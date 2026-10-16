@@ -51,6 +51,7 @@
     </aside>
     <main class="workspace">
       <div class="workspace-head"><div><span class="eyebrow">LIVE GENERATION / 01</span><h2>The canvas</h2><p>Built for your Pixel 6 Pro. Ready for an OLED display.</p></div><div class="dimensions"><strong>3024 × 6552</strong><span>PNG • 210% native width &amp; height</span></div></div>
+      <div class="randomize-bar"><button id="randomizeAll" class="button button-rainbow button-randomize-all" type="button">✳ <span>Randomize all</span></button><span>Fresh colours, shapes, materials, settings and seed</span></div>
       <div class="studio-stage">
         <div class="stage-inner">
           <div class="wallpaper-frame"><canvas id="preview" width="600" height="1300" role="img" aria-label="Procedurally generated seven stripe rainbow wallpaper"></canvas><div class="frame-label">PIXEL 6 PRO · PREVIEW</div></div>
@@ -59,7 +60,7 @@
       </div>
       <div class="action-tray">
         <div class="seed-group"><label for="seedInput">DESIGN SEED</label><input id="seedInput" type="text" maxlength="90" spellcheck="false" value="rainbow-001" aria-label="Design seed"><button id="applySeed" class="icon-btn" title="Render this seed" aria-label="Apply seed" type="button">↵</button></div>
-        <div class="main-actions"><button id="randomizeAll" class="button button-rainbow button-randomize-all" type="button">✳ <span>Randomize all</span></button><button id="randomize" class="button button-outline" type="button">↻ <span>New variation</span></button><button id="download" class="button button-light" type="button">↓ <span>Download PNG</span></button><button id="favorite" class="button button-icon" title="Save to favourites" aria-label="Save to favourites" aria-pressed="false" type="button">♡</button></div>
+        <div class="main-actions"><button id="randomize" class="button button-outline" type="button">↻ <span>New variation</span></button><button id="download" class="button button-light" type="button">↓ <span>Download PNG</span></button><button id="favorite" class="button button-icon" title="Save to favourites" aria-label="Save to favourites" aria-pressed="false" type="button">♡</button></div>
       </div>
       <div class="secondary-actions"><button id="copyLink" type="button">↗ Copy design link</button><button id="copyRecipe" type="button">⎘ Copy recipe JSON</button><button id="downloadRecipe" type="button">↓ Save recipe JSON</button><span id="notice" role="status" aria-live="polite"></span></div>
       <div class="details-bar"><div><span class="details-label">FAMILY</span><strong id="detailFamily">—</strong></div><div><span class="details-label">PATH</span><strong id="detailGeometry">—</strong></div><div><span class="details-label">MATERIAL</span><strong id="detailMaterial">—</strong></div><div><span class="details-label">COLOURS</span><strong>ROYGBIV · 7/7</strong></div></div>
