@@ -79,3 +79,12 @@
   .studio-stage { padding: 12px 8px; }
   .gallery-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
 }
+
+/* Slider precision controls and automatic selection disclosures */
+.stepper{display:grid!important;grid-template-columns:30px minmax(0,1fr) 30px;align-items:center;gap:7px}
+.stepper input[type=range]{width:100%;min-width:0}
+.step-button{min-width:30px;min-height:32px;background:#292b35;border:1px solid #4b4d5c;color:#fff;border-radius:5px;font-size:18px;font-weight:700;line-height:1}
+.step-button:hover{background:#3b3d4b}
+.resolved-selection{font-size:10px;color:#b3d5b5;font-weight:550;line-height:1.4}
+.resolved-selection[hidden]{display:none}
+.background-field{margin-top:13px}
