@@ -52,3 +52,14 @@ test('input normalization handles invalid slider settings and future versions',(
   assert.equal(recipe.chaos,100);assert.equal(recipe.stripeWidth,0);assert.equal(recipe.spread,56);
   assert.equal(recipe.seed,'rainbow-001');
 });
+
+
+test('backgrounds default to black and white stays in saved recipes',()=>{
+  assert.equal(normalizeRecipe({}).background,'black');
+  assert.equal(normalizeRecipe({background:'white'}).background,'white');
+  assert.equal(resolveScene({seed:'white-test',background:'white',outline:'black'}).background,'white');
+  assert.equal(resolveScene({seed:'white-test',background:'white',outline:'black'}).outline,'black');
+  assert.equal(decodeRecipe(encodeRecipe({background:'white',outline:'black-double'})).background,'white');
+  assert.equal(decodeRecipe(encodeRecipe({background:'white',outline:'black-double'})).outline,'black-double');
+  for(const outline of OUTLINES) assert.equal(normalizeRecipe({outline}).outline,outline);
+});
