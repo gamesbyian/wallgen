@@ -9,6 +9,7 @@ export const GEOMETRIES = ['straight', 'wave', 'zigzag', 'jagged', 'stepped', 'a
 export const MOTIFS = ['solid', 'dots', 'stars', 'dashes', 'diamonds', 'chevrons', 'hatch', 'checker'];
 export const MATERIALS = ['none', 'grain', 'watercolor', 'construction', 'handmade', 'linen', 'canvas', 'denim', 'knit', 'felt', 'corrugated'];
 export const PALETTES = ['classic', 'electric', 'pastel', 'jewel', 'muted'];
+export const TEXTURE_COVERAGES = ['both', 'stripes', 'background'];
 export const OUTLINES = ['none', 'hairline', 'white', 'double', 'broken', 'one-side', 'black', 'black-hairline', 'black-double', 'black-broken', 'black-one-side'];
 
 // An immutable, portable random stream. No Math.random() inside the render pipeline.
@@ -46,6 +47,7 @@ export function normalizeRecipe(input = {}) {
     motif: readChoice('motif', MOTIFS),
     palette: readChoice('palette', PALETTES),
     material: readChoice('material', MATERIALS),
+    textureCoverage: TEXTURE_COVERAGES.includes(input.textureCoverage) ? input.textureCoverage : 'both',
     outline: readChoice('outline', OUTLINES),
     background: input.background === 'white' ? 'white' : 'black',
     chaos: finiteRange(input.chaos, 36, 0, 100),
@@ -97,27 +99,42 @@ export function resolveScene(recipeInput) {
   const span = DESIGN_WIDTH * Math.abs(Math.sin(angle)) + DESIGN_HEIGHT * Math.abs(Math.cos(angle));
   const spread = span * (0.17 + 0.53 * recipe.spread / 100);
   const center = between(random, -1, 1) * span * 0.09;
+  // A shared master path keeps the seven stripes parallel at individuality=0.
+  // Independent path phase, period, tilt and edge profile grow with individuality.
+  const commonPhase=between(random,0,Math.PI*2);
+  const commonPeriod=between(random,145,530);
+  const commonEdgePhase=between(random,0,Math.PI*2);
+  const commonTaper=between(random,0,0.28)*chaos;
   const weights = Array.from({length:6}, () => between(random, 1 - chaos * .46, 1 + chaos * .46));
   const sum = weights.reduce((a,b) => a+b,0);
   const positions = [-spread/2];
   for (const weight of weights) positions.push(positions.at(-1) + spread * weight / sum);
   const avg = spread / 6;
+  const commonDisplacement=avg*.22*chaos;
   const widthFactor = (0.12 + 0.79 * recipe.stripeWidth / 100) * profile.width;
   const stripes = positions.map((position, i) => {
     const r = rng(`${recipe.seed}:stripe:${i}`);
     const leftGap = i ? positions[i] - positions[i - 1] : avg;
     const rightGap = i < 6 ? positions[i + 1] - positions[i] : avg;
     const width = Math.min(leftGap, rightGap) * widthFactor * between(r, 1 - chaos * 0.35, 1 + chaos * 0.35);
-    const individualGeometry = individuality > 0.6 && r() < (individuality - .6) * 1.75 ? pick(r, GEOMETRIES) : geometry;
-    const individualMotif = individuality > 0.45 && r() < (individuality - .45) * 1.60 ? pick(r, MOTIFS) : motif;
-    const displacement = Math.min(avg * 0.32, width * 0.7 + avg * 0.08) * chaos;
+    const individualGeometry = individuality > .25 && r() < (individuality-.25)*1.15 ? pick(r, GEOMETRIES) : geometry;
+    // Motif, palette and material belong to the whole seven-stripe design.
+    // Individuality is geometric only. Pattern changes are never selected here.
+    const displacement = Math.min(avg * .32, width * .7 + avg * .08) * chaos;
+    const phase=between(r,0,Math.PI*2);
+    const period=between(r,145,530);
     return {
       name: NAMES[i], index:i, color: paletteHsl(HUES[i], palette, r), center: position + center,
-      width: Math.max(width, 1.5), geometry: individualGeometry, motif: individualMotif,
-      phase: between(r, 0, Math.PI*2), period: between(r, 145, 530), displacement,
-      taper: between(r, 0.0, 0.36) * chaos, segments: 10 + Math.floor(r()*17),
-      patternScale: between(r, 0.7, 1.25), patternPhase: r()*120,
-      jitterSeed: `${recipe.seed}-noise-${i}`,
+      width: Math.max(width, 1.5), geometry: individualGeometry, motif,
+      phase, period, displacement,
+      sharedGeometry:geometry, sharedPhase:commonPhase, sharedPeriod:commonPeriod,
+      sharedDisplacement:commonDisplacement, parallelMix:individuality,
+      tilt:between(r,-avg*.8,avg*.8)*individuality*chaos,
+      edgePhase:commonEdgePhase+(phase-commonEdgePhase)*individuality,
+      taper:commonTaper+(between(r,0,.36)*chaos-commonTaper)*individuality,
+      segments:10+Math.floor(r()*17),
+      patternScale:between(r,.7,1.25), patternPhase:r()*120,
+      jitterSeed:`${recipe.seed}-noise-${i}`,
     };
   });
   return {
@@ -139,4 +156,21 @@ export function newSeed() {
   const data = new Uint32Array(2);
   crypto.getRandomValues(data);
   return Array.from(data, n => n.toString(36)).join('-');
+}
+
+/** Independently randomize every control, unlike New variation which preserves locks. */
+export function randomizeAllRecipe() {
+  const seed=newSeed();
+  const r=rng(seed+':randomize-all');
+  const any=choices=>pick(r,choices);
+  const percent=()=>Math.floor(r()*101);
+  return normalizeRecipe({
+    seed, family:any(FAMILIES), orientation:any(['vertical','horizontal','diagonal']),
+    geometry:any(GEOMETRIES), motif:any(MOTIFS), palette:any(PALETTES),
+    material:any(MATERIALS), textureCoverage:any(TEXTURE_COVERAGES),
+    outline:any(OUTLINES), background:any(['black','white']),
+    chaos:percent(), stripeWidth:percent(), spread:percent(),
+    textureStrength:percent(), textureScale:percent(), individuality:percent(),
+    gap:percent(), glow:percent(),
+  });
 }
