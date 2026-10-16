@@ -21,9 +21,18 @@ function displacement(x, stripe, extent) {
 }
 function widthAt(x,stripe,extent) {
   const t = x / extent;
-  return stripe.width * Math.max(0.3, 1 + stripe.taper * (Math.sin(t*TAU*1.4 + stripe.phase)*.7 + t*.3));
+  return stripe.width * Math.max(0.3, 1 + stripe.taper * (Math.sin(t*TAU*1.4 + (stripe.edgePhase??stripe.phase))*.7 + t*.3));
 }
-function geometryAt(x,stripe,extent) { return stripe.center + displacement(x,stripe,extent); }
+function geometryAt(x,stripe,extent) {
+  const shared=displacement(x,{
+    geometry:stripe.sharedGeometry??stripe.geometry,
+    phase:stripe.sharedPhase??stripe.phase,
+    period:stripe.sharedPeriod??stripe.period,
+    displacement:stripe.sharedDisplacement??stripe.displacement,
+  },extent);
+  return stripe.center + lerp(shared,displacement(x,stripe,extent),stripe.parallelMix??1)
+    + (stripe.tilt??0)*x/extent;
+}
 function stripePath(stripe, extent) {
   const path = new Path2D();
   const count = 500;
@@ -58,55 +67,73 @@ function stampStar(ctx,x,y,r,points=5) {
   }
   ctx.closePath(); ctx.fill();
 }
+/**
+ * Validate the entire geometric footprint before drawing a motif.
+ * No path clipping: a mark is either entirely within the stripe and canvas,
+ * or completely absent. Multiple x samples protect curved/jagged edges.
+ */
+export function motifFits(stripe,scene,x,y,halfX,halfY,extent=scene.extent) {
+  if(x-halfX < -extent || x+halfX > extent) return false;
+  const margin=.12;
+  for(let i=0;i<=8;i++){
+    const testX=x-halfX+halfX*i/4;
+    const center=geometryAt(testX,stripe,extent);
+    const radius=widthAt(testX,stripe,extent)/2;
+    if(y-halfY < center-radius+margin || y+halfY > center+radius-margin) return false;
+  }
+  // Only complete marks within the actual wallpaper rectangle.
+  const a=scene.angle, cos=Math.cos(a), sin=Math.sin(a);
+  for(const dx of [-halfX,halfX])for(const dy of [-halfY,halfY]){
+    const px=scene.centerX+(x+dx)*cos-(y+dy)*sin;
+    const py=scene.centerY+(x+dx)*sin+(y+dy)*cos;
+    if(px < 0 || px > DESIGN_WIDTH || py < 0 || py > DESIGN_HEIGHT) return false;
+  }
+  return true;
+}
 function fillMotif(ctx,stripe,extent,scene) {
   const motif=stripe.motif;
-  if(motif==='solid') {ctx.fill(stripePath(stripe,extent));return;}
-  const path=stripePath(stripe,extent);
-  ctx.save(); ctx.clip(path);
-  const r=rng(`${scene.seed}:motifs:${stripe.index}`);
-  const step=Math.max(11, stripe.width*.40*stripe.patternScale);
-  const across=Math.max(1,Math.ceil(stripe.width/(step*.80)));
-  const minX=-extent, maxX=extent;
-  if(motif==='hatch') {
-    ctx.lineWidth=Math.max(2,step*.23);
-    for(let x=minX-stripe.width*2;x<maxX+stripe.width*2;x+=step*.75){
-      for(let offset=-stripe.width*2;offset<stripe.width*2;offset+=step*1.15){
-        ctx.beginPath();ctx.moveTo(x, stripe.center+offset);ctx.lineTo(x+stripe.width*1.3,stripe.center+offset-stripe.width*1.3);ctx.stroke();
-      }
-    }
-  } else if(motif==='chevrons') {
-    ctx.lineWidth=Math.max(2,step*.23);
-    for(let x=minX;x<maxX;x+=step*1.8){
-      for(let j=-across;j<=across;j++){
-        const y=stripe.center+j*step*.9;
-        ctx.beginPath();ctx.moveTo(x-step*.5,y-step*.36);ctx.lineTo(x,y+step*.25);ctx.lineTo(x+step*.5,y-step*.36);ctx.stroke();
-      }
-    }
-  } else if(motif==='dashes'){
-    ctx.lineWidth=Math.min(stripe.width*.55,step*.70); ctx.lineCap='round';
-    for(let x=minX;x<maxX;x+=step*2.15){
-      for(let j=-across;j<=across;j++){
-        const y=stripe.center+j*step*.9;
-        ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+step*1.25,y);ctx.stroke();
-      }
-    }
-  } else {
-    for(let x=minX; x<maxX; x+=step){
-      for(let j=-across-1;j<=across+1;j++){
-        const row=j, y=stripe.center+j*step*.9;
-        const xx=x+(Math.abs(j)%2)*step*.5;
-        const jitter=scene.intensity * step * .13;
-        const px=xx+(r()-.5)*jitter, py=y+(r()-.5)*jitter;
-        const rad=step*.32*(.8+r()*.35);
-        if(motif==='dots') {ctx.beginPath();ctx.arc(px,py,rad,0,TAU);ctx.fill();}
-        else if(motif==='stars')stampStar(ctx,px,py,rad*1.2);
-        else if(motif==='diamonds') {ctx.beginPath();ctx.moveTo(px,py-rad);ctx.lineTo(px+rad,py);ctx.lineTo(px,py+rad);ctx.lineTo(px-rad,py);ctx.closePath();ctx.fill();}
-        else if(motif==='checker' && ((Math.round((x-minX)/step)+j)&1)===0) ctx.fillRect(px-rad,py-rad,rad*2,rad*2);
+  if(motif==='solid'){ctx.fill(stripePath(stripe,extent));return;}
+  const random=rng(`${scene.seed}:motifs:${stripe.index}`);
+  const step=Math.max(2.5,stripe.width*.42*stripe.patternScale);
+  const across=Math.max(1,Math.ceil(stripe.width/(step*.83)));
+  const stroke=Math.min(step*.19,Math.max(.55,stripe.width*.14));
+  ctx.save();ctx.lineWidth=stroke;ctx.lineCap='round';ctx.lineJoin='round';
+  const spacing=motif==='dashes'?step*1.9:motif==='chevrons'?step*1.5:step;
+  for(let x=-extent+spacing;x<extent-spacing;x+=spacing){
+    for(let j=-across;j<=across;j++){
+      const offset=j*step*.82;
+      const jitter=scene.intensity*step*.10;
+      const xx=x+(Math.abs(j)%2)*spacing*.35+(random()-.5)*jitter;
+      const yy=geometryAt(xx,stripe,extent)+offset+(random()-.5)*jitter;
+      const radius=step*.28*(.82+random()*.30);
+      let halfX=radius,halfY=radius;
+      if(motif==='hatch'){halfX=step*.37+stroke/2;halfY=step*.37+stroke/2;}
+      else if(motif==='chevrons'){halfX=step*.42+stroke/2;halfY=step*.31+stroke/2;}
+      else if(motif==='dashes'){halfX=step*.57+stroke/2;halfY=stroke/2;}
+      else if(motif==='checker'){halfX=radius;halfY=radius;}
+      else if(motif==='stars'){halfX=radius*1.16;halfY=radius*1.16;}
+      if(!motifFits(stripe,scene,xx,yy,halfX,halfY,extent))continue;
+      if(motif==='hatch'){
+        ctx.beginPath();ctx.moveTo(xx-step*.34,yy+step*.34);ctx.lineTo(xx+step*.34,yy-step*.34);ctx.stroke();
+      }else if(motif==='chevrons'){
+        ctx.beginPath();ctx.moveTo(xx-step*.39,yy-step*.25);ctx.lineTo(xx,yy+step*.26);
+        ctx.lineTo(xx+step*.39,yy-step*.25);ctx.stroke();
+      }else if(motif==='dashes'){
+        ctx.beginPath();ctx.moveTo(xx-step*.53,yy);ctx.lineTo(xx+step*.53,yy);ctx.stroke();
+      }else if(motif==='dots'){
+        ctx.beginPath();ctx.arc(xx,yy,radius,0,TAU);ctx.fill();
+      }else if(motif==='stars')stampStar(ctx,xx,yy,radius*1.16);
+      else if(motif==='diamonds'){
+        ctx.beginPath();ctx.moveTo(xx,yy-radius);ctx.lineTo(xx+radius,yy);
+        ctx.lineTo(xx,yy+radius);ctx.lineTo(xx-radius,yy);ctx.closePath();ctx.fill();
+      }else if(motif==='checker' && ((Math.round((x+extent)/spacing)+j)&1)===0){
+        ctx.fillRect(xx-radius,yy-radius,radius*2,radius*2);
       }
     }
   }
   ctx.restore();
 }
+
 function textureTile(material,seed,size) {
   const canvas=document.createElement('canvas');canvas.width=canvas.height=size;
   const ctx=canvas.getContext('2d');
@@ -225,16 +252,30 @@ export function drawWallpaper(canvas, recipe) {
     g.fillStyle=stripe.color;g.strokeStyle=stripe.color;
     fillMotif(g,stripe,scene.extent,scene);
   }
+  let tile;
   if(scene.material!=='none' && scene.textureStrength>0) {
     const tileSize=Math.max(32,Math.round(110*(.45+scene.textureScale/100*1.75)));
-    const tile=textureTile(scene.material,scene.seed,tileSize);
-    g.save();g.globalCompositeOperation='source-atop';
-    g.globalAlpha=scene.textureStrength/100;
-    g.fillStyle=g.createPattern(tile,'repeat');
-    g.fillRect(-scene.extent,-scene.extent,scene.extent*2,scene.extent*2);
-    g.restore();
+    tile=textureTile(scene.material,scene.seed,tileSize);
+    if(scene.textureCoverage!=='background'){
+      g.save();g.globalCompositeOperation='source-atop';
+      g.globalAlpha=scene.textureStrength/100;
+      g.fillStyle=g.createPattern(tile,'repeat');
+      g.fillRect(-scene.extent,-scene.extent,scene.extent*2,scene.extent*2);
+      g.restore();
+    }
   }
-  ctx.fillStyle=scene.background==='white'?'#fff':'#000';ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle=scene.background==='white'?'#fff':'#000';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  if(tile && scene.textureCoverage!=='stripes'){
+    // Background has its own surface, independent of the transparent stripe ink.
+    // Draw in logical coordinates so preview and PNG have the same texture scale.
+    ctx.save();
+    ctx.setTransform(canvas.width/DESIGN_WIDTH,0,0,canvas.height/DESIGN_HEIGHT,0,0);
+    ctx.globalAlpha=scene.textureStrength/100;
+    ctx.fillStyle=ctx.createPattern(tile,'repeat');
+    ctx.fillRect(0,0,DESIGN_WIDTH,DESIGN_HEIGHT);
+    ctx.restore();
+  }
   ctx.drawImage(ink,0,0);
   return scene;
 }
