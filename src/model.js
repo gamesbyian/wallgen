@@ -1,0 +1,141 @@
+export const DESIGN_WIDTH = 600;
+export const DESIGN_HEIGHT = 1300;
+export const OUTPUT_WIDTH = 3024;
+export const OUTPUT_HEIGHT = 6552;
+export const HUES = [0, 29, 52, 136, 212, 244, 278];
+export const NAMES = ['Red', 'Orange', 'Yellow', 'Green', 'Blue', 'Indigo', 'Violet'];
+export const FAMILIES = ['studio', 'currents', 'fracture', 'confetti', 'deco', 'tapestry', 'signal', 'contour'];
+export const GEOMETRIES = ['straight', 'wave', 'zigzag', 'jagged', 'stepped', 'arc', 'contour'];
+export const MOTIFS = ['solid', 'dots', 'stars', 'dashes', 'diamonds', 'chevrons', 'hatch', 'checker'];
+export const MATERIALS = ['none', 'grain', 'watercolor', 'construction', 'handmade', 'linen', 'canvas', 'denim', 'knit', 'felt', 'corrugated'];
+export const PALETTES = ['classic', 'electric', 'pastel', 'jewel', 'muted'];
+export const OUTLINES = ['none', 'hairline', 'white', 'double', 'broken', 'one-side'];
+
+// An immutable, portable random stream. No Math.random() inside the render pipeline.
+export function hashString(input) {
+  let h = 2166136261;
+  for (const char of String(input)) {
+    h ^= char.charCodeAt(0);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+export function rng(seed) {
+  let a = hashString(seed);
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t ^= t + Math.imul(t ^ (t >>> 7), 61 | t);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const pick = (random, choices) => choices[Math.floor(random() * choices.length)];
+const between = (random, min, max) => min + random() * (max - min);
+const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
+const finiteRange = (value, fallback, min, max) => clamp(Number.isFinite(+value) ? +value : fallback, min, max);
+
+export function normalizeRecipe(input = {}) {
+  const readChoice = (key, allowed) => allowed.includes(input[key]) ? input[key] : 'auto';
+  const seed = String(input.seed ?? 'rainbow-001').trim().slice(0, 90) || 'rainbow-001';
+  return {
+    version: 1,
+    seed,
+    family: readChoice('family', FAMILIES),
+    orientation: readChoice('orientation', ['vertical', 'horizontal', 'diagonal']),
+    geometry: readChoice('geometry', GEOMETRIES),
+    motif: readChoice('motif', MOTIFS),
+    palette: readChoice('palette', PALETTES),
+    material: readChoice('material', MATERIALS),
+    outline: readChoice('outline', OUTLINES),
+    chaos: finiteRange(input.chaos, 36, 0, 100),
+    stripeWidth: finiteRange(input.stripeWidth, 52, 0, 100),
+    spread: finiteRange(input.spread, 56, 0, 100),
+    textureStrength: finiteRange(input.textureStrength, 52, 0, 100),
+    textureScale: finiteRange(input.textureScale, 50, 0, 100),
+    individuality: finiteRange(input.individuality, 34, 0, 100),
+    gap: finiteRange(input.gap, 28, 0, 100),
+    glow: finiteRange(input.glow, 0, 0, 100),
+  };
+}
+
+const PROFILES = {
+  studio:   { geometry: 'straight', motif: 'solid', palette: 'classic', outline: 'white', material: 'none', width: 0.9 },
+  currents: { geometry: 'wave', motif: 'solid', palette: 'electric', outline: 'hairline', material: 'none', width: 0.38 },
+  fracture: { geometry: 'jagged', motif: 'solid', palette: 'electric', outline: 'white', material: 'grain', width: 0.65 },
+  confetti: { geometry: 'wave', motif: 'dots', palette: 'classic', outline: 'none', material: 'none', width: 0.68 },
+  deco: { geometry: 'arc', motif: 'solid', palette: 'jewel', outline: 'double', material: 'none', width: 0.64 },
+  tapestry: { geometry: 'wave', motif: 'chevrons', palette: 'muted', outline: 'hairline', material: 'linen', width: 0.84 },
+  signal: { geometry: 'stepped', motif: 'dashes', palette: 'electric', outline: 'one-side', material: 'none', width: 0.60 },
+  contour: { geometry: 'contour', motif: 'hatch', palette: 'pastel', outline: 'hairline', material: 'handmade', width: 0.5 },
+};
+
+function paletteHsl(hue, palette, r) {
+  const settings = {
+    classic: [92, 58], electric: [100, 62], pastel: [75, 79], jewel: [84, 39], muted: [51, 58],
+  }[palette];
+  const h = ((hue + between(r, -3, 3)) % 360 + 360) % 360;
+  return `hsl(${h.toFixed(1)} ${settings[0]}% ${settings[1]}%)`;
+}
+
+// Turns a saved recipe into a deterministic scene specification, independent of resolution.
+export function resolveScene(recipeInput) {
+  const recipe = normalizeRecipe(recipeInput);
+  const random = rng(recipe.seed);
+  const family = recipe.family === 'auto' ? pick(random, FAMILIES) : recipe.family;
+  const profile = PROFILES[family];
+  const orientation = recipe.orientation === 'auto' ? pick(random, ['vertical', 'vertical', 'diagonal', 'horizontal']) : recipe.orientation;
+  const geometry = recipe.geometry === 'auto' ? profile.geometry : recipe.geometry;
+  const motif = recipe.motif === 'auto' ? profile.motif : recipe.motif;
+  const palette = recipe.palette === 'auto' ? profile.palette : recipe.palette;
+  const material = recipe.material === 'auto' ? profile.material : recipe.material;
+  const outline = recipe.outline === 'auto' ? profile.outline : recipe.outline;
+  const chaos = recipe.chaos / 100;
+  const individuality = recipe.individuality / 100;
+  let angle = orientation === 'vertical' ? Math.PI / 2 : orientation === 'horizontal' ? 0 : (pick(random, [-1, 1]) * between(random, 0.30, 1.08));
+  angle += between(random, -0.18, 0.18) * chaos;
+  const span = DESIGN_WIDTH * Math.abs(Math.sin(angle)) + DESIGN_HEIGHT * Math.abs(Math.cos(angle));
+  const spread = span * (0.17 + 0.53 * recipe.spread / 100);
+  const center = between(random, -1, 1) * span * 0.09;
+  const weights = Array.from({length:6}, () => between(random, 1 - chaos * .46, 1 + chaos * .46));
+  const sum = weights.reduce((a,b) => a+b,0);
+  const positions = [-spread/2];
+  for (const weight of weights) positions.push(positions.at(-1) + spread * weight / sum);
+  const avg = spread / 6;
+  const widthFactor = (0.12 + 0.79 * recipe.stripeWidth / 100) * profile.width;
+  const stripes = positions.map((position, i) => {
+    const r = rng(`${recipe.seed}:stripe:${i}`);
+    const leftGap = i ? positions[i] - positions[i - 1] : avg;
+    const rightGap = i < 6 ? positions[i + 1] - positions[i] : avg;
+    const width = Math.min(leftGap, rightGap) * widthFactor * between(r, 1 - chaos * 0.35, 1 + chaos * 0.35);
+    const individualGeometry = individuality > 0.6 && r() < (individuality - .6) * 1.75 ? pick(r, GEOMETRIES) : geometry;
+    const individualMotif = individuality > 0.45 && r() < (individuality - .45) * 1.60 ? pick(r, MOTIFS) : motif;
+    const displacement = Math.min(avg * 0.32, width * 0.7 + avg * 0.08) * chaos;
+    return {
+      name: NAMES[i], index:i, color: paletteHsl(HUES[i], palette, r), center: position + center,
+      width: Math.max(width, 1.5), geometry: individualGeometry, motif: individualMotif,
+      phase: between(r, 0, Math.PI*2), period: between(r, 145, 530), displacement,
+      taper: between(r, 0.0, 0.36) * chaos, segments: 10 + Math.floor(r()*17),
+      patternScale: between(r, 0.7, 1.25), patternPhase: r()*120,
+      jitterSeed: `${recipe.seed}-noise-${i}`,
+    };
+  });
+  return {
+    ...recipe, family, orientation, geometry, motif, palette, material, outline, angle, span,
+    stripes, intensity: chaos, width: avg, extent: Math.hypot(DESIGN_WIDTH, DESIGN_HEIGHT) * 1.35,
+    centerX: DESIGN_WIDTH / 2 + between(random, -1, 1) * DESIGN_WIDTH * 0.055,
+    centerY: DESIGN_HEIGHT / 2 + between(random, -1, 1) * DESIGN_HEIGHT * 0.065,
+  };
+}
+
+export function encodeRecipe(recipe) {
+  return encodeURIComponent(JSON.stringify(normalizeRecipe(recipe)));
+}
+export function decodeRecipe(encoded) {
+  try { return normalizeRecipe(JSON.parse(decodeURIComponent(encoded))); }
+  catch { return null; }
+}
+export function newSeed() {
+  const data = new Uint32Array(2);
+  crypto.getRandomValues(data);
+  return Array.from(data, n => n.toString(36)).join('-');
+}
