@@ -1,4 +1,4 @@
-import { OUTPUT_WIDTH, OUTPUT_HEIGHT, normalizeRecipe, resolveScene, encodeRecipe, decodeRecipe, newSeed } from './model.js';
+import { OUTPUT_WIDTH, OUTPUT_HEIGHT, normalizeRecipe, resolveScene, encodeRecipe, decodeRecipe, newSeed, randomizeAllRecipe } from './model.js';
 import { drawWallpaper } from './renderer.js';
 
 const form = document.getElementById('controls');
@@ -8,7 +8,7 @@ const gallery = document.getElementById('gallery');
 const notice = document.getElementById('notice');
 const favoriteButton = document.getElementById('favorite');
 const FAVORITES_KEY = 'wallgen:favorites:v1';
-const FIELDS = ['family','orientation','geometry','motif','palette','material','outline','background','chaos','stripeWidth','spread','textureStrength','textureScale','individuality','gap','glow'];
+const FIELDS = ['family','orientation','geometry','motif','palette','material','outline','background','textureCoverage','chaos','stripeWidth','spread','textureStrength','textureScale','individuality','gap','glow'];
 let current = normalizeRecipe();
 let currentScene;
 let noticeTimer = 0;
@@ -144,6 +144,7 @@ form.addEventListener('submit',event=>event.preventDefault());
 seedInput.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();render(fromControls());}});
 document.getElementById('applySeed').addEventListener('click',()=>render(fromControls()));
 document.getElementById('randomize').addEventListener('click',()=>changeRecipe({...fromControls(),seed:newSeed()}));
+document.getElementById('randomizeAll').addEventListener('click',()=>changeRecipe(randomizeAllRecipe()));
 document.getElementById('download').addEventListener('click',downloadPNG);
 document.getElementById('copyRecipe').addEventListener('click',()=>copyText(JSON.stringify(current,null,2)));
 document.getElementById('copyLink').addEventListener('click',()=>copyText(location.href));
