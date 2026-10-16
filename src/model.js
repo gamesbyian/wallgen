@@ -9,7 +9,7 @@ export const GEOMETRIES = ['straight', 'wave', 'zigzag', 'jagged', 'stepped', 'a
 export const MOTIFS = ['solid', 'dots', 'stars', 'dashes', 'diamonds', 'chevrons', 'hatch', 'checker'];
 export const MATERIALS = ['none', 'grain', 'watercolor', 'construction', 'handmade', 'linen', 'canvas', 'denim', 'knit', 'felt', 'corrugated'];
 export const PALETTES = ['classic', 'electric', 'pastel', 'jewel', 'muted'];
-export const OUTLINES = ['none', 'hairline', 'white', 'double', 'broken', 'one-side'];
+export const OUTLINES = ['none', 'hairline', 'white', 'double', 'broken', 'one-side', 'black', 'black-hairline', 'black-double', 'black-broken', 'black-one-side'];
 
 // An immutable, portable random stream. No Math.random() inside the render pipeline.
 export function hashString(input) {
@@ -47,6 +47,7 @@ export function normalizeRecipe(input = {}) {
     palette: readChoice('palette', PALETTES),
     material: readChoice('material', MATERIALS),
     outline: readChoice('outline', OUTLINES),
+    background: input.background === 'white' ? 'white' : 'black',
     chaos: finiteRange(input.chaos, 36, 0, 100),
     stripeWidth: finiteRange(input.stripeWidth, 52, 0, 100),
     spread: finiteRange(input.spread, 56, 0, 100),
@@ -120,7 +121,7 @@ export function resolveScene(recipeInput) {
     };
   });
   return {
-    ...recipe, family, orientation, geometry, motif, palette, material, outline, angle, span,
+    ...recipe, family, orientation, geometry, motif, palette, material, outline, background: recipe.background, angle, span,
     stripes, intensity: chaos, width: avg, extent: Math.hypot(DESIGN_WIDTH, DESIGN_HEIGHT) * 1.35,
     centerX: DESIGN_WIDTH / 2 + between(random, -1, 1) * DESIGN_WIDTH * 0.055,
     centerY: DESIGN_HEIGHT / 2 + between(random, -1, 1) * DESIGN_HEIGHT * 0.065,
