@@ -8,7 +8,7 @@ const gallery = document.getElementById('gallery');
 const notice = document.getElementById('notice');
 const favoriteButton = document.getElementById('favorite');
 const FAVORITES_KEY = 'wallgen:favorites:v1';
-const FIELDS = ['family','orientation','geometry','motif','palette','material','outline','chaos','stripeWidth','spread','textureStrength','textureScale','individuality','gap','glow'];
+const FIELDS = ['family','orientation','geometry','motif','palette','material','outline','background','chaos','stripeWidth','spread','textureStrength','textureScale','individuality','gap','glow'];
 let current = normalizeRecipe();
 let currentScene;
 let noticeTimer = 0;
@@ -57,6 +57,7 @@ function titleCase(value){return value.replace(/-/g,' ').replace(/\b\w/g,c=>c.to
 function render(recipe,{scroll=false}={}) {
   current=normalizeRecipe(recipe);
   currentScene=drawWallpaper(preview,current);
+  showResolvedSelections(currentScene);
   document.getElementById('detailFamily').textContent=titleCase(currentScene.family);
   document.getElementById('detailGeometry').textContent=titleCase(currentScene.geometry);
   document.getElementById('detailMaterial').textContent=titleCase(currentScene.material);
@@ -98,6 +99,35 @@ async function downloadPNG(){
   finally { if(big){big.width=0;big.height=0;}setBusy(button,false); }
 }
 function updateControlsFromInputs(){render(fromControls());}
+
+for(const slider of form.querySelectorAll('input[type="range"]')){
+  const row=document.createElement('span');row.className='stepper';
+  const minus=document.createElement('button');minus.type='button';minus.className='step-button';minus.textContent='−';minus.setAttribute('aria-label','Decrease '+slider.name);
+  const plus=document.createElement('button');plus.type='button';plus.className='step-button';plus.textContent='+';plus.setAttribute('aria-label','Increase '+slider.name);
+  slider.parentNode.insertBefore(row,slider);row.append(minus,slider,plus);
+  for(const [button,delta] of [[minus,-1],[plus,1]]){
+    button.addEventListener('click',()=>{
+      slider.value=String(Math.max(Number(slider.min),Math.min(Number(slider.max),Number(slider.value)+delta*(Number(slider.step)||1))));
+      clearTimeout(rangeTimeout);
+      const output=form.querySelector('output[for="'+slider.name+'"]');if(output)output.textContent=slider.value+'%';
+      updateControlsFromInputs();
+    });
+  }
+}
+const automaticKeys=['family','orientation','geometry','motif','palette','material','outline'];
+for(const key of automaticKeys){
+  const select=form.elements.namedItem(key),hint=document.createElement('small');
+  hint.className='resolved-selection';hint.dataset.resolved=key;select.insertAdjacentElement('afterend',hint);
+}
+function showResolvedSelections(scene){
+  for(const key of automaticKeys){
+    const select=form.elements.namedItem(key),hint=form.querySelector('[data-resolved="'+key+'"]');
+    const auto=select.value==='auto',option=Array.from(select.options).find(o=>o.value===scene[key]);
+    hint.textContent=auto?'↳ Selected: '+(option?.textContent||titleCase(String(scene[key]))):'';
+    hint.hidden=!auto;
+  }
+}
+
 let rangeTimeout;
 form.addEventListener('input',event=>{
   const key=event.target.name;
