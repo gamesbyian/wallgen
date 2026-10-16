@@ -88,3 +88,18 @@
 .resolved-selection{font-size:10px;color:#b3d5b5;font-weight:550;line-height:1.4}
 .resolved-selection[hidden]{display:none}
 .background-field{margin-top:13px}
+
+/* Primary action is visible before the preview, also on compact phones. */
+.randomize-bar{display:flex;align-items:center;gap:14px;margin-bottom:16px;flex-wrap:wrap}
+.randomize-bar>span{font-size:11px;color:#9a9ba7;line-height:1.5}
+.button-randomize-all{min-height:51px;padding:0 24px;text-transform:uppercase;letter-spacing:.08em;font-size:13px;box-shadow:0 0 0 1px #ffffff26,0 7px 24px #0005}
+.button-randomize-all:hover{filter:brightness(1.1)}
+.texture-coverage-field{margin-top:13px}
+@media(max-width:790px){
+  .randomize-bar{gap:7px;margin-bottom:10px}
+  .randomize-bar>span{display:none}
+  .button-randomize-all{width:100%;padding:0 7px;font-size:11px;min-height:46px;letter-spacing:.025em}
+}
+@media(max-width:520px){
+  .button-randomize-all{font-size:10px}
+}
