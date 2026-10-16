@@ -187,21 +187,17 @@ function textureTile(material,seed,size) {
 
 function drawOutline(ctx,path,stripe,scene) {
   if(scene.outline==='none')return;
-  const width = scene.outline==='hairline'?1.1 : scene.outline==='double'?3.4 : 2.1;
-  const buffer=scene.gap / 100 * Math.min(20,stripe.width*.6);
+  const black=scene.outline.startsWith('black');
+  const style=black?(scene.outline==='black'?'white':scene.outline.slice(6)):scene.outline;
+  const colour=black?'rgba(0,0,0,.96)':'rgba(255,255,255,.94)';
+  const width=style==='hairline'?1.1:style==='double'?3.4:2.1;
+  const buffer=scene.gap/100*Math.min(20,stripe.width*.6);
   ctx.save();ctx.lineJoin='round';
-  if(scene.outline==='broken') ctx.setLineDash([15,10]);
-  if(scene.outline==='one-side'){
-    const edge=traceEdge(stripe,scene.extent,-1);
-    ctx.strokeStyle='rgba(255,255,255,.92)';ctx.lineWidth=width;ctx.stroke(edge);ctx.restore();return;
-  }
-  // Stroke outwards via successive covers; the final coloured fill hides all interior strokes.
-  ctx.strokeStyle='rgba(255,255,255,.94)';ctx.lineWidth=2*(buffer+width);ctx.stroke(path);
-  if(buffer>0){ctx.strokeStyle='#000';ctx.lineWidth=2*buffer;ctx.stroke(path);}
-  if(scene.outline==='double'){
-    ctx.strokeStyle='rgba(255,255,255,.85)';ctx.lineWidth=.95;
-    ctx.stroke(path);
-  }
+  if(style==='broken')ctx.setLineDash([15,10]);
+  if(style==='one-side'){ctx.strokeStyle=colour;ctx.lineWidth=width;ctx.stroke(traceEdge(stripe,scene.extent,-1));ctx.restore();return;}
+  ctx.strokeStyle=colour;ctx.lineWidth=2*(buffer+width);ctx.stroke(path);
+  if(buffer>0){ctx.strokeStyle=scene.background==='white'?'#fff':'#000';ctx.lineWidth=2*buffer;ctx.stroke(path);}
+  if(style==='double'){ctx.strokeStyle=colour;ctx.lineWidth=.95;ctx.stroke(path);}
   ctx.restore();
 }
 
@@ -238,7 +234,7 @@ export function drawWallpaper(canvas, recipe) {
     g.fillRect(-scene.extent,-scene.extent,scene.extent*2,scene.extent*2);
     g.restore();
   }
-  ctx.fillStyle='#000';ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle=scene.background==='white'?'#fff':'#000';ctx.fillRect(0,0,canvas.width,canvas.height);
   ctx.drawImage(ink,0,0);
   return scene;
 }
