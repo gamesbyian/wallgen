@@ -73,14 +73,17 @@ export function stripeLineMarks(stripe,extent){
   if((stripe.lineStyle||'continuous')==='continuous')return null;
   const start=stripe.segmentStart??-extent,end=stripe.segmentEnd??extent;
   const type=stripe.lineStyle;
-  const pitch=Math.max(type==='dotted'?12:26,stripe.width*(type==='dotted'?2.15:5.3));
+  const dotFactor=0.4+(stripe.dotSize??50)/100*1.2;
+  const spacingFactor=.55+(stripe.dotSpacing??50)/100*1.35;
+  const pitch=Math.max(type==='dotted'?12:26,
+    stripe.width*(type==='dotted'?2.15:5.3)*spacingFactor*dotFactor);
   const marks=[];
   const first=Math.max(0,Math.floor((start+extent)/pitch)-1);
   const last=Math.ceil((end+extent)/pitch)+1;
   for(let i=first;i<=last;i++){
     const origin=-extent+i*pitch;
     if(type==='dotted'){
-      const x=origin+pitch*.5,radius=Math.min(stripe.width*.43,pitch*.32);
+      const x=origin+pitch*.5,radius=Math.min(stripe.width*.43*dotFactor,pitch*.42);
       if(x-radius>=start && x+radius<=end)marks.push({type:'dot',x,radius});
     }else{
       const from=Math.max(start,origin+pitch*.08);
@@ -323,6 +326,32 @@ function traceCentre(stripe,extent,offset=0){
     if(!i)path.moveTo(x,y);else path.lineTo(x,y);
   }
   return path;
+}
+// Deterministic dry-ink breakup. Marks remain inside the ribbon and use
+// the common centreline/normal sampler at every output resolution.
+function drawBrushWear(ctx,stripe,extent,scene){
+  if(!scene.brushRoughness)return;
+  const random=rng(scene.seed+':brush:'+stripe.index);
+  const strength=scene.brushRoughness/100;
+  const n=Math.ceil(18+strength*300);
+  const start=stripe.segmentStart??-extent,end=stripe.segmentEnd??extent;
+  ctx.save();
+  ctx.strokeStyle=scene.background==='white'?'#fff':'#000';
+  ctx.lineCap='round';
+  for(let i=0;i<n;i++){
+    const t=start+(end-start)*random();
+    const p=samplePath(stripe,t,extent);
+    const half=widthAt(stripe,t,extent)*.38;
+    if(half<.4)continue;
+    const offset=(random()*2-1)*half;
+    const x=p.x+p.nx*offset,y=p.y+p.ny*offset;
+    const length=.5+random()*Math.min(13,stripe.width*.6);
+    ctx.globalAlpha=(.04+.62*random())*strength;
+    ctx.lineWidth=Math.max(.3,Math.min(1.8,stripe.width*.05)*(0.2+random()));
+    ctx.beginPath();ctx.moveTo(x,y);
+    ctx.lineTo(x+p.tx*length,y+p.ty*length);ctx.stroke();
+  }
+  ctx.restore();
 }
 function drawConstruction(ctx,stripe,extent,scene){
   const kind=scene.construction;
@@ -714,6 +743,7 @@ export function drawWallpaper(canvas, recipe, options={}) {
     drawOutline(g,path,stripe,scene);
     g.fillStyle=stripe.color;g.strokeStyle=stripe.color;
     fillMotif(g,stripe,scene.extent,scene);
+    drawBrushWear(g,stripe,scene.extent,scene);
   }
   }
   // One scratch buffer is reused for every texture layer and surface.
