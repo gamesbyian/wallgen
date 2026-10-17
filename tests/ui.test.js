@@ -168,7 +168,9 @@ test('chevron geometry and independent shape controls are present in Design',()=
   const design=html.slice(html.indexOf('id="panel-design"'),html.indexOf('id="panel-colour"'));
   assert.match(design,/<option value="chevron">Chevron/);
   assert.match(design,/Stripe pattern <select name="motif"/);
-  assert.doesNotMatch(design,/Stripe construction/);
+  assert.match(design,/Stripe construction <select name="construction"/);
+  assert.match(design,/<option value="hairpin">/);
+  assert.match(design,/<option value="loops">/);
   for(const field of ['shapeFrequency','shapeDepth','lineStyle']){
     assert.match(design,new RegExp('name="'+field+'"'));
     assert.match(app,new RegExp("'"+field+"'"));
