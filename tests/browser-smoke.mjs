@@ -95,6 +95,35 @@ try{
   assert.ok(initial.scroll<=915);
   await evaluate('document.getElementById("mobileEdit").click()');
   await waitFor('document.body.classList.contains("mobile-edit-open")');
+  const guide=await evaluate(`(()=>{
+    const btn=document.getElementById('mobileBleed'),frame=document.querySelector('.wallpaper-frame');
+    const f=frame.getBoundingClientRect();
+    const before=document.getElementById('preview').toDataURL();
+    btn.click();
+    const g=document.getElementById('bleedGuide').getBoundingClientRect();
+    const result={pressed:btn.getAttribute('aria-pressed'),hidden:document.getElementById('bleedGuide').hidden,
+      ratioW:g.width/f.width,ratioH:g.height/f.height,
+      contrast:getComputedStyle(document.getElementById('bleedGuide')).borderTopColor,
+      untouched:before===document.getElementById('preview').toDataURL()};
+    btn.click();result.off=document.getElementById('bleedGuide').hidden;
+    return result;
+  })()`);
+  console.log('BLEED_GUIDE_CHECK',JSON.stringify(guide));
+  assert.equal(guide.pressed,'true');assert.equal(guide.hidden,false);
+  assert.ok(Math.abs(guide.ratioW-.9)<.01&&Math.abs(guide.ratioH-.9)<.01);
+  assert.ok(guide.untouched&&guide.off,'Bleed is a reversible preview-only outline');
+  const sideRail=await evaluate(`(()=>{
+    const rail=document.getElementById('mobileEditorActionRail').getBoundingClientRect();
+    const edit=document.getElementById('mobileDesignSheet').getBoundingClientRect();
+    const buttons=[...document.querySelectorAll('#mobileEditorActionRail button')];
+    return {height:rail.height,editHeight:edit.height,aligned:Math.abs(rail.top-edit.top)<3,
+      visible:buttons.every(b=>b.getBoundingClientRect().height>0),
+      actions:buttons.map(b=>b.dataset.dockProxy)};
+  })()`);
+  console.log('EDITOR_ACTION_RAIL',JSON.stringify(sideRail));
+  assert.ok(sideRail.aligned&&Math.abs(sideRail.height-sideRail.editHeight)<3);
+  assert.ok(sideRail.visible);
+  assert.deepEqual(sideRail.actions,['mobileEdit','mobileExplore','mobileShuffle','mobileFavorite','mobileDownload','mobileMore']);
   const editor=await evaluate('(()=>{const box=q=>document.querySelector(q).getBoundingClientRect();const s=box(".studio-stage"),p=box(".wallpaper-frame"),t=box(".sidebar");return {separate:s.bottom<=t.top+2,ratio:p.width/p.height,previewHeight:p.height,scrollY:getComputedStyle(document.querySelector(".sidebar")).overflowY,tabs:[...document.querySelectorAll(".settings-tab")].map(b=>b.textContent.trim())}})()');
   console.log('REDESIGN_PHONE_METRICS',JSON.stringify(editor));
   assert.ok(editor.separate,'the panel may not overlap or obscure any stripe');
