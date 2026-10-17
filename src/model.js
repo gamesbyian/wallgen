@@ -183,6 +183,11 @@ export function resolveScene(recipeInput) {
       scale:recipe.textureScale3, rotation:recipe.textureRotation3, coverage:recipe.textureCoverage3,
       blend:recipe.textureBlend3, seed:recipe.seed+':texture:3', heightSeed:hashString(recipe.seed+':texture:3')}] : []),
   ].filter(layer=>layer.material!=='none' && layer.strength>0);
+  for(const layer of textureLayers){
+    const radians=layer.rotation*Math.PI/180;
+    layer.heightCos=Math.cos(radians);
+    layer.heightSin=Math.sin(radians);
+  }
   const materialSummary=textureLayers.length ? textureLayers.map(layer=>layer.material).join(' + ') : 'none';
   return {
     ...recipe, family, orientation, geometry, motif, palette, material, materialSummary, textureLayers, outline, background: recipe.background, angle, span,
