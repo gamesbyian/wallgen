@@ -230,6 +230,21 @@ try{
   await evaluate('document.querySelector("[name=primesOnly]").click()');
   assert.ok(await evaluate('document.getElementById("primeModeHint").hidden'));
   assert.ok(await evaluate('document.querySelector("[name=primesOnly]").checked'));
+  // Toggling Primes must reach the recipe, despite the original checkbox now
+  // living outside the <form> element's DOM subtree.
+  await evaluate('document.getElementById("randomizeAll").click()');
+  const primeDraw=await evaluate(`(()=>{
+    const percentages=['shapeFrequency','shapeDepth','stripeWidth','spread'];
+    return {checked:document.querySelector('[name=primesOnly]').checked,
+      values:percentages.map(k=>Number(document.querySelector('[name="'+k+'"]').value))};
+  })()`);
+  const isPrime=n=>Number.isInteger(n)&&n>=2&&
+    Array.from({length:Math.max(0,Math.floor(Math.sqrt(n))-1)},(_,i)=>i+2)
+      .every(d=>n%d!==0);
+  assert.ok(primeDraw.checked&&primeDraw.values.every(isPrime),
+    'randomized percentages should use primes when the moved toggle is selected');
+  assert.ok(await evaluate('document.body.classList.contains("mobile-edit-open")'),
+    'preview-side Randomize must keep the editor open');
   const originalImage=await evaluate('document.getElementById("preview").toDataURL()');
   await evaluate('document.querySelector("[data-zoom=in]").click()');
   assert.equal(await evaluate('document.querySelector(".studio-stage").style.getPropertyValue("--mobile-preview-zoom")'),'1.25');
