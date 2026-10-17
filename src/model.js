@@ -292,8 +292,12 @@ export function resolveScene(recipeInput) {
         .15+110*recipe.shapeDepth/100,
       phase, period, displacement,
       sharedGeometry:geometry, sharedPhase:commonPhase, sharedPeriod:commonPeriod,
-      sharedDisplacement:commonDisplacement, parallelMix:individuality,
-      tilt:between(r,-referenceAvg*.8,referenceAvg*.8)*individuality*(.25+.75*chaos),
+      sharedDisplacement:commonDisplacement,
+      // Safe mode scales stripe-to-stripe phase drift continuously across
+      // the *entire* slider instead of cutting it off at an invisible limit.
+      parallelMix:individuality*(recipe.geometrySafety?.45:1),
+      tilt:between(r,-referenceAvg*.8,referenceAvg*.8)*individuality*
+        (recipe.geometrySafety?.32:1)*(.25+.75*chaos),
       edgePhase:commonEdgePhase+(phase-commonEdgePhase)*individuality,
       taper:commonTaper+(between(r,.04,.36)*(.25+.75*chaos)-commonTaper)*individuality,
       segments:10+Math.floor(r()*17),
