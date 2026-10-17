@@ -52,6 +52,10 @@ particular metadata fields varies among image-viewing applications.
 - Base logical coordinate system: 600 × 1300, preserving the 6 Pro aspect ratio exactly.
 - Unused pixels use the selected opaque background (`#000000` or `#ffffff`); individual marks in patterned stripes are placed whole without cropping at stripe boundaries or canvas edges.
 
+## Brand and SVG logo
+
+The app uses `assets/roygbiv-logo.svg` as its masthead mark and browser icon. This original, editable SVG depicts seven angled red-to-violet ribbons on black, overlaid by a white phone outline. Several ribbons terminate before crossing both sides of the phone. It shares the repository's public-domain dedication; attribution is not required.
+
 ## Controls and workspace
 
 The settings column uses four accessible tabs: **Design** (family, direction, paths and patterns), **Colour** (palette, background, outlines, light and shadow), **Texture** (three independent material layers and relief), and **Refine** (spacing, thickness, individuality, glow). Tab selection is remembered in the browser session, works with keyboard arrow keys, and does not re-render the current wallpaper. On narrow devices the four tabs remain in one compact horizontal row, with shorter labels where needed.
@@ -62,8 +66,9 @@ The balanced-width **Randomize** button sits next to an equally prominent, alway
 
 - Eight scene families: Studio, Currents, Fracture, Confetti, Deco, Tapestry, Signal and Contour.
 - Orientation: vertical, horizontal, diagonal or seeded selection. Stripes that meet the wallpaper edge on one side without reaching the opposite edge get paired inset ends; stripes that traverse opposed edges remain continuous.
-- Geometry: straight, wave, zigzag, jagged, stepped, arc and contour.
-- Motifs: solid, dots, stars, dashes, diamonds, chevrons, hatch and checker.
+- Geometry: straight, wave, zigzag, **chevron (repeating pointed-V ribbon path)**, jagged, stepped, arc and contour. The Design tab's **Shape frequency** slider changes how often wave/zigzag/chevron/stepped/jagged/contour bends repeat; **Shape depth** varies their amplitude. Both have a neutral 50% midpoint that preserves legacy designs.
+- **Stripe line style** is independent of the **Stripe pattern** selector. Continuous, dotted and dashed *ribbon silhouettes* can be combined with **any path geometry**, whether straight, wavy or chevron, and independently combined with the existing filled dot/dash/chevron/checker/etc. motif patterns. Dotted styles use separate circular segments; dashed styles use short pieces of the selected path. These styles work with the existing material, outline and nudge pipeline.
+- Stripe patterns (previously called Stripe construction): solid, dots, stars, dashes, diamonds, chevrons, hatch and checker.
 - Palettes: classic, electric, pastel, jewel and muted. Their hues stay in ROYGBIV order.
 - Outlines: none, white or black hairline, solid, double, broken and single-side, with a buffer coloured to match the selected background.
 - **Ambient light & shade (Colour tab):** choose Off (default), Soft daylight, Golden hour or Cool moonlight, and a corner for the light source. Light intensity adds a soft warm/cool wash across the **whole canvas**, including the background and stripes; Canvas shade darkens the opposite region with a broad gradient. Canvas ambience does not cast shadows from the stripe silhouettes. An independent **Cast stripe shadows** option lives in Design (off by default), with strength, softness and light-source direction. Those optional shadows follow the completed stripes when nudged, while the ambient light stays fixed in canvas space. Old designs default to Off, and the controls remain lockable, deterministic and saved in recipes.
