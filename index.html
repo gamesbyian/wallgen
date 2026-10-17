@@ -17,6 +17,7 @@
     <aside class="sidebar" aria-label="Generator controls">
 
       <form id="controls" autocomplete="off">
+        <div class="randomize-bar"><button id="randomizeAll" class="button button-rainbow button-randomize-all" type="button">✳ <span>Randomize all</span></button><span>Unlocked settings only. Tap 🔓 beside a setting to protect it.</span></div>
         <div class="section-top"><span class="section-index">01</span><h2>Composition</h2><span class="section-rule"></span></div>
         <div class="control-grid">
           <label class="field">Visual family <select name="family" data-setting="family"><option value="auto">Surprise me</option><option value="studio">Studio / graphic</option><option value="currents">Neon currents</option><option value="fracture">Geometric fracture</option><option value="confetti">Particle ribbons</option><option value="deco">Art deco</option><option value="tapestry">Tapestry</option><option value="signal">Signal / digital</option><option value="contour">Topographic contour</option></select></label>
@@ -78,14 +79,14 @@
     </aside>
     <main class="workspace">
       <div class="workspace-head"><div><span class="eyebrow">LIVE GENERATION / 01</span><h2>The canvas</h2><p>Built for your Pixel 6 Pro. Ready for an OLED display.</p></div><div class="dimensions"><strong>3024 × 6552</strong><span>PNG • 210% native width &amp; height</span></div></div>
-      <div class="randomize-bar"><button id="randomizeAll" class="button button-rainbow button-randomize-all" type="button">✳ <span>Randomize all</span></button><span>Fresh colours, shapes, materials, settings and seed</span></div>
+      
       <div class="composition-positioner" aria-label="Position the composition">
         <div class="positioner-description">
           <strong>MOVE COMPOSITION</strong>
           <span>Shift the rainbow within the frame</span>
           <output id="positionStatus" aria-live="polite">Default position</output>
         </div>
-        <div class="nudge-pad" role="group" aria-label="Move rainbow artwork">
+        <div class="nudge-pad nudge-pad-inline" role="group" aria-label="Move rainbow artwork">
           <button type="button" class="nudge-button nudge-up" data-nudge="up" aria-label="Move composition up" title="Move up">↑</button>
           <button type="button" class="nudge-button nudge-left" data-nudge="left" aria-label="Move composition left" title="Move left">←</button>
           <button type="button" class="nudge-button nudge-reset" data-nudge="reset" aria-label="Reset composition offset" title="Reset position">⌖</button>
