@@ -536,3 +536,9 @@
 @media(max-width:520px){
   .brand .brand-logo{width:48px;height:48px;border-radius:10px}
 }
+
+/* Inapplicable controls retain their remembered recipe values, but read as zero. */
+.setting-inactive{opacity:.42;filter:grayscale(.75)}
+.setting-inactive .field,.setting-inactive .rotation-controls{cursor:not-allowed}
+.setting-inactive input:disabled,.setting-inactive select:disabled{opacity:1;cursor:not-allowed}
+.setting-inactive .setting-lock{opacity:.55;cursor:not-allowed}
