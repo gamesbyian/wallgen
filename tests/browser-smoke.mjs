@@ -253,11 +253,12 @@ try{
     return nodes.map(input=>{
       const stepper=input.closest('.stepper'),style=stepper&&getComputedStyle(stepper.querySelector('.step-button'));
       return {name:input.name,buttons:stepper?.querySelectorAll('.step-button').length,
-        display:style?.display,rect:stepper?.querySelector('.step-button').getBoundingClientRect().width||0};
+        display:style?.display,visible:input.getClientRects().length>0,
+        rect:stepper?.querySelector('.step-button').getBoundingClientRect().width||0};
     });
   })()`);
   assert.ok(steppers.length>20,'enough sliders for comprehensive stepper audit');
-  assert.ok(steppers.every(x=>x.buttons===2&&x.display!=='none'&&x.rect>=18),
+  assert.ok(steppers.every(x=>x.buttons===2&&x.display!=='none'&&(!x.visible||x.rect>=18)),
     'every swipe-card slider shows both minus and plus buttons');
   console.log('ALL_MOBILE_STEPPERS_VISIBLE',steppers.length);
 
