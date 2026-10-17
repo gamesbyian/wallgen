@@ -166,12 +166,12 @@
   body.mobile-studio .mobile-preview-rail-left{left:2px;width:46px}
   body.mobile-studio .mobile-preview-rail-right{right:2px;width:35px}
   body.mobile-studio .studio-stage .stage-inner{
-    margin-left:46px;margin-right:35px;
-    width:calc(100% - 81px)!important;
+    margin-left:43px;margin-right:32px;
+    width:calc(100% - 75px)!important;
   }
   body.mobile-studio .studio-stage .wallpaper-frame{
     max-width:100%!important;
-    height:min(100%,calc((100vw - 116px)*1300/600))!important;
+    height:min(100%,calc((100vw - 97px)*1300/600))!important;
     overflow:hidden!important;
   }
   body.mobile-studio .studio-stage .wallpaper-frame canvas{
