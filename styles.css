@@ -109,3 +109,11 @@
 .homogeneity-override{display:flex;gap:11px;align-items:flex-start;margin-top:19px;font-size:11px;color:#e6e6ed;line-height:1.5;cursor:pointer}
 .homogeneity-override input{accent-color:#b7a3ff;min-width:18px;width:18px;height:18px;margin:0}
 .homogeneity-override span{display:flex;flex-direction:column;gap:4px}
+
+/* Editable values appear after the + button, without sacrificing touch targets. */
+.stepper{grid-template-columns:30px minmax(0,1fr) 30px 53px!important;gap:5px}
+.slider-number{width:53px;min-width:0;height:34px;background:#1d1e27;color:#f7f6f9;border:1px solid #4b4d5c;border-radius:5px;padding:0 3px;text-align:center;font:12px ui-monospace,monospace;font-variant-numeric:tabular-nums}
+.slider-number::-webkit-inner-spin-button,.slider-number::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.slider-number{-moz-appearance:textfield;appearance:textfield}
+.button-undo:disabled{cursor:default;opacity:.38}
+@media(max-width:790px){.stepper{grid-template-columns:26px minmax(0,1fr) 26px 43px!important;gap:3px}.step-button{min-width:26px;min-height:32px}.slider-number{width:43px;font-size:11px}.main-actions{grid-template-columns:repeat(2,minmax(0,1fr))}.main-actions .button{font-size:10px}}
