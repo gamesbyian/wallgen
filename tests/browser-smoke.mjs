@@ -309,18 +309,60 @@ try{
   const originalImage=await evaluate('document.getElementById("preview").toDataURL()');
   await evaluate('document.querySelector("[data-zoom=in]").click()');
   assert.equal(await evaluate('document.querySelector(".studio-stage").style.getPropertyValue("--mobile-preview-zoom")'),'1.1');
-  assert.equal(await evaluate('document.getElementById("preview").toDataURL()'),originalImage,
-    'zooming should only magnify the preview, never modify wallpaper pixels');
+  assert.notEqual(await evaluate('document.getElementById("preview").toDataURL()'),originalImage,
+    'zoom must repaint newly framed pixels rather than scale a clipped bitmap');
+  assert.equal(await evaluate('new URLSearchParams(location.search).has("r")&&JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).viewZoom'),1.1);
+  assert.equal(await evaluate('getComputedStyle(document.getElementById("preview")).transform'),'none');
   await evaluate('document.querySelector("[data-zoom=out]").click()');
   assert.equal(await evaluate('document.querySelector(".studio-stage").style.getPropertyValue("--mobile-preview-zoom")'),'1');
+  assert.equal(await evaluate('document.getElementById("preview").toDataURL()'),originalImage,
+    'returning to 100% restores the exact original seeded pixels');
   await evaluate('document.querySelector("[data-zoom=out]").click()');
   assert.equal(await evaluate('document.querySelector(".studio-stage").style.getPropertyValue("--mobile-preview-zoom")'),'0.9');
-  assert.equal(await evaluate('document.getElementById("preview").toDataURL()'),originalImage);
+  assert.notEqual(await evaluate('document.getElementById("preview").toDataURL()'),originalImage);
   for(let i=0;i<4;i++)await evaluate('document.querySelector("[data-zoom=out]").click()');
   assert.equal(await evaluate('document.querySelector(".studio-stage").style.getPropertyValue("--mobile-preview-zoom")'),'0.5');
   assert.ok(await evaluate('document.querySelector("[data-zoom=out]").disabled'),
     'the very first wallpaper can zoom out to 50%');
+  assert.equal(await evaluate('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).viewZoom'),.5);
   for(let i=0;i<5;i++)await evaluate('document.querySelector("[data-zoom=in]").click()');
+  assert.equal(await evaluate('document.querySelector(".studio-stage").dataset.viewZoom'),'1');
+  // A fresh 50% view must contain ink outside the old 100% frame.
+  // Full-res save uses the exact same portable recipe camera as this preview.
+  const cameraParity=await evaluate(`(async()=>{
+    const {drawWallpaper}=await import('/src/renderer.js');
+    const recipe={seed:'uncropped-camera',family:'studio',geometry:'straight',
+      orientation:'horizontal',motif:'solid',palette:'citrus',outline:'none',
+      material:'none',lightingMood:'off',stripeShadowEnabled:false,
+      spread:53,stripeWidth:72,individuality:0,viewZoom:.5};
+    const small=document.createElement('canvas');
+    small.width=600;small.height=1300;drawWallpaper(small,recipe);
+    const large=document.createElement('canvas');
+    large.width=1200;large.height=2600;drawWallpaper(large,recipe);
+    const a=small.getContext('2d').getImageData(0,0,600,1300).data;
+    const b=large.getContext('2d').getImageData(0,0,1200,2600).data;
+    const isInk=(data,i)=>Math.max(data[i],data[i+1],data[i+2])-
+      Math.min(data[i],data[i+1],data[i+2])>42;
+    let left=0,right=0,diff=0,checked=0;
+    for(let y=150;y<1150;y+=9){
+      if(isInk(a,(y*600+75)*4))left++;
+      if(isInk(a,(y*600+525)*4))right++;
+    }
+    for(let y=80;y<1200;y+=17)for(let x=55;x<545;x+=13){
+      const j=(y*600+x)*4,k=((y*2)*1200+x*2)*4;
+      // Flat-colour interiors must be pixel-identical at scaled output sizes.
+      if(isInk(a,j)||isInk(b,k)){
+        diff+=Math.max(Math.abs(a[j]-b[k]),Math.abs(a[j+1]-b[k+1]),Math.abs(a[j+2]-b[k+2]));
+        checked++;
+      }
+    }
+    return {left,right,averageDifference:diff/Math.max(1,checked),checked};
+  })()`);
+  console.log('TRUE_CAMERA_EXPORT_PARITY',JSON.stringify(cameraParity));
+  assert.ok(cameraParity.left>8&&cameraParity.right>8,
+    'lines must continue through both areas outside the old 100% crop');
+  assert.ok(cameraParity.checked>80&&cameraParity.averageDifference<15,
+    'full-resolution camera must match the displayed composition');
   await evaluate('document.querySelector(".studio-stage [data-nudge=right]").click()');
   assert.ok((await evaluate('document.getElementById("positionStatus").textContent')).includes('X +1%'));
   await evaluate('document.querySelector(".studio-stage [data-nudge=reset]").click()');
@@ -618,8 +660,9 @@ try{
     const recipe=JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get('r')));
     return recipe.customPath[0];
   })()`);
-  assert.ok(Math.abs(zoomedPath[0]-.31)<.04&&Math.abs(zoomedPath[1]-.27)<.04,
-    'zoomed input must map back into unzoomed wallpaper coordinates');
+  assert.ok(Math.abs(zoomedPath[0]-(.5+(.31-.5)/1.1))<.04&&
+    Math.abs(zoomedPath[1]-(.5+(.27-.5)/1.1))<.04,
+    'zoomed input must invert the persisted camera framing coordinates');
   await evaluate('document.getElementById("undo").click()');
   await evaluate('document.querySelector("[data-zoom=out]").click()');
   console.log('ZOOMED_FINGER_PATH_COORDINATES_SUCCESS');
