@@ -208,6 +208,22 @@ try{
         .filter(el=>el.getClientRects().length>0&&getComputedStyle(el).visibility!=='hidden');
       const fieldR=toolbarFields.map(e=>({name:e.id||e.textContent.trim(),b:e.getBoundingClientRect()}));
       const visible=el=>el.getClientRects().length>0&&getComputedStyle(el).visibility!=='hidden';
+      const overlaps=[];
+      for(const row of document.querySelectorAll('.editor-tool-card:not([hidden]) .lockable-setting')){
+        if(!visible(row)||row.closest('[hidden]'))continue;
+        const die=row.querySelector(':scope > .editor-setting-die');
+        const lock=row.querySelector(':scope > .setting-lock');
+        if(die&&lock&&visible(die)&&visible(lock)){
+          const d=die.getBoundingClientRect(),l=lock.getBoundingClientRect();
+          if(d.right>l.left+1&&l.right>d.left+1)
+            overlaps.push({name:row.querySelector('[name]')?.name||'',excess:Math.round(d.right-l.left)});
+        }
+      }
+      const categoryDie=document.querySelector('[data-random-category]');
+      const categoryText=document.createRange();
+      categoryText.selectNodeContents(categoryDie);
+      const categoryTextBox=categoryText.getBoundingClientRect();
+      const dieBox=categoryDie.getBoundingClientRect();
       const failures=[];
       const allControls=[...document.querySelectorAll('.editor-tool-card:not([hidden]) input:not([type=hidden]),.editor-tool-card:not([hidden]) select,.editor-tool-card:not([hidden]) button')];
       for(const el of allControls){
@@ -229,7 +245,8 @@ try{
         toolbarInside:fieldR.every(({b})=>b.left>=toolbar.left-3&&b.right<=toolbar.right+3&&b.top>=toolbar.top-3&&b.bottom<=toolbar.bottom+3),
         toolbarOutliers:fieldR.filter(({b})=>b.left<toolbar.left-3||b.right>toolbar.right+3||b.top<toolbar.top-3||b.bottom>toolbar.bottom+3).map(({name,b})=>({name,left:Math.round(b.left-toolbar.left),top:Math.round(b.top-toolbar.top),right:Math.round(b.right-toolbar.right),bottom:Math.round(b.bottom-toolbar.bottom)})),
         selectedStyle:document.querySelector('[name=family]').selectedOptions[0].textContent,
-        toolbarHeight:Math.round(toolbar.height),failures,
+        toolbarHeight:Math.round(toolbar.height),failures,overlaps,
+        categoryTextOverflow:categoryTextBox.width>dieBox.width+2,
         selectorCount:allControls.filter(visible).length,
       };
     })()`);
@@ -248,6 +265,8 @@ try{
     assert.ok(await evaluate('document.getElementById("addTextureLayer2").getClientRects().length>0'),
       'Add texture layer must remain visible at '+name);
     assert.deepEqual(bounds.failures,[],'every active control must fit inside its card');
+    assert.deepEqual(bounds.overlaps,[],'dice and locks must never overlap');
+    assert.ok(!bounds.categoryTextOverflow,'Category icon text must never overflow its button');
     for(const category of ['path','stripes','colour','layout','effects']){
       await evaluate('document.getElementById("tab-'+category+'").click()');
       const fit=await evaluate(`(()=>{
