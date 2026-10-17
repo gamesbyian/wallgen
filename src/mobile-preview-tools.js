@@ -42,8 +42,8 @@ function setZoom(next){
   zoomValue.textContent=Math.round(zoom*100)+'%';
   zoomIn.disabled=zoom>=2.5;zoomOut.disabled=zoom<=1;
 }
-zoomIn.addEventListener('click',()=>setZoom(zoom+.25));
-zoomOut.addEventListener('click',()=>setZoom(zoom-.25));
+zoomIn.addEventListener('click',()=>setZoom(zoom+.10));
+zoomOut.addEventListener('click',()=>setZoom(zoom-.10));
 const zoomSlot=document.createElement('div');
 zoomSlot.className='mobile-zoom-slot';
 zoomSlot.append(zoomIn,zoomOut,zoomValue);
