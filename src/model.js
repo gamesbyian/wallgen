@@ -235,7 +235,9 @@ export function resolveScene(recipeInput) {
   const referenceSpread=geometry==='drawn'?spread:span*spreadFactor(56)/repeats;
   const referenceAvg=referenceSpread/6;
   const commonDisplacement=referenceAvg*.22*(.3+.7*chaos)*depthFactor;
-  const widthFactor = (.12+.395*Math.pow(recipe.stripeWidth/50,1.85))*profile.width;
+  // Starting styles populate explicit settings in the editor. A family must
+  // not invisibly multiply the user's manually selected stripe thickness.
+  const widthFactor = .12+.395*Math.pow(recipe.stripeWidth/50,1.85);
   const stripes = positions.map((position, i) => {
     const r = rng(`${recipe.seed}:stripe:${i}`);
     // Derive the reference gaps from the *weights*, not floating-point
