@@ -165,9 +165,9 @@ try{
   assert.ok(await evaluate('document.body.classList.contains("mobile-edit-open")'));
   // Full-fidelity controls, including portable reverse order and diagonal
   // transforms, must be reachable in the small no-scroll phone editor.
-  const originalStripeCanvas=await evaluate('document.getElementById("preview").toDataURL()');
+  await evaluate('window.__reverseBefore=document.getElementById("preview").toDataURL()');
   await evaluate('document.querySelector("[name=reverseStripes]").click()');
-  await waitFor('document.getElementById("preview").toDataURL()!==window.__wallpaperBefore',16000);
+  await waitFor('document.getElementById("preview").toDataURL()!==window.__reverseBefore',16000);
   assert.ok(await evaluate('document.querySelector("[name=reverseStripes]").checked'));
   await evaluate(`(()=>{
     const direction=document.querySelector('[name=orientation]');
@@ -187,9 +187,7 @@ try{
     const slider=document.querySelector('[name=diagonalRotation]');
     slider.value='48';slider.dispatchEvent(new Event('input',{bubbles:true}));
   })()`);
-  await waitFor(`document.getElementById('preview').toDataURL()!==window.__rotationBefore`.replace('window.__rotationBefore','window.__rotationBefore'),16000).catch(async()=>{
-    throw Error('Diagonal rotation failed to redraw wallpaper');
-  });
+  await waitFor(`document.getElementById('preview').toDataURL()!==window.__rotationBefore`,16000);
   await evaluate('document.querySelector("[name=mirrorHorizontal]").click()');
   assert.ok(await evaluate('document.querySelector("[name=mirrorHorizontal]").checked'));
   await evaluate('document.querySelector("[name=mirrorVertical]").click()');
