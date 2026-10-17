@@ -194,10 +194,10 @@ try{
     assert.equal(result.scrollY,'hidden');
   }
   await evaluate('document.getElementById("tab-material").click()');
-  await evaluate('document.querySelector("[data-editor-tool=layer1]").click()');
-  await evaluate('document.getElementById("addTextureLayer2").click()');
-  await waitFor('document.getElementById("textureLayer2Panel").hidden===false');
   await evaluate('document.querySelector("[data-editor-tool=layer2]").click()');
+  assert.ok(await evaluate('document.querySelector("[name=material2]").disabled===false'));
+  await evaluate('(()=>{const el=document.querySelector("[name=material2]");el.value="linen";el.dispatchEvent(new Event("change",{bubbles:true}))})()');
+  await waitFor('document.getElementById("textureLayer2Enabled").checked===true');
   assert.ok(await evaluate('document.querySelector("#panel-material .editor-tool-card:not([hidden]) [name=material2]")!==null'));
   await evaluate('document.getElementById("tab-path").click()');
   await evaluate('document.querySelector("[data-editor-tool=geometry]").click()');
@@ -296,8 +296,12 @@ try{
     assert.ok(bounds.selectedToolVisible,'active tool name stays visible in the horizontal rail');
     assert.ok(bounds.toolbarInside,'top-level controls must stay inside their toolbar');
     assert.ok(bounds.selectorCount>=6,'Material tool controls must be present');
-    assert.ok(await evaluate('document.getElementById("addTextureLayer2").getClientRects().length>0'),
-      'Add texture layer must remain visible at '+name);
+    const materialState=await evaluate('(()=>({active:!document.querySelector("[name=material2]").disabled,addButtons:document.querySelectorAll(".add-texture-layer").length,rotations:[1,2,3].map(n=>{const card=document.querySelector("[data-editor-tool=finish"+n+"]");const node=card.querySelector(".texture-rotation-field");return {label:node.querySelector("span").getBoundingClientRect(),input:node.querySelector("input[type=number]").getBoundingClientRect(),row:node.getBoundingClientRect()};})}))()');
+    assert.ok(materialState.active&&materialState.addButtons===0);
+    for(const rot of materialState.rotations){
+      assert.ok(rot.input.top>=rot.row.top-2&&rot.input.bottom<=rot.row.bottom+2,
+        'Rotation must fit on the same line at '+name);
+    }
     const noClippedTools=await evaluate(`(()=>{
       const problems=[];
       for(const tab of document.querySelectorAll('.settings-tab')){
@@ -343,10 +347,13 @@ try{
       assert.ok(fit,'category '+category+' must not overlap at '+name);
     }
   }
-  // Test the initial one-layer state as shown in the reported screenshots:
-  // the Add Layer control must occupy real visible space, not disappear.
-  await evaluate('document.getElementById("removeTextureLayer2").click()');
-  await waitFor('document.getElementById("textureLayer2Panel").hidden===true');
+  // No extra add/remove buttons: selecting Smooth turns off a layer while
+  // keeping its card available. Layer 3 works the same way.
+  await evaluate('(()=>{const el=document.querySelector("[name=material2]");el.value="none";el.dispatchEvent(new Event("change",{bubbles:true}))})()');
+  await waitFor('document.getElementById("textureLayer2Enabled").checked===false');
+  assert.ok(await evaluate('document.getElementById("textureLayer2Panel").hidden===false'));
+  assert.ok(await evaluate('document.getElementById("textureLayer3Panel").hidden===false'));
+  assert.ok(await evaluate('!document.getElementById("addTextureLayer2")&&!document.getElementById("removeTextureLayer2")'));
   await checkEditorZoom(412,915,'100-percent');
   for(const [category,tool] of [['path','geometry'],['stripes','structure'],['effects','lighting']]){
     await evaluate('document.getElementById("tab-'+category+'").click()');
