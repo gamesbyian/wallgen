@@ -422,6 +422,50 @@ function drawOutline(ctx,path,stripe,scene) {
   ctx.restore();
 }
 
+// A gentle, deterministic lighting wash within existing stripe pixels.
+// Source-atop retains their opacity and every previously balanced edge.
+function applyLightWash(ink,scene){
+  if(scene.lightingMood==='off'||scene.lightStrength<=0)return;
+  const g=ink.getContext('2d');
+  const fromRight=scene.lightDirection.endsWith('right');
+  const fromBottom=scene.lightDirection.startsWith('bottom');
+  const ax=fromRight?DESIGN_WIDTH:0,ay=fromBottom?DESIGN_HEIGHT:0;
+  const bx=DESIGN_WIDTH-ax,by=DESIGN_HEIGHT-ay;
+  const strength=scene.lightStrength/100;
+  const light=scene.lightingMood==='golden'?[255,218,153]:
+    scene.lightingMood==='moonlight'?[183,208,255]:[255,255,250];
+  const dark=scene.lightingMood==='golden'?[67,30,50]:
+    scene.lightingMood==='moonlight'?[10,22,64]:[23,25,47];
+  const color=(rgb,a)=>`rgba(${rgb.join(',')},${a.toFixed(4)})`;
+  g.save();
+  g.setTransform(ink.width/DESIGN_WIDTH,0,0,ink.height/DESIGN_HEIGHT,0,0);
+  g.globalCompositeOperation='source-atop';
+  const wash=g.createLinearGradient(ax,ay,bx,by);
+  wash.addColorStop(0,color(light,.38*strength));
+  wash.addColorStop(.43,color(light,.06*strength));
+  wash.addColorStop(.66,color(dark,.045*strength));
+  wash.addColorStop(1,color(dark,.32*strength));
+  g.fillStyle=wash;
+  g.fillRect(0,0,DESIGN_WIDTH,DESIGN_HEIGHT);
+  g.restore();
+}
+function drawFinishedInk(ctx,ink,recipe){
+  const dx=ink.width*(recipe.positionX||0)/100;
+  const dy=ink.height*(recipe.positionY||0)/100;
+  ctx.save();
+  if(recipe.lightingMood!=='off'&&recipe.shadowStrength>0){
+    const strength=recipe.shadowStrength/100;
+    const scale=ink.width/DESIGN_WIDTH;
+    const size=(1.5+9*strength)*scale;
+    ctx.shadowColor=`rgba(8,9,20,${(.65*strength).toFixed(4)})`;
+    ctx.shadowBlur=(2+15*strength)*scale;
+    ctx.shadowOffsetX=(recipe.lightDirection.endsWith('right')?-1:1)*size;
+    ctx.shadowOffsetY=(recipe.lightDirection.startsWith('bottom')?-1:1)*size;
+  }
+  ctx.drawImage(ink,dx,dy);
+  ctx.restore();
+}
+
 /** Repaint only the two cached bitmaps. No solving, balancing or regeneration. */
 export function presentNudgedArtwork(canvas, layers, recipe) {
   if(!layers?.background || !layers?.ink)throw new Error('No original composition to nudge');
@@ -429,8 +473,7 @@ export function presentNudgedArtwork(canvas, layers, recipe) {
   ctx.setTransform(1,0,0,1,0,0);
   ctx.clearRect(0,0,canvas.width,canvas.height);
   ctx.drawImage(layers.background,0,0);
-  ctx.drawImage(layers.ink,canvas.width*(recipe.positionX||0)/100,
-    canvas.height*(recipe.positionY||0)/100);
+  drawFinishedInk(ctx,layers.ink,recipe);
 }
 
 export function drawWallpaper(canvas, recipe, options={}) {
@@ -504,6 +547,7 @@ export function drawWallpaper(canvas, recipe, options={}) {
     g.save();g.setTransform(1,0,0,1,0,0);
     g.globalCompositeOperation=blend(layer);g.drawImage(scratch,0,0);g.restore();
   }
+  applyLightWash(ink,scene);
   // Background stays fixed; the *already clipped, immutable* stripe layer is
   // translated as one image. No stripe is re-ended/re-sized because of a nudge.
   if(options.cache) {
@@ -513,6 +557,6 @@ export function drawWallpaper(canvas, recipe, options={}) {
     options.cache.background=background;
     options.cache.ink=ink;
   }
-  ctx.drawImage(ink,canvas.width*scene.positionX/100,canvas.height*scene.positionY/100);
+  drawFinishedInk(ctx,ink,scene);
   return scene;
 }

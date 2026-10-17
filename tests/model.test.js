@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { DESIGN_WIDTH, DESIGN_HEIGHT, OUTPUT_WIDTH, OUTPUT_HEIGHT, HUES, NAMES, FAMILIES, GEOMETRIES, MOTIFS, MATERIALS, OUTLINES, normalizeRecipe, resolveScene, rng, encodeRecipe, decodeRecipe, TEXTURE_COVERAGES, BLEND_MODES, normalizeRotation, randomizeAllRecipe, LOCKABLE_SETTINGS, respectSettingLocks, isPrime, PRIME_PERCENTAGES, PRIME_ROTATIONS } from '../src/model.js';
+import { DESIGN_WIDTH, DESIGN_HEIGHT, OUTPUT_WIDTH, OUTPUT_HEIGHT, HUES, NAMES, FAMILIES, GEOMETRIES, MOTIFS, MATERIALS, OUTLINES, normalizeRecipe, resolveScene, rng, encodeRecipe, decodeRecipe, TEXTURE_COVERAGES, BLEND_MODES, normalizeRotation, randomizeAllRecipe, LOCKABLE_SETTINGS, respectSettingLocks, isPrime, PRIME_PERCENTAGES, PRIME_ROTATIONS, LIGHTING_MOODS, LIGHT_DIRECTIONS } from '../src/model.js';
 
 test('Pixel 6 Pro export has 210% linear dimensions and unchanged aspect ratio',()=>{
   assert.equal(OUTPUT_WIDTH,1440*2.1);
@@ -244,7 +244,7 @@ test('lock list rejects unknown keys and normalizes stable order',()=>{
 test('prime-only randomization constrains every randomized percentage and texture rotation',()=>{
   const numeric=['chaos','stripeWidth','spread','textureStrength','textureScale','textureDisplacement',
     'textureStrength2','textureScale2','textureStrength3','textureScale3',
-    'individuality','patternHomogeneity','gap','glow'];
+    'individuality','patternHomogeneity','gap','glow','lightStrength','shadowStrength'];
   const angles=['textureRotation','textureRotation2','textureRotation3'];
   assert.equal(PRIME_PERCENTAGES[0],2);
   assert.equal(PRIME_PERCENTAGES.at(-1),97);
@@ -279,4 +279,41 @@ test('prime-only mode respects locked non-prime values and leaves mode unchanged
   }
   assert.equal(normalizeRecipe({}).primesOnly,false);
   assert.equal(normalizeRecipe({primesOnly:'true'}).primesOnly,true);
+});
+
+test('lighting is off for existing recipes and does not alter stripe geometry',()=>{
+  const legacy={seed:'legacy-light',material:'linen',motif:'stars',individuality:77};
+  const unchanged=resolveScene(legacy);
+  assert.equal(unchanged.lightingMood,'off');
+  assert.equal(unchanged.lightStrength,45);
+  assert.equal(unchanged.shadowStrength,28);
+  for(const mood of LIGHTING_MOODS){
+    for(const direction of LIGHT_DIRECTIONS){
+      const scene=resolveScene({...legacy,lightingMood:mood,lightDirection:direction,
+        lightStrength:80,shadowStrength:80});
+      assert.deepEqual(scene.stripes,unchanged.stripes);
+      assert.equal(scene.centerX,unchanged.centerX);
+      assert.equal(scene.centerY,unchanged.centerY);
+    }
+  }
+});
+
+test('lighting controls are bounded, saved and individually lockable',()=>{
+  const recipe=normalizeRecipe({
+    seed:'light-lock',lightingMood:'golden',lightDirection:'bottom-right',
+    lightStrength:73,shadowStrength:19,
+    lockedSettings:['lightingMood','lightDirection','shadowStrength'],
+  });
+  assert.deepEqual(decodeRecipe(encodeRecipe(recipe)),recipe);
+  assert.ok(LOCKABLE_SETTINGS.includes('lightStrength'));
+  assert.ok(LOCKABLE_SETTINGS.includes('shadowStrength'));
+  const random=respectSettingLocks(recipe,randomizeAllRecipe({primesOnly:true}));
+  assert.equal(random.lightingMood,'golden');
+  assert.equal(random.lightDirection,'bottom-right');
+  assert.equal(random.shadowStrength,19);
+  assert.ok(isPrime(random.lightStrength));
+  assert.equal(normalizeRecipe({lightingMood:'bad'}).lightingMood,'off');
+  assert.equal(normalizeRecipe({lightDirection:'bad'}).lightDirection,'top-left');
+  assert.equal(normalizeRecipe({lightStrength:900}).lightStrength,100);
+  assert.equal(normalizeRecipe({shadowStrength:-9}).shadowStrength,0);
 });

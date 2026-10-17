@@ -9,7 +9,9 @@ export const GEOMETRIES = ['straight', 'wave', 'zigzag', 'jagged', 'stepped', 'a
 export const MOTIFS = ['solid', 'dots', 'stars', 'dashes', 'diamonds', 'chevrons', 'hatch', 'checker'];
 export const MATERIALS = ['none', 'grain', 'watercolor', 'construction', 'handmade', 'linen', 'canvas', 'denim', 'knit', 'felt', 'corduroy', 'corrugated', 'concrete', 'stucco', 'stone', 'drywall', 'wood-grain', 'vinyl-sheet', 'foil', 'glossy-paper', 'adobe'];
 export const BLEND_MODES = ['normal', 'multiply', 'screen', 'overlay', 'soft-light', 'difference'];
-export const LOCKABLE_SETTINGS = ['primesOnly','seed','family','orientation','geometry','motif','palette','outline','background',
+export const LIGHTING_MOODS = ['off', 'daylight', 'golden', 'moonlight'];
+export const LIGHT_DIRECTIONS = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
+export const LOCKABLE_SETTINGS = ['primesOnly','seed','family','orientation','geometry','motif','palette','outline','background','lightingMood','lightDirection','lightStrength','shadowStrength',
   'material','textureCoverage','textureStrength','textureScale','textureRotation','textureBlend',
   'textureLayer2Enabled','material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2',
   'textureLayer3Enabled','material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3',
@@ -76,6 +78,10 @@ export function normalizeRecipe(input = {}) {
     textureCoverage: TEXTURE_COVERAGES.includes(input.textureCoverage) ? input.textureCoverage : 'both',
     outline: readChoice('outline', OUTLINES),
     background: input.background === 'white' ? 'white' : 'black',
+    lightingMood: LIGHTING_MOODS.includes(input.lightingMood) ? input.lightingMood : 'off',
+    lightDirection: LIGHT_DIRECTIONS.includes(input.lightDirection) ? input.lightDirection : 'top-left',
+    lightStrength: finiteRange(input.lightStrength, 45, 0, 100),
+    shadowStrength: finiteRange(input.shadowStrength, 28, 0, 100),
     chaos: finiteRange(input.chaos, 36, 0, 100),
     stripeWidth: finiteRange(input.stripeWidth, 52, 0, 100),
     textureDisplacement: finiteRange(input.textureDisplacement, 0, 0, 100),
@@ -270,6 +276,8 @@ export function randomizeAllRecipe({primesOnly=false}={}) {
     textureLayer3Enabled:r()>.65, material3:any(MATERIALS), textureStrength3:percent(), textureScale3:percent(),
     textureRotation3:degrees(), textureCoverage3:any(TEXTURE_COVERAGES), textureBlend3:any(BLEND_MODES),
     outline:any(OUTLINES), background:any(['black','white']),
+    lightingMood:any(LIGHTING_MOODS),lightDirection:any(LIGHT_DIRECTIONS),
+    lightStrength:percent(),shadowStrength:percent(),
     chaos:percent(), stripeWidth:percent(), spread:percent(),
     textureStrength:percent(), textureScale:percent(), textureDisplacement:percent(), individuality:percent(),
     patternHomogeneity:percent(), overridePatternHomogeneity:r()>.5,

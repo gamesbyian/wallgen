@@ -1,5 +1,19 @@
 # WALLGEN
 
+## Made with ChatGPT · Free for absolutely anyone
+
+Wallgen was made by its project creator with **ChatGPT**. The creator
+**claims no ownership of the code, ideas, concepts, or repository contents**
+and wants anyone to be free to use the program, source files, generated
+wallpapers, and other contents however they like, **for any purpose**, with
+or without credit. That includes modification, redistribution, remixing and
+commercial use. No permission or attribution is requested.
+
+The repository includes a public-domain dedication under **[The Unlicense](LICENSE)**.
+To the extent the creator holds copyright interests in these materials, those
+interests are dedicated to the public domain; this cannot waive rights
+belonging to unrelated third parties. There is no warranty.
+
 Seed-based, offline-friendly, static rainbow wallpaper studio. Seven identifiable stripes always follow **red, orange, yellow, green, blue, indigo, violet** over a black or white canvas. No runtime dependencies, accounts, tracking, asset downloads, or build pipeline.
 
 ## Launch
@@ -24,7 +38,7 @@ Run `npm test` to check the reproducibility and structural invariants, or `npm r
 
 ## Controls and workspace
 
-The settings column uses four accessible tabs: **Design** (family, direction, paths and patterns), **Colour** (palette, background, outlines), **Texture** (three independent material layers and relief), and **Refine** (spacing, thickness, individuality, glow). Tab selection is remembered in the browser session, works with keyboard arrow keys, and does not re-render the current wallpaper. On narrow devices the tabs form a compact two-by-two grid.
+The settings column uses four accessible tabs: **Design** (family, direction, paths and patterns), **Colour** (palette, background, outlines, light and shadow), **Texture** (three independent material layers and relief), and **Refine** (spacing, thickness, individuality, glow). Tab selection is remembered in the browser session, works with keyboard arrow keys, and does not re-render the current wallpaper. On narrow devices the tabs form a compact two-by-two grid.
 
 **Explore Variations** now lives in the preview column below the canvas, with responsive thumbnails, its own Generate 12 control and favourites; it no longer spans both columns.
 
@@ -36,6 +50,7 @@ The smaller **Randomize** button sits next to a **Primes only** checkbox above t
 - Motifs: solid, dots, stars, dashes, diamonds, chevrons, hatch and checker.
 - Palettes: classic, electric, pastel, jewel and muted. Their hues stay in ROYGBIV order.
 - Outlines: none, white or black hairline, solid, double, broken and single-side, with a buffer coloured to match the selected background.
+- **Light & shadow (Colour tab):** choose Off (default), Soft daylight, Golden hour or Cool moonlight, then select which corner the light comes from. Light intensity adds a subtle highlight-to-shade gradient within the existing stripe pixels; Shadow depth adds a soft directional cast shadow without changing stripe shapes or positions. Both work with deterministic seeds, nudging, preview, favourites, share links and high-resolution exports. Existing saved designs default to Off, and both sliders remain individually lockable.
 - Materials: paper grain, watercolour, construction paper, handmade paper, corrugated board, linen, canvas, denim, knit, felt, corduroy, concrete, stucco, stone, adobe, drywall, wood grain, vinyl sheet, foil, and glossy paper. The ungrouped menu works across three independent material layers. Layer 2 is hidden until **New texture layer** is clicked under layer 1; layer 3 can be added in the same way under layer 2, and either extra layer can be removed. Each layer has its own strength, scale, surface coverage (background, stripes, or both), ±90° buttons, freely editable angle (including fractional degrees), and blend mode (normal, multiply, screen, overlay, soft light, difference). Rotations and enabled layers persist in URLs, saved recipes, favourites and PNG exports.
 - Chaos, thickness, **stripe spacing**, geometric individuality, pattern homogeneity, glow and outline buffer. Stripe spacing now adjusts only the distance between stripe centres, while thickness is controlled solely by Stripe thickness; at tight settings the ribbons can deliberately overlap. Every slider has −/+ adjustment buttons and an editable numeric percentage field immediately after +. Individuality adjusts per-stripe directions, parallelism, shape and edge profile, while all stripes retain the same motif.
 - **Texture displacement** (0–100%) uses a deterministic, material-informed height field to perturb stripe edges and patterned marks. Rough surfaces such as stucco, adobe, concrete and felt produce more relief than smooth vinyl or glossy paper; texture orientation, scale, strength, stripe coverage and stacked layers influence the displacement. Default 0% preserves the original clean shapes. This is procedural **geometry displacement**, not a per-pixel GPU normal-map or lighting shader, and preserves balanced endpoints and complete motif geometry.

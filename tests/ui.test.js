@@ -5,6 +5,8 @@ import {readFileSync} from 'node:fs';
 const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
 const css=readFileSync(new URL('../styles.css',import.meta.url),'utf8');
 const app=readFileSync(new URL('../src/app.js',import.meta.url),'utf8');
+const readme=readFileSync(new URL('../README.md',import.meta.url),'utf8');
+const license=readFileSync(new URL('../LICENSE',import.meta.url),'utf8');
 
 test('settings use four accessible mutually exclusive tab panels',()=>{
   const names=['design','colour','textures','refine'];
@@ -43,4 +45,29 @@ test('compact primes-only randomizer sits above the design tab and stays lockabl
   assert.match(app,/randomizeAllRecipe\(\{primesOnly:current\.primesOnly\}\)/);
   assert.match(app,/const FIELDS = \['primesOnly'/);
   assert.match(css,/\.randomize-bar\.randomize-toolbar/);
+});
+
+test('Light & Shadow is part of Colour, uses existing locks, and is explained clearly',()=>{
+  const colourStart=html.indexOf('id="panel-colour"');
+  const textureStart=html.indexOf('id="panel-textures"');
+  assert.ok(colourStart>=0 && textureStart>colourStart);
+  const colour=html.slice(colourStart,textureStart);
+  for(const key of ['lightingMood','lightDirection','lightStrength','shadowStrength']){
+    assert.match(colour,new RegExp('name="'+key+'"'));
+    assert.match(app,new RegExp("'"+key+"'"));
+  }
+  assert.match(colour,/Light &amp; shadow/);
+  assert.match(css,/\.lighting-subsection/);
+  assert.match(readme,/Light & shadow \(Colour tab\)/);
+});
+
+test('public domain licence and documentation acknowledge ChatGPT and unrestricted use',()=>{
+  assert.match(license,/made by its project creator with ChatGPT/i);
+  assert.match(license,/claims no ownership/i);
+  assert.match(license,/with or without attribution/i);
+  assert.match(license,/The Unlicense/i);
+  assert.match(license,/THE SOFTWARE IS PROVIDED "AS IS"/);
+  assert.match(readme,/made by its project creator with \*\*ChatGPT\*\*/i);
+  assert.match(readme,/\*\*claims no ownership/i);
+  assert.match(readme,/\*\*for any purpose\*\*/i);
 });
