@@ -205,7 +205,7 @@ export function resolveScene(recipeInput) {
   const avg = spread / 6;
   // Stripe width and path roughness have their own fixed reference scale.
   // Changing spread changes only centre-to-centre positions, not ribbon width.
-  const referenceSpread=span*(0.17+0.53*.56);
+  const referenceSpread=span*(0.17+0.53*.56)/repeats;
   const referenceAvg=referenceSpread/6;
   const commonDisplacement=referenceAvg*.22*(.3+.7*chaos)*depthFactor;
   const widthFactor = (0.12 + 0.79 * recipe.stripeWidth / 100) * profile.width;
@@ -217,7 +217,8 @@ export function resolveScene(recipeInput) {
     const rightGap = i < 6 ? referenceSpread*weights[i]/sum : referenceAvg;
     let width = Math.min(leftGap,rightGap)*widthFactor*between(r,1-chaos*.35,1+chaos*.35);
     if(recipe.construction==='stroke')width=Math.max(.8,Math.min(6,width*.12));
-    const individualGeometry = individuality > .25 && r() < (individuality-.25)*1.15 ? pick(r, GEOMETRIES) : geometry;
+    const individualGeometry = individuality > .25 && r() < (individuality-.25)*1.15 ?
+      pick(r,GEOMETRIES.filter(g=>!['hairpin','loops'].includes(g))) : geometry;
     // Motif, palette and material belong to the whole seven-stripe design.
     // Individuality is geometric only. Pattern changes are never selected here.
     const displacement = Math.min(referenceAvg * .32, width * .7 + referenceAvg * .08) * (.3 + .7*chaos)*depthFactor;
@@ -230,6 +231,7 @@ export function resolveScene(recipeInput) {
       color: paletteHsl(HUES[recipe.reverseStripes?6-i:i], palette, r), center: position + center,
       width: Math.max(width, recipe.construction==='stroke'?.8:1.5), geometry: individualGeometry,
       motif, lineStyle:recipe.lineStyle, endTaper:recipe.endTaper,
+      dotSize:recipe.dotSize,dotSpacing:recipe.dotSpacing,
       turnRadius:90+recipe.turnRadius*1.35,
       loopPeriod:27+((100-recipe.shapeFrequency)/100)*66,
       loopAmplitude:4+(recipe.loopSize/100)*29,
