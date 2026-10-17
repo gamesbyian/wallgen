@@ -53,7 +53,7 @@ function showNotice(message){
   noticeTimer=setTimeout(()=>{if(notice.textContent===message)notice.textContent='';},5500);
 }
 function fromControls() {
-  const data={seed:seedInput.value};
+  const data={seed:seedInput.value,positionX:current.positionX,positionY:current.positionY};
   for (const key of FIELDS) { const field=form.elements.namedItem(key); data[key]=field.type==='checkbox'?field.checked:field.value; }
   return normalizeRecipe(data);
 }
@@ -80,6 +80,7 @@ function titleCase(value){return value.replace(/-/g,' ').replace(/\b\w/g,c=>c.to
 function render(recipe,{scroll=false}={}) {
   current=checkpoint(recipe);
   currentScene=drawWallpaper(preview,current);
+  updatePositionStatus();
   showResolvedSelections(currentScene);
   document.getElementById('detailFamily').textContent=titleCase(currentScene.family);
   document.getElementById('detailGeometry').textContent=titleCase(currentScene.geometry);
@@ -91,6 +92,31 @@ function render(recipe,{scroll=false}={}) {
   if(scroll) document.querySelector('.workspace-head').scrollIntoView({behavior:'smooth',block:'start'});
 }
 function changeRecipe(recipe,options={}){const next=normalizeRecipe(recipe);render(next,options);toControls(next);}
+function updatePositionStatus(){
+  const label=document.getElementById('positionStatus');
+  const x=current.positionX, y=current.positionY;
+  label.textContent=x===0&&y===0?'Centered':
+    `X ${x>0?'+':''}${x}% · Y ${y>0?'+':''}${y}%`;
+  const reset=document.querySelector('[data-nudge="reset"]');
+  reset.disabled=x===0&&y===0;
+}
+const NUDGE_STEP=2;
+for(const button of document.querySelectorAll('[data-nudge]')){
+  button.addEventListener('click',()=>{
+    const direction=button.dataset.nudge;
+    const recipe=fromControls();
+    if(direction==='reset'){
+      recipe.positionX=0;recipe.positionY=0;
+    }else{
+      const dx=direction==='right'?NUDGE_STEP:direction==='left'?-NUDGE_STEP:0;
+      const dy=direction==='down'?NUDGE_STEP:direction==='up'?-NUDGE_STEP:0;
+      recipe.positionX=Math.max(-30,Math.min(30,recipe.positionX+dx));
+      recipe.positionY=Math.max(-30,Math.min(30,recipe.positionY+dy));
+    }
+    changeRecipe(recipe);
+  });
+}
+
 function downloadBlob(blob,name) {
   const url=URL.createObjectURL(blob);
   const link=document.createElement('a'); link.href=url;link.download=name;
