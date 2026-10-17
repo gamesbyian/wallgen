@@ -227,6 +227,7 @@ try{
   const groups=await evaluate(`(()=>{
     const entries=[
       ['Geometry',['geometry','shapeFrequency','shapeDepth']],
+      ['Path details',['turnRadius','hairpinAngle']],
       ['Stripe pattern',['motif','patternHomogeneity']],
       ['Stripe shadows',['stripeShadowEnabled','stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection']],
       ['Outlines',['outline','gap']],
@@ -247,6 +248,19 @@ try{
   for(const item of groups){
     assert.ok(item.fields.every(Boolean),item.name+' missing dependent controls');
   }
+  const steppers=await evaluate(`(()=>{
+    const nodes=[...document.querySelectorAll('.mobile-setting-cluster:not([hidden]) input[type=range]')];
+    return nodes.map(input=>{
+      const stepper=input.closest('.stepper'),style=stepper&&getComputedStyle(stepper.querySelector('.step-button'));
+      return {name:input.name,buttons:stepper?.querySelectorAll('.step-button').length,
+        display:style?.display,rect:stepper?.querySelector('.step-button').getBoundingClientRect().width||0};
+    });
+  })()`);
+  assert.ok(steppers.length>20,'enough sliders for comprehensive stepper audit');
+  assert.ok(steppers.every(x=>x.buttons===2&&x.display!=='none'&&x.rect>=18),
+    'every swipe-card slider shows both minus and plus buttons');
+  console.log('ALL_MOBILE_STEPPERS_VISIBLE',steppers.length);
+
   const previewTools=await evaluate(`(()=>{
     const stage=document.querySelector('.studio-stage');
     const prime=document.querySelector('[name=primesOnly]');
@@ -295,8 +309,16 @@ try{
     'zooming should only magnify the preview, never modify wallpaper pixels');
   await evaluate('document.querySelector("[data-zoom=out]").click()');
   assert.equal(await evaluate('document.querySelector(".studio-stage").style.getPropertyValue("--mobile-preview-zoom")'),'1');
+  await evaluate('document.querySelector("[data-zoom=out]").click()');
+  assert.equal(await evaluate('document.querySelector(".studio-stage").style.getPropertyValue("--mobile-preview-zoom")'),'0.9');
+  assert.equal(await evaluate('document.getElementById("preview").toDataURL()'),originalImage);
+  for(let i=0;i<4;i++)await evaluate('document.querySelector("[data-zoom=out]").click()');
+  assert.equal(await evaluate('document.querySelector(".studio-stage").style.getPropertyValue("--mobile-preview-zoom")'),'0.5');
+  assert.ok(await evaluate('document.querySelector("[data-zoom=out]").disabled'),
+    'the very first wallpaper can zoom out to 50%');
+  for(let i=0;i<5;i++)await evaluate('document.querySelector("[data-zoom=in]").click()');
   await evaluate('document.querySelector(".studio-stage [data-nudge=right]").click()');
-  assert.ok((await evaluate('document.getElementById("positionStatus").textContent')).includes('X +2%'));
+  assert.ok((await evaluate('document.getElementById("positionStatus").textContent')).includes('X +1%'));
   await evaluate('document.querySelector(".studio-stage [data-nudge=reset]").click()');
 
   // All nonhidden cards must have *no* vertical scroll or clipped controls.
@@ -538,8 +560,11 @@ try{
   await waitFor('document.getElementById("drawOverlay").hidden===false');
   const box=await evaluate(`(()=>{
     const r=document.getElementById('drawOverlay').getBoundingClientRect();
-    return {left:r.left,top:r.top,width:r.width,height:r.height};
+    const frame=document.getElementById('preview').getBoundingClientRect();
+    return {left:r.left,top:r.top,width:r.width,height:r.height,
+      frameLeft:frame.left,frameTop:frame.top,frameWidth:frame.width,frameHeight:frame.height};
   })()`);
+  assert.ok(box.width>box.frameWidth,'drawing plane includes gutters outside the frame');
   await swipe({x:Math.round(box.left+box.width*.24),y:Math.round(box.top+box.height*.19)},
               {x:Math.round(box.left+box.width*.73),y:Math.round(box.top+box.height*.68)});
   await waitFor('document.getElementById("drawApply").disabled===false');
@@ -564,7 +589,7 @@ try{
   await evaluate('document.querySelector("[data-zoom=in]").click()');
   await evaluate('document.getElementById("drawPathToggle").click()');
   const zoomBox=await evaluate(`(()=>{
-    const r=document.getElementById('drawOverlay').getBoundingClientRect();
+    const r=document.getElementById('preview').getBoundingClientRect();
     return {left:r.left,top:r.top,width:r.width,height:r.height};
   })()`);
   await swipe({x:Math.round(zoomBox.left+zoomBox.width*.31),y:Math.round(zoomBox.top+zoomBox.height*.27)},
