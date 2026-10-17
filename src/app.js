@@ -89,6 +89,29 @@ function toControls(recipe) {
   syncDiagonalUI();
   syncSettingLocks();
   syncInactiveSettings();
+  const effective=document.getElementById('geometrySafetyStatus');
+  if(effective){
+    if(!current.geometrySafety)effective.textContent='Unrestricted: intersections, overlaps and cropping permitted';
+    else if(['loops','hairpin','drawn'].includes(current.geometry)){
+      const safe=resolveScene(current);
+      const free=resolveScene({...current,geometrySafety:false});
+      const n=3;
+      const metric=geometry=>geometry==='loops'?'loopAmplitude':
+        geometry==='hairpin'?'turnRadius':null;
+      const key=metric(current.geometry);
+      if(key){
+        const actual=safe.stripes[n][key],requested=free.stripes[n][key];
+        effective.textContent=Math.abs(actual-requested)>1?
+          `Coherent: effective ${current.geometry} ${actual.toFixed(1)} px · unrestricted ${requested.toFixed(1)} px`:
+          'Coherent: no constraint currently required';
+      }else{
+        const span=scene=>scene.stripes.at(-1).center-scene.stripes[0].center;
+        effective.textContent=span(safe)+1<span(free)?
+          `Coherent spacing: ${span(safe).toFixed(0)} px · unrestricted ${span(free).toFixed(0)} px`:
+          'Coherent: no constraint currently required';
+      }
+    }else effective.textContent='Coherent: preserve the selected geometry family';
+  }
 }
 /**
  * Inapplicable settings show zero without destroying their saved recipe values.
@@ -661,7 +684,7 @@ document.getElementById('randomize').addEventListener('click',()=>{
 });
 document.getElementById('randomizeAll').addEventListener('click',()=>{
   explorationHistory.remember(current,'Before Random');
-  changeRecipe({...randomizeAllRecipe({primesOnly:current.primesOnly}),viewZoom:current.viewZoom});
+  changeRecipe({...randomizeAllRecipe({primesOnly:current.primesOnly}),viewZoom:current.viewZoom,geometrySafety:current.geometrySafety});
   explorationHistory.remember(current,'Random');
 });
 // Optional material layers activate by selecting an actual material, with
