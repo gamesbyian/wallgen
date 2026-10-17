@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { drawWallpaper, motifFits, balanceStripeEnds, stripeFrameContacts } from '../src/renderer.js';
+import { drawWallpaper, motifFits, balanceStripeEnds, stripeFrameContacts, textureHeight } from '../src/renderer.js';
 import { MATERIALS, MOTIFS, GEOMETRIES, OUTLINES, resolveScene } from '../src/model.js';
 
 // Node's lightweight Canvas API spy catches geometry/material code path errors
@@ -116,4 +116,48 @@ test('three composited materials apply rotated masks, background and blend modes
   for(const composite of ['overlay','multiply','screen','destination-in']){
     assert.ok(calls.some(c=>c[0]==='drawImage' && c[1]===composite),composite);
   }
+});
+
+test('material-informed height field is deterministic, bounded, and disabled by default',()=>{
+  const base={seed:'edge-relief',orientation:'diagonal',stripeWidth:70,material:'adobe',textureCoverage:'stripes'};
+  const none=resolveScene({...base});
+  const scene=resolveScene({...base,textureDisplacement:85});
+  const stripe=scene.stripes[3];
+  assert.equal(textureHeight(none,none.stripes[3],153,1),0);
+  assert.equal(textureHeight(resolveScene({...base,material:'none',textureDisplacement:85}),stripe,153,1),0);
+  assert.equal(textureHeight(resolveScene({...base,textureCoverage:'background',textureDisplacement:85}),stripe,153,1),0);
+  const first=textureHeight(scene,stripe,153,1);
+  assert.equal(first,textureHeight(scene,stripe,153,1));
+  const max=Math.min(11,stripe.width*.19)*.85;
+  assert.ok(Math.abs(first)<=max+1e-10);
+  const material=resolveScene({...base,material:'corduroy',textureDisplacement:85});
+  assert.notEqual(first,textureHeight(material,material.stripes[3],153,1));
+  const rotated=resolveScene({...base,textureDisplacement:85,textureRotation:90});
+  assert.notEqual(first,textureHeight(rotated,rotated.stripes[3],153,1));
+});
+test('displaced edges preserve the opposite-edge framing rule',()=>{
+  let rendered=0;
+  for(const orientation of ['vertical','horizontal','diagonal'])for(let i=0;i<10;i++){
+    const scene=resolveScene({seed:'relief-balance-'+orientation+'-'+i,orientation,
+      material:'stucco',textureDisplacement:78,textureCoverage:'both',
+      textureLayer2Enabled:true,material2:'wood-grain',textureCoverage2:'stripes',
+      individuality:80,chaos:75,spread:60,stripeWidth:62});
+    for(const stripe of scene.stripes){
+      balanceStripeEnds(scene,stripe);
+      if(stripe.hidden)continue;
+      const edges=stripeFrameContacts(scene,stripe);
+      assert.equal(edges.left,edges.right,orientation+' '+i+' stripe '+stripe.index+' LR');
+      assert.equal(edges.top,edges.bottom,orientation+' '+i+' stripe '+stripe.index+' TB');
+      rendered++;
+    }
+  }
+  assert.ok(rendered>0);
+});
+test('rough material and fine motif rendering complete together without clipping',()=>{
+  calls.length=0;
+  const canvas={width:600,height:1300,getContext:()=>new FakeContext('main')};
+  assert.doesNotThrow(()=>drawWallpaper(canvas,{seed:'rough-stars',motif:'stars',
+    textureDisplacement:85,material:'stone',textureCoverage:'stripes',
+    textureLayer2Enabled:true,material2:'felt',textureCoverage2:'stripes'}));
+  assert.ok(!calls.some(c=>c[0]==='clip'));
 });
