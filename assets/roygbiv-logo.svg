@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-labelledby="logo-title">
+  <title id="logo-title">R.O.Y.G.B.I.V. angled rainbow ribbons behind a white phone outline</title>
+  <defs>
+    <clipPath id="tile"><rect width="120" height="120" rx="20"/></clipPath>
+  </defs>
+  <g clip-path="url(#tile)">
+    <rect width="120" height="120" fill="#050608"/>
+    <!-- Each ribbon has its own endpoints; orange, blue and violet are
+         intentionally abbreviated and disappear beneath just one side
+         of the phone outline. -->
+    <g transform="rotate(-24 60 60)" stroke-linecap="round" fill="none" stroke-width="9.5">
+      <path stroke="#ff474e" d="M-12 24 H137"/>
+      <path stroke="#ff9b39" d="M-8 37 H61"/>
+      <path stroke="#ffe25b" d="M32 50 H139"/>
+      <path stroke="#4fdd87" d="M-13 63 H139"/>
+      <path stroke="#53aaff" d="M-13 76 H66"/>
+      <path stroke="#6359e5" d="M-12 89 H139"/>
+      <path stroke="#bb64ed" d="M51 102 H139"/>
+    </g>
+    <!-- The crisp phone outline is on top of every colour band. -->
+    <rect x="34" y="13" width="53" height="94" rx="9.5"
+      fill="none" stroke="#fff" stroke-width="2.7"/>
+    <path d="M49 20 H72" stroke="#fff" stroke-opacity=".95" stroke-width="1.7" stroke-linecap="round"/>
+    <path d="M55 99 H66" stroke="#fff" stroke-opacity=".95" stroke-width="1.6" stroke-linecap="round"/>
+  </g>
+</svg>

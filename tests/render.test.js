@@ -1,13 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { drawWallpaper, presentNudgedArtwork, motifFits, balanceStripeEnds, stripeFrameContacts, textureHeight, stripeShadowParameters, nudgeOverhang } from '../src/renderer.js';
+import { drawWallpaper, presentNudgedArtwork, motifFits, balanceStripeEnds, stripeFrameContacts, textureHeight, stripeShadowParameters, nudgeOverhang, stripeLineMarks } from '../src/renderer.js';
 import { MATERIALS, MOTIFS, GEOMETRIES, OUTLINES, resolveScene } from '../src/model.js';
 
 // Node's lightweight Canvas API spy catches geometry/material code path errors
 // without requiring a native browser, raster library, or platform build step.
 const calls=[];
 class FakePath2D {
-  moveTo(){} lineTo(){} closePath(){}
+  moveTo(){} lineTo(){} closePath(){} arc(){}
 }
 class FakeContext {
   constructor(tag='layer') {this.tag=tag;this.fillStyle='#000';this.strokeStyle='#000';this.globalAlpha=1;this.globalCompositeOperation='source-over';}
@@ -373,4 +373,54 @@ test('visible motif placement stays the same, while whole motifs may populate of
   const extended={...scene,renderBounds:{left:-180,right:780,top:-390,bottom:1690}};
   assert.equal(motifFits(stripe,extended,x,y,halfX,halfY),standard);
   assert.deepEqual(scene.stripes,extended.stripes);
+});
+
+test('dotted and dashed styles form different spaced geometry-independent silhouettes',()=>{
+  for(const geometry of GEOMETRIES){
+    const scene=resolveScene({seed:'ribbon-line-style',family:'studio',
+      geometry,motif:'solid',lineStyle:'dashed',individuality:0});
+    const stripe=scene.stripes[3];
+    const dashes=stripeLineMarks(stripe,scene.extent);
+    assert.ok(dashes.length>4,geometry+' should have several dashes');
+    assert.ok(dashes.every(m=>m.type==='dash'&&m.end>m.start));
+    for(let i=1;i<dashes.length;i++)assert.ok(dashes[i].start>dashes[i-1].end);
+    const dots=stripeLineMarks({...stripe,lineStyle:'dotted'},scene.extent);
+    assert.ok(dots.length>4);
+    assert.ok(dots.every(m=>m.type==='dot'&&m.radius>0));
+    const continuous=stripeLineMarks({...stripe,lineStyle:'continuous'},scene.extent);
+    assert.equal(continuous,null);
+  }
+});
+test('standard dot and dash line styles render on chevron and wave independently of motif',()=>{
+  for(const geometry of ['chevron','wave','zigzag']){
+    for(const lineStyle of ['dotted','dashed']){
+      calls.length=0;
+      const canvas={width:600,height:1300,getContext:()=>new FakeContext('main')};
+      const result=drawWallpaper(canvas,{seed:'style-'+geometry+lineStyle,
+        family:'studio',geometry,lineStyle,motif:'solid',individuality:0,outline:'none'});
+      assert.ok(result.stripes.some(s=>s.geometry===geometry&&s.lineStyle===lineStyle));
+      assert.ok(calls.some(c=>c[0]==='drawImage'&&c[2]==='main'));
+    }
+  }
+});
+test('dot or dash motif stays independent from dotted or dashed stripe line style',()=>{
+  for(const lineStyle of ['continuous','dotted','dashed']){
+    for(const motif of ['dots','dashes']){
+      const scene=resolveScene({seed:'style-versus-motif',family:'studio',
+        geometry:'chevron',lineStyle,motif,individuality:0});
+      const canvas={width:600,height:1300,getContext:()=>new FakeContext('main')};
+      assert.doesNotThrow(()=>drawWallpaper(canvas,scene));
+      assert.equal(scene.stripes[0].lineStyle,lineStyle);
+      assert.equal(scene.stripes[0].motif,motif);
+    }
+  }
+});
+test('dotted/dashed marks keep the same anchor and spacing when overscan is used',()=>{
+  const scene=resolveScene({seed:'off-frame-style',family:'studio',
+    geometry:'chevron',lineStyle:'dashed',motif:'solid'});
+  const stripe=scene.stripes[2],marks=stripeLineMarks(stripe,scene.extent);
+  const canvas={width:600,height:1300,getContext:()=>new FakeContext('main')},cache={};
+  drawWallpaper(canvas,{...scene,positionX:0,positionY:0},{cache});
+  assert.ok(cache.ink.width>600);
+  assert.deepEqual(stripeLineMarks(stripe,scene.extent),marks);
 });

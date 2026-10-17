@@ -7,6 +7,7 @@ const css=readFileSync(new URL('../styles.css',import.meta.url),'utf8');
 const app=readFileSync(new URL('../src/app.js',import.meta.url),'utf8');
 const readme=readFileSync(new URL('../README.md',import.meta.url),'utf8');
 const license=readFileSync(new URL('../LICENSE',import.meta.url),'utf8');
+const logo=readFileSync(new URL('../assets/roygbiv-logo.svg',import.meta.url),'utf8');
 
 test('settings use four accessible mutually exclusive tab panels',()=>{
   const names=['design','colour','textures','refine'];
@@ -118,11 +119,9 @@ test('R.O.Y.G.B.I.V. displays as a two-line masthead beside a larger seven-strip
   assert.match(header,/aria-label="R\.O\.Y\.G\.B\.I\.V\. home"/);
   assert.match(header,/<h1 class="brand-title">R\.O\.Y\.G\.B\.I\.V<span class="brand-dot">\.<\/span><\/h1>/);
   assert.match(header,/<p class="brand-subtitle">Rainbow-Only\. You Generate Based on Individual Variables\.<\/p>/);
-  const mark=header.match(/<span class="brand-mark"[^>]*>(.*?)<\/span>/s);
-  assert.ok(mark,'brand mark');
-  assert.equal((mark[1].match(/<i><\/i>/g)||[]).length,7);
-  assert.match(css,/\.brand-mark\{flex:0 0 auto;align-items:center;gap:3px;height:44px\}/);
-  assert.match(css,/\.brand-mark i\{width:5px;height:40px/);
+  assert.match(header,/<img class="brand-logo" src="assets\/roygbiv-logo.svg" width="64" height="64" alt="" aria-hidden="true">/);
+  assert.match(css,/\.brand \.brand-logo\{display:block;flex:0 0 auto;width:64px;height:64px/);
+  assert.match(html,/rel="icon" type="image\/svg\+xml" href="assets\/roygbiv-logo.svg"/);
   assert.match(css,/\.brand-copy\{display:flex;flex-direction:column/);
   assert.match(css,/\.brand-subtitle\{display:block/);
   assert.match(css,/@media\(max-width:520px\)\{/);
@@ -145,8 +144,8 @@ test('semantic masthead guarantees two lines and strong type hierarchy even with
   assert.match(header,/<\/p>\s*<\/div>/);
   assert.match(css,/\.brand \.brand-title\{display:block;margin:0;padding:0;font-size:clamp\(22px,2\.35vw,30px\)/);
   assert.match(css,/\.brand \.brand-subtitle\{display:block;margin:0;padding:0;font-size:clamp\(9px,\.9vw,11px\)/);
-  assert.match(html,/href="styles\.css\?v=20261016-layout2"/);
-  assert.match(html,/src="src\/app\.js\?v=20261016-lock2"/);
+  assert.match(html,/href="styles\.css\?v=20261016-geometry3"/);
+  assert.match(html,/src="src\/app\.js\?v=20261016-geometry3"/);
 });
 test('locks occupy dedicated layout columns and never overlap numeric slider values',()=>{
   assert.match(css,/\.settings-panel \.lockable-setting:not\(\.texture-rotation-field\)\{\s*display:grid;grid-template-columns:minmax\(0,1fr\) 28px/);
@@ -163,4 +162,33 @@ test('unlocked line-art padlock shackle swings away from the locked shackle',()=
   assert.match(unlocked[1],/<path d="M8 10V7a4 4 0 0 1 8 0v3" transform="rotate\(-48 8 10\)"\/>/);
   assert.doesNotMatch(locked[1],/transform="rotate/);
   assert.match(app,/aria-pressed/);
+});
+
+test('chevron geometry and independent shape controls are present in Design',()=>{
+  const design=html.slice(html.indexOf('id="panel-design"'),html.indexOf('id="panel-colour"'));
+  assert.match(design,/<option value="chevron">Chevron/);
+  assert.match(design,/Stripe pattern <select name="motif"/);
+  assert.doesNotMatch(design,/Stripe construction/);
+  for(const field of ['shapeFrequency','shapeDepth','lineStyle']){
+    assert.match(design,new RegExp('name="'+field+'"'));
+    assert.match(app,new RegExp("'"+field+"'"));
+  }
+  assert.match(design,/<option value="dotted">Dotted line<\/option>/);
+  assert.match(design,/<option value="dashed">Dashed line<\/option>/);
+  assert.match(design,/separately from the stripe pattern/);
+});
+
+test('brand SVG has seven slanted variable-length rainbow bands below a white phone outline',()=>{
+  assert.match(logo,/<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg"/);
+  assert.match(logo,/fill="#050608"/);
+  assert.match(logo,/transform="rotate\(-24 60 60\)"/);
+  const bands=[...logo.matchAll(/<path stroke="#[0-9a-fA-F]{6}" d="M([^"]+)"\/>/g)];
+  assert.equal(bands.length,7);
+  assert.ok(bands.some(x=>x[1].includes('H61')));
+  assert.ok(bands.some(x=>x[1].includes('H66')));
+  assert.ok(bands.some(x=>x[1].startsWith('51 102')));
+  const lastBand=logo.lastIndexOf('<path stroke="#');
+  const phone=logo.indexOf('x="34" y="13" width="53" height="94"');
+  assert.ok(phone>lastBand,'phone outline should visibly overlay the stripes');
+  assert.match(logo,/stroke="#fff" stroke-width="2\.7"/);
 });

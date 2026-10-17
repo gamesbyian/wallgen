@@ -14,6 +14,8 @@ function displacement(x, stripe, extent) {
   if(g === 'straight') return 0;
   if(g === 'wave') return d * (Math.sin(t * TAU) * .78 + Math.sin(t * TAU * .43 + phase) * .22);
   if(g === 'zigzag') return d * (2 * Math.abs(2 * fract(t) - 1) - 1);
+  // A distinctive sharp, narrow V instead of zigzag's even triangular peaks.
+  if(g === 'chevron') return d * (1 - 2*Math.pow(Math.abs(2*fract(t)-1),.55));
   if(g === 'jagged') return d * (noise1D(x / (period * 0.33), phase) * .85 + .15 * Math.sin(t * TAU));
   if(g === 'stepped') return d * (Math.floor(fract(t)*4)/2 - .75);
   if(g === 'arc') return d * (Math.pow(x/extent,2)*3.8 - .6);
@@ -84,21 +86,73 @@ function edgeAt(x,stripe,extent,side,scene){
   return geometryAt(x,stripe,extent)+side*widthAt(x,stripe,extent)/2+
     (scene?textureHeight(scene,stripe,x,side):0);
 }
-function stripePath(stripe, extent, scene) {
-  const path = new Path2D();
-  const start=stripe.segmentStart??-extent, end=stripe.segmentEnd??extent;
-  // Sample finely enough to preserve fine material contours in preview/export.
-  const count=Math.max(500,Math.ceil((end-start)/3));
-  for (let i=0;i<=count;i++) {
-    const x = start + (end-start)*i/count;
-    const y = edgeAt(x,stripe,extent,-1,scene);
-    if(i===0) path.moveTo(x,y); else path.lineTo(x,y);
+// This is an independent line rendering style, NOT the dot/dash motif.
+// Marks are anchored to the full unnudged ribbon so nudging and overscan
+// cannot change their spacing or introduce discontinuities.
+const lineMarksCache=new WeakMap();
+export function stripeLineMarks(stripe,extent){
+  if((stripe.lineStyle||'continuous')==='continuous')return null;
+  const start=stripe.segmentStart??-extent,end=stripe.segmentEnd??extent;
+  const type=stripe.lineStyle;
+  const pitch=Math.max(type==='dotted'?12:26,stripe.width*(type==='dotted'?2.15:5.3));
+  const marks=[];
+  const first=Math.max(0,Math.floor((start+extent)/pitch)-1);
+  const last=Math.ceil((end+extent)/pitch)+1;
+  for(let i=first;i<=last;i++){
+    const origin=-extent+i*pitch;
+    if(type==='dotted'){
+      const x=origin+pitch*.5,radius=Math.min(stripe.width*.43,pitch*.32);
+      if(x-radius>=start && x+radius<=end)marks.push({type:'dot',x,radius});
+    }else{
+      const from=Math.max(start,origin+pitch*.08);
+      const to=Math.min(end,origin+pitch*.64);
+      if(to-from>1)marks.push({type:'dash',start:from,end:to});
+    }
   }
-  for(let i=count;i>=0;i--) {
-    const x = start + (end-start)*i/count;
+  return marks;
+}
+function cachedLineMarks(stripe,extent){
+  const existing=lineMarksCache.get(stripe);
+  if(existing?.extent===extent&&existing.start===(stripe.segmentStart??-extent)
+    &&existing.end===(stripe.segmentEnd??extent))return existing.marks;
+  const marks=stripeLineMarks(stripe,extent);
+  lineMarksCache.set(stripe,{extent,start:stripe.segmentStart??-extent,end:stripe.segmentEnd??extent,marks});
+  return marks;
+}
+function traceStripeSegment(path,stripe,extent,scene,start,end){
+  const count=Math.max(12,Math.ceil((end-start)/3));
+  for(let i=0;i<=count;i++){
+    const x=start+(end-start)*i/count,y=edgeAt(x,stripe,extent,-1,scene);
+    if(i===0)path.moveTo(x,y);else path.lineTo(x,y);
+  }
+  for(let i=count;i>=0;i--){
+    const x=start+(end-start)*i/count;
     path.lineTo(x,edgeAt(x,stripe,extent,1,scene));
   }
   path.closePath();
+}
+function stripePath(stripe,extent,scene){
+  const path=new Path2D();
+  const marks=cachedLineMarks(stripe,extent);
+  if(marks){
+    for(const mark of marks){
+      if(mark.type==='dash')traceStripeSegment(path,stripe,extent,scene,mark.start,mark.end);
+      else path.arc(mark.x,geometryAt(mark.x,stripe,extent),mark.radius,0,TAU);
+    }
+  }else{
+    const start=stripe.segmentStart??-extent,end=stripe.segmentEnd??extent;
+    // The original continuous fill is unchanged for existing saved recipes.
+    const count=Math.max(500,Math.ceil((end-start)/3));
+    for(let i=0;i<=count;i++){
+      const x=start+(end-start)*i/count,y=edgeAt(x,stripe,extent,-1,scene);
+      if(i===0)path.moveTo(x,y);else path.lineTo(x,y);
+    }
+    for(let i=count;i>=0;i--){
+      const x=start+(end-start)*i/count;
+      path.lineTo(x,edgeAt(x,stripe,extent,1,scene));
+    }
+    path.closePath();
+  }
   return path;
 }
 function traceEdge(stripe, extent, side, scene) {
@@ -200,6 +254,18 @@ export function motifFits(stripe,scene,x,y,halfX,halfY,extent=scene.extent) {
     const low=edgeAt(testX,stripe,extent,-1,scene);
     const high=edgeAt(testX,stripe,extent,1,scene);
     if(y-halfY < low+margin || y+halfY > high-margin) return false;
+  }
+  const styleMarks=cachedLineMarks(stripe,extent);
+  if(styleMarks){
+    const fits=styleMarks.some(mark=>{
+      if(mark.type==='dash')return x-halfX>=mark.start && x+halfX<=mark.end;
+      for(const xx of [x-halfX,x+halfX])for(const yy of [y-halfY,y+halfY]){
+        const dy=yy-geometryAt(mark.x,stripe,extent);
+        if((xx-mark.x)**2+dy**2>(mark.radius-.12)**2)return false;
+      }
+      return true;
+    });
+    if(!fits)return false;
   }
   // Do not crop individual marks at the original frame boundary, preserving
   // the pre-nudge design exactly. Additional *whole* marks may be rendered
@@ -435,7 +501,12 @@ function drawOutline(ctx,path,stripe,scene) {
   const buffer=scene.gap/100*Math.min(20,stripe.width*.6);
   ctx.save();ctx.lineJoin='round';
   if(style==='broken')ctx.setLineDash([15,10]);
-  if(style==='one-side'){ctx.strokeStyle=colour;ctx.lineWidth=width;ctx.stroke(traceEdge(stripe,scene.extent,-1,scene));ctx.restore();return;}
+  if(style==='one-side'){
+    ctx.strokeStyle=colour;ctx.lineWidth=width;
+    ctx.stroke(stripe.lineStyle==='continuous'
+      ?traceEdge(stripe,scene.extent,-1,scene):path);
+    ctx.restore();return;
+  }
   ctx.strokeStyle=colour;ctx.lineWidth=2*(buffer+width);ctx.stroke(path);
   if(buffer>0){ctx.strokeStyle=scene.background==='white'?'#fff':'#000';ctx.lineWidth=2*buffer;ctx.stroke(path);}
   if(style==='double'){ctx.strokeStyle=colour;ctx.lineWidth=.95;ctx.stroke(path);}
