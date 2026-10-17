@@ -356,11 +356,23 @@ try{
         checked++;
       }
     }
-    return {left,right,averageDifference:diff/Math.max(1,checked),checked};
+    // A vertical composition must likewise continue above and below the
+    // original clipped frame, not leave blank horizontal strips.
+    const vertical=document.createElement('canvas');
+    vertical.width=600;vertical.height=1300;
+    drawWallpaper(vertical,{...recipe,orientation:'vertical'});
+    const v=vertical.getContext('2d').getImageData(0,0,600,1300).data;
+    let top=0,bottom=0;
+    for(let x=35;x<565;x+=7){
+      if(isInk(v,(100*600+x)*4))top++;
+      if(isInk(v,(1200*600+x)*4))bottom++;
+    }
+    return {left,right,top,bottom,averageDifference:diff/Math.max(1,checked),checked};
   })()`);
   console.log('TRUE_CAMERA_EXPORT_PARITY',JSON.stringify(cameraParity));
-  assert.ok(cameraParity.left>8&&cameraParity.right>8,
-    'lines must continue through both areas outside the old 100% crop');
+  assert.ok(cameraParity.left>8&&cameraParity.right>8&&
+    cameraParity.top>8&&cameraParity.bottom>8,
+    'lines must continue beyond all four sides of the old 100% crop');
   assert.ok(cameraParity.checked>80&&cameraParity.averageDifference<15,
     'full-resolution camera must match the displayed composition');
   await evaluate('document.querySelector(".studio-stage [data-nudge=right]").click()');
