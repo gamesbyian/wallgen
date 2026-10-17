@@ -54,8 +54,7 @@ export function textureHeight(scene,stripe,x,side=0){
     const profile=RELIEF_PROFILES[layer.material]||RELIEF_PROFILES.grain;
     const weight=(layer.strength/100)*profile[0];
     if(weight<=0)continue;
-    const theta=layer.rotation*Math.PI/180;
-    const co=Math.cos(theta),si=Math.sin(theta);
+    const co=layer.heightCos,si=layer.heightSin;
     // The fine band follows the same orientation and material scale as its
     // painted counterpart, and a second band keeps the edge organic at 90°.
     const along=x*co+y*si;
