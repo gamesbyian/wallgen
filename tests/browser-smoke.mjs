@@ -150,6 +150,40 @@ try{
   assert.ok(editing.arrow.left>editing.sidebar.left+editing.sidebar.width-2 &&
     editing.arrow.right<=412+1,'expand arrow lives beside the editor');
   assert.ok(editing.narrowRandomize&&editing.narrowTabs,'toolbar texts should be compact');
+  const compactLabels=await evaluate(`(()=>{
+    const buttons=['randomizeAll','drawPathToggle'].map(id=>document.getElementById(id));
+    const prime=document.querySelector('.mobile-preview-rail-left .prime-toggle');
+    const fit=node=>{
+      const a=node.getBoundingClientRect();
+      const spans=[...node.querySelectorAll('span')].filter(el=>el.textContent.trim() &&
+        !el.classList.contains('randomize-symbol') &&
+        !el.classList.contains('toolbar-wording'));
+      return spans.every(el=>{const b=el.getBoundingClientRect();
+        return b.left>=a.left-1&&b.right<=a.right+1&&b.top>=a.top-1&&b.bottom<=a.bottom+1;});
+    };
+    return {randomText:buttons[0].textContent.trim(),randomFits:fit(buttons[0]),
+      drawFits:fit(buttons[1]),primeFits:fit(prime),
+      primeLines:prime.querySelectorAll('.toolbar-wording>span').length,
+      drawLines:buttons[1].querySelectorAll('.toolbar-wording>span').length};
+  })()`);
+  assert.ok(compactLabels.randomText.includes('Random')&&!compactLabels.randomText.includes('Randomize'));
+  assert.ok(compactLabels.randomFits&&compactLabels.drawFits&&compactLabels.primeFits,
+    'preview buttons must fully contain their text');
+  assert.equal(compactLabels.primeLines,2);
+  assert.equal(compactLabels.drawLines,2);
+  const branding=await evaluate(`(()=>{
+    const letters=[...document.querySelectorAll('.brand-title .title-letter')];
+    const icon=document.querySelector('#mobileEdit .dock-pencil');
+    const heart=document.querySelector('#mobileFavorite .squat-heart');
+    return {letters:letters.map(el=>el.textContent).join(''),
+      distinct:new Set(letters.map(el=>getComputedStyle(el).color)).size,
+      pencil:icon?.querySelectorAll('path').length,
+      heart:heart?.getAttribute('viewBox'),desktopHeart:!!document.querySelector('#favorite .squat-heart')};
+  })()`);
+  assert.equal(branding.letters,'ROYGBIV');
+  assert.equal(branding.distinct,7,'rainbow title letters need seven distinct hues');
+  assert.ok(branding.pencil>0&&branding.heart==='0 0 24 20'&&branding.desktopHeart);
+
   assert.ok(editing.noDimmer&&editing.nonmodal&&editing.scrollable&&editing.tabsVisible);
   assert.ok(editing.stage.top<=10,'header must release its vertical space');
   assert.ok(editing.totalHeight<=915,'opening edit must not introduce page scrolling');
@@ -652,6 +686,13 @@ try{
   await swipe({x:Math.round(box.left+box.width*.24),y:Math.round(box.top+box.height*.19)},
               {x:Math.round(box.left+box.width*.73),y:Math.round(box.top+box.height*.68)});
   await waitFor('document.getElementById("drawApply").disabled===false');
+  const beforeSmoothing=await evaluate('document.getElementById("drawOverlay").toDataURL()');
+  await evaluate(`(()=>{
+    const slider=document.getElementById('drawSmoothingStrength');
+    slider.value='5';slider.dispatchEvent(new Event('input',{bubbles:true}));
+  })()`);
+  assert.equal(await evaluate('document.getElementById("drawSmoothingValue").textContent'),'5.0×');
+  assert.ok(await evaluate('!document.getElementById("drawApply").disabled'));
   await evaluate('document.getElementById("drawGeometric").click()');
   assert.ok(await evaluate('document.getElementById("drawGeometric").getAttribute("aria-pressed")==="true"'));
   await evaluate('document.getElementById("drawApply").click()');
