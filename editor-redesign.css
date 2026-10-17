@@ -537,6 +537,46 @@
    height:33px!important;min-height:33px!important;
    font-size:13px!important;
  }
+ /* Zoomed-out browsers have more CSS room. Give the preview-side tools
+    their actual touch target area back instead of leaving 29px visual buttons. */
+ body.mobile-studio .mobile-preview-rail-left{width:59px!important}
+ body.mobile-studio .mobile-preview-rail-right{width:47px!important}
+ body.mobile-studio .studio-stage .stage-inner{
+   margin-left:60px!important;margin-right:46px!important;
+   width:calc(100% - 106px)!important;
+ }
+ body.mobile-studio .studio-stage .wallpaper-frame{
+   height:min(100%,calc((100vw - 132px)*1300/600))!important;
+ }
+ body.mobile-studio .mobile-preview-rail-left #randomizeAll{
+   width:55px!important;height:48px!important;min-height:48px!important;
+   font-size:12px!important;
+ }
+ body.mobile-studio .mobile-preview-rail-left #randomizeAll span:last-child{
+   font-size:12px!important;
+ }
+ body.mobile-studio .mobile-preview-rail-left .prime-toggle{
+   width:55px!important;min-height:45px!important;font-size:12px!important;
+ }
+ body.mobile-studio .mobile-preview-rail-left #undo,
+ body.mobile-studio .mobile-preview-rail-left #drawPathToggle{
+   width:55px!important;min-width:55px!important;
+   height:46px!important;min-height:46px!important;
+   font-size:17px!important;
+ }
+ body.mobile-studio .mobile-preview-rail-left .toolbar-wording>span,
+ body.mobile-studio .mobile-preview-rail-left #undo span,
+ body.mobile-studio .mobile-preview-rail-left #drawPathToggle span{
+   font-size:12px!important;
+ }
+ body.mobile-studio .mobile-preview-rail-right .nudge-pad{width:43px!important}
+ body.mobile-studio .mobile-preview-rail-right .nudge-pad .nudge-button,
+ body.mobile-studio .mobile-zoom-button{
+   width:43px!important;min-width:43px!important;max-width:43px!important;
+   height:43px!important;min-height:43px!important;
+   font-size:20px!important;
+ }
+ body.mobile-studio .mobile-zoom-level{font-size:11px!important}
 }
 /* Recent generations occupy the same reserved tool space, never the preview. */
 .editor-history[hidden]{display:none!important}
