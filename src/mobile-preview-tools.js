@@ -16,6 +16,30 @@ prime.addEventListener('change',()=>{
   if(mq.matches)document.getElementById('controls')
     .dispatchEvent(new Event('change',{bubbles:true}));
 });
+// Bleed is a visual screen-safe-area guide only, never part of the recipe,
+ // rendering canvas, export, or saved image.
+const bleed=document.getElementById('bleedGuide');
+const bleedButton=document.createElement('button');
+bleedButton.type='button';bleedButton.id='mobileBleed';
+bleedButton.className='mobile-bleed-button';
+bleedButton.textContent='Bleed';
+bleedButton.setAttribute('aria-label','Toggle 90 percent wallpaper framing guide');
+bleedButton.setAttribute('aria-pressed','false');
+function updateBleedContrast(){
+  if(bleed.hidden)return;
+  const canvas=document.getElementById('preview');
+  const ctx=canvas.getContext('2d');
+  // Use a small patch near the frame edge, where the guide is painted.
+  const image=ctx.getImageData(Math.round(canvas.width*.05),Math.round(canvas.height*.05),1,1).data;
+  const brightness=(.2126*image[0]+.7152*image[1]+.0722*image[2])/255;
+  bleed.style.borderColor=brightness>.53?'#101014':'#ffffff';
+}
+bleedButton.addEventListener('click',()=>{
+  bleed.hidden=!bleed.hidden;
+  bleedButton.setAttribute('aria-pressed',String(!bleed.hidden));
+  updateBleedContrast();
+});
+stage.addEventListener('roygbiv-wallpaper-rendered',updateBleedContrast);
 const left=document.createElement('div');
 left.className='mobile-preview-rail mobile-preview-rail-left';
 left.setAttribute('aria-label','Generation shortcuts');
@@ -56,7 +80,7 @@ zoomSlot.className='mobile-zoom-slot';
 zoomSlot.append(zoomIn,zoomOut,zoomValue);
 function mobile(){
   stage.append(left,right);
-  left.append(toolbar);
+  left.append(bleedButton,toolbar);
   right.append(nudge,zoomSlot);
   document.body.classList.add('mobile-preview-tools-ready');
   setZoom(zoom);
