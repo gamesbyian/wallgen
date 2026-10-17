@@ -1,0 +1,55 @@
+name: Headless render smoke
+on:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'scripts/render-headless.mjs'
+      - 'tests/headless-cli.test.js'
+      - 'package.json'
+      - '.github/workflows/headless-render.yml'
+  workflow_dispatch:
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Full static and model tests
+        run: npm run check
+      - name: Install isolated browser driver
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+      - name: Render sample wallpapers with production engine
+        run: |
+          mkdir -p output
+          npm run render -- --seed paper-comet --set family=studio --set orientation=diagonal --set geometry=straight --set motif=solid --set palette=electric --set material=construction --set textureStrength=45 --set stripeWidth=66 --set spread=56 --width 600 --height 1300 --out output/paper-comet.png
+          npm run render -- --seed stardust-tapes --set family=tapestry --set orientation=horizontal --set geometry=jagged --set motif=solid --set palette=muted --set material=linen --set textureStrength=46 --set stripeWidth=25 --set spread=78 --width 600 --height 1300 --out output/stardust-tapes.png
+          npm run render -- --seed dot-matrix --set family=signal --set orientation=diagonal --set lineStyle=dotted --set motif=solid --set geometry=straight --set stripeWidth=45 --set spread=88 --width 600 --height 1300 --out output/dot-matrix.png
+          npm run render -- --seed white-silkscreen --set family=studio --set orientation=diagonal --set geometry=straight --set motif=solid --set palette=muted --set background=white --set material=linen --set textureStrength=20 --set stripeWidth=25 --set spread=65 --width 600 --height 1300 --out output/white-silkscreen.png
+          npm run render -- --seed rubber-sines --set family=currents --set orientation=horizontal --set geometry=wave --set motif=solid --set shapeFrequency=72 --set shapeDepth=65 --set stripeWidth=38 --set spread=84 --set outline=hairline --width 600 --height 1300 --out output/rubber-sines.png
+      - name: Validate PNG dimensions and round-trip recipes
+        run: |
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {readFile} from 'node:fs/promises';
+          import {extractPngRecipe} from './src/png-metadata.js';
+          for(const name of ['paper-comet','stardust-tapes','dot-matrix','white-silkscreen','rubber-sines']){
+            const png=await readFile('output/'+name+'.png');
+            assert.deepEqual([...png.subarray(0,8)],[137,80,78,71,13,10,26,10]);
+            assert.equal(png.readUInt32BE(16),600);
+            assert.equal(png.readUInt32BE(20),1300);
+            const recipe=extractPngRecipe(png);
+            assert.ok(recipe&&recipe.seed===name,name+' recipe missing');
+            console.log(name,png.length,recipe.geometry,recipe.motif);
+          }
+          JS
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: roy-gbiv-headless-previews
+          path: output/*.png
+          if-no-files-found: warn
