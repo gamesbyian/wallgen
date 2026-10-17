@@ -39,7 +39,8 @@ test('loopy continuous path actually reverses longitudinal direction',()=>{
   const xs=Array.from({length:400},(_,i)=>pathPosition(stripe,-200+i,e).x);
   assert.ok(xs.some((v,i)=>i>0&&v<xs[i-1]),'loops must fold backward');
   assert.ok(xs.some((v,i)=>i>0&&v>xs[i-1]),'loops must also advance');
-  assert.deepEqual(resolveScene(scene).stripes,scene.stripes);
+  assert.deepEqual(resolveScene({seed:'spring-line',geometry:'loops',orientation:'horizontal',
+    construction:'stroke',shapeFrequency:85,shapeDepth:95,individuality:0}).stripes,scene.stripes);
 });
 test('repetition changes the composition while retaining seven stripe identities',()=>{
   const single=resolveScene({seed:'repeat-bands',composition:'single',geometry:'straight'});
