@@ -1,4 +1,5 @@
 import { SHAPES } from './path-geometry.js';
+import { normalizeDrawnPath, prepareDrawnPath } from './drawn-path.js';
 export const DESIGN_WIDTH = 600;
 export const DESIGN_HEIGHT = 1300;
 export const OUTPUT_WIDTH = 3024;
@@ -58,7 +59,7 @@ const coverageChoice = (value) => TEXTURE_COVERAGES.includes(value) ? value : 'b
 const blendChoice = (value) => BLEND_MODES.includes(value) ? value : 'normal';
 const AUTO_CHOICES = {
   family:FAMILIES, orientation:['vertical','horizontal','diagonal'],
-  geometry:GEOMETRIES, motif:MOTIFS, palette:PALETTES,
+  geometry:GEOMETRIES.filter(x=>x!=='drawn'), motif:MOTIFS, palette:PALETTES,
   material:MATERIALS, outline:OUTLINES,
 };
 
@@ -82,6 +83,7 @@ export function normalizeRecipe(input = {}) {
     mirrorHorizontal: input.mirrorHorizontal === true || input.mirrorHorizontal === 'true',
     mirrorVertical: input.mirrorVertical === true || input.mirrorVertical === 'true',
     geometry: readChoice('geometry', GEOMETRIES),
+    customPath: normalizeDrawnPath(input.customPath),
     motif: readChoice('motif', MOTIFS),
     lineStyle: LINE_STYLES.includes(input.lineStyle) ? input.lineStyle : 'continuous',
     composition: COMPOSITIONS.includes(input.composition) ? input.composition : 'single',
@@ -171,7 +173,9 @@ export function resolveScene(recipeInput) {
   const family = keepAuto('family',recipe.family === 'auto' ? pick(random, FAMILIES) : recipe.family);
   const profile = PROFILES[family];
   const orientation = keepAuto('orientation',recipe.orientation === 'auto' ? pick(random, ['vertical', 'vertical', 'diagonal', 'horizontal']) : recipe.orientation);
-  const geometry = keepAuto('geometry',recipe.geometry === 'auto' ? profile.geometry : recipe.geometry);
+  const selectedGeometry = keepAuto('geometry',recipe.geometry === 'auto' ? profile.geometry : recipe.geometry);
+  const geometry = selectedGeometry==='drawn'&&recipe.customPath.length<2?'straight':selectedGeometry;
+  const drawnPath=geometry==='drawn'?prepareDrawnPath(recipe.customPath):null;
   const motif = keepAuto('motif',recipe.motif === 'auto' ? profile.motif : recipe.motif);
   const palette = keepAuto('palette',recipe.palette === 'auto' ? profile.palette : recipe.palette);
   const material = keepAuto('material',recipe.material === 'auto' ? profile.material : recipe.material);
@@ -184,11 +188,12 @@ export function resolveScene(recipeInput) {
   // Hairpins are defined with upright legs in local coordinates.
   if(geometry==='hairpin')angle=orientation==='horizontal'?Math.PI/2:orientation==='diagonal'?Math.PI/4:0;
   if(geometry==='loops')angle=orientation==='vertical'?Math.PI/2:orientation==='diagonal'?Math.PI/4:0;
-  if(orientation==='diagonal')angle += recipe.diagonalRotation*Math.PI/180;
-  const span = geometry==='hairpin'||geometry==='loops' ? DESIGN_WIDTH :
+  if(geometry==='drawn')angle=0;
+  if(orientation==='diagonal'&&geometry!=='drawn')angle += recipe.diagonalRotation*Math.PI/180;
+  const span = ['hairpin','loops','drawn'].includes(geometry) ? DESIGN_WIDTH :
     DESIGN_WIDTH * Math.abs(Math.sin(angle)) + DESIGN_HEIGHT * Math.abs(Math.cos(angle));
   const spread = span * (0.17 + 0.53 * recipe.spread / 100) / repeats;
-  const center = between(random, -1, 1) * span * 0.09;
+  const center = geometry==='drawn'?0:between(random, -1, 1) * span * 0.09;
   // A shared master path keeps the seven stripes parallel at individuality=0.
   // Independent path phase, period, tilt and edge profile grow with individuality.
   const commonPhase=between(random,0,Math.PI*2);
@@ -217,8 +222,8 @@ export function resolveScene(recipeInput) {
     const rightGap = i < 6 ? referenceSpread*weights[i]/sum : referenceAvg;
     let width = Math.min(leftGap,rightGap)*widthFactor*between(r,1-chaos*.35,1+chaos*.35);
     if(recipe.construction==='stroke')width=Math.max(.8,Math.min(6,width*.12));
-    const individualGeometry = individuality > .25 && r() < (individuality-.25)*1.15 ?
-      pick(r,GEOMETRIES.filter(g=>!['hairpin','loops'].includes(g))) : geometry;
+    const individualGeometry = geometry!=='drawn'&&individuality > .25 && r() < (individuality-.25)*1.15 ?
+      pick(r,GEOMETRIES.filter(g=>!['hairpin','loops','drawn'].includes(g))) : geometry;
     // Motif, palette and material belong to the whole seven-stripe design.
     // Individuality is geometric only. Pattern changes are never selected here.
     const displacement = Math.min(referenceAvg * .32, width * .7 + referenceAvg * .08) * (.3 + .7*chaos)*depthFactor;
@@ -236,6 +241,7 @@ export function resolveScene(recipeInput) {
       // real aligned columns instead of seven independently spaced chains.
       dotPitch:Math.max(18,referenceAvg*(1.3+recipe.dotSpacing/100*1.15)),
       dotRadius:Math.max(2,referenceAvg*(.23+.45*recipe.dotSize/100)*widthFactor*.95),
+      drawnPath,
       turnRadius:90+recipe.turnRadius*1.35,
       loopPeriod:27+((100-recipe.shapeFrequency)/100)*66,
       loopAmplitude:Math.min(4+29*recipe.shapeDepth/100,referenceAvg*.33),
@@ -278,8 +284,8 @@ export function resolveScene(recipeInput) {
     reliefFallbackSeed:hashString(recipe.seed+':relief:fine-grain'),
     // These positions are the canonical, unnudged geometry. Pan is applied only
     // when compositing the finished stripe ink, never while solving/capping it.
-    centerX: DESIGN_WIDTH / 2 + between(random, -1, 1) * DESIGN_WIDTH * 0.055,
-    centerY: DESIGN_HEIGHT / 2 + between(random, -1, 1) * DESIGN_HEIGHT * 0.065,
+    centerX: geometry==='drawn'?DESIGN_WIDTH/2:DESIGN_WIDTH / 2 + between(random, -1, 1) * DESIGN_WIDTH * 0.055,
+    centerY: geometry==='drawn'?DESIGN_HEIGHT/2:DESIGN_HEIGHT / 2 + between(random, -1, 1) * DESIGN_HEIGHT * 0.065,
   };
 }
 
@@ -289,6 +295,7 @@ export function respectSettingLocks(currentInput, nextInput) {
   const next=normalizeRecipe(nextInput);
   const locked=new Set(current.lockedSettings);
   for(const key of locked) {
+    if(key==='geometry')next.customPath=current.customPath;
     if(key==='position') {next.positionX=current.positionX;next.positionY=current.positionY;}
     else next[key]=current[key];
   }
@@ -328,7 +335,7 @@ export function randomizeAllRecipe({primesOnly=false}={}) {
   const degrees=()=>primesOnly?any(PRIME_ROTATIONS):Math.floor(r()*360);
   return normalizeRecipe({
     seed, primesOnly, family:any(FAMILIES), orientation:any(['vertical','horizontal','diagonal']),
-    geometry:any(GEOMETRIES), motif:any(MOTIFS), palette:any(PALETTES),
+    geometry:any(GEOMETRIES.filter(x=>x!=='drawn')), motif:any(MOTIFS), palette:any(PALETTES),
     reverseStripes:r()>.5,diagonalRotation:Math.floor(r()*361)-180,
     mirrorHorizontal:r()>.5,mirrorVertical:r()>.5,
     material:any(MATERIALS), textureCoverage:any(TEXTURE_COVERAGES), textureRotation:degrees(), textureBlend:any(BLEND_MODES),
