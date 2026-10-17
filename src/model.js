@@ -9,6 +9,12 @@ export const GEOMETRIES = ['straight', 'wave', 'zigzag', 'jagged', 'stepped', 'a
 export const MOTIFS = ['solid', 'dots', 'stars', 'dashes', 'diamonds', 'chevrons', 'hatch', 'checker'];
 export const MATERIALS = ['none', 'grain', 'watercolor', 'construction', 'handmade', 'linen', 'canvas', 'denim', 'knit', 'felt', 'corduroy', 'corrugated', 'concrete', 'stucco', 'stone', 'drywall', 'wood-grain', 'vinyl-sheet', 'foil', 'glossy-paper', 'adobe'];
 export const BLEND_MODES = ['normal', 'multiply', 'screen', 'overlay', 'soft-light', 'difference'];
+export const LOCKABLE_SETTINGS = ['seed','family','orientation','geometry','motif','palette','outline','background',
+  'material','textureCoverage','textureStrength','textureScale','textureRotation','textureBlend',
+  'textureLayer2Enabled','material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2',
+  'textureLayer3Enabled','material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3',
+  'textureDisplacement','patternHomogeneity','chaos','stripeWidth','spread','individuality',
+  'overridePatternHomogeneity','gap','glow','position'];
 export const PALETTES = ['classic', 'electric', 'pastel', 'jewel', 'muted'];
 export const TEXTURE_COVERAGES = ['both', 'stripes', 'background'];
 export const OUTLINES = ['none', 'hairline', 'white', 'double', 'broken', 'one-side', 'black', 'black-hairline', 'black-double', 'black-broken', 'black-one-side'];
@@ -50,6 +56,7 @@ export function normalizeRecipe(input = {}) {
   return {
     version: 1,
     seed,
+    lockedSettings: LOCKABLE_SETTINGS.filter(key=>Array.isArray(input.lockedSettings) && input.lockedSettings.includes(key)),
     family: readChoice('family', FAMILIES),
     orientation: readChoice('orientation', ['vertical', 'horizontal', 'diagonal']),
     geometry: readChoice('geometry', GEOMETRIES),
@@ -192,11 +199,25 @@ export function resolveScene(recipeInput) {
   return {
     ...recipe, family, orientation, geometry, motif, palette, material, materialSummary, textureLayers, outline, background: recipe.background, angle, span,
     stripes, intensity: chaos, width: avg, extent: Math.hypot(DESIGN_WIDTH, DESIGN_HEIGHT) * 1.35,
-    centerX: DESIGN_WIDTH / 2 + between(random, -1, 1) * DESIGN_WIDTH * 0.055 + DESIGN_WIDTH * recipe.positionX / 100,
-    centerY: DESIGN_HEIGHT / 2 + between(random, -1, 1) * DESIGN_HEIGHT * 0.065 + DESIGN_HEIGHT * recipe.positionY / 100,
+    // These positions are the canonical, unnudged geometry. Pan is applied only
+    // when compositing the finished stripe ink, never while solving/capping it.
+    centerX: DESIGN_WIDTH / 2 + between(random, -1, 1) * DESIGN_WIDTH * 0.055,
+    centerY: DESIGN_HEIGHT / 2 + between(random, -1, 1) * DESIGN_HEIGHT * 0.065,
   };
 }
 
+/** Preserve all locked controls, including seed and the two-axis position. */
+export function respectSettingLocks(currentInput, nextInput) {
+  const current=normalizeRecipe(currentInput);
+  const next=normalizeRecipe(nextInput);
+  const locked=new Set(current.lockedSettings);
+  for(const key of locked) {
+    if(key==='position') {next.positionX=current.positionX;next.positionY=current.positionY;}
+    else next[key]=current[key];
+  }
+  next.lockedSettings=[...current.lockedSettings];
+  return normalizeRecipe(next);
+}
 export function encodeRecipe(recipe) {
   return encodeURIComponent(JSON.stringify(normalizeRecipe(recipe)));
 }
