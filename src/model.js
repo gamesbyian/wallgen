@@ -5,7 +5,8 @@ export const OUTPUT_HEIGHT = 6552;
 export const HUES = [0, 29, 52, 136, 212, 244, 278];
 export const NAMES = ['Red', 'Orange', 'Yellow', 'Green', 'Blue', 'Indigo', 'Violet'];
 export const FAMILIES = ['studio', 'currents', 'fracture', 'confetti', 'deco', 'tapestry', 'signal', 'contour'];
-export const GEOMETRIES = ['straight', 'wave', 'zigzag', 'jagged', 'stepped', 'arc', 'contour'];
+export const GEOMETRIES = ['straight', 'wave', 'zigzag', 'chevron', 'jagged', 'stepped', 'arc', 'contour'];
+export const LINE_STYLES = ['continuous', 'dotted', 'dashed'];
 export const MOTIFS = ['solid', 'dots', 'stars', 'dashes', 'diamonds', 'chevrons', 'hatch', 'checker'];
 export const MATERIALS = ['none', 'grain', 'watercolor', 'construction', 'handmade', 'linen', 'canvas', 'denim', 'knit', 'felt', 'corduroy', 'corrugated', 'concrete', 'stucco', 'stone', 'drywall', 'wood-grain', 'vinyl-sheet', 'foil', 'glossy-paper', 'adobe'];
 export const BLEND_MODES = ['normal', 'multiply', 'screen', 'overlay', 'soft-light', 'difference'];
@@ -15,7 +16,7 @@ export const LOCKABLE_SETTINGS = ['seed','family','orientation','geometry','moti
   'material','textureCoverage','textureStrength','textureScale','textureRotation','textureBlend',
   'textureLayer2Enabled','material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2',
   'textureLayer3Enabled','material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3',
-  'textureDisplacement','patternHomogeneity','chaos','stripeWidth','spread','individuality',
+  'textureDisplacement','patternHomogeneity','chaos','stripeWidth','spread','shapeFrequency','shapeDepth','lineStyle','individuality',
   'overridePatternHomogeneity','gap','glow','position'];
 export const PALETTES = ['classic', 'electric', 'pastel', 'jewel', 'muted'];
 export const TEXTURE_COVERAGES = ['both', 'stripes', 'background'];
@@ -73,6 +74,9 @@ export function normalizeRecipe(input = {}) {
     orientation: readChoice('orientation', ['vertical', 'horizontal', 'diagonal']),
     geometry: readChoice('geometry', GEOMETRIES),
     motif: readChoice('motif', MOTIFS),
+    lineStyle: LINE_STYLES.includes(input.lineStyle) ? input.lineStyle : 'continuous',
+    shapeFrequency: finiteRange(input.shapeFrequency, 50, 0, 100),
+    shapeDepth: finiteRange(input.shapeDepth, 50, 0, 100),
     palette: readChoice('palette', PALETTES),
     material: readChoice('material', MATERIALS),
     textureCoverage: TEXTURE_COVERAGES.includes(input.textureCoverage) ? input.textureCoverage : 'both',
@@ -162,7 +166,10 @@ export function resolveScene(recipeInput) {
   // A shared master path keeps the seven stripes parallel at individuality=0.
   // Independent path phase, period, tilt and edge profile grow with individuality.
   const commonPhase=between(random,0,Math.PI*2);
-  const commonPeriod=between(random,145,530);
+  // Neutral midpoint preserves legacy geometry and saved designs.
+  const frequencyFactor=Math.pow(2,(recipe.shapeFrequency-50)/37);
+  const depthFactor=Math.pow(2,(recipe.shapeDepth-50)/55);
+  const commonPeriod=between(random,145,530)/frequencyFactor;
   const commonEdgePhase=between(random,0,Math.PI*2);
   const commonTaper=between(random,0,0.28)*chaos;
   const weights = Array.from({length:6}, () => between(random, 1 - chaos * .46, 1 + chaos * .46));
@@ -174,7 +181,7 @@ export function resolveScene(recipeInput) {
   // Changing spread changes only centre-to-centre positions, not ribbon width.
   const referenceSpread=span*(0.17+0.53*.56);
   const referenceAvg=referenceSpread/6;
-  const commonDisplacement=referenceAvg*.22*(.3+.7*chaos);
+  const commonDisplacement=referenceAvg*.22*(.3+.7*chaos)*depthFactor;
   const widthFactor = (0.12 + 0.79 * recipe.stripeWidth / 100) * profile.width;
   const stripes = positions.map((position, i) => {
     const r = rng(`${recipe.seed}:stripe:${i}`);
@@ -186,12 +193,12 @@ export function resolveScene(recipeInput) {
     const individualGeometry = individuality > .25 && r() < (individuality-.25)*1.15 ? pick(r, GEOMETRIES) : geometry;
     // Motif, palette and material belong to the whole seven-stripe design.
     // Individuality is geometric only. Pattern changes are never selected here.
-    const displacement = Math.min(referenceAvg * .32, width * .7 + referenceAvg * .08) * (.3 + .7*chaos);
+    const displacement = Math.min(referenceAvg * .32, width * .7 + referenceAvg * .08) * (.3 + .7*chaos)*depthFactor;
     const phase=between(r,0,Math.PI*2);
-    const period=between(r,145,530);
+    const period=between(r,145,530)/frequencyFactor;
     return {
       name: NAMES[i], index:i, color: paletteHsl(HUES[i], palette, r), center: position + center,
-      width: Math.max(width, 1.5), geometry: individualGeometry, motif,
+      width: Math.max(width, 1.5), geometry: individualGeometry, motif, lineStyle:recipe.lineStyle,
       phase, period, displacement,
       sharedGeometry:geometry, sharedPhase:commonPhase, sharedPeriod:commonPeriod,
       sharedDisplacement:commonDisplacement, parallelMix:individuality,
@@ -287,6 +294,7 @@ export function randomizeAllRecipe({primesOnly=false}={}) {
     stripeShadowEnabled:r()>.5,stripeShadowDirection:any(LIGHT_DIRECTIONS),
     stripeShadowStrength:percent(),stripeShadowSoftness:percent(),
     chaos:percent(), stripeWidth:percent(), spread:percent(),
+    shapeFrequency:percent(),shapeDepth:percent(),lineStyle:any(LINE_STYLES),
     textureStrength:percent(), textureScale:percent(), textureDisplacement:percent(), individuality:percent(),
     patternHomogeneity:percent(), overridePatternHomogeneity:r()>.5,
     gap:percent(), glow:percent(), positionX:0, positionY:0,
