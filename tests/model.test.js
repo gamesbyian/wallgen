@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { DESIGN_WIDTH, DESIGN_HEIGHT, OUTPUT_WIDTH, OUTPUT_HEIGHT, HUES, NAMES, FAMILIES, GEOMETRIES, MOTIFS, MATERIALS, OUTLINES, normalizeRecipe, resolveScene, rng, encodeRecipe, decodeRecipe, TEXTURE_COVERAGES, BLEND_MODES, normalizeRotation, randomizeAllRecipe, LOCKABLE_SETTINGS, respectSettingLocks, isPrime, PRIME_PERCENTAGES, PRIME_ROTATIONS, LIGHTING_MOODS, LIGHT_DIRECTIONS } from '../src/model.js';
+import { DESIGN_WIDTH, DESIGN_HEIGHT, OUTPUT_WIDTH, OUTPUT_HEIGHT, HUES, NAMES, FAMILIES, GEOMETRIES, MOTIFS, MATERIALS, OUTLINES, normalizeRecipe, resolveScene, rng, encodeRecipe, decodeRecipe, TEXTURE_COVERAGES, BLEND_MODES, normalizeRotation, randomizeAllRecipe, LOCKABLE_SETTINGS, respectSettingLocks, isPrime, PRIME_PERCENTAGES, PRIME_ROTATIONS, LIGHTING_MOODS, LIGHT_DIRECTIONS, LINE_STYLES } from '../src/model.js';
 
 test('Pixel 6 Pro export has 210% linear dimensions and unchanged aspect ratio',()=>{
   assert.equal(OUTPUT_WIDTH,1440*2.1);
@@ -244,7 +244,7 @@ test('lock list rejects unknown keys and normalizes stable order',()=>{
 test('prime-only randomization constrains every randomized percentage and texture rotation',()=>{
   const numeric=['chaos','stripeWidth','spread','textureStrength','textureScale','textureDisplacement',
     'textureStrength2','textureScale2','textureStrength3','textureScale3',
-    'individuality','patternHomogeneity','gap','glow','lightStrength','shadowStrength',
+    'individuality','patternHomogeneity','gap','glow','lightStrength','shadowStrength','shapeFrequency','shapeDepth',
     'stripeShadowStrength','stripeShadowSoftness'];
   const angles=['textureRotation','textureRotation2','textureRotation3'];
   assert.equal(PRIME_PERCENTAGES[0],2);
@@ -361,4 +361,58 @@ test('stripe shadows honor locks while randomizing other options',()=>{
   assert.equal(normalizeRecipe({stripeShadowStrength:500}).stripeShadowStrength,100);
   assert.equal(normalizeRecipe({stripeShadowSoftness:-20}).stripeShadowSoftness,0);
   assert.equal(normalizeRecipe({stripeShadowDirection:'invalid'}).stripeShadowDirection,'top-left');
+});
+
+test('new path and line-style controls preserve existing recipes by default',()=>{
+  const legacy=normalizeRecipe({seed:'legacy-chevron',geometry:'wave',motif:'dots'});
+  assert.equal(legacy.lineStyle,'continuous');
+  assert.equal(legacy.shapeFrequency,50);
+  assert.equal(legacy.shapeDepth,50);
+  assert.ok(GEOMETRIES.includes('chevron'));
+  assert.deepEqual(LINE_STYLES,['continuous','dotted','dashed']);
+  const existing=resolveScene(legacy), explicit=resolveScene({...legacy,
+    lineStyle:'continuous',shapeFrequency:50,shapeDepth:50});
+  assert.deepEqual(existing.stripes,explicit.stripes);
+  assert.deepEqual(decodeRecipe(encodeRecipe(legacy)),legacy);
+});
+test('chevron is a geometry separate from the chevron motif; line styles combine with any pattern',()=>{
+  for(const geometry of GEOMETRIES){
+    for(const lineStyle of LINE_STYLES){
+      const scene=resolveScene({seed:'combine-geometry',family:'studio',
+        geometry,motif:'chevrons',lineStyle,individuality:0});
+      assert.equal(scene.stripes.length,7);
+      assert.ok(scene.stripes.every(s=>s.geometry===geometry&&s.motif==='chevrons'&&s.lineStyle===lineStyle));
+    }
+  }
+  const chevron=normalizeRecipe({geometry:'chevron',motif:'solid'});
+  assert.equal(chevron.geometry,'chevron');
+  assert.equal(chevron.motif,'solid');
+  assert.equal(normalizeRecipe({lineStyle:'not-valid'}).lineStyle,'continuous');
+});
+test('frequency controls pitch without changing widths; depth controls displacement',()=>{
+  const base={seed:'shape-frequencies',family:'studio',geometry:'zigzag',individuality:0};
+  const slow=resolveScene({...base,shapeFrequency:0,shapeDepth:50});
+  const fast=resolveScene({...base,shapeFrequency:100,shapeDepth:50});
+  assert.ok(slow.stripes[0].sharedPeriod>fast.stripes[0].sharedPeriod*4);
+  assert.deepEqual(slow.stripes.map(s=>s.width),fast.stripes.map(s=>s.width));
+  const flat=resolveScene({...base,shapeFrequency:50,shapeDepth:0});
+  const deep=resolveScene({...base,shapeFrequency:50,shapeDepth:100});
+  assert.ok(deep.stripes[0].sharedDisplacement>flat.stripes[0].sharedDisplacement*3);
+  assert.deepEqual(flat.stripes.map(s=>s.width),deep.stripes.map(s=>s.width));
+});
+test('shape sliders and line-style selectors respect locks, Prime mode and saved URLs',()=>{
+  const base=normalizeRecipe({seed:'shape-lock',lineStyle:'dashed',
+    shapeFrequency:67,shapeDepth:79,lockedSettings:['shapeFrequency','lineStyle']});
+  assert.ok(LOCKABLE_SETTINGS.includes('shapeFrequency'));
+  assert.ok(LOCKABLE_SETTINGS.includes('shapeDepth'));
+  assert.ok(LOCKABLE_SETTINGS.includes('lineStyle'));
+  for(let i=0;i<25;i++){
+    const value=respectSettingLocks(base,randomizeAllRecipe({primesOnly:true}));
+    assert.equal(value.shapeFrequency,67);
+    assert.equal(value.lineStyle,'dashed');
+    assert.ok(isPrime(value.shapeDepth));
+  }
+  assert.deepEqual(decodeRecipe(encodeRecipe(base)),base);
+  assert.equal(normalizeRecipe({shapeFrequency:900}).shapeFrequency,100);
+  assert.equal(normalizeRecipe({shapeDepth:-30}).shapeDepth,0);
 });
