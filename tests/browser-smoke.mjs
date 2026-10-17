@@ -163,6 +163,45 @@ try{
   })()`);
   await waitFor(`document.getElementById('preview').toDataURL()!==window.__wallpaperBefore`,16000);
   assert.ok(await evaluate('document.body.classList.contains("mobile-edit-open")'));
+  // Full-fidelity controls, including portable reverse order and diagonal
+  // transforms, must be reachable in the small no-scroll phone editor.
+  await evaluate('window.__reverseBefore=document.getElementById("preview").toDataURL()');
+  await evaluate('document.querySelector("[name=reverseStripes]").click()');
+  await waitFor('document.getElementById("preview").toDataURL()!==window.__reverseBefore',16000);
+  assert.ok(await evaluate('document.querySelector("[name=reverseStripes]").checked'));
+  await evaluate(`(()=>{
+    const direction=document.querySelector('[name=orientation]');
+    direction.value='diagonal';
+    direction.dispatchEvent(new Event('change',{bubbles:true}));
+  })()`);
+  await waitFor(`!document.getElementById('diagonalSettings').hidden`);
+  assert.ok(await evaluate(`(()=>{
+    const card=[...document.querySelectorAll('.mobile-setting-cluster')]
+      .find(el=>el.dataset.group==='Diagonal transform');
+    return card&&!card.hidden&&card.querySelector('[name=diagonalRotation]') &&
+      card.querySelector('[name=mirrorHorizontal]')&&card.querySelector('[name=mirrorVertical]') &&
+      card.scrollHeight<=card.clientHeight+2;
+  })()`),'all three diagonal controls must be on one fully visible card');
+  await evaluate('window.__rotationBefore=document.getElementById("preview").toDataURL()');
+  await evaluate(`(()=>{
+    const slider=document.querySelector('[name=diagonalRotation]');
+    slider.value='48';slider.dispatchEvent(new Event('input',{bubbles:true}));
+  })()`);
+  await waitFor(`document.getElementById('preview').toDataURL()!==window.__rotationBefore`,16000);
+  await evaluate('document.querySelector("[name=mirrorHorizontal]").click()');
+  assert.ok(await evaluate('document.querySelector("[name=mirrorHorizontal]").checked'));
+  await evaluate('document.querySelector("[name=mirrorVertical]").click()');
+  assert.ok(await evaluate('document.querySelector("[name=mirrorVertical]").checked'));
+  await evaluate(`(()=>{
+    const direction=document.querySelector('[name=orientation]');
+    direction.value='vertical';direction.dispatchEvent(new Event('change',{bubbles:true}));
+  })()`);
+  await waitFor(`document.getElementById('diagonalSettings').hidden`);
+  await evaluate(`(()=>{
+    const direction=document.querySelector('[name=orientation]');
+    direction.value='diagonal';direction.dispatchEvent(new Event('change',{bubbles:true}));
+  })()`);
+  await waitFor(`!document.getElementById('diagonalSettings').hidden`);
   // Actual fields are now horizontal cards, not a tall scrolling list.
   const rail=await evaluate(`(()=>{
     const p=document.getElementById('panel-design');
@@ -526,6 +565,35 @@ try{
     'exploring variations must also keep the preview visible');
   await evaluate('document.getElementById("mobileExplore").click()');
   assert.ok(!await evaluate('document.body.classList.contains("mobile-gallery-open")'));
+  // A PNG generated elsewhere must be able to restore the *complete*
+  // recipe, rather than only seed/EXIF strings. Exercise the real file input.
+  await evaluate(`(async()=>{
+    const module=await import('/src/png-metadata.js');
+    const canvas=document.getElementById('preview');
+    const raw=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
+    const recipe={seed:'png-restore-qa',orientation:'diagonal',diagonalRotation:-61,
+      reverseStripes:true,mirrorHorizontal:true,mirrorVertical:true,
+      positionX:7,positionY:-4,textureLayer2Enabled:true,material2:'felt',
+      lockedSettings:['reverseStripes','diagonalRotation']};
+    const packed=module.embedPngMetadata(await raw.arrayBuffer(),{}, {recipe});
+    const transfer=new DataTransfer();
+    transfer.items.add(new File([packed],'saved-wallpaper.png',{type:'image/png'}));
+    const chooser=document.getElementById('importRecipeFile');
+    chooser.files=transfer.files;
+    chooser.dispatchEvent(new Event('change',{bubbles:true}));
+  })()`);
+  await waitFor(`(()=>{
+    const raw=new URLSearchParams(location.search).get('r');
+    if(!raw)return false;
+    const recipe=JSON.parse(decodeURIComponent(raw));
+    return recipe.seed==='png-restore-qa'&&recipe.diagonalRotation===-61&&
+      recipe.mirrorHorizontal&&recipe.mirrorVertical&&recipe.reverseStripes&&
+      recipe.positionX===7&&recipe.positionY===-4;
+  })()`);
+  assert.ok(await evaluate('document.querySelector("[name=reverseStripes]").checked'));
+  assert.equal(await evaluate('document.querySelector("[name=diagonalRotation]").value'),'-61');
+  console.log('PNG_RECIPE_IMPORT_SUCCESS');
+
   await command('Emulation.setDeviceMetricsOverride',{
     width:1280,height:900,deviceScaleFactor:1,mobile:false,
     screenWidth:1280,screenHeight:900,

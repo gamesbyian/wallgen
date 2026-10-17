@@ -1,0 +1,57 @@
+/* Conditional diagonal transform and stripe-order settings.
+   The portable recipe fields exist on every platform; controls become visible
+   only for an explicitly chosen Diagonal direction. */
+.diagonal-settings[hidden]{display:none!important}
+.diagonal-settings:not([hidden]){
+  display:grid;grid-template-columns:minmax(0,1fr);
+  gap:8px;grid-column:1/-1;
+  padding:10px 12px;margin:8px 0;
+  border:1px solid var(--line);border-radius:11px;
+}
+.diagonal-settings .mirror-field{
+  display:flex;align-items:center;gap:9px;min-height:32px;
+  font-size:12px;line-height:1.25;
+}
+.diagonal-settings .mirror-field input{
+  width:17px;height:17px;flex:0 0 17px;
+}
+.diagonal-settings .range-field small{font-size:10px}
+.reverse-stripe-field{display:flex;align-items:center;gap:9px}
+.reverse-stripe-field input{width:17px;height:17px}
+@media(max-width:790px){
+  body.mobile-studio .sidebar .settings-panel .mobile-setting-cluster>.diagonal-settings:not([hidden]){
+    display:flex!important;flex:0 0 auto;flex-direction:column;
+    justify-content:center;gap:6px!important;
+    margin:0!important;padding:1px!important;
+    border:0!important;background:transparent;
+    min-width:0;width:100%;
+  }
+  body.mobile-studio .sidebar .settings-panel .mobile-setting-cluster .diagonal-settings .lockable-setting{
+    display:grid!important;grid-template-columns:minmax(0,1fr) 24px!important;
+    align-items:center;gap:4px!important;
+    min-width:0;margin:0!important;padding:0!important;
+    background:transparent!important;border:0!important;
+  }
+  body.mobile-studio .sidebar .settings-panel .mobile-setting-cluster .diagonal-settings .range-field{
+    display:grid!important;grid-template-columns:100px minmax(0,1fr);
+    gap:5px!important;
+  }
+  body.mobile-studio .sidebar .settings-panel .mobile-setting-cluster .diagonal-settings .range-field>.stepper{
+    grid-column:2;grid-row:1;min-width:0;
+  }
+  body.mobile-studio .sidebar .settings-panel .mobile-setting-cluster .diagonal-settings .mirror-field{
+    display:flex!important;justify-content:flex-start!important;align-items:center;
+    gap:7px!important;min-height:28px!important;
+    font-size:11px!important;
+  }
+  body.mobile-studio .sidebar .settings-panel .mobile-setting-cluster .diagonal-settings .mirror-field input{
+    width:17px;min-width:17px;height:17px;flex:none;
+  }
+  body.mobile-studio .sidebar .settings-panel .mobile-setting-cluster .reverse-stripe-field{
+    display:flex!important;align-items:center!important;justify-content:flex-start!important;
+    gap:8px;font-size:11px!important;
+  }
+  body.mobile-studio .sidebar .settings-panel .mobile-setting-cluster .reverse-stripe-field input{
+    width:17px;height:17px;flex:0 0 17px;
+  }
+}

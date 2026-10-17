@@ -18,6 +18,7 @@
   <link rel="stylesheet" href="mobile-compact.css?v=20261016-dock2">
   <link rel="stylesheet" href="mobile-card-groups.css?v=20261016-related1">
   <link rel="stylesheet" href="mobile-editor-rail.css?v=20261016-noscroll1">
+  <link rel="stylesheet" href="design-transform.css?v=20261016-transform1">
 </head>
 <body>
   <header class="masthead">
@@ -63,6 +64,15 @@
           <div class="control-grid">
           <label class="field">Visual family <select name="family" data-setting="family"><option value="auto">Surprise me</option><option value="studio">Studio / graphic</option><option value="currents">Neon currents</option><option value="fracture">Geometric fracture</option><option value="confetti">Particle ribbons</option><option value="deco">Art deco</option><option value="tapestry">Tapestry</option><option value="signal">Signal / digital</option><option value="contour">Topographic contour</option></select></label>
           <label class="field">Direction <select name="orientation" data-setting="orientation"><option value="auto">Surprise me</option><option value="vertical">Vertical</option><option value="horizontal">Horizontal</option><option value="diagonal">Diagonal</option></select></label>
+          <label class="field reverse-stripe-field"><input type="checkbox" name="reverseStripes" data-setting="reverseStripes"> Reverse stripe order (violet first)</label>
+          <div class="diagonal-settings" id="diagonalSettings" hidden aria-label="Diagonal transform controls">
+            <label class="field range-field"><span>Diagonal rotation</span>
+              <input type="range" name="diagonalRotation" id="diagonalRotation" data-setting="diagonalRotation" min="-180" max="180" step="1" value="0">
+              <small>Relative degrees. Zero preserves the original seed-selected angle.</small>
+            </label>
+            <label class="field mirror-field"><input type="checkbox" name="mirrorHorizontal" data-setting="mirrorHorizontal"> Mirror horizontally</label>
+            <label class="field mirror-field"><input type="checkbox" name="mirrorVertical" data-setting="mirrorVertical"> Mirror vertically</label>
+          </div>
           <label class="field">Path geometry <select name="geometry" data-setting="geometry"><option value="auto">Follow family</option><option value="straight">Straight</option><option value="wave">Wavy</option><option value="zigzag">Zigzag</option><option value="chevron">Chevron / pointed V</option><option value="jagged">Jagged / fractured</option><option value="stepped">Stepped</option><option value="arc">Sweeping arcs</option><option value="contour">Topographic</option></select></label>
           <label class="field">Stripe pattern <select name="motif" data-setting="motif"><option value="auto">Follow family</option><option value="solid">Solid</option><option value="dots">Dots</option><option value="stars">Stars</option><option value="dashes">Dashes</option><option value="diamonds">Diamonds</option><option value="chevrons">Chevrons</option><option value="hatch">Hatching</option><option value="checker">Checkerboard</option></select></label>
           <label class="field">Stripe line style
@@ -227,6 +237,8 @@
         <div class="main-actions"><button id="undo" class="button button-outline button-undo" type="button" disabled aria-label="Undo last design change" title="Nothing to undo">↶ <span>Undo</span></button><button id="randomize" class="button button-outline" type="button">↻ <span>New variation</span></button><button id="download" class="button button-light" type="button">↓ <span>Download PNG</span></button><button id="favorite" class="button button-icon" title="Save to favourites" aria-label="Save to favourites" aria-pressed="false" type="button">♡</button></div>
       </div>
       <div class="export-metadata">
+        <button id="importRecipePNG" type="button" class="text-link-button" aria-label="Restore design from saved PNG metadata">↥ Restore design from PNG</button>
+        <input id="importRecipeFile" type="file" accept="image/png,.png" hidden aria-label="Choose a wallpaper PNG to restore its recipe">
         <button id="metadataToggle" type="button" class="text-link-button metadata-toggle"
           aria-expanded="false" aria-controls="metadataPanel">▸ Edit image metadata</button>
         <div id="metadataPanel" class="metadata-panel" hidden>
@@ -277,10 +289,10 @@
       stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"
       aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>
   </button>
-  <script type="module" src="src/app.js?v=20261016-geometry3"></script>
+  <script type="module" src="src/app.js?v=20261016-transforms1"></script>
   <script type="module" src="src/mobile-studio.js?v=20261016-dock2"></script>
   <script type="module" src="src/mobile-swipes.js?v=20261016-swipe1"></script>
-  <script type="module" src="src/mobile-card-groups.js?v=20261016-related1"></script>
+  <script type="module" src="src/mobile-card-groups.js?v=20261016-transform1"></script>
   <script type="module" src="src/mobile-preview-tools.js?v=20261016-noscroll1"></script>
 </body>
 </html>

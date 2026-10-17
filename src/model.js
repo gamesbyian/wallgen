@@ -17,7 +17,7 @@ export const LOCKABLE_SETTINGS = ['seed','family','orientation','geometry','moti
   'textureLayer2Enabled','material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2',
   'textureLayer3Enabled','material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3',
   'textureDisplacement','patternHomogeneity','chaos','stripeWidth','spread','shapeFrequency','shapeDepth','lineStyle','individuality',
-  'overridePatternHomogeneity','gap','glow','position'];
+  'overridePatternHomogeneity','gap','glow','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','position'];
 export const PALETTES = ['classic', 'electric', 'pastel', 'jewel', 'muted'];
 export const TEXTURE_COVERAGES = ['both', 'stripes', 'background'];
 export const OUTLINES = ['none', 'hairline', 'white', 'double', 'broken', 'one-side', 'black', 'black-hairline', 'black-double', 'black-broken', 'black-one-side'];
@@ -72,6 +72,11 @@ export function normalizeRecipe(input = {}) {
       .map(([key])=>[key,input.lockedResolved[key]])),
     family: readChoice('family', FAMILIES),
     orientation: readChoice('orientation', ['vertical', 'horizontal', 'diagonal']),
+    reverseStripes: input.reverseStripes === true || input.reverseStripes === 'true',
+    // Relative degrees: 0 retains legacy seed-selected diagonal angle exactly.
+    diagonalRotation: finiteRange(input.diagonalRotation, 0, -180, 180),
+    mirrorHorizontal: input.mirrorHorizontal === true || input.mirrorHorizontal === 'true',
+    mirrorVertical: input.mirrorVertical === true || input.mirrorVertical === 'true',
     geometry: readChoice('geometry', GEOMETRIES),
     motif: readChoice('motif', MOTIFS),
     lineStyle: LINE_STYLES.includes(input.lineStyle) ? input.lineStyle : 'continuous',
@@ -160,6 +165,7 @@ export function resolveScene(recipeInput) {
   const individuality = recipe.individuality / 100;
   let angle = orientation === 'vertical' ? Math.PI / 2 : orientation === 'horizontal' ? 0 : (pick(random, [-1, 1]) * between(random, 0.30, 1.08));
   angle += between(random, -0.18, 0.18) * chaos;
+  if(orientation==='diagonal')angle += recipe.diagonalRotation*Math.PI/180;
   const span = DESIGN_WIDTH * Math.abs(Math.sin(angle)) + DESIGN_HEIGHT * Math.abs(Math.cos(angle));
   const spread = span * (0.17 + 0.53 * recipe.spread / 100);
   const center = between(random, -1, 1) * span * 0.09;
@@ -197,7 +203,10 @@ export function resolveScene(recipeInput) {
     const phase=between(r,0,Math.PI*2);
     const period=between(r,145,530)/frequencyFactor;
     return {
-      name: NAMES[i], index:i, color: paletteHsl(HUES[i], palette, r), center: position + center,
+      // Reverse the colour assignment, not the geometry. It keeps all seven
+      // ribbon centres sorted and preserves the historic scene on default.
+      name: NAMES[recipe.reverseStripes?6-i:i], index:i,
+      color: paletteHsl(HUES[recipe.reverseStripes?6-i:i], palette, r), center: position + center,
       width: Math.max(width, 1.5), geometry: individualGeometry, motif, lineStyle:recipe.lineStyle,
       phase, period, displacement,
       sharedGeometry:geometry, sharedPhase:commonPhase, sharedPeriod:commonPeriod,
@@ -228,6 +237,9 @@ export function resolveScene(recipeInput) {
   const materialSummary=textureLayers.length ? textureLayers.map(layer=>layer.material).join(' + ') : 'none';
   return {
     ...recipe, family, orientation, geometry, motif, palette, material, materialSummary, textureLayers, outline, background: recipe.background, angle, span,
+    // Reflect the entire diagonal ink layer, not its textures or background.
+    mirrorHorizontal:orientation==='diagonal' && recipe.mirrorHorizontal,
+    mirrorVertical:orientation==='diagonal' && recipe.mirrorVertical,
     stripes, intensity: chaos, width: avg, extent: Math.hypot(DESIGN_WIDTH, DESIGN_HEIGHT) * 1.35,
     reliefFallbackSeed:hashString(recipe.seed+':relief:fine-grain'),
     // These positions are the canonical, unnudged geometry. Pan is applied only
@@ -283,6 +295,8 @@ export function randomizeAllRecipe({primesOnly=false}={}) {
   return normalizeRecipe({
     seed, primesOnly, family:any(FAMILIES), orientation:any(['vertical','horizontal','diagonal']),
     geometry:any(GEOMETRIES), motif:any(MOTIFS), palette:any(PALETTES),
+    reverseStripes:r()>.5,diagonalRotation:Math.floor(r()*361)-180,
+    mirrorHorizontal:r()>.5,mirrorVertical:r()>.5,
     material:any(MATERIALS), textureCoverage:any(TEXTURE_COVERAGES), textureRotation:degrees(), textureBlend:any(BLEND_MODES),
     textureLayer2Enabled:r()>.45, material2:any(MATERIALS), textureStrength2:percent(), textureScale2:percent(),
     textureRotation2:degrees(), textureCoverage2:any(TEXTURE_COVERAGES), textureBlend2:any(BLEND_MODES),

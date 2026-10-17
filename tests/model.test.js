@@ -416,3 +416,36 @@ test('shape sliders and line-style selectors respect locks, Prime mode and saved
   assert.equal(normalizeRecipe({shapeFrequency:900}).shapeFrequency,100);
   assert.equal(normalizeRecipe({shapeDepth:-30}).shapeDepth,0);
 });
+
+test('reverse stripe order keeps geometry stable but assigns violet to first and red to last',()=>{
+  const base=resolveScene({seed:'reverse-order-seed',orientation:'vertical',geometry:'wave'});
+  const flipped=resolveScene({seed:'reverse-order-seed',orientation:'vertical',geometry:'wave',reverseStripes:true});
+  assert.deepEqual(flipped.stripes.map(x=>x.name),[...NAMES].reverse());
+  assert.deepEqual(flipped.stripes.map(x=>x.center),base.stripes.map(x=>x.center));
+  assert.deepEqual(flipped.stripes.map(x=>x.width),base.stripes.map(x=>x.width));
+  assert.ok(flipped.stripes.every((x,i)=>x.index===i));
+  assert.equal(normalizeRecipe({}).reverseStripes,false);
+});
+test('diagonal transforms are deterministic, portable and preserve legacy zero-angle scenes',()=>{
+  const base={seed:'diagonal-transform',orientation:'diagonal',chaos:0};
+  const original=resolveScene(base);
+  const rotated=resolveScene({...base,diagonalRotation:60,mirrorHorizontal:true,mirrorVertical:true});
+  assert.ok(Math.abs(rotated.angle-original.angle-Math.PI/3)<1e-10);
+  assert.equal(rotated.mirrorHorizontal,true);
+  assert.equal(rotated.mirrorVertical,true);
+  assert.equal(resolveScene({...base,mirrorHorizontal:true,mirrorVertical:true,
+    diagonalRotation:0}).angle,original.angle);
+  assert.equal(resolveScene({...base,orientation:'horizontal',mirrorHorizontal:true}).mirrorHorizontal,false);
+  assert.equal(normalizeRecipe({diagonalRotation:999}).diagonalRotation,180);
+  assert.equal(normalizeRecipe({diagonalRotation:-999}).diagonalRotation,-180);
+  const normalized=normalizeRecipe({...base,reverseStripes:true,diagonalRotation:-34,
+    mirrorHorizontal:true,mirrorVertical:true,lockedSettings:['reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical']});
+  assert.deepEqual(decodeRecipe(encodeRecipe(normalized)),normalized);
+  assert.deepEqual(resolveScene(normalized),resolveScene(decodeRecipe(encodeRecipe(normalized))));
+  const locked=respectSettingLocks(normalized,{...normalized,reverseStripes:false,diagonalRotation:0,
+    mirrorHorizontal:false,mirrorVertical:false});
+  assert.equal(locked.reverseStripes,true);
+  assert.equal(locked.diagonalRotation,-34);
+  assert.equal(locked.mirrorHorizontal,true);
+  assert.equal(locked.mirrorVertical,true);
+});

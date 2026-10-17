@@ -171,7 +171,10 @@ function traceEdge(stripe, extent, side, scene) {
 // ends safely inside the frame instead of leaving a one-sided crop.
 function ribbonPoint(scene,x,y) {
   const co=Math.cos(scene.angle), si=Math.sin(scene.angle);
-  return {x:scene.centerX+x*co-y*si,y:scene.centerY+x*si+y*co};
+  const px=scene.centerX+x*co-y*si,py=scene.centerY+x*si+y*co;
+  // Frame contacts/caps must use the same reflected coordinates as painting.
+  return {x:scene.mirrorHorizontal?DESIGN_WIDTH-px:px,
+    y:scene.mirrorVertical?DESIGN_HEIGHT-py:py};
 }
 function endpoints(scene,stripe,x) {
   return [ribbonPoint(scene,x,edgeAt(x,stripe,scene.extent,-1,scene)),ribbonPoint(scene,x,edgeAt(x,stripe,scene.extent,1,scene))];
@@ -274,8 +277,10 @@ export function motifFits(stripe,scene,x,y,halfX,halfY,extent=scene.extent) {
   const bounds=scene.renderBounds||{left:0,top:0,right:DESIGN_WIDTH,bottom:DESIGN_HEIGHT};
   const points=[];
   for(const dx of [-halfX,halfX])for(const dy of [-halfY,halfY]){
-    const px=scene.centerX+(x+dx)*cos-(y+dy)*sin;
-    const py=scene.centerY+(x+dx)*sin+(y+dy)*cos;
+    const rawX=scene.centerX+(x+dx)*cos-(y+dy)*sin;
+    const rawY=scene.centerY+(x+dx)*sin+(y+dy)*cos;
+    const px=scene.mirrorHorizontal?DESIGN_WIDTH-rawX:rawX;
+    const py=scene.mirrorVertical?DESIGN_HEIGHT-rawY:rawY;
     if(px<bounds.left||px>bounds.right||py<bounds.top||py>bounds.bottom)return false;
     points.push({x:px,y:py});
   }
@@ -624,7 +629,12 @@ export function drawWallpaper(canvas, recipe, options={}) {
   if(!g) throw new Error('Canvas ink layer unavailable');
   g.scale(scaleX,scaleY);
   g.translate(margin.left/scaleX,margin.top/scaleY);
-  g.translate(scene.centerX,scene.centerY);g.rotate(scene.angle);
+  if(scene.mirrorHorizontal||scene.mirrorVertical){
+    g.translate(DESIGN_WIDTH/2,DESIGN_HEIGHT/2);
+    g.scale(scene.mirrorHorizontal?-1:1,scene.mirrorVertical?-1:1);
+    g.translate(scene.centerX-DESIGN_WIDTH/2,scene.centerY-DESIGN_HEIGHT/2);
+  }else g.translate(scene.centerX,scene.centerY);
+  g.rotate(scene.angle);
   for(const stripe of scene.stripes){
     balanceStripeEnds(scene,stripe);
     if(stripe.hidden)continue;

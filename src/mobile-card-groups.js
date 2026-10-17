@@ -23,6 +23,8 @@ function layerFields(n){
   };
 }
 const definitions=[
+  {name:'Direction',members:()=>[setting('orientation'),setting('reverseStripes')]},
+  {name:'Diagonal transform',members:()=>[document.getElementById('diagonalSettings')]},
   {name:'Geometry',members:()=>[setting('geometry'),setting('shapeFrequency'),setting('shapeDepth')]},
   {name:'Stripe pattern',members:()=>[setting('motif'),setting('patternHomogeneity')]},
   {name:'Stripe shadows',members:()=>[document.querySelector('#panel-design .stripe-shadow-section')]},
@@ -43,7 +45,8 @@ const definitions=[
 let groups=[];
 function refreshVisibility(){
   for(const {host,spec} of groups){
-    host.hidden=Boolean(spec.layer>1&&panelForLayer(spec.layer).hidden);
+    host.hidden=Boolean((spec.layer>1&&panelForLayer(spec.layer).hidden)||
+      (spec.name==='Diagonal transform'&&document.getElementById('diagonalSettings').hidden));
   }
   document.dispatchEvent(new Event('mobile-setting-groups-changed'));
 }
@@ -81,6 +84,7 @@ function restore(){
 }
 const watch=new MutationObserver(refreshVisibility);
 for(const n of [2,3])watch.observe(panelForLayer(n),{attributes:true,attributeFilter:['hidden']});
+watch.observe(document.getElementById('diagonalSettings'),{attributes:true,attributeFilter:['hidden']});
 function syncGroups(){if(mobileCardsQuery.matches)group();else restore();}
 mobileCardsQuery.addEventListener('change',syncGroups);
 syncGroups();

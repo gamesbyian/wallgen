@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {embedPngMetadata,cleanMetadata} from '../src/png-metadata.js';
+import {embedPngMetadata,extractPngRecipe,serializePngRecipe,RECIPE_KEYWORD,cleanMetadata} from '../src/png-metadata.js';
+import {normalizeRecipe,resolveScene} from '../src/model.js';
 
 const tiny=Uint8Array.from(Buffer.from(
  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScL/9QAAAABJRU5ErkJggg==','base64'));
@@ -46,4 +47,36 @@ test('empty metadata leaves original file intact',()=>{
 });
 test('malformed non-PNG input is rejected',()=>{
   assert.throws(()=>embedPngMetadata(new Uint8Array([1,2,3]),{title:'x'}),/not a PNG/);
+});
+
+test('saved PNG always embeds regenerable, lossless normalized recipe even with empty optional metadata',()=>{
+  const input=normalizeRecipe({
+    seed:'persist-regenerate-🌈',family:'signal',orientation:'diagonal',
+    diagonalRotation:-73,reverseStripes:true,mirrorHorizontal:true,mirrorVertical:false,
+    palette:'pastel',motif:'hatch',textureLayer2Enabled:true,material2:'felt',
+    textureRotation2:29,positionX:8,positionY:-12,
+    lockedSettings:['orientation','reverseStripes','mirrorHorizontal','position'],
+    primesOnly:true,
+  });
+  const result=embedPngMetadata(tiny,{}, {recipe:input});
+  const recipeChunk=chunks(result).find(c=>c.type==='iTXt'&&decode(c.data).includes(RECIPE_KEYWORD));
+  assert.ok(recipeChunk,'R.O.Y.G.B.I.V. recipe is a dedicated PNG iTXt field');
+  assert.deepEqual(extractPngRecipe(result),input);
+  assert.deepEqual(resolveScene(extractPngRecipe(result)),resolveScene(input));
+  assert.deepEqual(chunks(result).filter(x=>['IHDR','IDAT','IEND'].includes(x.type))
+    .map(x=>[x.type,[...x.data]]),chunks(tiny).map(x=>[x.type,[...x.data]]));
+  const envelope=JSON.parse(serializePngRecipe(input));
+  assert.equal(envelope.format,'roygbiv-recipe-v1');
+  assert.deepEqual(envelope.output,{width:3024,height:6552});
+});
+test('recipe reader rejects corrupted chunks and distinguishes old PNGs without a recipe',()=>{
+  assert.equal(extractPngRecipe(tiny),null);
+  const data=embedPngMetadata(tiny,{title:'test'},{recipe:{seed:'recover-me'}});
+  const corrupted=new Uint8Array(data);
+  const raw=Buffer.from(corrupted);
+  const index=raw.indexOf(Buffer.from('recover-me'));
+  assert.ok(index>0);
+  corrupted[index]=corrupted[index]^1;
+  assert.throws(()=>extractPngRecipe(corrupted),/checksum/);
+  assert.throws(()=>extractPngRecipe(new Uint8Array([3,1,4])),/not a PNG/);
 });

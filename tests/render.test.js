@@ -11,7 +11,7 @@ class FakePath2D {
 }
 class FakeContext {
   constructor(tag='layer') {this.tag=tag;this.fillStyle='#000';this.strokeStyle='#000';this.globalAlpha=1;this.globalCompositeOperation='source-over';}
-  save(){} restore(){} scale(){} translate(){} rotate(a){calls.push(['rotate',a]);} setTransform(){}
+  save(){} restore(){} scale(x,y){calls.push(['scale',x,y]);} translate(){} rotate(a){calls.push(['rotate',a]);} setTransform(){}
   clearRect(){} beginPath(){} moveTo(){} lineTo(){} closePath(){}
   arc(){} quadraticCurveTo(){} clip(){calls.push(['clip',this.tag]);} stroke(){} setLineDash(){}
   fill(){} fillRect(...args){calls.push(['fillRect',this.fillStyle,...args,this.tag]);}
@@ -423,4 +423,24 @@ test('dotted/dashed marks keep the same anchor and spacing when overscan is used
   drawWallpaper(canvas,{...scene,positionX:0,positionY:0},{cache});
   assert.ok(cache.ink.width>600);
   assert.deepEqual(stripeLineMarks(stripe,scene.extent),marks);
+});
+
+test('diagonal mirroring applies to ink transform, not the whole background canvas',()=>{
+  for(const [mirrorHorizontal,mirrorVertical] of [[true,false],[false,true],[true,true]]){
+    calls.length=0;
+    const scene=drawWallpaper({width:600,height:1300,getContext:()=>new FakeContext('main')},
+      {seed:'reflect-geometry',orientation:'diagonal',geometry:'wave',
+        diagonalRotation:29,mirrorHorizontal,mirrorVertical});
+    assert.equal(scene.mirrorHorizontal,mirrorHorizontal);
+    assert.equal(scene.mirrorVertical,mirrorVertical);
+    assert.ok(calls.some(x=>x[0]==='scale'&&x[1]===(mirrorHorizontal?-1:1)&&
+      x[2]===(mirrorVertical?-1:1)),'stripe ink uses reflected geometry');
+    for(const stripe of scene.stripes){
+      balanceStripeEnds(scene,stripe);
+      if(stripe.hidden)continue;
+      const contacts=stripeFrameContacts(scene,stripe);
+      assert.equal(contacts.left,contacts.right);
+      assert.equal(contacts.top,contacts.bottom);
+    }
+  }
 });
