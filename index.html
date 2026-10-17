@@ -55,6 +55,20 @@
     <main class="workspace">
       <div class="workspace-head"><div><span class="eyebrow">LIVE GENERATION / 01</span><h2>The canvas</h2><p>Built for your Pixel 6 Pro. Ready for an OLED display.</p></div><div class="dimensions"><strong>3024 × 6552</strong><span>PNG • 210% native width &amp; height</span></div></div>
       <div class="randomize-bar"><button id="randomizeAll" class="button button-rainbow button-randomize-all" type="button">✳ <span>Randomize all</span></button><span>Fresh colours, shapes, materials, settings and seed</span></div>
+      <div class="composition-positioner" aria-label="Position the composition">
+        <div class="positioner-description">
+          <strong>MOVE COMPOSITION</strong>
+          <span>Shift the rainbow within the frame</span>
+          <output id="positionStatus" aria-live="polite">Centered</output>
+        </div>
+        <div class="nudge-pad" role="group" aria-label="Move rainbow artwork">
+          <button type="button" class="nudge-button nudge-up" data-nudge="up" aria-label="Move composition up" title="Move up">↑</button>
+          <button type="button" class="nudge-button nudge-left" data-nudge="left" aria-label="Move composition left" title="Move left">←</button>
+          <button type="button" class="nudge-button nudge-reset" data-nudge="reset" aria-label="Reset composition offset" title="Reset position">⌖</button>
+          <button type="button" class="nudge-button nudge-right" data-nudge="right" aria-label="Move composition right" title="Move right">→</button>
+          <button type="button" class="nudge-button nudge-down" data-nudge="down" aria-label="Move composition down" title="Move down">↓</button>
+        </div>
+      </div>
       <div class="studio-stage">
         <div class="stage-inner">
           <div class="wallpaper-frame"><canvas id="preview" width="600" height="1300" role="img" aria-label="Procedurally generated seven stripe rainbow wallpaper"></canvas></div>
