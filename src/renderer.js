@@ -36,13 +36,14 @@ function geometryAt(x,stripe,extent) {
 function stripePath(stripe, extent) {
   const path = new Path2D();
   const count = 500;
+  const start=stripe.segmentStart??-extent, end=stripe.segmentEnd??extent;
   for (let i=0;i<=count;i++) {
-    const x = -extent + 2*extent*i/count;
+    const x = start + (end-start)*i/count;
     const y = geometryAt(x,stripe,extent) - widthAt(x,stripe,extent)/2;
     if(i===0) path.moveTo(x,y); else path.lineTo(x,y);
   }
   for(let i=count;i>=0;i--) {
-    const x = -extent + 2*extent*i/count;
+    const x = start + (end-start)*i/count;
     path.lineTo(x,geometryAt(x,stripe,extent)+widthAt(x,stripe,extent)/2);
   }
   path.closePath();
@@ -50,12 +51,77 @@ function stripePath(stripe, extent) {
 }
 function traceEdge(stripe, extent, side) {
   const path=new Path2D();
+  const start=stripe.segmentStart??-extent, end=stripe.segmentEnd??extent;
   for(let i=0;i<=500;i++){
-    const x=-extent+2*extent*i/500;
+    const x=start+(end-start)*i/500;
     const y=geometryAt(x,stripe,extent)+side*widthAt(x,stripe,extent)/2;
     if(i===0) path.moveTo(x,y); else path.lineTo(x,y);
   }
   return path;
+}
+// A stripe may either meet BOTH opposed frame edges, or NEITHER.
+// When an irregular path exits via unmatched sides, place its two physical
+// ends safely inside the frame instead of leaving a one-sided crop.
+function ribbonPoint(scene,x,y) {
+  const co=Math.cos(scene.angle), si=Math.sin(scene.angle);
+  return {x:scene.centerX+x*co-y*si,y:scene.centerY+x*si+y*co};
+}
+function endpoints(scene,stripe,x) {
+  const mid=geometryAt(x,stripe,scene.extent),radius=widthAt(x,stripe,scene.extent)/2;
+  return [ribbonPoint(scene,x,mid-radius),ribbonPoint(scene,x,mid+radius)];
+}
+function contactSegment(scene,contacts,p,q) {
+  const hit=(t,at,other,low,high)=>t>=0&&t<=1&&other>=low-1e-7&&other<=high+1e-7;
+  for(const [side,value,field,other,length] of [
+    ['left',0,'x','y',DESIGN_HEIGHT],['right',DESIGN_WIDTH,'x','y',DESIGN_HEIGHT],
+    ['top',0,'y','x',DESIGN_WIDTH],['bottom',DESIGN_HEIGHT,'y','x',DESIGN_WIDTH],
+  ]){
+    if(contacts[side]||Math.abs(q[field]-p[field])<1e-9)continue;
+    const t=(value-p[field])/(q[field]-p[field]);
+    if(hit(t,null,p[other]+t*(q[other]-p[other]),0,length))contacts[side]=true;
+  }
+}
+export function stripeFrameContacts(scene,stripe) {
+  const contacts={left:false,right:false,top:false,bottom:false};
+  const n=480;
+  let previous=endpoints(scene,stripe,-scene.extent);
+  for(let i=1;i<=n;i++){
+    const current=endpoints(scene,stripe,-scene.extent+2*scene.extent*i/n);
+    contactSegment(scene,contacts,previous[0],current[0]);
+    contactSegment(scene,contacts,previous[1],current[1]);
+    contactSegment(scene,contacts,current[0],current[1]);
+    previous=current;
+  }
+  return contacts;
+}
+export function balanceStripeEnds(scene,stripe) {
+  const contacts=stripeFrameContacts(scene,stripe);
+  const balanced=(contacts.left===contacts.right && contacts.top===contacts.bottom);
+  if(balanced)return {contacts,balanced:true,hidden:false};
+  // Account for borders and glow so even their outermost pixels stay inset.
+  const margin=24+scene.glow*.30+scene.gap*.08;
+  const inside=x=>endpoints(scene,stripe,x).every(p=>
+    p.x>=margin && p.x<=DESIGN_WIDTH-margin &&
+    p.y>=margin && p.y<=DESIGN_HEIGHT-margin);
+  const samples=640;
+  let start=null,bestStart=null,bestEnd=null;
+  for(let i=0;i<=samples;i++){
+    const x=-scene.extent+2*scene.extent*i/samples;
+    const yes=inside(x);
+    if(yes && start===null)start=x;
+    if((!yes || i===samples)&&start!==null){
+      const end=yes?x:-scene.extent+2*scene.extent*(i-1)/samples;
+      if(bestStart===null||end-start>bestEnd-bestStart){bestStart=start;bestEnd=end;}
+      start=null;
+    }
+  }
+  if(bestStart===null || bestEnd-bestStart<8){
+    stripe.hidden=true;
+    return {contacts,balanced:false,hidden:true};
+  }
+  stripe.segmentStart=bestStart;
+  stripe.segmentEnd=bestEnd;
+  return {contacts,balanced:false,hidden:false,start:bestStart,end:bestEnd};
 }
 function stampStar(ctx,x,y,r,points=5) {
   ctx.beginPath();
@@ -73,7 +139,7 @@ function stampStar(ctx,x,y,r,points=5) {
  * or completely absent. Multiple x samples protect curved/jagged edges.
  */
 export function motifFits(stripe,scene,x,y,halfX,halfY,extent=scene.extent) {
-  if(x-halfX < -extent || x+halfX > extent) return false;
+  if(stripe.hidden || x-halfX < (stripe.segmentStart??-extent) || x+halfX > (stripe.segmentEnd??extent)) return false;
   const margin=.12;
   for(let i=0;i<=8;i++){
     const testX=x-halfX+halfX*i/4;
@@ -265,6 +331,8 @@ export function drawWallpaper(canvas, recipe) {
   g.scale(canvas.width/DESIGN_WIDTH,canvas.height/DESIGN_HEIGHT);
   g.translate(scene.centerX,scene.centerY);g.rotate(scene.angle);
   for(const stripe of scene.stripes){
+    balanceStripeEnds(scene,stripe);
+    if(stripe.hidden)continue;
     const path=stripePath(stripe,scene.extent);
     if(scene.glow>0){
       g.save();g.shadowColor=stripe.color;g.shadowBlur=scene.glow/100*32;g.globalAlpha=.70;
