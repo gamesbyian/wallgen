@@ -20,7 +20,14 @@ export function modulation(x, geometry, phase, period, d, extent){
   if(geometry==='chevron')return d*(1-2*Math.pow(Math.abs(2*fract(t)-1),.55));
   if(geometry==='jagged')return d*(noise1D(x/(period*.33),phase)*.85+.15*Math.sin(t*TAU));
   if(geometry==='stepped')return d*(Math.floor(fract(t)*4)/2-.75);
-  if(geometry==='arc')return d*(Math.pow(x/extent,2)*3.8-.6);
+  if(geometry==='arc'){
+    // Arc frequency is curvature frequency: 0 gives a single broad sweep,
+    // while higher values produce a train of joined arches.
+    const cycles=Math.max(.2,extent/Math.max(30,period));
+    const u=x/extent*cycles;
+    const local=2*fract((u+1)/2)-1;
+    return d*(1-local*local)*2-d;
+  }
   return d*(Math.sin(t*TAU*.42)*.35+Math.sin(t*TAU*.79+phase)*.4+Math.sin(t*TAU*1.33)*.25);
 }
 export function pathPosition(stripe,x,extent){
@@ -91,7 +98,7 @@ export function widthAt(stripe,x,extent){
   if(!taper)return base;
   const start=stripe.segmentStart??-extent,end=stripe.segmentEnd??extent;
   const span=Math.max(1,end-start),distance=Math.min(x-start,end-x);
-  const edge=clamp(distance/(Math.max(0.1,taper)*span*.45),0,1);
+  const edge=clamp(distance/(Math.max(.001,taper)*span*.45),0,1);
   return base*(.03+.97*edge*edge*(3-2*edge));
 }
 export function ribbonEdge(stripe,x,extent,side,edgeRelief=0){
