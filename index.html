@@ -19,8 +19,9 @@
       <form id="controls" autocomplete="off">
         <div class="randomize-bar randomize-toolbar">
           <button id="randomizeAll" class="button button-rainbow button-randomize-all" type="button">✳ <span>Randomize</span></button>
-          <label class="prime-toggle" title="Randomized percentages and texture angles will be prime numbers"><input type="checkbox" name="primesOnly" data-setting="primesOnly"><span>Primes only</span></label>
+          <label class="prime-toggle" title="Randomized percentages and texture angles will be prime numbers"><input type="checkbox" name="primesOnly" data-setting="primesOnly" aria-describedby="primeModeHint"><span>Primes only</span></label>
         </div>
+        <p id="primeModeHint" class="prime-mode-hint" hidden>Prime percentages: 2–97. Prime texture angles: 2–359°. Locked values stay as they are.</p>
         <p class="studio-guidance">Refine one aspect at a time. <span>🔓</span> to protect settings from randomization.</p>
         <nav class="settings-tabs" role="tablist" aria-label="Wallpaper settings">
           <button type="button" id="tab-design" class="settings-tab" role="tab" aria-selected="true" aria-controls="panel-design" tabindex="0" data-tab="design"><span aria-hidden="true">◇</span> Design</button>
