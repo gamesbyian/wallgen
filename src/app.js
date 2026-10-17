@@ -195,7 +195,7 @@ metadataPanel.addEventListener('input',syncMetadataStorage);
 rememberMetadata.addEventListener('change',syncMetadataStorage);
 document.getElementById('metadataClear').addEventListener('click',()=>{
   for(const key of METADATA_FIELDS){
-    metadataPanel.querySelector('[name="'+key+'"]').value=key==='software'?'Wallgen · Made with ChatGPT':'';
+    metadataPanel.querySelector('[name="'+key+'"]').value=key==='software'?'R.O.Y.G.B.I.V. · Made with ChatGPT':'';
   }
   syncMetadataStorage();
 });
@@ -220,7 +220,7 @@ async function downloadPNG(){
     const metadata=metadataValues();
     const result=Object.keys(metadata).length?
       new Blob([embedPngMetadata(await blob.arrayBuffer(),metadata)],{type:'image/png'}):blob;
-    downloadBlob(result,`wallgen-${safeFilename(current.seed)}-${OUTPUT_WIDTH}x${OUTPUT_HEIGHT}.png`);
+    downloadBlob(result,`roygbiv-${safeFilename(current.seed)}-${OUTPUT_WIDTH}x${OUTPUT_HEIGHT}.png`);
     showNotice(`Exported ${OUTPUT_WIDTH} × ${OUTPUT_HEIGHT} PNG with embedded metadata.`);
   }catch(error){console.error(error);showNotice(`Export failed: ${error.message}`);}
   finally { if(big){big.width=0;big.height=0;}setBusy(button,false); }
@@ -457,7 +457,7 @@ document.getElementById('undo').addEventListener('click',undo);
 document.getElementById('download').addEventListener('click',downloadPNG);
 document.getElementById('copyRecipe').addEventListener('click',()=>copyText(JSON.stringify(current,null,2)));
 document.getElementById('copyLink').addEventListener('click',()=>copyText(location.href));
-document.getElementById('downloadRecipe').addEventListener('click',()=>downloadBlob(new Blob([JSON.stringify(current,null,2)+'\n'],{type:'application/json'}),`wallgen-${safeFilename(current.seed)}.json`));
+document.getElementById('downloadRecipe').addEventListener('click',()=>downloadBlob(new Blob([JSON.stringify(current,null,2)+'\n'],{type:'application/json'}),`roygbiv-${safeFilename(current.seed)}.json`));
 favoriteButton.addEventListener('click',()=>{
   if(isFavorite(current)){favorites=favorites.filter(item=>!sameRecipe(item,current));showNotice('Removed from favourites.');}
   else {favorites.unshift({...current});favorites=favorites.slice(0,60);showNotice('Added to favourites.');}
