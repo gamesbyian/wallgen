@@ -44,6 +44,7 @@ const definitions=[
       const a=layerFields(n);return [a.strength,a.scale,a.rotation];
     }},
   ]),
+  {name:'Stripe ends',members:()=>[setting('pathLength'),setting('endTaper')]},
   {name:'Individuality',members:()=>[setting('individuality'),setting('overridePatternHomogeneity')]},
 ];
 let groups=[];
