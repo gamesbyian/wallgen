@@ -149,6 +149,31 @@ npm run render -- --seed spring-test --set geometry=loops --set construction=str
 npm run render -- --seed groups-test --set composition=repeat --set repeatCount=4 --set repeatSpacing=55 --set geometry=straight --width 600 --height 1300 --out groups.png
 ```
 
+## Draw a path with your finger
+
+The **Draw path** action lives beside Randomize, Primes Only and Undo on the
+preview's left mobile rail (and in the desktop controls). **Undo is directly
+beneath Primes Only.** Tap Draw path, trace one continuous curve over the
+wallpaper with touch, pen or mouse, then lift to see a finished path.
+
+- **Smooth** suppresses input jitter and preserves the gesture's curves.
+- **Geometric** simplifies the sketch, aligns near-horizontal, vertical and
+  45-degree segments, and rounds their joins.
+- **Redraw** clears only the uncommitted trace; **Use path** applies all seven
+  rainbow stripes along its trajectory; **Cancel** leaves the design unchanged.
+- Applying a path creates a single undo checkpoint. Normal colour, texture,
+  stripe width, spread, line construction, effects, favourites and exports
+  continue to work with the new trajectory.
+- The path is stored as at most 96 bounded normalized points inside the ordinary
+  recipe and PNG metadata. Share links, CLI recipes and full-resolution PNGs all
+  reconstruct the exact same centreline.
+- Preview-only zoom is accounted for when capturing finger positions. The
+  drawing overlay is temporary and does not appear in exported pixels.
+
+A hand-drawn geometry appears in the normal Path geometry selector once a path
+has been saved. Randomize does not invent arbitrary hand-drawn paths, but locking
+Path geometry preserves your traced curve during further randomization.
+
 ## Output
 
 - Google Pixel 6 Pro native screen: **1440 × 3120**.
