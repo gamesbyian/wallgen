@@ -100,7 +100,13 @@ try{
   assert.ok(phone.dock.y>=phone.preview.bottom-16,'dock should sit below the preview');
   assert.ok(phone.dock.bottom<=915,'dock should be fully visible');
   await evaluate('document.getElementById("mobileEdit").click()');
-  await waitFor('document.body.classList.contains("mobile-edit-open") && document.querySelector(".sidebar").getBoundingClientRect().top < innerHeight');
+  await waitFor(`(()=>{
+    const stage=document.querySelector('.studio-stage').getBoundingClientRect();
+    const sidebar=document.querySelector('.sidebar').getBoundingClientRect();
+    const dock=document.querySelector('.mobile-dock').getBoundingClientRect();
+    return document.body.classList.contains('mobile-edit-open') &&
+      stage.bottom<=sidebar.top+2 && sidebar.bottom<=dock.top+2;
+  })()`);
   const editor=await evaluate(`(()=>({
     open:document.body.classList.contains('mobile-edit-open'),
     visible:document.querySelector('.sidebar').getBoundingClientRect().top<innerHeight,
@@ -154,6 +160,11 @@ try{
   assert.equal(await evaluate('document.documentElement.dataset.theme'),'dark');
   await evaluate('document.getElementById("mobileDesignClose").click()');
   await evaluate('document.getElementById("mobileMore").click()');
+  await waitFor(`(()=>{
+    const stage=document.querySelector('.studio-stage').getBoundingClientRect();
+    const sheet=document.getElementById('mobileToolsSheet').getBoundingClientRect();
+    return stage.bottom<=sheet.top+2;
+  })()`);
   const tools=await evaluate(`(()=>({
     open:document.body.classList.contains('mobile-tools-open'),
     seed:!!document.querySelector('#mobileToolsContent #seedInput'),
@@ -172,6 +183,11 @@ try{
   assert.ok(utilities.separated&&utilities.previewHeight>300,'nudge and other live tools must not cover the preview');
   await evaluate('document.getElementById("mobileToolsClose").click()');
   await evaluate('document.getElementById("mobileExplore").click()');
+  await waitFor(`(()=>{
+    const stage=document.querySelector('.studio-stage').getBoundingClientRect();
+    const tray=document.querySelector('.workspace>.gallery-section').getBoundingClientRect();
+    return stage.bottom<=tray.top+2;
+  })()`);
   assert.ok(await evaluate('document.body.classList.contains("mobile-gallery-open")'));
   assert.equal(await evaluate('getComputedStyle(document.querySelector(".workspace>.gallery-section")).display'),'flex');
   const galleryMetrics=await evaluate(`(()=>{
