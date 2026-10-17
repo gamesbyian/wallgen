@@ -25,6 +25,8 @@ const exploreBtn=document.getElementById('mobileExplore');
 const moreBtn=document.getElementById('mobileMore');
 const favouriteBtn=document.getElementById('mobileFavorite');
 const dismissHandle=document.getElementById('mobileDismissHandle');
+const dockExpand=document.getElementById('mobileDockExpand');
+const dock=document.getElementById('mobileActionDock');
 const originals=['.composition-positioner','.action-tray','.export-metadata','.secondary-actions','.details-bar']
   .map(sel=>document.querySelector(sel)).filter(Boolean);
 const placeholders=originals.map(node=>{
@@ -48,6 +50,8 @@ function closeSurfaces({restoreFocus=true}={}){
   design.removeAttribute('aria-modal');
   design.removeAttribute('role');
   tools.hidden=true;backstage.hidden=true;
+  dockExpand.setAttribute('aria-expanded','false');
+  dock.removeAttribute('aria-hidden');
   editBtn.setAttribute('aria-expanded','false');
   exploreBtn.setAttribute('aria-expanded','false');
   moreBtn.setAttribute('aria-expanded','false');
@@ -65,7 +69,11 @@ function openSurface(type){
   backstage.hidden=true;
   if(type==='edit'){
     editBtn.setAttribute('aria-expanded','true');
+    dockExpand.setAttribute('aria-expanded','false');
+    dock.setAttribute('aria-hidden','true');
     design.setAttribute('role','region');
+    // The dock slides off the right edge, leaving only its accessible
+    // expand arrow. Focus stays on the on-screen controls, not the hidden dock.
     dismissHandle.focus({preventScroll:true});
   }else if(type==='gallery'){
     exploreBtn.setAttribute('aria-expanded','true');
@@ -82,6 +90,7 @@ gallery.addEventListener('click',event=>{
   if(event.target.closest('.thumb'))closeSurfaces({restoreFocus:false});
 });
 dismissHandle.addEventListener('click',()=>closeSurfaces());
+dockExpand.addEventListener('click',()=>closeSurfaces({restoreFocus:false}));
 // Tapping the live image gives the user the full-size preview immediately.
 document.querySelector('.studio-stage').addEventListener('click',()=>{
   if(document.body.classList.contains('mobile-edit-open'))closeSurfaces({restoreFocus:false});
