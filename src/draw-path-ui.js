@@ -1,4 +1,4 @@
-import {finishDrawnPath} from './drawn-path.js';
+import {finishDrawnPath,DRAW_COORD_MIN,DRAW_COORD_MAX} from './drawn-path.js';
 
 // A temporary transparent overlay captures one physical pointer stroke.
 // Only the committed, normalized finished path becomes part of the recipe.
@@ -6,6 +6,7 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
   const button=document.getElementById('drawPathToggle');
   const panel=document.getElementById('drawPathPanel');
   const overlay=document.getElementById('drawOverlay');
+  const wallpaper=document.getElementById('preview');
   const hint=document.getElementById('drawPathHint');
   const apply=document.getElementById('drawApply');
   const smooth=document.getElementById('drawSmooth');
@@ -20,13 +21,18 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
     ctx.setTransform(1,0,0,1,0,0);
     ctx.clearRect(0,0,overlay.width,overlay.height);
     if(points.length<2)return;
+    // The temporary preview path is drawn in stage coordinates while its
+    // recipe points stay in unzoomed wallpaper coordinates.
+    const stage=overlay.getBoundingClientRect(),image=wallpaper.getBoundingClientRect();
+    const toX=x=>(image.left+x*image.width-stage.left)*overlay.width/stage.width;
+    const toY=y=>(image.top+y*image.height-stage.top)*overlay.height/stage.height;
     ctx.lineJoin='round';ctx.lineCap='round';
     for(const [colour,width] of [['#11131b',10],['#fff4a8',5]]){
       ctx.strokeStyle=colour;ctx.lineWidth=width;
       ctx.beginPath();
       points.forEach(([x,y],i)=>{
-        if(!i)ctx.moveTo(x*overlay.width,y*overlay.height);
-        else ctx.lineTo(x*overlay.width,y*overlay.height);
+        if(!i)ctx.moveTo(toX(x),toY(y));
+        else ctx.lineTo(toX(x),toY(y));
       });
       ctx.stroke();
     }
@@ -49,7 +55,7 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
   function reset(){
     pointer=null;raw=[];ready=[];
     apply.disabled=true;draw([]);
-    hint.textContent='Draw one continuous line across the wallpaper.';
+    hint.textContent='Start anywhere in the preview, including outside the frame.';
   }
   function stop(){
     active=false;reset();overlay.hidden=true;panel.hidden=true;
@@ -70,11 +76,11 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
     document.body.classList.add('path-drawing');
   }
   const position=event=>{
-    // getBoundingClientRect includes the preview-only zoom, CSS scaling,
-    // framing and page position. No assumption about device pixel ratio.
-    const rect=overlay.getBoundingClientRect();
-    return [Math.max(0,Math.min(1,(event.clientX-rect.left)/rect.width)),
-      Math.max(0,Math.min(1,(event.clientY-rect.top)/rect.height))];
+    // The full stage captures the pointer. Coordinates are relative to the
+    // actual zoomed wallpaper, without clipping at its edges.
+    const rect=wallpaper.getBoundingClientRect();
+    return [Math.max(DRAW_COORD_MIN,Math.min(DRAW_COORD_MAX,(event.clientX-rect.left)/rect.width)),
+      Math.max(DRAW_COORD_MIN,Math.min(DRAW_COORD_MAX,(event.clientY-rect.top)/rect.height))];
   };
   function append(event){
     const coalesced=event.getCoalescedEvents?.();
@@ -113,6 +119,10 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
   });
   overlay.addEventListener('click',event=>{if(active){event.preventDefault();event.stopPropagation();}});
   button.addEventListener('click',()=>active?stop():start());
+  window.addEventListener('resize',()=>{if(active)draw(ready.length?ready:raw);});
+  overlay.parentElement.addEventListener('roygbiv-preview-zoom',()=>{
+    if(active)draw(ready.length?ready:raw);
+  });
   smooth.addEventListener('click',()=>setFit('smooth'));
   geometric.addEventListener('click',()=>setFit('geometric'));
   again.addEventListener('click',reset);
