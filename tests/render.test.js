@@ -11,11 +11,11 @@ class FakePath2D {
 }
 class FakeContext {
   constructor(tag='layer') {this.tag=tag;this.fillStyle='#000';this.strokeStyle='#000';this.globalAlpha=1;this.globalCompositeOperation='source-over';}
-  save(){} restore(){} scale(){} translate(){} rotate(){} setTransform(){}
+  save(){} restore(){} scale(){} translate(){} rotate(a){calls.push(['rotate',a]);} setTransform(){}
   clearRect(){} beginPath(){} moveTo(){} lineTo(){} closePath(){}
   arc(){} quadraticCurveTo(){} clip(){calls.push(['clip',this.tag]);} stroke(){} setLineDash(){}
   fill(){} fillRect(...args){calls.push(['fillRect',this.fillStyle,...args,this.tag]);}
-  drawImage(){calls.push(['drawImage']);}
+  drawImage(){calls.push(['drawImage',this.globalCompositeOperation]);}
   createPattern(){return '#pattern';}
   createRadialGradient(){return {addColorStop(){}};}
 }
@@ -97,4 +97,23 @@ test('frame contacts are bilateral or fully inset for a variety of seeded geomet
     }
   assert.ok(through>0,'Some stripes should still cross paired opposite edges');
   assert.ok(inset>0,'Unbalanced edge contact should trigger paired end insets');
+});
+
+test('three composited materials apply rotated masks, background and blend modes',()=>{
+  calls.length=0;
+  const canvas={width:600,height:1300,getContext:()=>new FakeContext()};
+  const scene=drawWallpaper(canvas,{
+    seed:'composite-test',material:'wood-grain',textureCoverage:'both',
+    textureRotation:45,textureBlend:'overlay',
+    textureLayer2Enabled:true,material2:'adobe',textureCoverage2:'background',
+    textureRotation2:90,textureBlend2:'multiply',
+    textureLayer3Enabled:true,material3:'corduroy',textureCoverage3:'stripes',
+    textureRotation3:13.5,textureBlend3:'screen',
+  });
+  assert.equal(scene.textureLayers.length,3);
+  assert.ok(calls.some(c=>c[0]==='rotate' && Math.abs(c[1]-Math.PI/2)<1e-7));
+  assert.ok(calls.some(c=>c[0]==='rotate' && Math.abs(c[1]-13.5*Math.PI/180)<1e-7));
+  for(const composite of ['overlay','multiply','screen','destination-in']){
+    assert.ok(calls.some(c=>c[0]==='drawImage' && c[1]===composite),composite);
+  }
 });
