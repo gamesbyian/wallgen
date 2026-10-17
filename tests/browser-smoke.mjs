@@ -112,6 +112,26 @@ try{
   assert.equal(guide.pressed,'true');assert.equal(guide.hidden,false);
   assert.ok(Math.abs(guide.ratioW-.9)<.01&&Math.abs(guide.ratioH-.9)<.01);
   assert.ok(guide.untouched&&guide.off,'Bleed is a reversible preview-only outline');
+  // Bleed follows background rather than sampling stripe pixels, and the
+  // hairline inherits the frame's corner radius.
+  for(const background of ['black','white']){
+    await evaluate(`(()=>{const select=document.querySelector('[name=background]');select.value=${JSON.stringify(background)};select.dispatchEvent(new Event('change',{bubbles:true}));document.getElementById('mobileBleed').click()})()`);
+    const state=await evaluate('(()=>{const guide=document.getElementById("bleedGuide"),frame=document.querySelector(".wallpaper-frame");return {colour:getComputedStyle(guide).borderTopColor,radius:getComputedStyle(guide).borderTopLeftRadius,frameRadius:getComputedStyle(frame).borderTopLeftRadius}})()');
+    assert.equal(state.colour,background==='black'?'rgb(255, 255, 255)':'rgb(16, 16, 20)');
+    assert.equal(state.radius,state.frameRadius);
+    assert.ok(parseFloat(state.radius)>0);
+    await evaluate('document.getElementById("mobileBleed").click()');
+  }
+  // Side-rail Save/Favourite must keep the editor open, unlike navigation.
+  const beforeFavorite=await evaluate('document.getElementById("favorite").getAttribute("aria-pressed")');
+  await evaluate('document.querySelector("[data-dock-proxy=mobileFavorite]").click()');
+  assert.ok(await evaluate('document.body.classList.contains("mobile-edit-open")'));
+  assert.notEqual(await evaluate('document.getElementById("favorite").getAttribute("aria-pressed")'),beforeFavorite);
+  await evaluate('document.querySelector("[data-dock-proxy=mobileFavorite]").click()');
+  assert.ok(await evaluate('document.body.classList.contains("mobile-edit-open")'));
+  const saveClicks=await evaluate('(()=>{window.__sideSaveClicks=0;document.getElementById("download").addEventListener("click",()=>window.__sideSaveClicks++);document.querySelector("[data-dock-proxy=mobileDownload]").click();return window.__sideSaveClicks})()');
+  assert.equal(saveClicks,1);
+  assert.ok(await evaluate('document.body.classList.contains("mobile-edit-open")'));
   await waitFor(`(()=>{
     const rail=document.getElementById('mobileEditorActionRail').getBoundingClientRect();
     const edit=document.getElementById('mobileDesignSheet').getBoundingClientRect();
@@ -356,6 +376,12 @@ try{
   // keeping its card available. Layer 3 works the same way.
   await evaluate('(()=>{const el=document.querySelector("[name=material2]");el.value="none";el.dispatchEvent(new Event("change",{bubbles:true}))})()');
   await waitFor('document.getElementById("textureLayer2Enabled").checked===false');
+  await evaluate('(()=>{const el=document.querySelector("[name=material3]");el.value="foil";el.dispatchEvent(new Event("change",{bubbles:true}))})()');
+  await waitFor('document.getElementById("textureLayer3Enabled").checked===true');
+  assert.ok(await evaluate('document.getElementById("textureLayer2Enabled").checked===false'),
+    'layer 3 must activate without forcing layer 2 on');
+  await evaluate('(()=>{const el=document.querySelector("[name=material3]");el.value="none";el.dispatchEvent(new Event("change",{bubbles:true}))})()');
+  await waitFor('document.getElementById("textureLayer3Enabled").checked===false');
   assert.ok(await evaluate('document.getElementById("textureLayer2Panel").hidden===false'));
   assert.ok(await evaluate('document.getElementById("textureLayer3Panel").hidden===false'));
   assert.ok(await evaluate('!document.getElementById("addTextureLayer2")&&!document.getElementById("removeTextureLayer2")'));
