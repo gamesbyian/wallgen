@@ -95,7 +95,7 @@ function changeRecipe(recipe,options={}){const next=normalizeRecipe(recipe);rend
 function updatePositionStatus(){
   const label=document.getElementById('positionStatus');
   const x=current.positionX, y=current.positionY;
-  label.textContent=x===0&&y===0?'Centered':
+  label.textContent=x===0&&y===0?'Default position':
     `X ${x>0?'+':''}${x}% · Y ${y>0?'+':''}${y}%`;
   const reset=document.querySelector('[data-nudge="reset"]');
   reset.disabled=x===0&&y===0;
