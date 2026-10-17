@@ -246,6 +246,17 @@ try{
     const p=document.querySelector('.settings-panel:not([hidden])');
     const cards=[...p.querySelectorAll('.mobile-setting-cluster:not([hidden])')];
     return cards.map(card=>({panelHeight:p.clientHeight,formHeight:document.getElementById('controls').clientHeight,
+      formRect:JSON.stringify(document.getElementById('controls').getBoundingClientRect().toJSON()),
+      formDisplay:getComputedStyle(document.getElementById('controls')).display,
+      formPosition:getComputedStyle(document.getElementById('controls')).position,
+      formFlex:getComputedStyle(document.getElementById('controls')).flex,
+      formTop:getComputedStyle(document.getElementById('controls')).top,
+      formBottom:getComputedStyle(document.getElementById('controls')).bottom,
+      formParent:document.getElementById('controls').parentElement.id,
+      formHidden:document.getElementById('controls').hidden,
+      sidebarDisplay:getComputedStyle(document.querySelector('.sidebar')).display,
+      sidebarRect:JSON.stringify(document.querySelector('.sidebar').getBoundingClientRect().toJSON()),
+      navHeight:document.querySelector('.settings-tabs').clientHeight,
       panelStyle:getComputedStyle(p).flex,
       name:card.dataset.group,
       clientHeight:card.clientHeight,scrollHeight:card.scrollHeight,
