@@ -99,13 +99,16 @@ try{
   assert.ok(phone.preview.height>phone.height*.57,'the wallpaper should dominate the screen');
   assert.ok(phone.dock.y>=phone.preview.bottom-16,'dock should sit below the preview');
   assert.ok(phone.dock.bottom<=915,'dock should be fully visible');
+  assert.ok(phone.dock.height<=55,'normal bottom toolbar should be shorter');
+  assert.ok(phone.dock.y>=phone.header.bottom,'normal dock does not collide with the header');
   await evaluate('document.getElementById("mobileEdit").click()');
   await waitFor(`(()=>{
     const stage=document.querySelector('.studio-stage').getBoundingClientRect();
     const sidebar=document.querySelector('.sidebar').getBoundingClientRect();
     const dock=document.querySelector('.mobile-dock').getBoundingClientRect();
     return document.body.classList.contains('mobile-edit-open') &&
-      stage.bottom<=sidebar.top+2 && sidebar.bottom<=dock.top+2;
+      stage.bottom<=sidebar.top+2 && sidebar.bottom<=innerHeight+2 &&
+      dock.left>=innerWidth-2;
   })()`);
   const editor=await evaluate(`(()=>({
     open:document.body.classList.contains('mobile-edit-open'),
@@ -119,6 +122,12 @@ try{
       return {top:r.top,bottom:r.bottom,height:r.height}};
     return {preview:bounds('.wallpaper-frame'),stage:bounds('.studio-stage'),
       sidebar:bounds('.sidebar'),dock:bounds('.mobile-dock'),
+      header:bounds('.masthead'),arrow:bounds('#mobileDockExpand'),
+      dockHidden:getComputedStyle(document.querySelector('.mobile-dock')).visibility==='hidden',
+      arrowVisible:getComputedStyle(document.getElementById('mobileDockExpand')).display==='flex',
+      headerHidden:bounds('.masthead').bottom<=0,
+      narrowRandomize:document.getElementById('randomizeAll').getBoundingClientRect().height<=27,
+      narrowTabs:document.querySelector('.settings-tabs').getBoundingClientRect().height<=29,
       noDimmer:getComputedStyle(document.getElementById('mobileSheetBackdrop')).display==='none',
       nonmodal:document.getElementById('mobileDesignSheet').getAttribute('aria-modal')===null,
       scrollable:getComputedStyle(document.getElementById('mobileDesignSheet')).overflowY==='hidden',
@@ -126,11 +135,18 @@ try{
       tabsVisible:document.querySelector('.settings-tabs').getBoundingClientRect().bottom<=innerHeight};
   })()`);
   console.log('EDITING_LAYOUT_METRICS',JSON.stringify(editing));
-  assert.ok(editing.preview.height>325,'the editor must leave a meaningful visible image');
+  assert.ok(editing.preview.height>640,'editing must preserve a nearly full-height phone wallpaper');
   assert.ok(editing.preview.bottom<=editing.sidebar.top+2,'editing controls must not overlap the wallpaper');
   assert.ok(editing.stage.bottom<=editing.sidebar.top+2,'reserved layout must keep stage above the panel');
-  assert.ok(editing.sidebar.bottom<=editing.dock.top+2,'editing controls must sit above the action dock');
+  assert.ok(editing.sidebar.bottom<=915+1,'settings replace the dock without leaving the screen');
+  assert.ok(editing.sidebar.top>=editing.stage.bottom,'editor must use its own space');
+  assert.ok(editing.headerHidden && editing.dockHidden && editing.arrowVisible,
+    'header and toolbar must recede leaving the expand arrow');
+  assert.ok(editing.arrow.left>editing.sidebar.left+editing.sidebar.width-2 &&
+    editing.arrow.right<=412+1,'expand arrow lives beside the editor');
+  assert.ok(editing.narrowRandomize&&editing.narrowTabs,'toolbar texts should be compact');
   assert.ok(editing.noDimmer&&editing.nonmodal&&editing.scrollable&&editing.tabsVisible);
+  assert.ok(editing.stage.top<=10,'header must release its vertical space');
   assert.ok(editing.totalHeight<=915,'opening edit must not introduce page scrolling');
   // Changing a real setting must repaint the *visible* canvas without closing the tray.
   await evaluate(`(()=>{
@@ -238,6 +254,19 @@ try{
     theme.value='dark';theme.dispatchEvent(new Event('change',{bubbles:true}))})()`);
   assert.equal(await evaluate('document.documentElement.dataset.theme'),'dark');
   await evaluate('document.getElementById("mobileDismissHandle").click()');
+  // Reopen then restore toolbar through the small surviving expand arrow.
+  await evaluate('document.getElementById("mobileDockExpand").click()');
+  await waitFor(`!document.body.classList.contains('mobile-edit-open') &&
+    document.querySelector('.mobile-dock').getBoundingClientRect().left<10 &&
+    document.querySelector('.masthead').getBoundingClientRect().top>=0`);
+  const restored=await evaluate(`({
+    headerHeight:document.querySelector('.masthead').getBoundingClientRect().height,
+    dockHeight:document.querySelector('.mobile-dock').getBoundingClientRect().height,
+    arrowHidden:getComputedStyle(document.getElementById('mobileDockExpand')).opacity==='0',
+    theme:document.documentElement.dataset.theme
+  })`);
+  assert.ok(restored.headerHeight>=65&&restored.dockHeight<=55&&restored.arrowHidden);
+  assert.equal(restored.theme,'dark');
   await evaluate('document.getElementById("mobileMore").click()');
   await waitFor(`(()=>{
     const stage=document.querySelector('.studio-stage').getBoundingClientRect();
