@@ -8,7 +8,7 @@ export const EDITOR_CATEGORIES=[
     {id:'variability',name:'Variation',settings:['chaos']},
   ]},
   {id:'path',label:'Path',icon:'⌁',tools:[
-    {id:'geometry',name:'Geometry',settings:['geometry','shapeFrequency','shapeDepth']},
+    {id:'geometry',name:'Geometry',settings:['geometry','shapeFrequency','shapeDepth','geometrySafety']},
     {id:'turn',name:'Turns',settings:['turnRadius','hairpinAngle']},
     {id:'ends',name:'Endpoints',settings:['pathLength','endTaper']},
   ]},
