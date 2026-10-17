@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { DESIGN_WIDTH, DESIGN_HEIGHT, OUTPUT_WIDTH, OUTPUT_HEIGHT, HUES, NAMES, FAMILIES, GEOMETRIES, MOTIFS, MATERIALS, OUTLINES, normalizeRecipe, resolveScene, rng, encodeRecipe, decodeRecipe, TEXTURE_COVERAGES, randomizeAllRecipe } from '../src/model.js';
+import { DESIGN_WIDTH, DESIGN_HEIGHT, OUTPUT_WIDTH, OUTPUT_HEIGHT, HUES, NAMES, FAMILIES, GEOMETRIES, MOTIFS, MATERIALS, OUTLINES, normalizeRecipe, resolveScene, rng, encodeRecipe, decodeRecipe, TEXTURE_COVERAGES, BLEND_MODES, normalizeRotation, randomizeAllRecipe } from '../src/model.js';
 
 test('Pixel 6 Pro export has 210% linear dimensions and unchanged aspect ratio',()=>{
   assert.equal(OUTPUT_WIDTH,1440*2.1);
@@ -121,4 +121,45 @@ test('directional canvas offsets are bounded, deterministic, and portable',()=>{
   assert.deepEqual(decodeRecipe(encodeRecipe(recipe)),recipe);
   assert.equal(randomizeAllRecipe().positionX,0);
   assert.equal(randomizeAllRecipe().positionY,0);
+});
+
+test('three independent texture layers round-trip through share URLs and resolved scenes',()=>{
+  const recipe=normalizeRecipe({
+    seed:'adobe-corduroy',material:'adobe',textureCoverage:'both',textureRotation:30.5,
+    textureLayer2Enabled:true,material2:'corduroy',textureCoverage2:'background',
+    textureStrength2:64,textureScale2:22,textureRotation2:90,textureBlend2:'multiply',
+    textureLayer3Enabled:true,material3:'foil',textureCoverage3:'stripes',
+    textureStrength3:44,textureScale3:87,textureRotation3:255.5,textureBlend3:'screen',
+  });
+  const scene=resolveScene(recipe);
+  assert.equal(scene.textureLayers.length,3);
+  assert.deepEqual(scene.textureLayers.map(x=>x.material),['adobe','corduroy','foil']);
+  assert.deepEqual(scene.textureLayers.map(x=>x.rotation),[30.5,90,255.5]);
+  assert.deepEqual(scene.textureLayers.map(x=>x.coverage),['both','background','stripes']);
+  assert.deepEqual(scene.textureLayers.map(x=>x.blend),['normal','multiply','screen']);
+  assert.deepEqual(decodeRecipe(encodeRecipe(recipe)),recipe);
+  assert.ok(scene.materialSummary.includes('corduroy'));
+});
+test('legacy one-layer recipes remain single-layer and extra layers may be removed',()=>{
+  const legacy=normalizeRecipe({seed:'classic',material:'linen'});
+  assert.equal(resolveScene(legacy).textureLayers.length,1);
+  assert.equal(legacy.textureRotation,0);
+  assert.equal(legacy.textureBlend,'normal');
+  assert.equal(legacy.textureLayer2Enabled,false);
+  assert.equal(legacy.textureLayer3Enabled,false);
+  const hidden=resolveScene({...legacy,textureLayer3Enabled:true,material3:'adobe'});
+  assert.equal(hidden.textureLayers.length,1);
+  const none=resolveScene({...legacy,material:'none'});
+  assert.equal(none.textureLayers.length,0);
+});
+test('normalizes rotations and blend modes and recognizes corduroy spelling',()=>{
+  assert.equal(normalizeRotation(-90),270);
+  assert.equal(normalizeRotation(450),90);
+  assert.equal(normalizeRotation(360.5),0.5);
+  assert.equal(normalizeRotation('invalid'),0);
+  assert.equal(normalizeRecipe({material2:'courduroy'}).material2,'corduroy');
+  assert.equal(normalizeRecipe({textureBlend:'unsupported'}).textureBlend,'normal');
+  for(const mode of BLEND_MODES)assert.equal(normalizeRecipe({textureBlend3:mode}).textureBlend3,mode);
+  assert.ok(MATERIALS.includes('adobe'));
+  assert.ok(MATERIALS.includes('corduroy'));
 });
