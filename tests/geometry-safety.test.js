@@ -117,3 +117,14 @@ test('loop aspect can alter loop width independently of loop height',()=>{
   assert.equal(t.y,w.y);
   assert.notEqual(t.x,w.x);
 });
+
+test('coherent U-turn keeps inner and outer nested bends inside frame',()=>{
+  for(const spread of [0,25,50,75,100])for(const turnRadius of [0,50,100]){
+    const r=resolveScene({seed:'bounded-U',geometry:'hairpin',spread,turnRadius,
+      geometrySafety:true,orientation:'vertical'});
+    const pack=r.stripes.at(-1).center-r.stripes[0].center;
+    const radius=r.stripes[0].turnRadius;
+    assert.ok(radius+pack/2<=264+.0001,`outer bend at ${spread}/${turnRadius}`);
+    assert.ok(radius-pack/2>0,`inner bend at ${spread}/${turnRadius}`);
+  }
+});
