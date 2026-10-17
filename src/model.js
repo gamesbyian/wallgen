@@ -148,9 +148,11 @@ export function resolveScene(recipeInput) {
   const widthFactor = (0.12 + 0.79 * recipe.stripeWidth / 100) * profile.width;
   const stripes = positions.map((position, i) => {
     const r = rng(`${recipe.seed}:stripe:${i}`);
-    const leftGap = i ? positions[i] - positions[i - 1] : avg;
-    const rightGap = i < 6 ? positions[i + 1] - positions[i] : avg;
-    const width = Math.min(leftGap,rightGap)*(referenceSpread/spread)*widthFactor*between(r,1-chaos*.35,1+chaos*.35);
+    // Derive the reference gaps from the *weights*, not floating-point
+    // differences of spread-dependent positions. Width is bit-for-bit fixed.
+    const leftGap = i ? referenceSpread*weights[i-1]/sum : referenceAvg;
+    const rightGap = i < 6 ? referenceSpread*weights[i]/sum : referenceAvg;
+    const width = Math.min(leftGap,rightGap)*widthFactor*between(r,1-chaos*.35,1+chaos*.35);
     const individualGeometry = individuality > .25 && r() < (individuality-.25)*1.15 ? pick(r, GEOMETRIES) : geometry;
     // Motif, palette and material belong to the whole seven-stripe design.
     // Individuality is geometric only. Pattern changes are never selected here.
