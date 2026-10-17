@@ -502,6 +502,23 @@ try{
   })()`)));
   await waitFor(`Number(document.querySelector('[name=shapeFrequency]').value)>${slider.value}`);
 
+  const afterSlider=await evaluate(`({
+    value:Number(document.querySelector('[name=shapeFrequency]').value),
+    scroll:document.getElementById('panel-design').scrollLeft,
+    category:document.querySelector('.settings-tab[aria-selected="true"]').dataset.tab
+  })`);
+  assert.ok(afterSlider.value>slider.value,'range slider responds to a real finger drag');
+  assert.ok(Math.abs(afterSlider.scroll-slider.scrollLeft)<40,'dragging a slider should not swipe away the card');
+  assert.equal(afterSlider.category,'design');
+  // Pull down by the narrow, unobtrusive grab handle.
+  const grab=await evaluate(`(()=>{
+    const r=document.getElementById('mobileDismissHandle').getBoundingClientRect();
+    return {x:Math.round(r.x+r.width/2),y:Math.round(r.top+r.height/2)};
+  })()`);
+  await swipe(grab,{x:grab.x,y:grab.y+92});
+  await waitFor('!document.body.classList.contains("mobile-edit-open")');
+  assert.ok(!await evaluate('document.body.classList.contains("mobile-edit-open")'));
+
   // Draw on the exact preview overlay using native Chromium touch events,
   // apply a regularized path, and ensure Undo restores the prior wallpaper.
   const priorPath=await evaluate(`(()=>{
@@ -542,22 +559,6 @@ try{
   })()`);
   console.log('TOUCH_DOODLE_SMOOTH_GEOMETRIC_UNDO_SUCCESS');
 
-  const afterSlider=await evaluate(`({
-    value:Number(document.querySelector('[name=shapeFrequency]').value),
-    scroll:document.getElementById('panel-design').scrollLeft,
-    category:document.querySelector('.settings-tab[aria-selected="true"]').dataset.tab
-  })`);
-  assert.ok(afterSlider.value>slider.value,'range slider responds to a real finger drag');
-  assert.ok(Math.abs(afterSlider.scroll-slider.scrollLeft)<40,'dragging a slider should not swipe away the card');
-  assert.equal(afterSlider.category,'design');
-  // Pull down by the narrow, unobtrusive grab handle.
-  const grab=await evaluate(`(()=>{
-    const r=document.getElementById('mobileDismissHandle').getBoundingClientRect();
-    return {x:Math.round(r.x+r.width/2),y:Math.round(r.top+r.height/2)};
-  })()`);
-  await swipe(grab,{x:grab.x,y:grab.y+92});
-  await waitFor('!document.body.classList.contains("mobile-edit-open")');
-  assert.ok(!await evaluate('document.body.classList.contains("mobile-edit-open")'));
   await evaluate('document.getElementById("mobileEdit").click()');
   await waitFor('document.body.classList.contains("mobile-edit-open")');
   await evaluate(`(()=>{const theme=document.getElementById('studioTheme');
