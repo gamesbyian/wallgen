@@ -63,7 +63,8 @@ editor.addEventListener('touchend',e=>{
   // Vertical dismissal is not active on sliders, selects, text fields or
   // buttons: editing gestures always win over navigation gestures.
   if(dy>70 && Math.abs(dx)<Math.abs(dy)*.55 &&
-      !e.target.closest('input, select, textarea, button, [contenteditable]')){
+      (!e.target.closest('input, select, textarea, button, [contenteditable]') ||
+        e.target.closest('#mobileDismissHandle'))){
     if(e.cancelable)e.preventDefault();
     document.getElementById('mobileEdit').click();
   }
