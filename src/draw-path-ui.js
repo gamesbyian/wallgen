@@ -13,6 +13,8 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
   const geometric=document.getElementById('drawGeometric');
   const again=document.getElementById('drawAgain');
   const cancel=document.getElementById('drawCancel');
+  const smoothPower=document.getElementById('drawSmoothingStrength');
+  const smoothOutput=document.getElementById('drawSmoothingValue');
   const geometryOption=document.querySelector('[name=geometry] option[value=drawn]');
   const ctx=overlay.getContext('2d');
   let active=false,pointer=null,raw=[],ready=[],fit='smooth';
@@ -43,13 +45,13 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
     smooth.setAttribute('aria-pressed',String(fit==='smooth'));
     geometric.setAttribute('aria-pressed',String(fit==='geometric'));
     if(raw.length>=2){
-      ready=finishDrawnPath(raw,fit);
+      ready=finishDrawnPath(raw,fit,Number(smoothPower.value));
       apply.disabled=ready.length<2;
       if(ready.length>=2){
         draw(ready);
         hint.textContent=fit==='geometric'?
           'Straightened and rounded. Use this path or redraw.':
-          'Smoothed. Use this path or redraw.';
+          'Smoothed at '+smoothPower.value+'×. Use this path or redraw.';
       }
     }
   }
@@ -129,6 +131,10 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
   });
   smooth.addEventListener('click',()=>setFit('smooth'));
   geometric.addEventListener('click',()=>setFit('geometric'));
+  smoothPower.addEventListener('input',()=>{
+    smoothOutput.textContent=Number(smoothPower.value).toFixed(1)+'×';
+    setFit(fit);
+  });
   again.addEventListener('click',reset);
   cancel.addEventListener('click',stop);
   apply.addEventListener('click',()=>{

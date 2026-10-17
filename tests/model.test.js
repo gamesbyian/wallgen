@@ -487,3 +487,19 @@ test('chevron frequency and depth reach substantially smaller and larger profile
   const big=resolveScene({...recipe,shapeDepth:100});
   assert.ok(big.stripes[3].sharedDisplacement/small.stripes[3].sharedDisplacement>8);
 });
+
+test('random generations use at most the single primary texture layer',()=>{
+  for(let i=0;i<120;i++){
+    const r=randomizeAllRecipe({primesOnly:i%2===0});
+    assert.equal(r.textureLayer2Enabled,false);
+    assert.equal(r.textureLayer3Enabled,false);
+    assert.ok(resolveScene(r).textureLayers.length<=1);
+    // The ordinary editor still supports opt-in second and third layers.
+    const optIn=normalizeRecipe({...r,textureLayer2Enabled:true,material2:'linen',
+      textureLayer3Enabled:true,material3:'grain'});
+    assert.equal(optIn.textureLayer2Enabled,true);
+    assert.equal(optIn.textureLayer3Enabled,true);
+    assert.deepEqual(decodeRecipe(encodeRecipe(optIn)),optIn);
+    assert.ok(resolveScene(optIn).textureLayers.length>=2);
+  }
+});

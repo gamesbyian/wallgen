@@ -117,7 +117,11 @@ test('stripe shadows are an optional Design-only control, while canvas lighting 
 test('R.O.Y.G.B.I.V. displays as a two-line masthead beside a larger seven-stripe logo',()=>{
   const header=html.slice(html.indexOf('<header class="masthead">'),html.indexOf('</header>'));
   assert.match(header,/aria-label="R\.O\.Y\.G\.B\.I\.V\. home"/);
-  assert.match(header,/<h1 class="brand-title">R\.O\.Y\.G\.B\.I\.V<span class="brand-dot">\.<\/span><\/h1>/);
+  assert.ok(header.includes('<h1 class="brand-title" aria-label="R.O.Y.G.B.I.V.">'));
+  for(const [letter,color] of [['R','red'],['O','orange'],['Y','yellow'],
+    ['G','green'],['B','blue'],['I','indigo'],['V','violet']]){
+    assert.match(header,new RegExp('class="title-letter title-'+color+'" aria-hidden="true">'+letter+'<\\/span>'));
+  }
   assert.match(header,/<p class="brand-subtitle">Rainbow-Only\. You Generate Based on Individual Variables\.<\/p>/);
   assert.match(header,/<img class="brand-logo" src="assets\/roygbiv-logo.svg" width="64" height="64" alt="" aria-hidden="true">/);
   assert.match(css,/\.brand \.brand-logo\{display:block;flex:0 0 auto;width:64px;height:64px/);
@@ -139,7 +143,7 @@ test('R.O.Y.G.B.I.V. branding is consistent in public-facing output',()=>{
 
 test('semantic masthead guarantees two lines and strong type hierarchy even with old styles',()=>{
   const header=html.slice(html.indexOf('<header class="masthead">'),html.indexOf('</header>'));
-  assert.match(header,/<div class="brand-copy">\s*<h1 class="brand-title">/);
+  assert.ok(header.indexOf('<h1 class="brand-title"') > header.indexOf('<div class="brand-copy">'));
   assert.match(header,/<\/h1>\s*<p class="brand-subtitle">/);
   assert.match(header,/<\/p>\s*<\/div>/);
   assert.match(css,/\.brand \.brand-title\{display:block;margin:0;padding:0;font-size:clamp\(22px,2\.35vw,30px\)/);

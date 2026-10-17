@@ -93,8 +93,8 @@ function regularize(points){
     const delta=Math.atan2(Math.sin(angle-snap),Math.cos(angle-snap));
     if(Math.abs(delta)<11*Math.PI/180){
       const dist=Math.hypot(dx,dy);
-      ends.push([clamp(previous[0]+Math.cos(snap)*dist/PATH_WIDTH,0,1),
-        clamp(previous[1]+Math.sin(snap)*dist/PATH_HEIGHT,0,1)]);
+      ends.push([clamp(previous[0]+Math.cos(snap)*dist/PATH_WIDTH,DRAW_COORD_MIN,DRAW_COORD_MAX),
+        clamp(previous[1]+Math.sin(snap)*dist/PATH_HEIGHT,DRAW_COORD_MIN,DRAW_COORD_MAX)]);
     }else ends.push(p);
   }
   ends.push(points.at(-1));
@@ -148,7 +148,11 @@ export function curveThrough(points){
   return out;
 }
 
-export function finishDrawnPath(raw,mode='smooth'){
+// Strength 1 matches the existing finish exactly; 5 widens the fairing
+// kernel fivefold and gradually removes redundant small control-point bends.
+export function finishDrawnPath(raw,mode='smooth',strength=1){
+  const power=Number.isFinite(Number(strength))?
+    clamp(Number(strength),1,5):1;
   if(!Array.isArray(raw)||raw.length<2)return [];
   // Coalesce very dense pointer events before smoothing, with no dependence
   // on actual pointer-event sampling rate.
@@ -166,8 +170,17 @@ export function finishDrawnPath(raw,mode='smooth'){
   // Smooth mode uses stronger low-frequency curvature fairing.
   const even=resamplePath(clean,Math.min(500,Math.max(8,Math.ceil(total/7))));
   const shaped=mode==='geometric'?
-    curveThrough(regularize(simplifyPath(fairPath(even,{radius:3,passes:1}),10))):
-    curveThrough(fairPath(even,{radius:7,sigma:3.2,passes:3}));
+    curveThrough(regularize(simplifyPath(
+      fairPath(even,{radius:Math.ceil(3*power),sigma:2.6*power,passes:1}),
+      10+(power-1)*7))):
+    curveThrough((()=>{
+      const fair=fairPath(even,{
+        radius:Math.ceil(7*power),sigma:3.2*power,passes:3
+      });
+      // At 1x retain the exact previous result. At higher strengths,
+      // reduce micro-turns to long, fair segments before spline fitting.
+      return power===1?fair:simplifyPath(fair,(power-1)*5);
+    })());
   const points=resamplePath(shaped,Math.max(2,Math.min(MAX_DRAWN_POINTS,Math.ceil(total/9))));
   return normalizeDrawnPath(points);
 }

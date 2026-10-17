@@ -120,7 +120,7 @@ for(const [mobileId,targetId] of [
 function syncFavorite(){
   const chosen=document.getElementById('favorite').getAttribute('aria-pressed')==='true';
   favouriteBtn.setAttribute('aria-pressed',String(chosen));
-  favouriteBtn.querySelector('span').textContent=chosen?'♥':'♡';
+  // The permanent SVG responds to aria-pressed without replacing its markup.
 }
 new MutationObserver(syncFavorite).observe(document.getElementById('favorite'),{attributes:true,attributeFilter:['aria-pressed']});
 syncFavorite();

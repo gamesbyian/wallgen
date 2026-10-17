@@ -75,3 +75,58 @@ body.path-drawing .wallpaper-frame{
     font-size:9px;min-height:25px;padding:2px 5px;
   }
 }
+
+/* The seven letterforms of R.O.Y.G.B.I.V. carry their actual rainbow hues,
+   independently of the cream/dark studio theme. Punctuation remains neutral. */
+.brand-title .title-red{color:#ee555a}
+.brand-title .title-orange{color:#f6a039}
+.brand-title .title-yellow{color:#e2b62d}
+.brand-title .title-green{color:#42b877}
+.brand-title .title-blue{color:#4e9de5}
+.brand-title .title-indigo{color:#7775d9}
+.brand-title .title-violet{color:#b476d6}
+
+/* Wide, low-profile hearts stay unchanged when favourites are toggled. */
+.squat-heart{display:block;flex-shrink:0;overflow:visible;stroke:currentColor;fill:none}
+#favorite[aria-pressed="true"] .squat-heart,
+#mobileFavorite[aria-pressed="true"] .squat-heart{fill:currentColor}
+#favorite .squat-heart{width:27px;height:22px}
+#mobileFavorite .squat-heart{width:23px;height:20px}
+#mobileEdit .dock-pencil{width:21px;height:21px;display:block}
+
+/* One control across both finishing modes, refining the pending stroke live.
+   Strength lives in the drawing tool, while saved normalized curve points
+   preserve the precise final geometry in PNG recipes. */
+.draw-smoothing-row{
+  width:min(300px,100%);display:grid;
+  grid-template-columns:auto minmax(65px,1fr) 29px;
+  align-items:center;gap:9px;color:#f7eaf5;font-size:11px;font-weight:700;
+}
+.draw-smoothing-row input{width:100%;min-width:0;accent-color:#ea91cb;touch-action:pan-x}
+.draw-smoothing-row output{text-align:right;font-size:10px;font-variant-numeric:tabular-nums}
+
+/* Labels are ordinary readable words on desktop, with a reliable line break
+   in the 43px mobile preview rail rather than clipped text or tiny type. */
+.toolbar-wording>span+span:before{content:" "}
+@media(max-width:790px){
+  body.mobile-studio .mobile-preview-rail-left .toolbar-wording{
+    display:flex!important;flex-direction:column!important;
+    justify-content:center;align-items:center;line-height:1.08;
+    font-weight:750;font-size:9px!important;white-space:normal;
+  }
+  body.mobile-studio .mobile-preview-rail-left .toolbar-wording>span{
+    display:block;font-size:inherit!important;line-height:inherit;
+  }
+  body.mobile-studio .mobile-preview-rail-left .toolbar-wording>span+span:before{display:none}
+  body.mobile-studio .mobile-preview-rail-left #randomizeAll>span:last-child{font-size:9px!important}
+  body.mobile-studio .mobile-preview-rail-left #drawPathToggle{
+    height:41px!important;min-height:41px!important;gap:0!important;
+    white-space:normal!important;
+  }
+  body.mobile-studio .mobile-preview-rail-left .prime-toggle{
+    min-height:41px!important;line-height:1.08;
+  }
+  body.mobile-studio .draw-smoothing-row{font-size:10px;gap:6px}
+  body.mobile-studio .draw-smoothing-row input{min-width:0}
+  body.mobile-studio .draw-path-panel{width:min(340px,calc(100% - 7px));}
+}
