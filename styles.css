@@ -522,3 +522,17 @@
 .settings-panel .lockable-setting.texture-rotation-field > small{
   grid-column:1;
 }
+
+/* Vector icon: angled rainbow artwork and white phone outline on black. */
+.brand .brand-logo{display:block;flex:0 0 auto;width:64px;height:64px;object-fit:contain;
+  border-radius:12px;filter:drop-shadow(0 0 8px rgba(110,92,210,.12))}
+.brand .brand-copy{min-width:0}
+.shape-controls{margin:13px 0 15px}
+.shape-controls .field>small,.control-hint{display:block;color:#9ea1ae;font-size:10px;line-height:1.5;
+  font-weight:400;letter-spacing:0}
+@media(max-width:790px){
+  .brand .brand-logo{width:56px;height:56px;border-radius:11px}
+}
+@media(max-width:520px){
+  .brand .brand-logo{width:48px;height:48px;border-radius:10px}
+}
