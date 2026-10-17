@@ -72,6 +72,8 @@ ordinary tools and therefore never covers the image.
 
 Texture layers remain optional. Each has a **Layer** tool for material,
 coverage and blending, and a **Finish** tool for strength, scale and rotation.
+Layer 2 and 3 materials can be chosen directly, without Add/Remove controls or
+an extra lock. Their default Smooth selection means off.
 The same named pattern applies to layers 1, 2 and 3, so all adjustments
 remain accessible without scrolling inside any card.
 
@@ -304,8 +306,8 @@ The balanced-width **Randomize** button sits next to an equally prominent, alway
 - Palettes: classic, electric, pastel, jewel and muted. Their hues stay in ROYGBIV order.
 - Outlines: none, white or black hairline, solid, double, broken and single-side, with a buffer coloured to match the selected background.
 - **Ambient light & shade (Colour tab):** choose Off (default), Soft daylight, Golden hour or Cool moonlight, and a corner for the light source. Light intensity adds a soft warm/cool wash across the **whole canvas**, including the background and stripes; Canvas shade darkens the opposite region with a broad gradient. Canvas ambience does not cast shadows from the stripe silhouettes. An independent **Cast stripe shadows** option lives in Design (off by default), with strength, softness and light-source direction. Those optional shadows follow the completed stripes when nudged, while the ambient light stays fixed in canvas space. Old designs default to Off, and the controls remain lockable, deterministic and saved in recipes.
-- Materials: paper grain, watercolour, construction paper, handmade paper, corrugated board, linen, canvas, denim, knit, felt, corduroy, concrete, stucco, stone, adobe, drywall, wood grain, vinyl sheet, foil, and glossy paper. The ungrouped menu works across three independent material layers. Layer 2 is hidden until **New texture layer** is clicked under layer 1; layer 3 can be added in the same way under layer 2, and either extra layer can be removed. Each layer has its own strength, scale, surface coverage (background, stripes, or both), ±90° buttons, freely editable angle (including fractional degrees), and blend mode (normal, multiply, screen, overlay, soft light, difference). Rotations and enabled layers persist in URLs, saved recipes, favourites and PNG exports.
-- Chaos, thickness, **stripe spacing**, geometric individuality, pattern homogeneity, glow and outline buffer. Stripe spacing now adjusts only the distance between stripe centres, while thickness is controlled solely by Stripe thickness; at tight settings the ribbons can deliberately overlap. Every slider has −/+ adjustment buttons and an editable numeric percentage field immediately after +. Individuality adjusts per-stripe directions, parallelism, shape and edge profile, while all stripes retain the same motif.
+- Materials: paper grain, watercolour, construction paper, handmade paper, corrugated board, linen, canvas, denim, knit, felt, corduroy, concrete, stucco, stone, adobe, drywall, wood grain, vinyl sheet, foil, and glossy paper. The ungrouped menu works across three independent material layers. Layers 2 and 3 remain available as named tools, initially set to **No texture / smooth**. Selecting a real material activates that layer, and choosing Smooth disables it. Layer 3 can be used independently of Layer 2, without Add/Remove buttons. Each layer has its own strength, scale, surface coverage (background, stripes, or both), ±90° buttons, freely editable angle (including fractional degrees), and blend mode (normal, multiply, screen, overlay, soft light, difference). Rotations and enabled layers persist in URLs, saved recipes, favourites and PNG exports.
+- Chaos, thickness, **stripe spacing**, geometric individuality, pattern homogeneity, glow, outline thickness and outline buffer. Stripe spacing now adjusts only the distance between stripe centres, while thickness is controlled solely by Stripe thickness; at tight settings the ribbons can deliberately overlap. Every slider has −/+ adjustment buttons and an editable numeric percentage field immediately after +. Individuality adjusts per-stripe directions, parallelism, shape and edge profile, while all stripes retain the same motif.
 - **Texture displacement** (0–100%) actually warps the stripe contours using a higher-resolution procedural height field. Material type, rotation, scale and strength change the relief, and a seeded neutral grain is used when no stripe texture is selected, so the slider is never silently inert. Increased sampling and bounded displacement make the effect visible on phone previews without allowing the stripe edges to cross. At 0% the original crisp geometry is unchanged. This is edge-geometry displacement, not GPU bump mapping.
 - Five compact directional controls in a single row above the preview nudge the **already composed artwork** up/down/left/right by 2% of frame size per press (up to ±30% per axis), plus reset. The preview caches stripe ink **with 30% off-frame overscan on every side**, so ribbons that already run outside the wallpaper remain unbroken when nudged; stripes intentionally ending inside the frame retain those endpoints. Nudge clicks move this immutable image under a stationary background, without rerunning edge-balancing or regenerating geometry. Full-resolution exports generate only the overhang needed for the saved offset to limit memory usage, while preserving the same composition and background textures. These offsets travel with saved recipes, links, favourites, Undo and PNG export. **Undo** restores prior designs and their locks (up to 80 changes). **New variation** changes the seed unless it's locked. **Randomize**, now above the settings tabs, changes only unlocked settings and respects the optional prime-number constraint; each setting (including seed, composition position, texture rotations and whether layers are enabled) has a small line-art open/closed padlock control. Locking an automatic setting also freezes its actual resolved choice, and locks survive saved recipes, favourites and share links. `Auto` settings resolve according to the seeded style family.
 - Generate twelve thumbnails, open any thumbnail, save up to sixty local favourites, download a PNG, copy a share URL or a portable JSON recipe.
@@ -328,3 +330,21 @@ At 3024 × 6552, PNG rendering needs multiple substantial canvas buffers; textur
 ## Publishing to GitHub Pages
 
 A `Publish Wallgen` workflow tests and deploys the root static site on pushes to `main`. On first use, enable **Settings → Pages → Build and deployment → Source: GitHub Actions** in the GitHub repository if it is not enabled already. The expected URL is `https://gamesbyian.github.io/wallgen/` once a deployment succeeds. There is no domain, cloud infrastructure or API dependency.
+
+### Shorter Materials editor, Bleed and outlines (October 2026)
+
+The mobile Edit panel is roughly 12% shorter, and optional texture layer
+selectors stay available instead of requiring add/remove buttons. The rotation
+angle uses a narrow numeric input in the same row as its label, ±90° shortcuts,
+per-setting reroll and lock. Save and Favourite from the vertical Edit action
+rail no longer collapse the editor.
+
+The preview-only 90% Bleed guide follows the rounded frame corners. Its
+hairline is white for a black wallpaper background and black for white,
+regardless of the stripe colours crossing the guide; it is never exported.
+
+**Outline thickness** is the old adjustable outline-width parameter (the
+historical `gap` recipe field). A separate **Outline buffer** (`outlineBuffer`)
+sets the transparent distance between the stripe edge and that outline. The
+buffer reveals the actual backdrop, including paper/material textures, and
+does not alter outline thickness. Both values are serialized in the recipe.
