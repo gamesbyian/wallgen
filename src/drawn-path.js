@@ -167,5 +167,7 @@ export function safeDrawnBandSpan(path){
   radii.sort((a,b)=>a-b);
   // Keep the entire 7-ribbon pack narrower than the useful curvature radius.
   const r=radii[Math.floor((radii.length-1)*.25)];
-  return Math.max(52,Math.min(360,r*1.65));
+  // Strongly undercut the minimum useful radius: opposite edges of a seven-
+  // stripe bundle must not meet or reverse order at the inside of a U-turn.
+  return Math.max(44,Math.min(360,r*.72));
 }
