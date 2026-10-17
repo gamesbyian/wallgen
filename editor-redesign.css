@@ -1,0 +1,204 @@
+/* R.O.Y.G.B.I.V. editor v2. Six intentions, named tools, scoped dice.
+   The wallpaper occupies a separate resized area, never an opaque overlay. */
+.editor-explore{display:flex;flex-direction:column;gap:4px;flex:0 0 auto;
+  margin:4px 0;padding:4px 0;border-bottom:1px solid var(--line)}
+.editor-style,.editor-explore-actions{display:flex;gap:5px;align-items:center;justify-content:space-between;min-width:0}
+.editor-style>strong{font-size:10px;flex:0 0 auto;white-space:nowrap}
+.editor-style>.lockable-setting{flex:1;min-width:0}
+.editor-style>.lockable-setting>.field{display:flex;align-items:center;justify-content:space-between;gap:5px}
+.editor-style>.lockable-setting select{width:75%;min-width:0;min-height:27px;font-size:11px}
+.editor-variation-mode,.editor-variation-strength{min-width:0;flex:1;height:29px;padding:3px 5px;
+  border:1px solid var(--line);border-radius:7px;background:var(--surface);color:inherit;font-size:10px}
+.editor-scope-button,.editor-search-toggle{
+  flex:0 0 auto;min-height:28px;padding:3px 7px;border:1px solid var(--line);
+  border-radius:7px;color:inherit;background:var(--surface);font-size:10px;
+  font-weight:750;cursor:pointer}
+.editor-scope-button:hover,.editor-search-toggle:hover,
+.editor-tool-tab:hover{border-color:#cb5994}
+.editor-search-input{width:100%;height:27px;padding:3px 8px;border:1px solid var(--line);border-radius:7px;
+  background:var(--surface);color:inherit;font-size:11px}
+.editor-search-input[hidden]{display:none!important}
+.settings-tabs{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:3px!important;flex:0 0 auto;min-height:0!important}
+.settings-tabs .settings-tab{font-size:11px;min-width:0;min-height:31px;padding:5px 2px;
+  border:0;border-bottom:2px solid transparent;border-radius:5px;background:transparent;color:inherit}
+.settings-tabs .settings-tab[aria-selected=true]{border-bottom-color:#c85092;color:inherit;font-weight:800}
+.editor-tool-chooser{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:3px;margin:3px 0;flex:0 0 auto}
+.editor-tool-tab{min-width:0;min-height:27px;background:var(--surface);color:inherit;
+  border:1px solid var(--line);border-radius:7px;padding:2px;font-size:10px;cursor:pointer;
+  text-overflow:ellipsis;white-space:nowrap;overflow:hidden}
+.editor-tool-tab[aria-pressed=true]{border-color:#c85092;background:#d6609928;font-weight:800}
+.editor-tool-tab[hidden],.editor-category-panel[hidden],.editor-tool-card[hidden]{display:none!important}
+.settings-panel.editor-category-panel{display:block!important;position:relative;flex:1 1 auto;
+  margin:0;padding:0!important;min-width:0;min-height:0;overflow:hidden!important}
+.settings-panel.editor-category-panel[hidden]{display:none!important}
+.editor-tool-card{height:100%;min-height:0;padding:3px 6px 5px;border:1px solid var(--line);
+  border-radius:10px;display:flex;flex-direction:column;gap:2px;overflow:hidden}
+.editor-tool-header{display:flex;align-items:center;justify-content:space-between;gap:8px;
+  min-height:24px;flex:0 0 auto;font-size:11px;border-bottom:1px solid var(--line)}
+.editor-tool-header>.editor-scope-button{height:22px;min-height:22px;padding:2px 7px}
+.editor-tool-card .editor-setting-die{
+  display:flex;align-items:center;justify-content:center;background:transparent;color:inherit;
+  border:1px solid var(--line);border-radius:6px;min-width:22px;width:22px;height:23px;
+  font-size:12px;cursor:pointer;grid-column:2;grid-row:1}
+.editor-tool-card .editor-setting-die:disabled{opacity:.27;cursor:default}
+.editor-tool-card>.lockable-setting,.editor-tool-card>.field,
+.editor-tool-card>.homogeneity-override,.editor-tool-card>.texture-rotation-field{
+  min-height:0;margin:0;padding:2px 0;border:0;box-shadow:none;background:transparent}
+.editor-tool-card>.lockable-setting{
+  display:grid;grid-template-columns:minmax(0,1fr) 23px 23px;gap:2px;align-items:center}
+.editor-tool-card>.lockable-setting>.field{min-width:0;grid-column:1;grid-row:1;display:flex;align-items:center;gap:4px}
+.editor-tool-card>.lockable-setting>.setting-lock{width:22px;min-width:22px;height:23px;grid-column:3;grid-row:1}
+.editor-tool-card>.lockable-setting>.editor-setting-die{grid-column:2}
+.editor-tool-card .field{font-size:10px;line-height:1.1}
+.editor-tool-card .field.range-field{display:flex;flex-direction:row;align-items:center;min-width:0;gap:5px}
+.editor-tool-card .range-field>span{flex:0 0 82px;white-space:normal;line-height:1.1}
+.editor-tool-card .field select{min-width:0;flex:1;width:100%;max-width:100%;height:26px;min-height:26px;font-size:10px}
+.editor-tool-card .stepper{flex:1;min-width:0;display:flex;gap:2px;align-items:center}
+.editor-tool-card .step-button{width:20px;height:22px;min-width:20px;padding:0}
+.editor-tool-card .slider-number{width:35px;min-width:35px;height:23px;font-size:10px;padding:2px}
+.editor-tool-card input[type=range]{min-width:0;flex:1;width:100%;height:22px;margin:0}
+.editor-tool-card .field small,.editor-tool-card .control-hint,.editor-tool-card .lighting-help,
+.editor-tool-card .stripe-shadow-help,.editor-tool-card .lighting-intro,.editor-tool-card .control-note{
+  display:none!important}
+.editor-tool-card .texture-layer-group,.editor-tool-card .texture-layer-panel,
+.editor-tool-card .stripe-shadow-section,.editor-tool-card .lighting-subsection,
+.editor-tool-card .control-grid,.editor-tool-card .stripe-shadow-controls{
+  display:flex!important;flex-direction:column;gap:2px;min-width:0;min-height:0;
+  margin:0;padding:0!important;border:0!important;background:transparent!important}
+.editor-tool-card .texture-layer-panel[hidden],.editor-tool-card .stripe-shadow-controls[hidden],
+.editor-tool-card [hidden]{display:none!important}
+.editor-tool-card .texture-layer-group>.lockable-setting,
+.editor-tool-card .texture-layer-panel>.lockable-setting,
+.editor-tool-card .lighting-subsection .lockable-setting,
+.editor-tool-card .stripe-shadow-section .lockable-setting{
+  display:grid;grid-template-columns:minmax(0,1fr) 22px 22px;align-items:center;gap:2px;
+  padding:0!important;margin:0!important;min-height:0;border:0;background:transparent}
+.editor-tool-card .texture-layer-group .lockable-setting>.field,
+.editor-tool-card .texture-layer-panel .lockable-setting>.field,
+.editor-tool-card .lighting-subsection .lockable-setting>.field,
+.editor-tool-card .stripe-shadow-section .lockable-setting>.field{
+  grid-column:1;grid-row:1;min-width:0}
+.editor-tool-card .texture-layer-group .setting-lock,
+.editor-tool-card .texture-layer-panel .setting-lock,
+.editor-tool-card .lighting-subsection .setting-lock,
+.editor-tool-card .stripe-shadow-section .setting-lock{grid-column:3;grid-row:1;width:22px;height:22px}
+.editor-tool-card .texture-layer-group .editor-setting-die,
+.editor-tool-card .texture-layer-panel .editor-setting-die,
+.editor-tool-card .lighting-subsection .editor-setting-die,
+.editor-tool-card .stripe-shadow-section .editor-setting-die{grid-column:2;grid-row:1}
+.editor-tool-card .rotation-controls{min-width:0;gap:2px}
+.editor-tool-card .rotation-controls input{min-width:0}
+.editor-tool-card .texture-layer-panel-head{display:flex;justify-content:space-between;align-items:center}
+.editor-tool-card .texture-layer-panel-head>*{font-size:10px}
+.editor-tool-card .layer-add-lock{display:flex;align-items:center;justify-content:space-between;padding:0!important}
+.editor-tool-card .layer-add-lock .setting-lock{width:22px;height:22px}
+.editor-tool-card .add-texture-layer{font-size:10px;padding:3px;min-height:23px}
+.editor-tool-card .diagonal-settings{display:flex;flex-direction:column;gap:2px;padding:0;border:0;background:transparent}
+.editor-tool-card .diagonal-settings[hidden]{display:none!important}
+.editor-tool-card .diagonal-settings .lockable-setting{display:grid;grid-template-columns:minmax(0,1fr) 22px 22px;gap:2px;align-items:center}
+.editor-tool-card .diagonal-settings .lockable-setting>.field{grid-column:1;grid-row:1}
+.editor-tool-card .diagonal-settings .setting-lock{grid-column:3;grid-row:1;width:22px;height:22px}
+.editor-tool-card .diagonal-settings .editor-setting-die{grid-column:2;grid-row:1}
+@media(max-width:790px){
+ body.mobile-studio.mobile-edit-open{--mobile-tray-height:clamp(230px,36dvh,302px)!important}
+ body.mobile-studio.mobile-edit-open .layout{height:calc(100dvh - var(--mobile-tray-height))!important}
+ body.mobile-studio .sidebar .randomize-bar,.sidebar .studio-guidance{display:none!important}
+ body.mobile-studio .sidebar .settings-tabs{grid-template-columns:repeat(3,minmax(0,1fr))!important;
+   height:51px!important;max-height:51px!important;min-height:51px!important;gap:1px!important;
+   display:grid!important;flex:0 0 51px!important;padding:0!important;margin:1px 0!important}
+ body.mobile-studio .sidebar .settings-tabs .settings-tab{height:25px!important;min-height:25px!important;
+   max-height:25px!important;padding:1px 0!important;font-size:10px!important;line-height:1.1}
+ body.mobile-studio .sidebar .editor-explore{display:grid;grid-template-columns:1fr 1fr;
+   gap:3px;min-height:27px;padding:0!important;margin:0!important;flex:0 0 27px;
+   border:0}
+ body.mobile-studio .sidebar .editor-style{display:flex;gap:2px;min-width:0}
+ body.mobile-studio .sidebar .editor-style>strong{display:none}
+ body.mobile-studio .sidebar .editor-style>.lockable-setting{display:flex;min-width:0}
+ body.mobile-studio .sidebar .editor-style>.lockable-setting>.field{display:flex!important}
+ body.mobile-studio .sidebar .editor-style .field{font-size:0!important}
+ body.mobile-studio .sidebar .editor-style select{width:100%!important;max-width:100%!important;
+   height:25px!important;min-height:25px!important;font-size:10px!important}
+ body.mobile-studio .sidebar .editor-style .setting-lock{display:none!important}
+ body.mobile-studio .sidebar .editor-explore-actions{display:flex;gap:2px;min-width:0}
+ body.mobile-studio .sidebar .editor-variation-mode,
+ body.mobile-studio .sidebar .editor-variation-strength{min-width:0;flex:1;height:25px;padding:0;font-size:9px}
+ body.mobile-studio .sidebar .editor-scope-button{height:23px;min-height:23px;font-size:9px;padding:1px 4px}
+ body.mobile-studio .sidebar .editor-explore-actions .editor-scope-button{font-size:0!important;padding:1px 5px}
+ body.mobile-studio .sidebar .editor-explore-actions .editor-scope-button::before{content:'✳';font-size:12px}
+ body.mobile-studio .sidebar .editor-search-toggle{height:23px;min-height:23px;padding:1px 4px}
+ body.mobile-studio .sidebar .editor-search-input{grid-column:1/-1}
+ body.mobile-studio .sidebar .editor-tool-chooser{grid-template-columns:repeat(4,minmax(0,1fr));
+    flex:0 0 auto!important;gap:2px!important;margin:1px 0!important}
+ body.mobile-studio .sidebar .editor-tool-tab{height:25px;min-height:25px;font-size:9px;padding:0 2px}
+ body.mobile-studio .sidebar .mobile-setting-counter{display:none!important}
+ body.mobile-studio .sidebar .settings-panel.editor-category-panel:not([hidden]){
+   display:flex!important;flex-direction:column!important;flex:1 1 auto;
+   min-height:0!important;overflow:hidden!important;touch-action:pan-y!important;
+   padding:0!important;margin:0!important;scroll-snap-type:none!important}
+ body.mobile-studio .sidebar .editor-tool-card:not([hidden]){
+   display:flex!important;flex:1 1 auto!important;width:100%!important;
+   max-width:100%!important;height:100%!important;min-height:0!important;
+   padding:1px 4px!important;margin:0!important;background:transparent;
+   border:1px solid var(--line);overflow:hidden!important}
+ body.mobile-studio .sidebar .editor-tool-card .lockable-setting{
+   display:grid!important;grid-template-columns:minmax(0,1fr) 21px 21px!important;
+   gap:2px!important;padding:1px 0!important;margin:0!important;min-height:0!important;
+   width:100%!important;max-width:100%!important;flex:0 0 auto!important;
+   border:0!important;border-radius:0!important;background:transparent!important;
+   overflow:visible!important}
+ body.mobile-studio .sidebar .editor-tool-card .lockable-setting>.field{
+   grid-column:1!important;grid-row:1!important;display:flex!important;
+   align-items:center!important;justify-content:space-between;width:100%!important;
+   min-width:0!important;margin:0!important;padding:0!important}
+ body.mobile-studio .sidebar .editor-tool-card .lockable-setting>.setting-lock{
+   grid-column:3!important;grid-row:1!important;width:21px!important;height:22px!important}
+ body.mobile-studio .sidebar .editor-tool-card .editor-setting-die{
+   grid-column:2!important;grid-row:1!important;width:21px!important;min-width:21px!important;
+   height:22px!important;min-height:22px!important;font-size:11px!important}
+ body.mobile-studio .sidebar .editor-tool-card .field.range-field{
+   display:grid!important;grid-template-columns:76px minmax(0,1fr)!important;
+   gap:3px!important;grid-template-rows:24px!important}
+ body.mobile-studio .sidebar .editor-tool-card .field.range-field>span{
+   grid-column:1!important;grid-row:1!important;font-size:9px!important}
+ body.mobile-studio .sidebar .editor-tool-card .field.range-field>.stepper{
+   grid-column:2!important;grid-row:1!important;display:flex!important;
+   width:100%!important;min-width:0!important;gap:2px!important;height:24px!important}
+ body.mobile-studio .sidebar .editor-tool-card .stepper>.step-button{
+   width:18px!important;min-width:18px!important;height:22px!important;font-size:12px!important}
+ body.mobile-studio .sidebar .editor-tool-card .stepper>.slider-number{
+   width:30px!important;min-width:30px!important;height:22px!important;font-size:9px!important}
+ body.mobile-studio .sidebar .editor-tool-card .stepper>input[type=range]{
+   display:block!important;min-width:0!important;flex:1!important;width:100%!important;height:21px!important}
+ body.mobile-studio .sidebar .editor-tool-card .field select{width:100%!important;
+   min-width:0!important;max-width:100%!important;flex:1!important;height:23px!important;
+   min-height:23px!important;padding:1px 15px 1px 5px!important;font-size:10px!important}
+ body.mobile-studio .sidebar .editor-tool-card .control-grid,
+ body.mobile-studio .sidebar .editor-tool-card .texture-layer-panel:not([hidden]),
+ body.mobile-studio .sidebar .editor-tool-card .texture-layer-group,
+ body.mobile-studio .sidebar .editor-tool-card .lighting-subsection,
+ body.mobile-studio .sidebar .editor-tool-card .stripe-shadow-section,
+ body.mobile-studio .sidebar .editor-tool-card .stripe-shadow-controls:not([hidden]){
+   display:flex!important;flex-direction:column!important;gap:1px!important;
+   padding:0!important;margin:0!important;overflow:hidden!important;
+   flex:0 0 auto!important;min-width:0!important;width:100%!important}
+ body.mobile-studio .sidebar .editor-tool-card .texture-rotation-field{
+   display:grid!important;grid-template-columns:minmax(0,1fr) 21px 21px!important;
+   gap:1px!important;font-size:9px!important}
+ body.mobile-studio .sidebar .editor-tool-card .texture-rotation-field .rotation-controls{
+   grid-column:1/-1;display:flex;gap:2px;height:22px}
+ body.mobile-studio .sidebar .editor-tool-card .rotation-controls button{min-width:25px;height:22px}
+ body.mobile-studio .sidebar .editor-tool-card .texture-rotation-field>.setting-lock{
+   grid-column:3!important;grid-row:1!important}
+ body.mobile-studio .sidebar .editor-tool-card .texture-rotation-field>.editor-setting-die{
+   grid-column:2!important;grid-row:1!important}
+ body.mobile-studio .sidebar .editor-tool-card .texture-layer-panel-head{font-size:9px;height:20px}
+ body.mobile-studio .sidebar .editor-tool-card .lighting-intro,
+ body.mobile-studio .sidebar .editor-tool-card .lighting-help{display:none!important}
+ body.mobile-studio .sidebar .editor-tool-card .field small{display:none!important}
+ body.mobile-studio .sidebar .editor-tool-card .editor-tool-header{min-height:23px;flex:0 0 23px}
+ body.mobile-studio .sidebar .editor-tool-card .setting-lock{padding:1px!important}
+ body.mobile-studio .sidebar .editor-tool-card .texture-layer-group .add-texture-layer{
+   min-height:22px!important}
+}
