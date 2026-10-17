@@ -229,9 +229,12 @@ export function resolveScene(recipeInput) {
   // Independent path phase, period, tilt and edge profile grow with individuality.
   const commonPhase=between(random,0,Math.PI*2);
   // Neutral midpoint preserves legacy geometry and saved designs.
-  const frequencyFactor=Math.pow(2,(recipe.shapeFrequency-50)/(geometry==='chevron'?19:37));
-  const depthFactor=Math.pow(2,(recipe.shapeDepth-50)/(geometry==='chevron'?26:55));
-  const commonPeriod=between(random,145,530)/frequencyFactor;
+  // Frequency is perceived as bends per composition: its low end should
+  // be one broad gesture and its high end should reach dense, fine motion.
+  const commonPeriod=1400*Math.pow(.06,recipe.shapeFrequency/100)*
+    between(random,.85,1.15);
+  // True zero means no centreline displacement, not a residual half-wave.
+  const depthFactor=Math.pow(recipe.shapeDepth/50,1.3);
   const commonEdgePhase=between(random,0,Math.PI*2);
   const commonTaper=between(random,0,0.28)*chaos;
   const weights = Array.from({length:6}, () => between(random, 1 - chaos * .46, 1 + chaos * .46));
@@ -262,7 +265,7 @@ export function resolveScene(recipeInput) {
     // Individuality is geometric only. Pattern changes are never selected here.
     const displacement = Math.min(referenceAvg * .32, width * .7 + referenceAvg * .08) * (.3 + .7*chaos)*depthFactor;
     const phase=between(r,0,Math.PI*2);
-    const period=between(r,145,530)/frequencyFactor;
+    const period=commonPeriod*between(r,.8,1.2);
     return {
       // Reverse the colour assignment, not the geometry. It keeps all seven
       // ribbon centres sorted and preserves the historic scene on default.
@@ -276,6 +279,7 @@ export function resolveScene(recipeInput) {
       dotPitch:Math.max(18,referenceAvg*(1.3+recipe.dotSpacing/100*1.15)),
       dotRadius:Math.max(2,referenceAvg*(.23+.45*recipe.dotSize/100)*widthFactor*.95),
       drawnPath,
+      shapeFrequency:recipe.shapeFrequency,
       stepCount:recipe.stepCount,
       chevronSharpness:recipe.chevronSharpness,
       loopAspect:recipe.loopAspect,
