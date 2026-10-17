@@ -358,3 +358,53 @@
 .setting-lock.is-locked{color:#dfd2ff;border-color:#9980ce;background:#302a49}
 .setting-lock:hover{color:#fff}
 @media(max-width:790px){.setting-lock svg{width:14px;height:14px}}
+
+/* An even-weight randomizer. Prime mode is a direct checkbox, not a lockable setting. */
+.sidebar .randomize-bar.randomize-toolbar{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,1fr);
+  gap:9px;align-items:stretch;width:100%;margin:0 0 13px}
+.sidebar .randomize-bar.randomize-toolbar .button-randomize-all{display:flex;justify-content:center;align-items:center;
+  width:100%;min-width:0;min-height:46px;padding:9px 10px;border-radius:9px;
+  font-size:12px!important;line-height:1.2;white-space:nowrap}
+.sidebar .randomize-bar.randomize-toolbar .button-randomize-all span{font-size:inherit!important}
+.randomize-bar.randomize-toolbar>.prime-toggle{display:flex;justify-content:center;align-items:center;
+  gap:9px;min-width:0;min-height:46px;width:100%;padding:8px 9px;
+  font-size:11px;font-weight:700;line-height:1.2;white-space:nowrap;
+  border:1px solid #4b435f;border-radius:9px;background:#272337;color:#e7dffa;
+  cursor:pointer}
+.randomize-bar.randomize-toolbar>.prime-toggle:hover{background:#342b48;border-color:#796c9c}
+.randomize-bar.randomize-toolbar>.prime-toggle:focus-within{outline:2px solid #b49ee9;outline-offset:2px}
+.randomize-bar.randomize-toolbar>.prime-toggle input{width:17px;height:17px;min-width:17px;flex:0 0 auto}
+
+/* No wrapping: the studio's four settings tabs always share one horizontal row. */
+.sidebar .settings-tabs{grid-template-columns:repeat(4,minmax(0,1fr));gap:3px}
+.sidebar .settings-tab{min-width:0;overflow:hidden;text-overflow:ellipsis;gap:3px;padding:7px 2px}
+
+/* Distinct Design controls for optional silhouette shadows. */
+.stripe-shadow-section{display:grid;gap:11px;margin-top:20px;padding:15px 13px;
+  border:1px solid #3d4052;border-radius:11px;background:linear-gradient(160deg,#242535,#171923)}
+.stripe-shadow-switch{display:flex;align-items:center;gap:10px;padding-right:30px;
+  color:#f1edfa;min-height:32px;cursor:pointer}
+.stripe-shadow-switch input{width:17px;height:17px;min-width:17px;accent-color:#ac96dd;margin:0;flex-shrink:0}
+.stripe-shadow-switch>span{display:flex;flex-direction:column;gap:4px;min-width:0}
+.stripe-shadow-switch strong{font-size:12px;font-weight:700}
+.stripe-shadow-switch small,.stripe-shadow-help{font-size:10px;line-height:1.55;color:#aaa7b9}
+.stripe-shadow-controls{display:grid;gap:13px;padding-top:12px;border-top:1px solid #3b3b49}
+.stripe-shadow-controls[hidden]{display:none!important}
+.stripe-shadow-controls .control-grid{min-width:0;gap:12px}
+.stripe-shadow-help{display:block}
+@media(max-width:790px){
+ .sidebar .settings-tabs{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:3px}
+ .sidebar .settings-tab{min-height:37px;gap:3px;font-size:10px}
+ .sidebar .randomize-bar.randomize-toolbar{gap:7px;margin-bottom:11px}
+ .sidebar .randomize-bar.randomize-toolbar .button-randomize-all{min-height:43px}
+ .randomize-bar.randomize-toolbar>.prime-toggle{min-height:43px;font-size:11px;padding:7px 6px;gap:6px}
+ .stripe-shadow-section{margin-top:14px;padding:12px 10px}
+}
+@media(max-width:420px){
+ .sidebar .settings-tab{min-height:36px;font-size:10px;gap:0;padding:6px 1px}
+ .sidebar .settings-tab>span{display:none}
+ .sidebar .randomize-bar.randomize-toolbar .button-randomize-all{font-size:11px!important;padding:7px 5px}
+ .sidebar .randomize-bar.randomize-toolbar .button-randomize-all span{font-size:inherit!important}
+ .randomize-bar.randomize-toolbar>.prime-toggle{font-size:10px;padding:7px 4px;gap:5px}
+ .randomize-bar.randomize-toolbar>.prime-toggle input{width:15px;height:15px;min-width:15px}
+}
