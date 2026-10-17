@@ -81,7 +81,11 @@ test('stripe individuality only changes geometry, never motifs',()=>{
       const scene=resolveScene({seed:'geometry-only',family,motif,individuality,chaos:100});
       assert.ok(scene.stripes.every(s=>s.motif===motif),family+'/'+motif+'/'+individuality);
       if(individuality===0)assert.ok(scene.stripes.every(s=>s.parallelMix===0 && s.geometry===scene.geometry));
-      if(individuality===100)assert.ok(scene.stripes.every(s=>s.parallelMix===1));
+      if(individuality===100){
+        assert.ok(scene.stripes.every(s=>s.parallelMix===.45),'coherent mode limits stripe-to-stripe drift');
+        const unrestricted=resolveScene({seed:'geometry-only',family,motif,individuality,chaos:100,geometrySafety:false});
+        assert.ok(unrestricted.stripes.every(s=>s.parallelMix===1),'unrestricted uses full individuality range');
+      }
     }
   }
 });
