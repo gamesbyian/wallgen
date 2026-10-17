@@ -203,6 +203,27 @@ try{
   await swipe({x:navPosition.right-34,y:navPosition.y},
               {x:navPosition.left+40,y:navPosition.y});
   await waitFor(`document.getElementById('tab-colour').getAttribute('aria-selected')==='true'`);
+  // A real finger drag should adjust a slider, not scroll to another card.
+  await evaluate('document.getElementById("tab-design").click()');
+  await evaluate('document.querySelector("[name=shapeFrequency]").closest(".lockable-setting").scrollIntoView({inline:"start",block:"nearest",behavior:"instant"})');
+  await waitFor('document.querySelector("[name=shapeFrequency]").getBoundingClientRect().left > 0 && document.querySelector("[name=shapeFrequency]").getBoundingClientRect().right < innerWidth');
+  const slider=await evaluate(`(()=>{
+    const r=document.querySelector('[name=shapeFrequency]').getBoundingClientRect();
+    return {left:r.left,right:r.right,y:Math.round(r.top+r.height/2),
+      value:Number(document.querySelector('[name=shapeFrequency]').value),
+      scrollLeft:document.getElementById('panel-design').scrollLeft};
+  })()`);
+  await swipe({x:Math.round(slider.left+12),y:slider.y},
+              {x:Math.round(slider.right-12),y:slider.y});
+  await waitFor(`Number(document.querySelector('[name=shapeFrequency]').value)>${slider.value}`);
+  const afterSlider=await evaluate(`({
+    value:Number(document.querySelector('[name=shapeFrequency]').value),
+    scroll:document.getElementById('panel-design').scrollLeft,
+    category:document.querySelector('.settings-tab[aria-selected="true"]').dataset.tab
+  })`);
+  assert.ok(afterSlider.value>slider.value,'range slider responds to a real finger drag');
+  assert.ok(Math.abs(afterSlider.scroll-slider.scrollLeft)<40,'dragging a slider should not swipe away the card');
+  assert.equal(afterSlider.category,'design');
   // Pull down by the narrow, unobtrusive grab handle.
   const grab=await evaluate(`(()=>{
     const r=document.getElementById('mobileDismissHandle').getBoundingClientRect();
