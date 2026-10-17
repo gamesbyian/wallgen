@@ -718,6 +718,39 @@ try{
   assert.ok(await evaluate('document.querySelector("#controls .randomize-toolbar")!==null'));
   assert.ok(restoredSettings.geometry&&restoredSettings.shape&&restoredSettings.outlineBuffer);
   assert.ok(restoredSettings.lockCount>25,'locks must survive DOM reparenting');
+  // The drawing plane covers the entire stage. Start a real mouse gesture
+  // outside the wallpaper border, enter the image, then regenerate the design.
+  await evaluate('document.getElementById("drawPathToggle").click()');
+  const offFrame=await evaluate(`(()=>{
+    const image=document.getElementById('preview').getBoundingClientRect();
+    const stage=document.querySelector('.studio-stage').getBoundingClientRect();
+    const overlay=document.getElementById('drawOverlay').getBoundingClientRect();
+    return {image:{left:image.left,top:image.top,width:image.width,height:image.height},
+      stage:{left:stage.left,right:stage.right,top:stage.top,bottom:stage.bottom},
+      overlay:{left:overlay.left,right:overlay.right}};
+  })()`);
+  const startX=Math.round(offFrame.image.left-28);
+  const startY=Math.round(offFrame.image.top+offFrame.image.height*.28);
+  const endX=Math.round(offFrame.image.left+offFrame.image.width*.55);
+  const endY=Math.round(offFrame.image.top+offFrame.image.height*.70);
+  assert.ok(startX>offFrame.stage.left+6&&startX<offFrame.image.left);
+  assert.ok(offFrame.overlay.left<=startX&&offFrame.overlay.right>endX);
+  await command('Input.dispatchMouseEvent',{type:'mouseMoved',x:startX,y:startY});
+  await command('Input.dispatchMouseEvent',{type:'mousePressed',x:startX,y:startY,button:'left',clickCount:1});
+  for(let i=1;i<=8;i++){
+    const t=i/8;
+    await command('Input.dispatchMouseEvent',{type:'mouseMoved',
+      x:Math.round(startX+(endX-startX)*t),
+      y:Math.round(startY+(endY-startY)*t),button:'left',buttons:1});
+  }
+  await command('Input.dispatchMouseEvent',{type:'mouseReleased',x:endX,y:endY,button:'left',clickCount:1});
+  await waitFor('document.getElementById("drawApply").disabled===false');
+  await evaluate('document.getElementById("drawApply").click()');
+  await waitFor(`(()=>{
+    const r=JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get('r')));
+    return r.geometry==='drawn'&&r.customPath.length>3&&r.customPath[0][0]<-.05;
+  })()`);
+  console.log('OFF_FRAME_MOUSE_ENTRY_AND_RECIPE_SUCCESS');
   console.log('Browser smoke passed: phone viewport, sheets, gallery, theme and desktop restoration.');
 }finally{
   try{ws?.close()}catch{}
