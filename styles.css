@@ -292,3 +292,17 @@
   .workspace>.gallery-section .gallery-head h2{font-size:18px}
 }
 @media(prefers-reduced-motion:reduce){.settings-panel{animation:none}}
+
+.prime-mode-hint{font-size:10px;line-height:1.5;margin:0 0 8px;
+  padding:8px 10px;background:#241f35;border:1px solid #4c4169;border-radius:7px;color:#ddd1fc}
+.prime-mode-hint[hidden]{display:none!important}
+@media(max-width:420px){
+  .sidebar .randomize-toolbar .button-randomize-all{font-size:0!important;min-height:37px;padding:0 5px}
+  .sidebar .randomize-toolbar .button-randomize-all span{font-size:9px;letter-spacing:0}
+  .sidebar .randomize-toolbar{gap:4px}
+  .randomize-toolbar .prime-toggle{font-size:9px;gap:3px;padding:7px 20px 7px 0}
+  .randomize-toolbar .prime-toggle input{width:12px;height:12px;min-width:12px}
+  .randomize-toolbar .setting-lock{right:0;top:8px;width:19px;height:19px;min-width:19px;font-size:11px}
+  .settings-tab{gap:2px;font-size:9px;min-height:32px}
+  .settings-tab>span{font-size:12px}
+}
