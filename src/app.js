@@ -2,6 +2,10 @@ import { OUTPUT_WIDTH, OUTPUT_HEIGHT, normalizeRecipe, resolveScene, encodeRecip
 import { drawWallpaper, presentNudgedArtwork } from './renderer.js';
 import { embedPngMetadata, extractPngRecipe, cleanMetadata, METADATA_FIELDS } from './png-metadata.js';
 import { installDrawTool } from './draw-path-ui.js';
+import {mountEditor,selectEditorTool} from './editor-layout.js';
+import {randomizeScope} from './scoped-random.js';
+import {STYLE_PRESETS} from './editor-schema.js';
+import {installExplorationHistory} from './exploration-history.js';
 
 const form = document.getElementById('controls');
 const preview = document.getElementById('preview');
@@ -259,7 +263,14 @@ function render(recipe,{scroll=false,bypassLocks=false}={}) {
   syncURL();
   if(scroll) document.querySelector('.workspace-head').scrollIntoView({behavior:'smooth',block:'start'});
 }
-function changeRecipe(recipe,options={}){render(recipe,options);toControls(current);showResolvedSelections(currentScene);}
+function changeRecipe(recipe,options={}){
+  render(recipe,options);toControls(current);showResolvedSelections(currentScene);
+  for(const die of form.querySelectorAll('[data-random-setting]')){
+    const field=form.elements.namedItem(die.dataset.randomSetting);
+    die.disabled=!field||field.disabled||field.dataset.inactive==='true';
+    die.title=die.disabled?'Setting is unavailable or locked':'Randomize only '+die.dataset.randomSetting;
+  }
+}
 document.querySelector('.studio-stage').addEventListener('roygbiv-view-zoom-request',event=>{
   changeRecipe({...current,viewZoom:event.detail});
 });
@@ -534,8 +545,15 @@ function syncSettingLocks(){
   }
 }
 installSettingLocks();
+const editor=mountEditor();
+const explorationHistory=installExplorationHistory({
+  form,preview,getRecipe:()=>current,
+  restore:recipe=>changeRecipe(recipe,{bypassLocks:true}),
+});
 
-// Four real keyboard-accessible tabs. Their selection is a view preference,
+
+// Six category tabs control which named tool is shown. Navigation is a view
+// preference, independent of the recipe and preview/export geometry. Their selection is a view preference,
 // never part of the design recipe and never triggers image regeneration.
 const settingsTabs=Array.from(document.querySelectorAll('.settings-tab'));
 const TAB_NAMES=settingsTabs.map(button=>button.dataset.tab);
@@ -549,7 +567,8 @@ function activateSettingsTab(tabName,{focus=false}={}){
     panel.hidden=!active;
     if(active && focus)button.focus();
   }
-  try{sessionStorage.setItem('wallgen:settings-tab:v1',name);}catch{}
+  document.dispatchEvent(new CustomEvent('editor-category-change',{detail:name}));
+  try{sessionStorage.setItem('wallgen:settings-tab:v2',name);}catch{}
 }
 for(const button of settingsTabs){
   button.addEventListener('click',()=>activateSettingsTab(button.dataset.tab));
@@ -561,18 +580,48 @@ for(const button of settingsTabs){
     else if(event.key==='Home')target=TAB_NAMES[0];
     else if(event.key==='End')target=TAB_NAMES.at(-1);
     else if(event.key==='ArrowDown' && window.matchMedia('(max-width:790px)').matches)
-      target=TAB_NAMES[(index+2)%TAB_NAMES.length];
+      target=TAB_NAMES[(index+3)%TAB_NAMES.length];
     else if(event.key==='ArrowUp' && window.matchMedia('(max-width:790px)').matches)
-      target=TAB_NAMES[(index+TAB_NAMES.length-2)%TAB_NAMES.length];
+      target=TAB_NAMES[(index+TAB_NAMES.length-3)%TAB_NAMES.length];
     else return;
     event.preventDefault();
     activateSettingsTab(target,{focus:true});
   });
 }
-let rememberedTab='design';
-try{rememberedTab=sessionStorage.getItem('wallgen:settings-tab:v1')||'design';}catch{}
+let rememberedTab='layout';
+try{rememberedTab=sessionStorage.getItem('wallgen:settings-tab:v2')||'layout';}catch{}
 activateSettingsTab(rememberedTab);
 
+// Scope-aware exploration. One die changes exactly its setting; a tool die
+// changes only that tool; a category die only that category. Locks and dormant
+// controls are honoured by the same model shared with a future Wizard Mode.
+form.addEventListener('click',event=>{
+  const button=event.target.closest('[data-random-setting],[data-random-tool],[data-random-category]');
+  if(!button||button.disabled)return;
+  event.preventDefault();
+  const scope=button.dataset.randomSetting?'setting':
+    button.dataset.randomTool?'tool':'category';
+  const name=button.dataset.randomSetting||button.dataset.randomTool||button.dataset.randomCategory;
+  const mode=document.getElementById('editorVariationMode').value;
+  const strength=document.getElementById('editorVariationStrength').value;
+  const {recipe,modified}=randomizeScope(current,{
+    scope,name,mode,strength,seed:newSeed(),
+    control:key=>form.elements.namedItem(key),
+  });
+  if(!modified.length){showNotice('No unlocked, applicable settings changed.');return;}
+  explorationHistory.remember(current,'Before '+name);
+  changeRecipe(recipe);
+  explorationHistory.remember(current,(mode==='vary'?'Vary ':'Reroll ')+name);
+  showNotice((mode==='vary'?'Varied ':'Rerolled ')+name.replace(/-/g,' ')+' ('+modified.length+' settings).');
+});
+form.addEventListener('change',event=>{
+  if(event.target.name!=='family')return;
+  const family=event.target.value,defaults=STYLE_PRESETS[family];
+  if(!defaults)return;
+  // Convert the starting style to inspectable values. It never acts as a
+  // hidden multiplier after the player manually edits a field.
+  changeRecipe({...current,family,...defaults});
+},true);
 let rangeTimeout;
 form.addEventListener('input',event=>{
   const key=event.target.name;
@@ -597,9 +646,15 @@ form.addEventListener('change',()=>{clearTimeout(rangeTimeout);updateControlsFro
 form.addEventListener('submit',event=>event.preventDefault());
 seedInput.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();render(fromControls());}});
 document.getElementById('applySeed').addEventListener('click',()=>render(fromControls()));
-document.getElementById('randomize').addEventListener('click',()=>changeRecipe({...fromControls(),seed:newSeed()}));
+document.getElementById('randomize').addEventListener('click',()=>{
+  explorationHistory.remember(current,'Before seed');
+  changeRecipe({...fromControls(),seed:newSeed()});
+  explorationHistory.remember(current,'New seed');
+});
 document.getElementById('randomizeAll').addEventListener('click',()=>{
+  explorationHistory.remember(current,'Before Random');
   changeRecipe({...randomizeAllRecipe({primesOnly:current.primesOnly}),viewZoom:current.viewZoom});
+  explorationHistory.remember(current,'Random');
 });
 for(const n of [2,3]){
   document.getElementById('addTextureLayer'+n).addEventListener('click',()=>{

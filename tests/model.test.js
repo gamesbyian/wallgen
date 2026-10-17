@@ -495,8 +495,8 @@ test('random generations use at most the single primary texture layer',()=>{
     assert.equal(r.textureLayer3Enabled,false);
     assert.ok(resolveScene(r).textureLayers.length<=1);
     // The ordinary editor still supports opt-in second and third layers.
-    const optIn=normalizeRecipe({...r,textureLayer2Enabled:true,material2:'linen',
-      textureLayer3Enabled:true,material3:'grain'});
+    const optIn=normalizeRecipe({...r,textureLayer2Enabled:true,material2:'linen',textureStrength2:55,
+      textureLayer3Enabled:true,material3:'grain',textureStrength3:55});
     assert.equal(optIn.textureLayer2Enabled,true);
     assert.equal(optIn.textureLayer3Enabled,true);
     assert.deepEqual(decodeRecipe(encodeRecipe(optIn)),optIn);
