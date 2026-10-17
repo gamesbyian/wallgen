@@ -1,5 +1,5 @@
 import { SHAPES } from './path-geometry.js';
-import { normalizeDrawnPath, prepareDrawnPath } from './drawn-path.js';
+import { normalizeDrawnPath, prepareDrawnPath, safeDrawnBandSpan } from './drawn-path.js';
 export const DESIGN_WIDTH = 600;
 export const DESIGN_HEIGHT = 1300;
 export const OUTPUT_WIDTH = 3024;
@@ -192,7 +192,9 @@ export function resolveScene(recipeInput) {
   if(orientation==='diagonal'&&geometry!=='drawn')angle += recipe.diagonalRotation*Math.PI/180;
   const span = ['hairpin','loops','drawn'].includes(geometry) ? DESIGN_WIDTH :
     DESIGN_WIDTH * Math.abs(Math.sin(angle)) + DESIGN_HEIGHT * Math.abs(Math.cos(angle));
-  const spread = span * (0.17 + 0.53 * recipe.spread / 100) / repeats;
+  const requestedSpread=span*(0.17+0.53*recipe.spread/100)/repeats;
+  const spread=geometry==='drawn'?
+    Math.min(requestedSpread,safeDrawnBandSpan(drawnPath)):requestedSpread;
   const center = geometry==='drawn'?0:between(random, -1, 1) * span * 0.09;
   // A shared master path keeps the seven stripes parallel at individuality=0.
   // Independent path phase, period, tilt and edge profile grow with individuality.
@@ -210,7 +212,7 @@ export function resolveScene(recipeInput) {
   const avg = spread / 6;
   // Stripe width and path roughness have their own fixed reference scale.
   // Changing spread changes only centre-to-centre positions, not ribbon width.
-  const referenceSpread=span*(0.17+0.53*.56)/repeats;
+  const referenceSpread=geometry==='drawn'?spread:span*(0.17+0.53*.56)/repeats;
   const referenceAvg=referenceSpread/6;
   const commonDisplacement=referenceAvg*.22*(.3+.7*chaos)*depthFactor;
   const widthFactor = (0.12 + 0.79 * recipe.stripeWidth / 100) * profile.width;
