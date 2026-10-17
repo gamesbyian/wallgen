@@ -8,14 +8,16 @@ export const EDITOR_CATEGORIES=[
     {id:'variability',name:'Variation',settings:['chaos']},
   ]},
   {id:'path',label:'Path',icon:'⌁',tools:[
-    {id:'geometry',name:'Geometry',settings:['geometry','shapeFrequency','shapeDepth','turnRadius','hairpinAngle']},
+    {id:'geometry',name:'Geometry',settings:['geometry','shapeFrequency','shapeDepth']},
+    {id:'turn',name:'Turns',settings:['turnRadius','hairpinAngle']},
     {id:'ends',name:'Endpoints',settings:['pathLength','endTaper']},
   ]},
   {id:'stripes',label:'Stripes',icon:'≋',tools:[
     {id:'structure',name:'Structure',settings:['construction','stripeWidth','spread']},
     {id:'patterns',name:'Patterns',settings:['motif','lineStyle','patternHomogeneity']},
     {id:'marks',name:'Marks',settings:['dotSize','dotSpacing']},
-    {id:'character',name:'Character',settings:['individuality','overridePatternHomogeneity','tonalContrast']},
+    {id:'character',name:'Character',settings:['individuality','overridePatternHomogeneity']},
+    {id:'tone',name:'Band tones',settings:['tonalContrast']},
   ]},
   {id:'colour',label:'Colour',icon:'◐',tools:[
     {id:'rainbow',name:'Rainbow',settings:['palette','reverseStripes']},
