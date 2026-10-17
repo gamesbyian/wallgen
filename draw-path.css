@@ -1,0 +1,75 @@
+/* Touch path capture is a mode of the existing preview, not a new editor
+   viewport. Its overlay is exactly registered to the exported design pixels. */
+.randomize-bar.randomize-toolbar{
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  gap:5px 8px;align-items:center;
+}
+.randomize-toolbar #randomizeAll{grid-column:1;grid-row:1;width:100%}
+.randomize-toolbar .prime-toggle{grid-column:2;grid-row:1;padding:5px 0}
+.randomize-toolbar #undo{grid-column:2;grid-row:2}
+.randomize-toolbar #drawPathToggle{grid-column:1;grid-row:2}
+.randomize-toolbar #undo,
+.randomize-toolbar #drawPathToggle{
+  min-width:0;min-height:34px;height:34px;border-radius:8px;
+  padding:4px 7px;font-size:11px;white-space:nowrap;
+}
+.randomize-toolbar #drawPathToggle[aria-pressed="true"]{
+  border-color:#da69a4;background:#512744;color:#fff;
+}
+.wallpaper-frame .wallpaper-surface{position:relative;width:100%}
+.wallpaper-frame .wallpaper-surface #drawOverlay{
+  display:block;position:absolute;inset:0;width:100%;height:100%;
+  z-index:4;border-radius:7px 7px 0 0;background:transparent;
+  touch-action:none;user-select:none;cursor:crosshair;
+}
+.wallpaper-frame #drawOverlay[hidden],#drawPathPanel[hidden]{display:none!important}
+body.path-drawing .wallpaper-frame{
+  outline:2px solid #ee8dc5;outline-offset:4px;
+}
+.draw-path-panel{
+  position:absolute;z-index:30;bottom:9px;left:50%;transform:translateX(-50%);
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  width:max-content;max-width:calc(100% - 8px);
+  background:rgba(15,15,25,.94);border:1px solid #a6729f;border-radius:11px;
+  color:#fff;padding:7px 9px;box-shadow:0 8px 24px #0008;
+}
+.draw-path-panel #drawPathHint{
+  font-size:11px;line-height:1.2;text-align:center;
+}
+.draw-path-controls{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px}
+.draw-path-controls button{
+  cursor:pointer;border:1px solid #807688;color:#f9f6f7;background:#312b39;
+  border-radius:6px;min-height:30px;padding:3px 7px;font-size:10px;
+  font-weight:650;white-space:nowrap;
+}
+.draw-path-controls button:disabled{opacity:.35;cursor:default}
+.draw-path-controls button[aria-pressed="true"]{background:#8e376c;border-color:#f3aad1}
+.draw-path-controls #drawApply:not(:disabled){background:#c44d91;color:#fff;border-color:#ef88c2}
+.draw-path-controls button:focus-visible{outline:2px solid #f1b7f0;outline-offset:2px}
+@media(max-width:790px){
+  body.mobile-studio .mobile-preview-rail-left #undo,
+  body.mobile-studio .mobile-preview-rail-left #drawPathToggle{
+    display:flex!important;align-items:center;justify-content:center;flex-direction:column;
+    width:43px!important;min-width:43px!important;height:34px!important;
+    min-height:34px!important;padding:2px!important;
+    border-radius:8px;font-size:13px!important;line-height:1;
+    background:var(--surface);color:inherit;border:1px solid var(--line);
+  }
+  body.mobile-studio .mobile-preview-rail-left #undo span,
+  body.mobile-studio .mobile-preview-rail-left #drawPathToggle span{
+    display:block;font-size:9px;line-height:1;font-weight:750;
+  }
+  body.mobile-studio .mobile-preview-rail-left #undo:disabled{opacity:.35}
+  body.mobile-studio .mobile-preview-rail-left #drawPathToggle[aria-pressed="true"]{
+    border-color:#cc5c95;background:#f4d1e5;color:#832659;
+  }
+  body.mobile-studio .draw-path-panel{
+    bottom:4px;padding:5px 4px;gap:3px;
+    max-width:calc(100% - 4px);width:max-content;
+  }
+  body.mobile-studio .draw-path-panel #drawPathHint{font-size:9px}
+  body.mobile-studio .draw-path-controls{gap:2px}
+  body.mobile-studio .draw-path-controls button{
+    font-size:9px;min-height:25px;padding:2px 5px;
+  }
+}

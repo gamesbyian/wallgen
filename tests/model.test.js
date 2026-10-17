@@ -379,7 +379,8 @@ test('chevron is a geometry separate from the chevron motif; line styles combine
   for(const geometry of GEOMETRIES){
     for(const lineStyle of LINE_STYLES){
       const scene=resolveScene({seed:'combine-geometry',family:'studio',
-        geometry,motif:'chevrons',lineStyle,individuality:0});
+        geometry,motif:'chevrons',lineStyle,individuality:0,
+        ...(geometry==='drawn'?{customPath:[[.5,.1],[.6,.4],[.4,.8]]}:{})});
       assert.equal(scene.stripes.length,7);
       assert.ok(scene.stripes.every(s=>s.geometry===geometry&&s.motif==='chevrons'&&s.lineStyle===lineStyle));
     }

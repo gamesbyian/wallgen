@@ -6,7 +6,7 @@ const geometryAt=(x,stripe,extent)=>samplePath(stripe,x,extent).y;
 const edgePoint=(x,stripe,extent,side,scene)=>
   ribbonEdge(stripe,x,extent,side,scene?textureHeight(scene,stripe,x,side):0);
 const edgeAt=(x,stripe,extent,side,scene)=>edgePoint(x,stripe,extent,side,scene).y;
-const spatialGeometry=stripe=>['hairpin','loops'].includes(stripe.sharedGeometry??stripe.geometry);
+const spatialGeometry=stripe=>['hairpin','loops','drawn'].includes(stripe.sharedGeometry??stripe.geometry);
 // A procedural height field makes the actual texture material affect ribbon edges.
 // Separate low/high-frequency noise bands evoke fibres, pores, grain and stone.
 // This modifies geometry rather than offsetting the colour mask after painting.
@@ -186,6 +186,11 @@ export function stripeFrameContacts(scene,stripe) {
   return contacts;
 }
 export function balanceStripeEnds(scene,stripe) {
+  // A user trace is intentionally bounded by the input surface. Let its seven
+  // normal-offset ribbons clip naturally instead of recapping the sketch.
+  if((stripe.sharedGeometry??stripe.geometry)==='drawn')
+    return {contacts:{left:false,right:false,top:false,bottom:false},
+      balanced:true,hidden:false};
   // A returning path legitimately has both ends at the same frame edge.
   // Paired contacts for a hairpin are intentional rather than a lone crop.
   const floating=scene.composition==='floating';
