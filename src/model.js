@@ -21,7 +21,7 @@ export const LOCKABLE_SETTINGS = ['seed','family','orientation','geometry','moti
   'textureLayer2Enabled','material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2',
   'textureLayer3Enabled','material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3',
   'textureDisplacement','patternHomogeneity','chaos','stripeWidth','spread','shapeFrequency','shapeDepth','lineStyle','individuality',
-  'overridePatternHomogeneity','gap','glow','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','position',
+  'overridePatternHomogeneity','gap','outlineBuffer','glow','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','position',
   'composition','repeatCount','repeatSpacing','construction','turnRadius','hairpinAngle','pathLength','endTaper','tonalContrast','brushRoughness','dotSize','dotSpacing'];
 export const PALETTES = ['classic', 'electric', 'pastel', 'jewel', 'muted', 'sunset', 'candy', 'arctic', 'earth', 'twilight', 'citrus'];
 export const TEXTURE_COVERAGES = ['both', 'stripes', 'background'];
@@ -140,6 +140,7 @@ export function normalizeRecipe(input = {}) {
     patternHomogeneity: finiteRange(input.patternHomogeneity, 100, 0, 100),
     overridePatternHomogeneity: input.overridePatternHomogeneity === true || input.overridePatternHomogeneity === 'true',
     gap: finiteRange(input.gap, 28, 0, 100),
+    outlineBuffer: finiteRange(input.outlineBuffer, 0, 0, 100),
     glow: finiteRange(input.glow, 0, 0, 100),
     // Camera framing is part of the artwork and therefore of every saved PNG.
     viewZoom: Math.round(finiteRange(input.viewZoom, 1, .5, 2.5)*100)/100,
@@ -383,6 +384,6 @@ export function randomizeAllRecipe({primesOnly=false}={}) {
     tonalContrast:percent(),brushRoughness:percent(),dotSize:percent(),dotSpacing:percent(),
     textureStrength:percent(), textureScale:percent(), textureDisplacement:percent(), individuality:percent(),
     patternHomogeneity:percent(), overridePatternHomogeneity:r()>.5,
-    gap:percent(), glow:percent(), positionX:0, positionY:0,
+    gap:percent(), outlineBuffer:percent(), glow:percent(), positionX:0, positionY:0,
   });
 }
