@@ -97,8 +97,9 @@ function toControls(recipe) {
  */
 function inactiveSettingKeys(recipe,scene){
   const inactive=new Set();
-  if(['straight','hairpin','drawn'].includes(scene.geometry)&&
-      !(scene.motif==='chevrons'&&recipe.construction==='ribbon'))
+  // Decorative motifs have separate size/density knobs; straight geometry
+  // never has curve frequency/depth, even when marked with chevrons.
+  if(['straight','hairpin','drawn'].includes(scene.geometry))
     inactive.add('shapeFrequency'),inactive.add('shapeDepth');
   if(scene.geometry==='drawn')inactive.add('orientation');
   if(scene.geometry!=='hairpin')inactive.add('turnRadius'),inactive.add('hairpinAngle');
@@ -110,12 +111,15 @@ function inactiveSettingKeys(recipe,scene){
   }
   if(recipe.construction!=='ribbon'){
     inactive.add('motif');inactive.add('patternHomogeneity');inactive.add('overridePatternHomogeneity');
+    inactive.add('motifSize');inactive.add('motifFrequency');
   }else if(scene.motif==='solid'){
     inactive.add('patternHomogeneity');
+    inactive.add('motifSize');inactive.add('motifFrequency');
   }
   if(['woven','tonal'].includes(recipe.construction))inactive.add('lineStyle');
   if(recipe.construction==='woven')inactive.add('brushRoughness');
-  if(recipe.lineStyle!=='dotted'||recipe.construction==='woven'){
+  if((recipe.lineStyle!=='dotted'&&!(recipe.construction==='ribbon'&&scene.motif==='dots'))
+      ||recipe.construction==='woven'){
     inactive.add('dotSize');inactive.add('dotSpacing');
   }
   if(scene.orientation!=='diagonal'||scene.geometry==='drawn'){
