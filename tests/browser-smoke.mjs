@@ -271,6 +271,9 @@ try{
   await waitFor(`document.getElementById('tab-colour').getAttribute('aria-selected')==='true'`);
   // A real finger drag should adjust a slider, not scroll to another card.
   await evaluate('document.getElementById("tab-design").click()');
+  // Tab selection asynchronously resets the rail to its first card.
+  // Let that reset and CSS snap finish before navigating to the nested slider.
+  await delay(330);
   await evaluate(`(()=>{
     const card=[...document.querySelectorAll('#panel-design .mobile-setting-cluster')]
       .find(el=>el.dataset.group==='Geometry');
@@ -279,6 +282,7 @@ try{
       inline:'nearest',block:'center',behavior:'instant'
     });
   })()`);
+  await delay(280);
   await waitFor(`(()=>{
     const control=document.querySelector('[name=shapeFrequency]').getBoundingClientRect();
     const card=[...document.querySelectorAll('#panel-design .mobile-setting-cluster')]
