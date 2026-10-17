@@ -27,6 +27,19 @@ const favouriteBtn=document.getElementById('mobileFavorite');
 const dismissHandle=document.getElementById('mobileDismissHandle');
 const dockExpand=document.getElementById('mobileDockExpand');
 const dock=document.getElementById('mobileActionDock');
+const editRail=document.getElementById('mobileEditorActionRail');
+editRail.addEventListener('click',event=>{
+  const proxy=event.target.closest('[data-dock-proxy]');
+  if(!proxy)return;
+  const original=document.getElementById(proxy.dataset.dockProxy);
+  if(original)original.click();
+});
+function syncRail(){
+  const chosen=document.getElementById('favorite').getAttribute('aria-pressed')==='true';
+  editRail.querySelector('[data-dock-proxy=mobileFavorite]')
+    .setAttribute('aria-pressed',String(chosen));
+}
+
 const originals=['.composition-positioner','.action-tray','.export-metadata','.secondary-actions','.details-bar']
   .map(sel=>document.querySelector(sel)).filter(Boolean);
 const placeholders=originals.map(node=>{
@@ -120,6 +133,7 @@ for(const [mobileId,targetId] of [
 function syncFavorite(){
   const chosen=document.getElementById('favorite').getAttribute('aria-pressed')==='true';
   favouriteBtn.setAttribute('aria-pressed',String(chosen));
+  syncRail();
   // The permanent SVG responds to aria-pressed without replacing its markup.
 }
 new MutationObserver(syncFavorite).observe(document.getElementById('favorite'),{attributes:true,attributeFilter:['aria-pressed']});
