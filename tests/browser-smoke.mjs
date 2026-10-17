@@ -327,6 +327,18 @@ try{
   assert.equal(await evaluate('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).viewZoom'),.5);
   for(let i=0;i<5;i++)await evaluate('document.querySelector("[data-zoom=in]").click()');
   assert.equal(await evaluate('document.querySelector(".studio-stage").dataset.viewZoom'),'1');
+  // Generating a different wallpaper must keep the user's chosen framing.
+  await evaluate('document.querySelector("[data-zoom=out]").click()');
+  const beforeGeneration=await evaluate('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).seed');
+  await evaluate('document.getElementById("randomize").click()');
+  const generation=await evaluate(`(()=>{
+    const r=JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get('r')));
+    return {seed:r.seed,zoom:r.viewZoom,shown:document.querySelector('.studio-stage').dataset.viewZoom};
+  })()`);
+  assert.notEqual(generation.seed,beforeGeneration);
+  assert.equal(generation.zoom,.9);
+  assert.equal(generation.shown,'0.9');
+  await evaluate('document.querySelector("[data-zoom=in]").click()');
   // A fresh 50% view must contain ink outside the old 100% frame.
   // Full-res save uses the exact same portable recipe camera as this preview.
   const cameraParity=await evaluate(`(async()=>{
