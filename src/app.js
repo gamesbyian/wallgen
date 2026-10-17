@@ -257,7 +257,8 @@ for(const slider of form.querySelectorAll('input[type="range"]')){
   const numeric=document.createElement('input');
   numeric.type='number';numeric.className='slider-number';numeric.min=slider.min;numeric.max=slider.max;
   numeric.step=slider.step||'1';numeric.value=slider.value;numeric.dataset.numberFor=slider.name;
-  numeric.setAttribute('aria-label',slider.name+' percentage');
+  numeric.setAttribute('aria-label',slider.name==='diagonalRotation'?
+    'Diagonal rotation in degrees':slider.name+' percentage');
   slider.parentNode.insertBefore(row,slider);row.append(minus,slider,plus,numeric);
   numeric.addEventListener('change',()=>{
     const raw=Number(numeric.value);
