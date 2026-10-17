@@ -48,7 +48,16 @@ outward at the beginning or end of a card rail also moves to the adjacent
 category. A small counter shows your position within each category. All
 existing controls, optional texture layers, shadows, and numeric entries
 remain the original live form elements; there are no proxy sliders or lost
-settings. **Swipe down** on a noninteractive part of the tray or grabber to
+settings. Related options now travel together on a single card: Geometry with
+frequency/depth, Stripe pattern with homogeneity, Shadows with their toggle,
+strength/softness/direction, Outlines with buffer, Canvas lighting with mood,
+direction/intensity/shade, each Texture layer with its own full set of
+sliders/options, and Individuality with the pattern override checkbox.
+Multi-control cards can scroll internally if their contents exceed the compact
+tray; the overall editor still swipes horizontally. On larger viewports the
+original form order is restored without changing values or lock states.
+**Primes Only** now simply toggles its selected state without displaying an
+explanatory toast. **Swipe down** on a noninteractive part of the tray or grabber to
 dismiss it; tapping the picture or the Edit dock button also closes it. There
 is no separate Done or Larger preview button, and no vertical scrolling
 through the editor itself. The canvas always has its own unobstructed space.

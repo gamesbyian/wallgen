@@ -110,8 +110,10 @@ try{
     const sidebar=document.querySelector('.sidebar').getBoundingClientRect();
     const dock=document.querySelector('.mobile-dock').getBoundingClientRect();
     return document.body.classList.contains('mobile-edit-open') &&
-      stage.bottom<=sidebar.top+2 && sidebar.bottom<=innerHeight+2 &&
-      dock.left>=innerWidth-2;
+      stage.bottom<=sidebar.top+2 && sidebar.bottom<=innerHeight+1 &&
+      dock.left>=innerWidth-2 &&
+      getComputedStyle(document.querySelector('.mobile-dock')).visibility==='hidden' &&
+      document.querySelector('.masthead').getBoundingClientRect().bottom<=0;
   })()`);
   const editor=await evaluate(`(()=>({
     open:document.body.classList.contains('mobile-edit-open'),
@@ -180,6 +182,42 @@ try{
   assert.ok(rail.scrollWidth>rail.width*4,'settings must lay out horizontally');
   assert.equal(rail.overflowX,'auto');assert.equal(rail.overflowY,'hidden');
   assert.ok(rail.snap.includes('mandatory')&&rail.tabsVisible&&rail.noHeading&&rail.removed);
+  // Related modifiers must be on the SAME swipe card as their parent.
+  const groups=await evaluate(`(()=>{
+    const pairs=[
+      ['Geometry','panel-design',['geometry','shapeFrequency','shapeDepth']],
+      ['Stripe pattern','panel-design',['motif','patternHomogeneity']],
+      ['Stripe shadows','panel-design',['stripeShadowEnabled','stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection']],
+      ['Outlines','panel-colour',['outline','gap']],
+      ['Canvas lighting','panel-colour',['lightingMood','lightDirection','lightStrength','shadowStrength']],
+      ['Texture layer 1','panel-textures',['material','textureCoverage','textureStrength','textureScale','textureRotation','textureBlend']],
+      ['Texture layer 2','panel-textures',['material2','textureStrength2','textureScale2','textureRotation2']],
+      ['Texture layer 3','panel-textures',['material3','textureStrength3','textureScale3','textureRotation3']],
+      ['Individuality','panel-refine',['individuality','overridePatternHomogeneity']],
+    ];
+    return pairs.map(([name,panel,fields])=>{
+      const card=[...document.querySelectorAll('.mobile-setting-cluster')]
+        .find(el=>el.dataset.group===name);
+      return {name,panel:card?.closest('.settings-panel')?.id,
+        fields:fields.map(k=>!!card?.querySelector('[name="'+k+'"]')),
+        width:card?.getBoundingClientRect().width||0};
+    });
+  })()`);
+  console.log('CONTEXTUAL_CARDS',JSON.stringify(groups));
+  for(const group of groups){
+    assert.equal(group.fields.every(Boolean),true,group.name+' dependent controls must share a card');
+    const expected=group.name==='Outlines'||group.name==='Canvas lighting'?'panel-colour':
+      group.name.startsWith('Texture')?'panel-textures':
+      group.name==='Individuality'?'panel-refine':'panel-design';
+    assert.equal(group.panel,expected);
+    assert.ok(group.width>=0,group.name);
+  }
+  assert.ok(!await evaluate('document.getElementById("primeModeHint").hidden===false'));
+  await evaluate('document.querySelector("[name=primesOnly]").click()');
+  assert.ok(await evaluate('document.getElementById("primeModeHint").hidden'),
+    'Primes-only must never show its explanatory toast');
+  assert.ok(await evaluate('document.querySelector("[name=primesOnly]").checked'));
+
   // Programmatic scroll tests the native snap strip and progress indicator.
   await evaluate('document.getElementById("panel-design").scrollTo({left:document.getElementById("panel-design").clientWidth+8,behavior:"instant"})');
   await waitFor('document.getElementById("mobileSettingPosition").textContent.startsWith("2 /")');
@@ -198,10 +236,19 @@ try{
       previewVisible:document.querySelector('.studio-stage').getBoundingClientRect().bottom<
         document.getElementById('mobileDesignSheet').getBoundingClientRect().top};
   })()`);
-  assert.ok(textures.scrollWidth>textures.clientWidth*3 && textures.material && textures.layer2 && textures.layer3);
+  assert.ok(textures.scrollWidth>textures.clientWidth*1.5 && textures.material && textures.layer2 && textures.layer3,
+    'texture panel should contain a layer card plus displacement card, not one card per slider');
   assert.equal(textures.vertical,'hidden');assert.ok(textures.previewVisible);
   await evaluate('document.getElementById("addTextureLayer2").click()');
   await waitFor('document.getElementById("textureLayer2Panel").hidden===false');
+  assert.ok(await evaluate(`(()=>{
+    const card=[...document.querySelectorAll('.mobile-setting-cluster')]
+      .find(el=>el.dataset.group==='Texture layer 2');
+    return card?.getBoundingClientRect().width>80 &&
+      card?.querySelector('[name=material2]') &&
+      getComputedStyle(card).display!=='none';
+  })()`),'enabled texture layer and all associated controls should appear on one card');
+
   await evaluate('document.getElementById("tab-design").click()');
   await evaluate('document.querySelector("[name=stripeShadowEnabled]").click()');
   await waitFor('document.getElementById("stripeShadowControls").hidden===false');
@@ -224,16 +271,53 @@ try{
   await waitFor(`document.getElementById('tab-colour').getAttribute('aria-selected')==='true'`);
   // A real finger drag should adjust a slider, not scroll to another card.
   await evaluate('document.getElementById("tab-design").click()');
-  await evaluate('document.querySelector("[name=shapeFrequency]").closest(".lockable-setting").scrollIntoView({inline:"start",block:"nearest",behavior:"instant"})');
-  await waitFor('document.querySelector("[name=shapeFrequency]").getBoundingClientRect().left > 0 && document.querySelector("[name=shapeFrequency]").getBoundingClientRect().right < innerWidth');
+  // Tab selection asynchronously resets the rail to its first card.
+  // Let that reset and CSS snap finish before navigating to the nested slider.
+  await delay(330);
+  await evaluate(`(()=>{
+    const card=[...document.querySelectorAll('#panel-design .mobile-setting-cluster')]
+      .find(el=>el.dataset.group==='Geometry');
+    card.scrollIntoView({inline:'start',block:'nearest',behavior:'instant'});
+    document.querySelector('[name=shapeFrequency]').scrollIntoView({
+      inline:'nearest',block:'center',behavior:'instant'
+    });
+  })()`);
+  await delay(280);
+  await waitFor(`(()=>{
+    const control=document.querySelector('[name=shapeFrequency]').getBoundingClientRect();
+    const card=[...document.querySelectorAll('#panel-design .mobile-setting-cluster')]
+      .find(el=>el.dataset.group==='Geometry').getBoundingClientRect();
+    return control.left>0&&control.right<innerWidth &&
+      control.top>=card.top && control.bottom<=card.bottom;
+  })()`);
   const slider=await evaluate(`(()=>{
     const r=document.querySelector('[name=shapeFrequency]').getBoundingClientRect();
     return {left:r.left,right:r.right,y:Math.round(r.top+r.height/2),
       value:Number(document.querySelector('[name=shapeFrequency]').value),
       scrollLeft:document.getElementById('panel-design').scrollLeft};
   })()`);
-  await swipe({x:Math.round(slider.left+12),y:slider.y},
-              {x:Math.round(slider.right-12),y:slider.y});
+  console.log('SHAPE_SLIDER_BEFORE',JSON.stringify(await evaluate(`(()=>{
+    const target=document.querySelector('[name=shapeFrequency]');
+    const card=target.closest('.mobile-setting-cluster');
+    const pointX=Math.round((target.getBoundingClientRect().left+target.getBoundingClientRect().right)/2);
+    const pointY=Math.round((target.getBoundingClientRect().top+target.getBoundingClientRect().bottom)/2);
+    const hit=document.elementFromPoint(pointX,pointY);
+    return {pointX,pointY,hit:hit?.outerHTML?.slice(0,300),name:hit?.name,
+      disabled:target.disabled,touchAction:getComputedStyle(target).touchAction,
+      cardScroll:card.scrollTop,cardHeight:card.clientHeight,
+      totalCardHeight:card.scrollHeight,value:target.value,top:target.getBoundingClientRect().top,
+      railScroll:document.getElementById('panel-design').scrollLeft};
+  })()`)));
+  // Drag the actual thumb at its existing value. Touching the very
+  // beginning of a track is a value-jump, not a thumb drag.
+  const thumbX=Math.round(slider.left+(slider.right-slider.left)*slider.value/100);
+  await swipe({x:thumbX,y:slider.y},
+              {x:Math.round(slider.right-13),y:slider.y});
+  console.log('SHAPE_SLIDER_AFTER',JSON.stringify(await evaluate(`(()=>{
+    const target=document.querySelector('[name=shapeFrequency]');
+    return {value:target.value,railScroll:document.getElementById('panel-design').scrollLeft,
+      cardScroll:target.closest('.mobile-setting-cluster').scrollTop};
+  })()`)));
   await waitFor(`Number(document.querySelector('[name=shapeFrequency]').value)>${slider.value}`);
   const afterSlider=await evaluate(`({
     value:Number(document.querySelector('[name=shapeFrequency]').value),
@@ -317,6 +401,16 @@ try{
   await waitFor('!document.body.classList.contains("mobile-studio")');
   assert.equal(await evaluate('getComputedStyle(document.querySelector(".mobile-dock")).display'),'none');
   assert.equal(await evaluate('document.documentElement.dataset.theme'),'dark');
+  const restoredSettings=await evaluate(`({
+    groups:document.querySelectorAll('.mobile-setting-cluster').length,
+    geometry:document.querySelector('[name=geometry]').closest('#panel-design')!==null,
+    shape:document.querySelector('[name=shapeFrequency]').closest('#panel-design')!==null,
+    outlineBuffer:document.querySelector('[name=gap]').closest('#panel-refine')!==null,
+    lockCount:document.querySelectorAll('#controls .setting-lock').length,
+  })`);
+  assert.equal(restoredSettings.groups,0,'desktop must restore independent controls');
+  assert.ok(restoredSettings.geometry&&restoredSettings.shape&&restoredSettings.outlineBuffer);
+  assert.ok(restoredSettings.lockCount>25,'locks must survive DOM reparenting');
   console.log('Browser smoke passed: phone viewport, sheets, gallery, theme and desktop restoration.');
 }finally{
   try{ws?.close()}catch{}
