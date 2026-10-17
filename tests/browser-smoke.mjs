@@ -40,7 +40,7 @@ function command(method,params={}){
 const evaluate=async expression=>{
   const r=await command('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true});
   if(r.exceptionDetails)throw Error('Browser JS: '+JSON.stringify(r.exceptionDetails).slice(0,900));
-  return r.result.result.value;
+  return r.result?.value;
 };
 async function waitFor(expr,timeout=12000){
   const start=Date.now();
