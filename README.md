@@ -1,8 +1,10 @@
-# WALLGEN
+# R.O.Y.G.B.I.V.
+
+*Rainbow-Only. You Generate Based on Individual Variables.*
 
 ## Made with ChatGPT · Free for absolutely anyone
 
-Wallgen was made by its project creator with **ChatGPT**. The creator
+R.O.Y.G.B.I.V. was made by its project creator with **ChatGPT**. The creator
 **claims no ownership of the code, ideas, concepts, or repository contents**
 and wants anyone to be free to use the program, source files, generated
 wallpapers, and other contents however they like, **for any purpose**, with

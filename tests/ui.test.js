@@ -112,3 +112,28 @@ test('stripe shadows are an optional Design-only control, while canvas lighting 
   assert.match(app,/stripeShadowControls'\)\.hidden=!enabled/);
   assert.match(colour,/name="lightingMood"/);
 });
+
+test('R.O.Y.G.B.I.V. displays as a two-line masthead beside a larger seven-stripe logo',()=>{
+  const header=html.slice(html.indexOf('<header class="masthead">'),html.indexOf('</header>'));
+  assert.match(header,/aria-label="R\.O\.Y\.G\.B\.I\.V\. home"/);
+  assert.match(header,/<strong class="brand-title">R\.O\.Y\.G\.B\.I\.V<span class="brand-dot">\.<\/span><\/strong>/);
+  assert.match(header,/<span class="brand-subtitle">Rainbow-Only\. You Generate Based on Individual Variables\.<\/span>/);
+  const mark=header.match(/<span class="brand-mark"[^>]*>(.*?)<\/span>/s);
+  assert.ok(mark,'brand mark');
+  assert.equal((mark[1].match(/<i><\/i>/g)||[]).length,7);
+  assert.match(css,/\.brand-mark\{flex:0 0 auto;align-items:center;gap:3px;height:44px\}/);
+  assert.match(css,/\.brand-mark i\{width:5px;height:40px/);
+  assert.match(css,/\.brand-copy\{display:flex;flex-direction:column/);
+  assert.match(css,/\.brand-subtitle\{display:block/);
+  assert.match(css,/@media\(max-width:520px\)\{/);
+});
+
+test('R.O.Y.G.B.I.V. branding is consistent in public-facing output',()=>{
+  assert.match(html,/<title>R\.O\.Y\.G\.B\.I\.V\./);
+  assert.match(html,/<footer><span>R\.O\.Y\.G\.B\.I\.V\. \/ V1\.0/);
+  assert.match(html,/name="software"[^>]*value="R\.O\.Y\.G\.B\.I\.V\. · Made with ChatGPT"/);
+  assert.match(app,/roygbiv-\$\{safeFilename\(current\.seed\)\}/);
+  assert.match(readme,/# R\.O\.Y\.G\.B\.I\.V\./);
+  assert.match(readme,/Rainbow-Only\. You Generate Based on Individual Variables\./);
+  assert.match(license,/R\.O\.Y\.G\.B\.I\.V\. — PUBLIC-DOMAIN DEDICATION/);
+});

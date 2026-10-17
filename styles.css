@@ -408,3 +408,39 @@
  .randomize-bar.randomize-toolbar>.prime-toggle{font-size:10px;padding:7px 4px;gap:5px}
  .randomize-bar.randomize-toolbar>.prime-toggle input{width:15px;height:15px;min-width:15px}
 }
+
+
+/* R.O.Y.G.B.I.V. identity: the seven-colour mark spans the name and its expansion. */
+.masthead{height:auto;min-height:88px;gap:14px;padding-top:12px;padding-bottom:12px}
+.brand{min-width:0;flex:0 1 auto;align-items:center;gap:15px;letter-spacing:normal}
+.brand-mark{flex:0 0 auto;align-items:center;gap:3px;height:44px}
+.brand-mark i{width:5px;height:40px;border-radius:2px}
+.brand-copy{display:flex;flex-direction:column;justify-content:center;min-width:0;gap:4px}
+.brand-title{display:block;font-size:clamp(20px,2.15vw,27px);font-weight:900;
+  letter-spacing:-.035em;line-height:1.02;white-space:nowrap;color:#fff}
+.brand-subtitle{display:block;font-size:clamp(8px,.9vw,11px);font-weight:600;
+  line-height:1.35;letter-spacing:-.005em;color:#b9b7c9;white-space:nowrap}
+.layout{min-height:calc(100vh - 88px)}
+@media(max-width:1050px){
+  .header-right{font-size:9px;letter-spacing:.1em}
+  .header-tag{display:none}
+}
+@media(max-width:790px){
+  .masthead{height:auto;min-height:78px;padding-top:10px;padding-bottom:10px}
+  .brand{gap:12px}
+  .brand-mark{height:41px}
+  .brand-mark i{height:37px}
+  .brand-title{font-size:23px}
+  .brand-subtitle{font-size:9px}
+  .header-right{font-size:0;gap:0;flex-shrink:0}
+  .header-right .status-dot{display:block}
+}
+@media(max-width:520px){
+  .masthead{min-height:72px;gap:7px;padding-left:16px;padding-right:16px}
+  .brand{gap:10px}
+  .brand-mark{height:38px;gap:2px}
+  .brand-mark i{height:35px;width:4px}
+  .brand-copy{gap:3px}
+  .brand-title{font-size:clamp(19px,5.8vw,23px)}
+  .brand-subtitle{font-size:clamp(7.2px,2.37vw,9px);letter-spacing:-.018em}
+}
