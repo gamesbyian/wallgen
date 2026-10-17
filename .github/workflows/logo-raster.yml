@@ -2,6 +2,7 @@ name: Build logo raster assets
 on:
   push:
     branches:
+      - main
       - feature/mobile-first-cream-studio
     paths:
       - assets/roygbiv-logo.svg
