@@ -39,10 +39,25 @@ URL, favourite, seed, or PNG. To restore the old interface colours, select
 **Original Dark**. The new `studio-themes.css` supplies light tokens and the
 mobile layout on top of the intact original dark stylesheet.
 
+**Live-preview adjustment trays:** the Edit panel now reserves space **below**
+the wallpaper preview instead of covering it. The canvas stays visible and
+repaints while sliders, selectors, locks and textures are changed. Tabs and
+controls scroll *inside* the tray; tapping **Larger preview** makes the tray
+shorter while keeping every setting accessible, and tapping **More controls**
+restores its normal height. Tapping the picture or **Done** returns to the
+full preview. **Explore** and **More** (including the nudge pad) also use
+separate reserved space below the preview, so their controls never sit over
+the artwork. The approach borrows the essential image-above-adjustments
+principle from mobile photo editors, rather than hiding the thing being
+edited behind a modal drawer. Both Cream Studio and Original Dark use this
+layout. A Chromium mobile acceptance test checks simultaneous visibility,
+live repainting, accessibility and phone viewport dimensions.
+
 The primary interface is designed for the **Pixel 6 Pro portrait viewport** (the
 wallpaper itself is still drawn at a 600 × 1300 logical aspect ratio, exported
-at 3024 × 6552). At 790 CSS pixels and narrower the whole main viewport is
-given to the wallpaper preview. A thumb-accessible six-button dock provides
+at 3024 × 6552). At 790 CSS pixels and narrower the available viewport is shared
+between a live wallpaper preview and any open adjustment tray; with trays
+closed, the wallpaper regains the full preview area. A thumb-accessible six-button dock provides
 Edit, Explore, Randomize, Favourite, Download and More. The editor opens
 above the dock as a vertically scrollable sheet with all four original tabs,
 every existing setting and its lock. Explore opens a horizontal, swipeable
