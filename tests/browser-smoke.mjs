@@ -100,7 +100,13 @@ try{
   assert.ok(phone.dock.y>=phone.preview.bottom-16,'dock should sit below the preview');
   assert.ok(phone.dock.bottom<=915,'dock should be fully visible');
   await evaluate('document.getElementById("mobileEdit").click()');
-  await waitFor('document.body.classList.contains("mobile-edit-open") && document.querySelector(".sidebar").getBoundingClientRect().top < innerHeight');
+  await waitFor(`(()=>{
+    const stage=document.querySelector('.studio-stage').getBoundingClientRect();
+    const sidebar=document.querySelector('.sidebar').getBoundingClientRect();
+    const dock=document.querySelector('.mobile-dock').getBoundingClientRect();
+    return document.body.classList.contains('mobile-edit-open') &&
+      stage.bottom<=sidebar.top+2 && sidebar.bottom<=dock.top+2;
+  })()`);
   const editor=await evaluate(`(()=>({
     open:document.body.classList.contains('mobile-edit-open'),
     visible:document.querySelector('.sidebar').getBoundingClientRect().top<innerHeight,
@@ -108,11 +114,57 @@ try{
   }))()`);
   assert.ok(editor.open&&editor.visible);
   assert.equal(editor.tabs.length,4);
+  const editing=await evaluate(`(()=>{
+    const bounds=s=>{const r=document.querySelector(s).getBoundingClientRect();
+      return {top:r.top,bottom:r.bottom,height:r.height}};
+    return {preview:bounds('.wallpaper-frame'),stage:bounds('.studio-stage'),
+      sidebar:bounds('.sidebar'),dock:bounds('.mobile-dock'),
+      noDimmer:getComputedStyle(document.getElementById('mobileSheetBackdrop')).display==='none',
+      nonmodal:document.getElementById('mobileDesignSheet').getAttribute('aria-modal')===null,
+      scrollable:getComputedStyle(document.getElementById('mobileDesignSheet')).overflowY==='auto',
+      totalHeight:document.documentElement.scrollHeight,
+      tabsVisible:document.querySelector('.settings-tabs').getBoundingClientRect().bottom<=innerHeight};
+  })()`);
+  console.log('EDITING_LAYOUT_METRICS',JSON.stringify(editing));
+  assert.ok(editing.preview.height>325,'the editor must leave a meaningful visible image');
+  assert.ok(editing.preview.bottom<=editing.sidebar.top+2,'editing controls must not overlap the wallpaper');
+  assert.ok(editing.stage.bottom<=editing.sidebar.top+2,'reserved layout must keep stage above the panel');
+  assert.ok(editing.sidebar.bottom<=editing.dock.top+2,'editing controls must sit above the action dock');
+  assert.ok(editing.noDimmer&&editing.nonmodal&&editing.scrollable&&editing.tabsVisible);
+  assert.ok(editing.totalHeight<=915,'opening edit must not introduce page scrolling');
+  // Changing a real setting must repaint the *visible* canvas without closing the tray.
+  await evaluate(`(()=>{
+    const canvas=document.getElementById('preview');
+    window.__wallpaperBefore=canvas.toDataURL();
+    const input=document.querySelector('input[name="stripeWidth"]');
+    input.value=input.value==='90'?'11':'90';
+    input.dispatchEvent(new Event('input',{bubbles:true}));
+  })()`);
+  await waitFor(`document.getElementById('preview').toDataURL()!==window.__wallpaperBefore`,16000);
+  assert.ok(await evaluate('document.body.classList.contains("mobile-edit-open")'));
+  // Minimise the controls without losing editing access, to see more of the preview.
+  await evaluate('document.getElementById("mobilePreviewSpace").click()');
+  await waitFor('document.querySelector(".studio-stage").getBoundingClientRect().height > '+(editing.stage.height+35));
+  const compact=await evaluate(`(()=>({
+    visible:document.querySelector('.sidebar').getBoundingClientRect().height,
+    preview:document.querySelector('.wallpaper-frame').getBoundingClientRect().height,
+    controls:document.querySelectorAll('#controls [data-setting]').length,
+    expanded:document.getElementById('mobilePreviewSpace').getAttribute('aria-pressed')
+  }))()`);
+  assert.ok(compact.preview>editing.preview.height+35);
+  assert.ok(compact.visible>=180);
+  assert.ok(compact.controls>30,'no settings may disappear in compact edit mode');
+  assert.equal(compact.expanded,'true');
   await evaluate(`(()=>{const theme=document.getElementById('studioTheme');
     theme.value='dark';theme.dispatchEvent(new Event('change',{bubbles:true}))})()`);
   assert.equal(await evaluate('document.documentElement.dataset.theme'),'dark');
   await evaluate('document.getElementById("mobileDesignClose").click()');
   await evaluate('document.getElementById("mobileMore").click()');
+  await waitFor(`(()=>{
+    const stage=document.querySelector('.studio-stage').getBoundingClientRect();
+    const sheet=document.getElementById('mobileToolsSheet').getBoundingClientRect();
+    return stage.bottom<=sheet.top+2;
+  })()`);
   const tools=await evaluate(`(()=>({
     open:document.body.classList.contains('mobile-tools-open'),
     seed:!!document.querySelector('#mobileToolsContent #seedInput'),
@@ -122,10 +174,29 @@ try{
     undo:!!document.querySelector('#mobileToolsContent #undo')
   }))()`);
   assert.ok(Object.values(tools).every(Boolean),'mobile tools should expose all legacy utilities');
+  const utilities=await evaluate(`(()=>{
+    const r=document.querySelector('.studio-stage').getBoundingClientRect();
+    const t=document.getElementById('mobileToolsSheet').getBoundingClientRect();
+    return {previewHeight:document.querySelector('.wallpaper-frame').getBoundingClientRect().height,
+      separated:r.bottom<=t.top+2,toolsHeight:t.height};
+  })()`);
+  assert.ok(utilities.separated&&utilities.previewHeight>300,'nudge and other live tools must not cover the preview');
   await evaluate('document.getElementById("mobileToolsClose").click()');
   await evaluate('document.getElementById("mobileExplore").click()');
+  await waitFor(`(()=>{
+    const stage=document.querySelector('.studio-stage').getBoundingClientRect();
+    const tray=document.querySelector('.workspace>.gallery-section').getBoundingClientRect();
+    return stage.bottom<=tray.top+2;
+  })()`);
   assert.ok(await evaluate('document.body.classList.contains("mobile-gallery-open")'));
   assert.equal(await evaluate('getComputedStyle(document.querySelector(".workspace>.gallery-section")).display'),'flex');
+  const galleryMetrics=await evaluate(`(()=>{
+    const preview=document.querySelector('.studio-stage').getBoundingClientRect();
+    const gallery=document.querySelector('.workspace>.gallery-section').getBoundingClientRect();
+    return {previewHeight:preview.height,separate:preview.bottom<=gallery.top+2};
+  })()`);
+  assert.ok(galleryMetrics.separate&&galleryMetrics.previewHeight>340,
+    'exploring variations must also keep the preview visible');
   await evaluate('document.getElementById("mobileExplore").click()');
   assert.ok(!await evaluate('document.body.classList.contains("mobile-gallery-open")'));
   await command('Emulation.setDeviceMetricsOverride',{

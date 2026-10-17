@@ -24,6 +24,7 @@ const editBtn=document.getElementById('mobileEdit');
 const exploreBtn=document.getElementById('mobileExplore');
 const moreBtn=document.getElementById('mobileMore');
 const favouriteBtn=document.getElementById('mobileFavorite');
+const previewSpaceBtn=document.getElementById('mobilePreviewSpace');
 const originals=['.composition-positioner','.action-tray','.export-metadata','.secondary-actions','.details-bar']
   .map(sel=>document.querySelector(sel)).filter(Boolean);
 const placeholders=originals.map(node=>{
@@ -43,10 +44,13 @@ function closeSurfaces({restoreFocus=true}={}){
   const wasOpen=document.body.classList.contains('mobile-edit-open')||
     document.body.classList.contains('mobile-gallery-open')||
     document.body.classList.contains('mobile-tools-open');
-  document.body.classList.remove('mobile-edit-open','mobile-gallery-open','mobile-tools-open');
+  document.body.classList.remove('mobile-edit-open','mobile-edit-compact','mobile-gallery-open','mobile-tools-open');
   design.removeAttribute('aria-modal');
   design.removeAttribute('role');
   tools.hidden=true;backstage.hidden=true;
+  previewSpaceBtn.setAttribute('aria-pressed','false');
+  previewSpaceBtn.textContent='Larger preview';
+  previewSpaceBtn.setAttribute('aria-label','Give the preview more room');
   editBtn.setAttribute('aria-expanded','false');
   exploreBtn.setAttribute('aria-expanded','false');
   moreBtn.setAttribute('aria-expanded','false');
@@ -59,11 +63,12 @@ function openSurface(type){
   closeSurfaces({restoreFocus:false});
   lastFocus=document.activeElement;
   document.body.classList.add(className);
-  backstage.hidden=false;
+  // No backdrop and no aria-modal: the image remains visible and interactive
+  // above the tool rail, just as in a photo adjustment editor.
+  backstage.hidden=true;
   if(type==='edit'){
     editBtn.setAttribute('aria-expanded','true');
-    design.setAttribute('role','dialog');
-    design.setAttribute('aria-modal','true');
+    design.setAttribute('role','region');
     document.getElementById('mobileDesignClose').focus();
   }else if(type==='gallery'){
     exploreBtn.setAttribute('aria-expanded','true');
@@ -78,6 +83,16 @@ function openSurface(type){
 // A variation selection closes its sheet so the newly loaded wallpaper is visible.
 gallery.addEventListener('click',event=>{
   if(event.target.closest('.thumb'))closeSurfaces({restoreFocus:false});
+});
+previewSpaceBtn.addEventListener('click',()=>{
+  const compact=document.body.classList.toggle('mobile-edit-compact');
+  previewSpaceBtn.setAttribute('aria-pressed',String(compact));
+  previewSpaceBtn.textContent=compact?'More controls':'Larger preview';
+  previewSpaceBtn.setAttribute('aria-label',compact?'Show more editing controls':'Give the preview more room');
+});
+// Tapping the live image gives the user the full-size preview immediately.
+document.querySelector('.studio-stage').addEventListener('click',()=>{
+  if(document.body.classList.contains('mobile-edit-open'))closeSurfaces({restoreFocus:false});
 });
 editBtn.addEventListener('click',()=>openSurface('edit'));
 exploreBtn.addEventListener('click',()=>openSurface('gallery'));
