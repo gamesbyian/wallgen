@@ -194,6 +194,20 @@
  body.mobile-studio .sidebar .editor-tool-card .texture-rotation-field>.editor-setting-die{
    grid-column:2!important;grid-row:1!important}
  body.mobile-studio .sidebar .editor-tool-card .texture-layer-panel-head{font-size:9px;height:20px}
+ /* Material wrappers add no visual content or extra vertical spacing:
+    their actual label/lock controls are already moved into named tools. */
+ body.mobile-studio .sidebar .editor-tool-card .texture-layer-group,
+ body.mobile-studio .sidebar .editor-tool-card .texture-layer-panel:not([hidden]){
+   display:contents!important;padding:0!important;margin:0!important;
+ }
+ body.mobile-studio .sidebar .editor-tool-card .control-grid:empty{display:none!important}
+ body.mobile-studio .sidebar .editor-tool-card .texture-layer-panel-head{
+   min-height:17px!important;max-height:20px!important;padding:0!important;margin:0!important;
+ }
+ body.mobile-studio .sidebar .editor-tool-card .texture-layer-panel-head button{
+   height:19px!important;min-height:19px!important;padding:0 2px!important;
+ }
+
  body.mobile-studio .sidebar .editor-tool-card .lighting-intro,
  body.mobile-studio .sidebar .editor-tool-card .lighting-help{display:none!important}
  body.mobile-studio .sidebar .editor-tool-card .field small{display:none!important}
