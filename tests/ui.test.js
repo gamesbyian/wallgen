@@ -178,17 +178,16 @@ test('chevron geometry and independent shape controls are present in Design',()=
   assert.match(design,/separately from the stripe pattern/);
 });
 
-test('brand SVG has seven slanted variable-length rainbow bands below a white phone outline',()=>{
+test('dark phone SVG keeps all seven variable-length stripes inside the tile',()=>{
   assert.match(logo,/<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg"/);
   assert.match(logo,/fill="#050608"/);
-  assert.match(logo,/transform="rotate\(-24 60 60\)"/);
+  assert.match(logo,/transform="translate\(0 -2\.4\)"/);
   const bands=[...logo.matchAll(/<path stroke="#[0-9a-fA-F]{6}" d="M([^"]+)"\/>/g)];
   assert.equal(bands.length,7);
-  assert.ok(bands.some(x=>x[1].includes('H61')));
-  assert.ok(bands.some(x=>x[1].includes('H66')));
-  assert.ok(bands.some(x=>x[1].startsWith('51 102')));
+  assert.ok(bands.some(x=>x[1].includes('L67 35')));
+  assert.ok(bands.some(x=>x[1].includes('L78 68')));
   const lastBand=logo.lastIndexOf('<path stroke="#');
-  const phone=logo.indexOf('x="34" y="13" width="53" height="94"');
-  assert.ok(phone>lastBand,'phone outline should visibly overlay the stripes');
-  assert.match(logo,/stroke="#fff" stroke-width="2\.7"/);
+  assert.ok(logo.indexOf('x="34" y="13" width="53" height="94"')>lastBand,
+    'phone outline is overlaid above stripe geometry');
+  assert.match(logo,/stroke="#fff" stroke-width="2\.5"/);
 });
