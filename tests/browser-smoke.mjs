@@ -264,6 +264,37 @@ try{
     assert.ok(bounds.selectorCount>=6,'Material tool controls must be present');
     assert.ok(await evaluate('document.getElementById("addTextureLayer2").getClientRects().length>0'),
       'Add texture layer must remain visible at '+name);
+    const noClippedTools=await evaluate(`(()=>{
+      const problems=[];
+      for(const tab of document.querySelectorAll('.settings-tab')){
+        tab.click();
+        for(const tool of document.querySelectorAll('.editor-tool-tab:not([hidden])')){
+          tool.click();
+          const card=document.querySelector('.editor-tool-card:not([hidden])');
+          const frame=card.getBoundingClientRect();
+          for(const el of card.querySelectorAll('input:not([type=hidden]),select,button')){
+            if(!el.getClientRects().length||el.closest('[hidden]'))continue;
+            const b=el.getBoundingClientRect();
+            if(b.top<frame.top-2||b.bottom>frame.bottom+2||
+               b.left<frame.left-2||b.right>frame.right+2)
+              problems.push([tab.dataset.tab,tool.dataset.editorTool,el.name||el.id||el.textContent.trim()]);
+          }
+        }
+      }
+      return problems;
+    })()`);
+    assert.deepEqual(noClippedTools,[],
+      'no tool may clip any control at '+name);
+    const railPosition=await evaluate(`(()=>{
+      const r=selector=>document.querySelector(selector).getBoundingClientRect();
+      const frame=r('.wallpaper-frame');
+      return {leftClear:r('.mobile-preview-rail-left').right<=frame.left+3,
+        rightClear:r('.mobile-preview-rail-right').left>=frame.right-3,
+        frameHeight:frame.height};
+    })()`);
+    assert.ok(railPosition.leftClear&&railPosition.rightClear,
+      'preview controls must not cover the rainbow at '+name);
+    assert.ok(railPosition.frameHeight>200);
     assert.deepEqual(bounds.failures,[],'every active control must fit inside its card');
     assert.deepEqual(bounds.overlaps,[],'dice and locks must never overlap');
     assert.ok(!bounds.categoryTextOverflow,'Category icon text must never overflow its button');
