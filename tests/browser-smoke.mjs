@@ -72,6 +72,7 @@ try{
   });
   ws.addEventListener('message',event=>{
     const m=JSON.parse(event.data);
+    if(m.method==='Runtime.exceptionThrown')console.log('BROWSER_EXCEPTION',JSON.stringify(m.params).slice(0,1800));
     if(!m.id||!pending.has(m.id))return;
     const t=pending.get(m.id);pending.delete(m.id);
     if(m.error)t.bad(new Error(JSON.stringify(m.error)));else t.ok(m.result);
@@ -84,7 +85,8 @@ try{
   });
   await command('Page.navigate',{url});
   await waitFor('document.readyState==="complete"&&document.body.classList.contains("mobile-studio")');
-  await delay(400);
+  await waitFor('document.querySelectorAll(".settings-tab").length===6',15000);
+  await delay(300);
 
   const initial=await evaluate('({tabs:document.querySelectorAll(".settings-tab").length,tools:document.querySelectorAll(".editor-tool-card").length,preview:document.querySelector(".wallpaper-frame").getBoundingClientRect().height,scroll:document.documentElement.scrollHeight})');
   assert.equal(initial.tabs,6);
