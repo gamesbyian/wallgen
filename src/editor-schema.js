@@ -13,7 +13,8 @@ export const EDITOR_CATEGORIES=[
   ]},
   {id:'stripes',label:'Stripes',icon:'≋',tools:[
     {id:'structure',name:'Structure',settings:['construction','stripeWidth','spread']},
-    {id:'marks',name:'Patterns',settings:['motif','lineStyle','dotSize','dotSpacing','patternHomogeneity']},
+    {id:'patterns',name:'Patterns',settings:['motif','lineStyle','patternHomogeneity']},
+    {id:'marks',name:'Marks',settings:['dotSize','dotSpacing']},
     {id:'character',name:'Character',settings:['individuality','overridePatternHomogeneity','tonalContrast']},
   ]},
   {id:'colour',label:'Colour',icon:'◐',tools:[
@@ -21,9 +22,12 @@ export const EDITOR_CATEGORIES=[
     {id:'canvas',name:'Background',settings:['background']},
   ]},
   {id:'material',label:'Material',icon:'▧',tools:[
-    {id:'layer1',name:'Layer 1',settings:['material','textureCoverage','textureStrength','textureScale','textureRotation','textureBlend','textureLayer2Enabled']},
-    {id:'layer2',name:'Layer 2',settings:['material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2','textureLayer3Enabled']},
-    {id:'layer3',name:'Layer 3',settings:['material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3']},
+    {id:'layer1',name:'Layer 1',settings:['material','textureCoverage','textureBlend','textureLayer2Enabled']},
+    {id:'finish1',name:'Finish 1',settings:['textureStrength','textureScale','textureRotation']},
+    {id:'layer2',name:'Layer 2',settings:['material2','textureCoverage2','textureBlend2','textureLayer3Enabled']},
+    {id:'finish2',name:'Finish 2',settings:['textureStrength2','textureScale2','textureRotation2']},
+    {id:'layer3',name:'Layer 3',settings:['material3','textureCoverage3','textureBlend3']},
+    {id:'finish3',name:'Finish 3',settings:['textureStrength3','textureScale3','textureRotation3']},
     {id:'surface',name:'Surface',settings:['textureDisplacement','brushRoughness']},
   ]},
   {id:'effects',label:'Effects',icon:'✦',tools:[
