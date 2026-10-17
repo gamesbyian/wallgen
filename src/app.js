@@ -129,7 +129,7 @@ function inactiveSettingKeys(recipe,scene){
   }
   for(const suffix of ['','2','3']){
     const layerOn=suffix==='' || (suffix==='2'
-      ? recipe.textureLayer2Enabled : recipe.textureLayer2Enabled && recipe.textureLayer3Enabled);
+      ? recipe.textureLayer2Enabled : recipe.textureLayer3Enabled);
     const material=suffix===''?scene.material:recipe['material'+suffix];
     // Layers 2 and 3 can always be selected, even when switched off.
     // Choosing a material in their own tool enables the layer automatically.
@@ -150,7 +150,7 @@ function inactiveSettingKeys(recipe,scene){
   // control; all subordinate appearance knobs are dormant in the meantime.
   for(const suffix of ['','2','3']){
     const layerOn=suffix==='' || (suffix==='2'
-      ? recipe.textureLayer2Enabled : recipe.textureLayer2Enabled && recipe.textureLayer3Enabled);
+      ? recipe.textureLayer2Enabled : recipe.textureLayer3Enabled);
     const material=suffix===''?scene.material:recipe['material'+suffix];
     if(layerOn && material!=='none' && recipe['textureStrength'+suffix]===0){
       for(const base of ['textureCoverage','textureScale','textureRotation','textureBlend'])
@@ -665,11 +665,7 @@ for(const n of [2,3]){
     const enabled=event.target.value!=='none';
     next['material'+n]=event.target.value;
     next['textureLayer'+n+'Enabled']=enabled;
-    if(n===3 && enabled)next.textureLayer2Enabled=true;
-    if(n===2 && !enabled){
-      next.textureLayer3Enabled=false;
-      next.material3='none';
-    }
+    // Material 3 may be used while material 2 remains smooth/off.
     changeRecipe(next);
   });
 }
