@@ -112,6 +112,26 @@ try{
   assert.equal(guide.pressed,'true');assert.equal(guide.hidden,false);
   assert.ok(Math.abs(guide.ratioW-.9)<.01&&Math.abs(guide.ratioH-.9)<.01);
   assert.ok(guide.untouched&&guide.off,'Bleed is a reversible preview-only outline');
+  // Bleed follows background rather than sampling stripe pixels, and the
+  // hairline inherits the frame's corner radius.
+  for(const background of ['black','white']){
+    await evaluate(`(()=>{const select=document.querySelector('[name=background]');select.value=${JSON.stringify(background)};select.dispatchEvent(new Event('change',{bubbles:true}));document.getElementById('mobileBleed').click()})()`);
+    const state=await evaluate('(()=>{const guide=document.getElementById("bleedGuide"),frame=document.querySelector(".wallpaper-frame");return {colour:getComputedStyle(guide).borderTopColor,radius:getComputedStyle(guide).borderTopLeftRadius,frameRadius:getComputedStyle(frame).borderTopLeftRadius}})()');
+    assert.equal(state.colour,background==='black'?'rgb(255, 255, 255)':'rgb(16, 16, 20)');
+    assert.equal(state.radius,state.frameRadius);
+    assert.ok(parseFloat(state.radius)>0);
+    await evaluate('document.getElementById("mobileBleed").click()');
+  }
+  // Side-rail Save/Favourite must keep the editor open, unlike navigation.
+  const beforeFavorite=await evaluate('document.getElementById("favorite").getAttribute("aria-pressed")');
+  await evaluate('document.querySelector("[data-dock-proxy=mobileFavorite]").click()');
+  assert.ok(await evaluate('document.body.classList.contains("mobile-edit-open")'));
+  assert.notEqual(await evaluate('document.getElementById("favorite").getAttribute("aria-pressed")'),beforeFavorite);
+  await evaluate('document.querySelector("[data-dock-proxy=mobileFavorite]").click()');
+  assert.ok(await evaluate('document.body.classList.contains("mobile-edit-open")'));
+  const saveClicks=await evaluate('(()=>{window.__sideSaveClicks=0;document.getElementById("download").addEventListener("click",()=>window.__sideSaveClicks++);document.querySelector("[data-dock-proxy=mobileDownload]").click();return window.__sideSaveClicks})()');
+  assert.equal(saveClicks,1);
+  assert.ok(await evaluate('document.body.classList.contains("mobile-edit-open")'));
   await waitFor(`(()=>{
     const rail=document.getElementById('mobileEditorActionRail').getBoundingClientRect();
     const edit=document.getElementById('mobileDesignSheet').getBoundingClientRect();
@@ -194,10 +214,10 @@ try{
     assert.equal(result.scrollY,'hidden');
   }
   await evaluate('document.getElementById("tab-material").click()');
-  await evaluate('document.querySelector("[data-editor-tool=layer1]").click()');
-  await evaluate('document.getElementById("addTextureLayer2").click()');
-  await waitFor('document.getElementById("textureLayer2Panel").hidden===false');
   await evaluate('document.querySelector("[data-editor-tool=layer2]").click()');
+  assert.ok(await evaluate('document.querySelector("[name=material2]").disabled===false'));
+  await evaluate('(()=>{const el=document.querySelector("[name=material2]");el.value="linen";el.dispatchEvent(new Event("change",{bubbles:true}))})()');
+  await waitFor('document.getElementById("textureLayer2Enabled").checked===true');
   assert.ok(await evaluate('document.querySelector("#panel-material .editor-tool-card:not([hidden]) [name=material2]")!==null'));
   await evaluate('document.getElementById("tab-path").click()');
   await evaluate('document.querySelector("[data-editor-tool=geometry]").click()');
@@ -296,8 +316,17 @@ try{
     assert.ok(bounds.selectedToolVisible,'active tool name stays visible in the horizontal rail');
     assert.ok(bounds.toolbarInside,'top-level controls must stay inside their toolbar');
     assert.ok(bounds.selectorCount>=6,'Material tool controls must be present');
-    assert.ok(await evaluate('document.getElementById("addTextureLayer2").getClientRects().length>0'),
-      'Add texture layer must remain visible at '+name);
+    assert.ok(await evaluate('!document.querySelector("[name=material2]").disabled && !document.querySelector(".add-texture-layer")'));
+    await evaluate('document.getElementById("tab-material").click()');
+    for(const n of [1,2,3]){
+      await evaluate('document.querySelector("[data-editor-tool=finish'+n+']").click()');
+      const rot=await evaluate('(()=>{const node=document.querySelector(".editor-tool-card:not([hidden]) .texture-rotation-field");const row=node.getBoundingClientRect(),input=node.querySelector("input[type=number]").getBoundingClientRect(),label=node.querySelector("span").getBoundingClientRect();return {row:{top:row.top,bottom:row.bottom},input:{top:input.top,bottom:input.bottom},label:{top:label.top,bottom:label.bottom}}})()');
+      assert.ok(rot.input.top>=rot.row.top-2&&rot.input.bottom<=rot.row.bottom+2,
+        'Rotation must fit on one line in Finish '+n+' at '+name+': '+JSON.stringify(rot));
+      assert.ok(Math.abs((rot.label.top+rot.label.bottom)-(rot.input.top+rot.input.bottom))<12,
+        'Rotation label and number must align in Finish '+n+' at '+name);
+    }
+    await evaluate('document.querySelector("[data-editor-tool=layer1]").click()');
     const noClippedTools=await evaluate(`(()=>{
       const problems=[];
       for(const tab of document.querySelectorAll('.settings-tab')){
@@ -343,10 +372,19 @@ try{
       assert.ok(fit,'category '+category+' must not overlap at '+name);
     }
   }
-  // Test the initial one-layer state as shown in the reported screenshots:
-  // the Add Layer control must occupy real visible space, not disappear.
-  await evaluate('document.getElementById("removeTextureLayer2").click()');
-  await waitFor('document.getElementById("textureLayer2Panel").hidden===true');
+  // No extra add/remove buttons: selecting Smooth turns off a layer while
+  // keeping its card available. Layer 3 works the same way.
+  await evaluate('(()=>{const el=document.querySelector("[name=material2]");el.value="none";el.dispatchEvent(new Event("change",{bubbles:true}))})()');
+  await waitFor('document.getElementById("textureLayer2Enabled").checked===false');
+  await evaluate('(()=>{const el=document.querySelector("[name=material3]");el.value="foil";el.dispatchEvent(new Event("change",{bubbles:true}))})()');
+  await waitFor('document.getElementById("textureLayer3Enabled").checked===true');
+  assert.ok(await evaluate('document.getElementById("textureLayer2Enabled").checked===false'),
+    'layer 3 must activate without forcing layer 2 on');
+  await evaluate('(()=>{const el=document.querySelector("[name=material3]");el.value="none";el.dispatchEvent(new Event("change",{bubbles:true}))})()');
+  await waitFor('document.getElementById("textureLayer3Enabled").checked===false');
+  assert.ok(await evaluate('document.getElementById("textureLayer2Panel").hidden===false'));
+  assert.ok(await evaluate('document.getElementById("textureLayer3Panel").hidden===false'));
+  assert.ok(await evaluate('!document.getElementById("addTextureLayer2")&&!document.getElementById("removeTextureLayer2")'));
   await checkEditorZoom(412,915,'100-percent');
   for(const [category,tool] of [['path','geometry'],['stripes','structure'],['effects','lighting']]){
     await evaluate('document.getElementById("tab-'+category+'").click()');
@@ -364,6 +402,39 @@ try{
     screenWidth:412,screenHeight:915,
   });
   console.log('BROWSER_ZOOM_LAYOUT_ACCEPTANCE_SUCCESS');
+  // Render actual ink, not merely normalized parameters, to ensure each
+  // Outline slider changes pixels independently on a fixed wallpaper.
+  const outlinePixels=await evaluate(`(async()=>{
+    const {drawWallpaper}=await import('/src/renderer.js');
+    const base={seed:'outline-controls-test',family:'studio',
+      background:'black',geometry:'straight',orientation:'vertical',
+      composition:'single',construction:'ribbon',motif:'solid',
+      material:'none',textureDisplacement:0,chaos:0,individuality:0,
+      stripeWidth:68,spread:60,glow:0};
+    const render=(outline,gap,outlineBuffer)=>{
+      const c=document.createElement('canvas');c.width=230;c.height=500;
+      drawWallpaper(c,{...base,outline,gap,outlineBuffer});
+      return c.getContext('2d').getImageData(0,0,c.width,c.height).data;
+    };
+    const differences=(a,b)=>{
+      let n=0;for(let i=0;i<a.length;i+=4)
+        if(Math.abs(a[i]-b[i])+Math.abs(a[i+1]-b[i+1])+Math.abs(a[i+2]-b[i+2])>24)n++;
+      return n;
+    };
+    return ['white','black','one-side'].map(outline=>{
+      const first=render(outline,18,0);
+      const thick=render(outline,88,0);
+      const buffered=render(outline,18,75);
+      return {outline,thickness:differences(first,thick),
+        buffer:differences(first,buffered)};
+    });
+  })()`);
+  console.log('OUTLINE_PIXEL_DIFFERENCES',JSON.stringify(outlinePixels));
+  for(const result of outlinePixels){
+    assert.ok(result.thickness>40,'Outline thickness must affect rendered pixels: '+result.outline);
+    assert.ok(result.buffer>40,'Outline buffer must affect rendered pixels: '+result.outline);
+  }
+
   // Keep the existing single-checkpoint Undo and complete full-res export.
   await evaluate('document.getElementById("undo").click()');
   await waitFor('document.querySelector(".studio-stage").getBoundingClientRect().bottom<=document.querySelector(".sidebar").getBoundingClientRect().top+2',3000);

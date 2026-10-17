@@ -18,10 +18,10 @@ export const LIGHTING_MOODS = ['off', 'daylight', 'golden', 'moonlight'];
 export const LIGHT_DIRECTIONS = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
 export const LOCKABLE_SETTINGS = ['seed','family','orientation','geometry','motif','palette','outline','background','lightingMood','lightDirection','lightStrength','shadowStrength','stripeShadowEnabled','stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection',
   'material','textureCoverage','textureStrength','textureScale','textureRotation','textureBlend',
-  'textureLayer2Enabled','material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2',
-  'textureLayer3Enabled','material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3',
+  'material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2',
+  'material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3',
   'textureDisplacement','patternHomogeneity','chaos','stripeWidth','spread','shapeFrequency','shapeDepth','lineStyle','individuality',
-  'overridePatternHomogeneity','gap','glow','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','position',
+  'overridePatternHomogeneity','gap','outlineBuffer','glow','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','position',
   'composition','repeatCount','repeatSpacing','construction','turnRadius','hairpinAngle','pathLength','endTaper','tonalContrast','brushRoughness','dotSize','dotSpacing'];
 export const PALETTES = ['classic', 'electric', 'pastel', 'jewel', 'muted', 'sunset', 'candy', 'arctic', 'earth', 'twilight', 'citrus'];
 export const TEXTURE_COVERAGES = ['both', 'stripes', 'background'];
@@ -129,7 +129,7 @@ export function normalizeRecipe(input = {}) {
     textureRotation2: normalizeRotation(input.textureRotation2),
     textureCoverage2: coverageChoice(input.textureCoverage2),
     textureBlend2: blendChoice(input.textureBlend2),
-    textureLayer3Enabled: (input.textureLayer2Enabled === true || input.textureLayer2Enabled === 'true') && (input.textureLayer3Enabled === true || input.textureLayer3Enabled === 'true'),
+    textureLayer3Enabled: input.textureLayer3Enabled === true || input.textureLayer3Enabled === 'true',
     material3: materialChoice(input.material3, 'none'),
     textureStrength3: finiteRange(input.textureStrength3, 30, 0, 100),
     textureScale3: finiteRange(input.textureScale3, 50, 0, 100),
@@ -140,6 +140,7 @@ export function normalizeRecipe(input = {}) {
     patternHomogeneity: finiteRange(input.patternHomogeneity, 100, 0, 100),
     overridePatternHomogeneity: input.overridePatternHomogeneity === true || input.overridePatternHomogeneity === 'true',
     gap: finiteRange(input.gap, 28, 0, 100),
+    outlineBuffer: finiteRange(input.outlineBuffer, 0, 0, 100),
     glow: finiteRange(input.glow, 0, 0, 100),
     // Camera framing is part of the artwork and therefore of every saved PNG.
     viewZoom: Math.round(finiteRange(input.viewZoom, 1, .5, 2.5)*100)/100,
@@ -287,7 +288,7 @@ export function resolveScene(recipeInput) {
     ...(recipe.textureLayer2Enabled ? [{material:recipe.material2, strength:recipe.textureStrength2, scale:recipe.textureScale2,
       rotation:recipe.textureRotation2, coverage:recipe.textureCoverage2, blend:recipe.textureBlend2,
       seed:recipe.seed+':texture:2', heightSeed:hashString(recipe.seed+':texture:2')}] : []),
-    ...(recipe.textureLayer2Enabled && recipe.textureLayer3Enabled ? [{material:recipe.material3, strength:recipe.textureStrength3,
+    ...(recipe.textureLayer3Enabled ? [{material:recipe.material3, strength:recipe.textureStrength3,
       scale:recipe.textureScale3, rotation:recipe.textureRotation3, coverage:recipe.textureCoverage3,
       blend:recipe.textureBlend3, seed:recipe.seed+':texture:3', heightSeed:hashString(recipe.seed+':texture:3')}] : []),
   ].filter(layer=>layer.material!=='none' && layer.strength>0);
@@ -366,9 +367,9 @@ export function randomizeAllRecipe({primesOnly=false}={}) {
     material:any(MATERIALS), textureCoverage:any(TEXTURE_COVERAGES), textureRotation:degrees(), textureBlend:any(BLEND_MODES),
     // Random generation always starts with one texture layer. Players may
     // explicitly opt in to layers 2 and 3 through the existing controls.
-    textureLayer2Enabled:false, material2:any(MATERIALS), textureStrength2:percent(), textureScale2:percent(),
+    textureLayer2Enabled:false, material2:'none', textureStrength2:percent(), textureScale2:percent(),
     textureRotation2:degrees(), textureCoverage2:any(TEXTURE_COVERAGES), textureBlend2:any(BLEND_MODES),
-    textureLayer3Enabled:false, material3:any(MATERIALS), textureStrength3:percent(), textureScale3:percent(),
+    textureLayer3Enabled:false, material3:'none', textureStrength3:percent(), textureScale3:percent(),
     textureRotation3:degrees(), textureCoverage3:any(TEXTURE_COVERAGES), textureBlend3:any(BLEND_MODES),
     outline:any(OUTLINES), background:any(['black','white']),
     lightingMood:any(LIGHTING_MOODS),lightDirection:any(LIGHT_DIRECTIONS),
@@ -383,6 +384,6 @@ export function randomizeAllRecipe({primesOnly=false}={}) {
     tonalContrast:percent(),brushRoughness:percent(),dotSize:percent(),dotSpacing:percent(),
     textureStrength:percent(), textureScale:percent(), textureDisplacement:percent(), individuality:percent(),
     patternHomogeneity:percent(), overridePatternHomogeneity:r()>.5,
-    gap:percent(), glow:percent(), positionX:0, positionY:0,
+    gap:percent(), outlineBuffer:percent(), glow:percent(), positionX:0, positionY:0,
   });
 }

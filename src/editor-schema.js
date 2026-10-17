@@ -33,7 +33,7 @@ export const EDITOR_CATEGORIES=[
     {id:'surface',name:'Surface',settings:['textureDisplacement','brushRoughness']},
   ]},
   {id:'effects',label:'Effects',icon:'✦',tools:[
-    {id:'outlines',name:'Outlines',settings:['outline','gap']},
+    {id:'outlines',name:'Outlines',settings:['outline','gap','outlineBuffer']},
     {id:'lighting',name:'Lighting',settings:['lightingMood','lightDirection','lightStrength','shadowStrength']},
     {id:'shadows',name:'Shadows',settings:['stripeShadowEnabled','stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection']},
     {id:'glow',name:'Glow',settings:['glow']},

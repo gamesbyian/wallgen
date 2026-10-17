@@ -1,5 +1,6 @@
 import test from 'node:test';
 import {pathPosition} from '../src/path-geometry.js';
+import {outlineDimensions} from '../src/renderer.js';
 import assert from 'node:assert/strict';
 import { DESIGN_WIDTH, DESIGN_HEIGHT, OUTPUT_WIDTH, OUTPUT_HEIGHT, HUES, NAMES, FAMILIES, GEOMETRIES, MOTIFS, MATERIALS, OUTLINES, normalizeRecipe, resolveScene, rng, encodeRecipe, decodeRecipe, TEXTURE_COVERAGES, BLEND_MODES, normalizeRotation, randomizeAllRecipe, LOCKABLE_SETTINGS, respectSettingLocks, isPrime, PRIME_PERCENTAGES, PRIME_ROTATIONS, LIGHTING_MOODS, LIGHT_DIRECTIONS, LINE_STYLES } from '../src/model.js';
 
@@ -145,7 +146,7 @@ test('three independent texture layers round-trip through share URLs and resolve
   assert.deepEqual(decodeRecipe(encodeRecipe(recipe)),recipe);
   assert.ok(scene.materialSummary.includes('corduroy'));
 });
-test('legacy one-layer recipes remain single-layer and extra layers may be removed',()=>{
+test('one-layer recipes remain single-layer and optional layers can be selected independently',()=>{
   const legacy=normalizeRecipe({seed:'classic',material:'linen'});
   assert.equal(resolveScene(legacy).textureLayers.length,1);
   assert.equal(legacy.textureRotation,0);
@@ -153,7 +154,12 @@ test('legacy one-layer recipes remain single-layer and extra layers may be remov
   assert.equal(legacy.textureLayer2Enabled,false);
   assert.equal(legacy.textureLayer3Enabled,false);
   const hidden=resolveScene({...legacy,textureLayer3Enabled:true,material3:'adobe'});
-  assert.equal(hidden.textureLayers.length,1);
+  assert.equal(hidden.textureLayers.length,2);
+  assert.equal(hidden.textureLayers[1].material,'adobe');
+  const threeOnly=normalizeRecipe({...legacy,textureLayer2Enabled:false,
+    material2:'none',textureLayer3Enabled:true,material3:'foil'});
+  assert.deepEqual(resolveScene(threeOnly).textureLayers.map(x=>x.material),['linen','foil']);
+  assert.deepEqual(decodeRecipe(encodeRecipe(threeOnly)),threeOnly);
   const none=resolveScene({...legacy,material:'none'});
   assert.equal(none.textureLayers.length,0);
 });
@@ -221,7 +227,7 @@ test('locked settings are preserved by randomization and by attempted edits',()=
   assert.equal(next.positionY,-8);
   assert.deepEqual(next.lockedSettings,current.lockedSettings);
   assert.deepEqual(decodeRecipe(encodeRecipe(next)),next);
-  assert.equal(LOCKABLE_SETTINGS.includes('textureLayer3Enabled'),true);
+  assert.equal(LOCKABLE_SETTINGS.includes('textureLayer3Enabled'),false);
 });
 test('locked Follow family keeps the actually selected style through a new seed',()=>{
   const original=resolveScene({seed:'auto-lock-original',family:'auto',outline:'auto'});
@@ -501,5 +507,40 @@ test('random generations use at most the single primary texture layer',()=>{
     assert.equal(optIn.textureLayer3Enabled,true);
     assert.deepEqual(decodeRecipe(encodeRecipe(optIn)),optIn);
     assert.ok(resolveScene(optIn).textureLayers.length>=2);
+  }
+});
+
+test('outline thickness and stripe-to-outline buffer are independent recipe controls',()=>{
+  const original=normalizeRecipe({seed:'outline-separation',outline:'white'});
+  assert.equal(original.outlineBuffer,0,'existing default has no gap');
+  assert.equal(original.gap,28,'existing thickness setting remains editable');
+  const thick=normalizeRecipe({...original,gap:95,outlineBuffer:0});
+  const spaced=normalizeRecipe({...original,gap:28,outlineBuffer:95});
+  assert.equal(thick.outlineBuffer,0);
+  assert.equal(spaced.gap,28);
+  assert.equal(resolveScene(thick).gap,95);
+  assert.equal(resolveScene(spaced).outlineBuffer,95);
+  assert.deepEqual(decodeRecipe(encodeRecipe(spaced)),spaced);
+  assert.equal(normalizeRecipe({outlineBuffer:250}).outlineBuffer,100);
+  assert.equal(normalizeRecipe({outlineBuffer:-2}).outlineBuffer,0);
+  assert.equal(LOCKABLE_SETTINGS.includes('outlineBuffer'),true);
+  for(const n of [0,25,75,100]){
+    const r=normalizeRecipe({gap:n,outlineBuffer:100-n});
+    assert.equal(r.gap,n);
+    assert.equal(r.outlineBuffer,100-n);
+  }
+});
+
+test('outline buffer moves the edge without changing outline thickness',()=>{
+  for(const outline of ['white','hairline','double','broken','one-side','black-one-side']){
+    const stripe={width:75};
+    const base={outline,gap:45,outlineBuffer:0};
+    const first=outlineDimensions(stripe,base);
+    const shifted=outlineDimensions(stripe,{...base,outlineBuffer:90});
+    const thickened=outlineDimensions(stripe,{...base,gap:95});
+    assert.ok(shifted.separation>first.separation,outline);
+    assert.equal(shifted.thickness,first.thickness,outline);
+    assert.equal(thickened.separation,first.separation,outline);
+    assert.ok(thickened.thickness>first.thickness,outline);
   }
 });

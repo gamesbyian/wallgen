@@ -14,7 +14,7 @@ const gallery = document.getElementById('gallery');
 const notice = document.getElementById('notice');
 const favoriteButton = document.getElementById('favorite');
 const FAVORITES_KEY = 'wallgen:favorites:v1';
-const FIELDS = ['primesOnly','family','composition','repeatCount','repeatSpacing','orientation','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','geometry','turnRadius','hairpinAngle','construction','motif','lineStyle','pathLength','tonalContrast','brushRoughness','dotSize','dotSpacing','endTaper','shapeFrequency','shapeDepth','palette','material','outline','background','lightingMood','lightDirection','lightStrength','shadowStrength','stripeShadowEnabled','stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection','textureCoverage','textureRotation','textureBlend','textureLayer2Enabled','material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2','textureLayer3Enabled','material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3','chaos','stripeWidth','spread','textureStrength','textureScale','textureDisplacement','individuality','patternHomogeneity','overridePatternHomogeneity','gap','glow'];
+const FIELDS = ['primesOnly','family','composition','repeatCount','repeatSpacing','orientation','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','geometry','turnRadius','hairpinAngle','construction','motif','lineStyle','pathLength','tonalContrast','brushRoughness','dotSize','dotSpacing','endTaper','shapeFrequency','shapeDepth','palette','material','outline','background','lightingMood','lightDirection','lightStrength','shadowStrength','stripeShadowEnabled','stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection','textureCoverage','textureRotation','textureBlend','textureLayer2Enabled','material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2','textureLayer3Enabled','material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3','chaos','stripeWidth','spread','textureStrength','textureScale','textureDisplacement','individuality','patternHomogeneity','overridePatternHomogeneity','gap','outlineBuffer','glow'];
 let current = normalizeRecipe();
 let currentScene;
 const previewLayers={background:null,ink:null,scene:null,key:null};
@@ -105,6 +105,9 @@ function inactiveSettingKeys(recipe,scene){
   if(recipe.composition!=='repeat')inactive.add('repeatCount'),inactive.add('repeatSpacing');
   if(recipe.composition!=='floating')inactive.add('pathLength');
   if(recipe.construction!=='tonal')inactive.add('tonalContrast');
+  if(scene.outline==='none'){
+    inactive.add('gap');inactive.add('outlineBuffer');
+  }
   if(recipe.construction!=='ribbon'){
     inactive.add('motif');inactive.add('patternHomogeneity');inactive.add('overridePatternHomogeneity');
   }else if(scene.motif==='solid'){
@@ -126,9 +129,10 @@ function inactiveSettingKeys(recipe,scene){
   }
   for(const suffix of ['','2','3']){
     const layerOn=suffix==='' || (suffix==='2'
-      ? recipe.textureLayer2Enabled : recipe.textureLayer2Enabled && recipe.textureLayer3Enabled);
+      ? recipe.textureLayer2Enabled : recipe.textureLayer3Enabled);
     const material=suffix===''?scene.material:recipe['material'+suffix];
-    if(!layerOn)inactive.add('material'+suffix);
+    // Layers 2 and 3 can always be selected, even when switched off.
+    // Choosing a material in their own tool enables the layer automatically.
     if(!layerOn || material==='none'){
       for(const base of ['textureCoverage','textureStrength','textureScale','textureRotation','textureBlend'])
         inactive.add(base+suffix);
@@ -146,7 +150,7 @@ function inactiveSettingKeys(recipe,scene){
   // control; all subordinate appearance knobs are dormant in the meantime.
   for(const suffix of ['','2','3']){
     const layerOn=suffix==='' || (suffix==='2'
-      ? recipe.textureLayer2Enabled : recipe.textureLayer2Enabled && recipe.textureLayer3Enabled);
+      ? recipe.textureLayer2Enabled : recipe.textureLayer3Enabled);
     const material=suffix===''?scene.material:recipe['material'+suffix];
     if(layerOn && material!=='none' && recipe['textureStrength'+suffix]===0){
       for(const base of ['textureCoverage','textureScale','textureRotation','textureBlend'])
@@ -215,14 +219,10 @@ function syncStripeShadowUI(){
   document.getElementById('stripeShadowControls').hidden=!enabled;
 }
 function syncTextureLayerVisibility(){
-  const two=!!form.elements.namedItem('textureLayer2Enabled').checked;
-  const three=two && !!form.elements.namedItem('textureLayer3Enabled').checked;
-  document.getElementById('textureLayer2Panel').hidden=!two;
-  document.getElementById('textureLayer3Panel').hidden=!three;
-  document.getElementById('addTextureLayer2').hidden=two;
-  document.getElementById('addTextureLayer3').hidden=!two || three;
-  document.getElementById('addTextureLayer2').parentElement.hidden=two;
-  document.getElementById('addTextureLayer3').parentElement.hidden=!two || three;
+  // Layer tabs are always present, with 'No texture / smooth' as the
+  // inactive state. The two optional flags remain part of saved recipes.
+  document.getElementById('textureLayer2Panel').hidden=false;
+  document.getElementById('textureLayer3Panel').hidden=false;
 }
 function syncURL() {
   try {
@@ -251,7 +251,8 @@ function render(recipe,{scroll=false,bypassLocks=false}={}) {
   stage.dataset.viewZoom=String(current.viewZoom);
   stage.dispatchEvent(new CustomEvent('roygbiv-view-zoom-updated',
     {detail:current.viewZoom}));
-  stage.dispatchEvent(new Event('roygbiv-wallpaper-rendered'));
+  stage.dispatchEvent(new CustomEvent('roygbiv-wallpaper-rendered',
+    {detail:{background:current.background}}));
   updatePositionStatus();
   showResolvedSelections(currentScene);
   document.getElementById('detailFamily').textContent=titleCase(currentScene.family);
@@ -499,15 +500,6 @@ function installSettingLocks(){
       if(rotation){rotation.classList.add('lockable-setting');makeSettingLock(key,rotation);}
     }
   }
-  for(const n of [2,3]){
-    const key='textureLayer'+n+'Enabled';
-    const add=document.getElementById('addTextureLayer'+n);
-    const row=document.createElement('div');row.className='layer-add-lock';
-    add.parentNode.insertBefore(row,add);row.append(add);
-    makeSettingLock(key,row);
-    const header=document.querySelector('#textureLayer'+n+'Panel .texture-layer-panel-head');
-    if(header)makeSettingLock(key,header);
-  }
   const seedGroup=seedInput.closest('.seed-group');
   const seedRow=document.createElement('div');seedRow.className='seed-lock-row';
   seedGroup.parentNode.insertBefore(seedRow,seedGroup);seedRow.append(seedGroup);
@@ -665,18 +657,15 @@ document.getElementById('randomizeAll').addEventListener('click',()=>{
   changeRecipe({...randomizeAllRecipe({primesOnly:current.primesOnly}),viewZoom:current.viewZoom});
   explorationHistory.remember(current,'Random');
 });
+// Optional material layers activate by selecting an actual material, with
+// 'No texture / smooth' acting as their explicit off state.
 for(const n of [2,3]){
-  document.getElementById('addTextureLayer'+n).addEventListener('click',()=>{
+  form.elements.namedItem('material'+n).addEventListener('change',event=>{
     const next=fromControls();
-    next['textureLayer'+n+'Enabled']=true;
-    if(n===3)next.textureLayer2Enabled=true;
-    if(next['material'+n]==='none')next['material'+n]=n===2?'concrete':'adobe';
-    changeRecipe(next);
-  });
-  document.getElementById('removeTextureLayer'+n).addEventListener('click',()=>{
-    const next=fromControls();
-    next['textureLayer'+n+'Enabled']=false;
-    if(n===2)next.textureLayer3Enabled=false;
+    const enabled=event.target.value!=='none';
+    next['material'+n]=event.target.value;
+    next['textureLayer'+n+'Enabled']=enabled;
+    // Material 3 may be used while material 2 remains smooth/off.
     changeRecipe(next);
   });
 }
