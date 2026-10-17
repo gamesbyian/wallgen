@@ -22,7 +22,7 @@ export const LOCKABLE_SETTINGS = ['seed','family','orientation','geometry','moti
   'material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3',
   'textureDisplacement','patternHomogeneity','chaos','stripeWidth','spread','shapeFrequency','shapeDepth','lineStyle','individuality',
   'overridePatternHomogeneity','gap','outlineBuffer','glow','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','position',
-  'composition','repeatCount','repeatSpacing','construction','turnRadius','hairpinAngle','pathLength','endTaper','tonalContrast','brushRoughness','dotSize','dotSpacing'];
+  'composition','repeatCount','repeatSpacing','construction','turnRadius','hairpinAngle','geometrySafety','pathLength','endTaper','tonalContrast','brushRoughness','dotSize','dotSpacing'];
 export const PALETTES = ['classic', 'electric', 'pastel', 'jewel', 'muted', 'sunset', 'candy', 'arctic', 'earth', 'twilight', 'citrus'];
 export const TEXTURE_COVERAGES = ['both', 'stripes', 'background'];
 export const OUTLINES = ['none', 'hairline', 'white', 'double', 'broken', 'one-side', 'black', 'black-hairline', 'black-double', 'black-broken', 'black-one-side'];
@@ -91,6 +91,7 @@ export function normalizeRecipe(input = {}) {
     repeatCount: Math.round(finiteRange(input.repeatCount, 3, 2, 6)),
     repeatSpacing: finiteRange(input.repeatSpacing, 50, 0, 100),
     turnRadius: finiteRange(input.turnRadius, 50, 0, 100),
+    geometrySafety: !(input.geometrySafety===false || input.geometrySafety==='false'),
     hairpinAngle: finiteRange(input.hairpinAngle, 180, 60, 180),
     endTaper: finiteRange(input.endTaper, 0, 0, 100),
     pathLength: finiteRange(input.pathLength, 65, 0, 100),
@@ -214,7 +215,7 @@ export function resolveScene(recipeInput) {
   // Wider low/high ends while retaining the familiar 50% midpoint.
   const spreadFactor=value=>.10+.335*Math.pow(value/50,1.5);
   const requestedSpread=span*spreadFactor(recipe.spread)/repeats;
-  const spread=geometry==='drawn'?
+  const spread=geometry==='drawn'&&recipe.geometrySafety?
     Math.min(requestedSpread,safeDrawnBandSpan(drawnPath)):requestedSpread;
   const center = geometry==='drawn'?0:between(random, -1, 1) * span * 0.09;
   // A shared master path keeps the seven stripes parallel at individuality=0.
@@ -246,9 +247,10 @@ export function resolveScene(recipeInput) {
     const leftGap = i ? referenceSpread*weights[i-1]/sum : referenceAvg;
     const rightGap = i < 6 ? referenceSpread*weights[i]/sum : referenceAvg;
     let width = Math.min(leftGap,rightGap)*widthFactor*between(r,1-chaos*.35,1+chaos*.35);
-    if(recipe.construction==='stroke')width=Math.max(.8,Math.min(6,width*.12));
-    const individualGeometry = geometry!=='drawn'&&individuality > .25 && r() < (individuality-.25)*1.15 ?
-      pick(r,GEOMETRIES.filter(g=>!['hairpin','loops','drawn'].includes(g))) : geometry;
+    if(recipe.construction==='stroke')width=Math.max(.35,width*.12);
+    // Individuality varies each stripe within its chosen geometry, while
+    // preserving the intended shape family even at the extreme endpoint.
+    const individualGeometry=geometry;
     // Motif, palette and material belong to the whole seven-stripe design.
     // Individuality is geometric only. Pattern changes are never selected here.
     const displacement = Math.min(referenceAvg * .32, width * .7 + referenceAvg * .08) * (.3 + .7*chaos)*depthFactor;
@@ -267,10 +269,13 @@ export function resolveScene(recipeInput) {
       dotPitch:Math.max(18,referenceAvg*(1.3+recipe.dotSpacing/100*1.15)),
       dotRadius:Math.max(2,referenceAvg*(.23+.45*recipe.dotSize/100)*widthFactor*.95),
       drawnPath,
-      turnRadius:90+recipe.turnRadius*1.35,
+      turnRadius:recipe.geometrySafety?
+        Math.max(90+recipe.turnRadius*1.35,spread*.62):30+recipe.turnRadius*3.6,
       hairpinAngle:recipe.hairpinAngle,
       loopPeriod:27+((100-recipe.shapeFrequency)/100)*66,
-      loopAmplitude:Math.min(4+29*recipe.shapeDepth/100,referenceAvg*.33),
+      loopAmplitude:recipe.geometrySafety?
+        Math.min(2+70*recipe.shapeDepth/100,Math.max(2,avg*.66)):
+        2+110*recipe.shapeDepth/100,
       phase, period, displacement,
       sharedGeometry:geometry, sharedPhase:commonPhase, sharedPeriod:commonPeriod,
       sharedDisplacement:commonDisplacement, parallelMix:individuality,
