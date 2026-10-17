@@ -11,6 +11,12 @@ const nudgeMarker=document.createComment('Desktop position: composition nudge');
 toolbar.before(toolbarMarker);
 nudge.before(nudgeMarker);
 prime.setAttribute('form','controls'); // Preserve form.elements while reparented.
+// The moved checkbox no longer bubbles through <form>. Forward its change so
+// app.js updates the actual recipe state before Randomize is pressed.
+prime.addEventListener('change',()=>{
+  if(mq.matches)document.getElementById('controls')
+    .dispatchEvent(new Event('change',{bubbles:true}));
+});
 const left=document.createElement('div');
 left.className='mobile-preview-rail mobile-preview-rail-left';
 left.setAttribute('aria-label','Generation shortcuts');
