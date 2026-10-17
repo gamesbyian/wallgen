@@ -173,13 +173,13 @@ export function resolveScene(recipeInput) {
   });
   const textureLayers = [
     {material, strength:recipe.textureStrength, scale:recipe.textureScale, rotation:recipe.textureRotation,
-      coverage:recipe.textureCoverage, blend:recipe.textureBlend, seed:recipe.seed+':texture:1'},
+      coverage:recipe.textureCoverage, blend:recipe.textureBlend, seed:recipe.seed+':texture:1', heightSeed:hashString(recipe.seed+':texture:1')},
     ...(recipe.textureLayer2Enabled ? [{material:recipe.material2, strength:recipe.textureStrength2, scale:recipe.textureScale2,
       rotation:recipe.textureRotation2, coverage:recipe.textureCoverage2, blend:recipe.textureBlend2,
-      seed:recipe.seed+':texture:2'}] : []),
+      seed:recipe.seed+':texture:2', heightSeed:hashString(recipe.seed+':texture:2')}] : []),
     ...(recipe.textureLayer2Enabled && recipe.textureLayer3Enabled ? [{material:recipe.material3, strength:recipe.textureStrength3,
       scale:recipe.textureScale3, rotation:recipe.textureRotation3, coverage:recipe.textureCoverage3,
-      blend:recipe.textureBlend3, seed:recipe.seed+':texture:3'}] : []),
+      blend:recipe.textureBlend3, seed:recipe.seed+':texture:3', heightSeed:hashString(recipe.seed+':texture:3')}] : []),
   ].filter(layer=>layer.material!=='none' && layer.strength>0);
   const materialSummary=textureLayers.length ? textureLayers.map(layer=>layer.material).join(' + ') : 'none';
   return {
