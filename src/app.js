@@ -85,6 +85,8 @@ function syncTextureLayerVisibility(){
   document.getElementById('textureLayer3Panel').hidden=!three;
   document.getElementById('addTextureLayer2').hidden=two;
   document.getElementById('addTextureLayer3').hidden=!two || three;
+  document.getElementById('addTextureLayer2').parentElement.hidden=two;
+  document.getElementById('addTextureLayer3').parentElement.hidden=!two || three;
 }
 function syncURL() {
   try {
