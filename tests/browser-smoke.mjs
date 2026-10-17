@@ -296,12 +296,17 @@ try{
     assert.ok(bounds.selectedToolVisible,'active tool name stays visible in the horizontal rail');
     assert.ok(bounds.toolbarInside,'top-level controls must stay inside their toolbar');
     assert.ok(bounds.selectorCount>=6,'Material tool controls must be present');
-    const materialState=await evaluate('(()=>({active:!document.querySelector("[name=material2]").disabled,addButtons:document.querySelectorAll(".add-texture-layer").length,rotations:[1,2,3].map(n=>{const node=document.querySelector("[name=textureRotation"+(n===1?"":n)+"]").closest(".texture-rotation-field");return {label:node.querySelector("span").getBoundingClientRect(),input:node.querySelector("input[type=number]").getBoundingClientRect(),row:node.getBoundingClientRect()};})}))()');
-    assert.ok(materialState.active&&materialState.addButtons===0);
-    for(const rot of materialState.rotations){
+    assert.ok(await evaluate('!document.querySelector("[name=material2]").disabled && !document.querySelector(".add-texture-layer")'));
+    await evaluate('document.getElementById("tab-material").click()');
+    for(const n of [1,2,3]){
+      await evaluate('document.querySelector("[data-editor-tool=finish'+n+']").click()');
+      const rot=await evaluate('(()=>{const node=document.querySelector(".editor-tool-card:not([hidden]) .texture-rotation-field");const row=node.getBoundingClientRect(),input=node.querySelector("input[type=number]").getBoundingClientRect(),label=node.querySelector("span").getBoundingClientRect();return {row:{top:row.top,bottom:row.bottom},input:{top:input.top,bottom:input.bottom},label:{top:label.top,bottom:label.bottom}}})()');
       assert.ok(rot.input.top>=rot.row.top-2&&rot.input.bottom<=rot.row.bottom+2,
-        'Rotation must fit on the same line at '+name);
+        'Rotation must fit on one line in Finish '+n+' at '+name+': '+JSON.stringify(rot));
+      assert.ok(Math.abs((rot.label.top+rot.label.bottom)-(rot.input.top+rot.input.bottom))<12,
+        'Rotation label and number must align in Finish '+n+' at '+name);
     }
+    await evaluate('document.querySelector("[data-editor-tool=layer1]").click()');
     const noClippedTools=await evaluate(`(()=>{
       const problems=[];
       for(const tab of document.querySelectorAll('.settings-tab')){
