@@ -64,7 +64,7 @@ function showNotice(message){
 }
 function fromControls() {
   const data={seed:seedInput.value,positionX:current.positionX,positionY:current.positionY};
-  for (const key of FIELDS) { const field=form.elements.namedItem(key); data[key]=field.type==='checkbox'?field.checked:field.value; }
+  for (const key of FIELDS) { const field=form.elements.namedItem(key); data[key]=field.dataset.inactive==='true'?current[key]:(field.type==='checkbox'?field.checked:field.value); }
   return normalizeRecipe(data);
 }
 function toControls(recipe) {
@@ -82,6 +82,88 @@ function toControls(recipe) {
   syncStripeShadowUI();
   syncDiagonalUI();
   syncSettingLocks();
+  syncInactiveSettings();
+}
+/**
+ * Inapplicable settings show zero without destroying their saved recipe values.
+ * Disabled fields retain their canonical value in current, even when the visible
+ * slider thumb/number is temporarily zero.
+ */
+function inactiveSettingKeys(recipe,scene){
+  const inactive=new Set();
+  if(scene.geometry==='straight')inactive.add('shapeFrequency'),inactive.add('shapeDepth');
+  if(scene.orientation!=='diagonal'){
+    for(const key of ['diagonalRotation','mirrorHorizontal','mirrorVertical'])inactive.add(key);
+  }
+  if(recipe.lightingMood==='off'){
+    for(const key of ['lightDirection','lightStrength','shadowStrength'])inactive.add(key);
+  }
+  if(!recipe.stripeShadowEnabled){
+    for(const key of ['stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection'])inactive.add(key);
+  }
+  for(const suffix of ['','2','3']){
+    const layerOn=suffix==='' || (suffix==='2'
+      ? recipe.textureLayer2Enabled : recipe.textureLayer2Enabled && recipe.textureLayer3Enabled);
+    const material=suffix===''?scene.material:recipe['material'+suffix];
+    if(!layerOn)inactive.add('material'+suffix);
+    if(!layerOn || material==='none'){
+      for(const base of ['textureCoverage','textureStrength','textureScale','textureRotation','textureBlend'])
+        inactive.add(base+suffix);
+    }
+  }
+  if(recipe.individuality===0)inactive.add('overridePatternHomogeneity');
+  return inactive;
+}
+function syncInactiveSettings(){
+  const inactive=inactiveSettingKeys(current,currentScene||resolveScene(current));
+  for(const key of FIELDS){
+    const field=form.elements.namedItem(key);
+    if(!field)continue;
+    const isInactive=inactive.has(key);
+    field.dataset.inactive=isInactive?'true':'false';
+    const locked=current.lockedSettings.includes(key);
+    field.disabled=isInactive||locked;
+    const host=field.closest('.lockable-setting')||field.closest('.texture-rotation-field')||field.closest('label');
+    if(host){
+      host.classList.toggle('setting-inactive',isInactive);
+      for(const el of host.querySelectorAll('.step-button,.slider-number'))el.disabled=isInactive||locked;
+    }
+    if(field.type==='range'){
+      field.value=isInactive?'0':String(current[key]);
+      const numeric=form.querySelector('[data-number-for="'+key+'"]');
+      if(numeric)numeric.value=isInactive?'0':String(current[key]);
+      const output=form.querySelector('output[for="'+key+'"]');
+      if(output)output.textContent=(isInactive?'0':current[key])+'%';
+    }else if(field.type==='checkbox'){
+      field.checked=isInactive?false:!!current[key];
+    }else if(field.tagName==='SELECT'){
+      const placeholder=Array.from(field.options).find(option=>option.dataset.inactivePlaceholder==='true');
+      if(isInactive){
+        if(!placeholder){
+          const opt=document.createElement('option');
+          opt.value='0';opt.textContent='0 · Inactive';opt.dataset.inactivePlaceholder='true';
+          field.add(opt);
+        }
+        field.value='0';
+      }else{
+        if(placeholder)placeholder.remove();
+        field.value=current[key];
+      }
+    }else if(field.type==='number'){
+      field.value=isInactive?'0':String(current[key]);
+    }
+    if(key.startsWith('textureRotation') || key==='diagonalRotation'){
+      for(const button of document.querySelectorAll('[data-rotate-target="'+key+'"]'))
+        button.disabled=isInactive||locked;
+    }
+  }
+  for(const button of document.querySelectorAll('.setting-inactive > .setting-lock')){
+    button.disabled=true;
+    button.title='Inactive in the current configuration';
+  }
+  for(const button of document.querySelectorAll('.lockable-setting:not(.setting-inactive) > .setting-lock')){
+    button.disabled=false;
+  }
 }
 function syncDiagonalUI(){
   document.getElementById('diagonalSettings').hidden=form.elements.namedItem('orientation').value!=='diagonal';
@@ -247,7 +329,7 @@ importRecipeFile.addEventListener('change',async()=>{
 
 function updateControlsFromInputs(){
   syncDiagonalUI();
-  render(fromControls());
+  changeRecipe(fromControls());
 }
 
 for(const slider of form.querySelectorAll('input[type="range"]')){
