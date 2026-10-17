@@ -15,9 +15,16 @@ class FakeContext {
   clearRect(){} beginPath(){} moveTo(){} lineTo(){} closePath(){}
   arc(){} quadraticCurveTo(){} clip(){calls.push(['clip',this.tag]);} stroke(){} setLineDash(){}
   fill(){} fillRect(...args){calls.push(['fillRect',this.fillStyle,...args,this.tag]);}
-  drawImage(_src,...args){calls.push(['drawImage',this.globalCompositeOperation,this.tag,...args]);}
+  drawImage(_src,...args){
+    if(this.shadowBlur>0)calls.push(['lightingShadow',this.shadowBlur,this.shadowOffsetX,this.shadowOffsetY,this.shadowColor]);
+    calls.push(['drawImage',this.globalCompositeOperation,this.tag,...args]);
+  }
   createPattern(){return '#pattern';}
   createRadialGradient(){return {addColorStop(){}};}
+  createLinearGradient(...coords){
+    calls.push(['lightingGradient',...coords]);
+    return {addColorStop(offset,color){calls.push(['lightingStop',offset,color]);}};
+  }
 }
 const oldPath=globalThis.Path2D;
 const oldDocument=globalThis.document;
@@ -192,4 +199,50 @@ test('nudge at export dimensions is a scaled bitmap translation, not recapping s
   const base=resolveScene({seed:'export-pan',orientation:'diagonal'});
   assert.equal(scene.centerX,base.centerX);
   assert.equal(scene.centerY,base.centerY);
+});
+
+test('lighting is opt-in and draws directional highlight and shadow without new clipping',()=>{
+  for(const mood of ['off','daylight','golden','moonlight']){
+    calls.length=0;
+    const canvas={width:600,height:1300,getContext:()=>new FakeContext('main')};
+    drawWallpaper(canvas,{seed:'light:'+mood,material:'none',motif:'stars',lightingMood:mood,
+      lightDirection:'top-left',lightStrength:60,shadowStrength:75});
+    assert.equal(calls.some(c=>c[0]==='lightingGradient'),mood!=='off');
+    assert.equal(calls.some(c=>c[0]==='lightingShadow'),mood!=='off');
+    assert.ok(!calls.some(c=>c[0]==='clip'));
+  }
+});
+
+test('shadow direction follows the light source and scales to high-resolution export',()=>{
+  for(const [lightDirection,signX,signY] of [
+    ['top-left',1,1],['top-right',-1,1],
+    ['bottom-left',1,-1],['bottom-right',-1,-1],
+  ]){
+    calls.length=0;
+    const canvas={width:3024,height:6552,getContext:()=>new FakeContext('main')};
+    drawWallpaper(canvas,{seed:'shadow-'+lightDirection,lightingMood:'golden',
+      lightDirection,lightStrength:77,shadowStrength:84});
+    const shadows=calls.filter(c=>c[0]==='lightingShadow');
+    assert.equal(shadows.length,1);
+    assert.equal(Math.sign(shadows[0][2]),signX);
+    assert.equal(Math.sign(shadows[0][3]),signY);
+    assert.ok(shadows[0][1]>4,'shadow should scale with export resolution');
+  }
+});
+
+test('nudging relights no geometry and preserves the same finished lit stripe bitmap',()=>{
+  const canvas={width:600,height:1300,getContext:()=>new FakeContext('main')};
+  const cache={};
+  const recipe={seed:'lit-nudge',lightingMood:'moonlight',lightDirection:'bottom-right',
+    lightStrength:63,shadowStrength:57};
+  drawWallpaper(canvas,recipe,{cache});
+  assert.ok(cache.ink && cache.background);
+  calls.length=0;
+  presentNudgedArtwork(canvas,cache,{...recipe,positionX:14,positionY:-6});
+  assert.equal(calls.filter(c=>c[0]==='lightingGradient').length,0);
+  assert.equal(calls.filter(c=>c[0]==='lightingShadow').length,1);
+  const draws=calls.filter(c=>c[0]==='drawImage'&&c[2]==='main');
+  assert.deepEqual(draws.map(c=>c.slice(3)),[[0,0],[84,-78]]);
+  assert.deepEqual(resolveScene({...recipe,positionX:14,positionY:-6}).stripes,
+    resolveScene(recipe).stripes);
 });
