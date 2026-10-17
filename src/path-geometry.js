@@ -12,15 +12,28 @@ export const noise1D=(x,seed)=>{
   return mix(hash(i),hash(i+1),fract(x));
 };
 export const SHAPES=['straight','wave','zigzag','chevron','jagged','stepped','arc','contour','hairpin','loops','drawn'];
-export function modulation(x, geometry, phase, period, d, extent){
+export function modulation(x, geometry, phase, period, d, extent,detail={}){
   const t=x/period+phase/TAU;
   if(geometry==='straight')return 0;
   if(geometry==='wave')return d*(Math.sin(t*TAU)*.78+Math.sin(t*TAU*.43+phase)*.22);
   if(geometry==='zigzag')return d*(2*Math.abs(2*fract(t)-1)-1);
-  if(geometry==='chevron')return d*(1-2*Math.pow(Math.abs(2*fract(t)-1),.55));
+  if(geometry==='chevron')return d*(1-2*Math.pow(Math.abs(2*fract(t)-1),.2+.7*(detail.chevronSharpness??50)/100));
   if(geometry==='jagged')return d*(noise1D(x/(period*.33),phase)*.85+.15*Math.sin(t*TAU));
-  if(geometry==='stepped')return d*(Math.floor(fract(t)*4)/2-.75);
-  if(geometry==='arc')return d*(Math.pow(x/extent,2)*3.8-.6);
+  if(geometry==='stepped'){
+    const steps=clamp(Math.round(detail.stepCount??4),1,16);
+    return steps===1?d*(fract(t)<.5?-1:1):
+      d*(Math.floor(fract(t)*steps)*2/(steps-1)-1);
+  }
+  if(geometry==='arc'){
+    // Arc frequency is curvature frequency: 0 gives a single broad sweep,
+    // while higher values produce a train of joined arches.
+    const frequency=clamp((detail.shapeFrequency??50)/100,0,1);
+    const cycles=.5+12*Math.pow(frequency,1.45);
+    const u=x/extent*cycles+phase/TAU;
+    // Raised cosine joins successive arches with continuous derivatives;
+    // triangular periodic parabola tiles caused unintended sharp cusps.
+    return d*Math.cos(u*Math.PI);
+  }
   return d*(Math.sin(t*TAU*.42)*.35+Math.sin(t*TAU*.79+phase)*.4+Math.sin(t*TAU*1.33)*.25);
 }
 export function pathPosition(stripe,x,extent){
@@ -59,11 +72,11 @@ export function pathPosition(stripe,x,extent){
     const phase=(stripe.sharedPhase??0);
     const angle=x/pitch*TAU+phase;
     const size=stripe.loopAmplitude??13;
-    return {x:x-size*2.1*Math.sin(angle),y:size*Math.cos(angle)};
+    return {x:x-size*2.1*Math.pow(2,((stripe.loopAspect??50)-50)/35)*Math.sin(angle),y:size*Math.cos(angle)};
   }
   const shared=modulation(x,g,stripe.sharedPhase??stripe.phase,
-    stripe.sharedPeriod??stripe.period,stripe.sharedDisplacement??stripe.displacement,coreExtent);
-  const individual=modulation(x,stripe.geometry,stripe.phase,stripe.period,stripe.displacement,coreExtent);
+    stripe.sharedPeriod??stripe.period,stripe.sharedDisplacement??stripe.displacement,coreExtent,stripe);
+  const individual=modulation(x,stripe.geometry,stripe.phase,stripe.period,stripe.displacement,coreExtent,stripe);
   return {x,y:mix(shared,individual,stripe.parallelMix??1)+(stripe.tilt??0)*x/coreExtent};
 }
 export function samplePath(stripe,x,extent){
@@ -91,7 +104,7 @@ export function widthAt(stripe,x,extent){
   if(!taper)return base;
   const start=stripe.segmentStart??-extent,end=stripe.segmentEnd??extent;
   const span=Math.max(1,end-start),distance=Math.min(x-start,end-x);
-  const edge=clamp(distance/(Math.max(0.1,taper)*span*.45),0,1);
+  const edge=clamp(distance/(Math.max(.001,taper)*span*.45),0,1);
   return base*(.03+.97*edge*edge*(3-2*edge));
 }
 export function ribbonEdge(stripe,x,extent,side,edgeRelief=0){

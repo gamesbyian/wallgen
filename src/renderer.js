@@ -423,15 +423,17 @@ function fillMotif(ctx,stripe,extent,scene) {
   const motif=stripe.motif;
   if(motif==='solid'){ctx.fill(stripePath(stripe,extent,scene));return;}
   const random=rng(scene.seed+':motifs:'+stripe.index);
-  // Chevron motif size and repetition are independent: Shape depth scales
-  // the marks and Shape frequency sets their longitudinal density.
-  const chevronScale=motif==='chevrons'?Math.pow(2,(scene.shapeDepth-50)/29):1;
-  const chevronRate=motif==='chevrons'?Math.pow(2,(scene.shapeFrequency-50)/20):1;
-  const step=Math.max(2.5,stripe.width*.42*stripe.patternScale*chevronScale);
+  // Motif size and density are independent from centreline geometry.
+  // Every motif uses the same two dedicated controls, not curve frequency.
+  const motifScale=Math.pow(2,(scene.motifSize-50)/28);
+  const motifRate=Math.pow(2,(scene.motifFrequency-50)/27);
+  const step=Math.max(1.4,stripe.width*.42*stripe.patternScale*
+    (motif==='dots'?1:motifScale));
   const across=Math.max(1,Math.ceil(stripe.width/(step*.83)));
   const stroke=Math.min(step*.19,Math.max(.55,stripe.width*.14));
   ctx.save();ctx.lineWidth=stroke;ctx.lineCap='round';ctx.lineJoin='round';
-  const spacing=motif==='dashes'?step*1.9:motif==='chevrons'?Math.max(2.5,step*1.5/chevronRate):step;
+  const dotSpacingFactor=motif==='dots'?1.8-.95*scene.dotSpacing/100:1;
+  const spacing=Math.max(2.5,(motif==='dashes'?step*1.9:motif==='chevrons'?step*1.5:step)*dotSpacingFactor/motifRate);
   for(let x=-extent+spacing;x<extent-spacing;x+=spacing){
     for(let j=-across;j<=across;j++){
       if(motif==='checker' && ((Math.round((x+extent)/spacing)+j)&1)!==0)continue;
@@ -440,7 +442,13 @@ function fillMotif(ctx,stripe,extent,scene) {
       const jitter=scene.intensity*step*.10;
       const xx=x+(Math.abs(j)%2)*spacing*.35+(random()-.5)*jitter;
       const yy=geometryAt(xx,stripe,extent)+offset+(random()-.5)*jitter+textureHeight(scene,stripe,xx,0)*.3;
-      const radius=step*.28*variation.scale;
+      // Large dots are sized relative to the available stripe width, so
+      // the maximum remains a visible disc instead of being rejected by the
+      // all-or-nothing mark fit test.
+      const radius=motif==='dots'?
+        stripe.width*(.05+.38*scene.motifSize/100)*
+          (.3+.7*scene.dotSize/100)*variation.scale:
+        step*.28*variation.scale;
       // Bounds include rotation; never clip a partly visible element.
       let bx=radius,by=radius;
       if(motif==='hatch'){bx=step*.34*variation.scale+stroke/2;by=bx;}
@@ -479,19 +487,23 @@ function fillMotif(ctx,stripe,extent,scene) {
 function textureTile(material,seed,size) {
   const canvas=document.createElement('canvas');canvas.width=canvas.height=size;
   const ctx=canvas.getContext('2d');
+  // Tile size is controlled by Texture Scale; individual fibres and weave
+  // spacing must scale with it too, rather than remaining fixed in pixels.
+  const materialUnit=Math.max(.25,size/145);
   const rand=rng(`${seed}:material:${material}`);
   const random=(a,b)=>a+(b-a)*rand();
   const specks=(count,min,max,alpha=.22) => {
     for(let i=0;i<count;i++){
       const light=rand()>.47;
       ctx.fillStyle=`rgba(${light?'255,255,255':'0,0,0'},${random(alpha*.12,alpha).toFixed(3)})`;
-      const radius=random(min,max);
+      const radius=random(min,max)*materialUnit;
       ctx.beginPath();ctx.arc(rand()*size,rand()*size,radius,0,TAU);ctx.fill();
     }
   };
   const lines=(gap,colour,linewidth,angle=0)=>{
-    ctx.save();ctx.translate(size/2,size/2);ctx.rotate(angle);ctx.strokeStyle=colour;ctx.lineWidth=linewidth;
-    for(let x=-size*2;x<size*2;x+=gap){ctx.beginPath();ctx.moveTo(x,-size*2);ctx.lineTo(x,size*2);ctx.stroke();}
+    ctx.save();ctx.translate(size/2,size/2);ctx.rotate(angle);ctx.strokeStyle=colour;
+    ctx.lineWidth=linewidth*Math.sqrt(materialUnit);
+    for(let x=-size*2;x<size*2;x+=Math.max(.5,gap*materialUnit)){ctx.beginPath();ctx.moveTo(x,-size*2);ctx.lineTo(x,size*2);ctx.stroke();}
     ctx.restore();
   };
   const patches=(count,min,max,alpha=.12)=>{
@@ -506,7 +518,7 @@ function textureTile(material,seed,size) {
   };
   const fibres=(count,length=8,alpha=.22)=>{
     for(let i=0;i<count;i++){
-      const x=rand()*size,y=rand()*size,a=rand()*Math.PI*2,l=random(1,length);
+      const x=rand()*size,y=rand()*size,a=rand()*Math.PI*2,l=random(1,length)*materialUnit;
       ctx.strokeStyle=`rgba(${rand()>.5?'255,255,255':'0,0,0'},${random(alpha*.22,alpha).toFixed(3)})`;
       ctx.lineWidth=random(.25,1);
       ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+Math.cos(a)*l,y+Math.sin(a)*l);ctx.stroke();

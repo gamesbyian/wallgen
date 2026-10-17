@@ -9,13 +9,16 @@ export const EDITOR_CATEGORIES=[
   ]},
   {id:'path',label:'Path',icon:'⌁',tools:[
     {id:'geometry',name:'Geometry',settings:['geometry','shapeFrequency','shapeDepth']},
+    {id:'safety',name:'Constraints',settings:['geometrySafety']},
     {id:'turn',name:'Turns',settings:['turnRadius','hairpinAngle']},
+    {id:'shape-details',name:'Shape detail',settings:['stepCount','chevronSharpness','loopAspect']},
     {id:'ends',name:'Endpoints',settings:['pathLength','endTaper']},
   ]},
   {id:'stripes',label:'Stripes',icon:'≋',tools:[
     {id:'structure',name:'Structure',settings:['construction','stripeWidth','spread']},
     {id:'patterns',name:'Patterns',settings:['motif','lineStyle','patternHomogeneity']},
     {id:'marks',name:'Marks',settings:['dotSize','dotSpacing']},
+    {id:'motif-scale',name:'Motif scale',settings:['motifSize','motifFrequency']},
     {id:'character',name:'Character',settings:['individuality','overridePatternHomogeneity']},
     {id:'tone',name:'Band tones',settings:['tonalContrast']},
   ]},

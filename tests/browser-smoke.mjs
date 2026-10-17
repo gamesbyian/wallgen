@@ -222,6 +222,15 @@ try{
   await evaluate('document.getElementById("tab-path").click()');
   await evaluate('document.querySelector("[data-editor-tool=geometry]").click()');
   assert.ok(await evaluate('document.querySelector("#panel-path .editor-tool-card:not([hidden]) [name=geometry]")!==null'));
+  await evaluate('document.querySelector("[data-editor-tool=safety]").click()');
+  assert.ok(await evaluate('document.querySelector("[name=geometrySafety]").checked'));
+  await evaluate('(()=>{const f=document.querySelector("[name=geometrySafety]");f.checked=false;f.dispatchEvent(new Event("input",{bubbles:true}));f.dispatchEvent(new Event("change",{bubbles:true}));})()');
+  await waitFor('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).geometrySafety===false');
+  await evaluate('document.querySelector("[data-random-category=path]").click()');
+  assert.equal(await evaluate('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).geometrySafety'),false,
+    'randomization may not silently toggle the geometry-safety policy');
+  await evaluate('(()=>{const f=document.querySelector("[name=geometrySafety]");f.checked=true;f.dispatchEvent(new Event("change",{bubbles:true}));})()');
+  await waitFor('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).geometrySafety===true');
   // All six categories and their tool cards must fit without internal
   // scrolling or concealing active controls. This is stronger than merely
   // setting overflow:hidden in CSS.
@@ -443,6 +452,23 @@ try{
   await waitFor('!document.body.classList.contains("mobile-studio")');
   assert.ok(await evaluate('document.querySelector("#panel-path [name=geometry]")!==null'));
   assert.ok(await evaluate('document.querySelectorAll(".editor-tool-card").length>=18'));
+  const extremeDots=await evaluate(`(async()=>{
+    const {drawWallpaper}=await import('/src/renderer.js');
+    const canvas=document.createElement('canvas');canvas.width=360;canvas.height=780;
+    drawWallpaper(canvas,{seed:'extreme-visible-dots',geometry:'straight',
+      orientation:'vertical',motif:'dots',construction:'ribbon',outline:'none',
+      material:'none',chaos:0,stripeWidth:65,spread:60,
+      dotSize:100,dotSpacing:0,motifSize:100,motifFrequency:20});
+    const {data}=canvas.getContext('2d').getImageData(0,0,360,780);
+    let chromatic=0;
+    for(let p=0;p<data.length;p+=4){
+      if(Math.max(data[p],data[p+1],data[p+2])-
+          Math.min(data[p],data[p+1],data[p+2])>55)chromatic++;
+    }
+    return chromatic/(360*780);
+  })()`);
+  console.log('EXTREME_DOT_MOTIF_CHROMATIC_COVERAGE',extremeDots);
+  assert.ok(extremeDots>.035,'large dot motifs must remain coloured rather than vanish');
   console.log('REDESIGN_EXPLORATION_ACCEPTANCE_SUCCESS');
 }finally{
   try{ws?.close()}catch{}

@@ -36,7 +36,8 @@ export function randomizeScope(currentInput,{scope,name,mode='reroll',strength='
   const modified=[];
   for(const key of selected){
     if(current.lockedSettings.includes(key))continue;
-    if(key==='textureLayer2Enabled'||key==='textureLayer3Enabled')continue;
+    // Safety is an explicit editorial preference, never randomly flipped.
+    if(key==='textureLayer2Enabled'||key==='textureLayer3Enabled'||key==='geometrySafety')continue;
     // Disallow introducing a new randomly generated custom path: it is
     // exclusively drawn by the user and preserved when geometry is drawn.
     if(key==='geometry'&&current.geometry==='drawn')continue;
@@ -48,12 +49,12 @@ export function randomizeScope(currentInput,{scope,name,mode='reroll',strength='
     let target=candidate[key];
     if(mode==='vary'){
       if(typeof v==='number'){
-        const min=el&&Number.isFinite(Number(el.min))&&el.min!==''?Number(el.min):0;
-        const max=el&&Number.isFinite(Number(el.max))&&el.max!==''?Number(el.max):100;
+        const min=el&&el.min!==''&&Number.isFinite(Number(el.min))?Number(el.min):0;
+        const max=el&&el.max!==''&&Number.isFinite(Number(el.max))?Number(el.max):100;
         target=clamp(v+(random()*2-1)*weight*(max-min),min,max);
         const step=el&&el.step&&el.step!=='any'?Number(el.step):1;
         if(step>0)target=clamp(min+Math.round((target-min)/step)*step,min,max);
-        if(current.primesOnly&&min>=0&&max===100)
+        if(current.primesOnly&&min===0&&max===100)
           target=nearestPrime(target,PERCENT_PRIMES);
         else if(current.primesOnly&&key.startsWith('textureRotation'))
           target=nearestPrime(target,ANGLE_PRIMES);

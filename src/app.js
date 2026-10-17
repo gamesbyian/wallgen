@@ -14,7 +14,7 @@ const gallery = document.getElementById('gallery');
 const notice = document.getElementById('notice');
 const favoriteButton = document.getElementById('favorite');
 const FAVORITES_KEY = 'wallgen:favorites:v1';
-const FIELDS = ['primesOnly','family','composition','repeatCount','repeatSpacing','orientation','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','geometry','turnRadius','hairpinAngle','construction','motif','lineStyle','pathLength','tonalContrast','brushRoughness','dotSize','dotSpacing','endTaper','shapeFrequency','shapeDepth','palette','material','outline','background','lightingMood','lightDirection','lightStrength','shadowStrength','stripeShadowEnabled','stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection','textureCoverage','textureRotation','textureBlend','textureLayer2Enabled','material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2','textureLayer3Enabled','material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3','chaos','stripeWidth','spread','textureStrength','textureScale','textureDisplacement','individuality','patternHomogeneity','overridePatternHomogeneity','gap','outlineBuffer','glow'];
+const FIELDS = ['primesOnly','family','composition','repeatCount','repeatSpacing','orientation','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','geometry','turnRadius','hairpinAngle','geometrySafety','stepCount','chevronSharpness','loopAspect','construction','motif','lineStyle','pathLength','tonalContrast','brushRoughness','dotSize','dotSpacing','endTaper','shapeFrequency','shapeDepth','motifSize','motifFrequency','palette','material','outline','background','lightingMood','lightDirection','lightStrength','shadowStrength','stripeShadowEnabled','stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection','textureCoverage','textureRotation','textureBlend','textureLayer2Enabled','material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2','textureLayer3Enabled','material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3','chaos','stripeWidth','spread','textureStrength','textureScale','textureDisplacement','individuality','patternHomogeneity','overridePatternHomogeneity','gap','outlineBuffer','glow'];
 let current = normalizeRecipe();
 let currentScene;
 const previewLayers={background:null,ink:null,scene:null,key:null};
@@ -89,6 +89,29 @@ function toControls(recipe) {
   syncDiagonalUI();
   syncSettingLocks();
   syncInactiveSettings();
+  const effective=document.getElementById('geometrySafetyStatus');
+  if(effective){
+    if(!current.geometrySafety)effective.textContent='Unrestricted: intersections, overlaps and cropping permitted';
+    else if(['loops','hairpin','drawn'].includes(current.geometry)){
+      const safe=resolveScene(current);
+      const free=resolveScene({...current,geometrySafety:false});
+      const n=3;
+      const metric=geometry=>geometry==='loops'?'loopAmplitude':
+        geometry==='hairpin'?'turnRadius':null;
+      const key=metric(current.geometry);
+      if(key){
+        const actual=safe.stripes[n][key],requested=free.stripes[n][key];
+        effective.textContent=Math.abs(actual-requested)>1?
+          `Coherent: effective ${current.geometry} ${actual.toFixed(1)} px · unrestricted ${requested.toFixed(1)} px`:
+          'Coherent: no constraint currently required';
+      }else{
+        const span=scene=>scene.stripes.at(-1).center-scene.stripes[0].center;
+        effective.textContent=span(safe)+1<span(free)?
+          `Coherent spacing: ${span(safe).toFixed(0)} px · unrestricted ${span(free).toFixed(0)} px`:
+          'Coherent: no constraint currently required';
+      }
+    }else effective.textContent='Coherent: preserve the selected geometry family';
+  }
 }
 /**
  * Inapplicable settings show zero without destroying their saved recipe values.
@@ -97,11 +120,15 @@ function toControls(recipe) {
  */
 function inactiveSettingKeys(recipe,scene){
   const inactive=new Set();
-  if(['straight','hairpin','drawn'].includes(scene.geometry)&&
-      !(scene.motif==='chevrons'&&recipe.construction==='ribbon'))
+  // Decorative motifs have separate size/density knobs; straight geometry
+  // never has curve frequency/depth, even when marked with chevrons.
+  if(['straight','hairpin','drawn'].includes(scene.geometry))
     inactive.add('shapeFrequency'),inactive.add('shapeDepth');
   if(scene.geometry==='drawn')inactive.add('orientation');
   if(scene.geometry!=='hairpin')inactive.add('turnRadius'),inactive.add('hairpinAngle');
+  if(scene.geometry!=='stepped')inactive.add('stepCount');
+  if(scene.geometry!=='chevron')inactive.add('chevronSharpness');
+  if(scene.geometry!=='loops')inactive.add('loopAspect');
   if(recipe.composition!=='repeat')inactive.add('repeatCount'),inactive.add('repeatSpacing');
   if(recipe.composition!=='floating')inactive.add('pathLength');
   if(recipe.construction!=='tonal')inactive.add('tonalContrast');
@@ -110,12 +137,15 @@ function inactiveSettingKeys(recipe,scene){
   }
   if(recipe.construction!=='ribbon'){
     inactive.add('motif');inactive.add('patternHomogeneity');inactive.add('overridePatternHomogeneity');
+    inactive.add('motifSize');inactive.add('motifFrequency');
   }else if(scene.motif==='solid'){
     inactive.add('patternHomogeneity');
+    inactive.add('motifSize');inactive.add('motifFrequency');
   }
   if(['woven','tonal'].includes(recipe.construction))inactive.add('lineStyle');
   if(recipe.construction==='woven')inactive.add('brushRoughness');
-  if(recipe.lineStyle!=='dotted'||recipe.construction==='woven'){
+  if((recipe.lineStyle!=='dotted'&&!(recipe.construction==='ribbon'&&scene.motif==='dots'))
+      ||recipe.construction==='woven'){
     inactive.add('dotSize');inactive.add('dotSpacing');
   }
   if(scene.orientation!=='diagonal'||scene.geometry==='drawn'){
@@ -654,7 +684,7 @@ document.getElementById('randomize').addEventListener('click',()=>{
 });
 document.getElementById('randomizeAll').addEventListener('click',()=>{
   explorationHistory.remember(current,'Before Random');
-  changeRecipe({...randomizeAllRecipe({primesOnly:current.primesOnly}),viewZoom:current.viewZoom});
+  changeRecipe({...randomizeAllRecipe({primesOnly:current.primesOnly}),viewZoom:current.viewZoom,geometrySafety:current.geometrySafety});
   explorationHistory.remember(current,'Random');
 });
 // Optional material layers activate by selecting an actual material, with

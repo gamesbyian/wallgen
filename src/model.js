@@ -20,9 +20,9 @@ export const LOCKABLE_SETTINGS = ['seed','family','orientation','geometry','moti
   'material','textureCoverage','textureStrength','textureScale','textureRotation','textureBlend',
   'material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2',
   'material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3',
-  'textureDisplacement','patternHomogeneity','chaos','stripeWidth','spread','shapeFrequency','shapeDepth','lineStyle','individuality',
+  'textureDisplacement','patternHomogeneity','chaos','stripeWidth','spread','shapeFrequency','shapeDepth','motifSize','motifFrequency','lineStyle','individuality',
   'overridePatternHomogeneity','gap','outlineBuffer','glow','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','position',
-  'composition','repeatCount','repeatSpacing','construction','turnRadius','hairpinAngle','pathLength','endTaper','tonalContrast','brushRoughness','dotSize','dotSpacing'];
+  'composition','repeatCount','repeatSpacing','construction','turnRadius','hairpinAngle','geometrySafety','stepCount','chevronSharpness','loopAspect','pathLength','endTaper','tonalContrast','brushRoughness','dotSize','dotSpacing'];
 export const PALETTES = ['classic', 'electric', 'pastel', 'jewel', 'muted', 'sunset', 'candy', 'arctic', 'earth', 'twilight', 'citrus'];
 export const TEXTURE_COVERAGES = ['both', 'stripes', 'background'];
 export const OUTLINES = ['none', 'hairline', 'white', 'double', 'broken', 'one-side', 'black', 'black-hairline', 'black-double', 'black-broken', 'black-one-side'];
@@ -91,7 +91,11 @@ export function normalizeRecipe(input = {}) {
     repeatCount: Math.round(finiteRange(input.repeatCount, 3, 2, 6)),
     repeatSpacing: finiteRange(input.repeatSpacing, 50, 0, 100),
     turnRadius: finiteRange(input.turnRadius, 50, 0, 100),
+    geometrySafety: !(input.geometrySafety===false || input.geometrySafety==='false'),
     hairpinAngle: finiteRange(input.hairpinAngle, 180, 60, 180),
+    stepCount: Math.round(finiteRange(input.stepCount, 4, 1, 16)),
+    chevronSharpness: finiteRange(input.chevronSharpness, 50, 0, 100),
+    loopAspect: finiteRange(input.loopAspect, 50, 0, 100),
     endTaper: finiteRange(input.endTaper, 0, 0, 100),
     pathLength: finiteRange(input.pathLength, 65, 0, 100),
     tonalContrast: finiteRange(input.tonalContrast, 50, 0, 100),
@@ -99,6 +103,8 @@ export function normalizeRecipe(input = {}) {
     dotSize: finiteRange(input.dotSize, 50, 0, 100),
     dotSpacing: finiteRange(input.dotSpacing, 50, 0, 100),
     shapeFrequency: finiteRange(input.shapeFrequency, 50, 0, 100),
+    motifSize: finiteRange(input.motifSize, 50, 0, 100),
+    motifFrequency: finiteRange(input.motifFrequency, 50, 0, 100),
     shapeDepth: finiteRange(input.shapeDepth, 50, 0, 100),
     palette: readChoice('palette', PALETTES),
     material: readChoice('material', MATERIALS),
@@ -214,16 +220,21 @@ export function resolveScene(recipeInput) {
   // Wider low/high ends while retaining the familiar 50% midpoint.
   const spreadFactor=value=>.10+.335*Math.pow(value/50,1.5);
   const requestedSpread=span*spreadFactor(recipe.spread)/repeats;
-  const spread=geometry==='drawn'?
-    Math.min(requestedSpread,safeDrawnBandSpan(drawnPath)):requestedSpread;
+  const spread=recipe.geometrySafety&&geometry==='hairpin'?
+    Math.min(requestedSpread,DESIGN_WIDTH*.38):
+    geometry==='drawn'&&recipe.geometrySafety?
+      Math.min(requestedSpread,safeDrawnBandSpan(drawnPath)):requestedSpread;
   const center = geometry==='drawn'?0:between(random, -1, 1) * span * 0.09;
   // A shared master path keeps the seven stripes parallel at individuality=0.
   // Independent path phase, period, tilt and edge profile grow with individuality.
   const commonPhase=between(random,0,Math.PI*2);
   // Neutral midpoint preserves legacy geometry and saved designs.
-  const frequencyFactor=Math.pow(2,(recipe.shapeFrequency-50)/(geometry==='chevron'?19:37));
-  const depthFactor=Math.pow(2,(recipe.shapeDepth-50)/(geometry==='chevron'?26:55));
-  const commonPeriod=between(random,145,530)/frequencyFactor;
+  // Frequency is perceived as bends per composition: its low end should
+  // be one broad gesture and its high end should reach dense, fine motion.
+  const commonPeriod=1400*Math.pow(.04,recipe.shapeFrequency/100)*
+    between(random,.85,1.15);
+  // True zero means no centreline displacement, not a residual half-wave.
+  const depthFactor=Math.pow(recipe.shapeDepth/50,1.3);
   const commonEdgePhase=between(random,0,Math.PI*2);
   const commonTaper=between(random,0,0.28)*chaos;
   const weights = Array.from({length:6}, () => between(random, 1 - chaos * .46, 1 + chaos * .46));
@@ -246,14 +257,15 @@ export function resolveScene(recipeInput) {
     const leftGap = i ? referenceSpread*weights[i-1]/sum : referenceAvg;
     const rightGap = i < 6 ? referenceSpread*weights[i]/sum : referenceAvg;
     let width = Math.min(leftGap,rightGap)*widthFactor*between(r,1-chaos*.35,1+chaos*.35);
-    if(recipe.construction==='stroke')width=Math.max(.8,Math.min(6,width*.12));
-    const individualGeometry = geometry!=='drawn'&&individuality > .25 && r() < (individuality-.25)*1.15 ?
-      pick(r,GEOMETRIES.filter(g=>!['hairpin','loops','drawn'].includes(g))) : geometry;
+    if(recipe.construction==='stroke')width=Math.max(.35,width*.12);
+    // Individuality varies each stripe within its chosen geometry, while
+    // preserving the intended shape family even at the extreme endpoint.
+    const individualGeometry=geometry;
     // Motif, palette and material belong to the whole seven-stripe design.
     // Individuality is geometric only. Pattern changes are never selected here.
     const displacement = Math.min(referenceAvg * .32, width * .7 + referenceAvg * .08) * (.3 + .7*chaos)*depthFactor;
     const phase=between(r,0,Math.PI*2);
-    const period=between(r,145,530)/frequencyFactor;
+    const period=commonPeriod*between(r,.8,1.2);
     return {
       // Reverse the colour assignment, not the geometry. It keeps all seven
       // ribbon centres sorted and preserves the historic scene on default.
@@ -267,14 +279,29 @@ export function resolveScene(recipeInput) {
       dotPitch:Math.max(18,referenceAvg*(1.3+recipe.dotSpacing/100*1.15)),
       dotRadius:Math.max(2,referenceAvg*(.23+.45*recipe.dotSize/100)*widthFactor*.95),
       drawnPath,
-      turnRadius:90+recipe.turnRadius*1.35,
+      shapeFrequency:recipe.shapeFrequency,
+      stepCount:recipe.stepCount,
+      chevronSharpness:recipe.chevronSharpness,
+      loopAspect:recipe.loopAspect,
+      turnRadius:recipe.geometrySafety?
+        Math.min(Math.max(90+recipe.turnRadius*1.35,spread*.56),
+          DESIGN_WIDTH*.44-spread/2):
+        30+recipe.turnRadius*3.6,
       hairpinAngle:recipe.hairpinAngle,
-      loopPeriod:27+((100-recipe.shapeFrequency)/100)*66,
-      loopAmplitude:Math.min(4+29*recipe.shapeDepth/100,referenceAvg*.33),
+      loopPeriod:200*Math.pow(8/200,recipe.shapeFrequency/100),
+      // The safe limit is normalized to the available lane width so the
+      // entire slider, rather than its first few percent, remains useful.
+      loopAmplitude:recipe.geometrySafety?
+        (.15+(Math.max(.6,avg*.66)-.15)*Math.pow(recipe.shapeDepth/100,1.25)):
+        .15+110*recipe.shapeDepth/100,
       phase, period, displacement,
       sharedGeometry:geometry, sharedPhase:commonPhase, sharedPeriod:commonPeriod,
-      sharedDisplacement:commonDisplacement, parallelMix:individuality,
-      tilt:between(r,-referenceAvg*.8,referenceAvg*.8)*individuality*(.25+.75*chaos),
+      sharedDisplacement:commonDisplacement,
+      // Safe mode scales stripe-to-stripe phase drift continuously across
+      // the *entire* slider instead of cutting it off at an invisible limit.
+      parallelMix:individuality*(recipe.geometrySafety?.45:1),
+      tilt:between(r,-referenceAvg*.8,referenceAvg*.8)*individuality*
+        (recipe.geometrySafety?.32:1)*(.25+.75*chaos),
       edgePhase:commonEdgePhase+(phase-commonEdgePhase)*individuality,
       taper:commonTaper+(between(r,.04,.36)*(.25+.75*chaos)-commonTaper)*individuality,
       segments:10+Math.floor(r()*17),
@@ -377,10 +404,10 @@ export function randomizeAllRecipe({primesOnly=false}={}) {
     stripeShadowEnabled:r()>.5,stripeShadowDirection:any(LIGHT_DIRECTIONS),
     stripeShadowStrength:percent(),stripeShadowSoftness:percent(),
     chaos:percent(), stripeWidth:percent(), spread:percent(),
-    shapeFrequency:percent(),shapeDepth:percent(),lineStyle:any(LINE_STYLES),
+    shapeFrequency:percent(),shapeDepth:percent(),motifSize:percent(),motifFrequency:percent(),lineStyle:any(LINE_STYLES),
     composition:any(COMPOSITIONS),construction:any(CONSTRUCTIONS),
     repeatCount:2+Math.floor(r()*5),repeatSpacing:percent(),
-    turnRadius:percent(),pathLength:percent(),endTaper:percent(),
+    turnRadius:percent(),stepCount:1+Math.floor(r()*16),chevronSharpness:percent(),loopAspect:percent(),pathLength:percent(),endTaper:percent(),
     tonalContrast:percent(),brushRoughness:percent(),dotSize:percent(),dotSpacing:percent(),
     textureStrength:percent(), textureScale:percent(), textureDisplacement:percent(), individuality:percent(),
     patternHomogeneity:percent(), overridePatternHomogeneity:r()>.5,
