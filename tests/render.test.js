@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { drawWallpaper, motifFits } from '../src/renderer.js';
+import { drawWallpaper, motifFits, balanceStripeEnds, stripeFrameContacts } from '../src/renderer.js';
 import { MATERIALS, MOTIFS, GEOMETRIES, OUTLINES, resolveScene } from '../src/model.js';
 
 // Node's lightweight Canvas API spy catches geometry/material code path errors
@@ -70,4 +70,31 @@ test('motif shapes must fit completely, no boundary clipping',()=>{
   const stripe=scene.stripes[3];
   assert.equal(motifFits(stripe,scene,scene.extent,stripe.center,2,2),false);
   assert.equal(motifFits(stripe,scene,0,stripe.center+10000,2,2),false);
+});
+
+test('frame contacts are bilateral or fully inset for a variety of seeded geometries',()=>{
+  let inset=0,through=0;
+  for(const orientation of ['vertical','horizontal','diagonal'])
+    for(let i=0;i<24;i++){
+      const scene=resolveScene({
+        seed:'frame-balance:'+orientation+':'+i,orientation,
+        individuality:85,chaos:85,spread:66,stripeWidth:65,
+        positionX:((i%5)-2)*7,positionY:((i%7)-3)*5,
+      });
+      for(const stripe of scene.stripes){
+        const result=balanceStripeEnds(scene,stripe);
+        if(stripe.hidden)continue;
+        const edges=stripeFrameContacts(scene,stripe);
+        assert.equal(edges.left,edges.right,orientation+':'+i+':'+stripe.index+' left/right');
+        assert.equal(edges.top,edges.bottom,orientation+':'+i+':'+stripe.index+' top/bottom');
+        if(result.balanced)through++;
+        else{
+          inset++;
+          assert.ok(stripe.segmentEnd>stripe.segmentStart);
+          assert.equal(motifFits(stripe,scene,stripe.segmentStart,stripe.center,3,3),false);
+        }
+      }
+    }
+  assert.ok(through>0,'Some stripes should still cross paired opposite edges');
+  assert.ok(inset>0,'Unbalanced edge contact should trigger paired end insets');
 });
