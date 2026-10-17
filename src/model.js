@@ -217,6 +217,7 @@ export function resolveScene(recipeInput) {
   return {
     ...recipe, family, orientation, geometry, motif, palette, material, materialSummary, textureLayers, outline, background: recipe.background, angle, span,
     stripes, intensity: chaos, width: avg, extent: Math.hypot(DESIGN_WIDTH, DESIGN_HEIGHT) * 1.35,
+    reliefFallbackSeed:hashString(recipe.seed+':relief:fine-grain'),
     // These positions are the canonical, unnudged geometry. Pan is applied only
     // when compositing the finished stripe ink, never while solving/capping it.
     centerX: DESIGN_WIDTH / 2 + between(random, -1, 1) * DESIGN_WIDTH * 0.055,
