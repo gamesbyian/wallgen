@@ -119,7 +119,7 @@ try{
   assert.equal(editor.tabs.length,4);
   const editing=await evaluate(`(()=>{
     const bounds=s=>{const r=document.querySelector(s).getBoundingClientRect();
-      return {top:r.top,bottom:r.bottom,height:r.height}};
+      return {top:r.top,bottom:r.bottom,left:r.left,right:r.right,width:r.width,height:r.height}};
     return {preview:bounds('.wallpaper-frame'),stage:bounds('.studio-stage'),
       sidebar:bounds('.sidebar'),dock:bounds('.mobile-dock'),
       header:bounds('.masthead'),arrow:bounds('#mobileDockExpand'),
