@@ -110,8 +110,10 @@ try{
     const sidebar=document.querySelector('.sidebar').getBoundingClientRect();
     const dock=document.querySelector('.mobile-dock').getBoundingClientRect();
     return document.body.classList.contains('mobile-edit-open') &&
-      stage.bottom<=sidebar.top+2 && sidebar.bottom<=innerHeight+2 &&
-      dock.left>=innerWidth-2;
+      stage.bottom<=sidebar.top+2 && sidebar.bottom<=innerHeight+1 &&
+      dock.left>=innerWidth-2 &&
+      getComputedStyle(document.querySelector('.mobile-dock')).visibility==='hidden' &&
+      document.querySelector('.masthead').getBoundingClientRect().bottom<=0;
   })()`);
   const editor=await evaluate(`(()=>({
     open:document.body.classList.contains('mobile-edit-open'),
