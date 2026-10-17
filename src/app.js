@@ -65,7 +65,7 @@ function showNotice(message){
 }
 function fromControls() {
   const data={seed:seedInput.value,positionX:current.positionX,positionY:current.positionY,
-    customPath:current.customPath};
+    viewZoom:current.viewZoom,customPath:current.customPath};
   for (const key of FIELDS) { const field=form.elements.namedItem(key); data[key]=field.dataset.inactive==='true'?current[key]:(field.type==='checkbox'?field.checked:field.value); }
   return normalizeRecipe(data);
 }
@@ -242,6 +242,11 @@ function render(recipe,{scroll=false,bypassLocks=false}={}) {
     previewLayers.key=key;
     previewLayers.scene=currentScene;
   }
+  // The frame always shows the exact resolution-independent export camera.
+  const stage=document.querySelector('.studio-stage');
+  stage.dataset.viewZoom=String(current.viewZoom);
+  stage.dispatchEvent(new CustomEvent('roygbiv-view-zoom-updated',
+    {detail:current.viewZoom}));
   updatePositionStatus();
   showResolvedSelections(currentScene);
   document.getElementById('detailFamily').textContent=titleCase(currentScene.family);
@@ -255,6 +260,9 @@ function render(recipe,{scroll=false,bypassLocks=false}={}) {
   if(scroll) document.querySelector('.workspace-head').scrollIntoView({behavior:'smooth',block:'start'});
 }
 function changeRecipe(recipe,options={}){render(recipe,options);toControls(current);showResolvedSelections(currentScene);}
+document.querySelector('.studio-stage').addEventListener('roygbiv-view-zoom-request',event=>{
+  changeRecipe({...current,viewZoom:event.detail});
+});
 const drawTool=installDrawTool({
   getRecipe:()=>current,
   onNotice:showNotice,
@@ -354,13 +362,15 @@ async function downloadPNG(){
   let big;
   try {
     big=document.createElement('canvas');big.width=OUTPUT_WIDTH;big.height=OUTPUT_HEIGHT;
+    // Same framing recipe as the displayed canvas, independently rendered at
+    // 3024 × 6552 rather than exporting a magnified low-resolution screenshot.
     drawWallpaper(big,current);
     const blob=await new Promise((resolve,reject)=>big.toBlob(b=>b?resolve(b):reject(new Error('PNG encoding failed')),'image/png'));
     const metadata=metadataValues();
     const result=new Blob([embedPngMetadata(await blob.arrayBuffer(),metadata,{recipe:current})],
       {type:'image/png'});
     downloadBlob(result,`roygbiv-${safeFilename(current.seed)}-${OUTPUT_WIDTH}x${OUTPUT_HEIGHT}.png`);
-    showNotice(`Exported ${OUTPUT_WIDTH} × ${OUTPUT_HEIGHT} PNG with regenerable recipe metadata.`);
+    showNotice(`Exported the framed ${Math.round(current.viewZoom*100)}% view at ${OUTPUT_WIDTH} × ${OUTPUT_HEIGHT}, with recipe metadata.`);
   }catch(error){console.error(error);showNotice(`Export failed: ${error.message}`);}
   finally { if(big){big.width=0;big.height=0;}setBusy(button,false); }
 }
@@ -589,7 +599,7 @@ seedInput.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preve
 document.getElementById('applySeed').addEventListener('click',()=>render(fromControls()));
 document.getElementById('randomize').addEventListener('click',()=>changeRecipe({...fromControls(),seed:newSeed()}));
 document.getElementById('randomizeAll').addEventListener('click',()=>{
-  changeRecipe(randomizeAllRecipe({primesOnly:current.primesOnly}));
+  changeRecipe({...randomizeAllRecipe({primesOnly:current.primesOnly}),viewZoom:current.viewZoom});
 });
 for(const n of [2,3]){
   document.getElementById('addTextureLayer'+n).addEventListener('click',()=>{
