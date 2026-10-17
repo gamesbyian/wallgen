@@ -52,6 +52,17 @@ settings. **Swipe down** on a noninteractive part of the tray or grabber to
 dismiss it; tapping the picture or the Edit dock button also closes it. There
 is no separate Done or Larger preview button, and no vertical scrolling
 through the editor itself. The canvas always has its own unobstructed space.
+**Expanded-preview editing:** when Edit opens, the header slides out above
+the viewport and the action dock recedes to the right, leaving only a small
+left-pointing expand arrow. The horizontal setting cards move into that same
+bottom space, instead of sitting above the dock. Randomize, Primes Only and
+the four category tabs become tightly spaced text-only controls. The regular
+action dock is also shortened when the editor is closed. Pressing the expand
+arrow restores the full toolbar and header; downward swipe and tapping the
+picture still dismiss Edit. On a 412 × 915 viewport the preview should retain
+over 640 CSS pixels of height even while actively editing. All features remain
+accessible, unchanged in both Cream Studio and Original Dark.
+
 Explore and More still occupy reserved space beneath the preview. This works
 in both Cream Studio and Original Dark, without altering saved designs.
 
@@ -59,10 +70,10 @@ The primary interface is designed for the **Pixel 6 Pro portrait viewport** (the
 wallpaper itself is still drawn at a 600 × 1300 logical aspect ratio, exported
 at 3024 × 6552). At 790 CSS pixels and narrower the available viewport is shared
 between a live wallpaper preview and any open adjustment tray; with trays
-closed, the wallpaper regains the full preview area. A thumb-accessible six-button dock provides
-Edit, Explore, Randomize, Favourite, Download and More. The editor opens
-above the dock as a vertically scrollable sheet with all four original tabs,
-every existing setting and its lock. Explore opens a horizontal, swipeable
+closed, the wallpaper regains the full preview area. A thumb-accessible, compact six-button dock provides
+Edit, Explore, Randomize, Favourite, Download and More. When editing, the dock
+moves off to the right, the header recedes upward, and the horizontal
+setting-card editor occupies the reclaimed bottom strip. Explore opens a horizontal, swipeable
 gallery; selecting a variation closes it and reveals the preview. More reveals
 seed editing, Undo, New variation, nudge, the full metadata editor, link and
 recipe export, and detailed scene information. The actual generating model,

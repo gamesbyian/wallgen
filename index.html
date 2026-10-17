@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="styles.css?v=20261016-geometry3">
   <link rel="stylesheet" href="studio-themes.css?v=20261016-live-preview1">
   <link rel="stylesheet" href="mobile-swipes.css?v=20261016-swipe1">
+  <link rel="stylesheet" href="mobile-compact.css?v=20261016-dock2">
 </head>
 <body>
   <header class="masthead">
@@ -43,7 +44,7 @@
 
       <form id="controls" autocomplete="off">
         <div class="randomize-bar randomize-toolbar">
-          <button id="randomizeAll" class="button button-rainbow button-randomize-all" type="button">✳ <span>Randomize</span></button>
+          <button id="randomizeAll" class="button button-rainbow button-randomize-all" type="button"><span class="randomize-symbol" aria-hidden="true">✳</span><span>Randomize</span></button>
           <label class="prime-toggle" title="Randomized percentages and texture angles will be prime numbers"><input type="checkbox" name="primesOnly" data-setting="primesOnly" aria-describedby="primeModeHint"><span>Primes only</span></label>
         </div>
         <p id="primeModeHint" class="prime-mode-hint" hidden>Prime percentages: 2–97. Prime texture angles: 2–359°. Other setting locks still apply.</p>
@@ -259,7 +260,7 @@
     <div class="mobile-sheet-head"><strong>More tools</strong><button type="button" id="mobileToolsClose" aria-label="Close tools">✕</button></div>
     <div class="mobile-tools-content" id="mobileToolsContent"></div>
   </section>
-  <nav class="mobile-dock" aria-label="Quick wallpaper actions">
+  <nav class="mobile-dock" id="mobileActionDock" aria-label="Quick wallpaper actions">
     <button type="button" id="mobileEdit" aria-controls="mobileDesignSheet" aria-expanded="false"><span aria-hidden="true">☷</span><small>Edit</small></button>
     <button type="button" id="mobileExplore" aria-controls="gallery" aria-expanded="false"><span aria-hidden="true">▦</span><small>Explore</small></button>
     <button type="button" id="mobileShuffle" class="mobile-dock-featured" aria-label="Randomize all settings"><span aria-hidden="true">✳</span><small>Randomize</small></button>
@@ -267,8 +268,15 @@
     <button type="button" id="mobileDownload" aria-label="Download wallpaper PNG"><span aria-hidden="true">↓</span><small>Download</small></button>
     <button type="button" id="mobileMore" aria-controls="mobileToolsSheet" aria-expanded="false"><span aria-hidden="true">⋯</span><small>More</small></button>
   </nav>
+  <button type="button" id="mobileDockExpand" class="mobile-dock-expand"
+    aria-label="Expand bottom toolbar" aria-controls="mobileActionDock" aria-expanded="false"
+    title="Expand toolbar">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"
+      aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>
+  </button>
   <script type="module" src="src/app.js?v=20261016-geometry3"></script>
-  <script type="module" src="src/mobile-studio.js?v=20261016-swipe1"></script>
+  <script type="module" src="src/mobile-studio.js?v=20261016-dock2"></script>
   <script type="module" src="src/mobile-swipes.js?v=20261016-swipe1"></script>
 </body>
 </html>

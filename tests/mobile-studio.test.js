@@ -9,6 +9,7 @@ const original=read('styles.css');
 const mobile=read('src/mobile-studio.js');
 const swipe=read('src/mobile-swipes.js');
 const swipeCSS=read('mobile-swipes.css');
+const compactCSS=read('mobile-compact.css');
 const darkLogo=read('assets/roygbiv-logo-dark.svg');
 const creamLogo=read('assets/roygbiv-logo-cream.svg');
 
@@ -97,4 +98,22 @@ test('mobile editor is swipe-first without large heading or redundant buttons',(
   assert.match(swipeCSS,/\.texture-layer-panel:not\(\[hidden\]\)/);
   assert.match(swipeCSS,/\.stripe-shadow-controls:not\(\[hidden\]\)/);
   assert.match(swipeCSS,/\.settings-panel \[hidden\]\{display:none!important\}/);
+});
+
+test('mobile edit reclaims the header and compact action dock, leaving only an expand arrow',()=>{
+  assert.match(html,/id="mobileDockExpand"/);
+  assert.match(html,/id="mobileActionDock"/);
+  assert.match(compactCSS,/--mobile-head:0px/);
+  assert.match(compactCSS,/--mobile-dock-height:0px/);
+  assert.match(compactCSS,/--mobile-tray-height:clamp\(158px,19dvh,184px\)/);
+  assert.match(compactCSS,/translateY\(-110%\)/);
+  assert.match(compactCSS,/translateX\(110%\)/);
+  assert.match(compactCSS,/\.mobile-dock-expand/);
+  assert.match(mobile,/dockExpand\.addEventListener\('click',\(\)=>closeSurfaces/);
+  assert.match(mobile,/dock\.setAttribute\('aria-hidden','true'\)/);
+  assert.match(compactCSS,/min-height:25px!important/);
+  assert.match(compactCSS,/\.randomize-symbol/);
+  assert.match(compactCSS,/\.prime-toggle input/);
+  assert.match(compactCSS,/\.settings-tab/);
+  assert.match(html,/mobile-compact\.css\?v=/);
 });

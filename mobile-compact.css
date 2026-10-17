@@ -1,0 +1,174 @@
+/*
+ * Full-canvas mobile editing:
+ * the brand header slides up; normal actions slide right.
+ * The editing rail uses their reclaimed space rather than consuming a
+ * second toolbar row. Both appearance palettes inherit this geometry.
+ */
+.mobile-dock-expand{display:none}
+@media(max-width:790px){
+  :root{--mobile-dock-height:52px}
+  body.mobile-studio .mobile-dock{
+    height:52px!important;
+    padding:3px 6px max(3px,env(safe-area-inset-bottom))!important;
+    gap:2px;
+    border-radius:0;
+    transition:transform .22s ease,visibility .22s ease;
+  }
+  body.mobile-studio .mobile-dock button{
+    min-height:39px!important;height:42px;max-height:45px;
+    padding:2px 1px!important;gap:1px;border-radius:9px;
+  }
+  body.mobile-studio .mobile-dock button>span{font-size:19px}
+  body.mobile-studio .mobile-dock button>small{font-size:8px}
+  body.mobile-studio.mobile-edit-open{
+    --mobile-head:0px;
+    --mobile-dock-height:0px;
+    --mobile-tray-height:clamp(158px,19dvh,184px);
+  }
+  body.mobile-edit-open .masthead{
+    position:fixed!important;
+    top:0;left:0;right:0;
+    height:70px!important;min-height:70px!important;
+    transform:translateY(-110%);opacity:0;
+    pointer-events:none;
+    transition:transform .22s ease,opacity .22s ease;
+  }
+  body.mobile-studio.mobile-edit-open .layout{
+    height:calc(100dvh - var(--mobile-tray-height))!important;
+    overflow:hidden!important;
+  }
+  body.mobile-studio.mobile-edit-open .sidebar{
+    bottom:0!important;top:auto!important;
+    height:var(--mobile-tray-height)!important;
+    max-height:var(--mobile-tray-height)!important;
+    width:calc(100% - 40px)!important;
+    right:auto!important;left:0!important;
+    padding:0 7px 4px 9px!important;
+    border-radius:14px 14px 0 0;
+    box-shadow:0 -4px 16px #0002;
+    z-index:52;
+  }
+  body.mobile-studio.mobile-edit-open .mobile-dock{
+    transform:translateX(110%);
+    pointer-events:none;
+    visibility:hidden;
+  }
+  body.mobile-studio .mobile-dock-expand{
+    position:fixed;right:3px;bottom:7px;
+    width:34px;height:45px;
+    border-radius:13px 0 0 13px;
+    align-items:center;justify-content:center;
+    border:1px solid #494653;
+    border-right:0;
+    background:#222430;color:#fff;
+    z-index:55;box-shadow:-3px 0 15px #0003;
+    cursor:pointer;
+    transform:translateX(115%);
+    opacity:0;pointer-events:none;
+    transition:transform .22s ease,opacity .22s ease;
+  }
+  body.mobile-studio .mobile-dock-expand svg{width:21px;height:21px}
+  body.mobile-studio.mobile-edit-open .mobile-dock-expand{
+    display:flex;transform:translateX(0);opacity:1;pointer-events:auto;
+  }
+  body.mobile-studio .sidebar .randomize-bar.randomize-toolbar{
+    min-height:25px!important;max-height:26px;
+    margin:0 0 2px!important;
+    grid-template-columns:1fr 1fr!important;
+    gap:4px!important;
+  }
+  body.mobile-studio .sidebar .randomize-bar .button-randomize-all,
+  body.mobile-studio .sidebar .randomize-bar>.prime-toggle{
+    min-height:25px!important;max-height:25px!important;height:25px!important;
+    padding:2px 7px!important;
+    font-size:10px!important;font-weight:750;letter-spacing:0;
+    border-radius:8px!important;
+  }
+  body.mobile-studio .sidebar .randomize-bar .button-randomize-all .randomize-symbol{
+    display:none!important;
+  }
+  body.mobile-studio .sidebar .randomize-bar .prime-toggle{
+    position:relative;justify-content:center;gap:0;
+    text-align:center;
+  }
+  body.mobile-studio .sidebar .randomize-bar .prime-toggle input{
+    position:absolute;inset:0;width:100%;height:100%;
+    opacity:0;margin:0;cursor:pointer;
+  }
+  body.mobile-studio .sidebar .randomize-bar .prime-toggle:has(input:checked){
+    background:#b9a6e8;color:#1f1831;border-color:#8065c1;
+  }
+  body.mobile-studio .sidebar .randomize-bar .prime-toggle:has(input:focus-visible){
+    outline:2px solid #a67be8;outline-offset:1px;
+  }
+  body.mobile-studio .sidebar .settings-tabs{
+    min-height:27px!important;max-height:27px;
+    padding:1px!important;margin:0 0 1px!important;gap:2px!important;
+    border-radius:8px!important;
+  }
+  body.mobile-studio .sidebar .settings-tab{
+    min-height:24px!important;max-height:24px!important;
+    padding:1px 2px!important;
+    font-size:10px!important;font-weight:750;
+    border-radius:7px;
+  }
+  body.mobile-studio .mobile-dismiss-handle{
+    flex-basis:11px;min-height:11px;padding:0;
+  }
+  body.mobile-studio .mobile-dismiss-handle .mobile-grabber{
+    height:3px;width:32px;margin:1px 0;
+  }
+  body.mobile-studio .mobile-setting-counter{
+    flex-basis:12px;min-height:12px;
+    margin:0 4px 2px;
+    font-size:9px;
+  }
+  body.mobile-studio .sidebar .settings-panel:not([hidden]){
+    gap:5px!important;padding:0 0 1px!important;
+    max-height:100%;
+  }
+  body.mobile-studio .sidebar .settings-panel .lockable-setting,
+  body.mobile-studio .sidebar .settings-panel>.field,
+  body.mobile-studio .sidebar .settings-panel .texture-rotation-field,
+  body.mobile-studio .sidebar .settings-panel .homogeneity-override,
+  body.mobile-studio .sidebar .settings-panel .layer-add-lock,
+  body.mobile-studio .sidebar .settings-panel .texture-layer-panel-head,
+  body.mobile-studio .sidebar .settings-panel .stripe-shadow-switch,
+  body.mobile-studio .sidebar .settings-panel .add-texture-layer{
+    padding:7px 9px!important;
+    border-radius:10px;
+  }
+  body.mobile-studio .sidebar .settings-panel .field{gap:3px;font-size:11px}
+  body.mobile-studio .sidebar .settings-panel .field select{
+    min-height:35px;padding:4px 26px 4px 9px;
+    font-size:12px;
+  }
+  body.mobile-studio .sidebar .settings-panel .field>small{
+    font-size:9px;line-height:1.18;
+  }
+  body.mobile-studio .sidebar .settings-panel .range-field input[type=range]{
+    min-height:22px;
+  }
+  body.mobile-studio .sidebar .settings-panel .setting-lock{
+    width:26px;height:26px;min-width:26px;
+  }
+  body.mobile-studio .sidebar .settings-panel .slider-number{
+    min-width:42px;
+  }
+  html[data-theme=cream] body.mobile-studio .mobile-dock-expand{
+    background:#fff7ed;color:#554167;border-color:#e5d5c5;
+  }
+  html[data-theme=cream] body.mobile-studio .sidebar .randomize-bar .prime-toggle:has(input:checked){
+    background:#f4d4e5;color:#9e2766;border-color:#e3a4c6;
+  }
+}
+@media(max-width:790px) and (max-height:670px){
+  body.mobile-studio.mobile-edit-open{
+    --mobile-tray-height:clamp(145px,27dvh,178px);
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  body.mobile-studio .mobile-dock,
+  body.mobile-studio .mobile-dock-expand,
+  body.mobile-edit-open .masthead{transition:none!important}
+}
