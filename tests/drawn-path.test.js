@@ -114,7 +114,7 @@ test('out-of-frame sketch endpoints survive smoothing and recipe normalization',
 test('smoothing strength keeps the old minimum and progressively removes small bends',()=>{
   const raw=Array.from({length:280},(_,i)=>{
     const t=i/279;
-    return [.13+.74*t,.22+.56*t+.019*Math.sin(t*74)];
+    return [.13+.74*t,.22+.56*t+.022*Math.sin(t*Math.PI*8)];
   });
   const old=finishDrawnPath(raw,'smooth');
   const one=finishDrawnPath(raw,'smooth',1);
