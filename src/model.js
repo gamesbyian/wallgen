@@ -20,7 +20,7 @@ export const LOCKABLE_SETTINGS = ['seed','family','orientation','geometry','moti
   'material','textureCoverage','textureStrength','textureScale','textureRotation','textureBlend',
   'material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2',
   'material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3',
-  'textureDisplacement','patternHomogeneity','chaos','stripeWidth','spread','shapeFrequency','shapeDepth','lineStyle','individuality',
+  'textureDisplacement','patternHomogeneity','chaos','stripeWidth','spread','shapeFrequency','shapeDepth','motifSize','motifFrequency','lineStyle','individuality',
   'overridePatternHomogeneity','gap','outlineBuffer','glow','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','position',
   'composition','repeatCount','repeatSpacing','construction','turnRadius','hairpinAngle','geometrySafety','pathLength','endTaper','tonalContrast','brushRoughness','dotSize','dotSpacing'];
 export const PALETTES = ['classic', 'electric', 'pastel', 'jewel', 'muted', 'sunset', 'candy', 'arctic', 'earth', 'twilight', 'citrus'];
@@ -100,6 +100,8 @@ export function normalizeRecipe(input = {}) {
     dotSize: finiteRange(input.dotSize, 50, 0, 100),
     dotSpacing: finiteRange(input.dotSpacing, 50, 0, 100),
     shapeFrequency: finiteRange(input.shapeFrequency, 50, 0, 100),
+    motifSize: finiteRange(input.motifSize, 50, 0, 100),
+    motifFrequency: finiteRange(input.motifFrequency, 50, 0, 100),
     shapeDepth: finiteRange(input.shapeDepth, 50, 0, 100),
     palette: readChoice('palette', PALETTES),
     material: readChoice('material', MATERIALS),
@@ -382,7 +384,7 @@ export function randomizeAllRecipe({primesOnly=false}={}) {
     stripeShadowEnabled:r()>.5,stripeShadowDirection:any(LIGHT_DIRECTIONS),
     stripeShadowStrength:percent(),stripeShadowSoftness:percent(),
     chaos:percent(), stripeWidth:percent(), spread:percent(),
-    shapeFrequency:percent(),shapeDepth:percent(),lineStyle:any(LINE_STYLES),
+    shapeFrequency:percent(),shapeDepth:percent(),motifSize:percent(),motifFrequency:percent(),lineStyle:any(LINE_STYLES),
     composition:any(COMPOSITIONS),construction:any(CONSTRUCTIONS),
     repeatCount:2+Math.floor(r()*5),repeatSpacing:percent(),
     turnRadius:percent(),pathLength:percent(),endTaper:percent(),
