@@ -244,7 +244,8 @@ test('lock list rejects unknown keys and normalizes stable order',()=>{
 test('prime-only randomization constrains every randomized percentage and texture rotation',()=>{
   const numeric=['chaos','stripeWidth','spread','textureStrength','textureScale','textureDisplacement',
     'textureStrength2','textureScale2','textureStrength3','textureScale3',
-    'individuality','patternHomogeneity','gap','glow','lightStrength','shadowStrength'];
+    'individuality','patternHomogeneity','gap','glow','lightStrength','shadowStrength',
+    'stripeShadowStrength','stripeShadowSoftness'];
   const angles=['textureRotation','textureRotation2','textureRotation3'];
   assert.equal(PRIME_PERCENTAGES[0],2);
   assert.equal(PRIME_PERCENTAGES.at(-1),97);
@@ -316,4 +317,48 @@ test('lighting controls are bounded, saved and individually lockable',()=>{
   assert.equal(normalizeRecipe({lightDirection:'bad'}).lightDirection,'top-left');
   assert.equal(normalizeRecipe({lightStrength:900}).lightStrength,100);
   assert.equal(normalizeRecipe({shadowStrength:-9}).shadowStrength,0);
+});
+
+test('Prime mode is deliberately never lockable, including old saved recipes',()=>{
+  assert.equal(LOCKABLE_SETTINGS.includes('primesOnly'),false);
+  const legacy=normalizeRecipe({
+    primesOnly:true,lockedSettings:['primesOnly','seed','stripeShadowStrength'],
+    stripeShadowStrength:63,
+  });
+  assert.deepEqual(legacy.lockedSettings,['seed','stripeShadowStrength']);
+  assert.equal(legacy.primesOnly,true);
+  assert.deepEqual(decodeRecipe(encodeRecipe(legacy)),legacy);
+});
+test('optional stripe shadows are independent of ambient lighting and preserve geometry',()=>{
+  const base={seed:'stripe-cast-shadow',lightingMood:'golden',shadowStrength:90};
+  const original=resolveScene(base);
+  assert.equal(original.stripeShadowEnabled,false);
+  assert.equal(original.stripeShadowStrength,45);
+  assert.equal(original.stripeShadowSoftness,55);
+  assert.equal(original.stripeShadowDirection,'top-left');
+  const enabled=resolveScene({...base,stripeShadowEnabled:true,stripeShadowStrength:85,
+    stripeShadowSoftness:12,stripeShadowDirection:'bottom-right',lightingMood:'off'});
+  assert.deepEqual(enabled.stripes,original.stripes);
+  assert.equal(enabled.centerX,original.centerX);
+  assert.equal(enabled.centerY,original.centerY);
+  assert.equal(enabled.lightingMood,'off');
+  assert.equal(enabled.stripeShadowEnabled,true);
+  assert.deepEqual(decodeRecipe(encodeRecipe(enabled)),normalizeRecipe(enabled));
+});
+test('stripe shadows honor locks while randomizing other options',()=>{
+  const orig=normalizeRecipe({
+    seed:'locked-shadow',stripeShadowEnabled:true,stripeShadowStrength:75,
+    stripeShadowSoftness:81,stripeShadowDirection:'bottom-left',
+    lockedSettings:['stripeShadowEnabled','stripeShadowSoftness','stripeShadowDirection'],
+  });
+  for(let i=0;i<24;i++){
+    const next=respectSettingLocks(orig,randomizeAllRecipe({primesOnly:true}));
+    assert.equal(next.stripeShadowEnabled,true);
+    assert.equal(next.stripeShadowSoftness,81);
+    assert.equal(next.stripeShadowDirection,'bottom-left');
+    assert.ok(isPrime(next.stripeShadowStrength));
+  }
+  assert.equal(normalizeRecipe({stripeShadowStrength:500}).stripeShadowStrength,100);
+  assert.equal(normalizeRecipe({stripeShadowSoftness:-20}).stripeShadowSoftness,0);
+  assert.equal(normalizeRecipe({stripeShadowDirection:'invalid'}).stripeShadowDirection,'top-left');
 });
