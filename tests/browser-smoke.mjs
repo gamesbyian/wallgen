@@ -163,6 +163,47 @@ try{
   })()`);
   await waitFor(`document.getElementById('preview').toDataURL()!==window.__wallpaperBefore`,16000);
   assert.ok(await evaluate('document.body.classList.contains("mobile-edit-open")'));
+  // Full-fidelity controls, including portable reverse order and diagonal
+  // transforms, must be reachable in the small no-scroll phone editor.
+  const originalStripeCanvas=await evaluate('document.getElementById("preview").toDataURL()');
+  await evaluate('document.querySelector("[name=reverseStripes]").click()');
+  await waitFor('document.getElementById("preview").toDataURL()!==window.__wallpaperBefore',16000);
+  assert.ok(await evaluate('document.querySelector("[name=reverseStripes]").checked'));
+  await evaluate(`(()=>{
+    const direction=document.querySelector('[name=orientation]');
+    direction.value='diagonal';
+    direction.dispatchEvent(new Event('change',{bubbles:true}));
+  })()`);
+  await waitFor(`!document.getElementById('diagonalSettings').hidden`);
+  assert.ok(await evaluate(`(()=>{
+    const card=[...document.querySelectorAll('.mobile-setting-cluster')]
+      .find(el=>el.dataset.group==='Diagonal transform');
+    return card&&!card.hidden&&card.querySelector('[name=diagonalRotation]') &&
+      card.querySelector('[name=mirrorHorizontal]')&&card.querySelector('[name=mirrorVertical]') &&
+      card.scrollHeight<=card.clientHeight+2;
+  })()`),'all three diagonal controls must be on one fully visible card');
+  await evaluate('window.__rotationBefore=document.getElementById("preview").toDataURL()');
+  await evaluate(`(()=>{
+    const slider=document.querySelector('[name=diagonalRotation]');
+    slider.value='48';slider.dispatchEvent(new Event('input',{bubbles:true}));
+  })()`);
+  await waitFor(`document.getElementById('preview').toDataURL()!==window.__rotationBefore`.replace('window.__rotationBefore','window.__rotationBefore'),16000).catch(async()=>{
+    throw Error('Diagonal rotation failed to redraw wallpaper');
+  });
+  await evaluate('document.querySelector("[name=mirrorHorizontal]").click()');
+  assert.ok(await evaluate('document.querySelector("[name=mirrorHorizontal]").checked'));
+  await evaluate('document.querySelector("[name=mirrorVertical]").click()');
+  assert.ok(await evaluate('document.querySelector("[name=mirrorVertical]").checked'));
+  await evaluate(`(()=>{
+    const direction=document.querySelector('[name=orientation]');
+    direction.value='vertical';direction.dispatchEvent(new Event('change',{bubbles:true}));
+  })()`);
+  await waitFor(`document.getElementById('diagonalSettings').hidden`);
+  await evaluate(`(()=>{
+    const direction=document.querySelector('[name=orientation]');
+    direction.value='diagonal';direction.dispatchEvent(new Event('change',{bubbles:true}));
+  })()`);
+  await waitFor(`!document.getElementById('diagonalSettings').hidden`);
   // Actual fields are now horizontal cards, not a tall scrolling list.
   const rail=await evaluate(`(()=>{
     const p=document.getElementById('panel-design');
