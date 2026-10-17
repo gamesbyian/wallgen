@@ -77,3 +77,18 @@ test('nearby randomization respects physical angular and count bounds',()=>{
     if(key==='hairpinAngle')assert.ok(r[key]>=60&&r[key]<=180);
   }
 });
+
+test('motif size and density belong to decorations, not centreline geometry',()=>{
+  const base={seed:'motif-audit',geometry:'wave',shapeFrequency:64,shapeDepth:75,
+    motif:'chevrons',construction:'ribbon'};
+  const small=resolveScene({...base,motifSize:0,motifFrequency:0});
+  const large=resolveScene({...base,motifSize:100,motifFrequency:100});
+  assert.equal(small.motifSize,0);
+  assert.equal(large.motifFrequency,100);
+  for(let i=0;i<7;i++){
+    assert.equal(small.stripes[i].sharedPeriod,large.stripes[i].sharedPeriod);
+    assert.equal(small.stripes[i].sharedDisplacement,large.stripes[i].sharedDisplacement);
+    assert.equal(small.stripes[i].center,large.stripes[i].center);
+  }
+  assert.deepEqual(decodeRecipe(encodeRecipe({...base,motifSize:93,motifFrequency:7})).motifSize,93);
+});
