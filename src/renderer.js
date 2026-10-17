@@ -427,7 +427,8 @@ function fillMotif(ctx,stripe,extent,scene) {
   // Every motif uses the same two dedicated controls, not curve frequency.
   const motifScale=Math.pow(2,(scene.motifSize-50)/28);
   const motifRate=Math.pow(2,(scene.motifFrequency-50)/27);
-  const step=Math.max(1.4,stripe.width*.42*stripe.patternScale*motifScale);
+  const step=Math.max(1.4,stripe.width*.42*stripe.patternScale*
+    (motif==='dots'?1:motifScale));
   const across=Math.max(1,Math.ceil(stripe.width/(step*.83)));
   const stroke=Math.min(step*.19,Math.max(.55,stripe.width*.14));
   ctx.save();ctx.lineWidth=stroke;ctx.lineCap='round';ctx.lineJoin='round';
@@ -441,8 +442,13 @@ function fillMotif(ctx,stripe,extent,scene) {
       const jitter=scene.intensity*step*.10;
       const xx=x+(Math.abs(j)%2)*spacing*.35+(random()-.5)*jitter;
       const yy=geometryAt(xx,stripe,extent)+offset+(random()-.5)*jitter+textureHeight(scene,stripe,xx,0)*.3;
-      const radius=step*.28*variation.scale*
-        (motif==='dots'?.3+1.4*scene.dotSize/100:1);
+      // Large dots are sized relative to the available stripe width, so
+      // the maximum remains a visible disc instead of being rejected by the
+      // all-or-nothing mark fit test.
+      const radius=motif==='dots'?
+        stripe.width*(.05+.38*scene.motifSize/100)*
+          (.3+.7*scene.dotSize/100)*variation.scale:
+        step*.28*variation.scale;
       // Bounds include rotation; never clip a partly visible element.
       let bx=radius,by=radius;
       if(motif==='hatch'){bx=step*.34*variation.scale+stroke/2;by=bx;}
