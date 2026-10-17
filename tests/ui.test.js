@@ -84,7 +84,7 @@ test('lock controls use two consistent line-art SVG states, not emoji',()=>{
 test('texture relief and ambient canvas illumination are described accurately',()=>{
   assert.match(html,/Gently roughen|Distort the actual stripe contours/);
   assert.match(html,/Canvas shade/);
-  assert.match(html,/No stripe drop shadows/);
+  assert.match(html,/For optional shadows cast by the stripes themselves, see Design/);
   assert.match(readme,/Canvas ambience does not cast shadows from the stripe silhouettes/);
 });
 
