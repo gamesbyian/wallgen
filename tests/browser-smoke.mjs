@@ -452,6 +452,23 @@ try{
   await waitFor('!document.body.classList.contains("mobile-studio")');
   assert.ok(await evaluate('document.querySelector("#panel-path [name=geometry]")!==null'));
   assert.ok(await evaluate('document.querySelectorAll(".editor-tool-card").length>=18'));
+  const extremeDots=await evaluate(`(async()=>{
+    const {drawWallpaper}=await import('/src/renderer.js');
+    const canvas=document.createElement('canvas');canvas.width=360;canvas.height=780;
+    drawWallpaper(canvas,{seed:'extreme-visible-dots',geometry:'straight',
+      orientation:'vertical',motif:'dots',construction:'ribbon',outline:'none',
+      material:'none',chaos:0,stripeWidth:65,spread:60,
+      dotSize:100,dotSpacing:0,motifSize:100,motifFrequency:20});
+    const {data}=canvas.getContext('2d').getImageData(0,0,360,780);
+    let chromatic=0;
+    for(let p=0;p<data.length;p+=4){
+      if(Math.max(data[p],data[p+1],data[p+2])-
+          Math.min(data[p],data[p+1],data[p+2])>55)chromatic++;
+    }
+    return chromatic/(360*780);
+  })()`);
+  console.log('EXTREME_DOT_MOTIF_CHROMATIC_COVERAGE',extremeDots);
+  assert.ok(extremeDots>.035,'large dot motifs must remain coloured rather than vanish');
   console.log('REDESIGN_EXPLORATION_ACCEPTANCE_SUCCESS');
 }finally{
   try{ws?.close()}catch{}
