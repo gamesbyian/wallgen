@@ -231,7 +231,7 @@ export function resolveScene(recipeInput) {
   // Neutral midpoint preserves legacy geometry and saved designs.
   // Frequency is perceived as bends per composition: its low end should
   // be one broad gesture and its high end should reach dense, fine motion.
-  const commonPeriod=1400*Math.pow(.06,recipe.shapeFrequency/100)*
+  const commonPeriod=1400*Math.pow(.04,recipe.shapeFrequency/100)*
     between(random,.85,1.15);
   // True zero means no centreline displacement, not a residual half-wave.
   const depthFactor=Math.pow(recipe.shapeDepth/50,1.3);
