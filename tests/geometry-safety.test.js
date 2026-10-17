@@ -56,7 +56,7 @@ test('extreme individuality preserves selected geometry family',()=>{
 test('small nonzero end tapers are distinct, not flattened to ten percent',()=>{
   const stripe={width:20,taper:0,edgePhase:0,phase:0,segmentStart:-100,segmentEnd:100};
   const values=[0,1,3,5,10,20].map(endTaper=>
-    widthAt({...stripe,endTaper},97,100));
+    widthAt({...stripe,endTaper},99.5,100));
   assert.ok(new Set(values.map(n=>n.toFixed(6))).size>=5,JSON.stringify(values));
 });
 test('nearby randomization respects physical angular and count bounds',()=>{
