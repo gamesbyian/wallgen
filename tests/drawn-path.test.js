@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {finishDrawnPath, normalizeDrawnPath, prepareDrawnPath, pointOnDrawnPath,
+import {finishDrawnPath, normalizeDrawnPath, prepareDrawnPath, safeDrawnBandSpan, pointOnDrawnPath,
   MAX_DRAWN_POINTS} from '../src/drawn-path.js';
 import {normalizeRecipe,resolveScene,encodeRecipe,decodeRecipe,respectSettingLocks,
   DESIGN_WIDTH,DESIGN_HEIGHT} from '../src/model.js';
@@ -66,6 +66,15 @@ test('a hand-drawn path becomes seven normal-offset stripes with unchanged strok
     const edge=ribbonEdge(stripe,scene.extent*.1,scene.extent,1);
     assert.ok(Number.isFinite(edge.x)&&Number.isFinite(edge.y));
   }
+});
+test('tight freehand turns shrink rainbow spread instead of inverting ribbon offsets',()=>{
+  const curve=prepareDrawnPath([[.25,.12],[.23,.35],[.36,.71],[.56,.84],[.76,.65],[.77,.17]]);
+  const limit=safeDrawnBandSpan(curve);
+  assert.ok(limit>=44&&limit<260, 'a tight U-turn needs a capped group width');
+  const crowded=resolveScene({seed:'narrow-hairpin',geometry:'drawn',spread:100,
+    customPath:[[.25,.12],[.23,.35],[.36,.71],[.56,.84],[.76,.65],[.77,.17]]});
+  const span=crowded.stripes.at(-1).center-crowded.stripes[0].center;
+  assert.ok(span<=limit+1,'scene spread must honor the curve-safe bound');
 });
 test('drawn path persists through locks, URLs and seeded scene resolution',()=>{
   const saved=normalizeRecipe({geometry:'drawn',customPath:finishDrawnPath(gesture),
