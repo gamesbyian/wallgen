@@ -9,7 +9,7 @@ const gallery = document.getElementById('gallery');
 const notice = document.getElementById('notice');
 const favoriteButton = document.getElementById('favorite');
 const FAVORITES_KEY = 'wallgen:favorites:v1';
-const FIELDS = ['primesOnly','family','orientation','geometry','motif','palette','material','outline','background','lightingMood','lightDirection','lightStrength','shadowStrength','textureCoverage','textureRotation','textureBlend','textureLayer2Enabled','material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2','textureLayer3Enabled','material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3','chaos','stripeWidth','spread','textureStrength','textureScale','textureDisplacement','individuality','patternHomogeneity','overridePatternHomogeneity','gap','glow'];
+const FIELDS = ['primesOnly','family','orientation','geometry','motif','palette','material','outline','background','lightingMood','lightDirection','lightStrength','shadowStrength','stripeShadowEnabled','stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection','textureCoverage','textureRotation','textureBlend','textureLayer2Enabled','material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2','textureLayer3Enabled','material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3','chaos','stripeWidth','spread','textureStrength','textureScale','textureDisplacement','individuality','patternHomogeneity','overridePatternHomogeneity','gap','glow'];
 let current = normalizeRecipe();
 let currentScene;
 const previewLayers={background:null,ink:null,scene:null,key:null};
@@ -17,7 +17,8 @@ const settingLockButtons=new Map();
 const autos=['family','orientation','geometry','motif','palette','material','outline'];
 function artKey(recipe){
   const {positionX,positionY,lockedSettings,primesOnly,
-    lightingMood,lightDirection,lightStrength,shadowStrength,...art}=normalizeRecipe(recipe);
+    lightingMood,lightDirection,lightStrength,shadowStrength,
+    stripeShadowEnabled,stripeShadowStrength,stripeShadowSoftness,stripeShadowDirection,...art}=normalizeRecipe(recipe);
   return JSON.stringify(art);
 }
 let noticeTimer = 0;
@@ -78,7 +79,12 @@ function toControls(recipe) {
     if(numeric)numeric.value=current[key];
   }
   syncTextureLayerVisibility();
+  syncStripeShadowUI();
   syncSettingLocks();
+}
+function syncStripeShadowUI(){
+  const enabled=form.elements.namedItem('stripeShadowEnabled').checked;
+  document.getElementById('stripeShadowControls').hidden=!enabled;
 }
 function syncTextureLayerVisibility(){
   const two=!!form.elements.namedItem('textureLayer2Enabled').checked;
@@ -290,7 +296,8 @@ function makeSettingLock(key,host){
 }
 function installSettingLocks(){
   for(const key of FIELDS){
-    if(key==='textureLayer2Enabled'||key==='textureLayer3Enabled')continue;
+    // Prime mode is an ephemeral randomization modifier, not a design lock.
+    if(key==='primesOnly'||key==='textureLayer2Enabled'||key==='textureLayer3Enabled')continue;
     const field=form.elements.namedItem(key);
     const label=field.closest('label');
     if(label){
@@ -411,6 +418,7 @@ form.addEventListener('input',event=>{
     rangeTimeout=setTimeout(updateControlsFromInputs,60);
   }else {
     syncTextureLayerVisibility();
+    syncStripeShadowUI();
     updateControlsFromInputs();
   }
 });
