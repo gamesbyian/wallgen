@@ -222,6 +222,15 @@ try{
   await evaluate('document.getElementById("tab-path").click()');
   await evaluate('document.querySelector("[data-editor-tool=geometry]").click()');
   assert.ok(await evaluate('document.querySelector("#panel-path .editor-tool-card:not([hidden]) [name=geometry]")!==null'));
+  await evaluate('document.querySelector("[data-editor-tool=safety]").click()');
+  assert.ok(await evaluate('document.querySelector("[name=geometrySafety]").checked'));
+  await evaluate('(()=>{const f=document.querySelector("[name=geometrySafety]");f.checked=false;f.dispatchEvent(new Event("input",{bubbles:true}));f.dispatchEvent(new Event("change",{bubbles:true}));})()');
+  await waitFor('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).geometrySafety===false');
+  await evaluate('document.querySelector("[data-random-category=path]").click()');
+  assert.equal(await evaluate('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).geometrySafety'),false,
+    'randomization may not silently toggle the geometry-safety policy');
+  await evaluate('(()=>{const f=document.querySelector("[name=geometrySafety]");f.checked=true;f.dispatchEvent(new Event("change",{bubbles:true}));})()');
+  await waitFor('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).geometrySafety===true');
   // All six categories and their tool cards must fit without internal
   // scrolling or concealing active controls. This is stronger than merely
   // setting overflow:hidden in CSS.
