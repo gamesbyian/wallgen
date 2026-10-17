@@ -1,3 +1,4 @@
+import { SHAPES } from './path-geometry.js';
 export const DESIGN_WIDTH = 600;
 export const DESIGN_HEIGHT = 1300;
 export const OUTPUT_WIDTH = 3024;
@@ -5,7 +6,9 @@ export const OUTPUT_HEIGHT = 6552;
 export const HUES = [0, 29, 52, 136, 212, 244, 278];
 export const NAMES = ['Red', 'Orange', 'Yellow', 'Green', 'Blue', 'Indigo', 'Violet'];
 export const FAMILIES = ['studio', 'currents', 'fracture', 'confetti', 'deco', 'tapestry', 'signal', 'contour'];
-export const GEOMETRIES = ['straight', 'wave', 'zigzag', 'chevron', 'jagged', 'stepped', 'arc', 'contour'];
+export const GEOMETRIES = SHAPES;
+export const COMPOSITIONS = ['single', 'repeat'];
+export const CONSTRUCTIONS = ['ribbon', 'stroke', 'tonal', 'woven'];
 export const LINE_STYLES = ['continuous', 'dotted', 'dashed'];
 export const MOTIFS = ['solid', 'dots', 'stars', 'dashes', 'diamonds', 'chevrons', 'hatch', 'checker'];
 export const MATERIALS = ['none', 'grain', 'watercolor', 'construction', 'handmade', 'linen', 'canvas', 'denim', 'knit', 'felt', 'corduroy', 'corrugated', 'concrete', 'stucco', 'stone', 'drywall', 'wood-grain', 'vinyl-sheet', 'foil', 'glossy-paper', 'adobe'];
@@ -17,7 +20,8 @@ export const LOCKABLE_SETTINGS = ['seed','family','orientation','geometry','moti
   'textureLayer2Enabled','material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2',
   'textureLayer3Enabled','material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3',
   'textureDisplacement','patternHomogeneity','chaos','stripeWidth','spread','shapeFrequency','shapeDepth','lineStyle','individuality',
-  'overridePatternHomogeneity','gap','glow','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','position'];
+  'overridePatternHomogeneity','gap','glow','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','position',
+  'composition','repeatCount','repeatSpacing','construction','turnRadius','loopSize','endTaper','tonalContrast','brushRoughness','dotSize','dotSpacing'];
 export const PALETTES = ['classic', 'electric', 'pastel', 'jewel', 'muted'];
 export const TEXTURE_COVERAGES = ['both', 'stripes', 'background'];
 export const OUTLINES = ['none', 'hairline', 'white', 'double', 'broken', 'one-side', 'black', 'black-hairline', 'black-double', 'black-broken', 'black-one-side'];
@@ -80,6 +84,17 @@ export function normalizeRecipe(input = {}) {
     geometry: readChoice('geometry', GEOMETRIES),
     motif: readChoice('motif', MOTIFS),
     lineStyle: LINE_STYLES.includes(input.lineStyle) ? input.lineStyle : 'continuous',
+    composition: COMPOSITIONS.includes(input.composition) ? input.composition : 'single',
+    construction: CONSTRUCTIONS.includes(input.construction) ? input.construction : 'ribbon',
+    repeatCount: finiteRange(input.repeatCount, 3, 2, 6),
+    repeatSpacing: finiteRange(input.repeatSpacing, 50, 0, 100),
+    turnRadius: finiteRange(input.turnRadius, 50, 0, 100),
+    loopSize: finiteRange(input.loopSize, 50, 0, 100),
+    endTaper: finiteRange(input.endTaper, 0, 0, 100),
+    tonalContrast: finiteRange(input.tonalContrast, 50, 0, 100),
+    brushRoughness: finiteRange(input.brushRoughness, 0, 0, 100),
+    dotSize: finiteRange(input.dotSize, 50, 0, 100),
+    dotSpacing: finiteRange(input.dotSpacing, 50, 0, 100),
     shapeFrequency: finiteRange(input.shapeFrequency, 50, 0, 100),
     shapeDepth: finiteRange(input.shapeDepth, 50, 0, 100),
     palette: readChoice('palette', PALETTES),
@@ -162,12 +177,17 @@ export function resolveScene(recipeInput) {
   const material = keepAuto('material',recipe.material === 'auto' ? profile.material : recipe.material);
   const outline = keepAuto('outline',recipe.outline === 'auto' ? profile.outline : recipe.outline);
   const chaos = recipe.chaos / 100;
+  const repeats = recipe.composition === 'repeat' ? recipe.repeatCount : 1;
   const individuality = recipe.individuality / 100;
   let angle = orientation === 'vertical' ? Math.PI / 2 : orientation === 'horizontal' ? 0 : (pick(random, [-1, 1]) * between(random, 0.30, 1.08));
   angle += between(random, -0.18, 0.18) * chaos;
+  // Hairpins are defined with upright legs in local coordinates.
+  if(geometry==='hairpin')angle=orientation==='horizontal'?Math.PI/2:orientation==='diagonal'?Math.PI/4:0;
+  if(geometry==='loops')angle=orientation==='vertical'?Math.PI/2:orientation==='diagonal'?Math.PI/4:0;
   if(orientation==='diagonal')angle += recipe.diagonalRotation*Math.PI/180;
-  const span = DESIGN_WIDTH * Math.abs(Math.sin(angle)) + DESIGN_HEIGHT * Math.abs(Math.cos(angle));
-  const spread = span * (0.17 + 0.53 * recipe.spread / 100);
+  const span = geometry==='hairpin'||geometry==='loops' ? DESIGN_WIDTH :
+    DESIGN_WIDTH * Math.abs(Math.sin(angle)) + DESIGN_HEIGHT * Math.abs(Math.cos(angle));
+  const spread = span * (0.17 + 0.53 * recipe.spread / 100) / repeats;
   const center = between(random, -1, 1) * span * 0.09;
   // A shared master path keeps the seven stripes parallel at individuality=0.
   // Independent path phase, period, tilt and edge profile grow with individuality.
@@ -195,7 +215,8 @@ export function resolveScene(recipeInput) {
     // differences of spread-dependent positions. Width is bit-for-bit fixed.
     const leftGap = i ? referenceSpread*weights[i-1]/sum : referenceAvg;
     const rightGap = i < 6 ? referenceSpread*weights[i]/sum : referenceAvg;
-    const width = Math.min(leftGap,rightGap)*widthFactor*between(r,1-chaos*.35,1+chaos*.35);
+    let width = Math.min(leftGap,rightGap)*widthFactor*between(r,1-chaos*.35,1+chaos*.35);
+    if(recipe.construction==='stroke')width=Math.max(.8,Math.min(6,width*.12));
     const individualGeometry = individuality > .25 && r() < (individuality-.25)*1.15 ? pick(r, GEOMETRIES) : geometry;
     // Motif, palette and material belong to the whole seven-stripe design.
     // Individuality is geometric only. Pattern changes are never selected here.
@@ -207,7 +228,11 @@ export function resolveScene(recipeInput) {
       // ribbon centres sorted and preserves the historic scene on default.
       name: NAMES[recipe.reverseStripes?6-i:i], index:i,
       color: paletteHsl(HUES[recipe.reverseStripes?6-i:i], palette, r), center: position + center,
-      width: Math.max(width, 1.5), geometry: individualGeometry, motif, lineStyle:recipe.lineStyle,
+      width: Math.max(width, recipe.construction==='stroke'?.8:1.5), geometry: individualGeometry,
+      motif, lineStyle:recipe.lineStyle, endTaper:recipe.endTaper,
+      turnRadius:90+recipe.turnRadius*1.35,
+      loopPeriod:27+((100-recipe.shapeFrequency)/100)*66,
+      loopAmplitude:4+(recipe.loopSize/100)*29,
       phase, period, displacement,
       sharedGeometry:geometry, sharedPhase:commonPhase, sharedPeriod:commonPeriod,
       sharedDisplacement:commonDisplacement, parallelMix:individuality,
@@ -240,7 +265,10 @@ export function resolveScene(recipeInput) {
     // Reflect the entire diagonal ink layer, not its textures or background.
     mirrorHorizontal:orientation==='diagonal' && recipe.mirrorHorizontal,
     mirrorVertical:orientation==='diagonal' && recipe.mirrorVertical,
-    stripes, intensity: chaos, width: avg, extent: Math.hypot(DESIGN_WIDTH, DESIGN_HEIGHT) * 1.35,
+    stripes, intensity: chaos, width: avg,
+    bundleOffsets:Array.from({length:repeats},(_,i)=>
+      (i-(repeats-1)/2)*(spread+(12+recipe.repeatSpacing*1.1))),
+    extent: Math.hypot(DESIGN_WIDTH, DESIGN_HEIGHT) * 1.35,
     reliefFallbackSeed:hashString(recipe.seed+':relief:fine-grain'),
     // These positions are the canonical, unnudged geometry. Pan is applied only
     // when compositing the finished stripe ink, never while solving/capping it.
@@ -309,6 +337,10 @@ export function randomizeAllRecipe({primesOnly=false}={}) {
     stripeShadowStrength:percent(),stripeShadowSoftness:percent(),
     chaos:percent(), stripeWidth:percent(), spread:percent(),
     shapeFrequency:percent(),shapeDepth:percent(),lineStyle:any(LINE_STYLES),
+    composition:any(COMPOSITIONS),construction:any(CONSTRUCTIONS),
+    repeatCount:2+Math.floor(r()*5),repeatSpacing:percent(),
+    turnRadius:percent(),loopSize:percent(),endTaper:percent(),
+    tonalContrast:percent(),brushRoughness:percent(),dotSize:percent(),dotSpacing:percent(),
     textureStrength:percent(), textureScale:percent(), textureDisplacement:percent(), individuality:percent(),
     patternHomogeneity:percent(), overridePatternHomogeneity:r()>.5,
     gap:percent(), glow:percent(), positionX:0, positionY:0,
