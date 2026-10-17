@@ -679,3 +679,91 @@
    box-shadow:2px 0 5px #00000012;
  }
 }
+
+/* Optional texture layers are regular selectable tools, not extra add/remove
+   forms. A smooth material is simply inactive, without a dedicated action row.
+   Collapse rotation into a single label + controls + die + lock line. */
+.editor-tool-card .texture-layer-panel-head,
+.editor-tool-card .layer-add-lock,
+.editor-tool-card .add-texture-layer{display:none!important}
+.editor-tool-card .texture-rotation-field{
+  display:grid!important;
+  grid-template-columns:72px minmax(0,1fr) 24px 24px!important;
+  align-items:center!important;column-gap:3px!important;
+  margin:0!important;padding:2px 0!important;
+}
+.editor-tool-card .texture-rotation-field>span{
+  grid-column:1!important;grid-row:1!important;
+  min-width:0!important;font-size:10px!important;white-space:nowrap;
+}
+.editor-tool-card .texture-rotation-field .rotation-controls{
+  display:flex!important;grid-column:2!important;grid-row:1!important;
+  gap:2px!important;width:100%!important;min-width:0!important;
+  height:26px!important;align-items:center!important;
+}
+.editor-tool-card .texture-rotation-field .rotation-controls input[type=number]{
+  flex:1 1 45px!important;width:45px!important;min-width:28px!important;
+  max-width:none!important;height:26px!important;
+  padding:1px 3px!important;text-align:center!important;
+}
+.editor-tool-card .texture-rotation-field .rotation-controls button{
+  flex:0 0 31px!important;width:31px!important;min-width:31px!important;
+  height:26px!important;padding:0!important;font-size:10px!important;
+}
+.editor-tool-card .texture-rotation-field>.editor-setting-die{
+  grid-column:3!important;grid-row:1!important;
+}
+.editor-tool-card .texture-rotation-field>.setting-lock{
+  grid-column:4!important;grid-row:1!important;
+}
+.editor-tool-card .texture-rotation-field>small{display:none!important}
+@media(max-width:790px){
+  body.mobile-studio.mobile-edit-open{
+    --mobile-tray-height:clamp(268px,34dvh,302px)!important;
+  }
+  body.mobile-studio .sidebar .editor-tool-card .texture-rotation-field{
+    display:grid!important;
+    grid-template-columns:72px minmax(0,1fr) 24px 24px!important;
+    gap:3px!important;align-items:center!important;
+    min-height:28px!important;
+  }
+  body.mobile-studio .sidebar .editor-tool-card .texture-rotation-field>span{
+    grid-column:1!important;grid-row:1!important;font-size:10px!important;
+  }
+  body.mobile-studio .sidebar .editor-tool-card .texture-rotation-field .rotation-controls{
+    grid-column:2!important;grid-row:1!important;
+    width:100%!important;min-width:0!important;
+    height:26px!important;gap:2px!important;
+  }
+  body.mobile-studio .sidebar .editor-tool-card .texture-rotation-field>.editor-setting-die{
+    grid-column:3!important;grid-row:1!important;
+  }
+  body.mobile-studio .sidebar .editor-tool-card .texture-rotation-field>.setting-lock{
+    grid-column:4!important;grid-row:1!important;
+  }
+  body.mobile-studio .sidebar .editor-tool-card .texture-layer-panel:not([hidden]){
+    display:contents!important;
+  }
+}
+@media(min-width:500px) and (max-width:790px){
+  body.mobile-studio.mobile-edit-open{
+    --mobile-tray-height:clamp(300px,31dvh,380px)!important;
+  }
+  body.mobile-studio .sidebar .editor-tool-card .texture-rotation-field{
+    grid-template-columns:102px minmax(0,1fr) 33px 33px!important;
+    min-height:40px!important;gap:5px!important;
+  }
+  body.mobile-studio .sidebar .editor-tool-card .texture-rotation-field>span{
+    font-size:13px!important;
+  }
+  body.mobile-studio .sidebar .editor-tool-card .texture-rotation-field .rotation-controls{
+    height:37px!important;gap:4px!important;
+  }
+  body.mobile-studio .sidebar .editor-tool-card .texture-rotation-field .rotation-controls input[type=number]{
+    min-width:40px!important;height:36px!important;font-size:13px!important;
+  }
+  body.mobile-studio .sidebar .editor-tool-card .texture-rotation-field .rotation-controls button{
+    flex-basis:41px!important;width:41px!important;min-width:41px!important;
+    height:36px!important;font-size:12px!important;
+  }
+}
