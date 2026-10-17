@@ -7,6 +7,7 @@ const css=readFileSync(new URL('../styles.css',import.meta.url),'utf8');
 const app=readFileSync(new URL('../src/app.js',import.meta.url),'utf8');
 const readme=readFileSync(new URL('../README.md',import.meta.url),'utf8');
 const license=readFileSync(new URL('../LICENSE',import.meta.url),'utf8');
+const logo=readFileSync(new URL('../assets/roygbiv-logo.svg',import.meta.url),'utf8');
 
 test('settings use four accessible mutually exclusive tab panels',()=>{
   const names=['design','colour','textures','refine'];
@@ -175,4 +176,19 @@ test('chevron geometry and independent shape controls are present in Design',()=
   assert.match(design,/<option value="dotted">Dotted line<\/option>/);
   assert.match(design,/<option value="dashed">Dashed line<\/option>/);
   assert.match(design,/separately from the stripe pattern/);
+});
+
+test('brand SVG has seven slanted variable-length rainbow bands below a white phone outline',()=>{
+  assert.match(logo,/<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg"/);
+  assert.match(logo,/fill="#050608"/);
+  assert.match(logo,/transform="rotate\(-24 60 60\)"/);
+  const bands=[...logo.matchAll(/<path stroke="#[0-9a-fA-F]{6}" d="M([^"]+)"\/>/g)];
+  assert.equal(bands.length,7);
+  assert.ok(bands.some(x=>x[1].includes('H61')));
+  assert.ok(bands.some(x=>x[1].includes('H66')));
+  assert.ok(bands.some(x=>x[1].startsWith('51 102')));
+  const lastBand=logo.lastIndexOf('<path stroke="#');
+  const phone=logo.indexOf('x="34" y="13" width="53" height="94"');
+  assert.ok(phone>lastBand,'phone outline should visibly overlay the stripes');
+  assert.match(logo,/stroke="#fff" stroke-width="2\.7"/);
 });
