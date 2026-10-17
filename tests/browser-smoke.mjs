@@ -314,7 +314,17 @@ try{
   await evaluate('document.getElementById("removeTextureLayer2").click()');
   await waitFor('document.getElementById("textureLayer2Panel").hidden===true');
   await checkEditorZoom(412,915,'100-percent');
+  for(const [category,tool] of [['path','geometry'],['stripes','structure'],['effects','lighting']]){
+    await evaluate('document.getElementById("tab-'+category+'").click()');
+    await evaluate('document.querySelector("[data-editor-tool='+tool+']").click()');
+    await captureUI('100-percent-'+category+'-'+tool);
+  }
   await checkEditorZoom(615,1365,'67-percent');
+  for(const [category,tool] of [['path','geometry'],['stripes','structure'],['effects','lighting']]){
+    await evaluate('document.getElementById("tab-'+category+'").click()');
+    await evaluate('document.querySelector("[data-editor-tool='+tool+']").click()');
+    await captureUI('67-percent-'+category+'-'+tool);
+  }
   await command('Emulation.setDeviceMetricsOverride',{
     width:412,height:915,deviceScaleFactor:1,mobile:true,
     screenWidth:412,screenHeight:915,
