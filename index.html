@@ -21,7 +21,7 @@
           <button id="randomizeAll" class="button button-rainbow button-randomize-all" type="button">✳ <span>Randomize</span></button>
           <label class="prime-toggle" title="Randomized percentages and texture angles will be prime numbers"><input type="checkbox" name="primesOnly" data-setting="primesOnly" aria-describedby="primeModeHint"><span>Primes only</span></label>
         </div>
-        <p id="primeModeHint" class="prime-mode-hint" hidden>Prime percentages: 2–97. Prime texture angles: 2–359°. Locked values stay as they are.</p>
+        <p id="primeModeHint" class="prime-mode-hint" hidden>Prime percentages: 2–97. Prime texture angles: 2–359°. Other setting locks still apply.</p>
         <p class="studio-guidance">Refine one aspect at a time. Use the lock beside each setting to protect it from randomization.</p>
         <nav class="settings-tabs" role="tablist" aria-label="Wallpaper settings">
           <button type="button" id="tab-design" class="settings-tab" role="tab" aria-selected="true" aria-controls="panel-design" tabindex="0" data-tab="design"><span aria-hidden="true">◇</span> Design</button>
@@ -38,6 +38,30 @@
           <label class="field">Stripe construction <select name="motif" data-setting="motif"><option value="auto">Follow family</option><option value="solid">Solid</option><option value="dots">Dots</option><option value="stars">Stars</option><option value="dashes">Dashes</option><option value="diamonds">Diamonds</option><option value="chevrons">Chevrons</option><option value="hatch">Hatching</option><option value="checker">Checkerboard</option></select></label>
         </div>
         <label class="field range-field pattern-homogeneity"><span>Pattern homogeneity </span><input type="range" name="patternHomogeneity" id="patternHomogeneity" data-setting="patternHomogeneity" min="0" max="100" value="100"><small>100% uniform · 0% varied size, rotation and opacity</small></label>
+        <div class="stripe-shadow-section">
+          <label class="stripe-shadow-switch"><input type="checkbox" name="stripeShadowEnabled" data-setting="stripeShadowEnabled">
+            <span><strong>Cast stripe shadows</strong><small>Optional depth behind the ribbon silhouettes</small></span>
+          </label>
+          <div class="stripe-shadow-controls" id="stripeShadowControls" hidden>
+            <div class="control-grid range-grid">
+              <label class="field range-field"><span>Shadow strength</span>
+                <input type="range" name="stripeShadowStrength" id="stripeShadowStrength" data-setting="stripeShadowStrength" min="0" max="100" value="45">
+              </label>
+              <label class="field range-field"><span>Shadow softness</span>
+                <input type="range" name="stripeShadowSoftness" id="stripeShadowSoftness" data-setting="stripeShadowSoftness" min="0" max="100" value="55">
+              </label>
+            </div>
+            <label class="field">Shadow light source
+              <select name="stripeShadowDirection" data-setting="stripeShadowDirection">
+                <option value="top-left">Upper left ↘</option>
+                <option value="top-right">Upper right ↙</option>
+                <option value="bottom-left">Lower left ↗</option>
+                <option value="bottom-right">Lower right ↖</option>
+              </select>
+            </label>
+            <small class="stripe-shadow-help">These shadows move with the stripes. Canvas-wide light and shade in Colour remain separate.</small>
+          </div>
+        </div>
         </section>
         <section class="settings-panel" id="panel-colour" role="tabpanel" aria-labelledby="tab-colour" tabindex="0" hidden>
           <div class="settings-panel-heading"><h2>Colour & edges</h2><p>Tune the rainbow, canvas and outlines.</p></div>
