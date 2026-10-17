@@ -251,6 +251,7 @@ function render(recipe,{scroll=false,bypassLocks=false}={}) {
   stage.dataset.viewZoom=String(current.viewZoom);
   stage.dispatchEvent(new CustomEvent('roygbiv-view-zoom-updated',
     {detail:current.viewZoom}));
+  stage.dispatchEvent(new Event('roygbiv-wallpaper-rendered'));
   updatePositionStatus();
   showResolvedSelections(currentScene);
   document.getElementById('detailFamily').textContent=titleCase(currentScene.family);
