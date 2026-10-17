@@ -430,6 +430,99 @@
    display:none!important;
  }
 }
+/* Mobile browser zoom-out increases the effective CSS viewport width.
+   Compensate with larger, still comfortably tappable typography and controls
+   instead of shrinking everything to the former 412px visual size. */
+@media(min-width:500px) and (max-width:790px){
+ body.mobile-studio.mobile-edit-open{
+   --mobile-tray-height:clamp(308px,32dvh,385px)!important;
+ }
+ body.mobile-studio .sidebar .editor-explore{
+   min-height:41px!important;height:41px!important;
+   max-height:41px!important;flex-basis:41px!important;
+ }
+ body.mobile-studio .sidebar .editor-style select,
+ body.mobile-studio .sidebar .editor-variation-mode,
+ body.mobile-studio .sidebar .editor-variation-strength{
+   height:38px!important;min-height:38px!important;
+   font-size:13px!important;padding-inline:7px 17px!important;
+ }
+ body.mobile-studio .sidebar .editor-explore-actions>.editor-scope-button,
+ body.mobile-studio .sidebar .editor-explore-actions>.editor-search-toggle{
+   flex-basis:35px!important;width:35px!important;min-width:35px!important;
+   height:38px!important;min-height:38px!important;font-size:18px!important;
+ }
+ body.mobile-studio .sidebar .settings-tabs{
+   flex-basis:44px!important;height:44px!important;
+   min-height:44px!important;max-height:44px!important;
+   grid-template-rows:44px!important;
+ }
+ body.mobile-studio .sidebar .settings-tabs .settings-tab{
+   height:43px!important;min-height:43px!important;max-height:43px!important;
+   font-size:14px!important;
+ }
+ body.mobile-studio .sidebar .editor-tool-chooser{
+   flex-basis:41px!important;height:41px!important;
+   min-height:41px!important;max-height:41px!important;
+ }
+ body.mobile-studio .sidebar .editor-tool-tab:not([hidden]){
+   height:36px!important;min-height:36px!important;
+   max-height:36px!important;padding:3px 12px!important;
+   font-size:13px!important;
+ }
+ body.mobile-studio .sidebar .editor-tool-card:not([hidden]){
+   gap:4px!important;padding:5px 8px!important;
+ }
+ body.mobile-studio .sidebar .editor-tool-header{
+   flex-basis:34px!important;min-height:34px!important;height:34px!important;
+   font-size:15px!important;
+ }
+ body.mobile-studio .sidebar .editor-tool-card .field,
+ body.mobile-studio .sidebar .editor-tool-card .texture-layer-group .lockable-setting>.field,
+ body.mobile-studio .sidebar .editor-tool-card .texture-layer-panel .lockable-setting>.field{
+   font-size:14px!important;
+ }
+ body.mobile-studio .sidebar .editor-tool-card .lockable-setting{
+   min-height:35px!important;
+ }
+ body.mobile-studio .sidebar .editor-tool-card .texture-layer-group .lockable-setting,
+ body.mobile-studio .sidebar .editor-tool-card .texture-layer-panel .lockable-setting{
+   height:40px!important;max-height:40px!important;min-height:40px!important;
+ }
+ body.mobile-studio .sidebar .editor-tool-card .field select,
+ body.mobile-studio .sidebar .editor-tool-card .texture-layer-group .field select,
+ body.mobile-studio .sidebar .editor-tool-card .texture-layer-panel .field select{
+   height:37px!important;min-height:37px!important;
+   font-size:13px!important;
+ }
+ body.mobile-studio .sidebar .editor-tool-card .setting-lock,
+ body.mobile-studio .sidebar .editor-tool-card .editor-setting-die{
+   width:31px!important;min-width:31px!important;height:35px!important;
+   min-height:35px!important;
+ }
+ body.mobile-studio .sidebar .editor-tool-card .layer-add-lock{
+   flex-basis:34px!important;height:34px!important;
+   min-height:34px!important;max-height:34px!important;
+ }
+ body.mobile-studio .sidebar .editor-tool-card .layer-add-lock .add-texture-layer{
+   height:33px!important;min-height:33px!important;max-height:33px!important;
+   font-size:13px!important;
+ }
+ body.mobile-studio .sidebar .editor-tool-card .field.range-field{
+   grid-template-rows:minmax(36px,auto)!important;
+ }
+ body.mobile-studio .sidebar .editor-tool-card .field.range-field>span{
+   font-size:13px!important;
+ }
+ body.mobile-studio .sidebar .editor-tool-card .stepper{
+   height:35px!important;
+ }
+ body.mobile-studio .sidebar .editor-tool-card .stepper>.step-button,
+ body.mobile-studio .sidebar .editor-tool-card .stepper>.slider-number{
+   height:33px!important;min-height:33px!important;
+   font-size:13px!important;
+ }
+}
 /* Recent generations occupy the same reserved tool space, never the preview. */
 .editor-history[hidden]{display:none!important}
 .editor-history{display:flex;flex-direction:column;gap:4px;flex:1;min-height:0;overflow:hidden;
