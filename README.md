@@ -258,6 +258,40 @@ now always leaves extra texture layers disabled. You can still explicitly
 enable and customize the second and third layers from the Texture controls;
 existing manual multi-layer designs remain fully functional.
 
+## Geometry safety and expanded artistic controls
+
+The Path → Constraints tool contains **Preserve stripe coherence**, enabled by
+default. It keeps freehand stripe spacing and hairpin bend radius within
+geometry-aware limits and scales loops to their actual lane width. Turning it
+off unlocks intentional folding, extreme loop sizes and overlapping stripes.
+The request is retained: switching safety back off restores the user's
+unrestricted parameters, and changing the setting is undoable. The Constraints
+tool reports the effective radius, loop height or stripe pack spacing when
+the coherent renderer imposes a limit. Scoped Reroll/Vary never changes this
+preference by accident. Random retains the user's explicit setting.
+
+Geometry has shape-specific **Step count** (1–16, Step geometry only),
+**Chevron sharpness** (Chevron only), and **Loop aspect** (Loops only).
+Shape Frequency changes the curvature of Arc and logarithmically controls
+loop pitch; Shape Depth now scales loops across their complete slider
+range even with several repeated seven-colour bundles. Thin Stroke
+construction responds through the full thickness range, End Taper accepts
+genuinely small percentages, and high Individuality preserves the user's
+chosen geometry family instead of randomly switching it.
+
+Stripe Patterns has separate **Motif size** and **Motif density** so
+decorative marks can change size or spacing without modifying the actual
+wave/chevron geometry. The existing Dot Diameter and Dot Spacing controls
+also affect the Dots motif. Context-specific settings are disabled when
+inapplicable and show zero without discarding their stored values. Vary
+uses the actual bounds of each range or count rather than assuming all
+settings are percentages.
+
+All geometry modes and numeric settings remain part of the ordinary
+reproducible recipe and PNG metadata. No separate restricted/unrestricted
+rendering engine exists: they share the production renderer and parameter
+definitions.
+
 ## Output
 
 - Google Pixel 6 Pro native screen: **1440 × 3120**.
