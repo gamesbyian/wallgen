@@ -174,6 +174,35 @@ A hand-drawn geometry appears in the normal Path geometry selector once a path
 has been saved. Randomize does not invent arbitrary hand-drawn paths, but locking
 Path geometry preserves your traced curve during further randomization.
 
+## Flowing curves and expanded controls (October 2026)
+
+The canvas path tool now uses **arc-length resampling, Gaussian curve fairing
+and centripetal spline interpolation**. Smooth produces more balanced curves
+without preserving each jittery finger movement. Geometric still offers
+simplification and snapping for more deliberately constructed paths.
+
+When Draw path is active, the entire preview stage captures pointer input:
+you may **begin outside the wallpaper and draw into it**, or finish outside.
+Coordinates beyond the frame are stored in the recipe, so full-resolution
+exports clip only the resulting painted image, never the intended centreline.
+Preview zoom remains independent of saved artwork, with **50% through 250%**
+viewing and 10% steps available immediately on initial generation.
+
+Additional existing-control upgrades:
+
+- **Nudge:** 1% per tap in each direction, halved from 2%.
+- **Stripe spacing and thickness:** substantially expanded mappings at both
+  ends of the same familiar sliders, with independent control.
+- **Chevron geometry:** much broader shape frequency and depth ranges.
+  Chevron *stripe patterns* also reuse Shape frequency and depth for independent
+  mark frequency and size. These sliders stay active for chevron patterns even
+  when the underlying path itself is straight.
+- **Hairpin:** a separate 60°–180° turn-angle slider is grouped with the
+  existing turn-radius control; the exit leg remains tangent to the bend.
+- **Mobile swipe cards:** every range control includes visible, working
+  decrement/increment buttons, a draggable track, and a numeric entry. The
+  no-vertical-scroll card layout and inactive/zeroed settings remain intact.
+
 ## Output
 
 - Google Pixel 6 Pro native screen: **1440 × 3120**.
