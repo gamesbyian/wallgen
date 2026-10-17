@@ -145,7 +145,7 @@ test('three independent texture layers round-trip through share URLs and resolve
   assert.deepEqual(decodeRecipe(encodeRecipe(recipe)),recipe);
   assert.ok(scene.materialSummary.includes('corduroy'));
 });
-test('legacy one-layer recipes remain single-layer and extra layers may be removed',()=>{
+test('one-layer recipes remain single-layer and optional layers can be selected independently',()=>{
   const legacy=normalizeRecipe({seed:'classic',material:'linen'});
   assert.equal(resolveScene(legacy).textureLayers.length,1);
   assert.equal(legacy.textureRotation,0);
@@ -153,7 +153,12 @@ test('legacy one-layer recipes remain single-layer and extra layers may be remov
   assert.equal(legacy.textureLayer2Enabled,false);
   assert.equal(legacy.textureLayer3Enabled,false);
   const hidden=resolveScene({...legacy,textureLayer3Enabled:true,material3:'adobe'});
-  assert.equal(hidden.textureLayers.length,1);
+  assert.equal(hidden.textureLayers.length,2);
+  assert.equal(hidden.textureLayers[1].material,'adobe');
+  const threeOnly=normalizeRecipe({...legacy,textureLayer2Enabled:false,
+    material2:'none',textureLayer3Enabled:true,material3:'foil'});
+  assert.deepEqual(resolveScene(threeOnly).textureLayers.map(x=>x.material),['linen','foil']);
+  assert.deepEqual(decodeRecipe(encodeRecipe(threeOnly)),threeOnly);
   const none=resolveScene({...legacy,material:'none'});
   assert.equal(none.textureLayers.length,0);
 });
@@ -501,5 +506,26 @@ test('random generations use at most the single primary texture layer',()=>{
     assert.equal(optIn.textureLayer3Enabled,true);
     assert.deepEqual(decodeRecipe(encodeRecipe(optIn)),optIn);
     assert.ok(resolveScene(optIn).textureLayers.length>=2);
+  }
+});
+
+test('outline thickness and stripe-to-outline buffer are independent recipe controls',()=>{
+  const original=normalizeRecipe({seed:'outline-separation',outline:'white'});
+  assert.equal(original.outlineBuffer,0,'existing default has no gap');
+  assert.equal(original.gap,28,'existing thickness setting remains editable');
+  const thick=normalizeRecipe({...original,gap:95,outlineBuffer:0});
+  const spaced=normalizeRecipe({...original,gap:28,outlineBuffer:95});
+  assert.equal(thick.outlineBuffer,0);
+  assert.equal(spaced.gap,28);
+  assert.equal(resolveScene(thick).gap,95);
+  assert.equal(resolveScene(spaced).outlineBuffer,95);
+  assert.deepEqual(decodeRecipe(encodeRecipe(spaced)),spaced);
+  assert.equal(normalizeRecipe({outlineBuffer:250}).outlineBuffer,100);
+  assert.equal(normalizeRecipe({outlineBuffer:-2}).outlineBuffer,0);
+  assert.equal(LOCKABLE_SETTINGS.includes('outlineBuffer'),true);
+  for(const n of [0,25,75,100]){
+    const r=normalizeRecipe({gap:n,outlineBuffer:100-n});
+    assert.equal(r.gap,n);
+    assert.equal(r.outlineBuffer,100-n);
   }
 });
