@@ -1,14 +1,7 @@
 import { DESIGN_WIDTH, DESIGN_HEIGHT, resolveScene, rng } from './model.js';
-import { samplePath, ribbonEdge, widthAt } from './path-geometry.js';
+import { samplePath, ribbonEdge, widthAt, noise1D } from './path-geometry.js';
 
 const TAU = Math.PI * 2;
-const lerp=(a,b,t)=>a+(b-a)*t;
-const fract=v=>v-Math.floor(v);
-const noise1D=(x,seed)=>{
-  const i=Math.floor(x);
-  const hash=j=>fract(Math.sin(j*127.1+seed*311.7)*43758.5453)*2-1;
-  return lerp(hash(i),hash(i+1),fract(x));
-};
 const geometryAt=(x,stripe,extent)=>samplePath(stripe,x,extent).y;
 const edgePoint=(x,stripe,extent,side,scene)=>
   ribbonEdge(stripe,x,extent,side,scene?textureHeight(scene,stripe,x,side):0);
