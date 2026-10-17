@@ -5,7 +5,7 @@ const TAU=Math.PI*2;
 const fract=v=>v-Math.floor(v);
 const mix=(a,b,t)=>a+(b-a)*t;
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
-const noise=(x,seed)=>{
+export const noise1D=(x,seed)=>{
   const i=Math.floor(x);
   const hash=j=>fract(Math.sin(j*127.1+seed*311.7)*43758.5453)*2-1;
   return mix(hash(i),hash(i+1),fract(x));
@@ -17,7 +17,7 @@ export function modulation(x, geometry, phase, period, d, extent){
   if(geometry==='wave')return d*(Math.sin(t*TAU)*.78+Math.sin(t*TAU*.43+phase)*.22);
   if(geometry==='zigzag')return d*(2*Math.abs(2*fract(t)-1)-1);
   if(geometry==='chevron')return d*(1-2*Math.pow(Math.abs(2*fract(t)-1),.55));
-  if(geometry==='jagged')return d*(noise(x/(period*.33),phase)*.85+.15*Math.sin(t*TAU));
+  if(geometry==='jagged')return d*(noise1D(x/(period*.33),phase)*.85+.15*Math.sin(t*TAU));
   if(geometry==='stepped')return d*(Math.floor(fract(t)*4)/2-.75);
   if(geometry==='arc')return d*(Math.pow(x/extent,2)*3.8-.6);
   return d*(Math.sin(t*TAU*.42)*.35+Math.sin(t*TAU*.79+phase)*.4+Math.sin(t*TAU*1.33)*.25);
