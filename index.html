@@ -15,7 +15,7 @@
   </header>
   <div class="layout">
     <aside class="sidebar" aria-label="Generator controls">
-      <div class="sidebar-intro"><span class="eyebrow">THE COLOUR EXPERIMENT</span><h1>Seven stripes.<br><em>Infinite directions.</em></h1><p>Black or white canvas. The entire spectrum. Every design is a new experiment.</p></div>
+
       <form id="controls" autocomplete="off">
         <div class="section-top"><span class="section-index">01</span><h2>Composition</h2><span class="section-rule"></span></div>
         <div class="control-grid">
@@ -24,7 +24,7 @@
           <label class="field">Path geometry <select name="geometry" data-setting="geometry"><option value="auto">Follow family</option><option value="straight">Straight</option><option value="wave">Wavy</option><option value="zigzag">Zigzag</option><option value="jagged">Jagged / fractured</option><option value="stepped">Stepped</option><option value="arc">Sweeping arcs</option><option value="contour">Topographic</option></select></label>
           <label class="field">Stripe construction <select name="motif" data-setting="motif"><option value="auto">Follow family</option><option value="solid">Solid</option><option value="dots">Dots</option><option value="stars">Stars</option><option value="dashes">Dashes</option><option value="diamonds">Diamonds</option><option value="chevrons">Chevrons</option><option value="hatch">Hatching</option><option value="checker">Checkerboard</option></select></label>
         </div>
-        <label class="field range-field pattern-homogeneity"><span>Pattern homogeneity <output for="patternHomogeneity">100%</output></span><input type="range" name="patternHomogeneity" id="patternHomogeneity" data-setting="patternHomogeneity" min="0" max="100" value="100"><small>100% uniform · 0% varied size, rotation and opacity</small></label>
+        <label class="field range-field pattern-homogeneity"><span>Pattern homogeneity </span><input type="range" name="patternHomogeneity" id="patternHomogeneity" data-setting="patternHomogeneity" min="0" max="100" value="100"><small>100% uniform · 0% varied size, rotation and opacity</small></label>
         <div class="section-top"><span class="section-index">02</span><h2>Colour &amp; edges</h2><span class="section-rule"></span></div>
         <div class="control-grid">
           <label class="field">Colour story <select name="palette" data-setting="palette"><option value="auto">Follow family</option><option value="classic">Classic rainbow</option><option value="electric">Electric / neon</option><option value="pastel">Pastel</option><option value="jewel">Jewel tones</option><option value="muted">Muted / vintage</option></select></label>
@@ -35,18 +35,18 @@
         <label class="field">Surface texture <select name="material" data-setting="material"><option value="auto">Follow family</option><optgroup label="Paper"><option value="none">No material (smooth)</option><option value="grain">Fine paper grain</option><option value="watercolor">Watercolour paper</option><option value="construction">Construction paper</option><option value="handmade">Handmade fibrous paper</option><option value="corrugated">Corrugated cardboard</option></optgroup><optgroup label="Textiles"><option value="linen">Linen</option><option value="canvas">Cotton canvas</option><option value="denim">Denim twill</option><option value="knit">Knitted fabric</option><option value="felt">Wool felt</option></optgroup></select></label>
         <label class="field texture-coverage-field">Apply texture to <select name="textureCoverage" data-setting="textureCoverage"><option value="both">Background and stripes</option><option value="background">Background only</option><option value="stripes">Stripes only</option></select></label>
         <div class="control-grid range-grid">
-          <label class="field range-field"><span>Texture strength <output for="textureStrength">52%</output></span><input type="range" name="textureStrength" id="textureStrength" data-setting="textureStrength" min="0" max="100" value="52"></label>
-          <label class="field range-field"><span>Texture scale <output for="textureScale">50%</output></span><input type="range" name="textureScale" id="textureScale" data-setting="textureScale" min="0" max="100" value="50"></label>
+          <label class="field range-field"><span>Texture strength </span><input type="range" name="textureStrength" id="textureStrength" data-setting="textureStrength" min="0" max="100" value="52"></label>
+          <label class="field range-field"><span>Texture scale </span><input type="range" name="textureScale" id="textureScale" data-setting="textureScale" min="0" max="100" value="50"></label>
         </div>
         <div class="section-top"><span class="section-index">04</span><h2>Fine tuning</h2><span class="section-rule"></span></div>
         <div class="control-grid range-grid">
-          <label class="field range-field"><span>Controlled chaos <output for="chaos">36%</output></span><input type="range" name="chaos" id="chaos" data-setting="chaos" min="0" max="100" value="36"></label>
-          <label class="field range-field"><span>Stripe thickness <output for="stripeWidth">52%</output></span><input type="range" name="stripeWidth" id="stripeWidth" data-setting="stripeWidth" min="0" max="100" value="52"></label>
-          <label class="field range-field"><span>Stripe spread <output for="spread">56%</output></span><input type="range" name="spread" id="spread" data-setting="spread" min="0" max="100" value="56"></label>
-          <label class="field range-field"><span>Stripe individuality <output for="individuality">34%</output></span><input type="range" name="individuality" id="individuality" data-setting="individuality" min="0" max="100" value="34"></label>
+          <label class="field range-field"><span>Controlled chaos </span><input type="range" name="chaos" id="chaos" data-setting="chaos" min="0" max="100" value="36"></label>
+          <label class="field range-field"><span>Stripe thickness </span><input type="range" name="stripeWidth" id="stripeWidth" data-setting="stripeWidth" min="0" max="100" value="52"></label>
+          <label class="field range-field"><span>Stripe spread </span><input type="range" name="spread" id="spread" data-setting="spread" min="0" max="100" value="56"></label>
+          <label class="field range-field"><span>Stripe individuality </span><input type="range" name="individuality" id="individuality" data-setting="individuality" min="0" max="100" value="34"></label>
           <label class="homogeneity-override"><input type="checkbox" name="overridePatternHomogeneity" data-setting="overridePatternHomogeneity"><span>Override pattern homogeneity with stripe individuality<small>When enabled, individuality introduces additional per-stripe differences in pattern size, orientation and transparency.</small></span></label>
-          <label class="field range-field"><span>Outline buffer <output for="gap">28%</output></span><input type="range" name="gap" id="gap" data-setting="gap" min="0" max="100" value="28"></label>
-          <label class="field range-field"><span>Neon glow <output for="glow">0%</output></span><input type="range" name="glow" id="glow" data-setting="glow" min="0" max="100" value="0"></label>
+          <label class="field range-field"><span>Outline buffer </span><input type="range" name="gap" id="gap" data-setting="gap" min="0" max="100" value="28"></label>
+          <label class="field range-field"><span>Neon glow </span><input type="range" name="glow" id="glow" data-setting="glow" min="0" max="100" value="0"></label>
         </div>
         
         <p class="control-note">Geometric individuality changes path direction, parallelism, and edge profiles, never stripe pattern types. New variation retains settings; Randomize all changes everything.</p>
@@ -57,7 +57,7 @@
       <div class="randomize-bar"><button id="randomizeAll" class="button button-rainbow button-randomize-all" type="button">✳ <span>Randomize all</span></button><span>Fresh colours, shapes, materials, settings and seed</span></div>
       <div class="studio-stage">
         <div class="stage-inner">
-          <div class="wallpaper-frame"><canvas id="preview" width="600" height="1300" role="img" aria-label="Procedurally generated seven stripe rainbow wallpaper"></canvas><div class="frame-label">PIXEL 6 PRO · PREVIEW</div></div>
+          <div class="wallpaper-frame"><canvas id="preview" width="600" height="1300" role="img" aria-label="Procedurally generated seven stripe rainbow wallpaper"></canvas></div>
           <div class="stage-side"><span class="side-vertical">SEVEN COLOURS / ONE BLACK CANVAS</span><div class="palette-stack" aria-label="Red orange yellow green blue indigo violet"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div></div>
         </div>
       </div>
