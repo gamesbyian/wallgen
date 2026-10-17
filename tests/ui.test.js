@@ -58,7 +58,7 @@ test('Light & Shadow is part of Colour, uses existing locks, and is explained cl
   }
   assert.match(colour,/Light &amp; shadow/);
   assert.match(css,/\.lighting-subsection/);
-  assert.match(readme,/Light & shadow \(Colour tab\)/);
+  assert.match(readme,/Ambient light & shade \(Colour tab\)/);
 });
 
 test('public domain licence and documentation acknowledge ChatGPT and unrestricted use',()=>{
@@ -70,4 +70,20 @@ test('public domain licence and documentation acknowledge ChatGPT and unrestrict
   assert.match(readme,/made by its project creator with \*\*ChatGPT\*\*/i);
   assert.match(readme,/\*\*claims no ownership/i);
   assert.match(readme,/\*\*for any purpose\*\*/i);
+});
+
+test('lock controls use two consistent line-art SVG states, not emoji',()=>{
+  assert.match(app,/const LOCK_ICON=\{/);
+  assert.match(app,/locked:'<svg viewBox="0 0 24 24"/);
+  assert.match(app,/unlocked:'<svg viewBox="0 0 24 24"/);
+  assert.match(app,/button\.innerHTML=locked\.has\(key\)\?LOCK_ICON\.locked:LOCK_ICON\.unlocked/);
+  assert.doesNotMatch(app,/button\.textContent=locked\.has\(key\)\?'🔒'/);
+  assert.match(css,/\.setting-lock svg\{display:block/);
+  assert.match(html,/Use the lock beside each setting/);
+});
+test('texture relief and ambient canvas illumination are described accurately',()=>{
+  assert.match(html,/Gently roughen|Distort the actual stripe contours/);
+  assert.match(html,/Canvas shade/);
+  assert.match(html,/No stripe drop shadows/);
+  assert.match(readme,/No shadows are cast by stripe silhouettes/);
 });

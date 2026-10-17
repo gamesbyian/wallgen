@@ -16,7 +16,8 @@ const previewLayers={background:null,ink:null,scene:null,key:null};
 const settingLockButtons=new Map();
 const autos=['family','orientation','geometry','motif','palette','material','outline'];
 function artKey(recipe){
-  const {positionX,positionY,lockedSettings,primesOnly,...art}=normalizeRecipe(recipe);
+  const {positionX,positionY,lockedSettings,primesOnly,
+    lightingMood,lightDirection,lightStrength,shadowStrength,...art}=normalizeRecipe(recipe);
   return JSON.stringify(art);
 }
 let noticeTimer = 0;
@@ -317,11 +318,15 @@ function installSettingLocks(){
   makeSettingLock('seed',seedRow);
   makeSettingLock('position',document.querySelector('.positioner-description'));
 }
+const LOCK_ICON={
+  locked:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>',
+  unlocked:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0"/></svg>',
+};
 function syncSettingLocks(){
   const locked=new Set(current.lockedSettings);
   for(const [key,buttons] of settingLockButtons){
     for(const button of buttons){
-      button.textContent=locked.has(key)?'🔒':'🔓';
+      button.innerHTML=locked.has(key)?LOCK_ICON.locked:LOCK_ICON.unlocked;
       button.setAttribute('aria-pressed',String(locked.has(key)));
       button.setAttribute('aria-label',(locked.has(key)?'Unlock ':'Lock ')+key);
       button.title=locked.has(key)?'Locked. Click to allow changes.':'Unlocked. Click to protect this setting.';

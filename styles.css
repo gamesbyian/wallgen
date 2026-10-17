@@ -351,3 +351,10 @@
 .metadata-persist input{accent-color:#bb9ef7}
 @media(max-width:790px){.metadata-panel{padding:11px 9px}.metadata-fields{grid-template-columns:minmax(0,1fr)}
  .metadata-fields .metadata-wide{grid-column:auto}}
+
+/* One coherent pair of line-art padlocks, replacing platform-specific emoji. */
+.setting-lock{color:#b7b9c8;line-height:1;transition:background .13s,border-color .13s,color .13s}
+.setting-lock svg{display:block;width:16px;height:16px;stroke:currentColor;fill:none;flex-shrink:0}
+.setting-lock.is-locked{color:#dfd2ff;border-color:#9980ce;background:#302a49}
+.setting-lock:hover{color:#fff}
+@media(max-width:790px){.setting-lock svg{width:14px;height:14px}}

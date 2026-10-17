@@ -20,7 +20,7 @@ class FakeContext {
     calls.push(['drawImage',this.globalCompositeOperation,this.tag,...args]);
   }
   createPattern(){return '#pattern';}
-  createRadialGradient(){return {addColorStop(){}};}
+  createRadialGradient(...coords){calls.push(['ambientGlow',this.tag,...coords]);return {addColorStop(offset,color){calls.push(['ambientGlowStop',this.tag,offset,color]);}};}
   createLinearGradient(...coords){
     calls.push(['lightingGradient',...coords]);
     return {addColorStop(offset,color){calls.push(['lightingStop',offset,color]);}};
@@ -131,11 +131,14 @@ test('material-informed height field is deterministic, bounded, and disabled by 
   const scene=resolveScene({...base,textureDisplacement:85});
   const stripe=scene.stripes[3];
   assert.equal(textureHeight(none,none.stripes[3],153,1),0);
-  assert.equal(textureHeight(resolveScene({...base,material:'none',textureDisplacement:85}),stripe,153,1),0);
-  assert.equal(textureHeight(resolveScene({...base,textureCoverage:'background',textureDisplacement:85}),stripe,153,1),0);
+  // No active stripe material uses seeded neutral grain instead of a dead slider.
+  const bare=resolveScene({...base,material:'none',textureDisplacement:85});
+  const bgOnly=resolveScene({...base,textureCoverage:'background',textureDisplacement:85});
+  assert.notEqual(textureHeight(bare,bare.stripes[3],153,1),0);
+  assert.notEqual(textureHeight(bgOnly,bgOnly.stripes[3],153,1),0);
   const first=textureHeight(scene,stripe,153,1);
   assert.equal(first,textureHeight(scene,stripe,153,1));
-  const max=Math.min(11,stripe.width*.19)*.85;
+  const max=Math.min(28,stripe.width*.34)*Math.pow(.85,.85);
   assert.ok(Math.abs(first)<=max+1e-10);
   const material=resolveScene({...base,material:'corduroy',textureDisplacement:85});
   assert.notEqual(first,textureHeight(material,material.stripes[3],153,1));
@@ -201,48 +204,65 @@ test('nudge at export dimensions is a scaled bitmap translation, not recapping s
   assert.equal(scene.centerY,base.centerY);
 });
 
-test('lighting is opt-in and draws directional highlight and shadow without new clipping',()=>{
+test('lighting is an ambient wash across the whole canvas with no stripe cast shadows',()=>{
   for(const mood of ['off','daylight','golden','moonlight']){
     calls.length=0;
     const canvas={width:600,height:1300,getContext:()=>new FakeContext('main')};
-    drawWallpaper(canvas,{seed:'light:'+mood,material:'none',motif:'stars',lightingMood:mood,
+    drawWallpaper(canvas,{seed:'ambient:'+mood,material:'none',motif:'stars',lightingMood:mood,
       lightDirection:'top-left',lightStrength:60,shadowStrength:75});
+    assert.equal(calls.some(c=>c[0]==='ambientGlow'&&c[1]==='main'),mood!=='off');
     assert.equal(calls.some(c=>c[0]==='lightingGradient'),mood!=='off');
-    assert.equal(calls.some(c=>c[0]==='lightingShadow'),mood!=='off');
+    assert.ok(!calls.some(c=>c[0]==='lightingShadow'),'no cast shadows');
     assert.ok(!calls.some(c=>c[0]==='clip'));
+    const picture=calls.findLastIndex(c=>c[0]==='drawImage'&&c[2]==='main');
+    const shade=calls.findLastIndex(c=>c[0]==='fillRect'&&c.at(-1)==='main');
+    if(mood!=='off')assert.ok(shade>picture,'ambient wash should be composited after the picture');
   }
 });
-
-test('shadow direction follows the light source and scales to high-resolution export',()=>{
-  for(const [lightDirection,signX,signY] of [
-    ['top-left',1,1],['top-right',-1,1],
-    ['bottom-left',1,-1],['bottom-right',-1,-1],
+test('whole-canvas ambient light direction and shade scale to full export without shadows',()=>{
+  for(const [lightDirection,x,y] of [
+    ['top-left',0,0],['top-right',3024,0],
+    ['bottom-left',0,6552],['bottom-right',3024,6552],
   ]){
     calls.length=0;
     const canvas={width:3024,height:6552,getContext:()=>new FakeContext('main')};
-    drawWallpaper(canvas,{seed:'shadow-'+lightDirection,lightingMood:'golden',
+    drawWallpaper(canvas,{seed:'ambient-'+lightDirection,lightingMood:'golden',
       lightDirection,lightStrength:77,shadowStrength:84});
-    const shadows=calls.filter(c=>c[0]==='lightingShadow');
-    assert.equal(shadows.length,1);
-    assert.equal(Math.sign(shadows[0][2]),signX);
-    assert.equal(Math.sign(shadows[0][3]),signY);
-    assert.ok(shadows[0][1]>4,'shadow should scale with export resolution');
+    assert.ok(calls.some(c=>c[0]==='ambientGlow'&&c[1]==='main'&&c[2]===x&&c[3]===y));
+    assert.ok(calls.some(c=>c[0]==='lightingGradient'&&c[1]===x&&c[2]===y));
+    assert.ok(!calls.some(c=>c[0]==='lightingShadow'));
   }
 });
-
-test('nudging relights no geometry and preserves the same finished lit stripe bitmap',()=>{
+test('nudge reuses immutable geometry while moving under stationary ambient light',()=>{
   const canvas={width:600,height:1300,getContext:()=>new FakeContext('main')};
   const cache={};
-  const recipe={seed:'lit-nudge',lightingMood:'moonlight',lightDirection:'bottom-right',
+  const recipe={seed:'ambient-nudge',lightingMood:'moonlight',lightDirection:'bottom-right',
     lightStrength:63,shadowStrength:57};
   drawWallpaper(canvas,recipe,{cache});
-  assert.ok(cache.ink && cache.background);
+  assert.ok(cache.ink&&cache.background);
   calls.length=0;
   presentNudgedArtwork(canvas,cache,{...recipe,positionX:14,positionY:-6});
-  assert.equal(calls.filter(c=>c[0]==='lightingGradient').length,0);
-  assert.equal(calls.filter(c=>c[0]==='lightingShadow').length,1);
+  assert.equal(calls.filter(c=>c[0]==='ambientGlow'&&c[1]==='main').length,1);
+  assert.equal(calls.filter(c=>c[0]==='lightingGradient').length,1);
+  assert.ok(!calls.some(c=>c[0]==='lightingShadow'));
   const draws=calls.filter(c=>c[0]==='drawImage'&&c[2]==='main');
   assert.deepEqual(draws.map(c=>c.slice(3)),[[0,0],[84,-78]]);
   assert.deepEqual(resolveScene({...recipe,positionX:14,positionY:-6}).stripes,
     resolveScene(recipe).stripes);
+});
+test('texture displacement yields visible bounded silhouette movement with and without texture',()=>{
+  for(const material of ['none','stucco','stone','linen','wood-grain']){
+    const opts={seed:'relief-visibility',material,orientation:'vertical',
+      stripeWidth:55,textureCoverage:'stripes'};
+    const zero=resolveScene({...opts,textureDisplacement:0});
+    const high=resolveScene({...opts,textureDisplacement:100});
+    const stripe=high.stripes[3];
+    const samples=Array.from({length:250},(_,i)=>textureHeight(high,stripe,-750+i*6,1));
+    const magnitude=Math.max(...samples.map(Math.abs));
+    assert.ok(magnitude>Math.min(4,stripe.width*.17),material+' relief too subtle: '+magnitude);
+    assert.ok(samples.every(v=>Math.abs(v)<=Math.min(28,stripe.width*.34)+1e-8));
+    assert.equal(textureHeight(zero,zero.stripes[3],330,1),0);
+    assert.equal(textureHeight(high,stripe,330,1),textureHeight(high,stripe,330,1));
+    assert.deepEqual(high.stripes,zero.stripes);
+  }
 });
