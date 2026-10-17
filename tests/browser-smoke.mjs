@@ -292,8 +292,24 @@ try{
       value:Number(document.querySelector('[name=shapeFrequency]').value),
       scrollLeft:document.getElementById('panel-design').scrollLeft};
   })()`);
+  console.log('SHAPE_SLIDER_BEFORE',JSON.stringify(await evaluate(`(()=>{
+    const target=document.querySelector('[name=shapeFrequency]');
+    const card=target.closest('.mobile-setting-cluster');
+    const pointX=Math.round((target.getBoundingClientRect().left+target.getBoundingClientRect().right)/2);
+    const pointY=Math.round((target.getBoundingClientRect().top+target.getBoundingClientRect().bottom)/2);
+    const hit=document.elementFromPoint(pointX,pointY);
+    return {pointX,pointY,hit:hit?.outerHTML?.slice(0,300),name:hit?.name,
+      disabled:target.disabled,cardScroll:card.scrollTop,cardHeight:card.clientHeight,
+      totalCardHeight:card.scrollHeight,value:target.value,top:target.getBoundingClientRect().top,
+      railScroll:document.getElementById('panel-design').scrollLeft};
+  })()`)));
   await swipe({x:Math.round(slider.left+12),y:slider.y},
               {x:Math.round(slider.right-12),y:slider.y});
+  console.log('SHAPE_SLIDER_AFTER',JSON.stringify(await evaluate(`(()=>{
+    const target=document.querySelector('[name=shapeFrequency]');
+    return {value:target.value,railScroll:document.getElementById('panel-design').scrollLeft,
+      cardScroll:target.closest('.mobile-setting-cluster').scrollTop};
+  })()`)));
   await waitFor(`Number(document.querySelector('[name=shapeFrequency]').value)>${slider.value}`);
   const afterSlider=await evaluate(`({
     value:Number(document.querySelector('[name=shapeFrequency]').value),
