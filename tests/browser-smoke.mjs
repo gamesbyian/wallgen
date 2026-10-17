@@ -559,6 +559,29 @@ try{
   })()`);
   console.log('TOUCH_DOODLE_SMOOTH_GEOMETRIC_UNDO_SUCCESS');
 
+  // Doodle coordinates must still be recipe-space coordinates when the
+  // preview is zoomed; zooming is purely a visual transform, not regeneration.
+  await evaluate('document.querySelector("[data-zoom=in]").click()');
+  await evaluate('document.getElementById("drawPathToggle").click()');
+  const zoomBox=await evaluate(`(()=>{
+    const r=document.getElementById('drawOverlay').getBoundingClientRect();
+    return {left:r.left,top:r.top,width:r.width,height:r.height};
+  })()`);
+  await swipe({x:Math.round(zoomBox.left+zoomBox.width*.31),y:Math.round(zoomBox.top+zoomBox.height*.27)},
+              {x:Math.round(zoomBox.left+zoomBox.width*.67),y:Math.round(zoomBox.top+zoomBox.height*.62)});
+  await waitFor('document.getElementById("drawApply").disabled===false');
+  await evaluate('document.getElementById("drawApply").click()');
+  const zoomedPath=await evaluate(`(()=>{
+    const recipe=JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get('r')));
+    return recipe.customPath[0];
+  })()`);
+  assert.ok(Math.abs(zoomedPath[0]-.31)<.04&&Math.abs(zoomedPath[1]-.27)<.04,
+    'zoomed input must map back into unzoomed wallpaper coordinates');
+  await evaluate('document.getElementById("undo").click()');
+  await evaluate('document.querySelector("[data-zoom=out]").click()');
+  console.log('ZOOMED_FINGER_PATH_COORDINATES_SUCCESS');
+
+
   await evaluate('document.getElementById("mobileEdit").click()');
   await waitFor('document.body.classList.contains("mobile-edit-open")');
   await evaluate(`(()=>{const theme=document.getElementById('studioTheme');
