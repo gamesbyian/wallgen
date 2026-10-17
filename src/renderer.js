@@ -727,8 +727,9 @@ export function drawWallpaper(canvas, recipe, options={}) {
   g.rotate(scene.angle);
   for(const bundleOffset of scene.bundleOffsets){
   for(const original of scene.stripes){
-    const stripe=scene.bundleOffsets.length===1?original:
+    const stripe=scene.bundleOffsets.length===1?{...original}:
       {...original,center:original.center+bundleOffset};
+    if(['tonal','woven'].includes(scene.construction))stripe.lineStyle='continuous';
     balanceStripeEnds(scene,stripe);
     if(stripe.hidden)continue;
     const path=stripePath(stripe,scene.extent,scene);
@@ -739,7 +740,7 @@ export function drawWallpaper(canvas, recipe, options={}) {
     drawOutline(g,path,stripe,scene);
     g.fillStyle=stripe.color;g.strokeStyle=stripe.color;
     fillMotif(g,stripe,scene.extent,scene);
-    drawBrushWear(g,stripe,scene.extent,scene);
+    if(scene.construction!=='woven')drawBrushWear(g,stripe,scene.extent,scene);
   }
   }
   // One scratch buffer is reused for every texture layer and surface.
