@@ -1,0 +1,34 @@
+name: Build logo raster assets
+on:
+  push:
+    branches:
+      - feature/mobile-first-cream-studio
+    paths:
+      - assets/roygbiv-logo.svg
+      - assets/roygbiv-logo-dark.svg
+      - assets/roygbiv-logo-cream.svg
+      - scripts/build-logo-raster.mjs
+      - .github/workflows/logo-raster.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  rasterize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Render deterministic 512px PNG logos
+        run: node scripts/build-logo-raster.mjs
+      - name: Commit raster outputs if changed
+        run: |
+          git add assets/roygbiv-logo-dark.png assets/roygbiv-logo-cream.png
+          if ! git diff --cached --quiet; then
+            git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'Add 512px dark and cream raster logos'
+            git push origin "HEAD:${{ github.head_ref || github.ref_name }}"
+          fi
