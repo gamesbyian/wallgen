@@ -110,7 +110,7 @@ export function resolveScene(recipeInput) {
   const positions = [-spread/2];
   for (const weight of weights) positions.push(positions.at(-1) + spread * weight / sum);
   const avg = spread / 6;
-  const commonDisplacement=avg*.22*chaos;
+  const commonDisplacement=avg*.22*(.3+.7*chaos);
   const widthFactor = (0.12 + 0.79 * recipe.stripeWidth / 100) * profile.width;
   const stripes = positions.map((position, i) => {
     const r = rng(`${recipe.seed}:stripe:${i}`);
@@ -120,7 +120,7 @@ export function resolveScene(recipeInput) {
     const individualGeometry = individuality > .25 && r() < (individuality-.25)*1.15 ? pick(r, GEOMETRIES) : geometry;
     // Motif, palette and material belong to the whole seven-stripe design.
     // Individuality is geometric only. Pattern changes are never selected here.
-    const displacement = Math.min(avg * .32, width * .7 + avg * .08) * chaos;
+    const displacement = Math.min(avg * .32, width * .7 + avg * .08) * (.3 + .7*chaos);
     const phase=between(r,0,Math.PI*2);
     const period=between(r,145,530);
     return {
@@ -129,9 +129,9 @@ export function resolveScene(recipeInput) {
       phase, period, displacement,
       sharedGeometry:geometry, sharedPhase:commonPhase, sharedPeriod:commonPeriod,
       sharedDisplacement:commonDisplacement, parallelMix:individuality,
-      tilt:between(r,-avg*.8,avg*.8)*individuality*chaos,
+      tilt:between(r,-avg*.8,avg*.8)*individuality*(.25+.75*chaos),
       edgePhase:commonEdgePhase+(phase-commonEdgePhase)*individuality,
-      taper:commonTaper+(between(r,0,.36)*chaos-commonTaper)*individuality,
+      taper:commonTaper+(between(r,.04,.36)*(.25+.75*chaos)-commonTaper)*individuality,
       segments:10+Math.floor(r()*17),
       patternScale:between(r,.7,1.25), patternPhase:r()*120,
       jitterSeed:`${recipe.seed}-noise-${i}`,
