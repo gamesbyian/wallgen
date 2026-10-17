@@ -40,8 +40,8 @@
     overscroll-behavior:contain;
     touch-action:pan-x!important;
     scroll-snap-stop:normal!important;
-    padding:4px 7px!important;
-    gap:2px!important;
+    padding:2px 7px!important;
+    gap:1px!important;
     display:flex!important;flex-direction:column;justify-content:center;
   }
   body.mobile-studio .sidebar .settings-panel .mobile-setting-cluster[hidden]{
