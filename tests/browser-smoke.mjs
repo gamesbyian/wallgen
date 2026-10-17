@@ -112,6 +112,11 @@ try{
   assert.equal(guide.pressed,'true');assert.equal(guide.hidden,false);
   assert.ok(Math.abs(guide.ratioW-.9)<.01&&Math.abs(guide.ratioH-.9)<.01);
   assert.ok(guide.untouched&&guide.off,'Bleed is a reversible preview-only outline');
+  await waitFor(`(()=>{
+    const rail=document.getElementById('mobileEditorActionRail').getBoundingClientRect();
+    const edit=document.getElementById('mobileDesignSheet').getBoundingClientRect();
+    return Math.abs(rail.top-edit.top)<3;
+  })()`,3000);
   const sideRail=await evaluate(`(()=>{
     const rail=document.getElementById('mobileEditorActionRail').getBoundingClientRect();
     const edit=document.getElementById('mobileDesignSheet').getBoundingClientRect();
