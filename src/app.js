@@ -8,14 +8,14 @@ const gallery = document.getElementById('gallery');
 const notice = document.getElementById('notice');
 const favoriteButton = document.getElementById('favorite');
 const FAVORITES_KEY = 'wallgen:favorites:v1';
-const FIELDS = ['family','orientation','geometry','motif','palette','material','outline','background','textureCoverage','textureRotation','textureBlend','textureLayer2Enabled','material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2','textureLayer3Enabled','material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3','chaos','stripeWidth','spread','textureStrength','textureScale','textureDisplacement','individuality','patternHomogeneity','overridePatternHomogeneity','gap','glow'];
+const FIELDS = ['primesOnly','family','orientation','geometry','motif','palette','material','outline','background','textureCoverage','textureRotation','textureBlend','textureLayer2Enabled','material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2','textureLayer3Enabled','material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3','chaos','stripeWidth','spread','textureStrength','textureScale','textureDisplacement','individuality','patternHomogeneity','overridePatternHomogeneity','gap','glow'];
 let current = normalizeRecipe();
 let currentScene;
 const previewLayers={background:null,ink:null,scene:null,key:null};
 const settingLockButtons=new Map();
 const autos=['family','orientation','geometry','motif','palette','material','outline'];
 function artKey(recipe){
-  const {positionX,positionY,lockedSettings,...art}=normalizeRecipe(recipe);
+  const {positionX,positionY,lockedSettings,primesOnly,...art}=normalizeRecipe(recipe);
   return JSON.stringify(art);
 }
 let noticeTimer = 0;
@@ -312,6 +312,40 @@ function syncSettingLocks(){
 }
 installSettingLocks();
 
+// Four real keyboard-accessible tabs. Their selection is a view preference,
+// never part of the design recipe and never triggers image regeneration.
+const settingsTabs=Array.from(document.querySelectorAll('.settings-tab'));
+const TAB_NAMES=settingsTabs.map(button=>button.dataset.tab);
+function activateSettingsTab(tabName,{focus=false}={}){
+  const name=TAB_NAMES.includes(tabName)?tabName:TAB_NAMES[0];
+  for(const button of settingsTabs){
+    const active=button.dataset.tab===name;
+    button.setAttribute('aria-selected',String(active));
+    button.tabIndex=active?0:-1;
+    const panel=document.getElementById(button.getAttribute('aria-controls'));
+    panel.hidden=!active;
+    if(active && focus)button.focus();
+  }
+  try{sessionStorage.setItem('wallgen:settings-tab:v1',name);}catch{}
+}
+for(const button of settingsTabs){
+  button.addEventListener('click',()=>activateSettingsTab(button.dataset.tab));
+  button.addEventListener('keydown',event=>{
+    const index=TAB_NAMES.indexOf(button.dataset.tab);
+    let target;
+    if(event.key==='ArrowRight')target=TAB_NAMES[(index+1)%TAB_NAMES.length];
+    else if(event.key==='ArrowLeft')target=TAB_NAMES[(index-1+TAB_NAMES.length)%TAB_NAMES.length];
+    else if(event.key==='Home')target=TAB_NAMES[0];
+    else if(event.key==='End')target=TAB_NAMES.at(-1);
+    else return;
+    event.preventDefault();
+    activateSettingsTab(target,{focus:true});
+  });
+}
+let rememberedTab='design';
+try{rememberedTab=sessionStorage.getItem('wallgen:settings-tab:v1')||'design';}catch{}
+activateSettingsTab(rememberedTab);
+
 let rangeTimeout;
 form.addEventListener('input',event=>{
   const key=event.target.name;
@@ -336,7 +370,7 @@ seedInput.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preve
 document.getElementById('applySeed').addEventListener('click',()=>render(fromControls()));
 document.getElementById('randomize').addEventListener('click',()=>changeRecipe({...fromControls(),seed:newSeed()}));
 document.getElementById('randomizeAll').addEventListener('click',()=>{
-  changeRecipe(randomizeAllRecipe());
+  changeRecipe(randomizeAllRecipe({primesOnly:current.primesOnly}));
 });
 for(const n of [2,3]){
   document.getElementById('addTextureLayer'+n).addEventListener('click',()=>{
