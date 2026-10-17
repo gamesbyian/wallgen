@@ -1,5 +1,6 @@
 import { OUTPUT_WIDTH, OUTPUT_HEIGHT, normalizeRecipe, resolveScene, encodeRecipe, decodeRecipe, newSeed, randomizeAllRecipe, respectSettingLocks, LOCKABLE_SETTINGS } from './model.js';
 import { drawWallpaper, presentNudgedArtwork } from './renderer.js';
+import { embedPngMetadata, cleanMetadata, METADATA_FIELDS } from './png-metadata.js';
 
 const form = document.getElementById('controls');
 const preview = document.getElementById('preview');
@@ -164,6 +165,42 @@ function setBusy(button,busy,label) {
   if(busy){button.dataset.previous=button.innerHTML;button.textContent=label;}
   else if(button.dataset.previous){button.innerHTML=button.dataset.previous;delete button.dataset.previous;}
 }
+const metadataPanel=document.getElementById('metadataPanel');
+const metadataToggle=document.getElementById('metadataToggle');
+const rememberMetadata=document.getElementById('metadataRemember');
+const METADATA_STORE='wallgen:export-metadata:v1';
+function metadataValues(){
+  return cleanMetadata(Object.fromEntries(METADATA_FIELDS.map(key=>[key,metadataPanel.querySelector('[name="'+key+'"]').value])));
+}
+function syncMetadataStorage(){
+  try{
+    if(rememberMetadata.checked)localStorage.setItem(METADATA_STORE,JSON.stringify(metadataValues()));
+    else localStorage.removeItem(METADATA_STORE);
+  }catch{showNotice('Metadata storage is unavailable in this browser.');}
+}
+metadataToggle.addEventListener('click',()=>{
+  const open=metadataPanel.hidden;
+  metadataPanel.hidden=!open;
+  metadataToggle.setAttribute('aria-expanded',String(open));
+  metadataToggle.textContent=(open?'▾':'▸')+' Edit image metadata';
+});
+metadataPanel.addEventListener('input',syncMetadataStorage);
+rememberMetadata.addEventListener('change',syncMetadataStorage);
+document.getElementById('metadataClear').addEventListener('click',()=>{
+  for(const key of METADATA_FIELDS){
+    metadataPanel.querySelector('[name="'+key+'"]').value=key==='software'?'Wallgen · Made with ChatGPT':'';
+  }
+  syncMetadataStorage();
+});
+try{
+  const stored=JSON.parse(localStorage.getItem(METADATA_STORE)||'null');
+  if(stored&&typeof stored==='object'){
+    const values=cleanMetadata(stored);
+    for(const key of METADATA_FIELDS)if(key in values)metadataPanel.querySelector('[name="'+key+'"]').value=values[key];
+    rememberMetadata.checked=true;
+  }
+}catch{}
+
 async function downloadPNG(){
   const button=document.getElementById('download');
   setBusy(button,true,'Rendering 19.8 MP…');
@@ -173,8 +210,11 @@ async function downloadPNG(){
     big=document.createElement('canvas');big.width=OUTPUT_WIDTH;big.height=OUTPUT_HEIGHT;
     drawWallpaper(big,current);
     const blob=await new Promise((resolve,reject)=>big.toBlob(b=>b?resolve(b):reject(new Error('PNG encoding failed')),'image/png'));
-    downloadBlob(blob,`wallgen-${safeFilename(current.seed)}-${OUTPUT_WIDTH}x${OUTPUT_HEIGHT}.png`);
-    showNotice(`Exported ${OUTPUT_WIDTH} × ${OUTPUT_HEIGHT} PNG.`);
+    const metadata=metadataValues();
+    const result=Object.keys(metadata).length?
+      new Blob([embedPngMetadata(await blob.arrayBuffer(),metadata)],{type:'image/png'}):blob;
+    downloadBlob(result,`wallgen-${safeFilename(current.seed)}-${OUTPUT_WIDTH}x${OUTPUT_HEIGHT}.png`);
+    showNotice(`Exported ${OUTPUT_WIDTH} × ${OUTPUT_HEIGHT} PNG with embedded metadata.`);
   }catch(error){console.error(error);showNotice(`Export failed: ${error.message}`);}
   finally { if(big){big.width=0;big.height=0;}setBusy(button,false); }
 }
