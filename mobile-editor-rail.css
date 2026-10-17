@@ -63,7 +63,7 @@
     flex:0 0 58%;border-radius:7px;
   }
   body.mobile-studio .sidebar .settings-panel .mobile-setting-cluster .field.range-field{
-    display:grid!important;grid-template-columns:100px minmax(0,1fr);
+    display:grid!important;grid-template-columns:88px minmax(0,1fr);
     gap:5px!important;
     grid-template-rows:minmax(24px,auto);
   }
@@ -75,24 +75,27 @@
     height:23px!important;min-height:23px!important;
     touch-action:none!important;
   }
-  /* Each slider's existing stepper becomes a single compact track+number
-     row on phones. The +/- buttons remain in the DOM for desktop and keyboard,
-     but don't force extra rows or hide the next related control. */
+  /* Use the same actual stepper on desktop and phones: no hidden buttons.
+     Keep both controls and number readable in each no-scroll swipe card. */
   body.mobile-studio .sidebar .settings-panel .mobile-setting-cluster .field.range-field>.stepper{
     grid-column:2!important;grid-row:1!important;
     display:flex!important;align-items:center;
     width:100%!important;min-width:0;min-height:25px;height:25px;
-    gap:4px!important;margin:0!important;padding:0!important;
+    gap:2px!important;margin:0!important;padding:0!important;
   }
   body.mobile-studio .sidebar .settings-panel .mobile-setting-cluster .stepper>.step-button{
-    display:none!important;
+    display:flex!important;align-items:center;justify-content:center;
+    flex:0 0 21px!important;width:21px!important;min-width:21px!important;
+    max-width:21px!important;height:24px!important;min-height:24px!important;
+    padding:0!important;font-size:13px!important;line-height:1;
+    border-radius:5px;
   }
   body.mobile-studio .sidebar .settings-panel .mobile-setting-cluster .stepper>input[type=range]{
     display:block!important;flex:1 1 auto;min-width:0;width:auto!important;
     height:23px!important;min-height:23px!important;
   }
   body.mobile-studio .sidebar .settings-panel .mobile-setting-cluster .stepper>.slider-number{
-    flex:0 0 39px;width:39px!important;max-width:39px!important;
+    flex:0 0 35px;width:35px!important;max-width:35px!important;
     height:24px!important;min-height:24px!important;
     padding:1px 3px!important;font-size:10px!important;
   }
