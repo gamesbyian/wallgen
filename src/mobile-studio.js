@@ -10,8 +10,8 @@ function setTheme(name){
   if(meta)meta.content=theme==='cream'?'#f8f3e9':'#08090e';
   try{localStorage.setItem(THEME_KEY,theme);}catch{}
 }
-let remembered='dark';
-try{remembered=localStorage.getItem(THEME_KEY)||'dark';}catch{}
+let remembered='cream';
+try{remembered=localStorage.getItem(THEME_KEY)||'cream';}catch{}
 setTheme(remembered);
 select.addEventListener('change',()=>setTheme(select.value));
 
@@ -45,6 +45,7 @@ function closeSurfaces({restoreFocus=true}={}){
     document.body.classList.contains('mobile-tools-open');
   document.body.classList.remove('mobile-edit-open','mobile-gallery-open','mobile-tools-open');
   design.removeAttribute('aria-modal');
+  design.removeAttribute('role');
   tools.hidden=true;backstage.hidden=true;
   editBtn.setAttribute('aria-expanded','false');
   exploreBtn.setAttribute('aria-expanded','false');
@@ -61,6 +62,7 @@ function openSurface(type){
   backstage.hidden=false;
   if(type==='edit'){
     editBtn.setAttribute('aria-expanded','true');
+    design.setAttribute('role','dialog');
     design.setAttribute('aria-modal','true');
     document.getElementById('mobileDesignClose').focus();
   }else if(type==='gallery'){
@@ -73,6 +75,10 @@ function openSurface(type){
     document.getElementById('mobileToolsClose').focus();
   }
 }
+// A variation selection closes its sheet so the newly loaded wallpaper is visible.
+gallery.addEventListener('click',event=>{
+  if(event.target.closest('.thumb'))closeSurfaces({restoreFocus:false});
+});
 editBtn.addEventListener('click',()=>openSurface('edit'));
 exploreBtn.addEventListener('click',()=>openSurface('gallery'));
 moreBtn.addEventListener('click',()=>openSurface('tools'));
