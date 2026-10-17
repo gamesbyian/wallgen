@@ -296,7 +296,7 @@ try{
     assert.ok(bounds.selectedToolVisible,'active tool name stays visible in the horizontal rail');
     assert.ok(bounds.toolbarInside,'top-level controls must stay inside their toolbar');
     assert.ok(bounds.selectorCount>=6,'Material tool controls must be present');
-    const materialState=await evaluate('(()=>({active:!document.querySelector("[name=material2]").disabled,addButtons:document.querySelectorAll(".add-texture-layer").length,rotations:[1,2,3].map(n=>{const card=document.querySelector("[data-editor-tool=finish"+n+"]");const node=card.querySelector(".texture-rotation-field");return {label:node.querySelector("span").getBoundingClientRect(),input:node.querySelector("input[type=number]").getBoundingClientRect(),row:node.getBoundingClientRect()};})}))()');
+    const materialState=await evaluate('(()=>({active:!document.querySelector("[name=material2]").disabled,addButtons:document.querySelectorAll(".add-texture-layer").length,rotations:[1,2,3].map(n=>{const node=document.querySelector("[name=textureRotation"+(n===1?"":n)+"]").closest(".texture-rotation-field");return {label:node.querySelector("span").getBoundingClientRect(),input:node.querySelector("input[type=number]").getBoundingClientRect(),row:node.getBoundingClientRect()};})}))()');
     assert.ok(materialState.active&&materialState.addButtons===0);
     for(const rot of materialState.rotations){
       assert.ok(rot.input.top>=rot.row.top-2&&rot.input.bottom<=rot.row.bottom+2,
