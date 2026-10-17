@@ -666,8 +666,12 @@ function drawOutline(ctx,path,stripe,scene) {
   // the gap does not alter stroke thickness.
   ctx.lineWidth=2*(buffer+width);ctx.stroke(path);
   if(buffer>0){
-    ctx.strokeStyle=scene.background==='white'?'#fff':'#000';
+    // Cut the spacing out of the transparent stripe ink. This reveals the
+    // real background (including paper/grain textures), not an opaque painted
+    // white/black surrogate that would hide the material beneath.
+    ctx.globalCompositeOperation='destination-out';
     ctx.lineWidth=2*buffer;ctx.stroke(path);
+    ctx.globalCompositeOperation='source-over';
   }
   if(style==='double'&&buffer===0){
     ctx.strokeStyle=colour;ctx.lineWidth=.95;ctx.stroke(path);
