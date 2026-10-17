@@ -103,6 +103,9 @@ function inactiveSettingKeys(recipe,scene){
     inactive.add('shapeFrequency'),inactive.add('shapeDepth');
   if(scene.geometry==='drawn')inactive.add('orientation');
   if(scene.geometry!=='hairpin')inactive.add('turnRadius'),inactive.add('hairpinAngle');
+  if(scene.geometry!=='stepped')inactive.add('stepCount');
+  if(scene.geometry!=='chevron')inactive.add('chevronSharpness');
+  if(scene.geometry!=='loops')inactive.add('loopAspect');
   if(recipe.composition!=='repeat')inactive.add('repeatCount'),inactive.add('repeatSpacing');
   if(recipe.composition!=='floating')inactive.add('pathLength');
   if(recipe.construction!=='tonal')inactive.add('tonalContrast');
