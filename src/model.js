@@ -73,7 +73,7 @@ export function normalizeRecipe(input = {}) {
     textureRotation2: normalizeRotation(input.textureRotation2),
     textureCoverage2: coverageChoice(input.textureCoverage2),
     textureBlend2: blendChoice(input.textureBlend2),
-    textureLayer3Enabled: input.textureLayer3Enabled === true || input.textureLayer3Enabled === 'true',
+    textureLayer3Enabled: (input.textureLayer2Enabled === true || input.textureLayer2Enabled === 'true') && (input.textureLayer3Enabled === true || input.textureLayer3Enabled === 'true'),
     material3: materialChoice(input.material3, 'none'),
     textureStrength3: finiteRange(input.textureStrength3, 30, 0, 100),
     textureScale3: finiteRange(input.textureScale3, 50, 0, 100),
