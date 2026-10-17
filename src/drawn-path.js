@@ -23,7 +23,8 @@ export function normalizeDrawnPath(input){
   const length=points.slice(1).reduce((sum,p,i)=>sum+distance(p,points[i]),0);
   if(length<35)return [];
   // Keep stored and imported paths bounded without truncating their endpoint.
-  return points.length>MAX_DRAWN_POINTS?resamplePath(points,MAX_DRAWN_POINTS):points;
+  const reduced=points.length>MAX_DRAWN_POINTS?resamplePath(points,MAX_DRAWN_POINTS):points;
+  return reduced.map(([x,y])=>[round(x),round(y)]);
 }
 
 export function resamplePath(points,count){
