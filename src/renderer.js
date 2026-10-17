@@ -1,40 +1,19 @@
 import { DESIGN_WIDTH, DESIGN_HEIGHT, resolveScene, rng } from './model.js';
+import { samplePath, ribbonEdge, widthAt } from './path-geometry.js';
 
 const TAU = Math.PI * 2;
-const fract = (v) => v - Math.floor(v);
-const lerp = (a,b,t) => a + (b-a)*t;
-const noise1D = (x, seed) => {
-  const i = Math.floor(x);
-  const hash = j => fract(Math.sin(j * 127.1 + seed * 311.7) * 43758.5453) * 2 - 1;
-  return lerp(hash(i), hash(i+1), fract(x));
+const lerp=(a,b,t)=>a+(b-a)*t;
+const fract=v=>v-Math.floor(v);
+const noise1D=(x,seed)=>{
+  const i=Math.floor(x);
+  const hash=j=>fract(Math.sin(j*127.1+seed*311.7)*43758.5453)*2-1;
+  return lerp(hash(i),hash(i+1),fract(x));
 };
-function displacement(x, stripe, extent) {
-  const {geometry:g, phase, period, displacement:d} = stripe;
-  const t = x / period + phase / TAU;
-  if(g === 'straight') return 0;
-  if(g === 'wave') return d * (Math.sin(t * TAU) * .78 + Math.sin(t * TAU * .43 + phase) * .22);
-  if(g === 'zigzag') return d * (2 * Math.abs(2 * fract(t) - 1) - 1);
-  // A distinctive sharp, narrow V instead of zigzag's even triangular peaks.
-  if(g === 'chevron') return d * (1 - 2*Math.pow(Math.abs(2*fract(t)-1),.55));
-  if(g === 'jagged') return d * (noise1D(x / (period * 0.33), phase) * .85 + .15 * Math.sin(t * TAU));
-  if(g === 'stepped') return d * (Math.floor(fract(t)*4)/2 - .75);
-  if(g === 'arc') return d * (Math.pow(x/extent,2)*3.8 - .6);
-  return d * (Math.sin(t*TAU*.42)*.35 + Math.sin(t*TAU*.79+phase)*.4 + Math.sin(t*TAU*1.33)*.25);
-}
-function widthAt(x,stripe,extent) {
-  const t = x / extent;
-  return stripe.width * Math.max(0.3, 1 + stripe.taper * (Math.sin(t*TAU*1.4 + (stripe.edgePhase??stripe.phase))*.7 + t*.3));
-}
-function geometryAt(x,stripe,extent) {
-  const shared=displacement(x,{
-    geometry:stripe.sharedGeometry??stripe.geometry,
-    phase:stripe.sharedPhase??stripe.phase,
-    period:stripe.sharedPeriod??stripe.period,
-    displacement:stripe.sharedDisplacement??stripe.displacement,
-  },extent);
-  return stripe.center + lerp(shared,displacement(x,stripe,extent),stripe.parallelMix??1)
-    + (stripe.tilt??0)*x/extent;
-}
+const geometryAt=(x,stripe,extent)=>samplePath(stripe,x,extent).y;
+const edgePoint=(x,stripe,extent,side,scene)=>
+  ribbonEdge(stripe,x,extent,side,scene?textureHeight(scene,stripe,x,side):0);
+const edgeAt=(x,stripe,extent,side,scene)=>edgePoint(x,stripe,extent,side,scene).y;
+const spatialGeometry=stripe=>['hairpin','loops'].includes(stripe.sharedGeometry??stripe.geometry);
 // A procedural height field makes the actual texture material affect ribbon edges.
 // Separate low/high-frequency noise bands evoke fibres, pores, grain and stone.
 // This modifies geometry rather than offsetting the colour mask after painting.
@@ -122,12 +101,13 @@ function cachedLineMarks(stripe,extent){
 function traceStripeSegment(path,stripe,extent,scene,start,end){
   const count=Math.max(12,Math.ceil((end-start)/3));
   for(let i=0;i<=count;i++){
-    const x=start+(end-start)*i/count,y=edgeAt(x,stripe,extent,-1,scene);
-    if(i===0)path.moveTo(x,y);else path.lineTo(x,y);
+    const x=start+(end-start)*i/count,p=edgePoint(x,stripe,extent,-1,scene);
+    if(i===0)path.moveTo(p.x,p.y);else path.lineTo(p.x,p.y);
   }
   for(let i=count;i>=0;i--){
     const x=start+(end-start)*i/count;
-    path.lineTo(x,edgeAt(x,stripe,extent,1,scene));
+    const p=edgePoint(x,stripe,extent,1,scene);
+    path.lineTo(p.x,p.y);
   }
   path.closePath();
 }
@@ -137,19 +117,24 @@ function stripePath(stripe,extent,scene){
   if(marks){
     for(const mark of marks){
       if(mark.type==='dash')traceStripeSegment(path,stripe,extent,scene,mark.start,mark.end);
-      else path.arc(mark.x,geometryAt(mark.x,stripe,extent),mark.radius,0,TAU);
+      else {
+        const p=samplePath(stripe,mark.x,extent);
+        path.moveTo(p.x+mark.radius,p.y);
+        path.arc(p.x,p.y,mark.radius,0,TAU);
+      }
     }
   }else{
     const start=stripe.segmentStart??-extent,end=stripe.segmentEnd??extent;
     // The original continuous fill is unchanged for existing saved recipes.
     const count=Math.max(500,Math.ceil((end-start)/3));
     for(let i=0;i<=count;i++){
-      const x=start+(end-start)*i/count,y=edgeAt(x,stripe,extent,-1,scene);
-      if(i===0)path.moveTo(x,y);else path.lineTo(x,y);
+      const x=start+(end-start)*i/count,p=edgePoint(x,stripe,extent,-1,scene);
+      if(i===0)path.moveTo(p.x,p.y);else path.lineTo(p.x,p.y);
     }
     for(let i=count;i>=0;i--){
       const x=start+(end-start)*i/count;
-      path.lineTo(x,edgeAt(x,stripe,extent,1,scene));
+      const p=edgePoint(x,stripe,extent,1,scene);
+      path.lineTo(p.x,p.y);
     }
     path.closePath();
   }
@@ -161,8 +146,8 @@ function traceEdge(stripe, extent, side, scene) {
   const count=Math.max(500,Math.ceil((end-start)/3));
   for(let i=0;i<=count;i++){
     const x=start+(end-start)*i/count;
-    const y=edgeAt(x,stripe,extent,side,scene);
-    if(i===0) path.moveTo(x,y); else path.lineTo(x,y);
+    const p=edgePoint(x,stripe,extent,side,scene);
+    if(i===0) path.moveTo(p.x,p.y); else path.lineTo(p.x,p.y);
   }
   return path;
 }
@@ -177,7 +162,8 @@ function ribbonPoint(scene,x,y) {
     y:scene.mirrorVertical?DESIGN_HEIGHT-py:py};
 }
 function endpoints(scene,stripe,x) {
-  return [ribbonPoint(scene,x,edgeAt(x,stripe,scene.extent,-1,scene)),ribbonPoint(scene,x,edgeAt(x,stripe,scene.extent,1,scene))];
+  const low=edgePoint(x,stripe,scene.extent,-1,scene),high=edgePoint(x,stripe,scene.extent,1,scene);
+  return [ribbonPoint(scene,low.x,low.y),ribbonPoint(scene,high.x,high.y)];
 }
 function contactSegment(scene,contacts,p,q) {
   const hit=(t,at,other,low,high)=>t>=0&&t<=1&&other>=low-1e-7&&other<=high+1e-7;
@@ -206,6 +192,10 @@ export function stripeFrameContacts(scene,stripe) {
   return contacts;
 }
 export function balanceStripeEnds(scene,stripe) {
+  // A returning path legitimately has both ends at the same frame edge.
+  // Paired contacts for a hairpin are intentional rather than a lone crop.
+  if(spatialGeometry(stripe) && (stripe.sharedGeometry??stripe.geometry)==='hairpin')
+    return {contacts:stripeFrameContacts(scene,stripe),balanced:true,hidden:false};
   const contacts=stripeFrameContacts(scene,stripe);
   const balanced=(contacts.left===contacts.right && contacts.top===contacts.bottom);
   if(balanced)return {contacts,balanced:true,hidden:false};
@@ -252,6 +242,20 @@ function stampStar(ctx,x,y,r,points=5) {
 export function motifFits(stripe,scene,x,y,halfX,halfY,extent=scene.extent) {
   if(stripe.hidden || x-halfX < (stripe.segmentStart??-extent) || x+halfX > (stripe.segmentEnd??extent)) return false;
   const margin=.12;
+  if(spatialGeometry(stripe)){
+    const p=samplePath(stripe,x,extent);
+    const transverse=y-p.y;
+    if(Math.abs(transverse)+Math.max(halfX,halfY)>=widthAt(stripe,x,extent)/2)return false;
+    const at=ribbonPoint(scene,p.x+p.nx*transverse,p.y+p.ny*transverse);
+    const bounds=scene.renderBounds||{left:0,top:0,right:DESIGN_WIDTH,bottom:DESIGN_HEIGHT};
+    const radius=Math.max(halfX,halfY);
+    const inside=at.x-radius>=0&&at.x+radius<=DESIGN_WIDTH&&
+      at.y-radius>=0&&at.y+radius<=DESIGN_HEIGHT;
+    const outside=at.x+radius<0||at.x-radius>DESIGN_WIDTH||
+      at.y+radius<0||at.y-radius>DESIGN_HEIGHT;
+    return (inside||outside)&&at.x-radius>=bounds.left&&at.x+radius<=bounds.right&&
+      at.y-radius>=bounds.top&&at.y+radius<=bounds.bottom;
+  }
   for(let i=0;i<=8;i++){
     const testX=x-halfX+halfX*i/4;
     const low=edgeAt(testX,stripe,extent,-1,scene);
@@ -307,7 +311,64 @@ export function motifVariation(scene,stripe,random) {
     opacity:Math.max(.16,stripeOpacity*(1-random()*.75*variance)),
   };
 }
+// Tonal fills, woven lattice and pen strokes use the exact same path geometry
+// as ribbons, dots and dashes. No independent geometry implementations.
+function traceCentre(stripe,extent,offset=0){
+  const path=new Path2D();
+  const start=stripe.segmentStart??-extent,end=stripe.segmentEnd??extent;
+  const n=Math.max(180,Math.ceil((end-start)/2.2));
+  for(let i=0;i<=n;i++){
+    const p=samplePath(stripe,start+(end-start)*i/n,extent);
+    const x=p.x+p.nx*offset*stripe.width,y=p.y+p.ny*offset*stripe.width;
+    if(!i)path.moveTo(x,y);else path.lineTo(x,y);
+  }
+  return path;
+}
+function drawConstruction(ctx,stripe,extent,scene){
+  const kind=scene.construction;
+  const ribbon=stripePath(stripe,extent,scene);
+  if(kind==='stroke'){
+    ctx.fill(ribbon);
+    return true;
+  }
+  if(kind==='tonal'){
+    ctx.fill(ribbon);
+    const contrast=scene.tonalContrast/100;
+    for(const [offset,light,alpha] of [[-.29,true,.23],[0,false,.16],[.27,true,.17]]){
+      ctx.save();ctx.lineCap='round';ctx.lineJoin='round';
+      ctx.lineWidth=stripe.width*(offset===0?.20:.16);
+      ctx.strokeStyle=light?'#fff':'#000';
+      ctx.globalAlpha=alpha*contrast;
+      ctx.stroke(traceCentre(stripe,extent,offset));
+      ctx.restore();
+    }
+    return true;
+  }
+  if(kind==='woven'){
+    const step=Math.max(12,stripe.width*.63);
+    ctx.save();ctx.strokeStyle=stripe.color;
+    ctx.lineWidth=Math.max(.9,stripe.width*.11);
+    ctx.lineCap='square';
+    const start=stripe.segmentStart??-extent,end=stripe.segmentEnd??extent;
+    const bands=4;
+    for(let x=start+step;x<end-step;x+=step){
+      const flip=Math.floor((x-start)/step)%2===0?1:-1;
+      for(let j=0;j<bands;j++){
+        const from=samplePath(stripe,x,extent),to=samplePath(stripe,x+step*.83,extent);
+        const o1=-.42+j*.23,o2=o1+flip*.20;
+        const a={x:from.x+from.nx*stripe.width*o1,y:from.y+from.ny*stripe.width*o1};
+        const b={x:to.x+to.nx*stripe.width*o2,y:to.y+to.ny*stripe.width*o2};
+        if(Math.abs(o2)>.49)continue;
+        ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
+      }
+    }
+    ctx.restore();
+    return true;
+  }
+  return false;
+}
 function fillMotif(ctx,stripe,extent,scene) {
+  if(drawConstruction(ctx,stripe,extent,scene))return;
   const motif=stripe.motif;
   if(motif==='solid'){ctx.fill(stripePath(stripe,extent,scene));return;}
   const random=rng(scene.seed+':motifs:'+stripe.index);
@@ -336,7 +397,11 @@ function fillMotif(ctx,stripe,extent,scene) {
       if(!motifFits(stripe,scene,xx,yy,halfX,halfY,extent))continue;
       ctx.save();
       ctx.globalAlpha=variation.opacity;
-      ctx.translate(xx,yy);ctx.rotate(variation.angle);
+      if(spatialGeometry(stripe)){
+        const p=samplePath(stripe,xx,extent),offset=yy-p.y;
+        ctx.translate(p.x+p.nx*offset,p.y+p.ny*offset);
+        ctx.rotate(Math.atan2(p.ty,p.tx)+variation.angle);
+      }else{ctx.translate(xx,yy);ctx.rotate(variation.angle);}
       if(motif==='hatch'){
         ctx.beginPath();ctx.moveTo(-step*.34*variation.scale,step*.34*variation.scale);ctx.lineTo(step*.34*variation.scale,-step*.34*variation.scale);ctx.stroke();
       }else if(motif==='chevrons'){
@@ -635,7 +700,10 @@ export function drawWallpaper(canvas, recipe, options={}) {
     g.translate(scene.centerX-DESIGN_WIDTH/2,scene.centerY-DESIGN_HEIGHT/2);
   }else g.translate(scene.centerX,scene.centerY);
   g.rotate(scene.angle);
-  for(const stripe of scene.stripes){
+  for(const bundleOffset of scene.bundleOffsets){
+  for(const original of scene.stripes){
+    const stripe=scene.bundleOffsets.length===1?original:
+      {...original,center:original.center+bundleOffset};
     balanceStripeEnds(scene,stripe);
     if(stripe.hidden)continue;
     const path=stripePath(stripe,scene.extent,scene);
@@ -646,6 +714,7 @@ export function drawWallpaper(canvas, recipe, options={}) {
     drawOutline(g,path,stripe,scene);
     g.fillStyle=stripe.color;g.strokeStyle=stripe.color;
     fillMotif(g,stripe,scene.extent,scene);
+  }
   }
   // One scratch buffer is reused for every texture layer and surface.
   // The stripe pass masks against the current ink alpha, so multiply/screen/etc
