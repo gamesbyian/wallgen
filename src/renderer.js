@@ -61,10 +61,6 @@ export function textureHeight(scene,stripe,x,side=0){
   const field=sum/total;
   return Math.max(-cap,Math.min(cap,field*cap));
 }
-function edgeAt(x,stripe,extent,side,scene){
-  return geometryAt(x,stripe,extent)+side*widthAt(x,stripe,extent)/2+
-    (scene?textureHeight(scene,stripe,x,side):0);
-}
 // This is an independent line rendering style, NOT the dot/dash motif.
 // Marks are anchored to the full unnudged ribbon so nudging and overscan
 // cannot change their spacing or introduce discontinuities.
