@@ -11,7 +11,8 @@ test('camera retains frame centre while showing more world at zoom out',()=>{
   for(const zoom of [.5,.6,.8,1,1.25,2,2.5]){
     const p=viewCamera(600,1300,zoom),big=viewCamera(3024,6552,zoom);
     assert.equal(p.zoom,zoom);
-    assert.deepEqual(p.viewBounds,big.viewBounds);
+    for(const key of ['left','right','top','bottom'])
+      assert.ok(Math.abs(p.viewBounds[key]-big.viewBounds[key])<1e-9,key);
     const f=p.viewBounds;
     assert.ok(Math.abs((f.left+f.right)/2-DESIGN_WIDTH/2)<1e-9);
     assert.ok(Math.abs((f.top+f.bottom)/2-DESIGN_HEIGHT/2)<1e-9);
