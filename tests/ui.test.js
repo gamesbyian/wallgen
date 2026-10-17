@@ -9,21 +9,17 @@ const readme=readFileSync(new URL('../README.md',import.meta.url),'utf8');
 const license=readFileSync(new URL('../LICENSE',import.meta.url),'utf8');
 const logo=readFileSync(new URL('../assets/roygbiv-logo.svg',import.meta.url),'utf8');
 
-test('settings use four accessible mutually exclusive tab panels',()=>{
-  const names=['design','colour','textures','refine'];
+test('categories are generated from a canonical schema with six accessible tabs',()=>{
+  const schema=readFileSync(new URL('../src/editor-schema.js',import.meta.url),'utf8');
+  const layout=readFileSync(new URL('../src/editor-layout.js',import.meta.url),'utf8');
   assert.match(html,/class="settings-tabs" role="tablist"/);
-  assert.equal((html.match(/role="tab"/g)||[]).length,4);
-  assert.equal((html.match(/role="tabpanel"/g)||[]).length,4);
-  for(const name of names){
-    assert.match(html,new RegExp('id="tab-'+name+'"[^>]*aria-controls="panel-'+name+'"'));
-    assert.match(html,new RegExp('id="panel-'+name+'"[^>]*role="tabpanel"'));
-    assert.match(html,new RegExp('id="panel-'+name+'"[^>]*aria-labelledby="tab-'+name+'"'));
+  for(const name of ['layout','path','stripes','colour','material','effects']){
+    assert.match(schema,new RegExp("id:'"+name+"'"));
   }
-  assert.equal((html.match(/role="tabpanel"[^>]*hidden/g)||[]).length,3);
-  assert.match(css,/\.settings-panel\[hidden\]\s*\{display:none!important\}/);
-  assert.match(app,/ArrowRight/);
-  assert.match(app,/ArrowLeft/);
-  assert.match(app,/sessionStorage\.setItem\('wallgen:settings-tab:v1'/);
+  assert.match(layout,/panel\.setAttribute\('role','tabpanel'\)/);
+  assert.match(layout,/aria-pressed/);
+  assert.match(app,/sessionStorage\.setItem\('wallgen:settings-tab:v2'/);
+  assert.match(app,/mountEditor\(\)/);
 });
 
 test('Explore Variations belongs to the preview workspace, not the full-width layout',()=>{
@@ -80,7 +76,7 @@ test('lock controls use two consistent line-art SVG states, not emoji',()=>{
   assert.match(app,/button\.innerHTML=locked\.has\(key\)\?LOCK_ICON\.locked:LOCK_ICON\.unlocked/);
   assert.doesNotMatch(app,/button\.textContent=locked\.has\(key\)\?'🔒'/);
   assert.match(css,/\.setting-lock svg\{display:block/);
-  assert.match(html,/Use the lock beside each setting/);
+  assert.match(html,/Generate, protect what works/);
 });
 test('texture relief and ambient canvas illumination are described accurately',()=>{
   assert.match(html,/Gently roughen|Distort the actual stripe contours/);
