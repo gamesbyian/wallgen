@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { DESIGN_WIDTH, DESIGN_HEIGHT, OUTPUT_WIDTH, OUTPUT_HEIGHT, HUES, NAMES, FAMILIES, GEOMETRIES, MOTIFS, MATERIALS, OUTLINES, normalizeRecipe, resolveScene, rng, encodeRecipe, decodeRecipe, TEXTURE_COVERAGES, BLEND_MODES, normalizeRotation, randomizeAllRecipe, LOCKABLE_SETTINGS, respectSettingLocks } from '../src/model.js';
+import { DESIGN_WIDTH, DESIGN_HEIGHT, OUTPUT_WIDTH, OUTPUT_HEIGHT, HUES, NAMES, FAMILIES, GEOMETRIES, MOTIFS, MATERIALS, OUTLINES, normalizeRecipe, resolveScene, rng, encodeRecipe, decodeRecipe, TEXTURE_COVERAGES, BLEND_MODES, normalizeRotation, randomizeAllRecipe, LOCKABLE_SETTINGS, respectSettingLocks, isPrime, PRIME_PERCENTAGES, PRIME_ROTATIONS } from '../src/model.js';
 
 test('Pixel 6 Pro export has 210% linear dimensions and unchanged aspect ratio',()=>{
   assert.equal(OUTPUT_WIDTH,1440*2.1);
@@ -239,4 +239,44 @@ test('lock list rejects unknown keys and normalizes stable order',()=>{
   assert.deepEqual(recipe.lockedSettings,['seed','textureBlend3','spread']);
   assert.deepEqual(normalizeRecipe({lockedSettings:['geometry'],lockedResolved:{geometry:'zigzag',palette:'pastel'}}).lockedResolved,
     {geometry:'zigzag'});
+});
+
+test('prime-only randomization constrains every randomized percentage and texture rotation',()=>{
+  const numeric=['chaos','stripeWidth','spread','textureStrength','textureScale','textureDisplacement',
+    'textureStrength2','textureScale2','textureStrength3','textureScale3',
+    'individuality','patternHomogeneity','gap','glow'];
+  const angles=['textureRotation','textureRotation2','textureRotation3'];
+  assert.equal(PRIME_PERCENTAGES[0],2);
+  assert.equal(PRIME_PERCENTAGES.at(-1),97);
+  assert.equal(PRIME_ROTATIONS[0],2);
+  assert.equal(PRIME_ROTATIONS.at(-1),359);
+  assert.equal(isPrime(0),false);
+  assert.equal(isPrime(1),false);
+  assert.equal(isPrime(2),true);
+  assert.equal(isPrime(97),true);
+  assert.equal(isPrime(100),false);
+  for(let i=0;i<120;i++){
+    const recipe=randomizeAllRecipe({primesOnly:true});
+    assert.equal(recipe.primesOnly,true);
+    for(const key of numeric)assert.ok(isPrime(recipe[key]),key+'='+recipe[key]);
+    for(const key of angles)assert.ok(isPrime(recipe[key]),key+'='+recipe[key]);
+    assert.deepEqual(decodeRecipe(encodeRecipe(recipe)),recipe);
+  }
+});
+test('prime-only mode respects locked non-prime values and leaves mode unchanged',()=>{
+  const original=normalizeRecipe({
+    seed:'prime-lock-seed',primesOnly:true,chaos:100,spread:52,textureRotation:90,
+    lockedSettings:['chaos','textureRotation','primesOnly'],
+  });
+  for(let i=0;i<40;i++){
+    const recipe=respectSettingLocks(original,randomizeAllRecipe({primesOnly:original.primesOnly}));
+    assert.equal(recipe.chaos,100);
+    assert.equal(recipe.textureRotation,90);
+    assert.equal(recipe.primesOnly,true);
+    assert.ok(isPrime(recipe.spread));
+    assert.ok(isPrime(recipe.stripeWidth));
+    assert.ok(isPrime(recipe.textureRotation2));
+  }
+  assert.equal(normalizeRecipe({}).primesOnly,false);
+  assert.equal(normalizeRecipe({primesOnly:'true'}).primesOnly,true);
 });
