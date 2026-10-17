@@ -80,12 +80,13 @@ export function mountEditor(){
       card.setAttribute('role','group');
       card.setAttribute('aria-label',tool.name+' controls');
       card.hidden=tool.id!==category.tools[0].id;
-      const heading=create('header','editor-tool-header');
-      heading.append(create('strong',null,tool.name));
-      const roll=create('button','editor-scope-button','✳ Tool');
+      // The active tool chip already identifies the card. Keep only the
+      // scoped-random action in the card chrome, not a duplicate heading.
+      const roll=create('button','editor-scope-button editor-tool-reroll','✳ Tool');
       roll.type='button';roll.dataset.randomTool=tool.id;
       roll.title='Change only unlocked '+tool.name.toLowerCase()+' settings';
-      heading.append(roll);card.append(heading);
+      roll.setAttribute('aria-label','Randomize '+tool.name+' tool');
+      card.append(roll);
       panel.append(card);
       tools.set(tool.id,{spec:tool,card,chip,category:category.id});
     }
