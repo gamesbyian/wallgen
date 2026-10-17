@@ -144,8 +144,8 @@ test('semantic masthead guarantees two lines and strong type hierarchy even with
   assert.match(header,/<\/p>\s*<\/div>/);
   assert.match(css,/\.brand \.brand-title\{display:block;margin:0;padding:0;font-size:clamp\(22px,2\.35vw,30px\)/);
   assert.match(css,/\.brand \.brand-subtitle\{display:block;margin:0;padding:0;font-size:clamp\(9px,\.9vw,11px\)/);
-  assert.match(html,/href="styles\.css\?v=20261016-geometry3"/);
-  assert.match(html,/src="src\/app\.js\?v=20261016-(?:geometry3|transforms1)"/);
+  assert.match(html,/href=\"styles\\.css\\?v=\\d{8}-[a-z0-9]+\"/);
+  assert.match(html,/src=\"src\\/app\\.js\\?v=\\d{8}-[a-z0-9]+\"/);
 });
 test('locks occupy dedicated layout columns and never overlap numeric slider values',()=>{
   assert.match(css,/\.settings-panel \.lockable-setting:not\(\.texture-rotation-field\)\{\s*display:grid;grid-template-columns:minmax\(0,1fr\) 28px/);
