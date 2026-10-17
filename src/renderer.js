@@ -1,5 +1,6 @@
 import { DESIGN_WIDTH, DESIGN_HEIGHT, resolveScene, rng } from './model.js';
 import { samplePath, ribbonEdge, widthAt, noise1D } from './path-geometry.js';
+import { viewCamera } from './view-camera.js';
 
 const TAU = Math.PI * 2;
 const geometryAt=(x,stripe,extent)=>samplePath(stripe,x,extent).y;
@@ -68,10 +69,11 @@ export function stripeLineMarks(stripe,extent){
     stripe.dotPitch : Math.max(type==='dotted'?12:26,
       stripe.width*(type==='dotted'?2.15:5.3)*spacingFactor*dotFactor);
   const marks=[];
-  const first=Math.max(0,Math.floor((start+extent)/pitch)-1);
-  const last=Math.ceil((end+extent)/pitch)+1;
+  const originBase=-(stripe.coreExtent??extent);
+  const first=Math.floor((start-originBase)/pitch)-1;
+  const last=Math.ceil((end-originBase)/pitch)+1;
   for(let i=first;i<=last;i++){
-    const origin=-extent+i*pitch;
+    const origin=originBase+i*pitch;
     if(type==='dotted'){
       const x=origin+pitch*.5,radius=Math.min(
         stripe.dotRadius??(stripe.width*.43*dotFactor),pitch*.43);
@@ -160,14 +162,15 @@ function endpoints(scene,stripe,x) {
   return [ribbonPoint(scene,low.x,low.y),ribbonPoint(scene,high.x,high.y)];
 }
 function contactSegment(scene,contacts,p,q) {
-  const hit=(t,at,other,low,high)=>t>=0&&t<=1&&other>=low-1e-7&&other<=high+1e-7;
-  for(const [side,value,field,other,length] of [
-    ['left',0,'x','y',DESIGN_HEIGHT],['right',DESIGN_WIDTH,'x','y',DESIGN_HEIGHT],
-    ['top',0,'y','x',DESIGN_WIDTH],['bottom',DESIGN_HEIGHT,'y','x',DESIGN_WIDTH],
+  const f=scene.viewBounds||{left:0,right:DESIGN_WIDTH,top:0,bottom:DESIGN_HEIGHT};
+  const hit=(t,other,low,high)=>t>=0&&t<=1&&other>=low-1e-7&&other<=high+1e-7;
+  for(const [side,value,field,other,low,high] of [
+    ['left',f.left,'x','y',f.top,f.bottom],['right',f.right,'x','y',f.top,f.bottom],
+    ['top',f.top,'y','x',f.left,f.right],['bottom',f.bottom,'y','x',f.left,f.right],
   ]){
     if(contacts[side]||Math.abs(q[field]-p[field])<1e-9)continue;
     const t=(value-p[field])/(q[field]-p[field]);
-    if(hit(t,null,p[other]+t*(q[other]-p[other]),0,length))contacts[side]=true;
+    if(hit(t,p[other]+t*(q[other]-p[other]),low,high))contacts[side]=true;
   }
 }
 export function stripeFrameContacts(scene,stripe) {
@@ -201,9 +204,10 @@ export function balanceStripeEnds(scene,stripe) {
   if(balanced&&!floating)return {contacts,balanced:true,hidden:false};
   // Account for borders and glow so even their outermost pixels stay inset.
   const margin=24+scene.glow*.30+scene.gap*.08;
+  const f=scene.viewBounds||{left:0,right:DESIGN_WIDTH,top:0,bottom:DESIGN_HEIGHT};
   const inside=x=>endpoints(scene,stripe,x).every(p=>
-    p.x>=margin && p.x<=DESIGN_WIDTH-margin &&
-    p.y>=margin && p.y<=DESIGN_HEIGHT-margin);
+    p.x>=f.left+margin && p.x<=f.right-margin &&
+    p.y>=f.top+margin && p.y<=f.bottom-margin);
   const samples=640;
   let start=null,bestStart=null,bestEnd=null;
   for(let i=0;i<=samples;i++){
@@ -259,10 +263,11 @@ export function motifFits(stripe,scene,x,y,halfX,halfY,extent=scene.extent) {
     const at=ribbonPoint(scene,p.x+p.nx*transverse,p.y+p.ny*transverse);
     const bounds=scene.renderBounds||{left:0,top:0,right:DESIGN_WIDTH,bottom:DESIGN_HEIGHT};
     const radius=Math.max(halfX,halfY);
-    const inside=at.x-radius>=0&&at.x+radius<=DESIGN_WIDTH&&
-      at.y-radius>=0&&at.y+radius<=DESIGN_HEIGHT;
-    const outside=at.x+radius<0||at.x-radius>DESIGN_WIDTH||
-      at.y+radius<0||at.y-radius>DESIGN_HEIGHT;
+    const f=scene.viewBounds||{left:0,right:DESIGN_WIDTH,top:0,bottom:DESIGN_HEIGHT};
+    const inside=at.x-radius>=f.left&&at.x+radius<=f.right&&
+      at.y-radius>=f.top&&at.y+radius<=f.bottom;
+    const outside=at.x+radius<f.left||at.x-radius>f.right||
+      at.y+radius<f.top||at.y-radius>f.bottom;
     return (inside||outside)&&at.x-radius>=bounds.left&&at.x+radius<=bounds.right&&
       at.y-radius>=bounds.top&&at.y+radius<=bounds.bottom;
   }
@@ -300,8 +305,9 @@ export function motifFits(stripe,scene,x,y,halfX,halfY,extent=scene.extent) {
   }
   const minX=Math.min(...points.map(p=>p.x)),maxX=Math.max(...points.map(p=>p.x));
   const minY=Math.min(...points.map(p=>p.y)),maxY=Math.max(...points.map(p=>p.y));
-  const inside=minX>=0&&maxX<=DESIGN_WIDTH&&minY>=0&&maxY<=DESIGN_HEIGHT;
-  const outside=maxX<0||minX>DESIGN_WIDTH||maxY<0||minY>DESIGN_HEIGHT;
+  const f=scene.viewBounds||{left:0,right:DESIGN_WIDTH,top:0,bottom:DESIGN_HEIGHT};
+  const inside=minX>=f.left&&maxX<=f.right&&minY>=f.top&&maxY<=f.bottom;
+  const outside=maxX<f.left||minX>f.right||maxY<f.top||minY>f.bottom;
   return inside||outside;
 }
 /**
@@ -722,6 +728,12 @@ export function presentNudgedArtwork(canvas, layers, recipe) {
 
 export function drawWallpaper(canvas, recipe, options={}) {
   const scene=resolveScene(recipe);
+  const camera=viewCamera(canvas.width,canvas.height,scene.viewZoom);
+  scene.viewBounds=camera.viewBounds;
+  // The domain extends beyond the old frame at zoom-out, so fresh ribbon
+  // geometry is painted where a 100%-cropped bitmap contained no pixels.
+  scene.coreExtent=scene.extent;
+  if(camera.zoom<1)scene.extent/=camera.zoom;
   const ctx=canvas.getContext('2d', { alpha: false });
   if(!ctx) throw new Error('Canvas 2D is not supported by this browser.');
   ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,canvas.width,canvas.height);
@@ -732,17 +744,13 @@ export function drawWallpaper(canvas, recipe, options={}) {
   const margin=nudgeOverhang(canvas.width,canvas.height,scene,!!options.cache);
   const inkWidth=canvas.width+margin.left+margin.right;
   const inkHeight=canvas.height+margin.top+margin.bottom;
-  const scaleX=canvas.width/DESIGN_WIDTH,scaleY=canvas.height/DESIGN_HEIGHT;
-  scene.renderBounds={
-    left:-margin.left/scaleX,top:-margin.top/scaleY,
-    right:DESIGN_WIDTH+margin.right/scaleX,
-    bottom:DESIGN_HEIGHT+margin.bottom/scaleY,
-  };
+  const {scaleX,scaleY,offsetX,offsetY}=camera;
+  scene.renderBounds=camera.boundsWithMargin(margin);
   const ink=document.createElement('canvas');ink.width=inkWidth;ink.height=inkHeight;
   const g=ink.getContext('2d');
   if(!g) throw new Error('Canvas ink layer unavailable');
-  g.scale(scaleX,scaleY);
-  g.translate(margin.left/scaleX,margin.top/scaleY);
+  g.setTransform(scaleX,0,0,scaleY,
+    margin.left+offsetX,margin.top+offsetY);
   if(scene.mirrorHorizontal||scene.mirrorVertical){
     g.translate(DESIGN_WIDTH/2,DESIGN_HEIGHT/2);
     g.scale(scene.mirrorHorizontal?-1:1,scene.mirrorVertical?-1:1);
@@ -753,6 +761,11 @@ export function drawWallpaper(canvas, recipe, options={}) {
   for(const original of scene.stripes){
     const stripe=scene.bundleOffsets.length===1?{...original}:
       {...original,center:original.center+bundleOffset};
+    stripe.coreExtent=scene.coreExtent;
+    if((stripe.sharedGeometry??stripe.geometry)==='drawn'){
+      stripe.segmentStart=-scene.coreExtent;
+      stripe.segmentEnd=scene.coreExtent;
+    }
     if(['tonal','woven'].includes(scene.construction))stripe.lineStyle='continuous';
     balanceStripeEnds(scene,stripe);
     if(stripe.hidden)continue;
@@ -782,12 +795,12 @@ export function drawWallpaper(canvas, recipe, options={}) {
     s.setTransform(1,0,0,1,0,0);
     s.globalCompositeOperation='source-over';s.globalAlpha=1;
     s.clearRect(0,0,inkWidth,inkHeight);
-    s.setTransform(scaleX,0,0,scaleY,0,0);
-    s.translate(DESIGN_WIDTH/2+margin.left/scaleX,DESIGN_HEIGHT/2+margin.top/scaleY);
+    s.setTransform(scaleX,0,0,scaleY,margin.left+offsetX,margin.top+offsetY);
+    s.translate(DESIGN_WIDTH/2,DESIGN_HEIGHT/2);
     s.rotate(layer.rotation*Math.PI/180);
     s.globalAlpha=layer.strength/100;
     s.fillStyle=s.createPattern(tile,'repeat');
-    const reach=Math.hypot(DESIGN_WIDTH,DESIGN_HEIGHT)*1.5;
+    const reach=Math.hypot(DESIGN_WIDTH,DESIGN_HEIGHT)*1.5/camera.zoom;
     s.fillRect(-reach,-reach,2*reach,2*reach);
     s.setTransform(1,0,0,1,0,0);s.globalAlpha=1;
   };
