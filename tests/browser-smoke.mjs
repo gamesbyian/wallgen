@@ -299,12 +299,16 @@ try{
     const pointY=Math.round((target.getBoundingClientRect().top+target.getBoundingClientRect().bottom)/2);
     const hit=document.elementFromPoint(pointX,pointY);
     return {pointX,pointY,hit:hit?.outerHTML?.slice(0,300),name:hit?.name,
-      disabled:target.disabled,cardScroll:card.scrollTop,cardHeight:card.clientHeight,
+      disabled:target.disabled,touchAction:getComputedStyle(target).touchAction,
+      cardScroll:card.scrollTop,cardHeight:card.clientHeight,
       totalCardHeight:card.scrollHeight,value:target.value,top:target.getBoundingClientRect().top,
       railScroll:document.getElementById('panel-design').scrollLeft};
   })()`)));
-  await swipe({x:Math.round(slider.left+12),y:slider.y},
-              {x:Math.round(slider.right-12),y:slider.y});
+  // Drag the actual thumb at its existing value. Touching the very
+  // beginning of a track is a value-jump, not a thumb drag.
+  const thumbX=Math.round(slider.left+(slider.right-slider.left)*slider.value/100);
+  await swipe({x:thumbX,y:slider.y},
+              {x:Math.round(slider.right-13),y:slider.y});
   console.log('SHAPE_SLIDER_AFTER',JSON.stringify(await evaluate(`(()=>{
     const target=document.querySelector('[name=shapeFrequency]');
     return {value:target.value,railScroll:document.getElementById('panel-design').scrollLeft,
