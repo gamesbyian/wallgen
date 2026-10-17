@@ -220,8 +220,10 @@ export function resolveScene(recipeInput) {
   // Wider low/high ends while retaining the familiar 50% midpoint.
   const spreadFactor=value=>.10+.335*Math.pow(value/50,1.5);
   const requestedSpread=span*spreadFactor(recipe.spread)/repeats;
-  const spread=geometry==='drawn'&&recipe.geometrySafety?
-    Math.min(requestedSpread,safeDrawnBandSpan(drawnPath)):requestedSpread;
+  const spread=recipe.geometrySafety&&geometry==='hairpin'?
+    Math.min(requestedSpread,DESIGN_WIDTH*.38):
+    geometry==='drawn'&&recipe.geometrySafety?
+      Math.min(requestedSpread,safeDrawnBandSpan(drawnPath)):requestedSpread;
   const center = geometry==='drawn'?0:between(random, -1, 1) * span * 0.09;
   // A shared master path keeps the seven stripes parallel at individuality=0.
   // Independent path phase, period, tilt and edge profile grow with individuality.
@@ -278,7 +280,9 @@ export function resolveScene(recipeInput) {
       chevronSharpness:recipe.chevronSharpness,
       loopAspect:recipe.loopAspect,
       turnRadius:recipe.geometrySafety?
-        Math.max(90+recipe.turnRadius*1.35,spread*.62):30+recipe.turnRadius*3.6,
+        Math.min(Math.max(90+recipe.turnRadius*1.35,spread*.56),
+          DESIGN_WIDTH*.44-spread/2):
+        30+recipe.turnRadius*3.6,
       hairpinAngle:recipe.hairpinAngle,
       loopPeriod:200*Math.pow(8/200,recipe.shapeFrequency/100),
       // The safe limit is normalized to the available lane width so the
