@@ -498,6 +498,20 @@ try{
     return control.left>0&&control.right<innerWidth &&
       control.top>=card.top && control.bottom<=card.bottom;
   })()`);
+  // The displayed buttons must also adjust real recipe values, not merely
+  // be decorative controls alongside the touch slider.
+  const stepperResult=await evaluate(`(()=>{
+    const slider=document.querySelector('[name=shapeFrequency]');
+    const buttons=slider.closest('.stepper').querySelectorAll('.step-button');
+    const before=Number(slider.value);
+    buttons[1].click();
+    const afterPlus=Number(slider.value);
+    buttons[0].click();
+    return {before,afterPlus,afterMinus:Number(slider.value)};
+  })()`);
+  assert.equal(stepperResult.afterPlus,stepperResult.before+1);
+  assert.equal(stepperResult.afterMinus,stepperResult.before);
+  console.log('MOBILE_STEPPER_REAL_INCREMENT_SUCCESS');
   const slider=await evaluate(`(()=>{
     const r=document.querySelector('[name=shapeFrequency]').getBoundingClientRect();
     return {left:r.left,right:r.right,y:Math.round(r.top+r.height/2),
