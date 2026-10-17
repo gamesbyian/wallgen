@@ -31,7 +31,11 @@ const editRail=document.getElementById('mobileEditorActionRail');
 editRail.addEventListener('click',event=>{
   const proxy=event.target.closest('[data-dock-proxy]');
   if(!proxy)return;
-  const original=document.getElementById(proxy.dataset.dockProxy);
+  // Favourite and Save are non-navigational actions: they must never
+  // dismiss the editor or move the preview. The recessed dock shortcuts
+  // close the sheets, so bypass those wrappers for the edit rail only.
+  const direct={mobileFavorite:'favorite',mobileDownload:'download'};
+  const original=document.getElementById(direct[proxy.dataset.dockProxy]||proxy.dataset.dockProxy);
   if(original)original.click();
 });
 function syncRail(){
