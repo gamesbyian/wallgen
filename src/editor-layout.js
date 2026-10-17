@@ -114,6 +114,18 @@ export function mountEditor(){
     if(key==='textureLayer2Enabled'||key==='textureLayer3Enabled')continue;
     appendUnique(card,fieldNode(key));
   }
+  // Every property gets its own miniature, scope-safe die. The active
+  // variation mode decides whether it rerolls or explores a nearby value.
+  for(const t of TOOL_LIST)for(const key of t.settings){
+    if(key==='textureLayer2Enabled'||key==='textureLayer3Enabled')continue;
+    const root=fieldNode(key);
+    if(root.querySelector?.('[data-random-setting="'+key+'"]'))continue;
+    const die=create('button','editor-setting-die','✳');
+    die.type='button';die.dataset.randomSetting=key;
+    die.setAttribute('aria-label','Randomize only '+key);
+    die.title='Reroll or vary this setting only';
+    root.append(die);
+  }
   for(const old of originals){old.hidden=true;old.setAttribute('aria-hidden','true');}
   chooser.querySelectorAll('button').forEach(button=>button.addEventListener('click',()=>selectEditorTool(button.dataset.category,button.dataset.editorTool)));
   function currentCategoryFromTabs(){
