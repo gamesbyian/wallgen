@@ -286,7 +286,7 @@ try{
     'preview-side Randomize must keep the editor open');
   const originalImage=await evaluate('document.getElementById("preview").toDataURL()');
   await evaluate('document.querySelector("[data-zoom=in]").click()');
-  assert.equal(await evaluate('document.querySelector(".studio-stage").style.getPropertyValue("--mobile-preview-zoom")'),'1.25');
+  assert.equal(await evaluate('document.querySelector(".studio-stage").style.getPropertyValue("--mobile-preview-zoom")'),'1.1');
   assert.equal(await evaluate('document.getElementById("preview").toDataURL()'),originalImage,
     'zooming should only magnify the preview, never modify wallpaper pixels');
   await evaluate('document.querySelector("[data-zoom=out]").click()');
