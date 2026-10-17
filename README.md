@@ -40,10 +40,13 @@ URL, favourite, seed, or PNG. To restore the old interface colours, select
 mobile layout on top of the intact original dark stylesheet.
 
 **Swipe-first live editing:** the Edit tray stays below the visible, continuously
-updated wallpaper. It now contains a small pull-down grabber, Randomize,
-Primes only, and four compact category tabs. **Swipe left/right** across
-individual setting cards to adjust the next control, including locks; **swipe
-horizontally across the tab bar** to change the active category. Swiping
+updated wallpaper. A small pull-down grabber and four **plain text tabs with
+an underline under the active category** sit above the swipeable settings.
+**Swipe left/right** across the fixed-height cards to reach the next control
+(including through Colour and Texture); the phone uses explicit one-card
+gestures instead of relying on browser-native horizontal panning through
+nested selects and checkboxes. **Swipe horizontally across the tab bar** to
+change the active category. Swiping
 outward at the beginning or end of a card rail also moves to the adjacent
 category. A small counter shows your position within each category. All
 existing controls, optional texture layers, shadows, and numeric entries
@@ -51,11 +54,13 @@ remain the original live form elements; there are no proxy sliders or lost
 settings. Related options now travel together on a single card: Geometry with
 frequency/depth, Stripe pattern with homogeneity, Shadows with their toggle,
 strength/softness/direction, Outlines with buffer, Canvas lighting with mood,
-direction/intensity/shade, each Texture layer with its own full set of
-sliders/options, and Individuality with the pattern override checkbox.
-Multi-control cards can scroll internally if their contents exceed the compact
-tray; the overall editor still swipes horizontally. On larger viewports the
-original form order is restored without changing values or lock states.
+direction/intensity/shade, and Individuality with the pattern override
+checkbox. Every texture layer now uses two small cards: **Material** for its
+material, coverage and blend mode, and **Finish** for strength, scale and
+rotation. All active controls fit in their card at once: **no vertical
+scrolling anywhere in the settings tray**, even when shadows or additional
+texture layers are enabled. On larger viewports the original form order and
+numeric steppers are restored without changing values or lock states.
 **Primes Only** now simply toggles its selected state without displaying an
 explanatory toast. **Swipe down** on a noninteractive part of the tray or grabber to
 dismiss it; tapping the picture or the Edit dock button also closes it. There
@@ -64,8 +69,13 @@ through the editor itself. The canvas always has its own unobstructed space.
 **Expanded-preview editing:** when Edit opens, the header slides out above
 the viewport and the action dock recedes to the right, leaving only a small
 left-pointing expand arrow. The horizontal setting cards move into that same
-bottom space, instead of sitting above the dock. Randomize, Primes Only and
-the four category tabs become tightly spaced text-only controls. The regular
+bottom space, instead of sitting above the dock. **Randomize** and **Primes
+Only** move beside the preview on the left, leaving room for the plain
+underlined category tabs and cards below. A vertical rail to the **right** of
+the preview reuses the five original nudge buttons and adds **Zoom + / Zoom −**
+(with a visible percent indicator). Nudge shifts the artwork in the recipe;
+zoom scales the canvas display only and does **not** change the downloaded
+wallpaper, current design settings or saved recipe. The regular
 action dock is also shortened when the editor is closed. Pressing the expand
 arrow restores the full toolbar and header; downward swipe and tapping the
 picture still dismiss Edit. On a 412 × 915 viewport the preview should retain
