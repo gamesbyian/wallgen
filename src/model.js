@@ -7,7 +7,8 @@ export const NAMES = ['Red', 'Orange', 'Yellow', 'Green', 'Blue', 'Indigo', 'Vio
 export const FAMILIES = ['studio', 'currents', 'fracture', 'confetti', 'deco', 'tapestry', 'signal', 'contour'];
 export const GEOMETRIES = ['straight', 'wave', 'zigzag', 'jagged', 'stepped', 'arc', 'contour'];
 export const MOTIFS = ['solid', 'dots', 'stars', 'dashes', 'diamonds', 'chevrons', 'hatch', 'checker'];
-export const MATERIALS = ['none', 'grain', 'watercolor', 'construction', 'handmade', 'linen', 'canvas', 'denim', 'knit', 'felt', 'corrugated'];
+export const MATERIALS = ['none', 'grain', 'watercolor', 'construction', 'handmade', 'linen', 'canvas', 'denim', 'knit', 'felt', 'corduroy', 'corrugated', 'concrete', 'stucco', 'stone', 'drywall', 'wood-grain', 'vinyl-sheet', 'foil', 'glossy-paper', 'adobe'];
+export const BLEND_MODES = ['normal', 'multiply', 'screen', 'overlay', 'soft-light', 'difference'];
 export const PALETTES = ['classic', 'electric', 'pastel', 'jewel', 'muted'];
 export const TEXTURE_COVERAGES = ['both', 'stripes', 'background'];
 export const OUTLINES = ['none', 'hairline', 'white', 'double', 'broken', 'one-side', 'black', 'black-hairline', 'black-double', 'black-broken', 'black-one-side'];
@@ -34,6 +35,14 @@ const pick = (random, choices) => choices[Math.floor(random() * choices.length)]
 const between = (random, min, max) => min + random() * (max - min);
 const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
 const finiteRange = (value, fallback, min, max) => clamp(Number.isFinite(+value) ? +value : fallback, min, max);
+export const normalizeRotation = (value, fallback = 0) => {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return fallback;
+  return ((Math.round(number * 10) / 10) % 360 + 360) % 360;
+};
+const materialChoice = (value, fallback = 'none') => value === 'courduroy' ? 'corduroy' : MATERIALS.includes(value) ? value : fallback;
+const coverageChoice = (value) => TEXTURE_COVERAGES.includes(value) ? value : 'both';
+const blendChoice = (value) => BLEND_MODES.includes(value) ? value : 'normal';
 
 export function normalizeRecipe(input = {}) {
   const readChoice = (key, allowed) => allowed.includes(input[key]) ? input[key] : 'auto';
@@ -55,6 +64,22 @@ export function normalizeRecipe(input = {}) {
     spread: finiteRange(input.spread, 56, 0, 100),
     textureStrength: finiteRange(input.textureStrength, 52, 0, 100),
     textureScale: finiteRange(input.textureScale, 50, 0, 100),
+    textureRotation: normalizeRotation(input.textureRotation),
+    textureBlend: blendChoice(input.textureBlend),
+    textureLayer2Enabled: input.textureLayer2Enabled === true || input.textureLayer2Enabled === 'true',
+    material2: materialChoice(input.material2, 'none'),
+    textureStrength2: finiteRange(input.textureStrength2, 40, 0, 100),
+    textureScale2: finiteRange(input.textureScale2, 50, 0, 100),
+    textureRotation2: normalizeRotation(input.textureRotation2),
+    textureCoverage2: coverageChoice(input.textureCoverage2),
+    textureBlend2: blendChoice(input.textureBlend2),
+    textureLayer3Enabled: input.textureLayer3Enabled === true || input.textureLayer3Enabled === 'true',
+    material3: materialChoice(input.material3, 'none'),
+    textureStrength3: finiteRange(input.textureStrength3, 30, 0, 100),
+    textureScale3: finiteRange(input.textureScale3, 50, 0, 100),
+    textureRotation3: normalizeRotation(input.textureRotation3),
+    textureCoverage3: coverageChoice(input.textureCoverage3),
+    textureBlend3: blendChoice(input.textureBlend3),
     individuality: finiteRange(input.individuality, 34, 0, 100),
     patternHomogeneity: finiteRange(input.patternHomogeneity, 100, 0, 100),
     overridePatternHomogeneity: input.overridePatternHomogeneity === true || input.overridePatternHomogeneity === 'true',
@@ -141,8 +166,19 @@ export function resolveScene(recipeInput) {
       jitterSeed:`${recipe.seed}-noise-${i}`,
     };
   });
+  const textureLayers = [
+    {material, strength:recipe.textureStrength, scale:recipe.textureScale, rotation:recipe.textureRotation,
+      coverage:recipe.textureCoverage, blend:recipe.textureBlend, seed:recipe.seed+':texture:1'},
+    ...(recipe.textureLayer2Enabled ? [{material:recipe.material2, strength:recipe.textureStrength2, scale:recipe.textureScale2,
+      rotation:recipe.textureRotation2, coverage:recipe.textureCoverage2, blend:recipe.textureBlend2,
+      seed:recipe.seed+':texture:2'}] : []),
+    ...(recipe.textureLayer2Enabled && recipe.textureLayer3Enabled ? [{material:recipe.material3, strength:recipe.textureStrength3,
+      scale:recipe.textureScale3, rotation:recipe.textureRotation3, coverage:recipe.textureCoverage3,
+      blend:recipe.textureBlend3, seed:recipe.seed+':texture:3'}] : []),
+  ].filter(layer=>layer.material!=='none' && layer.strength>0);
+  const materialSummary=textureLayers.length ? textureLayers.map(layer=>layer.material).join(' + ') : 'none';
   return {
-    ...recipe, family, orientation, geometry, motif, palette, material, outline, background: recipe.background, angle, span,
+    ...recipe, family, orientation, geometry, motif, palette, material, materialSummary, textureLayers, outline, background: recipe.background, angle, span,
     stripes, intensity: chaos, width: avg, extent: Math.hypot(DESIGN_WIDTH, DESIGN_HEIGHT) * 1.35,
     centerX: DESIGN_WIDTH / 2 + between(random, -1, 1) * DESIGN_WIDTH * 0.055 + DESIGN_WIDTH * recipe.positionX / 100,
     centerY: DESIGN_HEIGHT / 2 + between(random, -1, 1) * DESIGN_HEIGHT * 0.065 + DESIGN_HEIGHT * recipe.positionY / 100,
@@ -171,7 +207,11 @@ export function randomizeAllRecipe() {
   return normalizeRecipe({
     seed, family:any(FAMILIES), orientation:any(['vertical','horizontal','diagonal']),
     geometry:any(GEOMETRIES), motif:any(MOTIFS), palette:any(PALETTES),
-    material:any(MATERIALS), textureCoverage:any(TEXTURE_COVERAGES),
+    material:any(MATERIALS), textureCoverage:any(TEXTURE_COVERAGES), textureRotation:Math.floor(r()*360), textureBlend:any(BLEND_MODES),
+    textureLayer2Enabled:r()>.45, material2:any(MATERIALS), textureStrength2:percent(), textureScale2:percent(),
+    textureRotation2:Math.floor(r()*360), textureCoverage2:any(TEXTURE_COVERAGES), textureBlend2:any(BLEND_MODES),
+    textureLayer3Enabled:r()>.65, material3:any(MATERIALS), textureStrength3:percent(), textureScale3:percent(),
+    textureRotation3:Math.floor(r()*360), textureCoverage3:any(TEXTURE_COVERAGES), textureBlend3:any(BLEND_MODES),
     outline:any(OUTLINES), background:any(['black','white']),
     chaos:percent(), stripeWidth:percent(), spread:percent(),
     textureStrength:percent(), textureScale:percent(), individuality:percent(),
