@@ -203,7 +203,7 @@ export function balanceStripeEnds(scene,stripe) {
   const balanced=(contacts.left===contacts.right && contacts.top===contacts.bottom);
   if(balanced&&!floating)return {contacts,balanced:true,hidden:false};
   // Account for borders and glow so even their outermost pixels stay inset.
-  const margin=24+scene.glow*.30+scene.gap*.08;
+  const margin=24+scene.glow*.30+scene.gap*.14+scene.outlineBuffer*.14;
   const f=scene.viewBounds||{left:0,right:DESIGN_WIDTH,top:0,bottom:DESIGN_HEIGHT};
   const inside=x=>endpoints(scene,stripe,x).every(p=>
     p.x>=f.left+margin && p.x<=f.right-margin &&
@@ -617,24 +617,54 @@ function textureTile(material,seed,size) {
   return canvas;
 }
 
+// Follow a single ribbon edge at an independently controlled OUTWARD
+// offset. This keeps one-sided outlines one-sided even with a buffer.
+function offsetStripeEdge(stripe,extent,scene,distance){
+  const path=new Path2D();
+  const start=stripe.segmentStart??-extent,end=stripe.segmentEnd??extent;
+  const count=Math.max(500,Math.ceil((end-start)/3));
+  for(let i=0;i<=count;i++){
+    const x=start+(end-start)*i/count;
+    const p=edgePoint(x,stripe,extent,-1,scene);
+    const a=edgePoint(Math.max(start,x-1),stripe,extent,-1,scene);
+    const b=edgePoint(Math.min(end,x+1),stripe,extent,-1,scene);
+    const dx=b.x-a.x,dy=b.y-a.y,len=Math.hypot(dx,dy)||1;
+    // The negative stripe edge is on the negative normal side.
+    const px=p.x+dy/len*distance,py=p.y-dx/len*distance;
+    if(i===0)path.moveTo(px,py);else path.lineTo(px,py);
+  }
+  return path;
+}
 function drawOutline(ctx,path,stripe,scene) {
   if(scene.outline==='none')return;
   const black=scene.outline.startsWith('black');
   const style=black?(scene.outline==='black'?'white':scene.outline.slice(6)):scene.outline;
   const colour=black?'rgba(0,0,0,.96)':'rgba(255,255,255,.94)';
-  const width=style==='hairline'?1.1:style==='double'?3.4:2.1;
-  const buffer=scene.gap/100*Math.min(20,stripe.width*.6);
-  ctx.save();ctx.lineJoin='round';
+  // The existing "gap" recipe field is thickness (renamed in the UI).
+  // New outlineBuffer independently controls stripe-to-outline distance.
+  const base=style==='hairline'?.55:style==='double'?1.4:1.05;
+  const width=base+scene.gap/100*Math.min(
+    style==='hairline'?5:20,stripe.width*.60);
+  const buffer=scene.outlineBuffer/100*Math.min(20,stripe.width*.70);
+  ctx.save();ctx.lineJoin='round';ctx.strokeStyle=colour;
   if(style==='broken')ctx.setLineDash([15,10]);
-  if(style==='one-side'){
-    ctx.strokeStyle=colour;ctx.lineWidth=width;
-    ctx.stroke(stripe.lineStyle==='continuous'
-      ?traceEdge(stripe,scene.extent,-1,scene):path);
+  if(style==='one-side'&&stripe.lineStyle==='continuous'){
+    ctx.lineWidth=width;
+    ctx.stroke(offsetStripeEdge(stripe,scene.extent,scene,buffer+width/2));
     ctx.restore();return;
   }
-  ctx.strokeStyle=colour;ctx.lineWidth=2*(buffer+width);ctx.stroke(path);
-  if(buffer>0){ctx.strokeStyle=scene.background==='white'?'#fff':'#000';ctx.lineWidth=2*buffer;ctx.stroke(path);}
-  if(style==='double'){ctx.strokeStyle=colour;ctx.lineWidth=.95;ctx.stroke(path);}
+  // Paint outward from the silhouette by exactly (buffer + width), then
+  // restore the physical buffer to the canvas background colour. The stripe
+  // fill follows this call. Setting width does not alter the gap; changing
+  // the gap does not alter stroke thickness.
+  ctx.lineWidth=2*(buffer+width);ctx.stroke(path);
+  if(buffer>0){
+    ctx.strokeStyle=scene.background==='white'?'#fff':'#000';
+    ctx.lineWidth=2*buffer;ctx.stroke(path);
+  }
+  if(style==='double'&&buffer===0){
+    ctx.strokeStyle=colour;ctx.lineWidth=.95;ctx.stroke(path);
+  }
   ctx.restore();
 }
 
