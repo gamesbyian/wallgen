@@ -8,6 +8,9 @@ on:
       - src/**
       - assets/**
       - tests/browser-smoke.mjs
+      - editor-redesign.css
+      - mobile-editor-rail.css
+      - mobile-compact.css
       - .github/workflows/mobile-browser.yml
   workflow_dispatch:
 permissions:
@@ -25,3 +28,10 @@ jobs:
           command -v google-chrome || command -v chromium
       - name: Test real phone viewport and both appearance modes
         run: node tests/browser-smoke.mjs
+      - name: Attach zoom-level editor screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: editor-layout-browser-zoom
+          path: output/editor-layout/*.png
+          if-no-files-found: ignore

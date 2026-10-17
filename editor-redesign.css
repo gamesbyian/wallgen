@@ -118,152 +118,466 @@
 .editor-tool-card .diagonal-settings .lockable-setting>.field{grid-column:1;grid-row:1}
 .editor-tool-card .diagonal-settings .setting-lock{grid-column:3;grid-row:1;width:22px;height:22px}
 .editor-tool-card .diagonal-settings .editor-setting-die{grid-column:2;grid-row:1}
+/* Phone editor layout. Navigation rows use their measured natural heights,
+   not sticky tabs or overlapping fixed-height grids inherited from the old UI.
+   The whole preview remains ABOVE the reserved tray, never beneath it. */
 @media(max-width:790px){
- body.mobile-studio.mobile-edit-open{--mobile-tray-height:clamp(230px,36dvh,302px)!important}
- body.mobile-studio.mobile-edit-open .layout{height:calc(100dvh - var(--mobile-tray-height))!important}
- body.mobile-studio .sidebar .randomize-bar,.sidebar .studio-guidance{display:none!important}
- body.mobile-studio .sidebar .settings-tabs{grid-template-columns:repeat(3,minmax(0,1fr))!important;
-   height:51px!important;max-height:51px!important;min-height:51px!important;gap:1px!important;
-   display:grid!important;flex:0 0 51px!important;padding:0!important;margin:1px 0!important}
- body.mobile-studio .sidebar .settings-tabs .settings-tab{height:25px!important;min-height:25px!important;
-   max-height:25px!important;padding:1px 0!important;font-size:10px!important;line-height:1.1}
- body.mobile-studio .sidebar .editor-explore{display:grid;grid-template-columns:1fr 1fr;
-   gap:3px;min-height:27px;padding:0!important;margin:0!important;flex:0 0 27px;
-   border:0}
- body.mobile-studio .sidebar .editor-style{display:flex;gap:2px;min-width:0}
- body.mobile-studio .sidebar .editor-style>strong{display:none}
- body.mobile-studio .sidebar .editor-style>.lockable-setting{display:flex;min-width:0}
- body.mobile-studio .sidebar .editor-style>.lockable-setting>.field{display:flex!important}
- body.mobile-studio .sidebar .editor-style .field{font-size:0!important}
- body.mobile-studio .sidebar .editor-style select{width:100%!important;max-width:100%!important;
-   height:25px!important;min-height:25px!important;font-size:10px!important}
+ body.mobile-studio.mobile-edit-open{
+   --mobile-tray-height:clamp(278px,35dvh,350px)!important;
+ }
+ body.mobile-studio.mobile-edit-open .layout{
+   height:calc(100dvh - var(--mobile-tray-height))!important;
+ }
+ body.mobile-studio .sidebar .randomize-bar,
+ body.mobile-studio .sidebar .studio-guidance{display:none!important}
+ body.mobile-studio .sidebar #controls{
+   display:flex!important;flex-direction:column!important;
+   min-width:0;min-height:0;height:100%!important;
+   gap:3px;overflow:hidden!important;
+ }
+ /* One compact operation strip. In particular, the Auto style hint stays
+    INSIDE its select rather than producing a second phantom text row. */
+ body.mobile-studio .sidebar .editor-explore{
+   position:relative;display:flex!important;flex-direction:row!important;
+   align-items:center;min-height:32px!important;height:32px!important;
+   max-height:32px!important;flex:0 0 32px!important;
+   gap:4px!important;padding:0!important;margin:0!important;border:0;
+ }
+ body.mobile-studio .sidebar .editor-style{
+   display:flex!important;min-width:0;flex:0 1 34%;gap:0;
+ }
+ body.mobile-studio .sidebar .editor-style>strong{display:none!important}
+ body.mobile-studio .sidebar .editor-style>.lockable-setting{
+   display:block!important;min-width:0!important;width:100%!important;
+   padding:0!important;margin:0!important;border:0!important;
+ }
+ body.mobile-studio .sidebar .editor-style .field{
+   display:block!important;min-width:0!important;max-width:100%;
+   margin:0!important;padding:0!important;font-size:0!important;
+ }
+ body.mobile-studio .sidebar .editor-style select{
+   display:block!important;box-sizing:border-box;
+   width:100%!important;max-width:100%!important;
+   height:30px!important;min-height:30px!important;
+   padding:2px 14px 2px 5px!important;font-size:11px!important;
+ }
+ body.mobile-studio .sidebar .editor-style .resolved-selection,
  body.mobile-studio .sidebar .editor-style .setting-lock{display:none!important}
- body.mobile-studio .sidebar .editor-explore-actions{display:flex;gap:2px;min-width:0}
+ body.mobile-studio .sidebar .editor-explore-actions{
+   display:flex!important;flex:1 1 auto;min-width:0;
+   align-items:center;gap:3px!important;justify-content:space-between;
+ }
  body.mobile-studio .sidebar .editor-variation-mode,
- body.mobile-studio .sidebar .editor-variation-strength{min-width:0;flex:1;height:25px;padding:0;font-size:9px}
- body.mobile-studio .sidebar .editor-scope-button{height:23px;min-height:23px;font-size:9px;padding:1px 4px}
- body.mobile-studio .sidebar .editor-explore-actions .editor-scope-button{font-size:0!important;padding:1px 5px}
- body.mobile-studio .sidebar .editor-explore-actions .editor-scope-button::before{content:'✳';font-size:12px}
- body.mobile-studio .sidebar .editor-search-toggle{height:23px;min-height:23px;padding:1px 4px}
- body.mobile-studio .sidebar .editor-search-input{grid-column:1/-1}
- body.mobile-studio .sidebar .editor-tool-chooser{grid-template-columns:repeat(4,minmax(0,1fr));
-    flex:0 0 auto!important;gap:2px!important;margin:1px 0!important}
- body.mobile-studio .sidebar .editor-tool-tab{height:25px;min-height:25px;font-size:9px;padding:0 2px}
+ body.mobile-studio .sidebar .editor-variation-strength{
+   flex:1 1 52px;min-width:0;width:0;max-width:none;
+   height:29px!important;min-height:29px!important;
+   font-size:10px!important;padding:1px 14px 1px 4px!important;
+ }
+ body.mobile-studio .sidebar .editor-explore-actions>.editor-scope-button,
+ body.mobile-studio .sidebar .editor-explore-actions>.editor-search-toggle{
+   flex:0 0 25px!important;width:25px!important;min-width:25px!important;
+   height:29px!important;min-height:29px!important;
+   font-size:0!important;padding:1px!important;
+   display:flex!important;align-items:center;justify-content:center;
+ }
+ body.mobile-studio .sidebar .editor-explore-actions>.editor-scope-button::before{
+   content:'✳';font-size:14px;
+ }
+ body.mobile-studio .sidebar .editor-explore-actions>.editor-search-toggle{
+   font-size:14px!important;
+ }
+ body.mobile-studio .sidebar .editor-search-input:not([hidden]){
+   position:absolute;z-index:20;top:0;left:0;right:0;
+   width:100%;height:31px;font-size:12px;
+   background:var(--surface);
+ }
+ /* A single row of six labels always occupies its own flow position. Never
+    inherit position:sticky or top:51px from the retired four-tab editor. */
+ body.mobile-studio .sidebar .settings-tabs{
+   display:grid!important;position:static!important;top:auto!important;
+   inset:auto!important;z-index:auto!important;transform:none!important;
+   grid-template-columns:repeat(6,minmax(0,1fr))!important;
+   grid-template-rows:minmax(34px,auto)!important;
+   flex:0 0 35px!important;height:35px!important;
+   min-height:35px!important;max-height:35px!important;
+   gap:0!important;margin:0!important;padding:0!important;
+   border:0!important;border-radius:0!important;background:transparent!important;
+   box-shadow:none!important;overflow:visible!important;
+ }
+ body.mobile-studio .sidebar .settings-tabs .settings-tab{
+   display:flex!important;align-items:center;justify-content:center;
+   position:static!important;min-width:0!important;width:100%!important;
+   height:34px!important;min-height:34px!important;max-height:34px!important;
+   padding:0 1px!important;margin:0!important;
+   line-height:1.12!important;font-size:10px!important;
+   white-space:nowrap;letter-spacing:-.01em;
+   border:0!important;border-radius:0!important;
+   border-bottom:2px solid transparent!important;
+   background:transparent!important;color:var(--muted)!important;
+ }
+ body.mobile-studio .sidebar .settings-tabs .settings-tab span{display:none!important}
+ body.mobile-studio .sidebar .settings-tabs .settings-tab[aria-selected="true"]{
+   color:inherit!important;border-bottom-color:#c85092!important;font-weight:800!important;
+ }
+ /* Named tools are a *single* horizontal row, like photo-editor effect chips.
+    Long categories can be scrolled sideways, never into a second hidden row. */
+ body.mobile-studio .sidebar .editor-tool-chooser{
+   display:flex!important;position:relative!important;
+   flex:0 0 31px!important;height:31px!important;
+   min-height:31px!important;max-height:31px!important;
+   width:100%;min-width:0;align-items:center;
+   gap:4px!important;padding:0 1px 2px!important;margin:0!important;
+   overflow-x:auto!important;overflow-y:hidden!important;
+   scrollbar-width:none;overscroll-behavior-x:contain;
+   -webkit-overflow-scrolling:touch;
+   scroll-snap-type:x proximity;
+ }
+ body.mobile-studio .sidebar .editor-tool-chooser::-webkit-scrollbar{display:none}
+ body.mobile-studio .sidebar .editor-tool-tab:not([hidden]){
+   display:flex!important;flex:0 0 auto!important;
+   align-items:center;justify-content:center;
+   width:auto!important;min-width:64px!important;
+   max-width:none!important;height:27px!important;
+   min-height:27px!important;max-height:27px!important;
+   padding:2px 9px!important;
+   font-size:11px!important;font-weight:550;
+   white-space:nowrap;overflow:visible;
+   scroll-snap-align:start;
+ }
+ body.mobile-studio .sidebar .editor-tool-tab[aria-pressed=true]{font-weight:800}
  body.mobile-studio .sidebar .mobile-setting-counter{display:none!important}
  body.mobile-studio .sidebar .settings-panel.editor-category-panel:not([hidden]){
-   display:flex!important;flex-direction:column!important;flex:1 1 auto;
-   min-height:0!important;overflow:hidden!important;touch-action:pan-y!important;
-   padding:0!important;margin:0!important;scroll-snap-type:none!important}
+   position:relative!important;display:flex!important;flex-direction:column!important;
+   flex:1 1 0!important;width:100%!important;min-height:0!important;
+   margin:0!important;padding:0!important;gap:0!important;
+   overflow:hidden!important;touch-action:pan-y!important;
+   scroll-snap-type:none!important;
+ }
  body.mobile-studio .sidebar .editor-tool-card:not([hidden]){
-   display:flex!important;flex:1 1 auto!important;width:100%!important;
-   max-width:100%!important;height:100%!important;min-height:0!important;
-   padding:1px 4px!important;margin:0!important;background:transparent;
-   border:1px solid var(--line);overflow:hidden!important}
+   display:flex!important;flex-direction:column!important;
+   flex:1 1 auto!important;box-sizing:border-box;
+   width:100%!important;min-width:0!important;max-width:100%!important;
+   height:100%!important;min-height:0!important;
+   margin:0!important;padding:3px 5px!important;
+   gap:3px!important;justify-content:flex-start!important;
+   overflow:hidden!important;background:transparent;
+   border:1px solid var(--line);border-radius:9px;
+ }
+ body.mobile-studio .sidebar .editor-tool-header{
+   display:flex!important;align-items:center;justify-content:space-between;
+   flex:0 0 26px!important;min-height:26px!important;height:26px!important;
+   margin:0!important;padding:0 0 2px!important;
+ }
+ body.mobile-studio .sidebar .editor-tool-card .field{
+   font-size:11px!important;line-height:1.15!important;
+ }
  body.mobile-studio .sidebar .editor-tool-card .lockable-setting{
-   display:grid!important;grid-template-columns:minmax(0,1fr) 21px 21px!important;
-   gap:2px!important;padding:1px 0!important;margin:0!important;min-height:0!important;
-   width:100%!important;max-width:100%!important;flex:0 0 auto!important;
-   border:0!important;border-radius:0!important;background:transparent!important;
-   overflow:visible!important}
+   display:grid!important;grid-template-columns:minmax(0,1fr) 24px 24px!important;
+   align-items:center;gap:3px!important;
+   flex:0 0 auto!important;width:100%!important;min-width:0!important;
+   margin:0!important;padding:1px 0!important;
+   border:0!important;background:transparent!important;
+   min-height:27px!important;max-height:none!important;
+ }
  body.mobile-studio .sidebar .editor-tool-card .lockable-setting>.field{
-   grid-column:1!important;grid-row:1!important;display:flex!important;
-   align-items:center!important;justify-content:space-between;width:100%!important;
-   min-width:0!important;margin:0!important;padding:0!important}
- body.mobile-studio .sidebar .editor-tool-card .lockable-setting>.setting-lock{
-   grid-column:3!important;grid-row:1!important;width:21px!important;height:22px!important}
+   grid-column:1!important;grid-row:1!important;
+   display:flex!important;align-items:center!important;
+   justify-content:space-between!important;
+   min-width:0!important;width:100%!important;
+   padding:0!important;margin:0!important;gap:4px!important;
+ }
+ body.mobile-studio .sidebar .editor-tool-card .setting-lock{
+   grid-column:3!important;grid-row:1!important;
+   width:24px!important;height:26px!important;padding:1px!important;
+   min-width:24px!important;
+ }
  body.mobile-studio .sidebar .editor-tool-card .editor-setting-die{
-   grid-column:2!important;grid-row:1!important;width:21px!important;min-width:21px!important;
-   height:22px!important;min-height:22px!important;font-size:11px!important}
+   grid-column:2!important;grid-row:1!important;
+   width:24px!important;min-width:24px!important;
+   height:26px!important;min-height:26px!important;
+ }
  body.mobile-studio .sidebar .editor-tool-card .field.range-field{
-   display:grid!important;grid-template-columns:76px minmax(0,1fr)!important;
-   gap:3px!important;grid-template-rows:24px!important}
+   display:grid!important;
+   grid-template-columns:minmax(68px,31%) minmax(0,1fr)!important;
+   grid-template-rows:minmax(27px,auto)!important;
+   align-items:center!important;gap:4px!important;
+ }
  body.mobile-studio .sidebar .editor-tool-card .field.range-field>span{
-   grid-column:1!important;grid-row:1!important;font-size:9px!important}
+   grid-column:1!important;grid-row:1!important;
+   min-width:0!important;flex:1;font-size:10px!important;
+ }
  body.mobile-studio .sidebar .editor-tool-card .field.range-field>.stepper{
-   grid-column:2!important;grid-row:1!important;display:flex!important;
-   width:100%!important;min-width:0!important;gap:2px!important;height:24px!important}
+   grid-column:2!important;grid-row:1!important;
+   display:flex!important;align-items:center!important;
+   width:100%!important;min-width:0!important;height:26px!important;
+   gap:2px!important;padding:0!important;margin:0!important;
+ }
  body.mobile-studio .sidebar .editor-tool-card .stepper>.step-button{
-   width:18px!important;min-width:18px!important;height:22px!important;font-size:12px!important}
+   display:flex!important;align-items:center;justify-content:center;
+   flex:0 0 21px!important;width:21px!important;min-width:21px!important;
+   height:25px!important;min-height:25px!important;padding:0!important;
+ }
  body.mobile-studio .sidebar .editor-tool-card .stepper>.slider-number{
-   width:30px!important;min-width:30px!important;height:22px!important;font-size:9px!important}
+   flex:0 0 34px!important;width:34px!important;min-width:34px!important;
+   height:25px!important;min-height:25px!important;font-size:10px!important;
+ }
  body.mobile-studio .sidebar .editor-tool-card .stepper>input[type=range]{
-   display:block!important;min-width:0!important;flex:1!important;width:100%!important;height:21px!important}
- body.mobile-studio .sidebar .editor-tool-card .field select{width:100%!important;
-   min-width:0!important;max-width:100%!important;flex:1!important;height:23px!important;
-   min-height:23px!important;padding:1px 15px 1px 5px!important;font-size:10px!important}
+   display:block!important;flex:1 1 auto!important;width:auto!important;
+   min-width:0!important;height:24px!important;
+ }
+ body.mobile-studio .sidebar .editor-tool-card .field select{
+   display:block!important;box-sizing:border-box;
+   flex:0 1 65%!important;width:65%!important;min-width:0!important;
+   max-width:65%!important;height:27px!important;min-height:27px!important;
+   margin:0!important;padding:2px 18px 2px 6px!important;
+   font-size:11px!important;
+ }
  body.mobile-studio .sidebar .editor-tool-card .control-grid,
- body.mobile-studio .sidebar .editor-tool-card .texture-layer-panel:not([hidden]),
- body.mobile-studio .sidebar .editor-tool-card .texture-layer-group,
  body.mobile-studio .sidebar .editor-tool-card .lighting-subsection,
  body.mobile-studio .sidebar .editor-tool-card .stripe-shadow-section,
  body.mobile-studio .sidebar .editor-tool-card .stripe-shadow-controls:not([hidden]){
-   display:flex!important;flex-direction:column!important;gap:1px!important;
-   padding:0!important;margin:0!important;overflow:hidden!important;
-   flex:0 0 auto!important;min-width:0!important;width:100%!important}
- body.mobile-studio .sidebar .editor-tool-card .texture-rotation-field{
-   display:grid!important;grid-template-columns:minmax(0,1fr) 21px 21px!important;
-   gap:1px!important;font-size:9px!important}
- body.mobile-studio .sidebar .editor-tool-card .texture-rotation-field .rotation-controls{
-   grid-column:1/-1;display:flex;gap:2px;height:22px}
- body.mobile-studio .sidebar .editor-tool-card .rotation-controls button{min-width:25px;height:22px}
- body.mobile-studio .sidebar .editor-tool-card .texture-rotation-field>.setting-lock{
-   grid-column:3!important;grid-row:1!important}
- body.mobile-studio .sidebar .editor-tool-card .texture-rotation-field>.editor-setting-die{
-   grid-column:2!important;grid-row:1!important}
- body.mobile-studio .sidebar .editor-tool-card .texture-layer-panel-head{font-size:9px;height:20px}
- /* Material wrappers add no visual content or extra vertical spacing:
-    their actual label/lock controls are already moved into named tools. */
+   display:flex!important;flex-direction:column!important;
+   min-width:0!important;width:100%!important;
+   gap:2px!important;margin:0!important;padding:0!important;
+   overflow:visible!important;
+ }
  body.mobile-studio .sidebar .editor-tool-card .texture-layer-group,
  body.mobile-studio .sidebar .editor-tool-card .texture-layer-panel:not([hidden]){
-   display:contents!important;padding:0!important;margin:0!important;
+   display:contents!important;margin:0!important;padding:0!important;
  }
- body.mobile-studio .sidebar .editor-tool-card .control-grid:empty{display:none!important}
  body.mobile-studio .sidebar .editor-tool-card .texture-layer-panel-head{
-   min-height:16px!important;max-height:17px!important;height:17px!important;padding:0!important;margin:0!important;
+   display:flex!important;min-height:19px!important;height:19px!important;
+   max-height:19px!important;margin:0!important;padding:0!important;
  }
  body.mobile-studio .sidebar .editor-tool-card .texture-layer-panel-head button{
-   height:19px!important;min-height:19px!important;padding:0 2px!important;
+   min-height:19px!important;height:19px!important;padding:0 3px!important;
  }
  body.mobile-studio .sidebar .editor-tool-card .texture-layer-group .lockable-setting,
  body.mobile-studio .sidebar .editor-tool-card .texture-layer-panel .lockable-setting{
-   min-height:23px!important;max-height:24px!important;height:24px!important;
-   padding:0!important;margin:0!important;
+   min-height:29px!important;height:clamp(29px,3.8dvh,35px)!important;
+   max-height:35px!important;
  }
  body.mobile-studio .sidebar .editor-tool-card .texture-layer-group .lockable-setting>.field,
  body.mobile-studio .sidebar .editor-tool-card .texture-layer-panel .lockable-setting>.field{
-   display:flex!important;flex-direction:row!important;align-items:center!important;
-   justify-content:space-between!important;gap:3px!important;
-   height:23px!important;min-height:23px!important;padding:0!important;
-   margin:0!important;font-size:10px!important;line-height:1.1!important;
+   display:flex!important;flex-direction:row!important;
+   flex-wrap:nowrap!important;align-items:center!important;
+   justify-content:space-between!important;
+   width:100%!important;min-width:0!important;
+   height:100%!important;min-height:0!important;
+   padding:0!important;margin:0!important;font-size:11px!important;
+   gap:5px!important;line-height:1.1!important;
  }
- body.mobile-studio .sidebar .editor-tool-card .texture-layer-group .lockable-setting>.field>select,
- body.mobile-studio .sidebar .editor-tool-card .texture-layer-panel .lockable-setting>.field>select{
-   flex:0 1 62%!important;width:62%!important;min-width:0!important;max-width:62%!important;
-   margin:0!important;height:23px!important;min-height:23px!important;
+ body.mobile-studio .sidebar .editor-tool-card .texture-layer-group .field select,
+ body.mobile-studio .sidebar .editor-tool-card .texture-layer-panel .field select{
+   flex:0 1 60%!important;width:60%!important;max-width:60%!important;
+   height:26px!important;min-height:26px!important;
  }
  body.mobile-studio .sidebar .editor-tool-card .layer-add-lock{
-   display:flex!important;flex-direction:row!important;justify-content:space-between!important;
-   align-items:center!important;height:19px!important;min-height:19px!important;
-   max-height:19px!important;flex:0 0 19px!important;padding:0!important;
-   margin:0!important;overflow:hidden!important;
+   display:flex!important;flex-direction:row!important;
+   align-items:center!important;justify-content:space-between!important;
+   flex:0 0 clamp(26px,3.5dvh,32px)!important;
+   height:clamp(26px,3.5dvh,32px)!important;
+   min-height:26px!important;max-height:32px!important;min-width:0;
+   padding:0!important;margin:0!important;overflow:visible!important;
  }
  body.mobile-studio .sidebar .editor-tool-card .layer-add-lock .add-texture-layer{
-   flex:1!important;height:22px!important;min-height:18px!important;max-height:18px!important;
-   padding:0!important;line-height:1!important;
+   display:block!important;flex:1 1 auto!important;
+   min-width:0!important;height:25px!important;min-height:25px!important;
+   max-height:25px!important;padding:1px 5px!important;
  }
  body.mobile-studio .sidebar .editor-tool-card .layer-add-lock .setting-lock{
-   flex:0 0 21px!important;width:21px!important;height:22px!important;
+   width:23px!important;min-width:23px!important;height:25px!important;
  }
-
+ body.mobile-studio .sidebar .editor-tool-card .texture-rotation-field{
+   display:grid!important;grid-template-columns:minmax(0,1fr) 24px 24px!important;
+   width:100%;min-width:0;gap:2px;font-size:10px!important;
+ }
+ body.mobile-studio .sidebar .editor-tool-card .texture-rotation-field .rotation-controls{
+   grid-column:1/-1;display:flex!important;gap:3px;height:26px;
+ }
+ body.mobile-studio .sidebar .editor-tool-card .rotation-controls button{
+   min-width:25px;height:25px;
+ }
+ body.mobile-studio .sidebar .editor-tool-card .texture-rotation-field>.setting-lock{
+   grid-column:3!important;grid-row:1!important;
+ }
+ body.mobile-studio .sidebar .editor-tool-card .texture-rotation-field>.editor-setting-die{
+   grid-column:2!important;grid-row:1!important;
+ }
+ body.mobile-studio .sidebar .editor-tool-card .diagonal-settings{
+   display:flex!important;flex-direction:column;gap:2px;padding:0!important;
+   margin:0!important;
+ }
+ body.mobile-studio .sidebar .editor-tool-card .diagonal-settings[hidden],
+ body.mobile-studio .sidebar .editor-tool-card [hidden]{display:none!important}
+ body.mobile-studio .sidebar .editor-tool-card .diagonal-settings .lockable-setting{
+   display:grid!important;grid-template-columns:minmax(0,1fr) 24px 24px!important;
+   gap:3px!important;
+ }
+ body.mobile-studio .sidebar .editor-tool-card .diagonal-settings .lockable-setting>.field{
+   grid-column:1!important;grid-row:1!important;
+ }
+ body.mobile-studio .sidebar .editor-tool-card .diagonal-settings .editor-setting-die{
+   grid-column:2!important;grid-row:1!important;
+ }
+ body.mobile-studio .sidebar .editor-tool-card .diagonal-settings .setting-lock{
+   grid-column:3!important;grid-row:1!important;
+ }
+ body.mobile-studio .sidebar .editor-tool-card .control-grid:empty,
  body.mobile-studio .sidebar .editor-tool-card .lighting-intro,
- body.mobile-studio .sidebar .editor-tool-card .lighting-help{display:none!important}
- body.mobile-studio .sidebar .editor-tool-card .field small{display:none!important}
- body.mobile-studio .sidebar .editor-tool-card .editor-tool-header{min-height:23px;flex:0 0 23px}
- body.mobile-studio .sidebar .editor-tool-card .setting-lock{padding:1px!important}
- body.mobile-studio .sidebar .editor-tool-card .texture-layer-group .add-texture-layer{
-   min-height:22px!important}
+ body.mobile-studio .sidebar .editor-tool-card .lighting-help,
+ body.mobile-studio .sidebar .editor-tool-card .field small{
+   display:none!important;
+ }
 }
-
+/* Mobile browser zoom-out increases the effective CSS viewport width.
+   Compensate with larger, still comfortably tappable typography and controls
+   instead of shrinking everything to the former 412px visual size. */
+@media(min-width:500px) and (max-width:790px){
+ body.mobile-studio.mobile-edit-open{
+   --mobile-tray-height:clamp(308px,32dvh,385px)!important;
+ }
+ body.mobile-studio .sidebar .editor-explore{
+   min-height:41px!important;height:41px!important;
+   max-height:41px!important;flex-basis:41px!important;
+ }
+ body.mobile-studio .sidebar .editor-style select,
+ body.mobile-studio .sidebar .editor-variation-mode,
+ body.mobile-studio .sidebar .editor-variation-strength{
+   height:38px!important;min-height:38px!important;
+   font-size:13px!important;padding-inline:7px 17px!important;
+ }
+ body.mobile-studio .sidebar .editor-explore-actions>.editor-scope-button,
+ body.mobile-studio .sidebar .editor-explore-actions>.editor-search-toggle{
+   flex-basis:35px!important;width:35px!important;min-width:35px!important;
+   height:38px!important;min-height:38px!important;
+ }
+ body.mobile-studio .sidebar .editor-explore-actions>.editor-scope-button{
+   font-size:0!important;
+ }
+ body.mobile-studio .sidebar .editor-explore-actions>.editor-scope-button::before{
+   font-size:18px!important;
+ }
+ body.mobile-studio .sidebar .editor-explore-actions>.editor-search-toggle{
+   font-size:18px!important;
+ }
+ body.mobile-studio .sidebar .settings-tabs{
+   flex-basis:44px!important;height:44px!important;
+   min-height:44px!important;max-height:44px!important;
+   grid-template-rows:44px!important;
+ }
+ body.mobile-studio .sidebar .settings-tabs .settings-tab{
+   height:43px!important;min-height:43px!important;max-height:43px!important;
+   font-size:14px!important;
+ }
+ body.mobile-studio .sidebar .editor-tool-chooser{
+   flex-basis:41px!important;height:41px!important;
+   min-height:41px!important;max-height:41px!important;
+ }
+ body.mobile-studio .sidebar .editor-tool-tab:not([hidden]){
+   height:36px!important;min-height:36px!important;
+   max-height:36px!important;padding:3px 12px!important;
+   font-size:13px!important;
+ }
+ body.mobile-studio .sidebar .editor-tool-card:not([hidden]){
+   gap:4px!important;padding:5px 8px!important;
+ }
+ body.mobile-studio .sidebar .editor-tool-header{
+   flex-basis:34px!important;min-height:34px!important;height:34px!important;
+   font-size:15px!important;
+ }
+ body.mobile-studio .sidebar .editor-tool-card .field,
+ body.mobile-studio .sidebar .editor-tool-card .texture-layer-group .lockable-setting>.field,
+ body.mobile-studio .sidebar .editor-tool-card .texture-layer-panel .lockable-setting>.field{
+   font-size:14px!important;
+ }
+ body.mobile-studio .sidebar .editor-tool-card .lockable-setting{
+   min-height:35px!important;
+   grid-template-columns:minmax(0,1fr) 33px 33px!important;
+ }
+ body.mobile-studio .sidebar .editor-tool-card .texture-layer-group .lockable-setting,
+ body.mobile-studio .sidebar .editor-tool-card .texture-layer-panel .lockable-setting,
+ body.mobile-studio .sidebar .editor-tool-card .diagonal-settings .lockable-setting{
+   grid-template-columns:minmax(0,1fr) 33px 33px!important;
+ }
+ body.mobile-studio .sidebar .editor-tool-card .texture-layer-group .lockable-setting,
+ body.mobile-studio .sidebar .editor-tool-card .texture-layer-panel .lockable-setting{
+   height:40px!important;max-height:40px!important;min-height:40px!important;
+ }
+ body.mobile-studio .sidebar .editor-tool-card .field select,
+ body.mobile-studio .sidebar .editor-tool-card .texture-layer-group .field select,
+ body.mobile-studio .sidebar .editor-tool-card .texture-layer-panel .field select{
+   height:37px!important;min-height:37px!important;
+   font-size:13px!important;
+ }
+ body.mobile-studio .sidebar .editor-tool-card .setting-lock,
+ body.mobile-studio .sidebar .editor-tool-card .editor-setting-die{
+   width:31px!important;min-width:31px!important;height:35px!important;
+   min-height:35px!important;
+ }
+ body.mobile-studio .sidebar .editor-tool-card .layer-add-lock{
+   flex-basis:34px!important;height:34px!important;
+   min-height:34px!important;max-height:34px!important;
+ }
+ body.mobile-studio .sidebar .editor-tool-card .layer-add-lock .add-texture-layer{
+   height:33px!important;min-height:33px!important;max-height:33px!important;
+   font-size:13px!important;
+ }
+ body.mobile-studio .sidebar .editor-tool-card .field.range-field{
+   grid-template-rows:minmax(36px,auto)!important;
+ }
+ body.mobile-studio .sidebar .editor-tool-card .field.range-field>span{
+   font-size:13px!important;
+ }
+ body.mobile-studio .sidebar .editor-tool-card .stepper{
+   height:35px!important;
+ }
+ body.mobile-studio .sidebar .editor-tool-card .stepper>.step-button,
+ body.mobile-studio .sidebar .editor-tool-card .stepper>.slider-number{
+   height:33px!important;min-height:33px!important;
+   font-size:13px!important;
+ }
+ /* Zoomed-out browsers have more CSS room. Give the preview-side tools
+    their actual touch target area back instead of leaving 29px visual buttons. */
+ body.mobile-studio .mobile-preview-rail-left{width:59px!important}
+ body.mobile-studio .mobile-preview-rail-right{width:47px!important}
+ body.mobile-studio .studio-stage .stage-inner{
+   margin-left:60px!important;margin-right:46px!important;
+   width:calc(100% - 106px)!important;
+ }
+ body.mobile-studio .studio-stage .wallpaper-frame{
+   height:min(100%,calc((100vw - 132px)*1300/600))!important;
+ }
+ body.mobile-studio .mobile-preview-rail-left #randomizeAll{
+   width:55px!important;height:48px!important;min-height:48px!important;
+   font-size:12px!important;
+ }
+ body.mobile-studio .mobile-preview-rail-left #randomizeAll span:last-child{
+   font-size:12px!important;
+ }
+ body.mobile-studio .mobile-preview-rail-left .prime-toggle{
+   width:55px!important;min-height:45px!important;font-size:12px!important;
+ }
+ body.mobile-studio .mobile-preview-rail-left #undo,
+ body.mobile-studio .mobile-preview-rail-left #drawPathToggle{
+   width:55px!important;min-width:55px!important;
+   height:46px!important;min-height:46px!important;
+   font-size:17px!important;
+ }
+ body.mobile-studio .mobile-preview-rail-left .toolbar-wording>span,
+ body.mobile-studio .mobile-preview-rail-left #undo span,
+ body.mobile-studio .mobile-preview-rail-left #drawPathToggle span{
+   font-size:12px!important;
+ }
+ body.mobile-studio .mobile-preview-rail-right .nudge-pad{width:43px!important}
+ body.mobile-studio .mobile-preview-rail-right .nudge-pad .nudge-button,
+ body.mobile-studio .mobile-zoom-button{
+   width:43px!important;min-width:43px!important;max-width:43px!important;
+   height:43px!important;min-height:43px!important;
+   font-size:20px!important;
+ }
+ body.mobile-studio .mobile-zoom-level{font-size:11px!important}
+}
 /* Recent generations occupy the same reserved tool space, never the preview. */
 .editor-history[hidden]{display:none!important}
 .editor-history{display:flex;flex-direction:column;gap:4px;flex:1;min-height:0;overflow:hidden;

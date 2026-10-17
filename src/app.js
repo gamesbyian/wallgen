@@ -446,8 +446,16 @@ function showResolvedSelections(scene){
   for(const key of automaticKeys){
     const select=form.elements.namedItem(key),hint=form.querySelector('[data-resolved="'+key+'"]');
     const auto=select.value==='auto',option=Array.from(select.options).find(o=>o.value===scene[key]);
-    hint.textContent=auto?'↳ Selected: '+(option?.textContent||titleCase(String(scene[key]))):'';
+    const resolvedName=option?.textContent||titleCase(String(scene[key]));
+    hint.textContent=auto?'↳ Selected: '+resolvedName:'';
     hint.hidden=!auto;
+    // The narrow mobile toolbar has space for a single line. Put the Auto
+    // selection inside the native select, not an extra line beneath it.
+    if(key==='family'){
+      const autoOption=Array.from(select.options).find(o=>o.value==='auto');
+      if(autoOption)autoOption.textContent=auto?'Auto · '+resolvedName:'Surprise me';
+      select.title=auto?'Starting style: '+resolvedName:'Starting style';
+    }
   }
 }
 

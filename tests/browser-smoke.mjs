@@ -2,7 +2,7 @@
 // Run: node tests/browser-smoke.mjs
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
-import {readFileSync,existsSync,mkdtempSync,rmSync} from 'node:fs';
+import {readFileSync,existsSync,mkdtempSync,rmSync,mkdirSync,writeFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join,resolve,extname} from 'node:path';
 import {spawn} from 'node:child_process';
@@ -174,9 +174,155 @@ try{
   const fitting=await evaluate('(()=>{const bad=[];for(const b of document.querySelectorAll(".settings-tab")){b.click();const c=b.dataset.tab;for(const chip of document.querySelectorAll(".editor-tool-tab:not([hidden])")){chip.click();const card=document.querySelector(".editor-tool-card:not([hidden])");const box=card.getBoundingClientRect();const names=[];for(const node of card.querySelectorAll("input:not([type=hidden]),select,.add-texture-layer")){if(node.getClientRects().length===0||node.closest("[hidden]"))continue;const r=node.getBoundingClientRect();if(r.top<box.top-3||r.bottom>box.bottom+3||r.left<box.left-3||r.right>box.right+3)names.push(node.name||node.id)}if(names.length)bad.push({tool:chip.dataset.editorTool,controls:names,card:card.clientHeight,scroll:card.scrollHeight,children:[...card.querySelectorAll(".texture-layer-group>* , #textureLayer2Panel>* , #textureLayer3Panel>*")].map(x=>({tag:x.tagName,cls:x.className?.toString().slice(0,45),h:Math.round(x.getBoundingClientRect().height),top:Math.round(x.getBoundingClientRect().top-box.top),display:getComputedStyle(x).display})).filter(x=>x.h>0)});}}return bad})()');
   console.log('ALL_TOOL_FIT_AUDIT',JSON.stringify(fitting));
   assert.deepEqual(fitting,[],'every active tool must fit without scrolling and without cutting controls');
+  // Browser zoom changes the effective CSS viewport. Test a normal phone
+  // (412 × 915 CSS pixels) and the same physical phone at 67% browser zoom
+  // (approximately 615 × 1365 CSS pixels). Both remain below mobile breakpoint.
+  const screenshots=join(cwd,'output','editor-layout');
+  mkdirSync(screenshots,{recursive:true});
+  async function captureUI(name){
+    const png=(await command('Page.captureScreenshot',{
+      format:'png',captureBeyondViewport:false,fromSurface:true,
+    })).data;
+    writeFileSync(join(screenshots,name+'.png'),Buffer.from(png,'base64'));
+  }
+  async function checkEditorZoom(width,height,name){
+    await command('Emulation.setDeviceMetricsOverride',{
+      width,height,deviceScaleFactor:1,mobile:true,
+      screenWidth:width,screenHeight:height,
+    });
+    await waitFor('document.body.classList.contains("mobile-studio")');
+    if(!await evaluate('document.body.classList.contains("mobile-edit-open")'))
+      await evaluate('document.getElementById("mobileEdit").click()');
+    await evaluate('document.getElementById("tab-material").click()');
+    await evaluate('document.querySelector("[data-editor-tool=layer1]").click()');
+    await delay(240);
+    const bounds=await evaluate(`(()=>{
+      const rect=q=>document.querySelector(q).getBoundingClientRect();
+      const nav=rect('.settings-tabs'),strip=rect('.editor-tool-chooser');
+      const card=rect('.editor-tool-card:not([hidden])');
+      const stage=rect('.studio-stage'),tray=rect('.sidebar');
+      const categoryBtns=[...document.querySelectorAll('.settings-tabs .settings-tab')];
+      const categoryR=categoryBtns.map(e=>e.getBoundingClientRect());
+      const toolbar=rect('.editor-explore');
+      const toolbarFields=[...document.querySelectorAll('.editor-explore select:not([hidden]),.editor-explore button:not([hidden])')]
+        .filter(el=>el.getClientRects().length>0&&getComputedStyle(el).visibility!=='hidden');
+      const fieldR=toolbarFields.map(e=>({name:e.id||e.textContent.trim(),b:e.getBoundingClientRect()}));
+      const visible=el=>el.getClientRects().length>0&&getComputedStyle(el).visibility!=='hidden';
+      const overlaps=[];
+      for(const row of document.querySelectorAll('.editor-tool-card:not([hidden]) .lockable-setting')){
+        if(!visible(row)||row.closest('[hidden]'))continue;
+        const die=row.querySelector(':scope > .editor-setting-die');
+        const lock=row.querySelector(':scope > .setting-lock');
+        if(die&&lock&&visible(die)&&visible(lock)){
+          const d=die.getBoundingClientRect(),l=lock.getBoundingClientRect();
+          if(d.right>l.left+1&&l.right>d.left+1)
+            overlaps.push({name:row.querySelector('[name]')?.name||'',excess:Math.round(d.right-l.left)});
+        }
+      }
+      const categoryDie=document.querySelector('[data-random-category]');
+      const categoryText=document.createRange();
+      categoryText.selectNodeContents(categoryDie);
+      const categoryTextBox=categoryText.getBoundingClientRect();
+      const dieBox=categoryDie.getBoundingClientRect();
+      const failures=[];
+      const allControls=[...document.querySelectorAll('.editor-tool-card:not([hidden]) input:not([type=hidden]),.editor-tool-card:not([hidden]) select,.editor-tool-card:not([hidden]) button')];
+      for(const el of allControls){
+        if(!visible(el)||el.closest('[hidden]'))continue;
+        const b=el.getBoundingClientRect();
+        if(b.top<card.top-2||b.bottom>card.bottom+2||b.left<card.left-2||b.right>card.right+2)
+          failures.push({control:el.name||el.id||el.textContent.trim().slice(0,16),top:Math.round(b.top-card.top),bottom:Math.round(b.bottom-card.bottom)});
+      }
+      const chip=document.querySelector('.editor-tool-tab[aria-pressed=true]').getBoundingClientRect();
+      return {
+        width:innerWidth,height:innerHeight,navPosition:getComputedStyle(document.querySelector('.settings-tabs')).position,
+        categoryRows:new Set(categoryR.map(b=>Math.round(b.top))).size,
+        categoryWithin:categoryR.every(b=>b.top>=nav.top-2&&b.bottom<=nav.bottom+2),
+        categoryBottom:Math.round(nav.bottom),toolTop:Math.round(strip.top),
+        toolBottom:Math.round(strip.bottom),cardTop:Math.round(card.top),
+        trayTop:Math.round(tray.top),stageBottom:Math.round(stage.bottom),
+        cardHeight:Math.round(card.height),cardScrollHeight:document.querySelector('.editor-tool-card:not([hidden])').scrollHeight,
+        selectedToolVisible:chip.left>=strip.left-3&&chip.right<=strip.right+3,
+        toolbarInside:fieldR.every(({b})=>b.left>=toolbar.left-3&&b.right<=toolbar.right+3&&b.top>=toolbar.top-3&&b.bottom<=toolbar.bottom+3),
+        toolbarOutliers:fieldR.filter(({b})=>b.left<toolbar.left-3||b.right>toolbar.right+3||b.top<toolbar.top-3||b.bottom>toolbar.bottom+3).map(({name,b})=>({name,left:Math.round(b.left-toolbar.left),top:Math.round(b.top-toolbar.top),right:Math.round(b.right-toolbar.right),bottom:Math.round(b.bottom-toolbar.bottom)})),
+        selectedStyle:document.querySelector('[name=family]').selectedOptions[0].textContent,
+        toolbarHeight:Math.round(toolbar.height),failures,overlaps,
+        categoryTextOverflow:categoryTextBox.width>dieBox.width+2,
+        selectorCount:allControls.filter(visible).length,
+      };
+    })()`);
+    console.log('BROWSER_ZOOM_LAYOUT',name,JSON.stringify(bounds));
+    await captureUI(name+'-material');
+    assert.equal(bounds.navPosition,'static','category navigation must not stick/overlap');
+    assert.equal(bounds.categoryRows,1,'all six categories must occupy one row');
+    assert.ok(bounds.categoryWithin,'category labels must remain inside navigation');
+    assert.ok(bounds.categoryBottom<=bounds.toolTop+2,'categories may not cover tool navigation');
+    assert.ok(bounds.toolBottom<=bounds.cardTop+2,'tool tabs may not overlap controls');
+    assert.ok(bounds.stageBottom<=bounds.trayTop+2,'editing controls may not cover the wallpaper');
+    assert.ok(bounds.cardHeight>=145,'active tool needs sufficient editing space');
+    assert.ok(bounds.selectedToolVisible,'active tool name stays visible in the horizontal rail');
+    assert.ok(bounds.toolbarInside,'top-level controls must stay inside their toolbar');
+    assert.ok(bounds.selectorCount>=6,'Material tool controls must be present');
+    assert.ok(await evaluate('document.getElementById("addTextureLayer2").getClientRects().length>0'),
+      'Add texture layer must remain visible at '+name);
+    const noClippedTools=await evaluate(`(()=>{
+      const problems=[];
+      for(const tab of document.querySelectorAll('.settings-tab')){
+        tab.click();
+        for(const tool of document.querySelectorAll('.editor-tool-tab:not([hidden])')){
+          tool.click();
+          const card=document.querySelector('.editor-tool-card:not([hidden])');
+          const frame=card.getBoundingClientRect();
+          for(const el of card.querySelectorAll('input:not([type=hidden]),select,button')){
+            if(!el.getClientRects().length||el.closest('[hidden]'))continue;
+            const b=el.getBoundingClientRect();
+            if(b.top<frame.top-2||b.bottom>frame.bottom+2||
+               b.left<frame.left-2||b.right>frame.right+2)
+              problems.push([tab.dataset.tab,tool.dataset.editorTool,el.name||el.id||el.textContent.trim()]);
+          }
+        }
+      }
+      return problems;
+    })()`);
+    assert.deepEqual(noClippedTools,[],
+      'no tool may clip any control at '+name);
+    const railPosition=await evaluate(`(()=>{
+      const r=selector=>document.querySelector(selector).getBoundingClientRect();
+      const frame=r('.wallpaper-frame');
+      return {leftClear:r('.mobile-preview-rail-left').right<=frame.left+3,
+        rightClear:r('.mobile-preview-rail-right').left>=frame.right-3,
+        frameHeight:frame.height};
+    })()`);
+    assert.ok(railPosition.leftClear&&railPosition.rightClear,
+      'preview controls must not cover the rainbow at '+name);
+    assert.ok(railPosition.frameHeight>200);
+    assert.deepEqual(bounds.failures,[],'every active control must fit inside its card');
+    assert.deepEqual(bounds.overlaps,[],'dice and locks must never overlap');
+    assert.ok(!bounds.categoryTextOverflow,'Category icon text must never overflow its button');
+    for(const category of ['path','stripes','colour','layout','effects']){
+      await evaluate('document.getElementById("tab-'+category+'").click()');
+      const fit=await evaluate(`(()=>{
+        const nav=document.querySelector('.settings-tabs').getBoundingClientRect();
+        const strip=document.querySelector('.editor-tool-chooser').getBoundingClientRect();
+        const card=document.querySelector('.editor-tool-card:not([hidden])').getBoundingClientRect();
+        return nav.bottom<=strip.top+2&&strip.bottom<=card.top+2;
+      })()`);
+      assert.ok(fit,'category '+category+' must not overlap at '+name);
+    }
+  }
+  // Test the initial one-layer state as shown in the reported screenshots:
+  // the Add Layer control must occupy real visible space, not disappear.
+  await evaluate('document.getElementById("removeTextureLayer2").click()');
+  await waitFor('document.getElementById("textureLayer2Panel").hidden===true');
+  await checkEditorZoom(412,915,'100-percent');
+  await checkEditorZoom(615,1365,'67-percent');
+  await command('Emulation.setDeviceMetricsOverride',{
+    width:412,height:915,deviceScaleFactor:1,mobile:true,
+    screenWidth:412,screenHeight:915,
+  });
+  console.log('BROWSER_ZOOM_LAYOUT_ACCEPTANCE_SUCCESS');
   // Keep the existing single-checkpoint Undo and complete full-res export.
   await evaluate('document.getElementById("undo").click()');
-  assert.ok(await evaluate('document.querySelector(".studio-stage").getBoundingClientRect().bottom<=document.querySelector(".sidebar").getBoundingClientRect().top+2'));
+  await waitFor('document.querySelector(".studio-stage").getBoundingClientRect().bottom<=document.querySelector(".sidebar").getBoundingClientRect().top+2',3000);
   // Desktop reuses identical form controls; no duplicated settings or hidden panel.
   await command('Emulation.setDeviceMetricsOverride',{width:1280,height:900,deviceScaleFactor:1,mobile:false,screenWidth:1280,screenHeight:900});
   await waitFor('!document.body.classList.contains("mobile-studio")');
