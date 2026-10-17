@@ -111,6 +111,25 @@ function inactiveSettingKeys(recipe,scene){
         inactive.add(base+suffix);
     }
   }
+  // Direction has no effect without an actual lighting contribution.
+  if(recipe.lightingMood!=='off' && recipe.lightStrength===0 && recipe.shadowStrength===0)
+    inactive.add('lightDirection');
+  // With a zero-strength cast shadow, softness and direction cannot be seen.
+  if(recipe.stripeShadowEnabled && recipe.stripeShadowStrength===0){
+    inactive.add('stripeShadowSoftness');
+    inactive.add('stripeShadowDirection');
+  }
+  // A real material at zero strength can be re-enabled using its strength
+  // control; all subordinate appearance knobs are dormant in the meantime.
+  for(const suffix of ['','2','3']){
+    const layerOn=suffix==='' || (suffix==='2'
+      ? recipe.textureLayer2Enabled : recipe.textureLayer2Enabled && recipe.textureLayer3Enabled);
+    const material=suffix===''?scene.material:recipe['material'+suffix];
+    if(layerOn && material!=='none' && recipe['textureStrength'+suffix]===0){
+      for(const base of ['textureCoverage','textureScale','textureRotation','textureBlend'])
+        inactive.add(base+suffix);
+    }
+  }
   if(recipe.individuality===0)inactive.add('overridePatternHomogeneity');
   return inactive;
 }
