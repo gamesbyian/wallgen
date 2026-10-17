@@ -354,13 +354,16 @@
  }
  body.mobile-studio .sidebar .editor-tool-card .texture-layer-group .lockable-setting,
  body.mobile-studio .sidebar .editor-tool-card .texture-layer-panel .lockable-setting{
-   min-height:27px!important;height:27px!important;max-height:none!important;
+   min-height:29px!important;height:clamp(29px,3.8dvh,35px)!important;
+   max-height:35px!important;
  }
  body.mobile-studio .sidebar .editor-tool-card .texture-layer-group .lockable-setting>.field,
  body.mobile-studio .sidebar .editor-tool-card .texture-layer-panel .lockable-setting>.field{
-   display:flex!important;align-items:center!important;justify-content:space-between!important;
+   display:flex!important;flex-direction:row!important;
+   flex-wrap:nowrap!important;align-items:center!important;
+   justify-content:space-between!important;
    width:100%!important;min-width:0!important;
-   height:26px!important;min-height:26px!important;
+   height:100%!important;min-height:0!important;
    padding:0!important;margin:0!important;font-size:11px!important;
    gap:5px!important;line-height:1.1!important;
  }
@@ -372,8 +375,9 @@
  body.mobile-studio .sidebar .editor-tool-card .layer-add-lock{
    display:flex!important;flex-direction:row!important;
    align-items:center!important;justify-content:space-between!important;
-   flex:0 0 26px!important;height:26px!important;min-height:26px!important;
-   max-height:26px!important;min-width:0;
+   flex:0 0 clamp(26px,3.5dvh,32px)!important;
+   height:clamp(26px,3.5dvh,32px)!important;
+   min-height:26px!important;max-height:32px!important;min-width:0;
    padding:0!important;margin:0!important;overflow:visible!important;
  }
  body.mobile-studio .sidebar .editor-tool-card .layer-add-lock .add-texture-layer{
