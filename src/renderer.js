@@ -33,28 +33,71 @@ function geometryAt(x,stripe,extent) {
   return stripe.center + lerp(shared,displacement(x,stripe,extent),stripe.parallelMix??1)
     + (stripe.tilt??0)*x/extent;
 }
-function stripePath(stripe, extent) {
+// A procedural height field makes the actual texture material affect ribbon edges.
+// Separate low/high-frequency noise bands evoke fibres, pores, grain and stone.
+// This modifies geometry rather than offsetting the colour mask after painting.
+const RELIEF_PROFILES={
+  none:[0,16,.4], grain:[.50,7,.68], watercolor:[.45,40,.15],
+  construction:[.60,13,.53], handmade:[.80,16,.58], corrugated:[.68,19,.82],
+  linen:[.52,12,.76], canvas:[.60,17,.78], denim:[.64,10,.84],
+  knit:[.72,17,.67], felt:[.90,9,.72], corduroy:[.78,13,.90],
+  concrete:[.76,22,.68], stucco:[1,11,.83], stone:[.89,36,.44],
+  drywall:[.32,24,.38], 'wood-grain':[.66,30,.91], 'vinyl-sheet':[.23,42,.16],
+  foil:[.50,13,.85], 'glossy-paper':[.15,42,.14], adobe:[.95,24,.71],
+};
+export function textureHeight(scene,stripe,x,side=0){
+  if(!scene.textureDisplacement)return 0;
+  let sum=0,total=0;
+  const y=stripe.center+side*stripe.width*.5;
+  for(const layer of scene.textureLayers){
+    if(layer.coverage==='background')continue;
+    const profile=RELIEF_PROFILES[layer.material]||RELIEF_PROFILES.grain;
+    const weight=(layer.strength/100)*profile[0];
+    if(weight<=0)continue;
+    const theta=layer.rotation*Math.PI/180;
+    const co=Math.cos(theta),si=Math.sin(theta);
+    // The fine band follows the same orientation and material scale as its
+    // painted counterpart, and a second band keeps the edge organic at 90°.
+    const along=x*co+y*si;
+    const across=-x*si+y*co;
+    const period=profile[1]*(.5+layer.scale/100*1.7);
+    const seed=layer.heightSeed;
+    const low=noise1D((along+x*.16)/(period*2.9),seed);
+    const fine=noise1D((along*.38+across*.46+x*.22)/period,seed+17);
+    const value=low*(1-profile[2]) + fine*profile[2];
+    sum+=value*weight;total+=weight;
+  }
+  if(total===0)return 0;
+  const amount=scene.textureDisplacement/100;
+  const maxPixels=Math.min(11,stripe.width*.19)*amount;
+  return Math.max(-maxPixels,Math.min(maxPixels,sum/Math.max(.6,total)*maxPixels));
+}
+function edgeAt(x,stripe,extent,side,scene){
+  return geometryAt(x,stripe,extent)+side*widthAt(x,stripe,extent)/2+
+    (scene?textureHeight(scene,stripe,x,side):0);
+}
+function stripePath(stripe, extent, scene) {
   const path = new Path2D();
   const count = 500;
   const start=stripe.segmentStart??-extent, end=stripe.segmentEnd??extent;
   for (let i=0;i<=count;i++) {
     const x = start + (end-start)*i/count;
-    const y = geometryAt(x,stripe,extent) - widthAt(x,stripe,extent)/2;
+    const y = edgeAt(x,stripe,extent,-1,scene);
     if(i===0) path.moveTo(x,y); else path.lineTo(x,y);
   }
   for(let i=count;i>=0;i--) {
     const x = start + (end-start)*i/count;
-    path.lineTo(x,geometryAt(x,stripe,extent)+widthAt(x,stripe,extent)/2);
+    path.lineTo(x,edgeAt(x,stripe,extent,1,scene));
   }
   path.closePath();
   return path;
 }
-function traceEdge(stripe, extent, side) {
+function traceEdge(stripe, extent, side, scene) {
   const path=new Path2D();
   const start=stripe.segmentStart??-extent, end=stripe.segmentEnd??extent;
   for(let i=0;i<=500;i++){
     const x=start+(end-start)*i/500;
-    const y=geometryAt(x,stripe,extent)+side*widthAt(x,stripe,extent)/2;
+    const y=edgeAt(x,stripe,extent,side,scene);
     if(i===0) path.moveTo(x,y); else path.lineTo(x,y);
   }
   return path;
@@ -67,8 +110,7 @@ function ribbonPoint(scene,x,y) {
   return {x:scene.centerX+x*co-y*si,y:scene.centerY+x*si+y*co};
 }
 function endpoints(scene,stripe,x) {
-  const mid=geometryAt(x,stripe,scene.extent),radius=widthAt(x,stripe,scene.extent)/2;
-  return [ribbonPoint(scene,x,mid-radius),ribbonPoint(scene,x,mid+radius)];
+  return [ribbonPoint(scene,x,edgeAt(x,stripe,scene.extent,-1,scene)),ribbonPoint(scene,x,edgeAt(x,stripe,scene.extent,1,scene))];
 }
 function contactSegment(scene,contacts,p,q) {
   const hit=(t,at,other,low,high)=>t>=0&&t<=1&&other>=low-1e-7&&other<=high+1e-7;
@@ -145,9 +187,9 @@ export function motifFits(stripe,scene,x,y,halfX,halfY,extent=scene.extent) {
   const margin=.12;
   for(let i=0;i<=8;i++){
     const testX=x-halfX+halfX*i/4;
-    const center=geometryAt(testX,stripe,extent);
-    const radius=widthAt(testX,stripe,extent)/2;
-    if(y-halfY < center-radius+margin || y+halfY > center+radius-margin) return false;
+    const low=edgeAt(testX,stripe,extent,-1,scene);
+    const high=edgeAt(testX,stripe,extent,1,scene);
+    if(y-halfY < low+margin || y+halfY > high-margin) return false;
   }
   // Only complete marks within the actual wallpaper rectangle.
   const a=scene.angle, cos=Math.cos(a), sin=Math.sin(a);
@@ -177,7 +219,7 @@ export function motifVariation(scene,stripe,random) {
 }
 function fillMotif(ctx,stripe,extent,scene) {
   const motif=stripe.motif;
-  if(motif==='solid'){ctx.fill(stripePath(stripe,extent));return;}
+  if(motif==='solid'){ctx.fill(stripePath(stripe,extent,scene));return;}
   const random=rng(scene.seed+':motifs:'+stripe.index);
   const step=Math.max(2.5,stripe.width*.42*stripe.patternScale);
   const across=Math.max(1,Math.ceil(stripe.width/(step*.83)));
@@ -191,7 +233,7 @@ function fillMotif(ctx,stripe,extent,scene) {
       const offset=j*step*.82;
       const jitter=scene.intensity*step*.10;
       const xx=x+(Math.abs(j)%2)*spacing*.35+(random()-.5)*jitter;
-      const yy=geometryAt(xx,stripe,extent)+offset+(random()-.5)*jitter;
+      const yy=geometryAt(xx,stripe,extent)+offset+(random()-.5)*jitter+textureHeight(scene,stripe,xx,0)*.3;
       const radius=step*.28*variation.scale;
       // Bounds include rotation; never clip a partly visible element.
       let bx=radius,by=radius;
@@ -374,7 +416,7 @@ function drawOutline(ctx,path,stripe,scene) {
   const buffer=scene.gap/100*Math.min(20,stripe.width*.6);
   ctx.save();ctx.lineJoin='round';
   if(style==='broken')ctx.setLineDash([15,10]);
-  if(style==='one-side'){ctx.strokeStyle=colour;ctx.lineWidth=width;ctx.stroke(traceEdge(stripe,scene.extent,-1));ctx.restore();return;}
+  if(style==='one-side'){ctx.strokeStyle=colour;ctx.lineWidth=width;ctx.stroke(traceEdge(stripe,scene.extent,-1,scene));ctx.restore();return;}
   ctx.strokeStyle=colour;ctx.lineWidth=2*(buffer+width);ctx.stroke(path);
   if(buffer>0){ctx.strokeStyle=scene.background==='white'?'#fff':'#000';ctx.lineWidth=2*buffer;ctx.stroke(path);}
   if(style==='double'){ctx.strokeStyle=colour;ctx.lineWidth=.95;ctx.stroke(path);}
@@ -398,7 +440,7 @@ export function drawWallpaper(canvas, recipe) {
   for(const stripe of scene.stripes){
     balanceStripeEnds(scene,stripe);
     if(stripe.hidden)continue;
-    const path=stripePath(stripe,scene.extent);
+    const path=stripePath(stripe,scene.extent,scene);
     if(scene.glow>0){
       g.save();g.shadowColor=stripe.color;g.shadowBlur=scene.glow/100*32;g.globalAlpha=.70;
       g.fillStyle=stripe.color;g.fill(path);g.restore();
