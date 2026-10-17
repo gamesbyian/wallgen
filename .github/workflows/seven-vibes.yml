@@ -1,0 +1,57 @@
+name: Seven ROYGBIV vibes
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/seven-vibes.yml'
+  workflow_dispatch:
+jobs:
+  wallpapers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm run check
+      - name: Prepare Chromium
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+      - name: Render full-resolution wallpapers from ROYGBIV settings
+        run: |
+          mkdir -p output previews
+          npm run render -- --seed vibe-50s --set family=studio --set orientation=diagonal --set geometry=straight --set palette=muted --set material=linen --set background=white --set stripeWidth=34 --set spread=60 --set textureStrength=24 --set chaos=18 --set gap=26 --out output/50s.png
+          npm run render -- --seed vibe-60s --set family=signal --set orientation=diagonal --set geometry=arc --set palette=electric --set material=construction --set background=black --set stripeWidth=52 --set spread=82 --set textureStrength=34 --set chaos=22 --set gap=20 --out output/60s.png
+          npm run render -- --seed vibe-70s --set family=currents --set orientation=vertical --set geometry=wave --set palette=muted --set material=linen --set background=white --set stripeWidth=54 --set spread=72 --set textureStrength=44 --set shapeFrequency=36 --set shapeDepth=58 --set chaos=20 --set gap=18 --out output/70s.png
+          npm run render -- --seed vibe-80s --set family=studio --set orientation=diagonal --set geometry=chevron --set palette=electric --set material=foil --set background=black --set stripeWidth=40 --set spread=66 --set textureStrength=38 --set chaos=24 --set glow=34 --set gap=16 --set stripeShadowEnabled=true --set stripeShadowStrength=62 --set stripeShadowSoftness=36 --out output/80s.png
+          npm run render -- --seed vibe-joy --set family=signal --set orientation=diagonal --set geometry=wave --set palette=electric --set material=linen --set background=white --set stripeWidth=42 --set spread=74 --set textureStrength=26 --set shapeFrequency=64 --set shapeDepth=36 --set chaos=28 --set gap=24 --out output/joy.png
+          npm run render -- --seed vibe-rage --set family=tapestry --set orientation=diagonal --set geometry=jagged --set palette=electric --set material=construction --set background=black --set stripeWidth=32 --set spread=86 --set textureStrength=62 --set chaos=78 --set individuality=62 --set textureDisplacement=67 --set gap=10 --out output/rage.png
+          npm run render -- --seed vibe-sex --set family=currents --set orientation=vertical --set geometry=wave --set palette=jewel --set material=glossy-paper --set background=black --set stripeWidth=62 --set spread=58 --set textureStrength=48 --set shapeFrequency=48 --set shapeDepth=28 --set chaos=18 --set gap=10 --set glow=18 --set stripeShadowEnabled=true --set stripeShadowStrength=48 --set stripeShadowSoftness=60 --out output/sex.png
+      - name: Validate every PNG and recipe
+        run: |
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {readFile,writeFile} from 'node:fs/promises';
+          import {extractPngRecipe} from './src/png-metadata.js';
+          const manifest=[];
+          for(const vibe of ['50s','60s','70s','80s','joy','rage','sex']){
+            const png=await readFile('output/'+vibe+'.png');
+            assert.deepEqual([...png.subarray(0,8)],[137,80,78,71,13,10,26,10]);
+            assert.equal(png.readUInt32BE(16),3024);
+            assert.equal(png.readUInt32BE(20),6552);
+            const recipe=extractPngRecipe(png);
+            assert.equal(recipe?.seed,'vibe-'+vibe);
+            manifest.push({vibe,recipe});
+            await writeFile('output/'+vibe+'.json',JSON.stringify(recipe,null,2)+'\n');
+            console.log(vibe,png.length,recipe.geometry,recipe.palette);
+          }
+          await writeFile('output/manifest.json',JSON.stringify(manifest,null,2));
+          JS
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: roy-gbiv-seven-vibes
+          path: output/
+          retention-days: 90
+          if-no-files-found: warn
