@@ -13,7 +13,7 @@
     catch { document.documentElement.dataset.theme = 'cream'; }
   </script>
   <link rel="stylesheet" href="styles.css?v=20261016-geometry3">
-  <link rel="stylesheet" href="studio-themes.css?v=20261017-mobile1">
+  <link rel="stylesheet" href="studio-themes.css?v=20261016-live-preview1">
 </head>
 <body>
   <header class="masthead">
@@ -35,7 +35,14 @@
   </header>
   <div class="layout">
     <aside class="sidebar" id="mobileDesignSheet" aria-label="Generator controls">
-      <div class="mobile-sheet-head"><strong>Make it yours</strong><button type="button" id="mobileDesignClose" aria-label="Close settings">✕</button></div>
+      <div class="mobile-sheet-head">
+        <div class="mobile-edit-heading"><span class="mobile-grabber" aria-hidden="true"></span><strong>Adjust your wallpaper</strong></div>
+        <div class="mobile-edit-actions">
+          <button type="button" id="mobilePreviewSpace" aria-pressed="false"
+            aria-label="Give the preview more room" title="Give the preview more room">Larger preview</button>
+          <button type="button" id="mobileDesignClose" aria-label="Done editing">Done</button>
+        </div>
+      </div>
 
       <form id="controls" autocomplete="off">
         <div class="randomize-bar randomize-toolbar">
@@ -263,6 +270,6 @@
     <button type="button" id="mobileMore" aria-controls="mobileToolsSheet" aria-expanded="false"><span aria-hidden="true">⋯</span><small>More</small></button>
   </nav>
   <script type="module" src="src/app.js?v=20261016-geometry3"></script>
-  <script type="module" src="src/mobile-studio.js?v=20261017-mobile1"></script>
+  <script type="module" src="src/mobile-studio.js?v=20261016-live-preview1"></script>
 </body>
 </html>
