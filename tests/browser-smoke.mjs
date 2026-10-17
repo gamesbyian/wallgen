@@ -29,7 +29,9 @@ const url='http://127.0.0.1:'+server.address().port+'/';
 const profile=mkdtempSync(join(tmpdir(),'roygbiv-chrome-'));
 const proc=spawn(chrome,['--headless=new','--no-sandbox','--disable-dev-shm-usage',
   '--disable-gpu','--hide-scrollbars','--remote-debugging-port=0',
-  '--user-data-dir='+profile,'about:blank'],{stdio:'ignore'});
+  '--user-data-dir='+profile,'about:blank'],{stdio:['ignore','ignore','pipe']});
+let chromeErrors='';
+proc.stderr.on('data',buffer=>{chromeErrors=(chromeErrors+buffer.toString()).slice(-2400);});
 let ws,seq=0;const pending=new Map();
 function command(method,params={}){
   return new Promise((ok,bad)=>{
@@ -52,13 +54,14 @@ async function waitFor(expr,timeout=12000){
 }
 try{
   let port;
-  for(let n=0;n<100;n++){
+  // Shared CI hosts can take longer to cold-start Chromium under load.
+  for(let n=0;n<260;n++){
     const p=join(profile,'DevToolsActivePort');
     if(existsSync(p)){port=Number(readFileSync(p,'utf8').split('\n')[0]);break;}
     if(proc.exitCode!==null)throw Error('Chromium exited before opening debugger');
     await delay(100);
   }
-  if(!port)throw Error('Chromium DevTools did not open');
+  if(!port)throw Error('Chromium DevTools did not open: '+chromeErrors);
   const targets=await (await fetch('http://127.0.0.1:'+port+'/json')).json();
   const page=targets.find(t=>t.type==='page');
   if(!page)throw Error('Missing Chromium page target');
