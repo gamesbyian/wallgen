@@ -28,14 +28,12 @@ bleedButton.className='mobile-bleed-button';
 bleedButton.textContent='Bleed';
 bleedButton.setAttribute('aria-label','Toggle 90 percent wallpaper framing guide');
 bleedButton.setAttribute('aria-pressed','false');
-function updateBleedContrast(){
-  if(bleed.hidden)return;
-  const canvas=document.getElementById('preview');
-  const ctx=canvas.getContext('2d');
-  // Use a small patch near the frame edge, where the guide is painted.
-  const image=ctx.getImageData(Math.round(canvas.width*.05),Math.round(canvas.height*.05),1,1).data;
-  const brightness=(.2126*image[0]+.7152*image[1]+.0722*image[2])/255;
-  bleed.style.borderColor=brightness>.53?'#101014':'#ffffff';
+function updateBleedContrast(event){
+  // Contrast follows the actual wallpaper *background*, not sampled stripe
+  // pixels, which might cover the inset at any particular seed/zoom.
+  const background=event?.detail?.background
+    ||document.querySelector('#controls [name="background"]')?.value;
+  bleed.style.borderColor=background==='white'?'#101014':'#ffffff';
 }
 bleedButton.addEventListener('click',()=>{
   bleed.hidden=!bleed.hidden;
