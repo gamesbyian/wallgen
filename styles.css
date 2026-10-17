@@ -174,3 +174,48 @@
 .texture-displacement-control .field{min-width:0;width:100%}
 .texture-displacement-control .stepper{min-width:0;width:100%}
 .texture-displacement-control small{color:#9395a6;font-size:10px;line-height:1.5}
+
+/* Locks sit beside each setting label rather than reducing slider travel. */
+.lockable-setting{position:relative;min-width:0;width:100%}
+.lockable-setting>.field,.lockable-setting>.homogeneity-override{min-width:0;width:100%}
+.lockable-setting .setting-lock{position:absolute;top:-1px;right:0;z-index:3}
+.setting-lock{display:inline-flex;align-items:center;justify-content:center;
+  width:26px;height:26px;min-width:26px;padding:0;border-radius:6px;
+  border:1px solid #525467;background:#1c1e28;color:#ececf6;font-size:14px;cursor:pointer}
+.setting-lock:hover{background:#353947;border-color:#aaa2ee}
+.setting-lock.is-locked{border-color:#9e88e7;background:#34304e}
+.lockable-setting .field>span:first-child{padding-right:28px}
+.lockable-setting .field>select{margin-top:4px}
+.lockable-setting input:disabled,.lockable-setting select:disabled{opacity:.58;cursor:not-allowed}
+.lockable-setting .stepper .step-button:disabled{opacity:.28}
+.lockable-setting .homogeneity-override{padding-right:29px}
+.layer-add-lock{display:flex;justify-content:space-between;gap:8px;align-items:center;width:100%}
+.layer-add-lock[hidden]{display:none!important}
+.texture-layer-panel-head .setting-lock{margin-left:auto}
+.seed-lock-row{display:flex;align-items:center;gap:6px;min-width:0}
+.seed-lock-row .seed-group{flex:1;min-width:0}
+.seed-lock-row .seed-group input{min-width:0;flex:1}
+.positioner-description{position:relative;padding-right:29px}
+.positioner-description>.setting-lock{position:absolute;right:0;top:0}
+/* Five directions share one row, on desktop and on portrait phones. */
+.nudge-pad.nudge-pad-inline{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));
+  grid-template-rows:34px;grid-template-areas:none;gap:4px;width:min(100%,208px);
+  margin-left:auto;flex:0 0 auto}
+.nudge-pad-inline .nudge-button{grid-area:auto!important;min-width:0}
+.nudge-pad-inline .nudge-left{order:1}
+.nudge-pad-inline .nudge-up{order:2}
+.nudge-pad-inline .nudge-down{order:3}
+.nudge-pad-inline .nudge-right{order:4}
+.nudge-pad-inline .nudge-reset{order:5}
+.sidebar .randomize-bar{margin:1px 0 20px;padding-bottom:17px;border-bottom:1px solid #363744}
+.sidebar .button-randomize-all{width:100%;white-space:normal;min-height:50px}
+.sidebar .randomize-bar>span{font-size:10px;color:#a4a5b4}
+@media(max-width:790px){
+  .nudge-pad.nudge-pad-inline{grid-template-rows:29px;gap:2px;width:min(100%,170px)}
+  .nudge-pad-inline .nudge-button{font-size:15px}
+  .sidebar .randomize-bar{margin:0 0 13px;padding-bottom:11px}
+  .sidebar .randomize-bar>span{display:block;font-size:9px}
+  .setting-lock{width:23px;height:23px;min-width:23px;font-size:12px}
+  .lockable-setting .setting-lock{top:0}
+  .positioner-description{padding-right:26px}
+}
