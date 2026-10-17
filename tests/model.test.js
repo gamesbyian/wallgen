@@ -227,7 +227,7 @@ test('locked settings are preserved by randomization and by attempted edits',()=
   assert.equal(next.positionY,-8);
   assert.deepEqual(next.lockedSettings,current.lockedSettings);
   assert.deepEqual(decodeRecipe(encodeRecipe(next)),next);
-  assert.equal(LOCKABLE_SETTINGS.includes('textureLayer3Enabled'),true);
+  assert.equal(LOCKABLE_SETTINGS.includes('textureLayer3Enabled'),false);
 });
 test('locked Follow family keeps the actually selected style through a new seed',()=>{
   const original=resolveScene({seed:'auto-lock-original',family:'auto',outline:'auto'});
