@@ -163,3 +163,39 @@ test('normalizes rotations and blend modes and recognizes corduroy spelling',()=
   assert.ok(MATERIALS.includes('adobe'));
   assert.ok(MATERIALS.includes('corduroy'));
 });
+
+test('stripe spread changes centre spacing without changing any stripe width or geometry',()=>{
+  for(const family of FAMILIES)for(const seed of ['fixed-a','fixed-b','fixed-c']){
+    const options={seed,family,stripeWidth:74,individuality:81,chaos:92};
+    const compact=resolveScene({...options,spread:0});
+    const normal=resolveScene({...options,spread:56});
+    const expanded=resolveScene({...options,spread:100});
+    for(let i=0;i<7;i++){
+      const a=compact.stripes[i],b=normal.stripes[i],c=expanded.stripes[i];
+      assert.ok(Math.abs(a.width-b.width)<1e-8 && Math.abs(a.width-c.width)<1e-8,`width changed: ${family}/${i}`);
+      for(const key of ['displacement','sharedDisplacement','taper','tilt','geometry']){
+        assert.equal(a[key],b[key],key);assert.equal(b[key],c[key],key);
+      }
+      if(i>0){
+        const compactGap=compact.stripes[i].center-compact.stripes[i-1].center;
+        const expandedGap=expanded.stripes[i].center-expanded.stripes[i-1].center;
+        assert.ok(expandedGap>compactGap,`gap failed: ${family}/${i}`);
+      }
+    }
+  }
+  const thin=resolveScene({seed:'width-is-independent',spread:50,stripeWidth:0});
+  const thick=resolveScene({seed:'width-is-independent',spread:50,stripeWidth:100});
+  assert.ok(thick.stripes.every((stripe,i)=>stripe.width>thin.stripes[i].width));
+});
+test('texture displacement defaults off, clamps to the slider range, and round-trips',()=>{
+  const legacy=normalizeRecipe({seed:'legacy'});
+  assert.equal(legacy.textureDisplacement,0);
+  assert.equal(normalizeRecipe({textureDisplacement:999}).textureDisplacement,100);
+  assert.equal(normalizeRecipe({textureDisplacement:-99}).textureDisplacement,0);
+  const mapped=normalizeRecipe({seed:'relief-seed',material:'stucco',textureDisplacement:72,
+    textureLayer2Enabled:true,material2:'adobe',textureRotation2:90,textureCoverage2:'stripes'});
+  assert.equal(resolveScene(mapped).textureDisplacement,72);
+  assert.deepEqual(decodeRecipe(encodeRecipe(mapped)),mapped);
+  const random=randomizeAllRecipe();
+  assert.ok(random.textureDisplacement>=0 && random.textureDisplacement<=100);
+});
