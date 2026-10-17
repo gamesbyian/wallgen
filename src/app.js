@@ -8,7 +8,7 @@ const gallery = document.getElementById('gallery');
 const notice = document.getElementById('notice');
 const favoriteButton = document.getElementById('favorite');
 const FAVORITES_KEY = 'wallgen:favorites:v1';
-const FIELDS = ['family','orientation','geometry','motif','palette','material','outline','background','textureCoverage','chaos','stripeWidth','spread','textureStrength','textureScale','individuality','patternHomogeneity','overridePatternHomogeneity','gap','glow'];
+const FIELDS = ['family','orientation','geometry','motif','palette','material','outline','background','textureCoverage','textureRotation','textureBlend','textureLayer2Enabled','material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2','textureLayer3Enabled','material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3','chaos','stripeWidth','spread','textureStrength','textureScale','individuality','patternHomogeneity','overridePatternHomogeneity','gap','glow'];
 let current = normalizeRecipe();
 let currentScene;
 let noticeTimer = 0;
@@ -68,6 +68,15 @@ function toControls(recipe) {
     const numeric=form.querySelector(`[data-number-for="${key}"]`);
     if(numeric)numeric.value=current[key];
   }
+  syncTextureLayerVisibility();
+}
+function syncTextureLayerVisibility(){
+  const two=!!form.elements.namedItem('textureLayer2Enabled').checked;
+  const three=two && !!form.elements.namedItem('textureLayer3Enabled').checked;
+  document.getElementById('textureLayer2Panel').hidden=!two;
+  document.getElementById('textureLayer3Panel').hidden=!three;
+  document.getElementById('addTextureLayer2').hidden=two;
+  document.getElementById('addTextureLayer3').hidden=!two || three;
 }
 function syncURL() {
   try {
@@ -84,7 +93,7 @@ function render(recipe,{scroll=false}={}) {
   showResolvedSelections(currentScene);
   document.getElementById('detailFamily').textContent=titleCase(currentScene.family);
   document.getElementById('detailGeometry').textContent=titleCase(currentScene.geometry);
-  document.getElementById('detailMaterial').textContent=titleCase(currentScene.material);
+  document.getElementById('detailMaterial').textContent=titleCase(currentScene.materialSummary);
   favoriteButton.setAttribute('aria-pressed',String(isFavorite(current)));
   favoriteButton.textContent=isFavorite(current)?'♥':'♡';
   document.getElementById('favoriteCount').textContent=String(favorites.length);
@@ -206,7 +215,10 @@ form.addEventListener('input',event=>{
   if(event.target.type==='range'){
     clearTimeout(rangeTimeout);
     rangeTimeout=setTimeout(updateControlsFromInputs,60);
-  }else updateControlsFromInputs();
+  }else {
+    syncTextureLayerVisibility();
+    updateControlsFromInputs();
+  }
 });
 form.addEventListener('change',()=>{clearTimeout(rangeTimeout);updateControlsFromInputs();});
 form.addEventListener('submit',event=>event.preventDefault());
@@ -214,6 +226,29 @@ seedInput.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preve
 document.getElementById('applySeed').addEventListener('click',()=>render(fromControls()));
 document.getElementById('randomize').addEventListener('click',()=>changeRecipe({...fromControls(),seed:newSeed()}));
 document.getElementById('randomizeAll').addEventListener('click',()=>changeRecipe(randomizeAllRecipe()));
+for(const n of [2,3]){
+  document.getElementById('addTextureLayer'+n).addEventListener('click',()=>{
+    const next=fromControls();
+    next['textureLayer'+n+'Enabled']=true;
+    if(n===3)next.textureLayer2Enabled=true;
+    if(next['material'+n]==='none')next['material'+n]=n===2?'concrete':'adobe';
+    changeRecipe(next);
+  });
+  document.getElementById('removeTextureLayer'+n).addEventListener('click',()=>{
+    const next=fromControls();
+    next['textureLayer'+n+'Enabled']=false;
+    if(n===2)next.textureLayer3Enabled=false;
+    changeRecipe(next);
+  });
+}
+for(const button of document.querySelectorAll('[data-rotate-target]')){
+  button.addEventListener('click',()=>{
+    const recipe=fromControls();
+    const key=button.dataset.rotateTarget;
+    recipe[key]=button.dataset.rotateSet!==undefined?Number(button.dataset.rotateSet):Number(recipe[key])+Number(button.dataset.rotateDelta);
+    changeRecipe(recipe);
+  });
+}
 document.getElementById('undo').addEventListener('click',undo);
 document.getElementById('download').addEventListener('click',downloadPNG);
 document.getElementById('copyRecipe').addEventListener('click',()=>copyText(JSON.stringify(current,null,2)));
@@ -232,7 +267,7 @@ function createCard(recipe,index) {
   const canvas=document.createElement('canvas');canvas.width=240;canvas.height=520;
   card.append(canvas);
   const name=document.createElement('span');name.className='thumb-caption';name.textContent=titleCase(scene.family);
-  const sub=document.createElement('span');sub.className='thumb-sub';sub.textContent=`${titleCase(scene.material)} · ${scene.orientation}`;
+  const sub=document.createElement('span');sub.className='thumb-sub';sub.textContent=`${titleCase(scene.materialSummary)} · ${scene.orientation}`;
   card.append(name,sub);
   card.addEventListener('click',()=>changeRecipe(recipe,{scroll:true}));
   drawWallpaper(canvas,recipe);
