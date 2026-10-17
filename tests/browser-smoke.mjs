@@ -140,5 +140,12 @@ try{
   for(const {bad} of pending.values())bad(new Error('Browser ended'));
   proc.kill('SIGTERM');
   server.close();
-  rmSync(profile,{recursive:true,force:true});
+  // Chromium writes cache entries while exiting. Never mask a browser assertion
+  // with a racing temporary-directory cleanup error.
+  await Promise.race([
+    new Promise(resolve=>proc.once('exit',resolve)),
+    delay(2200),
+  ]);
+  try{rmSync(profile,{recursive:true,force:true,maxRetries:5,retryDelay:180});}
+  catch(e){console.warn('Temporary Chrome profile cleanup:',e.message);}
 }
