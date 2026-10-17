@@ -21,7 +21,7 @@ export const LOCKABLE_SETTINGS = ['seed','family','orientation','geometry','moti
   'textureLayer3Enabled','material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3',
   'textureDisplacement','patternHomogeneity','chaos','stripeWidth','spread','shapeFrequency','shapeDepth','lineStyle','individuality',
   'overridePatternHomogeneity','gap','glow','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','position',
-  'composition','repeatCount','repeatSpacing','construction','turnRadius','loopSize','endTaper','tonalContrast','brushRoughness','dotSize','dotSpacing'];
+  'composition','repeatCount','repeatSpacing','construction','turnRadius','endTaper','tonalContrast','brushRoughness','dotSize','dotSpacing'];
 export const PALETTES = ['classic', 'electric', 'pastel', 'jewel', 'muted'];
 export const TEXTURE_COVERAGES = ['both', 'stripes', 'background'];
 export const OUTLINES = ['none', 'hairline', 'white', 'double', 'broken', 'one-side', 'black', 'black-hairline', 'black-double', 'black-broken', 'black-one-side'];
@@ -86,10 +86,9 @@ export function normalizeRecipe(input = {}) {
     lineStyle: LINE_STYLES.includes(input.lineStyle) ? input.lineStyle : 'continuous',
     composition: COMPOSITIONS.includes(input.composition) ? input.composition : 'single',
     construction: CONSTRUCTIONS.includes(input.construction) ? input.construction : 'ribbon',
-    repeatCount: finiteRange(input.repeatCount, 3, 2, 6),
+    repeatCount: Math.round(finiteRange(input.repeatCount, 3, 2, 6)),
     repeatSpacing: finiteRange(input.repeatSpacing, 50, 0, 100),
     turnRadius: finiteRange(input.turnRadius, 50, 0, 100),
-    loopSize: finiteRange(input.loopSize, 50, 0, 100),
     endTaper: finiteRange(input.endTaper, 0, 0, 100),
     tonalContrast: finiteRange(input.tonalContrast, 50, 0, 100),
     brushRoughness: finiteRange(input.brushRoughness, 0, 0, 100),
@@ -234,7 +233,7 @@ export function resolveScene(recipeInput) {
       dotSize:recipe.dotSize,dotSpacing:recipe.dotSpacing,
       turnRadius:90+recipe.turnRadius*1.35,
       loopPeriod:27+((100-recipe.shapeFrequency)/100)*66,
-      loopAmplitude:4+(recipe.loopSize/100)*29,
+      loopAmplitude:(4+29*recipe.shapeDepth/100),
       phase, period, displacement,
       sharedGeometry:geometry, sharedPhase:commonPhase, sharedPeriod:commonPeriod,
       sharedDisplacement:commonDisplacement, parallelMix:individuality,
@@ -341,7 +340,7 @@ export function randomizeAllRecipe({primesOnly=false}={}) {
     shapeFrequency:percent(),shapeDepth:percent(),lineStyle:any(LINE_STYLES),
     composition:any(COMPOSITIONS),construction:any(CONSTRUCTIONS),
     repeatCount:2+Math.floor(r()*5),repeatSpacing:percent(),
-    turnRadius:percent(),loopSize:percent(),endTaper:percent(),
+    turnRadius:percent(),endTaper:percent(),
     tonalContrast:percent(),brushRoughness:percent(),dotSize:percent(),dotSpacing:percent(),
     textureStrength:percent(), textureScale:percent(), textureDisplacement:percent(), individuality:percent(),
     patternHomogeneity:percent(), overridePatternHomogeneity:r()>.5,
