@@ -1,5 +1,22 @@
 /* R.O.Y.G.B.I.V. editor v2. Six intentions, named tools, scoped dice.
    The wallpaper occupies a separate resized area, never an opaque overlay. */
+/* Canonical mobile editor shell. This replaces the legacy swipe-sheet CSS
+   rather than keeping a second responsive settings implementation active. */
+.mobile-dismiss-handle,.mobile-setting-counter{display:none}
+@media(max-width:790px){
+ body.mobile-studio .sidebar{display:flex!important;flex-direction:column!important;
+   overflow:hidden!important;overscroll-behavior:contain}
+ body.mobile-studio .sidebar #controls{display:flex!important;flex-direction:column!important;
+   flex:1 1 auto!important;min-height:0!important;height:100%!important;overflow:hidden!important;
+   margin:0!important}
+ body.mobile-studio .mobile-dismiss-handle{display:flex!important;flex:0 0 12px!important;
+   min-height:12px!important;align-items:center;justify-content:center;
+   width:100%;padding:0!important;touch-action:none;background:transparent;border:0}
+ body.mobile-studio .mobile-dismiss-handle .mobile-grabber{
+   width:33px;height:3px;border-radius:99px}
+ body.mobile-studio .sidebar .settings-panel:not([hidden]){min-height:0!important}
+}
+
 .editor-explore{display:flex;flex-direction:column;gap:4px;flex:0 0 auto;
   margin:4px 0;padding:4px 0;border-bottom:1px solid var(--line)}
 .editor-style,.editor-explore-actions{display:flex;gap:5px;align-items:center;justify-content:space-between;min-width:0}
