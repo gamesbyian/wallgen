@@ -24,8 +24,9 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
     // The temporary preview path is drawn in stage coordinates while its
     // recipe points stay in unzoomed wallpaper coordinates.
     const stage=overlay.getBoundingClientRect(),image=wallpaper.getBoundingClientRect();
-    const toX=x=>(image.left+x*image.width-stage.left)*overlay.width/stage.width;
-    const toY=y=>(image.top+y*image.height-stage.top)*overlay.height/stage.height;
+    const zoom=Number(document.querySelector('.studio-stage').dataset.viewZoom)||1;
+    const toX=x=>(image.left+(.5+(x-.5)*zoom)*image.width-stage.left)*overlay.width/stage.width;
+    const toY=y=>(image.top+(.5+(y-.5)*zoom)*image.height-stage.top)*overlay.height/stage.height;
     ctx.lineJoin='round';ctx.lineCap='round';
     for(const [colour,width] of [['#11131b',10],['#fff4a8',5]]){
       ctx.strokeStyle=colour;ctx.lineWidth=width;
@@ -79,8 +80,11 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
     // The full stage captures the pointer. Coordinates are relative to the
     // actual zoomed wallpaper, without clipping at its edges.
     const rect=wallpaper.getBoundingClientRect();
-    return [Math.max(DRAW_COORD_MIN,Math.min(DRAW_COORD_MAX,(event.clientX-rect.left)/rect.width)),
-      Math.max(DRAW_COORD_MIN,Math.min(DRAW_COORD_MAX,(event.clientY-rect.top)/rect.height))];
+    const zoom=Number(document.querySelector('.studio-stage').dataset.viewZoom)||1;
+    return [Math.max(DRAW_COORD_MIN,Math.min(DRAW_COORD_MAX,
+        .5+((event.clientX-rect.left)/rect.width-.5)/zoom)),
+      Math.max(DRAW_COORD_MIN,Math.min(DRAW_COORD_MAX,
+        .5+((event.clientY-rect.top)/rect.height-.5)/zoom))];
   };
   function append(event){
     const coalesced=event.getCoalescedEvents?.();
