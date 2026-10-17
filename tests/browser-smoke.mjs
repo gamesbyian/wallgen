@@ -186,8 +186,30 @@ try{
   await evaluate('document.getElementById("tab-design").click()');
   await evaluate('document.querySelector("[name=stripeShadowEnabled]").click()');
   await waitFor('document.getElementById("stripeShadowControls").hidden===false');
-  // Downward gesture dismisses; visible handle provides a keyboard/click fallback.
-  await evaluate('document.getElementById("mobileDismissHandle").click()');
+  // Exercise actual Chrome touch events, not just DOM clicks.
+  const swipe=async (from,to)=>{
+    await command('Input.dispatchTouchEvent',{type:'touchStart',
+      touchPoints:[{x:from.x,y:from.y,id:1}]});
+    await command('Input.dispatchTouchEvent',{type:'touchMove',
+      touchPoints:[{x:(from.x+to.x)/2,y:(from.y+to.y)/2,id:1}]});
+    await command('Input.dispatchTouchEvent',{type:'touchMove',
+      touchPoints:[{x:to.x,y:to.y,id:1}]});
+    await command('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+  };
+  const navPosition=await evaluate(`(()=>{
+    const r=document.querySelector('.settings-tabs').getBoundingClientRect();
+    return {y:Math.round(r.top+r.height/2),left:Math.round(r.left),right:Math.round(r.right)};
+  })()`);
+  await swipe({x:navPosition.right-34,y:navPosition.y},
+              {x:navPosition.left+40,y:navPosition.y});
+  await waitFor(`document.getElementById('tab-colour').getAttribute('aria-selected')==='true'`);
+  // Pull down by the narrow, unobtrusive grab handle.
+  const grab=await evaluate(`(()=>{
+    const r=document.getElementById('mobileDismissHandle').getBoundingClientRect();
+    return {x:Math.round(r.x+r.width/2),y:Math.round(r.top+r.height/2)};
+  })()`);
+  await swipe(grab,{x:grab.x,y:grab.y+92});
+  await waitFor('!document.body.classList.contains("mobile-edit-open")');
   assert.ok(!await evaluate('document.body.classList.contains("mobile-edit-open")'));
   await evaluate('document.getElementById("mobileEdit").click()');
   await waitFor('document.body.classList.contains("mobile-edit-open")');
