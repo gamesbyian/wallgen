@@ -56,6 +56,8 @@ export function normalizeRecipe(input = {}) {
     textureStrength: finiteRange(input.textureStrength, 52, 0, 100),
     textureScale: finiteRange(input.textureScale, 50, 0, 100),
     individuality: finiteRange(input.individuality, 34, 0, 100),
+    patternHomogeneity: finiteRange(input.patternHomogeneity, 100, 0, 100),
+    overridePatternHomogeneity: input.overridePatternHomogeneity === true || input.overridePatternHomogeneity === 'true',
     gap: finiteRange(input.gap, 28, 0, 100),
     glow: finiteRange(input.glow, 0, 0, 100),
   };
@@ -171,6 +173,7 @@ export function randomizeAllRecipe() {
     outline:any(OUTLINES), background:any(['black','white']),
     chaos:percent(), stripeWidth:percent(), spread:percent(),
     textureStrength:percent(), textureScale:percent(), individuality:percent(),
+    patternHomogeneity:percent(), overridePatternHomogeneity:r()>.5,
     gap:percent(), glow:percent(),
   });
 }
