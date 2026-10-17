@@ -513,3 +513,12 @@
     width:26px;height:26px;min-width:26px;
   }
 }
+
+/* Rotation is a taller setting: centre its lock against the full control block. */
+.settings-panel .lockable-setting.texture-rotation-field > .setting-lock{
+  grid-column:2;grid-row:1 / 4;align-self:center;
+}
+.settings-panel .lockable-setting.texture-rotation-field > .rotation-controls,
+.settings-panel .lockable-setting.texture-rotation-field > small{
+  grid-column:1;
+}
