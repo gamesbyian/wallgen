@@ -56,6 +56,12 @@
 <label class="field">Blend mode<select name="textureBlend3" data-setting="textureBlend3"><option value="normal">Normal</option><option value="multiply">Multiply</option><option value="screen">Screen</option><option value="overlay">Overlay</option><option value="soft-light">Soft light</option><option value="difference">Difference</option></select></label>
 
 </div>
+        <div class="texture-displacement-control">
+          <label class="field range-field"><span>Texture displacement</span>
+            <input type="range" name="textureDisplacement" id="textureDisplacement" data-setting="textureDisplacement" min="0" max="100" value="0">
+          </label>
+          <small>Gently roughen stripe edges using the selected material textures. At 0%, the original clean geometry is preserved.</small>
+        </div>
         <div class="section-top"><span class="section-index">04</span><h2>Fine tuning</h2><span class="section-rule"></span></div>
         <div class="control-grid range-grid">
           <label class="field range-field"><span>Controlled chaos </span><input type="range" name="chaos" id="chaos" data-setting="chaos" min="0" max="100" value="36"></label>
