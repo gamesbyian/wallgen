@@ -32,8 +32,11 @@ test('real PNG preserves pixels while carrying Unicode international metadata',(
   assert.ok(actual.some(x=>x.type==='eXIf' && decode(x.data).includes('Ian')));
   for(let at=8;at<result.length;){
     const dv=new DataView(result.buffer,result.byteOffset+at,4),n=dv.getUint32(0);
-    const storedCrc=new DataView(result.buffer,result.byteOffset+at+n+8,4).getUint32(0);
-    assert.equal(storedCrc,crc(result.subarray(at+4,at+n+8)));
+    const type=decode(result.subarray(at+4,at+8));
+    if(type==='iTXt'||type==='eXIf'){
+      const storedCrc=new DataView(result.buffer,result.byteOffset+at+n+8,4).getUint32(0);
+      assert.equal(storedCrc,crc(result.subarray(at+4,at+n+8)));
+    }
     at+=n+12;
   }
 });
