@@ -201,14 +201,23 @@ export function motifFits(stripe,scene,x,y,halfX,halfY,extent=scene.extent) {
     const high=edgeAt(testX,stripe,extent,1,scene);
     if(y-halfY < low+margin || y+halfY > high-margin) return false;
   }
-  // Only complete marks within the actual wallpaper rectangle.
+  // Do not crop individual marks at the original frame boundary, preserving
+  // the pre-nudge design exactly. Additional *whole* marks may be rendered
+  // beyond that frame so that moving the already painted image reveals ink.
   const a=scene.angle, cos=Math.cos(a), sin=Math.sin(a);
+  const bounds=scene.renderBounds||{left:0,top:0,right:DESIGN_WIDTH,bottom:DESIGN_HEIGHT};
+  const points=[];
   for(const dx of [-halfX,halfX])for(const dy of [-halfY,halfY]){
     const px=scene.centerX+(x+dx)*cos-(y+dy)*sin;
     const py=scene.centerY+(x+dx)*sin+(y+dy)*cos;
-    if(px < 0 || px > DESIGN_WIDTH || py < 0 || py > DESIGN_HEIGHT) return false;
+    if(px<bounds.left||px>bounds.right||py<bounds.top||py>bounds.bottom)return false;
+    points.push({x:px,y:py});
   }
-  return true;
+  const minX=Math.min(...points.map(p=>p.x)),maxX=Math.max(...points.map(p=>p.x));
+  const minY=Math.min(...points.map(p=>p.y)),maxY=Math.max(...points.map(p=>p.y));
+  const inside=minX>=0&&maxX<=DESIGN_WIDTH&&minY>=0&&maxY<=DESIGN_HEIGHT;
+  const outside=maxX<0||minX>DESIGN_WIDTH||maxY<0||minY>DESIGN_HEIGHT;
+  return inside||outside;
 }
 /**
  * Homogeneity is 100 for identical motifs. Optional stripe override adds
@@ -483,11 +492,24 @@ export function stripeShadowParameters(recipe,scale=1){
     y:y*distance,
   };
 }
-function drawFinishedInk(ctx,ink,recipe){
-  const dx=ink.width*(recipe.positionX||0)/100;
-  const dy=ink.height*(recipe.positionY||0)/100;
+// Preview caches a full ±30% nudge range once; direct high-resolution exports
+// allocate only the margin actually needed by their selected offset.
+export function nudgeOverhang(width,height,recipe,cache=false){
+  const max=cache?30:0;
+  const x=Number(recipe.positionX)||0, y=Number(recipe.positionY)||0;
+  return {
+    left:Math.ceil(width*(cache?max:Math.max(0,x))/100),
+    right:Math.ceil(width*(cache?max:Math.max(0,-x))/100),
+    top:Math.ceil(height*(cache?max:Math.max(0,y))/100),
+    bottom:Math.ceil(height*(cache?max:Math.max(0,-y))/100),
+    width,height,
+  };
+}
+function drawFinishedInk(ctx,ink,recipe,margin={left:0,top:0,width:ink.width,height:ink.height}){
+  const dx=margin.width*(recipe.positionX||0)/100-margin.left;
+  const dy=margin.height*(recipe.positionY||0)/100-margin.top;
   ctx.save();
-  const shadow=stripeShadowParameters(recipe,ink.width/DESIGN_WIDTH);
+  const shadow=stripeShadowParameters(recipe,margin.width/DESIGN_WIDTH);
   if(shadow){
     ctx.shadowColor=shadow.color;
     ctx.shadowBlur=shadow.blur;
@@ -504,7 +526,7 @@ export function presentNudgedArtwork(canvas, layers, recipe) {
   ctx.setTransform(1,0,0,1,0,0);
   ctx.clearRect(0,0,canvas.width,canvas.height);
   ctx.drawImage(layers.background,0,0);
-  drawFinishedInk(ctx,layers.ink,recipe);
+  drawFinishedInk(ctx,layers.ink,recipe,layers.overhang);
   applyCanvasAtmosphere(ctx,canvas.width,canvas.height,recipe);
 }
 
@@ -517,10 +539,20 @@ export function drawWallpaper(canvas, recipe, options={}) {
   // layer *behind* it. This preserves truly black negative space at every resolution.
   // alpha:false canvases defeat this layering, so the compositing is done with a
   // separate transparent canvas surface at the target size.
-  const ink=document.createElement('canvas');ink.width=canvas.width;ink.height=canvas.height;
+  const margin=nudgeOverhang(canvas.width,canvas.height,scene,!!options.cache);
+  const inkWidth=canvas.width+margin.left+margin.right;
+  const inkHeight=canvas.height+margin.top+margin.bottom;
+  const scaleX=canvas.width/DESIGN_WIDTH,scaleY=canvas.height/DESIGN_HEIGHT;
+  scene.renderBounds={
+    left:-margin.left/scaleX,top:-margin.top/scaleY,
+    right:DESIGN_WIDTH+margin.right/scaleX,
+    bottom:DESIGN_HEIGHT+margin.bottom/scaleY,
+  };
+  const ink=document.createElement('canvas');ink.width=inkWidth;ink.height=inkHeight;
   const g=ink.getContext('2d');
   if(!g) throw new Error('Canvas ink layer unavailable');
-  g.scale(canvas.width/DESIGN_WIDTH,canvas.height/DESIGN_HEIGHT);
+  g.scale(scaleX,scaleY);
+  g.translate(margin.left/scaleX,margin.top/scaleY);
   g.translate(scene.centerX,scene.centerY);g.rotate(scene.angle);
   for(const stripe of scene.stripes){
     balanceStripeEnds(scene,stripe);
@@ -541,16 +573,16 @@ export function drawWallpaper(canvas, recipe, options={}) {
   let scratch,s;
   const active=layers.length>0;
   if(active){
-    scratch=document.createElement('canvas');scratch.width=canvas.width;scratch.height=canvas.height;
+    scratch=document.createElement('canvas');scratch.width=inkWidth;scratch.height=inkHeight;
     s=scratch.getContext('2d');
     if(!s) throw new Error('Texture composite surface unavailable');
   }
   const textured=(layer,tile)=>{
     s.setTransform(1,0,0,1,0,0);
     s.globalCompositeOperation='source-over';s.globalAlpha=1;
-    s.clearRect(0,0,canvas.width,canvas.height);
-    s.setTransform(canvas.width/DESIGN_WIDTH,0,0,canvas.height/DESIGN_HEIGHT,0,0);
-    s.translate(DESIGN_WIDTH/2,DESIGN_HEIGHT/2);
+    s.clearRect(0,0,inkWidth,inkHeight);
+    s.setTransform(scaleX,0,0,scaleY,0,0);
+    s.translate(DESIGN_WIDTH/2+margin.left/scaleX,DESIGN_HEIGHT/2+margin.top/scaleY);
     s.rotate(layer.rotation*Math.PI/180);
     s.globalAlpha=layer.strength/100;
     s.fillStyle=s.createPattern(tile,'repeat');
@@ -569,7 +601,9 @@ export function drawWallpaper(canvas, recipe, options={}) {
     const layer=layers[i];
     if(layer.coverage==='stripes')continue;
     textured(layer,tiles[i]);
-    ctx.save();ctx.globalCompositeOperation=blend(layer);ctx.drawImage(scratch,0,0);ctx.restore();
+    ctx.save();ctx.globalCompositeOperation=blend(layer);
+    ctx.drawImage(scratch,margin.left,margin.top,canvas.width,canvas.height,0,0,canvas.width,canvas.height);
+    ctx.restore();
   }
   for(let i=0;i<layers.length;i++){
     const layer=layers[i];
@@ -579,16 +613,18 @@ export function drawWallpaper(canvas, recipe, options={}) {
     g.save();g.setTransform(1,0,0,1,0,0);
     g.globalCompositeOperation=blend(layer);g.drawImage(scratch,0,0);g.restore();
   }
-  // Background stays fixed; the *already clipped, immutable* stripe layer is
-  // translated as one image. No stripe is re-ended/re-sized because of a nudge.
+  // Background stays fixed. The immutable ink now has transparent overscan:
+  // stripes that exited the original frame keep going off-frame when nudged.
+  // Intentionally inset stripe endpoints are unchanged.
   if(options.cache) {
     const background=document.createElement('canvas');
     background.width=canvas.width;background.height=canvas.height;
     background.getContext('2d').drawImage(canvas,0,0);
     options.cache.background=background;
     options.cache.ink=ink;
+    options.cache.overhang=margin;
   }
-  drawFinishedInk(ctx,ink,scene);
+  drawFinishedInk(ctx,ink,scene,margin);
   applyCanvasAtmosphere(ctx,canvas.width,canvas.height,scene);
   return scene;
 }
