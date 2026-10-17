@@ -92,3 +92,28 @@ test('motif size and density belong to decorations, not centreline geometry',()=
   }
   assert.deepEqual(decodeRecipe(encodeRecipe({...base,motifSize:93,motifFrequency:7})).motifSize,93);
 });
+
+test('step count changes number of plateaus rather than shape period',()=>{
+  const sample=n=>Array.from({length:160},(_,i)=>
+    modulation(i*2.5,'stepped',0,400,25,1000,{stepCount:n}));
+  const count=samples=>new Set(samples.map(n=>n.toFixed(2))).size;
+  assert.equal(count(sample(2)),2);
+  assert.equal(count(sample(12)),12);
+  assert.ok(count(sample(12))>count(sample(2)));
+});
+test('chevron sharpness changes vertices without changing number of peaks',()=>{
+  const flat=modulation(52,'chevron',0,240,30,1000,{chevronSharpness:0});
+  const pointed=modulation(52,'chevron',0,240,30,1000,{chevronSharpness:100});
+  assert.notEqual(flat,pointed);
+  const a=resolveScene({geometry:'chevron',chevronSharpness:0});
+  const b=resolveScene({geometry:'chevron',chevronSharpness:100});
+  assert.equal(a.stripes[0].sharedPeriod,b.stripes[0].sharedPeriod);
+});
+test('loop aspect can alter loop width independently of loop height',()=>{
+  const base={geometry:'loops',shapeDepth:60,shapeFrequency:50};
+  const tall=resolveScene({...base,loopAspect:0}).stripes[3];
+  const wide=resolveScene({...base,loopAspect:100}).stripes[3];
+  const t=pathPosition(tall,10,1000),w=pathPosition(wide,10,1000);
+  assert.equal(t.y,w.y);
+  assert.notEqual(t.x,w.x);
+});
