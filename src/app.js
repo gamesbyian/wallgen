@@ -288,10 +288,6 @@ const drawTool=installDrawTool({
     showNotice('Drawn path applied. Undo restores the previous wallpaper.');
   },
 });
-const explorationHistory=installExplorationHistory({
-  form,preview,getRecipe:()=>current,
-  restore:recipe=>changeRecipe(recipe,{bypassLocks:true}),
-});
 function updatePositionStatus(){
   const label=document.getElementById('positionStatus');
   const x=current.positionX, y=current.positionY;
@@ -550,6 +546,11 @@ function syncSettingLocks(){
 }
 installSettingLocks();
 const editor=mountEditor();
+const explorationHistory=installExplorationHistory({
+  form,preview,getRecipe:()=>current,
+  restore:recipe=>changeRecipe(recipe,{bypassLocks:true}),
+});
+
 
 // Six category tabs control which named tool is shown. Navigation is a view
 // preference, independent of the recipe and preview/export geometry. Their selection is a view preference,
