@@ -19,6 +19,9 @@ prime.addEventListener('change',()=>{
 // Bleed is a visual screen-safe-area guide only, never part of the recipe,
  // rendering canvas, export, or saved image.
 const bleed=document.getElementById('bleedGuide');
+const wallpaperFrame=document.querySelector('.wallpaper-frame');
+// The frame, not its padded/oversized visual surface, is the 100% reference.
+wallpaperFrame.append(bleed);
 const bleedButton=document.createElement('button');
 bleedButton.type='button';bleedButton.id='mobileBleed';
 bleedButton.className='mobile-bleed-button';
