@@ -150,3 +150,21 @@
   .nudge-pad{grid-template-columns:repeat(3,30px);grid-template-rows:repeat(3,30px);gap:2px}
   .nudge-button{font-size:18px}
 }
+
+/* Optional material stacks. Hidden panels stay hidden despite display:grid. */
+.texture-layer-group,.texture-layer-panel{display:grid;gap:11px;min-width:0}
+.texture-layer-group{margin-top:2px}
+.texture-layer-panel{padding:13px 10px;border:1px solid #373847;border-radius:8px;background:#151620}
+.texture-layer-panel[hidden],.add-texture-layer[hidden]{display:none!important}
+.texture-layer-panel-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.texture-layer-panel-head strong{font-size:11px;color:#ebebf7}
+.text-link-button{border:0;background:transparent;color:#c6c0ff;padding:4px 0;font-size:11px;font-weight:600;text-decoration:underline;text-underline-offset:3px;justify-self:start;text-align:left}
+.text-link-button:hover{color:#fff}
+.texture-rotation-field{display:grid;gap:8px;min-width:0}
+.texture-rotation-field>span{font-size:11px;font-weight:650;color:#e5e4ee}
+.texture-rotation-field small{font-size:10px;color:#888b99}
+.rotation-controls{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr) minmax(0,1fr) auto;gap:5px;align-items:center}
+.rotation-button{min-height:36px;border:1px solid #444655;border-radius:5px;background:#262733;color:#f2f1f9;padding:4px 5px;font-size:11px}
+.rotation-button:hover{background:#37394b}
+.rotation-controls input[type=number]{min-width:0;width:100%;min-height:36px;background:#1c1e29;color:#f9f9ff;border:1px solid #5f6277;border-radius:5px;text-align:center;padding:4px;font:12px ui-monospace,monospace}
+@media(max-width:790px){.rotation-controls{grid-template-columns:repeat(3,minmax(0,1fr))}.rotation-controls input[type=number]{grid-column:1 / -1;grid-row:2}.rotation-reset{grid-column:auto}.texture-layer-panel{padding:10px 7px}}
