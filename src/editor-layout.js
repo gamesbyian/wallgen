@@ -22,6 +22,7 @@ function create(tag,className,textContent){
 export function mountEditor(){
   const nav=form.querySelector('.settings-tabs');
   const originals=[...form.querySelectorAll('.settings-panel')];
+  for(const panel of originals)panel.id='legacy-'+panel.id;
   const oldFamily=fieldNode('family');
   // Preserve the actual form nodes and event/lock behavior, never proxies.
   const explore=create('div','editor-explore');
