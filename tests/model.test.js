@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { DESIGN_WIDTH, DESIGN_HEIGHT, OUTPUT_WIDTH, OUTPUT_HEIGHT, HUES, NAMES, FAMILIES, GEOMETRIES, MOTIFS, MATERIALS, OUTLINES, normalizeRecipe, resolveScene, rng, encodeRecipe, decodeRecipe, TEXTURE_COVERAGES, BLEND_MODES, normalizeRotation, randomizeAllRecipe } from '../src/model.js';
+import { DESIGN_WIDTH, DESIGN_HEIGHT, OUTPUT_WIDTH, OUTPUT_HEIGHT, HUES, NAMES, FAMILIES, GEOMETRIES, MOTIFS, MATERIALS, OUTLINES, normalizeRecipe, resolveScene, rng, encodeRecipe, decodeRecipe, TEXTURE_COVERAGES, BLEND_MODES, normalizeRotation, randomizeAllRecipe, LOCKABLE_SETTINGS, respectSettingLocks } from '../src/model.js';
 
 test('Pixel 6 Pro export has 210% linear dimensions and unchanged aspect ratio',()=>{
   assert.equal(OUTPUT_WIDTH,1440*2.1);
@@ -115,8 +115,12 @@ test('directional canvas offsets are bounded, deterministic, and portable',()=>{
   assert.equal(normalizeRecipe({}).positionY,0);
   assert.equal(normalizeRecipe({positionX:500,positionY:-500}).positionX,30);
   assert.equal(normalizeRecipe({positionX:500,positionY:-500}).positionY,-30);
-  assert.equal(moved.centerX-original.centerX,DESIGN_WIDTH*.08);
-  assert.equal(moved.centerY-original.centerY,-DESIGN_HEIGHT*.06);
+  // Nudge lives only in the presentation offset, not the underlying geometry.
+  assert.equal(moved.centerX,original.centerX);
+  assert.equal(moved.centerY,original.centerY);
+  assert.deepEqual(moved.stripes,original.stripes);
+  assert.equal(moved.positionX,8);
+  assert.equal(moved.positionY,-6);
   const recipe=normalizeRecipe({seed:'move-portably',positionX:20,positionY:-12});
   assert.deepEqual(decodeRecipe(encodeRecipe(recipe)),recipe);
   assert.equal(randomizeAllRecipe().positionX,0);
@@ -198,4 +202,41 @@ test('texture displacement defaults off, clamps to the slider range, and round-t
   assert.deepEqual(decodeRecipe(encodeRecipe(mapped)),mapped);
   const random=randomizeAllRecipe();
   assert.ok(random.textureDisplacement>=0 && random.textureDisplacement<=100);
+});
+
+test('locked settings are preserved by randomization and by attempted edits',()=>{
+  const current=normalizeRecipe({
+    seed:'do-not-change',family:'tapestry',geometry:'wave',background:'white',
+    stripeWidth:83,textureRotation2:270,textureLayer2Enabled:true,
+    lockedSettings:['seed','background','stripeWidth','textureRotation2','position'],
+    positionX:12,positionY:-8,
+  });
+  const incoming=randomizeAllRecipe();
+  const next=respectSettingLocks(current,incoming);
+  for(const key of current.lockedSettings.filter(k=>k!=='position')){
+    assert.equal(next[key],current[key],key);
+  }
+  assert.equal(next.positionX,12);
+  assert.equal(next.positionY,-8);
+  assert.deepEqual(next.lockedSettings,current.lockedSettings);
+  assert.deepEqual(decodeRecipe(encodeRecipe(next)),next);
+  assert.equal(LOCKABLE_SETTINGS.includes('textureLayer3Enabled'),true);
+});
+test('locked Follow family keeps the actually selected style through a new seed',()=>{
+  const original=resolveScene({seed:'auto-lock-original',family:'auto',outline:'auto'});
+  const recipe=normalizeRecipe({seed:'auto-lock-original',family:'auto',outline:'auto',
+    lockedSettings:['family','outline'],
+    lockedResolved:{family:original.family,outline:original.outline}});
+  const newSeedRecipe=respectSettingLocks(recipe,{...recipe,seed:'completely-new-seed',family:'studio',outline:'black'});
+  assert.equal(resolveScene(newSeedRecipe).family,original.family);
+  assert.equal(resolveScene(newSeedRecipe).outline,original.outline);
+  assert.equal(resolveScene(recipe).family,original.family);
+  assert.equal(resolveScene(recipe).outline,original.outline);
+  assert.deepEqual(decodeRecipe(encodeRecipe(newSeedRecipe)),newSeedRecipe);
+});
+test('lock list rejects unknown keys and normalizes stable order',()=>{
+  const recipe=normalizeRecipe({lockedSettings:['spread','unknown','seed','spread','textureBlend3']});
+  assert.deepEqual(recipe.lockedSettings,['seed','textureBlend3','spread']);
+  assert.deepEqual(normalizeRecipe({lockedSettings:['geometry'],lockedResolved:{geometry:'zigzag',palette:'pastel'}}).lockedResolved,
+    {geometry:'zigzag'});
 });
