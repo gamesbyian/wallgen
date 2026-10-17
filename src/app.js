@@ -253,7 +253,7 @@ function render(recipe,{scroll=false,bypassLocks=false}={}) {
   document.getElementById('detailGeometry').textContent=titleCase(currentScene.geometry);
   document.getElementById('detailMaterial').textContent=titleCase(currentScene.materialSummary);
   favoriteButton.setAttribute('aria-pressed',String(isFavorite(current)));
-  favoriteButton.textContent=isFavorite(current)?'♥':'♡';
+  // Keep the squat-heart SVG intact; aria-pressed controls its fill.
   drawTool.sync(current);
   document.getElementById('favoriteCount').textContent=String(favorites.length);
   syncURL();
