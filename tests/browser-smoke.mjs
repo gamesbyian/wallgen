@@ -204,7 +204,10 @@ try{
   console.log('CONTEXTUAL_CARDS',JSON.stringify(groups));
   for(const group of groups){
     assert.equal(group.fields.every(Boolean),true,group.name+' dependent controls must share a card');
-    assert.equal(group.panel,group.name==='Outlines'?'panel-colour':group.panel);
+    const expected=group.name==='Outlines'||group.name==='Canvas lighting'?'panel-colour':
+      group.name.startsWith('Texture')?'panel-textures':
+      group.name==='Individuality'?'panel-refine':'panel-design';
+    assert.equal(group.panel,expected);
     assert.ok(group.width>=0,group.name);
   }
   assert.ok(!await evaluate('document.getElementById("primeModeHint").hidden===false'));
@@ -231,7 +234,8 @@ try{
       previewVisible:document.querySelector('.studio-stage').getBoundingClientRect().bottom<
         document.getElementById('mobileDesignSheet').getBoundingClientRect().top};
   })()`);
-  assert.ok(textures.scrollWidth>textures.clientWidth*3 && textures.material && textures.layer2 && textures.layer3);
+  assert.ok(textures.scrollWidth>textures.clientWidth*1.5 && textures.material && textures.layer2 && textures.layer3,
+    'texture panel should contain a layer card plus displacement card, not one card per slider');
   assert.equal(textures.vertical,'hidden');assert.ok(textures.previewVisible);
   await evaluate('document.getElementById("addTextureLayer2").click()');
   await waitFor('document.getElementById("textureLayer2Panel").hidden===false');
