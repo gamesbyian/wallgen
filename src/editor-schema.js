@@ -16,6 +16,7 @@ export const EDITOR_CATEGORIES=[
     {id:'structure',name:'Structure',settings:['construction','stripeWidth','spread']},
     {id:'patterns',name:'Patterns',settings:['motif','lineStyle','patternHomogeneity']},
     {id:'marks',name:'Marks',settings:['dotSize','dotSpacing']},
+    {id:'motif-scale',name:'Motif scale',settings:['motifSize','motifFrequency']},
     {id:'character',name:'Character',settings:['individuality','overridePatternHomogeneity']},
     {id:'tone',name:'Band tones',settings:['tonalContrast']},
   ]},
