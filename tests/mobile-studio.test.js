@@ -85,23 +85,20 @@ test('raster generator produces matching actual PNG binaries at icon resolution'
   assert.ok(!dark.equals(cream));
 });
 
-test('mobile editor is swipe-first without large heading or redundant buttons',()=>{
+test('mobile editor has direct named tools and optional sideways swipes',()=>{
+  const schema=read('src/editor-schema.js');
+  const layout=read('src/editor-layout.js');
+  const newCSS=read('editor-redesign.css');
   assert.match(html,/id="mobileDismissHandle"/);
-  assert.match(html,/id="mobileSettingPosition"/);
-  assert.doesNotMatch(html,/id="mobilePreviewSpace"/);
-  assert.doesNotMatch(html,/id="mobileDesignClose"/);
-  assert.doesNotMatch(html,/Adjust your wallpaper/);
-  assert.match(html,/mobile-swipes\.css\?v=/);
   assert.match(html,/src\/mobile-swipes\.js\?v=/);
-  assert.match(swipe,/dy>70/);
-  assert.match(swipe,/visitTab\(activeIndex\(\)\+/);
-  assert.match(swipeCSS,/scroll-snap-type:x mandatory/);
-  assert.match(swipeCSS,/overflow-x:auto!important;overflow-y:hidden!important/);
-  assert.match(swipeCSS,/\.texture-layer-panel:not\(\[hidden\]\)/);
-  assert.match(swipeCSS,/\.stripe-shadow-controls:not\(\[hidden\]\)/);
-  assert.match(swipeCSS,/\.settings-panel \[hidden\]\{display:none!important\}/);
+  assert.doesNotMatch(html,/src\/mobile-card-groups\.js\?v=/);
+  assert.match(swipe,/selectEditorTool/);
+  assert.match(swipe,/Math\.abs\(dx\)<45/);
+  assert.match(layout,/editor-tool-chooser/);
+  assert.match(newCSS,/preview-safe|separate resized area/i);
+  assert.match(newCSS,/overflow:hidden!important/);
+  assert.match(schema,/WIZARD_STEPS/);
 });
-
 test('mobile edit reclaims the header and compact action dock, leaving only an expand arrow',()=>{
   assert.match(html,/id="mobileDockExpand"/);
   assert.match(html,/id="mobileActionDock"/);
@@ -126,25 +123,17 @@ test('Prime-only checkbox changes mode without displaying an explanatory toast',
   assert.match(html,/id="primeModeHint"[^>]*hidden/);
   assert.match(html,/name="primesOnly"/);
 });
-test('all mobile settings fit in fixed-height, horizontal-only compound cards',()=>{
-  for(const label of ['Geometry','Stripe pattern','Stripe shadows','Outlines','Canvas lighting','Individuality']){
-    assert.ok(grouping.includes("name:'"+label+"'"),label);
-  }
-  for(const name of ['material','coverage','strength','scale','rotation','blend']){
-    assert.ok(grouping.includes(name+':setting('),name);
-  }
-  assert.match(grouping,/\.\.\.\[1,2,3\]\.flatMap/);
-  assert.match(grouping,/refreshVisibility\(\)/);
-  assert.match(grouping,/marker\.replaceWith\(node\)/);
-  assert.match(grouping,/mobileCardsQuery\.addEventListener\('change',syncGroups\)/);
-  assert.match(groupingCSS,/\.mobile-setting-cluster/);
-  const rail=read('mobile-editor-rail.css');
-  assert.match(rail,/overflow-x:auto!important;overflow-y:hidden!important/);
-  assert.match(rail,/\.mobile-setting-cluster\{/);
-  assert.match(rail,/overflow:hidden!important/);
-  assert.match(rail,/\.settings-tab\[aria-selected="true"\]/);
-  assert.match(html,/mobile-editor-rail\.css\?v=/);
-  assert.match(html,/src\/mobile-preview-tools\.js\?v=/);
+test('all settings have a single tool home and no nested mobile vertical scrolling',()=>{
+  const schema=read('src/editor-schema.js');
+  const layout=read('src/editor-layout.js');
+  const css=read('editor-redesign.css');
+  for(const name of ['Geometry','Patterns','Shadows','Outlines','Lighting','Character'])
+    assert.ok(schema.includes("name:'"+name+"'"),name);
+  assert.match(layout,/appendUnique\(card,fieldNode\(key\)\)/);
+  assert.match(layout,/dataset\.randomSetting=key/);
+  assert.match(css,/scroll-snap-type:none!important/);
+  assert.match(css,/overflow:hidden!important/);
+  assert.match(html,/editor-redesign\.css\?v=/);
 });
 test('preview controls reuse the existing nudge and Randomize inputs, zoom affects preview only',()=>{
   const tools=read('src/mobile-preview-tools.js');
