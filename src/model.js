@@ -362,9 +362,11 @@ export function randomizeAllRecipe({primesOnly=false}={}) {
     reverseStripes:r()>.5,diagonalRotation:Math.floor(r()*361)-180,
     mirrorHorizontal:r()>.5,mirrorVertical:r()>.5,
     material:any(MATERIALS), textureCoverage:any(TEXTURE_COVERAGES), textureRotation:degrees(), textureBlend:any(BLEND_MODES),
-    textureLayer2Enabled:r()>.45, material2:any(MATERIALS), textureStrength2:percent(), textureScale2:percent(),
+    // Random generation always starts with one texture layer. Players may
+    // explicitly opt in to layers 2 and 3 through the existing controls.
+    textureLayer2Enabled:false, material2:any(MATERIALS), textureStrength2:percent(), textureScale2:percent(),
     textureRotation2:degrees(), textureCoverage2:any(TEXTURE_COVERAGES), textureBlend2:any(BLEND_MODES),
-    textureLayer3Enabled:r()>.65, material3:any(MATERIALS), textureStrength3:percent(), textureScale3:percent(),
+    textureLayer3Enabled:false, material3:any(MATERIALS), textureStrength3:percent(), textureScale3:percent(),
     textureRotation3:degrees(), textureCoverage3:any(TEXTURE_COVERAGES), textureBlend3:any(BLEND_MODES),
     outline:any(OUTLINES), background:any(['black','white']),
     lightingMood:any(LIGHTING_MOODS),lightDirection:any(LIGHT_DIRECTIONS),
