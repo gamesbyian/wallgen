@@ -1,5 +1,6 @@
 import test from 'node:test';
 import {pathPosition} from '../src/path-geometry.js';
+import {outlineDimensions} from '../src/renderer.js';
 import assert from 'node:assert/strict';
 import { DESIGN_WIDTH, DESIGN_HEIGHT, OUTPUT_WIDTH, OUTPUT_HEIGHT, HUES, NAMES, FAMILIES, GEOMETRIES, MOTIFS, MATERIALS, OUTLINES, normalizeRecipe, resolveScene, rng, encodeRecipe, decodeRecipe, TEXTURE_COVERAGES, BLEND_MODES, normalizeRotation, randomizeAllRecipe, LOCKABLE_SETTINGS, respectSettingLocks, isPrime, PRIME_PERCENTAGES, PRIME_ROTATIONS, LIGHTING_MOODS, LIGHT_DIRECTIONS, LINE_STYLES } from '../src/model.js';
 
@@ -527,5 +528,19 @@ test('outline thickness and stripe-to-outline buffer are independent recipe cont
     const r=normalizeRecipe({gap:n,outlineBuffer:100-n});
     assert.equal(r.gap,n);
     assert.equal(r.outlineBuffer,100-n);
+  }
+});
+
+test('outline buffer moves the edge without changing outline thickness',()=>{
+  for(const outline of ['white','hairline','double','broken','one-side','black-one-side']){
+    const stripe={width:75};
+    const base={outline,gap:45,outlineBuffer:0};
+    const first=outlineDimensions(stripe,base);
+    const shifted=outlineDimensions(stripe,{...base,outlineBuffer:90});
+    const thickened=outlineDimensions(stripe,{...base,gap:95});
+    assert.ok(shifted.separation>first.separation,outline);
+    assert.equal(shifted.thickness,first.thickness,outline);
+    assert.equal(thickened.separation,first.separation,outline);
+    assert.ok(thickened.thickness>first.thickness,outline);
   }
 });
