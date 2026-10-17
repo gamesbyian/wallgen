@@ -257,6 +257,9 @@ try{
         rect:stepper?.querySelector('.step-button').getBoundingClientRect().width||0};
     });
   })()`);
+  console.log('STEPPER_FAIL_DIAGNOSTIC',JSON.stringify(
+    steppers.filter(x=>x.buttons!==2||x.display==='none'||(x.visible&&x.rect<18))
+  ));
   assert.ok(steppers.length>20,'enough sliders for comprehensive stepper audit');
   assert.ok(steppers.every(x=>x.buttons===2&&x.display!=='none'&&(!x.visible||x.rect>=18)),
     'every swipe-card slider shows both minus and plus buttons');
