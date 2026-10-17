@@ -229,6 +229,27 @@ locks, recipes, and headless generation.
 npm run render -- --seed framed-rainbow --set geometry=wave --set palette=twilight --set viewZoom=0.7 --width 3024 --height 6552 --out framed.png
 ```
 
+## Smoothing, quick controls and branding (October 2026)
+
+After tracing a finger-drawn path, adjust the live **Smoothing** slider from
+**1×** (the previous curve fairing, completely unchanged) to **5×** (a much
+broader Gaussian fairing and stronger elimination of unnecessary control-point
+bends). Both Smooth and Geometric finishing modes respond immediately, without
+redrawing. The slider processes the pending stroke before committing it; the
+finished points are saved in the normal wallpaper recipe, so rendering and PNG
+regeneration remain deterministic.
+
+The header title spells R.O.Y.G.B.I.V. with each letter tinted in its
+corresponding colour. The mobile Edit button now uses a pencil, and Favourite
+uses a deliberately wide, low-profile heart SVG on both phone and desktop.
+These stay in place when selected rather than switching font glyphs.
+
+The narrow mobile preview rail reads **Random** and splits **Primes / only**
+and **Draw / path** onto two lines so button text fits. **Randomize All**
+now always leaves extra texture layers disabled. You can still explicitly
+enable and customize the second and third layers from the Texture controls;
+existing manual multi-layer designs remain fully functional.
+
 ## Output
 
 - Google Pixel 6 Pro native screen: **1440 × 3120**.
