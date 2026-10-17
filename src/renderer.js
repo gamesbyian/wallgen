@@ -366,11 +366,17 @@ function drawConstruction(ctx,stripe,extent,scene){
     return true;
   }
   if(kind==='woven'){
-    const step=Math.max(12,stripe.width*.63);
+    const step=Math.max(12,stripe.width*.54);
     ctx.save();ctx.strokeStyle=stripe.color;
-    ctx.lineWidth=Math.max(.9,stripe.width*.11);
+    ctx.lineWidth=Math.max(1.3,stripe.width*.14);
     ctx.lineCap='square';
     const start=stripe.segmentStart??-extent,end=stripe.segmentEnd??extent;
+    // Continuous selvedges make the diagonal thread lattice legible, with
+    // negative space maintained between each independent crossing.
+    ctx.save();ctx.lineWidth=Math.max(1.5,stripe.width*.075);
+    ctx.stroke(traceEdge(stripe,extent,-1,scene));
+    ctx.stroke(traceEdge(stripe,extent,1,scene));
+    ctx.restore();
     const bands=4;
     for(let x=start+step;x<end-step;x+=step){
       const flip=Math.floor((x-start)/step)%2===0?1:-1;
