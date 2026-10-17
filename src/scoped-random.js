@@ -48,12 +48,12 @@ export function randomizeScope(currentInput,{scope,name,mode='reroll',strength='
     let target=candidate[key];
     if(mode==='vary'){
       if(typeof v==='number'){
-        const min=el&&Number.isFinite(Number(el.min))&&el.min!==''?Number(el.min):0;
-        const max=el&&Number.isFinite(Number(el.max))&&el.max!==''?Number(el.max):100;
+        const min=el&&el.min!==''&&Number.isFinite(Number(el.min))?Number(el.min):0;
+        const max=el&&el.max!==''&&Number.isFinite(Number(el.max))?Number(el.max):100;
         target=clamp(v+(random()*2-1)*weight*(max-min),min,max);
         const step=el&&el.step&&el.step!=='any'?Number(el.step):1;
         if(step>0)target=clamp(min+Math.round((target-min)/step)*step,min,max);
-        if(current.primesOnly&&min>=0&&max===100)
+        if(current.primesOnly&&min===0&&max===100)
           target=nearestPrime(target,PERCENT_PRIMES);
         else if(current.primesOnly&&key.startsWith('textureRotation'))
           target=nearestPrime(target,ANGLE_PRIMES);
