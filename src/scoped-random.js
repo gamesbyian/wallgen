@@ -36,7 +36,8 @@ export function randomizeScope(currentInput,{scope,name,mode='reroll',strength='
   const modified=[];
   for(const key of selected){
     if(current.lockedSettings.includes(key))continue;
-    if(key==='textureLayer2Enabled'||key==='textureLayer3Enabled')continue;
+    // Safety is an explicit editorial preference, never randomly flipped.
+    if(key==='textureLayer2Enabled'||key==='textureLayer3Enabled'||key==='geometrySafety')continue;
     // Disallow introducing a new randomly generated custom path: it is
     // exclusively drawn by the user and preserved when geometry is drawn.
     if(key==='geometry'&&current.geometry==='drawn')continue;
