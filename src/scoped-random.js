@@ -70,9 +70,14 @@ export function randomizeScope(currentInput,{scope,name,mode='reroll',strength='
     if(mode==='reroll'&&target===v){
       if(typeof v==='boolean')target=!v;
       else if(choices?.length)target=chooseAlternative(choices,v,random);
-      else if(typeof v==='number')target=el&&el.max!==''?
-        (v+Math.max(1,Math.round((Number(el.max)-Number(el.min))/3)))>
-          Number(el.max)?Number(el.min):v+Math.max(1,Math.round((Number(el.max)-Number(el.min))/3)):v;
+      else if(typeof v==='number'){
+        const min=el?.min!==undefined&&el.min!==''?Number(el.min):0;
+        const max=el?.max!==undefined&&el.max!==''?Number(el.max):100;
+        const increment=Math.max(1,Math.round((max-min)/3));
+        target=v+increment>max?min:v+increment;
+        if(current.primesOnly&&min===0&&max===100)
+          target=nearestPrime(target,PERCENT_PRIMES);
+      }
     }
     if(target!==v){next[key]=target;modified.push(key);}
   }
