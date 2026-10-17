@@ -14,6 +14,7 @@
   </script>
   <link rel="stylesheet" href="styles.css?v=20261016-geometry3">
   <link rel="stylesheet" href="studio-themes.css?v=20261016-live-preview1">
+  <link rel="stylesheet" href="mobile-swipes.css?v=20261016-swipe1">
 </head>
 <body>
   <header class="masthead">
@@ -35,14 +36,10 @@
   </header>
   <div class="layout">
     <aside class="sidebar" id="mobileDesignSheet" aria-label="Generator controls">
-      <div class="mobile-sheet-head">
-        <div class="mobile-edit-heading"><span class="mobile-grabber" aria-hidden="true"></span><strong>Adjust your wallpaper</strong></div>
-        <div class="mobile-edit-actions">
-          <button type="button" id="mobilePreviewSpace" aria-pressed="false"
-            aria-label="Give the preview more room" title="Give the preview more room">Larger preview</button>
-          <button type="button" id="mobileDesignClose" aria-label="Done editing">Done</button>
-        </div>
-      </div>
+      <button type="button" class="mobile-dismiss-handle" id="mobileDismissHandle"
+        aria-label="Close editor; swipe down to dismiss">
+        <span class="mobile-grabber" aria-hidden="true"></span>
+      </button>
 
       <form id="controls" autocomplete="off">
         <div class="randomize-bar randomize-toolbar">
@@ -57,6 +54,7 @@
           <button type="button" id="tab-textures" class="settings-tab" role="tab" aria-selected="false" aria-controls="panel-textures" tabindex="-1" data-tab="textures"><span aria-hidden="true">▧</span> Texture</button>
           <button type="button" id="tab-refine" class="settings-tab" role="tab" aria-selected="false" aria-controls="panel-refine" tabindex="-1" data-tab="refine"><span aria-hidden="true">✣</span> Refine</button>
         </nav>
+        <div class="mobile-setting-counter" aria-live="off"><span>Swipe settings ↔</span><output id="mobileSettingPosition">1 / 1</output></div>
         <section class="settings-panel" id="panel-design" role="tabpanel" aria-labelledby="tab-design" tabindex="0">
           <div class="settings-panel-heading"><h2>Design the composition</h2><p>Choose the overall style, direction and stripe pattern.</p></div>
           <div class="control-grid">
@@ -270,6 +268,7 @@
     <button type="button" id="mobileMore" aria-controls="mobileToolsSheet" aria-expanded="false"><span aria-hidden="true">⋯</span><small>More</small></button>
   </nav>
   <script type="module" src="src/app.js?v=20261016-geometry3"></script>
-  <script type="module" src="src/mobile-studio.js?v=20261016-live-preview1"></script>
+  <script type="module" src="src/mobile-studio.js?v=20261016-swipe1"></script>
+  <script type="module" src="src/mobile-swipes.js?v=20261016-swipe1"></script>
 </body>
 </html>
