@@ -306,3 +306,23 @@
   .settings-tab{gap:2px;font-size:9px;min-height:32px}
   .settings-tab>span{font-size:12px}
 }
+
+/* Gentle atmosphere is intentionally part of Colour, not another crowded tab. */
+.lighting-subsection{margin-top:22px;padding:17px 14px 15px;
+  border:1px solid #3b384c;border-radius:11px;
+  background:linear-gradient(155deg,#242032,#171820 62%,#15161e)}
+.lighting-intro{display:flex;align-items:center;gap:11px;padding-bottom:12px;
+  margin-bottom:14px;border-bottom:1px solid #4c455c}
+.lighting-icon{display:grid;place-items:center;width:36px;height:36px;flex:0 0 36px;
+  border-radius:10px;background:linear-gradient(145deg,#a86b3e,#5b4769);
+  color:#fff0d6;font-size:20px}
+.lighting-intro h3{font-size:14px;letter-spacing:-.02em;color:#f4effb;margin:0 0 3px}
+.lighting-intro p{font-size:10px;line-height:1.5;color:#aba4b9;margin:0}
+.lighting-subsection .control-grid{gap:12px}
+.lighting-subsection .range-grid{margin-top:13px}
+.lighting-help{font-size:10px;line-height:1.55;color:#a9a4b7;margin:13px 0 0}
+@media(max-width:790px){
+  .lighting-subsection{padding:13px 9px;margin-top:15px}
+  .lighting-intro{gap:8px}
+  .lighting-icon{width:29px;height:29px;flex-basis:29px;font-size:17px}
+}
