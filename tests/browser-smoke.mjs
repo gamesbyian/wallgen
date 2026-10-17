@@ -312,10 +312,37 @@ try{
       card?.querySelector('[name=material2]') &&
       getComputedStyle(card).display!=='none';
   })()`),'enabled texture layer and all associated controls should appear on one card');
+  const textureExpansion=await evaluate(`(()=>{
+    const cards=[...document.querySelectorAll('.mobile-setting-cluster')]
+      .filter(el=>el.dataset.group.startsWith('Texture 2')&&!el.hidden);
+    return cards.map(el=>({name:el.dataset.group,client:el.clientHeight,
+      scroll:el.scrollHeight,
+      visible:([...el.querySelectorAll('select,input,button')].filter(node=>{
+        if(node.closest('[hidden]')||node.offsetParent===null)return false;
+        const r=node.getBoundingClientRect(),c=el.getBoundingClientRect();
+        return r.top>=c.top-2&&r.bottom<=c.bottom+2;
+      })).length}));
+  })()`);
+  console.log('EXPANDED_TEXTURE_CARD',JSON.stringify(textureExpansion));
+  assert.equal(textureExpansion.length,2);
+  for(const card of textureExpansion)assert.ok(card.scroll<=card.client+2,card.name+' must fit completely');
 
   await evaluate('document.getElementById("tab-design").click()');
   await evaluate('document.querySelector("[name=stripeShadowEnabled]").click()');
   await waitFor('document.getElementById("stripeShadowControls").hidden===false');
+  const expandedShadow=await evaluate(`(()=>{
+    const card=[...document.querySelectorAll('.mobile-setting-cluster')]
+      .find(el=>el.dataset.group==='Stripe shadows');
+    return {visible:card?.clientHeight,content:card?.scrollHeight,
+      clipped:[...card.querySelectorAll('input,select')].filter(el=>{
+        if(el.closest('[hidden]')||el.offsetParent===null)return false;
+        const c=card.getBoundingClientRect(),r=el.getBoundingClientRect();
+        return r.top<c.top-2||r.bottom>c.bottom+2;
+      }).map(el=>el.name)};
+  })()`);
+  console.log('EXPANDED_SHADOW_CARD',JSON.stringify(expandedShadow));
+  assert.ok(expandedShadow.content<=expandedShadow.visible+2,'expanded shadows should fit');
+  assert.deepEqual(expandedShadow.clipped,[]);
   // Exercise actual Chrome touch events, not just DOM clicks.
   const swipe=async (from,to)=>{
     await command('Input.dispatchTouchEvent',{type:'touchStart',
@@ -326,6 +353,26 @@ try{
       touchPoints:[{x:to.x,y:to.y,id:1}]});
     await command('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
   };
+  // Test sideways flicks in the historically problematic Colour and Texture
+  // categories with actual browser touch events, not scripted scrollLeft.
+  for(const category of ['colour','textures']){
+    await evaluate(`document.getElementById('tab-${category}').click()`);
+    await delay(370);
+    const railBounds=await evaluate(`(()=>{
+      const p=document.getElementById('panel-${category}');
+      const r=p.getBoundingClientRect();
+      return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,
+        initial:p.scrollLeft,maximum:p.scrollWidth-p.clientWidth};
+    })()`);
+    assert.ok(railBounds.maximum>railBounds.right-railBounds.left,
+      category+' should have multiple horizontal cards');
+    await swipe({x:Math.round(railBounds.right-32),y:Math.round(railBounds.bottom-9)},
+                {x:Math.round(railBounds.left+35),y:Math.round(railBounds.bottom-9)});
+    await waitFor(`document.getElementById('panel-${category}').scrollLeft>50`);
+    console.log('TOUCH_CATEGORY_SWIPE',category,await evaluate(`document.getElementById('panel-${category}').scrollLeft`));
+  }
+  await evaluate('document.getElementById("tab-design").click()');
+  await delay(320);
   const navPosition=await evaluate(`(()=>{
     const r=document.querySelector('.settings-tabs').getBoundingClientRect();
     return {y:Math.round(r.top+r.height/2),left:Math.round(r.left),right:Math.round(r.right)};
