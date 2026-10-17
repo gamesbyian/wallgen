@@ -232,6 +232,10 @@ export function resolveScene(recipeInput) {
       width: Math.max(width, recipe.construction==='stroke'?.8:1.5), geometry: individualGeometry,
       motif, lineStyle:recipe.lineStyle, endTaper:recipe.endTaper,
       dotSize:recipe.dotSize,dotSpacing:recipe.dotSpacing,
+      // These are shared across the seven colours: a dotted rainbow can form
+      // real aligned columns instead of seven independently spaced chains.
+      dotPitch:Math.max(18,referenceAvg*(1.3+recipe.dotSpacing/100*1.15)),
+      dotRadius:Math.max(2,referenceAvg*(.23+.45*recipe.dotSize/100)*widthFactor*.95),
       turnRadius:90+recipe.turnRadius*1.35,
       loopPeriod:27+((100-recipe.shapeFrequency)/100)*66,
       loopAmplitude:Math.min(4+29*recipe.shapeDepth/100,referenceAvg*.33),
