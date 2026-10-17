@@ -444,3 +444,72 @@
   .brand-title{font-size:clamp(19px,5.8vw,23px)}
   .brand-subtitle{font-size:clamp(7.2px,2.37vw,9px);letter-spacing:-.018em}
 }
+
+/* Masthead typography: structural blocks plus explicit, unequal font sizes.
+   The title/subtitle must not collapse into a single inline text run. */
+.brand .brand-copy{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;min-width:0;gap:5px}
+.brand .brand-title{display:block;margin:0;padding:0;font-size:clamp(22px,2.35vw,30px);
+  font-weight:900;line-height:1.08;letter-spacing:-.03em;white-space:nowrap;color:#fff}
+.brand .brand-subtitle{display:block;margin:0;padding:0;font-size:clamp(9px,.9vw,11px);
+  font-weight:500;line-height:1.4;letter-spacing:0;white-space:normal;color:#c2bfd0;
+  overflow-wrap:normal}
+.brand .brand-mark{min-height:46px;align-self:center}
+.brand .brand-mark i{height:43px}
+@media(max-width:790px){
+  .brand .brand-title{font-size:clamp(21px,3.1vw,25px)}
+  .brand .brand-subtitle{font-size:clamp(9px,1.3vw,10px)}
+  .brand .brand-mark{min-height:43px}
+  .brand .brand-mark i{height:40px}
+}
+@media(max-width:520px){
+  .masthead{padding-left:12px;padding-right:12px}
+  .brand{gap:9px}
+  .brand .brand-title{font-size:clamp(20px,5.8vw,25px)}
+  .brand .brand-subtitle{font-size:clamp(8px,2.2vw,10px);line-height:1.4}
+  .brand .brand-mark{min-height:40px}
+  .brand .brand-mark i{height:38px}
+}
+
+/* Place each lock in its own grid column. No absolute positioning or
+   collisions with editable slider numbers, steppers or drop-down controls. */
+.settings-panel .lockable-setting:not(.texture-rotation-field){
+  display:grid;grid-template-columns:minmax(0,1fr) 28px;column-gap:9px;align-items:start;
+}
+.settings-panel .lockable-setting:not(.texture-rotation-field) > .field,
+.settings-panel .lockable-setting:not(.texture-rotation-field) > .homogeneity-override{
+  grid-column:1;grid-row:1;min-width:0;width:100%;padding-right:0;
+}
+.settings-panel .lockable-setting > .setting-lock{
+  position:static!important;top:auto!important;right:auto!important;
+  grid-column:2;grid-row:1;align-self:start;justify-self:end;
+  width:28px;height:28px;min-width:28px;margin:0;z-index:auto;
+}
+.settings-panel .lockable-setting .field>span:first-child{padding-right:0}
+.settings-panel .lockable-setting.texture-rotation-field{
+  display:grid;grid-template-columns:minmax(0,1fr) 28px;
+  grid-template-rows:auto auto auto;gap:8px 9px;align-items:start;
+}
+.settings-panel .lockable-setting.texture-rotation-field > span:first-child{
+  grid-column:1;grid-row:1;min-width:0;
+}
+.settings-panel .lockable-setting.texture-rotation-field > .rotation-controls{
+  grid-column:1/-1;grid-row:2;min-width:0;width:100%;
+}
+.settings-panel .lockable-setting.texture-rotation-field > small{
+  grid-column:1/-1;grid-row:3;
+}
+.settings-panel .lockable-setting .slider-number{min-width:0}
+.setting-lock svg{stroke-width:1.85;stroke-linecap:round;stroke-linejoin:round}
+.setting-lock.is-locked{color:#e7d7ff;background:#3b3252;border-color:#b19bdc}
+.setting-lock:not(.is-locked){color:#b6becd;background:#1c202b;border-color:#50596a}
+@media(max-width:790px){
+  .settings-panel .lockable-setting:not(.texture-rotation-field){
+    grid-template-columns:minmax(0,1fr) 26px;column-gap:7px;
+  }
+  .settings-panel .lockable-setting.texture-rotation-field{
+    grid-template-columns:minmax(0,1fr) 26px;
+  }
+  .settings-panel .lockable-setting > .setting-lock{
+    width:26px;height:26px;min-width:26px;
+  }
+}

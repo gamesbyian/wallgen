@@ -116,8 +116,8 @@ test('stripe shadows are an optional Design-only control, while canvas lighting 
 test('R.O.Y.G.B.I.V. displays as a two-line masthead beside a larger seven-stripe logo',()=>{
   const header=html.slice(html.indexOf('<header class="masthead">'),html.indexOf('</header>'));
   assert.match(header,/aria-label="R\.O\.Y\.G\.B\.I\.V\. home"/);
-  assert.match(header,/<strong class="brand-title">R\.O\.Y\.G\.B\.I\.V<span class="brand-dot">\.<\/span><\/strong>/);
-  assert.match(header,/<span class="brand-subtitle">Rainbow-Only\. You Generate Based on Individual Variables\.<\/span>/);
+  assert.match(header,/<h1 class="brand-title">R\.O\.Y\.G\.B\.I\.V<span class="brand-dot">\.<\/span><\/h1>/);
+  assert.match(header,/<p class="brand-subtitle">Rainbow-Only\. You Generate Based on Individual Variables\.<\/p>/);
   const mark=header.match(/<span class="brand-mark"[^>]*>(.*?)<\/span>/s);
   assert.ok(mark,'brand mark');
   assert.equal((mark[1].match(/<i><\/i>/g)||[]).length,7);
@@ -136,4 +136,31 @@ test('R.O.Y.G.B.I.V. branding is consistent in public-facing output',()=>{
   assert.match(readme,/# R\.O\.Y\.G\.B\.I\.V\./);
   assert.match(readme,/Rainbow-Only\. You Generate Based on Individual Variables\./);
   assert.match(license,/R\.O\.Y\.G\.B\.I\.V\. — PUBLIC-DOMAIN DEDICATION/);
+});
+
+test('semantic masthead guarantees two lines and strong type hierarchy even with old styles',()=>{
+  const header=html.slice(html.indexOf('<header class="masthead">'),html.indexOf('</header>'));
+  assert.match(header,/<div class="brand-copy">\s*<h1 class="brand-title">/);
+  assert.match(header,/<\/h1>\s*<p class="brand-subtitle">/);
+  assert.match(header,/<\/p>\s*<\/div>/);
+  assert.match(css,/\.brand \.brand-title\{display:block;margin:0;padding:0;font-size:clamp\(22px,2\.35vw,30px\)/);
+  assert.match(css,/\.brand \.brand-subtitle\{display:block;margin:0;padding:0;font-size:clamp\(9px,\.9vw,11px\)/);
+  assert.match(html,/href="styles\.css\?v=20261016-layout2"/);
+  assert.match(html,/src="src\/app\.js\?v=20261016-lock2"/);
+});
+test('locks occupy dedicated layout columns and never overlap numeric slider values',()=>{
+  assert.match(css,/\.settings-panel \.lockable-setting:not\(\.texture-rotation-field\)\{\s*display:grid;grid-template-columns:minmax\(0,1fr\) 28px/);
+  assert.match(css,/\.settings-panel \.lockable-setting > \.setting-lock\{\s*position:static!important/);
+  assert.match(css,/\.settings-panel \.lockable-setting > \.setting-lock\{[\s\S]*?grid-column:2;grid-row:1/);
+  assert.match(css,/\.settings-panel \.lockable-setting\.texture-rotation-field > \.rotation-controls\{\s*grid-column:1\/-1;grid-row:2/);
+  assert.match(css,/\.settings-panel \.lockable-setting \.slider-number\{min-width:0\}/);
+});
+test('unlocked line-art padlock shackle swings away from the locked shackle',()=>{
+  const locked=app.match(/locked:'(<svg[^']+?)',/);
+  const unlocked=app.match(/unlocked:'(<svg[^']+?)',/);
+  assert.ok(locked?.[1]&&unlocked?.[1]);
+  assert.match(locked[1],/<path d="M8 10V7a4 4 0 0 1 8 0v3"\/>/);
+  assert.match(unlocked[1],/<path d="M8 10V7a4 4 0 0 1 8 0v3" transform="rotate\(-48 8 10\)"\/>/);
+  assert.doesNotMatch(locked[1],/transform="rotate/);
+  assert.match(app,/aria-pressed/);
 });
