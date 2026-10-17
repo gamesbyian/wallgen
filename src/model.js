@@ -129,7 +129,7 @@ export function normalizeRecipe(input = {}) {
     textureRotation2: normalizeRotation(input.textureRotation2),
     textureCoverage2: coverageChoice(input.textureCoverage2),
     textureBlend2: blendChoice(input.textureBlend2),
-    textureLayer3Enabled: (input.textureLayer2Enabled === true || input.textureLayer2Enabled === 'true') && (input.textureLayer3Enabled === true || input.textureLayer3Enabled === 'true'),
+    textureLayer3Enabled: input.textureLayer3Enabled === true || input.textureLayer3Enabled === 'true',
     material3: materialChoice(input.material3, 'none'),
     textureStrength3: finiteRange(input.textureStrength3, 30, 0, 100),
     textureScale3: finiteRange(input.textureScale3, 50, 0, 100),
@@ -288,7 +288,7 @@ export function resolveScene(recipeInput) {
     ...(recipe.textureLayer2Enabled ? [{material:recipe.material2, strength:recipe.textureStrength2, scale:recipe.textureScale2,
       rotation:recipe.textureRotation2, coverage:recipe.textureCoverage2, blend:recipe.textureBlend2,
       seed:recipe.seed+':texture:2', heightSeed:hashString(recipe.seed+':texture:2')}] : []),
-    ...(recipe.textureLayer2Enabled && recipe.textureLayer3Enabled ? [{material:recipe.material3, strength:recipe.textureStrength3,
+    ...(recipe.textureLayer3Enabled ? [{material:recipe.material3, strength:recipe.textureStrength3,
       scale:recipe.textureScale3, rotation:recipe.textureRotation3, coverage:recipe.textureCoverage3,
       blend:recipe.textureBlend3, seed:recipe.seed+':texture:3', heightSeed:hashString(recipe.seed+':texture:3')}] : []),
   ].filter(layer=>layer.material!=='none' && layer.strength>0);
