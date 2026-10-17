@@ -8,7 +8,7 @@ const gallery = document.getElementById('gallery');
 const notice = document.getElementById('notice');
 const favoriteButton = document.getElementById('favorite');
 const FAVORITES_KEY = 'wallgen:favorites:v1';
-const FIELDS = ['family','orientation','geometry','motif','palette','material','outline','background','textureCoverage','chaos','stripeWidth','spread','textureStrength','textureScale','individuality','gap','glow'];
+const FIELDS = ['family','orientation','geometry','motif','palette','material','outline','background','textureCoverage','chaos','stripeWidth','spread','textureStrength','textureScale','individuality','patternHomogeneity','overridePatternHomogeneity','gap','glow'];
 let current = normalizeRecipe();
 let currentScene;
 let noticeTimer = 0;
@@ -34,14 +34,15 @@ function showNotice(message){
 }
 function fromControls() {
   const data={seed:seedInput.value};
-  for (const key of FIELDS) data[key]=form.elements.namedItem(key).value;
+  for (const key of FIELDS) { const field=form.elements.namedItem(key); data[key]=field.type==='checkbox'?field.checked:field.value; }
   return normalizeRecipe(data);
 }
 function toControls(recipe) {
   current=normalizeRecipe(recipe);
   seedInput.value=current.seed;
   for(const key of FIELDS){
-    form.elements.namedItem(key).value=current[key];
+    const field=form.elements.namedItem(key);
+    if(field.type==='checkbox')field.checked=current[key]; else field.value=current[key];
     const output=form.querySelector(`output[for="${key}"]`);
     if(output) output.textContent=`${current[key]}%`;
   }

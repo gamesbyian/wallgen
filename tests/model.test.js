@@ -83,6 +83,15 @@ test('stripe individuality only changes geometry, never motifs',()=>{
     }
   }
 });
+test('pattern homogeneity and override persist without affecting stripe motif identity',()=>{
+  const recipe=normalizeRecipe({seed:'homogeneous',motif:'stars',patternHomogeneity:27,individuality:100,overridePatternHomogeneity:true});
+  assert.equal(recipe.patternHomogeneity,27);
+  assert.equal(recipe.overridePatternHomogeneity,true);
+  assert.deepEqual(decodeRecipe(encodeRecipe(recipe)),recipe);
+  assert.ok(resolveScene(recipe).stripes.every(s=>s.motif==='stars'));
+  assert.equal(normalizeRecipe({}).patternHomogeneity,100);
+  assert.equal(normalizeRecipe({}).overridePatternHomogeneity,false);
+});
 test('Randomize all provides complete normalized settings without preserving manual overrides',()=>{
   const recipe=randomizeAllRecipe();
   assert.equal(recipe.version,1);

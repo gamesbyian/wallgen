@@ -90,10 +90,27 @@ export function motifFits(stripe,scene,x,y,halfX,halfY,extent=scene.extent) {
   }
   return true;
 }
+/**
+ * Homogeneity is 100 for identical motifs. Optional stripe override adds
+ * deterministic per-stripe differences without changing the motif type.
+ */
+export function motifVariation(scene,stripe,random) {
+  const variance=1-scene.patternHomogeneity/100;
+  const stripeEffect=scene.overridePatternHomogeneity ? scene.individuality/100 : 0;
+  const stripeRandom=rng(scene.seed+':motif-stripe:'+stripe.index);
+  const stripeScale=1+(stripeRandom()-.5)*1.0*stripeEffect;
+  const stripeAngle=(stripeRandom()-.5)*1.6*stripeEffect;
+  const stripeOpacity=1-(stripeRandom()*.45*stripeEffect);
+  return {
+    scale:Math.max(.28,stripeScale*(1+(random()-.5)*1.1*variance)),
+    angle:stripeAngle+(random()-.5)*Math.PI*variance,
+    opacity:Math.max(.16,stripeOpacity*(1-random()*.75*variance)),
+  };
+}
 function fillMotif(ctx,stripe,extent,scene) {
   const motif=stripe.motif;
   if(motif==='solid'){ctx.fill(stripePath(stripe,extent));return;}
-  const random=rng(`${scene.seed}:motifs:${stripe.index}`);
+  const random=rng(scene.seed+':motifs:'+stripe.index);
   const step=Math.max(2.5,stripe.width*.42*stripe.patternScale);
   const across=Math.max(1,Math.ceil(stripe.width/(step*.83)));
   const stroke=Math.min(step*.19,Math.max(.55,stripe.width*.14));
@@ -101,34 +118,39 @@ function fillMotif(ctx,stripe,extent,scene) {
   const spacing=motif==='dashes'?step*1.9:motif==='chevrons'?step*1.5:step;
   for(let x=-extent+spacing;x<extent-spacing;x+=spacing){
     for(let j=-across;j<=across;j++){
+      if(motif==='checker' && ((Math.round((x+extent)/spacing)+j)&1)!==0)continue;
+      const variation=motifVariation(scene,stripe,random);
       const offset=j*step*.82;
       const jitter=scene.intensity*step*.10;
       const xx=x+(Math.abs(j)%2)*spacing*.35+(random()-.5)*jitter;
       const yy=geometryAt(xx,stripe,extent)+offset+(random()-.5)*jitter;
-      const radius=step*.28*(.82+random()*.30);
-      let halfX=radius,halfY=radius;
-      if(motif==='hatch'){halfX=step*.37+stroke/2;halfY=step*.37+stroke/2;}
-      else if(motif==='chevrons'){halfX=step*.42+stroke/2;halfY=step*.31+stroke/2;}
-      else if(motif==='dashes'){halfX=step*.57+stroke/2;halfY=stroke/2;}
-      else if(motif==='checker'){halfX=radius;halfY=radius;}
-      else if(motif==='stars'){halfX=radius*1.16;halfY=radius*1.16;}
+      const radius=step*.28*variation.scale;
+      // Bounds include rotation; never clip a partly visible element.
+      let bx=radius,by=radius;
+      if(motif==='hatch'){bx=step*.34*variation.scale+stroke/2;by=bx;}
+      else if(motif==='chevrons'){bx=step*.39*variation.scale+stroke/2;by=step*.26*variation.scale+stroke/2;}
+      else if(motif==='dashes'){bx=step*.53*variation.scale+stroke/2;by=stroke/2;}
+      else if(motif==='stars'){bx=radius*1.16;by=radius*1.16;}
+      const cs=Math.abs(Math.cos(variation.angle)),sn=Math.abs(Math.sin(variation.angle));
+      const halfX=bx*cs+by*sn,halfY=bx*sn+by*cs;
       if(!motifFits(stripe,scene,xx,yy,halfX,halfY,extent))continue;
+      ctx.save();
+      ctx.globalAlpha=variation.opacity;
+      ctx.translate(xx,yy);ctx.rotate(variation.angle);
       if(motif==='hatch'){
-        ctx.beginPath();ctx.moveTo(xx-step*.34,yy+step*.34);ctx.lineTo(xx+step*.34,yy-step*.34);ctx.stroke();
+        ctx.beginPath();ctx.moveTo(-step*.34*variation.scale,step*.34*variation.scale);ctx.lineTo(step*.34*variation.scale,-step*.34*variation.scale);ctx.stroke();
       }else if(motif==='chevrons'){
-        ctx.beginPath();ctx.moveTo(xx-step*.39,yy-step*.25);ctx.lineTo(xx,yy+step*.26);
-        ctx.lineTo(xx+step*.39,yy-step*.25);ctx.stroke();
+        ctx.beginPath();ctx.moveTo(-step*.39*variation.scale,-step*.25*variation.scale);
+        ctx.lineTo(0,step*.26*variation.scale);ctx.lineTo(step*.39*variation.scale,-step*.25*variation.scale);ctx.stroke();
       }else if(motif==='dashes'){
-        ctx.beginPath();ctx.moveTo(xx-step*.53,yy);ctx.lineTo(xx+step*.53,yy);ctx.stroke();
+        ctx.beginPath();ctx.moveTo(-step*.53*variation.scale,0);ctx.lineTo(step*.53*variation.scale,0);ctx.stroke();
       }else if(motif==='dots'){
-        ctx.beginPath();ctx.arc(xx,yy,radius,0,TAU);ctx.fill();
-      }else if(motif==='stars')stampStar(ctx,xx,yy,radius*1.16);
+        ctx.beginPath();ctx.arc(0,0,radius,0,TAU);ctx.fill();
+      }else if(motif==='stars')stampStar(ctx,0,0,radius*1.16);
       else if(motif==='diamonds'){
-        ctx.beginPath();ctx.moveTo(xx,yy-radius);ctx.lineTo(xx+radius,yy);
-        ctx.lineTo(xx,yy+radius);ctx.lineTo(xx-radius,yy);ctx.closePath();ctx.fill();
-      }else if(motif==='checker' && ((Math.round((x+extent)/spacing)+j)&1)===0){
-        ctx.fillRect(xx-radius,yy-radius,radius*2,radius*2);
-      }
+        ctx.beginPath();ctx.moveTo(0,-radius);ctx.lineTo(radius,0);ctx.lineTo(0,radius);ctx.lineTo(-radius,0);ctx.closePath();ctx.fill();
+      }else if(motif==='checker')ctx.fillRect(-radius,-radius,radius*2,radius*2);
+      ctx.restore();
     }
   }
   ctx.restore();

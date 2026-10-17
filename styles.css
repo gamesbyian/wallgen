@@ -103,3 +103,9 @@
 @media(max-width:520px){
   .button-randomize-all{font-size:10px}
 }
+
+.pattern-homogeneity{margin-top:15px}
+.pattern-homogeneity small,.homogeneity-override small{font-size:10px;color:#858998;line-height:1.45;font-weight:400}
+.homogeneity-override{display:flex;gap:11px;align-items:flex-start;margin-top:19px;font-size:11px;color:#e6e6ed;line-height:1.5;cursor:pointer}
+.homogeneity-override input{accent-color:#b7a3ff;min-width:18px;width:18px;height:18px;margin:0}
+.homogeneity-override span{display:flex;flex-direction:column;gap:4px}
