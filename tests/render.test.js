@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { drawWallpaper, presentNudgedArtwork, motifFits, balanceStripeEnds, stripeFrameContacts, textureHeight, stripeShadowParameters } from '../src/renderer.js';
+import { drawWallpaper, presentNudgedArtwork, motifFits, balanceStripeEnds, stripeFrameContacts, textureHeight, stripeShadowParameters, nudgeOverhang } from '../src/renderer.js';
 import { MATERIALS, MOTIFS, GEOMETRIES, OUTLINES, resolveScene } from '../src/model.js';
 
 // Node's lightweight Canvas API spy catches geometry/material code path errors
@@ -179,11 +179,14 @@ test('nudge repaints cached completed layers without redrawing any geometry',()=
     individuality:100,chaos:100,outline:'double',glow:55};
   const base=drawWallpaper(canvas,{...recipe,positionX:0,positionY:0},{cache});
   assert.ok(cache.background && cache.ink);
+  assert.equal(cache.ink.width,960);
+  assert.equal(cache.ink.height,2080);
+  assert.deepEqual(cache.overhang,{left:180,right:180,top:390,bottom:390,width:600,height:1300});
   calls.length=0;
   presentNudgedArtwork(canvas,cache,{positionX:12,positionY:-8});
   assert.deepEqual(calls,[
     ['drawImage','source-over','main',0,0],
-    ['drawImage','source-over','main',72,-104],
+    ['drawImage','source-over','main',-108,-494],
   ]);
   assert.equal(base.positionX,0);
   const moved=resolveScene({...recipe,positionX:12,positionY:-8});
@@ -198,7 +201,7 @@ test('nudge at export dimensions is a scaled bitmap translation, not recapping s
   const draws=calls.filter(x=>x[0]==='drawImage' && x[2]==='main');
   const last=draws.at(-1);
   assert.equal(last[3],-302.4);
-  assert.ok(Math.abs(last[4]-458.64)<1e-7);
+  assert.ok(Math.abs(last[4]-(458.64-459))<1e-7);
   const base=resolveScene({seed:'export-pan',orientation:'diagonal'});
   assert.equal(scene.centerX,base.centerX);
   assert.equal(scene.centerY,base.centerY);
@@ -246,7 +249,7 @@ test('nudge reuses immutable geometry while moving under stationary ambient ligh
   assert.equal(calls.filter(c=>c[0]==='lightingGradient').length,1);
   assert.ok(!calls.some(c=>c[0]==='lightingShadow'));
   const draws=calls.filter(c=>c[0]==='drawImage'&&c[2]==='main');
-  assert.deepEqual(draws.map(c=>c.slice(3)),[[0,0],[84,-78]]);
+  assert.deepEqual(draws.map(c=>c.slice(3)),[[0,0],[-96,-468]]);
   assert.deepEqual(resolveScene({...recipe,positionX:14,positionY:-6}).stripes,
     resolveScene(recipe).stripes);
 });
@@ -307,10 +310,67 @@ test('ambient and stripe shadows coexist, and nudge reuses the exact cached ink'
   assert.equal(calls.filter(c=>c[0]==='lightingShadow').length,1);
   assert.equal(calls.filter(c=>c[0]==='ambientGlow'&&c[1]==='main').length,1);
   const draws=calls.filter(c=>c[0]==='drawImage'&&c[2]==='main');
-  assert.deepEqual(draws.map(c=>c.slice(3)),[[0,0],[36,-52]]);
+  assert.deepEqual(draws.map(c=>c.slice(3)),[[0,0],[-144,-442]]);
   const shadowIndex=calls.findIndex(c=>c[0]==='lightingShadow');
   const ambientIndex=calls.findIndex(c=>c[0]==='ambientGlow');
   assert.ok(shadowIndex<ambientIndex,'canvas-wide ambience is applied after stripe shadow');
   assert.deepEqual(resolveScene(recipe).stripes,
     resolveScene({...recipe,positionX:6,positionY:-4}).stripes);
+});
+
+test('preview caches both nudge directions without regenerating stripe geometry',()=>{
+  const canvas={width:600,height:1300,getContext:()=>new FakeContext('main')};
+  const cache={};
+  const base=drawWallpaper(canvas,{seed:'overscan-extreme',orientation:'diagonal',motif:'solid'},{cache});
+  assert.deepEqual(cache.overhang,{left:180,right:180,top:390,bottom:390,width:600,height:1300});
+  for(const positionX of [-30,0,30])for(const positionY of [-30,0,30]){
+    calls.length=0;
+    presentNudgedArtwork(canvas,cache,{positionX,positionY,lightingMood:'off'});
+    const draws=calls.filter(c=>c[0]==='drawImage'&&c[2]==='main');
+    assert.equal(draws.length,2);
+    assert.equal(draws[1][3],positionX*6-180);
+    assert.equal(draws[1][4],positionY*13-390);
+    const sourceX=-draws[1][3], sourceY=-draws[1][4];
+    assert.ok(sourceX>=0&&sourceX+600<=cache.ink.width,
+      'horizontal pixel range should never fall outside cached ink');
+    assert.ok(sourceY>=0&&sourceY+1300<=cache.ink.height,
+      'vertical pixel range should never fall outside cached ink');
+  }
+  assert.equal(base.stripes.length,7);
+});
+test('export overscan allocates only required nudge sides, never a full 30% blanket',()=>{
+  assert.deepEqual(nudgeOverhang(3024,6552,{positionX:0,positionY:0}),
+    {left:0,right:0,top:0,bottom:0,width:3024,height:6552});
+  assert.deepEqual(nudgeOverhang(3024,6552,{positionX:30,positionY:-30}),
+    {left:908,right:0,top:0,bottom:1966,width:3024,height:6552});
+  assert.deepEqual(nudgeOverhang(3024,6552,{positionX:-30,positionY:30}),
+    {left:0,right:908,top:1966,bottom:0,width:3024,height:6552});
+  assert.deepEqual(nudgeOverhang(600,1300,{positionX:0,positionY:0},true),
+    {left:180,right:180,top:390,bottom:390,width:600,height:1300});
+  assert.deepEqual(nudgeOverhang(600,1300,{positionX:30,positionY:-30},true),
+    {left:180,right:180,top:390,bottom:390,width:600,height:1300});
+});
+test('background texture is cropped to the frame while extra stripe material extends off-frame',()=>{
+  calls.length=0;
+  const canvas={width:600,height:1300,getContext:()=>new FakeContext('main')};
+  const cache={};
+  drawWallpaper(canvas,{seed:'overscan-textures',material:'concrete',
+    textureCoverage:'both',textureStrength:78,textureLayer2Enabled:true,
+    material2:'linen',textureCoverage2:'stripes',motif:'checker'}, {cache});
+  assert.equal(cache.ink.width,960);
+  assert.equal(cache.ink.height,2080);
+  // Background uses the 9-argument source crop instead of shifting.
+  assert.ok(calls.some(c=>c[0]==='drawImage'&&c[2]==='main'&&
+    c.slice(3).join(',')==='180,390,600,1300,0,0,600,1300'));
+  assert.ok(calls.some(c=>c[0]==='drawImage'&&c[2]==='main'&&
+    c[3]===-180&&c[4]===-390),'ink uses its overscan origin');
+});
+test('visible motif placement stays the same, while whole motifs may populate off-frame overscan',()=>{
+  const scene=resolveScene({seed:'motif-visible-unchanged',motif:'dots'});
+  const stripe=scene.stripes[3];
+  const x=0,y=stripe.center,halfX=.4,halfY=.4;
+  const standard=motifFits(stripe,scene,x,y,halfX,halfY);
+  const extended={...scene,renderBounds:{left:-180,right:780,top:-390,bottom:1690}};
+  assert.equal(motifFits(stripe,extended,x,y,halfX,halfY),standard);
+  assert.deepEqual(scene.stripes,extended.stripes);
 });
