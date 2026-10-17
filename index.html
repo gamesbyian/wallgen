@@ -19,14 +19,14 @@
   <link rel="stylesheet" href="mobile-card-groups.css?v=20261016-related1">
   <link rel="stylesheet" href="mobile-editor-rail.css?v=20261017-camera1">
   <link rel="stylesheet" href="design-transform.css?v=20261016-transform1">
-  <link rel="stylesheet" href="draw-path.css?v=20261017-flow2">
+  <link rel="stylesheet" href="draw-path.css?v=20261017-smooth1">
 </head>
 <body>
   <header class="masthead">
     <a class="brand" href="./" aria-label="R.O.Y.G.B.I.V. home">
       <img class="brand-logo" src="assets/roygbiv-logo.svg" width="64" height="64" alt="" aria-hidden="true">
       <div class="brand-copy">
-        <h1 class="brand-title">R.O.Y.G.B.I.V<span class="brand-dot">.</span></h1>
+        <h1 class="brand-title" aria-label="R.O.Y.G.B.I.V."><span class="title-letter title-red" aria-hidden="true">R</span>.<span class="title-letter title-orange" aria-hidden="true">O</span>.<span class="title-letter title-yellow" aria-hidden="true">Y</span>.<span class="title-letter title-green" aria-hidden="true">G</span>.<span class="title-letter title-blue" aria-hidden="true">B</span>.<span class="title-letter title-indigo" aria-hidden="true">I</span>.<span class="title-letter title-violet" aria-hidden="true">V</span><span class="brand-dot">.</span></h1>
         <p class="brand-subtitle">Rainbow-Only. You Generate Based on Individual Variables.</p>
       </div>
     </a>
@@ -48,10 +48,10 @@
 
       <form id="controls" autocomplete="off">
         <div class="randomize-bar randomize-toolbar">
-          <button id="randomizeAll" class="button button-rainbow button-randomize-all" type="button"><span class="randomize-symbol" aria-hidden="true">✳</span><span>Randomize</span></button>
-          <label class="prime-toggle" title="Randomized percentages and texture angles will be prime numbers"><input type="checkbox" name="primesOnly" data-setting="primesOnly" aria-describedby="primeModeHint"><span>Primes only</span></label>
+          <button id="randomizeAll" class="button button-rainbow button-randomize-all" type="button" aria-label="Randomize settings"><span class="randomize-symbol" aria-hidden="true">✳</span><span>Random</span></button>
+          <label class="prime-toggle" title="Randomized percentages and texture angles will be prime numbers"><input type="checkbox" name="primesOnly" data-setting="primesOnly" aria-describedby="primeModeHint"><span class="toolbar-wording"><span>Primes</span><span>only</span></span></label>
           <button id="undo" class="button button-outline button-undo" type="button" disabled aria-label="Undo last design change" title="Nothing to undo">↶ <span>Undo</span></button>
-          <button id="drawPathToggle" class="button button-outline draw-path-toggle" type="button" aria-pressed="false" aria-controls="drawPathPanel" aria-label="Draw a custom path on the wallpaper">✎ <span>Draw path</span></button>
+          <button id="drawPathToggle" class="button button-outline draw-path-toggle" type="button" aria-pressed="false" aria-controls="drawPathPanel" aria-label="Draw a custom path on the wallpaper">✎ <span class="toolbar-wording"><span>Draw</span><span>path</span></span></button>
         </div>
         <p id="primeModeHint" class="prime-mode-hint" hidden>Prime percentages: 2–97. Prime texture angles: 2–359°. Other setting locks still apply.</p>
         <p class="studio-guidance">Refine one aspect at a time. Use the lock beside each setting to protect it from randomization.</p>
@@ -254,6 +254,7 @@
         <canvas id="drawOverlay" width="600" height="1300" hidden aria-label="Draw one continuous path anywhere on the preview stage"></canvas>
         <div class="draw-path-panel" id="drawPathPanel" role="group" aria-label="Custom path drawing controls" hidden>
           <span id="drawPathHint" aria-live="polite">Draw one continuous path across the canvas.</span>
+          <label class="draw-smoothing-row" for="drawSmoothingStrength"><span>Smoothing</span><input type="range" id="drawSmoothingStrength" min="1" max="5" step="0.5" value="1"><output id="drawSmoothingValue" for="drawSmoothingStrength">1.0×</output></label>
           <div class="draw-path-controls">
             <button type="button" id="drawSmooth" class="draw-fit-selected" aria-pressed="true">Smooth</button>
             <button type="button" id="drawGeometric" aria-pressed="false">Geometric</button>
@@ -265,7 +266,7 @@
       </div>
       <div class="action-tray">
         <div class="seed-group"><label for="seedInput">DESIGN SEED</label><input id="seedInput" type="text" maxlength="90" spellcheck="false" value="rainbow-001" aria-label="Design seed"><button id="applySeed" class="icon-btn" title="Render this seed" aria-label="Apply seed" type="button">↵</button></div>
-        <div class="main-actions"><button id="randomize" class="button button-outline" type="button">↻ <span>New variation</span></button><button id="download" class="button button-light" type="button">↓ <span>Download PNG</span></button><button id="favorite" class="button button-icon" title="Save to favourites" aria-label="Save to favourites" aria-pressed="false" type="button">♡</button></div>
+        <div class="main-actions"><button id="randomize" class="button button-outline" type="button">↻ <span>New variation</span></button><button id="download" class="button button-light" type="button">↓ <span>Download PNG</span></button><button id="favorite" class="button button-icon" title="Save to favourites" aria-label="Save to favourites" aria-pressed="false" type="button"><svg class="squat-heart" viewBox="0 0 24 20" width="23" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 18.1 3.4 11.9C-2.6 7.6 2 0.9 7.5 2.3c1.9.5 3.4 1.7 4.5 3.1 1.1-1.4 2.6-2.6 4.5-3.1C22-0.9 26.6 7.6 20.6 11.9Z"/></svg></button></div>
       </div>
       <div class="export-metadata">
         <button id="importRecipePNG" type="button" class="text-link-button" aria-label="Restore design from saved PNG metadata">↥ Restore design from PNG</button>
@@ -306,10 +307,10 @@
     <div class="mobile-tools-content" id="mobileToolsContent"></div>
   </section>
   <nav class="mobile-dock" id="mobileActionDock" aria-label="Quick wallpaper actions">
-    <button type="button" id="mobileEdit" aria-controls="mobileDesignSheet" aria-expanded="false"><span aria-hidden="true">☷</span><small>Edit</small></button>
+    <button type="button" id="mobileEdit" aria-controls="mobileDesignSheet" aria-expanded="false"><span aria-hidden="true"><svg class="dock-pencil" viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="m4 17-.8 3.8L7 20l12.4-12.4a2.2 2.2 0 0 0-3.1-3.1Z"/><path d="m14.8 6 3.2 3.2"/></svg></span><small>Edit</small></button>
     <button type="button" id="mobileExplore" aria-controls="gallery" aria-expanded="false"><span aria-hidden="true">▦</span><small>Explore</small></button>
     <button type="button" id="mobileShuffle" class="mobile-dock-featured" aria-label="Randomize all settings"><span aria-hidden="true">✳</span><small>Randomize</small></button>
-    <button type="button" id="mobileFavorite" aria-label="Save or remove favourite"><span aria-hidden="true">♡</span><small>Favourite</small></button>
+    <button type="button" id="mobileFavorite" aria-label="Save or remove favourite"><span aria-hidden="true"><svg class="squat-heart" viewBox="0 0 24 20" width="23" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 18.1 3.4 11.9C-2.6 7.6 2 0.9 7.5 2.3c1.9.5 3.4 1.7 4.5 3.1 1.1-1.4 2.6-2.6 4.5-3.1C22-0.9 26.6 7.6 20.6 11.9Z"/></svg></span><small>Favourite</small></button>
     <button type="button" id="mobileDownload" aria-label="Download wallpaper PNG"><span aria-hidden="true">↓</span><small>Download</small></button>
     <button type="button" id="mobileMore" aria-controls="mobileToolsSheet" aria-expanded="false"><span aria-hidden="true">⋯</span><small>More</small></button>
   </nav>
@@ -320,8 +321,8 @@
       stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"
       aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>
   </button>
-  <script type="module" src="src/app.js?v=20261017-camera1"></script>
-  <script type="module" src="src/mobile-studio.js?v=20261016-dock2"></script>
+  <script type="module" src="src/app.js?v=20261017-smooth1"></script>
+  <script type="module" src="src/mobile-studio.js?v=20261017-heart1"></script>
   <script type="module" src="src/mobile-swipes.js?v=20261016-swipe1"></script>
   <script type="module" src="src/mobile-card-groups.js?v=20261017-camera1"></script>
   <script type="module" src="src/mobile-preview-tools.js?v=20261017-camera1"></script>
