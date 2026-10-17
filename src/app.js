@@ -107,7 +107,7 @@ function titleCase(value){return value.replace(/-/g,' ').replace(/\b\w/g,c=>c.to
 function render(recipe,{scroll=false,bypassLocks=false}={}) {
   const next=bypassLocks?normalizeRecipe(recipe):respectSettingLocks(current,recipe);
   current=checkpoint(next);
-  document.getElementById('primeModeHint').hidden=!current.primesOnly;
+  // Primes Only is reflected by its selected control; no transient message.
   const key=artKey(current);
   if(previewLayers.key===key && previewLayers.ink && previewLayers.background){
     // The directional buttons only blit these two cached bitmaps.
