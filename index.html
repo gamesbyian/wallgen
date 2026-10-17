@@ -22,7 +22,7 @@
           <label class="prime-toggle" title="Randomized percentages and texture angles will be prime numbers"><input type="checkbox" name="primesOnly" data-setting="primesOnly" aria-describedby="primeModeHint"><span>Primes only</span></label>
         </div>
         <p id="primeModeHint" class="prime-mode-hint" hidden>Prime percentages: 2–97. Prime texture angles: 2–359°. Locked values stay as they are.</p>
-        <p class="studio-guidance">Refine one aspect at a time. <span>🔓</span> to protect settings from randomization.</p>
+        <p class="studio-guidance">Refine one aspect at a time. Use the lock beside each setting to protect it from randomization.</p>
         <nav class="settings-tabs" role="tablist" aria-label="Wallpaper settings">
           <button type="button" id="tab-design" class="settings-tab" role="tab" aria-selected="true" aria-controls="panel-design" tabindex="0" data-tab="design"><span aria-hidden="true">◇</span> Design</button>
           <button type="button" id="tab-colour" class="settings-tab" role="tab" aria-selected="false" aria-controls="panel-colour" tabindex="-1" data-tab="colour"><span aria-hidden="true">◐</span> Colour</button>
@@ -48,7 +48,7 @@
         <label class="field background-field">Background <select name="background" data-setting="background"><option value="black">Black</option><option value="white">White</option></select></label>
           <div class="lighting-subsection">
             <div class="lighting-intro"><span class="lighting-icon" aria-hidden="true">☀</span>
-              <div><h3>Light &amp; shadow</h3><p>A little atmosphere and depth, without changing your stripes.</p></div>
+              <div><h3>Light &amp; shadow</h3><p>Ambient illumination across the entire canvas, not shadows cast by stripes.</p></div>
             </div>
             <div class="control-grid">
               <label class="field">Lighting mood
@@ -72,11 +72,11 @@
               <label class="field range-field"><span>Light intensity</span>
                 <input type="range" name="lightStrength" data-setting="lightStrength" min="0" max="100" value="45">
               </label>
-              <label class="field range-field"><span>Shadow depth</span>
+              <label class="field range-field"><span>Canvas shade</span>
                 <input type="range" name="shadowStrength" data-setting="shadowStrength" min="0" max="100" value="28">
               </label>
             </div>
-            <p class="lighting-help">Soft shading stays inside the stripes. Shadows add subtle lift, particularly on a white canvas.</p>
+            <p class="lighting-help">Light and shade fall across the whole wallpaper, including its background. No stripe drop shadows.</p>
           </div>
         </section>
         <section class="settings-panel" id="panel-textures" role="tabpanel" aria-labelledby="tab-textures" tabindex="0" hidden>
@@ -109,7 +109,7 @@
           <label class="field range-field"><span>Texture displacement</span>
             <input type="range" name="textureDisplacement" id="textureDisplacement" data-setting="textureDisplacement" min="0" max="100" value="0">
           </label>
-          <small>Gently roughen stripe edges using the selected material textures. At 0%, the original clean geometry is preserved.</small>
+          <small>Distort the actual stripe contours, not just their colour. Visible even with no material selected (neutral grain fallback). 0% keeps crisp edges.</small>
         </div>
         </section>
         <section class="settings-panel" id="panel-refine" role="tabpanel" aria-labelledby="tab-refine" tabindex="0" hidden>
