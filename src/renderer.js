@@ -45,31 +45,40 @@ const RELIEF_PROFILES={
   drywall:[.32,24,.38], 'wood-grain':[.66,30,.91], 'vinyl-sheet':[.23,42,.16],
   foil:[.50,13,.85], 'glossy-paper':[.15,42,.14], adobe:[.95,24,.71],
 };
+// Material-specific fractal height, evaluated at each *edge* in stripe-local space.
+// When all chosen textures are background-only / smooth, a seeded fine-paper grain
+// gives this control a usable baseline rather than silently doing nothing.
 export function textureHeight(scene,stripe,x,side=0){
-  if(!scene.textureDisplacement)return 0;
+  const strength=scene.textureDisplacement/100;
+  if(strength<=0)return 0;
+  const actual=scene.textureLayers.filter(layer=>layer.coverage!=='background');
+  const layers=actual.length?actual:[{
+    material:'grain',strength:100,scale:50,heightCos:1,heightSin:0,
+    heightSeed:scene.reliefFallbackSeed ?? 17413,
+  }];
   let sum=0,total=0;
   const y=stripe.center+side*stripe.width*.5;
-  for(const layer of scene.textureLayers){
-    if(layer.coverage==='background')continue;
+  for(const layer of layers){
     const profile=RELIEF_PROFILES[layer.material]||RELIEF_PROFILES.grain;
-    const weight=(layer.strength/100)*profile[0];
+    const weight=(layer.strength/100)*(.45+.55*profile[0]);
     if(weight<=0)continue;
-    const co=layer.heightCos,si=layer.heightSin;
-    // The fine band follows the same orientation and material scale as its
-    // painted counterpart, and a second band keeps the edge organic at 90°.
-    const along=x*co+y*si;
-    const across=-x*si+y*co;
-    const period=profile[1]*(.5+layer.scale/100*1.7);
+    const along=x*layer.heightCos+y*layer.heightSin;
+    const across=-x*layer.heightSin+y*layer.heightCos;
+    const period=Math.max(4,profile[1]*(.55+layer.scale/100*1.6));
     const seed=layer.heightSeed;
-    const low=noise1D((along+x*.16)/(period*2.9),seed);
-    const fine=noise1D((along*.38+across*.46+x*.22)/period,seed+17);
-    const value=low*(1-profile[2]) + fine*profile[2];
-    sum+=value*weight;total+=weight;
+    const broad=noise1D((along+x*.12)/(period*3.5),seed);
+    const mid=noise1D((along*.7+across*.32)/period,seed+19);
+    const fine=noise1D((along*.48+across*.75)/(period*.49),seed+53);
+    const height=(broad*.48+mid*.39+fine*.13)*1.65;
+    sum+=height*weight;
+    total+=weight;
   }
-  if(total===0)return 0;
-  const amount=scene.textureDisplacement/100;
-  const maxPixels=Math.min(11,stripe.width*.19)*amount;
-  return Math.max(-maxPixels,Math.min(maxPixels,sum/Math.max(.6,total)*maxPixels));
+  if(total<=0)return 0;
+  // The earlier ~1-3 logical-pixel change was invisible on phone previews.
+  // Increase the *bounded* edge relief without permitting the two edges to cross.
+  const cap=Math.min(28,stripe.width*.34)*Math.pow(strength,.85);
+  const field=sum/total;
+  return Math.max(-cap,Math.min(cap,field*cap));
 }
 function edgeAt(x,stripe,extent,side,scene){
   return geometryAt(x,stripe,extent)+side*widthAt(x,stripe,extent)/2+
@@ -77,8 +86,9 @@ function edgeAt(x,stripe,extent,side,scene){
 }
 function stripePath(stripe, extent, scene) {
   const path = new Path2D();
-  const count = 500;
   const start=stripe.segmentStart??-extent, end=stripe.segmentEnd??extent;
+  // Sample finely enough to preserve fine material contours in preview/export.
+  const count=Math.max(500,Math.ceil((end-start)/3));
   for (let i=0;i<=count;i++) {
     const x = start + (end-start)*i/count;
     const y = edgeAt(x,stripe,extent,-1,scene);
@@ -94,8 +104,9 @@ function stripePath(stripe, extent, scene) {
 function traceEdge(stripe, extent, side, scene) {
   const path=new Path2D();
   const start=stripe.segmentStart??-extent, end=stripe.segmentEnd??extent;
-  for(let i=0;i<=500;i++){
-    const x=start+(end-start)*i/500;
+  const count=Math.max(500,Math.ceil((end-start)/3));
+  for(let i=0;i<=count;i++){
+    const x=start+(end-start)*i/count;
     const y=edgeAt(x,stripe,extent,side,scene);
     if(i===0) path.moveTo(x,y); else path.lineTo(x,y);
   }
@@ -422,50 +433,41 @@ function drawOutline(ctx,path,stripe,scene) {
   ctx.restore();
 }
 
-// A gentle, deterministic lighting wash within existing stripe pixels.
-// Source-atop retains their opacity and every previously balanced edge.
-function applyLightWash(ink,scene){
-  if(scene.lightingMood==='off'||scene.lightStrength<=0)return;
-  const g=ink.getContext('2d');
-  const fromRight=scene.lightDirection.endsWith('right');
-  const fromBottom=scene.lightDirection.startsWith('bottom');
-  const ax=fromRight?DESIGN_WIDTH:0,ay=fromBottom?DESIGN_HEIGHT:0;
-  const bx=DESIGN_WIDTH-ax,by=DESIGN_HEIGHT-ay;
-  const strength=scene.lightStrength/100;
-  const light=scene.lightingMood==='golden'?[255,218,153]:
-    scene.lightingMood==='moonlight'?[183,208,255]:[255,255,250];
-  const dark=scene.lightingMood==='golden'?[67,30,50]:
-    scene.lightingMood==='moonlight'?[10,22,64]:[23,25,47];
-  const color=(rgb,a)=>`rgba(${rgb.join(',')},${a.toFixed(4)})`;
-  g.save();
-  g.setTransform(ink.width/DESIGN_WIDTH,0,0,ink.height/DESIGN_HEIGHT,0,0);
-  g.globalCompositeOperation='source-atop';
-  const wash=g.createLinearGradient(ax,ay,bx,by);
-  wash.addColorStop(0,color(light,.38*strength));
-  wash.addColorStop(.43,color(light,.06*strength));
-  wash.addColorStop(.66,color(dark,.045*strength));
-  wash.addColorStop(1,color(dark,.32*strength));
-  g.fillStyle=wash;
-  g.fillRect(0,0,DESIGN_WIDTH,DESIGN_HEIGHT);
-  g.restore();
-}
-function drawFinishedInk(ctx,ink,recipe){
-  const dx=ink.width*(recipe.positionX||0)/100;
-  const dy=ink.height*(recipe.positionY||0)/100;
+// Ambient light and shade are fixed to the *whole canvas*, independent of
+// ribbons, their silhouettes, and the cached unlit/nudged composition.
+export function applyCanvasAtmosphere(ctx,width,height,recipe){
+  if(recipe.lightingMood==='off'||(!recipe.lightStrength&&!recipe.shadowStrength))return;
+  const fromRight=recipe.lightDirection.endsWith('right');
+  const fromBottom=recipe.lightDirection.startsWith('bottom');
+  const x=fromRight?width:0,y=fromBottom?height:0;
+  const farX=width-x,farY=height-y;
+  const light=recipe.lightingMood==='golden'?[255,204,133]:
+    recipe.lightingMood==='moonlight'?[177,207,255]:[255,255,242];
+  const shade=recipe.lightingMood==='golden'?[49,34,70]:
+    recipe.lightingMood==='moonlight'?[13,23,62]:[22,28,48];
+  const rgba=(rgb,opacity)=>`rgba(${rgb.join(',')},${opacity.toFixed(4)})`;
   ctx.save();
-  if(recipe.lightingMood!=='off'&&recipe.shadowStrength>0){
-    const strength=recipe.shadowStrength/100;
-    const scale=ink.width/DESIGN_WIDTH;
-    const size=(1.5+9*strength)*scale;
-    ctx.shadowColor=`rgba(8,9,20,${(.65*strength).toFixed(4)})`;
-    ctx.shadowBlur=(2+15*strength)*scale;
-    ctx.shadowOffsetX=(recipe.lightDirection.endsWith('right')?-1:1)*size;
-    ctx.shadowOffsetY=(recipe.lightDirection.startsWith('bottom')?-1:1)*size;
+  ctx.setTransform(1,0,0,1,0,0);
+  if(recipe.lightStrength>0){
+    const glow=ctx.createRadialGradient(x,y,0,x,y,Math.hypot(width,height)*.86);
+    glow.addColorStop(0,rgba(light,.38*recipe.lightStrength/100));
+    glow.addColorStop(.44,rgba(light,.15*recipe.lightStrength/100));
+    glow.addColorStop(1,rgba(light,0));
+    ctx.fillStyle=glow;ctx.fillRect(0,0,width,height);
   }
-  ctx.drawImage(ink,dx,dy);
+  if(recipe.shadowStrength>0){
+    const gradient=ctx.createLinearGradient(x,y,farX,farY);
+    gradient.addColorStop(0,rgba(shade,0));
+    gradient.addColorStop(.35,rgba(shade,.045*recipe.shadowStrength/100));
+    gradient.addColorStop(1,rgba(shade,.52*recipe.shadowStrength/100));
+    ctx.fillStyle=gradient;ctx.fillRect(0,0,width,height);
+  }
   ctx.restore();
 }
-
+function drawFinishedInk(ctx,ink,recipe){
+  ctx.drawImage(ink,ink.width*(recipe.positionX||0)/100,
+    ink.height*(recipe.positionY||0)/100);
+}
 /** Repaint only the two cached bitmaps. No solving, balancing or regeneration. */
 export function presentNudgedArtwork(canvas, layers, recipe) {
   if(!layers?.background || !layers?.ink)throw new Error('No original composition to nudge');
@@ -474,6 +476,7 @@ export function presentNudgedArtwork(canvas, layers, recipe) {
   ctx.clearRect(0,0,canvas.width,canvas.height);
   ctx.drawImage(layers.background,0,0);
   drawFinishedInk(ctx,layers.ink,recipe);
+  applyCanvasAtmosphere(ctx,canvas.width,canvas.height,recipe);
 }
 
 export function drawWallpaper(canvas, recipe, options={}) {
@@ -547,7 +550,6 @@ export function drawWallpaper(canvas, recipe, options={}) {
     g.save();g.setTransform(1,0,0,1,0,0);
     g.globalCompositeOperation=blend(layer);g.drawImage(scratch,0,0);g.restore();
   }
-  applyLightWash(ink,scene);
   // Background stays fixed; the *already clipped, immutable* stripe layer is
   // translated as one image. No stripe is re-ended/re-sized because of a nudge.
   if(options.cache) {
@@ -558,5 +560,6 @@ export function drawWallpaper(canvas, recipe, options={}) {
     options.cache.ink=ink;
   }
   drawFinishedInk(ctx,ink,scene);
+  applyCanvasAtmosphere(ctx,canvas.width,canvas.height,scene);
   return scene;
 }
