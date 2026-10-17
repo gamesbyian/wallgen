@@ -635,6 +635,16 @@ function offsetStripeEdge(stripe,extent,scene,distance){
   }
   return path;
 }
+// Pure, inspectable geometry: increasing thickness must never change
+// separation, and increasing the buffer must never change thickness.
+export function outlineDimensions(stripe,scene){
+  const isBlack=scene.outline.startsWith('black');
+  const style=isBlack?(scene.outline==='black'?'white':scene.outline.slice(6)):scene.outline;
+  const base=style==='hairline'?.55:style==='double'?1.4:1.05;
+  return {thickness:base+scene.gap/100*Math.min(
+    style==='hairline'?5:20,stripe.width*.60),
+  separation:scene.outlineBuffer/100*Math.min(20,stripe.width*.70)};
+}
 function drawOutline(ctx,path,stripe,scene) {
   if(scene.outline==='none')return;
   const black=scene.outline.startsWith('black');
@@ -642,10 +652,7 @@ function drawOutline(ctx,path,stripe,scene) {
   const colour=black?'rgba(0,0,0,.96)':'rgba(255,255,255,.94)';
   // The existing "gap" recipe field is thickness (renamed in the UI).
   // New outlineBuffer independently controls stripe-to-outline distance.
-  const base=style==='hairline'?.55:style==='double'?1.4:1.05;
-  const width=base+scene.gap/100*Math.min(
-    style==='hairline'?5:20,stripe.width*.60);
-  const buffer=scene.outlineBuffer/100*Math.min(20,stripe.width*.70);
+  const {thickness:width,separation:buffer}=outlineDimensions(stripe,scene);
   ctx.save();ctx.lineJoin='round';ctx.strokeStyle=colour;
   if(style==='broken')ctx.setLineDash([15,10]);
   if(style==='one-side'&&stripe.lineStyle==='continuous'){
