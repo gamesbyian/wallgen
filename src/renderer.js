@@ -213,8 +213,10 @@ export function motifFits(stripe,scene,x,y,halfX,halfY,extent=scene.extent) {
     if(px<bounds.left||px>bounds.right||py<bounds.top||py>bounds.bottom)return false;
     points.push({x:px,y:py});
   }
-  const inside=points.every(p=>p.x>=0&&p.x<=DESIGN_WIDTH&&p.y>=0&&p.y<=DESIGN_HEIGHT);
-  const outside=points.every(p=>p.x<0||p.x>DESIGN_WIDTH||p.y<0||p.y>DESIGN_HEIGHT);
+  const minX=Math.min(...points.map(p=>p.x)),maxX=Math.max(...points.map(p=>p.x));
+  const minY=Math.min(...points.map(p=>p.y)),maxY=Math.max(...points.map(p=>p.y));
+  const inside=minX>=0&&maxX<=DESIGN_WIDTH&&minY>=0&&maxY<=DESIGN_HEIGHT;
+  const outside=maxX<0||minX>DESIGN_WIDTH||maxY<0||minY>DESIGN_HEIGHT;
   return inside||outside;
 }
 /**
