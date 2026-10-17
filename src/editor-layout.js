@@ -86,7 +86,8 @@ export function mountEditor(){
       roll.type='button';roll.dataset.randomTool=tool.id;
       roll.title='Change only unlocked '+tool.name.toLowerCase()+' settings';
       roll.setAttribute('aria-label','Randomize '+tool.name+' tool');
-      card.append(roll);
+      roll.hidden=tool.id!==category.tools[0].id;
+      chooser.append(roll);
       panel.append(card);
       tools.set(tool.id,{spec:tool,card,chip,category:category.id});
     }
@@ -165,6 +166,8 @@ export function selectEditorTool(category,tool){
   for(const [id,entry] of tools){
     entry.card.hidden=id!==tool;
     entry.chip.hidden=entry.category!==category;
+    const roll=document.querySelector('[data-random-tool="'+id+'"]');
+    if(roll)roll.hidden=id!==tool;
     entry.chip.setAttribute('aria-pressed',String(id===tool));
   }
   for(const panel of document.querySelectorAll('.editor-category-panel'))
