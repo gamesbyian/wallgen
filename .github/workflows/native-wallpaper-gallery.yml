@@ -1,0 +1,59 @@
+name: Native wallpaper gallery
+
+# Reproduce the first five wallpapers at the Pixel 6 Pro native export size.
+# Manual dispatch allows future reruns without changes to the studio.
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/native-wallpaper-gallery.yml'
+
+jobs:
+  native-wallpapers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate generator
+        run: npm run check
+      - name: Install headless Chromium
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+      - name: Generate five native-resolution wallpapers
+        run: |
+          mkdir -p output
+          npm run render -- --seed paper-comet --set family=studio --set orientation=diagonal --set geometry=straight --set motif=solid --set palette=electric --set material=construction --set textureStrength=45 --set stripeWidth=66 --set spread=56 --out output/paper-comet.png
+          npm run render -- --seed stardust-tapes --set family=tapestry --set orientation=horizontal --set geometry=jagged --set motif=solid --set palette=muted --set material=linen --set textureStrength=46 --set stripeWidth=25 --set spread=78 --out output/stardust-tapes.png
+          npm run render -- --seed dot-matrix --set family=signal --set orientation=diagonal --set lineStyle=dotted --set motif=solid --set geometry=straight --set stripeWidth=45 --set spread=88 --out output/dot-matrix.png
+          npm run render -- --seed white-silkscreen --set family=studio --set orientation=diagonal --set geometry=straight --set motif=solid --set palette=muted --set background=white --set material=linen --set textureStrength=20 --set stripeWidth=25 --set spread=65 --out output/white-silkscreen.png
+          npm run render -- --seed rubber-sines --set family=currents --set orientation=horizontal --set geometry=wave --set motif=solid --set shapeFrequency=72 --set shapeDepth=65 --set stripeWidth=38 --set spread=84 --set outline=hairline --out output/rubber-sines.png
+      - name: Validate native PNGs and regenerable recipes
+        run: |
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {readFile} from 'node:fs/promises';
+          import {createHash} from 'node:crypto';
+          import {extractPngRecipe} from './src/png-metadata.js';
+          import {OUTPUT_WIDTH,OUTPUT_HEIGHT} from './src/model.js';
+          for(const name of ['paper-comet','stardust-tapes','dot-matrix','white-silkscreen','rubber-sines']){
+            const png=await readFile('output/'+name+'.png');
+            assert.deepEqual([...png.subarray(0,8)],[137,80,78,71,13,10,26,10]);
+            assert.equal(png.readUInt32BE(16),OUTPUT_WIDTH);
+            assert.equal(png.readUInt32BE(20),OUTPUT_HEIGHT);
+            const recipe=extractPngRecipe(png);
+            assert.equal(recipe?.seed,name,'Missing or incorrect recipe');
+            const digest=createHash('sha256').update(png).digest('hex');
+            console.log(name, png.length+' bytes',digest);
+          }
+          JS
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: roygbiv-native-wallpapers
+          path: output/*.png
+          if-no-files-found: warn
+          retention-days: 90
