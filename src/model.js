@@ -22,7 +22,7 @@ export const LOCKABLE_SETTINGS = ['seed','family','orientation','geometry','moti
   'textureLayer3Enabled','material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3',
   'textureDisplacement','patternHomogeneity','chaos','stripeWidth','spread','shapeFrequency','shapeDepth','lineStyle','individuality',
   'overridePatternHomogeneity','gap','glow','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','position',
-  'composition','repeatCount','repeatSpacing','construction','turnRadius','pathLength','endTaper','tonalContrast','brushRoughness','dotSize','dotSpacing'];
+  'composition','repeatCount','repeatSpacing','construction','turnRadius','hairpinAngle','pathLength','endTaper','tonalContrast','brushRoughness','dotSize','dotSpacing'];
 export const PALETTES = ['classic', 'electric', 'pastel', 'jewel', 'muted'];
 export const TEXTURE_COVERAGES = ['both', 'stripes', 'background'];
 export const OUTLINES = ['none', 'hairline', 'white', 'double', 'broken', 'one-side', 'black', 'black-hairline', 'black-double', 'black-broken', 'black-one-side'];
@@ -91,6 +91,7 @@ export function normalizeRecipe(input = {}) {
     repeatCount: Math.round(finiteRange(input.repeatCount, 3, 2, 6)),
     repeatSpacing: finiteRange(input.repeatSpacing, 50, 0, 100),
     turnRadius: finiteRange(input.turnRadius, 50, 0, 100),
+    hairpinAngle: finiteRange(input.hairpinAngle, 180, 60, 180),
     endTaper: finiteRange(input.endTaper, 0, 0, 100),
     pathLength: finiteRange(input.pathLength, 65, 0, 100),
     tonalContrast: finiteRange(input.tonalContrast, 50, 0, 100),
@@ -192,7 +193,9 @@ export function resolveScene(recipeInput) {
   if(orientation==='diagonal'&&geometry!=='drawn')angle += recipe.diagonalRotation*Math.PI/180;
   const span = ['hairpin','loops','drawn'].includes(geometry) ? DESIGN_WIDTH :
     DESIGN_WIDTH * Math.abs(Math.sin(angle)) + DESIGN_HEIGHT * Math.abs(Math.cos(angle));
-  const requestedSpread=span*(0.17+0.53*recipe.spread/100)/repeats;
+  // Wider low/high ends while retaining the familiar 50% midpoint.
+  const spreadFactor=value=>.10+.335*Math.pow(value/50,1.5);
+  const requestedSpread=span*spreadFactor(recipe.spread)/repeats;
   const spread=geometry==='drawn'?
     Math.min(requestedSpread,safeDrawnBandSpan(drawnPath)):requestedSpread;
   const center = geometry==='drawn'?0:between(random, -1, 1) * span * 0.09;
@@ -200,8 +203,8 @@ export function resolveScene(recipeInput) {
   // Independent path phase, period, tilt and edge profile grow with individuality.
   const commonPhase=between(random,0,Math.PI*2);
   // Neutral midpoint preserves legacy geometry and saved designs.
-  const frequencyFactor=Math.pow(2,(recipe.shapeFrequency-50)/37);
-  const depthFactor=Math.pow(2,(recipe.shapeDepth-50)/55);
+  const frequencyFactor=Math.pow(2,(recipe.shapeFrequency-50)/(geometry==='chevron'?19:37));
+  const depthFactor=Math.pow(2,(recipe.shapeDepth-50)/(geometry==='chevron'?26:55));
   const commonPeriod=between(random,145,530)/frequencyFactor;
   const commonEdgePhase=between(random,0,Math.PI*2);
   const commonTaper=between(random,0,0.28)*chaos;
@@ -212,10 +215,10 @@ export function resolveScene(recipeInput) {
   const avg = spread / 6;
   // Stripe width and path roughness have their own fixed reference scale.
   // Changing spread changes only centre-to-centre positions, not ribbon width.
-  const referenceSpread=geometry==='drawn'?spread:span*(0.17+0.53*.56)/repeats;
+  const referenceSpread=geometry==='drawn'?spread:span*spreadFactor(56)/repeats;
   const referenceAvg=referenceSpread/6;
   const commonDisplacement=referenceAvg*.22*(.3+.7*chaos)*depthFactor;
-  const widthFactor = (0.12 + 0.79 * recipe.stripeWidth / 100) * profile.width;
+  const widthFactor = (.12+.395*Math.pow(recipe.stripeWidth/50,1.85))*profile.width;
   const stripes = positions.map((position, i) => {
     const r = rng(`${recipe.seed}:stripe:${i}`);
     // Derive the reference gaps from the *weights*, not floating-point
@@ -245,6 +248,7 @@ export function resolveScene(recipeInput) {
       dotRadius:Math.max(2,referenceAvg*(.23+.45*recipe.dotSize/100)*widthFactor*.95),
       drawnPath,
       turnRadius:90+recipe.turnRadius*1.35,
+      hairpinAngle:recipe.hairpinAngle,
       loopPeriod:27+((100-recipe.shapeFrequency)/100)*66,
       loopAmplitude:Math.min(4+29*recipe.shapeDepth/100,referenceAvg*.33),
       phase, period, displacement,

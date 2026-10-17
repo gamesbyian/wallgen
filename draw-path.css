@@ -17,12 +17,14 @@
   border-color:#da69a4;background:#512744;color:#fff;
 }
 .wallpaper-frame .wallpaper-surface{position:relative;width:100%}
-.wallpaper-frame .wallpaper-surface #drawOverlay{
+/* The interaction plane includes the stage gutters, so a stroke can enter
+   or leave the wallpaper from beyond its visible edges. */
+.studio-stage>#drawOverlay{
   display:block;position:absolute;inset:0;width:100%;height:100%;
-  z-index:4;border-radius:7px 7px 0 0;background:transparent;
-  touch-action:none;user-select:none;cursor:crosshair;
+  z-index:10;background:transparent;touch-action:none;user-select:none;
+  cursor:crosshair;
 }
-.wallpaper-frame #drawOverlay[hidden],#drawPathPanel[hidden]{display:none!important}
+.studio-stage>#drawOverlay[hidden],#drawPathPanel[hidden]{display:none!important}
 body.path-drawing .wallpaper-frame{
   outline:2px solid #ee8dc5;outline-offset:4px;
 }

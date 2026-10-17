@@ -1,4 +1,5 @@
 import test from 'node:test';
+import {pathPosition} from '../src/path-geometry.js';
 import assert from 'node:assert/strict';
 import { DESIGN_WIDTH, DESIGN_HEIGHT, OUTPUT_WIDTH, OUTPUT_HEIGHT, HUES, NAMES, FAMILIES, GEOMETRIES, MOTIFS, MATERIALS, OUTLINES, normalizeRecipe, resolveScene, rng, encodeRecipe, decodeRecipe, TEXTURE_COVERAGES, BLEND_MODES, normalizeRotation, randomizeAllRecipe, LOCKABLE_SETTINGS, respectSettingLocks, isPrime, PRIME_PERCENTAGES, PRIME_ROTATIONS, LIGHTING_MOODS, LIGHT_DIRECTIONS, LINE_STYLES } from '../src/model.js';
 
@@ -449,4 +450,40 @@ test('diagonal transforms are deterministic, portable and preserve legacy zero-a
   assert.equal(locked.diagonalRotation,-34);
   assert.equal(locked.mirrorHorizontal,true);
   assert.equal(locked.mirrorVertical,true);
+});
+
+test('larger spacing and stripe width exceed former maximums independently',()=>{
+  const base={seed:'expanded-controls',geometry:'straight',orientation:'horizontal',
+    family:'studio',individuality:0,chaos:0};
+  const thin=resolveScene({...base,stripeWidth:50,spread:50});
+  const broad=resolveScene({...base,stripeWidth:100,spread:50});
+  const wide=resolveScene({...base,stripeWidth:50,spread:100});
+  const spread=scene=>scene.stripes.at(-1).center-scene.stripes[0].center;
+  assert.ok(spread(wide)>spread(thin)*2,'maximum spacing should be over double midpoint');
+  assert.ok(broad.stripes[3].width>thin.stripes[3].width*2.5,'very thick stripes available');
+  assert.equal(spread(broad),spread(thin),'thickness never changes stripe positions');
+  assert.equal(wide.stripes[3].width,thin.stripes[3].width,'spacing never changes thickness');
+});
+test('hairpin turn angle changes tangent-continuous returning leg and survives recipes',()=>{
+  const base={seed:'hairpin-angle',geometry:'hairpin',orientation:'vertical',
+    individuality:0,turnRadius:50};
+  const full=resolveScene({...base,hairpinAngle:180});
+  const angled=resolveScene({...base,hairpinAngle:115});
+  const fullStripe=full.stripes[3],angledStripe=angled.stripes[3],e=full.extent;
+  const bottom=pathPosition(fullStripe,e*.5,e),angledBottom=pathPosition(angledStripe,e*.5,e);
+  assert.ok(Math.abs(angledBottom.x-bottom.x)>150,'turn angle must visibly alter exit leg');
+  assert.ok(pathPosition(fullStripe,e,e).y<pathPosition(fullStripe,0,e).y);
+  assert.equal(normalizeRecipe({hairpinAngle:30}).hairpinAngle,60);
+  assert.equal(normalizeRecipe({hairpinAngle:250}).hairpinAngle,180);
+  assert.equal(decodeRecipe(encodeRecipe({...base,hairpinAngle:115})).hairpinAngle,115);
+  assert.ok(LOCKABLE_SETTINGS.includes('hairpinAngle'));
+});
+test('chevron frequency and depth reach substantially smaller and larger profiles',()=>{
+  const recipe={geometry:'chevron',family:'studio',individuality:0,shapeDepth:50};
+  const low=resolveScene({...recipe,shapeFrequency:0});
+  const high=resolveScene({...recipe,shapeFrequency:100});
+  assert.ok(low.stripes[3].sharedPeriod/high.stripes[3].sharedPeriod>20);
+  const small=resolveScene({...recipe,shapeDepth:0});
+  const big=resolveScene({...recipe,shapeDepth:100});
+  assert.ok(big.stripes[3].sharedDisplacement/small.stripes[3].sharedDisplacement>8);
 });

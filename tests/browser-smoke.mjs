@@ -227,6 +227,7 @@ try{
   const groups=await evaluate(`(()=>{
     const entries=[
       ['Geometry',['geometry','shapeFrequency','shapeDepth']],
+      ['Path details',['turnRadius','hairpinAngle']],
       ['Stripe pattern',['motif','patternHomogeneity']],
       ['Stripe shadows',['stripeShadowEnabled','stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection']],
       ['Outlines',['outline','gap']],
@@ -247,6 +248,23 @@ try{
   for(const item of groups){
     assert.ok(item.fields.every(Boolean),item.name+' missing dependent controls');
   }
+  const steppers=await evaluate(`(()=>{
+    const nodes=[...document.querySelectorAll('.mobile-setting-cluster:not([hidden]) input[type=range]')];
+    return nodes.map(input=>{
+      const stepper=input.closest('.stepper'),style=stepper&&getComputedStyle(stepper.querySelector('.step-button'));
+      return {name:input.name,buttons:stepper?.querySelectorAll('.step-button').length,
+        display:style?.display,visible:input.getClientRects().length>0,
+        rect:stepper?.querySelector('.step-button').getBoundingClientRect().width||0};
+    });
+  })()`);
+  console.log('STEPPER_FAIL_DIAGNOSTIC',JSON.stringify(
+    steppers.filter(x=>x.buttons!==2||x.display==='none'||(x.visible&&x.rect<18))
+  ));
+  assert.ok(steppers.length>20,'enough sliders for comprehensive stepper audit');
+  assert.ok(steppers.every(x=>x.buttons===2&&x.display!=='none'&&(!x.visible||x.rect>=18)),
+    'every swipe-card slider shows both minus and plus buttons');
+  console.log('ALL_MOBILE_STEPPERS_VISIBLE',steppers.length);
+
   const previewTools=await evaluate(`(()=>{
     const stage=document.querySelector('.studio-stage');
     const prime=document.querySelector('[name=primesOnly]');
@@ -295,8 +313,16 @@ try{
     'zooming should only magnify the preview, never modify wallpaper pixels');
   await evaluate('document.querySelector("[data-zoom=out]").click()');
   assert.equal(await evaluate('document.querySelector(".studio-stage").style.getPropertyValue("--mobile-preview-zoom")'),'1');
+  await evaluate('document.querySelector("[data-zoom=out]").click()');
+  assert.equal(await evaluate('document.querySelector(".studio-stage").style.getPropertyValue("--mobile-preview-zoom")'),'0.9');
+  assert.equal(await evaluate('document.getElementById("preview").toDataURL()'),originalImage);
+  for(let i=0;i<4;i++)await evaluate('document.querySelector("[data-zoom=out]").click()');
+  assert.equal(await evaluate('document.querySelector(".studio-stage").style.getPropertyValue("--mobile-preview-zoom")'),'0.5');
+  assert.ok(await evaluate('document.querySelector("[data-zoom=out]").disabled'),
+    'the very first wallpaper can zoom out to 50%');
+  for(let i=0;i<5;i++)await evaluate('document.querySelector("[data-zoom=in]").click()');
   await evaluate('document.querySelector(".studio-stage [data-nudge=right]").click()');
-  assert.ok((await evaluate('document.getElementById("positionStatus").textContent')).includes('X +2%'));
+  assert.ok((await evaluate('document.getElementById("positionStatus").textContent')).includes('X +1%'));
   await evaluate('document.querySelector(".studio-stage [data-nudge=reset]").click()');
 
   // All nonhidden cards must have *no* vertical scroll or clipped controls.
@@ -472,6 +498,20 @@ try{
     return control.left>0&&control.right<innerWidth &&
       control.top>=card.top && control.bottom<=card.bottom;
   })()`);
+  // The displayed buttons must also adjust real recipe values, not merely
+  // be decorative controls alongside the touch slider.
+  const stepperResult=await evaluate(`(()=>{
+    const slider=document.querySelector('[name=shapeFrequency]');
+    const buttons=slider.closest('.stepper').querySelectorAll('.step-button');
+    const before=Number(slider.value);
+    buttons[1].click();
+    const afterPlus=Number(slider.value);
+    buttons[0].click();
+    return {before,afterPlus,afterMinus:Number(slider.value)};
+  })()`);
+  assert.equal(stepperResult.afterPlus,stepperResult.before+1);
+  assert.equal(stepperResult.afterMinus,stepperResult.before);
+  console.log('MOBILE_STEPPER_REAL_INCREMENT_SUCCESS');
   const slider=await evaluate(`(()=>{
     const r=document.querySelector('[name=shapeFrequency]').getBoundingClientRect();
     return {left:r.left,right:r.right,y:Math.round(r.top+r.height/2),
@@ -538,8 +578,11 @@ try{
   await waitFor('document.getElementById("drawOverlay").hidden===false');
   const box=await evaluate(`(()=>{
     const r=document.getElementById('drawOverlay').getBoundingClientRect();
-    return {left:r.left,top:r.top,width:r.width,height:r.height};
+    const frame=document.getElementById('preview').getBoundingClientRect();
+    return {left:r.left,top:r.top,width:r.width,height:r.height,
+      frameLeft:frame.left,frameTop:frame.top,frameWidth:frame.width,frameHeight:frame.height};
   })()`);
+  assert.ok(box.width>box.frameWidth,'drawing plane includes gutters outside the frame');
   await swipe({x:Math.round(box.left+box.width*.24),y:Math.round(box.top+box.height*.19)},
               {x:Math.round(box.left+box.width*.73),y:Math.round(box.top+box.height*.68)});
   await waitFor('document.getElementById("drawApply").disabled===false');
@@ -564,7 +607,7 @@ try{
   await evaluate('document.querySelector("[data-zoom=in]").click()');
   await evaluate('document.getElementById("drawPathToggle").click()');
   const zoomBox=await evaluate(`(()=>{
-    const r=document.getElementById('drawOverlay').getBoundingClientRect();
+    const r=document.getElementById('preview').getBoundingClientRect();
     return {left:r.left,top:r.top,width:r.width,height:r.height};
   })()`);
   await swipe({x:Math.round(zoomBox.left+zoomBox.width*.31),y:Math.round(zoomBox.top+zoomBox.height*.27)},
@@ -689,6 +732,39 @@ try{
   assert.ok(await evaluate('document.querySelector("#controls .randomize-toolbar")!==null'));
   assert.ok(restoredSettings.geometry&&restoredSettings.shape&&restoredSettings.outlineBuffer);
   assert.ok(restoredSettings.lockCount>25,'locks must survive DOM reparenting');
+  // The drawing plane covers the entire stage. Start a real mouse gesture
+  // outside the wallpaper border, enter the image, then regenerate the design.
+  await evaluate('document.getElementById("drawPathToggle").click()');
+  const offFrame=await evaluate(`(()=>{
+    const image=document.getElementById('preview').getBoundingClientRect();
+    const stage=document.querySelector('.studio-stage').getBoundingClientRect();
+    const overlay=document.getElementById('drawOverlay').getBoundingClientRect();
+    return {image:{left:image.left,top:image.top,width:image.width,height:image.height},
+      stage:{left:stage.left,right:stage.right,top:stage.top,bottom:stage.bottom},
+      overlay:{left:overlay.left,right:overlay.right}};
+  })()`);
+  const startX=Math.round(offFrame.image.left-28);
+  const startY=Math.round(offFrame.image.top+offFrame.image.height*.28);
+  const endX=Math.round(offFrame.image.left+offFrame.image.width*.55);
+  const endY=Math.round(offFrame.image.top+offFrame.image.height*.70);
+  assert.ok(startX>offFrame.stage.left+6&&startX<offFrame.image.left);
+  assert.ok(offFrame.overlay.left<=startX&&offFrame.overlay.right>endX);
+  await command('Input.dispatchMouseEvent',{type:'mouseMoved',x:startX,y:startY});
+  await command('Input.dispatchMouseEvent',{type:'mousePressed',x:startX,y:startY,button:'left',clickCount:1});
+  for(let i=1;i<=8;i++){
+    const t=i/8;
+    await command('Input.dispatchMouseEvent',{type:'mouseMoved',
+      x:Math.round(startX+(endX-startX)*t),
+      y:Math.round(startY+(endY-startY)*t),button:'left',buttons:1});
+  }
+  await command('Input.dispatchMouseEvent',{type:'mouseReleased',x:endX,y:endY,button:'left',clickCount:1});
+  await waitFor('document.getElementById("drawApply").disabled===false');
+  await evaluate('document.getElementById("drawApply").click()');
+  await waitFor(`(()=>{
+    const r=JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get('r')));
+    return r.geometry==='drawn'&&r.customPath.length>3&&r.customPath[0][0]<-.05;
+  })()`);
+  console.log('OFF_FRAME_MOUSE_ENTRY_AND_RECIPE_SUCCESS');
   console.log('Browser smoke passed: phone viewport, sheets, gallery, theme and desktop restoration.');
 }finally{
   try{ws?.close()}catch{}

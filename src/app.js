@@ -10,7 +10,7 @@ const gallery = document.getElementById('gallery');
 const notice = document.getElementById('notice');
 const favoriteButton = document.getElementById('favorite');
 const FAVORITES_KEY = 'wallgen:favorites:v1';
-const FIELDS = ['primesOnly','family','composition','repeatCount','repeatSpacing','orientation','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','geometry','turnRadius','construction','motif','lineStyle','pathLength','tonalContrast','brushRoughness','dotSize','dotSpacing','endTaper','shapeFrequency','shapeDepth','palette','material','outline','background','lightingMood','lightDirection','lightStrength','shadowStrength','stripeShadowEnabled','stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection','textureCoverage','textureRotation','textureBlend','textureLayer2Enabled','material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2','textureLayer3Enabled','material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3','chaos','stripeWidth','spread','textureStrength','textureScale','textureDisplacement','individuality','patternHomogeneity','overridePatternHomogeneity','gap','glow'];
+const FIELDS = ['primesOnly','family','composition','repeatCount','repeatSpacing','orientation','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','geometry','turnRadius','hairpinAngle','construction','motif','lineStyle','pathLength','tonalContrast','brushRoughness','dotSize','dotSpacing','endTaper','shapeFrequency','shapeDepth','palette','material','outline','background','lightingMood','lightDirection','lightStrength','shadowStrength','stripeShadowEnabled','stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection','textureCoverage','textureRotation','textureBlend','textureLayer2Enabled','material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2','textureLayer3Enabled','material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3','chaos','stripeWidth','spread','textureStrength','textureScale','textureDisplacement','individuality','patternHomogeneity','overridePatternHomogeneity','gap','glow'];
 let current = normalizeRecipe();
 let currentScene;
 const previewLayers={background:null,ink:null,scene:null,key:null};
@@ -93,9 +93,11 @@ function toControls(recipe) {
  */
 function inactiveSettingKeys(recipe,scene){
   const inactive=new Set();
-  if(['straight','hairpin','drawn'].includes(scene.geometry))inactive.add('shapeFrequency'),inactive.add('shapeDepth');
+  if(['straight','hairpin','drawn'].includes(scene.geometry)&&
+      !(scene.motif==='chevrons'&&recipe.construction==='ribbon'))
+    inactive.add('shapeFrequency'),inactive.add('shapeDepth');
   if(scene.geometry==='drawn')inactive.add('orientation');
-  if(scene.geometry!=='hairpin')inactive.add('turnRadius');
+  if(scene.geometry!=='hairpin')inactive.add('turnRadius'),inactive.add('hairpinAngle');
   if(recipe.composition!=='repeat')inactive.add('repeatCount'),inactive.add('repeatSpacing');
   if(recipe.composition!=='floating')inactive.add('pathLength');
   if(recipe.construction!=='tonal')inactive.add('tonalContrast');
@@ -276,7 +278,7 @@ function updatePositionStatus(){
   const reset=document.querySelector('[data-nudge="reset"]');
   reset.disabled=(x===0&&y===0)||current.lockedSettings.includes('position');
 }
-const NUDGE_STEP=2;
+const NUDGE_STEP=1;
 for(const button of document.querySelectorAll('[data-nudge]')){
   button.addEventListener('click',()=>{
     const direction=button.dataset.nudge;
@@ -390,8 +392,8 @@ for(const slider of form.querySelectorAll('input[type="range"]')){
   const numeric=document.createElement('input');
   numeric.type='number';numeric.className='slider-number';numeric.min=slider.min;numeric.max=slider.max;
   numeric.step=slider.step||'1';numeric.value=slider.value;numeric.dataset.numberFor=slider.name;
-  numeric.setAttribute('aria-label',slider.name==='diagonalRotation'?
-    'Diagonal rotation in degrees':slider.name+' percentage');
+  numeric.setAttribute('aria-label',['diagonalRotation','hairpinAngle'].includes(slider.name)?
+    slider.name+' in degrees':slider.name+' percentage');
   slider.parentNode.insertBefore(row,slider);row.append(minus,slider,plus,numeric);
   numeric.addEventListener('change',()=>{
     const raw=Number(numeric.value);

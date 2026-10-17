@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {finishDrawnPath, normalizeDrawnPath, prepareDrawnPath, safeDrawnBandSpan, pointOnDrawnPath,
+import {finishDrawnPath, fairPath, normalizeDrawnPath, prepareDrawnPath, safeDrawnBandSpan, pointOnDrawnPath,
   MAX_DRAWN_POINTS} from '../src/drawn-path.js';
 import {normalizeRecipe,resolveScene,encodeRecipe,decodeRecipe,respectSettingLocks,
   DESIGN_WIDTH,DESIGN_HEIGHT} from '../src/model.js';
@@ -85,4 +85,28 @@ test('drawn path persists through locks, URLs and seeded scene resolution',()=>{
   assert.equal(changed.geometry,'drawn');
   assert.deepEqual(changed.customPath,saved.customPath);
   assert.equal(resolveScene({geometry:'drawn',customPath:[]}).geometry,'straight');
+});
+
+test('spline fairing strongly attenuates wobble while retaining the swept shape',()=>{
+  const raw=Array.from({length:220},(_,i)=>{
+    const t=i/219;
+    return [.09+.82*t,.15+.66*t+.013*Math.sin(i*2.4)];
+  });
+  const result=finishDrawnPath(raw,'smooth');
+  const rawDeviation=raw.reduce((sum,p)=>sum+Math.abs(p[1]-(.15+.66*(p[0]-.09)/.82)),0)/raw.length;
+  const smoothDeviation=result.reduce((sum,p)=>sum+Math.abs(p[1]-(.15+.66*(p[0]-.09)/.82)),0)/result.length;
+  assert.ok(smoothDeviation<rawDeviation*.65,'finished path should markedly reduce local jitter');
+  assert.ok(Math.abs(result[0][0]-raw[0][0])<.0001&&
+    Math.abs(result.at(-1)[0]-raw.at(-1)[0])<.0001,'endpoints stay anchored');
+});
+test('out-of-frame sketch endpoints survive smoothing and recipe normalization',()=>{
+  const raw=[[-.42,.14],[-.25,.20],[-.07,.36],[.18,.53],[.53,.75],[1.14,.90]];
+  const finished=finishDrawnPath(raw,'smooth');
+  assert.ok(finished.length>3&&finished[0][0]<0&&finished.at(-1)[0]>1);
+  const recipe=normalizeRecipe({geometry:'drawn',customPath:finished,seed:'off-frame'});
+  assert.deepEqual(decodeRecipe(encodeRecipe(recipe)),recipe);
+  const prepared=prepareDrawnPath(recipe.customPath);
+  assert.ok(pointOnDrawnPath(prepared,0).x < -DESIGN_WIDTH/2);
+  assert.ok(pointOnDrawnPath(prepared,1).x > DESIGN_WIDTH/2);
+  assert.deepEqual(finished,normalizeDrawnPath(finished));
 });

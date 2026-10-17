@@ -39,12 +39,19 @@ jobs:
           npm run render -- --seed floating-strokes --set composition=floating --set pathLength=56 --set endTaper=95 --set geometry=wave --set orientation=diagonal --set shapeFrequency=20 --set shapeDepth=25 --set brushRoughness=70 --set outline=none --set palette=electric --set stripeWidth=38 --width 600 --height 1300 --out output/floating-strokes.png
           npm run render -- --seed dry-brush --set geometry=wave --set orientation=diagonal --set construction=ribbon --set endTaper=75 --set brushRoughness=90 --set glow=42 --set palette=electric --set stripeWidth=35 --width 600 --height 1300 --out output/dry-brush.png
           npm run render -- --seed disc-columns --set family=studio --set motif=solid --set geometry=straight --set orientation=vertical --set construction=ribbon --set lineStyle=dotted --set dotSize=88 --set dotSpacing=72 --set outline=none --set stripeWidth=72 --set spread=90 --width 600 --height 1300 --out output/disc-columns.png
+          npm run render -- --seed hairpin-oblique --set geometry=hairpin --set orientation=vertical --set hairpinAngle=110 --set turnRadius=65 --set stripeWidth=45 --set spread=58 --set background=white --width 600 --height 1300 --out output/hairpin-oblique.png
+          npm run render -- --seed chevron-extremes --set family=studio --set geometry=chevron --set motif=solid --set shapeFrequency=14 --set shapeDepth=98 --set stripeWidth=45 --set spread=75 --width 600 --height 1300 --out output/chevron-extremes.png
+          npm run render -- --seed thick-spread --set family=studio --set geometry=straight --set orientation=horizontal --set stripeWidth=100 --set spread=96 --set outline=none --width 600 --height 1300 --out output/thick-spread.png
       - name: Drawn master curve exports identically through the production renderer
         run: |
           cat > output/drawn-recipe.json <<'JSON'
           {"seed":"drawn-smoke","geometry":"drawn","orientation":"horizontal","customPath":[[0.25,0.12],[0.23,0.35],[0.36,0.71],[0.56,0.84],[0.76,0.65],[0.77,0.17]],"construction":"tonal","palette":"electric","spread":44}
           JSON
           npm run render -- --recipe output/drawn-recipe.json --width 600 --height 1300 --out output/drawn-smoke.png
+          cat > output/offframe-recipe.json <<'JSON'
+          {"seed":"drawn-off-frame","geometry":"drawn","orientation":"horizontal","customPath":[[-0.35,0.23],[-0.10,0.30],[0.25,0.46],[0.69,0.60],[1.32,0.77]],"palette":"pastel","spread":35,"stripeWidth":72}
+          JSON
+          npm run render -- --recipe output/offframe-recipe.json --width 600 --height 1300 --out output/drawn-off-frame.png
           node --input-type=module <<'JS'
           import assert from 'node:assert/strict';
           import {readFile} from 'node:fs/promises';
@@ -62,7 +69,7 @@ jobs:
           import assert from 'node:assert/strict';
           import {readFile} from 'node:fs/promises';
           import {extractPngRecipe} from './src/png-metadata.js';
-          for(const name of ['paper-comet','stardust-tapes','dot-matrix','white-silkscreen','rubber-sines','hairpin-fabric','continuous-loops','bundle-repeat','woven-columns','tonal-bands','dry-brush','floating-strokes','disc-columns','drawn-smoke']){
+          for(const name of ['paper-comet','stardust-tapes','dot-matrix','white-silkscreen','rubber-sines','hairpin-fabric','continuous-loops','bundle-repeat','woven-columns','tonal-bands','dry-brush','floating-strokes','disc-columns','drawn-smoke','drawn-off-frame','hairpin-oblique','chevron-extremes','thick-spread']){
             const png=await readFile('output/'+name+'.png');
             assert.deepEqual([...png.subarray(0,8)],[137,80,78,71,13,10,26,10]);
             assert.equal(png.readUInt32BE(16),600);
