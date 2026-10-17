@@ -9,6 +9,8 @@ const original=read('styles.css');
 const mobile=read('src/mobile-studio.js');
 const swipe=read('src/mobile-swipes.js');
 const swipeCSS=read('mobile-swipes.css');
+const grouping=read('src/mobile-card-groups.js');
+const groupingCSS=read('mobile-card-groups.css');
 const compactCSS=read('mobile-compact.css');
 const darkLogo=read('assets/roygbiv-logo-dark.svg');
 const creamLogo=read('assets/roygbiv-logo-cream.svg');
@@ -116,4 +118,30 @@ test('mobile edit reclaims the header and compact action dock, leaving only an e
   assert.match(compactCSS,/\.prime-toggle input/);
   assert.match(compactCSS,/\.settings-tab/);
   assert.match(html,/mobile-compact\.css\?v=/);
+});
+
+test('Prime-only checkbox changes mode without displaying an explanatory toast',()=>{
+  const app=read('src/app.js');
+  assert.doesNotMatch(app,/primeModeHint'\)\.hidden=!current\.primesOnly/);
+  assert.match(html,/id="primeModeHint"[^>]*hidden/);
+  assert.match(html,/name="primesOnly"/);
+});
+test('related mobile settings share snap cards and restore desktop source structure',()=>{
+  for(const label of ['Geometry','Stripe pattern','Stripe shadows','Outlines',
+    'Canvas lighting','Texture layer 1','Texture layer 2','Texture layer 3','Individuality']){
+    assert.ok(grouping.includes("name:'"+label+"'"),'missing card '+label);
+  }
+  for(const control of ['shapeFrequency','shapeDepth','patternHomogeneity',
+    'stripeShadowEnabled','stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection',
+    'outline','gap','lightStrength','shadowStrength','lightingMood','lightDirection',
+    'individuality','overridePatternHomogeneity']){
+    assert.ok(grouping.includes("'"+control+"'"),'ungrouped dependent control '+control);
+  }
+  assert.match(grouping,/marker\.replaceWith\(node\)/);
+  assert.match(grouping,/mobileCardsQuery\.addEventListener\('change',syncGroups\)/);
+  assert.match(groupingCSS,/\.mobile-setting-cluster/);
+  assert.match(groupingCSS,/overflow-x:hidden;overflow-y:auto/);
+  assert.match(groupingCSS,/:has\(> \.texture-layer-panel\[hidden\]\)/);
+  assert.match(html,/mobile-card-groups\.css\?v=/);
+  assert.match(html,/src\/mobile-card-groups\.js\?v=/);
 });
