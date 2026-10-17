@@ -22,7 +22,7 @@ export const LOCKABLE_SETTINGS = ['seed','family','orientation','geometry','moti
   'material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3',
   'textureDisplacement','patternHomogeneity','chaos','stripeWidth','spread','shapeFrequency','shapeDepth','motifSize','motifFrequency','lineStyle','individuality',
   'overridePatternHomogeneity','gap','outlineBuffer','glow','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','position',
-  'composition','repeatCount','repeatSpacing','construction','turnRadius','hairpinAngle','geometrySafety','pathLength','endTaper','tonalContrast','brushRoughness','dotSize','dotSpacing'];
+  'composition','repeatCount','repeatSpacing','construction','turnRadius','hairpinAngle','geometrySafety','stepCount','chevronSharpness','loopAspect','pathLength','endTaper','tonalContrast','brushRoughness','dotSize','dotSpacing'];
 export const PALETTES = ['classic', 'electric', 'pastel', 'jewel', 'muted', 'sunset', 'candy', 'arctic', 'earth', 'twilight', 'citrus'];
 export const TEXTURE_COVERAGES = ['both', 'stripes', 'background'];
 export const OUTLINES = ['none', 'hairline', 'white', 'double', 'broken', 'one-side', 'black', 'black-hairline', 'black-double', 'black-broken', 'black-one-side'];
@@ -93,6 +93,9 @@ export function normalizeRecipe(input = {}) {
     turnRadius: finiteRange(input.turnRadius, 50, 0, 100),
     geometrySafety: !(input.geometrySafety===false || input.geometrySafety==='false'),
     hairpinAngle: finiteRange(input.hairpinAngle, 180, 60, 180),
+    stepCount: Math.round(finiteRange(input.stepCount, 4, 1, 16)),
+    chevronSharpness: finiteRange(input.chevronSharpness, 50, 0, 100),
+    loopAspect: finiteRange(input.loopAspect, 50, 0, 100),
     endTaper: finiteRange(input.endTaper, 0, 0, 100),
     pathLength: finiteRange(input.pathLength, 65, 0, 100),
     tonalContrast: finiteRange(input.tonalContrast, 50, 0, 100),
@@ -271,13 +274,18 @@ export function resolveScene(recipeInput) {
       dotPitch:Math.max(18,referenceAvg*(1.3+recipe.dotSpacing/100*1.15)),
       dotRadius:Math.max(2,referenceAvg*(.23+.45*recipe.dotSize/100)*widthFactor*.95),
       drawnPath,
+      stepCount:recipe.stepCount,
+      chevronSharpness:recipe.chevronSharpness,
+      loopAspect:recipe.loopAspect,
       turnRadius:recipe.geometrySafety?
         Math.max(90+recipe.turnRadius*1.35,spread*.62):30+recipe.turnRadius*3.6,
       hairpinAngle:recipe.hairpinAngle,
-      loopPeriod:27+((100-recipe.shapeFrequency)/100)*66,
+      loopPeriod:200*Math.pow(8/200,recipe.shapeFrequency/100),
+      // The safe limit is normalized to the available lane width so the
+      // entire slider, rather than its first few percent, remains useful.
       loopAmplitude:recipe.geometrySafety?
-        Math.min(2+70*recipe.shapeDepth/100,Math.max(2,avg*.66)):
-        2+110*recipe.shapeDepth/100,
+        (.15+(Math.max(.6,avg*.66)-.15)*Math.pow(recipe.shapeDepth/100,1.25)):
+        .15+110*recipe.shapeDepth/100,
       phase, period, displacement,
       sharedGeometry:geometry, sharedPhase:commonPhase, sharedPeriod:commonPeriod,
       sharedDisplacement:commonDisplacement, parallelMix:individuality,
@@ -387,7 +395,7 @@ export function randomizeAllRecipe({primesOnly=false}={}) {
     shapeFrequency:percent(),shapeDepth:percent(),motifSize:percent(),motifFrequency:percent(),lineStyle:any(LINE_STYLES),
     composition:any(COMPOSITIONS),construction:any(CONSTRUCTIONS),
     repeatCount:2+Math.floor(r()*5),repeatSpacing:percent(),
-    turnRadius:percent(),pathLength:percent(),endTaper:percent(),
+    turnRadius:percent(),stepCount:1+Math.floor(r()*16),chevronSharpness:percent(),loopAspect:percent(),pathLength:percent(),endTaper:percent(),
     tonalContrast:percent(),brushRoughness:percent(),dotSize:percent(),dotSpacing:percent(),
     textureStrength:percent(), textureScale:percent(), textureDisplacement:percent(), individuality:percent(),
     patternHomogeneity:percent(), overridePatternHomogeneity:r()>.5,
