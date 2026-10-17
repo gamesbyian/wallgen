@@ -7,7 +7,7 @@ export const HUES = [0, 29, 52, 136, 212, 244, 278];
 export const NAMES = ['Red', 'Orange', 'Yellow', 'Green', 'Blue', 'Indigo', 'Violet'];
 export const FAMILIES = ['studio', 'currents', 'fracture', 'confetti', 'deco', 'tapestry', 'signal', 'contour'];
 export const GEOMETRIES = SHAPES;
-export const COMPOSITIONS = ['single', 'repeat'];
+export const COMPOSITIONS = ['single', 'repeat', 'floating'];
 export const CONSTRUCTIONS = ['ribbon', 'stroke', 'tonal', 'woven'];
 export const LINE_STYLES = ['continuous', 'dotted', 'dashed'];
 export const MOTIFS = ['solid', 'dots', 'stars', 'dashes', 'diamonds', 'chevrons', 'hatch', 'checker'];
@@ -21,7 +21,7 @@ export const LOCKABLE_SETTINGS = ['seed','family','orientation','geometry','moti
   'textureLayer3Enabled','material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3',
   'textureDisplacement','patternHomogeneity','chaos','stripeWidth','spread','shapeFrequency','shapeDepth','lineStyle','individuality',
   'overridePatternHomogeneity','gap','glow','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','position',
-  'composition','repeatCount','repeatSpacing','construction','turnRadius','endTaper','tonalContrast','brushRoughness','dotSize','dotSpacing'];
+  'composition','repeatCount','repeatSpacing','construction','turnRadius','pathLength','endTaper','tonalContrast','brushRoughness','dotSize','dotSpacing'];
 export const PALETTES = ['classic', 'electric', 'pastel', 'jewel', 'muted'];
 export const TEXTURE_COVERAGES = ['both', 'stripes', 'background'];
 export const OUTLINES = ['none', 'hairline', 'white', 'double', 'broken', 'one-side', 'black', 'black-hairline', 'black-double', 'black-broken', 'black-one-side'];
@@ -90,6 +90,7 @@ export function normalizeRecipe(input = {}) {
     repeatSpacing: finiteRange(input.repeatSpacing, 50, 0, 100),
     turnRadius: finiteRange(input.turnRadius, 50, 0, 100),
     endTaper: finiteRange(input.endTaper, 0, 0, 100),
+    pathLength: finiteRange(input.pathLength, 65, 0, 100),
     tonalContrast: finiteRange(input.tonalContrast, 50, 0, 100),
     brushRoughness: finiteRange(input.brushRoughness, 0, 0, 100),
     dotSize: finiteRange(input.dotSize, 50, 0, 100),
@@ -340,7 +341,7 @@ export function randomizeAllRecipe({primesOnly=false}={}) {
     shapeFrequency:percent(),shapeDepth:percent(),lineStyle:any(LINE_STYLES),
     composition:any(COMPOSITIONS),construction:any(CONSTRUCTIONS),
     repeatCount:2+Math.floor(r()*5),repeatSpacing:percent(),
-    turnRadius:percent(),endTaper:percent(),
+    turnRadius:percent(),pathLength:percent(),endTaper:percent(),
     tonalContrast:percent(),brushRoughness:percent(),dotSize:percent(),dotSpacing:percent(),
     textureStrength:percent(), textureScale:percent(), textureDisplacement:percent(), individuality:percent(),
     patternHomogeneity:percent(), overridePatternHomogeneity:r()>.5,
