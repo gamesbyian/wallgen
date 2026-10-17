@@ -5,6 +5,7 @@ import { installDrawTool } from './draw-path-ui.js';
 import {mountEditor,selectEditorTool} from './editor-layout.js';
 import {randomizeScope} from './scoped-random.js';
 import {STYLE_PRESETS} from './editor-schema.js';
+import {installExplorationHistory} from './exploration-history.js';
 
 const form = document.getElementById('controls');
 const preview = document.getElementById('preview');
@@ -286,6 +287,10 @@ const drawTool=installDrawTool({
     changeRecipe(next);
     showNotice('Drawn path applied. Undo restores the previous wallpaper.');
   },
+});
+const explorationHistory=installExplorationHistory({
+  form,preview,getRecipe:()=>current,
+  restore:recipe=>changeRecipe(recipe,{bypassLocks:true}),
 });
 function updatePositionStatus(){
   const label=document.getElementById('positionStatus');
@@ -603,7 +608,9 @@ form.addEventListener('click',event=>{
     control:key=>form.elements.namedItem(key),
   });
   if(!modified.length){showNotice('No unlocked, applicable settings changed.');return;}
+  explorationHistory.remember(current,'Before '+name);
   changeRecipe(recipe);
+  explorationHistory.remember(current,(mode==='vary'?'Vary ':'Reroll ')+name);
   showNotice((mode==='vary'?'Varied ':'Rerolled ')+name.replace(/-/g,' ')+' ('+modified.length+' settings).');
 });
 form.addEventListener('change',event=>{
@@ -638,9 +645,15 @@ form.addEventListener('change',()=>{clearTimeout(rangeTimeout);updateControlsFro
 form.addEventListener('submit',event=>event.preventDefault());
 seedInput.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();render(fromControls());}});
 document.getElementById('applySeed').addEventListener('click',()=>render(fromControls()));
-document.getElementById('randomize').addEventListener('click',()=>changeRecipe({...fromControls(),seed:newSeed()}));
+document.getElementById('randomize').addEventListener('click',()=>{
+  explorationHistory.remember(current,'Before seed');
+  changeRecipe({...fromControls(),seed:newSeed()});
+  explorationHistory.remember(current,'New seed');
+});
 document.getElementById('randomizeAll').addEventListener('click',()=>{
+  explorationHistory.remember(current,'Before Random');
   changeRecipe({...randomizeAllRecipe({primesOnly:current.primesOnly}),viewZoom:current.viewZoom});
+  explorationHistory.remember(current,'Random');
 });
 for(const n of [2,3]){
   document.getElementById('addTextureLayer'+n).addEventListener('click',()=>{
