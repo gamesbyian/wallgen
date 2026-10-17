@@ -58,7 +58,7 @@ test('Light & Shadow is part of Colour, uses existing locks, and is explained cl
   }
   assert.match(colour,/Light &amp; shadow/);
   assert.match(css,/\.lighting-subsection/);
-  assert.match(readme,/Light & shadow \(Colour tab\)/);
+  assert.match(readme,/Ambient light & shade \(Colour tab\)/);
 });
 
 test('public domain licence and documentation acknowledge ChatGPT and unrestricted use',()=>{
