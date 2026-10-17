@@ -233,7 +233,7 @@ export function resolveScene(recipeInput) {
       dotSize:recipe.dotSize,dotSpacing:recipe.dotSpacing,
       turnRadius:90+recipe.turnRadius*1.35,
       loopPeriod:27+((100-recipe.shapeFrequency)/100)*66,
-      loopAmplitude:(4+29*recipe.shapeDepth/100),
+      loopAmplitude:Math.min(4+29*recipe.shapeDepth/100,referenceAvg*.33),
       phase, period, displacement,
       sharedGeometry:geometry, sharedPhase:commonPhase, sharedPeriod:commonPeriod,
       sharedDisplacement:commonDisplacement, parallelMix:individuality,
