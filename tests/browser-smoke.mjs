@@ -138,6 +138,13 @@ try{
   assert.equal(varied.palette,beforeVary.palette);
   assert.equal(varied.stripeWidth,beforeVary.stripeWidth);
   assert.ok(Math.abs(varied.spread-beforeVary.spread)<=7,'gentle variations stay local');
+  await evaluate('document.getElementById("editorHistoryToggle").click()');
+  const history=await evaluate('(()=>{const p=document.getElementById("editorHistory"),b=p.getBoundingClientRect(),s=document.querySelector(".studio-stage").getBoundingClientRect();return {open:!p.hidden,count:p.querySelectorAll(".editor-history-choice").length,images:p.querySelectorAll("img").length,separate:s.bottom<=b.top+4}})()');
+  assert.ok(history.open&&history.count>=3&&history.images===history.count&&history.separate,
+    'recent variation thumbnails must be usable without covering the artwork');
+  await evaluate('document.querySelector("#editorHistory .editor-history-choice").click()');
+  assert.ok(await evaluate('document.getElementById("editorHistory").hidden'),
+    'choosing an earlier variation closes history and restores the tool');
   // A style translates to visible regular settings rather than hidden width.
   await evaluate('(()=>{const f=document.querySelector("[name=family]");f.value="tapestry";f.dispatchEvent(new Event("change",{bubbles:true}))})()');
   const preset=await evaluate('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r")))');
