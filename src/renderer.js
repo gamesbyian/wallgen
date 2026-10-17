@@ -242,6 +242,24 @@ function textureTile(material,seed,size) {
     for(let x=-size*2;x<size*2;x+=gap){ctx.beginPath();ctx.moveTo(x,-size*2);ctx.lineTo(x,size*2);ctx.stroke();}
     ctx.restore();
   };
+  const patches=(count,min,max,alpha=.12)=>{
+    for(let i=0;i<count;i++){
+      const x=rand()*size,y=rand()*size,r=random(min,max);
+      const grad=ctx.createRadialGradient(x,y,0,x,y,r);
+      const white=rand()>.5;
+      grad.addColorStop(0,`rgba(${white?'255,255,255':'0,0,0'},${random(alpha*.25,alpha).toFixed(3)})`);
+      grad.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.fillStyle=grad;ctx.fillRect(x-r,y-r,r*2,r*2);
+    }
+  };
+  const fibres=(count,length=8,alpha=.22)=>{
+    for(let i=0;i<count;i++){
+      const x=rand()*size,y=rand()*size,a=rand()*Math.PI*2,l=random(1,length);
+      ctx.strokeStyle=`rgba(${rand()>.5?'255,255,255':'0,0,0'},${random(alpha*.22,alpha).toFixed(3)})`;
+      ctx.lineWidth=random(.25,1);
+      ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+Math.cos(a)*l,y+Math.sin(a)*l);ctx.stroke();
+    }
+  };
   switch(material){
     case 'grain': specks(size*9,.25,1.7,.43);break;
     case 'watercolor':
@@ -298,6 +316,51 @@ function textureTile(material,seed,size) {
     case 'corrugated':
       lines(15,'rgba(0,0,0,.33)',5.5);lines(15,'rgba(255,255,255,.18)',2.5);
       specks(size*3,.3,1.2,.16);break;
+    case 'concrete':
+      patches(33,size*.06,size*.23,.18);specks(size*11,.2,1.6,.25);
+      fibres(Math.floor(size*.35),14,.09);break;
+    case 'stucco':
+      specks(size*15,.5,2.4,.36);patches(14,size*.04,size*.13,.13);break;
+    case 'stone':
+      patches(41,size*.08,size*.28,.22);specks(size*4,.3,1.5,.13);
+      ctx.lineWidth=.8;
+      for(let i=0;i<Math.floor(size*.13);i++){
+        const x=rand()*size,y=rand()*size;
+        ctx.strokeStyle=`rgba(0,0,0,${random(.06,.19).toFixed(3)})`;
+        ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+random(-16,16),y+random(-20,20));ctx.stroke();
+      }break;
+    case 'drywall':
+      specks(size*5,.1,.9,.15);patches(9,size*.03,size*.15,.07);
+      lines(23,'rgba(255,255,255,.05)',.65,Math.PI/4);break;
+    case 'adobe':
+      patches(38,size*.07,size*.24,.17);specks(size*8,.4,2.5,.27);
+      fibres(Math.floor(size*.75),11,.20);break;
+    case 'wood-grain':
+      ctx.save();ctx.lineWidth=1.4;
+      for(let x=0;x<size;x+=random(6,13)){
+        const phase=rand()*TAU;
+        ctx.strokeStyle=`rgba(${rand()>.55?'255,255,255':'0,0,0'},${random(.08,.24).toFixed(3)})`;
+        ctx.beginPath();
+        for(let y=0;y<=size;y+=3){
+          const xx=x+Math.sin(y/23+phase)*random(1.1,3.5);
+          if(y===0)ctx.moveTo(xx,y);else ctx.lineTo(xx,y);
+        }
+        ctx.stroke();
+      }ctx.restore();patches(8,size*.05,size*.18,.08);break;
+    case 'corduroy':
+      lines(9,'rgba(0,0,0,.33)',3.3);
+      lines(9,'rgba(255,255,255,.23)',1.8);
+      fibres(size*2,4,.12);break;
+    case 'vinyl-sheet':
+      patches(14,size*.07,size*.2,.10);specks(size*2,.1,.6,.09);
+      lines(35,'rgba(255,255,255,.07)',1.0,Math.PI/8);break;
+    case 'foil':
+      lines(14,'rgba(255,255,255,.24)',1.5,Math.PI/4);
+      lines(22,'rgba(0,0,0,.23)',1.2,-Math.PI/3);
+      patches(38,size*.02,size*.14,.17);break;
+    case 'glossy-paper':
+      patches(12,size*.08,size*.21,.07);
+      lines(39,'rgba(255,255,255,.16)',1.2,Math.PI/6);break;
   }
   return canvas;
 }
@@ -344,29 +407,50 @@ export function drawWallpaper(canvas, recipe) {
     g.fillStyle=stripe.color;g.strokeStyle=stripe.color;
     fillMotif(g,stripe,scene.extent,scene);
   }
-  let tile;
-  if(scene.material!=='none' && scene.textureStrength>0) {
-    const tileSize=Math.max(32,Math.round(110*(.45+scene.textureScale/100*1.75)));
-    tile=textureTile(scene.material,scene.seed,tileSize);
-    if(scene.textureCoverage!=='background'){
-      g.save();g.globalCompositeOperation='source-atop';
-      g.globalAlpha=scene.textureStrength/100;
-      g.fillStyle=g.createPattern(tile,'repeat');
-      g.fillRect(-scene.extent,-scene.extent,scene.extent*2,scene.extent*2);
-      g.restore();
-    }
+  // One scratch buffer is reused for every texture layer and surface.
+  // The stripe pass masks against the current ink alpha, so multiply/screen/etc
+  // affect the stripe colours without spraying texture into negative space.
+  const layers=scene.textureLayers;
+  let scratch,s;
+  const active=layers.length>0;
+  if(active){
+    scratch=document.createElement('canvas');scratch.width=canvas.width;scratch.height=canvas.height;
+    s=scratch.getContext('2d');
+    if(!s) throw new Error('Texture composite surface unavailable');
   }
+  const textured=(layer,tile)=>{
+    s.setTransform(1,0,0,1,0,0);
+    s.globalCompositeOperation='source-over';s.globalAlpha=1;
+    s.clearRect(0,0,canvas.width,canvas.height);
+    s.setTransform(canvas.width/DESIGN_WIDTH,0,0,canvas.height/DESIGN_HEIGHT,0,0);
+    s.translate(DESIGN_WIDTH/2,DESIGN_HEIGHT/2);
+    s.rotate(layer.rotation*Math.PI/180);
+    s.globalAlpha=layer.strength/100;
+    s.fillStyle=s.createPattern(tile,'repeat');
+    const reach=Math.hypot(DESIGN_WIDTH,DESIGN_HEIGHT)*1.5;
+    s.fillRect(-reach,-reach,2*reach,2*reach);
+    s.setTransform(1,0,0,1,0,0);s.globalAlpha=1;
+  };
+  const blend=(layer)=>layer.blend==='normal'?'source-over':layer.blend;
+  const tiles=layers.map(layer=>{
+    const tileSize=Math.max(32,Math.round(110*(.45+layer.scale/100*1.75)));
+    return textureTile(layer.material,layer.seed,tileSize);
+  });
   ctx.fillStyle=scene.background==='white'?'#fff':'#000';
   ctx.fillRect(0,0,canvas.width,canvas.height);
-  if(tile && scene.textureCoverage!=='stripes'){
-    // Background has its own surface, independent of the transparent stripe ink.
-    // Draw in logical coordinates so preview and PNG have the same texture scale.
-    ctx.save();
-    ctx.setTransform(canvas.width/DESIGN_WIDTH,0,0,canvas.height/DESIGN_HEIGHT,0,0);
-    ctx.globalAlpha=scene.textureStrength/100;
-    ctx.fillStyle=ctx.createPattern(tile,'repeat');
-    ctx.fillRect(0,0,DESIGN_WIDTH,DESIGN_HEIGHT);
-    ctx.restore();
+  for(let i=0;i<layers.length;i++){
+    const layer=layers[i];
+    if(layer.coverage==='stripes')continue;
+    textured(layer,tiles[i]);
+    ctx.save();ctx.globalCompositeOperation=blend(layer);ctx.drawImage(scratch,0,0);ctx.restore();
+  }
+  for(let i=0;i<layers.length;i++){
+    const layer=layers[i];
+    if(layer.coverage==='background')continue;
+    textured(layer,tiles[i]);
+    s.save();s.globalCompositeOperation='destination-in';s.drawImage(ink,0,0);s.restore();
+    g.save();g.setTransform(1,0,0,1,0,0);
+    g.globalCompositeOperation=blend(layer);g.drawImage(scratch,0,0);g.restore();
   }
   ctx.drawImage(ink,0,0);
   return scene;
