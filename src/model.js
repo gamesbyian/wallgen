@@ -9,7 +9,7 @@ export const GEOMETRIES = ['straight', 'wave', 'zigzag', 'jagged', 'stepped', 'a
 export const MOTIFS = ['solid', 'dots', 'stars', 'dashes', 'diamonds', 'chevrons', 'hatch', 'checker'];
 export const MATERIALS = ['none', 'grain', 'watercolor', 'construction', 'handmade', 'linen', 'canvas', 'denim', 'knit', 'felt', 'corduroy', 'corrugated', 'concrete', 'stucco', 'stone', 'drywall', 'wood-grain', 'vinyl-sheet', 'foil', 'glossy-paper', 'adobe'];
 export const BLEND_MODES = ['normal', 'multiply', 'screen', 'overlay', 'soft-light', 'difference'];
-export const LOCKABLE_SETTINGS = ['seed','family','orientation','geometry','motif','palette','outline','background',
+export const LOCKABLE_SETTINGS = ['primesOnly','seed','family','orientation','geometry','motif','palette','outline','background',
   'material','textureCoverage','textureStrength','textureScale','textureRotation','textureBlend',
   'textureLayer2Enabled','material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2',
   'textureLayer3Enabled','material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3',
@@ -61,6 +61,7 @@ export function normalizeRecipe(input = {}) {
   return {
     version: 1,
     seed,
+    primesOnly: input.primesOnly === true || input.primesOnly === 'true',
     lockedSettings: LOCKABLE_SETTINGS.filter(key=>Array.isArray(input.lockedSettings) && input.lockedSettings.includes(key)),
     lockedResolved: Object.fromEntries(Object.entries(AUTO_CHOICES)
       .filter(([key, choices])=>Array.isArray(input.lockedSettings) &&
@@ -243,20 +244,31 @@ export function newSeed() {
   return Array.from(data, n => n.toString(36)).join('-');
 }
 
-/** Independently randomize every control, unlike New variation which preserves locks. */
-export function randomizeAllRecipe() {
+/** Prime-valued random choices apply to numeric percentages and layer angles.
+ * A locked non-prime value remains untouched: the lock always takes precedence.
+ */
+export const PRIME_PERCENTAGES = Object.freeze(Array.from({length:101},(_,i)=>i).filter(isPrime));
+export const PRIME_ROTATIONS = Object.freeze(Array.from({length:360},(_,i)=>i).filter(isPrime));
+export function isPrime(n) {
+  if(!Number.isInteger(n)||n<2)return false;
+  for(let d=2;d*d<=n;d++)if(n%d===0)return false;
+  return true;
+}
+/** Independently randomize every unlocked control; primeOnly restricts numeric draws. */
+export function randomizeAllRecipe({primesOnly=false}={}) {
   const seed=newSeed();
   const r=rng(seed+':randomize-all');
   const any=choices=>pick(r,choices);
-  const percent=()=>Math.floor(r()*101);
+  const percent=()=>primesOnly?any(PRIME_PERCENTAGES):Math.floor(r()*101);
+  const degrees=()=>primesOnly?any(PRIME_ROTATIONS):Math.floor(r()*360);
   return normalizeRecipe({
-    seed, family:any(FAMILIES), orientation:any(['vertical','horizontal','diagonal']),
+    seed, primesOnly, family:any(FAMILIES), orientation:any(['vertical','horizontal','diagonal']),
     geometry:any(GEOMETRIES), motif:any(MOTIFS), palette:any(PALETTES),
-    material:any(MATERIALS), textureCoverage:any(TEXTURE_COVERAGES), textureRotation:Math.floor(r()*360), textureBlend:any(BLEND_MODES),
+    material:any(MATERIALS), textureCoverage:any(TEXTURE_COVERAGES), textureRotation:degrees(), textureBlend:any(BLEND_MODES),
     textureLayer2Enabled:r()>.45, material2:any(MATERIALS), textureStrength2:percent(), textureScale2:percent(),
-    textureRotation2:Math.floor(r()*360), textureCoverage2:any(TEXTURE_COVERAGES), textureBlend2:any(BLEND_MODES),
+    textureRotation2:degrees(), textureCoverage2:any(TEXTURE_COVERAGES), textureBlend2:any(BLEND_MODES),
     textureLayer3Enabled:r()>.65, material3:any(MATERIALS), textureStrength3:percent(), textureScale3:percent(),
-    textureRotation3:Math.floor(r()*360), textureCoverage3:any(TEXTURE_COVERAGES), textureBlend3:any(BLEND_MODES),
+    textureRotation3:degrees(), textureCoverage3:any(TEXTURE_COVERAGES), textureBlend3:any(BLEND_MODES),
     outline:any(OUTLINES), background:any(['black','white']),
     chaos:percent(), stripeWidth:percent(), spread:percent(),
     textureStrength:percent(), textureScale:percent(), textureDisplacement:percent(), individuality:percent(),
