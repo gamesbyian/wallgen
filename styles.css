@@ -481,7 +481,7 @@
 }
 .settings-panel .lockable-setting > .setting-lock{
   position:static!important;top:auto!important;right:auto!important;
-  grid-column:2;grid-row:1;align-self:start;justify-self:end;
+  grid-column:2;grid-row:1;align-self:center;justify-self:end;
   width:28px;height:28px;min-width:28px;margin:0;z-index:auto;
 }
 .settings-panel .lockable-setting .field>span:first-child{padding-right:0}
