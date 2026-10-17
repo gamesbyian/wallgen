@@ -128,3 +128,14 @@ test('coherent U-turn keeps inner and outer nested bends inside frame',()=>{
     assert.ok(radius-pack/2>0,`inner bend at ${spread}/${turnRadius}`);
   }
 });
+
+test('safe individuality responds continuously without high-value stripe-type swaps',()=>{
+  const base={seed:'seven-parallel',geometry:'wave',shapeDepth:95,chaos:100};
+  const levels=[0,20,40,60,80,100].map(individuality=>
+    resolveScene({...base,individuality,geometrySafety:true}));
+  const mixture=levels.map(s=>s.stripes[3].parallelMix);
+  assert.ok(mixture.every((v,i)=>!i||v>mixture[i-1]),JSON.stringify(mixture));
+  assert.ok(levels.every(s=>s.stripes.every(stripe=>stripe.geometry==='wave')));
+  const free=resolveScene({...base,individuality:100,geometrySafety:false});
+  assert.ok(free.stripes[3].parallelMix>levels.at(-1).stripes[3].parallelMix);
+});
