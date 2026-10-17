@@ -237,8 +237,9 @@ html[data-theme="cream"] footer{color:#8c8191;border-color:#e8ddce}
     transform:translateY(110%);
     transition:transform .18s ease;
   }
-  body.mobile-edit-open .sidebar{
-    transform:translateY(0);
+  body.mobile-studio.mobile-edit-open .sidebar{
+    transform:translateY(0)!important;
+    pointer-events:auto;
   }
   body.mobile-studio .mobile-sheet-backdrop,
   body.mobile-studio .mobile-sheet-backdrop:not([hidden]){
