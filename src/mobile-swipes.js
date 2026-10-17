@@ -13,10 +13,14 @@ function activePanel(){return panels[activeIndex()];}
 function activeSlides(panel){
   // Ignore nested labels inside lock cards and controls in hidden texture layers.
   const candidates=panel.querySelectorAll(
-    '.lockable-setting, .field, .texture-rotation-field, .homogeneity-override, '+
-    '.layer-add-lock, .texture-layer-panel-head, .stripe-shadow-switch, .add-texture-layer'
+    '.mobile-setting-cluster, .lockable-setting, .field, .texture-rotation-field, '+
+    '.homogeneity-override, .layer-add-lock, .texture-layer-panel-head, '+
+    '.stripe-shadow-switch, .add-texture-layer'
   );
   return [...candidates].filter(el=>{
+    // A composite setting is one snap destination, not one destination for
+    // every nested slider/checkbox inside it.
+    if(el.closest('.mobile-setting-cluster') && !el.classList.contains('mobile-setting-cluster'))return false;
     if(el.closest('.lockable-setting')!==null&&el.closest('.lockable-setting')!==el)return false;
     if(el.closest('.layer-add-lock')!==null&&el.closest('.layer-add-lock')!==el)return false;
     const r=el.getBoundingClientRect();
@@ -120,6 +124,7 @@ for(const tab of tabs){
     activePanel().scrollLeft=0;position();
   }));
 }
+document.addEventListener('mobile-setting-groups-changed',()=>requestAnimationFrame(position));
 const resize=new ResizeObserver(position);
 for(const panel of panels)resize.observe(panel);
 handle.addEventListener('keydown',e=>{
