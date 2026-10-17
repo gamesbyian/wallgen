@@ -245,7 +245,8 @@ try{
   const auditCards=async()=>evaluate(`(()=>{
     const p=document.querySelector('.settings-panel:not([hidden])');
     const cards=[...p.querySelectorAll('.mobile-setting-cluster:not([hidden])')];
-    return cards.map(card=>({
+    return cards.map(card=>({panelHeight:p.clientHeight,formHeight:document.getElementById('controls').clientHeight,
+      panelStyle:getComputedStyle(p).flex,
       name:card.dataset.group,
       clientHeight:card.clientHeight,scrollHeight:card.scrollHeight,
       overflow:getComputedStyle(card).overflowY,
