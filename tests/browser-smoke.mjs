@@ -440,6 +440,13 @@ try{
   await waitFor(`document.getElementById('tab-colour').getAttribute('aria-selected')==='true'`);
   // A real finger drag should adjust a slider, not scroll to another card.
   await evaluate('document.getElementById("tab-design").click()');
+  // Randomize may select a straight or returning path, which legitimately
+  // disables shape frequency; select a geometry where this thumb is active.
+  await evaluate(`(()=>{
+    const geometry=document.querySelector('[name=geometry]');
+    geometry.value='wave';geometry.dispatchEvent(new Event('change',{bubbles:true}));
+  })()`);
+  await waitFor(`document.querySelector('[name=shapeFrequency]').disabled===false`);
   // Start this touch check from a middle track position, even if the earlier
   // Prime-mode randomization happened to choose a value near 0 or 100.
   await evaluate(`(()=>{
