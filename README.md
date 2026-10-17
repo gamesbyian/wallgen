@@ -39,49 +39,55 @@ URL, favourite, seed, or PNG. To restore the old interface colours, select
 **Original Dark**. The new `studio-themes.css` supplies light tokens and the
 mobile layout on top of the intact original dark stylesheet.
 
-**Swipe-first live editing:** the Edit tray stays below the visible, continuously
-updated wallpaper. A small pull-down grabber and four **plain text tabs with
-an underline under the active category** sit above the swipeable settings.
-**Swipe left/right** across the fixed-height cards to reach the next control
-(including through Colour and Texture); the phone uses explicit one-card
-gestures instead of relying on browser-native horizontal panning through
-nested selects and checkboxes. **Swipe horizontally across the tab bar** to
-change the active category. Swiping
-outward at the beginning or end of a card rail also moves to the adjacent
-category. A small counter shows your position within each category. All
-existing controls, optional texture layers, shadows, and numeric entries
-remain the original live form elements; there are no proxy sliders or lost
-settings. Related options now travel together on a single card: Geometry with
-frequency/depth, Stripe pattern with homogeneity, Shadows with their toggle,
-strength/softness/direction, Outlines with buffer, Canvas lighting with mood,
-direction/intensity/shade, and Individuality with the pattern override
-checkbox. Every texture layer now uses two small cards: **Material** for its
-material, coverage and blend mode, and **Finish** for strength, scale and
-rotation. All active controls fit in their card at once: **no vertical
-scrolling anywhere in the settings tray**, even when shadows or additional
-texture layers are enabled. On larger viewports the original form order and
-numeric steppers are restored without changing values or lock states.
-**Primes Only** now simply toggles its selected state without displaying an
-explanatory toast. **Swipe down** on a noninteractive part of the tray or grabber to
-dismiss it; tapping the picture or the Edit dock button also closes it. There
-is no separate Done or Larger preview button, and no vertical scrolling
-through the editor itself. The canvas always has its own unobstructed space.
-**Expanded-preview editing:** when Edit opens, the header slides out above
-the viewport and the action dock recedes to the right, leaving only a small
-left-pointing expand arrow. The horizontal setting cards move into that same
-bottom space, instead of sitting above the dock. **Randomize** and **Primes
-Only** move beside the preview on the left, leaving room for the plain
-underlined category tabs and cards below. A vertical rail to the **right** of
-the preview reuses the five original nudge buttons and adds **Zoom + / Zoom −**
-(with a visible percent indicator). Nudge shifts the artwork in the recipe;
-zoom changes the live rendering camera and becomes part of the current
-design recipe. The full-resolution PNG saves **exactly the composition visible
-inside the wallpaper frame**, rather than the original 100% crop. The regular
-action dock is also shortened when the editor is closed. Pressing the expand
-arrow restores the full toolbar and header; downward swipe and tapping the
-picture still dismiss Edit. On a 412 × 915 viewport the preview should retain
-over 640 CSS pixels of height even while actively editing. All features remain
-accessible, unchanged in both Cream Studio and Original Dark.
+**Exploration-first editor:** The full wallpaper remains visible in its own
+reserved space above the editing tray, even while adjusting settings. Opening
+Edit removes the header and dock, then proportionally reduces the preview's
+screen size without changing the artwork's saved zoom or crop. No editor,
+popover or history view covers a stripe. There is **no vertical scrolling** in
+the editor.
+
+The old Design/Colour/Texture/Refine mixture has been replaced by six
+unambiguous creative categories: **Layout, Path, Stripes, Colour, Material and
+Effects**. Each category contains named tools; tap a category and its tool for
+direct access. A sideways swipe can advance to the next *named* tool, but
+swiping blindly through a long stack is no longer required. The same real
+form controls, numeric steppers, locks and recipe fields serve desktop and
+phone. Inactive controls stay disabled and show zero.
+
+**Granular generation:** the large Random button still generates a completely
+new wallpaper, respecting locks. Within Edit, ✳ next to a property rerolls
+*only that property*, ✳ Tool changes only that named tool's controls, and
+✳ Category changes only the current category's controls. Locks, seed,
+background camera, positions, and all unrelated fields are preserved.
+Select **Reroll** for independent alternatives or **Vary nearby** for smaller
+local adjustments; Gentle, Moderate and Wild control variation strength.
+Scoped operations never implicitly add secondary texture layers. The
+**Starting style** selector now materializes editable default settings, so
+the Visual Family no longer imposes an invisible stripe-width multiplier.
+
+The **Recent variations** control offers a horizontal strip of actual saved
+wallpaper thumbnails, allowing promising alternatives to be recalled without
+destroying Undo history. It occupies the same lower editing region as the
+ordinary tools and therefore never covers the image.
+
+Texture layers remain optional. Each has a **Layer** tool for material,
+coverage and blending, and a **Finish** tool for strength, scale and rotation.
+The same named pattern applies to layers 1, 2 and 3, so all adjustments
+remain accessible without scrolling inside any card.
+
+The six-category metadata in `src/editor-schema.js` supplies the canonical
+tool membership, dependencies and `WIZARD_STEPS` ordering. A future opt-in
+Wizard Mode can reuse the existing control objects and scoped randomization
+without duplicating settings, renderer logic or recipes. No wizard UI is
+forced on ordinary users.
+
+**Preview tools** remain beside the wallpaper: Random, Primes Only, Undo,
+Draw Path, five directional nudges, and Zoom ±. Zoom changes the actual
+render camera and is saved with the wallpaper; opening the settings drawer
+only changes the on-screen available space. The full-resolution PNG still
+renders the exact framed composition. Downward swipe on an empty part of
+the tray or the grabber dismisses Edit; the arrow restores the full dock.
+All stripes stay visible during editing.
 
 Explore and More still occupy reserved space beneath the preview. This works
 in both Cream Studio and Original Dark, without altering saved designs.
@@ -140,7 +146,7 @@ particular metadata fields varies among image-viewing applications.
 
 The renderer uses the same path sampling functions for straight and nonlinear lines, including hairpins and looping paths. Each path yields a tangent and normal so width, taper, outlines and procedural materials can follow bends. Returning hairpins may have two endpoints crossing the same image edge intentionally; loops can fold back over their own earlier path.
 
-The new capabilities are equal members of the existing Design and Refine controls. There is no separate mode for the reference images, no fixed style priority, and no option to add arbitrary extra colours or switch to monochrome. **Exactly seven hues remain in each rainbow.**
+The capabilities are equal members of the corresponding Path, Stripes, Layout, Material and Effects tools. There is no separate mode for the reference images, no fixed style priority, and no option to add arbitrary extra colours or switch to monochrome. **Exactly seven hues remain in each rainbow.**
 
 The headless renderer accepts the same saved recipe options as the studio:
 
