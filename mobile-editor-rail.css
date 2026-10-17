@@ -4,13 +4,6 @@
  */
 @media(max-width:790px){
   body.mobile-studio.mobile-edit-open{--mobile-tray-height:clamp(188px,23dvh,213px)}
-  /* The original form loses its intrinsic height when both quick actions
-     leave it. Anchor its editing rail to the measured tray instead. */
-  body.mobile-studio.mobile-edit-open .sidebar #controls{
-    position:absolute!important;top:11px;left:8px;right:8px;bottom:4px;
-    width:auto!important;height:auto!important;min-height:0!important;
-    display:flex!important;flex-direction:column;overflow:hidden!important;
-  }
   body.mobile-studio .sidebar .randomize-bar{display:none!important}
   body.mobile-studio .sidebar .settings-tabs{
     display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));
