@@ -34,9 +34,9 @@ test('loop height remains responsive while unrestricted can exceed safe separati
 });
 test('arc frequency changes the actual modulation curve',()=>{
   const extent=900;
-  const sample=(period)=>Array.from({length:80},(_,i)=>
-    modulation(-extent+2*extent*i/79,'arc',0,period,40,extent));
-  assert.notDeepEqual(sample(500),sample(100));
+  const sample=frequency=>Array.from({length:80},(_,i)=>
+    modulation(-extent+2*extent*i/79,'arc',0,240,40,extent,{shapeFrequency:frequency}));
+  assert.notDeepEqual(sample(0),sample(100));
   assert.ok(sample(100).every(Number.isFinite));
 });
 test('stroke thickness slider does not saturate at six pixels',()=>{
@@ -138,4 +138,12 @@ test('safe individuality responds continuously without high-value stripe-type sw
   assert.ok(levels.every(s=>s.stripes.every(stripe=>stripe.geometry==='wave')));
   const free=resolveScene({...base,individuality:100,geometrySafety:false});
   assert.ok(free.stripes[3].parallelMix>levels.at(-1).stripes[3].parallelMix);
+});
+
+test('zero shape depth produces perfectly straight centreline displacement',()=>{
+  for(const geometry of ['wave','zigzag','chevron','jagged','stepped','arc','contour']){
+    const scene=resolveScene({seed:'zero-depth',geometry,shapeDepth:0,individuality:0,chaos:80});
+    assert.equal(scene.stripes[3].sharedDisplacement,0,geometry);
+    assert.equal(scene.stripes[3].displacement,0,geometry);
+  }
 });
