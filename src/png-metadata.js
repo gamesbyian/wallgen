@@ -1,3 +1,5 @@
+import { normalizeRecipe, OUTPUT_WIDTH, OUTPUT_HEIGHT } from './model.js';
+
 // PNG ancillary metadata writer. No external dependencies, no canvas rerendering.
 // The original PNG pixels/IDAT remain byte-for-byte unchanged.
 const encoder=new TextEncoder();
@@ -67,10 +69,18 @@ function exifTiff(info){
   dv.setUint32(10+12*tags.length,0,true);
   return out;
 }
-export function embedPngMetadata(input,values={}){
+export const RECIPE_KEYWORD='ROYGBIV Recipe';
+export const RECIPE_FORMAT='roygbiv-recipe-v1';
+export function serializePngRecipe(recipe){
+  return JSON.stringify({format:RECIPE_FORMAT,recipe:normalizeRecipe(recipe),
+    output:{width:OUTPUT_WIDTH,height:OUTPUT_HEIGHT},generator:'R.O.Y.G.B.I.V.'});
+}
+export function embedPngMetadata(input,values={},options={}){
   const bytes=input instanceof Uint8Array?input:new Uint8Array(input);
   const metadata=cleanMetadata(values);
-  if(!Object.keys(metadata).length)return new Uint8Array(bytes);
+  // Every exported PNG must contain a complete machine-readable recipe,
+  // even if the user leaves all optional descriptive metadata empty.
+  if(!Object.keys(metadata).length && options.recipe===undefined)return new Uint8Array(bytes);
   if(bytes.length<20||!PNG_SIGNATURE.every((v,i)=>bytes[i]===v))throw Error('Input is not a PNG');
   let offset=8,insert=0;
   while(offset+12<=bytes.length){
@@ -84,6 +94,7 @@ export function embedPngMetadata(input,values={}){
     keywords:'Keywords',comment:'Comment',software:'Software',dateTime:'Creation Time',
     cameraMake:'Camera Make',cameraModel:'Camera Model'};
   const chunks=Object.entries(metadata).map(([key,value])=>utf8Text(names[key],value));
+  if(options.recipe!==undefined)chunks.push(utf8Text(RECIPE_KEYWORD,serializePngRecipe(options.recipe)));
   const exif=exifTiff(metadata);
   if(exif)chunks.push(chunk('eXIf',exif));
   const total=bytes.length+chunks.reduce((n,c)=>n+c.length,0);
@@ -93,4 +104,38 @@ export function embedPngMetadata(input,values={}){
   for(const part of chunks){result.set(part,cursor);cursor+=part.length;}
   result.set(bytes.subarray(insert),cursor);
   return result;
+}
+
+// Reads a PNG recipe without decoding or altering its potentially huge IDAT.
+// Only our explicit iTXt keyword is accepted; freeform comments are ignored.
+// This can be used on exported images even when optional EXIF was left blank.
+export function extractPngRecipe(input){
+  const bytes=input instanceof Uint8Array?input:new Uint8Array(input);
+  if(bytes.length<20||!PNG_SIGNATURE.every((v,i)=>bytes[i]===v))throw Error('Input is not a PNG');
+  const decoder=new TextDecoder('utf-8',{fatal:true});
+  let offset=8;
+  while(offset+12<=bytes.length){
+    const size=u32(bytes,offset);
+    if(size>bytes.length-offset-12)throw Error('Damaged PNG chunk');
+    const type=String.fromCharCode(...bytes.subarray(offset+4,offset+8));
+    if(type==='iTXt' && size<=65536){
+      const data=bytes.subarray(offset+8,offset+8+size);
+      const end=data.indexOf(0);
+      if(end!==-1 && decoder.decode(data.subarray(0,end))===RECIPE_KEYWORD){
+        if(end+5>data.length||data[end+1]!==0||data[end+2]!==0||
+           data[end+3]!==0||data[end+4]!==0)throw Error('Unsupported recipe metadata encoding');
+        const stored=u32(bytes,offset+8+size);
+        if(stored!==crc(bytes.subarray(offset+4,offset+8+size)))throw Error('Damaged recipe metadata checksum');
+        let envelope;
+        try{envelope=JSON.parse(decoder.decode(data.subarray(end+5)));}
+        catch{throw Error('Damaged recipe metadata');}
+        if(envelope?.format!==RECIPE_FORMAT||typeof envelope.recipe!=='object'||
+           !envelope.recipe||Array.isArray(envelope.recipe))throw Error('Unsupported recipe metadata version');
+        return normalizeRecipe(envelope.recipe);
+      }
+    }
+    if(type==='IEND')break;
+    offset+=size+12;
+  }
+  return null;
 }
