@@ -36,6 +36,7 @@ jobs:
           npm run render -- --seed bundle-repeat --set geometry=straight --set composition=repeat --set repeatCount=4 --set repeatSpacing=62 --set orientation=diagonal --set diagonalRotation=0 --set construction=ribbon --set outline=none --set stripeWidth=65 --width 600 --height 1300 --out output/bundle-repeat.png
           npm run render -- --seed woven-columns --set family=tapestry --set geometry=straight --set orientation=vertical --set construction=woven --set outline=none --set stripeWidth=87 --set spread=70 --width 600 --height 1300 --out output/woven-columns.png
           npm run render -- --seed tonal-bands --set geometry=straight --set orientation=horizontal --set construction=tonal --set stripeWidth=90 --set spread=82 --set tonalContrast=80 --width 600 --height 1300 --out output/tonal-bands.png
+          npm run render -- --seed floating-strokes --set composition=floating --set pathLength=56 --set endTaper=95 --set geometry=wave --set orientation=diagonal --set shapeFrequency=20 --set shapeDepth=25 --set brushRoughness=70 --set outline=none --set palette=electric --set stripeWidth=38 --width 600 --height 1300 --out output/floating-strokes.png
           npm run render -- --seed dry-brush --set geometry=wave --set orientation=diagonal --set construction=ribbon --set endTaper=75 --set brushRoughness=90 --set glow=42 --set palette=electric --set stripeWidth=35 --width 600 --height 1300 --out output/dry-brush.png
           npm run render -- --seed disc-columns --set family=studio --set motif=solid --set geometry=straight --set orientation=vertical --set construction=ribbon --set lineStyle=dotted --set dotSize=88 --set dotSpacing=72 --set outline=none --set stripeWidth=72 --set spread=90 --width 600 --height 1300 --out output/disc-columns.png
       - name: Validate PNG dimensions and round-trip recipes
@@ -44,7 +45,7 @@ jobs:
           import assert from 'node:assert/strict';
           import {readFile} from 'node:fs/promises';
           import {extractPngRecipe} from './src/png-metadata.js';
-          for(const name of ['paper-comet','stardust-tapes','dot-matrix','white-silkscreen','rubber-sines','hairpin-fabric','continuous-loops','bundle-repeat','woven-columns','tonal-bands','dry-brush','disc-columns']){
+          for(const name of ['paper-comet','stardust-tapes','dot-matrix','white-silkscreen','rubber-sines','hairpin-fabric','continuous-loops','bundle-repeat','woven-columns','tonal-bands','dry-brush','floating-strokes','disc-columns']){
             const png=await readFile('output/'+name+'.png');
             assert.deepEqual([...png.subarray(0,8)],[137,80,78,71,13,10,26,10]);
             assert.equal(png.readUInt32BE(16),600);
