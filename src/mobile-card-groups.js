@@ -23,9 +23,13 @@ function layerFields(n){
   };
 }
 const definitions=[
+  {name:'Composition',members:()=>[setting('composition'),setting('repeatCount'),setting('repeatSpacing')]},
   {name:'Direction',members:()=>[setting('orientation'),setting('reverseStripes')]},
   {name:'Diagonal transform',members:()=>[document.getElementById('diagonalSettings')]},
   {name:'Geometry',members:()=>[setting('geometry'),setting('shapeFrequency'),setting('shapeDepth')]},
+  {name:'Path details',members:()=>[setting('turnRadius'),setting('loopSize')]},
+  {name:'Construction',members:()=>[setting('construction'),setting('tonalContrast'),setting('brushRoughness')]},
+  {name:'Line marks',members:()=>[setting('lineStyle'),setting('dotSize'),setting('dotSpacing')]},
   {name:'Stripe pattern',members:()=>[setting('motif'),setting('patternHomogeneity')]},
   {name:'Stripe shadows',members:()=>[document.querySelector('#panel-design .stripe-shadow-section')]},
   {name:'Outlines',members:()=>[setting('outline'),setting('gap')]},
