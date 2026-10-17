@@ -15,7 +15,7 @@ class FakeContext {
   clearRect(){} beginPath(){} moveTo(){} lineTo(){} closePath(){}
   arc(){} quadraticCurveTo(){} clip(){calls.push(['clip',this.tag]);} stroke(){} setLineDash(){}
   fill(){} fillRect(...args){calls.push(['fillRect',this.fillStyle,...args,this.tag]);}
-  drawImage(){calls.push(['drawImage',this.globalCompositeOperation]);}
+  drawImage(){calls.push(['drawImage',this.globalCompositeOperation,this.tag]);}
   createPattern(){return '#pattern';}
   createRadialGradient(){return {addColorStop(){}};}
 }
@@ -56,7 +56,7 @@ test('paper and textiles cover the chosen background as well as stripes',()=>{
       const scene=drawWallpaper(canvas,{seed:'surface-test',background,material,textureCoverage,motif:'dots'});
       assert.equal(scene.background,background);
       assert.ok(calls.some(x=>x[0]==='fillRect' && x[1]===(background==='black'?'#000':'#fff') && x.at(-1)==='main'));
-      assert.equal(calls.some(x=>x[0]==='fillRect' && x[1]==='#pattern' && x.at(-1)==='main'),textureCoverage!=='stripes');
+      assert.equal(calls.filter(x=>x[0]==='drawImage' && x[2]==='main').length>1,textureCoverage!=='stripes');
     }
   }
 });
