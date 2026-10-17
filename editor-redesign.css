@@ -216,3 +216,24 @@
  body.mobile-studio .sidebar .editor-tool-card .texture-layer-group .add-texture-layer{
    min-height:22px!important}
 }
+
+/* Recent generations occupy the same reserved tool space, never the preview. */
+.editor-history[hidden]{display:none!important}
+.editor-history{display:flex;flex-direction:column;gap:4px;flex:1;min-height:0;overflow:hidden;
+  padding:4px;border:1px solid var(--line);border-radius:8px}
+.editor-history-heading{display:flex;justify-content:space-between;align-items:center;gap:5px;font-size:10px}
+.editor-history-heading span{font-size:9px;opacity:.7}
+.editor-history-strip{display:flex;gap:6px;flex:1;min-height:0;overflow-x:auto;overflow-y:hidden;
+  scrollbar-width:none;align-items:stretch;scroll-snap-type:x proximity}
+.editor-history-choice{display:flex;flex-direction:column;gap:2px;align-items:center;
+  flex:0 0 57px;padding:2px;border:1px solid var(--line);background:var(--surface);
+  color:inherit;border-radius:6px;min-width:0;cursor:pointer;scroll-snap-align:start}
+.editor-history-choice img{display:block;width:auto;height:calc(100% - 19px);max-width:100%;
+  min-height:0;object-fit:contain;aspect-ratio:600/1300;border-radius:3px}
+.editor-history-choice span{max-width:100%;font-size:8px;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis}
+.editor-history-open .editor-category-panel{display:none!important}
+@media(max-width:790px){
+  body.mobile-studio .sidebar #editorHistory:not([hidden]){display:flex!important;flex:1 1 auto!important}
+  body.mobile-studio .sidebar #editorHistory .editor-history-choice{flex-basis:55px}
+}
