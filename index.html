@@ -6,12 +6,13 @@
   <meta name="theme-color" content="#08090e">
   <meta name="description" content="R.O.Y.G.B.I.V. — Rainbow-Only. You Generate Based on Individual Variables. A procedural rainbow wallpaper studio.">
   <title>R.O.Y.G.B.I.V. | Rainbow-Only Wallpaper Studio</title>
-  <link rel="stylesheet" href="styles.css?v=20261016-layout2">
+  <link rel="icon" type="image/svg+xml" href="assets/roygbiv-logo.svg">
+  <link rel="stylesheet" href="styles.css?v=20261016-geometry3">
 </head>
 <body>
   <header class="masthead">
     <a class="brand" href="./" aria-label="R.O.Y.G.B.I.V. home">
-      <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+      <img class="brand-logo" src="assets/roygbiv-logo.svg" width="64" height="64" alt="" aria-hidden="true">
       <div class="brand-copy">
         <h1 class="brand-title">R.O.Y.G.B.I.V<span class="brand-dot">.</span></h1>
         <p class="brand-subtitle">Rainbow-Only. You Generate Based on Individual Variables.</p>
@@ -40,8 +41,26 @@
           <div class="control-grid">
           <label class="field">Visual family <select name="family" data-setting="family"><option value="auto">Surprise me</option><option value="studio">Studio / graphic</option><option value="currents">Neon currents</option><option value="fracture">Geometric fracture</option><option value="confetti">Particle ribbons</option><option value="deco">Art deco</option><option value="tapestry">Tapestry</option><option value="signal">Signal / digital</option><option value="contour">Topographic contour</option></select></label>
           <label class="field">Direction <select name="orientation" data-setting="orientation"><option value="auto">Surprise me</option><option value="vertical">Vertical</option><option value="horizontal">Horizontal</option><option value="diagonal">Diagonal</option></select></label>
-          <label class="field">Path geometry <select name="geometry" data-setting="geometry"><option value="auto">Follow family</option><option value="straight">Straight</option><option value="wave">Wavy</option><option value="zigzag">Zigzag</option><option value="jagged">Jagged / fractured</option><option value="stepped">Stepped</option><option value="arc">Sweeping arcs</option><option value="contour">Topographic</option></select></label>
-          <label class="field">Stripe construction <select name="motif" data-setting="motif"><option value="auto">Follow family</option><option value="solid">Solid</option><option value="dots">Dots</option><option value="stars">Stars</option><option value="dashes">Dashes</option><option value="diamonds">Diamonds</option><option value="chevrons">Chevrons</option><option value="hatch">Hatching</option><option value="checker">Checkerboard</option></select></label>
+          <label class="field">Path geometry <select name="geometry" data-setting="geometry"><option value="auto">Follow family</option><option value="straight">Straight</option><option value="wave">Wavy</option><option value="zigzag">Zigzag</option><option value="chevron">Chevron / pointed V</option><option value="jagged">Jagged / fractured</option><option value="stepped">Stepped</option><option value="arc">Sweeping arcs</option><option value="contour">Topographic</option></select></label>
+          <label class="field">Stripe pattern <select name="motif" data-setting="motif"><option value="auto">Follow family</option><option value="solid">Solid</option><option value="dots">Dots</option><option value="stars">Stars</option><option value="dashes">Dashes</option><option value="diamonds">Diamonds</option><option value="chevrons">Chevrons</option><option value="hatch">Hatching</option><option value="checker">Checkerboard</option></select></label>
+          <label class="field">Stripe line style
+            <select name="lineStyle" data-setting="lineStyle">
+              <option value="continuous">Continuous</option>
+              <option value="dotted">Dotted line</option>
+              <option value="dashed">Dashed line</option>
+            </select>
+            <small class="control-hint">Applies to any path geometry, separately from the stripe pattern.</small>
+          </label>
+        </div>
+        <div class="control-grid range-grid shape-controls">
+          <label class="field range-field"><span>Shape frequency</span>
+            <input type="range" name="shapeFrequency" id="shapeFrequency" data-setting="shapeFrequency" min="0" max="100" value="50">
+            <small>Fewer broad bends ← → More tight bends</small>
+          </label>
+          <label class="field range-field"><span>Shape depth</span>
+            <input type="range" name="shapeDepth" id="shapeDepth" data-setting="shapeDepth" min="0" max="100" value="50">
+            <small>Subtle motion ← → Dramatic motion</small>
+          </label>
         </div>
         <label class="field range-field pattern-homogeneity"><span>Pattern homogeneity </span><input type="range" name="patternHomogeneity" id="patternHomogeneity" data-setting="patternHomogeneity" min="0" max="100" value="100"><small>100% uniform · 0% varied size, rotation and opacity</small></label>
         <div class="stripe-shadow-section">
@@ -216,6 +235,6 @@
     </main>
     <footer><span>R.O.Y.G.B.I.V. / V1.0</span><span>Generative. Deterministic. Made of light.</span><span>BLACK × ROYGBIV</span></footer>
   </div>
-  <script type="module" src="src/app.js?v=20261016-lock2"></script>
+  <script type="module" src="src/app.js?v=20261016-geometry3"></script>
 </body>
 </html>
