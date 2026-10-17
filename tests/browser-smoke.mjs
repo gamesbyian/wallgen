@@ -343,7 +343,7 @@ try{
   for(const card of textureExpansion)assert.ok(card.scroll<=card.client+2,card.name+' must fit completely');
 
   await evaluate('document.getElementById("tab-design").click()');
-  await evaluate('document.querySelector("[name=stripeShadowEnabled]").click()');
+  await evaluate(`(()=>{const box=document.querySelector('[name=stripeShadowEnabled]');if(!box.checked)box.click()})()`);
   await waitFor('document.getElementById("stripeShadowControls").hidden===false');
   const expandedShadow=await evaluate(`(()=>{
     const card=[...document.querySelectorAll('.mobile-setting-cluster')]
@@ -397,6 +397,12 @@ try{
   await waitFor(`document.getElementById('tab-colour').getAttribute('aria-selected')==='true'`);
   // A real finger drag should adjust a slider, not scroll to another card.
   await evaluate('document.getElementById("tab-design").click()');
+  // Start this touch check from a middle track position, even if the earlier
+  // Prime-mode randomization happened to choose a value near 0 or 100.
+  await evaluate(`(()=>{
+    const input=document.querySelector('[name=shapeFrequency]');
+    input.value='50';input.dispatchEvent(new Event('input',{bubbles:true}));
+  })()`);
   // Tab selection asynchronously resets the rail to its first card.
   // Let that reset and CSS snap finish before navigating to the nested slider.
   await delay(330);
