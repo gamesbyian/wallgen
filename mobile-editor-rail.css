@@ -194,10 +194,11 @@
     height:min(100%,calc((100vw - 97px)*1300/600))!important;
     overflow:hidden!important;
   }
+  /* Canvas pixels are rendered through the camera. Scaling a clipped bitmap
+     would permanently expose cropped line ends when zooming out. */
   body.mobile-studio .studio-stage .wallpaper-frame canvas{
-    transform:scale(var(--mobile-preview-zoom,1));
-    transform-origin:50% 50%;
-    transition:transform .12s ease-out;
+    transform:none!important;
+    transition:none!important;
   }
   body.mobile-studio .mobile-preview-rail-left .randomize-bar{
     display:flex!important;flex-direction:column;align-items:center;

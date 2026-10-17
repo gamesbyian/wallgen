@@ -74,8 +74,9 @@ Only** move beside the preview on the left, leaving room for the plain
 underlined category tabs and cards below. A vertical rail to the **right** of
 the preview reuses the five original nudge buttons and adds **Zoom + / Zoom −**
 (with a visible percent indicator). Nudge shifts the artwork in the recipe;
-zoom scales the canvas display only and does **not** change the downloaded
-wallpaper, current design settings or saved recipe. The regular
+zoom changes the live rendering camera and becomes part of the current
+design recipe. The full-resolution PNG saves **exactly the composition visible
+inside the wallpaper frame**, rather than the original 100% crop. The regular
 action dock is also shortened when the editor is closed. Pressing the expand
 arrow restores the full toolbar and header; downward swipe and tapping the
 picture still dismiss Edit. On a 412 × 915 viewport the preview should retain
@@ -167,8 +168,8 @@ wallpaper with touch, pen or mouse, then lift to see a finished path.
 - The path is stored as at most 96 bounded normalized points inside the ordinary
   recipe and PNG metadata. Share links, CLI recipes and full-resolution PNGs all
   reconstruct the exact same centreline.
-- Preview-only zoom is accounted for when capturing finger positions. The
-  drawing overlay is temporary and does not appear in exported pixels.
+- The drawing tool accounts for the actual camera framing when capturing finger
+  positions. The overlay is temporary and does not appear in exported pixels.
 
 A hand-drawn geometry appears in the normal Path geometry selector once a path
 has been saved. Randomize does not invent arbitrary hand-drawn paths, but locking
@@ -185,8 +186,8 @@ When Draw path is active, the entire preview stage captures pointer input:
 you may **begin outside the wallpaper and draw into it**, or finish outside.
 Coordinates beyond the frame are stored in the recipe, so full-resolution
 exports clip only the resulting painted image, never the intended centreline.
-Preview zoom remains independent of saved artwork, with **50% through 250%**
-viewing and 10% steps available immediately on initial generation.
+Camera zoom uses **50% through 250%** framing with 10% steps available
+immediately on initial generation, persisted in saved recipes and PNG exports.
 
 Additional existing-control upgrades:
 
@@ -202,6 +203,31 @@ Additional existing-control upgrades:
 - **Mobile swipe cards:** every range control includes visible, working
   decrement/increment buttons, a draggable track, and a numeric entry. The
   no-vertical-scroll card layout and inactive/zeroed settings remain intact.
+
+## Frame-faithful zoom and export
+
+Zooming now redraws the underlying procedural composition through one camera
+instead of scaling an already-clipped HTML canvas. Zooming out exposes freshly
+painted geometry beyond all four edges of the earlier 100% crop, with unchanged
+rainbow order, motif repetition, texture and seed. Finite custom paths retain
+their intentional endpoints. Background textures cover the newly visible frame.
+
+The selected camera magnification (`viewZoom`, 0.50–2.50) is recorded in the
+ordinary recipe and embedded PNG metadata; Undo, favourites, URL sharing, headless
+rendering, and Download all use the same framing. **Download saves the exact
+wallpaper-frame view at 3024 × 6552 pixels**, with full-resolution detail, even
+after zooming in or out. Its rendering does not depend on the preview's screen
+pixels or the CSS scale of an old cropped bitmap.
+
+Six more **Color Stories** sit alongside the originals: Sunset Glow, Candy Pop,
+Arctic Ice, Earth & Mineral, Twilight Violet, and Citrus Punch. Each keeps all
+seven named rainbow stripes in order and selects a coordinated hue/saturation/
+brightness relationship. These are ordinary palettes available in randomization,
+locks, recipes, and headless generation.
+
+```bash
+npm run render -- --seed framed-rainbow --set geometry=wave --set palette=twilight --set viewZoom=0.7 --width 3024 --height 6552 --out framed.png
+```
 
 ## Output
 

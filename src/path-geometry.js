@@ -24,11 +24,14 @@ export function modulation(x, geometry, phase, period, d, extent){
   return d*(Math.sin(t*TAU*.42)*.35+Math.sin(t*TAU*.79+phase)*.4+Math.sin(t*TAU*1.33)*.25);
 }
 export function pathPosition(stripe,x,extent){
+  // Zoom expands the sampled longitudinal domain, never the underlying
+  // wavelength or hairpin shape. A finite hand-drawn stroke keeps its ends.
+  const coreExtent=stripe.coreExtent??extent;
   const g=stripe.sharedGeometry??stripe.geometry;
   if(g==='drawn'&&stripe.drawnPath)
-    return pointOnDrawnPath(stripe.drawnPath,(x+extent)/(2*extent));
+    return pointOnDrawnPath(stripe.drawnPath,(x+coreExtent)/(2*coreExtent));
   if(g==='hairpin'){
-    const u=clamp((x+extent)/(2*extent),0,1);
+    const u=(x+coreExtent)/(2*coreExtent);
     const radius=stripe.turnRadius??190;
     const top=-900,turn=210;
     const theta=clamp(stripe.hairpinAngle??180,60,180)*Math.PI/180;
@@ -59,9 +62,9 @@ export function pathPosition(stripe,x,extent){
     return {x:x-size*2.1*Math.sin(angle),y:size*Math.cos(angle)};
   }
   const shared=modulation(x,g,stripe.sharedPhase??stripe.phase,
-    stripe.sharedPeriod??stripe.period,stripe.sharedDisplacement??stripe.displacement,extent);
-  const individual=modulation(x,stripe.geometry,stripe.phase,stripe.period,stripe.displacement,extent);
-  return {x,y:mix(shared,individual,stripe.parallelMix??1)+(stripe.tilt??0)*x/extent};
+    stripe.sharedPeriod??stripe.period,stripe.sharedDisplacement??stripe.displacement,coreExtent);
+  const individual=modulation(x,stripe.geometry,stripe.phase,stripe.period,stripe.displacement,coreExtent);
+  return {x,y:mix(shared,individual,stripe.parallelMix??1)+(stripe.tilt??0)*x/coreExtent};
 }
 export function samplePath(stripe,x,extent){
   const p=pathPosition(stripe,x,extent);

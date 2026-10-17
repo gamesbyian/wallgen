@@ -1,0 +1,68 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {viewCamera} from '../src/view-camera.js';
+import {DESIGN_WIDTH,DESIGN_HEIGHT,normalizeRecipe,encodeRecipe,decodeRecipe,
+  COLOR_STORIES,PALETTES,HUES,paletteHsl,resolveScene} from '../src/model.js';
+
+// Coordinate transforms must agree at live-preview and exported resolutions.
+// This ensures "Download PNG" samples the exact world rectangle visible in
+// the phone's frame, without rescaling an already-clipped 100%-view bitmap.
+test('camera retains frame centre while showing more world at zoom out',()=>{
+  for(const zoom of [.5,.6,.8,1,1.25,2,2.5]){
+    const p=viewCamera(600,1300,zoom),big=viewCamera(3024,6552,zoom);
+    assert.equal(p.zoom,zoom);
+    for(const key of ['left','right','top','bottom'])
+      assert.ok(Math.abs(p.viewBounds[key]-big.viewBounds[key])<1e-9,key);
+    const f=p.viewBounds;
+    assert.ok(Math.abs((f.left+f.right)/2-DESIGN_WIDTH/2)<1e-9);
+    assert.ok(Math.abs((f.top+f.bottom)/2-DESIGN_HEIGHT/2)<1e-9);
+    assert.ok(Math.abs((f.right-f.left)-DESIGN_WIDTH/zoom)<1e-9);
+    assert.ok(Math.abs((f.bottom-f.top)-DESIGN_HEIGHT/zoom)<1e-9);
+    assert.ok(Math.abs((p.offsetX+p.scaleX*DESIGN_WIDTH/2)-300)<1e-9);
+    assert.ok(Math.abs((big.offsetX+big.scaleX*DESIGN_WIDTH/2)-1512)<1e-9);
+  }
+  assert.ok(viewCamera(600,1300,.5).viewBounds.left<0);
+  assert.ok(viewCamera(600,1300,.5).viewBounds.right>600);
+  assert.ok(viewCamera(600,1300,.5).viewBounds.top<0);
+  assert.ok(viewCamera(600,1300,.5).viewBounds.bottom>1300);
+});
+
+test('camera margin maps beyond the visible frame in logical units',()=>{
+  const c=viewCamera(600,1300,.5);
+  const margin={left:180,right:180,top:390,bottom:390};
+  const b=c.boundsWithMargin(margin);
+  assert.ok(b.left<c.viewBounds.left);
+  assert.ok(b.right>c.viewBounds.right);
+  assert.ok(b.top<c.viewBounds.top);
+  assert.ok(b.bottom>c.viewBounds.bottom);
+});
+
+test('camera zoom round trips through recipe metadata and URI',()=>{
+  for(const zoom of [.5,.7,1,1.1,1.8,2.5]){
+    const r=normalizeRecipe({seed:'zoom-'+zoom,viewZoom:zoom,geometry:'wave'});
+    assert.equal(r.viewZoom,zoom);
+    assert.equal(decodeRecipe(encodeRecipe(r)).viewZoom,zoom);
+    assert.equal(resolveScene(r).viewZoom,zoom);
+  }
+  assert.equal(normalizeRecipe({}).viewZoom,1);
+  assert.equal(normalizeRecipe({viewZoom:.1}).viewZoom,.5);
+  assert.equal(normalizeRecipe({viewZoom:8}).viewZoom,2.5);
+});
+
+test('all Color Stories generate distinct ordered seven-stripe palettes',()=>{
+  assert.equal(new Set(PALETTES).size,PALETTES.length);
+  assert.ok(PALETTES.length>=11);
+  const variants=new Set();
+  for(const palette of PALETTES){
+    assert.ok(COLOR_STORIES[palette],palette);
+    const scene=resolveScene({seed:'stable-palette',palette,geometry:'straight'});
+    assert.equal(scene.stripes.length,7);
+    assert.deepEqual(scene.stripes.map(s=>s.name),['Red','Orange','Yellow','Green','Blue','Indigo','Violet']);
+    const values=scene.stripes.map(s=>s.color);
+    assert.ok(values.every(c=>/^hsl\(\d+(?:\.\d+)? \d+% \d+%\)$/.test(c)),palette);
+    variants.add(values.join('|'));
+    assert.equal(decodeRecipe(encodeRecipe({palette})).palette,palette);
+  }
+  assert.equal(variants.size,PALETTES.length);
+  assert.equal(HUES.length,7);
+});

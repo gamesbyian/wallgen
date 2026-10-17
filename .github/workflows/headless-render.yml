@@ -42,6 +42,28 @@ jobs:
           npm run render -- --seed hairpin-oblique --set geometry=hairpin --set orientation=vertical --set hairpinAngle=110 --set turnRadius=65 --set stripeWidth=45 --set spread=58 --set background=white --width 600 --height 1300 --out output/hairpin-oblique.png
           npm run render -- --seed chevron-extremes --set family=studio --set geometry=chevron --set motif=solid --set shapeFrequency=14 --set shapeDepth=98 --set stripeWidth=45 --set spread=75 --width 600 --height 1300 --out output/chevron-extremes.png
           npm run render -- --seed thick-spread --set family=studio --set geometry=straight --set orientation=horizontal --set stripeWidth=100 --set spread=96 --set outline=none --width 600 --height 1300 --out output/thick-spread.png
+      - name: Verify uncropped camera compositions and new Color Stories
+        run: |
+          npm run render -- --seed zoom-unclipped --set family=studio --set orientation=horizontal --set geometry=straight --set motif=solid --set material=none --set palette=sunset --set viewZoom=0.5 --set stripeWidth=72 --set spread=55 --width 600 --height 1300 --out output/zoom-unclipped.png
+          npm run render -- --seed zoom-framed-full --set family=studio --set orientation=horizontal --set geometry=wave --set shapeFrequency=42 --set motif=solid --set material=none --set palette=arctic --set viewZoom=0.7 --set stripeWidth=58 --set spread=66 --width 3024 --height 6552 --out output/zoom-framed-full.png
+          npm run render -- --seed palette-candy --set family=studio --set orientation=vertical --set geometry=straight --set motif=solid --set material=none --set palette=candy --width 600 --height 1300 --out output/palette-candy.png
+          npm run render -- --seed palette-earth --set family=studio --set orientation=vertical --set geometry=straight --set motif=solid --set material=none --set palette=earth --width 600 --height 1300 --out output/palette-earth.png
+          npm run render -- --seed palette-twilight --set family=studio --set orientation=vertical --set geometry=straight --set motif=solid --set material=none --set palette=twilight --width 600 --height 1300 --out output/palette-twilight.png
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {readFile} from 'node:fs/promises';
+          import {extractPngRecipe} from './src/png-metadata.js';
+          for(const [file,zoom,width,height] of [
+            ['zoom-unclipped',.5,600,1300],
+            ['zoom-framed-full',.7,3024,6552],
+            ['palette-candy',1,600,1300],['palette-earth',1,600,1300],
+            ['palette-twilight',1,600,1300]]){
+            const png=await readFile('output/'+file+'.png');
+            assert.equal(png.readUInt32BE(16),width);
+            assert.equal(png.readUInt32BE(20),height);
+            assert.equal(extractPngRecipe(png).viewZoom,zoom);
+          }
+          JS
       - name: Drawn master curve exports identically through the production renderer
         run: |
           cat > output/drawn-recipe.json <<'JSON'
@@ -69,7 +91,7 @@ jobs:
           import assert from 'node:assert/strict';
           import {readFile} from 'node:fs/promises';
           import {extractPngRecipe} from './src/png-metadata.js';
-          for(const name of ['paper-comet','stardust-tapes','dot-matrix','white-silkscreen','rubber-sines','hairpin-fabric','continuous-loops','bundle-repeat','woven-columns','tonal-bands','dry-brush','floating-strokes','disc-columns','drawn-smoke','drawn-off-frame','hairpin-oblique','chevron-extremes','thick-spread']){
+          for(const name of ['paper-comet','stardust-tapes','dot-matrix','white-silkscreen','rubber-sines','hairpin-fabric','continuous-loops','bundle-repeat','woven-columns','tonal-bands','dry-brush','floating-strokes','disc-columns','drawn-smoke','drawn-off-frame','hairpin-oblique','chevron-extremes','thick-spread','zoom-unclipped','palette-candy','palette-earth','palette-twilight']){
             const png=await readFile('output/'+name+'.png');
             assert.deepEqual([...png.subarray(0,8)],[137,80,78,71,13,10,26,10]);
             assert.equal(png.readUInt32BE(16),600);

@@ -23,7 +23,7 @@ export const LOCKABLE_SETTINGS = ['seed','family','orientation','geometry','moti
   'textureDisplacement','patternHomogeneity','chaos','stripeWidth','spread','shapeFrequency','shapeDepth','lineStyle','individuality',
   'overridePatternHomogeneity','gap','glow','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','position',
   'composition','repeatCount','repeatSpacing','construction','turnRadius','hairpinAngle','pathLength','endTaper','tonalContrast','brushRoughness','dotSize','dotSpacing'];
-export const PALETTES = ['classic', 'electric', 'pastel', 'jewel', 'muted'];
+export const PALETTES = ['classic', 'electric', 'pastel', 'jewel', 'muted', 'sunset', 'candy', 'arctic', 'earth', 'twilight', 'citrus'];
 export const TEXTURE_COVERAGES = ['both', 'stripes', 'background'];
 export const OUTLINES = ['none', 'hairline', 'white', 'double', 'broken', 'one-side', 'black', 'black-hairline', 'black-double', 'black-broken', 'black-one-side'];
 
@@ -141,6 +141,8 @@ export function normalizeRecipe(input = {}) {
     overridePatternHomogeneity: input.overridePatternHomogeneity === true || input.overridePatternHomogeneity === 'true',
     gap: finiteRange(input.gap, 28, 0, 100),
     glow: finiteRange(input.glow, 0, 0, 100),
+    // Camera framing is part of the artwork and therefore of every saved PNG.
+    viewZoom: Math.round(finiteRange(input.viewZoom, 1, .5, 2.5)*100)/100,
     positionX: finiteRange(input.positionX, 0, -30, 30),
     positionY: finiteRange(input.positionY, 0, -30, 30),
   };
@@ -157,12 +159,27 @@ const PROFILES = {
   contour: { geometry: 'contour', motif: 'hatch', palette: 'pastel', outline: 'hairline', material: 'handmade', width: 0.5 },
 };
 
-function paletteHsl(hue, palette, r) {
-  const settings = {
-    classic: [92, 58], electric: [100, 62], pastel: [75, 79], jewel: [84, 39], muted: [51, 58],
-  }[palette];
-  const h = ((hue + between(r, -3, 3)) % 360 + 360) % 360;
-  return `hsl(${h.toFixed(1)} ${settings[0]}% ${settings[1]}%)`;
+// Every Color Story keeps the seven ordered hues, but alters the entire
+// seven-colour harmony rather than simply applying one uniform saturation.
+export const COLOR_STORIES = Object.freeze({
+  classic: {sat:92,light:58},
+  electric: {sat:100,light:62},
+  pastel: {sat:75,light:79},
+  jewel: {sat:84,light:39},
+  muted: {sat:51,light:58},
+  sunset: {sat:82,light:59,hue:[-4,-6,-7,-9,-11,-7,-5],lights:[-3,3,7,-6,-7,-7,1]},
+  candy: {sat:90,light:69,hue:[-8,-9,-4,-3,-6,-5,12],lights:[3,2,5,-2,-1,0,4]},
+  arctic: {sat:70,light:72,hue:[-3,-7,-4,8,-12,-9,-11],lights:[2,0,7,-1,3,-3,1]},
+  earth: {sat:55,light:49,hue:[7,5,-3,-23,-28,-12,-9],lights:[3,6,8,-6,-3,-4,1]},
+  twilight: {sat:77,light:49,hue:[-9,-4,-2,6,12,9,8],lights:[1,1,9,-4,-2,-1,7]},
+  citrus: {sat:90,light:61,hue:[-2,-3,-9,-13,-3,-7,-5],lights:[-1,3,12,1,-3,-4,0]},
+});
+export function paletteHsl(hue, palette, r) {
+  const story=COLOR_STORIES[palette]??COLOR_STORIES.classic;
+  const i=HUES.indexOf(hue);
+  const h=((hue+(story.hue?.[i]??0)+between(r,-3,3))%360+360)%360;
+  const light=Math.max(10,Math.min(90,story.light+(story.lights?.[i]??0)));
+  return `hsl(${h.toFixed(1)} ${story.sat}% ${light}%)`;
 }
 
 // Turns a saved recipe into a deterministic scene specification, independent of resolution.
