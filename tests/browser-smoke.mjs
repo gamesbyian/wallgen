@@ -402,6 +402,39 @@ try{
     screenWidth:412,screenHeight:915,
   });
   console.log('BROWSER_ZOOM_LAYOUT_ACCEPTANCE_SUCCESS');
+  // Render actual ink, not merely normalized parameters, to ensure each
+  // Outline slider changes pixels independently on a fixed wallpaper.
+  const outlinePixels=await evaluate(`(async()=>{
+    const {drawWallpaper}=await import('/src/renderer.js');
+    const base={seed:'outline-controls-test',family:'studio',
+      background:'black',geometry:'straight',orientation:'vertical',
+      composition:'single',construction:'ribbon',motif:'solid',
+      material:'none',textureDisplacement:0,chaos:0,individuality:0,
+      stripeWidth:68,spread:60,glow:0};
+    const render=(outline,gap,outlineBuffer)=>{
+      const c=document.createElement('canvas');c.width=230;c.height=500;
+      drawWallpaper(c,{...base,outline,gap,outlineBuffer});
+      return c.getContext('2d').getImageData(0,0,c.width,c.height).data;
+    };
+    const differences=(a,b)=>{
+      let n=0;for(let i=0;i<a.length;i+=4)
+        if(Math.abs(a[i]-b[i])+Math.abs(a[i+1]-b[i+1])+Math.abs(a[i+2]-b[i+2])>24)n++;
+      return n;
+    };
+    return ['white','black','one-side'].map(outline=>{
+      const first=render(outline,18,0);
+      const thick=render(outline,88,0);
+      const buffered=render(outline,18,75);
+      return {outline,thickness:differences(first,thick),
+        buffer:differences(first,buffered)};
+    });
+  })()`);
+  console.log('OUTLINE_PIXEL_DIFFERENCES',JSON.stringify(outlinePixels));
+  for(const result of outlinePixels){
+    assert.ok(result.thickness>40,'Outline thickness must affect rendered pixels: '+result.outline);
+    assert.ok(result.buffer>40,'Outline buffer must affect rendered pixels: '+result.outline);
+  }
+
   // Keep the existing single-checkpoint Undo and complete full-res export.
   await evaluate('document.getElementById("undo").click()');
   await waitFor('document.querySelector(".studio-stage").getBoundingClientRect().bottom<=document.querySelector(".sidebar").getBoundingClientRect().top+2',3000);
