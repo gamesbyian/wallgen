@@ -84,9 +84,11 @@ function contactSegment(scene,contacts,p,q) {
 export function stripeFrameContacts(scene,stripe) {
   const contacts={left:false,right:false,top:false,bottom:false};
   const n=480;
-  let previous=endpoints(scene,stripe,-scene.extent);
+  const start=stripe.segmentStart??-scene.extent;
+  const end=stripe.segmentEnd??scene.extent;
+  let previous=endpoints(scene,stripe,start);
   for(let i=1;i<=n;i++){
-    const current=endpoints(scene,stripe,-scene.extent+2*scene.extent*i/n);
+    const current=endpoints(scene,stripe,start+(end-start)*i/n);
     contactSegment(scene,contacts,previous[0],current[0]);
     contactSegment(scene,contacts,previous[1],current[1]);
     contactSegment(scene,contacts,current[0],current[1]);
