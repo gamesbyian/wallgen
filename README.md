@@ -135,6 +135,20 @@ in browser local storage. It is off by default; clearing the fields also updates
 any remembered copy. This is PNG metadata, not JPEG EXIF; support for displaying
 particular metadata fields varies among image-viewing applications.
 
+## Parametric geometry and combined stripe modes
+
+The renderer uses the same path sampling functions for straight and nonlinear lines, including hairpins and looping paths. Each path yields a tangent and normal so width, taper, outlines and procedural materials can follow bends. Returning hairpins may have two endpoints crossing the same image edge intentionally; loops can fold back over their own earlier path.
+
+The new capabilities are equal members of the existing Design and Refine controls. There is no separate mode for the reference images, no fixed style priority, and no option to add arbitrary extra colours or switch to monochrome. **Exactly seven hues remain in each rainbow.**
+
+The headless renderer accepts the same saved recipe options as the studio:
+
+```bash
+npm run render -- --seed hairpin-test --set geometry=hairpin --set turnRadius=65 --set construction=tonal --width 600 --height 1300 --out hairpin.png
+npm run render -- --seed spring-test --set geometry=loops --set construction=stroke --set shapeFrequency=85 --set shapeDepth=90 --width 600 --height 1300 --out spring.png
+npm run render -- --seed groups-test --set composition=repeat --set repeatCount=4 --set repeatSpacing=55 --set geometry=straight --width 600 --height 1300 --out groups.png
+```
+
 ## Output
 
 - Google Pixel 6 Pro native screen: **1440 × 3120**.
@@ -173,7 +187,11 @@ The balanced-width **Randomize** button sits next to an equally prominent, alway
 
 - Eight scene families: Studio, Currents, Fracture, Confetti, Deco, Tapestry, Signal and Contour.
 - Orientation: vertical, horizontal, diagonal or seeded selection. Stripes that meet the wallpaper edge on one side without reaching the opposite edge get paired inset ends; stripes that traverse opposed edges remain continuous.
-- Geometry: straight, wave, zigzag, **chevron (repeating pointed-V ribbon path)**, jagged, stepped, arc and contour. The Design tab's **Shape frequency** slider changes how often wave/zigzag/chevron/stepped/jagged/contour bends repeat; **Shape depth** varies their amplitude. Both have a neutral 50% midpoint that preserves legacy designs.
+- Geometry: straight, wave, zigzag, **chevron**, jagged, stepped, arc, contour, **hairpin** (returning nested curves) and **continuous loops** (genuine self-intersecting paths). A shared parametric path sampler supplies centreline, tangent, normal and normal-offset boundaries to outlines, ribbon silhouettes, marks and frame-contact tests. Shape frequency and depth also control loop pitch/amplitude; hairpins have their own turn-radius control.
+- **Composition:** a single seven-colour rainbow, repeated complete seven-colour groups (two to six) with adjustable inter-group spacing, or seven independently inset paths with configurable physical length. Inset paths can end in visible tapers. Repetition never creates an eighth hue; it paints additional instances of the same seven stripe identities.
+- **Stripe construction:** existing patterned ribbons, fine continuous pen lines, multitone ribbons and woven diagonal lattice columns. These are ordinary construction choices that combine with geometry, palette and texture, not separate gallery presets.
+- **Brush and mark controls:** adjustable dotted-line diameter and pitch, end taper, tonal contrast and procedural ink wear/roughness. Inapplicable controls appear disabled and show zero while retaining their stored values.
+- All of these settings participate in seeded randomization, per-setting locks, undo, favourites, share links, headless rendering and embedded PNG recipe restoration. The Design tab's **Shape frequency** slider changes how often wave/zigzag/chevron/stepped/jagged/contour bends repeat; **Shape depth** varies their amplitude. Both have a neutral 50% midpoint that preserves legacy designs.
 - **Stripe line style** is independent of the **Stripe pattern** selector. Continuous, dotted and dashed *ribbon silhouettes* can be combined with **any path geometry**, whether straight, wavy or chevron, and independently combined with the existing filled dot/dash/chevron/checker/etc. motif patterns. Dotted styles use separate circular segments; dashed styles use short pieces of the selected path. These styles work with the existing material, outline and nudge pipeline.
 - Stripe patterns (previously called Stripe construction): solid, dots, stars, dashes, diamonds, chevrons, hatch and checker.
 - Palettes: classic, electric, pastel, jewel and muted. Their hues stay in ROYGBIV order.

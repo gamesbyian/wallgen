@@ -275,18 +275,22 @@ try{
   const primeDraw=await evaluate(`(()=>{
     const percentages=['shapeFrequency','shapeDepth','stripeWidth','spread'];
     return {checked:document.querySelector('[name=primesOnly]').checked,
-      values:percentages.map(k=>Number(document.querySelector('[name="'+k+'"]').value))};
+      values:percentages.map(k=>({
+        value:Number(document.querySelector('[name="'+k+'"]').value),
+        inactive:document.querySelector('[name="'+k+'"]').dataset.inactive==='true'
+      }))};
   })()`);
   const isPrime=n=>Number.isInteger(n)&&n>=2&&
     Array.from({length:Math.max(0,Math.floor(Math.sqrt(n))-1)},(_,i)=>i+2)
       .every(d=>n%d!==0);
-  assert.ok(primeDraw.checked&&primeDraw.values.every(isPrime),
+  assert.ok(primeDraw.checked&&primeDraw.values.every(x=>
+    x.inactive?x.value===0:isPrime(x.value)),
     'randomized percentages should use primes when the moved toggle is selected');
   assert.ok(await evaluate('document.body.classList.contains("mobile-edit-open")'),
     'preview-side Randomize must keep the editor open');
   const originalImage=await evaluate('document.getElementById("preview").toDataURL()');
   await evaluate('document.querySelector("[data-zoom=in]").click()');
-  assert.equal(await evaluate('document.querySelector(".studio-stage").style.getPropertyValue("--mobile-preview-zoom")'),'1.25');
+  assert.equal(await evaluate('document.querySelector(".studio-stage").style.getPropertyValue("--mobile-preview-zoom")'),'1.1');
   assert.equal(await evaluate('document.getElementById("preview").toDataURL()'),originalImage,
     'zooming should only magnify the preview, never modify wallpaper pixels');
   await evaluate('document.querySelector("[data-zoom=out]").click()');

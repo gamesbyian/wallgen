@@ -31,13 +31,21 @@ jobs:
           npm run render -- --seed dot-matrix --set family=signal --set orientation=diagonal --set lineStyle=dotted --set motif=solid --set geometry=straight --set stripeWidth=45 --set spread=88 --width 600 --height 1300 --out output/dot-matrix.png
           npm run render -- --seed white-silkscreen --set family=studio --set orientation=diagonal --set geometry=straight --set motif=solid --set palette=muted --set background=white --set material=linen --set textureStrength=20 --set stripeWidth=25 --set spread=65 --width 600 --height 1300 --out output/white-silkscreen.png
           npm run render -- --seed rubber-sines --set family=currents --set orientation=horizontal --set geometry=wave --set motif=solid --set shapeFrequency=72 --set shapeDepth=65 --set stripeWidth=38 --set spread=84 --set outline=hairline --width 600 --height 1300 --out output/rubber-sines.png
+          npm run render -- --seed hairpin-fabric --set geometry=hairpin --set orientation=vertical --set construction=ribbon --set outline=white --set background=white --set material=canvas --set textureStrength=65 --set turnRadius=55 --set stripeWidth=62 --set spread=40 --width 600 --height 1300 --out output/hairpin-fabric.png
+          npm run render -- --seed continuous-loops --set geometry=loops --set orientation=horizontal --set construction=stroke --set shapeFrequency=84 --set shapeDepth=75 --set background=white --set stripeWidth=30 --set spread=88 --width 600 --height 1300 --out output/continuous-loops.png
+          npm run render -- --seed bundle-repeat --set geometry=straight --set composition=repeat --set repeatCount=4 --set repeatSpacing=62 --set orientation=diagonal --set diagonalRotation=0 --set construction=ribbon --set outline=none --set stripeWidth=65 --width 600 --height 1300 --out output/bundle-repeat.png
+          npm run render -- --seed woven-columns --set family=tapestry --set geometry=straight --set orientation=vertical --set construction=woven --set outline=none --set stripeWidth=87 --set spread=70 --width 600 --height 1300 --out output/woven-columns.png
+          npm run render -- --seed tonal-bands --set geometry=straight --set orientation=horizontal --set construction=tonal --set stripeWidth=90 --set spread=82 --set tonalContrast=80 --width 600 --height 1300 --out output/tonal-bands.png
+          npm run render -- --seed floating-strokes --set composition=floating --set pathLength=56 --set endTaper=95 --set geometry=wave --set orientation=diagonal --set shapeFrequency=20 --set shapeDepth=25 --set brushRoughness=70 --set outline=none --set palette=electric --set stripeWidth=38 --width 600 --height 1300 --out output/floating-strokes.png
+          npm run render -- --seed dry-brush --set geometry=wave --set orientation=diagonal --set construction=ribbon --set endTaper=75 --set brushRoughness=90 --set glow=42 --set palette=electric --set stripeWidth=35 --width 600 --height 1300 --out output/dry-brush.png
+          npm run render -- --seed disc-columns --set family=studio --set motif=solid --set geometry=straight --set orientation=vertical --set construction=ribbon --set lineStyle=dotted --set dotSize=88 --set dotSpacing=72 --set outline=none --set stripeWidth=72 --set spread=90 --width 600 --height 1300 --out output/disc-columns.png
       - name: Validate PNG dimensions and round-trip recipes
         run: |
           node --input-type=module <<'JS'
           import assert from 'node:assert/strict';
           import {readFile} from 'node:fs/promises';
           import {extractPngRecipe} from './src/png-metadata.js';
-          for(const name of ['paper-comet','stardust-tapes','dot-matrix','white-silkscreen','rubber-sines']){
+          for(const name of ['paper-comet','stardust-tapes','dot-matrix','white-silkscreen','rubber-sines','hairpin-fabric','continuous-loops','bundle-repeat','woven-columns','tonal-bands','dry-brush','floating-strokes','disc-columns']){
             const png=await readFile('output/'+name+'.png');
             assert.deepEqual([...png.subarray(0,8)],[137,80,78,71,13,10,26,10]);
             assert.equal(png.readUInt32BE(16),600);
