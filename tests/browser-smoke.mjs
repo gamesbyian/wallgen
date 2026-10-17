@@ -245,6 +245,8 @@ try{
     assert.ok(bounds.selectedToolVisible,'active tool name stays visible in the horizontal rail');
     assert.ok(bounds.toolbarInside,'top-level controls must stay inside their toolbar');
     assert.ok(bounds.selectorCount>=6,'Material tool controls must be present');
+    assert.ok(await evaluate('document.getElementById("addTextureLayer2").getClientRects().length>0'),
+      'Add texture layer must remain visible at '+name);
     assert.deepEqual(bounds.failures,[],'every active control must fit inside its card');
     for(const category of ['path','stripes','colour','layout','effects']){
       await evaluate('document.getElementById("tab-'+category+'").click()');
@@ -257,6 +259,10 @@ try{
       assert.ok(fit,'category '+category+' must not overlap at '+name);
     }
   }
+  // Test the initial one-layer state as shown in the reported screenshots:
+  // the Add Layer control must occupy real visible space, not disappear.
+  await evaluate('document.getElementById("removeTextureLayer2").click()');
+  await waitFor('document.getElementById("textureLayer2Panel").hidden===true');
   await checkEditorZoom(412,915,'100-percent');
   await checkEditorZoom(615,1365,'67-percent');
   await command('Emulation.setDeviceMetricsOverride',{
@@ -266,7 +272,7 @@ try{
   console.log('BROWSER_ZOOM_LAYOUT_ACCEPTANCE_SUCCESS');
   // Keep the existing single-checkpoint Undo and complete full-res export.
   await evaluate('document.getElementById("undo").click()');
-  assert.ok(await evaluate('document.querySelector(".studio-stage").getBoundingClientRect().bottom<=document.querySelector(".sidebar").getBoundingClientRect().top+2'));
+  await waitFor('document.querySelector(".studio-stage").getBoundingClientRect().bottom<=document.querySelector(".sidebar").getBoundingClientRect().top+2',3000);
   // Desktop reuses identical form controls; no duplicated settings or hidden panel.
   await command('Emulation.setDeviceMetricsOverride',{width:1280,height:900,deviceScaleFactor:1,mobile:false,screenWidth:1280,screenHeight:900});
   await waitFor('!document.body.classList.contains("mobile-studio")');
