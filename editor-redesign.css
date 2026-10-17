@@ -598,3 +598,84 @@
   body.mobile-studio .sidebar #editorHistory:not([hidden]){display:flex!important;flex:1 1 auto!important}
   body.mobile-studio .sidebar #editorHistory .editor-history-choice{flex-basis:55px}
 }
+
+/* Compact editing card v3: tool name is already selected in the chip rail.
+   Put the tool die there too, without spending a whole card-header row. */
+.editor-tool-chooser>.editor-tool-reroll:not([hidden]){
+  flex:0 0 auto!important;display:flex!important;align-items:center;justify-content:center;
+  min-width:62px;min-height:27px;height:27px;
+  margin:0 0 0 auto;padding:2px 6px!important;
+  font-size:11px!important;white-space:nowrap;
+}
+.editor-tool-card{gap:3px!important;justify-content:flex-start!important}
+.editor-tool-card>.editor-tool-header{display:none!important}
+/* A select and its label should be a horizontal control row, regardless
+   of whether the legacy label has an extra resolved-value hint. */
+.editor-tool-card .lockable-setting>.field:not(.range-field):not(.mirror-field),
+.editor-tool-card>.field:not(.range-field),
+.editor-tool-card .texture-layer-group .lockable-setting>.field,
+.editor-tool-card .texture-layer-panel .lockable-setting>.field,
+.editor-tool-card .lighting-subsection .lockable-setting>.field,
+.editor-tool-card .stripe-shadow-section .lockable-setting>.field{
+  display:flex!important;flex-flow:row nowrap!important;
+  align-items:center!important;justify-content:space-between!important;
+  gap:5px!important;min-width:0!important;
+  text-align:left!important;
+}
+.editor-tool-card .lockable-setting>.field:not(.range-field)>select,
+.editor-tool-card>.field:not(.range-field)>select,
+.editor-tool-card .lighting-subsection .lockable-setting>.field>select,
+.editor-tool-card .stripe-shadow-section .lockable-setting>.field>select{
+  flex:0 1 62%!important;width:62%!important;max-width:62%!important;
+  min-width:0!important;margin:0!important;
+}
+/* A disabled setting still needs its row; opacity is not an excuse to
+   zero the controls' actual usable height. */
+@media(max-width:790px){
+ body.mobile-studio.mobile-edit-open{
+   --mobile-tray-height:clamp(304px,39dvh,342px)!important;
+ }
+ body.mobile-studio .sidebar .editor-tool-chooser>.editor-tool-reroll:not([hidden]){
+   height:27px!important;min-height:27px!important;
+   font-size:10px!important;
+ }
+ body.mobile-studio .sidebar .editor-tool-card:not([hidden]){
+   padding:5px 6px!important;gap:4px!important;
+ }
+ body.mobile-studio .sidebar .editor-tool-card .lockable-setting>.field:not(.range-field):not(.mirror-field),
+ body.mobile-studio .sidebar .editor-tool-card>.field:not(.range-field){
+   display:flex!important;flex-flow:row nowrap!important;
+   align-items:center!important;justify-content:space-between!important;
+   min-width:0!important;gap:4px!important;
+   font-size:11px!important;
+ }
+ body.mobile-studio .sidebar .editor-tool-card .lockable-setting>.field:not(.range-field)>select,
+ body.mobile-studio .sidebar .editor-tool-card>.field:not(.range-field)>select{
+   flex:0 1 61%!important;width:61%!important;max-width:61%!important;
+   min-width:0!important;
+ }
+}
+@media(min-width:500px) and (max-width:790px){
+ body.mobile-studio.mobile-edit-open{
+   --mobile-tray-height:clamp(340px,36dvh,430px)!important;
+ }
+ body.mobile-studio .sidebar .editor-tool-chooser>.editor-tool-reroll:not([hidden]){
+   height:36px!important;min-height:36px!important;font-size:12px!important;
+ }
+ body.mobile-studio .sidebar .editor-tool-card .lockable-setting>.field:not(.range-field),
+ body.mobile-studio .sidebar .editor-tool-card>.field:not(.range-field){
+   font-size:14px!important;
+ }
+}
+
+/* Keep the relocated per-tool action immediately available while swiping
+   through long named-tool strips, without reserving a header inside the card. */
+@media(max-width:790px){
+ body.mobile-studio .sidebar .editor-tool-chooser>.editor-tool-reroll:not([hidden]){
+   position:sticky!important;left:0!important;z-index:3;
+   order:-1!important;margin:0 3px 0 0!important;
+   background:var(--surface)!important;
+   border:1px solid var(--line)!important;border-radius:7px;
+   box-shadow:2px 0 5px #00000012;
+ }
+}

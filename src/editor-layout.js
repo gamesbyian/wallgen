@@ -80,12 +80,14 @@ export function mountEditor(){
       card.setAttribute('role','group');
       card.setAttribute('aria-label',tool.name+' controls');
       card.hidden=tool.id!==category.tools[0].id;
-      const heading=create('header','editor-tool-header');
-      heading.append(create('strong',null,tool.name));
-      const roll=create('button','editor-scope-button','✳ Tool');
+      // The active tool chip already identifies the card. Keep only the
+      // scoped-random action in the card chrome, not a duplicate heading.
+      const roll=create('button','editor-scope-button editor-tool-reroll','✳ Tool');
       roll.type='button';roll.dataset.randomTool=tool.id;
       roll.title='Change only unlocked '+tool.name.toLowerCase()+' settings';
-      heading.append(roll);card.append(heading);
+      roll.setAttribute('aria-label','Randomize '+tool.name+' tool');
+      roll.hidden=tool.id!==category.tools[0].id;
+      chooser.append(roll);
       panel.append(card);
       tools.set(tool.id,{spec:tool,card,chip,category:category.id});
     }
@@ -127,7 +129,8 @@ export function mountEditor(){
     root.append(die);
   }
   for(const old of originals){old.hidden=true;old.setAttribute('aria-hidden','true');}
-  chooser.querySelectorAll('button').forEach(button=>button.addEventListener('click',()=>selectEditorTool(button.dataset.category,button.dataset.editorTool)));
+  chooser.querySelectorAll('[data-editor-tool]').forEach(button=>
+    button.addEventListener('click',()=>selectEditorTool(button.dataset.category,button.dataset.editorTool)));
   function currentCategoryFromTabs(){
     return nav.querySelector('[aria-selected=true]')?.dataset.tab||activeCategory;
   }
@@ -164,6 +167,8 @@ export function selectEditorTool(category,tool){
   for(const [id,entry] of tools){
     entry.card.hidden=id!==tool;
     entry.chip.hidden=entry.category!==category;
+    const roll=document.querySelector('[data-random-tool="'+id+'"]');
+    if(roll)roll.hidden=id!==tool;
     entry.chip.setAttribute('aria-pressed',String(id===tool));
   }
   for(const panel of document.querySelectorAll('.editor-category-panel'))
