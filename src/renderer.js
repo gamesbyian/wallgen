@@ -437,8 +437,9 @@ function drawOutline(ctx,path,stripe,scene) {
 // ribbons, their silhouettes, and the cached unlit/nudged composition.
 export function applyCanvasAtmosphere(ctx,width,height,recipe){
   if(recipe.lightingMood==='off'||(!recipe.lightStrength&&!recipe.shadowStrength))return;
-  const fromRight=recipe.lightDirection.endsWith('right');
-  const fromBottom=recipe.lightDirection.startsWith('bottom');
+  const direction=recipe.lightDirection||'top-left';
+  const fromRight=direction.endsWith('right');
+  const fromBottom=direction.startsWith('bottom');
   const x=fromRight?width:0,y=fromBottom?height:0;
   const farX=width-x,farY=height-y;
   const light=recipe.lightingMood==='golden'?[255,204,133]:
