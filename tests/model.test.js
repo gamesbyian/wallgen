@@ -470,7 +470,7 @@ test('hairpin turn angle changes tangent-continuous returning leg and survives r
   const full=resolveScene({...base,hairpinAngle:180});
   const angled=resolveScene({...base,hairpinAngle:115});
   const fullStripe=full.stripes[3],angledStripe=angled.stripes[3],e=full.extent;
-  const bottom=pathPosition(fullStripe,e*.16,e),angledBottom=pathPosition(angledStripe,e*.16,e);
+  const bottom=pathPosition(fullStripe,e*.5,e),angledBottom=pathPosition(angledStripe,e*.5,e);
   assert.ok(Math.abs(angledBottom.x-bottom.x)>150,'turn angle must visibly alter exit leg');
   assert.ok(pathPosition(fullStripe,e,e).y<pathPosition(fullStripe,0,e).y);
   assert.equal(normalizeRecipe({hairpinAngle:30}).hairpinAngle,60);
