@@ -77,7 +77,8 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
       Math.max(0,Math.min(1,(event.clientY-rect.top)/rect.height))];
   };
   function append(event){
-    for(const sample of event.getCoalescedEvents?.()||[event]){
+    const coalesced=event.getCoalescedEvents?.();
+    for(const sample of coalesced?.length?coalesced:[event]){
       const p=position(sample),prior=raw.at(-1);
       if(!prior||Math.hypot((p[0]-prior[0])*600,(p[1]-prior[1])*1300)>=1.3)
         raw.push(p);
