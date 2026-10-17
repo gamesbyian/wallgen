@@ -1,6 +1,7 @@
 import { OUTPUT_WIDTH, OUTPUT_HEIGHT, normalizeRecipe, resolveScene, encodeRecipe, decodeRecipe, newSeed, randomizeAllRecipe, respectSettingLocks, LOCKABLE_SETTINGS } from './model.js';
 import { drawWallpaper, presentNudgedArtwork } from './renderer.js';
 import { embedPngMetadata, extractPngRecipe, cleanMetadata, METADATA_FIELDS } from './png-metadata.js';
+import { installDrawTool } from './draw-path-ui.js';
 
 const form = document.getElementById('controls');
 const preview = document.getElementById('preview');
@@ -63,7 +64,8 @@ function showNotice(message){
   noticeTimer=setTimeout(()=>{if(notice.textContent===message)notice.textContent='';},5500);
 }
 function fromControls() {
-  const data={seed:seedInput.value,positionX:current.positionX,positionY:current.positionY};
+  const data={seed:seedInput.value,positionX:current.positionX,positionY:current.positionY,
+    customPath:current.customPath};
   for (const key of FIELDS) { const field=form.elements.namedItem(key); data[key]=field.dataset.inactive==='true'?current[key]:(field.type==='checkbox'?field.checked:field.value); }
   return normalizeRecipe(data);
 }
@@ -91,7 +93,8 @@ function toControls(recipe) {
  */
 function inactiveSettingKeys(recipe,scene){
   const inactive=new Set();
-  if(['straight','hairpin'].includes(scene.geometry))inactive.add('shapeFrequency'),inactive.add('shapeDepth');
+  if(['straight','hairpin','drawn'].includes(scene.geometry))inactive.add('shapeFrequency'),inactive.add('shapeDepth');
+  if(scene.geometry==='drawn')inactive.add('orientation');
   if(scene.geometry!=='hairpin')inactive.add('turnRadius');
   if(recipe.composition!=='repeat')inactive.add('repeatCount'),inactive.add('repeatSpacing');
   if(recipe.composition!=='floating')inactive.add('pathLength');
@@ -106,7 +109,7 @@ function inactiveSettingKeys(recipe,scene){
   if(recipe.lineStyle!=='dotted'||recipe.construction==='woven'){
     inactive.add('dotSize');inactive.add('dotSpacing');
   }
-  if(scene.orientation!=='diagonal'){
+  if(scene.orientation!=='diagonal'||scene.geometry==='drawn'){
     for(const key of ['diagonalRotation','mirrorHorizontal','mirrorVertical'])inactive.add(key);
   }
   if(recipe.lightingMood==='off'){
@@ -244,11 +247,26 @@ function render(recipe,{scroll=false,bypassLocks=false}={}) {
   document.getElementById('detailMaterial').textContent=titleCase(currentScene.materialSummary);
   favoriteButton.setAttribute('aria-pressed',String(isFavorite(current)));
   favoriteButton.textContent=isFavorite(current)?'♥':'♡';
+  drawTool.sync(current);
   document.getElementById('favoriteCount').textContent=String(favorites.length);
   syncURL();
   if(scroll) document.querySelector('.workspace-head').scrollIntoView({behavior:'smooth',block:'start'});
 }
 function changeRecipe(recipe,options={}){render(recipe,options);toControls(current);showResolvedSelections(currentScene);}
+const drawTool=installDrawTool({
+  getRecipe:()=>current,
+  onNotice:showNotice,
+  onApply:points=>{
+    const next=fromControls();
+    next.customPath=points;
+    next.geometry='drawn';
+    next.orientation='horizontal';
+    next.positionX=0;
+    next.positionY=0;
+    changeRecipe(next);
+    showNotice('Drawn path applied. Undo restores the previous wallpaper.');
+  },
+});
 function updatePositionStatus(){
   const label=document.getElementById('positionStatus');
   const x=current.positionX, y=current.positionY;
