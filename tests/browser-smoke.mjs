@@ -204,7 +204,8 @@ try{
       const categoryBtns=[...document.querySelectorAll('.settings-tabs .settings-tab')];
       const categoryR=categoryBtns.map(e=>e.getBoundingClientRect());
       const toolbar=rect('.editor-explore');
-      const toolbarFields=[...document.querySelectorAll('.editor-explore select:not([hidden]),.editor-explore button:not([hidden])')];
+      const toolbarFields=[...document.querySelectorAll('.editor-explore select:not([hidden]),.editor-explore button:not([hidden])')]
+        .filter(el=>el.getClientRects().length>0&&getComputedStyle(el).visibility!=='hidden');
       const fieldR=toolbarFields.map(e=>({name:e.id||e.textContent.trim(),b:e.getBoundingClientRect()}));
       const visible=el=>el.getClientRects().length>0&&getComputedStyle(el).visibility!=='hidden';
       const failures=[];
@@ -226,6 +227,7 @@ try{
         cardHeight:Math.round(card.height),cardScrollHeight:document.querySelector('.editor-tool-card:not([hidden])').scrollHeight,
         selectedToolVisible:chip.left>=strip.left-3&&chip.right<=strip.right+3,
         toolbarInside:fieldR.every(({b})=>b.left>=toolbar.left-3&&b.right<=toolbar.right+3&&b.top>=toolbar.top-3&&b.bottom<=toolbar.bottom+3),
+        toolbarOutliers:fieldR.filter(({b})=>b.left<toolbar.left-3||b.right>toolbar.right+3||b.top<toolbar.top-3||b.bottom>toolbar.bottom+3).map(({name,b})=>({name,left:Math.round(b.left-toolbar.left),top:Math.round(b.top-toolbar.top),right:Math.round(b.right-toolbar.right),bottom:Math.round(b.bottom-toolbar.bottom)})),
         selectedStyle:document.querySelector('[name=family]').selectedOptions[0].textContent,
         toolbarHeight:Math.round(toolbar.height),failures,
         selectorCount:allControls.filter(visible).length,
