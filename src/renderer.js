@@ -431,7 +431,8 @@ function fillMotif(ctx,stripe,extent,scene) {
   const across=Math.max(1,Math.ceil(stripe.width/(step*.83)));
   const stroke=Math.min(step*.19,Math.max(.55,stripe.width*.14));
   ctx.save();ctx.lineWidth=stroke;ctx.lineCap='round';ctx.lineJoin='round';
-  const spacing=Math.max(2.5,(motif==='dashes'?step*1.9:motif==='chevrons'?step*1.5:step)/motifRate);
+  const dotSpacingFactor=motif==='dots'?1.8-.95*scene.dotSpacing/100:1;
+  const spacing=Math.max(2.5,(motif==='dashes'?step*1.9:motif==='chevrons'?step*1.5:step)*dotSpacingFactor/motifRate);
   for(let x=-extent+spacing;x<extent-spacing;x+=spacing){
     for(let j=-across;j<=across;j++){
       if(motif==='checker' && ((Math.round((x+extent)/spacing)+j)&1)!==0)continue;
@@ -440,7 +441,8 @@ function fillMotif(ctx,stripe,extent,scene) {
       const jitter=scene.intensity*step*.10;
       const xx=x+(Math.abs(j)%2)*spacing*.35+(random()-.5)*jitter;
       const yy=geometryAt(xx,stripe,extent)+offset+(random()-.5)*jitter+textureHeight(scene,stripe,xx,0)*.3;
-      const radius=step*.28*variation.scale;
+      const radius=step*.28*variation.scale*
+        (motif==='dots'?.3+1.4*scene.dotSize/100:1);
       // Bounds include rotation; never clip a partly visible element.
       let bx=radius,by=radius;
       if(motif==='hatch'){bx=step*.34*variation.scale+stroke/2;by=bx;}
