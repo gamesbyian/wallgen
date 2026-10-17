@@ -9,7 +9,7 @@ const gallery = document.getElementById('gallery');
 const notice = document.getElementById('notice');
 const favoriteButton = document.getElementById('favorite');
 const FAVORITES_KEY = 'wallgen:favorites:v1';
-const FIELDS = ['primesOnly','family','composition','repeatCount','repeatSpacing','orientation','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','geometry','turnRadius','loopSize','construction','motif','lineStyle','tonalContrast','brushRoughness','dotSize','dotSpacing','endTaper','shapeFrequency','shapeDepth','palette','material','outline','background','lightingMood','lightDirection','lightStrength','shadowStrength','stripeShadowEnabled','stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection','textureCoverage','textureRotation','textureBlend','textureLayer2Enabled','material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2','textureLayer3Enabled','material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3','chaos','stripeWidth','spread','textureStrength','textureScale','textureDisplacement','individuality','patternHomogeneity','overridePatternHomogeneity','gap','glow'];
+const FIELDS = ['primesOnly','family','composition','repeatCount','repeatSpacing','orientation','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','geometry','turnRadius','construction','motif','lineStyle','tonalContrast','brushRoughness','dotSize','dotSpacing','endTaper','shapeFrequency','shapeDepth','palette','material','outline','background','lightingMood','lightDirection','lightStrength','shadowStrength','stripeShadowEnabled','stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection','textureCoverage','textureRotation','textureBlend','textureLayer2Enabled','material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2','textureLayer3Enabled','material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3','chaos','stripeWidth','spread','textureStrength','textureScale','textureDisplacement','individuality','patternHomogeneity','overridePatternHomogeneity','gap','glow'];
 let current = normalizeRecipe();
 let currentScene;
 const previewLayers={background:null,ink:null,scene:null,key:null};
@@ -74,7 +74,7 @@ function toControls(recipe) {
     const field=form.elements.namedItem(key);
     if(field.type==='checkbox')field.checked=current[key]; else field.value=current[key];
     const output=form.querySelector(`output[for="${key}"]`);
-    if(output) output.textContent=`${current[key]}%`;
+    if(output) output.textContent=key==='repeatCount'?String(current[key]):`${current[key]}%`;
     const numeric=form.querySelector(`[data-number-for="${key}"]`);
     if(numeric)numeric.value=current[key];
   }
@@ -93,7 +93,6 @@ function inactiveSettingKeys(recipe,scene){
   const inactive=new Set();
   if(['straight','hairpin'].includes(scene.geometry))inactive.add('shapeFrequency'),inactive.add('shapeDepth');
   if(scene.geometry!=='hairpin')inactive.add('turnRadius');
-  if(scene.geometry!=='loops')inactive.add('loopSize');
   if(recipe.composition!=='repeat')inactive.add('repeatCount'),inactive.add('repeatSpacing');
   if(recipe.construction!=='tonal')inactive.add('tonalContrast');
   if(recipe.construction!=='ribbon'){
@@ -101,7 +100,8 @@ function inactiveSettingKeys(recipe,scene){
   }else if(scene.motif==='solid'){
     inactive.add('patternHomogeneity');
   }
-  if(recipe.construction==='woven')inactive.add('lineStyle');
+  if(['woven','tonal'].includes(recipe.construction))inactive.add('lineStyle');
+  if(recipe.construction==='woven')inactive.add('brushRoughness');
   if(recipe.lineStyle!=='dotted'||recipe.construction==='woven'){
     inactive.add('dotSize');inactive.add('dotSpacing');
   }
@@ -165,7 +165,7 @@ function syncInactiveSettings(){
       const numeric=form.querySelector('[data-number-for="'+key+'"]');
       if(numeric)numeric.value=isInactive?'0':String(current[key]);
       const output=form.querySelector('output[for="'+key+'"]');
-      if(output)output.textContent=(isInactive?'0':current[key])+'%';
+      if(output)output.textContent=(isInactive?'0':current[key])+(key==='repeatCount'?'':'%');
     }else if(field.type==='checkbox'){
       field.checked=isInactive?false:!!current[key];
     }else if(field.tagName==='SELECT'){
