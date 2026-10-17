@@ -184,7 +184,7 @@ try{
   await evaluate('document.getElementById("addTextureLayer2").click()');
   await waitFor('document.getElementById("textureLayer2Panel").hidden===false');
   await evaluate('document.getElementById("tab-design").click()');
-  await evaluate('document.querySelector('[name="stripeShadowEnabled"]').click()');
+  await evaluate('document.querySelector("[name=stripeShadowEnabled]").click()');
   await waitFor('document.getElementById("stripeShadowControls").hidden===false');
   // Downward gesture dismisses; visible handle provides a keyboard/click fallback.
   await evaluate('document.getElementById("mobileDismissHandle").click()');
