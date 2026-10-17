@@ -1,6 +1,6 @@
 import { OUTPUT_WIDTH, OUTPUT_HEIGHT, normalizeRecipe, resolveScene, encodeRecipe, decodeRecipe, newSeed, randomizeAllRecipe, respectSettingLocks, LOCKABLE_SETTINGS } from './model.js';
 import { drawWallpaper, presentNudgedArtwork } from './renderer.js';
-import { embedPngMetadata, cleanMetadata, METADATA_FIELDS } from './png-metadata.js';
+import { embedPngMetadata, extractPngRecipe, cleanMetadata, METADATA_FIELDS } from './png-metadata.js';
 
 const form = document.getElementById('controls');
 const preview = document.getElementById('preview');
@@ -9,7 +9,7 @@ const gallery = document.getElementById('gallery');
 const notice = document.getElementById('notice');
 const favoriteButton = document.getElementById('favorite');
 const FAVORITES_KEY = 'wallgen:favorites:v1';
-const FIELDS = ['primesOnly','family','orientation','geometry','motif','lineStyle','shapeFrequency','shapeDepth','palette','material','outline','background','lightingMood','lightDirection','lightStrength','shadowStrength','stripeShadowEnabled','stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection','textureCoverage','textureRotation','textureBlend','textureLayer2Enabled','material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2','textureLayer3Enabled','material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3','chaos','stripeWidth','spread','textureStrength','textureScale','textureDisplacement','individuality','patternHomogeneity','overridePatternHomogeneity','gap','glow'];
+const FIELDS = ['primesOnly','family','orientation','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','geometry','motif','lineStyle','shapeFrequency','shapeDepth','palette','material','outline','background','lightingMood','lightDirection','lightStrength','shadowStrength','stripeShadowEnabled','stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection','textureCoverage','textureRotation','textureBlend','textureLayer2Enabled','material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2','textureLayer3Enabled','material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3','chaos','stripeWidth','spread','textureStrength','textureScale','textureDisplacement','individuality','patternHomogeneity','overridePatternHomogeneity','gap','glow'];
 let current = normalizeRecipe();
 let currentScene;
 const previewLayers={background:null,ink:null,scene:null,key:null};
@@ -80,7 +80,11 @@ function toControls(recipe) {
   }
   syncTextureLayerVisibility();
   syncStripeShadowUI();
+  syncDiagonalUI();
   syncSettingLocks();
+}
+function syncDiagonalUI(){
+  document.getElementById('diagonalSettings').hidden=form.elements.namedItem('orientation').value!=='diagonal';
 }
 function syncStripeShadowUI(){
   const enabled=form.elements.namedItem('stripeShadowEnabled').checked;
@@ -218,14 +222,33 @@ async function downloadPNG(){
     drawWallpaper(big,current);
     const blob=await new Promise((resolve,reject)=>big.toBlob(b=>b?resolve(b):reject(new Error('PNG encoding failed')),'image/png'));
     const metadata=metadataValues();
-    const result=Object.keys(metadata).length?
-      new Blob([embedPngMetadata(await blob.arrayBuffer(),metadata)],{type:'image/png'}):blob;
+    const result=new Blob([embedPngMetadata(await blob.arrayBuffer(),metadata,{recipe:current})],
+      {type:'image/png'});
     downloadBlob(result,`roygbiv-${safeFilename(current.seed)}-${OUTPUT_WIDTH}x${OUTPUT_HEIGHT}.png`);
-    showNotice(`Exported ${OUTPUT_WIDTH} × ${OUTPUT_HEIGHT} PNG with embedded metadata.`);
+    showNotice(`Exported ${OUTPUT_WIDTH} × ${OUTPUT_HEIGHT} PNG with regenerable recipe metadata.`);
   }catch(error){console.error(error);showNotice(`Export failed: ${error.message}`);}
   finally { if(big){big.width=0;big.height=0;}setBusy(button,false); }
 }
-function updateControlsFromInputs(){render(fromControls());}
+const importRecipeButton=document.getElementById('importRecipePNG');
+const importRecipeFile=document.getElementById('importRecipeFile');
+importRecipeButton.addEventListener('click',()=>importRecipeFile.click());
+importRecipeFile.addEventListener('change',async()=>{
+  const file=importRecipeFile.files?.[0];
+  importRecipeFile.value='';
+  if(!file)return;
+  try{
+    if(file.size>150*1024*1024)throw Error('PNG exceeds the 150 MB import limit');
+    const recipe=extractPngRecipe(await file.arrayBuffer());
+    if(!recipe)throw Error('This PNG has no R.O.Y.G.B.I.V. recipe metadata');
+    changeRecipe(recipe,{bypassLocks:true});
+    showNotice('Restored original wallpaper settings from PNG recipe.');
+  }catch(error){showNotice('Cannot restore design: '+error.message);}
+});
+
+function updateControlsFromInputs(){
+  syncDiagonalUI();
+  render(fromControls());
+}
 
 for(const slider of form.querySelectorAll('input[type="range"]')){
   const row=document.createElement('span');row.className='stepper';
@@ -420,6 +443,7 @@ form.addEventListener('input',event=>{
   }else {
     syncTextureLayerVisibility();
     syncStripeShadowUI();
+    syncDiagonalUI();
     updateControlsFromInputs();
   }
 });
