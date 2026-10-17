@@ -73,8 +73,15 @@ test('dot diameter and spacing independently affect real marks',()=>{
     dotSize:20,dotSpacing:20});
   const stripe=scene.stripes[3];
   const small=stripeLineMarks(stripe,scene.extent);
-  const larger=stripeLineMarks({...stripe,dotSize:95},scene.extent);
-  const spaced=stripeLineMarks({...stripe,dotSpacing:95},scene.extent);
+  const biggerScene=resolveScene({seed:'dot-columns',geometry:'straight',lineStyle:'dotted',
+    dotSize:95,dotSpacing:20});
+  const spacedScene=resolveScene({seed:'dot-columns',geometry:'straight',lineStyle:'dotted',
+    dotSize:20,dotSpacing:95});
+  const larger=stripeLineMarks(biggerScene.stripes[3],biggerScene.extent);
+  const spaced=stripeLineMarks(spacedScene.stripes[3],spacedScene.extent);
+  const synced=scene.stripes.map(s=>stripeLineMarks(s,scene.extent));
+  assert.ok(synced.every(m=>m[0].x===synced[0][0].x&&m[0].radius===synced[0][0].radius),
+    'all seven coloured columns share circular mark positions and sizes');
   assert.ok(small.length>4);
   assert.ok(larger[0].radius>small[0].radius);
   assert.ok(spaced.length<small.length);
