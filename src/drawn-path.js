@@ -8,6 +8,9 @@ const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const distance=(a,b)=>Math.hypot((a[0]-b[0])*PATH_WIDTH,(a[1]-b[1])*PATH_HEIGHT);
 const interpolate=(a,b,t)=>[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t];
 const round=x=>Math.round(x*100000)/100000;
+// Extra-frame strokes retain real off-canvas coordinates for natural entry/exit.
+export const DRAW_COORD_MIN=-2;
+export const DRAW_COORD_MAX=3;
 
 export function normalizeDrawnPath(input){
   if(!Array.isArray(input))return [];
@@ -16,7 +19,7 @@ export function normalizeDrawnPath(input){
     if(!Array.isArray(point)||point.length<2)continue;
     const x=Number(point[0]),y=Number(point[1]);
     if(!Number.isFinite(x)||!Number.isFinite(y))continue;
-    const next=[round(clamp(x,0,1)),round(clamp(y,0,1))];
+    const next=[round(clamp(x,DRAW_COORD_MIN,DRAW_COORD_MAX)),round(clamp(y,DRAW_COORD_MIN,DRAW_COORD_MAX))];
     if(!points.length||distance(next,points.at(-1))>=.75)points.push(next);
   }
   if(points.length<2)return [];
@@ -98,6 +101,53 @@ function regularize(points){
   return soften(ends,2);
 }
 
+// Evenly sampled Gaussian fairing damps high-frequency wobble in both axes,
+// rather than merely cutting corners. Retain the original endpoints exactly.
+export function fairPath(points,{radius=5,sigma=2.6,passes=2}={}){
+  if(points.length<4)return points.map(p=>p.slice());
+  let current=points.map(p=>p.slice());
+  const weights=Array.from({length:2*radius+1},(_,k)=>
+    Math.exp(-.5*((k-radius)/sigma)**2));
+  for(let pass=0;pass<passes;pass++){
+    const next=current.map((p,i)=>{
+      if(i===0||i===current.length-1)return p.slice();
+      let x=0,y=0,total=0;
+      for(let k=-radius;k<=radius;k++){
+        const j=clamp(i+k,0,current.length-1),w=weights[k+radius];
+        x+=current[j][0]*w;y+=current[j][1]*w;total+=w;
+      }
+      return [x/total,y/total];
+    });
+    current=next;
+  }
+  return current;
+}
+
+// Centripetal Catmull-Rom yields curved but locally stable interpolation:
+// close control points cannot generate giant overshooting handles.
+function catmullPoint(a,b,c,d,t){
+  const dt=(p,q)=>Math.max(.00001,Math.sqrt(Math.sqrt(
+    ((q[0]-p[0])*PATH_WIDTH)**2+((q[1]-p[1])*PATH_HEIGHT)**2)));
+  const t0=0,t1=dt(a,b),t2=t1+dt(b,c),t3=t2+dt(c,d);
+  const u=t1+(t2-t1)*t;
+  const blend=(p,q,l,r)=>interpolate(p,q,(u-l)/(r-l||1));
+  const a1=blend(a,b,t0,t1),a2=blend(b,c,t1,t2),a3=blend(c,d,t2,t3);
+  const b1=blend(a1,a2,t0,t2),b2=blend(a2,a3,t1,t3);
+  return blend(b1,b2,t1,t2);
+}
+export function curveThrough(points){
+  if(points.length<3)return points.map(p=>p.slice());
+  const out=[points[0].slice()];
+  for(let i=0;i<points.length-1;i++){
+    const a=points[Math.max(i-1,0)],b=points[i],
+      c=points[i+1],d=points[Math.min(i+2,points.length-1)];
+    const segments=Math.max(2,Math.ceil(distance(b,c)/9));
+    for(let j=1;j<=segments;j++)
+      out.push(j===segments?c.slice():catmullPoint(a,b,c,d,j/segments));
+  }
+  return out;
+}
+
 export function finishDrawnPath(raw,mode='smooth'){
   if(!Array.isArray(raw)||raw.length<2)return [];
   // Coalesce very dense pointer events before smoothing, with no dependence
@@ -105,15 +155,20 @@ export function finishDrawnPath(raw,mode='smooth'){
   const clean=[];
   for(const p of raw.slice(0,8000)){
     if(!Array.isArray(p)||!Number.isFinite(Number(p[0]))||!Number.isFinite(Number(p[1])))continue;
-    const next=[clamp(Number(p[0]),0,1),clamp(Number(p[1]),0,1)];
+    const next=[clamp(Number(p[0]),DRAW_COORD_MIN,DRAW_COORD_MAX),clamp(Number(p[1]),DRAW_COORD_MIN,DRAW_COORD_MAX)];
     if(!clean.length||distance(next,clean.at(-1))>=1.5)clean.push(next);
   }
   if(clean.length<2)return [];
   const total=clean.slice(1).reduce((sum,p,i)=>sum+distance(p,clean[i]),0);
   if(total<35)return [];
-  const anchors=simplifyPath(clean,mode==='geometric'?12:2.5);
-  const shaped=mode==='geometric'?regularize(anchors):soften(anchors,2);
-  const points=resamplePath(shaped,Math.max(2,Math.min(MAX_DRAWN_POINTS,Math.ceil(total/8))));
+  // Resample uniformly before fairing so varying pointer-event rates do not
+  // alter the smoothing radius. Geometric mode regularizes intentional lines;
+  // Smooth mode uses stronger low-frequency curvature fairing.
+  const even=resamplePath(clean,Math.min(500,Math.max(8,Math.ceil(total/7))));
+  const shaped=mode==='geometric'?
+    curveThrough(regularize(simplifyPath(fairPath(even,{radius:3,passes:1}),10))):
+    curveThrough(fairPath(even,{radius:7,sigma:3.2,passes:3}));
+  const points=resamplePath(shaped,Math.max(2,Math.min(MAX_DRAWN_POINTS,Math.ceil(total/9))));
   return normalizeDrawnPath(points);
 }
 
