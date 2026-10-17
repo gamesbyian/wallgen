@@ -53,8 +53,9 @@ function staticServer(){
       const pathname=decodeURIComponent(url.pathname);
       const file=resolve(root,'.'+pathname);
       if(!file.startsWith(root+'/')&&file!==root){res.writeHead(403).end();return;}
-      const data=await readFile(file===root?join(root,'index.html'):file);
-      res.writeHead(200,{'Content-Type':types[extname(file)]||'application/octet-stream',
+      const target=file===root?join(root,'index.html'):file;
+      const data=await readFile(target);
+      res.writeHead(200,{'Content-Type':types[extname(target)]||'application/octet-stream',
         'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});
       res.end(data);
     }catch{res.writeHead(404).end('Not found');}
