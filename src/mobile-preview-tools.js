@@ -41,6 +41,7 @@ function setZoom(next){
   stage.style.setProperty('--mobile-preview-zoom',String(zoom));
   zoomValue.textContent=Math.round(zoom*100)+'%';
   zoomIn.disabled=zoom>=2.5;zoomOut.disabled=zoom<=.5;
+  stage.dispatchEvent(new Event('roygbiv-preview-zoom'));
 }
 zoomIn.addEventListener('click',()=>setZoom(zoom+.10));
 zoomOut.addEventListener('click',()=>setZoom(zoom-.10));
