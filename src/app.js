@@ -1,5 +1,5 @@
-import { OUTPUT_WIDTH, OUTPUT_HEIGHT, normalizeRecipe, resolveScene, encodeRecipe, decodeRecipe, newSeed, randomizeAllRecipe } from './model.js';
-import { drawWallpaper } from './renderer.js';
+import { OUTPUT_WIDTH, OUTPUT_HEIGHT, normalizeRecipe, resolveScene, encodeRecipe, decodeRecipe, newSeed, randomizeAllRecipe, respectSettingLocks, LOCKABLE_SETTINGS } from './model.js';
+import { drawWallpaper, presentNudgedArtwork } from './renderer.js';
 
 const form = document.getElementById('controls');
 const preview = document.getElementById('preview');
@@ -11,6 +11,13 @@ const FAVORITES_KEY = 'wallgen:favorites:v1';
 const FIELDS = ['family','orientation','geometry','motif','palette','material','outline','background','textureCoverage','textureRotation','textureBlend','textureLayer2Enabled','material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2','textureLayer3Enabled','material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3','chaos','stripeWidth','spread','textureStrength','textureScale','textureDisplacement','individuality','patternHomogeneity','overridePatternHomogeneity','gap','glow'];
 let current = normalizeRecipe();
 let currentScene;
+const previewLayers={background:null,ink:null,scene:null,key:null};
+const settingLockButtons=new Map();
+const autos=['family','orientation','geometry','motif','palette','material','outline'];
+function artKey(recipe){
+  const {positionX,positionY,lockedSettings,...art}=normalizeRecipe(recipe);
+  return JSON.stringify(art);
+}
 let noticeTimer = 0;
 let galleryRequestId = 0;
 let favorites = readFavorites();
@@ -32,7 +39,7 @@ function undo(){
   clearTimeout(rangeTimeout);
   const previous=undoStack.pop();
   undoing=true;
-  try{changeRecipe(previous);showNotice('Undid last design change.');}finally{undoing=false;updateUndoButton();}
+  try{changeRecipe(previous,{bypassLocks:true});showNotice('Undid last design change.');}finally{undoing=false;updateUndoButton();}
 }
 
 function readFavorites() {
@@ -69,6 +76,7 @@ function toControls(recipe) {
     if(numeric)numeric.value=current[key];
   }
   syncTextureLayerVisibility();
+  syncSettingLocks();
 }
 function syncTextureLayerVisibility(){
   const two=!!form.elements.namedItem('textureLayer2Enabled').checked;
@@ -77,6 +85,8 @@ function syncTextureLayerVisibility(){
   document.getElementById('textureLayer3Panel').hidden=!three;
   document.getElementById('addTextureLayer2').hidden=two;
   document.getElementById('addTextureLayer3').hidden=!two || three;
+  document.getElementById('addTextureLayer2').parentElement.hidden=two;
+  document.getElementById('addTextureLayer3').parentElement.hidden=!two || three;
 }
 function syncURL() {
   try {
@@ -86,9 +96,19 @@ function syncURL() {
   } catch { /* Local file previews may prohibit History API. */ }
 }
 function titleCase(value){return value.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase());}
-function render(recipe,{scroll=false}={}) {
-  current=checkpoint(recipe);
-  currentScene=drawWallpaper(preview,current);
+function render(recipe,{scroll=false,bypassLocks=false}={}) {
+  const next=bypassLocks?normalizeRecipe(recipe):respectSettingLocks(current,recipe);
+  current=checkpoint(next);
+  const key=artKey(current);
+  if(previewLayers.key===key && previewLayers.ink && previewLayers.background){
+    // The directional buttons only blit these two cached bitmaps.
+    presentNudgedArtwork(preview,previewLayers,current);
+    currentScene=previewLayers.scene;
+  }else{
+    currentScene=drawWallpaper(preview,current,{cache:previewLayers});
+    previewLayers.key=key;
+    previewLayers.scene=currentScene;
+  }
   updatePositionStatus();
   showResolvedSelections(currentScene);
   document.getElementById('detailFamily').textContent=titleCase(currentScene.family);
@@ -100,14 +120,15 @@ function render(recipe,{scroll=false}={}) {
   syncURL();
   if(scroll) document.querySelector('.workspace-head').scrollIntoView({behavior:'smooth',block:'start'});
 }
-function changeRecipe(recipe,options={}){const next=normalizeRecipe(recipe);render(next,options);toControls(next);}
+function changeRecipe(recipe,options={}){render(recipe,options);toControls(current);showResolvedSelections(currentScene);}
 function updatePositionStatus(){
   const label=document.getElementById('positionStatus');
   const x=current.positionX, y=current.positionY;
+  for(const button of document.querySelectorAll('[data-nudge]'))button.disabled=current.lockedSettings.includes('position');
   label.textContent=x===0&&y===0?'Default position':
     `X ${x>0?'+':''}${x}% · Y ${y>0?'+':''}${y}%`;
   const reset=document.querySelector('[data-nudge="reset"]');
-  reset.disabled=x===0&&y===0;
+  reset.disabled=(x===0&&y===0)||current.lockedSettings.includes('position');
 }
 const NUDGE_STEP=2;
 for(const button of document.querySelectorAll('[data-nudge]')){
@@ -188,7 +209,7 @@ for(const slider of form.querySelectorAll('input[type="range"]')){
     });
   }
 }
-const automaticKeys=['family','orientation','geometry','motif','palette','material','outline'];
+const automaticKeys=autos;
 for(const key of automaticKeys){
   const select=form.elements.namedItem(key),hint=document.createElement('small');
   hint.className='resolved-selection';hint.dataset.resolved=key;select.insertAdjacentElement('afterend',hint);
@@ -201,6 +222,95 @@ function showResolvedSelections(scene){
     hint.hidden=!auto;
   }
 }
+
+// One unobtrusive lock control is added beside every editable setting.
+function makeSettingLock(key,host){
+  const button=document.createElement('button');
+  button.type='button';button.className='setting-lock';button.dataset.lockKey=key;
+  button.addEventListener('click',event=>{
+    event.preventDefault();event.stopPropagation();
+    const next={...current,lockedSettings:[...current.lockedSettings],lockedResolved:{...current.lockedResolved}};
+    const locked=next.lockedSettings.includes(key);
+    if(locked){
+      next.lockedSettings=next.lockedSettings.filter(k=>k!==key);
+      delete next.lockedResolved[key];
+    }else{
+      next.lockedSettings.push(key);
+      if(autos.includes(key)&&current[key]==='auto'){
+        next.lockedResolved[key]=currentScene[key];
+      }
+    }
+    changeRecipe(next,{bypassLocks:true});
+  });
+  host.append(button);
+  if(!settingLockButtons.has(key))settingLockButtons.set(key,[]);
+  settingLockButtons.get(key).push(button);
+}
+function installSettingLocks(){
+  for(const key of FIELDS){
+    if(key==='textureLayer2Enabled'||key==='textureLayer3Enabled')continue;
+    const field=form.elements.namedItem(key);
+    const label=field.closest('label');
+    if(label){
+      const wrapper=document.createElement('div');wrapper.className='lockable-setting';
+      label.parentNode.insertBefore(wrapper,label);
+      wrapper.append(label);
+      makeSettingLock(key,wrapper);
+    }else{
+      const rotation=field.closest('.texture-rotation-field');
+      if(rotation){rotation.classList.add('lockable-setting');makeSettingLock(key,rotation);}
+    }
+  }
+  for(const n of [2,3]){
+    const key='textureLayer'+n+'Enabled';
+    const add=document.getElementById('addTextureLayer'+n);
+    const row=document.createElement('div');row.className='layer-add-lock';
+    add.parentNode.insertBefore(row,add);row.append(add);
+    makeSettingLock(key,row);
+    const header=document.querySelector('#textureLayer'+n+'Panel .texture-layer-panel-head');
+    if(header)makeSettingLock(key,header);
+  }
+  const seedGroup=seedInput.closest('.seed-group');
+  const seedRow=document.createElement('div');seedRow.className='seed-lock-row';
+  seedGroup.parentNode.insertBefore(seedRow,seedGroup);seedRow.append(seedGroup);
+  makeSettingLock('seed',seedRow);
+  makeSettingLock('position',document.querySelector('.positioner-description'));
+}
+function syncSettingLocks(){
+  const locked=new Set(current.lockedSettings);
+  for(const [key,buttons] of settingLockButtons){
+    for(const button of buttons){
+      button.textContent=locked.has(key)?'🔒':'🔓';
+      button.setAttribute('aria-pressed',String(locked.has(key)));
+      button.setAttribute('aria-label',(locked.has(key)?'Unlock ':'Lock ')+key);
+      button.title=locked.has(key)?'Locked. Click to allow changes.':'Unlocked. Click to protect this setting.';
+      button.classList.toggle('is-locked',locked.has(key));
+    }
+    if(key==='position')continue;
+    const field=key==='seed'?seedInput:form.elements.namedItem(key);
+    if(!field)continue;
+    field.disabled=locked.has(key);
+    if(key==='seed')document.getElementById('applySeed').disabled=locked.has(key);
+    if(field.type==='range'){
+      const wrapper=field.closest('.lockable-setting');
+      if(wrapper){
+        for(const el of wrapper.querySelectorAll('.step-button,.slider-number'))el.disabled=locked.has(key);
+      }
+    }
+    if(key.startsWith('textureLayer')&&key.endsWith('Enabled')){
+      const n=key.includes('2')?'2':'3';
+      document.getElementById('addTextureLayer'+n).disabled=locked.has(key);
+      document.getElementById('removeTextureLayer'+n).disabled=locked.has(key);
+    }
+    if(key.startsWith('textureRotation')){
+      for(const btn of document.querySelectorAll('[data-rotate-target="'+key+'"]'))btn.disabled=locked.has(key);
+    }
+  }
+  for(const button of document.querySelectorAll('[data-nudge]')){
+    button.disabled=locked.has('position') || (button.dataset.nudge==='reset' && current.positionX===0 && current.positionY===0);
+  }
+}
+installSettingLocks();
 
 let rangeTimeout;
 form.addEventListener('input',event=>{
@@ -225,7 +335,9 @@ form.addEventListener('submit',event=>event.preventDefault());
 seedInput.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();render(fromControls());}});
 document.getElementById('applySeed').addEventListener('click',()=>render(fromControls()));
 document.getElementById('randomize').addEventListener('click',()=>changeRecipe({...fromControls(),seed:newSeed()}));
-document.getElementById('randomizeAll').addEventListener('click',()=>changeRecipe(randomizeAllRecipe()));
+document.getElementById('randomizeAll').addEventListener('click',()=>{
+  changeRecipe(randomizeAllRecipe());
+});
 for(const n of [2,3]){
   document.getElementById('addTextureLayer'+n).addEventListener('click',()=>{
     const next=fromControls();

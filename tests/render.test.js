@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { drawWallpaper, motifFits, balanceStripeEnds, stripeFrameContacts, textureHeight } from '../src/renderer.js';
+import { drawWallpaper, presentNudgedArtwork, motifFits, balanceStripeEnds, stripeFrameContacts, textureHeight } from '../src/renderer.js';
 import { MATERIALS, MOTIFS, GEOMETRIES, OUTLINES, resolveScene } from '../src/model.js';
 
 // Node's lightweight Canvas API spy catches geometry/material code path errors
@@ -15,7 +15,7 @@ class FakeContext {
   clearRect(){} beginPath(){} moveTo(){} lineTo(){} closePath(){}
   arc(){} quadraticCurveTo(){} clip(){calls.push(['clip',this.tag]);} stroke(){} setLineDash(){}
   fill(){} fillRect(...args){calls.push(['fillRect',this.fillStyle,...args,this.tag]);}
-  drawImage(){calls.push(['drawImage',this.globalCompositeOperation,this.tag]);}
+  drawImage(_src,...args){calls.push(['drawImage',this.globalCompositeOperation,this.tag,...args]);}
   createPattern(){return '#pattern';}
   createRadialGradient(){return {addColorStop(){}};}
 }
@@ -160,4 +160,36 @@ test('rough material and fine motif rendering complete together without clipping
     textureDisplacement:85,material:'stone',textureCoverage:'stripes',
     textureLayer2Enabled:true,material2:'felt',textureCoverage2:'stripes'}));
   assert.ok(!calls.some(c=>c[0]==='clip'));
+});
+
+test('nudge repaints cached completed layers without redrawing any geometry',()=>{
+  const canvas={width:600,height:1300,getContext:()=>new FakeContext('main')};
+  const cache={};
+  const recipe={seed:'nudge-cache',material:'stucco',motif:'stars',textureDisplacement:100,
+    individuality:100,chaos:100,outline:'double',glow:55};
+  const base=drawWallpaper(canvas,{...recipe,positionX:0,positionY:0},{cache});
+  assert.ok(cache.background && cache.ink);
+  calls.length=0;
+  presentNudgedArtwork(canvas,cache,{positionX:12,positionY:-8});
+  assert.deepEqual(calls,[
+    ['drawImage','source-over','main',0,0],
+    ['drawImage','source-over','main',72,-104],
+  ]);
+  assert.equal(base.positionX,0);
+  const moved=resolveScene({...recipe,positionX:12,positionY:-8});
+  assert.equal(moved.centerX,base.centerX);
+  assert.equal(moved.centerY,base.centerY);
+  assert.deepEqual(moved.stripes,base.stripes.map(({segmentStart,segmentEnd,hidden,...stripe})=>stripe));
+});
+test('nudge at export dimensions is a scaled bitmap translation, not recapping stripes',()=>{
+  calls.length=0;
+  const canvas={width:3024,height:6552,getContext:()=>new FakeContext('main')};
+  const scene=drawWallpaper(canvas,{seed:'export-pan',orientation:'diagonal',positionX:-10,positionY:7});
+  const draws=calls.filter(x=>x[0]==='drawImage' && x[2]==='main');
+  const last=draws.at(-1);
+  assert.equal(last[3],-302.4);
+  assert.ok(Math.abs(last[4]-458.64)<1e-7);
+  const base=resolveScene({seed:'export-pan',orientation:'diagonal'});
+  assert.equal(scene.centerX,base.centerX);
+  assert.equal(scene.centerY,base.centerY);
 });

@@ -9,6 +9,12 @@ export const GEOMETRIES = ['straight', 'wave', 'zigzag', 'jagged', 'stepped', 'a
 export const MOTIFS = ['solid', 'dots', 'stars', 'dashes', 'diamonds', 'chevrons', 'hatch', 'checker'];
 export const MATERIALS = ['none', 'grain', 'watercolor', 'construction', 'handmade', 'linen', 'canvas', 'denim', 'knit', 'felt', 'corduroy', 'corrugated', 'concrete', 'stucco', 'stone', 'drywall', 'wood-grain', 'vinyl-sheet', 'foil', 'glossy-paper', 'adobe'];
 export const BLEND_MODES = ['normal', 'multiply', 'screen', 'overlay', 'soft-light', 'difference'];
+export const LOCKABLE_SETTINGS = ['seed','family','orientation','geometry','motif','palette','outline','background',
+  'material','textureCoverage','textureStrength','textureScale','textureRotation','textureBlend',
+  'textureLayer2Enabled','material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2',
+  'textureLayer3Enabled','material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3',
+  'textureDisplacement','patternHomogeneity','chaos','stripeWidth','spread','individuality',
+  'overridePatternHomogeneity','gap','glow','position'];
 export const PALETTES = ['classic', 'electric', 'pastel', 'jewel', 'muted'];
 export const TEXTURE_COVERAGES = ['both', 'stripes', 'background'];
 export const OUTLINES = ['none', 'hairline', 'white', 'double', 'broken', 'one-side', 'black', 'black-hairline', 'black-double', 'black-broken', 'black-one-side'];
@@ -43,6 +49,11 @@ export const normalizeRotation = (value, fallback = 0) => {
 const materialChoice = (value, fallback = 'none') => value === 'courduroy' ? 'corduroy' : MATERIALS.includes(value) ? value : fallback;
 const coverageChoice = (value) => TEXTURE_COVERAGES.includes(value) ? value : 'both';
 const blendChoice = (value) => BLEND_MODES.includes(value) ? value : 'normal';
+const AUTO_CHOICES = {
+  family:FAMILIES, orientation:['vertical','horizontal','diagonal'],
+  geometry:GEOMETRIES, motif:MOTIFS, palette:PALETTES,
+  material:MATERIALS, outline:OUTLINES,
+};
 
 export function normalizeRecipe(input = {}) {
   const readChoice = (key, allowed) => allowed.includes(input[key]) ? input[key] : 'auto';
@@ -50,6 +61,11 @@ export function normalizeRecipe(input = {}) {
   return {
     version: 1,
     seed,
+    lockedSettings: LOCKABLE_SETTINGS.filter(key=>Array.isArray(input.lockedSettings) && input.lockedSettings.includes(key)),
+    lockedResolved: Object.fromEntries(Object.entries(AUTO_CHOICES)
+      .filter(([key, choices])=>Array.isArray(input.lockedSettings) &&
+        input.lockedSettings.includes(key) && choices.includes(input.lockedResolved?.[key]))
+      .map(([key])=>[key,input.lockedResolved[key]])),
     family: readChoice('family', FAMILIES),
     orientation: readChoice('orientation', ['vertical', 'horizontal', 'diagonal']),
     geometry: readChoice('geometry', GEOMETRIES),
@@ -114,14 +130,16 @@ function paletteHsl(hue, palette, r) {
 export function resolveScene(recipeInput) {
   const recipe = normalizeRecipe(recipeInput);
   const random = rng(recipe.seed);
-  const family = recipe.family === 'auto' ? pick(random, FAMILIES) : recipe.family;
+  const keepAuto=(key,value)=>recipe.lockedSettings.includes(key) &&
+    recipe[key]==='auto' && AUTO_CHOICES[key]?.includes(recipe.lockedResolved[key]) ? recipe.lockedResolved[key] : value;
+  const family = keepAuto('family',recipe.family === 'auto' ? pick(random, FAMILIES) : recipe.family);
   const profile = PROFILES[family];
-  const orientation = recipe.orientation === 'auto' ? pick(random, ['vertical', 'vertical', 'diagonal', 'horizontal']) : recipe.orientation;
-  const geometry = recipe.geometry === 'auto' ? profile.geometry : recipe.geometry;
-  const motif = recipe.motif === 'auto' ? profile.motif : recipe.motif;
-  const palette = recipe.palette === 'auto' ? profile.palette : recipe.palette;
-  const material = recipe.material === 'auto' ? profile.material : recipe.material;
-  const outline = recipe.outline === 'auto' ? profile.outline : recipe.outline;
+  const orientation = keepAuto('orientation',recipe.orientation === 'auto' ? pick(random, ['vertical', 'vertical', 'diagonal', 'horizontal']) : recipe.orientation);
+  const geometry = keepAuto('geometry',recipe.geometry === 'auto' ? profile.geometry : recipe.geometry);
+  const motif = keepAuto('motif',recipe.motif === 'auto' ? profile.motif : recipe.motif);
+  const palette = keepAuto('palette',recipe.palette === 'auto' ? profile.palette : recipe.palette);
+  const material = keepAuto('material',recipe.material === 'auto' ? profile.material : recipe.material);
+  const outline = keepAuto('outline',recipe.outline === 'auto' ? profile.outline : recipe.outline);
   const chaos = recipe.chaos / 100;
   const individuality = recipe.individuality / 100;
   let angle = orientation === 'vertical' ? Math.PI / 2 : orientation === 'horizontal' ? 0 : (pick(random, [-1, 1]) * between(random, 0.30, 1.08));
@@ -192,11 +210,26 @@ export function resolveScene(recipeInput) {
   return {
     ...recipe, family, orientation, geometry, motif, palette, material, materialSummary, textureLayers, outline, background: recipe.background, angle, span,
     stripes, intensity: chaos, width: avg, extent: Math.hypot(DESIGN_WIDTH, DESIGN_HEIGHT) * 1.35,
-    centerX: DESIGN_WIDTH / 2 + between(random, -1, 1) * DESIGN_WIDTH * 0.055 + DESIGN_WIDTH * recipe.positionX / 100,
-    centerY: DESIGN_HEIGHT / 2 + between(random, -1, 1) * DESIGN_HEIGHT * 0.065 + DESIGN_HEIGHT * recipe.positionY / 100,
+    // These positions are the canonical, unnudged geometry. Pan is applied only
+    // when compositing the finished stripe ink, never while solving/capping it.
+    centerX: DESIGN_WIDTH / 2 + between(random, -1, 1) * DESIGN_WIDTH * 0.055,
+    centerY: DESIGN_HEIGHT / 2 + between(random, -1, 1) * DESIGN_HEIGHT * 0.065,
   };
 }
 
+/** Preserve all locked controls, including seed and the two-axis position. */
+export function respectSettingLocks(currentInput, nextInput) {
+  const current=normalizeRecipe(currentInput);
+  const next=normalizeRecipe(nextInput);
+  const locked=new Set(current.lockedSettings);
+  for(const key of locked) {
+    if(key==='position') {next.positionX=current.positionX;next.positionY=current.positionY;}
+    else next[key]=current[key];
+  }
+  next.lockedSettings=[...current.lockedSettings];
+  next.lockedResolved={...current.lockedResolved};
+  return normalizeRecipe(next);
+}
 export function encodeRecipe(recipe) {
   return encodeURIComponent(JSON.stringify(normalizeRecipe(recipe)));
 }

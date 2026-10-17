@@ -422,7 +422,18 @@ function drawOutline(ctx,path,stripe,scene) {
   ctx.restore();
 }
 
-export function drawWallpaper(canvas, recipe) {
+/** Repaint only the two cached bitmaps. No solving, balancing or regeneration. */
+export function presentNudgedArtwork(canvas, layers, recipe) {
+  if(!layers?.background || !layers?.ink)throw new Error('No original composition to nudge');
+  const ctx=canvas.getContext('2d',{alpha:false});
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.drawImage(layers.background,0,0);
+  ctx.drawImage(layers.ink,canvas.width*(recipe.positionX||0)/100,
+    canvas.height*(recipe.positionY||0)/100);
+}
+
+export function drawWallpaper(canvas, recipe, options={}) {
   const scene=resolveScene(recipe);
   const ctx=canvas.getContext('2d', { alpha: false });
   if(!ctx) throw new Error('Canvas 2D is not supported by this browser.');
@@ -493,6 +504,15 @@ export function drawWallpaper(canvas, recipe) {
     g.save();g.setTransform(1,0,0,1,0,0);
     g.globalCompositeOperation=blend(layer);g.drawImage(scratch,0,0);g.restore();
   }
-  ctx.drawImage(ink,0,0);
+  // Background stays fixed; the *already clipped, immutable* stripe layer is
+  // translated as one image. No stripe is re-ended/re-sized because of a nudge.
+  if(options.cache) {
+    const background=document.createElement('canvas');
+    background.width=canvas.width;background.height=canvas.height;
+    background.getContext('2d').drawImage(canvas,0,0);
+    options.cache.background=background;
+    options.cache.ink=ink;
+  }
+  ctx.drawImage(ink,canvas.width*scene.positionX/100,canvas.height*scene.positionY/100);
   return scene;
 }
