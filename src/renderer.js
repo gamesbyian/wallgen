@@ -64,15 +64,17 @@ export function stripeLineMarks(stripe,extent){
   const type=stripe.lineStyle;
   const dotFactor=0.4+(stripe.dotSize??50)/100*1.2;
   const spacingFactor=.55+(stripe.dotSpacing??50)/100*1.35;
-  const pitch=Math.max(type==='dotted'?12:26,
-    stripe.width*(type==='dotted'?2.15:5.3)*spacingFactor*dotFactor);
+  const pitch=type==='dotted'&&stripe.dotPitch ?
+    stripe.dotPitch : Math.max(type==='dotted'?12:26,
+      stripe.width*(type==='dotted'?2.15:5.3)*spacingFactor*dotFactor);
   const marks=[];
   const first=Math.max(0,Math.floor((start+extent)/pitch)-1);
   const last=Math.ceil((end+extent)/pitch)+1;
   for(let i=first;i<=last;i++){
     const origin=-extent+i*pitch;
     if(type==='dotted'){
-      const x=origin+pitch*.5,radius=Math.min(stripe.width*.43*dotFactor,pitch*.42);
+      const x=origin+pitch*.5,radius=Math.min(
+        stripe.dotRadius??(stripe.width*.43*dotFactor),pitch*.43);
       if(x-radius>=start && x+radius<=end)marks.push({type:'dot',x,radius});
     }else{
       const from=Math.max(start,origin+pitch*.08);
