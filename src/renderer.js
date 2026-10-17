@@ -437,8 +437,9 @@ function drawOutline(ctx,path,stripe,scene) {
 // ribbons, their silhouettes, and the cached unlit/nudged composition.
 export function applyCanvasAtmosphere(ctx,width,height,recipe){
   if(recipe.lightingMood==='off'||(!recipe.lightStrength&&!recipe.shadowStrength))return;
-  const fromRight=recipe.lightDirection.endsWith('right');
-  const fromBottom=recipe.lightDirection.startsWith('bottom');
+  const direction=recipe.lightDirection||'top-left';
+  const fromRight=direction.endsWith('right');
+  const fromBottom=direction.startsWith('bottom');
   const x=fromRight?width:0,y=fromBottom?height:0;
   const farX=width-x,farY=height-y;
   const light=recipe.lightingMood==='golden'?[255,204,133]:
@@ -464,9 +465,37 @@ export function applyCanvasAtmosphere(ctx,width,height,recipe){
   }
   ctx.restore();
 }
+// Optional silhouette shadow, composited behind the completed image.
+// It is separate from the stationary, whole-canvas atmospheric illumination.
+// The cached ink remains immutable, so nudge cannot reshape stripe geometry.
+export function stripeShadowParameters(recipe,scale=1){
+  if(!recipe.stripeShadowEnabled || recipe.stripeShadowStrength<=0)return null;
+  const strength=recipe.stripeShadowStrength/100;
+  const softness=recipe.stripeShadowSoftness/100;
+  const direction=recipe.stripeShadowDirection||'top-left';
+  const x=(direction.endsWith('right')?-1:1);
+  const y=(direction.startsWith('bottom')?-1:1);
+  const distance=5*scale;
+  return {
+    color:`rgba(11, 12, 21, ${(.65*strength).toFixed(4)})`,
+    blur:(1+16*softness)*scale,
+    x:x*distance,
+    y:y*distance,
+  };
+}
 function drawFinishedInk(ctx,ink,recipe){
-  ctx.drawImage(ink,ink.width*(recipe.positionX||0)/100,
-    ink.height*(recipe.positionY||0)/100);
+  const dx=ink.width*(recipe.positionX||0)/100;
+  const dy=ink.height*(recipe.positionY||0)/100;
+  ctx.save();
+  const shadow=stripeShadowParameters(recipe,ink.width/DESIGN_WIDTH);
+  if(shadow){
+    ctx.shadowColor=shadow.color;
+    ctx.shadowBlur=shadow.blur;
+    ctx.shadowOffsetX=shadow.x;
+    ctx.shadowOffsetY=shadow.y;
+  }
+  ctx.drawImage(ink,dx,dy);
+  ctx.restore();
 }
 /** Repaint only the two cached bitmaps. No solving, balancing or regeneration. */
 export function presentNudgedArtwork(canvas, layers, recipe) {

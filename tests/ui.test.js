@@ -34,7 +34,7 @@ test('Explore Variations belongs to the preview workspace, not the full-width la
   assert.ok(css.includes('.workspace>.gallery-section .gallery-grid'));
 });
 
-test('compact primes-only randomizer sits above the design tab and stays lockable',()=>{
+test('balanced primes-only randomizer sits above the design tab without a lock',()=>{
   const button=html.indexOf('id="randomizeAll"');
   const primes=html.indexOf('name="primesOnly"');
   const nav=html.indexOf('class="settings-tabs"');
@@ -84,6 +84,31 @@ test('lock controls use two consistent line-art SVG states, not emoji',()=>{
 test('texture relief and ambient canvas illumination are described accurately',()=>{
   assert.match(html,/Gently roughen|Distort the actual stripe contours/);
   assert.match(html,/Canvas shade/);
-  assert.match(html,/No stripe drop shadows/);
-  assert.match(readme,/No shadows are cast by stripe silhouettes/);
+  assert.match(html,/For optional shadows cast by the stripes themselves, see Design/);
+  assert.match(readme,/Canvas ambience does not cast shadows from the stripe silhouettes/);
+});
+
+test('Primes only has no lock and shares the full settings width with Randomize',()=>{
+  assert.match(app,/if\(key==='primesOnly'\|\|key==='textureLayer2Enabled'/);
+  assert.match(css,/\.sidebar \.randomize-bar\.randomize-toolbar\{display:grid;grid-template-columns:minmax\(0,1\.08fr\) minmax\(0,1fr\)/);
+  const bar=html.slice(html.indexOf('class="randomize-bar'),html.indexOf('id="primeModeHint"'));
+  assert.equal((bar.match(/name="primesOnly"/g)||[]).length,1);
+  assert.equal((bar.match(/class="setting-lock"/g)||[]).length,0);
+});
+test('all four tabs stay on a single horizontal row even in the phone layout',()=>{
+  assert.match(css,/\.sidebar \.settings-tabs\{grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/);
+  assert.match(css,/@media\(max-width:790px\)\{[\s\S]*?\.sidebar \.settings-tabs\{grid-template-columns:repeat\(4,minmax\(0,1fr\)\)!important/);
+  assert.match(css,/@media\(max-width:420px\)\{[\s\S]*?\.sidebar \.settings-tab>span\{display:none\}/);
+});
+test('stripe shadows are an optional Design-only control, while canvas lighting stays in Colour',()=>{
+  const design=html.slice(html.indexOf('id="panel-design"'),html.indexOf('id="panel-colour"'));
+  const colour=html.slice(html.indexOf('id="panel-colour"'),html.indexOf('id="panel-textures"'));
+  for(const field of ['stripeShadowEnabled','stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection']){
+    assert.match(design,new RegExp('name="'+field+'"'));
+    assert.doesNotMatch(colour,new RegExp('name="'+field+'"'));
+  }
+  assert.match(design,/id="stripeShadowControls" hidden/);
+  assert.match(app,/function syncStripeShadowUI\(\)/);
+  assert.match(app,/stripeShadowControls'\)\.hidden=!enabled/);
+  assert.match(colour,/name="lightingMood"/);
 });

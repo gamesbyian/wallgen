@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { drawWallpaper, presentNudgedArtwork, motifFits, balanceStripeEnds, stripeFrameContacts, textureHeight } from '../src/renderer.js';
+import { drawWallpaper, presentNudgedArtwork, motifFits, balanceStripeEnds, stripeFrameContacts, textureHeight, stripeShadowParameters } from '../src/renderer.js';
 import { MATERIALS, MOTIFS, GEOMETRIES, OUTLINES, resolveScene } from '../src/model.js';
 
 // Node's lightweight Canvas API spy catches geometry/material code path errors
@@ -265,4 +265,52 @@ test('texture displacement yields visible bounded silhouette movement with and w
     assert.equal(textureHeight(high,stripe,330,1),textureHeight(high,stripe,330,1));
     assert.deepEqual(high.stripes,zero.stripes);
   }
+});
+
+test('stripe shadow is separately opt-in with ambient lighting off',()=>{
+  const recipe={seed:'cast-shadow-check',lightingMood:'off',stripeShadowEnabled:true,
+    stripeShadowStrength:76,stripeShadowSoftness:65,stripeShadowDirection:'top-right'};
+  calls.length=0;
+  const canvas={width:600,height:1300,getContext:()=>new FakeContext('main')};
+  drawWallpaper(canvas,recipe);
+  const shadows=calls.filter(c=>c[0]==='lightingShadow');
+  assert.equal(shadows.length,1,'one silhouette shadow on the finished ink');
+  assert.ok(shadows[0][2]<0&&shadows[0][3]>0);
+  assert.equal(calls.some(c=>c[0]==='ambientGlow'&&c[1]==='main'),false);
+  assert.equal(stripeShadowParameters({...recipe,stripeShadowStrength:0}),null);
+  assert.equal(stripeShadowParameters({...recipe,stripeShadowEnabled:false}),null);
+});
+test('stripe shadow softness and export scale change blur, not the original scene',()=>{
+  const base={seed:'shadow-geometry',stripeShadowEnabled:true,stripeShadowStrength:67,
+    stripeShadowDirection:'bottom-left'};
+  const a=stripeShadowParameters({...base,stripeShadowSoftness:10},1);
+  const b=stripeShadowParameters({...base,stripeShadowSoftness:90},1);
+  assert.ok(a.blur<b.blur);
+  assert.equal(a.color,b.color);
+  assert.ok(a.x>0&&a.y<0);
+  const hires=stripeShadowParameters({...base,stripeShadowSoftness:90},3024/600);
+  assert.ok(Math.abs(hires.blur/b.blur-3024/600)<1e-10);
+  assert.ok(Math.abs(hires.x/b.x-3024/600)<1e-10);
+  assert.deepEqual(resolveScene({...base,stripeShadowSoftness:10}).stripes,
+    resolveScene({...base,stripeShadowSoftness:90}).stripes);
+});
+test('ambient and stripe shadows coexist, and nudge reuses the exact cached ink',()=>{
+  const canvas={width:600,height:1300,getContext:()=>new FakeContext('main')};
+  const recipe={seed:'both-lighting-modes',lightingMood:'moonlight',lightStrength:60,
+    shadowStrength:75,stripeShadowEnabled:true,stripeShadowStrength:65,
+    stripeShadowSoftness:40,stripeShadowDirection:'bottom-right'};
+  const cache={};
+  drawWallpaper(canvas,recipe,{cache});
+  assert.ok(cache.background&&cache.ink);
+  calls.length=0;
+  presentNudgedArtwork(canvas,cache,{...recipe,positionX:6,positionY:-4});
+  assert.equal(calls.filter(c=>c[0]==='lightingShadow').length,1);
+  assert.equal(calls.filter(c=>c[0]==='ambientGlow'&&c[1]==='main').length,1);
+  const draws=calls.filter(c=>c[0]==='drawImage'&&c[2]==='main');
+  assert.deepEqual(draws.map(c=>c.slice(3)),[[0,0],[36,-52]]);
+  const shadowIndex=calls.findIndex(c=>c[0]==='lightingShadow');
+  const ambientIndex=calls.findIndex(c=>c[0]==='ambientGlow');
+  assert.ok(shadowIndex<ambientIndex,'canvas-wide ambience is applied after stripe shadow');
+  assert.deepEqual(resolveScene(recipe).stripes,
+    resolveScene({...recipe,positionX:6,positionY:-4}).stripes);
 });
