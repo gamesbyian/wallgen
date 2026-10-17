@@ -37,10 +37,10 @@ zoomValue.className='mobile-zoom-level';
 zoomValue.setAttribute('aria-live','off');
 let zoom=1;
 function setZoom(next){
-  zoom=Math.round(Math.max(1,Math.min(2.5,next))*100)/100;
+  zoom=Math.round(Math.max(.5,Math.min(2.5,next))*100)/100;
   stage.style.setProperty('--mobile-preview-zoom',String(zoom));
   zoomValue.textContent=Math.round(zoom*100)+'%';
-  zoomIn.disabled=zoom>=2.5;zoomOut.disabled=zoom<=1;
+  zoomIn.disabled=zoom>=2.5;zoomOut.disabled=zoom<=.5;
 }
 zoomIn.addEventListener('click',()=>setZoom(zoom+.10));
 zoomOut.addEventListener('click',()=>setZoom(zoom-.10));
