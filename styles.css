@@ -130,3 +130,23 @@
  .range-grid .stepper{grid-template-columns:26px minmax(0,1fr) 26px 44px!important;gap:3px}
  .range-grid .slider-number{width:44px}
 }
+
+/* Precise, keyboard-operable positioning directly above the artwork. */
+.composition-positioner{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:11px 13px;margin-bottom:12px;border:1px solid #303340;border-radius:9px;background:#12141c}
+.positioner-description{display:flex;flex-direction:column;gap:5px;min-width:0}
+.positioner-description strong{font-size:10px;color:#f1f1f7;letter-spacing:.12em}
+.positioner-description>span{font-size:10px;color:#999aaa}
+#positionStatus{font:11px ui-monospace,monospace;color:#d1cfeb}
+.nudge-pad{display:grid;grid-template-columns:repeat(3,34px);grid-template-rows:repeat(3,32px);grid-template-areas:". up ." "left reset right" ". down .";gap:3px;margin-left:auto}
+.nudge-button{background:#282a36;color:#e8e8f3;border:1px solid #505362;border-radius:6px;min-width:0;min-height:0;font-size:19px;font-weight:650;line-height:1}
+.nudge-button:hover{background:#434657}
+.nudge-button:disabled{opacity:.35;cursor:default}
+.nudge-up{grid-area:up}.nudge-left{grid-area:left}.nudge-right{grid-area:right}.nudge-down{grid-area:down}.nudge-reset{grid-area:reset;color:#cabdfd}
+@media(max-width:790px){
+  .composition-positioner{padding:7px;gap:6px}
+  .positioner-description>span{display:none}
+  .positioner-description strong{font-size:9px;letter-spacing:.045em}
+  #positionStatus{font-size:9px}
+  .nudge-pad{grid-template-columns:repeat(3,30px);grid-template-rows:repeat(3,30px);gap:2px}
+  .nudge-button{font-size:18px}
+}
