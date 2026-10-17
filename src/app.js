@@ -14,6 +14,26 @@ let currentScene;
 let noticeTimer = 0;
 let galleryRequestId = 0;
 let favorites = readFavorites();
+const undoStack=[];
+const UNDO_LIMIT=80;
+let undoing=false;
+function updateUndoButton(){const button=document.getElementById('undo');button.disabled=undoStack.length===0;button.title=undoStack.length?`Undo (${undoStack.length} available)`:'Nothing to undo';}
+function checkpoint(next){
+  const normalized=normalizeRecipe(next);
+  if(!undoing && !sameRecipe(current,normalized)){
+    undoStack.push({...current});
+    if(undoStack.length>UNDO_LIMIT)undoStack.shift();
+  }
+  updateUndoButton();
+  return normalized;
+}
+function undo(){
+  if(!undoStack.length)return;
+  clearTimeout(rangeTimeout);
+  const previous=undoStack.pop();
+  undoing=true;
+  try{changeRecipe(previous);showNotice('Undid last design change.');}finally{undoing=false;updateUndoButton();}
+}
 
 function readFavorites() {
   try {
@@ -45,6 +65,8 @@ function toControls(recipe) {
     if(field.type==='checkbox')field.checked=current[key]; else field.value=current[key];
     const output=form.querySelector(`output[for="${key}"]`);
     if(output) output.textContent=`${current[key]}%`;
+    const numeric=form.querySelector(`[data-number-for="${key}"]`);
+    if(numeric)numeric.value=current[key];
   }
 }
 function syncURL() {
@@ -56,7 +78,7 @@ function syncURL() {
 }
 function titleCase(value){return value.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase());}
 function render(recipe,{scroll=false}={}) {
-  current=normalizeRecipe(recipe);
+  current=checkpoint(recipe);
   currentScene=drawWallpaper(preview,current);
   showResolvedSelections(currentScene);
   document.getElementById('detailFamily').textContent=titleCase(currentScene.family);
@@ -68,7 +90,7 @@ function render(recipe,{scroll=false}={}) {
   syncURL();
   if(scroll) document.querySelector('.workspace-head').scrollIntoView({behavior:'smooth',block:'start'});
 }
-function changeRecipe(recipe,options={}){toControls(recipe);render(current,options);}
+function changeRecipe(recipe,options={}){const next=normalizeRecipe(recipe);render(next,options);toControls(next);}
 function downloadBlob(blob,name) {
   const url=URL.createObjectURL(blob);
   const link=document.createElement('a'); link.href=url;link.download=name;
@@ -105,11 +127,27 @@ for(const slider of form.querySelectorAll('input[type="range"]')){
   const row=document.createElement('span');row.className='stepper';
   const minus=document.createElement('button');minus.type='button';minus.className='step-button';minus.textContent='−';minus.setAttribute('aria-label','Decrease '+slider.name);
   const plus=document.createElement('button');plus.type='button';plus.className='step-button';plus.textContent='+';plus.setAttribute('aria-label','Increase '+slider.name);
-  slider.parentNode.insertBefore(row,slider);row.append(minus,slider,plus);
+  const numeric=document.createElement('input');
+  numeric.type='number';numeric.className='slider-number';numeric.min=slider.min;numeric.max=slider.max;
+  numeric.step=slider.step||'1';numeric.value=slider.value;numeric.dataset.numberFor=slider.name;
+  numeric.setAttribute('aria-label',slider.name+' percentage');
+  slider.parentNode.insertBefore(row,slider);row.append(minus,slider,plus,numeric);
+  numeric.addEventListener('change',()=>{
+    const raw=Number(numeric.value);
+    if(numeric.value.trim()==='' || !Number.isFinite(raw)){numeric.value=slider.value;return;}
+    const step=Number(slider.step)||1,min=Number(slider.min),max=Number(slider.max);
+    slider.value=String(Math.min(max,Math.max(min,Math.round((raw-min)/step)*step+min)));
+    numeric.value=slider.value;
+    const output=form.querySelector('output[for="'+slider.name+'"]');
+    if(output)output.textContent=slider.value+'%';
+    clearTimeout(rangeTimeout);
+    updateControlsFromInputs();
+  });
   for(const [button,delta] of [[minus,-1],[plus,1]]){
     button.addEventListener('click',()=>{
       slider.value=String(Math.max(Number(slider.min),Math.min(Number(slider.max),Number(slider.value)+delta*(Number(slider.step)||1))));
       clearTimeout(rangeTimeout);
+      numeric.value=slider.value;
       const output=form.querySelector('output[for="'+slider.name+'"]');if(output)output.textContent=slider.value+'%';
       updateControlsFromInputs();
     });
@@ -136,6 +174,10 @@ form.addEventListener('input',event=>{
   const output=form.querySelector(`output[for="${key}"]`);
   if(output)output.textContent=`${event.target.value}%`;
   if(event.target.type==='range'){
+    const numeric=form.querySelector(`[data-number-for="${key}"]`);
+    if(numeric)numeric.value=event.target.value;
+  }
+  if(event.target.type==='range'){
     clearTimeout(rangeTimeout);
     rangeTimeout=setTimeout(updateControlsFromInputs,60);
   }else updateControlsFromInputs();
@@ -146,6 +188,7 @@ seedInput.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preve
 document.getElementById('applySeed').addEventListener('click',()=>render(fromControls()));
 document.getElementById('randomize').addEventListener('click',()=>changeRecipe({...fromControls(),seed:newSeed()}));
 document.getElementById('randomizeAll').addEventListener('click',()=>changeRecipe(randomizeAllRecipe()));
+document.getElementById('undo').addEventListener('click',undo);
 document.getElementById('download').addEventListener('click',downloadPNG);
 document.getElementById('copyRecipe').addEventListener('click',()=>copyText(JSON.stringify(current,null,2)));
 document.getElementById('copyLink').addEventListener('click',()=>copyText(location.href));
