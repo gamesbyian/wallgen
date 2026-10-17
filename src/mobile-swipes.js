@@ -85,24 +85,48 @@ nav.addEventListener('touchend',e=>{
 },{passive:false});
 for(const [i,panel] of panels.entries()){
   panel.addEventListener('scroll',position,{passive:true});
-  let edge=null;
+  // Native overflow scrolling is inconsistent when a card contains selects,
+  // checkboxes, and nested form controls. Own horizontal swipes explicitly,
+  // advancing exactly one card. Keep native slider and numeric gestures.
+  let gesture=null;
   panel.addEventListener('touchstart',e=>{
-    edge=null;
-    if(!begin(e)||e.target.closest('input,select,textarea,button,[contenteditable]'))return;
+    gesture=null;
     const start=begin(e);
-    edge={...start,left:panel.scrollLeft,
-      atStart:panel.scrollLeft<=3,
-      atEnd:panel.scrollLeft+panel.clientWidth>=panel.scrollWidth-4};
+    if(!start||e.target.closest('input[type=range],input[type=number],input[type=text],textarea,[contenteditable]'))return;
+    gesture={...start,left:panel.scrollLeft,moved:false};
   },{passive:true});
+  panel.addEventListener('touchmove',e=>{
+    if(!gesture||!e.touches.length)return;
+    const t=e.touches[0],dx=t.clientX-gesture.x,dy=t.clientY-gesture.y;
+    if(Math.abs(dx)>25&&Math.abs(dx)>Math.abs(dy)*1.3){
+      gesture.moved=true;
+      if(e.cancelable)e.preventDefault(); // Cancels a pending select/button tap.
+    }
+  },{passive:false});
   panel.addEventListener('touchend',e=>{
-    if(!edge)return;
-    const t=e.changedTouches[0],dx=t.clientX-edge.x,dy=t.clientY-edge.y;
-    const from=edge;edge=null;
-    if(Math.abs(dx)<70||Math.abs(dx)<Math.abs(dy)*1.5)return;
-    if(dx<0 && from.atEnd && i<tabs.length-1){
-      if(e.cancelable)e.preventDefault();visitTab(i+1);
-    }else if(dx>0 && from.atStart && i>0){
-      if(e.cancelable)e.preventDefault();visitTab(i-1,true);
+    if(!gesture)return;
+    const from=gesture;gesture=null;
+    const t=e.changedTouches[0],dx=t.clientX-from.x,dy=t.clientY-from.y;
+    if(Math.abs(dx)<45||Math.abs(dx)<Math.abs(dy)*1.3)return;
+    if(e.cancelable)e.preventDefault();
+    const direction=dx<0?1:-1;
+    const slides=activeSlides(panel);
+    if(!slides.length)return;
+    const left=panel.getBoundingClientRect().left;
+    const closest=slides.reduce((best,el,j)=>{
+      const distance=Math.abs(el.getBoundingClientRect().left-left);
+      return distance<best.distance?{index:j,distance}:best;
+    },{index:0,distance:Infinity}).index;
+    const target=closest+direction;
+    if(target>=slides.length){
+      if(i<tabs.length-1)visitTab(i+1);
+    }else if(target<0){
+      if(i>0)visitTab(i-1,true);
+    }else{
+      const el=slides[target];
+      const delta=el.getBoundingClientRect().left-panel.getBoundingClientRect().left;
+      panel.scrollTo({left:panel.scrollLeft+delta,behavior:'smooth'});
+      requestAnimationFrame(position);
     }
   },{passive:false});
   panel.addEventListener('keydown',e=>{

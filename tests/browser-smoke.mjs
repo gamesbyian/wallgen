@@ -131,7 +131,7 @@ try{
       dockHidden:getComputedStyle(document.querySelector('.mobile-dock')).visibility==='hidden',
       arrowVisible:getComputedStyle(document.getElementById('mobileDockExpand')).display==='flex',
       headerHidden:bounds('.masthead').bottom<=0,
-      narrowRandomize:document.getElementById('randomizeAll').getBoundingClientRect().height<=27,
+      narrowRandomize:document.getElementById('randomizeAll').getBoundingClientRect().width<=46,
       narrowTabs:document.querySelector('.settings-tabs').getBoundingClientRect().height<=29,
       noDimmer:getComputedStyle(document.getElementById('mobileSheetBackdrop')).display==='none',
       nonmodal:document.getElementById('mobileDesignSheet').getAttribute('aria-modal')===null,
@@ -183,40 +183,119 @@ try{
   assert.equal(rail.overflowX,'auto');assert.equal(rail.overflowY,'hidden');
   assert.ok(rail.snap.includes('mandatory')&&rail.tabsVisible&&rail.noHeading&&rail.removed);
   // Related modifiers must be on the SAME swipe card as their parent.
+  // Every active card and its actual controls must be fully visible, with
+  // no internal vertical scrolling, including Colour and Texture categories.
   const groups=await evaluate(`(()=>{
-    const pairs=[
-      ['Geometry','panel-design',['geometry','shapeFrequency','shapeDepth']],
-      ['Stripe pattern','panel-design',['motif','patternHomogeneity']],
-      ['Stripe shadows','panel-design',['stripeShadowEnabled','stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection']],
-      ['Outlines','panel-colour',['outline','gap']],
-      ['Canvas lighting','panel-colour',['lightingMood','lightDirection','lightStrength','shadowStrength']],
-      ['Texture layer 1','panel-textures',['material','textureCoverage','textureStrength','textureScale','textureRotation','textureBlend']],
-      ['Texture layer 2','panel-textures',['material2','textureStrength2','textureScale2','textureRotation2']],
-      ['Texture layer 3','panel-textures',['material3','textureStrength3','textureScale3','textureRotation3']],
-      ['Individuality','panel-refine',['individuality','overridePatternHomogeneity']],
+    const entries=[
+      ['Geometry',['geometry','shapeFrequency','shapeDepth']],
+      ['Stripe pattern',['motif','patternHomogeneity']],
+      ['Stripe shadows',['stripeShadowEnabled','stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection']],
+      ['Outlines',['outline','gap']],
+      ['Canvas lighting',['lightingMood','lightDirection','lightStrength','shadowStrength']],
+      ...[1,2,3].flatMap(n=>[
+        ['Texture '+n+' material',['material','textureCoverage','textureBlend'].map(k=>k+(n===1?'':n))],
+        ['Texture '+n+' finish',['textureStrength','textureScale','textureRotation'].map(k=>k+(n===1?'':n))]
+      ]),
+      ['Individuality',['individuality','overridePatternHomogeneity']]
     ];
-    return pairs.map(([name,panel,fields])=>{
-      const card=[...document.querySelectorAll('.mobile-setting-cluster')]
-        .find(el=>el.dataset.group===name);
+    return entries.map(([name,fields])=>{
+      const card=[...document.querySelectorAll('.mobile-setting-cluster')].find(x=>x.dataset.group===name);
       return {name,panel:card?.closest('.settings-panel')?.id,
-        fields:fields.map(k=>!!card?.querySelector('[name="'+k+'"]')),
-        width:card?.getBoundingClientRect().width||0};
+        fields:fields.map(key=>!!card?.querySelector('[name="'+key+'"]'))};
     });
   })()`);
   console.log('CONTEXTUAL_CARDS',JSON.stringify(groups));
-  for(const group of groups){
-    assert.equal(group.fields.every(Boolean),true,group.name+' dependent controls must share a card');
-    const expected=group.name==='Outlines'||group.name==='Canvas lighting'?'panel-colour':
-      group.name.startsWith('Texture')?'panel-textures':
-      group.name==='Individuality'?'panel-refine':'panel-design';
-    assert.equal(group.panel,expected);
-    assert.ok(group.width>=0,group.name);
+  for(const item of groups){
+    assert.ok(item.fields.every(Boolean),item.name+' missing dependent controls');
   }
-  assert.ok(!await evaluate('document.getElementById("primeModeHint").hidden===false'));
+  const previewTools=await evaluate(`(()=>{
+    const stage=document.querySelector('.studio-stage');
+    const prime=document.querySelector('[name=primesOnly]');
+    return {
+      left:!!stage.querySelector('.mobile-preview-rail-left #randomizeAll'),
+      right:!!stage.querySelector('.mobile-preview-rail-right .nudge-pad'),
+      nudgeButtons:stage.querySelectorAll('[data-nudge]').length,
+      zoomButtons:stage.querySelectorAll('.mobile-zoom-button').length,
+      formOwner:prime.form?.id,
+      tabDecoration:getComputedStyle(document.getElementById('tab-design')).backgroundColor,
+      activeBorder:getComputedStyle(document.getElementById('tab-design')).borderBottomWidth,
+    };
+  })()`);
+  assert.ok(previewTools.left&&previewTools.right);
+  assert.equal(previewTools.nudgeButtons,5);
+  assert.equal(previewTools.zoomButtons,2);
+  assert.equal(previewTools.formOwner,'controls');
+  assert.equal(previewTools.activeBorder,'2px');
+  assert.ok(await evaluate('document.getElementById("primeModeHint").hidden'));
   await evaluate('document.querySelector("[name=primesOnly]").click()');
-  assert.ok(await evaluate('document.getElementById("primeModeHint").hidden'),
-    'Primes-only must never show its explanatory toast');
+  assert.ok(await evaluate('document.getElementById("primeModeHint").hidden'));
   assert.ok(await evaluate('document.querySelector("[name=primesOnly]").checked'));
+  // Toggling Primes must reach the recipe, despite the original checkbox now
+  // living outside the <form> element's DOM subtree.
+  await evaluate('document.getElementById("randomizeAll").click()');
+  const primeDraw=await evaluate(`(()=>{
+    const percentages=['shapeFrequency','shapeDepth','stripeWidth','spread'];
+    return {checked:document.querySelector('[name=primesOnly]').checked,
+      values:percentages.map(k=>Number(document.querySelector('[name="'+k+'"]').value))};
+  })()`);
+  const isPrime=n=>Number.isInteger(n)&&n>=2&&
+    Array.from({length:Math.max(0,Math.floor(Math.sqrt(n))-1)},(_,i)=>i+2)
+      .every(d=>n%d!==0);
+  assert.ok(primeDraw.checked&&primeDraw.values.every(isPrime),
+    'randomized percentages should use primes when the moved toggle is selected');
+  assert.ok(await evaluate('document.body.classList.contains("mobile-edit-open")'),
+    'preview-side Randomize must keep the editor open');
+  const originalImage=await evaluate('document.getElementById("preview").toDataURL()');
+  await evaluate('document.querySelector("[data-zoom=in]").click()');
+  assert.equal(await evaluate('document.querySelector(".studio-stage").style.getPropertyValue("--mobile-preview-zoom")'),'1.25');
+  assert.equal(await evaluate('document.getElementById("preview").toDataURL()'),originalImage,
+    'zooming should only magnify the preview, never modify wallpaper pixels');
+  await evaluate('document.querySelector("[data-zoom=out]").click()');
+  assert.equal(await evaluate('document.querySelector(".studio-stage").style.getPropertyValue("--mobile-preview-zoom")'),'1');
+  await evaluate('document.querySelector(".studio-stage [data-nudge=right]").click()');
+  assert.ok((await evaluate('document.getElementById("positionStatus").textContent')).includes('X +2%'));
+  await evaluate('document.querySelector(".studio-stage [data-nudge=reset]").click()');
+
+  // All nonhidden cards must have *no* vertical scroll or clipped controls.
+  const auditCards=async()=>evaluate(`(()=>{
+    const p=document.querySelector('.settings-panel:not([hidden])');
+    const cards=[...p.querySelectorAll('.mobile-setting-cluster:not([hidden])')];
+    return cards.map(card=>({panelHeight:p.clientHeight,formHeight:document.getElementById('controls').clientHeight,
+      formRect:JSON.stringify(document.getElementById('controls').getBoundingClientRect().toJSON()),
+      formDisplay:getComputedStyle(document.getElementById('controls')).display,
+      formPosition:getComputedStyle(document.getElementById('controls')).position,
+      formFlex:getComputedStyle(document.getElementById('controls')).flex,
+      formTop:getComputedStyle(document.getElementById('controls')).top,
+      formBottom:getComputedStyle(document.getElementById('controls')).bottom,
+      formParent:document.getElementById('controls').parentElement.id,
+      formHidden:document.getElementById('controls').hidden,
+      sidebarDisplay:getComputedStyle(document.querySelector('.sidebar')).display,
+      sidebarRect:JSON.stringify(document.querySelector('.sidebar').getBoundingClientRect().toJSON()),
+      navHeight:document.querySelector('.settings-tabs').clientHeight,
+      panelStyle:getComputedStyle(p).flex,
+      name:card.dataset.group,
+      clientHeight:card.clientHeight,scrollHeight:card.scrollHeight,
+      overflow:getComputedStyle(card).overflowY,
+      controlOverflow:[...card.querySelectorAll('select,input:not([type=hidden]),button')].filter(el=>{
+        if(el.closest('[hidden]')||el.offsetParent===null)return false;
+        const c=card.getBoundingClientRect(),r=el.getBoundingClientRect();
+        return r.top<c.top-2||r.bottom>c.bottom+2;
+      }).map(el=>el.name||el.id||el.tagName)
+    }));
+  })()`);
+  for(const category of ['design','colour','textures','refine']){
+    await evaluate(`document.getElementById('tab-${category}').click()`);
+    await delay(250);
+    const audited=await auditCards();
+    console.log('NO_VERTICAL_CARDS',category,JSON.stringify(audited));
+    for(const card of audited){
+      assert.ok(card.scrollHeight<=card.clientHeight+2,category+' '+card.name+' has vertical overflow');
+      assert.equal(card.overflow,'hidden',category+' '+card.name+' can vertically scroll');
+      assert.deepEqual(card.controlOverflow,[],category+' '+card.name+' clips controls');
+    }
+  }
+  await evaluate('document.getElementById("tab-design").click()');
+  await delay(280);
 
   // Programmatic scroll tests the native snap strip and progress indicator.
   await evaluate('document.getElementById("panel-design").scrollTo({left:document.getElementById("panel-design").clientWidth+8,behavior:"instant"})');
@@ -230,8 +309,8 @@ try{
     const el=document.getElementById('panel-textures');
     return {scrollWidth:el.scrollWidth,clientWidth:el.clientWidth,
       material:!!el.querySelector('[name="material"]'),
-      layer2:!!el.querySelector('#textureLayer2Panel'),
-      layer3:!!el.querySelector('#textureLayer3Panel'),
+      layer2:!!document.getElementById('textureLayer2Panel'),
+      layer3:!!document.getElementById('textureLayer3Panel'),
       vertical:getComputedStyle(document.getElementById('mobileDesignSheet')).overflowY,
       previewVisible:document.querySelector('.studio-stage').getBoundingClientRect().bottom<
         document.getElementById('mobileDesignSheet').getBoundingClientRect().top};
@@ -243,15 +322,42 @@ try{
   await waitFor('document.getElementById("textureLayer2Panel").hidden===false');
   assert.ok(await evaluate(`(()=>{
     const card=[...document.querySelectorAll('.mobile-setting-cluster')]
-      .find(el=>el.dataset.group==='Texture layer 2');
-    return card?.getBoundingClientRect().width>80 &&
+      .find(el=>el.dataset.group==='Texture 2 material');
+    return !card?.hidden && card?.getBoundingClientRect().width>80 &&
       card?.querySelector('[name=material2]') &&
       getComputedStyle(card).display!=='none';
   })()`),'enabled texture layer and all associated controls should appear on one card');
+  const textureExpansion=await evaluate(`(()=>{
+    const cards=[...document.querySelectorAll('.mobile-setting-cluster')]
+      .filter(el=>el.dataset.group.startsWith('Texture 2')&&!el.hidden);
+    return cards.map(el=>({name:el.dataset.group,client:el.clientHeight,
+      scroll:el.scrollHeight,
+      visible:([...el.querySelectorAll('select,input,button')].filter(node=>{
+        if(node.closest('[hidden]')||node.offsetParent===null)return false;
+        const r=node.getBoundingClientRect(),c=el.getBoundingClientRect();
+        return r.top>=c.top-2&&r.bottom<=c.bottom+2;
+      })).length}));
+  })()`);
+  console.log('EXPANDED_TEXTURE_CARD',JSON.stringify(textureExpansion));
+  assert.equal(textureExpansion.length,2);
+  for(const card of textureExpansion)assert.ok(card.scroll<=card.client+2,card.name+' must fit completely');
 
   await evaluate('document.getElementById("tab-design").click()');
-  await evaluate('document.querySelector("[name=stripeShadowEnabled]").click()');
+  await evaluate(`(()=>{const box=document.querySelector('[name=stripeShadowEnabled]');if(!box.checked)box.click()})()`);
   await waitFor('document.getElementById("stripeShadowControls").hidden===false');
+  const expandedShadow=await evaluate(`(()=>{
+    const card=[...document.querySelectorAll('.mobile-setting-cluster')]
+      .find(el=>el.dataset.group==='Stripe shadows');
+    return {visible:card?.clientHeight,content:card?.scrollHeight,
+      clipped:[...card.querySelectorAll('input,select')].filter(el=>{
+        if(el.closest('[hidden]')||el.offsetParent===null)return false;
+        const c=card.getBoundingClientRect(),r=el.getBoundingClientRect();
+        return r.top<c.top-2||r.bottom>c.bottom+2;
+      }).map(el=>el.name)};
+  })()`);
+  console.log('EXPANDED_SHADOW_CARD',JSON.stringify(expandedShadow));
+  assert.ok(expandedShadow.content<=expandedShadow.visible+2,'expanded shadows should fit');
+  assert.deepEqual(expandedShadow.clipped,[]);
   // Exercise actual Chrome touch events, not just DOM clicks.
   const swipe=async (from,to)=>{
     await command('Input.dispatchTouchEvent',{type:'touchStart',
@@ -262,6 +368,26 @@ try{
       touchPoints:[{x:to.x,y:to.y,id:1}]});
     await command('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
   };
+  // Test sideways flicks in the historically problematic Colour and Texture
+  // categories with actual browser touch events, not scripted scrollLeft.
+  for(const category of ['colour','textures']){
+    await evaluate(`document.getElementById('tab-${category}').click()`);
+    await delay(370);
+    const railBounds=await evaluate(`(()=>{
+      const p=document.getElementById('panel-${category}');
+      const r=p.getBoundingClientRect();
+      return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,
+        initial:p.scrollLeft,maximum:p.scrollWidth-p.clientWidth};
+    })()`);
+    assert.ok(railBounds.maximum>railBounds.right-railBounds.left,
+      category+' should have multiple horizontal cards');
+    await swipe({x:Math.round(railBounds.right-32),y:Math.round(railBounds.bottom-9)},
+                {x:Math.round(railBounds.left+35),y:Math.round(railBounds.bottom-9)});
+    await waitFor(`document.getElementById('panel-${category}').scrollLeft>50`);
+    console.log('TOUCH_CATEGORY_SWIPE',category,await evaluate(`document.getElementById('panel-${category}').scrollLeft`));
+  }
+  await evaluate('document.getElementById("tab-design").click()');
+  await delay(320);
   const navPosition=await evaluate(`(()=>{
     const r=document.querySelector('.settings-tabs').getBoundingClientRect();
     return {y:Math.round(r.top+r.height/2),left:Math.round(r.left),right:Math.round(r.right)};
@@ -271,6 +397,12 @@ try{
   await waitFor(`document.getElementById('tab-colour').getAttribute('aria-selected')==='true'`);
   // A real finger drag should adjust a slider, not scroll to another card.
   await evaluate('document.getElementById("tab-design").click()');
+  // Start this touch check from a middle track position, even if the earlier
+  // Prime-mode randomization happened to choose a value near 0 or 100.
+  await evaluate(`(()=>{
+    const input=document.querySelector('[name=shapeFrequency]');
+    input.value='50';input.dispatchEvent(new Event('input',{bubbles:true}));
+  })()`);
   // Tab selection asynchronously resets the rail to its first card.
   // Let that reset and CSS snap finish before navigating to the nested slider.
   await delay(330);
@@ -364,7 +496,7 @@ try{
     open:document.body.classList.contains('mobile-tools-open'),
     seed:!!document.querySelector('#mobileToolsContent #seedInput'),
     metadata:!!document.querySelector('#mobileToolsContent #metadataToggle'),
-    nudge:!!document.querySelector('#mobileToolsContent .nudge-pad'),
+    nudge:!!document.querySelector('.studio-stage .nudge-pad'),
     copy:!!document.querySelector('#mobileToolsContent #copyLink'),
     undo:!!document.querySelector('#mobileToolsContent #undo')
   }))()`);
@@ -375,7 +507,7 @@ try{
     return {previewHeight:document.querySelector('.wallpaper-frame').getBoundingClientRect().height,
       separated:r.bottom<=t.top+2,toolsHeight:t.height};
   })()`);
-  assert.ok(utilities.separated&&utilities.previewHeight>300,'nudge and other live tools must not cover the preview');
+  assert.ok(utilities.separated&&utilities.previewHeight>300,'More tools must not cover the preview');
   await evaluate('document.getElementById("mobileToolsClose").click()');
   await evaluate('document.getElementById("mobileExplore").click()');
   await waitFor(`(()=>{
@@ -409,6 +541,8 @@ try{
     lockCount:document.querySelectorAll('#controls .setting-lock').length,
   })`);
   assert.equal(restoredSettings.groups,0,'desktop must restore independent controls');
+  assert.ok(await evaluate('document.querySelector(".composition-positioner .nudge-pad")!==null'));
+  assert.ok(await evaluate('document.querySelector("#controls .randomize-toolbar")!==null'));
   assert.ok(restoredSettings.geometry&&restoredSettings.shape&&restoredSettings.outlineBuffer);
   assert.ok(restoredSettings.lockCount>25,'locks must survive DOM reparenting');
   console.log('Browser smoke passed: phone viewport, sheets, gallery, theme and desktop restoration.');

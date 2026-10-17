@@ -92,7 +92,10 @@ gallery.addEventListener('click',event=>{
 dismissHandle.addEventListener('click',()=>closeSurfaces());
 dockExpand.addEventListener('click',()=>closeSurfaces({restoreFocus:false}));
 // Tapping the live image gives the user the full-size preview immediately.
-document.querySelector('.studio-stage').addEventListener('click',()=>{
+document.querySelector('.studio-stage').addEventListener('click',event=>{
+  // The wallpaper itself may dismiss Edit, but the preview-side Randomize,
+  // Primes, nudge, and zoom controls must NEVER close the editing tray.
+  if(event.target.closest('.mobile-preview-rail,button,input,label'))return;
   if(document.body.classList.contains('mobile-edit-open'))closeSurfaces({restoreFocus:false});
 });
 editBtn.addEventListener('click',()=>openSurface('edit'));
