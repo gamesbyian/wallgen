@@ -16,7 +16,7 @@ To the extent the creator holds copyright interests in these materials, those
 interests are dedicated to the public domain; this cannot waive rights
 belonging to unrelated third parties. There is no warranty.
 
-Seed-based, offline-friendly, static rainbow wallpaper studio. Seven identifiable stripes always follow **red, orange, yellow, green, blue, indigo, violet** over a black or white canvas. No runtime dependencies, accounts, tracking, asset downloads, or build pipeline.
+Seed-based, offline-friendly, static rainbow wallpaper studio. Seven identifiable stripes use **red, orange, yellow, green, blue, indigo, violet** (or the explicitly reversed violet-to-red order) over a black or white canvas. No runtime dependencies, accounts, tracking, asset downloads, or build pipeline.
 
 ## Launch
 
@@ -118,9 +118,17 @@ files are free to use without credit under the repository dedication.
 Below the Download PNG controls, **Edit image metadata** opens a collapsed-by-default
 editor. Fields include title, creator/artist, description, copyright/usage notice,
 keywords, comment, software, creation date/time, and optional camera/device
-make and model. Blank fields are omitted. PNG export embeds UTF-8 **iTXt** metadata
-and compatible **eXIf** TIFF-style metadata, preserving the original pixel data.
-Metadata is not drawn on the wallpaper and is not added to share links.
+make and model. Blank user-entered fields are omitted, but **every saved PNG
+always contains a complete, normalized, machine-readable design recipe** in a
+dedicated UTF-8 **iTXt** entry named `ROYGBIV Recipe`, independent of optional
+metadata. It records the seed, all generation settings, stripe order, diagonal
+transforms, layers, locks and position together with a recipe-format version and
+intended export dimensions. The **Restore design from PNG** command beside the
+metadata editor reads the embedded recipe, validates its checksum and restores the
+exact controls needed to regenerate the design. The images also carry any requested
+human-readable iTXt and compatible eXIf TIFF-style metadata, preserving the
+original pixel data. Recipe metadata is not printed on the wallpaper. Older PNGs
+without this recipe cannot be automatically reconstructed from pixels alone.
 
 The optional **Remember these fields on this device** checkbox stores the metadata
 in browser local storage. It is off by default; clearing the fields also updates
@@ -138,6 +146,22 @@ particular metadata fields varies among image-viewing applications.
 ## Brand and SVG logo
 
 The app uses `assets/roygbiv-logo.svg` as its masthead mark and browser icon. Paired dark and cream vector variants and raster PNGs are described above. These assets share the repository's public-domain dedication; attribution is not required.
+
+## Stripe ordering and diagonal transformations
+
+The Design category includes **Reverse stripe order**. When enabled, violet
+takes the first position and red the last; path positions, width and line
+geometry remain unchanged. The colour reversal is saved in shareable recipes
+and PNG exports, and is independently lockable for randomization.
+
+Select **Diagonal** under Direction to reveal a signed rotation slider
+(−180° to +180°) and **Mirror horizontally** / **Mirror vertically** toggles.
+Rotation is an *offset* relative to the seed-generated diagonal. Zero degrees
+preserves the legacy appearance of previously saved seeds, rather than
+silently replacing their original diagonal angle with a fixed angle. Mirroring
+reflects the stripes, not the canvas texture, and can be used in combination
+with rotation or reversal. These controls share one compact mobile swipe card
+and disappear when a non-diagonal direction is explicitly selected.
 
 ## Controls and workspace
 
