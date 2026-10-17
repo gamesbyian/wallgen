@@ -325,6 +325,9 @@ function drawBrushWear(ctx,stripe,extent,scene){
   const n=Math.ceil(18+strength*300);
   const start=stripe.segmentStart??-extent,end=stripe.segmentEnd??extent;
   ctx.save();
+  // Wear belongs to the painted mark, never to the adjacent background.
+  // In particular, dotted ribbons must not grow free-floating scratches.
+  ctx.clip(stripePath(stripe,extent,scene));
   ctx.strokeStyle=scene.background==='white'?'#fff':'#000';
   ctx.lineCap='round';
   for(let i=0;i<n;i++){
