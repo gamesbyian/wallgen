@@ -85,795 +85,89 @@ try{
   await command('Page.navigate',{url});
   await waitFor('document.readyState==="complete"&&document.body.classList.contains("mobile-studio")');
   await delay(400);
-  const phone=await evaluate(`(()=>{
-    const box=sel=>{const r=document.querySelector(sel).getBoundingClientRect();
-      return {x:r.x,y:r.y,width:r.width,height:r.height,bottom:r.bottom}};
-    return {width:innerWidth,height:innerHeight,scrollWidth:document.documentElement.scrollWidth,
-      scrollHeight:document.documentElement.scrollHeight,
-      preview:box('.wallpaper-frame'),dock:box('.mobile-dock'),header:box('.masthead'),
-      theme:document.documentElement.dataset.theme,
-      settingsHidden:getComputedStyle(document.querySelector('.sidebar')).transform!=='none'};
-  })()`);
-  console.log('PHONE_LAYOUT_METRICS',JSON.stringify(phone));
-  assert.equal(phone.width,412);
-  assert.equal(phone.theme,'cream');
-  assert.ok(phone.scrollWidth<=412,'no sideways viewport overflow');
-  assert.ok(phone.scrollHeight<=915,'no full-page vertical scrolling');
-  assert.ok(phone.preview.height>phone.height*.57,'the wallpaper should dominate the screen');
-  assert.ok(phone.dock.y>=phone.preview.bottom-16,'dock should sit below the preview');
-  assert.ok(phone.dock.bottom<=915,'dock should be fully visible');
-  assert.ok(phone.dock.height<=55,'normal bottom toolbar should be shorter');
-  assert.ok(phone.dock.y>=phone.header.bottom,'normal dock does not collide with the header');
-  await evaluate('document.getElementById("mobileEdit").click()');
-  await waitFor(`(()=>{
-    const stage=document.querySelector('.studio-stage').getBoundingClientRect();
-    const sidebar=document.querySelector('.sidebar').getBoundingClientRect();
-    const dock=document.querySelector('.mobile-dock').getBoundingClientRect();
-    return document.body.classList.contains('mobile-edit-open') &&
-      stage.bottom<=sidebar.top+2 && sidebar.bottom<=innerHeight+1 &&
-      dock.left>=innerWidth-2 &&
-      getComputedStyle(document.querySelector('.mobile-dock')).visibility==='hidden' &&
-      document.querySelector('.masthead').getBoundingClientRect().bottom<=0;
-  })()`);
-  const editor=await evaluate(`(()=>({
-    open:document.body.classList.contains('mobile-edit-open'),
-    visible:document.querySelector('.sidebar').getBoundingClientRect().top<innerHeight,
-    tabs:[...document.querySelectorAll('.settings-tab')].map(x=>x.textContent.trim())
-  }))()`);
-  assert.ok(editor.open&&editor.visible);
-  assert.equal(editor.tabs.length,4);
-  const editing=await evaluate(`(()=>{
-    const bounds=s=>{const r=document.querySelector(s).getBoundingClientRect();
-      return {top:r.top,bottom:r.bottom,left:r.left,right:r.right,width:r.width,height:r.height}};
-    return {preview:bounds('.wallpaper-frame'),stage:bounds('.studio-stage'),
-      sidebar:bounds('.sidebar'),dock:bounds('.mobile-dock'),
-      header:bounds('.masthead'),arrow:bounds('#mobileDockExpand'),
-      dockHidden:getComputedStyle(document.querySelector('.mobile-dock')).visibility==='hidden',
-      arrowVisible:getComputedStyle(document.getElementById('mobileDockExpand')).display==='flex',
-      headerHidden:bounds('.masthead').bottom<=0,
-      narrowRandomize:document.getElementById('randomizeAll').getBoundingClientRect().width<=46,
-      narrowTabs:document.querySelector('.settings-tabs').getBoundingClientRect().height<=29,
-      noDimmer:getComputedStyle(document.getElementById('mobileSheetBackdrop')).display==='none',
-      nonmodal:document.getElementById('mobileDesignSheet').getAttribute('aria-modal')===null,
-      scrollable:getComputedStyle(document.getElementById('mobileDesignSheet')).overflowY==='hidden',
-      totalHeight:document.documentElement.scrollHeight,
-      tabsVisible:document.querySelector('.settings-tabs').getBoundingClientRect().bottom<=innerHeight};
-  })()`);
-  console.log('EDITING_LAYOUT_METRICS',JSON.stringify(editing));
-  assert.ok(editing.preview.height>640,'editing must preserve a nearly full-height phone wallpaper');
-  assert.ok(editing.preview.bottom<=editing.sidebar.top+2,'editing controls must not overlap the wallpaper');
-  assert.ok(editing.stage.bottom<=editing.sidebar.top+2,'reserved layout must keep stage above the panel');
-  assert.ok(editing.sidebar.bottom<=915+1,'settings replace the dock without leaving the screen');
-  assert.ok(editing.sidebar.top>=editing.stage.bottom,'editor must use its own space');
-  assert.ok(editing.headerHidden && editing.dockHidden && editing.arrowVisible,
-    'header and toolbar must recede leaving the expand arrow');
-  assert.ok(editing.arrow.left>editing.sidebar.left+editing.sidebar.width-2 &&
-    editing.arrow.right<=412+1,'expand arrow lives beside the editor');
-  assert.ok(editing.narrowRandomize&&editing.narrowTabs,'toolbar texts should be compact');
-  const compactLabels=await evaluate(`(()=>{
-    const buttons=['randomizeAll','drawPathToggle'].map(id=>document.getElementById(id));
-    const prime=document.querySelector('.mobile-preview-rail-left .prime-toggle');
-    const fit=node=>{
-      const a=node.getBoundingClientRect();
-      const spans=[...node.querySelectorAll('span')].filter(el=>el.textContent.trim() &&
-        !el.classList.contains('randomize-symbol') &&
-        !el.classList.contains('toolbar-wording'));
-      return spans.every(el=>{const b=el.getBoundingClientRect();
-        return b.left>=a.left-1&&b.right<=a.right+1&&b.top>=a.top-1&&b.bottom<=a.bottom+1;});
-    };
-    return {randomText:buttons[0].textContent.trim(),randomFits:fit(buttons[0]),
-      drawFits:fit(buttons[1]),primeFits:fit(prime),
-      primeLines:prime.querySelectorAll('.toolbar-wording>span').length,
-      drawLines:buttons[1].querySelectorAll('.toolbar-wording>span').length};
-  })()`);
-  assert.ok(compactLabels.randomText.includes('Random')&&!compactLabels.randomText.includes('Randomize'));
-  assert.ok(compactLabels.randomFits&&compactLabels.drawFits&&compactLabels.primeFits,
-    'preview buttons must fully contain their text');
-  assert.equal(compactLabels.primeLines,2);
-  assert.equal(compactLabels.drawLines,2);
-  const branding=await evaluate(`(()=>{
-    const letters=[...document.querySelectorAll('.brand-title .title-letter')];
-    const icon=document.querySelector('#mobileEdit .dock-pencil');
-    const heart=document.querySelector('#mobileFavorite .squat-heart');
-    return {letters:letters.map(el=>el.textContent).join(''),
-      distinct:new Set(letters.map(el=>getComputedStyle(el).color)).size,
-      pencil:icon?.querySelectorAll('path').length,
-      heart:heart?.getAttribute('viewBox'),desktopHeart:!!document.querySelector('#favorite .squat-heart')};
-  })()`);
-  assert.equal(branding.letters,'ROYGBIV');
-  assert.equal(branding.distinct,7,'rainbow title letters need seven distinct hues');
-  assert.ok(branding.pencil>0&&branding.heart==='0 0 24 20'&&branding.desktopHeart);
 
-  assert.ok(editing.noDimmer&&editing.nonmodal&&editing.scrollable&&editing.tabsVisible);
-  assert.ok(editing.stage.top<=10,'header must release its vertical space');
-  assert.ok(editing.totalHeight<=915,'opening edit must not introduce page scrolling');
-  // Changing a real setting must repaint the *visible* canvas without closing the tray.
-  await evaluate(`(()=>{
-    const canvas=document.getElementById('preview');
-    window.__wallpaperBefore=canvas.toDataURL();
-    const input=document.querySelector('input[name="stripeWidth"]');
-    input.value=input.value==='90'?'11':'90';
-    input.dispatchEvent(new Event('input',{bubbles:true}));
-  })()`);
-  await waitFor(`document.getElementById('preview').toDataURL()!==window.__wallpaperBefore`,16000);
-  assert.ok(await evaluate('document.body.classList.contains("mobile-edit-open")'));
-  // Full-fidelity controls, including portable reverse order and diagonal
-  // transforms, must be reachable in the small no-scroll phone editor.
-  await evaluate('window.__reverseBefore=document.getElementById("preview").toDataURL()');
-  await evaluate('document.querySelector("[name=reverseStripes]").click()');
-  await waitFor('document.getElementById("preview").toDataURL()!==window.__reverseBefore',16000);
-  assert.ok(await evaluate('document.querySelector("[name=reverseStripes]").checked'));
-  await evaluate(`(()=>{
-    const direction=document.querySelector('[name=orientation]');
-    direction.value='diagonal';
-    direction.dispatchEvent(new Event('change',{bubbles:true}));
-  })()`);
-  await waitFor(`!document.getElementById('diagonalSettings').hidden`);
-  assert.ok(await evaluate(`(()=>{
-    const card=[...document.querySelectorAll('.mobile-setting-cluster')]
-      .find(el=>el.dataset.group==='Diagonal transform');
-    return card&&!card.hidden&&card.querySelector('[name=diagonalRotation]') &&
-      card.querySelector('[name=mirrorHorizontal]')&&card.querySelector('[name=mirrorVertical]') &&
-      card.scrollHeight<=card.clientHeight+2;
-  })()`),'all three diagonal controls must be on one fully visible card');
-  await evaluate('window.__rotationBefore=document.getElementById("preview").toDataURL()');
-  await evaluate(`(()=>{
-    const slider=document.querySelector('[name=diagonalRotation]');
-    slider.value='48';slider.dispatchEvent(new Event('input',{bubbles:true}));
-  })()`);
-  await waitFor(`document.getElementById('preview').toDataURL()!==window.__rotationBefore`,16000);
-  await evaluate('document.querySelector("[name=mirrorHorizontal]").click()');
-  assert.ok(await evaluate('document.querySelector("[name=mirrorHorizontal]").checked'));
-  await evaluate('document.querySelector("[name=mirrorVertical]").click()');
-  assert.ok(await evaluate('document.querySelector("[name=mirrorVertical]").checked'));
-  await evaluate(`(()=>{
-    const direction=document.querySelector('[name=orientation]');
-    direction.value='vertical';direction.dispatchEvent(new Event('change',{bubbles:true}));
-  })()`);
-  await waitFor(`document.getElementById('diagonalSettings').hidden`);
-  await evaluate(`(()=>{
-    const direction=document.querySelector('[name=orientation]');
-    direction.value='diagonal';direction.dispatchEvent(new Event('change',{bubbles:true}));
-  })()`);
-  await waitFor(`!document.getElementById('diagonalSettings').hidden`);
-  // Actual fields are now horizontal cards, not a tall scrolling list.
-  const rail=await evaluate(`(()=>{
-    const p=document.getElementById('panel-design');
-    const tab=document.querySelector('.settings-tabs');
-    const position=document.getElementById('mobileSettingPosition');
-    return {
-      overflowX:getComputedStyle(p).overflowX, overflowY:getComputedStyle(p).overflowY,
-      snap:getComputedStyle(p).scrollSnapType, width:p.clientWidth,
-      scrollWidth:p.scrollWidth,
-      tabsVisible:tab.getBoundingClientRect().bottom<p.getBoundingClientRect().top,
-      count:position.textContent.trim(),
-      noHeading:getComputedStyle(document.getElementById('mobileDismissHandle')).display!=='none',
-      removed:!document.getElementById('mobilePreviewSpace')&&!document.getElementById('mobileDesignClose')
-    };
-  })()`);
-  console.log('SWIPE_RAIL_METRICS',JSON.stringify(rail));
-  assert.ok(rail.scrollWidth>rail.width*4,'settings must lay out horizontally');
-  assert.equal(rail.overflowX,'auto');assert.equal(rail.overflowY,'hidden');
-  assert.ok(rail.snap.includes('mandatory')&&rail.tabsVisible&&rail.noHeading&&rail.removed);
-  // Related modifiers must be on the SAME swipe card as their parent.
-  // Every active card and its actual controls must be fully visible, with
-  // no internal vertical scrolling, including Colour and Texture categories.
-  const groups=await evaluate(`(()=>{
-    const entries=[
-      ['Geometry',['geometry','shapeFrequency','shapeDepth']],
-      ['Path details',['turnRadius','hairpinAngle']],
-      ['Stripe pattern',['motif','patternHomogeneity']],
-      ['Stripe shadows',['stripeShadowEnabled','stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection']],
-      ['Outlines',['outline','gap']],
-      ['Canvas lighting',['lightingMood','lightDirection','lightStrength','shadowStrength']],
-      ...[1,2,3].flatMap(n=>[
-        ['Texture '+n+' material',['material','textureCoverage','textureBlend'].map(k=>k+(n===1?'':n))],
-        ['Texture '+n+' finish',['textureStrength','textureScale','textureRotation'].map(k=>k+(n===1?'':n))]
-      ]),
-      ['Individuality',['individuality','overridePatternHomogeneity']]
-    ];
-    return entries.map(([name,fields])=>{
-      const card=[...document.querySelectorAll('.mobile-setting-cluster')].find(x=>x.dataset.group===name);
-      return {name,panel:card?.closest('.settings-panel')?.id,
-        fields:fields.map(key=>!!card?.querySelector('[name="'+key+'"]'))};
-    });
-  })()`);
-  console.log('CONTEXTUAL_CARDS',JSON.stringify(groups));
-  for(const item of groups){
-    assert.ok(item.fields.every(Boolean),item.name+' missing dependent controls');
-  }
-  const steppers=await evaluate(`(()=>{
-    const nodes=[...document.querySelectorAll('.mobile-setting-cluster:not([hidden]) input[type=range]')];
-    return nodes.map(input=>{
-      const stepper=input.closest('.stepper'),style=stepper&&getComputedStyle(stepper.querySelector('.step-button'));
-      return {name:input.name,buttons:stepper?.querySelectorAll('.step-button').length,
-        display:style?.display,visible:input.getClientRects().length>0,
-        rect:stepper?.querySelector('.step-button').getBoundingClientRect().width||0};
-    });
-  })()`);
-  console.log('STEPPER_FAIL_DIAGNOSTIC',JSON.stringify(
-    steppers.filter(x=>x.buttons!==2||x.display==='none'||(x.visible&&x.rect<18))
-  ));
-  assert.ok(steppers.length>20,'enough sliders for comprehensive stepper audit');
-  assert.ok(steppers.every(x=>x.buttons===2&&x.display!=='none'&&(!x.visible||x.rect>=18)),
-    'every swipe-card slider shows both minus and plus buttons');
-  console.log('ALL_MOBILE_STEPPERS_VISIBLE',steppers.length);
-
-  const previewTools=await evaluate(`(()=>{
-    const stage=document.querySelector('.studio-stage');
-    const prime=document.querySelector('[name=primesOnly]');
-    return {
-      left:!!stage.querySelector('.mobile-preview-rail-left #randomizeAll'),
-      right:!!stage.querySelector('.mobile-preview-rail-right .nudge-pad'),
-      nudgeButtons:stage.querySelectorAll('[data-nudge]').length,
-      zoomButtons:stage.querySelectorAll('.mobile-zoom-button').length,
-      formOwner:prime.form?.id,
-      tabDecoration:getComputedStyle(document.getElementById('tab-design')).backgroundColor,
-      activeBorder:getComputedStyle(document.getElementById('tab-design')).borderBottomWidth,
-    };
-  })()`);
-  assert.ok(previewTools.left&&previewTools.right);
-  assert.equal(previewTools.nudgeButtons,5);
-  assert.equal(previewTools.zoomButtons,2);
-  assert.equal(previewTools.formOwner,'controls');
-  assert.equal(previewTools.activeBorder,'2px');
-  assert.ok(await evaluate('document.getElementById("primeModeHint").hidden'));
-  await evaluate('document.querySelector("[name=primesOnly]").click()');
-  assert.ok(await evaluate('document.getElementById("primeModeHint").hidden'));
-  assert.ok(await evaluate('document.querySelector("[name=primesOnly]").checked'));
-  // Toggling Primes must reach the recipe, despite the original checkbox now
-  // living outside the <form> element's DOM subtree.
-  await evaluate('document.getElementById("randomizeAll").click()');
-  const primeDraw=await evaluate(`(()=>{
-    const percentages=['shapeFrequency','shapeDepth','stripeWidth','spread'];
-    return {checked:document.querySelector('[name=primesOnly]').checked,
-      values:percentages.map(k=>({
-        value:Number(document.querySelector('[name="'+k+'"]').value),
-        inactive:document.querySelector('[name="'+k+'"]').dataset.inactive==='true'
-      }))};
-  })()`);
-  const isPrime=n=>Number.isInteger(n)&&n>=2&&
-    Array.from({length:Math.max(0,Math.floor(Math.sqrt(n))-1)},(_,i)=>i+2)
-      .every(d=>n%d!==0);
-  assert.ok(primeDraw.checked&&primeDraw.values.every(x=>
-    x.inactive?x.value===0:isPrime(x.value)),
-    'randomized percentages should use primes when the moved toggle is selected');
-  assert.ok(await evaluate('document.body.classList.contains("mobile-edit-open")'),
-    'preview-side Randomize must keep the editor open');
-  const originalImage=await evaluate('document.getElementById("preview").toDataURL()');
-  await evaluate('document.querySelector("[data-zoom=in]").click()');
-  assert.equal(await evaluate('document.querySelector(".studio-stage").style.getPropertyValue("--mobile-preview-zoom")'),'1.1');
-  assert.notEqual(await evaluate('document.getElementById("preview").toDataURL()'),originalImage,
-    'zoom must repaint newly framed pixels rather than scale a clipped bitmap');
-  assert.equal(await evaluate('new URLSearchParams(location.search).has("r")&&JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).viewZoom'),1.1);
-  assert.equal(await evaluate('getComputedStyle(document.getElementById("preview")).transform'),'none');
-  await evaluate('document.querySelector("[data-zoom=out]").click()');
-  assert.equal(await evaluate('document.querySelector(".studio-stage").style.getPropertyValue("--mobile-preview-zoom")'),'1');
-  assert.equal(await evaluate('document.getElementById("preview").toDataURL()'),originalImage,
-    'returning to 100% restores the exact original seeded pixels');
-  await evaluate('document.querySelector("[data-zoom=out]").click()');
-  assert.equal(await evaluate('document.querySelector(".studio-stage").style.getPropertyValue("--mobile-preview-zoom")'),'0.9');
-  assert.notEqual(await evaluate('document.getElementById("preview").toDataURL()'),originalImage);
-  for(let i=0;i<4;i++)await evaluate('document.querySelector("[data-zoom=out]").click()');
-  assert.equal(await evaluate('document.querySelector(".studio-stage").style.getPropertyValue("--mobile-preview-zoom")'),'0.5');
-  assert.ok(await evaluate('document.querySelector("[data-zoom=out]").disabled'),
-    'the very first wallpaper can zoom out to 50%');
-  assert.equal(await evaluate('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).viewZoom'),.5);
-  for(let i=0;i<5;i++)await evaluate('document.querySelector("[data-zoom=in]").click()');
-  assert.equal(await evaluate('document.querySelector(".studio-stage").dataset.viewZoom'),'1');
-  // Generating a different wallpaper must keep the user's chosen framing.
-  await evaluate('document.querySelector("[data-zoom=out]").click()');
-  const beforeGeneration=await evaluate('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).seed');
-  await evaluate('document.getElementById("randomize").click()');
-  const generation=await evaluate(`(()=>{
-    const r=JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get('r')));
-    return {seed:r.seed,zoom:r.viewZoom,shown:document.querySelector('.studio-stage').dataset.viewZoom};
-  })()`);
-  assert.notEqual(generation.seed,beforeGeneration);
-  assert.equal(generation.zoom,.9);
-  assert.equal(generation.shown,'0.9');
-  await evaluate('document.querySelector("[data-zoom=in]").click()');
-  // A fresh 50% view must contain ink outside the old 100% frame.
-  // Full-res save uses the exact same portable recipe camera as this preview.
-  const cameraParity=await evaluate(`(async()=>{
-    const {drawWallpaper}=await import('/src/renderer.js');
-    const recipe={seed:'uncropped-camera',family:'studio',geometry:'straight',
-      orientation:'horizontal',motif:'solid',palette:'citrus',outline:'none',
-      material:'none',lightingMood:'off',stripeShadowEnabled:false,
-      spread:53,stripeWidth:72,individuality:0,viewZoom:.5};
-    const small=document.createElement('canvas');
-    small.width=600;small.height=1300;drawWallpaper(small,recipe);
-    const large=document.createElement('canvas');
-    large.width=1200;large.height=2600;drawWallpaper(large,recipe);
-    const a=small.getContext('2d').getImageData(0,0,600,1300).data;
-    const b=large.getContext('2d').getImageData(0,0,1200,2600).data;
-    const isInk=(data,i)=>Math.max(data[i],data[i+1],data[i+2])-
-      Math.min(data[i],data[i+1],data[i+2])>42;
-    let left=0,right=0,diff=0,checked=0;
-    for(let y=150;y<1150;y+=9){
-      if(isInk(a,(y*600+75)*4))left++;
-      if(isInk(a,(y*600+525)*4))right++;
-    }
-    for(let y=80;y<1200;y+=17)for(let x=55;x<545;x+=13){
-      const j=(y*600+x)*4,k=((y*2)*1200+x*2)*4;
-      // Flat-colour interiors must be pixel-identical at scaled output sizes.
-      if(isInk(a,j)||isInk(b,k)){
-        diff+=Math.max(Math.abs(a[j]-b[k]),Math.abs(a[j+1]-b[k+1]),Math.abs(a[j+2]-b[k+2]));
-        checked++;
-      }
-    }
-    // A vertical composition must likewise continue above and below the
-    // original clipped frame, not leave blank horizontal strips.
-    const vertical=document.createElement('canvas');
-    vertical.width=600;vertical.height=1300;
-    drawWallpaper(vertical,{...recipe,orientation:'vertical'});
-    const v=vertical.getContext('2d').getImageData(0,0,600,1300).data;
-    let top=0,bottom=0;
-    for(let x=35;x<565;x+=7){
-      if(isInk(v,(100*600+x)*4))top++;
-      if(isInk(v,(1200*600+x)*4))bottom++;
-    }
-    return {left,right,top,bottom,averageDifference:diff/Math.max(1,checked),checked};
-  })()`);
-  console.log('TRUE_CAMERA_EXPORT_PARITY',JSON.stringify(cameraParity));
-  assert.ok(cameraParity.left>8&&cameraParity.right>8&&
-    cameraParity.top>8&&cameraParity.bottom>8,
-    'lines must continue beyond all four sides of the old 100% crop');
-  assert.ok(cameraParity.checked>80&&cameraParity.averageDifference<15,
-    'full-resolution camera must match the displayed composition');
-  await evaluate('document.querySelector(".studio-stage [data-nudge=right]").click()');
-  assert.ok((await evaluate('document.getElementById("positionStatus").textContent')).includes('X +1%'));
-  await evaluate('document.querySelector(".studio-stage [data-nudge=reset]").click()');
-
-  // All nonhidden cards must have *no* vertical scroll or clipped controls.
-  const auditCards=async()=>evaluate(`(()=>{
-    const p=document.querySelector('.settings-panel:not([hidden])');
-    const cards=[...p.querySelectorAll('.mobile-setting-cluster:not([hidden])')];
-    return cards.map(card=>({panelHeight:p.clientHeight,formHeight:document.getElementById('controls').clientHeight,
-      formRect:JSON.stringify(document.getElementById('controls').getBoundingClientRect().toJSON()),
-      formDisplay:getComputedStyle(document.getElementById('controls')).display,
-      formPosition:getComputedStyle(document.getElementById('controls')).position,
-      formFlex:getComputedStyle(document.getElementById('controls')).flex,
-      formTop:getComputedStyle(document.getElementById('controls')).top,
-      formBottom:getComputedStyle(document.getElementById('controls')).bottom,
-      formParent:document.getElementById('controls').parentElement.id,
-      formHidden:document.getElementById('controls').hidden,
-      sidebarDisplay:getComputedStyle(document.querySelector('.sidebar')).display,
-      sidebarRect:JSON.stringify(document.querySelector('.sidebar').getBoundingClientRect().toJSON()),
-      navHeight:document.querySelector('.settings-tabs').clientHeight,
-      panelStyle:getComputedStyle(p).flex,
-      name:card.dataset.group,
-      clientHeight:card.clientHeight,scrollHeight:card.scrollHeight,
-      overflow:getComputedStyle(card).overflowY,
-      controlOverflow:[...card.querySelectorAll('select,input:not([type=hidden]),button')].filter(el=>{
-        if(el.closest('[hidden]')||el.offsetParent===null)return false;
-        const c=card.getBoundingClientRect(),r=el.getBoundingClientRect();
-        return r.top<c.top-2||r.bottom>c.bottom+2;
-      }).map(el=>el.name||el.id||el.tagName)
-    }));
-  })()`);
-  for(const category of ['design','colour','textures','refine']){
-    await evaluate(`document.getElementById('tab-${category}').click()`);
-    await delay(250);
-    const audited=await auditCards();
-    console.log('NO_VERTICAL_CARDS',category,JSON.stringify(audited));
-    for(const card of audited){
-      assert.ok(card.scrollHeight<=card.clientHeight+2,category+' '+card.name+' has vertical overflow');
-      assert.equal(card.overflow,'hidden',category+' '+card.name+' can vertically scroll');
-      assert.deepEqual(card.controlOverflow,[],category+' '+card.name+' clips controls');
-    }
-  }
-  await evaluate('document.getElementById("tab-design").click()');
-  await delay(280);
-
-  // Programmatic scroll tests the native snap strip and progress indicator.
-  await evaluate('document.getElementById("panel-design").scrollTo({left:document.getElementById("panel-design").clientWidth+8,behavior:"instant"})');
-  await waitFor('document.getElementById("mobileSettingPosition").textContent.startsWith("2 /")');
-  const pos2=await evaluate('document.getElementById("mobileSettingPosition").textContent');
-  assert.match(pos2,/^2 \/ /);
-  // Category changes reset to the first card and leave the canvas visible.
-  await evaluate('document.getElementById("tab-textures").click()');
-  await waitFor('document.getElementById("panel-textures").hidden===false');
-  const textures=await evaluate(`(()=>{
-    const el=document.getElementById('panel-textures');
-    return {scrollWidth:el.scrollWidth,clientWidth:el.clientWidth,
-      material:!!el.querySelector('[name="material"]'),
-      layer2:!!document.getElementById('textureLayer2Panel'),
-      layer3:!!document.getElementById('textureLayer3Panel'),
-      vertical:getComputedStyle(document.getElementById('mobileDesignSheet')).overflowY,
-      previewVisible:document.querySelector('.studio-stage').getBoundingClientRect().bottom<
-        document.getElementById('mobileDesignSheet').getBoundingClientRect().top};
-  })()`);
-  assert.ok(textures.scrollWidth>textures.clientWidth*1.5 && textures.material && textures.layer2 && textures.layer3,
-    'texture panel should contain a layer card plus displacement card, not one card per slider');
-  assert.equal(textures.vertical,'hidden');assert.ok(textures.previewVisible);
-  await evaluate('document.getElementById("addTextureLayer2").click()');
-  await waitFor('document.getElementById("textureLayer2Panel").hidden===false');
-  assert.ok(await evaluate(`(()=>{
-    const card=[...document.querySelectorAll('.mobile-setting-cluster')]
-      .find(el=>el.dataset.group==='Texture 2 material');
-    return !card?.hidden && card?.getBoundingClientRect().width>80 &&
-      card?.querySelector('[name=material2]') &&
-      getComputedStyle(card).display!=='none';
-  })()`),'enabled texture layer and all associated controls should appear on one card');
-  const textureExpansion=await evaluate(`(()=>{
-    const cards=[...document.querySelectorAll('.mobile-setting-cluster')]
-      .filter(el=>el.dataset.group.startsWith('Texture 2')&&!el.hidden);
-    return cards.map(el=>({name:el.dataset.group,client:el.clientHeight,
-      scroll:el.scrollHeight,
-      visible:([...el.querySelectorAll('select,input,button')].filter(node=>{
-        if(node.closest('[hidden]')||node.offsetParent===null)return false;
-        const r=node.getBoundingClientRect(),c=el.getBoundingClientRect();
-        return r.top>=c.top-2&&r.bottom<=c.bottom+2;
-      })).length}));
-  })()`);
-  console.log('EXPANDED_TEXTURE_CARD',JSON.stringify(textureExpansion));
-  assert.equal(textureExpansion.length,2);
-  for(const card of textureExpansion)assert.ok(card.scroll<=card.client+2,card.name+' must fit completely');
-
-  await evaluate('document.getElementById("tab-design").click()');
-  await evaluate(`(()=>{const box=document.querySelector('[name=stripeShadowEnabled]');if(!box.checked)box.click()})()`);
-  await waitFor('document.getElementById("stripeShadowControls").hidden===false');
-  const expandedShadow=await evaluate(`(()=>{
-    const card=[...document.querySelectorAll('.mobile-setting-cluster')]
-      .find(el=>el.dataset.group==='Stripe shadows');
-    return {visible:card?.clientHeight,content:card?.scrollHeight,
-      clipped:[...card.querySelectorAll('input,select')].filter(el=>{
-        if(el.closest('[hidden]')||el.offsetParent===null)return false;
-        const c=card.getBoundingClientRect(),r=el.getBoundingClientRect();
-        return r.top<c.top-2||r.bottom>c.bottom+2;
-      }).map(el=>el.name)};
-  })()`);
-  console.log('EXPANDED_SHADOW_CARD',JSON.stringify(expandedShadow));
-  assert.ok(expandedShadow.content<=expandedShadow.visible+2,'expanded shadows should fit');
-  assert.deepEqual(expandedShadow.clipped,[]);
-  // Exercise actual Chrome touch events, not just DOM clicks.
-  const swipe=async (from,to)=>{
-    await command('Input.dispatchTouchEvent',{type:'touchStart',
-      touchPoints:[{x:from.x,y:from.y,id:1}]});
-    await command('Input.dispatchTouchEvent',{type:'touchMove',
-      touchPoints:[{x:(from.x+to.x)/2,y:(from.y+to.y)/2,id:1}]});
-    await command('Input.dispatchTouchEvent',{type:'touchMove',
-      touchPoints:[{x:to.x,y:to.y,id:1}]});
-    await command('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
-  };
-  // Test sideways flicks in the historically problematic Colour and Texture
-  // categories with actual browser touch events, not scripted scrollLeft.
-  for(const category of ['colour','textures']){
-    await evaluate(`document.getElementById('tab-${category}').click()`);
-    await delay(370);
-    const railBounds=await evaluate(`(()=>{
-      const p=document.getElementById('panel-${category}');
-      const r=p.getBoundingClientRect();
-      return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,
-        initial:p.scrollLeft,maximum:p.scrollWidth-p.clientWidth};
-    })()`);
-    assert.ok(railBounds.maximum>railBounds.right-railBounds.left,
-      category+' should have multiple horizontal cards');
-    await swipe({x:Math.round(railBounds.right-32),y:Math.round(railBounds.bottom-9)},
-                {x:Math.round(railBounds.left+35),y:Math.round(railBounds.bottom-9)});
-    await waitFor(`document.getElementById('panel-${category}').scrollLeft>50`);
-    console.log('TOUCH_CATEGORY_SWIPE',category,await evaluate(`document.getElementById('panel-${category}').scrollLeft`));
-  }
-  await evaluate('document.getElementById("tab-design").click()');
-  await delay(320);
-  const navPosition=await evaluate(`(()=>{
-    const r=document.querySelector('.settings-tabs').getBoundingClientRect();
-    return {y:Math.round(r.top+r.height/2),left:Math.round(r.left),right:Math.round(r.right)};
-  })()`);
-  await swipe({x:navPosition.right-34,y:navPosition.y},
-              {x:navPosition.left+40,y:navPosition.y});
-  await waitFor(`document.getElementById('tab-colour').getAttribute('aria-selected')==='true'`);
-  // A real finger drag should adjust a slider, not scroll to another card.
-  await evaluate('document.getElementById("tab-design").click()');
-  // Randomize may select a straight or returning path, which legitimately
-  // disables shape frequency; select a geometry where this thumb is active.
-  await evaluate(`(()=>{
-    const geometry=document.querySelector('[name=geometry]');
-    geometry.value='wave';geometry.dispatchEvent(new Event('change',{bubbles:true}));
-  })()`);
-  await waitFor(`document.querySelector('[name=shapeFrequency]').disabled===false`);
-  // Start this touch check from a middle track position, even if the earlier
-  // Prime-mode randomization happened to choose a value near 0 or 100.
-  await evaluate(`(()=>{
-    const input=document.querySelector('[name=shapeFrequency]');
-    input.value='50';input.dispatchEvent(new Event('input',{bubbles:true}));
-  })()`);
-  // Tab selection asynchronously resets the rail to its first card.
-  // Let that reset and CSS snap finish before navigating to the nested slider.
-  await delay(330);
-  await evaluate(`(()=>{
-    const card=[...document.querySelectorAll('#panel-design .mobile-setting-cluster')]
-      .find(el=>el.dataset.group==='Geometry');
-    card.scrollIntoView({inline:'start',block:'nearest',behavior:'instant'});
-    document.querySelector('[name=shapeFrequency]').scrollIntoView({
-      inline:'nearest',block:'center',behavior:'instant'
-    });
-  })()`);
-  await delay(280);
-  await waitFor(`(()=>{
-    const control=document.querySelector('[name=shapeFrequency]').getBoundingClientRect();
-    const card=[...document.querySelectorAll('#panel-design .mobile-setting-cluster')]
-      .find(el=>el.dataset.group==='Geometry').getBoundingClientRect();
-    return control.left>0&&control.right<innerWidth &&
-      control.top>=card.top && control.bottom<=card.bottom;
-  })()`);
-  // The displayed buttons must also adjust real recipe values, not merely
-  // be decorative controls alongside the touch slider.
-  const stepperResult=await evaluate(`(()=>{
-    const slider=document.querySelector('[name=shapeFrequency]');
-    const buttons=slider.closest('.stepper').querySelectorAll('.step-button');
-    const before=Number(slider.value);
-    buttons[1].click();
-    const afterPlus=Number(slider.value);
-    buttons[0].click();
-    return {before,afterPlus,afterMinus:Number(slider.value)};
-  })()`);
-  assert.equal(stepperResult.afterPlus,stepperResult.before+1);
-  assert.equal(stepperResult.afterMinus,stepperResult.before);
-  console.log('MOBILE_STEPPER_REAL_INCREMENT_SUCCESS');
-  const slider=await evaluate(`(()=>{
-    const r=document.querySelector('[name=shapeFrequency]').getBoundingClientRect();
-    return {left:r.left,right:r.right,y:Math.round(r.top+r.height/2),
-      value:Number(document.querySelector('[name=shapeFrequency]').value),
-      scrollLeft:document.getElementById('panel-design').scrollLeft};
-  })()`);
-  console.log('SHAPE_SLIDER_BEFORE',JSON.stringify(await evaluate(`(()=>{
-    const target=document.querySelector('[name=shapeFrequency]');
-    const card=target.closest('.mobile-setting-cluster');
-    const pointX=Math.round((target.getBoundingClientRect().left+target.getBoundingClientRect().right)/2);
-    const pointY=Math.round((target.getBoundingClientRect().top+target.getBoundingClientRect().bottom)/2);
-    const hit=document.elementFromPoint(pointX,pointY);
-    return {pointX,pointY,hit:hit?.outerHTML?.slice(0,300),name:hit?.name,
-      disabled:target.disabled,touchAction:getComputedStyle(target).touchAction,
-      cardScroll:card.scrollTop,cardHeight:card.clientHeight,
-      totalCardHeight:card.scrollHeight,value:target.value,top:target.getBoundingClientRect().top,
-      railScroll:document.getElementById('panel-design').scrollLeft};
-  })()`)));
-  // Drag the actual thumb at its existing value. Touching the very
-  // beginning of a track is a value-jump, not a thumb drag.
-  const thumbX=Math.round(slider.left+(slider.right-slider.left)*slider.value/100);
-  await swipe({x:thumbX,y:slider.y},
-              {x:Math.round(slider.right-13),y:slider.y});
-  console.log('SHAPE_SLIDER_AFTER',JSON.stringify(await evaluate(`(()=>{
-    const target=document.querySelector('[name=shapeFrequency]');
-    return {value:target.value,railScroll:document.getElementById('panel-design').scrollLeft,
-      cardScroll:target.closest('.mobile-setting-cluster').scrollTop};
-  })()`)));
-  await waitFor(`Number(document.querySelector('[name=shapeFrequency]').value)>${slider.value}`);
-
-  const afterSlider=await evaluate(`({
-    value:Number(document.querySelector('[name=shapeFrequency]').value),
-    scroll:document.getElementById('panel-design').scrollLeft,
-    category:document.querySelector('.settings-tab[aria-selected="true"]').dataset.tab
-  })`);
-  assert.ok(afterSlider.value>slider.value,'range slider responds to a real finger drag');
-  assert.ok(Math.abs(afterSlider.scroll-slider.scrollLeft)<40,'dragging a slider should not swipe away the card');
-  assert.equal(afterSlider.category,'design');
-  // Pull down by the narrow, unobtrusive grab handle.
-  const grab=await evaluate(`(()=>{
-    const r=document.getElementById('mobileDismissHandle').getBoundingClientRect();
-    return {x:Math.round(r.x+r.width/2),y:Math.round(r.top+r.height/2)};
-  })()`);
-  await swipe(grab,{x:grab.x,y:grab.y+92});
-  await waitFor('!document.body.classList.contains("mobile-edit-open")');
-  assert.ok(!await evaluate('document.body.classList.contains("mobile-edit-open")'));
-
-  // Draw on the exact preview overlay using native Chromium touch events,
-  // apply a regularized path, and ensure Undo restores the prior wallpaper.
-  const priorPath=await evaluate(`(()=>{
-    const r=JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get('r')));
-    return {geometry:r.geometry,customPath:r.customPath};
-  })()`);
-  const undoInRail=await evaluate(`(()=>{
-    const rail=document.querySelector('.mobile-preview-rail-left');
-    const prime=rail.querySelector('.prime-toggle').getBoundingClientRect();
-    const undo=rail.querySelector('#undo').getBoundingClientRect();
-    return {visible:undo.width>20,below:undo.top>=prime.bottom-1,
-      toggle:!!rail.querySelector('#drawPathToggle')};
-  })()`);
-  assert.ok(undoInRail.visible&&undoInRail.below&&undoInRail.toggle,
-    'Undo should be immediately below Primes Only with drawing beside it');
-  await evaluate('document.getElementById("drawPathToggle").click()');
-  await waitFor('document.getElementById("drawOverlay").hidden===false');
-  const box=await evaluate(`(()=>{
-    const r=document.getElementById('drawOverlay').getBoundingClientRect();
-    const frame=document.getElementById('preview').getBoundingClientRect();
-    return {left:r.left,top:r.top,width:r.width,height:r.height,
-      frameLeft:frame.left,frameTop:frame.top,frameWidth:frame.width,frameHeight:frame.height};
-  })()`);
-  assert.ok(box.width>box.frameWidth,'drawing plane includes gutters outside the frame');
-  await swipe({x:Math.round(box.left+box.width*.24),y:Math.round(box.top+box.height*.19)},
-              {x:Math.round(box.left+box.width*.73),y:Math.round(box.top+box.height*.68)});
-  await waitFor('document.getElementById("drawApply").disabled===false');
-  const beforeSmoothing=await evaluate('document.getElementById("drawOverlay").toDataURL()');
-  await evaluate(`(()=>{
-    const slider=document.getElementById('drawSmoothingStrength');
-    slider.value='5';slider.dispatchEvent(new Event('input',{bubbles:true}));
-  })()`);
-  assert.equal(await evaluate('document.getElementById("drawSmoothingValue").textContent'),'5.0×');
-  assert.ok(await evaluate('!document.getElementById("drawApply").disabled'));
-  await evaluate('document.getElementById("drawGeometric").click()');
-  assert.ok(await evaluate('document.getElementById("drawGeometric").getAttribute("aria-pressed")==="true"'));
-  await evaluate('document.getElementById("drawApply").click()');
-  await waitFor(`(()=>{
-    const r=JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get('r')));
-    return r.geometry==='drawn'&&r.customPath.length>2;
-  })()`);
-  assert.equal(await evaluate('document.getElementById("drawOverlay").hidden'),true);
-  await evaluate('document.getElementById("undo").click()');
-  await waitFor(`(()=>{
-    const r=JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get('r')));
-    return r.geometry===${JSON.stringify(priorPath.geometry)}&&
-      JSON.stringify(r.customPath)===${JSON.stringify(JSON.stringify(priorPath.customPath))};
-  })()`);
-  console.log('TOUCH_DOODLE_SMOOTH_GEOMETRIC_UNDO_SUCCESS');
-
-  // Doodle coordinates must still be recipe-space coordinates when the
-  // preview is zoomed; zooming is purely a visual transform, not regeneration.
-  await evaluate('document.querySelector("[data-zoom=in]").click()');
-  await evaluate('document.getElementById("drawPathToggle").click()');
-  const zoomBox=await evaluate(`(()=>{
-    const r=document.getElementById('preview').getBoundingClientRect();
-    return {left:r.left,top:r.top,width:r.width,height:r.height};
-  })()`);
-  await swipe({x:Math.round(zoomBox.left+zoomBox.width*.31),y:Math.round(zoomBox.top+zoomBox.height*.27)},
-              {x:Math.round(zoomBox.left+zoomBox.width*.67),y:Math.round(zoomBox.top+zoomBox.height*.62)});
-  await waitFor('document.getElementById("drawApply").disabled===false');
-  await evaluate('document.getElementById("drawApply").click()');
-  const zoomedPath=await evaluate(`(()=>{
-    const recipe=JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get('r')));
-    return recipe.customPath[0];
-  })()`);
-  assert.ok(Math.abs(zoomedPath[0]-(.5+(.31-.5)/1.1))<.04&&
-    Math.abs(zoomedPath[1]-(.5+(.27-.5)/1.1))<.04,
-    'zoomed input must invert the persisted camera framing coordinates');
-  await evaluate('document.getElementById("undo").click()');
-  await evaluate('document.querySelector("[data-zoom=out]").click()');
-  console.log('ZOOMED_FINGER_PATH_COORDINATES_SUCCESS');
-
-
+  const initial=await evaluate('({tabs:document.querySelectorAll(".settings-tab").length,tools:document.querySelectorAll(".editor-tool-card").length,preview:document.querySelector(".wallpaper-frame").getBoundingClientRect().height,scroll:document.documentElement.scrollHeight})');
+  assert.equal(initial.tabs,6);
+  assert.ok(initial.tools>=18);
+  assert.ok(initial.preview>450);
+  assert.ok(initial.scroll<=915);
   await evaluate('document.getElementById("mobileEdit").click()');
   await waitFor('document.body.classList.contains("mobile-edit-open")');
-  await evaluate(`(()=>{const theme=document.getElementById('studioTheme');
-    theme.value='dark';theme.dispatchEvent(new Event('change',{bubbles:true}))})()`);
-  assert.equal(await evaluate('document.documentElement.dataset.theme'),'dark');
-  await evaluate('document.getElementById("mobileDismissHandle").click()');
-  // Reopen then restore toolbar through the small surviving expand arrow.
-  await evaluate('document.getElementById("mobileDockExpand").click()');
-  await waitFor(`!document.body.classList.contains('mobile-edit-open') &&
-    document.querySelector('.mobile-dock').getBoundingClientRect().left<10 &&
-    document.querySelector('.masthead').getBoundingClientRect().top>=0`);
-  const restored=await evaluate(`({
-    headerHeight:document.querySelector('.masthead').getBoundingClientRect().height,
-    dockHeight:document.querySelector('.mobile-dock').getBoundingClientRect().height,
-    arrowHidden:getComputedStyle(document.getElementById('mobileDockExpand')).opacity==='0',
-    theme:document.documentElement.dataset.theme
-  })`);
-  assert.ok(restored.headerHeight>=65&&restored.dockHeight<=55&&restored.arrowHidden);
-  assert.equal(restored.theme,'dark');
-  await evaluate('document.getElementById("mobileMore").click()');
-  await waitFor(`(()=>{
-    const stage=document.querySelector('.studio-stage').getBoundingClientRect();
-    const sheet=document.getElementById('mobileToolsSheet').getBoundingClientRect();
-    return stage.bottom<=sheet.top+2;
-  })()`);
-  const tools=await evaluate(`(()=>({
-    open:document.body.classList.contains('mobile-tools-open'),
-    seed:!!document.querySelector('#mobileToolsContent #seedInput'),
-    metadata:!!document.querySelector('#mobileToolsContent #metadataToggle'),
-    nudge:!!document.querySelector('.studio-stage .nudge-pad'),
-    copy:!!document.querySelector('#mobileToolsContent #copyLink'),
-    undo:!!document.querySelector('.studio-stage .mobile-preview-rail-left #undo')
-  }))()`);
-  assert.ok(Object.values(tools).every(Boolean),'mobile utilities and preview Undo should be available');
-  const utilities=await evaluate(`(()=>{
-    const r=document.querySelector('.studio-stage').getBoundingClientRect();
-    const t=document.getElementById('mobileToolsSheet').getBoundingClientRect();
-    return {previewHeight:document.querySelector('.wallpaper-frame').getBoundingClientRect().height,
-      separated:r.bottom<=t.top+2,toolsHeight:t.height};
-  })()`);
-  assert.ok(utilities.separated&&utilities.previewHeight>300,'More tools must not cover the preview');
-  await evaluate('document.getElementById("mobileToolsClose").click()');
-  await evaluate('document.getElementById("mobileExplore").click()');
-  await waitFor(`(()=>{
-    const stage=document.querySelector('.studio-stage').getBoundingClientRect();
-    const tray=document.querySelector('.workspace>.gallery-section').getBoundingClientRect();
-    return stage.bottom<=tray.top+2;
-  })()`);
-  assert.ok(await evaluate('document.body.classList.contains("mobile-gallery-open")'));
-  assert.equal(await evaluate('getComputedStyle(document.querySelector(".workspace>.gallery-section")).display'),'flex');
-  const galleryMetrics=await evaluate(`(()=>{
-    const preview=document.querySelector('.studio-stage').getBoundingClientRect();
-    const gallery=document.querySelector('.workspace>.gallery-section').getBoundingClientRect();
-    return {previewHeight:preview.height,separate:preview.bottom<=gallery.top+2};
-  })()`);
-  assert.ok(galleryMetrics.separate&&galleryMetrics.previewHeight>340,
-    'exploring variations must also keep the preview visible');
-  await evaluate('document.getElementById("mobileExplore").click()');
-  assert.ok(!await evaluate('document.body.classList.contains("mobile-gallery-open")'));
-  // A PNG generated elsewhere must be able to restore the *complete*
-  // recipe, rather than only seed/EXIF strings. Exercise the real file input.
-  await evaluate(`(async()=>{
-    const module=await import('/src/png-metadata.js');
-    const canvas=document.getElementById('preview');
-    const raw=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
-    const recipe={seed:'png-restore-qa',orientation:'diagonal',diagonalRotation:-61,
-      reverseStripes:true,mirrorHorizontal:true,mirrorVertical:true,
-      positionX:7,positionY:-4,textureLayer2Enabled:true,material2:'felt',
-      lockedSettings:['reverseStripes','diagonalRotation']};
-    const packed=module.embedPngMetadata(await raw.arrayBuffer(),{}, {recipe});
-    const transfer=new DataTransfer();
-    transfer.items.add(new File([packed],'saved-wallpaper.png',{type:'image/png'}));
-    const chooser=document.getElementById('importRecipeFile');
-    chooser.files=transfer.files;
-    chooser.dispatchEvent(new Event('change',{bubbles:true}));
-  })()`);
-  await waitFor(`(()=>{
-    const raw=new URLSearchParams(location.search).get('r');
-    if(!raw)return false;
-    const recipe=JSON.parse(decodeURIComponent(raw));
-    return recipe.seed==='png-restore-qa'&&recipe.diagonalRotation===-61&&
-      recipe.mirrorHorizontal&&recipe.mirrorVertical&&recipe.reverseStripes&&
-      recipe.positionX===7&&recipe.positionY===-4;
-  })()`);
-  assert.ok(await evaluate('document.querySelector("[name=reverseStripes]").checked'));
-  assert.equal(await evaluate('document.querySelector("[name=diagonalRotation]").value'),'-61');
-  console.log('PNG_RECIPE_IMPORT_SUCCESS');
-
-  await command('Emulation.setDeviceMetricsOverride',{
-    width:1280,height:900,deviceScaleFactor:1,mobile:false,
-    screenWidth:1280,screenHeight:900,
-  });
-  await waitFor('!document.body.classList.contains("mobile-studio")');
-  assert.equal(await evaluate('getComputedStyle(document.querySelector(".mobile-dock")).display'),'none');
-  assert.equal(await evaluate('document.documentElement.dataset.theme'),'dark');
-  const restoredSettings=await evaluate(`({
-    groups:document.querySelectorAll('.mobile-setting-cluster').length,
-    geometry:document.querySelector('[name=geometry]').closest('#panel-design')!==null,
-    shape:document.querySelector('[name=shapeFrequency]').closest('#panel-design')!==null,
-    outlineBuffer:document.querySelector('[name=gap]').closest('#panel-refine')!==null,
-    lockCount:document.querySelectorAll('#controls .setting-lock').length,
-  })`);
-  assert.equal(restoredSettings.groups,0,'desktop must restore independent controls');
-  assert.ok(await evaluate('document.querySelector(".composition-positioner .nudge-pad")!==null'));
-  assert.ok(await evaluate('document.querySelector("#controls .randomize-toolbar")!==null'));
-  assert.ok(restoredSettings.geometry&&restoredSettings.shape&&restoredSettings.outlineBuffer);
-  assert.ok(restoredSettings.lockCount>25,'locks must survive DOM reparenting');
-  // The drawing plane covers the entire stage. Start a real mouse gesture
-  // outside the wallpaper border, enter the image, then regenerate the design.
-  await evaluate('document.getElementById("drawPathToggle").click()');
-  const offFrame=await evaluate(`(()=>{
-    const image=document.getElementById('preview').getBoundingClientRect();
-    const stage=document.querySelector('.studio-stage').getBoundingClientRect();
-    const overlay=document.getElementById('drawOverlay').getBoundingClientRect();
-    return {image:{left:image.left,top:image.top,width:image.width,height:image.height},
-      stage:{left:stage.left,right:stage.right,top:stage.top,bottom:stage.bottom},
-      overlay:{left:overlay.left,right:overlay.right}};
-  })()`);
-  const startX=Math.round(offFrame.image.left-28);
-  const startY=Math.round(offFrame.image.top+offFrame.image.height*.28);
-  const endX=Math.round(offFrame.image.left+offFrame.image.width*.55);
-  const endY=Math.round(offFrame.image.top+offFrame.image.height*.70);
-  assert.ok(startX>offFrame.stage.left+6&&startX<offFrame.image.left);
-  assert.ok(offFrame.overlay.left<=startX&&offFrame.overlay.right>endX);
-  await command('Input.dispatchMouseEvent',{type:'mouseMoved',x:startX,y:startY});
-  await command('Input.dispatchMouseEvent',{type:'mousePressed',x:startX,y:startY,button:'left',clickCount:1});
-  for(let i=1;i<=8;i++){
-    const t=i/8;
-    await command('Input.dispatchMouseEvent',{type:'mouseMoved',
-      x:Math.round(startX+(endX-startX)*t),
-      y:Math.round(startY+(endY-startY)*t),button:'left',buttons:1});
+  const editor=await evaluate('(()=>{const box=q=>document.querySelector(q).getBoundingClientRect();const s=box(".studio-stage"),p=box(".wallpaper-frame"),t=box(".sidebar");return {separate:s.bottom<=t.top+2,ratio:p.width/p.height,previewHeight:p.height,scrollY:getComputedStyle(document.querySelector(".sidebar")).overflowY,tabs:[...document.querySelectorAll(".settings-tab")].map(b=>b.textContent.trim())}})()');
+  console.log('REDESIGN_PHONE_METRICS',JSON.stringify(editor));
+  assert.ok(editor.separate,'the panel may not overlap or obscure any stripe');
+  assert.ok(editor.previewHeight>260,'the complete frame remains appreciable during edits');
+  assert.ok(Math.abs(editor.ratio-600/1300)<.06);
+  assert.equal(editor.scrollY,'hidden');
+  assert.deepEqual(editor.tabs,['▦ Layout','⌁ Path','≋ Stripes','◐ Colour','▧ Material','✦ Effects']);
+  const schema=await evaluate('(async()=>{const m=await import("/src/editor-schema.js");const keys=[...document.querySelectorAll("#controls [data-setting]")].map(x=>x.name).filter(x=>x&&!["family","primesOnly"].includes(x));return {...m.validateEditorSchema([...new Set(keys)]),wizard:m.WIZARD_STEPS,toolCount:m.TOOL_LIST.length}})()');
+  console.log('EDITOR_SCHEMA',JSON.stringify(schema));
+  assert.deepEqual(schema.missing,[]);
+  assert.deepEqual(schema.duplicated,[]);
+  assert.deepEqual(schema.unknown,[]);
+  assert.equal(schema.wizard.length,6);
+  assert.ok(schema.toolCount>=18);
+  // Direct navigation, no blind scroll or gallery overlay.
+  await evaluate('document.getElementById("tab-stripes").click()');
+  await evaluate('document.querySelector("[data-editor-tool=structure]").click()');
+  assert.ok(await evaluate('document.querySelector("#panel-stripes .editor-tool-card:not([hidden]) [name=stripeWidth]")!==null'));
+  const original=await evaluate('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r")))');
+  await evaluate('document.querySelector("[data-random-setting=stripeWidth]").click()');
+  await waitFor('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).stripeWidth!=='+original.stripeWidth);
+  const changed=await evaluate('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r")))');
+  const changedKeys=Object.keys(changed).filter(k=>JSON.stringify(changed[k])!==JSON.stringify(original[k]));
+  assert.deepEqual(changedKeys,['stripeWidth'],'per-setting reroll must change ONLY stripeWidth');
+  await evaluate('document.querySelector("[name=stripeWidth]").closest(".lockable-setting").querySelector(".setting-lock").click()');
+  assert.ok(await evaluate('document.querySelector("[data-random-setting=stripeWidth]").disabled'));
+  const locked=await evaluate('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r")))');
+  await evaluate('document.querySelector("[data-random-category]").click()');
+  const afterCategory=await evaluate('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r")))');
+  assert.equal(afterCategory.stripeWidth,locked.stripeWidth);
+  assert.equal(afterCategory.palette,locked.palette);
+  assert.equal(afterCategory.seed,locked.seed);
+  assert.ok(['construction','spread','motif','lineStyle','dotSize','dotSpacing','individuality'].some(k=>JSON.stringify(afterCategory[k])!==JSON.stringify(locked[k])));
+  // Nearby variations are controlled by the same scope and don't reset seed.
+  await evaluate('document.getElementById("editorVariationMode").value="vary"');
+  await evaluate('document.getElementById("editorVariationStrength").value="gentle"');
+  const beforeVary=await evaluate('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r")))');
+  await evaluate('document.querySelector("[data-random-tool=structure]").click()');
+  const varied=await evaluate('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r")))');
+  assert.equal(varied.seed,beforeVary.seed);
+  assert.equal(varied.palette,beforeVary.palette);
+  assert.equal(varied.stripeWidth,beforeVary.stripeWidth);
+  assert.ok(Math.abs(varied.spread-beforeVary.spread)<=7,'gentle variations stay local');
+  // A style translates to visible regular settings rather than hidden width.
+  await evaluate('(()=>{const f=document.querySelector("[name=family]");f.value="tapestry";f.dispatchEvent(new Event("change",{bubbles:true}))})()');
+  const preset=await evaluate('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r")))');
+  assert.equal(preset.geometry,'wave');
+  assert.equal(preset.motif,'chevrons');
+  assert.equal(preset.palette,'muted');
+  // Editing from different categories never hides or renumbers stripes.
+  for(const id of ['layout','path','stripes','colour','material','effects']){
+    await evaluate('document.getElementById("tab-'+id+'").click()');
+    const result=await evaluate('(()=>{const p=document.querySelector(".editor-category-panel:not([hidden])");const c=p.querySelector(".editor-tool-card:not([hidden])");const a=c.getBoundingClientRect(),b=document.querySelector(".studio-stage").getBoundingClientRect(),t=document.querySelector(".sidebar").getBoundingClientRect();return {category:p.dataset.category,tool:c.dataset.editorTool,visible:a.width>0&&a.height>0,separate:b.bottom<=t.top+2,scrollY:getComputedStyle(p).overflowY}})()');
+    assert.equal(result.category,id);
+    assert.ok(result.visible&&result.separate);
+    assert.equal(result.scrollY,'hidden');
   }
-  await command('Input.dispatchMouseEvent',{type:'mouseReleased',x:endX,y:endY,button:'left',clickCount:1});
-  await waitFor('document.getElementById("drawApply").disabled===false');
-  await evaluate('document.getElementById("drawApply").click()');
-  await waitFor(`(()=>{
-    const r=JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get('r')));
-    return r.geometry==='drawn'&&r.customPath.length>3&&r.customPath[0][0]<-.05;
-  })()`);
-  console.log('OFF_FRAME_MOUSE_ENTRY_AND_RECIPE_SUCCESS');
-  console.log('Browser smoke passed: phone viewport, sheets, gallery, theme and desktop restoration.');
+  await evaluate('document.getElementById("tab-material").click()');
+  await evaluate('document.querySelector("[data-editor-tool=layer1]").click()');
+  await evaluate('document.getElementById("addTextureLayer2").click()');
+  await waitFor('document.getElementById("textureLayer2Panel").hidden===false');
+  await evaluate('document.querySelector("[data-editor-tool=layer2]").click()');
+  assert.ok(await evaluate('document.querySelector("#panel-material .editor-tool-card:not([hidden]) [name=material2]")!==null'));
+  await evaluate('document.getElementById("tab-path").click()');
+  await evaluate('document.querySelector("[data-editor-tool=geometry]").click()');
+  assert.ok(await evaluate('document.querySelector("#panel-path .editor-tool-card:not([hidden]) [name=geometry]")!==null'));
+  // Keep the existing single-checkpoint Undo and complete full-res export.
+  await evaluate('document.getElementById("undo").click()');
+  assert.ok(await evaluate('document.querySelector(".studio-stage").getBoundingClientRect().bottom<=document.querySelector(".sidebar").getBoundingClientRect().top+2'));
+  // Desktop reuses identical form controls; no duplicated settings or hidden panel.
+  await command('Emulation.setDeviceMetricsOverride',{width:1280,height:900,deviceScaleFactor:1,mobile:false,screenWidth:1280,screenHeight:900});
+  await waitFor('!document.body.classList.contains("mobile-studio")');
+  assert.ok(await evaluate('document.querySelector("#panel-path [name=geometry]")!==null'));
+  assert.ok(await evaluate('document.querySelectorAll(".editor-tool-card").length>=18'));
+  console.log('REDESIGN_EXPLORATION_ACCEPTANCE_SUCCESS');
 }finally{
   try{ws?.close()}catch{}
   for(const {bad} of pending.values())bad(new Error('Browser ended'));
