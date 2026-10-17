@@ -1,5 +1,5 @@
 /* A preview-only 90%-area device crop guide. It never touches canvas pixels. */
-.wallpaper-surface{position:relative}
+.wallpaper-frame{position:relative}
 .bleed-guide{
   position:absolute;inset:5%;width:90%;height:90%;box-sizing:border-box;
   border:1px solid white;z-index:8;pointer-events:none;
