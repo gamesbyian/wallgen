@@ -31,12 +31,20 @@ export function pathPosition(stripe,x,extent){
     const u=clamp((x+extent)/(2*extent),0,1);
     const radius=stripe.turnRadius??190;
     const top=-900,turn=210;
+    const theta=clamp(stripe.hairpinAngle??180,60,180)*Math.PI/180;
+    const finalAngle=Math.PI-theta;
     let px,py;
     if(u<.42){px=-radius;py=mix(top,turn,u/.42);}
     else if(u<.58){
-      const a=Math.PI*(1-(u-.42)/.16);
+      const a=Math.PI-theta*(u-.42)/.16;
       px=radius*Math.cos(a);py=turn+radius*Math.sin(a);
-    }else{px=radius;py=mix(turn,top,(u-.58)/.42);}
+    }else{
+      // Exit leg continues tangent to the adjustable circular turn, not from
+      // a fixed +radius X. 180° reproduces the original returning U path.
+      const distance=(u-.58)/.42*(turn-top);
+      px=radius*Math.cos(finalAngle)+distance*Math.sin(finalAngle);
+      py=turn+radius*Math.sin(finalAngle)-distance*Math.cos(finalAngle);
+    }
     // The shared normal makes the seven U's truly nested, including the bend.
     // A small seed-controlled deformation can still act on the entire group.
     const phase=stripe.sharedPhase??0;
