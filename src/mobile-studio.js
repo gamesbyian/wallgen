@@ -95,6 +95,7 @@ dockExpand.addEventListener('click',()=>closeSurfaces({restoreFocus:false}));
 document.querySelector('.studio-stage').addEventListener('click',event=>{
   // The wallpaper itself may dismiss Edit, but the preview-side Randomize,
   // Primes, nudge, and zoom controls must NEVER close the editing tray.
+  if(document.body.classList.contains('path-drawing'))return;
   if(event.target.closest('.mobile-preview-rail,button,input,label'))return;
   if(document.body.classList.contains('mobile-edit-open'))closeSurfaces({restoreFocus:false});
 });
