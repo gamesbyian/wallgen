@@ -19,7 +19,7 @@
   <link rel="stylesheet" href="mobile-card-groups.css?v=20261016-related1">
   <link rel="stylesheet" href="mobile-editor-rail.css?v=20261016-noscroll1">
   <link rel="stylesheet" href="design-transform.css?v=20261016-transform1">
-  <link rel="stylesheet" href="draw-path.css?v=20261017-draw1">
+  <link rel="stylesheet" href="draw-path.css?v=20261017-flow2">
 </head>
 <body>
   <header class="masthead">
@@ -84,6 +84,7 @@
           <label class="field range-field"><span>Repeat spacing</span><input type="range" name="repeatSpacing" data-setting="repeatSpacing" min="0" max="100" value="50"></label>
           <label class="field">Path geometry <select name="geometry" data-setting="geometry"><option value="auto">Follow family</option><option value="straight">Straight</option><option value="wave">Wavy</option><option value="zigzag">Zigzag</option><option value="chevron">Chevron / pointed V</option><option value="jagged">Jagged / fractured</option><option value="stepped">Stepped</option><option value="arc">Sweeping arcs</option><option value="contour">Topographic</option><option value="hairpin">Hairpin / returning curve</option><option value="loops">Continuous loops</option><option value="drawn" disabled>Drawn path</option></select></label>
           <label class="field range-field"><span>Hairpin radius</span><input type="range" name="turnRadius" data-setting="turnRadius" min="0" max="100" value="50"></label>
+          <label class="field range-field"><span>Hairpin turn angle</span><input type="range" name="hairpinAngle" data-setting="hairpinAngle" min="60" max="180" value="180" step="1"></label>
           <label class="field">Stripe construction <select name="construction" data-setting="construction"><option value="ribbon">Patterned / solid ribbon</option><option value="stroke">Fine continuous line</option><option value="tonal">Layered tonal bands</option><option value="woven">Woven diagonal lattice</option></select></label>
           <label class="field">Stripe pattern <select name="motif" data-setting="motif"><option value="auto">Follow family</option><option value="solid">Solid</option><option value="dots">Dots</option><option value="stars">Stars</option><option value="dashes">Dashes</option><option value="diamonds">Diamonds</option><option value="chevrons">Chevrons</option><option value="hatch">Hatching</option><option value="checker">Checkerboard</option></select></label>
           <label class="field range-field"><span>Tonal contrast</span><input type="range" name="tonalContrast" data-setting="tonalContrast" min="0" max="100" value="50"></label>
@@ -247,10 +248,10 @@
         <div class="stage-inner">
           <div class="wallpaper-frame"><div class="wallpaper-surface">
             <canvas id="preview" width="600" height="1300" role="img" aria-label="Procedurally generated seven stripe rainbow wallpaper"></canvas>
-            <canvas id="drawOverlay" width="600" height="1300" hidden aria-label="Draw a continuous path with a finger, pen, or mouse"></canvas>
           </div></div>
           <div class="stage-side"><span class="side-vertical">SEVEN COLOURS / ONE BLACK CANVAS</span><div class="palette-stack" aria-label="Red orange yellow green blue indigo violet"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div></div>
         </div>
+        <canvas id="drawOverlay" width="600" height="1300" hidden aria-label="Draw one continuous path anywhere on the preview stage"></canvas>
         <div class="draw-path-panel" id="drawPathPanel" role="group" aria-label="Custom path drawing controls" hidden>
           <span id="drawPathHint" aria-live="polite">Draw one continuous path across the canvas.</span>
           <div class="draw-path-controls">
@@ -319,10 +320,10 @@
       stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"
       aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>
   </button>
-  <script type="module" src="src/app.js?v=20261017-draw1"></script>
+  <script type="module" src="src/app.js?v=20261017-flow2"></script>
   <script type="module" src="src/mobile-studio.js?v=20261016-dock2"></script>
   <script type="module" src="src/mobile-swipes.js?v=20261016-swipe1"></script>
   <script type="module" src="src/mobile-card-groups.js?v=20261016-transform1"></script>
-  <script type="module" src="src/mobile-preview-tools.js?v=20261017-zoom10"></script>
+  <script type="module" src="src/mobile-preview-tools.js?v=20261017-zoomout2"></script>
 </body>
 </html>
