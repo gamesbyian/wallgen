@@ -1,0 +1,27 @@
+name: Mobile browser acceptance
+on:
+  pull_request:
+    paths:
+      - index.html
+      - styles.css
+      - studio-themes.css
+      - src/**
+      - assets/**
+      - tests/browser-smoke.mjs
+      - .github/workflows/mobile-browser.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  phone-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Show available browser
+        run: |
+          command -v google-chrome || command -v chromium
+      - name: Test real phone viewport and both appearance modes
+        run: node tests/browser-smoke.mjs

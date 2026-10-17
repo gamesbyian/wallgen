@@ -2,12 +2,18 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
   <meta name="theme-color" content="#08090e">
   <meta name="description" content="R.O.Y.G.B.I.V. — Rainbow-Only. You Generate Based on Individual Variables. A procedural rainbow wallpaper studio.">
   <title>R.O.Y.G.B.I.V. | Rainbow-Only Wallpaper Studio</title>
   <link rel="icon" type="image/svg+xml" href="assets/roygbiv-logo.svg">
+  <script>
+    // Apply the saved theme before stylesheets paint to avoid a dark flash.
+    try { document.documentElement.dataset.theme = localStorage.getItem('roygbiv:studio-theme:v1') || 'cream'; }
+    catch { document.documentElement.dataset.theme = 'cream'; }
+  </script>
   <link rel="stylesheet" href="styles.css?v=20261016-geometry3">
+  <link rel="stylesheet" href="studio-themes.css?v=20261017-mobile1">
 </head>
 <body>
   <header class="masthead">
@@ -19,9 +25,17 @@
       </div>
     </a>
     <div class="header-right"><span class="status-dot"></span> PROCEDURAL WALLPAPER STUDIO <span class="header-tag">v1.0</span></div>
+    <div class="theme-switcher">
+      <label for="studioTheme">Theme</label>
+      <select id="studioTheme" aria-label="Studio appearance">
+        <option value="dark">Original Dark</option>
+        <option value="cream" selected>Cream Studio</option>
+      </select>
+    </div>
   </header>
   <div class="layout">
-    <aside class="sidebar" aria-label="Generator controls">
+    <aside class="sidebar" id="mobileDesignSheet" aria-label="Generator controls">
+      <div class="mobile-sheet-head"><strong>Make it yours</strong><button type="button" id="mobileDesignClose" aria-label="Close settings">✕</button></div>
 
       <form id="controls" autocomplete="off">
         <div class="randomize-bar randomize-toolbar">
@@ -235,6 +249,20 @@
     </main>
     <footer><span>R.O.Y.G.B.I.V. / V1.0</span><span>Generative. Deterministic. Made of light.</span><span>BLACK × ROYGBIV</span></footer>
   </div>
+  <div id="mobileSheetBackdrop" class="mobile-sheet-backdrop" hidden></div>
+  <section id="mobileToolsSheet" class="mobile-utility-sheet" aria-label="More design tools" hidden>
+    <div class="mobile-sheet-head"><strong>More tools</strong><button type="button" id="mobileToolsClose" aria-label="Close tools">✕</button></div>
+    <div class="mobile-tools-content" id="mobileToolsContent"></div>
+  </section>
+  <nav class="mobile-dock" aria-label="Quick wallpaper actions">
+    <button type="button" id="mobileEdit" aria-controls="mobileDesignSheet" aria-expanded="false"><span aria-hidden="true">☷</span><small>Edit</small></button>
+    <button type="button" id="mobileExplore" aria-controls="gallery" aria-expanded="false"><span aria-hidden="true">▦</span><small>Explore</small></button>
+    <button type="button" id="mobileShuffle" class="mobile-dock-featured" aria-label="Randomize all settings"><span aria-hidden="true">✳</span><small>Randomize</small></button>
+    <button type="button" id="mobileFavorite" aria-label="Save or remove favourite"><span aria-hidden="true">♡</span><small>Favourite</small></button>
+    <button type="button" id="mobileDownload" aria-label="Download wallpaper PNG"><span aria-hidden="true">↓</span><small>Download</small></button>
+    <button type="button" id="mobileMore" aria-controls="mobileToolsSheet" aria-expanded="false"><span aria-hidden="true">⋯</span><small>More</small></button>
+  </nav>
   <script type="module" src="src/app.js?v=20261016-geometry3"></script>
+  <script type="module" src="src/mobile-studio.js?v=20261017-mobile1"></script>
 </body>
 </html>

@@ -30,6 +30,42 @@ Open `http://localhost:4173` on your computer. To access from a phone on the sam
 
 Run `npm test` to check the reproducibility and structural invariants, or `npm run check` for syntax plus tests. Host the root directory on GitHub Pages for installation-free access.
 
+## Phone-first Studio interface
+
+**Cream Studio** is the new default appearance. The original charcoal **Original Dark**
+design remains available from the header Theme selector, unchanged in `styles.css`.
+Theme choice is remembered in this browser only and never enters a wallpaper recipe,
+URL, favourite, seed, or PNG. To restore the old interface colours, select
+**Original Dark**. The new `studio-themes.css` supplies light tokens and the
+mobile layout on top of the intact original dark stylesheet.
+
+The primary interface is designed for the **Pixel 6 Pro portrait viewport** (the
+wallpaper itself is still drawn at a 600 × 1300 logical aspect ratio, exported
+at 3024 × 6552). At 790 CSS pixels and narrower the whole main viewport is
+given to the wallpaper preview. A thumb-accessible six-button dock provides
+Edit, Explore, Randomize, Favourite, Download and More. The editor opens
+above the dock as a vertically scrollable sheet with all four original tabs,
+every existing setting and its lock. Explore opens a horizontal, swipeable
+gallery; selecting a variation closes it and reveals the preview. More reveals
+seed editing, Undo, New variation, nudge, the full metadata editor, link and
+recipe export, and detailed scene information. The actual generating model,
+saved recipes, original dark colours, texture and lighting options are retained.
+The document itself does not need vertical scrolling on portrait mobile; only
+the open editing/tools sheets scroll. The desktop layout remains available on
+larger screens.
+
+### Paired brand assets
+
+The original raster artworks inspired matching, editable vector variants.
+`assets/roygbiv-logo.svg` is the primary dark masthead icon, also available
+as `assets/roygbiv-logo-dark.svg`; `assets/roygbiv-logo-cream.svg` is the
+cream companion. Their seven staggered stripes are raised 2% within the icon
+and finish before its outside edges, behind a contrasting phone outline.
+`assets/roygbiv-logo-dark.png` and `assets/roygbiv-logo-cream.png` are
+512 × 512 antialiased PNG versions produced deterministically from the same
+geometry by `node scripts/build-logo-raster.mjs`. Both source and derived
+files are free to use without credit under the repository dedication.
+
 ## Downloadable PNG metadata
 
 Below the Download PNG controls, **Edit image metadata** opens a collapsed-by-default
@@ -54,7 +90,7 @@ particular metadata fields varies among image-viewing applications.
 
 ## Brand and SVG logo
 
-The app uses `assets/roygbiv-logo.svg` as its masthead mark and browser icon. This original, editable SVG depicts seven angled red-to-violet ribbons on black, overlaid by a white phone outline. Several ribbons terminate before crossing both sides of the phone. It shares the repository's public-domain dedication; attribution is not required.
+The app uses `assets/roygbiv-logo.svg` as its masthead mark and browser icon. Paired dark and cream vector variants and raster PNGs are described above. These assets share the repository's public-domain dedication; attribution is not required.
 
 ## Controls and workspace
 
