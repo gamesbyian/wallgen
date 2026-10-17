@@ -295,7 +295,7 @@ export function randomizeAllRecipe({primesOnly=false}={}) {
   return normalizeRecipe({
     seed, primesOnly, family:any(FAMILIES), orientation:any(['vertical','horizontal','diagonal']),
     geometry:any(GEOMETRIES), motif:any(MOTIFS), palette:any(PALETTES),
-    reverseStripes:r()>.5,diagonalRotation:primesOnly?any(PRIME_PERCENTAGES)-50:Math.floor(r()*361)-180,
+    reverseStripes:r()>.5,diagonalRotation:Math.floor(r()*361)-180,
     mirrorHorizontal:r()>.5,mirrorVertical:r()>.5,
     material:any(MATERIALS), textureCoverage:any(TEXTURE_COVERAGES), textureRotation:degrees(), textureBlend:any(BLEND_MODES),
     textureLayer2Enabled:r()>.45, material2:any(MATERIALS), textureStrength2:percent(), textureScale2:percent(),
