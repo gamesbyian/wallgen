@@ -28,6 +28,20 @@ Open `http://localhost:4173` on your computer. To access from a phone on the sam
 
 Run `npm test` to check the reproducibility and structural invariants, or `npm run check` for syntax plus tests. Host the root directory on GitHub Pages for installation-free access.
 
+## Downloadable PNG metadata
+
+Below the Download PNG controls, **Edit image metadata** opens a collapsed-by-default
+editor. Fields include title, creator/artist, description, copyright/usage notice,
+keywords, comment, software, creation date/time, and optional camera/device
+make and model. Blank fields are omitted. PNG export embeds UTF-8 **iTXt** metadata
+and compatible **eXIf** TIFF-style metadata, preserving the original pixel data.
+Metadata is not drawn on the wallpaper and is not added to share links.
+
+The optional **Remember these fields on this device** checkbox stores the metadata
+in browser local storage. It is off by default; clearing the fields also updates
+any remembered copy. This is PNG metadata, not JPEG EXIF; support for displaying
+particular metadata fields varies among image-viewing applications.
+
 ## Output
 
 - Google Pixel 6 Pro native screen: **1440 × 3120**.
