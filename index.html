@@ -19,6 +19,7 @@
   <link rel="stylesheet" href="design-transform.css?v=20261016-transform1">
   <link rel="stylesheet" href="draw-path.css?v=20261017-smooth1">
   <link rel="stylesheet" href="editor-redesign.css?v=20261017-explore1">
+  <link rel="stylesheet" href="bleed-and-action-rail.css?v=20261017-b1">
 </head>
 <body>
   <header class="masthead">
@@ -247,6 +248,7 @@
         <div class="stage-inner">
           <div class="wallpaper-frame"><div class="wallpaper-surface">
             <canvas id="preview" width="600" height="1300" role="img" aria-label="Procedurally generated seven stripe rainbow wallpaper"></canvas>
+            <div id="bleedGuide" class="bleed-guide" aria-hidden="true" hidden></div>
           </div></div>
           <div class="stage-side"><span class="side-vertical">SEVEN COLOURS / ONE BLACK CANVAS</span><div class="palette-stack" aria-label="Red orange yellow green blue indigo violet"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div></div>
         </div>
@@ -313,6 +315,14 @@
     <button type="button" id="mobileDownload" aria-label="Download wallpaper PNG"><span aria-hidden="true">↓</span><small>Download</small></button>
     <button type="button" id="mobileMore" aria-controls="mobileToolsSheet" aria-expanded="false"><span aria-hidden="true">⋯</span><small>More</small></button>
   </nav>
+  <nav id="mobileEditorActionRail" class="mobile-editor-action-rail" aria-label="Quick actions while editing">
+    <button type="button" data-dock-proxy="mobileEdit" aria-label="Close editor" title="Close editor"><span aria-hidden="true">‹</span><small>Edit</small></button>
+    <button type="button" data-dock-proxy="mobileExplore" aria-label="Explore wallpapers" title="Explore"><span aria-hidden="true">▦</span><small>Explore</small></button>
+    <button type="button" data-dock-proxy="mobileShuffle" aria-label="Randomize all settings" title="Randomize"><span aria-hidden="true">✳</span><small>Random</small></button>
+    <button type="button" data-dock-proxy="mobileFavorite" aria-label="Save or remove favourite" title="Favourite"><span aria-hidden="true">♡</span><small>Favourite</small></button>
+    <button type="button" data-dock-proxy="mobileDownload" aria-label="Download PNG" title="Download"><span aria-hidden="true">↓</span><small>Save</small></button>
+    <button type="button" data-dock-proxy="mobileMore" aria-label="More tools" title="More tools"><span aria-hidden="true">⋯</span><small>More</small></button>
+  </nav>
   <button type="button" id="mobileDockExpand" class="mobile-dock-expand"
     aria-label="Expand bottom toolbar" aria-controls="mobileActionDock" aria-expanded="false"
     title="Expand toolbar">
@@ -321,8 +331,8 @@
       aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>
   </button>
   <script type="module" src="src/app.js?v=20261017-explore1"></script>
-  <script type="module" src="src/mobile-studio.js?v=20261017-heart1"></script>
+  <script type="module" src="src/mobile-studio.js?v=20261017-b1"></script>
   <script type="module" src="src/mobile-swipes.js?v=20261017-explore1"></script>
-  <script type="module" src="src/mobile-preview-tools.js?v=20261017-camera1"></script>
+  <script type="module" src="src/mobile-preview-tools.js?v=20261017-b1"></script>
 </body>
 </html>
