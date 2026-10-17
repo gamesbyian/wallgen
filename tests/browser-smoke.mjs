@@ -159,6 +159,12 @@ try{
   await evaluate('document.getElementById("tab-path").click()');
   await evaluate('document.querySelector("[data-editor-tool=geometry]").click()');
   assert.ok(await evaluate('document.querySelector("#panel-path .editor-tool-card:not([hidden]) [name=geometry]")!==null'));
+  // All six categories and their tool cards must fit without internal
+  // scrolling or concealing active controls. This is stronger than merely
+  // setting overflow:hidden in CSS.
+  const fitting=await evaluate('(()=>{const bad=[];for(const b of document.querySelectorAll(".settings-tab")){b.click();const c=b.dataset.tab;for(const chip of document.querySelectorAll(".editor-tool-tab:not([hidden])")){chip.click();const card=document.querySelector(".editor-tool-card:not([hidden])");const box=card.getBoundingClientRect();const names=[];for(const node of card.querySelectorAll("input:not([type=hidden]),select,.add-texture-layer")){if(node.getClientRects().length===0||node.closest("[hidden]"))continue;const r=node.getBoundingClientRect();if(r.top<box.top-3||r.bottom>box.bottom+3||r.left<box.left-3||r.right>box.right+3)names.push(node.name||node.id)}if(names.length)bad.push({tool:chip.dataset.editorTool,controls:names,card:card.clientHeight,scroll:card.scrollHeight});}}return bad})()');
+  console.log('ALL_TOOL_FIT_AUDIT',JSON.stringify(fitting));
+  assert.deepEqual(fitting,[],'every active tool must fit without scrolling and without cutting controls');
   // Keep the existing single-checkpoint Undo and complete full-res export.
   await evaluate('document.getElementById("undo").click()');
   assert.ok(await evaluate('document.querySelector(".studio-stage").getBoundingClientRect().bottom<=document.querySelector(".sidebar").getBoundingClientRect().top+2'));
