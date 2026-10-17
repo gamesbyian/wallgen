@@ -1,3 +1,4 @@
+import {pointOnDrawnPath} from './drawn-path.js';
 // Shared path sampler for every stripe geometry. x is the stable longitudinal
 // parameter; its *position* may turn back on itself (hairpins and loops).
 // The same samples drive silhouettes, decorations and frame-contact tests.
@@ -10,7 +11,7 @@ export const noise1D=(x,seed)=>{
   const hash=j=>fract(Math.sin(j*127.1+seed*311.7)*43758.5453)*2-1;
   return mix(hash(i),hash(i+1),fract(x));
 };
-export const SHAPES=['straight','wave','zigzag','chevron','jagged','stepped','arc','contour','hairpin','loops'];
+export const SHAPES=['straight','wave','zigzag','chevron','jagged','stepped','arc','contour','hairpin','loops','drawn'];
 export function modulation(x, geometry, phase, period, d, extent){
   const t=x/period+phase/TAU;
   if(geometry==='straight')return 0;
@@ -24,6 +25,8 @@ export function modulation(x, geometry, phase, period, d, extent){
 }
 export function pathPosition(stripe,x,extent){
   const g=stripe.sharedGeometry??stripe.geometry;
+  if(g==='drawn'&&stripe.drawnPath)
+    return pointOnDrawnPath(stripe.drawnPath,(x+extent)/(2*extent));
   if(g==='hairpin'){
     const u=clamp((x+extent)/(2*extent),0,1);
     const radius=stripe.turnRadius??190;
@@ -64,7 +67,8 @@ export function samplePath(stripe,x,extent){
   // Looped lines deliberately keep seven separate horizontal baselines:
   // offsetting those baselines by a normal that reverses within every loop
   // would splice neighbouring colours into a dense, crossed mesh.
-  const turn=(stripe.sharedGeometry==='hairpin'||stripe.geometry==='hairpin');
+  const turn=['hairpin','drawn'].includes(stripe.sharedGeometry)||
+    ['hairpin','drawn'].includes(stripe.geometry);
   return {x:p.x+(turn?nx*stripe.center:0),y:p.y+(turn?ny*stripe.center:stripe.center),
     tx:dx/length,ty:dy/length,nx,ny};
 }
