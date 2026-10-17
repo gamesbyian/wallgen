@@ -107,3 +107,18 @@ test('Randomize all provides complete normalized settings without preserving man
   }
   assert.equal(resolveScene(recipe).stripes.length,7);
 });
+
+test('directional canvas offsets are bounded, deterministic, and portable',()=>{
+  const original=resolveScene({seed:'nudge-coordinate-check',orientation:'horizontal'});
+  const moved=resolveScene({seed:'nudge-coordinate-check',orientation:'horizontal',positionX:8,positionY:-6});
+  assert.equal(normalizeRecipe({}).positionX,0);
+  assert.equal(normalizeRecipe({}).positionY,0);
+  assert.equal(normalizeRecipe({positionX:500,positionY:-500}).positionX,30);
+  assert.equal(normalizeRecipe({positionX:500,positionY:-500}).positionY,-30);
+  assert.equal(moved.centerX-original.centerX,DESIGN_WIDTH*.08);
+  assert.equal(moved.centerY-original.centerY,-DESIGN_HEIGHT*.06);
+  const recipe=normalizeRecipe({seed:'move-portably',positionX:20,positionY:-12});
+  assert.deepEqual(decodeRecipe(encodeRecipe(recipe)),recipe);
+  assert.equal(randomizeAllRecipe().positionX,0);
+  assert.equal(randomizeAllRecipe().positionY,0);
+});
