@@ -450,7 +450,16 @@
  body.mobile-studio .sidebar .editor-explore-actions>.editor-scope-button,
  body.mobile-studio .sidebar .editor-explore-actions>.editor-search-toggle{
    flex-basis:35px!important;width:35px!important;min-width:35px!important;
-   height:38px!important;min-height:38px!important;font-size:18px!important;
+   height:38px!important;min-height:38px!important;
+ }
+ body.mobile-studio .sidebar .editor-explore-actions>.editor-scope-button{
+   font-size:0!important;
+ }
+ body.mobile-studio .sidebar .editor-explore-actions>.editor-scope-button::before{
+   font-size:18px!important;
+ }
+ body.mobile-studio .sidebar .editor-explore-actions>.editor-search-toggle{
+   font-size:18px!important;
  }
  body.mobile-studio .sidebar .settings-tabs{
    flex-basis:44px!important;height:44px!important;
@@ -484,6 +493,12 @@
  }
  body.mobile-studio .sidebar .editor-tool-card .lockable-setting{
    min-height:35px!important;
+   grid-template-columns:minmax(0,1fr) 33px 33px!important;
+ }
+ body.mobile-studio .sidebar .editor-tool-card .texture-layer-group .lockable-setting,
+ body.mobile-studio .sidebar .editor-tool-card .texture-layer-panel .lockable-setting,
+ body.mobile-studio .sidebar .editor-tool-card .diagonal-settings .lockable-setting{
+   grid-template-columns:minmax(0,1fr) 33px 33px!important;
  }
  body.mobile-studio .sidebar .editor-tool-card .texture-layer-group .lockable-setting,
  body.mobile-studio .sidebar .editor-tool-card .texture-layer-panel .lockable-setting{
