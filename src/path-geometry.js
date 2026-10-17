@@ -60,8 +60,11 @@ export function samplePath(stripe,x,extent){
   const nx=-dy/length,ny=dx/length;
   // Old geometries are horizontally parameterized. For turns, offset in the
   // true normal instead of Y, so all seven ribbons remain parallel in corners.
-  const turn=(stripe.sharedGeometry==='hairpin'||stripe.sharedGeometry==='loops'||
-    stripe.geometry==='hairpin'||stripe.geometry==='loops');
+  // Hairpins require offsets along their curved normal to stay nested.
+  // Looped lines deliberately keep seven separate horizontal baselines:
+  // offsetting those baselines by a normal that reverses within every loop
+  // would splice neighbouring colours into a dense, crossed mesh.
+  const turn=(stripe.sharedGeometry==='hairpin'||stripe.geometry==='hairpin');
   return {x:p.x+(turn?nx*stripe.center:0),y:p.y+(turn?ny*stripe.center:stripe.center),
     tx:dx/length,ty:dy/length,nx,ny};
 }
