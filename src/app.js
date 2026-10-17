@@ -99,6 +99,7 @@ function titleCase(value){return value.replace(/-/g,' ').replace(/\b\w/g,c=>c.to
 function render(recipe,{scroll=false,bypassLocks=false}={}) {
   const next=bypassLocks?normalizeRecipe(recipe):respectSettingLocks(current,recipe);
   current=checkpoint(next);
+  document.getElementById('primeModeHint').hidden=!current.primesOnly;
   const key=artKey(current);
   if(previewLayers.key===key && previewLayers.ink && previewLayers.background){
     // The directional buttons only blit these two cached bitmaps.
@@ -337,6 +338,10 @@ for(const button of settingsTabs){
     else if(event.key==='ArrowLeft')target=TAB_NAMES[(index-1+TAB_NAMES.length)%TAB_NAMES.length];
     else if(event.key==='Home')target=TAB_NAMES[0];
     else if(event.key==='End')target=TAB_NAMES.at(-1);
+    else if(event.key==='ArrowDown' && window.matchMedia('(max-width:790px)').matches)
+      target=TAB_NAMES[(index+2)%TAB_NAMES.length];
+    else if(event.key==='ArrowUp' && window.matchMedia('(max-width:790px)').matches)
+      target=TAB_NAMES[(index+TAB_NAMES.length-2)%TAB_NAMES.length];
     else return;
     event.preventDefault();
     activateSettingsTab(target,{focus:true});
