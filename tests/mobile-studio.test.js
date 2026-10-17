@@ -126,24 +126,33 @@ test('Prime-only checkbox changes mode without displaying an explanatory toast',
   assert.match(html,/id="primeModeHint"[^>]*hidden/);
   assert.match(html,/name="primesOnly"/);
 });
-test('related mobile settings share snap cards and restore desktop source structure',()=>{
-  for(const label of ['Geometry','Stripe pattern','Stripe shadows','Outlines',
-    'Canvas lighting','Texture layer 1','Texture layer 2','Texture layer 3','Individuality']){
-    assert.ok(grouping.includes("name:'"+label+"'"),'missing card '+label);
+test('all mobile settings fit in fixed-height, horizontal-only compound cards',()=>{
+  for(const label of ['Geometry','Stripe pattern','Stripe shadows','Outlines','Canvas lighting','Individuality']){
+    assert.ok(grouping.includes("name:'"+label+"'"),label);
   }
-  for(const control of ['shapeFrequency','shapeDepth','patternHomogeneity',
-    'outline','gap','individuality','overridePatternHomogeneity']){
-    assert.ok(grouping.includes("'"+control+"'"),'ungrouped dependent control '+control);
+  for(const name of ['material','coverage','strength','scale','rotation','blend']){
+    assert.ok(grouping.includes(name+':setting('),name);
   }
-  for(const section of ['stripe-shadow-section','lighting-subsection',
-    'texture-layer-group','textureLayer2Panel','textureLayer3Panel']){
-    assert.ok(grouping.includes(section),'ungrouped section '+section);
-  }
+  assert.match(grouping,/\.\.\.\[1,2,3\]\.flatMap/);
+  assert.match(grouping,/refreshVisibility\(\)/);
   assert.match(grouping,/marker\.replaceWith\(node\)/);
   assert.match(grouping,/mobileCardsQuery\.addEventListener\('change',syncGroups\)/);
   assert.match(groupingCSS,/\.mobile-setting-cluster/);
-  assert.match(groupingCSS,/overflow-x:hidden;overflow-y:auto/);
-  assert.match(groupingCSS,/:has\(> \.texture-layer-panel\[hidden\]\)/);
-  assert.match(html,/mobile-card-groups\.css\?v=/);
-  assert.match(html,/src\/mobile-card-groups\.js\?v=/);
+  const rail=read('mobile-editor-rail.css');
+  assert.match(rail,/overflow-x:auto!important;overflow-y:hidden!important/);
+  assert.match(rail,/\.mobile-setting-cluster\{/);
+  assert.match(rail,/overflow:hidden!important/);
+  assert.match(rail,/\.settings-tab\[aria-selected="true"\]/);
+  assert.match(html,/mobile-editor-rail\.css\?v=/);
+  assert.match(html,/src\/mobile-preview-tools\.js\?v=/);
+});
+test('preview controls reuse the existing nudge and Randomize inputs, zoom affects preview only',()=>{
+  const tools=read('src/mobile-preview-tools.js');
+  assert.match(tools,/prime\.setAttribute\('form','controls'\)/);
+  assert.match(tools,/nudgeMarker\.after\(nudge\)/);
+  assert.match(tools,/toolbarMarker\.after\(toolbar\)/);
+  assert.match(tools,/stage\.style\.setProperty\('--mobile-preview-zoom'/);
+  assert.match(tools,/Math\.min\(2\.5,next\)/);
+  assert.doesNotMatch(tools,/changeRecipe|normalizeRecipe|downloadPNG/);
+  assert.match(read('mobile-editor-rail.css'),/\.mobile-preview-rail-right/);
 });
