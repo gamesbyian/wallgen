@@ -326,3 +326,28 @@
   .lighting-intro{gap:8px}
   .lighting-icon{width:29px;height:29px;flex-basis:29px;font-size:17px}
 }
+
+/* Optional export metadata: discoverable but out of the design workflow. */
+.export-metadata{margin:12px 0 4px}
+.metadata-toggle{display:inline-flex;align-items:center;min-height:30px;font-size:11px;color:#cbbcff}
+.metadata-panel{display:grid;gap:15px;margin-top:10px;padding:16px;border:1px solid #454157;
+  border-radius:11px;background:#1b1b27;box-shadow:0 6px 24px #0002}
+.metadata-panel[hidden]{display:none!important}
+.metadata-heading{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px;
+  border-bottom:1px solid #3e3b4e;padding-bottom:11px}
+.metadata-heading strong{font-size:13px;color:#f3eefb}
+.metadata-heading span,.metadata-panel>p{font-size:10px;color:#a6a3b5;line-height:1.55}
+.metadata-panel>p{margin:0}
+.metadata-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.metadata-fields label{display:flex;flex-direction:column;gap:6px;min-width:0;
+  font-size:11px;font-weight:650;color:#c9c5d5}
+.metadata-fields .metadata-wide{grid-column:1/-1}
+.metadata-fields input,.metadata-fields textarea{width:100%;min-width:0;background:#12141d;
+  border:1px solid #514d61;border-radius:6px;padding:10px;color:#f7f5fa;
+  font:12px inherit;line-height:1.4;resize:vertical}
+.metadata-fields input:focus,.metadata-fields textarea:focus{outline:2px solid #a99be0;outline-offset:1px}
+.metadata-bottom{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.metadata-persist{display:flex;align-items:center;gap:8px;color:#c8c5d4;font-size:10px}
+.metadata-persist input{accent-color:#bb9ef7}
+@media(max-width:790px){.metadata-panel{padding:11px 9px}.metadata-fields{grid-template-columns:minmax(0,1fr)}
+ .metadata-fields .metadata-wide{grid-column:auto}}
