@@ -501,6 +501,47 @@ try{
       cardScroll:target.closest('.mobile-setting-cluster').scrollTop};
   })()`)));
   await waitFor(`Number(document.querySelector('[name=shapeFrequency]').value)>${slider.value}`);
+
+  // Draw on the exact preview overlay using native Chromium touch events,
+  // apply a regularized path, and ensure Undo restores the prior wallpaper.
+  const priorPath=await evaluate(`(()=>{
+    const r=JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get('r')));
+    return {geometry:r.geometry,customPath:r.customPath};
+  })()`);
+  const undoInRail=await evaluate(`(()=>{
+    const rail=document.querySelector('.mobile-preview-rail-left');
+    const prime=rail.querySelector('.prime-toggle').getBoundingClientRect();
+    const undo=rail.querySelector('#undo').getBoundingClientRect();
+    return {visible:undo.width>20,below:undo.top>=prime.bottom-1,
+      toggle:!!rail.querySelector('#drawPathToggle')};
+  })()`);
+  assert.ok(undoInRail.visible&&undoInRail.below&&undoInRail.toggle,
+    'Undo should be immediately below Primes Only with drawing beside it');
+  await evaluate('document.getElementById("drawPathToggle").click()');
+  await waitFor('document.getElementById("drawOverlay").hidden===false');
+  const box=await evaluate(`(()=>{
+    const r=document.getElementById('drawOverlay').getBoundingClientRect();
+    return {left:r.left,top:r.top,width:r.width,height:r.height};
+  })()`);
+  await swipe({x:Math.round(box.left+box.width*.24),y:Math.round(box.top+box.height*.19)},
+              {x:Math.round(box.left+box.width*.73),y:Math.round(box.top+box.height*.68)});
+  await waitFor('document.getElementById("drawApply").disabled===false');
+  await evaluate('document.getElementById("drawGeometric").click()');
+  assert.ok(await evaluate('document.getElementById("drawGeometric").getAttribute("aria-pressed")==="true"'));
+  await evaluate('document.getElementById("drawApply").click()');
+  await waitFor(`(()=>{
+    const r=JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get('r')));
+    return r.geometry==='drawn'&&r.customPath.length>2;
+  })()`);
+  assert.equal(await evaluate('document.getElementById("drawOverlay").hidden'),true);
+  await evaluate('document.getElementById("undo").click()');
+  await waitFor(`(()=>{
+    const r=JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get('r')));
+    return r.geometry===${JSON.stringify(priorPath.geometry)}&&
+      JSON.stringify(r.customPath)===${JSON.stringify(JSON.stringify(priorPath.customPath))};
+  })()`);
+  console.log('TOUCH_DOODLE_SMOOTH_GEOMETRIC_UNDO_SUCCESS');
+
   const afterSlider=await evaluate(`({
     value:Number(document.querySelector('[name=shapeFrequency]').value),
     scroll:document.getElementById('panel-design').scrollLeft,
@@ -548,9 +589,9 @@ try{
     metadata:!!document.querySelector('#mobileToolsContent #metadataToggle'),
     nudge:!!document.querySelector('.studio-stage .nudge-pad'),
     copy:!!document.querySelector('#mobileToolsContent #copyLink'),
-    undo:!!document.querySelector('#mobileToolsContent #undo')
+    undo:!!document.querySelector('.studio-stage .mobile-preview-rail-left #undo')
   }))()`);
-  assert.ok(Object.values(tools).every(Boolean),'mobile tools should expose all legacy utilities');
+  assert.ok(Object.values(tools).every(Boolean),'mobile utilities and preview Undo should be available');
   const utilities=await evaluate(`(()=>{
     const r=document.querySelector('.studio-stage').getBoundingClientRect();
     const t=document.getElementById('mobileToolsSheet').getBoundingClientRect();
