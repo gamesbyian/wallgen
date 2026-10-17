@@ -269,8 +269,21 @@ try{
   await waitFor(`document.getElementById('tab-colour').getAttribute('aria-selected')==='true'`);
   // A real finger drag should adjust a slider, not scroll to another card.
   await evaluate('document.getElementById("tab-design").click()');
-  await evaluate('document.querySelector("[name=shapeFrequency]").closest(".lockable-setting").scrollIntoView({inline:"start",block:"nearest",behavior:"instant"})');
-  await waitFor('document.querySelector("[name=shapeFrequency]").getBoundingClientRect().left > 0 && document.querySelector("[name=shapeFrequency]").getBoundingClientRect().right < innerWidth');
+  await evaluate(`(()=>{
+    const card=[...document.querySelectorAll('#panel-design .mobile-setting-cluster')]
+      .find(el=>el.dataset.group==='Geometry');
+    card.scrollIntoView({inline:'start',block:'nearest',behavior:'instant'});
+    document.querySelector('[name=shapeFrequency]').scrollIntoView({
+      inline:'nearest',block:'center',behavior:'instant'
+    });
+  })()`);
+  await waitFor(`(()=>{
+    const control=document.querySelector('[name=shapeFrequency]').getBoundingClientRect();
+    const card=[...document.querySelectorAll('#panel-design .mobile-setting-cluster')]
+      .find(el=>el.dataset.group==='Geometry').getBoundingClientRect();
+    return control.left>0&&control.right<innerWidth &&
+      control.top>=card.top && control.bottom<=card.bottom;
+  })()`);
   const slider=await evaluate(`(()=>{
     const r=document.querySelector('[name=shapeFrequency]').getBoundingClientRect();
     return {left:r.left,right:r.right,y:Math.round(r.top+r.height/2),
