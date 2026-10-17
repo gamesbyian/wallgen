@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { DESIGN_WIDTH, DESIGN_HEIGHT, OUTPUT_WIDTH, OUTPUT_HEIGHT, HUES, NAMES, FAMILIES, GEOMETRIES, MOTIFS, MATERIALS, OUTLINES, normalizeRecipe, resolveScene, rng, encodeRecipe, decodeRecipe } from '../src/model.js';
+import { DESIGN_WIDTH, DESIGN_HEIGHT, OUTPUT_WIDTH, OUTPUT_HEIGHT, HUES, NAMES, FAMILIES, GEOMETRIES, MOTIFS, MATERIALS, OUTLINES, normalizeRecipe, resolveScene, rng, encodeRecipe, decodeRecipe, TEXTURE_COVERAGES, randomizeAllRecipe } from '../src/model.js';
 
 test('Pixel 6 Pro export has 210% linear dimensions and unchanged aspect ratio',()=>{
   assert.equal(OUTPUT_WIDTH,1440*2.1);
@@ -62,4 +62,39 @@ test('backgrounds default to black and white stays in saved recipes',()=>{
   assert.equal(decodeRecipe(encodeRecipe({background:'white',outline:'black-double'})).background,'white');
   assert.equal(decodeRecipe(encodeRecipe({background:'white',outline:'black-double'})).outline,'black-double');
   for(const outline of OUTLINES) assert.equal(normalizeRecipe({outline}).outline,outline);
+});
+
+test('material coverage defaults to both surfaces and survives URL recipes',()=>{
+  assert.equal(normalizeRecipe({}).textureCoverage,'both');
+  for(const textureCoverage of TEXTURE_COVERAGES){
+    const recipe=normalizeRecipe({seed:'materials',textureCoverage,background:'white',material:'linen'});
+    assert.equal(resolveScene(recipe).textureCoverage,textureCoverage);
+    assert.deepEqual(decodeRecipe(encodeRecipe(recipe)),recipe);
+  }
+  assert.equal(normalizeRecipe({textureCoverage:'invalid'}).textureCoverage,'both');
+});
+test('stripe individuality only changes geometry, never motifs',()=>{
+  for(const family of FAMILIES)for(const individuality of [0,20,50,80,100]){
+    for(const motif of MOTIFS){
+      const scene=resolveScene({seed:'geometry-only',family,motif,individuality,chaos:100});
+      assert.ok(scene.stripes.every(s=>s.motif===motif),family+'/'+motif+'/'+individuality);
+      if(individuality===0)assert.ok(scene.stripes.every(s=>s.parallelMix===0 && s.geometry===scene.geometry));
+      if(individuality===100)assert.ok(scene.stripes.every(s=>s.parallelMix===1));
+    }
+  }
+});
+test('Randomize all provides complete normalized settings without preserving manual overrides',()=>{
+  const recipe=randomizeAllRecipe();
+  assert.equal(recipe.version,1);
+  assert.ok(FAMILIES.includes(recipe.family));
+  assert.ok(GEOMETRIES.includes(recipe.geometry));
+  assert.ok(MOTIFS.includes(recipe.motif));
+  assert.ok(MATERIALS.includes(recipe.material));
+  assert.ok(OUTLINES.includes(recipe.outline));
+  assert.ok(TEXTURE_COVERAGES.includes(recipe.textureCoverage));
+  assert.ok(['black','white'].includes(recipe.background));
+  for(const key of ['chaos','stripeWidth','spread','textureStrength','textureScale','individuality','gap','glow']){
+    assert.ok(recipe[key]>=0 && recipe[key]<=100,key);
+  }
+  assert.equal(resolveScene(recipe).stripes.length,7);
 });
