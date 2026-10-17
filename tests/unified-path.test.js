@@ -39,6 +39,11 @@ test('loopy continuous path actually reverses longitudinal direction',()=>{
   const xs=Array.from({length:400},(_,i)=>pathPosition(stripe,-200+i,e).x);
   assert.ok(xs.some((v,i)=>i>0&&v<xs[i-1]),'loops must fold backward');
   assert.ok(xs.some((v,i)=>i>0&&v>xs[i-1]),'loops must also advance');
+  for(const x of [-150,-75,0,35,80,145]){
+    const tracks=scene.stripes.map(s=>samplePath(s,x,e).y);
+    assert.ok(tracks.every((v,i)=>i===0||v>tracks[i-1]),
+      'parallel loop baselines must not reverse stripe order');
+  }
   assert.deepEqual(resolveScene({seed:'spring-line',geometry:'loops',orientation:'horizontal',
     construction:'stroke',shapeFrequency:85,shapeDepth:95,individuality:0}).stripes,scene.stripes);
 });
