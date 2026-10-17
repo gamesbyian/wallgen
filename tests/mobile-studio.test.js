@@ -132,10 +132,12 @@ test('related mobile settings share snap cards and restore desktop source struct
     assert.ok(grouping.includes("name:'"+label+"'"),'missing card '+label);
   }
   for(const control of ['shapeFrequency','shapeDepth','patternHomogeneity',
-    'stripeShadowEnabled','stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection',
-    'outline','gap','lightStrength','shadowStrength','lightingMood','lightDirection',
-    'individuality','overridePatternHomogeneity']){
+    'outline','gap','individuality','overridePatternHomogeneity']){
     assert.ok(grouping.includes("'"+control+"'"),'ungrouped dependent control '+control);
+  }
+  for(const section of ['stripe-shadow-section','lighting-subsection',
+    'texture-layer-group','textureLayer2Panel','textureLayer3Panel']){
+    assert.ok(grouping.includes(section),'ungrouped section '+section);
   }
   assert.match(grouping,/marker\.replaceWith\(node\)/);
   assert.match(grouping,/mobileCardsQuery\.addEventListener\('change',syncGroups\)/);
