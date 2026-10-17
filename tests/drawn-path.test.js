@@ -110,3 +110,39 @@ test('out-of-frame sketch endpoints survive smoothing and recipe normalization',
   assert.ok(pointOnDrawnPath(prepared,1).x > DESIGN_WIDTH/2);
   assert.deepEqual(finished,normalizeDrawnPath(finished));
 });
+
+test('smoothing strength keeps the old minimum and progressively removes small bends',()=>{
+  const raw=Array.from({length:280},(_,i)=>{
+    const t=i/279;
+    return [.13+.74*t,.22+.56*t+.019*Math.sin(t*74)];
+  });
+  const old=finishDrawnPath(raw,'smooth');
+  const one=finishDrawnPath(raw,'smooth',1);
+  const middle=finishDrawnPath(raw,'smooth',3);
+  const strong=finishDrawnPath(raw,'smooth',5);
+  assert.deepEqual(one,old,'1× must reproduce existing smoothing exactly');
+  const drift=points=>points.reduce((total,[x,y])=>
+    total+Math.abs(y-(.22+.56*(x-.13)/.74)),0)/points.length;
+  assert.ok(drift(middle)<drift(one)*.85,
+    '3× should eliminate noticeable mid-frequency waviness');
+  assert.ok(drift(strong)<drift(one)*.45,
+    '5× should make an approximately straight gesture substantially straighter');
+  for(const path of [middle,strong]){
+    assert.deepEqual(path[0],one[0]);
+    assert.deepEqual(path.at(-1),one.at(-1));
+    assert.ok(path.length>=2&&path.length<=MAX_DRAWN_POINTS);
+  }
+  assert.deepEqual(finishDrawnPath(raw,'smooth',0),one);
+  assert.deepEqual(finishDrawnPath(raw,'smooth',20),strong);
+  assert.deepEqual(finishDrawnPath(raw,'smooth',NaN),one);
+});
+test('strong geometric smoothing preserves main loops and off-frame endpoints',()=>{
+  const raw=[[-.4,.14],[-.1,.26],[.2,.63],[.48,.82],[.72,.7],[.77,.25],[1.22,.1]];
+  for(const power of [1,2,3,4,5]){
+    const result=finishDrawnPath(raw,'geometric',power);
+    assert.ok(result.length>=2);
+    assert.ok(result[0][0]<0&&result.at(-1)[0]>1);
+    assert.ok(result.some(p=>p[1]>.68),'deliberate large curve is retained');
+    assert.deepEqual(result,finishDrawnPath(raw,'geometric',power));
+  }
+});
