@@ -7,6 +7,8 @@ const html=read('index.html');
 const css=read('studio-themes.css');
 const original=read('styles.css');
 const mobile=read('src/mobile-studio.js');
+const swipe=read('src/mobile-swipes.js');
+const swipeCSS=read('mobile-swipes.css');
 const darkLogo=read('assets/roygbiv-logo-dark.svg');
 const creamLogo=read('assets/roygbiv-logo-cream.svg');
 
@@ -78,4 +80,21 @@ test('raster generator produces matching actual PNG binaries at icon resolution'
     assert.equal(bytes.readUInt32BE(20),512);
   }
   assert.ok(!dark.equals(cream));
+});
+
+test('mobile editor is swipe-first without large heading or redundant buttons',()=>{
+  assert.match(html,/id="mobileDismissHandle"/);
+  assert.match(html,/id="mobileSettingPosition"/);
+  assert.doesNotMatch(html,/id="mobilePreviewSpace"/);
+  assert.doesNotMatch(html,/id="mobileDesignClose"/);
+  assert.doesNotMatch(html,/Adjust your wallpaper/);
+  assert.match(html,/mobile-swipes\.css\?v=/);
+  assert.match(html,/src\/mobile-swipes\.js\?v=/);
+  assert.match(swipe,/dy>70/);
+  assert.match(swipe,/visitTab\(activeIndex\(\)\+/);
+  assert.match(swipeCSS,/scroll-snap-type:x mandatory/);
+  assert.match(swipeCSS,/overflow-x:auto!important;overflow-y:hidden!important/);
+  assert.match(swipeCSS,/\.texture-layer-panel:not\(\[hidden\]\)/);
+  assert.match(swipeCSS,/\.stripe-shadow-controls:not\(\[hidden\]\)/);
+  assert.match(swipeCSS,/\.settings-panel \[hidden\]\{display:none!important\}/);
 });

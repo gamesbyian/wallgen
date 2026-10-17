@@ -121,7 +121,7 @@ try{
       sidebar:bounds('.sidebar'),dock:bounds('.mobile-dock'),
       noDimmer:getComputedStyle(document.getElementById('mobileSheetBackdrop')).display==='none',
       nonmodal:document.getElementById('mobileDesignSheet').getAttribute('aria-modal')===null,
-      scrollable:getComputedStyle(document.getElementById('mobileDesignSheet')).overflowY==='auto',
+      scrollable:getComputedStyle(document.getElementById('mobileDesignSheet')).overflowY==='hidden',
       totalHeight:document.documentElement.scrollHeight,
       tabsVisible:document.querySelector('.settings-tabs').getBoundingClientRect().bottom<=innerHeight};
   })()`);
@@ -142,23 +142,102 @@ try{
   })()`);
   await waitFor(`document.getElementById('preview').toDataURL()!==window.__wallpaperBefore`,16000);
   assert.ok(await evaluate('document.body.classList.contains("mobile-edit-open")'));
-  // Minimise the controls without losing editing access, to see more of the preview.
-  await evaluate('document.getElementById("mobilePreviewSpace").click()');
-  await waitFor('document.querySelector(".studio-stage").getBoundingClientRect().height > '+(editing.stage.height+35));
-  const compact=await evaluate(`(()=>({
-    visible:document.querySelector('.sidebar').getBoundingClientRect().height,
-    preview:document.querySelector('.wallpaper-frame').getBoundingClientRect().height,
-    controls:document.querySelectorAll('#controls [data-setting]').length,
-    expanded:document.getElementById('mobilePreviewSpace').getAttribute('aria-pressed')
-  }))()`);
-  assert.ok(compact.preview>editing.preview.height+35);
-  assert.ok(compact.visible>=180);
-  assert.ok(compact.controls>30,'no settings may disappear in compact edit mode');
-  assert.equal(compact.expanded,'true');
+  // Actual fields are now horizontal cards, not a tall scrolling list.
+  const rail=await evaluate(`(()=>{
+    const p=document.getElementById('panel-design');
+    const tab=document.querySelector('.settings-tabs');
+    const position=document.getElementById('mobileSettingPosition');
+    return {
+      overflowX:getComputedStyle(p).overflowX, overflowY:getComputedStyle(p).overflowY,
+      snap:getComputedStyle(p).scrollSnapType, width:p.clientWidth,
+      scrollWidth:p.scrollWidth,
+      tabsVisible:tab.getBoundingClientRect().bottom<p.getBoundingClientRect().top,
+      count:position.textContent.trim(),
+      noHeading:getComputedStyle(document.getElementById('mobileDismissHandle')).display!=='none',
+      removed:!document.getElementById('mobilePreviewSpace')&&!document.getElementById('mobileDesignClose')
+    };
+  })()`);
+  console.log('SWIPE_RAIL_METRICS',JSON.stringify(rail));
+  assert.ok(rail.scrollWidth>rail.width*4,'settings must lay out horizontally');
+  assert.equal(rail.overflowX,'auto');assert.equal(rail.overflowY,'hidden');
+  assert.ok(rail.snap.includes('mandatory')&&rail.tabsVisible&&rail.noHeading&&rail.removed);
+  // Programmatic scroll tests the native snap strip and progress indicator.
+  await evaluate('document.getElementById("panel-design").scrollTo({left:document.getElementById("panel-design").clientWidth+8,behavior:"instant"})');
+  await waitFor('document.getElementById("mobileSettingPosition").textContent.startsWith("2 /")');
+  const pos2=await evaluate('document.getElementById("mobileSettingPosition").textContent');
+  assert.match(pos2,/^2 \/ /);
+  // Category changes reset to the first card and leave the canvas visible.
+  await evaluate('document.getElementById("tab-textures").click()');
+  await waitFor('document.getElementById("panel-textures").hidden===false');
+  const textures=await evaluate(`(()=>{
+    const el=document.getElementById('panel-textures');
+    return {scrollWidth:el.scrollWidth,clientWidth:el.clientWidth,
+      material:!!el.querySelector('[name="material"]'),
+      layer2:!!el.querySelector('#textureLayer2Panel'),
+      layer3:!!el.querySelector('#textureLayer3Panel'),
+      vertical:getComputedStyle(document.getElementById('mobileDesignSheet')).overflowY,
+      previewVisible:document.querySelector('.studio-stage').getBoundingClientRect().bottom<
+        document.getElementById('mobileDesignSheet').getBoundingClientRect().top};
+  })()`);
+  assert.ok(textures.scrollWidth>textures.clientWidth*3 && textures.material && textures.layer2 && textures.layer3);
+  assert.equal(textures.vertical,'hidden');assert.ok(textures.previewVisible);
+  await evaluate('document.getElementById("addTextureLayer2").click()');
+  await waitFor('document.getElementById("textureLayer2Panel").hidden===false');
+  await evaluate('document.getElementById("tab-design").click()');
+  await evaluate('document.querySelector("[name=stripeShadowEnabled]").click()');
+  await waitFor('document.getElementById("stripeShadowControls").hidden===false');
+  // Exercise actual Chrome touch events, not just DOM clicks.
+  const swipe=async (from,to)=>{
+    await command('Input.dispatchTouchEvent',{type:'touchStart',
+      touchPoints:[{x:from.x,y:from.y,id:1}]});
+    await command('Input.dispatchTouchEvent',{type:'touchMove',
+      touchPoints:[{x:(from.x+to.x)/2,y:(from.y+to.y)/2,id:1}]});
+    await command('Input.dispatchTouchEvent',{type:'touchMove',
+      touchPoints:[{x:to.x,y:to.y,id:1}]});
+    await command('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+  };
+  const navPosition=await evaluate(`(()=>{
+    const r=document.querySelector('.settings-tabs').getBoundingClientRect();
+    return {y:Math.round(r.top+r.height/2),left:Math.round(r.left),right:Math.round(r.right)};
+  })()`);
+  await swipe({x:navPosition.right-34,y:navPosition.y},
+              {x:navPosition.left+40,y:navPosition.y});
+  await waitFor(`document.getElementById('tab-colour').getAttribute('aria-selected')==='true'`);
+  // A real finger drag should adjust a slider, not scroll to another card.
+  await evaluate('document.getElementById("tab-design").click()');
+  await evaluate('document.querySelector("[name=shapeFrequency]").closest(".lockable-setting").scrollIntoView({inline:"start",block:"nearest",behavior:"instant"})');
+  await waitFor('document.querySelector("[name=shapeFrequency]").getBoundingClientRect().left > 0 && document.querySelector("[name=shapeFrequency]").getBoundingClientRect().right < innerWidth');
+  const slider=await evaluate(`(()=>{
+    const r=document.querySelector('[name=shapeFrequency]').getBoundingClientRect();
+    return {left:r.left,right:r.right,y:Math.round(r.top+r.height/2),
+      value:Number(document.querySelector('[name=shapeFrequency]').value),
+      scrollLeft:document.getElementById('panel-design').scrollLeft};
+  })()`);
+  await swipe({x:Math.round(slider.left+12),y:slider.y},
+              {x:Math.round(slider.right-12),y:slider.y});
+  await waitFor(`Number(document.querySelector('[name=shapeFrequency]').value)>${slider.value}`);
+  const afterSlider=await evaluate(`({
+    value:Number(document.querySelector('[name=shapeFrequency]').value),
+    scroll:document.getElementById('panel-design').scrollLeft,
+    category:document.querySelector('.settings-tab[aria-selected="true"]').dataset.tab
+  })`);
+  assert.ok(afterSlider.value>slider.value,'range slider responds to a real finger drag');
+  assert.ok(Math.abs(afterSlider.scroll-slider.scrollLeft)<40,'dragging a slider should not swipe away the card');
+  assert.equal(afterSlider.category,'design');
+  // Pull down by the narrow, unobtrusive grab handle.
+  const grab=await evaluate(`(()=>{
+    const r=document.getElementById('mobileDismissHandle').getBoundingClientRect();
+    return {x:Math.round(r.x+r.width/2),y:Math.round(r.top+r.height/2)};
+  })()`);
+  await swipe(grab,{x:grab.x,y:grab.y+92});
+  await waitFor('!document.body.classList.contains("mobile-edit-open")');
+  assert.ok(!await evaluate('document.body.classList.contains("mobile-edit-open")'));
+  await evaluate('document.getElementById("mobileEdit").click()');
+  await waitFor('document.body.classList.contains("mobile-edit-open")');
   await evaluate(`(()=>{const theme=document.getElementById('studioTheme');
     theme.value='dark';theme.dispatchEvent(new Event('change',{bubbles:true}))})()`);
   assert.equal(await evaluate('document.documentElement.dataset.theme'),'dark');
-  await evaluate('document.getElementById("mobileDesignClose").click()');
+  await evaluate('document.getElementById("mobileDismissHandle").click()');
   await evaluate('document.getElementById("mobileMore").click()');
   await waitFor(`(()=>{
     const stage=document.querySelector('.studio-stage').getBoundingClientRect();

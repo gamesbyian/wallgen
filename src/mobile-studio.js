@@ -24,7 +24,7 @@ const editBtn=document.getElementById('mobileEdit');
 const exploreBtn=document.getElementById('mobileExplore');
 const moreBtn=document.getElementById('mobileMore');
 const favouriteBtn=document.getElementById('mobileFavorite');
-const previewSpaceBtn=document.getElementById('mobilePreviewSpace');
+const dismissHandle=document.getElementById('mobileDismissHandle');
 const originals=['.composition-positioner','.action-tray','.export-metadata','.secondary-actions','.details-bar']
   .map(sel=>document.querySelector(sel)).filter(Boolean);
 const placeholders=originals.map(node=>{
@@ -48,9 +48,6 @@ function closeSurfaces({restoreFocus=true}={}){
   design.removeAttribute('aria-modal');
   design.removeAttribute('role');
   tools.hidden=true;backstage.hidden=true;
-  previewSpaceBtn.setAttribute('aria-pressed','false');
-  previewSpaceBtn.textContent='Larger preview';
-  previewSpaceBtn.setAttribute('aria-label','Give the preview more room');
   editBtn.setAttribute('aria-expanded','false');
   exploreBtn.setAttribute('aria-expanded','false');
   moreBtn.setAttribute('aria-expanded','false');
@@ -69,7 +66,7 @@ function openSurface(type){
   if(type==='edit'){
     editBtn.setAttribute('aria-expanded','true');
     design.setAttribute('role','region');
-    document.getElementById('mobileDesignClose').focus();
+    dismissHandle.focus({preventScroll:true});
   }else if(type==='gallery'){
     exploreBtn.setAttribute('aria-expanded','true');
     gallery.setAttribute('tabindex','-1');
@@ -84,12 +81,7 @@ function openSurface(type){
 gallery.addEventListener('click',event=>{
   if(event.target.closest('.thumb'))closeSurfaces({restoreFocus:false});
 });
-previewSpaceBtn.addEventListener('click',()=>{
-  const compact=document.body.classList.toggle('mobile-edit-compact');
-  previewSpaceBtn.setAttribute('aria-pressed',String(compact));
-  previewSpaceBtn.textContent=compact?'More controls':'Larger preview';
-  previewSpaceBtn.setAttribute('aria-label',compact?'Show more editing controls':'Give the preview more room');
-});
+dismissHandle.addEventListener('click',()=>closeSurfaces());
 // Tapping the live image gives the user the full-size preview immediately.
 document.querySelector('.studio-stage').addEventListener('click',()=>{
   if(document.body.classList.contains('mobile-edit-open'))closeSurfaces({restoreFocus:false});
@@ -97,7 +89,7 @@ document.querySelector('.studio-stage').addEventListener('click',()=>{
 editBtn.addEventListener('click',()=>openSurface('edit'));
 exploreBtn.addEventListener('click',()=>openSurface('gallery'));
 moreBtn.addEventListener('click',()=>openSurface('tools'));
-for(const name of ['mobileDesignClose','mobileToolsClose']){
+for(const name of ['mobileToolsClose']){
   document.getElementById(name).addEventListener('click',()=>closeSurfaces());
 }
 backstage.addEventListener('click',()=>closeSurfaces());

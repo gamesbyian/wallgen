@@ -39,19 +39,21 @@ URL, favourite, seed, or PNG. To restore the old interface colours, select
 **Original Dark**. The new `studio-themes.css` supplies light tokens and the
 mobile layout on top of the intact original dark stylesheet.
 
-**Live-preview adjustment trays:** the Edit panel now reserves space **below**
-the wallpaper preview instead of covering it. The canvas stays visible and
-repaints while sliders, selectors, locks and textures are changed. Tabs and
-controls scroll *inside* the tray; tapping **Larger preview** makes the tray
-shorter while keeping every setting accessible, and tapping **More controls**
-restores its normal height. Tapping the picture or **Done** returns to the
-full preview. **Explore** and **More** (including the nudge pad) also use
-separate reserved space below the preview, so their controls never sit over
-the artwork. The approach borrows the essential image-above-adjustments
-principle from mobile photo editors, rather than hiding the thing being
-edited behind a modal drawer. Both Cream Studio and Original Dark use this
-layout. A Chromium mobile acceptance test checks simultaneous visibility,
-live repainting, accessibility and phone viewport dimensions.
+**Swipe-first live editing:** the Edit tray stays below the visible, continuously
+updated wallpaper. It now contains a small pull-down grabber, Randomize,
+Primes only, and four compact category tabs. **Swipe left/right** across
+individual setting cards to adjust the next control, including locks; **swipe
+horizontally across the tab bar** to change the active category. Swiping
+outward at the beginning or end of a card rail also moves to the adjacent
+category. A small counter shows your position within each category. All
+existing controls, optional texture layers, shadows, and numeric entries
+remain the original live form elements; there are no proxy sliders or lost
+settings. **Swipe down** on a noninteractive part of the tray or grabber to
+dismiss it; tapping the picture or the Edit dock button also closes it. There
+is no separate Done or Larger preview button, and no vertical scrolling
+through the editor itself. The canvas always has its own unobstructed space.
+Explore and More still occupy reserved space beneath the preview. This works
+in both Cream Studio and Original Dark, without altering saved designs.
 
 The primary interface is designed for the **Pixel 6 Pro portrait viewport** (the
 wallpaper itself is still drawn at a 600 × 1300 logical aspect ratio, exported

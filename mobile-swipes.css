@@ -1,0 +1,164 @@
+/* Phone-only horizontal settings rail. The wallpaper remains above this strip.
+   Desktop and the original dark palette are untouched. */
+.mobile-dismiss-handle,.mobile-setting-counter{display:none}
+@media(max-width:790px){
+  body.mobile-studio.mobile-edit-open{
+    --mobile-tray-height:clamp(237px,28dvh,265px);
+  }
+  body.mobile-studio .sidebar{
+    display:flex!important;
+    flex-direction:column;
+    overflow:hidden!important;
+    padding:0 12px 6px!important;
+  }
+  body.mobile-studio .mobile-dismiss-handle{
+    display:flex;flex:0 0 15px;min-height:15px;align-items:center;
+    justify-content:center;align-self:stretch;background:transparent;
+    border:0;border-radius:0;padding:2px 0 0;cursor:pointer;
+    touch-action:none;
+  }
+  body.mobile-studio .mobile-dismiss-handle .mobile-grabber{
+    width:38px;height:4px;pointer-events:none;margin:0;border-radius:99px;
+  }
+  body.mobile-studio #controls{
+    display:flex;flex-direction:column;flex:1 1 auto;
+    min-height:0;overflow:hidden;margin:0;
+  }
+  body.mobile-studio .sidebar .randomize-bar.randomize-toolbar{
+    flex:0 0 auto;margin:2px 0 4px!important;min-height:39px;
+    display:grid!important;grid-template-columns:1.25fr 1fr;
+    gap:7px!important;
+  }
+  body.mobile-studio .sidebar .randomize-bar .button-randomize-all,
+  body.mobile-studio .sidebar .randomize-bar>.prime-toggle{
+    min-height:39px!important;max-height:39px;min-width:0;border-radius:11px;
+  }
+  body.mobile-studio .sidebar .randomize-bar>.prime-toggle{
+    font-size:11px;padding:5px 9px;
+  }
+  body.mobile-studio .sidebar .settings-tabs{
+    position:static!important;top:auto!important;
+    flex:0 0 auto;margin:0 0 3px!important;padding:3px;
+    min-height:41px;border-radius:12px;
+    touch-action:pan-x;
+  }
+  body.mobile-studio .sidebar .settings-tab{
+    min-height:34px!important;max-height:34px;
+    font-size:11px!important;padding:3px 0;
+  }
+  body.mobile-studio .mobile-setting-counter{
+    display:flex;align-items:center;justify-content:space-between;
+    flex:0 0 15px;min-height:15px;margin:0 5px 4px;
+    font-size:10px;color:var(--muted);letter-spacing:.015em;
+  }
+  body.mobile-studio .mobile-setting-counter output{
+    font-variant-numeric:tabular-nums;font-weight:700;
+  }
+  body.mobile-studio .sidebar .settings-panel:not([hidden]){
+    display:flex!important;flex:1 1 auto;gap:8px;
+    overflow-x:auto!important;overflow-y:hidden!important;
+    min-width:0;width:100%;min-height:0;max-height:100%;
+    padding:0 1px 3px!important;margin:0!important;
+    scroll-snap-type:x mandatory;scroll-padding-inline:1px;
+    overscroll-behavior-x:contain;scrollbar-width:none;
+    touch-action:pan-x;
+    align-items:stretch;scroll-behavior:smooth;
+  }
+  body.mobile-studio .sidebar .settings-panel::-webkit-scrollbar{display:none}
+  /* Preserve the exact original form nodes. Display-contents creates one
+     horizontally swipable card per actual setting, including locks and
+     controls added dynamically by app.js. */
+  body.mobile-studio .sidebar .settings-panel .control-grid,
+  body.mobile-studio .sidebar .settings-panel .texture-layer-group,
+  body.mobile-studio .sidebar .settings-panel .lighting-subsection,
+  body.mobile-studio .sidebar .settings-panel .stripe-shadow-section,
+  body.mobile-studio .sidebar .settings-panel .texture-displacement-control{
+    display:contents!important;
+  }
+  body.mobile-studio .sidebar .settings-panel .texture-layer-panel:not([hidden]),
+  body.mobile-studio .sidebar .settings-panel .stripe-shadow-controls:not([hidden]){
+    display:contents!important;
+  }
+  body.mobile-studio .sidebar .settings-panel [hidden]{display:none!important}
+  body.mobile-studio .sidebar .settings-panel .settings-panel-heading,
+  body.mobile-studio .sidebar .settings-panel .lighting-intro,
+  body.mobile-studio .sidebar .settings-panel .lighting-help,
+  body.mobile-studio .sidebar .settings-panel .control-note,
+  body.mobile-studio .sidebar .settings-panel .stripe-shadow-help,
+  body.mobile-studio .sidebar .settings-panel .texture-displacement-control>small{
+    display:none!important;
+  }
+  body.mobile-studio .sidebar .settings-panel .lockable-setting,
+  body.mobile-studio .sidebar .settings-panel>.field,
+  body.mobile-studio .sidebar .settings-panel .texture-rotation-field,
+  body.mobile-studio .sidebar .settings-panel .homogeneity-override,
+  body.mobile-studio .sidebar .settings-panel .layer-add-lock,
+  body.mobile-studio .sidebar .settings-panel .texture-layer-panel-head,
+  body.mobile-studio .sidebar .settings-panel .stripe-shadow-switch,
+  body.mobile-studio .sidebar .settings-panel .add-texture-layer{
+    flex:0 0 calc(100% - 2px)!important;
+    width:calc(100% - 2px)!important;min-width:0;
+    min-height:0;max-height:100%;margin:0!important;
+    padding:12px!important;border:1px solid var(--line);
+    border-radius:14px;box-sizing:border-box;
+    background:var(--surface);scroll-snap-align:start;scroll-snap-stop:always;
+    overflow-y:auto;overflow-x:hidden;
+    overscroll-behavior-y:contain;
+  }
+  body.mobile-studio .sidebar .settings-panel .lockable-setting{
+    grid-template-columns:minmax(0,1fr) 29px;
+    align-items:center;gap:6px;
+  }
+  body.mobile-studio .sidebar .settings-panel .field{font-size:12px;gap:7px}
+  body.mobile-studio .sidebar .settings-panel .field select{
+    min-height:42px;font-size:13px;padding:7px 30px 7px 11px;
+  }
+  body.mobile-studio .sidebar .settings-panel .field>small,
+  body.mobile-studio .sidebar .settings-panel .control-hint,
+  body.mobile-studio .sidebar .settings-panel .texture-rotation-field>small{
+    font-size:9px;line-height:1.3;
+    margin:2px 0 0;
+  }
+  body.mobile-studio .sidebar .settings-panel .range-field input[type=range]{
+    min-height:24px;margin:0;
+    touch-action:none;
+  }
+  body.mobile-studio .sidebar .settings-panel .slider-number{
+    min-width:48px;
+  }
+  body.mobile-studio .sidebar .settings-panel .rotation-controls{
+    min-width:0;gap:4px;
+  }
+  body.mobile-studio .sidebar .settings-panel .texture-layer-panel-head{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+  }
+  body.mobile-studio .sidebar .settings-panel .stripe-shadow-switch{
+    display:flex;align-items:center;gap:10px;
+  }
+  body.mobile-studio .sidebar .settings-panel .layer-add-lock{
+    display:grid;grid-template-columns:minmax(0,1fr) 29px;align-items:center;
+  }
+  body.mobile-studio .sidebar .settings-panel .lockable-setting .setting-lock{
+    grid-column:2;grid-row:1;align-self:center;justify-self:end;
+  }
+  body.mobile-studio .sidebar .settings-panel .lockable-setting.texture-rotation-field .setting-lock{
+    grid-row:1/4;
+  }
+  body.mobile-studio .sidebar .settings-panel .lockable-setting.texture-rotation-field .rotation-controls{
+    grid-column:1 / -1;
+  }
+  html[data-theme=cream] body.mobile-studio .sidebar .settings-panel .lockable-setting,
+  html[data-theme=cream] body.mobile-studio .sidebar .settings-panel>.field,
+  html[data-theme=cream] body.mobile-studio .sidebar .settings-panel .texture-rotation-field,
+  html[data-theme=cream] body.mobile-studio .sidebar .settings-panel .homogeneity-override,
+  html[data-theme=cream] body.mobile-studio .sidebar .settings-panel .layer-add-lock,
+  html[data-theme=cream] body.mobile-studio .sidebar .settings-panel .texture-layer-panel-head{
+    background:#fffaf3;border-color:#eaddd0;
+  }
+}
+@media(max-width:790px) and (max-height:670px){
+  body.mobile-studio.mobile-edit-open{--mobile-tray-height:clamp(185px,37dvh,240px)}
+}
+@media(prefers-reduced-motion:reduce){
+  body.mobile-studio .sidebar .settings-panel{scroll-behavior:auto!important}
+}
