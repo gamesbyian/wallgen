@@ -120,7 +120,12 @@ export function finishDrawnPath(raw,mode='smooth'){
 export function prepareDrawnPath(input){
   const stored=normalizeDrawnPath(input);
   if(stored.length<2)return null;
-  const points=stored.map(([x,y])=>({x:x*PATH_WIDTH-PATH_WIDTH/2,y:y*PATH_HEIGHT-PATH_HEIGHT/2}));
+  // Sparse recipe anchors have mathematical corners with zero turn radius.
+  // Round these before normal offsets are constructed, just as finger traces
+  // are rounded when committed. Dense saved strokes keep their exact samples.
+  const shaped=stored.length<20?
+    resamplePath(soften(stored,3),MAX_DRAWN_POINTS):stored;
+  const points=shaped.map(([x,y])=>({x:x*PATH_WIDTH-PATH_WIDTH/2,y:y*PATH_HEIGHT-PATH_HEIGHT/2}));
   const lengths=[0];
   for(let i=1;i<points.length;i++){
     const a=points[i-1],b=points[i];
@@ -138,4 +143,29 @@ export function pointOnDrawnPath(path,u){
   const k=lo,a=path.points[k-1],b=path.points[k];
   const t=clamp((target-arr[k-1])/(arr[k]-arr[k-1]||1),0,1);
   return {x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t};
+}
+
+/** Bound parallel offsets around tight bends before they can turn inside out.
+ * Ignore near-straight vertices, and use a lower percentile to resist single
+ * residual touchscreen noise spikes. Units are logical design pixels. */
+export function safeDrawnBandSpan(path){
+  if(!path)return 120;
+  const radii=[];
+  const points=path.points;
+  for(let i=1;i<points.length-1;i++){
+    const a=points[i-1],b=points[i],c=points[i+1];
+    const dx1=b.x-a.x,dy1=b.y-a.y,dx2=c.x-b.x,dy2=c.y-b.y;
+    const l1=Math.hypot(dx1,dy1),l2=Math.hypot(dx2,dy2);
+    if(l1<1||l2<1)continue;
+    const cross=Math.abs(dx1*dy2-dy1*dx2);
+    const dot=dx1*dx2+dy1*dy2;
+    const theta=Math.atan2(cross,dot);
+    if(theta<.025)continue;
+    radii.push(Math.min(l1,l2)/(2*Math.sin(theta/2)));
+  }
+  if(!radii.length)return 360;
+  radii.sort((a,b)=>a-b);
+  // Keep the entire 7-ribbon pack narrower than the useful curvature radius.
+  const r=radii[Math.floor((radii.length-1)*.25)];
+  return Math.max(52,Math.min(360,r*1.65));
 }
