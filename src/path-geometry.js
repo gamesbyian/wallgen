@@ -29,8 +29,9 @@ export function modulation(x, geometry, phase, period, d, extent,detail={}){
     // while higher values produce a train of joined arches.
     const cycles=Math.max(.2,extent/Math.max(30,period));
     const u=x/extent*cycles;
-    const local=2*fract((u+1)/2)-1;
-    return d*(1-local*local)*2-d;
+    // Raised cosine joins successive arches with continuous derivatives;
+    // triangular periodic parabola tiles caused unintended sharp cusps.
+    return d*Math.cos(u*Math.PI);
   }
   return d*(Math.sin(t*TAU*.42)*.35+Math.sin(t*TAU*.79+phase)*.4+Math.sin(t*TAU*1.33)*.25);
 }
