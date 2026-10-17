@@ -423,15 +423,15 @@ function fillMotif(ctx,stripe,extent,scene) {
   const motif=stripe.motif;
   if(motif==='solid'){ctx.fill(stripePath(stripe,extent,scene));return;}
   const random=rng(scene.seed+':motifs:'+stripe.index);
-  // Chevron motif size and repetition are independent: Shape depth scales
-  // the marks and Shape frequency sets their longitudinal density.
-  const chevronScale=motif==='chevrons'?Math.pow(2,(scene.shapeDepth-50)/29):1;
-  const chevronRate=motif==='chevrons'?Math.pow(2,(scene.shapeFrequency-50)/20):1;
-  const step=Math.max(2.5,stripe.width*.42*stripe.patternScale*chevronScale);
+  // Motif size and density are independent from centreline geometry.
+  // Every motif uses the same two dedicated controls, not curve frequency.
+  const motifScale=Math.pow(2,(scene.motifSize-50)/28);
+  const motifRate=Math.pow(2,(scene.motifFrequency-50)/27);
+  const step=Math.max(1.4,stripe.width*.42*stripe.patternScale*motifScale);
   const across=Math.max(1,Math.ceil(stripe.width/(step*.83)));
   const stroke=Math.min(step*.19,Math.max(.55,stripe.width*.14));
   ctx.save();ctx.lineWidth=stroke;ctx.lineCap='round';ctx.lineJoin='round';
-  const spacing=motif==='dashes'?step*1.9:motif==='chevrons'?Math.max(2.5,step*1.5/chevronRate):step;
+  const spacing=Math.max(2.5,(motif==='dashes'?step*1.9:motif==='chevrons'?step*1.5:step)/motifRate);
   for(let x=-extent+spacing;x<extent-spacing;x+=spacing){
     for(let j=-across;j<=across;j++){
       if(motif==='checker' && ((Math.round((x+extent)/spacing)+j)&1)!==0)continue;
