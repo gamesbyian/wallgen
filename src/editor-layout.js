@@ -129,7 +129,8 @@ export function mountEditor(){
     root.append(die);
   }
   for(const old of originals){old.hidden=true;old.setAttribute('aria-hidden','true');}
-  chooser.querySelectorAll('button').forEach(button=>button.addEventListener('click',()=>selectEditorTool(button.dataset.category,button.dataset.editorTool)));
+  chooser.querySelectorAll('[data-editor-tool]').forEach(button=>
+    button.addEventListener('click',()=>selectEditorTool(button.dataset.category,button.dataset.editorTool)));
   function currentCategoryFromTabs(){
     return nav.querySelector('[aria-selected=true]')?.dataset.tab||activeCategory;
   }
