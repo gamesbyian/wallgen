@@ -155,6 +155,31 @@
         <div class="seed-group"><label for="seedInput">DESIGN SEED</label><input id="seedInput" type="text" maxlength="90" spellcheck="false" value="rainbow-001" aria-label="Design seed"><button id="applySeed" class="icon-btn" title="Render this seed" aria-label="Apply seed" type="button">↵</button></div>
         <div class="main-actions"><button id="undo" class="button button-outline button-undo" type="button" disabled aria-label="Undo last design change" title="Nothing to undo">↶ <span>Undo</span></button><button id="randomize" class="button button-outline" type="button">↻ <span>New variation</span></button><button id="download" class="button button-light" type="button">↓ <span>Download PNG</span></button><button id="favorite" class="button button-icon" title="Save to favourites" aria-label="Save to favourites" aria-pressed="false" type="button">♡</button></div>
       </div>
+      <div class="export-metadata">
+        <button id="metadataToggle" type="button" class="text-link-button metadata-toggle"
+          aria-expanded="false" aria-controls="metadataPanel">▸ Edit image metadata</button>
+        <div id="metadataPanel" class="metadata-panel" hidden>
+          <div class="metadata-heading"><strong>PNG metadata</strong>
+            <span>Optional. Embedded in the downloaded image.</span></div>
+          <div class="metadata-fields">
+            <label>Title <input name="title" maxlength="400" placeholder="Untitled rainbow"></label>
+            <label>Creator / artist <input name="creator" maxlength="400" placeholder="Name or alias (optional)"></label>
+            <label class="metadata-wide">Description <textarea name="description" rows="3" maxlength="2000" placeholder="Describe this design"></textarea></label>
+            <label>Copyright / usage notice <input name="copyright" maxlength="400" placeholder="Public domain / CC0 / custom notice"></label>
+            <label>Keywords <input name="keywords" maxlength="400" placeholder="rainbow, wallpaper, abstract"></label>
+            <label>Software <input name="software" maxlength="400" value="Wallgen · Made with ChatGPT"></label>
+            <label>Creation date &amp; time <input name="dateTime" type="datetime-local"></label>
+            <label>Camera / device maker <input name="cameraMake" maxlength="400" placeholder="Only if applicable"></label>
+            <label>Camera / device model <input name="cameraModel" maxlength="400" placeholder="Only if applicable"></label>
+            <label class="metadata-wide">Additional comment <textarea name="comment" rows="2" maxlength="2000" placeholder="Optional notes"></textarea></label>
+          </div>
+          <div class="metadata-bottom">
+            <label class="metadata-persist"><input id="metadataRemember" type="checkbox"> Remember these fields on this device</label>
+            <button id="metadataClear" type="button" class="text-link-button">Clear fields</button>
+          </div>
+          <p>Writes searchable PNG text fields and compatible EXIF tags. Blank fields are omitted. These details are not added to share links or to the picture itself.</p>
+        </div>
+      </div>
       <div class="secondary-actions"><button id="copyLink" type="button">↗ Copy design link</button><button id="copyRecipe" type="button">⎘ Copy recipe JSON</button><button id="downloadRecipe" type="button">↓ Save recipe JSON</button><span id="notice" role="status" aria-live="polite"></span></div>
       <div class="details-bar"><div><span class="details-label">FAMILY</span><strong id="detailFamily">—</strong></div><div><span class="details-label">PATH</span><strong id="detailGeometry">—</strong></div><div><span class="details-label">MATERIAL</span><strong id="detailMaterial">—</strong></div><div><span class="details-label">COLOURS</span><strong>ROYGBIV · 7/7</strong></div></div>
       <section class="gallery-section" aria-labelledby="galleryTitle"><div class="gallery-head"><div><span class="eyebrow">DISCOVER / 02</span><h2 id="galleryTitle">Explore variations</h2><p>Generate a contact sheet, inspect the possibilities, then open one for full-resolution export.</p></div><div class="gallery-buttons"><button id="batch" class="button button-outline" type="button">✳ Generate 12</button><button id="showFavorites" class="button button-outline" type="button">♡ Favourites <span id="favoriteCount">0</span></button></div></div><div id="gallery" class="gallery-grid" aria-live="polite"><div class="gallery-placeholder">A blank contact sheet is an invitation.<br><span>Generate twelve different directions.</span></div></div></section>
