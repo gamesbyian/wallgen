@@ -131,7 +131,7 @@ try{
       dockHidden:getComputedStyle(document.querySelector('.mobile-dock')).visibility==='hidden',
       arrowVisible:getComputedStyle(document.getElementById('mobileDockExpand')).display==='flex',
       headerHidden:bounds('.masthead').bottom<=0,
-      narrowRandomize:document.getElementById('randomizeAll').getBoundingClientRect().height<=27,
+      narrowRandomize:document.getElementById('randomizeAll').getBoundingClientRect().width<=46,
       narrowTabs:document.querySelector('.settings-tabs').getBoundingClientRect().height<=29,
       noDimmer:getComputedStyle(document.getElementById('mobileSheetBackdrop')).display==='none',
       nonmodal:document.getElementById('mobileDesignSheet').getAttribute('aria-modal')===null,
