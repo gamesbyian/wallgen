@@ -481,19 +481,23 @@ function fillMotif(ctx,stripe,extent,scene) {
 function textureTile(material,seed,size) {
   const canvas=document.createElement('canvas');canvas.width=canvas.height=size;
   const ctx=canvas.getContext('2d');
+  // Tile size is controlled by Texture Scale; individual fibres and weave
+  // spacing must scale with it too, rather than remaining fixed in pixels.
+  const materialUnit=Math.max(.25,size/145);
   const rand=rng(`${seed}:material:${material}`);
   const random=(a,b)=>a+(b-a)*rand();
   const specks=(count,min,max,alpha=.22) => {
     for(let i=0;i<count;i++){
       const light=rand()>.47;
       ctx.fillStyle=`rgba(${light?'255,255,255':'0,0,0'},${random(alpha*.12,alpha).toFixed(3)})`;
-      const radius=random(min,max);
+      const radius=random(min,max)*materialUnit;
       ctx.beginPath();ctx.arc(rand()*size,rand()*size,radius,0,TAU);ctx.fill();
     }
   };
   const lines=(gap,colour,linewidth,angle=0)=>{
-    ctx.save();ctx.translate(size/2,size/2);ctx.rotate(angle);ctx.strokeStyle=colour;ctx.lineWidth=linewidth;
-    for(let x=-size*2;x<size*2;x+=gap){ctx.beginPath();ctx.moveTo(x,-size*2);ctx.lineTo(x,size*2);ctx.stroke();}
+    ctx.save();ctx.translate(size/2,size/2);ctx.rotate(angle);ctx.strokeStyle=colour;
+    ctx.lineWidth=linewidth*Math.sqrt(materialUnit);
+    for(let x=-size*2;x<size*2;x+=Math.max(.5,gap*materialUnit)){ctx.beginPath();ctx.moveTo(x,-size*2);ctx.lineTo(x,size*2);ctx.stroke();}
     ctx.restore();
   };
   const patches=(count,min,max,alpha=.12)=>{
@@ -508,7 +512,7 @@ function textureTile(material,seed,size) {
   };
   const fibres=(count,length=8,alpha=.22)=>{
     for(let i=0;i<count;i++){
-      const x=rand()*size,y=rand()*size,a=rand()*Math.PI*2,l=random(1,length);
+      const x=rand()*size,y=rand()*size,a=rand()*Math.PI*2,l=random(1,length)*materialUnit;
       ctx.strokeStyle=`rgba(${rand()>.5?'255,255,255':'0,0,0'},${random(alpha*.22,alpha).toFixed(3)})`;
       ctx.lineWidth=random(.25,1);
       ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+Math.cos(a)*l,y+Math.sin(a)*l);ctx.stroke();
