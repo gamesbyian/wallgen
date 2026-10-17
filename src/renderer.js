@@ -186,11 +186,12 @@ export function stripeFrameContacts(scene,stripe) {
 export function balanceStripeEnds(scene,stripe) {
   // A returning path legitimately has both ends at the same frame edge.
   // Paired contacts for a hairpin are intentional rather than a lone crop.
-  if(spatialGeometry(stripe) && (stripe.sharedGeometry??stripe.geometry)==='hairpin')
+  const floating=scene.composition==='floating';
+  if(!floating && spatialGeometry(stripe) && (stripe.sharedGeometry??stripe.geometry)==='hairpin')
     return {contacts:stripeFrameContacts(scene,stripe),balanced:true,hidden:false};
   const contacts=stripeFrameContacts(scene,stripe);
   const balanced=(contacts.left===contacts.right && contacts.top===contacts.bottom);
-  if(balanced)return {contacts,balanced:true,hidden:false};
+  if(balanced&&!floating)return {contacts,balanced:true,hidden:false};
   // Account for borders and glow so even their outermost pixels stay inset.
   const margin=24+scene.glow*.30+scene.gap*.08;
   const inside=x=>endpoints(scene,stripe,x).every(p=>
@@ -211,6 +212,16 @@ export function balanceStripeEnds(scene,stripe) {
   if(bestStart===null || bestEnd-bestStart<8){
     stripe.hidden=true;
     return {contacts,balanced:false,hidden:true};
+  }
+  if(floating){
+    const random=rng(scene.seed+':floating-ends:'+stripe.index);
+    const amount=(.18+.78*scene.pathLength/100)*
+      (1-random()*scene.individuality/100*.24);
+    const length=(bestEnd-bestStart)*amount;
+    const free=(bestEnd-bestStart)-length;
+    const centre=(bestStart+bestEnd)*.5+(random()-.5)*free*.7;
+    bestStart=centre-length*.5;
+    bestEnd=centre+length*.5;
   }
   stripe.segmentStart=bestStart;
   stripe.segmentEnd=bestEnd;
