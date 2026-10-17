@@ -85,7 +85,7 @@ test('texture relief and ambient canvas illumination are described accurately',(
   assert.match(html,/Gently roughen|Distort the actual stripe contours/);
   assert.match(html,/Canvas shade/);
   assert.match(html,/No stripe drop shadows/);
-  assert.match(readme,/No shadows are cast by stripe silhouettes/);
+  assert.match(readme,/Canvas ambience does not cast shadows from the stripe silhouettes/);
 });
 
 test('Primes only has no lock and shares the full settings width with Randomize',()=>{
