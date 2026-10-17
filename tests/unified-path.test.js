@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { normalizeRecipe, resolveScene, GEOMETRIES, COMPOSITIONS, CONSTRUCTIONS,
   LOCKABLE_SETTINGS, encodeRecipe, decodeRecipe, randomizeAllRecipe } from '../src/model.js';
 import { pathPosition, samplePath, ribbonEdge, widthAt } from '../src/path-geometry.js';
-import { stripeLineMarks } from '../src/renderer.js';
+import { stripeLineMarks, balanceStripeEnds, stripeFrameContacts } from '../src/renderer.js';
 
 test('one parametric path sampler covers old and new geometry vocabulary',()=>{
   for(const geometry of GEOMETRIES){
@@ -52,6 +52,22 @@ test('repetition changes the composition while retaining seven stripe identities
   assert.ok(repeated.bundleOffsets.every((v,i)=>i===0||v>repeated.bundleOffsets[i-1]));
   assert.equal(new Set(repeated.stripes.map(s=>s.name)).size,7);
 });
+test('floating compositions terminate independently inside the canvas',()=>{
+  const recipe={seed:'floating-pencil',composition:'floating',geometry:'wave',
+    orientation:'diagonal',individuality:72,spread:45,stripeWidth:36};
+  const short=resolveScene({...recipe,pathLength:20,endTaper:80});
+  const long=resolveScene({...recipe,pathLength:95,endTaper:80});
+  for(let i=0;i<7;i++){
+    const a=short.stripes[i],b=long.stripes[i];
+    balanceStripeEnds(short,a);
+    balanceStripeEnds(long,b);
+    if(a.hidden||b.hidden)continue;
+    assert.ok(a.segmentStart>a.segmentEnd-2*short.extent);
+    assert.ok(a.segmentEnd-a.segmentStart<b.segmentEnd-b.segmentStart);
+    const contacts=stripeFrameContacts(short,a);
+    assert.ok(Object.values(contacts).every(v=>!v),'floating ends remain inset');
+  }
+});
 test('dot diameter and spacing independently affect real marks',()=>{
   const scene=resolveScene({seed:'dot-columns',geometry:'straight',lineStyle:'dotted',
     dotSize:20,dotSpacing:20});
@@ -79,7 +95,7 @@ test('all construction and composition settings are normalized, lockable and por
     assert.deepEqual(recovered,normalized);
   }
   for(const key of ['composition','construction','repeatCount','repeatSpacing','turnRadius',
-    'tonalContrast','brushRoughness','dotSize','dotSpacing','endTaper'])
+    'tonalContrast','brushRoughness','dotSize','dotSpacing','pathLength','endTaper'])
     assert.ok(LOCKABLE_SETTINGS.includes(key),key);
   const random=randomizeAllRecipe();
   assert.ok(COMPOSITIONS.includes(random.composition));
