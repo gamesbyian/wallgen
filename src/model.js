@@ -60,6 +60,8 @@ export function normalizeRecipe(input = {}) {
     overridePatternHomogeneity: input.overridePatternHomogeneity === true || input.overridePatternHomogeneity === 'true',
     gap: finiteRange(input.gap, 28, 0, 100),
     glow: finiteRange(input.glow, 0, 0, 100),
+    positionX: finiteRange(input.positionX, 0, -30, 30),
+    positionY: finiteRange(input.positionY, 0, -30, 30),
   };
 }
 
@@ -142,8 +144,8 @@ export function resolveScene(recipeInput) {
   return {
     ...recipe, family, orientation, geometry, motif, palette, material, outline, background: recipe.background, angle, span,
     stripes, intensity: chaos, width: avg, extent: Math.hypot(DESIGN_WIDTH, DESIGN_HEIGHT) * 1.35,
-    centerX: DESIGN_WIDTH / 2 + between(random, -1, 1) * DESIGN_WIDTH * 0.055,
-    centerY: DESIGN_HEIGHT / 2 + between(random, -1, 1) * DESIGN_HEIGHT * 0.065,
+    centerX: DESIGN_WIDTH / 2 + between(random, -1, 1) * DESIGN_WIDTH * 0.055 + DESIGN_WIDTH * recipe.positionX / 100,
+    centerY: DESIGN_HEIGHT / 2 + between(random, -1, 1) * DESIGN_HEIGHT * 0.065 + DESIGN_HEIGHT * recipe.positionY / 100,
   };
 }
 
@@ -174,6 +176,6 @@ export function randomizeAllRecipe() {
     chaos:percent(), stripeWidth:percent(), spread:percent(),
     textureStrength:percent(), textureScale:percent(), individuality:percent(),
     patternHomogeneity:percent(), overridePatternHomogeneity:r()>.5,
-    gap:percent(), glow:percent(),
+    gap:percent(), glow:percent(), positionX:0, positionY:0,
   });
 }
