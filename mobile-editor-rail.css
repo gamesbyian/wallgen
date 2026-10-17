@@ -31,14 +31,14 @@
   body.mobile-studio .sidebar .settings-panel:not([hidden]){
     overflow-x:auto!important;overflow-y:hidden!important;
     overscroll-behavior-x:contain!important;overscroll-behavior-y:none!important;
-    touch-action:pan-x!important;scroll-snap-type:x mandatory;
+    touch-action:none!important;scroll-snap-type:x mandatory;
     scroll-behavior:smooth;
     scrollbar-width:none;
   }
   body.mobile-studio .sidebar .settings-panel .mobile-setting-cluster{
     overflow:hidden!important;
     overscroll-behavior:contain;
-    touch-action:pan-x!important;
+    touch-action:none!important;
     scroll-snap-stop:normal!important;
     padding:2px 7px!important;
     gap:1px!important;
