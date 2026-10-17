@@ -74,7 +74,10 @@
             <label class="field mirror-field"><input type="checkbox" name="mirrorVertical" data-setting="mirrorVertical"> Mirror vertically</label>
           </div>
           <label class="field">Composition <select name="composition" data-setting="composition"><option value="single">Single rainbow</option><option value="repeat">Repeat rainbow group</option></select></label>
-          <label class="field range-field"><span>Rainbow repetitions</span><input type="range" name="repeatCount" data-setting="repeatCount" min="2" max="6" step="1" value="3"></label>
+          <label class="field">Rainbow repetitions <select name="repeatCount" data-setting="repeatCount">
+            <option value="2">2 groups</option><option value="3">3 groups</option><option value="4">4 groups</option>
+            <option value="5">5 groups</option><option value="6">6 groups</option>
+          </select></label>
           <label class="field range-field"><span>Repeat spacing</span><input type="range" name="repeatSpacing" data-setting="repeatSpacing" min="0" max="100" value="50"></label>
           <label class="field">Path geometry <select name="geometry" data-setting="geometry"><option value="auto">Follow family</option><option value="straight">Straight</option><option value="wave">Wavy</option><option value="zigzag">Zigzag</option><option value="chevron">Chevron / pointed V</option><option value="jagged">Jagged / fractured</option><option value="stepped">Stepped</option><option value="arc">Sweeping arcs</option><option value="contour">Topographic</option><option value="hairpin">Hairpin / returning curve</option><option value="loops">Continuous loops</option></select></label>
           <label class="field range-field"><span>Hairpin radius</span><input type="range" name="turnRadius" data-setting="turnRadius" min="0" max="100" value="50"></label>
