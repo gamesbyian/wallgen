@@ -100,6 +100,7 @@ try{
   assert.ok(phone.dock.y>=phone.preview.bottom-16,'dock should sit below the preview');
   assert.ok(phone.dock.bottom<=915,'dock should be fully visible');
   await evaluate('document.getElementById("mobileEdit").click()');
+  await waitFor('document.body.classList.contains("mobile-edit-open") && document.querySelector(".sidebar").getBoundingClientRect().top < innerHeight');
   const editor=await evaluate(`(()=>({
     open:document.body.classList.contains('mobile-edit-open'),
     visible:document.querySelector('.sidebar').getBoundingClientRect().top<innerHeight,
