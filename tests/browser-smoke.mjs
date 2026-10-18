@@ -165,7 +165,7 @@ try{
   assert.ok(workerParity.png.bytes>1000);
 
   // A camera change must reveal a different world rectangle, NOT reroll
-  // the ribbon width profile or the interior wave/loop station phase.
+  // ribbon widths, motif placements, woven threads or interior phase.
   // Compare identical logical points sampled at 100% and 50% zoom; skip
   // antialiased edges, whose pixel footprints differ between resolutions.
   const cameraZoomParity=await evaluate(`(async()=>{
@@ -176,6 +176,12 @@ try{
       {seed:'zoom-geometry-proof',structure:'paths',geometry:'zigzag',
         motif:'solid',material:'none',taper:75,spread:65,stripeWidth:66,
         shapeDepth:76},
+      {seed:'zoom-dots-proof',structure:'paths',geometry:'straight',
+        motif:'dots',material:'none',taper:60,spread:65,stripeWidth:66,
+        dotSize:85,dotSpacing:55,motifFrequency:60},
+      {seed:'zoom-woven-proof',structure:'paths',geometry:'wave',
+        motif:'solid',construction:'woven',material:'none',
+        taper:50,spread:69,stripeWidth:64},
       {seed:'zoom-decoration-proof',structure:'paths',geometry:'wave',
         motif:'solid',material:'none',taper:60,spread:61,stripeWidth:68,
         interiorElements:[{id:'zoom-ink',enabled:true,shape:'wave',
