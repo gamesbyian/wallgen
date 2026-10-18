@@ -150,3 +150,18 @@ test('canonical world-space grid gives identical shared inset points for zoom cr
   assert.ok(insideCrop.every(p=>all.has(key(p))),
     'changing camera bounds must not move the underlying inset samples');
 });
+
+test('clipped open contour stitches as one connected chain, without fragments',()=>{
+  const polygon=box(0,0,160,120);
+  const options={resolution:.7,bounds:{left:-5,right:36,top:20,bottom:105}};
+  const contours=polygonInsetContours(polygon,12,options);
+  assert.equal(contours.length,1,'a continuous cropped inset must not fragment');
+  const chain=contours[0];
+  assert.equal(chain.closed,false);
+  assert.ok(chain.points.length>180);
+  const first=chain.points[0],last=chain.points.at(-1);
+  assert.ok(Math.abs(first.y-12)<1||Math.abs(last.y-12)<1);
+  assert.ok(chain.points.every(p=>Number.isFinite(p.x)&&Number.isFinite(p.y)));
+  const reversed=polygonInsetContours([...polygon].reverse(),12,options);
+  assert.deepEqual(reversed,contours,'polygon winding cannot change open contour topology');
+});

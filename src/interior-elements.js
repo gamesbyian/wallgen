@@ -1,4 +1,5 @@
 import {polygonInsetContours,polygonInsetScale} from './polygon-inset.js';
+import {contourBoundaryFrame,decorateInsetContour} from './contour-decoration.js';
 // Shared, resolution-independent interior decoration contract for every scene object.
 // The geometry adapters choose a natural local coordinate system; ink is clipped
 // to the owner shape and never creates an additional rainbow pigment.
@@ -32,7 +33,9 @@ export function normalizeInteriorElements(input){
       width:number(e.width,e.type==='band'?22:1.5,.15,50),
       position:number(e.position,0,-.48,.48),
       amplitude:number(e.amplitude,.12,0,.45),
-      frequency:number(e.frequency,6,.1,100),
+      // Closed contours use whole cycles to meet cleanly at their seams.
+      frequency:e.placement==='contour'?Math.round(number(e.frequency,6,1,30)):
+        number(e.frequency,6,.1,100),
       phase:number(e.phase,0,-360,360),
       opacity:number(e.opacity,1,0,1),
       placement:['local','field','contour'].includes(e.placement)?e.placement:'local',
@@ -75,7 +78,7 @@ export function drawRegionInteriors(ctx,object,elements,structure,renderBounds){
   // A stack of strokes can share the same geometric insets. Resolve each
   // distance only once per object and render, independent of ink/stroke style.
   const insetCache=new Map();
-  let insetScale;
+  let insetScale,contourFrame;
   for(const e of elements){
     if(!e.enabled||!e.opacity||!elementApplies(e,object.colorIndex,object.id))continue;
     ctx.save();ctx.strokeStyle=elementInk(e,object.color);
@@ -96,11 +99,15 @@ export function drawRegionInteriors(ctx,object,elements,structure,renderBounds){
           insetCache.set(key,contours);
         }
         for(const contour of contours){
+          const styled=e.shape==='straight'&&e.stroke==='solid'?contour:
+            decorateInsetContour(contour,e,distance,
+              contourFrame??(contourFrame=contourBoundaryFrame(object.vertices)),ctx.lineWidth);
+          if(e.stroke!=='solid')ctx.lineDashOffset=styled.dashOffset??0;
           ctx.beginPath();
-          contour.points.forEach((p,i)=>{
+          styled.points.forEach((p,i)=>{
             if(i===0)ctx.moveTo(p.x,p.y);else ctx.lineTo(p.x,p.y);
           });
-          if(contour.closed)ctx.closePath();
+          if(styled.closed)ctx.closePath();
           ctx.stroke();
         }
       }

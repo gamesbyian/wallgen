@@ -178,9 +178,13 @@ export function polygonInsetContours(polygon,inset,options={}){
     }
     return v;
   };
+  // Horizontal edges occupy (ny+1)*nx IDs, including the bottom edge
+  // of the final row. Starting vertical IDs at nx*ny collided with those
+  // bottom boundary edges, fragmenting camera-clipped open contours.
+  const verticalBase=(ny+1)*nx;
   const node=(i,j,edge)=>edge===0?j*nx+i:
-    edge===1?nx*ny+j*(nx+1)+i+1:
-    edge===2?(j+1)*nx+i:nx*ny+j*(nx+1)+i;
+    edge===1?verticalBase+j*(nx+1)+i+1:
+    edge===2?(j+1)*nx+i:verticalBase+j*(nx+1)+i;
   function record(a,b){
     const k=segments.length;
     segments.push({a,b});
@@ -219,24 +223,32 @@ export function polygonInsetContours(polygon,inset,options={}){
   }
   const used=new Uint8Array(segments.length);
   const contours=[];
-  for(let initial=0;initial<segments.length;initial++){
-    if(used[initial])continue;
+  const trace=(startKey,initial)=>{
     const first=segments[initial];
-    const aLinks=adjacency.get(first.a.key)||[];
-    const bLinks=adjacency.get(first.b.key)||[];
-    let start=aLinks.length===1?first.a:bLinks.length===1?first.b:first.a;
-    let cursor=start.key,current=initial,closed=false;
+    const start=first.a.key===startKey?first.a:first.b;
+    let cursor=startKey,current=initial,closed=false;
     const points=[{x:start.x,y:start.y}];
     while(current!==undefined&&!used[current]){
       used[current]=1;
-      const seg=segments[current];
-      const next=seg.a.key===cursor?seg.b:seg.a;
+      const segment=segments[current];
+      const next=segment.a.key===cursor?segment.b:segment.a;
       points.push({x:next.x,y:next.y});
       cursor=next.key;
-      if(cursor===start.key){closed=true;points.pop();break;}
-      current=(adjacency.get(cursor)||[]).find(k=>!used[k]);
+      if(cursor===startKey){closed=true;points.pop();break;}
+      current=(adjacency.get(cursor)||[]).find(index=>!used[index]);
     }
     if(points.length>=(closed?3:2))contours.push({points,closed});
+  };
+  // Walk degree-one endpoints FIRST. Starting an open contour from an
+  // arbitrary interior segment traces only one side, leaving the other
+  // side as dozens of disconnected two-point fragments at viewport crops.
+  for(const [key,connected] of adjacency){
+    if(connected.length===1&&!used[connected[0]])
+      trace(key,connected[0]);
+  }
+  // Remaining edges form closed loops (or anomalous branching contours).
+  for(let i=0;i<segments.length;i++){
+    if(!used[i])trace(segments[i].a.key,i);
   }
   return contours;
 }

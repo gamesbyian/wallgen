@@ -118,6 +118,33 @@ try{
   })()`);
   assert.ok(insetRaster.every(x=>x.differing>30),
     'true polygon contour offsets must visibly draw in radial and regional scenes: '+JSON.stringify(insetRaster));
+  const contourStyles=await evaluate(`(async()=>{
+    const {drawWallpaper}=await import('/src/renderer.js');
+    const canvas=document.createElement('canvas');
+    canvas.width=300;canvas.height=650;
+    const recipe={seed:'metric-inset-styled-art',structure:'regions',regionMode:'facets',
+      regionCount:14,viewZoom:.7,dividerColor:'none',material:'none'};
+    const pixels=shape=>{
+      drawWallpaper(canvas,{...recipe,interiorElements:[{id:'geometry-style',
+        placement:'contour',shape,stroke:'solid',color:'white',width:2.5,
+        amplitude:.45,frequency:7,opacity:1}]});
+      return canvas.getContext('2d').getImageData(0,0,300,650).data.slice();
+    };
+    const baseline=pixels('straight');
+    const results=[];
+    for(const shape of ['wave','zigzag','loop']){
+      const actual=pixels(shape);
+      let changed=0;
+      for(let k=0;k<actual.length;k+=4){
+        if(Math.abs(actual[k]-baseline[k])+Math.abs(actual[k+1]-baseline[k+1])+
+          Math.abs(actual[k+2]-baseline[k+2])>28)changed++;
+      }
+      results.push({shape,changed});
+    }
+    return results;
+  })()`);
+  assert.ok(contourStyles.every(s=>s.changed>45),
+    'all selectable contour geometries must change real painted pixels: '+JSON.stringify(contourStyles));
   const initial=await evaluate('({tabs:document.querySelectorAll(".settings-tab").length,tools:document.querySelectorAll(".editor-tool-card").length,preview:document.querySelector(".wallpaper-frame").getBoundingClientRect().height,scroll:document.documentElement.scrollHeight})');
   assert.equal(initial.tabs,7);
   assert.ok(initial.tools>=18);

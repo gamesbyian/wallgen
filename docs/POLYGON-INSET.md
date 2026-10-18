@@ -31,9 +31,13 @@ when the entire region becomes too thin it can disappear. Hole edges move
    camera bounds. Optional fixed test resolution overrides are supported.
 5. Use threshold-interpolated marching squares to extract contour segments.
    Ambiguous diagonal cells are resolved by evaluating their exact centre.
-   Edge IDs stitch segments into closed loops or open contours at camera
-   limits, without drawing artificial straight caps across the viewport.
-6. Draw all extracted contours independently. The original region clip remains
+   Horizontal and vertical grid-edge IDs live in disjoint namespaces. Open
+   chains are stitched starting at degree-one endpoints before resolving the
+   remaining closed loops; this prevents fragmenting camera-clipped paths.
+   Neither viewport edges nor clipped field boundaries create false caps.
+6. Draw all extracted contours independently. Wave, zigzag and looping ink
+   follows the recovered inset geometry, with phase anchored to the original
+   untrimmed polygon perimeter instead of an arbitrary cropped endpoint. The original region clip remains
    in effect, and later shapes still occlude earlier shapes correctly.
 
 The resulting curves approximate exact Euclidean level sets to sampling
