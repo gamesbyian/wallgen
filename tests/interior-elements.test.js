@@ -61,3 +61,13 @@ test('scoped decoration rerolls are reproducible and honour the stack lock',()=>
   const result=randomizeScope(locked,{scope:'category',name:'details',seed:'fixed-selection'});
   assert.deepEqual(result.recipe.interiorElements,locked.interiorElements);
 });
+
+test('contour placement exposes whole cycles while field frequency stays continuous',()=>{
+  const [contour,field]=normalizeInteriorElements([
+    {id:'closed',placement:'contour',frequency:7.7},
+    {id:'field',placement:'field',frequency:7.7}
+  ]);
+  assert.equal(contour.frequency,8);
+  assert.equal(field.frequency,7.7);
+  assert.equal(normalizeInteriorElements([{placement:'contour',frequency:.1}])[0].frequency,1);
+});
