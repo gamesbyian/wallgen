@@ -31,6 +31,9 @@ References such as `pixel-6-pro/100/conditional-diagonal.png` are paths within t
 | M13 | P2 | Custom-colour swatch resembles empty/disabled field | Distinct swatch + value |
 | M14 | P2 | Image importer visual language inconsistent with cream theme | Documented themed or intentionally dark modal |
 | M15 | Technical | Cascading CSS overrides make these regressions likely | Consolidate responsive ownership |
+| M16 | P1 | Critical mobile buttons have undersized hit targets | Minimum effective 40–44 px tap areas |
+| M17 | P1 | Success/status messages nearly invisible on cream | Theme-aware notice palette and placement |
+| M18 | P1 | Feedback may be hidden when More tray is closed | Global visible transient status region |
 
 ### M01. Checkbox/label separation, P1
 
@@ -175,6 +178,34 @@ References such as `pixel-6-pro/100/conditional-diagonal.png` are paths within t
 **Implement:** Consolidate authoritative responsive layout geometry in the editor shell/styles, keep component-local style rules in their respective files, establish shared tokens for tray heights/rail width/field spacing/checkbox rows/disabled appearance. Remove superseded `!important` rules as each part is migrated instead of layering new overrides. Preserve the explicit 500–790 px compensation and desktop behavior. Coordinate CSS/icon ownership with agents working on icon assets.
 
 **Acceptance:** One clear owner per mobile component family and no regressions in screenshot matrix.
+
+### M16. Touch targets too small beyond the drawing panel, P1
+
+**Evidence:** `pixel-6-pro/100/editor-open.png`, `tool-paths-layout-variability.png`, `tool-paths-details-shadows.png` and `tool-paths-material-layer1.png`. Editor category cells are roughly 34 px high, tool chips 27 px, the reroll/lock dice often 24–26 px, and the upper operation-row actions 25×29 px. At 50% CSS zoom, their rendered touch rectangles become smaller still.
+
+**Root cause:** `editor-redesign.css` fixes short row heights and compact per-field action sizes; the 500–790 px compensation partly addresses typography but not all physical tap targets.
+
+**Implement:** Audit *interactive hit rectangles*, not only visual glyphs. Prefer a target of 44×44 CSS px at normal physical mobile sizing where layout permits; at minimum ensure controls don't share a pixel-tight ambiguous hit area. Expand hit regions via padded group cells, move rare actions into an accessible overflow control if space is genuinely insufficient, and preserve the preview/editor no-overlap contract. Do not blindly make every 24 px die into a 44 px square without reflowing its row.
+
+**Acceptance:** Randomize, lock, slider stepper, category/tab, history, search, tool chip, mobile rail and close actions are each independently tappable with no adjacent hitbox collision.
+
+### M17. Theme-blind success message colour, P1
+
+**Evidence:** `pixel-6-pro/100/special-metadata-scrolled-controls.png` and `shell-mobile-more.png` show faint green notice text nearly disappearing on cream.
+
+**Root cause:** `styles.css` sets `#notice{color:#c2e9be}` for a dark background; the cream theme does not override this text colour.
+
+**Implement:** Add `--notice-foreground` and optional `--notice-surface` theme tokens with legible contrast against both light and dark backgrounds. Use the same treatment for undo, saved, copied, imported and other transient messages. Preserve unobtrusiveness without sacrificing readability.
+
+**Acceptance:** A sample of each notice is legible in cream and dark themes at the smallest supported zoom.
+
+### M18. Status messages can be moved into an invisible tray, P1
+
+**Evidence and source:** `#notice` resides in `.secondary-actions`, which `src/mobile-studio.js` relocates into `#mobileToolsContent`. Actions originating from the live editor rail can trigger `showNotice()` while More is closed; the text therefore exists but is not visible to the user.
+
+**Implement:** Use one accessible, application-level transient status host outside all mutually exclusive trays, positioned above the bottom dock/action rail while respecting safe-area insets; announce changes with `role=status`/`aria-live=polite`. Keep More's button/action layout but do not rely on it to convey global action success. Avoid duplicating notices and do not cover wallpaper preview controls.
+
+**Acceptance:** Save/favourite, undo, import, copy and randomize notifications can be seen after invocation from both the compact dock and full editor, even if More is closed; transient status never obscures interactive controls.
 
 ## Atlas-fidelity and automation follow-up
 
