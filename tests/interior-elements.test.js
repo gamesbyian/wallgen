@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {normalizeRecipe,resolveScene,encodeRecipe,decodeRecipe} from '../src/model.js';
-import {normalizeInteriorElements,elementWave} from '../src/interior-elements.js';
+import {normalizeInteriorElements,elementWave,elementApplies,elementInk} from '../src/interior-elements.js';
 
 test('interior stack validates malformed and excessive elements safely',()=>{
   const elements=normalizeInteriorElements(Array.from({length:20},(_,i)=>({
@@ -33,4 +33,15 @@ test('recipes preserve element order and parameters',()=>{
   assert.deepEqual(normalizeRecipe(recipe).interiorElements,recipe.interiorElements);
   assert.deepEqual(decodeRecipe(encodeRecipe(recipe)).interiorElements,recipe.interiorElements);
   assert.ok(elementWave(recipe.interiorElements[0],.13)<=1);
+});
+
+test('decorations can target selected colours and stable object identifiers',()=>{
+  const [selected]=normalizeInteriorElements([{id:'scope',colorSlots:[0,2,2,7,-1],
+    objectIds:['region-1'],color:'custom',customColor:'#12AB56'}]);
+  assert.deepEqual(selected.colorSlots,[0,2]);
+  assert.equal(selected.customColor,'#12ab56');
+  assert.equal(elementInk(selected),'#12ab56');
+  assert.equal(elementApplies(selected,2,'region-1'),true);
+  assert.equal(elementApplies(selected,1,'region-1'),false);
+  assert.equal(elementApplies(selected,2,'region-0'),false);
 });
