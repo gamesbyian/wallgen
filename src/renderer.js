@@ -1,6 +1,6 @@
 import { DESIGN_WIDTH, DESIGN_HEIGHT, resolveScene, rng } from './model.js';
 import { samplePath, ribbonEdge, widthAt, noise1D } from './path-geometry.js';
-import {drawRegionInteriors,elementInk,elementWave,lineDash} from './interior-elements.js';
+import {drawRegionInteriors,elementInk,elementWave,lineDash,elementApplies} from './interior-elements.js';
 import { viewCamera } from './view-camera.js';
 import {findPathCrossings,crossingTopIsLater,crossingBranchClip} from './crossing-order.js';
 
@@ -383,7 +383,8 @@ function drawPathInteriors(ctx,stripe,extent,scene){
   ctx.save();ctx.clip(stripeFillPath(stripe,extent,scene));
   const start=stripe.segmentStart??-extent,end=stripe.segmentEnd??extent;
   for(const e of scene.interiorElements){
-    if(!e.enabled||!e.opacity)continue;
+    const slot=scene.reverseStripes?6-stripe.index:stripe.index;
+    if(!e.enabled||!e.opacity||!elementApplies(e,slot,stripe.objectId))continue;
     ctx.save();ctx.strokeStyle=elementInk(e,stripe.color);
     ctx.globalAlpha=e.opacity;
     ctx.lineWidth=e.type==='band'?Math.max(e.width,stripe.width*.16):e.width;
@@ -959,6 +960,7 @@ export function drawWallpaper(canvas, recipe, options={}) {
   for(const original of bundle.stripes){
     const stripe=scene.bundleOffsets.length===1?{...original}:
       {...original,center:original.center+bundleOffset};
+    stripe.objectId=bundle.id+'/stripe-'+original.index;
     stripe.coreExtent=scene.coreExtent;
     if((stripe.sharedGeometry??stripe.geometry)==='drawn'){
       stripe.segmentStart=-scene.coreExtent;
