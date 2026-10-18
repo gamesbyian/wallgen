@@ -12,6 +12,7 @@ export const EDITOR_CATEGORIES=[
     {id:'safety',name:'Constraints',settings:['geometrySafety']},
     {id:'turn',name:'Turns',settings:['turnRadius','hairpinAngle']},
     {id:'single-loop',name:'Single loop',settings:['loopRadius','loopSweep']},
+    {id:'crossings',name:'Crossings',settings:['crossingMode']},
     {id:'shape-details',name:'Shape detail',settings:['stepCount','chevronSharpness','loopAspect']},
     {id:'ends',name:'Endpoints',settings:['pathLength','endTaper']},
   ]},
