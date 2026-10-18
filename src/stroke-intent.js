@@ -209,22 +209,26 @@ function simplifyIndices(points,tolerance){
 }
 function segmentCandidates(p){
   if(p.length<18)return null;
-  const anchors=simplifyIndices(p,12),result=p.map(q=>q.slice());
+  const anchors=simplifyIndices(p,12),result=p.map(q=>q.slice()),
+    weights=new Array(p.length).fill(0),crossing=crossingInfluence(p);
   let matched=0;
   for(let j=1;j<anchors.length;j++){
     const lo=anchors[j-1],hi=anchors[j];
     if(hi-lo<6)continue;
     const span=p.slice(lo,hi+1),fit=lineCandidate(span);
     if(!fit||dist(p[lo],p[hi])<75)continue;
-    // Preserve corner location and continuity: blend each straight leg into
-    // its original endpoints over a few samples instead of creating jumps.
+    // Blend without slope discontinuities, leaving both branches of an
+    // intentional crossing on their original smoothed tangents.
     for(let i=lo+1;i<hi;i++){
-      const t=(i-lo)/(hi-lo),edge=clamp(Math.min(t,1-t)*8,0,1);
-      result[i]=interpolate(p[i],fit.points[i-lo],edge);
+      const t=(i-lo)/(hi-lo);
+      const amount=smoothstep(Math.min(t,1-t)*6)*crossing[i];
+      if(amount<=0)continue;
+      result[i]=fit.points[i-lo];
+      weights[i]=Math.max(weights[i],amount);
     }
     matched++;
   }
-  return matched?{kind:'segments',points:result}:null;
+  return matched?{kind:'segments',points:result,weights}:null;
 }
 /** Find strong global geometric intention and cautiously polish local legs.
  * Input/output are evenly distributed samples in normalized wallpaper units.
@@ -239,7 +243,7 @@ export function interpretStroke(points){
   const line=lineCandidate(p);
   if(line)return {kind:line.kind,points:line.points.map(normalize)};
   const loops=embeddedLoops(p);
-  if(loops)return {kind:loops.kind,points:loops.points.map(normalize)};
+  if(loops)return {kind:loops.kind,points:loops.points.map(normalize),weights:loops.weights};
   const segments=segmentCandidates(p);
-  return segments?{kind:segments.kind,points:segments.points.map(normalize)}:null;
+  return segments?{kind:segments.kind,points:segments.points.map(normalize),weights:segments.weights}:null;
 }
