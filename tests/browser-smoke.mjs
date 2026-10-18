@@ -145,6 +145,34 @@ try{
   })()`);
   assert.ok(contourStyles.every(s=>s.changed>45),
     'all selectable contour geometries must change real painted pixels: '+JSON.stringify(contourStyles));
+  // Many coloured objects with repeated interior patterns must remain
+  // interactive, rather than tessellating an enormous invisible ray field.
+  const renderStress=await evaluate(`(async()=>{
+    const {drawWallpaper}=await import('/src/renderer.js');
+    const canvas=document.createElement('canvas');canvas.width=240;canvas.height=520;
+    const elements=Array.from({length:4},(_,i)=>({
+      id:'perf-'+i,placement:i%2?'field':'local',
+      type:'line',shape:i%2?'wave':'zigzag',stroke:'dotted',
+      color:'white',width:2.2,frequency:9,amplitude:.2,phase:i*17
+    }));
+    const measurements=[];
+    for(const mode of [
+      {structure:'radial',radialMode:'sunburst',rayCount:70,rayCoverage:100},
+      {structure:'regions',regionMode:'blocks',regionCount:70,regionJitter:90}
+    ]){
+      const start=performance.now();
+      drawWallpaper(canvas,{seed:'stress-visible-geometry',...mode,
+        material:'none',interiorElements:elements});
+      const duration=performance.now()-start;
+      const pixels=canvas.getContext('2d').getImageData(0,0,240,520).data;
+      measurements.push({structure:mode.structure,duration,
+        present:pixels.some((v,i)=>i%4===0&&v>0)});
+    }
+    return measurements;
+  })()`);
+  console.log('VISIBLE_DECORATION_RENDER_STRESS',JSON.stringify(renderStress));
+  assert.ok(renderStress.every(x=>x.present&&x.duration<12000),
+    'dense multi-region decoration should paint within a responsive budget: '+JSON.stringify(renderStress));
   const initial=await evaluate('({tabs:document.querySelectorAll(".settings-tab").length,tools:document.querySelectorAll(".editor-tool-card").length,preview:document.querySelector(".wallpaper-frame").getBoundingClientRect().height,scroll:document.documentElement.scrollHeight})');
   assert.equal(initial.tabs,7);
   assert.ok(initial.tools>=18);
