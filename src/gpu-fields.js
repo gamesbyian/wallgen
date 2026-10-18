@@ -9,7 +9,7 @@ export const GPU_FIELD_FRAGMENT=`#version 300 es
 precision highp float;
 uniform sampler2D ownerMask;
 uniform vec2 viewport;
-uniform vec2 logicalSize;
+uniform vec4 worldRect; // left, top, width, height in original world units
 uniform float frequency;
 uniform float amplitude;
 uniform float position;
@@ -22,8 +22,8 @@ out vec4 pixel;
 const float PI=3.14159265358979323846;
 void main(){
   // Canvas2D design space is top-left origin; gl_FragCoord starts bottom-left.
-  vec2 p=vec2(gl_FragCoord.x/viewport.x*logicalSize.x,
-    (viewport.y-gl_FragCoord.y)/viewport.y*logicalSize.y);
+  vec2 p=worldRect.xy+vec2(gl_FragCoord.x/viewport.x,
+    (viewport.y-gl_FragCoord.y)/viewport.y)*worldRect.zw;
   vec2 maskUV=vec2(gl_FragCoord.x/viewport.x,
     1.0-gl_FragCoord.y/viewport.y);
   float coverage=texture(ownerMask,maskUV).a;
@@ -60,7 +60,7 @@ export const GPU_FIELD_STACK_FRAGMENT=`#version 300 es
 precision highp float;
 uniform sampler2D ownerMask;
 uniform vec2 viewport;
-uniform vec2 logicalSize;
+uniform vec4 worldRect;
 uniform int fieldCount;
 uniform vec4 fieldGeometry[8]; // frequency, amplitude, position, phase
 uniform vec4 fieldInk[8];      // RGB, opacity
@@ -68,8 +68,8 @@ uniform vec2 fieldStyle[8];    // stroke width, shape code
 out vec4 pixel;
 const float PI=3.14159265358979323846;
 void main(){
-  vec2 p=vec2(gl_FragCoord.x/viewport.x*logicalSize.x,
-    (viewport.y-gl_FragCoord.y)/viewport.y*logicalSize.y);
+  vec2 p=worldRect.xy+vec2(gl_FragCoord.x/viewport.x,
+    (viewport.y-gl_FragCoord.y)/viewport.y)*worldRect.zw;
   float coverage=texture(ownerMask,vec2(gl_FragCoord.x/viewport.x,
     1.0-gl_FragCoord.y/viewport.y)).a;
   vec3 accumulated=vec3(0.0);
@@ -134,6 +134,19 @@ function shader(gl,type,source){
   }
   return value;
 }
+// Shader stations are always defined in original 600 × 1300 world space.
+ // The camera is an explicit viewport transform, not a new pattern seed or
+ // frequency. The optional bounds exactly match viewCamera().viewBounds.
+export function gpuWorldRect(logicalWidth=600,logicalHeight=1300,viewBounds){
+  if(!Number.isFinite(logicalWidth)||!Number.isFinite(logicalHeight)||
+    logicalWidth<=0||logicalHeight<=0)return null;
+  if(viewBounds==null)return [0,0,logicalWidth,logicalHeight];
+  const {left,top,right,bottom}=viewBounds;
+  if(![left,top,right,bottom].every(Number.isFinite)||
+     right<=left||bottom<=top)return null;
+  return [left,top,right-left,bottom-top];
+}
+
 const validSurface=(width,height,maxPixels=2_500_000)=>
   Number.isInteger(width)&&Number.isInteger(height)&&width>0&&height>0&&
   width*height<=maxPixels;
@@ -245,15 +258,14 @@ export function createMaskedFieldSession({
           return status(String(error?.message||error));
         }
       },
-      render(element,{logicalWidth=600,logicalHeight=1300}={}){
+      render(element,{logicalWidth=600,logicalHeight=1300,viewBounds}={}){
         const failure=unusable();
         if(failure)return status(failure);
         if(!maskReady)return status('Upload a mask before rendering');
         if(!gpuFieldEligibility(element))
           return status('Unsupported decorative field');
-        if(!Number.isFinite(logicalWidth)||!Number.isFinite(logicalHeight)||
-           logicalWidth<=0||logicalHeight<=0)
-          return status('Invalid logical dimensions');
+        const world=gpuWorldRect(logicalWidth,logicalHeight,viewBounds);
+        if(!world)return status('Invalid logical dimensions or camera bounds');
         const colour=rgbaOf(element);
         if(!colour)return status('Invalid custom ink colour');
         try{
@@ -267,8 +279,7 @@ export function createMaskedFieldSession({
           gl.bindTexture(gl.TEXTURE_2D,texture);
           gl.uniform1i(gl.getUniformLocation(program,'ownerMask'),0);
           gl.uniform2f(gl.getUniformLocation(program,'viewport'),width,height);
-          gl.uniform2f(gl.getUniformLocation(program,'logicalSize'),
-            logicalWidth,logicalHeight);
+          gl.uniform4fv(gl.getUniformLocation(program,'worldRect'),world);
           gl.uniform1f(gl.getUniformLocation(program,'frequency'),element.frequency);
           gl.uniform1f(gl.getUniformLocation(program,'amplitude'),element.amplitude);
           gl.uniform1f(gl.getUniformLocation(program,'position'),element.position);
@@ -292,15 +303,14 @@ export function createMaskedFieldSession({
       // All eligible layers share the same source mask and compositor.
       // The entire stack is drawn in ONE fragment pass: no GL blending,
       // intermediary readback or per-layer mask transfer is required.
-      renderMany(elements,{logicalWidth=600,logicalHeight=1300}={}){
+      renderMany(elements,{logicalWidth=600,logicalHeight=1300,viewBounds}={}){
         const failure=unusable();
         if(failure)return status(failure);
         if(!maskReady)return status('Upload a mask before rendering');
         if(!Array.isArray(elements)||elements.length<1||elements.length>8)
           return status('GPU field stack must contain between 1 and 8 layers');
-        if(!Number.isFinite(logicalWidth)||!Number.isFinite(logicalHeight)||
-           logicalWidth<=0||logicalHeight<=0)
-          return status('Invalid logical dimensions');
+        const world=gpuWorldRect(logicalWidth,logicalHeight,viewBounds);
+        if(!world)return status('Invalid logical dimensions or camera bounds');
         if(elements.some(e=>!gpuFieldEligibility(e)||!rgbaOf(e)))
           return status('GPU field stack contains unsupported decoration');
         try{
@@ -344,8 +354,7 @@ export function createMaskedFieldSession({
           gl.bindTexture(gl.TEXTURE_2D,texture);
           gl.uniform1i(gl.getUniformLocation(stackProgram,'ownerMask'),0);
           gl.uniform2f(gl.getUniformLocation(stackProgram,'viewport'),width,height);
-          gl.uniform2f(gl.getUniformLocation(stackProgram,'logicalSize'),
-            logicalWidth,logicalHeight);
+          gl.uniform4fv(gl.getUniformLocation(stackProgram,'worldRect'),world);
           gl.uniform1i(gl.getUniformLocation(stackProgram,'fieldCount'),elements.length);
           gl.uniform4fv(gl.getUniformLocation(stackProgram,'fieldGeometry[0]'),geometry);
           gl.uniform4fv(gl.getUniformLocation(stackProgram,'fieldInk[0]'),inks);
@@ -375,7 +384,7 @@ export function createMaskedFieldSession({
 // Compatibility adapter for the earlier one-shot proof. Production is still
 // worker Canvas2D. Reusable callers should use createMaskedFieldSession().
 export function renderMaskedFieldGPU({
-  mask,element,logicalWidth=600,logicalHeight=1300,canvasFactory,
+  mask,element,logicalWidth=600,logicalHeight=1300,viewBounds,canvasFactory,
 }={}){
   if(!gpuFieldEligibility(element))
     return {supported:false,reason:'Unsupported decorative field'};
@@ -389,7 +398,7 @@ export function renderMaskedFieldGPU({
   if(!session.supported)return session;
   const uploaded=session.setMask(mask);
   if(!uploaded.supported){session.dispose();return uploaded;}
-  const drawn=session.render(element,{logicalWidth,logicalHeight});
+  const drawn=session.render(element,{logicalWidth,logicalHeight,viewBounds});
   if(!drawn.supported){session.dispose();return drawn;}
   return {supported:true,canvas:session.canvas,release:session.dispose,
     note:'Experimental reusable shader over Canvas2D mask; not production'};
