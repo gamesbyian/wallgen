@@ -3,9 +3,9 @@ import { drawWallpaper, presentNudgedArtwork } from './renderer.js';
 import { embedPngMetadata, extractPngRecipe, cleanMetadata, METADATA_FIELDS } from './png-metadata.js';
 import { installDrawTool } from './draw-path-ui.js?v=20261018-extend1';
 import { installImagePathTool } from './image-path-ui.js?v=20261018-import1';
-import {mountEditor,selectEditorTool,syncEditorStructure} from './editor-layout.js';
+import {mountEditor,selectEditorTool,syncEditorStructure} from './editor-layout.js?v=20261018-icons2';
 import {randomizeScope} from './scoped-random.js';
-import {STYLE_PRESETS} from './editor-schema.js';
+import {STYLE_PRESETS} from './editor-schema.js?v=20261018-icons2';
 import {installExplorationHistory} from './exploration-history.js';
 import {iconMarkup,setIconSource,hydrateStaticIcons} from './ui-icons.js';
 
