@@ -106,8 +106,9 @@ test('stripe shadows use zero strength for Off, and stripe effects belong in Str
   assert.doesNotMatch(html,/name="stripeShadowEnabled"/);
   assert.doesNotMatch(app,/stripeShadowEnabled/);
   assert.match(design,/id="stripeShadowControls"/);
-  assert.match(schema,/id:'stripes'[\\s\\S]*id:'outlines'[\\s\\S]*id:'shadows'[\\s\\S]*id:'glow'[\\s\\S]*id:'colour'/);
-  assert.match(schema,/id:'effects'[\\s\\S]*id:'lighting'/);
+  assert.ok(["id:'stripes'","id:'outlines'","id:'shadows'","id:'glow'","id:'colour'"].every((token,i,list)=>i===0||schema.indexOf(list[i-1])<schema.indexOf(token)));
+  assert.ok(schema.indexOf("id:'effects'")<schema.indexOf("id:'lighting'"));
+
   assert.match(colour,/name="lightingMood"/);
 });
 
