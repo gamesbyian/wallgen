@@ -227,6 +227,30 @@ try{
     'zoom must preserve colours and decoration at shared world points: '+
     JSON.stringify(cameraZoomParity));
 
+  // The phone rail's +/- buttons must change the camera, not the recipe.
+  const beforeZoom=await evaluate(
+    'JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r")))');
+  const targetZoom=Math.round(Math.max(.5,beforeZoom.viewZoom-.1)*100)/100;
+  assert.ok(targetZoom<beforeZoom.viewZoom,'initial phone zoom has outward room');
+  await evaluate('document.querySelector(".mobile-zoom-button[data-zoom=out]").click()');
+  await waitFor('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).viewZoom==='+targetZoom);
+  const afterZoom=await evaluate(
+    'JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r")))');
+  const zoomChanged=Object.keys(beforeZoom).filter(key=>
+    JSON.stringify(beforeZoom[key])!==JSON.stringify(afterZoom[key]));
+  assert.deepEqual(zoomChanged,['viewZoom'],
+    'Zoom-out must never change generated wallpaper settings');
+  await waitFor('document.getElementById("preview").dataset.renderPending!=="true"',20000);
+  assert.equal(await evaluate('document.querySelector(".mobile-zoom-level").textContent'),
+    Math.round(targetZoom*100)+'%');
+  await evaluate('document.querySelector(".mobile-zoom-button[data-zoom=in]").click()');
+  await waitFor('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).viewZoom==='+beforeZoom.viewZoom);
+  await waitFor('document.getElementById("preview").dataset.renderPending!=="true"',20000);
+  const returnedZoom=await evaluate(
+    'JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r")))');
+  assert.deepEqual(returnedZoom,beforeZoom,
+    'Zoom-in must restore exact recipe after camera-only zoom-out');
+
   // The actual application must use a worker after its deterministic initial
   // frame, and settle the correct recipe after rapid edits. A standalone
   // worker parity test alone would miss accidental main-thread fallback.
