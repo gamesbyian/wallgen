@@ -69,7 +69,7 @@ function showNotice(message){
 }
 function fromControls() {
   const data={seed:seedInput.value,positionX:current.positionX,positionY:current.positionY,
-    viewZoom:current.viewZoom,customPath:current.customPath,drawnAnchors:current.drawnAnchors};
+    viewZoom:current.viewZoom,customPath:current.customPath,drawnAnchors:current.drawnAnchors,drawnCorners:current.drawnCorners};
   for (const key of FIELDS) { const field=form.elements.namedItem(key); data[key]=field.dataset.inactive==='true'?current[key]:(field.type==='checkbox'?field.checked:field.value); }
   return normalizeRecipe(data);
 }
@@ -310,10 +310,11 @@ document.querySelector('.studio-stage').addEventListener('roygbiv-view-zoom-requ
 const drawTool=installDrawTool({
   getRecipe:()=>current,
   onNotice:showNotice,
-  onApply:(points,anchors=[])=>{
+  onApply:(points,anchors=[],corners=[])=>{
     const next=fromControls();
     next.customPath=points;
     next.drawnAnchors=anchors;
+    next.drawnCorners=corners;
     next.geometry='drawn';
     next.orientation='horizontal';
     next.positionX=0;
