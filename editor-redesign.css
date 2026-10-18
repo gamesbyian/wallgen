@@ -815,12 +815,12 @@
 
 
 /* Compact editor for ordered, resolution-independent decorations. */
-.editor-tool-card[data-editor-tool="interior"]{overflow:auto;gap:5px}
-.editor-tool-card[data-editor-tool="interior"] .interior-toolbar{
+.editor-tool-card[data-editor-tool^="interior"]{overflow:hidden;gap:5px}
+.editor-tool-card[data-editor-tool^="interior"] .interior-toolbar{
   display:flex;align-items:center;gap:5px;min-width:0
 }
-.editor-tool-card[data-editor-tool="interior"] .interior-toolbar select{flex:1;min-width:0}
-.editor-tool-card[data-editor-tool="interior"] .interior-toolbar button{
+.editor-tool-card[data-editor-tool^="interior"] .interior-toolbar select{flex:1;min-width:0}
+.editor-tool-card[data-editor-tool^="interior"] .interior-toolbar button{
   flex:0 0 auto;min-height:25px;padding:3px 6px;border:1px solid var(--line);
   border-radius:6px;background:var(--surface);color:inherit
 }
