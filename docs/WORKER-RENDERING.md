@@ -69,6 +69,17 @@ context errors and request timeouts disable the worker path and invoke the
 reference Canvas2D renderer. No second worker is spawned in an uncontrolled
 retry loop.
 
+## Background thumbnails and history fidelity
+
+A separate small-canvas FIFO worker lane renders Explore gallery cards and
+Recent Variations snapshots independently. Each archived history image comes
+from its saved normalized recipe, not the visible canvas, which may still
+show an older asynchronous frame. FIFO ordering and stable identities prevent
+swapped image/recipe pairs. If thumbnail workers are unsupported, the small
+reference Canvas2D renderer remains available. Pending image resources are
+closed when their card is no longer visible; thumbnail worker failures reject
+all affected jobs rather than leaving the controls stuck.
+
 ## Export isolation
 
 The Download action snapshots the exact normalized recipe before rendering.
