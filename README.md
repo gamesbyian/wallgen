@@ -47,7 +47,7 @@ popover or history view covers a stripe. There is **no vertical scrolling** in
 the editor.
 
 The old Design/Colour/Texture/Refine mixture has been replaced by six
-unambiguous creative categories: **Layout, Path, Stripes, Colour, Material and
+unambiguous creative categories: **Layout, Path, Shapes, Details, Colour, Material and
 Effects**. Each category contains named tools; tap a category and its tool for
 direct access. A sideways swipe can advance to the next *named* tool, but
 swiping blindly through a long stack is no longer required. The same real
@@ -164,7 +164,7 @@ Use **Layout → Canvas structure** to switch between:
 - **Regions and partitions:** Voronoi cells, smoothly warped territories,
   triangular facets, recursive rectangles and nested circular/polygonal
   silhouettes. **Geometry → Regions / Origin** controls element density,
-  irregularity, polygon sides and placement as applicable. **Stripes →
+  irregularity, polygon sides and placement as applicable. **Details →
   Dividers** sets a transparent, background-coloured, black or white boundary
   and an independent thickness.
 
@@ -184,11 +184,32 @@ deterministic seed, named controls, property locks and granular rerolling
 remain central to the editing workflow. Inactive controls are disabled and
 visually display zero without discarding their stored values.
 
+## Interior decoration layers
+
+All coloured objects support ordered interior elements, managed in
+**Details → Elements / Element style / Element motion / Placement / Colour targets**.
+A ribbon can carry a white or black hairline, a continuous/dotted/dashed
+wave, zigzag or looping line, or a contrasting tonal band. The same element
+system also decorates sunburst rays, pinwheels, nested circles, Voronoi
+regions, facets and blocks using local, field or contour placement.
+
+Each element has independent thickness, offset, opacity, frequency, amplitude,
+phase, ink colour (including custom hex), enabling and colour targeting.
+Up to eight can be reordered and the whole element stack locked. The
+underlying seven colours never change. Element geometry is clipped to its
+owner shape, participates in path intersection re-painting, and is preserved
+in saved/exported recipes and headless generation.
+
+The mobile editor separates **Shapes** (coloured geometry construction)
+from **Details** (interior decoration, borders/dividers, shadows and glow)
+so the additional controls do not require vertical scrolling.
+See [the interior element architecture](docs/INTERIOR-ELEMENTS.md).
+
 ## Parametric geometry and combined stripe modes
 
 The renderer uses the same path sampling functions for straight and nonlinear lines, including hairpins and looping paths. Each path yields a tangent and normal so width, taper, outlines and procedural materials can follow bends. Returning hairpins may have two endpoints crossing the same image edge intentionally; loops can fold back over their own earlier path.
 
-The capabilities are equal members of the corresponding Path, Stripes, Layout, Material and Effects tools. There is no separate mode for the reference images, no fixed style priority, and no option to add arbitrary extra colours or switch to monochrome. **Exactly seven hues remain in each rainbow.**
+The capabilities are equal members of the corresponding Geometry, Shapes, Details, Layout, Material and Effects tools. There is no separate mode for the reference images, no fixed style priority, and no option to add arbitrary extra colours or switch to monochrome. **Exactly seven hues remain in each rainbow.**
 
 The headless renderer accepts the same saved recipe options as the studio:
 
@@ -468,7 +489,7 @@ definitions.
 
 ### Stripe-specific finishing controls
 
-**Stripes** now groups Structure → Outlines → Patterns → Marks → Motif scale → Band tones → Character → Shadows → Glow. Outline style/thickness/buffer, shadow strength/softness/direction, and neon glow belong to stripe styling. **Effects** contains the independent canvas-wide Lighting tool. Removing the cast-shadow checkbox frees vertical space and keeps all shadow controls visible together in the phone editor. Strength 0 is Off; increasing it immediately casts shadows.
+**Shapes** contains ribbon construction, patterns, marks, motif scale and character, with the legacy tonal-contrast control shown only for imported legacy tonal recipes. **Details** contains interior element layers, outlines, closed-region dividers, shadows and glow. The editor only shows relevant controls for the current structure. **Effects** contains the independent canvas-wide Lighting tool. Shadow Strength 0 is Off; increasing it immediately casts shadows.
 
 ## Output
 
@@ -517,7 +538,7 @@ The balanced-width **Randomize** button sits next to an equally prominent, alway
 - Stripe patterns (previously called Stripe construction): solid, dots, stars, dashes, diamonds, chevrons, hatch and checker.
 - Palettes: classic, electric, pastel, jewel and muted. Their hues stay in ROYGBIV order.
 - Outlines: none, white or black hairline, solid, double, broken and single-side, with a buffer coloured to match the selected background.
-- **Ambient light & shade (Effects → Lighting):** choose Off (default), Soft daylight, Golden hour or Cool moonlight, and a corner for the light source. Light intensity adds a soft warm/cool wash across the **whole canvas**, including the background and stripes; Canvas shade darkens the opposite region with a broad gradient. Canvas ambience does not cast shadows from the stripe silhouettes. **Stripe shadows** live under **Stripes → Shadows**. Shadow Strength at **0** is Off, with no separate checkbox; softness and light direction become dormant at zero and return when strength increases. The shadows move with the stripes, while ambient light stays fixed in canvas space. Their settings remain lockable, deterministic and saved in recipes.
+- **Ambient light & shade (Effects → Lighting):** choose Off (default), Soft daylight, Golden hour or Cool moonlight, and a corner for the light source. Light intensity adds a soft warm/cool wash across the **whole canvas**, including the background and stripes; Canvas shade darkens the opposite region with a broad gradient. Canvas ambience does not cast shadows from the stripe silhouettes. **Stripe shadows** live under **Details → Shadows**. Shadow Strength at **0** is Off, with no separate checkbox; softness and light direction become dormant at zero and return when strength increases. The shadows move with the stripes, while ambient light stays fixed in canvas space. Their settings remain lockable, deterministic and saved in recipes.
 - Materials: paper grain, watercolour, construction paper, handmade paper, corrugated board, linen, canvas, denim, knit, felt, corduroy, concrete, stucco, stone, adobe, drywall, wood grain, vinyl sheet, foil, and glossy paper. The ungrouped menu works across three independent material layers. Layers 2 and 3 remain available as named tools, initially set to **No texture / smooth**. Selecting a real material activates that layer, and choosing Smooth disables it. Layer 3 can be used independently of Layer 2, without Add/Remove buttons. Each layer has its own strength, scale, surface coverage (background, stripes, or both), ±90° buttons, freely editable angle (including fractional degrees), and blend mode (normal, multiply, screen, overlay, soft light, difference). Rotations and enabled layers persist in URLs, saved recipes, favourites and PNG exports.
 - Chaos, thickness, **stripe spacing**, geometric individuality, pattern homogeneity, glow, outline thickness and outline buffer. Stripe spacing now adjusts only the distance between stripe centres, while thickness is controlled solely by Stripe thickness; at tight settings the ribbons can deliberately overlap. Every slider has −/+ adjustment buttons and an editable numeric percentage field immediately after +. Individuality adjusts per-stripe directions, parallelism, shape and edge profile, while all stripes retain the same motif.
 - **Texture displacement** (0–100%) actually warps the stripe contours using a higher-resolution procedural height field. Material type, rotation, scale and strength change the relief, and a seeded neutral grain is used when no stripe texture is selected, so the slider is never silently inert. Increased sampling and bounded displacement make the effect visible on phone previews without allowing the stripe edges to cross. At 0% the original crisp geometry is unchanged. This is edge-geometry displacement, not GPU bump mapping.

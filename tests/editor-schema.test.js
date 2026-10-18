@@ -13,7 +13,7 @@ test('all canonical editing settings have one and only one named home',()=>{
   const fields=Object.keys(values).filter(k=>k!=='primesOnly'&&k!=='family');
   assert.deepEqual(validateEditorSchema(fields),{missing:[],duplicated:[],unknown:[]});
   assert.deepEqual(EDITOR_CATEGORIES.map(c=>c.id),WIZARD_STEPS);
-  assert.equal(EDITOR_CATEGORIES.length,6);
+  assert.equal(EDITOR_CATEGORIES.length,7);
   assert.equal(new Set(TOOL_LIST.map(t=>t.id)).size,TOOL_LIST.length);
   assert.ok(TOOL_LIST.length>=18);
   for(const tool of TOOL_LIST)for(const key of tool.settings){

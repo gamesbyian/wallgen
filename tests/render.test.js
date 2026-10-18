@@ -457,3 +457,31 @@ test('diagonal mirroring applies to ink transform, not the whole background canv
     }
   }
 });
+
+test('interior decoration renders and clips for paths and every region family',()=>{
+  for(const [structure,mode,key] of [
+    ['paths','wave','geometry'],
+    ['paths','loop','geometry'],
+    ['radial','sunburst','radialMode'],
+    ['radial','pinwheel','radialMode'],
+    ['radial','spokes','radialMode'],
+    ['radial','concentric','radialMode'],
+    ['regions','voronoi','regionMode'],
+    ['regions','organic','regionMode'],
+    ['regions','facets','regionMode'],
+    ['regions','blocks','regionMode'],
+    ['regions','nested','regionMode']
+  ]){
+    const recipe={seed:'decor:'+mode,structure,[key]:mode,rayCount:7,regionCount:7,
+      interiorElements:[
+        {id:'line',type:'line',shape:'wave',stroke:'dotted',color:'custom',
+          customColor:'#eeeeee',width:1.5,frequency:7},
+        {id:'band',type:'band',shape:'zigzag',stroke:'solid',color:'darker',
+          width:2.5,amplitude:.08,colorSlots:[0,1,2,3,4,5,6]}
+      ]};
+    calls.length=0;
+    assert.doesNotThrow(()=>drawWallpaper(
+      {width:300,height:650,getContext:()=>new FakeContext('main')},recipe),structure+'/'+mode);
+    assert.ok(calls.some(x=>x[0]==='clip'),structure+'/'+mode+' decorations must be clipped');
+  }
+});

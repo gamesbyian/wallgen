@@ -1,4 +1,5 @@
 import { SHAPES } from './path-geometry.js';
+import { normalizeInteriorElements } from './interior-elements.js';
 import { STRUCTURES, RADIAL_MODES, REGION_MODES, DIVIDER_MODES, buildCompositionObjects } from './composition-geometry.js';
 export { STRUCTURES, RADIAL_MODES, REGION_MODES, DIVIDER_MODES };
 import { normalizeDrawnPath, prepareDrawnPath, safeDrawnBandSpan } from './drawn-path.js';
@@ -26,7 +27,7 @@ export const LOCKABLE_SETTINGS = ['seed','family','orientation','geometry','moti
   'textureDisplacement','patternHomogeneity','chaos','stripeWidth','spread','shapeFrequency','shapeDepth','motifSize','motifFrequency','lineStyle','individuality',
   'overridePatternHomogeneity','gap','outlineBuffer','glow','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','position',
   'structure','radialMode','rayCount','rayRotation','rayTwist','rayCoverage','rayCore','fieldCenterX','fieldCenterY','regionMode','regionCount','regionJitter','regionSides','dividerColor','dividerWidth',
-  'composition','repeatCount','repeatSpacing','construction','crossingMode','turnRadius','hairpinAngle','loopRadius','loopSweep','geometrySafety','stepCount','chevronSharpness','loopAspect','pathLength','endTaper','tonalContrast','brushRoughness','dotSize','dotSpacing'];
+  'composition','repeatCount','repeatSpacing','construction','crossingMode','turnRadius','hairpinAngle','loopRadius','loopSweep','geometrySafety','stepCount','chevronSharpness','loopAspect','pathLength','endTaper','tonalContrast','brushRoughness','dotSize','dotSpacing','interiorElements'];
 export const PALETTES = ['classic', 'electric', 'pastel', 'jewel', 'muted', 'sunset', 'candy', 'arctic', 'earth', 'twilight', 'citrus'];
 export const TEXTURE_COVERAGES = ['both', 'stripes', 'background'];
 export const OUTLINES = ['none', 'hairline', 'white', 'double', 'broken', 'one-side', 'black', 'black-hairline', 'black-double', 'black-broken', 'black-one-side'];
@@ -72,6 +73,7 @@ export function normalizeRecipe(input = {}) {
   const seed = String(input.seed ?? 'rainbow-001').trim().slice(0, 90) || 'rainbow-001';
   return {
     version: 2,
+    interiorElements:normalizeInteriorElements(input.interiorElements),
     seed,
     primesOnly: input.primesOnly === true || input.primesOnly === 'true',
     lockedSettings: LOCKABLE_SETTINGS.filter(key=>Array.isArray(input.lockedSettings) && input.lockedSettings.includes(key)),
@@ -447,6 +449,14 @@ export function randomizeAllRecipe({primesOnly=false}={}) {
   const degrees=()=>primesOnly?any(PRIME_ROTATIONS):Math.floor(r()*360);
   return normalizeRecipe({
     seed, primesOnly, family:any(FAMILIES), orientation:any(['vertical','horizontal','diagonal']),
+    interiorElements:r()<.32?Array.from({length:r()<.32?2:1},(_,i)=>{
+      const type=r()<.24?'band':'line';
+      return {id:'generated-'+i,type,shape:any(['straight','wave','zigzag','loop']),
+      stroke:any(['solid','solid','dashed','dotted']),color:any(['white','black','lighter','darker']),
+      width:type==='band'?10+percent()*.35:Math.max(.5,percent()/12),amplitude:percent()*.0035,
+      frequency:2+Math.floor(r()*14),phase:Math.floor(r()*361)-180,
+      position:(percent()-50)*.007,opacity:.4+r()*.6,
+    };}):[],
     structure:any(['paths','paths','radial','regions']),
     radialMode:any(RADIAL_MODES),rayCount:7*(1+Math.floor(r()*10)),
     rayRotation:Math.floor(r()*361)-180,rayTwist:Math.floor(r()*361)-180,
@@ -471,7 +481,7 @@ export function randomizeAllRecipe({primesOnly=false}={}) {
     stripeShadowStrength:percent(),stripeShadowSoftness:percent(),
     chaos:percent(), stripeWidth:percent(), spread:percent(),
     shapeFrequency:percent(),shapeDepth:percent(),motifSize:percent(),motifFrequency:percent(),lineStyle:any(LINE_STYLES),
-    composition:any(COMPOSITIONS),construction:any(CONSTRUCTIONS),crossingMode:any(CROSSING_MODES),
+    composition:any(COMPOSITIONS),construction:any(CONSTRUCTIONS.filter(x=>x!=='tonal')),crossingMode:any(CROSSING_MODES),
     repeatCount:2+Math.floor(r()*5),repeatSpacing:percent(),
     turnRadius:percent(),loopRadius:percent(),loopSweep:240+Math.floor(r()*211),stepCount:1+Math.floor(r()*16),chevronSharpness:percent(),loopAspect:percent(),pathLength:percent(),endTaper:percent(),
     tonalContrast:percent(),brushRoughness:percent(),dotSize:percent(),dotSpacing:percent(),

@@ -1,5 +1,6 @@
 import { DESIGN_WIDTH, DESIGN_HEIGHT, resolveScene, rng } from './model.js';
 import { samplePath, ribbonEdge, widthAt, noise1D } from './path-geometry.js';
+import {drawRegionInteriors,elementInk,elementWave,lineDash,elementApplies} from './interior-elements.js';
 import { viewCamera } from './view-camera.js';
 import {findPathCrossings,crossingTopIsLater,crossingBranchClip} from './crossing-order.js';
 
@@ -377,6 +378,50 @@ function traceCentre(stripe,extent,offset=0){
 }
 // Deterministic dry-ink breakup. Marks remain inside the ribbon and use
 // the common centreline/normal sampler at every output resolution.
+// Dotted/dashed decorations keep a world-station phase when the renderer
+// repaints only the front branch of a self-intersection.
+function arcLengthUntil(stripe,extent,station){
+  const origin=-(stripe.coreExtent??extent);
+  if(station<=origin)return 0;
+  const n=Math.max(1,Math.ceil((station-origin)/4));
+  let previous=samplePath(stripe,origin,extent),length=0;
+  for(let i=1;i<=n;i++){
+    const next=samplePath(stripe,origin+(station-origin)*i/n,extent);
+    length+=Math.hypot(next.x-previous.x,next.y-previous.y);
+    previous=next;
+  }
+  return length;
+}
+function drawPathInteriors(ctx,stripe,extent,scene){
+  if(!scene.interiorElements?.length)return;
+  ctx.save();ctx.clip(stripeFillPath(stripe,extent,scene));
+  const start=stripe.segmentStart??-extent,end=stripe.segmentEnd??extent;
+  for(const e of scene.interiorElements){
+    const slot=scene.reverseStripes?6-stripe.index:stripe.index;
+    if(!e.enabled||!e.opacity||!elementApplies(e,slot,stripe.objectId))continue;
+    ctx.save();ctx.strokeStyle=elementInk(e,stripe.color);
+    ctx.globalAlpha=e.opacity;
+    ctx.lineWidth=e.type==='band'?Math.max(.15,stripe.width*e.width/100):e.width;
+    ctx.lineJoin='round';lineDash(ctx,e);
+    const path=new Path2D();
+    const n=Math.max(160,Math.ceil((end-start)/2.3));
+    for(let i=0;i<=n;i++){
+      const station=start+(end-start)*i/n;
+      const p=samplePath(stripe,station,extent);
+      const width=widthAt(stripe,station,extent);
+      const transverse=e.position*width+
+        e.amplitude*width*elementWave(e,station/Math.max(100,extent*2));
+      const longitudinal=e.shape==='loop'?
+        Math.cos(station/Math.max(100,extent*2)*e.frequency*Math.PI*2+e.phase*Math.PI/180)*e.amplitude*width:0;
+      const x=p.x+p.nx*transverse+p.tx*longitudinal;
+      const y=p.y+p.ny*transverse+p.ty*longitudinal;
+      if(i===0)path.moveTo(x,y);else path.lineTo(x,y);
+    }
+    if(e.stroke!=='solid')ctx.lineDashOffset=-arcLengthUntil(stripe,extent,start);
+    ctx.stroke(path);ctx.restore();
+  }
+  ctx.restore();
+}
 function drawBrushWear(ctx,stripe,extent,scene){
   if(!scene.brushRoughness)return;
   const random=rng(scene.seed+':brush:'+stripe.index);
@@ -869,6 +914,7 @@ export function drawRegionObjects(ctx,scene){
     ctx.fillStyle=object.color;
     ctx.fill();
     ctx.shadowBlur=0;
+    drawRegionInteriors(ctx,object,scene.interiorElements,scene.structure);
     if(!hasDivider){
       ctx.strokeStyle=object.color;
       ctx.lineWidth=1;
@@ -929,6 +975,7 @@ export function drawWallpaper(canvas, recipe, options={}) {
   for(const original of bundle.stripes){
     const stripe=scene.bundleOffsets.length===1?{...original}:
       {...original,center:original.center+bundleOffset};
+    stripe.objectId=bundle.id+'/stripe-'+original.index;
     stripe.coreExtent=scene.coreExtent;
     if((stripe.sharedGeometry??stripe.geometry)==='drawn'){
       stripe.segmentStart=-scene.coreExtent;
@@ -947,6 +994,7 @@ export function drawWallpaper(canvas, recipe, options={}) {
     g.fillStyle=stripe.color;g.strokeStyle=stripe.color;
     fillMotif(g,stripe,scene.extent,scene);
     if(scene.construction!=='woven')drawBrushWear(g,stripe,scene.extent,scene);
+    drawPathInteriors(g,stripe,scene.extent,scene);
   }
   crossingBundles.push(crossingStripes);
   }
@@ -1005,6 +1053,7 @@ export function drawWallpaper(canvas, recipe, options={}) {
           drawCrossingOutline(g,branch,scene);
           g.fillStyle=stripe.color;g.strokeStyle=stripe.color;
           fillMotif(g,branch,scene.extent,scene);
+          drawPathInteriors(g,branch,scene.extent,scene);
           // Brush wear is seeded against the complete ribbon. Sample it
           // from the original path through the local branch mask so a
           // crossing does not suddenly acquire a different grain pattern.

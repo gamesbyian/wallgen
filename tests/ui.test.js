@@ -9,11 +9,11 @@ const readme=readFileSync(new URL('../README.md',import.meta.url),'utf8');
 const license=readFileSync(new URL('../LICENSE',import.meta.url),'utf8');
 const logo=readFileSync(new URL('../assets/roygbiv-logo.svg',import.meta.url),'utf8');
 
-test('categories are generated from a canonical schema with six accessible tabs',()=>{
+test('categories are generated from a canonical schema with seven accessible tabs',()=>{
   const schema=readFileSync(new URL('../src/editor-schema.js',import.meta.url),'utf8');
   const layout=readFileSync(new URL('../src/editor-layout.js',import.meta.url),'utf8');
   assert.match(html,/class="settings-tabs" role="tablist"/);
-  for(const name of ['layout','path','stripes','colour','material','effects']){
+  for(const name of ['layout','path','stripes','details','colour','material','effects']){
     assert.match(schema,new RegExp("id:'"+name+"'"));
   }
   assert.match(layout,/panel\.setAttribute\('role','tabpanel'\)/);
@@ -81,7 +81,7 @@ test('lock controls use two consistent line-art SVG states, not emoji',()=>{
 test('texture relief and ambient canvas illumination are described accurately',()=>{
   assert.match(html,/Gently roughen|Distort the actual stripe contours/);
   assert.match(html,/Canvas shade/);
-  assert.match(html,/Stripe shadows, outlines and glow are in Stripes/);
+  assert.match(html,/Stripe shadows, outlines and glow are in Details/);
   assert.match(readme,/Canvas ambience does not cast shadows from the stripe silhouettes/);
 });
 
@@ -97,7 +97,7 @@ test('all four tabs stay on a single horizontal row even in the phone layout',()
   assert.match(css,/@media\(max-width:790px\)\{[\s\S]*?\.sidebar \.settings-tabs\{grid-template-columns:repeat\(4,minmax\(0,1fr\)\)!important/);
   assert.match(css,/@media\(max-width:420px\)\{[\s\S]*?\.sidebar \.settings-tab>span\{display:none\}/);
 });
-test('stripe shadows use zero strength for Off, and stripe effects belong in Stripes',()=>{
+test('stripe shadows use zero strength for Off, and stripe effects belong in Details',()=>{
   const schema=readFileSync(new URL('../src/editor-schema.js',import.meta.url),'utf8');
   const design=html.slice(html.indexOf('id="panel-design"'),html.indexOf('id="panel-colour"'));
   const colour=html.slice(html.indexOf('id="panel-colour"'),html.indexOf('id="panel-textures"'));
@@ -106,7 +106,7 @@ test('stripe shadows use zero strength for Off, and stripe effects belong in Str
   assert.doesNotMatch(html,/name="stripeShadowEnabled"/);
   assert.doesNotMatch(app,/stripeShadowEnabled/);
   assert.match(design,/id="stripeShadowControls"/);
-  assert.ok(["id:'stripes'","id:'outlines'","id:'shadows'","id:'glow'","id:'colour'"].every((token,i,list)=>i===0||schema.indexOf(list[i-1])<schema.indexOf(token)));
+  assert.ok(["id:'details'","id:'outlines'","id:'shadows'","id:'glow'","id:'colour'"].every((token,i,list)=>i===0||schema.indexOf(list[i-1])<schema.indexOf(token)));
   assert.ok(schema.indexOf("id:'effects'")<schema.indexOf("id:'lighting'"));
 
   assert.match(colour,/name="lightingMood"/);

@@ -85,11 +85,11 @@ try{
   });
   await command('Page.navigate',{url});
   await waitFor('document.readyState==="complete"&&document.body.classList.contains("mobile-studio")');
-  await waitFor('document.querySelectorAll(".settings-tab").length===6',15000);
+  await waitFor('document.querySelectorAll(".settings-tab").length===7',15000);
   await delay(300);
 
   const initial=await evaluate('({tabs:document.querySelectorAll(".settings-tab").length,tools:document.querySelectorAll(".editor-tool-card").length,preview:document.querySelector(".wallpaper-frame").getBoundingClientRect().height,scroll:document.documentElement.scrollHeight})');
-  assert.equal(initial.tabs,6);
+  assert.equal(initial.tabs,7);
   assert.ok(initial.tools>=18);
   assert.ok(initial.preview>450);
   assert.ok(initial.scroll<=915);
@@ -178,14 +178,27 @@ try{
   assert.ok(editor.previewHeight>260,'the complete frame remains appreciable during edits');
   assert.ok(Math.abs(editor.ratio-600/1300)<.06);
   assert.equal(editor.scrollY,'hidden');
-  assert.deepEqual(editor.tabs,['▦ Layout','⌁ Path','≋ Stripes','◐ Colour','▧ Material','✦ Effects']);
+  assert.deepEqual(editor.tabs,['▦ Layout','⌁ Path','≋ Shapes','✧ Details','◐ Colour','▧ Material','✦ Effects']);
   const schema=await evaluate('(async()=>{const m=await import("/src/editor-schema.js");const keys=[...document.querySelectorAll("#controls [data-setting]")].map(x=>x.name).filter(x=>x&&!["family","primesOnly"].includes(x));keys.push("textureLayer2Enabled","textureLayer3Enabled");return {...m.validateEditorSchema([...new Set(keys)]),wizard:m.WIZARD_STEPS,toolCount:m.TOOL_LIST.length}})()');
   console.log('EDITOR_SCHEMA',JSON.stringify(schema));
   assert.deepEqual(schema.missing,[]);
   assert.deepEqual(schema.duplicated,[]);
   assert.deepEqual(schema.unknown,[]);
-  assert.equal(schema.wizard.length,6);
+  assert.equal(schema.wizard.length,7);
   assert.ok(schema.toolCount>=18);
+  // Interior element controls must work through the real mobile editor and
+  // remain portable in the same URL/PNG recipe as the rest of the scene.
+  const undetailed=await evaluate('document.getElementById("preview").toDataURL()');
+  await evaluate('document.getElementById("tab-details").click();document.querySelector("[data-editor-tool=interior]").click();document.querySelector(".interior-toolbar button").click()');
+  await waitFor('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).interiorElements.length===1');
+  const detailed=await evaluate('document.getElementById("preview").toDataURL()');
+  assert.notEqual(detailed,undetailed,'adding an interior hairline must change painted pixels');
+  await evaluate('document.querySelector("[data-editor-tool=interior-style]").click();(()=>{const select=document.querySelector(".editor-tool-card[data-editor-tool=interior-style] select");select.value="band";select.dispatchEvent(new Event("change",{bubbles:true}))})()');
+  await waitFor('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).interiorElements[0].type==="band"');
+  await evaluate('document.querySelector("[data-editor-tool=interior-targets]").click();(()=>{const boxes=[...document.querySelectorAll(".interior-targets input")];boxes[1].click()})()');
+  await waitFor('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).interiorElements[0].colorSlots.length===6');
+  await evaluate('document.querySelector("[data-editor-tool=interior]").click();document.querySelectorAll(".interior-toolbar button")[1].click()');
+  await waitFor('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).interiorElements.length===0');
   // Direct navigation, no blind scroll or gallery overlay.
   await evaluate('document.getElementById("tab-stripes").click()');
   await evaluate('document.querySelector("[data-editor-tool=structure]").click()');
@@ -280,8 +293,8 @@ try{
   await evaluate('document.getElementById("tab-stripes").click()');
   const stripeToolOrder=await evaluate('Array.from(document.querySelectorAll(".editor-tool-tab")).filter(b=>b.dataset.category==="stripes").map(b=>b.dataset.editorTool)');
   assert.deepEqual(stripeToolOrder,[
-    'structure','outlines','dividers','patterns','marks','motif-scale','tone','character','shadows','glow']);
-  await evaluate('document.querySelector("[data-editor-tool=shadows]").click()');
+    'structure','patterns','marks','motif-scale','tone','character']);
+  await evaluate('document.getElementById("tab-details").click();document.querySelector("[data-editor-tool=shadows]").click()');
   const beforeShadow=await evaluate('(()=>{const c=document.querySelector(".editor-tool-card:not([hidden])"),r=c.getBoundingClientRect();return {labels:[...c.querySelectorAll("[name]")].map(n=>n.name),w:r.width,h:r.height,checkbox:!!c.querySelector("[name=stripeShadowEnabled]"),controls:document.getElementById("stripeShadowControls").hidden}})()');
   assert.equal(beforeShadow.checkbox,false);
   assert.equal(beforeShadow.controls,false);
@@ -415,7 +428,7 @@ try{
     console.log('BROWSER_ZOOM_LAYOUT',name,JSON.stringify(bounds));
     await captureUI(name+'-material');
     assert.equal(bounds.navPosition,'static','category navigation must not stick/overlap');
-    assert.equal(bounds.categoryRows,1,'all six categories must occupy one row');
+    assert.equal(bounds.categoryRows,1,'all seven categories must occupy one row');
     assert.ok(bounds.categoryWithin,'category labels must remain inside navigation');
     assert.ok(bounds.categoryBottom<=bounds.toolTop+2,'categories may not cover tool navigation');
     assert.ok(bounds.toolBottom<=bounds.cardTop+2,'tool tabs may not overlap controls');

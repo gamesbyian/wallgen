@@ -70,7 +70,7 @@ function showNotice(message){
 }
 function fromControls() {
   const data={seed:seedInput.value,positionX:current.positionX,positionY:current.positionY,
-    viewZoom:current.viewZoom,customPath:current.customPath,drawnAnchors:current.drawnAnchors,drawnCorners:current.drawnCorners};
+    viewZoom:current.viewZoom,customPath:current.customPath,drawnAnchors:current.drawnAnchors,drawnCorners:current.drawnCorners,interiorElements:current.interiorElements};
   for (const key of FIELDS) { const field=form.elements.namedItem(key); data[key]=field.dataset.inactive==='true'?current[key]:(field.type==='checkbox'?field.checked:field.value); }
   return normalizeRecipe(data);
 }
@@ -90,7 +90,7 @@ function toControls(recipe) {
   syncDiagonalUI();
   syncSettingLocks();
   syncInactiveSettings();
-  syncEditorStructure(current.structure,current.regionMode);
+  syncEditorStructure(current.structure,current.regionMode,current.construction);
   const effective=document.getElementById('geometrySafetyStatus');
   if(effective){
     if(current.structure!=='paths')effective.textContent='Closed regions use connected polygon boundaries';
@@ -331,6 +331,7 @@ function render(recipe,{scroll=false,bypassLocks=false}={}) {
 }
 function changeRecipe(recipe,options={}){
   render(recipe,options);toControls(current);showResolvedSelections(currentScene);
+  syncInteriorUI();
   for(const die of form.querySelectorAll('[data-random-setting]')){
     const field=form.elements.namedItem(die.dataset.randomSetting);
     die.disabled=!field||field.disabled||field.dataset.inactive==='true';
@@ -635,6 +636,127 @@ function syncSettingLocks(){
 }
 installSettingLocks();
 const editor=mountEditor();
+// Details controls deliberately live outside the fixed scalar setting schema:
+// ordered element objects are a recipe collection, not separately lockable sliders.
+const interiorCards=Object.fromEntries(['interior','interior-style','interior-motion','interior-placement','interior-targets']
+  .map(id=>[id,document.querySelector('.editor-tool-card[data-editor-tool="'+id+'"]')]));
+let selectedInterior=0;
+function syncInteriorUI(){
+  const items=current.interiorElements||[];
+  for(const card of Object.values(interiorCards))card.replaceChildren();
+  const make=(host,tag,label)=>{
+    const el=document.createElement(tag);
+    if(label!==undefined)el.textContent=label;
+    host.append(el);return el;
+  };
+  const manager=interiorCards.interior;
+  const toolbar=make(manager,'div');toolbar.className='interior-toolbar';
+  const choose=make(toolbar,'select');
+  choose.setAttribute('aria-label','Select interior element');
+  items.forEach((item,i)=>{
+    const option=document.createElement('option');
+    option.value=String(i);option.textContent=(i+1)+'. '+item.type+' · '+item.shape;
+    choose.append(option);
+  });
+  selectedInterior=Math.max(0,Math.min(selectedInterior,items.length-1));
+  choose.value=String(selectedInterior);
+  choose.disabled=!items.length;
+  choose.addEventListener('change',()=>{selectedInterior=Number(choose.value);syncInteriorUI();});
+  const add=make(toolbar,'button','+ Add');add.type='button';
+  add.disabled=items.length>=8;
+  add.addEventListener('click',()=>{
+    selectedInterior=items.length;
+    changeRecipe({...current,interiorElements:[...items,{id:'element-'+Date.now(),type:'line',shape:'wave',color:'white',width:1.5,frequency:6,amplitude:.12}]});
+  });
+  const remove=make(toolbar,'button','Remove');remove.type='button';remove.disabled=!items.length;
+  remove.addEventListener('click',()=>{
+    selectedInterior=Math.max(0,selectedInterior-1);
+    changeRecipe({...current,interiorElements:items.filter((_,i)=>i!==Number(choose.value))});
+  });
+  if(!items.length){
+    for(const card of Object.values(interiorCards))make(card,'p','Add an interior element to begin.');
+    return;
+  }
+  const active=items[selectedInterior];
+  const update=(key,value)=>changeRecipe({...current,interiorElements:
+    current.interiorElements.map((e,i)=>i===selectedInterior?{...e,[key]:value}:e)});
+  const select=(card,name,key,options)=>{
+    const field=make(card,'label',name);
+    const control=make(field,'select');
+    for(const value of options){
+      const opt=document.createElement('option');opt.value=value;opt.textContent=value;control.append(opt);
+    }
+    control.value=active[key];control.addEventListener('change',()=>update(key,control.value));
+  };
+  const range=(card,name,key,min,max,step)=>{
+    const field=make(card,'label',name+' '+active[key]);
+    const slider=make(field,'input');
+    slider.type='range';slider.min=min;slider.max=max;slider.step=step;slider.value=active[key];
+    slider.addEventListener('input',()=>{field.firstChild.textContent=name+' '+slider.value;});
+    slider.addEventListener('change',()=>update(key,Number(slider.value)));
+  };
+  const actions=make(manager,'div');actions.className='interior-actions';
+  const up=make(actions,'button','↑');up.type='button';up.title='Move element upward';
+  up.disabled=selectedInterior===0;
+  up.addEventListener('click',()=>{
+    const next=[...current.interiorElements];
+    [next[selectedInterior-1],next[selectedInterior]]=[next[selectedInterior],next[selectedInterior-1]];
+    selectedInterior--;changeRecipe({...current,interiorElements:next});
+  });
+  const down=make(actions,'button','↓');down.type='button';down.title='Move element downward';
+  down.disabled=selectedInterior>=items.length-1;
+  down.addEventListener('click',()=>{
+    const next=[...current.interiorElements];
+    [next[selectedInterior+1],next[selectedInterior]]=[next[selectedInterior],next[selectedInterior+1]];
+    selectedInterior++;changeRecipe({...current,interiorElements:next});
+  });
+  const stackLocked=current.lockedSettings.includes('interiorElements');
+  const lock=make(actions,'button',stackLocked?'Unlock all elements':'Lock all elements');
+  lock.type='button';lock.setAttribute('aria-pressed',String(stackLocked));
+  lock.addEventListener('click',()=>{
+    const locks=new Set(current.lockedSettings);
+    if(locks.has('interiorElements'))locks.delete('interiorElements');
+    else locks.add('interiorElements');
+    changeRecipe({...current,lockedSettings:[...locks]},{bypassLocks:true});
+  });
+  const activeRow=make(manager,'label','Enabled');
+  const toggle=make(activeRow,'input');toggle.type='checkbox';toggle.checked=active.enabled;
+  toggle.addEventListener('change',()=>update('enabled',toggle.checked));
+  const typeField=make(interiorCards['interior-style'],'label','Element');
+  const typeSelect=make(typeField,'select');
+  for(const kind of ['line','band']){const option=document.createElement('option');option.value=kind;option.textContent=kind;typeSelect.append(option);}
+  typeSelect.value=active.type;
+  typeSelect.addEventListener('change',()=>changeRecipe({...current,interiorElements:
+    current.interiorElements.map((e,i)=>i===selectedInterior?{...e,type:typeSelect.value,width:typeSelect.value==='band'?22:1.5}:e)}));
+  select(interiorCards['interior-style'],'Geometry','shape',['straight','wave','zigzag','loop']);
+  select(interiorCards['interior-style'],'Stroke','stroke',['solid','dashed','dotted']);
+  select(interiorCards['interior-targets'],'Ink','color',['white','black','lighter','darker','custom']);
+  const customLabel=make(interiorCards['interior-targets'],'label','Custom colour');
+  const customPicker=make(customLabel,'input');
+  customPicker.type='color';customPicker.value=active.customColor;customPicker.disabled=active.color!=='custom';
+  customPicker.addEventListener('change',()=>update('customColor',customPicker.value));
+  range(interiorCards['interior-motion'],'Amplitude','amplitude',0,.45,.01);
+  range(interiorCards['interior-motion'],'Frequency','frequency',.1,30,.1);
+  range(interiorCards['interior-motion'],'Phase','phase',-180,180,1);
+  select(interiorCards['interior-placement'],'Placement','placement',['local','field','contour']);
+  range(interiorCards['interior-placement'],'Position','position',-.48,.48,.02);
+  range(interiorCards['interior-placement'],active.type==='band'?'Band width %':'Line width','width',.15,50,.25);
+  range(interiorCards['interior-placement'],'Opacity','opacity',0,1,.05);
+  const targetBox=make(interiorCards['interior-targets'],'div');targetBox.className='interior-targets';
+  const names=['R','O','Y','G','B','I','V'];
+  names.forEach((name,i)=>{
+    const label=make(targetBox,'label',name);label.title=['Red','Orange','Yellow','Green','Blue','Indigo','Violet'][i];
+    const checkbox=make(label,'input');checkbox.type='checkbox';
+    checkbox.checked=!active.colorSlots.length||active.colorSlots.includes(i);
+    checkbox.addEventListener('change',()=>{
+      const base=active.colorSlots.length?active.colorSlots:[0,1,2,3,4,5,6];
+      const next=checkbox.checked?[...new Set([...base,i])]:base.filter(x=>x!==i);
+      if(!next.length){syncInteriorUI();return;}
+      update('colorSlots',next.length===7?[]:next);
+    });
+  });
+}
+syncInteriorUI();
 const explorationHistory=installExplorationHistory({
   form,preview,getRecipe:()=>current,
   restore:recipe=>changeRecipe(recipe,{bypassLocks:true}),

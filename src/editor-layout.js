@@ -10,7 +10,7 @@ function fieldNode(key){
 }
 const tools=new Map();
 let activeCategory='layout',activeTool='arrange';
-let activeStructure='paths',activeRegionMode='voronoi';
+let activeStructure='paths',activeRegionMode='voronoi',activeConstruction='ribbon';
 // Keep the editor populated only with tools that can modify the active scene.
 // Hidden tools retain all values and locks; changing structure restores them.
 const pathTools=new Set(['geometry','safety','turn','single-loop','shape-details','ends']);
@@ -24,8 +24,12 @@ function toolApplies(entry){
       (entry.spec.id!=='origin'||activeRegionMode==='nested');
   }
   if(entry.category==='stripes')
-    return activeStructure==='paths'?entry.spec.id!=='dividers':
-      ['dividers','shadows','glow'].includes(entry.spec.id);
+    return activeStructure==='paths'&&
+      (entry.spec.id!=='tone'||activeConstruction==='tonal');
+  if(entry.category==='details'){
+    if(entry.spec.id==='outlines')return activeStructure==='paths';
+    if(entry.spec.id==='dividers')return activeStructure!=='paths';
+  }
   if(entry.category==='layout')
     return entry.spec.id==='structure-mode'||activeStructure==='paths';
   if(entry.category==='material'&&entry.spec.id==='surface')
@@ -35,15 +39,20 @@ function toolApplies(entry){
 function applicableTool(category){
   return [...tools.values()].find(entry=>entry.category===category&&toolApplies(entry))?.spec.id;
 }
-export function syncEditorStructure(structure,regionMode){
+export function syncEditorStructure(structure,regionMode,construction='ribbon'){
   activeStructure=structure;
   activeRegionMode=regionMode;
+  activeConstruction=construction;
   const pathTab=byId('tab-path');
   if(pathTab?.lastChild?.nodeType===3)
     pathTab.lastChild.textContent=structure==='paths'?' Path':' Geometry';
   const shapesTab=byId('tab-stripes');
   if(shapesTab?.lastChild?.nodeType===3)
-    shapesTab.lastChild.textContent=structure==='paths'?' Stripes':' Shapes';
+    shapesTab.lastChild.textContent=' Shapes';
+  if(shapesTab){
+    shapesTab.disabled=structure!=='paths';
+    shapesTab.setAttribute('aria-disabled',String(structure!=='paths'));
+  }
   for(const select of form.querySelectorAll('[name=textureCoverage],[name=textureCoverage2],[name=textureCoverage3]')){
     const prefix=structure==='paths'?'stripes':'shapes';
     const both=select.querySelector('option[value=both]');
@@ -52,7 +61,9 @@ export function syncEditorStructure(structure,regionMode){
     if(ink)ink.textContent=(structure==='paths'?'Stripes':'Shapes')+' only';
   }
   const selected=tools.get(activeTool);
-  if(!selected||!toolApplies(selected))
+  if(activeCategory==='stripes'&&structure!=='paths')
+    selectEditorTool('details',applicableTool('details'));
+  else if(!selected||!toolApplies(selected))
     selectEditorTool(activeCategory,applicableTool(activeCategory));
   else selectEditorTool(activeCategory,activeTool);
 }

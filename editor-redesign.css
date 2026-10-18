@@ -191,12 +191,12 @@
    width:100%;height:31px;font-size:12px;
    background:var(--surface);
  }
- /* A single row of six labels always occupies its own flow position. Never
+ /* A single row of seven labels always occupies its own flow position. Never
     inherit position:sticky or top:51px from the retired four-tab editor. */
  body.mobile-studio .sidebar .settings-tabs{
    display:grid!important;position:static!important;top:auto!important;
    inset:auto!important;z-index:auto!important;transform:none!important;
-   grid-template-columns:repeat(6,minmax(0,1fr))!important;
+   grid-template-columns:repeat(7,minmax(0,1fr))!important;
    grid-template-rows:minmax(34px,auto)!important;
    flex:0 0 35px!important;height:35px!important;
    min-height:35px!important;max-height:35px!important;
@@ -811,4 +811,52 @@
    flex:0 1 64px!important;width:64px!important;min-width:40px!important;
    max-width:64px!important;height:34px!important;
  }
+}
+
+
+/* Compact editor for ordered, resolution-independent decorations. */
+.editor-tool-card[data-editor-tool^="interior"]{overflow:hidden;gap:5px}
+.editor-tool-card[data-editor-tool^="interior"] .interior-toolbar{
+  display:flex;align-items:center;gap:5px;min-width:0
+}
+.editor-tool-card[data-editor-tool^="interior"] .interior-toolbar select{flex:1;min-width:0}
+.editor-tool-card[data-editor-tool^="interior"] .interior-toolbar button{
+  flex:0 0 auto;min-height:25px;padding:3px 6px;border:1px solid var(--line);
+  border-radius:6px;background:var(--surface);color:inherit
+}
+.editor-tool-card[data-editor-tool="interior"]>label{
+  display:flex;justify-content:space-between;align-items:center;
+  min-height:25px;gap:8px;font-size:11px
+}
+.editor-tool-card[data-editor-tool="interior"]>label>select,
+.editor-tool-card[data-editor-tool="interior"]>label>input{
+  flex:1;min-width:0;max-width:58%;height:24px
+}
+.editor-tool-card[data-editor-tool="interior"]>p{font-size:11px;opacity:.8}
+
+.editor-tool-card[data-editor-tool="interior-targets"] .interior-targets{
+  display:flex;gap:4px;justify-content:space-between;min-height:27px
+}
+.editor-tool-card[data-editor-tool="interior-targets"] .interior-targets label{
+  font-size:11px;display:flex;align-items:center;gap:2px
+}
+.editor-tool-card[data-editor-tool="interior-targets"] .interior-targets input{
+  width:13px;height:13px;margin:0
+}
+
+.editor-tool-card[data-editor-tool="interior"] .interior-actions{
+  display:flex;align-items:center;gap:4px;min-height:24px
+}
+.editor-tool-card[data-editor-tool="interior"] .interior-actions button{
+  background:var(--surface);color:inherit;border:1px solid var(--line);
+  border-radius:6px;min-height:23px;padding:2px 6px;font-size:10px
+}
+.editor-tool-card[data-editor-tool="interior"] .interior-actions button:disabled{
+  opacity:.3
+}
+
+/* The Shapes category contains ribbon-specific construction tools. All
+   structures retain the universal Details category. */
+body.mobile-studio .sidebar .settings-tabs .settings-tab:disabled{
+  opacity:.28!important;cursor:default!important;
 }
