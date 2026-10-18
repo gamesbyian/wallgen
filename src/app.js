@@ -329,6 +329,22 @@ const imagePathTool=installImagePathTool({
   getRecipe:()=>current,
   onNotice:showNotice,
   onPath:path=>drawTool.loadPath(path),
+  onAngle:angle=>{
+    // Rotation is relative to the resolved seed direction, not fixed at 45°.
+    const base=fromControls();
+    const keys=['orientation','diagonalRotation'];
+    if(base.geometry==='drawn')keys.push('geometry');
+    if(keys.some(key=>base.lockedSettings.includes(key))){
+      showNotice('Unlock Path geometry and Layout direction before applying an angle.');
+      return false;
+    }
+    const geometry=base.geometry==='drawn'?'straight':base.geometry;
+    const trial=normalizeRecipe({...base,geometry,orientation:'diagonal',diagonalRotation:0});
+    const baseline=resolveScene(trial).angle*180/Math.PI;
+    changeRecipe({...base,geometry,orientation:'diagonal',diagonalRotation:angle-baseline});
+    showNotice('Detected '+angle+'° line direction applied. Undo restores the previous angle.');
+    return true;
+  },
 });
 function updatePositionStatus(){
   const label=document.getElementById('positionStatus');
