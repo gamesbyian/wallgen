@@ -78,12 +78,14 @@ export function chooseAnchorIndices(points,pinned=[]){
   }
   return result;
 }
-export function createPointEditor(input,pinned=[]){
+export function createPointEditor(input,pinned=[],corners=[]){
   const points=normalizeDrawnPath(input);
   if(points.length<2)return null;
   const reserved=Array.isArray(pinned)?pinned.filter(v=>Number.isInteger(v)&&v>=0&&v<points.length):[];
-  return {points,anchors:chooseAnchorIndices(points,reserved),
-    pinned:new Set(reserved),corners:new Set(),selected:-1,changed:new Set()};
+  const cornersIn=Array.isArray(corners)?corners.filter(v=>Number.isInteger(v)&&v>=0&&v<points.length):[];
+  const allPins=[...new Set([...reserved,...cornersIn])];
+  return {points,anchors:chooseAnchorIndices(points,allPins),
+    pinned:new Set(allPins),corners:new Set(cornersIn),selected:-1,changed:new Set()};
 }
 export function clonePointEditor(e){
   return {points:copy(e.points),anchors:e.anchors.slice(),
@@ -198,6 +200,9 @@ export function resmoothPointEdits(e,strength=3){
   }
   e.points=points.map(round);
   return e.points;
+}
+export function savedPointCorners(e){
+  return [...e.corners].filter(i=>e.anchors.includes(i)).sort((a,b)=>a-b);
 }
 export function savedPointAnchors(e){
   return [...e.pinned].filter(i=>e.anchors.includes(i))
