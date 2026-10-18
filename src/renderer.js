@@ -378,6 +378,20 @@ function traceCentre(stripe,extent,offset=0){
 }
 // Deterministic dry-ink breakup. Marks remain inside the ribbon and use
 // the common centreline/normal sampler at every output resolution.
+// Dotted/dashed decorations keep a world-station phase when the renderer
+// repaints only the front branch of a self-intersection.
+function arcLengthUntil(stripe,extent,station){
+  const origin=-(stripe.coreExtent??extent);
+  if(station<=origin)return 0;
+  const n=Math.max(1,Math.ceil((station-origin)/4));
+  let previous=samplePath(stripe,origin,extent),length=0;
+  for(let i=1;i<=n;i++){
+    const next=samplePath(stripe,origin+(station-origin)*i/n,extent);
+    length+=Math.hypot(next.x-previous.x,next.y-previous.y);
+    previous=next;
+  }
+  return length;
+}
 function drawPathInteriors(ctx,stripe,extent,scene){
   if(!scene.interiorElements?.length)return;
   ctx.save();ctx.clip(stripeFillPath(stripe,extent,scene));
@@ -403,6 +417,7 @@ function drawPathInteriors(ctx,stripe,extent,scene){
       const y=p.y+p.ny*transverse+p.ty*longitudinal;
       if(i===0)path.moveTo(x,y);else path.lineTo(x,y);
     }
+    if(e.stroke!=='solid')ctx.lineDashOffset=-arcLengthUntil(stripe,extent,start);
     ctx.stroke(path);ctx.restore();
   }
   ctx.restore();
