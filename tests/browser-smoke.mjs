@@ -685,16 +685,18 @@ try{
     pointer('pointermove',x+13,y-9);
     pointer('pointerup',x+13,y-9);
     const undoAvailable=!document.getElementById('drawUndoPoint').disabled;
+    document.getElementById('drawCornerPoint').click();
     document.getElementById('drawApply').click();
     const next=JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get('r')));
     const changed=JSON.stringify(next.customPath)!==before;
     const pinned=next.drawnAnchors.length;
+    const corners=next.drawnCorners.length;
     document.getElementById('undo').click();
     const restored=JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get('r')));
-    return {changed,pinned,undoAvailable,restored:JSON.stringify(restored.customPath)===before};
+    return {changed,pinned,corners,undoAvailable,restored:JSON.stringify(restored.customPath)===before};
   })()`);
   console.log('LIVE_ANCHOR_EDITOR_ACCEPTANCE',JSON.stringify(pointEditorCheck));
-  assert.ok(pointEditorCheck.changed&&pointEditorCheck.pinned>0,
+  assert.ok(pointEditorCheck.changed&&pointEditorCheck.pinned>0&&pointEditorCheck.corners>0,
     'dragging a point must modify and pin the selected anchor');
   assert.ok(pointEditorCheck.undoAvailable&&pointEditorCheck.restored,
     'local Undo and wallpaper Undo must both remain usable');
@@ -709,10 +711,17 @@ try{
         quarterTurns:buttons.filter(b=>Math.abs(Number(b.dataset.rotateDelta))===90).length,
         reset:buttons.some(b=>b.dataset.rotateSet==='0')};
     });
-    return controls;
+    const texture=document.querySelector('[name=material]');
+    texture.value='construction';texture.dispatchEvent(new Event('change',{bubbles:true}));
+    const rotation=document.querySelector('[name=textureRotation]');
+    const initial=Number(rotation.value);
+    const up=document.querySelector('[data-rotate-target=textureRotation][data-rotate-delta="1"]');
+    if(!up.disabled)up.click();
+    return {controls,incremented:Number(rotation.value)===initial+1};
   })()`);
   console.log('ROTATION_STEPPER_ACCEPTANCE',JSON.stringify(fineRotations));
-  assert.ok(fineRotations.every(v=>v.minus&&v.plus&&v.quarterTurns===2&&v.reset));
+  assert.ok(fineRotations.incremented,'rotation step must update the actual recipe field');
+  assert.ok(fineRotations.controls.every(v=>v.minus&&v.plus&&v.quarterTurns===2&&v.reset));
   console.log('REDESIGN_EXPLORATION_ACCEPTANCE_SUCCESS');
 }finally{
   try{ws?.close()}catch{}
