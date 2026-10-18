@@ -381,16 +381,19 @@ function traceCentre(stripe,extent,offset=0){
 // Dotted/dashed decorations keep a world-station phase when the renderer
 // repaints only the front branch of a self-intersection.
 function arcLengthUntil(stripe,extent,station){
-  const origin=-(stripe.coreExtent??extent);
-  if(station<=origin)return 0;
-  const n=Math.max(1,Math.ceil((station-origin)/4));
+  const origin=-(stripe.coreExtent??extent),delta=station-origin;
+  if(!delta)return 0;
+  // Off-frame extrapolation can start before the original path's first
+  // station. Keep dash phase anchored to the saved path rather than
+  // resetting it at the transition from tangent extension to the stroke.
+  const n=Math.max(1,Math.ceil(Math.abs(delta)/4));
   let previous=samplePath(stripe,origin,extent),length=0;
   for(let i=1;i<=n;i++){
-    const next=samplePath(stripe,origin+(station-origin)*i/n,extent);
+    const next=samplePath(stripe,origin+delta*i/n,extent);
     length+=Math.hypot(next.x-previous.x,next.y-previous.y);
     previous=next;
   }
-  return length;
+  return Math.sign(delta)*length;
 }
 function drawPathInteriors(ctx,stripe,extent,scene){
   if(!scene.interiorElements?.length)return;
