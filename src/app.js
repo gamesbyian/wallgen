@@ -522,18 +522,36 @@ async function downloadPNG(){
   const button=document.getElementById('download');
   setBusy(button,true,'Rendering 19.8 MP…');
   await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+  const snapshot=normalizeRecipe(current);
+  const metadata=metadataValues();
   let big;
   try {
-    big=document.createElement('canvas');big.width=OUTPUT_WIDTH;big.height=OUTPUT_HEIGHT;
-    // Same framing recipe as the displayed canvas, independently rendered at
-    // 3024 × 6552 rather than exporting a magnified low-resolution screenshot.
-    drawWallpaper(big,current);
-    const blob=await new Promise((resolve,reject)=>big.toBlob(b=>b?resolve(b):reject(new Error('PNG encoding failed')),'image/png'));
-    const metadata=metadataValues();
-    const result=new Blob([embedPngMetadata(await blob.arrayBuffer(),metadata,{recipe:current})],
+    let blob;
+    if(typeof Worker==='function'&&typeof OffscreenCanvas==='function'){
+      try{
+        // A separate worker prevents full-resolution PNG generation from
+        // starving the interactive preview queue.
+        blob=await exportWallpaperInWorker({
+          recipe:snapshot,width:OUTPUT_WIDTH,height:OUTPUT_HEIGHT
+        });
+      }catch(error){
+        console.warn('ROYGBIV worker export fallback:',error);
+        // An interrupted, unsupported or failed worker can still use the
+        // established reference exporter. The user retains a real PNG.
+        showNotice('Trying compatibility export…');
+      }
+    }
+    if(!blob){
+      big=document.createElement('canvas');
+      big.width=OUTPUT_WIDTH;big.height=OUTPUT_HEIGHT;
+      drawWallpaper(big,snapshot);
+      blob=await new Promise((resolve,reject)=>big.toBlob(
+        b=>b?resolve(b):reject(new Error('PNG encoding failed')),'image/png'));
+    }
+    const result=new Blob([embedPngMetadata(await blob.arrayBuffer(),metadata,{recipe:snapshot})],
       {type:'image/png'});
-    downloadBlob(result,`roygbiv-${safeFilename(current.seed)}-${OUTPUT_WIDTH}x${OUTPUT_HEIGHT}.png`);
-    showNotice(`Exported the framed ${Math.round(current.viewZoom*100)}% view at ${OUTPUT_WIDTH} × ${OUTPUT_HEIGHT}, with recipe metadata.`);
+    downloadBlob(result,`roygbiv-${safeFilename(snapshot.seed)}-${OUTPUT_WIDTH}x${OUTPUT_HEIGHT}.png`);
+    showNotice(`Exported the framed ${Math.round(snapshot.viewZoom*100)}% view at ${OUTPUT_WIDTH} × ${OUTPUT_HEIGHT}, with recipe metadata.`);
   }catch(error){console.error(error);showNotice(`Export failed: ${error.message}`);}
   finally { if(big){big.width=0;big.height=0;}setBusy(button,false); }
 }
