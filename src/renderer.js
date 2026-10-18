@@ -692,6 +692,36 @@ export function outlineDimensions(stripe,scene){
     style==='hairline'?5:20,stripe.width*.60),
   separation:scene.outlineBuffer/100*Math.min(20,stripe.width*.70)};
 }
+// Open ribbon edges for a locally repaired overpass. Using drawOutline's
+// CLOSED silhouette here adds artificial transverse endcaps at the temporary
+// branch endpoints; clipped against another path those caps become the tiny
+// bars and prongs visible in high-individuality drawn loops.
+function drawCrossingOutline(ctx,stripe,scene){
+  if(scene.outline==='none')return;
+  const black=scene.outline.startsWith('black');
+  const style=black?(scene.outline==='black'?'white':scene.outline.slice(6)):scene.outline;
+  const colour=black?'rgba(0,0,0,.96)':'rgba(255,255,255,.94)';
+  const {thickness:width,separation:buffer}=outlineDimensions(stripe,scene);
+  ctx.save();
+  ctx.lineJoin='round';ctx.lineCap='round';ctx.strokeStyle=colour;
+  if(style==='broken')ctx.setLineDash([15,10]);
+  if(style==='one-side'&&stripe.lineStyle==='continuous'){
+    ctx.lineWidth=width;
+    ctx.stroke(offsetStripeEdge(stripe,scene.extent,scene,buffer+width/2));
+  }else{
+    const edges=[traceEdge(stripe,scene.extent,-1,scene),
+      traceEdge(stripe,scene.extent,1,scene)];
+    ctx.lineWidth=2*(buffer+width);
+    for(const edge of edges)ctx.stroke(edge);
+    if(buffer>0){
+      ctx.globalCompositeOperation='destination-out';
+      ctx.lineWidth=2*buffer;
+      for(const edge of edges)ctx.stroke(edge);
+      ctx.globalCompositeOperation='source-over';
+    }
+  }
+  ctx.restore();
+}
 function drawOutline(ctx,path,stripe,scene) {
   if(scene.outline==='none')return;
   const black=scene.outline.startsWith('black');
@@ -917,12 +947,14 @@ export function drawWallpaper(canvas, recipe, options={}) {
           // stripe. Replaying the complete stripe inside a local clip makes
           // the other arm leak through at tight loops (spikes and shards).
           // Only the local segment has matching geometry for this overpass.
-          const branch={...stripe,segmentStart:start,segmentEnd:end};
+          const branch={...stripe,segmentStart:start,segmentEnd:end,
+            taperStart:stripe.taperStart??stripe.segmentStart??-scene.extent,
+            taperEnd:stripe.taperEnd??stripe.segmentEnd??scene.extent};
           const path=stripePath(branch,scene.extent,scene);
           g.save();
           g.clip(branchMasks[later?0:1]);
           g.clip(crossingBranchClip(branch,scene.extent,station,halfLength,samplePath));
-          drawOutline(g,path,branch,scene);
+          drawCrossingOutline(g,branch,scene);
           g.fillStyle=stripe.color;g.strokeStyle=stripe.color;
           fillMotif(g,branch,scene.extent,scene);
           // Brush wear is seeded against the complete ribbon. Sample it

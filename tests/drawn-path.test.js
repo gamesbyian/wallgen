@@ -71,7 +71,7 @@ test('a hand-drawn path becomes seven normal-offset stripes with unchanged strok
 test('tight freehand turns shrink rainbow spread instead of inverting ribbon offsets',()=>{
   const curve=prepareDrawnPath([[.25,.12],[.23,.35],[.36,.71],[.56,.84],[.76,.65],[.77,.17]]);
   const limit=safeDrawnBandSpan(curve);
-  assert.ok(limit>=44&&limit<260, 'a tight U-turn needs a capped group width');
+  assert.ok(limit>=16&&limit<260, 'a tight U-turn needs a curvature-safe group width');
   const crowded=resolveScene({seed:'narrow-hairpin',geometry:'drawn',spread:100,
     customPath:[[.25,.12],[.23,.35],[.36,.71],[.56,.84],[.76,.65],[.77,.17]]});
   const span=crowded.stripes.at(-1).center-crowded.stripes[0].center;

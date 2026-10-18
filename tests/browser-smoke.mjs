@@ -567,6 +567,31 @@ try{
   })()`);
   assert.deepEqual(constraintsPlacement,{category:'path',tool:'safety',
     sameCard:true,hasStatus:true,hasOldTool:false,choices:['over','under','weave']});
+  // The original user-reported 96-point wallpaper, not an approximated loop.
+  // Load the checked-in recipe through the page and exercise the production
+  // raster compositor with its thin tonal strokes, max displacement and glow.
+  const reportedKnot=await evaluate(`(async()=>{
+    const recipe=await (await fetch('/tests/fixtures/drawn-knot-t0b4v5.json')).json();
+    const {drawWallpaper}=await import('/src/renderer.js');
+    const {resolveScene}=await import('/src/model.js');
+    const canvas=document.createElement('canvas');
+    canvas.width=240;canvas.height=520;
+    drawWallpaper(canvas,recipe);
+    const scene=resolveScene(recipe);
+    const pixels=canvas.getContext('2d').getImageData(0,0,240,520).data;
+    let ink=0;
+    for(let i=0;i<pixels.length;i+=4){
+      if(Math.max(pixels[i],pixels[i+1],pixels[i+2])>40)ink++;
+    }
+    return {points:recipe.customPath.length,seed:recipe.seed,ink,
+      spread:scene.stripes.at(-1).center-scene.stripes[0].center,
+      pngBytes:canvas.toDataURL().length};
+  })()`);
+  console.log('REPORTED_DRAWN_KNOT_RENDER',JSON.stringify(reportedKnot));
+  assert.equal(reportedKnot.points,96);
+  assert.equal(reportedKnot.seed,'t0b4v5-ice7lf');
+  assert.ok(reportedKnot.spread<80,'reported tight knot needs inner-turn clearance');
+  assert.ok(reportedKnot.ink>2000,'reported design must still draw a complete rainbow');
   // Tight-radius transverse crossings previously produced inner-ribbon shards
   // because crossing repairs replayed the entire self-overlapping source.
   // Exercise all depth orderings at a REAL 270° crossing. The >360°

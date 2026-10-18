@@ -109,7 +109,15 @@ export function pathPosition(stripe,x,extent){
 }
 export function samplePath(stripe,x,extent){
   const p=pathPosition(stripe,x,extent);
-  const a=pathPosition(stripe,x-0.15,extent),b=pathPosition(stripe,x+0.15,extent);
+  // Drawn recipes store a sampled polyline. A 0.3px centred derivative
+  // snaps its normal abruptly at each vertex; a large normal-offset stripe
+  // then draws a long sideways spike within that 0.3px interval. Estimate
+  // the tangent over a short, symmetric arc instead, without moving the
+  // artist's actual centreline or altering non-drawn geometry.
+  const g=stripe.sharedGeometry??stripe.geometry;
+  const tangentWindow=g==='drawn'?9:0.15;
+  const a=pathPosition(stripe,x-tangentWindow,extent),
+    b=pathPosition(stripe,x+tangentWindow,extent);
   const dx=b.x-a.x,dy=b.y-a.y;
   const length=Math.hypot(dx,dy)||1;
   const nx=-dy/length,ny=dx/length;
@@ -130,7 +138,10 @@ export function widthAt(stripe,x,extent){
     (Math.sin(t*TAU*1.4+(stripe.edgePhase??stripe.phase))*.7+t*.3));
   const taper=(stripe.endTaper??0)/100;
   if(!taper)return base;
-  const start=stripe.segmentStart??-extent,end=stripe.segmentEnd??extent;
+  // Crossing repairs draw a local branch from the ORIGINAL ribbon. Local
+  // clipping limits geometry, but must never create new tapered endpoints.
+  const start=stripe.taperStart??stripe.segmentStart??-extent,
+    end=stripe.taperEnd??stripe.segmentEnd??extent;
   const span=Math.max(1,end-start),distance=Math.min(x-start,end-x);
   const edge=clamp(distance/(Math.max(.001,taper)*span*.45),0,1);
   return base*(.03+.97*edge*edge*(3-2*edge));
