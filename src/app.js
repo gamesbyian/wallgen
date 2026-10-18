@@ -1,5 +1,5 @@
 import { OUTPUT_WIDTH, OUTPUT_HEIGHT, normalizeRecipe, resolveScene, encodeRecipe, decodeRecipe, newSeed, randomizeAllRecipe, respectSettingLocks, LOCKABLE_SETTINGS } from './model.js';
-import { drawWallpaper, presentNudgedArtwork } from './renderer.js';
+import { drawWallpaper, presentNudgedArtwork } from './renderer.js?v=20261018-worker1';
 import {createPreviewCoordinator,exportWallpaperInWorker,closeFrame} from './render-coordinator.js';
 import { embedPngMetadata, extractPngRecipe, cleanMetadata, METADATA_FIELDS } from './png-metadata.js';
 import { installDrawTool } from './draw-path-ui.js?v=20261018-extend1';
