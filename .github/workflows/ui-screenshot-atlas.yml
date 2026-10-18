@@ -50,6 +50,7 @@ jobs:
           node --check scripts/capture-ui-atlas.mjs
           node --check scripts/ui-atlas-special.mjs
           node --check scripts/ui-atlas-report.mjs
+          node --check scripts/ui-atlas-inspect.mjs
       - run: npm install --no-save playwright@1.56.1 serve@14.2.5
       - run: npx playwright install --with-deps chromium
       - name: Serve local app
