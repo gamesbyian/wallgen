@@ -54,7 +54,9 @@ export function randomizeScope(currentInput,{scope,name,mode='reroll',strength='
         if(mode==='reroll'||random()<weight){
           e.shape=alternative(['straight','wave','zigzag','loop'],e.shape);
           e.stroke=alternative(['solid','dashed','dotted'],e.stroke);
+          const priorType=e.type;
           e.type=alternative(['line','band'],e.type);
+          if(e.type!==priorType)e.width=e.type==='band'?22:1.5;
         }
       }
       if(all||name==='interior-motion'){
@@ -64,7 +66,8 @@ export function randomizeScope(currentInput,{scope,name,mode='reroll',strength='
       }
       if(all||name==='interior-placement'){
         e.position=mode==='reroll'?(random()-.5)*.7:varyNumber(e.position,-.48,.48);
-        e.width=mode==='reroll'?.6+random()*5:varyNumber(e.width,.15,10);
+        e.width=mode==='reroll'?(e.type==='band'?8+random()*38:.6+random()*5):
+          varyNumber(e.width,.15,e.type==='band'?50:10);
         e.opacity=mode==='reroll'?.35+random()*.65:varyNumber(e.opacity,0,1);
       }
       if(all||name==='interior-targets'){
