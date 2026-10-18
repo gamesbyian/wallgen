@@ -570,6 +570,62 @@ try{
     await captureUI('100-percent-'+category+'-'+tool);
   }
   await checkEditorZoom(615,1365,'67-percent');
+  // Screenshot regressions: a dense region editor and every new Details
+  // card must fit at the zoomed browser size with no hidden final control.
+  await evaluate(`(()=>{
+    const field=document.querySelector('[name=structure]');
+    field.value='regions';
+    field.dispatchEvent(new Event('change',{bubbles:true}));
+  })()`);
+  await waitFor('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).structure==="regions"');
+  const fitNewTools=await evaluate(`(()=>{
+    const issues=[];
+    const inspect=(name)=>{
+      const card=document.querySelector('.editor-tool-card:not([hidden])');
+      const frame=card.getBoundingClientRect();
+      for(const el of card.querySelectorAll('select,input:not([type=hidden]),button')){
+        if(!el.getClientRects().length||el.closest('[hidden]'))continue;
+        const b=el.getBoundingClientRect();
+        if(b.top<frame.top-2||b.bottom>frame.bottom+2||
+           b.left<frame.left-2||b.right>frame.right+2)
+          issues.push({name,control:el.name||el.getAttribute('aria-label')||el.textContent,
+            overflow:Math.round(b.bottom-frame.bottom)});
+      }
+    };
+    document.getElementById('tab-path').click();
+    for(const name of ['regions','region-detail','origin']){
+      document.querySelector('[data-editor-tool="'+name+'"]').click();inspect(name);
+    }
+    document.getElementById('tab-details').click();
+    document.querySelector('[data-editor-tool="interior"]').click();
+    document.querySelector('.interior-toolbar button').click();
+    for(const name of ['interior','interior-style','interior-motion','interior-placement','interior-targets']){
+      document.querySelector('[data-editor-tool="'+name+'"]').click();inspect(name);
+    }
+    return issues;
+  })()`);
+  assert.deepEqual(fitNewTools,[],
+    'all geometric and interior controls must fit on a phone with browser zoom');
+  await captureUI('67-percent-details-placement');
+  // A rapid sequence of changes must settle on the last requested state,
+  // and every change must actually refresh the painted wallpaper.
+  const previewChange=await evaluate(`(async()=>{
+    const canvas=document.getElementById('preview');
+    const before=canvas.toDataURL();
+    const select=document.querySelector('[name=regionMode]');
+    select.value='facets';
+    select.dispatchEvent(new Event('change',{bubbles:true}));
+    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+    const after=canvas.toDataURL();
+    return {changed:before!==after,selected:select.value};
+  })()`);
+  assert.equal(previewChange.selected,'facets');
+  assert.ok(previewChange.changed,'geometry selector must repaint instead of leaving stale pixels');
+  await evaluate(`(()=>{
+    const field=document.querySelector('[name=structure]');
+    field.value='paths';field.dispatchEvent(new Event('change',{bubbles:true}));
+  })()`);
+  await waitFor('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).structure==="paths"');
   for(const [category,tool] of [['path','geometry'],['stripes','structure'],['effects','lighting']]){
     await evaluate('document.getElementById("tab-'+category+'").click()');
     await evaluate('document.querySelector("[data-editor-tool='+tool+']").click()');
