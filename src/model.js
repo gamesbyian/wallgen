@@ -1,4 +1,5 @@
 import { SHAPES } from './path-geometry.js';
+import { normalizeInteriorElements } from './interior-elements.js';
 import { STRUCTURES, RADIAL_MODES, REGION_MODES, DIVIDER_MODES, buildCompositionObjects } from './composition-geometry.js';
 export { STRUCTURES, RADIAL_MODES, REGION_MODES, DIVIDER_MODES };
 import { normalizeDrawnPath, prepareDrawnPath, safeDrawnBandSpan } from './drawn-path.js';
@@ -72,6 +73,7 @@ export function normalizeRecipe(input = {}) {
   const seed = String(input.seed ?? 'rainbow-001').trim().slice(0, 90) || 'rainbow-001';
   return {
     version: 2,
+    interiorElements:normalizeInteriorElements(input.interiorElements),
     seed,
     primesOnly: input.primesOnly === true || input.primesOnly === 'true',
     lockedSettings: LOCKABLE_SETTINGS.filter(key=>Array.isArray(input.lockedSettings) && input.lockedSettings.includes(key)),
