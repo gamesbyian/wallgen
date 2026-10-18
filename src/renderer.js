@@ -849,15 +849,19 @@ export function presentNudgedArtwork(canvas, layers, recipe) {
 // No regional generator paints directly: the painter consumes scene.objects.
 export function drawRegionObjects(ctx,scene){
   const divider=scene.dividerColor==='background'?scene.background:scene.dividerColor;
-  const stroke=divider==='white'?'#fff':'#000';
-  for(const object of scene.objects){
-    if(object.kind!=='region'||object.vertices.length<3)continue;
-    ctx.save();
+  const hasDivider=scene.dividerColor!=='none'&&scene.dividerWidth>0;
+  const trace=object=>{
     ctx.beginPath();
     ctx.moveTo(object.vertices[0].x,object.vertices[0].y);
     for(let i=1;i<object.vertices.length;i++)
       ctx.lineTo(object.vertices[i].x,object.vertices[i].y);
     ctx.closePath();
+  };
+  const regions=scene.objects.filter(o=>o.kind==='region'&&o.vertices.length>=3);
+  // First paint every fill. A tiny matching stroke closes antialiasing seams
+  // where independent floating-point cells meet without a divider.
+  for(const object of regions){
+    ctx.save();trace(object);
     if(scene.glow>0){
       ctx.shadowColor=object.color;
       ctx.shadowBlur=scene.glow/100*32;
@@ -865,14 +869,23 @@ export function drawRegionObjects(ctx,scene){
     ctx.fillStyle=object.color;
     ctx.fill();
     ctx.shadowBlur=0;
-    // Painting the borders after each region maintains an evenly divided
-    // surface without introducing a separate eighth pigment identity.
-    if(scene.dividerColor!=='none'&&scene.dividerWidth>0){
-      ctx.strokeStyle=stroke;
-      ctx.lineWidth=.3+scene.dividerWidth*.24;
+    if(!hasDivider){
+      ctx.strokeStyle=object.color;
+      ctx.lineWidth=1;
       ctx.lineJoin='round';
       ctx.stroke();
     }
+    ctx.restore();
+  }
+  // A separate boundary pass prevents a subsequent cell's fill erasing half
+  // of its neighbour's divider. Stroke colour is an independent background
+  // role, never an eighth rainbow pigment.
+  if(hasDivider){
+    ctx.save();
+    ctx.strokeStyle=divider==='white'?'#fff':'#000';
+    ctx.lineWidth=.3+scene.dividerWidth*.24;
+    ctx.lineJoin='round';
+    for(const object of regions){trace(object);ctx.stroke();}
     ctx.restore();
   }
 }
