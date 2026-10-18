@@ -133,11 +133,13 @@ export function samplePath(stripe,x,extent){
     tx:dx/length,ty:dy/length,nx,ny};
 }
 export function widthAt(stripe,x,extent){
-  // A drawn path keeps the same relief at every saved point when the camera
-  // widens or endpoint extrapolation adds stations. Beyond either endpoint,
-  // the extension inherits the terminal cross-section instead of widening.
+  // Camera zoom changes the sampled station range, never the generated
+  // ribbon's width profile. Anchor relief to the original scene extent for
+  // EVERY geometry, including waves and straight stripes (not just drawn
+  // paths). Otherwise zoom-out changes the wallpaper instead of its framing.
+  // For extrapolated drawn paths, inherit the endpoint cross-section.
   const drawn=(stripe.sharedGeometry??stripe.geometry)==='drawn';
-  const core=drawn?(stripe.coreExtent??extent):extent;
+  const core=stripe.coreExtent??extent;
   const t=(drawn?clamp(x,-core,core):x)/core;
   const base=stripe.width*Math.max(.3,1+stripe.taper*
     (Math.sin(t*TAU*1.4+(stripe.edgePhase??stripe.phase))*.7+t*.3));
