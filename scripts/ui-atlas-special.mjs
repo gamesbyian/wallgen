@@ -21,9 +21,19 @@ export async function captureSpecialStates({page,ctx,capture,navigate,change,set
     await settle(page);
   };
   await attempt('theme',async()=>{
-    await page.locator('#studioTheme').evaluate(el=>{el.value='dark';el.dispatchEvent(new Event('change',{bubbles:true}));});
+    const switchTo=async theme=>{
+      // Support the new circle selector without breaking qualification of
+      // older branches that still expose the legacy native dropdown.
+      const circle=page.locator('[data-studio-theme="'+theme+'"]');
+      if(await circle.count())await circle.click();
+      else await page.locator('#studioTheme').evaluate((el,value)=>{
+        el.value=value;el.dispatchEvent(new Event('change',{bubbles:true}));
+      },theme);
+      await page.waitForFunction(value=>document.documentElement.dataset.theme===value,theme);
+    };
+    await switchTo('dark');
     await snap('dark-theme');
-    await page.locator('#studioTheme').evaluate(el=>{el.value='cream';el.dispatchEvent(new Event('change',{bubbles:true}));});
+    await switchTo('cream');
   });
   await attempt('variation-mode',async()=>{
     await navigate(page,'layout','arrange');
