@@ -237,3 +237,30 @@ WebGL, shader execution and final image presentation are included. Avoid
 introducing GPU context ownership, extra memory surfaces and fallback
 complexity merely because the shader supports multiple layers. The existing
 worker Canvas2D path remains the canonical image renderer and exporter.
+
+## Camera-aware GPU fields after zoom integration (PR #71 follow-up)
+
+The zoom correction in PR #71 established that the source scene is invariant
+under camera changes. A future WebGL2 rendering backend must obey the same
+contract. The original research shaders instead evaluated decorations in a
+world rectangle fixed to the physical viewport (0,0,600,1300), so a GPU
+promotion would have reintroduced the zoom defect.
+
+Both single-field and multi-field shaders now accept a `worldRect` uniform:
+`[left, top, right-left, bottom-top]`. The caller may supply
+`viewBounds` taken unchanged from
+`viewCamera(width,height,recipe.viewZoom).viewBounds`. Each fragment
+maps normalized viewport coordinates to this original-world rectangle
+before evaluating the source-anchored field phase and frequency.
+
+The default without explicit bounds remains the previous 600 × 1300 world
+rectangle for backward-compatible research results. Invalid or zero-area
+camera bounds are rejected before drawing. The existing owner polygon mask
+is always created in the exact same camera transform, so outlines,
+transparency and antialiasing remain clipped to the geometry rather than
+letting GPU ink spill into negative space.
+
+`tests/gpu-fields-browser.mjs` compares the same three-layer field against
+the production Canvas2D polygon painter under 50% and 150% camera zoom,
+including mask boundaries and alpha coverage. No new production backend,
+settings control, worker ownership or PNG behaviour is activated.
