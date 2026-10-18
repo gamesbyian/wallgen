@@ -81,3 +81,37 @@ test('a recipe roundtrip does not serialize heavy resolved geometry',()=>{
   assert.equal(encoded.includes('objects'),false);
   assert.equal(resolveScene(decodeRecipe(encoded)).objects.length,70);
 });
+
+function containsPolygon(x,y,vertices){
+  let inside=false;
+  for(let i=0,j=vertices.length-1;i<vertices.length;j=i++){
+    const a=vertices[i],b=vertices[j];
+    if((a.y>y)!==(b.y>y) && x<(b.x-a.x)*(y-a.y)/(b.y-a.y)+a.x)
+      inside=!inside;
+  }
+  return inside;
+}
+function visiblePaletteSlots(scene){
+  const seen=new Set();
+  for(let y=10;y<1300;y+=20)for(let x=10;x<600;x+=20){
+    for(let j=scene.objects.length-1;j>=0;j--){
+      const obj=scene.objects[j];
+      if(containsPolygon(x,y,obj.vertices)){seen.add(obj.colorIndex);break;}
+    }
+  }
+  return seen;
+}
+test('default seven-element compositions actually show all seven colours in the frame',()=>{
+  for(const radialMode of RADIAL_MODES){
+    const scene=resolveScene({seed:'visible-radial',structure:'radial',
+      radialMode,rayCount:7,rayCoverage:100});
+    assert.deepEqual(visiblePaletteSlots(scene),new Set([0,1,2,3,4,5,6]),
+      'radial/'+radialMode);
+  }
+  for(const regionMode of REGION_MODES){
+    const scene=resolveScene({seed:'visible-regions',structure:'regions',
+      regionMode,regionCount:7});
+    assert.deepEqual(visiblePaletteSlots(scene),new Set([0,1,2,3,4,5,6]),
+      'regions/'+regionMode);
+  }
+});
