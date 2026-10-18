@@ -133,7 +133,12 @@ export function samplePath(stripe,x,extent){
     tx:dx/length,ty:dy/length,nx,ny};
 }
 export function widthAt(stripe,x,extent){
-  const t=x/extent;
+  // A drawn path keeps the same relief at every saved point when the camera
+  // widens or endpoint extrapolation adds stations. Beyond either endpoint,
+  // the extension inherits the terminal cross-section instead of widening.
+  const drawn=(stripe.sharedGeometry??stripe.geometry)==='drawn';
+  const core=drawn?(stripe.coreExtent??extent):extent;
+  const t=(drawn?clamp(x,-core,core):x)/core;
   const base=stripe.width*Math.max(.3,1+stripe.taper*
     (Math.sin(t*TAU*1.4+(stripe.edgePhase??stripe.phase))*.7+t*.3));
   const taper=(stripe.endTaper??0)/100;
