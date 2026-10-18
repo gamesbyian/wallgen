@@ -18,7 +18,7 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
   const reSmooth=byId('drawResmoothPoints'),pointUndo=byId('drawUndoPoint');
   const geometryOption=document.querySelector('[name=geometry] option[value=drawn]');
   const ctx=overlay.getContext('2d');
-  let active=false,pointer=null,raw=[],ready=[],fit='smooth',editing=false;
+  let active=false,pointer=null,raw=[],ready=[],importedSource=[],fit='smooth',editing=false;
   let editor=null,pendingPins=[],pendingCorners=[],adding=false,drag=null,history=[];
 
   // Convert between the design's normalized coordinates and the full stage,
@@ -104,8 +104,8 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
     smooth.setAttribute('aria-pressed',String(fit==='smooth'));
     geometric.setAttribute('aria-pressed',String(fit==='geometric'));
     if(editing)return;
-    if(raw.length>=2){
-      ready=finishDrawnPath(raw,fit,Number(power.value));
+    if(raw.length>=2||importedSource.length>=2){
+      ready=finishDrawnPath(raw.length>=2?raw:importedSource,fit,Number(power.value));
       pendingPins=[];pendingCorners=[];
       if(ready.length>=2){
         draw(ready);
@@ -117,7 +117,7 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
     syncPointControls();
   }
   function reset(){
-    pointer=null;drag=null;raw=[];ready=[];pendingPins=[];pendingCorners=[];
+    pointer=null;drag=null;raw=[];ready=[];importedSource=[];pendingPins=[];pendingCorners=[];
     editor=null;editing=false;adding=false;history=[];
     draw([]);syncPointControls();
     hint.textContent='Draw anywhere on the preview, including beyond the frame.';
@@ -162,7 +162,7 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
       pendingCorners=savedPointCorners(editor);
       // No longer re-run the original raw stroke after manual corrections.
       // Hiding anchors keeps the edited geometry authoritative until redraw.
-      raw=[];
+      raw=[];importedSource=[];
       editing=false;editor=null;adding=false;history=[];
       hint.textContent='Edited path retained. Apply it or return to Edit points.';
     }
@@ -240,7 +240,7 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
       syncPointControls();draw(editor.points);
       return;
     }
-    pointer=event.pointerId;raw=[];ready=[];pendingPins=[];pendingCorners=[];apply.disabled=true;
+    pointer=event.pointerId;raw=[];ready=[];importedSource=[];pendingPins=[];pendingCorners=[];apply.disabled=true;
     append(event);
     try{overlay.setPointerCapture(pointer);}catch{}
     hint.textContent='Keep drawing. Lift your finger to finish.';
@@ -356,6 +356,20 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
     }
   });
   return {
+    // Imported geometry enters the exact same provisional preview, point
+    // editor, undo and onApply transaction as a finger-drawn curve.
+    loadPath(imported){
+      if(active)stop();
+      start();
+      if(!active)return false;
+      ready=imported.points.map(p=>p.slice());
+      importedSource=ready.map(p=>p.slice());
+      raw=[];pendingPins=[...(imported.anchors||[])];
+      pendingCorners=[...(imported.corners||[])];
+      hint.textContent='Imported path ready. Edit points or choose Use path.';
+      syncPointControls();draw(ready);
+      return true;
+    },
     sync(recipe){
       geometryOption.disabled=recipe.customPath.length<2;
       button.disabled=recipe.lockedSettings.includes('geometry');

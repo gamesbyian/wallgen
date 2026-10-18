@@ -9,6 +9,7 @@ on:
       - assets/**
       - tests/browser-smoke.mjs
       - editor-redesign.css
+      - image-path.css
       - mobile-editor-rail.css
       - mobile-compact.css
       - .github/workflows/mobile-browser.yml

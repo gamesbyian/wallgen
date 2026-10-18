@@ -1,0 +1,62 @@
+/* Import image as geometry. The picker is a temporary viewport, never part
+   of the wallpaper export, recipe, or ordinary no-scroll settings tray. */
+.randomize-toolbar #importPathToggle{
+  grid-column:1/-1;grid-row:3;width:100%;min-height:31px;
+  padding:4px 8px;font-size:11px;border-radius:8px;
+}
+.randomize-toolbar #importPathToggle:disabled{opacity:.35}
+.image-path-dialog{
+  box-sizing:border-box;width:min(470px,calc(100vw - 16px));
+  height:min(740px,calc(100dvh - 22px));max-width:none;max-height:none;
+  margin:auto;padding:11px;overflow:hidden;border:1px solid #776a8e;
+  border-radius:14px;background:#191b27;color:#f7f4ff;
+  box-shadow:0 16px 70px #000a;overscroll-behavior:contain;
+}
+.image-path-dialog[open]{display:flex;flex-direction:column;gap:8px}
+.image-path-dialog::backdrop{background:#090a13cc}
+.image-path-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.image-path-top strong{font-size:15px}
+.image-path-top button,.image-path-actions button{
+  border:1px solid #686575;border-radius:8px;background:#363340;
+  color:#fff;min-height:33px;padding:5px 11px;font-weight:700;cursor:pointer;
+}
+.image-path-top button{width:33px;padding:4px}
+.image-path-dialog #imagePathStatus{
+  font-size:11px;line-height:1.4;text-align:center;margin:0;min-height:30px;
+  color:#e7ddea;
+}
+.image-path-preview{
+  flex:1;min-height:0;min-width:0;display:flex;align-items:center;
+  justify-content:center;overflow:hidden;border:1px solid #4d4e60;
+  border-radius:9px;background:#111523;
+}
+.image-path-preview canvas{
+  display:block;width:auto;height:auto;max-width:100%;max-height:100%;
+  object-fit:contain;touch-action:manipulation;cursor:crosshair;
+}
+.image-path-choice{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700}
+.image-path-choice select{
+  flex:1;min-width:0;min-height:34px;border-radius:8px;
+  border:1px solid #77748e;background:#302f42;color:#fff;padding:5px 7px;
+}
+.image-path-actions{display:flex;gap:8px;justify-content:space-between}
+.image-path-actions button{flex:1;min-width:0;font-size:11px;padding:5px 5px}
+.image-path-actions #imagePathAngle{background:#3f3564;border-color:#8d7da4}
+.image-path-actions #imagePathApply{background:#c44d91;border-color:#ee8dca}
+.image-path-actions button:disabled{opacity:.4;cursor:default}
+.image-path-dialog button:focus-visible,
+.image-path-dialog select:focus-visible{outline:2px solid #f4c0e9;outline-offset:2px}
+@media(max-width:790px){
+  body.mobile-studio .mobile-preview-rail-left #importPathToggle{
+    display:flex!important;align-items:center;justify-content:center;
+    flex-direction:column;gap:1px;
+    width:43px!important;min-width:43px!important;
+    height:34px!important;min-height:34px!important;
+    padding:2px!important;font-size:13px!important;line-height:1;
+    background:var(--surface);color:inherit;border:1px solid var(--line);
+  }
+  body.mobile-studio .mobile-preview-rail-left #importPathToggle span{
+    font-size:8px;font-weight:750;line-height:1.1;text-align:center;
+  }
+  .image-path-dialog{width:calc(100vw - 12px);height:calc(100dvh - 16px);padding:8px}
+}

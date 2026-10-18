@@ -2,6 +2,7 @@ import { OUTPUT_WIDTH, OUTPUT_HEIGHT, normalizeRecipe, resolveScene, encodeRecip
 import { drawWallpaper, presentNudgedArtwork } from './renderer.js';
 import { embedPngMetadata, extractPngRecipe, cleanMetadata, METADATA_FIELDS } from './png-metadata.js';
 import { installDrawTool } from './draw-path-ui.js?v=20261018-points1';
+import { installImagePathTool } from './image-path-ui.js?v=20261018-import1';
 import {mountEditor,selectEditorTool} from './editor-layout.js';
 import {randomizeScope} from './scoped-random.js';
 import {STYLE_PRESETS} from './editor-schema.js';
@@ -292,6 +293,7 @@ function render(recipe,{scroll=false,bypassLocks=false}={}) {
   favoriteButton.setAttribute('aria-pressed',String(isFavorite(current)));
   // Keep the squat-heart SVG intact; aria-pressed controls its fill.
   drawTool.sync(current);
+  imagePathTool.sync(current);
   document.getElementById('favoriteCount').textContent=String(favorites.length);
   syncURL();
   if(scroll) document.querySelector('.workspace-head').scrollIntoView({behavior:'smooth',block:'start'});
@@ -321,6 +323,27 @@ const drawTool=installDrawTool({
     next.positionY=0;
     changeRecipe(next);
     showNotice('Drawn path applied. Undo restores the previous wallpaper.');
+  },
+});
+const imagePathTool=installImagePathTool({
+  getRecipe:()=>current,
+  onNotice:showNotice,
+  onPath:path=>drawTool.loadPath(path),
+  onAngle:angle=>{
+    // Rotation is relative to the resolved seed direction, not fixed at 45°.
+    const base=fromControls();
+    const keys=['orientation','diagonalRotation'];
+    if(base.geometry==='drawn')keys.push('geometry');
+    if(keys.some(key=>base.lockedSettings.includes(key))){
+      showNotice('Unlock Path geometry and Layout direction before applying an angle.');
+      return false;
+    }
+    const geometry=base.geometry==='drawn'?'straight':base.geometry;
+    const trial=normalizeRecipe({...base,geometry,orientation:'diagonal',diagonalRotation:0});
+    const baseline=resolveScene(trial).angle*180/Math.PI;
+    changeRecipe({...base,geometry,orientation:'diagonal',diagonalRotation:angle-baseline});
+    showNotice('Detected '+angle+'° line direction applied. Undo restores the previous angle.');
+    return true;
   },
 });
 function updatePositionStatus(){
