@@ -53,7 +53,7 @@ function fakeGPU(){
     TEXTURE_WRAP_T:13,NEAREST:14,CLAMP_TO_EDGE:15,
     UNPACK_FLIP_Y_WEBGL:16,UNPACK_PREMULTIPLY_ALPHA_WEBGL:17,
     UNPACK_COLORSPACE_CONVERSION_WEBGL:18,NONE:19,RGBA:20,
-    UNSIGNED_BYTE:21,BLEND:22,SCISSOR_TEST:23,COLOR_BUFFER_BIT:24,
+    UNSIGNED_BYTE:21,RGBA8:26,BLEND:22,SCISSOR_TEST:23,COLOR_BUFFER_BIT:24,
     TRIANGLES:25,NO_ERROR:0,
     createShader(){counters.shaders++;return {};},
     shaderSource(){},compileShader(){},getShaderParameter(){return true;},
@@ -65,7 +65,7 @@ function fakeGPU(){
     bindBuffer(){},bufferData(){},deleteBuffer(){counters.deleted++;},
     createTexture(){counters.textures++;return {};},
     activeTexture(){},bindTexture(){},texParameteri(){},pixelStorei(){},
-    texImage2D(){counters.allocations++;},
+    texStorage2D(){counters.allocations++;},
     texSubImage2D(){counters.reuploads++;},
     deleteTexture(){counters.deleted++;},
     getError(){return 0;},
@@ -116,7 +116,7 @@ test('reusable GPU session allocates shader/program/texture exactly once',()=>{
   // Calling setMask must therefore upload the new pixels.
   assert.equal(session.setMask(mutableMask).supported,true);
   assert.equal(mock.counters.allocations,1);
-  assert.equal(mock.counters.reuploads,1);
+  assert.equal(mock.counters.reuploads,2);
   assert.equal(session.stats.maskUploads,2);
   session.dispose();session.dispose();
   assert.equal(mock.counters.deleted,5);
