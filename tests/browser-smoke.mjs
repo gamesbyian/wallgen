@@ -722,6 +722,47 @@ try{
   console.log('ROTATION_STEPPER_ACCEPTANCE',JSON.stringify(fineRotations));
   assert.ok(fineRotations.incremented,'rotation step must update the actual recipe field');
   assert.ok(fineRotations.controls.every(v=>v.minus&&v.plus&&v.quarterTurns===2&&v.reset));
+  // E2E: a phone-uploaded raster image becomes an editable candidate and a
+  // regenerable recipe, never a retained image or an unundoable replacement.
+  const imageImport=await evaluate(`(async()=>{
+    const original=new URLSearchParams(location.search).get('r');
+    const art=document.createElement('canvas');art.width=160;art.height=240;
+    const ctx=art.getContext('2d');
+    ctx.fillStyle='#fff';ctx.fillRect(0,0,160,240);
+    ctx.strokeStyle='#131722';ctx.lineWidth=8;
+    ctx.beginPath();ctx.moveTo(25,35);ctx.lineTo(135,180);ctx.stroke();
+    const blob=await new Promise(ok=>art.toBlob(ok,'image/png'));
+    const dt=new DataTransfer();dt.items.add(new File([blob],'diagonal.png',{type:'image/png'}));
+    const file=document.getElementById('imagePathFile');file.files=dt.files;
+    file.dispatchEvent(new Event('change',{bubbles:true}));
+    return {original,buttonVisible:document.getElementById('importPathToggle')
+      .getBoundingClientRect().width>0};
+  })()`);
+  await waitFor('document.getElementById("imagePathDialog").open && document.getElementById("imagePathCandidate").options.length>0',15000);
+  const imageCandidates=await evaluate(`(()=>{
+    const select=document.getElementById('imagePathCandidate');
+    const labels=[...select.options].map(o=>o.textContent);
+    const line=[...select.options].find(o=>o.textContent.includes('Line '));
+    if(line){select.value=line.value;select.dispatchEvent(new Event('change',{bubbles:true}));}
+    document.getElementById('imagePathApply').click();
+    const live=document.getElementById('drawOverlay');
+    const ready=!live.hidden&&!document.getElementById('drawApply').disabled;
+    if(ready)document.getElementById('drawApply').click();
+    const recipe=JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get('r')));
+    return {labels,ready,closed:!document.getElementById('imagePathDialog').open,
+      geometry:recipe.geometry,pathPoints:recipe.customPath.length,
+      imageEmbedded:JSON.stringify(recipe).includes('diagonal.png')};
+  })()`);
+  console.log('IMAGE_IMPORT_PHONE_ACCEPTANCE',JSON.stringify({imageImport,imageCandidates}));
+  assert.ok(imageImport.buttonVisible);
+  assert.ok(imageCandidates.ready&&imageCandidates.closed);
+  assert.ok(imageCandidates.labels.some(v=>v.includes('Line ')));
+  assert.equal(imageCandidates.geometry,'drawn');
+  assert.ok(imageCandidates.pathPoints>=20&&!imageCandidates.imageEmbedded);
+  await evaluate('document.getElementById("undo").click()');
+  // No file import should poison future generation or the original undo stack.
+  assert.ok(await evaluate('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).geometry !== "drawn"') ||
+    await evaluate('document.getElementById("undo").disabled===false'));
   console.log('REDESIGN_EXPLORATION_ACCEPTANCE_SUCCESS');
 }finally{
   try{ws?.close()}catch{}
