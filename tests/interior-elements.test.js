@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {normalizeRecipe,resolveScene,encodeRecipe,decodeRecipe} from '../src/model.js';
 import {randomizeScope} from '../src/scoped-random.js';
-import {normalizeInteriorElements,elementWave,elementApplies,elementInk} from '../src/interior-elements.js';
+import {normalizeInteriorElements,elementWave,elementApplies,elementInk,polygonStripBounds} from '../src/interior-elements.js';
 
 test('interior stack validates malformed and excessive elements safely',()=>{
   const elements=normalizeInteriorElements(Array.from({length:20},(_,i)=>({
@@ -70,4 +70,23 @@ test('contour placement exposes whole cycles while field frequency stays continu
   assert.equal(contour.frequency,8);
   assert.equal(field.frequency,7.7);
   assert.equal(normalizeInteriorElements([{placement:'contour',frequency:.1}])[0].frequency,1);
+});
+
+test('visibility strips bound concave and narrow polygons without inventing intersections',()=>{
+  const wedge=[
+    {x:0,y:0},{x:1000,y:-25},{x:1000,y:25}
+  ];
+  const center=polygonStripBounds(wedge,-2,2);
+  assert.ok(center);
+  assert.ok(center.left>=0&&center.right<=1000);
+  assert.equal(polygonStripBounds(wedge,100,150),null);
+  const bar=[
+    {x:0,y:0},{x:100,y:0},{x:100,y:80},{x:70,y:80},
+    {x:70,y:30},{x:30,y:30},{x:30,y:80},{x:0,y:80}
+  ];
+  const bottom=polygonStripBounds(bar,60,65);
+  assert.deepEqual(bottom,{left:0,right:100});
+  const upper=polygonStripBounds(bar,5,10);
+  assert.deepEqual(upper,{left:0,right:100});
+  assert.equal(polygonStripBounds([],1,3),null);
 });

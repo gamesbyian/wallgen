@@ -145,6 +145,61 @@ try{
   })()`);
   assert.ok(contourStyles.every(s=>s.changed>45),
     'all selectable contour geometries must change real painted pixels: '+JSON.stringify(contourStyles));
+  // Many coloured objects with repeated interior patterns must remain
+  // interactive, rather than tessellating an enormous invisible ray field.
+  const renderStress=await evaluate(`(async()=>{
+    const {drawWallpaper}=await import('/src/renderer.js');
+    const canvas=document.createElement('canvas');canvas.width=240;canvas.height=520;
+    const elements=Array.from({length:4},(_,i)=>({
+      id:'perf-'+i,placement:i%2?'field':'local',
+      type:'line',shape:i%2?'wave':'zigzag',stroke:'dotted',
+      color:'white',width:2.2,frequency:9,amplitude:.2,phase:i*17
+    }));
+    const measurements=[];
+    for(const mode of [
+      {structure:'radial',radialMode:'sunburst',rayCount:70,rayCoverage:100},
+      {structure:'regions',regionMode:'blocks',regionCount:70,regionJitter:90}
+    ]){
+      const start=performance.now();
+      drawWallpaper(canvas,{seed:'stress-visible-geometry',...mode,
+        material:'none',interiorElements:elements});
+      const duration=performance.now()-start;
+      const pixels=canvas.getContext('2d').getImageData(0,0,240,520).data;
+      measurements.push({structure:mode.structure,duration,
+        present:pixels.some((v,i)=>i%4===0&&v>0)});
+    }
+    return measurements;
+  })()`);
+  console.log('VISIBLE_DECORATION_RENDER_STRESS',JSON.stringify(renderStress));
+  assert.ok(renderStress.every(x=>x.present&&x.duration<12000),
+    'dense multi-region decoration should paint within a responsive budget: '+JSON.stringify(renderStress));
+  const pathPlacement=await evaluate(`(async()=>{
+    const {drawWallpaper}=await import('/src/renderer.js');
+    const canvas=document.createElement('canvas');canvas.width=240;canvas.height=520;
+    const recipe={seed:'path-interior-placement',structure:'paths',family:'studio',
+      geometry:'wave',motif:'solid',material:'none',stripeWidth:65,spread:75,
+      interiorElements:[{id:'placement',shape:'wave',type:'line',stroke:'solid',
+        width:2,frequency:6,amplitude:.25,color:'white',opacity:1}]};
+    const render=placement=>{
+      drawWallpaper(canvas,{...recipe,interiorElements:[{
+        ...recipe.interiorElements[0],placement
+      }]});
+      return canvas.getContext('2d').getImageData(0,0,240,520).data.slice();
+    };
+    const local=render('local'),edge=render('contour'),field=render('field');
+    const different=(a,b)=>{
+      let changed=0;
+      for(let i=0;i<a.length;i+=4)
+        if(Math.abs(a[i]-b[i])+Math.abs(a[i+1]-b[i+1])+
+          Math.abs(a[i+2]-b[i+2])>30)changed++;
+      return changed;
+    };
+    return {edge:different(local,edge),field:different(local,field),
+      edgeVsField:different(edge,field)};
+  })()`);
+  assert.ok(Object.values(pathPlacement).every(count=>count>35),
+    'path placement choices must produce meaningfully distinct artwork: '+
+    JSON.stringify(pathPlacement));
   const initial=await evaluate('({tabs:document.querySelectorAll(".settings-tab").length,tools:document.querySelectorAll(".editor-tool-card").length,preview:document.querySelector(".wallpaper-frame").getBoundingClientRect().height,scroll:document.documentElement.scrollHeight})');
   assert.equal(initial.tabs,7);
   assert.ok(initial.tools>=18);
@@ -570,6 +625,88 @@ try{
     await captureUI('100-percent-'+category+'-'+tool);
   }
   await checkEditorZoom(615,1365,'67-percent');
+  // Screenshot regressions: a dense region editor and every new Details
+  // card must fit at the zoomed browser size with no hidden final control.
+  await evaluate(`(()=>{
+    const field=document.querySelector('[name=structure]');
+    field.value='regions';
+    field.dispatchEvent(new Event('change',{bubbles:true}));
+  })()`);
+  await waitFor('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).structure==="regions"');
+  const fitNewTools=await evaluate(`(()=>{
+    const issues=[];
+    const inspect=(name)=>{
+      const card=document.querySelector('.editor-tool-card:not([hidden])');
+      const frame=card.getBoundingClientRect();
+      for(const el of card.querySelectorAll('select,input:not([type=hidden]),button')){
+        if(!el.getClientRects().length||el.closest('[hidden]'))continue;
+        const b=el.getBoundingClientRect();
+        if(b.top<frame.top-2||b.bottom>frame.bottom+2||
+           b.left<frame.left-2||b.right>frame.right+2)
+          issues.push({name,control:el.name||el.getAttribute('aria-label')||el.textContent,
+            overflow:Math.round(b.bottom-frame.bottom)});
+      }
+    };
+    document.getElementById('tab-path').click();
+    for(const name of ['regions','region-detail','origin']){
+      document.querySelector('[data-editor-tool="'+name+'"]').click();inspect(name);
+    }
+    document.getElementById('tab-details').click();
+    document.querySelector('[data-editor-tool="interior"]').click();
+    document.querySelector('.interior-toolbar button').click();
+    for(const name of ['interior','interior-style','interior-motion','interior-placement','interior-targets']){
+      document.querySelector('[data-editor-tool="'+name+'"]').click();inspect(name);
+    }
+    return issues;
+  })()`);
+  assert.deepEqual(fitNewTools,[],
+    'all geometric and interior controls must fit on a phone with browser zoom');
+  await captureUI('67-percent-details-placement');
+  const elementUsability=await evaluate(`(async()=>{
+    document.getElementById('tab-details').click();
+    document.querySelector('[data-editor-tool="interior"]').click();
+    const manager=document.querySelector('.editor-tool-card[data-editor-tool="interior"]');
+    const select=manager.querySelector('.interior-toolbar select');
+    const scope=manager.querySelector('.interior-scope')?.textContent||'';
+    const lock=manager.querySelector('.interior-actions button:last-child');
+    lock.click();
+    const locked=document.querySelector('.editor-tool-card[data-editor-tool="interior-style"] select').disabled;
+    const chooseAvailable=!document.querySelector('.interior-toolbar select').disabled;
+    document.querySelector('.interior-actions button:last-child').click();
+    const unlocked=!document.querySelector('.editor-tool-card[data-editor-tool="interior-style"] select').disabled;
+    const identity=document.querySelector('.interior-toolbar select');
+    const background=document.querySelector('[name=background]');
+    background.value=background.value==='black'?'white':'black';
+    background.dispatchEvent(new Event('change',{bubbles:true}));
+    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+    return {scope,locked,chooseAvailable,unlocked,
+      stable:identity===document.querySelector('.interior-toolbar select')};
+  })()`);
+  assert.ok(elementUsability.scope.includes('all seven colours'),
+    'the element manager should explain its colour scope');
+  assert.ok(elementUsability.locked&&elementUsability.chooseAvailable&&
+    elementUsability.unlocked&&elementUsability.stable,
+    'locks must visibly disable changes and unrelated edits must not rebuild Details: '+
+    JSON.stringify(elementUsability));
+  // A rapid sequence of changes must settle on the last requested state,
+  // and every change must actually refresh the painted wallpaper.
+  const previewChange=await evaluate(`(async()=>{
+    const canvas=document.getElementById('preview');
+    const before=canvas.toDataURL();
+    const select=document.querySelector('[name=regionMode]');
+    select.value='facets';
+    select.dispatchEvent(new Event('change',{bubbles:true}));
+    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+    const after=canvas.toDataURL();
+    return {changed:before!==after,selected:select.value};
+  })()`);
+  assert.equal(previewChange.selected,'facets');
+  assert.ok(previewChange.changed,'geometry selector must repaint instead of leaving stale pixels');
+  await evaluate(`(()=>{
+    const field=document.querySelector('[name=structure]');
+    field.value='paths';field.dispatchEvent(new Event('change',{bubbles:true}));
+  })()`);
+  await waitFor('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).structure==="paths"');
   for(const [category,tool] of [['path','geometry'],['stripes','structure'],['effects','lighting']]){
     await evaluate('document.getElementById("tab-'+category+'").click()');
     await evaluate('document.querySelector("[data-editor-tool='+tool+']").click()');

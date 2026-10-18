@@ -395,6 +395,47 @@ function arcLengthUntil(stripe,extent,station){
   }
   return Math.sign(delta)*length;
 }
+// Canvas-field ink shared by all ribbon colours. Unlike local and contour
+// lines it does not follow each stripe's centreline, but it is still clipped
+// against the true ribbon silhouette by its caller. Bound strokes to the
+// visible parametric ribbon envelope instead of constructing a full-wall
+// field separately seven times.
+function drawPathFieldInk(ctx,stripe,extent,e){
+  const start=stripe.segmentStart??-extent,end=stripe.segmentEnd??extent;
+  let x0=Infinity,x1=-Infinity,y0=Infinity,y1=-Infinity;
+  // Sample the complete original path densely enough to include short
+  // jagged/looping turns; a coarse bounding box could silently crop field
+  // decorations at precisely the challenging imported/drawn features.
+  const samples=Math.max(180,Math.min(2500,Math.ceil((end-start)/2.3)));
+  for(let i=0;i<=samples;i++){
+    const station=start+(end-start)*i/samples;
+    const p=samplePath(stripe,station,extent);
+    const half=widthAt(stripe,station,extent)*.5;
+    x0=Math.min(x0,p.x-half);x1=Math.max(x1,p.x+half);
+    y0=Math.min(y0,p.y-half);y1=Math.max(y1,p.y+half);
+  }
+  if(!Number.isFinite(x0)||!Number.isFinite(y0))return;
+  const period=Math.max(12,160/Math.max(.2,e.frequency));
+  const scale=Math.max(16,220/e.frequency);
+  const step=Math.max(1.5,Math.min(5,scale/12));
+  const pad=e.amplitude*80+ctx.lineWidth*.5+8;
+  const startY=-2400+Math.floor((y0-pad+2400)/period)*period;
+  const firstX=Math.floor((x0-pad)/step)*step;
+  const endX=x1+pad;
+  const fieldShape={...e,frequency:1};
+  for(let y=startY;y<=y1+pad;y+=period){
+    ctx.beginPath();
+    if(e.stroke!=='solid')ctx.lineDashOffset=-(firstX+1760);
+    for(let x=firstX;x<=endX;x+=step){
+      const t=(x+e.phase*3)/scale;
+      const yy=y+e.position*period+e.amplitude*80*elementWave(fieldShape,t);
+      const xx=e.shape==='loop'?x+e.amplitude*80*
+        Math.cos(t*Math.PI*2+e.phase*Math.PI/180):x;
+      if(x===firstX)ctx.moveTo(xx,yy);else ctx.lineTo(xx,yy);
+    }
+    ctx.stroke();
+  }
+}
 function drawPathInteriors(ctx,stripe,extent,scene){
   if(!scene.interiorElements?.length)return;
   ctx.save();ctx.clip(stripeFillPath(stripe,extent,scene));
@@ -406,6 +447,10 @@ function drawPathInteriors(ctx,stripe,extent,scene){
     ctx.globalAlpha=e.opacity;
     ctx.lineWidth=e.type==='band'?Math.max(.15,stripe.width*e.width/100):e.width;
     ctx.lineJoin='round';lineDash(ctx,e);
+    if(e.placement==='field'){
+      drawPathFieldInk(ctx,stripe,extent,e);
+      ctx.restore();continue;
+    }
     const path=new Path2D();
     // Keep interior wave/loop phase stable in core path space as zoom and
     // off-frame continuation change the painted station interval.
@@ -416,7 +461,11 @@ function drawPathInteriors(ctx,stripe,extent,scene){
       const station=start+(end-start)*i/n;
       const p=samplePath(stripe,station,extent);
       const width=widthAt(stripe,station,extent);
-      const transverse=e.position*width+
+      const position=e.placement==='contour'?
+        (e.position<0?-1:1)*Math.max(0,width*.5-
+          Math.max(e.width*.5+1,width*(.06+Math.abs(e.position)*.45))):
+        e.position*width;
+      const transverse=position+
         e.amplitude*width*elementWave(e,station/Math.max(100,phaseExtent*2));
       const longitudinal=e.shape==='loop'?
         Math.cos(station/Math.max(100,phaseExtent*2)*e.frequency*Math.PI*2+e.phase*Math.PI/180)*e.amplitude*width:0;

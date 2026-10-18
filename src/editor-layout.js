@@ -15,7 +15,7 @@ let activeStructure='paths',activeRegionMode='voronoi',activeConstruction='ribbo
 // Hidden tools retain all values and locks; changing structure restores them.
 const pathTools=new Set(['geometry','safety','turn','single-loop','shape-details','ends']);
 const radialTools=new Set(['rays','ray-shape','origin']);
-const regionTools=new Set(['regions','origin']);
+const regionTools=new Set(['regions','region-detail','origin']);
 function toolApplies(entry){
   if(entry.category==='path'){
     if(activeStructure==='paths')return pathTools.has(entry.spec.id);

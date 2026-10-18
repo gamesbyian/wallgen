@@ -57,9 +57,36 @@ export function elementWave(e,t){
   return 0;
 }
 export function lineDash(ctx,e){
-  ctx.setLineDash(e.stroke==='dashed'?[e.width*5,e.width*3]:
-    e.stroke==='dotted'?[.01,e.width*3]:[]);
+  const width=Math.max(.15,ctx.lineWidth||e.width);
+  ctx.setLineDash(e.stroke==='dashed'?[width*4,width*2.5]:
+    e.stroke==='dotted'?[.01,width*2.7]:[]);
   ctx.lineCap=e.stroke==='dotted'?'round':'round';
+}
+// Conservative horizontal extent of a polygon intersecting a strip.
+// Waves may shift each scanline up or down: callers widen the strip by the
+// full displacement and half the stroke. Restricting horizontal sampling to
+// that strip eliminates millions of invisible tessellation points from narrow
+// radial rays while retaining correct clipped curves around shape boundaries.
+export function polygonStripBounds(vertices,low,high){
+  let left=Infinity,right=-Infinity;
+  if(!vertices?.length)return null;
+  for(let i=0;i<vertices.length;i++){
+    const a=vertices[i],b=vertices[(i+1)%vertices.length];
+    const minY=Math.min(a.y,b.y),maxY=Math.max(a.y,b.y);
+    if(maxY<low||minY>high)continue;
+    if(a.y>=low&&a.y<=high){
+      left=Math.min(left,a.x);right=Math.max(right,a.x);
+    }
+    if(b.y>=low&&b.y<=high){
+      left=Math.min(left,b.x);right=Math.max(right,b.x);
+    }
+    for(const y of [low,high]){
+      if(y<minY||y>maxY||Math.abs(b.y-a.y)<1e-9)continue;
+      const x=a.x+(b.x-a.x)*(y-a.y)/(b.y-a.y);
+      left=Math.min(left,x);right=Math.max(right,x);
+    }
+  }
+  return left<=right?{left,right}:null;
 }
 // For arbitrary closed regions, field strokes are painted in canvas space.
 // Their visibility is governed exclusively by the owner's exact shape mask.
@@ -68,10 +95,6 @@ export function drawRegionInteriors(ctx,object,elements,structure,renderBounds){
   const xs=object.vertices.map(p=>p.x),ys=object.vertices.map(p=>p.y);
   const x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys);
   const cx=(x0+x1)/2,cy=(y0+y1)/2;
-  // Radial wedges intentionally extend thousands of logical pixels beyond
-  // the frame. Bound procedural work to the visible design plus overhang.
-  const left=Math.max(x0,-1500),right=Math.min(x1,2100);
-  const top=Math.max(y0,-2200),bottom=Math.min(y1,3500);
   ctx.save();ctx.beginPath();ctx.moveTo(object.vertices[0].x,object.vertices[0].y);
   for(const p of object.vertices.slice(1))ctx.lineTo(p.x,p.y);
   ctx.closePath();ctx.clip();
@@ -116,21 +139,62 @@ export function drawRegionInteriors(ctx,object,elements,structure,renderBounds){
       // cells; each cell merely reveals its portion of the same continuous ink.
       const ang=structure==='radial'&&e.placement==='local'?
         Math.atan2(cy-(object.origin?.y??650),cx-(object.origin?.x??300)):0;
+      // Work in the inverse-rotated *visible camera*, not the enormous
+      // region bounding box. A radial wedge can extend 4,200 units beyond
+      // the frame, and the old field loop sampled that entire offscreen area
+      // once for EVERY region and EVERY element on every setting change.
+      const camera=renderBounds||{left:0,top:0,right:600,bottom:1300};
+      const bleed=100+e.width*.5+e.amplitude*80;
+      const corners=[
+        [camera.left,camera.top],[camera.left,camera.bottom],
+        [camera.right,camera.top],[camera.right,camera.bottom]
+      ];
+      const cos=Math.cos(ang),sin=Math.sin(ang);
+      const inverse=corners.map(([x,y])=>({
+        x:cx+(x-cx)*cos+(y-cy)*sin,
+        y:cy-(x-cx)*sin+(y-cy)*cos
+      }));
+      const left=Math.max(x0-bleed,Math.min(...inverse.map(p=>p.x))-bleed);
+      const right=Math.min(x1+bleed,Math.max(...inverse.map(p=>p.x))+bleed);
+      const top=Math.max(y0-bleed,Math.min(...inverse.map(p=>p.y))-bleed);
+      const bottom=Math.min(y1+bleed,Math.max(...inverse.map(p=>p.y))+bleed);
+      if(right<=left||bottom<=top){ctx.restore();continue;}
       ctx.translate(cx,cy);ctx.rotate(ang);ctx.translate(-cx,-cy);
       const period=Math.max(12,160/Math.max(.2,e.frequency));
       const waveElement={...e,frequency:1};
       const scale=Math.max(16,220/e.frequency);
       const step=Math.max(1.5,Math.min(5,scale/12));
+      const localPolygon=ang?object.vertices.map(p=>({
+        x:cx+(p.x-cx)*cos+(p.y-cy)*sin,
+        y:cy-(p.x-cx)*sin+(p.y-cy)*cos
+      })):object.vertices;
+      const verticalReach=Math.abs(e.position)*period+e.amplitude*80+
+        ctx.lineWidth*.5+step*2;
+      const horizontalReach=e.shape==='loop'?e.amplitude*80+ctx.lineWidth*.5+step*2:
+        ctx.lineWidth*.5+step*2;
       // Anchor every scanline to one world-space lattice. Adjacent polygon
       // masks reveal the same pattern without restarting its vertical phase.
-      const anchorY=-2400;
+      // Field placement uses one shared world lattice; local placement
+      // restarts that lattice around each shape's own centre. Previously
+      // these modes were indistinguishable for nonradial regions.
+      const anchorY=e.placement==='local'?cy:-2400;
+      const anchorX=e.placement==='local'?cx:0;
       const startY=anchorY+Math.floor((top-180-anchorY)/period)*period;
       for(let y=startY;y<=bottom+180;y+=period){
+        const strip=polygonStripBounds(localPolygon,
+          y-verticalReach,y+verticalReach);
+        if(!strip)continue;
+        const leftX=Math.max(left-260,strip.left-horizontalReach);
+        const rightX=Math.min(right+260,strip.right+horizontalReach);
+        if(leftX>=rightX)continue;
+        // Quantize stations in world/local coordinates rather than restart
+        // the sampling grid independently in each polygon.
+        const from=anchorX+Math.floor((leftX-anchorX)/step)*step;
+        const to=rightX+step;
         ctx.beginPath();
-        const from=left-260,to=right+260;
         if(e.stroke!=='solid')ctx.lineDashOffset=-(from+1760);
         for(let x=from;x<=to;x+=step){
-          const t=(x+e.phase*3)/scale;
+          const t=(x-anchorX+e.phase*3)/scale;
           const displacement=e.amplitude*80*elementWave(waveElement,t);
           const yy=y+e.position*period+displacement;
           const xx=e.shape==='loop'?x+e.amplitude*80*Math.cos(t*2*Math.PI+e.phase*Math.PI/180):x;

@@ -332,8 +332,11 @@ function render(recipe,{scroll=false,bypassLocks=false}={}) {
   if(scroll) document.querySelector('.workspace-head').scrollIntoView({behavior:'smooth',block:'start'});
 }
 function changeRecipe(recipe,options={}){
+  if(pendingControlFrame){cancelAnimationFrame(pendingControlFrame);pendingControlFrame=0;}
   render(recipe,options);toControls(current);showResolvedSelections(currentScene);
-  syncInteriorUI();
+  const elementState=JSON.stringify([current.interiorElements,
+    current.lockedSettings.includes('interiorElements')]);
+  if(elementState!==lastInteriorState)syncInteriorUI();
   for(const die of form.querySelectorAll('[data-random-setting]')){
     const field=form.elements.namedItem(die.dataset.randomSetting);
     die.disabled=!field||field.disabled||field.dataset.inactive==='true';
@@ -494,9 +497,17 @@ importRecipeFile.addEventListener('change',async()=>{
   }catch(error){showNotice('Cannot restore design: '+error.message);}
 });
 
+let pendingControlFrame=0;
 function updateControlsFromInputs(){
   syncDiagonalUI();
   changeRecipe(fromControls());
+}
+function queueControlUpdate(){
+  if(pendingControlFrame)cancelAnimationFrame(pendingControlFrame);
+  pendingControlFrame=requestAnimationFrame(()=>{
+    pendingControlFrame=0;
+    updateControlsFromInputs();
+  });
 }
 
 for(const slider of form.querySelectorAll('input[type="range"]')){
@@ -642,8 +653,10 @@ const editor=mountEditor();
 // ordered element objects are a recipe collection, not separately lockable sliders.
 const interiorCards=Object.fromEntries(['interior','interior-style','interior-motion','interior-placement','interior-targets']
   .map(id=>[id,document.querySelector('.editor-tool-card[data-editor-tool="'+id+'"]')]));
-let selectedInterior=0;
+let selectedInterior=0,lastInteriorState='';
 function syncInteriorUI(){
+  lastInteriorState=JSON.stringify([current.interiorElements,
+    current.lockedSettings.includes('interiorElements')]);
   const items=current.interiorElements||[];
   for(const card of Object.values(interiorCards))card.replaceChildren();
   const make=(host,tag,label)=>{
@@ -696,6 +709,7 @@ function syncInteriorUI(){
     slider.type='range';slider.min=min;slider.max=max;slider.step=step;slider.value=active[key];
     slider.addEventListener('input',()=>{field.firstChild.textContent=name+' '+slider.value;});
     slider.addEventListener('change',()=>update(key,Number(slider.value)));
+    return slider;
   };
   const actions=make(manager,'div');actions.className='interior-actions';
   const up=make(actions,'button','↑');up.type='button';up.title='Move element upward';
@@ -737,15 +751,35 @@ function syncInteriorUI(){
   const customPicker=make(customLabel,'input');
   customPicker.type='color';customPicker.value=active.customColor;customPicker.disabled=active.color!=='custom';
   customPicker.addEventListener('change',()=>update('customColor',customPicker.value));
-  range(interiorCards['interior-motion'],'Amplitude','amplitude',0,.45,.01);
-  range(interiorCards['interior-motion'],active.placement==='contour'?'Cycles':'Frequency',
+  const amplitude=range(interiorCards['interior-motion'],'Amplitude',
+    'amplitude',0,.45,.01);
+  const frequency=range(interiorCards['interior-motion'],
+    active.placement==='contour'?'Cycles':'Frequency',
     'frequency',active.placement==='contour'?1:.1,30,
     active.placement==='contour'?1:.1);
-  range(interiorCards['interior-motion'],'Phase','phase',-180,180,1);
+  const phase=range(interiorCards['interior-motion'],'Phase','phase',-180,180,1);
+  // A straight stroke has no oscillation. Disable its dormant controls,
+  // but retain frequency for canvas fields, where it controls line spacing.
+  const oscillates=active.shape!=='straight';
+  amplitude.disabled=!oscillates;
+  phase.disabled=!oscillates;
+  frequency.disabled=!oscillates&&active.placement==='contour';
   select(interiorCards['interior-placement'],'Placement','placement',['local','field','contour']);
   range(interiorCards['interior-placement'],'Position','position',-.48,.48,.02);
   range(interiorCards['interior-placement'],active.type==='band'?'Band width %':'Line width','width',.15,50,.25);
   range(interiorCards['interior-placement'],'Opacity','opacity',0,1,.05);
+  // Make application scope visible on the otherwise sparse Elements card.
+  // Selective colour targeting can otherwise look like a broken or cropped
+  // stroke when only a few slices of a radial composition are decorated.
+  const scope=make(manager,'div');
+  scope.className='interior-scope';
+  const paletteNames=['Red','Orange','Yellow','Green','Blue','Indigo','Violet'];
+  scope.textContent=active.objectIds.length?
+    'Applied to '+active.objectIds.length+' selected shapes':
+    active.colorSlots.length?
+      'Colours: '+active.colorSlots.map(index=>paletteNames[index]).join(' · '):
+      'Applied to all seven colours';
+  scope.title=scope.textContent;
   const targetBox=make(interiorCards['interior-targets'],'div');targetBox.className='interior-targets';
   const names=['R','O','Y','G','B','I','V'];
   names.forEach((name,i)=>{
@@ -759,6 +793,14 @@ function syncInteriorUI(){
       update('colorSlots',next.length===7?[]:next);
     });
   });
+  if(stackLocked){
+    // A locked element stack is read-only. Leaving these controls enabled
+    // while respectSettingLocks silently ignored changes looked like a
+    // failed preview refresh. Selection and Unlock remain possible.
+    for(const card of Object.values(interiorCards))
+      for(const control of card.querySelectorAll('input,select,button'))
+        if(control!==lock&&control!==choose)control.disabled=true;
+  }
 }
 syncInteriorUI();
 const explorationHistory=installExplorationHistory({
@@ -840,24 +882,24 @@ form.addEventListener('change',event=>{
 let rangeTimeout;
 form.addEventListener('input',event=>{
   const key=event.target.name;
-  if(!FIELDS.includes(key))return;
+  if(!FIELDS.includes(key)||event.target.type!=='range')return;
   const output=form.querySelector(`output[for="${key}"]`);
   if(output)output.textContent=`${event.target.value}%`;
-  if(event.target.type==='range'){
-    const numeric=form.querySelector(`[data-number-for="${key}"]`);
-    if(numeric)numeric.value=event.target.value;
-  }
-  if(event.target.type==='range'){
-    clearTimeout(rangeTimeout);
-    rangeTimeout=setTimeout(updateControlsFromInputs,60);
-  }else {
-    syncTextureLayerVisibility();
-    syncStripeShadowUI();
-    syncDiagonalUI();
-    updateControlsFromInputs();
-  }
+  const numeric=form.querySelector(`[data-number-for="${key}"]`);
+  if(numeric)numeric.value=event.target.value;
+  clearTimeout(rangeTimeout);
+  rangeTimeout=setTimeout(queueControlUpdate,75);
 });
-form.addEventListener('change',()=>{clearTimeout(rangeTimeout);updateControlsFromInputs();});
+// Selects and checkboxes fire input followed immediately by change. Handling
+// only their change event avoids rendering a recipe twice. A completed choice
+// must commit SYNCHRONOUSLY: deferring it to a frame races Favourite, Save,
+// Undo and subsequent edits, which could otherwise act on the older artwork.
+// Only continuous slider movement is coalesced into a frame.
+form.addEventListener('change',event=>{
+  if(!FIELDS.includes(event.target.name)||event.target.name==='family')return;
+  clearTimeout(rangeTimeout);
+  updateControlsFromInputs();
+});
 form.addEventListener('submit',event=>event.preventDefault());
 seedInput.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();render(fromControls());}});
 document.getElementById('applySeed').addEventListener('click',()=>render(fromControls()));
