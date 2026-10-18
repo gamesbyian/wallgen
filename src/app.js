@@ -128,6 +128,7 @@ function inactiveSettingKeys(recipe,scene){
   if(scene.geometry==='drawn')inactive.add('orientation');
   if(scene.geometry!=='hairpin')inactive.add('turnRadius'),inactive.add('hairpinAngle');
   if(scene.geometry!=='loop')inactive.add('loopRadius'),inactive.add('loopSweep');
+  if(!['loop','loops','drawn'].includes(scene.geometry))inactive.add('crossingMode');
   if(scene.geometry!=='stepped')inactive.add('stepCount');
   if(scene.geometry!=='chevron')inactive.add('chevronSharpness');
   if(scene.geometry!=='loops')inactive.add('loopAspect');
