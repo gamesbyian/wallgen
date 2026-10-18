@@ -10,6 +10,8 @@ import { chromium } from 'playwright';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
 import { EDITOR_CATEGORIES } from '../src/editor-schema.js';
+import { captureSpecialStates } from './ui-atlas-special.mjs';
+import { writeAtlasReport } from './ui-atlas-report.mjs';
 
 const arg = key => process.argv.find(x => x.startsWith('--'+key+'='))?.split('=').slice(1).join('=');
 const baseURL = arg('base-url') || 'http://127.0.0.1:4173';
@@ -153,6 +155,7 @@ async function exercise(page,ctx){
       await capture(page,ctx,'conditional-'+name,{kind:'conditional',values});
     }catch(e){errors.push({profile:ctx.surface.id,zoom:ctx.zoom,case:name,error:String(e)});}
   }
+  await captureSpecialStates({page,ctx,capture,navigate,change,settle,clickIfVisible,errors});
   // Shell states and special tools: do not upload/download or alter assets.
   for(const [name,selector] of [
     ['editor-search','.editor-search-toggle'],
@@ -189,6 +192,15 @@ try{
           const seed=document.querySelector('#seedInput');
           if(seed){seed.value=fixedSeed;seed.dispatchEvent(new Event('change',{bubbles:true}));}
         },{zoom,fixedSeed});
+        await page.locator('#applySeed').evaluate(el=>el.click());
+        // The canvas is only a positional reference for the UI. Suppressing
+        // its image dramatically reduces artifact size and removes all false
+        // variation from the screenshots. Controls, overlays and frames remain.
+        await page.addStyleTag({content:`
+          #preview, #gallery .thumb canvas { visibility:hidden!important; }
+          .wallpaper-surface { background: #d2d2d2!important; }
+          #gallery .thumb { background:#e4e4e4; }
+        `});
         await settle(page);
         await exercise(page,{surface,zoom});
       }catch(e){errors.push({profile:surface.id,zoom,case:'fatal',error:String(e)});}
