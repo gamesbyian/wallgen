@@ -53,6 +53,23 @@ jobs:
           npm run render -- --seed hairpin-free --set geometry=hairpin --set turnRadius=0 --set spread=100 --set geometrySafety=false --width 600 --height 1300 --out output/hairpin-free.png
           npm run render -- --seed dots-large --set motif=dots --set geometry=straight --set dotSize=100 --set dotSpacing=0 --set motifSize=90 --set motifFrequency=15 --width 600 --height 1300 --out output/dots-large.png
           npm run render -- --seed arcs-dense --set geometry=arc --set shapeFrequency=100 --set shapeDepth=100 --width 600 --height 1300 --out output/arcs-dense.png
+      - name: Render true metric inset polygons through production Chromium
+        run: |
+          npm run render -- --recipe tests/fixtures/metric-inset-voronoi.json --width 600 --height 1300 --out output/metric-inset-voronoi.png
+          npm run render -- --recipe tests/fixtures/metric-inset-pinwheel.json --width 600 --height 1300 --out output/metric-inset-pinwheel.png
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {readFile} from 'node:fs/promises';
+          import {extractPngRecipe} from './src/png-metadata.js';
+          for(const [file,structure] of [['metric-inset-voronoi','regions'],['metric-inset-pinwheel','radial']]){
+            const png=await readFile('output/'+file+'.png');
+            assert.equal(png.readUInt32BE(16),600);
+            assert.equal(png.readUInt32BE(20),1300);
+            const recipe=extractPngRecipe(png);
+            assert.equal(recipe.structure,structure);
+            assert.equal(recipe.interiorElements[0].placement,'contour');
+          }
+          JS
       - name: Compare deliberate stripe self-crossing modes
         run: |
           for mode in over under weave; do

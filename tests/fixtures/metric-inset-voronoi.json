@@ -1,0 +1,29 @@
+{
+  "version": 2,
+  "seed": "metric-inset-voronoi",
+  "structure": "regions",
+  "regionMode": "organic",
+  "regionCount": 14,
+  "regionJitter": 82,
+  "viewZoom": 0.68,
+  "palette": "electric",
+  "dividerColor": "black",
+  "dividerWidth": 5,
+  "interiorElements": [
+    {
+      "id": "organic-contour",
+      "placement": "contour",
+      "type": "line",
+      "shape": "straight",
+      "stroke": "dotted",
+      "color": "white",
+      "width": 1.5,
+      "position": -0.1,
+      "frequency": 9,
+      "amplitude": 0,
+      "phase": 0,
+      "opacity": 1,
+      "enabled": true
+    }
+  ]
+}

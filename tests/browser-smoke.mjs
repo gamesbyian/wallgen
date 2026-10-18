@@ -88,6 +88,36 @@ try{
   await waitFor('document.querySelectorAll(".settings-tab").length===7',15000);
   await delay(300);
 
+  // Real Chromium raster acceptance: inset contours alter native painted pixels
+  // in both regional and radial structures, including a zoomed-out camera.
+  const insetRaster=await evaluate(`(async()=>{
+    const {drawWallpaper}=await import('/src/renderer.js');
+    const modes=[
+      {structure:'regions',regionMode:'voronoi',regionCount:7,viewZoom:1},
+      {structure:'radial',radialMode:'pinwheel',rayCount:7,viewZoom:.65}
+    ];
+    const results=[];
+    for(const mode of modes){
+      const canvas=document.createElement('canvas');
+      canvas.width=180;canvas.height=390;
+      const plain=()=>drawWallpaper(canvas,{seed:'browser-metric-offset',...mode,
+        dividerColor:'none',interiorElements:[]});
+      plain();
+      const baseline=canvas.getContext('2d').getImageData(0,0,180,390).data.slice();
+      drawWallpaper(canvas,{seed:'browser-metric-offset',...mode,
+        dividerColor:'none',interiorElements:[{id:'offset',placement:'contour',
+          shape:'straight',stroke:'solid',color:'white',width:2}]});
+      const painted=canvas.getContext('2d').getImageData(0,0,180,390).data;
+      let differing=0;
+      for(let i=0;i<painted.length;i+=4)
+        if(Math.abs(painted[i]-baseline[i])+Math.abs(painted[i+1]-baseline[i+1])+
+          Math.abs(painted[i+2]-baseline[i+2])>20)differing++;
+      results.push({structure:mode.structure,differing});
+    }
+    return results;
+  })()`);
+  assert.ok(insetRaster.every(x=>x.differing>30),
+    'true polygon contour offsets must visibly draw in radial and regional scenes: '+JSON.stringify(insetRaster));
   const initial=await evaluate('({tabs:document.querySelectorAll(".settings-tab").length,tools:document.querySelectorAll(".editor-tool-card").length,preview:document.querySelector(".wallpaper-frame").getBoundingClientRect().height,scroll:document.documentElement.scrollHeight})');
   assert.equal(initial.tabs,7);
   assert.ok(initial.tools>=18);

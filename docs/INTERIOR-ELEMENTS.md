@@ -28,9 +28,15 @@ strokes retain their station-aligned phase.
 
 For `radial` and `regions`, the closed vertices provide an exact clipping mask.
 Field lines and waves live in canvas space; local radial placement rotates the
-field relative to the region and the recorded origin. Contours follow nested
-interpolations of the polygon boundary. Nested regions are painted in object
-order, meaning smaller visible shapes cover the details of larger shapes.
+field relative to the region and the recorded origin. Contour placement uses
+true Euclidean distance from each original polygon edge, reconstructed as
+closed or open inset contours. Concave corners, holes and disappearing narrow
+necks are supported, including multiple independent resulting loops. Unlike
+centroid interpolation, this maintains approximately constant boundary distance
+with a bounded grid approximation. The grid is anchored in world space, so
+preview and PNG export have matching contour coordinates. Nested regions are
+painted in object order, meaning smaller visible shapes cover the details of
+larger shapes.
 The region divider pass occurs last, avoiding half-erased shared boundaries.
 
 Element ink may be black, white, light/dark tonal contrast or a strict six-digit
@@ -59,6 +65,8 @@ does not remove or rewrite them.
 ## Tests and guardrails
 
 - `tests/interior-elements.test.js`: normalization, determinism, metadata and targeting.
+- `tests/polygon-inset.test.js`: signed-distance correctness, disconnected loops,
+  polygon holes, fixed world grid, zoom cropping and degenerate inputs.
 - `tests/render.test.js`: shared painter and clipped decorations across all structures.
 - `tests/browser-smoke.mjs`: mobile editor, new element creation, visual change,
   recipe persistence, styling, targeting, removal, and no-scroll card checks.
@@ -66,8 +74,12 @@ does not remove or rewrite them.
 
 All internal paths are sampled at logical design resolution. Wave tessellation
 adapts to frequency and bounded world extents to avoid thousands-of-pixels
-overscan from radial producers. A future specialised *true geometric inset*
-operation for arbitrary concave polygons could improve the visual regularity
-of contour placements, but should be separately qualified before replacing
-the current stable interpolated-contour design. It is not necessary for other
-placement modes.
+overscan from radial producers. Closed-region contour rendering now uses `src/polygon-inset.js`. For a contour
+distance d, the target is the positive-d level set of signed Euclidean distance
+to original edges. Marching-squares interpolation makes an explicit accuracy/
+performance tradeoff (normally about 1–3 logical units between samples).
+This is a metric inset, numerically polygonized rather than an exact symbolic
+arc/line offset. Thin components naturally vanish or split. The signed distance
+is evaluated against the uncropped source geometry, while marching work is
+bounded to the visible camera with ample overhang. See
+[polygon inset engineering details](POLYGON-INSET.md).
