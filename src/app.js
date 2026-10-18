@@ -695,6 +695,9 @@ function syncInteriorUI(){
     slider.addEventListener('input',()=>{field.firstChild.textContent=name+' '+slider.value;});
     slider.addEventListener('change',()=>update(key,Number(slider.value)));
   };
+  const activeRow=make(manager,'label','Enabled');
+  const toggle=make(activeRow,'input');toggle.type='checkbox';toggle.checked=active.enabled;
+  toggle.addEventListener('change',()=>update('enabled',toggle.checked));
   select(interiorCards['interior-style'],'Element','type',['line','band']);
   select(interiorCards['interior-style'],'Geometry','shape',['straight','wave','zigzag','loop']);
   select(interiorCards['interior-style'],'Stroke','stroke',['solid','dashed','dotted']);
@@ -719,6 +722,7 @@ function syncInteriorUI(){
     checkbox.addEventListener('change',()=>{
       const base=active.colorSlots.length?active.colorSlots:[0,1,2,3,4,5,6];
       const next=checkbox.checked?[...new Set([...base,i])]:base.filter(x=>x!==i);
+      if(!next.length){syncInteriorUI();return;}
       update('colorSlots',next.length===7?[]:next);
     });
   });
