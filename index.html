@@ -27,6 +27,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&amp;family=Rubik:wght@300;500&amp;display=swap" rel="stylesheet">
   <link rel="stylesheet" href="type-system.css?v=20261018-type6">
+  <link rel="stylesheet" href="ui-audit-fixes.css?v=20261018-ui-audit1">
 </head>
 <body>
   <header class="masthead">
@@ -38,12 +39,14 @@
       </div>
     </a>
     <div class="header-right"><span class="status-dot"></span> PROCEDURAL WALLPAPER STUDIO <span class="header-tag">v1.0</span></div>
-    <div class="theme-switcher">
-      <label for="studioTheme">Theme</label>
-      <select id="studioTheme" aria-label="Studio appearance">
-        <option value="dark">Original Dark</option>
-        <option value="cream" selected>Cream Studio</option>
-      </select>
+    <div class="theme-switcher" role="group" aria-label="Studio appearance">
+      <span class="theme-switcher-label">Theme</span>
+      <div class="theme-options">
+        <button type="button" class="theme-dot theme-dot-cream" data-studio-theme="cream"
+          aria-label="Cream theme" title="Cream theme" aria-pressed="true"></button>
+        <button type="button" class="theme-dot theme-dot-dark" data-studio-theme="dark"
+          aria-label="Black theme" title="Black theme" aria-pressed="false"></button>
+      </div>
     </div>
   </header>
   <div class="layout">
@@ -349,6 +352,7 @@
     <div class="mobile-sheet-head"><strong>More tools</strong><button type="button" id="mobileToolsClose" aria-label="Close tools"><img class="ui-icon" src="assets/icons/roygbiv/close.svg" alt="" aria-hidden="true" draggable="false"></button></div>
     <div class="mobile-tools-content" id="mobileToolsContent"></div>
   </section>
+  <output id="studioStatus" class="studio-status" role="status" aria-live="polite" aria-atomic="true"></output>
   <nav class="mobile-dock" id="mobileActionDock" aria-label="Quick wallpaper actions">
     <button type="button" id="mobileEdit" aria-controls="mobileDesignSheet" aria-expanded="false"><span aria-hidden="true"><img class="ui-icon" src="assets/icons/roygbiv/edit.svg" alt="" aria-hidden="true" draggable="false"></span><small>Edit</small></button>
     <button type="button" id="mobileExplore" aria-controls="gallery" aria-expanded="false"><span aria-hidden="true"><img class="ui-icon" src="assets/icons/roygbiv/explore.svg" alt="" aria-hidden="true" draggable="false"></span><small>Explore</small></button>
