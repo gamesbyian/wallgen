@@ -144,8 +144,9 @@ if(session.supported){
 }
 ```
 
-`setMask()` allocates the texture on first upload and uses
-`texSubImage2D()` for subsequent same-size masks. A mask is always
+The WebGL2 session allocates immutable one-level RGBA8 storage via
+`texStorage2D()` once, then every `setMask()` call uses `texSubImage2D()`
+to replace pixels without reallocating the texture. A mask is always
 reuploaded when the caller explicitly requests it, including if the same
 Canvas2D object was repainted in place. `render()` does not upload
 again: several independent field elements can share the *same* owner mask.
@@ -169,6 +170,8 @@ allocation. It does not yet prove an overall acceleration benefit: the
 Canvas2D-to-WebGL mask upload and presentation/download costs may exceed
 the saved CPU tessellation. Do not infer Pixel 6 Pro speed from the
 SwiftShader/ANGLE headless acceptance environment.
+
+This mirrors [MDN WebGL best practices](https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/WebGL_best_practices), which favour explicit immutable texture storage over repeatedly redefining texture levels. Driver-side mask upload costs may still dominate; the change alone is not proof of a performance benefit.
 
 **Tests:** `tests/gpu-fields.test.js` uses an instrumented fake WebGL2
 context to prove one shader program, one texture and repeated draws,
