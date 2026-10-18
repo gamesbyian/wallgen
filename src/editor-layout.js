@@ -90,7 +90,7 @@ export function mountEditor(){
   const controls=create('div','editor-explore-actions');
   const scopeMode=create('select','editor-variation-mode');
   scopeMode.id='editorVariationMode';scopeMode.setAttribute('aria-label','Randomization style');
-  for(const [value,name] of [['reroll','Reroll'],['vary','Vary nearby']]){
+  for(const [value,name] of [['reroll','Reroll'],['vary','Vary']]){
     const opt=create('option',null,name);opt.value=value;scopeMode.append(opt);
   }
   const strength=create('select','editor-variation-strength');
@@ -120,6 +120,14 @@ export function mountEditor(){
   const chooser=create('nav','editor-tool-chooser');
   chooser.setAttribute('aria-label','Tools in selected category');
   nav.after(chooser);
+  const updateChooserEdges=()=>{
+    const max=chooser.scrollWidth-chooser.clientWidth;
+    chooser.dataset.moreLeft=String(chooser.scrollLeft>3);
+    chooser.dataset.moreRight=String(max>3&&chooser.scrollLeft<max-3);
+  };
+  chooser.addEventListener('scroll',updateChooserEdges,{passive:true});
+  new ResizeObserver(updateChooserEdges).observe(chooser);
+  document.addEventListener('editor-tool-changed',()=>requestAnimationFrame(updateChooserEdges));
   for(const category of EDITOR_CATEGORIES){
     const button=create('button','settings-tab');
     button.type='button';button.id='tab-'+category.id;button.dataset.tab=category.id;
