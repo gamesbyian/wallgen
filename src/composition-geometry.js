@@ -63,7 +63,9 @@ function nested(r,radial=false){
   // Largest first so each progressively smaller shape reveals its outer ring.
   for(let i=0;i<count;i++){
     const size=(count-i)/(count+.3);
-    const radius=radial?1900:1200;
+    // The outer silhouette should meet the screen edge, so all seven
+    // nested pigments remain visible at the default centre.
+    const radius=900;
     result.push(region(perimeter(p.x,p.y,radius*size,radius*size,sides,rotation),
       radial?i:i));
   }
@@ -147,7 +149,7 @@ function facets(r){
   const random=stream(r.seed+':facets');
   const nx=Math.max(2,Math.round(Math.sqrt(r.regionCount*W/H)));
   const ny=Math.max(3,Math.ceil(r.regionCount/nx));
-  const x0=-800,y0=-1800,w=2200,h=4800;
+  const x0=-90,y0=-190,w=780,h=1680;
   const grid=Array.from({length:ny+1},(_,row)=>Array.from({length:nx+1},(_,col)=>{
     const jitter=r.regionJitter/100*.40;
     return point(x0+(col+(random()-.5)*jitter)*(w/nx),
@@ -162,7 +164,7 @@ function facets(r){
 }
 function blocks(r){
   const random=stream(r.seed+':blocks');
-  const rects=[{x:-900,y:-1800,w:2400,h:4900}];
+  const rects=[{x:-45,y:-100,w:690,h:1500}];
   while(rects.length<r.regionCount){
     const eligible=rects.map((v,i)=>({v,i,area:v.w*v.h}))
       .filter(x=>x.v.w>60&&x.v.h>60).sort((a,b)=>b.area-a.area);
