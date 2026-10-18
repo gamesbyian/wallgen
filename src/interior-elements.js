@@ -92,7 +92,7 @@ export function drawRegionInteriors(ctx,object,elements,structure,renderBounds){
         let contours=insetCache.get(key);
         if(!contours){
           contours=polygonInsetContours(object.vertices,distance,
-            {bounds:renderBounds,padding:Math.max(36,ctx.lineWidth+12)});
+            {bounds:renderBounds,padding:80});
           insetCache.set(key,contours);
         }
         for(const contour of contours){
