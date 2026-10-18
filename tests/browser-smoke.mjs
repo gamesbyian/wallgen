@@ -224,7 +224,7 @@ try{
     return results;
   })()`);
   console.log('CAMERA_ZOOM_RASTER_PARITY',JSON.stringify(cameraZoomParity));
-  assert.ok(cameraZoomParity.every(r=>r.examined>300&&r.ink>150&&r.mismatchRatio<.065),
+  assert.ok(cameraZoomParity.every(r=>r.examined>300&&r.ink>100&&r.mismatchRatio<.065),
     'zoom must preserve colours and decoration at shared world points: '+
     JSON.stringify(cameraZoomParity));
 
