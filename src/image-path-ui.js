@@ -2,12 +2,12 @@ import {extractImagePathCandidates,imagePlacement,pathToWallpaper} from './image
 
 // The image is transient: only the selected vector centreline enters the recipe.
 // A native dialog provides an accessible, phone-friendly full-stage workspace.
-export function installImagePathTool({getRecipe,onNotice,onPath}){
+export function installImagePathTool({getRecipe,onNotice,onPath,onAngle}){
   const byId=id=>document.getElementById(id);
   const launch=byId('importPathToggle'),fileInput=byId('imagePathFile'),
     dialog=byId('imagePathDialog'),canvas=byId('imagePathCanvas'),
     chooser=byId('imagePathCandidate'),status=byId('imagePathStatus'),
-    apply=byId('imagePathApply'),another=byId('imagePathAnother'),
+    apply=byId('imagePathApply'),angleButton=byId('imagePathAngle'),another=byId('imagePathAnother'),
     closeButton=byId('imagePathCancel');
   const ctx=canvas.getContext('2d');
   let image=null,candidates=[],selected=0,width=0,height=0,working=false;
@@ -38,6 +38,7 @@ export function installImagePathTool({getRecipe,onNotice,onPath}){
     chooser.value=String(selected);
     const candidate=candidates[selected];
     apply.disabled=!candidate;
+    angleButton.disabled=!candidate||candidate.kind!=='line';
     status.textContent=candidate?
       candidate.kind==='contour'?
         'Shape outline. It may be closed; inspect the join after applying.':
@@ -72,7 +73,7 @@ export function installImagePathTool({getRecipe,onNotice,onPath}){
       onNotice('Unlock Path geometry before importing an image.');return;
     }
     if(!dialog.open)dialog.showModal();
-    working=true;apply.disabled=true;another.disabled=true;chooser.disabled=true;
+    working=true;apply.disabled=true;angleButton.disabled=true;another.disabled=true;chooser.disabled=true;
     status.textContent='Analyzing the image locally…';
     try{
       const decoded=await decode(file);
@@ -93,7 +94,7 @@ export function installImagePathTool({getRecipe,onNotice,onPath}){
       });
       selected=0;choose(0);
     }catch(error){
-      image=null;candidates=[];chooser.replaceChildren();apply.disabled=true;
+      image=null;candidates=[];chooser.replaceChildren();apply.disabled=true;angleButton.disabled=true;
       status.textContent=error?.message||'Image analysis failed.';
       paint();
     }finally{working=false;another.disabled=false;chooser.disabled=false;fileInput.value='';}
@@ -125,6 +126,10 @@ export function installImagePathTool({getRecipe,onNotice,onPath}){
       }
     }
     if(best>=0)choose(best);
+  });
+  angleButton.addEventListener('click',()=>{
+    if(working||candidates[selected]?.kind!=='line')return;
+    if(onAngle(candidates[selected].angle))dialog.close();
   });
   apply.addEventListener('click',()=>{
     if(working)return;
