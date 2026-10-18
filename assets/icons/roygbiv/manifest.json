@@ -16,7 +16,7 @@
     "pink": "#FFB7C4",
     "cream": "#FFF8EF"
   },
-  "reference": "../references/roygbiv-icon-system-approved.png",
+  "reference": "../../icons/references/roygbiv-icon-system-approved.svg",
   "icons": [
     {
       "name": "home",
