@@ -160,7 +160,7 @@ export async function captureSpecialStates({page,ctx,capture,navigate,change,set
     if(!await page.locator('#drawApply').isEnabled())throw Error('Drawn path was not accepted');
     await snap('draw-ready-path');
     if(await clickIfVisible(page,'#drawGeometric'))await snap('draw-geometric-smoothing');
-    await page.locator('#drawSmoothingStrength').fill('8');
+    await page.locator('#drawSmoothingStrength').evaluate(el=>{el.value='8';el.dispatchEvent(new Event('input',{bubbles:true}));});
     await snap('draw-smoothing-strength');
     await page.locator('#drawExtendPath').check();
     await snap('draw-extend-path');
