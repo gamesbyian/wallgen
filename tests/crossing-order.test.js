@@ -1,8 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {CROSSING_MODES,segmentIntersection,findPathCrossings,crossingTopIsLater} from '../src/crossing-order.js';
+import {CROSSING_MODES,segmentIntersection,findPathCrossings,crossingTopIsLater,crossingBranchClip} from '../src/crossing-order.js';
 import {normalizeRecipe,resolveScene,encodeRecipe,decodeRecipe} from '../src/model.js';
 import {samplePath} from '../src/path-geometry.js';
+import {stripeFillPath} from '../src/renderer.js';
 
 test('over under weave are distinct, saved and lockable',()=>{
   assert.deepEqual(CROSSING_MODES,['over','under','weave']);
@@ -58,4 +59,72 @@ test('over under weave do not change the seven stripe geometries',()=>{
         samplePath(variant.stripes[i],t,variant.extent));
     }
   }
+});
+
+test('folded crossing masks form same-winding local quads, not a winding-cancelling loop',()=>{
+  class Polygons {
+    constructor(){this.polygons=[];this.current=[];}
+    moveTo(x,y){this.current=[{x,y}];}
+    lineTo(x,y){this.current.push({x,y});}
+    closePath(){this.polygons.push(this.current);}
+  }
+  // More than one entire revolution inside the mask window is deliberately
+  // adversarial: a single global outline would cross itself repeatedly.
+  const stripe={width:25,segmentStart:-180,segmentEnd:180};
+  const sampler=(_,station)=>{
+    const a=station/60*Math.PI;
+    return {x:26*Math.cos(a),y:26*Math.sin(a),nx:Math.cos(a),ny:Math.sin(a)};
+  };
+  const mask=crossingBranchClip(stripe,180,0,170,sampler,Polygons);
+  assert.ok(mask.polygons.length>40);
+  for(const polygon of mask.polygons){
+    assert.equal(polygon.length,4);
+    const area=polygon.reduce((sum,p,i)=>{
+      const q=polygon[(i+1)%polygon.length];
+      return sum+p.x*q.y-p.y*q.x;
+    },0);
+    assert.ok(area>0,'each quad must contribute positively to the union');
+  }
+});
+
+test('over-rotated inner loops remain a positive union of ribbon cells',()=>{
+  class PolygonPath {
+    constructor(){this.polygons=[];this.current=[];}
+    moveTo(x,y){this.current=[{x,y}];}
+    lineTo(x,y){this.current.push({x,y});}
+    closePath(){this.polygons.push(this.current);}
+  }
+  const scene=resolveScene({seed:'folded-ink',geometry:'loop',
+    loopSweep:445,loopRadius:0,spread:92,geometrySafety:false});
+  const stripe=scene.stripes[0];
+  const path=stripeFillPath(stripe,scene.extent,scene,PolygonPath);
+  assert.ok(path.polygons.length>300);
+  for(const corners of path.polygons){
+    assert.equal(corners.length,4);
+    const area=corners.reduce((sum,p,i)=>{
+      const q=corners[(i+1)%corners.length];
+      return sum+p.x*q.y-p.y*q.x;
+    },0);
+    assert.ok(area>0,'ribbon cells must add, never cancel at a retraced arc');
+  }
+});
+
+test('safe loops never invert the inner ribbon or exceed the outer frame radius',()=>{
+  // Sweep and colour do not change radial nesting. Vary both seed-shifted
+  // offsets and spread extremes to catch the formerly negative inner turn.
+  for(let i=0;i<24;i++)for(const spread of [0,40,100])
+    for(const loopRadius of [0,50,100]){
+      const scene=resolveScene({seed:'loop-clearance-'+i,geometry:'loop',
+        geometrySafety:true,spread,loopRadius,loopSweep:450});
+      const radius=scene.stripes[0].loopRadius;
+      const inner=radius+Math.min(...scene.stripes.map(s=>s.center));
+      const outer=radius+Math.max(...scene.stripes.map(s=>s.center));
+      assert.ok(inner>=28-1e-7,`inner loop clearance: ${inner} (${i},${spread},${loopRadius})`);
+      assert.ok(outer<=600*.43+1e-7,`outer loop frame: ${outer} (${i},${spread},${loopRadius})`);
+    }
+  // Unrestricted mode still permits the extreme overlap that artists chose.
+  const unrestricted=resolveScene({seed:'free-loop',geometry:'loop',
+    geometrySafety:false,spread:100,loopRadius:0});
+  const r=unrestricted.stripes[0].loopRadius;
+  assert.ok(r+unrestricted.stripes[0].center<0);
 });

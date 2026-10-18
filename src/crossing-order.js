@@ -3,7 +3,6 @@
 // Pure intersection finding is usable by Node tests and the browser renderer.
 const cross=(a,b)=>a.x*b.y-a.y*b.x;
 const delta=(a,b)=>({x:a.x-b.x,y:a.y-b.y});
-const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
 
 export const CROSSING_MODES=Object.freeze(['over','under','weave']);
 
@@ -63,19 +62,30 @@ export function crossingBranchClip(stripe,extent,station,halfLength,sampler,Path
   const path=new Path();
   const lo=Math.max(stripe.segmentStart??-extent,station-halfLength);
   const hi=Math.min(stripe.segmentEnd??extent,station+halfLength);
-  const n=Math.max(16,Math.ceil((hi-lo)/3));
-  const edges=[[],[]];
+  // A loop can double back inside this window, especially for inner colours.
+  // One perimeter around the WHOLE window forms a self-intersecting polygon:
+  // its winding can cancel or expose triangular shards at the turn. Build
+  // the area as consistently wound small quads instead. The nonzero fill
+  // rule then gives their physical UNION, including at sharp reversals.
+  const n=Math.max(16,Math.ceil((hi-lo)/5));
+  let previous=null;
   for(let i=0;i<=n;i++){
     const x=lo+(hi-lo)*i/n,p=sampler(stripe,x,extent);
-    // Include outlines and roughness at the edges of the overpassing band.
     const w=stripe.width*.5+Math.max(3,Math.min(18,stripe.width*.22));
-    for(const [index,sign] of [[0,1],[1,-1]])
-      edges[index].push({x:p.x+sign*p.nx*w,y:p.y+sign*p.ny*w});
+    const pair=[{x:p.x+p.nx*w,y:p.y+p.ny*w},
+      {x:p.x-p.nx*w,y:p.y-p.ny*w}];
+    if(previous){
+      const corners=[previous[0],pair[0],pair[1],previous[1]];
+      const a=corners[0],b=corners[1],c=corners[2];
+      const signed=(b.x-a.x)*(c.y-a.y)-(b.y-a.y)*(c.x-a.x);
+      if(Math.abs(signed)>1e-10){
+        if(signed<0)corners.reverse();
+        path.moveTo(corners[0].x,corners[0].y);
+        for(let j=1;j<4;j++)path.lineTo(corners[j].x,corners[j].y);
+        path.closePath();
+      }
+    }
+    previous=pair;
   }
-  const coords=[...edges[0],...edges[1].reverse()];
-  if(!coords.length)return path;
-  path.moveTo(coords[0].x,coords[0].y);
-  for(let i=1;i<coords.length;i++)path.lineTo(coords[i].x,coords[i].y);
-  path.closePath();
   return path;
 }

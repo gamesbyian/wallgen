@@ -223,8 +223,16 @@ export function resolveScene(recipeInput) {
   // Wider low/high ends while retaining the familiar 50% midpoint.
   const spreadFactor=value=>.10+.335*Math.pow(value/50,1.5);
   const requestedSpread=span*spreadFactor(recipe.spread)/repeats;
-  const spread=recipe.geometrySafety&&['hairpin','loop'].includes(geometry)?
+  // A safe circular turn needs clearance on BOTH sides: the innermost
+  // offset must not turn its radius negative, and the outermost stripe must
+  // still fit inside the target framing. A wide band cannot satisfy both
+  // constraints if spread is allowed to consume the whole frame width.
+  const loopFrameRadius=DESIGN_WIDTH*.43;
+  const loopInnerClearance=28;
+  const spread=recipe.geometrySafety&&geometry==='hairpin'?
     Math.min(requestedSpread,DESIGN_WIDTH*.38):
+    recipe.geometrySafety&&geometry==='loop'?
+      Math.min(requestedSpread,loopFrameRadius-2*loopInnerClearance):
     geometry==='drawn'&&recipe.geometrySafety?
       Math.min(requestedSpread,safeDrawnBandSpan(drawnPath)):requestedSpread;
   const center = geometry==='drawn'?0:between(random, -1, 1) * span * 0.09;
@@ -245,6 +253,12 @@ export function resolveScene(recipeInput) {
   const positions = [-spread/2];
   for (const weight of weights) positions.push(positions.at(-1) + spread * weight / sum);
   const avg = spread / 6;
+  // Include the seed-derived group offset, not just half the band's spread.
+  // Omitting this offset used to invert the violet/indigo turns even while
+  // Preserve stripe coherence was enabled.
+  const minimumLoopRadius=Math.max(28,-positions[0]-center+loopInnerClearance);
+  const maximumLoopRadius=Math.max(minimumLoopRadius,
+    loopFrameRadius-positions[6]-center);
   // Stripe width and path roughness have their own fixed reference scale.
   // Changing spread changes only centre-to-centre positions, not ribbon width.
   const referenceSpread=geometry==='drawn'?spread:span*spreadFactor(56)/repeats;
@@ -296,8 +310,7 @@ export function resolveScene(recipeInput) {
       // In coherent mode every radius setting remains active between the
       // smallest nested turn and the largest frame-fitting turn.
       loopRadius:recipe.geometrySafety?
-        Math.max(28,spread*.57)+
-          Math.max(0,DESIGN_WIDTH*.43-spread/2-Math.max(28,spread*.57))*(recipe.loopRadius/100):
+        minimumLoopRadius+(maximumLoopRadius-minimumLoopRadius)*(recipe.loopRadius/100):
         24+280*Math.pow(recipe.loopRadius/100,1.2),
       loopSweep:recipe.loopSweep,
       loopPeriod:200*Math.pow(8/200,recipe.shapeFrequency/100),
