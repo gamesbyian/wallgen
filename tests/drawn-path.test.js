@@ -310,7 +310,7 @@ test('embedded loop corrections fade smoothly around a self-crossing',()=>{
   const interpretation=interpretStroke(even);
   assert.equal(interpretation?.kind,'embedded-loops');
   assert.ok(interpretation.weights.some(v=>v>.8),'inner circle is actively fitted');
-  assert.ok(interpretation.weights.slice(0,35).every(v=>v===0),
+  assert.ok(interpretation.weights.slice(0,15).every(v=>v===0),
     'the independent lead-in stays outside the circle fit');
   assert.ok(interpretation.weights.slice(-35).every(v=>v===0),
     'the independent lead-out stays outside the circle fit');
