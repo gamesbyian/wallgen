@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createPreviewCoordinator,exportWallpaperInWorker,closeFrame} from '../src/render-coordinator.js';
+import {createPreviewCoordinator,createThumbnailQueue,exportWallpaperInWorker,closeFrame} from '../src/render-coordinator.js';
 
 class FakeWorker{
   constructor(){this.messages=[];this.terminated=false;}
@@ -114,4 +114,37 @@ test('frame cleanup ignores absent, untransferable and already closed resources'
   closeFrame(actual);
   assert.ok(actual.frame.closed&&actual.ink.closed&&actual.background.closed);
   assert.doesNotThrow(()=>closeFrame({ink:{close(){throw Error('already released');}}}));
+});
+
+test('thumbnail worker preserves FIFO recipe identity and bitmap ownership',async()=>{
+  const worker=new FakeWorker();
+  const queue=createThumbnailQueue({canUseWorker:true,workerFactory:()=>worker});
+  const first=queue.request({seed:'a'},120,260);
+  const second=queue.request({seed:'b'},120,260);
+  assert.equal(worker.messages.length,0);
+  worker.emit(ready);
+  assert.equal(worker.messages[0].recipe.seed,'a');
+  const firstBitmap=bitmap();
+  worker.emit({type:'thumbnail',id:worker.messages[0].id,frame:firstBitmap});
+  assert.equal(await first,firstBitmap);
+  assert.equal(worker.messages[1].recipe.seed,'b');
+  const secondBitmap=bitmap();
+  worker.emit({type:'thumbnail',id:worker.messages[1].id,frame:secondBitmap});
+  assert.equal(await second,secondBitmap);
+  assert.equal(queue.pending,0);
+  queue.dispose();
+  assert.ok(worker.terminated);
+});
+
+test('thumbnail worker failures reject current and queued snapshots without swapping their identities',async()=>{
+  const worker=new FakeWorker();
+  const queue=createThumbnailQueue({canUseWorker:true,workerFactory:()=>worker});
+  const first=queue.request({seed:'one'},80,170);
+  const second=queue.request({seed:'two'},80,170);
+  worker.emit(ready);
+  worker.emit({type:'error',id:worker.messages[0].id,error:'thumbnail context lost'});
+  await assert.rejects(first,/thumbnail context lost/);
+  await assert.rejects(second,/thumbnail context lost/);
+  assert.equal(queue.enabled,false);
+  queue.dispose();
 });
