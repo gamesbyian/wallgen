@@ -221,6 +221,15 @@ export function polygonInsetContours(polygon,inset,options={}){
       for(const [a,b] of pairing)record(byEdge.get(a),byEdge.get(b));
     }
   }
+  if(options.debug){
+    const nearby=segments.filter(seg=>[seg.a,seg.b].some(p=>
+      p.x>12&&p.x<16&&p.y>11&&p.y<13)).slice(0,25);
+    console.log('INSET_DEBUG',JSON.stringify({nx,ny,x0,y0,segments:segments.length,
+      nearby:nearby.map(seg=>({
+        a:{x:seg.a.x,y:seg.a.y,key:seg.a.key,degree:adjacency.get(seg.a.key)?.length},
+        b:{x:seg.b.x,y:seg.b.y,key:seg.b.key,degree:adjacency.get(seg.b.key)?.length}
+      }))}));
+  }
   const used=new Uint8Array(segments.length);
   const contours=[];
   for(let initial=0;initial<segments.length;initial++){
