@@ -323,8 +323,9 @@ test('embedded loop corrections fade smoothly around a self-crossing',()=>{
     const ux=b[0]-a[0],uy=b[1]-a[1],vx=c[0]-b[0],vy=c[1]-b[1];
     turns.push(Math.abs(Math.atan2(ux*vy-uy*vx,ux*vx+uy*vy)));
   }
-  const maxTurn=Math.max(...turns);
-  assert.ok(maxTurn<.65,'no artificial sharp hook at the loop seam: '+maxTurn);
+  const maxTurn=Math.max(...turns),maxIndex=turns.indexOf(maxTurn)+1;
+  assert.ok(maxTurn<.65,'no artificial sharp hook at the loop seam: '+
+    JSON.stringify({maxTurn,maxIndex,around:ink.slice(Math.max(0,maxIndex-3),maxIndex+4)}));
   assert.ok(ink[0][0]<start[0]-100&&ink.at(-1)[0]>start[0]+130,
     'both tail sections remain connected to the loop');
 });
