@@ -132,12 +132,22 @@ export function movePointAnchor(e,index,to,start=e.points){
 export function pointHandles(e,index){
   const [lo,hi]=neighbours(e,index),p=e.points[index];
   const a=e.points[Math.max(lo,index-2)],b=e.points[Math.min(hi,index+2)];
-  let dx=(b[0]-a[0])*W,dy=(b[1]-a[1])*H;
-  const len=Math.hypot(dx,dy)||1;dx/=len;dy/=len;
+  const normalized=(dx,dy)=>{
+    const len=Math.hypot(dx,dy)||1;
+    return [dx/len,dy/len];
+  };
+  const smooth=normalized((b[0]-a[0])*W,(b[1]-a[1])*H);
+  // Corners have *independent* incoming and outgoing tangents. A selected
+  // smooth anchor shares one axis, but a broken anchor must show its two
+  // actual side directions and permit independent manipulation.
+  const incoming=e.corners.has(index)?
+    normalized((p[0]-a[0])*W,(p[1]-a[1])*H):smooth;
+  const outgoing=e.corners.has(index)?
+    normalized((b[0]-p[0])*W,(b[1]-p[1])*H):smooth;
   const length=Math.min(40,Math.max(12,
     Math.min(pixel(e.points[lo],p)||40,pixel(p,e.points[hi])||40)*.35));
-  return {in:round([p[0]-dx*length/W,p[1]-dy*length/H]),
-    out:round([p[0]+dx*length/W,p[1]+dy*length/H])};
+  return {in:round([p[0]-incoming[0]*length/W,p[1]-incoming[1]*length/H]),
+    out:round([p[0]+outgoing[0]*length/W,p[1]+outgoing[1]*length/H])};
 }
 // Cubic Bézier endpoint basis. Dragging a handle changes exactly its adjacent
 // span; a smooth handle mirrors the delta onto the other side. Both have zero
