@@ -140,12 +140,12 @@ test('canonical world-space grid gives identical shared inset points for zoom cr
     bounds:{left:-100,right:700,top:0,bottom:1200},resolution:1.25
   });
   const crop=polygonInsetContours(polygon,11,{
-    bounds:{left:150,right:450,top:250,bottom:1000},resolution:1.25
+    bounds:{left:-70,right:180,top:250,bottom:1000},resolution:1.25
   });
   const key=p=>Math.round(p.x*1000)+','+Math.round(p.y*1000);
   const all=new Set(full.flatMap(c=>c.points).map(key));
   const insideCrop=crop.flatMap(c=>c.points).filter(p=>
-    p.x>165&&p.x<435&&p.y>265&&p.y<985);
+    p.x>-55&&p.x<165&&p.y>265&&p.y<985);
   assert.ok(insideCrop.length>10,'expect an actual cropped contour');
   assert.ok(insideCrop.every(p=>all.has(key(p))),
     'changing camera bounds must not move the underlying inset samples');
