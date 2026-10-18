@@ -34,7 +34,12 @@ closed or open inset contours. Concave corners, holes and disappearing narrow
 necks are supported, including multiple independent resulting loops. Unlike
 centroid interpolation, this maintains approximately constant boundary distance
 with a bounded grid approximation. The grid is anchored in world space, so
-preview and PNG export have matching contour coordinates. Nested regions are
+preview and PNG export have matching contour coordinates. A decoration's selected
+wave, zigzag or loop shape is now applied along the inset boundary rather than
+silently reverting to a plain line. Its phase is measured around the original,
+uncropped polygon perimeter, with consistent winding and a whole number of
+cycles for seamless closed contours. Dashed patterns likewise receive an
+original-boundary-aligned starting phase. Nested regions are
 painted in object order, meaning smaller visible shapes cover the details of
 larger shapes.
 The region divider pass occurs last, avoiding half-erased shared boundaries.
@@ -67,6 +72,8 @@ does not remove or rewrite them.
 - `tests/interior-elements.test.js`: normalization, determinism, metadata and targeting.
 - `tests/polygon-inset.test.js`: signed-distance correctness, disconnected loops,
   polygon holes, fixed world grid, zoom cropping and degenerate inputs.
+- `tests/contour-decoration.test.js`: independent wave/zigzag/loop displacement,
+  whole-boundary phase, winding invariance and cropped-chain continuity.
 - `tests/render.test.js`: shared painter and clipped decorations across all structures.
 - `tests/browser-smoke.mjs`: mobile editor, new element creation, visual change,
   recipe persistence, styling, targeting, removal, and no-scroll card checks.
