@@ -914,7 +914,7 @@ export function drawRegionObjects(ctx,scene){
     ctx.fillStyle=object.color;
     ctx.fill();
     ctx.shadowBlur=0;
-    drawRegionInteriors(ctx,object,scene.interiorElements,scene.structure);
+    drawRegionInteriors(ctx,object,scene.interiorElements,scene.structure,scene.renderBounds);
     if(!hasDivider){
       ctx.strokeStyle=object.color;
       ctx.lineWidth=1;
