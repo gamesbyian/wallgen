@@ -7,7 +7,7 @@ import {mountEditor,selectEditorTool,syncEditorStructure} from './editor-layout.
 import {randomizeScope} from './scoped-random.js';
 import {STYLE_PRESETS} from './editor-schema.js';
 import {installExplorationHistory} from './exploration-history.js';
-import {iconMarkup,setIconSource} from './ui-icons.js';
+import {iconMarkup,setIconSource,hydrateStaticIcons} from './ui-icons.js';
 
 const form = document.getElementById('controls');
 const preview = document.getElementById('preview');
@@ -981,3 +981,4 @@ const query=new URLSearchParams(location.search).get('r');
 const loaded=query?decodeRecipe(query):null;
 toControls(loaded||current);
 render(current);
+hydrateStaticIcons();

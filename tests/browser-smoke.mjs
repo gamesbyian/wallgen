@@ -290,7 +290,14 @@ try{
   assert.ok(editor.previewHeight>260,'the complete frame remains appreciable during edits');
   assert.ok(Math.abs(editor.ratio-600/1300)<.06);
   assert.equal(editor.scrollY,'hidden');
-  assert.deepEqual(editor.tabs,['▦ Layout','⌁ Path','≋ Shapes','✧ Details','◐ Colour','▧ Material','✦ Effects']);
+  assert.deepEqual(editor.tabs,['Layout','Path','Shapes','Details','Colour','Material','Effects']);
+  const iconPlacement=await evaluate('(()=>({tabs:[...document.querySelectorAll(".settings-tab")].map(b=>({width:b.getBoundingClientRect().width,icon:!!b.querySelector("svg.ui-icon")})),dock:[...document.querySelectorAll("#mobileActionDock>button")].map(b=>({width:b.getBoundingClientRect().width,icon:!!b.querySelector("svg.ui-icon")})),rail:[...document.querySelectorAll("#mobileEditorActionRail>button")].map(b=>({width:b.getBoundingClientRect().width,icon:!!b.querySelector("svg.ui-icon")})),remoteImages:document.querySelectorAll("img.ui-icon").length,categoryHeight:document.querySelector(".settings-tabs").getBoundingClientRect().height}))()');
+  assert.equal(iconPlacement.remoteImages,0,'inlined icons inherit theme contrast');
+  assert.ok(iconPlacement.tabs.every(t=>t.icon&&t.width>20));
+  assert.ok(iconPlacement.dock.every(t=>t.icon&&t.width>25));
+  assert.ok(iconPlacement.rail.every(t=>t.icon&&t.width>=25));
+  assert.ok(iconPlacement.categoryHeight<=50,'icons may not introduce a second tab row');
+  console.log('ICON_PLACEMENT_INVARIANTS',JSON.stringify(iconPlacement));
   const schema=await evaluate('(async()=>{const m=await import("/src/editor-schema.js");const keys=[...document.querySelectorAll("#controls [data-setting]")].map(x=>x.name).filter(x=>x&&!["family","primesOnly"].includes(x));keys.push("textureLayer2Enabled","textureLayer3Enabled");return {...m.validateEditorSchema([...new Set(keys)]),wizard:m.WIZARD_STEPS,toolCount:m.TOOL_LIST.length}})()');
   console.log('EDITOR_SCHEMA',JSON.stringify(schema));
   assert.deepEqual(schema.missing,[]);

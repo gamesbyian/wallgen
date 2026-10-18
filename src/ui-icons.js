@@ -1,14 +1,36 @@
-// Site-relative, immutable, vetted ROYGBIV icon assets. Icons are decorative;
-// native buttons and labels retain their existing accessible action names.
-const ICON_NAMES=new Set(["app-icon","home","create","explore","favourite","download","more","randomize","bleed","primes-only","undo","draw-path","arrow-left","arrow-up","arrow-down","arrow-right","recenter","zoom-in","zoom-out","history","edit","layout","path","stripes","colour","material","effects","tool","outlines","lighting","shadows","glow","lock","unlock","minus","plus","chevron-down","chevron-up","chevron-left","chevron-right","search","close","settings","rotate","copy","info","save","reroll","favourite-filled","check","reset","stripe-border","interior-elements","wave","zigzag","dotted-line"]);
+// True inline copies of the approved SVG artwork. currentColor must inherit
+// from the LIVE theme; external <img> SVGs cannot receive that colour.
+import {DRAWINGS_A} from './ui-icon-drawings-a.js';
+import {DRAWINGS_B} from './ui-icon-drawings-b.js';
+import {DRAWINGS_C} from './ui-icon-drawings-c.js';
+import {DRAWINGS_D} from './ui-icon-drawings-d.js';
+
+const DRAWINGS=Object.freeze({...DRAWINGS_A,...DRAWINGS_B,...DRAWINGS_C,...DRAWINGS_D});
+const hasIcon=name=>Object.hasOwn(DRAWINGS,name);
 export function iconSrc(name){
-  if(!ICON_NAMES.has(name))throw new RangeError('Unknown ROYGBIV icon: '+name);
+  if(!hasIcon(name))throw new RangeError('Unknown ROYGBIV icon: '+name);
   return 'assets/icons/roygbiv/'+name+'.svg';
 }
 export function iconMarkup(name){
-  return '<img class="ui-icon" src="'+iconSrc(name)+'" alt="" aria-hidden="true" draggable="false">';
+  if(!hasIcon(name))throw new RangeError('Unknown ROYGBIV icon: '+name);
+  const size=name==='app-icon'?'120 120':'32 32';
+  return '<svg xmlns="http://www.w3.org/2000/svg" class="ui-icon" data-roygbiv-icon="'+name+'"'+
+    ' viewBox="0 0 '+size+'" fill="none" stroke="currentColor" stroke-width="2.4"'+
+    ' stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'+
+    DRAWINGS[name]+'</svg>';
 }
 export function setIconSource(container,name){
-  const image=container?.querySelector('.ui-icon');
-  if(image){const src=iconSrc(name);if(image.getAttribute('src')!==src)image.setAttribute('src',src);}
+  const item=container?.querySelector('.ui-icon');
+  if(item&&item.getAttribute('data-roygbiv-icon')!==name)
+    item.outerHTML=iconMarkup(name);
+}
+// Static HTML includes external SVG fallbacks so it renders something even
+// before JS runs. Upgrade only known approved icons, preserving their parent
+// button nodes, focus, event listeners, text labels and dimensions.
+export function hydrateStaticIcons(root=document){
+  for(const image of root.querySelectorAll('img.ui-icon')){
+    const src=image.getAttribute('src')||'';
+    const match=src.match(/(?:^|\/)assets\/icons\/roygbiv\/([a-z0-9-]+)\.svg$/);
+    if(match&&hasIcon(match[1]))image.outerHTML=iconMarkup(match[1]);
+  }
 }
