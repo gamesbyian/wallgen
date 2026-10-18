@@ -33,7 +33,10 @@ export const EDITOR_CATEGORIES=[
     {id:'glow',name:'Glow',settings:['glow']},
   ]},
   {id:'details',label:'Details',icon:'✧',tools:[
-    {id:'interior',name:'Interior elements',settings:[]},
+    {id:'interior',name:'Elements',settings:[]},
+    {id:'interior-style',name:'Element style',settings:[]},
+    {id:'interior-motion',name:'Element motion',settings:[]},
+    {id:'interior-placement',name:'Placement',settings:[]},
   ]},
   {id:'colour',label:'Colour',icon:'◐',tools:[
     {id:'rainbow',name:'Rainbow',settings:['palette','reverseStripes']},
