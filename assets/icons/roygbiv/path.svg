@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Path geometry" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round">
+  <title>Path geometry</title>
+  <circle cx="5" cy="24" r="2.6" fill="#FFF8EF"/><circle cx="27" cy="8" r="2.6" fill="#FFF8EF"/><path d="M7.5 22.5C12 2 18 32 25 9.5" />
+</svg>

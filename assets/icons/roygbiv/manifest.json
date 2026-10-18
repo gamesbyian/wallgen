@@ -1,0 +1,297 @@
+{
+  "version": "1.0.0",
+  "status": "asset-library-only",
+  "design": "flat, rounded, playful but confident, no gradients",
+  "viewBox": "0 0 32 32",
+  "stroke": "currentColor",
+  "palette": {
+    "red": "#FF474E",
+    "orange": "#FF9B39",
+    "yellow": "#FFE25B",
+    "green": "#4FDD87",
+    "blue": "#53AAFF",
+    "indigo": "#6359E5",
+    "violet": "#BB64ED",
+    "ink": "#18151F",
+    "pink": "#FFB7C4",
+    "cream": "#FFF8EF"
+  },
+  "reference": "../references/roygbiv-icon-system-approved.png",
+  "icons": [
+    {
+      "name": "home",
+      "title": "Home",
+      "category": "navigation"
+    },
+    {
+      "name": "create",
+      "title": "Create / generate",
+      "category": "navigation"
+    },
+    {
+      "name": "explore",
+      "title": "Explore gallery",
+      "category": "navigation"
+    },
+    {
+      "name": "favourite",
+      "title": "Add to favourites",
+      "category": "navigation"
+    },
+    {
+      "name": "download",
+      "title": "Download",
+      "category": "navigation"
+    },
+    {
+      "name": "more",
+      "title": "More actions",
+      "category": "navigation"
+    },
+    {
+      "name": "randomize",
+      "title": "Randomize",
+      "category": "generation"
+    },
+    {
+      "name": "bleed",
+      "title": "Bleed / overscan",
+      "category": "generation"
+    },
+    {
+      "name": "primes-only",
+      "title": "Primes only",
+      "category": "generation"
+    },
+    {
+      "name": "undo",
+      "title": "Undo",
+      "category": "generation"
+    },
+    {
+      "name": "draw-path",
+      "title": "Draw a path",
+      "category": "generation"
+    },
+    {
+      "name": "arrow-left",
+      "title": "Nudge left",
+      "category": "direction"
+    },
+    {
+      "name": "arrow-up",
+      "title": "Nudge up",
+      "category": "direction"
+    },
+    {
+      "name": "arrow-down",
+      "title": "Nudge down",
+      "category": "direction"
+    },
+    {
+      "name": "arrow-right",
+      "title": "Nudge right",
+      "category": "direction"
+    },
+    {
+      "name": "recenter",
+      "title": "Recenter",
+      "category": "direction"
+    },
+    {
+      "name": "zoom-in",
+      "title": "Zoom in",
+      "category": "direction"
+    },
+    {
+      "name": "zoom-out",
+      "title": "Zoom out",
+      "category": "direction"
+    },
+    {
+      "name": "history",
+      "title": "History / reroll",
+      "category": "direction"
+    },
+    {
+      "name": "edit",
+      "title": "Edit settings",
+      "category": "editor"
+    },
+    {
+      "name": "layout",
+      "title": "Layout",
+      "category": "editor"
+    },
+    {
+      "name": "path",
+      "title": "Path geometry",
+      "category": "editor"
+    },
+    {
+      "name": "stripes",
+      "title": "Stripes",
+      "category": "editor"
+    },
+    {
+      "name": "colour",
+      "title": "Colour palette",
+      "category": "editor"
+    },
+    {
+      "name": "material",
+      "title": "Materials",
+      "category": "editor"
+    },
+    {
+      "name": "effects",
+      "title": "Effects",
+      "category": "editor"
+    },
+    {
+      "name": "tool",
+      "title": "Selection tool",
+      "category": "effects"
+    },
+    {
+      "name": "outlines",
+      "title": "Outlines",
+      "category": "effects"
+    },
+    {
+      "name": "lighting",
+      "title": "Lighting",
+      "category": "effects"
+    },
+    {
+      "name": "shadows",
+      "title": "Shadows",
+      "category": "effects"
+    },
+    {
+      "name": "glow",
+      "title": "Glow",
+      "category": "effects"
+    },
+    {
+      "name": "lock",
+      "title": "Lock settings",
+      "category": "utility"
+    },
+    {
+      "name": "unlock",
+      "title": "Unlock settings",
+      "category": "utility"
+    },
+    {
+      "name": "minus",
+      "title": "Decrease value",
+      "category": "utility"
+    },
+    {
+      "name": "plus",
+      "title": "Increase value",
+      "category": "utility"
+    },
+    {
+      "name": "chevron-down",
+      "title": "Expand",
+      "category": "utility"
+    },
+    {
+      "name": "chevron-up",
+      "title": "Collapse",
+      "category": "utility"
+    },
+    {
+      "name": "chevron-left",
+      "title": "Back",
+      "category": "utility"
+    },
+    {
+      "name": "chevron-right",
+      "title": "Forward",
+      "category": "utility"
+    },
+    {
+      "name": "search",
+      "title": "Search",
+      "category": "utility"
+    },
+    {
+      "name": "close",
+      "title": "Close",
+      "category": "utility"
+    },
+    {
+      "name": "settings",
+      "title": "Settings",
+      "category": "utility"
+    },
+    {
+      "name": "rotate",
+      "title": "Rotate",
+      "category": "utility"
+    },
+    {
+      "name": "copy",
+      "title": "Duplicate",
+      "category": "utility"
+    },
+    {
+      "name": "info",
+      "title": "Information",
+      "category": "utility"
+    },
+    {
+      "name": "save",
+      "title": "Save design",
+      "category": "utility"
+    },
+    {
+      "name": "reroll",
+      "title": "Regenerate current selection",
+      "category": "utility"
+    },
+    {
+      "name": "favourite-filled",
+      "title": "Favourite, selected",
+      "category": "utility"
+    },
+    {
+      "name": "check",
+      "title": "Confirm",
+      "category": "utility"
+    },
+    {
+      "name": "reset",
+      "title": "Reset setting",
+      "category": "utility"
+    },
+    {
+      "name": "stripe-border",
+      "title": "Stripe borders",
+      "category": "editor"
+    },
+    {
+      "name": "interior-elements",
+      "title": "Interior stripe elements",
+      "category": "editor"
+    },
+    {
+      "name": "wave",
+      "title": "Wave path",
+      "category": "editor"
+    },
+    {
+      "name": "zigzag",
+      "title": "Zigzag path",
+      "category": "editor"
+    },
+    {
+      "name": "dotted-line",
+      "title": "Dotted line",
+      "category": "editor"
+    }
+  ]
+}

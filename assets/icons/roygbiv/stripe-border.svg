@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Stripe borders" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round">
+  <title>Stripe borders</title>
+  <path d="M3 9Q10 1 16 9T29 9" stroke="#FF474E"/><path d="M3 16Q10 8 16 16T29 16" stroke="#FFE25B"/><path d="M3 23Q10 15 16 23T29 23" stroke="#53AAFF"/>
+</svg>

@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Materials" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round">
+  <title>Materials</title>
+  <path d="M16 3 28 10v13L16 30 4 23V10z" fill="#FFF8EF"/><path d="M4 10 16 17l12-7M16 17v13" /><path d="M4 10 16 3l12 7" fill="none"/><path d="M4 10v13l12 7V17Z" fill="#FFB7C4"/><path d="M16 17v13l12-7V10Z" fill="#FFE25B"/><path d="M4 10 16 17l12-7M16 17v13" />
+</svg>
