@@ -1,0 +1,23 @@
+/* Approved typography: Fredoka ALL CAPS; Rubik Light and Medium.
+   Do not modify any existing sizes, box geometry, line heights or positions. */
+:root{
+ --font-ui:'Rubik',ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+ --font-display:'Fredoka','Rubik',ui-sans-serif,system-ui,sans-serif;
+ font-family:var(--font-ui);font-weight:300;
+}
+body,button,input,select,textarea,option{font-family:var(--font-ui)}
+/* Restrict display lettering to established prominent headings and featured
+   commands, so tight settings controls and seven-column tabs never expand. */
+h1,h2,h3,.brand-title,.gallery-head h2,.button-randomize-all{
+ font-family:var(--font-display);font-weight:600;text-transform:uppercase;
+}
+/* Functional text: only the approved light and medium Rubik weights. */
+button,label,strong,b,th,.settings-tab,.editor-tool-tab,.editor-scope-button,
+.editor-search-toggle,.prime-toggle,.mobile-dock small,.mobile-editor-action-rail small{
+ font-weight:500;
+}
+input[type=number],.slider-number,output,.mobile-zoom-level,.rotation-controls{
+ font-family:var(--font-ui);font-weight:500;font-variant-numeric:tabular-nums;
+}
+/* Titles may contain acronym glyphs; CSS uppercase affects presentation only,
+   retaining DOM text, accessible names and previous action semantics. */
