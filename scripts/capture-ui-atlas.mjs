@@ -16,11 +16,15 @@ import { writeAtlasReport } from './ui-atlas-report.mjs';
 const arg = key => process.argv.find(x => x.startsWith('--'+key+'='))?.split('=').slice(1).join('=');
 const baseURL = arg('base-url') || 'http://127.0.0.1:4173';
 const out = resolve(arg('out') || 'artifacts/ui-atlas');
-const zooms = [100,75,66,50];
-const surfaces = [
+const smoke = process.argv.includes('--smoke');
+const zooms = smoke?[100]:[100,75,66,50];
+const surfaces = (smoke ? [
   {id:'desktop',viewport:{width:1440,height:900},mobile:false},
   {id:'pixel-6-pro',viewport:{width:412,height:892},mobile:true}
-];
+] .slice(0,1) : [
+  {id:'desktop',viewport:{width:1440,height:900},mobile:false},
+  {id:'pixel-6-pro',viewport:{width:412,height:892},mobile:true}
+]);
 const cases=[];const errors=[];const inapplicable=[];const seen=new Set();
 const safe=s=>String(s).toLowerCase().replace(/[^a-z0-9-]+/g,'-').replace(/^-|-$/g,'');
 const browser=await chromium.launch({headless:true});
@@ -243,7 +247,7 @@ for(const surface of surfaces)for(const zoom of zooms){
       missingExpected.push({profile:surface.id,zoom,missing:expectation});
   }
 }
-await writeFile(join(out,'manifest.json'),JSON.stringify({created:new Date().toISOString(),baseURL,zoomMethod:'CSS root zoom; viewport held fixed',cases,inapplicable,errors,missingExpected},null,2));
+await writeFile(join(out,'manifest.json'),JSON.stringify({created:new Date().toISOString(),baseURL,zoomMethod:'CSS root zoom; viewport held fixed',smoke,cases,inapplicable,errors,missingExpected},null,2));
 const byKind=Object.groupBy?Object.groupBy(cases,x=>x.kind):{};
 const report=['# ROYGBIV UI screenshot atlas','','Profiles: desktop 1440×900, mobile 412×892. Zoom: 100%, 75%, 66%, 50%.','','Screenshots: '+cases.length,'Recorded traversal failures: '+errors.length,'Correctly inapplicable tools: '+inapplicable.length,'Missing required UI states: '+missingExpected.length,'','The manifest lists every attempted screenshot, active overlays and navigation context. Static wallpaper artwork is deliberately unchanged across cases.','','## Coverage by kind',...Object.entries(byKind).map(([k,v])=>'- '+k+': '+v.length),'','## Missing/unreachable states',...errors.map(x=>'- '+JSON.stringify(x)),''];
 await writeFile(join(out,'README.md'),report.join('\n'));
