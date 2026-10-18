@@ -15,6 +15,10 @@ export function installExplorationHistory({form,preview,getRecipe,restore,render
   const heading=document.createElement('header');
   heading.className='editor-history-heading';
   heading.innerHTML='<strong>Recent variations</strong><span>Tap a thumbnail to restore it.</span>';
+  const back=document.createElement('button');
+  back.type='button';back.className='editor-history-close';
+  back.textContent='Back to tool';back.setAttribute('aria-label','Close recent variations and return to tool');
+  heading.append(back);
   const strip=document.createElement('div');
   strip.className='editor-history-strip';
   panel.append(heading,strip);
@@ -46,6 +50,7 @@ export function installExplorationHistory({form,preview,getRecipe,restore,render
     if(open)refresh();
   }
   toggle.addEventListener('click',()=>toggleHistory());
+  back.addEventListener('click',()=>toggleHistory(false));
   document.addEventListener('editor-tool-changed',()=>toggleHistory(false));
   refresh();
   return {
