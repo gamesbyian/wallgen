@@ -217,6 +217,8 @@ These are test **limitations**, not conclusions that the app's gallery or metada
 
 **A03. Navigation and physical zoom are not certified.** The full run's four search failures all occur when a redundant final `.editor-search-toggle` click is intercepted by `#mobileActionDock`. Atlas PR #67 has a later change removing that redundant step; its actual full-run qualification must still be checked. Track surface class, expanded/selected controls, bounding boxes, intersection ratio and clickability for each claimed state; flag false-positive captures. The four root CSS zoom screenshots are *scaling approximations*, not verified Android native Chrome zoom.
 
+**A05. Browser scaling is not equivalent to breakpoint coverage.** The requested 100/75/66/50 captures all use a fixed 412px Playwright viewport with `document.documentElement.style.zoom`. That means the 500–790px responsive rules in `editor-redesign.css` and `detail-controls.css` may not be exercised as they would be by native Chrome zoom. Add a *supplementary* browser-breakpoint matrix at 499/500/600/790/791 CSS viewport widths and small-height landscape cases, separately from the four user-requested zoom captures; assert when the `mobile-studio` breakpoint turns on/off. Do not silently rebrand root CSS zoom as native device zoom.
+
 **A04. Add automatic geometric linting to the atlas.** For each visible control and associated label, record DOM rectangle, parent panel rectangle, line box overflow (`scrollWidth > clientWidth` where non-scrollable), z-index hit-test at center, and accidental intersections with fixed rail/dock. Exempt intentionally scrollable tool chips and preview. Retain evidence snapshots, not only a summary percentage.
 
 ## Recommended execution order
