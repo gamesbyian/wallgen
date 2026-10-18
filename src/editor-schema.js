@@ -3,12 +3,12 @@
 // use these definitions rather than maintaining competing control taxonomies.
 export const EDITOR_CATEGORIES=[
   {id:'layout',label:'Layout',icon:'▦',tools:[
-    {id:'canvas',name:'Canvas structure',settings:['structure']},
+    {id:'structure-mode',name:'Canvas structure',settings:['structure']},
     {id:'arrange',name:'Arrangement',settings:['composition','repeatCount','repeatSpacing']},
     {id:'direction',name:'Direction',settings:['orientation','diagonalRotation','mirrorHorizontal','mirrorVertical']},
     {id:'variability',name:'Variation',settings:['chaos']},
   ]},
-  {id:'path',label:'Geometry',icon:'⌁',tools:[
+  {id:'path',label:'Path',icon:'⌁',tools:[
     {id:'geometry',name:'Paths',settings:['geometry','shapeFrequency','shapeDepth']},
     {id:'rays',name:'Radial rays',settings:['radialMode','rayCount','rayRotation']},
     {id:'ray-shape',name:'Ray shape',settings:['rayTwist','rayCoverage','rayCore']},
