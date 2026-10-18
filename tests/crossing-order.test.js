@@ -183,7 +183,7 @@ test('exact 96-point reported wallpaper keeps all seven offset ribbons coherent'
   const span=scene.stripes.at(-1).center-scene.stripes[0].center;
   const bound=safeDrawnBandSpan(scene.stripes[0].drawnPath);
   assert.ok(span<=bound+1e-6,'whole bundle must respect curvature limit');
-  assert.ok(span<100,'small inner knot must not invert: '+span);
+  assert.ok(span<80,'small inner knot must retain radial clearance: '+span);
   for(const stripe of scene.stripes){
     let prev=samplePath(stripe,-scene.extent,scene.extent);
     let largest=0;
