@@ -21,6 +21,9 @@ export const EDITOR_CATEGORIES=[
     {id:'motif-scale',name:'Motif scale',settings:['motifSize','motifFrequency']},
     {id:'character',name:'Character',settings:['individuality','overridePatternHomogeneity']},
     {id:'tone',name:'Band tones',settings:['tonalContrast']},
+    {id:'outlines',name:'Outlines',settings:['outline','gap','outlineBuffer']},
+    {id:'shadows',name:'Shadows',settings:['stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection']},
+    {id:'glow',name:'Glow',settings:['glow']},
   ]},
   {id:'colour',label:'Colour',icon:'◐',tools:[
     {id:'rainbow',name:'Rainbow',settings:['palette','reverseStripes']},
@@ -36,10 +39,7 @@ export const EDITOR_CATEGORIES=[
     {id:'surface',name:'Surface',settings:['textureDisplacement','brushRoughness']},
   ]},
   {id:'effects',label:'Effects',icon:'✦',tools:[
-    {id:'outlines',name:'Outlines',settings:['outline','gap','outlineBuffer']},
     {id:'lighting',name:'Lighting',settings:['lightingMood','lightDirection','lightStrength','shadowStrength']},
-    {id:'shadows',name:'Shadows',settings:['stripeShadowEnabled','stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection']},
-    {id:'glow',name:'Glow',settings:['glow']},
   ]},
 ];
 export const TOOL_LIST=EDITOR_CATEGORIES.flatMap(category=>
