@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {gpuFieldEligibility,renderMaskedFieldGPU,createMaskedFieldSession,GPU_FIELD_FRAGMENT,GPU_FIELD_STACK_FRAGMENT} from '../src/gpu-fields.js';
+import {gpuFieldEligibility,renderMaskedFieldGPU,createMaskedFieldSession,gpuWorldRect,GPU_FIELD_FRAGMENT,GPU_FIELD_STACK_FRAGMENT} from '../src/gpu-fields.js';
 
 const eligible={id:'stripe-accent',enabled:true,placement:'field',shape:'wave',
   stroke:'solid',type:'line',width:2.25,color:'white',opacity:1,
@@ -214,4 +214,38 @@ test('stack shader performs source-over blending and has fixed layer cap',()=>{
   assert.match(GPU_FIELD_STACK_FRAGMENT,/accumulatedAlpha=alpha\+accumulatedAlpha\*\(1\.0-alpha\)/);
   assert.match(GPU_FIELD_STACK_FRAGMENT,/accumulated\/accumulatedAlpha/);
   assert.match(GPU_FIELD_STACK_FRAGMENT,/texture\(ownerMask/);
+});
+
+test('WebGL world rectangle is independent of shader resolution and zoom',()=>{
+  assert.deepEqual(gpuWorldRect(),[0,0,600,1300]);
+  assert.deepEqual(gpuWorldRect(600,1300,{left:-300,top:-650,right:900,bottom:1950}),
+    [-300,-650,1200,2600]);
+  assert.deepEqual(gpuWorldRect(600,1300,{left:180,top:390,right:420,bottom:910}),
+    [180,390,240,520]);
+  for(const bad of [
+    {left:0,top:0,right:0,bottom:1300},
+    {left:400,top:0,right:399,bottom:100},
+    {left:0,top:NaN,right:300,bottom:1300},
+    {left:0,top:0,right:Infinity,bottom:100}
+  ])assert.equal(gpuWorldRect(600,1300,bad),null);
+  assert.equal(gpuWorldRect(0,1300),null);
+});
+
+test('Both GPU field paths accept explicit camera bounds and reject malformed frames',()=>{
+  const mock=fakeGPU();
+  const session=createMaskedFieldSession({
+    width:64,height:64,canvasFactory:()=>mock.canvas});
+  assert.equal(session.supported,true);
+  assert.equal(session.setMask({width:64,height:64}).supported,true);
+  const bounds={left:-300,top:-650,right:900,bottom:1950};
+  assert.equal(session.render(sessionElement,{viewBounds:bounds}).supported,true);
+  assert.equal(session.renderMany([sessionElement],{viewBounds:bounds}).supported,true);
+  assert.equal(mock.counters.draws,2);
+  const invalid={left:90,top:0,right:0,bottom:50};
+  assert.equal(session.render(sessionElement,{viewBounds:invalid}).supported,false);
+  assert.equal(session.renderMany([sessionElement],{viewBounds:invalid}).supported,false);
+  assert.equal(mock.counters.draws,2);
+  assert.match(GPU_FIELD_FRAGMENT,/worldRect/);
+  assert.match(GPU_FIELD_STACK_FRAGMENT,/worldRect/);
+  session.dispose();
 });
