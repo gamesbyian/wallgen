@@ -194,7 +194,7 @@ References such as `pixel-6-pro/100/conditional-diagonal.png` are paths within t
 
 **Evidence:** `pixel-6-pro/100/special-metadata-scrolled-controls.png` and `shell-mobile-more.png` show faint green notice text nearly disappearing on cream.
 
-**Root cause:** `styles.css` sets `#notice{color:#c2e9be}` for a dark background; the cream theme does not override this text colour.
+**Root cause:** `styles.css` sets `#notice{color:#c2e9be}` for a dark background; the cream theme does not override this text colour. That foreground has only **approximately 1.32:1** contrast against the cream tray's `#fffdf8`, well below the 4.5:1 target for small text.
 
 **Implement:** Add `--notice-foreground` and optional `--notice-surface` theme tokens with legible contrast against both light and dark backgrounds. Use the same treatment for undo, saved, copied, imported and other transient messages. Preserve unobtrusiveness without sacrificing readability.
 
