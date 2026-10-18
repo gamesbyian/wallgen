@@ -41,8 +41,21 @@ export async function captureSpecialStates({page,ctx,capture,navigate,change,set
       await settle(page);
       await snap('search-matching-setting');
       await page.locator('.editor-search-input').fill('');
-      await clickIfVisible(page,'.editor-search-toggle');
+      // The mobile expanded input can cover the toggle. Close the same
+      // application control directly after photographing that UI state.
+      await forceClick('.editor-search-toggle');
     }
+  });
+  await attempt('history',async()=>{
+    await navigate(page,'layout','arrange');
+    await clickIfVisible(page,'#editorHistoryToggle');
+    await snap('history-empty');
+    await clickIfVisible(page,'#editorHistoryToggle');
+    await forceClick('#randomize');
+    await clickIfVisible(page,'#editorHistoryToggle');
+    await snap('history-with-variations');
+    await clickIfVisible(page,'#editorHistoryToggle');
+    await snap('undo-now-enabled');
   });
   await attempt('lock',async()=>{
     await change(page,'structure','paths');
@@ -120,15 +133,28 @@ export async function captureSpecialStates({page,ctx,capture,navigate,change,set
     await forceClick('#favorite');
   });
   await attempt('metadata-open',async()=>{
-    if(ctx.surface.mobile)await clickIfVisible(page,'#mobileMore');
+    if(ctx.surface.mobile){
+      const editOpen=await page.evaluate(()=>document.body.classList.contains('mobile-edit-open'));
+      const toolsOpen=await page.evaluate(()=>document.body.classList.contains('mobile-tools-open'));
+      if(editOpen)await clickIfVisible(page,'[data-dock-proxy="mobileMore"]');
+      else if(!toolsOpen)await clickIfVisible(page,'#mobileMore');
+      await page.locator('#mobileToolsSheet:not([hidden])').waitFor({timeout:4000});
+    }
+    // The metadata section is long: record both its opening and controls
+    // scrolled into view at the bottom rather than claiming one screen holds it.
     if(await clickIfVisible(page,'#metadataToggle')){
       await snap('metadata-expanded');
       await page.locator('#metadataRemember').check();
       await snap('metadata-remember-checked');
+      const last=page.locator('#metadataPanel input:not([type=checkbox]),#metadataPanel textarea').last();
+      if(await last.count()){
+        await last.scrollIntoViewIfNeeded({timeout:3500});
+        await snap('metadata-scrolled-controls');
+      }
       await page.locator('#metadataRemember').uncheck();
-      await clickIfVisible(page,'#metadataToggle');
+      await forceClick('#metadataToggle');
     }else throw Error('Metadata control not reachable');
-    if(ctx.surface.mobile)await clickIfVisible(page,'#mobileMore');
+    if(ctx.surface.mobile)await clickIfVisible(page,'#mobileToolsClose');
   });
   await attempt('mobile-rails',async()=>{
     if(!ctx.surface.mobile)return;
@@ -137,6 +163,8 @@ export async function captureSpecialStates({page,ctx,capture,navigate,change,set
     if(await clickIfVisible(page,'#mobileBleed'))await snap('mobile-bleed-guide-enabled');
     await clickIfVisible(page,'#mobileBleed');
     if(await clickIfVisible(page,'[data-zoom=in].mobile-zoom-button'))await snap('mobile-preview-zoom-readout');
+    if(await clickIfVisible(page,'[data-nudge=right]'))await snap('mobile-nudge-reset-enabled');
+    await clickIfVisible(page,'[data-nudge=reset]');
   });
   await attempt('draw-empty',async()=>{
     // The drawing launch lives in the editor toolbar on desktop and in the
@@ -170,7 +198,13 @@ export async function captureSpecialStates({page,ctx,capture,navigate,change,set
       await clickIfVisible(page,'#drawAddPoint');
       await clickIfVisible(page,'#drawEditPoints');
     }
-    await clickIfVisible(page,'#drawCancel');
+    if(await clickIfVisible(page,'#drawApply')){
+      if(ctx.surface.mobile)await clickIfVisible(page,'#mobileEdit');
+      await navigate(page,'path','ends');
+      await snap('drawn-path-endpoint-controls');
+      await navigate(page,'path','geometry');
+      await snap('drawn-geometry-active');
+    }else await clickIfVisible(page,'#drawCancel');
   });
   await attempt('import-image',async()=>{
     const fixture='<svg xmlns="http://www.w3.org/2000/svg" width="300" height="500" viewBox="0 0 300 500"><rect width="300" height="500" fill="white"/><path d="M 15 450 L 270 45" stroke="black" stroke-width="9" fill="none"/></svg>';
