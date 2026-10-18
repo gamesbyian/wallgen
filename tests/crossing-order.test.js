@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {CROSSING_MODES,segmentIntersection,findPathCrossings,crossingTopIsLater,crossingBranchClip} from '../src/crossing-order.js';
 import {normalizeRecipe,resolveScene,encodeRecipe,decodeRecipe} from '../src/model.js';
-import {samplePath} from '../src/path-geometry.js';
+import {samplePath,widthAt} from '../src/path-geometry.js';
+import {safeDrawnBandSpan,prepareDrawnPath} from '../src/drawn-path.js';
 import {stripeFillPath} from '../src/renderer.js';
 
 test('over under weave are distinct, saved and lockable',()=>{
@@ -127,4 +128,45 @@ test('safe loops never invert the inner ribbon or exceed the outer frame radius'
     geometrySafety:false,spread:100,loopRadius:0});
   const r=unrestricted.stripes[0].loopRadius;
   assert.ok(r+unrestricted.stripes[0].center<0);
+});
+
+test('coherent drawn ribbons respect sustained tight bend curvature',()=>{
+  // The upper arc of the user-supplied 10x-smoothed knot, sampled in its
+  // original stroke order. Its abrupt turn is short but geometrically real.
+  const points=[
+    [.78896,.53643],[.81093,.49653],[.82761,.45608],[.84025,.41532],
+    [.84562,.37423],[.84553,.33306],[.8371,.29211],[.81811,.25188],
+    [.80431,.23233],[.77967,.21526],[.74849,.20054],[.71391,.18759],
+    [.67196,.18155],[.6283,.18536],[.58616,.19211],[.54435,.19929],
+    [.50364,.20769],[.46474,.21776],[.4274,.22902],[.3928,.24199],
+    [.36387,.25762],[.34157,.27543],[.32374,.29429],[.3079,.31354],
+    [.29352,.33303],[.28187,.3529],[.27393,.37316],[.26937,.39363]
+  ];
+  const path=prepareDrawnPath(points);
+  const span=safeDrawnBandSpan(path);
+  assert.ok(span<100,'tight bend must constrain the whole 7-stripe span: '+span);
+  assert.ok(span>=16,'the coherence guard must preserve visible stripes');
+  const input={seed:'t0b4v5-ice7lf',geometry:'drawn',customPath:points,
+    spread:67,individuality:77,geometrySafety:true,construction:'tonal'};
+  const scene=resolveScene(input);
+  assert.ok(scene.stripes[6].center-scene.stripes[0].center<=span+1e-6);
+  const stripe=scene.stripes[0],fullExtent=scene.extent;
+  // Smooth normals must not teleport the offset curve at sample vertices.
+  let previous=samplePath(stripe,-fullExtent,fullExtent),maxJump=0;
+  for(let x=-fullExtent+2;x<=fullExtent;x+=2){
+    const next=samplePath(stripe,x,fullExtent);
+    maxJump=Math.max(maxJump,Math.hypot(next.x-previous.x,next.y-previous.y));
+    previous=next;
+  }
+  assert.ok(maxJump<15,'drawn normal offsets must not create sideways spikes: '+maxJump);
+});
+
+test('local crossing segments retain the original endpoint taper',()=>{
+  const stripe={width:8,taper:0,endTaper:75,
+    segmentStart:-800,segmentEnd:800};
+  const original=widthAt(stripe,0,800);
+  const branch={...stripe,segmentStart:-100,segmentEnd:100,
+    taperStart:-800,taperEnd:800};
+  assert.equal(widthAt(branch,0,800),original);
+  assert.equal(widthAt(branch,100,800),widthAt(stripe,100,800));
 });

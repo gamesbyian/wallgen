@@ -249,29 +249,32 @@ export function pointOnDrawnPath(path,u){
   return {x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t};
 }
 
-/** Bound parallel offsets around tight bends before they can turn inside out.
- * Ignore near-straight vertices, and use a lower percentile to resist single
- * residual touchscreen noise spikes. Units are logical design pixels. */
+/** A stable ribbon cannot put an inward-offset lane beyond the radius of a
+ * tight turn. Use curvature over a *four-segment* chord: a single noisy touch
+ * vertex cannot force the entire pack to collapse, but a real U-turn can.
+ * The old 25th percentile ignored short yet genuine bends (the supplied
+ * t0b4v5-ice7lf knot had a 54px turn under >100px inner offsets).
+ */
 export function safeDrawnBandSpan(path){
   if(!path)return 120;
-  const radii=[];
-  const points=path.points;
-  for(let i=1;i<points.length-1;i++){
-    const a=points[i-1],b=points[i],c=points[i+1];
-    const dx1=b.x-a.x,dy1=b.y-a.y,dx2=c.x-b.x,dy2=c.y-b.y;
-    const l1=Math.hypot(dx1,dy1),l2=Math.hypot(dx2,dy2);
-    if(l1<1||l2<1)continue;
-    const cross=Math.abs(dx1*dy2-dy1*dx2);
-    const dot=dx1*dx2+dy1*dy2;
-    const theta=Math.atan2(cross,dot);
-    if(theta<.025)continue;
-    radii.push(Math.min(l1,l2)/(2*Math.sin(theta/2)));
+  const radii=[],points=path.points;
+  for(let i=2;i<points.length-2;i++){
+    const a=points[i-2],b=points[i],c=points[i+2];
+    const ab=Math.hypot(b.x-a.x,b.y-a.y);
+    const bc=Math.hypot(c.x-b.x,c.y-b.y);
+    const ac=Math.hypot(c.x-a.x,c.y-a.y);
+    if(Math.min(ab,bc)<2)continue;
+    const vx=b.x-a.x,vy=b.y-a.y,wx=c.x-b.x,wy=c.y-b.y;
+    const cross=Math.abs(vx*wy-vy*wx);
+    const turn=Math.atan2(cross,vx*wx+vy*wy);
+    if(turn<.05)continue;
+    const radius=ab*bc*ac/(2*cross||1);
+    if(Number.isFinite(radius))radii.push(radius);
   }
   if(!radii.length)return 360;
   radii.sort((a,b)=>a-b);
-  // Keep the entire 7-ribbon pack narrower than the useful curvature radius.
-  const r=radii[Math.floor((radii.length-1)*.25)];
-  // Strongly undercut the minimum useful radius: opposite edges of a seven-
-  // stripe bundle must not meet or reverse order at the inside of a U-turn.
-  return Math.max(44,Math.min(360,r*.72));
+  // The lower 5% of sustained bends matters. A large percentile averages
+  // away the exact turn where inner ribbons would invert or sprout barbs.
+  const r=radii[Math.floor((radii.length-1)*.05)];
+  return Math.max(16,Math.min(360,r*.75));
 }
