@@ -43,7 +43,7 @@ export function syncEditorStructure(structure,regionMode){
     pathTab.lastChild.textContent=structure==='paths'?' Path':' Geometry';
   const shapesTab=byId('tab-stripes');
   if(shapesTab?.lastChild?.nodeType===3)
-    shapesTab.lastChild.textContent=structure==='paths'?' Stripes':' Shapes';
+    shapesTab.lastChild.textContent=' Shapes';
   for(const select of form.querySelectorAll('[name=textureCoverage],[name=textureCoverage2],[name=textureCoverage3]')){
     const prefix=structure==='paths'?'stripes':'shapes';
     const both=select.querySelector('option[value=both]');
