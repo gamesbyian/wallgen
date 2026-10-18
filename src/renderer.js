@@ -381,16 +381,19 @@ function traceCentre(stripe,extent,offset=0){
 // Dotted/dashed decorations keep a world-station phase when the renderer
 // repaints only the front branch of a self-intersection.
 function arcLengthUntil(stripe,extent,station){
-  const origin=-(stripe.coreExtent??extent);
-  if(station<=origin)return 0;
-  const n=Math.max(1,Math.ceil((station-origin)/4));
+  const origin=-(stripe.coreExtent??extent),delta=station-origin;
+  if(!delta)return 0;
+  // Off-frame extrapolation can start before the original path's first
+  // station. Keep dash phase anchored to the saved path rather than
+  // resetting it at the transition from tangent extension to the stroke.
+  const n=Math.max(1,Math.ceil(Math.abs(delta)/4));
   let previous=samplePath(stripe,origin,extent),length=0;
   for(let i=1;i<=n;i++){
-    const next=samplePath(stripe,origin+(station-origin)*i/n,extent);
+    const next=samplePath(stripe,origin+delta*i/n,extent);
     length+=Math.hypot(next.x-previous.x,next.y-previous.y);
     previous=next;
   }
-  return length;
+  return Math.sign(delta)*length;
 }
 function drawPathInteriors(ctx,stripe,extent,scene){
   if(!scene.interiorElements?.length)return;
@@ -404,15 +407,19 @@ function drawPathInteriors(ctx,stripe,extent,scene){
     ctx.lineWidth=e.type==='band'?Math.max(.15,stripe.width*e.width/100):e.width;
     ctx.lineJoin='round';lineDash(ctx,e);
     const path=new Path2D();
+    // Keep interior wave/loop phase stable in core path space as zoom and
+    // off-frame continuation change the painted station interval.
+    const phaseExtent=(stripe.sharedGeometry??stripe.geometry)==='drawn'?
+      (stripe.coreExtent??extent):extent;
     const n=Math.max(160,Math.ceil((end-start)/2.3));
     for(let i=0;i<=n;i++){
       const station=start+(end-start)*i/n;
       const p=samplePath(stripe,station,extent);
       const width=widthAt(stripe,station,extent);
       const transverse=e.position*width+
-        e.amplitude*width*elementWave(e,station/Math.max(100,extent*2));
+        e.amplitude*width*elementWave(e,station/Math.max(100,phaseExtent*2));
       const longitudinal=e.shape==='loop'?
-        Math.cos(station/Math.max(100,extent*2)*e.frequency*Math.PI*2+e.phase*Math.PI/180)*e.amplitude*width:0;
+        Math.cos(station/Math.max(100,phaseExtent*2)*e.frequency*Math.PI*2+e.phase*Math.PI/180)*e.amplitude*width:0;
       const x=p.x+p.nx*transverse+p.tx*longitudinal;
       const y=p.y+p.ny*transverse+p.ty*longitudinal;
       if(i===0)path.moveTo(x,y);else path.lineTo(x,y);
@@ -944,6 +951,15 @@ export function drawWallpaper(canvas, recipe, options={}) {
   // geometry is painted where a 100%-cropped bitmap contained no pixels.
   scene.coreExtent=scene.extent;
   if(camera.zoom<1)scene.extent/=camera.zoom;
+  // The physical reach covers zoom-out corners and the 30% cache overhang.
+  // Floating compositions and closed silhouettes deliberately keep their caps.
+  const extendOpenPath=scene.geometry==='drawn'&&scene.extendDrawnPath&&
+    scene.composition!=='floating'&&!scene.stripes[0]?.drawnPath?.closed;
+  if(extendOpenPath){
+    const diagonal=Math.hypot(DESIGN_WIDTH,DESIGN_HEIGHT);
+    scene.extent=Math.max(scene.extent,scene.coreExtent+
+      (2*diagonal+.3*Math.max(DESIGN_WIDTH,DESIGN_HEIGHT))/camera.zoom);
+  }
   const ctx=canvas.getContext('2d', { alpha: false });
   if(!ctx) throw new Error('Canvas 2D is not supported by this browser.');
   ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,canvas.width,canvas.height);
@@ -978,8 +994,9 @@ export function drawWallpaper(canvas, recipe, options={}) {
     stripe.objectId=bundle.id+'/stripe-'+original.index;
     stripe.coreExtent=scene.coreExtent;
     if((stripe.sharedGeometry??stripe.geometry)==='drawn'){
-      stripe.segmentStart=-scene.coreExtent;
-      stripe.segmentEnd=scene.coreExtent;
+      stripe.extendDrawnPath=extendOpenPath;
+      stripe.segmentStart=extendOpenPath?-scene.extent:-scene.coreExtent;
+      stripe.segmentEnd=extendOpenPath?scene.extent:scene.coreExtent;
     }
     if(['tonal','woven'].includes(scene.construction))stripe.lineStyle='continuous';
     balanceStripeEnds(scene,stripe);

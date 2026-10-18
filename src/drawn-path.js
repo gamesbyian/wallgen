@@ -235,9 +235,25 @@ export function prepareDrawnPath(input){
     const a=points[i-1],b=points[i];
     lengths.push(lengths.at(-1)+Math.hypot(b.x-a.x,b.y-a.y));
   }
-  return {points,lengths,total:lengths.at(-1)};
+  return {points,lengths,total:lengths.at(-1),closed:distance(stored[0],stored.at(-1))<=6};
 }
-export function pointOnDrawnPath(path,u){
+// Optional non-destructive end continuation. The station-speed ramp is C1
+// at the original endpoint, then approaches one design pixel per station,
+// giving short imported lines enough off-frame reach at 50% zoom.
+export function pointOnDrawnPath(path,u,{extrapolate=false,coreExtent=1932}={}){
+  if(extrapolate&&!path.closed&&(u<0||u>1)){
+    const end=u>1,tip=path.points[end?path.points.length-1:0];
+    const window=Math.min(48,path.total*.25);
+    const inner=pointOnDrawnPath(path,end?1-window/path.total:window/path.total);
+    const vx=end?tip.x-inner.x:inner.x-tip.x;
+    const vy=end?tip.y-inner.y:inner.y-tip.y;
+    const size=Math.hypot(vx,vy)||1;
+    const station=Math.abs(u-(end?1:0))*2*coreExtent;
+    const rate=Math.min(1,path.total/(2*coreExtent)),ramp=96;
+    const travel=station-(1-rate)*ramp*(1-Math.exp(-station/ramp));
+    return {x:tip.x+(end?1:-1)*travel*vx/size,
+      y:tip.y+(end?1:-1)*travel*vy/size};
+  }
   const target=clamp(u,0,1)*path.total,arr=path.lengths;
   let lo=1,hi=arr.length-1;
   while(lo<hi){

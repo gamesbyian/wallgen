@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { drawWallpaper, presentNudgedArtwork, motifFits, balanceStripeEnds, stripeFrameContacts, textureHeight, stripeShadowParameters, nudgeOverhang, stripeLineMarks } from '../src/renderer.js';
 import { MATERIALS, MOTIFS, GEOMETRIES, OUTLINES, resolveScene } from '../src/model.js';
+import {samplePath} from '../src/path-geometry.js';
 
 // Node's lightweight Canvas API spy catches geometry/material code path errors
 // without requiring a native browser, raster library, or platform build step.
@@ -51,6 +52,23 @@ test('radial and regional objects use the complete common painting pipeline',()=
   }
 });
 
+test('open drawn paths use overscan; closed and floating strokes keep their ends',()=>{
+  const r={geometry:'drawn',customPath:[[.35,.42],[.5,.48],[.65,.54]],
+    material:'none',viewZoom:.5,positionX:30,positionY:-30};
+  const canvas=()=>({width:600,height:1300,getContext:()=>new FakeContext()});
+  const finite=drawWallpaper(canvas(),r);
+  const extended=drawWallpaper(canvas(),{...r,extendDrawnPath:true});
+  assert.ok(extended.extent>finite.extent);
+  const s={...extended.stripes[3],coreExtent:extended.coreExtent,extendDrawnPath:true};
+  const p=samplePath(s,extended.coreExtent+400,extended.extent);
+  const cap=samplePath({...s,extendDrawnPath:false},extended.coreExtent+400,extended.extent);
+  assert.ok(Math.hypot(p.x-cap.x,p.y-cap.y)>150);
+  const c=[[.2,.2],[.8,.2],[.8,.8],[.2,.8],[.2,.2]];
+  assert.equal(drawWallpaper(canvas(),{...r,customPath:c,extendDrawnPath:true}).extent,
+    drawWallpaper(canvas(),{...r,customPath:c}).extent);
+  assert.equal(drawWallpaper(canvas(),{...r,composition:'floating',extendDrawnPath:true}).extent,
+    finite.extent);
+});
 test('paper and textiles render without exceptions',()=>{
   for(const material of MATERIALS)render({seed:`textile-${material}`,material,motif:'solid'});
 });

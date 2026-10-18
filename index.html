@@ -245,6 +245,7 @@
           <label class="field range-field"><span>Outline thickness </span><input type="range" name="gap" id="gap" data-setting="gap" min="0" max="100" value="28"></label>
           <label class="field range-field"><span>Outline buffer </span><input type="range" name="outlineBuffer" id="outlineBuffer" data-setting="outlineBuffer" min="0" max="100" value="0" title="Distance between each stripe and its outline"></label>
           <label class="field range-field"><span>Floating stripe length</span><input type="range" name="pathLength" data-setting="pathLength" min="0" max="100" value="65"></label>
+          <label class="field path-extension-toggle" title="Continue open drawn and imported paths beyond the frame at any zoom or nudge. Closed and floating paths retain their ends."><span>Extend open drawn path</span><input type="checkbox" name="extendDrawnPath" data-setting="extendDrawnPath"></label>
           <label class="field range-field"><span>Taper stripe ends</span><input type="range" name="endTaper" data-setting="endTaper" min="0" max="100" value="0"></label>
           <label class="field range-field"><span>Neon glow </span><input type="range" name="glow" id="glow" data-setting="glow" min="0" max="100" value="0"></label>
         </div>
@@ -282,6 +283,7 @@
         <div class="draw-path-panel" id="drawPathPanel" role="group" aria-label="Custom path drawing controls" hidden>
           <span id="drawPathHint" aria-live="polite">Draw one continuous path across the canvas.</span>
           <label class="draw-smoothing-row" for="drawSmoothingStrength"><span>Smoothing</span><input type="range" id="drawSmoothingStrength" min="1" max="10" step="0.5" value="1"><output id="drawSmoothingValue" for="drawSmoothingStrength">1.0×</output></label>
+          <label class="draw-extension-row" for="drawExtendPath" title="Continue both open endpoints along their terminal tangents without changing saved control points."><input type="checkbox" id="drawExtendPath"><span>Extend open ends beyond frame</span></label>
           <div class="draw-path-controls">
             <button type="button" id="drawSmooth" class="draw-fit-selected" aria-pressed="true">Smooth</button>
             <button type="button" id="drawGeometric" aria-pressed="false">Geometric</button>
@@ -377,7 +379,7 @@
       <button type="button" id="imagePathApply" disabled>Edit / Use path</button>
     </div>
   </dialog>
-  <script type="module" src="src/app.js?v=20261018-import1"></script>
+  <script type="module" src="src/app.js?v=20261018-extend1"></script>
   <script type="module" src="src/mobile-studio.js?v=20261017-b1"></script>
   <script type="module" src="src/mobile-swipes.js?v=20261017-explore1"></script>
   <script type="module" src="src/mobile-preview-tools.js?v=20261017-b1"></script>

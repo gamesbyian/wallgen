@@ -27,7 +27,7 @@ export const LOCKABLE_SETTINGS = ['seed','family','orientation','geometry','moti
   'textureDisplacement','patternHomogeneity','chaos','stripeWidth','spread','shapeFrequency','shapeDepth','motifSize','motifFrequency','lineStyle','individuality',
   'overridePatternHomogeneity','gap','outlineBuffer','glow','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','position',
   'structure','radialMode','rayCount','rayRotation','rayTwist','rayCoverage','rayCore','fieldCenterX','fieldCenterY','regionMode','regionCount','regionJitter','regionSides','dividerColor','dividerWidth',
-  'composition','repeatCount','repeatSpacing','construction','crossingMode','turnRadius','hairpinAngle','loopRadius','loopSweep','geometrySafety','stepCount','chevronSharpness','loopAspect','pathLength','endTaper','tonalContrast','brushRoughness','dotSize','dotSpacing','interiorElements'];
+  'composition','repeatCount','repeatSpacing','construction','crossingMode','turnRadius','hairpinAngle','loopRadius','loopSweep','geometrySafety','extendDrawnPath','stepCount','chevronSharpness','loopAspect','pathLength','endTaper','tonalContrast','brushRoughness','dotSize','dotSpacing','interiorElements'];
 export const PALETTES = ['classic', 'electric', 'pastel', 'jewel', 'muted', 'sunset', 'candy', 'arctic', 'earth', 'twilight', 'citrus'];
 export const TEXTURE_COVERAGES = ['both', 'stripes', 'background'];
 export const OUTLINES = ['none', 'hairline', 'white', 'double', 'broken', 'one-side', 'black', 'black-hairline', 'black-double', 'black-broken', 'black-one-side'];
@@ -105,6 +105,7 @@ export function normalizeRecipe(input = {}) {
     mirrorVertical: input.mirrorVertical === true || input.mirrorVertical === 'true',
     geometry: readChoice('geometry', GEOMETRIES),
     customPath: normalizeDrawnPath(input.customPath),
+    extendDrawnPath:input.extendDrawnPath===true||input.extendDrawnPath==='true',
     // User-protected anchor indices travel with the sampled curve through
     // URLs, favourites, JSON and embedded PNG metadata.
     drawnAnchors: [...new Set((Array.isArray(input.drawnAnchors)?input.drawnAnchors:[])
@@ -409,6 +410,7 @@ export function respectSettingLocks(currentInput, nextInput) {
       next.customPath=current.customPath;
       next.drawnAnchors=current.drawnAnchors;
       next.drawnCorners=current.drawnCorners;
+      next.extendDrawnPath=current.extendDrawnPath;
     }
     if(key==='position') {next.positionX=current.positionX;next.positionY=current.positionY;}
     else next[key]=current[key];

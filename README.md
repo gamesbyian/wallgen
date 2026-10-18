@@ -205,6 +205,16 @@ from **Details** (interior decoration, borders/dividers, shadows and glow)
 so the additional controls do not require vertical scrolling.
 See [the interior element architecture](docs/INTERIOR-ELEMENTS.md).
 
+## Open-path continuation
+
+Drawn and image-imported paths preserve their exact stored points. Optional
+**Extend open drawn path** in **Path → Endpoints** (also in the drawing editor)
+continues the terminal tangents beyond the frame, including zoom-out/nudge
+overscan and export. It defaults off; closed shapes and deliberately floating
+compositions retain their ends. Dashed guides preview the extension.
+Existing nudged paths keep accurately registered editing handles and position
+when re-applied.
+
 ## Parametric geometry and combined stripe modes
 
 The renderer uses the same path sampling functions for straight and nonlinear lines, including hairpins and looping paths. Each path yields a tangent and normal so width, taper, outlines and procedural materials can follow bends. Returning hairpins may have two endpoints crossing the same image edge intentionally; loops can fold back over their own earlier path.

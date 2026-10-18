@@ -5,7 +5,7 @@ import {finishDrawnPath, fairPath, normalizeDrawnPath, prepareDrawnPath, safeDra
   MAX_DRAWN_POINTS,resamplePath} from '../src/drawn-path.js';
 import {normalizeRecipe,resolveScene,encodeRecipe,decodeRecipe,respectSettingLocks,
   DESIGN_WIDTH,DESIGN_HEIGHT} from '../src/model.js';
-import {pathPosition,samplePath,ribbonEdge} from '../src/path-geometry.js';
+import {pathPosition,samplePath,ribbonEdge,widthAt} from '../src/path-geometry.js';
 import {embedPngMetadata,extractPngRecipe} from '../src/png-metadata.js';
 
 const noisy=Array.from({length:250},(_,i)=>[
@@ -67,6 +67,29 @@ test('a hand-drawn path becomes seven normal-offset stripes with unchanged strok
     const edge=ribbonEdge(stripe,scene.extent*.1,scene.extent,1);
     assert.ok(Number.isFinite(edge.x)&&Number.isFinite(edge.y));
   }
+});
+test('optional tangent extension preserves finite recipes and closed contours',()=>{
+  const input=[[.2,.25],[.42,.26],[.68,.29],[.84,.30]];
+  const p=prepareDrawnPath(input),o={extrapolate:true,coreExtent:1932};
+  assert.ok(pointOnDrawnPath(p,-.8,o).x<pointOnDrawnPath(p,0).x-500);
+  assert.ok(pointOnDrawnPath(p,1.8,o).x>pointOnDrawnPath(p,1).x+500);
+  assert.deepEqual(pointOnDrawnPath(p,-.8),pointOnDrawnPath(p,0));
+  const c=prepareDrawnPath([[.2,.2],[.8,.2],[.8,.8],[.2,.8],[.2,.2]]);
+  assert.equal(c.closed,true);
+  assert.deepEqual(pointOnDrawnPath(c,-.8,o),pointOnDrawnPath(c,0));
+  const scene=resolveScene({geometry:'drawn',customPath:input,extendDrawnPath:true,
+    endTaper:0,viewZoom:.5,positionX:30,positionY:-30});
+  const stripe={...scene.stripes[3],coreExtent:scene.extent};
+  assert.equal(widthAt(stripe,150,scene.extent),
+    widthAt(stripe,150,scene.extent*3));
+  assert.equal(widthAt(stripe,scene.extent+150,scene.extent*3),
+    widthAt(stripe,scene.extent,scene.extent*3));
+  const r=normalizeRecipe({geometry:'drawn',customPath:input,extendDrawnPath:true,
+    viewZoom:.5,positionX:30,positionY:-30});
+  assert.equal(decodeRecipe(encodeRecipe(r)).extendDrawnPath,true);
+  assert.deepEqual(r.customPath,normalizeDrawnPath(input));
+  assert.equal(respectSettingLocks({...r,lockedSettings:['geometry']},
+    {...r,extendDrawnPath:false}).extendDrawnPath,true);
 });
 test('tight freehand turns shrink rainbow spread instead of inverting ribbon offsets',()=>{
   const curve=prepareDrawnPath([[.25,.12],[.23,.35],[.36,.71],[.56,.84],[.76,.65],[.77,.17]]);
