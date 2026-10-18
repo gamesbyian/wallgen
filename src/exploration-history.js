@@ -1,7 +1,7 @@
 // Exploration history is independent of Undo: jumping between promising
 // branches does not destroy the artwork's precise undo chain. All snapshots
 // are real normalized recipes, and the thumbnail captures the wallpaper only.
-export function installExplorationHistory({form,preview,getRecipe,restore}){
+export function installExplorationHistory({form,preview,getRecipe,restore,renderThumbnail}){
   const max=10,items=[];
   const actions=form.querySelector('.editor-explore-actions');
   const toggle=document.createElement('button');
@@ -50,11 +50,23 @@ export function installExplorationHistory({form,preview,getRecipe,restore}){
   refresh();
   return {
     remember(recipe,label){
-      const image=preview.toDataURL('image/jpeg',.55);
-      if(items.length&&items.at(-1).image===image)return;
-      items.push({recipe:structuredClone(recipe),label,image});
+      const snapshot=structuredClone(recipe);
+      const signature=JSON.stringify(snapshot);
+      if(items.length&&items.at(-1).signature===signature)return;
+      // A worker preview can still show the PREVIOUS recipe when this is
+      // called. Never photograph the visible canvas for an archival record.
+      const item={recipe:snapshot,label,signature,
+        image:'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=='};
+      items.push(item);
       if(items.length>max)items.shift();
       if(open)refresh();
+      Promise.resolve().then(()=>renderThumbnail(snapshot,120,260)).then(image=>{
+        item.image=image;
+        if(open&&items.includes(item))refresh();
+      }).catch(error=>{
+        console.warn('Could not render recent variation thumbnail:',error);
+        // The saved recipe stays available even if its thumbnail fails.
+      });
     },
     count:()=>items.length,
     close:()=>toggleHistory(false),

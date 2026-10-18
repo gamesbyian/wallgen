@@ -1,5 +1,6 @@
 import { OUTPUT_WIDTH, OUTPUT_HEIGHT, normalizeRecipe, resolveScene, encodeRecipe, decodeRecipe, newSeed, randomizeAllRecipe, respectSettingLocks, LOCKABLE_SETTINGS } from './model.js';
-import { drawWallpaper, presentNudgedArtwork } from './renderer.js';
+import { drawWallpaper, presentNudgedArtwork } from './renderer.js?v=20261018-worker1';
+import {createPreviewCoordinator,createThumbnailQueue,exportWallpaperInWorker,closeFrame} from './render-coordinator.js';
 import { embedPngMetadata, extractPngRecipe, cleanMetadata, METADATA_FIELDS } from './png-metadata.js';
 import { installDrawTool } from './draw-path-ui.js?v=20261018-extend1';
 import { installImagePathTool } from './image-path-ui.js?v=20261018-import1';
@@ -19,7 +20,71 @@ const FAVORITES_KEY = 'wallgen:favorites:v1';
 const FIELDS = ['primesOnly','family','structure','radialMode','rayCount','rayRotation','rayTwist','rayCoverage','rayCore','fieldCenterX','fieldCenterY','regionMode','regionCount','regionJitter','regionSides','dividerColor','dividerWidth','composition','repeatCount','repeatSpacing','orientation','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','geometry','turnRadius','hairpinAngle','loopRadius','loopSweep','geometrySafety','extendDrawnPath','crossingMode','stepCount','chevronSharpness','loopAspect','construction','motif','lineStyle','pathLength','tonalContrast','brushRoughness','dotSize','dotSpacing','endTaper','shapeFrequency','shapeDepth','motifSize','motifFrequency','palette','material','outline','background','lightingMood','lightDirection','lightStrength','shadowStrength','stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection','textureCoverage','textureRotation','textureBlend','textureLayer2Enabled','material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2','textureLayer3Enabled','material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3','chaos','stripeWidth','spread','textureStrength','textureScale','textureDisplacement','individuality','patternHomogeneity','overridePatternHomogeneity','gap','outlineBuffer','glow'];
 let current = normalizeRecipe();
 let currentScene;
-const previewLayers={background:null,ink:null,scene:null,key:null};
+const previewLayers={background:null,ink:null,scene:null,key:null,overhang:null};
+let previewWorker=null;
+let previewPainted=false;
+let settledPreviewTimer=null;
+const clearSettledPreview=()=>{
+  if(settledPreviewTimer!==null)clearTimeout(settledPreviewTimer);
+  settledPreviewTimer=null;
+};
+function releasePreviewLayers(){
+  for(const layer of ['background','ink']){
+    try{previewLayers[layer]?.close?.();}catch{}
+    previewLayers[layer]=null;
+  }
+  previewLayers.key=null;
+}
+function previewPresented(){
+  preview.dataset.renderPending='false';
+  preview.removeAttribute('aria-busy');
+  preview.dispatchEvent(new CustomEvent('roygbiv-preview-presented',{
+    detail:{key:previewLayers.key,worker:!!previewWorker?.enabled}
+  }));
+}
+function mainThreadPreview(){
+  releasePreviewLayers();
+  currentScene=drawWallpaper(preview,current,{cache:previewLayers});
+  previewLayers.key=artKey(current);
+  previewLayers.scene=currentScene;
+  previewPainted=true;
+  previewPresented();
+}
+function startPreviewWorker(){
+  if(previewWorker)return previewWorker;
+  previewWorker=createPreviewCoordinator({
+    onFrame:message=>{
+      // The coordinator rejects obsolete revisions, but the underlying
+      // recipe may also have changed through Undo or a cached nudge.
+      if(message.key!==artKey(current)){closeFrame(message);return;}
+      if(message.quality==='interactive'){
+        // Upscale temporary ink, but never mark a reduced-resolution frame
+        // as the definitive, reusable nudge cache.
+        const ctx=preview.getContext('2d',{alpha:false});
+        ctx.setTransform(1,0,0,1,0,0);
+        ctx.drawImage(message.frame,0,0,preview.width,preview.height);
+        closeFrame(message);
+        preview.dispatchEvent(new CustomEvent('roygbiv-preview-interactive'));
+        return;
+      }
+      releasePreviewLayers();
+      previewLayers.background=message.background;
+      previewLayers.ink=message.ink;
+      previewLayers.overhang=message.overhang;
+      previewLayers.key=message.key;
+      previewLayers.scene=resolveScene(current);
+      presentNudgedArtwork(preview,previewLayers,current);
+      previewPresented();
+    },
+    onFailure:reason=>{
+      // Preserve editing and the exact reference renderer if worker startup,
+      // 2D context creation, image transfer, or GPU resources fail.
+      console.warn('ROYGBIV preview worker fallback:',reason);
+      mainThreadPreview();
+    }
+  });
+  return previewWorker;
+}
 const settingLockButtons=new Map();
 const autos=['family','orientation','geometry','motif','palette','material','outline'];
 function artKey(recipe){
@@ -297,19 +362,37 @@ function syncURL() {
   } catch { /* Local file previews may prohibit History API. */ }
 }
 function titleCase(value){return value.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase());}
-function render(recipe,{scroll=false,bypassLocks=false}={}) {
+function render(recipe,{scroll=false,bypassLocks=false,interactive=false}={}) {
   const next=bypassLocks?normalizeRecipe(recipe):respectSettingLocks(current,recipe);
   current=checkpoint(next);
   // Primes Only is reflected by its selected control; no transient message.
   const key=artKey(current);
+  currentScene=resolveScene(current);
   if(previewLayers.key===key && previewLayers.ink && previewLayers.background){
-    // The directional buttons only blit these two cached bitmaps.
+    clearSettledPreview();
+    // Nudge and compositor-only changes remain immediate, even while an
+    // older, expensive worker paint is winding down.
+    previewWorker?.invalidate();
     presentNudgedArtwork(preview,previewLayers,current);
-    currentScene=previewLayers.scene;
+    previewPresented();
   }else{
-    currentScene=drawWallpaper(preview,current,{cache:previewLayers});
-    previewLayers.key=key;
-    previewLayers.scene=currentScene;
+    clearSettledPreview();
+    const scale=interactive?.62:1;
+    const width=interactive?Math.max(160,Math.round(preview.width*scale)):preview.width;
+    const height=interactive?Math.max(340,Math.round(preview.height*scale)):preview.height;
+    if(previewPainted&&startPreviewWorker().request(current,key,width,height,
+      {quality:interactive?'interactive':'settled'})){
+      // Keep the last complete wallpaper visible while the newest request
+      // renders, then settle at the exact screen resolution after dragging.
+      preview.dataset.renderPending='true';
+      preview.setAttribute('aria-busy','true');
+      if(interactive)settledPreviewTimer=setTimeout(()=>{
+        settledPreviewTimer=null;
+        if(previewWorker?.enabled&&artKey(current)===key)
+          previewWorker.request(current,key,preview.width,preview.height,
+            {quality:'settled'});
+      },170);
+    }else mainThreadPreview();
   }
   // The frame always shows the exact resolution-independent export camera.
   const stage=document.querySelector('.studio-stage');
@@ -464,21 +547,47 @@ try{
 }catch{}
 
 async function downloadPNG(){
+  // Commit an in-flight slider frame before taking the export snapshot.
+  // Metadata and artwork describe the state at the user's click, even if
+  // further controls are changed during PNG encoding.
+  if(pendingControlFrame){
+    cancelAnimationFrame(pendingControlFrame);
+    pendingControlFrame=0;
+    updateControlsFromInputs();
+  }
+  const snapshot=normalizeRecipe(current);
+  const metadata=metadataValues();
   const button=document.getElementById('download');
   setBusy(button,true,'Rendering 19.8 MP…');
   await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
   let big;
   try {
-    big=document.createElement('canvas');big.width=OUTPUT_WIDTH;big.height=OUTPUT_HEIGHT;
-    // Same framing recipe as the displayed canvas, independently rendered at
-    // 3024 × 6552 rather than exporting a magnified low-resolution screenshot.
-    drawWallpaper(big,current);
-    const blob=await new Promise((resolve,reject)=>big.toBlob(b=>b?resolve(b):reject(new Error('PNG encoding failed')),'image/png'));
-    const metadata=metadataValues();
-    const result=new Blob([embedPngMetadata(await blob.arrayBuffer(),metadata,{recipe:current})],
+    let blob;
+    if(typeof Worker==='function'&&typeof OffscreenCanvas==='function'){
+      try{
+        // A separate worker prevents full-resolution PNG generation from
+        // starving the interactive preview queue.
+        blob=await exportWallpaperInWorker({
+          recipe:snapshot,width:OUTPUT_WIDTH,height:OUTPUT_HEIGHT
+        });
+      }catch(error){
+        console.warn('ROYGBIV worker export fallback:',error);
+        // An interrupted, unsupported or failed worker can still use the
+        // established reference exporter. The user retains a real PNG.
+        showNotice('Trying compatibility export…');
+      }
+    }
+    if(!blob){
+      big=document.createElement('canvas');
+      big.width=OUTPUT_WIDTH;big.height=OUTPUT_HEIGHT;
+      drawWallpaper(big,snapshot);
+      blob=await new Promise((resolve,reject)=>big.toBlob(
+        b=>b?resolve(b):reject(new Error('PNG encoding failed')),'image/png'));
+    }
+    const result=new Blob([embedPngMetadata(await blob.arrayBuffer(),metadata,{recipe:snapshot})],
       {type:'image/png'});
-    downloadBlob(result,`roygbiv-${safeFilename(current.seed)}-${OUTPUT_WIDTH}x${OUTPUT_HEIGHT}.png`);
-    showNotice(`Exported the framed ${Math.round(current.viewZoom*100)}% view at ${OUTPUT_WIDTH} × ${OUTPUT_HEIGHT}, with recipe metadata.`);
+    downloadBlob(result,`roygbiv-${safeFilename(snapshot.seed)}-${OUTPUT_WIDTH}x${OUTPUT_HEIGHT}.png`);
+    showNotice(`Exported the framed ${Math.round(snapshot.viewZoom*100)}% view at ${OUTPUT_WIDTH} × ${OUTPUT_HEIGHT}, with recipe metadata.`);
   }catch(error){console.error(error);showNotice(`Export failed: ${error.message}`);}
   finally { if(big){big.width=0;big.height=0;}setBusy(button,false); }
 }
@@ -499,15 +608,15 @@ importRecipeFile.addEventListener('change',async()=>{
 });
 
 let pendingControlFrame=0;
-function updateControlsFromInputs(){
+function updateControlsFromInputs({interactive=false}={}){
   syncDiagonalUI();
-  changeRecipe(fromControls());
+  changeRecipe(fromControls(),{interactive});
 }
 function queueControlUpdate(){
   if(pendingControlFrame)cancelAnimationFrame(pendingControlFrame);
   pendingControlFrame=requestAnimationFrame(()=>{
     pendingControlFrame=0;
-    updateControlsFromInputs();
+    updateControlsFromInputs({interactive:true});
   });
 }
 
@@ -803,9 +912,45 @@ function syncInteriorUI(){
   }
 }
 syncInteriorUI();
+// A separate, bounded worker handles thumbnails. Every image is drawn from
+// its saved recipe: asynchronous screen presentation cannot corrupt history.
+// The small reference-renderer fallback is used only on unsupported devices.
+let thumbnailWorker=null;
+function getThumbnailWorker(){
+  if(!thumbnailWorker)thumbnailWorker=createThumbnailQueue();
+  return thumbnailWorker;
+}
+async function drawThumbnail(canvas,recipe,isRelevant=()=>true){
+  const worker=getThumbnailWorker();
+  if(worker.enabled){
+    try{
+      const bitmap=await worker.request(normalizeRecipe(recipe),canvas.width,canvas.height);
+      try{
+        if(isRelevant())canvas.getContext('2d').drawImage(bitmap,0,0);
+      }finally{bitmap.close();}
+      return;
+    }catch(error){console.warn('ROYGBIV thumbnail worker fallback:',error);}
+  }
+  if(isRelevant())drawWallpaper(canvas,recipe);
+}
+async function makeHistoryThumbnail(recipe,width,height){
+  const canvas=document.createElement('canvas');
+  canvas.width=width;canvas.height=height;
+  await drawThumbnail(canvas,recipe);
+  const image=canvas.toDataURL('image/jpeg',.57);
+  canvas.width=canvas.height=0;
+  return image;
+}
+window.addEventListener('pagehide',()=>{
+  previewWorker?.dispose();
+  thumbnailWorker?.dispose();
+  releasePreviewLayers();
+});
+
 const explorationHistory=installExplorationHistory({
   form,preview,getRecipe:()=>current,
   restore:recipe=>changeRecipe(recipe,{bypassLocks:true}),
+  renderThumbnail:makeHistoryThumbnail,
 });
 
 
@@ -954,7 +1099,10 @@ function createCard(recipe,index) {
   const sub=document.createElement('span');sub.className='thumb-sub';sub.textContent=`${titleCase(scene.materialSummary)} · ${scene.orientation}`;
   card.append(name,sub);
   card.addEventListener('click',()=>changeRecipe(recipe,{scroll:true}));
-  drawWallpaper(canvas,recipe);
+  // Append the card immediately; bitmap rendering happens off the main
+  // thread and updates it only while it is still in the active gallery.
+  drawThumbnail(canvas,recipe,()=>card.isConnected).catch(error=>
+    console.warn('ROYGBIV gallery thumbnail failed:',error));
   return card;
 }
 async function showGallery(recipes,button){
@@ -981,4 +1129,8 @@ const query=new URLSearchParams(location.search).get('r');
 const loaded=query?decodeRecipe(query):null;
 toControls(loaded||current);
 render(current);
+// Start only after the first complete reference frame is visible. This keeps
+// initial page load and screenshot restoration deterministic.
+startPreviewWorker();
+
 hydrateStaticIcons();

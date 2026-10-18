@@ -620,8 +620,20 @@ function fillMotif(ctx,stripe,extent,scene) {
   ctx.restore();
 }
 
-function textureTile(material,seed,size) {
-  const canvas=document.createElement('canvas');canvas.width=canvas.height=size;
+// Canvas creation is the only host-specific dependency in the production
+// rasterizer. DOM canvases remain the reference/main-thread backend; the same
+// algorithms use OffscreenCanvas inside a dedicated rendering worker.
+export function createRenderSurface(width,height,canvasFactory){
+  const canvas=canvasFactory?canvasFactory(width,height):
+    (typeof document!=='undefined'?document.createElement('canvas'):
+      typeof OffscreenCanvas!=='undefined'?new OffscreenCanvas(width,height):null);
+  if(!canvas)throw new Error('No Canvas2D rendering surface is available');
+  canvas.width=width;canvas.height=height;
+  return canvas;
+}
+
+function textureTile(material,seed,size,canvasFactory) {
+  const canvas=createRenderSurface(size,size,canvasFactory);
   const ctx=canvas.getContext('2d');
   // Tile size is controlled by Texture Scale; individual fibres and weave
   // spacing must scale with it too, rather than remaining fixed in pixels.
@@ -1021,7 +1033,7 @@ export function drawWallpaper(canvas, recipe, options={}) {
   const inkHeight=canvas.height+margin.top+margin.bottom;
   const {scaleX,scaleY,offsetX,offsetY}=camera;
   scene.renderBounds=camera.boundsWithMargin(margin);
-  const ink=document.createElement('canvas');ink.width=inkWidth;ink.height=inkHeight;
+  const ink=createRenderSurface(inkWidth,inkHeight,options.canvasFactory);
   const g=ink.getContext('2d');
   if(!g) throw new Error('Canvas ink layer unavailable');
   g.setTransform(scaleX,0,0,scaleY,
@@ -1141,7 +1153,7 @@ export function drawWallpaper(canvas, recipe, options={}) {
   let scratch,s;
   const active=layers.length>0;
   if(active){
-    scratch=document.createElement('canvas');scratch.width=inkWidth;scratch.height=inkHeight;
+    scratch=createRenderSurface(inkWidth,inkHeight,options.canvasFactory);
     s=scratch.getContext('2d');
     if(!s) throw new Error('Texture composite surface unavailable');
   }
@@ -1161,7 +1173,7 @@ export function drawWallpaper(canvas, recipe, options={}) {
   const blend=(layer)=>layer.blend==='normal'?'source-over':layer.blend;
   const tiles=layers.map(layer=>{
     const tileSize=Math.max(32,Math.round(110*(.45+layer.scale/100*1.75)));
-    return textureTile(layer.material,layer.seed,tileSize);
+    return textureTile(layer.material,layer.seed,tileSize,options.canvasFactory);
   });
   ctx.fillStyle=scene.background==='white'?'#fff':'#000';
   ctx.fillRect(0,0,canvas.width,canvas.height);
@@ -1185,8 +1197,7 @@ export function drawWallpaper(canvas, recipe, options={}) {
   // stripes that exited the original frame keep going off-frame when nudged.
   // Intentionally inset stripe endpoints are unchanged.
   if(options.cache) {
-    const background=document.createElement('canvas');
-    background.width=canvas.width;background.height=canvas.height;
+    const background=createRenderSurface(canvas.width,canvas.height,options.canvasFactory);
     background.getContext('2d').drawImage(canvas,0,0);
     options.cache.background=background;
     options.cache.ink=ink;

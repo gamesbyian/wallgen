@@ -60,3 +60,5 @@ slower than a simplified server-side drawing approximation but avoids a
 second engine falling out of visual parity. Browser/OS colour management,
 rasterization and PNG encoding may cause differences across Chromium versions.
 Pin the browser version for strict pixel-comparison campaigns.
+
+Worker parity: `npm run render -- --backend worker --recipe tests/fixtures/metric-inset-pinwheel.json --width 600 --height 1300 --out worker.png`. The default `--backend reference` uses the existing production Canvas2D renderer. Both embed restorable recipe metadata.

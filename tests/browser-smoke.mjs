@@ -88,6 +88,100 @@ try{
   await waitFor('document.querySelectorAll(".settings-tab").length===7',15000);
   await delay(300);
 
+  // Native worker/DOM pixel parity. The worker paints the full production
+  // scene; presentation reuses the same cached ink/background compositor as
+  // the main-thread fast nudge path. Test clipping, lighting and materials.
+  const workerParity=await evaluate(`(async()=>{
+    const {drawWallpaper,presentNudgedArtwork}=await import('/src/renderer.js');
+    const worker=new Worker('/src/render-worker.js',{type:'module'});
+    const received=()=>new Promise((resolve,reject)=>{
+      const timeout=setTimeout(()=>reject(Error('render worker timeout')),18000);
+      worker.onmessage=event=>{
+        clearTimeout(timeout);
+        if(event.data.type==='error'||event.data.type==='unsupported')
+          reject(Error(event.data.error));
+        else resolve(event.data);
+      };
+      worker.onerror=event=>{clearTimeout(timeout);reject(Error(event.message));};
+    });
+    try{
+      const initial=await received();
+      if(initial.type!=='ready')throw Error('worker did not initialize');
+      const fixtures=[
+        {seed:'worker-loop',structure:'paths',geometry:'loop',material:'none',
+          lightingMood:'studio',interiorElements:[{id:'accent',shape:'wave',width:1.5}]},
+        {seed:'worker-pinwheel',structure:'radial',radialMode:'pinwheel',
+          rayCount:14,material:'linen',textureStrength:62,viewZoom:.8,
+          dividerColor:'black'},
+        {seed:'worker-facets',structure:'regions',regionMode:'facets',
+          regionCount:14,material:'none',dividerColor:'white',glow:15,
+          interiorElements:[{id:'rings',placement:'contour',width:1.4}]}
+      ];
+      const results=[];
+      for(let i=0;i<fixtures.length;i++){
+        const recipe=fixtures[i];
+        const reference=document.createElement('canvas');
+        reference.width=180;reference.height=390;
+        drawWallpaper(reference,recipe);
+        worker.postMessage({type:'preview',id:i+1,key:'fixture-'+i,
+          width:180,height:390,recipe});
+        const response=await received();
+        if(response.type!=='frame')throw Error('missing preview frame');
+        const output=document.createElement('canvas');
+        output.width=180;output.height=390;
+        presentNudgedArtwork(output,{
+          ink:response.ink,background:response.background,
+          overhang:response.overhang
+        },recipe);
+        const a=reference.getContext('2d').getImageData(0,0,180,390).data;
+        const b=output.getContext('2d').getImageData(0,0,180,390).data;
+        let differing=0,maxError=0;
+        for(let k=0;k<a.length;k++){
+          const difference=Math.abs(a[k]-b[k]);
+          if(difference>4)differing++;
+          if(difference>maxError)maxError=difference;
+        }
+        response.ink.close();response.background.close();
+        results.push({structure:recipe.structure,differing,maxError});
+      }
+      worker.postMessage({type:'export',id:99,width:180,height:390,
+        recipe:fixtures[1]});
+      const exported=await received();
+      if(exported.type!=='exported'||!exported.blob?.size)
+        throw Error('worker PNG export failed');
+      const image=await createImageBitmap(exported.blob);
+      const png={width:image.width,height:image.height,
+        bytes:exported.blob.size};
+      image.close();
+      return {results,png};
+    }finally{worker.terminate();}
+  })()`);
+  console.log('WORKER_CANVAS_PARITY',JSON.stringify(workerParity));
+  assert.ok(workerParity.results.every(r=>r.differing<=100&&r.maxError<=24),
+    'OffscreenCanvas must match reference within tight subpixel antialiasing tolerance: '+
+    JSON.stringify(workerParity.results));
+  assert.equal(workerParity.png.width,180);
+  assert.equal(workerParity.png.height,390);
+  assert.ok(workerParity.png.bytes>1000);
+
+  // The actual application must use a worker after its deterministic initial
+  // frame, and settle the correct recipe after rapid edits. A standalone
+  // worker parity test alone would miss accidental main-thread fallback.
+  await evaluate(`(()=>{
+    window.__roygbivWorkerFrames=0;
+    document.getElementById('preview').addEventListener('roygbiv-preview-presented',
+      event=>{if(event.detail?.worker)window.__roygbivWorkerFrames++;});
+    const select=document.querySelector('[name=background]');
+    select.value='white';select.dispatchEvent(new Event('change',{bubbles:true}));
+  })()`);
+  await waitFor('window.__roygbivWorkerFrames>0 && document.getElementById("preview").dataset.renderPending!=="true"',20000);
+  await evaluate(`(()=>{
+    const select=document.querySelector('[name=background]');
+    select.value='black';select.dispatchEvent(new Event('change',{bubbles:true}));
+  })()`);
+  await waitFor('document.getElementById("preview").dataset.renderPending!=="true"',20000);
+  console.log('WORKER_APPLICATION_PREVIEW_READY');
+
   // Real Chromium raster acceptance: inset contours alter native painted pixels
   // in both regional and radial structures, including a zoomed-out camera.
   const insetRaster=await evaluate(`(async()=>{
@@ -316,6 +410,7 @@ try{
   const undetailed=await evaluate('document.getElementById("preview").toDataURL()');
   await evaluate('document.getElementById("tab-details").click();document.querySelector("[data-editor-tool=interior]").click();document.querySelector(".interior-toolbar button").click()');
   await waitFor('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).interiorElements.length===1');
+  await waitFor('document.getElementById("preview").dataset.renderPending!=="true"',20000);
   const detailed=await evaluate('document.getElementById("preview").toDataURL()');
   assert.notEqual(detailed,undetailed,'adding an interior hairline must change painted pixels');
   await evaluate('document.querySelector("[data-editor-tool=interior-style]").click();(()=>{const select=document.querySelector(".editor-tool-card[data-editor-tool=interior-style] select");select.value="band";select.dispatchEvent(new Event("change",{bubbles:true}))})()');
@@ -703,18 +798,17 @@ try{
     JSON.stringify(elementUsability));
   // A rapid sequence of changes must settle on the last requested state,
   // and every change must actually refresh the painted wallpaper.
-  const previewChange=await evaluate(`(async()=>{
-    const canvas=document.getElementById('preview');
-    const before=canvas.toDataURL();
+  await waitFor('document.getElementById("preview").dataset.renderPending!=="true"',20000);
+  const previewBefore=await evaluate('document.getElementById("preview").toDataURL()');
+  await evaluate(`(()=>{
     const select=document.querySelector('[name=regionMode]');
     select.value='facets';
     select.dispatchEvent(new Event('change',{bubbles:true}));
-    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
-    const after=canvas.toDataURL();
-    return {changed:before!==after,selected:select.value};
   })()`);
-  assert.equal(previewChange.selected,'facets');
-  assert.ok(previewChange.changed,'geometry selector must repaint instead of leaving stale pixels');
+  await waitFor('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).regionMode==="facets"&&document.getElementById("preview").dataset.renderPending!=="true"',20000);
+  const previewAfter=await evaluate('document.getElementById("preview").toDataURL()');
+  assert.notEqual(previewBefore,previewAfter,
+    'committed geometry choices must eventually repaint exact settled pixels');
   await evaluate(`(()=>{
     const field=document.querySelector('[name=structure]');
     field.value='paths';field.dispatchEvent(new Event('change',{bubbles:true}));
@@ -1029,11 +1123,17 @@ try{
     file.dispatchEvent(new Event('change',{bubbles:true}));
   })()`);
   await waitFor('document.getElementById("imagePathDialog").open && !document.getElementById("imagePathAngle").disabled || document.getElementById("imagePathDialog").open && document.getElementById("imagePathCandidate").options.length>1',15000);
+  await evaluate(`(()=>{
+    const select=document.getElementById('imagePathCandidate');
+    const line=[...select.options].find(o=>o.textContent.includes('Line '));
+    if(line){select.value=line.value;
+      select.dispatchEvent(new Event('change',{bubbles:true}));}
+  })()`);
+  await waitFor('!document.getElementById("imagePathAngle").disabled',5000);
   const appliedAngle=await evaluate(`(async()=>{
     const select=document.getElementById('imagePathCandidate');
     const line=[...select.options].find(o=>o.textContent.includes('Line '));
     if(!line)return {missingLine:true};
-    select.value=line.value;select.dispatchEvent(new Event('change',{bubbles:true}));
     const expected=Number(line.textContent.match(/Line (\\d+)°/)[1]);
     const enabled=!document.getElementById('imagePathAngle').disabled;
     document.getElementById('imagePathAngle').click();

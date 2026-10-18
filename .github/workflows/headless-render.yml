@@ -70,6 +70,20 @@ jobs:
             assert.equal(recipe.interiorElements[0].placement,'contour');
           }
           JS
+      - name: Verify worker-based production PNG export and restorable metadata
+        run: |
+          npm run render -- --recipe tests/fixtures/metric-inset-pinwheel.json --backend worker --width 600 --height 1300 --out output/worker-metric-inset.png
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {readFile} from 'node:fs/promises';
+          import {extractPngRecipe} from './src/png-metadata.js';
+          const png=await readFile('output/worker-metric-inset.png');
+          assert.equal(png.readUInt32BE(16),600);
+          assert.equal(png.readUInt32BE(20),1300);
+          const restored=extractPngRecipe(png);
+          assert.equal(restored.structure,'radial');
+          assert.equal(restored.interiorElements[0].placement,'contour');
+          JS
       - name: Compare deliberate stripe self-crossing modes
         run: |
           for mode in over under weave; do
