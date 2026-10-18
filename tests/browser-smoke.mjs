@@ -828,6 +828,15 @@ try{
           document.querySelector('[data-editor-tool='+tool+'].editor-tool-tab').click();
           const card=document.querySelector('.editor-tool-card:not([hidden])');
           const cb=card.getBoundingClientRect();
+          const controls=card.querySelector('.rotation-controls');
+          const field=controls.closest('.texture-rotation-field');
+          result.push({tool,diagnostic:true,controls:controls.getBoundingClientRect().toJSON(),row:field.getBoundingClientRect().toJSON(),
+            style:{columns:getComputedStyle(field).gridTemplateColumns,
+              controlsGrid:getComputedStyle(controls).gridColumn,
+              justify:getComputedStyle(controls).justifyContent,
+              controlsWidth:getComputedStyle(controls).width,
+              firstChild:controls.firstElementChild.getBoundingClientRect().toJSON(),
+              number:controls.querySelector('input').getBoundingClientRect().toJSON()}});
           for(const el of card.querySelectorAll('.rotation-controls button')){
             const b=el.getBoundingClientRect();
             result.push({tool,text:el.textContent,card:[cb.left,cb.top,cb.right,cb.bottom],
