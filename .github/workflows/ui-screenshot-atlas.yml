@@ -1,0 +1,76 @@
+name: UI state screenshot atlas
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Full four-zoom desktop/mobile atlas, or quick smoke'
+        type: choice
+        required: true
+        default: full
+        options:
+          - full
+          - smoke
+  pull_request:
+    paths:
+      - 'src/editor-*.js'
+      - 'src/mobile-*.js'
+      - 'src/app.js'
+      - 'src/draw-path-ui.js'
+      - 'src/image-path-ui.js'
+      - 'src/exploration-history.js'
+      - 'src/ui-*.js'
+      - 'assets/icons/**'
+      - '*.css'
+      - 'index.html'
+      - 'scripts/capture-ui-atlas.mjs'
+      - 'scripts/ui-atlas-*.mjs'
+      - '.github/workflows/ui-screenshot-atlas.yml'
+
+concurrency:
+  group: ui-atlas-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      ATLAS_MODE: ${{ github.event_name == 'pull_request' && github.head_ref == 'automation/ui-state-screenshot-atlas' && 'full' || github.event_name == 'pull_request' && 'smoke' || inputs.mode }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate atlas JavaScript
+        run: |
+          node --check scripts/capture-ui-atlas.mjs
+          node --check scripts/ui-atlas-special.mjs
+          node --check scripts/ui-atlas-report.mjs
+          node --check scripts/ui-atlas-inspect.mjs
+      - run: npm install --no-save playwright@1.56.1 serve@14.2.5
+      - run: npx playwright install --with-deps chromium
+      - name: Serve local app
+        run: |
+          npx serve . -l 4173 > /tmp/roygbiv-serve.log 2>&1 &
+          for i in $(seq 1 40); do curl --fail --silent http://127.0.0.1:4173/ >/dev/null && exit 0; sleep 1; done
+          cat /tmp/roygbiv-serve.log
+          exit 1
+      - name: Capture UI atlas
+        run: |
+          if [ "$ATLAS_MODE" = 'smoke' ]; then
+            node scripts/capture-ui-atlas.mjs --smoke
+          else
+            node scripts/capture-ui-atlas.mjs
+          fi
+      - name: Upload screenshot gallery, manifest and failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: roygbiv-ui-atlas
+          path: artifacts/ui-atlas/
+          retention-days: 14
+          if-no-files-found: warn
