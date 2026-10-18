@@ -66,3 +66,27 @@ test('all Color Stories generate distinct ordered seven-stripe palettes',()=>{
   assert.equal(variants.size,PALETTES.length);
   assert.equal(HUES.length,7);
 });
+
+test('zooming the render domain does not change existing ribbon widths',async()=>{
+  const {widthAt}=await import('../src/path-geometry.js');
+  for(const geometry of ['straight','wave','arc','zigzag','loops','drawn']){
+    const stripe={geometry,width:42,taper:.35,phase:.7,edgePhase:.35,
+      coreExtent:900,segmentStart:-1800,segmentEnd:1800,endTaper:0};
+    for(const station of [-750,-300,0,250,720]){
+      const at100=widthAt(stripe,station,900);
+      const at50=widthAt(stripe,station,1800);
+      assert.ok(Math.abs(at100-at50)<1e-10,
+        geometry+' width changed at station '+station);
+    }
+  }
+});
+
+test('zoom updates framing without changing generated scene settings',()=>{
+  const initial=normalizeRecipe({seed:'same-composition',geometry:'wave',
+    viewZoom:1,positionX:7,positionY:-4,textureStrength:37});
+  const zoomed=normalizeRecipe({...initial,viewZoom:.6});
+  for(const key of Object.keys(initial)){
+    if(key!=='viewZoom')assert.deepEqual(zoomed[key],initial[key],key);
+  }
+  assert.deepEqual(resolveScene(zoomed).stripes,resolveScene(initial).stripes);
+});

@@ -452,10 +452,10 @@ function drawPathInteriors(ctx,stripe,extent,scene){
       ctx.restore();continue;
     }
     const path=new Path2D();
-    // Keep interior wave/loop phase stable in core path space as zoom and
-    // off-frame continuation change the painted station interval.
-    const phaseExtent=(stripe.sharedGeometry??stripe.geometry)==='drawn'?
-      (stripe.coreExtent??extent):extent;
+    // Camera zoom may extend the painted longitudinal domain, but the
+    // interior wave/loop phase is part of the original generated design for
+    // ALL path geometries, not just hand-drawn paths.
+    const phaseExtent=stripe.coreExtent??extent;
     const n=Math.max(160,Math.ceil((end-start)/2.3));
     for(let i=0;i<=n;i++){
       const station=start+(end-start)*i/n;
@@ -483,18 +483,21 @@ function drawBrushWear(ctx,stripe,extent,scene){
   const random=rng(scene.seed+':brush:'+stripe.index);
   const strength=scene.brushRoughness/100;
   const n=Math.ceil(18+strength*300);
-  const start=stripe.segmentStart??-extent,end=stripe.segmentEnd??extent;
+  const core=stripe.coreExtent??extent;
+  const start=Math.max(-core,stripe.segmentStart??-core);
+  const end=Math.min(core,stripe.segmentEnd??core);
+  const renderStart=stripe.segmentStart??-extent;
+  const renderEnd=stripe.segmentEnd??extent;
   ctx.save();
   // Wear belongs to the painted mark, never to the adjacent background.
   // In particular, dotted ribbons must not grow free-floating scratches.
   ctx.clip(stripeFillPath(stripe,extent,scene));
   ctx.strokeStyle=scene.background==='white'?'#fff':'#000';
   ctx.lineCap='round';
-  for(let i=0;i<n;i++){
-    const t=start+(end-start)*random();
-    const p=samplePath(stripe,t,extent);
-    const half=widthAt(stripe,t,extent)*.38;
-    if(half<.4)continue;
+  const scratch=(station,random)=>{
+    const p=samplePath(stripe,station,extent);
+    const half=widthAt(stripe,station,extent)*.38;
+    if(half<.4)return;
     const offset=(random()*2-1)*half;
     const x=p.x+p.nx*offset,y=p.y+p.ny*offset;
     const length=.5+random()*Math.min(13,stripe.width*.6);
@@ -502,6 +505,18 @@ function drawBrushWear(ctx,stripe,extent,scene){
     ctx.lineWidth=Math.max(.3,Math.min(1.8,stripe.width*.05)*(0.2+random()));
     ctx.beginPath();ctx.moveTo(x,y);
     ctx.lineTo(x+p.tx*length,y+p.ty*length);ctx.stroke();
+  };
+  // Preserve the exact seeded sequence within the original composition.
+  // Extending the rendered domain must never reposition its wear scratches.
+  if(end>start)for(let i=0;i<n;i++)scratch(start+(end-start)*random(),random);
+  const density=n/Math.max(1,end-start);
+  for(const [from,to,side] of [
+    [renderStart,start,'before'],[end,renderEnd,'after']
+  ]){
+    if(to<=from)continue;
+    const extra=rng(scene.seed+':brush:'+stripe.index+':'+side);
+    const count=Math.min(1200,Math.ceil((to-from)*density));
+    for(let i=0;i<count;i++)scratch(from+(to-from)*extra(),extra);
   }
   ctx.restore();
 }
@@ -538,8 +553,15 @@ function drawConstruction(ctx,stripe,extent,scene){
     ctx.stroke(traceEdge(stripe,extent,1,scene));
     ctx.restore();
     const bands=4;
-    for(let x=start+step;x<end-step;x+=step){
-      const flip=Math.floor((x-start)/step)%2===0?1:-1;
+    // Align woven crossings to fixed source stations; zoom only reveals
+    // additional threads, never changes previously visible parity.
+    const origin=-(stripe.coreExtent??extent);
+    const first=Math.floor((start+step-origin)/step);
+    const last=Math.ceil((end-step-origin)/step);
+    for(let index=first;index<=last;index++){
+      const x=origin+index*step;
+      if(x<=start||x>=end-step)continue;
+      const flip=(index&1)===0?1:-1;
       for(let j=0;j<bands;j++){
         const from=samplePath(stripe,x,extent),to=samplePath(stripe,x+step*.83,extent);
         const o1=-.42+j*.23,o2=o1+flip*.20;
@@ -570,9 +592,9 @@ function fillMotif(ctx,stripe,extent,scene) {
   ctx.save();ctx.lineWidth=stroke;ctx.lineCap='round';ctx.lineJoin='round';
   const dotSpacingFactor=motif==='dots'?1.8-.95*scene.dotSpacing/100:1;
   const spacing=Math.max(2.5,(motif==='dashes'?step*1.9:motif==='chevrons'?step*1.5:step)*dotSpacingFactor/motifRate);
-  for(let x=-extent+spacing;x<extent-spacing;x+=spacing){
+  const drawColumn=(x,index,random)=>{
     for(let j=-across;j<=across;j++){
-      if(motif==='checker' && ((Math.round((x+extent)/spacing)+j)&1)!==0)continue;
+      if(motif==='checker' && ((index+1+j)&1)!==0)continue;
       const variation=motifVariation(scene,stripe,random);
       const offset=j*step*.82;
       const jitter=scene.intensity*step*.10;
@@ -616,7 +638,16 @@ function fillMotif(ctx,stripe,extent,scene) {
       }else if(motif==='checker')ctx.fillRect(-radius,-radius,radius*2,radius*2);
       ctx.restore();
     }
-  }
+  };
+  // Keep motifs rooted in the scene's original station lattice. Newly
+  // revealed negative columns use independent random streams so generating
+  // them does not reroll pre-existing dots, dashes or other marks.
+  const base=-(stripe.coreExtent??extent)+spacing;
+  const minIndex=Math.ceil((-extent+spacing-base)/spacing);
+  for(let i=minIndex;i<0;i++)
+    drawColumn(base+i*spacing,i,rng(scene.seed+':motifs:'+stripe.index+':outside:'+i));
+  for(let i=0,x=base;x<extent-spacing;i++,x=base+i*spacing)
+    drawColumn(x,i,random);
   ctx.restore();
 }
 
