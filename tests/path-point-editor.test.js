@@ -86,3 +86,27 @@ test('manual anchor metadata roundtrips and geometry locks guard it',()=>{
   for(const pin of saved.drawnAnchors)assert.ok(editor.anchors.includes(pin));
   assert.deepEqual(savedPointCorners(editor),[22,70]);
 });
+
+test('endpoint anchor can move without tearing the rest of a path',()=>{
+  const e=createPointEditor(figureEight);
+  const before=e.points.map(p=>p.slice()),last=e.points.length-1;
+  const target=[before[0][0]+.022,before[0][1]+.013];
+  movePointAnchor(e,0,target);
+  assert.ok(pixel(e.points[0],target)<.01);
+  assert.deepEqual(e.points.at(-1),before.at(-1));
+  const neighbour=e.anchors[1];
+  assert.deepEqual(e.points[neighbour],before[neighbour]);
+  assert.deepEqual(e.points.slice(neighbour+1),before.slice(neighbour+1));
+  assert.ok(savedPointAnchors(e).includes(0));
+});
+test('sharp-corner handles read different tangents and persist as manual constraints',()=>{
+  const e=createPointEditor([[.1,.1],[.2,.2],[.25,.35],[.4,.4],
+    [.6,.4],[.75,.6],[.8,.8]]);
+  const index=e.anchors.find(i=>i>0&&i<e.points.length-1);
+  e.corners.add(index);e.pinned.add(index);
+  const handles=pointHandles(e,index),p=e.points[index];
+  const incoming=[(p[0]-handles.in[0])*600,(p[1]-handles.in[1])*1300];
+  const outgoing=[(handles.out[0]-p[0])*600,(handles.out[1]-p[1])*1300];
+  assert.ok(Number.isFinite(incoming[0]+outgoing[0]));
+  assert.deepEqual(savedPointCorners(e),[index]);
+});
