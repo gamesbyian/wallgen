@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0",
+  "version": "1.1.0",
   "status": "integrated",
   "design": "flat, rounded, playful but confident, no gradients",
   "viewBox": "0 0 32 32",
@@ -298,8 +298,105 @@
       "name": "dotted-line",
       "title": "Dotted line",
       "category": "editor"
+    },
+    {
+      "name": "edit-controls",
+      "title": "Edit controls",
+      "category": "navigation",
+      "notes": "Replace pencil edit nav with adjustments symbol; keep approved draw-path pencil for drawing.",
+      "extension": "canvas-first-v2",
+      "status": "candidate; not wired into UI"
+    },
+    {
+      "name": "pan",
+      "title": "Pan canvas",
+      "category": "camera",
+      "notes": "Viewport movement only. Distinct from editing path anchor positions.",
+      "extension": "canvas-first-v2",
+      "status": "candidate; not wired into UI"
+    },
+    {
+      "name": "fit-canvas",
+      "title": "Fit canvas",
+      "category": "camera",
+      "notes": "Fit complete artwork without changing design/export dimensions.",
+      "extension": "canvas-first-v2",
+      "status": "candidate; not wired into UI"
+    },
+    {
+      "name": "import-path",
+      "title": "Import and extract path",
+      "category": "drawing",
+      "notes": "Specifically import a vector/raster-derived path, not export an image.",
+      "extension": "canvas-first-v2",
+      "status": "candidate; not wired into UI"
+    },
+    {
+      "name": "anchor-points",
+      "title": "Edit anchor points",
+      "category": "drawing",
+      "notes": "Differentiates path vertices/handles from viewport pan.",
+      "extension": "canvas-first-v2",
+      "status": "candidate; not wired into UI"
+    },
+    {
+      "name": "smooth-path",
+      "title": "Interpretive smoothing",
+      "category": "drawing",
+      "notes": "Smooth intended geometric segments, preserve deliberate corners.",
+      "extension": "canvas-first-v2",
+      "status": "candidate; not wired into UI"
+    },
+    {
+      "name": "extend-path",
+      "title": "Extend path beyond frame",
+      "category": "drawing",
+      "notes": "Extends editable path beyond canvas, not cropping or camera zoom.",
+      "extension": "canvas-first-v2",
+      "status": "candidate; not wired into UI"
+    },
+    {
+      "name": "weave",
+      "title": "Weave crossing",
+      "category": "drawing",
+      "notes": "Intersections policy (above/below/weave), not simply line pattern.",
+      "extension": "canvas-first-v2",
+      "status": "candidate; not wired into UI"
+    },
+    {
+      "name": "focus-slider",
+      "title": "Focused adjustment",
+      "category": "editor",
+      "notes": "Optional single shared slider surface, not replacement of full inspector.",
+      "extension": "canvas-first-v2",
+      "status": "candidate; not wired into UI"
+    },
+    {
+      "name": "export-png",
+      "title": "Export wallpaper PNG",
+      "category": "output",
+      "notes": "Disambiguate image export from recipe JSON save or download.",
+      "extension": "canvas-first-v2",
+      "status": "candidate; not wired into UI"
+    },
+    {
+      "name": "metadata",
+      "title": "Image metadata",
+      "category": "output",
+      "notes": "Title/description/creator/editable metadata, not design parameters.",
+      "extension": "canvas-first-v2",
+      "status": "candidate; not wired into UI"
+    },
+    {
+      "name": "restore-variation",
+      "title": "Restore variation",
+      "category": "history",
+      "notes": "Restore historical recipe to editor, not browser Back or undo.",
+      "extension": "canvas-first-v2",
+      "status": "candidate; not wired into UI"
     }
   ],
   "referenceVector": "../references/roygbiv-icon-system-approved.svg",
-  "brandViewBox": "0 0 120 120"
+  "brandViewBox": "0 0 120 120",
+  "proposedExtension": "Design-only candidates. Never replace original UI semantics or brand icon without explicit implementation change."
 }
