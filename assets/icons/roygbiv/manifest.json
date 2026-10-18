@@ -19,6 +19,12 @@
   "reference": "../references/roygbiv-icon-system-approved.png",
   "icons": [
     {
+      "name": "app-icon",
+      "title": "ROYGBIV app icon",
+      "category": "brand",
+      "notes": "Canonical existing 120×120 logo copied unchanged; brand artwork is exempt from the 32×32 UI-glyph grid."
+    },
+    {
       "name": "home",
       "title": "Home",
       "category": "navigation"
@@ -294,5 +300,6 @@
       "category": "editor"
     }
   ],
-  "referenceVector": "../references/roygbiv-icon-system-approved.svg"
+  "referenceVector": "../references/roygbiv-icon-system-approved.svg",
+  "brandViewBox": "0 0 120 120"
 }

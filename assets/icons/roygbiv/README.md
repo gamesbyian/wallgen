@@ -1,8 +1,8 @@
 # ROYGBIV icon library (approved concept, implementation pending)
 
-This directory holds 55 standalone production SVGs prepared from the approved ROYGBIV icon-system concept. **This commit stages assets only: no application source, existing branding, CSS, recipe behavior, or UI markup is altered.** The established original `assets/roygbiv-logo.svg` stays untouched.
+This directory holds 55 standalone UI glyph SVGs and a copy of the canonical brand icon prepared from the approved ROYGBIV icon-system concept. **This commit stages assets only: no application source, existing branding, CSS, recipe behavior, or UI markup is altered.** The established original `assets/roygbiv-logo.svg` stays untouched; `app-icon.svg` is a verbatim copy of it.
 
-- Icon paths: `assets/icons/roygbiv/<name>.svg`, each a transparent scalable 32×32 SVG with accessible title, rounded 2.4-unit dark/currentColor strokes, and solid color accents.
+- Icon paths: `assets/icons/roygbiv/<name>.svg`, the UI glyphs being transparent scalable 32×32 SVGs with accessible title, rounded 2.4-unit dark/currentColor strokes, and solid color accents.
 - Icon index: [manifest.json](./manifest.json), including intended meaning, role, palette and reference pointer.
 - [Review sheet](./review.html), a standalone HTML icon inventory outside the app.
 - Approved visual source: `assets/icons/references/roygbiv-icon-system-approved.png` (the original approved 1448×1086 generated raster) and `assets/icons/references/roygbiv-icon-system-approved.svg` (a companion self-contained vector reconstruction; icons are hand-authored translations, not crops or automated traces).
