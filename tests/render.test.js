@@ -485,3 +485,27 @@ test('interior decoration renders and clips for paths and every region family',(
     assert.ok(calls.some(x=>x[0]==='clip'),structure+'/'+mode+' decorations must be clipped');
   }
 });
+
+test('contour decorations paint actual inset strokes in the shared region renderer',()=>{
+  const previous=FakeContext.prototype.stroke;
+  try{
+    FakeContext.prototype.stroke=function(){calls.push(['contourStroke',this.strokeStyle,this.tag]);};
+    const canvas={width:300,height:650,getContext:()=>new FakeContext('main')};
+    for(const [structure,mode,key] of [
+      ['regions','organic','regionMode'],
+      ['regions','facets','regionMode'],
+      ['regions','nested','regionMode'],
+      ['radial','sunburst','radialMode'],
+      ['radial','concentric','radialMode']
+    ]){
+      const recipe={seed:'contour-integrated:'+mode,structure,[key]:mode,
+        regionCount:7,rayCount:7,dividerColor:'none',
+        interiorElements:[{id:'metric',shape:'wave',placement:'contour',
+          color:'white',width:1.7,stroke:'dashed',opacity:1}]};
+      calls.length=0;
+      assert.doesNotThrow(()=>drawWallpaper(canvas,recipe),structure+'/'+mode);
+      assert.ok(calls.some(v=>v[0]==='contourStroke'&&v[1]==='#fff'),
+        structure+'/'+mode+' must actually stroke the inset path');
+    }
+  }finally{FakeContext.prototype.stroke=previous;}
+});
