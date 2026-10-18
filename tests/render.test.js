@@ -39,6 +39,18 @@ function render(recipe) {
   assert.ok(calls.some(c=>c[0]==='fillRect' && c[1]==='#000'));
   assert.ok(calls.some(c=>c[0]==='drawImage'));
 }
+test('radial and regional objects use the complete common painting pipeline',()=>{
+  for(const [structure,modes,key] of [
+    ['radial',['sunburst','starburst','pinwheel','spokes','concentric'],'radialMode'],
+    ['regions',['voronoi','organic','facets','blocks','nested'],'regionMode'],
+  ])for(const mode of modes)for(const material of ['none','linen']){
+    const recipe={seed:'unified:'+mode+material,structure,[key]:mode,
+      rayCount:21,regionCount:21,material,textureStrength:80,
+      textureCoverage:'stripes',glow:20,dividerColor:'black',dividerWidth:24};
+    assert.doesNotThrow(()=>render(recipe),structure+'/'+mode+'/'+material);
+  }
+});
+
 test('paper and textiles render without exceptions',()=>{
   for(const material of MATERIALS)render({seed:`textile-${material}`,material,motif:'solid'});
 });
