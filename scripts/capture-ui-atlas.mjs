@@ -12,6 +12,7 @@ import { resolve, join } from 'node:path';
 import { EDITOR_CATEGORIES } from '../src/editor-schema.js';
 import { captureSpecialStates } from './ui-atlas-special.mjs';
 import { writeAtlasReport } from './ui-atlas-report.mjs';
+import { inspectAtlasState } from './ui-atlas-inspect.mjs';
 
 const arg = key => process.argv.find(x => x.startsWith('--'+key+'='))?.split('=').slice(1).join('=');
 const baseURL = arg('base-url') || 'http://127.0.0.1:4173';
@@ -55,6 +56,7 @@ async function change(page,name,value){
 async function capture(page,context,slug,meta={}){
   const key=context.surface.id+'/'+context.zoom+'/'+slug;
   if(seen.has(key))return;
+  const inspection=await inspectAtlasState(page,context,slug,meta);
   seen.add(key);
   const filename=join(context.surface.id,String(context.zoom),safe(slug)+'.png');
   await mkdir(join(out,context.surface.id,String(context.zoom)),{recursive:true});
@@ -63,7 +65,7 @@ async function capture(page,context,slug,meta={}){
     .filter(x=>x.getBoundingClientRect().width>0 && x.getBoundingClientRect().height>0)
     .slice(0,12).map(x=>x.id||x.getAttribute('aria-label')||x.dataset.editorTool||x.tagName));
   await page.screenshot({path:join(out,filename),animations:'disabled',fullPage:false});
-  cases.push({id:key,file:filename,zoomPercent:context.zoom,profile:context.surface.id,visible, ...meta});
+  cases.push({id:key,file:filename,zoomPercent:context.zoom,profile:context.surface.id,visible, inspection, ...meta});
   if(cases.length%50===0)console.log('Atlas progress:',cases.length,'screenshots,',errors.length,'traversal errors, last:',key);
 }
 async function openEditor(page,surface){
