@@ -201,8 +201,13 @@ export function finishDrawnPath(raw,mode='smooth',strength=1){
         const base=fairPath(even,{
           radius:Math.ceil(10+power*1.3),sigma:6+power*.45,passes:2
         });
-        result=base.map((p,i)=>interpolate(p,interpreted.points[i],
+        const corrected=base.map((p,i)=>interpolate(p,interpreted.points[i],
           blend*interpreted.weights[i]));
+        // Local fits preserve crossings, but their borders can still contain
+        // residual curvature spikes when later reduced to 96 stored points.
+        // Fair the composite once more in stroke order. Global exact circles
+        // and level/vertical strokes intentionally bypass this final fairing.
+        result=fairPath(corrected,{radius:6,sigma:2.8,passes:3});
       }else{
         // An entire line or circle is a single global primitive: there is no
         // composite junction and the original full-strength fit is retained.
