@@ -30,3 +30,16 @@ body.mobile-studio .sidebar .editor-explore-actions>.editor-scope-button::before
  body.mobile-studio .mobile-preview-rail-right .nudge-pad .ui-icon{width:17px;height:17px}
  body.mobile-studio .mobile-dock button>span .ui-icon{width:20px;height:20px}
 }
+
+/* The existing 55px preview shortcut needs the same two-line label as
+   Draw path, preventing Import image from spilling across the left margin. */
+@media(max-width:790px){
+ body.mobile-studio .mobile-preview-rail-left #importPathToggle{
+   box-sizing:border-box;width:55px!important;min-width:55px!important;
+   padding:2px 1px!important;white-space:normal!important;
+   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;
+ }
+ body.mobile-studio .mobile-preview-rail-left #importPathToggle .toolbar-wording{
+   line-height:1.08;font-size:9px!important;white-space:normal!important;
+ }
+}

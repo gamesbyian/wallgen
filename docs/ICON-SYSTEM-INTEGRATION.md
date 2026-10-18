@@ -16,3 +16,5 @@ The approved SVGs in `assets/icons/roygbiv/` are now used by existing primary na
 - The app keeps the same favourites/undo/download behaviors. Favourite icons update from aria-pressed, rather than overlaying a second decorative heart.
 
 To validate: run `npm run check`, then `node tests/browser-smoke.mjs` in an environment with Chromium. Open/close Edit at Pixel 6 Pro portrait and check the editor tab row, preview rails, settings, lock/unlock, favourite state and zoom before accepting visual parity.
+
+Visual inspection of the Chromium snapshots also identified an existing overflow in the 55px Import image shortcut. Its caption now uses the same two-line pattern as Draw path; the preview rail, column and button identity remain unchanged.
