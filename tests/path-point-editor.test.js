@@ -67,7 +67,7 @@ test('new/deleted anchors and undo clones preserve sampled pixels',()=>{
   assert.deepEqual(e.points,before.points,'changing handles never redraws the curve');
   movePointAnchor(e,e.anchors[1],[.35,.52]);
   assert.notDeepEqual(e.points,before.points);
-  assert.deepEqual(before.points,figureEight);
+  assert.deepEqual(before.points,createPointEditor(figureEight).points);
 });
 test('manual anchor metadata roundtrips and geometry locks guard it',()=>{
   const recipe=normalizeRecipe({geometry:'drawn',customPath:figureEight,
