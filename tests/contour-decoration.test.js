@@ -13,7 +13,7 @@ const element=(shape,overrides={})=>({
 });
 const pointKey=p=>Math.round(p.x*10000)+','+Math.round(p.y*10000);
 const contourAt=(inset=12,bounds)=>{
-  const loops=polygonInsetContours(rectangle,inset,{resolution:.7,bounds,debug:!!bounds});
+  const loops=polygonInsetContours(rectangle,inset,{resolution:.7,bounds});
   assert.equal(loops.length,1,JSON.stringify(loops.slice(0,16).map(c=>({
     closed:c.closed,count:c.points.length,first:c.points[0],last:c.points.at(-1)
   }))));
