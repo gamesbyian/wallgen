@@ -37,7 +37,7 @@ test('No context or mask yields safe nonproduction fallback',()=>{
 test('Research-only shader uses world-space source lattice and source-mask alpha',()=>{
   assert.match(GPU_FIELD_FRAGMENT,/adjustedY\+2400\.0/);
   assert.match(GPU_FIELD_FRAGMENT,/texture\(ownerMask,maskUV\)\.a/);
-  assert.match(GPU_FIELD_FRAGMENT,/smoothstep/);
+  assert.match(GPU_FIELD_FRAGMENT,/footprint/);
   assert.match(GPU_FIELD_FRAGMENT,/fwidth/);
   assert.match(GPU_FIELD_FRAGMENT,/shapeCode==1/);
 });
