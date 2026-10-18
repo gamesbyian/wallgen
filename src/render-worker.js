@@ -15,7 +15,7 @@ function dispose(canvas){
 }
 self.onmessage=async({data})=>{
   if(!supported)return;
-  const {type,id,recipe,width,height,key}=data||{};
+  const {type,id,recipe,width,height,key,quality='settled'}=data||{};
   if(type!=='preview'&&type!=='export')return;
   let surface,cache;
   const start=performance.now();
@@ -24,6 +24,16 @@ self.onmessage=async({data})=>{
       throw Error('Invalid render dimensions');
     surface=new OffscreenCanvas(width,height);
     if(type==='preview'){
+      if(quality==='interactive'){
+        // A transient lower-resolution frame while the user is dragging.
+        // Do not populate the full overscan nudge cache for obsolete frames.
+        drawWallpaper(surface,recipe);
+        const frame=surface.transferToImageBitmap();
+        try{self.postMessage({type:'frame',id,key,quality,frame,
+          ms:performance.now()-start},[frame]);}
+        catch(error){frame.close();throw error;}
+        return;
+      }
       cache={};
       drawWallpaper(surface,recipe,{cache});
       // Transfer only the two immutable cached layers. The main thread
@@ -32,7 +42,7 @@ self.onmessage=async({data})=>{
       const background=cache.background.transferToImageBitmap();
       const ink=cache.ink.transferToImageBitmap();
       try{
-        self.postMessage({type:'frame',id,key,background,ink,
+        self.postMessage({type:'frame',id,key,quality,background,ink,
           overhang:cache.overhang,ms:performance.now()-start},
           [background,ink]);
       }catch(error){
