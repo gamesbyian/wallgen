@@ -854,3 +854,9 @@
 .editor-tool-card[data-editor-tool="interior"] .interior-actions button:disabled{
   opacity:.3
 }
+
+/* The Shapes category contains ribbon-specific construction tools. All
+   structures retain the universal Details category. */
+body.mobile-studio .sidebar .settings-tabs .settings-tab:disabled{
+  opacity:.28!important;cursor:default!important;
+}
