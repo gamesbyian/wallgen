@@ -11,6 +11,7 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle}){
     closeButton=byId('imagePathCancel');
   const ctx=canvas.getContext('2d');
   let image=null,candidates=[],selected=0,width=0,height=0,working=false;
+  let loadRevision=0;
   const allowed=/^image\/(png|jpeg|webp|svg\+xml)$/;
   const placement=()=>imagePlacement(width,height);
   function paint(){
@@ -69,14 +70,19 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle}){
   }
   async function load(file){
     if(!file)return;
+    const revision=++loadRevision;
     if(getRecipe().lockedSettings.includes('geometry')){
       onNotice('Unlock Path geometry before importing an image.');return;
     }
     if(!dialog.open)dialog.showModal();
     working=true;apply.disabled=true;angleButton.disabled=true;another.disabled=true;chooser.disabled=true;
+    // Hide candidates from the previous import until this image's analysis
+    // has completed. Their old labels must not be mistaken for new results.
+    chooser.replaceChildren();candidates=[];image=null;
     status.textContent='Analyzing the image locally…';
     try{
       const decoded=await decode(file);
+      if(revision!==loadRevision||!dialog.open)return;
       width=decoded.naturalWidth;height=decoded.naturalHeight;image=decoded;
       const downsample=document.createElement('canvas'),limit=600,
         scale=Math.min(1,limit/Math.max(width,height));
@@ -85,7 +91,9 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle}){
       const dc=downsample.getContext('2d',{willReadFrequently:true});
       dc.drawImage(image,0,0,downsample.width,downsample.height);
       const pixels=dc.getImageData(0,0,downsample.width,downsample.height);
-      candidates=extractImagePathCandidates(pixels);
+      const extracted=extractImagePathCandidates(pixels);
+      if(revision!==loadRevision||!dialog.open)return;
+      candidates=extracted;
       chooser.replaceChildren();
       candidates.forEach((item,i)=>{
         const option=document.createElement('option');
@@ -94,10 +102,15 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle}){
       });
       selected=0;choose(0);
     }catch(error){
+      if(revision!==loadRevision)return;
       image=null;candidates=[];chooser.replaceChildren();apply.disabled=true;angleButton.disabled=true;
       status.textContent=error?.message||'Image analysis failed.';
       paint();
-    }finally{working=false;another.disabled=false;chooser.disabled=false;fileInput.value='';}
+    }finally{
+      if(revision===loadRevision){
+        working=false;another.disabled=false;chooser.disabled=false;fileInput.value='';
+      }
+    }
   }
   launch.addEventListener('click',()=>{
     if(getRecipe().lockedSettings.includes('geometry')){
@@ -140,6 +153,13 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle}){
     dialog.close();
     onPath(imported);
   });
-  dialog.addEventListener('close',()=>{image=null;candidates=[];fileInput.value='';});
+  dialog.addEventListener('close',()=>{
+    // The HTML dialog close event may be delivered after the user has
+    // already reopened the picker for a second image. Never clear that
+    // newer import's state from a delayed event belonging to the old one.
+    if(dialog.open)return;
+    ++loadRevision;working=false;
+    image=null;candidates=[];chooser.replaceChildren();fileInput.value='';
+  });
   return {sync(recipe){launch.disabled=recipe.lockedSettings.includes('geometry');}};
 }

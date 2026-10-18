@@ -1122,7 +1122,9 @@ try{
     const file=document.getElementById('imagePathFile');file.files=dt.files;
     file.dispatchEvent(new Event('change',{bubbles:true}));
   })()`);
-  await waitFor('document.getElementById("imagePathDialog").open && !document.getElementById("imagePathAngle").disabled || document.getElementById("imagePathDialog").open && document.getElementById("imagePathCandidate").options.length>1',15000);
+  // Wait for the NEW upload's analysis, not residual options from the
+  // previous dialog. The chooser is disabled throughout the new decode.
+  await waitFor('document.getElementById("imagePathDialog").open && !document.getElementById("imagePathCandidate").disabled && [...document.getElementById("imagePathCandidate").options].some(o=>o.textContent.includes("Line "))',15000);
   await evaluate(`(()=>{
     const select=document.getElementById('imagePathCandidate');
     const line=[...select.options].find(o=>o.textContent.includes('Line '));

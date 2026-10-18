@@ -23,6 +23,8 @@ jobs:
         run: |
           npm install --no-save playwright
           npx playwright install --with-deps chromium
+      - name: Compare research WebGL2 masked fields with Canvas2D
+        run: node tests/gpu-fields-browser.mjs
       - name: Render sample wallpapers with production engine
         run: |
           mkdir -p output
