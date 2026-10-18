@@ -185,8 +185,9 @@ try{
       {seed:'zoom-woven-proof',structure:'paths',geometry:'wave',
         motif:'solid',construction:'woven',material:'none',
         taper:50,spread:69,stripeWidth:64},
-      {seed:'zoom-decoration-proof',structure:'paths',geometry:'wave',
-        motif:'solid',material:'none',taper:60,spread:61,stripeWidth:68,
+      {seed:'zoom-decoration-proof',structure:'paths',geometry:'straight',
+        orientation:'horizontal',palette:'electric',family:'studio',
+        motif:'solid',material:'none',taper:55,spread:34,stripeWidth:92,
         interiorElements:[{id:'zoom-ink',enabled:true,shape:'wave',
           placement:'local',type:'line',stroke:'solid',color:'white',
           width:9,frequency:8,amplitude:.35,position:0,phase:30,opacity:1}]}
