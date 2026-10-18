@@ -23,9 +23,9 @@ export async function captureSpecialStates({page,ctx,capture,navigate,change,set
   await attempt('theme',async()=>{
     const switchTo=async theme=>{
       // Support the new circle selector without breaking qualification of
-      // older branches that still expose the legacy native dropdown.
+      // older branches that still expose the legacy native dropdown. Mobile\n      // edit mode hides the masthead; invoke the real button handler to\n      // set up theme imagery without attempting an offscreen pointer tap.
       const circle=page.locator('[data-studio-theme="'+theme+'"]');
-      if(await circle.count())await circle.click();
+      if(await circle.count())await circle.evaluate(el=>el.click());
       else await page.locator('#studioTheme').evaluate((el,value)=>{
         el.value=value;el.dispatchEvent(new Event('change',{bubbles:true}));
       },theme);
