@@ -186,6 +186,19 @@ try{
   assert.deepEqual(schema.unknown,[]);
   assert.equal(schema.wizard.length,7);
   assert.ok(schema.toolCount>=18);
+  // Interior element controls must work through the real mobile editor and
+  // remain portable in the same URL/PNG recipe as the rest of the scene.
+  const undetailed=await evaluate('document.getElementById("preview").toDataURL()');
+  await evaluate('document.getElementById("tab-details").click();document.querySelector("[data-editor-tool=interior]").click();document.querySelector(".interior-toolbar button").click()');
+  await waitFor('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).interiorElements.length===1');
+  const detailed=await evaluate('document.getElementById("preview").toDataURL()');
+  assert.notEqual(detailed,undetailed,'adding an interior hairline must change painted pixels');
+  await evaluate('document.querySelector("[data-editor-tool=interior-style]").click();(()=>{const select=document.querySelector(".editor-tool-card[data-editor-tool=interior-style] select");select.value="band";select.dispatchEvent(new Event("change",{bubbles:true}))})()');
+  await waitFor('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).interiorElements[0].type==="band"');
+  await evaluate('document.querySelector("[data-editor-tool=interior-targets]").click();(()=>{const boxes=[...document.querySelectorAll(".interior-targets input")];boxes[1].click()})()');
+  await waitFor('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).interiorElements[0].colorSlots.length===6');
+  await evaluate('document.querySelector("[data-editor-tool=interior]").click();document.querySelectorAll(".interior-toolbar button")[1].click()');
+  await waitFor('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).interiorElements.length===0');
   // Direct navigation, no blind scroll or gallery overlay.
   await evaluate('document.getElementById("tab-stripes").click()');
   await evaluate('document.querySelector("[data-editor-tool=structure]").click()');
