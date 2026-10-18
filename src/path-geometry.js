@@ -11,7 +11,7 @@ export const noise1D=(x,seed)=>{
   const hash=j=>fract(Math.sin(j*127.1+seed*311.7)*43758.5453)*2-1;
   return mix(hash(i),hash(i+1),fract(x));
 };
-export const SHAPES=['straight','wave','zigzag','chevron','jagged','stepped','arc','contour','hairpin','loops','drawn'];
+export const SHAPES=['straight','wave','zigzag','chevron','jagged','stepped','arc','contour','hairpin','loop','loops','drawn'];
 export function modulation(x, geometry, phase, period, d, extent,detail={}){
   const t=x/period+phase/TAU;
   if(geometry==='straight')return 0;
@@ -67,6 +67,34 @@ export function pathPosition(stripe,x,extent){
     px+=Math.sin(u*TAU*1.6+phase)*Math.min(12,stripe.sharedDisplacement??0)*.3;
     return {x:px,y:py};
   }
+  if(g==='loop'){
+    // A SINGLE loop, as opposed to the existing repeating 'loops' geometry.
+    // Three arc-length stations make the incoming straight, circular turn
+    // and outgoing tangent meet with continuous first derivatives. There is
+    // no artificial kink at either join or at the circular self-intersection.
+    const u=clamp((x+coreExtent)/(2*coreExtent),0,1);
+    const radius=stripe.loopRadius??150;
+    const sweep=clamp(stripe.loopSweep??360,240,450)*Math.PI/180;
+    const circleLength=radius*sweep,approach=900,departure=1070;
+    const total=approach+circleLength+departure,position=u*total;
+    const cy=-180,firstAngle=Math.PI,finalAngle=firstAngle-sweep;
+    let px,py;
+    if(position<=approach){
+      px=-radius;
+      py=cy-(approach-position);
+    }else if(position<=approach+circleLength){
+      const a=firstAngle-(position-approach)/radius;
+      px=radius*Math.cos(a);
+      py=cy+radius*Math.sin(a);
+    }else{
+      const travel=position-approach-circleLength;
+      // Derivative of [r cos(a),r sin(a)] as a decreases:
+      // tangent = [sin(a),-cos(a)].
+      px=radius*Math.cos(finalAngle)+travel*Math.sin(finalAngle);
+      py=cy+radius*Math.sin(finalAngle)-travel*Math.cos(finalAngle);
+    }
+    return {x:px,y:py};
+  }
   if(g==='loops'){
     const pitch=stripe.loopPeriod??65;
     const phase=(stripe.sharedPhase??0);
@@ -87,12 +115,12 @@ export function samplePath(stripe,x,extent){
   const nx=-dy/length,ny=dx/length;
   // Old geometries are horizontally parameterized. For turns, offset in the
   // true normal instead of Y, so all seven ribbons remain parallel in corners.
-  // Hairpins require offsets along their curved normal to stay nested.
+  // Hairpins and single loops require normal offsets to remain nested.
   // Looped lines deliberately keep seven separate horizontal baselines:
   // offsetting those baselines by a normal that reverses within every loop
   // would splice neighbouring colours into a dense, crossed mesh.
-  const turn=['hairpin','drawn'].includes(stripe.sharedGeometry)||
-    ['hairpin','drawn'].includes(stripe.geometry);
+  const turn=['hairpin','loop','drawn'].includes(stripe.sharedGeometry)||
+    ['hairpin','loop','drawn'].includes(stripe.geometry);
   return {x:p.x+(turn?nx*stripe.center:0),y:p.y+(turn?ny*stripe.center:stripe.center),
     tx:dx/length,ty:dy/length,nx,ny};
 }
