@@ -176,7 +176,7 @@ export async function captureSpecialStates({page,ctx,capture,navigate,change,set
     const last=page.locator('#metadataPanel input:not([type=checkbox]),#metadataPanel textarea').last();
     if(!await last.count())throw Error('Metadata form has no fields');
     await last.scrollIntoViewIfNeeded();
-    await snap('metadata-scrolled-controls',{focusSelector:'#metadataPanel input:not([type=checkbox]):last-of-type'});
+    await snap('metadata-scrolled-controls',{focusSelector:'#metadataPanel textarea[name="comment"]'});
     await remember.uncheck();
     await forceClick('#metadataToggle');
     if(ctx.surface.mobile)await page.locator('#mobileToolsClose').click();
