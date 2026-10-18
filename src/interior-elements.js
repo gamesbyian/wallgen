@@ -96,9 +96,14 @@ export function drawRegionInteriors(ctx,object,elements,structure){
       const waveElement={...e,frequency:1};
       const scale=Math.max(16,220/e.frequency);
       const step=Math.max(1.5,Math.min(5,scale/12));
-      for(let y=top-180;y<=bottom+180;y+=period){
+      // Anchor every scanline to one world-space lattice. Adjacent polygon
+      // masks reveal the same pattern without restarting its vertical phase.
+      const anchorY=-2400;
+      const startY=anchorY+Math.floor((top-180-anchorY)/period)*period;
+      for(let y=startY;y<=bottom+180;y+=period){
         ctx.beginPath();
         const from=left-260,to=right+260;
+        if(e.stroke!=='solid')ctx.lineDashOffset=-(from+1760);
         for(let x=from;x<=to;x+=step){
           const t=(x+e.phase*3)/scale;
           const displacement=e.amplitude*80*elementWave(waveElement,t);
