@@ -117,3 +117,36 @@ test('degenerate rings and nonsensical values cannot create nonfinite contours',
   assert.deepEqual(polygonInsetContours(boxShape,-1),[]);
   assert.deepEqual(polygonInsetContours(boxShape,0),[{points:boxShape,closed:true}]);
 });
+
+test('deeply concave L shape follows edge normals, not an exterior centroid',()=>{
+  const polygon=[
+    {x:0,y:0},{x:100,y:0},{x:100,y:25},
+    {x:25,y:25},{x:25,y:100},{x:0,y:100}
+  ];
+  const loops=polygonInsetContours(polygon,6,{resolution:.65});
+  assert.equal(loops.length,1);
+  assert.ok(loops[0].closed);
+  for(const p of loops[0].points.filter((_,i)=>i%13===0)){
+    assert.ok(pointInPolygon(p.x,p.y,polygon));
+    assert.ok(close(distanceToRings(p,polygon),6,.7));
+  }
+});
+
+test('canonical world-space grid gives identical shared inset points for zoom crops',()=>{
+  const polygon=[
+    {x:-100,y:0},{x:700,y:0},{x:480,y:1200},{x:120,y:1200}
+  ];
+  const full=polygonInsetContours(polygon,11,{
+    bounds:{left:-100,right:700,top:0,bottom:1200},resolution:1.25
+  });
+  const crop=polygonInsetContours(polygon,11,{
+    bounds:{left:150,right:450,top:250,bottom:1000},resolution:1.25
+  });
+  const key=p=>Math.round(p.x*1000)+','+Math.round(p.y*1000);
+  const all=new Set(full.flatMap(c=>c.points).map(key));
+  const insideCrop=crop.flatMap(c=>c.points).filter(p=>
+    p.x>165&&p.x<435&&p.y>265&&p.y<985);
+  assert.ok(insideCrop.length>10,'expect an actual cropped contour');
+  assert.ok(insideCrop.every(p=>all.has(key(p))),
+    'changing camera bounds must not move the underlying inset samples');
+});
