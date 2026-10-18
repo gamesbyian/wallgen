@@ -65,7 +65,7 @@ function nested(r,radial=false){
     const size=(count-i)/(count+.3);
     // The outer silhouette should meet the screen edge, so all seven
     // nested pigments remain visible at the default centre.
-    const radius=900;
+    const radius=780;
     result.push(region(perimeter(p.x,p.y,radius*size,radius*size,sides,rotation),
       radial?i:i));
   }
