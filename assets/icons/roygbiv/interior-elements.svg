@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Interior stripe elements" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round">
+  <title>Interior stripe elements</title>
+  <rect x="4" y="5" width="24" height="22" rx="5" fill="#FFF8EF"/><path d="M6 12h20" stroke="#FF474E" stroke-width="3"/><path d="M6 20h20" stroke="#BB64ED" stroke-width="3"/><path d="M6 16q5-5 10 0t10 0" stroke="#18151F" stroke-width="1.5"/>
+</svg>

@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Dotted line" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round">
+  <title>Dotted line</title>
+  <circle cx="4" cy="13" r="1.8" fill="#FF474E" stroke="none"/><circle cx="8" cy="19" r="1.8" fill="#FF9B39" stroke="none"/><circle cx="12" cy="13" r="1.8" fill="#FFE25B" stroke="none"/><circle cx="16" cy="19" r="1.8" fill="#4FDD87" stroke="none"/><circle cx="20" cy="13" r="1.8" fill="#53AAFF" stroke="none"/><circle cx="24" cy="19" r="1.8" fill="#6359E5" stroke="none"/><circle cx="28" cy="13" r="1.8" fill="#BB64ED" stroke="none"/>
+</svg>
