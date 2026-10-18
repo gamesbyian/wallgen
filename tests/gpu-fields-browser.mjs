@@ -31,7 +31,7 @@ try{
   const page=await browser.newPage();
   await page.goto('http://127.0.0.1:'+server.address().port+'/');
   const metrics=await page.evaluate(async()=>{
-    const {renderMaskedFieldGPU}=await import('/src/gpu-fields.js');
+    const {createMaskedFieldSession}=await import('/src/gpu-fields.js');
     const {drawRegionInteriors}=await import('/src/interior-elements.js');
     const width=300,height=650;
     const owner={id:'experiment',colorIndex:0,color:'#ff0000',
@@ -56,6 +56,12 @@ try{
         color:'custom',customColor:'#55aaff'},
     ];
     const output=[];
+    const session=createMaskedFieldSession({width,height});
+    if(!session.supported)return {available:false,reason:session.reason,output};
+    const initial=session.setMask(mask);
+    if(!initial.supported){session.dispose();
+      return {available:false,reason:initial.reason,output};}
+    try{
     for(const sample of cases){
       const e={id:'benchmark',type:'line',placement:'field',
         stroke:'solid',width:3.4,opacity:1,enabled:true,
@@ -65,10 +71,10 @@ try{
       drawRegionInteriors(draw,owner,[e],'regions',
         {left:0,top:0,right:600,bottom:1300});
       const ref=draw.getImageData(0,0,width,height).data;
-      const gpu=renderMaskedFieldGPU({mask,element:e});
-      if(!gpu.supported)return {available:false,reason:gpu.reason,output};
-      try{
-        const gl=gpu.canvas.getContext('webgl2');
+      const gpu=session.render(e);
+      if(!gpu.supported)throw Error('Reusable GPU render failed: '+gpu.reason);
+      {
+        const gl=session.canvas.getContext('webgl2');
         const pixels=new Uint8Array(width*height*4);
         gl.readPixels(0,0,width,height,gl.RGBA,gl.UNSIGNED_BYTE,pixels);
         let outside=0,insideSolid=0,gpuSolid=0;
@@ -86,9 +92,29 @@ try{
         output.push({shape:e.shape,outside,insideSolid,gpuSolid,
           meanAlphaDifference:alphaDiff/(width*height),
           significantRatio:significant/(width*height)});
-      }finally{gpu.release();}
+      }
     }
-    return {available:true,output};
+    const stats={...session.stats};
+    // Modifying pixels on the SAME mask canvas must invalidate GPU input.
+    const maskContext=mask.getContext('2d');
+    maskContext.clearRect(0,0,width,height);
+    const reupload=session.setMask(mask);
+    if(!reupload.supported)throw Error('Mask reupload: '+reupload.reason);
+    const repaint=session.render({id:'retry',enabled:true,type:'line',
+      placement:'field',shape:'straight',stroke:'solid',width:3,opacity:1,
+      color:'white',frequency:5,amplitude:0,position:0,phase:0,
+      colorSlots:[],objectIds:[]});
+    if(!repaint.supported)throw Error('Post-mask repaint: '+repaint.reason);
+    const pixels=new Uint8Array(width*height*4);
+    session.canvas.getContext('webgl2').readPixels(0,0,width,height,
+      session.canvas.getContext('webgl2').RGBA,
+      session.canvas.getContext('webgl2').UNSIGNED_BYTE,pixels);
+    let stale=0;
+    for(let i=3;i<pixels.length;i+=4)if(pixels[i]>0)stale++;
+    return {available:true,output,stats,
+      uploadCount:session.stats.maskUploads,
+      postClearStalePixels:stale};
+    }finally{session.dispose();}
   });
   console.log('GPU_MASKED_FIELD_PARITY',JSON.stringify(metrics));
   // Software GPU use may be prohibited in some CI environments. Only a
@@ -96,6 +122,11 @@ try{
   if(!metrics.available){
     console.warn('GPU smoke skipped: '+metrics.reason);
   }else{
+    assert.equal(metrics.stats.maskUploads,1,'mask uploaded once for all field variants');
+    assert.equal(metrics.stats.draws,3,'three field shaders share the same context');
+    assert.equal(metrics.uploadCount,2,'modified canvas mask reuploaded');
+    assert.equal(metrics.postClearStalePixels,0,
+      'a cleared mask may not leave old decoration pixels');
     assert.equal(metrics.output.length,3);
     for(const item of metrics.output){
       assert.equal(item.outside,0,item.shape+' violated polygon clipping');
