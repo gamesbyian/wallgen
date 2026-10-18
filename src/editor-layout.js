@@ -10,6 +10,42 @@ function fieldNode(key){
 }
 const tools=new Map();
 let activeCategory='layout',activeTool='arrange';
+let activeStructure='paths',activeRegionMode='voronoi';
+// Keep the editor populated only with tools that can modify the active scene.
+// Hidden tools retain all values and locks; changing structure restores them.
+const pathTools=new Set(['geometry','safety','turn','single-loop','shape-details','ends']);
+const radialTools=new Set(['rays','ray-shape','origin']);
+const regionTools=new Set(['regions','origin']);
+function toolApplies(entry){
+  if(entry.category==='path'){
+    if(activeStructure==='paths')return pathTools.has(entry.spec.id);
+    if(activeStructure==='radial')return radialTools.has(entry.spec.id);
+    return regionTools.has(entry.spec.id)&&
+      (entry.spec.id!=='origin'||activeRegionMode==='nested');
+  }
+  if(entry.category==='stripes')
+    return activeStructure==='paths'?entry.spec.id!=='dividers':
+      ['dividers','shadows','glow'].includes(entry.spec.id);
+  if(entry.category==='layout')
+    return entry.spec.id==='structure-mode'||activeStructure==='paths';
+  if(entry.category==='material'&&entry.spec.id==='surface')
+    return activeStructure==='paths';
+  return true;
+}
+function applicableTool(category){
+  return [...tools.values()].find(entry=>entry.category===category&&toolApplies(entry))?.spec.id;
+}
+export function syncEditorStructure(structure,regionMode){
+  activeStructure=structure;
+  activeRegionMode=regionMode;
+  const pathTab=byId('tab-path');
+  if(pathTab?.lastChild?.nodeType===3)
+    pathTab.lastChild.textContent=structure==='paths'?' Path':' Geometry';
+  const selected=tools.get(activeTool);
+  if(!selected||!toolApplies(selected))
+    selectEditorTool(activeCategory,applicableTool(activeCategory));
+  else selectEditorTool(activeCategory,activeTool);
+}
 function appendUnique(host,node){
   if(node&&!host.contains(node))host.append(node);
 }
@@ -163,13 +199,16 @@ export function mountEditor(){
   return {getCurrent:()=>({category:activeCategory,tool:activeTool}),tools,chooser,searchInput};
 }
 export function selectEditorTool(category,tool){
-  const selected=tools.get(tool);
-  if(!selected||selected.category!==category)return;
+  let selected=tools.get(tool);
+  if(!selected||selected.category!==category||!toolApplies(selected)){
+    tool=applicableTool(category);selected=tools.get(tool);
+  }
+  if(!selected)return;
   activeCategory=category;activeTool=tool;
   const chooser=document.querySelector('.editor-tool-chooser');
   for(const [id,entry] of tools){
     entry.card.hidden=id!==tool;
-    entry.chip.hidden=entry.category!==category;
+    entry.chip.hidden=entry.category!==category||!toolApplies(entry);
     const roll=document.querySelector('[data-random-tool="'+id+'"]');
     if(roll)roll.hidden=id!==tool;
     entry.chip.setAttribute('aria-pressed',String(id===tool));
