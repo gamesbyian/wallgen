@@ -125,7 +125,8 @@
 <circle cx="850" cy="185" r="5" fill="#4FDD87" stroke="#232333"/>
 <text x="863" y="188" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">Named selection and stable values</text>
 <circle cx="850" cy="218" r="5" fill="#4FDD87" stroke="#232333"/>
-<text x="863" y="221" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">Flat nonrepeating ROYGBIV slider colours per pa…</text>
+<text x="863" y="221" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">Flat nonrepeating ROYGBIV slider colours per pa</text>
+<text x="863" y="234" font-family="Arial,sans-serif" font-size="10" fill="#6D6574" font-weight="500">nel</text>
 <circle cx="850" cy="251" r="5" fill="#4FDD87" stroke="#232333"/>
 <text x="863" y="254" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">Available lock / die actions</text>
 <circle cx="850" cy="284" r="5" fill="#4FDD87" stroke="#232333"/>

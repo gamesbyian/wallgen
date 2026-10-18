@@ -127,7 +127,8 @@
 <circle cx="485" cy="218" r="5" fill="#4FDD87" stroke="#232333"/>
 <text x="498" y="221" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">Complete canvas preview, not crop</text>
 <circle cx="485" cy="251" r="5" fill="#4FDD87" stroke="#232333"/>
-<text x="498" y="254" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">Layout, Path, Shapes, Details, Colour, Material…</text>
+<text x="498" y="254" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">Layout, Path, Shapes, Details, Colour, Material</text>
+<text x="498" y="267" font-family="Arial,sans-serif" font-size="10" fill="#6D6574" font-weight="500">, Effects</text>
 <circle cx="485" cy="284" r="5" fill="#4FDD87" stroke="#232333"/>
 <text x="498" y="287" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">Selected category and tool breadcrumb</text>
 <circle cx="485" cy="317" r="5" fill="#4FDD87" stroke="#232333"/>
