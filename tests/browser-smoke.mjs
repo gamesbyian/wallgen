@@ -635,6 +635,32 @@ try{
   assert.deepEqual(fitNewTools,[],
     'all geometric and interior controls must fit on a phone with browser zoom');
   await captureUI('67-percent-details-placement');
+  const elementUsability=await evaluate(`(async()=>{
+    document.getElementById('tab-details').click();
+    document.querySelector('[data-editor-tool="interior"]').click();
+    const manager=document.querySelector('.editor-tool-card[data-editor-tool="interior"]');
+    const select=manager.querySelector('.interior-toolbar select');
+    const scope=manager.querySelector('.interior-scope')?.textContent||'';
+    const lock=manager.querySelector('.interior-actions button:last-child');
+    lock.click();
+    const locked=document.querySelector('.editor-tool-card[data-editor-tool="interior-style"] select').disabled;
+    const chooseAvailable=!document.querySelector('.interior-toolbar select').disabled;
+    document.querySelector('.interior-actions button:last-child').click();
+    const unlocked=!document.querySelector('.editor-tool-card[data-editor-tool="interior-style"] select').disabled;
+    const identity=document.querySelector('.interior-toolbar select');
+    const background=document.querySelector('[name=background]');
+    background.value=background.value==='black'?'white':'black';
+    background.dispatchEvent(new Event('change',{bubbles:true}));
+    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+    return {scope,locked,chooseAvailable,unlocked,
+      stable:identity===document.querySelector('.interior-toolbar select')};
+  })()`);
+  assert.ok(elementUsability.scope.includes('all seven colours'),
+    'the element manager should explain its colour scope');
+  assert.ok(elementUsability.locked&&elementUsability.chooseAvailable&&
+    elementUsability.unlocked&&elementUsability.stable,
+    'locks must visibly disable changes and unrelated edits must not rebuild Details: '+
+    JSON.stringify(elementUsability));
   // A rapid sequence of changes must settle on the last requested state,
   // and every change must actually refresh the painted wallpaper.
   const previewChange=await evaluate(`(async()=>{
