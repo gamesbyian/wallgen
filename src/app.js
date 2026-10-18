@@ -3,7 +3,7 @@ import { drawWallpaper, presentNudgedArtwork } from './renderer.js';
 import { embedPngMetadata, extractPngRecipe, cleanMetadata, METADATA_FIELDS } from './png-metadata.js';
 import { installDrawTool } from './draw-path-ui.js?v=20261018-points1';
 import { installImagePathTool } from './image-path-ui.js?v=20261018-import1';
-import {mountEditor,selectEditorTool} from './editor-layout.js';
+import {mountEditor,selectEditorTool,syncEditorStructure} from './editor-layout.js';
 import {randomizeScope} from './scoped-random.js';
 import {STYLE_PRESETS} from './editor-schema.js';
 import {installExplorationHistory} from './exploration-history.js';
@@ -90,6 +90,7 @@ function toControls(recipe) {
   syncDiagonalUI();
   syncSettingLocks();
   syncInactiveSettings();
+  syncEditorStructure(current.structure,current.regionMode);
   const effective=document.getElementById('geometrySafetyStatus');
   if(effective){
     if(!current.geometrySafety)effective.textContent='Unrestricted: intersections, overlaps and cropping permitted';
