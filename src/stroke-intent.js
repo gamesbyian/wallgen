@@ -42,6 +42,26 @@ function lineCandidate(p){
   return {kind:axis,points:p.map((_,i)=>
     interpolate(endA,endB,i/(n-1))),error:rms};
 }
+function hasDeliberateCorners(p){
+  // A closed square and a circle both wind 360 degrees and can both achieve
+  // a low least-squares radius error. Sharp turns concentrated at a handful
+  // of vertices indicate a polygon, which should keep its straight sides.
+  const gap=Math.max(3,Math.floor(p.length/32));
+  const turns=[];
+  for(let i=gap;i<p.length-gap;i+=Math.max(2,Math.floor(gap/2))){
+    const a=p[i-gap],b=p[i],c=p[i+gap];
+    const u=[b[0]-a[0],b[1]-a[1]],v=[c[0]-b[0],c[1]-b[1]];
+    const turn=Math.abs(Math.atan2(u[0]*v[1]-u[1]*v[0],
+      u[0]*v[0]+u[1]*v[1]));
+    if(Number.isFinite(turn))turns.push(turn);
+  }
+  if(turns.length<8)return false;
+  const sum=turns.reduce((a,b)=>a+b,0);
+  const high=[...turns].sort((a,b)=>b-a);
+  const peakCount=Math.max(3,Math.ceil(turns.length*.12));
+  const concentration=high.slice(0,peakCount).reduce((a,b)=>a+b,0)/(sum||1);
+  return high[0]>.50&&concentration>.49;
+}
 function circleCandidate(p){
   if(p.length<12)return null;
   const n=p.length,mean=p.reduce((a,q)=>[a[0]+q[0]/n,a[1]+q[1]/n],[0,0]);
@@ -64,7 +84,9 @@ function circleCandidate(p){
   if(radius<25||!Number.isFinite(radius))return null;
   const relativeError=Math.sqrt(radii.reduce((sum,r)=>
     sum+(r-radius)**2,0)/n)/radius;
-  if(relativeError>.16)return null;
+  // Higher wobble is acceptable if the stroke still exhibits the smooth
+  // distributed turning of a circle rather than the corners of a polygon.
+  if(relativeError>.23||hasDeliberateCorners(p))return null;
   const unwrapped=[angles[0]];
   let reversing=0,totalTurn=0;
   for(let i=1;i<n;i++){
@@ -86,7 +108,7 @@ function circleCandidate(p){
   // For open circular arcs preserve their actual start/end angles.
   // For full loops, close the circle precisely at any smoothness strength=10.
   const finalSweep=full?Math.sign(sweep)*roundTurns*TAU:sweep;
-  if(!full&&winding<Math.PI*.72)return null;
+  if(!full&&(winding<Math.PI*.72||relativeError>.14))return null;
   const points=p.map((_,i)=>{
     const theta=unwrapped[0]+finalSweep*i/(n-1);
     return [cx+radius*Math.cos(theta),cy+radius*Math.sin(theta)];
