@@ -1,0 +1,159 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1260 850" width="1260" height="850">
+<rect x="0" y="0" width="1260" height="850" rx="0" fill="#F8F3E9" />
+<text x="478" y="55" font-family="Arial,sans-serif" font-size="24" fill="#242334" font-weight="700">IMPLEMENTATION-SAFE  /  EDIT / PATH GEOMETRY</text>
+<text x="479" y="84" font-family="Arial,sans-serif" font-size="13" fill="#777182" font-weight="500">Live controls: source contract • Artwork: approved ROYGBIV SVGs • Geometry: schematic</text>
+<rect x="43" y="23" width="364" height="795" rx="30" fill="#211F2A" />
+<rect x="54" y="34" width="342" height="774" rx="22" fill="#FFFCF7" />
+<g transform="translate(54 34) scale(.8301 .8677)">
+<rect x="0" y="0" width="412" height="892" rx="20" fill="#F8F3E9" />
+<rect x="0" y="0" width="412" height="74" rx="0" fill="#FFFCF7" />
+<svg x="12" y="11" width="47" height="47" viewBox="0 0 120 120" fill="none" stroke="#242334" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect width="120" height="120" rx="15" fill="#050608"/>
+  <!-- Seven parallel ROYGBIV capsules, shifted up 2% of the square.
+       Every endpoint remains inside the tile and lengths intentionally differ. -->
+  <g transform="translate(0 -2.4)" fill="none" stroke-width="9" stroke-linecap="round">
+    <path stroke="#ff474e" d="M12 40 L107 14"/>
+    <path stroke="#ff9b39" d="M8 52 L67 35"/>
+    <path stroke="#ffe25b" d="M23 61 L111 36"/>
+    <path stroke="#4fdd87" d="M12 74 L110 48"/>
+    <path stroke="#53aaff" d="M10 87 L78 68"/>
+    <path stroke="#6359e5" d="M17 97 L111 72"/>
+    <path stroke="#bb64ed" d="M40 100 L100 84"/>
+  </g>
+  <!-- Phone contour sits on top of all seven colours. -->
+  <rect x="34" y="13" width="53" height="94" rx="10" fill="none"
+        stroke="#fff" stroke-width="2.5"/>
+  <path d="M50 21 H71 M55 99 H66" fill="none" stroke="#fff"
+        stroke-width="1.7" stroke-linecap="round"/></svg>
+<text x="68" y="34" font-family="Arial,sans-serif" font-size="19" fill="#FF474E" font-weight="700">R</text>
+<text x="81" y="34" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">.</text>
+<text x="90" y="34" font-family="Arial,sans-serif" font-size="19" fill="#FF9B39" font-weight="700">O</text>
+<text x="103" y="34" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">.</text>
+<text x="112" y="34" font-family="Arial,sans-serif" font-size="19" fill="#FFE25B" font-weight="700">Y</text>
+<text x="125" y="34" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">.</text>
+<text x="134" y="34" font-family="Arial,sans-serif" font-size="19" fill="#4FDD87" font-weight="700">G</text>
+<text x="147" y="34" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">.</text>
+<text x="156" y="34" font-family="Arial,sans-serif" font-size="19" fill="#53AAFF" font-weight="700">B</text>
+<text x="169" y="34" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">.</text>
+<text x="178" y="34" font-family="Arial,sans-serif" font-size="19" fill="#6359E5" font-weight="700">I</text>
+<text x="191" y="34" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">.</text>
+<text x="200" y="34" font-family="Arial,sans-serif" font-size="19" fill="#BB64ED" font-weight="700">V</text>
+<text x="69" y="52" font-family="Arial,sans-serif" font-size="10" fill="#696574" font-weight="500">PROCEDURAL WALLPAPER</text>
+<circle cx="352" cy="34" r="13" fill="#F8F3E9" stroke="#151515"/><circle cx="386" cy="34" r="13" fill="#08090E" stroke="#151515"/>
+<rect x="151" y="82" width="110" height="247" rx="9" fill="#FFFCF7" stroke="#DCD4CB"/>
+<svg x="151" y="82" width="110" height="247" viewBox="151 82 110 247">
+<path d="M177.4 87 C272.4 143.75 113.4 220.32000000000002 185.4 321" fill="none" stroke="#FF474E" stroke-width="8.139999999999999"/>
+<path d="M185.65 87 C280.65 143.75 121.65 220.32000000000002 193.65 321" fill="none" stroke="#FF9B39" stroke-width="8.139999999999999"/>
+<path d="M193.9 87 C288.9 143.75 129.9 220.32000000000002 201.9 321" fill="none" stroke="#FFE25B" stroke-width="8.139999999999999"/>
+<path d="M202.15 87 C297.15 143.75 138.15 220.32000000000002 210.15 321" fill="none" stroke="#4FDD87" stroke-width="8.139999999999999"/>
+<path d="M210.4 87 C305.4 143.75 146.4 220.32000000000002 218.4 321" fill="none" stroke="#53AAFF" stroke-width="8.139999999999999"/>
+<path d="M218.65 87 C313.65 143.75 154.65 220.32000000000002 226.65 321" fill="none" stroke="#6359E5" stroke-width="8.139999999999999"/>
+<path d="M226.9 87 C321.9 143.75 162.9 220.32000000000002 234.9 321" fill="none" stroke="#BB64ED" stroke-width="8.139999999999999"/>
+</svg>
+<rect x="0" y="352" width="412" height="464" rx="16" fill="#FFFCF7" stroke="#DCD4CB"/>
+<text x="20" y="378" font-family="Arial,sans-serif" font-size="13" fill="#696574" font-weight="700">EDIT /  PATH GEOMETRY</text>
+<svg x="15" y="390" width="21" height="21" viewBox="0 0 32 32" fill="none" stroke="#242334" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12V5h7m8 0h7v7M27 20v7h-7M12 27H5v-7" /></svg>
+<text x="15" y="424" font-family="Arial,sans-serif" font-size="9" fill="#242334" font-weight="500">Layout</text>
+<svg x="72" y="390" width="21" height="21" viewBox="0 0 32 32" fill="none" stroke="#242334" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="24" r="2.6" fill="#FFF8EF"/><circle cx="27" cy="8" r="2.6" fill="#FFF8EF"/><path d="M7.5 22.5C12 2 18 32 25 9.5" /></svg>
+<text x="72" y="424" font-family="Arial,sans-serif" font-size="9" fill="#242334" font-weight="500">Path</text>
+<svg x="129" y="390" width="21" height="21" viewBox="0 0 32 32" fill="none" stroke="#242334" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5L27 5" stroke="#FF474E" stroke-width="2.7"/><path d="M5 8.65L27 8.65" stroke="#FF9B39" stroke-width="2.7"/><path d="M5 12.3L27 12.3" stroke="#FFE25B" stroke-width="2.7"/><path d="M5 15.95L27 15.95" stroke="#4FDD87" stroke-width="2.7"/><path d="M5 19.6L27 19.6" stroke="#53AAFF" stroke-width="2.7"/><path d="M5 23.25L27 23.25" stroke="#6359E5" stroke-width="2.7"/><path d="M5 26.9L27 26.9" stroke="#BB64ED" stroke-width="2.7"/></svg>
+<text x="129" y="424" font-family="Arial,sans-serif" font-size="9" fill="#242334" font-weight="500">Shapes</text>
+<svg x="186" y="390" width="21" height="21" viewBox="0 0 32 32" fill="none" stroke="#242334" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="24" height="22" rx="5" fill="#FFF8EF"/><path d="M6 12h20" stroke="#FF474E" stroke-width="3"/><path d="M6 20h20" stroke="#BB64ED" stroke-width="3"/><path d="M6 16q5-5 10 0t10 0" stroke="#18151F" stroke-width="1.5"/></svg>
+<text x="186" y="424" font-family="Arial,sans-serif" font-size="9" fill="#242334" font-weight="500">Detail</text>
+<svg x="243" y="390" width="21" height="21" viewBox="0 0 32 32" fill="none" stroke="#242334" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path stroke-width="4.7" d="M16 5.3 A10.7 10.7 0 0 1 24.366 9.329" stroke="#FF474E"/><path stroke-width="4.7" d="M24.366 9.329 A10.7 10.7 0 0 1 26.432 18.381" stroke="#FF9B39"/><path stroke-width="4.7" d="M26.432 18.381 A10.7 10.7 0 0 1 20.643 25.64" stroke="#FFE25B"/><path stroke-width="4.7" d="M20.643 25.64 A10.7 10.7 0 0 1 11.357 25.64" stroke="#4FDD87"/><path stroke-width="4.7" d="M11.357 25.64 A10.7 10.7 0 0 1 5.568 18.381" stroke="#53AAFF"/><path stroke-width="4.7" d="M5.568 18.381 A10.7 10.7 0 0 1 7.634 9.329" stroke="#6359E5"/><path stroke-width="4.7" d="M7.634 9.329 A10.7 10.7 0 0 1 16 5.3" stroke="#BB64ED"/></svg>
+<text x="243" y="424" font-family="Arial,sans-serif" font-size="9" fill="#242334" font-weight="500">Colour</text>
+<svg x="300" y="390" width="21" height="21" viewBox="0 0 32 32" fill="none" stroke="#242334" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3 28 10v13L16 30 4 23V10z" fill="#FFF8EF"/><path d="M4 10 16 17l12-7M16 17v13" /><path d="M4 10 16 3l12 7" fill="none"/><path d="M4 10v13l12 7V17Z" fill="#FFB7C4"/><path d="M16 17v13l12-7V10Z" fill="#FFE25B"/><path d="M4 10 16 17l12-7M16 17v13" /></svg>
+<text x="300" y="424" font-family="Arial,sans-serif" font-size="9" fill="#242334" font-weight="500">Mat.</text>
+<svg x="357" y="390" width="21" height="21" viewBox="0 0 32 32" fill="none" stroke="#242334" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8 13 Q9 17 13 18Q9 19 8 23Q7 19 3 18Q7 17 8 13" fill="#FFF8EF"/><path d="M23 14 Q24 20 30 21Q24 22 23 28Q22 22 16 21Q22 20 23 14" fill="#FFF8EF"/><path d="M21 2 Q22 5 25 6Q22 7 21 10Q20 7 17 6Q20 5 21 2" fill="#BB64ED"/></svg>
+<text x="357" y="424" font-family="Arial,sans-serif" font-size="9" fill="#242334" font-weight="500">FX</text>
+<rect x="17" y="440" width="376" height="35" rx="8" fill="#F8F3E9" stroke="#DDD1C7"/>
+<text x="29" y="463" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="700">Path geometry</text>
+<text x="24" y="515" font-family="Arial,sans-serif" font-size="13" fill="#242334" font-weight="600">Geometry</text>
+<rect x="24" y="530" width="213" height="6" rx="3" fill="#E9E1D8" />
+<rect x="24" y="530" width="120" height="6" rx="3" fill="#4FDD87" />
+<circle cx="144" cy="533" r="9" fill="#4FDD87"/>
+<rect x="265" y="503" width="30" height="33" rx="6" fill="#FFFCF7" stroke="#E1D6CB"/>
+<text x="273" y="527" font-family="Arial,sans-serif" font-size="18" fill="#242334" font-weight="500">−</text>
+<rect x="301" y="503" width="44" height="33" rx="6" fill="#F8F3E9" stroke="#E1D6CB"/>
+<text x="312" y="525" font-family="Arial,sans-serif" font-size="13" fill="#242334" font-weight="500">42</text>
+<rect x="351" y="503" width="32" height="33" rx="6" fill="#FFFCF7" stroke="#E1D6CB"/>
+<text x="360" y="527" font-family="Arial,sans-serif" font-size="18" fill="#242334" font-weight="500">+</text>
+<text x="24" y="587" font-family="Arial,sans-serif" font-size="13" fill="#242334" font-weight="600">Shape frequency</text>
+<rect x="24" y="602" width="213" height="6" rx="3" fill="#E9E1D8" />
+<rect x="24" y="602" width="120" height="6" rx="3" fill="#53AAFF" />
+<circle cx="144" cy="605" r="9" fill="#53AAFF"/>
+<rect x="265" y="575" width="30" height="33" rx="6" fill="#FFFCF7" stroke="#E1D6CB"/>
+<text x="273" y="599" font-family="Arial,sans-serif" font-size="18" fill="#242334" font-weight="500">−</text>
+<rect x="301" y="575" width="44" height="33" rx="6" fill="#F8F3E9" stroke="#E1D6CB"/>
+<text x="312" y="597" font-family="Arial,sans-serif" font-size="13" fill="#242334" font-weight="500">42</text>
+<rect x="351" y="575" width="32" height="33" rx="6" fill="#FFFCF7" stroke="#E1D6CB"/>
+<text x="360" y="599" font-family="Arial,sans-serif" font-size="18" fill="#242334" font-weight="500">+</text>
+<text x="24" y="659" font-family="Arial,sans-serif" font-size="13" fill="#242334" font-weight="600">Shape depth</text>
+<rect x="24" y="674" width="213" height="6" rx="3" fill="#E9E1D8" />
+<rect x="24" y="674" width="120" height="6" rx="3" fill="#6359E5" />
+<circle cx="144" cy="677" r="9" fill="#6359E5"/>
+<rect x="265" y="647" width="30" height="33" rx="6" fill="#FFFCF7" stroke="#E1D6CB"/>
+<text x="273" y="671" font-family="Arial,sans-serif" font-size="18" fill="#242334" font-weight="500">−</text>
+<rect x="301" y="647" width="44" height="33" rx="6" fill="#F8F3E9" stroke="#E1D6CB"/>
+<text x="312" y="669" font-family="Arial,sans-serif" font-size="13" fill="#242334" font-weight="500">42</text>
+<rect x="351" y="647" width="32" height="33" rx="6" fill="#FFFCF7" stroke="#E1D6CB"/>
+<text x="360" y="671" font-family="Arial,sans-serif" font-size="18" fill="#242334" font-weight="500">+</text>
+<text x="24" y="731" font-family="Arial,sans-serif" font-size="13" fill="#242334" font-weight="600">Advanced</text>
+<rect x="24" y="746" width="213" height="6" rx="3" fill="#E9E1D8" />
+<rect x="24" y="746" width="120" height="6" rx="3" fill="#BB64ED" />
+<circle cx="144" cy="749" r="9" fill="#BB64ED"/>
+<rect x="265" y="719" width="30" height="33" rx="6" fill="#FFFCF7" stroke="#E1D6CB"/>
+<text x="273" y="743" font-family="Arial,sans-serif" font-size="18" fill="#242334" font-weight="500">−</text>
+<rect x="301" y="719" width="44" height="33" rx="6" fill="#F8F3E9" stroke="#E1D6CB"/>
+<text x="312" y="741" font-family="Arial,sans-serif" font-size="13" fill="#242334" font-weight="500">42</text>
+<rect x="351" y="719" width="32" height="33" rx="6" fill="#FFFCF7" stroke="#E1D6CB"/>
+<text x="360" y="743" font-family="Arial,sans-serif" font-size="18" fill="#242334" font-weight="500">+</text>
+<rect x="0" y="817" width="412" height="75" rx="0" fill="#FFFCF7" />
+<svg x="31" y="827" width="26" height="26" viewBox="0 0 32 32" fill="none" stroke="#242334" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14.5 16 4l12 10.5V28H6V14.5Z" /><rect x="13" y="19" width="6" height="9" rx="1.2" fill="#FFB7C4" stroke="#18151F"/></svg>
+<text x="24" y="877" font-family="Arial,sans-serif" font-size="11" fill="#242334" font-weight="500">Studio</text>
+<rect x="90" y="823" width="73" height="64" rx="11" fill="#FFE0BA" />
+<svg x="112" y="827" width="26" height="26" viewBox="0 0 32 32" fill="none" stroke="#242334" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h22M5 16h22M5 24h22"/><circle cx="12" cy="8" r="3.1" fill="#FF9B39" stroke="#18151F"/><circle cx="22" cy="16" r="3.1" fill="#53AAFF" stroke="#18151F"/><circle cx="9" cy="24" r="3.1" fill="#BB64ED" stroke="#18151F"/></svg>
+<text x="105" y="877" font-family="Arial,sans-serif" font-size="11" fill="#242334" font-weight="500">Edit</text>
+<svg x="193" y="827" width="26" height="26" viewBox="0 0 32 32" fill="none" stroke="#242334" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="9" height="9" rx="1.7" fill="none" stroke="#FF474E" stroke-width="3"/><rect x="18" y="5" width="9" height="9" rx="1.7" fill="none" stroke="#FFE25B" stroke-width="3"/><rect x="5" y="18" width="9" height="9" rx="1.7" fill="none" stroke="#6359E5" stroke-width="3"/><rect x="18" y="18" width="9" height="9" rx="1.7" fill="none" stroke="#4FDD87" stroke-width="3"/></svg>
+<text x="186" y="877" font-family="Arial,sans-serif" font-size="11" fill="#242334" font-weight="500">Explore</text>
+<svg x="274" y="827" width="26" height="26" viewBox="0 0 32 32" fill="none" stroke="#242334" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M16 27S4 20 4 11.5C4 4 12 3.3 16 9c4-5.7 12-5 12 2.5C28 20 16 27 16 27Z" fill="#FFB7C4"/></svg>
+<text x="267" y="877" font-family="Arial,sans-serif" font-size="11" fill="#242334" font-weight="500">Saved</text>
+<svg x="355" y="827" width="26" height="26" viewBox="0 0 32 32" fill="none" stroke="#242334" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="16" cy="8" r="2.1" fill="#18151F" stroke="none"/><circle cx="16" cy="16" r="2.1" fill="#18151F" stroke="none"/><circle cx="16" cy="24" r="2.1" fill="#18151F" stroke="none"/></svg>
+<text x="348" y="877" font-family="Arial,sans-serif" font-size="11" fill="#242334" font-weight="500">More</text>
+</g>
+<rect x="456" y="119" width="760" height="679" rx="18" fill="#FFFCF7" stroke="#E1D6CB"/>
+<text x="477" y="157" font-family="Arial,sans-serif" font-size="17" fill="#242334" font-weight="700">REQUIRED IN THIS STATE</text>
+<circle cx="485" cy="185" r="5" fill="#4FDD87" stroke="#232333"/>
+<text x="498" y="188" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">Header branding and theme dots</text>
+<circle cx="485" cy="218" r="5" fill="#4FDD87" stroke="#232333"/>
+<text x="498" y="221" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">Complete canvas preview, not crop</text>
+<circle cx="485" cy="251" r="5" fill="#4FDD87" stroke="#232333"/>
+<text x="498" y="254" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">Layout, Path, Shapes, Details, Colour, Material…</text>
+<circle cx="485" cy="284" r="5" fill="#4FDD87" stroke="#232333"/>
+<text x="498" y="287" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">Selected category and tool breadcrumb</text>
+<circle cx="485" cy="317" r="5" fill="#4FDD87" stroke="#232333"/>
+<text x="498" y="320" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">Search and tool chip chooser</text>
+<circle cx="485" cy="350" r="5" fill="#4FDD87" stroke="#232333"/>
+<text x="498" y="353" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">Reroll / Vary + strength</text>
+<circle cx="485" cy="383" r="5" fill="#4FDD87" stroke="#232333"/>
+<text x="498" y="386" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">Randomize tool / category / field</text>
+<circle cx="850" cy="185" r="5" fill="#4FDD87" stroke="#232333"/>
+<text x="863" y="188" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">Geometry selector</text>
+<circle cx="850" cy="218" r="5" fill="#4FDD87" stroke="#232333"/>
+<text x="863" y="221" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">Shape frequency and depth when active</text>
+<circle cx="850" cy="251" r="5" fill="#4FDD87" stroke="#232333"/>
+<text x="863" y="254" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">Visible value, stepper and lock/die controls</text>
+<circle cx="850" cy="284" r="5" fill="#4FDD87" stroke="#232333"/>
+<text x="863" y="287" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">History / restore access</text>
+<circle cx="850" cy="317" r="5" fill="#4FDD87" stroke="#232333"/>
+<text x="863" y="320" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">Apply edits to recipe only</text>
+<circle cx="850" cy="350" r="5" fill="#4FDD87" stroke="#232333"/>
+<text x="863" y="353" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">Bottom five-mode navigation</text>
+<text x="480" y="500" font-family="Arial,sans-serif" font-size="15" fill="#242334" font-weight="700">CONDITIONAL / ALTERNATE STATES</text>
+<text x="490" y="525" font-family="Arial,sans-serif" font-size="12" fill="#655E70" font-weight="500">• Straight path may disable frequency/depth</text>
+<text x="490" y="549" font-family="Arial,sans-serif" font-size="12" fill="#655E70" font-weight="500">• Relevant shape controls differ by structure</text>
+<text x="490" y="573" font-family="Arial,sans-serif" font-size="12" fill="#655E70" font-weight="500">• Optional focus-mode entry, never forced</text>
+<text x="480" y="613" font-family="Arial,sans-serif" font-size="14" fill="#B5465D" font-weight="700">MUST NOT LOSE / MUST NOT SHOW</text>
+<text x="490" y="637" font-family="Arial,sans-serif" font-size="12" fill="#65505A" font-weight="500">× Generated mockup omissions interpreted as removal</text>
+<text x="490" y="660" font-family="Arial,sans-serif" font-size="12" fill="#65505A" font-weight="500">× Duplicate tool heading consuming height</text>
+<text x="477" y="789" font-family="Arial,sans-serif" font-size="11" fill="#797281" font-weight="500">Contract: canonical-screen-contract.json  |  Phone = schematic; inventory = authoritative</text>
+</svg>
