@@ -160,6 +160,9 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
       ready=editor.points.map(p=>p.slice());
       pendingPins=savedPointAnchors(editor);
       pendingCorners=savedPointCorners(editor);
+      // No longer re-run the original raw stroke after manual corrections.
+      // Hiding anchors keeps the edited geometry authoritative until redraw.
+      raw=[];
       editing=false;editor=null;adding=false;history=[];
       hint.textContent='Edited path retained. Apply it or return to Edit points.';
     }
