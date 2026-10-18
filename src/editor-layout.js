@@ -178,15 +178,8 @@ export function selectEditorTool(category,tool){
     button.setAttribute('aria-selected',String(isActive));
     button.tabIndex=isActive?0:-1;
   }
-  // Tool navigation may contain many chips. Keep the selected one visible
-  // without allowing the document or wallpaper preview to scroll vertically.
-  const strip=document.querySelector('.editor-tool-chooser');
-  const chip=selected.chip;
-  if(strip&&chip){
-    const a=strip.getBoundingClientRect(),b=chip.getBoundingClientRect();
-    if(b.left<a.left+2)strip.scrollLeft-=a.left-b.left+9;
-    else if(b.right>a.right-2)strip.scrollLeft+=b.right-a.right+9;
-  }
+  // Preserve the user's horizontal tool-strip position when choosing a tool.
+  // The strip is freely scrollable; selecting a chip must not recenter it.
   const reroll=document.querySelector('[data-random-category]');
   if(reroll)reroll.dataset.randomCategory=category;
   document.dispatchEvent(new CustomEvent('editor-tool-changed',{detail:{category,tool}}));
