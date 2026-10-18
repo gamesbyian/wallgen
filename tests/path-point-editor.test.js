@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createPointEditor,chooseAnchorIndices,clonePointEditor,
   addPointAnchor,deletePointAnchor,movePointAnchor,movePointHandle,
-  pointHandles,resmoothPointEdits,savedPointAnchors} from '../src/path-point-editor.js';
+  pointHandles,resmoothPointEdits,savedPointAnchors,savedPointCorners} from '../src/path-point-editor.js';
 import {normalizeRecipe,encodeRecipe,decodeRecipe,respectSettingLocks} from '../src/model.js';
 
 const figureEight=Array.from({length:96},(_,i)=>{
@@ -71,15 +71,18 @@ test('new/deleted anchors and undo clones preserve sampled pixels',()=>{
 });
 test('manual anchor metadata roundtrips and geometry locks guard it',()=>{
   const recipe=normalizeRecipe({geometry:'drawn',customPath:figureEight,
-    drawnAnchors:[4,22,22,70,200,-9,2.5]});
+    drawnAnchors:[4,22,22,70,200,-9,2.5],drawnCorners:[22,70]});
   assert.deepEqual(recipe.drawnAnchors,[4,22,70]);
   const saved=decodeRecipe(encodeRecipe(recipe));
   assert.deepEqual(saved.drawnAnchors,recipe.drawnAnchors);
+  assert.deepEqual(saved.drawnCorners,[22,70]);
   const locked=normalizeRecipe({...recipe,lockedSettings:['geometry']});
   const attempted=respectSettingLocks(locked,{geometry:'wave',
-    customPath:[[.1,.1],[.8,.8]],drawnAnchors:[]});
+    customPath:[[.1,.1],[.8,.8]],drawnAnchors:[],drawnCorners:[]});
   assert.equal(attempted.geometry,'drawn');
   assert.deepEqual(attempted.drawnAnchors,[4,22,70]);
-  const editor=createPointEditor(saved.customPath,saved.drawnAnchors);
+  assert.deepEqual(attempted.drawnCorners,[22,70]);
+  const editor=createPointEditor(saved.customPath,saved.drawnAnchors,saved.drawnCorners);
   for(const pin of saved.drawnAnchors)assert.ok(editor.anchors.includes(pin));
+  assert.deepEqual(savedPointCorners(editor),[22,70]);
 });
