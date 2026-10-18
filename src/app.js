@@ -332,8 +332,11 @@ function render(recipe,{scroll=false,bypassLocks=false}={}) {
   if(scroll) document.querySelector('.workspace-head').scrollIntoView({behavior:'smooth',block:'start'});
 }
 function changeRecipe(recipe,options={}){
+  if(pendingControlFrame){cancelAnimationFrame(pendingControlFrame);pendingControlFrame=0;}
   render(recipe,options);toControls(current);showResolvedSelections(currentScene);
-  syncInteriorUI();
+  const elementState=JSON.stringify([current.interiorElements,
+    current.lockedSettings.includes('interiorElements')]);
+  if(elementState!==lastInteriorState)syncInteriorUI();
   for(const die of form.querySelectorAll('[data-random-setting]')){
     const field=form.elements.namedItem(die.dataset.randomSetting);
     die.disabled=!field||field.disabled||field.dataset.inactive==='true';
@@ -494,9 +497,17 @@ importRecipeFile.addEventListener('change',async()=>{
   }catch(error){showNotice('Cannot restore design: '+error.message);}
 });
 
+let pendingControlFrame=0;
 function updateControlsFromInputs(){
   syncDiagonalUI();
   changeRecipe(fromControls());
+}
+function queueControlUpdate(){
+  if(pendingControlFrame)cancelAnimationFrame(pendingControlFrame);
+  pendingControlFrame=requestAnimationFrame(()=>{
+    pendingControlFrame=0;
+    updateControlsFromInputs();
+  });
 }
 
 for(const slider of form.querySelectorAll('input[type="range"]')){
@@ -642,8 +653,10 @@ const editor=mountEditor();
 // ordered element objects are a recipe collection, not separately lockable sliders.
 const interiorCards=Object.fromEntries(['interior','interior-style','interior-motion','interior-placement','interior-targets']
   .map(id=>[id,document.querySelector('.editor-tool-card[data-editor-tool="'+id+'"]')]));
-let selectedInterior=0;
+let selectedInterior=0,lastInteriorState='';
 function syncInteriorUI(){
+  lastInteriorState=JSON.stringify([current.interiorElements,
+    current.lockedSettings.includes('interiorElements')]);
   const items=current.interiorElements||[];
   for(const card of Object.values(interiorCards))card.replaceChildren();
   const make=(host,tag,label)=>{
@@ -840,24 +853,22 @@ form.addEventListener('change',event=>{
 let rangeTimeout;
 form.addEventListener('input',event=>{
   const key=event.target.name;
-  if(!FIELDS.includes(key))return;
+  if(!FIELDS.includes(key)||event.target.type!=='range')return;
   const output=form.querySelector(`output[for="${key}"]`);
   if(output)output.textContent=`${event.target.value}%`;
-  if(event.target.type==='range'){
-    const numeric=form.querySelector(`[data-number-for="${key}"]`);
-    if(numeric)numeric.value=event.target.value;
-  }
-  if(event.target.type==='range'){
-    clearTimeout(rangeTimeout);
-    rangeTimeout=setTimeout(updateControlsFromInputs,60);
-  }else {
-    syncTextureLayerVisibility();
-    syncStripeShadowUI();
-    syncDiagonalUI();
-    updateControlsFromInputs();
-  }
+  const numeric=form.querySelector(`[data-number-for="${key}"]`);
+  if(numeric)numeric.value=event.target.value;
+  clearTimeout(rangeTimeout);
+  rangeTimeout=setTimeout(queueControlUpdate,75);
 });
-form.addEventListener('change',()=>{clearTimeout(rangeTimeout);updateControlsFromInputs();});
+// Selects and checkboxes fire input followed immediately by change. Handling
+// only their change event avoids repainting the same recipe twice. Range
+// input previews are coalesced into one animation frame, with a final commit.
+form.addEventListener('change',event=>{
+  if(!FIELDS.includes(event.target.name)||event.target.name==='family')return;
+  clearTimeout(rangeTimeout);
+  queueControlUpdate();
+});
 form.addEventListener('submit',event=>event.preventDefault());
 seedInput.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();render(fromControls());}});
 document.getElementById('applySeed').addEventListener('click',()=>render(fromControls()));
