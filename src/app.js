@@ -638,20 +638,20 @@ installSettingLocks();
 const editor=mountEditor();
 // Details controls deliberately live outside the fixed scalar setting schema:
 // ordered element objects are a recipe collection, not separately lockable sliders.
-const interiorHost=document.querySelector('.editor-tool-card[data-editor-tool="interior"]');
+const interiorCards=Object.fromEntries(['interior','interior-style','interior-motion','interior-placement']
+  .map(id=>[id,document.querySelector('.editor-tool-card[data-editor-tool="'+id+'"]')]));
 let selectedInterior=0;
 function syncInteriorUI(){
-  if(!interiorHost)return;
-  interiorHost.replaceChildren();
   const items=current.interiorElements||[];
-  const make=(tag,label,parent=interiorHost)=>{
+  for(const card of Object.values(interiorCards))card.replaceChildren();
+  const make=(host,tag,label)=>{
     const el=document.createElement(tag);
     if(label!==undefined)el.textContent=label;
-    parent.append(el);return el;
+    host.append(el);return el;
   };
-  const toolbar=make('div');
-  toolbar.className='interior-toolbar';
-  const choose=make('select',undefined,toolbar);
+  const manager=interiorCards.interior;
+  const toolbar=make(manager,'div');toolbar.className='interior-toolbar';
+  const choose=make(toolbar,'select');
   choose.setAttribute('aria-label','Select interior element');
   items.forEach((item,i)=>{
     const option=document.createElement('option');
@@ -662,46 +662,50 @@ function syncInteriorUI(){
   choose.value=String(selectedInterior);
   choose.disabled=!items.length;
   choose.addEventListener('change',()=>{selectedInterior=Number(choose.value);syncInteriorUI();});
-  const add=make('button','+ Add',toolbar);add.type='button';
+  const add=make(toolbar,'button','+ Add');add.type='button';
   add.disabled=items.length>=8;
   add.addEventListener('click',()=>{
     selectedInterior=items.length;
     changeRecipe({...current,interiorElements:[...items,{id:'element-'+Date.now(),type:'line',shape:'wave',color:'white',width:1.5,frequency:6,amplitude:.12}]});
   });
-  const remove=make('button','Remove',toolbar);remove.type='button';remove.disabled=!items.length;
+  const remove=make(toolbar,'button','Remove');remove.type='button';remove.disabled=!items.length;
   remove.addEventListener('click',()=>{
     selectedInterior=Math.max(0,selectedInterior-1);
     changeRecipe({...current,interiorElements:items.filter((_,i)=>i!==Number(choose.value))});
   });
-  if(!items.length){make('p','No interior decorations. Add a line or tonal band.');return;}
+  if(!items.length){
+    for(const card of Object.values(interiorCards))make(card,'p','Add an interior element to begin.');
+    return;
+  }
   const active=items[selectedInterior];
-  const update=(key,value)=>{
-    changeRecipe({...current,interiorElements:current.interiorElements.map((e,i)=>i===selectedInterior?{...e,[key]:value}:e)});
-  };
-  const select=(name,key,options)=>{
-    const field=make('label',name);
-    const control=make('select',undefined,field);
-    for(const value of options){const opt=document.createElement('option');opt.value=value;opt.textContent=value;control.append(opt);}
+  const update=(key,value)=>changeRecipe({...current,interiorElements:
+    current.interiorElements.map((e,i)=>i===selectedInterior?{...e,[key]:value}:e)});
+  const select=(card,name,key,options)=>{
+    const field=make(card,'label',name);
+    const control=make(field,'select');
+    for(const value of options){
+      const opt=document.createElement('option');opt.value=value;opt.textContent=value;control.append(opt);
+    }
     control.value=active[key];control.addEventListener('change',()=>update(key,control.value));
   };
-  const range=(name,key,min,max,step)=>{
-    const field=make('label',name+' '+active[key]);
-    const slider=make('input',undefined,field);
+  const range=(card,name,key,min,max,step)=>{
+    const field=make(card,'label',name+' '+active[key]);
+    const slider=make(field,'input');
     slider.type='range';slider.min=min;slider.max=max;slider.step=step;slider.value=active[key];
     slider.addEventListener('input',()=>{field.firstChild.textContent=name+' '+slider.value;});
     slider.addEventListener('change',()=>update(key,Number(slider.value)));
   };
-  select('Element','type',['line','band']);
-  select('Geometry','shape',['straight','wave','zigzag','loop']);
-  select('Stroke','stroke',['solid','dashed','dotted']);
-  select('Ink','color',['white','black','lighter','darker']);
-  select('Placement','placement',['local','field','contour']);
-  range('Thickness','width',.15,30,.25);
-  range('Position','position',-.48,.48,.02);
-  range('Amplitude','amplitude',0,.45,.01);
-  range('Frequency','frequency',.1,30,.1);
-  range('Phase','phase',-180,180,1);
-  range('Opacity','opacity',0,1,.05);
+  select(interiorCards['interior-style'],'Element','type',['line','band']);
+  select(interiorCards['interior-style'],'Geometry','shape',['straight','wave','zigzag','loop']);
+  select(interiorCards['interior-style'],'Stroke','stroke',['solid','dashed','dotted']);
+  select(interiorCards['interior-style'],'Ink','color',['white','black','lighter','darker']);
+  range(interiorCards['interior-motion'],'Amplitude','amplitude',0,.45,.01);
+  range(interiorCards['interior-motion'],'Frequency','frequency',.1,30,.1);
+  range(interiorCards['interior-motion'],'Phase','phase',-180,180,1);
+  select(interiorCards['interior-placement'],'Placement','placement',['local','field','contour']);
+  range(interiorCards['interior-placement'],'Position','position',-.48,.48,.02);
+  range(interiorCards['interior-placement'],'Thickness','width',.15,30,.25);
+  range(interiorCards['interior-placement'],'Opacity','opacity',0,1,.05);
 }
 syncInteriorUI();
 const explorationHistory=installExplorationHistory({
