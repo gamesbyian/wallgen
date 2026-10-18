@@ -195,3 +195,18 @@ html[data-theme="cream"] .image-path-dialog #imagePathAngle:not(:disabled){
   .image-path-dialog .image-path-actions button{min-height:40px}
   .image-path-dialog .image-path-choice select{min-height:40px}
 }
+
+/* Rotation's five shortcuts and numeric value must share the finite second
+   grid column. Older competing flex-basis rules allowed the numeric input to
+   expand to 175px, sending the last three buttons past the card's right edge. */
+@media(max-width:499px){
+  body.mobile-studio .sidebar .editor-tool-card .texture-rotation-field .rotation-controls{
+    justify-content:flex-start!important;min-width:0!important;
+    max-width:100%!important;overflow:hidden!important;gap:2px!important}
+  body.mobile-studio .sidebar .editor-tool-card .texture-rotation-field .rotation-controls input[type=number]{
+    flex:0 0 41px!important;width:41px!important;
+    min-width:41px!important;max-width:41px!important}
+  body.mobile-studio .sidebar .editor-tool-card .texture-rotation-field .rotation-controls button{
+    flex:1 1 18px!important;width:auto!important;min-width:18px!important;
+    max-width:25px!important;padding:0!important;font-size:9px!important}
+}
