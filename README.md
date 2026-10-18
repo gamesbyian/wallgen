@@ -191,7 +191,11 @@ All coloured objects support ordered interior elements, managed in
 A ribbon can carry a white or black hairline, a continuous/dotted/dashed
 wave, zigzag or looping line, or a contrasting tonal band. The same element
 system also decorates sunburst rays, pinwheels, nested circles, Voronoi
-regions, facets and blocks using local, field or contour placement.
+regions, facets and blocks using local, field or contour placement. **Contour
+placement now uses true Euclidean polygon insets** rather than scaling vertices
+toward a centroid, preserving concave shapes, holes and separate loops when
+narrow connecting necks disappear. Contours remain stable when zooming and
+exporting. See [the polygon inset solver](docs/POLYGON-INSET.md).
 
 Each element has independent thickness, offset, opacity, frequency, amplitude,
 phase, ink colour (including custom hex), enabling and colour targeting.
