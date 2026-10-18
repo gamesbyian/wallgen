@@ -401,7 +401,7 @@ function drawPathInteriors(ctx,stripe,extent,scene){
     if(!e.enabled||!e.opacity||!elementApplies(e,slot,stripe.objectId))continue;
     ctx.save();ctx.strokeStyle=elementInk(e,stripe.color);
     ctx.globalAlpha=e.opacity;
-    ctx.lineWidth=e.width;
+    ctx.lineWidth=e.type==='band'?Math.max(.15,stripe.width*e.width/100):e.width;
     ctx.lineJoin='round';lineDash(ctx,e);
     const path=new Path2D();
     const n=Math.max(160,Math.ceil((end-start)/2.3));
