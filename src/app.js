@@ -90,7 +90,7 @@ function toControls(recipe) {
   syncDiagonalUI();
   syncSettingLocks();
   syncInactiveSettings();
-  syncEditorStructure(current.structure,current.regionMode);
+  syncEditorStructure(current.structure,current.regionMode,current.construction);
   const effective=document.getElementById('geometrySafetyStatus');
   if(effective){
     if(current.structure!=='paths')effective.textContent='Closed regions use connected polygon boundaries';
