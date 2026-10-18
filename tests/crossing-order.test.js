@@ -108,3 +108,23 @@ test('over-rotated inner loops remain a positive union of ribbon cells',()=>{
     assert.ok(area>0,'ribbon cells must add, never cancel at a retraced arc');
   }
 });
+
+test('safe loops never invert the inner ribbon or exceed the outer frame radius',()=>{
+  // Sweep and colour do not change radial nesting. Vary both seed-shifted
+  // offsets and spread extremes to catch the formerly negative inner turn.
+  for(let i=0;i<24;i++)for(const spread of [0,40,100])
+    for(const loopRadius of [0,50,100]){
+      const scene=resolveScene({seed:'loop-clearance-'+i,geometry:'loop',
+        geometrySafety:true,spread,loopRadius,loopSweep:450});
+      const radius=scene.stripes[0].loopRadius;
+      const inner=radius+Math.min(...scene.stripes.map(s=>s.center));
+      const outer=radius+Math.max(...scene.stripes.map(s=>s.center));
+      assert.ok(inner>=28-1e-7,`inner loop clearance: ${inner} (${i},${spread},${loopRadius})`);
+      assert.ok(outer<=600*.43+1e-7,`outer loop frame: ${outer} (${i},${spread},${loopRadius})`);
+    }
+  // Unrestricted mode still permits the extreme overlap that artists chose.
+  const unrestricted=resolveScene({seed:'free-loop',geometry:'loop',
+    geometrySafety:false,spread:100,loopRadius:0});
+  const r=unrestricted.stripes[0].loopRadius;
+  assert.ok(r+unrestricted.stripes[0].center<0);
+});

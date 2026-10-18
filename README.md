@@ -315,7 +315,11 @@ parameterization, so they join without kinks.
 
 All seven colours follow one shared circular centreline with true
 perpendicular stripe offsets, just as Hairpin does. With **Preserve stripe
-coherence** enabled, the radius spans a nested, frame-conscious range.
+coherence** enabled, the radius spans a nested, frame-conscious range that
+keeps even the most inward stripe at least 28 design pixels from the loop's
+centre, accounting for seed-dependent placement as well as stripe spread.
+It prevents the inner band from turning inside out while maintaining the
+outer radius within the intended frame-conscious limit.
 Disabling safety unlocks oversized and tightly folded loops without replacing
 the saved requested radius or sweep. The settings respect locks, scoped
 randomization, recipes, PNG metadata, orientation, zoom and the usual
