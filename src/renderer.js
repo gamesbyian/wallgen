@@ -1,6 +1,7 @@
 import { DESIGN_WIDTH, DESIGN_HEIGHT, resolveScene, rng } from './model.js';
 import { samplePath, ribbonEdge, widthAt, noise1D } from './path-geometry.js';
 import { viewCamera } from './view-camera.js';
+import {findPathCrossings,crossingTopIsLater,crossingBranchClip} from './crossing-order.js';
 
 const TAU = Math.PI * 2;
 const geometryAt=(x,stripe,extent)=>samplePath(stripe,x,extent).y;
@@ -811,7 +812,9 @@ export function drawWallpaper(canvas, recipe, options={}) {
     g.translate(scene.centerX-DESIGN_WIDTH/2,scene.centerY-DESIGN_HEIGHT/2);
   }else g.translate(scene.centerX,scene.centerY);
   g.rotate(scene.angle);
+  const crossingBundles=[];
   for(const bundleOffset of scene.bundleOffsets){
+  const crossingStripes=[];
   for(const original of scene.stripes){
     const stripe=scene.bundleOffsets.length===1?{...original}:
       {...original,center:original.center+bundleOffset};
@@ -823,6 +826,7 @@ export function drawWallpaper(canvas, recipe, options={}) {
     if(['tonal','woven'].includes(scene.construction))stripe.lineStyle='continuous';
     balanceStripeEnds(scene,stripe);
     if(stripe.hidden)continue;
+    crossingStripes.push(stripe);
     const path=stripePath(stripe,scene.extent,scene);
     if(scene.glow>0){
       g.save();g.shadowColor=stripe.color;g.shadowBlur=scene.glow/100*32;g.globalAlpha=.70;
@@ -833,6 +837,58 @@ export function drawWallpaper(canvas, recipe, options={}) {
     fillMotif(g,stripe,scene.extent,scene);
     if(scene.construction!=='woven')drawBrushWear(g,stripe,scene.extent,scene);
   }
+  crossingBundles.push(crossingStripes);
+  }
+  // The basic painter's algorithm paints all seven colours in stripe order.
+  // At a physical self-intersection that inadvertently chooses the apparent
+  // overpass. Explicit traversal-order decisions now repaint ONLY the selected
+  // branch at each crossing, clipped to that branch's actual ribbon envelope.
+  // This is done on the SAME finished ink layer before applying texture.
+  if(['loop','loops','drawn'].includes(scene.geometry)){
+    for(const stripes of crossingBundles){
+      const reference=stripes.find(st=>st.index===3)||stripes[Math.floor(stripes.length/2)];
+      if(!reference)continue;
+      const hits=findPathCrossings(reference,scene.extent,samplePath);
+      for(let k=0;k<hits.length;k++){
+        const hit=hits[k];
+        const pack=Math.max(12,scene.width*7);
+        // A shallow crossing has a longer overlap; include enough branch
+        // on both sides for its final outline to join continuously.
+        const halfLength=Math.max(46,Math.min(310,(pack+24)/(hit.angle||.15)));
+        // Repaint only where the two *bundles* physically overlap.
+        // Repainting an entire fixed-length segment produced visible square
+        // cutoffs on the otherwise continuous ribbons, especially in loops.
+        // The other branch's actual union of seven stripe footprints is the
+        // natural, seamless occlusion mask. It also preserves negative space.
+        // One envelope per crossing branch includes the *spaces between*
+        // rainbow stripes. Cutting a separate mask for every underpassing
+        // stripe made the overpass into disconnected square checkerboard
+        // patches. The envelope is continuous, just like a real woven bundle.
+        const widest=Math.max(...stripes.map(st=>st.width));
+        const minCenter=Math.min(...stripes.map(st=>st.center));
+        const maxCenter=Math.max(...stripes.map(st=>st.center));
+        const referenceCenter=reference.center;
+        const envelope={...reference,
+          width:2*Math.max(
+            Math.abs(minCenter-referenceCenter),
+            Math.abs(maxCenter-referenceCenter))+widest+12};
+        const branchMasks=[hit.early,hit.late].map(station=>
+          crossingBranchClip(envelope,scene.extent,station,halfLength,samplePath));
+        for(const stripe of stripes){
+          const later=crossingTopIsLater(scene.crossingMode,stripe.index,k);
+          const station=later?hit.late:hit.early;
+          g.save();
+          g.clip(branchMasks[later?0:1]);
+          g.clip(crossingBranchClip(stripe,scene.extent,station,halfLength,samplePath));
+          const path=stripePath(stripe,scene.extent,scene);
+          drawOutline(g,path,stripe,scene);
+          g.fillStyle=stripe.color;g.strokeStyle=stripe.color;
+          fillMotif(g,stripe,scene.extent,scene);
+          if(scene.construction!=='woven')drawBrushWear(g,stripe,scene.extent,scene);
+          g.restore();
+        }
+      }
+    }
   }
   // One scratch buffer is reused for every texture layer and surface.
   // The stripe pass masks against the current ink alpha, so multiply/screen/etc
