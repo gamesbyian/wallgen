@@ -2,8 +2,8 @@ import {writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
 
 /** Self-contained, offline-friendly contact sheet for the Actions ZIP. */
-export async function writeAtlasReport(out,{cases,errors,inapplicable}){
-  const payload=JSON.stringify({cases,errors,inapplicable}).replace(/</g,'\\u003c');
+export async function writeAtlasReport(out,{cases,errors,inapplicable,missingExpected=[]}){
+  const payload=JSON.stringify({cases,errors,inapplicable,missingExpected}).replace(/</g,'\\u003c');
   const html=`<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ROYGBIV · UI atlas</title><style>
@@ -27,7 +27,7 @@ code{overflow-wrap:anywhere}
 <select id="zoom" aria-label="UI zoom"><option value="">All zoom levels</option></select>
 <select id="kind" aria-label="State type"><option value="">All state types</option></select>
 <input id="query" type="search" placeholder="Filter by control, tool, structure, state…" aria-label="Filter screenshots"></div>
-</header><main><details><summary>Traversal failures (<span id="errorCount"></span>) and intentionally inapplicable tools (<span id="skipCount"></span>)</summary>
+</header><main><details><summary>Traversal failures (<span id="errorCount"></span>) missing required states (<span id="missingCount"></span>), and intentionally inapplicable tools (<span id="skipCount"></span>)</summary>
 <p class="small">An inapplicable tool is excluded by the app's selected structure or construction. A failure represents an attempted but unverified capture.</p>
 <pre id="issues"></pre></details>
 <section id="status" class="small"></section><div id="grid" class="grid"></div></main>
@@ -43,8 +43,9 @@ for(const [key,values] of Object.entries({profile:unique('profile'),zoom:unique(
 }
 byId('errorCount').textContent=data.errors.length;
 byId('skipCount').textContent=data.inapplicable.length;
-byId('issues').textContent=JSON.stringify({errors:data.errors,inapplicable:data.inapplicable},null,2);
-byId('summary').textContent=data.cases.length+' captures · '+unique('profile').length+' viewports · 4 zoom levels · '+data.errors.length+' traversal failures';
+byId('missingCount').textContent=data.missingExpected.length;
+byId('issues').textContent=JSON.stringify({errors:data.errors,missingExpected:data.missingExpected,inapplicable:data.inapplicable},null,2);
+byId('summary').textContent=data.cases.length+' captures · '+unique('profile').length+' viewports · 4 zoom levels · '+data.errors.length+' traversal failures · '+data.missingExpected.length+' missing states';
 function show(){
  const match=data.cases.filter(x=>(!byId('profile').value||x.profile===byId('profile').value)
  &&(!byId('zoom').value||String(x.zoomPercent)===byId('zoom').value)
