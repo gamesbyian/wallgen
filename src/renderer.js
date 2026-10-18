@@ -483,18 +483,21 @@ function drawBrushWear(ctx,stripe,extent,scene){
   const random=rng(scene.seed+':brush:'+stripe.index);
   const strength=scene.brushRoughness/100;
   const n=Math.ceil(18+strength*300);
-  const start=stripe.segmentStart??-extent,end=stripe.segmentEnd??extent;
+  const core=stripe.coreExtent??extent;
+  const start=Math.max(-core,stripe.segmentStart??-core);
+  const end=Math.min(core,stripe.segmentEnd??core);
+  const renderStart=stripe.segmentStart??-extent;
+  const renderEnd=stripe.segmentEnd??extent;
   ctx.save();
   // Wear belongs to the painted mark, never to the adjacent background.
   // In particular, dotted ribbons must not grow free-floating scratches.
   ctx.clip(stripeFillPath(stripe,extent,scene));
   ctx.strokeStyle=scene.background==='white'?'#fff':'#000';
   ctx.lineCap='round';
-  for(let i=0;i<n;i++){
-    const t=start+(end-start)*random();
-    const p=samplePath(stripe,t,extent);
-    const half=widthAt(stripe,t,extent)*.38;
-    if(half<.4)continue;
+  const scratch=(station,random)=>{
+    const p=samplePath(stripe,station,extent);
+    const half=widthAt(stripe,station,extent)*.38;
+    if(half<.4)return;
     const offset=(random()*2-1)*half;
     const x=p.x+p.nx*offset,y=p.y+p.ny*offset;
     const length=.5+random()*Math.min(13,stripe.width*.6);
@@ -502,6 +505,18 @@ function drawBrushWear(ctx,stripe,extent,scene){
     ctx.lineWidth=Math.max(.3,Math.min(1.8,stripe.width*.05)*(0.2+random()));
     ctx.beginPath();ctx.moveTo(x,y);
     ctx.lineTo(x+p.tx*length,y+p.ty*length);ctx.stroke();
+  };
+  // Preserve the exact seeded sequence within the original composition.
+  // Extending the rendered domain must never reposition its wear scratches.
+  if(end>start)for(let i=0;i<n;i++)scratch(start+(end-start)*random(),random);
+  const density=n/Math.max(1,end-start);
+  for(const [from,to,side] of [
+    [renderStart,start,'before'],[end,renderEnd,'after']
+  ]){
+    if(to<=from)continue;
+    const extra=rng(scene.seed+':brush:'+stripe.index+':'+side);
+    const count=Math.min(1200,Math.ceil((to-from)*density));
+    for(let i=0;i<count;i++)scratch(from+(to-from)*extra(),extra);
   }
   ctx.restore();
 }
