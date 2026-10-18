@@ -1,5 +1,6 @@
 import { OUTPUT_WIDTH, OUTPUT_HEIGHT, normalizeRecipe, resolveScene, encodeRecipe, decodeRecipe, newSeed, randomizeAllRecipe, respectSettingLocks, LOCKABLE_SETTINGS } from './model.js';
 import { drawWallpaper, presentNudgedArtwork } from './renderer.js';
+import {createPreviewCoordinator,exportWallpaperInWorker,closeFrame} from './render-coordinator.js';
 import { embedPngMetadata, extractPngRecipe, cleanMetadata, METADATA_FIELDS } from './png-metadata.js';
 import { installDrawTool } from './draw-path-ui.js?v=20261018-extend1';
 import { installImagePathTool } from './image-path-ui.js?v=20261018-import1';
@@ -18,7 +19,56 @@ const FAVORITES_KEY = 'wallgen:favorites:v1';
 const FIELDS = ['primesOnly','family','structure','radialMode','rayCount','rayRotation','rayTwist','rayCoverage','rayCore','fieldCenterX','fieldCenterY','regionMode','regionCount','regionJitter','regionSides','dividerColor','dividerWidth','composition','repeatCount','repeatSpacing','orientation','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','geometry','turnRadius','hairpinAngle','loopRadius','loopSweep','geometrySafety','extendDrawnPath','crossingMode','stepCount','chevronSharpness','loopAspect','construction','motif','lineStyle','pathLength','tonalContrast','brushRoughness','dotSize','dotSpacing','endTaper','shapeFrequency','shapeDepth','motifSize','motifFrequency','palette','material','outline','background','lightingMood','lightDirection','lightStrength','shadowStrength','stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection','textureCoverage','textureRotation','textureBlend','textureLayer2Enabled','material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2','textureLayer3Enabled','material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3','chaos','stripeWidth','spread','textureStrength','textureScale','textureDisplacement','individuality','patternHomogeneity','overridePatternHomogeneity','gap','outlineBuffer','glow'];
 let current = normalizeRecipe();
 let currentScene;
-const previewLayers={background:null,ink:null,scene:null,key:null};
+const previewLayers={background:null,ink:null,scene:null,key:null,overhang:null};
+let previewWorker=null;
+let previewPainted=false;
+function releasePreviewLayers(){
+  for(const layer of ['background','ink']){
+    try{previewLayers[layer]?.close?.();}catch{}
+    previewLayers[layer]=null;
+  }
+  previewLayers.key=null;
+}
+function previewPresented(){
+  preview.dataset.renderPending='false';
+  preview.removeAttribute('aria-busy');
+  preview.dispatchEvent(new CustomEvent('roygbiv-preview-presented',{
+    detail:{key:previewLayers.key,worker:!!previewWorker?.enabled}
+  }));
+}
+function mainThreadPreview(){
+  releasePreviewLayers();
+  currentScene=drawWallpaper(preview,current,{cache:previewLayers});
+  previewLayers.key=artKey(current);
+  previewLayers.scene=currentScene;
+  previewPainted=true;
+  previewPresented();
+}
+function startPreviewWorker(){
+  if(previewWorker)return previewWorker;
+  previewWorker=createPreviewCoordinator({
+    onFrame:message=>{
+      // The coordinator rejects obsolete revisions, but the underlying
+      // recipe may also have changed through Undo or a cached nudge.
+      if(message.key!==artKey(current)){closeFrame(message);return;}
+      releasePreviewLayers();
+      previewLayers.background=message.background;
+      previewLayers.ink=message.ink;
+      previewLayers.overhang=message.overhang;
+      previewLayers.key=message.key;
+      previewLayers.scene=resolveScene(current);
+      presentNudgedArtwork(preview,previewLayers,current);
+      previewPresented();
+    },
+    onFailure:reason=>{
+      // Preserve editing and the exact reference renderer if worker startup,
+      // 2D context creation, image transfer, or GPU resources fail.
+      console.warn('ROYGBIV preview worker fallback:',reason);
+      mainThreadPreview();
+    }
+  });
+  return previewWorker;
+}
 const settingLockButtons=new Map();
 const autos=['family','orientation','geometry','motif','palette','material','outline'];
 function artKey(recipe){
@@ -301,14 +351,20 @@ function render(recipe,{scroll=false,bypassLocks=false}={}) {
   current=checkpoint(next);
   // Primes Only is reflected by its selected control; no transient message.
   const key=artKey(current);
+  currentScene=resolveScene(current);
   if(previewLayers.key===key && previewLayers.ink && previewLayers.background){
-    // The directional buttons only blit these two cached bitmaps.
+    // Nudge and compositor-only changes remain immediate, even while an
+    // older, expensive worker paint is winding down.
+    previewWorker?.invalidate();
     presentNudgedArtwork(preview,previewLayers,current);
-    currentScene=previewLayers.scene;
+    previewPresented();
+  }else if(previewPainted&&startPreviewWorker().request(current,key,preview.width,preview.height)){
+    // Do not blank the canvas: keep the previous complete wallpaper in view.
+    // Main-thread controls and recipe state are committed synchronously.
+    preview.dataset.renderPending='true';
+    preview.setAttribute('aria-busy','true');
   }else{
-    currentScene=drawWallpaper(preview,current,{cache:previewLayers});
-    previewLayers.key=key;
-    previewLayers.scene=currentScene;
+    mainThreadPreview();
   }
   // The frame always shows the exact resolution-independent export camera.
   const stage=document.querySelector('.studio-stage');
@@ -981,3 +1037,6 @@ const query=new URLSearchParams(location.search).get('r');
 const loaded=query?decodeRecipe(query):null;
 toControls(loaded||current);
 render(current);
+// Start only after the first complete reference frame is visible. This keeps
+// initial page load and screenshot restoration deterministic.
+startPreviewWorker();
