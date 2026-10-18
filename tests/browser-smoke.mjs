@@ -164,6 +164,24 @@ try{
   assert.equal(workerParity.png.height,390);
   assert.ok(workerParity.png.bytes>1000);
 
+  // The actual application must use a worker after its deterministic initial
+  // frame, and settle the correct recipe after rapid edits. A standalone
+  // worker parity test alone would miss accidental main-thread fallback.
+  await evaluate(`(()=>{
+    window.__roygbivWorkerFrames=0;
+    document.getElementById('preview').addEventListener('roygbiv-preview-presented',
+      event=>{if(event.detail?.worker)window.__roygbivWorkerFrames++;});
+    const select=document.querySelector('[name=background]');
+    select.value='white';select.dispatchEvent(new Event('change',{bubbles:true}));
+  })()`);
+  await waitFor('window.__roygbivWorkerFrames>0 && document.getElementById("preview").dataset.renderPending!=="true"',20000);
+  await evaluate(`(()=>{
+    const select=document.querySelector('[name=background]');
+    select.value='black';select.dispatchEvent(new Event('change',{bubbles:true}));
+  })()`);
+  await waitFor('document.getElementById("preview").dataset.renderPending!=="true"',20000);
+  console.log('WORKER_APPLICATION_PREVIEW_READY');
+
   // Real Chromium raster acceptance: inset contours alter native painted pixels
   // in both regional and radial structures, including a zoomed-out camera.
   const insetRaster=await evaluate(`(async()=>{
