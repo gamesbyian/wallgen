@@ -183,6 +183,31 @@ A hand-drawn geometry appears in the normal Path geometry selector once a path
 has been saved. Randomize does not invent arbitrary hand-drawn paths, but locking
 Path geometry preserves your traced curve during further randomization.
 
+## Import a path from an image
+
+Tap **Import image** beside Draw Path in the preview controls and select a
+PNG, JPEG, WebP or SVG (up to 12 MB). The importer analyzes a reduced-size
+image entirely in your browser: no images are uploaded or saved. The picker
+shows selectable yellow-highlighted candidates over the original image.
+Choose a candidate from the dropdown or tap its line, then tap **Edit / Use
+path**. The ordinary Draw Path overlay opens with the extracted geometry,
+where **Edit points**, **Smooth / Geometric**, local anchor correction, Undo
+and **Use path** work as normal. Cancel never replaces the current wallpaper.
+
+The first extraction methods recognize contrasting silhouettes (outer
+contours), saturated coloured regions (their approximate horizontal
+centrelines, useful for rainbows), and strong straight edges (including
+detected angle). The algorithms are deterministic but don't understand every
+object in a complex photograph. A clean illustration with strong contrast is
+more reliable. A closed silhouette is currently stored as a looped custom
+centreline; joins should be inspected and edited if necessary.
+
+The source image and analysis are never embedded in recipes or PNG metadata.
+Only the chosen normalized path, pinned anchors and corners are saved, so
+links, favourites and headless renders reproduce the same wallpaper offline.
+The image importer shares the custom-path renderer and does not add any
+runtime packages, server, accounts or remote AI dependency.
+
 ## Flowing curves and expanded controls (October 2026)
 
 The canvas path tool now uses **arc-length resampling, Gaussian curve fairing
