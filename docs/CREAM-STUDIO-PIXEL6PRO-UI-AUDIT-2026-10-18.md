@@ -1,3 +1,5 @@
+> **Second-pass design update:** [Canvas-first v2 revision](CREAM-STUDIO-CANVAS-FIRST-REDESIGN-V2.md) removes the proposed decorative canvas heading and top Fit/100% row, preserves the exact existing app icon beside the name, moves camera controls beside the artwork, evaluates an optional Google Photos-style focused slider, and expands the visual proposal to 36 slides / 12 coordinated concept screens. This original audit remains the verified 1,648-capture evidence baseline.
+
 # R.O.Y.G.B.I.V. | Cream Studio Pixel 6 Pro visual audit
 
 **Date:** 2026-10-18. **Scope:** `gamesbyian/wallgen`, production UI from current main captured on the audit branch `audit/cream-pixel6pro-20261018`. **Primary appearance:** Cream Studio. **Primary viewport:** 412 × 892 CSS px with Chromium mobile/touch emulation, representing Pixel 6 Pro-size layout.
