@@ -22,6 +22,11 @@ let currentScene;
 const previewLayers={background:null,ink:null,scene:null,key:null,overhang:null};
 let previewWorker=null;
 let previewPainted=false;
+let settledPreviewTimer=null;
+const clearSettledPreview=()=>{
+  if(settledPreviewTimer!==null)clearTimeout(settledPreviewTimer);
+  settledPreviewTimer=null;
+};
 function releasePreviewLayers(){
   for(const layer of ['background','ink']){
     try{previewLayers[layer]?.close?.();}catch{}
@@ -51,6 +56,16 @@ function startPreviewWorker(){
       // The coordinator rejects obsolete revisions, but the underlying
       // recipe may also have changed through Undo or a cached nudge.
       if(message.key!==artKey(current)){closeFrame(message);return;}
+      if(message.quality==='interactive'){
+        // Upscale temporary ink, but never mark a reduced-resolution frame
+        // as the definitive, reusable nudge cache.
+        const ctx=preview.getContext('2d',{alpha:false});
+        ctx.setTransform(1,0,0,1,0,0);
+        ctx.drawImage(message.frame,0,0,preview.width,preview.height);
+        closeFrame(message);
+        preview.dispatchEvent(new CustomEvent('roygbiv-preview-interactive'));
+        return;
+      }
       releasePreviewLayers();
       previewLayers.background=message.background;
       previewLayers.ink=message.ink;
@@ -346,25 +361,37 @@ function syncURL() {
   } catch { /* Local file previews may prohibit History API. */ }
 }
 function titleCase(value){return value.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase());}
-function render(recipe,{scroll=false,bypassLocks=false}={}) {
+function render(recipe,{scroll=false,bypassLocks=false,interactive=false}={}) {
   const next=bypassLocks?normalizeRecipe(recipe):respectSettingLocks(current,recipe);
   current=checkpoint(next);
   // Primes Only is reflected by its selected control; no transient message.
   const key=artKey(current);
   currentScene=resolveScene(current);
   if(previewLayers.key===key && previewLayers.ink && previewLayers.background){
+    clearSettledPreview();
     // Nudge and compositor-only changes remain immediate, even while an
     // older, expensive worker paint is winding down.
     previewWorker?.invalidate();
     presentNudgedArtwork(preview,previewLayers,current);
     previewPresented();
-  }else if(previewPainted&&startPreviewWorker().request(current,key,preview.width,preview.height)){
-    // Do not blank the canvas: keep the previous complete wallpaper in view.
-    // Main-thread controls and recipe state are committed synchronously.
-    preview.dataset.renderPending='true';
-    preview.setAttribute('aria-busy','true');
   }else{
-    mainThreadPreview();
+    clearSettledPreview();
+    const scale=interactive?.62:1;
+    const width=interactive?Math.max(160,Math.round(preview.width*scale)):preview.width;
+    const height=interactive?Math.max(340,Math.round(preview.height*scale)):preview.height;
+    if(previewPainted&&startPreviewWorker().request(current,key,width,height,
+      {quality:interactive?'interactive':'settled'})){
+      // Keep the last complete wallpaper visible while the newest request
+      // renders, then settle at the exact screen resolution after dragging.
+      preview.dataset.renderPending='true';
+      preview.setAttribute('aria-busy','true');
+      if(interactive)settledPreviewTimer=setTimeout(()=>{
+        settledPreviewTimer=null;
+        if(previewWorker?.enabled&&artKey(current)===key)
+          previewWorker.request(current,key,preview.width,preview.height,
+            {quality:'settled'});
+      },170);
+    }else mainThreadPreview();
   }
   // The frame always shows the exact resolution-independent export camera.
   const stage=document.querySelector('.studio-stage');
@@ -572,15 +599,15 @@ importRecipeFile.addEventListener('change',async()=>{
 });
 
 let pendingControlFrame=0;
-function updateControlsFromInputs(){
+function updateControlsFromInputs({interactive=false}={}){
   syncDiagonalUI();
-  changeRecipe(fromControls());
+  changeRecipe(fromControls(),{interactive});
 }
 function queueControlUpdate(){
   if(pendingControlFrame)cancelAnimationFrame(pendingControlFrame);
   pendingControlFrame=requestAnimationFrame(()=>{
     pendingControlFrame=0;
-    updateControlsFromInputs();
+    updateControlsFromInputs({interactive:true});
   });
 }
 
