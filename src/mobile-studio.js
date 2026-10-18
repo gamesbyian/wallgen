@@ -77,6 +77,20 @@ function closeSurfaces({restoreFocus=true}={}){
   moreBtn.setAttribute('aria-expanded','false');
   if(wasOpen&&restoreFocus&&lastFocus?.isConnected)lastFocus.focus();
 }
+function updateEditorDensity(){
+  if(!mobile.matches||!document.body.classList.contains('mobile-edit-open')||innerHeight<740){
+    document.body.classList.remove('mobile-edit-compact');return;
+  }
+  const card=document.querySelector('.editor-tool-card:not([hidden])');
+  if(!card)return;
+  // Only on navigation. Do not resize the preview while a slider changes.
+  const children=[...card.children].filter(el=>!el.hidden &&
+    getComputedStyle(el).display!=='none'&&!el.classList.contains('editor-tool-header'));
+  const short=children.length<=2 &&
+    !card.querySelector('.texture-layer-group,.interior-toolbar,.control-grid,.lighting-subsection');
+  document.body.classList.toggle('mobile-edit-compact',short);
+}
+document.addEventListener('editor-tool-changed',updateEditorDensity);
 function openSurface(type){
   if(!mobile.matches)return;
   const className='mobile-'+type+'-open';
@@ -92,6 +106,7 @@ function openSurface(type){
     dockExpand.setAttribute('aria-expanded','false');
     dock.setAttribute('aria-hidden','true');
     design.setAttribute('role','region');
+    updateEditorDensity();
     // The dock slides off the right edge, leaving only its accessible
     // expand arrow. Focus stays on the on-screen controls, not the hidden dock.
     dismissHandle.focus({preventScroll:true});
