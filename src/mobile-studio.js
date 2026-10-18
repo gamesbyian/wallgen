@@ -2,19 +2,19 @@ import {setIconSource} from './ui-icons.js';
 // This module changes the studio interface only. Wallpaper recipes, saved favourites,
 // and the original dark CSS remain untouched and theme-independent.
 const THEME_KEY='roygbiv:studio-theme:v1';
-const select=document.getElementById('studioTheme');
+const themeButtons=[...document.querySelectorAll('[data-studio-theme]')];
 const meta=document.querySelector('meta[name="theme-color"]');
 function setTheme(name){
   const theme=name==='cream'?'cream':'dark';
   document.documentElement.dataset.theme=theme;
-  select.value=theme;
+  for(const button of themeButtons)button.setAttribute('aria-pressed',String(button.dataset.studioTheme===theme));
   if(meta)meta.content=theme==='cream'?'#f8f3e9':'#08090e';
   try{localStorage.setItem(THEME_KEY,theme);}catch{}
 }
 let remembered='cream';
 try{remembered=localStorage.getItem(THEME_KEY)||'cream';}catch{}
 setTheme(remembered);
-select.addEventListener('change',()=>setTheme(select.value));
+for(const button of themeButtons)button.addEventListener('click',()=>setTheme(button.dataset.studioTheme));
 
 const mobile=window.matchMedia('(max-width:790px)');
 const design=document.getElementById('mobileDesignSheet');
