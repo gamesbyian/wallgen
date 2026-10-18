@@ -738,7 +738,9 @@ function syncInteriorUI(){
   customPicker.type='color';customPicker.value=active.customColor;customPicker.disabled=active.color!=='custom';
   customPicker.addEventListener('change',()=>update('customColor',customPicker.value));
   range(interiorCards['interior-motion'],'Amplitude','amplitude',0,.45,.01);
-  range(interiorCards['interior-motion'],'Frequency','frequency',.1,30,.1);
+  range(interiorCards['interior-motion'],active.placement==='contour'?'Cycles':'Frequency',
+    'frequency',active.placement==='contour'?1:.1,30,
+    active.placement==='contour'?1:.1);
   range(interiorCards['interior-motion'],'Phase','phase',-180,180,1);
   select(interiorCards['interior-placement'],'Placement','placement',['local','field','contour']);
   range(interiorCards['interior-placement'],'Position','position',-.48,.48,.02);
