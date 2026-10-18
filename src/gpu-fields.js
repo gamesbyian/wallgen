@@ -43,10 +43,12 @@ void main(){
     amplitude*80.0*(2.0*PI/wavelength)*cos(angle):
     shapeCode==2?amplitude*80.0*(4.0/wavelength)*sign(cos(angle)):0.0;
   float distance=verticalDistance*inversesqrt(1.0+steepness*steepness);
-  // Smooth coverage of a finite-width line. Derivatives are core in WebGL2.
-  float edge=max(.001,fwidth(distance)*.48);
-  float line=1.0-smoothstep(
-    max(0.0,strokeWidth*.5-edge),strokeWidth*.5+edge,distance);
+  // A pixel-footprint coverage estimate, rather than a smoothstep falloff.
+  // smoothstep made neighbouring pixels nearly opaque at a thin 1.7 px
+  // Canvas2D stroke, falsely doubling full-coverage samples. A linear box
+  // estimate behaves closer to Canvas2D's integrated pixel alpha.
+  float footprint=max(.001,fwidth(distance));
+  float line=clamp((strokeWidth*.5+footprint*.5-distance)/footprint,0.0,1.0);
   float alpha=clamp(coverage*line*inkOpacity,0.0,1.0);
   pixel=vec4(inkColour,alpha);
 }`;
