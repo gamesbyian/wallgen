@@ -73,7 +73,7 @@ export function drawRegionInteriors(ctx,object,elements,structure){
   for(const e of elements){
     if(!e.enabled||!e.opacity||!elementApplies(e,object.colorIndex,object.id))continue;
     ctx.save();ctx.strokeStyle=elementInk(e,object.color);
-    ctx.globalAlpha=e.opacity;ctx.lineWidth=e.type==='band'?Math.max(e.width,Math.min(x1-x0,y1-y0)*.14):e.width;
+    ctx.globalAlpha=e.opacity;ctx.lineWidth=e.width;
     lineDash(ctx,e);ctx.lineJoin='round';
     if(e.placement==='contour'){
       const count=structure==='radial'?3:2;
