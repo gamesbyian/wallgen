@@ -100,7 +100,7 @@ test('pattern homogeneity and override persist without affecting stripe motif id
 });
 test('Randomize all provides complete normalized settings without preserving manual overrides',()=>{
   const recipe=randomizeAllRecipe();
-  assert.equal(recipe.version,1);
+  assert.equal(recipe.version,2);
   assert.ok(FAMILIES.includes(recipe.family));
   assert.ok(GEOMETRIES.includes(recipe.geometry));
   assert.ok(MOTIFS.includes(recipe.motif));

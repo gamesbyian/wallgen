@@ -1,4 +1,6 @@
 import { SHAPES } from './path-geometry.js';
+import { STRUCTURES, RADIAL_MODES, REGION_MODES, DIVIDER_MODES, buildCompositionObjects } from './composition-geometry.js';
+export { STRUCTURES, RADIAL_MODES, REGION_MODES, DIVIDER_MODES };
 import { normalizeDrawnPath, prepareDrawnPath, safeDrawnBandSpan } from './drawn-path.js';
 export const DESIGN_WIDTH = 600;
 export const DESIGN_HEIGHT = 1300;
@@ -23,6 +25,7 @@ export const LOCKABLE_SETTINGS = ['seed','family','orientation','geometry','moti
   'material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3',
   'textureDisplacement','patternHomogeneity','chaos','stripeWidth','spread','shapeFrequency','shapeDepth','motifSize','motifFrequency','lineStyle','individuality',
   'overridePatternHomogeneity','gap','outlineBuffer','glow','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','position',
+  'structure','radialMode','rayCount','rayRotation','rayTwist','rayCoverage','rayCore','fieldCenterX','fieldCenterY','regionMode','regionCount','regionJitter','regionSides','dividerColor','dividerWidth',
   'composition','repeatCount','repeatSpacing','construction','crossingMode','turnRadius','hairpinAngle','loopRadius','loopSweep','geometrySafety','stepCount','chevronSharpness','loopAspect','pathLength','endTaper','tonalContrast','brushRoughness','dotSize','dotSpacing'];
 export const PALETTES = ['classic', 'electric', 'pastel', 'jewel', 'muted', 'sunset', 'candy', 'arctic', 'earth', 'twilight', 'citrus'];
 export const TEXTURE_COVERAGES = ['both', 'stripes', 'background'];
@@ -68,7 +71,7 @@ export function normalizeRecipe(input = {}) {
   const readChoice = (key, allowed) => allowed.includes(input[key]) ? input[key] : 'auto';
   const seed = String(input.seed ?? 'rainbow-001').trim().slice(0, 90) || 'rainbow-001';
   return {
-    version: 1,
+    version: 2,
     seed,
     primesOnly: input.primesOnly === true || input.primesOnly === 'true',
     lockedSettings: LOCKABLE_SETTINGS.filter(key=>Array.isArray(input.lockedSettings) && input.lockedSettings.includes(key)),
@@ -77,6 +80,21 @@ export function normalizeRecipe(input = {}) {
         input.lockedSettings.includes(key) && choices.includes(input.lockedResolved?.[key]))
       .map(([key])=>[key,input.lockedResolved[key]])),
     family: readChoice('family', FAMILIES),
+    structure: STRUCTURES.includes(input.structure) ? input.structure : 'paths',
+    radialMode: RADIAL_MODES.includes(input.radialMode) ? input.radialMode : 'sunburst',
+    rayCount: Math.round(finiteRange(input.rayCount, 14, 7, 70)/7)*7,
+    rayRotation: finiteRange(input.rayRotation, 0, -180, 180),
+    rayTwist: finiteRange(input.rayTwist, 45, -180, 180),
+    rayCoverage: finiteRange(input.rayCoverage, 100, 0, 100),
+    rayCore: finiteRange(input.rayCore, 0, 0, 100),
+    fieldCenterX: finiteRange(input.fieldCenterX, 50, -50, 150),
+    fieldCenterY: finiteRange(input.fieldCenterY, 50, -50, 150),
+    regionMode: REGION_MODES.includes(input.regionMode) ? input.regionMode : 'voronoi',
+    regionCount: Math.round(finiteRange(input.regionCount, 14, 7, 70)/7)*7,
+    regionJitter: finiteRange(input.regionJitter, 45, 0, 100),
+    regionSides: Math.round(finiteRange(input.regionSides, 0, 0, 12)),
+    dividerColor: DIVIDER_MODES.includes(input.dividerColor) ? input.dividerColor : 'background',
+    dividerWidth: finiteRange(input.dividerWidth, 12, 0, 100),
     orientation: readChoice('orientation', ['vertical', 'horizontal', 'diagonal']),
     reverseStripes: input.reverseStripes === true || input.reverseStripes === 'true',
     // Relative degrees: 0 retains legacy seed-selected diagonal angle exactly.
@@ -358,14 +376,18 @@ export function resolveScene(recipeInput) {
     layer.heightSin=Math.sin(radians);
   }
   const materialSummary=textureLayers.length ? textureLayers.map(layer=>layer.material).join(' + ') : 'none';
+  const bundleOffsets=Array.from({length:repeats},(_,i)=>
+    (i-(repeats-1)/2)*(spread+(12+recipe.repeatSpacing*1.1)));
+  // Every layout produces a unified ordered object list; seven colours are
+  // semantic palette slots rather than an assumption of seven objects.
+  const objects=buildCompositionObjects(recipe,stripes.map(stripe=>stripe.color),stripes,bundleOffsets);
   return {
     ...recipe, family, orientation, geometry, motif, palette, material, materialSummary, textureLayers, outline, background: recipe.background, angle, span,
     // Reflect the entire diagonal ink layer, not its textures or background.
     mirrorHorizontal:orientation==='diagonal' && recipe.mirrorHorizontal,
     mirrorVertical:orientation==='diagonal' && recipe.mirrorVertical,
     stripes, intensity: chaos, width: avg,
-    bundleOffsets:Array.from({length:repeats},(_,i)=>
-      (i-(repeats-1)/2)*(spread+(12+recipe.repeatSpacing*1.1))),
+    bundleOffsets, objects,
     extent: Math.hypot(DESIGN_WIDTH, DESIGN_HEIGHT) * 1.35,
     reliefFallbackSeed:hashString(recipe.seed+':relief:fine-grain'),
     // These positions are the canonical, unnudged geometry. Pan is applied only
@@ -425,6 +447,13 @@ export function randomizeAllRecipe({primesOnly=false}={}) {
   const degrees=()=>primesOnly?any(PRIME_ROTATIONS):Math.floor(r()*360);
   return normalizeRecipe({
     seed, primesOnly, family:any(FAMILIES), orientation:any(['vertical','horizontal','diagonal']),
+    structure:any(['paths','paths','radial','regions']),
+    radialMode:any(RADIAL_MODES),rayCount:7*(1+Math.floor(r()*10)),
+    rayRotation:Math.floor(r()*361)-180,rayTwist:Math.floor(r()*361)-180,
+    rayCoverage:percent(),rayCore:percent(),fieldCenterX:percent(),fieldCenterY:percent(),
+    regionMode:any(REGION_MODES),regionCount:7*(1+Math.floor(r()*10)),
+    regionJitter:percent(),regionSides:Math.floor(r()*13),
+    dividerColor:any(DIVIDER_MODES),dividerWidth:percent(),
     geometry:any(GEOMETRIES.filter(x=>x!=='drawn')), motif:any(MOTIFS), palette:any(PALETTES),
     reverseStripes:r()>.5,diagonalRotation:Math.floor(r()*361)-180,
     mirrorHorizontal:r()>.5,mirrorVertical:r()>.5,

@@ -70,7 +70,7 @@ function exifTiff(info){
   return out;
 }
 export const RECIPE_KEYWORD='ROYGBIV Recipe';
-export const RECIPE_FORMAT='roygbiv-recipe-v1';
+export const RECIPE_FORMAT='roygbiv-recipe-v2';
 export function serializePngRecipe(recipe){
   return JSON.stringify({format:RECIPE_FORMAT,recipe:normalizeRecipe(recipe),
     output:{width:OUTPUT_WIDTH,height:OUTPUT_HEIGHT},generator:'R.O.Y.G.B.I.V.'});
@@ -129,7 +129,7 @@ export function extractPngRecipe(input){
         let envelope;
         try{envelope=JSON.parse(decoder.decode(data.subarray(end+5)));}
         catch{throw Error('Damaged recipe metadata');}
-        if(envelope?.format!==RECIPE_FORMAT||typeof envelope.recipe!=='object'||
+        if(![RECIPE_FORMAT,'roygbiv-recipe-v1'].includes(envelope?.format)||typeof envelope.recipe!=='object'||
            !envelope.recipe||Array.isArray(envelope.recipe))throw Error('Unsupported recipe metadata version');
         return normalizeRecipe(envelope.recipe);
       }

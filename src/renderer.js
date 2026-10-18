@@ -844,6 +844,52 @@ export function presentNudgedArtwork(canvas, layers, recipe) {
   applyCanvasAtmosphere(ctx,canvas.width,canvas.height,recipe);
 }
 
+// Closed-region objects share the same transparent ink, palette slots,
+// material stack, camera, lighting, nudge and export path as ribbon objects.
+// No regional generator paints directly: the painter consumes scene.objects.
+export function drawRegionObjects(ctx,scene){
+  const divider=scene.dividerColor==='background'?scene.background:scene.dividerColor;
+  const hasDivider=scene.dividerColor!=='none'&&scene.dividerWidth>0;
+  const trace=object=>{
+    ctx.beginPath();
+    ctx.moveTo(object.vertices[0].x,object.vertices[0].y);
+    for(let i=1;i<object.vertices.length;i++)
+      ctx.lineTo(object.vertices[i].x,object.vertices[i].y);
+    ctx.closePath();
+  };
+  const regions=scene.objects.filter(o=>o.kind==='region'&&o.vertices.length>=3);
+  // First paint every fill. A tiny matching stroke closes antialiasing seams
+  // where independent floating-point cells meet without a divider.
+  for(const object of regions){
+    ctx.save();trace(object);
+    if(scene.glow>0){
+      ctx.shadowColor=object.color;
+      ctx.shadowBlur=scene.glow/100*32;
+    }
+    ctx.fillStyle=object.color;
+    ctx.fill();
+    ctx.shadowBlur=0;
+    if(!hasDivider){
+      ctx.strokeStyle=object.color;
+      ctx.lineWidth=1;
+      ctx.lineJoin='round';
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+  // A separate boundary pass prevents a subsequent cell's fill erasing half
+  // of its neighbour's divider. Stroke colour is an independent background
+  // role, never an eighth rainbow pigment.
+  if(hasDivider){
+    ctx.save();
+    ctx.strokeStyle=divider==='white'?'#fff':'#000';
+    ctx.lineWidth=.3+scene.dividerWidth*.24;
+    ctx.lineJoin='round';
+    for(const object of regions){trace(object);ctx.stroke();}
+    ctx.restore();
+  }
+}
+
 export function drawWallpaper(canvas, recipe, options={}) {
   const scene=resolveScene(recipe);
   const camera=viewCamera(canvas.width,canvas.height,scene.viewZoom);
@@ -869,6 +915,7 @@ export function drawWallpaper(canvas, recipe, options={}) {
   if(!g) throw new Error('Canvas ink layer unavailable');
   g.setTransform(scaleX,0,0,scaleY,
     margin.left+offsetX,margin.top+offsetY);
+  if(scene.structure==='paths'){
   if(scene.mirrorHorizontal||scene.mirrorVertical){
     g.translate(DESIGN_WIDTH/2,DESIGN_HEIGHT/2);
     g.scale(scene.mirrorHorizontal?-1:1,scene.mirrorVertical?-1:1);
@@ -876,9 +923,10 @@ export function drawWallpaper(canvas, recipe, options={}) {
   }else g.translate(scene.centerX,scene.centerY);
   g.rotate(scene.angle);
   const crossingBundles=[];
-  for(const bundleOffset of scene.bundleOffsets){
+  for(const bundle of scene.objects){
+  const bundleOffset=bundle.offset;
   const crossingStripes=[];
-  for(const original of scene.stripes){
+  for(const original of bundle.stripes){
     const stripe=scene.bundleOffsets.length===1?{...original}:
       {...original,center:original.center+bundleOffset};
     stripe.coreExtent=scene.coreExtent;
@@ -970,6 +1018,7 @@ export function drawWallpaper(canvas, recipe, options={}) {
       }
     }
   }
+  }else drawRegionObjects(g,scene);
   // One scratch buffer is reused for every texture layer and surface.
   // The stripe pass masks against the current ink alpha, so multiply/screen/etc
   // affect the stripe colours without spraying texture into negative space.
