@@ -1,7 +1,7 @@
 import { OUTPUT_WIDTH, OUTPUT_HEIGHT, normalizeRecipe, resolveScene, encodeRecipe, decodeRecipe, newSeed, randomizeAllRecipe, respectSettingLocks, LOCKABLE_SETTINGS } from './model.js';
 import { drawWallpaper, presentNudgedArtwork } from './renderer.js';
 import { embedPngMetadata, extractPngRecipe, cleanMetadata, METADATA_FIELDS } from './png-metadata.js';
-import { installDrawTool } from './draw-path-ui.js?v=20261018-intent10';
+import { installDrawTool } from './draw-path-ui.js?v=20261018-points1';
 import {mountEditor,selectEditorTool} from './editor-layout.js';
 import {randomizeScope} from './scoped-random.js';
 import {STYLE_PRESETS} from './editor-schema.js';
@@ -69,7 +69,7 @@ function showNotice(message){
 }
 function fromControls() {
   const data={seed:seedInput.value,positionX:current.positionX,positionY:current.positionY,
-    viewZoom:current.viewZoom,customPath:current.customPath};
+    viewZoom:current.viewZoom,customPath:current.customPath,drawnAnchors:current.drawnAnchors};
   for (const key of FIELDS) { const field=form.elements.namedItem(key); data[key]=field.dataset.inactive==='true'?current[key]:(field.type==='checkbox'?field.checked:field.value); }
   return normalizeRecipe(data);
 }
@@ -310,9 +310,10 @@ document.querySelector('.studio-stage').addEventListener('roygbiv-view-zoom-requ
 const drawTool=installDrawTool({
   getRecipe:()=>current,
   onNotice:showNotice,
-  onApply:points=>{
+  onApply:(points,anchors=[])=>{
     const next=fromControls();
     next.customPath=points;
+    next.drawnAnchors=anchors;
     next.geometry='drawn';
     next.orientation='horizontal';
     next.positionX=0;
