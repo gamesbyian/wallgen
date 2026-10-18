@@ -368,6 +368,12 @@ try{
   assert.deepEqual(editor.tabs,['Layout','Path','Shapes','Details','Colour','Material','Effects']);
   const iconPlacement=await evaluate('(()=>({tabs:[...document.querySelectorAll(".settings-tab")].map(b=>({width:b.getBoundingClientRect().width,icon:!!b.querySelector("svg.ui-icon")})),dock:[...document.querySelectorAll("#mobileActionDock>button")].map(b=>({width:b.getBoundingClientRect().width,icon:!!b.querySelector("svg.ui-icon")})),rail:[...document.querySelectorAll("#mobileEditorActionRail>button")].map(b=>({width:b.getBoundingClientRect().width,icon:!!b.querySelector("svg.ui-icon")})),remoteImages:document.querySelectorAll("img.ui-icon").length,categoryHeight:document.querySelector(".settings-tabs").getBoundingClientRect().height}))()');
   assert.equal(iconPlacement.remoteImages,0,'inlined icons inherit theme contrast');
+  const previewShortcutIcons=await evaluate('(()=>{const box=id=>{const b=document.getElementById(id);const r=b.getBoundingClientRect();return {height:r.height,width:r.width,icon:!!b.querySelector("svg.ui-icon"),labelHeight:b.querySelector(".toolbar-wording")?.getBoundingClientRect().height||0}};const prime=document.querySelector(".mobile-preview-rail-left .prime-toggle");return {prime:{height:prime.getBoundingClientRect().height,icon:!!prime.querySelector("svg.ui-icon"),labelHeight:prime.querySelector(".toolbar-wording").getBoundingClientRect().height},draw:box("drawPathToggle"),import:box("importPathToggle")}})()');
+  assert.ok(previewShortcutIcons.prime.icon,'Primes only uses approved SVG');
+  assert.ok(previewShortcutIcons.import.icon,'Import path uses approved SVG');
+  assert.ok(previewShortcutIcons.import.height>=previewShortcutIcons.draw.height-2,'Import shortcut matches the existing column height');
+  assert.ok(previewShortcutIcons.import.height>=previewShortcutIcons.import.labelHeight+17,'Import icon and caption fit within the button');
+  console.log('PREVIEW_SHORTCUT_ICONS',JSON.stringify(previewShortcutIcons));
   assert.ok(iconPlacement.tabs.every(t=>t.icon&&t.width>20));
   assert.ok(iconPlacement.dock.every(t=>t.icon&&t.width>25));
   assert.ok(iconPlacement.rail.every(t=>t.icon&&t.width>=25));
