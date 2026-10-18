@@ -1,4 +1,5 @@
-import {EDITOR_CATEGORIES, TOOL_LIST, SETTING_TOOL} from './editor-schema.js';
+import {EDITOR_CATEGORIES, TOOL_LIST, SETTING_TOOL} from './editor-schema.js?v=20261018-icons2';
+import {iconMarkup} from './ui-icons.js';
 
 const byId=id=>document.getElementById(id);
 const form=byId('controls');
@@ -97,10 +98,12 @@ export function mountEditor(){
   for(const [value,name] of [['gentle','Gentle'],['moderate','Moderate'],['wild','Wild']]){
     const opt=create('option',null,name);opt.value=value;strength.append(opt);
   }
-  const randomCategory=create('button','editor-scope-button','✳ Category');
+  const randomCategory=create('button','editor-scope-button');
+  randomCategory.innerHTML=iconMarkup('randomize')+' Category';
   randomCategory.type='button';randomCategory.dataset.randomCategory='layout';
   randomCategory.title='Change only unlocked settings in this category';
-  const search=create('button','editor-search-toggle','⌕');
+  const search=create('button','editor-search-toggle');
+  search.innerHTML=iconMarkup('search');
   search.type='button';search.title='Find a setting';search.setAttribute('aria-label','Find a setting');
   const searchInput=create('input','editor-search-input');
   searchInput.type='search';searchInput.placeholder='Find a setting…';
@@ -119,7 +122,7 @@ export function mountEditor(){
     button.setAttribute('role','tab');button.setAttribute('aria-controls','panel-'+category.id);
     button.setAttribute('aria-selected',String(category.id==='layout'));
     button.tabIndex=category.id==='layout'?0:-1;
-    button.innerHTML='<span aria-hidden="true">'+category.icon+'</span> '+category.label;
+    button.innerHTML='<span aria-hidden="true">'+iconMarkup(category.icon)+'</span> '+category.label;
     nav.append(button);
     const panel=create('section','settings-panel editor-category-panel');
     panel.id='panel-'+category.id;panel.dataset.category=category.id;
@@ -128,6 +131,8 @@ export function mountEditor(){
     form.append(panel);
     for(const tool of category.tools){
       const chip=create('button','editor-tool-tab',tool.name);
+      const toolIcon=({outlines:'outlines',shadows:'shadows',glow:'glow',lighting:'lighting',interior:'interior-elements',geometry:'path',patterns:'stripes',ray:'path',surface:'material'})[tool.id];
+      if(toolIcon)chip.innerHTML=iconMarkup(toolIcon)+'<span>'+tool.name+'</span>';
       chip.type='button';chip.dataset.editorTool=tool.id;
       chip.dataset.category=category.id;
       chip.setAttribute('aria-pressed',String(tool.id===category.tools[0].id));
@@ -139,7 +144,8 @@ export function mountEditor(){
       card.hidden=tool.id!==category.tools[0].id;
       // The active tool chip already identifies the card. Keep only the
       // scoped-random action in the card chrome, not a duplicate heading.
-      const roll=create('button','editor-scope-button editor-tool-reroll','✳ Tool');
+      const roll=create('button','editor-scope-button editor-tool-reroll');
+      roll.innerHTML=iconMarkup('randomize')+' Tool';
       roll.type='button';roll.dataset.randomTool=tool.id;
       roll.title='Change only unlocked '+tool.name.toLowerCase()+' settings';
       roll.setAttribute('aria-label','Randomize '+tool.name+' tool');
@@ -182,7 +188,8 @@ export function mountEditor(){
     if(key==='textureLayer2Enabled'||key==='textureLayer3Enabled')continue;
     const root=fieldNode(key);
     if(root.querySelector?.('[data-random-setting="'+key+'"]'))continue;
-    const die=create('button','editor-setting-die','✳');
+    const die=create('button','editor-setting-die');
+    die.innerHTML=iconMarkup('randomize');
     die.type='button';die.dataset.randomSetting=key;
     die.setAttribute('aria-label','Randomize only '+key);
     die.title='Reroll or vary this setting only';

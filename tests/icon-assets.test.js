@@ -4,14 +4,15 @@ import { readFileSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
+import {iconMarkup,iconSrc} from '../src/ui-icons.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const dir = join(root, "assets/icons/roygbiv");
 const manifest = JSON.parse(readFileSync(join(dir, "manifest.json"), "utf8"));
 const names = manifest.icons.map((entry) => entry.name);
 
-test("staged ROYGBIV icons are a complete, unique SVG collection", () => {
-  assert.equal(manifest.status, "asset-library-only");
+test("integrated ROYGBIV icons are a complete, unique SVG collection", () => {
+  assert.equal(manifest.status, "integrated");
   assert.equal(names.length, 56);
   assert.equal(new Set(names).size, names.length, "duplicate icon names");
   const files = readdirSync(dir).filter((name) => name.endsWith(".svg")).sort();
@@ -55,4 +56,16 @@ test("standalone review preview references every icon", () => {
   for (const name of names) {
     assert.ok(html.includes('src="./' + name + '.svg"'), "preview missing " + name);
   }
+});
+
+
+test('runtime SVGs preserve theme inheritance and the entire canonical icon inventory',()=>{
+  for(const name of names){
+    const markup=iconMarkup(name);
+    assert.ok(markup.includes('data-roygbiv-icon="'+name+'"'));
+    assert.ok(markup.includes('stroke="currentColor"'));
+    assert.ok(!markup.includes('<img'));
+    assert.ok(iconSrc(name).endsWith('/'+name+'.svg'));
+  }
+  assert.throws(()=>iconMarkup('../../foo'),RangeError);
 });

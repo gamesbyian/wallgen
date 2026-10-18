@@ -1,3 +1,4 @@
+import {iconMarkup} from './ui-icons.js';
 // Mobile preview rails use the original controls. The framing camera belongs
 // to the recipe, so exported full-resolution pixels match the displayed frame.
 const mq=window.matchMedia('(max-width:790px)');
@@ -55,7 +56,7 @@ for(const [el,mode,glyph,label] of [
   [zoomOut,'out','−','Zoom preview out'],
 ]){
   el.type='button';el.className='mobile-zoom-button';
-  el.dataset.zoom=mode;el.textContent=glyph;el.setAttribute('aria-label',label);
+  el.dataset.zoom=mode;el.innerHTML=iconMarkup(mode==='in'?'plus':'minus');el.setAttribute('aria-label',label);
 }
 const zoomValue=document.createElement('output');
 zoomValue.className='mobile-zoom-level';

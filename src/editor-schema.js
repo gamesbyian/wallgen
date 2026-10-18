@@ -2,13 +2,13 @@
 // Every parameter has ONE home. Navigation, scoped variation, and guided steps
 // use these definitions rather than maintaining competing control taxonomies.
 export const EDITOR_CATEGORIES=[
-  {id:'layout',label:'Layout',icon:'▦',tools:[
+  {id:'layout',label:'Layout',icon:'layout',tools:[
     {id:'structure-mode',name:'Canvas structure',settings:['structure']},
     {id:'arrange',name:'Arrangement',settings:['composition','repeatCount','repeatSpacing']},
     {id:'direction',name:'Direction',settings:['orientation','diagonalRotation','mirrorHorizontal','mirrorVertical']},
     {id:'variability',name:'Variation',settings:['chaos']},
   ]},
-  {id:'path',label:'Path',icon:'⌁',tools:[
+  {id:'path',label:'Path',icon:'path',tools:[
     {id:'geometry',name:'Geometry',settings:['geometry','shapeFrequency','shapeDepth']},
     {id:'rays',name:'Radial rays',settings:['radialMode','rayCount','rayRotation']},
     {id:'ray-shape',name:'Ray shape',settings:['rayTwist','rayCoverage','rayCore']},
@@ -21,7 +21,7 @@ export const EDITOR_CATEGORIES=[
     {id:'shape-details',name:'Shape detail',settings:['stepCount','chevronSharpness','loopAspect']},
     {id:'ends',name:'Endpoints',settings:['pathLength','endTaper','extendDrawnPath']},
   ]},
-  {id:'stripes',label:'Shapes',icon:'≋',tools:[
+  {id:'stripes',label:'Shapes',icon:'stripes',tools:[
     {id:'structure',name:'Structure',settings:['construction','stripeWidth','spread']},
     {id:'patterns',name:'Patterns',settings:['motif','lineStyle','patternHomogeneity']},
     {id:'marks',name:'Marks',settings:['dotSize','dotSpacing']},
@@ -29,7 +29,7 @@ export const EDITOR_CATEGORIES=[
     {id:'tone',name:'Band tones',settings:['tonalContrast']},
     {id:'character',name:'Character',settings:['individuality','overridePatternHomogeneity']},
   ]},
-  {id:'details',label:'Details',icon:'✧',tools:[
+  {id:'details',label:'Details',icon:'interior-elements',tools:[
     {id:'interior',name:'Elements',settings:[]},
     {id:'interior-style',name:'Element style',settings:[]},
     {id:'interior-motion',name:'Element motion',settings:[]},
@@ -40,11 +40,11 @@ export const EDITOR_CATEGORIES=[
     {id:'shadows',name:'Shadows',settings:['stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection']},
     {id:'glow',name:'Glow',settings:['glow']},
   ]},
-  {id:'colour',label:'Colour',icon:'◐',tools:[
+  {id:'colour',label:'Colour',icon:'colour',tools:[
     {id:'rainbow',name:'Rainbow',settings:['palette','reverseStripes']},
     {id:'canvas',name:'Background',settings:['background']},
   ]},
-  {id:'material',label:'Material',icon:'▧',tools:[
+  {id:'material',label:'Material',icon:'material',tools:[
     {id:'layer1',name:'Layer 1',settings:['material','textureCoverage','textureBlend','textureLayer2Enabled']},
     {id:'finish1',name:'Finish 1',settings:['textureStrength','textureScale','textureRotation']},
     {id:'layer2',name:'Layer 2',settings:['material2','textureCoverage2','textureBlend2','textureLayer3Enabled']},
@@ -53,7 +53,7 @@ export const EDITOR_CATEGORIES=[
     {id:'finish3',name:'Finish 3',settings:['textureStrength3','textureScale3','textureRotation3']},
     {id:'surface',name:'Surface',settings:['textureDisplacement','brushRoughness']},
   ]},
-  {id:'effects',label:'Effects',icon:'✦',tools:[
+  {id:'effects',label:'Effects',icon:'effects',tools:[
     {id:'lighting',name:'Lighting',settings:['lightingMood','lightDirection','lightStrength','shadowStrength']},
   ]},
 ];

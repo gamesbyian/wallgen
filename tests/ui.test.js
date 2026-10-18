@@ -69,13 +69,12 @@ test('public domain licence and documentation acknowledge ChatGPT and unrestrict
   assert.match(readme,/\*\*for any purpose\*\*/i);
 });
 
-test('lock controls use two consistent line-art SVG states, not emoji',()=>{
+test('setting locks use the approved distinct SVG assets and preserve their action semantics',()=>{
   assert.match(app,/const LOCK_ICON=\{/);
-  assert.match(app,/locked:'<svg viewBox="0 0 24 24"/);
-  assert.match(app,/unlocked:'<svg viewBox="0 0 24 24"/);
+  assert.match(app,/locked:iconMarkup\('lock'\)/);
+  assert.match(app,/unlocked:iconMarkup\('unlock'\)/);
   assert.match(app,/button\.innerHTML=locked\.has\(key\)\?LOCK_ICON\.locked:LOCK_ICON\.unlocked/);
-  assert.doesNotMatch(app,/button\.textContent=locked\.has\(key\)\?'🔒'/);
-  assert.match(css,/\.setting-lock svg\{display:block/);
+  assert.match(app,/button\.setAttribute\('aria-pressed'/);
   assert.match(html,/Generate, protect what works/);
 });
 test('texture relief and ambient canvas illumination are described accurately',()=>{
@@ -156,13 +155,12 @@ test('locks occupy dedicated layout columns and never overlap numeric slider val
   assert.match(css,/\.settings-panel \.lockable-setting\.texture-rotation-field > \.rotation-controls\{\s*grid-column:1\/-1;grid-row:2/);
   assert.match(css,/\.settings-panel \.lockable-setting \.slider-number\{min-width:0\}/);
 });
-test('unlocked line-art padlock shackle swings away from the locked shackle',()=>{
-  const locked=app.match(/locked:'(<svg[^']+?)',/);
-  const unlocked=app.match(/unlocked:'(<svg[^']+?)',/);
-  assert.ok(locked?.[1]&&unlocked?.[1]);
-  assert.match(locked[1],/<path d="M8 10V7a4 4 0 0 1 8 0v3"\/>/);
-  assert.match(unlocked[1],/<path d="M8 10V7a4 4 0 0 1 8 0v3" transform="rotate\(-48 8 10\)"\/>/);
-  assert.doesNotMatch(locked[1],/transform="rotate/);
+test('the shipped lock and unlock icon shapes differ while remaining separate assets',()=>{
+  const lock=readFileSync(new URL('../assets/icons/roygbiv/lock.svg',import.meta.url),'utf8');
+  const unlock=readFileSync(new URL('../assets/icons/roygbiv/unlock.svg',import.meta.url),'utf8');
+  assert.notEqual(lock,unlock);
+  assert.match(lock,/<path/);
+  assert.match(unlock,/<path/);
   assert.match(app,/aria-pressed/);
 });
 
