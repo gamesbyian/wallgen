@@ -271,6 +271,28 @@ now always leaves extra texture layers disabled. You can still explicitly
 enable and customize the second and third layers from the Texture controls;
 existing manual multi-layer designs remain fully functional.
 
+## Single loop path
+
+**Path → Geometry → Single loop / circular turn** creates one prominent round
+loop with a straight incoming section and a tangentially connected outgoing
+section. It is deliberately distinct from **Continuous loops**, which keeps
+repeating smaller loops along the stripe.
+
+**Path → Single loop** has two controls: **Loop radius** (the size of the
+circular turn) and **Loop turn angle** (240°–450°, with 360° closing exactly
+one circle). Angles below a full revolution form open sweeping curls; angles
+above it continue past the start and permit deliberate crossing. Incoming,
+circular and outgoing portions share a constant physical arc-length
+parameterization, so they join without kinks.
+
+All seven colours follow one shared circular centreline with true
+perpendicular stripe offsets, just as Hairpin does. With **Preserve stripe
+coherence** enabled, the radius spans a nested, frame-conscious range.
+Disabling safety unlocks oversized and tightly folded loops without replacing
+the saved requested radius or sweep. The settings respect locks, scoped
+randomization, recipes, PNG metadata, orientation, zoom and the usual
+material/outline/stripe controls.
+
 ## Geometry safety and expanded artistic controls
 
 The Path → Constraints tool contains **Preserve stripe coherence**, enabled by
@@ -347,7 +369,7 @@ The balanced-width **Randomize** button sits next to an equally prominent, alway
 
 - Eight scene families: Studio, Currents, Fracture, Confetti, Deco, Tapestry, Signal and Contour.
 - Orientation: vertical, horizontal, diagonal or seeded selection. Stripes that meet the wallpaper edge on one side without reaching the opposite edge get paired inset ends; stripes that traverse opposed edges remain continuous.
-- Geometry: straight, wave, zigzag, **chevron**, jagged, stepped, arc, contour, **hairpin** (returning nested curves) and **continuous loops** (genuine self-intersecting paths). A shared parametric path sampler supplies centreline, tangent, normal and normal-offset boundaries to outlines, ribbon silhouettes, marks and frame-contact tests. Shape frequency and depth also control loop pitch/amplitude; hairpins have their own turn-radius control.
+- Geometry: straight, wave, zigzag, **chevron**, jagged, stepped, arc, contour, **hairpin** (returning nested curves), **single loop** (one circular turn with tangent-connected entrance and exit), and **continuous loops** (repeated looping paths). A shared parametric path sampler supplies centreline, tangent, normal and normal-offset boundaries to outlines, ribbon silhouettes, marks and frame-contact tests. Shape frequency and depth control the repeated-loops pitch/amplitude. Hairpins have their own turn radius/angle; Single loop has independent radius and sweep-angle controls.
 - **Composition:** a single seven-colour rainbow, repeated complete seven-colour groups (two to six) with adjustable inter-group spacing, or seven independently inset paths with configurable physical length. Inset paths can end in visible tapers. Repetition never creates an eighth hue; it paints additional instances of the same seven stripe identities.
 - **Stripe construction:** existing patterned ribbons, fine continuous pen lines, multitone ribbons and woven diagonal lattice columns. These are ordinary construction choices that combine with geometry, palette and texture, not separate gallery presets.
 - **Brush and mark controls:** adjustable dotted-line diameter and pitch, end taper, tonal contrast and procedural ink wear/roughness. Inapplicable controls appear disabled and show zero while retaining their stored values.

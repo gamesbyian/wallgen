@@ -11,6 +11,7 @@ export const EDITOR_CATEGORIES=[
     {id:'geometry',name:'Geometry',settings:['geometry','shapeFrequency','shapeDepth']},
     {id:'safety',name:'Constraints',settings:['geometrySafety']},
     {id:'turn',name:'Turns',settings:['turnRadius','hairpinAngle']},
+    {id:'single-loop',name:'Single loop',settings:['loopRadius','loopSweep']},
     {id:'shape-details',name:'Shape detail',settings:['stepCount','chevronSharpness','loopAspect']},
     {id:'ends',name:'Endpoints',settings:['pathLength','endTaper']},
   ]},

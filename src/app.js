@@ -14,7 +14,7 @@ const gallery = document.getElementById('gallery');
 const notice = document.getElementById('notice');
 const favoriteButton = document.getElementById('favorite');
 const FAVORITES_KEY = 'wallgen:favorites:v1';
-const FIELDS = ['primesOnly','family','composition','repeatCount','repeatSpacing','orientation','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','geometry','turnRadius','hairpinAngle','geometrySafety','stepCount','chevronSharpness','loopAspect','construction','motif','lineStyle','pathLength','tonalContrast','brushRoughness','dotSize','dotSpacing','endTaper','shapeFrequency','shapeDepth','motifSize','motifFrequency','palette','material','outline','background','lightingMood','lightDirection','lightStrength','shadowStrength','stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection','textureCoverage','textureRotation','textureBlend','textureLayer2Enabled','material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2','textureLayer3Enabled','material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3','chaos','stripeWidth','spread','textureStrength','textureScale','textureDisplacement','individuality','patternHomogeneity','overridePatternHomogeneity','gap','outlineBuffer','glow'];
+const FIELDS = ['primesOnly','family','composition','repeatCount','repeatSpacing','orientation','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','geometry','turnRadius','hairpinAngle','loopRadius','loopSweep','geometrySafety','stepCount','chevronSharpness','loopAspect','construction','motif','lineStyle','pathLength','tonalContrast','brushRoughness','dotSize','dotSpacing','endTaper','shapeFrequency','shapeDepth','motifSize','motifFrequency','palette','material','outline','background','lightingMood','lightDirection','lightStrength','shadowStrength','stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection','textureCoverage','textureRotation','textureBlend','textureLayer2Enabled','material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2','textureLayer3Enabled','material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3','chaos','stripeWidth','spread','textureStrength','textureScale','textureDisplacement','individuality','patternHomogeneity','overridePatternHomogeneity','gap','outlineBuffer','glow'];
 let current = normalizeRecipe();
 let currentScene;
 const previewLayers={background:null,ink:null,scene:null,key:null};
@@ -92,12 +92,13 @@ function toControls(recipe) {
   const effective=document.getElementById('geometrySafetyStatus');
   if(effective){
     if(!current.geometrySafety)effective.textContent='Unrestricted: intersections, overlaps and cropping permitted';
-    else if(['loops','hairpin','drawn'].includes(current.geometry)){
+    else if(['loops','loop','hairpin','drawn'].includes(current.geometry)){
       const safe=resolveScene(current);
       const free=resolveScene({...current,geometrySafety:false});
       const n=3;
       const metric=geometry=>geometry==='loops'?'loopAmplitude':
-        geometry==='hairpin'?'turnRadius':null;
+        geometry==='hairpin'?'turnRadius':
+        geometry==='loop'?'loopRadius':null;
       const key=metric(current.geometry);
       if(key){
         const actual=safe.stripes[n][key],requested=free.stripes[n][key];
@@ -122,10 +123,11 @@ function inactiveSettingKeys(recipe,scene){
   const inactive=new Set();
   // Decorative motifs have separate size/density knobs; straight geometry
   // never has curve frequency/depth, even when marked with chevrons.
-  if(['straight','hairpin','drawn'].includes(scene.geometry))
+  if(['straight','hairpin','loop','drawn'].includes(scene.geometry))
     inactive.add('shapeFrequency'),inactive.add('shapeDepth');
   if(scene.geometry==='drawn')inactive.add('orientation');
   if(scene.geometry!=='hairpin')inactive.add('turnRadius'),inactive.add('hairpinAngle');
+  if(scene.geometry!=='loop')inactive.add('loopRadius'),inactive.add('loopSweep');
   if(scene.geometry!=='stepped')inactive.add('stepCount');
   if(scene.geometry!=='chevron')inactive.add('chevronSharpness');
   if(scene.geometry!=='loops')inactive.add('loopAspect');
@@ -443,7 +445,7 @@ for(const slider of form.querySelectorAll('input[type="range"]')){
   const numeric=document.createElement('input');
   numeric.type='number';numeric.className='slider-number';numeric.min=slider.min;numeric.max=slider.max;
   numeric.step=slider.step||'1';numeric.value=slider.value;numeric.dataset.numberFor=slider.name;
-  numeric.setAttribute('aria-label',['diagonalRotation','hairpinAngle'].includes(slider.name)?
+  numeric.setAttribute('aria-label',['diagonalRotation','hairpinAngle','loopSweep'].includes(slider.name)?
     slider.name+' in degrees':slider.name+' percentage');
   slider.parentNode.insertBefore(row,slider);row.append(minus,slider,plus,numeric);
   numeric.addEventListener('change',()=>{

@@ -7,7 +7,7 @@ const geometryAt=(x,stripe,extent)=>samplePath(stripe,x,extent).y;
 const edgePoint=(x,stripe,extent,side,scene)=>
   ribbonEdge(stripe,x,extent,side,scene?textureHeight(scene,stripe,x,side):0);
 const edgeAt=(x,stripe,extent,side,scene)=>edgePoint(x,stripe,extent,side,scene).y;
-const spatialGeometry=stripe=>['hairpin','loops','drawn'].includes(stripe.sharedGeometry??stripe.geometry);
+const spatialGeometry=stripe=>['hairpin','loop','loops','drawn'].includes(stripe.sharedGeometry??stripe.geometry);
 // A procedural height field makes the actual texture material affect ribbon edges.
 // Separate low/high-frequency noise bands evoke fibres, pores, grain and stone.
 // This modifies geometry rather than offsetting the colour mask after painting.
@@ -195,9 +195,10 @@ export function balanceStripeEnds(scene,stripe) {
     return {contacts:{left:false,right:false,top:false,bottom:false},
       balanced:true,hidden:false};
   // A returning path legitimately has both ends at the same frame edge.
-  // Paired contacts for a hairpin are intentional rather than a lone crop.
+  // Paired returns and crossings for hairpins and single loops are
+  // intentional, rather than one-sided cropping mistakes.
   const floating=scene.composition==='floating';
-  if(!floating && spatialGeometry(stripe) && (stripe.sharedGeometry??stripe.geometry)==='hairpin')
+  if(!floating && spatialGeometry(stripe) && ['hairpin','loop'].includes(stripe.sharedGeometry??stripe.geometry))
     return {contacts:stripeFrameContacts(scene,stripe),balanced:true,hidden:false};
   const contacts=stripeFrameContacts(scene,stripe);
   const balanced=(contacts.left===contacts.right && contacts.top===contacts.bottom);
