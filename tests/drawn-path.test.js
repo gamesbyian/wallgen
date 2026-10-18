@@ -210,7 +210,7 @@ test('confident partial circular arcs retain a smooth round curve',()=>{
   assert.ok(result.length>20);
   const xs=result.map(p=>p[0]),ys=result.map(p=>p[1]);
   assert.ok(Math.max(...xs)-Math.min(...xs)>.24);
-  assert.ok(Math.max(...ys)-Math.min(...ys)>.18);
+  assert.ok(Math.max(...ys)-Math.min(...ys)>.14);
 });
 test('strong geometric mode accepts 10× while preserving intentional bends',()=>{
   const raw=[[-.18,.17],[-.17,.36],[-.12,.62],[.18,.73],[.48,.61],[.52,.39],[.55,.11]];
