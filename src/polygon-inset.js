@@ -91,6 +91,9 @@ export function polygonInsetContours(polygon,inset,options={}){
     minX=Math.min(minX,e.minX);maxX=Math.max(maxX,e.maxX);
     minY=Math.min(minY,e.minY);maxY=Math.max(maxY,e.maxY);
   }
+  // No Euclidean inset survives once a disk cannot fit within the smaller
+  // axis of the polygon's bounding box. Also caps pathological inputs.
+  if(inset>=Math.min(maxX-minX,maxY-minY)/2)return [];
   const clip=options.bounds;
   // Rendering's camera bounds are logical coordinates. The inset curve
   // outside the visible frame can be safely omitted, but extra coverage
@@ -105,10 +108,10 @@ export function polygonInsetContours(polygon,inset,options={}){
     minX-=padding;maxX+=padding;minY-=padding;maxY+=padding;
   }
   if(maxX<=minX||maxY<=minY)return [];
-  // Logical resolution remains identical for preview and export. The cap
-  // prevents a single oversized radial shape from allocating a huge grid.
-  let h=clamp(options.resolution??Math.max(1.15,inset/9),.45,6);
-  h=Math.max(h,Math.sqrt((maxX-minX)*(maxY-minY)/150000));
+  // Sample on a canonical, world-aligned grid. Its pitch depends only on
+  // the requested inset, NEVER on camera crop or raster resolution, so the
+  // same contour pixels/phase are reconstructed in preview and PNG export.
+  const h=clamp(options.resolution??Math.max(1.15,Math.min(3.2,inset/9)),.45,6);
   const x0=Math.floor(minX/h)*h-h*.127;
   const y0=Math.floor(minY/h)*h-h*.293;
   const nx=Math.max(1,Math.ceil((maxX-x0)/h));
@@ -119,7 +122,7 @@ export function polygonInsetContours(polygon,inset,options={}){
   const candidates=new Set();
   const radius=inset+3*h;
   function addSpan(j,left,right){
-    if(right<x0||left>x0+nx*h)return;
+    if(right<left||right<x0||left>x0+nx*h)return;
     const lo=clamp(Math.floor((left-x0)/h)-1,0,nx-1);
     const hi=clamp(Math.ceil((right-x0)/h)+1,0,nx-1);
     for(let i=lo;i<=hi;i++)candidates.add(j*nx+i);
