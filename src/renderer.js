@@ -860,12 +860,20 @@ export function drawWallpaper(canvas, recipe, options={}) {
         // cutoffs on the otherwise continuous ribbons, especially in loops.
         // The other branch's actual union of seven stripe footprints is the
         // natural, seamless occlusion mask. It also preserves negative space.
-        const branchMasks=[hit.early,hit.late].map(station=>{
-          const union=new Path2D();
-          for(const stripe of stripes)union.addPath(
-            crossingBranchClip(stripe,scene.extent,station,halfLength,samplePath));
-          return union;
-        });
+        // One envelope per crossing branch includes the *spaces between*
+        // rainbow stripes. Cutting a separate mask for every underpassing
+        // stripe made the overpass into disconnected square checkerboard
+        // patches. The envelope is continuous, just like a real woven bundle.
+        const widest=Math.max(...stripes.map(st=>st.width));
+        const minCenter=Math.min(...stripes.map(st=>st.center));
+        const maxCenter=Math.max(...stripes.map(st=>st.center));
+        const referenceCenter=reference.center;
+        const envelope={...reference,
+          width:2*Math.max(
+            Math.abs(minCenter-referenceCenter),
+            Math.abs(maxCenter-referenceCenter))+widest+12};
+        const branchMasks=[hit.early,hit.late].map(station=>
+          crossingBranchClip(envelope,scene.extent,station,halfLength,samplePath));
         for(const stripe of stripes){
           const later=crossingTopIsLater(scene.crossingMode,stripe.index,k);
           const station=later?hit.late:hit.early;
