@@ -12,6 +12,12 @@
   "global": {
     "navigation": [
       {
+        "id": "studio",
+        "label": "Studio",
+        "icon": "home",
+        "newDestination": true
+      },
+      {
         "id": "mobileEdit",
         "label": "Edit",
         "icon": "edit-controls",
@@ -31,11 +37,6 @@
         "id": "mobileMore",
         "label": "More",
         "icon": "more"
-      },
-      {
-        "id": "mobileShuffle",
-        "label": "Random",
-        "icon": "randomize"
       }
     ],
     "brandIcon": "assets/roygbiv-logo.svg",
@@ -419,7 +420,38 @@
           }
         ]
       }
-    ]
+    ],
+    "currentDockControls": [
+      {
+        "id": "mobileEdit",
+        "role": "Open editor"
+      },
+      {
+        "id": "mobileExplore",
+        "role": "Open gallery"
+      },
+      {
+        "id": "mobileShuffle",
+        "role": "Randomize wallpaper"
+      },
+      {
+        "id": "mobileFavorite",
+        "role": "Toggle favourite"
+      },
+      {
+        "id": "mobileDownload",
+        "role": "Download wallpaper"
+      },
+      {
+        "id": "mobileMore",
+        "role": "Open utility sheet"
+      }
+    ],
+    "actionRelocations": {
+      "mobileShuffle": "Keep prominent Studio Randomize action and optional quick action; do not lose random generation.",
+      "mobileDownload": "Keep direct Studio Export/Download shortcut and More > Export PNG; do not force hidden utility navigation.",
+      "mobileFavorite": "Preserve single-tap favourite action on Studio and gallery, in addition to Saved destination."
+    }
   },
   "screens": [
     {

@@ -1,4 +1,4 @@
-# Cream Studio | Canvas-first v2 design plan
+> **Implementation source of truth:** [Implementation-Safe Redesign Pack](IMPLEMENTATION-SAFE-REDESIGN-PACK.md), [12 canonical non-generative reference plates](ui-reference/README.md), and [machine-readable full control contract](ui-reference/canonical-screen-contract.json). Previous generated vision mockups are not exhaustive and **must not be implemented literally**. The real UI atlas and screen contract decide required functions.\n\n# Cream Studio | Canvas-first v2 design plan
 
 **Revision:** 18 October 2026. **Status:** design recommendation, no production UI change. **Evidence:** [1,648-image completed atlas](https://github.com/gamesbyian/wallgen/actions/runs/39166559800), of which 832 captures represent 412 × 892 CSS px Pixel 6 Pro-sized mobile/Chromium touch emulation. Screenshot root zoom at 100/75/66/50% is **not** native Chrome zoom. The gallery/wallpaper art is masked in evidence captures; the proposed rainbow images are illustrations.
 

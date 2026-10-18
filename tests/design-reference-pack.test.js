@@ -31,6 +31,10 @@ test('approved icon family remains available with 12 unwired flat SVG candidates
 });
 test('critical semantics documented, existing logo and pencil kept',()=>{
  assert.equal(spec.global.brandIcon,'assets/roygbiv-logo.svg');
+ assert.deepEqual(spec.global.navigation.map(n=>n.label),['Studio','Edit','Explore','Saved','More']);
+ assert.ok(spec.global.currentDockControls.some(x=>x.id==='mobileShuffle'));
+ assert.ok(spec.global.currentDockControls.some(x=>x.id==='mobileDownload'));
+ assert.ok(spec.global.actionRelocations.mobileShuffle&&spec.global.actionRelocations.mobileDownload);
  assert.ok(spec.global.noDedicatedCanvasHeader);
  assert.match(spec.global.cameraSemantics,/no recipe mutation/);
  assert.match(spec.global.sliderSemantics,/blue/);
