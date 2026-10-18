@@ -1,0 +1,30 @@
+{
+  "version": 2,
+  "seed": "metric-inset-pinwheel",
+  "structure": "radial",
+  "radialMode": "pinwheel",
+  "rayCount": 14,
+  "rayTwist": 100,
+  "rayCoverage": 93,
+  "rayCore": 15,
+  "viewZoom": 0.73,
+  "palette": "jewel",
+  "dividerColor": "none",
+  "interiorElements": [
+    {
+      "id": "pinwheel-contour",
+      "placement": "contour",
+      "type": "line",
+      "shape": "straight",
+      "stroke": "solid",
+      "color": "black",
+      "width": 2,
+      "position": 0,
+      "frequency": 6,
+      "amplitude": 0,
+      "phase": 0,
+      "opacity": 0.9,
+      "enabled": true
+    }
+  ]
+}
