@@ -538,8 +538,15 @@ function drawConstruction(ctx,stripe,extent,scene){
     ctx.stroke(traceEdge(stripe,extent,1,scene));
     ctx.restore();
     const bands=4;
-    for(let x=start+step;x<end-step;x+=step){
-      const flip=Math.floor((x-start)/step)%2===0?1:-1;
+    // Align woven crossings to fixed source stations; zoom only reveals
+    // additional threads, never changes previously visible parity.
+    const origin=-(stripe.coreExtent??extent);
+    const first=Math.floor((start+step-origin)/step);
+    const last=Math.ceil((end-step-origin)/step);
+    for(let index=first;index<=last;index++){
+      const x=origin+index*step;
+      if(x<=start||x>=end-step)continue;
+      const flip=(index&1)===0?1:-1;
       for(let j=0;j<bands;j++){
         const from=samplePath(stripe,x,extent),to=samplePath(stripe,x+step*.83,extent);
         const o1=-.42+j*.23,o2=o1+flip*.20;
