@@ -70,10 +70,10 @@ export function createPreviewCoordinator({
     }catch(error){fail(error);}
   }
   return {
-    request(recipe,key,width,height){
+    request(recipe,key,width,height,{quality='settled'}={}){
       if(disabled||disposed)return false;
       const id=++revision;
-      pending={id,key,recipe,width,height};
+      pending={id,key,recipe,width,height,quality};
       dispatch();
       return true;
     },
