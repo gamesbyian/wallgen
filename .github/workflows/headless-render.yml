@@ -56,10 +56,10 @@ jobs:
       - name: Compare deliberate stripe self-crossing modes
         run: |
           for mode in over under weave; do
-            npm run render -- --seed crossings-loop --set geometry=loop --set loopSweep=270 --set loopRadius=85 --set geometrySafety=false --set orientation=vertical --set spread=65 --set stripeWidth=75 --set construction=ribbon --set motif=solid --set material=none --set outline=white --set palette=electric --set individuality=0 --set crossingMode=$mode --width 600 --height 1300 --out output/crossing-loop-$mode.png
+            npm run render -- --seed crossings-loop --set geometry=loop --set loopSweep=270 --set loopRadius=85 --set geometrySafety=false --set orientation=vertical --set spread=38 --set stripeWidth=38 --set construction=ribbon --set motif=solid --set material=none --set outline=white --set palette=electric --set individuality=0 --set crossingMode=$mode --width 600 --height 1300 --out output/crossing-loop-$mode.png
           done
           cat > output/crossing-drawn.json <<'JSON'
-          {"seed":"crossings-drawn","geometry":"drawn","customPath":[[0.16,0.49],[0.21,0.32],[0.38,0.25],[0.61,0.31],[0.84,0.49],[0.61,0.69],[0.39,0.73],[0.16,0.49],[0.39,0.31],[0.61,0.25],[0.84,0.49],[0.61,0.69],[0.39,0.73],[0.16,0.49]],"palette":"electric","construction":"ribbon","motif":"solid","outline":"white","geometrySafety":false,"material":"none","spread":65,"stripeWidth":75,"individuality":0}
+          {"seed":"crossings-drawn","geometry":"drawn","customPath":[[0.16,0.49],[0.21,0.32],[0.38,0.25],[0.61,0.31],[0.84,0.49],[0.61,0.69],[0.39,0.73],[0.16,0.49],[0.39,0.31],[0.61,0.25],[0.84,0.49],[0.61,0.69],[0.39,0.73],[0.16,0.49]],"palette":"electric","construction":"ribbon","motif":"solid","outline":"white","geometrySafety":false,"material":"none","spread":36,"stripeWidth":38,"individuality":0}
           JSON
           for mode in over under weave; do
             npm run render -- --recipe output/crossing-drawn.json --set crossingMode=$mode --width 600 --height 1300 --out output/crossing-drawn-$mode.png
