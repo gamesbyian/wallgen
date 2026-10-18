@@ -709,6 +709,7 @@ function syncInteriorUI(){
     slider.type='range';slider.min=min;slider.max=max;slider.step=step;slider.value=active[key];
     slider.addEventListener('input',()=>{field.firstChild.textContent=name+' '+slider.value;});
     slider.addEventListener('change',()=>update(key,Number(slider.value)));
+    return slider;
   };
   const actions=make(manager,'div');actions.className='interior-actions';
   const up=make(actions,'button','↑');up.type='button';up.title='Move element upward';
@@ -750,11 +751,19 @@ function syncInteriorUI(){
   const customPicker=make(customLabel,'input');
   customPicker.type='color';customPicker.value=active.customColor;customPicker.disabled=active.color!=='custom';
   customPicker.addEventListener('change',()=>update('customColor',customPicker.value));
-  range(interiorCards['interior-motion'],'Amplitude','amplitude',0,.45,.01);
-  range(interiorCards['interior-motion'],active.placement==='contour'?'Cycles':'Frequency',
+  const amplitude=range(interiorCards['interior-motion'],'Amplitude',
+    'amplitude',0,.45,.01);
+  const frequency=range(interiorCards['interior-motion'],
+    active.placement==='contour'?'Cycles':'Frequency',
     'frequency',active.placement==='contour'?1:.1,30,
     active.placement==='contour'?1:.1);
-  range(interiorCards['interior-motion'],'Phase','phase',-180,180,1);
+  const phase=range(interiorCards['interior-motion'],'Phase','phase',-180,180,1);
+  // A straight stroke has no oscillation. Disable its dormant controls,
+  // but retain frequency for canvas fields, where it controls line spacing.
+  const oscillates=active.shape!=='straight';
+  amplitude.disabled=!oscillates;
+  phase.disabled=!oscillates;
+  frequency.disabled=!oscillates&&active.placement==='contour';
   select(interiorCards['interior-placement'],'Placement','placement',['local','field','contour']);
   range(interiorCards['interior-placement'],'Position','position',-.48,.48,.02);
   range(interiorCards['interior-placement'],active.type==='band'?'Band width %':'Line width','width',.15,50,.25);
