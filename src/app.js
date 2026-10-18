@@ -832,7 +832,7 @@ function syncInteriorUI(){
   const range=(card,name,key,min,max,step)=>{
     const field=make(card,'label',name+' '+active[key]);
     const slider=make(field,'input');
-    slider.type='range';slider.min=min;slider.max=max;slider.step=step;slider.value=active[key];
+    slider.type='range';slider.dataset.rainbowKey=key;slider.min=min;slider.max=max;slider.step=step;slider.value=active[key];
     slider.addEventListener('input',()=>{field.firstChild.textContent=name+' '+slider.value;});
     slider.addEventListener('change',()=>update(key,Number(slider.value)));
     return slider;
