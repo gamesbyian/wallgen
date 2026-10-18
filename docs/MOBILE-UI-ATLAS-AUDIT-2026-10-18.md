@@ -34,6 +34,7 @@ References such as `pixel-6-pro/100/conditional-diagonal.png` are paths within t
 | M16 | P1 | Critical mobile buttons have undersized hit targets | Minimum effective 40–44 px tap areas |
 | M17 | P1 | Success/status messages nearly invisible on cream | Theme-aware notice palette and placement |
 | M18 | P1 | Feedback may be hidden when More tray is closed | Global visible transient status region |
+| M19 | P1 | Explore header/actions crowd out gallery thumbnails | Compact toolbar, usable visible cards |
 
 ### M01. Checkbox/label separation, P1
 
@@ -206,6 +207,16 @@ References such as `pixel-6-pro/100/conditional-diagonal.png` are paths within t
 **Implement:** Use one accessible, application-level transient status host outside all mutually exclusive trays, positioned above the bottom dock/action rail while respecting safe-area insets; announce changes with `role=status`/`aria-live=polite`. Keep More's button/action layout but do not rely on it to convey global action success. Avoid duplicating notices and do not cover wallpaper preview controls.
 
 **Acceptance:** Save/favourite, undo, import, copy and randomize notifications can be seen after invocation from both the compact dock and full editor, even if More is closed; transient status never obscures interactive controls.
+
+### M19. Explore gallery reserves too little visible room for previews, P1
+
+**Evidence:** `pixel-6-pro/100/shell-mobile-explore.png` (a genuine gallery-open screenshot, unlike the formerly mislabeled favourite journeys). The “Explore variations” heading and large Generate 12 / Favourites 0 actions stack vertically, leaving only a tiny sliver of the actual card row above the dock. The corrected empty/populated captures must be used to quantify this precisely.
+
+**Root cause:** `studio-themes.css` caps the mobile gallery tray height while `.gallery-head` and `.gallery-buttons` occupy a large share of it; the gallery grid is separately horizontally scrollable and vertically constrained.
+
+**Implement:** Make the gallery title compact and place Generate / Favourites as adjacent bounded controls (or a segmented mode switch plus Generate button). Reserve an explicit minimum visible height for at least one complete thumbnail and its caption. Let the gallery tray expand to a *measured* density or user-adjustable height if necessary, with the live canvas resizing above it. Avoid clipping thumbnail captions or relying on vertical scrolling before users can see what Explore does. Keep the gallery scroll rail independent from the controls.
+
+**Acceptance:** On the 412×892 mobile reference viewport, the open gallery immediately shows at least one full favourite/generated thumbnail and its label, without covering the preview or dock. Empty-state message and populated grid both remain legible at all four zoom settings.
 
 ## Atlas-fidelity and automation follow-up
 
