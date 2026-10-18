@@ -80,6 +80,20 @@ jobs:
             assert.ok(!images[1].equals(images[2]),geometry+' under / weave distinct');
           }
           JS
+      - name: Render the exact reported 96-point knot and verify embedded recipe
+        run: |
+          npm run render -- --recipe tests/fixtures/drawn-knot-t0b4v5.json --width 600 --height 1300 --out output/reported-drawn-knot.png
+          node --input-type=module <<'JS'
+          import {readFileSync} from 'node:fs';
+          import assert from 'node:assert/strict';
+          import {extractPngRecipe} from './src/png-metadata.js';
+          const image=readFileSync('output/reported-drawn-knot.png');
+          const recipe=extractPngRecipe(image);
+          assert.equal(recipe.seed,'t0b4v5-ice7lf');
+          assert.equal(recipe.geometry,'drawn');
+          assert.equal(recipe.construction,'tonal');
+          assert.equal(recipe.crossingMode,'over');
+          JS
       - name: Verify uncropped camera compositions and new Color Stories
         run: |
           npm run render -- --seed zoom-unclipped --set family=studio --set orientation=horizontal --set geometry=straight --set motif=solid --set material=none --set palette=sunset --set viewZoom=0.5 --set stripeWidth=72 --set spread=55 --width 600 --height 1300 --out output/zoom-unclipped.png
