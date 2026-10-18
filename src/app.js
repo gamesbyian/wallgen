@@ -722,7 +722,12 @@ function syncInteriorUI(){
   const activeRow=make(manager,'label','Enabled');
   const toggle=make(activeRow,'input');toggle.type='checkbox';toggle.checked=active.enabled;
   toggle.addEventListener('change',()=>update('enabled',toggle.checked));
-  select(interiorCards['interior-style'],'Element','type',['line','band']);
+  const typeField=make(interiorCards['interior-style'],'label','Element');
+  const typeSelect=make(typeField,'select');
+  for(const kind of ['line','band']){const option=document.createElement('option');option.value=kind;option.textContent=kind;typeSelect.append(option);}
+  typeSelect.value=active.type;
+  typeSelect.addEventListener('change',()=>changeRecipe({...current,interiorElements:
+    current.interiorElements.map((e,i)=>i===selectedInterior?{...e,type:typeSelect.value,width:typeSelect.value==='band'?22:1.5}:e)}));
   select(interiorCards['interior-style'],'Geometry','shape',['straight','wave','zigzag','loop']);
   select(interiorCards['interior-style'],'Stroke','stroke',['solid','dashed','dotted']);
   select(interiorCards['interior-targets'],'Ink','color',['white','black','lighter','darker','custom']);
@@ -735,7 +740,7 @@ function syncInteriorUI(){
   range(interiorCards['interior-motion'],'Phase','phase',-180,180,1);
   select(interiorCards['interior-placement'],'Placement','placement',['local','field','contour']);
   range(interiorCards['interior-placement'],'Position','position',-.48,.48,.02);
-  range(interiorCards['interior-placement'],'Thickness','width',.15,30,.25);
+  range(interiorCards['interior-placement'],active.type==='band'?'Band width %':'Line width','width',.15,50,.25);
   range(interiorCards['interior-placement'],'Opacity','opacity',0,1,.05);
   const targetBox=make(interiorCards['interior-targets'],'div');targetBox.className='interior-targets';
   const names=['R','O','Y','G','B','I','V'];
