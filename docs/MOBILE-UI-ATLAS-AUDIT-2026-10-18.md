@@ -35,6 +35,8 @@ References such as `pixel-6-pro/100/conditional-diagonal.png` are paths within t
 | M17 | P1 | Success/status messages nearly invisible on cream | Theme-aware notice palette and placement |
 | M18 | P1 | Feedback may be hidden when More tray is closed | Global visible transient status region |
 | M19 | P1 | Explore header/actions crowd out gallery thumbnails | Compact toolbar, usable visible cards |
+| M20 | P1 | Expanding metadata can leave its new fields off-screen | Scroll revealed section into view |
+| M21 | P1 | Search overlay hides its own toggle/close control | Reachable explicit close action |
 
 ### M01. Checkbox/label separation, P1
 
@@ -217,6 +219,26 @@ References such as `pixel-6-pro/100/conditional-diagonal.png` are paths within t
 **Implement:** Make the gallery title compact and place Generate / Favourites as adjacent bounded controls (or a segmented mode switch plus Generate button). Reserve an explicit minimum visible height for at least one complete thumbnail and its caption. Let the gallery tray expand to a *measured* density or user-adjustable height if necessary, with the live canvas resizing above it. Avoid clipping thumbnail captions or relying on vertical scrolling before users can see what Explore does. Keep the gallery scroll rail independent from the controls.
 
 **Acceptance:** On the 412×892 mobile reference viewport, the open gallery immediately shows at least one full favourite/generated thumbnail and its label, without covering the preview or dock. Empty-state message and populated grid both remain legible at all four zoom settings.
+
+### M20. Metadata expands below the current More viewport without revealing fields, P1
+
+**Evidence:** The original `pixel-6-pro/100/special-metadata-expanded.png` shows the “Edit image metadata” link near the bottom of More but not the expanded form; `special-metadata-remember-checked.png` exposes the form only after a later scroll. This is both a capture-harness false-positive and a genuine discoverability problem in the app's normal interaction.
+
+**Root cause:** `src/app.js` toggles `#metadataPanel.hidden` in place without scrolling the new section into the active tray view. On mobile, `#mobileToolsSheet` is a fixed, height-limited scrolling container.
+
+**Implement:** After a user opens metadata, schedule a layout-safe reveal of the heading/first editable field inside the More tray using `scrollIntoView({block:'nearest'})` or precise local scrolling. Do not scroll the entire application or steal focus unexpectedly. Keep expanded/collapsed aria state and ensure the panel returns to the right scroll position when closed. The atlas should assert actual onscreen fields, not merely an expanded attribute.
+
+**Acceptance:** Tapping “Edit image metadata” on a phone immediately displays the form heading and an editable field without requiring blind exploratory scrolling. Closing it leaves the user in a sensible location.
+
+### M21. Expanded search input obscures the control needed to close it, P1
+
+**Evidence:** `pixel-6-pro/100/special-search-expanded-empty.png` shows a full-width search input covering the top operation strip. The capture script had to invoke `.editor-search-toggle.click()` programmatically to dismiss search because the original toggle may be underneath the input.
+
+**Root cause:** `editor-redesign.css` positions `.editor-search-input:not([hidden])` absolutely across the entire row (`left:0;right:0;width:100%`, `z-index:20`), but `src/editor-layout.js` only provides a toggle button elsewhere in that same row.
+
+**Implement:** Render a genuinely visible close/cancel button in the search row, giving the input its own bounded flex space. Differentiate the browser-native clear-query affordance from “close search”; optionally accept Escape and return focus to the original search action. Preserve current category/tool selection unless the user intentionally resets it.
+
+**Acceptance:** On mobile at all zooms, search can be opened, cleared and closed by touch alone, and the dismiss control never sits behind the input.
 
 ## Atlas-fidelity and automation follow-up
 
