@@ -178,7 +178,7 @@ try{
   assert.ok(editor.previewHeight>260,'the complete frame remains appreciable during edits');
   assert.ok(Math.abs(editor.ratio-600/1300)<.06);
   assert.equal(editor.scrollY,'hidden');
-  assert.deepEqual(editor.tabs,['▦ Layout','⌁ Path','≋ Stripes','◐ Colour','▧ Material','✦ Effects']);
+  assert.deepEqual(editor.tabs,['▦ Layout','⌁ Path','≋ Stripes','✧ Details','◐ Colour','▧ Material','✦ Effects']);
   const schema=await evaluate('(async()=>{const m=await import("/src/editor-schema.js");const keys=[...document.querySelectorAll("#controls [data-setting]")].map(x=>x.name).filter(x=>x&&!["family","primesOnly"].includes(x));keys.push("textureLayer2Enabled","textureLayer3Enabled");return {...m.validateEditorSchema([...new Set(keys)]),wizard:m.WIZARD_STEPS,toolCount:m.TOOL_LIST.length}})()');
   console.log('EDITOR_SCHEMA',JSON.stringify(schema));
   assert.deepEqual(schema.missing,[]);
