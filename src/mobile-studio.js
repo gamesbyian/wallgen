@@ -1,4 +1,6 @@
 import {setIconSource} from './ui-icons.js';
+import {installRainbowSliders} from './rainbow-sliders.js';
+installRainbowSliders();
 // This module changes the studio interface only. Wallpaper recipes, saved favourites,
 // and the original dark CSS remain untouched and theme-independent.
 const THEME_KEY='roygbiv:studio-theme:v1';
