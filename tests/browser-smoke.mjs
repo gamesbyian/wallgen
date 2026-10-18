@@ -761,8 +761,8 @@ try{
   assert.ok(imageCandidates.pathPoints>=20&&!imageCandidates.imageEmbedded);
   await evaluate('document.getElementById("undo").click()');
   // No file import should poison future generation or the original undo stack.
-  assert.ok(await evaluate('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).geometry !== "drawn"') ||
-    await evaluate('document.getElementById("undo").disabled===false'));
+  assert.equal(await evaluate('new URLSearchParams(location.search).get("r")'),
+    imageImport.original,'Undo must restore the prior complete design');
   console.log('REDESIGN_EXPLORATION_ACCEPTANCE_SUCCESS');
 }finally{
   try{ws?.close()}catch{}
