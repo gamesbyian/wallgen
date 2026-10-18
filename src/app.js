@@ -2,6 +2,7 @@ import { OUTPUT_WIDTH, OUTPUT_HEIGHT, normalizeRecipe, resolveScene, encodeRecip
 import { drawWallpaper, presentNudgedArtwork } from './renderer.js';
 import { embedPngMetadata, extractPngRecipe, cleanMetadata, METADATA_FIELDS } from './png-metadata.js';
 import { installDrawTool } from './draw-path-ui.js?v=20261018-points1';
+import { installImagePathTool } from './image-path-ui.js?v=20261018-import1';
 import {mountEditor,selectEditorTool} from './editor-layout.js';
 import {randomizeScope} from './scoped-random.js';
 import {STYLE_PRESETS} from './editor-schema.js';
@@ -292,6 +293,7 @@ function render(recipe,{scroll=false,bypassLocks=false}={}) {
   favoriteButton.setAttribute('aria-pressed',String(isFavorite(current)));
   // Keep the squat-heart SVG intact; aria-pressed controls its fill.
   drawTool.sync(current);
+  imagePathTool.sync(current);
   document.getElementById('favoriteCount').textContent=String(favorites.length);
   syncURL();
   if(scroll) document.querySelector('.workspace-head').scrollIntoView({behavior:'smooth',block:'start'});
@@ -322,6 +324,11 @@ const drawTool=installDrawTool({
     changeRecipe(next);
     showNotice('Drawn path applied. Undo restores the previous wallpaper.');
   },
+});
+const imagePathTool=installImagePathTool({
+  getRecipe:()=>current,
+  onNotice:showNotice,
+  onPath:path=>drawTool.loadPath(path),
 });
 function updatePositionStatus(){
   const label=document.getElementById('positionStatus');
