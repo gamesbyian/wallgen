@@ -1,0 +1,32 @@
+/* ROYGBIV unified symbols: icon artwork ONLY. Every existing button, tab,
+   rail, grid, hit area and responsive breakpoint keeps its original geometry. */
+.ui-icon{display:inline-block;width:1.05em;height:1.05em;min-width:0;flex:0 0 auto;
+  object-fit:contain;vertical-align:-.16em;pointer-events:none;user-select:none}
+/* Strictly size images inside their *existing* glyph slot. */
+.randomize-symbol .ui-icon{width:1.3em;height:1.3em;vertical-align:middle}
+.mobile-dock button>span .ui-icon{width:23px;height:23px;vertical-align:middle}
+.mobile-editor-action-rail button>span .ui-icon{width:19px;height:19px;vertical-align:middle}
+.nudge-button .ui-icon,.mobile-zoom-button .ui-icon{width:19px;height:19px;vertical-align:middle}
+.mobile-zoom-button .ui-icon{width:16px;height:16px}
+.setting-lock .ui-icon{width:16px;height:16px;display:block}
+.editor-setting-die .ui-icon{width:15px;height:15px;display:block}
+.step-button .ui-icon{width:15px;height:15px;display:block;margin:auto}
+.editor-scope-button .ui-icon,.editor-search-toggle .ui-icon{width:16px;height:16px}
+.editor-search-toggle .ui-icon{display:block;margin:auto}
+.settings-tab>span .ui-icon{width:16px;height:16px}
+.editor-tool-tab .ui-icon{width:13px;height:13px;vertical-align:-.15em;margin-right:2px}
+.lighting-icon .ui-icon{width:20px;height:20px}
+.button-icon .ui-icon{width:23px;height:23px}
+#mobileToolsClose .ui-icon,#imagePathCancel .ui-icon{width:18px;height:18px}
+.interior-actions .ui-icon{width:17px;height:17px}
+/* Suppress the old mobile randomizer pseudo-glyph, now an actual SVG. */
+body.mobile-studio .sidebar .editor-explore-actions>.editor-scope-button::before{content:none!important}
+/* Source buttons still retain exact width/height, padding, placement and labels. */
+@media(max-width:790px){
+ .setting-lock .ui-icon{width:14px;height:14px}
+ body.mobile-studio .sidebar .editor-tool-card .setting-lock .ui-icon,
+ body.mobile-studio .sidebar .editor-tool-card .editor-setting-die .ui-icon{width:16px;height:16px}
+ body.mobile-studio .mobile-preview-rail-left #randomizeAll .randomize-symbol .ui-icon{width:17px;height:17px}
+ body.mobile-studio .mobile-preview-rail-right .nudge-pad .ui-icon{width:17px;height:17px}
+ body.mobile-studio .mobile-dock button>span .ui-icon{width:20px;height:20px}
+}

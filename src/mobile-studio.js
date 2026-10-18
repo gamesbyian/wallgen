@@ -1,3 +1,4 @@
+import {setIconSource} from './ui-icons.js';
 // This module changes the studio interface only. Wallpaper recipes, saved favourites,
 // and the original dark CSS remain untouched and theme-independent.
 const THEME_KEY='roygbiv:studio-theme:v1';
@@ -138,7 +139,8 @@ function syncFavorite(){
   const chosen=document.getElementById('favorite').getAttribute('aria-pressed')==='true';
   favouriteBtn.setAttribute('aria-pressed',String(chosen));
   syncRail();
-  // The permanent SVG responds to aria-pressed without replacing its markup.
+  setIconSource(favouriteBtn,chosen?'favourite-filled':'favourite');
+  setIconSource(editRail.querySelector('[data-dock-proxy=mobileFavorite]'),chosen?'favourite-filled':'favourite');
 }
 new MutationObserver(syncFavorite).observe(document.getElementById('favorite'),{attributes:true,attributeFilter:['aria-pressed']});
 syncFavorite();

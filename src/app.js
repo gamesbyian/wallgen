@@ -7,6 +7,7 @@ import {mountEditor,selectEditorTool,syncEditorStructure} from './editor-layout.
 import {randomizeScope} from './scoped-random.js';
 import {STYLE_PRESETS} from './editor-schema.js';
 import {installExplorationHistory} from './exploration-history.js';
+import {iconMarkup,setIconSource} from './ui-icons.js';
 
 const form = document.getElementById('controls');
 const preview = document.getElementById('preview');
@@ -324,7 +325,7 @@ function render(recipe,{scroll=false,bypassLocks=false}={}) {
     currentScene.geometry:currentScene.structure==='radial'?currentScene.radialMode:currentScene.regionMode);
   document.getElementById('detailMaterial').textContent=titleCase(currentScene.materialSummary);
   favoriteButton.setAttribute('aria-pressed',String(isFavorite(current)));
-  // Keep the squat-heart SVG intact; aria-pressed controls its fill.
+  setIconSource(favoriteButton,isFavorite(current)?'favourite-filled':'favourite');
   drawTool.sync(current);
   imagePathTool.sync(current);
   document.getElementById('favoriteCount').textContent=String(favorites.length);
@@ -512,8 +513,8 @@ function queueControlUpdate(){
 
 for(const slider of form.querySelectorAll('input[type="range"]')){
   const row=document.createElement('span');row.className='stepper';
-  const minus=document.createElement('button');minus.type='button';minus.className='step-button';minus.textContent='−';minus.setAttribute('aria-label','Decrease '+slider.name);
-  const plus=document.createElement('button');plus.type='button';plus.className='step-button';plus.textContent='+';plus.setAttribute('aria-label','Increase '+slider.name);
+  const minus=document.createElement('button');minus.type='button';minus.className='step-button';minus.innerHTML=iconMarkup('minus');minus.setAttribute('aria-label','Decrease '+slider.name);
+  const plus=document.createElement('button');plus.type='button';plus.className='step-button';plus.innerHTML=iconMarkup('plus');plus.setAttribute('aria-label','Increase '+slider.name);
   const numeric=document.createElement('input');
   numeric.type='number';numeric.className='slider-number';numeric.min=slider.min;numeric.max=slider.max;
   numeric.step=slider.step||'1';numeric.value=slider.value;numeric.dataset.numberFor=slider.name;
@@ -609,9 +610,8 @@ function installSettingLocks(){
   makeSettingLock('position',document.querySelector('.positioner-description'));
 }
 const LOCK_ICON={
-  locked:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>',
-  // Keep the shackle attached at the left hinge and rotate it clearly away.
-  unlocked:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3" transform="rotate(-48 8 10)"/></svg>',
+  locked:iconMarkup('lock'),
+  unlocked:iconMarkup('unlock'),
 };
 function syncSettingLocks(){
   const locked=new Set(current.lockedSettings);
@@ -712,14 +712,14 @@ function syncInteriorUI(){
     return slider;
   };
   const actions=make(manager,'div');actions.className='interior-actions';
-  const up=make(actions,'button','↑');up.type='button';up.title='Move element upward';
+  const up=make(actions,'button');up.type='button';up.innerHTML=iconMarkup('arrow-up');up.title='Move element upward';up.setAttribute('aria-label','Move element upward');
   up.disabled=selectedInterior===0;
   up.addEventListener('click',()=>{
     const next=[...current.interiorElements];
     [next[selectedInterior-1],next[selectedInterior]]=[next[selectedInterior],next[selectedInterior-1]];
     selectedInterior--;changeRecipe({...current,interiorElements:next});
   });
-  const down=make(actions,'button','↓');down.type='button';down.title='Move element downward';
+  const down=make(actions,'button');down.type='button';down.innerHTML=iconMarkup('arrow-down');down.title='Move element downward';down.setAttribute('aria-label','Move element downward');
   down.disabled=selectedInterior>=items.length-1;
   down.addEventListener('click',()=>{
     const next=[...current.interiorElements];
