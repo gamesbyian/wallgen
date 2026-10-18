@@ -140,14 +140,18 @@ export function drawRegionInteriors(ctx,object,elements,structure,renderBounds){
       const step=Math.max(1.5,Math.min(5,scale/12));
       // Anchor every scanline to one world-space lattice. Adjacent polygon
       // masks reveal the same pattern without restarting its vertical phase.
-      const anchorY=-2400;
+      // Field placement uses one shared world lattice; local placement
+      // restarts that lattice around each shape's own centre. Previously
+      // these modes were indistinguishable for nonradial regions.
+      const anchorY=e.placement==='local'?cy:-2400;
+      const anchorX=e.placement==='local'?cx:0;
       const startY=anchorY+Math.floor((top-180-anchorY)/period)*period;
       for(let y=startY;y<=bottom+180;y+=period){
         ctx.beginPath();
         const from=left-260,to=right+260;
         if(e.stroke!=='solid')ctx.lineDashOffset=-(from+1760);
         for(let x=from;x<=to;x+=step){
-          const t=(x+e.phase*3)/scale;
+          const t=(x-anchorX+e.phase*3)/scale;
           const displacement=e.amplitude*80*elementWave(waveElement,t);
           const yy=y+e.position*period+displacement;
           const xx=e.shape==='loop'?x+e.amplitude*80*Math.cos(t*2*Math.PI+e.phase*Math.PI/180):x;
