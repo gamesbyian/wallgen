@@ -1105,11 +1105,17 @@ try{
     file.dispatchEvent(new Event('change',{bubbles:true}));
   })()`);
   await waitFor('document.getElementById("imagePathDialog").open && !document.getElementById("imagePathAngle").disabled || document.getElementById("imagePathDialog").open && document.getElementById("imagePathCandidate").options.length>1',15000);
+  await evaluate(`(()=>{
+    const select=document.getElementById('imagePathCandidate');
+    const line=[...select.options].find(o=>o.textContent.includes('Line '));
+    if(line){select.value=line.value;
+      select.dispatchEvent(new Event('change',{bubbles:true}));}
+  })()`);
+  await waitFor('!document.getElementById("imagePathAngle").disabled',5000);
   const appliedAngle=await evaluate(`(async()=>{
     const select=document.getElementById('imagePathCandidate');
     const line=[...select.options].find(o=>o.textContent.includes('Line '));
     if(!line)return {missingLine:true};
-    select.value=line.value;select.dispatchEvent(new Event('change',{bubbles:true}));
     const expected=Number(line.textContent.match(/Line (\\d+)°/)[1]);
     const enabled=!document.getElementById('imagePathAngle').disabled;
     document.getElementById('imagePathAngle').click();
