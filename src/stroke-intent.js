@@ -8,6 +8,36 @@ const pixel=([x,y])=>[x*W,y*H];
 const normalize=([x,y])=>[x/W,y/H];
 const dist=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]);
 const interpolate=(a,b,t)=>[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t];
+const smoothstep=t=>{const x=clamp(t,0,1);return x*x*x*(x*(x*6-15)+10);};
+// Crossings are two distinct visits to the same image-plane position. Keep
+// both visits on their original smooth tangents when fitting nearby shapes.
+function crossingInfluence(p){
+  const weight=new Array(p.length).fill(1);
+  const cross=(a,b)=>a[0]*b[1]-a[1]*b[0];
+  for(let i=0;i<p.length-1;i++){
+    const a=p[i],b=p[i+1],r=[b[0]-a[0],b[1]-a[1]];
+    for(let j=i+9;j<p.length-1;j++){
+      const c=p[j],d=p[j+1];
+      if(Math.max(a[0],b[0])<Math.min(c[0],d[0])||
+         Math.max(c[0],d[0])<Math.min(a[0],b[0])||
+         Math.max(a[1],b[1])<Math.min(c[1],d[1])||
+         Math.max(c[1],d[1])<Math.min(a[1],b[1]))continue;
+      const v=[d[0]-c[0],d[1]-c[1]],den=cross(r,v);
+      if(Math.abs(den)<.001)continue;
+      const offset=[c[0]-a[0],c[1]-a[1]];
+      const t=cross(offset,v)/den,u=cross(offset,r)/den;
+      if(t<=.001||t>=.999||u<=.001||u>=.999)continue;
+      for(const index of [i+t,j+u]){
+        // Original stroke is sampled at roughly 7px intervals. Guard 42px
+        // each side, and fade smoothly through a further 56px.
+        for(let k=Math.max(0,Math.floor(index)-16);k<=Math.min(p.length-1,Math.ceil(index)+16);k++){
+          weight[k]=Math.min(weight[k],smoothstep((Math.abs(k-index)*7-42)/56));
+        }
+      }
+    }
+  }
+  return weight;
+}
 function statistics(points){
   const sum=points.reduce((s,p,i)=>i?s+dist(p,points[i-1]):0,0);
   return {length:sum,chord:dist(points[0],points.at(-1))};
@@ -120,35 +150,44 @@ function circleCandidate(p){
 // revolution, rather than assuming the entire stroke is one primitive.
 function embeddedLoops(p){
   if(p.length<36)return null;
-  const result=p.map(q=>q.slice());
+  const result=p.map(q=>q.slice()),weights=new Array(p.length).fill(0);
+  const crossing=crossingInfluence(p);
   let recognized=0;
   for(let start=0;start<p.length-22;start+=3){
     let minX=p[start][0],maxX=minX,minY=p[start][1],maxY=minY;
-    let chosen=null;
+    let chosen=null,score=Infinity;
     for(let end=start+1;end<Math.min(p.length,start+185);end++){
       const q=p[end];
       minX=Math.min(minX,q[0]);maxX=Math.max(maxX,q[0]);
       minY=Math.min(minY,q[1]);maxY=Math.max(maxY,q[1]);
       if(end-start<20||(end-start)%3)continue;
-      const diameter=Math.min(maxX-minX,maxY-minY);
-      if(diameter<42)continue;
-      const guessedRadius=(maxX-minX+maxY-minY)/4;
-      if(dist(p[start],q)>Math.max(18,guessedRadius*.57))continue;
+      if(Math.min(maxX-minX,maxY-minY)<42)continue;
+      const radius=(maxX-minX+maxY-minY)/4;
+      if(dist(p[start],q)>Math.max(12,radius*.32))continue;
       const candidate=circleCandidate(p.slice(start,end+1));
-      if(candidate?.kind==='circle'){
-        chosen={end,points:candidate.points};
-        break;
-      }
+      if(candidate?.kind!=='circle')continue;
+      // The first closed-looking subpath may occur at a crossing *before*
+      // the loop finishes. Prefer the most convincingly closed whole turn.
+      const candidateScore=dist(p[start],q)/Math.max(1,radius)+candidate.error*2;
+      if(candidateScore<score){score=candidateScore;chosen={end,candidate,radius};}
+      if(score<.08)break;
     }
     if(!chosen)continue;
-    for(let i=start+1;i<chosen.end;i++){
-      const edge=clamp(Math.min(i-start,chosen.end-i)/4,0,1);
-      result[i]=interpolate(p[i],chosen.points[i-start],edge);
+    const {end,candidate,radius}=chosen;
+    const transition=Math.max(9,Math.ceil(Math.min(128,Math.max(72,radius*.8))/7));
+    for(let i=start+1;i<end;i++){
+      const edge=smoothstep(Math.min(i-start,end-i)/transition);
+      const amount=edge*crossing[i];
+      if(amount<=0)continue;
+      // Return *unaltered* fitted points and a separate influence envelope.
+      // The caller blends with a correspondingly sampled smooth base curve.
+      result[i]=candidate.points[i-start];
+      weights[i]=Math.max(weights[i],amount);
     }
     recognized++;
-    start=chosen.end-3;
+    start=end-3;
   }
-  return recognized?{kind:'embedded-loops',points:result}:null;
+  return recognized?{kind:'embedded-loops',points:result,weights}:null;
 }
 function segmentDistance(p,a,b){
   const dx=b[0]-a[0],dy=b[1]-a[1],length=dx*dx+dy*dy;
@@ -170,22 +209,26 @@ function simplifyIndices(points,tolerance){
 }
 function segmentCandidates(p){
   if(p.length<18)return null;
-  const anchors=simplifyIndices(p,12),result=p.map(q=>q.slice());
+  const anchors=simplifyIndices(p,12),result=p.map(q=>q.slice()),
+    weights=new Array(p.length).fill(0),crossing=crossingInfluence(p);
   let matched=0;
   for(let j=1;j<anchors.length;j++){
     const lo=anchors[j-1],hi=anchors[j];
     if(hi-lo<6)continue;
     const span=p.slice(lo,hi+1),fit=lineCandidate(span);
     if(!fit||dist(p[lo],p[hi])<75)continue;
-    // Preserve corner location and continuity: blend each straight leg into
-    // its original endpoints over a few samples instead of creating jumps.
+    // Blend without slope discontinuities, leaving both branches of an
+    // intentional crossing on their original smoothed tangents.
     for(let i=lo+1;i<hi;i++){
-      const t=(i-lo)/(hi-lo),edge=clamp(Math.min(t,1-t)*8,0,1);
-      result[i]=interpolate(p[i],fit.points[i-lo],edge);
+      const t=(i-lo)/(hi-lo);
+      const amount=smoothstep(Math.min(t,1-t)*6)*crossing[i];
+      if(amount<=0)continue;
+      result[i]=fit.points[i-lo];
+      weights[i]=Math.max(weights[i],amount);
     }
     matched++;
   }
-  return matched?{kind:'segments',points:result}:null;
+  return matched?{kind:'segments',points:result,weights}:null;
 }
 /** Find strong global geometric intention and cautiously polish local legs.
  * Input/output are evenly distributed samples in normalized wallpaper units.
@@ -200,7 +243,7 @@ export function interpretStroke(points){
   const line=lineCandidate(p);
   if(line)return {kind:line.kind,points:line.points.map(normalize)};
   const loops=embeddedLoops(p);
-  if(loops)return {kind:loops.kind,points:loops.points.map(normalize)};
+  if(loops)return {kind:loops.kind,points:loops.points.map(normalize),weights:loops.weights};
   const segments=segmentCandidates(p);
-  return segments?{kind:segments.kind,points:segments.points.map(normalize)}:null;
+  return segments?{kind:segments.kind,points:segments.points.map(normalize),weights:segments.weights}:null;
 }

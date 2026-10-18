@@ -2,7 +2,7 @@ import {interpretStroke} from '../src/stroke-intent.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {finishDrawnPath, fairPath, normalizeDrawnPath, prepareDrawnPath, safeDrawnBandSpan, pointOnDrawnPath,
-  MAX_DRAWN_POINTS} from '../src/drawn-path.js';
+  MAX_DRAWN_POINTS,resamplePath} from '../src/drawn-path.js';
 import {normalizeRecipe,resolveScene,encodeRecipe,decodeRecipe,respectSettingLocks,
   DESIGN_WIDTH,DESIGN_HEIGHT} from '../src/model.js';
 import {pathPosition,samplePath,ribbonEdge} from '../src/path-geometry.js';
@@ -276,4 +276,56 @@ test('a changing-direction figure-eight is not falsely identified as one circle'
   assert.notEqual(kind,'arc');
   const result=finishDrawnPath(raw,'smooth',10);
   assert.ok(result.length>10);
+});
+
+test('embedded loop corrections fade smoothly around a self-crossing',()=>{
+  // Lollipop-style gesture: the line enters an imperfect circle, travels
+  // around once, then continues. The loop is visited twice at its junction;
+  // the recognizer must not inject two opposing hooks there.
+  const center=[315,500],radius=150,startAngle=2.27;
+  const at=angle=>[center[0]+radius*Math.cos(angle),center[1]+radius*Math.sin(angle)];
+  const start=at(startAngle),tangent=[Math.sin(startAngle),-Math.cos(startAngle)];
+  const point=(x,y)=>[x/600,y/1300];
+  const line=(a,b,count)=>Array.from({length:count},(_,i)=>{
+    const t=i/(count-1);
+    return point(a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t);
+  });
+  const leadIn=[start[0]-tangent[0]*235,start[1]-tangent[1]*235];
+  const leadOut=[start[0]+tangent[0]*380,start[1]+tangent[1]*380];
+  const circle=Array.from({length:251},(_,i)=>{
+    const angle=startAngle-2*Math.PI*i/250;
+    const r=radius*(1+.045*Math.sin(i*.86)+.015*Math.cos(i*.21));
+    return point(center[0]+r*Math.cos(angle),center[1]+r*Math.sin(angle));
+  });
+  const raw=[
+    ...line(leadIn,start,67).slice(0,-1),
+    ...circle,
+    ...line(start,leadOut,80).slice(1)
+  ];
+  // The production recognizer receives evenly arc-length-sampled input,
+  // irrespective of how many raw pointer events a device delivers.
+  const length=raw.slice(1).reduce((n,p,i)=>n+
+    Math.hypot((p[0]-raw[i][0])*600,(p[1]-raw[i][1])*1300),0);
+  const even=resamplePath(raw,Math.min(500,Math.max(8,Math.ceil(length/7))));
+  const interpretation=interpretStroke(even);
+  assert.equal(interpretation?.kind,'embedded-loops');
+  assert.ok(interpretation.weights.some(v=>v>.8),'inner circle is actively fitted');
+  assert.ok(interpretation.weights.slice(0,15).every(v=>v===0),
+    'the independent lead-in stays outside the circle fit');
+  assert.ok(interpretation.weights.slice(-35).every(v=>v===0),
+    'the independent lead-out stays outside the circle fit');
+  const finished=finishDrawnPath(raw,'smooth',10);
+  assert.ok(finished.length>40);
+  const ink=finished.map(([x,y])=>[600*x,1300*y]);
+  const turns=[];
+  for(let i=1;i<ink.length-1;i++){
+    const a=ink[i-1],b=ink[i],c=ink[i+1];
+    const ux=b[0]-a[0],uy=b[1]-a[1],vx=c[0]-b[0],vy=c[1]-b[1];
+    turns.push(Math.abs(Math.atan2(ux*vy-uy*vx,ux*vx+uy*vy)));
+  }
+  const maxTurn=Math.max(...turns),maxIndex=turns.indexOf(maxTurn)+1;
+  assert.ok(maxTurn<.65,'no artificial sharp hook at the loop seam: '+
+    JSON.stringify({maxTurn,maxIndex,around:ink.slice(Math.max(0,maxIndex-3),maxIndex+4)}));
+  assert.ok(ink[0][0]<start[0]-100&&ink.at(-1)[0]>start[0]+130,
+    'both tail sections remain connected to the loop');
 });
