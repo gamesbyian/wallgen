@@ -118,43 +118,68 @@ export async function captureSpecialStates({page,ctx,capture,navigate,change,set
     await page.locator('.editor-tool-card[data-editor-tool=interior] button').filter({hasText:'Unlock all elements'}).click();
     await snap('interior-stack-unlocked');
   });
+  // Opening Explore and More is a navigation action, not the same operation
+  // as preparing gallery items or filling the metadata form. Validate the
+  // visible destination before assigning a screenshot its stateful name.
+  const openGallery=async()=>{
+    if(!ctx.surface.mobile)return;
+    if(await page.evaluate(()=>document.body.classList.contains('mobile-gallery-open')))return;
+    const proxy=page.locator('[data-dock-proxy=mobileExplore]');
+    if(await page.evaluate(()=>document.body.classList.contains('mobile-edit-open')) && await proxy.isVisible())
+      await proxy.click();
+    else await page.locator('#mobileExplore').click();
+    await page.waitForFunction(()=>document.body.classList.contains('mobile-gallery-open'));
+  };
+  const closeGallery=async()=>{
+    if(!ctx.surface.mobile)return;
+    if(await page.evaluate(()=>document.body.classList.contains('mobile-gallery-open')))
+      await page.locator('#mobileExplore').click();
+    await page.waitForFunction(()=>!document.body.classList.contains('mobile-gallery-open'));
+  };
   await attempt('gallery-empty',async()=>{
     await forceClick('#showFavorites');
-    if(ctx.surface.mobile)await clickIfVisible(page,'#mobileExplore');
+    await openGallery();
+    await page.locator('#gallery .gallery-placeholder').waitFor({state:'visible'});
     await snap('gallery-empty-favourites');
-    if(ctx.surface.mobile)await clickIfVisible(page,'#mobileExplore');
+    await closeGallery();
   });
   await attempt('gallery-one',async()=>{
     await forceClick('#favorite');
     await forceClick('#showFavorites');
-    if(ctx.surface.mobile)await clickIfVisible(page,'#mobileExplore');
+    await page.locator('#gallery .thumb').first().waitFor({state:'attached',timeout:6000});
+    await openGallery();
+    await page.locator('#gallery .thumb').first().waitFor({state:'visible',timeout:6000});
     await snap('gallery-with-favourite');
-    if(ctx.surface.mobile)await clickIfVisible(page,'#mobileExplore');
+    await closeGallery();
     await forceClick('#favorite');
   });
   await attempt('metadata-open',async()=>{
     if(ctx.surface.mobile){
       const editOpen=await page.evaluate(()=>document.body.classList.contains('mobile-edit-open'));
       const toolsOpen=await page.evaluate(()=>document.body.classList.contains('mobile-tools-open'));
-      if(editOpen)await clickIfVisible(page,'[data-dock-proxy="mobileMore"]');
-      else if(!toolsOpen)await clickIfVisible(page,'#mobileMore');
-      await page.locator('#mobileToolsSheet:not([hidden])').waitFor({timeout:4000});
+      if(editOpen)await page.locator('[data-dock-proxy="mobileMore"]').click();
+      else if(!toolsOpen)await page.locator('#mobileMore').click();
+      await page.waitForFunction(()=>document.body.classList.contains('mobile-tools-open'));
+      await page.locator('#mobileToolsSheet:not([hidden])').waitFor({state:'visible'});
     }
-    // The metadata section is long: record both its opening and controls
-    // scrolled into view at the bottom rather than claiming one screen holds it.
-    if(await clickIfVisible(page,'#metadataToggle')){
-      await snap('metadata-expanded');
-      await page.locator('#metadataRemember').check();
-      await snap('metadata-remember-checked');
-      const last=page.locator('#metadataPanel input:not([type=checkbox]),#metadataPanel textarea').last();
-      if(await last.count()){
-        await last.scrollIntoViewIfNeeded({timeout:3500});
-        await snap('metadata-scrolled-controls');
-      }
-      await page.locator('#metadataRemember').uncheck();
-      await forceClick('#metadataToggle');
-    }else throw Error('Metadata control not reachable');
-    if(ctx.surface.mobile)await clickIfVisible(page,'#mobileToolsClose');
+    const toggle=page.locator('#metadataToggle');
+    await toggle.scrollIntoViewIfNeeded();
+    if(await toggle.getAttribute('aria-expanded')!=='true')await toggle.click();
+    await page.locator('#metadataPanel').waitFor({state:'visible'});
+    const head=page.locator('#metadataPanel .metadata-heading');
+    await head.scrollIntoViewIfNeeded();
+    await snap('metadata-expanded',{focusSelector:'#metadataPanel .metadata-heading'});
+    const remember=page.locator('#metadataRemember');
+    await remember.check();
+    await remember.scrollIntoViewIfNeeded();
+    await snap('metadata-remember-checked',{focusSelector:'#metadataRemember'});
+    const last=page.locator('#metadataPanel input:not([type=checkbox]),#metadataPanel textarea').last();
+    if(!await last.count())throw Error('Metadata form has no fields');
+    await last.scrollIntoViewIfNeeded();
+    await snap('metadata-scrolled-controls',{focusSelector:'#metadataPanel input:not([type=checkbox]):last-of-type'});
+    await remember.uncheck();
+    await forceClick('#metadataToggle');
+    if(ctx.surface.mobile)await page.locator('#mobileToolsClose').click();
   });
   await attempt('mobile-rails',async()=>{
     if(!ctx.surface.mobile)return;
