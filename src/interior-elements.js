@@ -62,6 +62,32 @@ export function lineDash(ctx,e){
     e.stroke==='dotted'?[.01,width*2.7]:[]);
   ctx.lineCap=e.stroke==='dotted'?'round':'round';
 }
+// Conservative horizontal extent of a polygon intersecting a strip.
+// Waves may shift each scanline up or down: callers widen the strip by the
+// full displacement and half the stroke. Restricting horizontal sampling to
+// that strip eliminates millions of invisible tessellation points from narrow
+// radial rays while retaining correct clipped curves around shape boundaries.
+export function polygonStripBounds(vertices,low,high){
+  let left=Infinity,right=-Infinity;
+  if(!vertices?.length)return null;
+  for(let i=0;i<vertices.length;i++){
+    const a=vertices[i],b=vertices[(i+1)%vertices.length];
+    const minY=Math.min(a.y,b.y),maxY=Math.max(a.y,b.y);
+    if(maxY<low||minY>high)continue;
+    if(a.y>=low&&a.y<=high){
+      left=Math.min(left,a.x);right=Math.max(right,a.x);
+    }
+    if(b.y>=low&&b.y<=high){
+      left=Math.min(left,b.x);right=Math.max(right,b.x);
+    }
+    for(const y of [low,high]){
+      if(y<minY||y>maxY||Math.abs(b.y-a.y)<1e-9)continue;
+      const x=a.x+(b.x-a.x)*(y-a.y)/(b.y-a.y);
+      left=Math.min(left,x);right=Math.max(right,x);
+    }
+  }
+  return left<=right?{left,right}:null;
+}
 // For arbitrary closed regions, field strokes are painted in canvas space.
 // Their visibility is governed exclusively by the owner's exact shape mask.
 export function drawRegionInteriors(ctx,object,elements,structure,renderBounds){
@@ -138,6 +164,14 @@ export function drawRegionInteriors(ctx,object,elements,structure,renderBounds){
       const waveElement={...e,frequency:1};
       const scale=Math.max(16,220/e.frequency);
       const step=Math.max(1.5,Math.min(5,scale/12));
+      const localPolygon=ang?object.vertices.map(p=>({
+        x:cx+(p.x-cx)*cos+(p.y-cy)*sin,
+        y:cy-(p.x-cx)*sin+(p.y-cy)*cos
+      })):object.vertices;
+      const verticalReach=Math.abs(e.position)*period+e.amplitude*80+
+        ctx.lineWidth*.5+step*2;
+      const horizontalReach=e.shape==='loop'?e.amplitude*80+ctx.lineWidth*.5+step*2:
+        ctx.lineWidth*.5+step*2;
       // Anchor every scanline to one world-space lattice. Adjacent polygon
       // masks reveal the same pattern without restarting its vertical phase.
       // Field placement uses one shared world lattice; local placement
@@ -147,8 +181,17 @@ export function drawRegionInteriors(ctx,object,elements,structure,renderBounds){
       const anchorX=e.placement==='local'?cx:0;
       const startY=anchorY+Math.floor((top-180-anchorY)/period)*period;
       for(let y=startY;y<=bottom+180;y+=period){
+        const strip=polygonStripBounds(localPolygon,
+          y-verticalReach,y+verticalReach);
+        if(!strip)continue;
+        const leftX=Math.max(left-260,strip.left-horizontalReach);
+        const rightX=Math.min(right+260,strip.right+horizontalReach);
+        if(leftX>=rightX)continue;
+        // Quantize stations in world/local coordinates rather than restart
+        // the sampling grid independently in each polygon.
+        const from=anchorX+Math.floor((leftX-anchorX)/step)*step;
+        const to=rightX+step;
         ctx.beginPath();
-        const from=left-260,to=right+260;
         if(e.stroke!=='solid')ctx.lineDashOffset=-(from+1760);
         for(let x=from;x<=to;x+=step){
           const t=(x-anchorX+e.phase*3)/scale;
