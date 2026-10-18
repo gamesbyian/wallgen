@@ -189,10 +189,13 @@ Tap **Import image** beside Draw Path in the preview controls and select a
 PNG, JPEG, WebP or SVG (up to 12 MB). The importer analyzes a reduced-size
 image entirely in your browser: no images are uploaded or saved. The picker
 shows selectable yellow-highlighted candidates over the original image.
-Choose a candidate from the dropdown or tap its line, then tap **Edit / Use
-path**. The ordinary Draw Path overlay opens with the extracted geometry,
+Choose a candidate from the dropdown or tap its line. **Edit / Use path**
+opens the ordinary Draw Path overlay with the extracted geometry,
 where **Edit points**, **Smooth / Geometric**, local anchor correction, Undo
-and **Use path** work as normal. Cancel never replaces the current wallpaper.
+and **Use path** work as normal. For detected straight lines, **Use angle**
+sets the existing wallpaper geometry's diagonal direction to the measured
+angle, accounting for the seed's starting orientation. If the active geometry
+was hand-drawn, it switches to Straight. Cancel never replaces the wallpaper.
 
 The first extraction methods recognize contrasting silhouettes (outer
 contours), saturated coloured regions (their approximate horizontal
