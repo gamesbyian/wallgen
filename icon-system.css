@@ -43,3 +43,33 @@ body.mobile-studio .sidebar .editor-explore-actions>.editor-scope-button::before
    line-height:1.08;font-size:9px!important;white-space:normal!important;
  }
 }
+
+/* Restore the approved Primes-only glyph, without moving the checkbox or
+   changing the label's clickable area. On mobile the whole tile is the hit target. */
+.randomize-toolbar>.prime-toggle>.ui-icon{width:18px;height:18px;flex:0 0 18px;pointer-events:none}
+@media(max-width:790px){
+ body.mobile-studio .mobile-preview-rail-left .prime-toggle{
+   box-sizing:border-box;flex-direction:column;gap:0!important;
+   justify-content:center;align-items:center;
+   height:46px!important;min-height:46px!important;
+   padding:2px 1px!important;white-space:normal!important;
+ }
+ body.mobile-studio .mobile-preview-rail-left .prime-toggle>.ui-icon{width:19px;height:19px;flex:0 0 19px}
+ body.mobile-studio .mobile-preview-rail-left .prime-toggle .toolbar-wording{
+   display:flex!important;flex-direction:column!important;align-items:center;
+   justify-content:center;line-height:1.05!important;white-space:normal!important;
+ }
+ /* Import previously inherited a 34px high button while its siblings use 46px.
+    Keep all left-column x positions and width, align its artwork and two words. */
+ body.mobile-studio .mobile-preview-rail-left #importPathToggle{
+   height:46px!important;min-height:46px!important;max-height:46px!important;
+   gap:1px!important;
+ }
+ body.mobile-studio .mobile-preview-rail-left #importPathToggle>.ui-icon{
+   width:18px;height:18px;flex:0 0 18px;
+ }
+ body.mobile-studio .mobile-preview-rail-left #importPathToggle .toolbar-wording{
+   display:flex!important;flex-direction:column!important;align-items:center;
+   line-height:1.05!important;
+ }
+}
