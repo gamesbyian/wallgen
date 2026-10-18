@@ -76,12 +76,16 @@ export function decorateInsetContour(contour,element,inset,frame,strokeWidth=1){
   const cycles=Math.max(1,Math.round(Number(element.frequency)||1));
   const phase=(Number(element.phase)||0)*Math.PI/180;
   const shape=element.shape;
+  if(shape==='straight'||amplitude<=0){
+    const first=nearestSource(original[0],frame);
+    return {points:original,closed:!!contour.closed,
+      dashOffset:first?-first.station:0};
+  }
   let dashOffset=0;
   const points=original.map((p,i)=>{
     const nearest=nearestSource(p,frame);
     if(!nearest)return {x:p.x,y:p.y};
     if(i===0)dashOffset=-nearest.station;
-    if(shape==='straight'||amplitude<=0)return {x:p.x,y:p.y};
     const angle=TAU*cycles*nearest.station/nearest.ringLength+phase;
     const wave=shape==='zigzag'?2/Math.PI*Math.asin(Math.sin(angle)):Math.sin(angle);
     const normalLength=Math.hypot(nearest.dx,nearest.dy);
