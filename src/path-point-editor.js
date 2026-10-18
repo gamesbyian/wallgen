@@ -59,6 +59,23 @@ export function chooseAnchorIndices(points,pinned=[]){
     if(fixed.has(i)||i-result.at(-1)>=3)result.push(i);
   }
   if(result.at(-1)!==n-1)result.push(n-1);
+  // At most ~18 visible squares for a typical 96-sample stroke. Reduce
+  // the least meaningful automatic node, measuring its geometric error
+  // against its current neighbours. Explicit user pins are never removed.
+  const limit=Math.max(18,fixed.size);
+  while(result.length>limit){
+    let candidate=-1,least=Infinity;
+    for(let j=1;j<result.length-1;j++){
+      const i=result[j];
+      if(fixed.has(i))continue;
+      const error=deviation(points[i],points[result[j-1]],points[result[j+1]]);
+      const span=arc[result[j+1]]-arc[result[j-1]];
+      const importance=error+span*.01;
+      if(importance<least){least=importance;candidate=j;}
+    }
+    if(candidate<0)break;
+    result.splice(candidate,1);
+  }
   return result;
 }
 export function createPointEditor(input,pinned=[]){
@@ -99,7 +116,7 @@ export function movePointAnchor(e,index,to,start=e.points){
   const arc=lengthAlong(start),delta=[to[0]-start[index][0],to[1]-start[index][1]];
   const result=copy(start);
   for(let i=lo;i<=hi;i++){
-    const fraction=i<=index?
+    const fraction=i===index?1:i<index?
       (arc[i]-arc[lo])/(arc[index]-arc[lo]||1):
       (arc[hi]-arc[i])/(arc[hi]-arc[index]||1);
     const w=smooth5(fraction);
