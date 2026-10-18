@@ -343,31 +343,30 @@ test('Prime mode is deliberately never lockable, including old saved recipes',()
 test('optional stripe shadows are independent of ambient lighting and preserve geometry',()=>{
   const base={seed:'stripe-cast-shadow',lightingMood:'golden',shadowStrength:90};
   const original=resolveScene(base);
-  assert.equal(original.stripeShadowEnabled,false);
-  assert.equal(original.stripeShadowStrength,45);
+  assert.equal(original.stripeShadowStrength,0);
   assert.equal(original.stripeShadowSoftness,55);
   assert.equal(original.stripeShadowDirection,'top-left');
-  const enabled=resolveScene({...base,stripeShadowEnabled:true,stripeShadowStrength:85,
+  const enabled=resolveScene({...base,stripeShadowStrength:85,
     stripeShadowSoftness:12,stripeShadowDirection:'bottom-right',lightingMood:'off'});
   assert.deepEqual(enabled.stripes,original.stripes);
   assert.equal(enabled.centerX,original.centerX);
   assert.equal(enabled.centerY,original.centerY);
   assert.equal(enabled.lightingMood,'off');
-  assert.equal(enabled.stripeShadowEnabled,true);
+  assert.equal(enabled.stripeShadowStrength,85);
   assert.deepEqual(decodeRecipe(encodeRecipe(enabled)),normalizeRecipe(enabled));
 });
 test('stripe shadows honor locks while randomizing other options',()=>{
   const orig=normalizeRecipe({
-    seed:'locked-shadow',stripeShadowEnabled:true,stripeShadowStrength:75,
+    seed:'locked-shadow',stripeShadowStrength:75,
     stripeShadowSoftness:81,stripeShadowDirection:'bottom-left',
-    lockedSettings:['stripeShadowEnabled','stripeShadowSoftness','stripeShadowDirection'],
+    lockedSettings:['stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection'],
   });
   for(let i=0;i<24;i++){
     const next=respectSettingLocks(orig,randomizeAllRecipe({primesOnly:true}));
-    assert.equal(next.stripeShadowEnabled,true);
+    assert.equal(next.stripeShadowStrength,75);
     assert.equal(next.stripeShadowSoftness,81);
     assert.equal(next.stripeShadowDirection,'bottom-left');
-    assert.ok(isPrime(next.stripeShadowStrength));
+    assert.equal(next.stripeShadowStrength,75);
   }
   assert.equal(normalizeRecipe({stripeShadowStrength:500}).stripeShadowStrength,100);
   assert.equal(normalizeRecipe({stripeShadowSoftness:-20}).stripeShadowSoftness,0);
