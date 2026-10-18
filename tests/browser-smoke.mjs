@@ -514,6 +514,24 @@ try{
   })()`);
   console.log('EXTREME_DOT_MOTIF_CHROMATIC_COVERAGE',extremeDots);
   assert.ok(extremeDots>.035,'large dot motifs must remain coloured rather than vanish');
+  const strokeAssist=await evaluate(`(async()=>{
+    const {finishDrawnPath}=await import('/src/drawn-path.js');
+    const slider=document.getElementById('drawSmoothingStrength');
+    slider.value='10';slider.dispatchEvent(new Event('input',{bubbles:true}));
+    const raw=Array.from({length:130},(_,i)=>{
+      const t=i/129;
+      return [.11+.78*t,.47+.006*Math.sin(i*.85)];
+    });
+    const straight=finishDrawnPath(raw,'smooth',10);
+    const ys=straight.map(p=>p[1]);
+    return {max:slider.max,label:document.getElementById('drawSmoothingValue').textContent,
+      result:straight.length,axisError:Math.max(...ys)-Math.min(...ys)};
+  })()`);
+  assert.equal(strokeAssist.max,'10');
+  assert.equal(strokeAssist.label,'10.0×');
+  assert.ok(strokeAssist.result>20&&strokeAssist.axisError<.00002,
+    'the live browser 10× implementation must recover a perfectly level stroke');
+  console.log('TEN_X_DRAWING_ASSIST',JSON.stringify(strokeAssist));
   console.log('REDESIGN_EXPLORATION_ACCEPTANCE_SUCCESS');
 }finally{
   try{ws?.close()}catch{}

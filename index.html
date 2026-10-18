@@ -17,7 +17,7 @@
   <link rel="stylesheet" href="mobile-compact.css?v=20261016-dock2">
   <link rel="stylesheet" href="mobile-editor-rail.css?v=20261017-camera1">
   <link rel="stylesheet" href="design-transform.css?v=20261016-transform1">
-  <link rel="stylesheet" href="draw-path.css?v=20261017-smooth1">
+  <link rel="stylesheet" href="draw-path.css?v=20261018-intent10">
   <link rel="stylesheet" href="editor-redesign.css?v=20261018-freescroll1">
   <link rel="stylesheet" href="bleed-and-action-rail.css?v=20261017-b1">
 </head>
@@ -260,7 +260,7 @@
         <canvas id="drawOverlay" width="600" height="1300" hidden aria-label="Draw one continuous path anywhere on the preview stage"></canvas>
         <div class="draw-path-panel" id="drawPathPanel" role="group" aria-label="Custom path drawing controls" hidden>
           <span id="drawPathHint" aria-live="polite">Draw one continuous path across the canvas.</span>
-          <label class="draw-smoothing-row" for="drawSmoothingStrength"><span>Smoothing</span><input type="range" id="drawSmoothingStrength" min="1" max="5" step="0.5" value="1"><output id="drawSmoothingValue" for="drawSmoothingStrength">1.0×</output></label>
+          <label class="draw-smoothing-row" for="drawSmoothingStrength"><span>Smoothing</span><input type="range" id="drawSmoothingStrength" min="1" max="10" step="0.5" value="1"><output id="drawSmoothingValue" for="drawSmoothingStrength">1.0×</output></label>
           <div class="draw-path-controls">
             <button type="button" id="drawSmooth" class="draw-fit-selected" aria-pressed="true">Smooth</button>
             <button type="button" id="drawGeometric" aria-pressed="false">Geometric</button>
@@ -335,7 +335,7 @@
       stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"
       aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>
   </button>
-  <script type="module" src="src/app.js?v=20261018-freescroll1"></script>
+  <script type="module" src="src/app.js?v=20261018-intent10"></script>
   <script type="module" src="src/mobile-studio.js?v=20261017-b1"></script>
   <script type="module" src="src/mobile-swipes.js?v=20261017-explore1"></script>
   <script type="module" src="src/mobile-preview-tools.js?v=20261017-b1"></script>

@@ -240,12 +240,25 @@ npm run render -- --seed framed-rainbow --set geometry=wave --set palette=twilig
 ## Smoothing, quick controls and branding (October 2026)
 
 After tracing a finger-drawn path, adjust the live **Smoothing** slider from
-**1×** (the previous curve fairing, completely unchanged) to **5×** (a much
-broader Gaussian fairing and stronger elimination of unnecessary control-point
-bends). Both Smooth and Geometric finishing modes respond immediately, without
-redrawing. The slider processes the pending stroke before committing it; the
-finished points are saved in the normal wallpaper recipe, so rendering and PNG
-regeneration remain deterministic.
+**1×** (the previous curve fairing, completely unchanged) to **10×**.
+Strengths 1×–5× retain their original calculations. Above 5×, the tool
+increasingly interprets geometric intent instead of indiscriminately blurring
+the stroke: confident freehand lines are fitted straight, nearly level or
+vertical strokes become perfectly horizontal or vertical, and circular loops
+and partial round arcs can be reconstructed from their traced points.
+Multiple loops may be identified within a single continuous path.
+The strongest setting reaches the exact fitted geometry when the gesture
+supports that interpretation; otherwise stronger continuous fairing is used.
+Recognition uses pixel-space residuals, least-squares circle fitting, stroke
+winding/closure and conservative local segment fitting to avoid snapping
+arbitrary curves into unintended shapes.
+
+Both Smooth and Geometric finishing modes update the preview immediately
+when strength changes, without asking for a redraw. The finished normalized
+points are saved in the wallpaper recipe and PNG metadata, so rendering,
+Undo and regeneration remain deterministic. Snapping is an interpretation
+rather than a guarantee that every gesture is a particular shape; ambiguous
+strokes retain their smoothed form.
 
 The header title spells R.O.Y.G.B.I.V. with each letter tinted in its
 corresponding colour. The mobile Edit button now uses a pencil, and Favourite

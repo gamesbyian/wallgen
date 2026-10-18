@@ -1,4 +1,4 @@
-import {finishDrawnPath,DRAW_COORD_MIN,DRAW_COORD_MAX} from './drawn-path.js';
+import {finishDrawnPath,DRAW_COORD_MIN,DRAW_COORD_MAX} from './drawn-path.js?v=20261018-intent10';
 
 // A temporary transparent overlay captures one physical pointer stroke.
 // Only the committed, normalized finished path becomes part of the recipe.

@@ -1,7 +1,7 @@
 import { OUTPUT_WIDTH, OUTPUT_HEIGHT, normalizeRecipe, resolveScene, encodeRecipe, decodeRecipe, newSeed, randomizeAllRecipe, respectSettingLocks, LOCKABLE_SETTINGS } from './model.js';
 import { drawWallpaper, presentNudgedArtwork } from './renderer.js';
 import { embedPngMetadata, extractPngRecipe, cleanMetadata, METADATA_FIELDS } from './png-metadata.js';
-import { installDrawTool } from './draw-path-ui.js';
+import { installDrawTool } from './draw-path-ui.js?v=20261018-intent10';
 import {mountEditor,selectEditorTool} from './editor-layout.js';
 import {randomizeScope} from './scoped-random.js';
 import {STYLE_PRESETS} from './editor-schema.js';

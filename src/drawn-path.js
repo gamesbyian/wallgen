@@ -1,6 +1,8 @@
 // Pure geometry for finger-drawn paths. Stored coordinates are normalized to
 // the 600 x 1300 design plane, independent of the display's size or zoom.
 // Imported paths are bounded, finite, compact and safe for deterministic export.
+import {interpretStroke} from './stroke-intent.js';
+
 export const PATH_WIDTH=600;
 export const PATH_HEIGHT=1300;
 export const MAX_DRAWN_POINTS=96;
@@ -148,11 +150,13 @@ export function curveThrough(points){
   return out;
 }
 
-// Strength 1 matches the existing finish exactly; 5 widens the fairing
-// kernel fivefold and gradually removes redundant small control-point bends.
+// Strength 1–5 keeps the previous pipeline unchanged. Beyond 5×, the
+// increased fairing is assisted by conservative geometric interpretation:
+// a confidently inferred line, level/vertical axis or circular loop can be
+// fitted exactly, instead of blurring its intended shape away.
 export function finishDrawnPath(raw,mode='smooth',strength=1){
   const power=Number.isFinite(Number(strength))?
-    clamp(Number(strength),1,5):1;
+    clamp(Number(strength),1,10):1;
   if(!Array.isArray(raw)||raw.length<2)return [];
   // Coalesce very dense pointer events before smoothing, with no dependence
   // on actual pointer-event sampling rate.
@@ -181,7 +185,20 @@ export function finishDrawnPath(raw,mode='smooth',strength=1){
       // reduce micro-turns to long, fair segments before spline fitting.
       return power===1?fair:simplifyPath(fair,(power-1)*5);
     })());
-  const points=resamplePath(shaped,Math.max(2,Math.min(MAX_DRAWN_POINTS,Math.ceil(total/9))));
+  let result=shaped;
+  if(power>5){
+    const interpreted=interpretStroke(even);
+    if(interpreted){
+      // Gradually converge to mathematically true primitives by 10×.
+      // The geometry recognizer sees the original, uniformly sampled stroke,
+      // before aggressive Gaussian fairing could erase a small loop.
+      const blend=Math.pow((power-5)/5,.8),count=Math.min(500,even.length);
+      const base=resamplePath(shaped,count);
+      const intended=resamplePath(interpreted.points,count);
+      result=base.map((p,i)=>interpolate(p,intended[i],blend));
+    }
+  }
+  const points=resamplePath(result,Math.max(2,Math.min(MAX_DRAWN_POINTS,Math.ceil(total/9))));
   return normalizeDrawnPath(points);
 }
 
