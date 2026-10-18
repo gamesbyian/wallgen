@@ -33,7 +33,7 @@ test('segment intersection excludes near-parallel touches and adjacent endpoints
 test('detector finds two separated visits at a genuine figure-eight intersection',()=>{
   const stripe={segmentStart:-350,segmentEnd:350,width:12,center:0,index:3};
   const sampler=(_,x)=>{
-    const t=(x+350)/700*Math.PI*2;
+    const t=-Math.PI/2+(x+350)/700*Math.PI*2;
     return {x:170*Math.sin(t),y:115*Math.sin(2*t)};
   };
   const crossings=findPathCrossings(stripe,350,sampler,{step:4});
