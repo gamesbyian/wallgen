@@ -15,7 +15,7 @@ const gallery = document.getElementById('gallery');
 const notice = document.getElementById('notice');
 const favoriteButton = document.getElementById('favorite');
 const FAVORITES_KEY = 'wallgen:favorites:v1';
-const FIELDS = ['primesOnly','family','composition','repeatCount','repeatSpacing','orientation','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','geometry','turnRadius','hairpinAngle','loopRadius','loopSweep','geometrySafety','crossingMode','stepCount','chevronSharpness','loopAspect','construction','motif','lineStyle','pathLength','tonalContrast','brushRoughness','dotSize','dotSpacing','endTaper','shapeFrequency','shapeDepth','motifSize','motifFrequency','palette','material','outline','background','lightingMood','lightDirection','lightStrength','shadowStrength','stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection','textureCoverage','textureRotation','textureBlend','textureLayer2Enabled','material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2','textureLayer3Enabled','material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3','chaos','stripeWidth','spread','textureStrength','textureScale','textureDisplacement','individuality','patternHomogeneity','overridePatternHomogeneity','gap','outlineBuffer','glow'];
+const FIELDS = ['primesOnly','family','structure','radialMode','rayCount','rayRotation','rayTwist','rayCoverage','rayCore','fieldCenterX','fieldCenterY','regionMode','regionCount','regionJitter','regionSides','dividerColor','dividerWidth','composition','repeatCount','repeatSpacing','orientation','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','geometry','turnRadius','hairpinAngle','loopRadius','loopSweep','geometrySafety','crossingMode','stepCount','chevronSharpness','loopAspect','construction','motif','lineStyle','pathLength','tonalContrast','brushRoughness','dotSize','dotSpacing','endTaper','shapeFrequency','shapeDepth','motifSize','motifFrequency','palette','material','outline','background','lightingMood','lightDirection','lightStrength','shadowStrength','stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection','textureCoverage','textureRotation','textureBlend','textureLayer2Enabled','material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2','textureLayer3Enabled','material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3','chaos','stripeWidth','spread','textureStrength','textureScale','textureDisplacement','individuality','patternHomogeneity','overridePatternHomogeneity','gap','outlineBuffer','glow'];
 let current = normalizeRecipe();
 let currentScene;
 const previewLayers={background:null,ink:null,scene:null,key:null};
@@ -122,6 +122,34 @@ function toControls(recipe) {
  */
 function inactiveSettingKeys(recipe,scene){
   const inactive=new Set();
+  const paths=recipe.structure==='paths',radial=recipe.structure==='radial',regions=recipe.structure==='regions';
+  if(!paths){
+    for(const key of ['composition','repeatCount','repeatSpacing','orientation',
+      'diagonalRotation','mirrorHorizontal','mirrorVertical','geometry','geometrySafety',
+      'crossingMode','turnRadius','hairpinAngle','loopRadius','loopSweep','stepCount',
+      'chevronSharpness','loopAspect','shapeFrequency','shapeDepth','pathLength','endTaper',
+      'construction','motif','lineStyle','patternHomogeneity','overridePatternHomogeneity',
+      'tonalContrast','brushRoughness','dotSize','dotSpacing','motifSize','motifFrequency',
+      'stripeWidth','spread','individuality','outline','gap','outlineBuffer','textureDisplacement'])inactive.add(key);
+  }
+  if(!radial){
+    for(const key of ['radialMode','rayCount','rayRotation','rayTwist','rayCoverage','rayCore'])inactive.add(key);
+  }else{
+    if(!['pinwheel','starburst'].includes(recipe.radialMode))inactive.add('rayTwist');
+    if(recipe.radialMode==='concentric')inactive.add('rayCoverage'),inactive.add('rayCore');
+    if(recipe.radialMode==='spokes')inactive.add('rayTwist');
+  }
+  if(!regions){
+    for(const key of ['regionMode','regionCount','regionJitter','regionSides'])inactive.add(key);
+  }else{
+    if(recipe.regionMode!=='nested')inactive.add('regionSides');
+    if(recipe.regionMode==='nested')inactive.add('regionJitter');
+  }
+  if(!(radial||(regions&&recipe.regionMode==='nested'))){
+    inactive.add('fieldCenterX');inactive.add('fieldCenterY');
+  }
+  if(paths){inactive.add('dividerColor');inactive.add('dividerWidth');}
+  else if(recipe.dividerColor==='none')inactive.add('dividerWidth');
   // Decorative motifs have separate size/density knobs; straight geometry
   // never has curve frequency/depth, even when marked with chevrons.
   if(['straight','hairpin','loop','drawn'].includes(scene.geometry))
@@ -288,7 +316,8 @@ function render(recipe,{scroll=false,bypassLocks=false}={}) {
   updatePositionStatus();
   showResolvedSelections(currentScene);
   document.getElementById('detailFamily').textContent=titleCase(currentScene.family);
-  document.getElementById('detailGeometry').textContent=titleCase(currentScene.geometry);
+  document.getElementById('detailGeometry').textContent=titleCase(currentScene.structure==='paths'?
+    currentScene.geometry:currentScene.structure==='radial'?currentScene.radialMode:currentScene.regionMode);
   document.getElementById('detailMaterial').textContent=titleCase(currentScene.materialSummary);
   favoriteButton.setAttribute('aria-pressed',String(isFavorite(current)));
   // Keep the squat-heart SVG intact; aria-pressed controls its fill.
@@ -317,6 +346,7 @@ const drawTool=installDrawTool({
     next.customPath=points;
     next.drawnAnchors=anchors;
     next.drawnCorners=corners;
+    next.structure='paths';
     next.geometry='drawn';
     next.orientation='horizontal';
     next.positionX=0;
@@ -341,7 +371,7 @@ const imagePathTool=installImagePathTool({
     const geometry=base.geometry==='drawn'?'straight':base.geometry;
     const trial=normalizeRecipe({...base,geometry,orientation:'diagonal',diagonalRotation:0});
     const baseline=resolveScene(trial).angle*180/Math.PI;
-    changeRecipe({...base,geometry,orientation:'diagonal',diagonalRotation:angle-baseline});
+    changeRecipe({...base,structure:'paths',geometry,orientation:'diagonal',diagonalRotation:angle-baseline});
     showNotice('Detected '+angle+'° line direction applied. Undo restores the previous angle.');
     return true;
   },
