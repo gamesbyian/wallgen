@@ -356,6 +356,19 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
     }
   });
   return {
+    // Imported geometry enters the exact same provisional preview, point
+    // editor, undo and onApply transaction as a finger-drawn curve.
+    loadPath(imported){
+      if(active)stop();
+      start();
+      if(!active)return false;
+      ready=imported.points.map(p=>p.slice());
+      raw=[];pendingPins=[...(imported.anchors||[])];
+      pendingCorners=[...(imported.corners||[])];
+      hint.textContent='Imported path ready. Edit points or choose Use path.';
+      syncPointControls();draw(ready);
+      return true;
+    },
     sync(recipe){
       geometryOption.disabled=recipe.customPath.length<2;
       button.disabled=recipe.lockedSettings.includes('geometry');
