@@ -1,3 +1,4 @@
+import {interpretStroke} from '../src/stroke-intent.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {finishDrawnPath, fairPath, normalizeDrawnPath, prepareDrawnPath, safeDrawnBandSpan, pointOnDrawnPath,
@@ -219,4 +220,33 @@ test('strong geometric mode accepts 10× while preserving intentional bends',()=
   assert.ok(result[0][0]<0&&result.at(-1)[1]<.2);
   assert.ok(Math.max(...result.map(p=>p[1]))>.5);
   assert.deepEqual(result,finishDrawnPath(raw,'geometric',10));
+});
+
+test('recognition can polish two circular loops connected by straight paths',()=>{
+  const line=(a,b,n)=>Array.from({length:n},(_,i)=>[
+    a[0]+(b[0]-a[0])*i/(n-1),a[1]+(b[1]-a[1])*i/(n-1)
+  ]);
+  const loop=(cx,n)=>Array.from({length:n},(_,i)=>{
+    const theta=Math.PI+Math.PI*2*i/(n-1);
+    const radius=45*(1+.067*Math.sin(i*.79));
+    return [cx+radius*Math.cos(theta),615+radius*Math.sin(theta)];
+  });
+  const p=[
+    ...line([50,615],[135,615],25),
+    ...loop(180,86),
+    ...line([135,615],[305,615],42),
+    ...loop(350,86),
+    ...line([305,615],[540,615],50)
+  ];
+  const raw=p.map(([x,y])=>[x/600,y/1300]);
+  const recognized=interpretStroke(raw);
+  assert.equal(recognized?.kind,'embedded-loops','correct circular subpaths without recategorizing the entire gesture');
+  const polished=recognized.points.map(([x,y])=>[x*600,y*1300]);
+  // The recognizer must retain the lead-in and lead-out rather than replacing
+  // the composite gesture with a single global circle.
+  assert.ok(polished[0][0]<60&&polished.at(-1)[0]>530);
+  assert.ok(polished.some((point,i)=>Math.hypot(point[0]-p[i][0],point[1]-p[i][1])>1.5),
+    'the round strokes should actually be corrected');
+  const finished=finishDrawnPath(raw,'smooth',10);
+  assert.ok(finished.length>20&&finished[0][0]<.1&&finished.at(-1)[0]>.85);
 });
