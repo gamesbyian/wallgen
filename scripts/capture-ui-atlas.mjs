@@ -1,0 +1,198 @@
+#!/usr/bin/env node
+/**
+ * UI state atlas. Art is deliberately held to a fixed recipe: this inventories
+ * navigable controls, not generated wallpaper variations.
+ *
+ * Run: npm run screenshots:ui
+ * Options: --base-url=http://127.0.0.1:4173 --out=artifacts/ui-atlas
+ */
+import { chromium } from 'playwright';
+import { mkdir, writeFile } from 'node:fs/promises';
+import { resolve, join } from 'node:path';
+import { EDITOR_CATEGORIES } from '../src/editor-schema.js';
+
+const arg = key => process.argv.find(x => x.startsWith('--'+key+'='))?.split('=').slice(1).join('=');
+const baseURL = arg('base-url') || 'http://127.0.0.1:4173';
+const out = resolve(arg('out') || 'artifacts/ui-atlas');
+const zooms = [100,75,66,50];
+const surfaces = [
+  {id:'desktop',viewport:{width:1440,height:900},mobile:false},
+  {id:'pixel-6-pro',viewport:{width:412,height:892},mobile:true}
+];
+const cases=[];const errors=[];const seen=new Set();
+const safe=s=>String(s).toLowerCase().replace(/[^a-z0-9-]+/g,'-').replace(/^-|-$/g,'');
+const browser=await chromium.launch({headless:true});
+const fixedSeed='ui-atlas-fixed';
+async function settle(page){
+  await page.waitForTimeout(160);
+  await page.evaluate(async()=>{
+    await document.fonts.ready;
+    await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+  });
+}
+async function clickIfVisible(page,selector){
+  const loc=page.locator(selector).first();
+  if(await loc.count() && await loc.isVisible() && await loc.isEnabled()){
+    await loc.click({timeout:2500});return true;
+  }
+  return false;
+}
+async function change(page,name,value){
+  const field=page.locator('#controls [name="'+name+'"]').first();
+  if(!await field.count())throw Error('Missing setting '+name);
+  await field.evaluate((el,value)=>{
+    if(el.type==='checkbox')el.checked=Boolean(value);
+    else el.value=String(value);
+    el.dispatchEvent(new Event(el.type==='range'?'input':'change',{bubbles:true}));
+    if(el.type==='range')el.dispatchEvent(new Event('change',{bubbles:true}));
+  },value);
+  await settle(page);
+}
+async function capture(page,context,slug,meta={}){
+  const key=context.surface.id+'/'+context.zoom+'/'+slug;
+  if(seen.has(key))return;
+  seen.add(key);
+  const filename=join(context.surface.id,String(context.zoom),safe(slug)+'.png');
+  await mkdir(join(out,context.surface.id,String(context.zoom)),{recursive:true});
+  await settle(page);
+  const visible=await page.evaluate(()=>[...document.querySelectorAll('[role="dialog"],dialog,.editor-tool-card:not([hidden]),[aria-expanded="true"]')]
+    .filter(x=>x.getBoundingClientRect().width>0 && x.getBoundingClientRect().height>0)
+    .slice(0,12).map(x=>x.id||x.getAttribute('aria-label')||x.dataset.editorTool||x.tagName));
+  await page.screenshot({path:join(out,filename),animations:'disabled',fullPage:false});
+  cases.push({id:key,file:filename,zoomPercent:context.zoom,profile:context.surface.id,visible, ...meta});
+}
+async function openEditor(page,surface){
+  if(surface.mobile)await clickIfVisible(page,'#mobileEdit');
+  await settle(page);
+}
+async function navigate(page,category,tool){
+  await clickIfVisible(page,'#tab-'+category);
+  const chip=page.locator('[data-editor-tool="'+tool+'"].editor-tool-tab');
+  if(await chip.isVisible())await chip.click();
+  await settle(page);
+  const active=await page.locator('.editor-tool-card[data-editor-tool="'+tool+'"]').evaluate(el=>!el.hidden&&el.getBoundingClientRect().height>0).catch(()=>false);
+  if(!active)throw Error('Tool unreachable: '+category+'/'+tool);
+}
+async function exercise(page,ctx){
+  await capture(page,ctx,'studio-default',{kind:'shell'});
+  await openEditor(page,ctx.surface);
+  await capture(page,ctx,'editor-open',{kind:'shell'});
+  // Every canonical tool, in each structural family. Unsupported tools are
+  // recorded as deliberately inapplicable rather than falsely covered.
+  for(const [structure,recipe] of Object.entries({
+    paths:{structure:'paths',geometry:'straight',construction:'ribbon',composition:'single'},
+    radial:{structure:'radial',radialMode:'sunburst'},
+    regions:{structure:'regions',regionMode:'voronoi'},
+    nested:{structure:'regions',regionMode:'nested'},
+    tonal:{structure:'paths',construction:'tonal'}
+  })){
+    for(const [name,value] of Object.entries(recipe))await change(page,name,value);
+    for(const category of EDITOR_CATEGORIES){
+      for(const tool of category.tools){
+        try {
+          await navigate(page,category.id,tool.id);
+          await capture(page,ctx,'tool-'+structure+'-'+category.id+'-'+tool.id,{kind:'tool',structure,category:category.id,tool:tool.id,settings:tool.settings});
+          // Disabled, active, locked and expanded control states are distinct UI.
+          const card=page.locator('.editor-tool-card[data-editor-tool="'+tool.id+'"]');
+          const field=card.locator('select:not(:disabled),input[type=checkbox]:not(:disabled)').first();
+          if(await field.count()){
+            const kind=await field.evaluate(el=>el.type);
+            if(kind==='checkbox'){
+              await field.evaluate(el=>{el.checked=!el.checked;el.dispatchEvent(new Event('change',{bubbles:true}));});
+              await capture(page,ctx,'state-'+structure+'-'+tool.id+'-checked',{kind:'control-state'});
+              await field.evaluate(el=>{el.checked=!el.checked;el.dispatchEvent(new Event('change',{bubbles:true}));});
+            }
+          }
+        }catch(e){
+          errors.push({profile:ctx.surface.id,zoom:ctx.zoom,structure,category:category.id,tool:tool.id,error:String(e)});
+        }
+      }
+    }
+  }
+  // Conditional panels need explicit activating recipes.
+  const variants=[
+    ['repeat',{structure:'paths',composition:'repeat'}],
+    ['floating',{structure:'paths',composition:'floating'}],
+    ['diagonal',{structure:'paths',orientation:'diagonal'}],
+    ['hairpin',{structure:'paths',geometry:'hairpin'}],
+    ['loop',{structure:'paths',geometry:'loop'}],
+    ['loops',{structure:'paths',geometry:'loops'}],
+    ['stepped',{structure:'paths',geometry:'stepped'}],
+    ['chevron',{structure:'paths',geometry:'chevron'}],
+    ['radial-pinwheel',{structure:'radial',radialMode:'pinwheel'}],
+    ['radial-concentric',{structure:'radial',radialMode:'concentric'}],
+    ['regions-nested',{structure:'regions',regionMode:'nested'}],
+    ['motif-dots',{structure:'paths',construction:'ribbon',motif:'dots'}],
+    ['material-layers',{structure:'paths',material:'grain',textureLayer2Enabled:true,material2:'linen',textureLayer3Enabled:true,material3:'grain'}],
+    ['lighting',{lightingMood:'studio',lightStrength:50,shadowStrength:30}],
+    ['shadows',{stripeShadowStrength:55}],
+    ['outline',{structure:'paths',outline:'white'}]
+  ];
+  for(const [name,values] of variants){
+    try{
+      for(const [key,value] of Object.entries(values))await change(page,key,value);
+      const categoryTool=name==='repeat'||name==='floating'?['layout','arrange']:
+        name==='diagonal'?['layout','direction']:
+        name==='material-layers'?['material','layer3']:
+        name==='lighting'?['effects','lighting']:
+        name==='shadows'?['details','shadows']:
+        name==='outline'?['details','outlines']:
+        name.startsWith('radial')?['path','ray-shape']:
+        name.startsWith('regions')?['path','region-detail']:
+        name==='motif-dots'?['stripes','marks']:
+        ['path',name==='hairpin'?'turn':name==='loop'?'single-loop':name==='loops'?'safety':'shape-details'];
+      await navigate(page,...categoryTool);
+      await capture(page,ctx,'conditional-'+name,{kind:'conditional',values});
+    }catch(e){errors.push({profile:ctx.surface.id,zoom:ctx.zoom,case:name,error:String(e)});}
+  }
+  // Shell states and special tools: do not upload/download or alter assets.
+  for(const [name,selector] of [
+    ['search','#button-does-not-exist'],
+    ['editor-search','.editor-search-toggle'],
+    ['primes-only','[name=primesOnly]'],
+    ['draw-path','#drawPathToggle'],
+    ['metadata','#metadataToggle'],
+    ['favorites','#showFavorites'],
+    ['mobile-more','#mobileMore'],
+    ['mobile-explore','#mobileExplore'],
+    ['mobile-dock-expand','#mobileDockExpand']
+  ]){
+    try{
+      if(await clickIfVisible(page,selector)){
+        await capture(page,ctx,'shell-'+name,{kind:'surface-state'});
+        if(name==='draw-path')await clickIfVisible(page,'#drawPathToggle');
+        else if(name==='mobile-more')await clickIfVisible(page,'#mobileMore');
+        else if(name==='mobile-explore')await clickIfVisible(page,'#mobileExplore');
+        else if(name==='mobile-dock-expand')await clickIfVisible(page,'#mobileDockExpand');
+      }
+    }catch(e){errors.push({profile:ctx.surface.id,zoom:ctx.zoom,case:name,error:String(e)});}
+  }
+}
+try{
+  for(const surface of surfaces){
+    for(const zoom of zooms){
+      const context=await browser.newContext({viewport:surface.viewport,isMobile:surface.mobile,hasTouch:surface.mobile,deviceScaleFactor:1, reducedMotion:'reduce'});
+      const page=await context.newPage();
+      page.on('pageerror',e=>errors.push({profile:surface.id,zoom,case:'pageerror',error:String(e)}));
+      try{
+        await page.goto(baseURL,{waitUntil:'domcontentloaded'});
+        await page.evaluate(({zoom,fixedSeed})=>{
+          localStorage.clear();
+          document.documentElement.style.zoom=(zoom/100).toString();
+          const seed=document.querySelector('#seedInput');
+          if(seed){seed.value=fixedSeed;seed.dispatchEvent(new Event('change',{bubbles:true}));}
+        },{zoom,fixedSeed});
+        await settle(page);
+        await exercise(page,{surface,zoom});
+      }catch(e){errors.push({profile:surface.id,zoom,case:'fatal',error:String(e)});}
+      finally{await context.close();}
+    }
+  }
+}finally{await browser.close();}
+await mkdir(out,{recursive:true});
+await writeFile(join(out,'manifest.json'),JSON.stringify({created:new Date().toISOString(),baseURL,zoomMethod:'CSS root zoom; viewport held fixed',cases,errors},null,2));
+const byKind=Object.groupBy?Object.groupBy(cases,x=>x.kind):{};
+const report=['# ROYGBIV UI screenshot atlas','','Profiles: desktop 1440×900, mobile 412×892. Zoom: 100%, 75%, 66%, 50%.','','Screenshots: '+cases.length,'Recorded traversal failures: '+errors.length,'','The manifest lists every attempted screenshot, active overlays and navigation context. Static wallpaper artwork is deliberately unchanged across cases.','','## Coverage by kind',...Object.entries(byKind).map(([k,v])=>'- '+k+': '+v.length),'','## Missing/unreachable states',...errors.map(x=>'- '+JSON.stringify(x)),''];
+await writeFile(join(out,'README.md'),report.join('\n'));
+console.log('UI atlas:',cases.length,'captures,',errors.length,'failures. Output:',out);
+if(errors.length)process.exitCode=1;
