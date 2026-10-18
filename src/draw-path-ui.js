@@ -95,6 +95,7 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
     cornerButton.textContent=available&&editor.corners.has(editor.selected)?'Make smooth':'Make corner';
     reSmooth.disabled=!available;
     pointUndo.disabled=history.length===0;
+    pointUndo.parentElement.hidden=!editing;
     smooth.disabled=geometric.disabled=editing;
     apply.disabled=(editing?editor?.points.length:ready.length)<2;
   }
@@ -153,6 +154,7 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
       editor=createPointEditor(existing,pins,corners);
       if(!editor)return;
       ready=editor.points.slice();editing=true;adding=false;history=[];
+      overlay.focus({preventScroll:true});
       hint.textContent='Drag squares or tangent handles. Add a point if needed.';
     }else{
       ready=editor.points.map(p=>p.slice());
@@ -334,7 +336,7 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
   document.addEventListener('keydown',event=>{
     if(!active)return;
     if(event.key==='Escape'){event.preventDefault();stop();return;}
-    if(!editing)return;
+    if(!editing||event.target?.closest?.('input,select,textarea'))return;
     if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='z'){
       event.preventDefault();pointUndo.click();return;
     }
