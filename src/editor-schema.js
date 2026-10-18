@@ -20,23 +20,23 @@ export const EDITOR_CATEGORIES=[
     {id:'shape-details',name:'Shape detail',settings:['stepCount','chevronSharpness','loopAspect']},
     {id:'ends',name:'Endpoints',settings:['pathLength','endTaper']},
   ]},
-  {id:'stripes',label:'Stripes',icon:'≋',tools:[
+  {id:'stripes',label:'Shapes',icon:'≋',tools:[
     {id:'structure',name:'Structure',settings:['construction','stripeWidth','spread']},
-    {id:'outlines',name:'Outlines',settings:['outline','gap','outlineBuffer']},
-    {id:'dividers',name:'Dividers',settings:['dividerColor','dividerWidth']},
     {id:'patterns',name:'Patterns',settings:['motif','lineStyle','patternHomogeneity']},
     {id:'marks',name:'Marks',settings:['dotSize','dotSpacing']},
     {id:'motif-scale',name:'Motif scale',settings:['motifSize','motifFrequency']},
     {id:'tone',name:'Band tones',settings:['tonalContrast']},
     {id:'character',name:'Character',settings:['individuality','overridePatternHomogeneity']},
-    {id:'shadows',name:'Shadows',settings:['stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection']},
-    {id:'glow',name:'Glow',settings:['glow']},
   ]},
   {id:'details',label:'Details',icon:'✧',tools:[
     {id:'interior',name:'Elements',settings:[]},
     {id:'interior-style',name:'Element style',settings:[]},
     {id:'interior-motion',name:'Element motion',settings:[]},
     {id:'interior-placement',name:'Placement',settings:[]},
+    {id:'outlines',name:'Outlines',settings:['outline','gap','outlineBuffer']},
+    {id:'dividers',name:'Dividers',settings:['dividerColor','dividerWidth']},
+    {id:'shadows',name:'Shadows',settings:['stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection']},
+    {id:'glow',name:'Glow',settings:['glow']},
   ]},
   {id:'colour',label:'Colour',icon:'◐',tools:[
     {id:'rainbow',name:'Rainbow',settings:['palette','reverseStripes']},
