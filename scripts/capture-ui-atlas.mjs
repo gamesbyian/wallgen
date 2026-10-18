@@ -181,7 +181,6 @@ async function exercise(page,ctx){
   await captureSpecialStates({page,ctx,capture,navigate,change,settle,clickIfVisible,errors});
   // Shell states and special tools: do not upload/download or alter assets.
   for(const [name,selector] of [
-    ['editor-search','.editor-search-toggle'],
     ['primes-only','[name=primesOnly]'],
     ['draw-path','#drawPathToggle'],
     ['metadata','#metadataToggle'],
