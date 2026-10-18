@@ -97,7 +97,10 @@ try{
     const stats={...session.stats};
     // Modifying pixels on the SAME mask canvas must invalidate GPU input.
     const maskContext=mask.getContext('2d');
+    maskContext.save();
+    maskContext.setTransform(1,0,0,1,0,0);
     maskContext.clearRect(0,0,width,height);
+    maskContext.restore();
     const reupload=session.setMask(mask);
     if(!reupload.supported)throw Error('Mask reupload: '+reupload.reason);
     const repaint=session.render({id:'retry',enabled:true,type:'line',
