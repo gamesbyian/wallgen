@@ -553,6 +553,20 @@ try{
   assert.ok(strokeAssist.result>20&&strokeAssist.axisError<.00002,
     'the live browser 10× implementation must recover a perfectly level stroke');
   console.log('TEN_X_DRAWING_ASSIST',JSON.stringify(strokeAssist));
+  // Moving a setting between tools must move the original working control,
+  // not a decorative duplicate that loses recipe, lock or disabled state.
+  const constraintsPlacement=await evaluate(`(()=>{
+    const select=document.querySelector('[name=crossingMode]');
+    const coherence=document.querySelector('[name=geometrySafety]');
+    const card=select?.closest('.editor-tool-card');
+    return {category:card?.dataset.category,tool:card?.dataset.editorTool,
+      sameCard:card===coherence?.closest('.editor-tool-card'),
+      hasStatus:!!card?.querySelector('#geometrySafetyStatus'),
+      hasOldTool:!!document.querySelector('[data-editor-tool=crossings]'),
+      choices:[...select.options].filter(o=>!o.dataset.inactivePlaceholder).map(o=>o.value)};
+  })()`);
+  assert.deepEqual(constraintsPlacement,{category:'path',tool:'safety',
+    sameCard:true,hasStatus:true,hasOldTool:false,choices:['over','under','weave']});
   // Browser renders must show three materially different occlusion choices,
   // for a loop and for a hand-drawn crossing. This uses the production canvas
   // renderer, not a mock algorithm or a test-only drawing shortcut.
