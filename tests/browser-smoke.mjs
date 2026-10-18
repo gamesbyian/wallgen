@@ -318,6 +318,10 @@ try{
     const scene=await evaluate('(async()=>{const {resolveScene}=await import("/src/model.js");const r=JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r")));const s=resolveScene(r);return {kinds:[...new Set(s.objects.map(x=>x.kind))],colors:[...new Set(s.objects.map(x=>x.colorIndex))]}})()');
     assert.deepEqual(scene.kinds,['region']);
     assert.deepEqual(scene.colors,[0,1,2,3,4,5,6]);
+    const badCards=await evaluate('(()=>{const bad=[];for(const tab of document.querySelectorAll(".settings-tab")){tab.click();for(const chip of document.querySelectorAll(".editor-tool-tab:not([hidden])")){chip.click();const card=document.querySelector(".editor-tool-card:not([hidden])"),rect=card.getBoundingClientRect();for(const el of card.querySelectorAll("input:not([type=hidden]),select")){if(!el.getClientRects().length||el.closest("[hidden]"))continue;const r=el.getBoundingClientRect();if(r.top<rect.top-3||r.bottom>rect.bottom+3||r.left<rect.left-3||r.right>rect.right+3)bad.push({tool:chip.dataset.editorTool,field:el.name})}}}return bad})()');
+    console.log('NEW_STRUCTURE_CARD_FIT',structure,JSON.stringify(badCards));
+    assert.deepEqual(badCards,[],'all '+structure+' controls fit without scrolling');
+    await evaluate('document.getElementById("tab-path").click()');
   }
   await evaluate('document.querySelector("[data-editor-tool=regions]").click()');
   await evaluate('(()=>{const f=document.querySelector("[name=regionMode]");f.value="nested";f.dispatchEvent(new Event("change",{bubbles:true}))})()');
