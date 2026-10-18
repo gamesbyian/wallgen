@@ -1,3 +1,4 @@
+import {polygonInsetContours,polygonInsetScale} from './polygon-inset.js';
 // Shared, resolution-independent interior decoration contract for every scene object.
 // The geometry adapters choose a natural local coordinate system; ink is clipped
 // to the owner shape and never creates an additional rainbow pigment.
@@ -59,7 +60,7 @@ export function lineDash(ctx,e){
 }
 // For arbitrary closed regions, field strokes are painted in canvas space.
 // Their visibility is governed exclusively by the owner's exact shape mask.
-export function drawRegionInteriors(ctx,object,elements,structure){
+export function drawRegionInteriors(ctx,object,elements,structure,renderBounds){
   if(!elements?.length||!object.vertices?.length)return;
   const xs=object.vertices.map(p=>p.x),ys=object.vertices.map(p=>p.y);
   const x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys);
@@ -78,14 +79,21 @@ export function drawRegionInteriors(ctx,object,elements,structure){
     lineDash(ctx,e);ctx.lineJoin='round';
     if(e.placement==='contour'){
       const count=structure==='radial'?3:2;
+      const scale=polygonInsetScale(object.vertices);
       for(let layer=0;layer<count;layer++){
-        const inset=.08+layer*.13+e.position*.08;
-        ctx.beginPath();
-        for(let i=0;i<object.vertices.length;i++){
-          const p=object.vertices[i],x=p.x+(cx-p.x)*inset,y=p.y+(cy-p.y)*inset;
-          if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+        // A Euclidean offset in logical design units. Multiple disconnected
+        // contours are possible when thin bridges disappear during erosion.
+        const distance=scale*(.10+layer*.16+e.position*.09);
+        const contours=polygonInsetContours(object.vertices,distance,
+          {bounds:renderBounds,padding:Math.max(18,ctx.lineWidth+12)});
+        for(const contour of contours){
+          ctx.beginPath();
+          contour.points.forEach((p,i)=>{
+            if(i===0)ctx.moveTo(p.x,p.y);else ctx.lineTo(p.x,p.y);
+          });
+          if(contour.closed)ctx.closePath();
+          ctx.stroke();
         }
-        ctx.closePath();ctx.stroke();
       }
     }else{
       // All field patterns have stable world-space phase across neighbouring
