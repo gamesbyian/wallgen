@@ -27,7 +27,8 @@ export function normalizeInteriorElements(input){
       customColor:/^#[0-9a-f]{6}$/i.test(e.customColor)?e.customColor.toLowerCase():'#ffffff',
       colorSlots:Array.isArray(e.colorSlots)?[...new Set(e.colorSlots.filter(x=>Number.isInteger(x)&&x>=0&&x<7))]:[],
       objectIds:Array.isArray(e.objectIds)?[...new Set(e.objectIds.filter(x=>typeof x==='string'&&x.length<100))].slice(0,200):[],
-      width:number(e.width,1.5,.15,50),
+      // Lines use logical design pixels; tonal bands use percent of local shape width.
+      width:number(e.width,e.type==='band'?22:1.5,.15,50),
       position:number(e.position,0,-.48,.48),
       amplitude:number(e.amplitude,.12,0,.45),
       frequency:number(e.frequency,6,.1,100),
@@ -73,7 +74,7 @@ export function drawRegionInteriors(ctx,object,elements,structure){
   for(const e of elements){
     if(!e.enabled||!e.opacity||!elementApplies(e,object.colorIndex,object.id))continue;
     ctx.save();ctx.strokeStyle=elementInk(e,object.color);
-    ctx.globalAlpha=e.opacity;ctx.lineWidth=e.width;
+    ctx.globalAlpha=e.opacity;ctx.lineWidth=e.type==='band'?e.width/100*Math.min(80,Math.max(2,Math.min(x1-x0,y1-y0))):e.width;
     lineDash(ctx,e);ctx.lineJoin='round';
     if(e.placement==='contour'){
       const count=structure==='radial'?3:2;
