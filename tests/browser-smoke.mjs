@@ -96,8 +96,8 @@ try{
   await evaluate('document.getElementById("mobileEdit").click()');
   await waitFor('document.body.classList.contains("mobile-edit-open")');
   const guide=await evaluate(`(()=>{
-    const btn=document.getElementById('mobileBleed'),frame=document.querySelector('.wallpaper-frame');
-    const f=frame.getBoundingClientRect();
+    const btn=document.getElementById('mobileBleed'),canvas=document.getElementById('preview');
+    const f=canvas.getBoundingClientRect();
     const before=document.getElementById('preview').toDataURL();
     btn.click();
     const g=document.getElementById('bleedGuide').getBoundingClientRect();
