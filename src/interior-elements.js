@@ -72,6 +72,10 @@ export function drawRegionInteriors(ctx,object,elements,structure,renderBounds){
   ctx.save();ctx.beginPath();ctx.moveTo(object.vertices[0].x,object.vertices[0].y);
   for(const p of object.vertices.slice(1))ctx.lineTo(p.x,p.y);
   ctx.closePath();ctx.clip();
+  // A stack of strokes can share the same geometric insets. Resolve each
+  // distance only once per object and render, independent of ink/stroke style.
+  const insetCache=new Map();
+  let insetScale;
   for(const e of elements){
     if(!e.enabled||!e.opacity||!elementApplies(e,object.colorIndex,object.id))continue;
     ctx.save();ctx.strokeStyle=elementInk(e,object.color);
@@ -79,13 +83,18 @@ export function drawRegionInteriors(ctx,object,elements,structure,renderBounds){
     lineDash(ctx,e);ctx.lineJoin='round';
     if(e.placement==='contour'){
       const count=structure==='radial'?3:2;
-      const scale=polygonInsetScale(object.vertices);
+      const scale=insetScale??(insetScale=polygonInsetScale(object.vertices));
       for(let layer=0;layer<count;layer++){
         // A Euclidean offset in logical design units. Multiple disconnected
         // contours are possible when thin bridges disappear during erosion.
         const distance=scale*(.10+layer*.16+e.position*.09);
-        const contours=polygonInsetContours(object.vertices,distance,
-          {bounds:renderBounds,padding:Math.max(18,ctx.lineWidth+12)});
+        const key=distance.toFixed(8);
+        let contours=insetCache.get(key);
+        if(!contours){
+          contours=polygonInsetContours(object.vertices,distance,
+            {bounds:renderBounds,padding:Math.max(36,ctx.lineWidth+12)});
+          insetCache.set(key,contours);
+        }
         for(const contour of contours){
           ctx.beginPath();
           contour.points.forEach((p,i)=>{
