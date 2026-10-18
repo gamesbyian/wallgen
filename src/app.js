@@ -1,6 +1,6 @@
 import { OUTPUT_WIDTH, OUTPUT_HEIGHT, normalizeRecipe, resolveScene, encodeRecipe, decodeRecipe, newSeed, randomizeAllRecipe, respectSettingLocks, LOCKABLE_SETTINGS } from './model.js';
 import { drawWallpaper, presentNudgedArtwork } from './renderer.js?v=20261018-worker1';
-import {createPreviewCoordinator,exportWallpaperInWorker,closeFrame} from './render-coordinator.js';
+import {createPreviewCoordinator,createThumbnailQueue,exportWallpaperInWorker,closeFrame} from './render-coordinator.js';
 import { embedPngMetadata, extractPngRecipe, cleanMetadata, METADATA_FIELDS } from './png-metadata.js';
 import { installDrawTool } from './draw-path-ui.js?v=20261018-extend1';
 import { installImagePathTool } from './image-path-ui.js?v=20261018-import1';
@@ -904,9 +904,45 @@ function syncInteriorUI(){
   }
 }
 syncInteriorUI();
+// A separate, bounded worker handles thumbnails. Every image is drawn from
+// its saved recipe: asynchronous screen presentation cannot corrupt history.
+// The small reference-renderer fallback is used only on unsupported devices.
+let thumbnailWorker=null;
+function getThumbnailWorker(){
+  if(!thumbnailWorker)thumbnailWorker=createThumbnailQueue();
+  return thumbnailWorker;
+}
+async function drawThumbnail(canvas,recipe,isRelevant=()=>true){
+  const worker=getThumbnailWorker();
+  if(worker.enabled){
+    try{
+      const bitmap=await worker.request(normalizeRecipe(recipe),canvas.width,canvas.height);
+      try{
+        if(isRelevant())canvas.getContext('2d').drawImage(bitmap,0,0);
+      }finally{bitmap.close();}
+      return;
+    }catch(error){console.warn('ROYGBIV thumbnail worker fallback:',error);}
+  }
+  if(isRelevant())drawWallpaper(canvas,recipe);
+}
+async function makeHistoryThumbnail(recipe,width,height){
+  const canvas=document.createElement('canvas');
+  canvas.width=width;canvas.height=height;
+  await drawThumbnail(canvas,recipe);
+  const image=canvas.toDataURL('image/jpeg',.57);
+  canvas.width=canvas.height=0;
+  return image;
+}
+window.addEventListener('pagehide',()=>{
+  previewWorker?.dispose();
+  thumbnailWorker?.dispose();
+  releasePreviewLayers();
+});
+
 const explorationHistory=installExplorationHistory({
   form,preview,getRecipe:()=>current,
   restore:recipe=>changeRecipe(recipe,{bypassLocks:true}),
+  renderThumbnail:makeHistoryThumbnail,
 });
 
 
@@ -1055,7 +1091,10 @@ function createCard(recipe,index) {
   const sub=document.createElement('span');sub.className='thumb-sub';sub.textContent=`${titleCase(scene.materialSummary)} · ${scene.orientation}`;
   card.append(name,sub);
   card.addEventListener('click',()=>changeRecipe(recipe,{scroll:true}));
-  drawWallpaper(canvas,recipe);
+  // Append the card immediately; bitmap rendering happens off the main
+  // thread and updates it only while it is still in the active gallery.
+  drawThumbnail(canvas,recipe,()=>card.isConnected).catch(error=>
+    console.warn('ROYGBIV gallery thumbnail failed:',error));
   return card;
 }
 async function showGallery(recipes,button){
