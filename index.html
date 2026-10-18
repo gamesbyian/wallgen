@@ -22,6 +22,7 @@
   <link rel="stylesheet" href="editor-redesign.css?v=20261018-points1">
   <link rel="stylesheet" href="bleed-and-action-rail.css?v=20261017-b1">
   <link rel="stylesheet" href="detail-controls.css?v=20261018-layout1">
+  <link rel="stylesheet" href="icon-system.css?v=20261018-icons1">
 </head>
 <body>
   <header class="masthead">
@@ -50,11 +51,11 @@
 
       <form id="controls" autocomplete="off">
         <div class="randomize-bar randomize-toolbar">
-          <button id="randomizeAll" class="button button-rainbow button-randomize-all" type="button" aria-label="Randomize settings"><span class="randomize-symbol" aria-hidden="true">✳</span><span>Random</span></button>
+          <button id="randomizeAll" class="button button-rainbow button-randomize-all" type="button" aria-label="Randomize settings"><span class="randomize-symbol" aria-hidden="true"><img class="ui-icon" src="assets/icons/roygbiv/randomize.svg" alt="" aria-hidden="true" draggable="false"></span><span>Random</span></button>
           <label class="prime-toggle" title="Randomized percentages and texture angles will be prime numbers"><input type="checkbox" name="primesOnly" data-setting="primesOnly" aria-describedby="primeModeHint"><span class="toolbar-wording"><span>Primes</span><span>only</span></span></label>
-          <button id="undo" class="button button-outline button-undo" type="button" disabled aria-label="Undo last design change" title="Nothing to undo">↶ <span>Undo</span></button>
-          <button id="drawPathToggle" class="button button-outline draw-path-toggle" type="button" aria-pressed="false" aria-controls="drawPathPanel" aria-label="Draw a custom path on the wallpaper">✎ <span class="toolbar-wording"><span>Draw</span><span>path</span></span></button>
-          <button id="importPathToggle" class="button button-outline import-path-toggle" type="button" aria-label="Extract a path from an image">⇧ <span>Import image</span></button>
+          <button id="undo" class="button button-outline button-undo" type="button" disabled aria-label="Undo last design change" title="Nothing to undo"><img class="ui-icon" src="assets/icons/roygbiv/undo.svg" alt="" aria-hidden="true" draggable="false"> <span>Undo</span></button>
+          <button id="drawPathToggle" class="button button-outline draw-path-toggle" type="button" aria-pressed="false" aria-controls="drawPathPanel" aria-label="Draw a custom path on the wallpaper"><img class="ui-icon" src="assets/icons/roygbiv/draw-path.svg" alt="" aria-hidden="true" draggable="false"> <span class="toolbar-wording"><span>Draw</span><span>path</span></span></button>
+          <button id="importPathToggle" class="button button-outline import-path-toggle" type="button" aria-label="Extract a path from an image"><img class="ui-icon" src="assets/icons/roygbiv/path.svg" alt="" aria-hidden="true" draggable="false"> <span class="toolbar-wording"><span>Import</span><span>image</span></span></button>
           <input id="imagePathFile" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml,.svg" hidden aria-label="Choose an image to extract a path">
         </div>
         <p id="primeModeHint" class="prime-mode-hint" hidden>Prime percentages: 2–97. Prime texture angles: 2–359°. Other setting locks still apply.</p>
@@ -170,7 +171,7 @@
         <label class="field range-field"><span>Divider thickness</span><input type="range" name="dividerWidth" data-setting="dividerWidth" min="0" max="100" value="12"></label>
         <label class="field background-field">Background <select name="background" data-setting="background"><option value="black">Black</option><option value="white">White</option></select></label>
           <div class="lighting-subsection">
-            <div class="lighting-intro"><span class="lighting-icon" aria-hidden="true">☀</span>
+            <div class="lighting-intro"><span class="lighting-icon" aria-hidden="true"><img class="ui-icon" src="assets/icons/roygbiv/lighting.svg" alt="" aria-hidden="true" draggable="false"></span>
               <div><h3>Light &amp; shadow</h3><p>Ambient illumination across the entire canvas, not shadows cast by stripes.</p></div>
             </div>
             <div class="control-grid">
@@ -265,11 +266,11 @@
           <output id="positionStatus" aria-live="polite">Default position</output>
         </div>
         <div class="nudge-pad nudge-pad-inline" role="group" aria-label="Move rainbow artwork">
-          <button type="button" class="nudge-button nudge-up" data-nudge="up" aria-label="Move composition up" title="Move up">↑</button>
-          <button type="button" class="nudge-button nudge-left" data-nudge="left" aria-label="Move composition left" title="Move left">←</button>
-          <button type="button" class="nudge-button nudge-reset" data-nudge="reset" aria-label="Reset composition offset" title="Reset position">⌖</button>
-          <button type="button" class="nudge-button nudge-right" data-nudge="right" aria-label="Move composition right" title="Move right">→</button>
-          <button type="button" class="nudge-button nudge-down" data-nudge="down" aria-label="Move composition down" title="Move down">↓</button>
+          <button type="button" class="nudge-button nudge-up" data-nudge="up" aria-label="Move composition up" title="Move up"><img class="ui-icon" src="assets/icons/roygbiv/arrow-up.svg" alt="" aria-hidden="true" draggable="false"></button>
+          <button type="button" class="nudge-button nudge-left" data-nudge="left" aria-label="Move composition left" title="Move left"><img class="ui-icon" src="assets/icons/roygbiv/arrow-left.svg" alt="" aria-hidden="true" draggable="false"></button>
+          <button type="button" class="nudge-button nudge-reset" data-nudge="reset" aria-label="Reset composition offset" title="Reset position"><img class="ui-icon" src="assets/icons/roygbiv/recenter.svg" alt="" aria-hidden="true" draggable="false"></button>
+          <button type="button" class="nudge-button nudge-right" data-nudge="right" aria-label="Move composition right" title="Move right"><img class="ui-icon" src="assets/icons/roygbiv/arrow-right.svg" alt="" aria-hidden="true" draggable="false"></button>
+          <button type="button" class="nudge-button nudge-down" data-nudge="down" aria-label="Move composition down" title="Move down"><img class="ui-icon" src="assets/icons/roygbiv/arrow-down.svg" alt="" aria-hidden="true" draggable="false"></button>
         </div>
       </div>
       <div class="studio-stage">
@@ -304,10 +305,10 @@
       </div>
       <div class="action-tray">
         <div class="seed-group"><label for="seedInput">DESIGN SEED</label><input id="seedInput" type="text" maxlength="90" spellcheck="false" value="rainbow-001" aria-label="Design seed"><button id="applySeed" class="icon-btn" title="Render this seed" aria-label="Apply seed" type="button">↵</button></div>
-        <div class="main-actions"><button id="randomize" class="button button-outline" type="button">↻ <span>New variation</span></button><button id="download" class="button button-light" type="button">↓ <span>Download PNG</span></button><button id="favorite" class="button button-icon" title="Save to favourites" aria-label="Save to favourites" aria-pressed="false" type="button"><svg class="squat-heart" viewBox="0 0 24 20" width="23" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 18.1 3.4 11.9C-2.6 7.6 2 0.9 7.5 2.3c1.9.5 3.4 1.7 4.5 3.1 1.1-1.4 2.6-2.6 4.5-3.1C22-0.9 26.6 7.6 20.6 11.9Z"/></svg></button></div>
+        <div class="main-actions"><button id="randomize" class="button button-outline" type="button"><img class="ui-icon" src="assets/icons/roygbiv/reroll.svg" alt="" aria-hidden="true" draggable="false"> <span>New variation</span></button><button id="download" class="button button-light" type="button"><img class="ui-icon" src="assets/icons/roygbiv/download.svg" alt="" aria-hidden="true" draggable="false"> <span>Download PNG</span></button><button id="favorite" class="button button-icon" title="Save to favourites" aria-label="Save to favourites" aria-pressed="false" type="button"><img class="ui-icon" src="assets/icons/roygbiv/favourite.svg" alt="" aria-hidden="true" draggable="false"></button></div>
       </div>
       <div class="export-metadata">
-        <button id="importRecipePNG" type="button" class="text-link-button" aria-label="Restore design from saved PNG metadata">↥ Restore design from PNG</button>
+        <button id="importRecipePNG" type="button" class="text-link-button" aria-label="Restore design from saved PNG metadata"><img class="ui-icon" src="assets/icons/roygbiv/path.svg" alt="" aria-hidden="true" draggable="false"> Restore design from PNG</button>
         <input id="importRecipeFile" type="file" accept="image/png,.png" hidden aria-label="Choose a wallpaper PNG to restore its recipe">
         <button id="metadataToggle" type="button" class="text-link-button metadata-toggle"
           aria-expanded="false" aria-controls="metadataPanel">▸ Edit image metadata</button>
@@ -333,32 +334,32 @@
           <p>Writes searchable PNG text fields and compatible EXIF tags. Blank fields are omitted. These details are not added to share links or to the picture itself.</p>
         </div>
       </div>
-      <div class="secondary-actions"><button id="copyLink" type="button">↗ Copy design link</button><button id="copyRecipe" type="button">⎘ Copy recipe JSON</button><button id="downloadRecipe" type="button">↓ Save recipe JSON</button><span id="notice" role="status" aria-live="polite"></span></div>
+      <div class="secondary-actions"><button id="copyLink" type="button">↗ Copy design link</button><button id="copyRecipe" type="button"><img class="ui-icon" src="assets/icons/roygbiv/copy.svg" alt="" aria-hidden="true" draggable="false"> Copy recipe JSON</button><button id="downloadRecipe" type="button"><img class="ui-icon" src="assets/icons/roygbiv/download.svg" alt="" aria-hidden="true" draggable="false"> Save recipe JSON</button><span id="notice" role="status" aria-live="polite"></span></div>
       <div class="details-bar"><div><span class="details-label">FAMILY</span><strong id="detailFamily">—</strong></div><div><span class="details-label">PATH</span><strong id="detailGeometry">—</strong></div><div><span class="details-label">MATERIAL</span><strong id="detailMaterial">—</strong></div><div><span class="details-label">COLOURS</span><strong>ROYGBIV · 7/7</strong></div></div>
-      <section class="gallery-section" aria-labelledby="galleryTitle"><div class="gallery-head"><div><span class="eyebrow">DISCOVER / 02</span><h2 id="galleryTitle">Explore variations</h2><p>Generate a contact sheet, inspect the possibilities, then open one for full-resolution export.</p></div><div class="gallery-buttons"><button id="batch" class="button button-outline" type="button">✳ Generate 12</button><button id="showFavorites" class="button button-outline" type="button">♡ Favourites <span id="favoriteCount">0</span></button></div></div><div id="gallery" class="gallery-grid" aria-live="polite"><div class="gallery-placeholder">A blank contact sheet is an invitation.<br><span>Generate twelve different directions.</span></div></div></section>
+      <section class="gallery-section" aria-labelledby="galleryTitle"><div class="gallery-head"><div><span class="eyebrow">DISCOVER / 02</span><h2 id="galleryTitle">Explore variations</h2><p>Generate a contact sheet, inspect the possibilities, then open one for full-resolution export.</p></div><div class="gallery-buttons"><button id="batch" class="button button-outline" type="button"><img class="ui-icon" src="assets/icons/roygbiv/randomize.svg" alt="" aria-hidden="true" draggable="false"> Generate 12</button><button id="showFavorites" class="button button-outline" type="button"><img class="ui-icon" src="assets/icons/roygbiv/favourite.svg" alt="" aria-hidden="true" draggable="false"> Favourites <span id="favoriteCount">0</span></button></div></div><div id="gallery" class="gallery-grid" aria-live="polite"><div class="gallery-placeholder">A blank contact sheet is an invitation.<br><span>Generate twelve different directions.</span></div></div></section>
     </main>
     <footer><span>R.O.Y.G.B.I.V. / V1.0</span><span>Generative. Deterministic. Made of light.</span><span>BLACK × ROYGBIV</span></footer>
   </div>
   <div id="mobileSheetBackdrop" class="mobile-sheet-backdrop" hidden></div>
   <section id="mobileToolsSheet" class="mobile-utility-sheet" aria-label="More design tools" hidden>
-    <div class="mobile-sheet-head"><strong>More tools</strong><button type="button" id="mobileToolsClose" aria-label="Close tools">✕</button></div>
+    <div class="mobile-sheet-head"><strong>More tools</strong><button type="button" id="mobileToolsClose" aria-label="Close tools"><img class="ui-icon" src="assets/icons/roygbiv/close.svg" alt="" aria-hidden="true" draggable="false"></button></div>
     <div class="mobile-tools-content" id="mobileToolsContent"></div>
   </section>
   <nav class="mobile-dock" id="mobileActionDock" aria-label="Quick wallpaper actions">
-    <button type="button" id="mobileEdit" aria-controls="mobileDesignSheet" aria-expanded="false"><span aria-hidden="true"><svg class="dock-pencil" viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="m4 17-.8 3.8L7 20l12.4-12.4a2.2 2.2 0 0 0-3.1-3.1Z"/><path d="m14.8 6 3.2 3.2"/></svg></span><small>Edit</small></button>
-    <button type="button" id="mobileExplore" aria-controls="gallery" aria-expanded="false"><span aria-hidden="true">▦</span><small>Explore</small></button>
-    <button type="button" id="mobileShuffle" class="mobile-dock-featured" aria-label="Randomize all settings"><span aria-hidden="true">✳</span><small>Randomize</small></button>
-    <button type="button" id="mobileFavorite" aria-label="Save or remove favourite"><span aria-hidden="true"><svg class="squat-heart" viewBox="0 0 24 20" width="23" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 18.1 3.4 11.9C-2.6 7.6 2 0.9 7.5 2.3c1.9.5 3.4 1.7 4.5 3.1 1.1-1.4 2.6-2.6 4.5-3.1C22-0.9 26.6 7.6 20.6 11.9Z"/></svg></span><small>Favourite</small></button>
-    <button type="button" id="mobileDownload" aria-label="Download wallpaper PNG"><span aria-hidden="true">↓</span><small>Download</small></button>
-    <button type="button" id="mobileMore" aria-controls="mobileToolsSheet" aria-expanded="false"><span aria-hidden="true">⋯</span><small>More</small></button>
+    <button type="button" id="mobileEdit" aria-controls="mobileDesignSheet" aria-expanded="false"><span aria-hidden="true"><img class="ui-icon" src="assets/icons/roygbiv/edit.svg" alt="" aria-hidden="true" draggable="false"></span><small>Edit</small></button>
+    <button type="button" id="mobileExplore" aria-controls="gallery" aria-expanded="false"><span aria-hidden="true"><img class="ui-icon" src="assets/icons/roygbiv/explore.svg" alt="" aria-hidden="true" draggable="false"></span><small>Explore</small></button>
+    <button type="button" id="mobileShuffle" class="mobile-dock-featured" aria-label="Randomize all settings"><span aria-hidden="true"><img class="ui-icon" src="assets/icons/roygbiv/randomize.svg" alt="" aria-hidden="true" draggable="false"></span><small>Randomize</small></button>
+    <button type="button" id="mobileFavorite" aria-label="Save or remove favourite"><span aria-hidden="true"><img class="ui-icon" src="assets/icons/roygbiv/favourite.svg" alt="" aria-hidden="true" draggable="false"></span><small>Favourite</small></button>
+    <button type="button" id="mobileDownload" aria-label="Download wallpaper PNG"><span aria-hidden="true"><img class="ui-icon" src="assets/icons/roygbiv/download.svg" alt="" aria-hidden="true" draggable="false"></span><small>Download</small></button>
+    <button type="button" id="mobileMore" aria-controls="mobileToolsSheet" aria-expanded="false"><span aria-hidden="true"><img class="ui-icon" src="assets/icons/roygbiv/more.svg" alt="" aria-hidden="true" draggable="false"></span><small>More</small></button>
   </nav>
   <nav id="mobileEditorActionRail" class="mobile-editor-action-rail" aria-label="Quick actions while editing">
-    <button type="button" data-dock-proxy="mobileEdit" aria-label="Close editor" title="Close editor"><span aria-hidden="true">‹</span><small>Edit</small></button>
-    <button type="button" data-dock-proxy="mobileExplore" aria-label="Explore wallpapers" title="Explore"><span aria-hidden="true">▦</span><small>Explore</small></button>
-    <button type="button" data-dock-proxy="mobileShuffle" aria-label="Randomize all settings" title="Randomize"><span aria-hidden="true">✳</span><small>Random</small></button>
-    <button type="button" data-dock-proxy="mobileFavorite" aria-label="Save or remove favourite" title="Favourite"><span aria-hidden="true">♡</span><small>Favourite</small></button>
-    <button type="button" data-dock-proxy="mobileDownload" aria-label="Download PNG" title="Download"><span aria-hidden="true">↓</span><small>Save</small></button>
-    <button type="button" data-dock-proxy="mobileMore" aria-label="More tools" title="More tools"><span aria-hidden="true">⋯</span><small>More</small></button>
+    <button type="button" data-dock-proxy="mobileEdit" aria-label="Close editor" title="Close editor"><span aria-hidden="true"><img class="ui-icon" src="assets/icons/roygbiv/chevron-left.svg" alt="" aria-hidden="true" draggable="false"></span><small>Edit</small></button>
+    <button type="button" data-dock-proxy="mobileExplore" aria-label="Explore wallpapers" title="Explore"><span aria-hidden="true"><img class="ui-icon" src="assets/icons/roygbiv/explore.svg" alt="" aria-hidden="true" draggable="false"></span><small>Explore</small></button>
+    <button type="button" data-dock-proxy="mobileShuffle" aria-label="Randomize all settings" title="Randomize"><span aria-hidden="true"><img class="ui-icon" src="assets/icons/roygbiv/randomize.svg" alt="" aria-hidden="true" draggable="false"></span><small>Random</small></button>
+    <button type="button" data-dock-proxy="mobileFavorite" aria-label="Save or remove favourite" title="Favourite"><span aria-hidden="true"><img class="ui-icon" src="assets/icons/roygbiv/favourite.svg" alt="" aria-hidden="true" draggable="false"></span><small>Favourite</small></button>
+    <button type="button" data-dock-proxy="mobileDownload" aria-label="Download PNG" title="Download"><span aria-hidden="true"><img class="ui-icon" src="assets/icons/roygbiv/download.svg" alt="" aria-hidden="true" draggable="false"></span><small>Save</small></button>
+    <button type="button" data-dock-proxy="mobileMore" aria-label="More tools" title="More tools"><span aria-hidden="true"><img class="ui-icon" src="assets/icons/roygbiv/more.svg" alt="" aria-hidden="true" draggable="false"></span><small>More</small></button>
   </nav>
   <button type="button" id="mobileDockExpand" class="mobile-dock-expand"
     aria-label="Expand bottom toolbar" aria-controls="mobileActionDock" aria-expanded="false"
@@ -368,7 +369,7 @@
       aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>
   </button>
   <dialog id="imagePathDialog" class="image-path-dialog" aria-label="Extract a path from an image">
-    <div class="image-path-top"><strong>Import path from image</strong><button type="button" id="imagePathCancel" aria-label="Close image importer">✕</button></div>
+    <div class="image-path-top"><strong>Import path from image</strong><button type="button" id="imagePathCancel" aria-label="Close image importer"><img class="ui-icon" src="assets/icons/roygbiv/close.svg" alt="" aria-hidden="true" draggable="false"></button></div>
     <p id="imagePathStatus" role="status" aria-live="polite">Choose a path from the image.</p>
     <div class="image-path-preview"><canvas id="imagePathCanvas" width="600" height="1300" aria-label="Image with selectable extracted paths"></canvas></div>
     <label class="image-path-choice">Detected geometry
