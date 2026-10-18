@@ -93,7 +93,8 @@ function toControls(recipe) {
   syncEditorStructure(current.structure,current.regionMode);
   const effective=document.getElementById('geometrySafetyStatus');
   if(effective){
-    if(!current.geometrySafety)effective.textContent='Unrestricted: intersections, overlaps and cropping permitted';
+    if(current.structure!=='paths')effective.textContent='Closed regions use connected polygon boundaries';
+    else if(!current.geometrySafety)effective.textContent='Unrestricted: intersections, overlaps and cropping permitted';
     else if(['loops','loop','hairpin','drawn'].includes(current.geometry)){
       const safe=resolveScene(current);
       const free=resolveScene({...current,geometrySafety:false});
