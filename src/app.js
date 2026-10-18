@@ -15,6 +15,7 @@ const preview = document.getElementById('preview');
 const seedInput = document.getElementById('seedInput');
 const gallery = document.getElementById('gallery');
 const notice = document.getElementById('notice');
+const studioStatus = document.getElementById('studioStatus');
 const favoriteButton = document.getElementById('favorite');
 const FAVORITES_KEY = 'wallgen:favorites:v1';
 const FIELDS = ['primesOnly','family','structure','radialMode','rayCount','rayRotation','rayTwist','rayCoverage','rayCore','fieldCenterX','fieldCenterY','regionMode','regionCount','regionJitter','regionSides','dividerColor','dividerWidth','composition','repeatCount','repeatSpacing','orientation','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','geometry','turnRadius','hairpinAngle','loopRadius','loopSweep','geometrySafety','extendDrawnPath','crossingMode','stepCount','chevronSharpness','loopAspect','construction','motif','lineStyle','pathLength','tonalContrast','brushRoughness','dotSize','dotSpacing','endTaper','shapeFrequency','shapeDepth','motifSize','motifFrequency','palette','material','outline','background','lightingMood','lightDirection','lightStrength','shadowStrength','stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection','textureCoverage','textureRotation','textureBlend','textureLayer2Enabled','material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2','textureLayer3Enabled','material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3','chaos','stripeWidth','spread','textureStrength','textureScale','textureDisplacement','individuality','patternHomogeneity','overridePatternHomogeneity','gap','outlineBuffer','glow'];
@@ -131,8 +132,18 @@ function sameRecipe(a,b){return JSON.stringify(normalizeRecipe(a))===JSON.string
 function isFavorite(recipe){return favorites.some(item=>sameRecipe(item,recipe));}
 function showNotice(message){
   notice.textContent=message;
+  if(studioStatus){
+    studioStatus.textContent=message;
+    studioStatus.classList.add('is-visible');
+  }
   clearTimeout(noticeTimer);
-  noticeTimer=setTimeout(()=>{if(notice.textContent===message)notice.textContent='';},5500);
+  noticeTimer=setTimeout(()=>{
+    if(notice.textContent===message)notice.textContent='';
+    if(studioStatus?.textContent===message){
+      studioStatus.textContent='';
+      studioStatus.classList.remove('is-visible');
+    }
+  },5500);
 }
 function fromControls() {
   const data={seed:seedInput.value,positionX:current.positionX,positionY:current.positionY,
@@ -528,6 +539,12 @@ metadataToggle.addEventListener('click',()=>{
   metadataPanel.hidden=!open;
   metadataToggle.setAttribute('aria-expanded',String(open));
   metadataToggle.textContent=(open?'▾':'▸')+' Edit image metadata';
+  if(open)requestAnimationFrame(()=>{
+    const tray=document.getElementById('mobileToolsSheet');
+    // The expanded form must be visible within the local More scroller.
+    if(!tray.hidden && window.matchMedia('(max-width:790px)').matches)
+      metadataPanel.querySelector('.metadata-heading')?.scrollIntoView({block:'nearest',behavior:'instant'});
+  });
 });
 metadataPanel.addEventListener('input',syncMetadataStorage);
 rememberMetadata.addEventListener('change',syncMetadataStorage);
@@ -815,7 +832,7 @@ function syncInteriorUI(){
   const range=(card,name,key,min,max,step)=>{
     const field=make(card,'label',name+' '+active[key]);
     const slider=make(field,'input');
-    slider.type='range';slider.min=min;slider.max=max;slider.step=step;slider.value=active[key];
+    slider.type='range';slider.dataset.rainbowKey=key;slider.min=min;slider.max=max;slider.step=step;slider.value=active[key];
     slider.addEventListener('input',()=>{field.firstChild.textContent=name+' '+slider.value;});
     slider.addEventListener('change',()=>update(key,Number(slider.value)));
     return slider;
@@ -844,8 +861,9 @@ function syncInteriorUI(){
     else locks.add('interiorElements');
     changeRecipe({...current,lockedSettings:[...locks]},{bypassLocks:true});
   });
-  const activeRow=make(manager,'label','Enabled');
+  const activeRow=make(manager,'label');activeRow.className='interior-toggle';
   const toggle=make(activeRow,'input');toggle.type='checkbox';toggle.checked=active.enabled;
+  make(activeRow,'span','Enabled');
   toggle.addEventListener('change',()=>update('enabled',toggle.checked));
   const typeField=make(interiorCards['interior-style'],'label','Element');
   const typeSelect=make(typeField,'select');
@@ -858,7 +876,12 @@ function syncInteriorUI(){
   select(interiorCards['interior-targets'],'Ink','color',['white','black','lighter','darker','custom']);
   const customLabel=make(interiorCards['interior-targets'],'label','Custom colour');
   const customPicker=make(customLabel,'input');
+  customLabel.classList.add('interior-colour-picker');
   customPicker.type='color';customPicker.value=active.customColor;customPicker.disabled=active.color!=='custom';
+  customPicker.setAttribute('aria-label','Custom interior ink colour');
+  const hexValue=make(customLabel,'output',String(customPicker.value).toUpperCase());
+  hexValue.className='colour-hex-value';
+  customPicker.addEventListener('input',()=>{hexValue.textContent=customPicker.value.toUpperCase();});
   customPicker.addEventListener('change',()=>update('customColor',customPicker.value));
   const amplitude=range(interiorCards['interior-motion'],'Amplitude',
     'amplitude',0,.45,.01);
@@ -892,9 +915,14 @@ function syncInteriorUI(){
   const targetBox=make(interiorCards['interior-targets'],'div');targetBox.className='interior-targets';
   const names=['R','O','Y','G','B','I','V'];
   names.forEach((name,i)=>{
-    const label=make(targetBox,'label',name);label.title=['Red','Orange','Yellow','Green','Blue','Indigo','Violet'][i];
+    const label=make(targetBox,'label');label.className='interior-colour-chip';
+    const fullName=['Red','Orange','Yellow','Green','Blue','Indigo','Violet'][i];
+    label.title=fullName;
+    label.setAttribute('aria-label',fullName+' colour target');
     const checkbox=make(label,'input');checkbox.type='checkbox';
+    checkbox.setAttribute('aria-label',fullName+' colour target');
     checkbox.checked=!active.colorSlots.length||active.colorSlots.includes(i);
+    make(label,'span',name);
     checkbox.addEventListener('change',()=>{
       const base=active.colorSlots.length?active.colorSlots:[0,1,2,3,4,5,6];
       const next=checkbox.checked?[...new Set([...base,i])]:base.filter(x=>x!==i);

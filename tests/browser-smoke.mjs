@@ -87,6 +87,51 @@ try{
   await waitFor('document.readyState==="complete"&&document.body.classList.contains("mobile-studio")');
   await waitFor('document.querySelectorAll(".settings-tab").length===7',15000);
   await delay(300);
+  const atlasUI=await evaluate(`(()=>{
+    const cream=document.querySelector('[data-studio-theme=cream]');
+    const dark=document.querySelector('[data-studio-theme=dark]');
+    dark.click();
+    const darkSelected=document.documentElement.dataset.theme==='dark'&&
+      dark.getAttribute('aria-pressed')==='true';
+    cream.click();
+    const creamSelected=document.documentElement.dataset.theme==='cream'&&
+      cream.getAttribute('aria-pressed')==='true';
+    const colours=[];
+    for(const card of document.querySelectorAll('.editor-tool-card')){
+      const bars=[...card.querySelectorAll('input[type=range]')];
+      if(!bars.length)continue;
+      const assigned=bars.map(e=>e.style.getPropertyValue('--roygbiv-slider-color'));
+      colours.push({tool:card.dataset.editorTool,count:assigned.length,assigned,
+        distinct:new Set(assigned).size===assigned.length});
+    }
+    const searchToggle=document.querySelector('.editor-search-toggle[aria-label="Find a setting"]');
+    searchToggle.click();
+    const input=document.querySelector('.editor-search-input');
+    input.value='shadow';input.dispatchEvent(new Event('input',{bubbles:true}));
+    const selected=document.querySelector('.editor-tool-tab[aria-pressed=true]');
+    const rail=document.querySelector('.editor-tool-chooser').getBoundingClientRect();
+    const chip=selected.getBoundingClientRect();
+    const searchVisible=selected.dataset.editorTool==='shadows' &&
+      chip.left>=rail.left-3&&chip.right<=rail.right+3;
+    const close=document.querySelector('.editor-search-close');
+    const closeVisible=close.getBoundingClientRect().width>15 && !close.hidden;
+    close.click();
+    const searchClosed=input.hidden&&close.hidden;
+    document.getElementById('tab-layout').click();
+    const history=document.getElementById('editorHistoryToggle');
+    history.click();
+    const historyOpen=!document.getElementById('editorHistory').hidden;
+    document.querySelector('.editor-history-close').click();
+    const historyClosed=document.getElementById('editorHistory').hidden;
+    return {darkSelected,creamSelected,searchVisible,closeVisible,searchClosed,
+      historyOpen,historyClosed,colourPanels:colours.length,
+      duplicatePanels:colours.filter(x=>!x.distinct)};
+  })()`);
+  console.log('UI_ATLAS_REGRESSION',JSON.stringify(atlasUI));
+  for(const key of ['darkSelected','creamSelected','searchVisible','closeVisible',
+    'searchClosed','historyOpen','historyClosed'])assert.ok(atlasUI[key],key);
+  assert.ok(atlasUI.colourPanels>=6,'multiple tool panels have rainbow sliders');
+  assert.deepEqual(atlasUI.duplicatePanels,[],'a panel must never repeat a slider colour');
 
   // Native worker/DOM pixel parity. The worker paints the full production
   // scene; presentation reuses the same cached ink/background compositor as
@@ -775,6 +820,34 @@ try{
       }
       return problems;
     })()`);
+    if(noClippedTools.length){
+      const diagnostic=await evaluate(`(()=>{
+        const result=[];
+        for(const tool of ['finish1','finish2','finish3']){
+          document.getElementById('tab-material').click();
+          document.querySelector('[data-editor-tool='+tool+'].editor-tool-tab').click();
+          const card=document.querySelector('.editor-tool-card:not([hidden])');
+          const cb=card.getBoundingClientRect();
+          const controls=card.querySelector('.rotation-controls');
+          const field=controls.closest('.texture-rotation-field');
+          result.push({tool,diagnostic:true,controls:controls.getBoundingClientRect().toJSON(),row:field.getBoundingClientRect().toJSON(),
+            style:{columns:getComputedStyle(field).gridTemplateColumns,
+              controlsGrid:getComputedStyle(controls).gridColumn,
+              justify:getComputedStyle(controls).justifyContent,
+              controlsWidth:getComputedStyle(controls).width,
+              firstChild:controls.firstElementChild.getBoundingClientRect().toJSON(),
+              number:controls.querySelector('input').getBoundingClientRect().toJSON()}});
+          for(const el of card.querySelectorAll('.rotation-controls button')){
+            const b=el.getBoundingClientRect();
+            result.push({tool,text:el.textContent,card:[cb.left,cb.top,cb.right,cb.bottom],
+              rect:[b.left,b.top,b.right,b.bottom],
+              row:el.closest('.texture-rotation-field').getBoundingClientRect().toJSON()});
+          }
+        }
+        return result;
+      })()`);
+      console.log('ROTATION_FIT_DIAG',JSON.stringify(diagnostic));
+    }
     assert.deepEqual(noClippedTools,[],
       'no tool may clip any control at '+name);
     const railPosition=await evaluate(`(()=>{

@@ -1,20 +1,22 @@
 import {setIconSource} from './ui-icons.js';
+import {installRainbowSliders} from './rainbow-sliders.js';
+installRainbowSliders();
 // This module changes the studio interface only. Wallpaper recipes, saved favourites,
 // and the original dark CSS remain untouched and theme-independent.
 const THEME_KEY='roygbiv:studio-theme:v1';
-const select=document.getElementById('studioTheme');
+const themeButtons=[...document.querySelectorAll('[data-studio-theme]')];
 const meta=document.querySelector('meta[name="theme-color"]');
 function setTheme(name){
   const theme=name==='cream'?'cream':'dark';
   document.documentElement.dataset.theme=theme;
-  select.value=theme;
+  for(const button of themeButtons)button.setAttribute('aria-pressed',String(button.dataset.studioTheme===theme));
   if(meta)meta.content=theme==='cream'?'#f8f3e9':'#08090e';
   try{localStorage.setItem(THEME_KEY,theme);}catch{}
 }
 let remembered='cream';
 try{remembered=localStorage.getItem(THEME_KEY)||'cream';}catch{}
 setTheme(remembered);
-select.addEventListener('change',()=>setTheme(select.value));
+for(const button of themeButtons)button.addEventListener('click',()=>setTheme(button.dataset.studioTheme));
 
 const mobile=window.matchMedia('(max-width:790px)');
 const design=document.getElementById('mobileDesignSheet');
@@ -75,6 +77,20 @@ function closeSurfaces({restoreFocus=true}={}){
   moreBtn.setAttribute('aria-expanded','false');
   if(wasOpen&&restoreFocus&&lastFocus?.isConnected)lastFocus.focus();
 }
+function updateEditorDensity(){
+  if(!mobile.matches||!document.body.classList.contains('mobile-edit-open')||innerHeight<740){
+    document.body.classList.remove('mobile-edit-compact');return;
+  }
+  const card=document.querySelector('.editor-tool-card:not([hidden])');
+  if(!card)return;
+  // Only on navigation. Do not resize the preview while a slider changes.
+  const children=[...card.children].filter(el=>!el.hidden &&
+    getComputedStyle(el).display!=='none'&&!el.classList.contains('editor-tool-header'));
+  const short=children.length<=2 &&
+    !card.querySelector('.texture-layer-group,.interior-toolbar,.control-grid,.lighting-subsection');
+  document.body.classList.toggle('mobile-edit-compact',short);
+}
+document.addEventListener('editor-tool-changed',updateEditorDensity);
 function openSurface(type){
   if(!mobile.matches)return;
   const className='mobile-'+type+'-open';
@@ -90,6 +106,7 @@ function openSurface(type){
     dockExpand.setAttribute('aria-expanded','false');
     dock.setAttribute('aria-hidden','true');
     design.setAttribute('role','region');
+    updateEditorDensity();
     // The dock slides off the right edge, leaving only its accessible
     // expand arrow. Focus stays on the on-screen controls, not the hidden dock.
     dismissHandle.focus({preventScroll:true});
