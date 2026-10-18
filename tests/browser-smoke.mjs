@@ -178,7 +178,7 @@ try{
   assert.ok(editor.previewHeight>260,'the complete frame remains appreciable during edits');
   assert.ok(Math.abs(editor.ratio-600/1300)<.06);
   assert.equal(editor.scrollY,'hidden');
-  assert.deepEqual(editor.tabs,['▦ Layout','⌁ Path','≋ Stripes','✧ Details','◐ Colour','▧ Material','✦ Effects']);
+  assert.deepEqual(editor.tabs,['▦ Layout','⌁ Path','≋ Shapes','✧ Details','◐ Colour','▧ Material','✦ Effects']);
   const schema=await evaluate('(async()=>{const m=await import("/src/editor-schema.js");const keys=[...document.querySelectorAll("#controls [data-setting]")].map(x=>x.name).filter(x=>x&&!["family","primesOnly"].includes(x));keys.push("textureLayer2Enabled","textureLayer3Enabled");return {...m.validateEditorSchema([...new Set(keys)]),wizard:m.WIZARD_STEPS,toolCount:m.TOOL_LIST.length}})()');
   console.log('EDITOR_SCHEMA',JSON.stringify(schema));
   assert.deepEqual(schema.missing,[]);
@@ -280,8 +280,8 @@ try{
   await evaluate('document.getElementById("tab-stripes").click()');
   const stripeToolOrder=await evaluate('Array.from(document.querySelectorAll(".editor-tool-tab")).filter(b=>b.dataset.category==="stripes").map(b=>b.dataset.editorTool)');
   assert.deepEqual(stripeToolOrder,[
-    'structure','outlines','dividers','patterns','marks','motif-scale','tone','character','shadows','glow']);
-  await evaluate('document.querySelector("[data-editor-tool=shadows]").click()');
+    'structure','patterns','marks','motif-scale','tone','character']);
+  await evaluate('document.getElementById("tab-details").click();document.querySelector("[data-editor-tool=shadows]").click()');
   const beforeShadow=await evaluate('(()=>{const c=document.querySelector(".editor-tool-card:not([hidden])"),r=c.getBoundingClientRect();return {labels:[...c.querySelectorAll("[name]")].map(n=>n.name),w:r.width,h:r.height,checkbox:!!c.querySelector("[name=stripeShadowEnabled]"),controls:document.getElementById("stripeShadowControls").hidden}})()');
   assert.equal(beforeShadow.checkbox,false);
   assert.equal(beforeShadow.controls,false);
@@ -415,7 +415,7 @@ try{
     console.log('BROWSER_ZOOM_LAYOUT',name,JSON.stringify(bounds));
     await captureUI(name+'-material');
     assert.equal(bounds.navPosition,'static','category navigation must not stick/overlap');
-    assert.equal(bounds.categoryRows,1,'all six categories must occupy one row');
+    assert.equal(bounds.categoryRows,1,'all seven categories must occupy one row');
     assert.ok(bounds.categoryWithin,'category labels must remain inside navigation');
     assert.ok(bounds.categoryBottom<=bounds.toolTop+2,'categories may not cover tool navigation');
     assert.ok(bounds.toolBottom<=bounds.cardTop+2,'tool tabs may not overlap controls');
