@@ -254,6 +254,28 @@ try{
     'randomization may not silently toggle the geometry-safety policy');
   await evaluate('(()=>{const f=document.querySelector("[name=geometrySafety]");f.checked=true;f.dispatchEvent(new Event("change",{bubbles:true}));})()');
   await waitFor('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).geometrySafety===true');
+  // Shadows are now stripe finishing, with zero intensity as the sole Off
+  // control. No checkbox takes a separate mobile row or hides the sliders.
+  await evaluate('document.getElementById("tab-stripes").click()');
+  const stripeToolOrder=await evaluate('Array.from(document.querySelectorAll(".editor-tool-tab")).filter(b=>b.dataset.category==="stripes").map(b=>b.dataset.editorTool)');
+  assert.deepEqual(stripeToolOrder,[
+    'structure','outlines','patterns','marks','motif-scale','tone','character','shadows','glow']);
+  await evaluate('document.querySelector("[data-editor-tool=shadows]").click()');
+  const beforeShadow=await evaluate('(()=>{const c=document.querySelector(".editor-tool-card:not([hidden])"),r=c.getBoundingClientRect();return {labels:[...c.querySelectorAll("[name]")].map(n=>n.name),w:r.width,h:r.height,checkbox:!!c.querySelector("[name=stripeShadowEnabled]"),controls:document.getElementById("stripeShadowControls").hidden}})()');
+  assert.equal(beforeShadow.checkbox,false);
+  assert.equal(beforeShadow.controls,false);
+  assert.ok(beforeShadow.labels.includes('stripeShadowStrength'));
+  await evaluate('(()=>{const input=document.querySelector("[name=stripeShadowStrength]");input.value="0";input.dispatchEvent(new Event("input",{bubbles:true}));input.dispatchEvent(new Event("change",{bubbles:true}));})()');
+  await waitFor('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).stripeShadowStrength===0');
+  const offShadow=await evaluate('(()=>({soft:document.querySelector("[name=stripeShadowSoftness]").disabled,direction:document.querySelector("[name=stripeShadowDirection]").disabled}))()');
+  assert.ok(offShadow.soft&&offShadow.direction,'zero shadow intensity makes subordinate controls dormant');
+  await evaluate('(()=>{const input=document.querySelector("[name=stripeShadowStrength]");input.value="72";input.dispatchEvent(new Event("input",{bubbles:true}));input.dispatchEvent(new Event("change",{bubbles:true}));})()');
+  await waitFor('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).stripeShadowStrength===72');
+  const onShadow=await evaluate('(()=>({soft:document.querySelector("[name=stripeShadowSoftness]").disabled,direction:document.querySelector("[name=stripeShadowDirection]").disabled}))()');
+  assert.ok(!onShadow.soft&&!onShadow.direction,'restoring shadow intensity re-enables softness and direction');
+  await evaluate('document.getElementById("tab-effects").click()');
+  const effectsTools=await evaluate('Array.from(document.querySelectorAll(".editor-tool-tab")).filter(b=>b.dataset.category==="effects").map(b=>b.dataset.editorTool)');
+  assert.deepEqual(effectsTools,['lighting'],'Effects retains only the canvas lighting controls');
   // All six categories and their tool cards must fit without internal
   // scrolling or concealing active controls. This is stronger than merely
   // setting overflow:hidden in CSS.

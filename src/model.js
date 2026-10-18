@@ -16,7 +16,7 @@ export const MATERIALS = ['none', 'grain', 'watercolor', 'construction', 'handma
 export const BLEND_MODES = ['normal', 'multiply', 'screen', 'overlay', 'soft-light', 'difference'];
 export const LIGHTING_MOODS = ['off', 'daylight', 'golden', 'moonlight'];
 export const LIGHT_DIRECTIONS = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
-export const LOCKABLE_SETTINGS = ['seed','family','orientation','geometry','motif','palette','outline','background','lightingMood','lightDirection','lightStrength','shadowStrength','stripeShadowEnabled','stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection',
+export const LOCKABLE_SETTINGS = ['seed','family','orientation','geometry','motif','palette','outline','background','lightingMood','lightDirection','lightStrength','shadowStrength','stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection',
   'material','textureCoverage','textureStrength','textureScale','textureRotation','textureBlend',
   'material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2',
   'material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3',
@@ -116,8 +116,7 @@ export function normalizeRecipe(input = {}) {
     lightStrength: finiteRange(input.lightStrength, 45, 0, 100),
     shadowStrength: finiteRange(input.shadowStrength, 28, 0, 100),
     // Separate opt-in silhouette shadow, independent of ambient canvas lighting.
-    stripeShadowEnabled: input.stripeShadowEnabled === true || input.stripeShadowEnabled === 'true',
-    stripeShadowStrength: finiteRange(input.stripeShadowStrength, 45, 0, 100),
+    stripeShadowStrength: finiteRange(input.stripeShadowStrength, 0, 0, 100),
     stripeShadowSoftness: finiteRange(input.stripeShadowSoftness, 55, 0, 100),
     stripeShadowDirection: LIGHT_DIRECTIONS.includes(input.stripeShadowDirection) ? input.stripeShadowDirection : 'top-left',
     chaos: finiteRange(input.chaos, 36, 0, 100),
@@ -401,7 +400,7 @@ export function randomizeAllRecipe({primesOnly=false}={}) {
     outline:any(OUTLINES), background:any(['black','white']),
     lightingMood:any(LIGHTING_MOODS),lightDirection:any(LIGHT_DIRECTIONS),
     lightStrength:percent(),shadowStrength:percent(),
-    stripeShadowEnabled:r()>.5,stripeShadowDirection:any(LIGHT_DIRECTIONS),
+    stripeShadowDirection:any(LIGHT_DIRECTIONS),
     stripeShadowStrength:percent(),stripeShadowSoftness:percent(),
     chaos:percent(), stripeWidth:percent(), spread:percent(),
     shapeFrequency:percent(),shapeDepth:percent(),motifSize:percent(),motifFrequency:percent(),lineStyle:any(LINE_STYLES),

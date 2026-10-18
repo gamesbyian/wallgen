@@ -270,8 +270,8 @@ test('texture displacement yields visible bounded silhouette movement with and w
   }
 });
 
-test('stripe shadow is separately opt-in with ambient lighting off',()=>{
-  const recipe={seed:'cast-shadow-check',lightingMood:'off',stripeShadowEnabled:true,
+test('stripe shadow strength alone enables casting, independently of ambient light',()=>{
+  const recipe={seed:'cast-shadow-check',lightingMood:'off',
     stripeShadowStrength:76,stripeShadowSoftness:65,stripeShadowDirection:'top-right'};
   calls.length=0;
   const canvas={width:600,height:1300,getContext:()=>new FakeContext('main')};
@@ -281,10 +281,11 @@ test('stripe shadow is separately opt-in with ambient lighting off',()=>{
   assert.ok(shadows[0][2]<0&&shadows[0][3]>0);
   assert.equal(calls.some(c=>c[0]==='ambientGlow'&&c[1]==='main'),false);
   assert.equal(stripeShadowParameters({...recipe,stripeShadowStrength:0}),null);
-  assert.equal(stripeShadowParameters({...recipe,stripeShadowEnabled:false}),null);
+  assert.ok(stripeShadowParameters({...recipe,stripeShadowEnabled:false}),
+    'legacy checkbox cannot override nonzero strength');
 });
 test('stripe shadow softness and export scale change blur, not the original scene',()=>{
-  const base={seed:'shadow-geometry',stripeShadowEnabled:true,stripeShadowStrength:67,
+  const base={seed:'shadow-geometry',stripeShadowStrength:67,
     stripeShadowDirection:'bottom-left'};
   const a=stripeShadowParameters({...base,stripeShadowSoftness:10},1);
   const b=stripeShadowParameters({...base,stripeShadowSoftness:90},1);
@@ -300,7 +301,7 @@ test('stripe shadow softness and export scale change blur, not the original scen
 test('ambient and stripe shadows coexist, and nudge reuses the exact cached ink',()=>{
   const canvas={width:600,height:1300,getContext:()=>new FakeContext('main')};
   const recipe={seed:'both-lighting-modes',lightingMood:'moonlight',lightStrength:60,
-    shadowStrength:75,stripeShadowEnabled:true,stripeShadowStrength:65,
+    shadowStrength:75,stripeShadowStrength:65,
     stripeShadowSoftness:40,stripeShadowDirection:'bottom-right'};
   const cache={};
   drawWallpaper(canvas,recipe,{cache});
