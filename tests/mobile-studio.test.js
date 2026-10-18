@@ -19,7 +19,7 @@ test('Cream Studio defaults on but Original Dark remains selectable and untouche
   assert.match(html,/data-studio-theme="cream"[^>]*aria-label="Cream theme"[^>]*aria-pressed="true"/);
   assert.match(html,/data-studio-theme="dark"[^>]*aria-label="Black theme"[^>]*aria-pressed="false"/);
   assert.match(mobile,/button\.dataset\.studioTheme===theme/);
-  assert.match(read('ui-audit-fixes.css'),/theme-dot-dark::before\{background:#08090e\}/);
+  assert.match(css,/theme-dot-dark::before\{background:#08090e\}/);
   assert.match(html,/localStorage\.getItem\('roygbiv:studio-theme:v1'\) \|\| 'cream'/);
   assert.match(mobile,/setTheme\(remembered\)/);
   assert.match(mobile,/localStorage\.setItem\(THEME_KEY,theme\)/);
