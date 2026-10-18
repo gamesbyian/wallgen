@@ -1,7 +1,7 @@
 import {finishDrawnPath,DRAW_COORD_MIN,DRAW_COORD_MAX} from './drawn-path.js?v=20261018-intent10';
 import {createPointEditor,clonePointEditor,addPointAnchor,deletePointAnchor,
   movePointAnchor,movePointHandle,pointHandles,resmoothPointEdits,
-  savedPointAnchors} from './path-point-editor.js';
+  savedPointAnchors,savedPointCorners} from './path-point-editor.js';
 
 // The freehand overlay is also the optional point editor: one shared camera,
 // one source of path geometry and one save/undo transaction.
@@ -19,7 +19,7 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
   const geometryOption=document.querySelector('[name=geometry] option[value=drawn]');
   const ctx=overlay.getContext('2d');
   let active=false,pointer=null,raw=[],ready=[],fit='smooth',editing=false;
-  let editor=null,pendingPins=[],adding=false,drag=null,history=[];
+  let editor=null,pendingPins=[],pendingCorners=[],adding=false,drag=null,history=[];
 
   // Convert between the design's normalized coordinates and the full stage,
   // whose preview may be zoomed and letterboxed inside the editing overlay.
@@ -105,7 +105,7 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
     if(editing)return;
     if(raw.length>=2){
       ready=finishDrawnPath(raw,fit,Number(power.value));
-      pendingPins=[];
+      pendingPins=[];pendingCorners=[];
       if(ready.length>=2){
         draw(ready);
         hint.textContent=fit==='geometric'?
@@ -116,7 +116,7 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
     syncPointControls();
   }
   function reset(){
-    pointer=null;drag=null;raw=[];ready=[];pendingPins=[];
+    pointer=null;drag=null;raw=[];ready=[];pendingPins=[];pendingCorners=[];
     editor=null;editing=false;adding=false;history=[];
     draw([]);syncPointControls();
     hint.textContent='Draw anywhere on the preview, including beyond the frame.';
@@ -149,13 +149,15 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
         getRecipe().geometry==='drawn'?getRecipe().customPath:[];
       if(existing.length<2)return;
       const pins=ready.length>=2?pendingPins:getRecipe().drawnAnchors;
-      editor=createPointEditor(existing,pins);
+      const corners=ready.length>=2?pendingCorners:getRecipe().drawnCorners;
+      editor=createPointEditor(existing,pins,corners);
       if(!editor)return;
       ready=editor.points.slice();editing=true;adding=false;history=[];
       hint.textContent='Drag squares or tangent handles. Add a point if needed.';
     }else{
       ready=editor.points.map(p=>p.slice());
       pendingPins=savedPointAnchors(editor);
+      pendingCorners=savedPointCorners(editor);
       editing=false;editor=null;adding=false;history=[];
       hint.textContent='Edited path retained. Apply it or return to Edit points.';
     }
@@ -168,6 +170,7 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
     editor.changed.clear();
     ready=editor.points.map(p=>p.slice());
     pendingPins=savedPointAnchors(editor);
+    pendingCorners=savedPointCorners(editor);
     syncPointControls();draw(ready);
   };
   function nearestHit(event){
@@ -232,7 +235,7 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
       syncPointControls();draw(editor.points);
       return;
     }
-    pointer=event.pointerId;raw=[];ready=[];pendingPins=[];apply.disabled=true;
+    pointer=event.pointerId;raw=[];ready=[];pendingPins=[];pendingCorners=[];apply.disabled=true;
     append(event);
     try{overlay.setPointerCapture(pointer);}catch{}
     hint.textContent='Keep drawing. Lift your finger to finish.';
@@ -324,7 +327,8 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
     const points=editing?editor.points:ready;
     if(points.length<2)return;
     const pins=editing?savedPointAnchors(editor):pendingPins;
-    onApply(points,pins);
+    const corners=editing?savedPointCorners(editor):pendingCorners;
+    onApply(points,pins,corners);
     stop();
   });
   document.addEventListener('keydown',event=>{
