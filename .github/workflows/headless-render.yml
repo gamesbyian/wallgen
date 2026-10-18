@@ -53,6 +53,33 @@ jobs:
           npm run render -- --seed hairpin-free --set geometry=hairpin --set turnRadius=0 --set spread=100 --set geometrySafety=false --width 600 --height 1300 --out output/hairpin-free.png
           npm run render -- --seed dots-large --set motif=dots --set geometry=straight --set dotSize=100 --set dotSpacing=0 --set motifSize=90 --set motifFrequency=15 --width 600 --height 1300 --out output/dots-large.png
           npm run render -- --seed arcs-dense --set geometry=arc --set shapeFrequency=100 --set shapeDepth=100 --width 600 --height 1300 --out output/arcs-dense.png
+      - name: Compare deliberate stripe self-crossing modes
+        run: |
+          for mode in over under weave; do
+            npm run render -- --seed crossings-loop --set geometry=loop --set loopSweep=270 --set loopRadius=85 --set geometrySafety=false --set orientation=vertical --set spread=65 --set stripeWidth=75 --set construction=ribbon --set motif=solid --set material=none --set outline=white --set palette=electric --set individuality=0 --set crossingMode=$mode --width 600 --height 1300 --out output/crossing-loop-$mode.png
+          done
+          cat > output/crossing-drawn.json <<'JSON'
+          {"seed":"crossings-drawn","geometry":"drawn","customPath":[[0.16,0.49],[0.21,0.32],[0.38,0.25],[0.61,0.31],[0.84,0.49],[0.61,0.69],[0.39,0.73],[0.16,0.49],[0.39,0.31],[0.61,0.25],[0.84,0.49],[0.61,0.69],[0.39,0.73],[0.16,0.49]],"palette":"electric","construction":"ribbon","motif":"solid","outline":"white","geometrySafety":false,"material":"none","spread":65,"stripeWidth":75,"individuality":0}
+          JSON
+          for mode in over under weave; do
+            npm run render -- --recipe output/crossing-drawn.json --set crossingMode=$mode --width 600 --height 1300 --out output/crossing-drawn-$mode.png
+          done
+          node --input-type=module <<'JS'
+          import {readFile} from 'node:fs/promises';
+          import assert from 'node:assert/strict';
+          import {extractPngRecipe} from './src/png-metadata.js';
+          for(const geometry of ['loop','drawn']){
+            const images=[];
+            for(const mode of ['over','under','weave']){
+              const png=await readFile('output/crossing-'+geometry+'-'+mode+'.png');
+              assert.equal(extractPngRecipe(png).crossingMode,mode);
+              images.push(png);
+            }
+            assert.ok(!images[0].equals(images[1]),geometry+' over / under distinct');
+            assert.ok(!images[0].equals(images[2]),geometry+' over / weave distinct');
+            assert.ok(!images[1].equals(images[2]),geometry+' under / weave distinct');
+          }
+          JS
       - name: Verify uncropped camera compositions and new Color Stories
         run: |
           npm run render -- --seed zoom-unclipped --set family=studio --set orientation=horizontal --set geometry=straight --set motif=solid --set material=none --set palette=sunset --set viewZoom=0.5 --set stripeWidth=72 --set spread=55 --width 600 --height 1300 --out output/zoom-unclipped.png
