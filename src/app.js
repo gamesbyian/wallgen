@@ -547,11 +547,19 @@ try{
 }catch{}
 
 async function downloadPNG(){
+  // Commit an in-flight slider frame before taking the export snapshot.
+  // Metadata and artwork describe the state at the user's click, even if
+  // further controls are changed during PNG encoding.
+  if(pendingControlFrame){
+    cancelAnimationFrame(pendingControlFrame);
+    pendingControlFrame=0;
+    updateControlsFromInputs();
+  }
+  const snapshot=normalizeRecipe(current);
+  const metadata=metadataValues();
   const button=document.getElementById('download');
   setBusy(button,true,'Rendering 19.8 MP…');
   await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
-  const snapshot=normalizeRecipe(current);
-  const metadata=metadataValues();
   let big;
   try {
     let blob;
