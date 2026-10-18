@@ -89,7 +89,7 @@ try{
   await delay(300);
 
   const initial=await evaluate('({tabs:document.querySelectorAll(".settings-tab").length,tools:document.querySelectorAll(".editor-tool-card").length,preview:document.querySelector(".wallpaper-frame").getBoundingClientRect().height,scroll:document.documentElement.scrollHeight})');
-  assert.equal(initial.tabs,6);
+  assert.equal(initial.tabs,7);
   assert.ok(initial.tools>=18);
   assert.ok(initial.preview>450);
   assert.ok(initial.scroll<=915);
