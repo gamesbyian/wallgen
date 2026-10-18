@@ -638,7 +638,7 @@ installSettingLocks();
 const editor=mountEditor();
 // Details controls deliberately live outside the fixed scalar setting schema:
 // ordered element objects are a recipe collection, not separately lockable sliders.
-const interiorCards=Object.fromEntries(['interior','interior-style','interior-motion','interior-placement']
+const interiorCards=Object.fromEntries(['interior','interior-style','interior-motion','interior-placement','interior-targets']
   .map(id=>[id,document.querySelector('.editor-tool-card[data-editor-tool="'+id+'"]')]));
 let selectedInterior=0;
 function syncInteriorUI(){
@@ -698,7 +698,11 @@ function syncInteriorUI(){
   select(interiorCards['interior-style'],'Element','type',['line','band']);
   select(interiorCards['interior-style'],'Geometry','shape',['straight','wave','zigzag','loop']);
   select(interiorCards['interior-style'],'Stroke','stroke',['solid','dashed','dotted']);
-  select(interiorCards['interior-style'],'Ink','color',['white','black','lighter','darker']);
+  select(interiorCards['interior-targets'],'Ink','color',['white','black','lighter','darker','custom']);
+  const customLabel=make(interiorCards['interior-targets'],'label','Custom colour');
+  const customPicker=make(customLabel,'input');
+  customPicker.type='color';customPicker.value=active.customColor;customPicker.disabled=active.color!=='custom';
+  customPicker.addEventListener('change',()=>update('customColor',customPicker.value));
   range(interiorCards['interior-motion'],'Amplitude','amplitude',0,.45,.01);
   range(interiorCards['interior-motion'],'Frequency','frequency',.1,30,.1);
   range(interiorCards['interior-motion'],'Phase','phase',-180,180,1);
@@ -706,6 +710,18 @@ function syncInteriorUI(){
   range(interiorCards['interior-placement'],'Position','position',-.48,.48,.02);
   range(interiorCards['interior-placement'],'Thickness','width',.15,30,.25);
   range(interiorCards['interior-placement'],'Opacity','opacity',0,1,.05);
+  const targetBox=make(interiorCards['interior-targets'],'div');targetBox.className='interior-targets';
+  const names=['R','O','Y','G','B','I','V'];
+  names.forEach((name,i)=>{
+    const label=make(targetBox,'label',name);label.title=['Red','Orange','Yellow','Green','Blue','Indigo','Violet'][i];
+    const checkbox=make(label,'input');checkbox.type='checkbox';
+    checkbox.checked=!active.colorSlots.length||active.colorSlots.includes(i);
+    checkbox.addEventListener('change',()=>{
+      const base=active.colorSlots.length?active.colorSlots:[0,1,2,3,4,5,6];
+      const next=checkbox.checked?[...new Set([...base,i])]:base.filter(x=>x!==i);
+      update('colorSlots',next.length===7?[]:next);
+    });
+  });
 }
 syncInteriorUI();
 const explorationHistory=installExplorationHistory({
