@@ -33,6 +33,7 @@ export const EDITOR_CATEGORIES=[
     {id:'interior-style',name:'Element style',settings:[]},
     {id:'interior-motion',name:'Element motion',settings:[]},
     {id:'interior-placement',name:'Placement',settings:[]},
+    {id:'interior-targets',name:'Colour targets',settings:[]},
     {id:'outlines',name:'Outlines',settings:['outline','gap','outlineBuffer']},
     {id:'dividers',name:'Dividers',settings:['dividerColor','dividerWidth']},
     {id:'shadows',name:'Shadows',settings:['stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection']},
