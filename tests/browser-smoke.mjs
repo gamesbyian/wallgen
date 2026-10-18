@@ -280,7 +280,7 @@ try{
   await evaluate('document.getElementById("tab-stripes").click()');
   const stripeToolOrder=await evaluate('Array.from(document.querySelectorAll(".editor-tool-tab")).filter(b=>b.dataset.category==="stripes").map(b=>b.dataset.editorTool)');
   assert.deepEqual(stripeToolOrder,[
-    'structure','outlines','patterns','marks','motif-scale','tone','character','shadows','glow']);
+    'structure','outlines','dividers','patterns','marks','motif-scale','tone','character','shadows','glow']);
   await evaluate('document.querySelector("[data-editor-tool=shadows]").click()');
   const beforeShadow=await evaluate('(()=>{const c=document.querySelector(".editor-tool-card:not([hidden])"),r=c.getBoundingClientRect();return {labels:[...c.querySelectorAll("[name]")].map(n=>n.name),w:r.width,h:r.height,checkbox:!!c.querySelector("[name=stripeShadowEnabled]"),controls:document.getElementById("stripeShadowControls").hidden}})()');
   assert.equal(beforeShadow.checkbox,false);
