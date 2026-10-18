@@ -553,6 +553,50 @@ try{
   assert.ok(strokeAssist.result>20&&strokeAssist.axisError<.00002,
     'the live browser 10× implementation must recover a perfectly level stroke');
   console.log('TEN_X_DRAWING_ASSIST',JSON.stringify(strokeAssist));
+  // Browser renders must show three materially different occlusion choices,
+  // for a loop and for a hand-drawn crossing. This uses the production canvas
+  // renderer, not a mock algorithm or a test-only drawing shortcut.
+  const crossingReview=await evaluate(`(async()=>{
+    const {drawWallpaper}=await import('/src/renderer.js');
+    const {findPathCrossings}=await import('/src/crossing-order.js');
+    const {resolveScene}=await import('/src/model.js');
+    const {samplePath}=await import('/src/path-geometry.js');
+    const contour=Array.from({length:170},(_,i)=>{
+      const t=-Math.PI/2+2*Math.PI*i/169;
+      return [.5+.34*Math.sin(t),.49+.24*Math.sin(2*t)];
+    });
+    const cases=[
+      {seed:'crossing-loop',geometry:'loop',loopSweep:445,loopRadius:85,
+       geometrySafety:false,orientation:'vertical',spread:65},
+      {seed:'crossing-drawn',geometry:'drawn',customPath:contour,
+       geometrySafety:false,spread:65}
+    ];
+    const results=[];
+    for(const base of cases){
+      const scene=resolveScene({...base,crossingMode:'over'});
+      const crossings=findPathCrossings(scene.stripes[3],scene.extent,samplePath);
+      const images=[];
+      for(const crossingMode of ['over','under','weave']){
+        const canvas=document.createElement('canvas');
+        canvas.width=240;canvas.height=520;
+        drawWallpaper(canvas,{...base,crossingMode,palette:'electric',
+          material:'none',lightingMood:'off',construction:'ribbon',
+          motif:'solid',stripeWidth:75,individuality:0,outline:'white',
+          stripeShadowStrength:0,textureDisplacement:0,brushRoughness:0});
+        images.push(canvas.toDataURL());
+      }
+      results.push({geometry:base.geometry,crossings:crossings.length,
+        overUnder:images[0]!==images[1],overWeave:images[0]!==images[2],
+        underWeave:images[1]!==images[2]});
+    }
+    return results;
+  })()`);
+  console.log('CROSSING_ORDER_RENDER_ACCEPTANCE',JSON.stringify(crossingReview));
+  for(const item of crossingReview){
+    assert.ok(item.crossings>0,item.geometry+' should have a real centreline crossing');
+    assert.ok(item.overUnder,item.geometry+' Over and Under must render differently');
+    assert.ok(item.overWeave&&item.underWeave,item.geometry+' Weave must be visibly distinct');
+  }
   console.log('REDESIGN_EXPLORATION_ACCEPTANCE_SUCCESS');
 }finally{
   try{ws?.close()}catch{}
