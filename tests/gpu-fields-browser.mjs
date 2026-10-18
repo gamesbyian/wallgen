@@ -158,6 +158,42 @@ try{
       maskUploads:session.stats.maskUploads,
       drawsAfterStack:session.stats.draws,
     };
+    // Camera zoom must change the world viewport, never shader field phase.
+    // Construct the very same owner polygon mask through ROYGBIV's camera
+    // transform and compare it against the Canvas2D reference at both ends.
+    const {viewCamera}=await import('/src/view-camera.js');
+    const zoomResults=[];
+    for(const zoom of [.5,1.5]){
+      const cam=viewCamera(width,height,zoom);
+      const zoomMask=canvas(),maskPainter=zoomMask.getContext('2d');
+      maskPainter.setTransform(cam.scaleX,0,0,cam.scaleY,cam.offsetX,cam.offsetY);
+      maskPainter.fillStyle='#fff';maskPainter.beginPath();
+      owner.vertices.forEach((p,i)=>i?
+        maskPainter.lineTo(p.x,p.y):maskPainter.moveTo(p.x,p.y));
+      maskPainter.closePath();maskPainter.fill();
+      const uploaded=session.setMask(zoomMask);
+      if(!uploaded.supported)throw Error('Camera mask upload: '+uploaded.reason);
+      const reference=canvas(),d=reference.getContext('2d');
+      d.setTransform(cam.scaleX,0,0,cam.scaleY,cam.offsetX,cam.offsetY);
+      drawRegionInteriors(d,owner,layers,'regions',cam.viewBounds);
+      const correct=d.getImageData(0,0,width,height).data;
+      const maskData=zoomMask.getContext('2d').getImageData(0,0,width,height).data;
+      const shader=session.renderMany(layers,{viewBounds:cam.viewBounds});
+      if(!shader.supported)throw Error('Zoomed GPU field: '+shader.reason);
+      const rendered=new Uint8Array(width*height*4);
+      gl.readPixels(0,0,width,height,gl.RGBA,gl.UNSIGNED_BYTE,rendered);
+      let visible=0,outside=0,alphaDifference=0,coloured=0;
+      for(let y=0;y<height;y++)for(let x=0;x<width;x++){
+        const i=(y*width+x)*4,j=((height-1-y)*width+x)*4;
+        const refAlpha=correct[i+3],gpuAlpha=rendered[j+3];
+        alphaDifference+=Math.abs(refAlpha-gpuAlpha);
+        if(gpuAlpha>80)visible++;
+        if(refAlpha>100)coloured++;
+        if(maskData[i+3]<2&&gpuAlpha>3)outside++;
+      }
+      zoomResults.push({zoom,visible,coloured,outside,
+        meanAlphaError:alphaDifference/(width*height)});
+    }
     // Modifying pixels on the SAME mask canvas must invalidate GPU input.
     const maskContext=mask.getContext('2d');
     maskContext.save();
@@ -177,7 +213,7 @@ try{
       session.canvas.getContext('webgl2').UNSIGNED_BYTE,pixels);
     let stale=0;
     for(let i=3;i<pixels.length;i+=4)if(pixels[i]>0)stale++;
-    return {available:true,output,stats,layeredMetrics,
+    return {available:true,output,stats,layeredMetrics,zoomResults,
       uploadCount:session.stats.maskUploads,
       postClearStalePixels:stale};
     }finally{session.dispose();}
@@ -190,7 +226,15 @@ try{
   }else{
     assert.equal(metrics.stats.maskUploads,1,'mask uploaded once for all field variants');
     assert.equal(metrics.stats.draws,3,'three field shaders share the same context');
-    assert.equal(metrics.uploadCount,2,'modified canvas mask reuploaded');
+    assert.equal(metrics.uploadCount,4,'zoom masks and final cleared mask uploaded');
+    assert.equal(metrics.zoomResults.length,2);
+    for(const result of metrics.zoomResults){
+      assert.equal(result.outside,0,'GPU camera ink escaped polygon mask');
+      assert.ok(result.visible>200&&result.coloured>200,
+        'GPU zoom produced insufficient field coverage: '+JSON.stringify(result));
+      assert.ok(result.meanAlphaError<12,
+        'GPU field changed under camera transform: '+JSON.stringify(result));
+    }
     assert.equal(metrics.postClearStalePixels,0,
       'a cleared mask may not leave old decoration pixels');
     assert.equal(metrics.layeredMetrics.maskUploads,1);
