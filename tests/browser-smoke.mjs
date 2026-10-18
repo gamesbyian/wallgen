@@ -657,6 +657,62 @@ try{
     assert.ok(item.overUnder,item.geometry+' Over and Under must render differently');
     assert.ok(item.overWeave&&item.underWeave,item.geometry+' Weave must be visibly distinct');
   }
+  // E2E: edit a saved drawn stroke on the phone canvas using physical pointer
+  // events, verify the recipe records a manual anchor and that app Undo works.
+  const editableRecipe=JSON.parse(readFileSync(join(cwd,'tests/fixtures/drawn-knot-t0b4v5.json'),'utf8'));
+  await command('Page.navigate',{url:url+'?r='+encodeURIComponent(JSON.stringify(editableRecipe))});
+  await waitFor('document.readyState==="complete"&&document.querySelector("#drawPathToggle")',15000);
+  await waitFor('document.querySelectorAll(".editor-tool-card").length>=18',15000);
+  const pointEditorCheck=await evaluate(`(async()=>{
+    const {createPointEditor}=await import('/src/path-point-editor.js');
+    const recipe=JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get('r')));
+    const before=JSON.stringify(recipe.customPath);
+    const button=document.getElementById('drawPathToggle');
+    button.click();
+    document.getElementById('drawEditPoints').click();
+    const overlay=document.getElementById('drawOverlay');
+    const model=createPointEditor(recipe.customPath);
+    const index=model.anchors[Math.floor(model.anchors.length/2)];
+    const point=model.points[index],frame=document.getElementById('preview').getBoundingClientRect();
+    const zoom=Number(document.querySelector('.studio-stage').dataset.viewZoom)||1;
+    const x=frame.left+(.5+(point[0]-.5)*zoom)*frame.width;
+    const y=frame.top+(.5+(point[1]-.5)*zoom)*frame.height;
+    const pointer=(name,clientX,clientY)=>overlay.dispatchEvent(new PointerEvent(name,{
+      bubbles:true,cancelable:true,pointerId:42,isPrimary:true,pointerType:'touch',
+      clientX,clientY,buttons:name==='pointerup'?0:1
+    }));
+    pointer('pointerdown',x,y);
+    pointer('pointermove',x+13,y-9);
+    pointer('pointerup',x+13,y-9);
+    const undoAvailable=!document.getElementById('drawUndoPoint').disabled;
+    document.getElementById('drawApply').click();
+    const next=JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get('r')));
+    const changed=JSON.stringify(next.customPath)!==before;
+    const pinned=next.drawnAnchors.length;
+    document.getElementById('undo').click();
+    const restored=JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get('r')));
+    return {changed,pinned,undoAvailable,restored:JSON.stringify(restored.customPath)===before};
+  })()`);
+  console.log('LIVE_ANCHOR_EDITOR_ACCEPTANCE',JSON.stringify(pointEditorCheck));
+  assert.ok(pointEditorCheck.changed&&pointEditorCheck.pinned>0,
+    'dragging a point must modify and pin the selected anchor');
+  assert.ok(pointEditorCheck.undoAvailable&&pointEditorCheck.restored,
+    'local Undo and wallpaper Undo must both remain usable');
+  const fineRotations=await evaluate(`(()=>{
+    const selectors=['textureRotation','textureRotation2','textureRotation3'];
+    const controls=selectors.map(key=>{
+      const field=document.querySelector('[name='+key+']');
+      const row=field.closest('.rotation-controls');
+      const buttons=[...row.querySelectorAll('[data-rotate-target]')];
+      return {key,minus:buttons.some(b=>b.dataset.rotateDelta==='-1'),
+        plus:buttons.some(b=>b.dataset.rotateDelta==='1'),
+        quarterTurns:buttons.filter(b=>Math.abs(Number(b.dataset.rotateDelta))===90).length,
+        reset:buttons.some(b=>b.dataset.rotateSet==='0')};
+    });
+    return controls;
+  })()`);
+  console.log('ROTATION_STEPPER_ACCEPTANCE',JSON.stringify(fineRotations));
+  assert.ok(fineRotations.every(v=>v.minus&&v.plus&&v.quarterTurns===2&&v.reset));
   console.log('REDESIGN_EXPLORATION_ACCEPTANCE_SUCCESS');
 }finally{
   try{ws?.close()}catch{}
