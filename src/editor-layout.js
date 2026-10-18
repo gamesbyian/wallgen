@@ -108,8 +108,12 @@ export function mountEditor(){
   const searchInput=create('input','editor-search-input');
   searchInput.type='search';searchInput.placeholder='Find a setting…';
   searchInput.setAttribute('aria-label','Search wallpaper settings');searchInput.hidden=true;
+  const searchClose=create('button','editor-search-close','×');
+  searchClose.type='button';searchClose.hidden=true;
+  searchClose.setAttribute('aria-label','Close setting search');
+  searchClose.title='Close search';
   controls.append(scopeMode,strength,randomCategory,search);
-  explore.append(style,controls,searchInput);
+  explore.append(style,controls,searchInput,searchClose);
   nav.before(explore);
   nav.replaceChildren();
 
@@ -211,22 +215,33 @@ export function mountEditor(){
     if(cat!==activeCategory)selectEditorTool(cat,EDITOR_CATEGORIES.find(c=>c.id===cat).tools[0].id);
   });
   randomCategory.addEventListener('click',()=>{randomCategory.dataset.randomCategory=currentCategoryFromTabs();});
+  function closeSearch(){
+    searchInput.hidden=true;searchClose.hidden=true;
+    explore.classList.remove('editor-search-open');
+    searchInput.value='';
+    search.focus({preventScroll:true});
+  }
   search.addEventListener('click',()=>{
-    searchInput.hidden=!searchInput.hidden;
-    if(!searchInput.hidden)searchInput.focus();
-    else searchInput.value='';
+    if(!searchInput.hidden){closeSearch();return;}
+    searchInput.hidden=false;searchClose.hidden=false;
+    explore.classList.add('editor-search-open');
+    searchInput.focus({preventScroll:true});
+  });
+  searchClose.addEventListener('click',closeSearch);
+  searchInput.addEventListener('keydown',event=>{
+    if(event.key==='Escape'){event.preventDefault();closeSearch();}
   });
   searchInput.addEventListener('input',()=>{
     const q=searchInput.value.toLowerCase().trim();
     if(!q)return;
     const match=TOOL_LIST.find(t=>t.name.toLowerCase().includes(q)||
       t.settings.some(key=>(form.elements.namedItem(key)?.closest('label')?.textContent||key).toLowerCase().includes(q)));
-    if(match)selectEditorTool(match.category,match.id);
+    if(match)selectEditorTool(match.category,match.id,{source:'search'});
   });
   selectEditorTool('layout','arrange');
   return {getCurrent:()=>({category:activeCategory,tool:activeTool}),tools,chooser,searchInput};
 }
-export function selectEditorTool(category,tool){
+export function selectEditorTool(category,tool,{source='manual'}={}){
   let selected=tools.get(tool);
   if(!selected||selected.category!==category||!toolApplies(selected)){
     tool=applicableTool(category);selected=tools.get(tool);
@@ -248,8 +263,15 @@ export function selectEditorTool(category,tool){
     button.setAttribute('aria-selected',String(isActive));
     button.tabIndex=isActive?0:-1;
   }
-  // Preserve the user's horizontal tool-strip position when choosing a tool.
-  // The strip is freely scrollable; selecting a chip must not recenter it.
+  // Touch-selected chips must *not* snap the strip back to its start.
+  // A search result is different: the corresponding chip must be discoverable.
+  if(source==='search'||source==='keyboard'){
+    const rail=chooser.getBoundingClientRect();
+    const chip=selected.chip.getBoundingClientRect();
+    const left=rail.left+10,right=rail.right-10;
+    if(chip.left<left)chooser.scrollLeft+=chip.left-left;
+    else if(chip.right>right)chooser.scrollLeft+=chip.right-right;
+  }
   const reroll=document.querySelector('[data-random-category]');
   if(reroll)reroll.dataset.randomCategory=category;
   document.dispatchEvent(new CustomEvent('editor-tool-changed',{detail:{category,tool}}));
