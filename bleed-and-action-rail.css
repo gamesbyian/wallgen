@@ -60,3 +60,13 @@
    width:55px;min-height:46px;font-size:12px;margin-bottom:92px;
  }
 }
+
+/* Solid flat accent, never a gradient. Only Random keeps its short caption. */
+@media(max-width:790px){
+ body.mobile-studio .mobile-editor-action-rail button[data-dock-proxy=mobileShuffle]{
+   background:#f5bc65;color:#29243b;
+ }
+ body.mobile-studio .mobile-editor-action-rail button:not([data-dock-proxy=mobileShuffle])>span .ui-icon{
+   width:21px;height:21px;
+ }
+}
