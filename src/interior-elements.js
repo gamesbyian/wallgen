@@ -93,12 +93,15 @@ export function drawRegionInteriors(ctx,object,elements,structure){
         Math.atan2(cy-(object.origin?.y??650),cx-(object.origin?.x??300)):0;
       ctx.translate(cx,cy);ctx.rotate(ang);ctx.translate(-cx,-cy);
       const period=Math.max(12,160/Math.max(.2,e.frequency));
+      const waveElement={...e,frequency:1};
+      const scale=Math.max(16,220/e.frequency);
+      const step=Math.max(1.5,Math.min(5,scale/12));
       for(let y=top-180;y<=bottom+180;y+=period){
         ctx.beginPath();
-        const step=3,from=left-260,to=right+260;
+        const from=left-260,to=right+260;
         for(let x=from;x<=to;x+=step){
-          const t=(x+e.phase*3)/Math.max(16,220/e.frequency);
-          const displacement=e.amplitude*80*elementWave({...e,frequency:1},t);
+          const t=(x+e.phase*3)/scale;
+          const displacement=e.amplitude*80*elementWave(waveElement,t);
           const yy=y+e.position*period+displacement;
           const xx=e.shape==='loop'?x+e.amplitude*80*Math.cos(t*2*Math.PI+e.phase*Math.PI/180):x;
           if(x===from)ctx.moveTo(xx,yy);else ctx.lineTo(xx,yy);
