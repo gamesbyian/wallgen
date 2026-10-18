@@ -178,9 +178,13 @@ export function polygonInsetContours(polygon,inset,options={}){
     }
     return v;
   };
+  // Horizontal edges occupy (ny+1)*nx IDs, including the bottom edge
+  // of the final row. Starting vertical IDs at nx*ny collided with those
+  // bottom boundary edges, fragmenting camera-clipped open contours.
+  const verticalBase=(ny+1)*nx;
   const node=(i,j,edge)=>edge===0?j*nx+i:
-    edge===1?nx*ny+j*(nx+1)+i+1:
-    edge===2?(j+1)*nx+i:nx*ny+j*(nx+1)+i;
+    edge===1?verticalBase+j*(nx+1)+i+1:
+    edge===2?(j+1)*nx+i:verticalBase+j*(nx+1)+i;
   function record(a,b){
     const k=segments.length;
     segments.push({a,b});
