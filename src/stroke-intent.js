@@ -93,6 +93,41 @@ function circleCandidate(p){
   });
   return {kind:full?'circle':'arc',points,error:relativeError,full};
 }
+// A single finger gesture can contain a straight lead-in, one or more
+// circular loops, and a lead-out. Look for near-returns with a coherent full
+// revolution, rather than assuming the entire stroke is one primitive.
+function embeddedLoops(p){
+  if(p.length<36)return null;
+  const result=p.map(q=>q.slice());
+  let recognized=0;
+  for(let start=0;start<p.length-22;start+=3){
+    let minX=p[start][0],maxX=minX,minY=p[start][1],maxY=minY;
+    let chosen=null;
+    for(let end=start+1;end<Math.min(p.length,start+185);end++){
+      const q=p[end];
+      minX=Math.min(minX,q[0]);maxX=Math.max(maxX,q[0]);
+      minY=Math.min(minY,q[1]);maxY=Math.max(maxY,q[1]);
+      if(end-start<20||(end-start)%3)continue;
+      const diameter=Math.min(maxX-minX,maxY-minY);
+      if(diameter<42)continue;
+      const guessedRadius=(maxX-minX+maxY-minY)/4;
+      if(dist(p[start],q)>Math.max(18,guessedRadius*.57))continue;
+      const candidate=circleCandidate(p.slice(start,end+1));
+      if(candidate?.kind==='circle'){
+        chosen={end,points:candidate.points};
+        break;
+      }
+    }
+    if(!chosen)continue;
+    for(let i=start+1;i<chosen.end;i++){
+      const edge=clamp(Math.min(i-start,chosen.end-i)/4,0,1);
+      result[i]=interpolate(p[i],chosen.points[i-start],edge);
+    }
+    recognized++;
+    start=chosen.end-3;
+  }
+  return recognized?{kind:'embedded-loops',points:result}:null;
+}
 function segmentDistance(p,a,b){
   const dx=b[0]-a[0],dy=b[1]-a[1],length=dx*dx+dy*dy;
   const t=clamp(((p[0]-a[0])*dx+(p[1]-a[1])*dy)/(length||1),0,1);
@@ -142,6 +177,8 @@ export function interpretStroke(points){
   if(circle)return {kind:circle.kind,points:circle.points.map(normalize)};
   const line=lineCandidate(p);
   if(line)return {kind:line.kind,points:line.points.map(normalize)};
+  const loops=embeddedLoops(p);
+  if(loops)return {kind:loops.kind,points:loops.points.map(normalize)};
   const segments=segmentCandidates(p);
   return segments?{kind:segments.kind,points:segments.points.map(normalize)}:null;
 }
