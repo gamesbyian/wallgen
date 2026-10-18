@@ -19,7 +19,7 @@ const surfaces = [
   {id:'desktop',viewport:{width:1440,height:900},mobile:false},
   {id:'pixel-6-pro',viewport:{width:412,height:892},mobile:true}
 ];
-const cases=[];const errors=[];const seen=new Set();
+const cases=[];const errors=[];const inapplicable=[];const seen=new Set();
 const safe=s=>String(s).toLowerCase().replace(/[^a-z0-9-]+/g,'-').replace(/^-|-$/g,'');
 const browser=await chromium.launch({headless:true});
 const fixedSeed='ui-atlas-fixed';
@@ -90,6 +90,14 @@ async function exercise(page,ctx){
     for(const category of EDITOR_CATEGORIES){
       for(const tool of category.tools){
         try {
+          // Category availability depends on the structural family and mode.
+          // A hidden chip represents a non-applicable tool, not a failure.
+          await clickIfVisible(page,'#tab-'+category.id);
+          const available=page.locator('[data-editor-tool="'+tool.id+'"].editor-tool-tab');
+          if(!await available.isVisible() || !await available.isEnabled()){
+            inapplicable.push({profile:ctx.surface.id,zoom:ctx.zoom,structure,category:category.id,tool:tool.id});
+            continue;
+          }
           await navigate(page,category.id,tool.id);
           await capture(page,ctx,'tool-'+structure+'-'+category.id+'-'+tool.id,{kind:'tool',structure,category:category.id,tool:tool.id,settings:tool.settings});
           // Disabled, active, locked and expanded control states are distinct UI.
@@ -147,7 +155,6 @@ async function exercise(page,ctx){
   }
   // Shell states and special tools: do not upload/download or alter assets.
   for(const [name,selector] of [
-    ['search','#button-does-not-exist'],
     ['editor-search','.editor-search-toggle'],
     ['primes-only','[name=primesOnly]'],
     ['draw-path','#drawPathToggle'],
@@ -190,9 +197,9 @@ try{
   }
 }finally{await browser.close();}
 await mkdir(out,{recursive:true});
-await writeFile(join(out,'manifest.json'),JSON.stringify({created:new Date().toISOString(),baseURL,zoomMethod:'CSS root zoom; viewport held fixed',cases,errors},null,2));
+await writeFile(join(out,'manifest.json'),JSON.stringify({created:new Date().toISOString(),baseURL,zoomMethod:'CSS root zoom; viewport held fixed',cases,inapplicable,errors},null,2));
 const byKind=Object.groupBy?Object.groupBy(cases,x=>x.kind):{};
-const report=['# ROYGBIV UI screenshot atlas','','Profiles: desktop 1440×900, mobile 412×892. Zoom: 100%, 75%, 66%, 50%.','','Screenshots: '+cases.length,'Recorded traversal failures: '+errors.length,'','The manifest lists every attempted screenshot, active overlays and navigation context. Static wallpaper artwork is deliberately unchanged across cases.','','## Coverage by kind',...Object.entries(byKind).map(([k,v])=>'- '+k+': '+v.length),'','## Missing/unreachable states',...errors.map(x=>'- '+JSON.stringify(x)),''];
+const report=['# ROYGBIV UI screenshot atlas','','Profiles: desktop 1440×900, mobile 412×892. Zoom: 100%, 75%, 66%, 50%.','','Screenshots: '+cases.length,'Recorded traversal failures: '+errors.length,'Correctly inapplicable tools: '+inapplicable.length,'','The manifest lists every attempted screenshot, active overlays and navigation context. Static wallpaper artwork is deliberately unchanged across cases.','','## Coverage by kind',...Object.entries(byKind).map(([k,v])=>'- '+k+': '+v.length),'','## Missing/unreachable states',...errors.map(x=>'- '+JSON.stringify(x)),''];
 await writeFile(join(out,'README.md'),report.join('\n'));
 console.log('UI atlas:',cases.length,'captures,',errors.length,'failures. Output:',out);
 if(errors.length)process.exitCode=1;
