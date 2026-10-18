@@ -566,7 +566,7 @@ try{
       return [.5+.34*Math.sin(t),.49+.24*Math.sin(2*t)];
     });
     const cases=[
-      {seed:'crossing-loop',geometry:'loop',loopSweep:445,loopRadius:85,
+      {seed:'crossing-loop',geometry:'loop',loopSweep:270,loopRadius:85,
        geometrySafety:false,orientation:'vertical',spread:65},
       {seed:'crossing-drawn',geometry:'drawn',customPath:contour,
        geometrySafety:false,spread:65}
