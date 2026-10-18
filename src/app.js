@@ -131,7 +131,7 @@ function inactiveSettingKeys(recipe,scene){
       'chevronSharpness','loopAspect','shapeFrequency','shapeDepth','pathLength','endTaper',
       'construction','motif','lineStyle','patternHomogeneity','overridePatternHomogeneity',
       'tonalContrast','brushRoughness','dotSize','dotSpacing','motifSize','motifFrequency',
-      'stripeWidth','spread','individuality','outline','gap','outlineBuffer','textureDisplacement'])inactive.add(key);
+      'stripeWidth','spread','individuality','chaos','outline','gap','outlineBuffer','textureDisplacement'])inactive.add(key);
   }
   if(!radial){
     for(const key of ['radialMode','rayCount','rayRotation','rayTwist','rayCoverage','rayCore'])inactive.add(key);
