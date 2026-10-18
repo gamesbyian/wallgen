@@ -1,0 +1,41 @@
+name: Design reference assets
+on:
+  pull_request:
+    paths:
+      - 'docs/ui-reference/**'
+      - 'assets/icons/roygbiv/**'
+      - 'src/ui-icon-drawings-*.js'
+      - 'tests/design-reference-pack.test.js'
+      - '.github/workflows/design-reference-assets.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-pack:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate all canonical SVG and icon files parse as XML
+        run: |
+          python3 - <<'PY'
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+          for file in [*Path('docs/ui-reference').glob('*.svg'),*Path('assets/icons/roygbiv').glob('*.svg')]:
+              ET.parse(file)
+          print('All diagram and icon SVGs parsed')
+          PY
+      - name: Run icon and specification tests
+        run: node --test tests/icon-assets.test.js tests/design-reference-pack.test.js
+      - name: Upload implementation-safe source reference archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: roygbiv-canonical-ui-reference-pack
+          retention-days: 14
+          path: |
+            docs/ui-reference/
+            assets/icons/roygbiv/
+            assets/roygbiv-logo.svg
+            docs/IMPLEMENTATION-SAFE-REDESIGN-PACK.md
