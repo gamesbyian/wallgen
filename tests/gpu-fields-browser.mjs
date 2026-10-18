@@ -77,7 +77,7 @@ try{
         const gl=session.canvas.getContext('webgl2');
         const pixels=new Uint8Array(width*height*4);
         gl.readPixels(0,0,width,height,gl.RGBA,gl.UNSIGNED_BYTE,pixels);
-        let outside=0,insideSolid=0,gpuSolid=0;
+        let outside=0,insideSolid=0,gpuSolid=0,gpuVisible=0;
         let alphaDiff=0,significant=0;
         for(let y=0;y<height;y++)for(let x=0;x<width;x++){
           const top=(y*width+x)*4;
@@ -88,8 +88,9 @@ try{
           if(masks[top+3]<2&&b>3)outside++;
           if(a>220)insideSolid++;
           if(b>220)gpuSolid++;
+          if(b>80)gpuVisible++;
         }
-        output.push({shape:e.shape,outside,insideSolid,gpuSolid,
+        output.push({shape:e.shape,outside,insideSolid,gpuSolid,gpuVisible,
           meanAlphaDifference:alphaDiff/(width*height),
           significantRatio:significant/(width*height)});
       }
@@ -134,10 +135,10 @@ try{
     for(const item of metrics.output){
       assert.equal(item.outside,0,item.shape+' violated polygon clipping');
       assert.ok(item.insideSolid>250,item.shape+' has no Canvas2D markings');
-      assert.ok(item.gpuSolid>250,item.shape+' has no GPU markings');
-      assert.ok(item.meanAlphaDifference<22,
+      assert.ok(item.gpuVisible>500,item.shape+' has no visible GPU markings');
+      assert.ok(item.meanAlphaDifference<10,
         item.shape+' excessive mismatch: '+JSON.stringify(item));
-      assert.ok(item.significantRatio<.09,
+      assert.ok(item.significantRatio<.06,
         item.shape+' exceeds marked-coverage tolerance: '+JSON.stringify(item));
     }
   }
