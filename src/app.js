@@ -759,6 +759,18 @@ function syncInteriorUI(){
   range(interiorCards['interior-placement'],'Position','position',-.48,.48,.02);
   range(interiorCards['interior-placement'],active.type==='band'?'Band width %':'Line width','width',.15,50,.25);
   range(interiorCards['interior-placement'],'Opacity','opacity',0,1,.05);
+  // Make application scope visible on the otherwise sparse Elements card.
+  // Selective colour targeting can otherwise look like a broken or cropped
+  // stroke when only a few slices of a radial composition are decorated.
+  const scope=make(manager,'div');
+  scope.className='interior-scope';
+  const paletteNames=['Red','Orange','Yellow','Green','Blue','Indigo','Violet'];
+  scope.textContent=active.objectIds.length?
+    'Applied to '+active.objectIds.length+' selected shapes':
+    active.colorSlots.length?
+      'Colours: '+active.colorSlots.map(index=>paletteNames[index]).join(' · '):
+      'Applied to all seven colours';
+  scope.title=scope.textContent;
   const targetBox=make(interiorCards['interior-targets'],'div');targetBox.className='interior-targets';
   const names=['R','O','Y','G','B','I','V'];
   names.forEach((name,i)=>{
@@ -772,6 +784,14 @@ function syncInteriorUI(){
       update('colorSlots',next.length===7?[]:next);
     });
   });
+  if(stackLocked){
+    // A locked element stack is read-only. Leaving these controls enabled
+    // while respectSettingLocks silently ignored changes looked like a
+    // failed preview refresh. Selection and Unlock remain possible.
+    for(const card of Object.values(interiorCards))
+      for(const control of card.querySelectorAll('input,select,button'))
+        if(control!==lock&&control!==choose)control.disabled=true;
+  }
 }
 syncInteriorUI();
 const explorationHistory=installExplorationHistory({
