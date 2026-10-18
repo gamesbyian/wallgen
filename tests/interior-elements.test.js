@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {normalizeRecipe,resolveScene,encodeRecipe,decodeRecipe} from '../src/model.js';
+import {randomizeScope} from '../src/scoped-random.js';
 import {normalizeInteriorElements,elementWave,elementApplies,elementInk} from '../src/interior-elements.js';
 
 test('interior stack validates malformed and excessive elements safely',()=>{
@@ -44,4 +45,19 @@ test('decorations can target selected colours and stable object identifiers',()=
   assert.equal(elementApplies(selected,2,'region-1'),true);
   assert.equal(elementApplies(selected,1,'region-1'),false);
   assert.equal(elementApplies(selected,2,'region-0'),false);
+});
+
+test('scoped decoration rerolls are reproducible and honour the stack lock',()=>{
+  const recipe=normalizeRecipe({seed:'scope-check',
+    interiorElements:[{id:'wave',shape:'wave',frequency:7,width:2}]});
+  for(const name of ['interior','interior-style','interior-motion','interior-placement','interior-targets']){
+    const opts={scope:'tool',name,mode:'reroll',seed:'fixed-selection'};
+    const a=randomizeScope(recipe,opts),b=randomizeScope(recipe,opts);
+    assert.deepEqual(a.recipe.interiorElements,b.recipe.interiorElements,name);
+    assert.ok(a.modified.includes('interiorElements'),name);
+    assert.deepEqual(a.recipe.stripes,undefined);
+  }
+  const locked=normalizeRecipe({...recipe,lockedSettings:['interiorElements']});
+  const result=randomizeScope(locked,{scope:'category',name:'details',seed:'fixed-selection'});
+  assert.deepEqual(result.recipe.interiorElements,locked.interiorElements);
 });
