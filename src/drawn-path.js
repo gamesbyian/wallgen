@@ -193,9 +193,23 @@ export function finishDrawnPath(raw,mode='smooth',strength=1){
       // The geometry recognizer sees the original, uniformly sampled stroke,
       // before aggressive Gaussian fairing could erase a small loop.
       const blend=Math.pow((power-5)/5,.8),count=Math.min(500,even.length);
-      const base=resamplePath(shaped,count);
-      const intended=resamplePath(interpreted.points,count);
-      result=base.map((p,i)=>interpolate(p,intended[i],blend));
+      if(interpreted.weights){
+        // Composite gestures have two different visits to every real
+        // intersection. Their correction must stay aligned by *stroke index*.
+        // Independently arc-length-resampling both fitted and fallback paths
+        // shifts circle splice boundaries and creates facing little jags.
+        const base=fairPath(even,{
+          radius:Math.ceil(10+power*1.3),sigma:6+power*.45,passes:2
+        });
+        result=base.map((p,i)=>interpolate(p,interpreted.points[i],
+          blend*interpreted.weights[i]));
+      }else{
+        // An entire line or circle is a single global primitive: there is no
+        // composite junction and the original full-strength fit is retained.
+        const base=resamplePath(shaped,count);
+        const intended=resamplePath(interpreted.points,count);
+        result=base.map((p,i)=>interpolate(p,intended[i],blend));
+      }
     }
   }
   const points=resamplePath(result,Math.max(2,Math.min(MAX_DRAWN_POINTS,Math.ceil(total/9))));
