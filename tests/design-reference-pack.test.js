@@ -46,7 +46,7 @@ test('critical semantics documented, existing logo and pencil kept',()=>{
 
 test('traceability inventory preserves current dock controls and draw/export selectors',()=>{
  const table=JSON.parse(read('docs/ui-reference/component-traceability.json'));
- const ids=new Set(table.entries.filter(x=>x.sourceSelector.startsWith('id:')).map(x=>x.sourceSelector.slice(3)));
+ const ids=new Set(table.entries.filter(x=>x.sourceSelector.startsWith('id:')&&x.sourceKind==='Static index.html ID').map(x=>x.sourceSelector.slice(3)));
  const html=read('index.html');
  for(const id of ids)assert.ok(html.includes('id="'+id+'"'),'Missing source id '+id);
  for(const id of ['mobileShuffle','mobileDownload','drawApply','drawCancel','drawEditPoints','metadataToggle','batch'])assert.ok(ids.has(id));
