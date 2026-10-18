@@ -116,7 +116,7 @@ export function normalizeRecipe(input = {}) {
     lightStrength: finiteRange(input.lightStrength, 45, 0, 100),
     shadowStrength: finiteRange(input.shadowStrength, 28, 0, 100),
     // Separate opt-in silhouette shadow, independent of ambient canvas lighting.
-    stripeShadowStrength: finiteRange(input.stripeShadowStrength, 45, 0, 100),
+    stripeShadowStrength: finiteRange(input.stripeShadowStrength, 0, 0, 100),
     stripeShadowSoftness: finiteRange(input.stripeShadowSoftness, 55, 0, 100),
     stripeShadowDirection: LIGHT_DIRECTIONS.includes(input.stripeShadowDirection) ? input.stripeShadowDirection : 'top-left',
     chaos: finiteRange(input.chaos, 36, 0, 100),
