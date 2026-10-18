@@ -85,7 +85,7 @@ try{
   });
   await command('Page.navigate',{url});
   await waitFor('document.readyState==="complete"&&document.body.classList.contains("mobile-studio")');
-  await waitFor('document.querySelectorAll(".settings-tab").length===6',15000);
+  await waitFor('document.querySelectorAll(".settings-tab").length===7',15000);
   await delay(300);
 
   const initial=await evaluate('({tabs:document.querySelectorAll(".settings-tab").length,tools:document.querySelectorAll(".editor-tool-card").length,preview:document.querySelector(".wallpaper-frame").getBoundingClientRect().height,scroll:document.documentElement.scrollHeight})');
@@ -184,7 +184,7 @@ try{
   assert.deepEqual(schema.missing,[]);
   assert.deepEqual(schema.duplicated,[]);
   assert.deepEqual(schema.unknown,[]);
-  assert.equal(schema.wizard.length,6);
+  assert.equal(schema.wizard.length,7);
   assert.ok(schema.toolCount>=18);
   // Direct navigation, no blind scroll or gallery overlay.
   await evaluate('document.getElementById("tab-stripes").click()');
