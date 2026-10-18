@@ -1,4 +1,4 @@
-import {EDITOR_CATEGORIES, TOOL_LIST, SETTING_TOOL} from './editor-schema.js';
+import {EDITOR_CATEGORIES, TOOL_LIST, SETTING_TOOL} from './editor-schema.js?v=20261018-icons2';
 import {iconMarkup} from './ui-icons.js';
 
 const byId=id=>document.getElementById(id);
