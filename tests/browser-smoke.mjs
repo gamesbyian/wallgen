@@ -775,6 +775,25 @@ try{
       }
       return problems;
     })()`);
+    if(noClippedTools.length){
+      const diagnostic=await evaluate(`(()=>{
+        const result=[];
+        for(const tool of ['finish1','finish2','finish3']){
+          document.getElementById('tab-material').click();
+          document.querySelector('[data-editor-tool='+tool+'].editor-tool-tab').click();
+          const card=document.querySelector('.editor-tool-card:not([hidden])');
+          const cb=card.getBoundingClientRect();
+          for(const el of card.querySelectorAll('.rotation-controls button')){
+            const b=el.getBoundingClientRect();
+            result.push({tool,text:el.textContent,card:[cb.left,cb.top,cb.right,cb.bottom],
+              rect:[b.left,b.top,b.right,b.bottom],
+              row:el.closest('.texture-rotation-field').getBoundingClientRect().toJSON()});
+          }
+        }
+        return result;
+      })()`);
+      console.log('ROTATION_FIT_DIAG',JSON.stringify(diagnostic));
+    }
     assert.deepEqual(noClippedTools,[],
       'no tool may clip any control at '+name);
     const railPosition=await evaluate(`(()=>{
