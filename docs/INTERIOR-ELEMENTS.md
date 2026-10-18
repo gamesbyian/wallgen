@@ -12,6 +12,8 @@ a self-crossing ribbon is not safely represented as one simple polygon.
 `src/interior-elements.js` defines the normalized array of interior decorations.
 Every entry carries a stable ID, type (`line` or `band`), geometry, stroke,
 colour, thickness, position, amplitude, frequency, phase, opacity and placement,
+with line thickness measured in logical pixels and band thickness as a percentage
+of the object's local cross-section,
 plus optional colour-slot and object-ID scopes. The maximum is eight elements
 per recipe. The stack is ordered, deterministic, and serialized in recipe
 metadata, favourites, URLs, history and headless recipes.
