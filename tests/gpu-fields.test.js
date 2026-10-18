@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {gpuFieldEligibility,renderMaskedFieldGPU,createMaskedFieldSession,GPU_FIELD_FRAGMENT} from '../src/gpu-fields.js';
+import {gpuFieldEligibility,renderMaskedFieldGPU,createMaskedFieldSession,GPU_FIELD_FRAGMENT,GPU_FIELD_STACK_FRAGMENT} from '../src/gpu-fields.js';
 
 const eligible={id:'stripe-accent',enabled:true,placement:'field',shape:'wave',
   stroke:'solid',type:'line',width:2.25,color:'white',opacity:1,
@@ -73,6 +73,7 @@ function fakeGPU(){
     enableVertexAttribArray(){},vertexAttribPointer(){},
     getUniformLocation(){return {};},
     uniform1i(){},uniform1f(){},uniform2f(){},uniform3fv(){},
+    uniform4fv(){},uniform2fv(){},
     viewport(){},disable(){},clearColor(){},clear(){},
     drawArrays(){counters.draws++;},isContextLost(){return contextLost;},
     getExtension(){return {loseContext(){counters.lost++;contextLost=true;}}}
@@ -154,4 +155,63 @@ test('Wrong-size mutable mask and invalid dimensions never draw stale ink',()=>{
   assert.equal(mock.counters.draws,0);
   session.dispose();
   assert.equal(createMaskedFieldSession({width:6000,height:6000}).supported,false);
+});
+
+test('single-pass GPU compositor accepts ordered eligible layers and shares uploads',()=>{
+  const mock=fakeGPU();
+  const session=createMaskedFieldSession({width:64,height:64,
+    canvasFactory:()=>mock.canvas});
+  assert.equal(session.supported,true);
+  assert.match(session.renderMany([sessionElement]).reason,/Upload a mask/);
+  assert.equal(session.setMask({width:64,height:64}).supported,true);
+  const fields=[
+    {...sessionElement,shape:'straight',color:'white',opacity:.4},
+    {...sessionElement,shape:'wave',color:'black',opacity:.65,phase:120},
+    {...sessionElement,shape:'zigzag',color:'custom',customColor:'#aabbcc',
+      opacity:.8,frequency:3.5},
+  ];
+  const result=session.renderMany(fields);
+  assert.equal(result.supported,true,result.reason);
+  assert.equal(result.canvas,mock.canvas);
+  const another=session.renderMany([...fields].reverse());
+  assert.equal(another.supported,true,another.reason);
+  assert.equal(mock.counters.shaders,3,'vertex and two fragment shaders');
+  assert.equal(mock.counters.programs,2);
+  assert.equal(mock.counters.buffers,1);
+  assert.equal(mock.counters.textures,1);
+  assert.equal(mock.counters.allocations,1);
+  assert.equal(mock.counters.reuploads,1);
+  assert.equal(mock.counters.draws,2,'one draw per complete layered scene');
+  assert.equal(session.stats.maskUploads,1);
+  assert.equal(session.stats.draws,2);
+  session.dispose();session.dispose();
+  assert.equal(mock.counters.deleted,7);
+  assert.equal(mock.counters.lost,1);
+});
+
+test('unsupported stack elements fail before drawing or compiling GPU programs',()=>{
+  const mock=fakeGPU();
+  const session=createMaskedFieldSession({width:64,height:64,
+    canvasFactory:()=>mock.canvas});
+  session.setMask({width:64,height:64});
+  for(const elements of [
+    [],Array(9).fill(sessionElement),
+    [{...sessionElement,shape:'loop'}],
+    [sessionElement,{...sessionElement,color:'custom',customColor:'#xyz'}],
+    [sessionElement,{...sessionElement,stroke:'dotted'}],
+    [sessionElement,{...sessionElement,opacity:0}]
+  ])assert.equal(session.renderMany(elements).supported,false);
+  assert.equal(session.renderMany([sessionElement],{logicalHeight:0}).supported,false);
+  assert.equal(mock.counters.shaders,2);
+  assert.equal(mock.counters.draws,0);
+  mock.fireLoss();
+  assert.match(session.renderMany([sessionElement]).reason,/context lost/);
+  session.dispose();
+});
+
+test('stack shader performs source-over blending and has fixed layer cap',()=>{
+  assert.match(GPU_FIELD_STACK_FRAGMENT,/for\(int i=0;i<8;i\+\+\)/);
+  assert.match(GPU_FIELD_STACK_FRAGMENT,/accumulatedAlpha=alpha\+accumulatedAlpha\*\(1\.0-alpha\)/);
+  assert.match(GPU_FIELD_STACK_FRAGMENT,/accumulated\/accumulatedAlpha/);
+  assert.match(GPU_FIELD_STACK_FRAGMENT,/texture\(ownerMask/);
 });
