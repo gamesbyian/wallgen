@@ -16,7 +16,7 @@ To the extent the creator holds copyright interests in these materials, those
 interests are dedicated to the public domain; this cannot waive rights
 belonging to unrelated third parties. There is no warranty.
 
-Seed-based, offline-friendly, static rainbow wallpaper studio. Seven identifiable stripes use **red, orange, yellow, green, blue, indigo, violet** (or the explicitly reversed violet-to-red order) over a black or white canvas. No runtime dependencies, accounts, tracking, asset downloads, or build pipeline.
+Seed-based, offline-friendly, static rainbow wallpaper studio. Seven palette identities use **red, orange, yellow, green, blue, indigo, violet** (or the explicitly reversed violet-to-red order) over a black or white canvas. No runtime dependencies, accounts, tracking, asset downloads, or build pipeline.
 
 ## Launch
 
@@ -143,6 +143,46 @@ The optional **Remember these fields on this device** checkbox stores the metada
 in browser local storage. It is off by default; clearing the fields also updates
 any remembered copy. This is PNG metadata, not JPEG EXIF; support for displaying
 particular metadata fields varies among image-viewing applications.
+
+## Unified composition model (recipe v2)
+
+The wallpaper scene is now an **ordered collection of geometry objects**. A
+traditional rainbow is one or more `path-group` objects containing the
+original seven independent stripe paths. New **radial** and **regions** canvas
+structures produce closed `region` objects. The seven ROYGBIV colours are
+semantic palette identities, not a hardcoded count of seven objects; a
+composition can contain 7, 14, 70 or more regions while retaining the same
+seven pigments. The background/divider stays separate from the palette.
+
+Use **Layout → Canvas structure** to switch between:
+- **Paths and ribbons:** all existing drawn, imported, straight, curved,
+  looped, hairpin, patterned, repeated, tapered and woven stripe designs.
+- **Radial and bursts:** sunburst, starburst, pinwheel, separate spokes and
+  concentric bands. **Geometry → Radial rays / Ray shape / Origin** offers
+  7–70 elements, rotation, twist, coverage, centre clearance and an origin
+  that can move beyond the page boundaries.
+- **Regions and partitions:** Voronoi cells, smoothly warped territories,
+  triangular facets, recursive rectangles and nested circular/polygonal
+  silhouettes. **Geometry → Regions / Origin** controls element density,
+  irregularity, polygon sides and placement as applicable. **Stripes →
+  Dividers** sets a transparent, background-coloured, black or white boundary
+  and an independent thickness.
+
+All scene objects pass through the **same transparent ink**, shared palette,
+material layers, glow, lighting, nudge camera, headless rendering and PNG
+export. The original centreline sampler remains the specialized
+implementation of ribbons, including their crossing-order repairs; polygon
+fills are a separate primitive rather than an imitation of thick ribbons.
+
+The new `src/composition-geometry.js` is a pure resolution-independent
+geometry factory. `resolveScene` assembles objects and palette-slot colours;
+`drawWallpaper` dispatches them through a common compositing pipeline.
+Recipes store the **instructions**, not the full generated point clouds.
+Version 2 is emitted by current recipes and embedded PNGs; previously
+exported v1 PNG recipes can still be read and normalized to v2. The
+deterministic seed, named controls, property locks and granular rerolling
+remain central to the editing workflow. Inactive controls are disabled and
+visually display zero without discarding their stored values.
 
 ## Parametric geometry and combined stripe modes
 
