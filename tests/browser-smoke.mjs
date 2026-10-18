@@ -392,6 +392,7 @@ try{
   const undetailed=await evaluate('document.getElementById("preview").toDataURL()');
   await evaluate('document.getElementById("tab-details").click();document.querySelector("[data-editor-tool=interior]").click();document.querySelector(".interior-toolbar button").click()');
   await waitFor('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).interiorElements.length===1');
+  await waitFor('document.getElementById("preview").dataset.renderPending!=="true"',20000);
   const detailed=await evaluate('document.getElementById("preview").toDataURL()');
   assert.notEqual(detailed,undetailed,'adding an interior hairline must change painted pixels');
   await evaluate('document.querySelector("[data-editor-tool=interior-style]").click();(()=>{const select=document.querySelector(".editor-tool-card[data-editor-tool=interior-style] select");select.value="band";select.dispatchEvent(new Event("change",{bubbles:true}))})()');
@@ -779,18 +780,17 @@ try{
     JSON.stringify(elementUsability));
   // A rapid sequence of changes must settle on the last requested state,
   // and every change must actually refresh the painted wallpaper.
-  const previewChange=await evaluate(`(async()=>{
-    const canvas=document.getElementById('preview');
-    const before=canvas.toDataURL();
+  await waitFor('document.getElementById("preview").dataset.renderPending!=="true"',20000);
+  const previewBefore=await evaluate('document.getElementById("preview").toDataURL()');
+  await evaluate(`(()=>{
     const select=document.querySelector('[name=regionMode]');
     select.value='facets';
     select.dispatchEvent(new Event('change',{bubbles:true}));
-    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
-    const after=canvas.toDataURL();
-    return {changed:before!==after,selected:select.value};
   })()`);
-  assert.equal(previewChange.selected,'facets');
-  assert.ok(previewChange.changed,'geometry selector must repaint instead of leaving stale pixels');
+  await waitFor('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).regionMode==="facets"&&document.getElementById("preview").dataset.renderPending!=="true"',20000);
+  const previewAfter=await evaluate('document.getElementById("preview").toDataURL()');
+  assert.notEqual(previewBefore,previewAfter,
+    'committed geometry choices must eventually repaint exact settled pixels');
   await evaluate(`(()=>{
     const field=document.querySelector('[name=structure]');
     field.value='paths';field.dispatchEvent(new Event('change',{bubbles:true}));
