@@ -36,7 +36,13 @@ void main(){
   float adjustedY=p.y-position*period-amplitude*80.0*oscillation;
   // The Canvas2D implementation anchors rows at -2400 logical units.
   float grid=adjustedY+2400.0;
-  float distance=abs(fract(grid/period+.5)-.5)*period;
+  float verticalDistance=abs(fract(grid/period+.5)-.5)*period;
+  // Canvas2D strokes are measured normal to the path, not vertically.
+  // Account for the tangent of sinusoidal and triangular field waves.
+  float steepness=shapeCode==1?
+    amplitude*80.0*(2.0*PI/wavelength)*cos(angle):
+    shapeCode==2?amplitude*80.0*(4.0/wavelength)*sign(cos(angle)):0.0;
+  float distance=verticalDistance*inversesqrt(1.0+steepness*steepness);
   // Smooth coverage of a finite-width line. Derivatives are core in WebGL2.
   float edge=max(.001,fwidth(distance)*.48);
   float line=1.0-smoothstep(
