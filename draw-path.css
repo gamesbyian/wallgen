@@ -130,3 +130,17 @@ body.path-drawing .wallpaper-frame{
   body.mobile-studio .draw-smoothing-row input{min-width:0}
   body.mobile-studio .draw-path-panel{width:min(340px,calc(100% - 7px));}
 }
+
+/* Optional anchor editing shares the drawing overlay and camera. Extra
+   tools get a second compact row rather than expanding the entire editor. */
+.draw-point-controls{width:100%;padding-top:2px;border-top:1px solid #ffffff30}
+.draw-point-controls[hidden],.draw-point-controls button[hidden]{display:none!important}
+.draw-path-controls #drawEditPoints[hidden]{display:none!important}
+.draw-path-controls #drawEditPoints[aria-pressed="true"],
+.draw-point-controls button[aria-pressed="true"]{border-color:#5ed6f1;background:#214d62;color:#fff}
+body.path-drawing .studio-stage>#drawOverlay{cursor:crosshair}
+.draw-point-controls button{font-size:10px;min-height:28px}
+@media(max-width:790px){
+  body.mobile-studio .draw-path-panel{max-height:35dvh;overflow-y:auto}
+  body.mobile-studio .draw-point-controls button{font-size:9px;min-height:26px}
+}

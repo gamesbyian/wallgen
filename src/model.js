@@ -85,6 +85,14 @@ export function normalizeRecipe(input = {}) {
     mirrorVertical: input.mirrorVertical === true || input.mirrorVertical === 'true',
     geometry: readChoice('geometry', GEOMETRIES),
     customPath: normalizeDrawnPath(input.customPath),
+    // User-protected anchor indices travel with the sampled curve through
+    // URLs, favourites, JSON and embedded PNG metadata.
+    drawnAnchors: [...new Set((Array.isArray(input.drawnAnchors)?input.drawnAnchors:[])
+      .filter(i=>Number.isInteger(i)&&i>=0&&i<normalizeDrawnPath(input.customPath).length))]
+      .sort((a,b)=>a-b).slice(0,96),
+    drawnCorners: [...new Set((Array.isArray(input.drawnCorners)?input.drawnCorners:[])
+      .filter(i=>Number.isInteger(i)&&i>=0&&i<normalizeDrawnPath(input.customPath).length))]
+      .sort((a,b)=>a-b).slice(0,96),
     motif: readChoice('motif', MOTIFS),
     lineStyle: LINE_STYLES.includes(input.lineStyle) ? input.lineStyle : 'continuous',
     composition: COMPOSITIONS.includes(input.composition) ? input.composition : 'single',
@@ -373,7 +381,11 @@ export function respectSettingLocks(currentInput, nextInput) {
   const next=normalizeRecipe(nextInput);
   const locked=new Set(current.lockedSettings);
   for(const key of locked) {
-    if(key==='geometry')next.customPath=current.customPath;
+    if(key==='geometry'){
+      next.customPath=current.customPath;
+      next.drawnAnchors=current.drawnAnchors;
+      next.drawnCorners=current.drawnCorners;
+    }
     if(key==='position') {next.positionX=current.positionX;next.positionY=current.positionY;}
     else next[key]=current[key];
   }

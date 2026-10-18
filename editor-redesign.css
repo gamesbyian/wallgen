@@ -787,3 +787,28 @@
 .editor-tool-card .texture-rotation-field .rotation-controls{
   justify-content:flex-start!important;
 }
+
+/* All three material rotation fields have one-degree steppers as well as
+   quarter-turn shortcuts. Compact every button on narrow tool cards instead
+   of introducing another vertically scrolling configuration panel. */
+.editor-tool-card .texture-rotation-field .rotation-controls{
+  justify-content:space-between!important;overflow:hidden!important;
+}
+.editor-tool-card .texture-rotation-field .rotation-controls button{
+  flex:0 1 25px!important;width:25px!important;min-width:22px!important;
+  height:26px!important;font-size:9px!important;letter-spacing:-.35px!important;
+}
+.editor-tool-card .texture-rotation-field .rotation-controls input[type=number]{
+  flex:0 1 49px!important;width:49px!important;min-width:35px!important;
+  max-width:49px!important;
+}
+@media(min-width:500px) and (max-width:790px){
+ body.mobile-studio .sidebar .editor-tool-card .texture-rotation-field .rotation-controls button{
+   flex:0 1 31px!important;width:31px!important;min-width:26px!important;
+   height:36px!important;font-size:10px!important;
+ }
+ body.mobile-studio .sidebar .editor-tool-card .texture-rotation-field .rotation-controls input[type=number]{
+   flex:0 1 64px!important;width:64px!important;min-width:40px!important;
+   max-width:64px!important;height:34px!important;
+ }
+}
