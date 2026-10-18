@@ -164,7 +164,7 @@ Use **Layout → Canvas structure** to switch between:
 - **Regions and partitions:** Voronoi cells, smoothly warped territories,
   triangular facets, recursive rectangles and nested circular/polygonal
   silhouettes. **Geometry → Regions / Origin** controls element density,
-  irregularity, polygon sides and placement as applicable. **Stripes →
+  irregularity, polygon sides and placement as applicable. **Details →
   Dividers** sets a transparent, background-coloured, black or white boundary
   and an independent thickness.
 
@@ -183,6 +183,27 @@ exported v1 PNG recipes can still be read and normalized to v2. The
 deterministic seed, named controls, property locks and granular rerolling
 remain central to the editing workflow. Inactive controls are disabled and
 visually display zero without discarding their stored values.
+
+## Interior decoration layers
+
+All coloured objects support ordered interior elements, managed in
+**Details → Elements / Element style / Element motion / Placement / Colour targets**.
+A ribbon can carry a white or black hairline, a continuous/dotted/dashed
+wave, zigzag or looping line, or a contrasting tonal band. The same element
+system also decorates sunburst rays, pinwheels, nested circles, Voronoi
+regions, facets and blocks using local, field or contour placement.
+
+Each element has independent thickness, offset, opacity, frequency, amplitude,
+phase, ink colour (including custom hex), enabling and colour targeting.
+Up to eight can be reordered and the whole element stack locked. The
+underlying seven colours never change. Element geometry is clipped to its
+owner shape, participates in path intersection re-painting, and is preserved
+in saved/exported recipes and headless generation.
+
+The mobile editor separates **Shapes** (coloured geometry construction)
+from **Details** (interior decoration, borders/dividers, shadows and glow)
+so the additional controls do not require vertical scrolling.
+See [the interior element architecture](docs/INTERIOR-ELEMENTS.md).
 
 ## Parametric geometry and combined stripe modes
 
