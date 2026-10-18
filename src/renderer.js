@@ -403,7 +403,10 @@ function arcLengthUntil(stripe,extent,station){
 function drawPathFieldInk(ctx,stripe,extent,e){
   const start=stripe.segmentStart??-extent,end=stripe.segmentEnd??extent;
   let x0=Infinity,x1=-Infinity,y0=Infinity,y1=-Infinity;
-  const samples=Math.max(40,Math.min(140,Math.ceil((end-start)/24)));
+  // Sample the complete original path densely enough to include short
+  // jagged/looping turns; a coarse bounding box could silently crop field
+  // decorations at precisely the challenging imported/drawn features.
+  const samples=Math.max(180,Math.min(2500,Math.ceil((end-start)/2.3)));
   for(let i=0;i<=samples;i++){
     const station=start+(end-start)*i/samples;
     const p=samplePath(stripe,station,extent);
