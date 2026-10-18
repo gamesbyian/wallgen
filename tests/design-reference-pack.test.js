@@ -2,12 +2,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {iconMarkup} from '../src/ui-icons.js';
+import {EDITOR_CATEGORIES} from '../src/editor-schema.js';
 const root=new URL('../',import.meta.url);
 const read=p=>readFileSync(new URL(p,root),'utf8');
 const spec=JSON.parse(read('docs/ui-reference/canonical-screen-contract.json'));
 const manifest=JSON.parse(read('assets/icons/roygbiv/manifest.json'));
 test('canonical references enumerate all seven categories, all 40 tools and 12 illustrated states',()=>{
  assert.equal(spec.global.sourceCategories.length,7);
+ assert.deepEqual(spec.global.sourceCategories.map(c=>({id:c.id,tools:c.tools.map(t=>({id:t.id,settings:t.settings}))})),EDITOR_CATEGORIES.map(c=>({id:c.id,tools:c.tools.map(t=>({id:t.id,settings:t.settings}))})), 'captured editor keys must reflect current source');
  assert.equal(spec.global.sourceCategories.reduce((n,c)=>n+c.tools.length,0),40);
  assert.equal(spec.screens.length,12);
  for(const sc of spec.screens){
@@ -40,4 +42,12 @@ test('critical semantics documented, existing logo and pencil kept',()=>{
  assert.match(spec.global.sliderSemantics,/blue/);
  assert.ok(spec.screens.find(x=>x.id==='draw').icons.includes('draw-path'));
  assert.ok(spec.global.navigation.find(x=>x.label==='Edit').icon==='edit-controls');
+});
+
+test('traceability inventory preserves current dock controls and draw/export selectors',()=>{
+ const table=JSON.parse(read('docs/ui-reference/component-traceability.json'));
+ const ids=new Set(table.entries.filter(x=>x.sourceSelector.startsWith('id:')).map(x=>x.sourceSelector.slice(3)));
+ const html=read('index.html');
+ for(const id of ids)assert.ok(html.includes('id="'+id+'"'),'Missing source id '+id);
+ for(const id of ['mobileShuffle','mobileDownload','drawApply','drawCancel','drawEditPoints','metadataToggle','batch'])assert.ok(ids.has(id));
 });
