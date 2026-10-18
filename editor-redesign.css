@@ -812,3 +812,24 @@
    max-width:64px!important;height:34px!important;
  }
 }
+
+
+/* Compact editor for ordered, resolution-independent decorations. */
+.editor-tool-card[data-editor-tool="interior"]{overflow:auto;gap:5px}
+.editor-tool-card[data-editor-tool="interior"] .interior-toolbar{
+  display:flex;align-items:center;gap:5px;min-width:0
+}
+.editor-tool-card[data-editor-tool="interior"] .interior-toolbar select{flex:1;min-width:0}
+.editor-tool-card[data-editor-tool="interior"] .interior-toolbar button{
+  flex:0 0 auto;min-height:25px;padding:3px 6px;border:1px solid var(--line);
+  border-radius:6px;background:var(--surface);color:inherit
+}
+.editor-tool-card[data-editor-tool="interior"]>label{
+  display:flex;justify-content:space-between;align-items:center;
+  min-height:25px;gap:8px;font-size:11px
+}
+.editor-tool-card[data-editor-tool="interior"]>label>select,
+.editor-tool-card[data-editor-tool="interior"]>label>input{
+  flex:1;min-width:0;max-width:58%;height:24px
+}
+.editor-tool-card[data-editor-tool="interior"]>p{font-size:11px;opacity:.8}
