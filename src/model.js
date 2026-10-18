@@ -90,6 +90,9 @@ export function normalizeRecipe(input = {}) {
     drawnAnchors: [...new Set((Array.isArray(input.drawnAnchors)?input.drawnAnchors:[])
       .filter(i=>Number.isInteger(i)&&i>=0&&i<normalizeDrawnPath(input.customPath).length))]
       .sort((a,b)=>a-b).slice(0,96),
+    drawnCorners: [...new Set((Array.isArray(input.drawnCorners)?input.drawnCorners:[])
+      .filter(i=>Number.isInteger(i)&&i>=0&&i<normalizeDrawnPath(input.customPath).length))]
+      .sort((a,b)=>a-b).slice(0,96),
     motif: readChoice('motif', MOTIFS),
     lineStyle: LINE_STYLES.includes(input.lineStyle) ? input.lineStyle : 'continuous',
     composition: COMPOSITIONS.includes(input.composition) ? input.composition : 'single',
@@ -381,6 +384,7 @@ export function respectSettingLocks(currentInput, nextInput) {
     if(key==='geometry'){
       next.customPath=current.customPath;
       next.drawnAnchors=current.drawnAnchors;
+      next.drawnCorners=current.drawnCorners;
     }
     if(key==='position') {next.positionX=current.positionX;next.positionY=current.positionY;}
     else next[key]=current[key];
