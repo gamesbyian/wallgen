@@ -36,7 +36,9 @@ function radialWedges(r){
     const sequence=[...Array.from({length:33},(_,j)=>lerp(inner,outer,j/32))];
     const vertices=[];
     const angle=(radius,side)=>{
-      const u=radius/outer;
+      // Normalize deformation to the visible wallpaper, rather than the
+      // intentionally enormous overscan radius, so the shape is perceptible.
+      const u=clamp(radius/Math.hypot(W,H),0,1);
       const spiral=(r.radialMode==='pinwheel'?1:r.radialMode==='starburst'?.28:0)*twist*u;
       const jag=r.radialMode==='starburst'?Math.sin(u*Math.PI*3+i*2.39996)*sweep*.10*u:0;
       return base+(i+.5+side*coverage*.5)*sweep+spiral+jag;
