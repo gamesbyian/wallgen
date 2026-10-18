@@ -1,4 +1,5 @@
 import test from 'node:test';
+import {readFileSync} from 'node:fs';
 import assert from 'node:assert/strict';
 import {CROSSING_MODES,segmentIntersection,findPathCrossings,crossingTopIsLater,crossingBranchClip} from '../src/crossing-order.js';
 import {normalizeRecipe,resolveScene,encodeRecipe,decodeRecipe} from '../src/model.js';
@@ -169,4 +170,28 @@ test('local crossing segments retain the original endpoint taper',()=>{
     taperStart:-800,taperEnd:800};
   assert.equal(widthAt(branch,0,800),original);
   assert.equal(widthAt(branch,100,800),widthAt(stripe,100,800));
+});
+
+test('exact 96-point reported wallpaper keeps all seven offset ribbons coherent',()=>{
+  const recipe=JSON.parse(readFileSync(new URL('./fixtures/drawn-knot-t0b4v5.json',import.meta.url),'utf8'));
+  assert.equal(recipe.customPath.length,96);
+  assert.equal(recipe.seed,'t0b4v5-ice7lf');
+  assert.equal(recipe.geometrySafety,true);
+  assert.equal(recipe.construction,'tonal');
+  assert.equal(recipe.textureDisplacement,100);
+  const scene=resolveScene(recipe);
+  const span=scene.stripes.at(-1).center-scene.stripes[0].center;
+  const bound=safeDrawnBandSpan(scene.stripes[0].drawnPath);
+  assert.ok(span<=bound+1e-6,'whole bundle must respect curvature limit');
+  assert.ok(span<100,'small inner knot must not invert: '+span);
+  for(const stripe of scene.stripes){
+    let prev=samplePath(stripe,-scene.extent,scene.extent);
+    let largest=0;
+    for(let x=-scene.extent+2;x<=scene.extent;x+=2){
+      const cur=samplePath(stripe,x,scene.extent);
+      largest=Math.max(largest,Math.hypot(cur.x-prev.x,cur.y-prev.y));
+      prev=cur;
+    }
+    assert.ok(largest<16,`stripe ${stripe.index} must not sprout a transverse spur: ${largest}`);
+  }
 });
