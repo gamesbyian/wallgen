@@ -2,7 +2,7 @@ import {interpretStroke} from '../src/stroke-intent.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {finishDrawnPath, fairPath, normalizeDrawnPath, prepareDrawnPath, safeDrawnBandSpan, pointOnDrawnPath,
-  MAX_DRAWN_POINTS} from '../src/drawn-path.js';
+  MAX_DRAWN_POINTS,resamplePath} from '../src/drawn-path.js';
 import {normalizeRecipe,resolveScene,encodeRecipe,decodeRecipe,respectSettingLocks,
   DESIGN_WIDTH,DESIGN_HEIGHT} from '../src/model.js';
 import {pathPosition,samplePath,ribbonEdge} from '../src/path-geometry.js';
@@ -302,7 +302,12 @@ test('embedded loop corrections fade smoothly around a self-crossing',()=>{
     ...circle,
     ...line(start,leadOut,80).slice(1)
   ];
-  const interpretation=interpretStroke(raw);
+  // The production recognizer receives evenly arc-length-sampled input,
+  // irrespective of how many raw pointer events a device delivers.
+  const length=raw.slice(1).reduce((n,p,i)=>n+
+    Math.hypot((p[0]-raw[i][0])*600,(p[1]-raw[i][1])*1300),0);
+  const even=resamplePath(raw,Math.min(500,Math.max(8,Math.ceil(length/7))));
+  const interpretation=interpretStroke(even);
   assert.equal(interpretation?.kind,'embedded-loops');
   assert.ok(interpretation.weights.some(v=>v>.8),'inner circle is actively fitted');
   assert.ok(interpretation.weights.slice(0,35).every(v=>v===0),
