@@ -26,15 +26,17 @@ self.onmessage=async({data})=>{
     if(type==='preview'){
       cache={};
       drawWallpaper(surface,recipe,{cache});
-      const frame=surface.transferToImageBitmap();
+      // Transfer only the two immutable cached layers. The main thread
+      // already has a pixel-identical compositor for nudge, shadows and
+      // lighting; transferring a third full-frame bitmap wastes memory.
       const background=cache.background.transferToImageBitmap();
       const ink=cache.ink.transferToImageBitmap();
       try{
-        self.postMessage({type:'frame',id,key,frame,background,ink,
+        self.postMessage({type:'frame',id,key,background,ink,
           overhang:cache.overhang,ms:performance.now()-start},
-          [frame,background,ink]);
+          [background,ink]);
       }catch(error){
-        frame.close();background.close();ink.close();throw error;
+        background.close();ink.close();throw error;
       }
     }else{
       drawWallpaper(surface,recipe);
