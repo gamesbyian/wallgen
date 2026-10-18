@@ -210,3 +210,24 @@ html[data-theme="cream"] .image-path-dialog #imagePathAngle:not(:disabled){
     flex:1 1 18px!important;width:auto!important;min-width:18px!important;
     max-width:25px!important;padding:0!important;font-size:9px!important}
 }
+
+/* Sparsely populated cards return measured space to the live preview.
+   Small landscape heights keep the standard fixed geometry. */
+@media(max-width:790px) and (min-height:740px){
+  body.mobile-studio.mobile-edit-open.mobile-edit-compact{
+    --mobile-tray-height:clamp(256px,29dvh,273px)!important}
+}
+.editor-tool-chooser[data-more-right="true"][data-more-left="false"]{
+  -webkit-mask-image:linear-gradient(to right,#000 0%,#000 92%,transparent 100%);
+  mask-image:linear-gradient(to right,#000 0%,#000 92%,transparent 100%)}
+.editor-tool-chooser[data-more-left="true"][data-more-right="false"]{
+  -webkit-mask-image:linear-gradient(to right,transparent 0%,#000 8%,#000 100%);
+  mask-image:linear-gradient(to right,transparent 0%,#000 8%,#000 100%)}
+.editor-tool-chooser[data-more-left="true"][data-more-right="true"]{
+  -webkit-mask-image:linear-gradient(to right,transparent 0%,#000 8%,#000 92%,transparent 100%);
+  mask-image:linear-gradient(to right,transparent 0%,#000 8%,#000 92%,transparent 100%)}
+.editor-tool-card .reverse-stripe-field{
+  display:flex!important;flex-direction:row!important;justify-content:flex-start!important;
+  align-items:center!important;gap:8px!important}
+.editor-tool-card .reverse-stripe-field>input[type="checkbox"]{
+  width:18px;min-width:18px;height:18px;margin:0}
