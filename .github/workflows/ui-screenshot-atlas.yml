@@ -1,0 +1,41 @@
+name: UI state screenshot atlas
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'src/editor-schema.js'
+      - 'src/editor-layout.js'
+      - 'src/mobile-*.js'
+      - 'src/app.js'
+      - 'index.html'
+      - 'scripts/capture-ui-atlas.mjs'
+      - '.github/workflows/ui-screenshot-atlas.yml'
+permissions:
+  contents: read
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save playwright@1.56.1 serve@14.2.5
+      - run: npx playwright install --with-deps chromium
+      - name: Serve local app
+        run: |
+          npx serve . -l 4173 > /tmp/roygbiv-serve.log 2>&1 &
+          for i in $(seq 1 40); do curl --fail --silent http://127.0.0.1:4173/ >/dev/null && exit 0; sleep 1; done
+          cat /tmp/roygbiv-serve.log
+          exit 1
+      - name: Capture UI atlas
+        run: node scripts/capture-ui-atlas.mjs
+      - name: Upload full screenshot inventory and failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: roygbiv-ui-atlas
+          path: artifacts/ui-atlas/
+          retention-days: 14
+          if-no-files-found: warn
