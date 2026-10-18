@@ -18,13 +18,11 @@ const baseURL = arg('base-url') || 'http://127.0.0.1:4173';
 const out = resolve(arg('out') || 'artifacts/ui-atlas');
 const smoke = process.argv.includes('--smoke');
 const zooms = smoke?[100]:[100,75,66,50];
-const surfaces = (smoke ? [
+const allSurfaces = [
   {id:'desktop',viewport:{width:1440,height:900},mobile:false},
   {id:'pixel-6-pro',viewport:{width:412,height:892},mobile:true}
-] .slice(0,1) : [
-  {id:'desktop',viewport:{width:1440,height:900},mobile:false},
-  {id:'pixel-6-pro',viewport:{width:412,height:892},mobile:true}
-]);
+];
+const surfaces = smoke ? allSurfaces.slice(0,1) : allSurfaces;
 const cases=[];const errors=[];const inapplicable=[];const seen=new Set();
 const safe=s=>String(s).toLowerCase().replace(/[^a-z0-9-]+/g,'-').replace(/^-|-$/g,'');
 const browser=await chromium.launch({headless:true});
@@ -147,6 +145,7 @@ async function exercise(page,ctx){
     ['loops',{structure:'paths',geometry:'loops'}],
     ['stepped',{structure:'paths',geometry:'stepped'}],
     ['chevron',{structure:'paths',geometry:'chevron'}],
+    ['geometry-wave',{structure:'paths',geometry:'wave'}],
     ['radial-pinwheel',{structure:'radial',radialMode:'pinwheel'}],
     ['radial-concentric',{structure:'radial',radialMode:'concentric'}],
     ['regions-nested',{structure:'regions',regionMode:'nested'}],
@@ -174,7 +173,7 @@ async function exercise(page,ctx){
         name.startsWith('regions')?['path','region-detail']:
         name==='motif-dots'?['stripes','marks']:
         name.startsWith('construction')?['stripes','structure']:
-        ['path',name==='hairpin'?'turn':name==='loop'?'single-loop':name==='loops'?'safety':'shape-details'];
+        ['path',name==='hairpin'?'turn':name==='loop'?'single-loop':name==='loops'?'safety':name==='geometry-wave'?'geometry':'shape-details'];
       await navigate(page,...categoryTool);
       await capture(page,ctx,'conditional-'+name,{kind:'conditional',values});
     }catch(e){errors.push({profile:ctx.surface.id,zoom:ctx.zoom,case:name,error:String(e)});}
@@ -221,7 +220,7 @@ try{
         // its image dramatically reduces artifact size and removes all false
         // variation from the screenshots. Controls, overlays and frames remain.
         await page.addStyleTag({content:`
-          #preview, #gallery .thumb canvas { visibility:hidden!important; }
+          #preview, #gallery .thumb canvas, .editor-history-choice img { visibility:hidden!important; }
           .wallpaper-surface { background: #d2d2d2!important; }
           #gallery .thumb { background:#e4e4e4; }
         `});
@@ -238,9 +237,9 @@ for(const surface of surfaces)for(const zoom of zooms){
   const subset=cases.filter(x=>x.profile===surface.id && x.zoomPercent===zoom);
   const required=[
     ...EDITOR_CATEGORIES.flatMap(c=>c.tools.map(t=>({kind:'tool',tool:t.id}))),
-    ...['repeat','floating','diagonal','hairpin','loop','loops','stepped','chevron','radial-pinwheel','radial-concentric','radial-spokes','regions-nested','regions-organic','motif-dots','construction-woven','construction-stroke','construction-tonal','material-layers','lighting','shadows','outline'].map(name=>({id:'conditional-'+name})),
-    ...['dark-theme','vary-wild','search-expanded-empty','setting-locked','interior-empty','interior-one-element','interior-band-style','interior-contour-placement','interior-custom-colour-enabled','interior-two-elements','interior-stack-locked','gallery-empty-favourites','gallery-with-favourite','metadata-expanded','draw-empty-panel','draw-ready-path','draw-edit-point-anchors','image-import-candidate-or-error'].map(name=>({id:'special-'+name})),
-    ...(surface.mobile?[{id:'special-mobile-edit-rail'}]:[])
+    ...['repeat','floating','diagonal','hairpin','loop','loops','stepped','chevron','geometry-wave','radial-pinwheel','radial-concentric','radial-spokes','regions-nested','regions-organic','motif-dots','construction-woven','construction-stroke','construction-tonal','material-layers','lighting','shadows','outline'].map(name=>({id:'conditional-'+name})),
+    ...['dark-theme','vary-wild','search-expanded-empty','setting-locked','interior-empty','interior-one-element','interior-band-style','interior-contour-placement','interior-custom-colour-enabled','interior-two-elements','interior-stack-locked','gallery-empty-favourites','gallery-with-favourite','metadata-expanded','metadata-scrolled-controls','history-empty','history-with-variations','drawn-path-endpoint-controls','draw-empty-panel','draw-ready-path','draw-edit-point-anchors','image-import-candidate-or-error'].map(name=>({id:'special-'+name})),
+    ...(surface.mobile?[{id:'special-mobile-edit-rail'},{id:'special-mobile-nudge-reset-enabled'}]:[])
   ];
   for(const expectation of required){
     if(!subset.some(x=>Object.entries(expectation).every(([k,v])=>k==='id'?x.id.endsWith('/'+v):x[k]===v)))
@@ -249,7 +248,7 @@ for(const surface of surfaces)for(const zoom of zooms){
 }
 await writeFile(join(out,'manifest.json'),JSON.stringify({created:new Date().toISOString(),baseURL,zoomMethod:'CSS root zoom; viewport held fixed',smoke,cases,inapplicable,errors,missingExpected},null,2));
 const byKind=Object.groupBy?Object.groupBy(cases,x=>x.kind):{};
-const report=['# ROYGBIV UI screenshot atlas','','Profiles: desktop 1440×900, mobile 412×892. Zoom: 100%, 75%, 66%, 50%.','','Screenshots: '+cases.length,'Recorded traversal failures: '+errors.length,'Correctly inapplicable tools: '+inapplicable.length,'Missing required UI states: '+missingExpected.length,'','The manifest lists every attempted screenshot, active overlays and navigation context. Static wallpaper artwork is deliberately unchanged across cases.','','## Coverage by kind',...Object.entries(byKind).map(([k,v])=>'- '+k+': '+v.length),'','## Missing/unreachable states',...errors.map(x=>'- '+JSON.stringify(x)),''];
+const report=['# ROYGBIV UI screenshot atlas','', 'Profiles: '+surfaces.map(x=>x.id+' ('+x.viewport.width+'x'+x.viewport.height+')').join(', ')+'. Zoom levels: '+zooms.map(x=>x+'%').join(', ')+'.','','Screenshots: '+cases.length,'Recorded traversal failures: '+errors.length,'Correctly inapplicable tools: '+inapplicable.length,'Missing required UI states: '+missingExpected.length,'','The manifest lists every attempted screenshot, active overlays and navigation context. Static wallpaper artwork is deliberately unchanged across cases.','','## Coverage by kind',...Object.entries(byKind).map(([k,v])=>'- '+k+': '+v.length),'','## Missing/unreachable states',...errors.map(x=>'- '+JSON.stringify(x)),''];
 await writeFile(join(out,'README.md'),report.join('\n'));
 await writeAtlasReport(out,{cases,errors,inapplicable,missingExpected});
 console.log('UI atlas:',cases.length,'captures,',errors.length,'traversal failures,',missingExpected.length,'missing expected states. Output:',out);
