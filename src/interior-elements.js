@@ -55,6 +55,10 @@ export function drawRegionInteriors(ctx,object,elements,structure){
   const xs=object.vertices.map(p=>p.x),ys=object.vertices.map(p=>p.y);
   const x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys);
   const cx=(x0+x1)/2,cy=(y0+y1)/2;
+  // Radial wedges intentionally extend thousands of logical pixels beyond
+  // the frame. Bound procedural work to the visible design plus overhang.
+  const left=Math.max(x0,-1500),right=Math.min(x1,2100);
+  const top=Math.max(y0,-2200),bottom=Math.min(y1,3500);
   ctx.save();ctx.beginPath();ctx.moveTo(object.vertices[0].x,object.vertices[0].y);
   for(const p of object.vertices.slice(1))ctx.lineTo(p.x,p.y);
   ctx.closePath();ctx.clip();
@@ -78,12 +82,12 @@ export function drawRegionInteriors(ctx,object,elements,structure){
       // All field patterns have stable world-space phase across neighbouring
       // cells; each cell merely reveals its portion of the same continuous ink.
       const ang=structure==='radial'&&e.placement==='local'?
-        Math.atan2(cy-650,cx-300):0;
+        Math.atan2(cy-(object.origin?.y??650),cx-(object.origin?.x??300)):0;
       ctx.translate(cx,cy);ctx.rotate(ang);ctx.translate(-cx,-cy);
       const period=Math.max(12,160/Math.max(.2,e.frequency));
-      for(let y=y0-180;y<=y1+180;y+=period){
+      for(let y=top-180;y<=bottom+180;y+=period){
         ctx.beginPath();
-        const step=3,from=x0-260,to=x1+260;
+        const step=3,from=left-260,to=right+260;
         for(let x=from;x<=to;x+=step){
           const t=(x+e.phase*3)/Math.max(16,220/e.frequency);
           const displacement=e.amplitude*80*elementWave({...e,frequency:1},t);
