@@ -133,7 +133,8 @@ test('smoothing strength keeps the old minimum and progressively removes small b
     assert.ok(path.length>=2&&path.length<=MAX_DRAWN_POINTS);
   }
   assert.deepEqual(finishDrawnPath(raw,'smooth',0),one);
-  assert.deepEqual(finishDrawnPath(raw,'smooth',20),strong);
+  assert.deepEqual(finishDrawnPath(raw,'smooth',5),strong);
+  assert.deepEqual(finishDrawnPath(raw,'smooth',30),finishDrawnPath(raw,'smooth',10));
   assert.deepEqual(finishDrawnPath(raw,'smooth',NaN),one);
 });
 test('strong geometric smoothing preserves main loops and off-frame endpoints',()=>{
@@ -145,4 +146,77 @@ test('strong geometric smoothing preserves main loops and off-frame endpoints',(
     assert.ok(result.some(p=>p[1]>.68),'deliberate large curve is retained');
     assert.deepEqual(result,finishDrawnPath(raw,'geometric',power));
   }
+});
+
+test('at 10× a finger-drawn horizontal line becomes mathematically horizontal',()=>{
+  const raw=Array.from({length:120},(_,i)=>{
+    const t=i/119;return [.08+.83*t,.46+.007*Math.sin(i*.7)+.005*t];
+  });
+  const result=finishDrawnPath(raw,'smooth',10);
+  assert.ok(result.length>=30);
+  const maxY=Math.max(...result.map(p=>p[1])),
+    minY=Math.min(...result.map(p=>p[1]));
+  assert.ok(maxY-minY<.00002,'Y must be constant, not merely less wobbly');
+  assert.ok(result[0][0]<.09&&result.at(-1)[0]>.90);
+});
+test('10× recovers an exactly vertical line from a wobbly stylus stroke',()=>{
+  const raw=Array.from({length:160},(_,i)=>{
+    const t=i/159;return [.54+.014*Math.sin(i*.45)+.006*t,-.08+1.12*t];
+  });
+  const result=finishDrawnPath(raw,'smooth',10);
+  assert.ok(result.length>=30);
+  assert.ok(Math.max(...result.map(p=>p[0]))-
+    Math.min(...result.map(p=>p[0]))<.00002);
+  assert.ok(result[0][1]<0&&result.at(-1)[1]>1,
+    'off-frame endpoints are not clipped by axis snapping');
+});
+test('high-strength diagonal line stays diagonal, not forcibly horizontal',()=>{
+  const raw=Array.from({length:105},(_,i)=>{
+    const t=i/104;
+    return [.12+.74*t,.15+.58*t+.006*Math.sin(i*.71)];
+  });
+  const result=finishDrawnPath(raw,'smooth',10);
+  const cross=(a,b,c)=>(b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0]);
+  const begin=result[0],end=result.at(-1);
+  assert.ok(result.reduce((sum,p)=>sum+Math.abs(cross(begin,end,p)),0)/result.length<.00003);
+  assert.ok(end[1]-begin[1]>.5);
+});
+test('10× recovers a circular loop with uniform radius and closed ends',()=>{
+  const centre=[.48,.48],rx=.275,ry=rx*600/1300;
+  const raw=Array.from({length:215},(_,i)=>{
+    const t=i/214,angle=2*Math.PI*t-.73;
+    const r=1+.045*Math.sin(i*.79)+.025*Math.cos(i*.17);
+    return [centre[0]+rx*r*Math.cos(angle),centre[1]+ry*r*Math.sin(angle)];
+  });
+  const result=finishDrawnPath(raw,'smooth',10);
+  assert.ok(result.length>=50);
+  const px=result.map(([x,y])=>[x*600,y*1300]);
+  const cx=px.reduce((s,p)=>s+p[0]/px.length,0);
+  const cy=px.reduce((s,p)=>s+p[1]/px.length,0);
+  const radii=px.map(p=>Math.hypot(p[0]-cx,p[1]-cy));
+  const mean=radii.reduce((s,r)=>s+r,0)/radii.length;
+  const deviation=Math.sqrt(radii.reduce((s,r)=>s+(r-mean)**2,0)/radii.length)/mean;
+  assert.ok(deviation<.018,'fitted loop should be circular rather than an oval or flattened blob');
+  assert.ok(Math.hypot(...[px[0][0]-px.at(-1)[0],px[0][1]-px.at(-1)[1]])<3,
+    'circular loop should close precisely');
+});
+test('confident partial circular arcs retain a smooth round curve',()=>{
+  const raw=Array.from({length:150},(_,i)=>{
+    const a=(-.18+i/149*1.28)*Math.PI;
+    const r=1+.015*Math.sin(i*.89);
+    return [.5+.24*r*Math.cos(a),.52+.24*600/1300*r*Math.sin(a)];
+  });
+  const result=finishDrawnPath(raw,'smooth',10);
+  assert.ok(result.length>20);
+  const xs=result.map(p=>p[0]),ys=result.map(p=>p[1]);
+  assert.ok(Math.max(...xs)-Math.min(...xs)>.24);
+  assert.ok(Math.max(...ys)-Math.min(...ys)>.18);
+});
+test('strong geometric mode accepts 10× while preserving intentional bends',()=>{
+  const raw=[[-.18,.17],[-.17,.36],[-.12,.62],[.18,.73],[.48,.61],[.52,.39],[.55,.11]];
+  const result=finishDrawnPath(raw,'geometric',10);
+  assert.ok(result.length>=10);
+  assert.ok(result[0][0]<0&&result.at(-1)[1]<.2);
+  assert.ok(Math.max(...result.map(p=>p[1]))>.5);
+  assert.deepEqual(result,finishDrawnPath(raw,'geometric',10));
 });
