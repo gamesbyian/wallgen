@@ -16,7 +16,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const types = {'.js':'text/javascript','.css':'text/css','.html':'text/html','.json':'application/json','.svg':'image/svg+xml'};
 const usage = `Usage: node scripts/render-headless.mjs [--recipe design.json] [--seed text]
   [--set key=value ...] [--width pixels] [--height pixels] [--out image.png]
-  [--metadata metadata.json] [--browser path] [--help]
+  [--metadata metadata.json] [--browser path] [--backend reference|worker] [--help]
 
 Examples:
   npm run render -- --seed rainbow-001 --out wallpaper.png
@@ -31,7 +31,7 @@ function parseArgs(args) {
   for (let i=0;i<args.length;i++) {
     const key=args[i];
     if(key==='--help'||key==='-h'){values.help=true;continue;}
-    if(!['--recipe','--seed','--set','--width','--height','--out','--metadata','--browser'].includes(key))
+    if(!['--recipe','--seed','--set','--width','--height','--out','--metadata','--browser','--backend'].includes(key))
       throw Error('Unknown option: '+key);
     if(i+1===args.length||args[i+1].startsWith('--'))throw Error('Missing value for '+key);
     const value=args[++i];
@@ -79,6 +79,8 @@ async function main(){
     if(!Object.hasOwn(normalizeRecipe({}),key))throw Error('Unknown recipe setting: '+key);
     input[key]=raw==='true'?true:raw==='false'?false:/^-?\d+(?:\.\d+)?$/.test(raw)?Number(raw):raw;
   }
+  if(args.backend!==undefined&&!['worker','reference'].includes(args.backend))
+    throw Error('--backend must be reference or worker');
   const recipe=normalizeRecipe(input);
   const width=integer(args.width,OUTPUT_WIDTH,'width');
   const height=integer(args.height,OUTPUT_HEIGHT,'height');
@@ -95,13 +97,23 @@ async function main(){
     browser=await chromium.launch({headless:true,...(args.browser?{executablePath:args.browser}:{})});
     const page=await browser.newPage({viewport:{width:800,height:900},deviceScaleFactor:1});
     await page.goto('http://127.0.0.1:'+port+'/',{waitUntil:'domcontentloaded'});
-    const base64=await page.evaluate(async({recipe,width,height})=>{
+    const base64=await page.evaluate(async({recipe,width,height,backend})=>{
+      if(backend==='worker'){
+        const {exportWallpaperInWorker}=await import('/src/render-coordinator.js');
+        const blob=await exportWallpaperInWorker({recipe,width,height});
+        return await new Promise((resolve,reject)=>{
+          const reader=new FileReader();
+          reader.onload=()=>resolve(String(reader.result).split(',')[1]);
+          reader.onerror=()=>reject(reader.error||Error('Worker PNG could not be read'));
+          reader.readAsDataURL(blob);
+        });
+      }
       const {drawWallpaper}=await import('/src/renderer.js');
       const canvas=document.createElement('canvas');
       canvas.width=width;canvas.height=height;
       drawWallpaper(canvas,recipe);
       return canvas.toDataURL('image/png').split(',')[1];
-    },{recipe,width,height});
+    },{recipe,width,height,backend:args.backend||'reference'});
     const png=embedPngMetadata(Buffer.from(base64,'base64'),metadata,{recipe});
     if(JSON.stringify(extractPngRecipe(png))!==JSON.stringify(recipe))
       throw Error('PNG recipe round-trip failed');
