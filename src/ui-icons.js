@@ -4,8 +4,9 @@ import {DRAWINGS_A} from './ui-icon-drawings-a.js';
 import {DRAWINGS_B} from './ui-icon-drawings-b.js';
 import {DRAWINGS_C} from './ui-icon-drawings-c.js';
 import {DRAWINGS_D} from './ui-icon-drawings-d.js';
+import {DRAWINGS_E} from './ui-icon-drawings-e.js';
 
-const DRAWINGS=Object.freeze({...DRAWINGS_A,...DRAWINGS_B,...DRAWINGS_C,...DRAWINGS_D});
+const DRAWINGS=Object.freeze({...DRAWINGS_A,...DRAWINGS_B,...DRAWINGS_C,...DRAWINGS_D,...DRAWINGS_E});
 const hasIcon=name=>Object.hasOwn(DRAWINGS,name);
 export function iconSrc(name){
   if(!hasIcon(name))throw new RangeError('Unknown ROYGBIV icon: '+name);

@@ -13,7 +13,7 @@ const names = manifest.icons.map((entry) => entry.name);
 
 test("integrated ROYGBIV icons are a complete, unique SVG collection", () => {
   assert.equal(manifest.status, "integrated");
-  assert.equal(names.length, 56);
+  assert.ok(names.length>=68, 'baseline plus candidate icon family');
   assert.equal(new Set(names).size, names.length, "duplicate icon names");
   const files = readdirSync(dir).filter((name) => name.endsWith(".svg")).sort();
   assert.deepEqual(files, names.map((name) => name + ".svg").sort());

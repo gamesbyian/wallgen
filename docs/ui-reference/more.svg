@@ -1,0 +1,120 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1260 850" width="1260" height="850">
+<rect x="0" y="0" width="1260" height="850" rx="0" fill="#F8F3E9" />
+<text x="478" y="55" font-family="Arial,sans-serif" font-size="24" fill="#242334" font-weight="700">IMPLEMENTATION-SAFE  /  MORE / OUTPUTS</text>
+<text x="479" y="84" font-family="Arial,sans-serif" font-size="13" fill="#777182" font-weight="500">Live controls: source contract • Artwork: approved ROYGBIV SVGs • Geometry: schematic</text>
+<rect x="43" y="23" width="364" height="795" rx="30" fill="#211F2A" />
+<rect x="54" y="34" width="342" height="774" rx="22" fill="#FFFCF7" />
+<g transform="translate(54 34) scale(.8301 .8677)">
+<rect x="0" y="0" width="412" height="892" rx="20" fill="#F8F3E9" />
+<rect x="0" y="0" width="412" height="74" rx="0" fill="#FFFCF7" />
+<svg x="12" y="11" width="47" height="47" viewBox="0 0 120 120" fill="none" stroke="#242334" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect width="120" height="120" rx="15" fill="#050608"/>
+  <!-- Seven parallel ROYGBIV capsules, shifted up 2% of the square.
+       Every endpoint remains inside the tile and lengths intentionally differ. -->
+  <g transform="translate(0 -2.4)" fill="none" stroke-width="9" stroke-linecap="round">
+    <path stroke="#ff474e" d="M12 40 L107 14"/>
+    <path stroke="#ff9b39" d="M8 52 L67 35"/>
+    <path stroke="#ffe25b" d="M23 61 L111 36"/>
+    <path stroke="#4fdd87" d="M12 74 L110 48"/>
+    <path stroke="#53aaff" d="M10 87 L78 68"/>
+    <path stroke="#6359e5" d="M17 97 L111 72"/>
+    <path stroke="#bb64ed" d="M40 100 L100 84"/>
+  </g>
+  <!-- Phone contour sits on top of all seven colours. -->
+  <rect x="34" y="13" width="53" height="94" rx="10" fill="none"
+        stroke="#fff" stroke-width="2.5"/>
+  <path d="M50 21 H71 M55 99 H66" fill="none" stroke="#fff"
+        stroke-width="1.7" stroke-linecap="round"/></svg>
+<text x="68" y="34" font-family="Arial,sans-serif" font-size="19" fill="#FF474E" font-weight="700">R</text>
+<text x="81" y="34" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">.</text>
+<text x="90" y="34" font-family="Arial,sans-serif" font-size="19" fill="#FF9B39" font-weight="700">O</text>
+<text x="103" y="34" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">.</text>
+<text x="112" y="34" font-family="Arial,sans-serif" font-size="19" fill="#FFE25B" font-weight="700">Y</text>
+<text x="125" y="34" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">.</text>
+<text x="134" y="34" font-family="Arial,sans-serif" font-size="19" fill="#4FDD87" font-weight="700">G</text>
+<text x="147" y="34" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">.</text>
+<text x="156" y="34" font-family="Arial,sans-serif" font-size="19" fill="#53AAFF" font-weight="700">B</text>
+<text x="169" y="34" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">.</text>
+<text x="178" y="34" font-family="Arial,sans-serif" font-size="19" fill="#6359E5" font-weight="700">I</text>
+<text x="191" y="34" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">.</text>
+<text x="200" y="34" font-family="Arial,sans-serif" font-size="19" fill="#BB64ED" font-weight="700">V</text>
+<text x="69" y="52" font-family="Arial,sans-serif" font-size="10" fill="#696574" font-weight="500">PROCEDURAL WALLPAPER</text>
+<circle cx="352" cy="34" r="13" fill="#F8F3E9" stroke="#151515"/><circle cx="386" cy="34" r="13" fill="#08090E" stroke="#151515"/>
+<text x="18" y="112" font-family="Arial,sans-serif" font-size="18" fill="#262434" font-weight="700">Export &amp; identity</text>
+<rect x="19" y="139" width="185" height="67" rx="9" fill="#FFFCF7" stroke="#DCD4CB"/>
+<svg x="31" y="154" width="27" height="27" viewBox="0 0 32 32" fill="none" stroke="#242334" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="23" height="17" rx="3" fill="#FFF8EF"/><circle cx="11" cy="9" r="2" fill="#FFE25B" stroke="none"/><path d="m7 17 6-6 4 4 4-6 3 8" stroke="#4FDD87"/><path d="M16 20v10m-4-4 4 4 4-4" stroke="#53AAFF"/></svg>
+<text x="67" y="179" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">Export PNG</text>
+<rect x="213" y="139" width="185" height="67" rx="9" fill="#FFFCF7" stroke="#DCD4CB"/>
+<svg x="225" y="154" width="27" height="27" viewBox="0 0 32 32" fill="none" stroke="#242334" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4v15m-6-6 6 6 6-6M6 22v5h20v-5" /></svg>
+<text x="261" y="179" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">Recipe JSON</text>
+<rect x="19" y="220" width="185" height="67" rx="9" fill="#FFFCF7" stroke="#DCD4CB"/>
+<svg x="31" y="235" width="27" height="27" viewBox="0 0 32 32" fill="none" stroke="#242334" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="10" y="10" width="18" height="18" rx="3" fill="#FFF8EF"/><path d="M7 23H5V5h18v2" /></svg>
+<text x="67" y="260" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">Copy JSON</text>
+<rect x="213" y="220" width="185" height="67" rx="9" fill="#FFFCF7" stroke="#DCD4CB"/>
+<svg x="225" y="235" width="27" height="27" viewBox="0 0 32 32" fill="none" stroke="#242334" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="10" y="10" width="18" height="18" rx="3" fill="#FFF8EF"/><path d="M7 23H5V5h18v2" /></svg>
+<text x="261" y="260" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">Copy link</text>
+<rect x="19" y="301" width="185" height="67" rx="9" fill="#FFFCF7" stroke="#DCD4CB"/>
+<svg x="31" y="316" width="27" height="27" viewBox="0 0 32 32" fill="none" stroke="#242334" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="17" height="21" rx="3" fill="#FFF8EF"/><path d="m7 19 5-7 3 4 4-7" stroke="#4FDD87"/><path d="M25 13v13m-4-4 4 4 4-4" stroke="#53AAFF"/><path d="M9 29h20" /></svg>
+<text x="67" y="341" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">Import</text>
+<rect x="213" y="301" width="185" height="67" rx="9" fill="#FFFCF7" stroke="#DCD4CB"/>
+<svg x="225" y="316" width="27" height="27" viewBox="0 0 32 32" fill="none" stroke="#242334" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h16l4 5v19H6z" fill="#FFF8EF"/><path d="M22 4v6h4M10 14h12M10 19h12M10 24h8" /><circle cx="11" cy="10" r="2" fill="#FFB7C4" stroke="none"/></svg>
+<text x="261" y="341" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">Metadata</text>
+<text x="21" y="457" font-family="Arial,sans-serif" font-size="14" fill="#242334" font-weight="500">MORE ACTIONS</text>
+<rect x="20" y="471" width="369" height="49" rx="8" fill="#FFFCF7" stroke="#DCD4CB"/>
+<text x="36" y="501" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">Batch output</text>
+<rect x="20" y="529" width="369" height="49" rx="8" fill="#FFFCF7" stroke="#DCD4CB"/>
+<text x="36" y="559" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">Seed / apply</text>
+<rect x="20" y="587" width="369" height="49" rx="8" fill="#FFFCF7" stroke="#DCD4CB"/>
+<text x="36" y="617" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">Remember metadata</text>
+<rect x="20" y="645" width="369" height="49" rx="8" fill="#FFFCF7" stroke="#DCD4CB"/>
+<text x="36" y="675" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">Clear metadata</text>
+<rect x="20" y="703" width="369" height="49" rx="8" fill="#FFFCF7" stroke="#DCD4CB"/>
+<text x="36" y="733" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">Global status</text>
+<rect x="0" y="817" width="412" height="75" rx="0" fill="#FFFCF7" />
+<svg x="31" y="827" width="26" height="26" viewBox="0 0 32 32" fill="none" stroke="#242334" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14.5 16 4l12 10.5V28H6V14.5Z" /><rect x="13" y="19" width="6" height="9" rx="1.2" fill="#FFB7C4" stroke="#18151F"/></svg>
+<text x="24" y="877" font-family="Arial,sans-serif" font-size="11" fill="#242334" font-weight="500">Studio</text>
+<svg x="112" y="827" width="26" height="26" viewBox="0 0 32 32" fill="none" stroke="#242334" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h22M5 16h22M5 24h22"/><circle cx="12" cy="8" r="3.1" fill="#FF9B39" stroke="#18151F"/><circle cx="22" cy="16" r="3.1" fill="#53AAFF" stroke="#18151F"/><circle cx="9" cy="24" r="3.1" fill="#BB64ED" stroke="#18151F"/></svg>
+<text x="105" y="877" font-family="Arial,sans-serif" font-size="11" fill="#242334" font-weight="500">Edit</text>
+<svg x="193" y="827" width="26" height="26" viewBox="0 0 32 32" fill="none" stroke="#242334" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="9" height="9" rx="1.7" fill="none" stroke="#FF474E" stroke-width="3"/><rect x="18" y="5" width="9" height="9" rx="1.7" fill="none" stroke="#FFE25B" stroke-width="3"/><rect x="5" y="18" width="9" height="9" rx="1.7" fill="none" stroke="#6359E5" stroke-width="3"/><rect x="18" y="18" width="9" height="9" rx="1.7" fill="none" stroke="#4FDD87" stroke-width="3"/></svg>
+<text x="186" y="877" font-family="Arial,sans-serif" font-size="11" fill="#242334" font-weight="500">Explore</text>
+<svg x="274" y="827" width="26" height="26" viewBox="0 0 32 32" fill="none" stroke="#242334" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M16 27S4 20 4 11.5C4 4 12 3.3 16 9c4-5.7 12-5 12 2.5C28 20 16 27 16 27Z" fill="#FFB7C4"/></svg>
+<text x="267" y="877" font-family="Arial,sans-serif" font-size="11" fill="#242334" font-weight="500">Saved</text>
+<rect x="333" y="823" width="73" height="64" rx="11" fill="#FFE0BA" />
+<svg x="355" y="827" width="26" height="26" viewBox="0 0 32 32" fill="none" stroke="#242334" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="16" cy="8" r="2.1" fill="#18151F" stroke="none"/><circle cx="16" cy="16" r="2.1" fill="#18151F" stroke="none"/><circle cx="16" cy="24" r="2.1" fill="#18151F" stroke="none"/></svg>
+<text x="348" y="877" font-family="Arial,sans-serif" font-size="11" fill="#242334" font-weight="500">More</text>
+</g>
+<rect x="456" y="119" width="760" height="679" rx="18" fill="#FFFCF7" stroke="#E1D6CB"/>
+<text x="477" y="157" font-family="Arial,sans-serif" font-size="17" fill="#242334" font-weight="700">REQUIRED IN THIS STATE</text>
+<circle cx="485" cy="185" r="5" fill="#4FDD87" stroke="#232333"/>
+<text x="498" y="188" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">Same branded masthead</text>
+<circle cx="485" cy="218" r="5" fill="#4FDD87" stroke="#232333"/>
+<text x="498" y="221" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">Export wallpaper PNG</text>
+<circle cx="485" cy="251" r="5" fill="#4FDD87" stroke="#232333"/>
+<text x="498" y="254" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">Download recipe JSON</text>
+<circle cx="485" cy="284" r="5" fill="#4FDD87" stroke="#232333"/>
+<text x="498" y="287" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">Copy recipe JSON</text>
+<circle cx="485" cy="317" r="5" fill="#4FDD87" stroke="#232333"/>
+<text x="498" y="320" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">Copy share link</text>
+<circle cx="485" cy="350" r="5" fill="#4FDD87" stroke="#232333"/>
+<text x="498" y="353" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">Import PNG recipe</text>
+<circle cx="485" cy="383" r="5" fill="#4FDD87" stroke="#232333"/>
+<text x="498" y="386" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">Import recipe JSON/file</text>
+<circle cx="850" cy="185" r="5" fill="#4FDD87" stroke="#232333"/>
+<text x="863" y="188" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">Batch output where available</text>
+<circle cx="850" cy="218" r="5" fill="#4FDD87" stroke="#232333"/>
+<text x="863" y="221" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">Seed entry / apply</text>
+<circle cx="850" cy="251" r="5" fill="#4FDD87" stroke="#232333"/>
+<text x="863" y="254" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">Editable image metadata fields</text>
+<circle cx="850" cy="284" r="5" fill="#4FDD87" stroke="#232333"/>
+<text x="863" y="287" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">Remember / clear metadata</text>
+<circle cx="850" cy="317" r="5" fill="#4FDD87" stroke="#232333"/>
+<text x="863" y="320" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">Accessible global status notifications</text>
+<circle cx="850" cy="350" r="5" fill="#4FDD87" stroke="#232333"/>
+<text x="863" y="353" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">Bottom navigation</text>
+<text x="480" y="500" font-family="Arial,sans-serif" font-size="15" fill="#242334" font-weight="700">CONDITIONAL / ALTERNATE STATES</text>
+<text x="490" y="525" font-family="Arial,sans-serif" font-size="12" fill="#655E70" font-weight="500">• Metadata expanded and collapsed views</text>
+<text x="490" y="549" font-family="Arial,sans-serif" font-size="12" fill="#655E70" font-weight="500">• Download/export progress where appropriate</text>
+<text x="480" y="589" font-family="Arial,sans-serif" font-size="14" fill="#B5465D" font-weight="700">MUST NOT LOSE / MUST NOT SHOW</text>
+<text x="490" y="613" font-family="Arial,sans-serif" font-size="12" fill="#65505A" font-weight="500">× Inert icon-only action with missing label</text>
+<text x="490" y="636" font-family="Arial,sans-serif" font-size="12" fill="#65505A" font-weight="500">× Notices hidden in More while editing</text>
+<text x="477" y="789" font-family="Arial,sans-serif" font-size="11" fill="#797281" font-weight="500">Contract: canonical-screen-contract.json  |  Phone = schematic; inventory = authoritative</text>
+</svg>

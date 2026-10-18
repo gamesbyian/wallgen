@@ -1,0 +1,921 @@
+{
+  "version": 1,
+  "sourceCommit": "7d99e99a5ce391d05ab410fcc90d3eb78420a282",
+  "referenceBaseline": "https://github.com/gamesbyian/wallgen/actions/runs/39166559800",
+  "status": "canonical proposed implementation contract, not app screenshot",
+  "notes": [
+    "All phone wireframes are complete for the depicted mode, but do not show every alternate dynamic state simultaneously.",
+    "Screen contract required/conditional arrays, category tool inventory and source DOM remain the implementation authority.",
+    "Icons are the exact SVG source geometry, not image-generated interpretations.",
+    "The 55 original glyphs and brand app icon remain. Twelve extension candidates are staged but unwired."
+  ],
+  "global": {
+    "navigation": [
+      {
+        "id": "studio",
+        "label": "Studio",
+        "icon": "home",
+        "newDestination": true
+      },
+      {
+        "id": "mobileEdit",
+        "label": "Edit",
+        "icon": "edit-controls",
+        "previous": "edit"
+      },
+      {
+        "id": "mobileExplore",
+        "label": "Explore",
+        "icon": "explore"
+      },
+      {
+        "id": "mobileFavorite",
+        "label": "Saved",
+        "icon": "favourite"
+      },
+      {
+        "id": "mobileMore",
+        "label": "More",
+        "icon": "more"
+      }
+    ],
+    "brandIcon": "assets/roygbiv-logo.svg",
+    "theme": [
+      "cream",
+      "dark"
+    ],
+    "noDedicatedCanvasHeader": true,
+    "cameraSemantics": "viewport transform only; no recipe mutation",
+    "sliderSemantics": "stable distinct ROYGBIV accents in each panel; includes blue",
+    "touch": "meet WCAG target min or exception; aim for 40-48px for primary phone controls",
+    "sourceCategories": [
+      {
+        "id": "layout",
+        "label": "Layout",
+        "icon": "layout",
+        "tools": [
+          {
+            "id": "structure-mode",
+            "label": "Canvas structure",
+            "settings": [
+              "structure"
+            ]
+          },
+          {
+            "id": "arrange",
+            "label": "Arrangement",
+            "settings": [
+              "composition",
+              "repeatCount",
+              "repeatSpacing"
+            ]
+          },
+          {
+            "id": "direction",
+            "label": "Direction",
+            "settings": [
+              "orientation",
+              "diagonalRotation",
+              "mirrorHorizontal",
+              "mirrorVertical"
+            ]
+          },
+          {
+            "id": "variability",
+            "label": "Variation",
+            "settings": [
+              "chaos"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "path",
+        "label": "Path",
+        "icon": "path",
+        "tools": [
+          {
+            "id": "geometry",
+            "label": "Geometry",
+            "settings": [
+              "geometry",
+              "shapeFrequency",
+              "shapeDepth"
+            ]
+          },
+          {
+            "id": "rays",
+            "label": "Radial rays",
+            "settings": [
+              "radialMode",
+              "rayCount",
+              "rayRotation"
+            ]
+          },
+          {
+            "id": "ray-shape",
+            "label": "Ray shape",
+            "settings": [
+              "rayTwist",
+              "rayCoverage",
+              "rayCore"
+            ]
+          },
+          {
+            "id": "origin",
+            "label": "Origin",
+            "settings": [
+              "fieldCenterX",
+              "fieldCenterY"
+            ]
+          },
+          {
+            "id": "regions",
+            "label": "Regions",
+            "settings": [
+              "regionMode",
+              "regionCount"
+            ]
+          },
+          {
+            "id": "region-detail",
+            "label": "Region detail",
+            "settings": [
+              "regionJitter",
+              "regionSides"
+            ]
+          },
+          {
+            "id": "safety",
+            "label": "Constraints",
+            "settings": [
+              "geometrySafety",
+              "crossingMode"
+            ]
+          },
+          {
+            "id": "turn",
+            "label": "Turns",
+            "settings": [
+              "turnRadius",
+              "hairpinAngle"
+            ]
+          },
+          {
+            "id": "single-loop",
+            "label": "Single loop",
+            "settings": [
+              "loopRadius",
+              "loopSweep"
+            ]
+          },
+          {
+            "id": "shape-details",
+            "label": "Shape detail",
+            "settings": [
+              "stepCount",
+              "chevronSharpness",
+              "loopAspect"
+            ]
+          },
+          {
+            "id": "ends",
+            "label": "Endpoints",
+            "settings": [
+              "pathLength",
+              "endTaper",
+              "extendDrawnPath"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "stripes",
+        "label": "Shapes",
+        "icon": "stripes",
+        "tools": [
+          {
+            "id": "structure",
+            "label": "Structure",
+            "settings": [
+              "construction",
+              "stripeWidth",
+              "spread"
+            ]
+          },
+          {
+            "id": "patterns",
+            "label": "Patterns",
+            "settings": [
+              "motif",
+              "lineStyle",
+              "patternHomogeneity"
+            ]
+          },
+          {
+            "id": "marks",
+            "label": "Marks",
+            "settings": [
+              "dotSize",
+              "dotSpacing"
+            ]
+          },
+          {
+            "id": "motif-scale",
+            "label": "Motif scale",
+            "settings": [
+              "motifSize",
+              "motifFrequency"
+            ]
+          },
+          {
+            "id": "tone",
+            "label": "Band tones",
+            "settings": [
+              "tonalContrast"
+            ]
+          },
+          {
+            "id": "character",
+            "label": "Character",
+            "settings": [
+              "individuality",
+              "overridePatternHomogeneity"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "details",
+        "label": "Details",
+        "icon": "interior-elements",
+        "tools": [
+          {
+            "id": "interior",
+            "label": "Elements",
+            "settings": []
+          },
+          {
+            "id": "interior-style",
+            "label": "Element style",
+            "settings": []
+          },
+          {
+            "id": "interior-motion",
+            "label": "Element motion",
+            "settings": []
+          },
+          {
+            "id": "interior-placement",
+            "label": "Placement",
+            "settings": []
+          },
+          {
+            "id": "interior-targets",
+            "label": "Colour targets",
+            "settings": []
+          },
+          {
+            "id": "outlines",
+            "label": "Outlines",
+            "settings": [
+              "outline",
+              "gap",
+              "outlineBuffer"
+            ]
+          },
+          {
+            "id": "dividers",
+            "label": "Dividers",
+            "settings": [
+              "dividerColor",
+              "dividerWidth"
+            ]
+          },
+          {
+            "id": "shadows",
+            "label": "Shadows",
+            "settings": [
+              "stripeShadowStrength",
+              "stripeShadowSoftness",
+              "stripeShadowDirection"
+            ]
+          },
+          {
+            "id": "glow",
+            "label": "Glow",
+            "settings": [
+              "glow"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "colour",
+        "label": "Colour",
+        "icon": "colour",
+        "tools": [
+          {
+            "id": "rainbow",
+            "label": "Rainbow",
+            "settings": [
+              "palette",
+              "reverseStripes"
+            ]
+          },
+          {
+            "id": "canvas",
+            "label": "Background",
+            "settings": [
+              "background"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "material",
+        "label": "Material",
+        "icon": "material",
+        "tools": [
+          {
+            "id": "layer1",
+            "label": "Layer 1",
+            "settings": [
+              "material",
+              "textureCoverage",
+              "textureBlend",
+              "textureLayer2Enabled"
+            ]
+          },
+          {
+            "id": "finish1",
+            "label": "Finish 1",
+            "settings": [
+              "textureStrength",
+              "textureScale",
+              "textureRotation"
+            ]
+          },
+          {
+            "id": "layer2",
+            "label": "Layer 2",
+            "settings": [
+              "material2",
+              "textureCoverage2",
+              "textureBlend2",
+              "textureLayer3Enabled"
+            ]
+          },
+          {
+            "id": "finish2",
+            "label": "Finish 2",
+            "settings": [
+              "textureStrength2",
+              "textureScale2",
+              "textureRotation2"
+            ]
+          },
+          {
+            "id": "layer3",
+            "label": "Layer 3",
+            "settings": [
+              "material3",
+              "textureCoverage3",
+              "textureBlend3"
+            ]
+          },
+          {
+            "id": "finish3",
+            "label": "Finish 3",
+            "settings": [
+              "textureStrength3",
+              "textureScale3",
+              "textureRotation3"
+            ]
+          },
+          {
+            "id": "surface",
+            "label": "Surface",
+            "settings": [
+              "textureDisplacement",
+              "brushRoughness"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "effects",
+        "label": "Effects",
+        "icon": "effects",
+        "tools": [
+          {
+            "id": "lighting",
+            "label": "Lighting",
+            "settings": [
+              "lightingMood",
+              "lightDirection",
+              "lightStrength",
+              "shadowStrength"
+            ]
+          }
+        ]
+      }
+    ],
+    "currentDockControls": [
+      {
+        "id": "mobileEdit",
+        "role": "Open editor"
+      },
+      {
+        "id": "mobileExplore",
+        "role": "Open gallery"
+      },
+      {
+        "id": "mobileShuffle",
+        "role": "Randomize wallpaper"
+      },
+      {
+        "id": "mobileFavorite",
+        "role": "Toggle favourite"
+      },
+      {
+        "id": "mobileDownload",
+        "role": "Download wallpaper"
+      },
+      {
+        "id": "mobileMore",
+        "role": "Open utility sheet"
+      }
+    ],
+    "actionRelocations": {
+      "mobileShuffle": "Keep prominent Studio Randomize action and optional quick action; do not lose random generation.",
+      "mobileDownload": "Keep direct Studio Export/Download shortcut and More > Export PNG; do not force hidden utility navigation.",
+      "mobileFavorite": "Preserve single-tap favourite action on Studio and gallery, in addition to Saved destination."
+    }
+  },
+  "screens": [
+    {
+      "id": "studio",
+      "title": "Studio / canvas",
+      "nav": "Studio",
+      "required": [
+        "Canonical app icon beside R.O.Y.G.B.I.V.",
+        "Cream and black theme circles",
+        "Entire uncut wallpaper frame",
+        "Side Pan tool (viewport only)",
+        "Side Zoom + and Zoom −",
+        "Side Fit / full frame",
+        "Directional nudge or recenter",
+        "Randomize current design",
+        "Undo and Primes-only",
+        "Draw path / Import image",
+        "Bleed/safe-frame display",
+        "Export or Download route",
+        "Bottom 5-mode navigation"
+      ],
+      "conditional": [
+        "Viewport zoom readout only on action",
+        "Camera guides when enabled"
+      ],
+      "forbidden": [
+        "‘Your canvas’ header",
+        "Top Fit / 100% bar",
+        "Recipe mutation from camera pan or zoom"
+      ],
+      "icons": [
+        "pan",
+        "zoom-in",
+        "zoom-out",
+        "fit-canvas",
+        "recenter",
+        "randomize",
+        "undo",
+        "primes-only",
+        "draw-path",
+        "import-path",
+        "bleed"
+      ],
+      "rows": [
+        "Pan",
+        "Zoom in",
+        "Zoom out",
+        "Fit frame"
+      ]
+    },
+    {
+      "id": "geometry",
+      "title": "Edit / Path geometry",
+      "nav": "Edit",
+      "required": [
+        "Header branding and theme dots",
+        "Complete canvas preview, not crop",
+        "Layout, Path, Shapes, Details, Colour, Material, Effects",
+        "Selected category and tool breadcrumb",
+        "Search and tool chip chooser",
+        "Reroll / Vary + strength",
+        "Randomize tool / category / field",
+        "Geometry selector",
+        "Shape frequency and depth when active",
+        "Visible value, stepper and lock/die controls",
+        "History / restore access",
+        "Apply edits to recipe only",
+        "Bottom five-mode navigation"
+      ],
+      "conditional": [
+        "Straight path may disable frequency/depth",
+        "Relevant shape controls differ by structure",
+        "Optional focus-mode entry, never forced"
+      ],
+      "forbidden": [
+        "Generated mockup omissions interpreted as removal",
+        "Duplicate tool heading consuming height"
+      ],
+      "icons": [
+        "edit-controls",
+        "path",
+        "randomize",
+        "lock",
+        "search",
+        "history",
+        "focus-slider"
+      ],
+      "rows": [
+        "Geometry",
+        "Shape frequency",
+        "Shape depth",
+        "Advanced"
+      ]
+    },
+    {
+      "id": "draw",
+      "title": "Draw / interpret / anchors",
+      "nav": "Edit",
+      "required": [
+        "Canonical header and active Draw context",
+        "Complete canvas with path overlay",
+        "Pencil drawing mode",
+        "Interpretive smoothing strength (up to 10×)",
+        "Geometric interpretation toggle",
+        "Optional edit-anchor handles",
+        "Add / delete / corner anchor",
+        "Resmooth edited section + neighbours",
+        "Extend path past canvas edges",
+        "Undo point / Draw again",
+        "Apply and Cancel persistent",
+        "Separate camera pan mode"
+      ],
+      "conditional": [
+        "Point controls in anchor-edit phase only",
+        "Off-frame geometry preview as needed"
+      ],
+      "forbidden": [
+        "Zoom changes generation settings",
+        "Apply hidden by sheet scrolling"
+      ],
+      "icons": [
+        "draw-path",
+        "smooth-path",
+        "anchor-points",
+        "extend-path",
+        "pan",
+        "undo",
+        "check",
+        "close"
+      ],
+      "rows": [
+        "Draw",
+        "Interpret 8×",
+        "Anchors",
+        "Apply / Cancel"
+      ]
+    },
+    {
+      "id": "explore",
+      "title": "Explore gallery",
+      "nav": "Explore",
+      "required": [
+        "Same brand header and themes",
+        "Search available wallpapers",
+        "Gallery filters",
+        "Thumbnail cards and descriptive titles",
+        "Clear favourite action per card",
+        "Load selected recipe into Studio",
+        "Show saved/favourites context",
+        "Scrollable image-first grid",
+        "Bottom five-mode navigation"
+      ],
+      "conditional": [
+        "Empty state when no favourites",
+        "Gallery image previews must be real renderer art"
+      ],
+      "forbidden": [
+        "Large decorative Explore heading",
+        "Full-width duplicate action bar above gallery"
+      ],
+      "icons": [
+        "explore",
+        "search",
+        "favourite",
+        "favourite-filled",
+        "home"
+      ],
+      "rows": [
+        "Search wallpapers",
+        "All / Favourites",
+        "Thumbnail cards"
+      ]
+    },
+    {
+      "id": "more",
+      "title": "More / outputs",
+      "nav": "More",
+      "required": [
+        "Same branded masthead",
+        "Export wallpaper PNG",
+        "Download recipe JSON",
+        "Copy recipe JSON",
+        "Copy share link",
+        "Import PNG recipe",
+        "Import recipe JSON/file",
+        "Batch output where available",
+        "Seed entry / apply",
+        "Editable image metadata fields",
+        "Remember / clear metadata",
+        "Accessible global status notifications",
+        "Bottom navigation"
+      ],
+      "conditional": [
+        "Metadata expanded and collapsed views",
+        "Download/export progress where appropriate"
+      ],
+      "forbidden": [
+        "Inert icon-only action with missing label",
+        "Notices hidden in More while editing"
+      ],
+      "icons": [
+        "export-png",
+        "download",
+        "copy",
+        "metadata",
+        "save",
+        "info"
+      ],
+      "rows": [
+        "Export",
+        "Copy link",
+        "Metadata",
+        "Import / Batch"
+      ]
+    },
+    {
+      "id": "material",
+      "title": "Material / three layers",
+      "nav": "Edit",
+      "required": [
+        "Material category + named tools",
+        "Layer 1 material type and coverage/blend",
+        "Finish 1 strength / scale / rotation",
+        "Layer 2 enable and settings",
+        "Finish 2 strength / scale / rotation",
+        "Layer 3 enable and settings",
+        "Finish 3 strength / scale / rotation",
+        "Rotation −90, −1, value, +1, +90",
+        "Surface settings where applicable",
+        "Lock / random field actions",
+        "Canvas preview / bottom navigation"
+      ],
+      "conditional": [
+        "Layer 2/3 disabled until enabled",
+        "Surface only for path construction",
+        "Some material coverage labels follow structure"
+      ],
+      "forbidden": [
+        "Rotation action squeezed or clipped",
+        "Layer controls silently dropped"
+      ],
+      "icons": [
+        "material",
+        "edit-controls",
+        "lock",
+        "rotate",
+        "randomize"
+      ],
+      "rows": [
+        "Layer 1  /  Finish 1",
+        "Strength  Scale",
+        "−90 −1 ° +1 +90",
+        "Layer 2 / Layer 3"
+      ]
+    },
+    {
+      "id": "colour",
+      "title": "Colour / palette",
+      "nav": "Edit",
+      "required": [
+        "Colour category and two named tools",
+        "Rainbow palette selection",
+        "Reverse stripe order control",
+        "Background colour setting",
+        "Full 7-colour visual order",
+        "Named selection and stable values",
+        "Flat nonrepeating ROYGBIV slider colours per panel",
+        "Available lock / die actions",
+        "Bottom navigation"
+      ],
+      "conditional": [
+        "Background colour options depend on recipe",
+        "Target-colour chips belong to Details > Colour targets"
+      ],
+      "forbidden": [
+        "Random colours reshuffled on rerender",
+        "Unimplemented extra saturation slider implied by illustration"
+      ],
+      "icons": [
+        "colour",
+        "stripes",
+        "randomize",
+        "lock"
+      ],
+      "rows": [
+        "Rainbow palette",
+        "Reverse order",
+        "Background"
+      ]
+    },
+    {
+      "id": "diagonal",
+      "title": "Layout / diagonal direction",
+      "nav": "Edit",
+      "required": [
+        "Direction tool identified",
+        "Orientation selector",
+        "Diagonal rotation setting + numeric stepper",
+        "Mirror horizontally checkbox/row",
+        "Mirror vertically checkbox/row",
+        "Scoped randomize + lock",
+        "Selected values remain readable",
+        "Canvas preview and bottom navigation"
+      ],
+      "conditional": [
+        "Diagonal rotation and mirrors dormant for non-diagonal configurations",
+        "Inactive properties indicate non-applicable/zero"
+      ],
+      "forbidden": [
+        "Separated checkbox from label",
+        "Greyed value implies retained nonzero active effect"
+      ],
+      "icons": [
+        "layout",
+        "rotate",
+        "check",
+        "lock",
+        "randomize"
+      ],
+      "rows": [
+        "Orientation",
+        "Rotation",
+        "Mirror X / Y"
+      ]
+    },
+    {
+      "id": "compact",
+      "title": "Edit / sparse tool",
+      "nav": "Edit",
+      "required": [
+        "Selected category/tool breadcrumb",
+        "Same brand / camera preview",
+        "One actual applicable tool only",
+        "All settings of that tool visible",
+        "Field label, value and scoped actions",
+        "Inspector returns unused vertical space to canvas",
+        "No preview/controls overlap",
+        "Bottom navigation"
+      ],
+      "conditional": [
+        "Glow or other one-setting tool as example",
+        "Height only changes on navigation or expansion"
+      ],
+      "forbidden": [
+        "Fixed huge empty inspector card",
+        "Invented hidden settings for a sparse tool"
+      ],
+      "icons": [
+        "glow",
+        "randomize",
+        "lock",
+        "fit-canvas"
+      ],
+      "rows": [
+        "Glow",
+        "Intensity",
+        "More canvas space"
+      ]
+    },
+    {
+      "id": "focus",
+      "title": "Optional Focus slider",
+      "nav": "Edit",
+      "required": [
+        "Clearly marked OPTIONAL experiment",
+        "Selected category and parameter name",
+        "Chooser chips for all active parameters",
+        "One large slider with numeric value",
+        "Increment/decrement and lock action",
+        "Return to All controls without losing data",
+        "Existing colour assignment retained",
+        "Canvas preview remains visible",
+        "Bottom navigation"
+      ],
+      "conditional": [
+        "Inactive parameter explained",
+        "Step size depends on setting type",
+        "Default remains multi-row inspector"
+      ],
+      "forbidden": [
+        "Mandatory shared slider for all users",
+        "Parameter loss when focus changes",
+        "Colour reassignment on switching"
+      ],
+      "icons": [
+        "focus-slider",
+        "edit-controls",
+        "lock",
+        "chevron-left",
+        "chevron-right"
+      ],
+      "rows": [
+        "All controls / Focus",
+        "Parameter A B C",
+        "One slider",
+        "Return to All"
+      ]
+    },
+    {
+      "id": "history",
+      "title": "Recent variations",
+      "nav": "Edit",
+      "required": [
+        "Recent variations title",
+        "Visible Back to tool action",
+        "Sequence of selectable prior states",
+        "Clear thumbnails & restore affordance",
+        "Restore selected recipe + close history",
+        "Maintain favourite distinction",
+        "Bottom navigation and global feedback"
+      ],
+      "conditional": [
+        "Empty recent history illustration",
+        "History may contain previous/next ghost states"
+      ],
+      "forbidden": [
+        "History overlaps active tool controls",
+        "Restoration silently randomizes settings"
+      ],
+      "icons": [
+        "history",
+        "restore-variation",
+        "chevron-left",
+        "favourite"
+      ],
+      "rows": [
+        "Recent variations",
+        "Restore a version",
+        "Back to tool"
+      ]
+    },
+    {
+      "id": "search",
+      "title": "Find setting / tool",
+      "nav": "Edit",
+      "required": [
+        "Search input with descriptive placeholder",
+        "Visible close search button + Escape",
+        "Find matching settings and tools",
+        "Navigation to exact category and tool",
+        "Selected target chip scrolled into view",
+        "Preserve manual horizontal chip position",
+        "Reveal needed controls after selection",
+        "Bottom navigation"
+      ],
+      "conditional": [
+        "No results / filtered out inapplicable tools",
+        "Keyboard and touch search focus states"
+      ],
+      "forbidden": [
+        "Expanded input covers only close affordance",
+        "Manual tool scroll snaps on unrelated actions"
+      ],
+      "icons": [
+        "search",
+        "close",
+        "edit-controls",
+        "chevron-right"
+      ],
+      "rows": [
+        "Find a setting",
+        "Matching tool chips",
+        "Jump to result"
+      ]
+    }
+  ]
+}

@@ -23,3 +23,7 @@ Icons are artwork, not touch targets. Keep a recommended minimum 44×44 CSS-pixe
 6. Run existing `npm run check` and mobile/browser-smoke after integration, comparing the before/after screenshots with the saved reference.
 
 No live controls are wired to these icons yet, by explicit request.
+
+## Canvas-first v2 extension (2026-10-18)
+
+Twelve **candidate** symbols are staged in this folder and registered as inline drawings for future UI work. The original 55 icons and brand identity remain intact, and current interface actions are **not rewired**. Proposed main navigation mapping: **Edit uses `edit-controls` (three adjustment sliders), Draw uses approved `draw-path` (pencil)**; the existing `edit.svg` pencil remains available for backward compatibility and is not deleted. Other candidates: pan, fit-canvas, import-path, anchor-points, smooth-path, extend-path, weave, focus-slider, export-png, metadata, restore-variation. Treat manifest status as a proposal until UI owner mapping and browser acceptance are approved. All files are flat SVG, 32x32, rounded 2.4-unit strokes and original palette.
