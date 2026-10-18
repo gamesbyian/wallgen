@@ -34,6 +34,51 @@ export function randomizeScope(currentInput,{scope,name,mode='reroll',strength='
   for(let i=0;i<salt.length;i++)state=(Math.imul(state,31)+salt.charCodeAt(i))>>>0;
   const random=()=>{state=(Math.imul(state,1664525)+1013904223)>>>0;return state/4294967296;};
   const modified=[];
+  const decorationScope=(scope==='category'&&name==='details')||
+    (scope==='tool'&&name.startsWith('interior'));
+  if(decorationScope&&!current.lockedSettings.includes('interiorElements')){
+    const all=scope==='category';
+    const active=current.interiorElements.length?current.interiorElements.map(e=>({...e})):
+      [{id:'generated-0',type:'line',shape:'wave',stroke:'solid',color:'white',
+        width:1.5,position:0,amplitude:.12,frequency:6,phase:0,opacity:1,
+        placement:'local',colorSlots:[],objectIds:[],enabled:true}];
+    const pick=options=>options[Math.floor(random()*options.length)];
+    const alternative=(choices,currentValue)=>{
+      const others=choices.filter(x=>x!==currentValue);
+      return pick(others.length?others:choices);
+    };
+    const varyNumber=(value,min,max)=>
+      clamp(value+(random()*2-1)*weight*(max-min),min,max);
+    for(const e of active){
+      if(all||name==='interior-style'||name==='interior'){
+        if(mode==='reroll'||random()<weight){
+          e.shape=alternative(['straight','wave','zigzag','loop'],e.shape);
+          e.stroke=alternative(['solid','dashed','dotted'],e.stroke);
+          e.type=alternative(['line','band'],e.type);
+        }
+      }
+      if(all||name==='interior-motion'){
+        e.amplitude=mode==='reroll'?random()*.40:varyNumber(e.amplitude,0,.45);
+        e.frequency=mode==='reroll'?1+random()*20:varyNumber(e.frequency,1,30);
+        e.phase=mode==='reroll'?-180+random()*360:varyNumber(e.phase,-180,180);
+      }
+      if(all||name==='interior-placement'){
+        e.position=mode==='reroll'?(random()-.5)*.7:varyNumber(e.position,-.48,.48);
+        e.width=mode==='reroll'?.6+random()*5:varyNumber(e.width,.15,10);
+        e.opacity=mode==='reroll'?.35+random()*.65:varyNumber(e.opacity,0,1);
+      }
+      if(all||name==='interior-targets'){
+        e.color=alternative(['white','black','lighter','darker'],e.color);
+        if(mode==='reroll')e.colorSlots=random()<.65?[]:[Math.floor(random()*7)];
+      }
+    }
+    // Rerolling just the element manager can introduce a new decorated line.
+    if(name==='interior'&&mode==='reroll'&&active.length<8&&random()<.25)
+      active.push({...active[0],id:'generated-'+active.length});
+    next.interiorElements=active;
+    if(JSON.stringify(active)!==JSON.stringify(current.interiorElements))
+      modified.push('interiorElements');
+  }
   for(const key of selected){
     if(current.lockedSettings.includes(key))continue;
     // Safety is an explicit editorial preference, never randomly flipped.
