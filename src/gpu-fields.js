@@ -80,88 +80,187 @@ function shader(gl,type,source){
   }
   return value;
 }
+const validSurface=(width,height,maxPixels=2_500_000)=>
+  Number.isInteger(width)&&Number.isInteger(height)&&width>0&&height>0&&
+  width*height<=maxPixels;
+
+// An isolated, reusable research backend. This is NOT wired into production:
+// ROI for mask uploads / GPU readback remains to be established. One mask can
+// be uploaded once, then many different ink styles can be rendered with the
+// same program, buffer, texture and context. Call dispose() after use.
+export function createMaskedFieldSession({
+  width,height,canvasFactory,maxPixels=2_500_000,
+}={}){
+  if(!validSurface(width,height,maxPixels))
+    return {supported:false,reason:'Mask dimensions outside experimental budget'};
+  const canvas=canvasFactory?.(width,height)||
+    (typeof OffscreenCanvas==='function'?new OffscreenCanvas(width,height):null);
+  if(!canvas)return {supported:false,reason:'OffscreenCanvas unavailable'};
+  let gl,vertex,fragment,program,buffer,texture;
+  let closed=false,lost=false,maskReady=false,uploads=0,draws=0;
+  const contextLost=event=>{
+    event?.preventDefault?.();
+    lost=true;
+    maskReady=false;
+  };
+  const contextRestored=()=>{
+    // WebGL objects are invalid after restoration. Caller explicitly creates
+    // a fresh session; no invisible autoretry and no stale texture reuse.
+    lost=true;maskReady=false;
+  };
+  const unusable=()=>closed?'GPU session disposed':
+    lost||gl?.isContextLost?.()?'WebGL2 context lost':null;
+  const release=()=>{
+    if(closed)return;
+    closed=true;maskReady=false;
+    canvas.removeEventListener?.('webglcontextlost',contextLost);
+    canvas.removeEventListener?.('webglcontextrestored',contextRestored);
+    if(gl){
+      try{
+        if(texture)gl.deleteTexture(texture);
+        if(buffer)gl.deleteBuffer(buffer);
+        if(program)gl.deleteProgram(program);
+        if(fragment)gl.deleteShader(fragment);
+        if(vertex)gl.deleteShader(vertex);
+        gl.getExtension('WEBGL_lose_context')?.loseContext();
+      }catch{}
+    }
+    try{canvas.width=0;canvas.height=0;}catch{}
+    gl=null;texture=null;buffer=null;program=null;vertex=null;fragment=null;
+  };
+  const status=reason=>({supported:false,reason});
+  try{
+    if(!canvas.getContext)return status('WebGL2 unavailable');
+    gl=canvas.getContext('webgl2',{alpha:true,antialias:false,
+      premultipliedAlpha:false,preserveDrawingBuffer:true,
+      depth:false,stencil:false,powerPreference:'low-power'});
+    if(!gl)return status('WebGL2 unavailable');
+    canvas.addEventListener?.('webglcontextlost',contextLost);
+    canvas.addEventListener?.('webglcontextrestored',contextRestored);
+    vertex=shader(gl,gl.VERTEX_SHADER,GPU_PROBE_VERTEX);
+    fragment=shader(gl,gl.FRAGMENT_SHADER,GPU_FIELD_FRAGMENT);
+    program=gl.createProgram();
+    if(!program)throw Error('WebGL2 program allocation failed');
+    gl.attachShader(program,vertex);gl.attachShader(program,fragment);
+    gl.linkProgram(program);
+    if(!gl.getProgramParameter(program,gl.LINK_STATUS))
+      throw Error('WebGL2 shader link failed: '+gl.getProgramInfoLog(program));
+    buffer=gl.createBuffer();
+    if(!buffer)throw Error('WebGL2 buffer allocation failed');
+    gl.bindBuffer(gl.ARRAY_BUFFER,buffer);
+    gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([
+      -1,-1,1,-1,-1,1,-1,1,1,-1,1,1,
+    ]),gl.STATIC_DRAW);
+    texture=gl.createTexture();
+    if(!texture)throw Error('WebGL2 texture allocation failed');
+    gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,texture);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,false);
+    gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL,gl.NONE);
+    if(gl.getError()!==gl.NO_ERROR)throw Error('WebGL2 session initialization failed');
+    return {
+      supported:true,canvas,
+      // Each setMask() call denotes new mask pixels even if the *same*
+      // mutable Canvas2D object is supplied. Never cache based on identity:
+      // input drawing can change without object identity changing.
+      setMask(mask){
+        const failure=unusable();
+        if(failure)return status(failure);
+        if(!mask||mask.width!==width||mask.height!==height)
+          return status('Mask dimensions do not match session');
+        try{
+          gl.activeTexture(gl.TEXTURE0);
+          gl.bindTexture(gl.TEXTURE_2D,texture);
+          if(maskReady)
+            gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,gl.RGBA,gl.UNSIGNED_BYTE,mask);
+          else
+            gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,mask);
+          const error=gl.getError();
+          if(error!==gl.NO_ERROR)throw Error('Mask upload failed: 0x'+error.toString(16));
+          maskReady=true;uploads++;
+          return {supported:true};
+        }catch(error){
+          maskReady=false;
+          return status(String(error?.message||error));
+        }
+      },
+      render(element,{logicalWidth=600,logicalHeight=1300}={}){
+        const failure=unusable();
+        if(failure)return status(failure);
+        if(!maskReady)return status('Upload a mask before rendering');
+        if(!gpuFieldEligibility(element))
+          return status('Unsupported decorative field');
+        if(!Number.isFinite(logicalWidth)||!Number.isFinite(logicalHeight)||
+           logicalWidth<=0||logicalHeight<=0)
+          return status('Invalid logical dimensions');
+        const colour=rgbaOf(element);
+        if(!colour)return status('Invalid custom ink colour');
+        try{
+          gl.useProgram(program);
+          gl.bindBuffer(gl.ARRAY_BUFFER,buffer);
+          const loc=gl.getAttribLocation(program,'position');
+          if(loc<0)throw Error('Vertex position attribute missing');
+          gl.enableVertexAttribArray(loc);
+          gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
+          gl.activeTexture(gl.TEXTURE0);
+          gl.bindTexture(gl.TEXTURE_2D,texture);
+          gl.uniform1i(gl.getUniformLocation(program,'ownerMask'),0);
+          gl.uniform2f(gl.getUniformLocation(program,'viewport'),width,height);
+          gl.uniform2f(gl.getUniformLocation(program,'logicalSize'),
+            logicalWidth,logicalHeight);
+          gl.uniform1f(gl.getUniformLocation(program,'frequency'),element.frequency);
+          gl.uniform1f(gl.getUniformLocation(program,'amplitude'),element.amplitude);
+          gl.uniform1f(gl.getUniformLocation(program,'position'),element.position);
+          gl.uniform1f(gl.getUniformLocation(program,'phaseDegrees'),element.phase);
+          gl.uniform1f(gl.getUniformLocation(program,'strokeWidth'),element.width);
+          gl.uniform1f(gl.getUniformLocation(program,'inkOpacity'),element.opacity);
+          gl.uniform1i(gl.getUniformLocation(program,'shapeCode'),SHAPES[element.shape]);
+          gl.uniform3fv(gl.getUniformLocation(program,'inkColour'),colour);
+          gl.viewport(0,0,width,height);
+          gl.disable(gl.BLEND);gl.disable(gl.SCISSOR_TEST);
+          gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);
+          gl.drawArrays(gl.TRIANGLES,0,6);
+          const error=gl.getError();
+          if(error!==gl.NO_ERROR)throw Error('WebGL2 draw failed: 0x'+error.toString(16));
+          draws++;
+          return {supported:true,canvas};
+        }catch(error){
+          return status(String(error?.message||error));
+        }
+      },
+      get stats(){return {maskUploads:uploads,draws,disposed:closed,contextLost:lost};},
+      dispose:release,
+    };
+  }catch(error){
+    const reason=String(error?.message||error);
+    release();
+    return status(reason);
+  }
+}
+
+// Compatibility adapter for the earlier one-shot proof. Production is still
+// worker Canvas2D. Reusable callers should use createMaskedFieldSession().
 export function renderMaskedFieldGPU({
   mask,element,logicalWidth=600,logicalHeight=1300,canvasFactory,
 }={}){
   if(!gpuFieldEligibility(element))
     return {supported:false,reason:'Unsupported decorative field'};
-  if(!mask||!Number.isInteger(mask.width)||!Number.isInteger(mask.height)||
-     mask.width<1||mask.height<1||mask.width*mask.height>2_500_000)
+  if(!mask||!validSurface(mask.width,mask.height))
     return {supported:false,reason:'Mask dimensions outside experimental budget'};
-  const colour=rgbaOf(element);
-  if(!colour)return {supported:false,reason:'Invalid custom ink colour'};
-  const canvas=canvasFactory?.(mask.width,mask.height)||
-    (typeof OffscreenCanvas==='function'?
-      new OffscreenCanvas(mask.width,mask.height):null);
-  if(!canvas)return {supported:false,reason:'OffscreenCanvas unavailable'};
-  let gl,vertex,fragment,program,buffer,texture;
-  const clean=()=>{
-    if(!gl)return;
-    if(texture)gl.deleteTexture(texture);
-    if(buffer)gl.deleteBuffer(buffer);
-    if(program)gl.deleteProgram(program);
-    if(fragment)gl.deleteShader(fragment);
-    if(vertex)gl.deleteShader(vertex);
-    try{gl.getExtension('WEBGL_lose_context')?.loseContext();}catch{}
-    try{canvas.width=0;canvas.height=0;}catch{}
-    gl=null;
-  };
-  try{
-    gl=canvas.getContext('webgl2',{alpha:true,antialias:false,
-      premultipliedAlpha:false,preserveDrawingBuffer:true,
-      depth:false,stencil:false,powerPreference:'low-power'});
-    if(!gl)return {supported:false,reason:'WebGL2 unavailable'};
-    vertex=shader(gl,gl.VERTEX_SHADER,GPU_PROBE_VERTEX);
-    fragment=shader(gl,gl.FRAGMENT_SHADER,GPU_FIELD_FRAGMENT);
-    program=gl.createProgram();
-    gl.attachShader(program,vertex);gl.attachShader(program,fragment);
-    gl.linkProgram(program);
-    if(!gl.getProgramParameter(program,gl.LINK_STATUS))
-      throw Error('WebGL2 shader link failed: '+gl.getProgramInfoLog(program));
-    gl.useProgram(program);
-    buffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buffer);
-    gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([
-      -1,-1,1,-1,-1,1,-1,1,1,-1,1,1,1,-1,1,1,
-    ]),gl.STATIC_DRAW);
-    const loc=gl.getAttribLocation(program,'position');
-    if(loc<0)throw Error('Vertex position attribute missing');
-    gl.enableVertexAttribArray(loc);
-    gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
-    texture=gl.createTexture();
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D,texture);
-    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);
-    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,false);
-    gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL,gl.NONE);
-    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
-    gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,mask);
-    gl.uniform1i(gl.getUniformLocation(program,'ownerMask'),0);
-    gl.uniform2f(gl.getUniformLocation(program,'viewport'),
-      mask.width,mask.height);
-    gl.uniform2f(gl.getUniformLocation(program,'logicalSize'),
-      logicalWidth,logicalHeight);
-    gl.uniform1f(gl.getUniformLocation(program,'frequency'),element.frequency);
-    gl.uniform1f(gl.getUniformLocation(program,'amplitude'),element.amplitude);
-    gl.uniform1f(gl.getUniformLocation(program,'position'),element.position);
-    gl.uniform1f(gl.getUniformLocation(program,'phaseDegrees'),element.phase);
-    gl.uniform1f(gl.getUniformLocation(program,'strokeWidth'),element.width);
-    gl.uniform1f(gl.getUniformLocation(program,'inkOpacity'),element.opacity);
-    gl.uniform1i(gl.getUniformLocation(program,'shapeCode'),SHAPES[element.shape]);
-    gl.uniform3fv(gl.getUniformLocation(program,'inkColour'),colour);
-    gl.viewport(0,0,mask.width,mask.height);
-    gl.disable(gl.BLEND);gl.disable(gl.SCISSOR_TEST);
-    gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.drawArrays(gl.TRIANGLES,0,6);
-    const err=gl.getError();
-    if(err!==gl.NO_ERROR)throw Error('WebGL2 drawing error 0x'+err.toString(16));
-    return {supported:true,canvas,release:clean,
-      note:'Experimental shader over a Canvas2D mask; not production'};
-  }catch(error){
-    const reason=String(error?.message||error);
-    clean();
-    return {supported:false,reason};
-  }
+  if(!rgbaOf(element))
+    return {supported:false,reason:'Invalid custom ink colour'};
+  const session=createMaskedFieldSession({
+    width:mask.width,height:mask.height,canvasFactory
+  });
+  if(!session.supported)return session;
+  const uploaded=session.setMask(mask);
+  if(!uploaded.supported){session.dispose();return uploaded;}
+  const drawn=session.render(element,{logicalWidth,logicalHeight});
+  if(!drawn.supported){session.dispose();return drawn;}
+  return {supported:true,canvas:session.canvas,release:session.dispose,
+    note:'Experimental reusable shader over Canvas2D mask; not production'};
 }
