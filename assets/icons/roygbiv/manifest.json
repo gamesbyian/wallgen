@@ -16,7 +16,7 @@
     "pink": "#FFB7C4",
     "cream": "#FFF8EF"
   },
-  "reference": "../../icons/references/roygbiv-icon-system-approved.svg",
+  "reference": "../references/roygbiv-icon-system-approved.png",
   "icons": [
     {
       "name": "home",
@@ -293,5 +293,6 @@
       "title": "Dotted line",
       "category": "editor"
     }
-  ]
+  ],
+  "referenceVector": "../references/roygbiv-icon-system-approved.svg"
 }

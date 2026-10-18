@@ -5,7 +5,7 @@ This directory holds 55 standalone production SVGs prepared from the approved RO
 - Icon paths: `assets/icons/roygbiv/<name>.svg`, each a transparent scalable 32×32 SVG with accessible title, rounded 2.4-unit dark/currentColor strokes, and solid color accents.
 - Icon index: [manifest.json](./manifest.json), including intended meaning, role, palette and reference pointer.
 - [Review sheet](./review.html), a standalone HTML icon inventory outside the app.
-- Approved visual source: `assets/icons/references/roygbiv-icon-system-approved.svg` (a self-contained vector redrawing of the approved concept; the SVGs are hand-authored translations, not crops or automated traces).
+- Approved visual source: `assets/icons/references/roygbiv-icon-system-approved.png` (the original approved 1448×1086 generated raster) and `assets/icons/references/roygbiv-icon-system-approved.svg` (a companion self-contained vector reconstruction; icons are hand-authored translations, not crops or automated traces).
 
 ## Design grammar
 
