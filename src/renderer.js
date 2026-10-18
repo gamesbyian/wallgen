@@ -577,9 +577,9 @@ function fillMotif(ctx,stripe,extent,scene) {
   ctx.save();ctx.lineWidth=stroke;ctx.lineCap='round';ctx.lineJoin='round';
   const dotSpacingFactor=motif==='dots'?1.8-.95*scene.dotSpacing/100:1;
   const spacing=Math.max(2.5,(motif==='dashes'?step*1.9:motif==='chevrons'?step*1.5:step)*dotSpacingFactor/motifRate);
-  for(let x=-extent+spacing;x<extent-spacing;x+=spacing){
+  const drawColumn=(x,index,random)=>{
     for(let j=-across;j<=across;j++){
-      if(motif==='checker' && ((Math.round((x+extent)/spacing)+j)&1)!==0)continue;
+      if(motif==='checker' && ((index+1+j)&1)!==0)continue;
       const variation=motifVariation(scene,stripe,random);
       const offset=j*step*.82;
       const jitter=scene.intensity*step*.10;
@@ -623,7 +623,16 @@ function fillMotif(ctx,stripe,extent,scene) {
       }else if(motif==='checker')ctx.fillRect(-radius,-radius,radius*2,radius*2);
       ctx.restore();
     }
-  }
+  };
+  // Keep motifs rooted in the scene's original station lattice. Newly
+  // revealed negative columns use independent random streams so generating
+  // them does not reroll pre-existing dots, dashes or other marks.
+  const base=-(stripe.coreExtent??extent)+spacing;
+  const minIndex=Math.ceil((-extent+spacing-base)/spacing);
+  for(let i=minIndex;i<0;i++)
+    drawColumn(base+i*spacing,i,rng(scene.seed+':motifs:'+stripe.index+':outside:'+i));
+  for(let i=0,x=base;x<extent-spacing;i++,x=base+i*spacing)
+    drawColumn(x,i,random);
   ctx.restore();
 }
 
