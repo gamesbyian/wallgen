@@ -891,12 +891,14 @@ form.addEventListener('input',event=>{
   rangeTimeout=setTimeout(queueControlUpdate,75);
 });
 // Selects and checkboxes fire input followed immediately by change. Handling
-// only their change event avoids repainting the same recipe twice. Range
-// input previews are coalesced into one animation frame, with a final commit.
+// only their change event avoids rendering a recipe twice. A completed choice
+// must commit SYNCHRONOUSLY: deferring it to a frame races Favourite, Save,
+// Undo and subsequent edits, which could otherwise act on the older artwork.
+// Only continuous slider movement is coalesced into a frame.
 form.addEventListener('change',event=>{
   if(!FIELDS.includes(event.target.name)||event.target.name==='family')return;
   clearTimeout(rangeTimeout);
-  queueControlUpdate();
+  updateControlsFromInputs();
 });
 form.addEventListener('submit',event=>event.preventDefault());
 seedInput.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();render(fromControls());}});
