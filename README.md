@@ -271,6 +271,28 @@ now always leaves extra texture layers disabled. You can still explicitly
 enable and customize the second and third layers from the Texture controls;
 existing manual multi-layer designs remain fully functional.
 
+## Self-intersections: Over, Under and Weave
+
+**Path → Crossings** appears when **Single loop**, **Continuous loops**
+or **Drawn path** is active. Each control changes how the seven coloured
+ribbons visually intersect themselves, without changing the underlying
+path geometry:
+
+- **Over**: the later traversal passes above the earlier one, with the
+  rainbow acting as a cohesive bundle.
+- **Under**: the earlier traversal passes above the later one.
+- **Weave**: alternate colours pass above and below in rainbow order; the
+  phase reverses at successive crossings, giving woven interlacing.
+
+The crossing solver samples the actual spatial centreline and finds
+transverse segment intersections. Each overpassing portion is repainted
+through a small region clipped to the selected ribbon's own footprint.
+Motifs, outlines, roughness and material texture continue to use the
+existing production renderer. Parallel passes and tangencies are not
+treated as false crossings. All three modes survive wallpaper recipe
+metadata, editing, locking and full-resolution PNG export. Old recipes
+without a crossing choice default to Over.
+
 ## Single loop path
 
 **Path → Geometry → Single loop / circular turn** creates one prominent round
