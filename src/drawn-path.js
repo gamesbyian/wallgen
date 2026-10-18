@@ -276,5 +276,5 @@ export function safeDrawnBandSpan(path){
   // The lower 5% of sustained bends matters. A large percentile averages
   // away the exact turn where inner ribbons would invert or sprout barbs.
   const r=radii[Math.floor((radii.length-1)*.05)];
-  return Math.max(16,Math.min(360,r*.75));
+  return Math.max(16,Math.min(360,r*.55));
 }
