@@ -172,7 +172,7 @@ function blocks(r){
     const chosen=eligible[Math.floor(random()*Math.min(eligible.length,4))];
     const {v,i}=chosen;
     const vertical=v.w/v.h>(W/H)*(0.65+random()*.75);
-    const fraction=.26+random()*.48;
+    const fraction=.5+(random()-.5)*.68*(r.regionJitter/100);
     const a=vertical?{...v,w:v.w*fraction}:{...v,h:v.h*fraction};
     const b=vertical?{...v,x:v.x+a.w,w:v.w-a.w}:{...v,y:v.y+a.h,h:v.h-a.h};
     rects.splice(i,1,a,b);
