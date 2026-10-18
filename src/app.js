@@ -14,7 +14,7 @@ const gallery = document.getElementById('gallery');
 const notice = document.getElementById('notice');
 const favoriteButton = document.getElementById('favorite');
 const FAVORITES_KEY = 'wallgen:favorites:v1';
-const FIELDS = ['primesOnly','family','composition','repeatCount','repeatSpacing','orientation','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','geometry','turnRadius','hairpinAngle','geometrySafety','stepCount','chevronSharpness','loopAspect','construction','motif','lineStyle','pathLength','tonalContrast','brushRoughness','dotSize','dotSpacing','endTaper','shapeFrequency','shapeDepth','motifSize','motifFrequency','palette','material','outline','background','lightingMood','lightDirection','lightStrength','shadowStrength','stripeShadowEnabled','stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection','textureCoverage','textureRotation','textureBlend','textureLayer2Enabled','material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2','textureLayer3Enabled','material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3','chaos','stripeWidth','spread','textureStrength','textureScale','textureDisplacement','individuality','patternHomogeneity','overridePatternHomogeneity','gap','outlineBuffer','glow'];
+const FIELDS = ['primesOnly','family','composition','repeatCount','repeatSpacing','orientation','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','geometry','turnRadius','hairpinAngle','geometrySafety','stepCount','chevronSharpness','loopAspect','construction','motif','lineStyle','pathLength','tonalContrast','brushRoughness','dotSize','dotSpacing','endTaper','shapeFrequency','shapeDepth','motifSize','motifFrequency','palette','material','outline','background','lightingMood','lightDirection','lightStrength','shadowStrength','stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection','textureCoverage','textureRotation','textureBlend','textureLayer2Enabled','material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2','textureLayer3Enabled','material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3','chaos','stripeWidth','spread','textureStrength','textureScale','textureDisplacement','individuality','patternHomogeneity','overridePatternHomogeneity','gap','outlineBuffer','glow'];
 let current = normalizeRecipe();
 let currentScene;
 const previewLayers={background:null,ink:null,scene:null,key:null};
@@ -23,7 +23,7 @@ const autos=['family','orientation','geometry','motif','palette','material','out
 function artKey(recipe){
   const {positionX,positionY,lockedSettings,primesOnly,
     lightingMood,lightDirection,lightStrength,shadowStrength,
-    stripeShadowEnabled,stripeShadowStrength,stripeShadowSoftness,stripeShadowDirection,...art}=normalizeRecipe(recipe);
+    stripeShadowStrength,stripeShadowSoftness,stripeShadowDirection,...art}=normalizeRecipe(recipe);
   return JSON.stringify(art);
 }
 let noticeTimer = 0;
@@ -154,9 +154,6 @@ function inactiveSettingKeys(recipe,scene){
   if(recipe.lightingMood==='off'){
     for(const key of ['lightDirection','lightStrength','shadowStrength'])inactive.add(key);
   }
-  if(!recipe.stripeShadowEnabled){
-    for(const key of ['stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection'])inactive.add(key);
-  }
   for(const suffix of ['','2','3']){
     const layerOn=suffix==='' || (suffix==='2'
       ? recipe.textureLayer2Enabled : recipe.textureLayer3Enabled);
@@ -172,7 +169,7 @@ function inactiveSettingKeys(recipe,scene){
   if(recipe.lightingMood!=='off' && recipe.lightStrength===0 && recipe.shadowStrength===0)
     inactive.add('lightDirection');
   // With a zero-strength cast shadow, softness and direction cannot be seen.
-  if(recipe.stripeShadowEnabled && recipe.stripeShadowStrength===0){
+  if(recipe.stripeShadowStrength===0){
     inactive.add('stripeShadowSoftness');
     inactive.add('stripeShadowDirection');
   }
@@ -245,8 +242,9 @@ function syncDiagonalUI(){
   document.getElementById('diagonalSettings').hidden=form.elements.namedItem('orientation').value!=='diagonal';
 }
 function syncStripeShadowUI(){
-  const enabled=form.elements.namedItem('stripeShadowEnabled').checked;
-  document.getElementById('stripeShadowControls').hidden=!enabled;
+  // Shadow strength = 0 is Off. Softness and direction are disabled, but
+  // retained so restoring strength restores the previous shadow character.
+  document.getElementById('stripeShadowControls').hidden=false;
 }
 function syncTextureLayerVisibility(){
   // Layer tabs are always present, with 'No texture / smooth' as the
