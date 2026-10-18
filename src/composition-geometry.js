@@ -198,5 +198,5 @@ export function buildCompositionObjects(recipe,colors,stripes,bundleOffsets){
     }
   }
   return shapes.map((shape,i)=>({...shape,id:'region-'+i,
-    color:colors[shape.colorIndex]}));
+    origin:center(recipe),color:colors[shape.colorIndex]}));
 }
