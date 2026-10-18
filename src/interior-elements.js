@@ -33,7 +33,9 @@ export function normalizeInteriorElements(input){
       width:number(e.width,e.type==='band'?22:1.5,.15,50),
       position:number(e.position,0,-.48,.48),
       amplitude:number(e.amplitude,.12,0,.45),
-      frequency:number(e.frequency,6,.1,100),
+      // Closed contours use whole cycles to meet cleanly at their seams.
+      frequency:e.placement==='contour'?Math.round(number(e.frequency,6,1,30)):
+        number(e.frequency,6,.1,100),
       phase:number(e.phase,0,-360,360),
       opacity:number(e.opacity,1,0,1),
       placement:['local','field','contour'].includes(e.placement)?e.placement:'local',
