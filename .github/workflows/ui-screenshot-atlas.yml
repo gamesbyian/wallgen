@@ -39,7 +39,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
-      ATLAS_MODE: ${{ github.event_name == 'pull_request' && 'smoke' || inputs.mode }}
+      ATLAS_MODE: ${{ github.event_name == 'pull_request' && github.head_ref == 'automation/ui-state-screenshot-atlas' && 'full' || github.event_name == 'pull_request' && 'smoke' || inputs.mode }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
