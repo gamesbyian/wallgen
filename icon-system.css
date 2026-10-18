@@ -73,3 +73,18 @@ body.mobile-studio .sidebar .editor-explore-actions>.editor-scope-button::before
    line-height:1.05!important;
  }
 }
+
+/* Narrow preview tools all share the SAME 43px slot at phone widths,
+   growing uniformly to 55px at wider zoom. Do not widen Import independently. */
+@media(max-width:790px){
+ body.mobile-studio .mobile-preview-rail-left #importPathToggle{
+   width:43px!important;min-width:43px!important;max-width:43px!important;
+   box-sizing:border-box;height:46px!important;min-height:46px!important;
+   padding:2px 1px!important;
+ }
+}
+@media(min-width:500px) and (max-width:790px){
+ body.mobile-studio .mobile-preview-rail-left #importPathToggle{
+   width:55px!important;min-width:55px!important;max-width:55px!important;
+ }
+}
