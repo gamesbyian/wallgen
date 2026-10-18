@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {CROSSING_MODES,segmentIntersection,findPathCrossings,crossingTopIsLater} from '../src/crossing-order.js';
+import {CROSSING_MODES,segmentIntersection,findPathCrossings,crossingTopIsLater,crossingBranchClip} from '../src/crossing-order.js';
 import {normalizeRecipe,resolveScene,encodeRecipe,decodeRecipe} from '../src/model.js';
 import {samplePath} from '../src/path-geometry.js';
 
@@ -57,5 +57,31 @@ test('over under weave do not change the seven stripe geometries',()=>{
       assert.deepEqual(samplePath(standard.stripes[i],t,standard.extent),
         samplePath(variant.stripes[i],t,variant.extent));
     }
+  }
+});
+
+test('folded crossing masks form same-winding local quads, not a winding-cancelling loop',()=>{
+  class Polygons {
+    constructor(){this.polygons=[];this.current=[];}
+    moveTo(x,y){this.current=[{x,y}];}
+    lineTo(x,y){this.current.push({x,y});}
+    closePath(){this.polygons.push(this.current);}
+  }
+  // More than one entire revolution inside the mask window is deliberately
+  // adversarial: a single global outline would cross itself repeatedly.
+  const stripe={width:25,segmentStart:-180,segmentEnd:180};
+  const sampler=(_,station)=>{
+    const a=station/60*Math.PI;
+    return {x:26*Math.cos(a),y:26*Math.sin(a),nx:Math.cos(a),ny:Math.sin(a)};
+  };
+  const mask=crossingBranchClip(stripe,180,0,170,sampler,Polygons);
+  assert.ok(mask.polygons.length>40);
+  for(const polygon of mask.polygons){
+    assert.equal(polygon.length,4);
+    const area=polygon.reduce((sum,p,i)=>{
+      const q=polygon[(i+1)%polygon.length];
+      return sum+p.x*q.y-p.y*q.x;
+    },0);
+    assert.ok(area>0,'each quad must contribute positively to the union');
   }
 });

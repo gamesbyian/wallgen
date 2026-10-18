@@ -877,14 +877,29 @@ export function drawWallpaper(canvas, recipe, options={}) {
         for(const stripe of stripes){
           const later=crossingTopIsLater(scene.crossingMode,stripe.index,k);
           const station=later?hit.late:hit.early;
+          const start=Math.max(stripe.segmentStart??-scene.extent,station-halfLength);
+          const end=Math.min(stripe.segmentEnd??scene.extent,station+halfLength);
+          if(end<=start)continue;
+          // Repaint just this traversal, not the full self-intersecting
+          // stripe. Replaying the complete stripe inside a local clip makes
+          // the other arm leak through at tight loops (spikes and shards).
+          // Only the local segment has matching geometry for this overpass.
+          const branch={...stripe,segmentStart:start,segmentEnd:end};
+          const path=stripePath(branch,scene.extent,scene);
           g.save();
           g.clip(branchMasks[later?0:1]);
-          g.clip(crossingBranchClip(stripe,scene.extent,station,halfLength,samplePath));
-          const path=stripePath(stripe,scene.extent,scene);
-          drawOutline(g,path,stripe,scene);
+          g.clip(crossingBranchClip(branch,scene.extent,station,halfLength,samplePath));
+          drawOutline(g,path,branch,scene);
           g.fillStyle=stripe.color;g.strokeStyle=stripe.color;
-          fillMotif(g,stripe,scene.extent,scene);
-          if(scene.construction!=='woven')drawBrushWear(g,stripe,scene.extent,scene);
+          fillMotif(g,branch,scene.extent,scene);
+          // Brush wear is seeded against the complete ribbon. Sample it
+          // from the original path through the local branch mask so a
+          // crossing does not suddenly acquire a different grain pattern.
+          if(scene.construction!=='woven'){
+            g.save();g.clip(path);
+            drawBrushWear(g,stripe,scene.extent,scene);
+            g.restore();
+          }
           g.restore();
         }
       }

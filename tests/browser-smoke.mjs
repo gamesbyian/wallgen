@@ -567,6 +567,26 @@ try{
   })()`);
   assert.deepEqual(constraintsPlacement,{category:'path',tool:'safety',
     sameCard:true,hasStatus:true,hasOldTool:false,choices:['over','under','weave']});
+  // Tight, over-rotated loops previously produced triangular inner-ribbon
+  // shards because crossing repairs replayed the entire self-overlapping
+  // source path. Exercise every depth ordering against that stress case.
+  const tightLoopReview=await evaluate(`(async()=>{
+    const {drawWallpaper}=await import('/src/renderer.js');
+    const base={seed:'crossing-tight-loop',geometry:'loop',loopSweep:440,
+      loopRadius:11,geometrySafety:false,spread:88,stripeWidth:45,
+      palette:'electric',material:'none',motif:'solid',orientation:'vertical',
+      individuality:0,outline:'white'};
+    const imgs=[];
+    for(const crossingMode of ['over','under','weave']){
+      const canvas=document.createElement('canvas');
+      canvas.width=240;canvas.height=520;
+      drawWallpaper(canvas,{...base,crossingMode});
+      imgs.push(canvas.toDataURL());
+    }
+    return {distinct:new Set(imgs).size,bytes:imgs.map(s=>s.length)};
+  })()`);
+  assert.equal(tightLoopReview.distinct,3,'tight loop must keep three working crossing choices');
+  console.log('TIGHT_LOOP_CROSSING_RENDER',JSON.stringify(tightLoopReview));
   // Browser renders must show three materially different occlusion choices,
   // for a loop and for a hand-drawn crossing. This uses the production canvas
   // renderer, not a mock algorithm or a test-only drawing shortcut.
