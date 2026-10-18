@@ -136,3 +136,78 @@ export function exportWallpaperInWorker({
     }catch(error){settle(error);}
   });
 }
+
+// FIFO, small-canvas render lane for history snapshots and gallery thumbnails.
+// Unlike the interactive preview, these are archival recipe images: skipping
+// older jobs would attach the wrong artwork to a saved history entry.
+export function createThumbnailQueue({
+  workerFactory=createRenderWorker,
+  canUseWorker=typeof Worker==='function'&&typeof OffscreenCanvas==='function',
+  startupMs=8000,jobTimeoutMs=20000,maxPending=32,
+}={}){
+  let worker=null,ready=false,disabled=!canUseWorker,disposed=false;
+  let id=0,active=null,queue=[],timer=null;
+  const clearTimer=()=>{if(timer!==null)clearTimeout(timer);timer=null;};
+  const fail=error=>{
+    if(disabled||disposed)return;
+    disabled=true;clearTimer();
+    const cause=error instanceof Error?error:new Error(String(error));
+    active?.reject(cause);active=null;
+    for(const item of queue)item.reject(cause);
+    queue=[];
+    try{worker?.terminate();}catch{}
+  };
+  const dispatch=()=>{
+    if(!ready||disabled||disposed||active||!queue.length)return;
+    active=queue.shift();
+    clearTimer();
+    timer=setTimeout(()=>fail(new Error('Thumbnail worker timed out')),jobTimeoutMs);
+    try{worker.postMessage({type:'thumbnail',id:active.id,
+      recipe:active.recipe,width:active.width,height:active.height});}
+    catch(error){fail(error);}
+  };
+  if(!disabled){
+    try{
+      worker=workerFactory();
+      timer=setTimeout(()=>fail(new Error('Thumbnail worker startup timed out')),startupMs);
+      worker.onmessage=({data})=>{
+        if(disabled||disposed){closeFrame(data);return;}
+        if(data?.type==='ready'){
+          if(data.protocol!==1){fail('Unknown thumbnail worker protocol');return;}
+          ready=true;clearTimer();dispatch();return;
+        }
+        if(data?.type==='unsupported'){fail(data.error||'Thumbnail worker unavailable');return;}
+        if(data?.type==='error'&&data.id===active?.id){
+          fail(data.error||'Thumbnail rendering failed');return;
+        }
+        if(data?.type==='thumbnail'){
+          if(data.id!==active?.id){closeFrame(data);return;}
+          clearTimer();
+          const finished=active;active=null;
+          if(data.frame)finished.resolve(data.frame);
+          else finished.reject(new Error('Missing thumbnail frame'));
+          dispatch();
+        }
+      };
+      worker.onerror=event=>{event?.preventDefault?.();fail(event?.message||'Thumbnail script failed');};
+      worker.onmessageerror=()=>fail('Cannot read thumbnail frame');
+    }catch(error){fail(error);}
+  }
+  return {
+    request(recipe,width,height){
+      if(disabled||disposed)return Promise.reject(new Error('Thumbnail worker unavailable'));
+      if(queue.length>=maxPending)return Promise.reject(new Error('Thumbnail queue full'));
+      return new Promise((resolve,reject)=>{
+        queue.push({id:++id,recipe,width,height,resolve,reject});
+        dispatch();
+      });
+    },
+    dispose(){
+      if(disposed)return;
+      fail('Thumbnail worker closed');disposed=true;disabled=true;
+      try{worker?.terminate();}catch{}
+    },
+    get enabled(){return !disabled&&!disposed;},
+    get pending(){return queue.length+(active?1:0);},
+  };
+}
