@@ -6,7 +6,11 @@ export const ELEMENT_SHAPES=Object.freeze(['straight','wave','zigzag','loop']);
 export const ELEMENT_STROKES=Object.freeze(['solid','dashed','dotted']);
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 const number=(x,f,a,b)=>clamp(Number.isFinite(+x)?+x:f,a,b);
-const COLOURS=['white','black','lighter','darker'];
+const COLOURS=['white','black','lighter','darker','custom'];
+export const RAINBOW_NAMES=Object.freeze(['Red','Orange','Yellow','Green','Blue','Indigo','Violet']);
+export const elementApplies=(e,slot,id)=>
+  (!e.colorSlots?.length||e.colorSlots.includes(slot))&&
+  (!e.objectIds?.length||e.objectIds.includes(id));
 export function normalizeInteriorElements(input){
   if(!Array.isArray(input))return [];
   const seen=new Set();
@@ -20,6 +24,9 @@ export function normalizeInteriorElements(input){
       shape:ELEMENT_SHAPES.includes(e.shape)?e.shape:'straight',
       stroke:ELEMENT_STROKES.includes(e.stroke)?e.stroke:'solid',
       color:COLOURS.includes(e.color)?e.color:'white',
+      customColor:/^#[0-9a-f]{6}$/i.test(e.customColor)?e.customColor.toLowerCase():'#ffffff',
+      colorSlots:Array.isArray(e.colorSlots)?[...new Set(e.colorSlots.filter(x=>Number.isInteger(x)&&x>=0&&x<7))]:[],
+      objectIds:Array.isArray(e.objectIds)?[...new Set(e.objectIds.filter(x=>typeof x==='string'&&x.length<100))].slice(0,200):[],
       width:number(e.width,1.5,.15,50),
       position:number(e.position,0,-.48,.48),
       amplitude:number(e.amplitude,.12,0,.45),
@@ -31,6 +38,7 @@ export function normalizeInteriorElements(input){
   });
 }
 export function elementInk(e,color){
+  if(e.color==='custom')return e.customColor;
   if(e.color==='white')return '#fff';
   if(e.color==='black')return '#000';
   // Palette-derived contrasts preserve the seven semantic colour roles.
@@ -63,7 +71,7 @@ export function drawRegionInteriors(ctx,object,elements,structure){
   for(const p of object.vertices.slice(1))ctx.lineTo(p.x,p.y);
   ctx.closePath();ctx.clip();
   for(const e of elements){
-    if(!e.enabled||!e.opacity)continue;
+    if(!e.enabled||!e.opacity||!elementApplies(e,object.colorIndex,object.id))continue;
     ctx.save();ctx.strokeStyle=elementInk(e,object.color);
     ctx.globalAlpha=e.opacity;ctx.lineWidth=e.type==='band'?Math.max(e.width,Math.min(x1-x0,y1-y0)*.14):e.width;
     lineDash(ctx,e);ctx.lineJoin='round';
@@ -92,7 +100,8 @@ export function drawRegionInteriors(ctx,object,elements,structure){
           const t=(x+e.phase*3)/Math.max(16,220/e.frequency);
           const displacement=e.amplitude*80*elementWave({...e,frequency:1},t);
           const yy=y+e.position*period+displacement;
-          if(x===from)ctx.moveTo(x,yy);else ctx.lineTo(x,yy);
+          const xx=e.shape==='loop'?x+e.amplitude*80*Math.cos(t*2*Math.PI+e.phase*Math.PI/180):x;
+          if(x===from)ctx.moveTo(xx,yy);else ctx.lineTo(xx,yy);
         }
         ctx.stroke();
       }
