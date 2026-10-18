@@ -303,6 +303,35 @@ try{
   const fitting=await evaluate('(()=>{const bad=[];for(const b of document.querySelectorAll(".settings-tab")){b.click();const c=b.dataset.tab;for(const chip of document.querySelectorAll(".editor-tool-tab:not([hidden])")){chip.click();const card=document.querySelector(".editor-tool-card:not([hidden])");const box=card.getBoundingClientRect();const names=[];for(const node of card.querySelectorAll("input:not([type=hidden]),select,.add-texture-layer")){if(node.getClientRects().length===0||node.closest("[hidden]"))continue;const r=node.getBoundingClientRect();if(r.top<box.top-3||r.bottom>box.bottom+3||r.left<box.left-3||r.right>box.right+3)names.push(node.name||node.id)}if(names.length)bad.push({tool:chip.dataset.editorTool,controls:names,card:card.clientHeight,scroll:card.scrollHeight,children:[...card.querySelectorAll(".texture-layer-group>* , #textureLayer2Panel>* , #textureLayer3Panel>*")].map(x=>({tag:x.tagName,cls:x.className?.toString().slice(0,45),h:Math.round(x.getBoundingClientRect().height),top:Math.round(x.getBoundingClientRect().top-box.top),display:getComputedStyle(x).display})).filter(x=>x.h>0)});}}return bad})()');
   console.log('ALL_TOOL_FIT_AUDIT',JSON.stringify(fitting));
   assert.deepEqual(fitting,[],'every active tool must fit without scrolling and without cutting controls');
+  // Mode changes must expose relevant geometry, retain dormant path settings,
+  // and keep the same no-scroll card design across both new scene families.
+  for(const [structure,expectedTool] of [['radial','rays'],['regions','regions']]){
+    await evaluate('document.getElementById("tab-layout").click()');
+    await evaluate('document.querySelector("[data-editor-tool=structure-mode]").click()');
+    await evaluate('(()=>{const f=document.querySelector("[name=structure]");f.value="'+structure+'";f.dispatchEvent(new Event("change",{bubbles:true}))})()');
+    await waitFor('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).structure==="'+structure+'"');
+    await evaluate('document.getElementById("tab-path").click()');
+    const state=await evaluate('(()=>({tool:document.querySelector(".editor-tool-card:not([hidden])").dataset.editorTool,geometryInactive:document.querySelector("[name=geometry]").disabled,activeChips:[...document.querySelectorAll(".editor-tool-tab:not([hidden])")].map(x=>x.dataset.editorTool)}))()');
+    assert.equal(state.tool,expectedTool,structure);
+    assert.equal(state.geometryInactive,true,structure);
+    assert.ok(state.activeChips.includes(expectedTool),structure);
+    const scene=await evaluate('(async()=>{const {resolveScene}=await import("/src/model.js");const r=JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r")));const s=resolveScene(r);return {kinds:[...new Set(s.objects.map(x=>x.kind))],colors:[...new Set(s.objects.map(x=>x.colorIndex))]}})()');
+    assert.deepEqual(scene.kinds,['region']);
+    assert.deepEqual(scene.colors,[0,1,2,3,4,5,6]);
+  }
+  await evaluate('document.querySelector("[data-editor-tool=regions]").click()');
+  await evaluate('(()=>{const f=document.querySelector("[name=regionMode]");f.value="nested";f.dispatchEvent(new Event("change",{bubbles:true}))})()');
+  await waitFor('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).regionMode==="nested"');
+  assert.ok(await evaluate('[...document.querySelectorAll(".editor-tool-tab:not([hidden])")].some(x=>x.dataset.editorTool==="origin")'));
+  await evaluate('document.getElementById("tab-layout").click()');
+  await evaluate('document.querySelector("[data-editor-tool=structure-mode]").click()');
+  await evaluate('(()=>{const f=document.querySelector("[name=structure]");f.value="paths";f.dispatchEvent(new Event("change",{bubbles:true}))})()');
+  await waitFor('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).structure==="paths"');
+  await evaluate('document.getElementById("tab-path").click()');
+  assert.equal(await evaluate('document.querySelector(".editor-tool-card:not([hidden])").dataset.editorTool'),'geometry');
+  assert.equal(await evaluate('document.querySelector("[name=geometry]").disabled'),false);
+  await evaluate('document.getElementById("tab-effects").click()');
+
   // Browser zoom changes the effective CSS viewport. Test a normal phone
   // (412 × 915 CSS pixels) and the same physical phone at 67% browser zoom
   // (approximately 615 × 1365 CSS pixels). Both remain below mobile breakpoint.
