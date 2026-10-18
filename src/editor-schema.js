@@ -9,7 +9,7 @@ export const EDITOR_CATEGORIES=[
     {id:'variability',name:'Variation',settings:['chaos']},
   ]},
   {id:'path',label:'Path',icon:'⌁',tools:[
-    {id:'geometry',name:'Paths',settings:['geometry','shapeFrequency','shapeDepth']},
+    {id:'geometry',name:'Geometry',settings:['geometry','shapeFrequency','shapeDepth']},
     {id:'rays',name:'Radial rays',settings:['radialMode','rayCount','rayRotation']},
     {id:'ray-shape',name:'Ray shape',settings:['rayTwist','rayCoverage','rayCore']},
     {id:'origin',name:'Origin',settings:['fieldCenterX','fieldCenterY']},
