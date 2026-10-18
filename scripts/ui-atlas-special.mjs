@@ -139,7 +139,9 @@ export async function captureSpecialStates({page,ctx,capture,navigate,change,set
   await attempt('gallery-empty',async()=>{
     await forceClick('#showFavorites');
     await openGallery();
-    await page.locator('#gallery .gallery-placeholder').waitFor({state:'visible'});
+    const placeholder=page.locator('#gallery .gallery-placeholder');
+    await placeholder.waitFor({state:'visible'});
+    await placeholder.scrollIntoViewIfNeeded();
     await snap('gallery-empty-favourites');
     await closeGallery();
   });
@@ -148,7 +150,9 @@ export async function captureSpecialStates({page,ctx,capture,navigate,change,set
     await forceClick('#showFavorites');
     await page.locator('#gallery .thumb').first().waitFor({state:'attached',timeout:6000});
     await openGallery();
-    await page.locator('#gallery .thumb').first().waitFor({state:'visible',timeout:6000});
+    const favouriteThumb=page.locator('#gallery .thumb').first();
+    await favouriteThumb.waitFor({state:'visible',timeout:6000});
+    await favouriteThumb.scrollIntoViewIfNeeded();
     await snap('gallery-with-favourite');
     await closeGallery();
     await forceClick('#favorite');
