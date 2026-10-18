@@ -695,6 +695,30 @@ function syncInteriorUI(){
     slider.addEventListener('input',()=>{field.firstChild.textContent=name+' '+slider.value;});
     slider.addEventListener('change',()=>update(key,Number(slider.value)));
   };
+  const actions=make(manager,'div');actions.className='interior-actions';
+  const up=make(actions,'button','↑');up.type='button';up.title='Move element upward';
+  up.disabled=selectedInterior===0;
+  up.addEventListener('click',()=>{
+    const next=[...current.interiorElements];
+    [next[selectedInterior-1],next[selectedInterior]]=[next[selectedInterior],next[selectedInterior-1]];
+    selectedInterior--;changeRecipe({...current,interiorElements:next});
+  });
+  const down=make(actions,'button','↓');down.type='button';down.title='Move element downward';
+  down.disabled=selectedInterior>=items.length-1;
+  down.addEventListener('click',()=>{
+    const next=[...current.interiorElements];
+    [next[selectedInterior+1],next[selectedInterior]]=[next[selectedInterior],next[selectedInterior+1]];
+    selectedInterior++;changeRecipe({...current,interiorElements:next});
+  });
+  const stackLocked=current.lockedSettings.includes('interiorElements');
+  const lock=make(actions,'button',stackLocked?'Unlock all elements':'Lock all elements');
+  lock.type='button';lock.setAttribute('aria-pressed',String(stackLocked));
+  lock.addEventListener('click',()=>{
+    const locks=new Set(current.lockedSettings);
+    if(locks.has('interiorElements'))locks.delete('interiorElements');
+    else locks.add('interiorElements');
+    changeRecipe({...current,lockedSettings:[...locks]},{bypassLocks:true});
+  });
   const activeRow=make(manager,'label','Enabled');
   const toggle=make(activeRow,'input');toggle.type='checkbox';toggle.checked=active.enabled;
   toggle.addEventListener('change',()=>update('enabled',toggle.checked));
