@@ -70,7 +70,7 @@ function showNotice(message){
 }
 function fromControls() {
   const data={seed:seedInput.value,positionX:current.positionX,positionY:current.positionY,
-    viewZoom:current.viewZoom,customPath:current.customPath,drawnAnchors:current.drawnAnchors,drawnCorners:current.drawnCorners};
+    viewZoom:current.viewZoom,customPath:current.customPath,drawnAnchors:current.drawnAnchors,drawnCorners:current.drawnCorners,interiorElements:current.interiorElements};
   for (const key of FIELDS) { const field=form.elements.namedItem(key); data[key]=field.dataset.inactive==='true'?current[key]:(field.type==='checkbox'?field.checked:field.value); }
   return normalizeRecipe(data);
 }
@@ -331,6 +331,7 @@ function render(recipe,{scroll=false,bypassLocks=false}={}) {
 }
 function changeRecipe(recipe,options={}){
   render(recipe,options);toControls(current);showResolvedSelections(currentScene);
+  syncInteriorUI();
   for(const die of form.querySelectorAll('[data-random-setting]')){
     const field=form.elements.namedItem(die.dataset.randomSetting);
     die.disabled=!field||field.disabled||field.dataset.inactive==='true';
@@ -635,6 +636,74 @@ function syncSettingLocks(){
 }
 installSettingLocks();
 const editor=mountEditor();
+// Details controls deliberately live outside the fixed scalar setting schema:
+// ordered element objects are a recipe collection, not separately lockable sliders.
+const interiorHost=document.querySelector('.editor-tool-card[data-editor-tool="interior"]');
+let selectedInterior=0;
+function syncInteriorUI(){
+  if(!interiorHost)return;
+  interiorHost.replaceChildren();
+  const items=current.interiorElements||[];
+  const make=(tag,label,parent=interiorHost)=>{
+    const el=document.createElement(tag);
+    if(label!==undefined)el.textContent=label;
+    parent.append(el);return el;
+  };
+  const toolbar=make('div');
+  toolbar.className='interior-toolbar';
+  const choose=make('select',undefined,toolbar);
+  choose.setAttribute('aria-label','Select interior element');
+  items.forEach((item,i)=>{
+    const option=document.createElement('option');
+    option.value=String(i);option.textContent=(i+1)+'. '+item.type+' · '+item.shape;
+    choose.append(option);
+  });
+  selectedInterior=Math.max(0,Math.min(selectedInterior,items.length-1));
+  choose.value=String(selectedInterior);
+  choose.disabled=!items.length;
+  choose.addEventListener('change',()=>{selectedInterior=Number(choose.value);syncInteriorUI();});
+  const add=make('button','+ Add',toolbar);add.type='button';
+  add.disabled=items.length>=8;
+  add.addEventListener('click',()=>{
+    selectedInterior=items.length;
+    changeRecipe({...current,interiorElements:[...items,{id:'element-'+Date.now(),type:'line',shape:'wave',color:'white',width:1.5,frequency:6,amplitude:.12}]});
+  });
+  const remove=make('button','Remove',toolbar);remove.type='button';remove.disabled=!items.length;
+  remove.addEventListener('click',()=>{
+    selectedInterior=Math.max(0,selectedInterior-1);
+    changeRecipe({...current,interiorElements:items.filter((_,i)=>i!==Number(choose.value))});
+  });
+  if(!items.length){make('p','No interior decorations. Add a line or tonal band.');return;}
+  const active=items[selectedInterior];
+  const update=(key,value)=>{
+    changeRecipe({...current,interiorElements:current.interiorElements.map((e,i)=>i===selectedInterior?{...e,[key]:value}:e)});
+  };
+  const select=(name,key,options)=>{
+    const field=make('label',name);
+    const control=make('select',undefined,field);
+    for(const value of options){const opt=document.createElement('option');opt.value=value;opt.textContent=value;control.append(opt);}
+    control.value=active[key];control.addEventListener('change',()=>update(key,control.value));
+  };
+  const range=(name,key,min,max,step)=>{
+    const field=make('label',name+' '+active[key]);
+    const slider=make('input',undefined,field);
+    slider.type='range';slider.min=min;slider.max=max;slider.step=step;slider.value=active[key];
+    slider.addEventListener('input',()=>{field.firstChild.textContent=name+' '+slider.value;});
+    slider.addEventListener('change',()=>update(key,Number(slider.value)));
+  };
+  select('Element','type',['line','band']);
+  select('Geometry','shape',['straight','wave','zigzag','loop']);
+  select('Stroke','stroke',['solid','dashed','dotted']);
+  select('Ink','color',['white','black','lighter','darker']);
+  select('Placement','placement',['local','field','contour']);
+  range('Thickness','width',.15,30,.25);
+  range('Position','position',-.48,.48,.02);
+  range('Amplitude','amplitude',0,.45,.01);
+  range('Frequency','frequency',.1,30,.1);
+  range('Phase','phase',-180,180,1);
+  range('Opacity','opacity',0,1,.05);
+}
+syncInteriorUI();
 const explorationHistory=installExplorationHistory({
   form,preview,getRecipe:()=>current,
   restore:recipe=>changeRecipe(recipe,{bypassLocks:true}),
