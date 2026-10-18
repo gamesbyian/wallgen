@@ -96,8 +96,8 @@ try{
   await evaluate('document.getElementById("mobileEdit").click()');
   await waitFor('document.body.classList.contains("mobile-edit-open")');
   const guide=await evaluate(`(()=>{
-    const btn=document.getElementById('mobileBleed'),frame=document.querySelector('.wallpaper-frame');
-    const f=frame.getBoundingClientRect();
+    const btn=document.getElementById('mobileBleed'),canvas=document.getElementById('preview');
+    const f=canvas.getBoundingClientRect();
     const before=document.getElementById('preview').toDataURL();
     btn.click();
     const g=document.getElementById('bleedGuide').getBoundingClientRect();
@@ -122,6 +122,29 @@ try{
     assert.ok(parseFloat(state.radius)>0);
     await evaluate('document.getElementById("mobileBleed").click()');
   }
+  // The outer frame changes its available height between dock and editor.
+  // Bleed must stay centred on the actual canvas in BOTH layouts.
+  await evaluate('document.getElementById("mobileBleed").click()');
+  const guidePosition=async()=>evaluate(`(()=>{
+    const canvas=document.getElementById('preview').getBoundingClientRect();
+    const g=document.getElementById('bleedGuide').getBoundingClientRect();
+    const x=(g.left-canvas.left)/canvas.width,y=(g.top-canvas.top)/canvas.height;
+    return {x,y,w:g.width/canvas.width,h:g.height/canvas.height,
+      centerY:(g.top+g.height/2-canvas.top)/canvas.height};
+  })()`);
+  const expandedGuide=await guidePosition();
+  await evaluate('document.getElementById("mobileEdit").click()');
+  await waitFor('!document.body.classList.contains("mobile-edit-open")');
+  const dockGuide=await guidePosition();
+  console.log('BLEED_DOCK_VS_EDIT',JSON.stringify({expandedGuide,dockGuide}));
+  for(const state of [expandedGuide,dockGuide]){
+    for(const key of ['x','y'])assert.ok(Math.abs(state[key]-.05)<.012,key+' bleed inset');
+    for(const key of ['w','h'])assert.ok(Math.abs(state[key]-.9)<.012,key+' bleed extent');
+    assert.ok(Math.abs(state.centerY-.5)<.012,'bleed must stay vertically centred');
+  }
+  await evaluate('document.getElementById("mobileEdit").click()');
+  await waitFor('document.body.classList.contains("mobile-edit-open")');
+  await evaluate('document.getElementById("mobileBleed").click()');
   // Side-rail Save/Favourite must keep the editor open, unlike navigation.
   const beforeFavorite=await evaluate('document.getElementById("favorite").getAttribute("aria-pressed")');
   await evaluate('document.querySelector("[data-dock-proxy=mobileFavorite]").click()');
