@@ -271,6 +271,40 @@ now always leaves extra texture layers disabled. You can still explicitly
 enable and customize the second and third layers from the Texture controls;
 existing manual multi-layer designs remain fully functional.
 
+## Freehand anchor editing and local re-smoothing
+
+The **Draw path** overlay offers an optional **Edit points** fallback. Make
+an ordinary finger stroke, choose Smooth or Geometric and 1–10× smoothing,
+and then tap Edit points before **Use path**. Or load an existing Drawn path,
+tap Draw path, then choose Edit points to correct the saved drawing.
+
+- **Square anchors** are selected at meaningful turns and spaced along
+  smooth spans, not at every stored sampling point. Drag an anchor to reposition
+  the stroke locally, including its adjacent spans. Tap a square to expose
+  round directional Bézier-style handles; drag them to change the tangent.
+- **Smooth / corner** switches handle coupling at the selected anchor.
+  Smooth adjustments mirror the opposite tangent handle; corner adjustments
+  may be independent. **Add point** arms a tap-on-line insertion; **Delete
+  point** removes a selectable anchor constraint, retaining the curve itself.
+- **Re-smooth** runs local fairing on the selected span and its neighbours,
+  using the current smoothing strength. This also runs after point dragging.
+  Edited anchor coordinates stay fixed; samples outside the local region
+  retain their positions. **Undo point** reverses changes within the edit
+  session. The normal wallpaper Undo restores the complete pre-edit recipe
+  after applying the path.
+- **Hide points** retains unfinished adjustments without forcing a save.
+  Redraw starts a new gesture; Cancel discards pending changes.
+
+Point edits operate directly on the existing normalized stroke without
+globally re-fitting its shape. Manually protected anchor and corner indices
+are stored as optional `drawnAnchors` and `drawnCorners` in the recipe,
+so edits persist through copied URLs, favourites, JSON and exported PNGs.
+No additional per-image data or server component is required.
+
+All rotation controls have fine adjustment: diagonal rotation uses its
+existing ± slider steppers, while material layers 1–3 have **±1°** steppers
+alongside **±90°** shortcuts, direct degree entry and **0°** reset.
+
 ## Self-intersections: Over, Under and Weave
 
 **Path → Constraints → At intersections** offers **Over**, **Under** and
