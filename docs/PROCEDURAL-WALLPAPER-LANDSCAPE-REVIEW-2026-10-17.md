@@ -2,10 +2,10 @@
 
 **Research date:** 17 October 2026, Calgary local time (the inspected GitHub merge was on 18 October UTC)  
 **Repository:** [gamesbyian/wallgen](https://github.com/gamesbyian/wallgen)  
-**Source baseline:** [main \`2e6039c8d7fcef85b74dfe70435ffeda03929b98\`](https://github.com/gamesbyian/wallgen/commit/2e6039c8d7fcef85b74dfe70435ffeda03929b98)  
+**Source baseline:** [main `2e6039c8d7fcef85b74dfe70435ffeda03929b98`](https://github.com/gamesbyian/wallgen/commit/2e6039c8d7fcef85b74dfe70435ffeda03929b98)  
 **Scope:** Competitive feature/UX and engineering review; *research and recommendations only*. No product changes, dependency changes, or tests performed by this review.
 
-> **Timing correction:** While this research was underway, [PR #46](https://github.com/gamesbyian/wallgen/pull/46), “Unify ROYGBIV scene geometry and add radial/region compositions”, **merged**. Everything below treats its new \`structure=radial|regions\` capabilities, recipe v2, and \`src/composition-geometry.js\` as implemented. An earlier audit of \`cce79ece\` was updated accordingly. The report must not be read as claiming these additions are still future work.
+> **Timing correction:** While this research was underway, [PR #46](https://github.com/gamesbyian/wallgen/pull/46), “Unify ROYGBIV scene geometry and add radial/region compositions”, **merged**. Everything below treats its new `structure=radial|regions` capabilities, recipe v2, and `src/composition-geometry.js` as implemented. An earlier audit of `cce79ece` was updated accordingly. The report must not be read as claiming these additions are still future work.
 
 ## 1. Executive assessment
 
@@ -14,7 +14,7 @@
 Commercial visual generators typically win on **immediate discoverability, shape packs, easy tiled previews, export choices, side-by-side variants, and visual language that makes effects obvious before selecting them**. In code libraries, useful architectural examples are **a renderer-neutral geometric representation, reusable mask/boolean operations, reproducible random streams, and modular declarative effects**. ROYGBIV should adopt selected techniques rather than imitate entire product categories.
 
 **Suggested order:**
-1. Make **stripe contents / decorations** a first-class ordered layer stack, with continuous hairlines and offset curves as the initial feature. Replace the \`construction=tonal\` special-case where practical, but preserve its visible behavior via migration/preset.
+1. Make **stripe contents / decorations** a first-class ordered layer stack, with continuous hairlines and offset curves as the initial feature. Replace the `construction=tonal` special-case where practical, but preserve its visible behavior via migration/preset.
 2. Build a **seven-colour composition grammar** above the newly landed scene objects: symmetry, repeats, nesting, adjacency, deliberate colour allocation, and per-object transforms. Avoid another geometry-specific renderer.
 3. Add **excellent visual exploration UX**: graphic tool thumbnails, pinned A/B variants, selective remix, and bounded visual history, without sacrificing the no-vertical-scroll phone editor.
 4. Expand **colour treatment, crop/output ratios, and export**, initially scalable/vector-friendly output where it can faithfully represent the artwork.
@@ -26,12 +26,12 @@ These are prioritized judgments, not claims of measured audience demand.
 
 The comparison used direct product documentation/live web tool pages and original repository documentation/source. “Yes” in matrices means **documented or visible in a source**, not that every advertised feature was manually exercised. ROYGBIV conclusions derive from current source reads, its README, UI/schema code, automated test inventory, headless workflow and the merged PR. Rival commercial backends were generally **not accessible for code audit**, so their engineering architecture is not guessed. No browser/device-based side-by-side usability test, export pixel parity experiment, or performance benchmark was run for this report. Such empirical tests would be useful in a later QA task.
 
-Read locally in ROYGBIV: \`src/model.js\`, \`src/composition-geometry.js\`, \`src/path-geometry.js\`, \`src/renderer.js\`, \`src/app.js\`, \`src/editor-schema.js\`, \`src/editor-layout.js\`, \`src/mobile-studio.js\`, \`src/scoped-random.js\`, \`src/exploration-history.js\`, \`src/drawn-path.js\`, \`src/path-point-editor.js\`, \`src/image-path.js\`, \`src/png-metadata.js\`, \`README.md\`, \`docs/HEADLESS.md\`, tests and workflow inventory. See source links in §10.
+Read locally in ROYGBIV: `src/model.js`, `src/composition-geometry.js`, `src/path-geometry.js`, `src/renderer.js`, `src/app.js`, `src/editor-schema.js`, `src/editor-layout.js`, `src/mobile-studio.js`, `src/scoped-random.js`, `src/exploration-history.js`, `src/drawn-path.js`, `src/path-point-editor.js`, `src/image-path.js`, `src/png-metadata.js`, `README.md`, `docs/HEADLESS.md`, tests and workflow inventory. See source links in §10.
 
 ## 3. ROYGBIV's actual implementation at the reviewed revision
 
 ### Geometry / composition
-- **Recipe v2** preserves the semantic seven-pigment palette and emits ordered scene objects: \`path-group\` for classic ribbons, \`region\` for closed colour areas. Geometry instructions are stored; not huge resolved point clouds.
+- **Recipe v2** preserves the semantic seven-pigment palette and emits ordered scene objects: `path-group` for classic ribbons, `region` for closed colour areas. Geometry instructions are stored; not huge resolved point clouds.
 - **Three canvas structures:** paths/ribbons, radial/bursts, and regions/partitions.
 - **12 named path geometries:** straight, wave, zigzag, chevron, jagged, stepped, arc, contour, hairpin, single loop, continuous loops, and drawn.
 - **Five radial modes:** sunburst, starburst, pinwheel, spokes, concentric; element counts in multiples of seven (7–70), rotation, twist, coverage, central gap and movable origin.
@@ -55,15 +55,15 @@ Read locally in ROYGBIV: \`src/model.js\`, \`src/composition-geometry.js\`, \`sr
 1. **One seeded recipe contract** across editing, sharing, image metadata, favourites and headless work; geometry resolved in the same 600 × 1300 logical domain.
 2. **One production raster compositor** for masks, materials, lighting, positional overscan and output; classic path rendering has dedicated tangent/normal geometry and crossing repair.
 3. **Human correction tools** for freehand and image-imported geometry. The image import is browser-local rather than a fragile server inference service.
-4. **Structured editor taxonomy** in \`editor-schema.js\` and scope-aware randomization, which give new features a recognizable home.
+4. **Structured editor taxonomy** in `editor-schema.js` and scope-aware randomization, which give new features a recognizable home.
 5. **No runtime package/service dependency** for the deployed studio: quick static hosting, privacy, accessibility to offline use.
 6. **Significant test coverage** for recipe normalization, determinism, geometry, intersections, browser interactions, metadata and CLI. Number of test files does not itself prove all visual cases are correct.
 
 ### Engineering liabilities / scaling pressure
-1. **Large concentrated modules:** \`src/renderer.js\` is already above a thousand lines; \`src/app.js\` and \`src/model.js\` contain many unrelated policies. The merged composition layer is a useful extraction, but adding every new effect directly to the renderer will compound branch complexity.
-2. **Two kinds of “structure” remain:** top-level \`structure=paths|radial|regions\` and stripe-level \`construction=ribbon|stroke|tonal|woven\`. They are legitimate concepts but confusingly named and constrained across tools. A clear future model should be **Canvas Composition → Shape/Path → Stripe Fill & Contents → Edges/Finish**.
-3. **Applicability is partly imperative** in \`app.js\` (\`inactiveSettingKeys\`) while membership is declared in \`editor-schema.js\`. Introducing further modes risks missing a grey-out case, stale status text, an omitted reroll selector, or a recipe field. Move to one testable typed declarative setting registry, with per-mode capability predicates.
-4. **Path and region branches diverge near render dispatch.** They share a compositor, but \`drawWallpaper\` still routes through distinct per-shape drawing branches. Introduce a compact renderable interface (geometry mask, local coordinate field, paint passes, bounds) so future content operators are shared wherever valid.
+1. **Large concentrated modules:** `src/renderer.js` is already above a thousand lines; `src/app.js` and `src/model.js` contain many unrelated policies. The merged composition layer is a useful extraction, but adding every new effect directly to the renderer will compound branch complexity.
+2. **Two kinds of “structure” remain:** top-level `structure=paths|radial|regions` and stripe-level `construction=ribbon|stroke|tonal|woven`. They are legitimate concepts but confusingly named and constrained across tools. A clear future model should be **Canvas Composition → Shape/Path → Stripe Fill & Contents → Edges/Finish**.
+3. **Applicability is partly imperative** in `app.js` (`inactiveSettingKeys`) while membership is declared in `editor-schema.js`. Introducing further modes risks missing a grey-out case, stale status text, an omitted reroll selector, or a recipe field. Move to one testable typed declarative setting registry, with per-mode capability predicates.
+4. **Path and region branches diverge near render dispatch.** They share a compositor, but `drawWallpaper` still routes through distinct per-shape drawing branches. Introduce a compact renderable interface (geometry mask, local coordinate field, paint passes, bounds) so future content operators are shared wherever valid.
 5. **Hard-coded logical/output aspect ratio** is a deliberate phone target, not a universal artwork canvas. Custom aspect ratios should change camera/export, not force geometry to be regenerated unexpectedly.
 6. **Full-resolution Canvas2D allocation risk:** the README explicitly notes large buffers and limited mobile RAM. Avoid piling on live sub-canvases for each decoration. Use a bounded cache, lazy export, and memory budgets before high-layer animation.
 7. **Reproducibility requires explicit seeding for any new noise/operator**. Continue isolated per-node/per-effect seed namespaces; do not let inserting one decoration reshuffle every unrelated component.
@@ -112,7 +112,7 @@ The key requirement is not “add all generic drawing features”; it is **make 
 
 ### A. Stripe interior element stack (highest immediate payoff)
 A stripe has **fill**, an ordered list of **contents**, and **edges**. One content item may be:
-- tonal band (existing \`construction=tonal\` translated into a preset operator);
+- tonal band (existing `construction=tonal` translated into a preset operator);
 - **continuous straight/sine/loopy/triangle/zigzag hairline** centered at any fraction of band width;
 - **dotted/dashed** versions of those same curves, with independent dot/dash lengths, spacing and phase;
 - twin mirrored hairlines, nested rails, railway sleeper ticks, contour echoes;
@@ -156,13 +156,13 @@ Each should be a **composition preset + parameter constraints**, not a new one-o
 - **Resolution-independent SVG** for vector-capable geometry; decide and document whether complex textures/filters are exported as equivalent SVG operations or embedded raster fallback. Mixed SVG is acceptable if clearly labelled; never advertise lossless full-vector fidelity where impossible.
 - **Wallpaper sets:** paired lock-screen/home-screen versions from the same recipe with configurable contrast, framing and amount of negative space.
 - **Tile export** with guaranteed seam tests for tileable compositions, and code/CSS/SVG fragments where an operator has faithful representation.
-- **Motion** eventually: deterministic time \`t\`, slow flow of phase, breathing radial shape, traveling light/hairlines, pinwheel turning, animate between two recipes. Export finite video/GIF/web package only after the underlying time evaluation is pure and preview/export match.
+- **Motion** eventually: deterministic time `t`, slow flow of phase, breathing radial shape, traveling light/hairlines, pinwheel turning, animate between two recipes. Export finite video/GIF/web package only after the underlying time evaluation is pure and preview/export match.
 
 ## 6. Architecture recommendation
 
-The newly merged \`src/composition-geometry.js\` and recipe v2 are the *right base*. Do **not** replace them or regress the original ribbon path geometry. Extend the model by describing an object's fill and optional ordered content operators. Pseudocode only, **not current API**:
+The newly merged `src/composition-geometry.js` and recipe v2 are the *right base*. Do **not** replace them or regress the original ribbon path geometry. Extend the model by describing an object's fill and optional ordered content operators. Pseudocode only, **not current API**:
 
-\`\`\`js
+```js
 {
   id: "rainbow-1",
   type: "path-group",          // or "region"
@@ -185,22 +185,22 @@ The newly merged \`src/composition-geometry.js\` and recipe v2 are the *right ba
     edge: { /* existing outline thickness/buffer/style */ }
   }
 }
-\`\`\`
+```
 
 There are two layers of compositing policy:
 1. **Scene-level z-order**: object draw order, blend, masks, geometry intersections (Over/Under/Weave) and scene-wide finish.
 2. **Shape-level ordering**: base fill → clipped interior contents → outlines / shadows, with strokes sampled in path-local coordinates and region decorations mapped to region-local coordinates.
 
-For classic crossings, **preserve branch-aware repainting** from \`crossing-order.js\`. A decorative element on an overpassing arm must come with the local branch, and never resurrect a hidden underpass via its own mask. A region's single clipping path should support the same interior-content interfaces as a ribbon without pretending it has a centreline. Define operator capabilities: \`supportsPathCoordinates\`, \`supportsRegionUV\`, \`supportsDistanceField\`, \`supportsTiling\`, \`vectorExportable\`. When not applicable, grey the control and display zero while keeping its saved requested value.
+For classic crossings, **preserve branch-aware repainting** from `crossing-order.js`. A decorative element on an overpassing arm must come with the local branch, and never resurrect a hidden underpass via its own mask. A region's single clipping path should support the same interior-content interfaces as a ribbon without pretending it has a centreline. Define operator capabilities: `supportsPathCoordinates`, `supportsRegionUV`, `supportsDistanceField`, `supportsTiling`, `vectorExportable`. When not applicable, grey the control and display zero while keeping its saved requested value.
 
 **Suggested internal refactor seams:**
-- \`recipe-schema\`: one canonical typed descriptor per setting (default, domain, units, relevance predicate, scope, randomization policy, UI placement, migration, validation). \`editor-schema.js\` can point to those descriptors. No dependence on querying DOM input min/max for model correctness.
-- \`geometry\`: pure seeded object factories, path sampler, normal/offset sampling, region outlines, stable bounds and UV fields.
-- \`paint-operators\`: \`solidFill\`, \`tonalBand\`, \`pathLine\`, \`repeatStamp\`, \`hatch\`, \`gradient\`, etc., each with explicit clipping and deterministic seed.
-- \`compositor\`: masks, scene z-order, localized crossings, outlines, textures/lighting/camera. Keep one production compositor and one parity contract for browser/headless.
-- \`exporters\`: Canvas/PNG stays authoritative until a vector export passes defined fidelity fixtures.
+- `recipe-schema`: one canonical typed descriptor per setting (default, domain, units, relevance predicate, scope, randomization policy, UI placement, migration, validation). `editor-schema.js` can point to those descriptors. No dependence on querying DOM input min/max for model correctness.
+- `geometry`: pure seeded object factories, path sampler, normal/offset sampling, region outlines, stable bounds and UV fields.
+- `paint-operators`: `solidFill`, `tonalBand`, `pathLine`, `repeatStamp`, `hatch`, `gradient`, etc., each with explicit clipping and deterministic seed.
+- `compositor`: masks, scene z-order, localized crossings, outlines, textures/lighting/camera. Keep one production compositor and one parity contract for browser/headless.
+- `exporters`: Canvas/PNG stays authoritative until a vector export passes defined fidelity fixtures.
 
-**Determinism:** derive RNG from \`recipeSeed / stableNodeId / stableOperatorId / property\`. Inserting a mark should not perturb geometry or material grain elsewhere. Store instruction-level recipes with explicit migrations (v1→v2 exists; future v2→v3 should be tested). Pixel-exact images on different browsers may still differ because of fonts/Canvas antialiasing/colour management; define deterministic **scene geometry** separately from device-specific raster equality.
+**Determinism:** derive RNG from `recipeSeed / stableNodeId / stableOperatorId / property`. Inserting a mark should not perturb geometry or material grain elsewhere. Store instruction-level recipes with explicit migrations (v1→v2 exists; future v2→v3 should be tested). Pixel-exact images on different browsers may still differ because of fonts/Canvas antialiasing/colour management; define deterministic **scene geometry** separately from device-specific raster equality.
 
 **Libraries to evaluate, not blindly adopt:**
 - [Paper.js path operations](https://paperjs.org/reference/path/) and [SVGPathCommander](https://github.com/thednp/svg-path-commander) for sophisticated geometry, SVG path transforms, and boolean/point-at-length operations.
@@ -220,8 +220,8 @@ The live unobstructed phone preview, six-category/named-tool card layout, disabl
 ### What to upgrade
 1. **First screen:** structure picker with small genuinely rendered thumbnails for Paths, Radial, Regions; below that the named subtype picker. The controls use the same underlying data as the category tools. A thumbnail can explain “pinwheel” more quickly than a paragraph.
 2. **Each tool:** keep one active card and make its large controls context-specific. Use shared compact rows of label + value + two steppers; show colour swatches for semantic black/white/own-hue and a short explanatory illustration for unusual controls.
-3. **Within-stripe elements:** editable chip list no taller than a standard tool card; plus/minus and reorder gestures; a tapped chip gets a full normal-width settings card, with only applicable controls. Do not bolt 12 additional sliders directly onto \`Stripes → Structure\`.
-4. **Search:** retain \`src/editor-layout.js\` search and enrich with synonyms (“ray”, “sunburst”, “inside stripe”, “dash”, “outlines”, “tiling”); a search result should navigate to a *working card* rather than scroll a long form.
+3. **Within-stripe elements:** editable chip list no taller than a standard tool card; plus/minus and reorder gestures; a tapped chip gets a full normal-width settings card, with only applicable controls. Do not bolt 12 additional sliders directly onto `Stripes → Structure`.
+4. **Search:** retain `src/editor-layout.js` search and enrich with synonyms (“ray”, “sunburst”, “inside stripe”, “dash”, “outlines”, “tiling”); a search result should navigate to a *working card* rather than scroll a long form.
 5. **Before/after:** one prominent compare surface and “keep this one” action alongside recent variants. Save/restore should not collapse the edit panel or change framing.
 6. **Progressive complexity:** presets have deterministic known-good parameter ranges; optional “Advanced” only expands a particular tool, not a new global UI mode. Help text appears on demand.
 7. **Preview safety:** accessible “show home icons / clock safe area” overlay tied to device aspect-ratio preset; never part of exported design.
@@ -266,7 +266,7 @@ They should be ordinary recipes, not bespoke render functions. Any impressive pr
 
 ## 10. Source register / reproducibility
 
-**Primary ROYGBIV source (reviewed at commit \`2e6039c8\`):**
+**Primary ROYGBIV source (reviewed at commit `2e6039c8`):**
 - [README.md](https://github.com/gamesbyian/wallgen/blob/2e6039c8d7fcef85b74dfe70435ffeda03929b98/README.md): current features, v2 model and user-facing UX.
 - [src/model.js](https://github.com/gamesbyian/wallgen/blob/2e6039c8d7fcef85b74dfe70435ffeda03929b98/src/model.js): types of settings, slots, seeded recipe normalization and scene resolution.
 - [src/composition-geometry.js](https://github.com/gamesbyian/wallgen/blob/2e6039c8d7fcef85b74dfe70435ffeda03929b98/src/composition-geometry.js): newly landed radial/region pure factories.
