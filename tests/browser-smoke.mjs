@@ -763,6 +763,42 @@ try{
   // No file import should poison future generation or the original undo stack.
   assert.equal(await evaluate('new URLSearchParams(location.search).get("r")'),
     imageImport.original,'Undo must restore the prior complete design');
+  // Applying the detected orientation should be exact even though the
+  // generator chooses its initial diagonal angle from the wallpaper seed.
+  await evaluate(`(async()=>{
+    const c=document.createElement('canvas');c.width=160;c.height=240;
+    const ctx=c.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,160,240);
+    ctx.strokeStyle='#111';ctx.lineWidth=8;
+    ctx.beginPath();ctx.moveTo(25,35);ctx.lineTo(135,180);ctx.stroke();
+    const blob=await new Promise(ok=>c.toBlob(ok,'image/png'));
+    const dt=new DataTransfer();dt.items.add(new File([blob],'orientation.png',{type:'image/png'}));
+    const file=document.getElementById('imagePathFile');file.files=dt.files;
+    file.dispatchEvent(new Event('change',{bubbles:true}));
+  })()`);
+  await waitFor('document.getElementById("imagePathDialog").open && !document.getElementById("imagePathAngle").disabled || document.getElementById("imagePathDialog").open && document.getElementById("imagePathCandidate").options.length>1',15000);
+  const appliedAngle=await evaluate(`(async()=>{
+    const select=document.getElementById('imagePathCandidate');
+    const line=[...select.options].find(o=>o.textContent.includes('Line '));
+    if(!line)return {missingLine:true};
+    select.value=line.value;select.dispatchEvent(new Event('change',{bubbles:true}));
+    const expected=Number(line.textContent.match(/Line (\\d+)°/)[1]);
+    const enabled=!document.getElementById('imagePathAngle').disabled;
+    document.getElementById('imagePathAngle').click();
+    const recipe=JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get('r')));
+    const {resolveScene}=await import('/src/model.js');
+    const actual=((resolveScene(recipe).angle*180/Math.PI)%180+180)%180;
+    return {expected,actual,enabled,dialogClosed:!document.getElementById('imagePathDialog').open,
+      geometry:recipe.geometry,orientation:recipe.orientation};
+  })()`);
+  console.log('IMAGE_APPLY_ANGLE_ACCEPTANCE',JSON.stringify(appliedAngle));
+  assert.ok(appliedAngle.enabled&&appliedAngle.dialogClosed);
+  assert.equal(appliedAngle.geometry,'straight');
+  assert.equal(appliedAngle.orientation,'diagonal');
+  assert.ok(Math.abs(appliedAngle.actual-appliedAngle.expected)<.3,
+    'detected orientation must compensate for the seed-resolved base angle');
+  await evaluate('document.getElementById("undo").click()');
+  assert.equal(await evaluate('new URLSearchParams(location.search).get("r")'),
+    imageImport.original,'angle application should also be undoable');
   console.log('REDESIGN_EXPLORATION_ACCEPTANCE_SUCCESS');
 }finally{
   try{ws?.close()}catch{}
