@@ -590,7 +590,7 @@ try{
   console.log('REPORTED_DRAWN_KNOT_RENDER',JSON.stringify(reportedKnot));
   assert.equal(reportedKnot.points,96);
   assert.equal(reportedKnot.seed,'t0b4v5-ice7lf');
-  assert.ok(reportedKnot.spread<100,'reported tight knot must be curvature constrained');
+  assert.ok(reportedKnot.spread<80,'reported tight knot needs inner-turn clearance');
   assert.ok(reportedKnot.ink>2000,'reported design must still draw a complete rainbow');
   // Tight-radius transverse crossings previously produced inner-ribbon shards
   // because crossing repairs replayed the entire self-overlapping source.
