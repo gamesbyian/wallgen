@@ -99,8 +99,9 @@ export function createPreviewCoordinator({
 export function exportWallpaperInWorker({
   recipe,width,height,workerFactory=createRenderWorker,
   startupMs=8000,timeoutMs=120000,
+  canUseWorker=typeof Worker==='function'&&typeof OffscreenCanvas==='function',
 }){
-  if(typeof Worker!=='function'||typeof OffscreenCanvas!=='function')
+  if(!canUseWorker)
     return Promise.reject(new Error('OffscreenCanvas worker export unavailable'));
   return new Promise((resolve,reject)=>{
     let worker,timer,finished=false;
