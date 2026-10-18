@@ -21,6 +21,16 @@ test('all canonical editing settings have one and only one named home',()=>{
     assert.equal(SETTING_TOOL[key].tool,tool.id);
   }
 });
+test('self-crossing choices share Path Constraints with coherence, not a second tool',()=>{
+  const path=EDITOR_CATEGORIES.find(category=>category.id==='path');
+  const constraints=path.tools.find(tool=>tool.id==='safety');
+  assert.deepEqual(constraints.settings,['geometrySafety','crossingMode']);
+  assert.equal(SETTING_TOOL.crossingMode.category,'path');
+  assert.equal(SETTING_TOOL.crossingMode.tool,'safety');
+  assert.ok(!TOOL_LIST.some(tool=>tool.id==='crossings'));
+  assert.deepEqual(scopedKeys('tool','safety'),['geometrySafety','crossingMode']);
+  assert.deepEqual(scopedKeys('tool','crossings'),[]);
+});
 test('each randomization scope targets only its own canonical settings',()=>{
   const fields=new Set(TOOL_LIST.flatMap(t=>t.settings));
   for(const category of EDITOR_CATEGORIES){

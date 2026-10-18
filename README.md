@@ -273,10 +273,12 @@ existing manual multi-layer designs remain fully functional.
 
 ## Self-intersections: Over, Under and Weave
 
-**Path → Crossings** appears when **Single loop**, **Continuous loops**
-or **Drawn path** is active. Each control changes how the seven coloured
-ribbons visually intersect themselves, without changing the underlying
-path geometry:
+**Path → Constraints → At intersections** offers **Over**, **Under** and
+**Weave** for **Single loop**, **Continuous loops** and **Drawn path**.
+The setting is greyed out on other path geometries, but its saved choice
+is retained when returning to one of the supported paths. It changes
+how the seven coloured ribbons visually intersect themselves without
+altering the underlying path geometry:
 
 - **Over**: the later traversal passes above the earlier one, with the
   rainbow acting as a cohesive bundle.
@@ -318,7 +320,7 @@ material/outline/stripe controls.
 ## Geometry safety and expanded artistic controls
 
 The Path → Constraints tool contains **Preserve stripe coherence**, enabled by
-default. It keeps freehand stripe spacing and hairpin bend radius within
+default, and **At intersections** for the self-crossing path types. It keeps freehand stripe spacing and hairpin bend radius within
 geometry-aware limits and scales loops to their actual lane width. Turning it
 off unlocks intentional folding, extreme loop sizes and overlapping stripes.
 The request is retained: switching safety back off restores the user's

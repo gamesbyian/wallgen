@@ -116,6 +116,9 @@ export function mountEditor(){
     if(key==='textureLayer2Enabled'||key==='textureLayer3Enabled')continue;
     appendUnique(card,fieldNode(key));
   }
+  // Keep the dynamic explanation beside the coherence and intersection
+  // controls after the legacy controls are moved to their canonical home.
+  appendUnique(tools.get('safety').card,byId('geometrySafetyStatus'));
   // Every property gets its own miniature, scope-safe die. The active
   // variation mode decides whether it rerolls or explores a nearby value.
   for(const t of TOOL_LIST)for(const key of t.settings){
