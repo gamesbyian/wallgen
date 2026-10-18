@@ -81,7 +81,7 @@ test('lock controls use two consistent line-art SVG states, not emoji',()=>{
 test('texture relief and ambient canvas illumination are described accurately',()=>{
   assert.match(html,/Gently roughen|Distort the actual stripe contours/);
   assert.match(html,/Canvas shade/);
-  assert.match(html,/For optional shadows cast by the stripes themselves, see Design/);
+  assert.match(html,/Stripe shadows, outlines and glow are in Stripes/);
   assert.match(readme,/Canvas ambience does not cast shadows from the stripe silhouettes/);
 });
 
@@ -97,16 +97,17 @@ test('all four tabs stay on a single horizontal row even in the phone layout',()
   assert.match(css,/@media\(max-width:790px\)\{[\s\S]*?\.sidebar \.settings-tabs\{grid-template-columns:repeat\(4,minmax\(0,1fr\)\)!important/);
   assert.match(css,/@media\(max-width:420px\)\{[\s\S]*?\.sidebar \.settings-tab>span\{display:none\}/);
 });
-test('stripe shadows are an optional Design-only control, while canvas lighting stays in Colour',()=>{
+test('stripe shadows use zero strength for Off, and stripe effects belong in Stripes',()=>{
+  const schema=readFileSync(new URL('../src/editor-schema.js',import.meta.url),'utf8');
   const design=html.slice(html.indexOf('id="panel-design"'),html.indexOf('id="panel-colour"'));
   const colour=html.slice(html.indexOf('id="panel-colour"'),html.indexOf('id="panel-textures"'));
-  for(const field of ['stripeShadowEnabled','stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection']){
-    assert.match(design,new RegExp('name="'+field+'"'));
-    assert.doesNotMatch(colour,new RegExp('name="'+field+'"'));
-  }
-  assert.match(design,/id="stripeShadowControls" hidden/);
-  assert.match(app,/function syncStripeShadowUI\(\)/);
-  assert.match(app,/stripeShadowControls'\)\.hidden=!enabled/);
+  for(const key of ['stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection'])
+    assert.match(design,new RegExp('name="'+key+'"'));
+  assert.doesNotMatch(html,/name="stripeShadowEnabled"/);
+  assert.doesNotMatch(app,/stripeShadowEnabled/);
+  assert.match(design,/id="stripeShadowControls"/);
+  assert.match(schema,/id:'stripes'[\\s\\S]*id:'outlines'[\\s\\S]*id:'shadows'[\\s\\S]*id:'glow'[\\s\\S]*id:'colour'/);
+  assert.match(schema,/id:'effects'[\\s\\S]*id:'lighting'/);
   assert.match(colour,/name="lightingMood"/);
 });
 
