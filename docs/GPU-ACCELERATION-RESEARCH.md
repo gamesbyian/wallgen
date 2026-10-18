@@ -187,3 +187,53 @@ net savings after polygon-mask upload and final compositing. Prefer
 reusing one context for the lifetime of a worker rather than initializing
 one for each shape. Production can remain worker Canvas2D indefinitely
 if shaders do not deliver meaningful benefit.
+
+## Ordered multi-decoration compositing prototype (PR #70)
+
+`createMaskedFieldSession()` now offers `renderMany(elements,options)`.
+Unlike invoking `render()` separately, it renders **one ordered stack of 1–8
+eligible field elements in one fragment draw**. A second fragment program is
+compiled lazily on the first stack request and shared across subsequent stacks
+in the same session. The vertex buffer, mask texture and WebGL context are
+reused from the single-element path.
+
+The shader's uniforms carry all eight potentially independent values for
+frequency, amplitude, position, phase, thickness, colour, shape and opacity.
+It evaluates the same world-anchored lines (including the source -2400
+vertical-grid station) and calculates source-over in straight RGBA:
+
+```
+nextPremultipliedRGB = newInkRGB * newAlpha + oldPremultipliedRGB * (1-newAlpha)
+nextAlpha = newAlpha + oldAlpha * (1-newAlpha)
+outputRGB = accumulatedRGB / accumulatedAlpha
+```
+
+This avoids the pitfalls of using framebuffer blending factors intended for
+premultiplied versus straight alpha, and removes inter-layer readbacks,
+uploading output bitmaps or creating additional FBO textures. The final
+straight-alpha output can be compared with `CanvasRenderingContext2D`
+`getImageData()` more directly. See MDN
+[blendFuncSeparate](https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/blendFuncSeparate)
+for the distinction between RGB and alpha blending factors.
+
+**The entire stack is rejected** if any element uses unsupported features,
+is disabled or contains invalid custom colour. The prototype intentionally
+only accepts world-field, solid-stroke line elements with no selective
+object/colour targeting and straight/wave/zigzag shapes. This avoids silently
+dropping selected layers. Zero layers and more than eight are rejected rather
+than truncated. No production code invokes this API.
+
+`tests/gpu-fields-browser.mjs` renders three different translucent colours
+in order through both Canvas2D and WebGL2; checks RGB and alpha agreement,
+the original polygon clip, reverse-order changes, and complete mask
+invalidations. `tests/gpu-fields.test.js` confirms one texture upload and
+one GPU draw call per full stack, correct resource disposal and unsupported
+element rejection. Software ANGLE/SwiftShader validates raster semantics,
+**not** hardware performance on the Pixel 6 Pro.
+
+**Production promotion is still blocked** on evaluating whether a unified
+GPU render batch saves time once the Canvas2D mask creation, transfer to
+WebGL, shader execution and final image presentation are included. Avoid
+introducing GPU context ownership, extra memory surfaces and fallback
+complexity merely because the shader supports multiple layers. The existing
+worker Canvas2D path remains the canonical image renderer and exporter.

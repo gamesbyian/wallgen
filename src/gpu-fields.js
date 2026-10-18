@@ -53,6 +53,58 @@ void main(){
   pixel=vec4(inkColour,alpha);
 }`;
 
+// A single-pass source-over compositor for up to eight ordered field layers.
+// It writes straight RGBA, not a framebuffer blend's premultiplied RGB. This
+// avoids repeated GPU readbacks or intermediate textures between elements.
+export const GPU_FIELD_STACK_FRAGMENT=`#version 300 es
+precision highp float;
+uniform sampler2D ownerMask;
+uniform vec2 viewport;
+uniform vec2 logicalSize;
+uniform int fieldCount;
+uniform vec4 fieldGeometry[8]; // frequency, amplitude, position, phase
+uniform vec4 fieldInk[8];      // RGB, opacity
+uniform vec2 fieldStyle[8];    // stroke width, shape code
+out vec4 pixel;
+const float PI=3.14159265358979323846;
+void main(){
+  vec2 p=vec2(gl_FragCoord.x/viewport.x*logicalSize.x,
+    (viewport.y-gl_FragCoord.y)/viewport.y*logicalSize.y);
+  float coverage=texture(ownerMask,vec2(gl_FragCoord.x/viewport.x,
+    1.0-gl_FragCoord.y/viewport.y)).a;
+  vec3 accumulated=vec3(0.0);
+  float accumulatedAlpha=0.0;
+  for(int i=0;i<8;i++){
+    if(i>=fieldCount)break;
+    float frequency=fieldGeometry[i].x;
+    float amplitude=fieldGeometry[i].y;
+    float position=fieldGeometry[i].z;
+    float phaseDegrees=fieldGeometry[i].w;
+    float strokeWidth=fieldStyle[i].x;
+    int shapeCode=int(fieldStyle[i].y+.5);
+    float period=max(12.0,160.0/max(.2,frequency));
+    float wavelength=max(16.0,220.0/frequency);
+    float angle=(p.x+phaseDegrees*3.0)/wavelength*2.0*PI+
+      phaseDegrees*PI/180.0;
+    float oscillation=shapeCode==1?sin(angle):
+      shapeCode==2?2.0/PI*asin(sin(angle)):0.0;
+    float adjustedY=p.y-position*period-amplitude*80.0*oscillation;
+    float grid=adjustedY+2400.0;
+    float verticalDistance=abs(fract(grid/period+.5)-.5)*period;
+    float steepness=shapeCode==1?
+      amplitude*80.0*(2.0*PI/wavelength)*cos(angle):
+      shapeCode==2?amplitude*80.0*(4.0/wavelength)*sign(cos(angle)):0.0;
+    float distance=verticalDistance*inversesqrt(1.0+steepness*steepness);
+    float footprint=max(.001,fwidth(distance));
+    float line=clamp((strokeWidth*.5+footprint*.5-distance)/footprint,0.0,1.0);
+    float alpha=clamp(coverage*line*fieldInk[i].a,0.0,1.0);
+    accumulated=fieldInk[i].rgb*alpha+accumulated*(1.0-alpha);
+    accumulatedAlpha=alpha+accumulatedAlpha*(1.0-alpha);
+  }
+  pixel=vec4(accumulatedAlpha>0.0?
+    accumulated/accumulatedAlpha:vec3(0.0),accumulatedAlpha);
+}`;
+
 const SHAPES=Object.freeze({straight:0,wave:1,zigzag:2});
 export function gpuFieldEligibility(element){
   if(!element||element.enabled===false||element.opacity<=0)return false;
@@ -98,7 +150,7 @@ export function createMaskedFieldSession({
   const canvas=canvasFactory?.(width,height)||
     (typeof OffscreenCanvas==='function'?new OffscreenCanvas(width,height):null);
   if(!canvas)return {supported:false,reason:'OffscreenCanvas unavailable'};
-  let gl,vertex,fragment,program,buffer,texture;
+  let gl,vertex,fragment,program,buffer,texture,stackFragment,stackProgram;
   let closed=false,lost=false,maskReady=false,uploads=0,draws=0;
   const contextLost=event=>{
     event?.preventDefault?.();
@@ -122,6 +174,8 @@ export function createMaskedFieldSession({
         if(texture)gl.deleteTexture(texture);
         if(buffer)gl.deleteBuffer(buffer);
         if(program)gl.deleteProgram(program);
+        if(stackProgram)gl.deleteProgram(stackProgram);
+        if(stackFragment)gl.deleteShader(stackFragment);
         if(fragment)gl.deleteShader(fragment);
         if(vertex)gl.deleteShader(vertex);
         gl.getExtension('WEBGL_lose_context')?.loseContext();
@@ -129,6 +183,7 @@ export function createMaskedFieldSession({
     }
     try{canvas.width=0;canvas.height=0;}catch{}
     gl=null;texture=null;buffer=null;program=null;vertex=null;fragment=null;
+    stackProgram=null;stackFragment=null;
   };
   const status=reason=>({supported:false,reason});
   try{
@@ -228,6 +283,79 @@ export function createMaskedFieldSession({
           gl.drawArrays(gl.TRIANGLES,0,6);
           const error=gl.getError();
           if(error!==gl.NO_ERROR)throw Error('WebGL2 draw failed: 0x'+error.toString(16));
+          draws++;
+          return {supported:true,canvas};
+        }catch(error){
+          return status(String(error?.message||error));
+        }
+      },
+      // All eligible layers share the same source mask and compositor.
+      // The entire stack is drawn in ONE fragment pass: no GL blending,
+      // intermediary readback or per-layer mask transfer is required.
+      renderMany(elements,{logicalWidth=600,logicalHeight=1300}={}){
+        const failure=unusable();
+        if(failure)return status(failure);
+        if(!maskReady)return status('Upload a mask before rendering');
+        if(!Array.isArray(elements)||elements.length<1||elements.length>8)
+          return status('GPU field stack must contain between 1 and 8 layers');
+        if(!Number.isFinite(logicalWidth)||!Number.isFinite(logicalHeight)||
+           logicalWidth<=0||logicalHeight<=0)
+          return status('Invalid logical dimensions');
+        if(elements.some(e=>!gpuFieldEligibility(e)||!rgbaOf(e)))
+          return status('GPU field stack contains unsupported decoration');
+        try{
+          // Lazily compile the more complex stack program only if used.
+          if(!stackProgram){
+            const candidateShader=shader(gl,gl.FRAGMENT_SHADER,GPU_FIELD_STACK_FRAGMENT);
+            const candidateProgram=gl.createProgram();
+            if(!candidateProgram){
+              gl.deleteShader(candidateShader);
+              throw Error('WebGL2 stack program allocation failed');
+            }
+            try{
+              gl.attachShader(candidateProgram,vertex);
+              gl.attachShader(candidateProgram,candidateShader);
+              gl.linkProgram(candidateProgram);
+              if(!gl.getProgramParameter(candidateProgram,gl.LINK_STATUS))
+                throw Error('WebGL2 stack shader link: '+gl.getProgramInfoLog(candidateProgram));
+            }catch(error){
+              gl.deleteProgram(candidateProgram);
+              gl.deleteShader(candidateShader);
+              throw error;
+            }
+            stackProgram=candidateProgram;
+            stackFragment=candidateShader;
+          }
+          const geometry=new Float32Array(8*4);
+          const inks=new Float32Array(8*4);
+          const styles=new Float32Array(8*2);
+          elements.forEach((e,i)=>{
+            geometry.set([e.frequency,e.amplitude,e.position,e.phase],i*4);
+            inks.set([...rgbaOf(e),e.opacity],i*4);
+            styles.set([e.width,SHAPES[e.shape]],i*2);
+          });
+          gl.useProgram(stackProgram);
+          gl.bindBuffer(gl.ARRAY_BUFFER,buffer);
+          const loc=gl.getAttribLocation(stackProgram,'position');
+          if(loc<0)throw Error('Stack vertex position attribute missing');
+          gl.enableVertexAttribArray(loc);
+          gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
+          gl.activeTexture(gl.TEXTURE0);
+          gl.bindTexture(gl.TEXTURE_2D,texture);
+          gl.uniform1i(gl.getUniformLocation(stackProgram,'ownerMask'),0);
+          gl.uniform2f(gl.getUniformLocation(stackProgram,'viewport'),width,height);
+          gl.uniform2f(gl.getUniformLocation(stackProgram,'logicalSize'),
+            logicalWidth,logicalHeight);
+          gl.uniform1i(gl.getUniformLocation(stackProgram,'fieldCount'),elements.length);
+          gl.uniform4fv(gl.getUniformLocation(stackProgram,'fieldGeometry[0]'),geometry);
+          gl.uniform4fv(gl.getUniformLocation(stackProgram,'fieldInk[0]'),inks);
+          gl.uniform2fv(gl.getUniformLocation(stackProgram,'fieldStyle[0]'),styles);
+          gl.viewport(0,0,width,height);
+          gl.disable(gl.BLEND);gl.disable(gl.SCISSOR_TEST);
+          gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);
+          gl.drawArrays(gl.TRIANGLES,0,6);
+          const error=gl.getError();
+          if(error!==gl.NO_ERROR)throw Error('WebGL2 stack draw: 0x'+error.toString(16));
           draws++;
           return {supported:true,canvas};
         }catch(error){
