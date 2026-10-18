@@ -235,7 +235,7 @@ html[data-theme="cream"] .image-path-dialog #imagePathAngle:not(:disabled){
 /* Avoid a transient camera/tray overlap when sparse-tool mode is selected.
    Both blocks resize atomically rather than animating different distances. */
 @media(max-width:790px){
-  body.mobile-studio.mobile-edit-open.mobile-edit-compact .layout{
+  body.mobile-studio.mobile-edit-open .layout{
     transition:none!important}
   #drawPathPanel input[type=range]{
     accent-color:var(--roygbiv-slider-color,#2778dc)!important}
