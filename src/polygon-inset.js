@@ -69,16 +69,32 @@ export function polygonInsetScale(polygon){
   const edges=edgesOf(rings);
   if(!edges.length)return 0;
   let area=0,perimeter=0;
-  for(const ring of rings){
+  for(let k=0;k<rings.length;k++){
+    const ring=rings[k];
     let sum=0;
     for(let i=0;i<ring.length;i++){
       const a=ring[i],b=ring[(i+1)%ring.length];
       sum+=a.x*b.y-b.x*a.y;
     }
-    area+=Math.abs(sum)/2;
+    // Even-odd rings alternately add islands and subtract holes. Winding
+    // direction must not change the characteristic inset distance.
+    const sample=ring[0];
+    let nesting=0;
+    for(let j=0;j<rings.length;j++)if(j!==k){
+      let within=false;
+      const other=rings[j];
+      for(let i=0,p=other.length-1;i<other.length;p=i++){
+        const a=other[i],b=other[p];
+        if((a.y>sample.y)!==(b.y>sample.y)&&
+          sample.x<(b.x-a.x)*(sample.y-a.y)/(b.y-a.y)+a.x)
+          within=!within;
+      }
+      if(within)nesting++;
+    }
+    area+=(nesting%2?-1:1)*Math.abs(sum)/2;
   }
   for(const edge of edges)perimeter+=edge.length;
-  return clamp(2*area/Math.max(perimeter,1e-9),0,100);
+  return clamp(2*Math.max(0,area)/Math.max(perimeter,1e-9),0,100);
 }
 export function polygonInsetContours(polygon,inset,options={}){
   const rings=ringsOf(polygon);
