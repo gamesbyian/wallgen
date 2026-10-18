@@ -449,13 +449,14 @@ export function randomizeAllRecipe({primesOnly=false}={}) {
   const degrees=()=>primesOnly?any(PRIME_ROTATIONS):Math.floor(r()*360);
   return normalizeRecipe({
     seed, primesOnly, family:any(FAMILIES), orientation:any(['vertical','horizontal','diagonal']),
-    interiorElements:r()<.32?Array.from({length:r()<.32?2:1},(_,i)=>({
-      id:'generated-'+i,type:r()<.24?'band':'line',shape:any(['straight','wave','zigzag','loop']),
+    interiorElements:r()<.32?Array.from({length:r()<.32?2:1},(_,i)=>{
+      const type=r()<.24?'band':'line';
+      return {id:'generated-'+i,type,shape:any(['straight','wave','zigzag','loop']),
       stroke:any(['solid','solid','dashed','dotted']),color:any(['white','black','lighter','darker']),
-      width:Math.max(.5,percent()/12),amplitude:percent()*.0035,
+      width:type==='band'?10+percent()*.35:Math.max(.5,percent()/12),amplitude:percent()*.0035,
       frequency:2+Math.floor(r()*14),phase:Math.floor(r()*361)-180,
       position:(percent()-50)*.007,opacity:.4+r()*.6,
-    })):[],
+    };}):[],
     structure:any(['paths','paths','radial','regions']),
     radialMode:any(RADIAL_MODES),rayCount:7*(1+Math.floor(r()*10)),
     rayRotation:Math.floor(r()*361)-180,rayTwist:Math.floor(r()*361)-180,
