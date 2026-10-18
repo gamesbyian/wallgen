@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {CROSSING_MODES,segmentIntersection,findPathCrossings,crossingTopIsLater,crossingBranchClip} from '../src/crossing-order.js';
 import {normalizeRecipe,resolveScene,encodeRecipe,decodeRecipe} from '../src/model.js';
 import {samplePath} from '../src/path-geometry.js';
+import {stripeFillPath} from '../src/renderer.js';
 
 test('over under weave are distinct, saved and lockable',()=>{
   assert.deepEqual(CROSSING_MODES,['over','under','weave']);
@@ -83,5 +84,27 @@ test('folded crossing masks form same-winding local quads, not a winding-cancell
       return sum+p.x*q.y-p.y*q.x;
     },0);
     assert.ok(area>0,'each quad must contribute positively to the union');
+  }
+});
+
+test('over-rotated inner loops remain a positive union of ribbon cells',()=>{
+  class PolygonPath {
+    constructor(){this.polygons=[];this.current=[];}
+    moveTo(x,y){this.current=[{x,y}];}
+    lineTo(x,y){this.current.push({x,y});}
+    closePath(){this.polygons.push(this.current);}
+  }
+  const scene=resolveScene({seed:'folded-ink',geometry:'loop',
+    loopSweep:445,loopRadius:0,spread:92,geometrySafety:false});
+  const stripe=scene.stripes[0];
+  const path=stripeFillPath(stripe,scene.extent,scene,PolygonPath);
+  assert.ok(path.polygons.length>300);
+  for(const corners of path.polygons){
+    assert.equal(corners.length,4);
+    const area=corners.reduce((sum,p,i)=>{
+      const q=corners[(i+1)%corners.length];
+      return sum+p.x*q.y-p.y*q.x;
+    },0);
+    assert.ok(area>0,'ribbon cells must add, never cancel at a retraced arc');
   }
 });

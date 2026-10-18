@@ -289,8 +289,9 @@ altering the underlying path geometry:
 The crossing solver samples the actual spatial centreline and finds
 transverse segment intersections. Each overpassing portion is repainted
 from its **local traversal segment** rather than the entire self-crossing
-stripe path. Folded loop masks are unions of consistently wound small cells,
-preventing unrelated arms from poking through or cancelling into shards.
+stripe path. Folded loop masks and continuous ribbon fills are unions of consistently
+wound small cells, preventing unrelated arms from poking through or
+cancelling into shards, including in loops that retrace an arc beyond 360°.
 The segment is clipped to the opposite rainbow branch's footprint.
 Motifs, outlines, roughness and material texture continue to use the
 existing production renderer. Parallel passes and tangencies are not

@@ -567,12 +567,13 @@ try{
   })()`);
   assert.deepEqual(constraintsPlacement,{category:'path',tool:'safety',
     sameCard:true,hasStatus:true,hasOldTool:false,choices:['over','under','weave']});
-  // Tight, over-rotated loops previously produced triangular inner-ribbon
-  // shards because crossing repairs replayed the entire self-overlapping
-  // source path. Exercise every depth ordering against that stress case.
+  // Tight-radius transverse crossings previously produced inner-ribbon shards
+  // because crossing repairs replayed the entire self-overlapping source.
+  // Exercise all depth orderings at a REAL 270° crossing. The >360°
+  // coincident retracing case is separately verified by the fill-union test.
   const tightLoopReview=await evaluate(`(async()=>{
     const {drawWallpaper}=await import('/src/renderer.js');
-    const base={seed:'crossing-tight-loop',geometry:'loop',loopSweep:440,
+    const base={seed:'crossing-tight-loop',geometry:'loop',loopSweep:270,
       loopRadius:11,geometrySafety:false,spread:88,stripeWidth:45,
       palette:'electric',material:'none',motif:'solid',orientation:'vertical',
       individuality:0,outline:'white'};
