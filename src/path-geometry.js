@@ -37,12 +37,12 @@ export function modulation(x, geometry, phase, period, d, extent,detail={}){
   return d*(Math.sin(t*TAU*.42)*.35+Math.sin(t*TAU*.79+phase)*.4+Math.sin(t*TAU*1.33)*.25);
 }
 export function pathPosition(stripe,x,extent){
-  // Zoom expands the sampled longitudinal domain, never the underlying
-  // wavelength or hairpin shape. A finite hand-drawn stroke keeps its ends.
+  // Zoom expands the station domain. Finite drawn ends remain unless opted in.
   const coreExtent=stripe.coreExtent??extent;
   const g=stripe.sharedGeometry??stripe.geometry;
   if(g==='drawn'&&stripe.drawnPath)
-    return pointOnDrawnPath(stripe.drawnPath,(x+coreExtent)/(2*coreExtent));
+    return pointOnDrawnPath(stripe.drawnPath,(x+coreExtent)/(2*coreExtent),
+      {extrapolate:stripe.extendDrawnPath===true,coreExtent});
   if(g==='hairpin'){
     const u=(x+coreExtent)/(2*coreExtent);
     const radius=stripe.turnRadius??190;

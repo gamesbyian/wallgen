@@ -1,4 +1,4 @@
-import {finishDrawnPath,DRAW_COORD_MIN,DRAW_COORD_MAX} from './drawn-path.js?v=20261018-intent10';
+import {finishDrawnPath,DRAW_COORD_MIN,DRAW_COORD_MAX,prepareDrawnPath,pointOnDrawnPath} from './drawn-path.js?v=20261018-extend1';
 import {createPointEditor,clonePointEditor,addPointAnchor,deletePointAnchor,
   movePointAnchor,movePointHandle,pointHandles,resmoothPointEdits,
   savedPointAnchors,savedPointCorners} from './path-point-editor.js';
@@ -13,6 +13,7 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
   const smooth=byId('drawSmooth'),geometric=byId('drawGeometric');
   const again=byId('drawAgain'),cancel=byId('drawCancel');
   const power=byId('drawSmoothingStrength'),powerLabel=byId('drawSmoothingValue');
+  const extend=byId('drawExtendPath');
   const editButton=byId('drawEditPoints'),addButton=byId('drawAddPoint');
   const deleteButton=byId('drawDeletePoint'),cornerButton=byId('drawCornerPoint');
   const reSmooth=byId('drawResmoothPoints'),pointUndo=byId('drawUndoPoint');
@@ -20,26 +21,33 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
   const ctx=overlay.getContext('2d');
   let active=false,pointer=null,raw=[],ready=[],importedSource=[],fit='smooth',editing=false;
   let editor=null,pendingPins=[],pendingCorners=[],adding=false,drag=null,history=[];
+  let editingSavedPath=false,showingSavedPath=false;
+  const cameraPan=()=>{
+    const r=getRecipe();
+    return showingSavedPath||editingSavedPath?[r.positionX/100,r.positionY/100]:[0,0];
+  };
 
   // Convert between the design's normalized coordinates and the full stage,
   // whose preview may be zoomed and letterboxed inside the editing overlay.
   function stageMapping(){
     const stage=overlay.getBoundingClientRect(),image=wallpaper.getBoundingClientRect();
     const zoom=Number(document.querySelector('.studio-stage').dataset.viewZoom)||1;
+    const [panX,panY]=cameraPan();
     return {
-      x:x=>(image.left+(.5+(x-.5)*zoom)*image.width-stage.left)*overlay.width/stage.width,
-      y:y=>(image.top+(.5+(y-.5)*zoom)*image.height-stage.top)*overlay.height/stage.height,
+      x:x=>(image.left+(.5+(x-.5)*zoom+panX)*image.width-stage.left)*overlay.width/stage.width,
+      y:y=>(image.top+(.5+(y-.5)*zoom+panY)*image.height-stage.top)*overlay.height/stage.height,
       scale:overlay.width/Math.max(stage.width,1)
     };
   }
   function position(event){
     const rect=wallpaper.getBoundingClientRect();
     const zoom=Number(document.querySelector('.studio-stage').dataset.viewZoom)||1;
+    const [panX,panY]=cameraPan();
     return [
       Math.max(DRAW_COORD_MIN,Math.min(DRAW_COORD_MAX,
-        .5+((event.clientX-rect.left)/rect.width-.5)/zoom)),
+        .5+((event.clientX-rect.left)/rect.width-.5-panX)/zoom)),
       Math.max(DRAW_COORD_MIN,Math.min(DRAW_COORD_MAX,
-        .5+((event.clientY-rect.top)/rect.height-.5)/zoom))
+        .5+((event.clientY-rect.top)/rect.height-.5-panY)/zoom))
     ];
   }
   const project=(m,p)=>[m.x(p[0]),m.y(p[1])];
@@ -50,6 +58,20 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
     if(points.length<2)return;
     const m=stageMapping();
     ctx.lineJoin='round';ctx.lineCap='round';
+    if(extend.checked){
+      const prepared=prepareDrawnPath(points);
+      if(prepared&&!prepared.closed){
+        const norm=p=>[(p.x+300)/600,(p.y+650)/1300];
+        ctx.save();ctx.strokeStyle='#8de8f6';ctx.lineWidth=1.8*m.scale;
+        ctx.setLineDash([8*m.scale,6*m.scale]);
+        for(const [u,tip] of [[-1,prepared.points[0]],[2,prepared.points.at(-1)]]){
+          const outer=pointOnDrawnPath(prepared,u,{extrapolate:true});
+          const a=project(m,norm(tip)),b=project(m,norm(outer));
+          ctx.beginPath();ctx.moveTo(...a);ctx.lineTo(...b);ctx.stroke();
+        }
+        ctx.restore();
+      }
+    }
     for(const [colour,width] of [['#11131b',10],['#fff4a8',5]]){
       ctx.strokeStyle=colour;ctx.lineWidth=width*m.scale;
       ctx.beginPath();
@@ -119,6 +141,7 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
   function reset(){
     pointer=null;drag=null;raw=[];ready=[];importedSource=[];pendingPins=[];pendingCorners=[];
     editor=null;editing=false;adding=false;history=[];
+    editingSavedPath=false;showingSavedPath=false;
     draw([]);syncPointControls();
     hint.textContent='Draw anywhere on the preview, including beyond the frame.';
   }
@@ -135,10 +158,13 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
     if(document.body.classList.contains('mobile-edit-open'))
       byId('mobileDismissHandle').click();
     active=true;reset();setFit('smooth');
+    extend.checked=!!getRecipe().extendDrawnPath;
+    extend.disabled=getRecipe().lockedSettings.includes('extendDrawnPath');
     overlay.hidden=false;panel.hidden=false;
     button.setAttribute('aria-pressed','true');
     document.body.classList.add('path-drawing');
     if(getRecipe().geometry==='drawn'&&getRecipe().customPath.length>1){
+      showingSavedPath=true;
       hint.textContent='Draw a replacement, or tap Edit points to refine this path.';
       draw(getRecipe().customPath);
     }
@@ -148,6 +174,7 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
     if(!editing){
       const existing=ready.length>=2?ready:
         getRecipe().geometry==='drawn'?getRecipe().customPath:[];
+      editingSavedPath=ready.length<2&&getRecipe().geometry==='drawn';
       if(existing.length<2)return;
       const pins=ready.length>=2?pendingPins:getRecipe().drawnAnchors;
       const corners=ready.length>=2?pendingCorners:getRecipe().drawnCorners;
@@ -241,6 +268,7 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
       return;
     }
     pointer=event.pointerId;raw=[];ready=[];importedSource=[];pendingPins=[];pendingCorners=[];apply.disabled=true;
+    showingSavedPath=false;editingSavedPath=false;
     append(event);
     try{overlay.setPointerCapture(pointer);}catch{}
     hint.textContent='Keep drawing. Lift your finger to finish.';
@@ -290,6 +318,12 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
   });
   smooth.addEventListener('click',()=>setFit('smooth'));
   geometric.addEventListener('click',()=>setFit('geometric'));
+  extend.addEventListener('change',()=>draw(editing?editor.points:ready.length?ready:
+    raw.length?raw:showingSavedPath?getRecipe().customPath:[]));
+  document.querySelector('.studio-stage').addEventListener('roygbiv-view-zoom-updated',()=>{
+    if(active)draw(editing?editor.points:ready.length?ready:
+      raw.length?raw:showingSavedPath?getRecipe().customPath:[]);
+  });
   power.addEventListener('input',()=>{
     powerLabel.textContent=Number(power.value).toFixed(1)+'×';
     if(!editing)setFit(fit);
@@ -333,7 +367,7 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
     if(points.length<2)return;
     const pins=editing?savedPointAnchors(editor):pendingPins;
     const corners=editing?savedPointCorners(editor):pendingCorners;
-    onApply(points,pins,corners);
+    onApply(points,pins,corners,extend.checked,editingSavedPath);
     stop();
   });
   document.addEventListener('keydown',event=>{
@@ -363,6 +397,7 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
       start();
       if(!active)return false;
       ready=imported.points.map(p=>p.slice());
+      showingSavedPath=false;editingSavedPath=false;
       importedSource=ready.map(p=>p.slice());
       raw=[];pendingPins=[...(imported.anchors||[])];
       pendingCorners=[...(imported.corners||[])];
@@ -373,6 +408,7 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
     sync(recipe){
       geometryOption.disabled=recipe.customPath.length<2;
       button.disabled=recipe.lockedSettings.includes('geometry');
+      if(active)extend.disabled=recipe.lockedSettings.includes('extendDrawnPath');
       if(active&&button.disabled)stop();
       if(active&&!editing&&raw.length===0&&ready.length===0)
         syncPointControls();

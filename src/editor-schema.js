@@ -18,7 +18,7 @@ export const EDITOR_CATEGORIES=[
     {id:'turn',name:'Turns',settings:['turnRadius','hairpinAngle']},
     {id:'single-loop',name:'Single loop',settings:['loopRadius','loopSweep']},
     {id:'shape-details',name:'Shape detail',settings:['stepCount','chevronSharpness','loopAspect']},
-    {id:'ends',name:'Endpoints',settings:['pathLength','endTaper']},
+    {id:'ends',name:'Endpoints',settings:['pathLength','endTaper','extendDrawnPath']},
   ]},
   {id:'stripes',label:'Shapes',icon:'≋',tools:[
     {id:'structure',name:'Structure',settings:['construction','stripeWidth','spread']},

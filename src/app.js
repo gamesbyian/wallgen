@@ -1,7 +1,7 @@
 import { OUTPUT_WIDTH, OUTPUT_HEIGHT, normalizeRecipe, resolveScene, encodeRecipe, decodeRecipe, newSeed, randomizeAllRecipe, respectSettingLocks, LOCKABLE_SETTINGS } from './model.js';
 import { drawWallpaper, presentNudgedArtwork } from './renderer.js';
 import { embedPngMetadata, extractPngRecipe, cleanMetadata, METADATA_FIELDS } from './png-metadata.js';
-import { installDrawTool } from './draw-path-ui.js?v=20261018-points1';
+import { installDrawTool } from './draw-path-ui.js?v=20261018-extend1';
 import { installImagePathTool } from './image-path-ui.js?v=20261018-import1';
 import {mountEditor,selectEditorTool,syncEditorStructure} from './editor-layout.js';
 import {randomizeScope} from './scoped-random.js';
@@ -15,7 +15,7 @@ const gallery = document.getElementById('gallery');
 const notice = document.getElementById('notice');
 const favoriteButton = document.getElementById('favorite');
 const FAVORITES_KEY = 'wallgen:favorites:v1';
-const FIELDS = ['primesOnly','family','structure','radialMode','rayCount','rayRotation','rayTwist','rayCoverage','rayCore','fieldCenterX','fieldCenterY','regionMode','regionCount','regionJitter','regionSides','dividerColor','dividerWidth','composition','repeatCount','repeatSpacing','orientation','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','geometry','turnRadius','hairpinAngle','loopRadius','loopSweep','geometrySafety','crossingMode','stepCount','chevronSharpness','loopAspect','construction','motif','lineStyle','pathLength','tonalContrast','brushRoughness','dotSize','dotSpacing','endTaper','shapeFrequency','shapeDepth','motifSize','motifFrequency','palette','material','outline','background','lightingMood','lightDirection','lightStrength','shadowStrength','stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection','textureCoverage','textureRotation','textureBlend','textureLayer2Enabled','material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2','textureLayer3Enabled','material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3','chaos','stripeWidth','spread','textureStrength','textureScale','textureDisplacement','individuality','patternHomogeneity','overridePatternHomogeneity','gap','outlineBuffer','glow'];
+const FIELDS = ['primesOnly','family','structure','radialMode','rayCount','rayRotation','rayTwist','rayCoverage','rayCore','fieldCenterX','fieldCenterY','regionMode','regionCount','regionJitter','regionSides','dividerColor','dividerWidth','composition','repeatCount','repeatSpacing','orientation','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','geometry','turnRadius','hairpinAngle','loopRadius','loopSweep','geometrySafety','extendDrawnPath','crossingMode','stepCount','chevronSharpness','loopAspect','construction','motif','lineStyle','pathLength','tonalContrast','brushRoughness','dotSize','dotSpacing','endTaper','shapeFrequency','shapeDepth','motifSize','motifFrequency','palette','material','outline','background','lightingMood','lightDirection','lightStrength','shadowStrength','stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection','textureCoverage','textureRotation','textureBlend','textureLayer2Enabled','material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2','textureLayer3Enabled','material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3','chaos','stripeWidth','spread','textureStrength','textureScale','textureDisplacement','individuality','patternHomogeneity','overridePatternHomogeneity','gap','outlineBuffer','glow'];
 let current = normalizeRecipe();
 let currentScene;
 const previewLayers={background:null,ink:null,scene:null,key:null};
@@ -157,6 +157,8 @@ function inactiveSettingKeys(recipe,scene){
   if(['straight','hairpin','loop','drawn'].includes(scene.geometry))
     inactive.add('shapeFrequency'),inactive.add('shapeDepth');
   if(scene.geometry==='drawn')inactive.add('orientation');
+  else inactive.add('extendDrawnPath');
+  if(recipe.composition==='floating')inactive.add('extendDrawnPath');
   if(scene.geometry!=='hairpin')inactive.add('turnRadius'),inactive.add('hairpinAngle');
   if(scene.geometry!=='loop')inactive.add('loopRadius'),inactive.add('loopSweep');
   if(!['loop','loops','drawn'].includes(scene.geometry))inactive.add('crossingMode');
@@ -344,16 +346,16 @@ document.querySelector('.studio-stage').addEventListener('roygbiv-view-zoom-requ
 const drawTool=installDrawTool({
   getRecipe:()=>current,
   onNotice:showNotice,
-  onApply:(points,anchors=[],corners=[])=>{
+  onApply:(points,anchors=[],corners=[],extended=false,preservePosition=false)=>{
     const next=fromControls();
     next.customPath=points;
     next.drawnAnchors=anchors;
     next.drawnCorners=corners;
+    next.extendDrawnPath=extended;
     next.structure='paths';
     next.geometry='drawn';
     next.orientation='horizontal';
-    next.positionX=0;
-    next.positionY=0;
+    if(!preservePosition){next.positionX=0;next.positionY=0;}
     changeRecipe(next);
     showNotice('Drawn path applied. Undo restores the previous wallpaper.');
   },

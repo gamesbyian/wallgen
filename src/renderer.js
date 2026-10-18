@@ -944,6 +944,15 @@ export function drawWallpaper(canvas, recipe, options={}) {
   // geometry is painted where a 100%-cropped bitmap contained no pixels.
   scene.coreExtent=scene.extent;
   if(camera.zoom<1)scene.extent/=camera.zoom;
+  // The physical reach covers zoom-out corners and the 30% cache overhang.
+  // Floating compositions and closed silhouettes deliberately keep their caps.
+  const extendOpenPath=scene.geometry==='drawn'&&scene.extendDrawnPath&&
+    scene.composition!=='floating'&&!scene.stripes[0]?.drawnPath?.closed;
+  if(extendOpenPath){
+    const diagonal=Math.hypot(DESIGN_WIDTH,DESIGN_HEIGHT);
+    scene.extent=Math.max(scene.extent,scene.coreExtent+
+      (2*diagonal+.3*Math.max(DESIGN_WIDTH,DESIGN_HEIGHT))/camera.zoom);
+  }
   const ctx=canvas.getContext('2d', { alpha: false });
   if(!ctx) throw new Error('Canvas 2D is not supported by this browser.');
   ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,canvas.width,canvas.height);
@@ -978,8 +987,9 @@ export function drawWallpaper(canvas, recipe, options={}) {
     stripe.objectId=bundle.id+'/stripe-'+original.index;
     stripe.coreExtent=scene.coreExtent;
     if((stripe.sharedGeometry??stripe.geometry)==='drawn'){
-      stripe.segmentStart=-scene.coreExtent;
-      stripe.segmentEnd=scene.coreExtent;
+      stripe.extendDrawnPath=extendOpenPath;
+      stripe.segmentStart=extendOpenPath?-scene.extent:-scene.coreExtent;
+      stripe.segmentEnd=extendOpenPath?scene.extent:scene.coreExtent;
     }
     if(['tonal','woven'].includes(scene.construction))stripe.lineStyle='continuous';
     balanceStripeEnds(scene,stripe);

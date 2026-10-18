@@ -105,6 +105,12 @@ body.path-drawing .wallpaper-frame{
 .draw-smoothing-row input{width:100%;min-width:0;accent-color:#ea91cb;touch-action:pan-x}
 .draw-smoothing-row output{text-align:right;font-size:10px;font-variant-numeric:tabular-nums}
 
+.draw-extension-row{display:flex;align-items:center;justify-content:center;gap:6px;
+  font-size:10px;font-weight:650;color:#e6e1eb;cursor:pointer}
+.draw-extension-row input{width:14px;height:14px;margin:0;accent-color:#ea91cb}
+.draw-extension-row:has(input:disabled){opacity:.45;cursor:default}
+@media(max-width:790px){body.mobile-studio .draw-extension-row{font-size:9px}}
+
 /* Labels are ordinary readable words on desktop, with a reliable line break
    in the 43px mobile preview rail rather than clipped text or tiny type. */
 .toolbar-wording>span+span:before{content:" "}
