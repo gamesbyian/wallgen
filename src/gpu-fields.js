@@ -161,6 +161,9 @@ export function createMaskedFieldSession({
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);
     gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,false);
     gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL,gl.NONE);
+    // WebGL2 immutable one-level texture storage avoids repeated allocation
+    // and driver-side mip-map guessing. Only pixels change between masks.
+    gl.texStorage2D(gl.TEXTURE_2D,1,gl.RGBA8,width,height);
     if(gl.getError()!==gl.NO_ERROR)throw Error('WebGL2 session initialization failed');
     return {
       supported:true,canvas,
@@ -175,10 +178,7 @@ export function createMaskedFieldSession({
         try{
           gl.activeTexture(gl.TEXTURE0);
           gl.bindTexture(gl.TEXTURE_2D,texture);
-          if(maskReady)
-            gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,gl.RGBA,gl.UNSIGNED_BYTE,mask);
-          else
-            gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,mask);
+          gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,gl.RGBA,gl.UNSIGNED_BYTE,mask);
           const error=gl.getError();
           if(error!==gl.NO_ERROR)throw Error('Mask upload failed: 0x'+error.toString(16));
           maskReady=true;uploads++;
