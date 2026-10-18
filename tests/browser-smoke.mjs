@@ -173,6 +173,33 @@ try{
   console.log('VISIBLE_DECORATION_RENDER_STRESS',JSON.stringify(renderStress));
   assert.ok(renderStress.every(x=>x.present&&x.duration<12000),
     'dense multi-region decoration should paint within a responsive budget: '+JSON.stringify(renderStress));
+  const pathPlacement=await evaluate(`(async()=>{
+    const {drawWallpaper}=await import('/src/renderer.js');
+    const canvas=document.createElement('canvas');canvas.width=240;canvas.height=520;
+    const recipe={seed:'path-interior-placement',structure:'paths',family:'studio',
+      geometry:'wave',motif:'solid',material:'none',stripeWidth:65,spread:75,
+      interiorElements:[{id:'placement',shape:'wave',type:'line',stroke:'solid',
+        width:2,frequency:6,amplitude:.25,color:'white',opacity:1}]};
+    const render=placement=>{
+      drawWallpaper(canvas,{...recipe,interiorElements:[{
+        ...recipe.interiorElements[0],placement
+      }]});
+      return canvas.getContext('2d').getImageData(0,0,240,520).data.slice();
+    };
+    const local=render('local'),edge=render('contour'),field=render('field');
+    const different=(a,b)=>{
+      let changed=0;
+      for(let i=0;i<a.length;i+=4)
+        if(Math.abs(a[i]-b[i])+Math.abs(a[i+1]-b[i+1])+
+          Math.abs(a[i+2]-b[i+2])>30)changed++;
+      return changed;
+    };
+    return {edge:different(local,edge),field:different(local,field),
+      edgeVsField:different(edge,field)};
+  })()`);
+  assert.ok(Object.values(pathPlacement).every(count=>count>35),
+    'path placement choices must produce meaningfully distinct artwork: '+
+    JSON.stringify(pathPlacement));
   const initial=await evaluate('({tabs:document.querySelectorAll(".settings-tab").length,tools:document.querySelectorAll(".editor-tool-card").length,preview:document.querySelector(".wallpaper-frame").getBoundingClientRect().height,scroll:document.documentElement.scrollHeight})');
   assert.equal(initial.tabs,7);
   assert.ok(initial.tools>=18);
