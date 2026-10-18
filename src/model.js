@@ -480,7 +480,7 @@ export function randomizeAllRecipe({primesOnly=false}={}) {
     stripeShadowStrength:percent(),stripeShadowSoftness:percent(),
     chaos:percent(), stripeWidth:percent(), spread:percent(),
     shapeFrequency:percent(),shapeDepth:percent(),motifSize:percent(),motifFrequency:percent(),lineStyle:any(LINE_STYLES),
-    composition:any(COMPOSITIONS),construction:any(CONSTRUCTIONS),crossingMode:any(CROSSING_MODES),
+    composition:any(COMPOSITIONS),construction:any(CONSTRUCTIONS.filter(x=>x!=='tonal')),crossingMode:any(CROSSING_MODES),
     repeatCount:2+Math.floor(r()*5),repeatSpacing:percent(),
     turnRadius:percent(),loopRadius:percent(),loopSweep:240+Math.floor(r()*211),stepCount:1+Math.floor(r()*16),chevronSharpness:percent(),loopAspect:percent(),pathLength:percent(),endTaper:percent(),
     tonalContrast:percent(),brushRoughness:percent(),dotSize:percent(),dotSpacing:percent(),
