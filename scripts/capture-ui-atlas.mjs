@@ -62,6 +62,7 @@ async function capture(page,context,slug,meta={}){
     .slice(0,12).map(x=>x.id||x.getAttribute('aria-label')||x.dataset.editorTool||x.tagName));
   await page.screenshot({path:join(out,filename),animations:'disabled',fullPage:false});
   cases.push({id:key,file:filename,zoomPercent:context.zoom,profile:context.surface.id,visible, ...meta});
+  if(cases.length%50===0)console.log('Atlas progress:',cases.length,'screenshots,',errors.length,'traversal errors, last:',key);
 }
 async function openEditor(page,surface){
   if(surface.mobile)await clickIfVisible(page,'#mobileEdit');
@@ -102,6 +103,19 @@ async function exercise(page,ctx){
           }
           await navigate(page,category.id,tool.id);
           await capture(page,ctx,'tool-'+structure+'-'+category.id+'-'+tool.id,{kind:'tool',structure,category:category.id,tool:tool.id,settings:tool.settings});
+          // Reveal controls below a scrollable card's fold.
+          const last=page.locator('.editor-tool-card[data-editor-tool="'+tool.id+'"] input:not([type=hidden]),.editor-tool-card[data-editor-tool="'+tool.id+'"] select,.editor-tool-card[data-editor-tool="'+tool.id+'"] button').last();
+          if(await last.count()){
+            const shifted=await last.evaluate(el=>{
+              const ancestors=[document.scrollingElement];
+              for(let p=el.parentElement;p;p=p.parentElement)
+                if(p.scrollHeight>p.clientHeight+2)ancestors.push(p);
+              const positions=ancestors.map(a=>a.scrollTop);
+              el.scrollIntoView({block:'nearest',inline:'nearest',behavior:'instant'});
+              return ancestors.some((a,i)=>Math.abs(a.scrollTop-positions[i])>15);
+            });
+            if(shifted)await capture(page,ctx,'tool-'+structure+'-'+category.id+'-'+tool.id+'-scrolled',{kind:'tool-tail',structure,category:category.id,tool:tool.id});
+          }
           // Disabled, active, locked and expanded control states are distinct UI.
           const card=page.locator('.editor-tool-card[data-editor-tool="'+tool.id+'"]');
           const field=card.locator('select:not(:disabled),input[type=checkbox]:not(:disabled)').first();
@@ -133,14 +147,19 @@ async function exercise(page,ctx){
     ['radial-concentric',{structure:'radial',radialMode:'concentric'}],
     ['regions-nested',{structure:'regions',regionMode:'nested'}],
     ['motif-dots',{structure:'paths',construction:'ribbon',motif:'dots'}],
+    ['construction-woven',{structure:'paths',construction:'woven'}],
+    ['construction-stroke',{structure:'paths',construction:'stroke'}],
+    ['construction-tonal',{structure:'paths',construction:'tonal'}],
+    ['radial-spokes',{structure:'radial',radialMode:'spokes'}],
+    ['regions-organic',{structure:'regions',regionMode:'organic'}],
     ['material-layers',{structure:'paths',material:'grain',textureLayer2Enabled:true,material2:'linen',textureLayer3Enabled:true,material3:'grain'}],
-    ['lighting',{lightingMood:'studio',lightStrength:50,shadowStrength:30}],
+    ['lighting',{lightingMood:'daylight',lightStrength:50,shadowStrength:30}],
     ['shadows',{stripeShadowStrength:55}],
     ['outline',{structure:'paths',outline:'white'}]
   ];
   for(const [name,values] of variants){
     try{
-      for(const [key,value] of Object.entries(values))await change(page,key,value);
+      for(const [key,value] of Object.entries({structure:'paths',composition:'single',orientation:'vertical',geometry:'straight',construction:'ribbon',...values}))await change(page,key,value);
       const categoryTool=name==='repeat'||name==='floating'?['layout','arrange']:
         name==='diagonal'?['layout','direction']:
         name==='material-layers'?['material','layer3']:
@@ -150,6 +169,7 @@ async function exercise(page,ctx){
         name.startsWith('radial')?['path','ray-shape']:
         name.startsWith('regions')?['path','region-detail']:
         name==='motif-dots'?['stripes','marks']:
+        name.startsWith('construction')?['stripes','structure']:
         ['path',name==='hairpin'?'turn':name==='loop'?'single-loop':name==='loops'?'safety':'shape-details'];
       await navigate(page,...categoryTool);
       await capture(page,ctx,'conditional-'+name,{kind:'conditional',values});
@@ -209,9 +229,24 @@ try{
   }
 }finally{await browser.close();}
 await mkdir(out,{recursive:true});
-await writeFile(join(out,'manifest.json'),JSON.stringify({created:new Date().toISOString(),baseURL,zoomMethod:'CSS root zoom; viewport held fixed',cases,inapplicable,errors},null,2));
+const missingExpected=[];
+for(const surface of surfaces)for(const zoom of zooms){
+  const subset=cases.filter(x=>x.profile===surface.id && x.zoomPercent===zoom);
+  const required=[
+    ...EDITOR_CATEGORIES.flatMap(c=>c.tools.map(t=>({kind:'tool',tool:t.id}))),
+    ...['repeat','floating','diagonal','hairpin','loop','loops','stepped','chevron','radial-pinwheel','radial-concentric','radial-spokes','regions-nested','regions-organic','motif-dots','construction-woven','construction-stroke','construction-tonal','material-layers','lighting','shadows','outline'].map(name=>({id:'conditional-'+name})),
+    ...['dark-theme','vary-wild','search-expanded-empty','setting-locked','interior-empty','interior-one-element','interior-band-style','interior-contour-placement','interior-custom-colour-enabled','interior-two-elements','interior-stack-locked','gallery-empty-favourites','gallery-with-favourite','metadata-expanded','draw-empty-panel','draw-ready-path','draw-edit-point-anchors','image-import-candidate-or-error'].map(name=>({id:'special-'+name})),
+    ...(surface.mobile?[{id:'special-mobile-edit-rail'}]:[])
+  ];
+  for(const expectation of required){
+    if(!subset.some(x=>Object.entries(expectation).every(([k,v])=>k==='id'?x.id.endsWith('/'+v):x[k]===v)))
+      missingExpected.push({profile:surface.id,zoom,missing:expectation});
+  }
+}
+await writeFile(join(out,'manifest.json'),JSON.stringify({created:new Date().toISOString(),baseURL,zoomMethod:'CSS root zoom; viewport held fixed',cases,inapplicable,errors,missingExpected},null,2));
 const byKind=Object.groupBy?Object.groupBy(cases,x=>x.kind):{};
-const report=['# ROYGBIV UI screenshot atlas','','Profiles: desktop 1440×900, mobile 412×892. Zoom: 100%, 75%, 66%, 50%.','','Screenshots: '+cases.length,'Recorded traversal failures: '+errors.length,'Correctly inapplicable tools: '+inapplicable.length,'','The manifest lists every attempted screenshot, active overlays and navigation context. Static wallpaper artwork is deliberately unchanged across cases.','','## Coverage by kind',...Object.entries(byKind).map(([k,v])=>'- '+k+': '+v.length),'','## Missing/unreachable states',...errors.map(x=>'- '+JSON.stringify(x)),''];
+const report=['# ROYGBIV UI screenshot atlas','','Profiles: desktop 1440×900, mobile 412×892. Zoom: 100%, 75%, 66%, 50%.','','Screenshots: '+cases.length,'Recorded traversal failures: '+errors.length,'Correctly inapplicable tools: '+inapplicable.length,'Missing required UI states: '+missingExpected.length,'','The manifest lists every attempted screenshot, active overlays and navigation context. Static wallpaper artwork is deliberately unchanged across cases.','','## Coverage by kind',...Object.entries(byKind).map(([k,v])=>'- '+k+': '+v.length),'','## Missing/unreachable states',...errors.map(x=>'- '+JSON.stringify(x)),''];
 await writeFile(join(out,'README.md'),report.join('\n'));
-console.log('UI atlas:',cases.length,'captures,',errors.length,'failures. Output:',out);
-if(errors.length)process.exitCode=1;
+await writeAtlasReport(out,{cases,errors,inapplicable,missingExpected});
+console.log('UI atlas:',cases.length,'captures,',errors.length,'traversal failures,',missingExpected.length,'missing expected states. Output:',out);
+if(errors.length||missingExpected.length)process.exitCode=1;
