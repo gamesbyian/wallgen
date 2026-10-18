@@ -8,7 +8,7 @@
 
 The full ZIP contains 1,652 captures: **208 mobile captures each at 100%, 75%, 66% and 50% CSS-root zoom** (832 mobile in total) and 205 desktop captures per zoom. I visually inspected representative images and side-by-side zoom states throughout the mobile inventory, checked targeted panel states, and matched findings with `index.html`, `editor-redesign.css`, `detail-controls.css`, `mobile-editor-rail.css`, `studio-themes.css`, `mobile-compact.css`, `draw-path.css`, `src/editor-layout.js`, `src/exploration-history.js`, and `src/app.js`. Their content on main matched the captured snapshot at audit time.
 
-**Important:** CSS root zoom is not native Chrome browser zoom on a Pixel 6 Pro. The atlas masks wallpaper pixels on purpose. These captures reveal UI geometry and visual consistency, not real-device performance. The full run recorded **zero missing *named* expected states, but four mobile navigation errors** attributable to the same redundant editor-search click at each zoom. “Screenshot exists” does not prove that a claimed surface is actually visible: see the atlas-fidelity appendix below.
+**Important:** The owner explicitly likes blue slider bars and requests random, nonrepeating ROYGBIV slider colours per panel; see M02. CSS root zoom is not native Chrome browser zoom on a Pixel 6 Pro. The atlas masks wallpaper pixels on purpose. These captures reveal UI geometry and visual consistency, not real-device performance. The full run recorded **zero missing *named* expected states, but four mobile navigation errors** attributable to the same redundant editor-search click at each zoom. “Screenshot exists” does not prove that a claimed surface is actually visible: see the atlas-fidelity appendix below.
 
 References such as `pixel-6-pro/100/conditional-diagonal.png` are paths within the ZIP. They should become named visual regression cases during implementation.
 
@@ -17,7 +17,7 @@ References such as `pixel-6-pro/100/conditional-diagonal.png` are paths within t
 | ID | Priority | Problem | Remediation |
 |---|---|---|---|
 | M01 | P1 | Checkbox separated from its textual label | Shared compact checkbox row |
-| M02 | P1 | Interior controls use inconsistent native visual styling | Shared field/slider/selector components |
+| M02 | P1 | Interior controls inconsistent; rainbow slider opportunity | Shared fields and unique ROYGBIV slider colours per panel |
 | M03 | P1 | Seven colour-target checkboxes too small | Accessible whole-cell colour toggles |
 | M04 | P1 | Search results select a panel without exposing its active chip | Source-aware chip scrolling |
 | M05 | P1 | Tool chips clipped at edges without scroll indication | Edge affordances and safe scroll padding |
@@ -42,15 +42,15 @@ References such as `pixel-6-pro/100/conditional-diagonal.png` are paths within t
 
 **Acceptance:** The checkbox sits immediately next to the associated text, including at 50% zoom; the entire label toggles it; die and lock never overlap. Keyboard and pointer behavior are unchanged.
 
-### M02. Native appearance leaks into interior-element subpanels, P1
+### M02. Rainbow slider-bar system with consistent component ergonomics, P1
 
-**Evidence:** `pixel-6-pro/100/special-interior-interior-style-populated.png`, `...-interior-motion-populated.png`, `...-interior-placement-populated.png`, and `special-interior-band-style.png`. Black square native selects and bright blue sliders do not match the cream, rounded, compact scalar editor.
+**Evidence:** `pixel-6-pro/100/special-interior-interior-style-populated.png`, `...-interior-motion-populated.png`, `...-interior-placement-populated.png`, and `special-interior-band-style.png`. Select styling and layout are inconsistent with other control panels. **The blue slider bars themselves are a feature, not a defect.**
 
-**Root cause:** `syncInteriorUI()` in `src/app.js` creates bare selects, ranges, colour inputs and labels. `detail-controls.css` governs layout but not visual state; it bypasses the ordinary editor field/stepper conventions.
+**User-approved design direction (2026-10-18):** Slider bars should receive **random ROYGBIV colours**, with **no repeated colour within an individual control panel**. Blue must remain an eligible colour and its playful presence should be preserved. Do **not** replace sliders with monochrome, cream or uniformly purple tracks.
 
-**Implement:** Extract a lightweight accessible UI control factory for dynamic recipe collections: select; labelled range with numeric readout, +/- steppers and disabled state; colour swatch; checkbox. Use the existing recipe update callbacks and preserve undo/locks/element identity. Apply common theme tokens, radius, borders, focus rings, height, slider track/thumb, and selected/disabled appearance. Separate readouts from bare labels such as “Amplitude 0.12”.
+**Implement:** Extract accessible shared control primitives for dynamic interior collections, including styled selects, labelled sliders with optional numeric readout/steppers, colour swatches and grouped checkboxes. For the sliders, add a dedicated panel-scoped colour allocator rather than hard-coding a global `accent-color`. Each control panel gets a shuffled *permutation* of red, orange, yellow, green, blue, indigo and violet; its concurrently visible sliders receive unique assignments. Seed the permutation from a stable panel identifier plus a generation/session key, so colours are randomized per logical panel/generation but **do not jump around during edits, undo, rerenders or reordering**. Blue is one of the seven colours, not an error. If a panel contains more than seven simultaneous slider bars, create meaningful subpanels or expand the pool to distinct ROYGBIV-derived hues rather than duplicate a colour inside the same panel. Support WebKit and Firefox tracks/thumbs and accessible colour-independent value indication. Preserve existing callbacks, undo, locks and element identity.
 
-**Acceptance:** Element Style, Motion, Placement, Targets, stack selector and reordering all look native *to ROYGBIV*, in light and dark. No default-blue tracks, text clipped inside controls, or state changes lost when choosing/reordering elements.
+**Acceptance:** Every visible slider bar is recognizably rainbow-themed, no panel repeats a slider colour, existing blue appearance remains part of the repertoire, values still have readable numeric/text indicators, and changing panel selection does not randomly recolour it mid-interaction. Dropdown geometry and disabled/focus states match the surrounding studio on both themes.
 
 ### M03. R/O/Y/G/B/I/V selection boxes too small, P1
 
@@ -190,7 +190,7 @@ These are test **limitations**, not conclusions that the app's gallery or metada
 
 ## Recommended execution order
 
-**Pass 1, accessibility and architecture:** M01, M02, M03, M09 with shared control primitives and theme tokens. Lock down active/disabled/selection behavior and compare both themes.
+**Pass 1, accessibility and architecture:** M01, M02, M03, M09 with shared control primitives, panel-unique randomized ROYGBIV slider colours (including blue), and theme tokens. Lock down active/disabled/selection behavior and compare both themes.
 
 **Pass 2, navigation and utility surfaces:** M04, M05, M06, M07, M08. Respect the existing requirement that manual horizontal chip scrolling must remain at its chosen offset. Fix A01/A02 in the capture runner simultaneously.
 
