@@ -40,26 +40,31 @@ input[type=number],.slider-number,output,.mobile-zoom-level,.rotation-controls{
 .brand-initial .brand-separator{font-family:var(--font-display);font-weight:600;
  font-size:.70em;line-height:1;transform:translateY(-.035em);margin-inline-start:.035em}
 /* Individually tuned advance after each letter and punctuation. */
-.brand-initial-1{margin-right:.005em}.brand-initial-1 .brand-separator{margin-inline-start:.205em}
+.brand-initial-1{margin-right:.005em}.brand-initial-1 .brand-separator{margin-inline-start:.1845em}
 .brand-initial-2{margin-right:.01em}.brand-initial-2 .brand-separator{margin-inline-start:.035em}
 .brand-initial-3{margin-right:.015em}.brand-initial-3 .brand-separator{margin-inline-start:.01em}
-.brand-initial-4{margin-right:.005em}.brand-initial-4 .brand-separator{margin-inline-start:.2025em}
-.brand-initial-5{margin-left:.18em;margin-right:0}.brand-initial-5 .brand-separator{margin-inline-start:.2075em}
-.brand-initial-6{margin-left:.18em;margin-right:.015em}.brand-initial-6 .brand-separator{margin-inline-start:.2075em}
-.brand-initial-7 .brand-separator{margin-inline-start:-.1375em}
+.brand-initial-4{margin-right:.005em}.brand-initial-4 .brand-separator{margin-inline-start:.1782em}
+.brand-initial-5{margin-left:.1584em;margin-right:0}.brand-initial-5 .brand-separator{margin-inline-start:.18675em}
+.brand-initial-6{margin-left:.162em;margin-right:.0135em}.brand-initial-6 .brand-separator{margin-inline-start:.18675em}
+.brand-initial-7 .brand-separator{margin-inline-start:-.15125em}
 
 /* Explicit mobile/desktop optical spacing; each pair remains independently
    adjustable. The URL version is bumped whenever this stylesheet changes. */
-.brand .brand-title .brand-initial-1 .brand-separator{margin-inline-start:.205em}
-.brand .brand-title .brand-initial-4 .brand-separator{margin-inline-start:.2025em}
-.brand .brand-title .brand-initial-5{margin-left:.18em}
-.brand .brand-title .brand-initial-5 .brand-separator{margin-inline-start:.2075em}
-.brand .brand-title .brand-initial-6{margin-left:.18em}
-.brand .brand-title .brand-initial-6 .brand-separator{margin-inline-start:.2075em}
-.brand .brand-title .brand-initial-7 .brand-separator{margin-inline-start:-.1375em}
+.brand .brand-title .brand-initial-1 .brand-separator{margin-inline-start:.1845em}
+.brand .brand-title .brand-initial-4 .brand-separator{margin-inline-start:.1782em}
+.brand .brand-title .brand-initial-5{margin-left:.1584em}
+.brand .brand-title .brand-initial-5 .brand-separator{margin-inline-start:.18675em}
+.brand .brand-title .brand-initial-6{margin-left:.162em}
+.brand .brand-title .brand-initial-6 .brand-separator{margin-inline-start:.18675em}
+.brand .brand-title .brand-initial-7 .brand-separator{margin-inline-start:-.15125em}
 /* The wallpaper-side Random button, compact dock Random, and editor-side
    Random shortcut are ALL flat fills. Override their older gradient rules. */
 #randomizeAll.button-rainbow{background:#f5bc65!important;background-image:none!important;color:#29243b}
 body.mobile-studio #mobileShuffle.mobile-dock-featured,
 html[data-theme=cream] body.mobile-studio #mobileShuffle.mobile-dock-featured{background:#f5bc65!important;background-image:none!important;color:#29243b}
 body.mobile-studio .mobile-editor-action-rail button[data-dock-proxy=mobileShuffle]{background:#f5bc65!important;background-image:none!important;color:#29243b}
+
+/* Optical adjustment around Y, without altering O/Y/G glyph advances:
+   punctuation moves visually inside its allocated slot only. */
+.brand .brand-title .brand-initial-2 .brand-separator{position:relative;left:.012em}
+.brand .brand-title .brand-initial-3 .brand-separator{position:relative;left:-.012em}
