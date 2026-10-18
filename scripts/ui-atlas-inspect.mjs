@@ -17,14 +17,20 @@ export async function inspectAtlasState(page,ctx,slug,meta={}){
       const b=el.getBoundingClientRect();
       let left=Math.max(0,b.left),right=Math.min(innerWidth,b.right);
       let top=Math.max(0,b.top),bottom=Math.min(innerHeight,b.bottom);
-      for(let a=el.parentElement;a;a=a.parentElement){
-        const s=getComputedStyle(a);
-        if(/hidden|auto|scroll|clip/.test(s.overflowX+s.overflowY)){
-          const r=a.getBoundingClientRect();
-          left=Math.max(left,r.left);right=Math.min(right,r.right);
-          top=Math.max(top,r.top);bottom=Math.min(bottom,r.bottom);
+      // Fixed mobile trays escape their ordinary ancestors' overflow clips.
+      // CSS position:fixed is viewport-rooted unless a containing-block
+      // transform intervenes; no such transform is used by these tray shells.
+      // Still honour the fixed tray's *own* overflow clip for child fields.
+      if(getComputedStyle(el).position!=='fixed')
+        for(let a=el.parentElement;a;a=a.parentElement){
+          const s=getComputedStyle(a);
+          if(/hidden|auto|scroll|clip/.test(s.overflowX+s.overflowY)){
+            const r=a.getBoundingClientRect();
+            left=Math.max(left,r.left);right=Math.min(right,r.right);
+            top=Math.max(top,r.top);bottom=Math.min(bottom,r.bottom);
+          }
+          if(s.position==='fixed')break;
         }
-      }
       return right-left>Math.min(8,b.width*.2)&&bottom-top>Math.min(8,b.height*.2);
     };
     const check=(ok,why)=>{if(!ok)throw Error('Invalid atlas state '+slug+': '+why)};
