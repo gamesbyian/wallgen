@@ -105,3 +105,56 @@
     font-size:13px;
   }
 }
+
+/* Canonical editor toggles, colour target chips, and interior form states. */
+/* Checkboxes must stay with their own labels, not in an orphaned grid cell. */
+.editor-tool-card .mirror-field,.editor-tool-card .lockable-setting>.mirror-field{
+  display:flex!important;flex-flow:row nowrap!important;align-items:center!important;
+  justify-content:flex-start!important;gap:7px!important;min-width:0}
+.editor-tool-card .mirror-field input[type="checkbox"]{flex:0 0 18px;min-width:18px;
+  width:18px;height:18px;margin:0}
+.editor-tool-card[data-editor-tool^="interior"]>label.interior-toggle,
+body.mobile-studio .sidebar .editor-tool-card[data-editor-tool^="interior"]>label.interior-toggle{
+  display:flex!important;flex-direction:row!important;align-items:center!important;
+  gap:9px!important;justify-content:flex-start!important;min-height:31px!important}
+.editor-tool-card[data-editor-tool^="interior"]>label.interior-toggle>input[type="checkbox"]{
+  margin:0!important;width:19px!important;min-width:19px!important;height:19px!important}
+.editor-tool-card[data-editor-tool^="interior"]>label.interior-toggle>span{flex:1}
+/* Seven colour targets, each entirely clickable. Checked state uses a border
+   and checkmark, not colour alone. */
+.editor-tool-card[data-editor-tool="interior-targets"] .interior-targets{gap:5px!important}
+.editor-tool-card[data-editor-tool="interior-targets"] .interior-targets .interior-colour-chip{
+  position:relative;display:flex!important;min-height:38px!important;
+  border:1px solid var(--line);border-radius:8px;background:var(--surface);
+  cursor:pointer;padding:2px!important;justify-content:center;align-items:center}
+.editor-tool-card .interior-colour-chip input{position:absolute;inset:0;width:100%;
+  height:100%;margin:0;opacity:0;cursor:pointer}
+.editor-tool-card .interior-colour-chip span{pointer-events:none;font-weight:750}
+.editor-tool-card .interior-colour-chip:has(input:checked){border:2px solid #bd4788;
+  background:rgba(206,75,140,.14)}
+.editor-tool-card .interior-colour-chip input:focus-visible+span{outline:2px solid #247bd9;outline-offset:3px}
+.editor-tool-card .interior-colour-chip:has(input:checked) span::after{
+  content:"✓";display:block;font-size:9px;line-height:1}
+/* Native colour pickers need an outline even when choosing white. */
+.editor-tool-card[data-editor-tool="interior-targets"]>label.interior-colour-picker{
+  grid-template-columns:minmax(78px,35%) minmax(0,1fr) auto!important;gap:6px!important}
+.editor-tool-card[data-editor-tool="interior-targets"] .interior-colour-picker input[type=color]{
+  grid-column:2;min-width:0!important;max-width:100%!important;padding:2px!important;
+  border:1px solid #89828a;border-radius:7px;box-shadow:inset 0 0 0 1px #fff}
+.editor-tool-card .colour-hex-value{grid-column:3;font-size:10px;font-variant-numeric:tabular-nums;
+  min-width:54px;color:inherit;text-align:right}
+.editor-tool-card[data-editor-tool^="interior"] select{
+  background:var(--surface);color:inherit;border:1px solid var(--line);
+  border-radius:7px;padding:3px 6px}
+.editor-tool-card[data-editor-tool^="interior"] :is(select,input):disabled{
+  opacity:.72!important;cursor:not-allowed}
+.editor-tool-card .editor-setting-die:disabled,
+.editor-tool-card .setting-lock:disabled{opacity:.62!important}
+.editor-tool-card :is(input,select,button):disabled{color:var(--muted)}
+
+.editor-tool-card .reverse-stripe-field{
+  display:flex!important;flex-direction:row!important;justify-content:flex-start!important;
+  align-items:center!important;gap:8px!important}
+.editor-tool-card .reverse-stripe-field>input[type="checkbox"]{
+  width:18px;min-width:18px;height:18px;margin:0}
+
