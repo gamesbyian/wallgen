@@ -57,8 +57,9 @@ export function elementWave(e,t){
   return 0;
 }
 export function lineDash(ctx,e){
-  ctx.setLineDash(e.stroke==='dashed'?[e.width*5,e.width*3]:
-    e.stroke==='dotted'?[.01,e.width*3]:[]);
+  const width=Math.max(.15,ctx.lineWidth||e.width);
+  ctx.setLineDash(e.stroke==='dashed'?[width*4,width*2.5]:
+    e.stroke==='dotted'?[.01,width*2.7]:[]);
   ctx.lineCap=e.stroke==='dotted'?'round':'round';
 }
 // For arbitrary closed regions, field strokes are painted in canvas space.
