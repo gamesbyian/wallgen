@@ -32,6 +32,9 @@ export const EDITOR_CATEGORIES=[
     {id:'shadows',name:'Shadows',settings:['stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection']},
     {id:'glow',name:'Glow',settings:['glow']},
   ]},
+  {id:'details',label:'Details',icon:'✧',tools:[
+    {id:'interior',name:'Interior elements',settings:[]},
+  ]},
   {id:'colour',label:'Colour',icon:'◐',tools:[
     {id:'rainbow',name:'Rainbow',settings:['palette','reverseStripes']},
     {id:'canvas',name:'Background',settings:['background']},
@@ -53,7 +56,7 @@ export const TOOL_LIST=EDITOR_CATEGORIES.flatMap(category=>
   category.tools.map(tool=>({...tool,category:category.id,categoryLabel:category.label})));
 export const SETTING_TOOL=Object.fromEntries(TOOL_LIST.flatMap(t=>
   t.settings.map(setting=>[setting,{category:t.category,tool:t.id}])));
-export const WIZARD_STEPS=['layout','path','stripes','colour','material','effects'];
+export const WIZARD_STEPS=['layout','path','stripes','details','colour','material','effects'];
 export const STYLE_PRESETS={
   studio:{geometry:'straight',motif:'solid',palette:'classic',outline:'white',material:'none',stripeWidth:72},
   currents:{geometry:'wave',motif:'solid',palette:'electric',outline:'hairline',material:'none',stripeWidth:31},
