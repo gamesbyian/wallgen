@@ -260,7 +260,7 @@
         <canvas id="drawOverlay" width="600" height="1300" hidden aria-label="Draw one continuous path anywhere on the preview stage"></canvas>
         <div class="draw-path-panel" id="drawPathPanel" role="group" aria-label="Custom path drawing controls" hidden>
           <span id="drawPathHint" aria-live="polite">Draw one continuous path across the canvas.</span>
-          <label class="draw-smoothing-row" for="drawSmoothingStrength"><span>Smoothing</span><input type="range" id="drawSmoothingStrength" min="1" max="5" step="0.5" value="1"><output id="drawSmoothingValue" for="drawSmoothingStrength">1.0×</output></label>
+          <label class="draw-smoothing-row" for="drawSmoothingStrength"><span>Smoothing</span><input type="range" id="drawSmoothingStrength" min="1" max="10" step="0.5" value="1"><output id="drawSmoothingValue" for="drawSmoothingStrength">1.0×</output></label>
           <div class="draw-path-controls">
             <button type="button" id="drawSmooth" class="draw-fit-selected" aria-pressed="true">Smooth</button>
             <button type="button" id="drawGeometric" aria-pressed="false">Geometric</button>
