@@ -69,10 +69,6 @@ export function drawRegionInteriors(ctx,object,elements,structure,renderBounds){
   const xs=object.vertices.map(p=>p.x),ys=object.vertices.map(p=>p.y);
   const x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys);
   const cx=(x0+x1)/2,cy=(y0+y1)/2;
-  // Radial wedges intentionally extend thousands of logical pixels beyond
-  // the frame. Bound procedural work to the visible design plus overhang.
-  const left=Math.max(x0,-1500),right=Math.min(x1,2100);
-  const top=Math.max(y0,-2200),bottom=Math.min(y1,3500);
   ctx.save();ctx.beginPath();ctx.moveTo(object.vertices[0].x,object.vertices[0].y);
   for(const p of object.vertices.slice(1))ctx.lineTo(p.x,p.y);
   ctx.closePath();ctx.clip();
@@ -117,6 +113,26 @@ export function drawRegionInteriors(ctx,object,elements,structure,renderBounds){
       // cells; each cell merely reveals its portion of the same continuous ink.
       const ang=structure==='radial'&&e.placement==='local'?
         Math.atan2(cy-(object.origin?.y??650),cx-(object.origin?.x??300)):0;
+      // Work in the inverse-rotated *visible camera*, not the enormous
+      // region bounding box. A radial wedge can extend 4,200 units beyond
+      // the frame, and the old field loop sampled that entire offscreen area
+      // once for EVERY region and EVERY element on every setting change.
+      const camera=renderBounds||{left:0,top:0,right:600,bottom:1300};
+      const bleed=100+e.width*.5+e.amplitude*80;
+      const corners=[
+        [camera.left,camera.top],[camera.left,camera.bottom],
+        [camera.right,camera.top],[camera.right,camera.bottom]
+      ];
+      const cos=Math.cos(ang),sin=Math.sin(ang);
+      const inverse=corners.map(([x,y])=>({
+        x:cx+(x-cx)*cos+(y-cy)*sin,
+        y:cy-(x-cx)*sin+(y-cy)*cos
+      }));
+      const left=Math.max(x0-bleed,Math.min(...inverse.map(p=>p.x))-bleed);
+      const right=Math.min(x1+bleed,Math.max(...inverse.map(p=>p.x))+bleed);
+      const top=Math.max(y0-bleed,Math.min(...inverse.map(p=>p.y))-bleed);
+      const bottom=Math.min(y1+bleed,Math.max(...inverse.map(p=>p.y))+bleed);
+      if(right<=left||bottom<=top){ctx.restore();continue;}
       ctx.translate(cx,cy);ctx.rotate(ang);ctx.translate(-cx,-cy);
       const period=Math.max(12,160/Math.max(.2,e.frequency));
       const waveElement={...e,frequency:1};
