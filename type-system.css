@@ -21,3 +21,29 @@ input[type=number],.slider-number,output,.mobile-zoom-level,.rotation-controls{
 }
 /* Titles may contain acronym glyphs; CSS uppercase affects presentation only,
    retaining DOM text, accessible names and previous action semantics. */
+
+/* Expanded Fredoka voice: named tool/category tabs, gallery, panel labels,
+   call-to-action buttons. These retain inherited font sizes and native layout. */
+.settings-tabs .settings-tab,.editor-tool-chooser .editor-tool-tab,
+.gallery-head .eyebrow,.details-label,.mobile-sheet-head strong,
+.editor-style>strong,.editor-tool-card>.editor-tool-header,
+#batch,#showFavorites,#download,.mobile-dock button>small,
+.mobile-editor-action-rail [data-dock-proxy=mobileShuffle] small{
+  font-family:var(--font-display);font-weight:600;text-transform:uppercase;
+}
+/* Kerning: separate ink glyphs and punctuation into individually controlled
+   fixed optical groups, no trailing text-node dots or collapsed spacing. */
+.brand .brand-title{display:flex!important;align-items:baseline;gap:0!important;
+ letter-spacing:0!important;white-space:nowrap}
+.brand-initial{display:inline-flex;align-items:baseline;gap:0;flex:0 0 auto;white-space:nowrap}
+.brand-initial .title-letter,.brand-initial .brand-separator{display:inline-block;flex:0 0 auto}
+.brand-initial .brand-separator{font-family:var(--font-display);font-weight:600;
+ font-size:.70em;line-height:1;transform:translateY(-.035em);margin-inline-start:.035em}
+/* Individually tuned advance after each letter and punctuation. */
+.brand-initial-1{margin-right:.005em}.brand-initial-1 .brand-separator{margin-inline-start:.025em}
+.brand-initial-2{margin-right:.01em}.brand-initial-2 .brand-separator{margin-inline-start:.035em}
+.brand-initial-3{margin-right:.015em}.brand-initial-3 .brand-separator{margin-inline-start:.01em}
+.brand-initial-4{margin-right:.005em}.brand-initial-4 .brand-separator{margin-inline-start:0}
+.brand-initial-5{margin-right:0}.brand-initial-5 .brand-separator{margin-inline-start:.005em}
+.brand-initial-6{margin-right:.015em}.brand-initial-6 .brand-separator{margin-inline-start:.005em}
+.brand-initial-7 .brand-separator{margin-inline-start:.02em}
