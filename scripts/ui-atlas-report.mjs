@@ -45,7 +45,7 @@ byId('errorCount').textContent=data.errors.length;
 byId('skipCount').textContent=data.inapplicable.length;
 byId('missingCount').textContent=data.missingExpected.length;
 byId('issues').textContent=JSON.stringify({errors:data.errors,missingExpected:data.missingExpected,inapplicable:data.inapplicable},null,2);
-byId('summary').textContent=data.cases.length+' captures · '+unique('profile').length+' viewports · 4 zoom levels · '+data.errors.length+' traversal failures · '+data.missingExpected.length+' missing states';
+byId('summary').textContent=data.cases.length+' captures · '+unique('profile').length+' viewports · '+unique('zoomPercent').length+' zoom levels · '+data.errors.length+' traversal failures · '+data.missingExpected.length+' missing states';
 function show(){
  const match=data.cases.filter(x=>(!byId('profile').value||x.profile===byId('profile').value)
  &&(!byId('zoom').value||String(x.zoomPercent)===byId('zoom').value)
