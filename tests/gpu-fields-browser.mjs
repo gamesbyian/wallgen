@@ -96,6 +96,68 @@ try{
       }
     }
     const stats={...session.stats};
+    // Test an actual three-layer ink stack rather than three isolated
+    // shaders. The shader must composite all colours/alphas in recipe order,
+    // using the SAME uploaded mask and ONE framebuffer draw.
+    const layers=[
+      {id:'first',enabled:true,placement:'field',type:'line',
+        shape:'straight',stroke:'solid',color:'white',width:4,
+        frequency:5,amplitude:0,position:0,phase:0,opacity:.68,
+        colorSlots:[],objectIds:[]},
+      {id:'second',enabled:true,placement:'field',type:'line',
+        shape:'wave',stroke:'solid',color:'custom',customColor:'#55aaff',
+        width:4.6,frequency:6,amplitude:.12,position:.13,phase:40,
+        opacity:.64,colorSlots:[],objectIds:[]},
+      {id:'third',enabled:true,placement:'field',type:'line',
+        shape:'zigzag',stroke:'solid',color:'black',width:3.6,
+        frequency:3.8,amplitude:.08,position:-.09,phase:-28,
+        opacity:.74,colorSlots:[],objectIds:[]},
+    ];
+    const referenceStack=canvas();
+    const cpu=referenceStack.getContext('2d');
+    cpu.scale(width/600,height/1300);
+    drawRegionInteriors(cpu,owner,layers,'regions',
+      {left:0,top:0,right:600,bottom:1300});
+    const referencePixels=cpu.getImageData(0,0,width,height).data;
+    const composed=session.renderMany(layers);
+    if(!composed.supported)throw Error('GPU layer stack: '+composed.reason);
+    const gl=session.canvas.getContext('webgl2');
+    const composedPixels=new Uint8Array(width*height*4);
+    gl.readPixels(0,0,width,height,gl.RGBA,gl.UNSIGNED_BYTE,composedPixels);
+    let alphaError=0,significant=0,rgbError=0,rgbSamples=0,outside=0;
+    for(let y=0;y<height;y++)for(let x=0;x<width;x++){
+      const index=(y*width+x)*4;
+      const gpuIndex=((height-1-y)*width+x)*4;
+      const a=referencePixels[index+3],b=composedPixels[gpuIndex+3];
+      alphaError+=Math.abs(a-b);
+      if(Math.abs(a-b)>45)significant++;
+      if(masks[index+3]<2&&b>3)outside++;
+      if(a>100&&b>100){
+        for(let c=0;c<3;c++)rgbError+=Math.abs(
+          referencePixels[index+c]-composedPixels[gpuIndex+c]);
+        rgbSamples+=3;
+      }
+    }
+    const forwardBytes=composedPixels.slice();
+    const reversed=session.renderMany(layers.slice().reverse());
+    if(!reversed.supported)throw Error('GPU reverse stack: '+reversed.reason);
+    const reversedBytes=new Uint8Array(width*height*4);
+    gl.readPixels(0,0,width,height,gl.RGBA,gl.UNSIGNED_BYTE,reversedBytes);
+    let changedOrdering=0;
+    for(let i=0;i<forwardBytes.length;i+=4){
+      const rgbDistance=Math.abs(forwardBytes[i]-reversedBytes[i])+
+        Math.abs(forwardBytes[i+1]-reversedBytes[i+1])+
+        Math.abs(forwardBytes[i+2]-reversedBytes[i+2]);
+      if(rgbDistance>35)changedOrdering++;
+    }
+    const layeredMetrics={
+      outside,meanAlphaError:alphaError/(width*height),
+      significantRatio:significant/(width*height),
+      meanRGBError:rgbSamples?rgbError/rgbSamples:Infinity,
+      changedOrdering,
+      maskUploads:session.stats.maskUploads,
+      drawsAfterStack:session.stats.draws,
+    };
     // Modifying pixels on the SAME mask canvas must invalidate GPU input.
     const maskContext=mask.getContext('2d');
     maskContext.save();
@@ -115,7 +177,7 @@ try{
       session.canvas.getContext('webgl2').UNSIGNED_BYTE,pixels);
     let stale=0;
     for(let i=3;i<pixels.length;i+=4)if(pixels[i]>0)stale++;
-    return {available:true,output,stats,
+    return {available:true,output,stats,layeredMetrics,
       uploadCount:session.stats.maskUploads,
       postClearStalePixels:stale};
     }finally{session.dispose();}
@@ -131,6 +193,18 @@ try{
     assert.equal(metrics.uploadCount,2,'modified canvas mask reuploaded');
     assert.equal(metrics.postClearStalePixels,0,
       'a cleared mask may not leave old decoration pixels');
+    assert.equal(metrics.layeredMetrics.maskUploads,1);
+    assert.equal(metrics.layeredMetrics.drawsAfterStack,5,
+      'three single draws then one per ordered multilayer scene');
+    assert.equal(metrics.layeredMetrics.outside,0,'stack must respect exact mask');
+    assert.ok(metrics.layeredMetrics.meanAlphaError<25,
+      'combined layered ink alpha differs: '+JSON.stringify(metrics.layeredMetrics));
+    assert.ok(metrics.layeredMetrics.significantRatio<.12,
+      'combined ink has excessive dropped coverage: '+JSON.stringify(metrics.layeredMetrics));
+    assert.ok(metrics.layeredMetrics.meanRGBError<65,
+      'combined ink colours differ: '+JSON.stringify(metrics.layeredMetrics));
+    assert.ok(metrics.layeredMetrics.changedOrdering>5,
+      'reversing partially transparent layers must change overlapping ink');
     assert.equal(metrics.output.length,3);
     for(const item of metrics.output){
       assert.equal(item.outside,0,item.shape+' violated polygon clipping');
