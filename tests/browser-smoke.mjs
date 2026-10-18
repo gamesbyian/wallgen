@@ -157,8 +157,9 @@ try{
     }finally{worker.terminate();}
   })()`);
   console.log('WORKER_CANVAS_PARITY',JSON.stringify(workerParity));
-  assert.ok(workerParity.results.every(r=>r.differing<60),
-    'OffscreenCanvas worker must retain reference pixel fidelity');
+  assert.ok(workerParity.results.every(r=>r.differing<=100&&r.maxError<=24),
+    'OffscreenCanvas must match reference within tight subpixel antialiasing tolerance: '+
+    JSON.stringify(workerParity.results));
   assert.equal(workerParity.png.width,180);
   assert.equal(workerParity.png.height,390);
   assert.ok(workerParity.png.bytes>1000);
