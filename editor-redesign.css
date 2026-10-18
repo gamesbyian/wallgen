@@ -833,3 +833,13 @@
   flex:1;min-width:0;max-width:58%;height:24px
 }
 .editor-tool-card[data-editor-tool="interior"]>p{font-size:11px;opacity:.8}
+
+.editor-tool-card[data-editor-tool="interior-targets"] .interior-targets{
+  display:flex;gap:4px;justify-content:space-between;min-height:27px
+}
+.editor-tool-card[data-editor-tool="interior-targets"] .interior-targets label{
+  font-size:11px;display:flex;align-items:center;gap:2px
+}
+.editor-tool-card[data-editor-tool="interior-targets"] .interior-targets input{
+  width:13px;height:13px;margin:0
+}
