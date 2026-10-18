@@ -855,10 +855,22 @@ export function drawWallpaper(canvas, recipe, options={}) {
         // A shallow crossing has a longer overlap; include enough branch
         // on both sides for its final outline to join continuously.
         const halfLength=Math.max(46,Math.min(310,(pack+24)/(hit.angle||.15)));
+        // Repaint only where the two *bundles* physically overlap.
+        // Repainting an entire fixed-length segment produced visible square
+        // cutoffs on the otherwise continuous ribbons, especially in loops.
+        // The other branch's actual union of seven stripe footprints is the
+        // natural, seamless occlusion mask. It also preserves negative space.
+        const branchMasks=[hit.early,hit.late].map(station=>{
+          const union=new Path2D();
+          for(const stripe of stripes)union.addPath(
+            crossingBranchClip(stripe,scene.extent,station,halfLength,samplePath));
+          return union;
+        });
         for(const stripe of stripes){
-          const station=crossingTopIsLater(scene.crossingMode,stripe.index,k)?
-            hit.late:hit.early;
+          const later=crossingTopIsLater(scene.crossingMode,stripe.index,k);
+          const station=later?hit.late:hit.early;
           g.save();
+          g.clip(branchMasks[later?0:1]);
           g.clip(crossingBranchClip(stripe,scene.extent,station,halfLength,samplePath));
           const path=stripePath(stripe,scene.extent,scene);
           drawOutline(g,path,stripe,scene);
