@@ -164,6 +164,59 @@ try{
   assert.equal(workerParity.png.height,390);
   assert.ok(workerParity.png.bytes>1000);
 
+  // A camera change must reveal a different world rectangle, NOT reroll
+  // the ribbon width profile or the interior wave/loop station phase.
+  // Compare identical logical points sampled at 100% and 50% zoom; skip
+  // antialiased edges, whose pixel footprints differ between resolutions.
+  const cameraZoomParity=await evaluate(`(async()=>{
+    const {drawWallpaper}=await import('/src/renderer.js');
+    const make=()=>{const canvas=document.createElement('canvas');
+      canvas.width=240;canvas.height=520;return canvas;};
+    const cases=[
+      {seed:'zoom-geometry-proof',structure:'paths',geometry:'zigzag',
+        motif:'solid',material:'none',taper:75,spread:65,stripeWidth:66,
+        shapeDepth:76},
+      {seed:'zoom-decoration-proof',structure:'paths',geometry:'wave',
+        motif:'solid',material:'none',taper:60,spread:61,stripeWidth:68,
+        interiorElements:[{id:'zoom-ink',enabled:true,shape:'wave',
+          placement:'local',type:'line',stroke:'solid',color:'white',
+          width:9,frequency:8,amplitude:.35,position:0,phase:30,opacity:1}]}
+    ];
+    const results=[];
+    for(const recipe of cases){
+      const close=make(),wide=make();
+      drawWallpaper(close,{...recipe,viewZoom:1});
+      drawWallpaper(wide,{...recipe,viewZoom:.5});
+      const a=close.getContext('2d').getImageData(0,0,240,520).data;
+      const b=wide.getContext('2d').getImageData(0,0,240,520).data;
+      const colour=(data,x,y)=>Array.from(data.slice((y*240+x)*4,(y*240+x)*4+3));
+      const uniform=(data,x,y)=>{
+        const base=colour(data,x,y);
+        for(const [dx,dy] of [[-1,0],[1,0],[0,-1],[0,1]]){
+          const other=colour(data,x+dx,y+dy);
+          if(base.some((value,i)=>Math.abs(value-other[i])>12))return false;
+        }
+        return true;
+      };
+      let examined=0,changed=0,ink=0;
+      for(let y=132;y<388;y+=3)for(let x=62;x<178;x+=3){
+        const ax=2*x-120,ay=2*y-260;
+        if(!uniform(a,ax,ay)||!uniform(b,x,y))continue;
+        const ca=colour(a,ax,ay),cb=colour(b,x,y);
+        examined++;
+        if(ca.some((v,i)=>Math.abs(v-cb[i])>24))changed++;
+        if(ca.some(v=>v>48))ink++;
+      }
+      results.push({geometry:recipe.geometry,examined,changed,ink,
+        mismatchRatio:examined?changed/examined:1});
+    }
+    return results;
+  })()`);
+  console.log('CAMERA_ZOOM_RASTER_PARITY',JSON.stringify(cameraZoomParity));
+  assert.ok(cameraZoomParity.every(r=>r.examined>300&&r.ink>150&&r.mismatchRatio<.065),
+    'zoom must preserve colours and decoration at shared world points: '+
+    JSON.stringify(cameraZoomParity));
+
   // The actual application must use a worker after its deterministic initial
   // frame, and settle the correct recipe after rapid edits. A standalone
   // worker parity test alone would miss accidental main-thread fallback.
