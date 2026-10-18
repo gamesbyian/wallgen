@@ -250,3 +250,30 @@ test('recognition can polish two circular loops connected by straight paths',()=
   const finished=finishDrawnPath(raw,'smooth',10);
   assert.ok(finished.length>20&&finished[0][0]<.1&&finished.at(-1)[0]>.85);
 });
+
+test('a deliberate square remains a cornered path instead of being mistaken for a circle',()=>{
+  const corners=[[.22,.28],[.68,.28],[.68,.49],[.22,.49],[.22,.28]];
+  const raw=[];
+  for(let edge=0;edge<4;edge++)for(let i=0;i<40;i++){
+    const t=i/39,a=corners[edge],b=corners[edge+1];
+    raw.push([a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t]);
+  }
+  const kind=interpretStroke(raw)?.kind;
+  assert.notEqual(kind,'circle','a square has four intentional corners');
+  const result=finishDrawnPath(raw,'geometric',10);
+  assert.ok(result.length>=12);
+  const xs=result.map(p=>p[0]),ys=result.map(p=>p[1]);
+  assert.ok(Math.max(...xs)-Math.min(...xs)>.35);
+  assert.ok(Math.max(...ys)-Math.min(...ys)>.15);
+});
+test('a changing-direction figure-eight is not falsely identified as one circle',()=>{
+  const raw=Array.from({length:185},(_,i)=>{
+    const t=i/184*Math.PI*2;
+    return [.5+.27*Math.sin(t),.5+.13*Math.sin(2*t)];
+  });
+  const kind=interpretStroke(raw)?.kind;
+  assert.notEqual(kind,'circle');
+  assert.notEqual(kind,'arc');
+  const result=finishDrawnPath(raw,'smooth',10);
+  assert.ok(result.length>10);
+});
