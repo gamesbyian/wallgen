@@ -16,14 +16,19 @@ function dispose(canvas){
 self.onmessage=async({data})=>{
   if(!supported)return;
   const {type,id,recipe,width,height,key,quality='settled'}=data||{};
-  if(type!=='preview'&&type!=='export')return;
+  if(type!=='preview'&&type!=='export'&&type!=='thumbnail')return;
   let surface,cache;
   const start=performance.now();
   try{
     if(!Number.isInteger(width)||!Number.isInteger(height)||width<1||height<1)
       throw Error('Invalid render dimensions');
     surface=new OffscreenCanvas(width,height);
-    if(type==='preview'){
+    if(type==='thumbnail'){
+      drawWallpaper(surface,recipe);
+      const frame=surface.transferToImageBitmap();
+      try{self.postMessage({type:'thumbnail',id,frame},[frame]);}
+      catch(error){frame.close();throw error;}
+    }else if(type==='preview'){
       if(quality==='interactive'){
         // A transient lower-resolution frame while the user is dragging.
         // Do not populate the full overscan nudge cache for obsolete frames.
