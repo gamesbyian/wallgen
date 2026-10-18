@@ -33,13 +33,13 @@ The artifact **roygbiv-ui-atlas** includes:
 - `README.md`: generated run summary.
 - `desktop/100/*.png` etc.: one screenshot per distinct navigation/state at a particular zoom, with additional scrolled-tool captures when necessary.
 
-The UI runner fails if it encounters traversal failures or misses expected states, and the artifact uploads even when the run fails.
+The UI runner fails if it encounters traversal failures, missing expected states, or a screenshot whose visible application state does not match its assigned name. The artifact uploads even when the run fails. Every capture also records bounded DOM geometry observations in `cases[].inspection` within `manifest.json`. Those warnings aid auditing but do not themselves fail the runner, because intentional clipping and scrolling need human review.
 
 ## Coverage
 
 1. Every named tool in the canonical `src/editor-schema.js`, under paths, radial, regions, nested regions, and tonal construction. Tools that do not apply in a particular structure are recorded separately as inapplicable.
 2. Dependent panels and controls for repeated/floating arrangements, diagonal direction, hairpin/single and continuous loops, stepped and chevron paths, radial and region modes, woven/stroke/tonal constructions, dotted motifs, multiple material layers, shadows, lighting, and outlines.
-3. Stateful UI journeys for editable interior elements (empty/populated, line/band, contour, straight/no-oscillation, custom colour and individual targets, stack locking/reordering); favourites (empty/populated); image metadata (expanded/remembered); search and variation mode; setting locks; cream/dark themes; drawing and smoothing; manual anchor editing; SVG path import; and mobile rails.
+3. Verified Explore-gallery journeys and top/bottom metadata panel visibility, plus stateful UI journeys for editable interior elements (empty/populated, line/band, contour, straight/no-oscillation, custom colour and individual targets, stack locking/reordering); favourites (empty/populated); image metadata (expanded/remembered); search and variation mode; setting locks; cream/dark themes; drawing and smoothing; manual anchor editing; SVG path import; and mobile rails.
 4. Visible interactive shells, preview controls and trays. Buttons that initiate system file pickers or downloads are not activated solely to create a screenshot.
 
 The image importer is driven by a synthetic, local SVG containing a strong diagonal, rather than user imagery. The fixed wallpaper canvas is hidden in captures, and the image generator is not varied for screenshot purposes.
