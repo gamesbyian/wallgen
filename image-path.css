@@ -40,7 +40,8 @@
   border:1px solid #77748e;background:#302f42;color:#fff;padding:5px 7px;
 }
 .image-path-actions{display:flex;gap:8px;justify-content:space-between}
-.image-path-actions button{flex:1;font-size:12px}
+.image-path-actions button{flex:1;min-width:0;font-size:11px;padding:5px 5px}
+.image-path-actions #imagePathAngle{background:#3f3564;border-color:#8d7da4}
 .image-path-actions #imagePathApply{background:#c44d91;border-color:#ee8dca}
 .image-path-actions button:disabled{opacity:.4;cursor:default}
 .image-path-dialog button:focus-visible,
