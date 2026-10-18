@@ -191,12 +191,12 @@
    width:100%;height:31px;font-size:12px;
    background:var(--surface);
  }
- /* A single row of six labels always occupies its own flow position. Never
+ /* A single row of seven labels always occupies its own flow position. Never
     inherit position:sticky or top:51px from the retired four-tab editor. */
  body.mobile-studio .sidebar .settings-tabs{
    display:grid!important;position:static!important;top:auto!important;
    inset:auto!important;z-index:auto!important;transform:none!important;
-   grid-template-columns:repeat(6,minmax(0,1fr))!important;
+   grid-template-columns:repeat(7,minmax(0,1fr))!important;
    grid-template-rows:minmax(34px,auto)!important;
    flex:0 0 35px!important;height:35px!important;
    min-height:35px!important;max-height:35px!important;
