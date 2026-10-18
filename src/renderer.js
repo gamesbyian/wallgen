@@ -407,15 +407,19 @@ function drawPathInteriors(ctx,stripe,extent,scene){
     ctx.lineWidth=e.type==='band'?Math.max(.15,stripe.width*e.width/100):e.width;
     ctx.lineJoin='round';lineDash(ctx,e);
     const path=new Path2D();
+    // Keep interior wave/loop phase stable in core path space as zoom and
+    // off-frame continuation change the painted station interval.
+    const phaseExtent=(stripe.sharedGeometry??stripe.geometry)==='drawn'?
+      (stripe.coreExtent??extent):extent;
     const n=Math.max(160,Math.ceil((end-start)/2.3));
     for(let i=0;i<=n;i++){
       const station=start+(end-start)*i/n;
       const p=samplePath(stripe,station,extent);
       const width=widthAt(stripe,station,extent);
       const transverse=e.position*width+
-        e.amplitude*width*elementWave(e,station/Math.max(100,extent*2));
+        e.amplitude*width*elementWave(e,station/Math.max(100,phaseExtent*2));
       const longitudinal=e.shape==='loop'?
-        Math.cos(station/Math.max(100,extent*2)*e.frequency*Math.PI*2+e.phase*Math.PI/180)*e.amplitude*width:0;
+        Math.cos(station/Math.max(100,phaseExtent*2)*e.frequency*Math.PI*2+e.phase*Math.PI/180)*e.amplitude*width:0;
       const x=p.x+p.nx*transverse+p.tx*longitudinal;
       const y=p.y+p.ny*transverse+p.ty*longitudinal;
       if(i===0)path.moveTo(x,y);else path.lineTo(x,y);
