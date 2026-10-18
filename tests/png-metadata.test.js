@@ -66,7 +66,7 @@ test('saved PNG always embeds regenerable, lossless normalized recipe even with 
   assert.deepEqual(chunks(result).filter(x=>['IHDR','IDAT','IEND'].includes(x.type))
     .map(x=>[x.type,[...x.data]]),chunks(tiny).map(x=>[x.type,[...x.data]]));
   const envelope=JSON.parse(serializePngRecipe(input));
-  assert.equal(envelope.format,'roygbiv-recipe-v1');
+  assert.equal(envelope.format,'roygbiv-recipe-v2');
   assert.deepEqual(envelope.output,{width:3024,height:6552});
 });
 test('recipe reader rejects corrupted chunks and distinguishes old PNGs without a recipe',()=>{
