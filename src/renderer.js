@@ -452,10 +452,10 @@ function drawPathInteriors(ctx,stripe,extent,scene){
       ctx.restore();continue;
     }
     const path=new Path2D();
-    // Keep interior wave/loop phase stable in core path space as zoom and
-    // off-frame continuation change the painted station interval.
-    const phaseExtent=(stripe.sharedGeometry??stripe.geometry)==='drawn'?
-      (stripe.coreExtent??extent):extent;
+    // Camera zoom may extend the painted longitudinal domain, but the
+    // interior wave/loop phase is part of the original generated design for
+    // ALL path geometries, not just hand-drawn paths.
+    const phaseExtent=stripe.coreExtent??extent;
     const n=Math.max(160,Math.ceil((end-start)/2.3));
     for(let i=0;i<=n;i++){
       const station=start+(end-start)*i/n;
