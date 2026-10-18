@@ -3,12 +3,17 @@
 // use these definitions rather than maintaining competing control taxonomies.
 export const EDITOR_CATEGORIES=[
   {id:'layout',label:'Layout',icon:'▦',tools:[
+    {id:'canvas',name:'Canvas structure',settings:['structure']},
     {id:'arrange',name:'Arrangement',settings:['composition','repeatCount','repeatSpacing']},
     {id:'direction',name:'Direction',settings:['orientation','diagonalRotation','mirrorHorizontal','mirrorVertical']},
     {id:'variability',name:'Variation',settings:['chaos']},
   ]},
-  {id:'path',label:'Path',icon:'⌁',tools:[
-    {id:'geometry',name:'Geometry',settings:['geometry','shapeFrequency','shapeDepth']},
+  {id:'path',label:'Geometry',icon:'⌁',tools:[
+    {id:'geometry',name:'Paths',settings:['geometry','shapeFrequency','shapeDepth']},
+    {id:'rays',name:'Radial rays',settings:['radialMode','rayCount','rayRotation']},
+    {id:'ray-shape',name:'Ray shape',settings:['rayTwist','rayCoverage','rayCore']},
+    {id:'origin',name:'Origin',settings:['fieldCenterX','fieldCenterY']},
+    {id:'regions',name:'Regions',settings:['regionMode','regionCount','regionJitter','regionSides']},
     {id:'safety',name:'Constraints',settings:['geometrySafety','crossingMode']},
     {id:'turn',name:'Turns',settings:['turnRadius','hairpinAngle']},
     {id:'single-loop',name:'Single loop',settings:['loopRadius','loopSweep']},
@@ -18,6 +23,7 @@ export const EDITOR_CATEGORIES=[
   {id:'stripes',label:'Stripes',icon:'≋',tools:[
     {id:'structure',name:'Structure',settings:['construction','stripeWidth','spread']},
     {id:'outlines',name:'Outlines',settings:['outline','gap','outlineBuffer']},
+    {id:'dividers',name:'Dividers',settings:['dividerColor','dividerWidth']},
     {id:'patterns',name:'Patterns',settings:['motif','lineStyle','patternHomogeneity']},
     {id:'marks',name:'Marks',settings:['dotSize','dotSpacing']},
     {id:'motif-scale',name:'Motif scale',settings:['motifSize','motifFrequency']},
