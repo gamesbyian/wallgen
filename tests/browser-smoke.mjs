@@ -245,6 +245,27 @@ try{
   await evaluate('document.getElementById("tab-path").click()');
   await evaluate('document.querySelector("[data-editor-tool=geometry]").click()');
   assert.ok(await evaluate('document.querySelector("#panel-path .editor-tool-card:not([hidden]) [name=geometry]")!==null'));
+  // The single-loop path is separate from repeated loops and follows the
+  // existing hairpin recipe + controls flow.
+  await evaluate('(()=>{const el=document.querySelector("[name=geometry]");el.value="loop";el.dispatchEvent(new Event("change",{bubbles:true}));})()');
+  await waitFor('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).geometry==="loop"');
+  await evaluate('document.querySelector("[data-editor-tool=single-loop]").click()');
+  const loopControls=await evaluate('(()=>({radius:document.querySelector("[name=loopRadius]").disabled,sweep:document.querySelector("[name=loopSweep]").disabled,tool:document.querySelector(".editor-tool-card:not([hidden])").dataset.editorTool,hasRepeated:!!document.querySelector("[name=geometry] option[value=loops]")}))()');
+  assert.equal(loopControls.radius,false);
+  assert.equal(loopControls.sweep,false);
+  assert.equal(loopControls.tool,'single-loop');
+  assert.equal(loopControls.hasRepeated,true);
+  await evaluate('(()=>{const el=document.querySelector("[name=loopSweep]");el.value="405";el.dispatchEvent(new Event("input",{bubbles:true}));el.dispatchEvent(new Event("change",{bubbles:true}));})()');
+  await waitFor('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).loopSweep===405');
+  const loopGeometry=await evaluate(`(async()=>{const {resolveScene}=await import('/src/model.js');
+    const recipe=JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get('r')));
+    const scene=resolveScene(recipe);
+    return {count:scene.stripes.length,geometry:scene.geometry,
+      radius:scene.stripes[3].loopRadius,sweep:scene.stripes[3].loopSweep}})()`);
+  assert.equal(loopGeometry.count,7);
+  assert.equal(loopGeometry.geometry,'loop');
+  assert.equal(loopGeometry.sweep,405);
+  assert.ok(loopGeometry.radius>0);
   await evaluate('document.querySelector("[data-editor-tool=safety]").click()');
   assert.ok(await evaluate('document.querySelector("[name=geometrySafety]").checked'));
   await evaluate('(()=>{const f=document.querySelector("[name=geometrySafety]");f.checked=false;f.dispatchEvent(new Event("input",{bubbles:true}));f.dispatchEvent(new Event("change",{bubbles:true}));})()');
