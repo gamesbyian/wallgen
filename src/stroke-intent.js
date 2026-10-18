@@ -8,6 +8,36 @@ const pixel=([x,y])=>[x*W,y*H];
 const normalize=([x,y])=>[x/W,y/H];
 const dist=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]);
 const interpolate=(a,b,t)=>[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t];
+const smoothstep=t=>{const x=clamp(t,0,1);return x*x*x*(x*(x*6-15)+10);};
+// Crossings are two distinct visits to the same image-plane position. Keep
+// both visits on their original smooth tangents when fitting nearby shapes.
+function crossingInfluence(p){
+  const weight=new Array(p.length).fill(1);
+  const cross=(a,b)=>a[0]*b[1]-a[1]*b[0];
+  for(let i=0;i<p.length-1;i++){
+    const a=p[i],b=p[i+1],r=[b[0]-a[0],b[1]-a[1]];
+    for(let j=i+9;j<p.length-1;j++){
+      const c=p[j],d=p[j+1];
+      if(Math.max(a[0],b[0])<Math.min(c[0],d[0])||
+         Math.max(c[0],d[0])<Math.min(a[0],b[0])||
+         Math.max(a[1],b[1])<Math.min(c[1],d[1])||
+         Math.max(c[1],d[1])<Math.min(a[1],b[1]))continue;
+      const v=[d[0]-c[0],d[1]-c[1]],den=cross(r,v);
+      if(Math.abs(den)<.001)continue;
+      const offset=[c[0]-a[0],c[1]-a[1]];
+      const t=cross(offset,v)/den,u=cross(offset,r)/den;
+      if(t<=.001||t>=.999||u<=.001||u>=.999)continue;
+      for(const index of [i+t,j+u]){
+        // Original stroke is sampled at roughly 7px intervals. Guard 42px
+        // each side, and fade smoothly through a further 56px.
+        for(let k=Math.max(0,Math.floor(index)-16);k<=Math.min(p.length-1,Math.ceil(index)+16);k++){
+          weight[k]=Math.min(weight[k],smoothstep((Math.abs(k-index)*7-42)/56));
+        }
+      }
+    }
+  }
+  return weight;
+}
 function statistics(points){
   const sum=points.reduce((s,p,i)=>i?s+dist(p,points[i-1]):0,0);
   return {length:sum,chord:dist(points[0],points.at(-1))};
