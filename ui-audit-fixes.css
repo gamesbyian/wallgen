@@ -126,8 +126,11 @@ html[data-theme="cream"] #notice{color:#28583f!important}
   body.mobile-studio .sidebar .editor-tool-card .setting-lock{
     min-width:27px!important;width:27px!important;min-height:29px!important;
     height:29px!important}
+  body.mobile-studio .sidebar .editor-tool-card .lockable-setting:not(.texture-rotation-field){
+    grid-template-columns:minmax(0,1fr) 30px 30px!important;column-gap:2px!important;
+    min-width:0!important}
   body.mobile-studio .sidebar .editor-tool-card>.lockable-setting{
-    grid-template-columns:minmax(0,1fr) 29px 29px}
+    grid-template-columns:minmax(0,1fr) 30px 30px!important}
   /* Reserve real space for the gallery cards, not just its toolbar. */
   body.mobile-gallery-open{--mobile-tray-height:clamp(300px,42dvh,420px)}
   body.mobile-gallery-open .workspace>.gallery-section{
@@ -145,4 +148,40 @@ html[data-theme="cream"] #notice{color:#28583f!important}
   body.mobile-gallery-open .thumb{flex:0 0 104px!important;min-width:104px!important}
   body.mobile-studio .sidebar .editor-style>.lockable-setting select{
     min-width:0!important;text-overflow:ellipsis}
+}
+
+/* Drawing mode: separate prominent primary actions from secondary work and
+   give point-editing controls usable tap areas without covering the canvas. */
+@media(max-width:790px){
+  body.mobile-studio .draw-path-panel{max-height:min(42dvh,370px)!important;
+    overflow-y:auto;overscroll-behavior:contain;padding:8px 7px!important;
+    width:min(380px,calc(100% - 12px))!important;gap:7px!important}
+  body.mobile-studio .draw-path-controls{gap:5px!important}
+  body.mobile-studio .draw-path-controls button{
+    min-height:34px!important;padding:5px 8px!important;
+    font-size:10px!important;line-height:1.1!important}
+  body.mobile-studio .draw-path-controls #drawApply{order:-3;min-height:38px!important}
+  body.mobile-studio .draw-path-controls #drawCancel{order:-2;min-height:38px!important}
+  body.mobile-studio .draw-path-controls #drawEditPoints{order:-1;min-height:38px!important}
+  body.mobile-studio .draw-point-controls{padding-top:7px;gap:5px!important}
+  body.mobile-studio .draw-point-controls button{min-height:34px!important}
+  body.mobile-studio .draw-path-panel #drawPathHint{font-size:10px!important}
+}
+/* Keep imported artwork on a deliberately dark inspection plane but match
+   dialog chrome to the active theme and reuse readable form controls. */
+html[data-theme="cream"] .image-path-dialog{background:#fffdf8;color:#302b3a;
+  border-color:#d8ccda;box-shadow:0 14px 45px #18132155}
+html[data-theme="cream"] .image-path-dialog #imagePathStatus{color:#50475c}
+html[data-theme="cream"] .image-path-dialog .image-path-top button,
+html[data-theme="cream"] .image-path-dialog .image-path-actions button,
+html[data-theme="cream"] .image-path-dialog .image-path-choice select{
+  background:#faf4eb;color:#362e41;border:1px solid #cfc3cc}
+html[data-theme="cream"] .image-path-dialog #imagePathApply{
+  background:#b94c84;color:#fff;border-color:#ad3874}
+html[data-theme="cream"] .image-path-dialog #imagePathAngle:not(:disabled){
+  background:#ece7fa;color:#42346c;border-color:#c7b2e7}
+@media(max-width:790px){
+  .image-path-dialog .image-path-top button,
+  .image-path-dialog .image-path-actions button{min-height:40px}
+  .image-path-dialog .image-path-choice select{min-height:40px}
 }
