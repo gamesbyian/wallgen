@@ -128,7 +128,20 @@ export function randomizeScope(currentInput,{scope,name,mode='reroll',strength='
           target=nearestPrime(target,PERCENT_PRIMES);
       }
     }
-    if(target!==v){next[key]=target;modified.push(key);}
+    if(target!==v){
+      next[key]=target;modified.push(key);
+      // The optional-layer material chooser is its visible on/off switch.
+      // Scope dice must commit the same hidden Enabled state as an actual
+      // chooser change. Otherwise they report a new finish that never paints.
+      if(key==='material2'||key==='material3'){
+        const enabledKey=key==='material2'?'textureLayer2Enabled':'textureLayer3Enabled';
+        const enabled=target!=='none';
+        if(next[enabledKey]!==enabled){
+          next[enabledKey]=enabled;
+          modified.push(enabledKey);
+        }
+      }
+    }
   }
   return {recipe:normalizeRecipe(next),modified,scope,name,mode};
 }
