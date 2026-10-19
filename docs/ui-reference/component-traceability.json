@@ -1,7 +1,7 @@
 {
   "version": 2,
   "purpose": "Traceability between original source UI and proposal. No removal of existing behavior.",
-  "updated": "2026-10-18",
+  "updated": "2026-10-19",
   "sourceBaseline": "default five-destination main-compatible shell, reviewed from 115 static HTML IDs",
   "entries": [
     {
@@ -363,6 +363,14 @@
       "canonicalScreen": "geometry",
       "sourceKind": "Static index.html ID",
       "state": "Preserve until deliberate nav action migration"
+    },
+    {
+      "id": "viewportPan",
+      "sourceSelector": "id:viewPanStatus",
+      "meaning": "Camera-only Pan control/status via More; persists separately from source nudge",
+      "canonicalScreen": "more",
+      "sourceKind": "Static index.html ID",
+      "state": "New PR #143, independent source handler and recipe fields"
     }
   ]
 }
