@@ -130,6 +130,19 @@ try{
     favouriteSeed:selected.seed,repeatedSwitches:8,undoPreserved:true});
   await screenshot('edit-after-undo');
 
+  // History is a separate restore mechanism from the Undo stack. Exercise
+  // the visible history chooser after a real generator change.
+  await page.locator('#randomizeAll').click();
+  assert.notDeepEqual(current(),selected);
+  await page.locator('#editorHistoryToggle').click();
+  const beforeRandom=page.locator('#editorHistory .editor-history-choice')
+    .filter({hasText:'Before Random'}).first();
+  await beforeRandom.waitFor({state:'visible'});
+  await beforeRandom.click();
+  assert.deepEqual(current(),selected,'History restore must recover exact pre-random recipe');
+  record('history-from-real-randomize',{restoredSeed:selected.seed,exactRecipe:true});
+  await screenshot('history-restored');
+
   await go('mobileMore');
   const named={};
   for(const selector of [
@@ -151,6 +164,15 @@ try{
   assert.equal(await metadataTitle.inputValue(),'');
   await page.locator('#metadataRemember').uncheck();
   await page.locator('#metadataToggle').click();
+
+  // The same More surface must actually commit a typed seed, then produce
+  // a fresh randomized seed. DOM presence alone cannot qualify these tools.
+  await page.locator('#seedInput').fill('agent3-seed-from-more');
+  await page.locator('#applySeed').click();
+  assert.equal(current().seed,'agent3-seed-from-more');
+  await page.locator('#randomize').click();
+  assert.notEqual(current().seed,'agent3-seed-from-more');
+  record('more-seed-and-randomize',{typedSeedApplied:true,rerolled:true});
 
   // Clipboard and download come from the actual buttons, not encodeRecipe()
   // alone. The browser is a localhost secure context with clipboard permission.
