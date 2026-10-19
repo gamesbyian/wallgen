@@ -3,6 +3,7 @@ import {iconMarkup} from './ui-icons.js';
 import {annotateEditorSettingRow} from './editor-control-roles.js';
 import {installFocusedAdjustments} from './editor-focus.js';
 import {toolAppliesToScene} from './editor-tool-applicability.js';
+import {findEditorToolMatch} from './editor-tool-search.js';
 
 const byId=id=>document.getElementById(id);
 const form=byId('controls');
@@ -90,15 +91,20 @@ export function mountEditor(){
   const search=create('button','editor-search-toggle');
   search.innerHTML=iconMarkup('search');
   search.type='button';search.title='Find a setting';search.setAttribute('aria-label','Find a setting');
+  search.setAttribute('aria-expanded','false');
   const searchInput=create('input','editor-search-input');
   searchInput.type='search';searchInput.placeholder='Find a setting…';
   searchInput.setAttribute('aria-label','Search wallpaper settings');searchInput.hidden=true;
+  const searchStatus=create('p','editor-search-status');
+  searchStatus.id='editorSearchStatus';searchStatus.hidden=true;
+  searchStatus.setAttribute('role','status');searchStatus.setAttribute('aria-live','polite');
+  searchInput.setAttribute('aria-describedby',searchStatus.id);
   const searchClose=create('button','editor-search-close','×');
   searchClose.type='button';searchClose.hidden=true;
   searchClose.setAttribute('aria-label','Close setting search');
   searchClose.title='Close search';
   controls.append(scopeMode,strength,randomCategory,search);
-  explore.append(style,controls,searchInput,searchClose);
+  explore.append(style,controls,searchInput,searchClose,searchStatus);
   nav.before(explore);
   nav.replaceChildren();
 
@@ -234,8 +240,10 @@ export function mountEditor(){
   });
   randomCategory.addEventListener('click',()=>{randomCategory.dataset.randomCategory=currentCategoryFromTabs();});
   function closeSearch(){
-    searchInput.hidden=true;searchClose.hidden=true;
+    searchInput.hidden=true;searchClose.hidden=true;searchStatus.hidden=true;
+    searchStatus.textContent='';
     explore.classList.remove('editor-search-open');
+    search.setAttribute('aria-expanded','false');
     searchInput.value='';
     search.focus({preventScroll:true});
   }
@@ -243,6 +251,7 @@ export function mountEditor(){
     if(!searchInput.hidden){closeSearch();return;}
     searchInput.hidden=false;searchClose.hidden=false;
     explore.classList.add('editor-search-open');
+    search.setAttribute('aria-expanded','true');
     searchInput.focus({preventScroll:true});
   });
   searchClose.addEventListener('click',closeSearch);
@@ -250,11 +259,22 @@ export function mountEditor(){
     if(event.key==='Escape'){event.preventDefault();closeSearch();}
   });
   searchInput.addEventListener('input',()=>{
-    const q=searchInput.value.toLowerCase().trim();
-    if(!q)return;
-    const match=TOOL_LIST.find(t=>t.name.toLowerCase().includes(q)||
-      t.settings.some(key=>(form.elements.namedItem(key)?.closest('label')?.textContent||key).toLowerCase().includes(q)));
-    if(match)selectEditorTool(match.category,match.id,{source:'search'});
+    const query=searchInput.value.trim();
+    searchStatus.hidden=true;
+    searchStatus.textContent='';
+    if(!query)return;
+    const labelFor=key=>form.elements.namedItem(key)?.closest('label')?.textContent||key;
+    const options={labelFor,applies:tool=>toolApplies(tools.get(tool.id))};
+    const match=findEditorToolMatch(query,TOOL_LIST,options);
+    if(match){
+      selectEditorTool(match.category,match.id,{source:'search'});
+      return;
+    }
+    const dormant=findEditorToolMatch(query,TOOL_LIST,{labelFor});
+    searchStatus.textContent=dormant
+      ?'That setting is unavailable for the current canvas structure.'
+      :'No matching settings.';
+    searchStatus.hidden=false;
   });
   selectEditorTool('layout','arrange');
   const focused=installFocusedAdjustments({form,chooser});
