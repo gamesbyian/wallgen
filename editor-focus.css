@@ -40,9 +40,12 @@
  body.mobile-studio .sidebar .editor-focus-heading strong{font-size:11px}
  body.mobile-studio .sidebar .editor-focus-help{font-size:10px}
 }
+/* The Pixel 6 Pro atlas showed the shared slider below the screen edge at
+   29dvh. Reserve enough vertical space for the parameter chips, slider and
+   contextual explanation; the preview contracts atomically with the tray. */
 @media(max-width:790px) and (min-height:740px){
  body.mobile-studio.mobile-edit-open:has(#controls.editor-focus-active){
-   --mobile-tray-height:clamp(250px,29dvh,275px)!important}
+   --mobile-tray-height:clamp(295px,34dvh,330px)!important}
 }
 
 html[data-theme="dark"] .editor-focus-all{background:#51374f;color:#fff;border-color:#8f6b8b}

@@ -73,3 +73,12 @@ test('Focus distinguishes user locks, contextual inactivity and other disabled s
   assert.match(src,/help\.textContent=disabled\?unavailableReason\(original\)/);
   assert.match(src,/locked:Boolean\(field\.closest\('\.lockable-setting'\)/);
 });
+
+test('Focus expands only its own tall-phone viewport reservation',()=>{
+  const css=readFileSync(new URL('../editor-focus.css',import.meta.url),'utf8');
+  const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
+  assert.match(css, /mobile-edit-open:has\(#controls\.editor-focus-active\)/);
+  assert.match(css, /--mobile-tray-height:clamp\(295px,34dvh,330px\)!important/);
+  assert.match(css, /--mobile-tray-height:clamp\(192px,23dvh,215px\)!important/);
+  assert.match(html, /editor-focus\.css\?v=20261019-viewport1/);
+});
