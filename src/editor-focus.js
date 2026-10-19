@@ -21,7 +21,7 @@ const create=(tag,className,text)=>{
 };
 export function installFocusedAdjustments({form,chooser}){
   if(!form||!chooser)throw new TypeError('Real editor form and tool chooser required');
-  const toggle=create('button','editor-tool-tab editor-focus-toggle','Focus');
+  const toggle=create('button','editor-focus-toggle','Focus');
   toggle.type='button';toggle.setAttribute('aria-pressed','false');
   toggle.setAttribute('aria-controls','editorFocusPanel');
   toggle.title='Optional single-slider Focus view; all existing controls remain available';

@@ -237,7 +237,7 @@
     },
     {
       "id": "FOCUS-EXPERIMENT",
-      "kind": "optional-proposal",
+      "kind": "optional-prototype",
       "source": [
         "src/editor-focus.js",
         "src/editor-layout.js",
@@ -248,7 +248,7 @@
         "tests/browser-smoke.mjs"
       ],
       "assertion": "One focused slider may be tested as opt-in; multi-slider view remains default; switching parameters never resets other values.",
-      "status": "optional source-preserving prototype implemented in PR #87; user A/B approval NOT verified",
+      "status": "optional source-preserving experiment implemented on feature branch; not user-approved as default; wider A/B evaluation pending",
       "risk": "medium"
     }
   ]

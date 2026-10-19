@@ -1,6 +1,7 @@
 /* Optional Focus is a secondary editing experience, never the default.
    The real source input nodes remain installed in their original tool cards. */
-.editor-focus-toggle{flex:0 0 auto;border-color:#d9a2b9!important;
+.editor-focus-toggle{flex:0 0 auto;border:1px solid #d9a2b9!important;min-height:30px;
+  padding:3px 12px;border-radius:9px;font-size:11px;font-weight:700;cursor:pointer;
   background:var(--surface);position:sticky;left:0;z-index:4}
 .editor-focus-toggle[aria-pressed="true"]{background:#ffe0bb!important;border-color:#cf719a!important}
 .editor-focus-panel{display:flex;flex-direction:column;gap:10px;
@@ -45,3 +46,11 @@
 }
 
 html[data-theme="dark"] .editor-focus-all{background:#51374f;color:#fff;border-color:#8f6b8b}
+
+@media(max-width:790px){
+  body.mobile-studio .sidebar .editor-tool-chooser .editor-focus-toggle{
+    display:flex!important;align-items:center;justify-content:center;
+    min-width:67px;min-height:27px;max-height:27px;height:27px;
+    flex:0 0 67px;margin-right:2px;padding:2px 7px!important;
+    font-size:11px!important}
+}

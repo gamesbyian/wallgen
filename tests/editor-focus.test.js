@@ -1,3 +1,4 @@
+import {readFileSync} from 'node:fs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {focusEligible,adjustedValue} from '../src/editor-focus.js';
@@ -17,3 +18,12 @@ test('one-step adjustments clamp, support decimals and never modify the source o
  assert.equal(adjustedValue(field('2.4','0','10','.1'),1),'2.5');
  assert.equal(adjustedValue(field('2.4','0','10','.1'),-1),'2.3');
 });
+
+test('Focus controls must not masquerade as named tool chips',()=>{
+  // Named tool chips are enumerated by the atlas and browser tests.
+  // Focus is a secondary view, not a 41st generated editor tool.
+  const fs=requireFocusSource();
+  assert.ok(fs.includes("const toggle=create('button','editor-focus-toggle','Focus');"));
+  assert.equal(fs.includes("'editor-tool-tab editor-focus-toggle'"),false);
+});
+function requireFocusSource(){return readFileSync(new URL('../src/editor-focus.js',import.meta.url),'utf8');}
