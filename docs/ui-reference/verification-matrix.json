@@ -52,7 +52,7 @@
         ".github/workflows/headless-render.yml"
       ],
       "assertion": "Viewport-only Pan has independent recipe.viewPanX/viewPanY state and five source-named actions, distinct from composition nudge, with identical world-coordinate framing in direct preview and native-resolution PNG.",
-      "status": "implemented in PR #143; browser and native PNG verification pending",
+      "status": "source, model, real mobile browser, native 3024×6552 export and atlas qualified; merged PR #143",
       "risk": "high"
     },
     {
