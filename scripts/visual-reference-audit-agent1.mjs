@@ -81,9 +81,18 @@ const scenarios={
   },
   explore:async(page,profile)=>{
     if(profile.width>790)return;
-    await click(page,'#favorite');await click(page,'#showFavorites');
+    // Explore is valid with zero saved items. Capturing its empty gallery
+    // state avoids falsely requiring that the independent Saved-favourites
+    // model has been populated by a single favourite click.
     await click(page,'#mobileExplore');
-    await page.locator('#gallery .thumb').first().waitFor({state:'visible'});
+    await page.waitForFunction(()=>document.body.classList.contains('mobile-gallery-open'));
+    await page.locator('#gallery').waitFor({state:'visible'});
+    const state=await page.evaluate(()=>{
+      const section=document.querySelector('#gallery');
+      return {thumbs:section.querySelectorAll('.thumb').length,
+        empty:!!section.querySelector('.gallery-placeholder')};
+    });
+    if(!state.empty&&!state.thumbs)throw Error('Explore gallery has neither thumbnails nor empty guidance');
   },
   more:async(page,profile)=>{
     if(profile.width<=790){
