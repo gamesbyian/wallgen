@@ -19,7 +19,7 @@
   <link rel="stylesheet" href="mobile-editor-rail.css?v=20261017-camera1">
   <link rel="stylesheet" href="design-transform.css?v=20261016-transform1">
   <link rel="stylesheet" href="draw-path.css?v=20261019-opaque1">
-  <link rel="stylesheet" href="image-path.css?v=20261018-import1">
+  <link rel="stylesheet" href="image-path.css?v=20261019-stages1">
   <link rel="stylesheet" href="editor-redesign.css?v=20261018-points1">
   <link rel="stylesheet" href="bleed-and-action-rail.css?v=20261018-five-default1">
   <link rel="stylesheet" href="detail-controls.css?v=20261018-layout1">
@@ -393,8 +393,8 @@
       stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"
       aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>
   </button>
-  <dialog id="imagePathDialog" class="image-path-dialog" aria-label="Extract a path from an image">
-    <div class="image-path-top"><strong>Import path from image</strong><button type="button" id="imagePathCancel" aria-label="Close image importer"><img class="ui-icon" src="assets/icons/roygbiv/close.svg" alt="" aria-hidden="true" draggable="false"></button></div>
+  <dialog id="imagePathDialog" class="image-path-dialog" aria-label="Extract a path from an image" data-phase="idle">
+    <div class="image-path-top"><strong>Import path from image</strong><span class="image-path-phase" aria-hidden="true">Choose image</span><button type="button" id="imagePathCancel" aria-label="Close image importer"><img class="ui-icon" src="assets/icons/roygbiv/close.svg" alt="" aria-hidden="true" draggable="false"></button></div>
     <p id="imagePathStatus" role="status" aria-live="polite">Choose a path from the image.</p>
     <div class="image-path-preview"><canvas id="imagePathCanvas" width="600" height="1300" aria-label="Image with selectable extracted paths"></canvas></div>
     <label class="image-path-choice">Detected geometry

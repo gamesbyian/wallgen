@@ -12,6 +12,12 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle}){
   const ctx=canvas.getContext('2d');
   let image=null,candidates=[],selected=0,width=0,height=0,working=false;
   let loadRevision=0;
+  const phases={idle:'Choose image',analyzing:'Analyzing',ready:'Select path',empty:'No paths'};
+  const phaseLabel=dialog.querySelector('.image-path-phase');
+  function setPhase(next){
+    dialog.dataset.phase=next;
+    phaseLabel.textContent=phases[next];
+  }
   const allowed=/^image\/(png|jpeg|webp|svg\+xml)$/;
   const placement=()=>imagePlacement(width,height);
   function paint(){
@@ -40,6 +46,7 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle}){
     const candidate=candidates[selected];
     apply.disabled=!candidate;
     angleButton.disabled=!candidate||candidate.kind!=='line';
+    setPhase(candidate?'ready':'empty');
     status.textContent=candidate?
       candidate.kind==='contour'?
         'Shape outline. It may be closed; inspect the join after applying.':
@@ -75,6 +82,7 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle}){
       onNotice('Unlock Path geometry before importing an image.');return;
     }
     if(!dialog.open)dialog.showModal();
+    setPhase('analyzing');
     working=true;apply.disabled=true;angleButton.disabled=true;another.disabled=true;chooser.disabled=true;
     // Hide candidates from the previous import until this image's analysis
     // has completed. Their old labels must not be mistaken for new results.
@@ -104,6 +112,7 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle}){
     }catch(error){
       if(revision!==loadRevision)return;
       image=null;candidates=[];chooser.replaceChildren();apply.disabled=true;angleButton.disabled=true;
+      setPhase('empty');
       status.textContent=error?.message||'Image analysis failed.';
       paint();
     }finally{
@@ -159,6 +168,7 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle}){
     // newer import's state from a delayed event belonging to the old one.
     if(dialog.open)return;
     ++loadRevision;working=false;
+    setPhase('idle');
     image=null;candidates=[];chooser.replaceChildren();fileInput.value='';
   });
   return {sync(recipe){launch.disabled=recipe.lockedSettings.includes('geometry');}};

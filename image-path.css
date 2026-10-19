@@ -16,6 +16,24 @@
 .image-path-dialog::backdrop{background:#090a13cc}
 .image-path-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .image-path-top strong{font-size:15px}
+/* A small workflow marker, never a duplicate state or a second picker.
+   Actual candidate and file lifecycle in image-path-ui.js owns its phase. */
+.image-path-phase{
+  margin-left:auto;flex:0 1 auto;min-width:0;
+  font-size:10px;line-height:1.2;font-weight:800;
+  white-space:nowrap;letter-spacing:.025em;
+  padding:4px 7px;border-radius:99px;
+  background:#343044;color:#efe4ff;border:1px solid #786a89;
+}
+.image-path-dialog[data-phase="analyzing"] .image-path-phase{
+  background:#554422;border-color:#b99c5c;color:#ffe7ad;
+}
+.image-path-dialog[data-phase="ready"] .image-path-phase{
+  background:#244a3d;border-color:#63ae90;color:#c6ffe0;
+}
+.image-path-dialog[data-phase="empty"] .image-path-phase{
+  background:#573443;border-color:#b37891;color:#ffe3ec;
+}
 .image-path-top button,.image-path-actions button{
   border:1px solid #686575;border-radius:8px;background:#363340;
   color:#fff;min-height:33px;padding:5px 11px;font-weight:700;cursor:pointer;
@@ -81,3 +99,21 @@ html[data-theme="cream"] .image-path-dialog #imagePathAngle:not(:disabled){
   .image-path-dialog .image-path-choice select{min-height:40px}
 }
 
+
+/* Cream variant remains flat, dark ink on light surface. */
+html[data-theme="cream"] .image-path-phase{
+  background:#efe8f7;color:#553d72;border-color:#cdbadf;
+}
+html[data-theme="cream"] .image-path-dialog[data-phase="analyzing"] .image-path-phase{
+  background:#fff0ca;color:#72510a;border-color:#d4b767;
+}
+html[data-theme="cream"] .image-path-dialog[data-phase="ready"] .image-path-phase{
+  background:#e0f5e7;color:#276143;border-color:#9ac8ac;
+}
+html[data-theme="cream"] .image-path-dialog[data-phase="empty"] .image-path-phase{
+  background:#fae1eb;color:#813f5b;border-color:#d6a5b6;
+}
+@media(max-width:400px){
+  .image-path-top strong{font-size:13px}
+  .image-path-phase{font-size:9px;padding:3px 5px}
+}

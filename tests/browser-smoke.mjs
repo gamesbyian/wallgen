@@ -1593,6 +1593,17 @@ try{
       .getBoundingClientRect().width>0};
   })()`);
   await waitFor('document.getElementById("imagePathDialog").open && document.getElementById("imagePathCandidate").options.length>0',15000);
+  const imageImportPhase=await evaluate(`(()=>{
+    const dialog=document.getElementById('imagePathDialog');
+    return {phase:dialog.dataset.phase,
+      label:dialog.querySelector('.image-path-phase')?.textContent,
+      candidateCount:document.getElementById('imagePathCandidate').options.length,
+      choiceEnabled:!document.getElementById('imagePathCandidate').disabled};
+  })()`);
+  assert.equal(imageImportPhase.phase,'ready');
+  assert.equal(imageImportPhase.label,'Select path');
+  assert.ok(imageImportPhase.choiceEnabled&&imageImportPhase.candidateCount>0);
+  await captureUI('image-path-ready-phone');
   const imageCandidates=await evaluate(`(()=>{
     const select=document.getElementById('imagePathCandidate');
     const labels=[...select.options].map(o=>o.textContent);
@@ -1613,6 +1624,9 @@ try{
   assert.ok(imageCandidates.labels.some(v=>v.includes('Line ')));
   assert.equal(imageCandidates.geometry,'drawn');
   assert.ok(imageCandidates.pathPoints>=20&&!imageCandidates.imageEmbedded);
+  await waitFor('document.getElementById("imagePathDialog").dataset.phase==="idle"');
+  assert.equal(await evaluate('document.querySelector("#imagePathDialog .image-path-phase").textContent'),'Choose image');
+  console.log('IMAGE_IMPORT_WORKFLOW_PHASES',JSON.stringify(imageImportPhase));
   await evaluate('document.getElementById("undo").click()');
   // No file import should poison future generation or the original undo stack.
   assert.equal(await evaluate('new URLSearchParams(location.search).get("r")'),
