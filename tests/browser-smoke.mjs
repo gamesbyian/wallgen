@@ -323,6 +323,18 @@ try{
   assert.ok(typedRows.keys>=80,'not all canonical source fields assigned typed rows');
   assert.deepEqual(typedRows.missing,[],'a static editor setting lost its source row');
   assert.ok(typedRows.originalFieldsPreserved);
+  const typedToggles=await evaluate(`(()=>{
+    const keys=['reverseStripes','mirrorHorizontal','mirrorVertical'];
+    return keys.map(key=>{
+      const field=document.querySelector('[name="'+key+'"]');
+      const root=field?.closest('.editor-setting-row');
+      return {key,original:field?.type==='checkbox',
+        kind:root?.dataset.controlKind,hasKey:root?.dataset.controlKeys?.split(' ').includes(key)};
+    });
+  })()`);
+  assert.deepEqual(typedToggles.filter(x=>!x.original||x.kind!=='toggle'||!x.hasKey),[],
+    'Existing reverse/mirror checkbox rows must retain their typed source controls');
+
 
     const realGlyphs=await evaluate(`(()=>{
     const icons=[
