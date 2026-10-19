@@ -13,6 +13,8 @@ import { EDITOR_CATEGORIES } from '../src/editor-schema.js';
 import { captureSpecialStates } from './ui-atlas-special.mjs';
 import { writeAtlasReport } from './ui-atlas-report.mjs';
 import { inspectAtlasState } from './ui-atlas-inspect.mjs';
+import { MOBILE_ATLAS_SMOKE_TOOLS,MOBILE_ATLAS_SMOKE_STATES }
+  from './ui-atlas-mobile-smoke-plan.mjs';
 
 const arg = key => process.argv.find(x => x.startsWith('--'+key+'='))?.split('=').slice(1).join('=');
 const baseURL = arg('base-url') || 'http://127.0.0.1:4173';
@@ -215,13 +217,8 @@ async function exerciseMobileSmoke(page,ctx){
   await openEditor(page,ctx.surface);
   await capture(page,ctx,'editor-open',{kind:'shell'});
   await capture(page,ctx,'special-mobile-edit-rail',{kind:'special'});
-  const selected=[
-    ['layout','arrange'],['path','geometry'],['stripes','structure'],
-    ['details','interior-targets'],['colour','rainbow'],
-    ['material','finish1'],['effects','lighting']
-  ];
   await change(page,'structure','paths');
-  for(const [category,tool] of selected){
+  for(const {category,tool} of MOBILE_ATLAS_SMOKE_TOOLS){
     await navigate(page,category,tool);
     const spec=EDITOR_CATEGORIES.find(c=>c.id===category)?.tools.find(t=>t.id===tool);
     if(!spec)throw Error('Unregistered mobile smoke tool '+category+'/'+tool);
@@ -289,17 +286,8 @@ await mkdir(out,{recursive:true});
 const missingExpected=[];
 for(const surface of surfaces)for(const zoom of zooms){
   const subset=cases.filter(x=>x.profile===surface.id && x.zoomPercent===zoom);
-  const required=mobileSmoke?[
-    {id:'studio-default'},{id:'editor-open'},{id:'special-mobile-edit-rail'},
-    ...[
-      'layout-arrange','path-geometry','stripes-structure',
-      'details-interior-targets','colour-rainbow','material-finish1',
-      'effects-lighting'
-    ].map(x=>({id:'tool-paths-'+x})),
-    {id:'special-focus-stripe-width'},{id:'conditional-diagonal'},
-    {id:'conditional-material-layers'},{id:'special-dark-theme'},
-    {id:'shell-mobile-more'},{id:'shell-mobile-explore'}
-  ]:[
+  const required=mobileSmoke?
+    MOBILE_ATLAS_SMOKE_STATES.map(id=>({id})):[
     ...EDITOR_CATEGORIES.flatMap(c=>c.tools.map(t=>({kind:'tool',tool:t.id}))),
     ...['repeat','floating','diagonal','hairpin','loop','loops','stepped','chevron','geometry-wave','radial-pinwheel','radial-concentric','radial-spokes','regions-nested','regions-organic','motif-dots','construction-woven','construction-stroke','construction-tonal','material-layers','lighting','shadows','outline'].map(name=>({id:'conditional-'+name})),
     ...['dark-theme','vary-wild','search-expanded-empty','setting-locked','interior-empty','interior-one-element','interior-band-style','interior-contour-placement','interior-custom-colour-enabled','interior-two-elements','interior-stack-locked','gallery-empty-favourites','gallery-with-favourite','metadata-expanded','metadata-scrolled-controls','history-empty','history-with-variations','drawn-path-endpoint-controls','draw-empty-panel','draw-ready-path','draw-edit-point-anchors','image-import-candidate-or-error'].map(name=>({id:'special-'+name})),
