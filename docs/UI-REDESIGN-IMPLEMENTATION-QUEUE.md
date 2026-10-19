@@ -65,6 +65,7 @@
 - [x] Give the three existing material chooser chips source-backed Off / Automatic / Active / 0% status without changing input identity or navigation geometry (PR #113).
 - [x] Explain off/zero-strength Finish 1–3 states within the original Material card, without substituting inputs or altering controls (rebased PR pending).
 - [ ] Preserve dynamic interior element stack, ink selection, colours, placement, locking, reordering.
+- [x] Replace repeated Interior Elements empty-state copy with tool-specific guidance while preserving the original Add control and all element operations (PR pending).
 - [x] Show selected interior element index, total, enabled/hidden state and targeting scope in the already-present compact manager line, without new inputs or card-height changes (PR pending).
 - [x] Implement opt-in single Focus slider prototype backed by existing original range inputs; default All controls preserved (PR #87).
 - [ ] A/B evaluate Focus versus full inspector on Path, Material and Colour workflows, especially locked/disabled states; do not change default without user testing.

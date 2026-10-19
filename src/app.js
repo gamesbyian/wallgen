@@ -821,7 +821,18 @@ function syncInteriorUI(){
     changeRecipe({...current,interiorElements:items.filter((_,i)=>i!==Number(choose.value))});
   });
   if(!items.length){
-    for(const card of Object.values(interiorCards))make(card,'p','Add an interior element to begin.');
+    const guidance={
+      interior:'No interior elements yet. Use + Add above to create a line.',
+      'interior-style':'Add a line or band in Elements to choose its appearance.',
+      'interior-motion':'Add an element in Elements to adjust its shape and rhythm.',
+      'interior-placement':'Add an element in Elements to place it on the artwork.',
+      'interior-targets':'Add an element in Elements to choose which colours or shapes it affects.'
+    };
+    for(const [id,card] of Object.entries(interiorCards)){
+      const message=make(card,'p',guidance[id]);
+      message.className='interior-empty-guidance';
+      message.setAttribute('role','note');
+    }
     return;
   }
   const active=items[selectedInterior];
