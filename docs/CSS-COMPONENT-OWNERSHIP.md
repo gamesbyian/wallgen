@@ -11,6 +11,7 @@ The production wallpaper renderer, preview camera, recipe data and exported imag
 | Responsive workspace reservation | `studio-themes.css` | Stage/tray separation, gallery and More sheet |
 | Compact phone shell/dock | `mobile-compact.css` | Collapsed header, dock and editor-open behavior |
 | Default five-destination mobile dock | `mobile-five-nav.css` | Five-destination styling and preview quick-action relocation; base dock geometry remains in `mobile-compact.css` |
+| Grouped More source controls | `mobile-more-groups.css` | Three labelled content groups; mobile-only layout, not recipe or handler ownership |
 | Editor-side camera buttons | `mobile-editor-rail.css` | Action rail, left/right preview shortcuts |
 | Editor tabs, named tools and rotation | `editor-redesign.css` | Base editor structure, compact card and rotation row |
 | Interior element selectors, checkbox alignment and colour chips | `detail-controls.css` | Dynamic element controls, ink targeting, colour picker states |
