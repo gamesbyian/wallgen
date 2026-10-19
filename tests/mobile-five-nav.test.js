@@ -26,7 +26,7 @@ test('Saved and Explore swap gallery mode without discarding its contact sheet',
   const app=read('src/app.js');
   assert.match(mobile,/openSurface\('gallery','saved'\)/);
   assert.match(mobile,/openSurface\('gallery','explore'\)/);
-  assert.match(mobile,/galleryDestination!==galleryMode/);
+  assert.match(mobile,/galleryDestination===galleryMode/);
   assert.match(mobile,/roygbiv-mobile-navigation-changed/);
   assert.match(app,/let explorationRecipes = null/);
   assert.match(app,/if\(explorationRecipes\)return showGallery\(explorationRecipes\)/);
