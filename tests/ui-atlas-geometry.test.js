@@ -36,8 +36,8 @@ test('offscreen fixed action is distinguished from intentionally scrollable list
  assert.equal(clipped.clipped,true);
  const scroll=inspectGeometry(target(800,60,842,103),viewport,
    [{bounds:target(10,0,350,180),kind:'scroll',x:true,y:false,element:'.chooser'}]);
- // A scrollable chip strip can legitimately contain offscreen children;
- // viewport-only intersection cannot tell why a child is offscreen,
- // so this case gets filtered by a separate ancestor-aware diagnostic.
- assert.equal(scroll.clipped,true);
+ // Entirely offscreen descendants are still intentional when clipped by a
+ // known scrollable ancestor, even if viewport intersection is already zero.
+ assert.equal(scroll.scrollClipped,true);
+ assert.equal(scroll.clipped,false);
 });
