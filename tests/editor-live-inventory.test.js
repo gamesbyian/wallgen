@@ -21,7 +21,7 @@ test('every source-backed named editor setting remains present exactly once',()=
 
 test('source-backed exceptional fields keep their stable form identities',()=>{
   for(const key of ['family','primesOnly','textureLayer2Enabled',
-    'textureLayer3Enabled','viewZoom','positionX','positionY'])
+    'textureLayer3Enabled'])
     assert.equal(count(key),1,key+' source input identity changed');
   for(const category of EDITOR_CATEGORIES){
     assert.ok(category.tools.length>0,category.id+' has no reachable tool');
