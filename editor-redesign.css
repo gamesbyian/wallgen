@@ -852,3 +852,9 @@
 body.mobile-studio .sidebar .settings-tabs .settings-tab:disabled{
   opacity:.28!important;cursor:default!important;
 }
+
+/* Canonical setting-row state indication. No box-model or input changes:
+   drawn inset only while a keyboard-focused child is active. */
+.editor-tool-card .editor-setting-row:has(:focus-visible){
+  outline:2px solid #53AAFF;outline-offset:-2px;border-radius:7px;
+}
