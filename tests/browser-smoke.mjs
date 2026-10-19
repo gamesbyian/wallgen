@@ -1722,18 +1722,21 @@ try{
       const stage=box('.studio-stage');
       const frame=box('.wallpaper-frame');
       const scrollRail=document.querySelector('.mobile-preview-rail-left');
-      const originalScroll=scrollRail.scrollTop;
-      scrollRail.scrollTop=scrollRail.scrollHeight;
-      const lastShortcut=box('#mobileDownload');
-      const railBounds=scrollRail.getBoundingClientRect();
-      const lowerShortcutReachable=lastShortcut.top>=railBounds.top-2&&
-        lastShortcut.bottom<=railBounds.bottom+2;
-      const shortcutScroll={
-        overflow:getComputedStyle(scrollRail).overflowY,
-        maxScroll:scrollRail.scrollHeight-scrollRail.clientHeight,
-        lowerShortcutReachable
-      };
-      scrollRail.scrollTop=originalScroll;
+      let shortcutScroll=null;
+      if(scrollRail){
+        const originalScroll=scrollRail.scrollTop;
+        scrollRail.scrollTop=scrollRail.scrollHeight;
+        const lastShortcut=box('#mobileDownload');
+        const railBounds=scrollRail.getBoundingClientRect();
+        const lowerShortcutReachable=lastShortcut.top>=railBounds.top-2&&
+          lastShortcut.bottom<=railBounds.bottom+2;
+        shortcutScroll={
+          overflow:getComputedStyle(scrollRail).overflowY,
+          maxScroll:scrollRail.scrollHeight-scrollRail.clientHeight,
+          lowerShortcutReachable
+        };
+        scrollRail.scrollTop=originalScroll;
+      }
       return {mobile:document.body.classList.contains('mobile-studio'),
         dockStyle:getComputedStyle(document.getElementById('mobileActionDock')).display,
         buttons:document.querySelectorAll('#mobileActionDock>button').length,
