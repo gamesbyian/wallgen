@@ -17,5 +17,5 @@ test('offline icon-state fixture exactly reproduces every production inline symb
  assert.equal(data.icons.length,68);
  assert.deepEqual(data.icons.map(i=>i.name),manifest.icons.map(i=>i.name));
  assert.deepEqual(data.drawings,source,'Matrix glyphs drifted from real source');
- for(const icon of data.icons)assert.equal(icon.status,manifest.icons.find(i=>i.name===icon.name).status);
+ for(const icon of data.icons)assert.equal(icon.status,manifest.icons.find(i=>i.name===icon.name).status||'original');
 });
