@@ -14,22 +14,47 @@ const round=x=>Math.round(x*100000)/100000;
 export const DRAW_COORD_MIN=-2;
 export const DRAW_COORD_MAX=3;
 
-export function normalizeDrawnPath(input){
-  if(!Array.isArray(input))return [];
-  const points=[];
-  for(const point of input.slice(0,1200)){
+function normalizedDrawnPath(input,withIndexMap=false){
+  if(!Array.isArray(input))return {points:[],indexMap:[]};
+  const points=[],indexMap=withIndexMap?[]:null;
+  for(let i=0;i<Math.min(input.length,1200);i++){
+    const point=input[i];
     if(!Array.isArray(point)||point.length<2)continue;
     const x=Number(point[0]),y=Number(point[1]);
     if(!Number.isFinite(x)||!Number.isFinite(y))continue;
     const next=[round(clamp(x,DRAW_COORD_MIN,DRAW_COORD_MAX)),round(clamp(y,DRAW_COORD_MIN,DRAW_COORD_MAX))];
     if(!points.length||distance(next,points.at(-1))>=.75)points.push(next);
+    // A subpixel duplicate belongs to the last retained station, never to
+    // the next unrelated anchor. Invalid input indices remain unmapped.
+    if(indexMap)indexMap[i]=points.length-1;
   }
-  if(points.length<2)return [];
+  if(points.length<2)return {points:[],indexMap:[]};
   const length=points.slice(1).reduce((sum,p,i)=>sum+distance(p,points[i]),0);
-  if(length<35)return [];
+  if(length<35)return {points:[],indexMap:[]};
   // Keep stored and imported paths bounded without truncating their endpoint.
   const reduced=points.length>MAX_DRAWN_POINTS?resamplePath(points,MAX_DRAWN_POINTS):points;
-  return reduced.map(([x,y])=>[round(x),round(y)]);
+  if(indexMap&&points.length>MAX_DRAWN_POINTS){
+    // Match the existing arc-length resampling, rather than mapping raw
+    // ordinal indices. A self-intersecting loop may revisit the same XY,
+    // so choosing the nearest output XY would attach a corner to the wrong
+    // traversal. Arc stations preserve stroke order.
+    const arc=[0];
+    for(let i=1;i<points.length;i++)arc.push(arc.at(-1)+distance(points[i-1],points[i]));
+    for(let i=0;i<indexMap.length;i++)if(Number.isInteger(indexMap[i]))
+      indexMap[i]=Math.min(MAX_DRAWN_POINTS-1,
+        Math.round(arc[indexMap[i]]/length*(MAX_DRAWN_POINTS-1)));
+  }
+  return {points:reduced.map(([x,y])=>[round(x),round(y)]),indexMap:indexMap||[]};
+}
+export function normalizeDrawnPath(input){
+  return normalizedDrawnPath(input).points;
+}
+/** Normalize authored path metadata in precisely the same pass as geometry.
+ * Old sparse/oversampled imports can lose samples; every authored pin/corner
+ * must follow its original stroke station instead of its obsolete array slot.
+ */
+export function normalizeDrawnPathWithIndexMap(input){
+  return normalizedDrawnPath(input,true);
 }
 
 export function resamplePath(points,count){
