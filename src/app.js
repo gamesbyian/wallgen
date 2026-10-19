@@ -1159,8 +1159,16 @@ function createCard(recipe,index) {
 const galleryTitle=document.getElementById('galleryTitle');
 const galleryDescription=galleryTitle.closest('.gallery-head').querySelector('p');
 const exploreDescription=galleryDescription.textContent;
-const exploreEmpty='<div class="gallery-placeholder">A blank contact sheet is an invitation.<br><span>Generate twelve different directions.</span></div>';
-const savedEmpty='<div class="gallery-placeholder">Nothing saved yet.<br><span>Find something you love, then tap the heart.</span></div>';
+// The seven solid colour ribbons are intentionally decorative. They cannot
+// masquerade as generated designs or a tappable gallery item.
+const galleryEmptyRibbon='<div class="gallery-empty-ribbon" aria-hidden="true">'+
+  '<i></i>'.repeat(7)+'</div>';
+const exploreEmpty='<div class="gallery-placeholder">'+galleryEmptyRibbon+
+  '<strong class="gallery-empty-heading">A blank contact sheet is an invitation.</strong>'+
+  '<span>Generate twelve different directions.</span></div>';
+const savedEmpty='<div class="gallery-placeholder">'+galleryEmptyRibbon+
+  '<strong class="gallery-empty-heading">Nothing saved yet.</strong>'+
+  '<span>Find something you love, then tap the heart.</span></div>';
 function setGalleryMode(mode){
   const saved=mode==='saved';
   gallery.dataset.view=saved?'saved':'explore';
