@@ -5,6 +5,7 @@
  * PNG embedded in a test and not the renderer alone.
  */
 import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
 import {readFile,mkdir,writeFile} from 'node:fs/promises';
 import {resolve,join} from 'node:path';
 import {chromium} from 'playwright';
@@ -20,6 +21,24 @@ const fixtures=[
     customPath:[[-.2,.18],[.36,.33],[.67,.61],[1.2,.84]],
     drawnAnchors:[1,2],extendDrawnPath:true,
     stripeWidth:92,spread:45,viewZoom:1.12,viewPanX:5,viewPanY:-5,
+    material:'none',background:'black'
+  })},
+  // These exact foreground-qualified fixtures were first audited by the
+  // direct-renderer world-pixel test. Here we require *real downloaded native*
+  // IDAT pixels to preserve their camera and coloured foreground as well.
+  {name:'radial-pinwheel-native',comparePixels:true,recipe:normalizeRecipe({
+    seed:'a3-pixel-radial',structure:'radial',radialMode:'pinwheel',
+    rayCount:23,rayTwist:39,viewZoom:1.35,viewPanX:-15,viewPanY:5,
+    material:'none',background:'black'
+  })},
+  {name:'regions-voronoi-native',comparePixels:true,recipe:normalizeRecipe({
+    seed:'a3-pixel-voronoi',structure:'regions',regionMode:'voronoi',
+    regionCount:19,regionJitter:53,viewZoom:.8,viewPanX:10,
+    material:'none',background:'black'
+  })},
+  {name:'regions-nested-native',comparePixels:true,recipe:normalizeRecipe({
+    seed:'a3-pixel-nested',structure:'regions',regionMode:'nested',
+    regionCount:13,regionSides:7,viewZoom:.68,viewPanX:15,viewPanY:-10,
     material:'none',background:'black'
   })},
   {name:'nested-layered-interior-native',comparePixels:false,recipe:normalizeRecipe({
@@ -65,7 +84,10 @@ try{
     assert.deepEqual(extractPngRecipe(bytes),fixture.recipe,
       'Actual native PNG dropped or changed source recipe fields');
     const observation={name:fixture.name,filename:name,bytes:bytes.length,
-      dimensions:[OUTPUT_WIDTH,OUTPUT_HEIGHT],embeddedRecipe:true};
+      sha256:createHash('sha256').update(bytes).digest('hex'),
+      dimensions:[OUTPUT_WIDTH,OUTPUT_HEIGHT],embeddedRecipe:true,
+      structure:fixture.recipe.structure,geometry:fixture.recipe.geometry,
+      camera:[fixture.recipe.viewZoom,fixture.recipe.viewPanX,fixture.recipe.viewPanY]};
     // Compare genuine native downloaded pixels against the main-thread
     // preview renderer, not merely preview vs preview. Textured-material cases
     // are validated for nonempty decoded output and metadata, not exact texture
@@ -140,7 +162,7 @@ try{
   }
   assert.deepEqual(errors,[],'Uncaught page errors during actual PNG download');
   await writeFile(join(out,'evidence.json'),JSON.stringify({
-    classification:'behavior-verified for two tested real native browser downloads',
+    classification:'behavior-verified for five actual 19.8MP browser downloads',
     exclusions:['physical Android Chrome','OS file-picker integration',
       'exact texture-pixel equality','all recipe variants','canonical visual review'],
     observations,errors
