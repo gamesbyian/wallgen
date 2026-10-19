@@ -57,20 +57,24 @@ export async function inspectAtlasState(page,ctx,slug,meta={}){
     }
     // Historical material controls inherited a 36px minimum button height
     // inside a 26px rotation row. PR #84 corrected that real clipping.
-    // Guard the actual visible source controls, not only screenshot pixels.
-    if(!mobile&&meta.kind==='tool'&&/^finish[123]$/.test(meta.tool)){
-      const row=g('.editor-tool-card[data-editor-tool="'+meta.tool+'"]:not([hidden]) .texture-rotation-field .rotation-controls');
-      check(!!row,'Material '+meta.tool+' has no rotation control row');
+    // Guard the actual visible source controls on desktop AND mobile, not only screenshot pixels.
+    // Mobile smoke also captures the second, enabled material layer as a
+    // conditional state, so guard its actual Finish 2 control bounds too.
+    const rotationTool=meta.kind==='tool'&&/^finish[123]$/.test(meta.tool)?
+      meta.tool:mobile&&slug==='conditional-material-layers'?'finish2':null;
+    if(rotationTool){
+      const row=g('.editor-tool-card[data-editor-tool="'+rotationTool+'"]:not([hidden]) .texture-rotation-field .rotation-controls');
+      check(!!row,'Material '+rotationTool+' has no rotation control row');
       const frame=row.getBoundingClientRect();
       check(frame.width>150&&frame.height>=20,'Material rotation row is hidden or collapsed');
       const controls=[...row.querySelectorAll('button,input[type=number]')];
-      check(controls.length===6,'Expected five rotation shortcut buttons plus one numeric input in '+meta.tool);
+      check(controls.length===6,'Expected five rotation shortcut buttons plus one numeric input in '+rotationTool);
       const cut=controls.filter(el=>{
         const r=el.getBoundingClientRect();
         return r.top<frame.top-2||r.bottom>frame.bottom+2||
           r.left<frame.left-2||r.right>frame.right+2;
       });
-      check(cut.length===0,'Material '+meta.tool+' rotation controls overflow their row: '+
+      check(cut.length===0,'Material '+rotationTool+' rotation controls overflow their row: '+
         cut.map(el=>el.getAttribute('aria-label')||el.textContent.trim()).join(','));
     }
     if(slug.startsWith('special-gallery-')){
