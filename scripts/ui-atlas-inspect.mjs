@@ -80,11 +80,19 @@ export async function inspectAtlasState(page,ctx,slug,meta={}){
       check(!mobile||root.classList.contains('mobile-tools-open'),'More tray not shown');
     if(slug==='shell-mobile-explore')
       check(!mobile||root.classList.contains('mobile-gallery-open'),'Explore tray not shown');
-    const owner=mobile
-      ? root.classList.contains('mobile-tools-open')?g('#mobileToolsSheet'):
-        root.classList.contains('mobile-gallery-open')?g('.workspace>.gallery-section'):
-        root.classList.contains('mobile-edit-open')?g('#mobileDesignSheet'):g('#mobileActionDock')
-      : g('#mobileDesignSheet');
+    // Screenshot navigation can scroll the *desktop* page into Explore or
+    // metadata. Auditing the editor sidebar in those shots produces hundreds
+    // of false offscreen-action findings. Select the demonstrated surface,
+    // regardless of viewport profile, before testing any control geometry.
+    const galleryShot=slug.startsWith('special-gallery-')||slug==='shell-favorites';
+    const metadataShot=slug.startsWith('special-metadata-')||slug==='shell-metadata';
+    const owner=galleryShot?g('.workspace>.gallery-section'):
+      metadataShot?g(mobile?'#mobileToolsSheet':'.export-metadata'):
+      mobile
+        ? root.classList.contains('mobile-tools-open')?g('#mobileToolsSheet'):
+          root.classList.contains('mobile-gallery-open')?g('.workspace>.gallery-section'):
+          root.classList.contains('mobile-edit-open')?g('#mobileDesignSheet'):g('#mobileActionDock')
+        : g('#mobileDesignSheet');
     const findings=[];
     // The preview rails remain interactive while Edit is open, and live
     // outside the editor tray. Inspect them too, without scanning the hidden
