@@ -109,6 +109,23 @@ export async function inspectAtlasState(page,ctx,slug,meta={}){
       check(shownInShot(g('#imagePathDialog[open]')),'import dialog not visible');
     if(slug.startsWith('special-draw-')&&!slug.includes('drawn-path'))
       check(shownInShot(g('#drawPathPanel:not([hidden])')),'draw path controls not visible');
+    if(slug==='special-view-pan'){
+      check(root.classList.contains('mobile-tools-open'),'View Pan requires the real More tray');
+      const panel=g('.mobile-more-group-body>.viewport-positioner');
+      check(shownInShot(panel),'Camera-only View Pan controls must be visible in mobile tray');
+      check(shownInShot(g('#viewPanStatus')),'Frame Pan status must be visible');
+      check(g('#viewPanStatus')?.textContent.includes((meta.cameraPan>0?'+':'')+meta.cameraPan+'%'),
+        'Pan status does not reflect actual +5% source camera');
+      check([...panel.querySelectorAll('[data-view-pan]')].length===5,
+        'View Pan lost one of its five original action identities');
+      for(const button of panel.querySelectorAll('[data-view-pan]')){
+        check(shownInShot(button),'View Pan control clipped: '+button.dataset.viewPan);
+        check(!!button.getAttribute('aria-label'),'View Pan control missing accessible name');
+      }
+      const recipe=JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get('r')));
+      check(recipe.viewPanX===meta.cameraPan&&recipe.positionX===meta.compositionPosition,
+        'Viewport Pan must change only the source camera, not composition nudge');
+    }
     if(slug==='shell-mobile-more')
       check(!mobile||root.classList.contains('mobile-tools-open'),'More tray not shown');
     if(slug==='shell-mobile-explore')

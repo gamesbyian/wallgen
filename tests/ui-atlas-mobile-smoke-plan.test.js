@@ -17,11 +17,11 @@ test('mobile capture plan retains camera, Focus, complex, cream/dark and navigat
   'tool-paths-material-finish1','tool-paths-details-interior-targets',
   'special-focus-stripe-width','conditional-diagonal',
   'conditional-material-layers','special-dark-theme',
-  'shell-mobile-more','shell-mobile-explore',
+  'shell-mobile-more','shell-mobile-explore','special-view-pan',
   'special-mobile-draw-sketch','special-mobile-draw-refine',
   'special-mobile-draw-anchors'
  ];
  for(const x of expected)assert.ok(MOBILE_ATLAS_SMOKE_STATES.includes(x),'Lost mobile state '+x);
  assert.equal(new Set(MOBILE_ATLAS_SMOKE_STATES).size,MOBILE_ATLAS_SMOKE_STATES.length);
- assert.equal(MOBILE_ATLAS_SMOKE_STATES.length,20);
+ assert.equal(MOBILE_ATLAS_SMOKE_STATES.length,21);
 });

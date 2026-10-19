@@ -217,6 +217,29 @@ export async function captureSpecialStates({page,ctx,capture,navigate,change,set
     await forceClick('#metadataToggle');
     if(ctx.surface.mobile)await page.locator('#mobileToolsClose').click();
   });
+  await attempt('viewport-pan',async()=>{
+    if(!ctx.surface.mobile)return;
+    // Open the actual mobile More surface, rather than force-displaying the
+    // controls. Pan is independent of the preview-rail composition arrows.
+    if(!await page.evaluate(()=>document.body.classList.contains('mobile-tools-open')))
+      await page.locator('#mobileMore').evaluate(el=>el.click());
+    await page.waitForFunction(()=>document.body.classList.contains('mobile-tools-open'));
+    const row=page.locator('.mobile-more-group-body>.viewport-positioner');
+    await row.scrollIntoViewIfNeeded();
+    const snapshot=await page.evaluate(()=>{
+      const r=JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get('r')));
+      return {pan:r.viewPanX,composition:r.positionX};
+    });
+    const base=snapshot.pan;
+    await row.locator('[data-view-pan=right]').click();
+    await page.waitForFunction(x=>JSON.parse(decodeURIComponent(
+      new URLSearchParams(location.search).get('r'))).viewPanX===x+5,base);
+    await snap('view-pan',{cameraPan:base+5,compositionPosition:snapshot.composition});
+    await row.locator('[data-view-pan=reset]').click();
+    await page.waitForFunction(()=>JSON.parse(decodeURIComponent(
+      new URLSearchParams(location.search).get('r'))).viewPanX===0);
+    await page.locator('#mobileToolsClose').click();
+  });
   await attempt('mobile-rails',async()=>{
     if(!ctx.surface.mobile)return;
     await clickIfVisible(page,'#mobileEdit');

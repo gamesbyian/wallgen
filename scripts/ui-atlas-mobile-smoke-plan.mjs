@@ -12,7 +12,7 @@ export const MOBILE_ATLAS_SMOKE_STATES=Object.freeze([
   ...MOBILE_ATLAS_SMOKE_TOOLS.map(({category,tool})=>'tool-paths-'+category+'-'+tool),
   'special-focus-stripe-width','special-focus-no-range','conditional-diagonal',
   'conditional-material-layers','special-dark-theme',
-  'shell-mobile-more','shell-mobile-explore',
+  'shell-mobile-more','shell-mobile-explore','special-view-pan',
   'special-mobile-draw-sketch','special-mobile-draw-refine',
   'special-mobile-draw-anchors'
 ]);

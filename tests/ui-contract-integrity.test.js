@@ -64,7 +64,7 @@ test('camera zoom, composition nudge and future viewport pan remain distinct',()
   for(const id of ['CAM-ZOOM','COMPOSE-NUDGE','CAM-PAN-NEW','CAM-FIT']){
     assert.ok(req.has(id),id);
   }
-  assert.match(req.get('CAM-PAN-NEW').status,/implemented in PR #143/);
+  assert.match(req.get('CAM-PAN-NEW').status,/merged PR #143/);
   assert.equal(req.get('CAM-PAN-NEW').kind,'behavior');
   assert.ok(req.get('CAM-PAN-NEW').proof.includes('tests/verify-export-geometry.mjs'));
   assert.ok(base.staticIds.includes('viewPanStatus'));
