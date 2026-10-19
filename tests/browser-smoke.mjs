@@ -870,6 +870,10 @@ try{
   await evaluate('document.getElementById("tab-material").click()');
   await evaluate('document.querySelector("[data-editor-tool=layer2]").click()');
   assert.ok(await evaluate('document.querySelector("[name=material2]").disabled===false'));
+  await evaluate('(()=>{const f=document.querySelector("[name=material2]");f.value="none";f.dispatchEvent(new Event("change",{bubbles:true}))})()');
+  await waitFor('document.querySelector("[data-editor-tool=layer2]").dataset.materialState==="off"');
+  const finish2Off=await evaluate('(()=>{const n=document.querySelector("[data-editor-tool=finish2] .material-finish-help");return {hidden:n.hidden,text:n.textContent}})()');
+  assert.ok(!finish2Off.hidden&&finish2Off.text.includes('Choose a texture in Layer 2'));
   await evaluate('(()=>{const el=document.querySelector("[name=material2]");el.value="linen";el.dispatchEvent(new Event("change",{bubbles:true}))})()');
   await waitFor('document.getElementById("textureLayer2Enabled").checked===true');
   assert.ok(await evaluate('document.querySelector("#panel-material .editor-tool-card:not([hidden]) [name=material2]")!==null'));
@@ -879,12 +883,16 @@ try{
   const layer2Status=await evaluate('(()=>{const b=document.querySelector("[data-editor-tool=layer2]");return {state:b.dataset.materialState,label:b.getAttribute("aria-label"),title:b.title}})()');
   assert.equal(layer2Status.label,'Layer 2: Texture selected');
   assert.equal(layer2Status.title,layer2Status.label);
+  assert.ok(await evaluate('document.querySelector("[data-editor-tool=finish2] .material-finish-help").hidden'),
+    'Finish 2 explanation must disappear when a real texture activates the layer');
   await evaluate('(()=>{const f=document.querySelector("[name=material3]");f.value="foil";f.dispatchEvent(new Event("change",{bubbles:true}))})()');
   await waitFor('document.querySelector("[data-editor-tool=layer3]").dataset.materialState==="on"');
   await evaluate('(()=>{const f=document.querySelector("[name=textureStrength3]");f.value="0";f.dispatchEvent(new Event("change",{bubbles:true}))})()');
   await waitFor('document.querySelector("[data-editor-tool=layer3]").dataset.materialState==="zero"');
   const layer3Zero=await evaluate('document.querySelector("[data-editor-tool=layer3]").getAttribute("aria-label")');
   assert.equal(layer3Zero,'Layer 3: Strength 0%');
+  const finish3Zero=await evaluate('(()=>{const n=document.querySelector("[data-editor-tool=finish3] .material-finish-help");return {hidden:n.hidden,text:n.textContent}})()');
+  assert.ok(!finish3Zero.hidden&&finish3Zero.text.includes('0% strength'));
   await evaluate('(()=>{const f=document.querySelector("[name=material3]");f.value="none";f.dispatchEvent(new Event("change",{bubbles:true}))})()');
   await waitFor('document.querySelector("[data-editor-tool=layer3]").dataset.materialState==="off"');
   console.log('MATERIAL_SOURCE_STATUS_STATES',JSON.stringify({layer2Status,layer3Zero}));

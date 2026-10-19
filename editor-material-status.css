@@ -22,3 +22,18 @@
 @media(prefers-reduced-motion:reduce){
   .editor-tool-chooser .editor-tool-tab[data-material-state]{transition:none}
 }
+
+/* Finish tabs expose conditional settings, but a texture set to None (or
+   strength 0) intentionally disables its controls. Show the reason in the
+   real tool card rather than inventing an alternate material switch. */
+.editor-tool-card>.material-finish-help{
+  display:block;margin:1px 0 5px;padding:5px 7px;
+  border-left:3px solid #9d89bb;border-radius:5px;
+  background:var(--surface);color:var(--muted);
+  font-size:10px;line-height:1.35;
+  white-space:normal;flex:0 0 auto;
+}
+.editor-tool-card>.material-finish-help[hidden]{display:none!important}
+@media(min-width:500px){
+  .editor-tool-card>.material-finish-help{font-size:11px}
+}
