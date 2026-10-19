@@ -50,7 +50,7 @@
       "dark"
     ],
     "noDedicatedCanvasHeader": true,
-    "cameraSemantics": "CURRENT: Zoom changes the serialised recipe.viewZoom only (camera framing, shared preview/export); composition nudges change recipe.positionX/Y. PROPOSED: viewport-only Pan is a distinct unimplemented action and must not impersonate composition nudge.",
+    "cameraSemantics": "Zoom changes serialized recipe.viewZoom; Move composition changes recipe.positionX/Y and translates final ink; separate Move view frame changes recipe.viewPanX/Y and shifts the true render camera only. Both preview and export use the same world camera.",
     "sliderSemantics": "stable distinct ROYGBIV accents in each panel; includes blue",
     "touch": "meet WCAG target min or exception; aim for 40-48px for primary phone controls",
     "sourceCategories": [
@@ -431,7 +431,7 @@
       "mobileDownload": "Original PNG source action beside artwork and edit rail, no redirect to More.",
       "mobileFavorite": "Original favourite source action beside artwork and edit rail, separate from Saved."
     },
-    "cameraZoomState": "viewZoom is a camera-specific field persisted as part of the recipe, unlike other generator settings; zoom affects export framing by design.",
+    "cameraZoomState": "viewZoom, viewPanX and viewPanY are camera-specific fields persisted as part of the normalized recipe and embedded in PNG metadata; Fit restores 100% zoom with centered pan without touching composition nudge.",
     "panStatus": "A separately implemented viewport-only Pan is not yet available; existing arrows move the actual composition.",
     "fitStatus": "Fit is planned as a viewZoom=1 action in mobile canvas rail.",
     "previousDockControls": [
@@ -470,7 +470,7 @@
         "Canonical app icon beside R.O.Y.G.B.I.V.",
         "Cream and black theme circles",
         "Entire uncut wallpaper frame",
-        "A distinct viewport Pan affordance only if separately implemented; currently composition nudge is available",
+        "Viewport Pan must have a distinct entry in More; side composition nudge must retain its own source handlers",
         "Side Zoom + and Zoom −",
         "Side Fit / full frame",
         "Directional nudge or recenter",
@@ -651,7 +651,8 @@
         "Editable image metadata fields",
         "Remember / clear metadata",
         "Accessible global status notifications",
-        "Bottom navigation"
+        "Bottom navigation",
+        "Independent Move view frame Pan controls and centered status, distinct from composition position"
       ],
       "conditional": [
         "Metadata expanded and collapsed views",

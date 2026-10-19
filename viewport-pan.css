@@ -1,0 +1,41 @@
+/* Viewport-only reframing, deliberately distinct from composition nudge.
+   The same native SVG arrows are used, but never the data-nudge handlers. */
+.viewport-positioner{
+  border-left:3px solid #478cbf;
+  background:#17212d;
+}
+.viewport-positioner .positioner-description{
+  padding-right:0;
+}
+.viewport-positioner .positioner-description strong{
+  color:#ccecff;
+}
+#viewPanStatus{
+  color:#abd8f7;font:11px ui-monospace,monospace;
+}
+.viewport-positioner [data-view-pan]:disabled{
+  opacity:.38;cursor:default;
+}
+html[data-theme="cream"] .viewport-positioner{
+  background:#f1f6fa;color:#29374c;border-color:#bad3e8;
+  border-left-color:#3988bc;
+}
+html[data-theme="cream"] .viewport-positioner .positioner-description strong,
+html[data-theme="cream"] #viewPanStatus{color:#264b68}
+html[data-theme="cream"] .viewport-positioner .positioner-description>span{color:#516477}
+@media(max-width:790px){
+  body.mobile-studio .mobile-more-group-body>.viewport-positioner{
+    width:100%;min-width:0;max-width:100%;
+    display:flex!important;flex-direction:column;gap:7px;margin:0;
+    padding:9px;
+  }
+  body.mobile-studio #viewPanStatus{font-size:10px}
+  body.mobile-studio .viewport-positioner .view-pan-pad{
+    grid-template-rows:36px;
+    width:min(100%,240px);
+    gap:5px;margin:0;
+  }
+  body.mobile-studio .viewport-positioner .view-pan-pad button{
+    min-height:36px;
+  }
+}

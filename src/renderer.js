@@ -1037,12 +1037,16 @@ export function drawRegionObjects(ctx,scene){
 
 export function drawWallpaper(canvas, recipe, options={}) {
   const scene=resolveScene(recipe);
-  const camera=viewCamera(canvas.width,canvas.height,scene.viewZoom);
+  const camera=viewCamera(canvas.width,canvas.height,scene.viewZoom,
+    {panX:scene.viewPanX,panY:scene.viewPanY});
   scene.viewBounds=camera.viewBounds;
   // The domain extends beyond the old frame at zoom-out, so fresh ribbon
   // geometry is painted where a 100%-cropped bitmap contained no pixels.
   scene.coreExtent=scene.extent;
   if(camera.zoom<1)scene.extent/=camera.zoom;
+  // Reframing must expose original world ink beyond either edge, especially
+  // an extended drawn path. Do not use a translated already-clipped frame.
+  scene.extent+=Math.hypot(camera.shiftX,camera.shiftY);
   // The physical reach covers zoom-out corners and the 30% cache overhang.
   // Floating compositions and closed silhouettes deliberately keep their caps.
   const extendOpenPath=scene.geometry==='drawn'&&scene.extendDrawnPath&&

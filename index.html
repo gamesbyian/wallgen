@@ -30,6 +30,7 @@
   <link rel="stylesheet" href="type-system.css?v=20261018-type6">
   <link rel="stylesheet" href="ui-audit-fixes.css?v=20261019-motion1">
   <link rel="stylesheet" href="editor-focus.css?v=20261019-viewport1">
+  <link rel="stylesheet" href="viewport-pan.css?v=20261019-framing1">
   <link rel="stylesheet" href="mobile-more-groups.css?v=20261018-more1">
   <link rel="stylesheet" href="editor-setting-rows.css?v=20261019-rotationlabel1">
   <link rel="stylesheet" href="editor-material-status.css?v=20261019-help1">
@@ -285,6 +286,20 @@
           <button type="button" class="nudge-button nudge-down" data-nudge="down" aria-label="Move composition down" title="Move down"><img class="ui-icon" src="assets/icons/roygbiv/arrow-down.svg" alt="" aria-hidden="true" draggable="false"></button>
         </div>
       </div>
+      <section class="composition-positioner viewport-positioner" aria-label="Reframe wallpaper viewport">
+        <div class="positioner-description">
+          <strong>MOVE VIEW FRAME</strong>
+          <span>Reframe the wallpaper without shifting the rainbow artwork</span>
+          <output id="viewPanStatus" aria-live="polite">Centered frame</output>
+        </div>
+        <div class="nudge-pad nudge-pad-inline view-pan-pad" role="group" aria-label="Pan viewport in world coordinates">
+          <button type="button" class="nudge-button nudge-up" data-view-pan="up" aria-label="Pan viewport up" title="View content above"><img class="ui-icon" src="assets/icons/roygbiv/arrow-up.svg" alt="" aria-hidden="true" draggable="false"></button>
+          <button type="button" class="nudge-button nudge-left" data-view-pan="left" aria-label="Pan viewport left" title="View content left"><img class="ui-icon" src="assets/icons/roygbiv/arrow-left.svg" alt="" aria-hidden="true" draggable="false"></button>
+          <button type="button" class="nudge-button nudge-reset" data-view-pan="reset" aria-label="Center viewport pan" title="Center view frame"><img class="ui-icon" src="assets/icons/roygbiv/recenter.svg" alt="" aria-hidden="true" draggable="false"></button>
+          <button type="button" class="nudge-button nudge-right" data-view-pan="right" aria-label="Pan viewport right" title="View content right"><img class="ui-icon" src="assets/icons/roygbiv/arrow-right.svg" alt="" aria-hidden="true" draggable="false"></button>
+          <button type="button" class="nudge-button nudge-down" data-view-pan="down" aria-label="Pan viewport down" title="View content below"><img class="ui-icon" src="assets/icons/roygbiv/arrow-down.svg" alt="" aria-hidden="true" draggable="false"></button>
+        </div>
+      </section>
       <div class="studio-stage">
         <div class="stage-inner">
           <div class="wallpaper-frame"><div class="wallpaper-surface">

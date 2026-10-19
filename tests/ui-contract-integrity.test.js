@@ -55,7 +55,7 @@ test('source controls remain traced and required interactions are protected',()=
   const necessary=['mobileEdit','mobileExplore','mobileShuffle','mobileFavorite','mobileDownload','mobileMore',
     'drawApply','drawCancel','drawSmoothingStrength','drawExtendPath','drawEditPoints',
     'drawAddPoint','drawDeletePoint','drawCornerPoint','drawResmoothPoints',
-    'metadataToggle','metadataRemember','metadataClear','downloadRecipe','importRecipePNG'];
+    'metadataToggle','metadataRemember','metadataClear','downloadRecipe','importRecipePNG','viewPanStatus'];
   for(const id of necessary)assert.ok(listed.has(id),'Feature dropped without deliberate deprecation: '+id);
 });
 
@@ -64,7 +64,11 @@ test('camera zoom, composition nudge and future viewport pan remain distinct',()
   for(const id of ['CAM-ZOOM','COMPOSE-NUDGE','CAM-PAN-NEW','CAM-FIT']){
     assert.ok(req.has(id),id);
   }
-  assert.match(req.get('CAM-PAN-NEW').status,/NOT implemented/);
+  assert.match(req.get('CAM-PAN-NEW').status,/implemented in PR #143/);
+  assert.equal(req.get('CAM-PAN-NEW').kind,'behavior');
+  assert.ok(req.get('CAM-PAN-NEW').proof.includes('tests/verify-export-geometry.mjs'));
+  assert.ok(base.staticIds.includes('viewPanStatus'));
+  assert.ok(spec.global.cameraSemantics.includes('viewPanX/Y'));
   assert.match(spec.global.cameraSemantics,/positionX\/Y/);
   assert.match(spec.global.cameraZoomState,/viewZoom/);
   const camera=read('src/mobile-preview-tools.js');

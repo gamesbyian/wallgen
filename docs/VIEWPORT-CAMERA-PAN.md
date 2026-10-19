@@ -1,0 +1,26 @@
+# Independent viewport Pan and composition move
+
+**Status:** implementation under qualification (2026-10-19). This is an explicit redesign distinction, not an alias for the old nudge.
+
+## Two different operations
+
+**Move composition** (positionX, positionY, ±30%, source data-nudge) translates the final coloured ink relative to the wallpaper frame. It is the existing, independently lockable action. Its original controls, ±1 percentage-point increments and reset remain unchanged.
+
+**Move view frame** (viewPanX, viewPanY, ±50%, new data-view-pan) moves the virtual camera through logical world coordinates, without changing the generated path, stripe layout, source objects or composition translation. Positive X looks farther right, sliding the image left; positive Y looks farther down. Buttons step by 5 percentage points and have a separate recenter control.
+
+Both frame coordinates are percentages of the canonical 600×1300 logical design. They are stored in normalized version-2 recipes with one decimal place and pass through share links, JSON, history, favourites and embedded PNG metadata. No browser zoom, CSS transformation of clipped pixels, or unsaved viewport state is involved. Default is centered (0,0). Zoom remains 0.5–2.5. Fit restores zoom=1 and pan=(0,0), preserving composition position.
+
+## Implementation guarantees
+
+The viewCamera(width,height,zoom,{panX,panY}) world transform is used for preview and native export. The renderer expands world extent for pan/zoom instead of recycling clipped preview ink. Preview worker, main-thread fallback, thumbnails and full-resolution export share the same source function. Camera edits invalidate cached artwork, while composition nudges may reuse cached ink.
+
+A source-backed Move view frame row appears below composition positioning on desktop and under More → Position & design details on mobile. Its five controls and live status are independent of the original nudge controls. The side-rail Zoom+/− and Fit remain directly accessible.
+
+## Qualification
+
+- tests/view-camera.test.js: preview/export invariance, bounds/clamps, roundtrip and scene invariants.
+- tests/viewport-pan-contract.test.js: separate handlers, source controls and Fit/randomize semantics.
+- tests/browser-smoke.mjs: actual mobile More pan-right action, field-diff check and recenter, plus original nudge assertions.
+- Headless workflow: same wave recipe at 600×1300 and 3024×6552, zoomed out and panned on both axes; compare embedded normalized recipe and stable coloured interior pixels.
+
+This is discrete button-driven pan, not drag-to-pan. Moving the viewing frame past a finite authored ribbon may legitimately expose background. Additional structure-specific export pixel comparisons remain future acceptance work.

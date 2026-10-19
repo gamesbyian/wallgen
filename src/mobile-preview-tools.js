@@ -65,7 +65,7 @@ zoomFit.dataset.zoom='fit';zoomFit.innerHTML=iconMarkup('fit-canvas');
 zoomFit.setAttribute('aria-label','Fit entire wallpaper (100% framing)');
 zoomFit.title='Fit whole wallpaper at 100%';
 zoomFit.addEventListener('click',()=>
-  stage.dispatchEvent(new CustomEvent('roygbiv-view-zoom-request',{detail:1})));
+  stage.dispatchEvent(new CustomEvent('roygbiv-view-fit-request')));
 const zoomValue=document.createElement('output');
 zoomValue.className='mobile-zoom-level';
 zoomValue.setAttribute('aria-live','off');
@@ -78,7 +78,8 @@ function setZoom(next){
   stage.style.setProperty('--mobile-preview-zoom',String(zoom));
   zoomValue.textContent=Math.round(zoom*100)+'%';
   zoomIn.disabled=zoom>=2.5;zoomOut.disabled=zoom<=.5;
-  zoomFit.disabled=Math.abs(zoom-1)<.001;
+  zoomFit.disabled=Math.abs(zoom-1)<.001&&
+    Number(stage.dataset.viewPanX||0)===0&&Number(stage.dataset.viewPanY||0)===0;
   stage.dispatchEvent(new Event('roygbiv-preview-zoom'));
 }
 zoomIn.addEventListener('click',()=>
