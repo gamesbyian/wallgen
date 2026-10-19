@@ -1779,7 +1779,8 @@ try{
     const thumb=document.querySelector('#gallery .thumb');
     return {mode:document.getElementById('gallery').dataset.view,
       count:document.querySelectorAll('#gallery .thumb').length,
-      caption:thumb?.textContent};
+      caption:thumb?.textContent,
+      seeds:[...document.querySelectorAll('#gallery .thumb')].map(card=>card.dataset.recipeSeed)};
   })()`);
   await evaluate('document.getElementById("mobileSaved").click()');
   await waitFor('document.getElementById("gallery").dataset.view==="saved"');
@@ -1789,7 +1790,8 @@ try{
     const thumb=document.querySelector('#gallery .thumb');
     return {mode:document.getElementById('gallery').dataset.view,
       count:document.querySelectorAll('#gallery .thumb').length,
-      caption:thumb?.textContent};
+      caption:thumb?.textContent,
+      seeds:[...document.querySelectorAll('#gallery .thumb')].map(card=>card.dataset.recipeSeed)};
   })()`);
   assert.deepEqual(returnedExplore,firstExplore,
     'Saved visits must preserve the previous Explore contact sheet');
