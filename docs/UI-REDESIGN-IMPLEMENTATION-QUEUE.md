@@ -59,7 +59,8 @@
 - [x] Fix the matching 10px clipping on compact Pixel 6 Pro material rotation buttons. The new 17-state mobile atlas exposed this separately; assert source button bounds on both desktop and mobile (PR #91).
 - [x] Lock down actual desktop Material Finish button bounds as a CI-enforced atlas invariant (PR #86).
 - [ ] Preserve all three material layers, coverage, strength/scale/rotation shortcuts (−90,−1,value,+1,+90) through the complete redesign.
-- [x] Give the three existing material chooser chips source-backed Off / Automatic / Active / 0% status without changing input identity or navigation geometry (PR pending).
+- [x] Give the three existing material chooser chips source-backed Off / Automatic / Active / 0% status without changing input identity or navigation geometry (PR #113).
+- [x] Explain inactive Finish 1–3 settings inside their real editor cards, distinguishing no texture from zero strength, with no substitute input (PR pending).
 - [ ] Preserve dynamic interior element stack, ink selection, colours, placement, locking, reordering.
 - [x] Implement opt-in single Focus slider prototype backed by existing original range inputs; default All controls preserved (PR #87).
 - [ ] A/B evaluate Focus versus full inspector on Path, Material and Colour workflows, especially locked/disabled states; do not change default without user testing.
