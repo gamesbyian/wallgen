@@ -7,6 +7,7 @@ export function findEditorToolMatch(query,toolList,{applies=()=>true,labelFor=ke
   if(!term)return null;
   return toolList.find(tool=>applies(tool)&&(
     tool.name.toLowerCase().includes(term)||
-    tool.settings.some(key=>String(labelFor(key)||key).toLowerCase().includes(term))
+    tool.settings.some(key=>String(key).toLowerCase().includes(term)||
+      String(labelFor(key)||key).toLowerCase().includes(term))
   ))||null;
 }
