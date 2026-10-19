@@ -64,7 +64,7 @@ export async function inspectAtlasState(page,ctx,slug,meta={}){
       const frame=row.getBoundingClientRect();
       check(frame.width>150&&frame.height>=20,'Material rotation row is hidden or collapsed');
       const controls=[...row.querySelectorAll('button,input[type=number]')];
-      check(controls.length>=7,'Incomplete material rotation shortcuts in '+meta.tool);
+      check(controls.length===6,'Expected five rotation shortcut buttons plus one numeric input in '+meta.tool);
       const cut=controls.filter(el=>{
         const r=el.getBoundingClientRect();
         return r.top<frame.top-2||r.bottom>frame.bottom+2||
