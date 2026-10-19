@@ -4,7 +4,9 @@
  */
 export function focusEligible(field){
   if(!field||field.tagName!=='INPUT'||field.type!=='range'||!field.name)return false;
-  return !field.closest('[hidden]')&&!field.disabled;
+  // Include disabled/inactive sliders as *explained* chips; only the shared
+  // adjustment itself becomes disabled. Otherwise Focus silently omits state.
+  return !field.closest('[hidden]');
 }
 export function adjustedValue(field,delta){
   const min=Number(field.min),max=Number(field.max),step=Number(field.step)||1;

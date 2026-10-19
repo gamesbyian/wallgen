@@ -5,7 +5,7 @@ const field=(value='40',min='0',max='100',step='1')=>({tagName:'INPUT',type:'ran
  name:'stripeWidth',value,min,max,step,disabled:false,closest:()=>null});
 test('only actual available named range controls qualify; no proxy recipe keys',()=>{
  assert.equal(focusEligible(field()),true);
- assert.equal(focusEligible({...field(),disabled:true}),false);
+ assert.equal(focusEligible({...field(),disabled:true}),true);
  assert.equal(focusEligible({...field(),type:'checkbox'}),false);
  assert.equal(focusEligible({...field(),name:''}),false);
  assert.equal(focusEligible({...field(),closest:()=>({hidden:true})}),false);

@@ -285,7 +285,12 @@ export function selectEditorTool(category,tool,{source='manual'}={}){
   if(source==='search'||source==='keyboard'){
     const rail=chooser.getBoundingClientRect();
     const chip=selected.chip.getBoundingClientRect();
-    const left=rail.left+10,right=rail.right-10;
+    // An optional sticky Focus chip takes genuine left-side space. Search
+    // navigation must reveal the selected tool *beside* it, not underneath.
+    const pinned=chooser.querySelector('.editor-focus-toggle');
+    const pinnedWidth=pinned&&getComputedStyle(pinned).display!=='none'?
+      pinned.getBoundingClientRect().width:0;
+    const left=rail.left+pinnedWidth+10,right=rail.right-10;
     if(chip.left<left)chooser.scrollLeft+=chip.left-left;
     else if(chip.right>right)chooser.scrollLeft+=chip.right-right;
   }

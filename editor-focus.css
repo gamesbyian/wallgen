@@ -43,3 +43,5 @@
  body.mobile-studio.mobile-edit-open:has(#controls.editor-focus-active){
    --mobile-tray-height:clamp(250px,29dvh,275px)!important}
 }
+
+html[data-theme="dark"] .editor-focus-all{background:#51374f;color:#fff;border-color:#8f6b8b}
