@@ -74,7 +74,7 @@ export async function inspectAtlasState(page,ctx,slug,meta={}){
         return r.top<frame.top-2||r.bottom>frame.bottom+2||
           r.left<frame.left-2||r.right>frame.right+2;
       });
-      check(cut.length===0,'Material '+meta.tool+' rotation controls overflow their row: '+
+      check(cut.length===0,'Material '+rotationTool+' rotation controls overflow their row: '+
         cut.map(el=>el.getAttribute('aria-label')||el.textContent.trim()).join(','));
     }
     if(slug.startsWith('special-gallery-')){
