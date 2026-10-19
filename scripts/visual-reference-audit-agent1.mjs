@@ -93,6 +93,22 @@ const scenarios={
         empty:!!section.querySelector('.gallery-placeholder')};
     });
     if(!state.empty&&!state.thumbs)throw Error('Explore gallery has neither thumbnails nor empty guidance');
+    // This short gallery intentionally preserves some canvas above it;
+    // don't let the decorative seven-bar ribbon hide the actionable guidance
+    // behind the grid's overflow-y:hidden clipping rectangle.
+    if(profile.width<=790&&profile.height<=670&&state.empty){
+      const legibility=await page.evaluate(()=>{
+        const clip=document.querySelector('#gallery').getBoundingClientRect();
+        const heading=document.querySelector('#gallery .gallery-empty-heading')?.getBoundingClientRect();
+        const hint=document.querySelector('#gallery .gallery-placeholder>span')?.getBoundingClientRect();
+        return {clipTop:clip.top,clipBottom:clip.bottom,headingTop:heading?.top,
+          headingBottom:heading?.bottom,hintTop:hint?.top,hintBottom:hint?.bottom};
+      });
+      if(legibility.headingTop==null||legibility.hintTop==null||
+          legibility.headingTop<legibility.clipTop-1||
+          legibility.hintBottom>legibility.clipBottom+1)
+        throw Error('Short-screen gallery empty guidance clipped: '+JSON.stringify(legibility));
+    }
   },
   more:async(page,profile)=>{
     if(profile.width<=790){
