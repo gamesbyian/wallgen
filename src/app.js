@@ -96,6 +96,7 @@ function artKey(recipe){
 }
 let noticeTimer = 0;
 let galleryRequestId = 0;
+let explorationRecipes = null; // Last contact sheet is retained across Saved visits.
 let favorites = readFavorites();
 const undoStack=[];
 const UNDO_LIMIT=80;
@@ -1138,25 +1139,66 @@ function createCard(recipe,index) {
     console.warn('ROYGBIV gallery thumbnail failed:',error));
   return card;
 }
+const galleryTitle=document.getElementById('galleryTitle');
+const galleryDescription=galleryTitle.closest('.gallery-head').querySelector('p');
+const exploreDescription=galleryDescription.textContent;
+const exploreEmpty='<div class="gallery-placeholder">A blank contact sheet is an invitation.<br><span>Generate twelve different directions.</span></div>';
+const savedEmpty='<div class="gallery-placeholder">Nothing saved yet.<br><span>Find something you love, then tap the heart.</span></div>';
+function setGalleryMode(mode){
+  const saved=mode==='saved';
+  gallery.dataset.view=saved?'saved':'explore';
+  galleryTitle.textContent=saved?'Saved wallpapers':'Explore variations';
+  galleryDescription.textContent=saved
+    ?'Your favourites stay here while you explore new variations.'
+    :exploreDescription;
+  document.dispatchEvent(new CustomEvent('roygbiv-gallery-mode-changed',{
+    detail:{mode:gallery.dataset.view}
+  }));
+}
 async function showGallery(recipes,button){
   const requestId=++galleryRequestId;
   gallery.replaceChildren();
-  if(!recipes.length){gallery.innerHTML='<div class="gallery-placeholder">Nothing saved yet.<br><span>Find something you love, then tap the heart.</span></div>';return;}
+  if(!recipes.length){
+    gallery.innerHTML=gallery.dataset.view==='saved'?savedEmpty:exploreEmpty;
+    gallery.removeAttribute('aria-busy');
+    return;
+  }
+  gallery.setAttribute('aria-busy','true');
   if(button)setBusy(button,true,'Generating…');
   try {
     for(let i=0;i<recipes.length;i++){
       if(requestId!==galleryRequestId)break;
       await new Promise(resolve=>requestAnimationFrame(resolve));
+      if(requestId!==galleryRequestId)break;
       gallery.append(createCard(recipes[i],i));
     }
-  }finally{if(button)setBusy(button,false);}
+  }finally{
+    if(requestId===galleryRequestId)gallery.removeAttribute('aria-busy');
+    if(button)setBusy(button,false);
+  }
+}
+function showExplore(){
+  setGalleryMode('explore');
+  if(explorationRecipes)return showGallery(explorationRecipes);
+  ++galleryRequestId; // Invalidate any pending Saved thumbnail render.
+  gallery.removeAttribute('aria-busy');
+  gallery.innerHTML=exploreEmpty;
+}
+function showSaved(){
+  setGalleryMode('saved');
+  return showGallery(favorites,document.getElementById('showFavorites'));
 }
 document.getElementById('batch').addEventListener('click',async()=>{
   const base=fromControls();
-  const recipes=Array.from({length:12},()=>normalizeRecipe({...base,seed:newSeed()}));
-  await showGallery(recipes,document.getElementById('batch'));
+  explorationRecipes=Array.from({length:12},()=>normalizeRecipe({...base,seed:newSeed()}));
+  setGalleryMode('explore');
+  await showGallery(explorationRecipes,document.getElementById('batch'));
 });
-document.getElementById('showFavorites').addEventListener('click',()=>showGallery(favorites,document.getElementById('showFavorites')));
+document.getElementById('showFavorites').addEventListener('click',showSaved);
+document.addEventListener('roygbiv-gallery-view-request',event=>{
+  if(event.detail==='explore')showExplore();
+  else if(event.detail==='saved')showSaved();
+});
 
 const query=new URLSearchParams(location.search).get('r');
 const loaded=query?decodeRecipe(query):null;
