@@ -6,7 +6,7 @@ import { installDrawTool } from './draw-path-ui.js?v=20261018-extend1';
 import { installImagePathTool } from './image-path-ui.js?v=20261018-import1';
 import {mountEditor,selectEditorTool,syncEditorStructure} from './editor-layout.js?v=20261018-icons2';
 import {randomizeScope} from './scoped-random.js';
-import {newInteriorElementId} from './interior-elements.js';
+import {newInteriorElementId,INTERIOR_LIMITS} from './interior-elements.js';
 import {STYLE_PRESETS} from './editor-schema.js?v=20261018-icons2';
 import {installExplorationHistory} from './exploration-history.js';
 import {iconMarkup,setIconSource,hydrateStaticIcons} from './ui-icons.js';
@@ -940,11 +940,17 @@ function syncInteriorUI(){
   customPicker.addEventListener('change',()=>update('customColor',customPicker.value));
   const amplitude=range(interiorCards['interior-motion'],'Amplitude',
     'amplitude',0,.45,.01);
+  // Native range inputs clamp assigned values to their min/max. Match the
+  // normalizer so importing a valid 100-cycle field or ±360° phase cannot
+  // silently display a different value or truncate it on interaction.
+  const frequencyRange=active.placement==='contour'?
+    INTERIOR_LIMITS.contourFrequency:INTERIOR_LIMITS.fieldFrequency;
   const frequency=range(interiorCards['interior-motion'],
     active.placement==='contour'?'Cycles':'Frequency',
-    'frequency',active.placement==='contour'?1:.1,30,
-    active.placement==='contour'?1:.1);
-  const phase=range(interiorCards['interior-motion'],'Phase','phase',-180,180,1);
+    'frequency',frequencyRange.min,frequencyRange.max,frequencyRange.step);
+  const phaseRange=INTERIOR_LIMITS.phase;
+  const phase=range(interiorCards['interior-motion'],'Phase','phase',
+    phaseRange.min,phaseRange.max,phaseRange.step);
   // A straight stroke has no oscillation. Disable its dormant controls,
   // but retain frequency for canvas fields, where it controls line spacing.
   const oscillates=active.shape!=='straight';
