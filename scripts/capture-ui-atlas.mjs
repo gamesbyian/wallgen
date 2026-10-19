@@ -230,6 +230,11 @@ async function exerciseMobileSmoke(page,ctx){
   await page.locator('.editor-focus-chip[data-focus-key=stripeWidth]').click();
   await capture(page,ctx,'special-focus-stripe-width',
     {kind:'special',focusSetting:'stripeWidth'});
+  // When a tool has no range settings, preserve the helpful explanation
+  // and the explicit escape back to all original controls.
+  await page.locator('#tab-colour').evaluate(el=>el.click());
+  await page.locator('.editor-tool-tab[data-editor-tool=rainbow]').evaluate(el=>el.click());
+  await capture(page,ctx,'special-focus-no-range',{kind:'special'});
   await page.locator('.editor-focus-all').click();
   await change(page,'orientation','diagonal');
   await navigate(page,'layout','direction');
