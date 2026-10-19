@@ -5,6 +5,7 @@ import { embedPngMetadata, extractPngRecipe, cleanMetadata, METADATA_FIELDS } fr
 import { installDrawTool } from './draw-path-ui.js?v=20261018-extend1';
 import {appliedDrawnPathRecipe} from './draw-apply-transaction.js';
 import { installImagePathTool } from './image-path-ui.js?v=20261018-import1';
+import {importedAngleDeltaDegrees} from './import-angle-wrap.js';
 import {pathStructureLockedOutsidePaths} from './path-authoring-locks.js';
 import {mountEditor,selectEditorTool,syncEditorStructure} from './editor-layout.js?v=20261018-icons2';
 import {randomizeScope} from './scoped-random.js';
@@ -486,7 +487,8 @@ const imagePathTool=installImagePathTool({
     const geometry=base.geometry==='drawn'?'straight':base.geometry;
     const trial=normalizeRecipe({...base,geometry,orientation:'diagonal',diagonalRotation:0});
     const baseline=resolveScene(trial).angle*180/Math.PI;
-    changeRecipe({...base,structure:'paths',geometry,orientation:'diagonal',diagonalRotation:angle-baseline});
+    changeRecipe({...base,structure:'paths',geometry,orientation:'diagonal',
+      diagonalRotation:importedAngleDeltaDegrees(angle,baseline)});
     showNotice('Detected '+angle+'° line direction applied. Undo restores the previous angle.');
     return true;
   },
