@@ -1681,7 +1681,34 @@ try{
   await evaluate('document.getElementById("mobileMore").click()');
   await delay(180);
   await captureUI('five-nav-more-412x892');
+  // Compare a genuinely rendered second palette, not a recoloured mockup.
+  await evaluate('document.querySelector("[data-studio-theme=dark]").click()');
   await evaluate('document.getElementById("mobileStudio").click()');
+  await delay(180);
+  await captureUI('five-nav-studio-dark-412x892');
+  await evaluate('document.getElementById("mobileSaved").click()');
+  await delay(180);
+  await captureUI('five-nav-saved-dark-412x892');
+  assert.equal(await evaluate('document.documentElement.dataset.theme'),'dark');
+  await evaluate('document.querySelector("[data-studio-theme=cream]").click()');
+  await evaluate('document.getElementById("mobileStudio").click()');
+  // A relocated source button must still forward into the canonical handler.
+  const favouriteRoundtrip=await evaluate(`(()=>{
+    const src=document.getElementById('mobileFavorite');
+    const canonical=document.getElementById('favorite');
+    const before=canonical.getAttribute('aria-pressed');
+    src.click();
+    const during=canonical.getAttribute('aria-pressed');
+    src.click();
+    return {before,during,after:canonical.getAttribute('aria-pressed'),
+      quickConnected:src.isConnected,source:src.id};
+  })()`);
+  assert.ok(favouriteRoundtrip.quickConnected);
+  assert.notEqual(favouriteRoundtrip.before,favouriteRoundtrip.during,
+    'five-item preview Favourite must invoke canonical saved state');
+  assert.equal(favouriteRoundtrip.after,favouriteRoundtrip.before,
+    'favourite shortcut roundtrip must restore original state');
+  console.log('FIVE_DESTINATION_FAVOURITE_ROUNDTRIP',JSON.stringify(favouriteRoundtrip));
   const boundaryViewports=[[499,892],[500,892],[790,892],[700,412],[791,892]];
   const trialBoundaries=[];
   for(const [width,height] of boundaryViewports){
