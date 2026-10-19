@@ -131,7 +131,10 @@ export function mountEditor(){
     const panel=create('section','settings-panel editor-category-panel');
     panel.id='panel-'+category.id;panel.dataset.category=category.id;
     panel.setAttribute('role','tabpanel');panel.setAttribute('aria-labelledby',button.id);
-    panel.tabIndex=0;panel.hidden=category.id!=='layout';
+    // Every panel has reachable editor controls; the panel itself must not
+    // become a zero-height Tab stop while the mobile editor is closed. Keep
+    // programmatic focus available to assistive navigation when needed.
+    panel.tabIndex=-1;panel.hidden=category.id!=='layout';
     form.append(panel);
     for(const tool of category.tools){
       const chip=create('button','editor-tool-tab',tool.name);
