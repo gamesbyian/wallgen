@@ -2099,6 +2099,9 @@ try{
   await evaluate('document.getElementById("mobileDismissHandle").click()');
   await waitFor('!document.body.classList.contains("mobile-edit-open")');
   assert.equal(await evaluate('document.getElementById("mobileActionDock").inert'),false);
+  // Closing Edit restores the dock through a real 220ms translate transition.
+  // The responsive census below measures settled frames, not a midway dock.
+  await delay(260);
   console.log('NAVIGATION_ONLY_COMPACT_TRAY',JSON.stringify({sparseTray,fullTray,
     gainedPreview:sparseTray.layoutHeight-fullTray.layoutHeight}));
 
