@@ -185,6 +185,20 @@ function geometryFromPage(page){
         label:{x:label.x,y:label.y,right:label.right,bottom:label.bottom},
         button:{x:button.x,y:button.y,right:button.right,bottom:button.bottom}};
     });
+    // Source DOM, not guessed recipe labels. Inspect the native six-part
+    // rotation toolbar as displayed on tiny phones, including actual paint
+    // order at each interactive element's centre.
+    const rotationRow=document.querySelector(
+      '.editor-tool-card[data-editor-tool="finish1"] .texture-rotation-field .rotation-controls');
+    const rotationFrame=rotationRow?.getBoundingClientRect();
+    const rotationCells=rotationRow?[...rotationRow.querySelectorAll('button,input[type=number]')]
+      .map(el=>{
+        const r=el.getBoundingClientRect();
+        const probe=document.elementFromPoint((r.left+r.right)/2,(r.top+r.bottom)/2);
+        return {name:el.getAttribute('aria-label')||el.value||el.textContent.trim(),
+          x:r.left,right:r.right,y:r.top,bottom:r.bottom,width:r.width,height:r.height,
+          centerTarget:el===probe||el.contains(probe)};
+      }):[];
     const stage=rect('.studio-stage'),sidebar=rect('.sidebar'),
       gallery=rect('.gallery-section'),more=rect('#mobileToolsSheet');
     const openSheet=body.classList.contains('mobile-edit-open')?sidebar:
@@ -196,6 +210,7 @@ function geometryFromPage(page){
       theme:document.documentElement.dataset.theme,
       bodyClasses:body.className,
       stage,sidebar,gallery,more,dock:rect('#mobileActionDock'),dockLabels,
+      rotationFrame:rotationFrame?{x:rotationFrame.x,right:rotationFrame.right,y:rotationFrame.y,bottom:rotationFrame.bottom}:null,rotationCells,
       galleryGrid:rect('#gallery'),firstThumb:rect('#gallery .thumb'),
       firstThumbCanvas:rect('#gallery .thumb canvas'),
       firstThumbCaption:rect('#gallery .thumb-caption'),
@@ -282,6 +297,13 @@ try{
               errors.push({key,error});
               console.error('VISUAL FAILURE '+key+' '+error);
             }
+          }
+          if(profile.width<=360&&name==='material'){
+            // Optical inventory first: the current raster appears crowded.
+            // Keep source-accurate boxes/centre hit targets in the artifact
+            // before deciding whether another production CSS change is safe.
+            console.log('MATERIAL ROTATION '+key+' '+JSON.stringify({
+              frame:measured.rotationFrame,cells:measured.rotationCells}));
           }
           if(profile.width<=360){
             for(const [name,rect] of [['preview',measured.stage],['dock',measured.dock]]){
