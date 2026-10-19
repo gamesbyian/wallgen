@@ -1,19 +1,19 @@
 {
-  "version": 1,
+  "version": 2,
   "kind": "source-backed snapshot; NOT exhaustive runtime inventory",
-  "referenceCommit": "0b4aa19d7d0a76d04a7919ffb345bd43664812cf",
+  "referenceCommit": "c4d75cbfa30dd513c91a6b80348c56d0a053723f + reviewed native five-destination source",
   "extraction": {
-    "staticIds": "exact id attributes in index.html",
+    "staticIds": "reviewed exact DOM IDs from default five-destination index.html",
     "fields": "exact data-setting attributes in index.html",
     "namedEditorTools": "EDITOR_CATEGORIES in src/editor-schema.js",
     "traceability": "prior source-mapped control registry"
   },
   "counts": {
-    "staticIds": 113,
+    "staticIds": 115,
     "settings": 87,
     "categories": 7,
     "namedTools": 40,
-    "tracedUI": 43
+    "tracedUI": 45
   },
   "staticIds": [
     "mobileDesignSheet",
@@ -67,6 +67,8 @@
     "positionStatus",
     "preview",
     "bleedGuide",
+    "mobileFavorite",
+    "mobileDownload",
     "drawOverlay",
     "drawPathPanel",
     "drawPathHint",
@@ -111,13 +113,13 @@
     "mobileToolsSheet",
     "mobileToolsClose",
     "mobileToolsContent",
+    "mobileShuffle",
     "studioStatus",
     "mobileActionDock",
+    "mobileStudio",
     "mobileEdit",
     "mobileExplore",
-    "mobileShuffle",
-    "mobileFavorite",
-    "mobileDownload",
+    "mobileSaved",
     "mobileMore",
     "mobileEditorActionRail",
     "mobileDockExpand",
@@ -281,10 +283,26 @@
     {
       "id": "dock",
       "sourceSelector": "id:mobileActionDock",
-      "meaning": "Six current mobile actions; proposed five destinations with relocated actions",
+      "meaning": "Five default mobile destinations: Studio, Edit, Explore, Saved, More; original source quick actions relocated",
       "canonicalScreen": "studio",
       "sourceKind": "CSS / dynamic or static DOM",
       "state": "keep or explicitly relocate; never silently remove"
+    },
+    {
+      "id": "studioDestination",
+      "sourceSelector": "id:studioDestination",
+      "meaning": "Return to unobscured canvas",
+      "canonicalScreen": "studio",
+      "sourceKind": "Static index.html ID",
+      "state": "live five-destination navigation; source-owned"
+    },
+    {
+      "id": "savedDestination",
+      "sourceSelector": "id:savedDestination",
+      "meaning": "Open saved favourites independently from Explore",
+      "canonicalScreen": "explore",
+      "sourceKind": "Static index.html ID",
+      "state": "live five-destination navigation; source-owned"
     },
     {
       "id": "edit",
@@ -305,7 +323,7 @@
     {
       "id": "randomize",
       "sourceSelector": "id:mobileShuffle",
-      "meaning": "Randomize preserved as Studio primary action",
+      "meaning": "Unchanged Shuffle source action in More; live Randomize control remains beside preview",
       "canonicalScreen": "studio",
       "sourceKind": "Static index.html ID",
       "state": "keep or explicitly relocate; never silently remove"
@@ -313,7 +331,7 @@
     {
       "id": "favorite",
       "sourceSelector": "id:mobileFavorite",
-      "meaning": "Favourite retained at one tap and Saved destination",
+      "meaning": "Single-tap favourite source action beside artwork; separate from Saved destination",
       "canonicalScreen": "explore",
       "sourceKind": "Static index.html ID",
       "state": "keep or explicitly relocate; never silently remove"
@@ -321,7 +339,7 @@
     {
       "id": "download",
       "sourceSelector": "id:mobileDownload",
-      "meaning": "Direct PNG action retained in Studio and More",
+      "meaning": "Direct PNG source action beside artwork and edit rail",
       "canonicalScreen": "more",
       "sourceKind": "Static index.html ID",
       "state": "keep or explicitly relocate; never silently remove"
