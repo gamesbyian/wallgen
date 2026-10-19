@@ -103,7 +103,7 @@ try{
         await page.keyboard.press('Home');
         await verify(ids[0],'restore-home');
         record.push({category:category.id,available:ids,
-          keyboardActions:ids.length+5,focusObscured:false});
+          keyboardActions:ids.length+4,focusObscured:false});
         if(['path','details','material'].includes(category.id)){
           await page.screenshot({path:join(out,scenario.name+'-'+category.id+'.png'),
             animations:'disabled'});
