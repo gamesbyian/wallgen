@@ -9,6 +9,7 @@ on:
       - 'tests/redesign-conditional-tools-acceptance.mjs'
       - 'tests/redesign-seven-colour-targets-acceptance.mjs'
       - 'tests/redesign-material-rotation-browser.mjs'
+      - 'tests/redesign-camera-structure-acceptance.mjs'
       - '.github/workflows/agent3-mobile-acceptance.yml'
       - 'docs/ui-reference/source-control-inventory.json'
       - 'src/editor-*.js'
@@ -17,6 +18,7 @@ on:
       - 'src/model.js'
       - 'src/interior-elements.js'
       - 'src/composition-geometry.js'
+      - 'src/view-camera.js'
       - 'index.html'
       - '*.css'
       - 'assets/icons/**'
@@ -38,7 +40,8 @@ jobs:
             tests/redesign-runtime-source-census.mjs \
             tests/redesign-conditional-tools-acceptance.mjs \
             tests/redesign-seven-colour-targets-acceptance.mjs \
-            tests/redesign-material-rotation-browser.mjs; do
+            tests/redesign-material-rotation-browser.mjs \
+            tests/redesign-camera-structure-acceptance.mjs; do
             node --check "$test"
           done
           node --test \
@@ -47,7 +50,7 @@ jobs:
             tests/interior-combined-scope.test.js \
             tests/interior-selected-id.test.js \
             tests/material-three-layer-adversarial.test.js
-      - name: One Chromium/browser install for five acceptance suites
+      - name: One Chromium/browser install for six acceptance suites
         run: |
           npm install --no-save playwright@1.56.1 serve@14.2.5
           npx playwright install --with-deps chromium
@@ -60,7 +63,7 @@ jobs:
           done
           cat /tmp/agent3-consolidated.log
           exit 1
-      - name: Exercise all five independently authored browser gates
+      - name: Exercise all six independently authored browser gates
         run: |
           status=0
           for test in \
@@ -68,7 +71,8 @@ jobs:
             tests/redesign-runtime-source-census.mjs \
             tests/redesign-conditional-tools-acceptance.mjs \
             tests/redesign-seven-colour-targets-acceptance.mjs \
-            tests/redesign-material-rotation-browser.mjs; do
+            tests/redesign-material-rotation-browser.mjs \
+            tests/redesign-camera-structure-acceptance.mjs; do
             echo "::group::$test"
             node "$test" || status=1
             echo "::endgroup::"
@@ -85,5 +89,6 @@ jobs:
             artifacts/agent3-conditional-tools/
             artifacts/agent3-interior-colour-targets/
             artifacts/agent3-material-rotation/
+            artifacts/agent3-camera-isolation/
           retention-days: 14
           if-no-files-found: warn
