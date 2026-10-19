@@ -1771,7 +1771,7 @@ try{
   const pannedDrawRecipe={...editableRecipe,viewZoom:1.2,
     viewPanX:15,viewPanY:-10,positionX:5,positionY:-4};
   await command('Page.navigate',{url:url+'?r='+encodeURIComponent(JSON.stringify(pannedDrawRecipe))});
-  await waitFor('document.body.classList.contains("mobile-studio")',15000);
+  await waitFor('document.body&&document.body.classList.contains("mobile-studio")',15000);
   await waitFor('document.querySelectorAll(".editor-tool-card").length>=39',15000);
   const pannedAnchorEditing=await evaluate(`(async()=>{
     const {createPointEditor}=await import('/src/path-point-editor.js');
