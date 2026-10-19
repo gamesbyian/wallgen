@@ -25,7 +25,8 @@
 ## Phase B — canvas-first shell
 
 - [ ] Keep exact approved app icon beside R.O.Y.G.B.I.V. in all modes.
-- [x] Replace three legacy decorative cream-stage and dock colour gradients with solid surface fills, preserving functional scroll edge masks and artwork colour (PR pending).
+- [x] Replace three legacy decorative cream-stage and dock colour gradients with solid surface fills, preserving functional scroll edge masks and artwork colour (PR #120).
+- [x] Remove remaining decorative base/dark Studio, lighting and shadow card gradients while retaining generated artwork and functional scroll masks (rebased PR pending).
 - [x] Keep (already existing) canvas-side Zoom+/− and add Fit/100% using the actual `viewZoom` source; no dedicated top zoom header on mobile. (PR #79)
 - [ ] Implement a **separate viewport Pan** with explicit preview/export persistence, *without* relabelling composition nudge as Pan.
 - [x] Consolidate default mobile navigation following source-action preservation and tested screen geometry; all original source action IDs retain live handlers (PR #101 and default-promotion PR).
