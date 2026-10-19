@@ -497,6 +497,65 @@ try{
   assert.ok(initial.scroll<=915);
   await evaluate('document.getElementById("mobileEdit").click()');
   await waitFor('document.body.classList.contains("mobile-edit-open")');
+  // Experimental Focus: a shared slider controls the *real* field, keeps
+  // All controls one tap away, and never edits values on view switching.
+  const focusBaseline=await evaluate(`(()=>{
+    const structure=document.querySelector('#controls [name=structure]');
+    structure.value='paths';structure.dispatchEvent(new Event('change',{bubbles:true}));
+    document.querySelector('#tab-stripes').click();
+    document.querySelector('.editor-tool-tab[data-editor-tool=structure]').click();
+    const source=document.querySelector('#controls [name=stripeWidth]');
+    const recipe=JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get('r')));
+    const originalSource=source;
+    document.querySelector('.editor-focus-toggle').click();
+    const focused=document.querySelector('.editor-focus-panel:not([hidden])');
+    const chip=focused.querySelector('[data-focus-key="stripeWidth"]');
+    if(chip)chip.click();
+    return {before:recipe,value:source.value,step:Number(source.step)||1,
+      max:Number(source.max),min:Number(source.min),
+      panel:!!focused,sourceUnmoved:originalSource===document.querySelector('[name=stripeWidth]'),
+      chip:!!chip,
+      all:!!focused?.querySelector('.editor-focus-all'),
+      visible:focused?focused.getBoundingClientRect().height:0,
+      sourceColor:source.style.getPropertyValue('--roygbiv-slider-color'),
+      focusColor:focused?.querySelector('.editor-focus-slider')?.style.getPropertyValue('--roygbiv-slider-color'),
+      off:!document.querySelector('#controls').classList.contains('editor-focus-active')};
+  })()`);
+  assert.ok(focusBaseline.panel&&focusBaseline.chip&&focusBaseline.all&&focusBaseline.visible>65);
+  assert.ok(focusBaseline.sourceUnmoved&&!focusBaseline.off);
+  assert.ok(focusBaseline.sourceColor&&focusBaseline.sourceColor===focusBaseline.focusColor,
+    'The focused adjustment must inherit its source panel ROYGBIV colour');
+  assert.deepEqual(await evaluate(
+    'JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r")))'),
+    focusBaseline.before,'Opening Focus or choosing a parameter changed the recipe');
+  await evaluate(`(()=>{
+    const input=document.querySelector('.editor-focus-slider');
+    const delta=Number(input.value)<Number(input.max)?1:-1;
+    document.querySelector('.editor-focus-slider-row .editor-focus-step'+(delta>0?':last-of-type':':first-of-type')).click();
+  })()`);
+  await waitFor(`Number(document.querySelector('[name=stripeWidth]').value)!==${Number(focusBaseline.value)}`);
+  const focusedAfter=await evaluate(`(()=>{
+    const source=document.querySelector('[name=stripeWidth]');
+    const form=document.querySelector('#controls');
+    const label=document.querySelector('.editor-focus-value').textContent;
+    const recipe=JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get('r')));
+    return {value:source.value,display:label,recipe,active:form.classList.contains('editor-focus-active')};
+  })()`);
+  assert.ok(focusedAfter.active&&focusedAfter.value===focusedAfter.display);
+  assert.equal(Number(focusedAfter.recipe.stripeWidth),Number(focusedAfter.value));
+  assert.deepEqual(Object.keys(focusBaseline.before).filter(
+    k=>JSON.stringify(focusBaseline.before[k])!==JSON.stringify(focusedAfter.recipe[k])),
+    ['stripeWidth'],'Focus adjusted other recipe fields unexpectedly');
+  await evaluate(`(()=>{
+    document.querySelector('.editor-focus-all').click();
+    const source=document.querySelector('[name=stripeWidth]');
+    source.value=${JSON.stringify(focusBaseline.value)};
+    source.dispatchEvent(new Event('change',{bubbles:true}));
+  })()`);
+  await waitFor(`Number(document.querySelector('[name=stripeWidth]').value)===${Number(focusBaseline.value)}`);
+  await waitFor(`JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get('r'))).stripeWidth===${Number(focusBaseline.before.stripeWidth)}`);
+  assert.equal(await evaluate('document.querySelector("#controls").classList.contains("editor-focus-active")'),false);
+  assert.ok(await evaluate('document.querySelector(".editor-tool-card[data-editor-tool=structure]").getBoundingClientRect().height>0'));
   const guide=await evaluate(`(()=>{
     const btn=document.getElementById('mobileBleed'),canvas=document.getElementById('preview');
     const f=canvas.getBoundingClientRect();
