@@ -48,8 +48,30 @@ function syncRail(){
     .setAttribute('aria-pressed',String(chosen));
 }
 
-const originals=['.composition-positioner','.action-tray','.export-metadata','.secondary-actions','.details-bar']
-  .map(sel=>document.querySelector(sel)).filter(Boolean);
+// Group existing source controls without cloning fields, listeners or state.
+const moreContent=document.getElementById('mobileToolsContent');
+const moreGroups=new Map();
+for(const [id,title] of [
+  ['generate','Create & seed'],
+  ['export','Import, export & share'],
+  ['inspect','Position & design details']
+]){
+  const section=document.createElement('section');
+  section.className='mobile-more-group';
+  section.setAttribute('aria-labelledby','mobileMoreHeading-'+id);
+  const heading=document.createElement('h3');
+  heading.id='mobileMoreHeading-'+id;heading.textContent=title;
+  const body=document.createElement('div');
+  body.className='mobile-more-group-body';
+  section.append(heading,body);
+  moreContent.append(section);
+  moreGroups.set(id,body);
+}
+moreGroups.get('generate').append(document.getElementById('mobileShuffle'));
+const originalSelectors=['.composition-positioner','.action-tray',
+  '.export-metadata','.secondary-actions','.details-bar'];
+const originalGroups=['inspect','generate','export','export','inspect'];
+const originals=originalSelectors.map(sel=>document.querySelector(sel)).filter(Boolean);
 const placeholders=originals.map(node=>{
   const mark=document.createComment('Original desktop position');
   node.before(mark);
@@ -65,9 +87,8 @@ function announceNavigation(){
   document.dispatchEvent(new CustomEvent('roygbiv-mobile-navigation-changed',{detail:{mode}}));
 }
 function moveUtilities(toSheet){
-  const content=document.getElementById('mobileToolsContent');
   originals.forEach((node,i)=>{
-    if(toSheet)content.append(node);
+    if(toSheet)moreGroups.get(originalGroups[i]).append(node);
     else placeholders[i].after(node);
   });
 }
