@@ -148,7 +148,8 @@ function showNotice(message){
 }
 function fromControls() {
   const data={seed:seedInput.value,positionX:current.positionX,positionY:current.positionY,
-    viewZoom:current.viewZoom,customPath:current.customPath,drawnAnchors:current.drawnAnchors,drawnCorners:current.drawnCorners,interiorElements:current.interiorElements};
+    viewZoom:current.viewZoom,viewPanX:current.viewPanX,viewPanY:current.viewPanY,
+    customPath:current.customPath,drawnAnchors:current.drawnAnchors,drawnCorners:current.drawnCorners,interiorElements:current.interiorElements};
   for (const key of FIELDS) { const field=form.elements.namedItem(key); data[key]=field.dataset.inactive==='true'?current[key]:(field.type==='checkbox'?field.checked:field.value); }
   return normalizeRecipe(data);
 }
@@ -414,6 +415,7 @@ function render(recipe,{scroll=false,bypassLocks=false,interactive=false}={}) {
   stage.dispatchEvent(new CustomEvent('roygbiv-wallpaper-rendered',
     {detail:{background:current.background}}));
   updatePositionStatus();
+  updateViewPanStatus();
   showResolvedSelections(currentScene);
   document.getElementById('detailFamily').textContent=titleCase(currentScene.family);
   document.getElementById('detailGeometry').textContent=titleCase(currentScene.structure==='paths'?
@@ -446,6 +448,11 @@ function changeRecipe(recipe,options={}){
 }
 document.querySelector('.studio-stage').addEventListener('roygbiv-view-zoom-request',event=>{
   changeRecipe({...current,viewZoom:event.detail});
+});
+// Fit restores the canonical centered camera, without altering the distinct
+// composition nudge. The original zoom +/- event retains its scalar contract.
+document.querySelector('.studio-stage').addEventListener('roygbiv-view-fit-request',()=>{
+  changeRecipe({...current,viewZoom:1,viewPanX:0,viewPanY:0});
 });
 const drawTool=installDrawTool({
   getRecipe:()=>current,
@@ -493,6 +500,34 @@ function updatePositionStatus(){
     `X ${x>0?'+':''}${x}% · Y ${y>0?'+':''}${y}%`;
   const reset=document.querySelector('[data-nudge="reset"]');
   reset.disabled=(x===0&&y===0)||current.lockedSettings.includes('position');
+}
+function updateViewPanStatus(){
+  const label=document.getElementById('viewPanStatus');
+  if(!label)return;
+  const x=current.viewPanX,y=current.viewPanY;
+  label.textContent=x===0&&y===0?'Centered frame':
+    `Frame X ${x>0?'+':''}${x}% · Y ${y>0?'+':''}${y}%`;
+  for(const button of document.querySelectorAll('[data-view-pan]')){
+    const direction=button.dataset.viewPan;
+    button.disabled=direction==='reset'?(x===0&&y===0):
+      direction==='left'?x<=-50:direction==='right'?x>=50:
+      direction==='up'?y<=-50:y>=50;
+  }
+}
+const VIEW_PAN_STEP=5;
+for(const button of document.querySelectorAll('[data-view-pan]')){
+  button.addEventListener('click',()=>{
+    const dir=button.dataset.viewPan;
+    const recipe=fromControls();
+    if(dir==='reset'){recipe.viewPanX=0;recipe.viewPanY=0;}
+    else{
+      const dx=dir==='right'?VIEW_PAN_STEP:dir==='left'?-VIEW_PAN_STEP:0;
+      const dy=dir==='down'?VIEW_PAN_STEP:dir==='up'?-VIEW_PAN_STEP:0;
+      recipe.viewPanX=Math.max(-50,Math.min(50,recipe.viewPanX+dx));
+      recipe.viewPanY=Math.max(-50,Math.min(50,recipe.viewPanY+dy));
+    }
+    changeRecipe(recipe);
+  });
 }
 const NUDGE_STEP=1;
 for(const button of document.querySelectorAll('[data-nudge]')){
@@ -1105,7 +1140,9 @@ document.getElementById('randomize').addEventListener('click',()=>{
 });
 document.getElementById('randomizeAll').addEventListener('click',()=>{
   explorationHistory.remember(current,'Before Random');
-  changeRecipe({...randomizeAllRecipe({primesOnly:current.primesOnly}),viewZoom:current.viewZoom,geometrySafety:current.geometrySafety});
+  changeRecipe({...randomizeAllRecipe({primesOnly:current.primesOnly}),
+    viewZoom:current.viewZoom,viewPanX:current.viewPanX,viewPanY:current.viewPanY,
+    geometrySafety:current.geometrySafety});
   explorationHistory.remember(current,'Random');
 });
 // Optional material layers activate by selecting an actual material, with
