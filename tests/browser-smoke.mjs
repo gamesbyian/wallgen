@@ -1582,7 +1582,7 @@ try{
   // The five-destination trial runs as a second, explicit navigation mode.
   // The default six-action interface above remains a fully tested baseline.
   await command('Page.navigate',{url:url+'?nav=five'});
-  await waitFor('document.body?.classList.contains("mobile-five-nav")&&!!document.getElementById("mobileSaved")',15000);
+  await waitFor('document.body?.classList.contains("mobile-five-nav")&&!!document.getElementById("mobileSaved")&&!!document.querySelector(".mobile-preview-rail-left .mobile-five-shortcuts>#mobileFavorite")&&!!document.querySelector(".mobile-preview-rail-left .mobile-five-shortcuts>#mobileDownload")',15000);
   const fiveNav=await evaluate(`(()=>{
     const dock=[...document.querySelectorAll('#mobileActionDock>button')];
     const ids=dock.map(button=>button.id);
