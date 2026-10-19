@@ -2,7 +2,7 @@ import { SHAPES } from './path-geometry.js';
 import { normalizeInteriorElements } from './interior-elements.js';
 import { STRUCTURES, RADIAL_MODES, REGION_MODES, DIVIDER_MODES, buildCompositionObjects } from './composition-geometry.js';
 export { STRUCTURES, RADIAL_MODES, REGION_MODES, DIVIDER_MODES };
-import { normalizeDrawnPath, prepareDrawnPath, safeDrawnBandSpan } from './drawn-path.js';
+import { normalizeDrawnPathWithIndexMap, prepareDrawnPath, safeDrawnBandSpan } from './drawn-path.js';
 export const DESIGN_WIDTH = 600;
 export const DESIGN_HEIGHT = 1300;
 export const OUTPUT_WIDTH = 3024;
@@ -71,6 +71,12 @@ const AUTO_CHOICES = {
 export function normalizeRecipe(input = {}) {
   const readChoice = (key, allowed) => allowed.includes(input[key]) ? input[key] : 'auto';
   const seed = String(input.seed ?? 'rainbow-001').trim().slice(0, 90) || 'rainbow-001';
+  const drawnPath=normalizeDrawnPathWithIndexMap(input.customPath);
+  const mappedPathIndices=raw=>[...new Set((Array.isArray(raw)?raw:[])
+    .filter(i=>Number.isInteger(i)&&i>=0)
+    .map(i=>drawnPath.indexMap[i])
+    .filter(i=>Number.isInteger(i)&&i>=0&&i<drawnPath.points.length))]
+    .sort((a,b)=>a-b).slice(0,96);
   return {
     version: 2,
     interiorElements:normalizeInteriorElements(input.interiorElements),
@@ -104,16 +110,12 @@ export function normalizeRecipe(input = {}) {
     mirrorHorizontal: input.mirrorHorizontal === true || input.mirrorHorizontal === 'true',
     mirrorVertical: input.mirrorVertical === true || input.mirrorVertical === 'true',
     geometry: readChoice('geometry', GEOMETRIES),
-    customPath: normalizeDrawnPath(input.customPath),
+    customPath:drawnPath.points,
     extendDrawnPath:input.extendDrawnPath===true||input.extendDrawnPath==='true',
-    // User-protected anchor indices travel with the sampled curve through
-    // URLs, favourites, JSON and embedded PNG metadata.
-    drawnAnchors: [...new Set((Array.isArray(input.drawnAnchors)?input.drawnAnchors:[])
-      .filter(i=>Number.isInteger(i)&&i>=0&&i<normalizeDrawnPath(input.customPath).length))]
-      .sort((a,b)=>a-b).slice(0,96),
-    drawnCorners: [...new Set((Array.isArray(input.drawnCorners)?input.drawnCorners:[])
-      .filter(i=>Number.isInteger(i)&&i>=0&&i<normalizeDrawnPath(input.customPath).length))]
-      .sort((a,b)=>a-b).slice(0,96),
+    // User-protected anchors/corners follow the original stroke station
+    // through duplicate removal and legacy >96-point resampling.
+    drawnAnchors:mappedPathIndices(input.drawnAnchors),
+    drawnCorners:mappedPathIndices(input.drawnCorners),
     motif: readChoice('motif', MOTIFS),
     lineStyle: LINE_STYLES.includes(input.lineStyle) ? input.lineStyle : 'continuous',
     composition: COMPOSITIONS.includes(input.composition) ? input.composition : 'single',
