@@ -27,7 +27,16 @@ try {
     try{
       await page.goto(origin,{waitUntil:'domcontentloaded'});
       await page.waitForFunction(()=>document.body.classList.contains('mobile-five-nav'));
-      // At >=791px the phone dock is deliberately hidden. Assert the\n      // breakpoint transition instead of demanding a false mobile hitbox.\n      if(width>790){\n        assert.equal(await page.evaluate(()=>document.body.classList.contains('mobile-studio')),false,\n          'Desktop breakpoint must not present mobile Studio at '+width);\n        captures.push({viewport:[width,height],mode:'desktop',mobileDockExpected:false,errors});\n        assert.deepEqual(errors,[]);\n        continue;\n      }\n      const base=await page.evaluate(ids=>{
+      // At >=791px the phone dock is deliberately hidden. Assert the
+      // breakpoint transition instead of demanding a false mobile hitbox.
+      if(width>790){
+        assert.equal(await page.evaluate(()=>document.body.classList.contains('mobile-studio')),false,
+          'Desktop breakpoint must not present mobile Studio at '+width);
+        captures.push({viewport:[width,height],mode:'desktop',mobileDockExpected:false,errors});
+        assert.deepEqual(errors,[]);
+        continue;
+      }
+      const base=await page.evaluate(ids=>{
         const samples={};
         for(const id of ids){
           const el=document.getElementById(id);
