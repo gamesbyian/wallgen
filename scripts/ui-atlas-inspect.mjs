@@ -86,7 +86,18 @@ export async function inspectAtlasState(page,ctx,slug,meta={}){
         root.classList.contains('mobile-edit-open')?g('#mobileDesignSheet'):g('#mobileActionDock')
       : g('#mobileDesignSheet');
     const findings=[];
-    const candidates=owner?.querySelectorAll('button,input:not([type=hidden]),select,textarea,label')||[];
+    // The preview rails remain interactive while Edit is open, and live
+    // outside the editor tray. Inspect them too, without scanning the hidden
+    // old dock or background stage when More/Explore overlays take focus.
+    const roots=owner?[owner]:[];
+    if(mobile&&!root.classList.contains('mobile-tools-open')&&
+        !root.classList.contains('mobile-gallery-open')){
+      for(const sel of ['.mobile-preview-rail-left','.mobile-preview-rail-right']){
+        const rail=g(sel);if(rail)roots.push(rail);
+      }
+    }
+    const candidates=[...new Set(roots.flatMap(node=>[...node.querySelectorAll(
+      'button,input:not([type=hidden]),select,textarea,label')]))];
     let scanned=0,ignoredScroll=0,smallActionCount=0;
     function label(el){
       return (el.getAttribute('aria-label')||el.getAttribute('title')||
