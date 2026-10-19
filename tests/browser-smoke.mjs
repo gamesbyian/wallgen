@@ -2698,7 +2698,7 @@ try{
         stroke:'dashed',color:'black',width:22}
     ]};
   await command('Page.navigate',{url:url+'?r='+encodeURIComponent(JSON.stringify(interiorFixture))});
-  await waitFor('document.body.classList.contains("mobile-studio")');
+  await waitFor('document.body&&document.body.classList.contains("mobile-studio")');
   await waitFor('document.querySelectorAll(".editor-tool-card").length>=39',15000);
   await waitFor('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).interiorElements.length===2');
   await evaluate('document.getElementById("mobileEdit").click()');
