@@ -78,7 +78,8 @@ function setZoom(next){
   stage.style.setProperty('--mobile-preview-zoom',String(zoom));
   zoomValue.textContent=Math.round(zoom*100)+'%';
   zoomIn.disabled=zoom>=2.5;zoomOut.disabled=zoom<=.5;
-  zoomFit.disabled=Math.abs(zoom-1)<.001;
+  zoomFit.disabled=Math.abs(zoom-1)<.001&&
+    Number(stage.dataset.viewPanX||0)===0&&Number(stage.dataset.viewPanY||0)===0;
   stage.dispatchEvent(new Event('roygbiv-preview-zoom'));
 }
 zoomIn.addEventListener('click',()=>
