@@ -2,6 +2,9 @@
 
 **Status:** canonical visual/behavior reference; not a production redesign. **Source:** `gamesbyian/wallgen` main at `7d99e99a5ce391d05ab410fcc90d3eb78420a282`, with a staged icon extension on this documentation branch. [Fresh verified UI atlas: 1,648 captures, zero missing states](https://github.com/gamesbyian/wallgen/actions/runs/39166559800). The illustrated mockups in earlier decks are inspiration, **not specifications**.
 
+**Verified semantic correction (source, 2026-10-18):** Existing Zoom +/− modifies the serialized **`recipe.viewZoom`** field, so both preview and exported PNG use the same framing. Existing directional nudge buttons modify **`recipe.positionX` / `positionY`** and therefore move the composition. They are **not viewport-only Pan**. A separate Pan action is a future feature with unresolved persistence and export semantics; the visual concept was ahead of implementation. Fit would reset only `viewZoom` to `1`. The proposed navigation, symbols and focused slider remain design proposals until a tested PR changes production UI. See [verification matrix](ui-reference/verification-matrix.json) and [source control inventory](ui-reference/source-control-inventory.json).
+
+
 ## Source-of-truth hierarchy
 
 1. **Actual production source and screenshot atlas:** existing controls, code paths, conditional states and current behavior.

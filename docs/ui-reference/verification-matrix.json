@@ -1,0 +1,250 @@
+{
+  "version": 1,
+  "policy": "source/path/verification requirements; status is evidence-qualified, not an assertion of release completion",
+  "sourceCommit": "0b4aa19d7d0a76d04a7919ffb345bd43664812cf",
+  "requirements": [
+    {
+      "id": "CAM-ZOOM",
+      "kind": "behavior",
+      "source": [
+        "src/mobile-preview-tools.js",
+        "src/app.js",
+        "src/view-camera.js"
+      ],
+      "proof": [
+        "tests/view-camera.test.js",
+        "tests/browser-smoke.mjs"
+      ],
+      "assertion": "Zoom +/- updates only recipe.viewZoom (10% increments) and does not regenerate stripe stations; framing persists in serialized recipe and PNG output.",
+      "status": "source-confirmed; existing automated tests",
+      "risk": "high"
+    },
+    {
+      "id": "COMPOSE-NUDGE",
+      "kind": "behavior",
+      "source": [
+        "index.html",
+        "src/app.js"
+      ],
+      "proof": [
+        "tests/browser-smoke.mjs"
+      ],
+      "assertion": "Nudge changes recipe.positionX/positionY by one step; it is composition movement, NOT viewport-only pan; lock position suppresses changes.",
+      "status": "source-confirmed; regression to strengthen",
+      "risk": "high"
+    },
+    {
+      "id": "CAM-PAN-NEW",
+      "kind": "proposal",
+      "source": [
+        "docs/CREAM-STUDIO-CANVAS-FIRST-REDESIGN-V2.md"
+      ],
+      "proof": [],
+      "assertion": "Any new viewport-only Pan must be explicitly implemented with separate state, defined export/serialization semantics, tests and labels before enabling; not an alias for nudge.",
+      "status": "proposed / NOT implemented",
+      "risk": "high"
+    },
+    {
+      "id": "CAM-FIT",
+      "kind": "behavior",
+      "source": [
+        "src/mobile-preview-tools.js",
+        "src/app.js"
+      ],
+      "proof": [
+        "tests/browser-smoke.mjs"
+      ],
+      "assertion": "Fit button (new) resets viewZoom=1 without touching any other recipe fields, retains canvas overflow extrapolation and full resolution export.",
+      "status": "planned implementation; not yet verified",
+      "risk": "high"
+    },
+    {
+      "id": "ICON-BRAND",
+      "kind": "asset",
+      "source": [
+        "index.html",
+        "assets/roygbiv-logo.svg"
+      ],
+      "proof": [
+        "tests/icon-assets.test.js"
+      ],
+      "assertion": "Exact original SVG brand icon remains beside name; theme dots remain cream/black with thin black borders.",
+      "status": "source-confirmed",
+      "risk": "medium"
+    },
+    {
+      "id": "ICON-EDIT-DRAW",
+      "kind": "asset",
+      "source": [
+        "assets/icons/roygbiv/edit-controls.svg",
+        "assets/icons/roygbiv/draw-path.svg"
+      ],
+      "proof": [
+        "tests/icon-assets.test.js"
+      ],
+      "assertion": "Edit destination uses actual approved-family adjustments glyph; Draw uses original pencil/path. No generic pictogram substitutions.",
+      "status": "proposal candidate, UI wiring pending",
+      "risk": "medium"
+    },
+    {
+      "id": "NAV-ACTIONS",
+      "kind": "behavior",
+      "source": [
+        "index.html",
+        "src/mobile-studio.js",
+        "src/mobile-preview-tools.js"
+      ],
+      "proof": [
+        "tests/mobile-studio.test.js",
+        "tests/browser-smoke.mjs"
+      ],
+      "assertion": "Current six dock actions and separate edit rail remain reachable; five-destination navigation proposal must preserve Randomize, Save and direct Download.",
+      "status": "current implementation verified / new shell proposed",
+      "risk": "high"
+    },
+    {
+      "id": "EDITOR-TOOLS",
+      "kind": "coverage",
+      "source": [
+        "src/editor-schema.js",
+        "src/editor-layout.js",
+        "index.html"
+      ],
+      "proof": [
+        "tests/editor-schema.test.js",
+        "tests/design-reference-pack.test.js"
+      ],
+      "assertion": "All 7 categories, 40 tools and 87 static configuration data-setting keys retain functioning source form controls, including conditional applicability.",
+      "status": "source inventory confirmed; runtime coverage partial",
+      "risk": "high"
+    },
+    {
+      "id": "INTERIOR",
+      "kind": "coverage",
+      "source": [
+        "src/app.js",
+        "docs/INTERIOR-ELEMENTS.md"
+      ],
+      "proof": [
+        "tests/interior-elements.test.js",
+        "tests/browser-smoke.mjs"
+      ],
+      "assertion": "Dynamic element stacks, types, position, style and seven colour targets remain editable; UI generated at runtime.",
+      "status": "source-confirmed, runtime conditional coverage partial",
+      "risk": "high"
+    },
+    {
+      "id": "DRAW-ANCHORS",
+      "kind": "behavior",
+      "source": [
+        "src/draw-path-ui.js",
+        "src/path-point-editor.js"
+      ],
+      "proof": [
+        "tests/drawn-path.test.js",
+        "tests/path-point-editor.test.js"
+      ],
+      "assertion": "Draw, interpretive 1x–10x smooth, add/delete/corner anchors, resmooth, undo and path extension are preserved.",
+      "status": "source-confirmed with unit coverage, browser coverage partial",
+      "risk": "high"
+    },
+    {
+      "id": "MATERIAL-3",
+      "kind": "coverage",
+      "source": [
+        "index.html",
+        "src/editor-schema.js"
+      ],
+      "proof": [
+        "tests/browser-smoke.mjs"
+      ],
+      "assertion": "Three material layers and all six layer/finish cards, rotation steppers and disabled layer states remain available; no collision.",
+      "status": "source-confirmed, browser assertions exist",
+      "risk": "high"
+    },
+    {
+      "id": "PALETTE-SLIDERS",
+      "kind": "visual-behavior",
+      "source": [
+        "src/rainbow-sliders.js",
+        "ui-audit-fixes.css"
+      ],
+      "proof": [
+        "tests/browser-smoke.mjs"
+      ],
+      "assertion": "No duplicate ROYGBIV slider colour in same active card; blue eligible and assignments stable during editing.",
+      "status": "source/browser verified",
+      "risk": "medium"
+    },
+    {
+      "id": "SEARCH-HISTORY",
+      "kind": "workflow",
+      "source": [
+        "src/editor-layout.js",
+        "src/exploration-history.js"
+      ],
+      "proof": [
+        "tests/browser-smoke.mjs"
+      ],
+      "assertion": "Search exposes exact tool and can close; free scroll doesn't reset; history returns to tool without loss.",
+      "status": "browser tested for representative case",
+      "risk": "medium"
+    },
+    {
+      "id": "EXPL-SAVED",
+      "kind": "workflow",
+      "source": [
+        "src/app.js",
+        "src/mobile-studio.js"
+      ],
+      "proof": [
+        "tests/browser-smoke.mjs"
+      ],
+      "assertion": "Explore, saved favourites and edit-history are distinct; gallery restore is a deliberate recipe action.",
+      "status": "partially tested",
+      "risk": "medium"
+    },
+    {
+      "id": "OUTPUT",
+      "kind": "workflow",
+      "source": [
+        "src/app.js",
+        "src/png-metadata.js"
+      ],
+      "proof": [
+        "tests/png-metadata.test.js",
+        "tests/browser-smoke.mjs",
+        "tests/headless-cli.test.js"
+      ],
+      "assertion": "PNG export and embedded metadata, JSON recipe, share link, seed, import, batch generation and notifications remain reachable.",
+      "status": "partially tested",
+      "risk": "high"
+    },
+    {
+      "id": "RESPONSIVE",
+      "kind": "visual-workflow",
+      "source": [
+        "mobile-compact.css",
+        "mobile-editor-rail.css",
+        "studio-themes.css"
+      ],
+      "proof": [
+        "tests/browser-smoke.mjs"
+      ],
+      "assertion": "No actionable clipping or preview/editor overlap at 412x892 and 499/500/790/791, short landscape, disabled/focus states.",
+      "status": "partial automated coverage; physical Chrome unverified",
+      "risk": "high"
+    },
+    {
+      "id": "FOCUS-EXPERIMENT",
+      "kind": "optional-proposal",
+      "source": [
+        "docs/CREAM-STUDIO-CANVAS-FIRST-REDESIGN-V2.md"
+      ],
+      "proof": [],
+      "assertion": "One focused slider may be tested as opt-in; multi-slider view remains default; switching parameters never resets other values.",
+      "status": "not implemented, not approved",
+      "risk": "medium"
+    }
+  ]
+}

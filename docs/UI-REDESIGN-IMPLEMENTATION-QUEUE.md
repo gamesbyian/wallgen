@@ -4,6 +4,10 @@
 
 ## Phase A — approval and reference integrity
 
+- [x] Establish independent snapshot of 113 static IDs, 87 configuration attributes and 40 source-defined tools, with a versioned verification matrix.
+- [x] Correct prior Pan/Zoom/Nudge semantics against actual renderer and UI code.
+- [ ] Qualify **all** static/conditional controls against runtime interaction coverage; source inventories do not establish reachability.
+
 - [x] Inventory existing 55 glyphs + existing brand icon.
 - [x] Enumerate all 7 editor categories and 40 tools from the code.
 - [x] Stage 12 SVG candidates without rewiring live controls.
