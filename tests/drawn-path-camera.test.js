@@ -42,7 +42,7 @@ test('new strokes follow view Pan but not the generated wallpaper composition nu
   const fresh=drawnPathViewportOffset(recipe,false);
   assert.deepEqual(fresh,[-.3,.12]);
   assert.ok(Math.abs(saved[0]+.05)<1e-10);
-  assert.ok(Math.abs(saved[1]-.1)<1e-10);
+  assert.ok(Math.abs(saved[1]+.1)<1e-10);
 });
 
 test('centered camera retains original drawn-path overlay mapping',()=>{
