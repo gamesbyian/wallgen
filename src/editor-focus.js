@@ -13,6 +13,14 @@ export function adjustedValue(field,delta){
   const next=Math.min(max,Math.max(min,Number(field.value)+delta*step));
   return String(Number((min+Math.round((next-min)/step)*step).toFixed(7)));
 }
+export function focusChipDestination(key,index,count){
+  if(!Number.isInteger(index)||!Number.isInteger(count)||count<1||index<0||index>=count)return -1;
+  if(key==='ArrowRight')return (index+1)%count;
+  if(key==='ArrowLeft')return (index+count-1)%count;
+  if(key==='Home')return 0;
+  if(key==='End')return count-1;
+  return -1;
+}
 const create=(tag,className,text)=>{
   const node=document.createElement(tag);
   if(className)node.className=className;
@@ -94,12 +102,9 @@ export function installFocusedAdjustments({form,chooser}){
     const all=[...chips.querySelectorAll('button[data-focus-key]')];
     const index=all.indexOf(current);
     if(index<0)return;
-    let next;
-    if(event.key==='ArrowRight')next=all[(index+1)%all.length];
-    else if(event.key==='ArrowLeft')next=all[(index+all.length-1)%all.length];
-    else if(event.key==='Home')next=all[0];
-    else if(event.key==='End')next=all[all.length-1];
-    else return;
+    const destination=focusChipDestination(event.key,index,all.length);
+    if(destination<0)return;
+    const next=all[destination];
     const source=available.find(field=>field.name===next.dataset.focusKey);
     if(!source)return;
     event.preventDefault();
