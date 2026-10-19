@@ -52,7 +52,8 @@
 ## Phase D — complex tool journeys
 
 - [ ] Keep Draw → Interpret → Edit anchors → Apply/Cancel, including resmoothing, corners, points and 10× interpretive smoothing.
-- [x] Add three real 412×892 Chrome drawing-phase screenshots to the 20-state mobile atlas, enforcing the live phase sequence and real pointer controls (PR pending).
+- [x] Add three real 412×892 Chrome drawing-phase screenshots to the 20-state mobile atlas, enforcing the live phase sequence and real pointer controls (PR #114).
+- [x] Address genuine semi-transparent drawing-panel ghosting discovered in those three mobile screenshots, while preserving original pointer plane and actions (PR pending).
 - [x] Group drawing controls into Interpret, Refine and Finish with live Sketch/Refine/Edit points state and keep all source handlers, smoothing, anchor and extension identities; complete touch-fidelity review remains open (PR pending).
 - [ ] Keep path extrapolation beyond boundaries and intersections/weave/over/under.
 - [x] Fix source-proven 10px clipping of desktop material rotation buttons (36px inherited minimum inside 26px control row), preserving existing rotations and mobile sizing (PR #84).
