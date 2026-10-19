@@ -1,0 +1,53 @@
+name: Agent 3 real native PNG download acceptance
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'tests/redesign-native-download-acceptance.mjs'
+      - '.github/workflows/agent3-native-download.yml'
+      - 'src/app.js'
+      - 'src/renderer.js'
+      - 'src/render-coordinator.js'
+      - 'src/render-worker.js'
+      - 'src/png-metadata.js'
+      - 'src/model.js'
+      - 'src/mobile-five-nav.js'
+permissions:
+  contents: read
+jobs:
+  real-native-png:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Source and syntax checks
+        run: |
+          node --check tests/redesign-native-download-acceptance.mjs
+          node --test tests/render.test.js tests/png-metadata.test.js
+      - name: Chromium dependencies
+        run: |
+          npm install --no-save playwright@1.56.1 serve@14.2.5
+          npx playwright install --with-deps chromium
+      - name: Serve real app and modules
+        run: |
+          npx serve . -l 4173 > /tmp/agent3-native-download.log 2>&1 &
+          for i in $(seq 1 40); do
+            if curl --fail --silent http://127.0.0.1:4173/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/agent3-native-download.log
+          exit 1
+      - name: Two real native wallpaper downloads, full metadata and painted pixel comparison
+        run: node tests/redesign-native-download-acceptance.mjs
+      - name: Upload quantified evidence or failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: roygbiv-agent3-native-download
+          path: artifacts/agent3-native-download/
+          retention-days: 14
+          if-no-files-found: warn
