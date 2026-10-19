@@ -1,6 +1,6 @@
 # Independent viewport Pan and composition move
 
-**Status:** implementation under qualification (2026-10-19). This is an explicit redesign distinction, not an alias for the old nudge.
+**Status:** implemented and merged (PR #143, 2026-10-19), all five workflows passed. This is an explicit redesign distinction, not an alias for the old nudge.
 
 ## Two different operations
 
@@ -24,3 +24,5 @@ A source-backed Move view frame row appears below composition positioning on des
 - Headless workflow: same wave recipe at 600×1300 and 3024×6552, zoomed out and panned on both axes; compare embedded normalized recipe and stable coloured interior pixels.
 
 This is discrete button-driven pan, not drag-to-pan. Moving the viewing frame past a finite authored ribbon may legitimately expose background. Additional structure-specific export pixel comparisons remain future acceptance work.
+
+The follow-up UI atlas now records an explicit mobile More → Move view frame → +5% state and rejects clipped/unnamed frame controls. This is a visual/reachability guard; it does not substitute for physical device acceptance.
