@@ -1268,6 +1268,11 @@ document.addEventListener('roygbiv-gallery-view-request',event=>{
 const query=new URLSearchParams(location.search).get('r');
 const loaded=query?decodeRecipe(query):null;
 toControls(loaded||current);
+// The dynamic interior cards were first mounted against the empty default
+// recipe. URL restoration changes current directly through toControls(), not
+// changeRecipe(), so refresh the actual collection UI before first paint.
+// Otherwise imported stacks show stale selectors until some unrelated edit.
+syncInteriorUI();
 render(current);
 // Start only after the first complete reference frame is visible. This keeps
 // initial page load and screenshot restoration deterministic.
