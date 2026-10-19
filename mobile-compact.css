@@ -55,8 +55,9 @@
     visibility:hidden;
   }
   body.mobile-studio .mobile-dock-expand{
-    position:fixed;right:3px;bottom:7px;
-    width:34px;height:45px;
+    /* Occupy the 40px rail already reserved beside the editor. */
+    position:fixed;right:0;bottom:7px;
+    width:40px;height:45px;min-width:40px;min-height:45px;
     border-radius:13px 0 0 13px;
     align-items:center;justify-content:center;
     border:1px solid #494653;
