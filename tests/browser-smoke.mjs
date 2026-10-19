@@ -2005,6 +2005,47 @@ try{
     '40th named tool is a preserved legacy tonal state, not a visible user choice');
   assert.ok(!interactionCensus.reached.includes('stripes/tone'));
   console.log('EDITOR_INTERACTIVE_TOOL_MATRIX',JSON.stringify(interactionCensus));
+  // The seven rainbow accents are randomly shuffled once per tool panel,
+  // but must NOT reshuffle when a user navigates away and back. Verify live
+  // source slider nodes rather than an illustrative colour palette.
+  const rainbowStability=await evaluate(`(()=>{
+    const panels=[...document.querySelectorAll('#controls .editor-tool-card')];
+    const read=()=>new Map(panels.map(panel=>[
+      panel.dataset.editorTool,
+      [...panel.querySelectorAll('input[type=range]')].map((slider,i)=>({
+        key:slider.dataset.rainbowKey||slider.name||slider.id||'slot-'+i,
+        colour:slider.style.getPropertyValue('--roygbiv-slider-color').trim()
+      }))
+    ]));
+    const before=read();
+    for(const tab of document.querySelectorAll('.settings-tab[data-tab]')){
+      if(tab.disabled)continue;
+      tab.click();
+      for(const chip of document.querySelectorAll('.editor-tool-chooser [data-editor-tool]')){
+        if(!chip.hidden&&!chip.disabled)chip.click();
+      }
+    }
+    const after=read(),failures=[],hues=new Set();let ranges=0;
+    for(const [tool,values] of before){
+      if(!values.length)continue;
+      ranges+=values.length;
+      const assigned=values.map(x=>x.colour);
+      if(assigned.some(x=>!x))failures.push(tool+':unassigned');
+      if(new Set(assigned).size!==assigned.length)failures.push(tool+':duplicate');
+      for(const x of assigned)hues.add(x);
+      if(JSON.stringify(values)!==JSON.stringify(after.get(tool)))
+        failures.push(tool+':reshuffled');
+    }
+    const source=document.querySelector('.editor-tool-card[data-editor-tool=finish1] input[type=range]');
+    const accentColour=source?getComputedStyle(source).accentColor:'';
+    return {panels:before.size,ranges,distinctTracks:hues.size,accentColour,failures};
+  })()`);
+  assert.deepEqual(rainbowStability.failures,[]);
+  assert.ok(rainbowStability.ranges>=20&&rainbowStability.distinctTracks>=7,
+    'all source panels must retain a richly varied seven-colour slider vocabulary');
+  assert.notEqual(rainbowStability.accentColour,'auto',
+    'the actual Material Finish slider must use the computed palette accent');
+  console.log('ROYGBIV_SLIDER_NAVIGATION_STABILITY',JSON.stringify(rainbowStability));
   console.log('REDESIGN_EXPLORATION_ACCEPTANCE_SUCCESS');
 }finally{
   try{ws?.close()}catch{}
