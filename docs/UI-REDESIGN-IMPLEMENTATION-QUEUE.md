@@ -38,6 +38,7 @@
 - [ ] Keep all seven categories and 40 named tools; verify full source keys and applicability rules.
 - [ ] Keep blue and random stable unique ROYGBIV slider accents inside each panel.
 - [ ] Preserve search match-to-tool and manual horizontal chip scroll state.
+- [x] Make Find setting structure-aware: search only currently applicable tools, distinguish dormant matches from absent settings, and preserve source tool identity (PR pending).
 - [x] Add roving keyboard navigation (Left/Right/Home/End) for applicable named tools; keep manual chip scroll untouched (PR pending).
 - [ ] Reduce excess short-panel height only on navigation, with atomic preview/tray resize.
 - [ ] Ensure all inactive values/locks remain comprehensible and true to generation logic.
