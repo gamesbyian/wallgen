@@ -208,6 +208,11 @@ try{
           console.log('CAPTURED '+key+' overlap='+measured.stageOverlap);
           // The screenshot and geometry remain in the artifact on failure:
           // an attractive comparison gallery is not evidence of safe layout.
+          if(profile.id==='desktop-791x892'&&measured.undersized24.length){
+            const error='Editor action targets below 24 CSS px: '+measured.undersized24.join(', ');
+            errors.push({key,error});
+            console.error('VISUAL FAILURE '+key+' '+error);
+          }
           if(measured.stageOverlap>1){
             const error='Visible preview is overlapped by open '+name+
               ' surface: '+measured.stageOverlap.toFixed(1)+'px';
