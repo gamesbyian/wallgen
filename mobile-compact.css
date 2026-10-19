@@ -19,7 +19,8 @@
     padding:2px 1px!important;gap:1px;border-radius:9px;
   }
   body.mobile-studio .mobile-dock button>span{font-size:19px}
-  body.mobile-studio .mobile-dock button>small{font-size:8px}
+  /* Five even columns have room for readable captions without a taller dock. */
+  body.mobile-studio .mobile-dock button>small{font-size:10px;line-height:1.2}
   body.mobile-studio.mobile-edit-open{
     --mobile-head:0px;
     --mobile-dock-height:0px;
