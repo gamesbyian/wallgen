@@ -1772,6 +1772,29 @@ try{
     }
   }
   console.log('FIVE_DESTINATION_BREAKPOINTS',JSON.stringify(trialBoundaries));
+  // A populated Explore gallery must survive visiting Saved without a reroll.
+  await evaluate('document.getElementById("batch").click()');
+  await waitFor('document.querySelectorAll("#gallery .thumb").length===12',12000);
+  const firstExplore=await evaluate(`(()=>{
+    const thumb=document.querySelector('#gallery .thumb');
+    return {mode:document.getElementById('gallery').dataset.view,
+      count:document.querySelectorAll('#gallery .thumb').length,
+      caption:thumb?.textContent};
+  })()`);
+  await evaluate('document.getElementById("mobileSaved").click()');
+  await waitFor('document.getElementById("gallery").dataset.view==="saved"');
+  await evaluate('document.getElementById("mobileExplore").click()');
+  await waitFor('document.getElementById("gallery").dataset.view==="explore"&&document.querySelectorAll("#gallery .thumb").length===12',12000);
+  const returnedExplore=await evaluate(`(()=>{
+    const thumb=document.querySelector('#gallery .thumb');
+    return {mode:document.getElementById('gallery').dataset.view,
+      count:document.querySelectorAll('#gallery .thumb').length,
+      caption:thumb?.textContent};
+  })()`);
+  assert.deepEqual(returnedExplore,firstExplore,
+    'Saved visits must preserve the previous Explore contact sheet');
+  console.log('FIVE_DESTINATION_POPULATED_GALLERY_ROUNDTRIP',JSON.stringify(returnedExplore));
+
 
 
 
