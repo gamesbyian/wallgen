@@ -52,3 +52,10 @@ export function inspectGeometry(rect,viewport,clips=[]){
     offscreen,clipped:!scrollClipped&&fraction<.82&&missingPixels>=8,
     scrollClipped,clipSources};
 }
+
+/** Page-flow captures intentionally show only a scrolled document slice.
+ * Offscreen controls outside that slice are not unreachable; only local
+ * non-scrollable clipping should be reported in those screenshots. */
+export function expectedPageScroll(scrollable,isFlowCapture,clipSources=[]){
+  return Boolean(scrollable&&isFlowCapture&&!clipSources.some(c=>c.kind==='hidden'));
+}

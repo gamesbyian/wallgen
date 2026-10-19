@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {inspectGeometry} from '../scripts/ui-atlas-geometry.mjs';
+import {inspectGeometry,expectedPageScroll} from '../scripts/ui-atlas-geometry.mjs';
 const target=(l,t,r,b)=>({left:l,top:t,right:r,bottom:b});
 const viewport=target(0,0,412,892);
 test('in-viewport or subpixel clipping does not flood atlas findings',()=>{
@@ -40,4 +40,12 @@ test('offscreen fixed action is distinguished from intentionally scrollable list
  // known scrollable ancestor, even if viewport intersection is already zero.
  assert.equal(scroll.scrollClipped,true);
  assert.equal(scroll.clipped,false);
+});
+
+test('page scrolling of desktop gallery/metadata does not imply missing controls',()=>{
+ assert.equal(expectedPageScroll(true,true,[]),true);
+ assert.equal(expectedPageScroll(true,true,[{kind:'scroll'}]),true);
+ assert.equal(expectedPageScroll(true,true,[{kind:'hidden'}]),false);
+ assert.equal(expectedPageScroll(true,false,[]),false);
+ assert.equal(expectedPageScroll(false,true,[]),false);
 });

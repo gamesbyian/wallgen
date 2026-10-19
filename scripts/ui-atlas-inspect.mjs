@@ -5,7 +5,7 @@
  */
 export async function inspectAtlasState(page,ctx,slug,meta={}){
   return page.evaluate(async ({slug,meta,mobile})=>{
-    const {inspectGeometry}=await import('/scripts/ui-atlas-geometry.mjs');
+    const {inspectGeometry,expectedPageScroll}=await import('/scripts/ui-atlas-geometry.mjs');
     const root=document.body;
     const g=id=>document.querySelector(id);
     const visible=el=>{
@@ -153,6 +153,10 @@ export async function inspectAtlasState(page,ctx,slug,meta={}){
         {left:0,top:0,right:innerWidth,bottom:innerHeight},ancestorClips(el));
       scanned++;
       if(geometry.scrollClipped){ignoredScroll++;continue;}
+      if(expectedPageScroll(!mobile&&document.scrollingElement?.scrollHeight>innerHeight+3,
+           galleryShot||metadataShot,geometry.clipSources)){
+        ignoredScroll++;continue;
+      }
       if(!geometry.clipped)continue;
       const name=selector(el);
       const size={width:Math.round(rect.width),height:Math.round(rect.height)};
