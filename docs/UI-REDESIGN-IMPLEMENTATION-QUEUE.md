@@ -42,7 +42,7 @@
 - [x] Apply a flat ROYGBIV category accent rail to all source-annotated setting rows (7 categories), with cream/dark shape distinctions, inactive cues and no layout/control reparenting (PR #106).
 - [x] Real Chromium screenshot review found 3px accent overlapping flush-left setting labels; move rail outside each row with no layout or source-control changes (PR #108).
 - [x] Keep seven categories and 40 named tools; inventory source keys and test structure-aware applicability (PRs #94, #96, #97).
-- [ ] Keep blue and random stable unique ROYGBIV slider accents inside each panel.
+- [x] Keep blue and randomly shuffled, session-stable, unique ROYGBIV accents on original range inputs across tool navigation, with explicit seven-hue source contract (PR pending).
 - [ ] Preserve search match-to-tool and manual horizontal chip scroll state.
 - [x] Make Find setting structure-aware: search applicable tools and explain dormant settings (PR #99).
 - [x] Add roving keyboard navigation for applicable tools and Focus parameters, preserving manual chip scroll (PRs #94 and #98).
