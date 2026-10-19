@@ -283,6 +283,16 @@ try{
               console.error('VISUAL FAILURE '+key+' '+error);
             }
           }
+          if(profile.width<=360){
+            for(const [name,rect] of [['preview',measured.stage],['dock',measured.dock]]){
+              if(rect?.visible&&(rect.x< -1||rect.right>profile.width+1)){
+                const error='Narrow phone '+name+' extends outside '+profile.width+
+                  'px viewport: '+JSON.stringify(rect);
+                errors.push({key,error});
+                console.error('VISUAL FAILURE '+key+' '+error);
+              }
+            }
+          }
           if(profile.id==='desktop-791x892'&&measured.undersized24.length){
             const error='Editor action targets below 24 CSS px: '+measured.undersized24.join(', ');
             errors.push({key,error});
