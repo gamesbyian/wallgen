@@ -4,7 +4,7 @@ Claims are qualified as source-confirmed, browser-observed, visual-approved, beh
 
 ## Independent reviewer lanes
 
-**Capability lane:** Compare all 115 current static IDs, 87 data-setting fields, 40 named tools, 3 material layers, 7 colour targets, dynamic interiors, drawing/anchor actions, import/export/metadata, saved/history, all six current dock actions. Prove alternate scene applicability via actual UI interactions. Seek missing controls and record CSS selectors and reproduction.
+**Capability lane:** Compare the **116 versioned historical source IDs** (113 represented in the live DOM, three retired category IDs with six tested successor tabs), 87 source data-setting fields, 40 named tools (39 currently user-reachable; HTML-disabled legacy Tone remains uncredited), 3 material layers, 7 colour targets, dynamic interiors, drawing/anchor actions, import/export/metadata, saved/history, the five canonical mobile destinations and the three relocated quick actions. Historical inventory identity, DOM presence, pointer reachability, keyboard access, semantic equivalence and visual approval are separate evidence levels. Prove alternate scene applicability via actual UI interactions. Seek missing controls and record CSS selectors and reproduction.
 
 **Behavior lane:** Seek counterexamples to each requirement in the verification matrix. Verify zoom changes serialized viewZoom only; nudge changes positionX and positionY while frame Pan changes only viewPanX/viewPanY; Fit resets both framing axes and zoom without altering composition; point edits alter geometry, while framing guides do not. Compare full before/after recipes, screenshots and PNG output.
 
