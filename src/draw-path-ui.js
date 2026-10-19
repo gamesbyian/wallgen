@@ -3,6 +3,19 @@ import {createPointEditor,clonePointEditor,addPointAnchor,deletePointAnchor,
   movePointAnchor,movePointHandle,pointHandles,resmoothPointEdits,
   savedPointAnchors,savedPointCorners} from './path-point-editor.js';
 
+/** Match the renderer's world-space camera and *screen-space* composition
+ * nudge. Positive viewPanX/Y moves the camera to higher world coordinates,
+ * shifting ink and its interactive anchors in the opposite screen direction.
+ * New strokes are authored in world coordinates without inheriting the
+ * unrelated positionX/Y translation of the currently generated wallpaper. */
+export function drawnPathViewportOffset(recipe,showSavedPath=false){
+  const zoom=Math.max(.5,Math.min(2.5,Number(recipe?.viewZoom)||1));
+  const compositionX=showSavedPath?(Number(recipe?.positionX)||0):0;
+  const compositionY=showSavedPath?(Number(recipe?.positionY)||0):0;
+  return [(compositionX-zoom*(Number(recipe?.viewPanX)||0))/100,
+    (compositionY-zoom*(Number(recipe?.viewPanY)||0))/100];
+}
+
 // The freehand overlay is also the optional point editor: one shared camera,
 // one source of path geometry and one save/undo transaction.
 export function installDrawTool({getRecipe,onApply,onNotice}){
@@ -23,10 +36,8 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
   let active=false,pointer=null,raw=[],ready=[],importedSource=[],fit='smooth',editing=false;
   let editor=null,pendingPins=[],pendingCorners=[],adding=false,drag=null,history=[];
   let editingSavedPath=false,showingSavedPath=false;
-  const cameraPan=()=>{
-    const r=getRecipe();
-    return showingSavedPath||editingSavedPath?[r.positionX/100,r.positionY/100]:[0,0];
-  };
+  const cameraPan=()=>drawnPathViewportOffset(getRecipe(),
+    showingSavedPath||editingSavedPath);
 
   // Convert between the design's normalized coordinates and the full stage,
   // whose preview may be zoomed and letterboxed inside the editing overlay.
