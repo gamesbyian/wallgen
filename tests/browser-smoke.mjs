@@ -472,8 +472,42 @@ try{
   assert.equal(await evaluate('document.querySelector(".mobile-fit-button").getAttribute("aria-label")'),
     'Fit entire wallpaper (100% framing)');
   assert.equal(await evaluate('document.querySelector(".mobile-fit-button").disabled'),true);
-  // Distinguish composition nudge from zoom and from proposed viewport Pan:
-  // nudge is intentionally a saved recipe-position change, not a camera move.
+  // Move the CAMERA via its own controls in More. Never invoke data-nudge
+  // or mutate the source composition position. The resulting frame is saved.
+  await evaluate('document.getElementById("mobileMore").click()');
+  await waitFor('document.body.classList.contains("mobile-tools-open")');
+  const panUi=await evaluate(`(()=>{
+    const area=document.querySelector('.mobile-more-group-body>.viewport-positioner');
+    const buttons=[...area?.querySelectorAll('[data-view-pan]')||[]];
+    return {inMore:!!area,actions:buttons.map(b=>b.dataset.viewPan),
+      labels:buttons.map(b=>b.getAttribute('aria-label')),
+      status:area?.querySelector('#viewPanStatus')?.textContent};
+  })()`);
+  assert.equal(panUi.inMore,true,'mobile Pan must be available in the real More sheet');
+  assert.deepEqual(panUi.actions.sort(),['down','left','reset','right','up']);
+  assert.ok(panUi.labels.every(Boolean),'viewport Pan actions must have accessible labels');
+  assert.equal(panUi.status,'Centered frame');
+  await evaluate('document.querySelector("[data-view-pan=right]").click()');
+  await waitFor('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).viewPanX===5');
+  const rightPan=await evaluate(
+    'JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r")))');
+  assert.deepEqual(Object.keys(fitted).filter(key=>
+    JSON.stringify(fitted[key])!==JSON.stringify(rightPan[key])),['viewPanX'],
+    'Viewport pan must not move any composition or generation setting');
+  assert.equal(rightPan.positionX,fitted.positionX);
+  assert.equal(rightPan.positionY,fitted.positionY);
+  assert.equal(await evaluate('document.querySelector(".mobile-fit-button").disabled'),false,
+    'Fit must be available at 100% when the camera is off-center');
+  await evaluate('document.querySelector(".mobile-zoom-button[data-zoom=fit]").click()');
+  await waitFor('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).viewPanX===0');
+  const resetPan=await evaluate(
+    'JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r")))');
+  assert.deepEqual(resetPan,fitted,'Fit must restore the centered viewport without changing artwork');
+  await evaluate('document.getElementById("mobileMore").click()');
+  await waitFor('!document.body.classList.contains("mobile-tools-open")');
+  console.log('INDEPENDENT_VIEWPORT_PAN',JSON.stringify({panUi,right:rightPan.viewPanX,reset:resetPan.viewPanX}));
+  // Composition nudge remains its own handler and unchanged recipe field.
+
   await evaluate('document.querySelector("[data-nudge=right]").click()');
   await waitFor('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).positionX==='+(fitted.positionX+1));
   const nudged=await evaluate(
