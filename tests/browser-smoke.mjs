@@ -2327,7 +2327,10 @@ try{
   // Follow actual tab/chip clicks across every reachable source structure.
   // Tonal is a separately noted legacy import state: its option is hidden and
   // disabled in the shipping form, so this MUST NOT claim 40/40 user reachability.
-  const interactionCensus=await evaluate(`(()=>{
+  const interactionCensus=await evaluate(`(async()=>{
+    const {EDITOR_CATEGORIES}=await import('/src/editor-schema.js');
+    const sourceTools=new Map(EDITOR_CATEGORIES.flatMap(category=>
+      category.tools.map(tool=>[category.id+'/'+tool.id,tool.settings])));
     document.getElementById('mobileEdit').click();
     if(document.getElementById('controls').classList.contains('editor-focus-active'))
       document.querySelector('.editor-focus-all').click();
@@ -2337,6 +2340,8 @@ try{
     construction.value='ribbon'; // Tonal is deliberately hidden/disabled.
     construction.dispatchEvent(new Event('change',{bubbles:true}));
     const failures=[],reached=new Set(),perScene={};
+    const sourceFailures=[],geometryFailures=[];
+    let checkedFields=0,checkedGeometry=0;
     for(const [scene,region] of [
       ['paths','voronoi'],['radial','voronoi'],
       ['regions','voronoi'],['regions','nested']
@@ -2368,16 +2373,50 @@ try{
           else{
             reached.add(category+'/'+tool);
             perScene[sceneKey].push(category+'/'+tool);
+            // The screenshot atlas verifies its selected tools. Here every
+            // available *source* tool and setting node is checked while users
+            // navigate all four live geometry structure configurations.
+            const expected=sourceTools.get(category+'/'+tool);
+            if(!expected)sourceFailures.push(sceneKey+':unknown tool '+category+'/'+tool);
+            else{
+              checkedFields+=expected.length;
+              const missing=expected.filter(key=>{
+                const field=document.querySelector('#controls [name="'+CSS.escape(key)+'"]');
+                return !field||!card.contains(field);
+              });
+              if(missing.length)sourceFailures.push(sceneKey+':'+category+'/'+tool+
+                ' missing source input(s): '+missing.join(','));
+            }
+            const tray=document.querySelector('.sidebar').getBoundingClientRect();
+            const stage=document.querySelector('.studio-stage').getBoundingClientRect();
+            const currentCard=card.getBoundingClientRect();
+            checkedGeometry++;
+            if(stage.bottom>tray.top+2||tray.left<-2||tray.right>innerWidth+2||
+               tray.bottom>innerHeight+2||currentCard.width<25||currentCard.height<15||
+               currentCard.left<tray.left-2||currentCard.right>tray.right+2){
+              geometryFailures.push({scene:sceneKey,tool:category+'/'+tool,
+                stageBottom:Math.round(stage.bottom),trayTop:Math.round(tray.top),
+                cardLeft:Math.round(currentCard.left),cardRight:Math.round(currentCard.right),
+                trayLeft:Math.round(tray.left),trayRight:Math.round(tray.right),
+                trayBottom:Math.round(tray.bottom)});
+            }
           }
         }
       }
     }
     const tonalOption=document.querySelector('[name=construction] option[value=tonal]');
     return {reached:[...reached].sort(),perScene,failures,
+      sourceFailures,geometryFailures,checkedFields,checkedGeometry,
       legacyTonalHidden:!!tonalOption?.hidden&&!!tonalOption?.disabled,
       toneSourceCard:!!document.querySelector('.editor-tool-card[data-editor-tool=tone]')};
   })()`);
   assert.deepEqual(interactionCensus.failures,[]);
+  assert.deepEqual(interactionCensus.sourceFailures,[],
+    'every applicable named tool must contain its exact schema-owned source inputs');
+  assert.deepEqual(interactionCensus.geometryFailures,[],
+    'every selected source tool must stay inside the live mobile tray, clear of the wallpaper');
+  assert.ok(interactionCensus.checkedFields>=200&&interactionCensus.checkedGeometry>=70,
+    'conditional tool census must exercise substantial real source fields and layout states');
   assert.equal(interactionCensus.reached.length,39,
     '39 enabled source tools must be accessible through real category/chip selection');
   assert.ok(interactionCensus.legacyTonalHidden&&interactionCensus.toneSourceCard,
