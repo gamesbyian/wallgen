@@ -106,6 +106,7 @@ function closeSurfaces({restoreFocus=true}={}){
   tools.hidden=true;backstage.hidden=true;
   dockExpand.setAttribute('aria-expanded','false');
   dock.removeAttribute('aria-hidden');
+  dock.inert=false;
   editBtn.setAttribute('aria-expanded','false');
   exploreBtn.setAttribute('aria-expanded','false');
   document.getElementById('mobileSaved')?.setAttribute('aria-expanded','false');
@@ -143,6 +144,9 @@ function openSurface(type,galleryMode='explore'){
     editBtn.setAttribute('aria-expanded','true');
     dockExpand.setAttribute('aria-expanded','false');
     dock.setAttribute('aria-hidden','true');
+    // Hidden controls must not remain keyboard-reachable. The separate
+    // onscreen expand arrow remains available to leave Edit.
+    dock.inert=true;
     design.setAttribute('role','region');
     updateEditorDensity();
     // The dock slides off the right edge, leaving only its accessible
