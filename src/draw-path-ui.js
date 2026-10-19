@@ -51,7 +51,7 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
   let active=false,pointer=null,raw=[],ready=[],importedSource=[],fit='smooth',editing=false;
   let editor=null,pendingPins=[],pendingCorners=[],adding=false,drag=null,history=[];
   let editingSavedPath=false,showingSavedPath=false;
-  let savedSourcePath=null,applying=false;
+  let savedSourcePath=null,applying=false,interruptedStroke=null;
   const cameraPan=()=>drawnPathViewportOffset(getRecipe(),
     showingSavedPath||editingSavedPath);
   // A saved curve has not entered provisional ready/raw state yet. Reframing
@@ -181,7 +181,8 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
     syncPointControls();
   }
   function reset(){
-    pointer=null;drag=null;raw=[];ready=[];importedSource=[];pendingPins=[];pendingCorners=[];
+    pointer=null;drag=null;interruptedStroke=null;
+    raw=[];ready=[];importedSource=[];pendingPins=[];pendingCorners=[];
     editor=null;editing=false;adding=false;history=[];
     editingSavedPath=false;showingSavedPath=false;
     savedSourcePath=null;
@@ -347,6 +348,13 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
       syncPointControls();draw(editor.points);
       return;
     }
+    // A browser may cancel a touch when orientation changes, the OS steals
+    // the gesture or scrolling wins. Keep the previous uncommitted draft until
+    // this replacement stroke actually finishes. Cancellation is not Erase.
+    interruptedStroke={
+      raw,ready,importedSource,pendingPins,pendingCorners,editor,history,
+      showingSavedPath,editingSavedPath,savedSourcePath
+    };
     pointer=event.pointerId;raw=[];ready=[];importedSource=[];pendingPins=[];pendingCorners=[];apply.disabled=true;
     // A replacement stroke is a new transaction, unlike merely hiding handles.
     editor=null;history=[];adding=false;
@@ -381,6 +389,7 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
     try{overlay.releasePointerCapture(event.pointerId);}catch{}
     if(editing){if(drag?.moved)settle();drag=null;return;}
     setFit(fit);
+    interruptedStroke=null;
     if(ready.length<2)hint.textContent='That was too short. Draw a longer path.';
   });
   overlay.addEventListener('pointercancel',event=>{
@@ -389,7 +398,21 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
     if(editing&&drag){
       if(drag.moved){editor=drag.start;history.pop();}
       drag=null;draw(editor.points);syncPointControls();
-    }else{reset();hint.textContent='Stroke interrupted. Draw again.';}
+    }else{
+      const previous=interruptedStroke;
+      interruptedStroke=null;
+      if(previous){
+        ({raw,ready,importedSource,pendingPins,pendingCorners,editor,history,
+          showingSavedPath,editingSavedPath,savedSourcePath}=previous);
+        syncPointControls();draw(visiblePoints());
+        hint.textContent=ready.length>=2||showingSavedPath?
+          'Stroke interrupted. Your previous path is still here.':
+          'Stroke interrupted. Draw again.';
+      }else{
+        reset();
+        hint.textContent='Stroke interrupted. Draw again.';
+      }
+    }
   });
   overlay.addEventListener('click',event=>{if(active){event.preventDefault();event.stopPropagation();}});
   button.addEventListener('click',()=>active?stop():start());
