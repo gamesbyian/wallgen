@@ -37,6 +37,16 @@ export const elementApplies=(e,slot,id)=>
 /** UI selection follows an element's stable recipe ID, not its current
  * position in the ordered stack. Undo, reorder and recipe restore can all
  * replace the array while preserving the selected identity. */
+/** Pick a live replacement for a control destroyed by an Interior card
+ * rebuild. Never return a disabled or stale node. The manager chooser and Add
+ * button are safe keyboard fallbacks when the original action disappears. */
+export function resolveInteriorFocusTarget(controls,requestedKey){
+  if(!requestedKey)return null;
+  const available=Array.isArray(controls)?controls.filter(c=>c&&!c.disabled):[];
+  return available.find(c=>c.dataset?.interiorFocus===requestedKey)||
+    available.find(c=>c.dataset?.interiorFocus==='manager.choose')||
+    available.find(c=>c.dataset?.interiorFocus==='manager.add')||null;
+}
 export function resolveInteriorSelection(items,selectedId,fallbackIndex=0){
   if(!Array.isArray(items)||!items.length)return 0;
   if(selectedId!==null&&selectedId!==undefined){
