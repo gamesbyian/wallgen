@@ -1,6 +1,6 @@
 import {finishDrawnPath,DRAW_COORD_MIN,DRAW_COORD_MAX,MAX_DRAWN_POINTS,prepareDrawnPath,pointOnDrawnPath} from './drawn-path.js?v=20261018-extend1';
 import {createPointEditor,clonePointEditor,addPointAnchor,deletePointAnchor,
-  movePointAnchor,movePointHandle,pointHandles,editablePointHandleSides,
+  movePointAnchor,pointAnchorWouldMove,movePointHandle,pointHandles,editablePointHandleSides,
   resmoothPointEdits,insertPointAnchor,
   savedPointAnchors,savedPointCorners} from './path-point-editor.js';
 import {drawAuthoringLockReason,drawAuthoringLockMessage} from './path-authoring-locks.js';
@@ -376,7 +376,14 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
         Math.max(DRAW_COORD_MIN,Math.min(DRAW_COORD_MAX,pos[0]+drag.offset[0])),
         Math.max(DRAW_COORD_MIN,Math.min(DRAW_COORD_MAX,pos[1]+drag.offset[1]))
       ];
-      if(!drag.moved){pushUndo();drag.moved=true;}
+      if(!drag.moved){
+        const changed=drag.hit.type==='anchor'?
+          pointAnchorWouldMove(editor,drag.hit.index,to,drag.start.points):
+          Math.abs(to[0]-drag.hit.at[0])>=.00001||
+          Math.abs(to[1]-drag.hit.at[1])>=.00001;
+        if(!changed)return;
+        pushUndo();drag.moved=true;
+      }
       if(drag.hit.type==='anchor')
         movePointAnchor(editor,drag.hit.index,to,drag.start.points);
       else movePointHandle(editor,drag.hit.index,drag.hit.side,to,
@@ -489,13 +496,14 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
       event.preventDefault();pointUndo.click();return;
     }
     if(editor.selected!==-1&&['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(event.key)){
-      event.preventDefault();pushUndo();
+      event.preventDefault();
       const p=editor.points[editor.selected].slice(),amount=event.shiftKey?10:1;
       if(event.key==='ArrowUp')p[1]-=amount/1300;
       if(event.key==='ArrowDown')p[1]+=amount/1300;
       if(event.key==='ArrowLeft')p[0]-=amount/600;
       if(event.key==='ArrowRight')p[0]+=amount/600;
-      movePointAnchor(editor,editor.selected,p);settle();
+      if(!pointAnchorWouldMove(editor,editor.selected,p))return;
+      pushUndo();movePointAnchor(editor,editor.selected,p);settle();
     }else if(editor.selected!==-1&&['Delete','Backspace'].includes(event.key)){
       event.preventDefault();deleteButton.click();
     }
