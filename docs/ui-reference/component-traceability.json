@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "purpose": "Traceability between original source UI and proposal. No removal of existing behavior.",
   "updated": "2026-10-18",
   "sourceBaseline": "main @ 7d99e99a5ce391d05ab410fcc90d3eb78420a282",
@@ -94,8 +94,8 @@
     },
     {
       "id": "cameraRail",
-      "sourceSelector": "id:mobileEditorActionRail",
-      "meaning": "Viewport operations distinct from model changes",
+      "sourceSelector": "css:.mobile-preview-rail-right",
+      "meaning": "Actual side rail for composition nudge (positionX/Y), camera zoom and Fit. Not the edit action rail.",
       "canonicalScreen": "studio",
       "sourceKind": "CSS / dynamic or static DOM",
       "state": "keep or explicitly relocate; never silently remove"
@@ -339,6 +339,14 @@
       "canonicalScreen": "colour",
       "sourceKind": "CSS / dynamic or static DOM",
       "state": "keep or explicitly relocate; never silently remove"
+    },
+    {
+      "id": "editActionRail",
+      "sourceSelector": "id:mobileEditorActionRail",
+      "meaning": "Edit-only quick actions; not camera or composition movement",
+      "canonicalScreen": "geometry",
+      "sourceKind": "Static index.html ID",
+      "state": "Preserve until deliberate nav action migration"
     }
   ]
 }

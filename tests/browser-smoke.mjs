@@ -296,6 +296,34 @@ try{
     'JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r")))');
   assert.deepEqual(returnedZoom,beforeZoom,
     'Zoom-in must restore exact recipe after camera-only zoom-out');
+  // The side Fit action resets framing, and may not move the composition,
+  // change generation controls, or hide off-canvas path continuation.
+  await evaluate('document.querySelector(".mobile-zoom-button[data-zoom=out]").click()');
+  await waitFor('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).viewZoom==='+targetZoom);
+  await evaluate('document.querySelector(".mobile-zoom-button[data-zoom=fit]").click()');
+  await waitFor('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).viewZoom===1');
+  const fitted=await evaluate(
+    'JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r")))');
+  assert.deepEqual(fitted,beforeZoom,'Fit changed artwork instead of framing');
+  assert.equal(await evaluate('document.querySelector(".mobile-fit-button").getAttribute("aria-label")'),
+    'Fit entire wallpaper (100% framing)');
+  assert.equal(await evaluate('document.querySelector(".mobile-fit-button").disabled'),true);
+  // Distinguish composition nudge from zoom and from proposed viewport Pan:
+  // nudge is intentionally a saved recipe-position change, not a camera move.
+  await evaluate('document.querySelector("[data-nudge=right]").click()');
+  await waitFor('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).positionX==='+(fitted.positionX+1));
+  const nudged=await evaluate(
+    'JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r")))');
+  assert.deepEqual(Object.keys(fitted).filter(key=>
+    JSON.stringify(fitted[key])!==JSON.stringify(nudged[key])),['positionX'],
+    'Nudge must change the saved composition position, not the camera');
+  await evaluate('document.querySelector("[data-nudge=left]").click()');
+  await waitFor('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).positionX==='+fitted.positionX);
+  assert.deepEqual(await evaluate(
+    'JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r")))'),
+    fitted,'Opposite composition nudge must restore the same saved recipe');
+
+
 
   // The actual application must use a worker after its deterministic initial
   // frame, and settle the correct recipe after rapid edits. A standalone

@@ -4,6 +4,11 @@
 
 ## Phase A — approval and reference integrity
 
+- [x] Establish independent snapshot of 113 static IDs, 87 configuration attributes and 40 source-defined tools, with a versioned verification matrix.
+- [x] Correct prior Pan/Zoom/Nudge semantics against actual renderer and UI code.
+- [ ] Qualify **all** static/conditional controls against runtime interaction coverage; source inventories do not establish reachability.
+- [ ] Independent negative testing of real screen states using the [adversarial protocol](UI-REDESIGN-ADVERSARIAL-REVIEW.md), including unscripted interactions and candidate SVGs.
+
 - [x] Inventory existing 55 glyphs + existing brand icon.
 - [x] Enumerate all 7 editor categories and 40 tools from the code.
 - [x] Stage 12 SVG candidates without rewiring live controls.
@@ -16,7 +21,9 @@
 ## Phase B — canvas-first shell
 
 - [ ] Keep exact approved app icon beside R.O.Y.G.B.I.V. in all modes.
-- [ ] Remove canvas heading and top Fit/100% row; move Pan, Zoom+/−, Fit to canvas side, nudge/recenter logically adjacent.
+- [x] Keep (already existing) canvas-side Zoom+/− and add Fit/100% using the actual `viewZoom` source; no dedicated top zoom header on mobile. (PR #79)
+- [ ] Implement a **separate viewport Pan** with explicit preview/export persistence, *without* relabelling composition nudge as Pan.
+- [ ] Consolidate navigation only after full action-preservation and screen geometry tests; existing six dock actions remain functional.
 - [ ] Preserve zoom increments, full fit, camera-only state, drawn-path extension and exported wallpaper dimensions.
 - [ ] Migrate six dock actions (Edit/Explore/Randomize/Favourite/Download/More) to five destinations (Studio/Edit/Explore/Saved/More) **without losing Randomize, Favourite or direct Download**.
 - [ ] Verify 412×892 phone, 499/500/790/791 boundaries, constrained landscape; no artwork/tray overlap.

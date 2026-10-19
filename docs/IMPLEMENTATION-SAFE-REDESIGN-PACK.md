@@ -2,6 +2,9 @@
 
 **Status:** canonical visual/behavior reference; not a production redesign. **Source:** `gamesbyian/wallgen` main at `7d99e99a5ce391d05ab410fcc90d3eb78420a282`, with a staged icon extension on this documentation branch. [Fresh verified UI atlas: 1,648 captures, zero missing states](https://github.com/gamesbyian/wallgen/actions/runs/39166559800). The illustrated mockups in earlier decks are inspiration, **not specifications**.
 
+**Verified semantic correction (source, 2026-10-18):** Existing Zoom +/− modifies the serialized **`recipe.viewZoom`** field, so both preview and exported PNG use the same framing. Existing directional nudge buttons modify **`recipe.positionX` / `positionY`** and therefore move the composition. They are **not viewport-only Pan**. A separate Pan action is a future feature with unresolved persistence and export semantics; the visual concept was ahead of implementation. Fit would reset only `viewZoom` to `1`. The proposed navigation, symbols and focused slider remain design proposals until a tested PR changes production UI. See [verification matrix](ui-reference/verification-matrix.json) and [source control inventory](ui-reference/source-control-inventory.json).
+
+
 ## Source-of-truth hierarchy
 
 1. **Actual production source and screenshot atlas:** existing controls, code paths, conditional states and current behavior.
@@ -10,7 +13,9 @@
 4. **[ROYGBIV icon manifest](../assets/icons/roygbiv/manifest.json):** original glyphs, exact SVG sources and candidate extension statuses. The logo is always `assets/roygbiv-logo.svg`.
 5. **[Canvas-first v2 vision plan](./CREAM-STUDIO-CANVAS-FIRST-REDESIGN-V2.md) and proposal deck:** product goals, colour/style and narrative inspiration, *not exhaustive implementation references*.
 
-**Navigation migration:** the current six mobile dock controls are Edit, Explore, Randomize, Favourite, Download and More. The proposed **five destinations** are Studio, Edit, Explore, Saved and More. Randomize, Download and Favourite are **relocated to prominent contextual actions**, not removed or buried. The full before/after action mapping is in `canonical-screen-contract.json` under `global.currentDockControls` and `global.actionRelocations`.\n\n**Do not build by copying missing controls from generative mockups.** Required elements are preserved even if the illustrative phone view lacks the space to depict them simultaneously. Feature removal requires a separate explicit product decision.
+**Navigation migration:** the current six mobile dock controls are Edit, Explore, Randomize, Favourite, Download and More. The proposed **five destinations** are Studio, Edit, Explore, Saved and More. Randomize, Download and Favourite are **relocated to prominent contextual actions**, not removed or buried. The full before/after action mapping is in `canonical-screen-contract.json` under `global.currentDockControls` and `global.actionRelocations`.\n\n**Independent review:** [source inventory](ui-reference/source-control-inventory.json), [evidence matrix](ui-reference/verification-matrix.json) and [adversarial acceptance protocol](UI-REDESIGN-ADVERSARIAL-REVIEW.md) are mandatory before claiming full UI fidelity. Source/atlas evidence may disprove a beautiful screen diagram.
+
+**Do not build by copying missing controls from generative mockups.** Required elements are preserved even if the illustrative phone view lacks the space to depict them simultaneously. Feature removal requires a separate explicit product decision.
 
 ## Approved icon family and proposed assignments
 

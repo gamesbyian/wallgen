@@ -45,7 +45,7 @@
       "dark"
     ],
     "noDedicatedCanvasHeader": true,
-    "cameraSemantics": "viewport transform only; no recipe mutation",
+    "cameraSemantics": "CURRENT: Zoom changes the serialised recipe.viewZoom only (camera framing, shared preview/export); composition nudges change recipe.positionX/Y. PROPOSED: viewport-only Pan is a distinct unimplemented action and must not impersonate composition nudge.",
     "sliderSemantics": "stable distinct ROYGBIV accents in each panel; includes blue",
     "touch": "meet WCAG target min or exception; aim for 40-48px for primary phone controls",
     "sourceCategories": [
@@ -451,7 +451,10 @@
       "mobileShuffle": "Keep prominent Studio Randomize action and optional quick action; do not lose random generation.",
       "mobileDownload": "Keep direct Studio Export/Download shortcut and More > Export PNG; do not force hidden utility navigation.",
       "mobileFavorite": "Preserve single-tap favourite action on Studio and gallery, in addition to Saved destination."
-    }
+    },
+    "cameraZoomState": "viewZoom is a camera-specific field persisted as part of the recipe, unlike other generator settings; zoom affects export framing by design.",
+    "panStatus": "A separately implemented viewport-only Pan is not yet available; existing arrows move the actual composition.",
+    "fitStatus": "Fit is planned as a viewZoom=1 action in mobile canvas rail."
   },
   "screens": [
     {
@@ -462,7 +465,7 @@
         "Canonical app icon beside R.O.Y.G.B.I.V.",
         "Cream and black theme circles",
         "Entire uncut wallpaper frame",
-        "Side Pan tool (viewport only)",
+        "A distinct viewport Pan affordance only if separately implemented; currently composition nudge is available",
         "Side Zoom + and Zoom −",
         "Side Fit / full frame",
         "Directional nudge or recenter",
@@ -475,7 +478,8 @@
       ],
       "conditional": [
         "Viewport zoom readout only on action",
-        "Camera guides when enabled"
+        "Camera guides when enabled",
+        "Viewport-only Pan requires new source-qualified behavior; do not label composition nudge as Pan."
       ],
       "forbidden": [
         "‘Your canvas’ header",

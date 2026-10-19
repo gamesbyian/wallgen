@@ -1,6 +1,6 @@
-# ROYGBIV icon library (approved concept, implementation pending)
+# ROYGBIV icon library (approved glyphs integrated; extension candidates staged)
 
-This directory holds 55 standalone UI glyph SVGs and a copy of the canonical brand icon prepared from the approved ROYGBIV icon-system concept. **This commit stages assets only: no application source, existing branding, CSS, recipe behavior, or UI markup is altered.** The established original `assets/roygbiv-logo.svg` stays untouched; `app-icon.svg` is a verbatim copy of it.
+This directory contains 55 original SVG UI glyphs, a verbatim copy of the canonical brand icon, and 12 staged extension candidates. The **original glyphs are integrated** in the current application. The extension candidates are not assigned to production controls. The asset-only statement below describes the initial historical staging, not the current integration state. The established original `assets/roygbiv-logo.svg` stays untouched; `app-icon.svg` is a verbatim copy of it.
 
 - Icon paths: `assets/icons/roygbiv/<name>.svg`, the UI glyphs being transparent scalable 32×32 SVGs with accessible title, rounded 2.4-unit dark/currentColor strokes, and solid color accents.
 - Icon index: [manifest.json](./manifest.json), including intended meaning, role, palette and reference pointer.

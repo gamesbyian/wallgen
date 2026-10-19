@@ -2,6 +2,9 @@
 
 **Revision:** 18 October 2026. **Status:** design recommendation, no production UI change. **Evidence:** [1,648-image completed atlas](https://github.com/gamesbyian/wallgen/actions/runs/39166559800), of which 832 captures represent 412 × 892 CSS px Pixel 6 Pro-sized mobile/Chromium touch emulation. Screenshot root zoom at 100/75/66/50% is **not** native Chrome zoom. The gallery/wallpaper art is masked in evidence captures; the proposed rainbow images are illustrations.
 
+**Verified semantic correction (source, 2026-10-18):** Existing Zoom +/− modifies the serialized **`recipe.viewZoom`** field, so both preview and exported PNG use the same framing. Existing directional nudge buttons modify **`recipe.positionX` / `positionY`** and therefore move the composition. They are **not viewport-only Pan**. A separate Pan action is a future feature with unresolved persistence and export semantics; the visual concept was ahead of implementation. Fit would reset only `viewZoom` to `1`. The proposed navigation, symbols and focused slider remain design proposals until a tested PR changes production UI. See [verification matrix](ui-reference/verification-matrix.json) and [source control inventory](ui-reference/source-control-inventory.json).
+
+
 **Full original audit:** [Cream Studio Pixel 6 Pro analysis](CREAM-STUDIO-PIXEL6PRO-UI-AUDIT-2026-10-18.md).
 
 ## User-approved decisions

@@ -51,6 +51,7 @@ right.className='mobile-preview-rail mobile-preview-rail-right';
 right.setAttribute('role','group');
 right.setAttribute('aria-label','Move artwork and zoom preview');
 const zoomOut=document.createElement('button'),zoomIn=document.createElement('button');
+const zoomFit=document.createElement('button');
 for(const [el,mode,glyph,label] of [
   [zoomIn,'in','+','Zoom preview in'],
   [zoomOut,'out','−','Zoom preview out'],
@@ -58,6 +59,13 @@ for(const [el,mode,glyph,label] of [
   el.type='button';el.className='mobile-zoom-button';
   el.dataset.zoom=mode;el.innerHTML=iconMarkup(mode==='in'?'plus':'minus');el.setAttribute('aria-label',label);
 }
+// Fit is a first-class side-camera operation, not another top toolbar.
+zoomFit.type='button';zoomFit.className='mobile-zoom-button mobile-fit-button';
+zoomFit.dataset.zoom='fit';zoomFit.innerHTML=iconMarkup('fit-canvas');
+zoomFit.setAttribute('aria-label','Fit entire wallpaper (100% framing)');
+zoomFit.title='Fit whole wallpaper at 100%';
+zoomFit.addEventListener('click',()=>
+  stage.dispatchEvent(new CustomEvent('roygbiv-view-zoom-request',{detail:1})));
 const zoomValue=document.createElement('output');
 zoomValue.className='mobile-zoom-level';
 zoomValue.setAttribute('aria-live','off');
@@ -69,6 +77,7 @@ function setZoom(next){
   stage.style.setProperty('--mobile-preview-zoom',String(zoom));
   zoomValue.textContent=Math.round(zoom*100)+'%';
   zoomIn.disabled=zoom>=2.5;zoomOut.disabled=zoom<=.5;
+  zoomFit.disabled=Math.abs(zoom-1)<.001;
   stage.dispatchEvent(new Event('roygbiv-preview-zoom'));
 }
 zoomIn.addEventListener('click',()=>
@@ -80,7 +89,7 @@ zoomOut.addEventListener('click',()=>
 stage.addEventListener('roygbiv-view-zoom-updated',event=>setZoom(event.detail));
 const zoomSlot=document.createElement('div');
 zoomSlot.className='mobile-zoom-slot';
-zoomSlot.append(zoomIn,zoomOut,zoomValue);
+zoomSlot.append(zoomIn,zoomOut,zoomFit,zoomValue);
 function mobile(){
   stage.append(left,right);
   left.append(bleedButton,toolbar);

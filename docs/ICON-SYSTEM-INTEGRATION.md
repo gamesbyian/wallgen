@@ -2,7 +2,7 @@
 
 The approved SVGs in `assets/icons/roygbiv/` are now used by existing primary navigation, editing and preview controls. This pass deliberately changes **only icon contents**, not the bounding boxes, grid structures, responsive breakpoints, button labels, DOM identities, or user interaction events. The masthead's existing logo is retained.
 
-- Source icon helper: `src/ui-icons.js`, with four generated geometry inventories. Static HTML keeps app-relative SVG fallbacks and the helper upgrades them to inline SVG so neutral strokes inherit the selected cream/dark theme's `currentColor` without recolouring the rainbow accents. No runtime network fetch is necessary.
+- Source icon helper: `src/ui-icons.js`, with five generated geometry inventories, including the unwired v2 candidate extension. Static HTML keeps app-relative SVG fallbacks and the helper upgrades them to inline SVG so neutral strokes inherit the selected cream/dark theme's `currentColor` without recolouring the rainbow accents. No runtime network fetch is necessary.
 - CSS: `icon-system.css`, last stylesheet, defines image sizing within existing glyph slots; no new button layout, no positioning, and no new responsive panel rows.
 - Dynamic editor: `src/editor-layout.js` and `src/editor-schema.js` apply the same asset vocabulary as the static dock. Settings dice and locks retain their original event handlers and aria state.
 - Dynamic preview: mobile zoom, direction controls, and favorite-on/off graphics reflect existing state.
