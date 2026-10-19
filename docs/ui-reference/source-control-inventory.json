@@ -290,7 +290,7 @@
     },
     {
       "id": "studioDestination",
-      "sourceSelector": "id:studioDestination",
+      "sourceSelector": "id:mobileStudio",
       "meaning": "Return to unobscured canvas",
       "canonicalScreen": "studio",
       "sourceKind": "Static index.html ID",
@@ -298,7 +298,7 @@
     },
     {
       "id": "savedDestination",
-      "sourceSelector": "id:savedDestination",
+      "sourceSelector": "id:mobileSaved",
       "meaning": "Open saved favourites independently from Explore",
       "canonicalScreen": "explore",
       "sourceKind": "Static index.html ID",
