@@ -35,3 +35,13 @@ test('optional Focus listens to every completed source control sync',()=>{
   assert.match(focus,/addEventListener\('roygbiv-controls-synced',sync\)/);
   assert.match(focus,/else slider\.style\.removeProperty\('--roygbiv-slider-color'\)/);
 });
+
+test('empty Focus tools surrender unused sheet height but retain an exit',()=>{
+ const js=requireFocusSource();
+ const css=readFileSync(new URL('../editor-focus.css',import.meta.url),'utf8');
+ assert.match(js,/form\.classList\.toggle\('editor-focus-empty',empty\)/);
+ assert.match(js,/chips\.hidden=empty/);
+ assert.match(js,/form\.classList\.remove\('editor-focus-empty'\)/);
+ assert.match(css,/:has\(#controls\.editor-focus-active\.editor-focus-empty\)/);
+ assert.match(css,/--mobile-tray-height:clamp\(192px,23dvh,215px\)/);
+});
