@@ -83,6 +83,7 @@
 - [ ] Test all existing PNG/JSON recipe round-trips and exact preview/export geometry.
 - [x] Matrix-test source recipes with off-frame drawn paths, independent material layers, custom interior ink/locks, nested regions and hidden legacy tonal mode across JSON, shared URLs and embedded PNG; full-resolution export geometry acceptance remains open (PR pending).
 - [ ] Test touch targets, keyboard/focus, colour contrast, screen reader names and reduced motion.
+- [x] Raise the Image import → Edit / Use path button's white-text contrast above 4.5:1 in dark and cream, retaining the original import/angle actions (PR pending).
 - [x] Keep the off-screen mobile Edit dock inert while preserving the visible dismiss handle and restoring keyboard navigation on close (rebased PR pending).
 - [x] Keep the offscreen Edit dock inert to keyboard focus, while leaving the visible dismiss/expand affordance available and restoring the dock on exit (rebased PR pending).
 - [ ] Update screen plates and companion deck with real implementation screenshots only after fidelity review.
