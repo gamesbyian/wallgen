@@ -2,7 +2,7 @@
   "version": 2,
   "purpose": "Traceability between original source UI and proposal. No removal of existing behavior.",
   "updated": "2026-10-18",
-  "sourceBaseline": "main @ 7d99e99a5ce391d05ab410fcc90d3eb78420a282",
+  "sourceBaseline": "default five-destination main-compatible shell, reviewed from 115 static HTML IDs",
   "entries": [
     {
       "id": "brand",
@@ -23,10 +23,26 @@
     {
       "id": "dock",
       "sourceSelector": "id:mobileActionDock",
-      "meaning": "Six current mobile actions; proposed five destinations with relocated actions",
+      "meaning": "Five live mobile destinations with preserved source quick actions",
       "canonicalScreen": "studio",
       "sourceKind": "CSS / dynamic or static DOM",
       "state": "keep or explicitly relocate; never silently remove"
+    },
+    {
+      "id": "studioDestination",
+      "sourceSelector": "id:mobileStudio",
+      "meaning": "Studio canvas destination, default page",
+      "canonicalScreen": "studio",
+      "sourceKind": "Static index.html ID",
+      "state": "live default navigation"
+    },
+    {
+      "id": "savedDestination",
+      "sourceSelector": "id:mobileSaved",
+      "meaning": "Saved favourites destination, independent from Explore",
+      "canonicalScreen": "explore",
+      "sourceKind": "Static index.html ID",
+      "state": "live default navigation"
     },
     {
       "id": "edit",
@@ -47,7 +63,7 @@
     {
       "id": "randomize",
       "sourceSelector": "id:mobileShuffle",
-      "meaning": "Randomize preserved as Studio primary action",
+      "meaning": "Source Shuffle in More; full Randomize remains beside wallpaper",
       "canonicalScreen": "studio",
       "sourceKind": "Static index.html ID",
       "state": "keep or explicitly relocate; never silently remove"
@@ -55,7 +71,7 @@
     {
       "id": "favorite",
       "sourceSelector": "id:mobileFavorite",
-      "meaning": "Favourite retained at one tap and Saved destination",
+      "meaning": "Direct source Favourite beside artwork, separate from Saved destination",
       "canonicalScreen": "explore",
       "sourceKind": "Static index.html ID",
       "state": "keep or explicitly relocate; never silently remove"
@@ -63,7 +79,7 @@
     {
       "id": "download",
       "sourceSelector": "id:mobileDownload",
-      "meaning": "Direct PNG action retained in Studio and More",
+      "meaning": "Direct original Export PNG beside artwork; also accessible from Edit",
       "canonicalScreen": "more",
       "sourceKind": "Static index.html ID",
       "state": "keep or explicitly relocate; never silently remove"
