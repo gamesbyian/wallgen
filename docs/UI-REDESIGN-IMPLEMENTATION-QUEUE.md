@@ -32,6 +32,7 @@
 - [x] Migrate six source action identities to a five-destination default dock, retaining direct Randomize, Favourite and Download in their source-backed surfaces.
 - [x] Qualify five-destination trial through all four CI workflows and promote to static first-paint HTML; no URL feature flag (PR #101 and default-promotion PR).
 - [ ] Verify 412×892 phone, 499/500/790/791 boundaries, constrained landscape; no artwork/tray overlap.
+- [x] Extend genuine Chromium breakpoint census beyond Studio to *open Edit*, asserting the preview remains above the tray, original actions and selected tool survive, and retaining boundary phone/landscape screenshots (PR pending).
 
 ## Phase C — component system and named editor controls
 
