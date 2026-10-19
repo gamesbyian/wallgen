@@ -11,6 +11,7 @@ on:
       - 'tests/redesign-material-rotation-browser.mjs'
       - 'tests/redesign-camera-structure-acceptance.mjs'
       - 'tests/redesign-keyboard-roving-tools.mjs'
+      - 'tests/redesign-cold-keyboard-editor.mjs'
       - '.github/workflows/agent3-mobile-acceptance.yml'
       - 'docs/ui-reference/source-control-inventory.json'
       - 'src/editor-*.js'
@@ -43,7 +44,8 @@ jobs:
             tests/redesign-seven-colour-targets-acceptance.mjs \
             tests/redesign-material-rotation-browser.mjs \
             tests/redesign-camera-structure-acceptance.mjs \
-            tests/redesign-keyboard-roving-tools.mjs; do
+            tests/redesign-keyboard-roving-tools.mjs \
+            tests/redesign-cold-keyboard-editor.mjs; do
             node --check "$test"
           done
           node --test \
@@ -52,7 +54,7 @@ jobs:
             tests/interior-combined-scope.test.js \
             tests/interior-selected-id.test.js \
             tests/material-three-layer-adversarial.test.js
-      - name: One Chromium/browser install for seven acceptance suites
+      - name: One Chromium/browser install for eight acceptance suites
         run: |
           npm install --no-save playwright@1.56.1 serve@14.2.5
           npx playwright install --with-deps chromium
@@ -65,7 +67,7 @@ jobs:
           done
           cat /tmp/agent3-consolidated.log
           exit 1
-      - name: Exercise all seven independently authored browser gates
+      - name: Exercise all eight independently authored browser gates
         run: |
           status=0
           for test in \
@@ -75,7 +77,8 @@ jobs:
             tests/redesign-seven-colour-targets-acceptance.mjs \
             tests/redesign-material-rotation-browser.mjs \
             tests/redesign-camera-structure-acceptance.mjs \
-            tests/redesign-keyboard-roving-tools.mjs; do
+            tests/redesign-keyboard-roving-tools.mjs \
+            tests/redesign-cold-keyboard-editor.mjs; do
             echo "::group::$test"
             node "$test" || status=1
             echo "::endgroup::"
@@ -94,5 +97,6 @@ jobs:
             artifacts/agent3-material-rotation/
             artifacts/agent3-camera-isolation/
             artifacts/agent3-tool-keyboard/
+            artifacts/agent3-cold-keyboard/
           retention-days: 14
           if-no-files-found: warn
