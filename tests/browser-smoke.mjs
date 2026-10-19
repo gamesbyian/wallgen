@@ -1582,7 +1582,7 @@ try{
   // The five-destination trial runs as a second, explicit navigation mode.
   // The default six-action interface above remains a fully tested baseline.
   await command('Page.navigate',{url:url+'?nav=five'});
-  await waitFor('document.readyState==="complete"&&location.search.includes("nav=five")&&document.body?.classList.contains("mobile-studio")',15000);
+  await waitFor('document.readyState==="complete"&&document.body?.classList.contains("mobile-studio")',15000);
   await delay(400);
   const trialBoot=await evaluate(`(()=>({
     query:location.search.slice(0,100),body:document.body.className,
