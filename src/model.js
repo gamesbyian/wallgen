@@ -182,6 +182,10 @@ export function normalizeRecipe(input = {}) {
     glow: finiteRange(input.glow, 0, 0, 100),
     // Camera framing is part of the artwork and therefore of every saved PNG.
     viewZoom: Math.round(finiteRange(input.viewZoom, 1, .5, 2.5)*100)/100,
+    // Camera-only frame pan in percent of the original 600×1300 world.
+    // Distinct from positionX/Y, which translate the finished rainbow ink.
+    viewPanX: Math.round(finiteRange(input.viewPanX, 0, -50, 50)*10)/10,
+    viewPanY: Math.round(finiteRange(input.viewPanY, 0, -50, 50)*10)/10,
     positionX: finiteRange(input.positionX, 0, -30, 30),
     positionY: finiteRange(input.positionY, 0, -30, 30),
   };
