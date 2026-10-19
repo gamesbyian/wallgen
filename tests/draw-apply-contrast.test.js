@@ -21,7 +21,7 @@ test('both active Use path rules have AA-level small-text contrast',()=>{
   assert.equal(rules.length,2,'desktop and compact Finish button must agree');
   for(const rule of rules){
     const background=rule.match(/background:(#[0-9a-f]{3,6})/i)?.[1];
-    const colour=rule.match(/color:(#[0-9a-f]{3,6})/i)?.[1];
+    const colour=rule.match(/(?:^|;)\s*color:(#[0-9a-f]{3,6})/i)?.[1];
     assert.ok(background&&colour,'explicit flat foreground and background required');
     assert.ok(contrast(background,colour)>=4.5,
       'white Use path text must achieve WCAG AA contrast in every compact layout');
