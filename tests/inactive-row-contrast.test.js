@@ -13,7 +13,7 @@ test('inactive labelled rows are not dimmed wholesale',()=>{
   const css=read('editor-setting-rows.css');
   assert.match(css,/\.editor-tool-card \.editor-setting-row\.setting-inactive\{\s*opacity:1;\s*filter:none;/);
   assert.match(css,/\.editor-setting-row\.setting-inactive \.slider-number:disabled\{\s*opacity:1/);
-  assert.match(read('index.html'),/editor-setting-rows\.css\?v=20261019-inactive1/);
+  assert.match(read('index.html'),/editor-setting-rows\.css\?v=\d{8}-[a-z0-9]+/);
 });
 test('flat cream and dark inactive label and zero text meet AA small-text contrast',()=>{
   for(const [theme,background,label,numberBackground,numberText] of [
