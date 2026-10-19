@@ -86,13 +86,14 @@ try{
   await command('Page.navigate',{url});
   await waitFor('document.readyState==="complete"&&document.body.classList.contains("mobile-studio")');
   await waitFor('document.querySelectorAll(".settings-tab").length===7',15000);
+  await waitFor('document.body.classList.contains("mobile-five-nav")&&document.querySelectorAll("#mobileActionDock>button").length===5',15000);
   await delay(300);
   // Inspect the real accessible control semantics, independently of the
   // screenshot atlas and independently of visible icon shape.
   const mobileSemantics=await evaluate(`(()=>{
-    const ids=['mobileEdit','mobileExplore','mobileShuffle','mobileFavorite',
-      'mobileDownload','mobileMore','mobileDockExpand','mobileDismissHandle',
-      'drawPathToggle','importPathToggle'];
+    const ids=['mobileStudio','mobileEdit','mobileExplore','mobileSaved',
+      'mobileShuffle','mobileFavorite','mobileDownload','mobileMore',
+      'mobileDockExpand','mobileDismissHandle','drawPathToggle','importPathToggle'];
     const records=ids.map(id=>{
       const el=document.getElementById(id);
       return {id,tag:el?.tagName,label:el?.getAttribute('aria-label')||
@@ -107,7 +108,7 @@ try{
       pressed:el.getAttribute('aria-pressed'),type:el.getAttribute('type')}));
     return {records,themes};
   })()`);
-  assert.equal(mobileSemantics.records.length,10);
+  assert.equal(mobileSemantics.records.length,12);
   assert.deepEqual(mobileSemantics.records.filter(x=>x.tag!=='BUTTON'||!x.label||
     !x.targetExists),[],'Mobile actions must be named native buttons with valid targets');
   assert.equal(mobileSemantics.themes.length,2);
@@ -1579,13 +1580,13 @@ try{
   await evaluate('document.getElementById("undo").click()');
   assert.equal(await evaluate('new URLSearchParams(location.search).get("r")'),
     imageImport.original,'angle application should also be undoable');
-  // The five-destination trial runs as a second, explicit navigation mode.
-  // The default six-action interface above remains a fully tested baseline.
+  // Reload the default five-destination app independently of initial smoke.
+  // This must work with no query flag or pre-existing settings from the prior page.
   await command('Emulation.setDeviceMetricsOverride',{
     width:412,height:915,deviceScaleFactor:1,mobile:true,
     screenWidth:412,screenHeight:915,
   });
-  await command('Page.navigate',{url:url+'?nav=five'});
+  await command('Page.navigate',{url});
   await waitFor('document.readyState==="complete"&&document.body?.classList.contains("mobile-studio")',15000);
   await delay(400);
   const trialBoot=await evaluate(`(()=>({
@@ -1600,6 +1601,8 @@ try{
       .map(el=>el.className||el.id).slice(0,8),
     navButtons:[...document.querySelectorAll('#mobileActionDock>button')].map(el=>el.id)
   }))()`);
+  assert.ok(!new URLSearchParams(trialBoot.query).has('nav'),
+    'default five-destination navigation cannot depend on a URL experiment switch');
   console.log('FIVE_BOOT_DIAGNOSTICS',JSON.stringify(trialBoot));
   await waitFor('document.body?.classList.contains("mobile-five-nav")&&!!document.getElementById("mobileSaved")&&!!document.querySelector(".mobile-preview-rail-left .mobile-five-shortcuts>#mobileFavorite")&&!!document.querySelector(".mobile-preview-rail-left .mobile-five-shortcuts>#mobileDownload")',15000);
   const fiveNav=await evaluate(`(()=>{

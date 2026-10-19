@@ -10,7 +10,7 @@ The production wallpaper renderer, preview camera, recipe data and exported imag
 | Theme tokens, masthead, two theme dots | `studio-themes.css` | Dark/cream surface colours and theme switcher |
 | Responsive workspace reservation | `studio-themes.css` | Stage/tray separation, gallery and More sheet |
 | Compact phone shell/dock | `mobile-compact.css` | Collapsed header, dock and editor-open behavior |
-| Gated five-destination mobile dock trial | `mobile-five-nav.css` | `?nav=five` layout and relocated preview shortcuts only; default dock remains owned by `mobile-compact.css` |
+| Default five-destination mobile dock | `mobile-five-nav.css` | Five-destination styling and preview quick-action relocation; base dock geometry remains in `mobile-compact.css` |
 | Editor-side camera buttons | `mobile-editor-rail.css` | Action rail, left/right preview shortcuts |
 | Editor tabs, named tools and rotation | `editor-redesign.css` | Base editor structure, compact card and rotation row |
 | Interior element selectors, checkbox alignment and colour chips | `detail-controls.css` | Dynamic element controls, ink targeting, colour picker states |

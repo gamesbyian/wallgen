@@ -3,22 +3,28 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 
-test('five destinations are opt-in and retain all six original actions',()=>{
+test('five destinations are the live HTML default and source actions remain real',()=>{
   const mobile=read('src/mobile-studio.js');
   const five=read('src/mobile-five-nav.js');
   const html=read('index.html');
-  assert.match(mobile,/new URLSearchParams\(location\.search\)\.get\('nav'\)==='five'/);
-  assert.match(mobile,/installFiveDestinationDock/);
+  assert.match(mobile,/import \{installFiveDestinationDock\} from '\.\/mobile-five-nav\.js'/);
+  assert.match(mobile,/installFiveDestinationDock\(\{/);
+  assert.doesNotMatch(mobile,/get\('nav'\)==='five'/);
   assert.match(html,/mobile-five-nav\.css\?v=/);
-  for(const id of ['mobileShuffle','mobileFavorite','mobileDownload','mobileEdit','mobileExplore','mobileMore']){
-    assert.match(html,new RegExp('id="'+id+'"'),id);
+  for(const id of ['mobileStudio','mobileEdit','mobileExplore','mobileSaved',
+    'mobileMore','mobileShuffle','mobileFavorite','mobileDownload']){
+    assert.equal([...html.matchAll(new RegExp('id="'+id+'"','g'))].length,1,
+      'Static source button identity '+id);
   }
-  assert.match(five,/dock\.prepend\(home\)/);
-  assert.match(five,/more\.before\(saved\)/);
-  assert.match(five,/moreContent\.prepend\(shuffle\)/);
-  assert.match(five,/shortcuts\.append\(favorite,download\)/);
-  assert.match(five,/iconMarkup\('home'\)/);
-  assert.match(five,/iconMarkup\('favourite'\)/);
+  const dock=html.match(/<nav class="mobile-dock"[^>]*>([\s\S]*?)<\/nav>/)?.[1];
+  assert.ok(dock);
+  assert.deepEqual([...dock.matchAll(/id="([^"]+)"/g)].map(x=>x[1]),
+    ['mobileStudio','mobileEdit','mobileExplore','mobileSaved','mobileMore']);
+  assert.match(html,/src="assets\/icons\/roygbiv\/home\.svg"/);
+  assert.match(html,/src="assets\/icons\/roygbiv\/favourite\.svg"/);
+  assert.match(five,/shortcuts\.contains\(favorite\)/);
+  assert.match(five,/shortcuts\.contains\(download\)/);
+  assert.match(five,/shuffle\.parentElement!==moreContent/);
   assert.match(five,/aria-current/);
 });
 test('Saved and Explore swap gallery mode without discarding its contact sheet',()=>{

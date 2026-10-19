@@ -1,42 +1,47 @@
 {
   "version": 1,
-  "sourceCommit": "7d99e99a5ce391d05ab410fcc90d3eb78420a282",
+  "sourceCommit": "c4d75cbfa30dd513c91a6b80348c56d0a053723f + default five-destination integration",
   "referenceBaseline": "https://github.com/gamesbyian/wallgen/actions/runs/39166559800",
   "status": "canonical proposed implementation contract, not app screenshot",
   "notes": [
     "All phone wireframes are complete for the depicted mode, but do not show every alternate dynamic state simultaneously.",
     "Screen contract required/conditional arrays, category tool inventory and source DOM remain the implementation authority.",
     "Icons are the exact SVG source geometry, not image-generated interpretations.",
-    "The 55 original glyphs and brand app icon remain. Twelve extension candidates are staged but unwired."
+    "The 55 original glyphs and brand app icon remain. Twelve extension candidates are staged but unwired.",
+    "The source default dock now has five static destinations; previousDockControls records the original six source actions that remain in the HTML, relocated without changing their handlers."
   ],
   "global": {
     "navigation": [
       {
-        "id": "studio",
+        "id": "mobileStudio",
         "label": "Studio",
         "icon": "home",
-        "newDestination": true
+        "source": "Static index.html ID",
+        "default": true
       },
       {
         "id": "mobileEdit",
         "label": "Edit",
         "icon": "edit-controls",
-        "previous": "edit"
+        "source": "Static index.html ID"
       },
       {
         "id": "mobileExplore",
         "label": "Explore",
-        "icon": "explore"
+        "icon": "explore",
+        "source": "Static index.html ID"
       },
       {
-        "id": "mobileFavorite",
+        "id": "mobileSaved",
         "label": "Saved",
-        "icon": "favourite"
+        "icon": "favourite",
+        "source": "Static index.html ID"
       },
       {
         "id": "mobileMore",
         "label": "More",
-        "icon": "more"
+        "icon": "more",
+        "source": "Static index.html ID"
       }
     ],
     "brandIcon": "assets/roygbiv-logo.svg",
@@ -421,7 +426,15 @@
         ]
       }
     ],
-    "currentDockControls": [
+    "actionRelocations": {
+      "mobileShuffle": "Original Shuffle source action in More, with independent real Randomize control always on the preview rail; editor quick rail remains.",
+      "mobileDownload": "Original PNG source action beside artwork and edit rail, no redirect to More.",
+      "mobileFavorite": "Original favourite source action beside artwork and edit rail, separate from Saved."
+    },
+    "cameraZoomState": "viewZoom is a camera-specific field persisted as part of the recipe, unlike other generator settings; zoom affects export framing by design.",
+    "panStatus": "A separately implemented viewport-only Pan is not yet available; existing arrows move the actual composition.",
+    "fitStatus": "Fit is planned as a viewZoom=1 action in mobile canvas rail.",
+    "previousDockControls": [
       {
         "id": "mobileEdit",
         "role": "Open editor"
@@ -446,15 +459,7 @@
         "id": "mobileMore",
         "role": "Open utility sheet"
       }
-    ],
-    "actionRelocations": {
-      "mobileShuffle": "Keep prominent Studio Randomize action and optional quick action; do not lose random generation.",
-      "mobileDownload": "Keep direct Studio Export/Download shortcut and More > Export PNG; do not force hidden utility navigation.",
-      "mobileFavorite": "Preserve single-tap favourite action on Studio and gallery, in addition to Saved destination."
-    },
-    "cameraZoomState": "viewZoom is a camera-specific field persisted as part of the recipe, unlike other generator settings; zoom affects export framing by design.",
-    "panStatus": "A separately implemented viewport-only Pan is not yet available; existing arrows move the actual composition.",
-    "fitStatus": "Fit is planned as a viewZoom=1 action in mobile canvas rail."
+    ]
   },
   "screens": [
     {

@@ -1,4 +1,5 @@
 import {setIconSource} from './ui-icons.js';
+import {installFiveDestinationDock} from './mobile-five-nav.js';
 import {installRainbowSliders} from './rainbow-sliders.js';
 installRainbowSliders();
 // This module changes the studio interface only. Wallpaper recipes, saved favourites,
@@ -190,22 +191,18 @@ function syncViewport(){
 mobile.addEventListener('change',syncViewport);
 syncViewport();
 
-// Side-by-side trial before making the five-destination dock the default.
-// Existing six actions retain their original identities and handlers.
-if(new URLSearchParams(location.search).get('nav')==='five'){
-  import('./mobile-five-nav.js').then(({installFiveDestinationDock})=>{
-    installFiveDestinationDock({
-      closeStudio:()=>closeSurfaces({restoreFocus:false}),
-      openSaved:()=>{
-        const switchView=!document.body.classList.contains('mobile-gallery-open')||
-          galleryDestination!=='saved';
-        openSurface('gallery','saved');
-        if(switchView)
-          document.dispatchEvent(new CustomEvent('roygbiv-gallery-view-request',{detail:'saved'}));
-      }
-    });
-  }).catch(error=>console.error('Five-destination navigation trial failed:',error));
-}
+// Default mobile navigation. All five destination buttons and three relocated
+// quick-action source buttons already exist in HTML before enhancement.
+installFiveDestinationDock({
+  closeStudio:()=>closeSurfaces({restoreFocus:false}),
+  openSaved:()=>{
+    const switchView=!document.body.classList.contains('mobile-gallery-open')||
+      galleryDestination!=='saved';
+    openSurface('gallery','saved');
+    if(switchView)
+      document.dispatchEvent(new CustomEvent('roygbiv-gallery-view-request',{detail:'saved'}));
+  }
+});
 document.addEventListener('roygbiv-gallery-mode-changed',event=>{
   if(!document.body.classList.contains('mobile-five-nav')||
     !document.body.classList.contains('mobile-gallery-open'))return;

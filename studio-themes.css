@@ -121,8 +121,6 @@ html[data-theme="cream"] footer{color:#8c8191;border-color:#e8ddce}
     align-items:center;justify-content:center;flex-direction:column;gap:3px;padding:3px 0}
   .mobile-dock button>span{font-size:23px;line-height:1.1}
   .mobile-dock button>small{font-size:9px;letter-spacing:-.02em;font-weight:750}
-  .mobile-dock .mobile-dock-featured{background:linear-gradient(125deg,#ff8975,#ffca79 48%,#9c9cff);
-    color:#212131}
   .mobile-dock button[aria-expanded=true],.mobile-dock button[aria-pressed=true]{color:#ff9cbe}
   .mobile-sheet-backdrop:not([hidden]){display:block;position:fixed;
     inset:var(--mobile-head) 0 var(--mobile-dock-height);

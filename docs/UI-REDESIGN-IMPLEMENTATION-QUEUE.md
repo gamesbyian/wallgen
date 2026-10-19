@@ -1,6 +1,6 @@
 # Implementation-safe ROYGBIV redesign queue
 
-**Status: planning/reference only.** Do not treat checked items as shipped UI, and never implement a generated vision screenshot literally. [Canonical contract](ui-reference/canonical-screen-contract.json) · [Source traceability](ui-reference/component-traceability.json) · [Screen references](ui-reference/README.md) · [Icon manifest](../assets/icons/roygbiv/manifest.json). The approved logo remains `assets/roygbiv-logo.svg`.
+**Status: living design and implementation queue.** Checked items describe source-qualified work, not blanket visual approval. Never implement a generated vision screenshot literally. [Canonical contract](ui-reference/canonical-screen-contract.json) · [Source traceability](ui-reference/component-traceability.json) · [Screen references](ui-reference/README.md) · [Icon manifest](../assets/icons/roygbiv/manifest.json). The approved logo remains `assets/roygbiv-logo.svg`.
 
 ## Phase A — approval and reference integrity
 
@@ -26,21 +26,21 @@
 - [ ] Keep exact approved app icon beside R.O.Y.G.B.I.V. in all modes.
 - [x] Keep (already existing) canvas-side Zoom+/− and add Fit/100% using the actual `viewZoom` source; no dedicated top zoom header on mobile. (PR #79)
 - [ ] Implement a **separate viewport Pan** with explicit preview/export persistence, *without* relabelling composition nudge as Pan.
-- [ ] Consolidate navigation only after full action-preservation and screen geometry tests; existing six dock actions remain functional.
+- [x] Consolidate default mobile navigation following source-action preservation and tested screen geometry; all original source action IDs retain live handlers (PR #101 and default-promotion PR).
 - [ ] Preserve zoom increments, full fit, camera-only state, drawn-path extension and exported wallpaper dimensions.
-- [ ] Migrate six dock actions (Edit/Explore/Randomize/Favourite/Download/More) to five destinations (Studio/Edit/Explore/Saved/More) **without losing Randomize, Favourite or direct Download**.
-- [x] Stage opt-in `?nav=five` prototype retaining source action identities; trial must clear browser, geometry and visual gates before becoming default (PR pending).
+- [x] Migrate six source action identities to a five-destination default dock, retaining direct Randomize, Favourite and Download in their source-backed surfaces.
+- [x] Qualify five-destination trial through all four CI workflows and promote to static first-paint HTML; no URL feature flag (PR #101 and default-promotion PR).
 - [ ] Verify 412×892 phone, 499/500/790/791 boundaries, constrained landscape; no artwork/tray overlap.
 
 ## Phase C — component system and named editor controls
 
 - [x] Add typed, source-preserving setting-row semantics for all ordinary static editor fields; no duplicate inputs or changed handlers (PR #80).
 - [ ] Apply the unified visual row layout family-by-family with per-viewport screenshot approval, preserving the special four-column rotation controls.
-- [ ] Keep all seven categories and 40 named tools; verify full source keys and applicability rules.
+- [x] Keep seven categories and 40 named tools; inventory source keys and test structure-aware applicability (PRs #94, #96, #97).
 - [ ] Keep blue and random stable unique ROYGBIV slider accents inside each panel.
 - [ ] Preserve search match-to-tool and manual horizontal chip scroll state.
-- [x] Make Find setting structure-aware: search only currently applicable tools, distinguish dormant matches from absent settings, and preserve source tool identity (PR pending).
-- [x] Add roving keyboard navigation (Left/Right/Home/End) for applicable named tools; keep manual chip scroll untouched (PR pending).
+- [x] Make Find setting structure-aware: search applicable tools and explain dormant settings (PR #99).
+- [x] Add roving keyboard navigation for applicable tools and Focus parameters, preserving manual chip scroll (PRs #94 and #98).
 - [ ] Reduce excess short-panel height only on navigation, with atomic preview/tray resize.
 - [ ] Ensure all inactive values/locks remain comprehensible and true to generation logic.
 
@@ -60,7 +60,7 @@
 
 - [ ] Keep image-first Explore, independent Saved, history restore, user favourites and gallery loading semantics.
 - [x] Preserve the most recent Explore contact sheet while opening Saved favourites; restore it without re-randomizing, with explicit accessible gallery mode labels (PR #100).
-- [x] Browser-test populated Explore → Saved → Explore using all twelve exact recipe seed identities, beyond empty-gallery smoke (PR pending).
+- [x] Browser-test populated Explore → Saved → Explore using all twelve original recipe seed identities (PR #102).
 - [ ] Preserve global status announcements and grouped More with seed, import, output, metadata, batch, share.
 - [ ] Test all existing PNG/JSON recipe round-trips and exact preview/export geometry.
 - [ ] Test touch targets, keyboard/focus, colour contrast, screen reader names and reduced motion.
