@@ -147,3 +147,12 @@ test('preview controls reuse the existing nudge and Randomize inputs, zoom affec
   assert.doesNotMatch(tools,/changeRecipe|normalizeRecipe|downloadPNG/);
   assert.match(read('mobile-editor-rail.css'),/\.mobile-preview-rail-right/);
 });
+
+test('canvas-first rail has independent side Fit and approved Edit adjustments icon',()=>{
+  const previewTools=read('src/mobile-preview-tools.js');
+  assert.match(previewTools,/zoomFit\.dataset\.zoom='fit'/);
+  assert.match(previewTools,/detail:1/);
+  assert.match(previewTools,/zoomSlot\.append\(zoomIn,zoomOut,zoomFit,zoomValue\)/);
+  assert.match(html,/id="mobileEdit"[^>]*>[\s\S]*?edit-controls\.svg/);
+  assert.match(html,/id="drawPathToggle"[^>]*>[\s\S]*?draw-path\.svg/);
+});

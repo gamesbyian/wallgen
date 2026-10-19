@@ -55,7 +55,7 @@
         "tests/browser-smoke.mjs"
       ],
       "assertion": "Fit button (new) resets viewZoom=1 without touching any other recipe fields, retains canvas overflow extrapolation and full resolution export.",
-      "status": "planned implementation; not yet verified",
+      "status": "implemented in PR #79; browser acceptance qualification pending",
       "risk": "high"
     },
     {
@@ -83,7 +83,7 @@
         "tests/icon-assets.test.js"
       ],
       "assertion": "Edit destination uses actual approved-family adjustments glyph; Draw uses original pencil/path. No generic pictogram substitutions.",
-      "status": "proposal candidate, UI wiring pending",
+      "status": "Edit symbol reassigned in PR #79; other new icons staged without UI wiring",
       "risk": "medium"
     },
     {

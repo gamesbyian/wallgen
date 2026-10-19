@@ -296,6 +296,19 @@ try{
     'JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r")))');
   assert.deepEqual(returnedZoom,beforeZoom,
     'Zoom-in must restore exact recipe after camera-only zoom-out');
+  // The side Fit action resets framing, and may not move the composition,
+  // change generation controls, or hide off-canvas path continuation.
+  await evaluate('document.querySelector(".mobile-zoom-button[data-zoom=out]").click()');
+  await waitFor('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).viewZoom==='+targetZoom);
+  await evaluate('document.querySelector(".mobile-zoom-button[data-zoom=fit]").click()');
+  await waitFor('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).viewZoom===1');
+  const fitted=await evaluate(
+    'JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r")))');
+  assert.deepEqual(fitted,beforeZoom,'Fit changed artwork instead of framing');
+  assert.equal(await evaluate('document.querySelector(".mobile-fit-button").getAttribute("aria-label")'),
+    'Fit entire wallpaper (100% framing)');
+  assert.equal(await evaluate('document.querySelector(".mobile-fit-button").disabled'),true);
+
 
   // The actual application must use a worker after its deterministic initial
   // frame, and settle the correct recipe after rapid edits. A standalone
