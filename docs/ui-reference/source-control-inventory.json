@@ -13,7 +13,7 @@
     "settings": 87,
     "categories": 7,
     "namedTools": 40,
-    "tracedUI": 42
+    "tracedUI": 43
   },
   "staticIds": [
     "mobileDesignSheet",
@@ -265,296 +265,346 @@
     {
       "id": "brand",
       "sourceSelector": "css:img.brand-logo",
-      "canonicalScreen": "studio",
       "meaning": "Original app icon and ROYGBIV name",
-      "sourceKind": "CSS / dynamic or static DOM"
+      "canonicalScreen": "studio",
+      "sourceKind": "CSS / dynamic or static DOM",
+      "state": "keep or explicitly relocate; never silently remove"
     },
     {
       "id": "theme",
       "sourceSelector": "css:[data-studio-theme]",
-      "canonicalScreen": "studio",
       "meaning": "Cream/black theme circles",
-      "sourceKind": "CSS / dynamic or static DOM"
+      "canonicalScreen": "studio",
+      "sourceKind": "CSS / dynamic or static DOM",
+      "state": "keep or explicitly relocate; never silently remove"
     },
     {
       "id": "dock",
       "sourceSelector": "id:mobileActionDock",
-      "canonicalScreen": "studio",
       "meaning": "Six current mobile actions; proposed five destinations with relocated actions",
-      "sourceKind": "CSS / dynamic or static DOM"
+      "canonicalScreen": "studio",
+      "sourceKind": "CSS / dynamic or static DOM",
+      "state": "keep or explicitly relocate; never silently remove"
     },
     {
       "id": "edit",
       "sourceSelector": "id:mobileEdit",
-      "canonicalScreen": "geometry",
       "meaning": "Open editor; proposed edit-controls symbol",
-      "sourceKind": "Static index.html ID"
+      "canonicalScreen": "geometry",
+      "sourceKind": "Static index.html ID",
+      "state": "keep or explicitly relocate; never silently remove"
     },
     {
       "id": "explore",
       "sourceSelector": "id:mobileExplore",
-      "canonicalScreen": "explore",
       "meaning": "Open gallery",
-      "sourceKind": "Static index.html ID"
+      "canonicalScreen": "explore",
+      "sourceKind": "Static index.html ID",
+      "state": "keep or explicitly relocate; never silently remove"
     },
     {
       "id": "randomize",
       "sourceSelector": "id:mobileShuffle",
-      "canonicalScreen": "studio",
       "meaning": "Randomize preserved as Studio primary action",
-      "sourceKind": "Static index.html ID"
+      "canonicalScreen": "studio",
+      "sourceKind": "Static index.html ID",
+      "state": "keep or explicitly relocate; never silently remove"
     },
     {
       "id": "favorite",
       "sourceSelector": "id:mobileFavorite",
-      "canonicalScreen": "explore",
       "meaning": "Favourite retained at one tap and Saved destination",
-      "sourceKind": "Static index.html ID"
+      "canonicalScreen": "explore",
+      "sourceKind": "Static index.html ID",
+      "state": "keep or explicitly relocate; never silently remove"
     },
     {
       "id": "download",
       "sourceSelector": "id:mobileDownload",
-      "canonicalScreen": "more",
       "meaning": "Direct PNG action retained in Studio and More",
-      "sourceKind": "Static index.html ID"
+      "canonicalScreen": "more",
+      "sourceKind": "Static index.html ID",
+      "state": "keep or explicitly relocate; never silently remove"
     },
     {
       "id": "more",
       "sourceSelector": "id:mobileMore",
-      "canonicalScreen": "more",
       "meaning": "Open utilities",
-      "sourceKind": "Static index.html ID"
+      "canonicalScreen": "more",
+      "sourceKind": "Static index.html ID",
+      "state": "keep or explicitly relocate; never silently remove"
     },
     {
       "id": "draw",
       "sourceSelector": "id:drawPathToggle",
-      "canonicalScreen": "draw",
       "meaning": "Pencil/path draw action",
-      "sourceKind": "Static index.html ID"
+      "canonicalScreen": "draw",
+      "sourceKind": "Static index.html ID",
+      "state": "keep or explicitly relocate; never silently remove"
     },
     {
       "id": "importImage",
       "sourceSelector": "id:importPathToggle",
-      "canonicalScreen": "draw",
       "meaning": "Extract path from image",
-      "sourceKind": "Static index.html ID"
+      "canonicalScreen": "draw",
+      "sourceKind": "Static index.html ID",
+      "state": "keep or explicitly relocate; never silently remove"
     },
     {
       "id": "cameraRail",
-      "sourceSelector": "id:mobileEditorActionRail",
+      "sourceSelector": "css:.mobile-preview-rail-right",
+      "meaning": "Actual side rail for composition nudge (positionX/Y), camera zoom and Fit. Not the edit action rail.",
       "canonicalScreen": "studio",
-      "meaning": "Viewport operations distinct from model changes",
-      "sourceKind": "CSS / dynamic or static DOM"
+      "sourceKind": "CSS / dynamic or static DOM",
+      "state": "keep or explicitly relocate; never silently remove"
     },
     {
       "id": "preview",
       "sourceSelector": "id:preview",
-      "canonicalScreen": "studio",
       "meaning": "Rendered wallpaper preview must remain uncropped",
-      "sourceKind": "CSS / dynamic or static DOM"
+      "canonicalScreen": "studio",
+      "sourceKind": "CSS / dynamic or static DOM",
+      "state": "keep or explicitly relocate; never silently remove"
     },
     {
       "id": "drawSmoothing",
       "sourceSelector": "id:drawSmoothingStrength",
-      "canonicalScreen": "draw",
       "meaning": "Interpretive smoothing 1–10×",
-      "sourceKind": "Static index.html ID"
+      "canonicalScreen": "draw",
+      "sourceKind": "Static index.html ID",
+      "state": "keep or explicitly relocate; never silently remove"
     },
     {
       "id": "drawGeometric",
       "sourceSelector": "id:drawGeometric",
-      "canonicalScreen": "draw",
       "meaning": "Toggle geometrical interpretation",
-      "sourceKind": "Static index.html ID"
+      "canonicalScreen": "draw",
+      "sourceKind": "Static index.html ID",
+      "state": "keep or explicitly relocate; never silently remove"
     },
     {
       "id": "drawAnchors",
       "sourceSelector": "id:drawEditPoints",
-      "canonicalScreen": "draw",
       "meaning": "Toggle point edit",
-      "sourceKind": "Static index.html ID"
+      "canonicalScreen": "draw",
+      "sourceKind": "Static index.html ID",
+      "state": "keep or explicitly relocate; never silently remove"
     },
     {
       "id": "drawExtend",
       "sourceSelector": "id:drawExtendPath",
-      "canonicalScreen": "draw",
       "meaning": "Extend editable path outside frame",
-      "sourceKind": "Static index.html ID"
+      "canonicalScreen": "draw",
+      "sourceKind": "Static index.html ID",
+      "state": "keep or explicitly relocate; never silently remove"
     },
     {
       "id": "drawApply",
       "sourceSelector": "id:drawApply",
-      "canonicalScreen": "draw",
       "meaning": "Apply drawing to recipe",
-      "sourceKind": "Static index.html ID"
+      "canonicalScreen": "draw",
+      "sourceKind": "Static index.html ID",
+      "state": "keep or explicitly relocate; never silently remove"
     },
     {
       "id": "drawCancel",
       "sourceSelector": "id:drawCancel",
-      "canonicalScreen": "draw",
       "meaning": "Cancel, restoring prior recipe",
-      "sourceKind": "Static index.html ID"
+      "canonicalScreen": "draw",
+      "sourceKind": "Static index.html ID",
+      "state": "keep or explicitly relocate; never silently remove"
     },
     {
       "id": "drawPointAdd",
       "sourceSelector": "id:drawAddPoint",
-      "canonicalScreen": "draw",
       "meaning": "Add editable anchor",
-      "sourceKind": "Static index.html ID"
+      "canonicalScreen": "draw",
+      "sourceKind": "Static index.html ID",
+      "state": "keep or explicitly relocate; never silently remove"
     },
     {
       "id": "drawPointDelete",
       "sourceSelector": "id:drawDeletePoint",
-      "canonicalScreen": "draw",
       "meaning": "Delete editable anchor",
-      "sourceKind": "Static index.html ID"
+      "canonicalScreen": "draw",
+      "sourceKind": "Static index.html ID",
+      "state": "keep or explicitly relocate; never silently remove"
     },
     {
       "id": "drawPointCorner",
       "sourceSelector": "id:drawCornerPoint",
-      "canonicalScreen": "draw",
       "meaning": "Preserve corner/segment intention",
-      "sourceKind": "Static index.html ID"
+      "canonicalScreen": "draw",
+      "sourceKind": "Static index.html ID",
+      "state": "keep or explicitly relocate; never silently remove"
     },
     {
       "id": "drawResmooth",
       "sourceSelector": "id:drawResmoothPoints",
-      "canonicalScreen": "draw",
       "meaning": "Re-smooth changed and adjacent segments",
-      "sourceKind": "Static index.html ID"
+      "canonicalScreen": "draw",
+      "sourceKind": "Static index.html ID",
+      "state": "keep or explicitly relocate; never silently remove"
     },
     {
       "id": "drawUndo",
       "sourceSelector": "id:drawUndoPoint",
-      "canonicalScreen": "draw",
       "meaning": "Undo point edit",
-      "sourceKind": "Static index.html ID"
+      "canonicalScreen": "draw",
+      "sourceKind": "Static index.html ID",
+      "state": "keep or explicitly relocate; never silently remove"
     },
     {
       "id": "materialLayer2",
       "sourceSelector": "id:textureLayer2Enabled",
-      "canonicalScreen": "material",
       "meaning": "Enable second material layer",
-      "sourceKind": "Static index.html ID"
+      "canonicalScreen": "material",
+      "sourceKind": "Static index.html ID",
+      "state": "keep or explicitly relocate; never silently remove"
     },
     {
       "id": "materialLayer3",
       "sourceSelector": "id:textureLayer3Enabled",
-      "canonicalScreen": "material",
       "meaning": "Enable third material layer",
-      "sourceKind": "Static index.html ID"
+      "canonicalScreen": "material",
+      "sourceKind": "Static index.html ID",
+      "state": "keep or explicitly relocate; never silently remove"
     },
     {
       "id": "metadataToggle",
       "sourceSelector": "id:metadataToggle",
-      "canonicalScreen": "more",
       "meaning": "Expand metadata",
-      "sourceKind": "Static index.html ID"
+      "canonicalScreen": "more",
+      "sourceKind": "Static index.html ID",
+      "state": "keep or explicitly relocate; never silently remove"
     },
     {
       "id": "metadataRemember",
       "sourceSelector": "id:metadataRemember",
-      "canonicalScreen": "more",
       "meaning": "Remember image identity",
-      "sourceKind": "Static index.html ID"
+      "canonicalScreen": "more",
+      "sourceKind": "Static index.html ID",
+      "state": "keep or explicitly relocate; never silently remove"
     },
     {
       "id": "metadataClear",
       "sourceSelector": "id:metadataClear",
-      "canonicalScreen": "more",
       "meaning": "Clear saved image identity",
-      "sourceKind": "Static index.html ID"
+      "canonicalScreen": "more",
+      "sourceKind": "Static index.html ID",
+      "state": "keep or explicitly relocate; never silently remove"
     },
     {
       "id": "favoriteAction",
       "sourceSelector": "id:favorite",
-      "canonicalScreen": "explore",
       "meaning": "Add/remove favourite",
-      "sourceKind": "Static index.html ID"
+      "canonicalScreen": "explore",
+      "sourceKind": "Static index.html ID",
+      "state": "keep or explicitly relocate; never silently remove"
     },
     {
       "id": "galleryFavorites",
       "sourceSelector": "id:showFavorites",
-      "canonicalScreen": "explore",
       "meaning": "Filter favourites",
-      "sourceKind": "Static index.html ID"
+      "canonicalScreen": "explore",
+      "sourceKind": "Static index.html ID",
+      "state": "keep or explicitly relocate; never silently remove"
     },
     {
       "id": "linkCopy",
       "sourceSelector": "id:copyLink",
-      "canonicalScreen": "more",
       "meaning": "Copy share link",
-      "sourceKind": "Static index.html ID"
+      "canonicalScreen": "more",
+      "sourceKind": "Static index.html ID",
+      "state": "keep or explicitly relocate; never silently remove"
     },
     {
       "id": "recipeCopy",
       "sourceSelector": "id:copyRecipe",
-      "canonicalScreen": "more",
       "meaning": "Copy recipe JSON",
-      "sourceKind": "Static index.html ID"
+      "canonicalScreen": "more",
+      "sourceKind": "Static index.html ID",
+      "state": "keep or explicitly relocate; never silently remove"
     },
     {
       "id": "recipeDownload",
       "sourceSelector": "id:downloadRecipe",
-      "canonicalScreen": "more",
       "meaning": "Download JSON file",
-      "sourceKind": "Static index.html ID"
+      "canonicalScreen": "more",
+      "sourceKind": "Static index.html ID",
+      "state": "keep or explicitly relocate; never silently remove"
     },
     {
       "id": "batch",
       "sourceSelector": "id:batch",
-      "canonicalScreen": "more",
       "meaning": "Batch creation/output",
-      "sourceKind": "Static index.html ID"
+      "canonicalScreen": "more",
+      "sourceKind": "Static index.html ID",
+      "state": "keep or explicitly relocate; never silently remove"
     },
     {
       "id": "seedApply",
       "sourceSelector": "id:applySeed",
-      "canonicalScreen": "more",
       "meaning": "Apply seed input",
-      "sourceKind": "Static index.html ID"
+      "canonicalScreen": "more",
+      "sourceKind": "Static index.html ID",
+      "state": "keep or explicitly relocate; never silently remove"
     },
     {
       "id": "importRecipePNG",
       "sourceSelector": "id:importRecipePNG",
-      "canonicalScreen": "more",
       "meaning": "Import recipe from PNG",
-      "sourceKind": "Static index.html ID"
+      "canonicalScreen": "more",
+      "sourceKind": "Static index.html ID",
+      "state": "keep or explicitly relocate; never silently remove"
     },
     {
       "id": "importRecipeJSON",
       "sourceSelector": "id:importRecipeFile",
-      "canonicalScreen": "more",
       "meaning": "Import recipe JSON file",
-      "sourceKind": "Static index.html ID"
+      "canonicalScreen": "more",
+      "sourceKind": "Static index.html ID",
+      "state": "keep or explicitly relocate; never silently remove"
     },
     {
       "id": "editorToolSearch",
       "sourceSelector": "css:.editor-search-input",
-      "canonicalScreen": "search",
       "meaning": "Search editor tools (dynamic)",
-      "sourceKind": "CSS / dynamic or static DOM"
+      "canonicalScreen": "search",
+      "sourceKind": "CSS / dynamic or static DOM",
+      "state": "keep or explicitly relocate; never silently remove"
     },
     {
       "id": "editorToolChips",
       "sourceSelector": "css:.editor-tool-chooser",
-      "canonicalScreen": "geometry",
       "meaning": "Overflowing tool chooser (dynamic)",
-      "sourceKind": "CSS / dynamic or static DOM"
+      "canonicalScreen": "geometry",
+      "sourceKind": "CSS / dynamic or static DOM",
+      "state": "keep or explicitly relocate; never silently remove"
     },
     {
       "id": "editorHistory",
       "sourceSelector": "id:editorHistory",
-      "canonicalScreen": "history",
       "meaning": "Recent history (dynamic)",
-      "sourceKind": "CSS / dynamic or static DOM"
+      "canonicalScreen": "history",
+      "sourceKind": "CSS / dynamic or static DOM",
+      "state": "keep or explicitly relocate; never silently remove"
     },
     {
       "id": "interiorTargets",
       "sourceSelector": "css:.interior-targets",
-      "canonicalScreen": "colour",
       "meaning": "Seven target chips (dynamic)",
-      "sourceKind": "CSS / dynamic or static DOM"
+      "canonicalScreen": "colour",
+      "sourceKind": "CSS / dynamic or static DOM",
+      "state": "keep or explicitly relocate; never silently remove"
+    },
+    {
+      "id": "editActionRail",
+      "sourceSelector": "id:mobileEditorActionRail",
+      "meaning": "Edit-only quick actions; not camera or composition movement",
+      "canonicalScreen": "geometry",
+      "sourceKind": "Static index.html ID",
+      "state": "Preserve until deliberate nav action migration"
     }
   ],
   "exceptions": {

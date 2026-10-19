@@ -96,7 +96,7 @@
 <text x="348" y="877" font-family="Arial,sans-serif" font-size="11" fill="#242334" font-weight="500">More</text>
 </g>
 <rect x="456" y="119" width="760" height="679" rx="18" fill="#FFFCF7" stroke="#E1D6CB"/>
-<text x="477" y="157" font-family="Arial,sans-serif" font-size="17" fill="#242334" font-weight="700">REQUIRED IN THIS STATE</text>
+<text x="477" y="157" font-family="Arial,sans-serif" font-size="17" fill="#242334" font-weight="700">REQUIRED  /  SOURCE-VERIFIED AND PLANNED</text>
 <circle cx="485" cy="185" r="5" fill="#4FDD87" stroke="#232333"/>
 <text x="498" y="188" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">Canonical app icon beside R.O.Y.G.B.I.V.</text>
 <circle cx="485" cy="218" r="5" fill="#4FDD87" stroke="#232333"/>
@@ -104,7 +104,7 @@
 <circle cx="485" cy="251" r="5" fill="#4FDD87" stroke="#232333"/>
 <text x="498" y="254" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">Entire uncut wallpaper frame</text>
 <circle cx="485" cy="284" r="5" fill="#4FDD87" stroke="#232333"/>
-<text x="498" y="287" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">Side Pan tool (viewport only)</text>
+<text x="498" y="287" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">Composition nudge (NOT viewport Pan)</text>
 <circle cx="485" cy="317" r="5" fill="#4FDD87" stroke="#232333"/>
 <text x="498" y="320" font-family="Arial,sans-serif" font-size="12" fill="#242334" font-weight="500">Side Zoom + and Zoom −</text>
 <circle cx="485" cy="350" r="5" fill="#4FDD87" stroke="#232333"/>
