@@ -1647,6 +1647,22 @@ try{
   assert.ok(trialGeometry.shortcuts.every(r=>r.right<=trialGeometry.frame.left+5),
     'preview quick actions must not obscure any wallpaper pixel');
   console.log('FIVE_DESTINATION_412_892_GEOMETRY',JSON.stringify(trialGeometry));
+  // Retain real Chromium images for independent design review. These are not
+  // concept art or an assertion that the opt-in shell is visually approved.
+  await captureUI('five-nav-studio-412x892');
+  await evaluate('document.getElementById("mobileExplore").click()');
+  await delay(180);
+  await captureUI('five-nav-explore-412x892');
+  await evaluate('document.getElementById("mobileSaved").click()');
+  await delay(180);
+  await captureUI('five-nav-saved-412x892');
+  await evaluate('document.getElementById("mobileEdit").click()');
+  await delay(180);
+  await captureUI('five-nav-edit-412x892');
+  await evaluate('document.getElementById("mobileMore").click()');
+  await delay(180);
+  await captureUI('five-nav-more-412x892');
+
 
   console.log('REDESIGN_EXPLORATION_ACCEPTANCE_SUCCESS');
 }finally{
