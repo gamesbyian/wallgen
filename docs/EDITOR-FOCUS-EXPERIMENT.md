@@ -23,3 +23,7 @@ A tool with no scalar range settings cannot benefit from the one-slider Focus su
 ## Parameter-chip keyboard access
 
 Focus has one tab stop for its parameter choices. Left/Right cycle within the current tool, Home/End jump to bounds, and keyboard focus follows the selected real source field. Horizontal reveal is limited to the chip strip. A disabled or locked underlying range remains selectable so its inactive status can be explained, but the shared adjustment stays disabled. All controls remains an independent exit. This is an accessibility refinement only; it changes no recipe values unless the user subsequently adjusts the source-backed slider.
+
+## Tall-phone visibility verification (2026-10-19)
+
+The real 412×892 Chromium atlas showed the active Focus slider partly below the bottom of the visible editing sheet. When Focus has at least one source-backed range and the viewport is 740px tall or more, reserve `clamp(295px, 34dvh, 330px)` for the tray, atomically contracting the wallpaper preview rather than overlapping it. Keep the existing `clamp(192px, 23dvh, 215px)` compact rule for range-free Focus tools. Landscape/short devices continue to use the scrollable panel. Mobile browser acceptance now inspects the *actual rendered* slider, help, tray and preview rectangles at 412×892, without substituting a screenshot zoom.

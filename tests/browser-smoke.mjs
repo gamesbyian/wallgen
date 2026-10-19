@@ -636,6 +636,42 @@ try{
   assert.deepEqual(await evaluate(
     'JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r")))'),
     focusBaseline.before,'Opening Focus or choosing a parameter changed the recipe');
+  // The reference atlas exposed a half-hidden Focus slider at 412×892.
+  // Test the real phone viewport and require the entire active adjustment,
+  // explanatory help and source preview to fit without scrolling the tray.
+  await command('Emulation.setDeviceMetricsOverride',{
+    width:412,height:892,deviceScaleFactor:1,mobile:true,
+    screenWidth:412,screenHeight:892,
+  });
+  // The editor's 180ms sheet translation must finish before measuring its
+  // final resting bounds. Otherwise DOMRect observes a moving offscreen tray.
+  await delay(320);
+  const focusViewport=await evaluate(`(()=>{
+    const bounds=selector=>document.querySelector(selector).getBoundingClientRect();
+    const panel=bounds('.editor-focus-panel');
+    const slider=bounds('.editor-focus-slider-row');
+    const help=bounds('.editor-focus-help');
+    const stage=bounds('.studio-stage');
+    const tray=bounds('#mobileDesignSheet');
+    return {height:innerHeight,panelBottom:panel.bottom,sliderBottom:slider.bottom,
+      helpBottom:help.bottom,sliderHeight:slider.height,
+      stageBottom:stage.bottom,trayTop:tray.top,
+      panelScrollable:document.querySelector('.editor-focus-panel').scrollHeight>
+        document.querySelector('.editor-focus-panel').clientHeight+2};
+  })()`);
+  assert.ok(focusViewport.sliderHeight>=40&&
+    focusViewport.sliderBottom<=Math.min(focusViewport.panelBottom,focusViewport.height)-2,
+    '412×892 Focus adjustment must fit fully in the visible sheet: '+JSON.stringify(focusViewport));
+  assert.ok(focusViewport.helpBottom<=Math.min(focusViewport.panelBottom,focusViewport.height)+1,
+    'Focus help should be readable without scrolling at normal phone height: '+
+    JSON.stringify(focusViewport));
+  assert.ok(focusViewport.stageBottom<=focusViewport.trayTop+2,
+    'Expanding Focus must contract preview space rather than covering artwork');
+  await command('Emulation.setDeviceMetricsOverride',{
+    width:412,height:915,deviceScaleFactor:1,mobile:true,
+    screenWidth:412,screenHeight:915,
+  });
+  console.log('PIXEL6PRO_FOCUS_VIEWPORT_FIT',JSON.stringify(focusViewport));
   await evaluate(`(()=>{
     const input=document.querySelector('.editor-focus-slider');
     const delta=Number(input.value)<Number(input.max)?1:-1;
