@@ -1126,6 +1126,7 @@ favoriteButton.addEventListener('click',()=>{
 function createCard(recipe,index) {
   const scene=resolveScene(recipe);
   const card=document.createElement('button');card.className='thumb';card.type='button';
+  card.dataset.recipeSeed=recipe.seed; // Stable source identity for gallery mode restoration.
   card.title=`Open variation ${index+1}`;
   const canvas=document.createElement('canvas');canvas.width=240;canvas.height=520;
   card.append(canvas);
