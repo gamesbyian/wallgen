@@ -37,3 +37,7 @@ This consolidation removed retired theme-dropdown styling and the original 13-pi
 ## 2026-10-18 source-proven dead-rule cleanup
 
 The old native theme dropdown and its sibling label were removed earlier, replaced by two native buttons with thin-black-outline cream/dark circles. `index.html` and `src/mobile-studio.js` no longer create a `.theme-switcher select` or descendant `label`. Four dead CSS selector arms were removed from the owning `studio-themes.css` stylesheet; no current theme button, brand, layout or recipe property was changed. A unit test checks that the retired selectors cannot quietly return. Continue CSS consolidation only after demonstrating selector death at the applicable viewport and verifying both live themes.
+
+## Mobile drawing panel ownership, 2026-10-19
+
+The compact Sketch → Refine → Finish drawing panel and its point-edit buttons now live entirely in `draw-path.css`; their former mobile overrides were removed from `ui-audit-fixes.css`. The owning rules retain the established opaque background, capped vertical scroller and source action order, while enlarging normal Draw/anchor actions to at least 36 CSS px and primary Finish actions to 40 CSS px. The browser smoke explicitly switches back to 412px mobile before measuring actual DOM rectangles, then restores the desktop test viewport. This is a practical improvement, not a claim that every control has a 48dp hitbox or native-device sign-off.

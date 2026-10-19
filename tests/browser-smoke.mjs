@@ -1496,8 +1496,15 @@ try{
   }
   // E2E: edit a saved drawn stroke on the phone canvas using physical pointer
   // events, verify the recipe records a manual anchor and that app Undo works.
+  // Earlier renderer coverage switches to desktop. Explicitly return to the
+  // Pixel-size mobile viewport before qualifying touch hitboxes.
+  await command('Emulation.setDeviceMetricsOverride',{
+    width:412,height:915,deviceScaleFactor:1,mobile:true,
+    screenWidth:412,screenHeight:915,
+  });
   const editableRecipe=JSON.parse(readFileSync(join(cwd,'tests/fixtures/drawn-knot-t0b4v5.json'),'utf8'));
   await command('Page.navigate',{url:url+'?r='+encodeURIComponent(JSON.stringify(editableRecipe))});
+  await waitFor('document.body.classList.contains("mobile-studio")',15000);
   await waitFor('document.readyState==="complete"&&document.querySelector("#drawPathToggle")',15000);
   await waitFor('document.querySelectorAll(".editor-tool-card").length>=18',15000);
   const pointEditorCheck=await evaluate(`(async()=>{
@@ -1519,6 +1526,14 @@ try{
       .every(sel=>panel.querySelector(sel)?.getAttribute('role')==='group');
     document.getElementById('drawEditPoints').click();
     const editingPhase=panel.dataset.phase;
+    const drawingTargets=[...panel.querySelectorAll('.draw-path-controls button')]
+      .filter(button=>!button.hidden&&getComputedStyle(button).display!=='none')
+      .map(button=>{
+        const r=button.getBoundingClientRect();
+        const parent=panel.getBoundingClientRect();
+        return {id:button.id,width:r.width,height:r.height,
+          horizontallyInside:r.left>=parent.left-1&&r.right<=parent.right+1};
+      });
     const overlay=document.getElementById('drawOverlay');
     const model=createPointEditor(recipe.customPath);
     const index=model.anchors[Math.floor(model.anchors.length/2)];
@@ -1543,7 +1558,7 @@ try{
     document.getElementById('undo').click();
     const restored=JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get('r')));
     return {changed,pinned,corners,undoAvailable,panelOpacity,initialPhase,editingPhase,
-      originalActions,semanticGroups,
+      originalActions,semanticGroups,drawingTargets,
       restored:JSON.stringify(restored.customPath)===before};
   })()`);
   console.log('LIVE_ANCHOR_EDITOR_ACCEPTANCE',JSON.stringify(pointEditorCheck));
@@ -1555,10 +1570,21 @@ try{
     'point edit action should visibly identify the anchor editing phase');
   assert.ok(pointEditorCheck.originalActions&&pointEditorCheck.semanticGroups,
     'drawing workflow must retain all eleven original action identities in named groups');
+  assert.ok(pointEditorCheck.drawingTargets.length>=9,
+    'Sketch, Refine, Finish and anchor actions remain reachable');
+  assert.deepEqual(pointEditorCheck.drawingTargets.filter(t=>
+    t.height<33||t.width<24||!t.horizontallyInside),[],
+    'Compact drawing actions must expose usable touch rectangles without side clipping');
   assert.ok(pointEditorCheck.changed&&pointEditorCheck.pinned>0&&pointEditorCheck.corners>0,
     'dragging a point must modify and pin the selected anchor');
   assert.ok(pointEditorCheck.undoAvailable&&pointEditorCheck.restored,
     'local Undo and wallpaper Undo must both remain usable');
+  // Preserve the desktop viewport expected by the following Material and
+  // geometry probes. Breakpoint boundaries are tested separately later.
+  await command('Emulation.setDeviceMetricsOverride',{
+    width:1280,height:900,deviceScaleFactor:1,mobile:false,
+    screenWidth:1280,screenHeight:900,
+  });
   const fineRotations=await evaluate(`(()=>{
     const selectors=['textureRotation','textureRotation2','textureRotation3'];
     const controls=selectors.map(key=>{
