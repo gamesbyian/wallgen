@@ -101,7 +101,7 @@ export async function inspectAtlasState(page,ctx,slug,meta={}){
     let scanned=0,ignoredScroll=0,smallActionCount=0;
     function label(el){
       return (el.getAttribute('aria-label')||el.getAttribute('title')||
-        el.labels?.[0]?.textContent||el.textContent||'').trim().replace(/\\s+/g,' ').slice(0,68);
+        el.labels?.[0]?.textContent||el.textContent||'').trim().replace(/\s+/g,' ').slice(0,68);
     }
     function selector(el){
       if(el.id)return '#'+CSS.escape(el.id);
