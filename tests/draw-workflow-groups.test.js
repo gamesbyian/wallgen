@@ -13,7 +13,7 @@ test('drawing workflow groups retain all real source buttons and anchor controls
     assert.equal([...html.matchAll(new RegExp('id="'+id+'"','g'))].length,1,id);
   for(const group of ['draw-fit-group','draw-refine-group','draw-finish-group'])
     assert.match(html,new RegExp('class="'+group+'" role="group"'));
-  assert.match(html,/id="drawPhase" aria-hidden="true"/);
+  assert.match(html,/class="draw-phase" aria-hidden="true"/);
   assert.match(html,/id="drawPathHint" aria-live="polite"/);
   assert.match(html,/id="drawOverlay"[^>]+hidden/);
 });
