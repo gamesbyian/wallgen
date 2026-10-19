@@ -255,6 +255,34 @@ async function exerciseMobileSmoke(page,ctx){
   await capture(page,ctx,'shell-mobile-more',{kind:'surface-state'});
   await page.locator('#mobileExplore').evaluate(el=>el.click());
   await capture(page,ctx,'shell-mobile-explore',{kind:'surface-state'});
+
+  // Real phone drawing journey. The old atlas only photographed its custom
+  // path stages on desktop, which cannot qualify compact overlay geometry.
+  await page.locator('#mobileStudio').evaluate(el=>el.click());
+  await page.locator('#drawPathToggle').evaluate(el=>el.click());
+  await page.locator('#drawPathPanel:not([hidden])').waitFor({state:'visible'});
+  if(await page.locator('#drawPathPanel').getAttribute('data-phase')!=='sketch')
+    throw Error('Mobile drawing must start in Sketch state');
+  await capture(page,ctx,'special-mobile-draw-sketch',{kind:'special',drawPhase:'sketch'});
+  const bounds=await page.locator('#drawOverlay').boundingBox();
+  if(!bounds||bounds.width<100||bounds.height<150)throw Error('Mobile drawing overlay has no usable area');
+  const stroke=[[.25,.17],[.33,.25],[.41,.32],[.55,.42],[.67,.53]];
+  await page.mouse.move(bounds.x+bounds.width*stroke[0][0],bounds.y+bounds.height*stroke[0][1]);
+  await page.mouse.down();
+  for(const [x,y] of stroke.slice(1))
+    await page.mouse.move(bounds.x+bounds.width*x,bounds.y+bounds.height*y,{steps:5});
+  await page.mouse.up();
+  await page.locator('#drawApply:enabled').waitFor({state:'visible'});
+  if(await page.locator('#drawPathPanel').getAttribute('data-phase')!=='refine')
+    throw Error('Mobile drawing must show Refine after a valid stroke');
+  await capture(page,ctx,'special-mobile-draw-refine',{kind:'special',drawPhase:'refine'});
+  await page.locator('#drawEditPoints').evaluate(el=>el.click());
+  if(await page.locator('#drawPathPanel').getAttribute('data-phase')!=='anchors')
+    throw Error('Mobile point editing must identify its Edit points state');
+  await capture(page,ctx,'special-mobile-draw-anchors',{kind:'special',drawPhase:'anchors'});
+  await page.locator('#drawCancel').evaluate(el=>el.click());
+  if(await page.locator('#drawPathPanel').isVisible())
+    throw Error('Cancelling mobile drawing must close the overlay');
 }
 try{
   for(const surface of surfaces){

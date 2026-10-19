@@ -6,7 +6,7 @@ This workflow inventories **visible interface states**, not wallpaper variations
 
 The GitHub Actions **UI state screenshot atlas** workflow has two entry points:
 
-- **Pull requests touching UI code:** desktop / 100% *smoke* capture (all registered tools, conditionals and stateful journeys), **plus a bounded 412 × 892 Pixel 6 Pro-sized mobile smoke**. The mobile subset captures all seven editor categories, Fit camera rail, Focus, diagonal/material conditions, cream/dark and Explore/More surfaces without paying for eight full atlas combinations.
+- **Pull requests touching UI code:** desktop / 100% *smoke* capture (all registered tools, conditionals and stateful journeys), **plus a bounded 412 × 892 Pixel 6 Pro-sized mobile smoke**. The mobile subset captures all seven editor categories, Fit camera rail, Focus, diagonal/material conditions, cream/dark, Explore/More, and a real three-stage Sketch → Refine → Edit points drawing journey without paying for eight full atlas combinations.
 - **Actions → UI state screenshot atlas → Run workflow → full:** all eight viewport/zoom combinations and an uploadable screenshot atlas. Select **smoke** for a quick diagnostic.
 
 Concurrent runs on the same PR/ref cancel superseded runs. Screenshot artifacts are retained for 14 days.
