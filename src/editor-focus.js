@@ -69,6 +69,7 @@ export function installFocusedAdjustments({form,chooser}){
     slider.value=original.value;
     const color=original.style.getPropertyValue('--roygbiv-slider-color');
     if(color)slider.style.setProperty('--roygbiv-slider-color',color);
+    else slider.style.removeProperty('--roygbiv-slider-color');
     const disabled=isInactive(original);
     slider.disabled=disabled;minus.disabled=disabled;plus.disabled=disabled;
     slider.setAttribute('aria-label',sourceLabel(original));
@@ -128,6 +129,11 @@ export function installFocusedAdjustments({form,chooser}){
   form.addEventListener('change',event=>{
     if(active&&event.target!==slider)queueMicrotask(sync);
   });
+  // The regular form change event does not cover Undo, seed randomization,
+  // imported recipes or lock changes. Those operations call changeRecipe()
+  // which synchronizes the original controls and emits this source-state
+  // notification. The Focus surface follows rather than caching old values.
+  document.addEventListener('roygbiv-controls-synced',sync);
   document.addEventListener('editor-tool-changed',refresh);
   mobile.addEventListener('change',event=>{if(!event.matches)setActive(false);});
   return {get active(){return active;},close:()=>setActive(false)};

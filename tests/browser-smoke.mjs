@@ -546,6 +546,47 @@ try{
   assert.deepEqual(Object.keys(focusBaseline.before).filter(
     k=>JSON.stringify(focusBaseline.before[k])!==JSON.stringify(focusedAfter.recipe[k])),
     ['stripeWidth'],'Focus adjusted other recipe fields unexpectedly');
+  // Undo is an external command. It replays saved source controls without
+  // dispatching native input/change from the selected slider. Focus must
+  // display the restored value and remain operable while it is open.
+  await evaluate('document.getElementById("undo").click()');
+  await waitFor(`JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).stripeWidth===${Number(focusBaseline.before.stripeWidth)}`);
+  const focusedUndone=await evaluate(`(()=>{
+    const source=document.querySelector('[name=stripeWidth]');
+    const shared=document.querySelector('.editor-focus-slider');
+    const output=document.querySelector('.editor-focus-value');
+    return {source:Number(source.value),shared:Number(shared.value),
+      output:Number(output.textContent),active:document.querySelector('#controls')
+        .classList.contains('editor-focus-active')};
+  })()`);
+  assert.equal(focusedUndone.source,Number(focusBaseline.before.stripeWidth));
+  assert.equal(focusedUndone.shared,focusedUndone.source,
+    'Focus must follow an external Undo of its original source setting');
+  assert.equal(focusedUndone.output,focusedUndone.source);
+  assert.equal(focusedUndone.active,true);
+  // Lock is another recipe-driven action without a source slider 'change'
+  // event. Focus must become inert and then re-enable after unlocking.
+  const focusedLock=await evaluate(`(()=>{
+    const source=document.querySelector('[name=stripeWidth]');
+    const lock=document.querySelector('[data-lock-key=stripeWidth]');
+    lock.click();
+    const focus=document.querySelector('.editor-focus-slider');
+    const before=JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get('r')));
+    const state={sourceDisabled:source.disabled,focusedDisabled:focus.disabled,
+      stepDisabled:[...document.querySelectorAll('.editor-focus-step')].every(x=>x.disabled),
+      locked:before.lockedSettings.includes('stripeWidth')};
+    state.beforeStep=before;
+    document.querySelector('.editor-focus-step').click();
+    state.after=JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get('r')));
+    lock.click();
+    state.enabled=!source.disabled&&!focus.disabled;
+    return state;
+  })()`);
+  assert.ok(focusedLock.sourceDisabled&&focusedLock.focusedDisabled&&
+    focusedLock.stepDisabled&&focusedLock.locked&&focusedLock.enabled,
+    'Focused slider must immediately respect and recover from source locks');
+  assert.deepEqual(focusedLock.after,focusedLock.beforeStep,
+    'Locked focused step must not mutate recipe');
   await evaluate(`(()=>{
     document.querySelector('.editor-focus-all').click();
     const source=document.querySelector('[name=stripeWidth]');
