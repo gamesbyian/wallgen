@@ -71,7 +71,11 @@ moreGroups.get('generate').append(document.getElementById('mobileShuffle'));
 const originalSelectors=['.composition-positioner','.action-tray',
   '.export-metadata','.secondary-actions','.details-bar'];
 const originalGroups=['inspect','generate','export','export','inspect'];
-const originals=originalSelectors.map(sel=>document.querySelector(sel)).filter(Boolean);
+const originals=originalSelectors.map(sel=>{
+  const element=document.querySelector(sel);
+  if(!element)throw new Error('Missing original More source controls: '+sel);
+  return element;
+});
 const placeholders=originals.map(node=>{
   const mark=document.createComment('Original desktop position');
   node.before(mark);
