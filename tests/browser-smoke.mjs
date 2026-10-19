@@ -2162,8 +2162,46 @@ try{
         inactive:input.dataset.inactive,numeric:numeric?.value||null,
         hostInactive:!!input.closest('.setting-inactive')}];
     }));
+    const rgb=value=>(value.match(/[0-9.]+/g)||[]).slice(0,3).map(Number);
+    const lum=value=>rgb(value).map(x=>x/255).map(x=>
+      x<=.04045?x/12.92:((x+.055)/1.055)**2.4)
+      .reduce((sum,x,i)=>sum+x*[.2126,.7152,.0722][i],0);
+    const contrast=(a,b)=>{
+      const x=lum(a),y=lum(b);
+      return (Math.max(x,y)+.05)/(Math.min(x,y)+.05);
+    };
+    // Rows can be transparent over their parent card. Contrast requires the
+    // actual opaque backing surface, not transparent black (rgba(0,0,0,0)).
+    const backdrop=element=>{
+      for(let node=element;node;node=node.parentElement){
+        const colour=getComputedStyle(node).backgroundColor;
+        const channels=(colour.match(/[0-9.]+/g)||[]).map(Number);
+        if(channels.length>=3&&(channels.length<4||channels[3]>=.995))
+          return colour;
+      }
+      throw Error('No opaque row backing surface found');
+    };
+    const originalTheme=document.documentElement.dataset.theme;
+    const readability={};
+    for(const theme of ['cream','dark']){
+      document.querySelector('[data-studio-theme="'+theme+'"]').click();
+      const input=document.querySelector('[name=shapeFrequency]');
+      const row=input.closest('.setting-inactive');
+      const field=row.querySelector('.field')||row;
+      const numeric=document.querySelector('[data-number-for=shapeFrequency]');
+      const hostStyle=getComputedStyle(row);
+      const labelStyle=getComputedStyle(field);
+      const numberStyle=getComputedStyle(numeric);
+      readability[theme]={
+        opacity:hostStyle.opacity,filter:hostStyle.filter,
+        labelContrast:contrast(labelStyle.color,backdrop(field)),
+        numberContrast:contrast(numberStyle.webkitTextFillColor,numberStyle.backgroundColor),
+        numberOpacity:numberStyle.opacity,
+      };
+    }
+    document.querySelector('[data-studio-theme="'+originalTheme+'"]').click();
     const recipe=JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get('r')));
-    return {fields,stored:{shapeFrequency:recipe.shapeFrequency,shapeDepth:recipe.shapeDepth}};
+    return {fields,stored:{shapeFrequency:recipe.shapeFrequency,shapeDepth:recipe.shapeDepth},readability};
   })()`);
   for(const [name,stored] of [['shapeFrequency',61],['shapeDepth',79]]){
     const visible=inactiveShapes.fields[name];
@@ -2171,6 +2209,13 @@ try{
     assert.equal(visible.value,'0','inactive range must visibly display zero');
     if(visible.numeric!==null)assert.equal(visible.numeric,'0');
     assert.equal(inactiveShapes.stored[name],stored,'inactive recipe value must survive');
+  }
+  for(const [theme,metrics] of Object.entries(inactiveShapes.readability)){
+    assert.equal(metrics.opacity,'1',theme+' inactive row must remain legible');
+    assert.equal(metrics.filter,'none',theme+' must retain its true theme colours');
+    assert.ok(metrics.labelContrast>=4.5,theme+' inactive label AA contrast: '+JSON.stringify(metrics));
+    assert.ok(metrics.numberContrast>=4.5,theme+' zero-value AA contrast: '+JSON.stringify(metrics));
+    assert.equal(metrics.numberOpacity,'1',theme+' zero-value field remains opaque');
   }
   await captureUI('straight-path-inactive-zero-values');
   await evaluate(`(()=>{
