@@ -48,7 +48,8 @@ body.path-drawing .wallpaper-frame{
 }
 .draw-path-controls button:disabled{opacity:.35;cursor:default}
 .draw-path-controls button[aria-pressed="true"]{background:#8e376c;border-color:#f3aad1}
-.draw-path-controls #drawApply:not(:disabled){background:#c44d91;color:#fff;border-color:#ef88c2}
+/* 5.34:1 white-on-magenta text contrast at phone-label sizes. */
+.draw-path-controls #drawApply:not(:disabled){background:#b73a80;color:#fff;border-color:#ef88c2}
 .draw-path-controls button:focus-visible{outline:2px solid #f1b7f0;outline-offset:2px}
 @media(max-width:790px){
   body.mobile-studio .mobile-preview-rail-left #undo,
@@ -163,7 +164,7 @@ body.path-drawing .wallpaper-frame{
 .draw-finish-group{grid-column:1/-1;justify-content:flex-end;
   border-top:1px solid #ffffff25;padding-top:5px}
 .draw-finish-group>button{min-width:0;flex:1 1 0}
-.draw-finish-group #drawApply:not(:disabled){background:#c44d91;
+.draw-finish-group #drawApply:not(:disabled){background:#b73a80;
   border-color:#ef88c2;color:#fff}
 @media(max-width:790px){
   body.mobile-studio .draw-path-intro{min-height:15px}
