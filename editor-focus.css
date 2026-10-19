@@ -54,3 +54,14 @@ html[data-theme="dark"] .editor-focus-all{background:#51374f;color:#fff;border-c
     flex:0 0 67px;margin-right:2px;padding:2px 7px!important;
     font-size:11px!important}
 }
+
+/* No-range tools should not reserve the full shared-slider panel, since
+   there is no parameter strip or range control to show. Reclaim a little
+   artwork height on tall phones, without shrinking the All controls exit.
+   The existing editor stage/tray resize is synchronous and overlap-safe. */
+.editor-focus-chips[hidden]{display:none!important}
+@media(max-width:790px) and (min-height:740px){
+  body.mobile-studio.mobile-edit-open:has(#controls.editor-focus-active.editor-focus-empty){
+    --mobile-tray-height:clamp(192px,23dvh,215px)!important;
+  }
+}

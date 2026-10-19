@@ -15,3 +15,7 @@ The Edit tool chooser now includes a **Focus** chip on mobile. In Focus, a singl
 ## Source-state refresh after external actions
 
 Focus also listens for the application's `roygbiv-controls-synced` notification, dispatched **after** `changeRecipe` has updated canonical form controls. Undo, seed and category randomization, import, and lock changes therefore update the selected shared slider, value readout and disabled/locked treatment immediately, even when no native source `input` or `change` event bubbles. The selected range colour still derives only from the real original input, and clears if no colour is assigned. Chromium browser acceptance explicitly checks **Focus adjustment → Undo while Focus stays open → synced original, shared value, and readout**.
+
+## Empty tool presentation
+
+A tool with no scalar range settings cannot benefit from the one-slider Focus surface. In that state, the unused parameter chooser is hidden, the explanation remains readable, and taller mobile viewports return some sheet height to the artwork. The **All controls** escape remains available and maintains every non-range field. Selecting a tool with ranges restores the complete Focus slider and its original source values; closing Focus removes the empty-state styling. This is a layout-only improvement, not a change to recipe applicability.

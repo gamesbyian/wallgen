@@ -87,8 +87,11 @@ export function installFocusedAdjustments({form,chooser}){
     if(!active)return;
     const card=document.querySelector('.editor-tool-card:not([hidden])');
     available=card?[...card.querySelectorAll('input[type=range][name]')].filter(focusEligible):[];
+    const empty=available.length===0;
+    form.classList.toggle('editor-focus-empty',empty);
+    chips.hidden=empty;
     chips.replaceChildren();
-    if(!available.length){
+    if(empty){
       original=null;row.hidden=true;help.textContent='This tool has no sliders. Choose All controls for its other settings.';
       return;
     }
@@ -109,7 +112,11 @@ export function installFocusedAdjustments({form,chooser}){
     toggle.setAttribute('aria-pressed',String(active));
     toggle.setAttribute('aria-label',active?'Focused mode on. Return to All controls':'Open focused single-slider adjustment mode');
     if(active)refresh();
-    else original=null;
+    else {
+      original=null;
+      form.classList.remove('editor-focus-empty');
+      chips.hidden=false;
+    }
     document.dispatchEvent(new CustomEvent('editor-focus-changed',{detail:{active}}));
     if(!active)toggle.focus({preventScroll:true});
   }
