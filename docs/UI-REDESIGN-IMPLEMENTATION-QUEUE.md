@@ -4,7 +4,7 @@
 
 ## Phase A — approval and reference integrity
 
-- [x] Establish independent snapshot of 113 static IDs, 87 configuration attributes and 40 source-defined tools, with a versioned verification matrix.
+- [x] Version and verify all 115 current static IDs (including native Studio and Saved destinations), 87 configuration attributes and 40 source-defined tools.
 - [x] Correct prior Pan/Zoom/Nudge semantics against actual renderer and UI code.
 - [ ] Qualify **all** static/conditional controls against runtime interaction coverage; source inventories do not establish reachability.
 - [ ] Independent negative testing of real screen states using the [adversarial protocol](UI-REDESIGN-ADVERSARIAL-REVIEW.md), including unscripted interactions and candidate SVGs.
@@ -45,6 +45,7 @@
 - [x] Add roving keyboard navigation for applicable tools and Focus parameters, preserving manual chip scroll (PRs #94 and #98).
 - [ ] Reduce excess short-panel height only on navigation, with atomic preview/tray resize.
 - [ ] Ensure all inactive values/locks remain comprehensible and true to generation logic.
+- [x] Name per-setting randomize dice using the visible source label or explicitly authored accessible name, not internal recipe keys (rebased PR pending).
 - [x] Explain separately why a Focus range is locked, contextually inactive, or otherwise unavailable, without altering its source controls (PR pending).
 
 ## Phase D — complex tool journeys
