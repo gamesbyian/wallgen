@@ -90,3 +90,46 @@ test('zoom updates framing without changing generated scene settings',()=>{
   }
   assert.deepEqual(resolveScene(zoomed).stripes,resolveScene(initial).stripes);
 });
+
+
+test('reframing camera pans world coordinates, not the composition or output size',()=>{
+  for(const zoom of [.5,.7,1,1.4,2.5]){
+    const small=viewCamera(600,1300,zoom,{panX:15,panY:-12});
+    const native=viewCamera(3024,6552,zoom,{panX:15,panY:-12});
+    const centered=viewCamera(600,1300,zoom);
+    for(const side of ['left','right','top','bottom']){
+      assert.ok(Math.abs(small.viewBounds[side]-native.viewBounds[side])<1e-9,
+        side+' changes with export size at '+zoom);
+    }
+    assert.ok(Math.abs(small.viewBounds.left-centered.viewBounds.left-90)<1e-9);
+    assert.ok(Math.abs(small.viewBounds.top-centered.viewBounds.top+156)<1e-9);
+    assert.ok(Math.abs((small.viewBounds.left+small.viewBounds.right)/2-390)<1e-9);
+    assert.ok(Math.abs((small.viewBounds.top+small.viewBounds.bottom)/2-494)<1e-9);
+  }
+  const bounded=viewCamera(600,1300,1,{panX:10000,panY:-10000});
+  assert.equal(bounded.shiftX,300);
+  assert.equal(bounded.shiftY,-650);
+  assert.equal(viewCamera(600,1300,1,{panX:NaN}).shiftX,0);
+});
+
+test('pan remains an independent serialized frame state and leaves scene geometry untouched',()=>{
+  const original=normalizeRecipe({seed:'pan-contract',geometry:'drawn',
+    customPath:[[0,.5],[.5,.1],[1,.85]],viewZoom:.7,
+    positionX:11,positionY:-9,viewPanX:15,viewPanY:-10});
+  assert.equal(original.viewPanX,15);
+  assert.equal(original.viewPanY,-10);
+  const roundTrip=decodeRecipe(encodeRecipe(original));
+  assert.deepEqual(roundTrip,original);
+  assert.equal(normalizeRecipe({...original,viewPanX:80}).viewPanX,50);
+  assert.equal(normalizeRecipe({...original,viewPanY:-80}).viewPanY,-50);
+  assert.equal(normalizeRecipe({}).viewPanX,0);
+  assert.equal(normalizeRecipe({}).viewPanY,0);
+  const moved=normalizeRecipe({...original,viewPanX:-20,viewPanY:35});
+  for(const key of Object.keys(original)){
+    if(!['viewPanX','viewPanY'].includes(key))
+      assert.deepEqual(original[key],moved[key],key);
+  }
+  assert.deepEqual(resolveScene(original).stripes,resolveScene(moved).stripes);
+  assert.equal(moved.positionX,11);
+  assert.equal(moved.positionY,-9);
+});
