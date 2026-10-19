@@ -755,6 +755,25 @@ try{
   assert.ok(Math.abs(editor.ratio-600/1300)<.06);
   assert.equal(editor.scrollY,'hidden');
   assert.deepEqual(editor.tabs,['Layout','Path','Shapes','Details','Colour','Material','Effects']);
+  // Every live source category gets a distinct flat accent, without changing
+  // slider values, disabled handlers or the four-column material rotation.
+  const rowPalette=await evaluate(`(()=>{
+    const seen={};
+    for(const row of document.querySelectorAll('.editor-setting-row[data-control-category]')){
+      const key=row.dataset.controlCategory;
+      if(seen[key])continue;
+      const style=getComputedStyle(row);
+      seen[key]={accent:style.getPropertyValue('--editor-row-accent').trim(),
+        kind:row.dataset.controlKind,keys:row.dataset.controlKeys,
+        shadow:style.boxShadow};
+    }
+    return seen;
+  })()`);
+  assert.deepEqual(Object.keys(rowPalette).sort(),
+    ['colour','details','effects','layout','material','path','stripes']);
+  assert.equal(new Set(Object.values(rowPalette).map(x=>x.accent)).size,7);
+  assert.ok(Object.values(rowPalette).every(x=>x.keys&&x.kind&&x.shadow.includes('inset')));
+  console.log('EDITOR_FLAT_SEVEN_COLOUR_ROWS',JSON.stringify(rowPalette));
   const iconPlacement=await evaluate('(()=>({tabs:[...document.querySelectorAll(".settings-tab")].map(b=>({width:b.getBoundingClientRect().width,icon:!!b.querySelector("svg.ui-icon")})),dock:[...document.querySelectorAll("#mobileActionDock>button")].map(b=>({width:b.getBoundingClientRect().width,icon:!!b.querySelector("svg.ui-icon")})),rail:[...document.querySelectorAll("#mobileEditorActionRail>button")].map(b=>({width:b.getBoundingClientRect().width,icon:!!b.querySelector("svg.ui-icon")})),remoteImages:document.querySelectorAll("img.ui-icon").length,categoryHeight:document.querySelector(".settings-tabs").getBoundingClientRect().height}))()');
   assert.equal(iconPlacement.remoteImages,0,'inlined icons inherit theme contrast');
   const previewShortcutIcons=await evaluate('(()=>{const box=id=>{const b=document.getElementById(id);const r=b.getBoundingClientRect();return {height:r.height,width:r.width,icon:!!b.querySelector("svg.ui-icon"),labelHeight:b.querySelector(".toolbar-wording")?.getBoundingClientRect().height||0}};const prime=document.querySelector(".mobile-preview-rail-left .prime-toggle");return {prime:{height:prime.getBoundingClientRect().height,icon:!!prime.querySelector("svg.ui-icon"),labelHeight:prime.querySelector(".toolbar-wording").getBoundingClientRect().height},draw:box("drawPathToggle"),import:box("importPathToggle")}})()');
