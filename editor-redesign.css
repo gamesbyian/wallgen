@@ -894,3 +894,22 @@ html[data-theme="cream"] body.mobile-studio .sidebar .settings-tabs .settings-ta
 .editor-tool-card .editor-setting-row:has(:focus-visible){
   outline:2px solid #53AAFF;outline-offset:-2px;border-radius:7px;
 }
+
+/* Measured at the narrow desktop boundary (791 CSS px): the source lock and
+   per-setting randomize targets were only 22×23px. Give these ordinary rows
+   25px box targets without touching the four-column rotation shortcut row
+   or the separate compact-phone tray geometry. */
+@media(min-width:791px){
+  .editor-tool-card>.lockable-setting:not(.texture-rotation-field),
+  .editor-tool-card .texture-layer-group>.lockable-setting:not(.texture-rotation-field),
+  .editor-tool-card .texture-layer-panel>.lockable-setting:not(.texture-rotation-field),
+  .editor-tool-card .lighting-subsection .lockable-setting:not(.texture-rotation-field),
+  .editor-tool-card .stripe-shadow-section .lockable-setting:not(.texture-rotation-field),
+  .editor-tool-card .diagonal-settings .lockable-setting:not(.texture-rotation-field){
+    grid-template-columns:minmax(0,1fr) 25px 25px;
+  }
+  .editor-tool-card .lockable-setting:not(.texture-rotation-field)>.setting-lock,
+  .editor-tool-card .lockable-setting:not(.texture-rotation-field)>.editor-setting-die{
+    width:25px;min-width:25px;height:25px;min-height:25px;
+  }
+}
