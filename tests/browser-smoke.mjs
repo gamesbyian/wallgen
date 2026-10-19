@@ -2682,6 +2682,118 @@ try{
     assert.equal(inactive.opacity,'1',theme+' inactive rotation row must remain opaque');
   }
   console.log('MATERIAL_ROTATION_LABEL_CONTRAST',JSON.stringify(rotationReadability));
+
+  // Full two-element UI journey: selection, reorder, visibility, seven-colour
+  // targeting, locking, repeated Add and serialised identity preservation.
+  // This operates on the actual mobile form controls, not a model-only stub.
+  await command('Emulation.setDeviceMetricsOverride',{
+    width:412,height:892,deviceScaleFactor:1,mobile:true,
+    screenWidth:412,screenHeight:892
+  });
+  const interiorFixture={version:2,seed:'interior-stack-browser-e2e',
+    interiorElements:[
+      {id:'first-ink',type:'line',shape:'wave',enabled:true,
+        stroke:'solid',color:'white',width:1.5},
+      {id:'second-band',type:'band',shape:'zigzag',enabled:true,
+        stroke:'dashed',color:'black',width:22}
+    ]};
+  await command('Page.navigate',{url:url+'?r='+encodeURIComponent(JSON.stringify(interiorFixture))});
+  await waitFor('document.body.classList.contains("mobile-studio")');
+  await waitFor('document.querySelectorAll(".editor-tool-card").length>=39',15000);
+  await waitFor('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).interiorElements.length===2');
+  await evaluate('document.getElementById("mobileEdit").click()');
+  await delay(260);
+  const interiorStackJourney=await evaluate(`(()=>{
+    const recipe=()=>JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get('r')));
+    const manager=()=>document.querySelector('.editor-tool-card[data-editor-tool=interior]');
+    const choose=()=>manager().querySelector('.interior-toolbar select');
+    const scope=()=>manager().querySelector('.interior-scope');
+    const actions=()=>manager().querySelector('.interior-actions');
+    const tool=name=>document.querySelector('.editor-tool-tab[data-editor-tool="'+name+'"]');
+    document.getElementById('tab-details').click();
+    tool('interior').click();
+    const beginning=recipe().interiorElements.map(e=>e.id);
+    const selector=choose();
+    selector.value='1';selector.dispatchEvent(new Event('change',{bubbles:true}));
+    const chosen={value:choose().value,scope:scope().textContent,
+      downDisabled:actions().querySelector('[aria-label="Move element downward"]').disabled};
+    const upward=actions().querySelector('[aria-label="Move element upward"]');
+    const upAvailable=!upward.disabled;
+    upward.click();
+    const upOrder=recipe().interiorElements.map(e=>e.id);
+    const afterUpSelection=choose().value;
+    const downward=actions().querySelector('[aria-label="Move element downward"]');
+    const downAvailable=!downward.disabled;
+    downward.click();
+    const restoredOrder=recipe().interiorElements.map(e=>e.id);
+    const afterDownSelection=choose().value;
+    const toggle=manager().querySelector('.interior-toggle input');
+    toggle.checked=false;toggle.dispatchEvent(new Event('change',{bubbles:true}));
+    const hidden={enabled:recipe().interiorElements[1].enabled,
+      scope:scope().textContent,visibility:scope().dataset.elementVisibility};
+    const show=manager().querySelector('.interior-toggle input');
+    show.checked=true;show.dispatchEvent(new Event('change',{bubbles:true}));
+    const reenabled=recipe().interiorElements[1].enabled;
+    tool('interior-targets').click();
+    const targets=()=>[...document.querySelectorAll('.editor-tool-card[data-editor-tool=interior-targets] .interior-targets input')];
+    const targetsBefore=targets().length;
+    targets()[0].click();
+    const redExcluded=[...recipe().interiorElements[1].colorSlots];
+    targets()[0].click();
+    const allColours=[...recipe().interiorElements[1].colorSlots];
+    tool('interior').click();
+    const lock=actions().querySelector('button:last-child');
+    lock.click();
+    const locked={value:recipe().lockedSettings.includes('interiorElements'),
+      addDisabled:manager().querySelector('.interior-toolbar button').disabled,
+      reorderDisabled:actions().querySelector('[aria-label="Move element upward"]').disabled,
+      chooserEnabled:!choose().disabled,
+      styleDisabled:document.querySelector('.editor-tool-card[data-editor-tool=interior-style] select').disabled};
+    actions().querySelector('button:last-child').click();
+    const unlocked={value:recipe().lockedSettings.includes('interiorElements'),
+      addEnabled:!manager().querySelector('.interior-toolbar button').disabled,
+      styleEnabled:!document.querySelector('.editor-tool-card[data-editor-tool=interior-style] select').disabled};
+    // Dynamic controls re-render after every Add. Always retrieve the new
+    // canonical button rather than retaining stale detached DOM references.
+    manager().querySelector('.interior-toolbar button').click();
+    manager().querySelector('.interior-toolbar button').click();
+    const final=recipe().interiorElements.map(e=>e.id);
+    const selectionAfterAdd=choose().value;
+    return {beginning,chosen,upAvailable,upOrder,afterUpSelection,
+      downAvailable,restoredOrder,afterDownSelection,hidden,reenabled,
+      targetsBefore,redExcluded,allColours,locked,unlocked,final,selectionAfterAdd,
+      finalScope:scope().textContent,selectedCardVisible:
+        manager().getBoundingClientRect().height>15};
+  })()`);
+  assert.deepEqual(interiorStackJourney.beginning,['first-ink','second-band']);
+  assert.equal(interiorStackJourney.chosen.value,'1');
+  assert.match(interiorStackJourney.chosen.scope,/Element 2 of 2 · Enabled/);
+  assert.ok(interiorStackJourney.upAvailable&&interiorStackJourney.downAvailable);
+  assert.deepEqual(interiorStackJourney.upOrder,['second-band','first-ink']);
+  assert.deepEqual(interiorStackJourney.restoredOrder,interiorStackJourney.beginning);
+  assert.equal(interiorStackJourney.afterUpSelection,'0');
+  assert.equal(interiorStackJourney.afterDownSelection,'1');
+  assert.deepEqual(interiorStackJourney.hidden,{
+    enabled:false,scope:interiorStackJourney.hidden.scope,visibility:'hidden'
+  });
+  assert.match(interiorStackJourney.hidden.scope,/Element 2 of 2 · Hidden/);
+  assert.equal(interiorStackJourney.reenabled,true);
+  assert.equal(interiorStackJourney.targetsBefore,7);
+  assert.deepEqual(interiorStackJourney.redExcluded,[1,2,3,4,5,6]);
+  assert.deepEqual(interiorStackJourney.allColours,[]);
+  assert.deepEqual(interiorStackJourney.locked,{
+    value:true,addDisabled:true,reorderDisabled:true,
+    chooserEnabled:true,styleDisabled:true});
+  assert.deepEqual(interiorStackJourney.unlocked,{
+    value:false,addEnabled:true,styleEnabled:true});
+  assert.equal(interiorStackJourney.final.length,4);
+  assert.equal(new Set(interiorStackJourney.final).size,4,
+    'repeated mobile Add must allocate unique persistent element identities');
+  assert.deepEqual(interiorStackJourney.final.slice(0,2),['first-ink','second-band']);
+  assert.equal(interiorStackJourney.selectionAfterAdd,'3');
+  assert.ok(interiorStackJourney.selectedCardVisible);
+  await captureUI('interior-stack-four-unique-elements-412x892');
+  console.log('INTERIOR_STACK_ACTUAL_UI_JOURNEY',JSON.stringify(interiorStackJourney));
   console.log('REDESIGN_EXPLORATION_ACCEPTANCE_SUCCESS');
 }finally{
   try{ws?.close()}catch{}
