@@ -24,7 +24,11 @@ test('status presentation binds real fields, includes all three chips and all so
   for(const state of ['off','auto','on','zero'])
     assert.ok(css.includes('[data-material-state="'+state+'"]'),state);
   assert.doesNotMatch(css,/linear-gradient|radial-gradient|conic-gradient/i);
-  assert.doesNotMatch(css,/grid-template-columns|height:|width:|padding:/);
+  const railCSS=css.split('/* Finish tabs expose conditional settings')[0];
+  assert.doesNotMatch(railCSS,/grid-template-columns|height:|width:|padding:/,
+    'source status rails must never change chooser geometry');
+  assert.match(css,/\.editor-tool-card>\.material-finish-help\{/,
+    'the explanatory note has its own separate visual scope');
 });
 
 test('Finish 1–3 explain disabled source states, without creating alternate switches',()=>{
