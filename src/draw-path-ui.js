@@ -215,9 +215,15 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
       if(ready.length<2&&saved)editingSavedPath=true;
       const pins=ready.length>=2?pendingPins:getRecipe().drawnAnchors;
       const corners=ready.length>=2?pendingCorners:getRecipe().drawnCorners;
-      editor=createPointEditor(existing,pins,corners);
+      // Hiding control squares is presentation only. If the same draft is
+      // reopened, retain its actual editor and Undo history, not a new
+      // approximation of the already-edited points.
+      if(!editor){
+        editor=createPointEditor(existing,pins,corners);
+        history=[];
+      }
       if(!editor)return;
-      ready=editor.points.slice();editing=true;adding=false;history=[];
+      ready=editor.points.map(p=>p.slice());editing=true;adding=false;
       overlay.focus({preventScroll:true});
       hint.textContent='Drag squares or tangent handles. Add a point if needed.';
     }else{
@@ -227,7 +233,7 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
       // No longer re-run the original raw stroke after manual corrections.
       // Hiding anchors keeps the edited geometry authoritative until redraw.
       raw=[];importedSource=[];
-      editing=false;editor=null;adding=false;history=[];
+      editing=false;adding=false;
       hint.textContent='Edited path retained. Apply it or return to Edit points.';
     }
     syncPointControls();draw(ready);
@@ -330,6 +336,8 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
       return;
     }
     pointer=event.pointerId;raw=[];ready=[];importedSource=[];pendingPins=[];pendingCorners=[];apply.disabled=true;
+    // A replacement stroke is a new transaction, unlike merely hiding handles.
+    editor=null;history=[];adding=false;
     showingSavedPath=false;editingSavedPath=false;
     append(event);
     try{overlay.setPointerCapture(pointer);}catch{}

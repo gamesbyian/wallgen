@@ -214,3 +214,59 @@ test('after new stroke begins, resizing uses new provisional geometry, not saved
     assert.deepEqual(f.recipe,f.snap);
   }finally{f.cleanup();}
 });
+
+test('Hide points and Edit points preserve the complete pending point Undo transaction',()=>{
+  const f=fixture({seed:'hide-reopen-undo',structure:'paths',geometry:'drawn',
+    customPath:path,positionX:12,positionY:-9,viewZoom:1.3,
+    viewPanX:17,viewPanY:-11,extendDrawnPath:true});
+  try{
+    f.nodes.drawPathToggle.click();
+    f.nodes.drawEditPoints.click();
+    selectFirstAnchor(f);
+    arrowRight(f);
+    assert.equal(f.nodes.drawUndoPoint.disabled,false,'a moved node has an Undo snapshot');
+    f.nodes.drawEditPoints.click(); // presentation-only Hide points
+    assert.equal(f.nodes.drawPathPanel.dataset.phase,'refine');
+    f.nodes.drawEditPoints.click(); // same pending transaction
+    assert.equal(f.nodes.drawPathPanel.dataset.phase,'anchors');
+    assert.equal(f.nodes.drawUndoPoint.disabled,false,
+      'hiding the handles must not erase point Undo history');
+    f.nodes.drawUndoPoint.click();
+    assert.equal(f.nodes.drawUndoPoint.disabled,true,'the one previous change was reverted');
+    f.nodes.drawApply.click();
+    assert.equal(f.calls.length,1);
+    assert.deepEqual(f.calls[0][0],f.recipe.customPath,
+      'the original world-space points must be restored exactly');
+    assert.equal(f.calls[0][4],true,'saved composition nudge must survive');
+    assert.deepEqual(f.recipe,f.snap,'the provisional editor never modified source recipe');
+  }finally{f.cleanup();}
+});
+
+test('starting a fresh replacement stroke clears the hidden editor and its Undo history',()=>{
+  const f=fixture({seed:'hide-replace-undo',structure:'paths',geometry:'drawn',
+    customPath:path,positionX:15,viewZoom:.5,viewPanX:19});
+  try{
+    f.nodes.drawPathToggle.click();
+    f.nodes.drawEditPoints.click();
+    selectFirstAnchor(f);
+    arrowRight(f);
+    f.nodes.drawEditPoints.click(); // Hide old point controls
+    pointer(f.nodes.drawOverlay,'pointerdown',{
+      pointerId:42,isPrimary:true,clientX:100,clientY:230});
+    pointer(f.nodes.drawOverlay,'pointermove',{
+      pointerId:42,isPrimary:true,clientX:245,clientY:570});
+    pointer(f.nodes.drawOverlay,'pointerup',{
+      pointerId:42,isPrimary:true,clientX:400,clientY:850});
+    assert.equal(f.nodes.drawEditPoints.hidden,false,
+      'new long stroke must offer point editing');
+    f.nodes.drawEditPoints.click();
+    assert.equal(f.nodes.drawPathPanel.dataset.phase,'anchors');
+    assert.equal(f.nodes.drawUndoPoint.disabled,true,
+      'a replacement stroke must never inherit the previous saved path Undo stack');
+    f.nodes.drawApply.click();
+    assert.equal(f.calls.length,1);
+    assert.equal(f.calls[0][4],false,'new geometry must not inherit saved nudge');
+    assert.notDeepEqual(f.calls[0][0],f.recipe.customPath);
+    assert.deepEqual(f.recipe,f.snap);
+  }finally{f.cleanup();}
+});
