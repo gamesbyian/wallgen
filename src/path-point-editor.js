@@ -127,6 +127,9 @@ export function deletePointAnchor(e,index){
   if(index<=0||index>=e.points.length-1||!e.anchors.includes(index))return false;
   e.anchors=e.anchors.filter(i=>i!==index);
   e.pinned.delete(index);e.corners.delete(index);
+  // Deleting a once-moved anchor must not leave an obsolete resmoothing
+  // marker that will later address another unrelated span.
+  e.changed.delete(index);
   e.selected=-1;
   return true;
 }
@@ -211,6 +214,7 @@ export function resmoothPointEdits(e,strength=3){
   const regions=new Set();
   for(const index of e.changed){
     const slot=anchors.indexOf(index);
+    if(slot<0)continue; // Defensive against stale/externally constructed editor state.
     for(let j=Math.max(0,slot-2);j<Math.min(anchors.length-1,slot+2);j++)
       regions.add(j);
   }
