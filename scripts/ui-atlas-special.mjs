@@ -43,7 +43,29 @@ export async function captureSpecialStates({page,ctx,capture,navigate,change,set
     await page.locator('#editorVariationMode').selectOption('reroll');
     await page.locator('#editorVariationStrength').selectOption('moderate');
   });
-  await attempt('search',async()=>{
+  await attempt('focus-adjustment',async()=>{
+    if(!ctx.surface.mobile)return;
+    await change(page,'structure','paths');
+    await navigate(page,'stripes','structure');
+    const original=await page.locator('[name=stripeWidth]').inputValue();
+    const toggle=page.locator('.editor-focus-toggle');
+    await toggle.click();
+    await page.locator('#editorFocusPanel:not([hidden])').waitFor({state:'visible'});
+    await page.locator('.editor-focus-chip[data-focus-key=stripeWidth]').click();
+    await snap('focus-stripe-width',{focusSetting:'stripeWidth'});
+    await page.locator('.editor-focus-chip[data-focus-key=spread]').click();
+    await snap('focus-spread',{focusSetting:'spread'});
+    // Selection never alters values. This checks the real original source
+    // node, even though the full editor card is visually collapsed.
+    if(await page.locator('[name=stripeWidth]').inputValue()!==original)
+      throw Error('Focus selection unexpectedly changed recipe');
+    await page.locator('#tab-colour').evaluate(el=>el.click());
+    await page.locator('.editor-tool-tab[data-editor-tool=rainbow]').evaluate(el=>el.click());
+    await snap('focus-no-range');
+    await page.locator('.editor-focus-all').click();
+    await navigate(page,'layout','arrange');
+  });
+    await attempt('search',async()=>{
     await navigate(page,'layout','arrange');
     if(await clickIfVisible(page,'.editor-search-toggle')){
       await snap('search-expanded-empty');

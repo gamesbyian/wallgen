@@ -70,7 +70,18 @@ export async function inspectAtlasState(page,ctx,slug,meta={}){
     }
     if(slug==='special-search-expanded-empty'||slug==='special-search-matching-setting')
       check(shownInShot(g('.editor-search-input:not([hidden])')),'search input not visible');
-    if(slug==='special-history-empty'||slug==='special-history-with-variations')
+    if(slug.startsWith('special-focus-')){
+      check(shownInShot(g('#editorFocusPanel:not([hidden])')),'focused slider view not visible');
+      check(g('#controls')?.classList.contains('editor-focus-active'),'focus mode not active');
+      if(meta.focusSetting){
+        check(shownInShot(g('.editor-focus-chip[data-focus-key="'+meta.focusSetting+'"]')),
+          'focused parameter chip not shown');
+        check(!g('.editor-focus-slider')?.disabled,'chosen focus slider was unexpectedly disabled');
+      }
+      if(slug==='special-focus-no-range')
+        check(shownInShot(g('.editor-focus-help')),'empty slider explanation not visible');
+    }
+        if(slug==='special-history-empty'||slug==='special-history-with-variations')
       check(shownInShot(g('#editorHistory:not([hidden])')),'history panel not visible');
     if(slug.startsWith('special-image-import-'))
       check(shownInShot(g('#imagePathDialog[open]')),'import dialog not visible');

@@ -9,3 +9,5 @@ The Edit tool chooser now includes a **Focus** chip on mobile. In Focus, a singl
 **Review tasks:** A/B alternate between Full and Focus while (a) tuning stripe width and spacing, (b) changing material strength/scale, (c) exploring geometry/radial parameters and (d) searching for a disabled setting. Observe tap count, glanceability and how easily users can compare simultaneously changed values. Explicitly retain default All mode unless user evaluation supports changing it.
 
 **Implementation acceptance:** original form nodes never move or duplicate; focus slider inherits the source field's stable ROYGBIV colour (blue remains eligible); no flicker during rerender; direct keyboard/touch focus and source-state updates; mobile preview and editor never overlap; Chrome screenshots before/after must be compared to existing controls.
+
+**Atlas capture:** mobile full 100/75/66/50% includes `special-focus-stripe-width`, `special-focus-spread` and `special-focus-no-range` captures. Each checks the actual source chip/panel; a parameter switch must not change the original stripe-width control. Desktop atlas intentionally omits this mobile-only option.
