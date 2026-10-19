@@ -260,7 +260,10 @@ async function exerciseMobileSmoke(page,ctx){
   await panRow.locator('[data-view-pan="right"]').click();
   await page.waitForFunction(()=>JSON.parse(decodeURIComponent(
     new URLSearchParams(location.search).get('r'))).viewPanX===5);
-  await capture(page,ctx,'special-view-pan',{kind:'special',cameraPan:5});
+  const unchangedPosition=await page.evaluate(()=>JSON.parse(decodeURIComponent(
+    new URLSearchParams(location.search).get('r'))).positionX);
+  await capture(page,ctx,'special-view-pan',{kind:'special',cameraPan:5,
+    compositionPosition:unchangedPosition});
   await panRow.locator('[data-view-pan="reset"]').click();
   await page.waitForFunction(()=>JSON.parse(decodeURIComponent(
     new URLSearchParams(location.search).get('r'))).viewPanX===0);
