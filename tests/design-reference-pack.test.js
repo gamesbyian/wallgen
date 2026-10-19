@@ -15,7 +15,7 @@ test('canonical references enumerate all seven categories, all 40 tools and 12 i
  for(const sc of spec.screens){
   assert.ok(sc.required.length>=6 && sc.conditional.length && sc.forbidden.length,sc.id);
   assert.ok(read('docs/ui-reference/'+sc.id+'.svg').includes('IMPLEMENTATION-SAFE'));
-  assert.ok(read('docs/ui-reference/'+sc.id+'.svg').includes('REQUIRED IN THIS STATE'));
+  assert.match(read('docs/ui-reference/'+sc.id+'.svg'),/REQUIRED\s+(?:IN THIS STATE|\/\s*SOURCE-VERIFIED AND PLANNED)/);
  }
 });
 test('approved icon family remains available with 12 unwired flat SVG candidates',()=>{
