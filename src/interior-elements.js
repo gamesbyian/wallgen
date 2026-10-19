@@ -10,6 +10,13 @@ const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 const number=(x,f,a,b)=>clamp(Number.isFinite(+x)?+x:f,a,b);
 const COLOURS=['white','black','lighter','darker','custom'];
 export const RAINBOW_NAMES=Object.freeze(['Red','Orange','Yellow','Green','Blue','Indigo','Violet']);
+// One contract for normalized recipe values and native editor slider limits.
+// Older and externally supplied recipes can legitimately use the full span.
+export const INTERIOR_LIMITS=Object.freeze({
+  fieldFrequency:Object.freeze({min:.1,max:100,step:.1}),
+  contourFrequency:Object.freeze({min:1,max:30,step:1}),
+  phase:Object.freeze({min:-360,max:360,step:1}),
+});
 export const elementApplies=(e,slot,id)=>
   (!e.colorSlots?.length||e.colorSlots.includes(slot))&&
   (!e.objectIds?.length||e.objectIds.includes(id));
@@ -54,9 +61,10 @@ export function normalizeInteriorElements(input){
       position:number(e.position,0,-.48,.48),
       amplitude:number(e.amplitude,.12,0,.45),
       // Closed contours use whole cycles to meet cleanly at their seams.
-      frequency:e.placement==='contour'?Math.round(number(e.frequency,6,1,30)):
-        number(e.frequency,6,.1,100),
-      phase:number(e.phase,0,-360,360),
+      frequency:e.placement==='contour'?Math.round(number(e.frequency,6,
+        INTERIOR_LIMITS.contourFrequency.min,INTERIOR_LIMITS.contourFrequency.max)):
+        number(e.frequency,6,INTERIOR_LIMITS.fieldFrequency.min,INTERIOR_LIMITS.fieldFrequency.max),
+      phase:number(e.phase,0,INTERIOR_LIMITS.phase.min,INTERIOR_LIMITS.phase.max),
       opacity:number(e.opacity,1,0,1),
       placement:['local','field','contour'].includes(e.placement)?e.placement:'local',
     };
