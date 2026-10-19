@@ -167,7 +167,12 @@ function openSurface(type,galleryMode='explore'){
 }
 // A variation selection closes its sheet so the newly loaded wallpaper is visible.
 gallery.addEventListener('click',event=>{
-  if(event.target.closest('.thumb'))closeSurfaces({restoreFocus:false});
+  if(!event.target.closest('.thumb'))return;
+  closeSurfaces({restoreFocus:false});
+  // A gallery choice hides its own focused button via CSS. Hand focus to a
+  // visible destination, or keyboard and screen-reader users end up on body
+  // without a meaningful continuation target after restoring the design.
+  document.getElementById('mobileStudio').focus({preventScroll:true});
 });
 dismissHandle.addEventListener('click',()=>closeSurfaces());
 dockExpand.addEventListener('click',()=>closeSurfaces({restoreFocus:false}));
