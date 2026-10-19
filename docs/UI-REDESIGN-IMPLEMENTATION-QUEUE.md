@@ -6,7 +6,7 @@
 
 ## Phase A — approval and reference integrity
 
-- [x] Version and verify all 115 current static IDs (including native Studio and Saved destinations), 87 configuration attributes and 40 source-defined tools.
+- [x] Version and verify the 116 source-inventoried static IDs (including native Studio and Saved destinations), 87 configuration attributes and 40 source-defined tools. The previous 115 count was stale after navigation changes; this is source inventory, not runtime reachability.
 - [x] Correct prior Pan/Zoom/Nudge semantics against actual renderer and UI code.
 - [ ] Qualify **all** static/conditional controls against runtime interaction coverage; source inventories do not establish reachability.
 - [x] Browser-click the enabled named tools across Paths, Radial, Voronoi and Nested Regions, recording actual selected cards and explicitly flagging the preserved but HTML-disabled legacy Tonal mode instead of awarding false reachability (PR #110).
@@ -84,9 +84,11 @@
 ## Phase E — gallery, history, output and quality
 
 - [ ] Keep image-first Explore, independent Saved, history restore, user favourites and gallery loading semantics.
+- [ ] Independent actual-navigation qualification: Explore → Generate 12 → select → Favourite → Saved → Explore (including asynchronous switches) → restore → Edit → Undo. Agent 3's isolated Playwright gate is pending workflow results and does not imply coverage until it passes.
 - [x] Preserve the most recent Explore contact sheet while opening Saved favourites; restore it without re-randomizing, with explicit accessible gallery mode labels (PR #100).
 - [x] Browser-test populated Explore → Saved → Explore using all twelve original recipe seed identities (PR #102).
 - [ ] Preserve global status announcements and grouped More with seed, import, output, metadata, batch, share.
+- [ ] Independent More hit-test, clipboard, JSON download, share URL, metadata memory, PNG file-input import and complex recipe identity qualification. Agent 3 added an acceptance runner on its own branch; track as NOT VERIFIED until successful Chromium evidence is retained.
 - [x] Introduce source-preserving semantic groups inside More for create/seed, import/export/share and composition/details, retaining original handlers and desktop positions (PR #104).
 - [ ] Test all existing PNG/JSON recipe round-trips and exact preview/export geometry.
 - [x] Verify real native-resolution and direct preview zoom-out pixels and metadata with stable interior samples (PR #136). Broader structure coverage remains in the overarching gate.
