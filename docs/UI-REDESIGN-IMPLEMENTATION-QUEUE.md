@@ -52,14 +52,15 @@
 ## Phase D — complex tool journeys
 
 - [ ] Keep Draw → Interpret → Edit anchors → Apply/Cancel, including resmoothing, corners, points and 10× interpretive smoothing.
-- [x] Add three real 412×892 Chrome drawing-phase screenshots to the 20-state mobile atlas, enforcing the live phase sequence and real pointer controls (PR pending).
-- [x] Group drawing controls into Interpret, Refine and Finish with live Sketch/Refine/Edit points state and keep all source handlers, smoothing, anchor and extension identities; complete touch-fidelity review remains open (PR pending).
+- [x] Add three real 412×892 Chrome drawing-phase screenshots to the 20-state mobile atlas, enforcing the live phase sequence and real pointer controls (PR #114).
+- [x] Address genuine semi-transparent drawing-panel ghosting discovered in those three mobile screenshots, while preserving original pointer plane and actions (PR pending).
+- [x] Group drawing controls into Interpret, Refine and Finish with live Sketch/Refine/Edit points state and keep all source handlers, smoothing, anchor and extension identities; complete touch-fidelity review remains open (PR #112).
 - [ ] Keep path extrapolation beyond boundaries and intersections/weave/over/under.
 - [x] Fix source-proven 10px clipping of desktop material rotation buttons (36px inherited minimum inside 26px control row), preserving existing rotations and mobile sizing (PR #84).
 - [x] Fix the matching 10px clipping on compact Pixel 6 Pro material rotation buttons. The new 17-state mobile atlas exposed this separately; assert source button bounds on both desktop and mobile (PR #91).
 - [x] Lock down actual desktop Material Finish button bounds as a CI-enforced atlas invariant (PR #86).
 - [ ] Preserve all three material layers, coverage, strength/scale/rotation shortcuts (−90,−1,value,+1,+90) through the complete redesign.
-- [x] Give the three existing material chooser chips source-backed Off / Automatic / Active / 0% status without changing input identity or navigation geometry (PR pending).
+- [x] Give the three existing material chooser chips source-backed Off / Automatic / Active / 0% status without changing input identity or navigation geometry (PR #113).
 - [ ] Preserve dynamic interior element stack, ink selection, colours, placement, locking, reordering.
 - [x] Implement opt-in single Focus slider prototype backed by existing original range inputs; default All controls preserved (PR #87).
 - [ ] A/B evaluate Focus versus full inspector on Path, Material and Colour workflows, especially locked/disabled states; do not change default without user testing.

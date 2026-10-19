@@ -28,11 +28,13 @@
 body.path-drawing .wallpaper-frame{
   outline:2px solid #ee8dc5;outline-offset:4px;
 }
+/* Opaque control surface prevents preview-side shortcuts ghosting through
+   the drawing actions on compact phones and when anchors are visible. */
 .draw-path-panel{
   position:absolute;z-index:30;bottom:9px;left:50%;transform:translateX(-50%);
   display:flex;flex-direction:column;align-items:center;gap:6px;
   width:max-content;max-width:calc(100% - 8px);
-  background:rgba(15,15,25,.94);border:1px solid #a6729f;border-radius:11px;
+  background:#15141f;border:1px solid #a6729f;border-radius:11px;
   color:#fff;padding:7px 9px;box-shadow:0 8px 24px #0008;
 }
 .draw-path-panel #drawPathHint{
