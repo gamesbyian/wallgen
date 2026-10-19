@@ -2,6 +2,7 @@ import {EDITOR_CATEGORIES, TOOL_LIST, SETTING_TOOL} from './editor-schema.js?v=2
 import {iconMarkup} from './ui-icons.js';
 import {annotateEditorSettingRow} from './editor-control-roles.js';
 import {installFocusedAdjustments} from './editor-focus.js';
+import {toolAppliesToScene} from './editor-tool-applicability.js';
 
 const byId=id=>document.getElementById(id);
 const form=byId('controls');
@@ -16,28 +17,10 @@ let activeCategory='layout',activeTool='arrange';
 let activeStructure='paths',activeRegionMode='voronoi',activeConstruction='ribbon';
 // Keep the editor populated only with tools that can modify the active scene.
 // Hidden tools retain all values and locks; changing structure restores them.
-const pathTools=new Set(['geometry','safety','turn','single-loop','shape-details','ends']);
-const radialTools=new Set(['rays','ray-shape','origin']);
-const regionTools=new Set(['regions','region-detail','origin']);
 function toolApplies(entry){
-  if(entry.category==='path'){
-    if(activeStructure==='paths')return pathTools.has(entry.spec.id);
-    if(activeStructure==='radial')return radialTools.has(entry.spec.id);
-    return regionTools.has(entry.spec.id)&&
-      (entry.spec.id!=='origin'||activeRegionMode==='nested');
-  }
-  if(entry.category==='stripes')
-    return activeStructure==='paths'&&
-      (entry.spec.id!=='tone'||activeConstruction==='tonal');
-  if(entry.category==='details'){
-    if(entry.spec.id==='outlines')return activeStructure==='paths';
-    if(entry.spec.id==='dividers')return activeStructure!=='paths';
-  }
-  if(entry.category==='layout')
-    return entry.spec.id==='structure-mode'||activeStructure==='paths';
-  if(entry.category==='material'&&entry.spec.id==='surface')
-    return activeStructure==='paths';
-  return true;
+  return toolAppliesToScene({category:entry.category,id:entry.spec.id},{
+    structure:activeStructure,regionMode:activeRegionMode,construction:activeConstruction
+  });
 }
 function applicableTool(category){
   return [...tools.values()].find(entry=>entry.category===category&&toolApplies(entry))?.spec.id;
