@@ -175,6 +175,12 @@ function geometryFromPage(page){
       '.editor-tool-card:not([hidden]) .editor-setting-die:not(:disabled)'];
     const actionTargets=actionSelectors.map(selector=>({selector,...rect(selector)}))
       .filter(el=>el.visible);
+    const dockLabels=[...document.querySelectorAll('#mobileActionDock>button>small')].map(el=>{
+      const label=el.getBoundingClientRect(),button=el.parentElement.getBoundingClientRect();
+      return {text:el.textContent.trim(),fontSize:parseFloat(getComputedStyle(el).fontSize),
+        label:{x:label.x,y:label.y,right:label.right,bottom:label.bottom},
+        button:{x:button.x,y:button.y,right:button.right,bottom:button.bottom}};
+    });
     const stage=rect('.studio-stage'),sidebar=rect('.sidebar'),
       gallery=rect('.gallery-section'),more=rect('#mobileToolsSheet');
     const openSheet=body.classList.contains('mobile-edit-open')?sidebar:
@@ -185,7 +191,7 @@ function geometryFromPage(page){
     return {
       theme:document.documentElement.dataset.theme,
       bodyClasses:body.className,
-      stage,sidebar,gallery,more,dock:rect('#mobileActionDock'),
+      stage,sidebar,gallery,more,dock:rect('#mobileActionDock'),dockLabels,
       galleryGrid:rect('#gallery'),firstThumb:rect('#gallery .thumb'),
       firstThumbCanvas:rect('#gallery .thumb canvas'),
       firstThumbCaption:rect('#gallery .thumb-caption'),
@@ -259,6 +265,20 @@ try{
           console.log('CAPTURED '+key+' overlap='+measured.stageOverlap);
           // The screenshot and geometry remain in the artifact on failure:
           // an attractive comparison gallery is not evidence of safe layout.
+          if(profile.width<=790&&!profile.zoom&&measured.dock?.visible){
+            const labels=measured.dockLabels;
+            const clipped=labels.filter(item=>
+              item.fontSize<9.9||item.label.x<item.button.x-1||
+              item.label.right>item.button.right+1||
+              item.label.y<item.button.y-1||
+              item.label.bottom>item.button.bottom+1);
+            if(labels.length!==5||clipped.length){
+              const error='Five-dock caption label size or clipping: '+
+                JSON.stringify({count:labels.length,clipped});
+              errors.push({key,error});
+              console.error('VISUAL FAILURE '+key+' '+error);
+            }
+          }
           if(profile.id==='desktop-791x892'&&measured.undersized24.length){
             const error='Editor action targets below 24 CSS px: '+measured.undersized24.join(', ');
             errors.push({key,error});
