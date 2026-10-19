@@ -1,6 +1,7 @@
 import {EDITOR_CATEGORIES, TOOL_LIST, SETTING_TOOL} from './editor-schema.js?v=20261018-icons2';
 import {iconMarkup} from './ui-icons.js';
 import {annotateEditorSettingRow} from './editor-control-roles.js';
+import {installFocusedAdjustments} from './editor-focus.js';
 
 const byId=id=>document.getElementById(id);
 const form=byId('controls');
@@ -254,7 +255,8 @@ export function mountEditor(){
     if(match)selectEditorTool(match.category,match.id,{source:'search'});
   });
   selectEditorTool('layout','arrange');
-  return {getCurrent:()=>({category:activeCategory,tool:activeTool}),tools,chooser,searchInput};
+  const focused=installFocusedAdjustments({form,chooser});
+  return {focused,getCurrent:()=>({category:activeCategory,tool:activeTool}),tools,chooser,searchInput};
 }
 export function selectEditorTool(category,tool,{source='manual'}={}){
   let selected=tools.get(tool);
