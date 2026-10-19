@@ -18,7 +18,8 @@ test('narrow phone preview and dock must remain horizontally within the viewport
 });
 test('320px Explore keeps all guidance within the short gallery without re-extending the tray',()=>{
   const css=readFileSync('studio-themes.css','utf8');
-  const narrow=css.slice(css.lastIndexOf('/* Actual 320×640 Chromium'));
+  const narrow=css.slice(css.lastIndexOf('/* Actual 320×640 Chromium'),
+    css.indexOf('/* The real 320×640 populated Explore strip'));
   assert.match(narrow,/@media\(max-width:360px\) and \(max-height:670px\)/);
   assert.match(narrow,/body\.mobile-gallery-open \.gallery-placeholder/);
   assert.match(narrow,/gap:1px;padding:1px 5px/);
