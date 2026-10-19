@@ -79,10 +79,34 @@ export function installFocusedAdjustments({form,chooser}){
   }
   function choose(field){
     original=field;
-    for(const chip of chips.querySelectorAll('button'))
-      chip.setAttribute('aria-pressed',String(chip.dataset.focusKey===field.name));
+    for(const chip of chips.querySelectorAll('button')){
+      const selected=chip.dataset.focusKey===field.name;
+      chip.setAttribute('aria-pressed',String(selected));
+      chip.tabIndex=selected?0:-1;
+    }
     sync();
   }
+  // Focus parameter chips use one Tab stop. Arrow navigation stays within
+  // the real sliders offered by the active tool, including disabled sources.
+  chips.addEventListener('keydown',event=>{
+    const current=event.target.closest('button[data-focus-key]');
+    if(!current||!chips.contains(current))return;
+    const all=[...chips.querySelectorAll('button[data-focus-key]')];
+    const index=all.indexOf(current);
+    if(index<0)return;
+    let next;
+    if(event.key==='ArrowRight')next=all[(index+1)%all.length];
+    else if(event.key==='ArrowLeft')next=all[(index+all.length-1)%all.length];
+    else if(event.key==='Home')next=all[0];
+    else if(event.key==='End')next=all[all.length-1];
+    else return;
+    const source=available.find(field=>field.name===next.dataset.focusKey);
+    if(!source)return;
+    event.preventDefault();
+    choose(source);
+    next.focus({preventScroll:true});
+    next.scrollIntoView({block:'nearest',inline:'nearest'});
+  });
   function refresh(){
     if(!active)return;
     const card=document.querySelector('.editor-tool-card:not([hidden])');
