@@ -16,7 +16,7 @@ const out=resolve(process.env.ROYGBIV_NATIVE_OUT||'artifacts/agent3-native-downl
 await mkdir(out,{recursive:true});
 const fixtures=[
   {name:'drawn-extrapolated-native',comparePixels:true,recipe:normalizeRecipe({
-    seed:'a3-downloaded-drawn-native',structure:'paths',geometry:'drawn',
+    seed:'a3-pixel-drawn',structure:'paths',geometry:'drawn',
     customPath:[[-.2,.18],[.36,.33],[.67,.61],[1.2,.84]],
     drawnAnchors:[1,2],extendDrawnPath:true,
     stripeWidth:92,spread:45,viewZoom:1.12,viewPanX:5,viewPanY:-5,
