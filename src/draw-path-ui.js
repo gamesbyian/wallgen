@@ -10,6 +10,7 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
   const button=byId('drawPathToggle'),panel=byId('drawPathPanel');
   const overlay=byId('drawOverlay'),wallpaper=byId('preview');
   const hint=byId('drawPathHint'),apply=byId('drawApply');
+  const phase=byId('drawPhase');
   const smooth=byId('drawSmooth'),geometric=byId('drawGeometric');
   const again=byId('drawAgain'),cancel=byId('drawCancel');
   const power=byId('drawSmoothingStrength'),powerLabel=byId('drawSmoothingValue');
@@ -120,6 +121,12 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
     pointUndo.parentElement.hidden=!editing;
     smooth.disabled=geometric.disabled=editing;
     apply.disabled=(editing?editor?.points.length:ready.length)<2;
+    // The UI follows the existing authoritative path state. This is not a
+    // new workflow engine; no recipe data or pointer state is duplicated.
+    const step=editing?'anchors':
+      ready.length>=2||showingSavedPath?'refine':'sketch';
+    panel.dataset.phase=step;
+    phase.textContent=step==='anchors'?'Edit points':step==='refine'?'Refine':'Sketch';
   }
   function setFit(mode){
     fit=mode;
@@ -272,6 +279,7 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
     append(event);
     try{overlay.setPointerCapture(pointer);}catch{}
     hint.textContent='Keep drawing. Lift your finger to finish.';
+    panel.dataset.phase='sketch';phase.textContent='Sketch';
   });
   overlay.addEventListener('pointermove',event=>{
     if(pointer!==event.pointerId)return;
