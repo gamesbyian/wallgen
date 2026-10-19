@@ -1697,10 +1697,14 @@ try{
       return {mobile:document.body.classList.contains('mobile-studio'),
         dockStyle:getComputedStyle(document.getElementById('mobileActionDock')).display,
         buttons:document.querySelectorAll('#mobileActionDock>button').length,
+        quickActionsConnected:['mobileFavorite','mobileDownload'].every(id=>
+          document.getElementById(id)?.isConnected),
         dock:{left:dock.left,right:dock.right,top:dock.top,bottom:dock.bottom},
         stageBottom:stage.bottom,frameHeight:frame.height};
     })()`);
     trialBoundaries.push({width,height,...state});
+    assert.ok(state.quickActionsConnected,
+      'responsive rail detachment must preserve both source action identities');
     if(width<=790){
       assert.ok(state.mobile&&state.dockStyle!=='none');
       assert.equal(state.buttons,5);
