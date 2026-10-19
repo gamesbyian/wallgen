@@ -36,7 +36,8 @@
 
 - [x] Add typed, source-preserving setting-row semantics for all ordinary static editor fields; no duplicate inputs or changed handlers (PR #80).
 - [ ] Apply the unified visual row layout family-by-family with per-viewport screenshot approval, preserving the special four-column rotation controls.
-- [x] Apply a flat ROYGBIV category accent rail to all source-annotated setting rows (7 categories), with cream/dark shape distinctions, inactive cues and no layout/control reparenting (PR pending).
+- [x] Apply a flat ROYGBIV category accent rail to all source-annotated setting rows (7 categories), with cream/dark shape distinctions, inactive cues and no layout/control reparenting (PR #106).
+- [x] Real Chromium screenshot review found 3px accent overlapping flush-left setting labels; move rail outside each row with no layout or source-control changes (PR pending).
 - [x] Keep seven categories and 40 named tools; inventory source keys and test structure-aware applicability (PRs #94, #96, #97).
 - [ ] Keep blue and random stable unique ROYGBIV slider accents inside each panel.
 - [ ] Preserve search match-to-tool and manual horizontal chip scroll state.

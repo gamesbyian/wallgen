@@ -772,7 +772,7 @@ try{
   assert.deepEqual(Object.keys(rowPalette).sort(),
     ['colour','details','effects','layout','material','path','stripes']);
   assert.equal(new Set(Object.values(rowPalette).map(x=>x.accent)).size,7);
-  assert.ok(Object.values(rowPalette).every(x=>x.keys&&x.kind&&x.shadow.includes('inset')));
+  assert.ok(Object.values(rowPalette).every(x=>x.keys&&x.kind&&x.shadow.includes('-3px')));
   console.log('EDITOR_FLAT_SEVEN_COLOUR_ROWS',JSON.stringify(rowPalette));
   const iconPlacement=await evaluate('(()=>({tabs:[...document.querySelectorAll(".settings-tab")].map(b=>({width:b.getBoundingClientRect().width,icon:!!b.querySelector("svg.ui-icon")})),dock:[...document.querySelectorAll("#mobileActionDock>button")].map(b=>({width:b.getBoundingClientRect().width,icon:!!b.querySelector("svg.ui-icon")})),rail:[...document.querySelectorAll("#mobileEditorActionRail>button")].map(b=>({width:b.getBoundingClientRect().width,icon:!!b.querySelector("svg.ui-icon")})),remoteImages:document.querySelectorAll("img.ui-icon").length,categoryHeight:document.querySelector(".settings-tabs").getBoundingClientRect().height}))()');
   assert.equal(iconPlacement.remoteImages,0,'inlined icons inherit theme contrast');

@@ -15,7 +15,7 @@ test('flat row accent language covers exactly the seven live tool categories',()
   assert.match(css,/html\[data-theme="cream"\]/);
   assert.match(css,/html\[data-theme="dark"\]/);
   assert.match(css,/input\[data-inactive="true"\]/);
-  assert.match(css,/box-shadow:inset 3px 0 0/);
+  assert.match(css,/box-shadow:-3px 0 0/);
   assert.doesNotMatch(css,/linear-gradient|radial-gradient|conic-gradient/i);
   assert.match(html,/editor-setting-rows\.css\?v=/);
 });
