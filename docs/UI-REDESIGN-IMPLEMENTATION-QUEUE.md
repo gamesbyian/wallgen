@@ -94,6 +94,7 @@
 - [x] Verify real native-resolution and direct preview zoom-out pixels and metadata with stable interior samples (PR #136). Broader structure coverage remains in the overarching gate.
 - [x] Matrix-test source recipes with off-frame drawn paths, independent material layers, custom interior ink/locks, nested regions and hidden legacy tonal mode across JSON, shared URLs and embedded PNG; full-resolution export geometry acceptance remains open (present on main).
 - [ ] Test touch targets, keyboard/focus, colour contrast, screen reader names and reduced motion.
+- [x] Keep keyboard focus on a **visible** destination after selecting an Explore or Saved thumbnail by Enter or pointer, and return focus to More's opener after Escape (PR #163; real [Chromium/atlas 39324815936](https://github.com/gamesbyian/wallgen/actions/runs/39324815936), [mobile acceptance 39324816039](https://github.com/gamesbyian/wallgen/actions/runs/39324816039)). Complete sequential focus and screen reader auditing remains open.
 - [x] Honor reduced motion for toast and lock feedback in browser media emulation while retaining normal-motion behavior (PR #139).
 - [x] Honor system reduced-motion preference for document scrolling as well as the already-existing mobile transitions (PR #135).
 - [x] Raise the active Draw → Use path button above 4.5:1 white-on-magenta contrast in normal and compact layouts, preserving action geometry (PR #133).
