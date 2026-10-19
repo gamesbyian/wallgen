@@ -72,10 +72,10 @@ body.path-drawing .wallpaper-frame{
     bottom:4px;padding:5px 4px;gap:3px;
     max-width:calc(100% - 4px);width:max-content;
   }
-  body.mobile-studio .draw-path-panel #drawPathHint{font-size:9px}
-  body.mobile-studio .draw-path-controls{gap:2px}
+  body.mobile-studio .draw-path-panel #drawPathHint{font-size:10px;line-height:1.35}
+  body.mobile-studio .draw-path-controls{gap:4px}
   body.mobile-studio .draw-path-controls button{
-    font-size:9px;min-height:25px;padding:2px 5px;
+    font-size:10px;min-height:34px;padding:5px 7px;
   }
 }
 
@@ -112,7 +112,8 @@ body.path-drawing .wallpaper-frame{
   font-size:10px;font-weight:650;color:#e6e1eb;cursor:pointer}
 .draw-extension-row input{width:14px;height:14px;margin:0;accent-color:#ea91cb}
 .draw-extension-row:has(input:disabled){opacity:.45;cursor:default}
-@media(max-width:790px){body.mobile-studio .draw-extension-row{font-size:9px}}
+@media(max-width:790px){body.mobile-studio .draw-extension-row{font-size:10px;min-height:32px}
+  body.mobile-studio .draw-extension-row input{width:18px;height:18px}}
 
 /* Labels are ordinary readable words on desktop, with a reliable line break
    in the 43px mobile preview rail rather than clipped text or tiny type. */
@@ -136,7 +137,7 @@ body.path-drawing .wallpaper-frame{
     min-height:41px!important;line-height:1.08;
   }
   body.mobile-studio .draw-smoothing-row{font-size:10px;gap:6px}
-  body.mobile-studio .draw-smoothing-row input{min-width:0}
+  body.mobile-studio .draw-smoothing-row input{min-width:0;min-height:30px}
   body.mobile-studio .draw-path-panel{width:min(340px,calc(100% - 7px));}
 }
 
@@ -171,7 +172,7 @@ body.path-drawing .wallpaper-frame{
   body.mobile-studio .draw-path-intro>strong{font-size:10px}
   body.mobile-studio .draw-phase{padding:2px 6px;font-size:8px}
   body.mobile-studio .draw-path-controls:not(.draw-point-controls) button{
-    min-height:27px;padding:3px 4px}
+    min-height:36px;padding:6px 5px}
 }
 
 .draw-point-controls{width:100%;padding-top:2px;border-top:1px solid #ffffff30}
@@ -183,5 +184,5 @@ body.path-drawing .studio-stage>#drawOverlay{cursor:crosshair}
 .draw-point-controls button{font-size:10px;min-height:28px}
 @media(max-width:790px){
   body.mobile-studio .draw-path-panel{max-height:35dvh;overflow-y:auto}
-  body.mobile-studio .draw-point-controls button{font-size:9px;min-height:26px}
+  body.mobile-studio .draw-point-controls button{font-size:10px;min-height:34px}
 }
