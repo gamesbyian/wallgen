@@ -49,3 +49,29 @@ html[data-theme="dark"] .editor-tool-card .editor-setting-row[data-control-kind=
 }
 /* The existing focus-visible outline is authoritative and never replaced by
    a coloured surface or a focus marker that could disappear on either theme. */
+
+
+/* An inactive parameter should still explain itself. Earlier .42 opacity on
+   the entire row compounded with disabled-input fading and made "0" and its
+   source label needlessly hard to read. Keep the neutral accent and disabled
+   handlers, but retain opaque, theme-contrasting text and numeric values.
+   No box-model or source-control change. */
+.editor-tool-card .editor-setting-row.setting-inactive{
+  opacity:1;
+  filter:none;
+  box-shadow:-3px 0 0 var(--line);
+}
+html[data-theme="cream"] .editor-tool-card .editor-setting-row.setting-inactive .field,
+html[data-theme="cream"] .editor-tool-card .editor-setting-row.setting-inactive .range-field output{
+  color:#595365;
+}
+html[data-theme="dark"] .editor-tool-card .editor-setting-row.setting-inactive .field,
+html[data-theme="dark"] .editor-tool-card .editor-setting-row.setting-inactive .range-field output{
+  color:#d2ccde;
+}
+html[data-theme="cream"] .editor-tool-card .editor-setting-row.setting-inactive .slider-number:disabled{
+  opacity:1;color:#595365;-webkit-text-fill-color:#595365;
+}
+html[data-theme="dark"] .editor-tool-card .editor-setting-row.setting-inactive .slider-number:disabled{
+  opacity:1;color:#e5e0ec;-webkit-text-fill-color:#e5e0ec;
+}
