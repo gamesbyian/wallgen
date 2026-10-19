@@ -197,8 +197,10 @@ html[data-theme="cream"] footer{color:#8c8191;border-color:#e8ddce}
   body.mobile-edit-open.mobile-edit-compact{
     --mobile-tray-height:clamp(185px,23dvh,218px);
   }
+  /* Taller portrait gallery keeps thumbnails useful. Short landscape below
+     gets a smaller reservation, leaving the artwork truly unoccluded. */
   body.mobile-gallery-open{
-    --mobile-tray-height:clamp(194px,26dvh,255px);
+    --mobile-tray-height:clamp(300px,42dvh,420px);
   }
   body.mobile-tools-open{
     --mobile-tray-height:clamp(245px,39dvh,350px);
