@@ -1,0 +1,24 @@
+/* State rails never consume a pixel of the named-tool hit target.
+   Their actual source state is also present as an ARIA label and title. */
+.editor-tool-chooser .editor-tool-tab[data-material-state]{
+  --material-state-ink:#8e8994;
+  box-shadow:inset 0 -3px 0 var(--material-state-ink);
+}
+.editor-tool-chooser .editor-tool-tab[data-material-state="auto"]{
+  --material-state-ink:#d7a143;
+}
+.editor-tool-chooser .editor-tool-tab[data-material-state="on"]{
+  --material-state-ink:#40ad80;
+}
+.editor-tool-chooser .editor-tool-tab[data-material-state="zero"]{
+  --material-state-ink:#80a5c2;
+}
+.editor-tool-chooser .editor-tool-tab[data-material-state="off"]{
+  --material-state-ink:#898590;
+}
+.editor-tool-chooser .editor-tool-tab[data-material-state][aria-pressed="true"]{
+  outline:1px solid #d05d9e;outline-offset:-1px;
+}
+@media(prefers-reduced-motion:reduce){
+  .editor-tool-chooser .editor-tool-tab[data-material-state]{transition:none}
+}
