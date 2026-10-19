@@ -85,7 +85,9 @@ try{
   // Zero-target state is forbidden: attempting to uncheck the last target
   // must revert visibly and keep the source recipe unchanged.
   const beforeLast=current();
-  await targets().nth(1).uncheck();
+  // click() permits a deliberately rejected uncheck; uncheck() would
+  // incorrectly wait for an impossible persistent false state.
+  await targets().nth(1).click();
   assert.deepEqual(current(),beforeLast,'Last hue could be silently removed');
   await assertChips([false,true,false,false,false,false,false]);
   observations.push({name:'last-target-guard',guarded:true});
