@@ -218,6 +218,25 @@ export function mountEditor(){
   for(const old of originals){old.hidden=true;old.setAttribute('aria-hidden','true');}
   chooser.querySelectorAll('[data-editor-tool]').forEach(button=>
     button.addEventListener('click',()=>selectEditorTool(button.dataset.category,button.dataset.editorTool)));
+  // Named tools form one horizontal selection group. Roving focus keeps Tab
+  // traversal short while arrow/Home/End keys reveal otherwise offscreen tools.
+  chooser.addEventListener('keydown',event=>{
+    const origin=event.target.closest('[data-editor-tool]');
+    if(!origin||!chooser.contains(origin))return;
+    const visible=[...chooser.querySelectorAll('[data-editor-tool]')]
+      .filter(chip=>!chip.hidden&&!chip.disabled);
+    const index=visible.indexOf(origin);
+    if(index<0||!visible.length)return;
+    let next;
+    if(event.key==='ArrowRight')next=visible[(index+1)%visible.length];
+    else if(event.key==='ArrowLeft')next=visible[(index+visible.length-1)%visible.length];
+    else if(event.key==='Home')next=visible[0];
+    else if(event.key==='End')next=visible[visible.length-1];
+    else return;
+    event.preventDefault();
+    selectEditorTool(next.dataset.category,next.dataset.editorTool,{source:'keyboard'});
+    next.focus({preventScroll:true});
+  });
   function currentCategoryFromTabs(){
     return nav.querySelector('[aria-selected=true]')?.dataset.tab||activeCategory;
   }
@@ -272,6 +291,7 @@ export function selectEditorTool(category,tool,{source='manual'}={}){
     const roll=document.querySelector('[data-random-tool="'+id+'"]');
     if(roll)roll.hidden=id!==tool;
     entry.chip.setAttribute('aria-pressed',String(id===tool));
+    entry.chip.tabIndex=id===tool?0:-1;
   }
   for(const panel of document.querySelectorAll('.editor-category-panel'))
     panel.hidden=panel.dataset.category!==category;
