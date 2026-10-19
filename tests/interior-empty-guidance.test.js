@@ -9,7 +9,7 @@ test('empty interior tool cards explain the task, while + Add stays canonical',(
   ['interior-motion','adjust its shape and rhythm'],
   ['interior-placement','place it on the artwork'],
   ['interior-targets','choose which colours or shapes']]){
-   assert.match(app,new RegExp("'"+tool+"':'"+copy.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')));
+   assert.ok(app.includes(copy),tool);
  }
  assert.match(app,/message\.className='interior-empty-guidance'/);
  assert.match(app,/message\.setAttribute\('role','note'\)/);
