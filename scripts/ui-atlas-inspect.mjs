@@ -37,8 +37,24 @@ export async function inspectAtlasState(page,ctx,slug,meta={}){
     const check=(ok,why)=>{if(!ok)throw Error('Invalid atlas state '+slug+': '+why)};
     if(slug==='editor-open'||slug==='special-mobile-edit-rail')
       check(!mobile||(root.classList.contains('mobile-edit-open')&&shownInShot(g('#mobileDesignSheet'))),'mobile Edit tray not shown');
-    if(meta.kind==='tool'||meta.kind==='tool-tail')
-      check(shownInShot(g('.editor-tool-card[data-editor-tool="'+meta.tool+'"]:not([hidden])')),'selected tool card missing');
+    let sourceControls=null;
+    if(meta.kind==='tool'||meta.kind==='tool-tail'){
+      const card=g('.editor-tool-card[data-editor-tool="'+meta.tool+'"]:not([hidden])');
+      check(shownInShot(card),'selected tool card missing');
+      // The atlas must independently verify every schema setting is housed
+      // by the real selected card. Seeing a card alone is insufficient: a
+      // control can silently disappear while the screenshot still looks fine.
+      if(Array.isArray(meta.settings)){
+        const nonVisual=new Set(['textureLayer2Enabled','textureLayer3Enabled']);
+        const keys=meta.settings.filter(key=>!nonVisual.has(key));
+        const missing=keys.filter(key=>{
+          const field=document.querySelector('#controls [name="'+CSS.escape(key)+'"]');
+          return !field||!card.contains(field);
+        });
+        check(missing.length===0,'required source controls missing from '+meta.tool+': '+missing.join(','));
+        sourceControls={expected:keys.length,verified:keys.length,keys};
+      }
+    }
     if(slug.startsWith('special-gallery-')){
       const gallery=g('.workspace>.gallery-section');
       check(!mobile||root.classList.contains('mobile-gallery-open'),'Explore mode not active');
@@ -135,6 +151,6 @@ export async function inspectAtlasState(page,ctx,slug,meta={}){
     findings.length=Math.min(findings.length,24);
     return {verified:true,surfaceMode:mobile?
       ['mobile-edit-open','mobile-gallery-open','mobile-tools-open'].find(x=>root.classList.contains(x))||'mobile-preview':
-      'desktop',focus:meta.focusSelector||null,scanned,ignoredScroll,smallActionCount,totalFindings,findings};
+      'desktop',focus:meta.focusSelector||null,scanned,ignoredScroll,smallActionCount,totalFindings,sourceControls,findings};
   },{slug,meta,mobile:ctx.surface.mobile});
 }
