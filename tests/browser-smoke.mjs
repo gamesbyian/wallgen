@@ -546,6 +546,24 @@ try{
   assert.deepEqual(Object.keys(focusBaseline.before).filter(
     k=>JSON.stringify(focusBaseline.before[k])!==JSON.stringify(focusedAfter.recipe[k])),
     ['stripeWidth'],'Focus adjusted other recipe fields unexpectedly');
+  // Undo is an external command. It replays saved source controls without
+  // dispatching native input/change from the selected slider. Focus must
+  // display the restored value and remain operable while it is open.
+  await evaluate('document.getElementById("undo").click()');
+  await waitFor(`JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).stripeWidth===${Number(focusBaseline.before.stripeWidth)}`);
+  const focusedUndone=await evaluate(`(()=>{
+    const source=document.querySelector('[name=stripeWidth]');
+    const shared=document.querySelector('.editor-focus-slider');
+    const output=document.querySelector('.editor-focus-value');
+    return {source:Number(source.value),shared:Number(shared.value),
+      output:Number(output.textContent),active:document.querySelector('#controls')
+        .classList.contains('editor-focus-active')};
+  })()`);
+  assert.equal(focusedUndone.source,Number(focusBaseline.before.stripeWidth));
+  assert.equal(focusedUndone.shared,focusedUndone.source,
+    'Focus must follow an external Undo of its original source setting');
+  assert.equal(focusedUndone.output,focusedUndone.source);
+  assert.equal(focusedUndone.active,true);
   await evaluate(`(()=>{
     document.querySelector('.editor-focus-all').click();
     const source=document.querySelector('[name=stripeWidth]');
