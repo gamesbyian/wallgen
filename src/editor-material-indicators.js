@@ -15,6 +15,16 @@ export function installMaterialLayerIndicators({form,tools}){
     {id:'layer2',name:'material2',strength:'textureStrength2',enabled:'textureLayer2Enabled'},
     {id:'layer3',name:'material3',strength:'textureStrength3',enabled:'textureLayer3Enabled'}
   ];
+  const finishHelp=sources.map((config,i)=>{
+    const card=tools.get('finish'+(i+1))?.card;
+    if(!card)throw new Error('Missing material finish tool '+(i+1));
+    const note=document.createElement('p');
+    note.className='material-finish-help';
+    note.setAttribute('role','note');
+    note.hidden=true;
+    card.prepend(note);
+    return note;
+  });
   function update(){
     for(const [i,config] of sources.entries()){
       const chip=tools.get(config.id)?.chip;
@@ -28,6 +38,13 @@ export function installMaterialLayerIndicators({form,tools}){
       const label='Layer '+(i+1)+': '+descriptions[state];
       chip.title=label;
       chip.setAttribute('aria-label',label);
+      const note=finishHelp[i];
+      note.hidden=state!=='off'&&state!=='zero';
+      const message=state==='off'?
+        'Finish '+(i+1)+' is inactive. Choose a texture in Layer '+(i+1)+'.':
+        state==='zero'?
+          'Finish '+(i+1)+' has 0% strength. Increase layer strength to enable its effects.':'';
+      if(note.textContent!==message)note.textContent=message;
     }
   }
   // Imported recipes, Undo, randomization and locks all update source form
