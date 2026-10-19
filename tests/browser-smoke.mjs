@@ -87,6 +87,39 @@ try{
   await waitFor('document.readyState==="complete"&&document.body.classList.contains("mobile-studio")');
   await waitFor('document.querySelectorAll(".settings-tab").length===7',15000);
   await delay(300);
+  // Inspect the real accessible control semantics, independently of the
+  // screenshot atlas and independently of visible icon shape.
+  const mobileSemantics=await evaluate(`(()=>{
+    const ids=['mobileEdit','mobileExplore','mobileShuffle','mobileFavorite',
+      'mobileDownload','mobileMore','mobileDockExpand','mobileDismissHandle',
+      'drawPathToggle','importPathToggle'];
+    const records=ids.map(id=>{
+      const el=document.getElementById(id);
+      return {id,tag:el?.tagName,label:el?.getAttribute('aria-label')||
+        el?.innerText?.trim()||'',disabled:el?.disabled||false,
+        ariaControls:el?.getAttribute('aria-controls')||null,
+        ariaExpanded:el?.getAttribute('aria-expanded')||null,
+        targetExists:el?.getAttribute('aria-controls')?
+          !!document.getElementById(el.getAttribute('aria-controls')):true};
+    });
+    const themes=[...document.querySelectorAll('[data-studio-theme]')].map(el=>({
+      theme:el.dataset.studioTheme,label:el.getAttribute('aria-label'),
+      pressed:el.getAttribute('aria-pressed'),type:el.getAttribute('type')}));
+    return {records,themes};
+  })()`);
+  assert.equal(mobileSemantics.records.length,10);
+  assert.deepEqual(mobileSemantics.records.filter(x=>x.tag!=='BUTTON'||!x.label||
+    !x.targetExists),[],'Mobile actions must be named native buttons with valid targets');
+  assert.equal(mobileSemantics.themes.length,2);
+  assert.deepEqual(mobileSemantics.themes.map(x=>x.theme).sort(),['cream','dark']);
+  assert.ok(mobileSemantics.themes.every(x=>x.label&&x.type==='button'&&
+    ['true','false'].includes(x.pressed)));
+  const declaredExpansions=mobileSemantics.records.filter(x=>x.ariaExpanded!==null);
+  assert.ok(declaredExpansions.length>=3);
+  assert.ok(declaredExpansions.every(x=>x.ariaControls&&
+    ['true','false'].includes(x.ariaExpanded)));
+  console.log('MOBILE_ACCESSIBLE_ACTION_CENSUS',JSON.stringify(mobileSemantics));
+
   const atlasUI=await evaluate(`(()=>{
     const cream=document.querySelector('[data-studio-theme=cream]');
     const dark=document.querySelector('[data-studio-theme=dark]');
