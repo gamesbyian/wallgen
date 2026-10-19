@@ -5,6 +5,9 @@
   body.mobile-studio.mobile-five-nav .mobile-dock{
     grid-template-columns:repeat(5,minmax(0,1fr));
   }
+  body.mobile-studio.mobile-five-nav.mobile-gallery-open .gallery-head h2{
+    word-spacing:.16em;letter-spacing:.015em;
+  }
   body.mobile-studio.mobile-five-nav .mobile-dock button[aria-current="page"]{
     background:#40334b;color:#fff0fa;
     border-radius:9px;
