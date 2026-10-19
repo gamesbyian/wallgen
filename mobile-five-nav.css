@@ -1,0 +1,59 @@
+/* Feature-gated five-destination shell. Source actions remain accessible
+   beside artwork and in More; no rendering or recipe properties change. */
+.mobile-five-shortcuts{display:none}
+@media(max-width:790px){
+  body.mobile-studio.mobile-five-nav .mobile-dock{
+    grid-template-columns:repeat(5,minmax(0,1fr));
+  }
+  body.mobile-studio.mobile-five-nav .mobile-dock button[aria-current="page"]{
+    background:#40334b;color:#fff0fa;
+    border-radius:9px;
+  }
+  html[data-theme=cream] body.mobile-studio.mobile-five-nav
+    .mobile-dock button[aria-current="page"]{
+    background:#f5d6e8;color:#72375a;
+  }
+  body.mobile-studio.mobile-five-nav .mobile-preview-rail-left .mobile-five-shortcuts{
+    display:flex;flex-direction:column;align-items:center;gap:5px;
+  }
+  body.mobile-studio.mobile-five-nav .mobile-five-shortcuts>#mobileFavorite,
+  body.mobile-studio.mobile-five-nav .mobile-five-shortcuts>#mobileDownload{
+    display:flex;align-items:center;justify-content:center;
+    width:43px;height:38px;min-width:43px;min-height:38px;
+    flex:0 0 38px;padding:3px;border:1px solid var(--line);
+    border-radius:8px;background:var(--surface);color:inherit;
+    cursor:pointer;
+  }
+  body.mobile-studio.mobile-five-nav .mobile-five-shortcuts>button>span{
+    display:flex;align-items:center;justify-content:center;
+  }
+  body.mobile-studio.mobile-five-nav .mobile-five-shortcuts>button svg.ui-icon{
+    width:22px;height:22px;
+  }
+  body.mobile-studio.mobile-five-nav .mobile-five-shortcuts>button>small{
+    display:none;
+  }
+  body.mobile-studio.mobile-five-nav .mobile-five-shortcuts>#mobileFavorite[aria-pressed=true]{
+    background:#f6d5e4;color:#872d61;border-color:#d47fa6;
+  }
+  body.mobile-studio.mobile-five-nav.mobile-edit-open .mobile-five-shortcuts{
+    display:none!important; /* Editor action rail retains both source actions. */
+  }
+  body.mobile-studio.mobile-five-nav .mobile-tools-content>#mobileShuffle{
+    display:flex;align-items:center;justify-content:center;
+    gap:8px;min-height:38px;width:100%;
+    border:1px solid var(--line);border-radius:9px;
+    background:var(--surface);color:inherit;
+    padding:5px 10px;font-size:12px;font-weight:750;
+  }
+  body.mobile-studio.mobile-five-nav .mobile-tools-content>#mobileShuffle>span{
+    display:flex;align-items:center;justify-content:center;
+  }
+  body.mobile-studio.mobile-five-nav .mobile-tools-content>#mobileShuffle svg.ui-icon{
+    width:22px;height:22px;
+  }
+  body.mobile-studio.mobile-five-nav .mobile-five-shortcuts>button:focus-visible,
+  body.mobile-studio.mobile-five-nav .mobile-dock button:focus-visible{
+    outline:2px solid #9b5fcf;outline-offset:1px;
+  }
+}
