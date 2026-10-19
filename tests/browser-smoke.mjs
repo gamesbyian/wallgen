@@ -397,11 +397,11 @@ try{
     const {drawWallpaper}=await import('/src/renderer.js');
     const cases=[
       {seed:'pan-straight',structure:'paths',geometry:'straight',
-        orientation:'diagonal',stripeWidth:72,spread:67},
+        orientation:'horizontal',stripeWidth:95,spread:38},
       {seed:'pan-zigzag',structure:'paths',geometry:'zigzag',
         shapeDepth:66,shapeFrequency:58,stripeWidth:82,spread:72},
       {seed:'pan-loop',structure:'paths',geometry:'loop',
-        loopRadius:55,loopSweep:320,stripeWidth:66,spread:44},
+        loopRadius:78,loopSweep:360,stripeWidth:92,spread:35},
       {seed:'pan-dots',structure:'paths',geometry:'wave',
         motif:'dots',dotSize:75,dotSpacing:45,stripeWidth:72,spread:68},
       {seed:'pan-radial',structure:'radial',radialMode:'pinwheel',
