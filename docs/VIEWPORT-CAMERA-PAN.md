@@ -1,6 +1,6 @@
 # Independent viewport Pan and composition move
 
-**Status:** implemented and merged (PR #143, 2026-10-19), all five workflows passed. This is an explicit redesign distinction, not an alias for the old nudge.
+**Status:** implemented and merged (#143), with independent live More viewport accessibility (#145, #147) and source-world raster parity repair (#146), 2026-10-19. This is an explicit redesign distinction, not an alias for the old nudge.
 
 ## Two different operations
 
@@ -23,10 +23,16 @@ A source-backed Move view frame row appears below composition positioning on des
 - tests/browser-smoke.mjs: actual mobile More pan-right action, field-diff check and recenter, plus original nudge assertions.
 - Headless workflow: same wave recipe at 600×1300 and 3024×6552, zoomed out and panned on both axes; compare embedded normalized recipe and stable coloured interior pixels.
 
-This is discrete button-driven pan, not drag-to-pan. Moving the viewing frame past a finite authored ribbon may legitimately expose background. Additional structure-specific export pixel comparisons remain future acceptance work.
+This is discrete button-driven pan, not drag-to-pan. Moving the viewing frame past a finite authored ribbon may legitimately expose background. Additional structure-specific **native export** pixel comparisons remain future acceptance work.
 
 The follow-up UI atlas now records an explicit mobile More → Move view frame → +5% state and rejects clipped/unnamed frame controls. This is a visual/reachability guard; it does not substitute for physical device acceptance.
 
 ## Cross-structure pixel-invariance check (2026-10-19)
 
 The browser smoke now independently samples exact common world-space pixels from **two fresh Canvas2D renders**, one centered and one panned +10% X/−10% Y at 240×520. Translation is exactly 24 screen pixels left and 52 down. After excluding antialiased boundaries, it requires sufficient coloured artwork and fewer than 4% mismatched stable samples in four foreground-qualified geometries: zigzag, dotted wave, radial pinwheel and Voronoi regions. Initial straight/loop seeds generated too little foreground ink in the common view to qualify and are explicitly excluded, not silently treated as passes. This catches extent changes that alter real motif positions or clip coloured ink, which the wave-only native PNG test cannot establish. Zero texture/material avoids nondeterministic or resolution-sensitive surface variation; broader recipe coverage remains an explicit release gate.
+
+## Regression discovered during independent pan acceptance
+
+PR #146 found that the renderer passed the *panned* `camera.viewBounds` to `balanceStripeEnds` / `stripeFrameContacts`. Some path stripe caps therefore changed merely when the viewer moved. The renderer now computes composition-side contact and cap decisions against the **centered source bounds**, while retaining the genuinely panned camera and expanded render bounds for display/export. The fresh Canvas2D pan-vs-centered pixel test proves four nonempty foreground families stay stable instead of merely reusing the same painted screenshot.
+
+PR #147 qualifies the actual mobile More sheet at **412×892, 499×892, 500×892, 790×892 and 700×412**. For every size Chromium scrolls each of the five Pan buttons into view and checks that the center is inside the sheet, hit-testable above overlays, at least 34×34 CSS px, and accessibly named. It also performs live +5% / Recenter recipe changes with composition X/Y unchanged, rejects dock intrusion, and keeps boundary screenshots for review. CI success here is not user visual approval or an Android hardware test.
