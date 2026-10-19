@@ -35,13 +35,24 @@
     },
     {
       "id": "CAM-PAN-NEW",
-      "kind": "proposal",
+      "kind": "behavior",
       "source": [
-        "docs/CREAM-STUDIO-CANVAS-FIRST-REDESIGN-V2.md"
+        "src/view-camera.js",
+        "src/model.js",
+        "src/renderer.js",
+        "src/app.js",
+        "src/mobile-studio.js",
+        "docs/VIEWPORT-CAMERA-PAN.md"
       ],
-      "proof": [],
-      "assertion": "Any new viewport-only Pan must be explicitly implemented with separate state, defined export/serialization semantics, tests and labels before enabling; not an alias for nudge.",
-      "status": "proposed / NOT implemented",
+      "proof": [
+        "tests/view-camera.test.js",
+        "tests/viewport-pan-contract.test.js",
+        "tests/browser-smoke.mjs",
+        "tests/verify-export-geometry.mjs",
+        ".github/workflows/headless-render.yml"
+      ],
+      "assertion": "Viewport-only Pan has independent recipe.viewPanX/viewPanY state and five source-named actions, distinct from composition nudge, with identical world-coordinate framing in direct preview and native-resolution PNG.",
+      "status": "implemented in PR #143; browser and native PNG verification pending",
       "risk": "high"
     },
     {
@@ -54,7 +65,7 @@
       "proof": [
         "tests/browser-smoke.mjs"
       ],
-      "assertion": "Fit button (new) resets viewZoom=1 without touching any other recipe fields, retains canvas overflow extrapolation and full resolution export.",
+      "assertion": "Fit restores the camera to viewZoom=1 with viewPanX=viewPanY=0 while preserving all composition/generation values, with the same source-backed path overflow and full-resolution export.",
       "status": "implemented in PR #79; browser acceptance qualification pending",
       "risk": "high"
     },
