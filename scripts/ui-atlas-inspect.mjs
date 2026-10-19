@@ -5,7 +5,7 @@
  */
 export async function inspectAtlasState(page,ctx,slug,meta={}){
   return page.evaluate(async ({slug,meta,mobile})=>{
-    const {inspectGeometry,expectedPageScroll}=await import('/scripts/ui-atlas-geometry.mjs');
+    const {inspectGeometry,expectedPageScroll,inspectTargetBox}=await import('/scripts/ui-atlas-geometry.mjs');
     const root=document.body;
     const g=id=>document.querySelector(id);
     const visible=el=>{
@@ -156,7 +156,9 @@ export async function inspectAtlasState(page,ctx,slug,meta={}){
     }
     const candidates=[...new Set(roots.flatMap(node=>[...node.querySelectorAll(
       'button,input:not([type=hidden]),select,textarea,label')]))];
-    let scanned=0,ignoredScroll=0,smallActionCount=0;
+    let scanned=0,ignoredScroll=0,smallActionCount=0,measuredTouchTargets=0;
+    let under44Count=0;
+    const undersizedActions=[];
     function label(el){
       return (el.getAttribute('aria-label')||el.getAttribute('title')||
         el.labels?.[0]?.textContent||el.textContent||'').trim().replace(/\s+/g,' ').slice(0,68);
@@ -207,10 +209,28 @@ export async function inspectAtlasState(page,ctx,slug,meta={}){
            galleryShot||metadataShot,geometry.clipSources)){
         ignoredScroll++;continue;
       }
+      // The old smallActionCount was accidentally inside the *clipped-only*
+      // branch. It missed every undersized control that was fully visible.
+      // Record sizes for all reachable native controls before clipping
+      // reporting, with labels counted as the target for wrapped toggles.
+      const interactive=el.matches('button,input,select,textarea')&&!el.disabled;
+      if(interactive){
+        const checkbox=el.matches('input[type="checkbox"],input[type="radio"]');
+        const target=checkbox?(el.labels?.[0]?.getBoundingClientRect()||rect):rect;
+        const size=inspectTargetBox(target);
+        measuredTouchTargets++;
+        if(size.under44)under44Count++;
+        if(size.under24){
+          smallActionCount++;
+          if(undersizedActions.length<16)undersizedActions.push({
+            element:selector(el),label:label(el),size,
+            target:checkbox&&el.labels?.length?'associated-label':'native-control'
+          });
+        }
+      }
       if(!geometry.clipped)continue;
       const name=selector(el);
       const size={width:Math.round(rect.width),height:Math.round(rect.height)};
-      if(size.width<24||size.height<24)smallActionCount++;
       findings.push({type:geometry.offscreen?'offscreen-action':'clipped-action',
         element:name,scope:meta.category&&meta.tool?meta.category+'/'+meta.tool:null,
         label:label(el),missingPixels:geometry.missingPixels,
@@ -224,6 +244,6 @@ export async function inspectAtlasState(page,ctx,slug,meta={}){
     findings.length=Math.min(findings.length,24);
     return {verified:true,surfaceMode:mobile?
       ['mobile-edit-open','mobile-gallery-open','mobile-tools-open'].find(x=>root.classList.contains(x))||'mobile-preview':
-      'desktop',focus:meta.focusSelector||null,scanned,ignoredScroll,smallActionCount,totalFindings,sourceControls,findings};
+      'desktop',focus:meta.focusSelector||null,scanned,ignoredScroll,measuredTouchTargets,smallActionCount,under44Count,undersizedActions,totalFindings,sourceControls,findings};
   },{slug,meta,mobile:ctx.surface.mobile});
 }

@@ -59,3 +59,16 @@ export function inspectGeometry(rect,viewport,clips=[]){
 export function expectedPageScroll(scrollable,isFlowCapture,clipSources=[]){
   return Boolean(scrollable&&isFlowCapture&&!clipSources.some(c=>c.kind==='hidden'));
 }
+
+/**
+ * Bounding-box triage for candidate touch targets, not a WCAG verdict:
+ * spacing exceptions, painted pseudo-elements and actual pointer hit-tests
+ * still require separate qualification.
+ */
+export function inspectTargetBox(rect){
+  const width=Math.max(0,Number(rect.width??Number(rect.right)-Number(rect.left)));
+  const height=Math.max(0,Number(rect.height??Number(rect.bottom)-Number(rect.top)));
+  return {width:Math.round(width*10)/10,height:Math.round(height*10)/10,
+    under24:width<24||height<24,
+    under44:width<44||height<44};
+}

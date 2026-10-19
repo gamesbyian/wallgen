@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {inspectGeometry,expectedPageScroll} from '../scripts/ui-atlas-geometry.mjs';
+import {readFileSync} from 'node:fs';
+import {inspectGeometry,expectedPageScroll,inspectTargetBox} from '../scripts/ui-atlas-geometry.mjs';
 const target=(l,t,r,b)=>({left:l,top:t,right:r,bottom:b});
 const viewport=target(0,0,412,892);
 test('in-viewport or subpixel clipping does not flood atlas findings',()=>{
@@ -49,3 +50,24 @@ test('page scrolling of desktop gallery/metadata does not imply missing controls
  assert.equal(expectedPageScroll(true,false,[]),false);
  assert.equal(expectedPageScroll(false,true,[]),false);
 });
+
+test('target-size triage counts fully visible small controls and respects associated label rects',()=>{
+  assert.deepEqual(inspectTargetBox({width:42,height:28}),
+    {width:42,height:28,under24:false,under44:true});
+  assert.deepEqual(inspectTargetBox({width:21,height:41}),
+    {width:21,height:41,under24:true,under44:true});
+  assert.deepEqual(inspectTargetBox(target(0,0,46,50)),
+    {width:46,height:50,under24:false,under44:false});
+  assert.deepEqual(inspectTargetBox({width:16,height:16}).under24,true);
+});
+test('atlas collects touch target boxes independently of screenshot clipping failures',()=>{
+  const source=requireSource();
+  assert.match(source,/const interactive=el\.matches\('button,input,select,textarea'\)/);
+  assert.match(source,/measuredTouchTargets\+\+/);
+  assert.match(source,/if\(!geometry\.clipped\)continue/);
+  assert.ok(source.indexOf('measuredTouchTargets++')<source.indexOf('if(!geometry.clipped)continue'),
+    'touch targets must be counted even when fully visible');
+});
+function requireSource(){
+  return readFileSync(new URL('../scripts/ui-atlas-inspect.mjs',import.meta.url),'utf8');
+}

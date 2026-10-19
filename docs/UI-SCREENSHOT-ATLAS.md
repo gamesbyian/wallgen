@@ -59,3 +59,19 @@ Generated PNGs stay in Actions artifacts rather than being committed to the repo
 ### Mobile smoke limitations
 
 The 17-state **mobile quick plan** is defined in `scripts/ui-atlas-mobile-smoke-plan.mjs` and independently checked against `EDITOR_CATEGORIES` in `tests/ui-atlas-mobile-smoke-plan.test.js`. It covers every category once, **not every tool and conditional permutation**. Desktop PR smoke retains the full 204-state registered matrix; manually dispatched full captures retain all 1,648 states across the emulated desktop/mobile root CSS zoom matrix. Neither mode measures actual physical Pixel 6 Pro performance or real Chrome toolbar zoom. A mobile smoke success is never described as 832-screen mobile coverage.
+
+### Independent small-target geometry audit
+
+Every atlas case now records `inspection.measuredTouchTargets`,
+`inspection.smallActionCount` (measured target boxes narrower or shorter
+than 24 CSS pixels), `inspection.under44Count` and a bounded list
+`inspection.undersizedActions` with a source selector and label. The old
+small-action counter checked **only clipped controls** and therefore silently
+undercounted small controls that fitted inside the viewport. The corrected
+census runs before the clipping-only filter, ignores inactive/offscreen
+scroll-strip controls and considers an associated label for checkbox/radio
+targets. These are **browser-observed bounding-box diagnostics, not WCAG
+conformance claims**: spacing exceptions, pseudo-element pointer regions,
+physical touch accuracy, native Chrome zoom and screen-reader announcements
+require separate tests and review. An undersized target is a remediation
+candidate, not an automatic atlas failure.
