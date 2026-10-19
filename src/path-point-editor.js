@@ -148,7 +148,17 @@ function neighbours(e,index){
 }
 // A compactly supported C2 bell moves the point exactly, and goes to zero
 // WITH zero tangent at adjacent anchors. Unrelated samples never move.
+/** The editor stores coordinates to five decimals and clamps to -2..3.
+ * A pointer or keyboard event outside that effective grid must not invent a
+ * pin, smoothing region, or Undo transaction for a movement of zero pixels. */
+export function pointAnchorWouldMove(e,index,to,start=e?.points){
+  if(!e||!Array.isArray(to)||!start?.[index]||!e.anchors?.includes(index)||
+      !Number.isFinite(to[0])||!Number.isFinite(to[1]))return false;
+  const target=round(to),original=start[index];
+  return target[0]!==original[0]||target[1]!==original[1];
+}
 export function movePointAnchor(e,index,to,start=e.points){
+  if(!pointAnchorWouldMove(e,index,to,start))return e.points;
   const [lo,hi]=neighbours(e,index);
   const arc=lengthAlong(start),delta=[to[0]-start[index][0],to[1]-start[index][1]];
   const result=copy(start);
