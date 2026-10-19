@@ -1,4 +1,4 @@
-/* Feature-gated five-destination shell. Source actions remain accessible
+/* Default five-destination shell. Source actions remain accessible
    beside artwork and in More; no rendering or recipe properties change. */
 .mobile-five-shortcuts{display:none}
 @media(max-width:790px){
