@@ -65,6 +65,7 @@
 - [x] Distinguish genuine imported-image Analyze / Select path / No paths phases in the existing modal with flat cream/dark visual states, real source-candidate browser screenshots and reset behavior (PR pending).
 - [x] Fix source-proven 10px clipping of desktop material rotation buttons (36px inherited minimum inside 26px control row), preserving existing rotations and mobile sizing (PR #84).
 - [x] Fix the matching 10px clipping on compact Pixel 6 Pro material rotation buttons. The new 17-state mobile atlas exposed this separately; assert source button bounds on both desktop and mobile (PR #91).
+- [ ] Fix cream Material Finish rotation captions that remain nearly white on a pale inactive row in the real 412px UI atlas; prove 4.5:1 theme contrast for active/inactive captions and retain numeric/shortcut geometry (PR in qualification).
 - [x] Lock down actual desktop Material Finish button bounds as a CI-enforced atlas invariant (PR #86).
 - [ ] Preserve all three material layers, coverage, strength/scale/rotation shortcuts (−90,−1,value,+1,+90) through the complete redesign.
 - [x] Give the three existing material chooser chips source-backed Off / Automatic / Active / 0% status without changing input identity or navigation geometry (PR #113).

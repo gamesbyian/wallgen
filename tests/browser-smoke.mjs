@@ -2262,6 +2262,68 @@ try{
   assert.deepEqual(restoredShapes,{frequency:'61',depth:'79',
     frequencyEnabled:true,depthEnabled:true,storedFrequency:61,storedDepth:79});
   console.log('CONDITIONAL_ZERO_PRESERVES_SOURCE_RECIPE',JSON.stringify({inactiveShapes,restoredShapes}));
+  // The real 412px atlas found Layer 1 rotation almost white on cream,
+  // even after generic inactive-row repair. Its caption is a direct span,
+  // not the .field label tested by the Shape frequency/depth acceptance.
+  const rotationReadability=await evaluate(`(()=>{
+    const set=(key,value)=>{
+      const field=document.querySelector('[name="'+key+'"]');
+      field.value=value;field.dispatchEvent(new Event('change',{bubbles:true}));
+    };
+    const parts=css=>(css.match(/[0-9.]+/g)||[]).map(Number);
+    const lum=css=>parts(css).slice(0,3).map(v=>v/255).map(c=>
+      c<=.04045?c/12.92:((c+.055)/1.055)**2.4)
+      .reduce((sum,c,i)=>sum+c*[.2126,.7152,.0722][i],0);
+    const contrast=(a,b)=>{
+      const x=lum(a),y=lum(b);
+      return (Math.max(x,y)+.05)/(Math.min(x,y)+.05);
+    };
+    const backdrop=element=>{
+      for(let el=element;el;el=el.parentElement){
+        const value=getComputedStyle(el).backgroundColor;
+        const c=parts(value);
+        if(c.length>=3&&(c.length===3||c[3]>=.995))return value;
+      }
+      throw Error('No opaque backdrop for rotation caption');
+    };
+    const inspect=()=>{
+      const input=document.querySelector('[name=textureRotation]');
+      const row=input.closest('.texture-rotation-field');
+      const label=row.querySelector(':scope > span');
+      if(!label)throw Error('Missing layer 1 rotation source label');
+      return {contrast:contrast(getComputedStyle(label).color,backdrop(label)),
+        disabled:input.disabled,zero:input.value==='0',
+        inactive:row.classList.contains('setting-inactive'),
+        opacity:getComputedStyle(row).opacity};
+    };
+    const originalTheme=document.documentElement.dataset.theme;
+    set('material','linen');
+    set('textureStrength','65');
+    const active={};
+    for(const theme of ['cream','dark']){
+      document.querySelector('[data-studio-theme="'+theme+'"]').click();
+      active[theme]=inspect();
+    }
+    set('material','none');
+    const inactive={};
+    for(const theme of ['cream','dark']){
+      document.querySelector('[data-studio-theme="'+theme+'"]').click();
+      inactive[theme]=inspect();
+    }
+    document.querySelector('[data-studio-theme="'+originalTheme+'"]').click();
+    return {active,inactive};
+  })()`);
+  for(const theme of ['cream','dark']){
+    const active=rotationReadability.active[theme];
+    const inactive=rotationReadability.inactive[theme];
+    assert.ok(active.contrast>=4.5&&!active.inactive&&!active.disabled,
+      theme+' active material rotation caption must remain readable: '+JSON.stringify(active));
+    assert.ok(inactive.contrast>=4.5&&inactive.inactive&&inactive.disabled&&inactive.zero,
+      theme+' inactive material rotation caption and 0-value must remain readable: '+
+      JSON.stringify(inactive));
+    assert.equal(inactive.opacity,'1',theme+' inactive rotation row must remain opaque');
+  }
+  console.log('MATERIAL_ROTATION_LABEL_CONTRAST',JSON.stringify(rotationReadability));
   console.log('REDESIGN_EXPLORATION_ACCEPTANCE_SUCCESS');
 }finally{
   try{ws?.close()}catch{}
