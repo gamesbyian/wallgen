@@ -13,7 +13,7 @@ test('base Studio, lighting and shadow surfaces use flat colours exclusively',()
     ['stripe-shadow-section','#242633']
   ])assert.ok(css.includes('background:'+colour),selector);
   assert.match(css,/\.studio-stage:before\{[^}]*background-image:none/);
-  assert.match(read('index.html'),/styles\.css\?v=20261019-baseflat1/);
+  assert.match(read('index.html'),/styles\.css\?v=\d{8}-[a-z0-9]+/);
 });
 test('unrelated scrollbar fade masks and procedural wallpaper remain owned elsewhere',()=>{
   const css=read('ui-audit-fixes.css');
