@@ -85,6 +85,7 @@
 - [ ] Independently compare real native-resolution and direct preview pixels under the same zoom-out camera with metadata identity, skipping only antialiased edge pixels (PR under test); expand structure coverage if qualified.
 - [x] Matrix-test source recipes with off-frame drawn paths, independent material layers, custom interior ink/locks, nested regions and hidden legacy tonal mode across JSON, shared URLs and embedded PNG; full-resolution export geometry acceptance remains open (PR pending).
 - [ ] Test touch targets, keyboard/focus, colour contrast, screen reader names and reduced motion.
+- [ ] Honor `prefers-reduced-motion` in the shared toast and setting-lock feedback transitions, along with the existing sheet/document motion rules; qualify in actual Chromium CDP media emulation (PR pending).
 - [x] Honor system reduced-motion preference for document scrolling as well as the already-existing mobile transitions (rebased PR).
 - [x] Raise the active Draw → Use path button above 4.5:1 white-on-magenta contrast in normal and compact layouts, preserving action geometry (rebased PR pending).
 - [x] Raise the Image import → Edit / Use path button's white-text contrast above 4.5:1 in dark and cream, retaining the original import/angle actions (PR pending).
