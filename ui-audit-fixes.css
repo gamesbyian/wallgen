@@ -96,23 +96,6 @@ html[data-theme="cream"] #notice{color:#28583f!important}
     min-width:0!important;text-overflow:ellipsis}
 }
 
-/* Drawing mode: separate prominent primary actions from secondary work and
-   give point-editing controls usable tap areas without covering the canvas. */
-@media(max-width:790px){
-  body.mobile-studio .draw-path-panel{max-height:min(42dvh,370px)!important;
-    overflow-y:auto;overscroll-behavior:contain;padding:8px 7px!important;
-    width:min(380px,calc(100% - 12px))!important;gap:7px!important}
-  body.mobile-studio .draw-path-controls{gap:5px!important}
-  body.mobile-studio .draw-path-controls button{
-    min-height:34px!important;padding:5px 8px!important;
-    font-size:10px!important;line-height:1.1!important}
-  body.mobile-studio .draw-path-controls #drawApply{order:-3;min-height:38px!important}
-  body.mobile-studio .draw-path-controls #drawCancel{order:-2;min-height:38px!important}
-  body.mobile-studio .draw-path-controls #drawEditPoints{order:-1;min-height:38px!important}
-  body.mobile-studio .draw-point-controls{padding-top:7px;gap:5px!important}
-  body.mobile-studio .draw-point-controls button{min-height:34px!important}
-  body.mobile-studio .draw-path-panel #drawPathHint{font-size:10px!important}
-}
 /* Rotation's five shortcuts and numeric value must share the finite second
    grid column. Older competing flex-basis rules allowed the numeric input to
    expand to 175px, sending the last three buttons past the card's right edge. */
