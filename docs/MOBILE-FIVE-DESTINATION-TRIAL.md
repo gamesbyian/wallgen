@@ -26,3 +26,11 @@
 3. Confirm all five destinations and three relocated source actions with keyboard, touch and screen-reader semantics; Saved/Explore switch without hidden regeneration.
 4. Confirm drawing and generated/exported pixels are unchanged.
 5. Only then consider making the five-item dock default in a separate PR. Human icon/art direction approval remains separate from these technical gates.
+
+## First real Chromium evidence (pre-default approval)
+
+The initial full five-screen inspection is captured by [Mobile browser acceptance run 39199704468](https://github.com/gamesbyian/wallgen/actions/runs/39199704468), artifact `editor-layout-browser-zoom` (ID `12163388510`). It contains `five-nav-{studio,edit,explore,saved,more}-412x892.png`, alongside the existing editor captures. These are actual application screenshots, not generated design illustrations.
+
+At 412×892, the preview stage ended at CSS y=830 and the dock began at y=840; the wallpaper frame was approximately 682.5 CSS px high. Favourite/Download rectangles ended at x=58.5 while the visible wallpaper began at x=63, so the relocated quick actions did not cover artwork. Chromium also verified the five dock identities, selected/expanded state and Saved↔Explore transitions. The 499, 500, 790 and 791px boundaries, plus a 700×412 landscape viewport, passed dock/preview overlap assertions on that run. At 791px the six-action mobile rail is replaced by the established desktop UI, with source buttons kept connected.
+
+Source-button attachment now follows breakpoint changes, preserving the same Favourite/Download DOM identities as the mobile preview rail is detached and restored. The following pass additionally checks a Favourite on/off roundtrip and captures dark Studio/Saved states. **Visual review:** the cream trial looked coherent in the real five-screen montage, including logo, icons, inspector, gallery and More. This is a preliminary inspection and does not certify other platforms or final visual approval.
