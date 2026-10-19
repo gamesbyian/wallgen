@@ -44,7 +44,8 @@
 
 - [ ] Keep Draw → Interpret → Edit anchors → Apply/Cancel, including resmoothing, corners, points and 10× interpretive smoothing.
 - [ ] Keep path extrapolation beyond boundaries and intersections/weave/over/under.
-- [ ] Preserve all three material layers, coverage, strength/scale/rotation shortcuts (−90,−1,value,+1,+90).
+- [x] Fix source-proven 10px clipping of desktop material rotation buttons (36px inherited minimum inside 26px control row), preserving existing rotations and mobile sizing (PR #84).
+- [ ] Preserve all three material layers, coverage, strength/scale/rotation shortcuts (−90,−1,value,+1,+90) through the complete redesign.
 - [ ] Preserve dynamic interior element stack, ink selection, colours, placement, locking, reordering.
 - [ ] Prototype optional shared Focus slider, A/B against full multi-row inspector; NEVER force removal of all-controls mode.
 

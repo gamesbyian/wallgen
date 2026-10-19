@@ -1089,6 +1089,30 @@ try{
   await waitFor('!document.body.classList.contains("mobile-studio")');
   assert.ok(await evaluate('document.querySelector("#panel-path [name=geometry]")!==null'));
   assert.ok(await evaluate('document.querySelectorAll(".editor-tool-card").length>=18'));
+  const desktopRotationBoxes=await evaluate(`(()=>{
+    const problems=[];
+    document.querySelector('#tab-material').click();
+    for(const tool of ['finish1','finish2','finish3']){
+      document.querySelector('[data-editor-tool="'+tool+'"].editor-tool-tab').click();
+      const card=document.querySelector('.editor-tool-card[data-editor-tool="'+tool+'"]:not([hidden])');
+      const row=card.querySelector('.texture-rotation-field .rotation-controls');
+      if(!row){problems.push({tool,error:'missing original rotation row'});continue;}
+      const host=row.getBoundingClientRect();
+      for(const button of row.querySelectorAll('button,input[type=number]')){
+        const box=button.getBoundingClientRect();
+        if(box.top<host.top-2||box.bottom>host.bottom+2||
+           box.left<host.left-2||box.right>host.right+2)
+          problems.push({tool,label:button.getAttribute('aria-label')||button.textContent,
+            containerHeight:host.height,height:box.height,
+            top:box.top-host.top,bottom:box.bottom-host.bottom,
+            left:box.left-host.left,right:box.right-host.right});
+      }
+    }
+    return problems;
+  })()`);
+  assert.deepEqual(desktopRotationBoxes,[],
+    'Every material rotation button must fit its visible desktop control row');
+
   const extremeDots=await evaluate(`(async()=>{
     const {drawWallpaper}=await import('/src/renderer.js');
     const canvas=document.createElement('canvas');canvas.width=360;canvas.height=780;
