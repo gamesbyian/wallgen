@@ -74,6 +74,7 @@
 - [x] Fix cream/dark active and inactive Material Finish rotation caption contrast without moving source shortcuts; Chromium ≥4.5:1 (PR #141).
 - [x] Lock down actual desktop Material Finish button bounds as a CI-enforced atlas invariant (PR #86).
 - [ ] Preserve all three material layers, coverage, strength/scale/rotation shortcuts (−90,−1,value,+1,+90) through the complete redesign.
+- [x] Independently exercise each of **three live Material Finish rotation controls** in 412×892 phone and 700×412 constrained landscape: real −90°,−1°,+1°,+90°,0° Reset button clicks, typed 137.5° numeric value, exact modulo-360 normalization, all other recipe fields unchanged, 24px source hitbox floor, and lock/unlock disabling five shortcut buttons plus numeric field on that layer. [PR #202](https://github.com/gamesbyian/wallgen/pull/202), [browser CI 39338482045](https://github.com/gamesbyian/wallgen/actions/runs/39338482045) passed **18 qualified operation/witness records per viewport**, including three lock confirmations. This is *not* all texture coverage/strength/scale combinations or native 4K textured pixel parity.
 - [x] Give the three existing material chooser chips source-backed Off / Automatic / Active / 0% status without changing input identity or navigation geometry (PR #113).
 - [x] Explain off/zero-strength Finish 1–3 states within the original Material card, without substituting inputs or altering controls (present on main).
 - [ ] Preserve dynamic interior element stack, ink selection, colours, placement, locking, reordering.
