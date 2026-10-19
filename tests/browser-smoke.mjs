@@ -1851,6 +1851,63 @@ try{
 
 
 
+  // Follow actual tab/chip clicks across every reachable source structure.
+  // Tonal is a separately noted legacy import state: its option is hidden and
+  // disabled in the shipping form, so this MUST NOT claim 40/40 user reachability.
+  const interactionCensus=await evaluate(`(()=>{
+    document.getElementById('mobileEdit').click();
+    if(document.getElementById('controls').classList.contains('editor-focus-active'))
+      document.querySelector('.editor-focus-all').click();
+    const structure=document.querySelector('[name=structure]');
+    const regionMode=document.querySelector('[name=regionMode]');
+    const failures=[],reached=new Set(),perScene={};
+    for(const [scene,region] of [
+      ['paths','voronoi'],['radial','voronoi'],
+      ['regions','voronoi'],['regions','nested']
+    ]){
+      structure.value=scene;
+      structure.dispatchEvent(new Event('change',{bubbles:true}));
+      if(scene==='regions'){
+        regionMode.value=region;
+        regionMode.dispatchEvent(new Event('change',{bubbles:true}));
+      }
+      const sceneKey=scene==='regions'?scene+'-'+region:scene;
+      perScene[sceneKey]=[];
+      for(const tab of document.querySelectorAll('.settings-tab[data-tab]')){
+        if(tab.disabled)continue;
+        tab.click();
+        const available=[...document.querySelectorAll('.editor-tool-chooser [data-editor-tool]')]
+          .filter(chip=>!chip.hidden&&!chip.disabled);
+        for(const chip of available){
+          chip.scrollIntoView({block:'nearest',inline:'nearest'});
+          chip.click();
+          const category=tab.dataset.tab,tool=chip.dataset.editorTool;
+          const card=document.querySelector('.editor-tool-card[data-editor-tool="'+tool+'"]');
+          const current=document.querySelector('.settings-tab[aria-selected="true"]');
+          const ok=card&&!card.hidden&&getComputedStyle(card).display!=='none'&&
+            card.getBoundingClientRect().height>0&&
+            chip.getAttribute('aria-pressed')==='true'&&
+            current?.dataset.tab===category;
+          if(!ok)failures.push(sceneKey+':'+category+'/'+tool);
+          else{
+            reached.add(category+'/'+tool);
+            perScene[sceneKey].push(category+'/'+tool);
+          }
+        }
+      }
+    }
+    const tonalOption=document.querySelector('[name=construction] option[value=tonal]');
+    return {reached:[...reached].sort(),perScene,failures,
+      legacyTonalHidden:!!tonalOption?.hidden&&!!tonalOption?.disabled,
+      toneSourceCard:!!document.querySelector('.editor-tool-card[data-editor-tool=tone]')};
+  })()`);
+  assert.deepEqual(interactionCensus.failures,[]);
+  assert.equal(interactionCensus.reached.length,39,
+    '39 enabled source tools must be accessible through real category/chip selection');
+  assert.ok(interactionCensus.legacyTonalHidden&&interactionCensus.toneSourceCard,
+    '40th named tool is a preserved legacy tonal state, not a visible user choice');
+  assert.ok(!interactionCensus.reached.includes('stripes/tone'));
+  console.log('EDITOR_INTERACTIVE_TOOL_MATRIX',JSON.stringify(interactionCensus));
   console.log('REDESIGN_EXPLORATION_ACCEPTANCE_SUCCESS');
 }finally{
   try{ws?.close()}catch{}
