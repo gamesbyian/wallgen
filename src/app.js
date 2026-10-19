@@ -912,12 +912,17 @@ function syncInteriorUI(){
   const scope=make(manager,'div');
   scope.className='interior-scope';
   const paletteNames=['Red','Orange','Yellow','Green','Blue','Indigo','Violet'];
-  scope.textContent=active.objectIds.length?
+  const targeting=active.objectIds.length?
     'Applied to '+active.objectIds.length+' selected shapes':
     active.colorSlots.length?
       'Colours: '+active.colorSlots.map(index=>paletteNames[index]).join(' · '):
       'Applied to all seven colours';
+  const stackIdentity='Element '+(selectedInterior+1)+' of '+items.length+
+    ' · '+(active.enabled?'Enabled':'Hidden');
+  scope.textContent=stackIdentity+' · '+targeting;
+  scope.dataset.elementVisibility=active.enabled?'enabled':'hidden';
   scope.title=scope.textContent;
+  scope.setAttribute('aria-label',scope.textContent);
   const targetBox=make(interiorCards['interior-targets'],'div');targetBox.className='interior-targets';
   const names=['R','O','Y','G','B','I','V'];
   names.forEach((name,i)=>{
