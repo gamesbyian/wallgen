@@ -6,7 +6,7 @@ Claims are qualified as source-confirmed, browser-observed, visual-approved, beh
 
 **Capability lane:** Compare all 115 current static IDs, 87 data-setting fields, 40 named tools, 3 material layers, 7 colour targets, dynamic interiors, drawing/anchor actions, import/export/metadata, saved/history, all six current dock actions. Prove alternate scene applicability via actual UI interactions. Seek missing controls and record CSS selectors and reproduction.
 
-**Behavior lane:** Seek counterexamples to each requirement in the verification matrix. Verify zoom changes serialized viewZoom only; nudge changes positionX and positionY and is NOT viewport-only Pan; Fit returns framing to 100%; point edits alter geometry, while framing guides do not. Compare full before/after recipes, screenshots and PNG output.
+**Behavior lane:** Seek counterexamples to each requirement in the verification matrix. Verify zoom changes serialized viewZoom only; nudge changes positionX and positionY while frame Pan changes only viewPanX/viewPanY; Fit resets both framing axes and zoom without altering composition; point edits alter geometry, while framing guides do not. Compare full before/after recipes, screenshots and PNG output.
 
 **Visual/accessibility lane:** Render actual existing and candidate SVGs at 20, 24 and 28 pixels under cream/dark, active/disabled/focus states. Find lost labels, clashing hitboxes, clipped/hidden controls, short-height landscape failures and theme discrepancies. User approval of new glyphs remains separate from their presence in the repository.
 
@@ -15,6 +15,7 @@ Claims are qualified as source-confirmed, browser-observed, visual-approved, beh
 | Journey | Failure being sought | Evidence |
 |---|---|---|
 | Studio zoom out → Fit → Export | Any change besides viewZoom, hidden Fit, wrong export | Serialized before/after recipe, PNG parity, rail screenshot |
+| Pan view right → left → Fit → Export | Artwork nudge contaminated, panned canvas cropped or hidden More controls | Distinct viewPanX/Y vs positionX/Y diff, off-frame ink and native pixel parity, named controls visible at 412×892 |
 | Composition right → left | Other setting changed, position lock bypassed | Delta and roundtrip recipe |
 | Edit category → search tool | Hit chip hidden or scroll snaps | Bounding geometry and navigation path |
 | Details → Interior → colours | Missing seven chips, incorrect enable state | DOM and normalized recipe |
