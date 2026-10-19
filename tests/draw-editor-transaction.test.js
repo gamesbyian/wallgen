@@ -445,3 +445,38 @@ test('canceling replacement restores hidden editor history and previous custom c
     assert.equal(f.calls[0][4],true);
   }finally{f.cleanup();}
 });
+
+test('live Draw toggle stays unavailable when non-Paths Structure is locked',()=>{
+  for(const structure of ['radial','regions']){
+    const f=fixture({seed:'structure-lock-'+structure,structure,
+      geometry:'wave',customPath:path,lockedSettings:['structure'],
+      positionX:15,viewZoom:.5,viewPanX:22});
+    try{
+      f.tool.sync(f.recipe);
+      assert.equal(f.nodes.drawPathToggle.disabled,true,
+        'locked non-Paths composition must not expose an applyable Draw action');
+      assert.throws(()=>f.tool.loadPath({points:path}),/Unlock Layout structure/,
+        'image-derived vector loading must enforce the same source-lock gate');
+      assert.equal(f.calls.length,0);
+      assert.notEqual(f.nodes.drawPathToggle.getAttribute('aria-pressed'),'true',
+        'a rejected import must not activate the editor');
+      assert.deepEqual(f.recipe,f.snap);
+    }finally{f.cleanup();}
+  }
+});
+
+test('a Structure lock already on Paths does not block Draw authoring',()=>{
+  const f=fixture({seed:'locked-but-paths',structure:'paths',
+    geometry:'wave',customPath:path,lockedSettings:['structure'],
+    positionX:-11,viewZoom:1.5,viewPanY:14});
+  try{
+    f.tool.sync(f.recipe);
+    assert.equal(f.nodes.drawPathToggle.disabled,false);
+    assert.equal(f.tool.loadPath({points:path,anchors:[2],corners:[2]}),true);
+    assert.equal(f.nodes.drawPathPanel.dataset.phase,'refine');
+    f.nodes.drawApply.click();
+    assert.equal(f.calls.length,1);
+    assert.equal(f.calls[0][4],false);
+    assert.deepEqual(f.recipe,f.snap);
+  }finally{f.cleanup();}
+});

@@ -1,4 +1,5 @@
 import {extractImagePathCandidates,imagePlacement,pathToWallpaper} from './image-path.js?v=20261018-import1';
+import {drawAuthoringLockReason,drawAuthoringLockMessage} from './path-authoring-locks.js';
 
 // The image is transient: only the selected vector centreline enters the recipe.
 // A native dialog provides an accessible, phone-friendly full-stage workspace.
@@ -78,9 +79,8 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle}){
   async function load(file){
     if(!file)return;
     const revision=++loadRevision;
-    if(getRecipe().lockedSettings.includes('geometry')){
-      onNotice('Unlock Path geometry before importing an image.');return;
-    }
+    const blocked=drawAuthoringLockReason(getRecipe());
+    if(blocked){onNotice(drawAuthoringLockMessage(blocked));return;}
     if(!dialog.open)dialog.showModal();
     setPhase('analyzing');
     working=true;apply.disabled=true;angleButton.disabled=true;another.disabled=true;chooser.disabled=true;
@@ -122,9 +122,8 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle}){
     }
   }
   launch.addEventListener('click',()=>{
-    if(getRecipe().lockedSettings.includes('geometry')){
-      onNotice('Unlock Path geometry before importing an image.');return;
-    }
+    const blocked=drawAuthoringLockReason(getRecipe());
+    if(blocked){onNotice(drawAuthoringLockMessage(blocked));return;}
     fileInput.click();
   });
   fileInput.addEventListener('change',()=>{void load(fileInput.files?.[0]);});
@@ -159,6 +158,12 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle}){
     if(!candidate)return;
     const imported=pathToWallpaper(candidate,width,height);
     if(!imported){status.textContent='This path is too short to import.';return;}
+    const blocked=drawAuthoringLockReason(getRecipe());
+    if(blocked){
+      status.textContent=drawAuthoringLockMessage(blocked);
+      onNotice(status.textContent);
+      return;
+    }
     dialog.close();
     onPath(imported);
   });
@@ -171,5 +176,5 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle}){
     setPhase('idle');
     image=null;candidates=[];chooser.replaceChildren();fileInput.value='';
   });
-  return {sync(recipe){launch.disabled=recipe.lockedSettings.includes('geometry');}};
+  return {sync(recipe){launch.disabled=!!drawAuthoringLockReason(recipe);}};
 }
