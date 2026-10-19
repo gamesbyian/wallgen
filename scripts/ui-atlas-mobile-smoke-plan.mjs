@@ -10,7 +10,7 @@ export const MOBILE_ATLAS_SMOKE_TOOLS=Object.freeze([
 export const MOBILE_ATLAS_SMOKE_STATES=Object.freeze([
   'studio-default','editor-open','special-mobile-edit-rail',
   ...MOBILE_ATLAS_SMOKE_TOOLS.map(({category,tool})=>'tool-paths-'+category+'-'+tool),
-  'special-focus-stripe-width','conditional-diagonal',
+  'special-focus-stripe-width','special-focus-no-range','conditional-diagonal',
   'conditional-material-layers','special-dark-theme',
   'shell-mobile-more','shell-mobile-explore'
 ]);
