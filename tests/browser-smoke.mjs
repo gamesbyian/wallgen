@@ -755,6 +755,15 @@ try{
   assert.ok(Math.abs(editor.ratio-600/1300)<.06);
   assert.equal(editor.scrollY,'hidden');
   assert.deepEqual(editor.tabs,['Layout','Path','Shapes','Details','Colour','Material','Effects']);
+  const sourcedDieNames=await evaluate(`(()=>({
+    stripe:document.querySelector('[data-random-setting="stripeWidth"]')?.getAttribute('aria-label'),
+    rotation:document.querySelector('[data-random-setting="textureRotation"]')?.getAttribute('aria-label'),
+    background:document.querySelector('[data-random-setting="background"]')?.getAttribute('aria-label')
+  }))()`);
+  assert.equal(sourcedDieNames.stripe,'Randomize only Stripe thickness');
+  assert.match(sourcedDieNames.rotation,/^Randomize only Texture layer 1 rotation in degrees$/);
+  assert.equal(sourcedDieNames.background,'Randomize only Background');
+  console.log('SOURCE_SETTING_RANDOMIZE_LABELS',JSON.stringify(sourcedDieNames));
   const iconPlacement=await evaluate('(()=>({tabs:[...document.querySelectorAll(".settings-tab")].map(b=>({width:b.getBoundingClientRect().width,icon:!!b.querySelector("svg.ui-icon")})),dock:[...document.querySelectorAll("#mobileActionDock>button")].map(b=>({width:b.getBoundingClientRect().width,icon:!!b.querySelector("svg.ui-icon")})),rail:[...document.querySelectorAll("#mobileEditorActionRail>button")].map(b=>({width:b.getBoundingClientRect().width,icon:!!b.querySelector("svg.ui-icon")})),remoteImages:document.querySelectorAll("img.ui-icon").length,categoryHeight:document.querySelector(".settings-tabs").getBoundingClientRect().height}))()');
   assert.equal(iconPlacement.remoteImages,0,'inlined icons inherit theme contrast');
   const previewShortcutIcons=await evaluate('(()=>{const box=id=>{const b=document.getElementById(id);const r=b.getBoundingClientRect();return {height:r.height,width:r.width,icon:!!b.querySelector("svg.ui-icon"),labelHeight:b.querySelector(".toolbar-wording")?.getBoundingClientRect().height||0}};const prime=document.querySelector(".mobile-preview-rail-left .prime-toggle");return {prime:{height:prime.getBoundingClientRect().height,icon:!!prime.querySelector("svg.ui-icon"),labelHeight:prime.querySelector(".toolbar-wording").getBoundingClientRect().height},draw:box("drawPathToggle"),import:box("importPathToggle")}})()');
