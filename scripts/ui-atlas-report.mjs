@@ -64,6 +64,7 @@ for(const capture of data.cases){
    row.frequency++;
    if(finding.missingPixels>row.maxPixels){
      row.maxPixels=finding.missingPixels;
+     row.visibleFraction=finding.visibleFraction;
      row.example=capture.file;row.zoom=capture.zoomPercent;
    }
  }
