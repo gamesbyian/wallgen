@@ -873,6 +873,22 @@ try{
   await evaluate('(()=>{const el=document.querySelector("[name=material2]");el.value="linen";el.dispatchEvent(new Event("change",{bubbles:true}))})()');
   await waitFor('document.getElementById("textureLayer2Enabled").checked===true');
   assert.ok(await evaluate('document.querySelector("#panel-material .editor-tool-card:not([hidden]) [name=material2]")!==null'));
+  // Visual layer chips announce the authoritative source model state, not
+  // fake enabled switches or stale values from a previous category.
+  await waitFor('document.querySelector("[data-editor-tool=layer2]").dataset.materialState==="on"');
+  const layer2Status=await evaluate('(()=>{const b=document.querySelector("[data-editor-tool=layer2]");return {state:b.dataset.materialState,label:b.getAttribute("aria-label"),title:b.title}})()');
+  assert.equal(layer2Status.label,'Layer 2: Texture selected');
+  assert.equal(layer2Status.title,layer2Status.label);
+  await evaluate('(()=>{const f=document.querySelector("[name=material3]");f.value="foil";f.dispatchEvent(new Event("change",{bubbles:true}))})()');
+  await waitFor('document.querySelector("[data-editor-tool=layer3]").dataset.materialState==="on"');
+  await evaluate('(()=>{const f=document.querySelector("[name=textureStrength3]");f.value="0";f.dispatchEvent(new Event("change",{bubbles:true}))})()');
+  await waitFor('document.querySelector("[data-editor-tool=layer3]").dataset.materialState==="zero"');
+  const layer3Zero=await evaluate('document.querySelector("[data-editor-tool=layer3]").getAttribute("aria-label")');
+  assert.equal(layer3Zero,'Layer 3: Strength 0%');
+  await evaluate('(()=>{const f=document.querySelector("[name=material3]");f.value="none";f.dispatchEvent(new Event("change",{bubbles:true}))})()');
+  await waitFor('document.querySelector("[data-editor-tool=layer3]").dataset.materialState==="off"');
+  console.log('MATERIAL_SOURCE_STATUS_STATES',JSON.stringify({layer2Status,layer3Zero}));
+
   await evaluate('document.getElementById("tab-path").click()');
   await evaluate('document.querySelector("[data-editor-tool=geometry]").click()');
   assert.ok(await evaluate('document.querySelector("#panel-path .editor-tool-card:not([hidden]) [name=geometry]")!==null'));
