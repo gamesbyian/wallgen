@@ -14,7 +14,7 @@ export function installFiveDestinationDock({openSaved,closeStudio}){
   if(!home||!saved||!shortcuts||
      [...dock.children].map(node=>node.id).join(',')!==
        'mobileStudio,mobileEdit,mobileExplore,mobileSaved,mobileMore'||
-     shuffle.parentElement!==moreContent||
+     !moreContent.contains(shuffle)||
      !shortcuts.contains(favorite)||!shortcuts.contains(download))
     throw new Error('Five destinations or source quick actions missing from HTML');
   const mobile=matchMedia('(max-width:790px)');
