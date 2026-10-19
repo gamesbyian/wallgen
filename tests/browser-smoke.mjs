@@ -119,6 +119,34 @@ try{
   assert.ok(declaredExpansions.every(x=>x.ariaControls&&
     ['true','false'].includes(x.ariaExpanded)));
   console.log('MOBILE_ACCESSIBLE_ACTION_CENSUS',JSON.stringify(mobileSemantics));
+  // Saved and Explore share the grid but must never share navigation mode.
+  // On an empty fresh profile, Saved has its own heading and empty copy;
+  // returning via Explore restores the independent exploration view.
+  const galleryModes=await evaluate(`(()=>{
+    document.getElementById('showFavorites').click();
+    const saved={
+      mode:document.getElementById('gallery').dataset.view,
+      heading:document.getElementById('galleryTitle').textContent,
+      empty:document.querySelector('#gallery .gallery-placeholder')?.textContent
+    };
+    document.getElementById('mobileExplore').click();
+    const explore={
+      mode:document.getElementById('gallery').dataset.view,
+      heading:document.getElementById('galleryTitle').textContent,
+      empty:document.querySelector('#gallery .gallery-placeholder')?.textContent,
+      open:document.body.classList.contains('mobile-gallery-open')
+    };
+    document.getElementById('mobileExplore').click();
+    return {saved,explore};
+  })()`);
+  assert.equal(galleryModes.saved.mode,'saved');
+  assert.equal(galleryModes.saved.heading,'Saved wallpapers');
+  assert.ok(galleryModes.saved.empty?.includes('Nothing saved yet'));
+  assert.equal(galleryModes.explore.mode,'explore');
+  assert.equal(galleryModes.explore.heading,'Explore variations');
+  assert.ok(galleryModes.explore.empty?.includes('Generate twelve'));
+  assert.ok(galleryModes.explore.open);
+
 
   const atlasUI=await evaluate(`(()=>{
     const cream=document.querySelector('[data-studio-theme=cream]');

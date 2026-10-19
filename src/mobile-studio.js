@@ -135,7 +135,11 @@ document.querySelector('.studio-stage').addEventListener('click',event=>{
   if(document.body.classList.contains('mobile-edit-open'))closeSurfaces({restoreFocus:false});
 });
 editBtn.addEventListener('click',()=>openSurface('edit'));
-exploreBtn.addEventListener('click',()=>openSurface('gallery'));
+exploreBtn.addEventListener('click',()=>{
+  if(!document.body.classList.contains('mobile-gallery-open'))
+    document.dispatchEvent(new CustomEvent('roygbiv-gallery-view-request',{detail:'explore'}));
+  openSurface('gallery');
+});
 moreBtn.addEventListener('click',()=>openSurface('tools'));
 for(const name of ['mobileToolsClose']){
   document.getElementById(name).addEventListener('click',()=>closeSurfaces());
