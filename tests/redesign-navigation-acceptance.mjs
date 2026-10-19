@@ -134,7 +134,8 @@ try{
   await page.locator('#metadataToggle').click();
   await page.locator('#metadataPanel').waitFor({state:'visible'});
   assert.equal(await page.locator('#metadataToggle').getAttribute('aria-expanded'),'true');
-  assert.ok((await hit('#metadataRemember')).hit);
+  assert.ok(await page.locator('#metadataRemember').isVisible(),
+    'Metadata memory checkbox must be visible and have a clickable label');
   const metadataTitle=page.locator('#metadataPanel [name=title]');
   await metadataTitle.fill('Agent 3 actual browser metadata');
   await page.locator('#metadataRemember').check();
