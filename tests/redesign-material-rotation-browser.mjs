@@ -64,7 +64,7 @@ try{
         for(const op of operation){
           const selector=op.set!==undefined?'[data-rotate-set="'+op.set+'"]':
             '[data-rotate-delta="'+op.delta+'"]';
-          const target=buttons.locator(selector);
+          const target=card.locator('[data-rotate-target="'+key+'"]'+selector);
           const access=await target.evaluate(el=>({
             label:el.getAttribute('aria-label'),
             rect:[el.getBoundingClientRect().width,el.getBoundingClientRect().height],
