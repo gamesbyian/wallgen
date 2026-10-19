@@ -1763,6 +1763,61 @@ try{
     'dragging a point must modify and pin the selected anchor');
   assert.ok(pointEditorCheck.undoAvailable&&pointEditorCheck.restored,
     'local Undo and wallpaper Undo must both remain usable');
+
+  // A panned camera must move the *interactive* anchor hitboxes with the
+  // painted source world, while composition nudge remains distinct. Compute
+  // expected device coordinates independently from the renderer equation,
+  // not from the overlay's own projection helper (which could be wrong).
+  const pannedDrawRecipe={...editableRecipe,viewZoom:1.2,
+    viewPanX:15,viewPanY:-10,positionX:5,positionY:-4};
+  await command('Page.navigate',{url:url+'?r='+encodeURIComponent(JSON.stringify(pannedDrawRecipe))});
+  await waitFor('document.body&&document.body.classList.contains("mobile-studio")',15000);
+  await waitFor('document.querySelectorAll(".editor-tool-card").length>=39',15000);
+  const pannedAnchorEditing=await evaluate(`(async()=>{
+    const {createPointEditor}=await import('/src/path-point-editor.js');
+    const recipe=JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get('r')));
+    const before=JSON.stringify(recipe.customPath);
+    document.getElementById('drawPathToggle').click();
+    document.getElementById('drawEditPoints').click();
+    const model=createPointEditor(recipe.customPath);
+    const anchor=model.anchors[Math.floor(model.anchors.length/2)];
+    const point=model.points[anchor];
+    const canvas=document.getElementById('preview').getBoundingClientRect();
+    const x=canvas.left+(.5+(point[0]-.5)*recipe.viewZoom+
+      recipe.positionX/100-recipe.viewPanX*recipe.viewZoom/100)*canvas.width;
+    const y=canvas.top+(.5+(point[1]-.5)*recipe.viewZoom+
+      recipe.positionY/100-recipe.viewPanY*recipe.viewZoom/100)*canvas.height;
+    const hitInside=x>=canvas.left&&x<=canvas.right&&
+      y>=canvas.top&&y<=canvas.bottom;
+    const overlay=document.getElementById('drawOverlay');
+    const pointer=(name,cx,cy)=>overlay.dispatchEvent(new PointerEvent(name,{
+      bubbles:true,cancelable:true,pointerId:59,isPrimary:true,pointerType:'touch',
+      clientX:cx,clientY:cy,buttons:name==='pointerup'?0:1
+    }));
+    pointer('pointerdown',x,y);
+    pointer('pointermove',x+14,y-11);
+    pointer('pointerup',x+14,y-11);
+    const undoAvailable=!document.getElementById('drawUndoPoint').disabled;
+    document.getElementById('drawApply').click();
+    const after=JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get('r')));
+    return {anchor,hitInside,x,y,undoAvailable,
+      changed:JSON.stringify(after.customPath)!==before,
+      anchors:after.drawnAnchors.length,
+      beforePan:[recipe.viewPanX,recipe.viewPanY],
+      afterPan:[after.viewPanX,after.viewPanY],
+      beforeComposition:[recipe.positionX,recipe.positionY],
+      afterComposition:[after.positionX,after.positionY]};
+  })()`);
+  assert.ok(pannedAnchorEditing.hitInside,
+    'selected saved anchor should remain inside the panned wallpaper window');
+  assert.ok(pannedAnchorEditing.undoAvailable&&pannedAnchorEditing.changed&&
+    pannedAnchorEditing.anchors>0,
+    'pointer drag on the actually projected panned anchor must edit and pin it');
+  assert.deepEqual(pannedAnchorEditing.afterPan,pannedAnchorEditing.beforePan);
+  assert.deepEqual(pannedAnchorEditing.afterComposition,pannedAnchorEditing.beforeComposition);
+  await captureUI('draw-anchor-world-pan-aligned-412x915');
+  console.log('PANNED_DRAW_ANCHOR_POINTER_ALIGNMENT',JSON.stringify(pannedAnchorEditing));
+
   // Preserve the desktop viewport expected by the following Material and
   // geometry probes. Breakpoint boundaries are tested separately later.
   await command('Emulation.setDeviceMetricsOverride',{
