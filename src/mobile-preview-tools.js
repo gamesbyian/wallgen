@@ -49,12 +49,12 @@ left.setAttribute('aria-label','Generation shortcuts');
 const right=document.createElement('div');
 right.className='mobile-preview-rail mobile-preview-rail-right';
 right.setAttribute('role','group');
-right.setAttribute('aria-label','Move artwork and zoom preview');
+right.setAttribute('aria-label','Move artwork and adjust wallpaper framing');
 const zoomOut=document.createElement('button'),zoomIn=document.createElement('button');
 const zoomFit=document.createElement('button');
 for(const [el,mode,glyph,label] of [
-  [zoomIn,'in','+','Zoom preview in'],
-  [zoomOut,'out','−','Zoom preview out'],
+  [zoomIn,'in','+','Zoom wallpaper framing in'],
+  [zoomOut,'out','−','Zoom wallpaper framing out'],
 ]){
   el.type='button';el.className='mobile-zoom-button';
   el.dataset.zoom=mode;el.innerHTML=iconMarkup(mode==='in'?'plus':'minus');el.setAttribute('aria-label',label);
@@ -69,6 +69,7 @@ zoomFit.addEventListener('click',()=>
 const zoomValue=document.createElement('output');
 zoomValue.className='mobile-zoom-level';
 zoomValue.setAttribute('aria-live','off');
+zoomValue.setAttribute('aria-label','Wallpaper framing zoom');
 let zoom=Number(stage.dataset.viewZoom)||1;
 function setZoom(next){
   zoom=Math.round(Math.max(.5,Math.min(2.5,next))*100)/100;
