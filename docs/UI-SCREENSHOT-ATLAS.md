@@ -33,7 +33,7 @@ The artifact **roygbiv-ui-atlas** includes:
 - `README.md`: generated run summary.
 - `desktop/100/*.png` etc.: one screenshot per distinct navigation/state at a particular zoom, with additional scrolled-tool captures when necessary.
 
-The UI runner fails if it encounters traversal failures, missing expected states, or a screenshot whose visible application state does not match its assigned name. The artifact uploads even when the run fails. Every capture also records bounded DOM geometry observations in `cases[].inspection` within `manifest.json`. Those warnings aid auditing but do not themselves fail the runner, because intentional clipping and scrolling need human review.
+The UI runner fails if it encounters traversal failures, missing expected states, or a screenshot whose visible application state does not match its assigned name. The artifact uploads even when the run fails. Every capture records a bounded, severity-ordered interactive-control geometry inspection in `cases[].inspection` within `manifest.json`. Each actionable finding includes an identifiable selector, short control label, visible fraction, missing pixels and clipping ancestor(s), with unbounded `totalFindings` and `ignoredScroll` counts. Controls clipped inside intentional scroll strips or galleries are excluded from warnings, avoiding the former mass of generic offscreen `button` findings. A warning is not automatically a user-facing defect: inspect the corresponding screenshot and interaction state; only assertions for named required UI states fail the runner.
 
 ## Coverage
 
