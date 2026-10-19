@@ -369,3 +369,79 @@ test('Apply from hidden saved handles commits through source sync, not false sta
     assert.notDeepEqual(f.recipe.customPath,path);
   }finally{f.cleanup();}
 });
+
+test('canceled replacement touch restores the visible saved source curve',()=>{
+  const f=fixture({seed:'cancel-saved-replacement',structure:'paths',geometry:'drawn',
+    customPath:path,positionX:17,positionY:-11,
+    viewZoom:.5,viewPanX:24,viewPanY:-12,extendDrawnPath:true});
+  try{
+    f.nodes.drawPathToggle.click();
+    assert.equal(f.nodes.drawPathPanel.dataset.phase,'refine');
+    pointer(f.nodes.drawOverlay,'pointerdown',{
+      pointerId:91,isPrimary:true,clientX:110,clientY:155});
+    pointer(f.nodes.drawOverlay,'pointermove',{
+      pointerId:91,isPrimary:true,clientX:155,clientY:275});
+    const afterStroke=f.nodes.drawOverlay.canvasCalls.length;
+    pointer(f.nodes.drawOverlay,'pointercancel',{
+      pointerId:91,isPrimary:true,clientX:155,clientY:275});
+    assert.equal(f.nodes.drawPathPanel.dataset.phase,'refine',
+      'canceled replacement must restore the original saved preview phase');
+    assert.equal(f.nodes.drawEditPoints.hidden,false);
+    assert.equal(f.nodes.drawApply.disabled,true,
+      'Apply must not silently commit the original saved path as new geometry');
+    assert.ok(f.nodes.drawOverlay.canvasCalls.slice(afterStroke)
+      .some(op=>op.key==='lineTo'),'saved path must be painted again');
+    assert.match(f.nodes.drawPathHint.textContent,/previous path/);
+    f.nodes.drawEditPoints.click();
+    f.nodes.drawApply.click();
+    assert.equal(f.calls.length,1);
+    assert.equal(f.calls[0][4],true,'editing restored source retains its nudge');
+    assert.deepEqual(f.calls[0][0],f.snap.customPath);
+    assert.deepEqual(f.recipe,f.snap);
+  }finally{f.cleanup();}
+});
+
+test('canceling a replacement touch preserves imported provisional curve and metadata',()=>{
+  const f=fixture({seed:'cancel-imported-replacement',structure:'paths',
+    geometry:'wave',positionX:14,viewZoom:.75,viewPanX:18});
+  const imported={points:path.map(([x,y])=>[x+.1,y-.08]),anchors:[2,4],
+    corners:[4]};
+  try{
+    assert.equal(f.tool.loadPath(imported),true);
+    assert.equal(f.nodes.drawPathPanel.dataset.phase,'refine');
+    pointer(f.nodes.drawOverlay,'pointerdown',{
+      pointerId:92,isPrimary:true,clientX:150,clientY:180});
+    pointer(f.nodes.drawOverlay,'pointercancel',{pointerId:92,isPrimary:true});
+    assert.equal(f.nodes.drawPathPanel.dataset.phase,'refine');
+    assert.equal(f.nodes.drawApply.disabled,false);
+    f.nodes.drawApply.click();
+    assert.equal(f.calls.length,1);
+    assert.deepEqual(f.calls[0].slice(0,3),[
+      imported.points,imported.anchors,imported.corners]);
+    assert.equal(f.calls[0][4],false,
+      'restored import must not pick up the existing wallpaper nudge');
+    assert.deepEqual(f.recipe,f.snap);
+  }finally{f.cleanup();}
+});
+
+test('canceling replacement restores hidden editor history and previous custom controls',()=>{
+  const f=fixture({seed:'cancel-hidden-edited-replacement',structure:'paths',
+    geometry:'drawn',customPath:path,positionX:9,viewZoom:1.3,viewPanY:10});
+  try{
+    f.nodes.drawPathToggle.click();
+    f.nodes.drawEditPoints.click();selectFirstAnchor(f);arrowRight(f);
+    assert.equal(f.nodes.drawUndoPoint.disabled,false);
+    f.nodes.drawEditPoints.click();
+    pointer(f.nodes.drawOverlay,'pointerdown',{
+      pointerId:93,isPrimary:true,clientX:140,clientY:230});
+    pointer(f.nodes.drawOverlay,'pointercancel',{pointerId:93,isPrimary:true});
+    assert.equal(f.nodes.drawPathPanel.dataset.phase,'refine');
+    f.nodes.drawEditPoints.click();
+    assert.equal(f.nodes.drawUndoPoint.disabled,false,
+      'a canceled attempt is not an intentional new stroke transaction');
+    f.nodes.drawUndoPoint.click();
+    f.nodes.drawApply.click();
+    assert.deepEqual(f.calls[0][0],f.snap.customPath);
+    assert.equal(f.calls[0][4],true);
+  }finally{f.cleanup();}
+});
