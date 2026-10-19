@@ -15,7 +15,7 @@ The production wallpaper renderer, preview camera, recipe data and exported imag
 | Editor-side camera buttons | `mobile-editor-rail.css` | Action rail, left/right preview shortcuts |
 | Editor tabs, named tools and rotation | `editor-redesign.css` | Base editor structure, compact card and rotation row |
 | Flat source setting-row accent family | `editor-setting-rows.css` | ROYGBIV category rails, flat theme surfaces, disabled-state cues; zero control geometry changes |
-| Material layer chooser statuses | `editor-material-status.css` | Tiny source-backed Off / Auto / On / Zero accent rail on original three material chips |
+| Material layer chooser statuses | `editor-material-status.css` | Source-backed Off / Auto / On / Zero rails on the three material chips, with explanatory inactive Finish cards |
 | Interior element selectors, checkbox alignment and colour chips | `detail-controls.css` | Dynamic element controls, ink targeting, colour picker states |
 | Imported path dialog | `image-path.css` | Import preview/dialog in both themes |
 | Drawn path editing | `draw-path.css` | Drawing overlay, source action grouping, live phase pill, point controls, hint/action bars |
