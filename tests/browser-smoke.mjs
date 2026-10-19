@@ -1897,11 +1897,20 @@ try{
           trayBottom:tray.bottom,
           sourceActionsConnected:sourceIds.every(id=>document.getElementById(id)?.isConnected),
           selection:document.querySelector('.editor-tool-tab[aria-pressed=true]')?.dataset.editorTool,
-          dockRecessed:document.getElementById('mobileActionDock').getAttribute('aria-hidden')==='true'
+          dockRecessed:document.getElementById('mobileActionDock').getAttribute('aria-hidden')==='true',
+          dockInert:document.getElementById('mobileActionDock').inert,
+          hiddenDockNotFocusable:(()=>{
+            const home=document.getElementById('mobileStudio');
+            home.focus();
+            const blocked=document.activeElement!==home;
+            document.getElementById('mobileDismissHandle').focus();
+            return blocked;
+          })()
         };
       })()`);
       trialBoundaries.at(-1).edit=edit;
-      assert.ok(edit.open&&edit.dockRecessed,'responsive Edit must use the non-overlay tray');
+      assert.ok(edit.open&&edit.dockRecessed&&edit.dockInert&&edit.hiddenDockNotFocusable,
+        'offscreen Edit dock must be hidden and inert, not keyboard-focusable');
       assert.ok(edit.sourceActionsConnected,'all source quick actions must survive Edit at this breakpoint');
       assert.ok(edit.stageHeight>25&&edit.layoutHeight>25,
         'Edit must reserve a positive preview viewport even in landscape');
@@ -1912,8 +1921,10 @@ try{
       assert.ok(edit.trayLeft>=-2&&edit.trayRight<=width+2&&edit.trayBottom<=height+1);
       if(width===499||width===500||width===790||height<=620)
         await captureUI('five-nav-edit-boundary-'+width+'x'+height);
-      await evaluate('document.getElementById("mobileStudio").click()');
+      await evaluate('document.getElementById("mobileDismissHandle").click()');
       await delay(215);
+      assert.equal(await evaluate('document.getElementById("mobileActionDock").inert'),false,
+        'visible five-destination dock must regain normal focus after Edit closes');
     }
   }
   console.log('FIVE_DESTINATION_BREAKPOINTS',JSON.stringify(trialBoundaries));
