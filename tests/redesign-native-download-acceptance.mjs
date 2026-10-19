@@ -118,6 +118,9 @@ try{
         coloredMismatchRatio:colored?coloredMismatch/colored:null,examples};
     },{base64:bytes.toString('base64'),recipe:fixture.recipe,
       comparePixels:fixture.comparePixels});
+    Object.assign(observation,{metrics});
+    observations.push(observation);
+    console.log('AGENT3_NATIVE_DOWNLOAD_MEASURED',JSON.stringify(observation));
     assert.deepEqual(metrics.decoded,[OUTPUT_WIDTH,OUTPUT_HEIGHT],
       'Native PNG browser-decoded at an unexpected size');
     assert.ok(metrics.distinctColorBuckets>=12,
@@ -130,9 +133,7 @@ try{
       assert.ok(metrics.coloredMismatchRatio<=.06,
         'Native PNG painted foreground geometry disagrees with direct renderer');
     }
-    Object.assign(observation,{metrics});
-    observations.push(observation);
-    console.log('AGENT3_NATIVE_DOWNLOAD',JSON.stringify(observation));
+    console.log('AGENT3_NATIVE_DOWNLOAD_QUALIFIED',JSON.stringify(observation));
   }
   assert.deepEqual(errors,[],'Uncaught page errors during actual PNG download');
   await writeFile(join(out,'evidence.json'),JSON.stringify({
