@@ -27,3 +27,11 @@ test('Focus controls must not masquerade as named tool chips',()=>{
   assert.equal(fs.includes("'editor-tool-tab editor-focus-toggle'"),false);
 });
 function requireFocusSource(){return readFileSync(new URL('../src/editor-focus.js',import.meta.url),'utf8');}
+
+test('optional Focus listens to every completed source control sync',()=>{
+  const app=readFileSync(new URL('../src/app.js',import.meta.url),'utf8');
+  const focus=requireFocusSource();
+  assert.match(app,/document\.dispatchEvent\(new Event\('roygbiv-controls-synced'\)\)/);
+  assert.match(focus,/addEventListener\('roygbiv-controls-synced',sync\)/);
+  assert.match(focus,/else slider\.style\.removeProperty\('--roygbiv-slider-color'\)/);
+});
