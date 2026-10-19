@@ -2327,11 +2327,16 @@ try{
   // Follow actual tab/chip clicks across every reachable source structure.
   // Tonal is a separately noted legacy import state: its option is hidden and
   // disabled in the shipping form, so this MUST NOT claim 40/40 user reachability.
+  // Enter the real Edit mode, then allow its documented CSS opening
+  // transition to settle. Measuring while a sheet is translating onto
+  // screen would falsely report every live card as offscreen.
+  await evaluate('document.getElementById("mobileEdit").click()');
+  await waitFor('document.body.classList.contains("mobile-edit-open")');
+  await delay(270);
   const interactionCensus=await evaluate(`(async()=>{
     const {EDITOR_CATEGORIES}=await import('/src/editor-schema.js');
     const sourceTools=new Map(EDITOR_CATEGORIES.flatMap(category=>
       category.tools.map(tool=>[category.id+'/'+tool.id,tool.settings])));
-    document.getElementById('mobileEdit').click();
     if(document.getElementById('controls').classList.contains('editor-focus-active'))
       document.querySelector('.editor-focus-all').click();
     const structure=document.querySelector('[name=structure]');
