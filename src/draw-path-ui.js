@@ -16,6 +16,14 @@ export function drawnPathViewportOffset(recipe,showSavedPath=false){
     (compositionY-zoom*(Number(recipe?.viewPanY)||0))/100];
 }
 
+/** Stored Draw geometry remains available when another structure is
+ * selected, but only the active Paths scene can be refined as a saved path.
+ * A Radial/Regions recipe may carry a dormant customPath for future reuse. */
+export function activeSavedDrawnPath(recipe){
+  return recipe?.structure==='paths'&&recipe.geometry==='drawn'&&
+    Array.isArray(recipe.customPath)&&recipe.customPath.length>=2;
+}
+
 // The freehand overlay is also the optional point editor: one shared camera,
 // one source of path geometry and one save/undo transaction.
 export function installDrawTool({getRecipe,onApply,onNotice}){
@@ -43,7 +51,7 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
   // Authoring new points still takes precedence over the old saved geometry.
   const visiblePoints=()=>editing?editor?.points||[]:
     ready.length?ready:raw.length?raw:
-    showingSavedPath&&getRecipe().geometry==='drawn'?getRecipe().customPath:[];
+    showingSavedPath&&activeSavedDrawnPath(getRecipe())?getRecipe().customPath:[];
 
   // Convert between the design's normalized coordinates and the full stage,
   // whose preview may be zoomed and letterboxed inside the editing overlay.
@@ -126,7 +134,7 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
   function syncPointControls(){
     const savedPath=getRecipe();
     editButton.hidden=!active||(!editing&&ready.length<2&&
-      !(savedPath.geometry==='drawn'&&savedPath.customPath.length>=2));
+      !activeSavedDrawnPath(savedPath));
     editButton.setAttribute('aria-pressed',String(editing));
     editButton.textContent=editing?'Hide points':'Edit points';
     const available=editing&&editor?.selected!==-1;
@@ -189,7 +197,7 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
     overlay.hidden=false;panel.hidden=false;
     button.setAttribute('aria-pressed','true');
     document.body.classList.add('path-drawing');
-    if(getRecipe().geometry==='drawn'&&getRecipe().customPath.length>1){
+    if(activeSavedDrawnPath(getRecipe())){
       showingSavedPath=true;
       hint.textContent='Draw a replacement, or tap Edit points to refine this path.';
       draw(getRecipe().customPath);
@@ -198,13 +206,13 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
   }
   function editPoints(){
     if(!editing){
-      const existing=ready.length>=2?ready:
-        getRecipe().geometry==='drawn'?getRecipe().customPath:[];
+      const source=getRecipe(),saved=activeSavedDrawnPath(source);
+      const existing=ready.length>=2?ready:saved?source.customPath:[];
       if(existing.length<2)return;
       // Editing a saved path remains one transaction even if its controls
       // are hidden and reopened. A second entry must not turn an existing
       // path into a replacement and silently zero composition position.
-      if(ready.length<2&&getRecipe().geometry==='drawn')editingSavedPath=true;
+      if(ready.length<2&&saved)editingSavedPath=true;
       const pins=ready.length>=2?pendingPins:getRecipe().drawnAnchors;
       const corners=ready.length>=2?pendingCorners:getRecipe().drawnCorners;
       editor=createPointEditor(existing,pins,corners);
@@ -463,8 +471,14 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
       button.disabled=recipe.lockedSettings.includes('geometry');
       if(active)extend.disabled=recipe.lockedSettings.includes('extendDrawnPath');
       if(active&&button.disabled)stop();
-      if(active&&!editing&&raw.length===0&&ready.length===0)
+      if(active&&!editing&&raw.length===0&&ready.length===0){
+        // Undo, import, or another source-driven recipe transition can change
+        // which path is actually visible while this optional overlay is open.
+        // Refresh its source identity rather than presenting dormant geometry.
+        showingSavedPath=activeSavedDrawnPath(recipe);
         syncPointControls();
+        draw(visiblePoints());
+      }
     },
     close:stop,
   };
