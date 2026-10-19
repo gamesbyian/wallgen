@@ -24,7 +24,7 @@ jobs:
       - name: Syntax and normalization checks
         run: |
           node --check tests/redesign-material-rotation-browser.mjs
-          node --test tests/render.test.js tests/material-rotation-controls.test.js
+          node --test tests/render.test.js tests/material-three-layer-adversarial.test.js
       - name: Chromium and local server
         run: |
           npm install --no-save playwright@1.56.1 serve@14.2.5
