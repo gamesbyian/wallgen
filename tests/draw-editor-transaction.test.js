@@ -35,8 +35,9 @@ class Element extends EventTarget {
   releasePointerCapture(){}
   closest(){return null;}
 }
-function fixture(recipeInput){
-  const recipe=normalizeRecipe(recipeInput),snap=structuredClone(recipe);
+function fixture(recipeInput,{commitOnApply=false}={}){
+  let recipe=normalizeRecipe(recipeInput);
+  const snap=structuredClone(recipe);
   const ids=['drawPathToggle','drawPathPanel','drawOverlay','preview','drawPathHint',
     'drawApply','drawSmooth','drawGeometric','drawAgain','drawCancel',
     'drawSmoothingStrength','drawSmoothingValue','drawExtendPath',
@@ -60,13 +61,28 @@ function fixture(recipeInput){
   const old={document:globalThis.document,window:globalThis.window};
   globalThis.document=document;globalThis.window=window;
   const calls=[];
-  const tool=installDrawTool({
+  let tool;
+  tool=installDrawTool({
     getRecipe:()=>recipe,
     onNotice:message=>{throw Error('Unexpected notice: '+message);},
-    onApply:(...args)=>calls.push(args)
+    onApply:(...args)=>{
+      calls.push(args);
+      if(commitOnApply){
+        // Simulate app.js synchronous changeRecipe → drawTool.sync on Apply.
+        const [points,anchors,corners,extend]=args;
+        recipe=normalizeRecipe({...recipe,customPath:points,
+          drawnAnchors:anchors,drawnCorners:corners,extendDrawnPath:extend,
+          structure:'paths',geometry:'drawn'});
+        tool.sync(recipe);
+      }
+    }
   });
   return {
-    recipe,snap,nodes,stage,document,window,calls,tool,
+    get recipe(){return recipe;},snap,nodes,stage,document,window,calls,tool,
+    replaceRecipe(input){
+      recipe=normalizeRecipe(input);
+      tool.sync(recipe);
+    },
     cleanup(){
       tool.close();
       if(old.document===undefined)delete globalThis.document;
@@ -268,5 +284,50 @@ test('starting a fresh replacement stroke clears the hidden editor and its Undo 
     assert.equal(f.calls[0][4],false,'new geometry must not inherit saved nudge');
     assert.notDeepEqual(f.calls[0][0],f.recipe.customPath);
     assert.deepEqual(f.recipe,f.snap);
+  }finally{f.cleanup();}
+});
+
+test('an external Undo/restore with different saved geometry invalidates an open point edit',()=>{
+  const f=fixture({seed:'stale-saved-editor',structure:'paths',geometry:'drawn',
+    customPath:path,positionX:13,positionY:-9,viewZoom:1.3,viewPanX:16});
+  try{
+    f.nodes.drawPathToggle.click();
+    f.nodes.drawEditPoints.click();
+    selectFirstAnchor(f);arrowRight(f);
+    const restored=normalizeRecipe({...f.recipe,
+      customPath:path.map(([x,y],i)=>i===3?[x+.08,y-.04]:[x,y])});
+    assert.throws(()=>f.replaceRecipe(restored),/Saved path changed while editing/,
+      'the old provisional editor must not apply over a restored source path');
+    assert.equal(f.nodes.drawOverlay.hidden,true);
+    assert.equal(f.nodes.drawPathPanel.hidden,true);
+    assert.equal(f.calls.length,0,'no stale Apply should have happened');
+    assert.deepEqual(f.recipe,restored,'restored geometry remains authoritative');
+  }finally{f.cleanup();}
+});
+
+test('camera and material changes do not cancel saved edits; successful Apply is not misclassified',()=>{
+  const f=fixture({seed:'camera-preserving-saved-editor',structure:'paths',
+    geometry:'drawn',customPath:path,positionX:14,positionY:-10,
+    viewZoom:1.1,viewPanX:12,viewPanY:-9,material:'linen'},
+    {commitOnApply:true});
+  try{
+    f.nodes.drawPathToggle.click();
+    f.nodes.drawEditPoints.click();
+    selectFirstAnchor(f);arrowRight(f);
+    const camera=normalizeRecipe({...f.recipe,viewZoom:2.2,
+      viewPanX:-21,viewPanY:15,material:'foil'});
+    f.replaceRecipe(camera);
+    assert.equal(f.nodes.drawOverlay.hidden,false,
+      'camera/material edits must remain independent of the pending curve');
+    assert.equal(f.nodes.drawPathPanel.dataset.phase,'anchors');
+    f.nodes.drawApply.click();
+    assert.equal(f.calls.length,1);
+    assert.equal(f.calls[0][4],true);
+    assert.equal(f.nodes.drawOverlay.hidden,true);
+    assert.equal(f.recipe.material,'foil');
+    assert.deepEqual([f.recipe.viewZoom,f.recipe.viewPanX,f.recipe.viewPanY],
+      [2.2,-21,15]);
+    assert.notDeepEqual(f.recipe.customPath,path,
+      'successful Apply commits the new path through the actual sync guard');
   }finally{f.cleanup();}
 });

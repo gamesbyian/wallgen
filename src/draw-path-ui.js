@@ -23,6 +23,13 @@ export function activeSavedDrawnPath(recipe){
   return recipe?.structure==='paths'&&recipe.geometry==='drawn'&&
     Array.isArray(recipe.customPath)&&recipe.customPath.length>=2;
 }
+/** An open saved-path transaction belongs to the precise source geometry.
+ * Changes to camera or materials remain independent, but restoring a
+ * different path makes old provisional edits stale and unsafe to Apply. */
+export function savedDrawSourceMatches(sourceKey,recipe){
+  return typeof sourceKey==='string'&&activeSavedDrawnPath(recipe)&&
+    JSON.stringify(recipe.customPath)===sourceKey;
+}
 
 // The freehand overlay is also the optional point editor: one shared camera,
 // one source of path geometry and one save/undo transaction.
@@ -44,6 +51,7 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
   let active=false,pointer=null,raw=[],ready=[],importedSource=[],fit='smooth',editing=false;
   let editor=null,pendingPins=[],pendingCorners=[],adding=false,drag=null,history=[];
   let editingSavedPath=false,showingSavedPath=false;
+  let savedSourcePath=null,applying=false;
   const cameraPan=()=>drawnPathViewportOffset(getRecipe(),
     showingSavedPath||editingSavedPath);
   // A saved curve has not entered provisional ready/raw state yet. Reframing
@@ -176,6 +184,7 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
     pointer=null;drag=null;raw=[];ready=[];importedSource=[];pendingPins=[];pendingCorners=[];
     editor=null;editing=false;adding=false;history=[];
     editingSavedPath=false;showingSavedPath=false;
+    savedSourcePath=null;
     draw([]);syncPointControls();
     hint.textContent='Draw anywhere on the preview, including beyond the frame.';
   }
@@ -212,7 +221,10 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
       // Editing a saved path remains one transaction even if its controls
       // are hidden and reopened. A second entry must not turn an existing
       // path into a replacement and silently zero composition position.
-      if(ready.length<2&&saved)editingSavedPath=true;
+      if(ready.length<2&&saved){
+        editingSavedPath=true;
+        savedSourcePath=JSON.stringify(source.customPath);
+      }
       const pins=ready.length>=2?pendingPins:getRecipe().drawnAnchors;
       const corners=ready.length>=2?pendingCorners:getRecipe().drawnCorners;
       // Hiding control squares is presentation only. If the same draft is
@@ -338,7 +350,7 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
     pointer=event.pointerId;raw=[];ready=[];importedSource=[];pendingPins=[];pendingCorners=[];apply.disabled=true;
     // A replacement stroke is a new transaction, unlike merely hiding handles.
     editor=null;history=[];adding=false;
-    showingSavedPath=false;editingSavedPath=false;
+    showingSavedPath=false;editingSavedPath=false;savedSourcePath=null;
     append(event);
     try{overlay.setPointerCapture(pointer);}catch{}
     hint.textContent='Keep drawing. Lift your finger to finish.';
@@ -436,8 +448,11 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
     if(points.length<2)return;
     const pins=editing?savedPointAnchors(editor):pendingPins;
     const corners=editing?savedPointCorners(editor):pendingCorners;
-    onApply(points,pins,corners,extend.checked,editingSavedPath);
-    stop();
+    // The real onApply synchronously updates the recipe and calls sync().
+    // That intentional commit must not look like an unrelated Undo/restore.
+    applying=true;
+    try{onApply(points,pins,corners,extend.checked,editingSavedPath);}
+    finally{applying=false;stop();}
   });
   document.addEventListener('keydown',event=>{
     if(!active)return;
@@ -478,7 +493,15 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
       geometryOption.disabled=recipe.customPath.length<2;
       button.disabled=recipe.lockedSettings.includes('geometry');
       if(active)extend.disabled=recipe.lockedSettings.includes('extendDrawnPath');
-      if(active&&button.disabled)stop();
+      if(active&&button.disabled){stop();return;}
+      if(active&&!applying&&editingSavedPath&&
+        !savedDrawSourceMatches(savedSourcePath,recipe)){
+        // Source geometry was replaced by Undo/import/history during editing.
+        // A stale provisional curve must not overwrite the newly loaded one.
+        stop();
+        onNotice('Saved path changed while editing. Reopen Draw to edit the restored path.');
+        return;
+      }
       if(active&&!editing&&raw.length===0&&ready.length===0){
         // Undo, import, or another source-driven recipe transition can change
         // which path is actually visible while this optional overlay is open.
