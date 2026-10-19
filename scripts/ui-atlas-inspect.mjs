@@ -4,7 +4,8 @@
  * This is observation only and never changes production UI state.
  */
 export async function inspectAtlasState(page,ctx,slug,meta={}){
-  return page.evaluate(({slug,meta,mobile})=>{
+  return page.evaluate(async ({slug,meta,mobile})=>{
+    const {inspectGeometry,expectedPageScroll}=await import('/scripts/ui-atlas-geometry.mjs');
     const root=document.body;
     const g=id=>document.querySelector(id);
     const visible=el=>{
@@ -36,8 +37,24 @@ export async function inspectAtlasState(page,ctx,slug,meta={}){
     const check=(ok,why)=>{if(!ok)throw Error('Invalid atlas state '+slug+': '+why)};
     if(slug==='editor-open'||slug==='special-mobile-edit-rail')
       check(!mobile||(root.classList.contains('mobile-edit-open')&&shownInShot(g('#mobileDesignSheet'))),'mobile Edit tray not shown');
-    if(meta.kind==='tool'||meta.kind==='tool-tail')
-      check(shownInShot(g('.editor-tool-card[data-editor-tool="'+meta.tool+'"]:not([hidden])')),'selected tool card missing');
+    let sourceControls=null;
+    if(meta.kind==='tool'||meta.kind==='tool-tail'){
+      const card=g('.editor-tool-card[data-editor-tool="'+meta.tool+'"]:not([hidden])');
+      check(shownInShot(card),'selected tool card missing');
+      // The atlas must independently verify every schema setting is housed
+      // by the real selected card. Seeing a card alone is insufficient: a
+      // control can silently disappear while the screenshot still looks fine.
+      if(Array.isArray(meta.settings)){
+        const nonVisual=new Set(['textureLayer2Enabled','textureLayer3Enabled']);
+        const keys=meta.settings.filter(key=>!nonVisual.has(key));
+        const missing=keys.filter(key=>{
+          const field=document.querySelector('#controls [name="'+CSS.escape(key)+'"]');
+          return !field||!card.contains(field);
+        });
+        check(missing.length===0,'required source controls missing from '+meta.tool+': '+missing.join(','));
+        sourceControls={expected:keys.length,verified:keys.length,keys};
+      }
+    }
     if(slug.startsWith('special-gallery-')){
       const gallery=g('.workspace>.gallery-section');
       check(!mobile||root.classList.contains('mobile-gallery-open'),'Explore mode not active');
@@ -63,30 +80,100 @@ export async function inspectAtlasState(page,ctx,slug,meta={}){
       check(!mobile||root.classList.contains('mobile-tools-open'),'More tray not shown');
     if(slug==='shell-mobile-explore')
       check(!mobile||root.classList.contains('mobile-gallery-open'),'Explore tray not shown');
-    const owner=mobile
-      ? root.classList.contains('mobile-tools-open')?g('#mobileToolsSheet'):
-        root.classList.contains('mobile-gallery-open')?g('.workspace>.gallery-section'):
-        root.classList.contains('mobile-edit-open')?g('#mobileDesignSheet'):g('#mobileActionDock')
-      : g('#mobileDesignSheet');
+    // Screenshot navigation can scroll the *desktop* page into Explore or
+    // metadata. Auditing the editor sidebar in those shots produces hundreds
+    // of false offscreen-action findings. Select the demonstrated surface,
+    // regardless of viewport profile, before testing any control geometry.
+    const galleryShot=slug.startsWith('special-gallery-')||slug==='shell-favorites';
+    const metadataShot=slug.startsWith('special-metadata-')||slug==='shell-metadata';
+    const owner=galleryShot?g('.workspace>.gallery-section'):
+      metadataShot?g(mobile?'#mobileToolsSheet':'.export-metadata'):
+      mobile
+        ? root.classList.contains('mobile-tools-open')?g('#mobileToolsSheet'):
+          root.classList.contains('mobile-gallery-open')?g('.workspace>.gallery-section'):
+          root.classList.contains('mobile-edit-open')?g('#mobileDesignSheet'):g('#mobileActionDock')
+        : g('#mobileDesignSheet');
     const findings=[];
-    if(owner){
-      const candidates=owner.querySelectorAll('button,input:not([type=hidden]),select,textarea,label,.field,.interior-toolbar');
-      for(const el of candidates){
-        if(findings.length>=24)break;
-        if(!visible(el))continue;
-        const rect=el.getBoundingClientRect();
-        const id=(el.id?('#'+el.id):el.tagName.toLowerCase()+(el.getAttribute('name')?'[name='+el.getAttribute('name')+']':''));
-        if(rect.right>innerWidth+3||rect.left< -3)
-          findings.push({type:'viewport-edge',element:id,overflow:Math.round(Math.max(rect.right-innerWidth,-rect.left))});
-        const style=getComputedStyle(el);
-        if((el.tagName==='BUTTON'||el.tagName==='LABEL')&&
-           !/auto|scroll/.test(style.overflowX)&&el.scrollWidth>el.clientWidth+5)
-          findings.push({type:'text-or-content-overflow',element:id,excess:el.scrollWidth-el.clientWidth,
-            text:el.textContent?.trim().slice(0,55)});
+    // The preview rails remain interactive while Edit is open, and live
+    // outside the editor tray. Inspect them too, without scanning the hidden
+    // old dock or background stage when More/Explore overlays take focus.
+    const roots=owner?[owner]:[];
+    if(mobile&&!root.classList.contains('mobile-tools-open')&&
+        !root.classList.contains('mobile-gallery-open')){
+      for(const sel of ['.mobile-preview-rail-left','.mobile-preview-rail-right']){
+        const rail=g(sel);if(rail)roots.push(rail);
       }
     }
+    const candidates=[...new Set(roots.flatMap(node=>[...node.querySelectorAll(
+      'button,input:not([type=hidden]),select,textarea,label')]))];
+    let scanned=0,ignoredScroll=0,smallActionCount=0;
+    function label(el){
+      return (el.getAttribute('aria-label')||el.getAttribute('title')||
+        el.labels?.[0]?.textContent||el.textContent||'').trim().replace(/\s+/g,' ').slice(0,68);
+    }
+    function selector(el){
+      if(el.id)return '#'+CSS.escape(el.id);
+      if(el.dataset.setting)return '[data-setting="'+CSS.escape(el.dataset.setting)+'"]';
+      const tag=el.tagName.toLowerCase();
+      if(el.getAttribute('name'))return tag+'[name="'+CSS.escape(el.name)+'"]';
+      const scope=el.closest('[data-editor-tool],.mobile-preview-rail,.mobile-tools-content,.mobile-dock');
+      const parent=el.parentElement;
+      const ix=parent?[...parent.children].indexOf(el)+1:1;
+      const rootName=scope?.dataset.editorTool?'.editor-tool-card[data-editor-tool="'+
+        CSS.escape(scope.dataset.editorTool)+'"]':scope?.classList.contains('mobile-dock')?
+        '.mobile-dock':scope?.classList.contains('mobile-tools-content')?
+        '#mobileToolsContent':scope?.classList.contains('mobile-preview-rail')?
+        '.'+[...scope.classList].find(x=>x.endsWith('-left')||x.endsWith('-right')):null;
+      return (rootName?rootName+' > ':'')+tag+':nth-child('+ix+')';
+    }
+    function ancestorClips(el){
+      const result=[];
+      for(let a=el.parentElement;a;a=a.parentElement){
+        const s=getComputedStyle(a);
+        const x=/hidden|clip|auto|scroll/.test(s.overflowX);
+        const y=/hidden|clip|auto|scroll/.test(s.overflowY);
+        if(x||y){
+          result.push({bounds:a.getBoundingClientRect(),x,y,
+            kind:/auto|scroll/.test(s.overflowX+s.overflowY)?'scroll':'hidden',
+            element:selector(a)});
+        }
+        // Fixed components can escape clipping from their scrolling ancestor,
+        // but still honor their own overflow. A fixed ancestor terminates
+        // the chain only after its dimensions have been considered.
+        if(s.position==='fixed')break;
+      }
+      return result;
+    }
+    for(const el of candidates){
+      if(!visible(el)||el.closest('[hidden],[inert],[aria-hidden="true"]'))continue;
+      const cs=getComputedStyle(el);
+      if(cs.pointerEvents==='none'||cs.opacity==='0')continue;
+      const rect=el.getBoundingClientRect();
+      const geometry=inspectGeometry(rect,
+        {left:0,top:0,right:innerWidth,bottom:innerHeight},ancestorClips(el));
+      scanned++;
+      if(geometry.scrollClipped){ignoredScroll++;continue;}
+      if(expectedPageScroll(!mobile&&document.scrollingElement?.scrollHeight>innerHeight+3,
+           galleryShot||metadataShot,geometry.clipSources)){
+        ignoredScroll++;continue;
+      }
+      if(!geometry.clipped)continue;
+      const name=selector(el);
+      const size={width:Math.round(rect.width),height:Math.round(rect.height)};
+      if(size.width<24||size.height<24)smallActionCount++;
+      findings.push({type:geometry.offscreen?'offscreen-action':'clipped-action',
+        element:name,scope:meta.category&&meta.tool?meta.category+'/'+meta.tool:null,
+        label:label(el),missingPixels:geometry.missingPixels,
+        visibleFraction:geometry.visibleFraction,size,
+        clipSources:geometry.clipSources});
+    }
+    findings.sort((a,b)=>b.missingPixels-a.missingPixels);
+    const totalFindings=findings.length;
+    // The summary exposes the unbounded count; its detail is bounded for
+    // useful manifest size without losing the severity ordering.
+    findings.length=Math.min(findings.length,24);
     return {verified:true,surfaceMode:mobile?
       ['mobile-edit-open','mobile-gallery-open','mobile-tools-open'].find(x=>root.classList.contains(x))||'mobile-preview':
-      'desktop',focus:meta.focusSelector||null,findings};
+      'desktop',focus:meta.focusSelector||null,scanned,ignoredScroll,smallActionCount,totalFindings,sourceControls,findings};
   },{slug,meta,mobile:ctx.surface.mobile});
 }
