@@ -68,9 +68,9 @@ for(const [id,title] of [
   moreGroups.set(id,body);
 }
 moreGroups.get('generate').append(document.getElementById('mobileShuffle'));
-const originalSelectors=['.composition-positioner','.action-tray',
-  '.export-metadata','.secondary-actions','.details-bar'];
-const originalGroups=['inspect','generate','export','export','inspect'];
+const originalSelectors=['.composition-positioner','.viewport-positioner',
+  '.action-tray','.export-metadata','.secondary-actions','.details-bar'];
+const originalGroups=['inspect','inspect','generate','export','export','inspect'];
 const originals=originalSelectors.map(sel=>{
   const element=document.querySelector(sel);
   if(!element)throw new Error('Missing original More source controls: '+sel);
