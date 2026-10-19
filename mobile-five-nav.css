@@ -2,6 +2,10 @@
    beside artwork and in More; no rendering or recipe properties change. */
 .mobile-five-shortcuts{display:none}
 @media(max-width:790px){
+  /* A viewport transition must resize the artwork reservation atomically.
+     The inherited animated height can briefly cover the fixed dock in
+     short landscape, even when the final layout has no overlap. */
+  body.mobile-studio.mobile-five-nav .layout{transition:none!important}
   body.mobile-studio.mobile-five-nav .mobile-dock{
     grid-template-columns:repeat(5,minmax(0,1fr));
   }
