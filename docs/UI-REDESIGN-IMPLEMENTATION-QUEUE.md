@@ -79,6 +79,7 @@
 - [ ] Test all existing PNG/JSON recipe round-trips and exact preview/export geometry.
 - [x] Matrix-test source recipes with off-frame drawn paths, independent material layers, custom interior ink/locks, nested regions and hidden legacy tonal mode across JSON, shared URLs and embedded PNG; full-resolution export geometry acceptance remains open (PR pending).
 - [ ] Test touch targets, keyboard/focus, colour contrast, screen reader names and reduced motion.
+- [x] Keep the offscreen Edit dock inert to keyboard focus, while leaving the visible dismiss/expand affordance available and restoring the dock on exit (rebased PR pending).
 - [ ] Update screen plates and companion deck with real implementation screenshots only after fidelity review.
 
 ## Acceptance gates for every implementation PR
