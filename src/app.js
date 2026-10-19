@@ -3,6 +3,7 @@ import { drawWallpaper, presentNudgedArtwork } from './renderer.js?v=20261018-wo
 import {createPreviewCoordinator,createThumbnailQueue,exportWallpaperInWorker,closeFrame} from './render-coordinator.js';
 import { embedPngMetadata, extractPngRecipe, cleanMetadata, METADATA_FIELDS } from './png-metadata.js';
 import { installDrawTool } from './draw-path-ui.js?v=20261018-extend1';
+import {appliedDrawnPathRecipe} from './draw-apply-transaction.js';
 import { installImagePathTool } from './image-path-ui.js?v=20261018-import1';
 import {mountEditor,selectEditorTool,syncEditorStructure} from './editor-layout.js?v=20261018-icons2';
 import {randomizeScope} from './scoped-random.js';
@@ -461,15 +462,8 @@ const drawTool=installDrawTool({
   getRecipe:()=>current,
   onNotice:showNotice,
   onApply:(points,anchors=[],corners=[],extended=false,preservePosition=false)=>{
-    const next=fromControls();
-    next.customPath=points;
-    next.drawnAnchors=anchors;
-    next.drawnCorners=corners;
-    next.extendDrawnPath=extended;
-    next.structure='paths';
-    next.geometry='drawn';
-    next.orientation='horizontal';
-    if(!preservePosition){next.positionX=0;next.positionY=0;}
+    const next=appliedDrawnPathRecipe(fromControls(),points,anchors,corners,
+      extended,preservePosition);
     changeRecipe(next);
     showNotice('Drawn path applied. Undo restores the previous wallpaper.');
   },
