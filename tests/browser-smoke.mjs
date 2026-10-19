@@ -2153,6 +2153,83 @@ try{
       await delay(215);
       assert.equal(await evaluate('document.getElementById("mobileActionDock").inert'),false,
         'visible five-destination dock must regain normal focus after Edit closes');
+      // More is a scrollable real sheet, not a synthetic element census.
+      // Exercise its furthest-down camera pad at each boundary and the
+      // constrained-height landscape. A JS click on an offscreen control
+      // would be a false positive, so first verify a user could hit it.
+      await evaluate('document.getElementById("mobileMore").click()');
+      await waitFor('document.body.classList.contains("mobile-tools-open")');
+      const moreReachability=await evaluate(`(async()=>{
+        const sheet=document.getElementById('mobileToolsSheet');
+        const dock=document.getElementById('mobileActionDock');
+        const pad=sheet.querySelector('.mobile-more-group-body>.viewport-positioner');
+        if(!pad)throw Error('Missing live viewport pan row in More');
+        const actions=['up','left','reset','right','down'];
+        const targets=[];
+        for(const action of actions){
+          const button=pad.querySelector('[data-view-pan="'+action+'"]');
+          button.scrollIntoView({block:'center',behavior:'instant'});
+          await new Promise(resolve=>requestAnimationFrame(resolve));
+          const b=button.getBoundingClientRect();
+          const s=sheet.getBoundingClientRect();
+          const x=b.left+b.width/2,y=b.top+b.height/2;
+          const hit=document.elementFromPoint(x,y);
+          targets.push({action,width:b.width,height:b.height,
+            withinSheet:x>=s.left&&x<=s.right&&y>=s.top&&y<=s.bottom,
+            hit:hit===button||button.contains(hit),
+            labelled:!!button.getAttribute('aria-label')});
+        }
+        const s=sheet.getBoundingClientRect(),d=dock.getBoundingClientRect();
+        const groups=[...sheet.querySelectorAll('.mobile-more-group')];
+        return {open:!sheet.hidden,sheet:{left:s.left,right:s.right,
+          top:s.top,bottom:s.bottom},dockTop:d.top,
+          scrollRange:sheet.scrollHeight-sheet.clientHeight,
+          headings:groups.map(g=>g.querySelector('h3')?.textContent),
+          originalPanConnected:pad.isConnected,
+          targets};
+      })()`);
+      trialBoundaries.at(-1).more=moreReachability;
+      assert.ok(moreReachability.open&&moreReachability.originalPanConnected);
+      assert.ok(moreReachability.sheet.left>=-1&&moreReachability.sheet.right<=width+1);
+      assert.ok(moreReachability.sheet.top>=-1&&
+        moreReachability.sheet.bottom<=moreReachability.dockTop+1,
+        'More sheet must stop above the five-destination dock at '+width+'×'+height);
+      assert.ok(moreReachability.scrollRange>0,
+        'More must scroll to expose lower source controls at '+width+'×'+height);
+      assert.deepEqual(moreReachability.headings,
+        ['Create & seed','Import, export & share','Position & design details']);
+      assert.deepEqual(moreReachability.targets.map(x=>x.action),
+        ['up','left','reset','right','down']);
+      assert.ok(moreReachability.targets.every(x=>x.width>=34&&x.height>=34&&
+        x.withinSheet&&x.hit&&x.labelled),
+        'Camera controls must be scroll-reachable, hit-testable and named in More: '+
+          width+'×'+height+' '+JSON.stringify(moreReachability));
+      // Change the genuine serialized camera state without contaminating
+      // composition position. Then recenter through the actual source pad.
+      const beforeMorePan=await evaluate(
+        'JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r")))');
+      await evaluate('document.querySelector("[data-view-pan=right]").click()');
+      await waitFor('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).viewPanX==='+
+        (beforeMorePan.viewPanX+5));
+      const duringMorePan=await evaluate(
+        'JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r")))');
+      assert.equal(duringMorePan.positionX,beforeMorePan.positionX);
+      assert.equal(duringMorePan.positionY,beforeMorePan.positionY);
+      await evaluate('document.querySelector("[data-view-pan=reset]").click()');
+      await waitFor('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).viewPanX===0');
+      const afterMorePan=await evaluate(
+        'JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r")))');
+      assert.equal(afterMorePan.viewPanY,0);
+      assert.equal(afterMorePan.positionX,beforeMorePan.positionX);
+      assert.equal(afterMorePan.positionY,beforeMorePan.positionY);
+      if(width===499||width===500||width===790||height<=620)
+        await captureUI('five-nav-more-boundary-'+width+'x'+height);
+      await evaluate('document.getElementById("mobileToolsClose").click()');
+      await waitFor('!document.body.classList.contains("mobile-tools-open")');
+      console.log('MORE_PAN_BREAKPOINT',JSON.stringify({
+        width,height,...moreReachability,deltaX:duringMorePan.viewPanX-beforeMorePan.viewPanX,
+        recenteredX:afterMorePan.viewPanX,recenteredY:afterMorePan.viewPanY
+      }));
     }
   }
   console.log('FIVE_DESTINATION_BREAKPOINTS',JSON.stringify(trialBoundaries));
