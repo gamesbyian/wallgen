@@ -26,3 +26,7 @@ A source-backed Move view frame row appears below composition positioning on des
 This is discrete button-driven pan, not drag-to-pan. Moving the viewing frame past a finite authored ribbon may legitimately expose background. Additional structure-specific export pixel comparisons remain future acceptance work.
 
 The follow-up UI atlas now records an explicit mobile More → Move view frame → +5% state and rejects clipped/unnamed frame controls. This is a visual/reachability guard; it does not substitute for physical device acceptance.
+
+## Cross-structure pixel-invariance check (2026-10-19)
+
+The browser smoke now independently samples exact common world-space pixels from **two fresh Canvas2D renders**, one centered and one panned +10% X/−10% Y at 240×520. Translation is exactly 24 screen pixels left and 52 down. After excluding antialiased boundaries, it requires sufficient coloured artwork and fewer than 4% mismatched stable samples in four foreground-qualified geometries: zigzag, dotted wave, radial pinwheel and Voronoi regions. Initial straight/loop seeds generated too little foreground ink in the common view to qualify and are explicitly excluded, not silently treated as passes. This catches extent changes that alter real motif positions or clip coloured ink, which the wave-only native PNG test cannot establish. Zero texture/material avoids nondeterministic or resolution-sensitive surface variation; broader recipe coverage remains an explicit release gate.

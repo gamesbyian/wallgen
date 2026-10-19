@@ -1039,7 +1039,12 @@ export function drawWallpaper(canvas, recipe, options={}) {
   const scene=resolveScene(recipe);
   const camera=viewCamera(canvas.width,canvas.height,scene.viewZoom,
     {panX:scene.viewPanX,panY:scene.viewPanY});
-  scene.viewBounds=camera.viewBounds;
+  // Stripe cap/continuity decisions belong to the authored composition,
+  // not the *position* of a viewing window. Keep the baseline (un-panned)
+  // camera rectangle for those decisions so moving the frame cannot move
+  // strand endpoints, hide a stripe or reroll the visible artwork.
+  // The actual panned bounds still control physical render coverage below.
+  scene.viewBounds=viewCamera(canvas.width,canvas.height,scene.viewZoom).viewBounds;
   // The domain extends beyond the old frame at zoom-out, so fresh ribbon
   // geometry is painted where a 100%-cropped bitmap contained no pixels.
   scene.coreExtent=scene.extent;

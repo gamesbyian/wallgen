@@ -390,6 +390,71 @@ try{
     'zoom must preserve colours and decoration at shared world points: '+
     JSON.stringify(cameraZoomParity));
 
+  // A true viewport pan must preserve identical world-space pixels across
+  // the source renderers. Compare translated points in *fresh* Canvas2D
+  // paintings, not scaled screenshots or the cached nudge layer.
+  const panWorldParity=await evaluate(`(async()=>{
+    const {drawWallpaper}=await import('/src/renderer.js');
+    const cases=[
+      {seed:'pan-zigzag',structure:'paths',geometry:'zigzag',
+        shapeDepth:66,shapeFrequency:58,stripeWidth:82,spread:72},
+      {seed:'pan-dots',structure:'paths',geometry:'wave',
+        motif:'dots',dotSize:75,dotSpacing:45,stripeWidth:72,spread:68},
+      {seed:'pan-radial',structure:'radial',radialMode:'pinwheel',
+        rayCount:16,dividerColor:'black'},
+      {seed:'pan-regions',structure:'regions',regionMode:'voronoi',
+        regionCount:9,dividerColor:'black'}
+    ];
+    const colour=(data,x,y)=>[...data.slice((y*240+x)*4,(y*240+x)*4+3)];
+    const diff=(a,b)=>Math.max(...a.map((v,i)=>Math.abs(v-b[i])));
+    const stable=(data,x,y)=>{
+      const centre=colour(data,x,y);
+      return [[-2,0],[2,0],[0,-2],[0,2]].every(([dx,dy])=>
+        diff(centre,colour(data,x+dx,y+dy))<=8);
+    };
+    const casesResult=[];
+    for(const caseRecipe of cases){
+      const recipe={...caseRecipe,viewZoom:1,viewPanX:0,viewPanY:0,
+        material:'none',lightingMood:'off',glow:0,brushRoughness:0};
+      const make=()=>{const c=document.createElement('canvas');
+        c.width=240;c.height=520;return c;};
+      const baseline=make(),panned=make();
+      drawWallpaper(baseline,recipe);
+      drawWallpaper(panned,{...recipe,viewPanX:10,viewPanY:-10});
+      const a=baseline.getContext('2d').getImageData(0,0,240,520).data;
+      const b=panned.getContext('2d').getImageData(0,0,240,520).data;
+      let stableCount=0,ink=0,mismatch=0;
+      const examples=[];
+      // 10% of 600/1300 source units at 240x520 equals exactly
+      // 24px left and 52px down. Identical world points must match.
+      for(let y=40;y<449;y+=4)for(let x=31;x<215;x+=4){
+        const bx=x-24,by=y+52;
+        if(!stable(a,x,y)||!stable(b,bx,by))continue;
+        const ca=colour(a,x,y),cb=colour(b,bx,by);
+        stableCount++;
+        if(ca.some(v=>v>42))ink++;
+        if(diff(ca,cb)>15){
+          mismatch++;
+          if(examples.length<5)examples.push({x,y,ca,cb});
+        }
+      }
+      casesResult.push({structure:caseRecipe.structure,geometry:caseRecipe.geometry||
+        caseRecipe.radialMode||caseRecipe.regionMode,
+        stable:stableCount,ink,mismatch,
+        ratio:stableCount?mismatch/stableCount:1,examples});
+    }
+    return casesResult;
+  })()`);
+  console.log('CAMERA_PAN_WORLD_PIXEL_PARITY',JSON.stringify(panWorldParity));
+  for(const result of panWorldParity){
+    assert.ok(result.stable>200&&result.ink>80,
+      'Pan parity needs actual artwork, not background-only evidence: '+
+      JSON.stringify(result));
+    assert.ok(result.ratio<.04,
+      'Camera pan appears to regenerate or clip source world ink: '+
+      JSON.stringify(result));
+  }
+
   // Verify real mounted form nodes have semantic component roles, without
   // generating proxies that break locks, undo, disabled states or recipe data.
   const typedRows=await evaluate(`(()=>{
