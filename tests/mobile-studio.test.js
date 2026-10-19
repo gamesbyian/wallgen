@@ -153,7 +153,8 @@ test('preview controls reuse the existing nudge and Randomize inputs, zoom affec
 test('canvas-first rail has independent side Fit and approved Edit adjustments icon',()=>{
   const previewTools=read('src/mobile-preview-tools.js');
   assert.match(previewTools,/zoomFit\.dataset\.zoom='fit'/);
-  assert.match(previewTools,/detail:1/);
+  assert.match(previewTools,/roygbiv-view-fit-request/);
+  assert.match(read('src/app.js'),/viewZoom:1,viewPanX:0,viewPanY:0/);
   assert.match(previewTools,/zoomSlot\.append\(zoomIn,zoomOut,zoomFit,zoomValue\)/);
   assert.match(html,/id="mobileEdit"[^>]*>[\s\S]*?edit-controls\.svg/);
   assert.match(html,/id="drawPathToggle"[^>]*>[\s\S]*?draw-path\.svg/);
