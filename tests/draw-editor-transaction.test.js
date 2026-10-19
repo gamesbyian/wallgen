@@ -331,3 +331,41 @@ test('camera and material changes do not cancel saved edits; successful Apply is
       'successful Apply commits the new path through the actual sync guard');
   }finally{f.cleanup();}
 });
+
+test('hidden pending saved-path edits invalidate if restore changes the active scene',()=>{
+  const f=fixture({seed:'stale-hidden-draw',structure:'paths',geometry:'drawn',
+    customPath:path,positionX:11,viewZoom:1.2,viewPanY:9});
+  try{
+    f.nodes.drawPathToggle.click();
+    f.nodes.drawEditPoints.click();
+    selectFirstAnchor(f);arrowRight(f);
+    f.nodes.drawEditPoints.click(); // Hide handles but retain pending edits.
+    assert.equal(f.nodes.drawPathPanel.dataset.phase,'refine');
+    const restored=normalizeRecipe({...f.recipe,structure:'radial'});
+    assert.throws(()=>f.replaceRecipe(restored),/Saved path changed while editing/,
+      'a dormant path is not the source of the newly restored Radial artwork');
+    assert.equal(f.nodes.drawOverlay.hidden,true);
+    assert.equal(f.calls.length,0);
+    assert.deepEqual(f.recipe,restored);
+  }finally{f.cleanup();}
+});
+
+test('Apply from hidden saved handles commits through source sync, not false stale invalidation',()=>{
+  const f=fixture({seed:'apply-hidden-handles',structure:'paths',geometry:'drawn',
+    customPath:path,positionX:9,positionY:-7,viewZoom:.75},
+    {commitOnApply:true});
+  try{
+    f.nodes.drawPathToggle.click();
+    f.nodes.drawEditPoints.click();
+    selectFirstAnchor(f);arrowRight(f);
+    f.nodes.drawEditPoints.click();
+    assert.equal(f.nodes.drawPathPanel.dataset.phase,'refine');
+    f.nodes.drawApply.click();
+    assert.equal(f.calls.length,1);
+    assert.equal(f.calls[0][4],true,'saved nudge preserved');
+    assert.equal(f.nodes.drawOverlay.hidden,true);
+    assert.deepEqual([f.recipe.positionX,f.recipe.positionY,f.recipe.viewZoom],
+      [9,-7,.75]);
+    assert.notDeepEqual(f.recipe.customPath,path);
+  }finally{f.cleanup();}
+});
