@@ -11,3 +11,9 @@ test('the real mobile material toolbar reports six source-backed interactive cel
   assert.match(live,/MATERIAL ROTATION/);
   assert.match(live,/profile\.width<=360&&name==='material'/);
 });
+test('the minimum-width populated gallery must show a complete card and caption',()=>{
+  assert.match(live,/minimum-320x640'.*'explore-populated'/);
+  assert.match(live,/profile\.id==='landscape-700x412'\|\|profile\.id==='minimum-320x640'/);
+  assert.match(live,/canvas\.bottom>grid\.bottom\+1/);
+  assert.match(live,/caption\.bottom>grid\.bottom\+1/);
+});
