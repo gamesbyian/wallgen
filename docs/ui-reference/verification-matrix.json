@@ -237,13 +237,18 @@
     },
     {
       "id": "FOCUS-EXPERIMENT",
-      "kind": "optional-proposal",
+      "kind": "optional-prototype",
       "source": [
-        "docs/CREAM-STUDIO-CANVAS-FIRST-REDESIGN-V2.md"
+        "src/editor-focus.js",
+        "src/editor-layout.js",
+        "docs/EDITOR-FOCUS-EXPERIMENT.md"
       ],
-      "proof": [],
+      "proof": [
+        "tests/editor-focus.test.js",
+        "tests/browser-smoke.mjs"
+      ],
       "assertion": "One focused slider may be tested as opt-in; multi-slider view remains default; switching parameters never resets other values.",
-      "status": "not implemented, not approved",
+      "status": "optional source-preserving experiment implemented on feature branch; not user-approved as default; wider A/B evaluation pending",
       "risk": "medium"
     }
   ]

@@ -833,12 +833,14 @@
       "conditional": [
         "Inactive parameter explained",
         "Step size depends on setting type",
-        "Default remains multi-row inspector"
+        "Default remains multi-row inspector",
+        "Prototype exists only on mobile; desktop returns to ordinary multi-slider inspector automatically."
       ],
       "forbidden": [
         "Mandatory shared slider for all users",
         "Parameter loss when focus changes",
-        "Colour reassignment on switching"
+        "Colour reassignment on switching",
+        "A focused control editing a locked source field"
       ],
       "icons": [
         "focus-slider",

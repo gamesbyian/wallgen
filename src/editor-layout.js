@@ -1,6 +1,7 @@
 import {EDITOR_CATEGORIES, TOOL_LIST, SETTING_TOOL} from './editor-schema.js?v=20261018-icons2';
 import {iconMarkup} from './ui-icons.js';
 import {annotateEditorSettingRow} from './editor-control-roles.js';
+import {installFocusedAdjustments} from './editor-focus.js';
 
 const byId=id=>document.getElementById(id);
 const form=byId('controls');
@@ -254,7 +255,8 @@ export function mountEditor(){
     if(match)selectEditorTool(match.category,match.id,{source:'search'});
   });
   selectEditorTool('layout','arrange');
-  return {getCurrent:()=>({category:activeCategory,tool:activeTool}),tools,chooser,searchInput};
+  const focused=installFocusedAdjustments({form,chooser});
+  return {focused,getCurrent:()=>({category:activeCategory,tool:activeTool}),tools,chooser,searchInput};
 }
 export function selectEditorTool(category,tool,{source='manual'}={}){
   let selected=tools.get(tool);
@@ -283,7 +285,12 @@ export function selectEditorTool(category,tool,{source='manual'}={}){
   if(source==='search'||source==='keyboard'){
     const rail=chooser.getBoundingClientRect();
     const chip=selected.chip.getBoundingClientRect();
-    const left=rail.left+10,right=rail.right-10;
+    // An optional sticky Focus chip takes genuine left-side space. Search
+    // navigation must reveal the selected tool *beside* it, not underneath.
+    const pinned=chooser.querySelector('.editor-focus-toggle');
+    const pinnedWidth=pinned&&getComputedStyle(pinned).display!=='none'?
+      pinned.getBoundingClientRect().width:0;
+    const left=rail.left+pinnedWidth+10,right=rail.right-10;
     if(chip.left<left)chooser.scrollLeft+=chip.left-left;
     else if(chip.right>right)chooser.scrollLeft+=chip.right-right;
   }

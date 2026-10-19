@@ -1,0 +1,56 @@
+/* Optional Focus is a secondary editing experience, never the default.
+   The real source input nodes remain installed in their original tool cards. */
+.editor-focus-toggle{flex:0 0 auto;border:1px solid #d9a2b9!important;min-height:30px;
+  padding:3px 12px;border-radius:9px;font-size:11px;font-weight:700;cursor:pointer;
+  background:var(--surface);position:sticky;left:0;z-index:4}
+.editor-focus-toggle[aria-pressed="true"]{background:#ffe0bb!important;border-color:#cf719a!important}
+.editor-focus-panel{display:flex;flex-direction:column;gap:10px;
+  flex:1 1 auto;min-height:0;overflow:auto;overscroll-behavior:contain;
+  padding:8px 10px 9px;border:1px solid var(--line);border-radius:10px;
+  background:var(--surface);color:inherit}
+.editor-focus-panel[hidden],.editor-focus-slider-row[hidden]{display:none!important}
+#controls.editor-focus-active .editor-category-panel:not([hidden]){display:none!important}
+.editor-focus-heading{display:flex;align-items:center;justify-content:space-between;gap:9px;
+  font-size:12px;min-height:32px}
+.editor-focus-all{background:#ffe0bb;border:1px solid #d3a082;border-radius:8px;
+  padding:6px 10px;min-height:34px;white-space:nowrap;color:#292433;font-weight:750}
+.editor-focus-chips{display:flex;align-items:center;gap:6px;flex:0 0 auto;
+  overflow:auto hidden;overscroll-behavior-x:contain;min-height:37px;scrollbar-width:thin}
+.editor-focus-chip{flex:0 0 auto;min-height:33px;max-width:170px;padding:5px 10px;
+  color:inherit;background:var(--surface);border:1px solid var(--line);
+  border-radius:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.editor-focus-chip[aria-pressed="true"]{background:#d660991e;border-color:#cb5994;font-weight:750}
+.editor-focus-slider-row{display:grid;grid-template-columns:38px minmax(0,1fr) 38px 47px;
+  gap:6px;align-items:center;min-height:42px}
+.editor-focus-slider{width:100%;min-width:0;height:32px;margin:0;touch-action:pan-x;
+  accent-color:var(--roygbiv-slider-color,#2778dc)}
+.editor-focus-step{border:1px solid var(--line);border-radius:9px;min-height:40px;
+  color:inherit;background:var(--surface);font-size:23px}
+.editor-focus-value{min-width:0;text-align:center;font:600 13px Rubik,system-ui,sans-serif;
+  font-variant-numeric:tabular-nums}
+.editor-focus-help{font-size:11px;line-height:1.35;color:var(--muted);margin:0}
+.editor-focus-panel :disabled{opacity:.5}
+.editor-focus-panel :is(button,input):focus-visible,.editor-focus-toggle:focus-visible{
+  outline:2px solid #6359e5;outline-offset:2px}
+@media(min-width:791px){.editor-focus-toggle{display:none!important}}
+@media(max-width:790px){
+ body.mobile-studio .sidebar .editor-focus-panel{
+   flex:1 1 0!important;min-height:0!important;overflow:auto!important;
+   margin:0!important;padding:7px 9px!important}
+ body.mobile-studio .sidebar .editor-focus-heading strong{font-size:11px}
+ body.mobile-studio .sidebar .editor-focus-help{font-size:10px}
+}
+@media(max-width:790px) and (min-height:740px){
+ body.mobile-studio.mobile-edit-open:has(#controls.editor-focus-active){
+   --mobile-tray-height:clamp(250px,29dvh,275px)!important}
+}
+
+html[data-theme="dark"] .editor-focus-all{background:#51374f;color:#fff;border-color:#8f6b8b}
+
+@media(max-width:790px){
+  body.mobile-studio .sidebar .editor-tool-chooser .editor-focus-toggle{
+    display:flex!important;align-items:center;justify-content:center;
+    min-width:67px;min-height:27px;max-height:27px;height:27px;
+    flex:0 0 67px;margin-right:2px;padding:2px 7px!important;
+    font-size:11px!important}
+}
