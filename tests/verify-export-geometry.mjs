@@ -23,6 +23,8 @@ const previewRecipe=extractPngRecipe(preview);
 const exportRecipe=extractPngRecipe(full);
 assert.deepEqual(exportRecipe,previewRecipe,'native PNG silently changed the editable recipe');
 assert.equal(exportRecipe.viewZoom,.7,'expect a genuine zoom-out framing fixture');
+assert.equal(exportRecipe.viewPanX,15,'native/export viewport horizontal pan must persist');
+assert.equal(exportRecipe.viewPanY,-10,'native/export viewport vertical pan must persist');
 assert.equal(exportRecipe.material,'none','avoid stochastic textures in geometric pixel acceptance');
 let browser;
 try{
