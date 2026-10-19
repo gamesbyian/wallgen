@@ -77,7 +77,10 @@ try{
         img.onload=resolve;img.onerror=()=>reject(Error('Downloaded PNG failed browser decode'));
         img.src='data:image/png;base64,'+base64;
       });
-      const width=600,height=1300;
+      // This scale was foreground-qualified for the same off-frame Drawn
+      // path in the direct world-pixel test; 600x1300/17 missed every narrow
+      // painted region even though thousands of background samples matched.
+      const width=300,height=650;
       const scaled=document.createElement('canvas');
       scaled.width=width;scaled.height=height;
       const ctx=scaled.getContext('2d',{willReadFrequently:true});
@@ -94,12 +97,12 @@ try{
       const delta=(a,b)=>Math.max(...a.map((v,i)=>Math.abs(v-b[i])));
       let stable=0,colored=0,mismatch=0,coloredMismatch=0;
       const distinct=new Set(),examples=[];
-      for(let y=10;y<height-10;y+=17){
-        for(let x=10;x<width-10;x+=17){
+      for(let y=10;y<height-10;y+=11){
+        for(let x=10;x<width-10;x+=11){
           const a=channel(original,x,y),b=channel(downloadPixels,x,y);
           distinct.add(b.map(v=>Math.round(v/24)).join(':'));
           if(!comparePixels)continue;
-          if([[3,0],[-3,0],[0,3],[0,-3],[3,3],[-3,-3]]
+          if([[2,0],[-2,0],[0,2],[0,-2],[2,2],[-2,-2]]
             .some(([dx,dy])=>delta(a,channel(original,x+dx,y+dy))>8))continue;
           const ink=Math.max(...a)>75&&Math.max(...a)-Math.min(...a)>36;
           stable++;
