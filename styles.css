@@ -542,3 +542,6 @@
 .setting-inactive .field,.setting-inactive .rotation-controls{cursor:not-allowed}
 .setting-inactive input:disabled,.setting-inactive select:disabled{opacity:1;cursor:not-allowed}
 .setting-inactive .setting-lock{opacity:.55;cursor:not-allowed}
+
+/* Follow system motion preference for base document navigation as well as trays. */
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
