@@ -881,7 +881,12 @@
 /* The Shapes category contains ribbon-specific construction tools. All
    structures retain the universal Details category. */
 body.mobile-studio .sidebar .settings-tabs .settings-tab:disabled{
-  opacity:.28!important;cursor:default!important;
+  /* An inapplicable category is still a navigational label. Avoid the old
+     28% whole-button fade, which compounded with the muted foreground. */
+  opacity:1!important;color:#b5adbf!important;cursor:default!important;
+}
+html[data-theme="cream"] body.mobile-studio .sidebar .settings-tabs .settings-tab:disabled{
+  color:#716879!important;
 }
 
 /* Canonical setting-row state indication. No box-model or input changes:
