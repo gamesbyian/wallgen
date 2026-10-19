@@ -1579,6 +1579,46 @@ try{
   await evaluate('document.getElementById("undo").click()');
   assert.equal(await evaluate('new URLSearchParams(location.search).get("r")'),
     imageImport.original,'angle application should also be undoable');
+  // The five-destination trial runs as a second, explicit navigation mode.
+  // The default six-action interface above remains a fully tested baseline.
+  await command('Page.navigate',{url:url+'?nav=five'});
+  await waitFor('document.body.classList.contains("mobile-five-nav")&&!!document.getElementById("mobileSaved")',15000);
+  const fiveNav=await evaluate(`(()=>{
+    const dock=[...document.querySelectorAll('#mobileActionDock>button')];
+    const ids=dock.map(button=>button.id);
+    const hasAction=id=>document.getElementById(id)?.tagName==='BUTTON';
+    const favorite=document.getElementById('mobileFavorite');
+    const download=document.getElementById('mobileDownload');
+    const shuffle=document.getElementById('mobileShuffle');
+    const quick=favorite.closest('.mobile-five-shortcuts')===download.closest('.mobile-five-shortcuts');
+    const rects=dock.map(b=>b.getBoundingClientRect());
+    document.getElementById('mobileSaved').click();
+    const saved={mode:document.getElementById('gallery').dataset.view,
+      selected:document.getElementById('mobileSaved').getAttribute('aria-current'),
+      expanded:document.getElementById('mobileSaved').getAttribute('aria-expanded'),
+      open:document.body.classList.contains('mobile-gallery-open')};
+    document.getElementById('mobileExplore').click();
+    const explore={mode:document.getElementById('gallery').dataset.view,
+      selected:document.getElementById('mobileExplore').getAttribute('aria-current'),
+      open:document.body.classList.contains('mobile-gallery-open')};
+    document.getElementById('mobileStudio').click();
+    const studio={selected:document.getElementById('mobileStudio').getAttribute('aria-current'),
+      galleryClosed:!document.body.classList.contains('mobile-gallery-open')};
+    return {ids,allNamed:['mobileShuffle','mobileFavorite','mobileDownload'].every(hasAction),
+      quick,shuffleInMore:shuffle.parentElement.id==='mobileToolsContent',
+      iconCount:dock.filter(b=>!!b.querySelector('svg.ui-icon')).length,
+      widths:rects.map(b=>b.width),
+      saved,explore,studio};
+  })()`);
+  assert.deepEqual(fiveNav.ids,
+    ['mobileStudio','mobileEdit','mobileExplore','mobileSaved','mobileMore']);
+  assert.ok(fiveNav.allNamed&&fiveNav.quick&&fiveNav.shuffleInMore);
+  assert.equal(fiveNav.iconCount,5);
+  assert.ok(fiveNav.widths.every(width=>width>45));
+  assert.deepEqual(fiveNav.saved,{mode:'saved',selected:'page',expanded:'true',open:true});
+  assert.deepEqual(fiveNav.explore,{mode:'explore',selected:'page',open:true});
+  assert.deepEqual(fiveNav.studio,{selected:'page',galleryClosed:true});
+  console.log('FIVE_DESTINATION_TRIAL_ACCEPTANCE',JSON.stringify(fiveNav));
   console.log('REDESIGN_EXPLORATION_ACCEPTANCE_SUCCESS');
 }finally{
   try{ws?.close()}catch{}
