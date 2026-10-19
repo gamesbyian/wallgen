@@ -1,0 +1,55 @@
+name: Agent 3 painted-world pixel parity
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'tests/redesign-world-pixel-acceptance.mjs'
+      - '.github/workflows/agent3-world-pixels.yml'
+      - 'src/renderer.js'
+      - 'src/model.js'
+      - 'src/view-camera.js'
+      - 'src/composition-geometry.js'
+      - 'src/interior-elements.js'
+      - 'src/path-geometry.js'
+permissions:
+  contents: read
+concurrency:
+  group: agent3-world-pixels-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  foreground-pixels:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax and source tests
+        run: |
+          node --check tests/redesign-world-pixel-acceptance.mjs
+          node --test tests/render.test.js tests/viewport-pan-contract.test.js
+      - name: Browser dependencies
+        run: |
+          npm install --no-save playwright@1.56.1 serve@14.2.5
+          npx playwright install --with-deps chromium
+      - name: Serve actual application and source ES modules
+        run: |
+          npx serve . -l 4173 > /tmp/agent3-world-pixels.log 2>&1 &
+          for i in $(seq 1 40); do
+            if curl --fail --silent http://127.0.0.1:4173/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/agent3-world-pixels.log
+          exit 1
+      - name: Compare foreground-qualified pixels at two sizes and native Radial
+        run: node tests/redesign-world-pixel-acceptance.mjs
+      - name: Upload actual pixel evidence and failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: roygbiv-agent3-foreground-pixels
+          path: artifacts/agent3-world-pixels/
+          retention-days: 14
+          if-no-files-found: warn
