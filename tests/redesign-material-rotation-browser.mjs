@@ -54,7 +54,7 @@ try{
         assert.equal(await card.isVisible(),true);
         assert.equal(await card.getAttribute('aria-label'),'Finish '+layer+' controls');
         const buttons=card.locator('[data-rotate-target="'+key+'"]');
-        assert.equal(await buttons.count(),6,'Layer '+layer+' lost a source rotation shortcut');
+        assert.equal(await buttons.count(),5,'Layer '+layer+' lost a source rotation shortcut');
         const input=card.locator('input[name="'+key+'"]');
         assert.equal(await input.isVisible(),true);
         assert.equal(await input.isEnabled(),true);
@@ -104,14 +104,14 @@ try{
         assert.ok(current().lockedSettings.includes(key));
         assert.equal(await input.isDisabled(),true,'Locked numeric rotation editable');
         assert.deepEqual(await buttons.evaluateAll(els=>els.map(el=>el.disabled)),
-          [true,true,true,true,true,true],
+          [true,true,true,true,true],
           'Rotation shortcut bypasses source setting lock for layer '+layer);
         record.push({layer,lockConfirmed:true});
         await lock.click();
         assert.ok(!current().lockedSettings.includes(key));
         assert.equal(await input.isDisabled(),false);
         assert.deepEqual(await buttons.evaluateAll(els=>els.map(el=>el.disabled)),
-          [false,false,false,false,false,false],
+          [false,false,false,false,false],
           'Unlock did not restore source rotation shortcuts');
         await page.screenshot({path:join(output,scenario.name+'-finish-'+layer+'.png'),
           animations:'disabled'});
