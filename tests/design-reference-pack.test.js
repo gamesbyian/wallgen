@@ -18,7 +18,7 @@ test('canonical references enumerate all seven categories, all 40 tools and 12 i
   assert.match(read('docs/ui-reference/'+sc.id+'.svg'),/REQUIRED\s+(?:IN THIS STATE|\/\s*SOURCE-VERIFIED AND PLANNED)/);
  }
 });
-test('approved icon family remains available with 12 unwired flat SVG candidates',()=>{
+test('approved icon family tracks actual live usage of four extension glyphs',()=>{
  assert.equal(manifest.icons.length,68);
  const original=manifest.icons.filter(i=>i.extension!=='canvas-first-v2');
  assert.equal(original.length,56);
@@ -27,7 +27,14 @@ test('approved icon family remains available with 12 unwired flat SVG candidates
   assert.ok(iconMarkup(icon.name).includes('data-roygbiv-icon="'+icon.name+'"'));
  }
  for(const icon of manifest.icons.filter(i=>i.extension==='canvas-first-v2')){
-  assert.match(icon.status,/not wired/i);
+  const paths=icon.integrationSources||[];
+  if(icon.status==='integrated'){
+    assert.ok(paths.length,'Integrated icon has no recorded source '+icon.name);
+    for(const path of paths)assert.ok(read(path).includes(icon.name),'Unreferenced live glyph '+icon.name);
+  }else{
+    assert.match(icon.status,/not wired/i);
+    assert.equal(paths.length,0);
+  }
   assert.doesNotMatch(read('assets/icons/roygbiv/'+icon.name+'.svg'),/(?:linear|radial)Gradient|<filter|<script/i);
  }
 });

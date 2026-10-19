@@ -15,7 +15,9 @@
 - [x] Publish 12 source-driven wireframe plates with required/conditional/forbidden inventories.
 - [x] Record current six dock actions versus proposed five navigation destinations and action relocations.
 - [x] Add automated SVG/spec/asset tests and saved approved reference source hashes.
-- [ ] Review staged glyphs at 20/24/28px on both cream and dark, selected/disabled; approve/edit candidates before UI wiring.
+- [x] Wire source-qualified Fit and Edit adjustment symbols to existing controls; verify actual source markup/handlers.
+- [x] Wire Import path and Export PNG icons to their matching pre-existing actions, without altering button identities.
+- [ ] Review all extension glyphs at 20/24/28px on both cream and dark, selected/disabled; approve/edit the remaining eight candidates before UI wiring.
 - [ ] Compare every canonical screen plate to exact feature inventory, including uncommon conditional states; annotate any implementation exception.
 
 ## Phase B — canvas-first shell

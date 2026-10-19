@@ -19,7 +19,7 @@
 
 ## Approved icon family and proposed assignments
 
-The baseline contained **55 UI glyphs plus one untouched brand icon (56 SVGs)**. This pack stages **12 additional candidate glyphs**, for **68 total SVGs**. No navigation or tools have been rewired. All candidates are 32×32, rounded 2.4-unit neutral strokes with flat approved ROYGBIV accents, no gradient/filter/raster. The approved poster remains at `assets/icons/references/roygbiv-icon-system-approved.png`. The canonical app brand image must never be regenerated or restyled without separate approval.
+The baseline contained **55 UI glyphs plus one untouched brand icon (56 SVGs)**. This pack stages **12 additional candidate glyphs**, for **68 total SVGs**. **Four candidates are now wired by successive verified PRs** (Edit, Fit, Import path, PNG export), using existing source controls without changing event semantics; the other eight remain unwired. All candidates are 32×32, rounded 2.4-unit neutral strokes with flat approved ROYGBIV accents, no gradient/filter/raster. The approved poster remains at `assets/icons/references/roygbiv-icon-system-approved.png`. The canonical app brand image must never be regenerated or restyled without separate approval.
 
 | Function | Source SVG | Action | Rule |
 |---|---|---|---|
@@ -39,7 +39,7 @@ The baseline contained **55 UI glyphs plus one untouched brand icon (56 SVGs)**.
 | PNG export | export-png (candidate) | Add | Separate saved recipe JSON |
 | Image metadata | metadata (candidate) | Add | Output identity not design parameter |
 
-**Semantics:** Use one action concept per glyph; don't reuse the same figure to mean zooming the camera and editing artwork geometry. Use real labels/aria-labels even where a glyph is displayed alone. SVG art at 20–28px may have 40–48px hit zones; keep focus/active/disabled distinction on the button or chip, not purely by icon hue. Preserve existing theme-aware inline `currentColor` rendering. New candidates are registered in the icon renderer for preview, but **not bound to live controls**.
+**Semantics:** Use one action concept per glyph; don't reuse the same figure to mean zooming the camera and editing artwork geometry. Use real labels/aria-labels even where a glyph is displayed alone. SVG art at 20–28px may have 40–48px hit zones; keep focus/active/disabled distinction on the button or chip, not purely by icon hue. Preserve existing theme-aware inline `currentColor` rendering. Extension glyphs are registered in the icon renderer. Their per-icon **integrated** or **candidate/not wired** state and actual source usages are machine-checked in the manifest.
 
 ## Feature-preservation census
 

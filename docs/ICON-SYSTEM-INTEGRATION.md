@@ -18,3 +18,7 @@ The approved SVGs in `assets/icons/roygbiv/` are now used by existing primary na
 To validate: run `npm run check`, then `node tests/browser-smoke.mjs` in an environment with Chromium. Open/close Edit at Pixel 6 Pro portrait and check the editor tab row, preview rails, settings, lock/unlock, favourite state and zoom before accepting visual parity.
 
 Visual inspection of the Chromium snapshots also identified an existing overflow in the 55px Import image shortcut. Its caption now uses the same two-line pattern as Draw path; the preview rail, column and button identity remain unchanged.
+
+## Verified semantic icon mapping updates
+
+The original 55 UI glyphs and app icon remain. Four of the twelve v2 extension glyphs now have real production owners: `edit-controls` on the existing Edit dock button, `fit-canvas` on the mobile camera Fit control, `import-path` on Import image, and `export-png` on wallpaper PNG download controls. The file/recipe JSON download retains the original `download` symbol to preserve output distinctions. The manifest documents integration paths, and tests confirm referenced source files actually use the glyphs. The remaining eight candidates are not yet wired.
