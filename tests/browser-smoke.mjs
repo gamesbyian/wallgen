@@ -1519,6 +1519,14 @@ try{
       .every(sel=>panel.querySelector(sel)?.getAttribute('role')==='group');
     document.getElementById('drawEditPoints').click();
     const editingPhase=panel.dataset.phase;
+    const drawingTargets=[...panel.querySelectorAll('.draw-path-controls button')]
+      .filter(button=>!button.hidden&&getComputedStyle(button).display!=='none')
+      .map(button=>{
+        const r=button.getBoundingClientRect();
+        const parent=panel.getBoundingClientRect();
+        return {id:button.id,width:r.width,height:r.height,
+          horizontallyInside:r.left>=parent.left-1&&r.right<=parent.right+1};
+      });
     const overlay=document.getElementById('drawOverlay');
     const model=createPointEditor(recipe.customPath);
     const index=model.anchors[Math.floor(model.anchors.length/2)];
@@ -1543,7 +1551,7 @@ try{
     document.getElementById('undo').click();
     const restored=JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get('r')));
     return {changed,pinned,corners,undoAvailable,panelOpacity,initialPhase,editingPhase,
-      originalActions,semanticGroups,
+      originalActions,semanticGroups,drawingTargets,
       restored:JSON.stringify(restored.customPath)===before};
   })()`);
   console.log('LIVE_ANCHOR_EDITOR_ACCEPTANCE',JSON.stringify(pointEditorCheck));
@@ -1555,6 +1563,11 @@ try{
     'point edit action should visibly identify the anchor editing phase');
   assert.ok(pointEditorCheck.originalActions&&pointEditorCheck.semanticGroups,
     'drawing workflow must retain all eleven original action identities in named groups');
+  assert.ok(pointEditorCheck.drawingTargets.length>=9,
+    'Sketch, Refine, Finish and anchor actions remain reachable');
+  assert.deepEqual(pointEditorCheck.drawingTargets.filter(t=>
+    t.height<33||t.width<24||!t.horizontallyInside),[],
+    'Compact drawing actions must expose usable touch rectangles without side clipping');
   assert.ok(pointEditorCheck.changed&&pointEditorCheck.pinned>0&&pointEditorCheck.corners>0,
     'dragging a point must modify and pin the selected anchor');
   assert.ok(pointEditorCheck.undoAvailable&&pointEditorCheck.restored,
