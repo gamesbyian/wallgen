@@ -4,7 +4,7 @@ Claims are qualified as source-confirmed, browser-observed, visual-approved, beh
 
 ## Independent reviewer lanes
 
-**Capability lane:** Compare all 113 static IDs, 87 data-setting fields, 40 named tools, 3 material layers, 7 colour targets, dynamic interiors, drawing/anchor actions, import/export/metadata, saved/history, all six current dock actions. Prove alternate scene applicability via actual UI interactions. Seek missing controls and record CSS selectors and reproduction.
+**Capability lane:** Compare all 115 current static IDs, 87 data-setting fields, 40 named tools, 3 material layers, 7 colour targets, dynamic interiors, drawing/anchor actions, import/export/metadata, saved/history, all six current dock actions. Prove alternate scene applicability via actual UI interactions. Seek missing controls and record CSS selectors and reproduction.
 
 **Behavior lane:** Seek counterexamples to each requirement in the verification matrix. Verify zoom changes serialized viewZoom only; nudge changes positionX and positionY and is NOT viewport-only Pan; Fit returns framing to 100%; point edits alter geometry, while framing guides do not. Compare full before/after recipes, screenshots and PNG output.
 
