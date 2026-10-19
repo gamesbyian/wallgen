@@ -62,6 +62,7 @@
 - [ ] Preserve all three material layers, coverage, strength/scale/rotation shortcuts (−90,−1,value,+1,+90) through the complete redesign.
 - [x] Give the three existing material chooser chips source-backed Off / Automatic / Active / 0% status without changing input identity or navigation geometry (PR #113).
 - [ ] Preserve dynamic interior element stack, ink selection, colours, placement, locking, reordering.
+- [x] Show selected interior element index, total, enabled/hidden state and targeting scope in the already-present compact manager line, without new inputs or card-height changes (PR pending).
 - [x] Implement opt-in single Focus slider prototype backed by existing original range inputs; default All controls preserved (PR #87).
 - [ ] A/B evaluate Focus versus full inspector on Path, Material and Colour workflows, especially locked/disabled states; do not change default without user testing.
 
