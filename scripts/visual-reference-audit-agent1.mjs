@@ -22,7 +22,7 @@ const all=Object.keys(plates).filter(name=>name!=='explore-populated');
 const profiles=[
   // Exact lower-width CSS boundary plus the app's minimum supported width.
   // These are actual mobile Chromium layouts, never CSS-root zoom proxies.
-  {id:'minimum-320x640',width:320,height:640,cases:['studio','geometry','material','more','explore','draw']},
+  {id:'minimum-320x640',width:320,height:640,cases:['studio','geometry','material','more','explore','explore-populated','draw']},
   {id:'edge-360x740',width:360,height:740,cases:['studio','geometry','material','more','explore','focus']},
   {id:'phone-412x892',width:412,height:892,cases:[...all,'explore-populated']},
   {id:'edge-499x892',width:499,height:892,cases:['studio','geometry','material','more','focus']},
@@ -267,7 +267,7 @@ try{
               Math.max(0,canvas.bottom-grid.bottom):null;
             console.log('GALLERY THUMB: '+key+' canvas hidden below clip='+hidden+
               'px; grid overflow-y='+measured.galleryGridOverflowY);
-            if(profile.id==='landscape-700x412'){
+            if(profile.id==='landscape-700x412'||profile.id==='minimum-320x640'){
               const card=measured.firstThumb,caption=measured.firstThumbCaption;
               const bad=!grid?.visible||!canvas?.visible||!card?.visible||!caption?.visible||
                 canvas.y<grid.y-1||canvas.bottom>grid.bottom+1||
