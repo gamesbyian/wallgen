@@ -1,6 +1,6 @@
 import {EDITOR_CATEGORIES, TOOL_LIST, SETTING_TOOL} from './editor-schema.js?v=20261018-icons2';
 import {iconMarkup} from './ui-icons.js';
-import {annotateEditorSettingRow} from './editor-control-roles.js';
+import {annotateEditorSettingRow,sourceSettingLabel} from './editor-control-roles.js';
 import {installFocusedAdjustments} from './editor-focus.js';
 import {toolAppliesToScene} from './editor-tool-applicability.js';
 import {findEditorToolMatch} from './editor-tool-search.js';
@@ -200,8 +200,9 @@ export function mountEditor(){
     const die=create('button','editor-setting-die');
     die.innerHTML=iconMarkup('randomize');
     die.type='button';die.dataset.randomSetting=key;
-    die.setAttribute('aria-label','Randomize only '+key);
-    die.title='Reroll or vary this setting only';
+    const name=sourceSettingLabel(form.elements.namedItem(key),key);
+    die.setAttribute('aria-label','Randomize only '+name);
+    die.title='Reroll or vary '+name+' only';
     root.append(die);
   }
   for(const old of originals){old.hidden=true;old.setAttribute('aria-hidden','true');}
