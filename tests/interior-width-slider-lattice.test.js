@@ -27,7 +27,8 @@ test('Interior line and band defaults are representable as exact native range po
 test('live Interior width control uses the same legal grid for either element type',()=>{
   const source=readFileSync(new URL('../src/app.js',import.meta.url),'utf8');
   assert.match(source,/range\(interiorCards\['interior-placement'\],active\.type==='band'\?'Band width %':'Line width','width',\.15,50,\.05\)/);
-  assert.match(source,/slider\.step=step;slider\.value=active\[key\]/);
+  assert.match(source,/slider\.step=interiorSliderStep\(active\[key\],min,step\)/);
+  assert.match(source,/slider\.value=active\[key\]/);
   assert.match(source,/slider\.addEventListener\('change',\(\)=>update\(key,Number\(slider\.value\)\)\)/);
 });
 
