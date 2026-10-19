@@ -78,8 +78,6 @@ html[data-theme="cream"] #notice{color:#28583f!important}
     width:24px!important;min-width:24px!important;
     height:26px!important;min-height:26px!important;
     padding:1px!important}
-  /* Reserve real space for the gallery cards, not just its toolbar. */
-  body.mobile-gallery-open{--mobile-tray-height:clamp(300px,42dvh,420px)}
   body.mobile-gallery-open .workspace>.gallery-section{
     padding:9px 12px 8px!important;gap:7px!important}
   body.mobile-gallery-open .gallery-head{
