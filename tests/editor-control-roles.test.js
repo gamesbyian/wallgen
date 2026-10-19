@@ -54,6 +54,6 @@ test('scoped randomize labels use visible source language, never raw recipe keys
   };
   assert.equal(sourceSettingLabel(visible,'stripeWidth'),'Stripe thickness');
   assert.equal(sourceSettingLabel({getAttribute:()=>null,closest:()=>null},'outlineBuffer'),
-    'outline Buffer');
-  assert.equal(sourceSettingLabel(null,'stripeWidth'),'stripe Width');
+    'Outline Buffer');
+  assert.equal(sourceSettingLabel(null,'stripeWidth'),'Stripe Width');
 });
