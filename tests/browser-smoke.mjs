@@ -1662,6 +1662,40 @@ try{
   await evaluate('document.getElementById("mobileMore").click()');
   await delay(180);
   await captureUI('five-nav-more-412x892');
+  await evaluate('document.getElementById("mobileStudio").click()');
+  const boundaryViewports=[[499,892],[500,892],[790,892],[700,412],[791,892]];
+  const trialBoundaries=[];
+  for(const [width,height] of boundaryViewports){
+    await command('Emulation.setDeviceMetricsOverride',{
+      width,height,deviceScaleFactor:1,mobile:true,screenWidth:width,screenHeight:height,
+    });
+    await delay(130);
+    const state=await evaluate(`(()=>{
+      const box=selector=>document.querySelector(selector)?.getBoundingClientRect();
+      const dock=box('#mobileActionDock');
+      const stage=box('.studio-stage');
+      const frame=box('.wallpaper-frame');
+      return {mobile:document.body.classList.contains('mobile-studio'),
+        dockStyle:getComputedStyle(document.getElementById('mobileActionDock')).display,
+        buttons:document.querySelectorAll('#mobileActionDock>button').length,
+        dock:{left:dock.left,right:dock.right,top:dock.top,bottom:dock.bottom},
+        stageBottom:stage.bottom,frameHeight:frame.height};
+    })()`);
+    trialBoundaries.push({width,height,...state});
+    if(width<=790){
+      assert.ok(state.mobile&&state.dockStyle!=='none');
+      assert.equal(state.buttons,5);
+      assert.ok(state.dock.left>=-1&&state.dock.right<=width+1);
+      assert.ok(state.dock.bottom<=height+1);
+      assert.ok(state.stageBottom<=state.dock.top+2,
+        'five-nav viewport stage overlaps bottom dock');
+    }else{
+      assert.equal(state.mobile,false,'791px must return to desktop shell');
+      assert.equal(state.dockStyle,'none');
+    }
+  }
+  console.log('FIVE_DESTINATION_BREAKPOINTS',JSON.stringify(trialBoundaries));
+
 
 
   console.log('REDESIGN_EXPLORATION_ACCEPTANCE_SUCCESS');
