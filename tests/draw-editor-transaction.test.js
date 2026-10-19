@@ -524,3 +524,44 @@ test('keyboard arrow at an off-frame clamp edge creates no Undo step',()=>{
     assert.deepEqual(f.recipe,f.snap);
   }finally{f.cleanup();}
 });
+
+test('saved Draw source does not advertise inactive Smooth or Geometric fit',()=>{
+  const f=fixture({seed:'saved-inert-fit-controls',structure:'paths',geometry:'drawn',
+    customPath:path,positionX:13,positionY:-7,viewZoom:.5,viewPanX:19});
+  try{
+    f.nodes.drawPathToggle.click();
+    assert.equal(f.nodes.drawPathPanel.dataset.phase,'refine');
+    assert.equal(f.nodes.drawSmooth.disabled,true,
+      'saved centreline has no original raw samples for a new Smooth fit');
+    assert.equal(f.nodes.drawGeometric.disabled,true,
+      'Geometric fit must not offer an action that leaves the saved path unchanged');
+    assert.equal(f.nodes.drawSmoothingStrength.disabled,true);
+    f.nodes.drawEditPoints.click();
+    assert.equal(f.nodes.drawSmooth.disabled,true);
+    assert.equal(f.nodes.drawGeometric.disabled,true);
+    assert.equal(f.nodes.drawSmoothingStrength.disabled,false,
+      'the explicit editor Resmooth action still consumes its smoothing strength');
+    f.nodes.drawEditPoints.click();
+    assert.equal(f.nodes.drawSmoothingStrength.disabled,true);
+    assert.equal(f.nodes.drawSmooth.disabled,true);
+    f.nodes.drawAgain.click();
+    assert.equal(f.nodes.drawPathPanel.dataset.phase,'sketch');
+    assert.equal(f.nodes.drawSmooth.disabled,false,'a new sketch can select its fit');
+    assert.equal(f.nodes.drawGeometric.disabled,false);
+    assert.equal(f.nodes.drawSmoothingStrength.disabled,false);
+    assert.deepEqual(f.recipe,f.snap);
+  }finally{f.cleanup();}
+});
+
+test('an imported provisional curve still offers both usable fit modes',()=>{
+  const f=fixture({seed:'imported-fit-controls',structure:'paths',
+    geometry:'wave',positionX:14,viewZoom:.75});
+  try{
+    assert.equal(f.tool.loadPath({points:path,anchors:[2],corners:[2]}),true);
+    assert.equal(f.nodes.drawPathPanel.dataset.phase,'refine');
+    for(const id of ['drawSmooth','drawGeometric','drawSmoothingStrength'])
+      assert.equal(f.nodes[id].disabled,false,id+' should work with imported samples');
+    f.nodes.drawCancel.click();
+    assert.deepEqual(f.recipe,f.snap);
+  }finally{f.cleanup();}
+});

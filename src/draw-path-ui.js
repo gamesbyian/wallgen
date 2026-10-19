@@ -157,7 +157,13 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
     reSmooth.disabled=!available;
     pointUndo.disabled=history.length===0;
     pointUndo.parentElement.hidden=!editing;
-    smooth.disabled=geometric.disabled=editing;
+    // Fit selectors work only on provisional raw/imported samples. A saved
+    // centreline has no raw source to refit, so choosing Smooth/Geometric or
+    // changing strength here previously appeared to act but did nothing.
+    // The explicit point-editor Resmooth action remains available.
+    const savedOnly=showingSavedPath&&raw.length<2&&importedSource.length<2;
+    smooth.disabled=geometric.disabled=editing||savedOnly;
+    power.disabled=savedOnly&&!editing;
     apply.disabled=(editing?editor?.points.length:ready.length)<2;
     // The UI follows the existing authoritative path state. This is not a
     // new workflow engine; no recipe data or pointer state is duplicated.
