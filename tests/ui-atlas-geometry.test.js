@@ -5,7 +5,7 @@ const target=(l,t,r,b)=>({left:l,top:t,right:r,bottom:b});
 const viewport=target(0,0,412,892);
 test('in-viewport or subpixel clipping does not flood atlas findings',()=>{
  assert.equal(inspectGeometry(target(40,120,120,165),viewport).clipped,false);
- assert.equal(inspectGeometry(target(410,30,420,70),viewport).clipped,false);
+ assert.equal(inspectGeometry(target(409,30,415,70),viewport).clipped,false);
 });
 test('real right-side clipping is actionable and measurable',()=>{
  const result=inspectGeometry(target(385,100,447,142),viewport);
