@@ -4,6 +4,7 @@ import {annotateEditorSettingRow,sourceSettingLabel} from './editor-control-role
 import {installFocusedAdjustments} from './editor-focus.js';
 import {toolAppliesToScene} from './editor-tool-applicability.js';
 import {findEditorToolMatch} from './editor-tool-search.js';
+import {installMaterialLayerIndicators} from './editor-material-indicators.js';
 
 const byId=id=>document.getElementById(id);
 const form=byId('controls');
@@ -279,6 +280,7 @@ export function mountEditor(){
   });
   selectEditorTool('layout','arrange');
   const focused=installFocusedAdjustments({form,chooser});
+  installMaterialLayerIndicators({form,tools});
   return {focused,getCurrent:()=>({category:activeCategory,tool:activeTool}),tools,chooser,searchInput};
 }
 export function selectEditorTool(category,tool,{source='manual'}={}){
