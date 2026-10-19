@@ -11,3 +11,7 @@ The Edit tool chooser now includes a **Focus** chip on mobile. In Focus, a singl
 **Implementation acceptance:** original form nodes never move or duplicate; focus slider inherits the source field's stable ROYGBIV colour (blue remains eligible); no flicker during rerender; direct keyboard/touch focus and source-state updates; mobile preview and editor never overlap; Chrome screenshots before/after must be compared to existing controls.
 
 **Atlas capture:** mobile full 100/75/66/50% includes `special-focus-stripe-width`, `special-focus-spread` and `special-focus-no-range` captures. Each checks the actual source chip/panel; a parameter switch must not change the original stripe-width control. Desktop atlas intentionally omits this mobile-only option.
+
+## Source-state refresh after external actions
+
+Focus also listens for the application's `roygbiv-controls-synced` notification, dispatched **after** `changeRecipe` has updated canonical form controls. Undo, seed and category randomization, import, and lock changes therefore update the selected shared slider, value readout and disabled/locked treatment immediately, even when no native source `input` or `change` event bubbles. The selected range colour still derives only from the real original input, and clears if no colour is assigned. Chromium browser acceptance explicitly checks **Focus adjustment → Undo while Focus stays open → synced original, shared value, and readout**.
