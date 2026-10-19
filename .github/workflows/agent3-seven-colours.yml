@@ -1,0 +1,50 @@
+name: Agent 3 seven interior colour targets
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'tests/redesign-seven-colour-targets-acceptance.mjs'
+      - '.github/workflows/agent3-seven-colours.yml'
+      - 'src/app.js'
+      - 'src/interior-elements.js'
+      - 'src/editor-layout.js'
+      - 'src/model.js'
+permissions:
+  contents: read
+jobs:
+  real-colour-targets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Source and Interior behavior checks
+        run: |
+          node --check tests/redesign-seven-colour-targets-acceptance.mjs
+          node --test tests/interior-elements.test.js tests/interior-combined-scope.test.js tests/interior-selected-id.test.js
+      - name: Install Chromium browser
+        run: |
+          npm install --no-save playwright@1.56.1 serve@14.2.5
+          npx playwright install --with-deps chromium
+      - name: Serve actual app
+        run: |
+          npx serve . -l 4173 > /tmp/agent3-seven-colours.log 2>&1 &
+          for i in $(seq 1 40); do
+            if curl --fail --silent http://127.0.0.1:4173/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/agent3-seven-colours.log
+          exit 1
+      - name: Real seven-colour targeting and lock journeys
+        run: node tests/redesign-seven-colour-targets-acceptance.mjs
+      - name: Upload screenshots, full source recipe witnesses and failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: roygbiv-agent3-seven-colour-targets
+          path: artifacts/agent3-interior-colour-targets/
+          retention-days: 14
+          if-no-files-found: warn
