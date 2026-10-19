@@ -34,4 +34,6 @@ test('three step styling is flat and does not resize the source camera',()=>{
   assert.ok(addition.includes('.draw-path-intro'));
   assert.doesNotMatch(addition,/linear-gradient|radial-gradient|conic-gradient/);
   assert.doesNotMatch(addition,/#drawOverlay|\.wallpaper-frame|\.studio-stage/);
+  assert.match(css,/background:#15141f;border:1px solid #a6729f/);
+  assert.doesNotMatch(css,/background:rgba\(15,15,25,\.94\)/);
 });
