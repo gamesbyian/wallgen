@@ -206,6 +206,14 @@ try{
             interaction:'original source handlers invoked; not a physical tap acceptance',
             ...measured});
           console.log('CAPTURED '+key+' overlap='+measured.stageOverlap);
+          // The screenshot and geometry remain in the artifact on failure:
+          // an attractive comparison gallery is not evidence of safe layout.
+          if(measured.stageOverlap>1){
+            const error='Visible preview is overlapped by open '+name+
+              ' surface: '+measured.stageOverlap.toFixed(1)+'px';
+            errors.push({key,error});
+            console.error('VISUAL FAILURE '+key+' '+error);
+          }
         }catch(e){
           errors.push({key,error:String(e)});
           console.error('VISUAL FAILURE '+key+' '+String(e));
