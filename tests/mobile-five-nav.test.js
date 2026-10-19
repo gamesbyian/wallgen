@@ -24,7 +24,7 @@ test('five destinations are the live HTML default and source actions remain real
   assert.match(html,/src="assets\/icons\/roygbiv\/favourite\.svg"/);
   assert.match(five,/shortcuts\.contains\(favorite\)/);
   assert.match(five,/shortcuts\.contains\(download\)/);
-  assert.match(five,/shuffle\.parentElement!==moreContent/);
+  assert.match(five,/!moreContent\.contains\(shuffle\)/);
   assert.match(five,/aria-current/);
 });
 test('Saved and Explore swap gallery mode without discarding its contact sheet',()=>{
