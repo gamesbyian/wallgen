@@ -1,0 +1,21 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {DRAWINGS_A} from '../src/ui-icon-drawings-a.js';
+import {DRAWINGS_B} from '../src/ui-icon-drawings-b.js';
+import {DRAWINGS_C} from '../src/ui-icon-drawings-c.js';
+import {DRAWINGS_D} from '../src/ui-icon-drawings-d.js';
+import {DRAWINGS_E} from '../src/ui-icon-drawings-e.js';
+const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
+test('offline icon-state fixture exactly reproduces every production inline symbol',()=>{
+ const source={...DRAWINGS_A,...DRAWINGS_B,...DRAWINGS_C,...DRAWINGS_D,...DRAWINGS_E};
+ const html=read('assets/icons/roygbiv/state-matrix.html');
+ const match=html.match(/<script id="icon-inventory" type="application\/json">([\s\S]*?)<\/script>/);
+ assert.ok(match,'Missing embedded offline icon data');
+ const data=JSON.parse(match[1]);
+ const manifest=JSON.parse(read('assets/icons/roygbiv/manifest.json'));
+ assert.equal(data.icons.length,68);
+ assert.deepEqual(data.icons.map(i=>i.name),manifest.icons.map(i=>i.name));
+ assert.deepEqual(data.drawings,source,'Matrix glyphs drifted from real source');
+ for(const icon of data.icons)assert.equal(icon.status,manifest.icons.find(i=>i.name===icon.name).status||'original');
+});

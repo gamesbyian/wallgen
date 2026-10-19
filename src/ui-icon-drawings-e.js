@@ -1,4 +1,4 @@
-/* Proposed extension: same 32x32 approved ROYGBIV grammar. Not wired into UI. */
+/* Approved-family extension. Four icons are wired, eight remain candidates. */
 export const DRAWINGS_E=Object.freeze({
   "edit-controls": "<path d=\"M5 8h22M5 16h22M5 24h22\"/><circle cx=\"12\" cy=\"8\" r=\"3.1\" fill=\"#FF9B39\" stroke=\"#18151F\"/><circle cx=\"22\" cy=\"16\" r=\"3.1\" fill=\"#53AAFF\" stroke=\"#18151F\"/><circle cx=\"9\" cy=\"24\" r=\"3.1\" fill=\"#BB64ED\" stroke=\"#18151F\"/>",
   "pan": "<path d=\"M16 12V3m-4 4 4-4 4 4M16 20v9m-4-4 4 4 4-4M12 16H3m4-4-4 4 4 4m13-4h9m-4-4 4 4-4 4\"/><circle cx=\"16\" cy=\"16\" r=\"2.5\" fill=\"#4FDD87\" stroke=\"#18151F\"/>",
