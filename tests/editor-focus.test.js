@@ -1,7 +1,7 @@
 import {readFileSync} from 'node:fs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {focusEligible,adjustedValue,focusChipDestination} from '../src/editor-focus.js';
+import {focusEligible,adjustedValue,focusChipDestination,focusUnavailableReason} from '../src/editor-focus.js';
 const field=(value='40',min='0',max='100',step='1')=>({tagName:'INPUT',type:'range',
  name:'stripeWidth',value,min,max,step,disabled:false,closest:()=>null});
 test('only actual available named range controls qualify; no proxy recipe keys',()=>{
@@ -61,4 +61,15 @@ test('Focus chip arrows wrap while Home/End choose bounds',()=>{
   assert.match(js,/chip\.tabIndex=selected\?0:-1/);
   assert.match(js,/choose\(source\)/);
   assert.match(js,/next\.focus\(\{preventScroll:true\}\)/);
+});
+
+test('Focus distinguishes user locks, contextual inactivity and other disabled sources',()=>{
+  assert.equal(focusUnavailableReason({}), '');
+  assert.match(focusUnavailableReason({locked:true}),/locked.*unlock/i);
+  assert.match(focusUnavailableReason({inactive:true}),/inactive.*current design/i);
+  assert.match(focusUnavailableReason({disabled:true}),/temporarily unavailable/i);
+  assert.match(focusUnavailableReason({inactive:true,locked:true}),/locked/i);
+  const src=readFileSync(new URL('../src/editor-focus.js',import.meta.url),'utf8');
+  assert.match(src,/help\.textContent=disabled\?unavailableReason\(original\)/);
+  assert.match(src,/locked:Boolean\(field\.closest\('\.lockable-setting'\)/);
 });
