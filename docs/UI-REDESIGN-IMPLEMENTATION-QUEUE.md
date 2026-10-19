@@ -57,6 +57,7 @@
 ## Phase E — gallery, history, output and quality
 
 - [ ] Keep image-first Explore, independent Saved, history restore, user favourites and gallery loading semantics.
+- [x] Preserve the most recent Explore contact sheet while opening Saved favourites; restore it without re-randomizing, with explicit accessible gallery mode labels (PR pending).
 - [ ] Preserve global status announcements and grouped More with seed, import, output, metadata, batch, share.
 - [ ] Test all existing PNG/JSON recipe round-trips and exact preview/export geometry.
 - [ ] Test touch targets, keyboard/focus, colour contrast, screen reader names and reduced motion.
