@@ -75,3 +75,21 @@ html[data-theme="cream"] .editor-tool-card .editor-setting-row.setting-inactive 
 html[data-theme="dark"] .editor-tool-card .editor-setting-row.setting-inactive .slider-number:disabled{
   opacity:1;color:#e5e0ec;-webkit-text-fill-color:#e5e0ec;
 }
+
+
+/* Material rotation is a direct <span>, not a .field label. The dark base
+   stylesheet gave it near-white text even when the cream inspector was
+   selected. Name the contrast in both themes, including inactive 0-degree
+   rows, without changing the four-column rotation controls. */
+html[data-theme="cream"] .editor-tool-card .texture-rotation-field>span{
+  color:#323042;
+}
+html[data-theme="dark"] .editor-tool-card .texture-rotation-field>span{
+  color:#e5e4ee;
+}
+html[data-theme="cream"] .editor-tool-card .texture-rotation-field.setting-inactive>span{
+  color:#595365;
+}
+html[data-theme="dark"] .editor-tool-card .texture-rotation-field.setting-inactive>span{
+  color:#d2ccde;
+}
