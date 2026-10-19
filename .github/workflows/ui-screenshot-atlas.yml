@@ -26,6 +26,7 @@ on:
       - 'scripts/capture-ui-atlas.mjs'
       - 'scripts/ui-atlas-*.mjs'
       - 'tests/redesign-navigation-acceptance.mjs'
+      - 'tests/redesign-interior-browser-acceptance.mjs'
       - '.github/workflows/ui-screenshot-atlas.yml'
 
 concurrency:
@@ -73,6 +74,18 @@ jobs:
         with:
           name: roygbiv-agent3-acceptance
           path: artifacts/agent3-acceptance/
+          retention-days: 14
+          if-no-files-found: warn
+      - name: Independent Interior selection and full-range browser acceptance
+        run: |
+          node --check tests/redesign-interior-browser-acceptance.mjs
+          node tests/redesign-interior-browser-acceptance.mjs
+      - name: Upload independent Interior integration evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: roygbiv-agent3-interior-integration
+          path: artifacts/agent3-interior-integration/
           retention-days: 14
           if-no-files-found: warn
       - name: Capture UI atlas
