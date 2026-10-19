@@ -159,6 +159,11 @@ try{
     const creamSelected=document.documentElement.dataset.theme==='cream'&&
       cream.getAttribute('aria-pressed')==='true';
     const flatCreamStage=getComputedStyle(document.querySelector('.studio-stage')).backgroundImage==='none';
+    const flatLightingAndShadow=['.lighting-subsection','.lighting-icon','.stripe-shadow-section']
+      .every(selector=>{
+        const element=document.querySelector(selector);
+        return element&&getComputedStyle(element).backgroundImage==='none';
+      });
     const colours=[];
     for(const card of document.querySelectorAll('.editor-tool-card')){
       const bars=[...card.querySelectorAll('input[type=range]')];
@@ -186,12 +191,12 @@ try{
     const historyOpen=!document.getElementById('editorHistory').hidden;
     document.querySelector('.editor-history-close').click();
     const historyClosed=document.getElementById('editorHistory').hidden;
-    return {darkSelected,creamSelected,flatCreamStage,searchVisible,closeVisible,searchClosed,
+    return {darkSelected,creamSelected,flatCreamStage,flatLightingAndShadow,searchVisible,closeVisible,searchClosed,
       historyOpen,historyClosed,colourPanels:colours.length,
       duplicatePanels:colours.filter(x=>!x.distinct)};
   })()`);
   console.log('UI_ATLAS_REGRESSION',JSON.stringify(atlasUI));
-  for(const key of ['darkSelected','creamSelected','flatCreamStage','searchVisible','closeVisible',
+  for(const key of ['darkSelected','creamSelected','flatCreamStage','flatLightingAndShadow','searchVisible','closeVisible',
     'searchClosed','historyOpen','historyClosed'])assert.ok(atlasUI[key],key);
   assert.ok(atlasUI.colourPanels>=6,'multiple tool panels have rainbow sliders');
   assert.deepEqual(atlasUI.duplicatePanels,[],'a panel must never repeat a slider colour');
