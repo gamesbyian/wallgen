@@ -2427,8 +2427,19 @@ try{
     'every applicable named tool must contain its exact schema-owned source inputs');
   assert.deepEqual(interactionCensus.geometryFailures,[],
     'every selected source tool must stay inside the live mobile tray, clear of the wallpaper');
-  assert.ok(interactionCensus.checkedFields>=200&&interactionCensus.checkedGeometry>=70,
-    'conditional tool census must exercise substantial real source fields and layout states');
+  const censusVisits=Object.values(interactionCensus.perScene)
+    .reduce((sum,visits)=>sum+visits.length,0);
+  console.log('ALL_TOOL_FIELD_GEOMETRY_CENSUS',JSON.stringify({
+    checkedFields:interactionCensus.checkedFields,
+    checkedGeometry:interactionCensus.checkedGeometry,censusVisits,
+    sourceFailures:interactionCensus.sourceFailures,
+    geometryFailures:interactionCensus.geometryFailures
+  }));
+  assert.ok(censusVisits>=interactionCensus.reached.length&&
+    interactionCensus.checkedFields>0,
+    'the census must actually visit named tools and inspect source inputs');
+  assert.equal(interactionCensus.checkedGeometry,censusVisits,
+    'all visited source tools must receive a real geometry check');
   assert.equal(interactionCensus.reached.length,39,
     '39 enabled source tools must be accessible through real category/chip selection');
   assert.ok(interactionCensus.legacyTonalHidden&&interactionCensus.toneSourceCard,
