@@ -7,7 +7,7 @@
 - [x] Version and verify all 115 current static IDs (including native Studio and Saved destinations), 87 configuration attributes and 40 source-defined tools.
 - [x] Correct prior Pan/Zoom/Nudge semantics against actual renderer and UI code.
 - [ ] Qualify **all** static/conditional controls against runtime interaction coverage; source inventories do not establish reachability.
-- [x] Browser-click the enabled named tools across Paths, Radial, Voronoi and Nested Regions, recording actual selected cards and explicitly flagging the preserved but HTML-disabled legacy Tonal mode instead of awarding false reachability (PR pending).
+- [x] Browser-click the enabled named tools across Paths, Radial, Voronoi and Nested Regions, recording actual selected cards and explicitly flagging the preserved but HTML-disabled legacy Tonal mode instead of awarding false reachability (PR #110).
 - [ ] Independent negative testing of real screen states using the [adversarial protocol](UI-REDESIGN-ADVERSARIAL-REVIEW.md), including unscripted interactions and candidate SVGs.
 
 - [x] Inventory existing 55 glyphs + existing brand icon.
@@ -38,7 +38,7 @@
 - [x] Add typed, source-preserving setting-row semantics for all ordinary static editor fields; no duplicate inputs or changed handlers (PR #80).
 - [ ] Apply the unified visual row layout family-by-family with per-viewport screenshot approval, preserving the special four-column rotation controls.
 - [x] Apply a flat ROYGBIV category accent rail to all source-annotated setting rows (7 categories), with cream/dark shape distinctions, inactive cues and no layout/control reparenting (PR #106).
-- [x] Real Chromium screenshot review found 3px accent overlapping flush-left setting labels; move rail outside each row with no layout or source-control changes (PR pending).
+- [x] Real Chromium screenshot review found 3px accent overlapping flush-left setting labels; move rail outside each row with no layout or source-control changes (PR #108).
 - [x] Keep seven categories and 40 named tools; inventory source keys and test structure-aware applicability (PRs #94, #96, #97).
 - [ ] Keep blue and random stable unique ROYGBIV slider accents inside each panel.
 - [ ] Preserve search match-to-tool and manual horizontal chip scroll state.
@@ -46,8 +46,8 @@
 - [x] Add roving keyboard navigation for applicable tools and Focus parameters, preserving manual chip scroll (PRs #94 and #98).
 - [ ] Reduce excess short-panel height only on navigation, with atomic preview/tray resize.
 - [ ] Ensure all inactive values/locks remain comprehensible and true to generation logic.
-- [x] Name per-setting randomize dice using the visible source label or explicitly authored accessible name, not internal recipe keys (rebased PR pending).
-- [x] Explain separately why a Focus range is locked, contextually inactive, or otherwise unavailable, without altering its source controls (PR pending).
+- [x] Name per-setting randomize dice using the visible source label or explicitly authored accessible name, not internal recipe keys (PR #109).
+- [x] Explain separately why a Focus range is locked, contextually inactive, or otherwise unavailable, without altering its source controls (PR #105).
 
 ## Phase D — complex tool journeys
 
