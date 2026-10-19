@@ -437,6 +437,11 @@ function changeRecipe(recipe,options={}){
     die.disabled=!field||field.disabled||field.dataset.inactive==='true';
     die.title=die.disabled?'Setting is unavailable or locked':'Randomize only '+die.dataset.randomSetting;
   }
+  // Other inspectors (notably the optional Focus slider) share the ORIGINAL
+  // form fields. Undo, randomize and import can rewrite them without a
+  // bubbling native input/change event, so announce settled source state
+  // after every recipe-driven form sync.
+  document.dispatchEvent(new Event('roygbiv-controls-synced'));
 }
 document.querySelector('.studio-stage').addEventListener('roygbiv-view-zoom-request',event=>{
   changeRecipe({...current,viewZoom:event.detail});
