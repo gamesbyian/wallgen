@@ -38,7 +38,9 @@ test('critical semantics documented, existing logo and pencil kept',()=>{
  assert.ok(spec.global.currentDockControls.some(x=>x.id==='mobileDownload'));
  assert.ok(spec.global.actionRelocations.mobileShuffle&&spec.global.actionRelocations.mobileDownload);
  assert.ok(spec.global.noDedicatedCanvasHeader);
- assert.match(spec.global.cameraSemantics,/no recipe mutation/);
+ assert.match(spec.global.cameraSemantics,/viewZoom/);
+ assert.match(spec.global.cameraSemantics,/positionX\/Y/);
+ assert.match(spec.global.cameraSemantics,/unimplemented/);
  assert.match(spec.global.sliderSemantics,/blue/);
  assert.ok(spec.screens.find(x=>x.id==='draw').icons.includes('draw-path'));
  assert.ok(spec.global.navigation.find(x=>x.label==='Edit').icon==='edit-controls');
