@@ -1,19 +1,14 @@
 {
   "version": 2,
   "kind": "source-backed snapshot; NOT exhaustive runtime inventory",
-  "referenceCommit": "c4d75cbfa30dd513c91a6b80348c56d0a053723f + reviewed native five-destination source",
-  "extraction": {
-    "staticIds": "reviewed exact DOM IDs from default five-destination index.html",
-    "fields": "exact data-setting attributes in index.html",
-    "namedEditorTools": "EDITOR_CATEGORIES in src/editor-schema.js",
-    "traceability": "prior source-mapped control registry"
-  },
+  "referenceCommit": "base current main + camera-pan PR #143",
+  "extraction": "Source reviewed 2026-10-19 for separate viewport Pan; original IDs retained",
   "counts": {
-    "staticIds": 115,
+    "staticIds": 116,
     "settings": 87,
     "categories": 7,
     "namedTools": 40,
-    "tracedUI": 45
+    "tracedUI": 46
   },
   "staticIds": [
     "mobileDesignSheet",
@@ -65,6 +60,7 @@
     "outlineBuffer",
     "glow",
     "positionStatus",
+    "viewPanStatus",
     "preview",
     "bleedGuide",
     "mobileFavorite",
@@ -623,6 +619,14 @@
       "canonicalScreen": "geometry",
       "sourceKind": "Static index.html ID",
       "state": "Preserve until deliberate nav action migration"
+    },
+    {
+      "id": "viewportPan",
+      "sourceSelector": "id:viewPanStatus",
+      "meaning": "Distinct persisted wallpaper viewing frame pan; accessible under More on mobile",
+      "canonicalScreen": "more",
+      "sourceKind": "Static index.html ID",
+      "state": "Preserve independent camera field and source nudge identities"
     }
   ],
   "exceptions": {
