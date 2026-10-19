@@ -10,6 +10,17 @@ const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 const number=(x,f,a,b)=>clamp(Number.isFinite(+x)?+x:f,a,b);
 const COLOURS=['white','black','lighter','darker','custom'];
 export const RAINBOW_NAMES=Object.freeze(['Red','Orange','Yellow','Green','Blue','Indigo','Violet']);
+/** Keep a native range's *actual* value aligned with its source recipe.
+ * Ordinary lattice values retain familiar fixed increments; a valid imported
+ * or scope-randomized fractional value uses HTML step=any, avoiding browser
+ * sanitization to an incorrect neighbouring tick before the user touches it. */
+export function interiorSliderStep(value,min,step){
+  const v=Number(value),low=Number(min),increment=Number(step);
+  if(!Number.isFinite(v)||!Number.isFinite(low)||
+     !Number.isFinite(increment)||increment<=0)return 'any';
+  const ticks=(v-low)/increment;
+  return Math.abs(ticks-Math.round(ticks))<=1e-7?String(step):'any';
+}
 // One contract for normalized recipe values and native editor slider limits.
 // Older and externally supplied recipes can legitimately use the full span.
 export const INTERIOR_LIMITS=Object.freeze({
