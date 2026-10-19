@@ -7,7 +7,7 @@ import {appliedDrawnPathRecipe} from './draw-apply-transaction.js';
 import { installImagePathTool } from './image-path-ui.js?v=20261018-import1';
 import {mountEditor,selectEditorTool,syncEditorStructure} from './editor-layout.js?v=20261018-icons2';
 import {randomizeScope} from './scoped-random.js';
-import {newInteriorElementId,INTERIOR_LIMITS,resolveInteriorSelection} from './interior-elements.js';
+import {newInteriorElementId,INTERIOR_LIMITS,resolveInteriorSelection,interiorTargetSummary} from './interior-elements.js';
 import {STYLE_PRESETS} from './editor-schema.js?v=20261018-icons2';
 import {installExplorationHistory} from './exploration-history.js';
 import {iconMarkup,setIconSource,hydrateStaticIcons} from './ui-icons.js';
@@ -969,12 +969,7 @@ function syncInteriorUI(){
   // stroke when only a few slices of a radial composition are decorated.
   const scope=make(manager,'div');
   scope.className='interior-scope';
-  const paletteNames=['Red','Orange','Yellow','Green','Blue','Indigo','Violet'];
-  const targeting=active.objectIds.length?
-    'Applied to '+active.objectIds.length+' selected shapes':
-    active.colorSlots.length?
-      'Colours: '+active.colorSlots.map(index=>paletteNames[index]).join(' · '):
-      'Applied to all seven colours';
+  const targeting=interiorTargetSummary(active);
   const stackIdentity='Element '+(selectedInterior+1)+' of '+items.length+
     ' · '+(active.enabled?'Enabled':'Hidden');
   scope.textContent=stackIdentity+' · '+targeting;

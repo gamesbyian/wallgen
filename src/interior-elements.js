@@ -17,6 +17,17 @@ export const INTERIOR_LIMITS=Object.freeze({
   contourFrequency:Object.freeze({min:1,max:30,step:1}),
   phase:Object.freeze({min:-360,max:360,step:1}),
 });
+/** Explain the same intersection-of-scopes rule used by elementApplies().
+ * Imported elements can have BOTH object-ID and colour-slot restrictions.
+ * Neither filter may disappear from the Elements manager explanation. */
+export function interiorTargetSummary(element){
+  const pieces=[];
+  if(element?.objectIds?.length)
+    pieces.push('Applied to '+element.objectIds.length+' selected shapes');
+  if(element?.colorSlots?.length)
+    pieces.push('Colours: '+element.colorSlots.map(index=>RAINBOW_NAMES[index]??'?').join(' · '));
+  return pieces.join(' · ')||'Applied to all seven colours';
+}
 export const elementApplies=(e,slot,id)=>
   (!e.colorSlots?.length||e.colorSlots.includes(slot))&&
   (!e.objectIds?.length||e.objectIds.includes(id));
