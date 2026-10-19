@@ -1,6 +1,6 @@
-import {finishDrawnPath,DRAW_COORD_MIN,DRAW_COORD_MAX,prepareDrawnPath,pointOnDrawnPath} from './drawn-path.js?v=20261018-extend1';
+import {finishDrawnPath,DRAW_COORD_MIN,DRAW_COORD_MAX,MAX_DRAWN_POINTS,prepareDrawnPath,pointOnDrawnPath} from './drawn-path.js?v=20261018-extend1';
 import {createPointEditor,clonePointEditor,addPointAnchor,deletePointAnchor,
-  movePointAnchor,movePointHandle,pointHandles,resmoothPointEdits,
+  movePointAnchor,movePointHandle,pointHandles,resmoothPointEdits,insertPointAnchor,
   savedPointAnchors,savedPointCorners} from './path-point-editor.js';
 
 /** Match the renderer's world-space camera and *screen-space* composition
@@ -252,8 +252,26 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
     if(adding){
       least=22*m.scale;
       for(let i=1;i<editor.points.length-1;i++){
+        if(editor.anchors.some(anchor=>Math.abs(anchor-i)<3))continue;
         const d=distance(mouse,project(m,editor.points[i]));
         if(d<least){least=d;best={type:'add',index:i};}
+      }
+      if(best)return best;
+      // A legitimate imported line can consist of just two endpoints:
+      // there is no interior sample to select. Project segments into the
+      // same zoomed, panned screen space as normal anchor hit-testing.
+      // Inserting on the original segment preserves its world geometry.
+      if(editor.points.length<MAX_DRAWN_POINTS){
+        for(let i=0;i<editor.points.length-1;i++){
+          const a=project(m,editor.points[i]),b=project(m,editor.points[i+1]);
+          const vx=b[0]-a[0],vy=b[1]-a[1],len2=vx*vx+vy*vy;
+          if(len2<=0)continue;
+          const t=Math.max(0,Math.min(1,
+            ((mouse[0]-a[0])*vx+(mouse[1]-a[1])*vy)/len2));
+          if(t<=.05||t>=.95)continue;
+          const d=distance(mouse,[a[0]+vx*t,a[1]+vy*t]);
+          if(d<least){least=d;best={type:'insert',index:i,t};}
+        }
       }
     }
     return best;
@@ -274,9 +292,16 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
     if(editing){
       const hit=nearestHit(event);
       if(!hit){editor.selected=-1;draw(editor.points);syncPointControls();return;}
-      if(hit.type==='add'){
+      if(hit.type==='add'||hit.type==='insert'){
         pushUndo();
-        if(!addPointAnchor(editor,hit.index))history.pop();
+        const added=hit.type==='add'?addPointAnchor(editor,hit.index):
+          insertPointAnchor(editor,hit.index,hit.t);
+        if(!added)history.pop();
+        if(added){
+          ready=editor.points.map(p=>p.slice());
+          pendingPins=savedPointAnchors(editor);
+          pendingCorners=savedPointCorners(editor);
+        }
         adding=false;draw(editor.points);syncPointControls();
         return;
       }

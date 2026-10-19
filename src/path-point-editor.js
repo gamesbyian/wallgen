@@ -1,7 +1,7 @@
 // Local, non-destructive node editor for a sampled drawn path.
 // The source remains the actual 96-point shape until the user changes it:
 // entering node mode never re-fits or silently replaces existing geometry.
-import {normalizeDrawnPath} from './drawn-path.js';
+import {normalizeDrawnPath,MAX_DRAWN_POINTS} from './drawn-path.js';
 const W=600,H=1300;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const mix=(a,b,t)=>a+(b-a)*t;
@@ -97,6 +97,30 @@ export function addPointAnchor(e,index){
   if(e.anchors.some(i=>Math.abs(i-index)<3))return false;
   e.anchors.push(index);e.anchors.sort((a,b)=>a-b);
   e.pinned.add(index);e.selected=index;
+  return true;
+}
+/** Insert a true control station on an existing segment when an imported
+ * sparse path has no interior sample to promote. Preserve every previous
+ * world-space coordinate and reindex all user-authored constraints atomically.
+ * Dense 96-sample paths still use the original pin-an-existing-point mode. */
+export function insertPointAnchor(e,segment,t){
+  if(!Number.isInteger(segment)||segment<0||segment>=e.points.length-1||
+    e.points.length>=MAX_DRAWN_POINTS||!Number.isFinite(t)||t<=.05||t>=.95)return false;
+  const a=e.points[segment],b=e.points[segment+1];
+  const point=round([mix(a[0],b[0],t),mix(a[1],b[1],t)]);
+  if(pixel(point,a)<1||pixel(point,b)<1)return false;
+  const index=segment+1;
+  e.points.splice(index,0,point);
+  const shift=i=>i>=index?i+1:i;
+  e.anchors=e.anchors.map(shift);
+  e.pinned=new Set([...e.pinned].map(shift));
+  e.corners=new Set([...e.corners].map(shift));
+  e.changed=new Set([...e.changed].map(shift));
+  if(e.selected>=index)e.selected++;
+  e.anchors.push(index);
+  e.anchors.sort((x,y)=>x-y);
+  e.pinned.add(index);
+  e.selected=index;
   return true;
 }
 export function deletePointAnchor(e,index){
