@@ -29,6 +29,7 @@
 - [x] Remove remaining decorative base/dark Studio, lighting and shadow card gradients while retaining generated artwork and functional scroll masks (rebased PR pending).
 - [x] Keep (already existing) canvas-side Zoom+/− and add Fit/100% using the actual `viewZoom` source; no dedicated top zoom header on mobile. (PR #79)
 - [ ] Implement a **separate viewport Pan** with explicit preview/export persistence, *without* relabelling composition nudge as Pan.
+- [ ] Qualify separate camera-only viewPanX/viewPanY controls under More, preserving source nudge, Fit, recipe and full native-resolution export ([contract](VIEWPORT-CAMERA-PAN.md), pending PR).
 - [x] Consolidate default mobile navigation following source-action preservation and tested screen geometry; all original source action IDs retain live handlers (PR #101 and default-promotion PR).
 - [ ] Preserve zoom increments, full fit, camera-only state, drawn-path extension and exported wallpaper dimensions.
 - [x] Migrate six source action identities to a five-destination default dock, retaining direct Randomize, Favourite and Download in their source-backed surfaces.
