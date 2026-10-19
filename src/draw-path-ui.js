@@ -10,7 +10,7 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
   const button=byId('drawPathToggle'),panel=byId('drawPathPanel');
   const overlay=byId('drawOverlay'),wallpaper=byId('preview');
   const hint=byId('drawPathHint'),apply=byId('drawApply');
-  const phase=byId('drawPhase');
+  const phase=panel.querySelector('.draw-phase');
   const smooth=byId('drawSmooth'),geometric=byId('drawGeometric');
   const again=byId('drawAgain'),cancel=byId('drawCancel');
   const power=byId('drawSmoothingStrength'),powerLabel=byId('drawSmoothingValue');
