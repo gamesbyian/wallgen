@@ -62,6 +62,7 @@
 - [x] Preserve the most recent Explore contact sheet while opening Saved favourites; restore it without re-randomizing, with explicit accessible gallery mode labels (PR #100).
 - [x] Browser-test populated Explore → Saved → Explore using all twelve original recipe seed identities (PR #102).
 - [ ] Preserve global status announcements and grouped More with seed, import, output, metadata, batch, share.
+- [x] Introduce source-preserving semantic groups inside More for create/seed, import/export/share and composition/details, retaining original handlers and desktop positions (PR pending).
 - [ ] Test all existing PNG/JSON recipe round-trips and exact preview/export geometry.
 - [ ] Test touch targets, keyboard/focus, colour contrast, screen reader names and reduced motion.
 - [ ] Update screen plates and companion deck with real implementation screenshots only after fidelity review.
