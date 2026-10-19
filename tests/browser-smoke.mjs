@@ -2380,9 +2380,16 @@ try{
             if(!expected)sourceFailures.push(sceneKey+':unknown tool '+category+'/'+tool);
             else{
               checkedFields+=expected.length;
+              const hiddenLayerFlags=new Set(['textureLayer2Enabled','textureLayer3Enabled']);
               const missing=expected.filter(key=>{
                 const field=document.querySelector('#controls [name="'+CSS.escape(key)+'"]');
-                return !field||!card.contains(field);
+                if(!field)return true;
+                // The optional layer-enable source flags are real hidden
+                // checkboxes that intentionally remain in the old parent
+                // form. Their visible Layer 2/3 controls are reparented.
+                if(hiddenLayerFlags.has(key))
+                  return field.type!=='checkbox'||!field.hidden||!field.isConnected;
+                return !card.contains(field);
               });
               if(missing.length)sourceFailures.push(sceneKey+':'+category+'/'+tool+
                 ' missing source input(s): '+missing.join(','));
