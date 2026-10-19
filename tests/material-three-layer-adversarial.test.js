@@ -111,7 +111,7 @@ test('three live material cards retain all five distinct source rotation control
     const reset='data-rotate-target="'+key+'" data-rotate-set="0"';
     assert.equal(html.split(reset).length-1,1,reset);
     assert.equal(html.split('name="'+key+'"').length-1,1,key);
-    assert.match(html,new RegExp('name="'+key+'"[^>]*step="0\\\\.1"'));
+    assert.match(html,new RegExp('name="'+key+'"[^>]*step="0[.]1"'));
   }
   assert.match(app,/recipe\[key\]=button\.dataset\.rotateSet!==undefined/);
   assert.match(app,/changeRecipe\(recipe\)/);
