@@ -215,7 +215,7 @@ const gallery='<!doctype html><html lang="en"><meta charset="utf-8"><title>Agent
   'figcaption{font-size:12px}h2{font-size:16px;overflow-wrap:anywhere}p{font-size:12px}@media(max-width:750px){.pair{grid-template-columns:1fr}img{height:auto}}</style>'+
   '<h1>ROYGBIV: live app versus 12 reference plates</h1>'+
   '<p>References are explanatory source-backed schematic plates, never pixel-perfect golden images. This gallery provides paired evidence for independent visual approval, not approval itself. Browser is Playwright Chromium, with real UI elements, original event handlers and visible live artwork. CSS root zoom is labelled where used, and is not native Android/browser zoom proof.</p>'+
-  imageCards+'</html>';
+  imageCards+'<p><a href="icon-review.html">Review unwired SVG source icons against the 68-symbol multi-state matrix</a></p></html>';
 await writeFile(join(output,'review.html'),gallery);
 const iconCandidates=['pan','anchor-points','smooth-path','extend-path','weave','focus-slider','metadata','restore-variation'];
 const iconFindings=[];
@@ -227,9 +227,39 @@ for(const candidate of iconCandidates){
   iconFindings.push(item);
   if(!item.viewBox32||item.hasGradient||item.hasScript)errors.push({key:'svg/'+candidate,error:JSON.stringify(item)});
 }
+// Render the actual production 68-symbol fixture, not a reconstructed SVG
+// preview. Each candidate filter contains 20/24/28px across both themes
+// and normal/selected/disabled/focused states.
+const iconShots=[];
+const iconsBrowser=await chromium.launch({headless:true});
+try{
+  const context=await iconsBrowser.newContext({viewport:{width:1280,height:900},deviceScaleFactor:1});
+  const page=await context.newPage();
+  await page.goto(url+'/assets/icons/roygbiv/state-matrix.html',{waitUntil:'domcontentloaded'});
+  await page.locator('#filter').waitFor({state:'visible'});
+  await page.evaluate(async()=>document.fonts.ready);
+  await mkdir(join(output,'icons'),{recursive:true});
+  await page.screenshot({path:join(output,'icons','all-68-state-matrix.png'),fullPage:true,animations:'disabled'});
+  for(const candidate of iconCandidates){
+    await page.locator('#filter').fill(candidate);
+    await pause(90);
+    const file='icons/'+candidate+'-states.png';
+    await page.screenshot({path:join(output,file),fullPage:true,animations:'disabled'});
+    iconShots.push({candidate,file,states:'20/24/28px, cream/dark, normal/selected/disabled/focus'});
+  }
+  await context.close();
+}finally{await iconsBrowser.close();}
+const iconCards=iconShots.map(row=>'<section><h2>'+row.candidate+'</h2><img alt="'+row.candidate+' state matrix" src="'+row.file+'"></section>').join('\n');
+await writeFile(join(output,'icon-review.html'),
+  '<!doctype html><html lang="en"><meta charset="utf-8"><title>Candidate SVG source review</title>'+
+  '<style>body{font:14px system-ui;margin:22px;background:#f7f2eb;color:#18151f}section{background:#fff;padding:18px;margin:18px 0}img{max-width:100%;height:auto;border:1px solid #ddd}</style>'+
+  '<h1>Eight unwired candidates, rendered in the real 68-symbol matrix</h1>'+
+  '<p>This is source-backed multi-state optical evidence, not approval or permission to wire icons. Full established matrix: <a href="icons/all-68-state-matrix.png">68 symbols</a>.</p>'+
+  iconCards+'</html>');
+
 await writeFile(join(output,'manifest.json'),JSON.stringify({
   source:'git checkout used by Action',plateSource:'docs/ui-reference',profiles,shots,errors,
-  iconCandidates:iconFindings,notes:[
+  iconCandidates:iconFindings,iconScreenshots:iconShots,notes:[
     'No visual/human sign-off inferred from passing geometry or screenshot capture',
     'Candidate icon matrix lives at assets/icons/roygbiv/state-matrix.html',
     'Original application controls remain live; only source click handlers are invoked',
