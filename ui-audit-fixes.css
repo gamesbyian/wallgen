@@ -36,6 +36,7 @@
   font-size:12px;line-height:1.4;text-align:center;z-index:80;
   opacity:0;visibility:hidden;pointer-events:none;transition:opacity .12s}
 .studio-status.is-visible:not(:empty){visibility:visible;opacity:1}
+@media(prefers-reduced-motion:reduce){.studio-status{transition:none}}
 html[data-theme="cream"] .studio-status{background:#fffdf8;color:#363044;border-color:#d7c7c1}
 html[data-theme="cream"] #notice{color:#28583f!important}
 @media(min-width:791px){.studio-status{bottom:24px}}
