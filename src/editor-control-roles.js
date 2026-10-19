@@ -1,3 +1,21 @@
+/** Prefer the actual source-visible name over a camelCase recipe key.
+ * Read a disposable label clone so nested option text, hints, numeric values
+ * and per-setting dice never leak into screen-reader action names.
+ */
+export function sourceSettingLabel(field,key){
+  const explicit=field?.getAttribute?.('aria-label')?.trim();
+  if(explicit)return explicit;
+  const nativeLabel=field?.closest?.('label')||field?.labels?.[0];
+  if(nativeLabel){
+    const copy=nativeLabel.cloneNode(true);
+    for(const control of copy.querySelectorAll('input,select,textarea,button,output,small'))
+      control.remove();
+    const text=copy.textContent.replace(/\\s+/g,' ').trim();
+    if(text)return text.slice(0,100);
+  }
+  return String(key||'Setting').replace(/([a-z0-9])([A-Z])/g,'$1 $2')
+    .replace(/[_-]+/g,' ').trim();
+}
 // Semantic control grammar. This is an adapter over existing source form
 // controls, not a recreated set of input elements or a new recipe engine.
 export function controlKind(field,root){
