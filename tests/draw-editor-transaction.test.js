@@ -480,3 +480,47 @@ test('a Structure lock already on Paths does not block Draw authoring',()=>{
     assert.deepEqual(f.recipe,f.snap);
   }finally{f.cleanup();}
 });
+
+test('same-position pointer drag does not create a phantom Draw point Undo step',()=>{
+  const f=fixture({seed:'noop-pointer-nudge',structure:'paths',geometry:'drawn',
+    customPath:path,positionX:12,positionY:-8,viewZoom:1.3,viewPanX:6});
+  try{
+    f.nodes.drawPathToggle.click();
+    f.nodes.drawEditPoints.click();
+    const [panX,panY]=drawnPathViewportOffset(f.recipe,true);
+    const p=f.recipe.customPath[0],z=f.recipe.viewZoom;
+    const clientX=600*(.5+(p[0]-.5)*z+panX);
+    const clientY=1300*(.5+(p[1]-.5)*z+panY);
+    pointer(f.nodes.drawOverlay,'pointerdown',{pointerId:27,isPrimary:true,clientX,clientY});
+    pointer(f.nodes.drawOverlay,'pointermove',{pointerId:27,isPrimary:true,clientX,clientY});
+    pointer(f.nodes.drawOverlay,'pointerup',{pointerId:27,isPrimary:true,clientX,clientY});
+    assert.equal(f.nodes.drawUndoPoint.disabled,true,
+      'no actual movement means no point Undo snapshot');
+    f.nodes.drawApply.click();
+    assert.equal(f.calls.length,1);
+    assert.deepEqual(f.calls[0][0],f.snap.customPath);
+    assert.equal(f.calls[0][4],true);
+    assert.deepEqual(f.recipe,f.snap);
+  }finally{f.cleanup();}
+});
+
+test('keyboard arrow at an off-frame clamp edge creates no Undo step',()=>{
+  const bounded=[[-2,.34],[-.6,.37],[.35,.44],[.72,.6]];
+  const f=fixture({seed:'noop-bounded-arrow',structure:'paths',geometry:'drawn',
+    customPath:bounded,viewZoom:.5,viewPanX:9});
+  try{
+    f.nodes.drawPathToggle.click();
+    f.nodes.drawEditPoints.click();
+    selectFirstAnchor(f);
+    const key=new Event('keydown',{cancelable:true});
+    Object.defineProperties(key,{
+      key:{value:'ArrowLeft'},shiftKey:{value:false},
+      ctrlKey:{value:false},metaKey:{value:false}
+    });
+    f.document.dispatchEvent(key);
+    assert.equal(f.nodes.drawUndoPoint.disabled,true);
+    f.nodes.drawApply.click();
+    assert.deepEqual(f.calls[0][0],f.snap.customPath);
+    assert.deepEqual(f.recipe,f.snap);
+  }finally{f.cleanup();}
+});
