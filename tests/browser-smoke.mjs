@@ -1098,6 +1098,10 @@ try{
       const row=card.querySelector('.texture-rotation-field .rotation-controls');
       if(!row){problems.push({tool,error:'missing original rotation row'});continue;}
       const host=row.getBoundingClientRect();
+      if(host.width<150||host.height<20){
+        problems.push({tool,error:'rotation row hidden or zero-size',width:host.width,height:host.height});
+        continue;
+      }
       for(const button of row.querySelectorAll('button,input[type=number]')){
         const box=button.getBoundingClientRect();
         if(box.top<host.top-2||box.bottom>host.bottom+2||
