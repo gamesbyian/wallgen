@@ -55,6 +55,24 @@ export async function inspectAtlasState(page,ctx,slug,meta={}){
         sourceControls={expected:keys.length,verified:keys.length,keys};
       }
     }
+    // Historical material controls inherited a 36px minimum button height
+    // inside a 26px rotation row. PR #84 corrected that real clipping.
+    // Guard the actual visible source controls, not only screenshot pixels.
+    if(!mobile&&meta.kind==='tool'&&/^finish[123]$/.test(meta.tool)){
+      const row=g('.editor-tool-card[data-editor-tool="'+meta.tool+'"]:not([hidden]) .texture-rotation-field .rotation-controls');
+      check(!!row,'Material '+meta.tool+' has no rotation control row');
+      const frame=row.getBoundingClientRect();
+      check(frame.width>150&&frame.height>=20,'Material rotation row is hidden or collapsed');
+      const controls=[...row.querySelectorAll('button,input[type=number]')];
+      check(controls.length===6,'Expected five rotation shortcut buttons plus one numeric input in '+meta.tool);
+      const cut=controls.filter(el=>{
+        const r=el.getBoundingClientRect();
+        return r.top<frame.top-2||r.bottom>frame.bottom+2||
+          r.left<frame.left-2||r.right>frame.right+2;
+      });
+      check(cut.length===0,'Material '+meta.tool+' rotation controls overflow their row: '+
+        cut.map(el=>el.getAttribute('aria-label')||el.textContent.trim()).join(','));
+    }
     if(slug.startsWith('special-gallery-')){
       const gallery=g('.workspace>.gallery-section');
       check(!mobile||root.classList.contains('mobile-gallery-open'),'Explore mode not active');
