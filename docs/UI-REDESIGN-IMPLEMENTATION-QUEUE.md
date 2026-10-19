@@ -43,7 +43,7 @@
 - [x] Real Chromium screenshot review found 3px accent overlapping flush-left setting labels; move rail outside each row with no layout or source-control changes (PR #108).
 - [x] Keep seven categories and 40 named tools; inventory source keys and test structure-aware applicability (PRs #94, #96, #97).
 - [x] Keep blue and randomly shuffled, session-stable, unique ROYGBIV accents on original range inputs across tool navigation, with explicit seven-hue source contract (PR pending).
-- [ ] Preserve search match-to-tool and manual horizontal chip scroll state.
+- [x] Preserve manually scrolled tool-strip position while source-visible-name searches (including layer rotation accessible names) reveal their destination beside Focus, retaining internal-key aliases (PR pending).
 - [x] Make Find setting structure-aware: search applicable tools and explain dormant settings (PR #99).
 - [x] Add roving keyboard navigation for applicable tools and Focus parameters, preserving manual chip scroll (PRs #94 and #98).
 - [ ] Reduce excess short-panel height only on navigation, with atomic preview/tray resize.

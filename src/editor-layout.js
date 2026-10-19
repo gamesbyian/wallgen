@@ -265,7 +265,7 @@ export function mountEditor(){
     searchStatus.hidden=true;
     searchStatus.textContent='';
     if(!query)return;
-    const labelFor=key=>form.elements.namedItem(key)?.closest('label')?.textContent||key;
+    const labelFor=key=>sourceSettingLabel(form.elements.namedItem(key),key);
     const options={labelFor,applies:tool=>toolApplies(tools.get(tool.id))};
     const match=findEditorToolMatch(query,TOOL_LIST,options);
     if(match){

@@ -2046,6 +2046,36 @@ try{
   assert.notEqual(rainbowStability.accentColour,'auto',
     'the actual Material Finish slider must use the computed palette accent');
   console.log('ROYGBIV_SLIDER_NAVIGATION_STABILITY',JSON.stringify(rainbowStability));
+  const chooserSearch=await evaluate(`(()=>{
+    if(document.getElementById('controls').classList.contains('editor-focus-active'))
+      document.querySelector('.editor-focus-all').click();
+    document.getElementById('tab-material').click();
+    const rail=document.querySelector('.editor-tool-chooser');
+    const max=rail.scrollWidth-rail.clientWidth;
+    rail.scrollLeft=Math.min(70,max);
+    const start=rail.scrollLeft;
+    document.querySelector('.editor-tool-tab[data-editor-tool=layer2]').click();
+    const afterTap=rail.scrollLeft;
+    document.querySelector('.editor-search-toggle').click();
+    const input=document.querySelector('.editor-search-input');
+    input.value='layer 3 rotation';
+    input.dispatchEvent(new Event('input',{bubbles:true}));
+    const chip=rail.querySelector('.editor-tool-tab[aria-pressed=true]');
+    const a=rail.getBoundingClientRect(),c=chip?.getBoundingClientRect();
+    const focus=rail.querySelector('.editor-focus-toggle');
+    const inset=focus&&getComputedStyle(focus).display!=='none'?focus.getBoundingClientRect().width:0;
+    const visible=!!c&&c.left>=a.left+inset-3&&c.right<=a.right+3;
+    const human=chip?.dataset.editorTool;
+    input.value='textureRotation3';input.dispatchEvent(new Event('input',{bubbles:true}));
+    const legacy=rail.querySelector('.editor-tool-tab[aria-pressed=true]')?.dataset.editorTool;
+    document.querySelector('.editor-search-close').click();
+    return {max,start,afterTap,visible,human,legacy};
+  })()`);
+  assert.ok(chooserSearch.max>5&&chooserSearch.start>5);
+  assert.ok(Math.abs(chooserSearch.afterTap-chooserSearch.start)<=2,'manual tool taps preserve scroll');
+  assert.ok(chooserSearch.visible&&chooserSearch.human==='finish3','search reveals source-named rotation tool');
+  assert.equal(chooserSearch.legacy,'finish3');
+  console.log('TOOL_STRIP_MANUAL_SCROLL_AND_SOURCE_SEARCH',JSON.stringify(chooserSearch));
   console.log('REDESIGN_EXPLORATION_ACCEPTANCE_SUCCESS');
 }finally{
   try{ws?.close()}catch{}
