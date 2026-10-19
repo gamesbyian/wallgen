@@ -1,7 +1,7 @@
 // Local, non-destructive node editor for a sampled drawn path.
 // The source remains the actual 96-point shape until the user changes it:
 // entering node mode never re-fits or silently replaces existing geometry.
-import {normalizeDrawnPath,MAX_DRAWN_POINTS} from './drawn-path.js';
+import {normalizeDrawnPathWithIndexMap,MAX_DRAWN_POINTS} from './drawn-path.js';
 const W=600,H=1300;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const mix=(a,b,t)=>a+(b-a)*t;
@@ -79,10 +79,18 @@ export function chooseAnchorIndices(points,pinned=[]){
   return result;
 }
 export function createPointEditor(input,pinned=[],corners=[]){
-  const points=normalizeDrawnPath(input);
+  // Legacy/sparse imports can lose near-duplicate samples or be resampled
+  // down to the 96-point cap. Reindex human-authored constraints in the
+  // SAME normalization pass as their curve, exactly like recipe restoration.
+  const {points,indexMap}=normalizeDrawnPathWithIndexMap(input);
   if(points.length<2)return null;
-  const reserved=Array.isArray(pinned)?pinned.filter(v=>Number.isInteger(v)&&v>=0&&v<points.length):[];
-  const cornersIn=Array.isArray(corners)?corners.filter(v=>Number.isInteger(v)&&v>=0&&v<points.length):[];
+  const mapped=indices=>[...new Set((Array.isArray(indices)?indices:[])
+    .filter(i=>Number.isInteger(i)&&i>=0)
+    .map(i=>indexMap[i])
+    .filter(i=>Number.isInteger(i)&&i>=0&&i<points.length))]
+    .sort((a,b)=>a-b);
+  const reserved=mapped(pinned);
+  const cornersIn=mapped(corners);
   const allPins=[...new Set([...reserved,...cornersIn])];
   return {points,anchors:chooseAnchorIndices(points,allPins),
     pinned:new Set(allPins),corners:new Set(cornersIn),selected:-1,changed:new Set()};
