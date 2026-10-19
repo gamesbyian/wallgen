@@ -14,17 +14,18 @@ const output=resolve(process.argv.find(x=>x.startsWith('--out='))?.slice(6)||'ar
 const url=process.argv.find(x=>x.startsWith('--base-url='))?.slice(11)||'http://127.0.0.1:4173';
 const plates={
   studio:'studio',geometry:'geometry',draw:'draw',explore:'explore',
+  'explore-populated':'explore',
   more:'more',material:'material',colour:'colour',diagonal:'diagonal',
   compact:'compact',focus:'focus',history:'history',search:'search'
 };
-const all=Object.keys(plates);
+const all=Object.keys(plates).filter(name=>name!=='explore-populated');
 const profiles=[
-  {id:'phone-412x892',width:412,height:892,cases:all},
+  {id:'phone-412x892',width:412,height:892,cases:[...all,'explore-populated']},
   {id:'edge-499x892',width:499,height:892,cases:['studio','geometry','material','more','focus']},
   {id:'edge-500x892',width:500,height:892,cases:all},
   {id:'edge-790x892',width:790,height:892,cases:['studio','geometry','material','more','explore']},
   {id:'desktop-791x892',width:791,height:892,cases:['studio','geometry','material']},
-  {id:'landscape-700x412',width:700,height:412,cases:['studio','geometry','draw','more','explore']},
+  {id:'landscape-700x412',width:700,height:412,cases:['studio','geometry','draw','more','explore','explore-populated']},
   {id:'zoom-out-412x892',width:412,height:892,cases:['studio','geometry','more'],zoom:.75}
 ];
 const errors=[],shots=[];
@@ -110,6 +111,16 @@ const scenarios={
         throw Error('Short-screen gallery empty guidance clipped: '+JSON.stringify(legibility));
     }
   },
+  'explore-populated':async(page)=>{
+    // Real twelve-way generation is slower than the preloaded empty gallery.
+    // Capture the result rather than reconstructing fake card screenshots.
+    await click(page,'#mobileExplore');
+    await page.locator('#gallery').waitFor({state:'visible'});
+    await click(page,'#batch');
+    await page.waitForFunction(()=>document.querySelectorAll('#gallery .thumb').length>=12,
+      null,{timeout:60000});
+    await pause(650);
+  },
   more:async(page,profile)=>{
     if(profile.width<=790){
       await click(page,'#mobileMore');
@@ -175,6 +186,9 @@ function geometryFromPage(page){
       theme:document.documentElement.dataset.theme,
       bodyClasses:body.className,
       stage,sidebar,gallery,more,dock:rect('#mobileActionDock'),
+      galleryGrid:rect('#gallery'),firstThumb:rect('#gallery .thumb'),
+      firstThumbCanvas:rect('#gallery .thumb canvas'),
+      galleryGridOverflowY:document.querySelector('#gallery')?getComputedStyle(document.querySelector('#gallery')).overflowY:null,
       stageOverlap,actionTargets,
       undersized24:actionTargets.filter(el=>el.width<24||el.height<24)
         .map(el=>el.selector),
@@ -221,6 +235,13 @@ try{
             file:filename,zoomMethod:profile.zoom?'CSS root zoom (approximation)':'native CSS viewport',
             interaction:'original source handlers invoked; not a physical tap acceptance',
             ...measured});
+          if(name==='explore-populated'){
+            const grid=measured.galleryGrid,canvas=measured.firstThumbCanvas;
+            const hidden=grid?.visible&&canvas?.visible?
+              Math.max(0,canvas.bottom-grid.bottom):null;
+            console.log('GALLERY THUMB: '+key+' canvas hidden below clip='+hidden+
+              'px; grid overflow-y='+measured.galleryGridOverflowY);
+          }
           console.log('CAPTURED '+key+' overlap='+measured.stageOverlap);
           // The screenshot and geometry remain in the artifact on failure:
           // an attractive comparison gallery is not evidence of safe layout.
