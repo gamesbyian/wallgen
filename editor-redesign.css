@@ -716,6 +716,16 @@
 .editor-tool-card .texture-rotation-field>.setting-lock{
   grid-column:4!important;grid-row:1!important;
 }
+/* Source-qualified desktop correction: the original .rotation-button has a
+   36px minimum, but this inspector allocates a 26px flex row. Without a
+   matching minimum Chrome draws 36px buttons clipped 10px by their parent.
+   Retain the independently budgeted 4-column rotation controls on phones. */
+@media(min-width:791px){
+  .editor-tool-card .texture-rotation-field .rotation-controls button,
+  .editor-tool-card .texture-rotation-field .rotation-controls input[type=number]{
+    min-height:26px!important;
+  }
+}
 .editor-tool-card .texture-rotation-field>small{display:none!important}
 @media(max-width:790px){
   body.mobile-studio.mobile-edit-open{
