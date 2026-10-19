@@ -212,23 +212,57 @@ try{
   });
   const barePNG=Buffer.from(
     'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScL/9QAAAABJRU5ErkJggg==','base64');
-  const withRecipe=embedPngMetadata(barePNG,{title:'Agent3 fixture'},{recipe:rich});
-  await page.locator('#importRecipeFile').setInputFiles({
-    name:'agent3-embedded-recipe.png',mimeType:'image/png',buffer:Buffer.from(withRecipe)
-  });
-  await page.waitForFunction(()=>document.querySelector('#seedInput').value==='agent3-png-import-rich');
-  assert.deepEqual(current(),rich,'Actual PNG import handler damaged a complex recipe');
-  const announcement=await page.locator('#studioStatus').textContent();
-  assert.match(announcement,/Restored original wallpaper settings from PNG recipe/);
+  const fixtures=[
+    ['radial-layered-interior',rich],
+    ['drawn-extrapolated',normalizeRecipe({
+      seed:'agent3-drawn-offframe-import',structure:'paths',geometry:'drawn',
+      customPath:[[-.36,.07],[.18,.42],[.5,.78],[1.31,.93]],
+      drawnAnchors:[1,2],drawnCorners:[2],extendDrawnPath:true,
+      crossingMode:'weave',viewZoom:.6,viewPanX:-15,viewPanY:5,
+      positionX:14,positionY:-9,material:'grain',
+      textureStrength:58,textureLayer2Enabled:true,material2:'linen',
+      textureStrength2:22,textureRotation2:227.5,
+      interiorElements:[{id:'drawn-field',type:'line',shape:'straight',
+        placement:'field',width:1.75,color:'white',colorSlots:[1,3,5]}]
+    })],
+    ['nested-regions-mixed-material',normalizeRecipe({
+      seed:'agent3-nested-region-import',structure:'regions',regionMode:'nested',
+      regionCount:17,regionSides:9,regionJitter:77,
+      viewZoom:.8,viewPanX:20,viewPanY:10,
+      dividerColor:'black',dividerWidth:2.5,
+      material:'construction',textureStrength:75,
+      textureLayer2Enabled:true,material2:'linen',
+      textureStrength2:40,textureLayer3Enabled:true,material3:'foil',
+      textureStrength3:80,textureRotation3:11.5,
+      interiorElements:[{id:'region-contour',type:'line',shape:'wave',
+        placement:'contour',color:'custom',customColor:'#a1b2c3',
+        colorSlots:[0,2,4,6],frequency:21,phase:-270,width:3}]
+    })]
+  ];
+  for(const [name,fixture] of fixtures){
+    const withRecipe=embedPngMetadata(barePNG,{title:'Agent3 '+name},{recipe:fixture});
+    await page.locator('#importRecipeFile').setInputFiles({
+      name:'agent3-'+name+'.png',mimeType:'image/png',buffer:Buffer.from(withRecipe)
+    });
+    await page.waitForFunction(seed=>document.querySelector('#seedInput').value===seed,
+      fixture.seed);
+    assert.deepEqual(current(),fixture,
+      'Actual More PNG import handler damaged '+name+' complex recipe');
+    const announcement=await page.locator('#studioStatus').textContent();
+    assert.match(announcement,/Restored original wallpaper settings from PNG recipe/);
+  }
   await page.locator('#mobileStudio').click();
   assert.equal(await page.locator('#mobileStudio').getAttribute('aria-current'),'page');
   await go('mobileMore');
   await page.keyboard.press('Escape');
   assert.equal(await page.evaluate(()=>document.activeElement?.id),'mobileMore',
     'Escape from More must restore focus to its visible opener');
-  record('png-input-roundtrip',{seed:rich.seed,structure:rich.structure,
-    materials:[rich.material,rich.material2,rich.material3],
-    interiors:rich.interiorElements.length,camera:[rich.viewZoom,rich.viewPanX,rich.viewPanY]});
+  record('png-input-roundtrip',{fixtures:fixtures.map(([name,recipe])=>({
+    name,seed:recipe.seed,structure:recipe.structure,
+    materials:[recipe.material,recipe.material2,recipe.material3],
+    interiors:recipe.interiorElements.length,
+    camera:[recipe.viewZoom,recipe.viewPanX,recipe.viewPanY]
+  }))});
   await screenshot('studio-import-restored');
 
   assert.deepEqual(errors,[],'Uncaught errors during browser acceptance');
