@@ -37,3 +37,14 @@ test('three step styling is flat and does not resize the source camera',()=>{
   assert.match(css,/background:#15141f;border:1px solid #a6729f/);
   assert.doesNotMatch(css,/background:rgba\(15,15,25,\.94\)/);
 });
+
+test('mobile Draw and anchor action geometry belongs only to draw-path.css',()=>{
+  const component=read('draw-path.css');
+  const shared=read('ui-audit-fixes.css');
+  assert.doesNotMatch(shared,/body\.mobile-studio \.draw-path-controls/);
+  assert.doesNotMatch(shared,/body\.mobile-studio \.draw-point-controls/);
+  assert.match(component,/body\.mobile-studio \.draw-path-controls button\{\s*min-height:36px!important/);
+  assert.match(component,/body\.mobile-studio \.draw-point-controls button\{min-height:36px!important\}/);
+  assert.match(component,/body\.mobile-studio \.draw-path-controls #drawApply\{order:-3;min-height:40px!important\}/);
+  assert.match(read('index.html'),/ui-audit-fixes\.css\?v=20261019-drawmove1/);
+});
