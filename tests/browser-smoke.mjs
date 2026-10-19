@@ -1496,8 +1496,15 @@ try{
   }
   // E2E: edit a saved drawn stroke on the phone canvas using physical pointer
   // events, verify the recipe records a manual anchor and that app Undo works.
+  // Earlier renderer coverage switches to desktop. Explicitly return to the
+  // Pixel-size mobile viewport before qualifying touch hitboxes.
+  await command('Emulation.setDeviceMetricsOverride',{
+    width:412,height:915,deviceScaleFactor:1,mobile:true,
+    screenWidth:412,screenHeight:915,
+  });
   const editableRecipe=JSON.parse(readFileSync(join(cwd,'tests/fixtures/drawn-knot-t0b4v5.json'),'utf8'));
   await command('Page.navigate',{url:url+'?r='+encodeURIComponent(JSON.stringify(editableRecipe))});
+  await waitFor('document.body.classList.contains("mobile-studio")',15000);
   await waitFor('document.readyState==="complete"&&document.querySelector("#drawPathToggle")',15000);
   await waitFor('document.querySelectorAll(".editor-tool-card").length>=18',15000);
   const pointEditorCheck=await evaluate(`(async()=>{
@@ -1572,6 +1579,12 @@ try{
     'dragging a point must modify and pin the selected anchor');
   assert.ok(pointEditorCheck.undoAvailable&&pointEditorCheck.restored,
     'local Undo and wallpaper Undo must both remain usable');
+  // Preserve the desktop viewport expected by the following Material and
+  // geometry probes. Breakpoint boundaries are tested separately later.
+  await command('Emulation.setDeviceMetricsOverride',{
+    width:1280,height:900,deviceScaleFactor:1,mobile:false,
+    screenWidth:1280,screenHeight:900,
+  });
   const fineRotations=await evaluate(`(()=>{
     const selectors=['textureRotation','textureRotation2','textureRotation3'];
     const controls=selectors.map(key=>{
