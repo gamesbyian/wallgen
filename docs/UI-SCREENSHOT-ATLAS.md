@@ -28,7 +28,7 @@ Full mode uses desktop **1440 × 900** and Pixel 6 Pro-sized mobile **412 × 892
 
 The artifact **roygbiv-ui-atlas** includes:
 
-- `index.html`: offline, searchable contact sheet with filters for viewport, zoom, UI state and tool. Unzip the archive and open this HTML document.
+- `index.html`: offline, searchable contact sheet with filters for viewport, zoom, UI state and tool, plus a deduplicated, linked clipping-diagnostic table. Unzip the archive and open this HTML document.
 - `manifest.json`: capture identities, control context, viewport and zoom, recorded traversal errors, inapplicable tools and explicit expected-state gaps.
 - `README.md`: generated run summary.
 - `desktop/100/*.png` etc.: one screenshot per distinct navigation/state at a particular zoom, with additional scrolled-tool captures when necessary.
