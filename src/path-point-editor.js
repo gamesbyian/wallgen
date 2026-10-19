@@ -162,6 +162,14 @@ export function movePointAnchor(e,index,to,start=e.points){
   e.points=result;e.pinned.add(index);e.changed.add(index);e.selected=index;
   return result;
 }
+/** A free endpoint has exactly one adjacent editable tangent.
+ * The other apparent handle has no geometric effect and must stay inert. */
+export function editablePointHandleSides(e,index){
+  if(!e?.anchors?.includes(index))return [];
+  if(index===0)return ['out'];
+  if(index===e.points.length-1)return ['in'];
+  return ['in','out'];
+}
 // Handles are inferred from the current polyline rather than stored as a
 // separate approximation. Each is a directional derivative at an anchor.
 export function pointHandles(e,index){
@@ -189,9 +197,11 @@ export function pointHandles(e,index){
 // displacement at neighbouring anchors and no edits beyond them.
 export function movePointHandle(e,index,side,to,start=e.points,initial=null){
   if(!['in','out'].includes(side))throw Error('Unknown handle');
+  const [lo,hi]=neighbours(e,index);
+  if((side==='in'&&lo===index)||(side==='out'&&hi===index))
+    return e.points; // No adjacent segment and no misleading changed marker.
   const handles=initial||pointHandles({...e,points:start},index);
   const delta=[to[0]-handles[side][0],to[1]-handles[side][1]];
-  const [lo,hi]=neighbours(e,index);
   const arc=lengthAlong(start),result=copy(start);
   const update=(type,d)=>{
     if(type==='out'&&hi!==index){
