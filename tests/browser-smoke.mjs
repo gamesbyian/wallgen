@@ -2051,7 +2051,7 @@ try{
   await evaluate('document.getElementById("mobileEdit").click()');
   await waitFor('document.body.classList.contains("mobile-edit-open")');
   await delay(260);
-  const compactGeometry=async tool=>evaluate(`(()=>{
+  const compactGeometry=async()=>evaluate(`(()=>{
     const stage=document.querySelector('.studio-stage').getBoundingClientRect();
     const tray=document.querySelector('.sidebar').getBoundingClientRect();
     const layout=document.querySelector('.layout').getBoundingClientRect();
@@ -2067,12 +2067,12 @@ try{
   await evaluate('document.getElementById("tab-layout").click()');
   await evaluate('document.querySelector(".editor-tool-tab[data-editor-tool=structure-mode]").click()');
   await waitFor('document.body.classList.contains("mobile-edit-compact")');
-  const sparseTray=await compactGeometry('structure-mode');
+  const sparseTray=await compactGeometry();
   await captureUI('compact-tray-sparse-tool-412x892');
   await evaluate('document.getElementById("tab-material").click()');
   await evaluate('document.querySelector(".editor-tool-tab[data-editor-tool=layer1]").click()');
   await waitFor('!document.body.classList.contains("mobile-edit-compact")');
-  const fullTray=await compactGeometry('layer1');
+  const fullTray=await compactGeometry();
   await captureUI('compact-tray-full-tool-412x892');
   assert.equal(sparseTray.selected,'structure-mode');
   assert.equal(fullTray.selected,'layer1');
