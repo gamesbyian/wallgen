@@ -188,6 +188,7 @@ function geometryFromPage(page){
       stage,sidebar,gallery,more,dock:rect('#mobileActionDock'),
       galleryGrid:rect('#gallery'),firstThumb:rect('#gallery .thumb'),
       firstThumbCanvas:rect('#gallery .thumb canvas'),
+      firstThumbCaption:rect('#gallery .thumb-caption'),
       galleryGridOverflowY:document.querySelector('#gallery')?getComputedStyle(document.querySelector('#gallery')).overflowY:null,
       stageOverlap,actionTargets,
       undersized24:actionTargets.filter(el=>el.width<24||el.height<24)
@@ -241,6 +242,19 @@ try{
               Math.max(0,canvas.bottom-grid.bottom):null;
             console.log('GALLERY THUMB: '+key+' canvas hidden below clip='+hidden+
               'px; grid overflow-y='+measured.galleryGridOverflowY);
+            if(profile.id==='landscape-700x412'){
+              const card=measured.firstThumb,caption=measured.firstThumbCaption;
+              const bad=!grid?.visible||!canvas?.visible||!card?.visible||!caption?.visible||
+                canvas.y<grid.y-1||canvas.bottom>grid.bottom+1||
+                card.bottom>grid.bottom+1||caption.bottom>grid.bottom+1||
+                canvas.height>54||canvas.width/canvas.height>.5;
+              if(bad){
+                const error='Short-landscape populated thumbnail is cropped or caption hidden: '+
+                  JSON.stringify({grid,card,canvas,caption});
+                errors.push({key,error});
+                console.error('VISUAL FAILURE '+key+' '+error);
+              }
+            }
           }
           console.log('CAPTURED '+key+' overlap='+measured.stageOverlap);
           // The screenshot and geometry remain in the artifact on failure:
