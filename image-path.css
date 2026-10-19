@@ -60,7 +60,8 @@
 .image-path-actions{display:flex;gap:8px;justify-content:space-between}
 .image-path-actions button{flex:1;min-width:0;font-size:11px;padding:5px 5px}
 .image-path-actions #imagePathAngle{background:#3f3564;border-color:#8d7da4}
-.image-path-actions #imagePathApply{background:#c44d91;border-color:#ee8dca}
+/* At compact label size, white on this solid magenta exceeds 4.5:1. */
+.image-path-actions #imagePathApply{background:#b73a80;border-color:#ee8dca}
 .image-path-actions button:disabled{opacity:.4;cursor:default}
 .image-path-dialog button:focus-visible,
 .image-path-dialog select:focus-visible{outline:2px solid #f4c0e9;outline-offset:2px}
