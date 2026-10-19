@@ -18,12 +18,14 @@ const arg = key => process.argv.find(x => x.startsWith('--'+key+'='))?.split('='
 const baseURL = arg('base-url') || 'http://127.0.0.1:4173';
 const out = resolve(arg('out') || 'artifacts/ui-atlas');
 const smoke = process.argv.includes('--smoke');
-const zooms = smoke?[100]:[100,75,66,50];
+const mobileSmoke = process.argv.includes('--mobile-smoke');
+if(smoke&&mobileSmoke)throw Error('Choose at most one atlas smoke mode');
+const zooms = smoke||mobileSmoke?[100]:[100,75,66,50];
 const allSurfaces = [
   {id:'desktop',viewport:{width:1440,height:900},mobile:false},
   {id:'pixel-6-pro',viewport:{width:412,height:892},mobile:true}
 ];
-const surfaces = smoke ? allSurfaces.slice(0,1) : allSurfaces;
+const surfaces = mobileSmoke ? allSurfaces.slice(1) : smoke ? allSurfaces.slice(0,1) : allSurfaces;
 const cases=[];const errors=[];const inapplicable=[];const seen=new Set();
 const safe=s=>String(s).toLowerCase().replace(/[^a-z0-9-]+/g,'-').replace(/^-|-$/g,'');
 const browser=await chromium.launch({headless:true});
@@ -202,6 +204,56 @@ async function exercise(page,ctx){
     }catch(e){errors.push({profile:ctx.surface.id,zoom:ctx.zoom,case:name,error:String(e)});}
   }
 }
+
+/** Fast Pixel 6 Pro acceptance for every UI PR. This complements rather than
+ * replaces the desktop all-tools smoke and the eight-matrix full atlas.
+ * Selected states represent the real running mobile Studio/Edit/Focus/
+ * material/gallery/More surfaces, with source-setting and panel assertions.
+ */
+async function exerciseMobileSmoke(page,ctx){
+  await capture(page,ctx,'studio-default',{kind:'shell'});
+  await openEditor(page,ctx.surface);
+  await capture(page,ctx,'editor-open',{kind:'shell'});
+  await capture(page,ctx,'special-mobile-edit-rail',{kind:'special'});
+  const selected=[
+    ['layout','arrange'],['path','geometry'],['stripes','structure'],
+    ['details','interior-targets'],['colour','rainbow'],
+    ['material','finish1'],['effects','lighting']
+  ];
+  await change(page,'structure','paths');
+  for(const [category,tool] of selected){
+    await navigate(page,category,tool);
+    const spec=EDITOR_CATEGORIES.find(c=>c.id===category)?.tools.find(t=>t.id===tool);
+    if(!spec)throw Error('Unregistered mobile smoke tool '+category+'/'+tool);
+    await capture(page,ctx,'tool-paths-'+category+'-'+tool,
+      {kind:'tool',structure:'paths',category,tool,settings:spec.settings});
+  }
+  await navigate(page,'stripes','structure');
+  await page.locator('.editor-focus-toggle').click();
+  await page.locator('.editor-focus-chip[data-focus-key=stripeWidth]').click();
+  await capture(page,ctx,'special-focus-stripe-width',
+    {kind:'special',focusSetting:'stripeWidth'});
+  await page.locator('.editor-focus-all').click();
+  await change(page,'orientation','diagonal');
+  await navigate(page,'layout','direction');
+  await capture(page,ctx,'conditional-diagonal',{kind:'conditional'});
+  await change(page,'orientation','vertical');
+  await change(page,'material','grain');
+  await change(page,'textureLayer2Enabled',true);
+  await navigate(page,'material','finish2');
+  await capture(page,ctx,'conditional-material-layers',{kind:'conditional'});
+  // The masthead is hidden during editing; invoke the real theme button
+  // handler rather than synthesizing an impossible pointer click.
+  await page.locator('[data-studio-theme=dark]').evaluate(el=>el.click());
+  if(await page.locator('html').getAttribute('data-theme')!=='dark')
+    throw Error('Dark circle did not switch mobile Studio theme');
+  await capture(page,ctx,'special-dark-theme',{kind:'special'});
+  await page.locator('[data-studio-theme=cream]').evaluate(el=>el.click());
+  await page.locator('#mobileMore').evaluate(el=>el.click());
+  await capture(page,ctx,'shell-mobile-more',{kind:'surface-state'});
+  await page.locator('#mobileExplore').evaluate(el=>el.click());
+  await capture(page,ctx,'shell-mobile-explore',{kind:'surface-state'});
+}
 try{
   for(const surface of surfaces){
     for(const zoom of zooms){
@@ -226,7 +278,8 @@ try{
           #gallery .thumb { background:#e4e4e4; }
         `});
         await settle(page);
-        await exercise(page,{surface,zoom});
+        if(mobileSmoke)await exerciseMobileSmoke(page,{surface,zoom});
+        else await exercise(page,{surface,zoom});
       }catch(e){errors.push({profile:surface.id,zoom,case:'fatal',error:String(e)});}
       finally{await context.close();}
     }
@@ -236,7 +289,17 @@ await mkdir(out,{recursive:true});
 const missingExpected=[];
 for(const surface of surfaces)for(const zoom of zooms){
   const subset=cases.filter(x=>x.profile===surface.id && x.zoomPercent===zoom);
-  const required=[
+  const required=mobileSmoke?[
+    {id:'studio-default'},{id:'editor-open'},{id:'special-mobile-edit-rail'},
+    ...[
+      'layout-arrange','path-geometry','stripes-structure',
+      'details-interior-targets','colour-rainbow','material-finish1',
+      'effects-lighting'
+    ].map(x=>({id:'tool-paths-'+x})),
+    {id:'special-focus-stripe-width'},{id:'conditional-diagonal'},
+    {id:'conditional-material-layers'},{id:'special-dark-theme'},
+    {id:'shell-mobile-more'},{id:'shell-mobile-explore'}
+  ]:[
     ...EDITOR_CATEGORIES.flatMap(c=>c.tools.map(t=>({kind:'tool',tool:t.id}))),
     ...['repeat','floating','diagonal','hairpin','loop','loops','stepped','chevron','geometry-wave','radial-pinwheel','radial-concentric','radial-spokes','regions-nested','regions-organic','motif-dots','construction-woven','construction-stroke','construction-tonal','material-layers','lighting','shadows','outline'].map(name=>({id:'conditional-'+name})),
     ...['dark-theme','vary-wild','search-expanded-empty','setting-locked','interior-empty','interior-one-element','interior-band-style','interior-contour-placement','interior-custom-colour-enabled','interior-two-elements','interior-stack-locked','gallery-empty-favourites','gallery-with-favourite','metadata-expanded','metadata-scrolled-controls','history-empty','history-with-variations','drawn-path-endpoint-controls','draw-empty-panel','draw-ready-path','draw-edit-point-anchors','image-import-candidate-or-error'].map(name=>({id:'special-'+name})),
@@ -247,7 +310,7 @@ for(const surface of surfaces)for(const zoom of zooms){
       missingExpected.push({profile:surface.id,zoom,missing:expectation});
   }
 }
-await writeFile(join(out,'manifest.json'),JSON.stringify({created:new Date().toISOString(),baseURL,zoomMethod:'CSS root zoom; viewport held fixed',smoke,cases,inapplicable,errors,missingExpected},null,2));
+await writeFile(join(out,'manifest.json'),JSON.stringify({created:new Date().toISOString(),baseURL,zoomMethod:'CSS root zoom; viewport held fixed',smoke,mobileSmoke,cases,inapplicable,errors,missingExpected},null,2));
 const byKind=Object.groupBy?Object.groupBy(cases,x=>x.kind):{};
 const report=['# ROYGBIV UI screenshot atlas','', 'Profiles: '+surfaces.map(x=>x.id+' ('+x.viewport.width+'x'+x.viewport.height+')').join(', ')+'. Zoom levels: '+zooms.map(x=>x+'%').join(', ')+'.','','Screenshots: '+cases.length,'Recorded traversal failures: '+errors.length,'Correctly inapplicable tools: '+inapplicable.length,'Missing required UI states: '+missingExpected.length,'','The manifest lists every attempted screenshot, active overlays and navigation context. Static wallpaper artwork is deliberately unchanged across cases.','','## Coverage by kind',...Object.entries(byKind).map(([k,v])=>'- '+k+': '+v.length),'','## Missing/unreachable states',...errors.map(x=>'- '+JSON.stringify(x)),''];
 await writeFile(join(out,'README.md'),report.join('\n'));
