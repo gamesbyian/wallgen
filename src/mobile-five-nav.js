@@ -33,6 +33,9 @@ export function installFiveDestinationDock({openSaved,closeStudio}){
   shortcuts.className='mobile-five-shortcuts';
   shortcuts.setAttribute('role','group');
   shortcuts.setAttribute('aria-label','Save or download current artwork');
+  // Attach the host before moving either source button: getElementById,
+  // original event wiring and favourite status sync must never see a gap.
+  stage.append(shortcuts);
   shortcuts.append(favorite,download);
   const mountShortcuts=()=>{
     const rail=stage.querySelector('.mobile-preview-rail-left');
