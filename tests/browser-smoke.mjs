@@ -2144,6 +2144,17 @@ try{
       const x=lum(a),y=lum(b);
       return (Math.max(x,y)+.05)/(Math.min(x,y)+.05);
     };
+    // Rows can be transparent over their parent card. Contrast requires the
+    // actual opaque backing surface, not transparent black (rgba(0,0,0,0)).
+    const backdrop=element=>{
+      for(let node=element;node;node=node.parentElement){
+        const colour=getComputedStyle(node).backgroundColor;
+        const channels=(colour.match(/[0-9.]+/g)||[]).map(Number);
+        if(channels.length>=3&&(channels.length<4||channels[3]>=.995))
+          return colour;
+      }
+      throw Error('No opaque row backing surface found');
+    };
     const originalTheme=document.documentElement.dataset.theme;
     const readability={};
     for(const theme of ['cream','dark']){
@@ -2157,7 +2168,7 @@ try{
       const numberStyle=getComputedStyle(numeric);
       readability[theme]={
         opacity:hostStyle.opacity,filter:hostStyle.filter,
-        labelContrast:contrast(labelStyle.color,hostStyle.backgroundColor),
+        labelContrast:contrast(labelStyle.color,backdrop(field)),
         numberContrast:contrast(numberStyle.webkitTextFillColor,numberStyle.backgroundColor),
         numberOpacity:numberStyle.opacity,
       };
