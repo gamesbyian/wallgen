@@ -1,0 +1,50 @@
+/* Seven-category ROYGBIV accent rails for actual, source-owned editor rows.
+   No gradients, pseudo-controls, duplicate inputs, or box-model changes.
+   Sliders retain their independently shuffled per-panel track colours. */
+.editor-tool-card .editor-setting-row[data-control-category]{
+  --editor-row-accent:#9464b6;
+  border-radius:7px;
+  box-shadow:inset 3px 0 0 var(--editor-row-accent);
+}
+.editor-tool-card .editor-setting-row[data-control-category="layout"]{--editor-row-accent:#e25757}
+.editor-tool-card .editor-setting-row[data-control-category="path"]{--editor-row-accent:#da8731}
+.editor-tool-card .editor-setting-row[data-control-category="stripes"]{--editor-row-accent:#c8a331}
+.editor-tool-card .editor-setting-row[data-control-category="details"]{--editor-row-accent:#379b73}
+.editor-tool-card .editor-setting-row[data-control-category="colour"]{--editor-row-accent:#3d88d4}
+.editor-tool-card .editor-setting-row[data-control-category="material"]{--editor-row-accent:#7469c8}
+.editor-tool-card .editor-setting-row[data-control-category="effects"]{--editor-row-accent:#b566b4}
+/* Flat, lightly tinted backgrounds separate parameter shapes. Existing row
+   sizes, three-column locks and special four-column rotations do not change. */
+html[data-theme="cream"] .editor-tool-card .editor-setting-row[data-control-kind="slider"],
+html[data-theme="cream"] .editor-tool-card .editor-setting-row[data-control-kind="rotation"]{
+  background-color:#f7f2e9;
+}
+html[data-theme="cream"] .editor-tool-card .editor-setting-row[data-control-kind="choice"],
+html[data-theme="cream"] .editor-tool-card .editor-setting-row[data-control-kind="toggle"],
+html[data-theme="cream"] .editor-tool-card .editor-setting-row[data-control-kind="colour"]{
+  background-color:#f3f0f9;
+}
+html[data-theme="dark"] .editor-tool-card .editor-setting-row[data-control-kind="slider"],
+html[data-theme="dark"] .editor-tool-card .editor-setting-row[data-control-kind="rotation"]{
+  background-color:#242333;
+}
+html[data-theme="dark"] .editor-tool-card .editor-setting-row[data-control-kind="choice"],
+html[data-theme="dark"] .editor-tool-card .editor-setting-row[data-control-kind="toggle"],
+html[data-theme="dark"] .editor-tool-card .editor-setting-row[data-control-kind="colour"]{
+  background-color:#292637;
+}
+/* Inapplicable and disabled controls remain visible, clearly subdued, and
+   subject to their original handlers, lock icons and explanatory text. */
+.editor-tool-card .editor-setting-row[data-control-category]:has(input[data-inactive="true"],select[data-inactive="true"],input:disabled,select:disabled){
+  box-shadow:inset 3px 0 0 var(--line);
+}
+@media(hover:hover){
+  html[data-theme="cream"] .editor-tool-card .editor-setting-row[data-control-category]:not(:has(:disabled)):hover{
+    background-color:#f6eaf1;
+  }
+  html[data-theme="dark"] .editor-tool-card .editor-setting-row[data-control-category]:not(:has(:disabled)):hover{
+    background-color:#312c42;
+  }
+}
+/* The existing focus-visible outline is authoritative and never replaced by
+   a coloured surface or a focus marker that could disappear on either theme. */
