@@ -231,7 +231,9 @@ export async function captureSpecialStates({page,ctx,capture,navigate,change,set
     await row.locator('[data-view-pan=right]').click();
     await page.waitForFunction(x=>JSON.parse(decodeURIComponent(
       new URLSearchParams(location.search).get('r'))).viewPanX===x+5,base);
-    await snap('view-pan',{cameraPan:base+5});
+    const position=await page.evaluate(()=>JSON.parse(decodeURIComponent(
+      new URLSearchParams(location.search).get('r'))).positionX);
+    await snap('view-pan',{cameraPan:base+5,compositionPosition:position});
     await row.locator('[data-view-pan=reset]').click();
     await page.waitForFunction(()=>JSON.parse(decodeURIComponent(
       new URLSearchParams(location.search).get('r'))).viewPanX===0);
