@@ -253,6 +253,17 @@ async function exerciseMobileSmoke(page,ctx){
   await page.locator('[data-studio-theme=cream]').evaluate(el=>el.click());
   await page.locator('#mobileMore').evaluate(el=>el.click());
   await capture(page,ctx,'shell-mobile-more',{kind:'surface-state'});
+  // New frame Pan lives below the first More group: scroll to the real
+  // source control, activate it and prove it remains in the visible tray.
+  const panRow=page.locator('.mobile-more-group-body>.viewport-positioner');
+  await panRow.scrollIntoViewIfNeeded();
+  await panRow.locator('[data-view-pan="right"]').click();
+  await page.waitForFunction(()=>JSON.parse(decodeURIComponent(
+    new URLSearchParams(location.search).get('r'))).viewPanX===5);
+  await capture(page,ctx,'special-view-pan',{kind:'special',cameraPan:5});
+  await panRow.locator('[data-view-pan="reset"]').click();
+  await page.waitForFunction(()=>JSON.parse(decodeURIComponent(
+    new URLSearchParams(location.search).get('r'))).viewPanX===0);
   await page.locator('#mobileExplore').evaluate(el=>el.click());
   await capture(page,ctx,'shell-mobile-explore',{kind:'surface-state'});
 
@@ -324,7 +335,7 @@ for(const surface of surfaces)for(const zoom of zooms){
     ...EDITOR_CATEGORIES.flatMap(c=>c.tools.map(t=>({kind:'tool',tool:t.id}))),
     ...['repeat','floating','diagonal','hairpin','loop','loops','stepped','chevron','geometry-wave','radial-pinwheel','radial-concentric','radial-spokes','regions-nested','regions-organic','motif-dots','construction-woven','construction-stroke','construction-tonal','material-layers','lighting','shadows','outline'].map(name=>({id:'conditional-'+name})),
     ...['dark-theme','vary-wild','search-expanded-empty','setting-locked','interior-empty','interior-one-element','interior-band-style','interior-contour-placement','interior-custom-colour-enabled','interior-two-elements','interior-stack-locked','gallery-empty-favourites','gallery-with-favourite','metadata-expanded','metadata-scrolled-controls','history-empty','history-with-variations','drawn-path-endpoint-controls','draw-empty-panel','draw-ready-path','draw-edit-point-anchors','image-import-candidate-or-error'].map(name=>({id:'special-'+name})),
-    ...(surface.mobile?[{id:'special-mobile-edit-rail'},{id:'special-mobile-nudge-reset-enabled'}]:[])
+    ...(surface.mobile?[{id:'special-mobile-edit-rail'},{id:'special-mobile-nudge-reset-enabled'},{id:'special-view-pan'}]:[])
   ];
   for(const expectation of required){
     if(!subset.some(x=>Object.entries(expectation).every(([k,v])=>k==='id'?x.id.endsWith('/'+v):x[k]===v)))
