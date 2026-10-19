@@ -31,9 +31,14 @@ export function inspectGeometry(rect,viewport,clips=[]){
       visible.right=Math.min(visible.right,clip.right);}
     if(part.y){visible.top=Math.max(visible.top,clip.top);
       visible.bottom=Math.min(visible.bottom,clip.bottom);}
-    if(area(visible)<area(before)-.5){
+    // Test overlap against the *original target*. An offscreen child has
+    // zero intersection with the viewport already; comparing intersection
+    // areas alone would incorrectly call a scrolled-away chip 'broken'.
+    const crosses=(part.x&&(target.left<clip.left-.5||target.right>clip.right+.5))||
+      (part.y&&(target.top<clip.top-.5||target.bottom>clip.bottom+.5));
+    if(crosses||area(visible)<area(before)-.5){
       clipSources.push({kind:part.kind,element:part.element});
-      if(part.kind==='scroll')scrollClipped=true;
+      if(part.kind==='scroll'&&crosses)scrollClipped=true;
     }
   }
   const fraction=Math.max(0,Math.min(1,area(visible)/originalArea));
