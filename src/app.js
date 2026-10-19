@@ -7,7 +7,7 @@ import {appliedDrawnPathRecipe} from './draw-apply-transaction.js';
 import { installImagePathTool } from './image-path-ui.js?v=20261018-import1';
 import {mountEditor,selectEditorTool,syncEditorStructure} from './editor-layout.js?v=20261018-icons2';
 import {randomizeScope} from './scoped-random.js';
-import {newInteriorElementId,INTERIOR_LIMITS,resolveInteriorSelection,interiorTargetSummary} from './interior-elements.js';
+import {newInteriorElementId,INTERIOR_LIMITS,resolveInteriorSelection,interiorTargetSummary,resolveInteriorFocusTarget} from './interior-elements.js';
 import {STYLE_PRESETS} from './editor-schema.js?v=20261018-icons2';
 import {installExplorationHistory} from './exploration-history.js';
 import {iconMarkup,setIconSource,hydrateStaticIcons} from './ui-icons.js';
@@ -819,6 +819,18 @@ const interiorCards=Object.fromEntries(['interior','interior-style','interior-mo
   .map(id=>[id,document.querySelector('.editor-tool-card[data-editor-tool="'+id+'"]')]));
 let selectedInterior=0,selectedInteriorId=null,lastInteriorState='';
 function syncInteriorUI(){
+  // Every change to an element rebuilds its five editor cards. Preserve the
+  // user's focused *logical* control, not the node being removed, so Tab and
+  // repeated arrow-key adjustments keep working after changeRecipe().
+  const focused=Object.values(interiorCards).some(card=>
+    card.contains(document.activeElement))?
+    document.activeElement?.dataset?.interiorFocus:null;
+  const restoreFocus=()=>{
+    if(!focused)return;
+    const controls=Object.values(interiorCards).flatMap(card=>
+      [...card.querySelectorAll('[data-interior-focus]')]);
+    resolveInteriorFocusTarget(controls,focused)?.focus({preventScroll:true});
+  };
   lastInteriorState=JSON.stringify([current.interiorElements,
     current.lockedSettings.includes('interiorElements')]);
   const items=current.interiorElements||[];
@@ -832,6 +844,7 @@ function syncInteriorUI(){
   const toolbar=make(manager,'div');toolbar.className='interior-toolbar';
   const choose=make(toolbar,'select');
   choose.setAttribute('aria-label','Select interior element');
+  choose.dataset.interiorFocus='manager.choose';
   items.forEach((item,i)=>{
     const option=document.createElement('option');
     option.value=String(i);option.textContent=(i+1)+'. '+item.type+' · '+item.shape;
@@ -847,6 +860,7 @@ function syncInteriorUI(){
     syncInteriorUI();
   });
   const add=make(toolbar,'button','+ Add');add.type='button';
+  add.dataset.interiorFocus='manager.add';
   add.disabled=items.length>=8;
   add.addEventListener('click',()=>{
     const id=newInteriorElementId(items);
@@ -855,6 +869,7 @@ function syncInteriorUI(){
     changeRecipe({...current,interiorElements:[...items,{id,type:'line',shape:'wave',color:'white',width:1.5,frequency:6,amplitude:.12}]});
   });
   const remove=make(toolbar,'button','Remove');remove.type='button';remove.disabled=!items.length;
+  remove.dataset.interiorFocus='manager.remove';
   remove.addEventListener('click',()=>{
     const remaining=items.filter((_,i)=>i!==Number(choose.value));
     selectedInterior=Math.max(0,selectedInterior-1);
@@ -874,6 +889,7 @@ function syncInteriorUI(){
       message.className='interior-empty-guidance';
       message.setAttribute('role','note');
     }
+    restoreFocus();
     return;
   }
   const active=items[selectedInterior];
@@ -885,18 +901,22 @@ function syncInteriorUI(){
     for(const value of options){
       const opt=document.createElement('option');opt.value=value;opt.textContent=value;control.append(opt);
     }
+    control.dataset.interiorFocus='field.'+key;
     control.value=active[key];control.addEventListener('change',()=>update(key,control.value));
   };
   const range=(card,name,key,min,max,step)=>{
     const field=make(card,'label',name+' '+active[key]);
     const slider=make(field,'input');
-    slider.type='range';slider.dataset.rainbowKey=key;slider.min=min;slider.max=max;slider.step=step;slider.value=active[key];
+    slider.type='range';slider.dataset.rainbowKey=key;
+    slider.dataset.interiorFocus='field.'+key;
+    slider.min=min;slider.max=max;slider.step=step;slider.value=active[key];
     slider.addEventListener('input',()=>{field.firstChild.textContent=name+' '+slider.value;});
     slider.addEventListener('change',()=>update(key,Number(slider.value)));
     return slider;
   };
   const actions=make(manager,'div');actions.className='interior-actions';
   const up=make(actions,'button');up.type='button';up.innerHTML=iconMarkup('arrow-up');up.title='Move element upward';up.setAttribute('aria-label','Move element upward');
+  up.dataset.interiorFocus='manager.up';
   up.disabled=selectedInterior===0;
   up.addEventListener('click',()=>{
     const next=[...current.interiorElements];
@@ -904,6 +924,7 @@ function syncInteriorUI(){
     selectedInterior--;changeRecipe({...current,interiorElements:next});
   });
   const down=make(actions,'button');down.type='button';down.innerHTML=iconMarkup('arrow-down');down.title='Move element downward';down.setAttribute('aria-label','Move element downward');
+  down.dataset.interiorFocus='manager.down';
   down.disabled=selectedInterior>=items.length-1;
   down.addEventListener('click',()=>{
     const next=[...current.interiorElements];
@@ -912,7 +933,8 @@ function syncInteriorUI(){
   });
   const stackLocked=current.lockedSettings.includes('interiorElements');
   const lock=make(actions,'button',stackLocked?'Unlock all elements':'Lock all elements');
-  lock.type='button';lock.setAttribute('aria-pressed',String(stackLocked));
+  lock.type='button';lock.dataset.interiorFocus='manager.lock';
+  lock.setAttribute('aria-pressed',String(stackLocked));
   lock.addEventListener('click',()=>{
     const locks=new Set(current.lockedSettings);
     if(locks.has('interiorElements'))locks.delete('interiorElements');
@@ -920,12 +942,14 @@ function syncInteriorUI(){
     changeRecipe({...current,lockedSettings:[...locks]},{bypassLocks:true});
   });
   const activeRow=make(manager,'label');activeRow.className='interior-toggle';
-  const toggle=make(activeRow,'input');toggle.type='checkbox';toggle.checked=active.enabled;
+  const toggle=make(activeRow,'input');toggle.type='checkbox';
+  toggle.dataset.interiorFocus='field.enabled';toggle.checked=active.enabled;
   make(activeRow,'span','Enabled');
   toggle.addEventListener('change',()=>update('enabled',toggle.checked));
   const typeField=make(interiorCards['interior-style'],'label','Element');
   const typeSelect=make(typeField,'select');
   for(const kind of ['line','band']){const option=document.createElement('option');option.value=kind;option.textContent=kind;typeSelect.append(option);}
+  typeSelect.dataset.interiorFocus='field.type';
   typeSelect.value=active.type;
   typeSelect.addEventListener('change',()=>changeRecipe({...current,interiorElements:
     current.interiorElements.map((e,i)=>i===selectedInterior?{...e,type:typeSelect.value,width:typeSelect.value==='band'?22:1.5}:e)}));
@@ -935,7 +959,8 @@ function syncInteriorUI(){
   const customLabel=make(interiorCards['interior-targets'],'label','Custom colour');
   const customPicker=make(customLabel,'input');
   customLabel.classList.add('interior-colour-picker');
-  customPicker.type='color';customPicker.value=active.customColor;customPicker.disabled=active.color!=='custom';
+  customPicker.type='color';customPicker.dataset.interiorFocus='field.customColor';
+  customPicker.value=active.customColor;customPicker.disabled=active.color!=='custom';
   customPicker.setAttribute('aria-label','Custom interior ink colour');
   const hexValue=make(customLabel,'output',String(customPicker.value).toUpperCase());
   hexValue.className='colour-hex-value';
@@ -987,6 +1012,7 @@ function syncInteriorUI(){
     label.title=fullName;
     label.setAttribute('aria-label',fullName+' colour target');
     const checkbox=make(label,'input');checkbox.type='checkbox';
+    checkbox.dataset.interiorFocus='colour.'+i;
     checkbox.setAttribute('aria-label',fullName+' colour target');
     checkbox.checked=!active.colorSlots.length||active.colorSlots.includes(i);
     make(label,'span',name);
@@ -1005,6 +1031,7 @@ function syncInteriorUI(){
       for(const control of card.querySelectorAll('input,select,button'))
         if(control!==lock&&control!==choose)control.disabled=true;
   }
+  restoreFocus();
 }
 syncInteriorUI();
 // A separate, bounded worker handles thumbnails. Every image is drawn from
