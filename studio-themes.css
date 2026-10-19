@@ -429,3 +429,19 @@ html[data-theme="dark"] .gallery-placeholder>span{color:#c5becf}
     display:none;
   }
 }
+
+/* Actual 320×640 Chromium exposes a second, narrower case: after the Explore
+   header wraps, the scroll-hidden gallery grid has only ~53px for the empty
+   message. Preserve both real guidance lines and all seven flat bars without
+   enlarging the tray or overlaying the preview. */
+@media(max-width:360px) and (max-height:670px){
+  body.mobile-gallery-open .gallery-placeholder{
+    gap:1px;padding:1px 5px;
+  }
+  body.mobile-gallery-open .gallery-empty-ribbon{
+    flex:0 0 20px;height:20px;
+  }
+  body.mobile-gallery-open .gallery-empty-ribbon>i{
+    transform:scaleY(.32);
+  }
+}

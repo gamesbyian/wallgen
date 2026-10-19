@@ -20,6 +20,10 @@ const plates={
 };
 const all=Object.keys(plates).filter(name=>name!=='explore-populated');
 const profiles=[
+  // Exact lower-width CSS boundary plus the app's minimum supported width.
+  // These are actual mobile Chromium layouts, never CSS-root zoom proxies.
+  {id:'minimum-320x640',width:320,height:640,cases:['studio','geometry','material','more','explore','draw']},
+  {id:'edge-360x740',width:360,height:740,cases:['studio','geometry','material','more','explore','focus']},
   {id:'phone-412x892',width:412,height:892,cases:[...all,'explore-populated']},
   {id:'edge-499x892',width:499,height:892,cases:['studio','geometry','material','more','focus']},
   {id:'edge-500x892',width:500,height:892,cases:all},
@@ -277,6 +281,16 @@ try{
                 JSON.stringify({count:labels.length,clipped});
               errors.push({key,error});
               console.error('VISUAL FAILURE '+key+' '+error);
+            }
+          }
+          if(profile.width<=360){
+            for(const [name,rect] of [['preview',measured.stage],['dock',measured.dock]]){
+              if(rect?.visible&&(rect.x< -1||rect.right>profile.width+1)){
+                const error='Narrow phone '+name+' extends outside '+profile.width+
+                  'px viewport: '+JSON.stringify(rect);
+                errors.push({key,error});
+                console.error('VISUAL FAILURE '+key+' '+error);
+              }
             }
           }
           if(profile.id==='desktop-791x892'&&measured.undersized24.length){
