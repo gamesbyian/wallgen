@@ -19,3 +19,7 @@ Focus also listens for the application's `roygbiv-controls-synced` notification,
 ## Empty tool presentation
 
 A tool with no scalar range settings cannot benefit from the one-slider Focus surface. In that state, the unused parameter chooser is hidden, the explanation remains readable, and taller mobile viewports return some sheet height to the artwork. The **All controls** escape remains available and maintains every non-range field. Selecting a tool with ranges restores the complete Focus slider and its original source values; closing Focus removes the empty-state styling. This is a layout-only improvement, not a change to recipe applicability.
+
+## Parameter-chip keyboard access
+
+Focus has one tab stop for its parameter choices. Left/Right cycle within the current tool, Home/End jump to bounds, and keyboard focus follows the selected real source field. Horizontal reveal is limited to the chip strip. A disabled or locked underlying range remains selectable so its inactive status can be explained, but the shared adjustment stays disabled. All controls remains an independent exit. This is an accessibility refinement only; it changes no recipe values unless the user subsequently adjusts the source-backed slider.
