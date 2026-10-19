@@ -1,6 +1,7 @@
 import {finishDrawnPath,DRAW_COORD_MIN,DRAW_COORD_MAX,MAX_DRAWN_POINTS,prepareDrawnPath,pointOnDrawnPath} from './drawn-path.js?v=20261018-extend1';
 import {createPointEditor,clonePointEditor,addPointAnchor,deletePointAnchor,
-  movePointAnchor,movePointHandle,pointHandles,resmoothPointEdits,insertPointAnchor,
+  movePointAnchor,movePointHandle,pointHandles,editablePointHandleSides,
+  resmoothPointEdits,insertPointAnchor,
   savedPointAnchors,savedPointCorners} from './path-point-editor.js';
 
 /** Match the renderer's world-space camera and *screen-space* composition
@@ -121,7 +122,7 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
       const at=editor.points[editor.selected],handles=pointHandles(editor,editor.selected);
       const origin=project(m,at);
       ctx.strokeStyle='#58d8ff';ctx.lineWidth=1.5*m.scale;
-      for(const side of ['in','out']){
+      for(const side of editablePointHandleSides(editor,editor.selected)){
         const h=project(m,handles[side]);
         ctx.beginPath();ctx.moveTo(...origin);ctx.lineTo(...h);ctx.stroke();
         ctx.fillStyle='#d6f5ff';ctx.beginPath();
@@ -149,7 +150,8 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
     addButton.hidden=deleteButton.hidden=cornerButton.hidden=reSmooth.hidden=pointUndo.hidden=!editing;
     addButton.setAttribute('aria-pressed',String(adding));
     deleteButton.disabled=!available||editor.selected===0||editor.selected===editor.points.length-1;
-    cornerButton.disabled=!available;
+    cornerButton.disabled=!available||editor.selected===0||
+      editor.selected===editor.points.length-1;
     cornerButton.textContent=available&&editor.corners.has(editor.selected)?'Make smooth':'Make corner';
     reSmooth.disabled=!available;
     pointUndo.disabled=history.length===0;
@@ -271,7 +273,7 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
     const radius=17*m.scale;
     if(editor.selected!==-1){
       const handles=pointHandles(editor,editor.selected);
-      for(const side of ['in','out']){
+      for(const side of editablePointHandleSides(editor,editor.selected)){
         if(distance(mouse,project(m,handles[side]))<=radius)
           return {type:'handle',index:editor.selected,side,at:handles[side]};
       }
