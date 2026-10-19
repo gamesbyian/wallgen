@@ -27,7 +27,7 @@ test('both active Use path rules have AA-level small-text contrast',()=>{
       'white Use path text must achieve WCAG AA contrast in every compact layout');
   }
 });
-test('contrast improvement does not alter button geometry or path source actions',()=>{
+test('contrast and touch-size improvements preserve path source actions',()=>{
   const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
   assert.equal([...html.matchAll(/id="drawApply"/g)].length,1);
   assert.match(html,/draw-path\.css\?v=20261019-touch1/);
