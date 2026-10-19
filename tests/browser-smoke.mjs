@@ -2136,7 +2136,7 @@ try{
         inactive:input.dataset.inactive,numeric:numeric?.value||null,
         hostInactive:!!input.closest('.setting-inactive')}];
     }));
-    const rgb=value=>(value.match(/[\d.]+/g)||[]).slice(0,3).map(Number);
+    const rgb=value=>(value.match(/[0-9.]+/g)||[]).slice(0,3).map(Number);
     const lum=value=>rgb(value).map(x=>x/255).map(x=>
       x<=.04045?x/12.92:((x+.055)/1.055)**2.4)
       .reduce((sum,x,i)=>sum+x*[.2126,.7152,.0722][i],0);
