@@ -1579,6 +1579,202 @@ try{
   await evaluate('document.getElementById("undo").click()');
   assert.equal(await evaluate('new URLSearchParams(location.search).get("r")'),
     imageImport.original,'angle application should also be undoable');
+  // The five-destination trial runs as a second, explicit navigation mode.
+  // The default six-action interface above remains a fully tested baseline.
+  await command('Emulation.setDeviceMetricsOverride',{
+    width:412,height:915,deviceScaleFactor:1,mobile:true,
+    screenWidth:412,screenHeight:915,
+  });
+  await command('Page.navigate',{url:url+'?nav=five'});
+  await waitFor('document.readyState==="complete"&&document.body?.classList.contains("mobile-studio")',15000);
+  await delay(400);
+  const trialBoot=await evaluate(`(()=>({
+    query:location.search.slice(0,100),body:document.body.className,
+    saved:!!document.getElementById('mobileSaved'),
+    favourite:!!document.getElementById('mobileFavorite'),
+    download:!!document.getElementById('mobileDownload'),
+    shortcutHost:!!document.querySelector('.mobile-five-shortcuts'),
+    hostParent:document.querySelector('.mobile-five-shortcuts')?.parentElement?.className,
+    previewRail:!!document.querySelector('.mobile-preview-rail-left'),
+    leftChildren:[...document.querySelector('.mobile-preview-rail-left')?.children||[]]
+      .map(el=>el.className||el.id).slice(0,8),
+    navButtons:[...document.querySelectorAll('#mobileActionDock>button')].map(el=>el.id)
+  }))()`);
+  console.log('FIVE_BOOT_DIAGNOSTICS',JSON.stringify(trialBoot));
+  await waitFor('document.body?.classList.contains("mobile-five-nav")&&!!document.getElementById("mobileSaved")&&!!document.querySelector(".mobile-preview-rail-left .mobile-five-shortcuts>#mobileFavorite")&&!!document.querySelector(".mobile-preview-rail-left .mobile-five-shortcuts>#mobileDownload")',15000);
+  const fiveNav=await evaluate(`(()=>{
+    const dock=[...document.querySelectorAll('#mobileActionDock>button')];
+    const ids=dock.map(button=>button.id);
+    const hasAction=id=>document.getElementById(id)?.tagName==='BUTTON';
+    const favorite=document.getElementById('mobileFavorite');
+    const download=document.getElementById('mobileDownload');
+    const shuffle=document.getElementById('mobileShuffle');
+    const quickHost=favorite.closest('.mobile-five-shortcuts');
+    const quick=!!quickHost&&quickHost===download.closest('.mobile-five-shortcuts');
+    const rects=dock.map(b=>b.getBoundingClientRect());
+    document.getElementById('mobileSaved').click();
+    const saved={mode:document.getElementById('gallery').dataset.view,
+      selected:document.getElementById('mobileSaved').getAttribute('aria-current'),
+      expanded:document.getElementById('mobileSaved').getAttribute('aria-expanded'),
+      open:document.body.classList.contains('mobile-gallery-open')};
+    document.getElementById('mobileExplore').click();
+    const explore={mode:document.getElementById('gallery').dataset.view,
+      selected:document.getElementById('mobileExplore').getAttribute('aria-current'),
+      open:document.body.classList.contains('mobile-gallery-open')};
+    document.getElementById('mobileStudio').click();
+    const studio={selected:document.getElementById('mobileStudio').getAttribute('aria-current'),
+      galleryClosed:!document.body.classList.contains('mobile-gallery-open')};
+    return {ids,allNamed:['mobileShuffle','mobileFavorite','mobileDownload'].every(hasAction),
+      quick,shuffleInMore:shuffle.parentElement.id==='mobileToolsContent',
+      iconCount:dock.filter(b=>!!b.querySelector('svg.ui-icon')).length,
+      widths:rects.map(b=>b.width),
+      saved,explore,studio};
+  })()`);
+  assert.deepEqual(fiveNav.ids,
+    ['mobileStudio','mobileEdit','mobileExplore','mobileSaved','mobileMore']);
+  assert.ok(fiveNav.allNamed&&fiveNav.quick&&fiveNav.shuffleInMore);
+  assert.equal(fiveNav.iconCount,5);
+  assert.ok(fiveNav.widths.every(width=>width>45));
+  assert.deepEqual(fiveNav.saved,{mode:'saved',selected:'page',expanded:'true',open:true});
+  assert.deepEqual(fiveNav.explore,{mode:'explore',selected:'page',open:true});
+  assert.deepEqual(fiveNav.studio,{selected:'page',galleryClosed:true});
+  console.log('FIVE_DESTINATION_TRIAL_ACCEPTANCE',JSON.stringify(fiveNav));
+  // Match the actual design reference's 412×892 CSS viewport, not only the
+  // slightly taller general mobile-smoke profile.
+  await command('Emulation.setDeviceMetricsOverride',{
+    width:412,height:892,deviceScaleFactor:1,mobile:true,
+    screenWidth:412,screenHeight:892,
+  });
+  await delay(220);
+  const trialGeometry=await evaluate(`(()=>{
+    const rect=selector=>document.querySelector(selector)?.getBoundingClientRect();
+    const dock=rect('#mobileActionDock');
+    const frame=rect('.wallpaper-frame');
+    const preview=rect('.studio-stage');
+    const quick=[...document.querySelectorAll('.mobile-five-shortcuts>button')]
+      .map(button=>button.getBoundingClientRect());
+    return {dock:{top:dock.top,bottom:dock.bottom},
+      preview:{top:preview.top,bottom:preview.bottom},
+      frame:{left:frame.left,right:frame.right,height:frame.height},
+      shortcuts:quick.map(r=>({left:r.left,right:r.right,top:r.top,bottom:r.bottom}))};
+  })()`);
+  assert.equal(trialGeometry.shortcuts.length,2);
+  assert.ok(trialGeometry.dock.top>=trialGeometry.preview.bottom-2,
+    'five-item dock must not cover preview stage');
+  assert.ok(trialGeometry.dock.bottom<=893);
+  assert.ok(trialGeometry.frame.height>300);
+  assert.ok(trialGeometry.shortcuts.every(r=>r.right<=trialGeometry.frame.left+5),
+    'preview quick actions must not obscure any wallpaper pixel');
+  console.log('FIVE_DESTINATION_412_892_GEOMETRY',JSON.stringify(trialGeometry));
+  // Retain real Chromium images for independent design review. These are not
+  // concept art or an assertion that the opt-in shell is visually approved.
+  await captureUI('five-nav-studio-412x892');
+  await evaluate('document.getElementById("mobileExplore").click()');
+  await delay(180);
+  await captureUI('five-nav-explore-412x892');
+  await evaluate('document.getElementById("mobileSaved").click()');
+  await delay(180);
+  await captureUI('five-nav-saved-412x892');
+  await evaluate('document.getElementById("mobileEdit").click()');
+  await delay(180);
+  await captureUI('five-nav-edit-412x892');
+  await evaluate('document.getElementById("mobileMore").click()');
+  await delay(180);
+  await captureUI('five-nav-more-412x892');
+  // Compare a genuinely rendered second palette, not a recoloured mockup.
+  await evaluate('document.querySelector("[data-studio-theme=dark]").click()');
+  await evaluate('document.getElementById("mobileStudio").click()');
+  await delay(180);
+  await captureUI('five-nav-studio-dark-412x892');
+  await evaluate('document.getElementById("mobileSaved").click()');
+  await delay(180);
+  await captureUI('five-nav-saved-dark-412x892');
+  assert.equal(await evaluate('document.documentElement.dataset.theme'),'dark');
+  await evaluate('document.querySelector("[data-studio-theme=cream]").click()');
+  await evaluate('document.getElementById("mobileStudio").click()');
+  // A relocated source button must still forward into the canonical handler.
+  const favouriteRoundtrip=await evaluate(`(()=>{
+    const src=document.getElementById('mobileFavorite');
+    const canonical=document.getElementById('favorite');
+    const before=canonical.getAttribute('aria-pressed');
+    src.click();
+    const during=canonical.getAttribute('aria-pressed');
+    src.click();
+    return {before,during,after:canonical.getAttribute('aria-pressed'),
+      quickConnected:src.isConnected,source:src.id};
+  })()`);
+  assert.ok(favouriteRoundtrip.quickConnected);
+  assert.notEqual(favouriteRoundtrip.before,favouriteRoundtrip.during,
+    'five-item preview Favourite must invoke canonical saved state');
+  assert.equal(favouriteRoundtrip.after,favouriteRoundtrip.before,
+    'favourite shortcut roundtrip must restore original state');
+  console.log('FIVE_DESTINATION_FAVOURITE_ROUNDTRIP',JSON.stringify(favouriteRoundtrip));
+  const boundaryViewports=[[499,892],[500,892],[790,892],[700,412],[791,892],[412,892]];
+  const trialBoundaries=[];
+  for(const [width,height] of boundaryViewports){
+    await command('Emulation.setDeviceMetricsOverride',{
+      width,height,deviceScaleFactor:1,mobile:true,screenWidth:width,screenHeight:height,
+    });
+    await delay(130);
+    const state=await evaluate(`(()=>{
+      const box=selector=>document.querySelector(selector)?.getBoundingClientRect();
+      const dock=box('#mobileActionDock');
+      const stage=box('.studio-stage');
+      const frame=box('.wallpaper-frame');
+      const scrollRail=document.querySelector('.mobile-preview-rail-left');
+      let shortcutScroll=null;
+      if(scrollRail){
+        const originalScroll=scrollRail.scrollTop;
+        scrollRail.scrollTop=scrollRail.scrollHeight;
+        const lastShortcut=box('#mobileDownload');
+        const railBounds=scrollRail.getBoundingClientRect();
+        const lowerShortcutReachable=lastShortcut.top>=railBounds.top-2&&
+          lastShortcut.bottom<=railBounds.bottom+2;
+        shortcutScroll={
+          overflow:getComputedStyle(scrollRail).overflowY,
+          maxScroll:scrollRail.scrollHeight-scrollRail.clientHeight,
+          lowerShortcutReachable
+        };
+        scrollRail.scrollTop=originalScroll;
+      }
+      return {mobile:document.body.classList.contains('mobile-studio'),
+        dockStyle:getComputedStyle(document.getElementById('mobileActionDock')).display,
+        buttons:document.querySelectorAll('#mobileActionDock>button').length,
+        quickActionsConnected:['mobileFavorite','mobileDownload'].every(id=>
+          document.getElementById(id)?.isConnected),
+        dock:{left:dock.left,right:dock.right,top:dock.top,bottom:dock.bottom},
+        shortcutHost:document.querySelector('.mobile-five-shortcuts')?.parentElement?.className||null,
+        shortcutScroll,
+        stageBottom:stage.bottom,frameHeight:frame.height};
+    })()`);
+    trialBoundaries.push({width,height,...state});
+    console.log('FIVE_NAV_VIEWPORT',JSON.stringify({width,height,...state}));
+    if(height<=620){
+      assert.equal(state.shortcutScroll.overflow,'auto',
+        'constrained landscape shortcut rail must remain vertically navigable');
+      assert.ok(state.shortcutScroll.lowerShortcutReachable,
+        'Download must be reachable by scrolling only the left shortcut rail');
+    }
+    assert.ok(state.quickActionsConnected,
+      'responsive rail detachment must preserve both source action identities');
+    if(width<=790){
+      assert.ok(state.mobile&&state.dockStyle!=='none');
+      assert.ok(state.shortcutHost?.includes('mobile-preview-rail-left'),
+        'resizing back to mobile must remount the original source actions');
+      assert.equal(state.buttons,5);
+      assert.ok(state.dock.left>=-1&&state.dock.right<=width+1);
+      assert.ok(state.dock.bottom<=height+1);
+      assert.ok(state.stageBottom<=state.dock.top+2,
+        'five-nav viewport stage overlaps bottom dock');
+    }else{
+      assert.equal(state.mobile,false,'791px must return to desktop shell');
+      assert.equal(state.dockStyle,'none');
+    }
+  }
+  console.log('FIVE_DESTINATION_BREAKPOINTS',JSON.stringify(trialBoundaries));
+
+
+
   console.log('REDESIGN_EXPLORATION_ACCEPTANCE_SUCCESS');
 }finally{
   try{ws?.close()}catch{}

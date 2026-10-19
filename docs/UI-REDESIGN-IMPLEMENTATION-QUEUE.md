@@ -29,6 +29,7 @@
 - [ ] Consolidate navigation only after full action-preservation and screen geometry tests; existing six dock actions remain functional.
 - [ ] Preserve zoom increments, full fit, camera-only state, drawn-path extension and exported wallpaper dimensions.
 - [ ] Migrate six dock actions (Edit/Explore/Randomize/Favourite/Download/More) to five destinations (Studio/Edit/Explore/Saved/More) **without losing Randomize, Favourite or direct Download**.
+- [x] Stage opt-in `?nav=five` prototype retaining source action identities; trial must clear browser, geometry and visual gates before becoming default (PR pending).
 - [ ] Verify 412×892 phone, 499/500/790/791 boundaries, constrained landscape; no artwork/tray overlap.
 
 ## Phase C — component system and named editor controls

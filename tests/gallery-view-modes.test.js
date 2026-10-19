@@ -16,7 +16,7 @@ test('Explore retains last variation recipe list independently from Saved',()=>{
 test('mobile Explore switches back to exploration before showing gallery',()=>{
   const mobile=read('src/mobile-studio.js');
   assert.match(mobile,/new CustomEvent\('roygbiv-gallery-view-request',\{detail:'explore'\}\)/);
-  assert.match(mobile,/openSurface\('gallery'\)/);
+  assert.match(mobile,/openSurface\('gallery'(?:,'explore')?\)/);
   assert.match(read('index.html'),/id="showFavorites"/);
   assert.match(read('index.html'),/id="mobileExplore"/);
 });
