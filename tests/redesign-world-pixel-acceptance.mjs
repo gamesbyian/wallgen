@@ -24,7 +24,7 @@ const fixtures=[
     seed:'a3-pixel-drawn',structure:'paths',geometry:'drawn',
     customPath:[[-.2,.18],[.36,.33],[.67,.61],[1.2,.84]],
     drawnAnchors:[1,2],extendDrawnPath:true,
-    viewZoom:.7,viewPanX:10,viewPanY:-15,
+    stripeWidth:92,spread:45,viewZoom:1.12,viewPanX:5,viewPanY:-5,
     material:'none',background:'black'
   }},
   {name:'radial-pinwheel',input:{
@@ -109,8 +109,8 @@ try{
       console.log('AGENT3_WORLD_PIXELS',JSON.stringify(metrics));
       assert.ok(metrics.stable>=200,
         metrics.name+': not enough locally stable sample pixels');
-      assert.ok(metrics.foreground>=30,
-        metrics.name+': painted foreground coverage too small for qualification');
+      assert.ok(metrics.foreground>=Math.max(30,Math.ceil(metrics.stable*.08)),
+        metrics.name+': colored samples cover too little of the tested artwork');
       assert.ok(metrics.stableDisagreement<=.04,
         metrics.name+': stable artwork pixels changed at different sizes');
       assert.ok(metrics.foregroundDisagreement<=.06,
