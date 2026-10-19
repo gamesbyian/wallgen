@@ -48,13 +48,16 @@ byId('errorCount').textContent=data.errors.length;
 byId('skipCount').textContent=data.inapplicable.length;
 byId('missingCount').textContent=data.missingExpected.length;
 byId('issues').textContent=JSON.stringify({errors:data.errors,missingExpected:data.missingExpected,inapplicable:data.inapplicable},null,2);
-const inspectionCounts={scanned:0,ignoredScroll:0,reported:0};
+const inspectionCounts={scanned:0,ignoredScroll:0,reported:0,measuredTouchTargets:0,smallActionCount:0,under44Count:0};
 const diagnosticGroups=new Map();
 for(const capture of data.cases){
  const scan=capture.inspection||{};
  inspectionCounts.scanned+=(scan.scanned||0);
  inspectionCounts.ignoredScroll+=(scan.ignoredScroll||0);
  inspectionCounts.reported+=(scan.totalFindings||0);
+ inspectionCounts.measuredTouchTargets+=(scan.measuredTouchTargets||0);
+ inspectionCounts.smallActionCount+=(scan.smallActionCount||0);
+ inspectionCounts.under44Count+=(scan.under44Count||0);
  for(const finding of scan.findings||[]){
    const key=[capture.profile,finding.type,finding.element].join('::');
    let row=diagnosticGroups.get(key);
@@ -78,6 +81,8 @@ info.className='small';
 info.textContent=inspectionCounts.scanned+' examined controls · '+
  inspectionCounts.ignoredScroll+' intentionally scroll-clipped · '+
  inspectionCounts.reported+' potential actionable clips · '+
+ inspectionCounts.smallActionCount+' sub-24px target boxes / '+
+ inspectionCounts.measuredTouchTargets+' measured visible targets · '+
  diagnosticGroups.size+' unique viewport/control combinations';
 diag.append(info);
 const tbl=document.createElement('table');
