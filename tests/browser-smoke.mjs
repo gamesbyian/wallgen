@@ -2042,6 +2042,69 @@ try{
   assert.equal(favouriteRoundtrip.after,favouriteRoundtrip.before,
     'favourite shortcut roundtrip must restore original state');
   console.log('FIVE_DESTINATION_FAVOURITE_ROUNDTRIP',JSON.stringify(favouriteRoundtrip));
+  // The short-panel class is intentionally navigation-driven. It must
+  // actually shrink the reserved tray (and grow the unobscured preview),
+  // not merely decorate the body with an inert CSS class. A complex
+  // multi-control panel must reclaim the full height on the next click.
+  const compactRecipeBefore=await evaluate(
+    'JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r")))');
+  await evaluate('document.getElementById("mobileEdit").click()');
+  await waitFor('document.body.classList.contains("mobile-edit-open")');
+  await delay(260);
+  const compactGeometry=async()=>evaluate(`(()=>{
+    const stage=document.querySelector('.studio-stage').getBoundingClientRect();
+    const tray=document.querySelector('.sidebar').getBoundingClientRect();
+    const layout=document.querySelector('.layout').getBoundingClientRect();
+    const card=document.querySelector('.editor-tool-card:not([hidden])');
+    return {compact:document.body.classList.contains('mobile-edit-compact'),
+      selected:document.querySelector('.editor-tool-tab[aria-pressed=true]')?.dataset.editorTool,
+      cardVisible:!!card&&card.getBoundingClientRect().height>16,
+      trayHeight:tray.height,layoutHeight:layout.height,
+      stageBottom:stage.bottom,trayTop:tray.top,
+      trayLeft:tray.left,trayRight:tray.right,trayBottom:tray.bottom,
+      sourceNavTabs:document.querySelectorAll('.settings-tabs .settings-tab').length};
+  })()`);
+  await evaluate('document.getElementById("tab-layout").click()');
+  await evaluate('document.querySelector(".editor-tool-tab[data-editor-tool=structure-mode]").click()');
+  await waitFor('document.body.classList.contains("mobile-edit-compact")');
+  const sparseTray=await compactGeometry();
+  await captureUI('compact-tray-sparse-tool-412x892');
+  await evaluate('document.getElementById("tab-material").click()');
+  await evaluate('document.querySelector(".editor-tool-tab[data-editor-tool=layer1]").click()');
+  await waitFor('!document.body.classList.contains("mobile-edit-compact")');
+  const fullTray=await compactGeometry();
+  await captureUI('compact-tray-full-tool-412x892');
+  assert.equal(sparseTray.selected,'structure-mode');
+  assert.equal(fullTray.selected,'layer1');
+  assert.ok(sparseTray.compact&&!fullTray.compact&&
+    sparseTray.cardVisible&&fullTray.cardVisible);
+  assert.ok(fullTray.trayHeight-sparseTray.trayHeight>=20,
+    'a short tool must reclaim actual vertical wallpaper space');
+  assert.ok(sparseTray.layoutHeight-fullTray.layoutHeight>=20,
+    'the preview must grow when the settings tray shrinks');
+  assert.ok(Math.abs((sparseTray.layoutHeight+sparseTray.trayHeight)-
+    (fullTray.layoutHeight+fullTray.trayHeight))<=3,
+    'preview and tray must resize as one reserved screen partition');
+  for(const [tool,geometry] of [['structure-mode',sparseTray],['layer1',fullTray]]){
+    assert.ok(geometry.stageBottom<=geometry.trayTop+2,
+      tool+' camera and tray must not overlap');
+    assert.ok(geometry.trayLeft>=-1&&geometry.trayRight<=413&&
+      geometry.trayBottom<=893&&geometry.sourceNavTabs===7,
+      tool+' retains all seven source categories within the phone');
+  }
+  const compactRecipeAfter=await evaluate(
+    'JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r")))');
+  assert.deepEqual(compactRecipeAfter,compactRecipeBefore,
+    'switching sparse/full editor tools must not mutate the artwork recipe');
+  await evaluate('document.getElementById("mobileDismissHandle").click()');
+  await waitFor('!document.body.classList.contains("mobile-edit-open")');
+  assert.equal(await evaluate('document.getElementById("mobileActionDock").inert'),false);
+  // Closing Edit restores the dock through a real 220ms translate transition.
+  // The responsive census below measures settled frames, not a midway dock.
+  await delay(260);
+  console.log('NAVIGATION_ONLY_COMPACT_TRAY',JSON.stringify({sparseTray,fullTray,
+    gainedPreview:sparseTray.layoutHeight-fullTray.layoutHeight}));
+
   const boundaryViewports=[[499,892],[500,892],[790,892],[700,412],[791,892],[412,892]];
   const trialBoundaries=[];
   for(const [width,height] of boundaryViewports){
