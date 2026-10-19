@@ -418,6 +418,11 @@ export function respectSettingLocks(currentInput, nextInput) {
       next.drawnCorners=current.drawnCorners;
       next.extendDrawnPath=current.extendDrawnPath;
     }
+    // For optional layers, the material chooser is the sole visible on/off
+    // action. Its hidden Enabled flag belongs to the same atomic user lock.
+    // Randomize/restore must not leave a locked material silently inactive.
+    if(key==='material2')next.textureLayer2Enabled=current.textureLayer2Enabled;
+    if(key==='material3')next.textureLayer3Enabled=current.textureLayer3Enabled;
     if(key==='position') {next.positionX=current.positionX;next.positionY=current.positionY;}
     else next[key]=current[key];
   }
