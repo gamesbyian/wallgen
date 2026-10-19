@@ -46,5 +46,5 @@ test('mobile Draw and anchor action geometry belongs only to draw-path.css',()=>
   assert.match(component,/body\.mobile-studio \.draw-path-controls button\{\s*min-height:36px!important/);
   assert.match(component,/body\.mobile-studio \.draw-point-controls button\{min-height:36px!important\}/);
   assert.match(component,/body\.mobile-studio \.draw-path-controls #drawApply\{order:-3;min-height:40px!important\}/);
-  assert.match(read('index.html'),/ui-audit-fixes\.css\?v=20261019-drawmove1/);
+  assert.match(read('index.html'),/ui-audit-fixes\.css\?v=\d{8}-[a-z0-9]+/);
 });

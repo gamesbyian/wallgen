@@ -88,6 +88,34 @@ try{
   await waitFor('document.querySelectorAll(".settings-tab").length===7',15000);
   await waitFor('document.body.classList.contains("mobile-five-nav")&&document.querySelectorAll("#mobileActionDock>button").length===5',15000);
   await delay(300);
+  // Actual Chromium media emulation: notifications and disabled/locked affordance
+  // changes must not animate when the OS asks for reduced motion.
+  await command('Emulation.setEmulatedMedia',{
+    features:[{name:'prefers-reduced-motion',value:'reduce'}]
+  });
+  const reducedMotion=await evaluate(`(()=>{
+    const toast=getComputedStyle(document.getElementById('studioStatus'));
+    const lock=getComputedStyle(document.querySelector('.setting-lock'));
+    return {scroll:getComputedStyle(document.documentElement).scrollBehavior,
+      toast:toast.transitionDuration,lock:lock.transitionDuration,
+      media:matchMedia('(prefers-reduced-motion: reduce)').matches};
+  })()`);
+  assert.deepEqual(reducedMotion,{scroll:'auto',toast:'0s',lock:'0s',media:true},
+    'reduced-motion preference must remove scrolling, toast and lock transitions');
+  await command('Emulation.setEmulatedMedia',{
+    features:[{name:'prefers-reduced-motion',value:'no-preference'}]
+  });
+  const normalMotion=await evaluate(`(()=>{
+    const toast=getComputedStyle(document.getElementById('studioStatus'));
+    const lock=getComputedStyle(document.querySelector('.setting-lock'));
+    return {scroll:getComputedStyle(document.documentElement).scrollBehavior,
+      toast:toast.transitionDuration,lock:lock.transitionDuration,
+      media:matchMedia('(prefers-reduced-motion: reduce)').matches};
+  })()`);
+  assert.ok(normalMotion.scroll==='smooth'&&!normalMotion.media&&
+    normalMotion.toast!=='0s'&&normalMotion.lock!=='0s',
+    'non-reduced UI keeps intentional short feedback transitions');
+  console.log('MOBILE_REDUCED_MOTION_CONTRACT',JSON.stringify({reducedMotion,normalMotion}));
   // Inspect the real accessible control semantics, independently of the
   // screenshot atlas and independently of visible icon shape.
   const mobileSemantics=await evaluate(`(()=>{
