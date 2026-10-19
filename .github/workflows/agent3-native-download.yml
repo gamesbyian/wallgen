@@ -41,7 +41,7 @@ jobs:
           done
           cat /tmp/agent3-native-download.log
           exit 1
-      - name: Two real native wallpaper downloads, full metadata and painted pixel comparison
+      - name: Five real native downloads: four coloured structure comparisons and layered metadata
         run: node tests/redesign-native-download-acceptance.mjs
       - name: Upload quantified evidence or failure
         if: always()
