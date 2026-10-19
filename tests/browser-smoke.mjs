@@ -1859,7 +1859,10 @@ try{
     if(document.getElementById('controls').classList.contains('editor-focus-active'))
       document.querySelector('.editor-focus-all').click();
     const structure=document.querySelector('[name=structure]');
+    const construction=document.querySelector('[name=construction]');
     const regionMode=document.querySelector('[name=regionMode]');
+    construction.value='ribbon'; // Tonal is deliberately hidden/disabled.
+    construction.dispatchEvent(new Event('change',{bubbles:true}));
     const failures=[],reached=new Set(),perScene={};
     for(const [scene,region] of [
       ['paths','voronoi'],['radial','voronoi'],
