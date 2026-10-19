@@ -88,7 +88,10 @@ test('otherwise dormant path, material and interior fields remain available afte
   }));
   assert.equal(layer.textureLayer2Enabled,false);
   assert.equal(layer.textureLayer3Enabled,true);
-  assert.equal(layer.textureRotation3,256.25);
+  // Recipe angles intentionally quantize to one decimal place. Transport
+  // preserves that canonical value, not the unnormalized original input.
+  assert.equal(layer.textureRotation3,
+    normalizeRecipe(examples.find(([name])=>name==='three-layer-mixed-availability')[1]).textureRotation3);
   assert.equal(layer.textureBlend3,'multiply');
 
   const radial=decodeRecipe(encodeRecipe(examples.find(([name])=>
