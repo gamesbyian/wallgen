@@ -1620,6 +1620,34 @@ try{
   assert.deepEqual(fiveNav.explore,{mode:'explore',selected:'page',open:true});
   assert.deepEqual(fiveNav.studio,{selected:'page',galleryClosed:true});
   console.log('FIVE_DESTINATION_TRIAL_ACCEPTANCE',JSON.stringify(fiveNav));
+  // Match the actual design reference's 412×892 CSS viewport, not only the
+  // slightly taller general mobile-smoke profile.
+  await command('Emulation.setDeviceMetricsOverride',{
+    width:412,height:892,deviceScaleFactor:1,mobile:true,
+    screenWidth:412,screenHeight:892,
+  });
+  await delay(220);
+  const trialGeometry=await evaluate(`(()=>{
+    const rect=selector=>document.querySelector(selector)?.getBoundingClientRect();
+    const dock=rect('#mobileActionDock');
+    const frame=rect('.wallpaper-frame');
+    const preview=rect('.studio-stage');
+    const quick=[...document.querySelectorAll('.mobile-five-shortcuts>button')]
+      .map(button=>button.getBoundingClientRect());
+    return {dock:{top:dock.top,bottom:dock.bottom},
+      preview:{top:preview.top,bottom:preview.bottom},
+      frame:{left:frame.left,right:frame.right,height:frame.height},
+      shortcuts:quick.map(r=>({left:r.left,right:r.right,top:r.top,bottom:r.bottom}))};
+  })()`);
+  assert.equal(trialGeometry.shortcuts.length,2);
+  assert.ok(trialGeometry.dock.top>=trialGeometry.preview.bottom-2,
+    'five-item dock must not cover preview stage');
+  assert.ok(trialGeometry.dock.bottom<=893);
+  assert.ok(trialGeometry.frame.height>300);
+  assert.ok(trialGeometry.shortcuts.every(r=>r.right<=trialGeometry.frame.left+5),
+    'preview quick actions must not obscure any wallpaper pixel');
+  console.log('FIVE_DESTINATION_412_892_GEOMETRY',JSON.stringify(trialGeometry));
+
   console.log('REDESIGN_EXPLORATION_ACCEPTANCE_SUCCESS');
 }finally{
   try{ws?.close()}catch{}
