@@ -6,7 +6,7 @@ import { installDrawTool } from './draw-path-ui.js?v=20261018-extend1';
 import { installImagePathTool } from './image-path-ui.js?v=20261018-import1';
 import {mountEditor,selectEditorTool,syncEditorStructure} from './editor-layout.js?v=20261018-icons2';
 import {randomizeScope} from './scoped-random.js';
-import {newInteriorElementId,INTERIOR_LIMITS} from './interior-elements.js';
+import {newInteriorElementId,INTERIOR_LIMITS,resolveInteriorSelection} from './interior-elements.js';
 import {STYLE_PRESETS} from './editor-schema.js?v=20261018-icons2';
 import {installExplorationHistory} from './exploration-history.js';
 import {iconMarkup,setIconSource,hydrateStaticIcons} from './ui-icons.js';
@@ -823,7 +823,7 @@ const editor=mountEditor();
 // ordered element objects are a recipe collection, not separately lockable sliders.
 const interiorCards=Object.fromEntries(['interior','interior-style','interior-motion','interior-placement','interior-targets']
   .map(id=>[id,document.querySelector('.editor-tool-card[data-editor-tool="'+id+'"]')]));
-let selectedInterior=0,lastInteriorState='';
+let selectedInterior=0,selectedInteriorId=null,lastInteriorState='';
 function syncInteriorUI(){
   lastInteriorState=JSON.stringify([current.interiorElements,
     current.lockedSettings.includes('interiorElements')]);
@@ -843,20 +843,29 @@ function syncInteriorUI(){
     option.value=String(i);option.textContent=(i+1)+'. '+item.type+' · '+item.shape;
     choose.append(option);
   });
-  selectedInterior=Math.max(0,Math.min(selectedInterior,items.length-1));
+  selectedInterior=resolveInteriorSelection(items,selectedInteriorId,selectedInterior);
+  selectedInteriorId=items[selectedInterior]?.id??null;
   choose.value=String(selectedInterior);
   choose.disabled=!items.length;
-  choose.addEventListener('change',()=>{selectedInterior=Number(choose.value);syncInteriorUI();});
+  choose.addEventListener('change',()=>{
+    selectedInterior=Number(choose.value);
+    selectedInteriorId=items[selectedInterior]?.id??null;
+    syncInteriorUI();
+  });
   const add=make(toolbar,'button','+ Add');add.type='button';
   add.disabled=items.length>=8;
   add.addEventListener('click',()=>{
+    const id=newInteriorElementId(items);
     selectedInterior=items.length;
-    changeRecipe({...current,interiorElements:[...items,{id:newInteriorElementId(items),type:'line',shape:'wave',color:'white',width:1.5,frequency:6,amplitude:.12}]});
+    selectedInteriorId=id;
+    changeRecipe({...current,interiorElements:[...items,{id,type:'line',shape:'wave',color:'white',width:1.5,frequency:6,amplitude:.12}]});
   });
   const remove=make(toolbar,'button','Remove');remove.type='button';remove.disabled=!items.length;
   remove.addEventListener('click',()=>{
+    const remaining=items.filter((_,i)=>i!==Number(choose.value));
     selectedInterior=Math.max(0,selectedInterior-1);
-    changeRecipe({...current,interiorElements:items.filter((_,i)=>i!==Number(choose.value))});
+    selectedInteriorId=remaining[selectedInterior]?.id??null;
+    changeRecipe({...current,interiorElements:remaining});
   });
   if(!items.length){
     const guidance={

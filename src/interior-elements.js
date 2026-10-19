@@ -23,6 +23,18 @@ export const elementApplies=(e,slot,id)=>
 // Unique inside the current stack even if the user taps Add twice within
 // one millisecond. Clock time is only a human-readable starting candidate;
 // generation randomness and serialized order are never affected.
+/** UI selection follows an element's stable recipe ID, not its current
+ * position in the ordered stack. Undo, reorder and recipe restore can all
+ * replace the array while preserving the selected identity. */
+export function resolveInteriorSelection(items,selectedId,fallbackIndex=0){
+  if(!Array.isArray(items)||!items.length)return 0;
+  if(selectedId!==null&&selectedId!==undefined){
+    const matching=items.findIndex(e=>e?.id===selectedId);
+    if(matching>=0)return matching;
+  }
+  const index=Number.isInteger(fallbackIndex)?fallbackIndex:0;
+  return Math.max(0,Math.min(index,items.length-1));
+}
 export function newInteriorElementId(items,now=Date.now()){
   const used=new Set((Array.isArray(items)?items:[]).map(e=>String(e?.id??'')));
   const stamp=Number.isFinite(Number(now))?Math.max(0,Math.trunc(Number(now))):Date.now();
