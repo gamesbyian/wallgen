@@ -65,7 +65,7 @@ zoomFit.dataset.zoom='fit';zoomFit.innerHTML=iconMarkup('fit-canvas');
 zoomFit.setAttribute('aria-label','Fit entire wallpaper (100% framing)');
 zoomFit.title='Fit whole wallpaper at 100%';
 zoomFit.addEventListener('click',()=>
-  stage.dispatchEvent(new CustomEvent('roygbiv-view-zoom-request',{detail:1})));
+  stage.dispatchEvent(new CustomEvent('roygbiv-view-fit-request')));
 const zoomValue=document.createElement('output');
 zoomValue.className='mobile-zoom-level';
 zoomValue.setAttribute('aria-live','off');
