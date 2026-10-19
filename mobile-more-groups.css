@@ -1,0 +1,60 @@
+/* Semantic More grouping. Original form controls remain live and unchanged. */
+@media(max-width:790px){
+  body.mobile-studio .mobile-tools-content{
+    gap:9px;padding:10px 0 22px;
+  }
+  body.mobile-studio .mobile-more-group{
+    display:flex;flex-direction:column;min-width:0;gap:7px;
+    padding:9px;border:1px solid var(--line);border-radius:12px;
+    background:var(--surface);
+  }
+  body.mobile-studio .mobile-more-group>h3{
+    margin:0;font-size:11px;line-height:1.25;font-weight:800;
+    letter-spacing:.025em;color:inherit;
+  }
+  body.mobile-studio .mobile-more-group-body{
+    display:flex;flex-direction:column;gap:8px;min-width:0;
+  }
+  body.mobile-studio .mobile-more-group-body>.composition-positioner,
+  body.mobile-studio .mobile-more-group-body>.action-tray,
+  body.mobile-studio .mobile-more-group-body>.export-metadata,
+  body.mobile-studio .mobile-more-group-body>.secondary-actions{
+    display:flex!important;flex-direction:column;gap:7px;
+    margin:0;min-width:0;max-width:100%;
+  }
+  body.mobile-studio .mobile-more-group-body>.details-bar{
+    display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:7px;margin:0;min-width:0;max-width:100%;
+  }
+  body.mobile-studio .mobile-more-group-body>.secondary-actions{
+    display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+  body.mobile-studio .mobile-more-group-body>.secondary-actions button,
+  body.mobile-studio .mobile-more-group-body>.export-metadata>button{
+    display:flex!important;justify-content:flex-start;align-items:center;gap:6px;
+    width:100%;min-width:0!important;min-height:40px!important;
+    padding:8px 10px!important;white-space:normal;text-align:left;
+    text-decoration:none!important;font-size:11px;
+    border:1px solid var(--line)!important;border-radius:9px!important;
+    background:var(--surface);color:inherit;
+  }
+  body.mobile-studio .mobile-more-group-body>.secondary-actions button img{
+    flex:0 0 15px;width:15px;height:15px;
+  }
+  body.mobile-studio .mobile-more-group-body>#mobileShuffle,
+  body.mobile-studio .mobile-more-group-body #mobileShuffle{
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    width:100%;min-height:40px;padding:6px 10px;
+    border:1px solid var(--line);border-radius:9px;
+    background:var(--surface);color:inherit;font-size:12px;font-weight:750;
+  }
+  body.mobile-studio .mobile-more-group-body #mobileShuffle>span{
+    display:flex;align-items:center;justify-content:center;
+  }
+  body.mobile-studio .mobile-more-group-body #mobileShuffle svg.ui-icon{
+    width:22px;height:22px;
+  }
+  body.mobile-studio .mobile-more-group-body button:focus-visible{
+    outline:2px solid #9b5fcf;outline-offset:1px;
+  }
+}
