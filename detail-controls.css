@@ -158,3 +158,21 @@ body.mobile-studio .sidebar .editor-tool-card[data-editor-tool^="interior"]>labe
 .editor-tool-card .reverse-stripe-field>input[type="checkbox"]{
   width:18px;min-width:18px;height:18px;margin:0}
 
+
+/* The same semantic toggle grammar applies to mirror, reverse and other
+   schema-backed switches. The original checkbox remains the sole input;
+   a checked/focus treatment lives on the source row instead of a proxy. */
+.editor-tool-card .editor-setting-row[data-control-kind="toggle"]:has(input[type="checkbox"]:checked){
+  border-radius:7px;
+  background:color-mix(in srgb,var(--surface) 85%,#53AAFF 15%);
+}
+.editor-tool-card .editor-setting-row[data-control-kind="toggle"]:has(input[type="checkbox"]:focus-visible){
+  outline:2px solid #53AAFF;
+  outline-offset:0;
+}
+@media(max-width:790px){
+  body.mobile-studio .sidebar .editor-tool-card
+    .editor-setting-row[data-control-kind="toggle"]>.field{
+    min-height:31px;
+  }
+}
