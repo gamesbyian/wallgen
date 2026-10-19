@@ -103,14 +103,27 @@ try{
       'Migrated source tab has no functioning replacement: '+tab);
     exercised.push(tab);
   }
-  samples.push({state:'migrated-tab-clicks',exercised});
+  samples.push({state:'migrated-tab-clicks',exercised,missing:[]});
   await page.locator('#mobileDismissHandle').click();
   await page.locator('#mobileMore').click();
   const more=await census('more');
   assert.equal(more.current,'mobileMore');
+  const moreHitTargets=[];
   for(const id of ['seedInput','applySeed','download','copyRecipe','metadataToggle']){
-    assert.ok(more.exposed.includes(id),'More lost visible source control '+id);
+    const target=page.locator('#'+id);
+    await target.scrollIntoViewIfNeeded();
+    const measure=await target.evaluate(el=>{
+      const r=el.getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2;
+      const hit=document.elementFromPoint(x,y);
+      return {id:el.id,visible:r.width>0&&r.height>0&&
+        x>=0&&x<innerWidth&&y>=0&&y<innerHeight,
+        centerHit:hit===el||el.contains(hit)};
+    });
+    assert.ok(measure.visible&&measure.centerHit,
+      'More source control remains unreachable even after scrolling: '+JSON.stringify(measure));
+    moreHitTargets.push(measure);
   }
+  samples.push({state:'more-scrolled-hit-targets',targets:moreHitTargets,missing:[]});
   await page.keyboard.press('Escape');
   await page.locator('#mobileExplore').click();
   const explore=await census('explore');
