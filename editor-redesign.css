@@ -726,6 +726,18 @@
     min-height:26px!important;
   }
 }
+/* The exact same inherited 36px .rotation-button minimum clips 10px on
+   412px phones. On compact cards the row height is intentionally 26px.
+   Match each button's minimum to that row; 500-790px layouts retain their
+   independently sized 36px buttons. No recipe/rotation logic changes. */
+@media(max-width:499px){
+  body.mobile-studio .sidebar .editor-tool-card .texture-rotation-field
+    .rotation-controls button{
+    min-height:26px!important;
+    max-height:26px!important;
+    box-sizing:border-box!important;
+  }
+}
 .editor-tool-card .texture-rotation-field>small{display:none!important}
 @media(max-width:790px){
   body.mobile-studio.mobile-edit-open{
