@@ -54,12 +54,12 @@ export function installFocusedAdjustments({form,chooser}){
   function sourceLabel(field){
     const explicit=field.closest('label')?.querySelector('span')?.textContent||
       field.closest('label')?.textContent;
-    return (explicit?.trim().replace(/\\s+/g,' ').slice(0,35)||
+    return (explicit?.trim().replace(/\s+/g,' ').slice(0,35)||
       field.name.replace(/([a-z])([A-Z])/g,'$1 $2')).trim();
   }
   function isInactive(field){
     return field.dataset.inactive==='true'||field.disabled||
-      field.closest('.lockable-setting')?.querySelector('.setting-lock.is-locked')!==null;
+      Boolean(field.closest('.lockable-setting')?.querySelector('.setting-lock.is-locked'));
   }
   function sync(){
     if(!active||!original)return;
