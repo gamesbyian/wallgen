@@ -226,14 +226,15 @@ export async function captureSpecialStates({page,ctx,capture,navigate,change,set
     await page.waitForFunction(()=>document.body.classList.contains('mobile-tools-open'));
     const row=page.locator('.mobile-more-group-body>.viewport-positioner');
     await row.scrollIntoViewIfNeeded();
-    const base=await page.evaluate(()=>JSON.parse(decodeURIComponent(
-      new URLSearchParams(location.search).get('r'))).viewPanX);
+    const snapshot=await page.evaluate(()=>{
+      const r=JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get('r')));
+      return {pan:r.viewPanX,composition:r.positionX};
+    });
+    const base=snapshot.pan;
     await row.locator('[data-view-pan=right]').click();
     await page.waitForFunction(x=>JSON.parse(decodeURIComponent(
       new URLSearchParams(location.search).get('r'))).viewPanX===x+5,base);
-    const position=await page.evaluate(()=>JSON.parse(decodeURIComponent(
-      new URLSearchParams(location.search).get('r'))).positionX);
-    await snap('view-pan',{cameraPan:base+5,compositionPosition:position});
+    await snap('view-pan',{cameraPan:base+5,compositionPosition:snapshot.composition});
     await row.locator('[data-view-pan=reset]').click();
     await page.waitForFunction(()=>JSON.parse(decodeURIComponent(
       new URLSearchParams(location.search).get('r'))).viewPanX===0);
