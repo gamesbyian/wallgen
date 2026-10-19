@@ -55,6 +55,14 @@ const placeholders=originals.map(node=>{
   return mark;
 });
 let lastFocus=null;
+let galleryDestination='explore';
+function announceNavigation(){
+  const body=document.body.classList;
+  const mode=body.contains('mobile-edit-open')?'edit':
+    body.contains('mobile-tools-open')?'more':
+    body.contains('mobile-gallery-open')?galleryDestination:'studio';
+  document.dispatchEvent(new CustomEvent('roygbiv-mobile-navigation-changed',{detail:{mode}}));
+}
 function moveUtilities(toSheet){
   const content=document.getElementById('mobileToolsContent');
   originals.forEach((node,i)=>{
@@ -74,7 +82,10 @@ function closeSurfaces({restoreFocus=true}={}){
   dock.removeAttribute('aria-hidden');
   editBtn.setAttribute('aria-expanded','false');
   exploreBtn.setAttribute('aria-expanded','false');
+  document.getElementById('mobileSaved')?.setAttribute('aria-expanded','false');
   moreBtn.setAttribute('aria-expanded','false');
+  galleryDestination='explore';
+  announceNavigation();
   if(wasOpen&&restoreFocus&&lastFocus?.isConnected)lastFocus.focus();
 }
 function updateEditorDensity(){
@@ -91,10 +102,11 @@ function updateEditorDensity(){
   document.body.classList.toggle('mobile-edit-compact',short);
 }
 document.addEventListener('editor-tool-changed',updateEditorDensity);
-function openSurface(type){
+function openSurface(type,galleryMode='explore'){
   if(!mobile.matches)return;
   const className='mobile-'+type+'-open';
-  if(document.body.classList.contains(className)){closeSurfaces();return;}
+  if(document.body.classList.contains(className)&&
+    (type!=='gallery'||galleryDestination===galleryMode)){closeSurfaces();return;}
   closeSurfaces({restoreFocus:false});
   lastFocus=document.activeElement;
   document.body.classList.add(className);
@@ -111,7 +123,9 @@ function openSurface(type){
     // expand arrow. Focus stays on the on-screen controls, not the hidden dock.
     dismissHandle.focus({preventScroll:true});
   }else if(type==='gallery'){
-    exploreBtn.setAttribute('aria-expanded','true');
+    galleryDestination=galleryMode;
+    exploreBtn.setAttribute('aria-expanded',String(galleryMode==='explore'));
+    document.getElementById('mobileSaved')?.setAttribute('aria-expanded',String(galleryMode==='saved'));
     gallery.setAttribute('tabindex','-1');
     gallery.focus();
   }else{
@@ -119,6 +133,7 @@ function openSurface(type){
     tools.hidden=false;
     document.getElementById('mobileToolsClose').focus();
   }
+  announceNavigation();
 }
 // A variation selection closes its sheet so the newly loaded wallpaper is visible.
 gallery.addEventListener('click',event=>{
@@ -136,9 +151,10 @@ document.querySelector('.studio-stage').addEventListener('click',event=>{
 });
 editBtn.addEventListener('click',()=>openSurface('edit'));
 exploreBtn.addEventListener('click',()=>{
-  if(!document.body.classList.contains('mobile-gallery-open'))
+  if(!document.body.classList.contains('mobile-gallery-open')||
+    galleryDestination!=='explore')
     document.dispatchEvent(new CustomEvent('roygbiv-gallery-view-request',{detail:'explore'}));
-  openSurface('gallery');
+  openSurface('gallery','explore');
 });
 moreBtn.addEventListener('click',()=>openSurface('tools'));
 for(const name of ['mobileToolsClose']){
@@ -172,3 +188,19 @@ function syncViewport(){
 }
 mobile.addEventListener('change',syncViewport);
 syncViewport();
+
+// Side-by-side trial before making the five-destination dock the default.
+// Existing six actions retain their original identities and handlers.
+if(new URLSearchParams(location.search).get('nav')==='five'){
+  import('./mobile-five-nav.js').then(({installFiveDestinationDock})=>{
+    installFiveDestinationDock({
+      closeStudio:()=>closeSurfaces({restoreFocus:false}),
+      openSaved:()=>{
+        if(!document.body.classList.contains('mobile-gallery-open')||
+          galleryDestination!=='saved')
+          document.dispatchEvent(new CustomEvent('roygbiv-gallery-view-request',{detail:'saved'}));
+        openSurface('gallery','saved');
+      }
+    });
+  }).catch(error=>console.error('Five-destination navigation trial failed:',error));
+}
