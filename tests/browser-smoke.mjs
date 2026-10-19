@@ -1709,7 +1709,7 @@ try{
   assert.equal(favouriteRoundtrip.after,favouriteRoundtrip.before,
     'favourite shortcut roundtrip must restore original state');
   console.log('FIVE_DESTINATION_FAVOURITE_ROUNDTRIP',JSON.stringify(favouriteRoundtrip));
-  const boundaryViewports=[[499,892],[500,892],[790,892],[700,412],[791,892]];
+  const boundaryViewports=[[499,892],[500,892],[790,892],[700,412],[791,892],[412,892]];
   const trialBoundaries=[];
   for(const [width,height] of boundaryViewports){
     await command('Emulation.setDeviceMetricsOverride',{
@@ -1727,6 +1727,7 @@ try{
         quickActionsConnected:['mobileFavorite','mobileDownload'].every(id=>
           document.getElementById(id)?.isConnected),
         dock:{left:dock.left,right:dock.right,top:dock.top,bottom:dock.bottom},
+        shortcutHost:document.querySelector('.mobile-five-shortcuts')?.parentElement?.className||null,
         stageBottom:stage.bottom,frameHeight:frame.height};
     })()`);
     trialBoundaries.push({width,height,...state});
@@ -1735,6 +1736,8 @@ try{
       'responsive rail detachment must preserve both source action identities');
     if(width<=790){
       assert.ok(state.mobile&&state.dockStyle!=='none');
+      assert.ok(state.shortcutHost?.includes('mobile-preview-rail-left'),
+        'resizing back to mobile must remount the original source actions');
       assert.equal(state.buttons,5);
       assert.ok(state.dock.left>=-1&&state.dock.right<=width+1);
       assert.ok(state.dock.bottom<=height+1);
