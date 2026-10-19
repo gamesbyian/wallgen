@@ -151,10 +151,11 @@ document.querySelector('.studio-stage').addEventListener('click',event=>{
 });
 editBtn.addEventListener('click',()=>openSurface('edit'));
 exploreBtn.addEventListener('click',()=>{
-  if(!document.body.classList.contains('mobile-gallery-open')||
-    galleryDestination!=='explore')
-    document.dispatchEvent(new CustomEvent('roygbiv-gallery-view-request',{detail:'explore'}));
+  const switchView=!document.body.classList.contains('mobile-gallery-open')||
+    galleryDestination!=='explore';
   openSurface('gallery','explore');
+  if(switchView)
+    document.dispatchEvent(new CustomEvent('roygbiv-gallery-view-request',{detail:'explore'}));
 });
 moreBtn.addEventListener('click',()=>openSurface('tools'));
 for(const name of ['mobileToolsClose']){
@@ -196,11 +197,20 @@ if(new URLSearchParams(location.search).get('nav')==='five'){
     installFiveDestinationDock({
       closeStudio:()=>closeSurfaces({restoreFocus:false}),
       openSaved:()=>{
-        if(!document.body.classList.contains('mobile-gallery-open')||
-          galleryDestination!=='saved')
-          document.dispatchEvent(new CustomEvent('roygbiv-gallery-view-request',{detail:'saved'}));
+        const switchView=!document.body.classList.contains('mobile-gallery-open')||
+          galleryDestination!=='saved';
         openSurface('gallery','saved');
+        if(switchView)
+          document.dispatchEvent(new CustomEvent('roygbiv-gallery-view-request',{detail:'saved'}));
       }
     });
   }).catch(error=>console.error('Five-destination navigation trial failed:',error));
 }
+document.addEventListener('roygbiv-gallery-mode-changed',event=>{
+  if(!document.body.classList.contains('mobile-five-nav')||
+    !document.body.classList.contains('mobile-gallery-open'))return;
+  galleryDestination=event.detail.mode;
+  exploreBtn.setAttribute('aria-expanded',String(galleryDestination==='explore'));
+  document.getElementById('mobileSaved')?.setAttribute('aria-expanded',String(galleryDestination==='saved'));
+  announceNavigation();
+});
