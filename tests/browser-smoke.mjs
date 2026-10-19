@@ -152,17 +152,31 @@ try{
   // On an empty fresh profile, Saved has its own heading and empty copy;
   // returning via Explore restores the independent exploration view.
   const galleryModes=await evaluate(`(()=>{
+    const emptyVisual=()=>{
+      const grid=document.getElementById('gallery');
+      const placeholder=grid.querySelector('.gallery-placeholder');
+      const mark=placeholder?.querySelector('.gallery-empty-ribbon');
+      const ribbons=[...mark?.querySelectorAll('i')||[]];
+      const rect=placeholder?.getBoundingClientRect();
+      return {count:ribbons.length,
+        distinct:new Set(ribbons.map(el=>getComputedStyle(el).backgroundColor)).size,
+        ariaHidden:mark?.getAttribute('aria-hidden'),
+        sourceActionCount:placeholder?.querySelectorAll('button,a,input').length||0,
+        fits:!!rect&&rect.left>=-1&&rect.right<=innerWidth+1};
+    };
     document.getElementById('showFavorites').click();
     const saved={
       mode:document.getElementById('gallery').dataset.view,
       heading:document.getElementById('galleryTitle').textContent,
-      empty:document.querySelector('#gallery .gallery-placeholder')?.textContent
+      empty:document.querySelector('#gallery .gallery-placeholder')?.textContent,
+      visual:emptyVisual()
     };
     document.getElementById('mobileExplore').click();
     const explore={
       mode:document.getElementById('gallery').dataset.view,
       heading:document.getElementById('galleryTitle').textContent,
       empty:document.querySelector('#gallery .gallery-placeholder')?.textContent,
+      visual:emptyVisual(),
       open:document.body.classList.contains('mobile-gallery-open')
     };
     document.getElementById('mobileExplore').click();
@@ -171,6 +185,13 @@ try{
   assert.equal(galleryModes.saved.mode,'saved');
   assert.equal(galleryModes.saved.heading,'Saved wallpapers');
   assert.ok(galleryModes.saved.empty?.includes('Nothing saved yet'));
+  for(const item of [galleryModes.saved,galleryModes.explore]){
+    assert.equal(item.visual.count,7,'empty gallery contains seven flat decorative ribbons');
+    assert.equal(item.visual.distinct,7,'all seven rainbow colours must be distinct');
+    assert.equal(item.visual.ariaHidden,'true','illustration must not add screen-reader noise');
+    assert.equal(item.visual.sourceActionCount,0,'empty illustration must not create fake controls');
+    assert.ok(item.visual.fits,'empty gallery decoration stays within visible mobile viewport');
+  }
   assert.equal(galleryModes.explore.mode,'explore');
   assert.equal(galleryModes.explore.heading,'Explore variations');
   assert.ok(galleryModes.explore.empty?.includes('Generate twelve'));
