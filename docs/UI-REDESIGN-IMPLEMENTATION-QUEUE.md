@@ -2,7 +2,7 @@
 
 **Status: living design and implementation queue.** Checked items describe source-qualified work, not blanket visual approval. Never implement a generated vision screenshot literally. [Canonical contract](ui-reference/canonical-screen-contract.json) · [Source traceability](ui-reference/component-traceability.json) · [Screen references](ui-reference/README.md) · [Icon manifest](../assets/icons/roygbiv/manifest.json). The approved logo remains `assets/roygbiv-logo.svg`.
 
-**Evidence reconciliation (2026-10-19):** merged PRs #133 and #135–#142 each passed their applicable CI gates. Focus, inactive and Material rotation contrast, drawing touch targets, real export/preview geometry, reduced-motion feedback and empty gallery visuals are present on main. Broader journeys and independent visual sign-off remain open. Genuine viewport Pan in PR #143 remains provisional until its native-export and atlas checks pass.
+**Evidence reconciliation (2026-10-19):** merged PRs #133 and #135–#142 each passed their applicable CI gates. Focus, inactive and Material rotation contrast, drawing touch targets, real export/preview geometry, reduced-motion feedback and empty gallery visuals are present on main. Broader journeys and independent visual sign-off remain open. Genuine viewport Pan passed all five workflows and merged as PR #143; a separate on-screen More/viewport Pan screenshot acceptance is added in this PR.
 
 ## Phase A — approval and reference integrity
 
@@ -30,13 +30,13 @@
 - [x] Replace three legacy decorative cream-stage and dock colour gradients with solid surface fills, preserving functional scroll edge masks and artwork colour (PR #120).
 - [x] Remove remaining decorative base/dark Studio, lighting and shadow card gradients while retaining generated artwork and functional scroll masks (PR #130).
 - [x] Keep (already existing) canvas-side Zoom+/− and add Fit/100% using the actual `viewZoom` source; no dedicated top zoom header on mobile. (PR #79)
-- [ ] Implement a **separate viewport Pan** with explicit preview/export persistence, *without* relabelling composition nudge as Pan.
-- [ ] Qualify separate camera-only viewPanX/viewPanY controls under More, preserving source nudge, Fit, recipe and full native-resolution export ([contract](VIEWPORT-CAMERA-PAN.md), pending PR).
+- [x] Implement genuinely independent recipe-persisted viewport Pan on preview/native export without renaming composition nudge (PR #143).
+- [x] Qualify camera-only viewPanX/viewPanY controls in mobile More, independent nudge and Fit, recipe/PNG metadata, and 600×1300 versus 3024×6552 panned export pixels ([contract](VIEWPORT-CAMERA-PAN.md); PR #143).
 - [x] Consolidate default mobile navigation following source-action preservation and tested screen geometry; all original source action IDs retain live handlers (PR #101 and default-promotion PR).
 - [ ] Preserve zoom increments, full fit, camera-only state, drawn-path extension and exported wallpaper dimensions.
 - [x] Migrate six source action identities to a five-destination default dock, retaining direct Randomize, Favourite and Download in their source-backed surfaces.
 - [x] Qualify five-destination trial through all four CI workflows and promote to static first-paint HTML; no URL feature flag (PR #101 and default-promotion PR).
-- [ ] Verify 412×892 phone, 499/500/790/791 boundaries, constrained landscape; no artwork/tray overlap.
+- [ ] Verify 412×892 phone, 499/500/790/791 boundaries, constrained landscape; no artwork/tray overlap. Separate 412×892 real mobile Pan-in-More screenshot acceptance is being qualified (PR under test).
 - [x] Extend genuine Chromium breakpoint census beyond Studio to *open Edit*, asserting the preview remains above the tray, original actions and selected tool survive, and retaining boundary phone/landscape screenshots (PR pending).
 
 ## Phase C — component system and named editor controls
