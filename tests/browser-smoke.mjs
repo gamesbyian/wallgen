@@ -1628,7 +1628,7 @@ try{
     const studio={selected:document.getElementById('mobileStudio').getAttribute('aria-current'),
       galleryClosed:!document.body.classList.contains('mobile-gallery-open')};
     return {ids,allNamed:['mobileShuffle','mobileFavorite','mobileDownload'].every(hasAction),
-      quick,shuffleInMore:shuffle.parentElement.id==='mobileToolsContent',
+      quick,shuffleInMore:!!shuffle.closest('#mobileToolsContent .mobile-more-group'),
       iconCount:dock.filter(b=>!!b.querySelector('svg.ui-icon')).length,
       widths:rects.map(b=>b.width),
       saved,explore,studio};
@@ -1641,6 +1641,26 @@ try{
   assert.deepEqual(fiveNav.saved,{mode:'saved',selected:'page',expanded:'true',open:true});
   assert.deepEqual(fiveNav.explore,{mode:'explore',selected:'page',open:true});
   assert.deepEqual(fiveNav.studio,{selected:'page',galleryClosed:true});
+  const moreGroups=await evaluate(`(()=>{
+    document.getElementById('mobileMore').click();
+    const groups=[...document.querySelectorAll('#mobileToolsContent .mobile-more-group')];
+    const selectorToGroup={
+      '#mobileShuffle':0,'.action-tray':0,'.export-metadata':1,
+      '.secondary-actions':1,'.composition-positioner':2,'.details-bar':2
+    };
+    const placement=Object.fromEntries(Object.entries(selectorToGroup).map(
+      ([selector,group])=>[selector,groups[group]?.contains(document.querySelector(selector))||false]));
+    const visible=groups.every(group=>group.getBoundingClientRect().height>0);
+    document.getElementById('mobileMore').click();
+    return {headings:groups.map(group=>group.querySelector('h3')?.textContent),
+      placement,visible,closed:!document.body.classList.contains('mobile-tools-open')};
+  })()`);
+  assert.deepEqual(moreGroups.headings,[
+    'Create & seed','Import, export & share','Position & design details'
+  ]);
+  assert.ok(Object.values(moreGroups.placement).every(Boolean));
+  assert.ok(moreGroups.visible&&moreGroups.closed);
+  console.log('MOBILE_MORE_GROUP_CENSUS',JSON.stringify(moreGroups));
   console.log('FIVE_DESTINATION_TRIAL_ACCEPTANCE',JSON.stringify(fiveNav));
   // Match the actual design reference's 412×892 CSS viewport, not only the
   // slightly taller general mobile-smoke profile.
