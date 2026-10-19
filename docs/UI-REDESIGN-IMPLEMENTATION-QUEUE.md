@@ -17,7 +17,8 @@
 - [x] Add automated SVG/spec/asset tests and saved approved reference source hashes.
 - [x] Wire source-qualified Fit and Edit adjustment symbols to existing controls; verify actual source markup/handlers.
 - [x] Wire Import path and Export PNG icons to their matching pre-existing actions, without altering button identities.
-- [ ] Review all extension glyphs at 20/24/28px on both cream and dark, selected/disabled; approve/edit the remaining eight candidates before UI wiring.
+- [x] Publish an offline exact-SVG icon matrix covering 68 symbols at 20/24/28px in cream/dark/selected/disabled/focus states (visual review fixture; no approval implied).
+- [ ] Human/independent visual review of actual icon matrix, including source-tested candidate status; approve/refine eight unwired candidates before UI use.
 - [ ] Compare every canonical screen plate to exact feature inventory, including uncommon conditional states; annotate any implementation exception.
 
 ## Phase B — canvas-first shell
