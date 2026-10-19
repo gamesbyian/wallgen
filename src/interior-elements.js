@@ -13,13 +13,33 @@ export const RAINBOW_NAMES=Object.freeze(['Red','Orange','Yellow','Green','Blue'
 export const elementApplies=(e,slot,id)=>
   (!e.colorSlots?.length||e.colorSlots.includes(slot))&&
   (!e.objectIds?.length||e.objectIds.includes(id));
+// Unique inside the current stack even if the user taps Add twice within
+// one millisecond. Clock time is only a human-readable starting candidate;
+// generation randomness and serialized order are never affected.
+export function newInteriorElementId(items,now=Date.now()){
+  const used=new Set((Array.isArray(items)?items:[]).map(e=>String(e?.id??'')));
+  const stamp=Number.isFinite(Number(now))?Math.max(0,Math.trunc(Number(now))):Date.now();
+  const base='element-'+stamp;
+  let id=base,suffix=2;
+  while(used.has(id))id=base+'-'+suffix++;
+  return id;
+}
 export function normalizeInteriorElements(input){
   if(!Array.isArray(input))return [];
   const seen=new Set();
   return input.slice(0,8).map((raw,i)=>{
     const e=raw&&typeof raw==='object'?raw:{};
     let id=String(e.id??'element-'+i).replace(/[^a-zA-Z0-9_-]/g,'').slice(0,48)||'element-'+i;
-    if(seen.has(id))id='element-'+i;seen.add(id);
+    if(seen.has(id)){
+      // An imported user ID may already be equal to the simple index
+      // fallback (element-2, etc.). Probe until truly unused, rather than
+      // merely replacing one duplicate with another.
+      const base='element-'+i;
+      id=base;
+      let suffix=2;
+      while(seen.has(id))id=base+'-'+suffix++;
+    }
+    seen.add(id);
     return {
       id,enabled:e.enabled!==false,
       type:ELEMENT_TYPES.includes(e.type)?e.type:'line',

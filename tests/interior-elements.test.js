@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {normalizeRecipe,resolveScene,encodeRecipe,decodeRecipe} from '../src/model.js';
 import {randomizeScope} from '../src/scoped-random.js';
-import {normalizeInteriorElements,elementWave,elementApplies,elementInk,polygonStripBounds} from '../src/interior-elements.js';
+import {normalizeInteriorElements,newInteriorElementId,elementWave,elementApplies,elementInk,polygonStripBounds} from '../src/interior-elements.js';
 
 test('interior stack validates malformed and excessive elements safely',()=>{
   const elements=normalizeInteriorElements(Array.from({length:20},(_,i)=>({
@@ -13,6 +13,30 @@ test('interior stack validates malformed and excessive elements safely',()=>{
   assert.equal(new Set(elements.map(x=>x.id)).size,8);
   assert.ok(elements.every(x=>x.width>=.15&&x.opacity<=1&&x.position>=-.48));
   assert.ok(elements.every(x=>x.shape==='straight'&&Number.isFinite(x.frequency)));
+});
+
+test('interior IDs stay unique under hostile imports and same-tick adds',()=>{
+  const originals=[
+    {id:'element-2'}, {id:'keep'}, {id:'keep'},
+    {id:'element-4'}, {id:'element-4'}, {id:'element-5'}
+  ];
+  const cleaned=normalizeInteriorElements(originals);
+  const ids=cleaned.map(e=>e.id);
+  assert.equal(new Set(ids).size,ids.length,
+    'index-based duplicate fallback must never collide with a preexisting ID');
+  assert.equal(ids[0],'element-2');
+  assert.equal(ids[1],'keep');
+  assert.deepEqual(normalizeInteriorElements(cleaned).map(e=>e.id),ids,
+    'normalization must not keep changing already-repaired identities');
+  const first=newInteriorElementId(cleaned,1234);
+  const second=newInteriorElementId([...cleaned,{id:first}],1234);
+  assert.equal(first,'element-1234');
+  assert.equal(second,'element-1234-2');
+  const restored=decodeRecipe(encodeRecipe(normalizeRecipe({interiorElements:[
+    ...cleaned,{id:first},{id:second}
+  ]})));
+  assert.equal(new Set(restored.interiorElements.map(e=>e.id)).size,8,
+    'new identities and order must survive recipe transport');
 });
 
 test('unified objects carry identical decoration specifications in all structures',()=>{

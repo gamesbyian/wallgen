@@ -6,6 +6,7 @@ import { installDrawTool } from './draw-path-ui.js?v=20261018-extend1';
 import { installImagePathTool } from './image-path-ui.js?v=20261018-import1';
 import {mountEditor,selectEditorTool,syncEditorStructure} from './editor-layout.js?v=20261018-icons2';
 import {randomizeScope} from './scoped-random.js';
+import {newInteriorElementId} from './interior-elements.js';
 import {STYLE_PRESETS} from './editor-schema.js?v=20261018-icons2';
 import {installExplorationHistory} from './exploration-history.js';
 import {iconMarkup,setIconSource,hydrateStaticIcons} from './ui-icons.js';
@@ -850,7 +851,7 @@ function syncInteriorUI(){
   add.disabled=items.length>=8;
   add.addEventListener('click',()=>{
     selectedInterior=items.length;
-    changeRecipe({...current,interiorElements:[...items,{id:'element-'+Date.now(),type:'line',shape:'wave',color:'white',width:1.5,frequency:6,amplitude:.12}]});
+    changeRecipe({...current,interiorElements:[...items,{id:newInteriorElementId(items),type:'line',shape:'wave',color:'white',width:1.5,frequency:6,amplitude:.12}]});
   });
   const remove=make(toolbar,'button','Remove');remove.type='button';remove.disabled=!items.length;
   remove.addEventListener('click',()=>{
