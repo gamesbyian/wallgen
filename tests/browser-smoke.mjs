@@ -276,7 +276,6 @@ try{
   // Verify real mounted form nodes have semantic component roles, without
   // generating proxies that break locks, undo, disabled states or recipe data.
   const typedRows=await evaluate(`(()=>{
-    const {EDITOR_CATEGORIES}=window.__unused||{};
     const named=[...document.querySelectorAll('.editor-setting-row')];
     const keys=named.flatMap(row=>(row.dataset.controlKeys||'').split(' ').filter(Boolean));
     const missing=[...document.querySelectorAll('[data-setting]')].map(el=>el.dataset.setting)
