@@ -1,0 +1,30 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
+test('image path importer presents transient progress, ready and empty states from real extraction',()=>{
+  const js=read('src/image-path-ui.js'),html=read('index.html'),css=read('image-path.css');
+  assert.match(html,/id="imagePathDialog"[^>]*data-phase="idle"/);
+  assert.match(html,/class="image-path-phase" aria-hidden="true">Choose image/);
+  assert.match(html,/id="imagePathStatus" role="status" aria-live="polite"/);
+  assert.match(js,/const phases=\{idle:'Choose image',analyzing:'Analyzing',ready:'Select path',empty:'No paths'\}/);
+  assert.match(js,/dialog\.dataset\.phase=next/);
+  assert.match(js,/setPhase\('analyzing'\)/);
+  assert.match(js,/setPhase\(candidate\?'ready':'empty'\)/);
+  assert.match(js,/setPhase\('empty'\)/);
+  assert.match(js,/setPhase\('idle'\)/);
+  assert.match(css,/\.image-path-dialog\[data-phase="ready"\] \.image-path-phase/);
+  assert.match(css,/html\[data-theme="cream"\] \.image-path-dialog\[data-phase="ready"\] \.image-path-phase/);
+  assert.doesNotMatch(css,/linear-gradient|radial-gradient|conic-gradient/i);
+});
+test('phase indicator never adds a new canonical input, changes geometry or stores an image',()=>{
+  const js=read('src/image-path-ui.js');
+  assert.match(js,/const phaseLabel=dialog\.querySelector\('\.image-path-phase'\)/);
+  assert.match(js,/image=null;candidates=\[\];chooser\.replaceChildren\(\);fileInput\.value=''/);
+  assert.match(js,/onPath\(imported\)/);
+  assert.match(js,/onAngle\(candidates\[selected\]\.angle\)/);
+  const html=read('index.html');
+  assert.equal([...html.matchAll(/class="image-path-phase"/g)].length,1);
+  assert.equal([...html.matchAll(/id="imagePathCandidate"/g)].length,1);
+  assert.equal([...html.matchAll(/id="imagePathApply"/g)].length,1);
+});
