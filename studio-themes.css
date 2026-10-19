@@ -385,3 +385,22 @@ html[data-theme="dark"] .gallery-placeholder>span{color:#c5becf}
   }
   body.mobile-gallery-open .gallery-empty-ribbon{height:60px;margin-bottom:2px}
 }
+
+/* The 165px short-landscape gallery tray must show real empty-state guidance.
+   The normal phone ribbon's 150px minimum would otherwise be clipped inside
+   the horizontally scrolling (overflow-y:hidden) gallery grid. */
+@media(max-width:790px) and (max-height:670px){
+  body.mobile-gallery-open .gallery-placeholder{
+    min-height:0;padding:3px 8px;gap:3px;line-height:1.15;
+  }
+  body.mobile-gallery-open .gallery-empty-ribbon{
+    flex:0 0 34px;height:34px;margin-bottom:0;overflow:hidden;
+  }
+  body.mobile-gallery-open .gallery-empty-ribbon>i{transform:scaleY(.5)}
+  body.mobile-gallery-open .gallery-empty-heading{
+    font-size:11px;line-height:1.15;
+  }
+  body.mobile-gallery-open .gallery-placeholder>span{
+    font-size:10px;line-height:1.15;
+  }
+}
