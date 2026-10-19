@@ -1,10 +1,11 @@
 /* Seven-category ROYGBIV accent rails for actual, source-owned editor rows.
    No gradients, pseudo-controls, duplicate inputs, or box-model changes.
+   The 3px rail sits just OUTSIDE the row to protect flush-left label glyphs.
    Sliders retain their independently shuffled per-panel track colours. */
 .editor-tool-card .editor-setting-row[data-control-category]{
   --editor-row-accent:#9464b6;
   border-radius:7px;
-  box-shadow:inset 3px 0 0 var(--editor-row-accent);
+  box-shadow:-3px 0 0 var(--editor-row-accent);
 }
 .editor-tool-card .editor-setting-row[data-control-category="layout"]{--editor-row-accent:#e25757}
 .editor-tool-card .editor-setting-row[data-control-category="path"]{--editor-row-accent:#da8731}
@@ -36,7 +37,7 @@ html[data-theme="dark"] .editor-tool-card .editor-setting-row[data-control-kind=
 /* Inapplicable and disabled controls remain visible, clearly subdued, and
    subject to their original handlers, lock icons and explanatory text. */
 .editor-tool-card .editor-setting-row[data-control-category]:has(input[data-inactive="true"],select[data-inactive="true"],input:disabled,select:disabled){
-  box-shadow:inset 3px 0 0 var(--line);
+  box-shadow:-3px 0 0 var(--line);
 }
 @media(hover:hover){
   html[data-theme="cream"] .editor-tool-card .editor-setting-row[data-control-category]:not(:has(:disabled)):hover{
