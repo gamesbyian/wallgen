@@ -410,6 +410,8 @@ function render(recipe,{scroll=false,bypassLocks=false,interactive=false}={}) {
   // The frame always shows the exact resolution-independent export camera.
   const stage=document.querySelector('.studio-stage');
   stage.dataset.viewZoom=String(current.viewZoom);
+  stage.dataset.viewPanX=String(current.viewPanX);
+  stage.dataset.viewPanY=String(current.viewPanY);
   stage.dispatchEvent(new CustomEvent('roygbiv-view-zoom-updated',
     {detail:current.viewZoom}));
   stage.dispatchEvent(new CustomEvent('roygbiv-wallpaper-rendered',
