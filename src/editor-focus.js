@@ -13,6 +13,14 @@ export function adjustedValue(field,delta){
   const next=Math.min(max,Math.max(min,Number(field.value)+delta*step));
   return String(Number((min+Math.round((next-min)/step)*step).toFixed(7)));
 }
+// Distinguish a recipe-disabled field from a user lock. Both remain visible
+// and selectable in Focus, but the explanation must identify the actual gate.
+export function focusUnavailableReason({inactive=false,locked=false,disabled=false}={}){
+  if(locked)return 'This setting is locked. Open All controls to unlock it.';
+  if(inactive)return 'This setting is inactive for the current design. Open All controls to change the settings that enable it.';
+  if(disabled)return 'This setting is temporarily unavailable. Open All controls to inspect it.';
+  return '';
+}
 export function focusChipDestination(key,index,count){
   if(!Number.isInteger(index)||!Number.isInteger(count)||count<1||index<0||index>=count)return -1;
   if(key==='ArrowRight')return (index+1)%count;
@@ -67,10 +75,14 @@ export function installFocusedAdjustments({form,chooser}){
     return (explicit?.trim().replace(/\s+/g,' ').slice(0,35)||
       field.name.replace(/([a-z])([A-Z])/g,'$1 $2')).trim();
   }
-  function isInactive(field){
-    return field.dataset.inactive==='true'||field.disabled||
-      Boolean(field.closest('.lockable-setting')?.querySelector('.setting-lock.is-locked'));
+  function unavailableReason(field){
+    return focusUnavailableReason({
+      inactive:field.dataset.inactive==='true',
+      locked:Boolean(field.closest('.lockable-setting')?.querySelector('.setting-lock.is-locked')),
+      disabled:field.disabled
+    });
   }
+  function isInactive(field){return Boolean(unavailableReason(field));}
   function sync(){
     if(!active||!original)return;
     slider.min=original.min;slider.max=original.max;slider.step=original.step||'1';
@@ -82,7 +94,7 @@ export function installFocusedAdjustments({form,chooser}){
     slider.disabled=disabled;minus.disabled=disabled;plus.disabled=disabled;
     slider.setAttribute('aria-label',sourceLabel(original));
     output.textContent=String(original.value);
-    help.textContent=disabled?'Setting inactive or locked. Use All controls to change its availability.':
+    help.textContent=disabled?unavailableReason(original):
       'Changes the original setting; all other values and locks remain unchanged.';
   }
   function choose(field){
