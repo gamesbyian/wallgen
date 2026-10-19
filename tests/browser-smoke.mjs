@@ -2100,6 +2100,64 @@ try{
   assert.ok(chooserSearch.visible&&chooserSearch.human==='finish3','search reveals source-named rotation tool');
   assert.equal(chooserSearch.legacy,'finish3');
   console.log('TOOL_STRIP_MANUAL_SCROLL_AND_SOURCE_SEARCH',JSON.stringify(chooserSearch));
+  // A disabling geometry must DISPLAY zero but never overwrite the real
+  // source recipe values. This is a visual/state promise from the user,
+  // not an invitation to normalize inactive shape parameters to zero.
+  await evaluate(`(()=>{
+    const form=document.getElementById('controls');
+    const choose=(name,value)=>{
+      const field=form.elements.namedItem(name);field.value=value;
+      field.dispatchEvent(new Event('change',{bubbles:true}));
+    };
+    choose('structure','paths');
+    choose('geometry','zigzag');
+    choose('shapeFrequency','61');
+    choose('shapeDepth','79');
+  })()`);
+  await waitFor('(()=>{const r=new URLSearchParams(location.search).get("r");if(!r)return false;const a=JSON.parse(decodeURIComponent(r));return a.geometry==="zigzag"&&a.shapeFrequency===61&&a.shapeDepth===79})()',15000);
+  await evaluate(`(()=>{
+    const field=document.querySelector('[name=geometry]');
+    field.value='straight';field.dispatchEvent(new Event('change',{bubbles:true}));
+    document.getElementById('tab-path').click();
+    document.querySelector('.editor-tool-tab[data-editor-tool=geometry]').click();
+  })()`);
+  await waitFor('document.querySelector("[name=shapeDepth]").dataset.inactive==="true"');
+  const inactiveShapes=await evaluate(`(()=>{
+    const names=['shapeFrequency','shapeDepth'];
+    const fields=Object.fromEntries(names.map(key=>{
+      const input=document.querySelector('[name='+key+']');
+      const numeric=document.querySelector('[data-number-for='+key+']');
+      return [key,{value:input.value,disabled:input.disabled,
+        inactive:input.dataset.inactive,numeric:numeric?.value||null,
+        hostInactive:!!input.closest('.setting-inactive')}];
+    }));
+    const recipe=JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get('r')));
+    return {fields,stored:{shapeFrequency:recipe.shapeFrequency,shapeDepth:recipe.shapeDepth}};
+  })()`);
+  for(const [name,stored] of [['shapeFrequency',61],['shapeDepth',79]]){
+    const visible=inactiveShapes.fields[name];
+    assert.ok(visible.disabled&&visible.inactive==='true'&&visible.hostInactive);
+    assert.equal(visible.value,'0','inactive range must visibly display zero');
+    if(visible.numeric!==null)assert.equal(visible.numeric,'0');
+    assert.equal(inactiveShapes.stored[name],stored,'inactive recipe value must survive');
+  }
+  await captureUI('straight-path-inactive-zero-values');
+  await evaluate(`(()=>{
+    const field=document.querySelector('[name=geometry]');
+    field.value='zigzag';field.dispatchEvent(new Event('change',{bubbles:true}));
+  })()`);
+  await waitFor('document.querySelector("[name=shapeFrequency]").dataset.inactive==="false"');
+  const restoredShapes=await evaluate(`(()=>{
+    const r=JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get('r')));
+    return {frequency:document.querySelector('[name=shapeFrequency]').value,
+      depth:document.querySelector('[name=shapeDepth]').value,
+      frequencyEnabled:!document.querySelector('[name=shapeFrequency]').disabled,
+      depthEnabled:!document.querySelector('[name=shapeDepth]').disabled,
+      storedFrequency:r.shapeFrequency,storedDepth:r.shapeDepth};
+  })()`);
+  assert.deepEqual(restoredShapes,{frequency:'61',depth:'79',
+    frequencyEnabled:true,depthEnabled:true,storedFrequency:61,storedDepth:79});
+  console.log('CONDITIONAL_ZERO_PRESERVES_SOURCE_RECIPE',JSON.stringify({inactiveShapes,restoredShapes}));
   console.log('REDESIGN_EXPLORATION_ACCEPTANCE_SUCCESS');
 }finally{
   try{ws?.close()}catch{}
