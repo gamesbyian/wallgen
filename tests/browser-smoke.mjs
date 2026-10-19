@@ -1590,7 +1590,8 @@ try{
     const favorite=document.getElementById('mobileFavorite');
     const download=document.getElementById('mobileDownload');
     const shuffle=document.getElementById('mobileShuffle');
-    const quick=favorite.closest('.mobile-five-shortcuts')===download.closest('.mobile-five-shortcuts');
+    const quickHost=favorite.closest('.mobile-five-shortcuts');
+    const quick=!!quickHost&&quickHost===download.closest('.mobile-five-shortcuts');
     const rects=dock.map(b=>b.getBoundingClientRect());
     document.getElementById('mobileSaved').click();
     const saved={mode:document.getElementById('gallery').dataset.view,
