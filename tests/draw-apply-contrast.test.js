@@ -30,6 +30,6 @@ test('both active Use path rules have AA-level small-text contrast',()=>{
 test('contrast improvement does not alter button geometry or path source actions',()=>{
   const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
   assert.equal([...html.matchAll(/id="drawApply"/g)].length,1);
-  assert.match(html,/draw-path\.css\?v=20261019-contrast1/);
+  assert.match(html,/draw-path\.css\?v=20261019-touch1/);
   assert.doesNotMatch(css,/linear-gradient|radial-gradient|conic-gradient/i);
 });
