@@ -57,8 +57,8 @@ export async function inspectAtlasState(page,ctx,slug,meta={}){
     }
     // Historical material controls inherited a 36px minimum button height
     // inside a 26px rotation row. PR #84 corrected that real clipping.
-    // Guard the actual visible source controls, not only screenshot pixels.
-    if(!mobile&&meta.kind==='tool'&&/^finish[123]$/.test(meta.tool)){
+    // Guard the actual visible source controls on desktop AND mobile, not only screenshot pixels.
+    if(meta.kind==='tool'&&/^finish[123]$/.test(meta.tool)){
       const row=g('.editor-tool-card[data-editor-tool="'+meta.tool+'"]:not([hidden]) .texture-rotation-field .rotation-controls');
       check(!!row,'Material '+meta.tool+' has no rotation control row');
       const frame=row.getBoundingClientRect();
