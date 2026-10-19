@@ -81,6 +81,7 @@
 - [ ] Preserve global status announcements and grouped More with seed, import, output, metadata, batch, share.
 - [x] Introduce source-preserving semantic groups inside More for create/seed, import/export/share and composition/details, retaining original handlers and desktop positions (PR #104).
 - [ ] Test all existing PNG/JSON recipe round-trips and exact preview/export geometry.
+- [ ] Independently compare real native-resolution and direct preview pixels under the same zoom-out camera with metadata identity, skipping only antialiased edge pixels (PR under test); expand structure coverage if qualified.
 - [x] Matrix-test source recipes with off-frame drawn paths, independent material layers, custom interior ink/locks, nested regions and hidden legacy tonal mode across JSON, shared URLs and embedded PNG; full-resolution export geometry acceptance remains open (PR pending).
 - [ ] Test touch targets, keyboard/focus, colour contrast, screen reader names and reduced motion.
 - [x] Honor system reduced-motion preference for document scrolling as well as the already-existing mobile transitions (rebased PR).

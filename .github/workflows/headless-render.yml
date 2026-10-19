@@ -131,6 +131,7 @@ jobs:
         run: |
           npm run render -- --seed zoom-unclipped --set family=studio --set orientation=horizontal --set geometry=straight --set motif=solid --set material=none --set palette=sunset --set viewZoom=0.5 --set stripeWidth=72 --set spread=55 --width 600 --height 1300 --out output/zoom-unclipped.png
           npm run render -- --seed zoom-framed-full --set family=studio --set orientation=horizontal --set geometry=wave --set shapeFrequency=42 --set motif=solid --set material=none --set palette=arctic --set viewZoom=0.7 --set stripeWidth=58 --set spread=66 --width 3024 --height 6552 --out output/zoom-framed-full.png
+          npm run render -- --seed zoom-framed-full --set family=studio --set orientation=horizontal --set geometry=wave --set shapeFrequency=42 --set motif=solid --set material=none --set palette=arctic --set viewZoom=0.7 --set stripeWidth=58 --set spread=66 --width 600 --height 1300 --out output/zoom-framed-preview.png
           npm run render -- --seed palette-candy --set family=studio --set orientation=vertical --set geometry=straight --set motif=solid --set material=none --set palette=candy --width 600 --height 1300 --out output/palette-candy.png
           npm run render -- --seed palette-earth --set family=studio --set orientation=vertical --set geometry=straight --set motif=solid --set material=none --set palette=earth --width 600 --height 1300 --out output/palette-earth.png
           npm run render -- --seed palette-twilight --set family=studio --set orientation=vertical --set geometry=straight --set motif=solid --set material=none --set palette=twilight --width 600 --height 1300 --out output/palette-twilight.png
@@ -149,6 +150,8 @@ jobs:
             assert.equal(extractPngRecipe(png).viewZoom,zoom);
           }
           JS
+      - name: Compare direct preview and native export pixels in Chromium
+        run: node tests/verify-export-geometry.mjs output/zoom-framed-preview.png output/zoom-framed-full.png
       - name: Drawn master curve exports identically through the production renderer
         run: |
           cat > output/drawn-recipe.json <<'JSON'
