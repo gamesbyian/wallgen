@@ -305,7 +305,10 @@
       "category": "navigation",
       "notes": "Replace pencil edit nav with adjustments symbol; keep approved draw-path pencil for drawing.",
       "extension": "canvas-first-v2",
-      "status": "candidate; not wired into UI"
+      "status": "integrated",
+      "integrationSources": [
+        "index.html"
+      ]
     },
     {
       "name": "pan",
@@ -321,7 +324,10 @@
       "category": "camera",
       "notes": "Fit complete artwork without changing design/export dimensions.",
       "extension": "canvas-first-v2",
-      "status": "candidate; not wired into UI"
+      "status": "integrated",
+      "integrationSources": [
+        "src/mobile-preview-tools.js"
+      ]
     },
     {
       "name": "import-path",
@@ -329,7 +335,10 @@
       "category": "drawing",
       "notes": "Specifically import a vector/raster-derived path, not export an image.",
       "extension": "canvas-first-v2",
-      "status": "candidate; not wired into UI"
+      "status": "integrated",
+      "integrationSources": [
+        "index.html"
+      ]
     },
     {
       "name": "anchor-points",
@@ -377,7 +386,10 @@
       "category": "output",
       "notes": "Disambiguate image export from recipe JSON save or download.",
       "extension": "canvas-first-v2",
-      "status": "candidate; not wired into UI"
+      "status": "integrated",
+      "integrationSources": [
+        "index.html"
+      ]
     },
     {
       "name": "metadata",
@@ -398,5 +410,5 @@
   ],
   "referenceVector": "../references/roygbiv-icon-system-approved.svg",
   "brandViewBox": "0 0 120 120",
-  "proposedExtension": "Design-only candidates. Never replace original UI semantics or brand icon without explicit implementation change."
+  "proposedExtension": "Four icons are now integrated (edit-controls, fit-canvas, import-path, export-png); remaining extension icons are unwired candidates. Canonical brand and original icon sources remain untouched."
 }

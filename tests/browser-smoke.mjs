@@ -291,6 +291,23 @@ try{
   assert.deepEqual(typedRows.missing,[],'a static editor setting lost its source row');
   assert.ok(typedRows.originalFieldsPreserved);
 
+    const realGlyphs=await evaluate(`(()=>{
+    const icons=[
+      ['#mobileEdit','edit-controls'],
+      ['#drawPathToggle','draw-path'],
+      ['#importPathToggle','import-path'],
+      ['#download','export-png'],
+      ['#mobileDownload','export-png'],
+      ['[data-dock-proxy=mobileDownload]','export-png'],
+      ['.mobile-fit-button','fit-canvas'],
+    ];
+    return icons.map(([selector,expected])=>({selector,expected,
+      present:!!document.querySelector(selector+' [data-roygbiv-icon="'+expected+'"]')}));
+  })()`);
+  console.log('APPROVED_ICON_MAPPING',JSON.stringify(realGlyphs));
+  assert.deepEqual(realGlyphs.filter(x=>!x.present),[],
+    'Live controls must use the approved family SVG, not generic substitutes');
+
     // The phone rail's +/- buttons must change the camera, not the recipe.
   const beforeZoom=await evaluate(
     'JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r")))');
