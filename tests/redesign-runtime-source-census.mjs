@@ -14,20 +14,36 @@ await mkdir(out,{recursive:true});
 const inventory=JSON.parse(await readFile(new URL('../docs/ui-reference/source-control-inventory.json',import.meta.url),'utf8'));
 assert.equal(inventory.staticIds.length,inventory.counts.staticIds,'source static ID inventory must reconcile');
 assert.equal(new Set(inventory.staticIds).size,inventory.staticIds.length,'source inventory contains duplicated IDs');
+// Historical source tabs are replaced by explicit seven-category navigation.
+// Do not claim these IDs survive; exercise their actual successor tabs below.
+const migratedTabs={
+  'tab-design':['tab-layout','tab-path','tab-stripes'],
+  'tab-textures':['tab-material'],
+  'tab-refine':['tab-details','tab-effects']
+};
 const browser=await chromium.launch({headless:true});
 const page=await browser.newPage({viewport:{width:412,height:892},hasTouch:true,isMobile:true,reducedMotion:'reduce'});
 page.setDefaultTimeout(15000);
 const samples=[],errors=[];
 page.on('pageerror',e=>errors.push(String(e)));
 async function census(state){
-  const report=await page.evaluate(ids=>{
+  const report=await page.evaluate(({ids,migrations})=>{
     const items=ids.map(id=>{
       // Editor migration deliberately renames old panel IDs to legacy-ID;
       // these are represented, but not falsely marked currently actionable.
       const exact=document.getElementById(id);
       const old=exact?null:document.getElementById('legacy-'+id);
       const el=exact||old;
-      if(!el)return {id,present:false,renamedLegacy:false,exposed:false};
+      if(!el){
+        const expected=migrations[id]||[];
+        const successors=expected.filter(key=>{
+          const node=document.getElementById(key);
+          return node&&node.getAttribute('role')==='tab';
+        });
+        return {id,present:false,renamedLegacy:false,
+          migrated:expected.length>0&&successors.length===expected.length,
+          replacementTabs:successors,exposed:false};
+      }
       const rect=el.getBoundingClientRect();
       const style=getComputedStyle(el);
       const x=rect.left+rect.width/2,y=rect.top+rect.height/2;
@@ -46,13 +62,15 @@ async function census(state){
     });
     return {current:document.querySelector('#mobileActionDock [aria-current=page]')?.id||null,
       items};
-  },inventory.staticIds);
-  const missing=report.items.filter(i=>!i.present).map(i=>i.id);
+  },{ids:inventory.staticIds,migrations:migratedTabs});
+  const missing=report.items.filter(i=>!i.present&&!i.migrated).map(i=>i.id);
   const visible=report.items.filter(i=>i.exposed);
   const unnamed=visible.filter(i=>i.interactive&&!i.label).map(i=>i.id);
   const measured={state,current:report.current,
     count:report.items.length,present:report.items.filter(i=>i.present).length,
     remappedLegacy:report.items.filter(i=>i.renamedLegacy).map(i=>i.id),
+    migratedTabs:report.items.filter(i=>i.migrated)
+      .map(i=>({id:i.id,replacementTabs:i.replacementTabs})),
     missing,exposed:visible.map(i=>i.id),
     centerHit:visible.filter(i=>i.centerHit).map(i=>i.id),
     unnamedVisibleInteractive:unnamed};
@@ -60,6 +78,7 @@ async function census(state){
   console.log('AGENT3_RUNTIME_SOURCE_CENSUS',JSON.stringify({
     state,current:measured.current,present:measured.present,
     exposed:visible.length,remappedLegacy:measured.remappedLegacy,
+    migratedTabs:measured.migratedTabs,
     missing,unnamedVisibleInteractive:unnamed
   }));
   return measured;
@@ -73,6 +92,18 @@ try{
   await page.locator('#mobileEdit').click();
   const edit=await census('edit');
   assert.equal(edit.current,'mobileEdit');
+  assert.deepEqual(edit.migratedTabs.map(i=>i.id).sort(),
+    Object.keys(migratedTabs).sort(),'All three retired tab IDs must have explicit successors');
+  const exercised=[];
+  for(const tab of Object.values(migratedTabs).flat()){
+    // Actual physical Playwright clicks, including horizontally scrolled tabs.
+    const node=page.locator('#'+tab);
+    await node.click();
+    assert.equal(await node.getAttribute('aria-selected'),'true',
+      'Migrated source tab has no functioning replacement: '+tab);
+    exercised.push(tab);
+  }
+  samples.push({state:'migrated-tab-clicks',exercised});
   await page.locator('#mobileDismissHandle').click();
   await page.locator('#mobileMore').click();
   const more=await census('more');
@@ -95,7 +126,10 @@ try{
   await writeFile(join(out,'evidence.json'),JSON.stringify({
     classification:'browser-observed DOM identity and named surface exposure',
     inventoryVersion:inventory.version,sourceCounts:inventory.counts,
-    limitations:['DOM presence is not interactive reachability',
+    historicalTabsMigrated:migratedTabs,
+    limitations:['Three original category tab IDs were intentionally retired',
+      'Only their replacement category navigation, not all original tool values, was exercised',
+      'DOM presence is not interactive reachability',
       'not all conditional phases or 40 tools exercised',
       'not native Android Chrome or screen-reader output',
       'center hit does not prove all parts of a control are reachable'],
