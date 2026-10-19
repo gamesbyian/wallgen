@@ -14,7 +14,7 @@ export function sourceSettingLabel(field,key){
     if(text)return text.slice(0,100);
   }
   return String(key||'Setting').replace(/([a-z0-9])([A-Z])/g,'$1 $2')
-    .replace(/[_-]+/g,' ').trim();
+    .replace(/[_-]+/g,' ').trim().replace(/^./,char=>char.toUpperCase());
 }
 // Semantic control grammar. This is an adapter over existing source form
 // controls, not a recreated set of input elements or a new recipe engine.
