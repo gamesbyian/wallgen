@@ -7,6 +7,7 @@
 - [x] Version and verify all 115 current static IDs (including native Studio and Saved destinations), 87 configuration attributes and 40 source-defined tools.
 - [x] Correct prior Pan/Zoom/Nudge semantics against actual renderer and UI code.
 - [ ] Qualify **all** static/conditional controls against runtime interaction coverage; source inventories do not establish reachability.
+- [x] Browser-click the enabled named tools across Paths, Radial, Voronoi and Nested Regions, recording actual selected cards and explicitly flagging the preserved but HTML-disabled legacy Tonal mode instead of awarding false reachability (PR pending).
 - [ ] Independent negative testing of real screen states using the [adversarial protocol](UI-REDESIGN-ADVERSARIAL-REVIEW.md), including unscripted interactions and candidate SVGs.
 
 - [x] Inventory existing 55 glyphs + existing brand icon.
