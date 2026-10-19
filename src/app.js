@@ -962,7 +962,10 @@ function syncInteriorUI(){
   frequency.disabled=!oscillates&&active.placement==='contour';
   select(interiorCards['interior-placement'],'Placement','placement',['local','field','contour']);
   range(interiorCards['interior-placement'],'Position','position',-.48,.48,.02);
-  range(interiorCards['interior-placement'],active.type==='band'?'Band width %':'Line width','width',.15,50,.25);
+  // Align the native slider lattice with both valid source defaults:
+  // line 1.5px and band 22%. With a .15 minimum, a .25 step silently
+  // snapped both values, even though the label displayed the true recipe.
+  range(interiorCards['interior-placement'],active.type==='band'?'Band width %':'Line width','width',.15,50,.05);
   range(interiorCards['interior-placement'],'Opacity','opacity',0,1,.05);
   // Make application scope visible on the otherwise sparse Elements card.
   // Selective colour targeting can otherwise look like a broken or cropped
