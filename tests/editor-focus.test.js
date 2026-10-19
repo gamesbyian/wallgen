@@ -1,7 +1,7 @@
 import {readFileSync} from 'node:fs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {focusEligible,adjustedValue} from '../src/editor-focus.js';
+import {focusEligible,adjustedValue,focusChipDestination} from '../src/editor-focus.js';
 const field=(value='40',min='0',max='100',step='1')=>({tagName:'INPUT',type:'range',
  name:'stripeWidth',value,min,max,step,disabled:false,closest:()=>null});
 test('only actual available named range controls qualify; no proxy recipe keys',()=>{
@@ -44,4 +44,21 @@ test('empty Focus tools surrender unused sheet height but retain an exit',()=>{
  assert.match(js,/form\.classList\.remove\('editor-focus-empty'\)/);
  assert.match(css,/:has\(#controls\.editor-focus-active\.editor-focus-empty\)/);
  assert.match(css,/--mobile-tray-height:clamp\(192px,23dvh,215px\)/);
+});
+
+test('Focus chip arrows wrap while Home/End choose bounds',()=>{
+  assert.equal(focusChipDestination('ArrowRight',2,3),0);
+  assert.equal(focusChipDestination('ArrowLeft',0,3),2);
+  assert.equal(focusChipDestination('Home',2,3),0);
+  assert.equal(focusChipDestination('End',0,3),2);
+  assert.equal(focusChipDestination('ArrowRight',0,1),0);
+  assert.equal(focusChipDestination('ArrowLeft',0,1),0);
+  assert.equal(focusChipDestination('Enter',0,3),-1);
+  assert.equal(focusChipDestination('ArrowRight',0,0),-1);
+  assert.equal(focusChipDestination('ArrowRight',-1,3),-1);
+  const js=requireFocusSource();
+  assert.match(js,/chips\.addEventListener\('keydown',event=>\{/);
+  assert.match(js,/chip\.tabIndex=selected\?0:-1/);
+  assert.match(js,/choose\(source\)/);
+  assert.match(js,/next\.focus\(\{preventScroll:true\}\)/);
 });

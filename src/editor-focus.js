@@ -13,6 +13,14 @@ export function adjustedValue(field,delta){
   const next=Math.min(max,Math.max(min,Number(field.value)+delta*step));
   return String(Number((min+Math.round((next-min)/step)*step).toFixed(7)));
 }
+export function focusChipDestination(key,index,count){
+  if(!Number.isInteger(index)||!Number.isInteger(count)||count<1||index<0||index>=count)return -1;
+  if(key==='ArrowRight')return (index+1)%count;
+  if(key==='ArrowLeft')return (index+count-1)%count;
+  if(key==='Home')return 0;
+  if(key==='End')return count-1;
+  return -1;
+}
 const create=(tag,className,text)=>{
   const node=document.createElement(tag);
   if(className)node.className=className;
@@ -79,10 +87,31 @@ export function installFocusedAdjustments({form,chooser}){
   }
   function choose(field){
     original=field;
-    for(const chip of chips.querySelectorAll('button'))
-      chip.setAttribute('aria-pressed',String(chip.dataset.focusKey===field.name));
+    for(const chip of chips.querySelectorAll('button')){
+      const selected=chip.dataset.focusKey===field.name;
+      chip.setAttribute('aria-pressed',String(selected));
+      chip.tabIndex=selected?0:-1;
+    }
     sync();
   }
+  // Focus parameter chips use one Tab stop. Arrow navigation stays within
+  // the real sliders offered by the active tool, including disabled sources.
+  chips.addEventListener('keydown',event=>{
+    const current=event.target.closest('button[data-focus-key]');
+    if(!current||!chips.contains(current))return;
+    const all=[...chips.querySelectorAll('button[data-focus-key]')];
+    const index=all.indexOf(current);
+    if(index<0)return;
+    const destination=focusChipDestination(event.key,index,all.length);
+    if(destination<0)return;
+    const next=all[destination];
+    const source=available.find(field=>field.name===next.dataset.focusKey);
+    if(!source)return;
+    event.preventDefault();
+    choose(source);
+    next.focus({preventScroll:true});
+    next.scrollIntoView({block:'nearest',inline:'nearest'});
+  });
   function refresh(){
     if(!active)return;
     const card=document.querySelector('.editor-tool-card:not([hidden])');
