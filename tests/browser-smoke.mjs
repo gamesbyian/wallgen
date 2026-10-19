@@ -1225,7 +1225,10 @@ try{
     document.querySelector('[data-editor-tool="interior"]').click();
     const manager=document.querySelector('.editor-tool-card[data-editor-tool="interior"]');
     const select=manager.querySelector('.interior-toolbar select');
-    const scope=manager.querySelector('.interior-scope')?.textContent||'';
+    const scopeRow=manager.querySelector('.interior-scope');
+    const scope=scopeRow?.textContent||'';
+    const accessibleScope=scopeRow?.getAttribute('aria-label')||'';
+    const elementState=scopeRow?.dataset.elementVisibility||'';
     const lock=manager.querySelector('.interior-actions button:last-child');
     lock.click();
     const locked=document.querySelector('.editor-tool-card[data-editor-tool="interior-style"] select').disabled;
@@ -1237,9 +1240,12 @@ try{
     background.value=background.value==='black'?'white':'black';
     background.dispatchEvent(new Event('change',{bubbles:true}));
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
-    return {scope,locked,chooseAvailable,unlocked,
+    return {scope,accessibleScope,elementState,locked,chooseAvailable,unlocked,
       stable:identity===document.querySelector('.interior-toolbar select')};
   })()`);
+  assert.equal(elementUsability.accessibleScope,elementUsability.scope);
+  assert.match(elementUsability.scope,/Element [1-8] of [1-8] · Enabled/);
+  assert.equal(elementUsability.elementState,'enabled');
   assert.ok(elementUsability.scope.includes('all seven colours'),
     'the element manager should explain its colour scope');
   assert.ok(elementUsability.locked&&elementUsability.chooseAvailable&&

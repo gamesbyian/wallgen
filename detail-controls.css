@@ -95,6 +95,14 @@
   }
 }
 
+/* Existing compact scope line doubles as an element status readout; no
+   extra editor rows or controls in the fixed-height phone card. */
+.editor-tool-card[data-editor-tool="interior"] .interior-scope[data-element-visibility="hidden"]{
+  color:var(--muted);text-decoration:underline dotted; text-underline-offset:2px;
+}
+.editor-tool-card[data-editor-tool="interior"] .interior-scope[data-element-visibility="enabled"]{
+  color:inherit;
+}
 .editor-tool-card[data-editor-tool="interior"] .interior-scope{
   min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;
   white-space:nowrap;color:var(--muted);font-size:11px;line-height:1.3;
