@@ -25,6 +25,7 @@ on:
       - 'index.html'
       - 'scripts/capture-ui-atlas.mjs'
       - 'scripts/ui-atlas-*.mjs'
+      - 'tests/redesign-navigation-acceptance.mjs'
       - '.github/workflows/ui-screenshot-atlas.yml'
 
 concurrency:
@@ -62,6 +63,18 @@ jobs:
           for i in $(seq 1 40); do curl --fail --silent http://127.0.0.1:4173/ >/dev/null && exit 0; sleep 1; done
           cat /tmp/roygbiv-serve.log
           exit 1
+      - name: Independent gallery, More, and recipe transport acceptance
+        run: |
+          node --check tests/redesign-navigation-acceptance.mjs
+          node tests/redesign-navigation-acceptance.mjs
+      - name: Upload independent acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: roygbiv-agent3-acceptance
+          path: artifacts/agent3-acceptance/
+          retention-days: 14
+          if-no-files-found: warn
       - name: Capture UI atlas
         run: |
           if [ "$ATLAS_MODE" = 'smoke' ]; then
