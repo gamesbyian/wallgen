@@ -38,6 +38,12 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
   let editingSavedPath=false,showingSavedPath=false;
   const cameraPan=()=>drawnPathViewportOffset(getRecipe(),
     showingSavedPath||editingSavedPath);
+  // A saved curve has not entered provisional ready/raw state yet. Reframing
+  // must render that visible source too, rather than clearing the overlay.
+  // Authoring new points still takes precedence over the old saved geometry.
+  const visiblePoints=()=>editing?editor?.points||[]:
+    ready.length?ready:raw.length?raw:
+    showingSavedPath&&getRecipe().geometry==='drawn'?getRecipe().customPath:[];
 
   // Convert between the design's normalized coordinates and the full stage,
   // whose preview may be zoomed and letterboxed inside the editing overlay.
@@ -360,18 +366,16 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
   overlay.addEventListener('click',event=>{if(active){event.preventDefault();event.stopPropagation();}});
   button.addEventListener('click',()=>active?stop():start());
   window.addEventListener('resize',()=>{
-    if(active)draw(editing?editor.points:ready.length?ready:raw);
+    if(active)draw(visiblePoints());
   });
   overlay.parentElement.addEventListener('roygbiv-preview-zoom',()=>{
-    if(active)draw(editing?editor.points:ready.length?ready:raw);
+    if(active)draw(visiblePoints());
   });
   smooth.addEventListener('click',()=>setFit('smooth'));
   geometric.addEventListener('click',()=>setFit('geometric'));
-  extend.addEventListener('change',()=>draw(editing?editor.points:ready.length?ready:
-    raw.length?raw:showingSavedPath?getRecipe().customPath:[]));
+  extend.addEventListener('change',()=>{if(active)draw(visiblePoints());});
   document.querySelector('.studio-stage').addEventListener('roygbiv-view-zoom-updated',()=>{
-    if(active)draw(editing?editor.points:ready.length?ready:
-      raw.length?raw:showingSavedPath?getRecipe().customPath:[]);
+    if(active)draw(visiblePoints());
   });
   power.addEventListener('input',()=>{
     powerLabel.textContent=Number(power.value).toFixed(1)+'×';
