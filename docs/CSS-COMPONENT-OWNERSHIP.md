@@ -29,3 +29,7 @@ The production wallpaper renderer, preview camera, recipe data and exported imag
 8. Root CSS zoom in the screenshot atlas is an approximation, not guaranteed to match native Chrome browser zoom; treat discrepancies accordingly.
 
 This consolidation removed retired theme-dropdown styling and the original 13-pixel interior colour-target checkboxes. Circle styling moved to `studio-themes.css`, imported-path styling to `image-path.css`, and interior control styling to `detail-controls.css`. Further changes should reduce the remaining exception sheet by migrating individual features only after browser geometry checks confirm equivalence.
+
+## 2026-10-18 source-proven dead-rule cleanup
+
+The old native theme dropdown and its sibling label were removed earlier, replaced by two native buttons with thin-black-outline cream/dark circles. `index.html` and `src/mobile-studio.js` no longer create a `.theme-switcher select` or descendant `label`. Four dead CSS selector arms were removed from the owning `studio-themes.css` stylesheet; no current theme button, brand, layout or recipe property was changed. A unit test checks that the retired selectors cannot quietly return. Continue CSS consolidation only after demonstrating selector death at the applicable viewport and verifying both live themes.

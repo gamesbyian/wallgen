@@ -12,8 +12,7 @@ html[data-theme="cream"] .masthead{background:#fffdf8;border-color:#eee4d8;
   box-shadow:0 3px 18px #4f3a2110}
 html[data-theme="cream"] .brand,html[data-theme="cream"] .brand .brand-title{color:#181b2b}
 html[data-theme="cream"] .brand .brand-subtitle{color:#66697b}
-html[data-theme="cream"] .header-right,html[data-theme="cream"] .theme-switcher label{color:#787487}
-html[data-theme="cream"] .theme-switcher select{background:#fff5e3;color:#343047;border-color:#e7d4b4}
+html[data-theme="cream"] .header-right{color:#787487}
 html[data-theme="cream"] .sidebar{background:#fffdf8;border-color:#e9dfd4}
 html[data-theme="cream"] .workspace{background:#f8f3e9}
 html[data-theme="cream"] .settings-tabs{background:#f6f0e6;border-color:#e7dcd2}
@@ -73,9 +72,6 @@ html[data-theme="cream"] footer{color:#8c8191;border-color:#e8ddce}
     line-height:1.2;max-width:245px}
   .header-right{display:none!important}
   .theme-switcher{padding:0;gap:0}
-  .theme-switcher label{display:none}
-  .theme-switcher select{max-width:88px;min-height:40px;font-size:10px;
-    padding:4px 17px 4px 7px;text-overflow:ellipsis}
   .layout,.layout:where(*){
     min-height:0!important;display:block!important;height:calc(100dvh - var(--mobile-head) - var(--mobile-dock-height));
     overflow:hidden;position:relative}
