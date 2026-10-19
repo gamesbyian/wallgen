@@ -1581,6 +1581,10 @@ try{
     imageImport.original,'angle application should also be undoable');
   // The five-destination trial runs as a second, explicit navigation mode.
   // The default six-action interface above remains a fully tested baseline.
+  await command('Emulation.setDeviceMetricsOverride',{
+    width:412,height:915,deviceScaleFactor:1,mobile:true,
+    screenWidth:412,screenHeight:915,
+  });
   await command('Page.navigate',{url:url+'?nav=five'});
   await waitFor('document.readyState==="complete"&&document.body?.classList.contains("mobile-studio")',15000);
   await delay(400);
