@@ -118,7 +118,9 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
     }
   }
   function syncPointControls(){
-    editButton.hidden=!active||(!editing&&ready.length<2&&getRecipe().customPath.length<2);
+    const savedPath=getRecipe();
+    editButton.hidden=!active||(!editing&&ready.length<2&&
+      !(savedPath.geometry==='drawn'&&savedPath.customPath.length>=2));
     editButton.setAttribute('aria-pressed',String(editing));
     editButton.textContent=editing?'Hide points':'Edit points';
     const available=editing&&editor?.selected!==-1;
@@ -192,8 +194,11 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
     if(!editing){
       const existing=ready.length>=2?ready:
         getRecipe().geometry==='drawn'?getRecipe().customPath:[];
-      editingSavedPath=ready.length<2&&getRecipe().geometry==='drawn';
       if(existing.length<2)return;
+      // Editing a saved path remains one transaction even if its controls
+      // are hidden and reopened. A second entry must not turn an existing
+      // path into a replacement and silently zero composition position.
+      if(ready.length<2&&getRecipe().geometry==='drawn')editingSavedPath=true;
       const pins=ready.length>=2?pendingPins:getRecipe().drawnAnchors;
       const corners=ready.length>=2?pendingCorners:getRecipe().drawnCorners;
       editor=createPointEditor(existing,pins,corners);
