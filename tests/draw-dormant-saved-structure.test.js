@@ -50,5 +50,5 @@ test('the real Draw lifecycle uses the same applicability rule for Show and Edit
   assert.match(code,/editButton\.hidden=!active\|\|\(!editing&&ready\.length<2&&\s*!activeSavedDrawnPath\(savedPath\)\)/);
   assert.match(code,/if\(activeSavedDrawnPath\(getRecipe\(\)\)\)\{/);
   assert.match(code,/const source=getRecipe\(\),saved=activeSavedDrawnPath\(source\);/);
-  assert.match(code,/if\(ready\.length<2&&saved\)editingSavedPath=true/);
+  assert.match(code,/if\(ready\.length<2&&saved\)\s*\{\s*editingSavedPath=true;\s*savedSourcePath=JSON\.stringify\(source\.customPath\)/);
 });
