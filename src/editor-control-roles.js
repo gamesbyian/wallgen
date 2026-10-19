@@ -10,7 +10,7 @@ export function sourceSettingLabel(field,key){
     const copy=nativeLabel.cloneNode(true);
     for(const control of copy.querySelectorAll('input,select,textarea,button,output,small'))
       control.remove();
-    const text=copy.textContent.replace(/\\s+/g,' ').trim();
+    const text=copy.textContent.replace(/\s+/g,' ').trim();
     if(text)return text.slice(0,100);
   }
   return String(key||'Setting').replace(/([a-z0-9])([A-Z])/g,'$1 $2')
