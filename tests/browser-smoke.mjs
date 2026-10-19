@@ -1470,7 +1470,16 @@ try{
     const before=JSON.stringify(recipe.customPath);
     const button=document.getElementById('drawPathToggle');
     button.click();
+    const panel=document.getElementById('drawPathPanel');
+    const initialPhase=panel.dataset.phase;
+    const sourceButtons=['drawSmooth','drawGeometric','drawEditPoints',
+      'drawAgain','drawApply','drawCancel','drawAddPoint','drawDeletePoint',
+      'drawCornerPoint','drawResmoothPoints','drawUndoPoint'];
+    const originalActions=sourceButtons.every(id=>!!document.getElementById(id));
+    const semanticGroups=['.draw-fit-group','.draw-refine-group','.draw-finish-group']
+      .every(sel=>panel.querySelector(sel)?.getAttribute('role')==='group');
     document.getElementById('drawEditPoints').click();
+    const editingPhase=panel.dataset.phase;
     const overlay=document.getElementById('drawOverlay');
     const model=createPointEditor(recipe.customPath);
     const index=model.anchors[Math.floor(model.anchors.length/2)];
@@ -1494,9 +1503,17 @@ try{
     const corners=next.drawnCorners.length;
     document.getElementById('undo').click();
     const restored=JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get('r')));
-    return {changed,pinned,corners,undoAvailable,restored:JSON.stringify(restored.customPath)===before};
+    return {changed,pinned,corners,undoAvailable,initialPhase,editingPhase,
+      originalActions,semanticGroups,
+      restored:JSON.stringify(restored.customPath)===before};
   })()`);
   console.log('LIVE_ANCHOR_EDITOR_ACCEPTANCE',JSON.stringify(pointEditorCheck));
+  assert.equal(pointEditorCheck.initialPhase,'refine',
+    'existing saved path should offer refinement rather than empty sketch');
+  assert.equal(pointEditorCheck.editingPhase,'anchors',
+    'point edit action should visibly identify the anchor editing phase');
+  assert.ok(pointEditorCheck.originalActions&&pointEditorCheck.semanticGroups,
+    'drawing workflow must retain all eleven original action identities in named groups');
   assert.ok(pointEditorCheck.changed&&pointEditorCheck.pinned>0&&pointEditorCheck.corners>0,
     'dragging a point must modify and pin the selected anchor');
   assert.ok(pointEditorCheck.undoAvailable&&pointEditorCheck.restored,

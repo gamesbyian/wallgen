@@ -17,7 +17,7 @@ The production wallpaper renderer, preview camera, recipe data and exported imag
 | Flat source setting-row accent family | `editor-setting-rows.css` | ROYGBIV category rails, flat theme surfaces, disabled-state cues; zero control geometry changes |
 | Interior element selectors, checkbox alignment and colour chips | `detail-controls.css` | Dynamic element controls, ink targeting, colour picker states |
 | Imported path dialog | `image-path.css` | Import preview/dialog in both themes |
-| Drawn path editing | `draw-path.css` | Drawing overlay, point controls, hint/action bars |
+| Drawn path editing | `draw-path.css` | Drawing overlay, source action grouping, live phase pill, point controls, hint/action bars |
 | Cross-component audit refinements | `ui-audit-fixes.css` | Only remaining shared exceptions, search/history, More/gallery proportions, short tray and material rotation width |
 
 ## Precedence and cleanup contract

@@ -139,6 +139,38 @@ body.path-drawing .wallpaper-frame{
 
 /* Optional anchor editing shares the drawing overlay and camera. Extra
    tools get a second compact row rather than expanding the entire editor. */
+/* A compact three-step authoring tool, rather than six undifferentiated
+   actions. The original buttons, pointer plane and viewport stay untouched. */
+.draw-path-intro{display:flex;align-items:center;justify-content:space-between;
+  gap:8px;width:100%;font-size:11px;line-height:1.2;min-height:17px}
+.draw-path-intro>strong{font-size:11px;letter-spacing:.01em}
+.draw-phase{font-size:9px;font-weight:800;text-transform:uppercase;
+  letter-spacing:.075em;padding:3px 7px;border:1px solid #aa8da4;
+  border-radius:99px;background:#30293b;color:#ffe1f1}
+.draw-path-panel[data-phase="refine"] .draw-phase{
+  border-color:#8cd3b3;color:#baf8d9;background:#254d3e}
+.draw-path-panel[data-phase="anchors"] .draw-phase{
+  border-color:#80c7f0;color:#c7eeff;background:#28475e}
+.draw-path-panel>.draw-path-controls:not(.draw-point-controls){
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  gap:5px;width:100%;align-items:start;
+}
+.draw-fit-group,.draw-refine-group,.draw-finish-group{
+  display:flex;gap:3px;align-items:stretch;min-width:0}
+.draw-fit-group>button,.draw-refine-group>button{flex:1 1 0;min-width:0}
+.draw-finish-group{grid-column:1/-1;justify-content:flex-end;
+  border-top:1px solid #ffffff25;padding-top:5px}
+.draw-finish-group>button{min-width:0;flex:1 1 0}
+.draw-finish-group #drawApply:not(:disabled){background:#c44d91;
+  border-color:#ef88c2;color:#fff}
+@media(max-width:790px){
+  body.mobile-studio .draw-path-intro{min-height:15px}
+  body.mobile-studio .draw-path-intro>strong{font-size:10px}
+  body.mobile-studio .draw-phase{padding:2px 6px;font-size:8px}
+  body.mobile-studio .draw-path-controls:not(.draw-point-controls) button{
+    min-height:27px;padding:3px 4px}
+}
+
 .draw-point-controls{width:100%;padding-top:2px;border-top:1px solid #ffffff30}
 .draw-point-controls[hidden],.draw-point-controls button[hidden]{display:none!important}
 .draw-path-controls #drawEditPoints[hidden]{display:none!important}

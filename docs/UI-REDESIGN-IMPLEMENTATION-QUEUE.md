@@ -52,6 +52,7 @@
 ## Phase D — complex tool journeys
 
 - [ ] Keep Draw → Interpret → Edit anchors → Apply/Cancel, including resmoothing, corners, points and 10× interpretive smoothing.
+- [x] Group drawing controls into Interpret, Refine and Finish with live Sketch/Refine/Edit points state and keep all source handlers, smoothing, anchor and extension identities; complete touch-fidelity review remains open (PR pending).
 - [ ] Keep path extrapolation beyond boundaries and intersections/weave/over/under.
 - [x] Fix source-proven 10px clipping of desktop material rotation buttons (36px inherited minimum inside 26px control row), preserving existing rotations and mobile sizing (PR #84).
 - [x] Fix the matching 10px clipping on compact Pixel 6 Pro material rotation buttons. The new 17-state mobile atlas exposed this separately; assert source button bounds on both desktop and mobile (PR #91).

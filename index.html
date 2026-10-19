@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="mobile-five-nav.css?v=20261018-default1">
   <link rel="stylesheet" href="mobile-editor-rail.css?v=20261017-camera1">
   <link rel="stylesheet" href="design-transform.css?v=20261016-transform1">
-  <link rel="stylesheet" href="draw-path.css?v=20261018-points1">
+  <link rel="stylesheet" href="draw-path.css?v=20261018-workflow1">
   <link rel="stylesheet" href="image-path.css?v=20261018-import1">
   <link rel="stylesheet" href="editor-redesign.css?v=20261018-points1">
   <link rel="stylesheet" href="bleed-and-action-rail.css?v=20261018-five-default1">
@@ -297,17 +297,24 @@
     <button type="button" id="mobileDownload" aria-label="Download wallpaper PNG"><span aria-hidden="true"><img class="ui-icon" src="assets/icons/roygbiv/export-png.svg" alt="" aria-hidden="true" draggable="false"></span><small>Download</small></button>
         </div>
         <canvas id="drawOverlay" width="600" height="1300" tabindex="0" hidden aria-label="Draw a path or use square anchors and tangent handles to edit it"></canvas>
-        <div class="draw-path-panel" id="drawPathPanel" role="group" aria-label="Custom path drawing controls" hidden>
+        <div class="draw-path-panel" id="drawPathPanel" role="group" aria-label="Custom path drawing controls" hidden data-phase="sketch">
+          <div class="draw-path-intro"><strong>Custom path</strong><span class="draw-phase" aria-hidden="true">Sketch</span></div>
           <span id="drawPathHint" aria-live="polite">Draw one continuous path across the canvas.</span>
           <label class="draw-smoothing-row" for="drawSmoothingStrength"><span>Smoothing</span><input type="range" id="drawSmoothingStrength" min="1" max="10" step="0.5" value="1"><output id="drawSmoothingValue" for="drawSmoothingStrength">1.0×</output></label>
           <label class="draw-extension-row" for="drawExtendPath" title="Continue both open endpoints along their terminal tangents without changing saved control points."><input type="checkbox" id="drawExtendPath"><span>Extend open ends beyond frame</span></label>
           <div class="draw-path-controls">
-            <button type="button" id="drawSmooth" class="draw-fit-selected" aria-pressed="true">Smooth</button>
-            <button type="button" id="drawGeometric" aria-pressed="false">Geometric</button>
-            <button type="button" id="drawEditPoints" aria-pressed="false" hidden>Edit points</button>
-            <button type="button" id="drawAgain">Redraw</button>
-            <button type="button" id="drawApply" disabled>Use path</button>
-            <button type="button" id="drawCancel">Cancel</button>
+            <div class="draw-fit-group" role="group" aria-label="Interpret path shape">
+              <button type="button" id="drawSmooth" class="draw-fit-selected" aria-pressed="true">Smooth</button>
+              <button type="button" id="drawGeometric" aria-pressed="false">Geometric</button>
+            </div>
+            <div class="draw-refine-group" role="group" aria-label="Refine or redraw path">
+              <button type="button" id="drawEditPoints" aria-pressed="false" hidden>Edit points</button>
+              <button type="button" id="drawAgain">Redraw</button>
+            </div>
+            <div class="draw-finish-group" role="group" aria-label="Finish drawing">
+              <button type="button" id="drawApply" disabled>Use path</button>
+              <button type="button" id="drawCancel">Cancel</button>
+            </div>
           </div>
           <div class="draw-path-controls draw-point-controls" aria-label="Anchor point tools">
             <button type="button" id="drawAddPoint" aria-pressed="false" hidden>Add point</button>
