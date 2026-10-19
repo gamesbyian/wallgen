@@ -1,0 +1,50 @@
+name: Agent 3 three-layer material rotations
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'tests/redesign-material-rotation-browser.mjs'
+      - '.github/workflows/agent3-material-rotations.yml'
+      - 'src/app.js'
+      - 'src/editor-layout.js'
+      - 'src/model.js'
+      - 'index.html'
+permissions:
+  contents: read
+jobs:
+  real-material-rotations:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax and normalization checks
+        run: |
+          node --check tests/redesign-material-rotation-browser.mjs
+          node --test tests/render.test.js tests/material-three-layer-adversarial.test.js
+      - name: Chromium and local server
+        run: |
+          npm install --no-save playwright@1.56.1 serve@14.2.5
+          npx playwright install --with-deps chromium
+      - name: Serve real app
+        run: |
+          npx serve . -l 4173 > /tmp/agent3-material.log 2>&1 &
+          for i in $(seq 1 40); do
+            if curl --fail --silent http://127.0.0.1:4173/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/agent3-material.log
+          exit 1
+      - name: Two viewport material-layer rotation and lock journeys
+        run: node tests/redesign-material-rotation-browser.mjs
+      - name: Upload screenshots and serialised recipe evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: roygbiv-agent3-material-rotations
+          path: artifacts/agent3-material-rotation/
+          retention-days: 14
+          if-no-files-found: warn
