@@ -37,18 +37,17 @@ export function installFiveDestinationDock({openSaved,closeStudio}){
   // original event wiring and favourite status sync must never see a gap.
   stage.append(shortcuts);
   shortcuts.append(favorite,download);
+  const mobile=matchMedia('(max-width:790px)');
+  // Rails are detached on desktop and reattached on mobile. Keep the same
+  // favourite/download source buttons connected across every breakpoint.
   const mountShortcuts=()=>{
-    const rail=stage.querySelector('.mobile-preview-rail-left');
-    if(!rail)return false;
-    rail.append(shortcuts);
-    return true;
+    const rail=mobile.matches?stage.querySelector('.mobile-preview-rail-left'):null;
+    const destination=rail||stage;
+    if(shortcuts.parentElement!==destination)destination.append(shortcuts);
   };
-  if(!mountShortcuts()){
-    const observer=new MutationObserver(()=>{
-      if(mountShortcuts())observer.disconnect();
-    });
-    observer.observe(stage,{childList:true});
-  }
+  new MutationObserver(mountShortcuts).observe(stage,{childList:true});
+  mobile.addEventListener('change',mountShortcuts);
+  mountShortcuts();
   home.addEventListener('click',closeStudio);
   saved.addEventListener('click',openSaved);
   function sync(event){
