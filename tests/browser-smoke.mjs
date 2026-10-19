@@ -1703,6 +1703,7 @@ try{
         stageBottom:stage.bottom,frameHeight:frame.height};
     })()`);
     trialBoundaries.push({width,height,...state});
+    console.log('FIVE_NAV_VIEWPORT',JSON.stringify({width,height,...state}));
     assert.ok(state.quickActionsConnected,
       'responsive rail detachment must preserve both source action identities');
     if(width<=790){
