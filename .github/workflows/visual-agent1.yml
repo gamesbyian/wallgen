@@ -1,0 +1,47 @@
+name: Agent 1 canonical/live visual comparisons
+on:
+  pull_request:
+    paths:
+      - 'scripts/visual-reference-audit-agent1.mjs'
+      - '.github/workflows/visual-agent1.yml'
+      - 'docs/ui-reference/*.svg'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: visual-agent1-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  live-plates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate independent evidence script
+        run: node --check scripts/visual-reference-audit-agent1.mjs
+      - name: Install browser dependencies
+        run: |
+          npm install --no-save playwright@1.56.1 serve@14.2.5
+          npx playwright install --with-deps chromium
+      - name: Launch real application
+        run: |
+          npx serve . -l 4173 > /tmp/visual-agent1-server.log 2>&1 &
+          for i in $(seq 1 40); do
+            if curl --fail --silent http://127.0.0.1:4173/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/visual-agent1-server.log
+          exit 1
+      - name: Capture paired real Chromium/reference states
+        run: node scripts/visual-reference-audit-agent1.mjs
+      - name: Upload 12-plate comparison gallery and measured geometry
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent1-canonical-live-visual-evidence
+          path: artifacts/visual-agent1/
+          retention-days: 14
+          if-no-files-found: warn
