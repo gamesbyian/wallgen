@@ -1,0 +1,89 @@
+name: Agent 3 consolidated mobile acceptance gates
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'tests/redesign-mobile-focus-boundaries.mjs'
+      - 'tests/redesign-runtime-source-census.mjs'
+      - 'tests/redesign-conditional-tools-acceptance.mjs'
+      - 'tests/redesign-seven-colour-targets-acceptance.mjs'
+      - 'tests/redesign-material-rotation-browser.mjs'
+      - '.github/workflows/agent3-mobile-acceptance.yml'
+      - 'docs/ui-reference/source-control-inventory.json'
+      - 'src/editor-*.js'
+      - 'src/mobile-*.js'
+      - 'src/app.js'
+      - 'src/model.js'
+      - 'src/interior-elements.js'
+      - 'src/composition-geometry.js'
+      - 'index.html'
+      - '*.css'
+      - 'assets/icons/**'
+permissions:
+  contents: read
+jobs:
+  independent-mobile-acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax and source controls contracts
+        run: |
+          for test in \
+            tests/redesign-mobile-focus-boundaries.mjs \
+            tests/redesign-runtime-source-census.mjs \
+            tests/redesign-conditional-tools-acceptance.mjs \
+            tests/redesign-seven-colour-targets-acceptance.mjs \
+            tests/redesign-material-rotation-browser.mjs; do
+            node --check "$test"
+          done
+          node --test \
+            tests/editor-tool-applicability.test.js \
+            tests/interior-elements.test.js \
+            tests/interior-combined-scope.test.js \
+            tests/interior-selected-id.test.js \
+            tests/material-three-layer-adversarial.test.js
+      - name: One Chromium/browser install for five acceptance suites
+        run: |
+          npm install --no-save playwright@1.56.1 serve@14.2.5
+          npx playwright install --with-deps chromium
+      - name: Serve live application source
+        run: |
+          npx serve . -l 4173 > /tmp/agent3-consolidated.log 2>&1 &
+          for i in $(seq 1 40); do
+            if curl --fail --silent http://127.0.0.1:4173/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/agent3-consolidated.log
+          exit 1
+      - name: Exercise all five independently authored browser gates
+        run: |
+          status=0
+          for test in \
+            tests/redesign-mobile-focus-boundaries.mjs \
+            tests/redesign-runtime-source-census.mjs \
+            tests/redesign-conditional-tools-acceptance.mjs \
+            tests/redesign-seven-colour-targets-acceptance.mjs \
+            tests/redesign-material-rotation-browser.mjs; do
+            echo "::group::$test"
+            node "$test" || status=1
+            echo "::endgroup::"
+          done
+          exit "$status"
+      - name: Retain every independent witness, including failed suites
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: roygbiv-agent3-consolidated-mobile-evidence
+          path: |
+            artifacts/agent3-focus-boundaries/
+            artifacts/agent3-runtime-source-census/
+            artifacts/agent3-conditional-tools/
+            artifacts/agent3-interior-colour-targets/
+            artifacts/agent3-material-rotation/
+          retention-days: 14
+          if-no-files-found: warn
