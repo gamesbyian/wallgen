@@ -114,7 +114,7 @@ export async function inspectAtlasState(page,ctx,slug,meta={}){
       const panel=g('.mobile-more-group-body>.viewport-positioner');
       check(shownInShot(panel),'Camera-only View Pan controls must be visible in mobile tray');
       check(shownInShot(g('#viewPanStatus')),'Frame Pan status must be visible');
-      check(g('#viewPanStatus')?.textContent.includes('+5%'),
+      check(g('#viewPanStatus')?.textContent.includes((meta.cameraPan>0?'+':'')+meta.cameraPan+'%'),
         'Pan status does not reflect actual +5% source camera');
       check([...panel.querySelectorAll('[data-view-pan]')].length===5,
         'View Pan lost one of its five original action identities');
@@ -123,7 +123,7 @@ export async function inspectAtlasState(page,ctx,slug,meta={}){
         check(!!button.getAttribute('aria-label'),'View Pan control missing accessible name');
       }
       const recipe=JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get('r')));
-      check(recipe.viewPanX===meta.cameraPan&&recipe.positionX===0,
+      check(recipe.viewPanX===meta.cameraPan&&recipe.positionX===meta.compositionPosition,
         'Viewport Pan must change only the source camera, not composition nudge');
     }
     if(slug==='shell-mobile-more')
