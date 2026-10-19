@@ -131,7 +131,9 @@ test('all settings have a single tool home and no nested mobile vertical scrolli
   const css=read('editor-redesign.css');
   for(const name of ['Geometry','Patterns','Shadows','Outlines','Lighting','Character'])
     assert.ok(schema.includes("name:'"+name+"'"),name);
-  assert.match(layout,/appendUnique\(card,fieldNode\(key\)\)/);
+  assert.match(layout,/const root=fieldNode\(key\)/);
+  assert.match(layout,/annotateEditorSettingRow\(root,form\.elements\.namedItem\(key\),key,/);
+  assert.match(layout,/appendUnique\(card,root\)/);
   assert.match(layout,/dataset\.randomSetting=key/);
   assert.match(css,/scroll-snap-type:none!important/);
   assert.match(css,/overflow:hidden!important/);
