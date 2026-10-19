@@ -1721,6 +1721,19 @@ try{
       const dock=box('#mobileActionDock');
       const stage=box('.studio-stage');
       const frame=box('.wallpaper-frame');
+      const scrollRail=document.querySelector('.mobile-preview-rail-left');
+      const originalScroll=scrollRail.scrollTop;
+      scrollRail.scrollTop=scrollRail.scrollHeight;
+      const lastShortcut=box('#mobileDownload');
+      const railBounds=scrollRail.getBoundingClientRect();
+      const lowerShortcutReachable=lastShortcut.top>=railBounds.top-2&&
+        lastShortcut.bottom<=railBounds.bottom+2;
+      const shortcutScroll={
+        overflow:getComputedStyle(scrollRail).overflowY,
+        maxScroll:scrollRail.scrollHeight-scrollRail.clientHeight,
+        lowerShortcutReachable
+      };
+      scrollRail.scrollTop=originalScroll;
       return {mobile:document.body.classList.contains('mobile-studio'),
         dockStyle:getComputedStyle(document.getElementById('mobileActionDock')).display,
         buttons:document.querySelectorAll('#mobileActionDock>button').length,
@@ -1728,10 +1741,17 @@ try{
           document.getElementById(id)?.isConnected),
         dock:{left:dock.left,right:dock.right,top:dock.top,bottom:dock.bottom},
         shortcutHost:document.querySelector('.mobile-five-shortcuts')?.parentElement?.className||null,
+        shortcutScroll,
         stageBottom:stage.bottom,frameHeight:frame.height};
     })()`);
     trialBoundaries.push({width,height,...state});
     console.log('FIVE_NAV_VIEWPORT',JSON.stringify({width,height,...state}));
+    if(height<=620){
+      assert.equal(state.shortcutScroll.overflow,'auto',
+        'constrained landscape shortcut rail must remain vertically navigable');
+      assert.ok(state.shortcutScroll.lowerShortcutReachable,
+        'Download must be reachable by scrolling only the left shortcut rail');
+    }
     assert.ok(state.quickActionsConnected,
       'responsive rail detachment must preserve both source action identities');
     if(width<=790){
