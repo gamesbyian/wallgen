@@ -273,7 +273,25 @@ try{
     'zoom must preserve colours and decoration at shared world points: '+
     JSON.stringify(cameraZoomParity));
 
-  // The phone rail's +/- buttons must change the camera, not the recipe.
+  // Verify real mounted form nodes have semantic component roles, without
+  // generating proxies that break locks, undo, disabled states or recipe data.
+  const typedRows=await evaluate(`(()=>{
+    const named=[...document.querySelectorAll('.editor-setting-row')];
+    const keys=named.flatMap(row=>(row.dataset.controlKeys||'').split(' ').filter(Boolean));
+    const missing=[...document.querySelectorAll('[data-setting]')].map(el=>el.dataset.setting)
+      .filter(k=>!['primesOnly','family','textureLayer2Enabled','textureLayer3Enabled'].includes(k)&&
+        !keys.includes(k));
+    return {rows:named.length,keys:new Set(keys).size,missing,
+      kinds:[...new Set(named.map(row=>row.dataset.controlKind))],
+      originalFieldsPreserved:[...keys].every(k=>!!document.querySelector('[name="'+k+'"]'))};
+  })()`);
+  console.log('EDITOR_TYPED_ROW_CENSUS',JSON.stringify(typedRows));
+  assert.ok(typedRows.rows>=70,'expected stable typed UI rows across all tool categories');
+  assert.ok(typedRows.keys>=80,'not all canonical source fields assigned typed rows');
+  assert.deepEqual(typedRows.missing,[],'a static editor setting lost its source row');
+  assert.ok(typedRows.originalFieldsPreserved);
+
+    // The phone rail's +/- buttons must change the camera, not the recipe.
   const beforeZoom=await evaluate(
     'JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r")))');
   const targetZoom=Math.round(Math.max(.5,beforeZoom.viewZoom-.1)*100)/100;

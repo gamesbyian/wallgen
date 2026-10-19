@@ -1,5 +1,6 @@
 import {EDITOR_CATEGORIES, TOOL_LIST, SETTING_TOOL} from './editor-schema.js?v=20261018-icons2';
 import {iconMarkup} from './ui-icons.js';
+import {annotateEditorSettingRow} from './editor-control-roles.js';
 
 const byId=id=>document.getElementById(id);
 const form=byId('controls');
@@ -189,9 +190,15 @@ export function mountEditor(){
     // The texture enabled flags are intentionally hidden inputs. Their real
     // add/remove controls remain inside the relocated texture layer groups.
     if(key==='textureLayer2Enabled'||key==='textureLayer3Enabled')continue;
-    appendUnique(card,fieldNode(key));
+    const root=fieldNode(key);
+    annotateEditorSettingRow(root,form.elements.namedItem(key),key,
+      {category:spec.category||card.dataset.category,tool:spec.id});
+    appendUnique(card,root);
   }
-  // Keep the dynamic explanation beside the coherence and intersection
+  // Each source field has a stable semantic row identity, not a reconstructed
+  // input. Retaining original DOM nodes preserves handlers, locks and recipes.
+  // Rich dynamic interior controls have their own component system.
+    // Keep the dynamic explanation beside the coherence and intersection
   // controls after the legacy controls are moved to their canonical home.
   appendUnique(tools.get('safety').card,byId('geometrySafetyStatus'));
   // Every property gets its own miniature, scope-safe die. The active

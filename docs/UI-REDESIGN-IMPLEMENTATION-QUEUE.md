@@ -30,7 +30,8 @@
 
 ## Phase C — component system and named editor controls
 
-- [ ] Implement typed setting rows and lock/die/stepper slots without changing recipe or event semantics.
+- [x] Add typed, source-preserving setting-row semantics for all ordinary static editor fields; no duplicate inputs or changed handlers (PR #80).
+- [ ] Apply the unified visual row layout family-by-family with per-viewport screenshot approval, preserving the special four-column rotation controls.
 - [ ] Keep all seven categories and 40 named tools; verify full source keys and applicability rules.
 - [ ] Keep blue and random stable unique ROYGBIV slider accents inside each panel.
 - [ ] Preserve search match-to-tool and manual horizontal chip scroll state.
