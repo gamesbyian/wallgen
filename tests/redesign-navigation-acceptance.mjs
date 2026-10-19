@@ -87,7 +87,10 @@ try{
   assert.equal(new Set(explore).size,12,'Generate 12 must preserve twelve distinct identities');
   await screenshot('explore-twelve');
   // Open an actual generated thumbnail, not a fabricated recipe object.
-  await page.locator('#gallery .thumb').nth(4).click();
+  await page.locator('#gallery .thumb').nth(4).focus();
+  await page.keyboard.press('Enter');
+  assert.equal(await page.evaluate(()=>document.activeElement?.id),'mobileStudio',
+    'Keyboard gallery restore must return focus to the visible Studio destination');
   const selected=current();
   assert.equal(selected.seed,explore[4]);
   await page.waitForFunction(()=>!document.body.classList.contains('mobile-gallery-open'));
@@ -114,6 +117,8 @@ try{
   assert.deepEqual((await state()).seeds,explore,'Stale async thumbnails leaked into Explore');
   await go('mobileSaved');
   await page.locator('#gallery .thumb').click();
+  assert.equal(await page.evaluate(()=>document.activeElement?.id),'mobileStudio',
+    'Pointer gallery restore must not strand focus in the now-hidden gallery');
   assert.deepEqual(current(),selected,'Saved restore must retain the entire recipe');
   await go('mobileEdit');
   await page.locator('#tab-colour').click();
@@ -217,6 +222,10 @@ try{
   assert.match(announcement,/Restored original wallpaper settings from PNG recipe/);
   await page.locator('#mobileStudio').click();
   assert.equal(await page.locator('#mobileStudio').getAttribute('aria-current'),'page');
+  await go('mobileMore');
+  await page.keyboard.press('Escape');
+  assert.equal(await page.evaluate(()=>document.activeElement?.id),'mobileMore',
+    'Escape from More must restore focus to its visible opener');
   record('png-input-roundtrip',{seed:rich.seed,structure:rich.structure,
     materials:[rich.material,rich.material2,rich.material3],
     interiors:rich.interiorElements.length,camera:[rich.viewZoom,rich.viewPanX,rich.viewPanY]});
