@@ -52,7 +52,8 @@ jobs:
           node --check scripts/ui-atlas-report.mjs
           node --check scripts/ui-atlas-inspect.mjs
           node --check scripts/ui-atlas-geometry.mjs
-          node --test tests/ui-atlas-geometry.test.js
+          node --check scripts/ui-atlas-mobile-smoke-plan.mjs
+          node --test tests/ui-atlas-geometry.test.js tests/ui-atlas-mobile-smoke-plan.test.js
       - run: npm install --no-save playwright@1.56.1 serve@14.2.5
       - run: npx playwright install --with-deps chromium
       - name: Serve local app
@@ -65,6 +66,10 @@ jobs:
         run: |
           if [ "$ATLAS_MODE" = 'smoke' ]; then
             node scripts/capture-ui-atlas.mjs --smoke
+            # Additional bounded touch/mobile screenshot check. Unlike the
+            # full atlas, this covers a representative seven-category subset,
+            # Focus, material states, theme and nav at 412x892.
+            node scripts/capture-ui-atlas.mjs --mobile-smoke --out=artifacts/ui-atlas/mobile-smoke
           else
             node scripts/capture-ui-atlas.mjs
           fi

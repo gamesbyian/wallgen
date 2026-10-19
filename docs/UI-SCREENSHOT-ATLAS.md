@@ -6,7 +6,7 @@ This workflow inventories **visible interface states**, not wallpaper variations
 
 The GitHub Actions **UI state screenshot atlas** workflow has two entry points:
 
-- **Pull requests touching UI code:** a desktop / 100% *smoke* capture, with assertions for every registered tool, conditional and stateful journey. This avoids triggering a large archive for every small UI change.
+- **Pull requests touching UI code:** desktop / 100% *smoke* capture (all registered tools, conditionals and stateful journeys), **plus a bounded 412 × 892 Pixel 6 Pro-sized mobile smoke**. The mobile subset captures all seven editor categories, Fit camera rail, Focus, diagonal/material conditions, cream/dark and Explore/More surfaces without paying for eight full atlas combinations.
 - **Actions → UI state screenshot atlas → Run workflow → full:** all eight viewport/zoom combinations and an uploadable screenshot atlas. Select **smoke** for a quick diagnostic.
 
 Concurrent runs on the same PR/ref cancel superseded runs. Screenshot artifacts are retained for 14 days.
@@ -20,13 +20,15 @@ npx serve . -l 4173
 node scripts/capture-ui-atlas.mjs --out=artifacts/ui-atlas
 # or a single desktop/100% smoke:
 node scripts/capture-ui-atlas.mjs --smoke --out=artifacts/ui-atlas-smoke
+# compact mobile screenshot subset, separately viewable via index.html:
+node scripts/capture-ui-atlas.mjs --mobile-smoke --out=artifacts/ui-atlas-mobile-smoke
 ```
 
 ## Matrix and outputs
 
 Full mode uses desktop **1440 × 900** and Pixel 6 Pro-sized mobile **412 × 892**, at **100%, 75%, 66% and 50%**. It uses **CSS root zoom on a fixed viewport**, an approximation for testing scaled UI and clipping, not literal Chrome-toolbar/browser-native page zoom. The mobile profile emulates browser touch/mobile viewport, not physical device performance.
 
-The artifact **roygbiv-ui-atlas** includes:
+The artifact **roygbiv-ui-atlas** includes (in ordinary PR smoke mode, the compact mobile atlas is nested under `mobile-smoke/`, with its own `index.html` and `manifest.json`):
 
 - `index.html`: offline, searchable contact sheet with filters for viewport, zoom, UI state and tool, plus a deduplicated, linked clipping-diagnostic table. Unzip the archive and open this HTML document.
 - `manifest.json`: capture identities, control context, viewport and zoom, recorded traversal errors, inapplicable tools and explicit expected-state gaps.
@@ -51,3 +53,7 @@ A completed Actions job demonstrates that the screenshot process ran. Inspect th
 Native OS dialogs (file picker/download prompt), hover/focus and keyboard-only accessibility states, the full range of toast messages, and actual-device Chrome zoom differ from the simulated browser environment and are not exhaustively represented. Screenshots do not replace device testing or test render-result variations.
 
 Generated PNGs stay in Actions artifacts rather than being committed to the repository.
+
+### Mobile smoke limitations
+
+The 17-state **mobile quick plan** is defined in `scripts/ui-atlas-mobile-smoke-plan.mjs` and independently checked against `EDITOR_CATEGORIES` in `tests/ui-atlas-mobile-smoke-plan.test.js`. It covers every category once, **not every tool and conditional permutation**. Desktop PR smoke retains the full 204-state registered matrix; manually dispatched full captures retain all 1,648 states across the emulated desktop/mobile root CSS zoom matrix. Neither mode measures actual physical Pixel 6 Pro performance or real Chrome toolbar zoom. A mobile smoke success is never described as 832-screen mobile coverage.
