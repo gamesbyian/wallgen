@@ -32,7 +32,13 @@ const record=(name,data)=>{observations.push({name,...data});console.log('AGENT3
 const current=()=>decodeRecipe(new URL(page.url()).searchParams.get('r'));
 const screenshot=async name=>page.screenshot({path:join(out,name+'.png'),animations:'disabled'});
 const go=async id=>{
-  await page.locator('#'+id).click();
+  // The five-destination dock is deliberately inert while Edit is open.
+  // Use its visible, source-wired action rail rather than bypassing inertness.
+  const editing=await page.evaluate(()=>
+    document.body.classList.contains('mobile-edit-open'));
+  const selector=editing&&id==='mobileMore'?
+    '[data-dock-proxy="mobileMore"]':'#'+id;
+  await page.locator(selector).click();
   await page.waitForFunction(id=>document.querySelector('#'+id)?.getAttribute('aria-current')==='page',id);
 };
 const state=()=>page.evaluate(()=>({
