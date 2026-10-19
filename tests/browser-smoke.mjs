@@ -1873,6 +1873,47 @@ try{
       assert.equal(state.mobile,false,'791px must return to desktop shell');
       assert.equal(state.dockStyle,'none');
     }
+    // Unlike the studio-only check above, test the *open* editor's camera,
+    // real tool rail, tray and surviving dock actions at each mobile CSS
+    // breakpoint. Landscape is deliberately constrained but not overlaid.
+    if(width<=790){
+      await evaluate('document.getElementById("mobileEdit").click()');
+      await delay(245);
+      const edit=await evaluate(`(()=>{
+        const rect=selector=>document.querySelector(selector)?.getBoundingClientRect();
+        const stage=rect('.studio-stage'),tray=rect('.sidebar'),
+          layout=rect('.layout'),nav=rect('.settings-tabs'),
+          strip=rect('.editor-tool-chooser'),
+          card=rect('.editor-tool-card:not([hidden])');
+        const sourceIds=['drawPathToggle','mobileFavorite','mobileDownload'];
+        return {
+          open:document.body.classList.contains('mobile-edit-open'),
+          stageBottom:stage.bottom,trayTop:tray.top,
+          stageHeight:stage.height,layoutHeight:layout.height,
+          navVisible:nav.height>15,toolStripVisible:strip.height>12,
+          cardVisible:card.height>12,
+          trayRight:tray.right,trayLeft:tray.left,
+          trayBottom:tray.bottom,
+          sourceActionsConnected:sourceIds.every(id=>document.getElementById(id)?.isConnected),
+          selection:document.querySelector('.editor-tool-tab[aria-pressed=true]')?.dataset.editorTool,
+          dockRecessed:document.getElementById('mobileActionDock').getAttribute('aria-hidden')==='true'
+        };
+      })()`);
+      trialBoundaries.at(-1).edit=edit;
+      assert.ok(edit.open&&edit.dockRecessed,'responsive Edit must use the non-overlay tray');
+      assert.ok(edit.sourceActionsConnected,'all source quick actions must survive Edit at this breakpoint');
+      assert.ok(edit.stageHeight>25&&edit.layoutHeight>25,
+        'Edit must reserve a positive preview viewport even in landscape');
+      assert.ok(edit.stageBottom<=edit.trayTop+2,
+        'Edit tray overlaps canvas at '+width+'×'+height);
+      assert.ok(edit.navVisible&&edit.toolStripVisible&&edit.cardVisible&&edit.selection,
+        'Edit must expose a selected source tool at '+width+'×'+height);
+      assert.ok(edit.trayLeft>=-2&&edit.trayRight<=width+2&&edit.trayBottom<=height+1);
+      if(width===499||width===500||width===790||height<=620)
+        await captureUI('five-nav-edit-boundary-'+width+'x'+height);
+      await evaluate('document.getElementById("mobileStudio").click()');
+      await delay(215);
+    }
   }
   console.log('FIVE_DESTINATION_BREAKPOINTS',JSON.stringify(trialBoundaries));
   // A populated Explore gallery must survive visiting Saved without a reroll.
