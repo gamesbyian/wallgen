@@ -26,7 +26,7 @@ test('editor search matches labels and does not mutate or invent a fallback',()=
   const options={applies:t=>toolAppliesToScene(t,scene),
     labelFor:key=>key==='shapeDepth'?'Amplitude':key};
   assert.equal(findEditorToolMatch('AMPLITUDE',TOOL_LIST,options)?.id,'geometry');
-  assert.equal(findEditorToolMatch('  shapE   ',TOOL_LIST,options)?.id,'shape-details');
+  assert.equal(findEditorToolMatch('  shape detail   ',TOOL_LIST,options)?.id,'shape-details');
   assert.equal(findEditorToolMatch('does not exist',TOOL_LIST,options),null);
   assert.equal(findEditorToolMatch('',TOOL_LIST,options),null);
   assert.equal(findEditorToolMatch('   ',TOOL_LIST,options),null);
