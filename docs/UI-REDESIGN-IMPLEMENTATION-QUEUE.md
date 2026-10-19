@@ -49,6 +49,7 @@
 - [x] Add roving keyboard navigation for applicable tools and Focus parameters, preserving manual chip scroll (PRs #94 and #98).
 - [ ] Reduce excess short-panel height only on navigation, with atomic preview/tray resize.
 - [ ] Ensure all inactive values/locks remain comprehensible and true to generation logic.
+- [ ] Make inactive editor row labels and zero-value readouts actually legible, retaining disabled handlers and remembered nonzero recipe values; check AA contrast in Chromium under both themes (PR under test).
 - [x] Prove in actual Chromium that changing Zigzag → Straight displays zero and disables inapplicable Shape frequency/depth while preserving their nonzero recipe values, then restores them on reactivation (PR pending).
 - [x] Name per-setting randomize dice using the visible source label or explicitly authored accessible name, not internal recipe keys (PR #109).
 - [x] Explain separately why a Focus range is locked, contextually inactive, or otherwise unavailable, without altering its source controls (PR #105).
