@@ -1487,6 +1487,9 @@ try{
     const button=document.getElementById('drawPathToggle');
     button.click();
     const panel=document.getElementById('drawPathPanel');
+    const surfaceColour=getComputedStyle(panel).backgroundColor;
+    const panelOpacity=surfaceColour.startsWith('rgba(')?
+      Number(surfaceColour.split(',').at(-1).replace(')','')):1;
     const initialPhase=panel.dataset.phase;
     const sourceButtons=['drawSmooth','drawGeometric','drawEditPoints',
       'drawAgain','drawApply','drawCancel','drawAddPoint','drawDeletePoint',
@@ -1519,11 +1522,13 @@ try{
     const corners=next.drawnCorners.length;
     document.getElementById('undo').click();
     const restored=JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get('r')));
-    return {changed,pinned,corners,undoAvailable,initialPhase,editingPhase,
+    return {changed,pinned,corners,undoAvailable,panelOpacity,initialPhase,editingPhase,
       originalActions,semanticGroups,
       restored:JSON.stringify(restored.customPath)===before};
   })()`);
   console.log('LIVE_ANCHOR_EDITOR_ACCEPTANCE',JSON.stringify(pointEditorCheck));
+  assert.equal(pointEditorCheck.panelOpacity,1,
+    'drawing action surface must remain opaque over shortcuts and saved wallpaper');
   assert.equal(pointEditorCheck.initialPhase,'refine',
     'existing saved path should offer refinement rather than empty sketch');
   assert.equal(pointEditorCheck.editingPhase,'anchors',
