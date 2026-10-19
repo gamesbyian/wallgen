@@ -26,3 +26,17 @@ test('status presentation binds real fields, includes all three chips and all so
   assert.doesNotMatch(css,/linear-gradient|radial-gradient|conic-gradient/i);
   assert.doesNotMatch(css,/grid-template-columns|height:|width:|padding:/);
 });
+
+test('Finish 1–3 explain disabled source states, without creating alternate switches',()=>{
+  const js=read('src/editor-material-indicators.js');
+  const css=read('editor-material-status.css');
+  for(const id of ['finish1','finish2','finish3'])
+    assert.match(read('src/editor-schema.js'),new RegExp("id:'"+id+"'"));
+  assert.match(js,/note\.className='material-finish-help'/);
+  assert.match(js,/note\.hidden=state!=='off'&&state!=='zero'/);
+  assert.match(js,/Choose a texture in Layer/);
+  assert.match(js,/Increase layer strength to enable its effects/);
+  assert.match(css,/\.material-finish-help\[hidden\]\{display:none!important\}/);
+  assert.doesNotMatch(js,/document\.createElement\('input'\)/);
+  assert.doesNotMatch(css,/linear-gradient|radial-gradient|conic-gradient/i);
+});
