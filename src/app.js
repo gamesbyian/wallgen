@@ -5,6 +5,7 @@ import { embedPngMetadata, extractPngRecipe, cleanMetadata, METADATA_FIELDS } fr
 import { installDrawTool } from './draw-path-ui.js?v=20261018-extend1';
 import {appliedDrawnPathRecipe} from './draw-apply-transaction.js';
 import { installImagePathTool } from './image-path-ui.js?v=20261018-import1';
+import {pathStructureLockedOutsidePaths} from './path-authoring-locks.js';
 import {mountEditor,selectEditorTool,syncEditorStructure} from './editor-layout.js?v=20261018-icons2';
 import {randomizeScope} from './scoped-random.js';
 import {newInteriorElementId,INTERIOR_LIMITS,resolveInteriorSelection,interiorTargetSummary,resolveInteriorFocusTarget} from './interior-elements.js';
@@ -477,8 +478,9 @@ const imagePathTool=installImagePathTool({
     const base=fromControls();
     const keys=['orientation','diagonalRotation'];
     if(base.geometry==='drawn')keys.push('geometry');
-    if(keys.some(key=>base.lockedSettings.includes(key))){
-      showNotice('Unlock Path geometry and Layout direction before applying an angle.');
+    if(keys.some(key=>base.lockedSettings.includes(key))||
+      pathStructureLockedOutsidePaths(base)){
+      showNotice('Unlock Layout structure, direction and any affected path geometry before applying an angle.');
       return false;
     }
     const geometry=base.geometry==='drawn'?'straight':base.geometry;

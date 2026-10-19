@@ -3,6 +3,7 @@ import {createPointEditor,clonePointEditor,addPointAnchor,deletePointAnchor,
   movePointAnchor,movePointHandle,pointHandles,editablePointHandleSides,
   resmoothPointEdits,insertPointAnchor,
   savedPointAnchors,savedPointCorners} from './path-point-editor.js';
+import {drawAuthoringLockReason,drawAuthoringLockMessage} from './path-authoring-locks.js';
 
 /** Match the renderer's world-space camera and *screen-space* composition
  * nudge. Positive viewPanX/Y moves the camera to higher world coordinates,
@@ -197,8 +198,9 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
     document.body.classList.remove('path-drawing');
   }
   function start(){
-    if(getRecipe().lockedSettings.includes('geometry')){
-      onNotice('Unlock Path geometry before drawing or editing a path.');
+    const blocked=drawAuthoringLockReason(getRecipe());
+    if(blocked){
+      onNotice(drawAuthoringLockMessage(blocked));
       return;
     }
     if(document.body.classList.contains('mobile-edit-open'))
@@ -516,7 +518,7 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
     },
     sync(recipe){
       geometryOption.disabled=recipe.customPath.length<2;
-      button.disabled=recipe.lockedSettings.includes('geometry');
+      button.disabled=!!drawAuthoringLockReason(recipe);
       if(active)extend.disabled=recipe.lockedSettings.includes('extendDrawnPath');
       if(active&&button.disabled){stop();return;}
       if(active&&!applying&&editingSavedPath&&
