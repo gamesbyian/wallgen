@@ -35,7 +35,8 @@ const states=[
  }}
 ];
 try{
- for(const [width,height] of [[412,892],[700,412]]){
+ const viewports=[[320,700],[412,892],[499,892],[500,892],[700,412],[790,892]];
+ for(const [width,height] of viewports){
   for(const theme of ['cream','dark']){
    for(const state of states){
     const context=await browser.newContext({viewport:{width,height},
@@ -79,7 +80,7 @@ try{
      'A colour contrast warning requires confirming actual layered backgrounds and state',
      'Mobile device, touch and physical screen reader still pending']},null,2));
  assert.deepEqual(errors,[],'Real-browser axe setup or navigation failed');
- assert.equal(findings.length,24,'Missing an axe state or viewport sample');
+ assert.equal(findings.length,72,'Missing an axe state or viewport sample');
  const total=findings.reduce((n,x)=>n+x.violations.length,0);
  assert.equal(total,0,'WCAG automated violation regression: inspect preserved axe evidence');
  const unnamedRoleLabels=findings.flatMap(x=>x.incomplete.filter(v=>v.id==='aria-prohibited-attr'));
