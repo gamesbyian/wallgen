@@ -19,3 +19,16 @@ test('offline icon-state fixture exactly reproduces every production inline symb
  assert.deepEqual(data.drawings,source,'Matrix glyphs drifted from real source');
  for(const icon of data.icons)assert.equal(icon.status,manifest.icons.find(i=>i.name===icon.name).status||'original');
 });
+
+test('canonical app logo SVG is the exact source for current inline brand geometry',()=>{
+ const sourceSvg=read('assets/icons/roygbiv/app-icon.svg');
+ assert.match(sourceSvg,/viewBox="0 0 120 120"/);
+ const inner=sourceSvg.slice(sourceSvg.indexOf('>')+1,sourceSvg.lastIndexOf('</svg>'))
+   .trim().replace(/<title\b[^>]*>[\s\S]*?<\/title>\s*/,'');
+ assert.equal(DRAWINGS_A['app-icon'],inner,'Live inline brand differs from canonical 120x120 SVG');
+ const fixture=read('assets/icons/roygbiv/state-matrix.html');
+ assert.match(fixture,/name==='app-icon'\?'0 0 120 120':'0 0 32 32'/);
+ assert.match(fixture,/name==='app-icon'\?'none':'currentColor'/);
+ const live=read('src/ui-icons.js');
+ assert.match(live,/name==='app-icon'\?'none':'currentColor'/);
+});
