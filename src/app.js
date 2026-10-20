@@ -135,7 +135,10 @@ function saveFavorites() {
 window.addEventListener('storage',event=>{
   if(event.key!==FAVORITES_KEY&&event.key!==null)return;
   favorites=readFavorites();
-  favoriteButton.setAttribute('aria-pressed',String(isFavorite(current)));
+  const selected=isFavorite(current);
+  favoriteButton.setAttribute('aria-pressed',String(selected));
+  setIconSource(favoriteButton,selected?'favourite-filled':'favourite');
+  document.getElementById('favoriteCount').textContent=String(favorites.length);
   if(gallery.dataset.view==='saved')void showSaved();
 });
 function sameRecipe(a,b){return JSON.stringify(normalizeRecipe(a))===JSON.stringify(normalizeRecipe(b));}
