@@ -1,0 +1,50 @@
+name: Agent 1 category ink and touch acceptance
+on:
+  pull_request:
+    paths:
+      - 'scripts/visual-category-ink-agent1.mjs'
+      - '.github/workflows/visual-category-ink-agent1.yml'
+      - 'editor-redesign.css'
+      - 'mobile-editor-rail.css'
+      - 'styles.css'
+      - 'index.html'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: agent1-category-ink-\${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  category-tabs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate direct browser audit
+        run: node --check scripts/visual-category-ink-agent1.mjs
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.56.1 serve@14.2.5
+          npx playwright install --with-deps chromium
+      - name: Launch original app
+        run: |
+          npx serve . -l 4173 >/tmp/agent1-category-ink-server.log 2>&1 &
+          for i in $(seq 1 40); do
+            if curl --silent --fail http://127.0.0.1:4173/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/agent1-category-ink-server.log
+          exit 1
+      - name: Measure live category text ink and physical taps in both themes
+        run: node scripts/visual-category-ink-agent1.mjs
+      - name: Archive original source screenshots and glyph rectangles
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent1-category-ink-and-touch-evidence
+          path: artifacts/visual-agent1-category-ink/
+          retention-days: 14
+          if-no-files-found: warn
