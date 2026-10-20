@@ -24,6 +24,18 @@ const dense=normalizeRecipe({
   drawnAnchors:[5],drawnCorners:[],extendDrawnPath:true,
   viewZoom:1.1,viewPanX:3,viewPanY:-3,positionX:4,positionY:-2
 });
+// Matches the independent unit-tested *positive* fairing specimen:
+// 96 samples with genuine local high-frequency bends and freely movable
+// interior stations. A sparse, already-fair path can correctly be a no-op.
+const textured=normalizeRecipe({
+  seed:'a3-real-10x-fairing',structure:'paths',geometry:'drawn',
+  customPath:Array.from({length:96},(_,i)=>{
+    const t=i/95*Math.PI*2;
+    return [.5+.27*Math.sin(t),.5+.19*Math.sin(2*t)+.027*Math.sin(27*t)];
+  }),
+  extendDrawnPath:false,viewZoom:1.25,viewPanX:13,viewPanY:-8,
+  positionX:9,positionY:0
+});
 const sparse=normalizeRecipe({
   seed:'a3-sparse-point-insert',structure:'paths',geometry:'drawn',
   customPath:[[.25,.30],[.72,.69]],drawnAnchors:[],drawnCorners:[],
@@ -112,29 +124,55 @@ try{
       await slider.focus();
       await page.keyboard.press('End');
       assert.equal(Number(await slider.inputValue()),10);
-      trace('capture actual overlay canvas pixels before 10x Resmooth');
-      const overlayPixels=()=>page.evaluate(()=>document.getElementById('drawOverlay').toDataURL('image/png'));
+      const overlayPixels=()=>page.evaluate(()=>
+        document.getElementById('drawOverlay').toDataURL('image/png'));
       const beforeResmooth=await overlayPixels();
       await page.locator('#drawResmoothPoints').click();
       const afterResmooth=await overlayPixels();
-      trace('10x Resmooth canvas pixels captured');
-      assert.notDeepEqual(afterResmooth,beforeResmooth,
-        'A visibly kinked 10x local Resmooth did not alter the provisional curve');
-      assert.equal(await page.locator('#drawUndoPoint').isDisabled(),false,
-        'Genuine local Resmooth failed to register a reversible point edit');
+      assert.equal(afterResmooth,beforeResmooth,
+        'A locally fair, pinned sparse span must not be warped by 10x Resmooth');
       await page.locator('#drawUndoPoint').click();
-      const restoredResmooth=await overlayPixels();
-      trace('Undo-after-Resmooth canvas pixels captured');
-      assert.deepEqual(restoredResmooth,beforeResmooth,
-        'Local point Undo did not restore exact pre-resmooth overlay geometry');
-      assert.deepEqual(current(page),dense,'Local resmooth/Undo committed before Apply');
+      assert.equal(await page.locator('#drawCornerPoint').textContent(),'Make corner',
+        'No-op Resmooth manufactured an Undo snapshot instead of reverting the previous corner');
+      assert.deepEqual(current(page),dense,'No-op resmooth/Undo committed before Apply');
+      trace('sparse no-op Resmooth consumed no extra Undo history');
       await page.screenshot({path:join(out,width+'x'+height+'-resmooth-draft.png'),
         animations:'disabled'});
       await page.locator('#drawCancel').click();
       assert.deepEqual(current(page),dense,'Cancel failed to roll back the whole advanced draft');
       trace('10x Resmooth, pixel-exact Undo and Cancel passed');
-      record.operations.push('physical anchor; keyboard shift nudge; make corner; Hide/Reenter; 10x local resmooth; Cancel');
+      record.operations.push('physical anchor; keyboard shift nudge; make corner; Hide/Reenter; no-op 10x resmooth; correct previous Undo; Cancel');
 
+      // Positive control: the same 10x button must change genuinely uneven
+      // geometry, register exactly one useful local Undo, restore pixels
+      // exactly and keep the full saved recipe provisional until Apply.
+      await readPage(page,textured);
+      await openSaved(page);
+      await tapSourcePoint(page,textured.customPath[0],textured);
+      assert.equal(await page.locator('#drawResmoothPoints').isEnabled(),true);
+      await page.locator('#drawSmoothingStrength').focus();
+      await page.keyboard.press('End');
+      assert.equal(Number(await page.locator('#drawSmoothingStrength').inputValue()),10);
+      const unevenBefore=await overlayPixels();
+      await page.locator('#drawResmoothPoints').click();
+      const unevenAfter=await overlayPixels();
+      assert.notEqual(unevenAfter,unevenBefore,
+        'True high-frequency saved path did not visibly change under 10x fairing');
+      assert.equal(await page.locator('#drawUndoPoint').isDisabled(),false,
+        'Genuine 10x fairing did not create its reversible Undo snapshot');
+      await page.locator('#drawUndoPoint').click();
+      const unevenUndone=await overlayPixels();
+      assert.equal(unevenUndone,unevenBefore,
+        'Undo of genuine 10x Resmooth failed pixel-exact canvas restoration');
+      assert.deepEqual(current(page),textured,
+        'Resmooth or local point Undo contaminated original source recipe');
+      await page.locator('#drawCancel').click();
+      assert.deepEqual(current(page),textured,
+        'Cancelling a positively resmoothed saved path changed the source');
+      record.operations.push('genuinely textured 96-sample path: 10x fairing changed painted pixels; local Undo restored exact pixels; Cancel preserved recipe');
+      trace('positive 10x resmoothing and pixel-exact Undo passed');
+
+      await readPage(page,dense);
       await openSaved(page);
       await tapSourcePoint(page,dense.customPath[5],dense);
       await page.locator('#drawOverlay').focus();
