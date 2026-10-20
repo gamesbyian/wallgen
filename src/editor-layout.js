@@ -314,12 +314,17 @@ export function selectEditorTool(category,tool,{source='manual'}={}){
   if(source==='search'||source==='keyboard'){
     const rail=chooser.getBoundingClientRect();
     const chip=selected.chip.getBoundingClientRect();
-    // An optional sticky Focus chip takes genuine left-side space. Search
-    // navigation must reveal the selected tool *beside* it, not underneath.
-    const pinned=chooser.querySelector('.editor-focus-toggle');
-    const pinnedWidth=pinned&&getComputedStyle(pinned).display!=='none'?
-      pinned.getBoundingClientRect().width:0;
-    const left=rail.left+pinnedWidth+10,right=rail.right-10;
+    // Both Focus and the Tool die are independently sticky on mobile.
+    // Clearing Focus alone places keyboard/Home/Search-selected tool chips
+    // physically underneath the Tool die. Use ACTUAL pinned rectangles so
+    // the hit area stays unobscured at every responsive breakpoint.
+    const pinned=[...chooser.querySelectorAll(
+      '.editor-focus-toggle,.editor-tool-reroll:not([hidden])')]
+      .filter(el=>getComputedStyle(el).position==='sticky'&&
+        getComputedStyle(el).display!=='none');
+    const pinnedRight=Math.max(rail.left,
+      ...pinned.map(el=>el.getBoundingClientRect().right));
+    const left=pinnedRight+10,right=rail.right-10;
     if(chip.left<left)chooser.scrollLeft+=chip.left-left;
     else if(chip.right>right)chooser.scrollLeft+=chip.right-right;
   }
