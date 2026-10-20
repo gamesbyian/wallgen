@@ -533,7 +533,17 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
     sync(recipe){
       geometryOption.disabled=recipe.customPath.length<2;
       button.disabled=!!drawAuthoringLockReason(recipe);
-      if(active)extend.disabled=recipe.lockedSettings.includes('extendDrawnPath');
+      if(active){
+        const locked=recipe.lockedSettings.includes('extendDrawnPath');
+        if(locked&&extend.checked!==recipe.extendDrawnPath){
+          // A newly locked setting is authoritative even during an open
+          // draft. Keep the preview and disabled checkbox aligned with what
+          // Apply is actually allowed to preserve.
+          extend.checked=recipe.extendDrawnPath;
+          draw(visiblePoints());
+        }
+        extend.disabled=locked;
+      }
       if(active&&button.disabled){stop();return;}
       if(active&&!applying&&editingSavedPath&&
         !savedDrawSourceMatches(savedSourcePath,recipe)){
