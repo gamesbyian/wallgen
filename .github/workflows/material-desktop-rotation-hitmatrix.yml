@@ -1,0 +1,45 @@
+name: Desktop Material 791 boundary hitmatrix
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'tests/material-desktop-rotation-hitmatrix.mjs'
+      - 'editor-redesign.css'
+      - 'src/editor-*.js'
+      - '.github/workflows/material-desktop-rotation-hitmatrix.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  desktop-native-rotations:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify test syntax and native rotation semantics
+        run: |
+          node --check tests/material-desktop-rotation-hitmatrix.mjs
+          node --test tests/material-three-layer-adversarial.test.js
+      - run: npm install --no-save playwright@1.56.1 serve@14.2.5
+      - run: npx playwright install --with-deps chromium
+      - name: Serve app
+        run: |
+          npx serve . -l 4173 >/tmp/material-desktop-hits.log 2>&1 &
+          for i in $(seq 1 40); do curl -fsS http://127.0.0.1:4173/ >/dev/null && exit 0; sleep 1; done
+          cat /tmp/material-desktop-hits.log
+          exit 1
+      - name: Exercise all native shortcuts at desktop responsive boundaries
+        run: node tests/material-desktop-rotation-hitmatrix.mjs
+      - name: Preserve desktop Material screenshots and failure rectangles
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: material-first-desktop-hits
+          path: artifacts/material-desktop-hitmatrix/
+          retention-days: 14
+          if-no-files-found: warn
