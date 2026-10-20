@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 
 const live=readFileSync('scripts/visual-reference-audit-agent1.mjs','utf8');
 test('the 399px to 400px control/media transition and short 412px portrait are real browser screens',()=>{
-  for(const [id,width] of [['edge-399x740',399],['edge-400x740',400],['short-phone-412x740',412]]){
+  for(const [id,width] of [['edge-399x740',399],['edge-400x740',400],['short-phone-412x740',412],['short-edge-499x740',499],['short-edge-500x740',500]]){
     assert.match(live,new RegExp("id:'"+id+"',width:"+width+",height:740"));
     const profile=live.split('\n').find(line=>line.includes("id:'"+id+"'"));
     assert.ok(profile?.includes("'saved-populated'"),id+' must test real saved artwork');
