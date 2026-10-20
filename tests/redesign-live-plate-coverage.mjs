@@ -119,11 +119,21 @@ try{
       await page.screenshot({path:join(out,plate+'.png'),animations:'disabled'});
       assert.ok(probed.some(x=>x.visible>0),
         plate+': no canonical mapped controls exposed to this actual plate');
+      // Source presence alone is insufficient: at least one canonical action
+      // must be enabled AND own its centre hit target in the live viewport.
+      // A CSS-visible screen covered by an inert overlay cannot pass.
+      const hittable=probed.filter(x=>x.physicallyHittable>0);
+      assert.ok(hittable.length>0,
+        plate+': no enabled canonical action owns a viewport centre hit target; '+
+        JSON.stringify(probed.filter(x=>x.visible>0)));
+      assert.deepEqual(probed.filter(x=>x.state==='invalid-selector'),[],
+        plate+': invalid canonical source selectors');
       assert.deepEqual(scriptErrors,[],'Runtime error on '+plate);
       const sample={plate,viewport:[412,892],mode:await page.locator('body')
         .getAttribute('class'),sourceClaims:source.length,
         observedSelectors:probed.filter(x=>x.candidates>0).length,
         actuallyVisible:probed.filter(x=>x.visible>0).length,
+        physicallyHittableClaims:probed.filter(x=>x.physicallyHittable>0).length,
         sourceOnly:probed.filter(x=>x.candidates>0&&!x.visible).map(x=>x.id),
         unmatched:probed.filter(x=>x.state==='no-source-in-this-state').map(x=>x.id),
         invalidSelectors:probed.filter(x=>x.state==='invalid-selector').map(x=>x.id),
@@ -133,6 +143,7 @@ try{
         plate,sourceClaims:sample.sourceClaims,
         sourceCandidates:sample.observedSelectors,
         visibleClaims:sample.actuallyVisible,
+        hittableClaims:sample.physicallyHittableClaims,
         unmatched:sample.unmatched.length,sourceOnly:sample.sourceOnly.length
       }));
     }catch(error){
@@ -143,7 +154,7 @@ try{
     }finally{await page.close()}
   }
   await writeFile(join(out,'evidence.json'),JSON.stringify({
-    classification:errors.length?'PARTIAL / failing screen':'real browser source-visibility and reachability candidates',
+    classification:errors.length?'PARTIAL / failing screen':'real browser source-visibility with mandatory hitability gate',
     sourceCommit:'PR #268 (see CI run SHA)',canonicalClaims:177,
     limitations:['CSS source matches do not prove actual operability',
       'Focused screen is a representative real state, not every condition',
