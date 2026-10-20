@@ -345,6 +345,56 @@ try{
   record('more-batch-through-original-explore',{generated:12,unique:12,
     savedEmpty:true,preservedSheet:true,unchangedActiveRecipe:true});
   await page.screenshot({path:join(out,'batch-explore.png'),animations:'disabled'});
+  // Independently reload full serialized recipes across radial, region and
+  // lighting contexts. This checks the REAL source form's displayed values,
+  // disabled state and preserved URL recipe, not a source-code expectation.
+  const crossFamilyCases=[
+    {name:'radial-spokes',overrides:{structure:'radial',radialMode:'spokes',
+      rayTwist:38,rayCoverage:76,rayCore:42},dormant:['rayTwist'],
+      active:['rayCoverage','rayCore']},
+    {name:'radial-pinwheel',overrides:{structure:'radial',radialMode:'pinwheel',
+      rayTwist:38,rayCoverage:76},dormant:[],active:['rayTwist','rayCoverage']},
+    {name:'radial-concentric',overrides:{structure:'radial',radialMode:'concentric',
+      rayTwist:38,rayCoverage:76,rayCore:42},
+      dormant:['rayTwist','rayCoverage','rayCore'],active:[]},
+    {name:'regions-nested',overrides:{structure:'regions',regionMode:'nested',
+      regionSides:8,regionJitter:45},dormant:['regionJitter'],active:['regionSides']},
+    {name:'regions-voronoi',overrides:{structure:'regions',regionMode:'voronoi',
+      regionSides:8,regionJitter:45},dormant:['regionSides'],active:['regionJitter']},
+    {name:'lighting-off',overrides:{lightingMood:'off',lightDirection:48,
+      lightStrength:68,shadowStrength:47},
+      dormant:['lightDirection','lightStrength','shadowStrength'],active:[]},
+    {name:'lighting-zero',overrides:{lightingMood:'natural',lightDirection:48,
+      lightStrength:0,shadowStrength:0},dormant:['lightDirection'],
+      active:['lightStrength','shadowStrength']}
+  ];
+  for(const scenario of crossFamilyCases){
+    const source=normalizeRecipe({...baseline,...scenario.overrides,
+      seed:'agent2-'+scenario.name});
+    await page.goto(origin+'/?r='+encodeRecipe(source),{waitUntil:'domcontentloaded'});
+    await page.waitForFunction(()=>document.body.classList.contains('mobile-five-nav'));
+    assert.deepEqual(current(),source,scenario.name+': source URL changed');
+    for(const key of scenario.dormant){
+      const field=page.locator('#controls [name="'+key+'"]');
+      assert.equal(await field.count(),1,scenario.name+': missing '+key);
+      assert.equal(await field.isDisabled(),true,scenario.name+': inactive '+key+' editable');
+      assert.equal(await field.getAttribute('data-inactive'),'true');
+      if(await field.getAttribute('type')==='range')
+        assert.equal(await field.inputValue(),'0',scenario.name+': dormant '+key+' not zero');
+      const lock=await field.evaluate(el=>el.closest('.lockable-setting')
+        ?.querySelector('.setting-lock')?.disabled);
+      if(lock!==undefined)assert.equal(lock,true,scenario.name+': dormant lock enabled');
+      assert.equal(current()[key],source[key],scenario.name+': dormant recipe lost '+key);
+    }
+    for(const key of scenario.active){
+      const field=page.locator('#controls [name="'+key+'"]');
+      assert.equal(await field.count(),1,scenario.name+': missing live '+key);
+      assert.equal(await field.isDisabled(),false,scenario.name+': live '+key+' disabled');
+      assert.equal(await field.getAttribute('data-inactive'),'false');
+    }
+    record('conditional-'+scenario.name,{dormant:scenario.dormant,
+      active:scenario.active,retainedRecipe:true});
+  }
   assert.deepEqual(errors,[],'Runtime JavaScript errors');
   await writeFile(join(out,'evidence.json'),JSON.stringify({
     classification:'live Chromium pointer/clipboard/file/download/conditional-state acceptance',
