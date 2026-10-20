@@ -118,3 +118,14 @@ are bounded, repeatable proof. The additional transition and axe-core suites
 are **pending at the latest head** and may reveal further defects.
 Entries #2, #11, #15 remain unchecked; physical-device screen reader,
 touch hardware and human aesthetic/usability approval remain explicit.
+
+## Dynamic transition qualification (replaces pending statement above)
+
+At `a74d31f6fe6257a04b13707961dc51bd17f2695b`,
+[dedicated CI run 39394353417](https://github.com/gamesbyian/wallgen/actions/runs/39394353417)
+passed unit tests, original 20-case Focus matrix, the new **four real-browser
+Material lock/unlock → resize → Colour → motion** journeys, and the 192 SVG
+candidate samples. The run uploaded 35 files including browser screenshots
+and machine evidence (artifact `12251042459`). This qualifies the four
+state-transition journeys on that head. It still does not establish human
+A/B preference, full WCAG conformance or physical-device acceptance.
