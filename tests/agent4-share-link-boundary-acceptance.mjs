@@ -124,6 +124,38 @@ try{
       'Unsupported compression silently overwrote clipboard');
   }finally{await unsupported.close();}
 
+  // A failed History API update must not let a stale, short ?r URL
+  // masquerade as the CURRENT wallpaper's share link.
+  const blockedHistory=await browser.newContext({viewport:{width:412,height:892},
+    isMobile:true,hasTouch:true,reducedMotion:'reduce'});
+  await blockedHistory.grantPermissions(['clipboard-read','clipboard-write']);
+  await blockedHistory.addInitScript(()=>{
+    History.prototype.replaceState=function(){
+      throw Error('Simulated History API denial');
+    };
+  });
+  const stale=await blockedHistory.newPage();
+  try{
+    await stale.goto(origin+'/?r='+encodeRecipe(previous),
+      {waitUntil:'domcontentloaded'});
+    await stale.locator('#mobileMore').click();
+    await stale.locator('#importRecipeFile').setInputFiles({
+      name:'large-design.png',mimeType:'image/png',buffer:image});
+    await stale.waitForFunction(seed=>document.querySelector('#seedInput')
+      ?.value===seed,large.seed,{timeout:30000});
+    assert.deepEqual(decodeRecipe(new URL(stale.url()).searchParams.get('r')),
+      previous,'Failure injection did not retain prior short URL');
+    await stale.evaluate(value=>navigator.clipboard.writeText(value),sentinel);
+    await stale.locator('#copyLink').click();
+    await stale.waitForFunction(()=>document.querySelector('#studioStatus')
+      ?.textContent==='Copied to clipboard.');
+    const actual=await stale.evaluate(()=>navigator.clipboard.readText());
+    assert.notEqual(actual,stale.url(),
+      'History denial allowed Copy Link to copy a stale previous wallpaper');
+    assert.deepEqual(await decodePortableRecipe(portableShareTokenFromLocation(
+      new URL(actual))),large,'History-denied compact link lost current artwork');
+  }finally{await blockedHistory.close();}
+
   // The same source offers a lossless share artifact without requiring a
   // giant URL. Verify actual original Save recipe JSON download and reimport.
   const pending=page.waitForEvent('download');
@@ -159,7 +191,7 @@ try{
   const row={largeUrlChars:urlSize,compactUrlChars:compact.length,
     compressedStandaloneLink:true,cleanBrowserOpened:true,
     malformedTokenRejected:true,unsupportedCompressionFallback:true,
-    exactCanonicalRecipe:true,downloadedAndReimportedJSON:true,
+    staleShortHistoryLinkRejected:true,exactCanonicalRecipe:true,downloadedAndReimportedJSON:true,
     normalCopiedLinkNavigated:true};
   evidence.push(row);
   console.log('AGENT4_SHARE_BOUNDARY_PASS',JSON.stringify(row));
