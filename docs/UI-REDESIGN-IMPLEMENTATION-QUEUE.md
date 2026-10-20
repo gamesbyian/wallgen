@@ -4,6 +4,8 @@
 
 **Evidence reconciliation (2026-10-19, Agent 3):** merged PRs #133 and #135–#148 passed their applicable required workflows (some test-only PRs do not trigger headless/atlas). Focus, inactive and Material rotation contrast, drawing touch targets, real export/preview geometry, reduced-motion feedback and empty gallery visuals are present on main. Independent viewport Pan shipped in #143, its real mobile More screenshot and on-screen interaction in #145, source-geometry camera invariance bug fix and four-colour-geometry raster tests in #146, breakpoint More scroll-to-hit acceptance in #147, and measured navigation-only compact-tray geometry in #148. This is functional and browser evidence, **not** comprehensive visual sign-off. Broader conditionals, native device observation, source-icon approval and adversarial design review remain open.
 
+**Latest integration checkpoint (2026-10-19):** independently qualified [#154](https://github.com/gamesbyian/wallgen/pull/154) pre-Apply Draw anchor screenshot and [#252](https://github.com/gamesbyian/wallgen/pull/252) 198-state responsive screenshot audit, followed by [#243](https://github.com/gamesbyian/wallgen/pull/243) real-keyboard More metadata accessibility and scroll/hit-test clearance. All were merged only after applicable CI passed. The responsive gallery continuity fix [#254](https://github.com/gamesbyian/wallgen/pull/254) subsequently merged after all five applicable CI workflows passed, including **226 real Chromium screenshots with zero visual errors** across the added 320px and 840–861px cases. See [release-readiness checkpoint](ROYGBIV-REDESIGN-RELEASE-READINESS-2026-10-19.md) for evidence and remaining non-automatable gates.
+
 ## Phase A — approval and reference integrity
 
 - [x] Version and verify the 116 source-inventoried static IDs (including native Studio and Saved destinations), 87 configuration attributes and 40 source-defined tools. The previous 115 count was stale after navigation changes; this is source inventory, not runtime reachability.
@@ -28,7 +30,7 @@
 
 ## Phase B — canvas-first shell
 
-- [ ] Keep exact approved app icon beside R.O.Y.G.B.I.V. in all modes.
+- [x] Keep the exact approved `assets/roygbiv-logo.svg` beside R.O.Y.G.B.I.V. in all modes: both live in the single persistent `index.html` brand header, and cream/dark Chromium gallery captures show them together across mobile destinations (#252; source-and-browser observed, not replacement-icon approval).
 - [x] Replace three legacy decorative cream-stage and dock colour gradients with solid surface fills, preserving functional scroll edge masks and artwork colour (PR #120).
 - [x] Remove remaining decorative base/dark Studio, lighting and shadow card gradients while retaining generated artwork and functional scroll masks (PR #130).
 - [x] Keep (already existing) canvas-side Zoom+/− and add Fit/100% using the actual `viewZoom` source; no dedicated top zoom header on mobile. (PR #79)
