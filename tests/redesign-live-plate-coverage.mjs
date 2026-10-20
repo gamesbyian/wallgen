@@ -63,7 +63,24 @@ async function exercise(plate,page){
   }else{
     await page.locator('.editor-tool-chooser [data-editor-tool="'+tools[plate]+'"]').click();
   }
-  if(plate==='focus')await page.locator('.editor-focus-toggle').click();
+  if(plate==='focus'){
+    const sourceColours=()=>page.locator(
+      '.editor-tool-card[data-editor-tool="geometry"] [data-setting][type="range"]')
+      .evaluateAll(fields=>fields.map(el=>({
+        key:el.name,colour:el.style.getPropertyValue('--roygbiv-slider-color')
+      })));
+    const before=await sourceColours();
+    assert.equal(before.length,2,'Focus Geometry source range inventory changed');
+    assert.ok(before.every(x=>x.colour.trim()),
+      'Focus original ranges lack their assigned ROYGBIV colours');
+    assert.equal(new Set(before.map(x=>x.colour)).size,2,
+      'Focus original fields reuse a colour unexpectedly');
+    await page.locator('.editor-focus-toggle').click();
+    const other=page.locator('.editor-focus-chip[data-focus-key="shapeDepth"]');
+    await other.click();
+    assert.deepEqual(await sourceColours(),before,
+      'Focus parameter switching reassigned original range colours');
+  }
   if(plate==='history')await page.locator('#editorHistoryToggle').click();
   if(plate==='search'){
     await page.locator('button[aria-label="Find a setting"]').click();
@@ -126,6 +143,17 @@ try{
       assert.ok(hittable.length>0,
         plate+': no enabled canonical action owns a viewport centre hit target; '+
         JSON.stringify(probed.filter(x=>x.visible>0)));
+      // Canonical REQUIRED claims are stronger than optional or conditional
+      // illustrations: every mapped selector must exist in its real plate.
+      // Source presence is recorded separately from user operability, so
+      // hidden/disabled but legitimately retained source nodes cannot be
+      // falsely counted as clicked or visible.
+      const absentRequired=probed.filter(x=>x.kind==='required'&&
+        x.state!=='source-present');
+      assert.deepEqual(absentRequired,[],
+        plate+': unmapped required canonical capability in live source');
+      assert.ok(probed.some(x=>x.kind==='required'&&x.physicallyHittable>0),
+        plate+': no REQUIRED canonical action owns an enabled centre hit target');
       assert.deepEqual(probed.filter(x=>x.state==='invalid-selector'),[],
         plate+': invalid canonical source selectors');
       assert.deepEqual(scriptErrors,[],'Runtime error on '+plate);
@@ -134,6 +162,12 @@ try{
         observedSelectors:probed.filter(x=>x.candidates>0).length,
         actuallyVisible:probed.filter(x=>x.visible>0).length,
         physicallyHittableClaims:probed.filter(x=>x.physicallyHittable>0).length,
+        requiredClaims:probed.filter(x=>x.kind==='required').length,
+        requiredSourceMapped:probed.filter(x=>x.kind==='required'&&
+          x.state==='source-present').length,
+        requiredActuallyVisible:probed.filter(x=>x.kind==='required'&&x.visible>0).length,
+        requiredPhysicallyHittable:probed.filter(x=>x.kind==='required'&&
+          x.physicallyHittable>0).length,
         sourceOnly:probed.filter(x=>x.candidates>0&&!x.visible).map(x=>x.id),
         unmatched:probed.filter(x=>x.state==='no-source-in-this-state').map(x=>x.id),
         invalidSelectors:probed.filter(x=>x.state==='invalid-selector').map(x=>x.id),
@@ -144,6 +178,9 @@ try{
         sourceCandidates:sample.observedSelectors,
         visibleClaims:sample.actuallyVisible,
         hittableClaims:sample.physicallyHittableClaims,
+        requiredClaims:sample.requiredClaims,
+        requiredSourceMapped:sample.requiredSourceMapped,
+        requiredHit:sample.requiredPhysicallyHittable,
         unmatched:sample.unmatched.length,sourceOnly:sample.sourceOnly.length
       }));
     }catch(error){
@@ -154,7 +191,8 @@ try{
     }finally{await page.close()}
   }
   await writeFile(join(out,'evidence.json'),JSON.stringify({
-    classification:errors.length?'PARTIAL / failing screen':'real browser source-visibility with mandatory hitability gate',
+    classification:errors.length?'PARTIAL / failing screen':
+      'real browser full required-source inventory plus mandatory per-plate hitability',
     sourceCommit:'PR #268 (see CI run SHA)',canonicalClaims:177,
     limitations:['CSS source matches do not prove actual operability',
       'Focused screen is a representative real state, not every condition',

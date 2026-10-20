@@ -2008,13 +2008,13 @@
       "plate": "focus",
       "kind": "required",
       "claim": "Existing colour assignment retained",
-      "sourceCandidate": ".rainbow-slider",
+      "sourceCandidate": "[data-setting][type=\"range\"][style*=\"--roygbiv-slider-color\"]",
       "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
-      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "exercise": "Require original source range elements retaining their inline session-stable ROYGBIV colour assignment while optional Focus is active; a .rainbow-slider class was never part of the original UI",
       "evidenceCandidates": [
         "tests/editor-focus.test.js"
       ],
-      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+      "qualification": "SOURCE TRACED; selector corrected 2026-10-20 to original styled range; only test-specific journeys are BROWSER VERIFIED, not optical approval"
     },
     {
       "id": "focus.required.08",
