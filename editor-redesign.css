@@ -1013,4 +1013,11 @@ html[data-theme="cream"] body.mobile-studio .sidebar .settings-tabs .settings-ta
     .editor-tool-card[data-editor-tool="lighting"] .lighting-subsection{
     gap:0!important;
   }
+  /* Four original Lighting rows inherit 1px top + bottom padding each.
+     Remove only that inner dead space (8px total); retain native 35px
+     buttons, 37px selects and every original control and focus target. */
+  body.mobile-studio.mobile-edit-open .sidebar
+    .editor-tool-card[data-editor-tool="lighting"] .lighting-subsection .lockable-setting{
+    padding:0!important;
+  }
 }
