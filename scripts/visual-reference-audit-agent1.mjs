@@ -573,9 +573,45 @@ await writeFile(join(output,'icon-review.html'),
   '<p>This is source-backed multi-state optical evidence, not approval or permission to wire icons. Full established matrix: <a href="icons/all-68-state-matrix.png">68 symbols</a>.</p>'+
   iconCards+'</html>');
 
+// Never promote a failing capture to an implementation reference. Only a
+// completely green *real Chromium* run stages the actual 412×892 screenshot
+// plates in the artifact. The schematic SVGs remain unchanged and authoritative
+// for required/conditional feature inventory until a human design sign-off.
+const implementationPlates=[];
+if(errors.length===0){
+  const referenceScreens=['studio','geometry','draw','explore','more','material',
+    'colour','diagonal','compact','focus','history','search'];
+  await mkdir(join(output,'implemented-plates'),{recursive:true});
+  for(const screenshot of shots.filter(s=>s.profile==='phone-412x892'&&referenceScreens.includes(s.screen))){
+    const imagePath='implemented-plates/'+s.theme+'-'+s.screen+'.png';
+    await copyFile(join(output,screenshot.file),join(output,imagePath));
+    implementationPlates.push({screen:screenshot.screen,theme:screenshot.theme,
+      source:screenshot.file,image:imagePath,
+      sourceCommit:process.env.GITHUB_SHA||'local checkout (see script invocation)',
+      viewport:'412×892 native CSS Chromium',plate:plates[screenshot.screen],
+      review:'evidence only; human optical approval outstanding'});
+  }
+  if(implementationPlates.length!==referenceScreens.length*2){
+    errors.push({key:'implementation-plates',
+      error:'Missing real screenshot reference: '+implementationPlates.length+'/24'});
+  }else{
+    const realCards=implementationPlates.map(s=>'<article><h2>'+s.screen+' / '+s.theme+
+      '</h2><figure><img src="'+s.image.split('/').pop()+'" alt="Actual implemented '+s.screen+
+      ' screen in '+s.theme+'"></figure><p>Source screenshot: '+s.source+'</p></article>').join('');
+    await writeFile(join(output,'implemented-plates','index.html'),
+      '<!doctype html><html lang="en"><meta charset="utf-8"><title>Live ROYGBIV implementation plates</title>'+
+      '<style>body{font:14px system-ui;background:#f7f2eb;color:#18151f;margin:20px}'+
+      'article{display:inline-block;vertical-align:top;width:300px;margin:8px;padding:10px;background:#fff}'+
+      'img{width:100%;height:auto;border:1px solid #ddd}h2{font-size:15px}</style>'+
+      '<h1>Actual implementation at 412×892</h1>'+
+      '<p>Captured directly from Chromium and source UI. These are conditional evidence plates, '+
+      'not regenerated mockups or human aesthetic approval. SVG inventory contracts remain authoritative.</p>'+
+      realCards+'</html>');
+  }
+}
 await writeFile(join(output,'manifest.json'),JSON.stringify({
   source:'git checkout used by Action',plateSource:'docs/ui-reference',profiles,shots,errors,
-  iconCandidates:iconFindings,iconScreenshots:iconShots,notes:[
+  iconCandidates:iconFindings,iconScreenshots:iconShots,implementationPlates,notes:[
     'No visual/human sign-off inferred from passing geometry or screenshot capture',
     'Candidate icon matrix lives at assets/icons/roygbiv/state-matrix.html',
     'Original application controls remain live; only source click handlers are invoked',
