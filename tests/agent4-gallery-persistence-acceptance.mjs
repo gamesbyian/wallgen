@@ -84,6 +84,31 @@ try{
       null,{timeout:90000});
     assert.deepEqual(await page.locator('#gallery .thumb').evaluateAll(cards=>
       cards.map(card=>card.dataset.recipeSeed)),explore);
+    // Seeded exploratory state-machine walk: unscripted-by-scenario sequence,
+    // but precisely replayable when a failure is reported. It includes
+    // repeated taps on an already active destination, which close that sheet.
+    let prng=0xa4110;
+    const walk=[];
+    for(let step=0;step<12;step++){
+      prng=(Math.imul(prng,1664525)+1013904223)>>>0;
+      const target=['mobileStudio','mobileSaved','mobileExplore'][prng%3];
+      await page.locator('#'+target).click();
+      const mode=await page.evaluate(()=>
+        document.querySelector('#mobileActionDock [aria-current="page"]')?.id);
+      walk.push({step,target,mode});
+      if(mode==='mobileSaved'||mode==='mobileExplore'){
+        const expected=mode==='mobileSaved'?
+          [complete.seed,partial.seed]:explore;
+        await page.waitForFunction(value=>
+          document.querySelectorAll('#gallery .thumb').length===value.length &&
+          document.querySelector('#gallery').getAttribute('aria-busy')!=='true',
+          expected,{timeout:90000});
+        assert.deepEqual(await page.locator('#gallery .thumb').evaluateAll(cards=>
+          cards.map(card=>card.dataset.recipeSeed)),expected,
+          'Stale gallery entries after exploratory action '+JSON.stringify(walk.at(-1)));
+      }
+    }
+    await page.locator('#mobileStudio').click();
     await page.locator('#mobileSaved').click();
     await page.waitForFunction(()=>document.querySelectorAll('#gallery .thumb').length===2
       && document.querySelector('#gallery').getAttribute('aria-busy')!=='true');
@@ -109,7 +134,7 @@ try{
     assert.deepEqual(current(),partial,
       'Partial legacy Saved record must restore canonical defaults after reload');
     evidence.push({viewport:[width,height],recovered:initial.map(item=>item.seed),
-      savedCanvasFirst:true,painted:true,exploreCount:12,raceSwitches:8,
+      savedCanvasFirst:true,painted:true,exploreCount:12,raceSwitches:8,exploratoryActions:walk,
       keyboardRestore:true,exactRecipe:true,reloadPersistence:true,
       corruptedEntriesPrunedOnNextSave:true});
     console.log('AGENT4_GALLERY_VERIFIED',JSON.stringify(evidence.at(-1)));
