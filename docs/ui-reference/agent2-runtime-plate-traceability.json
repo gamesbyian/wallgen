@@ -2014,7 +2014,7 @@
       "evidenceCandidates": [
         "tests/editor-focus.test.js"
       ],
-      "qualification": "SOURCE CANDIDATE CORRECTED 2026-10-20; live browser must confirm, not an independent optical colour approval"
+      "qualification": "SOURCE TRACED; selector corrected 2026-10-20 to original styled range; only test-specific journeys are BROWSER VERIFIED, not optical approval"
     },
     {
       "id": "focus.required.08",
