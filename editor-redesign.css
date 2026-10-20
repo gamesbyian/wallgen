@@ -680,8 +680,15 @@
 /* Keep the relocated per-tool action immediately available while swiping
    through long named-tool strips, without reserving a header inside the card. */
 @media(max-width:790px){
+ /* Focus (67px + 2px margin) and Tool dice are BOTH persistent actions.
+    Give them separate pinned lanes. Previously the die stuck at left:0
+    behind Focus (z-index:4), silently stealing roughly half its taps as
+    the selected tool strip scrolled. Maintain keyboard/DOM ownership. */
+ body.mobile-studio .sidebar .editor-tool-chooser>.editor-focus-toggle{
+   order:-2!important;
+ }
  body.mobile-studio .sidebar .editor-tool-chooser>.editor-tool-reroll:not([hidden]){
-   position:sticky!important;left:0!important;z-index:3;
+   position:sticky!important;left:69px!important;z-index:3;
    order:-1!important;margin:0 3px 0 0!important;
    background:var(--surface)!important;
    border:1px solid var(--line)!important;border-radius:7px;

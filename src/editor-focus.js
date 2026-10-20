@@ -15,8 +15,10 @@ export function adjustedValue(field,delta){
 }
 // Distinguish a recipe-disabled field from a user lock. Both remain visible
 // and selectable in Focus, but the explanation must identify the actual gate.
-export function focusUnavailableReason({inactive=false,locked=false,disabled=false}={}){
-  if(locked)return 'This setting is locked. Open All controls to unlock it.';
+export function focusUnavailableReason({inactive=false,locked=false,disabled=false,unlockHere=false}={}){
+  if(locked)return unlockHere
+    ? 'This setting is locked. Choose Unlock here to edit it.'
+    : 'This setting is locked. Open All controls to unlock it.';
   if(inactive)return 'This setting is inactive for the current design. Open All controls to change the settings that enable it.';
   if(disabled)return 'This setting is temporarily unavailable. Open All controls to inspect it.';
   return '';
@@ -82,10 +84,14 @@ export function installFocusedAdjustments({form,chooser}){
       field.name.replace(/([a-z])([A-Z])/g,'$1 $2')).trim();
   }
   function unavailableReason(field){
+    const sourceLock=field.closest('.lockable-setting')?.querySelector('.setting-lock');
     return focusUnavailableReason({
       inactive:field.dataset.inactive==='true',
-      locked:Boolean(field.closest('.lockable-setting')?.querySelector('.setting-lock.is-locked')),
-      disabled:field.disabled
+      locked:Boolean(sourceLock?.classList.contains('is-locked')),
+      disabled:field.disabled,
+      // The original lock action is exposed directly as Focus's Unlock button.
+      // Only send users to All controls if that delegated action is unavailable.
+      unlockHere:Boolean(sourceLock&&!sourceLock.disabled)
     });
   }
   function isInactive(field){return Boolean(unavailableReason(field));}

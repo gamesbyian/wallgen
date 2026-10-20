@@ -15,7 +15,13 @@ const modes=[
   {id:'regions-voronoi',structure:'regions',construction:'ribbon',regionMode:'voronoi'},
   {id:'regions-nested',structure:'regions',construction:'ribbon',regionMode:'nested'},
 ];
-const profiles=[{id:'phone-412x892',width:412,height:892},{id:'desktop-791x892',width:791,height:892}];
+const profiles=[
+  // The release-relevant 320px minimum used to have only 7-state source
+  // screenshot checks; enumerate every applicable editor tool here as well.
+  {id:'minimum-320x700',width:320,height:700},
+  {id:'phone-412x892',width:412,height:892},
+  {id:'desktop-791x892',width:791,height:892}
+];
 const visited=new Set(),records=[],errors=[],rowScreens=[];
 const pictured=new Set();
 const activeTools=new Set(TOOL_LIST.filter(t=>modes.some(scene=>toolAppliesToScene(t,scene))).map(t=>t.id));
@@ -83,12 +89,18 @@ try{
           if(inkRange)inkRange.selectNodeContents(caption);
           const ink=inkRange?.getBoundingClientRect();
           const button=firstButton?.getBoundingClientRect();
+          const rotationControls=rotation?[...controls.querySelectorAll('button,input[type=number]')]
+            .map(element=>{
+              const b=element.getBoundingClientRect();
+              return {type:element.tagName.toLowerCase(),left:b.left,right:b.right,
+                top:b.top,bottom:b.bottom,width:b.width,height:b.height};
+            }):[];
           const captionCollision=Boolean(ink&&button&&
             ink.right>button.left-1&&ink.left<button.right+1&&
             ink.bottom>button.top+1&&ink.top<button.bottom-1);
           return {keys:el.dataset.controlKeys,category:el.dataset.controlCategory,
             tool:el.dataset.controlTool,kind:el.dataset.controlKind,
-            visible,rotation,captionCollision,
+            visible,rotation,captionCollision,rotationControls,
             captionInk:ink?{left:ink.left,right:ink.right,top:ink.top,bottom:ink.bottom}:null,
             firstRotationButton:button?{left:button.left,right:button.right,top:button.top,bottom:button.bottom}:null,
             left:r.left,right:r.right,cardLeft:bounds?.left,
@@ -115,6 +127,23 @@ try{
           throw Error('Material rotation loses source 5-button/1-number grammar');
         if(row.rotation&&row.visible&&row.captionCollision)
           throw Error('Material rotation label ink overlaps first shortcut: '+JSON.stringify(row));
+        if(row.rotation&&row.visible){
+          // Do not mistake the outer source row fitting for its *six*
+          // descendants fitting. The supported 320px two-row layout had
+          // historically lost the final shortcut beyond its control frame.
+          if(row.rotationControls.length!==6||
+             row.rotationControls.some(b=>b.width<1||b.height<1||
+               b.left<row.cardLeft-1||b.right>row.cardRight+1))
+            throw Error('Rotation child escapes live card or collapses: '+JSON.stringify(row));
+          const controls=row.rotationControls;
+          for(let a=0;a<controls.length;a++)for(let b=a+1;b<controls.length;b++){
+            const first=controls[a],second=controls[b];
+            const overlapX=Math.min(first.right,second.right)-Math.max(first.left,second.left);
+            const overlapY=Math.min(first.bottom,second.bottom)-Math.max(first.top,second.top);
+            if(overlapX>1&&overlapY>1)
+              throw Error('Rotation shortcuts/numeric fields overlap: '+JSON.stringify(row));
+          }
+        }
        }
        for(const sourceKey of spec.settings.filter(x=>
          !['textureLayer2Enabled','textureLayer3Enabled'].includes(x))){
@@ -122,8 +151,8 @@ try{
           throw Error('Source setting missing from active card: '+sourceKey);
        }
        // One *source-exact* optical crop per reachable tool at each viewport
-       // and theme. The 380 scene-specific inspections remain complete in
-       // JSON; the 156 PNGs provide human-reviewable family-level evidence.
+       // and theme. Scene-specific inspections remain complete in JSON.
+       // 320px/412px/791px PNGs provide independently reviewable evidence.
        const pictureKey=profile.id+'/'+theme+'/'+spec.id;
        if(!pictured.has(pictureKey)){
         const liveCard=page.locator('.editor-tool-card[data-editor-tool="'+spec.id+'"]');
@@ -154,7 +183,8 @@ const expectedPictures=activeTools.size*profiles.length*2;
 if(rowScreens.length!==expectedPictures)
  errors.push({error:'Missing source-exact tool crops: '+rowScreens.length+'/'+expectedPictures});
 await writeFile(join(output,'row-census.json'),JSON.stringify({
-  provenance:'Real source DOM / Chromium, not generated controls; 2 viewports x 2 themes',
+  provenance:'Real source DOM / Chromium, not generated controls; '+profiles.length+
+    ' in-scope viewports x 2 themes (includes 320px minimum)',
   declaredTools:TOOL_LIST.length,declaredCategories:EDITOR_CATEGORIES.length,
   sceneModes:modes,applicableTools:[...activeTools],visitedTools:[...visited],
   excludedCondition:'tone requires legacy tonal option which is currently hidden and disabled',

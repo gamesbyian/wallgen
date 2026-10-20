@@ -1,0 +1,56 @@
+name: Agent 2 source dice initial import state
+
+on:
+  pull_request:
+    paths:
+      - 'src/app.js'
+      - 'index.html'
+      - 'tests/agent2-initial-setting-dice.mjs'
+      - '.github/workflows/agent2-initial-setting-dice.yml'
+  push:
+    branches:
+      - agent2/safety-die-editorial-policy-20261020
+    paths:
+      - 'tests/agent2-initial-setting-dice.mjs'
+      - '.github/workflows/agent2-initial-setting-dice.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  actual-locked-dormant-and-editorial-dice:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check source and browser witness syntax
+        run: |
+          node --check src/app.js
+          node --check tests/agent2-initial-setting-dice.mjs
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.56.1 serve@14.2.5
+          npx playwright install --with-deps chromium
+      - name: Serve original app
+        run: |
+          npx serve . -l 4173 >/tmp/agent2-initial-dice.log 2>&1 &
+          for i in $(seq 1 40); do
+            if curl --fail --silent http://127.0.0.1:4173/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/agent2-initial-dice.log
+          exit 1
+      - name: Exercise truthful first-import dice and editorial Safety
+        run: node tests/agent2-initial-setting-dice.mjs
+      - name: Save field-state and browser failure evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent2-source-dice-initial-state
+          path: artifacts/agent2-initial-dice/
+          if-no-files-found: warn
+          retention-days: 14
