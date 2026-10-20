@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {activeSavedDrawnPath} from '../src/draw-path-ui.js';
+import {activeSavedDrawnPath,savedDrawSourceKey,savedDrawSourceMatches} from '../src/draw-path-ui.js';
 import {normalizeRecipe,encodeRecipe,decodeRecipe} from '../src/model.js';
 
 const points=[[.22,.18],[.45,.48],[.78,.85]];
@@ -50,5 +50,26 @@ test('the real Draw lifecycle uses the same applicability rule for Show and Edit
   assert.match(code,/editButton\.hidden=!active\|\|\(!editing&&ready\.length<2&&\s*!activeSavedDrawnPath\(savedPath\)\)/);
   assert.match(code,/if\(activeSavedDrawnPath\(getRecipe\(\)\)\)\{/);
   assert.match(code,/const source=getRecipe\(\),saved=activeSavedDrawnPath\(source\);/);
-  assert.match(code,/if\(ready\.length<2&&saved\)\s*\{\s*editingSavedPath=true;\s*savedSourcePath=JSON\.stringify\(source\.customPath\)/);
+  assert.match(code,/if\(ready\.length<2&&saved\)\s*\{\s*editingSavedPath=true;\s*savedSourcePath=savedDrawSourceKey\(source\)/);
+});
+
+test('authored anchors and corners are part of a saved Draw edit source identity',()=>{
+  const source=base(),key=savedDrawSourceKey(source);
+  assert.equal(typeof key,'string');
+  assert.equal(savedDrawSourceMatches(key,source),true);
+  assert.equal(savedDrawSourceMatches(key,{...source,viewZoom:2,
+    viewPanX:-10,positionX:17,material:'foil',extendDrawnPath:true}),true,
+    'camera, surface, composition and extension settings are separate edits');
+  for(const [name,next] of [
+    ['geometry',{customPath:[[.18,.2],...source.customPath.slice(1)]}],
+    ['authored pin',{drawnAnchors:[]}],
+    ['authored corner',{drawnCorners:[]}],
+    ['new source structure',{structure:'radial'}],
+    ['dormant source geometry',{geometry:'wave'}]
+  ]){
+    assert.equal(savedDrawSourceMatches(key,{...source,...next}),false,name);
+  }
+  assert.equal(savedDrawSourceKey(null),null);
+  assert.equal(savedDrawSourceMatches(key,null),false);
+  assert.equal(savedDrawSourceMatches(null,source),false);
 });
