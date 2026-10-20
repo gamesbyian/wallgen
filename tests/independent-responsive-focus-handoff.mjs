@@ -128,11 +128,56 @@ try{
    }finally{await context.close();}
   }
  }
+ // A sliderless Colour tool has no original range to focus. The genuine
+ // selected tool remains the meaningful fallback after the responsive exit.
+ for(const [width,height] of [[790,892],[700,412]]){
+  for(const theme of ['cream','dark']){
+   const context=await browser.newContext({viewport:{width,height},hasTouch:true,
+     isMobile:true,reducedMotion:'reduce'});
+   const page=await context.newPage();page.setDefaultTimeout(15000);
+   const runtimeErrors=[];page.on('pageerror',e=>runtimeErrors.push(String(e)));
+   try{
+    await page.goto(origin+'/?r='+encodeRecipe(recipe),{waitUntil:'domcontentloaded'});
+    await page.evaluate(t=>localStorage.setItem('roygbiv:studio-theme:v1',t),theme);
+    await page.reload({waitUntil:'domcontentloaded'});
+    await page.locator('#mobileEdit').click();
+    await page.locator('#tab-colour').click();
+    await page.locator('[data-editor-tool="rainbow"].editor-tool-tab').click();
+    await page.locator('.editor-focus-toggle').click();
+    assert.equal(await page.locator('#controls').evaluate(el=>el.classList.contains('editor-focus-empty')),true,
+      'Sliderless Colour tool invented an active range parameter');
+    const all=page.locator('.editor-focus-all');
+    await all.focus();
+    const before=read(page);
+    await page.setViewportSize({width:791,height:892});
+    await page.waitForFunction(()=>!document.querySelector('#controls')?.classList.contains('editor-focus-active'));
+    const after=await focusedState(page);
+    assert.ok(after.className.includes('editor-tool-tab'),
+      'Sliderless Focus needs original selected tool: '+JSON.stringify(after));
+    assert.ok(!after.hidden&&after.viewportHit,'Sliderless fallback hidden/offscreen');
+    assert.deepEqual(read(page),before,'Sliderless responsive exit changed recipe');
+    await page.keyboard.press('Tab');
+    const next=await focusedState(page);
+    assert.ok(!next.isBody&&!next.hidden,'Tab after sliderless fallback lost visible focus');
+    assert.deepEqual(runtimeErrors,[]);
+    observations.push({mode:'sliderless-colour',viewport:[width,height],theme,
+      after,next,recipeUnchanged:true});
+    await page.screenshot({path:join(out,'sliderless-'+theme+'-'+width+'x'+height+'.png'),
+      animations:'disabled'});
+    console.log('INDEPENDENT_RESPONSIVE_FOCUS_EMPTY',JSON.stringify(observations.at(-1)));
+   }catch(e){
+    errors.push({mode:'sliderless-colour',viewport:[width,height],theme,error:String(e),
+      stack:e.stack,focused:await focusedState(page).catch(()=>null),runtimeErrors});
+    await page.screenshot({path:join(out,'failure-sliderless-'+theme+'-'+width+'x'+height+'.png'),
+      animations:'disabled'}).catch(()=>{});
+   }finally{await context.close();}
+  }
+ }
  await writeFile(join(out,'evidence.json'),JSON.stringify({observations,errors,
   classification:errors.length?'NOT VERIFIED':'bounded native Chromium breakpoint focus handoff',
   limits:['Not physical Android/AT','Programmatic focus used only for starting state',
-   'Enabled and explicitly locked Path geometry across mobile→desktop']},null,2));
+   'Enabled/locked Path geometry and sliderless Colour across mobile→desktop']},null,2));
  assert.deepEqual(errors,[],'Responsive Focus keyboard handoff counterexamples');
- assert.equal(observations.length,8);
+ assert.equal(observations.length,12);
  console.log('INDEPENDENT_RESPONSIVE_FOCUS_SUCCESS');
 }finally{await browser.close();}
