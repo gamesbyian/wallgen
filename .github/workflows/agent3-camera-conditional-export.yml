@@ -1,0 +1,68 @@
+name: Agent 3 twenty-two-mode camera and native export acceptance
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/agent3-camera-conditional-export.yml'
+      - 'tests/agent3-camera-conditional-export.mjs'
+      - 'src/composition-geometry.js'
+      - 'src/view-camera.js'
+      - 'src/render-coordinator.js'
+      - 'src/render-worker.js'
+      - 'src/renderer.js'
+      - 'src/model.js'
+      - 'src/mobile-five-nav.js'
+      - 'src/app.js'
+
+permissions:
+  contents: read
+
+jobs:
+  twenty-two-real-native-exports:
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Source geometry and test syntax
+        run: |
+          node --check tests/agent3-camera-conditional-export.mjs
+          node --test tests/redesign-draw-geometry-matrix.test.js
+      - name: Reuse runner browser, install stable Playwright
+        run: |
+          npm install --no-save playwright@1.56.1 serve@14.2.5
+          CHROME_BIN="$(command -v google-chrome || command -v chromium || true)"
+          if [ -n "$CHROME_BIN" ]; then
+            echo "CHROME_BIN=$CHROME_BIN" >> "$GITHUB_ENV"
+            "$CHROME_BIN" --version
+          else
+            npx playwright install chromium
+          fi
+      - name: Serve actual ROYGBIV UI
+        run: |
+          npx serve . -l 4173 > /tmp/agent3-camera-conditional.log 2>&1 &
+          for i in $(seq 1 40); do
+            if curl --fail --silent http://127.0.0.1:4173/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/agent3-camera-conditional.log
+          exit 1
+      - name: Actual zoom controls, full Fit, native PNG downloads and pixel parity
+        env:
+          AGENT3_CONDITIONAL_SHARD: ${{ matrix.shard }}
+        run: node tests/agent3-camera-conditional-export.mjs
+      - name: Preserve mode-specific screenshots, metrics and failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: roygbiv-agent3-conditional-shard-${{ matrix.shard }}
+          path: artifacts/agent3-camera-conditional-native/shard-${{ matrix.shard }}/
+          retention-days: 14
+          if-no-files-found: warn
