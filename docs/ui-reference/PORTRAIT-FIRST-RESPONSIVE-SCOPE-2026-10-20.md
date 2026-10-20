@@ -16,6 +16,10 @@
 
 A regression in normal **portrait** or **supported tablet/desktop** layouts discovered while investigating a landscape issue is still in scope and must be repaired and tested. Likewise, keep any pre-existing low-cost landscape smoke tests when they help guard shared controls; their success or failure must not be confused with release approval for a non-target orientation.
 
+## Bounded independent portrait optical witness
+
+A separate [Agent 1 review of 56 **real source screenshots**](AGENT1-INDEPENDENT-PORTRAIT-OPTICAL-REVIEW-2026-10-20.md) covers seven Studio/Edit/Explore/Saved/More/Draw states at 360/412/499/500 CSS px in **both themes**, sourced from [passing real-touch Chromium run 39408395746](https://github.com/gamesbyian/wallgen/actions/runs/39408395746). Its per-surface observations and exclusions are intentionally explicit. It does **not** qualify every hidden action, 320px or desktop, font scaling, Android hardware or final visual sign-off.
+
 ## Evidence and completion rules
 
 Prioritize actual-source Chromium and physical-device review of portrait reference plates, breakpoint transitions, icon readability and the true source row inventory, in both themes and representative conditional states. **Do not check** an acceptance entry merely because the scope was narrowed: each remaining in-scope capability and visual approval must still be evidenced. Do not mark the old landscape failure fixed, and do not invent a new layout default.
