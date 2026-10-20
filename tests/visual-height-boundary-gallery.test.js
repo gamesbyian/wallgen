@@ -12,14 +12,14 @@ test('real Saved wallpapers are probed across the 670, 680 and 790 height CSS bo
  }
  for(const h of [700,841]){
    const id='height-edge-320x'+h;
-   const row=live.split('\\n').find(x=>x.includes("id:'"+id+"'"));
+   const row=live.split('\n').find(x=>x.includes("id:'"+id+"'"));
    assert.ok(row&&row.includes('width:320,height:'+h)&&
      row.includes("'saved-populated'"),id);
  }
  const css=readFileSync('studio-themes.css','utf8');
  assert.match(css,/--mobile-gallery-canvas-overhead:170px/);
  assert.match(css,/--mobile-gallery-canvas-overhead:197px/);
- assert.match(css,/height:clamp\\(46px,calc\\(var\\(--mobile-tray-height\\) - var\\(--mobile-gallery-canvas-overhead\\)\\),195px\\)/);
+ assert.ok(css.includes('height:clamp(46px,calc(var(--mobile-tray-height) - var(--mobile-gallery-canvas-overhead)),195px)'), 'adaptive art height is source-backed');
  assert.match(live,/await awaitPaintedThumbnails\(page,1\)/);
  assert.match(live,/canvas\.bottom>clip\.bottom\+1/);
  assert.match(live,/caption\.bottom>clip\.bottom\+1/);
