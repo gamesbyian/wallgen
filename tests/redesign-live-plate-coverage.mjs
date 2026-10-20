@@ -56,7 +56,13 @@ async function exercise(plate,page){
     diagonal:'direction',compact:'glow',focus:'geometry',
     history:'geometry',search:'geometry'
   };
-  await page.locator('.editor-tool-chooser [data-editor-tool="'+tools[plate]+'"]').click();
+  if(plate==='history'){
+    // Randomize-all deliberately changes the composition structure; the
+    // initial Paths-only Geometry chip may now be source-inapplicable.
+    await page.locator('.editor-tool-chooser [data-editor-tool]:visible').first().click();
+  }else{
+    await page.locator('.editor-tool-chooser [data-editor-tool="'+tools[plate]+'"]').click();
+  }
   if(plate==='focus')await page.locator('.editor-focus-toggle').click();
   if(plate==='history')await page.locator('#editorHistoryToggle').click();
   if(plate==='search'){
