@@ -73,9 +73,25 @@ try{
           const visible=r.width>0&&r.height>0&&css.display!=='none'&&css.visibility!=='hidden';
           const rotation=el.classList.contains('texture-rotation-field');
           const controls=el.querySelector('.rotation-controls');
+          // A row can fit its card while actual text ink paints directly
+          // over the first rotation shortcut. Test glyph bounds, not just
+          // grid-cell rectangles. Two-row tiny phones may overlap in X but
+          // have disjoint Y, which is a valid source layout.
+          const caption=rotation?el.querySelector(':scope > span'):null;
+          const firstButton=rotation?controls?.querySelector('button'):null;
+          const inkRange=caption?document.createRange():null;
+          if(inkRange)inkRange.selectNodeContents(caption);
+          const ink=inkRange?.getBoundingClientRect();
+          const button=firstButton?.getBoundingClientRect();
+          const captionCollision=Boolean(ink&&button&&
+            ink.right>button.left-1&&ink.left<button.right+1&&
+            ink.bottom>button.top+1&&ink.top<button.bottom-1);
           return {keys:el.dataset.controlKeys,category:el.dataset.controlCategory,
             tool:el.dataset.controlTool,kind:el.dataset.controlKind,
-            visible,rotation,left:r.left,right:r.right,cardLeft:bounds?.left,
+            visible,rotation,captionCollision,
+            captionInk:ink?{left:ink.left,right:ink.right,top:ink.top,bottom:ink.bottom}:null,
+            firstRotationButton:button?{left:button.left,right:button.right,top:button.top,bottom:button.bottom}:null,
+            left:r.left,right:r.right,cardLeft:bounds?.left,
             cardRight:bounds?.right,width:r.width,
             opacity:Number(css.opacity),textColor:css.color,
             buttons:rotation?controls?.querySelectorAll('button').length:undefined,
@@ -97,6 +113,8 @@ try{
           throw Error('Visible source row exceeds card: '+JSON.stringify(row));
         if(row.rotation&&(row.buttons!==5||row.numbers!==1))
           throw Error('Material rotation loses source 5-button/1-number grammar');
+        if(row.rotation&&row.visible&&row.captionCollision)
+          throw Error('Material rotation label ink overlaps first shortcut: '+JSON.stringify(row));
        }
        for(const sourceKey of spec.settings.filter(x=>
          !['textureLayer2Enabled','textureLayer3Enabled'].includes(x))){

@@ -93,3 +93,14 @@ html[data-theme="cream"] .editor-tool-card .texture-rotation-field.setting-inact
 html[data-theme="dark"] .editor-tool-card .texture-rotation-field.setting-inactive>span{
   color:#d2ccde;
 }
+
+/* Independent 156-card source atlas exposed text ink collision at 412px and
+   desktop 791px: "Layer 1 rotation" extended past its fixed grid label into
+   the -90° control. The six source buttons/input are correctly laid out;
+   allow the *label text* to wrap inside its existing first grid column.
+   Two short lines fit within the existing 26px rotation row, preserve the
+   special four-column grammar and avoid truncating the full source label. */
+.editor-tool-card .texture-rotation-field>span{
+  white-space:normal!important;
+  overflow-wrap:normal;
+}
