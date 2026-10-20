@@ -1,0 +1,93 @@
+name: Agent 4 adversarial gallery export and accessibility
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'src/app.js'
+      - 'src/favorites-store.js'
+      - 'src/model.js'
+      - 'src/png-metadata.js'
+      - 'src/mobile-*.js'
+      - 'tests/favorites-store.test.js'
+      - 'tests/agent4-*.mjs'
+      - 'tests/redesign-native-download-acceptance.mjs'
+      - '.github/workflows/agent4-adversarial-qa.yml'
+
+concurrency:
+  group: agent4-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  gallery-accessibility-and-transport:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify source and test syntax
+        run: |
+          node --check src/app.js
+          node --check src/favorites-store.js
+          node --check tests/agent4-gallery-persistence-acceptance.mjs
+          node --check tests/agent4-accessibility-acceptance.mjs
+          node --check tests/agent4-json-download-acceptance.mjs
+      - name: Unit and transport regression
+        run: node --test tests/favorites-store.test.js tests/recipe-transport-matrix.test.js tests/gallery-view-modes.test.js
+      - run: npm install --no-save playwright@1.56.1 serve@14.2.5
+      - run: npx playwright install --with-deps chromium
+      - name: Serve app
+        run: |
+          npx serve . -l 4173 > /tmp/agent4-serve.log 2>&1 &
+          for i in $(seq 1 40); do curl --fail --silent http://127.0.0.1:4173/ >/dev/null && exit 0; sleep 1; done
+          cat /tmp/agent4-serve.log
+          exit 1
+      - name: Damaged storage, image-first gallery, async and reload journeys
+        run: node tests/agent4-gallery-persistence-acceptance.mjs
+      - name: Keyboard, touch targets, measured contrast and reduced-motion journeys
+        run: node tests/agent4-accessibility-acceptance.mjs
+      - name: Real JSON downloads and PNG file-input round-trips
+        run: node tests/agent4-json-download-acceptance.mjs
+      - name: Upload gallery, accessibility and recipe evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent4-adversarial-gallery-accessibility
+          path: |
+            artifacts/agent4-gallery/
+            artifacts/agent4-accessibility/
+            artifacts/agent4-json/
+          retention-days: 14
+          if-no-files-found: warn
+
+  native-export-existing-matrix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save playwright@1.56.1 serve@14.2.5
+      - run: npx playwright install --with-deps chromium
+      - name: Serve app
+        run: |
+          npx serve . -l 4173 > /tmp/agent4-native-serve.log 2>&1 &
+          for i in $(seq 1 40); do curl --fail --silent http://127.0.0.1:4173/ >/dev/null && exit 0; sleep 1; done
+          cat /tmp/agent4-native-serve.log
+          exit 1
+      - name: Independently rerun 5 true 3024x6552 downloaded PNG pixel witnesses
+        run: node tests/redesign-native-download-acceptance.mjs
+      - name: Upload actual downloaded-PNG metrics and failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent4-real-native-png-revalidation
+          path: artifacts/agent3-native-download/
+          retention-days: 14
+          if-no-files-found: warn
