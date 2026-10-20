@@ -101,6 +101,55 @@ try{
       await page.goto(origin+'/?r='+encodeRecipe(recipe),{waitUntil:'domcontentloaded'});
       await page.waitForFunction(()=>document.body.classList.contains('mobile-five-nav'));
       await exercise(plate,page);
+      // Objective forbidden-plate canaries: unlike the remaining subjective
+      // aesthetic claims, these omissions can be decisively falsified in
+      // actual Chromium. Do not confuse them with approval of all 27.
+      const negativeCanaries=[];
+      if(plate==='studio'){
+        assert.equal(await page.locator(
+          '.studio-stage h1,.studio-stage h2,.studio-stage h3').count(),0,
+          'Forbidden decorative stage heading displaced the wallpaper');
+        assert.equal(await page.locator('.masthead [data-zoom="fit"]').count(),0,
+          'Forbidden top Fit button appeared in the masthead');
+        assert.equal(await page.locator(
+          '.mobile-preview-rail-right [data-zoom="fit"]').count(),1,
+          'The actual source Fit button disappeared from the canvas rail');
+        negativeCanaries.push('no-stage-heading','Fit-remains-on-canvas-rail');
+      }
+      if(plate==='geometry'){
+        assert.equal(await page.locator(
+          '.editor-tool-card[data-editor-tool="geometry"] h2,'+
+          '.editor-tool-card[data-editor-tool="geometry"] h3').count(),0,
+          'Forbidden duplicate tool heading consumes editor card height');
+        negativeCanaries.push('no-duplicate-tool-heading');
+      }
+      if(plate==='colour'){
+        assert.equal(await page.locator('#controls [name="saturation"]').count(),0,
+          'Unimplemented extra saturation control was introduced');
+        negativeCanaries.push('no-fictitious-saturation-setting');
+      }
+      if(plate==='compact'){
+        const controls=await page.locator(
+          '.editor-tool-card[data-editor-tool="glow"] [data-setting]')
+          .evaluateAll(nodes=>nodes.map(node=>node.name));
+        assert.deepEqual(controls,['glow'],
+          'Sparse Glow acquired unimplemented source settings');
+        negativeCanaries.push('compact-glow-has-only-original-source-field');
+      }
+      if(plate==='diagonal'){
+        for(const key of ['mirrorHorizontal','mirrorVertical']){
+          const wrapped=await page.locator('[data-setting][name="'+key+'"]')
+            .evaluate(el=>el.closest('label')?.contains(el));
+          assert.equal(wrapped,true,
+            key+': mirror checkbox separated from its original label');
+        }
+        negativeCanaries.push('mirrors-remain-native-labelled-checkboxes');
+      }
+      if(plate==='search'){
+        assert.ok(await page.locator('.editor-search-close').isVisible(),
+          'Search input opened without its separately reachable close action');
+        negativeCanaries.push('search-close-action-preserved');
+      }
       const source=contract.entries.filter(row=>row.plate===plate);
       const probed=await page.evaluate(entries=>entries.map(row=>{
         if(!row.sourceCandidate)return {id:row.id,kind:row.kind,
@@ -171,7 +220,7 @@ try{
         sourceOnly:probed.filter(x=>x.candidates>0&&!x.visible).map(x=>x.id),
         unmatched:probed.filter(x=>x.state==='no-source-in-this-state').map(x=>x.id),
         invalidSelectors:probed.filter(x=>x.state==='invalid-selector').map(x=>x.id),
-        claimResults:probed,scriptErrors};
+        claimResults:probed,negativeCanaries,scriptErrors};
       results.push(sample);
       console.log('AGENT2_LIVE_PLATE',JSON.stringify({
         plate,sourceClaims:sample.sourceClaims,
@@ -181,6 +230,7 @@ try{
         requiredClaims:sample.requiredClaims,
         requiredSourceMapped:sample.requiredSourceMapped,
         requiredHit:sample.requiredPhysicallyHittable,
+        negativeCanaries:sample.negativeCanaries.length,
         unmatched:sample.unmatched.length,sourceOnly:sample.sourceOnly.length
       }));
     }catch(error){
