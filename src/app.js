@@ -131,6 +131,13 @@ function readFavorites() {
 function saveFavorites() {
   try { localStorage.setItem(FAVORITES_KEY,JSON.stringify(favorites)); } catch { showNotice('Browser storage unavailable; favourites last for this visit.'); }
 }
+// Keep Saved and the favourite action truthful when another tab writes.
+window.addEventListener('storage',event=>{
+  if(event.key!==FAVORITES_KEY&&event.key!==null)return;
+  favorites=readFavorites();
+  favoriteButton.setAttribute('aria-pressed',String(isFavorite(current)));
+  if(gallery.dataset.view==='saved')void showSaved();
+});
 function sameRecipe(a,b){return JSON.stringify(normalizeRecipe(a))===JSON.stringify(normalizeRecipe(b));}
 function isFavorite(recipe){return favorites.some(item=>sameRecipe(item,recipe));}
 function showNotice(message){
