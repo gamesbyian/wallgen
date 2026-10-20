@@ -53,7 +53,11 @@ export function rng(seed) {
 const pick = (random, choices) => choices[Math.floor(random() * choices.length)];
 const between = (random, min, max) => min + random() * (max - min);
 const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
-const finiteRange = (value, fallback, min, max) => clamp(Number.isFinite(+value) ? +value : fallback, min, max);
+const canonicalZero=n=>n===0?0:n;
+// JSON, URLs and PNG metadata all represent -0 as 0. Canonical numerical
+// recipe state must use the same zero so file transport is truly lossless.
+const finiteRange = (value, fallback, min, max) =>
+  canonicalZero(clamp(Number.isFinite(+value) ? +value : fallback, min, max));
 export const normalizeRotation = (value, fallback = 0) => {
   const number = Number(value);
   if (!Number.isFinite(number)) return fallback;
@@ -186,8 +190,8 @@ export function normalizeRecipe(input = {}) {
     viewZoom: Math.round(finiteRange(input.viewZoom, 1, .5, 2.5)*100)/100,
     // Camera-only frame pan in percent of the original 600×1300 world.
     // Distinct from positionX/Y, which translate the finished rainbow ink.
-    viewPanX: Math.round(finiteRange(input.viewPanX, 0, -50, 50)*10)/10,
-    viewPanY: Math.round(finiteRange(input.viewPanY, 0, -50, 50)*10)/10,
+    viewPanX: canonicalZero(Math.round(finiteRange(input.viewPanX, 0, -50, 50)*10)/10),
+    viewPanY: canonicalZero(Math.round(finiteRange(input.viewPanY, 0, -50, 50)*10)/10),
     positionX: finiteRange(input.positionX, 0, -30, 30),
     positionY: finiteRange(input.positionY, 0, -30, 30),
   };
