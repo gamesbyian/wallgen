@@ -469,6 +469,12 @@ try{
     classification:'live Chromium pointer/clipboard/file/download/conditional-state acceptance',
     viewport:[412,892],sourceBranch:'agent2-controls-state-fidelity-20261019',
     semantics,cases,errors,
+    originalSourceCensus:{
+      fixtureCount:sourceCensus.length,expectedSourceFields:87,
+      fixtures:sourceCensus,
+      bothActiveAndInactiveKeys:[...new Set(sourceCensus.flatMap(x=>x.active))]
+        .filter(key=>sourceCensus.some(x=>x.inactive.includes(key))).sort()
+    },
     scope:['five destinations','More grouped operations and batch handoff',
       'valid/invalid JSON recipe import','inactive zero state and lock restoration',
       'source-independent gallery persistence','live global status repetition'],
