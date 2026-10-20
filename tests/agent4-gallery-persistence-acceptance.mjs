@@ -144,6 +144,44 @@ try{
       animations:'disabled'}).catch(()=>{});
   }finally{await context.close();}
  }
+ // Storage can reject writes (private mode, disabled storage, quota).
+ // Session-only favourites must remain usable without suggesting persistence.
+ {
+  const context=await browser.newContext({viewport:{width:412,height:892},
+    isMobile:true,hasTouch:true,reducedMotion:'reduce'});
+  await context.addInitScript(()=>{
+    const original=Storage.prototype.setItem;
+    Storage.prototype.setItem=function(key,value){
+      if(key==='wallgen:favorites:v1')
+        throw new DOMException('Storage quota unavailable','QuotaExceededError');
+      return original.call(this,key,value);
+    };
+  });
+  const page=await context.newPage();
+  try{
+    await page.goto(origin+'/?r='+encodeRecipe(baseline),{waitUntil:'domcontentloaded'});
+    await page.locator('#mobileFavorite').click();
+    assert.match(await page.locator('#studioStatus').textContent(),
+      /Browser storage unavailable; favourites last for this visit/);
+    await page.locator('#mobileSaved').click();
+    await page.waitForFunction(()=>document.querySelectorAll('#gallery .thumb').length===1
+      && document.querySelector('#gallery').getAttribute('aria-busy')!=='true');
+    assert.equal(await page.locator('#gallery .thumb').first().getAttribute('data-recipe-seed'),
+      baseline.seed);
+    await page.reload({waitUntil:'domcontentloaded'});
+    await page.locator('#mobileSaved').click();
+    await page.waitForFunction(()=>document.querySelector('#gallery')?.dataset.view==='saved'
+      && document.querySelector('#gallery').getAttribute('aria-busy')!=='true');
+    assert.equal(await page.locator('#gallery .thumb').count(),0,
+      'Storage write denial must not fabricate persistence after reload');
+    evidence.push({name:'blocked-storage',temporaryFavorite:true,
+      accessibleWarning:true,reloadShowsEmpty:true});
+  }catch(e){
+    errors.push({name:'blocked-storage',message:String(e),stack:e.stack});
+    await page.screenshot({path:join(out,'failure-blocked-storage.png'),
+      animations:'disabled'}).catch(()=>{});
+  }finally{await context.close();}
+ }
  await writeFile(join(out,'evidence.json'),JSON.stringify({
    classification:errors.length?'not verified':'real Chromium gallery and storage recovery',
    evidence,errors,limitations:['no physical Android','session Explore not persisted across reload by design',
