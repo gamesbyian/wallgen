@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - 'scripts/visual-reference-audit-agent1.mjs'
+      - 'scripts/visual-setting-row-census-agent1.mjs'
       - '.github/workflows/visual-agent1.yml'
       - 'docs/ui-reference/*.svg'
       # All owning production presentation surfaces. An attractive PR should
@@ -40,7 +41,9 @@ jobs:
         with:
           node-version: '22'
       - name: Validate independent evidence script
-        run: node --check scripts/visual-reference-audit-agent1.mjs
+        run: |
+          node --check scripts/visual-reference-audit-agent1.mjs
+          node --check scripts/visual-setting-row-census-agent1.mjs
       - name: Install browser dependencies
         run: |
           npm install --no-save playwright@1.56.1 serve@14.2.5
@@ -56,6 +59,8 @@ jobs:
           exit 1
       - name: Capture paired real Chromium/reference states
         run: node scripts/visual-reference-audit-agent1.mjs
+      - name: Census all reachable source setting rows in real Chromium
+        run: node scripts/visual-setting-row-census-agent1.mjs
       - name: Upload 12-plate comparison gallery and measured geometry
         if: always()
         uses: actions/upload-artifact@v4

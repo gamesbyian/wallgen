@@ -7,7 +7,7 @@
     "All phone wireframes are complete for the depicted mode, but do not show every alternate dynamic state simultaneously.",
     "Screen contract required/conditional arrays, category tool inventory and source DOM remain the implementation authority.",
     "Icons are the exact SVG source geometry, not image-generated interpretations.",
-    "The 55 original glyphs and brand app icon remain. Twelve extension candidates are staged but unwired.",
+    "The 55 original glyphs and brand app icon remain. Four extension glyphs are integrated and eight remain unwired pending independent use-case and human aesthetic approval.",
     "The source default dock now has five static destinations; previousDockControls records the original six source actions that remain in the HTML, relocated without changing their handlers."
   ],
   "global": {
@@ -432,8 +432,8 @@
       "mobileFavorite": "Original favourite source action beside artwork and edit rail, separate from Saved."
     },
     "cameraZoomState": "viewZoom, viewPanX and viewPanY are camera-specific fields persisted as part of the normalized recipe and embedded in PNG metadata; Fit restores 100% zoom with centered pan without touching composition nudge.",
-    "panStatus": "A separately implemented viewport-only Pan is not yet available; existing arrows move the actual composition.",
-    "fitStatus": "Fit is planned as a viewZoom=1 action in mobile canvas rail.",
+    "panStatus": "A separate viewport-only Move view frame Pan is implemented in More; original composition nudge moves positionX/Y, not viewPanX/Y. Real source reachability is qualified in PR #147.",
+    "fitStatus": "Fit is implemented: resets viewZoom=1 and viewPanX/Y=0 while preserving composition positionX/Y.",
     "previousDockControls": [
       {
         "id": "mobileEdit",
@@ -484,7 +484,7 @@
       "conditional": [
         "Viewport zoom readout only on action",
         "Camera guides when enabled",
-        "Viewport-only Pan requires new source-qualified behavior; do not label composition nudge as Pan."
+        "Viewport-only Pan is implemented as a separately named More action; composition nudge remains distinct from the camera."
       ],
       "forbidden": [
         "‘Your canvas’ header",

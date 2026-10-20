@@ -44,7 +44,7 @@ a{color:inherit}
 <h1>ROYGBIV · icon state matrix</h1>
 <p class="subtitle">Exact current inline SVG geometry at 20, 24 and 28 CSS pixels, in cream/dark settings with normal, selected, disabled and focused treatments.</p>
 <p>This is an <strong>asset approval fixture</strong>, not a live app screenshot or a claim that candidate icons are wired. The surface/state treatments are controlled visual experiments; actual application behaviour and focus styling remain authoritative in the running UI. All glyph path data below is copied from the source inline symbol registries, including unchanged rainbow accent fills.</p>
-<label for="filter">Find icon by name, category or status</label>
+<label for="filter">Find icon by name, category or status (prefix = for exact icon name)</label>
 <input type="search" id="filter" placeholder="Search 68 symbols…">
 <p id="count"></p>
 <main id="grid" class="grid"></main>
@@ -65,7 +65,8 @@ function iconSVG(name,size){
 }
 function render(){
  const q=filter.value.trim().toLowerCase();
- const matches=items.filter(i=>(i.name+' '+i.title+' '+i.category+' '+i.status).toLowerCase().includes(q));
+ const matches=items.filter(i=>q.startsWith('=')?i.name.toLowerCase()===q.slice(1):
+    (i.name+' '+i.title+' '+i.category+' '+i.status).toLowerCase().includes(q));
  document.getElementById('count').textContent=matches.length+' of '+items.length+' source-registered symbols';
  const fragment=document.createDocumentFragment();
  for(const item of matches){

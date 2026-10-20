@@ -1,5 +1,7 @@
 # Implementation-safe ROYGBIV phone references
 
+**Actual running app comparison:** [24 conditional real-Chromium implementation plates and independent approval rules](LIVE-IMPLEMENTATION-PLATES.md). These screenshot-only artifacts are staged after a completely green browser geometry audit; they do not replace the canonical SVG feature contracts or imply human aesthetic sign-off.
+
 Twelve deterministic SVGs render **real ROYGBIV SVG paths**, with an explicit side inventory of required, conditional and forbidden elements. The phone is an explanatory schematic, not a generated app screenshot or fixed-pixel implementation layout. **The inventory and [canonical-screen-contract.json](canonical-screen-contract.json) take priority over artwork.**
 
 - [Studio / canvas](./studio.svg)
