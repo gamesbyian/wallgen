@@ -1,0 +1,43 @@
+name: Independent Focus undo history parity
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'src/editor-focus.js'
+      - 'src/app.js'
+      - 'tests/independent-focus-undo-history-ab.mjs'
+      - '.github/workflows/independent-focus-undo-history.yml'
+permissions:
+  contents: read
+concurrency:
+  group: independent-focus-undo-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  chromium:
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check tests/independent-focus-undo-history-ab.mjs
+      - run: npm test
+      - run: npm install --no-save playwright@1.56.1 serve@14.2.5
+      - run: npx playwright install --with-deps chromium
+      - name: Serve original studio
+        run: |
+          npx serve . -l 4173 > /tmp/focus-undo-server.log 2>&1 &
+          for i in $(seq 1 40); do curl -fs http://127.0.0.1:4173/ >/dev/null && exit 0; sleep 1; done
+          cat /tmp/focus-undo-server.log
+          exit 1
+      - name: Compare one native keyboard edit and Undo between All and Focus
+        run: node tests/independent-focus-undo-history-ab.mjs
+      - name: Preserve measured UI, recipe and failure evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: independent-focus-undo-evidence
+          path: artifacts/independent-focus-undo-ab/
+          retention-days: 14
+          if-no-files-found: warn
