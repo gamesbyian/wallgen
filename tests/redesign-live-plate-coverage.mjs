@@ -70,7 +70,7 @@ async function exercise(plate,page){
         key:el.name,colour:el.style.getPropertyValue('--roygbiv-slider-color')
       })));
     const before=await sourceColours();
-    assert.equal(before.length,2,'Focus's Geometry source range inventory changed');
+    assert.equal(before.length,2,'Focus Geometry source range inventory changed');
     assert.ok(before.every(x=>x.colour.trim()),
       'Focus original ranges lack their assigned ROYGBIV colours');
     assert.equal(new Set(before.map(x=>x.colour)).size,2,
