@@ -92,6 +92,9 @@ test('too-large named recipe reports explicit bounded error; huge foreign iTXt i
   const foreignBefore=inputChunks.find(c=>c.type==='iTXt').data;
   const foreignAfter=outputChunks.find(c=>c.type==='iTXt'&&
     Buffer.from(c.data.subarray(0,8)).toString()==='Unrelate')?.data;
-  assert.deepEqual(foreignAfter,foreignBefore,
+  assert.ok(foreignAfter,'Re-export dropped unrelated iTXt record');
+  assert.equal(foreignAfter.length,foreignBefore.length,
+    'Re-export changed unrelated ancillary record length');
+  assert.equal(Buffer.compare(Buffer.from(foreignAfter),Buffer.from(foreignBefore)),0,
     'Re-export must preserve opaque unrelated ancillary bytes verbatim');
 });
