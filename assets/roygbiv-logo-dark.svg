@@ -1,20 +1,21 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-labelledby="title">
   <title id="title">R.O.Y.G.B.I.V. rainbow phone icon, black background and white phone</title>
   <rect width="120" height="120" rx="15" fill="#050608"/>
-  <!-- Seven parallel ROYGBIV capsules, shifted up 2% of the square.
-       Every endpoint remains inside the tile and lengths intentionally differ. -->
+  <!-- Seven parallel ROYGBIV capsules with equal line spacing; endpoint lengths intentionally differ. -->
+  <g transform="translate(1 0)">
   <g transform="translate(0 -2.4)" fill="none" stroke-width="9" stroke-linecap="round">
-    <path stroke="#ff474e" d="M12 40 L107 14"/>
-    <path stroke="#ff9b39" d="M8 52 L67 35"/>
-    <path stroke="#ffe25b" d="M23 61 L111 36"/>
-    <path stroke="#4fdd87" d="M12 74 L110 48"/>
-    <path stroke="#53aaff" d="M10 87 L78 68"/>
-    <path stroke="#6359e5" d="M17 97 L111 72"/>
-    <path stroke="#bb64ed" d="M40 100 L100 84"/>
+    <path stroke="#ff474e" d="M11.4567 40 L96.1433 17.12"/>
+    <path stroke="#ff9b39" d="M8 52.9109 L67 36.9707"/>
+    <path stroke="#ffe25b" d="M23 60.8353 L97.8 40.6264"/>
+    <path stroke="#4fdd87" d="M47.25 66.2606 L110 49.3073"/>
+    <path stroke="#53aaff" d="M23.6 84.6272 L78 69.9298"/>
+    <path stroke="#6359e5" d="M17 98.3874 L101.6 75.5308"/>
+    <path stroke="#bb64ed" d="M66.0219 97.12 L99.7781 88"/>
   </g>
   <!-- Phone contour sits on top of all seven colours. -->
   <rect x="34" y="13" width="53" height="94" rx="10" fill="none"
         stroke="#fff" stroke-width="2.5"/>
   <path d="M50 21 H71 M55 99 H66" fill="none" stroke="#fff"
         stroke-width="1.7" stroke-linecap="round"/>
+  </g>
 </svg>
