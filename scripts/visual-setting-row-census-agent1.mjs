@@ -15,7 +15,13 @@ const modes=[
   {id:'regions-voronoi',structure:'regions',construction:'ribbon',regionMode:'voronoi'},
   {id:'regions-nested',structure:'regions',construction:'ribbon',regionMode:'nested'},
 ];
-const profiles=[{id:'phone-412x892',width:412,height:892},{id:'desktop-791x892',width:791,height:892}];
+const profiles=[
+  // The release-relevant 320px minimum used to have only 7-state source
+  // screenshot checks; enumerate every applicable editor tool here as well.
+  {id:'minimum-320x700',width:320,height:700},
+  {id:'phone-412x892',width:412,height:892},
+  {id:'desktop-791x892',width:791,height:892}
+];
 const visited=new Set(),records=[],errors=[],rowScreens=[];
 const pictured=new Set();
 const activeTools=new Set(TOOL_LIST.filter(t=>modes.some(scene=>toolAppliesToScene(t,scene))).map(t=>t.id));
@@ -122,8 +128,8 @@ try{
           throw Error('Source setting missing from active card: '+sourceKey);
        }
        // One *source-exact* optical crop per reachable tool at each viewport
-       // and theme. The 380 scene-specific inspections remain complete in
-       // JSON; the 156 PNGs provide human-reviewable family-level evidence.
+       // and theme. Scene-specific inspections remain complete in JSON.
+       // 320px/412px/791px PNGs provide independently reviewable evidence.
        const pictureKey=profile.id+'/'+theme+'/'+spec.id;
        if(!pictured.has(pictureKey)){
         const liveCard=page.locator('.editor-tool-card[data-editor-tool="'+spec.id+'"]');
@@ -154,7 +160,8 @@ const expectedPictures=activeTools.size*profiles.length*2;
 if(rowScreens.length!==expectedPictures)
  errors.push({error:'Missing source-exact tool crops: '+rowScreens.length+'/'+expectedPictures});
 await writeFile(join(output,'row-census.json'),JSON.stringify({
-  provenance:'Real source DOM / Chromium, not generated controls; 2 viewports x 2 themes',
+  provenance:'Real source DOM / Chromium, not generated controls; '+profiles.length+
+    ' in-scope viewports x 2 themes (includes 320px minimum)',
   declaredTools:TOOL_LIST.length,declaredCategories:EDITOR_CATEGORIES.length,
   sceneModes:modes,applicableTools:[...activeTools],visitedTools:[...visited],
   excludedCondition:'tone requires legacy tonal option which is currently hidden and disabled',
