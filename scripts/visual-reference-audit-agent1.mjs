@@ -39,6 +39,16 @@ const profiles=[
   {id:'height-edge-412x680',width:412,height:680,cases:['studio','saved-populated']},
   {id:'height-edge-412x790',width:412,height:790,cases:['studio','saved-populated']},
   {id:'height-edge-412x791',width:412,height:791,cases:['studio','saved-populated']},
+  // Above 791px the old fixed 160px rule stopped at 840px even though the
+  // gallery did not have enough clipped height for a complete 195px image.
+  {id:'height-edge-412x840',width:412,height:840,cases:['studio','saved-populated']},
+  {id:'height-edge-412x841',width:412,height:841,cases:['studio','saved-populated']},
+  {id:'height-edge-412x859',width:412,height:859,cases:['studio','saved-populated']},
+  {id:'height-edge-412x860',width:412,height:860,cases:['studio','saved-populated']},
+  {id:'height-edge-412x861',width:412,height:861,cases:['studio','saved-populated']},
+  // A narrower source header wraps and changes the real gallery ink budget.
+  {id:'height-edge-320x700',width:320,height:700,cases:['studio','saved-populated']},
+  {id:'height-edge-320x841',width:320,height:841,cases:['studio','saved-populated']},
   {id:'short-edge-499x740',width:499,height:740,cases:['studio','material','saved-populated']},
   {id:'short-edge-500x740',width:500,height:740,cases:['studio','material','saved-populated']},
   {id:'phone-412x892',width:412,height:892,cases:[...all,'explore-populated','saved-empty','saved-populated']},
