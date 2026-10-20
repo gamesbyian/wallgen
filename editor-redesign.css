@@ -1007,7 +1007,7 @@ html[data-theme="cream"] body.mobile-studio .sidebar .settings-tabs .settings-ta
 @media (min-width:500px) and (max-width:790px){
   body.mobile-studio.mobile-edit-open .sidebar
     .editor-tool-card[data-editor-tool="lighting"]{
-    gap:0!important;padding:1px 8px 2px!important;
+    gap:0!important;padding:0 8px 2px!important;
   }
   body.mobile-studio.mobile-edit-open .sidebar
     .editor-tool-card[data-editor-tool="lighting"] .lighting-subsection{
