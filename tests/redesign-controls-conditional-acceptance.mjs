@@ -348,6 +348,7 @@ try{
   // Independently reload full serialized recipes across radial, region and
   // lighting contexts. This checks the REAL source form's displayed values,
   // disabled state and preserved URL recipe, not a source-code expectation.
+  const sourceCensus=[];
   const crossFamilyCases=[
     {name:'radial-spokes',overrides:{structure:'radial',radialMode:'spokes',
       rayTwist:38,rayCoverage:76,rayCore:42},dormant:['rayTwist'],
