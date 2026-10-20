@@ -189,8 +189,33 @@ try{
           assert.ok(await field.isEnabled(),key+': unlocked active field disabled');
         lockCycle='verified';
       }
+      let primesGeneration=null;
+      if(key==='primesOnly'){
+        // An enabled checkbox that only changes the URL is insufficient:
+        // the next real Random action must consume the mode and produce
+        // prime-valued original percentages/texture angles.
+        assert.equal(after.primesOnly,true,'Primes checked source not enabled');
+        await page.locator('#randomizeAll').click();
+        const generated=current();
+        assert.equal(generated.primesOnly,true,
+          'Randomize ignored the mobile preview-rail Primes value');
+        const prime=n=>{
+          if(!Number.isInteger(n)||n<2)return false;
+          for(let i=2;i*i<=n;i++)if(n%i===0)return false;
+          return true;
+        };
+        for(const sample of ['chaos','stripeWidth','spread','shapeFrequency',
+          'textureRotation','textureRotation2','textureRotation3']){
+          assert.ok(prime(generated[sample]),
+            'Randomized '+sample+' violates checked Primes: '+generated[sample]);
+        }
+        primesGeneration={realRandomize:true,
+          primeWitnesses:['chaos','stripeWidth','spread','shapeFrequency',
+            'textureRotation','textureRotation2','textureRotation3']};
+      }
       const item={key,kind:await field.getAttribute('type'),action,
-        before:source[key],after:after[key],changedKeys:changed,lockCycle};
+        before:source[key],after:after[key],changedKeys:changed,lockCycle,
+        ...(primesGeneration?{primesGeneration}:{})};
       observations.push(item);
       console.log('AGENT2_FIELD_ACTION',JSON.stringify(item));
     }catch(error){
