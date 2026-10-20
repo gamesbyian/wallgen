@@ -44,6 +44,7 @@ jobs:
         run: |
           node --check scripts/visual-reference-audit-agent1.mjs
           node --check scripts/visual-setting-row-census-agent1.mjs
+          node --check scripts/visual-narrow-desktop-range-agent1.mjs
       - name: Install browser dependencies
         run: |
           npm install --no-save playwright@1.56.1 serve@14.2.5
@@ -61,6 +62,8 @@ jobs:
         run: node scripts/visual-reference-audit-agent1.mjs
       - name: Census all reachable source setting rows in real Chromium
         run: node scripts/visual-setting-row-census-agent1.mjs
+      - name: Measure native slider tracks, label ink and source controls across breakpoints
+        run: node scripts/visual-narrow-desktop-range-agent1.mjs
       - name: Upload 12-plate comparison gallery and measured geometry
         if: always()
         uses: actions/upload-artifact@v4
