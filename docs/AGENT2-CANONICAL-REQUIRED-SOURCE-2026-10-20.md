@@ -11,3 +11,11 @@ Existing conditional cases remain assessed by scenario-specific behavioural test
 Reproduce by running `node tests/redesign-live-plate-coverage.mjs` against real `http://127.0.0.1:4173` Chromium. CI: `.github/workflows/agent2-controls-acceptance.yml`, artifacts under `artifacts/agent2-live-plates`.
 
 Evidence requires a successful run on the proposed head commit. Existing human/physical-device acceptance boundaries remain unaffected.
+
+## Real counterexample found and corrected in traceability
+
+The first strict 121-required mapping test [run 39397435523](https://github.com/gamesbyian/wallgen/actions/runs/39397435523) located one **incorrect source manifest claim**, `focus.required.07` (“Existing colour assignment retained”). The candidate CSS selector `.rainbow-slider` is absent from the genuine ROYGBIV implementation; the production mechanism sets `--roygbiv-slider-color` on each original range using `src/rainbow-sliders.js`. The original field identity is `[data-setting][type="range"]`; no new class or source handler was introduced.
+
+The manifest now maps that one required claim to `[data-setting][type="range"][style*="--roygbiv-slider-color"]`, and the live Focus plate test **also** records both original Geometry source range colours before Focus, selects a different Focus parameter through the real browser and verifies both original colour assignments remain identical and distinct. This adds behavioral evidence beyond a CSS source match, with the broader visual approval still left open.
+
+First-run 11 other plates showed their required source claims fully mapped in real Chromium: Studio 13, Geometry 13, Draw 12, Explore 9, More 14, Material 11, Colour 9, Diagonal 8, Compact 8, History 7, Search 8. That is 112/121 required mappings before repairing the single Focus candidate, NOT a fully green 121-claim report. Wait for the subsequent CI before promoting.
