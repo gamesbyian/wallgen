@@ -36,6 +36,21 @@ const profiles=[
 ];
 const errors=[],shots=[];
 const pause=ms=>new Promise(done=>setTimeout(done,ms));
+// Cards are inserted before their async bitmap work finishes. A real
+// screenshot must never certify an allocated-but-unpainted <canvas>.
+// Alpha at a background corner discriminates a cleared canvas from actual
+// wallpaper artwork without imposing a motif-specific colour requirement.
+const awaitPaintedThumbnails=async(page,required)=>{
+  await page.waitForFunction(count=>{
+    const cards=[...document.querySelectorAll('#gallery .thumb canvas')];
+    if(cards.length<count)return false;
+    return cards.slice(0,count).every(canvas=>{
+      if(!canvas.width||!canvas.height)return false;
+      try{return canvas.getContext('2d').getImageData(0,0,1,1).data[3]>0;}
+      catch{return false;}
+    });
+  },required,{timeout:90000});
+};
 const click=async(page,selector)=>{
   const control=page.locator(selector).first();
   if(!await control.count())throw Error('Source action absent: '+selector);
@@ -158,7 +173,8 @@ const scenarios={
     await page.waitForFunction(()=>document.querySelector('#gallery')?.dataset.view==='saved'&&
       document.querySelectorAll('#gallery .thumb').length===1&&
       !document.querySelector('#gallery')?.hasAttribute('aria-busy'));
-    await pause(400);
+    await awaitPaintedThumbnails(page,1);
+    await pause(150);
     const capture=await page.evaluate(()=>{
       const grid=document.querySelector('#gallery');
       const card=grid.querySelector('.thumb');
@@ -191,7 +207,8 @@ const scenarios={
     await click(page,'#batch');
     await page.waitForFunction(()=>document.querySelectorAll('#gallery .thumb').length>=12,
       null,{timeout:60000});
-    await pause(650);
+    await awaitPaintedThumbnails(page,12);
+    await pause(150);
   },
   more:async(page,profile)=>{
     if(profile.width<=790){
