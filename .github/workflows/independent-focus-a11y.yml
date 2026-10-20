@@ -8,6 +8,9 @@ on:
       - 'editor-focus.css'
       - 'src/mobile-*.js'
       - 'tests/independent-focus-a11y-acceptance.mjs'
+      - 'tests/independent-svg-candidates-acceptance.mjs'
+      - 'assets/icons/roygbiv/manifest.json'
+      - 'assets/icons/roygbiv/state-matrix.html'
       - '.github/workflows/independent-focus-a11y.yml'
 
 permissions:
@@ -22,7 +25,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: node --check tests/independent-focus-a11y-acceptance.mjs
+      - run: |
+          node --check tests/independent-focus-a11y-acceptance.mjs
+          node --check tests/independent-svg-candidates-acceptance.mjs
       - run: npm test
       - run: npm install --no-save playwright@1.56.1 serve@14.2.5
       - run: npx playwright install --with-deps chromium
@@ -34,11 +39,15 @@ jobs:
           exit 1
       - name: Execute independent Focus/All Chromium negative journeys
         run: node tests/independent-focus-a11y-acceptance.mjs
+      - name: Independently probe eight source-exact candidate icons at 20/24/28px
+        run: node tests/independent-svg-candidates-acceptance.mjs
       - name: Preserve measurements and failure screenshots
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: independent-focus-adversarial-evidence
-          path: artifacts/independent-focus-qa/
+          path: |
+            artifacts/independent-focus-qa/
+            artifacts/independent-svg-qa/
           retention-days: 14
           if-no-files-found: warn
