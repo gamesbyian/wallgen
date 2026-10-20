@@ -18,6 +18,8 @@ on:
       - 'tests/redesign-more-keyboard-traversal.mjs'
       - 'tests/redesign-draw-real-transaction.mjs'
       - 'tests/redesign-fresh-draw-gesture.mjs'
+      - 'tests/redesign-editor-focus-ab.mjs'
+      - 'tests/redesign-draw-geometry-matrix.test.js'
       - '.github/workflows/agent3-mobile-acceptance.yml'
       - 'docs/ui-reference/source-control-inventory.json'
       - 'src/editor-*.js'
@@ -57,7 +59,8 @@ jobs:
             tests/redesign-clipboard-denial-recovery.mjs \
             tests/redesign-more-keyboard-traversal.mjs \
             tests/redesign-draw-real-transaction.mjs \
-            tests/redesign-fresh-draw-gesture.mjs; do
+            tests/redesign-fresh-draw-gesture.mjs \
+            tests/redesign-editor-focus-ab.mjs; do
             node --check "$test"
           done
           node --test \
@@ -65,8 +68,9 @@ jobs:
             tests/interior-elements.test.js \
             tests/interior-combined-scope.test.js \
             tests/interior-selected-id.test.js \
-            tests/material-three-layer-adversarial.test.js
-      - name: One Chromium/browser install for fourteen acceptance suites
+            tests/material-three-layer-adversarial.test.js \
+            tests/redesign-draw-geometry-matrix.test.js
+      - name: One Chromium/browser install for fifteen acceptance suites
         run: |
           npm install --no-save playwright@1.56.1 serve@14.2.5
           npx playwright install --with-deps chromium
@@ -79,7 +83,7 @@ jobs:
           done
           cat /tmp/agent3-consolidated.log
           exit 1
-      - name: Exercise all fourteen independently authored browser gates
+      - name: Exercise all fifteen independently authored browser gates
         run: |
           status=0
           for test in \
@@ -96,7 +100,8 @@ jobs:
             tests/redesign-clipboard-denial-recovery.mjs \
             tests/redesign-more-keyboard-traversal.mjs \
             tests/redesign-draw-real-transaction.mjs \
-            tests/redesign-fresh-draw-gesture.mjs; do
+            tests/redesign-fresh-draw-gesture.mjs \
+            tests/redesign-editor-focus-ab.mjs; do
             echo "::group::$test"
             node "$test" || status=1
             echo "::endgroup::"
@@ -122,5 +127,6 @@ jobs:
             artifacts/agent3-more-keyboard/
             artifacts/agent3-draw-transaction/
             artifacts/agent3-fresh-draw/
+            artifacts/agent3-editor-focus-ab/
           retention-days: 14
           if-no-files-found: warn
