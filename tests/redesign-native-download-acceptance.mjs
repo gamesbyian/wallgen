@@ -195,6 +195,21 @@ try{
     }
     console.log('AGENT3_NATIVE_DOWNLOAD_QUALIFIED',JSON.stringify(observation));
   }
+  const crossingFiles=observations.filter(x=>
+    x.name.startsWith('drawn-offframe-crossing-'));
+  assert.deepEqual(crossingFiles.map(x=>x.crossingMode),
+    ['over','under','weave'],
+    'Missing one of the three genuinely exported crossing-order PNGs');
+  assert.equal(new Set(crossingFiles.map(x=>x.sha256)).size,3,
+    'Actual downloaded native PNG pixels/recipes were identical across crossing orders');
+  const canonicalCrossing=fixtures.find(f=>
+    f.name==='drawn-offframe-crossing-over-native')?.recipe;
+  for(const fixture of fixtures.filter(f=>
+    f.name.startsWith('drawn-offframe-crossing-'))){
+    assert.deepEqual(normalizeRecipe({...fixture.recipe,crossingMode:'over'}),
+      canonicalCrossing,
+      'Supposed crossing-only native export changed another source setting');
+  }
   assert.deepEqual(errors,[],'Uncaught page errors during actual PNG download');
   await writeFile(join(out,'evidence.json'),JSON.stringify({
     classification:'eight actual 19.8MP downloaded PNGs including all three off-frame crossing modes compared to direct stable foreground pixels',
