@@ -17,15 +17,15 @@ const scenes=[{id:'path-geometry',tab:'path',tool:'geometry'},
  {id:'material-finish',tab:'material',tool:'finish1'},
  {id:'colour-rainbow',tab:'colour',tool:'rainbow'}];
 const proposedCss=`
-/* EXPERIMENT ONLY. 64/36 inspector/preview ratio; NOT shipped. */
+/* EXPERIMENT ONLY. fixed 420px inspector / remaining-width preview; NOT shipped. */
 @media (min-width:570px) and (max-width:790px) and (max-height:530px) and (orientation:landscape){
  body.mobile-studio.mobile-edit-open .layout{
    position:fixed!important;inset:0!important;display:block!important;
    width:100vw!important;height:100dvh!important;overflow:hidden!important;
  }
  body.mobile-studio.mobile-edit-open .workspace{
-   position:fixed!important;left:64%!important;right:0!important;
-   top:0!important;bottom:0!important;width:36%!important;
+   position:fixed!important;left:420px!important;right:0!important;
+   top:0!important;bottom:0!important;width:calc(100vw - 420px)!important;
    height:100dvh!important;max-height:100dvh!important;
    margin:0!important;padding:6px!important;overflow:hidden!important;
  }
@@ -35,7 +35,7 @@ const proposedCss=`
  }
  body.mobile-studio.mobile-edit-open .sidebar{
    position:fixed!important;top:0!important;bottom:0!important;
-   left:0!important;right:auto!important;width:64%!important;
+   left:0!important;right:auto!important;width:420px!important;
    height:100dvh!important;max-height:100dvh!important;min-height:0!important;
    padding:0 8px 4px!important;border-radius:0!important;
    transform:translateY(0)!important;overflow:hidden!important;
