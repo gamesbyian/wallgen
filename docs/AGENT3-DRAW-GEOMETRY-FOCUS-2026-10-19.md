@@ -34,7 +34,7 @@ CI: `.github/workflows/agent3-mobile-acceptance.yml` runs all seventeen independ
 
 **Queue 9: STRONG BOUNDED BROWSER EVIDENCE, unchecked.** Actual freehand sketch/Interpret/Draw again/Edit points and saved geometry now exercise corner, nudge, point Undo, 10× resmooth, real handle drag, insertion, deletion, Cancel and Apply at both 412×892 and 700×412. Full combinations/native hardware are still outside this gate.
 
-**Queue 10: STRONG BOUNDED RENDER EVIDENCE, unchecked.** Extrapolated world-space geometry, source-immutable crossing-order maths, and painted Canvas2D pairwise distinctions at two camera scales now cover a loop, a saved figure-eight and an authored off-frame figure-eight. Exact native PNG transport across crossing/material permutations remains unqualified.
+**Queue 10: CHECKED, BOUNDED BEHAVIOR VERIFIED.** World-space extrapolation, source-immutable crossing geometry and painted Canvas2D order distinctions are qualified at two camera scales, with **real downloaded 3024×6552 off-frame Over/Under/Weave PNGs**, all with complete original normalized recipes and **zero sampled native/direct foreground pixel mismatches**. Stochastic textured permutations and physical Android remain explicitly separate *release-wide* gates.
 
 **Queue 11: MACHINE A/B EVIDENCE PENDING HUMAN SIGNOFF, unchecked.** The sampled task makes Focus cost one extra action but may offer larger/clearer adjustments. That cost is not equivalent to task-completion time, accuracy or user preference. Preserve the mandatory user-testing gate and the current **All controls** default.
 
@@ -63,3 +63,11 @@ This is genuine native downloadable PNG transport and painted pixel parity for t
 The [17-suite Chromium run 39377693618](https://github.com/gamesbyian/wallgen/actions/runs/39377693618) also passed a third **off-frame** self-intersecting real-render variant (three orders × 100%/75%), physical Draw again at both phone and short-landscape and a repeated phone/short-landscape Focus A/B with intact original recipe and disabled-state semantics. Newer checks demand resmoothing change visible *in the actual overlaid pixels*, pixel-exact local Undo, and one continuous fresh Draw→Interpret→Edit anchors→Apply gesture; those remain **pending their later CI head**.
 
 **No default inspector change.** Human A/B approval remains separate regardless of machine gesture counts.
+
+## Queue adjudication and runner limits, 2026-10-20
+
+**Acceptance entry 10 has been checked in `docs/UI-REDESIGN-IMPLEMENTATION-QUEUE.md`**, using the passing [native download run 39377844451](https://github.com/gamesbyian/wallgen/actions/runs/39377844451) plus [production crossing-raster run 39377237162](https://github.com/gamesbyian/wallgen/actions/runs/39377237162) and source extrapolation/serialization unit tests. This is a claim about the *named* extension and crossing behaviors, not every downstream texture/OS variation.
+
+**Acceptance entry 9 remains unchecked**, although the [green 17-suite run 39378143046](https://github.com/gamesbyian/wallgen/actions/runs/39378143046) established that actual 10× Resmooth changes overlay pixels and all earlier live source actions work. The [new continuous freehand Draw→Interpret→Edit anchor→Apply run 39378328111](https://github.com/gamesbyian/wallgen/actions/runs/39378328111) separately printed success records for both phone and landscape, but the aggregate was terminated by a **GitHub runner shutdown**, including its manual retry, before executing the *new* pixel-exact local Resmooth→point Undo assertion. Neither canceled attempt is credited as green for that assertion. Preserve it and run with a stable Actions slot.
+
+The last clean full-suite head and last clean eight-file native head precede the extra pixel-exact Undo check. General validation passed on the later source heads. Reviewers should use exact green head/run identities, not the PR's latest SHA alone, when determining which regression requirements were executed.
