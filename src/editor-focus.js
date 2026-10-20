@@ -65,7 +65,9 @@ export function installFocusedAdjustments({form,chooser}){
   lock.setAttribute('aria-label','Lock focused parameter');
   lock.setAttribute('aria-pressed','false');
   const output=create('output','editor-focus-value');output.setAttribute('aria-live','off');
-  row.append(minus,slider,plus,lock,output);
+  // Keep + as the last button in DOM order: existing keyboard/browser
+  // stepping semantics rely on that identity. CSS places Lock beside it.
+  row.append(minus,slider,lock,plus,output);
   const help=create('p','editor-focus-help');
   help.setAttribute('role','status');help.setAttribute('aria-live','polite');
   panel.append(heading,chips,row,help);
