@@ -70,8 +70,12 @@ test('the two SVGs share geometry and differ in background and phone outline col
   assert.deepEqual(paths(darkLogo),paths(creamLogo));
   assert.match(darkLogo,/transform="translate\(0 -2\.4\)"/);
   for(const path of paths(darkLogo)){
-    const n=[...path.matchAll(/\d+/g)].map(x=>Number(x[0]));
+    const n=[...path.matchAll(/-?\d+(?:\.\d+)?/g)].map(x=>Number(x[0]));
+    assert.equal(n.length,4,'each rainbow stripe stays a single straight segment');
     assert.ok(n.every(v=>v>=8&&v<=111),'stripes stay short of square edges');
+    const [x1,y1,x2,y2]=n;
+    const slope=(y2-y1)/(x2-x1);
+    assert.ok(Math.abs(slope+0.27017)<.001,'all V6 stripes retain the approved common angle');
   }
 });
 test('raster generator produces matching actual PNG binaries at icon resolution',()=>{
