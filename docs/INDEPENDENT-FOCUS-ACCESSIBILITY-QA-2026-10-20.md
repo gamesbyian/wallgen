@@ -156,3 +156,30 @@ contrast defect and narrowly scoped repair; do not describe the repair as
 browser-verified until the **post-fix** Actions run is green. Native Android,
 TalkBack, all possible dynamic editor screens and human evaluation are
 still **NOT VERIFIED**. Entry #15 remains unchecked.
+
+## Expanded More-panel counterexample: second repair
+
+The stricter `zero automated WCAG violation` assertion caught a separate
+**cream-theme expanded More → Metadata** failure at the post-zoom-fix head
+`342a1eac7f3a23edabe75ee941f766ac6735ed8c`:
+[red CI run 39395007270](https://github.com/gamesbyian/wallgen/actions/runs/39395007270).
+The original zoom-label violation was gone, but axe identified
+`label[for="seedInput"]` at **2.44:1**, metadata explanatory text
+at **2.33:1**, and enabled Title/Creator/Description labels at **1.60:1**
+in 412×892 and/or 700×412 cream More. Dark passed. Source trace:
+`styles.css` supplied dark-on-dark labels whose colours were inherited
+by cream's light `studio-themes.css` surfaces; the input foreground
+itself already used a cream override. These are legibility defects on
+genuine enabled labels, **not** intended disabled-state opacity.
+
+Remediation adds only colour overrides to `studio-themes.css`:
+cream seed and metadata guidance `#625d70`, cream metadata labels
+`#5b5366`. Computed expected contrast exceeds **6:1** on the light
+surfaces observed by axe; does not alter font size, placement, controls,
+input values, locks, dark theme or export. The `index.html` stylesheet
+version is bumped so cached clients receive the repair.
+
+**Next verification:** require zero axe WCAG 2.x automated violations
+across the same 24-state browser matrix at a post-fix head. Diagnostic
+`incomplete` nodes now retain target selectors for manual review;
+automated success cannot qualify physical TalkBack or full WCAG.
