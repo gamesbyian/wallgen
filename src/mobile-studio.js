@@ -98,17 +98,28 @@ const placeholders=originals.map(node=>{
  * textarea taller than the CSS scroll-padding budget. A focused source
  * control must be physically visible, not merely focusable in the DOM.
  * Keep original controls, order, and focus intact; only move sheet scroll. */
-tools.addEventListener('focusin',event=>{
-  if(!mobile.matches||tools.hidden)return;
-  const el=event.target;
-  if(!(el instanceof HTMLElement)||!tools.contains(el))return;
+function ensureMoreFocusedControlVisible(el){
+  if(!mobile.matches||tools.hidden||document.activeElement!==el)return;
   const viewport=tools.getBoundingClientRect(),rect=el.getBoundingClientRect();
   const header=tools.querySelector('.mobile-sheet-head');
   const top=Math.min(viewport.bottom-8,
     Math.max(viewport.top,header?.getBoundingClientRect().bottom||viewport.top)+8);
   const bottom=viewport.bottom-8;
-  if(rect.bottom>bottom)tools.scrollTop+=rect.bottom-bottom;
-  else if(rect.top<top)tools.scrollTop-=top-rect.top;
+  const delta=rect.bottom>bottom?rect.bottom-bottom:
+    rect.top<top?rect.top-top:0;
+  // A keyboard focus target MUST remain inside the fixed More tray. Instant
+  // scroller movement avoids animations racing native Tab focus scrolling.
+  if(delta)tools.scrollTo({top:tools.scrollTop+delta,behavior:'instant'});
+}
+tools.addEventListener('focusin',event=>{
+  if(!mobile.matches||tools.hidden)return;
+  const el=event.target;
+  if(!(el instanceof HTMLElement)||!tools.contains(el))return;
+  ensureMoreFocusedControlVisible(el);
+  // Chromium can apply its own native focus scroll *after* focusin; recheck
+  // against the final painted geometry, without stealing focus or moving
+  // any wallpaper/recipe state.
+  requestAnimationFrame(()=>ensureMoreFocusedControlVisible(el));
 });
 
 let lastFocus=null;
