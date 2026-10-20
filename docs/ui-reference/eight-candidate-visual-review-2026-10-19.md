@@ -5,7 +5,7 @@
 ## Evidence and decision boundary
 
 - [Source-exact 68-icon state matrix](../../assets/icons/roygbiv/state-matrix.html) and [icon manifest](../../assets/icons/roygbiv/manifest.json) are the source of candidate glyph geometry and status.
-- [Independent real-browser screenshot artifact](https://github.com/gamesbyian/wallgen/actions/runs/39353643417) includes `icons/{name}-states.png` for all eight reviewed candidates. This is the **pre-metadata-contrast correction** baseline. Inspect #258's regenerated source matrix after it merges, not the old screenshot, for the corrected metadata page.
+- [Independent real-browser screenshot artifact](https://github.com/gamesbyian/wallgen/actions/runs/39353643417) includes `icons/{name}-states.png` for all eight reviewed candidates. This is the **pre-metadata-contrast correction** baseline. The corrected [#258 source-exact Chromium matrix](https://github.com/gamesbyian/wallgen/actions/runs/39363366198) is now independently inspected as well. All seven applicable workflows passed before #258 merged.
 - This review looked at distinctiveness, legibility and state persistence. It does **not** replace the user's approval, a final in-app control assignment or a physical device comparison. Leave all eight unwired until approved and source-mapped.
 
 | Candidate | Visual review of 20/24/28px cream/dark states | Disposition |
@@ -16,7 +16,7 @@
 | `extend-path` | Frame/dashed boundary and extrapolating line are recognizable at 24/28px, but comparatively dense at 20px. | **Caution: prefer 24px+** where geometry permits, or retain clear adjacent label. Validate on open/closed paths rather than inferring applicability from the icon. |
 | `weave` | Crossing red/blue segments are crisp across themes and states. Icon alone does not distinguish over/under choice or renderer semantics. | **Candidate retained with text**, no colour-only indication of selected crossing order. |
 | `focus-slider` | Slider motif remains readable in both themes, but could be confused with the wired `edit-controls` glyph. | **Caution: label Focus explicitly**, retain All controls default and visibility of source parameter/locks. |
-| `metadata` | **Adversarial finding:** in the baseline matrix, cream-filled page used inherited light strokes, erasing its document rules/edge in dark normal and selected. | **Fix in #258, awaiting current matrix validation**: pin page edge and rule ink to ROYGBIV dark `#18151F` while preserving fill and geometry. Re-review before approval. |
+| `metadata` | **Adversarial finding:** in the baseline matrix, cream-filled page used inherited light strokes, erasing its document rules/edge in dark normal and selected. | **Fix merged and re-reviewed (#258)**: page edge and document rules now use ROYGBIV ink `#18151F` on the unchanged cream page. The new actual 20/24/28px cream/dark/selected/disabled/focus screenshot clearly retains the page lines on dark surfaces. User placement/approval still pending. |
 | `restore-variation` | Three-colour overlapping paper/loop motif visible in normal/focus; relatively busy at 20px and perceptually closer to refresh than an explicit history destination. | **Caution: labelled Restore**, 24/28px preferable for important actions. Keep Undo and History semantics separate. |
 
 ## Source and accessibility constraints before wiring
@@ -26,4 +26,4 @@
 3. Make disabled/selected/focus/locked states discernible without interpreting small coloured pixels; retain accessible names and help text.
 4. User approval is still outstanding for the candidates. Do not claim that an independently inspected row constitutes approval of its eventual placement, size or meaning.
 
-**Follow-up required:** re-run and inspect corrected `metadata` 20/24/28px matrix after #258 succeeds; record explicit user decisions for all eight before changing their candidate status.
+**Next decision:** record explicit user approval or revisions for the eight glyph assignments before changing their candidate status. The corrected Metadata artwork has passed source checks and actual visual review, but is still unwired, as intended.
