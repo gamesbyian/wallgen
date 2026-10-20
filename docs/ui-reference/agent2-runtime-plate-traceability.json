@@ -268,10 +268,10 @@
       "id": "studio.forbidden.03",
       "plate": "studio",
       "kind": "forbidden",
-      "claim": "Recipe mutation from camera pan or zoom",
+      "claim": "Camera zoom or viewport pan changing authored geometry, composition positionX/Y, or wallpaper export dimensions",
       "sourceCandidate": null,
-      "applicableState": "Every plate variant; counterexample search required",
-      "exercise": "Try to reproduce forbidden content or behavior in actual browser across relevant states",
+      "applicableState": "Studio viewport pan, Zoom +/− and Fit with an existing nondefault authored recipe",
+      "exercise": "Record full normalized recipe and source dimensions; invoke Pan, Zoom and Fit separately; verify only viewZoom/viewPanX/viewPanY change, while authored geometry, positionX/Y and PNG dimensions remain identical.",
       "evidenceCandidates": [
         "tests/redesign-navigation-acceptance.mjs",
         "tests/redesign-camera-structure-acceptance.mjs"
