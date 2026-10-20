@@ -27,12 +27,12 @@
 .editor-focus-step{border:1px solid var(--line);border-radius:9px;min-height:40px;
   color:inherit;background:var(--surface);font-size:23px}
 /* Focus lock delegates to the existing source lock, including inactive gates. */
-.editor-focus-lock{min-width:40px;min-height:40px;padding:2px;border:1px solid var(--line);
+.editor-focus-lock{order:1;min-width:40px;min-height:40px;padding:2px;border:1px solid var(--line);
   border-radius:9px;color:inherit;background:var(--surface);font-size:10px;font-weight:750}
 .editor-focus-lock[aria-pressed=true]{border-color:#b35b8f}
 .editor-focus-lock:disabled{cursor:not-allowed;opacity:.55}
 
-.editor-focus-value{min-width:0;text-align:center;font:600 13px Rubik,system-ui,sans-serif;
+.editor-focus-value{order:2;min-width:0;text-align:center;font:600 13px Rubik,system-ui,sans-serif;
   font-variant-numeric:tabular-nums}
 .editor-focus-help{font-size:11px;line-height:1.35;color:var(--muted);margin:0}
 .editor-focus-panel :disabled{opacity:.5}
