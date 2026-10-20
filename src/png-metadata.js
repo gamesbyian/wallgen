@@ -103,7 +103,6 @@ export function embedPngMetadata(input,values={},options={}){
   // text both before and after the (contiguous) IDAT sequence. Older exports
   // could contain multiple recipes; never let a stale one survive re-export.
   const oldChunks=[];
-  const recipeKeyword=encoder.encode(RECIPE_KEYWORD);
   let offset=8,insertIndex=-1;
   while(offset+12<=bytes.length){
     const size=u32(bytes,offset);
@@ -111,10 +110,11 @@ export function embedPngMetadata(input,values={},options={}){
     const end=offset+12+size;
     const type=String.fromCharCode(...bytes.subarray(offset+4,offset+8));
     if(type==='IDAT'&&insertIndex<0)insertIndex=oldChunks.length;
-    const data=bytes.subarray(offset+8,offset+8+size);
-    const keywordEnd=type==='iTXt'?data.indexOf(0):-1;
-    const oldRecipe=type==='iTXt'&&keywordEnd===recipeKeyword.length&&
-      recipeKeyword.every((value,i)=>data[i]===value);
+    // Compare just the fixed keyword prefix; never scan a potentially huge
+    // unrelated PNG text record simply to decide whether to preserve it.
+    const oldRecipe=type==='iTXt'&&size>recipeKeywordBytes.length&&
+      recipeKeywordBytes.every((value,i)=>bytes[offset+8+i]===value)&&
+      bytes[offset+8+recipeKeywordBytes.length]===0;
     if(!(options.recipe!==undefined&&oldRecipe))
       oldChunks.push(bytes.subarray(offset,end));
     offset=end;
