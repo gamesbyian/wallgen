@@ -31,6 +31,14 @@ const profiles=[
   {id:'edge-399x740',width:399,height:740,cases:['studio','material','saved-empty','saved-populated']},
   {id:'edge-400x740',width:400,height:740,cases:['studio','material','saved-empty','saved-populated']},
   {id:'short-phone-412x740',width:412,height:740,cases:['studio','material','saved-empty','saved-populated','explore-populated']},
+  // Probe the handoff among <=670px short landscape, 680px compact
+  // portrait, and >790px normal-height thumbnail recipes.
+  {id:'height-edge-412x670',width:412,height:670,cases:['studio','saved-populated']},
+  {id:'height-edge-412x671',width:412,height:671,cases:['studio','saved-populated']},
+  {id:'height-edge-412x679',width:412,height:679,cases:['studio','saved-populated']},
+  {id:'height-edge-412x680',width:412,height:680,cases:['studio','saved-populated']},
+  {id:'height-edge-412x790',width:412,height:790,cases:['studio','saved-populated']},
+  {id:'height-edge-412x791',width:412,height:791,cases:['studio','saved-populated']},
   {id:'short-edge-499x740',width:499,height:740,cases:['studio','material','saved-populated']},
   {id:'short-edge-500x740',width:500,height:740,cases:['studio','material','saved-populated']},
   {id:'phone-412x892',width:412,height:892,cases:[...all,'explore-populated','saved-empty','saved-populated']},
