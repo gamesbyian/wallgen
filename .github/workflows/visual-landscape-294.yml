@@ -1,0 +1,46 @@
+name: Agent 1 landscape split-preview research (#294)
+on:
+  pull_request:
+    paths:
+      - 'scripts/visual-landscape-prototype-agent1.mjs'
+      - '.github/workflows/visual-landscape-294.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: landscape-preview-agent1-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  actual-browser-ab:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate independent browser research
+        run: node --check scripts/visual-landscape-prototype-agent1.mjs
+      - name: Install Chromium dependencies
+        run: |
+          npm install --no-save playwright@1.56.1 serve@14.2.5
+          npx playwright install --with-deps chromium
+      - name: Launch unchanged live application
+        run: |
+          npx serve . -l 4173 > /tmp/visual-landscape-source.log 2>&1 &
+          for i in $(seq 1 40); do
+            if curl --fail --silent http://127.0.0.1:4173/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/visual-landscape-source.log
+          exit 1
+      - name: Capture real-source baseline versus CSS-injected landscape-only prototype
+        run: node scripts/visual-landscape-prototype-agent1.mjs
+      - name: Publish A/B screenshots and objective geometry with explicit limitations
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent1-landscape-294-browser-ab
+          path: artifacts/visual-landscape-294/
+          retention-days: 14
+          if-no-files-found: warn
