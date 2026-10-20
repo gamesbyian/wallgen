@@ -60,7 +60,7 @@ async function exercise(plate,page){
   if(plate==='focus')await page.locator('.editor-focus-toggle').click();
   if(plate==='history')await page.locator('#editorHistoryToggle').click();
   if(plate==='search'){
-    await page.locator('.editor-search-toggle').click();
+    await page.locator('button[aria-label="Find a setting"]').click();
     await page.locator('.editor-search-input').fill('geometry');
   }
 }
