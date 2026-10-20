@@ -154,6 +154,15 @@ try{
     if(!deltas.portraitUnchanged)
      failures.push({key,error:'Landscape-only proposal altered portrait viewport'});
     if(stageSidebarOverlap>2)failures.push({key,error:'Proposal lays source inspector over stage'});
+    if(!deltas.sourceCardFitsAfter)failures.push({key,error:'Proposal clips active card below inspector'});
+    for(const id of ['selectedTool','settingCategory','sourceControl']){
+      const target=after.targets.find(t=>t.id===id);
+      if(!target||!target.hit)failures.push({key,error:'Proposal obstructs live '+id+' center'});
+    }
+    const unreachableRotation=after.rotationActions.filter(a=>a.visible&&!a.disabled&&!a.hit);
+    if(unreachableRotation.length)failures.push({key,error:'Proposal loses original Material rotation actions',
+      names:unreachableRotation.map(a=>a.name)});
+
     records.push({key,size,theme,scene,production:before,experimental:after,deltas});
     console.log('LANDSCAPE_294 '+JSON.stringify({key,...deltas}));
    }
