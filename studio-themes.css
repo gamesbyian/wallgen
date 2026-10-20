@@ -456,12 +456,13 @@ html[data-theme="dark"] .gallery-placeholder>span{color:#c5becf}
   }
 }
 
-/* Real 360×740 Saved and Explore cards were 104px wide with a 195px-tall
-   thumbnail inside a 184px gallery. Their caption fell ~47px below the
-   overflow-hidden boundary. Keep the original thumbnail artwork and a
-   readable whole-image miniature at this compact portrait width instead of
-   clipping the bottom or increasing the canvas-overlapping tray. */
-@media(min-width:341px) and (max-width:399px) and (min-height:680px) and (max-height:790px){
+/* Short portrait gallery clip height, not width, determines whether the
+   original 195px bitmap plus caption can fit. Real 360, 400 and 412×740
+   screens all provided only ~184px of grid height, hiding 23px of wallpaper
+   and 47px of caption when the old 399px width cutoff was crossed.
+   Keep complete 140px artwork through the mobile <=790px breakpoint without
+   enlarging the canvas-overlapping tray. Tall phones stay full size. */
+@media(min-width:341px) and (max-width:790px) and (min-height:680px) and (max-height:790px){
   body.mobile-gallery-open .gallery-grid .thumb canvas{
     display:block;width:auto!important;height:140px!important;
     max-height:140px!important;max-width:100%!important;
