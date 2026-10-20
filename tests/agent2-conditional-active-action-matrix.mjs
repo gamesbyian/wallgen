@@ -182,6 +182,8 @@ for(const layout of layouts){
       }
       active=await pick(page,item.active);
       await undoSource(page,active,action);
+      await page.waitForFunction(token=>
+        new URL(location.href).searchParams.get('r')===token,token);
       assert.deepEqual(current(),source,
         item.id+': restoring driver failed full normalized recipe reversibility');
       assert.ok(await dormant.isDisabled(),
