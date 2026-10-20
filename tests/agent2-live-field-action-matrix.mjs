@@ -54,9 +54,14 @@ const sceneForKey=key=>{
   return normalizeRecipe({...baseline,...mode});
 };
 const intentionallySeparate=new Set([
-  'textureLayer2Enabled','textureLayer3Enabled', // native hidden flags; real layer controls tested separately
   'tonalContrast' // disabled legacy Tonal construction, never credit as user-operable
 ]);
+// Layer-enable source checkboxes have no data-setting attribute and are
+// deliberately controlled by their user-visible material chooser buttons.
+const shard=Number(process.env.AGENT2_FIELD_SHARD||0);
+const shardCount=Number(process.env.AGENT2_FIELD_SHARDS||1);
+assert.ok(Number.isInteger(shard)&&Number.isInteger(shardCount)&&
+  shardCount>0&&shard>=0&&shard<shardCount,'Invalid matrix shard');
 const browser=await chromium.launch({headless:true});
 const context=await browser.newContext({viewport:{width:412,height:892},
   isMobile:true,hasTouch:true,reducedMotion:'reduce'});
@@ -76,7 +81,7 @@ async function goToField(key,original){
   await page.goto(url,{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>document.body.classList.contains('mobile-five-nav'));
   assert.deepEqual(current(),original,key+': imported fixture mutated before user action');
-  await page.locator('#mobileEdit').click();
+  if(key!=='primesOnly')await page.locator('#mobileEdit').click();
   if(candidate){
     const tab=page.locator('#tab-'+candidate.category);
     assert.ok(await tab.isEnabled(),key+': source category not available');
@@ -139,7 +144,8 @@ try{
   assert.equal(inventory.length,87,'Source field count changed; refresh acceptance scope');
   assert.equal(new Set(inventory.map(f=>f.key)).size,87,
     'Duplicate source field identities would invalidate reachability count');
-  for(const {key} of inventory){
+  const assigned=inventory.filter((item,i)=>i%shardCount===shard);
+  for(const {key} of assigned){
     if(intentionallySeparate.has(key))continue;
     try{
       const source=sceneForKey(key);
@@ -184,11 +190,12 @@ try{
     }
   }
   const tested=observations.map(v=>v.key);
-  const outstanding=inventory.map(f=>f.key)
+  const outstanding=assigned.map(f=>f.key)
     .filter(key=>!tested.includes(key)&&!intentionallySeparate.has(key));
   const summary={classification:failures.length?'PARTIAL / unverified':
     'actual Chromium source-field action/URL round-trip acceptance',
-    originalFields:inventory.length,eligible:inventory.length-intentionallySeparate.size,
+    originalFields:inventory.length,shard,shardCount,
+    assigned:assigned.length,eligible:assigned.filter(f=>!intentionallySeparate.has(f.key)).length,
     verified:tested.length,intentionallySeparate:[...intentionallySeparate],
     exclusions:['Legacy Tonal construction disabled in native selector',
       'layer enable flags are controlled through original layer controls',
@@ -200,5 +207,5 @@ try{
   assert.deepEqual(pageErrors,[],'Uncaught runtime errors');
   assert.deepEqual(failures,[],'Original input action failures');
   assert.deepEqual(outstanding,[],'Some applicable original fields lack action witnesses');
-  console.log('AGENT2_FIELD_ACTION_MATRIX_SUCCESS',tested.length);
+  console.log('AGENT2_FIELD_ACTION_MATRIX_SUCCESS',shard,shardCount,tested.length);
 }finally{await page.close();await context.close();await browser.close();}
