@@ -1256,8 +1256,14 @@ form.addEventListener('input',event=>{
 // must commit SYNCHRONOUSLY: deferring it to a frame races Favourite, Save,
 // Undo and subsequent edits, which could otherwise act on the older artwork.
 // Only continuous slider movement is coalesced into a frame.
-form.addEventListener('change',event=>{
-  if(!FIELDS.includes(event.target.name)||event.target.name==='family')return;
+// The original Primes checkbox is moved to the mobile wallpaper-side rail.
+// It retains form ownership through its form attribute, but the native change
+// cannot bubble through #controls once the original node is reparented.
+// Handle genuine form-owned input changes at document level so both mobile
+// and desktop have exactly the same authoritative recipe update.
+document.addEventListener('change',event=>{
+  if(event.target.form!==form||!FIELDS.includes(event.target.name)||
+    event.target.name==='family')return;
   clearTimeout(rangeTimeout);
   updateControlsFromInputs();
 });

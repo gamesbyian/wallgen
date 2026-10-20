@@ -11,12 +11,9 @@ const nudgeMarker=document.createComment('Desktop position: composition nudge');
 toolbar.before(toolbarMarker);
 nudge.before(nudgeMarker);
 prime.setAttribute('form','controls'); // Preserve form.elements while reparented.
-// The moved checkbox no longer bubbles through <form>. Forward its change so
-// app.js updates the actual recipe state before Randomize is pressed.
-prime.addEventListener('change',()=>{
-  if(mq.matches)document.getElementById('controls')
-    .dispatchEvent(new Event('change',{bubbles:true}));
-});
+// app.js now receives the real form-associated input change at document
+// scope. Synthetic changes dispatched from the form would lose the input
+// identity and could never update the actual Primes source setting.
 // Bleed is a visual screen-safe-area guide only, never part of the recipe,
  // rendering canvas, export, or saved image.
 const bleed=document.getElementById('bleedGuide');
