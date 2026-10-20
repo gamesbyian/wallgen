@@ -83,7 +83,8 @@ jobs:
             tests/redesign-camera-structure-acceptance.mjs \
             tests/redesign-keyboard-roving-tools.mjs \
             tests/redesign-cold-keyboard-editor.mjs \
-            tests/redesign-global-status-acceptance.mjs; do
+            tests/redesign-global-status-acceptance.mjs \
+            tests/redesign-negative-png-import.mjs; do
             echo "::group::$test"
             node "$test" || status=1
             echo "::endgroup::"
