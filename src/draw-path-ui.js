@@ -165,9 +165,14 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
     // centreline has no raw source to refit, so choosing Smooth/Geometric or
     // changing strength here previously appeared to act but did nothing.
     // The explicit point-editor Resmooth action remains available.
-    const savedOnly=showingSavedPath&&raw.length<2&&importedSource.length<2;
-    smooth.disabled=geometric.disabled=editing||savedOnly;
-    power.disabled=savedOnly&&!editing;
+    // A saved path OR an already hand-edited provisional path no longer
+    // has raw/imported samples to refit. After Edit points -> Hide points,
+    // the authoritative ready curve remains but Smooth/Geometric would
+    // otherwise claim to work while setFit silently does nothing.
+    const noRefitSource=(showingSavedPath||ready.length>=2)&&
+      raw.length<2&&importedSource.length<2;
+    smooth.disabled=geometric.disabled=editing||noRefitSource;
+    power.disabled=noRefitSource&&!editing;
     apply.disabled=(editing?editor?.points.length:ready.length)<2;
     // The UI follows the existing authoritative path state. This is not a
     // new workflow engine; no recipe data or pointer state is duplicated.
