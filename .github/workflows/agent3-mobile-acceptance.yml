@@ -91,6 +91,8 @@ jobs:
         run: |
           status=0
           for test in \
+            tests/redesign-draw-advanced-acceptance.mjs \
+            tests/redesign-fresh-draw-gesture.mjs \
             tests/redesign-mobile-focus-boundaries.mjs \
             tests/redesign-runtime-source-census.mjs \
             tests/redesign-conditional-tools-acceptance.mjs \
@@ -104,9 +106,7 @@ jobs:
             tests/redesign-clipboard-denial-recovery.mjs \
             tests/redesign-more-keyboard-traversal.mjs \
             tests/redesign-draw-real-transaction.mjs \
-            tests/redesign-fresh-draw-gesture.mjs \
             tests/redesign-editor-focus-ab.mjs \
-            tests/redesign-draw-advanced-acceptance.mjs \
             tests/redesign-crossing-pixels.mjs; do
             echo "::group::$test"
             node "$test" || status=1
