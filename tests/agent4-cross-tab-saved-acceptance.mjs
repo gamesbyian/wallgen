@@ -18,9 +18,18 @@ try{
   await a.locator('#mobileFavorite').click();
   await b.waitForFunction(()=>document.querySelectorAll('#gallery .thumb').length===1);
   assert.equal(await b.locator('#gallery .thumb').first().getAttribute('data-recipe-seed'),first.seed);
+  assert.equal(await b.locator('#favoriteCount').textContent(),'1',
+    'Cross-tab Saved count did not refresh');
+  assert.equal(await b.locator('#favorite .ui-icon').getAttribute('data-roygbiv-icon'),
+    'favourite','Unselected second design should have empty heart');
+
   await b.locator('#mobileStudio').click();
   await b.locator('#mobileFavorite').click();
   await a.waitForFunction(()=>JSON.parse(localStorage.getItem('wallgen:favorites:v1')).length===2);
+  await a.waitForFunction(()=>document.getElementById('favoriteCount')?.textContent==='2');
+  assert.equal(await a.locator('#favorite .ui-icon').getAttribute('data-roygbiv-icon'),
+    'favourite-filled','Source heart icon did not reflect remote favourite');
+
   await a.locator('#mobileSaved').click();
   await a.waitForFunction(()=>document.querySelectorAll('#gallery .thumb').length===2);
   assert.deepEqual((await a.locator('#gallery .thumb').evaluateAll(cards=>cards.map(c=>c.dataset.recipeSeed))).sort(),[first.seed,second.seed].sort());
@@ -28,12 +37,52 @@ try{
   await b.locator('#mobileFavorite').click();
   await a.waitForFunction(()=>document.querySelectorAll('#gallery .thumb').length===1);
   assert.equal(await a.locator('#gallery .thumb').first().getAttribute('data-recipe-seed'),first.seed);
+  assert.equal(await a.locator('#favoriteCount').textContent(),'1');
+
   assert.equal(await a.locator('#mobileFavorite').getAttribute('aria-pressed'),'true');
   await a.locator('#mobileStudio').click();
   await a.locator('#mobileFavorite').click();
   await b.waitForFunction(()=>localStorage.getItem('wallgen:favorites:v1')==='[]');
   assert.equal(await b.locator('#mobileFavorite').getAttribute('aria-pressed'),'false');
   assert.deepEqual(await b.evaluate(key=>JSON.parse(localStorage.getItem(key)),key),[]);
+  assert.equal(await b.locator('#favoriteCount').textContent(),'0',
+    'Remote removal left a stale visible count');
+  assert.equal(await b.locator('#favorite .ui-icon').getAttribute('data-roygbiv-icon'),
+    'favourite');
+  // Switch favourites while another tab is still painting a populated Saved
+  // contact sheet. The final view must not regain stale thumbnail cards.
+  await b.locator('#mobileSaved').click();
+  const many=Array.from({length:30},(_,i)=>normalizeRecipe({
+    seed:'a4-stale-tab-'+i,structure:i%2?'regions':'radial',
+    regionMode:'nested',radialMode:'pinwheel'
+  }));
+  await a.evaluate(([storageKey,items])=>
+    localStorage.setItem(storageKey,JSON.stringify(items)),[key,many]);
+  await a.evaluate(([storageKey,items])=>
+    localStorage.setItem(storageKey,JSON.stringify(items)),[key,[first,second]]);
+  await b.waitForFunction(()=>document.querySelector('#gallery')?.dataset.view==='saved'
+    && document.querySelector('#gallery').getAttribute('aria-busy')!=='true'
+    && document.querySelectorAll('#gallery .thumb').length===2);
+  assert.deepEqual(await b.locator('#gallery .thumb').evaluateAll(cards=>
+    cards.map(c=>c.dataset.recipeSeed)),[first.seed,second.seed],
+    'Cancelled thumbnail batch contaminated remote Saved updates');
+  assert.equal(await b.locator('#favoriteCount').textContent(),'2');
+  await a.evaluate(storageKey=>localStorage.setItem(storageKey,'{bad json'),key);
+  await b.waitForFunction(()=>document.querySelectorAll('#gallery .thumb').length===0
+    && document.querySelector('#gallery').getAttribute('aria-busy')!=='true');
+  assert.equal(await b.locator('#favoriteCount').textContent(),'0');
+  await a.evaluate(([storageKey,items])=>
+    localStorage.setItem(storageKey,JSON.stringify(items)),[key,[second]]);
+  await b.waitForFunction(()=>document.querySelectorAll('#gallery .thumb').length===1
+    && document.querySelector('#gallery .thumb')?.dataset.recipeSeed==='agent4-tab-b');
+  assert.equal(await b.locator('#favorite .ui-icon').getAttribute('data-roygbiv-icon'),
+    'favourite-filled');
+  await a.evaluate(()=>localStorage.clear());
+  await b.waitForFunction(()=>document.querySelectorAll('#gallery .thumb').length===0
+    && document.querySelector('#favoriteCount')?.textContent==='0');
+  assert.equal(await b.locator('#favorite .ui-icon').getAttribute('data-roygbiv-icon'),
+    'favourite');
+
   console.log('AGENT4_TWO_TAB_SAVED_SUCCESS');
   await context.close();
 }finally{await browser.close();}
