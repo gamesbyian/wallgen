@@ -11,6 +11,7 @@ on:
       - 'index.html'
       - 'tests/redesign-controls-conditional-acceptance.mjs'
       - 'tests/redesign-live-plate-coverage.mjs'
+      - 'tests/agent2-category-reveal-acceptance.mjs'
       - '.github/workflows/agent2-controls-acceptance.yml'
   pull_request:
     paths:
@@ -20,6 +21,7 @@ on:
       - 'index.html'
       - 'tests/redesign-controls-conditional-acceptance.mjs'
       - 'tests/redesign-live-plate-coverage.mjs'
+      - 'tests/agent2-category-reveal-acceptance.mjs'
       - '.github/workflows/agent2-controls-acceptance.yml'
   workflow_dispatch:
 
@@ -43,6 +45,7 @@ jobs:
         run: |
           node --check tests/redesign-controls-conditional-acceptance.mjs
           node --check tests/redesign-live-plate-coverage.mjs
+          node --check tests/agent2-category-reveal-acceptance.mjs
           node --check src/app.js
           node --check src/mobile-studio.js
           node --test tests/mobile-more-groups.test.js tests/inactive-conditional-roundtrip.test.js tests/ui-contract-integrity.test.js
@@ -61,6 +64,8 @@ jobs:
           exit 1
       - name: Exercise original controls and new More routes in live Chromium
         run: node tests/redesign-controls-conditional-acceptance.mjs
+      - name: Search-selected category visibility and keyboard roving at 320/360px
+        run: node tests/agent2-category-reveal-acceptance.mjs
       - name: Probe all twelve canonical plates in the running browser
         run: node tests/redesign-live-plate-coverage.mjs
       - name: Preserve source-control trace and failure screenshots
@@ -71,5 +76,6 @@ jobs:
           path: |
             artifacts/agent2-controls/
             artifacts/agent2-live-plates/
+            artifacts/agent2-category-reveal/
           retention-days: 14
           if-no-files-found: warn

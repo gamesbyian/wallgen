@@ -239,6 +239,24 @@ export function mountEditor(){
     if(!button)return;
     selectEditorTool(button.dataset.tab,EDITOR_CATEGORIES.find(c=>c.id===button.dataset.tab).tools[0].id);
   });
+  // The selected tab is the only normal Tab stop; arrows/Home/End navigate
+  // the whole category row, including tabs offscreen at phone widths.
+  nav.addEventListener('keydown',event=>{
+    const current=event.target.closest('[data-tab]');
+    if(!current||!nav.contains(current))return;
+    const available=[...nav.querySelectorAll('[data-tab]')].filter(tab=>!tab.disabled);
+    const index=available.indexOf(current);
+    if(index<0)return;
+    let next;
+    if(event.key==='ArrowRight')next=available[(index+1)%available.length];
+    else if(event.key==='ArrowLeft')next=available[(index+available.length-1)%available.length];
+    else if(event.key==='Home')next=available[0];
+    else if(event.key==='End')next=available[available.length-1];
+    else return;
+    event.preventDefault();
+    selectEditorTool(next.dataset.tab,applicableTool(next.dataset.tab),{source:'keyboard'});
+    next.focus({preventScroll:true});
+  });
   document.addEventListener('editor-category-change',event=>{
     const cat=event.detail;
     if(cat!==activeCategory)selectEditorTool(cat,EDITOR_CATEGORIES.find(c=>c.id===cat).tools[0].id);
@@ -309,9 +327,18 @@ export function selectEditorTool(category,tool,{source='manual'}={}){
     button.setAttribute('aria-selected',String(isActive));
     button.tabIndex=isActive?0:-1;
   }
-  // Touch-selected chips must *not* snap the strip back to its start.
-  // A search result is different: the corresponding chip must be discoverable.
+  // Preserve manual category swipes; reveal offscreen category tabs only for
+  // search and keyboard selection, independently of the tool-chip scroll.
   if(source==='search'||source==='keyboard'){
+    const tabRail=document.querySelector('.settings-tabs');
+    const selectedTab=tabRail?.querySelector('.settings-tab[aria-selected="true"]');
+    if(selectedTab){
+      const bounds=tabRail.getBoundingClientRect();
+      const tab=selectedTab.getBoundingClientRect();
+      const left=bounds.left+4,right=bounds.right-4;
+      if(tab.left<left)tabRail.scrollLeft+=tab.left-left;
+      else if(tab.right>right)tabRail.scrollLeft+=tab.right-right;
+    }
     const rail=chooser.getBoundingClientRect();
     const chip=selected.chip.getBoundingClientRect();
     // Both Focus and the Tool die are independently sticky on mobile.
