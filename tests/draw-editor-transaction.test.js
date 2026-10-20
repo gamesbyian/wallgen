@@ -615,3 +615,62 @@ test('locked false extension also overrides an uncommitted true preview',()=>{
     assert.equal(f.calls[0][3],false);
   }finally{f.cleanup();}
 });
+
+test('Undo that restores only saved anchor metadata invalidates the prior Draw edit',()=>{
+  const f=fixture({seed:'metadata-stale-pins',structure:'paths',geometry:'drawn',
+    customPath:path,drawnAnchors:[2],drawnCorners:[2],
+    viewZoom:1.3,viewPanX:12,positionX:9,positionY:-7});
+  try{
+    f.nodes.drawPathToggle.click();
+    f.nodes.drawEditPoints.click();
+    selectFirstAnchor(f);arrowRight(f);
+    const restored=normalizeRecipe({...f.recipe,
+      drawnAnchors:[3],drawnCorners:[3]});
+    assert.deepEqual(restored.customPath,f.recipe.customPath,
+      'only authored metadata changed, not a single curve coordinate');
+    assert.throws(()=>f.replaceRecipe(restored),/Saved path changed while editing/,
+      'stale editor cannot overwrite a restored corner or anchor');
+    assert.equal(f.nodes.drawPathPanel.hidden,true);
+    assert.equal(f.nodes.drawOverlay.hidden,true);
+    assert.equal(f.calls.length,0);
+    assert.deepEqual(f.recipe,restored);
+  }finally{f.cleanup();}
+});
+
+test('a hidden saved editor cannot Apply over newly restored corner-only metadata',()=>{
+  const f=fixture({seed:'metadata-stale-hidden',structure:'paths',geometry:'drawn',
+    customPath:path,drawnAnchors:[2,4],drawnCorners:[4],
+    viewZoom:.5,positionX:11});
+  try{
+    f.nodes.drawPathToggle.click();
+    f.nodes.drawEditPoints.click();
+    selectFirstAnchor(f);arrowRight(f);
+    f.nodes.drawEditPoints.click();
+    assert.equal(f.nodes.drawPathPanel.dataset.phase,'refine');
+    const restored=normalizeRecipe({...f.recipe,drawnCorners:[2,4]});
+    assert.deepEqual(restored.customPath,f.recipe.customPath);
+    assert.throws(()=>f.replaceRecipe(restored),/Saved path changed while editing/);
+    assert.equal(f.calls.length,0);
+    assert.equal(f.nodes.drawPathPanel.hidden,true);
+    assert.deepEqual(f.recipe,restored);
+  }finally{f.cleanup();}
+});
+
+test('a saved editor still Applies normally when only the camera changed',()=>{
+  const f=fixture({seed:'metadata-camera-independent',structure:'paths',
+    geometry:'drawn',customPath:path,drawnAnchors:[2],drawnCorners:[2],
+    viewZoom:.5,viewPanX:18,material:'linen'},
+    {commitOnApply:true});
+  try{
+    f.nodes.drawPathToggle.click();
+    f.nodes.drawEditPoints.click();
+    selectFirstAnchor(f);arrowRight(f);
+    f.replaceRecipe({...f.recipe,viewZoom:1.5,viewPanX:-8,material:'foil'});
+    assert.equal(f.nodes.drawPathPanel.hidden,false);
+    f.nodes.drawApply.click();
+    assert.equal(f.calls.length,1);
+    assert.equal(f.recipe.material,'foil');
+    assert.deepEqual([f.recipe.viewZoom,f.recipe.viewPanX],[1.5,-8]);
+    assert.notDeepEqual(f.recipe.customPath,path);
+  }finally{f.cleanup();}
+});
