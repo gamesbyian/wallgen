@@ -967,3 +967,63 @@ html[data-theme="cream"] body.mobile-studio .sidebar .settings-tabs .settings-ta
     max-height:29px!important;box-sizing:border-box!important;
   }
 }
+
+/* Issue #276: real source measurements reveal collapsed native slider
+   tracks on ALL desktop widths, including the 791px handoff and 1151/1280px.
+   Stack existing labels above the complete source stepper so each input
+   has a draggable track; preserve source die/lock and 4-column rotations.
+   Phone <=790px retains its independently qualified control geometry. */
+@media (min-width:791px){
+  .editor-tool-card .field.range-field:not(.texture-rotation-field){
+    display:flex;flex-direction:column;align-items:stretch;gap:3px;
+    min-width:0;
+  }
+  /* Legacy nested Shadow/Lighting rows force row-nowrap !important in the
+     base desktop editor. Without overriding that old declaration, their
+     source steppers overlap die/lock and run 86px outside the field. */
+  .editor-tool-card :is(.stripe-shadow-section,.lighting-subsection)
+    .lockable-setting>.field.range-field{
+    flex-flow:column nowrap!important;
+    align-items:stretch!important;
+    justify-content:flex-start!important;
+  }
+  .editor-tool-card .field.range-field:not(.texture-rotation-field)>span{
+    flex:0 0 auto;width:auto;max-width:100%;white-space:normal;
+  }
+  .editor-tool-card .field.range-field:not(.texture-rotation-field)>.stepper{
+    display:flex;align-items:center;min-width:0;width:100%;
+    flex:0 0 auto;
+  }
+  .editor-tool-card .field.range-field:not(.texture-rotation-field)>.stepper>input[type=range]{
+    flex:1 1 auto;min-width:0;width:auto;
+  }
+}
+
+/* Measured real Chromium at 500x892, 790x892 and 700x412: the final
+   Lighting canvas-shade row was 5.84px beneath its clipped source card.
+   Reclaim unused internal 2px gaps and 3px of bottom padding, keeping the
+   existing native inputs, the stage/tray boundary and wallpaper size fixed.
+   Compact <=499px uses a different layout and is deliberately untouched. */
+@media (min-width:500px) and (max-width:790px){
+  body.mobile-studio.mobile-edit-open .sidebar
+    .editor-tool-card[data-editor-tool="lighting"]{
+    gap:0!important;padding:0 8px 2px!important;
+  }
+  body.mobile-studio.mobile-edit-open .sidebar
+    .editor-tool-card[data-editor-tool="lighting"] .lighting-subsection{
+    gap:0!important;
+  }
+  /* Four original Lighting rows inherit 1px top + bottom padding each.
+     Remove only that inner dead space (8px total); retain native 35px
+     buttons, 37px selects and every original control and focus target. */
+  body.mobile-studio.mobile-edit-open .sidebar
+    .editor-tool-card[data-editor-tool="lighting"] .lighting-subsection .lockable-setting{
+    padding:0!important;
+  }
+  /* Two original Lighting selects can release 1px each while retaining
+     36px-high source hit targets, leaving visible clearance for Canvas shade. */
+  body.mobile-studio.mobile-edit-open .sidebar
+    .editor-tool-card[data-editor-tool="lighting"] .field select{
+    height:36px!important;min-height:36px!important;
+  }
+}
