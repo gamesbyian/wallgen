@@ -8,7 +8,7 @@ Claims are qualified as source-confirmed, browser-observed, visual-approved, beh
 
 **Behavior lane:** Seek counterexamples to each requirement in the verification matrix. Verify zoom changes serialized viewZoom only; nudge changes positionX and positionY while frame Pan changes only viewPanX/viewPanY; Fit resets both framing axes and zoom without altering composition; point edits alter geometry, while framing guides do not. Compare full before/after recipes, screenshots and PNG output.
 
-**Visual/accessibility lane:** Render actual existing and candidate SVGs at 20, 24 and 28 pixels under cream/dark, active/disabled/focus states. Find lost labels, clashing hitboxes, clipped/hidden controls, short-height landscape failures and theme discrepancies. User approval of new glyphs remains separate from their presence in the repository.
+**Visual/accessibility lane:** Render actual existing and candidate SVGs at 20, 24 and 28 pixels under cream/dark, active/disabled/focus states. Find lost labels, clashing hitboxes, clipped/hidden controls, **supported portrait phone and desktop/tablet** viewport failures and theme discrepancies. Existing short-height phone-landscape test evidence remains useful but is **non-blocking** under the [2026-10-20 portrait-first support policy](ui-reference/PORTRAIT-FIRST-RESPONSIVE-SCOPE-2026-10-20.md); do not pursue new phone-landscape redesign or equate its known issue #301 with an in-scope release failure unless a shared defect manifests in portrait. User approval of new glyphs remains separate from their presence in the repository.
 
 ## Counterexample journeys
 

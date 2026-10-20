@@ -15,6 +15,10 @@
 | Keyboard and focus | Five mobile destinations at multiple viewports, visible focus restore, 39 applicable editor tools, real Arrow/Home/End and cold entry. More's seven original controls and three expanded metadata fields are keyboard reachable with real Tab/Enter/Escape at 320×700, 412×892, 700×412, 790×892, including scroll clearance around sticky header and dock (#184, #215, #221, #243). | Automated Chromium behaviour, not assistive technology speech or native Pixel Chrome. |
 | Approved logo | The only header element `<a class="brand">` directly contains `<img class="brand-logo" src="assets/roygbiv-logo.svg">` beside the `h1.brand-title`; both are outside switchable destination panels in `index.html`. Actual cream/dark mobile screenshot galleries consistently show the icon and seven-letter brand together. | This is source and screen-observed persistence, not approval of candidate unwired SVG replacements. |
 
+## Current viewport support decision (2026-10-20)
+
+The [portrait-first responsive support policy](ui-reference/PORTRAIT-FIRST-RESPONSIVE-SCOPE-2026-10-20.md) supersedes this historical checkpoint's short-height phone-landscape coverage as a **release gate**. Prioritize real portrait phones (including 320/360px narrow widths, 412×892, 499/500px breakpoint and 790px portrait), the 790/791 desktop handoff and normal tablet/desktop. Keep meaningful existing landscape regression witnesses, but **do not require** a redesigned 600×360 or 700×412 phone editing experience to ship. Known zero-size canvas [issue #301](https://github.com/gamesbyian/wallgen/issues/301) is low-priority and non-blocking, not falsely fixed; optional landscape split proposal [issue #294](https://github.com/gamesbyian/wallgen/issues/294) is closed not planned. The supported-layout visual, accessibility and device/human gates **remain fully open** until evidenced.
+
 ## Open acceptance boundaries, not numerical checkboxes
 
 1. **Visual agreement:** Compare actual implementation against every canonical plate and every important conditional state; explicitly approve or refine the eight unwired SVG candidates. A screenshot existing is not approval.
