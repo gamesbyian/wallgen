@@ -1,0 +1,69 @@
+name: Agent 2 conditional source action reversibility
+
+on:
+  pull_request:
+    paths:
+      - 'tests/agent2-conditional-active-action-matrix.mjs'
+      - '.github/workflows/agent2-conditional-active-action-matrix.yml'
+      - 'src/app.js'
+      - 'src/editor-layout.js'
+      - 'src/editor-schema.js'
+  push:
+    branches:
+      - agent2/conditional-matrix-live-actions-20261020
+    paths:
+      - 'tests/agent2-conditional-active-action-matrix.mjs'
+      - '.github/workflows/agent2-conditional-active-action-matrix.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: agent2-conditional-actions-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  native-conditional-actions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 24
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3]
+    env:
+      AGENT2_CONDITIONAL_SHARD: ${{ matrix.shard }}
+      AGENT2_CONDITIONAL_SHARDS: '4'
+      ROYGBIV_CONDITIONAL_ACTION_OUT: artifacts/agent2-conditional-live-${{ matrix.shard }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate suite syntax and the actual conditional engine
+        run: |
+          node --check tests/agent2-conditional-active-action-matrix.mjs
+          node --test tests/inactive-conditional-roundtrip.test.js
+      - name: Install Chromium with the existing browser toolchain
+        run: |
+          npm install --no-save playwright@1.56.1 serve@14.2.5
+          npx playwright install --with-deps chromium
+      - name: Serve original app
+        run: |
+          npx serve . -l 4173 >/tmp/agent2-active-conditional-http.log 2>&1 &
+          for i in $(seq 1 40); do
+            if curl --fail --silent http://127.0.0.1:4173/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/agent2-active-conditional-http.log
+          exit 1
+      - name: Test reversible real conditional source-field actions
+        run: node tests/agent2-conditional-active-action-matrix.mjs
+      - name: Keep verified and negative browser witnesses
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent2-conditional-native-action-${{ matrix.shard }}
+          path: artifacts/agent2-conditional-live-${{ matrix.shard }}/
+          if-no-files-found: warn
+          retention-days: 14
