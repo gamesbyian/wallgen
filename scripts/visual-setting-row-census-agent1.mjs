@@ -16,7 +16,8 @@ const modes=[
   {id:'regions-nested',structure:'regions',construction:'ribbon',regionMode:'nested'},
 ];
 const profiles=[{id:'phone-412x892',width:412,height:892},{id:'desktop-791x892',width:791,height:892}];
-const visited=new Set(),records=[],errors=[];
+const visited=new Set(),records=[],errors=[],rowScreens=[];
+const pictured=new Set();
 const activeTools=new Set(TOOL_LIST.filter(t=>modes.some(scene=>toolAppliesToScene(t,scene))).map(t=>t.id));
 const click=async(page,sel)=>{
   const loc=page.locator(sel).first();
@@ -102,6 +103,22 @@ try{
         if(!state.fields.includes(sourceKey))
           throw Error('Source setting missing from active card: '+sourceKey);
        }
+       // One *source-exact* optical crop per reachable tool at each viewport
+       // and theme. The 380 scene-specific inspections remain complete in
+       // JSON; the 156 PNGs provide human-reviewable family-level evidence.
+       const pictureKey=profile.id+'/'+theme+'/'+spec.id;
+       if(!pictured.has(pictureKey)){
+        const liveCard=page.locator('.editor-tool-card[data-editor-tool="'+spec.id+'"]');
+        const file='row-screens/'+profile.id+'/'+theme+'/'+category.id+'-'+spec.id+'.png';
+        await mkdir(join(output,'row-screens',profile.id,theme),{recursive:true});
+        await liveCard.screenshot({path:join(output,file),animations:'disabled',
+          timeout:15000});
+        rowScreens.push({key:pictureKey,profile:profile.id,theme,scene:mode.id,
+          category:category.id,tool:spec.id,title:spec.name,file,
+          sourceRowKeys:state.rows.map(row=>row.keys),sourceRowKinds:state.rows.map(row=>row.kind),
+          proof:'actual Chromium crop of the active source editor-tool card'});
+        pictured.add(pictureKey);
+       }
       }catch(e){errors.push({key,error:String(e)});console.error('ROW CENSUS FAILURE '+key+' '+e);}
      }
     }
@@ -115,13 +132,39 @@ if(missing.length)errors.push({error:'Unvisited applicable tool IDs: '+missing.j
 if(TOOL_LIST.length!==40||EDITOR_CATEGORIES.length!==7)
  errors.push({error:'Source editor inventory changed from 7 categories / 40 declared tools'});
 await mkdir(output,{recursive:true});
+const expectedPictures=activeTools.size*profiles.length*2;
+if(rowScreens.length!==expectedPictures)
+ errors.push({error:'Missing source-exact tool crops: '+rowScreens.length+'/'+expectedPictures});
 await writeFile(join(output,'row-census.json'),JSON.stringify({
   provenance:'Real source DOM / Chromium, not generated controls; 2 viewports x 2 themes',
   declaredTools:TOOL_LIST.length,declaredCategories:EDITOR_CATEGORIES.length,
   sceneModes:modes,applicableTools:[...activeTools],visitedTools:[...visited],
   excludedCondition:'tone requires legacy tonal option which is currently hidden and disabled',
-  records,errors
+  records,rowScreens,expectedPictures,errors
 },null,2));
+const esc=s=>String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('"','&quot;');
+const sections=profiles.flatMap(profile=>['cream','dark'].map(theme=>{
+  const cards=rowScreens.filter(s=>s.profile===profile.id&&s.theme===theme);
+  return '<section><h2>'+esc(profile.id)+' / '+esc(theme)+'</h2><div class="grid">'+
+    cards.map(s=>'<article><h3>'+esc(s.category)+' / '+esc(s.title)+'</h3>'+
+      '<img src="'+esc(s.file)+'" alt="Real source editor card: '+esc(s.title)+' in '+
+      esc(s.theme)+' at '+esc(s.profile)+'"><p>Actual '+esc(s.scene)+
+      ' controls · source keys: '+esc(s.sourceRowKeys.join(', '))+'</p></article>').join('')+
+    '</div></section>';
+})).join('');
+await writeFile(join(output,'row-review.html'),
+  '<!doctype html><html lang="en"><meta charset="utf-8"><title>Live ROYGBIV source setting row atlas</title>'+
+  '<style>body{font:14px system-ui;background:#f4f0e9;color:#25212c;margin:20px}'+
+  '.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,310px),1fr));gap:12px}'+
+  'article{background:white;border:1px solid #d1c8c4;border-radius:12px;padding:10px;min-width:0}'+
+  'h3{font-size:14px;margin:0 0 8px}img{display:block;max-width:100%;height:auto;'+
+  'background:#eee}p{font-size:11px;overflow-wrap:anywhere}</style><h1>Real 7-family editor row atlas</h1>'+
+  '<p>'+rowScreens.length+' source-exact Chromium tool-card screenshots across '+
+  profiles.length+' CSS viewports, two themes, and '+activeTools.size+
+  ' applicable named tools. Screenshots are actual source controls, not redrawn samples. '+
+  'Legacy tonal construction is hidden/disabled. This is evidence for human optical review, '+
+  'not an aesthetic approval or native Android proof.</p>'+sections+'</html>');
 console.log('ROW CENSUS: '+visited.size+'/'+activeTools.size+' applicable tools, '+
-  records.length+' real tool-state inspections, '+errors.length+' errors');
+  records.length+' real tool-state inspections, '+rowScreens.length+
+  ' optical crops, '+errors.length+' errors');
 if(errors.length)process.exitCode=1;
