@@ -129,3 +129,30 @@ candidate samples. The run uploaded 35 files including browser screenshots
 and machine evidence (artifact `12251042459`). This qualifies the four
 state-transition journeys on that head. It still does not establish human
 A/B preference, full WCAG conformance or physical-device acceptance.
+
+## Automated accessibility counterexample and targeted correction
+
+At head `4f32707a9852c3d1c0d211c442ba417ecab4697e`,
+[CI 39394489094](https://github.com/gamesbyian/wallgen/actions/runs/39394489094)
+successfully ran the independent axe-core diagnostic across all **24
+source-rendered browser states**. It reported **7 WCAG 2.x automated
+`color-contrast` violations**, all on `.mobile-zoom-level` in the cream
+theme. The first live computed witness was **4.25:1**: foreground
+`#747486`, background `#fbf6ee`, 8px font. Expected **4.5:1**.
+No other automated axe rule violation was reported in that 24-state sample.
+That is not a claim that axe evaluates every accessibility requirement.
+
+**Corrective change:** keep existing markup, 8px/11px size rules, mobile
+rail layout, paths and controls intact; change only the cream mobile zoom
+percentage text colour to `#696576` (computed expected contrast ≈5.24:1
+against the observed background). Leave dark unchanged. Bump the CSS
+cache-buster in `index.html` so returning clients do not retain an older
+stylesheet URL. The corresponding 24-state axe suite now asserts zero
+automated WCAG violations at its tested real-browser screens, saves all
+findings and failure screenshots, and fails CI if another is detected.
+
+**Validation boundary:** before/after computation identifies a verified
+contrast defect and narrowly scoped repair; do not describe the repair as
+browser-verified until the **post-fix** Actions run is green. Native Android,
+TalkBack, all possible dynamic editor screens and human evaluation are
+still **NOT VERIFIED**. Entry #15 remains unchecked.
