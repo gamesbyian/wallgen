@@ -1,0 +1,156 @@
+#!/usr/bin/env node
+/**
+ * Twelve live canonical-screen plate probes. Each source candidate is
+ * inspected in a REAL running Chromium page after navigating to the
+ * corresponding screen and relevant conditional mode. A source match is NOT
+ * automatically a successful/operable/visually approved control.
+ */
+import assert from 'node:assert/strict';
+import {mkdir,readFile,writeFile} from 'node:fs/promises';
+import {join,resolve} from 'node:path';
+import {chromium} from 'playwright';
+import {normalizeRecipe,encodeRecipe} from '../src/model.js';
+const contract=JSON.parse(await readFile(new URL(
+  '../docs/ui-reference/agent2-runtime-plate-traceability.json',import.meta.url),'utf8'));
+const origin=process.env.ROYGBIV_URL||'http://127.0.0.1:4173';
+const out=resolve(process.env.ROYGBIV_PLATE_OUT||'artifacts/agent2-live-plates');
+await mkdir(out,{recursive:true});
+const browser=await chromium.launch({headless:true});
+const results=[],errors=[];
+const base={seed:'agent2-real-plate-source',structure:'paths',geometry:'zigzag',
+  orientation:'diagonal',diagonalRotation:19,mirrorHorizontal:true,
+  shapeFrequency:42,shapeDepth:61,outline:'white',composition:'repeat',
+  repeatCount:3,material:'linen',textureStrength:65,textureLayer2Enabled:true,
+  material2:'foil',textureStrength2:62,textureLayer3Enabled:true,material3:'grain',
+  textureStrength3:43,viewZoom:.85};
+async function exercise(plate,page){
+  if(plate==='studio')return;
+  if(plate==='draw'){
+    await page.locator('#drawPathToggle').click();
+    await page.locator('#drawPathPanel').waitFor({state:'visible'});
+    return;
+  }
+  if(plate==='explore'){
+    await page.locator('#mobileExplore').click();
+    await page.locator('#batch').click();
+    await page.waitForFunction(()=>document.querySelectorAll('#gallery .thumb').length===12,
+      null,{timeout:25000});
+    return;
+  }
+  if(plate==='more'){
+    await page.locator('#mobileMore').click();
+    await page.locator('#metadataToggle').click();
+    await page.locator('#metadataPanel').waitFor({state:'visible'});
+    return;
+  }
+  if(plate==='history')await page.locator('#randomizeAll').click();
+  await page.locator('#mobileEdit').click();
+  const categories={
+    geometry:'path',material:'material',colour:'colour',
+    diagonal:'layout',compact:'details',focus:'path',
+    history:'path',search:'path'
+  };
+  await page.locator('#tab-'+categories[plate]).click();
+  const tools={
+    geometry:'geometry',material:'layer2',colour:'rainbow',
+    diagonal:'direction',compact:'glow',focus:'geometry',
+    history:'geometry',search:'geometry'
+  };
+  if(plate==='history'){
+    // Randomize-all deliberately changes the composition structure; the
+    // initial Paths-only Geometry chip may now be source-inapplicable.
+    await page.locator('.editor-tool-chooser [data-editor-tool]:visible').first().click();
+  }else{
+    await page.locator('.editor-tool-chooser [data-editor-tool="'+tools[plate]+'"]').click();
+  }
+  if(plate==='focus')await page.locator('.editor-focus-toggle').click();
+  if(plate==='history')await page.locator('#editorHistoryToggle').click();
+  if(plate==='search'){
+    await page.locator('button[aria-label="Find a setting"]').click();
+    await page.locator('.editor-search-input').fill('geometry');
+  }
+}
+const pages=['studio','geometry','draw','explore','more','material',
+  'colour','diagonal','compact','focus','history','search'];
+try{
+  for(const plate of pages){
+    const page=await browser.newPage({viewport:{width:412,height:892},
+      isMobile:true,hasTouch:true,reducedMotion:'reduce'});
+    page.setDefaultTimeout(15000);
+    const scriptErrors=[];
+    page.on('pageerror',e=>scriptErrors.push(String(e)));
+    try{
+      const recipe=normalizeRecipe(base);
+      await page.goto(origin+'/?r='+encodeRecipe(recipe),{waitUntil:'domcontentloaded'});
+      await page.waitForFunction(()=>document.body.classList.contains('mobile-five-nav'));
+      await exercise(plate,page);
+      const source=contract.entries.filter(row=>row.plate===plate);
+      const probed=await page.evaluate(entries=>entries.map(row=>{
+        if(!row.sourceCandidate)return {id:row.id,kind:row.kind,
+          state:'forbidden-unmapped',candidates:0};
+        try{
+          const nodes=[...document.querySelectorAll(row.sourceCandidate)];
+          const exposed=nodes.map(el=>{
+            const rect=el.getBoundingClientRect(),style=getComputedStyle(el);
+            const viewport=rect.width>0&&rect.height>0&&
+              rect.bottom>0&&rect.top<innerHeight&&rect.right>0&&rect.left<innerWidth;
+            const visible=viewport&&style.display!=='none'&&
+              style.visibility!=='hidden'&&!el.closest('[hidden],[inert]');
+            const x=rect.x+rect.width/2,y=rect.y+rect.height/2;
+            const top=x>=0&&x<innerWidth&&y>=0&&y<innerHeight?
+              document.elementFromPoint(x,y):null;
+            return {visible,enabled:!el.disabled,hit:visible&&
+              (el===top||el.contains(top)),tag:el.tagName,
+              label:el.getAttribute('aria-label')||
+                el.labels?.[0]?.textContent?.trim()?.slice(0,70)||
+                el.innerText?.trim()?.slice(0,70)||'',
+              rect:[Math.round(rect.x),Math.round(rect.y),
+                Math.round(rect.width),Math.round(rect.height)]};
+          });
+          return {id:row.id,kind:row.kind,selector:row.sourceCandidate,
+            candidates:nodes.length,visible:exposed.filter(el=>el.visible).length,
+            enabledVisible:exposed.filter(el=>el.visible&&el.enabled).length,
+            physicallyHittable:exposed.filter(el=>el.hit&&el.enabled).length,
+            examples:exposed.slice(0,3),
+            state:nodes.length?'source-present':'no-source-in-this-state'};
+        }catch(error){return {id:row.id,kind:row.kind,selector:row.sourceCandidate,
+          state:'invalid-selector',error:String(error)}}
+      }),source);
+      await page.screenshot({path:join(out,plate+'.png'),animations:'disabled'});
+      assert.ok(probed.some(x=>x.visible>0),
+        plate+': no canonical mapped controls exposed to this actual plate');
+      assert.deepEqual(scriptErrors,[],'Runtime error on '+plate);
+      const sample={plate,viewport:[412,892],mode:await page.locator('body')
+        .getAttribute('class'),sourceClaims:source.length,
+        observedSelectors:probed.filter(x=>x.candidates>0).length,
+        actuallyVisible:probed.filter(x=>x.visible>0).length,
+        sourceOnly:probed.filter(x=>x.candidates>0&&!x.visible).map(x=>x.id),
+        unmatched:probed.filter(x=>x.state==='no-source-in-this-state').map(x=>x.id),
+        invalidSelectors:probed.filter(x=>x.state==='invalid-selector').map(x=>x.id),
+        claimResults:probed,scriptErrors};
+      results.push(sample);
+      console.log('AGENT2_LIVE_PLATE',JSON.stringify({
+        plate,sourceClaims:sample.sourceClaims,
+        sourceCandidates:sample.observedSelectors,
+        visibleClaims:sample.actuallyVisible,
+        unmatched:sample.unmatched.length,sourceOnly:sample.sourceOnly.length
+      }));
+    }catch(error){
+      errors.push({plate,message:String(error),stack:error.stack});
+      await page.screenshot({path:join(out,'failure-'+plate+'.png'),
+        animations:'disabled'}).catch(()=>{});
+      console.error('AGENT2_LIVE_PLATE_FAILURE',plate,String(error));
+    }finally{await page.close()}
+  }
+  await writeFile(join(out,'evidence.json'),JSON.stringify({
+    classification:errors.length?'PARTIAL / failing screen':'real browser source-visibility and reachability candidates',
+    sourceCommit:'PR #268 (see CI run SHA)',canonicalClaims:177,
+    limitations:['CSS source matches do not prove actual operability',
+      'Focused screen is a representative real state, not every condition',
+      'Forbidden entries need explicit adversarial negative tests',
+      'Schematic artwork has not received human fidelity approval',
+      'No Android physical-device or assistive-reader signoff'],results,errors
+  },null,2));
+  assert.deepEqual(errors,[],'One or more live canonical plates could not be reached');
+  console.log('AGENT2_LIVE_PLATES_SUCCESS');
+}finally{await browser.close();}

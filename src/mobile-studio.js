@@ -68,6 +68,18 @@ for(const [id,title] of [
   moreGroups.set(id,body);
 }
 moreGroups.get('generate').append(document.getElementById('mobileShuffle'));
+// Preserve the original gallery #batch action and its event handler. More
+// exposes an honest route to it instead of cloning gallery state or recipes.
+const moreBatch=document.createElement('button');
+moreBatch.type='button';
+moreBatch.className='text-link-button mobile-more-batch';
+moreBatch.textContent='Generate 12 variations in Explore';
+moreBatch.setAttribute('aria-label','Generate 12 wallpapers and open Explore');
+moreBatch.addEventListener('click',()=>{
+  document.getElementById('batch').click();
+  document.getElementById('mobileExplore').click();
+});
+moreGroups.get('generate').append(moreBatch);
 const originalSelectors=['.composition-positioner','.viewport-positioner',
   '.action-tray','.export-metadata','.secondary-actions','.details-bar'];
 const originalGroups=['inspect','inspect','generate','export','export','inspect'];
@@ -86,25 +98,28 @@ const placeholders=originals.map(node=>{
  * textarea taller than the CSS scroll-padding budget. A focused source
  * control must be physically visible, not merely focusable in the DOM.
  * Keep original controls, order, and focus intact; only move sheet scroll. */
+function ensureMoreFocusedControlVisible(el){
+  if(!mobile.matches||tools.hidden||document.activeElement!==el)return;
+  const viewport=tools.getBoundingClientRect(),rect=el.getBoundingClientRect();
+  const header=tools.querySelector('.mobile-sheet-head');
+  const top=Math.min(viewport.bottom-8,
+    Math.max(viewport.top,header?.getBoundingClientRect().bottom||viewport.top)+8);
+  const bottom=viewport.bottom-8;
+  const delta=rect.bottom>bottom?rect.bottom-bottom:
+    rect.top<top?rect.top-top:0;
+  // A keyboard focus target MUST remain inside the fixed More tray. Instant
+  // scroller movement avoids animations racing native Tab focus scrolling.
+  if(delta)tools.scrollTo({top:tools.scrollTop+delta,behavior:'instant'});
+}
 tools.addEventListener('focusin',event=>{
   if(!mobile.matches||tools.hidden)return;
   const el=event.target;
   if(!(el instanceof HTMLElement)||!tools.contains(el))return;
-  const ensureVisible=()=>{
-    if(!mobile.matches||tools.hidden||document.activeElement!==el)return;
-    const viewport=tools.getBoundingClientRect(),rect=el.getBoundingClientRect();
-    const header=tools.querySelector('.mobile-sheet-head');
-    const top=Math.min(viewport.bottom-8,
-      Math.max(viewport.top,header?.getBoundingClientRect().bottom||viewport.top)+8);
-    const bottom=viewport.bottom-8;
-    if(rect.bottom>bottom)tools.scrollTop+=rect.bottom-bottom;
-    else if(rect.top<top)tools.scrollTop-=top-rect.top;
-  };
-  // Native focus scroll can happen *after* focusin and undo our initial
-  // correction. Recheck on the following frame without stealing focus,
-  // changing the source control, or moving the fixed dock.
-  ensureVisible();
-  requestAnimationFrame(ensureVisible);
+  ensureMoreFocusedControlVisible(el);
+  // Chromium can apply its own native focus scroll *after* focusin; recheck
+  // against the final painted geometry, without stealing focus or moving
+  // any wallpaper/recipe state.
+  requestAnimationFrame(()=>ensureMoreFocusedControlVisible(el));
 });
 
 let lastFocus=null;

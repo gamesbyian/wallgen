@@ -60,8 +60,14 @@ export function installFocusedAdjustments({form,chooser}){
   slider.setAttribute('aria-label','Focused parameter adjustment');
   const plus=create('button','editor-focus-step','+');
   plus.type='button';plus.setAttribute('aria-label','Increase focused parameter');
+  const lock=create('button','editor-focus-lock');
+  lock.type='button';lock.textContent='Lock';
+  lock.setAttribute('aria-label','Lock focused parameter');
+  lock.setAttribute('aria-pressed','false');
   const output=create('output','editor-focus-value');output.setAttribute('aria-live','off');
-  row.append(minus,slider,plus,output);
+  // Keep + as the last button in DOM order: existing keyboard/browser
+  // stepping semantics rely on that identity. CSS places Lock beside it.
+  row.append(minus,slider,lock,plus,output);
   const help=create('p','editor-focus-help');
   help.setAttribute('role','status');help.setAttribute('aria-live','polite');
   panel.append(heading,chips,row,help);
@@ -92,6 +98,16 @@ export function installFocusedAdjustments({form,chooser}){
     else slider.style.removeProperty('--roygbiv-slider-color');
     const disabled=isInactive(original);
     slider.disabled=disabled;minus.disabled=disabled;plus.disabled=disabled;
+    // This secondary button delegates to the ORIGINAL setting lock. Inactive
+    // settings stay locked out, while explicitly locked live settings can be
+    // unlocked without abandoning Focus or inventing a new recipe mutation.
+    const sourceLock=original.closest('.lockable-setting')?.querySelector('.setting-lock');
+    const locked=sourceLock?.getAttribute('aria-pressed')==='true';
+    lock.hidden=!sourceLock;
+    lock.disabled=!sourceLock||sourceLock.disabled;
+    lock.textContent=locked?'Unlock':'Lock';
+    lock.setAttribute('aria-label',(locked?'Unlock ':'Lock ')+sourceLabel(original));
+    lock.setAttribute('aria-pressed',String(locked));
     slider.setAttribute('aria-label',sourceLabel(original));
     output.textContent=String(original.value);
     help.textContent=disabled?unavailableReason(original):
@@ -163,6 +179,11 @@ export function installFocusedAdjustments({form,chooser}){
   }
   toggle.addEventListener('click',()=>setActive(!active));
   all.addEventListener('click',()=>setActive(false));
+  lock.addEventListener('click',()=>{
+    if(!active||!original)return;
+    const sourceLock=original.closest('.lockable-setting')?.querySelector('.setting-lock');
+    if(sourceLock&&!sourceLock.disabled)sourceLock.click();
+  });
   const apply=(next,commit)=>{
     if(!active||!original||isInactive(original))return;
     original.value=next;

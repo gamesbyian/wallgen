@@ -131,9 +131,7 @@ function readFavorites() {
 function saveFavorites() {
   try { localStorage.setItem(FAVORITES_KEY,JSON.stringify(favorites)); } catch { showNotice('Browser storage unavailable; favourites last for this visit.'); }
 }
-// A second tab can add or remove a favourite while this tab is open.
-// Trust the updated canonical storage snapshot, and refresh Saved only when
-// it is displayed. Storage events do not fire in the writing tab.
+// Keep Saved and the favourite action truthful when another tab writes.
 window.addEventListener('storage',event=>{
   if(event.key!==FAVORITES_KEY&&event.key!==null)return;
   favorites=readFavorites();
@@ -328,6 +326,20 @@ function syncInactiveSettings(){
       for(const el of host.querySelectorAll('.step-button,.slider-number'))el.disabled=isInactive||locked;
     }
     if(field.type==='range'){
+      // A native range clamps an attempted zero to its minimum (7 for
+      // region/ray counts). Temporarily expand only the inactive control's
+      // visual range; restore its exact authored minimum on reactivation.
+      // This is presentation-only: current[key] and the serialized recipe
+      // retain their actual value throughout the inactive interval.
+      if(isInactive && Number(field.min)>0){
+        if(field.dataset.activeMin===undefined)
+          field.dataset.activeMin=field.getAttribute('min')||'';
+        field.min='0';
+      }else if(!isInactive && field.dataset.activeMin!==undefined){
+        if(field.dataset.activeMin)field.min=field.dataset.activeMin;
+        else field.removeAttribute('min');
+        delete field.dataset.activeMin;
+      }
       field.value=isInactive?'0':String(current[key]);
       const numeric=form.querySelector('[data-number-for="'+key+'"]');
       if(numeric)numeric.value=isInactive?'0':String(current[key]);
@@ -665,11 +677,30 @@ importRecipeFile.addEventListener('change',async()=>{
   importRecipeFile.value='';
   if(!file)return;
   try{
-    if(file.size>150*1024*1024)throw Error('PNG exceeds the 150 MB import limit');
-    const recipe=extractPngRecipe(await file.arrayBuffer());
-    if(!recipe)throw Error('This PNG has no R.O.Y.G.B.I.V. recipe metadata');
+    // JSON exported by Save recipe is a first-class import, using the same
+    // original file input and history transaction as embedded PNG recipes.
+    // Never silently reset the design when a random JSON document is chosen.
+    const isJSON=/\.json$/i.test(file.name)||file.type==='application/json';
+    const limit=isJSON?10*1024*1024:150*1024*1024;
+    if(file.size>limit)throw Error(isJSON?
+      'JSON exceeds the 10 MB import limit':'PNG exceeds the 150 MB import limit');
+    let recipe;
+    if(isJSON){
+      let raw;
+      try{raw=JSON.parse(await file.text());}
+      catch{throw Error('Invalid JSON recipe syntax');}
+      if(!raw||Array.isArray(raw)||typeof raw!=='object'||
+        typeof raw.seed!=='string'||!raw.seed.trim()||
+        !['paths','radial','regions'].includes(raw.structure))
+        throw Error('JSON must contain a wallpaper recipe with seed and structure');
+      recipe=normalizeRecipe(raw);
+    }else{
+      recipe=extractPngRecipe(await file.arrayBuffer());
+      if(!recipe)throw Error('This PNG has no R.O.Y.G.B.I.V. recipe metadata');
+    }
     changeRecipe(recipe,{bypassLocks:true});
-    showNotice('Restored original wallpaper settings from PNG recipe.');
+    showNotice(isJSON?'Restored wallpaper settings from JSON recipe.':
+      'Restored original wallpaper settings from PNG recipe.');
   }catch(error){showNotice('Cannot restore design: '+error.message);}
 });
 
@@ -1250,8 +1281,7 @@ function createCard(recipe,index) {
   const name=document.createElement('span');name.className='thumb-caption';name.textContent=titleCase(scene.family);
   const sub=document.createElement('span');sub.className='thumb-sub';sub.textContent=`${titleCase(scene.materialSummary)} · ${scene.orientation}`;
   card.append(name,sub);
-  // A Saved/Explore choice replaces the complete design, including its own locks.
-  // Current-art locks apply to edits/randomization, not to loading an archive.
+  // Gallery selection restores the complete saved recipe, including its own locks.
   card.addEventListener('click',()=>changeRecipe(recipe,{scroll:true,bypassLocks:true}));
   // Append the card immediately; bitmap rendering happens off the main
   // thread and updates it only while it is still in the active gallery.
