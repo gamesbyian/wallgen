@@ -38,7 +38,7 @@ try{
    assert.deepEqual(current(),original);
    const sequence=[original];
    for(let i=0;i<3;i++){
-     await page.locator('#randomize').click();
+     await page.locator('#randomizeAll').click();
      sequence.push(current());
      assert.notDeepEqual(sequence.at(-1),sequence.at(-2),'New seed did not change recipe');
    }
@@ -77,7 +77,7 @@ try{
    // evicted snapshots or change the recipe chosen by the history button.
    const generated=[];
    for(let i=0;i<12;i++){
-     await page.locator('#randomize').click();
+     await page.locator('#randomizeAll').click();
      generated.push(current());
    }
    await page.locator('#mobileEdit').click();
