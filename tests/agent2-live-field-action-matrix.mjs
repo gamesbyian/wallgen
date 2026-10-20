@@ -71,9 +71,10 @@ const observations=[],failures=[],pageErrors=[];
 page.on('pageerror',e=>pageErrors.push(String(e)));
 const current=()=>decodeRecipe(new URL(page.url()).searchParams.get('r'));
 function getOriginalFields(){
-  return page.locator('#controls [data-setting]').evaluateAll(nodes=>
+  return page.locator('[data-setting]').evaluateAll(nodes=>
     nodes.map(el=>({key:el.name,type:el.type,
-      id:el.id,source:el.dataset.setting})));
+      id:el.id,source:el.dataset.setting,
+      inForm:!!el.closest('#controls'),formOwner:el.form?.id||null})));
 }
 async function goToField(key,original){
   const candidate=SETTING_TOOL[key];
@@ -141,7 +142,8 @@ async function editOriginal(key,field){
 try{
   await page.goto(origin+'/?r='+encodeRecipe(normalizeRecipe(baseline)));
   const inventory=await getOriginalFields();
-  assert.equal(inventory.length,87,'Source field count changed; refresh acceptance scope');
+  console.log('AGENT2_SOURCE_FIELD_INVENTORY',JSON.stringify(inventory));
+  assert.equal(inventory.length,87,'Global source field count changed; refresh acceptance scope');
   assert.equal(new Set(inventory.map(f=>f.key)).size,87,
     'Duplicate source field identities would invalidate reachability count');
   const assigned=inventory.filter((item,i)=>i%shardCount===shard);
