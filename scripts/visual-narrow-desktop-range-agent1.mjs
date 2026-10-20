@@ -102,7 +102,7 @@ try{
         // while its actual bottom 6px is hidden by the source card clip.
         // This is a physical card-boundary test, not a scrollWidth proxy.
         if(profile.width>=500&&profile.width<=790&&tool.id==='lighting'&&
-           r.wrapper&&r.card&&r.wrapper.bottom>r.card.bottom+1)
+           r.wrapper&&r.card&&r.wrapper.bottom>r.card.bottom+0.25)
           failures.push({key,source:r.sourceKeys,type:'Lighting source row below visible card',
             bottomOverflow:r.wrapper.bottom-r.card.bottom});
         if(profile.width>=791){
