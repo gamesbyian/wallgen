@@ -45,7 +45,11 @@ try{
       'Focus lock failed to preserve the exact user lock');
     assert.equal(await source.isDisabled(),true);
     assert.equal(await slider.isDisabled(),true);
-    assert.match(await page.locator('.editor-focus-help').innerText(),/locked/i);
+    const lockedHelp=await page.locator('.editor-focus-help').innerText();
+    assert.match(lockedHelp,/locked.*Unlock here/i,
+      'Focus must mention its working direct Unlock control');
+    assert.doesNotMatch(lockedHelp,/Open All controls/i,
+      'Do not falsely tell a user to leave Focus when Unlock is available here');
     assert.equal(await lock.getAttribute('aria-pressed'),'true');
     assert.equal(locked.textureStrength,before.textureStrength);
     await lock.click();

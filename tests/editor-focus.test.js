@@ -66,12 +66,16 @@ test('Focus chip arrows wrap while Home/End choose bounds',()=>{
 test('Focus distinguishes user locks, contextual inactivity and other disabled sources',()=>{
   assert.equal(focusUnavailableReason({}), '');
   assert.match(focusUnavailableReason({locked:true}),/locked.*unlock/i);
+  assert.match(focusUnavailableReason({locked:true,unlockHere:true}),/locked.*Unlock here/i);
+  assert.doesNotMatch(focusUnavailableReason({locked:true,unlockHere:true}),/Open All controls/i);
+  assert.match(focusUnavailableReason({locked:true,unlockHere:false}),/Open All controls/i);
   assert.match(focusUnavailableReason({inactive:true}),/inactive.*current design/i);
   assert.match(focusUnavailableReason({disabled:true}),/temporarily unavailable/i);
   assert.match(focusUnavailableReason({inactive:true,locked:true}),/locked/i);
   const src=readFileSync(new URL('../src/editor-focus.js',import.meta.url),'utf8');
   assert.match(src,/help\.textContent=disabled\?unavailableReason\(original\)/);
-  assert.match(src,/locked:Boolean\(field\.closest\('\.lockable-setting'\)/);
+  assert.match(src,/locked:Boolean\(sourceLock\?\.classList\.contains\('is-locked'\)\)/);
+  assert.match(src,/unlockHere:Boolean\(sourceLock&&!sourceLock\.disabled\)/);
 });
 
 test('Focus expands only its own tall-phone viewport reservation',()=>{
