@@ -16,6 +16,12 @@ test('real Saved wallpapers are probed across the 670, 680 and 790 height CSS bo
    assert.ok(row&&row.includes('width:320,height:'+h)&&
      row.includes("'saved-populated'"),id);
  }
+ for(const [width,height] of [[320,671],[320,680],[340,680],[341,680],[320,892]]){
+   const id='wrap-edge-'+width+'x'+height;
+   const row=live.split('\n').find(x=>x.includes("id:'"+id+"'"));
+   assert.ok(row&&row.includes('width:'+width+',height:'+height),id);
+   assert.ok(row.includes("'saved-populated'")&&row.includes("'saved-empty'"),id);
+ }
  const css=readFileSync('studio-themes.css','utf8');
  assert.match(css,/--mobile-gallery-canvas-overhead:170px/);
  assert.match(css,/--mobile-gallery-canvas-overhead:197px/);
