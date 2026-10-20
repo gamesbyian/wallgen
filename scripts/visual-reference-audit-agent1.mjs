@@ -631,7 +631,7 @@ if(errors.length===0){
     'colour','diagonal','compact','focus','history','search'];
   await mkdir(join(output,'implemented-plates'),{recursive:true});
   for(const screenshot of shots.filter(s=>s.profile==='phone-412x892'&&referenceScreens.includes(s.screen))){
-    const imagePath='implemented-plates/'+s.theme+'-'+s.screen+'.png';
+    const imagePath='implemented-plates/'+screenshot.theme+'-'+screenshot.screen+'.png';
     await copyFile(join(output,screenshot.file),join(output,imagePath));
     implementationPlates.push({screen:screenshot.screen,theme:screenshot.theme,
       source:screenshot.file,image:imagePath,
