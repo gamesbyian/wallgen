@@ -10,7 +10,9 @@ import {resolve,join} from 'node:path';
 const output=resolve(process.argv.find(x=>x.startsWith('--out='))?.slice(6)||'artifacts/visual-agent1-dpr');
 const base=process.argv.find(x=>x.startsWith('--base-url='))?.slice(11)||'http://127.0.0.1:4173';
 const profiles=[
+  {id:'narrow-360-portrait',width:360,height:740,dpr:3},
   {id:'pixel6pro-css-proxy',width:412,height:892,dpr:3.5},
+  {id:'edge-499-portrait',width:499,height:892,dpr:3},
   {id:'edge-500',width:500,height:892,dpr:3},
   {id:'short-landscape',width:700,height:412,dpr:3},
 ];
@@ -73,7 +75,7 @@ try{
           width:r.width,height:r.height,visible:css.display!=='none'&&
           css.visibility!=='hidden'&&r.width>0&&r.height>0};
        };
-       const stage=rect('.studio-stage'),sidebar=rect('.sidebar'),
+       const stage=rect('.studio-stage'),preview=rect('#preview'),sidebar=rect('.sidebar'),
          gallery=rect('.gallery-section'),more=rect('#mobileToolsSheet'),
          dock=rect('#mobileActionDock');
        const body=document.body;
@@ -91,7 +93,7 @@ try{
            hit:hit===el||el.contains(hit)};
        });
        const dockNode=document.querySelector('#mobileActionDock');
-       return {stage,surface,dock,overlap,labels,
+       return {stage,preview,surface,dock,overlap,labels,
          dockInert:!!dockNode?.inert||
            [...(dockNode?.querySelectorAll('button')||[])].every(b=>b.inert||!!b.closest('[inert]')),
          horizontalScroll:document.documentElement.scrollWidth>innerWidth+1,
@@ -112,6 +114,14 @@ try{
        throw Error('Unexpected physical PNG resolution '+JSON.stringify(png));
      if(geometry.horizontalScroll||geometry.overlap>1)
        throw Error('Layout overflow or stage/sheet intersection '+JSON.stringify(geometry));
+     // A previous short-phone-landscape bug collapsed the actual canvas to
+     // 0x0 while the stage box still existed. Guard intended PORTRAIT editing
+     // (and Studio/Draw), without creating a non-target landscape release gate.
+     const portrait=profile.width<profile.height;
+     const artworkState=state.id==='studio'||state.id.startsWith('edit-')||state.id==='draw';
+     if(portrait&&artworkState&&
+       (!geometry.preview?.visible||geometry.preview.width<1||geometry.preview.height<1))
+       throw Error('Supported portrait source preview collapsed: '+JSON.stringify(geometry.preview));
      // The full editor deliberately moves the bottom dock off-screen and
      // makes it inert. Only visible mobile destinations should be hittable.
      const editing=state.id.startsWith('edit-');
