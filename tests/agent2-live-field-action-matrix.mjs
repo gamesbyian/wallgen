@@ -201,6 +201,35 @@ try{
         animations:'disabled'}).catch(()=>{});
     }
   }
+  let desktopPrimes=null;
+  if(assigned.some(field=>field.key==='primesOnly')){
+    // Regression for the other half of the same original checkbox journey:
+    // desktop mounts it back within <form>; both placements must produce the
+    // same actual source recipe event, without synthetic form changes.
+    const desk=await browser.newContext({viewport:{width:1100,height:800},
+      reducedMotion:'reduce'});
+    const desktop=await desk.newPage();
+    const base=normalizeRecipe({seed:'agent2-desktop-primes',primesOnly:false});
+    await desktop.goto(origin+'/?r='+encodeRecipe(base),{waitUntil:'domcontentloaded'});
+    const prime=desktop.locator('[data-setting][name="primesOnly"]');
+    assert.equal(await prime.count(),1,'Desktop Primes original field missing');
+    assert.equal(await prime.evaluate(el=>el.closest('#controls')?.id),'controls',
+      'Desktop Primes failed to remount in its native form');
+    await prime.setChecked(true);
+    await desktop.waitForFunction(()=>
+      new URL(location.href).searchParams.get('r')!==null&&
+      document.querySelector('[name="primesOnly"]').checked);
+    const on=decodeRecipe(new URL(desktop.url()).searchParams.get('r'));
+    assert.equal(on.primesOnly,true,'Desktop check did not commit recipe');
+    await prime.setChecked(false);
+    await desktop.waitForFunction(()=>!document.querySelector('[name="primesOnly"]').checked);
+    const off=decodeRecipe(new URL(desktop.url()).searchParams.get('r'));
+    assert.equal(off.primesOnly,false,'Desktop uncheck did not commit recipe');
+    assert.deepEqual(off,base,'Desktop round-trip polluted unrelated recipe');
+    desktopPrimes={controlRemountedInForm:true,checked:true,
+      unchecked:true,fullRecipeReversible:true};
+    await desk.close();
+  }
   const tested=observations.map(v=>v.key);
   const outstanding=assigned.map(f=>f.key)
     .filter(key=>!tested.includes(key)&&!intentionallySeparate.has(key));
@@ -214,7 +243,7 @@ try{
       'physical Android gestures and screen reader',
       'source fields outside tested fixture variants',
       'all possible values/combinations'],inventory,observations,outstanding,
-    failures,pageErrors};
+    failures,pageErrors,desktopPrimes};
   await writeFile(join(out,'evidence.json'),JSON.stringify(summary,null,2));
   assert.deepEqual(pageErrors,[],'Uncaught runtime errors');
   assert.deepEqual(failures,[],'Original input action failures');
