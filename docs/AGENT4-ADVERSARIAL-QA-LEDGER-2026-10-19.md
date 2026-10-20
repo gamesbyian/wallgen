@@ -33,12 +33,40 @@ repairing damaged storage without erasing surviving user data. Original
 valid recipe identities, versioned normalization, gallery events and UI
 markup remain unchanged.
 
+## Independent CI checkpoint and second counterexample
+
+**PR:** https://github.com/gamesbyian/wallgen/pull/269
+
+At head `61a4768cca2018b52a652fa1c5efb764f2138cfa`, the independent
+[Agent 4 workflow run 39375236491](https://github.com/gamesbyian/wallgen/actions/runs/39375236491)
+completed **both** jobs successfully: new gallery/keyboard/contrast/JSON
+browser journeys and five real 3024×6552 PNG downloads/pixel checks. Unit
+tests and Node syntax checks also passed in that run. This is qualified
+**behaviour-verified** evidence for that exact head, not later additions.
+
+The **first browser run was red**, a genuine counterexample: clicking a
+Saved thumbnail failed to restore the archived `lockedSettings` if the
+current design carried different locks. Before: `createCard()` called
+`changeRecipe(recipe,{scroll:true})`, which invoked `respectSettingLocks`
+against the *old current* design. After: gallery selection calls
+`changeRecipe(recipe,{scroll:true,bypassLocks:true})`, matching history and
+import restoration semantics. The same exact-recipes test that exposed the
+failure passes at both mobile sizes after repair, including two distinct
+lock configurations. This was not a test-only relaxation.
+
+**Follow-through awaiting its own head-specific CI:** computed browser
+accessible-name assertions, live reduce → no-preference → reduce preference
+changes, twelve seeded exploratory gallery actions and a separate actual
+1024×768 desktop gallery/metadata/keyboard journey. No older green run
+proves those newly added assertions.
+
 ## How to reproduce
 
 1. Unit tests: `node --test tests/favorites-store.test.js tests/recipe-transport-matrix.test.js tests/gallery-view-modes.test.js`.
 2. On a local server (`npx serve . -l 4173`) with Playwright Chromium installed:
    `node tests/agent4-gallery-persistence-acceptance.mjs`,
    `node tests/agent4-accessibility-acceptance.mjs`,
+   `node tests/agent4-desktop-acceptance.mjs`,
    `node tests/agent4-json-download-acceptance.mjs`.
 3. Actual 19.8MP file/pixel comparison: `node tests/redesign-native-download-acceptance.mjs`.
 4. CI: `.github/workflows/agent4-adversarial-qa.yml` uploads failure screenshots and machine-readable records. Run details and artifact IDs belong in this ledger only **after** GitHub Actions reports a result.
