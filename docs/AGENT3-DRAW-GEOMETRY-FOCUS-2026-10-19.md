@@ -45,3 +45,21 @@ Do not alter the four master checkboxes or market a 100% conclusion on the stren
 - **Green baseline head `eda0ab87dfa63c68ee3b675e06c82ed9fe8a6545`**: [full general validation](https://github.com/gamesbyian/wallgen/actions/runs/39377237064) and [17/17 actual Chromium acceptance](https://github.com/gamesbyian/wallgen/actions/runs/39377237162) passed. The latter recorded Draw advanced gestures at 412×892 and 700×412, including real tangent drag, and two crossing geometries × two zooms × three paint orders. Source geometry stayed identical and each pair changed **thousands** of actual coloured pixels rather than just a screenshot hash. All fifteen earlier browser suites passed on the same head.
 - One earlier intermediate head [39377149131](https://github.com/gamesbyian/wallgen/actions/runs/39377149131) failed an *unchanged* More keyboard test when focus on `input[name=keywords]` at 320×700 landed at y=844 below the sheet end y=648. All 16 other suites, including Draw and crossing pixels, passed; the final green 17-suite head subsequently passed More without changing the navigation source. This intermittent keyboard occlusion was reported to controls-owner PR #268. Do not hide it or infer permanent resolution.
 - Subsequent PR-branch additions: an off-frame self-intersecting path rendered through all crossing modes, a real Draw again reset, and Focus A/B at constrained 700×412 as well as phone 412×892. These **are not credited until their later CI head passes**.
+
+## Genuine off-frame crossing Download milestone
+
+On `40698caf331b9cd9d0d60b9e26010973a4d69c59`, [native Chrome CI 39377844451](https://github.com/gamesbyian/wallgen/actions/runs/39377844451) passed **eight** real clicked `#mobileDownload` 3024×6552 PNG files. Each image was browser-decoded, its IHDR and filename checked, its original normalized recipe extracted from actual PNG metadata and compared, and stable coloured foreground samples compared against a fresh 300×650 source Canvas2D render.
+
+Three files used the **same 170-station off-frame crossing path**, extending left of zero and right of one, with `extendDrawnPath:true`, `viewZoom:.75`, and all source settings identical **except** Over/Under/Weave:
+
+| Native crossing mode | Locally stable positions | Painted foreground | Pixel mismatches | SHA-256 |
+| --- | ---: | ---: | ---: | --- |
+| Over | 1057 | 610 | **0** | `283be9ed1b19933b469ce753a8d452d9b38c510a61c609ead262bb3fc801ae47` |
+| Under | 1081 | 634 | **0** | `8a5852ef3dba202839975b8d89500c04ced95dc4fa0758d20f7e36011cc1786b` |
+| Weave | 1049 | 602 | **0** | `d2316a12adfb329def9ef23f09ea5d009b0c48eb282fb7c66958b77146cee2c2` |
+
+This is genuine native downloadable PNG transport and painted pixel parity for the exact fixtures, not an exhaustive material/random seed proof. A later test addition checks all three files have unique full-file SHA-256 hashes and their complete normalized recipes differ only in the crossing choice; do not count that *additional assertion* until its exact CI run passes.
+
+The [17-suite Chromium run 39377693618](https://github.com/gamesbyian/wallgen/actions/runs/39377693618) also passed a third **off-frame** self-intersecting real-render variant (three orders × 100%/75%), physical Draw again at both phone and short-landscape and a repeated phone/short-landscape Focus A/B with intact original recipe and disabled-state semantics. Newer checks demand resmoothing change visible *in the actual overlaid pixels*, pixel-exact local Undo, and one continuous fresh Draw→Interpret→Edit anchors→Apply gesture; those remain **pending their later CI head**.
+
+**No default inspector change.** Human A/B approval remains separate regardless of machine gesture counts.
