@@ -55,7 +55,8 @@ try{
        violations:audit.violations.map(v=>({id:v.id,impact:v.impact,description:v.description,
          nodes:v.nodes.map(n=>({target:n.target,summary:n.failureSummary})).slice(0,12),
          affectedNodes:v.nodes.length})),
-       incomplete:audit.incomplete.map(v=>({id:v.id,count:v.nodes.length})),
+       incomplete:audit.incomplete.map(v=>({id:v.id,count:v.nodes.length,
+         samples:v.nodes.slice(0,8).map(n=>({target:n.target,summary:n.failureSummary}))})),
        passes:audit.passes.length};
      findings.push(entry);
      console.log('INDEPENDENT_AXE_DIAGNOSTIC',JSON.stringify(entry));
