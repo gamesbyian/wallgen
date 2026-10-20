@@ -25,7 +25,7 @@
 - [x] Wire source-qualified Fit and Edit adjustment symbols to existing controls; verify actual source markup/handlers.
 - [x] Wire Import path and Export PNG icons to their matching pre-existing actions, without altering button identities.
 - [x] Publish an offline exact-SVG icon matrix covering 68 symbols at 20/24/28px in cream/dark/selected/disabled/focus states (visual review fixture; no approval implied).
-- [ ] Human/independent visual review of actual icon matrix, including source-tested candidate status; approve/refine eight unwired candidates before UI use.
+- [ ] Human/independent visual review of actual icon matrix, including source-tested candidate status; approve/refine eight unwired candidates before UI use. Independent bounded [eight-candidate 20/24/28px review](ui-reference/eight-candidate-visual-review-2026-10-19.md) and **actual post-fix Metadata screenshots** are complete after green #258; candidate wiring and human approval remain **not verified**.
 - [ ] Compare every canonical screen plate to exact feature inventory, including uncommon conditional states; annotate any implementation exception.
 
 ## Phase B — canvas-first shell
