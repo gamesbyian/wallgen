@@ -49,6 +49,13 @@ const profiles=[
   // A narrower source header wraps and changes the real gallery ink budget.
   {id:'height-edge-320x700',width:320,height:700,cases:['studio','saved-populated']},
   {id:'height-edge-320x841',width:320,height:841,cases:['studio','saved-populated']},
+  // The 340/341px switch changes actual header wrapping and adaptive art
+  // overhead. Test real generated Saved canvases on both sides in both themes.
+  {id:'wrap-edge-320x671',width:320,height:671,cases:['studio','saved-populated','saved-empty']},
+  {id:'wrap-edge-320x680',width:320,height:680,cases:['studio','saved-populated','saved-empty']},
+  {id:'wrap-edge-340x680',width:340,height:680,cases:['studio','saved-populated','saved-empty']},
+  {id:'wrap-edge-341x680',width:341,height:680,cases:['studio','saved-populated','saved-empty']},
+  {id:'wrap-edge-320x892',width:320,height:892,cases:['studio','saved-populated','saved-empty']},
   {id:'short-edge-499x740',width:499,height:740,cases:['studio','material','saved-populated']},
   {id:'short-edge-500x740',width:500,height:740,cases:['studio','material','saved-populated']},
   {id:'phone-412x892',width:412,height:892,cases:[...all,'explore-populated','saved-empty','saved-populated']},
