@@ -111,8 +111,11 @@ try{
     beforeInk.interiorElements.slice(0,2),'Ink changed a different Interior element');
   await page.locator('#undo').click();
   assert.deepEqual(current(),beforeInk,'Undo did not recover ID-bound ink edit');
+  // Return to the actual Elements tool after the ink edit: a hidden
+  // manager select cannot be interacted with while Targets is active.
   // The other element has contour-specific 1..30 integer frequency, with a
   // legitimate phase of -360. It cannot inherit the field slider bounds.
+  await tool('details','interior');
   await choose.selectOption('1');
   assert.deepEqual(await selectIndex(),{index:1,id:'contour'});
   const contour=await checkMotion({frequency:30,phase:-360,minimum:1,maximum:30});
