@@ -60,6 +60,9 @@ jobs:
           cat /tmp/visual-agent1-server.log
           exit 1
       - name: Capture paired real Chromium/reference states
+        env:
+          SOURCE_PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          SOURCE_PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: node scripts/visual-reference-audit-agent1.mjs
       - name: Census all reachable source setting rows in real Chromium
         run: node scripts/visual-setting-row-census-agent1.mjs
