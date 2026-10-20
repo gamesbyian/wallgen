@@ -63,7 +63,24 @@ async function exercise(plate,page){
   }else{
     await page.locator('.editor-tool-chooser [data-editor-tool="'+tools[plate]+'"]').click();
   }
-  if(plate==='focus')await page.locator('.editor-focus-toggle').click();
+  if(plate==='focus'){
+    const sourceColours=()=>page.locator(
+      '.editor-tool-card[data-editor-tool="geometry"] [data-setting][type="range"]')
+      .evaluateAll(fields=>fields.map(el=>({
+        key:el.name,colour:el.style.getPropertyValue('--roygbiv-slider-color')
+      })));
+    const before=await sourceColours();
+    assert.equal(before.length,2,'Focus's Geometry source range inventory changed');
+    assert.ok(before.every(x=>x.colour.trim()),
+      'Focus original ranges lack their assigned ROYGBIV colours');
+    assert.equal(new Set(before.map(x=>x.colour)).size,2,
+      'Focus original fields reuse a colour unexpectedly');
+    await page.locator('.editor-focus-toggle').click();
+    const other=page.locator('.editor-focus-chip[data-focus-key="shapeDepth"]');
+    await other.click();
+    assert.deepEqual(await sourceColours(),before,
+      'Focus parameter switching reassigned original range colours');
+  }
   if(plate==='history')await page.locator('#editorHistoryToggle').click();
   if(plate==='search'){
     await page.locator('button[aria-label="Find a setting"]').click();
