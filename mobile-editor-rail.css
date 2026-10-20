@@ -270,3 +270,10 @@
 @media(prefers-reduced-motion:reduce){
   body.mobile-studio .studio-stage .wallpaper-frame canvas{transition:none}
 }
+
+/* Independent 2026-10-20 axe counterexample: the 8px zoom percentage readout
+   inherited cream --muted #747486 at only 4.25:1 over #fbf6ee.
+   Dark already passes; adjust only cream text ink without changing geometry. */
+html[data-theme=cream] body.mobile-studio .mobile-zoom-level{
+  color:#696576;
+}
