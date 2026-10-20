@@ -161,8 +161,16 @@ export function installFocusedAdjustments({form,chooser}){
     }
     choose(available.includes(original)?original:available[0]);
   }
-  function setActive(next){
+  function setActive(next,{responsive=false}={}){
     if(next&&!mobile.matches)return;
+    // A desktop breakpoint change also occurs when Focus was never opened.
+    // In that case there is no Focus destination to restore, and the source
+    // must leave the user's existing keyboard focus alone.
+    if(!next&&!active)return;
+    const previousFocus=document.activeElement;
+    const recoverKeyboard=responsive&&active&&(
+      previousFocus===document.body||panel.contains(previousFocus)||previousFocus===toggle);
+    const sourceForRestore=original;
     active=Boolean(next);
     form.classList.toggle('editor-focus-active',active);
     panel.hidden=!active;
@@ -175,7 +183,18 @@ export function installFocusedAdjustments({form,chooser}){
       chips.hidden=false;
     }
     document.dispatchEvent(new CustomEvent('editor-focus-changed',{detail:{active}}));
-    if(!active)toggle.focus({preventScroll:true});
+    if(!active&&responsive&&recoverKeyboard){
+      // The Focus toggle becomes display:none at 791px. Restore the original
+      // enabled range control in the now-visible All inspector; if it is
+      // inactive/locked, use the real selected tool rather than a dead slider.
+      const target=sourceForRestore&&!sourceForRestore.disabled?sourceForRestore:
+        chooser.querySelector('.editor-tool-tab[aria-pressed="true"]')||
+        form.querySelector('.settings-tab[aria-selected="true"]');
+      if(target?.isConnected){
+        target.scrollIntoView({block:'nearest',inline:'nearest'});
+        target.focus({preventScroll:true});
+      }
+    }else if(!active&&!responsive)toggle.focus({preventScroll:true});
   }
   toggle.addEventListener('click',()=>setActive(!active));
   all.addEventListener('click',()=>setActive(false));
@@ -204,6 +223,6 @@ export function installFocusedAdjustments({form,chooser}){
   // notification. The Focus surface follows rather than caching old values.
   document.addEventListener('roygbiv-controls-synced',sync);
   document.addEventListener('editor-tool-changed',refresh);
-  mobile.addEventListener('change',event=>{if(!event.matches)setActive(false);});
+  mobile.addEventListener('change',event=>{if(!event.matches)setActive(false,{responsive:true});});
   return {get active(){return active;},close:()=>setActive(false)};
 }
