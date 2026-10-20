@@ -66,14 +66,14 @@ async function choose(page,key){
   assert.equal(await chip.getAttribute('aria-pressed'),'true');
   return page.locator('[data-setting][name="'+key+'"]');
 }
-async function changeDriver(field,value){
+async function changeDriver(page,field,value){
   const tag=await field.evaluate(el=>el.tagName);
   if(tag==='SELECT'){await field.selectOption(String(value));return;}
   if(await field.getAttribute('type')==='checkbox'){
     await field.setChecked(Boolean(value));return;
   }
   const key=await field.getAttribute('name');
-  const numeric=field.page().locator('.slider-number[data-number-for="'+key+'"]');
+  const numeric=page.locator('.slider-number[data-number-for="'+key+'"]');
   if(await numeric.count()===1){
     await numeric.fill(String(value));
     await numeric.press('Tab');
@@ -110,7 +110,7 @@ for(const variant of variants){
       assert.ok(current().lockedSettings.includes(journey.dependent));
       assert.ok(await dependent.isDisabled());
       let driver=await choose(page,journey.driver);
-      await changeDriver(driver,journey.off);
+      await changeDriver(page,driver,journey.off);
       assert.equal(current()[journey.driver],journey.off);
       assert.deepEqual(current()[journey.dependent],original,
         journey.id+': dormant transition destroyed stored source value');
@@ -124,7 +124,7 @@ for(const variant of variants){
       assert.equal(await lock.isDisabled(),true,
         journey.id+': locked dormant source must not toggle');
       driver=await choose(page,journey.driver);
-      await changeDriver(driver,journey.on);
+      await changeDriver(page,driver,journey.on);
       assert.equal(current()[journey.driver],journey.on);
       assert.deepEqual(current()[journey.dependent],original);
       await choose(page,journey.dependent);
