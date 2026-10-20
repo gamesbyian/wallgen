@@ -25,14 +25,23 @@ const scenarios=[
       rayCount:23,material:'canvas',textureStrength:66,textureRotation:217.5,
       textureLayer2Enabled:true,material2:'linen',textureStrength2:50,
       textureRotation2:23.5,textureLayer3Enabled:true,material3:'foil',
-      textureStrength3:84,textureRotation3:299.5}}
+      textureStrength3:84,textureRotation3:299.5}},
+  {name:'desktop-paths-three-layers',viewport:{width:1024,height:768},
+    source:{seed:'a3-material-desktop',structure:'paths',geometry:'zigzag',
+      material:'linen',textureCoverage:'both',textureBlend:'multiply',
+      textureStrength:65,textureRotation:359.5,
+      textureLayer2Enabled:true,material2:'foil',textureCoverage2:'stripes',
+      textureBlend2:'screen',textureStrength2:45,textureRotation2:359.5,
+      textureLayer3Enabled:true,material3:'grain',textureCoverage3:'background',
+      textureBlend3:'overlay',textureStrength3:80,textureRotation3:359.5}}
 ];
 const browser=await chromium.launch({headless:true});
 const evidence=[],errors=[];
 try{
   for(const scenario of scenarios){
-    const page=await browser.newPage({viewport:scenario.viewport,isMobile:true,
-      hasTouch:true,reducedMotion:'reduce'});
+    const mobile=scenario.viewport.width<=790;
+    const page=await browser.newPage({viewport:scenario.viewport,isMobile:mobile,
+      hasTouch:mobile,reducedMotion:'reduce'});
     page.setDefaultTimeout(15000);
     const localErrors=[];
     page.on('pageerror',e=>localErrors.push(String(e)));
@@ -42,7 +51,7 @@ try{
     try{
       await page.goto(origin+'/?r='+encodeRecipe(recipe),{waitUntil:'domcontentloaded'});
       await page.waitForFunction(()=>document.body.classList.contains('mobile-five-nav'));
-      await page.locator('#mobileEdit').click();
+      if(mobile)await page.locator('#mobileEdit').click();
       await page.locator('#tab-material').click();
       assert.equal(await page.locator('#tab-material').getAttribute('aria-selected'),'true');
       for(let layer=1;layer<=3;layer++){
@@ -65,12 +74,15 @@ try{
           const selector=op.set!==undefined?'[data-rotate-set="'+op.set+'"]':
             '[data-rotate-delta="'+op.delta+'"]';
           const target=card.locator('[data-rotate-target="'+key+'"]'+selector);
-          const access=await target.evaluate(el=>({
-            label:el.getAttribute('aria-label'),
-            rect:[el.getBoundingClientRect().width,el.getBoundingClientRect().height],
-            disabled:el.disabled
-          }));
-          assert.ok(access.label&&access.rect[0]>=24&&access.rect[1]>=24&&!access.disabled,
+          await target.scrollIntoViewIfNeeded();
+          const access=await target.evaluate(el=>{
+            const box=el.getBoundingClientRect();
+            const top=document.elementFromPoint(box.left+box.width/2,box.top+box.height/2);
+            return {label:el.getAttribute('aria-label'),rect:[box.width,box.height],
+              disabled:el.disabled,centerHittable:top===el||el.contains(top)};
+          });
+          assert.ok(access.label&&access.rect[0]>=24&&access.rect[1]>=24&&
+            !access.disabled&&access.centerHittable,
             'Source shortcut clipped, nameless or disabled: '+JSON.stringify({layer,op,access}));
           const previous=current();
           await target.click();
@@ -98,6 +110,22 @@ try{
         assert.equal(current()[material],beforeTyped[material],
           'Rotating a layer should not change its texture selection');
 
+        // Each independent layer must wrap its half-degree value cleanly on
+        // real shortcut presses, without mutating a different layer or camera.
+        await input.fill('359.5');
+        await input.press('Tab');
+        const beforeWrap=current();
+        const plusOne=card.locator('[data-rotate-target="'+key+'"][data-rotate-delta="1"]');
+        await plusOne.click();
+        assert.equal(current()[key],.5,'359.5 + 1 did not wrap to 0.5');
+        assert.deepEqual(current(),{...beforeWrap,[key]:.5},
+          'Wrap changed an unrelated wallpaper field');
+        const minusOne=card.locator('[data-rotate-target="'+key+'"][data-rotate-delta="-1"]');
+        await minusOne.click();
+        assert.deepEqual(current(),beforeWrap,
+          'Reversing wrapped rotation did not preserve the full source recipe');
+        record.push({layer,wrapped:true,from:359.5,afterPlus:.5,afterMinus:359.5});
+
         const lock=card.locator('.setting-lock[data-lock-key="'+key+'"]');
         assert.equal(await lock.count(),1,'Missing original per-layer rotation lock');
         await lock.click();
@@ -118,6 +146,18 @@ try{
       }
       assert.equal(current().textureLayer2Enabled,true);
       assert.equal(current().textureLayer3Enabled,true);
+      // Removing an optional layer must only alter its enabled flag; its
+      // preserved material, coverage, blend and rotation revive on Add.
+      await page.locator('.editor-tool-chooser [data-editor-tool="layer3"]').click();
+      const beforeOptional=current();
+      await page.locator('#removeTextureLayer3').click();
+      assert.equal(current().textureLayer3Enabled,false);
+      assert.deepEqual(current(),{...beforeOptional,textureLayer3Enabled:false},
+        'Disabled third layer lost its dormant authored settings');
+      await page.locator('#addTextureLayer3').click();
+      assert.deepEqual(current(),beforeOptional,
+        'Reenabled third layer did not restore saved authored values');
+      record.push({layer:3,disabledAndRestored:true});
       assert.deepEqual(localErrors,[],'Errors while actually using Material rotations');
       evidence.push({scenario:scenario.name,viewport:scenario.viewport,
         operations:record,sourceKeyIntegrity:true});
