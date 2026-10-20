@@ -477,7 +477,21 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
   });
   reSmooth.addEventListener('click',()=>{
     if(!editing||editor.selected===-1)return;
-    pushUndo();editor.changed.add(editor.selected);settle();
+    // A two-node imported line or already-fair straight span has no
+    // interior samples that fairing can change. Only real curve changes
+    // deserve an Undo snapshot and a new authored transaction.
+    const trial=clonePointEditor(editor);
+    trial.changed.add(trial.selected);
+    resmoothPointEdits(trial,Number(power.value));
+    if(trial.points.every((p,i)=>p[0]===editor.points[i][0]&&
+      p[1]===editor.points[i][1]))return;
+    pushUndo();
+    editor=trial;
+    editor.changed.clear();
+    ready=editor.points.map(p=>p.slice());
+    pendingPins=savedPointAnchors(editor);
+    pendingCorners=savedPointCorners(editor);
+    syncPointControls();draw(ready);
   });
   pointUndo.addEventListener('click',()=>{
     if(!editing||!history.length)return;

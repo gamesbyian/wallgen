@@ -674,3 +674,74 @@ test('a saved editor still Applies normally when only the camera changed',()=>{
     assert.notDeepEqual(f.recipe.customPath,path);
   }finally{f.cleanup();}
 });
+
+test('Re-smooth on a sparse two-node path does not manufacture an Undo snapshot',()=>{
+  const segment=[[.16,.2],[.85,.79]];
+  const f=fixture({seed:'resmooth-empty-span',structure:'paths',
+    geometry:'drawn',customPath:segment,viewZoom:.5,viewPanX:16,
+    positionX:11,positionY:-7});
+  try{
+    f.nodes.drawPathToggle.click();f.nodes.drawEditPoints.click();
+    selectFirstAnchor(f);
+    assert.equal(f.nodes.drawUndoPoint.disabled,true);
+    f.nodes.drawResmoothPoints.click();
+    assert.equal(f.nodes.drawUndoPoint.disabled,true,
+      'fairing cannot modify a two-node open segment');
+    f.nodes.drawApply.click();
+    assert.equal(f.calls.length,1);
+    assert.deepEqual(f.calls[0][0],f.snap.customPath);
+    assert.equal(f.calls[0][4],true);
+    assert.deepEqual(f.recipe,f.snap);
+  }finally{f.cleanup();}
+});
+
+test('Re-smooth on a visibly textured curved path creates exactly one useful Undo',()=>{
+  const detailed=Array.from({length:96},(_,i)=>{
+    const t=i/95*Math.PI*2;
+    return [.5+.27*Math.sin(t),.5+.19*Math.sin(2*t)+.027*Math.sin(27*t)];
+  });
+  const f=fixture({seed:'resmooth-curvature',structure:'paths',
+    geometry:'drawn',customPath:detailed,viewZoom:1.25,
+    viewPanX:13,viewPanY:-8,positionX:9});
+  try{
+    f.nodes.drawPathToggle.click();f.nodes.drawEditPoints.click();
+    selectFirstAnchor(f);
+    f.nodes.drawResmoothPoints.click();
+    assert.equal(f.nodes.drawUndoPoint.disabled,false,
+      'real high-frequency bends are legitimately altered by fairing');
+    f.nodes.drawApply.click();
+    assert.equal(f.calls.length,1);
+    assert.notDeepEqual(f.calls[0][0],f.snap.customPath);
+    assert.equal(f.calls[0][4],true);
+    assert.deepEqual(f.recipe,f.snap);
+  }finally{f.cleanup();}
+});
+
+test('image-imported two-node path Re-smooth keeps its exact uncommitted geometry',()=>{
+  const segment=[[.2,.16],[.81,.83]];
+  const f=fixture({seed:'imported-resmooth-noop',structure:'paths',
+    geometry:'wave',viewZoom:1.4,viewPanX:12,viewPanY:-10,
+    positionX:18,positionY:-12});
+  try{
+    assert.equal(f.tool.loadPath({points:segment}),true);
+    f.nodes.drawEditPoints.click();
+    const [panX,panY]=drawnPathViewportOffset(f.recipe,false);
+    const [x,y]=segment[0],z=f.recipe.viewZoom;
+    const clientX=600*(.5+(x-.5)*z+panX);
+    const clientY=1300*(.5+(y-.5)*z+panY);
+    pointer(f.nodes.drawOverlay,'pointerdown',{
+      pointerId:111,isPrimary:true,clientX,clientY});
+    pointer(f.nodes.drawOverlay,'pointerup',{
+      pointerId:111,isPrimary:true,clientX,clientY});
+    assert.equal(f.nodes.drawResmoothPoints.disabled,false);
+    f.nodes.drawResmoothPoints.click();
+    assert.equal(f.nodes.drawUndoPoint.disabled,true,
+      'imported sparse geometry cannot invent an Undo action');
+    f.nodes.drawApply.click();
+    assert.equal(f.calls.length,1);
+    assert.deepEqual(f.calls[0][0],segment);
+    assert.equal(f.calls[0][4],false,
+      'imported replacement must not inherit the old source nudge');
+    assert.deepEqual(f.recipe,f.snap);
+  }finally{f.cleanup();}
+});
