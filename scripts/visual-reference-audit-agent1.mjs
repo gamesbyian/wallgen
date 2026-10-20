@@ -15,21 +15,22 @@ const url=process.argv.find(x=>x.startsWith('--base-url='))?.slice(11)||'http://
 const plates={
   studio:'studio',geometry:'geometry',draw:'draw',explore:'explore',
   'explore-populated':'explore',
+  'saved-empty':'explore',
   more:'more',material:'material',colour:'colour',diagonal:'diagonal',
   compact:'compact',focus:'focus',history:'history',search:'search'
 };
-const all=Object.keys(plates).filter(name=>name!=='explore-populated');
+const all=Object.keys(plates).filter(name=>!['explore-populated','saved-empty'].includes(name));
 const profiles=[
   // Exact lower-width CSS boundary plus the app's minimum supported width.
   // These are actual mobile Chromium layouts, never CSS-root zoom proxies.
-  {id:'minimum-320x640',width:320,height:640,cases:['studio','geometry','material','more','explore','explore-populated','draw']},
-  {id:'edge-360x740',width:360,height:740,cases:['studio','geometry','material','more','explore','focus']},
-  {id:'phone-412x892',width:412,height:892,cases:[...all,'explore-populated']},
+  {id:'minimum-320x640',width:320,height:640,cases:['studio','geometry','material','more','explore','explore-populated','saved-empty','draw']},
+  {id:'edge-360x740',width:360,height:740,cases:['studio','geometry','material','more','explore','saved-empty','focus']},
+  {id:'phone-412x892',width:412,height:892,cases:[...all,'explore-populated','saved-empty']},
   {id:'edge-499x892',width:499,height:892,cases:['studio','geometry','material','more','focus']},
   {id:'edge-500x892',width:500,height:892,cases:all},
   {id:'edge-790x892',width:790,height:892,cases:['studio','geometry','material','more','explore']},
   {id:'desktop-791x892',width:791,height:892,cases:['studio','geometry','material']},
-  {id:'landscape-700x412',width:700,height:412,cases:['studio','geometry','draw','more','explore','explore-populated']},
+  {id:'landscape-700x412',width:700,height:412,cases:['studio','geometry','draw','more','explore','explore-populated','saved-empty']},
   {id:'zoom-out-412x892',width:412,height:892,cases:['studio','geometry','more'],zoom:.75}
 ];
 const errors=[],shots=[];
@@ -114,6 +115,36 @@ const scenarios={
           legibility.hintBottom>legibility.clipBottom+1)
         throw Error('Short-screen gallery empty guidance clipped: '+JSON.stringify(legibility));
     }
+  },
+  'saved-empty':async(page,profile)=>{
+    if(profile.width>790)return;
+    await click(page,'#mobileSaved');
+    await page.waitForFunction(()=>document.body.classList.contains('mobile-gallery-open')&&
+      document.querySelector('#gallery')?.dataset.view==='saved');
+    await page.locator('#gallery .gallery-placeholder').waitFor({state:'visible'});
+    // Save-specific copy can wrap differently from Explore. Check real text
+    // rectangles against the scroll-hidden gallery, without removing lines.
+    const evidence=await page.evaluate(()=>{
+      const gallery=document.querySelector('#gallery');
+      const heading=gallery.querySelector('.gallery-empty-heading');
+      const hint=gallery.querySelector('.gallery-placeholder>span');
+      const rect=el=>{
+        const r=el.getBoundingClientRect();
+        return {top:r.top,bottom:r.bottom,left:r.left,right:r.right,width:r.width,height:r.height};
+      };
+      return {mode:gallery.dataset.view,clip:rect(gallery),
+        heading:heading?rect(heading):null,hint:hint?rect(hint):null,
+        text:heading?.textContent?.trim(),instruction:hint?.textContent?.trim()};
+    });
+    console.log('SAVED EMPTY '+profile.id+' '+JSON.stringify(evidence));
+    if(evidence.text!=='Nothing saved yet.'||
+        !evidence.instruction?.includes('tap the heart')||
+        !evidence.heading||!evidence.hint||
+        evidence.heading.top<evidence.clip.top-1||
+        evidence.hint.bottom>evidence.clip.bottom+1||
+        evidence.heading.left<evidence.clip.left-1||
+        evidence.hint.right>evidence.clip.right+1)
+      throw Error('Saved empty-state guidance clipped or incorrect: '+JSON.stringify(evidence));
   },
   'explore-populated':async(page)=>{
     // Real twelve-way generation is slower than the preloaded empty gallery.
