@@ -108,7 +108,13 @@ try{
       await slider.focus();
       await page.keyboard.press('End');
       assert.equal(Number(await slider.inputValue()),10);
+      const beforeResmooth=await page.locator('#drawOverlay').screenshot({
+        animations:'disabled'});
       await page.locator('#drawResmoothPoints').click();
+      const afterResmooth=await page.locator('#drawOverlay').screenshot({
+        animations:'disabled'});
+      assert.notDeepEqual(afterResmooth,beforeResmooth,
+        'A visibly kinked 10x local Resmooth did not alter the provisional curve');
       assert.deepEqual(current(page),dense,'Local resmooth committed before Apply');
       await page.screenshot({path:join(out,width+'x'+height+'-resmooth-draft.png'),
         animations:'disabled'});
