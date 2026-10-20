@@ -165,6 +165,14 @@ try{
       const changed=Object.keys(source).filter(name=>
         JSON.stringify(after[name])!==JSON.stringify(source[name]));
       assert.ok(changed.includes(key),key+': original property absent from recipe diff');
+      const expectedAdditional={
+        family:['geometry','motif','palette','material','outline','stripeWidth'],
+        material2:['textureLayer2Enabled'],
+        material3:['textureLayer3Enabled']
+      };
+      assert.deepEqual(changed.slice().sort(),
+        [key,...(expectedAdditional[key]||[])].sort(),
+        key+': action unexpectedly modified unrelated original recipe settings');
       // Inspect locks only when this particular original row owns a source lock.
       // Lock actions never stand in for the field's own actual edit.
       const lock=page.locator('#controls .setting-lock[data-lock-key="'+key+'"]');
