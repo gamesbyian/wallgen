@@ -482,6 +482,26 @@ try{
   await page.locator('#controls [name="structure"]').selectOption('paths');
   assert.equal(await regionsCount.inputValue(),'0');
   assert.equal(await regionsCount.getAttribute('min'),'0');
+  await page.locator('#tab-path').click();
+  await page.locator('.editor-tool-chooser [data-editor-tool="geometry"]').click();
+  const editableGeometry=page.locator('#controls [name="geometry"]');
+  for(const scenario of [
+    {geometry:'hairpin',key:'hairpinAngle',min:'60'},
+    {geometry:'loop',key:'loopSweep',min:'240'},
+    {geometry:'stepped',key:'stepCount',min:'1'}
+  ]){
+    const field=page.locator('#controls [name="'+scenario.key+'"]');
+    assert.equal(await field.getAttribute('min'),'0',
+      scenario.key+': must start with honest dormant zero');
+    await editableGeometry.selectOption(scenario.geometry);
+    assert.equal(await field.getAttribute('min'),scenario.min,
+      scenario.key+': authored minimum did not return');
+    assert.equal(await field.inputValue(),String(current()[scenario.key]),
+      scenario.key+': active source value not restored');
+    await editableGeometry.selectOption('zigzag');
+    assert.equal(await field.getAttribute('min'),'0');
+    assert.equal(await field.inputValue(),'0');
+  }
   record('positive-minimum-range-restoration',{inactiveMinimum:0,
     activeMinimum:7,storedCount:current().regionCount,
     structureTransitions:['paths','regions','paths']});
