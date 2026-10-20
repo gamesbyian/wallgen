@@ -122,6 +122,28 @@ and finish before its outside edges, behind a contrasting phone outline.
 geometry by `node scripts/build-logo-raster.mjs`. Both source and derived
 files are free to use without credit under the repository dedication.
 
+## Sharing recipes between browsers
+
+**Copy Link** keeps the long-established `?r=` JSON recipe URL for ordinary
+wallpapers. For complex wallpapers whose original URL exceeds 8,192
+characters, browsers with native compression support instead create a
+**versioned compressed `#s=v1.…` link**. It encodes the complete normalized
+design, including Drawn paths, Interior object selections, locks, dormant
+material settings and camera framing, using only nondefault fields.
+The fragment is not sent to the static hosting server, so no account,
+database, upload, proprietary rendezvous or external JavaScript dependency
+is needed. Open the copied link on another supported browser to restore it.
+Existing `?r=` links continue to work.
+
+Compressed links still have an **8,192-character upper bound** in Copy Link
+as a conservative portability measure, not a universal browser limit.
+Malformed, unsupported or excessively large compressed recipes must fail
+visibly instead of silently restoring a different wallpaper. Where native
+CompressionStream/DecompressionStream support is unavailable, or a compressed
+link remains too long, **Save recipe JSON** and the original full-resolution
+**Download PNG** with embedded recipe are the lossless alternatives.
+Physical-device clipboard and OS file-picker behaviour need their own checks.
+
 ## Downloadable PNG metadata
 
 Below the Download PNG controls, **Edit image metadata** opens a collapsed-by-default
