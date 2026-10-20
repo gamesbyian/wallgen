@@ -48,7 +48,7 @@ const sceneForKey=key=>{
     Object.assign(mode,{geometry:'chevron'});
   else if(key==='extendDrawnPath')
     Object.assign(mode,{geometry:'drawn',composition:'single',
-      customPath:[{x:-25,y:25},{x:100,y:650},{x:625,y:1210}]});
+      customPath:[[-.25,.05],[.5,.5],[1.25,.95]]});
   else if(key==='pathLength')
     Object.assign(mode,{composition:'floating'});
   return normalizeRecipe({...baseline,...mode});
