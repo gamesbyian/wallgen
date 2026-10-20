@@ -4,6 +4,7 @@ on:
     paths:
       - 'scripts/visual-reference-audit-agent1.mjs'
       - 'scripts/visual-setting-row-census-agent1.mjs'
+      - 'scripts/visual-narrow-desktop-range-agent1.mjs'
       - '.github/workflows/visual-agent1.yml'
       - 'docs/ui-reference/*.svg'
       # All owning production presentation surfaces. An attractive PR should
@@ -94,7 +95,7 @@ jobs:
           done
           cat /tmp/visual-narrow-sliders.log
           exit 1
-      - name: Qualify source slider tracks in 10 viewport profiles and both themes
+      - name: Qualify source slider tracks in 13 viewport profiles and both themes
         run: node scripts/visual-narrow-desktop-range-agent1.mjs
       - name: Preserve live numeric evidence and source screenshots
         if: always()
