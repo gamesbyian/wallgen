@@ -100,6 +100,8 @@ try{
       await chip(p,'shapeDepth').click();
       assert.equal(await p.locator('.editor-focus-slider').isDisabled(),true);
       assert.match(await p.locator('.editor-focus-help').textContent(),/inactive/i);
+      assert.equal((await p.locator('.editor-focus-value').textContent()).trim(),
+        String(before.shapeDepth),'Inactive stored value must remain legible');
       assert.equal(await p.locator('.editor-focus-step[aria-label="Increase focused parameter"]').isDisabled(),true);
       assert.deepEqual(current(p),before,'Inactive Focus control changed saved value');
       await capture(p,'path-inactive-focus');
@@ -120,7 +122,10 @@ try{
       await chip(p,'textureStrength').click();
       assert.equal(await p.locator('.editor-focus-slider').isDisabled(),true);
       assert.match(await p.locator('.editor-focus-help').textContent(),/locked/i);
+      assert.equal((await p.locator('.editor-focus-value').textContent()).trim(),
+        String(before.textureStrength),'Locked stored value must remain legible');
       assert.deepEqual(current(p),before,'Locked source value changed under Focus');
+      await capture(p,'material-locked-focus');
       await p.locator('.editor-focus-all').click();
       assert.equal(await card(p).locator('input[name="textureStrength"]').isDisabled(),true);
       assert.deepEqual(current(p),before,'Focus exit bypassed Material lock');
