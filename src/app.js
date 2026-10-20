@@ -1350,7 +1350,13 @@ async function showGallery(recipes,button){
     return;
   }
   gallery.setAttribute('aria-busy','true');
-  if(button)setBusy(button,true,'Generating…');
+  if(button){
+    // Re-entrant Saved requests can target the same source button. A newer
+    // request inherits its original label, rather than saving "Generating…"
+    // as the text to restore when the older request is cancelled.
+    if(!button.dataset.galleryRequestId)setBusy(button,true,'Generating…');
+    button.dataset.galleryRequestId=String(requestId);
+  }
   try {
     for(let i=0;i<recipes.length;i++){
       if(requestId!==galleryRequestId)break;
@@ -1359,9 +1365,12 @@ async function showGallery(recipes,button){
       gallery.append(createCard(recipes[i],i));
     }
   }finally{
+    if(button&&button.dataset.galleryRequestId===String(requestId)){
+      delete button.dataset.galleryRequestId;
+      setBusy(button,false);
+    }
     if(requestId===galleryRequestId){
       gallery.removeAttribute('aria-busy');
-      if(button)setBusy(button,false);
       // A later tab write can supersede storage events while the initial
       // async Saved cards are still being built. Never publish those stale
       // thumbnails/counts as the completed gallery.
