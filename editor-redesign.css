@@ -968,15 +968,24 @@ html[data-theme="cream"] body.mobile-studio .sidebar .settings-tabs .settings-ta
   }
 }
 
-/* Issue #276: the desktop handoff leaves the source slider in a narrow
-   inline label + stepper column. At 791–899px, put the existing label above
+/* Issue #276: narrow desktop sidebar (791–1150px) leaves source sliders
+   compressed to zero or a few pixels. Put each existing label above
    its unchanged native slider, number input, steppers, die and lock. Do not
-   affect mobile (<=790px), the four-column Material rotation control or
-   wider desktop where the inline row has adequate room. */
-@media (min-width:791px) and (max-width:899px){
+   affect mobile (<=790px), four-column Material rotations, or the wider
+   desktop sidebar with its own full-width layout. */
+@media (min-width:791px) and (max-width:1150px){
   .editor-tool-card .field.range-field:not(.texture-rotation-field){
     display:flex;flex-direction:column;align-items:stretch;gap:3px;
     min-width:0;
+  }
+  /* Legacy nested Shadow/Lighting rows force row-nowrap !important in the
+     base desktop editor. Without overriding that old declaration, their
+     source steppers overlap die/lock and run 86px outside the field. */
+  .editor-tool-card :is(.stripe-shadow-section,.lighting-subsection)
+    .lockable-setting>.field.range-field{
+    flex-flow:column nowrap!important;
+    align-items:stretch!important;
+    justify-content:flex-start!important;
   }
   .editor-tool-card .field.range-field:not(.texture-rotation-field)>span{
     flex:0 0 auto;width:auto;max-width:100%;white-space:normal;
