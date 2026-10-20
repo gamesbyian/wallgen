@@ -26,7 +26,8 @@ const all=Object.keys(plates).filter(name=>!['explore-populated','saved-empty','
 Object.assign(plates,{'more-expanded':'more','interior':'colour',
   'outlines':'geometry','material-layer2':'material','material-layer3':'material',
   'effects':'colour','import-modal':'draw',
-  'desktop-gallery':'explore','desktop-favourites':'history'});
+  'desktop-gallery':'explore','desktop-favourites':'history',
+  'desktop-focus':'focus'});
 const deepMobile=['more-expanded','interior','outlines','material-layer2','material-layer3','effects','import-modal'];
 const profiles=[
   // Exact lower-width CSS boundary plus the app's minimum supported width.
@@ -69,7 +70,7 @@ const profiles=[
   {id:'edge-499x892',width:499,height:892,cases:[...all,...deepMobile,'explore-populated','saved-empty','saved-populated']},
   {id:'edge-500x892',width:500,height:892,cases:[...all,...deepMobile,'explore-populated','saved-empty','saved-populated']},
   {id:'edge-790x892',width:790,height:892,cases:[...all,...deepMobile,'explore-populated','saved-empty','saved-populated']},
-  {id:'desktop-791x892',width:791,height:892,cases:['studio','geometry','material','colour','diagonal','compact','focus','history','search','interior','outlines','material-layer2','material-layer3','effects','import-modal','more-expanded','desktop-gallery','desktop-favourites']},
+  {id:'desktop-791x892',width:791,height:892,cases:['studio','geometry','material','colour','diagonal','compact','desktop-focus','history','search','interior','outlines','material-layer2','material-layer3','effects','import-modal','more-expanded','desktop-gallery','desktop-favourites']},
   {id:'landscape-700x412',width:700,height:412,cases:[...all,...deepMobile,'explore-populated','saved-empty','saved-populated']},
   {id:'zoom-out-412x892',width:412,height:892,cases:['studio','geometry','more'],zoom:.75}
 ];
@@ -333,6 +334,20 @@ const scenarios={
     await click(page,'.editor-focus-toggle');
     await click(page,'.editor-focus-chip[data-focus-key=stripeWidth]');
     await page.locator('#editorFocusPanel:not([hidden])').waitFor({state:'visible'});
+  },
+  'desktop-focus':async(page,profile)=>{
+    if(profile.width<=790)throw Error('Desktop Focus guard requires desktop breakpoint');
+    await edit(page,profile);
+    await tool(page,'stripes','structure');
+    // The optional one-slider experiment is deliberately mobile-only.
+    // Its desktop toggle exists but may not activate the hidden panel.
+    const toggle=page.locator('.editor-focus-toggle');
+    await toggle.waitFor({state:'attached'});
+    const before=await page.locator('#editorFocusPanel').isHidden();
+    await click(page,'.editor-focus-toggle');
+    const after=await page.locator('#editorFocusPanel').isHidden();
+    if(!before||!after||await toggle.getAttribute('aria-pressed')!=='false')
+      throw Error('Desktop must retain source full inspector, not enter mobile-only Focus');
   },
   history:async(page,profile)=>{
     await edit(page,profile);await click(page,'#randomize');
