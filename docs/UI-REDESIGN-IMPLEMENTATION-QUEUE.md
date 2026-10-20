@@ -65,7 +65,7 @@
 
 ## Phase D — complex tool journeys
 
-- [ ] Keep Draw → Interpret → Edit anchors → Apply/Cancel, including resmoothing, corners, points and 10× interpretive smoothing.
+- [x] Keep Draw → Interpret → Edit anchors → Apply/Cancel, including resmoothing, corners, points and 10× interpretive smoothing. Verified against real production browser controls at 412×892 and 700×412 by [focused Draw lifecycle run 39380936613](https://github.com/gamesbyian/wallgen/actions/runs/39380936613) (43/43 source tests plus physical freehand Draw → Interpret → anchor nudge → Apply; true 96-sample 10× Resmooth changing canvas pixels and **pixel-exact local Undo**; sparse no-op refusing a spurious Undo entry; pinned corners, handle drag, Add/Delete point, Draw again and Cancel). Camera/composition fields remain untouched by saved-point edits; physical Android stylus/OS gesture input remains outside this browser fidelity gate.
 - [x] Add three real 412×892 Chrome drawing-phase screenshots to the 20-state mobile atlas, enforcing the live phase sequence and real pointer controls (PR #114).
 - [x] Address genuine semi-transparent drawing-panel ghosting discovered in those three mobile screenshots, while preserving original pointer plane and actions (present on main).
 - [x] Group drawing controls into Interpret, Refine and Finish with live Sketch/Refine/Edit points state and keep all source handlers, smoothing, anchor and extension identities; complete touch-fidelity review remains open (PR #112).
