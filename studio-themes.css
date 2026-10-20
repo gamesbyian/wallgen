@@ -456,48 +456,26 @@ html[data-theme="dark"] .gallery-placeholder>span{color:#c5becf}
   }
 }
 
-/* Short portrait gallery clip height, not width, determines whether the
-   original 195px bitmap plus caption can fit. Real 360, 400 and 412×740
-   screens all provided only ~184px of grid height, hiding 23px of wallpaper
-   and 47px of caption when the old 399px width cutoff was crossed.
-   Keep complete 140px artwork through the mobile <=790px breakpoint without
-   enlarging the canvas-overlapping tray. Tall phones stay full size. */
-@media(min-width:341px) and (max-width:790px) and (min-height:680px) and (max-height:790px){
+/* A mobile gallery loses height to its real source heading and caption.
+   Breakpoint-sized fixed canvases cliffed at 671, 680, 791 and again
+   between 840 and 860px. Size the complete wallpaper illustration from
+   the SAME reserved tray budget instead of guessing fixed height bands.
+   The 195px cap restores the original full-height artwork on tall phones.
+   A wrapping 320px header needs more room than the >340px version.
+   Short landscape <=670px retains its separate 46px miniature filmstrip. */
+@media(max-width:790px) and (min-height:671px){
+  body.mobile-gallery-open{--mobile-gallery-canvas-overhead:170px}
   body.mobile-gallery-open .gallery-grid .thumb canvas{
-    display:block;width:auto!important;height:140px!important;
-    max-height:140px!important;max-width:100%!important;
+    display:block;width:auto!important;
+    height:clamp(46px,calc(var(--mobile-tray-height) - var(--mobile-gallery-canvas-overhead)),195px)!important;
+    max-height:195px!important;max-width:100%!important;
     object-fit:contain;margin-inline:auto;
   }
-  body.mobile-gallery-open .gallery-grid .thumb-caption{
-    text-align:center;
-  }
-  body.mobile-gallery-open .gallery-grid .thumb-sub{
-    display:none;
-  }
-}
-
-/* Real 412px Saved gallery at 671-790px has only ~173px of clipped
-   filmstrip space after the header. 140px ink plus a 24px caption can
-   still overrun by 3px; 195px is substantially clipped at 671-679px.
-   The <=670px miniature rule above remains a separate short-height case. */
-@media(min-width:341px) and (max-width:790px) and (min-height:671px) and (max-height:790px){
-  body.mobile-gallery-open .gallery-grid .thumb canvas{
-    display:block;width:auto!important;height:132px!important;
-    max-height:132px!important;max-width:100%!important;
-    object-fit:contain;margin-inline:auto;
-  }
+  body.mobile-gallery-open .gallery-grid .thumb-caption{text-align:center}
   body.mobile-gallery-open .gallery-grid .thumb-sub{display:none}
 }
-/* At the 790/791 handoff the tray increases before its thumbnail does.
-   160px preserves the complete art and caption inside the actual 206px
-   clipped gallery. Normal height keeps the regular 195px thumbnail. */
-@media(min-width:341px) and (max-width:790px) and (min-height:791px) and (max-height:840px){
-  body.mobile-gallery-open .gallery-grid .thumb canvas{
-    display:block;width:auto!important;height:160px!important;
-    max-height:160px!important;max-width:100%!important;
-    object-fit:contain;margin-inline:auto;
-  }
-  body.mobile-gallery-open .gallery-grid .thumb-sub{display:none}
+@media(max-width:340px) and (min-height:671px){
+  body.mobile-gallery-open{--mobile-gallery-canvas-overhead:197px}
 }
 
 /* Actual 320x700 keyboard traversal reached metadata Description with its
