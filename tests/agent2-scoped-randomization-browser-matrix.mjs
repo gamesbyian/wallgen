@@ -96,18 +96,23 @@ for(const sample of owned){
     await page.locator('#tab-'+sample.category).click();
     const tab=page.locator('#tab-'+sample.category);
     assert.equal(await tab.getAttribute('aria-selected'),'true');
+    const toolId=typeof sample.tool==='string'?sample.tool:sample.tool?.id;
     if(sample.type!=='category'){
-      const chip=page.locator('.editor-tool-chooser [data-editor-tool="'+sample.tool.id+'"]');
+      const chip=page.locator('.editor-tool-chooser [data-editor-tool="'+toolId+'"]');
       assert.ok(await chip.isVisible(),sample.id+': tool is not reachable');
       await chip.click();
       assert.equal(await chip.getAttribute('aria-pressed'),'true');
     }
     const button=sample.type==='category'
       ?page.locator('#controls [data-random-category="'+sample.category+'"]')
-      :page.locator('#controls [data-random-tool="'+sample.tool.id+'"]');
+      :page.locator('#controls [data-random-tool="'+toolId+'"]');
     assert.equal(await button.count(),1,sample.id+': missing actual scoped action');
     assert.ok(await button.isVisible(),sample.id+': scope action hidden');
     assert.ok(await button.isEnabled(),sample.id+': scope action disabled');
+    // Tool dice share a horizontally scrollable chooser. Their pre-scroll
+    // coordinates may lie behind a clip boundary; reproduce what a genuine
+    // Playwright click does before asserting physical centre hitability.
+    await button.scrollIntoViewIfNeeded();
     const center=await button.evaluate(el=>{
       const r=el.getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2;
       const upper=document.elementFromPoint(x,y);
@@ -154,7 +159,7 @@ for(const sample of owned){
       assert.notEqual(new URL(page.url()).searchParams.get('r'),beforeToken);
     }
     const record={id:sample.id,type:sample.type,mode:sample.mode,
-      source:sample.category,tool:sample.tool?.id||sample.tool||null,
+      source:sample.category,tool:toolId||null,
       centerHit:!(!center.hit),modified:changes,modifiedCount:changes.length,
       noUnrelatedMutations:true,lockedIntact:true,cameraIntact:true,
       notice};
