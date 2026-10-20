@@ -130,6 +130,25 @@ try{
   assert.equal(await b.locator('#favorite .ui-icon').getAttribute('data-roygbiv-icon'),
     'favourite');
 
+  // A replacement that makes Saved EMPTY may interrupt a previous nonempty
+  // render before its finally block. The original Saved button must recover,
+  // rather than keeping its own disabled/loading state indefinitely.
+  await a.evaluate(([storageKey,items])=>
+    localStorage.setItem(storageKey,JSON.stringify(items)),[key,many]);
+  await b.waitForFunction(()=>document.querySelector('#showFavorites')
+    ?.getAttribute('aria-busy')==='true');
+  await a.evaluate(storageKey=>localStorage.setItem(storageKey,'[]'),key);
+  await b.waitForFunction(()=>document.querySelector('#gallery')?.dataset.view==='saved'
+    && document.querySelectorAll('#gallery .thumb').length===0
+    && document.querySelector('#gallery').getAttribute('aria-busy')!=='true'
+    && document.querySelector('#favoriteCount')?.textContent==='0');
+  assert.equal(await b.locator('#showFavorites').isEnabled(),true,
+    'Zero-item cross-tab update stranded the Saved button disabled');
+  assert.equal(await b.locator('#showFavorites').getAttribute('aria-busy'),'false',
+    'Zero-item cross-tab update stranded Saved in loading state');
+  assert.equal(await b.locator('#showFavorites').getAttribute('data-gallery-request-id'),null,
+    'Old Saved request was not retired when a zero-item update superseded it');
+
   assert.deepEqual(pageErrors,[],
     'Cross-tab updates threw uncaught browser errors during Saved rendering');
   console.log('AGENT4_TWO_TAB_SAVED_SUCCESS');
