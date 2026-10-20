@@ -41,7 +41,7 @@ const fixtures=[
     regionCount:13,regionSides:7,viewZoom:.68,viewPanX:15,viewPanY:-10,
     material:'none',background:'black'
   })},
-  {name:'nested-layered-interior-native',comparePixels:false,recipe:normalizeRecipe({
+  {name:'nested-layered-interior-native',comparePixels:true,recipe:normalizeRecipe({
     seed:'a3-downloaded-nested-native',structure:'regions',regionMode:'nested',
     regionCount:16,regionSides:9,regionJitter:71,viewZoom:.72,
     viewPanX:-15,viewPanY:10,positionX:6,positionY:-3,
@@ -90,8 +90,9 @@ try{
       camera:[fixture.recipe.viewZoom,fixture.recipe.viewPanX,fixture.recipe.viewPanY]};
     // Compare genuine native downloaded pixels against the main-thread
     // preview renderer, not merely preview vs preview. Textured-material cases
-    // are validated for nonempty decoded output and metadata, not exact texture
-    // equality because texture paths may use different sampling.
+    // are now independently challenged using the same stable local foreground
+    // sampling. Treat meaningful texture drift as a real red acceptance gate,
+    // not a reason to silently skip the source variant.
     const metrics=await page.evaluate(async({base64,recipe,comparePixels})=>{
       const {drawWallpaper}=await import('/src/renderer.js');
       const img=new Image();
@@ -119,8 +120,13 @@ try{
       const delta=(a,b)=>Math.max(...a.map((v,i)=>Math.abs(v-b[i])));
       let stable=0,colored=0,mismatch=0,coloredMismatch=0;
       const distinct=new Set(),examples=[];
-      for(let y=10;y<height-10;y+=11){
-        for(let x=10;x<width-10;x+=11){
+      // A three-layer textured sample varies sharply over 2px even in a
+      // correctly rendered file. Retain the *same* six-neighbour stability
+      // filter and disagreement limits, but sample a denser spatial grid so
+      // genuine stable ink regions are numerous enough to adjudicate.
+      const sampleStep=recipe.material==='none'?11:5;
+      for(let y=10;y<height-10;y+=sampleStep){
+        for(let x=10;x<width-10;x+=sampleStep){
           const a=channel(original,x,y),b=channel(downloadPixels,x,y);
           distinct.add(b.map(v=>Math.round(v/24)).join(':'));
           if(!comparePixels)continue;
@@ -138,7 +144,7 @@ try{
       }
       scaled.width=scaled.height=direct.width=direct.height=0;
       return {decoded:[img.naturalWidth,img.naturalHeight],
-        distinctColorBuckets:distinct.size,stable,colored,mismatch,coloredMismatch,
+        sampleStep,distinctColorBuckets:distinct.size,stable,colored,mismatch,coloredMismatch,
         mismatchRatio:stable?mismatch/stable:null,
         coloredMismatchRatio:colored?coloredMismatch/colored:null,examples};
     },{base64:bytes.toString('base64'),recipe:fixture.recipe,
@@ -162,9 +168,9 @@ try{
   }
   assert.deepEqual(errors,[],'Uncaught page errors during actual PNG download');
   await writeFile(join(out,'evidence.json'),JSON.stringify({
-    classification:'behavior-verified for five actual 19.8MP browser downloads',
+    classification:'five actual 19.8MP downloaded PNGs compared to direct stable foreground pixels',
     exclusions:['physical Android Chrome','OS file-picker integration',
-      'exact texture-pixel equality','all recipe variants','canonical visual review'],
+      'all recipe variants','canonical visual review'],
     observations,errors
   },null,2));
   console.log('AGENT3_NATIVE_DOWNLOAD_SUCCESS');
