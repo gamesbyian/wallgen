@@ -38,6 +38,21 @@ async function openSaved(page){
   assert.equal(await page.locator('#drawPathPanel').getAttribute('data-phase'),'anchors');
   assert.ok(await page.locator('#drawOverlay').isVisible());
 }
+async function tapSourcePointCoordinates(page,point,recipe){
+  const g=await page.evaluate(({point,zoom,panX,panY,posX,posY})=>{
+    const r=document.getElementById('preview').getBoundingClientRect();
+    const x=r.left+r.width*(.5+(point[0]-.5)*zoom+(posX-zoom*panX)/100);
+    const y=r.top+r.height*(.5+(point[1]-.5)*zoom+(posY-zoom*panY)/100);
+    const hit=document.elementFromPoint(x,y),ov=document.getElementById('drawOverlay');
+    return {x,y,hit:hit?.id||hit?.tagName||'',inOverlay:x>=ov.getBoundingClientRect().left&&
+      x<=ov.getBoundingClientRect().right&&y>=ov.getBoundingClientRect().top&&
+      y<=ov.getBoundingClientRect().bottom};
+  },{point,zoom:recipe.viewZoom,panX:recipe.viewPanX,panY:recipe.viewPanY,
+    posX:recipe.positionX,posY:recipe.positionY});
+  assert.ok(g.inOverlay&&g.hit==='drawOverlay',
+    'Visible tangent handle obscured: '+JSON.stringify(g));
+  return g;
+}
 async function tapSourcePoint(page,point,recipe){
   const geometry=await page.evaluate(({point,zoom,panX,panY,posX,posY})=>{
     const r=document.getElementById('preview').getBoundingClientRect();
@@ -118,6 +133,37 @@ try{
         'Local point operation moved the source endpoint');
       record.operations.push('Apply committed a changed interior anchor and corner, untouched camera');
 
+      // Actual tangent-handle drag, with an existing broken-corner pin.
+      // The canvas draws handle squares at source-projected coordinates.
+      // Compute the expected pixel target from the same pure point-editor
+      // geometry but issue *real* mouse pointer events through the overlay.
+      await openSaved(page);
+      await tapSourcePoint(page,applied.customPath[5],applied);
+      const tangent=await page.evaluate(async recipe=>{
+        const {createPointEditor,pointHandles}=await import('/src/path-point-editor.js');
+        const e=createPointEditor(recipe.customPath,recipe.drawnAnchors,recipe.drawnCorners);
+        return pointHandles(e,5).out;
+      },applied);
+      const h=await tapSourcePointCoordinates(page,tangent,applied);
+      await page.mouse.move(h.x,h.y);
+      await page.mouse.down();
+      await page.mouse.move(h.x+18,h.y-12,{steps:12});
+      await page.mouse.up();
+      assert.equal(await page.locator('#drawUndoPoint').isDisabled(),false,
+        'Dragging visible tangent handle did not create point Undo');
+      assert.deepEqual(current(page),applied,'Unapplied tangent changed recipe');
+      await page.screenshot({path:join(out,width+'x'+height+'-handle-draft.png'),
+        animations:'disabled'});
+      await page.locator('#drawApply').click();
+      const handled=current(page);
+      unchangedFields(applied,handled,'tangent handle');
+      assert.notDeepEqual(handled.customPath,applied.customPath,
+        'Real tangent-handle drag left all authored geometry unchanged');
+      assert.deepEqual(handled.customPath[0],applied.customPath[0]);
+      assert.deepEqual(handled.customPath.at(-1),applied.customPath.at(-1));
+      assert.ok(handled.drawnCorners.includes(5)&&handled.drawnAnchors.includes(5));
+      record.operations.push('physical tangent-handle drag; Undo available; Apply changed only local geometry');
+
       // A true two-endpoint imported path needs a *new station*, rather
       // than selecting an existing interior sample.
       await readPage(page,sparse);
@@ -167,7 +213,7 @@ try{
   await writeFile(join(out,'evidence.json'),JSON.stringify({
     classification:errors.length?'NOT VERIFIED':'real advanced Draw interactions verified',
     results,errors,
-    exclusions:['Tangent handle drag and OS pointer cancellation require separate browser qualification',
+    exclusions:['OS pointer cancellation requires separate browser qualification',
       'Native Android stylus/handwriting and all constrained viewports unqualified']
   },null,2));
   assert.deepEqual(errors,[],'Actual advanced Draw interactions failed');
