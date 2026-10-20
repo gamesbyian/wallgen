@@ -1,0 +1,63 @@
+name: Agent 2 individual setting dice browser matrix
+
+on:
+  pull_request:
+    paths:
+      - 'tests/agent2-single-setting-die-matrix.mjs'
+      - '.github/workflows/agent2-single-setting-die-matrix.yml'
+      - 'src/scoped-random.js'
+      - 'src/editor-layout.js'
+      - 'src/app.js'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: agent2-setting-dice-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  source-setting-dice:
+    runs-on: ubuntu-latest
+    timeout-minutes: 24
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3]
+    env:
+      AGENT2_DIE_MATRIX_SHARD: ${{ matrix.shard }}
+      AGENT2_DIE_MATRIX_SHARDS: '4'
+      AGENT2_DIE_MATRIX_OUT: artifacts/agent2-die-matrix-${{ matrix.shard }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify source die test and existing scoped model contracts
+        run: |
+          node --check tests/agent2-single-setting-die-matrix.mjs
+          node --test tests/editor-schema.test.js tests/scoped-optional-layer-activation.test.js
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.56.1 serve@14.2.5
+          npx playwright install --with-deps chromium
+      - name: Start original app
+        run: |
+          npx serve . -l 4173 > /tmp/agent2-die-http.log 2>&1 &
+          for i in $(seq 1 40); do
+            if curl --fail --silent http://127.0.0.1:4173/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/agent2-die-http.log
+          exit 1
+      - name: Audit real individual setting dice for Reroll Vary and source lock
+        run: node tests/agent2-single-setting-die-matrix.mjs
+      - name: Retain browser witness and negative screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent2-individual-dice-${{ matrix.shard }}
+          path: artifacts/agent2-die-matrix-${{ matrix.shard }}/
+          if-no-files-found: warn
+          retention-days: 14
