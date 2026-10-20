@@ -33,7 +33,7 @@ test('re-embedding an existing PNG replaces stale recipe while preserving raster
   assert.deepEqual(extractPngRecipe(again),second);
   assert.deepEqual(idat(again),idat(source),'IDAT remains byte-identical');
   const recipeChunks=pngChunks(again).filter(c=>c.type==='iTXt'&&
-    Buffer.from(c.data).toString('utf8').startsWith('ROYGBIV Recipe\\0'));
+    Buffer.from(c.data.subarray(0,c.data.indexOf(0))).toString('utf8')==='ROYGBIV Recipe');
   assert.equal(recipeChunks.length,1,'only the latest recipe is embedded');
   assert.equal(new DataView(again.buffer,again.byteOffset+16).getUint32(0),1);
   assert.equal(new DataView(again.buffer,again.byteOffset+20).getUint32(0),1);
