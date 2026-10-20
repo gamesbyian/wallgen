@@ -543,3 +543,14 @@ html[data-theme=cream] .metadata-fields label{
     color:#b6b2c2;
   }
 }
+
+/* Follow-up to the independent 20-screen desktop axe run: source gallery
+   heading/helper copy (2.18–2.63:1) and footer (3.35:1) were the only
+   remaining cream AA contrast violations after the initial correction. */
+@media(min-width:791px){
+  html[data-theme="cream"] .gallery-head .eyebrow,
+  html[data-theme="cream"] .gallery-head p,
+  html[data-theme="cream"] footer{
+    color:#625b6c;
+  }
+}
