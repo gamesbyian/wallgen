@@ -123,3 +123,17 @@ test('180 deterministic source recipes preserve EVERY canonical field through JS
     'Randomized test lost its deliberately adversarial structural coverage');
   console.log('AGENT4_RECIPE_MATRIX_PASS',JSON.stringify(stats));
 });
+
+test('rounded negative-zero camera and position values have one portable canonical representation',()=>{
+  for(const [x,y] of [[-.01,-.04],[-0,-0],[.01,-.049],[0,0]]){
+    const source=normalizeRecipe({
+      seed:'portable-zero',structure:'regions',regionMode:'nested',
+      viewPanX:x,viewPanY:y,positionX:-0,positionY:-0
+    });
+    for(const key of ['viewPanX','viewPanY','positionX','positionY'])
+      assert.ok(!Object.is(source[key],-0),key+' retained nonportable -0');
+    assert.deepEqual(decodeRecipe(encodeRecipe(source)),source);
+    assert.deepEqual(extractPngRecipe(embedPngMetadata(png,{},
+      {recipe:source})),source);
+  }
+});
