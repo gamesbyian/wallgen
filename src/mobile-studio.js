@@ -68,6 +68,18 @@ for(const [id,title] of [
   moreGroups.set(id,body);
 }
 moreGroups.get('generate').append(document.getElementById('mobileShuffle'));
+// Preserve the original gallery #batch action and its event handler. More
+// exposes an honest route to it instead of cloning gallery state or recipes.
+const moreBatch=document.createElement('button');
+moreBatch.type='button';
+moreBatch.className='text-link-button mobile-more-batch';
+moreBatch.textContent='Generate 12 variations in Explore';
+moreBatch.setAttribute('aria-label','Generate 12 wallpapers and open Explore');
+moreBatch.addEventListener('click',()=>{
+  document.getElementById('batch').click();
+  document.getElementById('mobileExplore').click();
+});
+moreGroups.get('generate').append(moreBatch);
 const originalSelectors=['.composition-positioner','.viewport-positioner',
   '.action-tray','.export-metadata','.secondary-actions','.details-bar'];
 const originalGroups=['inspect','inspect','generate','export','export','inspect'];
