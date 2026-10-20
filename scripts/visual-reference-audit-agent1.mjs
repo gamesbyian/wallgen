@@ -604,20 +604,21 @@ try{
   await page.evaluate(async()=>document.fonts.ready);
   await mkdir(join(output,'icons'),{recursive:true});
   await page.screenshot({path:join(output,'icons','all-68-state-matrix.png'),fullPage:true,animations:'disabled'});
-  // Canonical brand art is 120x120 and must not be crammed into the
-  // UI glyph 32x32 viewBox. Enforce 24 distinct source-exact samples.
+  // Canonical brand art is 120x120, and all 24 brand matrix samples
+  // must use that viewBox while staying bounded inside their 36px cells.
+  // The source registry and fixture data are also compared by Node CI.
   await page.locator('#filter').fill('=app-icon');
   await page.waitForFunction(()=>{
-    const imgs=[...document.querySelectorAll('#grid .card .sample img')];
-    return imgs.length===24&&imgs.every(img=>img.complete&&img.naturalWidth===120&&img.naturalHeight===120);
+    const glyphs=[...document.querySelectorAll('#grid .card .sample svg')];
+    return glyphs.length===24&&glyphs.every(svg=>svg.getAttribute('viewBox')==='0 0 120 120');
   },null,{timeout:15000});
   const brandAudit=await page.evaluate(()=>
-    [...document.querySelectorAll('#grid .card .sample img')].map(img=>{
-      const r=img.getBoundingClientRect(),box=img.closest('.sample').getBoundingClientRect();
-      return {src:img.getAttribute('src'),width:r.width,height:r.height,
+    [...document.querySelectorAll('#grid .card .sample svg')].map(svg=>{
+      const r=svg.getBoundingClientRect(),box=svg.closest('.sample').getBoundingClientRect();
+      return {viewBox:svg.getAttribute('viewBox'),width:r.width,height:r.height,
         fits:r.left>=box.left-1&&r.right<=box.right+1&&r.top>=box.top-1&&r.bottom<=box.bottom+1};
     }));
-  if(brandAudit.length!==24||brandAudit.some(x=>x.src!=='app-icon.svg'||!x.fits))
+  if(brandAudit.length!==24||brandAudit.some(x=>x.viewBox!=='0 0 120 120'||!x.fits))
     errors.push({key:'svg/app-icon-source',error:JSON.stringify(brandAudit)});
   await page.screenshot({path:join(output,'icons','app-icon-states.png'),fullPage:true,animations:'disabled'});
   for(const candidate of iconCandidates){
