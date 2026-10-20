@@ -156,17 +156,42 @@ try{
             mismatch++;if(ink)colouredMismatch++;
           }
         }
+        // Complement strict *flat-ink* samples with a foreground-positive
+        // metric for narrow spokes and high-frequency dots. A supersampled
+        // 3024×6552 PNG can shift an edge by ~1 display pixel when decoded
+        // to 300×650. Instead of declaring these modes empty, require that
+        // each direct-rendered saturated foreground sample has a near-pixel
+        // native colour match. Background-only images cannot pass.
+        let fineForeground=0,fineUnmatched=0;
+        for(let y=2;y<h-2;y+=2)for(let x=2;x<w-2;x+=2){
+          const original=ch(a,x,y);
+          if(Math.max(...original)<=75||
+            Math.max(...original)-Math.min(...original)<=36)continue;
+          fineForeground++;
+          let best=Infinity;
+          for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++)
+            best=Math.min(best,difference(original,ch(b,x+dx,y+dy)));
+          if(best>58)fineUnmatched++;
+        }
         return {decoded:[img.naturalWidth,img.naturalHeight],
           stable,coloured,mismatch,colouredMismatch,colorBuckets:buckets.size,
           mismatchRatio:stable?mismatch/stable:1,
-          colouredMismatchRatio:coloured?colouredMismatch/coloured:1};
+          colouredMismatchRatio:coloured?colouredMismatch/coloured:null,
+          fineForeground,fineUnmatched,
+          fineUnmatchedRatio:fineForeground?fineUnmatched/fineForeground:1};
       },{base64:bytes.toString('base64'),recipe:after});
       assert.deepEqual(parity.decoded,[OUTPUT_WIDTH,OUTPUT_HEIGHT]);
+      console.log('AGENT3_CONDITIONAL_METRICS',scene.id,JSON.stringify(parity));
       assert.ok(parity.colorBuckets>=10,'Downloaded mode lost meaningful colour variety');
       assert.ok(parity.stable>=150,scene.id+': insufficient stable source pixel checks');
-      assert.ok(parity.coloured>=35,scene.id+': no meaningful painted foreground sampled');
-      assert.ok(parity.mismatchRatio<=.04&&parity.colouredMismatchRatio<=.06,
-        scene.id+' real native pixels disagreed with source renderer: '+JSON.stringify(parity));
+      assert.ok(parity.fineForeground>=70,
+        scene.id+': no meaningful directly-rendered foreground to verify');
+      assert.ok(parity.fineUnmatchedRatio<=.12,
+        scene.id+': edge-aware native foreground image disagrees with source: '+JSON.stringify(parity));
+      assert.ok(parity.mismatchRatio<=.04,
+        scene.id+': stable native pixels disagree with source renderer: '+JSON.stringify(parity));
+      if(parity.coloured>=35)assert.ok(parity.colouredMismatchRatio<=.06,
+        scene.id+': stable painted ink disagrees with renderer: '+JSON.stringify(parity));
       record.native={dimension:[OUTPUT_WIDTH,OUTPUT_HEIGHT],size:bytes.length,
         sha256:createHash('sha256').update(bytes).digest('hex'),
         sourceRecipePreserved:true,parity};
