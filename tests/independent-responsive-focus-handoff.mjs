@@ -80,11 +80,59 @@ try{
    }finally{await context.close();}
   }
  }
+ // Disabled/locked source fallback. The original range cannot receive
+ // focus, so resume at the real selected tool after the desktop handoff.
+ for(const [width,height] of [[790,892],[700,412]]){
+  for(const theme of ['cream','dark']){
+   const context=await browser.newContext({viewport:{width,height},hasTouch:true,
+     isMobile:true,reducedMotion:'reduce'});
+   const page=await context.newPage();page.setDefaultTimeout(15000);
+   const runtimeErrors=[];page.on('pageerror',e=>runtimeErrors.push(String(e)));
+   try{
+    const lockedRecipe=normalizeRecipe({...recipe,lockedSettings:['shapeDepth']});
+    await page.goto(origin+'/?r='+encodeRecipe(lockedRecipe),{waitUntil:'domcontentloaded'});
+    await page.evaluate(t=>localStorage.setItem('roygbiv:studio-theme:v1',t),theme);
+    await page.reload({waitUntil:'domcontentloaded'});
+    await page.locator('#mobileEdit').click();
+    await page.locator('#tab-path').click();
+    await page.locator('[data-editor-tool="geometry"].editor-tool-tab').click();
+    await page.locator('.editor-focus-toggle').click();
+    const selected=page.locator('.editor-focus-chip[data-focus-key="shapeDepth"]');
+    await selected.click();
+    assert.equal(await page.locator('.editor-focus-slider').isDisabled(),true,
+      'Locked source did not disable Focus range');
+    await selected.focus();
+    const before=read(page);
+    await page.setViewportSize({width:791,height:892});
+    await page.waitForFunction(()=>!document.querySelector('#controls')?.classList.contains('editor-focus-active'));
+    const after=await focusedState(page);
+    assert.ok(after.className.includes('editor-tool-tab'),
+      'Locked range handoff must return to selected original tool: '+JSON.stringify(after));
+    assert.equal(after.hidden,false);
+    assert.equal(after.viewportHit,true,'Locked fallback is not visibly keyboard focused');
+    assert.deepEqual(read(page),before,'Locked breakpoint switch altered the recipe');
+    await page.keyboard.press('Tab');
+    const next=await focusedState(page);
+    assert.ok(!next.isBody&&!next.hidden,'Tab after locked fallback lost visible keyboard focus');
+    assert.deepEqual(runtimeErrors,[]);
+    observations.push({mode:'locked-fallback',viewport:[width,height],theme,
+      after,next,recipeUnchanged:true});
+    await page.screenshot({path:join(out,'locked-'+theme+'-'+width+'x'+height+'.png'),
+      animations:'disabled'});
+    console.log('INDEPENDENT_RESPONSIVE_FOCUS_LOCKED',JSON.stringify(observations.at(-1)));
+   }catch(e){
+    errors.push({mode:'locked-fallback',viewport:[width,height],theme,error:String(e),
+      stack:e.stack,focused:await focusedState(page).catch(()=>null),runtimeErrors});
+    await page.screenshot({path:join(out,'failure-locked-'+theme+'-'+width+'x'+height+'.png'),
+      animations:'disabled'}).catch(()=>{});
+   }finally{await context.close();}
+  }
+ }
  await writeFile(join(out,'evidence.json'),JSON.stringify({observations,errors,
   classification:errors.length?'NOT VERIFIED':'bounded native Chromium breakpoint focus handoff',
   limits:['Not physical Android/AT','Programmatic focus used only for starting state',
-   'Only active Path geometry slider across mobile→desktop']},null,2));
+   'Enabled and explicitly locked Path geometry across mobile→desktop']},null,2));
  assert.deepEqual(errors,[],'Responsive Focus keyboard handoff counterexamples');
- assert.equal(observations.length,4);
+ assert.equal(observations.length,8);
  console.log('INDEPENDENT_RESPONSIVE_FOCUS_SUCCESS');
 }finally{await browser.close();}
