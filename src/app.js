@@ -1220,8 +1220,14 @@ form.addEventListener('input',event=>{
 // must commit SYNCHRONOUSLY: deferring it to a frame races Favourite, Save,
 // Undo and subsequent edits, which could otherwise act on the older artwork.
 // Only continuous slider movement is coalesced into a frame.
-form.addEventListener('change',event=>{
-  if(!FIELDS.includes(event.target.name)||event.target.name==='family')return;
+// The original Primes checkbox is moved to the mobile wallpaper-side rail.
+// It still belongs to #controls through its form attribute, but a native
+// change outside the form's DOM subtree cannot bubble through #controls.
+// Listen at document scope and restrict to genuine form-owned setting fields.
+// This also avoids fabricating change events whose target would be the form.
+document.addEventListener('change',event=>{
+  if(event.target.form!==form||!FIELDS.includes(event.target.name)||
+    event.target.name==='family')return;
   clearTimeout(rangeTimeout);
   updateControlsFromInputs();
 });
