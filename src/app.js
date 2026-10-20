@@ -658,11 +658,30 @@ importRecipeFile.addEventListener('change',async()=>{
   importRecipeFile.value='';
   if(!file)return;
   try{
-    if(file.size>150*1024*1024)throw Error('PNG exceeds the 150 MB import limit');
-    const recipe=extractPngRecipe(await file.arrayBuffer());
-    if(!recipe)throw Error('This PNG has no R.O.Y.G.B.I.V. recipe metadata');
+    // JSON exported by Save recipe is a first-class import, using the same
+    // original file input and history transaction as embedded PNG recipes.
+    // Never silently reset the design when a random JSON document is chosen.
+    const isJSON=/\\.json$/i.test(file.name)||file.type==='application/json';
+    const limit=isJSON?10*1024*1024:150*1024*1024;
+    if(file.size>limit)throw Error(isJSON?
+      'JSON exceeds the 10 MB import limit':'PNG exceeds the 150 MB import limit');
+    let recipe;
+    if(isJSON){
+      let raw;
+      try{raw=JSON.parse(await file.text());}
+      catch{throw Error('Invalid JSON recipe syntax');}
+      if(!raw||Array.isArray(raw)||typeof raw!=='object'||
+        typeof raw.seed!=='string'||!raw.seed.trim()||
+        !['paths','radial','regions'].includes(raw.structure))
+        throw Error('JSON must contain a wallpaper recipe with seed and structure');
+      recipe=normalizeRecipe(raw);
+    }else{
+      recipe=extractPngRecipe(await file.arrayBuffer());
+      if(!recipe)throw Error('This PNG has no R.O.Y.G.B.I.V. recipe metadata');
+    }
     changeRecipe(recipe,{bypassLocks:true});
-    showNotice('Restored original wallpaper settings from PNG recipe.');
+    showNotice(isJSON?'Restored wallpaper settings from JSON recipe.':
+      'Restored original wallpaper settings from PNG recipe.');
   }catch(error){showNotice('Cannot restore design: '+error.message);}
 });
 
