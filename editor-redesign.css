@@ -1020,4 +1020,10 @@ html[data-theme="cream"] body.mobile-studio .sidebar .settings-tabs .settings-ta
     .editor-tool-card[data-editor-tool="lighting"] .lighting-subsection .lockable-setting{
     padding:0!important;
   }
+  /* Two original Lighting selects can release 1px each while retaining
+     36px-high source hit targets, leaving visible clearance for Canvas shade. */
+  body.mobile-studio.mobile-edit-open .sidebar
+    .editor-tool-card[data-editor-tool="lighting"] .field select{
+    height:36px!important;min-height:36px!important;
+  }
 }
