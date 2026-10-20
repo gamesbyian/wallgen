@@ -29,6 +29,10 @@ try{
       geometrySafety:false,orientation:'vertical',spread:65}},
     {id:'saved-figure-eight',scene:{seed:'crossing-drawn',
       structure:'paths',geometry:'drawn',customPath:contour,
+      geometrySafety:false,spread:65,extendDrawnPath:true}},
+    {id:'off-frame-figure-eight',scene:{seed:'crossing-drawn-outside',
+      structure:'paths',geometry:'drawn',
+      customPath:contour.map(([x,y])=>[.5+(x-.5)*1.9,.49+(y-.49)*1.35]),
       geometrySafety:false,spread:65,extendDrawnPath:true}}
   ])for(const zoom of [1,.75]){
     const scene={...testCase.scene,viewZoom:zoom,viewPanX:0,viewPanY:0,
@@ -84,6 +88,11 @@ try{
       },scene);
       assert.ok(result.crossings>0,
         testCase.id+'/'+zoom+' does not contain an actual transverse junction');
+      if(testCase.id==='off-frame-figure-eight'){
+        assert.ok(scene.customPath.some(([x])=>x<0)&&
+          scene.customPath.some(([x])=>x>1),
+          'Off-frame crossing fixture never left the wallpaper source frame');
+      }
       assert.ok(result.recipes.every(x=>x.sameGeometry&&x.sourcePathRetained),
         'Changing depth order silently regenerated a source stripe/path');
       for(const compare of result.comparisons){
