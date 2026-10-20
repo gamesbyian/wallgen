@@ -10,6 +10,19 @@ Inspected **56 of the 70 actual pictures** as cream/dark full-view contact sheet
 
 The comparison covers `studio`, `edit-material`, `edit-interior`, `explore`, `saved`, `more` and `draw`. The first two editor states were entered via original browser touchscreen-emulated taps; all images are the actual source app, not generated replacement screens.
 
+## Numeric cross-check of original screenshot manifest
+
+In addition to examining the actual PNG pixels, I separately read the `manifest.json` inside the source artifact and filtered to exactly the 56 portrait screenshots. All have **positive native `#preview` dimensions**, **zero reported stage/sheet intersections**, **zero horizontal document scroll**, and **no obstructed five-dock centre hit tests when the dock is visible**. The Edit dock is intentionally off-screen and inert and is not falsely counted as a failed visible target. No manifest errors or warnings were reported.
+
+| CSS viewport (both themes) | Original screenshot cases | Smallest measured `#preview` (CSS px), any sampled state |
+| --- | ---: | --- |
+| 360×740 | 14 | 113.16 × 245.17 |
+| 412×892 | 14 | 153.84 × 333.33 |
+| 499×892 | 14 | 153.84 × 333.33 |
+| 500×892 | 14 | 153.84 × 333.33 |
+
+This is the rendered **canvas size**, not a claim about artwork density, legibility under magnification or a minimum requirement for every conditional state. The smallest previews occur in empty Explore/Saved where the gallery intentionally takes space. These measurements specifically distinguish supported portrait from the known historical **600×360 zero-canvas landscape** issue, which is still unfixed but out of scope for release blocking.
+
 ## Observations in supported portrait widths
 
 | Source surface | Bounded screenshot observation | What this does **not** prove |
