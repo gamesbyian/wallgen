@@ -72,8 +72,28 @@ try{
    await page.locator('#undo').click();
    assert.deepEqual(current(),sequence[2],
      'History restoration damaged pre-existing Undo provenance');
+   // Fill the bounded history without allowing thumbnail workers time to
+   // settle between generations. Stale completed images must not resurrect
+   // evicted snapshots or change the recipe chosen by the history button.
+   const generated=[];
+   for(let i=0;i<12;i++){
+     await page.locator('#randomize').click();
+     generated.push(current());
+   }
+   await page.locator('#mobileEdit').click();
+   await page.locator('#editorHistoryToggle').click();
+   const capped=page.locator('#editorHistory .editor-history-choice');
+   assert.equal(await capped.count(),10,'Recent variation history must cap at 10');
+   await page.waitForTimeout(600);
+   assert.equal(await capped.count(),10,
+     'Late asynchronous thumbnail completion resurrected removed history items');
+   await capped.last().click();
+   assert.deepEqual(current(),generated[2],
+     'Oldest retained history snapshot should be the third of twelve changes');
+   assert.equal(await page.locator('#editorHistory').isVisible(),false);
    evidence.push({thumbnailFailureInjected:failThumbnail,
-     historyItems:4,restoredOriginal:true,undoChainPreserved:true,
+     historyItems:4,cappedItems:10,oldestCappedRestored:true,
+     restoredOriginal:true,undoChainPreserved:true,
      thumbnailResult:failThumbnail?'deliberately failed and recovered':'painted 120x260 JPEG'});
    console.log('AGENT4_HISTORY_VERIFIED',JSON.stringify(evidence.at(-1)));
   }catch(error){
