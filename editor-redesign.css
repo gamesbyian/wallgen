@@ -968,12 +968,12 @@ html[data-theme="cream"] body.mobile-studio .sidebar .settings-tabs .settings-ta
   }
 }
 
-/* Issue #276: narrow desktop sidebar (791–1150px) leaves source sliders
-   compressed to zero or a few pixels. Put each existing label above
-   its unchanged native slider, number input, steppers, die and lock. Do not
-   affect mobile (<=790px), four-column Material rotations, or the wider
-   desktop sidebar with its own full-width layout. */
-@media (min-width:791px) and (max-width:1150px){
+/* Issue #276: real source measurements reveal collapsed native slider
+   tracks on ALL desktop widths, including the 791px handoff and 1151/1280px.
+   Stack existing labels above the complete source stepper so each input
+   has a draggable track; preserve source die/lock and 4-column rotations.
+   Phone <=790px retains its independently qualified control geometry. */
+@media (min-width:791px){
   .editor-tool-card .field.range-field:not(.texture-rotation-field){
     display:flex;flex-direction:column;align-items:stretch;gap:3px;
     min-width:0;
