@@ -605,8 +605,13 @@ try{
   await mkdir(join(output,'icons'),{recursive:true});
   await page.screenshot({path:join(output,'icons','all-68-state-matrix.png'),fullPage:true,animations:'disabled'});
   for(const candidate of iconCandidates){
-    await page.locator('#filter').fill(candidate);
-    await pause(90);
+    // Plain `pan` also matches the title "Expand". The review must display
+    // exactly the candidate source glyph, never a similarly named original.
+    await page.locator('#filter').fill('='+candidate);
+    await page.waitForFunction(name=>{
+      const cards=[...document.querySelectorAll('#grid .card')];
+      return cards.length===1&&cards[0].querySelector('code')?.textContent===name;
+    },candidate);
     const file='icons/'+candidate+'-states.png';
     await page.screenshot({path:join(output,file),fullPage:true,animations:'disabled'});
     iconShots.push({candidate,file,states:'20/24/28px, cream/dark, normal/selected/disabled/focus'});
