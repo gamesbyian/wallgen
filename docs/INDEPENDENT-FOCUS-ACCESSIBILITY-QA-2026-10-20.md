@@ -78,3 +78,43 @@ Chromium 20-scenario Focus/All run passed, with screenshots and structured
 observations uploaded. This establishes a bounded, head-specific **behaviour-
 verified** witness for the five scenarios at two viewports in both themes;
 **not** a release-wide accessibility or human preference signoff.
+
+## Additional adversarial probes (separate evidence gates)
+
+**Eight SVG candidates:** `tests/independent-svg-candidates-acceptance.mjs`
+reads all eight `candidate; not wired into UI` entries directly from the
+manifest. The true source-registered visual fixture renders 8 × 2 themes ×
+4 states × 3 sizes = **192 visual samples**; assertions check SVG viewBoxes,
+standalone titles, nonempty exact fixture renderings, in-cell SVG dimensions,
+disallowed raster/executable/gradient elements, decorative
+`aria-hidden=true`, and manifest status. The source-exact matrix and 20
+Focus/All browser journeys passed at head
+`936c5810077c78e6aea2d4624f405a3eb59034dc`
+in [CI run 39394165173](https://github.com/gamesbyian/wallgen/actions/runs/39394165173).
+These **rendering diagnostics** establish no aesthetic approval or intended
+semantic interpretation. Human review of icon recognizability and all eight
+candidate artworks remains **NOT VERIFIED**.
+
+**Transitions:** `tests/independent-focus-transitions.mjs` performs real
+Material Focus lock → unlock → +, responsive 791px desktop handoff → mobile
+return, Colour's empty Focus panel, user motion preference changes, and All
+restoration. This supplements earlier static A/B with four multi-action
+journeys across both viewports and themes. Its CI status is independent
+from the earlier successful 20-case matrix and must be assessed at the
+latest head before accepting new conclusions.
+
+**WCAG diagnostics:** `tests/independent-axe-diagnostic.mjs` collects
+automated axe-core 4.10.3 browser reports for 24 states (2 viewports ×
+2 themes × 6 screens, including opt-in Focus and expanded More metadata).
+It records exact violation identifiers and affected selectors plus
+incomplete/manual-review checks and screenshots. The diagnostic deliberately
+does not auto-certify WCAG by a zero-exit code, and any reported defect
+must be inspected and remediated independently.
+
+### Current disposition
+
+The successful 20-case Focus/All matrix and 192 candidate fixture samples
+are bounded, repeatable proof. The additional transition and axe-core suites
+are **pending at the latest head** and may reveal further defects.
+Entries #2, #11, #15 remain unchecked; physical-device screen reader,
+touch hardware and human aesthetic/usability approval remain explicit.
