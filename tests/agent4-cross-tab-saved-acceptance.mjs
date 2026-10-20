@@ -55,6 +55,22 @@ try{
   await b.locator('#mobileSaved').click();
   await b.waitForFunction(()=>document.querySelector('#mobileSaved')
     ?.getAttribute('aria-current')==='page');
+  await b.evaluate(()=>{
+    window.__a4StorageTimeline=[];
+    window.addEventListener('storage',event=>{
+      if(event.key!=='wallgen:favorites:v1')return;
+      const parse=value=>{
+        try{return JSON.parse(value||'[]').map(recipe=>recipe.seed);}catch{return ['INVALID'];}
+      };
+      window.__a4StorageTimeline.push({
+        eventSeeds:parse(event.newValue),
+        actualSeeds:parse(localStorage.getItem(event.key)),
+        cards:[...document.querySelectorAll('#gallery .thumb')]
+          .map(card=>card.dataset.recipeSeed),
+        count:document.querySelector('#favoriteCount')?.textContent
+      });
+    });
+  });
   const many=Array.from({length:30},(_,i)=>normalizeRecipe({
     seed:'a4-stale-tab-'+i,structure:i%2?'regions':'radial',
     regionMode:'nested',radialMode:'pinwheel'
@@ -76,7 +92,8 @@ try{
       seeds:[...document.querySelectorAll('#gallery .thumb')].map(c=>c.dataset.recipeSeed),
       favoriteCount:document.querySelector('#favoriteCount')?.textContent,
       localSeeds:JSON.parse(localStorage.getItem('wallgen:favorites:v1')||'[]')
-        .map(recipe=>recipe.seed)
+        .map(recipe=>recipe.seed),
+      timeline:window.__a4StorageTimeline
     }));
     console.error('AGENT4_TWO_TAB_RACE_DIAGNOSTIC',JSON.stringify(state));
     throw error;
