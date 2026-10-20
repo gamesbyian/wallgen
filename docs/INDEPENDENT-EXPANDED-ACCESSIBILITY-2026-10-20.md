@@ -13,3 +13,18 @@ Adds WCAG **2.2 AA** tagged checks to the existing 2.0/2.1 A/AA set. Retains str
 ## Verification
 
 A committed browser test is a **pending witness** until a passing, exact-head Actions run. Automated axe success alone is not general WCAG conformance or physical TalkBack/VoiceOver verification. The human comparative Focus usability gate (#11) and eight SVG semantic-review approvals (#2) remain open.
+
+## Desktop screen expansion
+
+`tests/independent-desktop-axe-diagnostic.mjs` adds **20 real desktop**
+snapshots: widths 791×892 and 1024×768 × cream/dark × Studio, Path,
+Material, Colour and expanded Metadata. All source tool/navigation
+actions execute against Chromium rather than synthetic DOM dispatch.
+Both scripts evaluate WCAG 2.0, 2.1 and 2.2 AA tagged automated
+rules and preserve exact failing nodes, incomplete checks and screenshot
+witnesses in CI artifacts. Combined planned coverage is **92** screens.
+
+The 791px desktop handoff, including precisely the first desktop CSS
+pixel, is deliberately distinct from the 790px mobile threshold.
+A **passing Actions run is required** before signing off any increased
+coverage. The existing queue remains unchecked for human/native gates.
