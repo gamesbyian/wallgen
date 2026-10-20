@@ -12,6 +12,7 @@ import {randomizeScope} from './scoped-random.js';
 import {newInteriorElementId,INTERIOR_LIMITS,resolveInteriorSelection,interiorTargetSummary,resolveInteriorFocusTarget,interiorSliderStep} from './interior-elements.js';
 import {STYLE_PRESETS} from './editor-schema.js?v=20261018-icons2';
 import {installExplorationHistory} from './exploration-history.js';
+import {parseStoredFavorites} from './favorites-store.js';
 import {iconMarkup,setIconSource,hydrateStaticIcons} from './ui-icons.js';
 
 const form = document.getElementById('controls');
@@ -124,11 +125,8 @@ function undo(){
 }
 
 function readFavorites() {
-  try {
-    const data = JSON.parse(localStorage.getItem(FAVORITES_KEY) || '[]');
-    if(!Array.isArray(data)) return [];
-    return data.slice(0,60).map(normalizeRecipe);
-  } catch { return []; }
+  try {return parseStoredFavorites(localStorage.getItem(FAVORITES_KEY));}
+  catch {return [];} // Storage access can be denied independently of parsing.
 }
 function saveFavorites() {
   try { localStorage.setItem(FAVORITES_KEY,JSON.stringify(favorites)); } catch { showNotice('Browser storage unavailable; favourites last for this visit.'); }
@@ -1276,7 +1274,8 @@ function createCard(recipe,index) {
   const name=document.createElement('span');name.className='thumb-caption';name.textContent=titleCase(scene.family);
   const sub=document.createElement('span');sub.className='thumb-sub';sub.textContent=`${titleCase(scene.materialSummary)} · ${scene.orientation}`;
   card.append(name,sub);
-  card.addEventListener('click',()=>changeRecipe(recipe,{scroll:true}));
+  // Gallery selection restores the complete saved recipe, including its own locks.
+  card.addEventListener('click',()=>changeRecipe(recipe,{scroll:true,bypassLocks:true}));
   // Append the card immediately; bitmap rendering happens off the main
   // thread and updates it only while it is still in the active gallery.
   drawThumbnail(canvas,recipe,()=>card.isConnected).catch(error=>
