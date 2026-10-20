@@ -28,3 +28,36 @@ The 791px desktop handoff, including precisely the first desktop CSS
 pixel, is deliberately distinct from the 790px mobile threshold.
 A **passing Actions run is required** before signing off any increased
 coverage. The existing queue remains unchecked for human/native gates.
+
+## First qualified mobile result; desktop red counterexamples
+
+At `29fc5c63a76c33fb563a9cc3d43e3212eab13b45`, the independent
+[CI run 39399526570](https://github.com/gamesbyian/wallgen/actions/runs/39399526570)
+executed all **72 mobile cases** successfully against WCAG 2.0, 2.1 and
+2.2 tagged axe checks, including the exact 499/500/790px boundaries.
+The mobile diagnostic emitted `INDEPENDENT_AXE_AUDIT_RECORDED`;
+the **20 desktop cases executed but failed**, correctly preserving
+counterexamples. Never present the full 92-case run as passing.
+
+Desktop failure occurred in both themes at **791×892** and **1024×768**,
+across actual Studio, Path, Material, Colour and Metadata screens.
+The source seven-colour swatch stack had `aria-label` on an unroled
+generic `div`, yielding `aria-prohibited-attr`. Source markup now
+specifies `role="img"` and preserves the descriptive colour name.
+
+Recorded desktop contrast failures included the light-theme workspace
+eyebrow **2.18:1**, details labels **3.05:1**, the metadata persistence
+label **1.60:1**, category tabs **4.19:1**, and the dark vertical
+caption **4.09:1** (target 4.5:1). Additional light desktop header,
+dimensions, resolved-style and caption labels ranged **3.25–4.46:1**.
+An intentionally desktop-only colour correction to
+`studio-themes.css` darkens cream descriptive text and tabs while
+lightening dark's vertical caption; selected-tab accent, type,
+control geometry, mobile skin and output are unchanged.
+The source palette image's computed name is now also checked.
+
+**Verification status:** contrast and role repairs must pass the exact
+post-fix 92-case Actions run before being marked behaviour-verified.
+All axe `incomplete` warnings still require manual assessment,
+including background-image select fields. Native Android/TalkBack and
+human visual/UX acceptance remain pending.
