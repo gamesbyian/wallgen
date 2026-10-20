@@ -47,7 +47,7 @@ const rect=e=>{if(!e)return null;const r=e.getBoundingClientRect();
 const overlap=(a,b)=>!a||!b?0:Math.max(0,Math.min(a.right,b.right)-Math.max(a.x,b.x))*
  Math.max(0,Math.min(a.bottom,b.bottom)-Math.max(a.y,b.y));
 const browser=await chromium.launch({headless:true});
-const records=[],failures=[];
+const records=[],failures=[],baselineDefects=[];
 await mkdir(output,{recursive:true});
 try{
  for(const size of sizes)for(const theme of ['cream','dark']){
@@ -112,13 +112,13 @@ try{
     const injected=await page.addStyleTag({content:proposedCss});
     await injected.evaluate(el=>el.setAttribute('data-experimental-294','true'));
     const after=await capture('experimental');
-    const gain=before.preview.width?after.preview.width/before.preview.width:0;
+    const gain=before.preview.width?after.preview.width/before.preview.width:null;
     const stageSidebarOverlap=overlap(after.stage,after.sidebar);
     const portrait=size.width<=size.height;
     // A prototype is not accepted solely for making the canvas bigger.
     // Log all source hitability/size tradeoffs for independent human review.
     const deltas={
-      canvasWidthRatio:Number(gain.toFixed(3)),
+      canvasWidthRatio:gain===null?null:Number(gain.toFixed(3)),
       previewDeltaHeight:Number((after.preview.height-before.preview.height).toFixed(2)),
       stageSidebarOverlap:Number(stageSidebarOverlap.toFixed(2)),
       sourceInputCountEqual:before.numberOfSourceInputs===after.numberOfSourceInputs,
@@ -130,8 +130,10 @@ try{
        after.selectedCard.bottom<=after.sidebar.bottom+1,
       portraitUnchanged:!portrait||Math.abs(after.preview.width-before.preview.width)<.2
     };
-    if(!before.preview.width||!after.preview.width)
-     failures.push({key,error:'Native preview missing in A/B'});
+    if(!before.preview.width||!before.preview.height)
+     baselineDefects.push({key,error:'Production native canvas is zero-sized',preview:before.preview,stage:before.stage});
+    if(!after.preview.width||!after.preview.height)
+     failures.push({key,error:'Experimental native canvas is zero-sized'});
     if(!deltas.sourceInputCountEqual)
      failures.push({key,error:'Source controls changed count in style-only experiment'});
     if(!deltas.portraitUnchanged)
@@ -149,7 +151,7 @@ const esc=s=>String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll
 const grid=records.map(r=>'<article><h2>'+esc(r.key)+'</h2><p>Actual source canvas width: '+
  r.production.preview.width.toFixed(1)+'px baseline → '+
  r.experimental.preview.width.toFixed(1)+'px prototype; ratio '+
- r.deltas.canvasWidthRatio.toFixed(2)+'×. Original source hit: '+
+ (r.deltas.canvasWidthRatio===null?'undefined (0px baseline)':r.deltas.canvasWidthRatio.toFixed(2)+'×')+'. Original source hit: '+
  esc(String(r.deltas.sourceControlHitAfter))+'</p><div class="pair">'+
  '<figure><img src="'+esc(r.production.file)+'" alt="Production screenshot"><figcaption>PRODUCTION BASELINE</figcaption></figure>'+
  '<figure><img src="'+esc(r.experimental.file)+'" alt="Experimental CSS-injected screenshot"><figcaption>EXPERIMENT ONLY, NOT SHIPPED</figcaption></figure>'+
@@ -164,14 +166,14 @@ p{font-size:12px}</style><h1>Issue #294: real source side-by-side A/B</h1>
 <p>The LEFT images are unaltered production DOM and CSS. RIGHT are the same running
 application and controls with a temporary media-guarded CSS prototype injected solely
 by Playwright. No product feature, visual default, canonical plate, or simulation changed.
-Desktop and physical-device approval remain unclaimed.</p>`+grid+'</html>');
+At 600×360 the unmodified production canvas is 0×0: tracked as issue #301, not a prototype failure. Desktop and physical-device approval remain unclaimed.</p>`+grid+'</html>');
 await writeFile(join(output,'measurements.json'),JSON.stringify({
- status:failures.length?'experimental measurements with exceptions':'experiment measured without invariant failures',
+ status:failures.length?'experiment invariant failure':'experiment measured; existing baseline defects reported separately',
  method:'Actual Chromium source DOM; temporary landscape-only CSS style injection; NOT a merged application design',
- profiles:sizes,scenes,variantStyles:proposedCss,records,failures,
+ profiles:sizes,scenes,variantStyles:proposedCss,records,failures,baselineDefects,
  limits:['No human taste judgment','No physical-device guarantee',
  'DOM-invoked category selection is not physical touch','CSS concept does not assert ideal usability']
 },null,2));
 console.log('LANDSCAPE_294_SUMMARY',JSON.stringify({states:records.length,
- failures:failures.length,issues:failures}));
+ failures:failures.length,baselineDefects:baselineDefects.length,issues:failures}));
 if(failures.length)process.exitCode=1;
