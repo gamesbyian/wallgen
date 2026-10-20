@@ -1,0 +1,70 @@
+name: Agent 2 real scoped variation non-interference
+
+on:
+  pull_request:
+    paths:
+      - 'tests/agent2-scoped-randomization-browser-matrix.mjs'
+      - '.github/workflows/agent2-scoped-randomization-browser-matrix.yml'
+      - 'src/app.js'
+      - 'src/scoped-random.js'
+      - 'src/editor-layout.js'
+      - 'src/editor-schema.js'
+  push:
+    branches:
+      - agent2/scoped-variation-browser-matrix-20261020
+    paths:
+      - 'tests/agent2-scoped-randomization-browser-matrix.mjs'
+      - '.github/workflows/agent2-scoped-randomization-browser-matrix.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: agent2-scope-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  scoped-action-probes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 24
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3]
+    env:
+      AGENT2_SCOPE_SHARD: ${{ matrix.shard }}
+      AGENT2_SCOPE_SHARDS: '4'
+      AGENT2_SCOPE_OUT: artifacts/agent2-scope-${{ matrix.shard }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax and unit-level scoped randomization contracts
+        run: |
+          node --check tests/agent2-scoped-randomization-browser-matrix.mjs
+          node --test tests/scoped-random.test.js
+      - name: Install real Chromium
+        run: |
+          npm install --no-save playwright@1.56.1 serve@14.2.5
+          npx playwright install --with-deps chromium
+      - name: Serve actual app
+        run: |
+          npx serve . -l 4173 > /tmp/agent2-scope-http.log 2>&1 &
+          for i in $(seq 1 40); do
+            if curl --fail --silent http://127.0.0.1:4173/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/agent2-scope-http.log
+          exit 1
+      - name: Audit source Tool and Category dice and locked/no-op states
+        run: node tests/agent2-scoped-randomization-browser-matrix.mjs
+      - name: Keep scope proof and failure screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent2-scoped-action-${{ matrix.shard }}
+          path: artifacts/agent2-scope-${{ matrix.shard }}/
+          if-no-files-found: warn
+          retention-days: 14
