@@ -1302,9 +1302,15 @@ document.getElementById('copyRecipe').addEventListener('click',()=>copyText(JSON
 document.getElementById('copyLink').addEventListener('click',()=>copyText(location.href));
 document.getElementById('downloadRecipe').addEventListener('click',()=>downloadBlob(new Blob([JSON.stringify(current,null,2)+'\n'],{type:'application/json'}),`roygbiv-${safeFilename(current.seed)}.json`));
 favoriteButton.addEventListener('click',()=>{
+  // A local click does not fire a storage event in this tab. Read the latest
+  // shared state before mutating it so an intervening remote write survives.
+  reconcileFavoritesFromStorage();
   if(isFavorite(current)){favorites=favorites.filter(item=>!sameRecipe(item,current));showNotice('Removed from favourites.');}
   else {favorites.unshift({...current});favorites=favorites.slice(0,60);showNotice('Added to favourites.');}
   saveFavorites();render(current);
+  // Desktop can keep Saved visible while its heart action changes the list.
+  // Its cards must refresh without waiting for a non-existent same-tab event.
+  if(gallery.dataset.view==='saved')void showSaved();
 });
 
 function createCard(recipe,index) {
@@ -1355,6 +1361,13 @@ async function showGallery(recipes,button){
   if(!recipes.length){
     gallery.innerHTML=gallery.dataset.view==='saved'?savedEmpty:exploreEmpty;
     gallery.removeAttribute('aria-busy');
+    // The empty replacement cancels any prior in-flight contact sheet. Since
+    // that superseded request cannot own its finally block any more, retire
+    // its busy button here, or the Saved button remains disabled forever.
+    if(button?.dataset.galleryRequestId){
+      delete button.dataset.galleryRequestId;
+      setBusy(button,false);
+    }
     return;
   }
   gallery.setAttribute('aria-busy','true');
