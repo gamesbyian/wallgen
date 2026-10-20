@@ -16,21 +16,22 @@ const plates={
   studio:'studio',geometry:'geometry',draw:'draw',explore:'explore',
   'explore-populated':'explore',
   'saved-empty':'explore',
+  'saved-populated':'explore',
   more:'more',material:'material',colour:'colour',diagonal:'diagonal',
   compact:'compact',focus:'focus',history:'history',search:'search'
 };
-const all=Object.keys(plates).filter(name=>!['explore-populated','saved-empty'].includes(name));
+const all=Object.keys(plates).filter(name=>!['explore-populated','saved-empty','saved-populated'].includes(name));
 const profiles=[
   // Exact lower-width CSS boundary plus the app's minimum supported width.
   // These are actual mobile Chromium layouts, never CSS-root zoom proxies.
-  {id:'minimum-320x640',width:320,height:640,cases:['studio','geometry','material','more','explore','explore-populated','saved-empty','draw']},
-  {id:'edge-360x740',width:360,height:740,cases:['studio','geometry','material','more','explore','saved-empty','focus']},
-  {id:'phone-412x892',width:412,height:892,cases:[...all,'explore-populated','saved-empty']},
+  {id:'minimum-320x640',width:320,height:640,cases:['studio','geometry','material','more','explore','explore-populated','saved-empty','saved-populated','draw']},
+  {id:'edge-360x740',width:360,height:740,cases:['studio','geometry','material','more','explore','saved-empty','saved-populated','focus']},
+  {id:'phone-412x892',width:412,height:892,cases:[...all,'explore-populated','saved-empty','saved-populated']},
   {id:'edge-499x892',width:499,height:892,cases:['studio','geometry','material','more','focus']},
   {id:'edge-500x892',width:500,height:892,cases:all},
   {id:'edge-790x892',width:790,height:892,cases:['studio','geometry','material','more','explore']},
   {id:'desktop-791x892',width:791,height:892,cases:['studio','geometry','material']},
-  {id:'landscape-700x412',width:700,height:412,cases:['studio','geometry','draw','more','explore','explore-populated','saved-empty']},
+  {id:'landscape-700x412',width:700,height:412,cases:['studio','geometry','draw','more','explore','explore-populated','saved-empty','saved-populated']},
   {id:'zoom-out-412x892',width:412,height:892,cases:['studio','geometry','more'],zoom:.75}
 ];
 const errors=[],shots=[];
@@ -145,6 +146,42 @@ const scenarios={
         evidence.heading.left<evidence.clip.left-1||
         evidence.hint.right>evidence.clip.right+1)
       throw Error('Saved empty-state guidance clipped or incorrect: '+JSON.stringify(evidence));
+  },
+  'saved-populated':async(page,profile)=>{
+    if(profile.width>790)return;
+    // Use the real Studio heart action and Saved destination, not DOM-injected
+    // gallery cards or manually seeded localStorage. This also proves the
+    // saved screen is not accidentally a stale Explore contact sheet.
+    await click(page,'#mobileFavorite');
+    await page.waitForFunction(()=>JSON.parse(localStorage.getItem('wallgen:favorites:v1')||'[]').length===1);
+    await click(page,'#mobileSaved');
+    await page.waitForFunction(()=>document.querySelector('#gallery')?.dataset.view==='saved'&&
+      document.querySelectorAll('#gallery .thumb').length===1&&
+      !document.querySelector('#gallery')?.hasAttribute('aria-busy'));
+    await pause(400);
+    const capture=await page.evaluate(()=>{
+      const grid=document.querySelector('#gallery');
+      const card=grid.querySelector('.thumb');
+      const canvas=card?.querySelector('canvas');
+      const caption=card?.querySelector('.thumb-caption');
+      const bounds=el=>{
+        const r=el.getBoundingClientRect();
+        return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height};
+      };
+      return {mode:grid.dataset.view,count:grid.querySelectorAll('.thumb').length,
+        stored:JSON.parse(localStorage.getItem('wallgen:favorites:v1')||'[]').length,
+        clip:bounds(grid),card:bounds(card),canvas:bounds(canvas),
+        caption:bounds(caption),captionText:caption?.textContent?.trim(),
+        aria:card?.getAttribute('title')};
+    });
+    console.log('SAVED POPULATED '+profile.id+' '+JSON.stringify(capture));
+    const {clip,card,canvas,caption}=capture;
+    if(capture.mode!=='saved'||capture.count!==1||capture.stored!==1||
+      !capture.captionText||!capture.aria||
+      card.left<clip.left-1||card.right>clip.right+1||
+      canvas.top<clip.top-1||canvas.bottom>clip.bottom+1||
+      caption.top<clip.top-1||caption.bottom>clip.bottom+1)
+      throw Error('Real favourite cropped or missing in Saved: '+JSON.stringify(capture));
   },
   'explore-populated':async(page)=>{
     // Real twelve-way generation is slower than the preloaded empty gallery.
