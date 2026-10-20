@@ -25,13 +25,16 @@ test('Saved wallpaper and actual caption must remain wholly inside visible galle
   assert.match(source,/card\.right>clip\.right\+1/);
   assert.match(source,/capture\.count!==1\|\|capture\.stored!==1/);
 });
-test('only compact 341–399px portrait filmstrips use complete, smaller wallpaper art',()=>{
+test('responsive Saved thumbnails derive complete artwork height from reserved gallery space',()=>{
   const css=readFileSync('studio-themes.css','utf8');
-  const scoped=css.slice(css.lastIndexOf('/* Short portrait gallery clip height'));
-  assert.match(scoped,/@media\(min-width:341px\) and \(max-width:790px\) and \(min-height:680px\) and \(max-height:790px\)/);
+  const scoped=css.slice(css.indexOf('/* A mobile gallery loses height'));
+  assert.match(scoped,/@media\(max-width:790px\) and \(min-height:671px\)/);
   assert.match(scoped,/body\.mobile-gallery-open \.gallery-grid \.thumb canvas/);
-  assert.match(scoped,/width:auto!important;height:140px!important/);
+  assert.ok(scoped.includes('height:clamp(46px,calc(var(--mobile-tray-height) - var(--mobile-gallery-canvas-overhead)),195px)!important'));
+  assert.match(scoped,/--mobile-gallery-canvas-overhead:170px/);
+  assert.match(scoped,/@media\(max-width:340px\) and \(min-height:671px\)/);
+  assert.match(scoped,/--mobile-gallery-canvas-overhead:197px/);
   assert.match(scoped,/object-fit:contain/);
   assert.match(scoped,/body\.mobile-gallery-open \.gallery-grid \.thumb-caption/);
-  assert.doesNotMatch(scoped,/--mobile-tray-height/);
+  assert.doesNotMatch(scoped,/height:132px!important|height:160px!important/);
 });
