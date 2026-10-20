@@ -105,7 +105,7 @@ try{
            r.wrapper&&r.card&&r.wrapper.bottom>r.card.bottom+1)
           failures.push({key,source:r.sourceKeys,type:'Lighting source row below visible card',
             bottomOverflow:r.wrapper.bottom-r.card.bottom});
-        if(profile.width>=791&&profile.width<=1150){
+        if(profile.width>=791){
          if(r.track.width<64)failures.push({key,source:r.sourceKeys,type:'compressed active track',width:r.track.width});
          if(r.labelCollision)failures.push({key,source:r.sourceKeys,type:'label ink overlaps steppers'});
          if(r.childCollision)failures.push({key,source:r.sourceKeys,type:'stepper children intersect'});
@@ -134,7 +134,7 @@ try{
 }finally{await browser.close();}
 await mkdir(out,{recursive:true});
 const scopes=samples.flatMap(s=>s.rows.map(r=>({...r,key:s.key})));
-const scoped=scopes.filter(x=>/desktop-(791|850|899|900|1024|1150)x892/.test(x.key));
+const scoped=scopes.filter(x=>/desktop-(791|850|899|900|1024|1150|1151|1280)x892/.test(x.key));
 const minimum=scoped.length?Math.min(...scoped.map(x=>x.track.width)):null;
 if(!scoped.length)failures.push({type:'No desktop handoff range fields measured'});
 if(pictures.length<profiles.length*2*4)
@@ -142,11 +142,11 @@ if(pictures.length<profiles.length*2*4)
 await writeFile(join(out,'narrow-desktop-range-audit.json'),JSON.stringify({
  source:'actual production controls, measured with Chromium DOMRange and getBoundingClientRect',
  profiles,modes,recordCount:samples.length,rangeFieldCount:scopes.length,
- desktopHandoffSourceFields:scoped.length,minHandoffTrackWidth:minimum,
+ desktopSourceFields:scoped.length,minDesktopTrackWidth:minimum,
  screenshots:pictures,failures,records:samples
 },null,2));
 console.log('NARROW RANGE AUDIT: '+samples.length+' live tool states, '+
  scopes.length+' visible source range fields, '+scoped.length+
- ' source 791-1150px tracks (active and disabled), minimum width '+minimum+'px, '+
+ ' source >=791px desktop tracks (active and disabled), minimum width '+minimum+'px, '+
  pictures.length+' live screenshots, '+failures.length+' failures');
 if(failures.length)process.exitCode=1;
