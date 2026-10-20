@@ -366,7 +366,22 @@ try{
       dormant:['lightDirection','lightStrength','shadowStrength'],active:[]},
     {name:'lighting-zero',overrides:{lightingMood:'daylight',lightDirection:'top-right',
       lightStrength:0,shadowStrength:0},dormant:['lightDirection'],
-      active:['lightStrength','shadowStrength']}
+      active:['lightStrength','shadowStrength']},
+    {name:'layer2-disabled',overrides:{textureLayer2Enabled:false,
+      material2:'foil',textureStrength2:77,lockedSettings:[]},
+      dormant:['textureStrength2','textureScale2','textureRotation2'],active:[]},
+    {name:'layer2-enabled',overrides:{textureLayer2Enabled:true,
+      material2:'foil',textureStrength2:77,lockedSettings:[]},
+      dormant:[],active:['textureStrength2','textureScale2','textureRotation2']},
+    {name:'layer2-zero-strength',overrides:{textureLayer2Enabled:true,
+      material2:'foil',textureStrength2:0,lockedSettings:[]},
+      dormant:['textureScale2','textureRotation2'],active:['textureStrength2']},
+    {name:'layer3-disabled',overrides:{textureLayer3Enabled:false,
+      material3:'construction',textureStrength3:84,lockedSettings:[]},
+      dormant:['textureStrength3','textureScale3','textureRotation3'],active:[]},
+    {name:'layer3-zero-strength',overrides:{textureLayer3Enabled:true,
+      material3:'construction',textureStrength3:0,lockedSettings:[]},
+      dormant:['textureScale3','textureRotation3'],active:['textureStrength3']}
   ];
   for(const scenario of crossFamilyCases){
     const source=normalizeRecipe({...baseline,...scenario.overrides,
