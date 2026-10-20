@@ -521,3 +521,46 @@ html[data-theme=cream] .metadata-panel > p{
 html[data-theme=cream] .metadata-fields label{
   color:#5b5366;
 }
+
+/* Independent desktop axe WCAG AA counterexamples at the 791px handoff
+   and 1024px. Keep the visual hierarchy, original controls, type sizes,
+   active rainbow hues and mobile skin; change only low-contrast text ink. */
+@media(min-width:791px){
+  html[data-theme="cream"] .header-right,
+  html[data-theme="cream"] small[data-resolved="family"],
+  html[data-theme="cream"] .workspace-head .eyebrow,
+  html[data-theme="cream"] .workspace-head p,
+  html[data-theme="cream"] .dimensions > span,
+  html[data-theme="cream"] .side-vertical,
+  html[data-theme="cream"] .details-label,
+  html[data-theme="cream"] .metadata-persist{
+    color:#625b6c;
+  }
+  html[data-theme="cream"] .settings-tab:not([aria-selected="true"]){
+    color:#605568;
+  }
+  html[data-theme="dark"] .side-vertical{
+    color:#b6b2c2;
+  }
+}
+
+/* Follow-up to the independent 20-screen desktop axe run: source gallery
+   heading/helper copy (2.18–2.63:1) and footer (3.35:1) were the only
+   remaining cream AA contrast violations after the initial correction. */
+@media(min-width:791px){
+  html[data-theme="cream"] .gallery-head .eyebrow,
+  html[data-theme="cream"] .gallery-head p,
+  html[data-theme="cream"] footer{
+    color:#625b6c;
+  }
+}
+
+/* The original stylesheet scopes gallery copy under
+   .workspace > .gallery-section .gallery-head p (higher specificity than
+   the generic cream gallery correction). Match that source structure so
+   the measured 2.63:1 description actually receives compliant text ink. */
+@media(min-width:791px){
+  html[data-theme="cream"] .workspace > .gallery-section .gallery-head p{
+    color:#625b6c;
+  }
+}
