@@ -66,3 +66,25 @@ The [passing real-mobile adversarial suite 39405563455](https://github.com/games
 A different boundary surfaced: direct navigation to a roughly 100 KB encoded recipe URL timed out in the tested static-server configuration. That is explicitly **not** accepted as a working share link; [issue #306](https://github.com/gamesbyian/wallgen/issues/306) records follow-up. The large native export fixture selects its legitimate design via the original PNG import rather than making an oversized HTTP GET. Separate [PR #308](https://github.com/gamesbyian/wallgen/pull/308) subsequently **merged** at `5059a5b7366e568a249bcad39cb242a241608dca` after all thirteen applicable checks passed. [Live Chrome acceptance 39406507815](https://github.com/gamesbyian/wallgen/actions/runs/39406507815) measured a 116,910-character design link, preserved the original clipboard with an accessible overlength explanation, proved the existing full JSON download→file-input restoration and Undo, and opened a copied ordinary-sized design link in a fresh page. The Copy Link action now conservatively refuses links exceeding 8,192 characters; this is **not** compression or universal long-link support, which remains independently tracked by [#306](https://github.com/gamesbyian/wallgen/issues/306).
 
 The queue parent 14 remains **unchecked**. These are source-bound Chromium and deterministic pixel proofs, not physical Android file-picker testing or exhaustive external PNG compatibility.
+
+## Portable compressed share link accepted in real Chromium (2026-10-20)
+
+**Merged [#317](https://github.com/gamesbyian/wallgen/pull/317), squash commit `03d7efaba995fdf57e9698993162881623e4ec78`.** On exact head `d531507c49f9b97a90b096da6ea3d2ccd9459360`, **all 13 GitHub Actions workflows passed**, including native 3024×6552 PNG export, camera pixel parity, Agent 2 original/conditional control acceptance, mobile screenshot atlas and [Agent 4 real-browser suite 39410636568](https://github.com/gamesbyian/wallgen/actions/runs/39410636568).
+
+The actual 412×892 Chromium test logged:
+
+```json
+{"largeUrlChars":116910,"compactUrlChars":7759,
+ "compressedStandaloneLink":true,"cleanBrowserOpened":true,
+ "sourceJSONDownloadedFromSharedBrowser":true,
+ "shareEditInvalidatesOldToken":true,"malformedTokenRejected":true,
+ "unsupportedCompressionFallback":true,
+ "staleShortHistoryLinkRejected":true,
+ "exactCanonicalRecipe":true,
+ "downloadedAndReimportedJSON":true,
+ "normalCopiedLinkNavigated":true}
+```
+
+A 116,910-character legacy URL compressed to a 7,759-character `#s=v1.…` self-contained fragment, which the static host never sees in its HTTP request. A clean browser (no Saved/local storage) restored the original imported design and downloaded the *complete original JSON* through the real application. Reload preserved the compact link, an actual edit invalidated its old identity, the malformed-link path reported an accessible error, and simulated missing native compression left the original clipboard untouched. A deliberately denied History API could not cause Copy Link to advertise an old short `?r=` design. Node tests separately measured a 109,134→7,788-character fixture, exact Drawn/Interior/locks/dormant state, malformed/noncanonical versions and zip-bomb guards ([full validation 39410636555](https://github.com/gamesbyian/wallgen/actions/runs/39410636555)).
+
+**Known boundaries:** compression is not guaranteed to make arbitrary high-entropy recipes fit 8,192 characters; the original JSON/PNG sharing routes remain fully functional fallback. Physical Android/OS clipboard, other browsers and exhaustive combinations are not inferred from Chromium. Parent queue entries 12 and 14 remain **unchecked**.
