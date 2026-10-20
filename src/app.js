@@ -1305,7 +1305,18 @@ for(const button of document.querySelectorAll('[data-rotate-target]')){
 document.getElementById('undo').addEventListener('click',undo);
 document.getElementById('download').addEventListener('click',downloadPNG);
 document.getElementById('copyRecipe').addEventListener('click',()=>copyText(JSON.stringify(current,null,2)));
-document.getElementById('copyLink').addEventListener('click',()=>copyText(location.href));
+// Long URL-encoded recipes can exceed request-line limits on ordinary static
+// hosts. An apparently successful clipboard operation must not promise an
+// unusable link. JSON and embedded-PNG recipes are the lossless share fallback.
+const SAFE_SHARE_URL_CHARS=8192;
+document.getElementById('copyLink').addEventListener('click',()=>{
+  const url=location.href;
+  if(url.length>SAFE_SHARE_URL_CHARS){
+    showNotice('Design link is too long to open reliably. Use Save recipe JSON or Download PNG to share this wallpaper.');
+    return;
+  }
+  void copyText(url);
+});
 document.getElementById('downloadRecipe').addEventListener('click',()=>downloadBlob(new Blob([JSON.stringify(current,null,2)+'\n'],{type:'application/json'}),`roygbiv-${safeFilename(current.seed)}.json`));
 favoriteButton.addEventListener('click',()=>{
   // A local click does not fire a storage event in this tab. Read the latest
