@@ -110,7 +110,7 @@ try{
      await old.evaluate(el=>el.remove());
     const before=await capture('production');
     const injected=await page.addStyleTag({content:proposedCss});
-    await injected.evaluate(el=>el.dataset.experimental294='true');
+    await injected.evaluate(el=>el.setAttribute('data-experimental-294','true'));
     const after=await capture('experimental');
     const gain=before.preview.width?after.preview.width/before.preview.width:0;
     const stageSidebarOverlap=overlap(after.stage,after.sidebar);
