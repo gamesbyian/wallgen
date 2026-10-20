@@ -1,0 +1,44 @@
+name: Independent Focus and accessibility adversarial QA
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'src/editor-focus.js'
+      - 'editor-focus.css'
+      - 'src/mobile-*.js'
+      - 'tests/independent-focus-a11y-acceptance.mjs'
+      - '.github/workflows/independent-focus-a11y.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  focus-adversarial:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check tests/independent-focus-a11y-acceptance.mjs
+      - run: npm test
+      - run: npm install --no-save playwright@1.56.1 serve@14.2.5
+      - run: npx playwright install --with-deps chromium
+      - name: Serve source UI
+        run: |
+          npx serve . -l 4173 > /tmp/focus-serve.log 2>&1 &
+          for i in $(seq 1 40); do curl --fail --silent http://127.0.0.1:4173/ >/dev/null && exit 0; sleep 1; done
+          cat /tmp/focus-serve.log
+          exit 1
+      - name: Execute independent Focus/All Chromium negative journeys
+        run: node tests/independent-focus-a11y-acceptance.mjs
+      - name: Preserve measurements and failure screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: independent-focus-adversarial-evidence
+          path: artifacts/independent-focus-qa/
+          retention-days: 14
+          if-no-files-found: warn
