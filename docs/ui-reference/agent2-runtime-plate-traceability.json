@@ -1,0 +1,2449 @@
+{
+  "version": 1,
+  "baseline": "main@4f900d8f6fe5f4dd5c1ed114d1777d8d3a393659",
+  "sourceContract": "docs/ui-reference/canonical-screen-contract.json",
+  "sourceInventory": "docs/ui-reference/source-control-inventory.json",
+  "evidencePolicy": "177 exact canonical claims tracked 1:1. Candidate selectors and proof filenames do not themselves confer reachability. Confirm test-specific assertions and green CI at the applicable commit. Human visual review and native Android AT remain unverified.",
+  "counts": {
+    "plates": 12,
+    "required": 121,
+    "conditional": 29,
+    "forbidden": 27,
+    "total": 177
+  },
+  "entries": [
+    {
+      "id": "studio.required.01",
+      "plate": "studio",
+      "kind": "required",
+      "claim": "Canonical app icon beside R.O.Y.G.B.I.V.",
+      "sourceCandidate": "img.brand-logo,h1.brand-title",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-camera-structure-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "studio.required.02",
+      "plate": "studio",
+      "kind": "required",
+      "claim": "Cream and black theme circles",
+      "sourceCandidate": "[data-studio-theme]",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-camera-structure-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "studio.required.03",
+      "plate": "studio",
+      "kind": "required",
+      "claim": "Entire uncut wallpaper frame",
+      "sourceCandidate": "#preview,.wallpaper-frame",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-camera-structure-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "studio.required.04",
+      "plate": "studio",
+      "kind": "required",
+      "claim": "Viewport Pan must have a distinct entry in More; side composition nudge must retain its own source handlers",
+      "sourceCandidate": "[data-nudge],[data-view-pan]",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-camera-structure-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "studio.required.05",
+      "plate": "studio",
+      "kind": "required",
+      "claim": "Side Zoom + and Zoom −",
+      "sourceCandidate": "[data-view-zoom]",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-camera-structure-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "studio.required.06",
+      "plate": "studio",
+      "kind": "required",
+      "claim": "Side Fit / full frame",
+      "sourceCandidate": "[data-view-fit]",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-camera-structure-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "studio.required.07",
+      "plate": "studio",
+      "kind": "required",
+      "claim": "Directional nudge or recenter",
+      "sourceCandidate": "[data-nudge]",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-camera-structure-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "studio.required.08",
+      "plate": "studio",
+      "kind": "required",
+      "claim": "Randomize current design",
+      "sourceCandidate": "#randomizeAll",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-camera-structure-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "studio.required.09",
+      "plate": "studio",
+      "kind": "required",
+      "claim": "Undo and Primes-only",
+      "sourceCandidate": "#undo,[name=primesOnly]",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-camera-structure-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "studio.required.10",
+      "plate": "studio",
+      "kind": "required",
+      "claim": "Draw path / Import image",
+      "sourceCandidate": "#drawPathToggle,#importPathToggle",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-camera-structure-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "studio.required.11",
+      "plate": "studio",
+      "kind": "required",
+      "claim": "Bleed/safe-frame display",
+      "sourceCandidate": "#bleedGuide",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-camera-structure-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "studio.required.12",
+      "plate": "studio",
+      "kind": "required",
+      "claim": "Export or Download route",
+      "sourceCandidate": "#mobileDownload,#download",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-camera-structure-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "studio.required.13",
+      "plate": "studio",
+      "kind": "required",
+      "claim": "Bottom 5-mode navigation",
+      "sourceCandidate": "#mobileActionDock>button",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-camera-structure-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "studio.conditional.01",
+      "plate": "studio",
+      "kind": "conditional",
+      "claim": "Viewport zoom readout only on action",
+      "sourceCandidate": "#viewZoomStatus",
+      "applicableState": "Trigger both applicable and dormant/hidden values; negative case required",
+      "exercise": "User action plus negative state, focus/hit test, screenshot and normalized recipe comparison",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-camera-structure-acceptance.mjs"
+      ],
+      "qualification": "PARTIAL; full conditional permutation NOT VERIFIED"
+    },
+    {
+      "id": "studio.conditional.02",
+      "plate": "studio",
+      "kind": "conditional",
+      "claim": "Camera guides when enabled",
+      "sourceCandidate": ".wallpaper-frame",
+      "applicableState": "Trigger both applicable and dormant/hidden values; negative case required",
+      "exercise": "User action plus negative state, focus/hit test, screenshot and normalized recipe comparison",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-camera-structure-acceptance.mjs"
+      ],
+      "qualification": "PARTIAL; full conditional permutation NOT VERIFIED"
+    },
+    {
+      "id": "studio.conditional.03",
+      "plate": "studio",
+      "kind": "conditional",
+      "claim": "Viewport-only Pan requires new source-qualified behavior; do not label composition nudge as Pan.",
+      "sourceCandidate": "[data-view-pan],#viewPanStatus",
+      "applicableState": "Trigger both applicable and dormant/hidden values; negative case required",
+      "exercise": "User action plus negative state, focus/hit test, screenshot and normalized recipe comparison",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-camera-structure-acceptance.mjs"
+      ],
+      "qualification": "PARTIAL; full conditional permutation NOT VERIFIED"
+    },
+    {
+      "id": "studio.forbidden.01",
+      "plate": "studio",
+      "kind": "forbidden",
+      "claim": "‘Your canvas’ header",
+      "sourceCandidate": null,
+      "applicableState": "Every plate variant; counterexample search required",
+      "exercise": "Try to reproduce forbidden content or behavior in actual browser across relevant states",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-camera-structure-acceptance.mjs"
+      ],
+      "qualification": "NOT VERIFIED across full matrix"
+    },
+    {
+      "id": "studio.forbidden.02",
+      "plate": "studio",
+      "kind": "forbidden",
+      "claim": "Top Fit / 100% bar",
+      "sourceCandidate": null,
+      "applicableState": "Every plate variant; counterexample search required",
+      "exercise": "Try to reproduce forbidden content or behavior in actual browser across relevant states",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-camera-structure-acceptance.mjs"
+      ],
+      "qualification": "NOT VERIFIED across full matrix"
+    },
+    {
+      "id": "studio.forbidden.03",
+      "plate": "studio",
+      "kind": "forbidden",
+      "claim": "Recipe mutation from camera pan or zoom",
+      "sourceCandidate": null,
+      "applicableState": "Every plate variant; counterexample search required",
+      "exercise": "Try to reproduce forbidden content or behavior in actual browser across relevant states",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-camera-structure-acceptance.mjs"
+      ],
+      "qualification": "NOT VERIFIED across full matrix"
+    },
+    {
+      "id": "geometry.required.01",
+      "plate": "geometry",
+      "kind": "required",
+      "claim": "Header branding and theme dots",
+      "sourceCandidate": "img.brand-logo,[data-studio-theme]",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "geometry.required.02",
+      "plate": "geometry",
+      "kind": "required",
+      "claim": "Complete canvas preview, not crop",
+      "sourceCandidate": "#preview",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "geometry.required.03",
+      "plate": "geometry",
+      "kind": "required",
+      "claim": "Layout, Path, Shapes, Details, Colour, Material, Effects",
+      "sourceCandidate": "#tab-layout,#tab-path,#tab-stripes,#tab-details,#tab-colour,#tab-material,#tab-effects",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "geometry.required.04",
+      "plate": "geometry",
+      "kind": "required",
+      "claim": "Selected category and tool breadcrumb",
+      "sourceCandidate": ".editor-tool-chooser,.editor-tool-card",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "geometry.required.05",
+      "plate": "geometry",
+      "kind": "required",
+      "claim": "Search and tool chip chooser",
+      "sourceCandidate": ".editor-search-toggle,.editor-tool-chooser",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "geometry.required.06",
+      "plate": "geometry",
+      "kind": "required",
+      "claim": "Reroll / Vary + strength",
+      "sourceCandidate": "#editorVariationMode,#editorVariationStrength",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "geometry.required.07",
+      "plate": "geometry",
+      "kind": "required",
+      "claim": "Randomize tool / category / field",
+      "sourceCandidate": "[data-random-tool],[data-random-category],[data-random-setting]",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "geometry.required.08",
+      "plate": "geometry",
+      "kind": "required",
+      "claim": "Geometry selector",
+      "sourceCandidate": "[name=geometry]",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "geometry.required.09",
+      "plate": "geometry",
+      "kind": "required",
+      "claim": "Shape frequency and depth when active",
+      "sourceCandidate": "[name=shapeFrequency],[name=shapeDepth]",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "geometry.required.10",
+      "plate": "geometry",
+      "kind": "required",
+      "claim": "Visible value, stepper and lock/die controls",
+      "sourceCandidate": ".setting-lock,.step-button,.slider-number",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "geometry.required.11",
+      "plate": "geometry",
+      "kind": "required",
+      "claim": "History / restore access",
+      "sourceCandidate": "#editorHistoryToggle",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "geometry.required.12",
+      "plate": "geometry",
+      "kind": "required",
+      "claim": "Apply edits to recipe only",
+      "sourceCandidate": "#controls",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "geometry.required.13",
+      "plate": "geometry",
+      "kind": "required",
+      "claim": "Bottom five-mode navigation",
+      "sourceCandidate": "#mobileActionDock>button",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "geometry.conditional.01",
+      "plate": "geometry",
+      "kind": "conditional",
+      "claim": "Straight path may disable frequency/depth",
+      "sourceCandidate": "[name=geometry],[name=shapeFrequency],[name=shapeDepth]",
+      "applicableState": "Trigger both applicable and dormant/hidden values; negative case required",
+      "exercise": "User action plus negative state, focus/hit test, screenshot and normalized recipe comparison",
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "qualification": "PARTIAL; full conditional permutation NOT VERIFIED"
+    },
+    {
+      "id": "geometry.conditional.02",
+      "plate": "geometry",
+      "kind": "conditional",
+      "claim": "Relevant shape controls differ by structure",
+      "sourceCandidate": "#tab-stripes,.editor-tool-chooser",
+      "applicableState": "Trigger both applicable and dormant/hidden values; negative case required",
+      "exercise": "User action plus negative state, focus/hit test, screenshot and normalized recipe comparison",
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "qualification": "PARTIAL; full conditional permutation NOT VERIFIED"
+    },
+    {
+      "id": "geometry.conditional.03",
+      "plate": "geometry",
+      "kind": "conditional",
+      "claim": "Optional focus-mode entry, never forced",
+      "sourceCandidate": ".editor-focus-entry",
+      "applicableState": "Trigger both applicable and dormant/hidden values; negative case required",
+      "exercise": "User action plus negative state, focus/hit test, screenshot and normalized recipe comparison",
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "qualification": "PARTIAL; full conditional permutation NOT VERIFIED"
+    },
+    {
+      "id": "geometry.forbidden.01",
+      "plate": "geometry",
+      "kind": "forbidden",
+      "claim": "Generated mockup omissions interpreted as removal",
+      "sourceCandidate": null,
+      "applicableState": "Every plate variant; counterexample search required",
+      "exercise": "Try to reproduce forbidden content or behavior in actual browser across relevant states",
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "qualification": "NOT VERIFIED across full matrix"
+    },
+    {
+      "id": "geometry.forbidden.02",
+      "plate": "geometry",
+      "kind": "forbidden",
+      "claim": "Duplicate tool heading consuming height",
+      "sourceCandidate": null,
+      "applicableState": "Every plate variant; counterexample search required",
+      "exercise": "Try to reproduce forbidden content or behavior in actual browser across relevant states",
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "qualification": "NOT VERIFIED across full matrix"
+    },
+    {
+      "id": "draw.required.01",
+      "plate": "draw",
+      "kind": "required",
+      "claim": "Canonical header and active Draw context",
+      "sourceCandidate": "img.brand-logo,#drawPathPanel",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-draw-real-transaction.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "draw.required.02",
+      "plate": "draw",
+      "kind": "required",
+      "claim": "Complete canvas with path overlay",
+      "sourceCandidate": "#preview,#drawOverlay",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-draw-real-transaction.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "draw.required.03",
+      "plate": "draw",
+      "kind": "required",
+      "claim": "Pencil drawing mode",
+      "sourceCandidate": "#drawPathToggle",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-draw-real-transaction.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "draw.required.04",
+      "plate": "draw",
+      "kind": "required",
+      "claim": "Interpretive smoothing strength (up to 10×)",
+      "sourceCandidate": "#drawSmoothingStrength",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-draw-real-transaction.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "draw.required.05",
+      "plate": "draw",
+      "kind": "required",
+      "claim": "Geometric interpretation toggle",
+      "sourceCandidate": "#drawGeometric",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-draw-real-transaction.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "draw.required.06",
+      "plate": "draw",
+      "kind": "required",
+      "claim": "Optional edit-anchor handles",
+      "sourceCandidate": "#drawEditPoints",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-draw-real-transaction.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "draw.required.07",
+      "plate": "draw",
+      "kind": "required",
+      "claim": "Add / delete / corner anchor",
+      "sourceCandidate": "#drawAddPoint,#drawDeletePoint,#drawCornerPoint",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-draw-real-transaction.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "draw.required.08",
+      "plate": "draw",
+      "kind": "required",
+      "claim": "Resmooth edited section + neighbours",
+      "sourceCandidate": "#drawResmoothPoints",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-draw-real-transaction.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "draw.required.09",
+      "plate": "draw",
+      "kind": "required",
+      "claim": "Extend path past canvas edges",
+      "sourceCandidate": "#drawExtendPath",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-draw-real-transaction.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "draw.required.10",
+      "plate": "draw",
+      "kind": "required",
+      "claim": "Undo point / Draw again",
+      "sourceCandidate": "#drawUndoPoint,#drawAgain",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-draw-real-transaction.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "draw.required.11",
+      "plate": "draw",
+      "kind": "required",
+      "claim": "Apply and Cancel persistent",
+      "sourceCandidate": "#drawApply,#drawCancel",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-draw-real-transaction.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "draw.required.12",
+      "plate": "draw",
+      "kind": "required",
+      "claim": "Separate camera pan mode",
+      "sourceCandidate": "[data-view-pan]",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-draw-real-transaction.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "draw.conditional.01",
+      "plate": "draw",
+      "kind": "conditional",
+      "claim": "Point controls in anchor-edit phase only",
+      "sourceCandidate": "#drawAddPoint,#drawCornerPoint",
+      "applicableState": "Trigger both applicable and dormant/hidden values; negative case required",
+      "exercise": "User action plus negative state, focus/hit test, screenshot and normalized recipe comparison",
+      "evidenceCandidates": [
+        "tests/redesign-draw-real-transaction.mjs"
+      ],
+      "qualification": "PARTIAL; full conditional permutation NOT VERIFIED"
+    },
+    {
+      "id": "draw.conditional.02",
+      "plate": "draw",
+      "kind": "conditional",
+      "claim": "Off-frame geometry preview as needed",
+      "sourceCandidate": "#drawOverlay",
+      "applicableState": "Trigger both applicable and dormant/hidden values; negative case required",
+      "exercise": "User action plus negative state, focus/hit test, screenshot and normalized recipe comparison",
+      "evidenceCandidates": [
+        "tests/redesign-draw-real-transaction.mjs"
+      ],
+      "qualification": "PARTIAL; full conditional permutation NOT VERIFIED"
+    },
+    {
+      "id": "draw.forbidden.01",
+      "plate": "draw",
+      "kind": "forbidden",
+      "claim": "Zoom changes generation settings",
+      "sourceCandidate": null,
+      "applicableState": "Every plate variant; counterexample search required",
+      "exercise": "Try to reproduce forbidden content or behavior in actual browser across relevant states",
+      "evidenceCandidates": [
+        "tests/redesign-draw-real-transaction.mjs"
+      ],
+      "qualification": "NOT VERIFIED across full matrix"
+    },
+    {
+      "id": "draw.forbidden.02",
+      "plate": "draw",
+      "kind": "forbidden",
+      "claim": "Apply hidden by sheet scrolling",
+      "sourceCandidate": null,
+      "applicableState": "Every plate variant; counterexample search required",
+      "exercise": "Try to reproduce forbidden content or behavior in actual browser across relevant states",
+      "evidenceCandidates": [
+        "tests/redesign-draw-real-transaction.mjs"
+      ],
+      "qualification": "NOT VERIFIED across full matrix"
+    },
+    {
+      "id": "explore.required.01",
+      "plate": "explore",
+      "kind": "required",
+      "claim": "Same brand header and themes",
+      "sourceCandidate": "img.brand-logo,[data-studio-theme]",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "explore.required.02",
+      "plate": "explore",
+      "kind": "required",
+      "claim": "Search available wallpapers",
+      "sourceCandidate": "#gallery",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "explore.required.03",
+      "plate": "explore",
+      "kind": "required",
+      "claim": "Gallery filters",
+      "sourceCandidate": "#batch,#showFavorites",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "explore.required.04",
+      "plate": "explore",
+      "kind": "required",
+      "claim": "Thumbnail cards and descriptive titles",
+      "sourceCandidate": "#gallery .thumb",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "explore.required.05",
+      "plate": "explore",
+      "kind": "required",
+      "claim": "Clear favourite action per card",
+      "sourceCandidate": "#favorite,#mobileFavorite",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "explore.required.06",
+      "plate": "explore",
+      "kind": "required",
+      "claim": "Load selected recipe into Studio",
+      "sourceCandidate": "#gallery .thumb",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "explore.required.07",
+      "plate": "explore",
+      "kind": "required",
+      "claim": "Show saved/favourites context",
+      "sourceCandidate": "#mobileSaved,#mobileExplore",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "explore.required.08",
+      "plate": "explore",
+      "kind": "required",
+      "claim": "Scrollable image-first grid",
+      "sourceCandidate": "#gallery",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "explore.required.09",
+      "plate": "explore",
+      "kind": "required",
+      "claim": "Bottom five-mode navigation",
+      "sourceCandidate": "#mobileActionDock>button",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "explore.conditional.01",
+      "plate": "explore",
+      "kind": "conditional",
+      "claim": "Empty state when no favourites",
+      "sourceCandidate": "#gallery .gallery-placeholder",
+      "applicableState": "Trigger both applicable and dormant/hidden values; negative case required",
+      "exercise": "User action plus negative state, focus/hit test, screenshot and normalized recipe comparison",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "qualification": "PARTIAL; full conditional permutation NOT VERIFIED"
+    },
+    {
+      "id": "explore.conditional.02",
+      "plate": "explore",
+      "kind": "conditional",
+      "claim": "Gallery image previews must be real renderer art",
+      "sourceCandidate": "#gallery .thumb canvas",
+      "applicableState": "Trigger both applicable and dormant/hidden values; negative case required",
+      "exercise": "User action plus negative state, focus/hit test, screenshot and normalized recipe comparison",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "qualification": "PARTIAL; full conditional permutation NOT VERIFIED"
+    },
+    {
+      "id": "explore.forbidden.01",
+      "plate": "explore",
+      "kind": "forbidden",
+      "claim": "Large decorative Explore heading",
+      "sourceCandidate": null,
+      "applicableState": "Every plate variant; counterexample search required",
+      "exercise": "Try to reproduce forbidden content or behavior in actual browser across relevant states",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "qualification": "NOT VERIFIED across full matrix"
+    },
+    {
+      "id": "explore.forbidden.02",
+      "plate": "explore",
+      "kind": "forbidden",
+      "claim": "Full-width duplicate action bar above gallery",
+      "sourceCandidate": null,
+      "applicableState": "Every plate variant; counterexample search required",
+      "exercise": "Try to reproduce forbidden content or behavior in actual browser across relevant states",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "qualification": "NOT VERIFIED across full matrix"
+    },
+    {
+      "id": "more.required.01",
+      "plate": "more",
+      "kind": "required",
+      "claim": "Same branded masthead",
+      "sourceCandidate": "img.brand-logo",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs",
+        "tests/redesign-global-status-acceptance.mjs",
+        "tests/redesign-clipboard-denial-recovery.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "more.required.02",
+      "plate": "more",
+      "kind": "required",
+      "claim": "Export wallpaper PNG",
+      "sourceCandidate": "#download,#mobileDownload",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs",
+        "tests/redesign-global-status-acceptance.mjs",
+        "tests/redesign-clipboard-denial-recovery.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "more.required.03",
+      "plate": "more",
+      "kind": "required",
+      "claim": "Download recipe JSON",
+      "sourceCandidate": "#downloadRecipe",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs",
+        "tests/redesign-global-status-acceptance.mjs",
+        "tests/redesign-clipboard-denial-recovery.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "more.required.04",
+      "plate": "more",
+      "kind": "required",
+      "claim": "Copy recipe JSON",
+      "sourceCandidate": "#copyRecipe",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs",
+        "tests/redesign-global-status-acceptance.mjs",
+        "tests/redesign-clipboard-denial-recovery.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "more.required.05",
+      "plate": "more",
+      "kind": "required",
+      "claim": "Copy share link",
+      "sourceCandidate": "#copyLink",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs",
+        "tests/redesign-global-status-acceptance.mjs",
+        "tests/redesign-clipboard-denial-recovery.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "more.required.06",
+      "plate": "more",
+      "kind": "required",
+      "claim": "Import PNG recipe",
+      "sourceCandidate": "#importRecipePNG",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs",
+        "tests/redesign-global-status-acceptance.mjs",
+        "tests/redesign-clipboard-denial-recovery.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "more.required.07",
+      "plate": "more",
+      "kind": "required",
+      "claim": "Import recipe JSON/file",
+      "sourceCandidate": "#importRecipeFile",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs",
+        "tests/redesign-global-status-acceptance.mjs",
+        "tests/redesign-clipboard-denial-recovery.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "more.required.08",
+      "plate": "more",
+      "kind": "required",
+      "claim": "Batch output where available",
+      "sourceCandidate": ".mobile-more-batch,#batch",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs",
+        "tests/redesign-global-status-acceptance.mjs",
+        "tests/redesign-clipboard-denial-recovery.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "more.required.09",
+      "plate": "more",
+      "kind": "required",
+      "claim": "Seed entry / apply",
+      "sourceCandidate": "#seedInput,#applySeed",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs",
+        "tests/redesign-global-status-acceptance.mjs",
+        "tests/redesign-clipboard-denial-recovery.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "more.required.10",
+      "plate": "more",
+      "kind": "required",
+      "claim": "Editable image metadata fields",
+      "sourceCandidate": "#metadataPanel [name]",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs",
+        "tests/redesign-global-status-acceptance.mjs",
+        "tests/redesign-clipboard-denial-recovery.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "more.required.11",
+      "plate": "more",
+      "kind": "required",
+      "claim": "Remember / clear metadata",
+      "sourceCandidate": "#metadataRemember,#metadataClear",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs",
+        "tests/redesign-global-status-acceptance.mjs",
+        "tests/redesign-clipboard-denial-recovery.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "more.required.12",
+      "plate": "more",
+      "kind": "required",
+      "claim": "Accessible global status notifications",
+      "sourceCandidate": "#studioStatus,#notice",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs",
+        "tests/redesign-global-status-acceptance.mjs",
+        "tests/redesign-clipboard-denial-recovery.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "more.required.13",
+      "plate": "more",
+      "kind": "required",
+      "claim": "Bottom navigation",
+      "sourceCandidate": "#mobileActionDock>button",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs",
+        "tests/redesign-global-status-acceptance.mjs",
+        "tests/redesign-clipboard-denial-recovery.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "more.required.14",
+      "plate": "more",
+      "kind": "required",
+      "claim": "Independent Move view frame Pan controls and centered status, distinct from composition position",
+      "sourceCandidate": "[data-view-pan],#viewPanStatus,[data-nudge],#positionStatus",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs",
+        "tests/redesign-global-status-acceptance.mjs",
+        "tests/redesign-clipboard-denial-recovery.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "more.conditional.01",
+      "plate": "more",
+      "kind": "conditional",
+      "claim": "Metadata expanded and collapsed views",
+      "sourceCandidate": "#metadataToggle,#metadataPanel",
+      "applicableState": "Trigger both applicable and dormant/hidden values; negative case required",
+      "exercise": "User action plus negative state, focus/hit test, screenshot and normalized recipe comparison",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs",
+        "tests/redesign-global-status-acceptance.mjs",
+        "tests/redesign-clipboard-denial-recovery.mjs"
+      ],
+      "qualification": "PARTIAL; full conditional permutation NOT VERIFIED"
+    },
+    {
+      "id": "more.conditional.02",
+      "plate": "more",
+      "kind": "conditional",
+      "claim": "Download/export progress where appropriate",
+      "sourceCandidate": "#studioStatus,#download",
+      "applicableState": "Trigger both applicable and dormant/hidden values; negative case required",
+      "exercise": "User action plus negative state, focus/hit test, screenshot and normalized recipe comparison",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs",
+        "tests/redesign-global-status-acceptance.mjs",
+        "tests/redesign-clipboard-denial-recovery.mjs"
+      ],
+      "qualification": "PARTIAL; full conditional permutation NOT VERIFIED"
+    },
+    {
+      "id": "more.forbidden.01",
+      "plate": "more",
+      "kind": "forbidden",
+      "claim": "Inert icon-only action with missing label",
+      "sourceCandidate": null,
+      "applicableState": "Every plate variant; counterexample search required",
+      "exercise": "Try to reproduce forbidden content or behavior in actual browser across relevant states",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs",
+        "tests/redesign-global-status-acceptance.mjs",
+        "tests/redesign-clipboard-denial-recovery.mjs"
+      ],
+      "qualification": "NOT VERIFIED across full matrix"
+    },
+    {
+      "id": "more.forbidden.02",
+      "plate": "more",
+      "kind": "forbidden",
+      "claim": "Notices hidden in More while editing",
+      "sourceCandidate": null,
+      "applicableState": "Every plate variant; counterexample search required",
+      "exercise": "Try to reproduce forbidden content or behavior in actual browser across relevant states",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs",
+        "tests/redesign-global-status-acceptance.mjs",
+        "tests/redesign-clipboard-denial-recovery.mjs"
+      ],
+      "qualification": "NOT VERIFIED across full matrix"
+    },
+    {
+      "id": "material.required.01",
+      "plate": "material",
+      "kind": "required",
+      "claim": "Material category + named tools",
+      "sourceCandidate": "#tab-material,.editor-tool-chooser",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-material-rotation-browser.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "material.required.02",
+      "plate": "material",
+      "kind": "required",
+      "claim": "Layer 1 material type and coverage/blend",
+      "sourceCandidate": "[name=material],[name=textureCoverage],[name=textureBlend]",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-material-rotation-browser.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "material.required.03",
+      "plate": "material",
+      "kind": "required",
+      "claim": "Finish 1 strength / scale / rotation",
+      "sourceCandidate": "[name=textureStrength],[name=textureScale],[name=textureRotation]",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-material-rotation-browser.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "material.required.04",
+      "plate": "material",
+      "kind": "required",
+      "claim": "Layer 2 enable and settings",
+      "sourceCandidate": "[name=textureLayer2Enabled],[name=material2]",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-material-rotation-browser.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "material.required.05",
+      "plate": "material",
+      "kind": "required",
+      "claim": "Finish 2 strength / scale / rotation",
+      "sourceCandidate": "[name=textureStrength2],[name=textureScale2],[name=textureRotation2]",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-material-rotation-browser.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "material.required.06",
+      "plate": "material",
+      "kind": "required",
+      "claim": "Layer 3 enable and settings",
+      "sourceCandidate": "[name=textureLayer3Enabled],[name=material3]",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-material-rotation-browser.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "material.required.07",
+      "plate": "material",
+      "kind": "required",
+      "claim": "Finish 3 strength / scale / rotation",
+      "sourceCandidate": "[name=textureStrength3],[name=textureScale3],[name=textureRotation3]",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-material-rotation-browser.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "material.required.08",
+      "plate": "material",
+      "kind": "required",
+      "claim": "Rotation −90, −1, value, +1, +90",
+      "sourceCandidate": "[data-rotate-target]",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-material-rotation-browser.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "material.required.09",
+      "plate": "material",
+      "kind": "required",
+      "claim": "Surface settings where applicable",
+      "sourceCandidate": "[name=textureDisplacement]",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-material-rotation-browser.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "material.required.10",
+      "plate": "material",
+      "kind": "required",
+      "claim": "Lock / random field actions",
+      "sourceCandidate": ".setting-lock,[data-random-setting]",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-material-rotation-browser.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "material.required.11",
+      "plate": "material",
+      "kind": "required",
+      "claim": "Canvas preview / bottom navigation",
+      "sourceCandidate": "#preview,#mobileActionDock",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-material-rotation-browser.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "material.conditional.01",
+      "plate": "material",
+      "kind": "conditional",
+      "claim": "Layer 2/3 disabled until enabled",
+      "sourceCandidate": "[name=textureLayer2Enabled],[name=textureLayer3Enabled]",
+      "applicableState": "Trigger both applicable and dormant/hidden values; negative case required",
+      "exercise": "User action plus negative state, focus/hit test, screenshot and normalized recipe comparison",
+      "evidenceCandidates": [
+        "tests/redesign-material-rotation-browser.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "qualification": "PARTIAL; full conditional permutation NOT VERIFIED"
+    },
+    {
+      "id": "material.conditional.02",
+      "plate": "material",
+      "kind": "conditional",
+      "claim": "Surface only for path construction",
+      "sourceCandidate": "[name=textureDisplacement]",
+      "applicableState": "Trigger both applicable and dormant/hidden values; negative case required",
+      "exercise": "User action plus negative state, focus/hit test, screenshot and normalized recipe comparison",
+      "evidenceCandidates": [
+        "tests/redesign-material-rotation-browser.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "qualification": "PARTIAL; full conditional permutation NOT VERIFIED"
+    },
+    {
+      "id": "material.conditional.03",
+      "plate": "material",
+      "kind": "conditional",
+      "claim": "Some material coverage labels follow structure",
+      "sourceCandidate": "[name=textureCoverage]",
+      "applicableState": "Trigger both applicable and dormant/hidden values; negative case required",
+      "exercise": "User action plus negative state, focus/hit test, screenshot and normalized recipe comparison",
+      "evidenceCandidates": [
+        "tests/redesign-material-rotation-browser.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "qualification": "PARTIAL; full conditional permutation NOT VERIFIED"
+    },
+    {
+      "id": "material.forbidden.01",
+      "plate": "material",
+      "kind": "forbidden",
+      "claim": "Rotation action squeezed or clipped",
+      "sourceCandidate": null,
+      "applicableState": "Every plate variant; counterexample search required",
+      "exercise": "Try to reproduce forbidden content or behavior in actual browser across relevant states",
+      "evidenceCandidates": [
+        "tests/redesign-material-rotation-browser.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "qualification": "NOT VERIFIED across full matrix"
+    },
+    {
+      "id": "material.forbidden.02",
+      "plate": "material",
+      "kind": "forbidden",
+      "claim": "Layer controls silently dropped",
+      "sourceCandidate": null,
+      "applicableState": "Every plate variant; counterexample search required",
+      "exercise": "Try to reproduce forbidden content or behavior in actual browser across relevant states",
+      "evidenceCandidates": [
+        "tests/redesign-material-rotation-browser.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "qualification": "NOT VERIFIED across full matrix"
+    },
+    {
+      "id": "colour.required.01",
+      "plate": "colour",
+      "kind": "required",
+      "claim": "Colour category and two named tools",
+      "sourceCandidate": "#tab-colour,.editor-tool-chooser",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-seven-colour-targets-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "colour.required.02",
+      "plate": "colour",
+      "kind": "required",
+      "claim": "Rainbow palette selection",
+      "sourceCandidate": "[name=palette]",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-seven-colour-targets-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "colour.required.03",
+      "plate": "colour",
+      "kind": "required",
+      "claim": "Reverse stripe order control",
+      "sourceCandidate": "[name=reverseStripes]",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-seven-colour-targets-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "colour.required.04",
+      "plate": "colour",
+      "kind": "required",
+      "claim": "Background colour setting",
+      "sourceCandidate": "[name=background]",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-seven-colour-targets-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "colour.required.05",
+      "plate": "colour",
+      "kind": "required",
+      "claim": "Full 7-colour visual order",
+      "sourceCandidate": ".palette-stack",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-seven-colour-targets-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "colour.required.06",
+      "plate": "colour",
+      "kind": "required",
+      "claim": "Named selection and stable values",
+      "sourceCandidate": ".editor-tool-chooser",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-seven-colour-targets-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "colour.required.07",
+      "plate": "colour",
+      "kind": "required",
+      "claim": "Flat nonrepeating ROYGBIV slider colours per panel",
+      "sourceCandidate": ".rainbow-slider,.slider-number",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-seven-colour-targets-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "colour.required.08",
+      "plate": "colour",
+      "kind": "required",
+      "claim": "Available lock / die actions",
+      "sourceCandidate": ".setting-lock,[data-random-setting]",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-seven-colour-targets-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "colour.required.09",
+      "plate": "colour",
+      "kind": "required",
+      "claim": "Bottom navigation",
+      "sourceCandidate": "#mobileActionDock",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-seven-colour-targets-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "colour.conditional.01",
+      "plate": "colour",
+      "kind": "conditional",
+      "claim": "Background colour options depend on recipe",
+      "sourceCandidate": "[name=background]",
+      "applicableState": "Trigger both applicable and dormant/hidden values; negative case required",
+      "exercise": "User action plus negative state, focus/hit test, screenshot and normalized recipe comparison",
+      "evidenceCandidates": [
+        "tests/redesign-seven-colour-targets-acceptance.mjs"
+      ],
+      "qualification": "PARTIAL; full conditional permutation NOT VERIFIED"
+    },
+    {
+      "id": "colour.conditional.02",
+      "plate": "colour",
+      "kind": "conditional",
+      "claim": "Target-colour chips belong to Details > Colour targets",
+      "sourceCandidate": ".interior-colour-chip",
+      "applicableState": "Trigger both applicable and dormant/hidden values; negative case required",
+      "exercise": "User action plus negative state, focus/hit test, screenshot and normalized recipe comparison",
+      "evidenceCandidates": [
+        "tests/redesign-seven-colour-targets-acceptance.mjs"
+      ],
+      "qualification": "PARTIAL; full conditional permutation NOT VERIFIED"
+    },
+    {
+      "id": "colour.forbidden.01",
+      "plate": "colour",
+      "kind": "forbidden",
+      "claim": "Random colours reshuffled on rerender",
+      "sourceCandidate": null,
+      "applicableState": "Every plate variant; counterexample search required",
+      "exercise": "Try to reproduce forbidden content or behavior in actual browser across relevant states",
+      "evidenceCandidates": [
+        "tests/redesign-seven-colour-targets-acceptance.mjs"
+      ],
+      "qualification": "NOT VERIFIED across full matrix"
+    },
+    {
+      "id": "colour.forbidden.02",
+      "plate": "colour",
+      "kind": "forbidden",
+      "claim": "Unimplemented extra saturation slider implied by illustration",
+      "sourceCandidate": null,
+      "applicableState": "Every plate variant; counterexample search required",
+      "exercise": "Try to reproduce forbidden content or behavior in actual browser across relevant states",
+      "evidenceCandidates": [
+        "tests/redesign-seven-colour-targets-acceptance.mjs"
+      ],
+      "qualification": "NOT VERIFIED across full matrix"
+    },
+    {
+      "id": "diagonal.required.01",
+      "plate": "diagonal",
+      "kind": "required",
+      "claim": "Direction tool identified",
+      "sourceCandidate": ".editor-tool-chooser [data-editor-tool=direction]",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/inactive-conditional-roundtrip.test.js"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "diagonal.required.02",
+      "plate": "diagonal",
+      "kind": "required",
+      "claim": "Orientation selector",
+      "sourceCandidate": "[name=orientation]",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/inactive-conditional-roundtrip.test.js"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "diagonal.required.03",
+      "plate": "diagonal",
+      "kind": "required",
+      "claim": "Diagonal rotation setting + numeric stepper",
+      "sourceCandidate": "#diagonalRotation,[data-number-for=diagonalRotation]",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/inactive-conditional-roundtrip.test.js"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "diagonal.required.04",
+      "plate": "diagonal",
+      "kind": "required",
+      "claim": "Mirror horizontally checkbox/row",
+      "sourceCandidate": "[name=mirrorHorizontal]",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/inactive-conditional-roundtrip.test.js"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "diagonal.required.05",
+      "plate": "diagonal",
+      "kind": "required",
+      "claim": "Mirror vertically checkbox/row",
+      "sourceCandidate": "[name=mirrorVertical]",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/inactive-conditional-roundtrip.test.js"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "diagonal.required.06",
+      "plate": "diagonal",
+      "kind": "required",
+      "claim": "Scoped randomize + lock",
+      "sourceCandidate": ".setting-lock,[data-random-setting]",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/inactive-conditional-roundtrip.test.js"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "diagonal.required.07",
+      "plate": "diagonal",
+      "kind": "required",
+      "claim": "Selected values remain readable",
+      "sourceCandidate": "[name=diagonalRotation],[data-number-for=diagonalRotation]",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/inactive-conditional-roundtrip.test.js"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "diagonal.required.08",
+      "plate": "diagonal",
+      "kind": "required",
+      "claim": "Canvas preview and bottom navigation",
+      "sourceCandidate": "#preview,#mobileActionDock",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/inactive-conditional-roundtrip.test.js"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "diagonal.conditional.01",
+      "plate": "diagonal",
+      "kind": "conditional",
+      "claim": "Diagonal rotation and mirrors dormant for non-diagonal configurations",
+      "sourceCandidate": "#diagonalSettings",
+      "applicableState": "Trigger both applicable and dormant/hidden values; negative case required",
+      "exercise": "User action plus negative state, focus/hit test, screenshot and normalized recipe comparison",
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/inactive-conditional-roundtrip.test.js"
+      ],
+      "qualification": "PARTIAL; full conditional permutation NOT VERIFIED"
+    },
+    {
+      "id": "diagonal.conditional.02",
+      "plate": "diagonal",
+      "kind": "conditional",
+      "claim": "Inactive properties indicate non-applicable/zero",
+      "sourceCandidate": "[name=diagonalRotation],[name=mirrorHorizontal],[name=mirrorVertical]",
+      "applicableState": "Trigger both applicable and dormant/hidden values; negative case required",
+      "exercise": "User action plus negative state, focus/hit test, screenshot and normalized recipe comparison",
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/inactive-conditional-roundtrip.test.js"
+      ],
+      "qualification": "PARTIAL; full conditional permutation NOT VERIFIED"
+    },
+    {
+      "id": "diagonal.forbidden.01",
+      "plate": "diagonal",
+      "kind": "forbidden",
+      "claim": "Separated checkbox from label",
+      "sourceCandidate": null,
+      "applicableState": "Every plate variant; counterexample search required",
+      "exercise": "Try to reproduce forbidden content or behavior in actual browser across relevant states",
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/inactive-conditional-roundtrip.test.js"
+      ],
+      "qualification": "NOT VERIFIED across full matrix"
+    },
+    {
+      "id": "diagonal.forbidden.02",
+      "plate": "diagonal",
+      "kind": "forbidden",
+      "claim": "Greyed value implies retained nonzero active effect",
+      "sourceCandidate": null,
+      "applicableState": "Every plate variant; counterexample search required",
+      "exercise": "Try to reproduce forbidden content or behavior in actual browser across relevant states",
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/inactive-conditional-roundtrip.test.js"
+      ],
+      "qualification": "NOT VERIFIED across full matrix"
+    },
+    {
+      "id": "compact.required.01",
+      "plate": "compact",
+      "kind": "required",
+      "claim": "Selected category/tool breadcrumb",
+      "sourceCandidate": ".editor-tool-card:not([hidden])",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-cold-keyboard-editor.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "compact.required.02",
+      "plate": "compact",
+      "kind": "required",
+      "claim": "Same brand / camera preview",
+      "sourceCandidate": "img.brand-logo,#preview",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-cold-keyboard-editor.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "compact.required.03",
+      "plate": "compact",
+      "kind": "required",
+      "claim": "One actual applicable tool only",
+      "sourceCandidate": ".editor-tool-chooser",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-cold-keyboard-editor.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "compact.required.04",
+      "plate": "compact",
+      "kind": "required",
+      "claim": "All settings of that tool visible",
+      "sourceCandidate": ".editor-tool-card:not([hidden]) [name]",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-cold-keyboard-editor.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "compact.required.05",
+      "plate": "compact",
+      "kind": "required",
+      "claim": "Field label, value and scoped actions",
+      "sourceCandidate": ".editor-setting-row",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-cold-keyboard-editor.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "compact.required.06",
+      "plate": "compact",
+      "kind": "required",
+      "claim": "Inspector returns unused vertical space to canvas",
+      "sourceCandidate": ".mobile-edit-compact",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-cold-keyboard-editor.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "compact.required.07",
+      "plate": "compact",
+      "kind": "required",
+      "claim": "No preview/controls overlap",
+      "sourceCandidate": ".studio-stage,#mobileDesignSheet",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-cold-keyboard-editor.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "compact.required.08",
+      "plate": "compact",
+      "kind": "required",
+      "claim": "Bottom navigation",
+      "sourceCandidate": "#mobileActionDock",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-cold-keyboard-editor.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "compact.conditional.01",
+      "plate": "compact",
+      "kind": "conditional",
+      "claim": "Glow or other one-setting tool as example",
+      "sourceCandidate": ".editor-tool-card:not([hidden])",
+      "applicableState": "Trigger both applicable and dormant/hidden values; negative case required",
+      "exercise": "User action plus negative state, focus/hit test, screenshot and normalized recipe comparison",
+      "evidenceCandidates": [
+        "tests/redesign-cold-keyboard-editor.mjs"
+      ],
+      "qualification": "PARTIAL; full conditional permutation NOT VERIFIED"
+    },
+    {
+      "id": "compact.conditional.02",
+      "plate": "compact",
+      "kind": "conditional",
+      "claim": "Height only changes on navigation or expansion",
+      "sourceCandidate": ".mobile-edit-compact",
+      "applicableState": "Trigger both applicable and dormant/hidden values; negative case required",
+      "exercise": "User action plus negative state, focus/hit test, screenshot and normalized recipe comparison",
+      "evidenceCandidates": [
+        "tests/redesign-cold-keyboard-editor.mjs"
+      ],
+      "qualification": "PARTIAL; full conditional permutation NOT VERIFIED"
+    },
+    {
+      "id": "compact.forbidden.01",
+      "plate": "compact",
+      "kind": "forbidden",
+      "claim": "Fixed huge empty inspector card",
+      "sourceCandidate": null,
+      "applicableState": "Every plate variant; counterexample search required",
+      "exercise": "Try to reproduce forbidden content or behavior in actual browser across relevant states",
+      "evidenceCandidates": [
+        "tests/redesign-cold-keyboard-editor.mjs"
+      ],
+      "qualification": "NOT VERIFIED across full matrix"
+    },
+    {
+      "id": "compact.forbidden.02",
+      "plate": "compact",
+      "kind": "forbidden",
+      "claim": "Invented hidden settings for a sparse tool",
+      "sourceCandidate": null,
+      "applicableState": "Every plate variant; counterexample search required",
+      "exercise": "Try to reproduce forbidden content or behavior in actual browser across relevant states",
+      "evidenceCandidates": [
+        "tests/redesign-cold-keyboard-editor.mjs"
+      ],
+      "qualification": "NOT VERIFIED across full matrix"
+    },
+    {
+      "id": "focus.required.01",
+      "plate": "focus",
+      "kind": "required",
+      "claim": "Clearly marked OPTIONAL experiment",
+      "sourceCandidate": ".editor-focus-entry",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/editor-focus.test.js"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "focus.required.02",
+      "plate": "focus",
+      "kind": "required",
+      "claim": "Selected category and parameter name",
+      "sourceCandidate": ".editor-focus-panel",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/editor-focus.test.js"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "focus.required.03",
+      "plate": "focus",
+      "kind": "required",
+      "claim": "Chooser chips for all active parameters",
+      "sourceCandidate": ".editor-focus-chip",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/editor-focus.test.js"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "focus.required.04",
+      "plate": "focus",
+      "kind": "required",
+      "claim": "One large slider with numeric value",
+      "sourceCandidate": ".editor-focus-slider",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/editor-focus.test.js"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "focus.required.05",
+      "plate": "focus",
+      "kind": "required",
+      "claim": "Increment/decrement and lock action",
+      "sourceCandidate": ".editor-focus-step,.editor-focus-lock",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/editor-focus.test.js"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "focus.required.06",
+      "plate": "focus",
+      "kind": "required",
+      "claim": "Return to All controls without losing data",
+      "sourceCandidate": ".editor-focus-exit",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/editor-focus.test.js"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "focus.required.07",
+      "plate": "focus",
+      "kind": "required",
+      "claim": "Existing colour assignment retained",
+      "sourceCandidate": ".rainbow-slider",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/editor-focus.test.js"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "focus.required.08",
+      "plate": "focus",
+      "kind": "required",
+      "claim": "Canvas preview remains visible",
+      "sourceCandidate": "#preview",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/editor-focus.test.js"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "focus.required.09",
+      "plate": "focus",
+      "kind": "required",
+      "claim": "Bottom navigation",
+      "sourceCandidate": "#mobileActionDock",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/editor-focus.test.js"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "focus.conditional.01",
+      "plate": "focus",
+      "kind": "conditional",
+      "claim": "Inactive parameter explained",
+      "sourceCandidate": ".editor-setting-row.setting-inactive",
+      "applicableState": "Trigger both applicable and dormant/hidden values; negative case required",
+      "exercise": "User action plus negative state, focus/hit test, screenshot and normalized recipe comparison",
+      "evidenceCandidates": [
+        "tests/editor-focus.test.js"
+      ],
+      "qualification": "PARTIAL; full conditional permutation NOT VERIFIED"
+    },
+    {
+      "id": "focus.conditional.02",
+      "plate": "focus",
+      "kind": "conditional",
+      "claim": "Step size depends on setting type",
+      "sourceCandidate": ".slider-number",
+      "applicableState": "Trigger both applicable and dormant/hidden values; negative case required",
+      "exercise": "User action plus negative state, focus/hit test, screenshot and normalized recipe comparison",
+      "evidenceCandidates": [
+        "tests/editor-focus.test.js"
+      ],
+      "qualification": "PARTIAL; full conditional permutation NOT VERIFIED"
+    },
+    {
+      "id": "focus.conditional.03",
+      "plate": "focus",
+      "kind": "conditional",
+      "claim": "Default remains multi-row inspector",
+      "sourceCandidate": ".editor-focus-panel",
+      "applicableState": "Trigger both applicable and dormant/hidden values; negative case required",
+      "exercise": "User action plus negative state, focus/hit test, screenshot and normalized recipe comparison",
+      "evidenceCandidates": [
+        "tests/editor-focus.test.js"
+      ],
+      "qualification": "PARTIAL; full conditional permutation NOT VERIFIED"
+    },
+    {
+      "id": "focus.conditional.04",
+      "plate": "focus",
+      "kind": "conditional",
+      "claim": "Prototype exists only on mobile; desktop returns to ordinary multi-slider inspector automatically.",
+      "sourceCandidate": "[name]",
+      "applicableState": "Trigger both applicable and dormant/hidden values; negative case required",
+      "exercise": "User action plus negative state, focus/hit test, screenshot and normalized recipe comparison",
+      "evidenceCandidates": [
+        "tests/editor-focus.test.js"
+      ],
+      "qualification": "PARTIAL; full conditional permutation NOT VERIFIED"
+    },
+    {
+      "id": "focus.forbidden.01",
+      "plate": "focus",
+      "kind": "forbidden",
+      "claim": "Mandatory shared slider for all users",
+      "sourceCandidate": null,
+      "applicableState": "Every plate variant; counterexample search required",
+      "exercise": "Try to reproduce forbidden content or behavior in actual browser across relevant states",
+      "evidenceCandidates": [
+        "tests/editor-focus.test.js"
+      ],
+      "qualification": "NOT VERIFIED across full matrix"
+    },
+    {
+      "id": "focus.forbidden.02",
+      "plate": "focus",
+      "kind": "forbidden",
+      "claim": "Parameter loss when focus changes",
+      "sourceCandidate": null,
+      "applicableState": "Every plate variant; counterexample search required",
+      "exercise": "Try to reproduce forbidden content or behavior in actual browser across relevant states",
+      "evidenceCandidates": [
+        "tests/editor-focus.test.js"
+      ],
+      "qualification": "NOT VERIFIED across full matrix"
+    },
+    {
+      "id": "focus.forbidden.03",
+      "plate": "focus",
+      "kind": "forbidden",
+      "claim": "Colour reassignment on switching",
+      "sourceCandidate": null,
+      "applicableState": "Every plate variant; counterexample search required",
+      "exercise": "Try to reproduce forbidden content or behavior in actual browser across relevant states",
+      "evidenceCandidates": [
+        "tests/editor-focus.test.js"
+      ],
+      "qualification": "NOT VERIFIED across full matrix"
+    },
+    {
+      "id": "focus.forbidden.04",
+      "plate": "focus",
+      "kind": "forbidden",
+      "claim": "A focused control editing a locked source field",
+      "sourceCandidate": null,
+      "applicableState": "Every plate variant; counterexample search required",
+      "exercise": "Try to reproduce forbidden content or behavior in actual browser across relevant states",
+      "evidenceCandidates": [
+        "tests/editor-focus.test.js"
+      ],
+      "qualification": "NOT VERIFIED across full matrix"
+    },
+    {
+      "id": "history.required.01",
+      "plate": "history",
+      "kind": "required",
+      "claim": "Recent variations title",
+      "sourceCandidate": "#editorHistoryToggle",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "history.required.02",
+      "plate": "history",
+      "kind": "required",
+      "claim": "Visible Back to tool action",
+      "sourceCandidate": "#editorHistoryBack",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "history.required.03",
+      "plate": "history",
+      "kind": "required",
+      "claim": "Sequence of selectable prior states",
+      "sourceCandidate": ".editor-history-choice",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "history.required.04",
+      "plate": "history",
+      "kind": "required",
+      "claim": "Clear thumbnails & restore affordance",
+      "sourceCandidate": ".editor-history-choice",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "history.required.05",
+      "plate": "history",
+      "kind": "required",
+      "claim": "Restore selected recipe + close history",
+      "sourceCandidate": "#favorite,#mobileFavorite",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "history.required.06",
+      "plate": "history",
+      "kind": "required",
+      "claim": "Maintain favourite distinction",
+      "sourceCandidate": "#mobileActionDock,#studioStatus",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "history.required.07",
+      "plate": "history",
+      "kind": "required",
+      "claim": "Bottom navigation and global feedback",
+      "sourceCandidate": "#editorHistory",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "history.conditional.01",
+      "plate": "history",
+      "kind": "conditional",
+      "claim": "Empty recent history illustration",
+      "sourceCandidate": "#editorHistory",
+      "applicableState": "Trigger both applicable and dormant/hidden values; negative case required",
+      "exercise": "User action plus negative state, focus/hit test, screenshot and normalized recipe comparison",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs"
+      ],
+      "qualification": "PARTIAL; full conditional permutation NOT VERIFIED"
+    },
+    {
+      "id": "history.conditional.02",
+      "plate": "history",
+      "kind": "conditional",
+      "claim": "History may contain previous/next ghost states",
+      "sourceCandidate": ".editor-history-choice",
+      "applicableState": "Trigger both applicable and dormant/hidden values; negative case required",
+      "exercise": "User action plus negative state, focus/hit test, screenshot and normalized recipe comparison",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs"
+      ],
+      "qualification": "PARTIAL; full conditional permutation NOT VERIFIED"
+    },
+    {
+      "id": "history.forbidden.01",
+      "plate": "history",
+      "kind": "forbidden",
+      "claim": "History overlaps active tool controls",
+      "sourceCandidate": null,
+      "applicableState": "Every plate variant; counterexample search required",
+      "exercise": "Try to reproduce forbidden content or behavior in actual browser across relevant states",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs"
+      ],
+      "qualification": "NOT VERIFIED across full matrix"
+    },
+    {
+      "id": "history.forbidden.02",
+      "plate": "history",
+      "kind": "forbidden",
+      "claim": "Restoration silently randomizes settings",
+      "sourceCandidate": null,
+      "applicableState": "Every plate variant; counterexample search required",
+      "exercise": "Try to reproduce forbidden content or behavior in actual browser across relevant states",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs"
+      ],
+      "qualification": "NOT VERIFIED across full matrix"
+    },
+    {
+      "id": "search.required.01",
+      "plate": "search",
+      "kind": "required",
+      "claim": "Search input with descriptive placeholder",
+      "sourceCandidate": ".editor-search-input",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/editor-tool-search.test.js"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "search.required.02",
+      "plate": "search",
+      "kind": "required",
+      "claim": "Visible close search button + Escape",
+      "sourceCandidate": ".editor-search-close",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/editor-tool-search.test.js"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "search.required.03",
+      "plate": "search",
+      "kind": "required",
+      "claim": "Find matching settings and tools",
+      "sourceCandidate": "#editorSearchStatus",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/editor-tool-search.test.js"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "search.required.04",
+      "plate": "search",
+      "kind": "required",
+      "claim": "Navigation to exact category and tool",
+      "sourceCandidate": ".editor-search-toggle,.editor-tool-chooser",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/editor-tool-search.test.js"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "search.required.05",
+      "plate": "search",
+      "kind": "required",
+      "claim": "Selected target chip scrolled into view",
+      "sourceCandidate": ".editor-tool-chooser",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/editor-tool-search.test.js"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "search.required.06",
+      "plate": "search",
+      "kind": "required",
+      "claim": "Preserve manual horizontal chip position",
+      "sourceCandidate": ".editor-tool-card:not([hidden])",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/editor-tool-search.test.js"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "search.required.07",
+      "plate": "search",
+      "kind": "required",
+      "claim": "Reveal needed controls after selection",
+      "sourceCandidate": "#mobileActionDock",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/editor-tool-search.test.js"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "search.required.08",
+      "plate": "search",
+      "kind": "required",
+      "claim": "Bottom navigation",
+      "sourceCandidate": ".editor-search-input",
+      "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
+      "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
+      "evidenceCandidates": [
+        "tests/editor-tool-search.test.js"
+      ],
+      "qualification": "SOURCE TRACED; only test-specific journeys are BROWSER VERIFIED"
+    },
+    {
+      "id": "search.conditional.01",
+      "plate": "search",
+      "kind": "conditional",
+      "claim": "No results / filtered out inapplicable tools",
+      "sourceCandidate": "#editorSearchStatus",
+      "applicableState": "Trigger both applicable and dormant/hidden values; negative case required",
+      "exercise": "User action plus negative state, focus/hit test, screenshot and normalized recipe comparison",
+      "evidenceCandidates": [
+        "tests/editor-tool-search.test.js"
+      ],
+      "qualification": "PARTIAL; full conditional permutation NOT VERIFIED"
+    },
+    {
+      "id": "search.conditional.02",
+      "plate": "search",
+      "kind": "conditional",
+      "claim": "Keyboard and touch search focus states",
+      "sourceCandidate": ".editor-search-input",
+      "applicableState": "Trigger both applicable and dormant/hidden values; negative case required",
+      "exercise": "User action plus negative state, focus/hit test, screenshot and normalized recipe comparison",
+      "evidenceCandidates": [
+        "tests/editor-tool-search.test.js"
+      ],
+      "qualification": "PARTIAL; full conditional permutation NOT VERIFIED"
+    },
+    {
+      "id": "search.forbidden.01",
+      "plate": "search",
+      "kind": "forbidden",
+      "claim": "Expanded input covers only close affordance",
+      "sourceCandidate": null,
+      "applicableState": "Every plate variant; counterexample search required",
+      "exercise": "Try to reproduce forbidden content or behavior in actual browser across relevant states",
+      "evidenceCandidates": [
+        "tests/editor-tool-search.test.js"
+      ],
+      "qualification": "NOT VERIFIED across full matrix"
+    },
+    {
+      "id": "search.forbidden.02",
+      "plate": "search",
+      "kind": "forbidden",
+      "claim": "Manual tool scroll snaps on unrelated actions",
+      "sourceCandidate": null,
+      "applicableState": "Every plate variant; counterexample search required",
+      "exercise": "Try to reproduce forbidden content or behavior in actual browser across relevant states",
+      "evidenceCandidates": [
+        "tests/editor-tool-search.test.js"
+      ],
+      "qualification": "NOT VERIFIED across full matrix"
+    }
+  ]
+}
