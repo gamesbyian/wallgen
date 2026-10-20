@@ -141,6 +141,33 @@ try{
   await page.locator('.editor-tool-card[data-editor-tool="geometry"] .setting-lock[data-lock-key="shapeFrequency"]').click();
   assert.ok(await shape.isEnabled());
   assert.ok(!current().lockedSettings.includes('shapeFrequency'));
+  // Every geometry which suppresses curvature must present truthful zero
+  // values AND disabled source locks without discarding stored tuning. Test
+  // transitions separately, since stale DOM state can survive a switch.
+  for(const dormantGeometry of ['straight','hairpin','loop','drawn']){
+    await geometry.selectOption(dormantGeometry);
+    assert.equal(current().geometry,dormantGeometry);
+    assert.equal(current().shapeFrequency,61);
+    assert.equal(current().shapeDepth,79);
+    assert.equal(await shape.inputValue(),'0');
+    assert.equal(await depth.inputValue(),'0');
+    assert.ok(await shape.isDisabled()&&await depth.isDisabled());
+    for(const key of ['shapeFrequency','shapeDepth']){
+      const row=page.locator('.editor-tool-card[data-editor-tool="geometry"] '+
+        '[data-setting="'+key+'"]');
+      assert.ok(await row.count(),dormantGeometry+': missing '+key+' row');
+      assert.equal(await row.locator('.setting-lock').isDisabled(),true,
+        dormantGeometry+': dormant '+key+' lock was operable');
+    }
+    await geometry.selectOption('zigzag');
+    assert.equal(await shape.inputValue(),'61');
+    assert.equal(await depth.inputValue(),'79');
+    assert.ok(await shape.isEnabled()&&await depth.isEnabled());
+  }
+  record('all-four-dormant-geometry-modes',{
+    disabledModes:['straight','hairpin','loop','drawn'],
+    preservedSourceValues:[61,79],zeroDisplay:true,
+    dormantLocksDisabled:true,restoredAfterEveryTransition:true});
   record('path-inactive-and-lock-cycle',{sourceValues:[61,79],
     visibleDormantValues:[0,0],dormantLockDisabled:true,
     revived:true,lockPreservesRecipe:true});
