@@ -74,6 +74,50 @@ try{
    await page.screenshot({path:join(out,'failure-'+recipe.seed+'.png'),
      animations:'disabled'}).catch(()=>{});}
  }
+ // Older PNG metadata exporters appended a later recipe without deleting
+ // their earlier iTXt. Exercise the REAL file-input handler with that legacy
+ // shape, not just the pure decoder, and confirm restoration is the last one.
+ try{
+  const original=normalizeRecipe({seed:'a4-old-png-recipe',structure:'paths',
+    geometry:'straight',viewZoom:.7});
+  const latest=normalizeRecipe({seed:'a4-latest-png-recipe',structure:'regions',
+    regionMode:'nested',viewPanX:13,lockedSettings:['regionMode']});
+  const originalPng=Buffer.from(embedPngMetadata(tiny,{}, {recipe:original}));
+  const latestPng=Buffer.from(embedPngMetadata(tiny,{}, {recipe:latest}));
+  const recipeStart=latestPng.indexOf(Buffer.from('ROYGBIV Recipe'));
+  assert.ok(recipeStart>12);
+  const chunkStart=recipeStart-8,chunkLength=latestPng.readUInt32BE(chunkStart)+12;
+  const newChunk=latestPng.subarray(chunkStart,chunkStart+chunkLength);
+  const pngTypeAt=(png,name)=>{
+    let at=8;
+    while(at+12<=png.length){
+      const len=png.readUInt32BE(at);
+      if(png.toString('ascii',at+4,at+8)===name)return at;
+      at+=len+12;
+    }
+    throw Error('Missing PNG chunk '+name);
+  };
+  const iend=pngTypeAt(originalPng,'IEND');
+  const legacy=Buffer.concat([originalPng.subarray(0,iend),newChunk,
+    originalPng.subarray(iend)]);
+  await page.goto(origin+'/?r='+encodeRecipe(original),{waitUntil:'domcontentloaded'});
+  await page.locator('#mobileMore').click();
+  await page.locator('#importRecipeFile').setInputFiles({
+    name:'legacy-double-recipe.png',mimeType:'image/png',buffer:legacy});
+  await page.waitForFunction(seed=>document.querySelector('#seedInput')?.value===seed,
+    latest.seed);
+  assert.deepEqual(decodeRecipe(new URL(page.url()).searchParams.get('r')),latest,
+    'Real PNG import used stale first embedded recipe instead of newest valid one');
+  assert.match(await page.locator('#studioStatus').textContent(),
+    /Restored original wallpaper settings from PNG recipe/);
+  evidence.push({seed:latest.seed,kind:'legacy-double-recipe-import',
+    newerRecipeRestored:true,sourceFileInput:true});
+  console.log('AGENT4_LEGACY_DOUBLE_RECIPE_BROWSER',JSON.stringify(evidence.at(-1)));
+ }catch(e){
+  errors.push({name:'legacy-double-recipe-import',message:String(e),stack:e.stack});
+  await page.screenshot({path:join(out,'failure-legacy-double-recipe.png'),
+    animations:'disabled'}).catch(()=>{});
+ }
  await writeFile(join(out,'evidence.json'),JSON.stringify({
   classification:errors.length?'not verified':'source JSON download and PNG-import round trips',
   evidence,errors,limitations:['transport PNG is a 1x1 codec fixture, not rendered image',
