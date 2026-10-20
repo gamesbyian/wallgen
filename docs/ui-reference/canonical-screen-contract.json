@@ -489,7 +489,7 @@
       "forbidden": [
         "‘Your canvas’ header",
         "Top Fit / 100% bar",
-        "Recipe mutation from camera pan or zoom"
+        "Camera zoom or viewport pan changing authored geometry, composition positionX/Y, or wallpaper export dimensions"
       ],
       "icons": [
         "pan",
