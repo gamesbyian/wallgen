@@ -1,4 +1,4 @@
-name: Agent 3 twelve-mode camera and native export acceptance
+name: Agent 3 twenty-two-mode camera and native export acceptance
 
 on:
   workflow_dispatch:
@@ -19,13 +19,13 @@ permissions:
   contents: read
 
 jobs:
-  twelve-real-native-exports:
+  twenty-two-real-native-exports:
     runs-on: ubuntu-latest
     timeout-minutes: 22
     strategy:
       fail-fast: false
       matrix:
-        shard: [0, 1, 2]
+        shard: [0, 1, 2, 3, 4, 5]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -58,7 +58,7 @@ jobs:
         env:
           AGENT3_CONDITIONAL_SHARD: ${{ matrix.shard }}
         run: node tests/agent3-camera-conditional-export.mjs
-      - name: Preserve all four fixtures, screenshots, metrics and failures
+      - name: Preserve mode-specific screenshots, metrics and failures
         if: always()
         uses: actions/upload-artifact@v4
         with:
