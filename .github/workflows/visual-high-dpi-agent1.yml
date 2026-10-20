@@ -1,0 +1,53 @@
+name: Agent 1 high-DPI touch optical acceptance
+on:
+  pull_request:
+    paths:
+      - 'scripts/visual-high-dpi-touch-agent1.mjs'
+      - '.github/workflows/visual-high-dpi-agent1.yml'
+      - 'studio-themes.css'
+      - 'mobile-compact.css'
+      - 'mobile-five-nav.css'
+      - 'mobile-editor-rail.css'
+      - 'editor-redesign.css'
+      - 'editor-setting-rows.css'
+      - 'index.html'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: visual-dpr-agent1-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  high-dpi-touch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 16
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Source script syntax
+        run: node --check scripts/visual-high-dpi-touch-agent1.mjs
+      - name: Install independent Chromium
+        run: |
+          npm install --no-save playwright@1.56.1 serve@14.2.5
+          npx playwright install --with-deps chromium
+      - name: Launch actual app
+        run: |
+          npx serve . -l 4173 > /tmp/visual-dpr-agent1.log 2>&1 &
+          for i in $(seq 1 40); do
+            if curl --fail --silent http://127.0.0.1:4173/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/visual-dpr-agent1.log
+          exit 1
+      - name: Capture high-DPI source UI with real touch taps
+        run: node scripts/visual-high-dpi-touch-agent1.mjs
+      - name: Upload physical pixel screenshots and geometry
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent1-high-dpi-touch-optical-evidence
+          path: artifacts/visual-agent1-dpr/
+          retention-days: 14
+          if-no-files-found: warn
