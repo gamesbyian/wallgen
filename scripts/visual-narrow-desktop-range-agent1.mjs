@@ -22,6 +22,9 @@ const profiles=[
  {id:'desktop-899x892',width:899,height:892},
  {id:'desktop-900x892',width:900,height:892},
  {id:'desktop-1024x892',width:1024,height:892},
+ {id:'desktop-1150x892',width:1150,height:892},
+ {id:'desktop-1151x892',width:1151,height:892},
+ {id:'desktop-1280x892',width:1280,height:892},
  {id:'landscape-700x412',width:700,height:412}
 ];
 const modes=[
@@ -95,7 +98,7 @@ try{
        },tool.id);
        samples.push({key,rows});
        for(const r of rows){
-        if(profile.width>=791&&profile.width<=899&&!r.disabled){
+        if(profile.width>=791&&profile.width<=1150){
          if(r.track.width<64)failures.push({key,source:r.sourceKeys,type:'compressed active track',width:r.track.width});
          if(r.labelCollision)failures.push({key,source:r.sourceKeys,type:'label ink overlaps steppers'});
          if(r.childCollision)failures.push({key,source:r.sourceKeys,type:'stepper children intersect'});
@@ -124,19 +127,19 @@ try{
 }finally{await browser.close();}
 await mkdir(out,{recursive:true});
 const scopes=samples.flatMap(s=>s.rows.map(r=>({...r,key:s.key})));
-const scoped=scopes.filter(x=>/desktop-(791|850|899)x892/.test(x.key)&&!x.disabled);
+const scoped=scopes.filter(x=>/desktop-(791|850|899|900|1024|1150)x892/.test(x.key));
 const minimum=scoped.length?Math.min(...scoped.map(x=>x.track.width)):null;
-if(!scoped.length)failures.push({type:'No active desktop handoff range fields measured'});
+if(!scoped.length)failures.push({type:'No desktop handoff range fields measured'});
 if(pictures.length<profiles.length*2*4)
  failures.push({type:'Missing category source screenshots',got:pictures.length});
 await writeFile(join(out,'narrow-desktop-range-audit.json'),JSON.stringify({
  source:'actual production controls, measured with Chromium DOMRange and getBoundingClientRect',
  profiles,modes,recordCount:samples.length,rangeFieldCount:scopes.length,
- desktopHandoffActiveFields:scoped.length,minActiveTrackWidth:minimum,
+ desktopHandoffSourceFields:scoped.length,minHandoffTrackWidth:minimum,
  screenshots:pictures,failures,records:samples
 },null,2));
 console.log('NARROW RANGE AUDIT: '+samples.length+' live tool states, '+
  scopes.length+' visible source range fields, '+scoped.length+
- ' active 791-899px tracks, minimum width '+minimum+'px, '+
+ ' source 791-1150px tracks (active and disabled), minimum width '+minimum+'px, '+
  pictures.length+' live screenshots, '+failures.length+' failures');
 if(failures.length)process.exitCode=1;
