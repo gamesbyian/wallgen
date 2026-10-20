@@ -146,18 +146,22 @@ try{
       }
       assert.equal(current().textureLayer2Enabled,true);
       assert.equal(current().textureLayer3Enabled,true);
-      // Removing an optional layer must only alter its enabled flag; its
-      // preserved material, coverage, blend and rotation revive on Add.
+      // Optional layers now use the ORIGINAL material selector, with None
+      // as the off state. No obsolete add/remove buttons exist in the UI.
       await page.locator('.editor-tool-chooser [data-editor-tool="layer3"]').click();
       const beforeOptional=current();
-      await page.locator('#removeTextureLayer3').click();
+      const materialChoice=page.locator('.editor-tool-card[data-editor-tool="layer3"] select[name="material3"]');
+      await materialChoice.selectOption('none');
       assert.equal(current().textureLayer3Enabled,false);
-      assert.deepEqual(current(),{...beforeOptional,textureLayer3Enabled:false},
-        'Disabled third layer lost its dormant authored settings');
-      await page.locator('#addTextureLayer3').click();
+      assert.equal(current().material3,'none');
+      for(const key of ['textureCoverage3','textureBlend3','textureRotation3',
+        'textureStrength3','textureScale3'])
+        assert.deepEqual(current()[key],beforeOptional[key],
+          'Disabled third layer destroyed dormant authored '+key);
+      await materialChoice.selectOption(beforeOptional.material3);
       assert.deepEqual(current(),beforeOptional,
-        'Reenabled third layer did not restore saved authored values');
-      record.push({layer:3,disabledAndRestored:true});
+        'Reenabled third layer did not revive prior authored values');
+      record.push({layer:3,materialNoneOffAndRevived:true});
       assert.deepEqual(localErrors,[],'Errors while actually using Material rotations');
       evidence.push({scenario:scenario.name,viewport:scenario.viewport,
         operations:record,sourceKeyIntegrity:true});
