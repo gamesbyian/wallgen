@@ -138,8 +138,12 @@ try{
       await page.locator('.editor-focus-step[aria-label="'+direction+' focused parameter"]').click();
      }
      action=useKeyboard?'native Focus arrow':'Focus source step';mutating=true;counts.edit++;
-    }else if(choice<.95&&state.active&&!state.focusLock.hidden&&
-      !state.focusLock.disabled){
+    }else if(choice<.95&&state.active&&!state.rowHidden&&
+      !state.focusLock.hidden&&!state.focusLock.disabled&&
+      await page.locator('.editor-focus-lock').isVisible()){
+     // A sliderless tool hides the entire Focus range row, but the
+     // descendant Lock node itself may still have hidden=false. Never
+     // manufacture an inaccessible user action against that subtree.
      await page.locator('.editor-focus-lock').click();
      action='source lock/unlock';mutating=true;counts.lock++;
     }else if(state.active){
