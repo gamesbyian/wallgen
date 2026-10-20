@@ -15,6 +15,7 @@ on:
       - 'tests/independent-svg-candidates-acceptance.mjs'
       - 'tests/independent-focus-transitions.mjs'
       - 'tests/independent-axe-diagnostic.mjs'
+      - 'tests/independent-desktop-axe-diagnostic.mjs'
       - 'assets/icons/roygbiv/manifest.json'
       - 'assets/icons/roygbiv/state-matrix.html'
       - '.github/workflows/independent-focus-a11y.yml'
@@ -29,7 +30,7 @@ permissions:
 jobs:
   focus-adversarial:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -40,6 +41,7 @@ jobs:
           node --check tests/independent-svg-candidates-acceptance.mjs
           node --check tests/independent-focus-transitions.mjs
           node --check tests/independent-axe-diagnostic.mjs
+          node --check tests/independent-desktop-axe-diagnostic.mjs
       - run: npm test
       - run: npm install --no-save playwright@1.56.1 serve@14.2.5 axe-core@4.10.3
       - run: npx playwright install --with-deps chromium
@@ -57,6 +59,8 @@ jobs:
         run: node tests/independent-svg-candidates-acceptance.mjs
       - name: Capture independent WCAG automated diagnostics without falsely certifying accessibility
         run: node tests/independent-axe-diagnostic.mjs
+      - name: Independently audit 791px and 1024px desktop WCAG 2.2 screen states
+        run: node tests/independent-desktop-axe-diagnostic.mjs
       - name: Preserve measurements and failure screenshots
         if: always()
         uses: actions/upload-artifact@v4
@@ -67,5 +71,6 @@ jobs:
             artifacts/independent-svg-qa/
             artifacts/independent-focus-transitions/
             artifacts/independent-axe-audit/
+            artifacts/independent-desktop-axe/
           retention-days: 14
           if-no-files-found: warn
