@@ -15,6 +15,26 @@ import {extractPngRecipe} from '../src/png-metadata.js';
 const origin=process.env.ROYGBIV_URL||'http://127.0.0.1:4173';
 const out=resolve(process.env.ROYGBIV_NATIVE_OUT||'artifacts/agent3-native-download');
 await mkdir(out,{recursive:true});
+// The same extended, transverse figure-eight source is downloaded once per
+// crossing-depth mode. Each real 19.8MP file must agree with its direct source
+// renderer, preserve off-frame authored stations, and embed its own order.
+const crossingContour=Array.from({length:170},(_,i)=>{
+  const t=-Math.PI/2+2*Math.PI*i/169;
+  return [.5+.646*Math.sin(t),.49+.324*Math.sin(2*t)];
+});
+const crossingNative=mode=>({
+  name:'drawn-offframe-crossing-'+mode+'-native',
+  comparePixels:true,
+  recipe:normalizeRecipe({
+    seed:'a3-native-crossing-depth',structure:'paths',geometry:'drawn',
+    customPath:crossingContour,extendDrawnPath:true,
+    crossingMode:mode,geometrySafety:false,spread:65,
+    stripeWidth:75,viewZoom:.75,viewPanX:0,viewPanY:0,
+    material:'none',motif:'solid',background:'black',outline:'white',
+    individuality:0,lightingMood:'off',stripeShadowStrength:0,
+    textureDisplacement:0,brushRoughness:0
+  })
+});
 const fixtures=[
   {name:'drawn-extrapolated-native',comparePixels:true,recipe:normalizeRecipe({
     seed:'a3-pixel-drawn',structure:'paths',geometry:'drawn',
@@ -26,6 +46,7 @@ const fixtures=[
   // These exact foreground-qualified fixtures were first audited by the
   // direct-renderer world-pixel test. Here we require *real downloaded native*
   // IDAT pixels to preserve their camera and coloured foreground as well.
+  ...['over','under','weave'].map(crossingNative),
   {name:'radial-pinwheel-native',comparePixels:true,recipe:normalizeRecipe({
     seed:'a3-pixel-radial',structure:'radial',radialMode:'pinwheel',
     rayCount:23,rayTwist:39,viewZoom:1.35,viewPanX:-15,viewPanY:5,
@@ -150,6 +171,14 @@ try{
     },{base64:bytes.toString('base64'),recipe:fixture.recipe,
       comparePixels:fixture.comparePixels});
     Object.assign(observation,{metrics});
+    if(fixture.name.startsWith('drawn-offframe-crossing-')){
+      assert.equal(fixture.recipe.extendDrawnPath,true);
+      assert.ok(fixture.recipe.customPath.some(([x])=>x<0)&&
+        fixture.recipe.customPath.some(([x])=>x>1),
+        'Crossing fixture never authored outside the wallpaper frame');
+      observation.crossingMode=fixture.recipe.crossingMode;
+      observation.offFrameSourceRetained=true;
+    }
     observations.push(observation);
     console.log('AGENT3_NATIVE_DOWNLOAD_MEASURED',JSON.stringify(observation));
     assert.deepEqual(metrics.decoded,[OUTPUT_WIDTH,OUTPUT_HEIGHT],
@@ -168,7 +197,7 @@ try{
   }
   assert.deepEqual(errors,[],'Uncaught page errors during actual PNG download');
   await writeFile(join(out,'evidence.json'),JSON.stringify({
-    classification:'five actual 19.8MP downloaded PNGs compared to direct stable foreground pixels',
+    classification:'eight actual 19.8MP downloaded PNGs including all three off-frame crossing modes compared to direct stable foreground pixels',
     exclusions:['physical Android Chrome','OS file-picker integration',
       'all recipe variants','canonical visual review'],
     observations,errors
