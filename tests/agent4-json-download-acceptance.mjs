@@ -74,6 +74,86 @@ try{
    await page.screenshot({path:join(out,'failure-'+recipe.seed+'.png'),
      animations:'disabled'}).catch(()=>{});}
  }
+ // Older PNG metadata exporters appended a later recipe without deleting
+ // their earlier iTXt. Exercise the REAL file-input handler with that legacy
+ // shape, not just the pure decoder, and confirm restoration is the last one.
+ try{
+  const original=normalizeRecipe({seed:'a4-old-png-recipe',structure:'paths',
+    geometry:'straight',viewZoom:.7});
+  const latest=normalizeRecipe({seed:'a4-latest-png-recipe',structure:'regions',
+    regionMode:'nested',viewPanX:13,lockedSettings:['regionMode']});
+  const originalPng=Buffer.from(embedPngMetadata(tiny,{}, {recipe:original}));
+  const latestPng=Buffer.from(embedPngMetadata(tiny,{}, {recipe:latest}));
+  const recipeStart=latestPng.indexOf(Buffer.from('ROYGBIV Recipe'));
+  assert.ok(recipeStart>12);
+  const chunkStart=recipeStart-8,chunkLength=latestPng.readUInt32BE(chunkStart)+12;
+  const newChunk=latestPng.subarray(chunkStart,chunkStart+chunkLength);
+  const pngTypeAt=(png,name)=>{
+    let at=8;
+    while(at+12<=png.length){
+      const len=png.readUInt32BE(at);
+      if(png.toString('ascii',at+4,at+8)===name)return at;
+      at+=len+12;
+    }
+    throw Error('Missing PNG chunk '+name);
+  };
+  const iend=pngTypeAt(originalPng,'IEND');
+  const legacy=Buffer.concat([originalPng.subarray(0,iend),newChunk,
+    originalPng.subarray(iend)]);
+  await page.goto(origin+'/?r='+encodeRecipe(original),{waitUntil:'domcontentloaded'});
+  await page.locator('#mobileMore').click();
+  await page.locator('#importRecipeFile').setInputFiles({
+    name:'legacy-double-recipe.png',mimeType:'image/png',buffer:legacy});
+  await page.waitForFunction(seed=>document.querySelector('#seedInput')?.value===seed,
+    latest.seed);
+  assert.deepEqual(decodeRecipe(new URL(page.url()).searchParams.get('r')),latest,
+    'Real PNG import used stale first embedded recipe instead of newest valid one');
+  assert.match(await page.locator('#studioStatus').textContent(),
+    /Restored original wallpaper settings from PNG recipe/);
+  evidence.push({seed:latest.seed,kind:'legacy-double-recipe-import',
+    newerRecipeRestored:true,sourceFileInput:true});
+  console.log('AGENT4_LEGACY_DOUBLE_RECIPE_BROWSER',JSON.stringify(evidence.at(-1)));
+  // A structurally valid iTXt with a valid CRC but no meaningful seed must
+  // fail visibly, without changing wallpaper or Undo. A subsequent re-import
+  // of the good legacy file must recover in the SAME file-input instance.
+  await page.goto(origin+'/?r='+encodeRecipe(original),{waitUntil:'domcontentloaded'});
+  await page.locator('#mobileMore').click();
+  const malformed=Buffer.from(legacy);
+  const seedOffset=malformed.lastIndexOf(Buffer.from(latest.seed,'utf8'));
+  assert.ok(seedOffset>iend&&seedOffset<iend+newChunk.length);
+  malformed.fill(0x20,seedOffset,seedOffset+Buffer.byteLength(latest.seed));
+  const payloadLength=newChunk.readUInt32BE(0);
+  let checksum=0xffffffff;
+  for(const byte of malformed.subarray(iend+4,iend+8+payloadLength)){
+    checksum^=byte;
+    for(let bit=0;bit<8;bit++)
+      checksum=(checksum&1)?(0xedb88320^(checksum>>>1)):(checksum>>>1);
+  }
+  malformed.writeUInt32BE((checksum^0xffffffff)>>>0,iend+8+payloadLength);
+  await page.locator('#importRecipeFile').setInputFiles({
+    name:'invalid-identity.png',mimeType:'image/png',buffer:malformed});
+  await page.waitForFunction(()=>document.querySelector('#studioStatus')
+    ?.textContent?.includes('Damaged recipe metadata identity'));
+  assert.deepEqual(decodeRecipe(new URL(page.url()).searchParams.get('r')),original,
+    'Checksummed but invalid recipe changed current wallpaper');
+  assert.equal(await page.locator('#importRecipeFile').inputValue(),'');
+  await page.locator('#importRecipeFile').setInputFiles({
+    name:'recovered-double-recipe.png',mimeType:'image/png',buffer:legacy});
+  await page.waitForFunction(seed=>document.querySelector('#seedInput')?.value===seed,
+    latest.seed);
+  assert.deepEqual(decodeRecipe(new URL(page.url()).searchParams.get('r')),latest);
+  await page.locator('#mobileToolsClose').click();
+  await page.locator('#undo').click();
+  assert.deepEqual(decodeRecipe(new URL(page.url()).searchParams.get('r')),original,
+    'Rejected import inserted a phantom Undo checkpoint');
+  evidence.push({kind:'invalid-recipe-identity-recovery',
+    rejectedWithoutMutation:true,goodReimport:true,undoProvenance:true});
+
+ }catch(e){
+  errors.push({name:'legacy-double-recipe-import',message:String(e),stack:e.stack});
+  await page.screenshot({path:join(out,'failure-legacy-double-recipe.png'),
+    animations:'disabled'}).catch(()=>{});
+ }
  await writeFile(join(out,'evidence.json'),JSON.stringify({
   classification:errors.length?'not verified':'source JSON download and PNG-import round trips',
   evidence,errors,limitations:['transport PNG is a 1x1 codec fixture, not rendered image',

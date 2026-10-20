@@ -128,15 +128,43 @@ function readFavorites() {
   try {return parseStoredFavorites(localStorage.getItem(FAVORITES_KEY));}
   catch {return [];} // Storage access can be denied independently of parsing.
 }
-function saveFavorites() {
-  try { localStorage.setItem(FAVORITES_KEY,JSON.stringify(favorites)); } catch { showNotice('Browser storage unavailable; favourites last for this visit.'); }
+let sessionOnlyFavorites=false;
+function syncFavoriteIndicators(){
+  const selected=isFavorite(current);
+  favoriteButton.setAttribute('aria-pressed',String(selected));
+  setIconSource(favoriteButton,selected?'favourite-filled':'favourite');
+  document.getElementById('favoriteCount').textContent=String(favorites.length);
 }
-// Keep Saved and the favourite action truthful when another tab writes.
+function reconcileFavoritesFromStorage(){
+  // Never erase a session-only favourite when storage writes were denied.
+  // An external storage event explicitly supersedes that temporary state.
+  if(sessionOnlyFavorites)return false;
+  let saved;
+  try{saved=parseStoredFavorites(localStorage.getItem(FAVORITES_KEY));}
+  catch{return false;}
+  if(JSON.stringify(saved)===JSON.stringify(favorites))return false;
+  favorites=saved;
+  syncFavoriteIndicators();
+  return true;
+}
+function saveFavorites() {
+  try {
+    localStorage.setItem(FAVORITES_KEY,JSON.stringify(favorites));
+    sessionOnlyFavorites=false;
+  }catch{
+    sessionOnlyFavorites=true;
+    showNotice('Browser storage unavailable; favourites last for this visit.');
+  }
+}
+// Storage events can arrive during an asynchronous thumbnail contact sheet;
+// its final paint independently reconciles the current shared storage state.
 window.addEventListener('storage',event=>{
   if(event.key!==FAVORITES_KEY&&event.key!==null)return;
-  favorites=readFavorites();
-  favoriteButton.setAttribute('aria-pressed',String(isFavorite(current)));
-  if(gallery.dataset.view==='saved')void showSaved();
+  sessionOnlyFavorites=false;
+  if(reconcileFavoritesFromStorage()&&gallery.dataset.view==='saved')void showSaved();
+});
+window.addEventListener('focus',()=>{
+  if(reconcileFavoritesFromStorage()&&gallery.dataset.view==='saved')void showSaved();
 });
 function sameRecipe(a,b){return JSON.stringify(normalizeRecipe(a))===JSON.stringify(normalizeRecipe(b));}
 function isFavorite(recipe){return favorites.some(item=>sameRecipe(item,recipe));}
@@ -579,6 +607,14 @@ async function copyText(text) {
 }
 function setBusy(button,busy,label) {
   button.disabled=busy;
+  // Saved contains the live #favoriteCount status element. Replacing its
+  // innerHTML during thumbnail loading used to delete that element; a second
+  // storage event then threw during count refresh and left stale Saved cards.
+  // Keep the original DOM/accessible count mounted even while the action is busy.
+  if(button.id==='showFavorites'){
+    button.setAttribute('aria-busy',String(busy));
+    return;
+  }
   if(busy){button.dataset.previous=button.innerHTML;button.textContent=label;}
   else if(button.dataset.previous){button.innerHTML=button.dataset.previous;delete button.dataset.previous;}
 }
@@ -1322,7 +1358,13 @@ async function showGallery(recipes,button){
     return;
   }
   gallery.setAttribute('aria-busy','true');
-  if(button)setBusy(button,true,'Generating…');
+  if(button){
+    // Re-entrant Saved requests can target the same source button. A newer
+    // request inherits its original label, rather than saving "Generating…"
+    // as the text to restore when the older request is cancelled.
+    if(!button.dataset.galleryRequestId)setBusy(button,true,'Generating…');
+    button.dataset.galleryRequestId=String(requestId);
+  }
   try {
     for(let i=0;i<recipes.length;i++){
       if(requestId!==galleryRequestId)break;
@@ -1331,8 +1373,18 @@ async function showGallery(recipes,button){
       gallery.append(createCard(recipes[i],i));
     }
   }finally{
-    if(requestId===galleryRequestId)gallery.removeAttribute('aria-busy');
-    if(button)setBusy(button,false);
+    if(button&&button.dataset.galleryRequestId===String(requestId)){
+      delete button.dataset.galleryRequestId;
+      setBusy(button,false);
+    }
+    if(requestId===galleryRequestId){
+      gallery.removeAttribute('aria-busy');
+      // A later tab write can supersede storage events while the initial
+      // async Saved cards are still being built. Never publish those stale
+      // thumbnails/counts as the completed gallery.
+      if(gallery.dataset.view==='saved'&&reconcileFavoritesFromStorage())
+        void showSaved();
+    }
   }
 }
 function showExplore(){
@@ -1344,6 +1396,7 @@ function showExplore(){
 }
 function showSaved(){
   setGalleryMode('saved');
+  reconcileFavoritesFromStorage();
   return showGallery(favorites,document.getElementById('showFavorites'));
 }
 document.getElementById('batch').addEventListener('click',async()=>{

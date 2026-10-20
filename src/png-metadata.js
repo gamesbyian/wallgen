@@ -82,14 +82,7 @@ export function embedPngMetadata(input,values={},options={}){
   // even if the user leaves all optional descriptive metadata empty.
   if(!Object.keys(metadata).length && options.recipe===undefined)return new Uint8Array(bytes);
   if(bytes.length<20||!PNG_SIGNATURE.every((v,i)=>bytes[i]===v))throw Error('Input is not a PNG');
-  let offset=8,insert=0;
-  while(offset+12<=bytes.length){
-    const size=u32(bytes,offset),type=String.fromCharCode(...bytes.subarray(offset+4,offset+8));
-    if(size>bytes.length-offset-12)throw Error('Damaged PNG chunk');
-    if(type==='IDAT'){insert=offset;break;}
-    offset+=size+12;
-  }
-  if(!insert)throw Error('PNG has no image data');
+
   const names={title:'Title',creator:'Author',description:'Description',copyright:'Copyright',
     keywords:'Keywords',comment:'Comment',software:'Software',dateTime:'Creation Time',
     cameraMake:'Camera Make',cameraModel:'Camera Model'};
@@ -97,12 +90,37 @@ export function embedPngMetadata(input,values={},options={}){
   if(options.recipe!==undefined)chunks.push(utf8Text(RECIPE_KEYWORD,serializePngRecipe(options.recipe)));
   const exif=exifTiff(metadata);
   if(exif)chunks.push(chunk('eXIf',exif));
-  const total=bytes.length+chunks.reduce((n,c)=>n+c.length,0);
+  // Replace recipe chunks wherever they occur: PNG permits ancillary
+  // text both before and after the (contiguous) IDAT sequence. Older exports
+  // could contain multiple recipes; never let a stale one survive re-export.
+  const oldChunks=[];
+  const recipeKeyword=encoder.encode(RECIPE_KEYWORD);
+  let offset=8,insertIndex=-1;
+  while(offset+12<=bytes.length){
+    const size=u32(bytes,offset);
+    if(size>bytes.length-offset-12)throw Error('Damaged PNG chunk');
+    const end=offset+12+size;
+    const type=String.fromCharCode(...bytes.subarray(offset+4,offset+8));
+    if(type==='IDAT'&&insertIndex<0)insertIndex=oldChunks.length;
+    const data=bytes.subarray(offset+8,offset+8+size);
+    const keywordEnd=type==='iTXt'?data.indexOf(0):-1;
+    const oldRecipe=type==='iTXt'&&keywordEnd===recipeKeyword.length&&
+      recipeKeyword.every((value,i)=>data[i]===value);
+    if(!(options.recipe!==undefined&&oldRecipe))
+      oldChunks.push(bytes.subarray(offset,end));
+    offset=end;
+    if(type==='IEND')break;
+  }
+  if(insertIndex<0)throw Error('PNG has no image data');
+  const parts=[bytes.subarray(0,8),...oldChunks.slice(0,insertIndex),
+    ...chunks,...oldChunks.slice(insertIndex)];
+  // Preserve trailing bytes exactly; ancillary replacement must never
+  // accidentally rewrite opaque image data or container extensions.
+  if(offset<bytes.length)parts.push(bytes.subarray(offset));
+  const total=parts.reduce((n,part)=>n+part.length,0);
   const result=new Uint8Array(total);
-  result.set(bytes.subarray(0,insert));
-  let cursor=insert;
-  for(const part of chunks){result.set(part,cursor);cursor+=part.length;}
-  result.set(bytes.subarray(insert),cursor);
+  let cursor=0;
+  for(const part of parts){result.set(part,cursor);cursor+=part.length;}
   return result;
 }
 
@@ -113,7 +131,7 @@ export function extractPngRecipe(input){
   const bytes=input instanceof Uint8Array?input:new Uint8Array(input);
   if(bytes.length<20||!PNG_SIGNATURE.every((v,i)=>bytes[i]===v))throw Error('Input is not a PNG');
   const decoder=new TextDecoder('utf-8',{fatal:true});
-  let offset=8;
+  let offset=8,latestRecipe=null;
   while(offset+12<=bytes.length){
     const size=u32(bytes,offset);
     if(size>bytes.length-offset-12)throw Error('Damaged PNG chunk');
@@ -131,11 +149,19 @@ export function extractPngRecipe(input){
         catch{throw Error('Damaged recipe metadata');}
         if(![RECIPE_FORMAT,'roygbiv-recipe-v1'].includes(envelope?.format)||typeof envelope.recipe!=='object'||
            !envelope.recipe||Array.isArray(envelope.recipe))throw Error('Unsupported recipe metadata version');
-        return normalizeRecipe(envelope.recipe);
+        // An unrelated PNG must never restore the silent default wallpaper
+        // simply by claiming the correct envelope format.
+        if(typeof envelope.recipe.seed!=='string'||!envelope.recipe.seed.trim()||
+           (envelope.format===RECIPE_FORMAT&&
+            !['paths','radial','regions'].includes(envelope.recipe.structure)))
+          throw Error('Damaged recipe metadata identity');
+        // A legacy writer could append a newer recipe without removing its
+        // previous record. Honour the last valid record for compatibility.
+        latestRecipe=normalizeRecipe(envelope.recipe);
       }
     }
     if(type==='IEND')break;
     offset+=size+12;
   }
-  return null;
+  return latestRecipe;
 }
