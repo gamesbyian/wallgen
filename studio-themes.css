@@ -508,3 +508,16 @@ html[data-theme="dark"] .gallery-placeholder>span{color:#c5becf}
     scroll-margin-block:56px 12px;
   }
 }
+
+/* Independent axe-core contrast evidence, cream More > expanded metadata.
+   Legacy dark-theme label colours (#a4a3af, #a6a3b5, #c9c5d5)
+   were inherited unchanged against the light surface at 1.6–2.44:1.
+   Preserve font sizes, form geometry and all dark-theme presentation. */
+html[data-theme=cream] .seed-group label,
+html[data-theme=cream] .metadata-heading span,
+html[data-theme=cream] .metadata-panel > p{
+  color:#625d70;
+}
+html[data-theme=cream] .metadata-fields label{
+  color:#5b5366;
+}
