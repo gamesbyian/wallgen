@@ -17,7 +17,8 @@ await mkdir(dir,{recursive:true});
 const initial=normalizeRecipe({seed:'a3-real-freehand-10x',structure:'paths',
   geometry:'zigzag',customPath:[],viewZoom:1,viewPanX:0,viewPanY:0,
   positionX:0,positionY:0,extendDrawnPath:false});
-const browser=await chromium.launch({headless:true});
+const browser=await chromium.launch({headless:true,
+  ...(process.env.CHROME_BIN?{executablePath:process.env.CHROME_BIN}:{})});
 const checks=[],errors=[];
 try{
   for(const [width,height] of [[412,892],[700,412]]){
