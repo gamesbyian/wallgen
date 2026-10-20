@@ -53,7 +53,7 @@ try{
        assert.equal(await page.getByRole('group',{name:'Position the composition'}).count(),1);
      await page.addScriptTag({content:axe.source});
      const audit=await page.evaluate(async()=>window.axe.run(document,{
-       runOnly:{type:'tag',values:['wcag2a','wcag2aa','wcag21a','wcag21aa']},
+       runOnly:{type:'tag',values:['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa']},
        resultTypes:['violations','incomplete']
      }));
      const entry={viewport:[width,height],theme,state:state.name,
