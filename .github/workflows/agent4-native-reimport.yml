@@ -1,0 +1,52 @@
+name: Agent 4 native PNG re-import and compatibility export
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'tests/agent4-native-reimport-acceptance.mjs'
+      - '.github/workflows/agent4-native-reimport.yml'
+      - 'src/png-metadata.js'
+      - 'src/app.js'
+      - 'src/model.js'
+      - 'src/renderer.js'
+      - 'src/render-coordinator.js'
+
+concurrency:
+  group: agent4-native-reimport-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  native-file-roundtrip:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax and PNG transport unit acceptance
+        run: |
+          node --check tests/agent4-native-reimport-acceptance.mjs
+          node --test tests/png-metadata.test.js tests/recipe-transport-matrix.test.js
+      - run: npm install --no-save playwright@1.56.1 serve@14.2.5
+      - run: npx playwright install --with-deps chromium
+      - name: Serve real application
+        run: |
+          npx serve . -l 4173 > /tmp/agent4-native-reimport-serve.log 2>&1 &
+          for i in $(seq 1 40); do curl --fail --silent http://127.0.0.1:4173/ >/dev/null && exit 0; sleep 1; done
+          cat /tmp/agent4-native-reimport-serve.log
+          exit 1
+      - name: Original Download to actual PNG, real file-input restore and Undo in worker and fallback
+        run: node tests/agent4-native-reimport-acceptance.mjs
+      - name: Preserve genuine PNG metrics and browser failure screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent4-native-export-reimport
+          path: artifacts/agent4-native-reimport/
+          retention-days: 14
+          if-no-files-found: warn
