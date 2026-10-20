@@ -1323,7 +1323,20 @@ document.getElementById('copyRecipe').addEventListener('click',()=>copyText(JSON
 // that the static hosting server never receives as an HTTP request.
 document.getElementById('copyLink').addEventListener('click',async()=>{
   const url=location.href;
+  // History API failures can leave a stale, deceptively short URL in the
+  // address bar. A link is safe to copy only when it actually restores the
+  // current wallpaper, not merely because it falls below a length threshold.
+  let currentLink=false;
   if(url.length<=MAX_PORTABLE_LINK_CHARS){
+    const ordinary=new URLSearchParams(location.search).get('r');
+    const compact=portableShareTokenFromLocation(location);
+    currentLink=compact
+      ? retainedPortableToken===compact&&retainedPortableRecipe&&
+        sameRecipe(current,retainedPortableRecipe)
+      : !!ordinary&&!!decodeRecipe(ordinary)&&
+        sameRecipe(current,decodeRecipe(ordinary));
+  }
+  if(currentLink){
     await copyText(url);
     return;
   }
