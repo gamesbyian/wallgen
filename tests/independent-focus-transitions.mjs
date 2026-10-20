@@ -67,6 +67,9 @@ try{
     await page.setViewportSize({width,height});
     assert.equal(await toggle.getAttribute('aria-pressed'),'false');
     assert.deepEqual(current(page),modified);
+    // Breakpoint switches intentionally close the mobile sheet; reopen through
+    // its genuine dock button before navigating to the next tool family.
+    await page.locator('#mobileEdit').click();
     // The original parameter and Colour checkbox remain independently usable.
     await page.locator('#tab-colour').click();
     await page.locator('[data-editor-tool="rainbow"].editor-tool-tab').click();
