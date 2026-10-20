@@ -604,6 +604,22 @@ try{
   await page.evaluate(async()=>document.fonts.ready);
   await mkdir(join(output,'icons'),{recursive:true});
   await page.screenshot({path:join(output,'icons','all-68-state-matrix.png'),fullPage:true,animations:'disabled'});
+  // Canonical brand art is 120x120 and must not be crammed into the
+  // UI glyph 32x32 viewBox. Enforce 24 distinct source-exact samples.
+  await page.locator('#filter').fill('=app-icon');
+  await page.waitForFunction(()=>{
+    const imgs=[...document.querySelectorAll('#grid .card .sample img')];
+    return imgs.length===24&&imgs.every(img=>img.complete&&img.naturalWidth===120&&img.naturalHeight===120);
+  },null,{timeout:15000});
+  const brandAudit=await page.evaluate(()=>
+    [...document.querySelectorAll('#grid .card .sample img')].map(img=>{
+      const r=img.getBoundingClientRect(),box=img.closest('.sample').getBoundingClientRect();
+      return {src:img.getAttribute('src'),width:r.width,height:r.height,
+        fits:r.left>=box.left-1&&r.right<=box.right+1&&r.top>=box.top-1&&r.bottom<=box.bottom+1};
+    }));
+  if(brandAudit.length!==24||brandAudit.some(x=>x.src!=='app-icon.svg'||!x.fits))
+    errors.push({key:'svg/app-icon-source',error:JSON.stringify(brandAudit)});
+  await page.screenshot({path:join(output,'icons','app-icon-states.png'),fullPage:true,animations:'disabled'});
   for(const candidate of iconCandidates){
     // Plain `pan` also matches the title "Expand". The review must display
     // exactly the candidate source glyph, never a similarly named original.
@@ -623,7 +639,7 @@ await writeFile(join(output,'icon-review.html'),
   '<!doctype html><html lang="en"><meta charset="utf-8"><title>Candidate SVG source review</title>'+
   '<style>body{font:14px system-ui;margin:22px;background:#f7f2eb;color:#18151f}section{background:#fff;padding:18px;margin:18px 0}img{max-width:100%;height:auto;border:1px solid #ddd}</style>'+
   '<h1>Eight unwired candidates, rendered in the real 68-symbol matrix</h1>'+
-  '<p>This is source-backed multi-state optical evidence, not approval or permission to wire icons. Full established matrix: <a href="icons/all-68-state-matrix.png">68 symbols</a>.</p>'+
+  '<p>This is source-backed multi-state optical evidence, not approval or permission to wire icons. Full established matrix: <a href="icons/all-68-state-matrix.png">68 symbols</a>; <a href="icons/app-icon-states.png">source-exact canonical logo 20/24/28px</a>.</p>'+
   iconCards+'</html>');
 
 // Never promote a failing capture to an implementation reference. Only a
