@@ -431,7 +431,7 @@
       "mobileDownload": "Original PNG source action beside artwork and edit rail, no redirect to More.",
       "mobileFavorite": "Original favourite source action beside artwork and edit rail, separate from Saved."
     },
-    "cameraZoomState": "viewZoom, viewPanX and viewPanY are camera-specific fields persisted as part of the normalized recipe and embedded in PNG metadata; Fit restores 100% zoom with centered pan without touching composition nudge.",
+    "cameraZoomState": "viewZoom, viewPanX and viewPanY are camera-specific fields persisted in the normalized recipe and embedded in PNG metadata; Fit restores viewZoom=1 and viewPanX/Y=0 (100% centred camera) without touching authored composition positionX/Y.",
     "panStatus": "A separate viewport-only Move view frame Pan is implemented in More; original composition nudge moves positionX/Y, not viewPanX/Y. Real source reachability is qualified in PR #147.",
     "fitStatus": "Fit is implemented: resets viewZoom=1 and viewPanX/Y=0 while preserving composition positionX/Y.",
     "previousDockControls": [
@@ -489,7 +489,7 @@
       "forbidden": [
         "‘Your canvas’ header",
         "Top Fit / 100% bar",
-        "Recipe mutation from camera pan or zoom"
+        "Camera zoom or viewport pan changing authored geometry, composition positionX/Y, or wallpaper export dimensions"
       ],
       "icons": [
         "pan",
