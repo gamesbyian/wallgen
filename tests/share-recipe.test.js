@@ -110,8 +110,14 @@ test('high-entropy legal recipes remain lossless even when compression cannot fi
   assert.equal(source.interiorElements.length,8);
   assert.equal(source.interiorElements.reduce((total,el)=>total+el.objectIds.length,0),1600);
   const token=await encodePortableRecipe(source);
-  assert.deepEqual(await decodePortableRecipe(token),source,
-    'High-entropy compression altered valid recipe fields');
+  assert.ok(token.length>MAX_PORTABLE_LINK_CHARS,
+    'Fixture unexpectedly compressed into a portable URL');
+  await assert.rejects(decodePortableRecipe(token),/Compressed design link is too long/,
+    'Reader incorrectly accepted a token above its intentional 8,192-character limit');
+  assert.deepEqual(normalizeRecipe(JSON.parse(JSON.stringify(source))),source,
+    'High-entropy valid recipe lost fields in its guaranteed JSON fallback');
+  assert.deepEqual(decodeRecipe(encodeRecipe(source)),source,
+    'Legacy recipe serialization lost hidden Interior fields');
   const original='https://example.org/wallgen/?r='+encodeRecipe(source);
   assert.ok(original.length>MAX_PORTABLE_LINK_CHARS);
   assert.throws(()=>portableShareUrl(original,token),
@@ -120,5 +126,5 @@ test('high-entropy legal recipes remain lossless even when compression cannot fi
   console.log('AGENT4_HIGH_ENTROPY_FALLBACK',JSON.stringify({
     originalChars:original.length,compressedTokenChars:token.length,
     portableMax:MAX_PORTABLE_LINK_CHARS,
-    exactRecipePreserved:true,copyShouldRefuse:true}));
+    sourceJSONPreserved:true,oversizeTokenRejected:true,copyShouldRefuse:true}));
 });
