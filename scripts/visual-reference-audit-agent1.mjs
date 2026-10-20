@@ -21,6 +21,10 @@ const plates={
   compact:'compact',focus:'focus',history:'history',search:'search'
 };
 const all=Object.keys(plates).filter(name=>!['explore-populated','saved-empty','saved-populated'].includes(name));
+// Deep states are compared to their nearest canonical *contract*, not a
+// fabricated proposal plate. Label each state in the screenshot manifest.
+Object.assign(plates,{'more-expanded':'more','interior':'colour',
+  'outlines':'geometry','material-layer2':'material','material-layer3':'material'});
 const deepMobile=['more-expanded','interior','outlines','material-layer2','material-layer3'];
 const profiles=[
   // Exact lower-width CSS boundary plus the app's minimum supported width.
