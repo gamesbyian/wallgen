@@ -27,6 +27,8 @@ try{
   }));
   assert.deepEqual(semantics,{role:'status',live:'polite',atomic:'true'});
   const record=async (name,pattern)=>{
+    await page.waitForFunction(source=>new RegExp(source).test(
+      document.getElementById('studioStatus')?.textContent||''),pattern.source);
     const text=await status.textContent();
     assert.match(text,pattern,name+' lost visible accessible status');
     const original=await page.locator('#notice').textContent();
