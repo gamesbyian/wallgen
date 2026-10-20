@@ -8,7 +8,7 @@ const png=Uint8Array.from(Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScL/9QAAAABJRU5ErkJggg==','base64'));
 const makeIds=(element)=>Array.from({length:200},(_,i)=>
   'region-'+element+'-'+String(i).padStart(3,'0')+'-'+
-  String(element*200+i).padStart(3,'0').repeat(10).slice(0,72));
+  String(element*200+i).padStart(3,'0').repeat(30).slice(0,82));
 export function largeValidRecipe(count=5){
   return normalizeRecipe({seed:'agent4-large-embedded-recipe',structure:'regions',
     regionMode:'nested',regionCount:21,viewZoom:.75,viewPanX:-6.5,
