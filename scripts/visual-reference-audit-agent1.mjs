@@ -21,6 +21,7 @@ const plates={
   compact:'compact',focus:'focus',history:'history',search:'search'
 };
 const all=Object.keys(plates).filter(name=>!['explore-populated','saved-empty','saved-populated'].includes(name));
+const deepMobile=['more-expanded','interior','outlines','material-layer2','material-layer3'];
 const profiles=[
   // Exact lower-width CSS boundary plus the app's minimum supported width.
   // These are actual mobile Chromium layouts, never CSS-root zoom proxies.
@@ -58,12 +59,12 @@ const profiles=[
   {id:'wrap-edge-320x892',width:320,height:892,cases:['studio','saved-empty','saved-populated']},
   {id:'short-edge-499x740',width:499,height:740,cases:['studio','material','saved-populated']},
   {id:'short-edge-500x740',width:500,height:740,cases:['studio','material','saved-populated']},
-  {id:'phone-412x892',width:412,height:892,cases:[...all,'explore-populated','saved-empty','saved-populated']},
-  {id:'edge-499x892',width:499,height:892,cases:['studio','geometry','material','more','focus']},
-  {id:'edge-500x892',width:500,height:892,cases:all},
-  {id:'edge-790x892',width:790,height:892,cases:['studio','geometry','material','more','explore']},
-  {id:'desktop-791x892',width:791,height:892,cases:['studio','geometry','material']},
-  {id:'landscape-700x412',width:700,height:412,cases:['studio','geometry','draw','more','explore','explore-populated','saved-empty','saved-populated']},
+  {id:'phone-412x892',width:412,height:892,cases:[...all,...deepMobile,'explore-populated','saved-empty','saved-populated']},
+  {id:'edge-499x892',width:499,height:892,cases:[...all,...deepMobile,'saved-empty','saved-populated']},
+  {id:'edge-500x892',width:500,height:892,cases:[...all,...deepMobile,'saved-empty','saved-populated']},
+  {id:'edge-790x892',width:790,height:892,cases:[...all,...deepMobile,'saved-empty','saved-populated']},
+  {id:'desktop-791x892',width:791,height:892,cases:['studio','geometry','material','colour','diagonal','compact','focus','history','search','interior','outlines','material-layer2','material-layer3']},
+  {id:'landscape-700x412',width:700,height:412,cases:[...all,...deepMobile,'explore-populated','saved-empty','saved-populated']},
   {id:'zoom-out-412x892',width:412,height:892,cases:['studio','geometry','more'],zoom:.75}
 ];
 const errors=[],shots=[];
@@ -248,9 +249,36 @@ const scenarios={
       await page.locator('#mobileToolsSheet:not([hidden])').waitFor({state:'visible'});
     }
   },
+  'more-expanded':async(page,profile)=>{
+    if(profile.width<=790){
+      await click(page,'#mobileMore');
+      await page.locator('#mobileToolsSheet:not([hidden])').waitFor({state:'visible'});
+    }
+    await click(page,'#metadataToggle');
+    await page.locator('#metadataPanel:not([hidden])').waitFor({state:'visible'});
+    if(profile.width<=790)
+      await page.locator('#metadataPanel').evaluate(el=>el.scrollIntoView({block:'nearest',inline:'nearest'}));
+  },
   material:async(page,profile)=>{
     await edit(page,profile);await field(page,'structure','paths');
     await field(page,'material','grain');await tool(page,'material','finish1');
+  },
+  'material-layer2':async(page,profile)=>{
+    await edit(page,profile);await field(page,'structure','paths');
+    await field(page,'textureLayer2Enabled',true);
+    await field(page,'material2','linen');await tool(page,'material','finish2');
+  },
+  'material-layer3':async(page,profile)=>{
+    await edit(page,profile);await field(page,'structure','paths');
+    await field(page,'textureLayer2Enabled',true);
+    await field(page,'textureLayer3Enabled',true);
+    await field(page,'material3','foil');await tool(page,'material','finish3');
+  },
+  interior:async(page,profile)=>{
+    await edit(page,profile);await tool(page,'details','interior');
+  },
+  outlines:async(page,profile)=>{
+    await edit(page,profile);await tool(page,'details','outlines');
   },
   colour:async(page,profile)=>{
     await edit(page,profile);await tool(page,'colour','rainbow');
