@@ -1,0 +1,47 @@
+name: Sparse Draw import native export acceptance
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'tests/issue170-sparse-native-import.mjs'
+      - 'src/draw-path-ui.js'
+      - 'src/path-point-editor.js'
+      - 'src/app.js'
+      - 'src/model.js'
+      - '.github/workflows/sparse-native-issue170.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  sparse-native:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify test syntax and sparse path model
+        run: |
+          node --check tests/issue170-sparse-native-import.mjs
+          node --test tests/draw-sparse-anchor-insertion.test.js
+      - run: npm install --no-save playwright@1.56.1 serve@14.2.5
+      - run: npx playwright install --with-deps chromium
+      - name: Serve app
+        run: |
+          npx serve . -l 4173 >/tmp/issue170-sparse-serve.log 2>&1 &
+          for i in $(seq 1 40); do curl -fsS http://127.0.0.1:4173/ >/dev/null && exit 0; sleep 1; done
+          cat /tmp/issue170-sparse-serve.log
+          exit 1
+      - name: Real PNG file import anchor edit and 3024x6552 source export
+        run: node tests/issue170-sparse-native-import.mjs
+      - name: Preserve live canvas screenshots and native-PNG evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue170-sparse-import-native
+          path: artifacts/issue170-native-sparse/
+          retention-days: 14
+          if-no-files-found: warn
