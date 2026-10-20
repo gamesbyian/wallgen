@@ -226,7 +226,7 @@
       "id": "studio.conditional.03",
       "plate": "studio",
       "kind": "conditional",
-      "claim": "Viewport-only Pan requires new source-qualified behavior; do not label composition nudge as Pan.",
+      "claim": "Viewport-only Pan is implemented as a separately named More action; composition nudge remains distinct from the camera.",
       "sourceCandidate": "[data-view-pan],#viewPanStatus",
       "applicableState": "Trigger both applicable and dormant/hidden values; negative case required",
       "exercise": "User action plus negative state, focus/hit test, screenshot and normalized recipe comparison",
