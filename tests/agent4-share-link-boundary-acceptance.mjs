@@ -10,6 +10,7 @@ import {resolve,join} from 'node:path';
 import {chromium} from 'playwright';
 import {normalizeRecipe,encodeRecipe,decodeRecipe} from '../src/model.js';
 import {embedPngMetadata,serializePngRecipe} from '../src/png-metadata.js';
+import {decodePortableRecipe,portableShareTokenFromLocation} from '../src/share-recipe.js';
 
 const origin=process.env.ROYGBIV_URL||'http://127.0.0.1:4173';
 const tiny=Buffer.from(
@@ -53,16 +54,44 @@ try{
   const urlSize=page.url().length;
   assert.ok(urlSize>8192,'Large share fixture does not challenge URL length');
 
+  // A versioned fragment carries a compressed canonical recipe but never
+  // sends the recipe to the static server in its HTTP request line.
   const sentinel='intentionally-unchanged-clipboard';
   await page.evaluate(value=>navigator.clipboard.writeText(value),sentinel);
   await page.locator('#copyLink').click();
   await page.waitForFunction(()=>document.querySelector('#studioStatus')
-    ?.textContent.includes('too long to open reliably'));
-  assert.match(await page.locator('#studioStatus').textContent(),
-    /Save recipe JSON|Download PNG/);
-  assert.equal(await page.evaluate(()=>navigator.clipboard.readText()),sentinel,
-    'Oversized link silently replaced clipboard despite unsupported direct navigation');
-  assert.deepEqual(current(),large,'Share refusal altered the wallpaper');
+    ?.textContent==='Copied to clipboard.');
+  const compact=await page.evaluate(()=>navigator.clipboard.readText());
+  assert.notEqual(compact,sentinel);
+  assert.ok(compact.length<=8192,'Copied link is still over static-host limit');
+  assert.equal(new URL(compact).searchParams.has('r'),false);
+  const token=portableShareTokenFromLocation(new URL(compact));
+  assert.ok(token?.startsWith('v1.'));
+  assert.deepEqual(await decodePortableRecipe(token),large);
+  assert.deepEqual(current(),large,'Copying compact link altered wallpaper');
+
+  // A CLEAN browser context with no local storage proves standalone sharing.
+  const clean=await browser.newContext({viewport:{width:412,height:892},
+    isMobile:true,hasTouch:true,reducedMotion:'reduce'});
+  const linked=await clean.newPage();
+  try{
+    await linked.goto(compact,{waitUntil:'domcontentloaded',timeout:30000});
+    await linked.waitForFunction(seed=>document.querySelector('#seedInput')?.value===seed,
+      large.seed,{timeout:30000});
+    assert.equal(portableShareTokenFromLocation(new URL(linked.url())),token,
+      'Initial render rewrote compressed URL into oversized ?r query');
+    assert.equal(new URL(linked.url()).searchParams.has('r'),false);
+    const loaded=await linked.evaluate(async()=>{
+      const {decodePortableRecipe,portableShareTokenFromLocation}=
+        await import('/src/share-recipe.js');
+      return decodePortableRecipe(portableShareTokenFromLocation(location));
+    });
+    assert.deepEqual(loaded,large,'Clean browser compressed share lost hidden settings');
+    await linked.reload({waitUntil:'domcontentloaded'});
+    await linked.waitForFunction(seed=>document.querySelector('#seedInput')?.value===seed,
+      large.seed,{timeout:30000});
+    assert.equal(portableShareTokenFromLocation(new URL(linked.url())),token);
+  }finally{await clean.close();}
 
   // The same source offers a lossless share artifact without requiring a
   // giant URL. Verify actual original Save recipe JSON download and reimport.
@@ -96,8 +125,9 @@ try{
    assert.deepEqual(decodeRecipe(new URL(opened.url()).searchParams.get('r')),
      previous,'Normal copied share URL does not restore original design');
   }finally{await opened.close();}
-  const row={largeUrlChars:urlSize,rejectedOverlongLink:true,
-    clipboardPreserved:true,downloadedAndReimportedJSON:true,
+  const row={largeUrlChars:urlSize,compactUrlChars:compact.length,
+    compressedStandaloneLink:true,cleanBrowserOpened:true,
+    exactCanonicalRecipe:true,downloadedAndReimportedJSON:true,
     normalCopiedLinkNavigated:true};
   evidence.push(row);
   console.log('AGENT4_SHARE_BOUNDARY_PASS',JSON.stringify(row));
@@ -108,7 +138,8 @@ try{
     animations:'disabled'}).catch(()=>{});
  }finally{await context.close();}
  await writeFile(join(out,'evidence.json'),JSON.stringify({evidence,errors,
-   boundaries:['conservative 8192-character guard for static hosts',
-     'not a universal browser maximum','native OS clipboard/device unverified']},null,2));
+   boundaries:['versioned compressed fragment must stay below 8192 characters',
+     'not a universal browser maximum','native OS clipboard/device unverified',
+     'JSON and PNG remain necessary when native stream APIs are unavailable']},null,2));
  assert.deepEqual(errors,[],'Live large URL copy/fallback acceptance failed');
 }finally{await browser.close();}
