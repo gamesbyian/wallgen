@@ -24,8 +24,9 @@ const all=Object.keys(plates).filter(name=>!['explore-populated','saved-empty','
 // Deep states are compared to their nearest canonical *contract*, not a
 // fabricated proposal plate. Label each state in the screenshot manifest.
 Object.assign(plates,{'more-expanded':'more','interior':'colour',
-  'outlines':'geometry','material-layer2':'material','material-layer3':'material'});
-const deepMobile=['more-expanded','interior','outlines','material-layer2','material-layer3'];
+  'outlines':'geometry','material-layer2':'material','material-layer3':'material',
+  'effects':'colour','import-modal':'draw'});
+const deepMobile=['more-expanded','interior','outlines','material-layer2','material-layer3','effects','import-modal'];
 const profiles=[
   // Exact lower-width CSS boundary plus the app's minimum supported width.
   // These are actual mobile Chromium layouts, never CSS-root zoom proxies.
@@ -67,7 +68,7 @@ const profiles=[
   {id:'edge-499x892',width:499,height:892,cases:[...all,...deepMobile,'saved-empty','saved-populated']},
   {id:'edge-500x892',width:500,height:892,cases:[...all,...deepMobile,'saved-empty','saved-populated']},
   {id:'edge-790x892',width:790,height:892,cases:[...all,...deepMobile,'saved-empty','saved-populated']},
-  {id:'desktop-791x892',width:791,height:892,cases:['studio','geometry','material','colour','diagonal','compact','focus','history','search','interior','outlines','material-layer2','material-layer3']},
+  {id:'desktop-791x892',width:791,height:892,cases:['studio','geometry','material','colour','diagonal','compact','focus','history','search','interior','outlines','material-layer2','material-layer3','effects','import-modal']},
   {id:'landscape-700x412',width:700,height:412,cases:[...all,...deepMobile,'explore-populated','saved-empty','saved-populated']},
   {id:'zoom-out-412x892',width:412,height:892,cases:['studio','geometry','more'],zoom:.75}
 ];
@@ -277,6 +278,24 @@ const scenarios={
     await field(page,'textureLayer2Enabled',true);
     await field(page,'textureLayer3Enabled',true);
     await field(page,'material3','foil');await tool(page,'material','finish3');
+  },
+  effects:async(page,profile)=>{
+    await edit(page,profile);await tool(page,'effects','lighting');
+  },
+  'import-modal':async(page)=>{
+    // Actual native file-input selection and image decoding. Do not create
+    // or paint synthetic dialog nodes, and don't pretend the file has paths.
+    const svg='<svg xmlns="http://www.w3.org/2000/svg" width="320" height="520">'+
+      '<rect width="320" height="520" fill="white"/>'+
+      '<path d="M28 450 L292 70" stroke="black" stroke-width="18"/></svg>';
+    await page.locator('#imagePathFile').setInputFiles({
+      name:'agent1-source-diagonal.svg',mimeType:'image/svg+xml',buffer:Buffer.from(svg)
+    });
+    await page.locator('#imagePathDialog[open]').waitFor({state:'visible'});
+    await page.waitForFunction(()=>{
+      const el=document.querySelector('#imagePathDialog');
+      return el&&['ready','empty'].includes(el.dataset.phase);
+    },null,{timeout:20000});
   },
   interior:async(page,profile)=>{
     await edit(page,profile);await tool(page,'details','interior');
