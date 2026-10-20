@@ -116,7 +116,14 @@ for(const sample of owned){
     const center=await button.evaluate(el=>{
       const r=el.getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2;
       const upper=document.elementFromPoint(x,y);
-      return {width:r.width,height:r.height,hit:el===upper||el.contains(upper)};
+      const focus=el.parentElement?.querySelector('.editor-focus-toggle');
+      const focusBox=focus?.getBoundingClientRect();
+      return {width:r.width,height:r.height,x,y,
+        hit:el===upper||el.contains(upper),
+        actualTarget:upper?.className?.baseVal||upper?.className||upper?.tagName,
+        focusRight:focusBox?.right,
+        focusLeft:focusBox?.left,
+        stripScrollX:el.parentElement?.scrollLeft};
     });
     assert.ok(center.width>0&&center.height>0&&center.hit,
       sample.id+': non-hittable scoped action '+JSON.stringify(center));
