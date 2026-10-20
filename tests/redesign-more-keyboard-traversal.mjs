@@ -51,6 +51,10 @@ try{
             offscreen:!r||r.bottom<=0||r.top>=innerHeight||
               r.right<=0||r.left>=innerWidth,
             centerHit:!!r&&(hit===el||el.contains(hit)),
+            hitElement:hit?{tag:hit.tagName,id:hit.id,
+              classes:String(hit.className||'').slice(0,120)}:null,
+            dockTop:document.querySelector('#mobileActionDock')?.getBoundingClientRect()?.top,
+            sheetBottom:document.querySelector('#mobileToolsSheet')?.getBoundingClientRect()?.bottom,
             rect:r?[r.x,r.y,r.width,r.height]:null};
         });
         if(state.hidden)record.hiddenFocus.push(state);
