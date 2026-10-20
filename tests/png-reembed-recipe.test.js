@@ -101,7 +101,7 @@ function makeChunk(type,data){
   return Buffer.concat([head,data,trailer]);
 }
 const forgedRecipePng=(envelope)=>{
-  const body=Buffer.concat([Buffer.from('ROYGBIV Recipe\\0','utf8'),
+  const body=Buffer.concat([Buffer.from('ROYGBIV Recipe\0','utf8'),
     Buffer.alloc(4),Buffer.from(JSON.stringify(envelope),'utf8')]);
   return insertBefore(source,'IDAT',makeChunk('iTXt',body));
 };
