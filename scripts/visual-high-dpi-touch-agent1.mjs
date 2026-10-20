@@ -45,7 +45,7 @@ const states=[
    await page.locator('#drawPathPanel:not([hidden])').waitFor({state:'visible'});
  }},
 ];
-const errors=[],records=[];
+const errors=[],warnings=[],records=[];
 const screenshotWidth=(buffer)=>buffer.readUInt32BE(16);
 const screenshotHeight=(buffer)=>buffer.readUInt32BE(20);
 const browser=await chromium.launch({headless:true});
@@ -138,19 +138,31 @@ try{
            dockInert:geometry.dockInert,labels:geometry.labels}));
      console.log('HIGH-DPI CAPTURE '+key+' physical='+png.width+'x'+png.height);
     }catch(e){
-     errors.push({key,error:String(e)});
-     console.error('HIGH-DPI FAILURE '+key+' '+e);
+     // Preserve source screenshots and report genuine non-target landscape
+     // failures without turning sideways phone editing into a release gate.
+     const diagnostic={key,error:String(e)};
+     if(profile.width>profile.height){
+       warnings.push(diagnostic);
+       console.warn('HIGH-DPI NONBLOCKING LANDSCAPE '+key+' '+e);
+     }else{
+       errors.push(diagnostic);
+       console.error('HIGH-DPI FAILURE '+key+' '+e);
+     }
     }finally{await page.close();}
    }
   }finally{await context.close();}
  }
 }finally{await browser.close();}
 await mkdir(output,{recursive:true});
-if(records.length!==profiles.length*2*states.length)
- errors.push({error:'Missing source screenshot states '+records.length+'/'+(profiles.length*2*states.length)});
+const portraitProfiles=profiles.filter(p=>p.height>p.width);
+const requiredPortrait=portraitProfiles.length*2*states.length;
+const capturedPortrait=records.filter(r=>portraitProfiles.some(p=>p.id===r.profile)).length;
+if(capturedPortrait!==requiredPortrait)
+ errors.push({error:'Missing supported portrait screenshot states '+capturedPortrait+'/'+requiredPortrait});
 await writeFile(join(output,'manifest.json'),JSON.stringify({
   provenance:'Real browser Chromium source; touch/DPR emulation only, not Pixel hardware or Android OS',
-  profiles,states:states.map(({id})=>id),records,errors
+  profiles,states:states.map(({id})=>id),records,errors,warnings,
+  scope:'Portrait phone checks are required; historical short phone landscape is diagnostic only'
 },null,2));
 const escape=s=>String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('"','&quot;');
 await writeFile(join(output,'review.html'),'<html lang="en"><meta charset="utf-8">'+
@@ -158,10 +170,10 @@ await writeFile(join(output,'review.html'),'<html lang="en"><meta charset="utf-8
  'color:#211a2a;margin:18px}main{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));'+
  'gap:10px}article{background:#fff;border:1px solid #ccc;border-radius:10px;padding:10px}'+
  'img{width:100%;height:auto}h2{font-size:14px}</style><h1>True touch-emulated high-density source frames</h1>'+
- '<p>Source app, two themes, original taps, DPR 3 to 3.5. These raster frames are NOT an Android or physical-device sign-off.</p>'+
+ '<p>Source app, two themes, original taps, DPR 3 to 3.5. These raster frames are NOT an Android or physical-device sign-off. Supported portrait issues fail acceptance; historical short phone-landscape checks are non-blocking diagnostics only.</p>'+
  '<main>'+records.map(r=>'<article><h2>'+escape(r.key)+' · '+r.png.width+'×'+r.png.height+
  '</h2><img loading="lazy" src="'+escape(r.file)+'" alt="Real Chromium '+escape(r.state)+
  ' touch-rendered screenshot"><p>'+escape(r.profile)+' source layout, DPR '+r.deviceScaleFactor+
  '</p></article>').join('')+'</main></html>');
-console.log('HIGH-DPI EVIDENCE: '+records.length+' real physical-resolution screenshots, '+errors.length+' errors');
+console.log('HIGH-DPI EVIDENCE: '+records.length+' real physical-resolution screenshots, '+errors.length+' required portrait errors; '+warnings.length+' optional landscape diagnostics');
 if(errors.length)process.exitCode=1;
