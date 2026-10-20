@@ -1,20 +1,30 @@
-# Agent 4 gallery/export acceptance evidence, 2026-10-20
+# Agent 4 gallery/history and export acceptance evidence, 2026-10-20
 
-Scope: implementation queue entries **12** (Explore/Saved/history) and **14** (PNG/JSON round-trips and export geometry). These remain **unchecked**.
+Owner: entries **12** (image-first Explore, independent Saved, favourites, history) and **14** (recipe transport, native export and pixels) in `docs/UI-REDESIGN-IMPLEMENTATION-QUEUE.md`. **Neither global checkbox is closed.** Source baseline: `fd20147bfe1dc2f65a44fa3fc5b563b8b4667510` main; branch `agent4-gallery-export-roundtrip-20261020`.
 
-## Source-grounded counterexample repaired
+## Actual bugs fixed
 
-`src/png-metadata.js` previously copied existing ancillary chunks unchanged and prepended new `ROYGBIV Recipe` iTXt metadata before IDAT. Re-embedding a different recipe into an already exported ROYGBIV PNG produced two recipe iTXt records. `extractPngRecipe` returns the first record, so a later import silently restores the **old recipe**, even though the export passed the new recipe. The fix removes earlier ROYGBIV recipe records from the PNG prefix during recipe re-embedding; it copies all other original chunks and IDAT without modification. Pure metadata-only calls without a new recipe retain prior behaviour.
+1. **Repeated export restored stale design.** The old PNG metadata writer preserved existing `ROYGBIV Recipe` iTXt entries and prepended a new one. The reader returned the first, so re-embedding a different recipe left import restoring the older settings.
+2. **Older double-recipe PNGs had no reliable migration.** Their last recipe could occur before or after IDAT, and the old decoder preferred the earlier record. The decoder now chooses the **last checksum-valid recipe**, while any corrupt or unsupported targeted record still causes a hard error. The writer removes all earlier ROYGBIV recipe records anywhere in the PNG, preserves every unrelated chunk and the original IDAT bytes, and writes exactly one current entry.
+3. **Checksum-valid but empty or structurally invalid recipe identities silently normalized to defaults.** Import now rejects v2 envelopes whose seed is missing/blank or whose structure is not paths/radial/regions. Legacy v1 envelopes with a seed and no v2 structure remain readable.
 
-New `tests/png-reembed-recipe.test.js` specifies: two successive exports restore the latest normalized recipe; re-export across Paths, Radial and Regions restores each new structure and setting; the PNG IDAT chunk remains byte-identical; the IHDR dimensions are unchanged; exactly one ROYGBIV recipe iTXt remains. It intentionally uses a tiny deterministic fixture and does **not** substitute for live 3024×6552 downloaded-image pixel comparison.
+## New enduring tests on this branch
 
-## Independently inspected source surfaces
+- `tests/png-reembed-recipe.test.js`: actual PNG chunk-boundary and IHDR assertions; normal successive re-embedding across Paths/Radial/Regions; byte-identical IDAT; single current iTXt record; legacy two-record PNGs with new record both before IDAT and after IDAT; last-recipe restore and re-export cleanup; forged checksum-valid bad identities fail; legacy v1 normalized restoration.
+- `tests/agent4-json-download-acceptance.mjs` extended: uses the actual `#importRecipeFile` Chromium file input with a legacy double-recipe image (new metadata *after* IDAT), checks exact URL/source state and announced success. Then imports deliberately malformed but CRC-recomputed latest metadata, requires a meaningful rejection with no recipe change or stale input, successfully retries a valid double-recipe file via that same control and verifies Undo provenance.
+- `tests/agent4-history-recovery-acceptance.mjs` (new): real 412×892 mobile Chrome: three source Randomize actions create four distinct history snapshots, history JPEGs settle to 120×260, oldest restores the complete layered/locked recipe, and Undo still visits the intermediate wallpaper sequence. A separate browser context forces `canvas.toDataURL` to throw: history entries must remain selectable and exact-restorable despite failed thumbnails. A 12-generation rapid burst must leave exactly ten entries despite asynchronous thumbnail completions; the oldest retained source recipe is restored exactly.
+- `.github/workflows/agent4-adversarial-qa.yml`: runs the new history journey alongside existing Saved, cross-tab, accessibility, JSON and native export acceptance; uploads independent history evidence.
 
-- `src/favorites-store.js` already bounds malformed storage, skips invalid records, retains valid adjacent recipes, and normalizes legacy seed-bearing records. Existing `tests/favorites-store.test.js` covers these boundaries.
-- `src/app.js` listens for cross-tab localStorage updates and refreshes the Saved view; gallery request tokens prevent older async iteration from appending stale cards.
-- `src/exploration-history.js` snapshots recipes independently of Undo and retains restoration even when thumbnail rendering fails.
-- The original queue records substantial prior Chromium gallery and actual downloadable export evidence. This PR narrows a separately reproducible repeated-embedding defect, not comprehensive acceptance.
+## Existing mainline source/browser evidence inspected
 
-## Execution and unverified boundaries
+- `src/favorites-store.js` and `tests/favorites-store.test.js`: bounds malformed storage and skips bad neighbours, preserving valid legacy/final saved recipes.
+- `tests/agent4-gallery-persistence-acceptance.mjs`: image-first galleries, 412×892 and 700×412 navigation, damaged localStorage, 12 distinct Explore identities, eight fast mode switches, reload and blocked-storage recovery.
+- `tests/agent4-cross-tab-saved-acceptance.mjs`: two actual simultaneous Chromium pages synchronize favourite add/remove and Saved updates.
+- `tests/agent4-json-download-acceptance.mjs` preexisting six exact downloaded JSON → embedded PNG source-input cases, including inactive Tonal, drawn weave, radial, regions and layered interior.
+- `tests/redesign-native-download-acceptance.mjs`: eight real 3024×6552 downloaded PNG files, exact embedded recipes, decoded dimensions and representative stable coloured direct-renderer pixels. Agent 3's separate 22-mode native export regression further broadens structure/zoom coverage.
 
-This connector session could read and modify GitHub files but could not clone/execute the repository or launch Chromium; the attempted container GitHub connection failed DNS. Therefore **no claims of green CI or local test execution are made here**. Run `npm run check`, `node --test tests/png-reembed-recipe.test.js`, targeted Chromium gallery and PNG download suites, and verify PR CI before merge. Actual cross-tab navigation, simultaneous gallery requests, malformed recipe recovery, download pixel parity, human aesthetic approval and physical Android behaviour are **NOT VERIFIED by this PR**. Leave acceptance entries 12 and 14 unchecked.
+**CI checkpoint:** prior branch commit `5b1333b4dff324cdd4422b961dc5c48686c81499` passed all five [Validate](https://github.com/gamesbyian/wallgen/actions/runs/39393631298), [Mobile Chromium](https://github.com/gamesbyian/wallgen/actions/runs/39393631359), [Headless render](https://github.com/gamesbyian/wallgen/actions/runs/39393631196), [Native PNG](https://github.com/gamesbyian/wallgen/actions/runs/39393631248) and [Agent 4 adversarial](https://github.com/gamesbyian/wallgen/actions/runs/39393631158) suites. **New tests/revisions require head-specific CI; the old green checkpoint does not prove them.** This connector could not clone/execute the repo locally (GitHub DNS unavailable in the container); all runtime assertions are exercised by the documented GitHub-hosted workflows, not simulated local-browser claims.
+
+## Explicit remaining acceptance boundaries
+
+Session history/Explore is intentionally not durable across cold reload. Full combinatorial gallery state space, simultaneous conflicting writes at sub-event timing, intentionally denied image-worker/OS downloads, all possible malformed metadata streams, every renderer/material permutation, OS file-picker integration, human visual/aesthetic approval and native Pixel 6 Pro touch/assistive-tech observation remain NOT VERIFIED. No unqualified “100%” claim or entry 12/14 checkbox should be made on this branch.
