@@ -41,6 +41,7 @@ jobs:
           node --check tests/agent4-desktop-acceptance.mjs
           node --check tests/agent4-local-saved-acceptance.mjs
           node --check tests/agent4-json-download-acceptance.mjs
+          node --check tests/agent4-share-link-boundary-acceptance.mjs
           node --check tests/agent4-large-png-browser-acceptance.mjs
       - name: Unit and transport regression
         run: node --test tests/favorites-store.test.js tests/recipe-transport-matrix.test.js tests/gallery-view-modes.test.js
@@ -66,6 +67,8 @@ jobs:
         run: node tests/agent4-local-saved-acceptance.mjs
       - name: Real valid PNG recipe larger than 64 KiB imports through the original UI
         run: node tests/agent4-large-png-browser-acceptance.mjs
+      - name: Oversize design share-link recovery with normal link and exact JSON fallback
+        run: node tests/agent4-share-link-boundary-acceptance.mjs
       - name: Real JSON downloads and PNG file-input round-trips
         run: node tests/agent4-json-download-acceptance.mjs
       - name: Upload gallery, accessibility and recipe evidence
@@ -80,6 +83,7 @@ jobs:
             artifacts/agent4-desktop/
             artifacts/agent4-local-saved/
             artifacts/agent4-json/
+            artifacts/agent4-share-boundary/
             artifacts/agent4-large-import/
           retention-days: 14
           if-no-files-found: warn
