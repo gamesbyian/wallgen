@@ -68,12 +68,14 @@ try{
   }
  }
  await writeFile(join(out,'evidence.json'),JSON.stringify({findings,errors,
-   classification:'diagnostic only: violations require independent interpretation',
+   classification:'automated WCAG checks only, not complete WCAG or AT approval',
    limitations:['Axe cannot evaluate user comprehension, real screen-reader narration or all keyboard traversal',
      'WCAG 2.x automated rules are not an all-criteria accessibility certificate',
      'A colour contrast warning requires confirming actual layered backgrounds and state',
      'Mobile device, touch and physical screen reader still pending']},null,2));
  assert.deepEqual(errors,[],'Real-browser axe setup or navigation failed');
  assert.equal(findings.length,24,'Missing an axe state or viewport sample');
+ const total=findings.reduce((n,x)=>n+x.violations.length,0);
+ assert.equal(total,0,'WCAG automated violation regression: inspect preserved axe evidence');
  console.log('INDEPENDENT_AXE_AUDIT_RECORDED');
 }finally{await browser.close();}
