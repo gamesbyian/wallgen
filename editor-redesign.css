@@ -1027,3 +1027,24 @@ html[data-theme="cream"] body.mobile-studio .sidebar .settings-tabs .settings-ta
     height:36px!important;min-height:36px!important;
   }
 }
+
+/* 320px source optical finding: the seven editor category captions extend
+   beyond their 1/7 grid cells and physically paint over neighbouring names.
+   Keep every category accessible in one line rather than shrinking labels,
+   adding a second clipped row, or hiding tools. Category tabs follow the
+   same horizontal-swipe pattern as their source tool chips at narrow widths. */
+@media (max-width:399px){
+  body.mobile-studio .sidebar .settings-tabs{
+    display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;
+    gap:9px!important;justify-content:flex-start!important;align-items:stretch!important;
+    overflow-x:auto!important;overflow-y:hidden!important;
+    overscroll-behavior-x:contain;scrollbar-width:none;
+    -webkit-overflow-scrolling:touch;
+    padding:0 3px!important;
+  }
+  body.mobile-studio .sidebar .settings-tabs::-webkit-scrollbar{display:none}
+  body.mobile-studio .sidebar .settings-tabs .settings-tab{
+    flex:0 0 auto!important;width:auto!important;min-width:max-content!important;
+    padding:0 5px!important;white-space:nowrap!important;
+  }
+}
