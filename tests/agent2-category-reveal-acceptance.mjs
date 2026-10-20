@@ -60,7 +60,7 @@ try{
 
         // Genuine Find input from leftward user state must reveal rightmost tab.
         await page.locator('.settings-tabs').evaluate(el=>{el.scrollLeft=0;});
-        await page.locator('.editor-search-toggle').click();
+        await page.getByRole('button',{name:'Find a setting',exact:true}).click();
         await page.locator('.editor-search-input').fill('Lighting');
         await page.waitForFunction(()=>document.querySelector('#tab-effects')
           ?.getAttribute('aria-selected')==='true');
