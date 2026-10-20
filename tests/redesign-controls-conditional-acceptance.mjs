@@ -426,6 +426,41 @@ try{
       assert.equal(await field.isDisabled(),false,scenario.name+': live '+key+' disabled');
       assert.equal(await field.getAttribute('data-inactive'),'false');
     }
+    const census=await page.locator('#controls [data-setting]').evaluateAll(nodes=>
+      nodes.map(el=>({
+        name:el.dataset.setting,inactive:el.dataset.inactive==='true',
+        flag:el.dataset.inactive,disabled:el.disabled,
+        kind:el.type,tag:el.tagName,value:el.value,checked:el.checked,
+        hasDormantOption:!!el.querySelector?.('option[data-inactive-placeholder]'),
+        rowDormant:el.closest('.lockable-setting')?.classList.contains('setting-inactive'),
+        lockDisabled:el.closest('.lockable-setting')?.querySelector('.setting-lock')?.disabled
+      })));
+    assert.equal(census.length,87,scenario.name+': original source count');
+    assert.equal(new Set(census.map(x=>x.name)).size,87,
+      scenario.name+': duplicate original source key');
+    for(const field of census){
+      assert.ok(['true','false'].includes(field.flag),
+        scenario.name+': missing source state '+field.name);
+      assert.equal(field.disabled,
+        field.inactive||source.lockedSettings.includes(field.name),
+        scenario.name+': source disabled mismatch '+field.name);
+      if(!field.inactive)continue;
+      if(['range','number'].includes(field.kind))
+        assert.equal(field.value,'0',scenario.name+': dormant value '+field.name);
+      if(field.tag==='SELECT'){
+        assert.equal(field.value,'0',scenario.name+': dormant select '+field.name);
+        assert.ok(field.hasDormantOption,scenario.name+': no inactive select explanation '+field.name);
+      }
+      if(field.kind==='checkbox')
+        assert.equal(field.checked,false,scenario.name+': dormant checkbox '+field.name);
+      if(field.rowDormant!==undefined)
+        assert.equal(field.rowDormant,true,scenario.name+': inactive row '+field.name);
+      if(field.lockDisabled!==undefined)
+        assert.equal(field.lockDisabled,true,scenario.name+': inactive lock '+field.name);
+    }
+    sourceCensus.push({scenario:scenario.name,
+      active:census.filter(x=>!x.inactive).map(x=>x.name),
+      inactive:census.filter(x=>x.inactive).map(x=>x.name)});
     record('conditional-'+scenario.name,{dormant:scenario.dormant,
       active:scenario.active,retainedRecipe:true});
   }
