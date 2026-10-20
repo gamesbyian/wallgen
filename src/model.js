@@ -76,6 +76,19 @@ export function normalizeRecipe(input = {}) {
   const readChoice = (key, allowed) => allowed.includes(input[key]) ? input[key] : 'auto';
   const seed = String(input.seed ?? 'rainbow-001').trim().slice(0, 90) || 'rainbow-001';
   const drawnPath=normalizeDrawnPathWithIndexMap(input.customPath);
+  // These are newly normalized snapshots, not the caller's authored arrays.
+  // Signed -0 in a Drawn station otherwise survives in memory but disappears
+  // from every serialized JSON/URL/PNG recipe, violating exact restoration.
+  for(const point of drawnPath.points){
+    point[0]=canonicalZero(point[0]);
+    point[1]=canonicalZero(point[1]);
+  }
+  const normalizedInteriors=normalizeInteriorElements(input.interiorElements);
+  // Interior numeric controls have the same transport invariant. Normalize
+  // only signed zeros, preserving all finite authored values and geometry.
+  for(const element of normalizedInteriors)
+    for(const key of ['width','position','amplitude','frequency','phase','opacity'])
+      element[key]=canonicalZero(element[key]);
   const mappedPathIndices=raw=>[...new Set((Array.isArray(raw)?raw:[])
     .filter(i=>Number.isInteger(i)&&i>=0)
     .map(i=>drawnPath.indexMap[i])
@@ -83,7 +96,7 @@ export function normalizeRecipe(input = {}) {
     .sort((a,b)=>a-b).slice(0,96);
   return {
     version: 2,
-    interiorElements:normalizeInteriorElements(input.interiorElements),
+    interiorElements:normalizedInteriors,
     seed,
     primesOnly: input.primesOnly === true || input.primesOnly === 'true',
     lockedSettings: LOCKABLE_SETTINGS.filter(key=>Array.isArray(input.lockedSettings) && input.lockedSettings.includes(key)),
