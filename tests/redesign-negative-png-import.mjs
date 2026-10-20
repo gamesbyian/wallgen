@@ -66,7 +66,9 @@ try{
   await reverse.setChecked(!baseline.reverseStripes);
   const modified=current();
   assert.equal(modified.reverseStripes,!baseline.reverseStripes);
-  await page.locator('#mobileDockExpand').click();
+  // The large dock is inert while Edit is open. Close with the actual
+  // visible editor dismiss handle, never a hidden Expand toolbar shortcut.
+  await page.locator('#mobileDismissHandle').click();
   await page.locator('#mobileMore').click();
   const file=page.locator('#importRecipeFile');
   const studioStatus=page.locator('#studioStatus');
