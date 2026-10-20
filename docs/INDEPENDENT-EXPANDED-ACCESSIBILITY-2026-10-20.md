@@ -76,3 +76,19 @@ recipe field and preservation of the adjusted wallpaper after exit,
 without `.focus()`, `.click()` or direct DOM `input` dispatches.
 This is a **pending witness** until actual CI passes. It does not
 substitute for screen-reader speech or physical keyboard evaluation.
+
+## Second desktop and cold-keyboard checkpoint
+
+At `302c5d62b2b6778cc504e74574c88dae3040c221`,
+[CI run 39400659563](https://github.com/gamesbyian/wallgen/actions/runs/39400659563)
+again passed **all 72 mobile WCAG 2.2 scans** and all
+**four genuine cold Tab/Enter/Arrow/Shift+Tab Focus journeys**.
+The desktop audit still failed, but *all previous* palette-label,
+desktop tabs, metadata, main heading, detail labels and dark caption
+counterexamples disappeared. The **sole remaining** desktop findings
+were cream gallery `.gallery-head .eyebrow` **2.18:1**,
+`.gallery-head p` **2.63:1**, and three footer texts at **3.35:1**.
+The subsequent desktop-only `#625b6c` ink correction covers those
+specific selectors. The exact latest-head audit must pass before full
+92-screen qualification; no new mobile or gallery control behaviour
+was added. Do not count the earlier red runs as green evidence.
