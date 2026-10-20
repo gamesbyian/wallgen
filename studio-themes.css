@@ -493,3 +493,18 @@ html[data-theme="dark"] .gallery-placeholder>span{color:#c5becf}
     scroll-margin-block:68px 80px;
   }
 }
+
+/* Actual 700x412 keyboard navigation exposed a metadata textarea remaining
+   below the More sheet after Tab. The generic 68px top + 80px bottom scroll
+   clearance consumes nearly its entire 175px short-landscape scrollport,
+   leaving insufficient space for a 78px focused textarea. Retain the real
+   sticky-header clearance, but reduce the unused bottom gutter ONLY here.
+   This does not change the fixed dock, source focus order or textarea size. */
+@media(max-width:790px) and (max-height:620px){
+  body.mobile-studio.mobile-tools-open .mobile-utility-sheet:not([hidden]){
+    scroll-padding-block:56px 12px;
+  }
+  body.mobile-studio.mobile-tools-open .mobile-utility-sheet :is(input,textarea,select,button){
+    scroll-margin-block:56px 12px;
+  }
+}
