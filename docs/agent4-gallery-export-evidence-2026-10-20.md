@@ -28,3 +28,19 @@ Owner: entries **12** (image-first Explore, independent Saved, favourites, histo
 ## Explicit remaining acceptance boundaries
 
 Session history/Explore is intentionally not durable across cold reload. Full combinatorial gallery state space, simultaneous conflicting writes at sub-event timing, intentionally denied image-worker/OS downloads, all possible malformed metadata streams, every renderer/material permutation, OS file-picker integration, human visual/aesthetic approval and native Pixel 6 Pro touch/assistive-tech observation remain NOT VERIFIED. No unqualified “100%” claim or entry 12/14 checkbox should be made on this branch.
+
+## Completed PR #281 acceptance checkpoint (post-recovery)
+
+The final implemented code at commit `2b746f62b242f4335a5a0a8939eb38a4a333b0ab` completed **all eleven** GHA workflows successfully, including:
+
+- [Agent 4 adversarial gallery, history, cross-tab, accessibility, JSON and native PNG](https://github.com/gamesbyian/wallgen/actions/runs/39398304796) (both jobs passed)
+- [Native worker and compatibility PNG export/import](https://github.com/gamesbyian/wallgen/actions/runs/39398304827)
+- [Mobile browser acceptance](https://github.com/gamesbyian/wallgen/actions/runs/39398304749), [general validation](https://github.com/gamesbyian/wallgen/actions/runs/39398304889), [headless renderer](https://github.com/gamesbyian/wallgen/actions/runs/39398304743)
+- [22-mode camera/native export](https://github.com/gamesbyian/wallgen/actions/runs/39398304778), [eight true native downloads](https://github.com/gamesbyian/wallgen/actions/runs/39398304834), [Agent 3 consolidated](https://github.com/gamesbyian/wallgen/actions/runs/39398304792)
+- [Agent 2 conditional controls](https://github.com/gamesbyian/wallgen/actions/runs/39398304745), [locked-field return](https://github.com/gamesbyian/wallgen/actions/runs/39398304927), and [UI screenshot atlas](https://github.com/gamesbyian/wallgen/actions/runs/39398304765)
+
+**Confirmed cross-tab counterexample and fix:** two valid rapid writes to `wallgen:favorites:v1` genuinely reached the second tab, but a generic busy button rewrote the Saved action's innerHTML, deleting the live `#favoriteCount` node. The second storage handler threw and left thirty stale cards despite only two stored designs. The source busy action now retains the original Saved DOM during async contact-sheet generation. The regression confirms a rapid 30→2 replacement, malformed storage and subsequent recovery, exact displayed cards and count/icon, non-disappearing status DOM, original button state, and **zero uncaught Chromium page errors**. Its failures and diagnostics were retained in preceding PR CI artifacts; the green run genuinely executes this case.
+
+**Other related work now merged to main:** [#283](https://github.com/gamesbyian/wallgen/pull/283) deduplicates normalized Saved records during corruption/legacy recovery, and [#286](https://github.com/gamesbyian/wallgen/pull/286) independently proves actual native 3024×6552 PNG Download → Import → Undo through normal Worker and fallback Canvas2D paths. Those are separate verified commits and must be preserved when integrating this PR.
+
+The queued parent entries **12 and 14 remain unchecked** because physical Android/OS picker and exhaustive human/conditional acceptance are not implied by these bounded browser observations.
