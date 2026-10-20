@@ -144,6 +144,34 @@ try{
   record('path-inactive-and-lock-cycle',{sourceValues:[61,79],
     visibleDormantValues:[0,0],dormantLockDisabled:true,
     revived:true,lockPreservesRecipe:true});
+  // The optional Focus plate must be able to lock AND unlock its current
+  // original setting. A disabled contextual setting must not accidentally
+  // expose a live lock toggle.
+  await page.locator('.editor-focus-toggle').click();
+  await page.locator('.editor-focus-chip[data-focus-key="shapeFrequency"]').click();
+  const focusLock=page.locator('.editor-focus-lock');
+  await hit('.editor-focus-lock');
+  assert.equal(await focusLock.getAttribute('aria-pressed'),'false');
+  await focusLock.click();
+  assert.equal(await focusLock.getAttribute('aria-pressed'),'true');
+  assert.ok(current().lockedSettings.includes('shapeFrequency'));
+  assert.equal(await page.locator('.editor-focus-slider').isDisabled(),true);
+  assert.match(await page.locator('.editor-focus-help').textContent(),/locked/i);
+  await focusLock.click();
+  assert.equal(await focusLock.getAttribute('aria-pressed'),'false');
+  assert.ok(!current().lockedSettings.includes('shapeFrequency'));
+  assert.equal(await page.locator('.editor-focus-slider').isEnabled(),true);
+  await page.locator('.editor-focus-all').click();
+  await geometry.selectOption('straight');
+  await page.locator('.editor-focus-toggle').click();
+  await page.locator('.editor-focus-chip[data-focus-key="shapeFrequency"]').click();
+  assert.equal(await focusLock.isDisabled(),true);
+  assert.match(await page.locator('.editor-focus-help').textContent(),/inactive/i);
+  assert.equal(await page.locator('.editor-focus-slider').isDisabled(),true);
+  await page.locator('.editor-focus-all').click();
+  await geometry.selectOption('zigzag');
+  record('optional-focus-source-lock',{delegatedOriginalSource:true,
+    lockAndUnlock:true,dormantLockBlocked:true,recipePreserved:true});
 
   await page.locator('#mobileDismissHandle').click();
   assert.equal(await page.locator('#mobileActionDock').evaluate(el=>el.inert),false);
