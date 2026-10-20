@@ -20,12 +20,18 @@
   color:inherit;background:var(--surface);border:1px solid var(--line);
   border-radius:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .editor-focus-chip[aria-pressed="true"]{background:#d660991e;border-color:#cb5994;font-weight:750}
-.editor-focus-slider-row{display:grid;grid-template-columns:38px minmax(0,1fr) 38px 47px;
+.editor-focus-slider-row{display:grid;grid-template-columns:38px minmax(0,1fr) 38px 40px 47px;
   gap:6px;align-items:center;min-height:42px}
 .editor-focus-slider{width:100%;min-width:0;height:32px;margin:0;touch-action:pan-x;
   accent-color:var(--roygbiv-slider-color,#2778dc)}
 .editor-focus-step{border:1px solid var(--line);border-radius:9px;min-height:40px;
   color:inherit;background:var(--surface);font-size:23px}
+/* Focus lock delegates to the existing source lock, including inactive gates. */
+.editor-focus-lock{min-width:40px;min-height:40px;padding:2px;border:1px solid var(--line);
+  border-radius:9px;color:inherit;background:var(--surface);font-size:10px;font-weight:750}
+.editor-focus-lock[aria-pressed=true]{border-color:#b35b8f}
+.editor-focus-lock:disabled{cursor:not-allowed;opacity:.55}
+
 .editor-focus-value{min-width:0;text-align:center;font:600 13px Rubik,system-ui,sans-serif;
   font-variant-numeric:tabular-nums}
 .editor-focus-help{font-size:11px;line-height:1.35;color:var(--muted);margin:0}
