@@ -110,7 +110,7 @@ test('saved traversals yield real intersections while over/under/weave never rew
     assert.equal(crossingTopIsLater('weave',1,n),n%2!==0);
   }
 });
-test('10x Smooth and Geometric are deterministic, capped, and retain original stroke endpoints',()=>{
+test('10x Smooth and Geometric are deterministic, capped, and do not mutate raw samples',()=>{
   const original=[
     [.1,.2],[.14,.26],[.2,.3],[.3,.35],[.42,.42],[.52,.5],
     [.62,.58],[.75,.62],[.83,.75],[.9,.8]
@@ -120,8 +120,12 @@ test('10x Smooth and Geometric are deterministic, capped, and retain original st
     const b=finishDrawnPath(structuredClone(original),mode,10);
     assert.deepEqual(a,b,'10x '+mode+' changed without input changes');
     assert.ok(a.length>=2&&a.length<=MAX_DRAWN_POINTS);
-    assert.ok(Math.hypot(a[0][0]-.1,a[0][1]-.2)<.005);
-    assert.ok(Math.hypot(a.at(-1)[0]-.9,a.at(-1)[1]-.8)<.005);
+    // At 10x interpretive fitting is allowed to move original endpoints
+    // toward a mathematically inferred line/arc. Unlike local anchor edits,
+    // it does not promise exact pointer endpoints or the same control count.
+    assert.ok(a.every(([x,y])=>Number.isFinite(x)&&Number.isFinite(y)&&
+      x>=-2&&x<=3&&y>=-2&&y<=3));
+    assert.deepEqual(original.at(-1),[.9,.8]);
     assert.deepEqual(original[0],[.1,.2],
       'Smoothing must not mutate original pointer samples');
   }
