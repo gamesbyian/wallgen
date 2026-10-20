@@ -37,7 +37,7 @@ async function go(page,item){
   assert.ok(await page.locator('[data-editor-tool="'+item.tool+'"].editor-tool-card').isVisible());
 }
 try{
- for(const viewport of [[412,892],[700,412]]){
+ for(const viewport of [[320,700],[412,892],[700,412]]){
   for(const theme of ['cream','dark']){
    for(const item of samples){
     const context=await browser.newContext({viewport:{width:viewport[0],height:viewport[1]},
@@ -59,6 +59,17 @@ try{
      assert.equal(await toggle.getAttribute('aria-pressed'),'false','All must be default');
      await toggle.click();
      assert.equal(await toggle.getAttribute('aria-pressed'),'true');
+     // A clickable element must be genuinely exposed at the actual viewport,
+     // not merely report isVisible() while another surface occludes its centre.
+     const hit=await page.locator('.editor-focus-all').evaluate(el=>{
+       const r=el.getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2;
+       const top=document.elementFromPoint(x,y);
+       return {width:r.width,height:r.height,
+         inside:x>=0&&y>=0&&x<innerWidth&&y<innerHeight,
+         centerHit:top===el||el.contains(top)};
+     });
+     assert.ok(hit.inside&&hit.centerHit&&hit.width>=24&&hit.height>=24,
+       'Focus → All escape is not touch reachable: '+JSON.stringify(hit));
      const chips=page.locator('.editor-focus-chip[data-focus-key]');
      assert.equal(await chips.count(),allFields.length,'Focus chips must match original visible sliders');
      if(item.key){
