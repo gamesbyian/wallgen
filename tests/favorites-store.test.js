@@ -42,3 +42,27 @@ test('Saved reads cap at sixty valid favourites, searching beyond corrupt entrie
   assert.deepEqual(parseStoredFavorites(JSON.stringify(stored),2)
     .map(x=>x.seed),[],'bounded work stops after five times requested limit');
 });
+
+test('Saved de-duplicates exact and normalized legacy aliases without losing adjacent designs',()=>{
+  const first=normalizeRecipe({
+    seed:'canonical-saved',structure:'radial',radialMode:'pinwheel',
+    viewZoom:.8,lockedSettings:['material']
+  });
+  const second=normalizeRecipe({seed:'different-saved',structure:'regions',
+    regionMode:'nested'});
+  const stored=[first,structuredClone(first),
+    {...first,seed:'  canonical-saved  '},null,second,
+    {seed:'different-saved',structure:'regions',regionMode:'nested'}];
+  assert.deepEqual(parseStoredFavorites(JSON.stringify(stored)),[first,second],
+    'Repeated records must not produce duplicate Saved cards');
+});
+
+test('Saved capacity applies to unique normalized recipes, not duplicate raw objects',()=>{
+  const stored=[
+    ...Array.from({length:20},()=>({seed:'same'})),
+    ...Array.from({length:10},(_,i)=>({seed:'unique-'+i}))
+  ];
+  const parsed=parseStoredFavorites(JSON.stringify(stored),4);
+  assert.deepEqual(parsed.map(item=>item.seed),
+    ['same','unique-0','unique-1','unique-2']);
+});
