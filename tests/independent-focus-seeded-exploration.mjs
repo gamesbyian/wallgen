@@ -94,6 +94,42 @@ try{
    await page.evaluate(t=>localStorage.setItem('roygbiv:studio-theme:v1',t),item.theme);
    await page.reload({waitUntil:'domcontentloaded'});
    await page.locator('#mobileEdit').click();
+   // A reproducible range-bearing preflight prevents seeded random walks
+   // from spending all their time in legitimate sliderless tools. It is
+   // explicitly recorded separately from the following 55 random actions.
+   const guidedTool=item.id.startsWith('path')?'geometry':
+     item.id.startsWith('radial')?'rays':'regions';
+   await page.locator('#tab-path').click();counts.category++;
+   await page.locator('.editor-tool-chooser .editor-tool-tab[data-editor-tool="'+guidedTool+'"]').click();
+   counts.tool++;
+   await page.locator('.editor-focus-toggle').click();counts.toggle++;
+   const guidedInventory=await inventory(page);
+   assertInventory(guidedInventory,item.id+' guided Focus preflight');
+   const eligible=guidedInventory.fields.filter(x=>!x.disabled&&!x.inactive&&!x.locked);
+   assert.ok(eligible.length,'No original source range for guided '+guidedTool);
+   const guidedKey=eligible[0].key;
+   for(let k=0;k<2;k++){
+    await page.locator('.editor-focus-chip[data-focus-key="'+guidedKey+'"]').click();
+    counts.chip++;
+   }
+   const initialGuided=current(page);
+   const proxy=page.locator('.editor-focus-slider');
+   await proxy.focus();await page.keyboard.press('ArrowRight');counts.edit++;
+   assert.notDeepEqual(current(page),initialGuided,'Guided native Focus adjustment did not commit');
+   const lock=page.locator('.editor-focus-lock');
+   if(await lock.isVisible()&&await lock.isEnabled()){
+    await lock.click();counts.lock++;
+    assert.equal(await proxy.isDisabled(),true,'Guided Lock failed to disable its original source');
+    await lock.click();counts.lock++;
+    assert.equal(await proxy.isEnabled(),true,'Guided Unlock failed to restore its source');
+   }
+   await proxy.focus();await page.keyboard.press('ArrowLeft');counts.edit++;
+   assert.deepEqual(current(page),initialGuided,'Guided native reverse failed');
+   await page.locator('.editor-focus-all').click();counts.all++;
+   assertInventory(await inventory(page),item.id+' guided exit');
+   history.push({step:'guided',action:'real Path '+guidedTool+
+     ' Focus ArrowRight/Lock/Unlock/ArrowLeft/All',
+    category:'path',tool:guidedTool,focused:false,changed:false});
    for(step=0;step<55;step++){
     const where=item.id+' step '+step;
     const before=current(page),state=await inventory(page);
@@ -181,7 +217,7 @@ try{
  const totals=outcomes.reduce((acc,e)=>{
   for(const [k,v] of Object.entries(e.counts))acc[k]=(acc[k]||0)+v;return acc;},{});
  assert.ok(totals.category>=10&&totals.tool>=10&&totals.toggle>=10&&
-  totals.edit>=4&&totals.chip>=4,
+  totals.edit>=6&&totals.chip>=6&&totals.lock>=2,
   'Exploratory action mix insufficient for a meaningful stateful witness: '+JSON.stringify(totals));
  console.log('INDEPENDENT_FOCUS_EXPLORATORY_SUCCESS',JSON.stringify(totals));
 }finally{await browser.close();}
