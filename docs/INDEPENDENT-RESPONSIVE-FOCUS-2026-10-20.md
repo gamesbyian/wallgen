@@ -21,3 +21,26 @@ The dedicated `independent-responsive-focus.yml` job executes source app + nativ
 **Extended locked-state witness:** `75f94aa5d2b0450cee5f7a65d463c9ec21d30784`, [CI 39404987880](https://github.com/gamesbyian/wallgen/actions/runs/39404987880) passed **8/8**: the original 4 live-slider cases and 4 locked/disabled-slider cases. The latter all focused the live `.editor-tool-tab` rather than an unavailable slider, kept its hit-testable centre, continued keyboard navigation and preserved the exact recipe. Structured JSON and actual Chromium screenshots are uploaded by the job. Existing automated suites and full accessibility gate require independent CI confirmation before integration.
 
 **Acceptance:** This fixes and qualifies **only** the source-backed breakpoint keyboard continuity for enabled and locked Path Geometry sliders under headless Chromium. No claim is made of native Android, physical keyboard, AT speech, full WCAG conformance, human Focus-preference approval or the eight unwired SVG aesthetic judgments. Keep acceptance entries **2, 11, 15 unchecked**.
+
+## Final state: merged and integrated
+
+**Merged [PR #305](https://github.com/gamesbyian/wallgen/pull/305)** at squash commit
+`e0fa47b2f261d2910191851cb8375db356d7750f`.
+
+**Final implementation head:** `7ee18fafe0f21abd962077e095ebb93e8a813aca`.
+[CI 39405800489](https://github.com/gamesbyian/wallgen/actions/runs/39405800489)
+passed **12/12** genuine Chromium responsive keyboard-focus transitions:
+4 enabled Path range, 4 explicitly locked Path range, and 4
+sliderless Colour (Rainbow) settings panels, across 790×892 / 700×412
+and cream/dark. All preserved recipe data; all selected a visible,
+hit-testable continuation focus target after switching to 791×892.
+
+The accompanying [full independent UI/accessibility CI 39405800629](https://github.com/gamesbyian/wallgen/actions/runs/39405800629)
+completed successfully on the same source head. The editor/control-state,
+mobile browser, unit, headless render, consolidated mobile and screenshot
+atlas workflows also passed on that head. No human signoff, optical
+judgement or hardware attestation is inferred.
+
+The regression tests and narrow production repair live on `main`.
+Acceptance entries **2, 11 and 15 remain unchecked** for the separate
+human aesthetic/usability and actual-device assistive-technology gates.
