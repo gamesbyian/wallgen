@@ -45,4 +45,12 @@ This is a **bounded specialist evidence log**, not a substitute for the common i
 
 The combined programme is not declared finished. Native Android Chrome, actual touch with system-scaled fonts, broad conditional geometry, eight still-unwired icon candidates and independent visual approval remain open.
 
+
+## Short-portrait width cliff and next height-boundary gate (2026-10-19)
+
+- [#250](https://github.com/gamesbyian/wallgen/pull/250) **merged**. Real native CSS 399×740, 400×740, 412×740, 499×740 and 500×740 widths were tested with actual favourites and Material six-button source controls. The [first 162-screen attempt 39349986594](https://github.com/gamesbyian/wallgen/actions/runs/39349986594) failed four real 400/412 cream/dark Saved states, image bottom **702.8px**, caption bottom **726.8px**, versus gallery clip bottom **680px**. Material buttons passed centre hit and >=24px thresholds at 399/400/412 without new CSS. The defect was an arbitrary **399px width cutoff** on a thumbnail rule for 740px-high phones, not a reason to expand the gallery over the preview. Extending only the short-portrait 140px fully visible art treatment to **341–790px width and 680–790px height** kept source captions/handlers and full artwork; tall portrait and <=670px landscape remain separate. [Final live run 39350542821](https://github.com/gamesbyian/wallgen/actions/runs/39350542821) passed **174 genuine screenshots, zero errors**, with all five applicable workflows green.
+- [#252](https://github.com/gamesbyian/wallgen/pull/252) is **pending**, probing the related exact **670/671/679/680/790/791px height** transitions at width 412 in both themes, real-painted favourites and Studio stage geometry. This adds 24 actual captures to the 174-screen matrix. Do **not** credit its future proof or merge until final real-browser and source CI runs have passed. Any new clipping is a separate grounded finding.
+- Tests assert source browser geometry and await real nontransparent source canvas pixels; they do **not** establish touch precision, OS font scaling, icon semantic approval or native Pixel Chrome performance.
+
+
 The independent comparison artifact is generated as `artifacts/visual-agent1/review.html` plus `manifest.json` by `scripts/visual-reference-audit-agent1.mjs`, uploaded in the `Agent 1 canonical/live visual comparisons` workflow (artifacts retained 14 days). A failed capture still publishes its current screenshot/geometry artifact for counterexample inspection.
