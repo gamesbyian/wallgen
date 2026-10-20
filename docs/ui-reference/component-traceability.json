@@ -2,7 +2,7 @@
   "version": 2,
   "purpose": "Traceability between original source UI and proposal. No removal of existing behavior.",
   "updated": "2026-10-19",
-  "sourceBaseline": "default five-destination main-compatible shell, reviewed from 115 static HTML IDs",
+  "sourceBaseline": "116-versioned historical static IDs; 113 remain represented, three old category-tab IDs retired with six live successors under the seven-category editor (merged #193)",
   "entries": [
     {
       "id": "brand",
