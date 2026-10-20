@@ -661,7 +661,7 @@ importRecipeFile.addEventListener('change',async()=>{
     // JSON exported by Save recipe is a first-class import, using the same
     // original file input and history transaction as embedded PNG recipes.
     // Never silently reset the design when a random JSON document is chosen.
-    const isJSON=/\\.json$/i.test(file.name)||file.type==='application/json';
+    const isJSON=/\.json$/i.test(file.name)||file.type==='application/json';
     const limit=isJSON?10*1024*1024:150*1024*1024;
     if(file.size>limit)throw Error(isJSON?
       'JSON exceeds the 10 MB import limit':'PNG exceeds the 150 MB import limit');
