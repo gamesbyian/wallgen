@@ -927,3 +927,43 @@ html[data-theme="cream"] body.mobile-studio .sidebar .settings-tabs .settings-ta
     font-size:9px!important;line-height:1.05!important;
   }
 }
+
+/* At 320–399px a six-item Material rotation strip cannot meet even 24px
+   targets in the compressed label/input column (18–22px measured). Use the
+   existing row's full card width below its real label, die and lock.
+   Preserve all five rotation buttons, native numeric input and handlers.
+   Wider phone/desktop breakpoints retain the validated single-line layout. */
+@media(max-width:399px){
+  body.mobile-studio.mobile-edit-open .sidebar .editor-tool-card .texture-rotation-field{
+    grid-template-columns:minmax(0,1fr) 24px 24px 24px!important;
+    grid-template-rows:26px 31px!important;
+    row-gap:3px!important;min-height:60px!important;
+  }
+  body.mobile-studio.mobile-edit-open .sidebar .editor-tool-card
+    .texture-rotation-field>span{
+    grid-column:1/3!important;grid-row:1!important;
+    font-size:10px!important;line-height:1.1!important;
+  }
+  body.mobile-studio.mobile-edit-open .sidebar .editor-tool-card
+    .texture-rotation-field .rotation-controls{
+    grid-column:1/-1!important;grid-row:2!important;
+    width:100%!important;height:31px!important;
+    min-width:0!important;overflow:hidden!important;
+    display:flex!important;gap:3px!important;justify-content:space-between!important;
+  }
+  body.mobile-studio.mobile-edit-open .sidebar .editor-tool-card
+    .texture-rotation-field .rotation-controls button{
+    flex:1 1 25px!important;width:auto!important;
+    min-width:25px!important;max-width:none!important;
+    height:30px!important;min-height:30px!important;
+    max-height:30px!important;box-sizing:border-box!important;
+    padding:0 2px!important;font-size:10px!important;
+  }
+  body.mobile-studio.mobile-edit-open .sidebar .editor-tool-card
+    .texture-rotation-field .rotation-controls input[type=number]{
+    flex:0 0 45px!important;width:45px!important;
+    min-width:45px!important;max-width:45px!important;
+    height:29px!important;min-height:29px!important;
+    max-height:29px!important;box-sizing:border-box!important;
+  }
+}
