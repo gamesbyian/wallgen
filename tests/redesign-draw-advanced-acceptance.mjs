@@ -85,11 +85,14 @@ try{
   for(const [width,height] of [[412,892],[700,412]]){
     const page=await browser.newPage({viewport:{width,height},hasTouch:true,isMobile:true,
       reducedMotion:'reduce'});
-    page.setDefaultTimeout(18000);
+    page.setDefaultTimeout(7000);
+    page.setDefaultNavigationTimeout(14000);
+    const trace=step=>console.log('AGENT3_ADVANCED_DRAW_STEP',JSON.stringify({width,height,step}));
     const unexpected=[];
     page.on('pageerror',e=>unexpected.push(String(e)));
     const record={viewport:[width,height],operations:[]};
     try{
+      trace('open dense saved curve');
       await readPage(page,dense);
       await openSaved(page);
       await tapSourcePoint(page,dense.customPath[5],dense);
@@ -109,18 +112,19 @@ try{
       await slider.focus();
       await page.keyboard.press('End');
       assert.equal(Number(await slider.inputValue()),10);
-      const beforeResmooth=await page.locator('#drawOverlay').screenshot({
-        animations:'disabled'});
+      trace('capture actual overlay canvas pixels before 10x Resmooth');
+      const overlayPixels=()=>page.evaluate(()=>document.getElementById('drawOverlay').toDataURL('image/png'));
+      const beforeResmooth=await overlayPixels();
       await page.locator('#drawResmoothPoints').click();
-      const afterResmooth=await page.locator('#drawOverlay').screenshot({
-        animations:'disabled'});
+      const afterResmooth=await overlayPixels();
+      trace('10x Resmooth canvas pixels captured');
       assert.notDeepEqual(afterResmooth,beforeResmooth,
         'A visibly kinked 10x local Resmooth did not alter the provisional curve');
       assert.equal(await page.locator('#drawUndoPoint').isDisabled(),false,
         'Genuine local Resmooth failed to register a reversible point edit');
       await page.locator('#drawUndoPoint').click();
-      const restoredResmooth=await page.locator('#drawOverlay').screenshot({
-        animations:'disabled'});
+      const restoredResmooth=await overlayPixels();
+      trace('Undo-after-Resmooth canvas pixels captured');
       assert.deepEqual(restoredResmooth,beforeResmooth,
         'Local point Undo did not restore exact pre-resmooth overlay geometry');
       assert.deepEqual(current(page),dense,'Local resmooth/Undo committed before Apply');
@@ -128,6 +132,7 @@ try{
         animations:'disabled'});
       await page.locator('#drawCancel').click();
       assert.deepEqual(current(page),dense,'Cancel failed to roll back the whole advanced draft');
+      trace('10x Resmooth, pixel-exact Undo and Cancel passed');
       record.operations.push('physical anchor; keyboard shift nudge; make corner; Hide/Reenter; 10x local resmooth; Cancel');
 
       await openSaved(page);
@@ -146,6 +151,7 @@ try{
       assert.deepEqual(applied.customPath[0],dense.customPath[0],
         'Local point operation moved the source endpoint');
       record.operations.push('Apply committed a changed interior anchor and corner, untouched camera');
+      trace('saved path keyboard movement and Apply passed');
 
       // Actual tangent-handle drag, with an existing broken-corner pin.
       // The canvas draws handle squares at source-projected coordinates.
@@ -177,6 +183,7 @@ try{
       assert.deepEqual(handled.customPath.at(-1),applied.customPath.at(-1));
       assert.ok(handled.drawnCorners.includes(5)&&handled.drawnAnchors.includes(5));
       record.operations.push('physical tangent-handle drag; Undo available; Apply changed only local geometry');
+      trace('physical tangent drag and Apply passed');
 
       // A true two-endpoint imported path needs a *new station*, rather
       // than selecting an existing interior sample.
@@ -214,14 +221,16 @@ try{
         'Deleting only an anchor rewrote the drawn centreline');
       unchangedFields(inserted,unpinned,'remove anchor');
       record.operations.push('Delete anchor removed human pin but retained exactly the source geometry');
+      trace('sparse insertion/deletion and Apply passed');
       assert.deepEqual(unexpected,[],'Browser exceptions in advanced Draw acceptance');
       console.log('AGENT3_ADVANCED_DRAW',JSON.stringify(record));
       results.push(record);
     }catch(e){
+      console.error('AGENT3_ADVANCED_DRAW_FAILURE',JSON.stringify({width,height,message:String(e),stack:e.stack}));
       errors.push({viewport:[width,height],message:String(e),stack:e.stack,record,
         pageErrors:unexpected});
       await page.screenshot({path:join(out,'failure-'+width+'x'+height+'.png'),
-        animations:'disabled'}).catch(()=>{});
+        animations:'disabled',timeout:4000}).catch(()=>{});
     }finally{await page.close();}
   }
   await writeFile(join(out,'evidence.json'),JSON.stringify({
