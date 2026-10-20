@@ -98,6 +98,13 @@ try{
        },tool.id);
        samples.push({key,rows});
        for(const r of rows){
+        // Small-tray screens may show the last range row as present in DOM
+        // while its actual bottom 6px is hidden by the source card clip.
+        // This is a physical card-boundary test, not a scrollWidth proxy.
+        if(profile.width>=500&&profile.width<=790&&tool.id==='lighting'&&
+           r.wrapper&&r.card&&r.wrapper.bottom>r.card.bottom+1)
+          failures.push({key,source:r.sourceKeys,type:'Lighting source row below visible card',
+            bottomOverflow:r.wrapper.bottom-r.card.bottom});
         if(profile.width>=791&&profile.width<=1150){
          if(r.track.width<64)failures.push({key,source:r.sourceKeys,type:'compressed active track',width:r.track.width});
          if(r.labelCollision)failures.push({key,source:r.sourceKeys,type:'label ink overlaps steppers'});
