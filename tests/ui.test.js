@@ -186,8 +186,8 @@ test('dark phone SVG keeps all seven variable-length stripes inside the tile',()
   assert.match(logo,/transform="translate\(0 -2\.4\)"/);
   const bands=[...logo.matchAll(/<path stroke="#[0-9a-fA-F]{6}" d="M([^"]+)"\/>/g)];
   assert.equal(bands.length,7);
-  assert.ok(bands.some(x=>x[1].includes('L67 35')));
-  assert.ok(bands.some(x=>x[1].includes('L78 68')));
+  assert.ok(bands.some(x=>x[1].includes('L67 36.9707')), 'approved V6 orange endpoint');
+  assert.ok(bands.some(x=>x[1].includes('L78 69.9298')), 'approved V6 blue endpoint');
   const lastBand=logo.lastIndexOf('<path stroke="#');
   assert.ok(logo.indexOf('x="34" y="13" width="53" height="94"')>lastBand,
     'phone outline is overlaid above stripe geometry');
