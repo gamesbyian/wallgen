@@ -1,5 +1,25 @@
 import {extractImagePathCandidates,imagePlacement,pathToWallpaper} from './image-path.js?v=20261018-import1';
-import {drawAuthoringLockReason,drawAuthoringLockMessage} from './path-authoring-locks.js';
+import {drawAuthoringLockReason,drawAuthoringLockMessage,pathStructureLockedOutsidePaths} from './path-authoring-locks.js';
+
+/** A live import dialog must match the current authoritative lock state,
+ * even if a recipe restores a lock while image decoding is in flight. */
+export function imagePathActionAvailability(recipe,candidate,working=false){
+  const blocked=drawAuthoringLockReason(recipe);
+  // Using a detected angle is not always the same as importing a Draw path.
+  // A locked existing straight/wave geometry can still rotate if its layout
+  // direction controls are unlocked. Match app.js onAngle's exact contract.
+  const locks=recipe?.lockedSettings||[];
+  const angleBlocked=pathStructureLockedOutsidePaths(recipe)||
+    locks.includes('orientation')||locks.includes('diagonalRotation')||
+    (recipe?.geometry==='drawn'&&locks.includes('geometry'));
+  return {
+    blocked,
+    angleBlocked,
+    canApply:!working&&!blocked&&!!candidate,
+    canAngle:!working&&!angleBlocked&&candidate?.kind==='line',
+    canChooseAnother:!working&&!blocked
+  };
+}
 
 // The image is transient: only the selected vector centreline enters the recipe.
 // A native dialog provides an accessible, phone-friendly full-stage workspace.
@@ -45,10 +65,14 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle}){
     selected=Math.max(0,Math.min(candidates.length-1,i));
     chooser.value=String(selected);
     const candidate=candidates[selected];
-    apply.disabled=!candidate;
-    angleButton.disabled=!candidate||candidate.kind!=='line';
+    const access=imagePathActionAvailability(getRecipe(),candidate,working);
+    apply.disabled=!access.canApply;
+    angleButton.disabled=!access.canAngle;
+    another.disabled=!access.canChooseAnother;
     setPhase(candidate?'ready':'empty');
-    status.textContent=candidate?
+    status.textContent=access.blocked?
+      access.canAngle?'Path import is locked; this detected line angle can still be applied.':
+        drawAuthoringLockMessage(access.blocked):candidate?
       candidate.kind==='contour'?
         'Shape outline. It may be closed; inspect the join after applying.':
       candidate.kind==='arc'?
@@ -115,7 +139,7 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle}){
         option.value=String(i);option.textContent=(i+1)+'. '+item.label;
         chooser.append(option);
       });
-      selected=0;choose(0);
+      selected=0;working=false;choose(0);
     }catch(error){
       if(revision!==loadRevision)return;
       image=null;candidates=[];chooser.replaceChildren();apply.disabled=true;angleButton.disabled=true;
@@ -124,7 +148,10 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle}){
       paint();
     }finally{
       if(revision===loadRevision){
-        working=false;another.disabled=false;chooser.disabled=false;fileInput.value='';
+        working=false;
+        another.disabled=!imagePathActionAvailability(
+          getRecipe(),candidates[selected],false).canChooseAnother;
+        chooser.disabled=false;fileInput.value='';
       }
     }
   }
@@ -187,5 +214,18 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle}){
     setPhase('idle');
     image=null;candidates=[];chooser.replaceChildren();fileInput.value='';
   });
-  return {sync(recipe){launch.disabled=!!drawAuthoringLockReason(recipe);}};
+  return {sync(recipe){
+    const access=imagePathActionAvailability(recipe,candidates[selected],working);
+    launch.disabled=!!access.blocked;
+    if(!dialog.open)return;
+    // The picker may have opened before a lock was restored. Do not expose
+    // an Apply button that will be rejected after the user taps it.
+    apply.disabled=!access.canApply;
+    angleButton.disabled=!access.canAngle;
+    another.disabled=!access.canChooseAnother;
+    if(access.blocked)status.textContent=access.canAngle?
+      'Path import is locked; this detected line angle can still be applied.':
+      drawAuthoringLockMessage(access.blocked);
+    else if(!working)choose(selected); // Restore the existing selected candidate.
+  }};
 }

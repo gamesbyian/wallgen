@@ -61,7 +61,8 @@ test('real entry, lock-sync, async image Apply and detected angle all enforce th
   const app=readFileSync(new URL('../src/app.js',import.meta.url),'utf8');
   assert.match(draw,/const blocked=drawAuthoringLockReason\(getRecipe\(\)\)/);
   assert.match(draw,/button\.disabled=!!drawAuthoringLockReason\(recipe\)/);
-  assert.match(image,/launch\.disabled=!!drawAuthoringLockReason\(recipe\)/);
+  assert.match(image,/launch\.disabled=!!access\.blocked/);
+  assert.match(image,/const access=imagePathActionAvailability\(recipe,candidates\[selected\],working\)/);
   const gateCalls=image.match(/drawAuthoringLockReason\(getRecipe\(\)\)/g)||[];
   assert.equal(gateCalls.length,4,
     'image selection launch, async load, Choose another and actual Apply each recheck locks');
