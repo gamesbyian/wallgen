@@ -68,3 +68,13 @@ reading order and physical device geometry remain pending.
 
 No production defaults, SVG shapes, editor geometry or generation semantics
 are modified in this QA contribution.
+
+## Verified CI checkpoint
+
+At head `2ffbe2892155bd19e5873270de1e2e17030846b3`,
+[GitHub Actions run 39393555576](https://github.com/gamesbyian/wallgen/actions/runs/39393555576)
+completed **successfully**. Both `npm test` and the actual Playwright
+Chromium 20-scenario Focus/All run passed, with screenshots and structured
+observations uploaded. This establishes a bounded, head-specific **behaviour-
+verified** witness for the five scenarios at two viewports in both themes;
+**not** a release-wide accessibility or human preference signoff.
