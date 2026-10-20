@@ -93,8 +93,10 @@ async function goToField(key,original){
     assert.equal(await chip.getAttribute('aria-pressed'),'true',
       key+': source tool did not become active');
   }
-  const field=page.locator('#controls [name="'+key+'"]');
+  const field=page.locator('[data-setting][name="'+key+'"]');
   assert.equal(await field.count(),1,key+': original field not unique');
+  assert.equal(await field.evaluate(el=>el.form?.id),'controls',
+    key+': source setting lost its logical form ownership');
   assert.ok(await field.isVisible(),key+': original field hidden despite applicable state');
   assert.ok(await field.isEnabled(),key+': original field unexpectedly locked/inactive');
   assert.equal(await field.getAttribute('data-inactive'),'false',
