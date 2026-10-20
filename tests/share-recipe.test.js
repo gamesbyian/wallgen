@@ -86,3 +86,39 @@ test('unsupported and malicious compressed links fail explicitly without resetti
   await assert.rejects(decodePortableRecipe(big),/safety limit|Damaged compressed/,
     'Compressed zip bomb was not bounded during streaming decode');
 });
+
+function incompressibleRecipe(){
+  let state=0x1f7acafe;
+  const chars='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-';
+  function next(){
+    state^=state<<13;state^=state>>>17;state^=state<<5;
+    return (state>>>0)%chars.length;
+  }
+  const objectIds=element=>Array.from({length:200},(_,index)=>
+    'piece-'+element+'-'+index+'-'+Array.from({length:75},()=>chars[next()]).join(''));
+  return normalizeRecipe({seed:'bounded-compression-fallback',structure:'regions',
+    regionMode:'nested',material:'linen',viewZoom:.85,
+    interiorElements:Array.from({length:8},(_,element)=>({
+      id:'entropy-'+element,type:'line',shape:'wave',placement:'contour',
+      objectIds:objectIds(element),colorSlots:[element%7],
+      customColor:'#1188bb',color:'custom'}))
+  });
+}
+
+test('high-entropy legal recipes remain lossless even when compression cannot fit 8192 characters',async()=>{
+  const source=incompressibleRecipe();
+  assert.equal(source.interiorElements.length,8);
+  assert.equal(source.interiorElements.reduce((total,el)=>total+el.objectIds.length,0),1600);
+  const token=await encodePortableRecipe(source);
+  assert.deepEqual(await decodePortableRecipe(token),source,
+    'High-entropy compression altered valid recipe fields');
+  const original='https://example.org/wallgen/?r='+encodeRecipe(source);
+  assert.ok(original.length>MAX_PORTABLE_LINK_CHARS);
+  assert.throws(()=>portableShareUrl(original,token),
+    /Compressed link is still too long/,
+    'A compressed but oversized valid recipe must not be advertised as a portable link');
+  console.log('AGENT4_HIGH_ENTROPY_FALLBACK',JSON.stringify({
+    originalChars:original.length,compressedTokenChars:token.length,
+    portableMax:MAX_PORTABLE_LINK_CHARS,
+    exactRecipePreserved:true,copyShouldRefuse:true}));
+});
