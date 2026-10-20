@@ -475,3 +475,27 @@ html[data-theme="dark"] .gallery-placeholder>span{color:#c5becf}
     display:none;
   }
 }
+
+/* Real 412px Saved gallery at 671-790px has only ~173px of clipped
+   filmstrip space after the header. 140px ink plus a 24px caption can
+   still overrun by 3px; 195px is substantially clipped at 671-679px.
+   The <=670px miniature rule above remains a separate short-height case. */
+@media(min-width:341px) and (max-width:790px) and (min-height:671px) and (max-height:790px){
+  body.mobile-gallery-open .gallery-grid .thumb canvas{
+    display:block;width:auto!important;height:132px!important;
+    max-height:132px!important;max-width:100%!important;
+    object-fit:contain;margin-inline:auto;
+  }
+  body.mobile-gallery-open .gallery-grid .thumb-sub{display:none}
+}
+/* At the 790/791 handoff the tray increases before its thumbnail does.
+   160px preserves the complete art and caption inside the actual 206px
+   clipped gallery. Normal height keeps the regular 195px thumbnail. */
+@media(min-width:341px) and (max-width:790px) and (min-height:791px) and (max-height:840px){
+  body.mobile-gallery-open .gallery-grid .thumb canvas{
+    display:block;width:auto!important;height:160px!important;
+    max-height:160px!important;max-width:100%!important;
+    object-fit:contain;margin-inline:auto;
+  }
+  body.mobile-gallery-open .gallery-grid .thumb-sub{display:none}
+}
