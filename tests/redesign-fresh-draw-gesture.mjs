@@ -17,7 +17,8 @@ await mkdir(dir,{recursive:true});
 const initial=normalizeRecipe({seed:'a3-real-freehand-10x',structure:'paths',
   geometry:'zigzag',customPath:[],viewZoom:1,viewPanX:0,viewPanY:0,
   positionX:0,positionY:0,extendDrawnPath:false});
-const browser=await chromium.launch({headless:true});
+const browser=await chromium.launch({headless:true,
+  ...(process.env.CHROME_BIN?{executablePath:process.env.CHROME_BIN}:{})});
 const checks=[],errors=[];
 try{
   for(const [width,height] of [[412,892],[700,412]]){
@@ -85,6 +86,42 @@ try{
 
       await begin();
       await stroke();
+      // Real Draw again must discard the provisional curve (not the recipe)
+      // and restore a genuinely blank Sketch state before replacing it.
+      await page.locator('#drawAgain').click();
+      assert.equal(await page.locator('#drawPathPanel').getAttribute('data-phase'),
+        'sketch','Draw again did not reset back to Sketch');
+      assert.equal(await page.locator('#drawApply').isDisabled(),true,
+        'Draw again left stale interpreted geometry Apply-able');
+      assert.deepEqual(current(),baseline,'Draw again mutated the saved recipe');
+      record.steps.push('Draw again erased only the provisional interpretation');
+      // Prove the *continuous* new-stroke sequence: Sketch -> Interpret ->
+      // Edit actual first anchor -> Apply. High-strength (10x) interpretation
+      // may deliberately reposition endpoints, so start a fresh 1x path
+      // here to independently locate the original pointer-down endpoint.
+      await slider.focus();
+      await page.keyboard.press('Home');
+      assert.equal(Number(await slider.inputValue()),1);
+      await stroke();
+      await page.locator('#drawEditPoints').click();
+      assert.equal(await page.locator('#drawPathPanel').getAttribute('data-phase'),
+        'anchors','Interpret did not enter the actual point editor');
+      const rect=await page.locator('#preview').boundingBox();
+      assert.ok(rect);
+      const start=[rect.x+rect.width*.21,rect.y+rect.height*.24];
+      const target=await page.evaluate(([x,y])=>
+        document.elementFromPoint(x,y)?.id||'',start);
+      assert.equal(target,'drawOverlay','First freshly drawn anchor is obscured');
+      await page.mouse.click(...start);
+      assert.equal(await page.locator('#drawDeletePoint').isDisabled(),true,
+        'An original endpoint must be non-deletable');
+      await page.locator('#drawOverlay').focus();
+      await page.keyboard.press('Shift+ArrowRight');
+      assert.equal(await page.locator('#drawUndoPoint').isDisabled(),false,
+        'Freshly interpreted point movement must be locally undoable');
+      assert.deepEqual(current(),baseline,
+        'An unpublished fresh-stroke anchor edit contaminated source recipe');
+      record.steps.push('continuous Draw -> Interpret -> Edit first anchor, source unchanged before Apply');
       await page.locator('#drawExtendPath').check();
       assert.equal(await page.locator('#drawExtendPath').isChecked(),true);
       await page.locator('#drawApply').click();
@@ -94,6 +131,8 @@ try{
       assert.equal(applied.geometry,'drawn');
       assert.equal(applied.structure,'paths');
       assert.ok(applied.customPath.length>=4,'Actual pointer path did not persist');
+      assert.ok(applied.customPath[0][0]>.215,
+        'New path Apply did not preserve the manually moved first anchor');
       assert.equal(applied.extendDrawnPath,true);
       for(const name of ['viewZoom','viewPanX','viewPanY','positionX','positionY'])
         assert.equal(applied[name],baseline[name],name+' contaminated by Draw');

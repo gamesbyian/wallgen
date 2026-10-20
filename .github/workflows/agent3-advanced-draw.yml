@@ -1,0 +1,68 @@
+name: Agent 3 focused Draw lifecycle acceptance
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'tests/redesign-draw-advanced-acceptance.mjs'
+      - 'tests/redesign-fresh-draw-gesture.mjs'
+      - 'src/draw-path-ui.js'
+      - 'src/path-point-editor.js'
+      - 'src/drawn-path.js'
+      - 'src/draw-apply-transaction.js'
+      - '.github/workflows/agent3-advanced-draw.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  real-draw-lifecycle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate exact Draw suites and source geometry
+        run: |
+          node --check tests/redesign-draw-advanced-acceptance.mjs
+          node --check tests/redesign-fresh-draw-gesture.mjs
+          node --test \
+            tests/draw-editor-transaction.test.js \
+            tests/path-point-editor.test.js \
+            tests/redesign-draw-geometry-matrix.test.js
+      - name: Reuse runner Chrome when available
+        run: |
+          npm install --no-save playwright@1.56.1 serve@14.2.5
+          CHROME_BIN="$(command -v google-chrome || command -v chromium || true)"
+          if [ -n "$CHROME_BIN" ]; then
+            echo "CHROME_BIN=$CHROME_BIN" >> "$GITHUB_ENV"
+            "$CHROME_BIN" --version
+          else
+            echo "Runner Chrome not installed; installing Playwright Chromium"
+            npx playwright install chromium
+          fi
+      - name: Serve production UI
+        run: |
+          npx serve . -l 4173 > /tmp/agent3-focused-draw.log 2>&1 &
+          for i in $(seq 1 40); do
+            if curl --fail --silent http://127.0.0.1:4173/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/agent3-focused-draw.log
+          exit 1
+      - name: Physically exercise all advanced and continuous freehand journeys
+        run: |
+          node tests/redesign-draw-advanced-acceptance.mjs
+          node tests/redesign-fresh-draw-gesture.mjs
+      - name: Keep pixel screenshots, geometry and failure evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: roygbiv-agent3-focused-draw
+          path: |
+            artifacts/agent3-advanced-draw/
+            artifacts/agent3-fresh-draw/
+          retention-days: 14
+          if-no-files-found: warn

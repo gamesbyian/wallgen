@@ -41,7 +41,7 @@ jobs:
           done
           cat /tmp/agent3-native-download.log
           exit 1
-      - name: Five actual native downloads with layered texture foreground parity
+      - name: Eight actual native downloads incl. off-frame crossings and layered texture foreground parity
         run: node tests/redesign-native-download-acceptance.mjs
       - name: Upload quantified evidence or failure
         if: always()
