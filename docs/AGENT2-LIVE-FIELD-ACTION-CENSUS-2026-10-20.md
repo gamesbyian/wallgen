@@ -19,3 +19,13 @@ A verified non-change, disabled field, or intercepted pointer is a **failing tes
 ## Acceptance boundaries
 
 All three assigned master checkboxes remain unchecked pending complete independent adjudication of disabled values, mode combinations, all 177 canonical required/conditional/forbidden assertions and true browser operability. This suite deliberately does not claim exhaustive permutations, subjective visual approval, genuine Android touch hardware, OS-level accessibility or native screen-reader verification.
+
+## Source-confirmed mobile Primes failure, repaired pending final CI
+
+The independent browser matrix reproduced a **real production defect** after fixing only its fixture/harness errors: [run 39395608389](https://github.com/gamesbyian/wallgen/actions/runs/39395608389) had 85 successful browser field edits, with only `primesOnly` timing out waiting for the URL source to change. All other original actions' recipe mutations were scoped to exactly their source property, except deliberate Starting style preset fields and automatic optional material enable flags.
+
+Cause: `src/mobile-preview-tools.js` reparented the *actual* Primes checkbox into a preview rail, while preserving its logical `form="controls"` owner. The checkbox's native `change` event consequently stopped bubbling through `#controls`. The old workaround dispatched a synthetic `change` on the form itself, but the event target became the **form**, so `src/app.js`'s existing delegated listener found no setting name and skipped the update. Thus the visible toggle could disagree with both URL and the next randomized wallpaper.
+
+Repair: delegate the original form-owned settings' `change` handling from `document`, guarded by `event.target.form === form`, using the unchanged `updateControlsFromInputs()` source transaction. Remove ineffective synthetic forwarding from `mobile-preview-tools.js`; refresh script version keys in `index.html`. The test now uses a live DOM-global `data-setting` census to include the preview-mounted Primes field, checks its real recipe change, and verifies the same field after it returns inside `#controls` on desktop. The source count remains **87 globally**, although only **86 are DOM descendants of the form** at 412px: Primes retains `formOwner: controls`.
+
+**Final proof still pending** at the repaired PR head. Do not claim 86/86 until all four shards and main validation pass again; no acceptance item is checked by this repair alone.
