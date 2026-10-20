@@ -851,6 +851,25 @@
  }
 }
 
+/* Real 1024px Chromium found the desktop one-row rotation rail squeezing
+   genuine source buttons to 22px. At narrow desktop widths move the source
+   rail beneath its own label/lock, keeping all five + numeric controls in
+   one full-width row, with usable center-hit targets. Phone layout is intact. */
+@media(min-width:791px) and (max-width:1100px){
+  .editor-tool-card .texture-rotation-field .rotation-controls{
+    grid-column:1/-1!important;grid-row:2!important;
+    width:100%!important;min-width:0!important;
+    gap:2px!important;overflow:visible!important;
+  }
+  .editor-tool-card .texture-rotation-field .rotation-controls button{
+    flex:1 1 25px!important;width:auto!important;min-width:24px!important;
+  }
+  .editor-tool-card .texture-rotation-field .rotation-controls input[type=number]{
+    flex:0 0 49px!important;width:49px!important;
+    min-width:49px!important;max-width:49px!important;
+  }
+}
+
 
 /* Compact editor for ordered, resolution-independent decorations. */
 .editor-tool-card[data-editor-tool^="interior"]{overflow:hidden;gap:5px}
