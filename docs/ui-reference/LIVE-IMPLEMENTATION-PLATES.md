@@ -28,3 +28,9 @@ See the [eight candidate icon dispositions](eight-candidate-visual-review-2026-1
 ## Reproduction and provenance
 
 Install `playwright@1.56.1` and `serve@14.2.5`, serve the repository at `http://127.0.0.1:4173`, then run `node scripts/visual-reference-audit-agent1.mjs --out=artifacts/visual-agent1`. The GitHub job executes the same script and uploads evidence even on failure. Artifacts expire after 14 days; permanent publication of a visually approved PNG must carry source commit, viewport and browser method.
+
+### Source-bound provenance verification
+
+The real-browser screenshot manifest includes a `sourceProvenance` object with **the exact checked-out/tested GitHub commit** (`GITHUB_SHA`), the PR's separate head and base SHA, and an immutable workflow run URL. GitHub's pull-request build commonly checks out a temporary merge commit, so **branch head is not necessarily the code that produced the PNG pixels**. Each of the 24 staged plates repeats the tested checkout, PR head/base and run URL.
+
+CI runs `scripts/validate-visual-source-provenance-agent1.mjs` immediately after the visual audit. The verifier rejects any missing, duplicate, misattributed or non-PNG canonical plate, wrong 412×892 raster dimensions, and any PNG not **byte-identical** to its associated live `screens/phone-412x892/{theme}/{screen}.png` screenshot. A geometry-failing run cannot stage approved-to-review plates. The extra guard validates traceability and actual browser pixels, **never** subjective fidelity, physical Android rendering or authority to replace the schematic contracts.
