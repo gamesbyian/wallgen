@@ -115,7 +115,14 @@ try{
         animations:'disabled'});
       assert.notDeepEqual(afterResmooth,beforeResmooth,
         'A visibly kinked 10x local Resmooth did not alter the provisional curve');
-      assert.deepEqual(current(page),dense,'Local resmooth committed before Apply');
+      assert.equal(await page.locator('#drawUndoPoint').isDisabled(),false,
+        'Genuine local Resmooth failed to register a reversible point edit');
+      await page.locator('#drawUndoPoint').click();
+      const restoredResmooth=await page.locator('#drawOverlay').screenshot({
+        animations:'disabled'});
+      assert.deepEqual(restoredResmooth,beforeResmooth,
+        'Local point Undo did not restore exact pre-resmooth overlay geometry');
+      assert.deepEqual(current(page),dense,'Local resmooth/Undo committed before Apply');
       await page.screenshot({path:join(out,width+'x'+height+'-resmooth-draft.png'),
         animations:'disabled'});
       await page.locator('#drawCancel').click();
