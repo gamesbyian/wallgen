@@ -137,3 +137,30 @@ test('rounded negative-zero camera and position values have one portable canonic
       {recipe:source})),source);
   }
 });
+
+test('nested Drawn stations and interior parameters canonicalize signed zero through JSON/URL/PNG',()=>{
+  const source=normalizeRecipe({
+    seed:'nested-signed-zero',structure:'paths',geometry:'drawn',
+    customPath:[[-0,-0],[.42,.34],[1,1]],
+    drawnAnchors:[0,1],drawnCorners:[0],
+    interiorElements:[{id:'signed-zero-line',type:'line',shape:'wave',
+      color:'custom',customColor:'#ba19cc',width:2.5,
+      position:-0,phase:-0,amplitude:-0,opacity:-0,
+      placement:'field'}]
+  });
+  assert.equal(source.customPath.length,3,'Drawn station test was normalized away');
+  assert.equal(source.interiorElements.length,1);
+  for(const [path,value] of [
+    ['customPath[0][0]',source.customPath[0][0]],
+    ['customPath[0][1]',source.customPath[0][1]],
+    ['interiorElements[0].position',source.interiorElements[0].position],
+    ['interiorElements[0].phase',source.interiorElements[0].phase],
+    ['interiorElements[0].amplitude',source.interiorElements[0].amplitude],
+    ['interiorElements[0].opacity',source.interiorElements[0].opacity]
+  ])assert.ok(!Object.is(value,-0),path+' contains nonportable signed zero');
+  assert.deepEqual(normalizeRecipe(JSON.parse(JSON.stringify(source))),source);
+  assert.deepEqual(decodeRecipe(encodeRecipe(source)),source);
+  assert.deepEqual(extractPngRecipe(embedPngMetadata(png,{},
+    {recipe:source})),source);
+  assert.deepEqual(normalizeRecipe(source),source);
+});
