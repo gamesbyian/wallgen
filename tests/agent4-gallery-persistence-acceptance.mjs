@@ -21,7 +21,8 @@ const complete=normalizeRecipe({seed:'agent4-favourite-complete',structure:'regi
   interiorElements:[{id:'agent4-ink',type:'line',shape:'wave',
     color:'custom',customColor:'#22bb88',placement:'contour',width:2.5}]});
 const partial=normalizeRecipe({seed:'agent4-legacy-partial'});
-const corrupt=[null,{seed:''},complete,[],17,{seed:'agent4-legacy-partial'},
+const corrupt=[null,{seed:''},complete,structuredClone(complete),[],17,
+  {seed:'agent4-legacy-partial'},{seed:' agent4-legacy-partial '},
   'not a recipe',{geometry:'zigzag'},false];
 
 const browser=await chromium.launch({headless:true});
