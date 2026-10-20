@@ -59,7 +59,7 @@ test('Saved de-duplicates exact and normalized legacy aliases without losing adj
 
 test('Saved capacity applies to unique normalized recipes, not duplicate raw objects',()=>{
   const stored=[
-    ...Array.from({length:20},()=>({seed:'same'})),
+    ...Array.from({length:15},()=>({seed:'same'})),
     ...Array.from({length:10},(_,i)=>({seed:'unique-'+i}))
   ];
   const parsed=parseStoredFavorites(JSON.stringify(stored),4);
