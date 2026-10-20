@@ -13,31 +13,42 @@ import {mkdir,readFile,writeFile} from 'node:fs/promises';
 import {join,resolve} from 'node:path';
 import {chromium} from 'playwright';
 import {normalizeRecipe,encodeRecipe,decodeRecipe,resolveScene,
-  STRUCTURES,RADIAL_MODES,REGION_MODES,
+  STRUCTURES,RADIAL_MODES,REGION_MODES,GEOMETRIES,
   OUTPUT_WIDTH,OUTPUT_HEIGHT} from '../src/model.js';
 import {viewCamera} from '../src/view-camera.js';
 import {extractPngRecipe} from '../src/png-metadata.js';
 
 const origin=process.env.ROYGBIV_URL||'http://127.0.0.1:4173';
 const shard=Number(process.env.AGENT3_CONDITIONAL_SHARD??0);
-assert.ok(Number.isInteger(shard)&&shard>=0&&shard<3,'Expected native shard 0, 1 or 2');
+assert.ok(Number.isInteger(shard)&&shard>=0&&shard<6,'Expected native shard from 0 through 5');
 assert.deepEqual(STRUCTURES,['paths','radial','regions']);
 assert.deepEqual(RADIAL_MODES,['sunburst','starburst','pinwheel','spokes','concentric']);
 assert.deepEqual(REGION_MODES,['voronoi','organic','facets','blocks','nested']);
+assert.deepEqual(GEOMETRIES,['straight','wave','zigzag','chevron','jagged',
+  'stepped','arc','contour','hairpin','loop','loops','drawn']);
 const out=resolve(process.env.AGENT3_CONDITIONAL_OUT||
   'artifacts/agent3-camera-conditional-native/shard-'+shard);
 await mkdir(out,{recursive:true});
 
 const all=[
-  {id:'paths-wave-repeat',mode:'wave',
-    source:{structure:'paths',geometry:'wave',shapeFrequency:24,shapeDepth:54,
-      composition:'repeat',repeatCount:2,repeatSpacing:24,
-      construction:'woven',motif:'dots',motifFrequency:55}},
-  {id:'paths-drawn-offframe',mode:'drawn',
-    source:{structure:'paths',geometry:'drawn',extendDrawnPath:true,
-      customPath:[[-.28,.15],[.14,.29],[.45,.50],[.77,.69],[1.25,.89]],
-      drawnAnchors:[2],drawnCorners:[2],crossingMode:'weave',
-      construction:'ribbon',motif:'solid'}},
+  ...GEOMETRIES.map((mode,i)=>({
+    id:'paths-'+mode,mode,source:{
+      structure:'paths',geometry:mode,
+      shapeFrequency:24,shapeDepth:54,
+      stepCount:7,chevronSharpness:65,
+      turnRadius:54,hairpinAngle:58,loopRadius:73,loopSweep:290,
+      loopAspect:88,pathLength:86,
+      composition:mode==='wave'?'repeat':'single',
+      repeatCount:2,repeatSpacing:24,
+      construction:mode==='wave'?'woven':'ribbon',
+      motif:mode==='wave'?'dots':'solid',motifFrequency:55,
+      ...(mode==='drawn'?{
+        extendDrawnPath:true,
+        customPath:[[-.28,.15],[.14,.29],[.45,.50],[.77,.69],[1.25,.89]],
+        drawnAnchors:[2],drawnCorners:[2],crossingMode:'weave'
+      }:{})
+    }
+  })),
   ...RADIAL_MODES.map(mode=>({
     id:'radial-'+mode,mode,source:{structure:'radial',radialMode:mode,
       rayCount:19,rayCoverage:92,rayTwist:39,rayCore:22,
@@ -51,9 +62,9 @@ const all=[
       motif:'solid'}
   }))
 ];
-assert.equal(all.length,12,'Must cover all five Radial, five Regions and two Paths conditions');
+assert.equal(all.length,22,'Must cover all twelve Paths, five Radial and five Regions modes');
 const cases=all.slice(shard*4,(shard+1)*4);
-assert.equal(cases.length,4);
+assert.ok(cases.length>=2&&cases.length<=4,'Each finite source-mode shard must be nonempty');
 const browser=await chromium.launch({headless:true,
   ...(process.env.CHROME_BIN?{executablePath:process.env.CHROME_BIN}:{})});
 const evidence=[],errors=[];
@@ -206,7 +217,7 @@ try{
     }
   }
   await writeFile(join(out,'evidence.json'),JSON.stringify({
-    classification:errors.length?'NOT VERIFIED':'four production conditional native exports verified',
+    classification:errors.length?'NOT VERIFIED':'production mode-specific native exports verified',
     shard,cases:cases.map(x=>x.id),evidence,errors,
     exclusions:['Physical Android GPU and OS file picker',
       'All possible combinations of material, motif, custom overlay and construction',
