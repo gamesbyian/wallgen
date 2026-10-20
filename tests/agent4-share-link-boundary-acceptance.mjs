@@ -72,7 +72,7 @@ try{
 
   // A CLEAN browser context with no local storage proves standalone sharing.
   const clean=await browser.newContext({viewport:{width:412,height:892},
-    isMobile:true,hasTouch:true,reducedMotion:'reduce'});
+    isMobile:true,hasTouch:true,acceptDownloads:true,reducedMotion:'reduce'});
   const linked=await clean.newPage();
   try{
     await linked.goto(compact,{waitUntil:'domcontentloaded',timeout:30000});
@@ -87,6 +87,15 @@ try{
       return decodePortableRecipe(portableShareTokenFromLocation(location));
     });
     assert.deepEqual(loaded,large,'Clean browser compressed share lost hidden settings');
+    // Compare actual application state, not merely the standalone decoder:
+    // the original Save recipe JSON must download every recovered hidden field.
+    await linked.locator('#mobileMore').click();
+    const pendingShared=linked.waitForEvent('download');
+    await linked.locator('#downloadRecipe').click();
+    const actualRecipe=JSON.parse((await readFile(
+      await (await pendingShared).path())).toString('utf8'));
+    assert.deepEqual(actualRecipe,large,
+      'App bootstrap restored only seed, not full compressed wallpaper settings');
     await linked.reload({waitUntil:'domcontentloaded'});
     await linked.waitForFunction(seed=>document.querySelector('#seedInput')?.value===seed,
       large.seed,{timeout:30000});
@@ -190,7 +199,7 @@ try{
   }finally{await opened.close();}
   const row={largeUrlChars:urlSize,compactUrlChars:compact.length,
     compressedStandaloneLink:true,cleanBrowserOpened:true,
-    malformedTokenRejected:true,unsupportedCompressionFallback:true,
+    sourceJSONDownloadedFromSharedBrowser:true,malformedTokenRejected:true,unsupportedCompressionFallback:true,
     staleShortHistoryLinkRejected:true,exactCanonicalRecipe:true,downloadedAndReimportedJSON:true,
     normalCopiedLinkNavigated:true};
   evidence.push(row);
