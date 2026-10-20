@@ -1,0 +1,58 @@
+name: Agent 2 controls and conditional-state acceptance
+
+on:
+  pull_request:
+    paths:
+      - 'src/app.js'
+      - 'src/mobile-studio.js'
+      - 'src/editor-*.js'
+      - 'index.html'
+      - 'tests/redesign-controls-conditional-acceptance.mjs'
+      - '.github/workflows/agent2-controls-acceptance.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: agent2-controls-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  conditional-controls:
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate test script and source contracts
+        run: |
+          node --check tests/redesign-controls-conditional-acceptance.mjs
+          node --check src/app.js
+          node --check src/mobile-studio.js
+          node --test tests/mobile-more-groups.test.js tests/inactive-conditional-roundtrip.test.js tests/ui-contract-integrity.test.js
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.56.1 serve@14.2.5
+          npx playwright install --with-deps chromium
+      - name: Serve ROYGBIV
+        run: |
+          npx serve . -l 4173 > /tmp/agent2-controls-serve.log 2>&1 &
+          for i in $(seq 1 40); do
+            if curl --fail --silent http://127.0.0.1:4173/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/agent2-controls-serve.log
+          exit 1
+      - name: Exercise original controls and new More routes in live Chromium
+        run: node tests/redesign-controls-conditional-acceptance.mjs
+      - name: Preserve source-control trace and failure screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: roygbiv-agent2-controls-state-evidence
+          path: artifacts/agent2-controls/
+          retention-days: 14
+          if-no-files-found: warn
