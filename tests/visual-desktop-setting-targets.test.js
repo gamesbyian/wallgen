@@ -4,7 +4,8 @@ import {readFileSync} from 'node:fs';
 
 const stylesheet=readFileSync('editor-redesign.css','utf8');
 const audit=readFileSync('scripts/visual-reference-audit-agent1.mjs','utf8');
-const scope=stylesheet.slice(stylesheet.lastIndexOf('/* Measured at the narrow desktop boundary'));
+const scope=stylesheet.slice(stylesheet.lastIndexOf('/* Measured at the narrow desktop boundary'),
+  stylesheet.indexOf('/* 320px Chromium:'));
 
 test('desktop ordinary editor targets are larger than 24px',()=>{
   assert.match(scope,/@media\(min-width:791px\)/);

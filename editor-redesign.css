@@ -913,3 +913,17 @@ html[data-theme="cream"] body.mobile-studio .sidebar .settings-tabs .settings-ta
     width:25px;min-width:25px;height:25px;min-height:25px;
   }
 }
+
+/* 320px Chromium: the sixth Material rotation button was 20px beyond its
+   121px control frame and could not receive a centre hit. The 72px caption
+   column needlessly starved six existing source buttons. Release 22px of
+   column width without hiding, resizing or replacing any rotation action.
+   Other phone and desktop widths keep their previously proven geometry. */
+@media(max-width:340px){
+  body.mobile-studio .sidebar .editor-tool-card .texture-rotation-field{
+    grid-template-columns:50px minmax(0,1fr) 24px 24px!important;
+  }
+  body.mobile-studio .sidebar .editor-tool-card .texture-rotation-field>span{
+    font-size:9px!important;line-height:1.05!important;
+  }
+}

@@ -22,7 +22,7 @@ const all=Object.keys(plates).filter(name=>name!=='explore-populated');
 const profiles=[
   // Exact lower-width CSS boundary plus the app's minimum supported width.
   // These are actual mobile Chromium layouts, never CSS-root zoom proxies.
-  {id:'minimum-320x640',width:320,height:640,cases:['studio','geometry','material','more','explore','draw']},
+  {id:'minimum-320x640',width:320,height:640,cases:['studio','geometry','material','more','explore','explore-populated','draw']},
   {id:'edge-360x740',width:360,height:740,cases:['studio','geometry','material','more','explore','focus']},
   {id:'phone-412x892',width:412,height:892,cases:[...all,'explore-populated']},
   {id:'edge-499x892',width:499,height:892,cases:['studio','geometry','material','more','focus']},
@@ -185,6 +185,20 @@ function geometryFromPage(page){
         label:{x:label.x,y:label.y,right:label.right,bottom:label.bottom},
         button:{x:button.x,y:button.y,right:button.right,bottom:button.bottom}};
     });
+    // Source DOM, not guessed recipe labels. Inspect the native six-part
+    // rotation toolbar as displayed on tiny phones, including actual paint
+    // order at each interactive element's centre.
+    const rotationRow=document.querySelector(
+      '.editor-tool-card[data-editor-tool="finish1"] .texture-rotation-field .rotation-controls');
+    const rotationFrame=rotationRow?.getBoundingClientRect();
+    const rotationCells=rotationRow?[...rotationRow.querySelectorAll('button,input[type=number]')]
+      .map(el=>{
+        const r=el.getBoundingClientRect();
+        const probe=document.elementFromPoint((r.left+r.right)/2,(r.top+r.bottom)/2);
+        return {name:el.getAttribute('aria-label')||el.value||el.textContent.trim(),
+          x:r.left,right:r.right,y:r.top,bottom:r.bottom,width:r.width,height:r.height,
+          centerTarget:el===probe||el.contains(probe)};
+      }):[];
     const stage=rect('.studio-stage'),sidebar=rect('.sidebar'),
       gallery=rect('.gallery-section'),more=rect('#mobileToolsSheet');
     const openSheet=body.classList.contains('mobile-edit-open')?sidebar:
@@ -196,6 +210,7 @@ function geometryFromPage(page){
       theme:document.documentElement.dataset.theme,
       bodyClasses:body.className,
       stage,sidebar,gallery,more,dock:rect('#mobileActionDock'),dockLabels,
+      rotationFrame:rotationFrame?{x:rotationFrame.x,right:rotationFrame.right,y:rotationFrame.y,bottom:rotationFrame.bottom}:null,rotationCells,
       galleryGrid:rect('#gallery'),firstThumb:rect('#gallery .thumb'),
       firstThumbCanvas:rect('#gallery .thumb canvas'),
       firstThumbCaption:rect('#gallery .thumb-caption'),
@@ -252,7 +267,7 @@ try{
               Math.max(0,canvas.bottom-grid.bottom):null;
             console.log('GALLERY THUMB: '+key+' canvas hidden below clip='+hidden+
               'px; grid overflow-y='+measured.galleryGridOverflowY);
-            if(profile.id==='landscape-700x412'){
+            if(profile.id==='landscape-700x412'||profile.id==='minimum-320x640'){
               const card=measured.firstThumb,caption=measured.firstThumbCaption;
               const bad=!grid?.visible||!canvas?.visible||!card?.visible||!caption?.visible||
                 canvas.y<grid.y-1||canvas.bottom>grid.bottom+1||
@@ -279,6 +294,23 @@ try{
             if(labels.length!==5||clipped.length){
               const error='Five-dock caption label size or clipping: '+
                 JSON.stringify({count:labels.length,clipped});
+              errors.push({key,error});
+              console.error('VISUAL FAILURE '+key+' '+error);
+            }
+          }
+          if(profile.width<=360&&name==='material'){
+            // Optical inventory first: the current raster appears crowded.
+            // Keep source-accurate boxes/centre hit targets in the artifact
+            // before deciding whether another production CSS change is safe.
+            console.log('MATERIAL ROTATION '+key+' '+JSON.stringify({
+              frame:measured.rotationFrame,cells:measured.rotationCells}));
+            const frame=measured.rotationFrame,cells=measured.rotationCells;
+            const blocked=!frame||cells.length!==6||cells.some(cell=>
+              !cell.centerTarget||cell.x<frame.x-1||cell.right>frame.right+1||
+              cell.y<frame.y-1||cell.bottom>frame.bottom+1);
+            if(blocked){
+              const error='One or more of six Material rotation targets clipped or blocked: '+
+                JSON.stringify({frame,cells});
               errors.push({key,error});
               console.error('VISUAL FAILURE '+key+' '+error);
             }

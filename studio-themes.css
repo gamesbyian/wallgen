@@ -445,3 +445,13 @@ html[data-theme="dark"] .gallery-placeholder>span{color:#c5becf}
     transform:scaleY(.32);
   }
 }
+
+/* The real 320×640 populated Explore strip needs 60px of card content for
+   its complete miniature and caption. The former 179px tray left a 53px
+   overflow-hidden grid and clipped both. Reserve only ~27px more at this
+   specific portrait height; preserve 700×412 landscape and taller phones. */
+@media(max-width:340px) and (min-height:620px) and (max-height:670px){
+  body.mobile-studio.mobile-gallery-open{
+    --mobile-tray-height:206px;
+  }
+}
