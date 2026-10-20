@@ -81,6 +81,24 @@ const placeholders=originals.map(node=>{
   node.before(mark);
   return mark;
 });
+/* Native Tab focus into an overflowed More sheet is not always scrolled
+ * into its visible tray, particularly with a sticky header/fixed dock and
+ * textarea taller than the CSS scroll-padding budget. A focused source
+ * control must be physically visible, not merely focusable in the DOM.
+ * Keep original controls, order, and focus intact; only move sheet scroll. */
+tools.addEventListener('focusin',event=>{
+  if(!mobile.matches||tools.hidden)return;
+  const el=event.target;
+  if(!(el instanceof HTMLElement)||!tools.contains(el))return;
+  const viewport=tools.getBoundingClientRect(),rect=el.getBoundingClientRect();
+  const header=tools.querySelector('.mobile-sheet-head');
+  const top=Math.min(viewport.bottom-8,
+    Math.max(viewport.top,header?.getBoundingClientRect().bottom||viewport.top)+8);
+  const bottom=viewport.bottom-8;
+  if(rect.bottom>bottom)tools.scrollTop+=rect.bottom-bottom;
+  else if(rect.top<top)tools.scrollTop-=top-rect.top;
+});
+
 let lastFocus=null;
 let galleryDestination='explore';
 function announceNavigation(){
