@@ -18,6 +18,10 @@ on:
       - 'assets/icons/roygbiv/state-matrix.html'
       - '.github/workflows/independent-focus-a11y.yml'
 
+concurrency:
+  group: independent-focus-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
