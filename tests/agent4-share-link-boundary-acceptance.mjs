@@ -91,7 +91,38 @@ try{
     await linked.waitForFunction(seed=>document.querySelector('#seedInput')?.value===seed,
       large.seed,{timeout:30000});
     assert.equal(portableShareTokenFromLocation(new URL(linked.url())),token);
+    await linked.goto(origin+'/#s=v1.broken!',{waitUntil:'domcontentloaded'});
+    await linked.waitForFunction(()=>document.querySelector('#studioStatus')
+      ?.textContent?.includes('Cannot restore compressed design link'));
+    assert.notEqual(await linked.locator('#seedInput').inputValue(),large.seed,
+      'Invalid compressed share restored an unrelated saved wallpaper');
   }finally{await clean.close();}
+
+  // A browser without CompressionStream must fail truthfully and leave its
+  // clipboard unchanged, retaining the existing JSON/PNG sharing routes.
+  const unsupported=await browser.newContext({viewport:{width:412,height:892},
+    isMobile:true,hasTouch:true,reducedMotion:'reduce'});
+  await unsupported.grantPermissions(['clipboard-read','clipboard-write']);
+  await unsupported.addInitScript(()=>{
+    Object.defineProperty(window,'CompressionStream',{value:undefined,configurable:true});
+    Object.defineProperty(window,'DecompressionStream',{value:undefined,configurable:true});
+  });
+  const fallback=await unsupported.newPage();
+  try{
+    await fallback.goto(origin+'/?r='+encodeRecipe(previous),
+      {waitUntil:'domcontentloaded'});
+    await fallback.locator('#mobileMore').click();
+    await fallback.locator('#importRecipeFile').setInputFiles({
+      name:'large-design.png',mimeType:'image/png',buffer:image});
+    await fallback.waitForFunction(seed=>document.querySelector('#seedInput')
+      ?.value===seed,large.seed,{timeout:30000});
+    await fallback.evaluate(value=>navigator.clipboard.writeText(value),sentinel);
+    await fallback.locator('#copyLink').click();
+    await fallback.waitForFunction(()=>document.querySelector('#studioStatus')
+      ?.textContent?.includes('Use Save recipe JSON or Download PNG'));
+    assert.equal(await fallback.evaluate(()=>navigator.clipboard.readText()),sentinel,
+      'Unsupported compression silently overwrote clipboard');
+  }finally{await unsupported.close();}
 
   // The same source offers a lossless share artifact without requiring a
   // giant URL. Verify actual original Save recipe JSON download and reimport.
@@ -127,6 +158,7 @@ try{
   }finally{await opened.close();}
   const row={largeUrlChars:urlSize,compactUrlChars:compact.length,
     compressedStandaloneLink:true,cleanBrowserOpened:true,
+    malformedTokenRejected:true,unsupportedCompressionFallback:true,
     exactCanonicalRecipe:true,downloadedAndReimportedJSON:true,
     normalCopiedLinkNavigated:true};
   evidence.push(row);
