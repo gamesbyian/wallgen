@@ -9,7 +9,7 @@ import {readFile,mkdir,writeFile} from 'node:fs/promises';
 import {join,resolve} from 'node:path';
 import {chromium} from 'playwright';
 import {encodeRecipe,decodeRecipe,normalizeRecipe,OUTPUT_WIDTH,OUTPUT_HEIGHT} from '../src/model.js';
-import {extractPngRecipe} from '../src/png-metadata.js';
+import {extractPngRecipe,serializePngRecipe} from '../src/png-metadata.js';
 
 const origin=process.env.ROYGBIV_URL||'http://127.0.0.1:4173';
 const out=resolve('artifacts/agent4-native-reimport');
@@ -21,6 +21,20 @@ const fixtures=[
      rayCount:28,rayTwist:57,rayRotation:25,viewZoom:1.27,
      viewPanX:-10,viewPanY:7,material:'none',motif:'solid',
      stripeShadowStrength:0,lightingMood:'off'
+   })},
+  {name:'worker-large-interior-recipe',disableWorker:false,
+   recipe:normalizeRecipe({
+     seed:'a4-native-over-64k',structure:'regions',regionMode:'nested',
+     regionCount:21,viewZoom:.75,viewPanY:-8,
+     material:'none',motif:'solid',lightingMood:'off',
+     stripeShadowStrength:0,lockedSettings:['regionMode','interiorElements'],
+     interiorElements:Array.from({length:5},(_,j)=>({
+       id:'large-ink-'+j,enabled:false,type:'line',
+       shape:'wave',placement:'contour',color:'custom',
+       customColor:'#22aacc',objectIds:Array.from({length:200},(_,i)=>
+         'region-'+j+'-'+String(i).padStart(3,'0')+'-'+
+         String(j*200+i).padStart(3,'0').repeat(30).slice(0,82))
+     }))
    })},
   {name:'compatibility-paths',disableWorker:true,
    recipe:normalizeRecipe({
@@ -68,6 +82,11 @@ try{
    assert.equal(bytes.readUInt32BE(20),OUTPUT_HEIGHT);
    assert.deepEqual(extractPngRecipe(bytes),fixture.recipe,
      'Native PNG lost source settings');
+   if(fixture.name==='worker-large-interior-recipe'){
+     const size=Buffer.byteLength(serializePngRecipe(fixture.recipe),'utf8');
+     assert.ok(size>65536&&size<1024*1024,
+       'Native download fixture does not challenge the 64 KiB reader boundary');
+   }
    assert.match(download.suggestedFilename(),/3024x6552\.png$/);
 
    // The actual downloaded IDAT is decoded in Chromium and compared against
