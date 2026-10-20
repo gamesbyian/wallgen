@@ -38,8 +38,8 @@ const textured=normalizeRecipe({
 });
 const sparse=normalizeRecipe({
   seed:'a3-sparse-point-insert',structure:'paths',geometry:'drawn',
-  customPath:[[.25,.30],[.72,.69]],drawnAnchors:[],drawnCorners:[],
-  viewZoom:1,viewPanX:0,viewPanY:0,positionX:0,positionY:0,
+  customPath:[[-.30,.20],[1.30,.80]],drawnAnchors:[],drawnCorners:[],
+  viewZoom:.5,viewPanX:8,viewPanY:-5,positionX:6,positionY:-3,
   extendDrawnPath:true
 });
 const current=page=>decodeRecipe(new URL(page.url()).searchParams.get('r'));
@@ -229,10 +229,19 @@ try{
       await openSaved(page);
       await page.locator('#drawAddPoint').click();
       assert.equal(await page.locator('#drawAddPoint').getAttribute('aria-pressed'),'true');
-      await tapSourcePoint(page,[(.25+.72)/2,(.30+.69)/2],sparse);
+      await tapSourcePoint(page,[(sparse.customPath[0][0]+sparse.customPath[1][0])/2,
+        (sparse.customPath[0][1]+sparse.customPath[1][1])/2],sparse);
       assert.equal(await page.locator('#drawAddPoint').getAttribute('aria-pressed'),'false');
       assert.equal(await page.locator('#drawUndoPoint').isDisabled(),false);
       assert.deepEqual(current(page),sparse,'Sparse insertion edited recipe before Apply');
+      // Local Undo must recover the original two-node source draft exactly,
+      // then the same projected midpoint can be inserted again.
+      await page.locator('#drawUndoPoint').click();
+      assert.deepEqual(current(page),sparse,'Local Undo leaked into original recipe');
+      await page.locator('#drawAddPoint').click();
+      await tapSourcePoint(page,[(sparse.customPath[0][0]+sparse.customPath[1][0])/2,
+        (sparse.customPath[0][1]+sparse.customPath[1][1])/2],sparse);
+      assert.equal(await page.locator('#drawUndoPoint').isDisabled(),false);
       await page.screenshot({path:join(out,width+'x'+height+'-sparse-anchor.png'),
         animations:'disabled'});
       await page.locator('#drawApply').click();
@@ -240,6 +249,9 @@ try{
       const inserted=current(page);
       assert.equal(inserted.customPath.length,3,'Sparse insertion did not create a real station');
       assert.deepEqual(inserted.drawnAnchors,[1],'Inserted middle station was not pinned');
+      assert.deepEqual(inserted.customPath[0],sparse.customPath[0]);
+      assert.deepEqual(inserted.customPath.at(-1),sparse.customPath.at(-1));
+      assert.deepEqual(inserted.drawnCorners,[],'New pin invented a corner');
       unchangedFields(sparse,inserted,'sparse insertion');
       record.operations.push('real midpoint click inserted a third source station, Apply retained pin');
 
@@ -260,6 +272,23 @@ try{
       unchangedFields(inserted,unpinned,'remove anchor');
       record.operations.push('Delete anchor removed human pin but retained exactly the source geometry');
       trace('sparse insertion/deletion and Apply passed');
+      // At the 96-sample source capacity a further physical midpoint tap
+      // may not evict a terminal station, create a phantom pin or grow to 97.
+      await readPage(page,textured);
+      await openSaved(page);
+      await page.locator('#drawAddPoint').click();
+      const mid=[(textured.customPath[47][0]+textured.customPath[48][0])/2,
+        (textured.customPath[47][1]+textured.customPath[48][1])/2];
+      await tapSourcePoint(page,mid,textured);
+      assert.deepEqual(current(page),textured,'Full-capacity draft mutated source early');
+      await page.locator('#drawApply').click();
+      const capped=current(page);
+      assert.equal(capped.customPath.length,96,'96-point path illegally grew beyond capacity');
+      assert.deepEqual(capped.customPath.at(-1),textured.customPath.at(-1),
+        'Full-capacity insertion removed the terminal sample');
+      assert.deepEqual(capped,textured,
+        'Rejected 97th station unexpectedly changed authored path or camera');
+      record.operations.push('full-capacity 96-point rejection preserved all samples');
       assert.deepEqual(unexpected,[],'Browser exceptions in advanced Draw acceptance');
       console.log('AGENT3_ADVANCED_DRAW',JSON.stringify(record));
       results.push(record);
