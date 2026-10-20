@@ -97,11 +97,27 @@ export function embedPngMetadata(input,values={},options={}){
   if(options.recipe!==undefined)chunks.push(utf8Text(RECIPE_KEYWORD,serializePngRecipe(options.recipe)));
   const exif=exifTiff(metadata);
   if(exif)chunks.push(chunk('eXIf',exif));
-  const total=bytes.length+chunks.reduce((n,c)=>n+c.length,0);
+  // Re-embedding an exported PNG must replace its prior recipe rather than
+  // leaving a stale first match that import would silently restore.
+  // Copy every unrelated chunk (including IDAT) byte-for-byte.
+  const prefix=[];
+  let cursor=8;
+  while(cursor<insert){
+    const length=u32(bytes,cursor),end=cursor+length+12;
+    const type=String.fromCharCode(...bytes.subarray(cursor+4,cursor+8));
+    const data=bytes.subarray(cursor+8,cursor+8+length);
+    const keywordEnd=type==='iTXt'?data.indexOf(0):-1;
+    const isRecipe=type==='iTXt'&&keywordEnd===RECIPE_KEYWORD.length&&
+      data.subarray(0,keywordEnd).every((value,i)=>value===encoder.encode(RECIPE_KEYWORD)[i]);
+    if(!(options.recipe!==undefined&&isRecipe))prefix.push(bytes.subarray(cursor,end));
+    cursor=end;
+  }
+  const total=8+prefix.reduce((n,c)=>n+c.length,0)+
+    chunks.reduce((n,c)=>n+c.length,0)+bytes.length-insert;
   const result=new Uint8Array(total);
-  result.set(bytes.subarray(0,insert));
-  let cursor=insert;
-  for(const part of chunks){result.set(part,cursor);cursor+=part.length;}
+  result.set(bytes.subarray(0,8));
+  cursor=8;
+  for(const part of [...prefix,...chunks]){result.set(part,cursor);cursor+=part.length;}
   result.set(bytes.subarray(insert),cursor);
   return result;
 }
