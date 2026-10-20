@@ -71,6 +71,10 @@ function exifTiff(info){
 }
 export const RECIPE_KEYWORD='ROYGBIV Recipe';
 export const RECIPE_FORMAT='roygbiv-recipe-v2';
+// Full normalized Interior selections can legitimately exceed the old 64 KiB
+// reader bound. Still cap named metadata before parsing untrusted JSON.
+export const MAX_RECIPE_ITXT_BYTES=1024*1024;
+const recipeKeywordBytes=encoder.encode(RECIPE_KEYWORD);
 export function serializePngRecipe(recipe){
   return JSON.stringify({format:RECIPE_FORMAT,recipe:normalizeRecipe(recipe),
     output:{width:OUTPUT_WIDTH,height:OUTPUT_HEIGHT},generator:'R.O.Y.G.B.I.V.'});
@@ -87,14 +91,18 @@ export function embedPngMetadata(input,values={},options={}){
     keywords:'Keywords',comment:'Comment',software:'Software',dateTime:'Creation Time',
     cameraMake:'Camera Make',cameraModel:'Camera Model'};
   const chunks=Object.entries(metadata).map(([key,value])=>utf8Text(names[key],value));
-  if(options.recipe!==undefined)chunks.push(utf8Text(RECIPE_KEYWORD,serializePngRecipe(options.recipe)));
+  if(options.recipe!==undefined){
+    const embedded= utf8Text(RECIPE_KEYWORD,serializePngRecipe(options.recipe));
+    if(embedded.length-12>MAX_RECIPE_ITXT_BYTES)
+      throw Error('PNG recipe metadata exceeds 1 MB export limit');
+    chunks.push(embedded);
+  }
   const exif=exifTiff(metadata);
   if(exif)chunks.push(chunk('eXIf',exif));
   // Replace recipe chunks wherever they occur: PNG permits ancillary
   // text both before and after the (contiguous) IDAT sequence. Older exports
   // could contain multiple recipes; never let a stale one survive re-export.
   const oldChunks=[];
-  const recipeKeyword=encoder.encode(RECIPE_KEYWORD);
   let offset=8,insertIndex=-1;
   while(offset+12<=bytes.length){
     const size=u32(bytes,offset);
@@ -102,10 +110,11 @@ export function embedPngMetadata(input,values={},options={}){
     const end=offset+12+size;
     const type=String.fromCharCode(...bytes.subarray(offset+4,offset+8));
     if(type==='IDAT'&&insertIndex<0)insertIndex=oldChunks.length;
-    const data=bytes.subarray(offset+8,offset+8+size);
-    const keywordEnd=type==='iTXt'?data.indexOf(0):-1;
-    const oldRecipe=type==='iTXt'&&keywordEnd===recipeKeyword.length&&
-      recipeKeyword.every((value,i)=>data[i]===value);
+    // Compare just the fixed keyword prefix; never scan a potentially huge
+    // unrelated PNG text record simply to decide whether to preserve it.
+    const oldRecipe=type==='iTXt'&&size>recipeKeywordBytes.length&&
+      recipeKeywordBytes.every((value,i)=>bytes[offset+8+i]===value)&&
+      bytes[offset+8+recipeKeywordBytes.length]===0;
     if(!(options.recipe!==undefined&&oldRecipe))
       oldChunks.push(bytes.subarray(offset,end));
     offset=end;
@@ -136,10 +145,18 @@ export function extractPngRecipe(input){
     const size=u32(bytes,offset);
     if(size>bytes.length-offset-12)throw Error('Damaged PNG chunk');
     const type=String.fromCharCode(...bytes.subarray(offset+4,offset+8));
-    if(type==='iTXt' && size<=65536){
-      const data=bytes.subarray(offset+8,offset+8+size);
-      const end=data.indexOf(0);
-      if(end!==-1 && decoder.decode(data.subarray(0,end))===RECIPE_KEYWORD){
+    if(type==='iTXt'){
+      // Peek at a fixed-size keyword before touching potentially enormous
+      // unrelated ancillary data. An explicit recipe must never be silently
+      // treated as absent merely because it exceeds the supported bound.
+      const targeted=size>recipeKeywordBytes.length &&
+        recipeKeywordBytes.every((value,i)=>bytes[offset+8+i]===value) &&
+        bytes[offset+8+recipeKeywordBytes.length]===0;
+      if(targeted){
+        if(size>MAX_RECIPE_ITXT_BYTES)
+          throw Error('PNG recipe metadata exceeds 1 MB import limit');
+        const data=bytes.subarray(offset+8,offset+8+size);
+        const end=data.indexOf(0);
         if(end+5>data.length||data[end+1]!==0||data[end+2]!==0||
            data[end+3]!==0||data[end+4]!==0)throw Error('Unsupported recipe metadata encoding');
         const stored=u32(bytes,offset+8+size);

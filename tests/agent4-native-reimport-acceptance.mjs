@@ -9,7 +9,7 @@ import {readFile,mkdir,writeFile} from 'node:fs/promises';
 import {join,resolve} from 'node:path';
 import {chromium} from 'playwright';
 import {encodeRecipe,decodeRecipe,normalizeRecipe,OUTPUT_WIDTH,OUTPUT_HEIGHT} from '../src/model.js';
-import {extractPngRecipe} from '../src/png-metadata.js';
+import {extractPngRecipe,serializePngRecipe,embedPngMetadata} from '../src/png-metadata.js';
 
 const origin=process.env.ROYGBIV_URL||'http://127.0.0.1:4173';
 const out=resolve('artifacts/agent4-native-reimport');
@@ -21,6 +21,20 @@ const fixtures=[
      rayCount:28,rayTwist:57,rayRotation:25,viewZoom:1.27,
      viewPanX:-10,viewPanY:7,material:'none',motif:'solid',
      stripeShadowStrength:0,lightingMood:'off'
+   })},
+  {name:'worker-large-interior-recipe',disableWorker:false,
+   recipe:normalizeRecipe({
+     seed:'a4-native-over-64k',structure:'regions',regionMode:'nested',
+     regionCount:21,viewZoom:.75,viewPanY:-8,
+     material:'none',motif:'solid',lightingMood:'off',
+     stripeShadowStrength:0,lockedSettings:['regionMode','interiorElements'],
+     interiorElements:Array.from({length:5},(_,j)=>({
+       id:'large-ink-'+j,enabled:false,type:'line',
+       shape:'wave',placement:'contour',color:'custom',
+       customColor:'#22aacc',objectIds:Array.from({length:200},(_,i)=>
+         'region-'+j+'-'+String(i).padStart(3,'0')+'-'+
+         String(j*200+i).padStart(3,'0').repeat(30).slice(0,82))
+     }))
    })},
   {name:'compatibility-paths',disableWorker:true,
    recipe:normalizeRecipe({
@@ -46,8 +60,30 @@ try{
   page.setDefaultTimeout(25000);
   page.on('pageerror',error=>errors.push({fixture:fixture.name,pageerror:String(error)}));
   try{
-   await page.goto(origin+'/?r='+encodeRecipe(fixture.recipe),
-     {waitUntil:'domcontentloaded'});
+   if(fixture.name==='worker-large-interior-recipe'){
+     // Static hosts may reject an enormous initial GET query before app JS
+     // runs. Importing the identical recipe through the original PNG UI is
+     // the supported alternative, and the native exporter is tested from
+     // precisely that fully restored application state.
+     const small=normalizeRecipe({seed:'before-large-native-export'});
+     await page.goto(origin+'/?r='+encodeRecipe(small),
+       {waitUntil:'domcontentloaded'});
+     const tiny=Buffer.from(
+       'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScL/9QAAAABJRU5ErkJggg==','base64');
+     const embedded=Buffer.from(embedPngMetadata(tiny,{},
+       {recipe:fixture.recipe}));
+     await page.locator('#mobileMore').click();
+     await page.locator('#importRecipeFile').setInputFiles({
+       name:'large-native-export-source.png',mimeType:'image/png',
+       buffer:embedded
+     });
+     await page.waitForFunction(seed=>document.querySelector('#seedInput')
+       ?.value===seed,fixture.recipe.seed,{timeout:90000});
+     await page.locator('#mobileToolsClose').click();
+   }else{
+     await page.goto(origin+'/?r='+encodeRecipe(fixture.recipe),
+       {waitUntil:'domcontentloaded'});
+   }
    assert.deepEqual(decodeRecipe(new URL(page.url()).searchParams.get('r')),
      fixture.recipe);
    const runtime=await page.evaluate(()=>({
@@ -68,6 +104,11 @@ try{
    assert.equal(bytes.readUInt32BE(20),OUTPUT_HEIGHT);
    assert.deepEqual(extractPngRecipe(bytes),fixture.recipe,
      'Native PNG lost source settings');
+   if(fixture.name==='worker-large-interior-recipe'){
+     const size=Buffer.byteLength(serializePngRecipe(fixture.recipe),'utf8');
+     assert.ok(size>65536&&size<1024*1024,
+       'Native download fixture does not challenge the 64 KiB reader boundary');
+   }
    assert.match(download.suggestedFilename(),/3024x6552\.png$/);
 
    // The actual downloaded IDAT is decoded in Chromium and compared against
@@ -143,7 +184,10 @@ try{
    console.log('AGENT4_NATIVE_REIMPORT_PASS',JSON.stringify(observation));
    await page.screenshot({path:join(out,fixture.name+'.png'),animations:'disabled'});
   }catch(error){
-   errors.push({fixture:fixture.name,message:String(error),stack:error.stack});
+   // Avoid logging a 100 KB source URL in a Playwright navigation stack.
+   const brief=String(error).slice(0,800);
+   errors.push({fixture:fixture.name,message:brief,
+     stack:String(error.stack||'').slice(0,1200)});
    await page.screenshot({path:join(out,'failure-'+fixture.name+'.png'),
      animations:'disabled'}).catch(()=>{});
   }finally{await context.close();}
