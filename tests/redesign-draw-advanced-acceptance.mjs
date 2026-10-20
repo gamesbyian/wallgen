@@ -14,7 +14,8 @@ import {normalizeRecipe,encodeRecipe,decodeRecipe} from '../src/model.js';
 const origin=process.env.ROYGBIV_URL||'http://127.0.0.1:4173';
 const out=resolve(process.env.ROYGBIV_ADVANCED_DRAW_OUT||'artifacts/agent3-advanced-draw');
 await mkdir(out,{recursive:true});
-const browser=await chromium.launch({headless:true});
+const browser=await chromium.launch({headless:true,
+  ...(process.env.CHROME_BIN?{executablePath:process.env.CHROME_BIN}:{})});
 const results=[],errors=[];
 const dense=normalizeRecipe({
   seed:'a3-point-handle-boundaries',structure:'paths',geometry:'drawn',
