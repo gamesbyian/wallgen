@@ -3,6 +3,10 @@ import assert from 'node:assert/strict';
 import {normalizeRecipe,resolveScene,encodeRecipe,decodeRecipe,
   OUTPUT_WIDTH,OUTPUT_HEIGHT} from '../src/model.js';
 import {viewCamera} from '../src/view-camera.js';
+import {createPointEditor,clonePointEditor,movePointAnchor,
+  resmoothPointEdits,savedPointAnchors,savedPointCorners}
+  from '../src/path-point-editor.js';
+import {appliedDrawnPathRecipe} from '../src/draw-apply-transaction.js';
 import {normalizeDrawnPath,prepareDrawnPath,pointOnDrawnPath,
   finishDrawnPath,MAX_DRAWN_POINTS} from '../src/drawn-path.js';
 import {CROSSING_MODES,findPathCrossings,crossingTopIsLater}
@@ -121,4 +125,45 @@ test('10x Smooth and Geometric are deterministic, capped, and retain original st
     assert.deepEqual(original[0],[.1,.2],
       'Smoothing must not mutate original pointer samples');
   }
+});
+
+test('local 10x point Resmooth protects every authored constraint and camera',()=>{
+  const original=normalizeRecipe({seed:'a3-local-resmooth',structure:'paths',
+    geometry:'drawn',customPath:crossPath,drawnAnchors:[3,11],
+    drawnCorners:[11],extendDrawnPath:true,orientation:'diagonal',
+    viewZoom:1.3,viewPanX:20,viewPanY:-15,positionX:8,positionY:-6});
+  const editor=createPointEditor(original.customPath,
+    original.drawnAnchors,original.drawnCorners);
+  assert.ok(editor?.anchors.includes(11));
+  assert.ok(editor.corners.has(11));
+  const saved=clonePointEditor(editor);
+  const target=[editor.points[11][0]+.06,editor.points[11][1]-.04];
+  movePointAnchor(editor,11,target);
+  assert.ok(editor.changed.has(11),'Manual edit did not flag its local span');
+  const positioned=editor.points[11].slice();
+  resmoothPointEdits(editor,10);
+  assert.deepEqual(editor.points[11],positioned,
+    'A local resmooth shifted the human-positioned fixed anchor');
+  assert.deepEqual(editor.points[0],saved.points[0],
+    'Resmoothing leaked through the first endpoint');
+  assert.deepEqual(editor.points.at(-1),saved.points.at(-1),
+    'Resmoothing leaked through the last endpoint');
+  assert.ok(savedPointAnchors(editor).includes(11));
+  assert.ok(savedPointCorners(editor).includes(11));
+  const committed=appliedDrawnPathRecipe(original,editor.points,
+    savedPointAnchors(editor),savedPointCorners(editor),true,true);
+  assert.equal(committed.orientation,original.orientation);
+  for(const key of ['seed','viewZoom','viewPanX','viewPanY',
+    'positionX','positionY','crossingMode','extendDrawnPath']){
+    assert.deepEqual(committed[key],original[key],
+      'Resmooth + Apply contaminated unrelated '+key);
+  }
+  assert.ok(committed.drawnCorners.includes(11));
+  assert.notDeepEqual(committed.customPath,original.customPath,
+    'Manual anchor change disappeared on Apply');
+  assert.deepEqual(editor.points[11],positioned);
+  assert.deepEqual(original.customPath,crossPath,
+    'The original recipe mutated before Apply or on cancel');
+  assert.deepEqual(savedPointCorners(saved),[11],
+    'Snapshot of original constraints changed after editable transaction');
 });
