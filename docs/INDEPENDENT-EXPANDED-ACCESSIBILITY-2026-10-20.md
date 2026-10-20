@@ -92,3 +92,40 @@ The subsequent desktop-only `#625b6c` ink correction covers those
 specific selectors. The exact latest-head audit must pass before full
 92-screen qualification; no new mobile or gallery control behaviour
 was added. Do not count the earlier red runs as green evidence.
+
+## Final qualification and integration
+
+**Merged:** [PR #288](https://github.com/gamesbyian/wallgen/pull/288),
+merge commit `ff78fdf1edef664f846fa61406787277d7596066`.
+
+**Final verified PR head:** `27b80eb738a8ef4b87ce4113038f8d2ff8c71cd6`.
+
+**Green exact-head CI:** [39402261160](https://github.com/gamesbyian/wallgen/actions/runs/39402261160).
+The complete workflow passed, with decoded live Chromium witnesses:
+- **30** original Focus/All cases, **4** dynamic lock/mode transitions.
+- **8** independent unwired SVG candidate diagnostics × 24 exact
+  render states each = **192** visual samples, no user approval implied.
+- **72/72** mobile WCAG 2.2 axe scans, including narrow 320px,
+  breakpoint boundaries 499/500/790px, and short landscape.
+- **4/4** cold keyboard-only Focus/All editor journeys with bounded
+  Tab/Enter/Arrow/Shift+Tab traces, hit-testable focus and exact
+  one-setting recipe deltas.
+- **20/20** desktop WCAG 2.2 axe scans at first-desktop 791px and
+  1024px in both themes, across five true source screens.
+
+**Automated violations: zero in all 92 sampled WCAG browser scans.**
+All originally reproduced desktop palette semantics and cream/dark
+contrast defects passed after the exact CSS specificity correction;
+no axe checks were suppressed. Repository validation, mobile browser
+acceptance, control-state tests, high-DPI touch emulation, consolidated
+mobile tests and UI atlas also passed at the tested head. The separate
+long-running human-facing visual plate workflow had not yet been
+credited here at merge time.
+
+This is **bounded automated evidence**, not complete WCAG conformance,
+human unscripted testing, approval of any unwired candidate glyph,
+screen-reader spoken output, native Android Chrome, or physical
+Pixel 6 Pro accessibility. Acceptance entries **#2, #11 and #15
+remain unchecked** pending their respective human/device gates.
+Earlier red runs above are retained as defect discovery and repair
+evidence; the current state is the exact-head green run linked here.
