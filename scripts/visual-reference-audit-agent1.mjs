@@ -26,6 +26,13 @@ const profiles=[
   // These are actual mobile Chromium layouts, never CSS-root zoom proxies.
   {id:'minimum-320x640',width:320,height:640,cases:['studio','geometry','material','more','explore','explore-populated','saved-empty','saved-populated','draw']},
   {id:'edge-360x740',width:360,height:740,cases:['studio','geometry','material','more','explore','saved-empty','saved-populated','focus']},
+  // Height-constrained portrait and the two-row rotation 399/400px boundary.
+  // Gallery thumbnail size must not cliff at this exact media-query edge.
+  {id:'edge-399x740',width:399,height:740,cases:['studio','material','saved-empty','saved-populated']},
+  {id:'edge-400x740',width:400,height:740,cases:['studio','material','saved-empty','saved-populated']},
+  {id:'short-phone-412x740',width:412,height:740,cases:['studio','material','saved-empty','saved-populated','explore-populated']},
+  {id:'short-edge-499x740',width:499,height:740,cases:['studio','material','saved-populated']},
+  {id:'short-edge-500x740',width:500,height:740,cases:['studio','material','saved-populated']},
   {id:'phone-412x892',width:412,height:892,cases:[...all,'explore-populated','saved-empty','saved-populated']},
   {id:'edge-499x892',width:499,height:892,cases:['studio','geometry','material','more','focus']},
   {id:'edge-500x892',width:500,height:892,cases:all},
@@ -383,7 +390,7 @@ try{
               console.error('VISUAL FAILURE '+key+' '+error);
             }
           }
-          if(profile.width<=360&&name==='material'){
+          if(profile.width<=412&&name==='material'){
             // Optical inventory first: the current raster appears crowded.
             // Keep source-accurate boxes/centre hit targets in the artifact
             // before deciding whether another production CSS change is safe.
