@@ -58,7 +58,7 @@ function iconSVG(name,size){
  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
  svg.setAttribute('viewBox',name==='app-icon'?'0 0 120 120':'0 0 32 32');svg.setAttribute('width',String(size));
  svg.setAttribute('height',String(size));svg.setAttribute('fill','none');
- svg.setAttribute('stroke','currentColor');svg.setAttribute('stroke-width','2.4');
+ svg.setAttribute('stroke',name==='app-icon'?'none':'currentColor');svg.setAttribute('stroke-width','2.4');
  svg.setAttribute('stroke-linecap','round');svg.setAttribute('stroke-linejoin','round');
  svg.setAttribute('aria-hidden','true');svg.innerHTML=info.drawings[name];
  return svg;
