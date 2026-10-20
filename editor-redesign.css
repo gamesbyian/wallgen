@@ -998,3 +998,19 @@ html[data-theme="cream"] body.mobile-studio .sidebar .settings-tabs .settings-ta
     flex:1 1 auto;min-width:0;width:auto;
   }
 }
+
+/* Measured real Chromium at 500x892, 790x892 and 700x412: the final
+   Lighting canvas-shade row was 5.84px beneath its clipped source card.
+   Reclaim unused internal 2px gaps and 3px of bottom padding, keeping the
+   existing native inputs, the stage/tray boundary and wallpaper size fixed.
+   Compact <=499px uses a different layout and is deliberately untouched. */
+@media (min-width:500px) and (max-width:790px){
+  body.mobile-studio.mobile-edit-open .sidebar
+    .editor-tool-card[data-editor-tool="lighting"]{
+    gap:0!important;padding-bottom:2px!important;
+  }
+  body.mobile-studio.mobile-edit-open .sidebar
+    .editor-tool-card[data-editor-tool="lighting"] .lighting-subsection{
+    gap:0!important;
+  }
+}
