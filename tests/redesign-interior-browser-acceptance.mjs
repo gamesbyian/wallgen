@@ -76,6 +76,17 @@ try{
   await choose.selectOption('2');
   assert.deepEqual(await selectIndex(),{index:2,id:'field-max'});
   const field=await checkMotion({frequency:100,phase:360,minimum:.1,maximum:100});
+  // Actual native keyboard adjustment must preserve the other extreme input
+  // and all unrelated imported element settings, not merely show a legal max.
+  const beforeFieldEdit=current();
+  await page.locator('.editor-tool-card[data-editor-tool="interior-motion"] input[data-rainbow-key="phase"]').focus();
+  await page.keyboard.press('ArrowLeft');
+  assert.equal(current().interiorElements[2].phase,359);
+  assert.equal(current().interiorElements[2].frequency,100);
+  assert.deepEqual(current().interiorElements.slice(0,2),
+    beforeFieldEdit.interiorElements.slice(0,2));
+  await page.locator('#undo').click();
+  assert.deepEqual(current(),beforeFieldEdit,'Undo did not restore imported field maxima');
   await page.screenshot({path:join(output,'field-extreme.png'),animations:'disabled'});
   await tool('details','interior');
   await page.locator('.editor-tool-card[data-editor-tool="interior"] button[aria-label="Move element upward"]').click();
@@ -88,11 +99,32 @@ try{
     'Undo must follow element ID through restored order');
   record('reorder-undo-preserves-interior-identity',{id:'field-max',indexAfterMove:1,
     indexAfterUndo:2,fieldMotion:field});
+  // Identity after Undo must govern the next real native colour edit, rather
+  // than mutating whichever element temporarily occupied the moved index.
+  await tool('details','interior-targets');
+  const beforeInk=current();
+  await page.locator('.editor-tool-card[data-editor-tool="interior-targets"] input[type="color"]')
+    .fill('#55aadd');
+  assert.equal(current().interiorElements[2].id,'field-max');
+  assert.equal(current().interiorElements[2].customColor,'#55aadd');
+  assert.deepEqual(current().interiorElements.slice(0,2),
+    beforeInk.interiorElements.slice(0,2),'Ink changed a different Interior element');
+  await page.locator('#undo').click();
+  assert.deepEqual(current(),beforeInk,'Undo did not recover ID-bound ink edit');
   // The other element has contour-specific 1..30 integer frequency, with a
   // legitimate phase of -360. It cannot inherit the field slider bounds.
   await choose.selectOption('1');
   assert.deepEqual(await selectIndex(),{index:1,id:'contour'});
   const contour=await checkMotion({frequency:30,phase:-360,minimum:1,maximum:30});
+  const beforeContourEdit=current();
+  await page.locator('.editor-tool-card[data-editor-tool="interior-motion"] input[data-rainbow-key="phase"]').focus();
+  await page.keyboard.press('ArrowRight');
+  assert.equal(current().interiorElements[1].phase,-359);
+  assert.equal(current().interiorElements[1].frequency,30);
+  assert.deepEqual(current().interiorElements.filter(e=>e.id!=='contour'),
+    beforeContourEdit.interiorElements.filter(e=>e.id!=='contour'));
+  await page.locator('#undo').click();
+  assert.deepEqual(current(),beforeContourEdit,'Undo did not recover imported contour minima');
   await page.screenshot({path:join(output,'contour-extreme.png'),animations:'disabled'});
   record('contour-motion-full-range',{selected:'contour',...contour});
   await tool('details','interior');
