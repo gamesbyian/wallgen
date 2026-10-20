@@ -381,7 +381,25 @@ try{
       dormant:['textureStrength3','textureScale3','textureRotation3'],active:[]},
     {name:'layer3-zero-strength',overrides:{textureLayer3Enabled:true,
       material3:'construction',textureStrength3:0,lockedSettings:[]},
-      dormant:['textureScale3','textureRotation3'],active:['textureStrength3']}
+      dormant:['textureScale3','textureRotation3'],active:['textureStrength3']},
+    {name:'orientation-horizontal',overrides:{orientation:'horizontal',
+      diagonalRotation:27,mirrorHorizontal:true,mirrorVertical:true,
+      lockedSettings:[]},
+      dormant:['diagonalRotation','mirrorHorizontal','mirrorVertical'],active:[]},
+    {name:'orientation-diagonal',overrides:{orientation:'diagonal',
+      diagonalRotation:27,mirrorHorizontal:true,mirrorVertical:true,
+      lockedSettings:[]},
+      dormant:[],active:['diagonalRotation','mirrorHorizontal','mirrorVertical']},
+    {name:'stripe-shadow-zero',overrides:{stripeShadowStrength:0,
+      stripeShadowSoftness:81,lockedSettings:[]},
+      dormant:['stripeShadowSoftness','stripeShadowDirection'],
+      active:['stripeShadowStrength']},
+    {name:'repeat-off',overrides:{composition:'single',repeatCount:4,
+      repeatSpacing:68,lockedSettings:[]},
+      dormant:['repeatCount','repeatSpacing'],active:[]},
+    {name:'repeat-on',overrides:{composition:'repeat',repeatCount:4,
+      repeatSpacing:68,lockedSettings:[]},
+      dormant:[],active:['repeatCount','repeatSpacing']}
   ];
   for(const scenario of crossFamilyCases){
     const source=normalizeRecipe({...baseline,...scenario.overrides,
