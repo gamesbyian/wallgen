@@ -344,6 +344,22 @@ function geometryFromPage(page){
           x:r.left,right:r.right,y:r.top,bottom:r.bottom,width:r.width,height:r.height,
           centerTarget:el===probe||el.contains(probe)};
       }):[];
+    // Actual, visible source-row geometry; never synthetic controls.
+    const rows=[...document.querySelectorAll('.editor-tool-card:not([hidden]) .editor-setting-row')]
+      .filter(el=>{const r=el.getBoundingClientRect(),s=getComputedStyle(el);
+        return r.width>0&&r.height>0&&s.display!=='none'&&s.visibility!=='hidden';})
+      .map(el=>{
+        const r=el.getBoundingClientRect();
+        const card=el.closest('.editor-tool-card')?.getBoundingClientRect();
+        const inputs=[...el.querySelectorAll('input:not([type=hidden]),select,textarea')];
+        return {tool:el.dataset.controlTool,kind:el.dataset.controlKind,
+          keys:el.dataset.controlKeys,rotation:el.classList.contains('texture-rotation-field'),
+          grid:getComputedStyle(el).gridTemplateColumns,
+          left:r.left,right:r.right,top:r.top,bottom:r.bottom,
+          cardLeft:card?.left,cardRight:card?.right,
+          inputCount:inputs.length,buttonCount:el.querySelectorAll('.rotation-controls button').length,
+          overflow:card?Math.max(0,card.left-r.left,r.right-card.right):0};
+      });
     const stage=rect('.studio-stage'),sidebar=rect('.sidebar'),
       gallery=rect('.gallery-section'),more=rect('#mobileToolsSheet');
     const openSheet=body.classList.contains('mobile-edit-open')?sidebar:
@@ -360,7 +376,7 @@ function geometryFromPage(page){
       firstThumbCanvas:rect('#gallery .thumb canvas'),
       firstThumbCaption:rect('#gallery .thumb-caption'),
       galleryGridOverflowY:document.querySelector('#gallery')?getComputedStyle(document.querySelector('#gallery')).overflowY:null,
-      stageOverlap,actionTargets,
+      stageOverlap,rows,actionTargets,
       undersized24:actionTargets.filter(el=>el.width<24||el.height<24)
         .map(el=>el.selector),
       categoryDisabled:[...document.querySelectorAll('.settings-tabs .settings-tab:disabled')]
@@ -461,7 +477,18 @@ try{
               console.error('VISUAL FAILURE '+key+' '+error);
             }
           }
-          if(profile.width<=360){
+          if(!profile.zoom&&measured.rows.some(row=>row.overflow>1)){
+             const badRows=measured.rows.filter(row=>row.overflow>1);
+             const error='Visible setting row exceeds source card horizontally: '+JSON.stringify(badRows);
+             errors.push({key,error});console.error('VISUAL FAILURE '+key+' '+error);
+           }
+           for(const row of measured.rows.filter(row=>row.rotation)){
+             if(row.buttonCount!==5||row.inputCount!==1){
+               const error='Special rotation controls missing: '+JSON.stringify(row);
+               errors.push({key,error});console.error('VISUAL FAILURE '+key+' '+error);
+             }
+           }
+           if(profile.width<=360){
             for(const [name,rect] of [['preview',measured.stage],['dock',measured.dock]]){
               if(rect?.visible&&(rect.x< -1||rect.right>profile.width+1)){
                 const error='Narrow phone '+name+' extends outside '+profile.width+
