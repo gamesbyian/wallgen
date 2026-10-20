@@ -45,6 +45,7 @@ bleedButton.addEventListener('click',()=>{
 stage.addEventListener('roygbiv-wallpaper-rendered',updateBleedContrast);
 const left=document.createElement('div');
 left.className='mobile-preview-rail mobile-preview-rail-left';
+left.setAttribute('role','group');
 left.setAttribute('aria-label','Generation shortcuts');
 const right=document.createElement('div');
 right.className='mobile-preview-rail mobile-preview-rail-right';
