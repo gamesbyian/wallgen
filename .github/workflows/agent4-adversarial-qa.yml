@@ -39,6 +39,7 @@ jobs:
           node --check tests/agent4-cross-tab-saved-acceptance.mjs
           node --check tests/agent4-accessibility-acceptance.mjs
           node --check tests/agent4-desktop-acceptance.mjs
+          node --check tests/agent4-local-saved-acceptance.mjs
           node --check tests/agent4-json-download-acceptance.mjs
       - name: Unit and transport regression
         run: node --test tests/favorites-store.test.js tests/recipe-transport-matrix.test.js tests/gallery-view-modes.test.js
@@ -60,6 +61,8 @@ jobs:
         run: node tests/agent4-accessibility-acceptance.mjs
       - name: Desktop source galleries, keyboard and metadata
         run: node tests/agent4-desktop-acceptance.mjs
+      - name: Same-tab Saved gallery live mutation on desktop
+        run: node tests/agent4-local-saved-acceptance.mjs
       - name: Real JSON downloads and PNG file-input round-trips
         run: node tests/agent4-json-download-acceptance.mjs
       - name: Upload gallery, accessibility and recipe evidence
@@ -72,6 +75,7 @@ jobs:
             artifacts/agent4-history/
             artifacts/agent4-accessibility/
             artifacts/agent4-desktop/
+            artifacts/agent4-local-saved/
             artifacts/agent4-json/
           retention-days: 14
           if-no-files-found: warn
