@@ -23,7 +23,7 @@ const initial={
   lightDirection:'top-right',stripeShadowStrength:64,stripeShadowSoftness:57,
   textureLayer2Enabled:true,material2:'foil',textureStrength2:73,
   textureScale2:52,dividerColor:'black',dividerWidth:23,
-  individuality:55,overridePatternHomogeneity:54,
+  individuality:55,overridePatternHomogeneity:true,
   radialMode:'pinwheel',rayTwist:43,regionMode:'nested',regionSides:8,
   lockedSettings:[]
 };
@@ -131,7 +131,10 @@ for(const variant of variants){
       assert.equal(await dependent.getAttribute('data-inactive'),'false');
       assert.equal(await dependent.isDisabled(),true,
         journey.id+': recovered source lock was forgotten');
-      assert.equal(await dependent.inputValue(),String(original),
+      if(await dependent.getAttribute('type')==='checkbox')
+        assert.equal(await dependent.isChecked(),Boolean(original),
+          journey.id+': restored original checkbox value not displayed');
+      else assert.equal(await dependent.inputValue(),String(original),
         journey.id+': restored source value not displayed');
       assert.equal(await lock.isEnabled(),true,
         journey.id+': a revived setting must allow unlocking');
