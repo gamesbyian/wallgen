@@ -12,6 +12,7 @@ import {randomizeScope} from './scoped-random.js';
 import {newInteriorElementId,INTERIOR_LIMITS,resolveInteriorSelection,interiorTargetSummary,resolveInteriorFocusTarget,interiorSliderStep} from './interior-elements.js';
 import {STYLE_PRESETS} from './editor-schema.js?v=20261018-icons2';
 import {installExplorationHistory} from './exploration-history.js';
+import {parseStoredFavorites} from './favorites-store.js';
 import {iconMarkup,setIconSource,hydrateStaticIcons} from './ui-icons.js';
 
 const form = document.getElementById('controls');
@@ -124,11 +125,8 @@ function undo(){
 }
 
 function readFavorites() {
-  try {
-    const data = JSON.parse(localStorage.getItem(FAVORITES_KEY) || '[]');
-    if(!Array.isArray(data)) return [];
-    return data.slice(0,60).map(normalizeRecipe);
-  } catch { return []; }
+  try {return parseStoredFavorites(localStorage.getItem(FAVORITES_KEY));}
+  catch {return [];} // Storage access can be denied independently of parsing.
 }
 function saveFavorites() {
   try { localStorage.setItem(FAVORITES_KEY,JSON.stringify(favorites)); } catch { showNotice('Browser storage unavailable; favourites last for this visit.'); }
