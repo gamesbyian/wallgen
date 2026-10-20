@@ -52,11 +52,18 @@ try{
         const r=document.querySelector('#preview').getBoundingClientRect();
         const overlay=document.querySelector('#drawOverlay').getBoundingClientRect();
         const pos={x:r.left+p[0]*r.width,y:r.top+p[1]*r.height};
+        const hit=document.elementFromPoint(pos.x,pos.y);
+        const panel=document.querySelector('#drawPathPanel');
         return {...pos,visible:!document.querySelector('#drawOverlay').hidden,
           inOverlay:pos.x>=overlay.left&&pos.x<=overlay.right&&
-            pos.y>=overlay.top&&pos.y<=overlay.bottom};
+            pos.y>=overlay.top&&pos.y<=overlay.bottom,
+          hitOriginalOverlay:hit?.id==='drawOverlay',
+          occludedByPanel:!!(hit===panel||panel.contains(hit)),
+          topHitId:hit?.id||''};
       },source.customPath[3]);
       assert.ok(position.visible&&position.inOverlay,'Projected pinned anchor absent');
+      assert.ok(position.hitOriginalOverlay&&!position.occludedByPanel,
+        'Draw anchor is physically obscured: '+JSON.stringify(position));
       await page.mouse.click(position.x,position.y);
       assert.equal(await page.locator('#drawCornerPoint').isDisabled(),false,
         'Actual overlay anchor click did not select the pinned interior node');
