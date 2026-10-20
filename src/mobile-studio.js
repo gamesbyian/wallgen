@@ -90,13 +90,21 @@ tools.addEventListener('focusin',event=>{
   if(!mobile.matches||tools.hidden)return;
   const el=event.target;
   if(!(el instanceof HTMLElement)||!tools.contains(el))return;
-  const viewport=tools.getBoundingClientRect(),rect=el.getBoundingClientRect();
-  const header=tools.querySelector('.mobile-sheet-head');
-  const top=Math.min(viewport.bottom-8,
-    Math.max(viewport.top,header?.getBoundingClientRect().bottom||viewport.top)+8);
-  const bottom=viewport.bottom-8;
-  if(rect.bottom>bottom)tools.scrollTop+=rect.bottom-bottom;
-  else if(rect.top<top)tools.scrollTop-=top-rect.top;
+  const ensureVisible=()=>{
+    if(!mobile.matches||tools.hidden||document.activeElement!==el)return;
+    const viewport=tools.getBoundingClientRect(),rect=el.getBoundingClientRect();
+    const header=tools.querySelector('.mobile-sheet-head');
+    const top=Math.min(viewport.bottom-8,
+      Math.max(viewport.top,header?.getBoundingClientRect().bottom||viewport.top)+8);
+    const bottom=viewport.bottom-8;
+    if(rect.bottom>bottom)tools.scrollTop+=rect.bottom-bottom;
+    else if(rect.top<top)tools.scrollTop-=top-rect.top;
+  };
+  // Native focus scroll can happen *after* focusin and undo our initial
+  // correction. Recheck on the following frame without stealing focus,
+  // changing the source control, or moving the fixed dock.
+  ensureVisible();
+  requestAnimationFrame(ensureVisible);
 });
 
 let lastFocus=null;
