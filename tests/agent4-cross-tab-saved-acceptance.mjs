@@ -51,7 +51,10 @@ try{
     'favourite');
   // Switch favourites while another tab is still painting a populated Saved
   // contact sheet. The final view must not regain stale thumbnail cards.
+  await b.locator('#mobileStudio').click();
   await b.locator('#mobileSaved').click();
+  await b.waitForFunction(()=>document.querySelector('#mobileSaved')
+    ?.getAttribute('aria-current')==='page');
   const many=Array.from({length:30},(_,i)=>normalizeRecipe({
     seed:'a4-stale-tab-'+i,structure:i%2?'regions':'radial',
     regionMode:'nested',radialMode:'pinwheel'
@@ -60,9 +63,24 @@ try{
     localStorage.setItem(storageKey,JSON.stringify(items)),[key,many]);
   await a.evaluate(([storageKey,items])=>
     localStorage.setItem(storageKey,JSON.stringify(items)),[key,[first,second]]);
-  await b.waitForFunction(()=>document.querySelector('#gallery')?.dataset.view==='saved'
-    && document.querySelector('#gallery').getAttribute('aria-busy')!=='true'
-    && document.querySelectorAll('#gallery .thumb').length===2);
+  try{
+    await b.waitForFunction(()=>document.querySelector('#gallery')?.dataset.view==='saved'
+      && document.querySelector('#gallery').getAttribute('aria-busy')!=='true'
+      && document.querySelectorAll('#gallery .thumb').length===2,null,{timeout:12000});
+  }catch(error){
+    const state=await b.evaluate(()=>({
+      mode:document.querySelector('#gallery')?.dataset.view,
+      busy:document.querySelector('#gallery')?.getAttribute('aria-busy'),
+      dock:document.querySelector('#mobileActionDock [aria-current="page"]')?.id,
+      panelOpen:document.body.classList.contains('mobile-gallery-open'),
+      seeds:[...document.querySelectorAll('#gallery .thumb')].map(c=>c.dataset.recipeSeed),
+      favoriteCount:document.querySelector('#favoriteCount')?.textContent,
+      localSeeds:JSON.parse(localStorage.getItem('wallgen:favorites:v1')||'[]')
+        .map(recipe=>recipe.seed)
+    }));
+    console.error('AGENT4_TWO_TAB_RACE_DIAGNOSTIC',JSON.stringify(state));
+    throw error;
+  }
   assert.deepEqual(await b.locator('#gallery .thumb').evaluateAll(cards=>
     cards.map(c=>c.dataset.recipeSeed)),[first.seed,second.seed],
     'Cancelled thumbnail batch contaminated remote Saved updates');
