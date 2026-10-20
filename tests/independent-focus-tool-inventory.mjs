@@ -100,8 +100,7 @@ try{
      }else{
       for(const source of ranges){
        step='parameter '+category.id+'/'+tool.id+'/'+source.key;
-       const chip=chips.filter({hasText:''}).and(page.locator(
-         '.editor-focus-chip[data-focus-key="'+source.key+'"]'));
+       const chip=page.locator('.editor-focus-chip[data-focus-key="'+source.key+'"]');
        assert.equal(await chip.count(),1,step+' parameter chip missing');
        await chip.click();
        assert.equal(await chip.getAttribute('aria-pressed'),'true',step+' selection');
