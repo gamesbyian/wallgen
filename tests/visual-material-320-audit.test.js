@@ -24,7 +24,8 @@ test('320px full rotation row is supported by source-owned, width-gated four col
   assert.match(tiny,/grid-template-columns:50px minmax\(0,1fr\) 24px 24px!important/);
   assert.match(tiny,/\.texture-rotation-field>span/);
   assert.match(live,/cells\.length!==6\|\|cells\.some/);
-  assert.match(live,/!cell\.centerTarget\|\|cell\.x<frame\.x-1\|\|cell\.right>frame\.right\+1/);
+  assert.match(live,/!cell\.centerTarget\|\|cell\.width<24\|\|cell\.height<24/);
+  assert.match(live,/cell\.x<frame\.x-1\|\|cell\.right>frame\.right\+1/);
 });
 test('320px Explore uses a bounded portrait-only tray increase, keeping complete thumbnails',()=>{
   const css=readFileSync('studio-themes.css','utf8');
