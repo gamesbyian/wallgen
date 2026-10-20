@@ -967,3 +967,25 @@ html[data-theme="cream"] body.mobile-studio .sidebar .settings-tabs .settings-ta
     max-height:29px!important;box-sizing:border-box!important;
   }
 }
+
+/* Issue #276: the desktop handoff leaves the source slider in a narrow
+   inline label + stepper column. At 791–899px, put the existing label above
+   its unchanged native slider, number input, steppers, die and lock. Do not
+   affect mobile (<=790px), the four-column Material rotation control or
+   wider desktop where the inline row has adequate room. */
+@media (min-width:791px) and (max-width:899px){
+  .editor-tool-card .field.range-field:not(.texture-rotation-field){
+    display:flex;flex-direction:column;align-items:stretch;gap:3px;
+    min-width:0;
+  }
+  .editor-tool-card .field.range-field:not(.texture-rotation-field)>span{
+    flex:0 0 auto;width:auto;max-width:100%;white-space:normal;
+  }
+  .editor-tool-card .field.range-field:not(.texture-rotation-field)>.stepper{
+    display:flex;align-items:center;min-width:0;width:100%;
+    flex:0 0 auto;
+  }
+  .editor-tool-card .field.range-field:not(.texture-rotation-field)>.stepper>input[type=range]{
+    flex:1 1 auto;min-width:0;width:auto;
+  }
+}
