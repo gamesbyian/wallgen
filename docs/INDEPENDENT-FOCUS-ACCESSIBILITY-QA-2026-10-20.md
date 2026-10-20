@@ -183,3 +183,27 @@ version is bumped so cached clients receive the repair.
 across the same 24-state browser matrix at a post-fix head. Diagnostic
 `incomplete` nodes now retain target selectors for manual review;
 automated success cannot qualify physical TalkBack or full WCAG.
+
+## First fully passing post-repair browser checkpoint
+
+**Verified commit:** `f37e9f176e6e8864d0f936a1749712f2689fac6a`
+
+**Run:** [39395495847](https://github.com/gamesbyian/wallgen/actions/runs/39395495847),
+all steps **success**. Decoded GitHub job log confirms:
+- **30** successful opt-in Focus/All cases: 320×700 narrow phone,
+  412×892 portrait, 700×412 short landscape × two themes × five
+  Path/Material/Colour scenarios.
+- **4** successful dynamic transitions with original Material lock/unlock,
+  responsive desktop/media handoff, Colour empty mode and motion changes.
+- **8** source-exact independent candidate SVG checks, **192 render samples**.
+- **24** independent axe-core WCAG 2.x browser scans across Studio,
+  Material Edit, Focus Edit, Explore, Saved and expanded More, two
+  viewports and both themes. **Zero automated rule violations** after
+  the two targeted cream-text repairs, compared with earlier
+  **7 zoom-label violations** and separately observed **More labels
+  as low as 1.60:1**.
+
+This qualifies only the automated checks and exact tested source head.
+Automated axe completion is not a substitute for complete WCAG
+conformance, TalkBack/VoiceOver interaction, independent human A/B
+preference or physical touch-device use. Entries **2, 11, 15 remain open**.
