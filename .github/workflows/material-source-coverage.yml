@@ -1,0 +1,46 @@
+name: Material source controls live acceptance
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'tests/material-source-coverage-browser.mjs'
+      - 'src/app.js'
+      - 'src/model.js'
+      - 'src/editor-*.js'
+      - '.github/workflows/material-source-coverage.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  live-material-controls:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify executable and model
+        run: |
+          node --check tests/material-source-coverage-browser.mjs
+          node --test tests/material-three-layer-adversarial.test.js
+      - run: npm install --no-save playwright@1.56.1 serve@14.2.5
+      - run: npx playwright install --with-deps chromium
+      - name: Serve source
+        run: |
+          npx serve . -l 4173 >/tmp/material-source-browser.log 2>&1 &
+          for i in $(seq 1 40); do curl -fsS http://127.0.0.1:4173/ >/dev/null && exit 0; sleep 1; done
+          cat /tmp/material-source-browser.log
+          exit 1
+      - name: Exercise native coverage blend zero strength locks and optional layers
+        run: node tests/material-source-coverage-browser.mjs
+      - name: Retain exact source screenshots and failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: material-source-browser-coverage
+          path: artifacts/material-live-coverage/
+          retention-days: 14
+          if-no-files-found: warn
