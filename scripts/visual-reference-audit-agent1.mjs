@@ -75,6 +75,20 @@ const profiles=[
   {id:'zoom-out-412x892',width:412,height:892,cases:['studio','geometry','more'],zoom:.75}
 ];
 const errors=[],shots=[];
+const sourceProvenance={
+  checkedOutCommit:process.env.GITHUB_SHA||null,
+  pullRequestHeadCommit:process.env.SOURCE_PR_HEAD_SHA||null,
+  pullRequestBaseCommit:process.env.SOURCE_PR_BASE_SHA||null,
+  ref:process.env.GITHUB_REF||null,
+  repository:process.env.GITHUB_REPOSITORY||null,
+  runId:process.env.GITHUB_RUN_ID||null,
+  runAttempt:process.env.GITHUB_RUN_ATTEMPT||null,
+  runUrl:process.env.GITHUB_REPOSITORY&&process.env.GITHUB_RUN_ID?
+    'https://github.com/'+process.env.GITHUB_REPOSITORY+
+    '/actions/runs/'+process.env.GITHUB_RUN_ID:null,
+  method:'real Chromium source checkout',
+  approval:'evidence only; human optical approval outstanding'
+};
 const pause=ms=>new Promise(done=>setTimeout(done,ms));
 // Cards are inserted before their async bitmap work finishes. A real
 // screenshot must never certify an allocated-but-unpainted <canvas>.
@@ -657,7 +671,10 @@ if(errors.length===0){
     await copyFile(join(output,screenshot.file),join(output,imagePath));
     implementationPlates.push({screen:screenshot.screen,theme:screenshot.theme,
       source:screenshot.file,image:imagePath,
-      sourceCommit:process.env.GITHUB_SHA||'local checkout (see script invocation)',
+      sourceCommit:sourceProvenance.checkedOutCommit||'local checkout (see script invocation)',
+      headCommit:sourceProvenance.pullRequestHeadCommit,
+      baseCommit:sourceProvenance.pullRequestBaseCommit,
+      runUrl:sourceProvenance.runUrl,
       viewport:'412×892 native CSS Chromium',plate:plates[screenshot.screen],
       review:'evidence only; human optical approval outstanding'});
   }
@@ -667,7 +684,9 @@ if(errors.length===0){
   }else{
     const realCards=implementationPlates.map(s=>'<article><h2>'+s.screen+' / '+s.theme+
       '</h2><figure><img src="'+s.image.split('/').pop()+'" alt="Actual implemented '+s.screen+
-      ' screen in '+s.theme+'"></figure><p>Source screenshot: '+s.source+'</p></article>').join('');
+      ' screen in '+s.theme+'"></figure><p>Source screenshot: '+s.source+'</p>'+
+      '<p>Tested checkout '+(s.sourceCommit||'local')+
+      '; PR head '+(s.headCommit||'local')+'</p></article>').join('');
     await writeFile(join(output,'implemented-plates','index.html'),
       '<!doctype html><html lang="en"><meta charset="utf-8"><title>Live ROYGBIV implementation plates</title>'+
       '<style>body{font:14px system-ui;background:#f7f2eb;color:#18151f;margin:20px}'+
@@ -680,7 +699,8 @@ if(errors.length===0){
   }
 }
 await writeFile(join(output,'manifest.json'),JSON.stringify({
-  source:'git checkout used by Action',plateSource:'docs/ui-reference',profiles,shots,errors,
+  source:'git checkout used by Action',sourceProvenance,
+   plateSource:'docs/ui-reference',profiles,shots,errors,
   iconCandidates:iconFindings,iconScreenshots:iconShots,implementationPlates,notes:[
     'No visual/human sign-off inferred from passing geometry or screenshot capture',
     'Candidate icon matrix lives at assets/icons/roygbiv/state-matrix.html',
