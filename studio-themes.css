@@ -474,3 +474,16 @@ html[data-theme="dark"] .gallery-placeholder>span{color:#c5becf}
     display:none;
   }
 }
+
+/* Actual 320x700 keyboard traversal reached metadata Description with its
+   center beneath the fixed dock. The More sheet must scroll focused form
+   controls fully clear of its reserved bottom edge instead of allowing a
+   partially visible textarea to count as keyboard accessible. */
+@media(max-width:790px){
+  body.mobile-studio.mobile-tools-open .mobile-utility-sheet:not([hidden]){
+    scroll-padding-block:12px 70px;
+  }
+  body.mobile-studio.mobile-tools-open .mobile-utility-sheet :is(input,textarea,select,button):focus-visible{
+    scroll-margin-block:12px 70px;
+  }
+}
