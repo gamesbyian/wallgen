@@ -20,6 +20,7 @@ on:
       - 'tests/redesign-fresh-draw-gesture.mjs'
       - 'tests/redesign-editor-focus-ab.mjs'
       - 'tests/redesign-draw-advanced-acceptance.mjs'
+      - 'tests/redesign-crossing-pixels.mjs'
       - 'tests/redesign-draw-geometry-matrix.test.js'
       - '.github/workflows/agent3-mobile-acceptance.yml'
       - 'docs/ui-reference/source-control-inventory.json'
@@ -62,7 +63,8 @@ jobs:
             tests/redesign-draw-real-transaction.mjs \
             tests/redesign-fresh-draw-gesture.mjs \
             tests/redesign-editor-focus-ab.mjs \
-            tests/redesign-draw-advanced-acceptance.mjs; do
+            tests/redesign-draw-advanced-acceptance.mjs \
+            tests/redesign-crossing-pixels.mjs; do
             node --check "$test"
           done
           node --test \
@@ -72,7 +74,7 @@ jobs:
             tests/interior-selected-id.test.js \
             tests/material-three-layer-adversarial.test.js \
             tests/redesign-draw-geometry-matrix.test.js
-      - name: One Chromium/browser install for sixteen acceptance suites
+      - name: One Chromium/browser install for seventeen acceptance suites
         run: |
           npm install --no-save playwright@1.56.1 serve@14.2.5
           npx playwright install --with-deps chromium
@@ -85,7 +87,7 @@ jobs:
           done
           cat /tmp/agent3-consolidated.log
           exit 1
-      - name: Exercise all sixteen independently authored browser gates
+      - name: Exercise all seventeen independently authored browser gates
         run: |
           status=0
           for test in \
@@ -104,7 +106,8 @@ jobs:
             tests/redesign-draw-real-transaction.mjs \
             tests/redesign-fresh-draw-gesture.mjs \
             tests/redesign-editor-focus-ab.mjs \
-            tests/redesign-draw-advanced-acceptance.mjs; do
+            tests/redesign-draw-advanced-acceptance.mjs \
+            tests/redesign-crossing-pixels.mjs; do
             echo "::group::$test"
             node "$test" || status=1
             echo "::endgroup::"
@@ -132,5 +135,6 @@ jobs:
             artifacts/agent3-fresh-draw/
             artifacts/agent3-editor-focus-ab/
             artifacts/agent3-advanced-draw/
+            artifacts/agent3-crossing-pixels/
           retention-days: 14
           if-no-files-found: warn
