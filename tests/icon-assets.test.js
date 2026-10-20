@@ -63,7 +63,11 @@ test('runtime SVGs preserve theme inheritance and the entire canonical icon inve
   for(const name of names){
     const markup=iconMarkup(name);
     assert.ok(markup.includes('data-roygbiv-icon="'+name+'"'));
-    assert.ok(markup.includes('stroke="currentColor"'));
+    // The 120x120 brand uses explicit source strokes, unlike the 67
+    // currentColor UI glyphs. Inheriting a theme border around the brand
+    // rectangle would visibly change the approved canonical artwork.
+    if(name==='app-icon')assert.ok(markup.includes('stroke="none"'));
+    else assert.ok(markup.includes('stroke="currentColor"'));
     assert.ok(!markup.includes('<img'));
     assert.ok(iconSrc(name).endsWith('/'+name+'.svg'));
   }
