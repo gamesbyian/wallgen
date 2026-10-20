@@ -426,16 +426,18 @@ try{
       assert.equal(await field.isDisabled(),false,scenario.name+': live '+key+' disabled');
       assert.equal(await field.getAttribute('data-inactive'),'false');
     }
-    const census=await page.locator('#controls [data-setting]').evaluateAll(nodes=>
+    const census=await page.locator('[data-setting]').evaluateAll(nodes=>
       nodes.map(el=>({
-        name:el.dataset.setting,inactive:el.dataset.inactive==='true',
+        name:el.dataset.setting,insideSourceForm:el.closest('form')?.id==='controls',
+        formOwner:el.form?.id||null,inactive:el.dataset.inactive==='true',
         flag:el.dataset.inactive,disabled:el.disabled,
         kind:el.type,tag:el.tagName,value:el.value,checked:el.checked,
         hasDormantOption:!!el.querySelector?.('option[data-inactive-placeholder]'),
         rowDormant:el.closest('.lockable-setting')?.classList.contains('setting-inactive'),
         lockDisabled:el.closest('.lockable-setting')?.querySelector('.setting-lock')?.disabled
       })));
-    assert.equal(census.length,87,scenario.name+': original source count');
+    assert.equal(census.length,87,scenario.name+': original source count; '+
+      JSON.stringify(census.map(x=>x.name)));
     assert.equal(new Set(census.map(x=>x.name)).size,87,
       scenario.name+': duplicate original source key');
     for(const field of census){
@@ -459,6 +461,7 @@ try{
         assert.equal(field.lockDisabled,true,scenario.name+': inactive lock '+field.name);
     }
     sourceCensus.push({scenario:scenario.name,
+      outsideForm:census.filter(x=>!x.insideSourceForm).map(x=>({key:x.name,form:x.formOwner})),
       active:census.filter(x=>!x.inactive).map(x=>x.name),
       inactive:census.filter(x=>x.inactive).map(x=>x.name)});
     record('conditional-'+scenario.name,{dormant:scenario.dormant,
