@@ -361,10 +361,10 @@ try{
       regionSides:8,regionJitter:45},dormant:['regionJitter'],active:['regionSides']},
     {name:'regions-voronoi',overrides:{structure:'regions',regionMode:'voronoi',
       regionSides:8,regionJitter:45},dormant:['regionSides'],active:['regionJitter']},
-    {name:'lighting-off',overrides:{lightingMood:'off',lightDirection:48,
+    {name:'lighting-off',overrides:{lightingMood:'off',lightDirection:'top-right',
       lightStrength:68,shadowStrength:47},
       dormant:['lightDirection','lightStrength','shadowStrength'],active:[]},
-    {name:'lighting-zero',overrides:{lightingMood:'natural',lightDirection:48,
+    {name:'lighting-zero',overrides:{lightingMood:'daylight',lightDirection:'top-right',
       lightStrength:0,shadowStrength:0},dormant:['lightDirection'],
       active:['lightStrength','shadowStrength']}
   ];
