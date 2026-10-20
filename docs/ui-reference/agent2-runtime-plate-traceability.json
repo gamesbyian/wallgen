@@ -73,7 +73,7 @@
       "plate": "studio",
       "kind": "required",
       "claim": "Side Zoom + and Zoom −",
-      "sourceCandidate": "[data-view-zoom]",
+      "sourceCandidate": "[data-zoom=in],[data-zoom=out]",
       "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
       "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
       "evidenceCandidates": [
@@ -87,7 +87,7 @@
       "plate": "studio",
       "kind": "required",
       "claim": "Side Fit / full frame",
-      "sourceCandidate": "[data-view-fit]",
+      "sourceCandidate": "[data-zoom=fit]",
       "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
       "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
       "evidenceCandidates": [
@@ -199,7 +199,7 @@
       "plate": "studio",
       "kind": "conditional",
       "claim": "Viewport zoom readout only on action",
-      "sourceCandidate": "#viewZoomStatus",
+      "sourceCandidate": ".mobile-zoom-level",
       "applicableState": "Trigger both applicable and dormant/hidden values; negative case required",
       "exercise": "User action plus negative state, focus/hit test, screenshot and normalized recipe comparison",
       "evidenceCandidates": [
@@ -1515,7 +1515,7 @@
       "plate": "colour",
       "kind": "required",
       "claim": "Flat nonrepeating ROYGBIV slider colours per panel",
-      "sourceCandidate": ".rainbow-slider,.slider-number",
+      "sourceCandidate": "input[type=range][data-setting]",
       "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
       "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
       "evidenceCandidates": [
@@ -1930,7 +1930,7 @@
       "plate": "focus",
       "kind": "required",
       "claim": "Clearly marked OPTIONAL experiment",
-      "sourceCandidate": ".editor-focus-entry",
+      "sourceCandidate": ".editor-focus-toggle",
       "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
       "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
       "evidenceCandidates": [
@@ -1943,7 +1943,7 @@
       "plate": "focus",
       "kind": "required",
       "claim": "Selected category and parameter name",
-      "sourceCandidate": ".editor-focus-panel",
+      "sourceCandidate": "#editorFocusPanel",
       "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
       "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
       "evidenceCandidates": [
@@ -1969,7 +1969,7 @@
       "plate": "focus",
       "kind": "required",
       "claim": "One large slider with numeric value",
-      "sourceCandidate": ".editor-focus-slider",
+      "sourceCandidate": ".editor-focus-slider,.editor-focus-value",
       "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
       "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
       "evidenceCandidates": [
@@ -1982,7 +1982,7 @@
       "plate": "focus",
       "kind": "required",
       "claim": "Increment/decrement and lock action",
-      "sourceCandidate": ".editor-focus-step,.editor-focus-lock",
+      "sourceCandidate": ".editor-focus-step,.setting-lock",
       "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
       "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
       "evidenceCandidates": [
@@ -1995,7 +1995,7 @@
       "plate": "focus",
       "kind": "required",
       "claim": "Return to All controls without losing data",
-      "sourceCandidate": ".editor-focus-exit",
+      "sourceCandidate": ".editor-focus-all",
       "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
       "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
       "evidenceCandidates": [
@@ -2073,7 +2073,7 @@
       "plate": "focus",
       "kind": "conditional",
       "claim": "Default remains multi-row inspector",
-      "sourceCandidate": ".editor-focus-panel",
+      "sourceCandidate": ".editor-focus-help",
       "applicableState": "Trigger both applicable and dormant/hidden values; negative case required",
       "exercise": "User action plus negative state, focus/hit test, screenshot and normalized recipe comparison",
       "evidenceCandidates": [
@@ -2164,7 +2164,7 @@
       "plate": "history",
       "kind": "required",
       "claim": "Visible Back to tool action",
-      "sourceCandidate": "#editorHistoryBack",
+      "sourceCandidate": ".editor-history-close",
       "applicableState": "Named plate and matching recipe; some controls are intentionally dormant in other structures",
       "exercise": "Navigate to live destination, operate or inspect source candidate; test focus/hit and return",
       "evidenceCandidates": [
