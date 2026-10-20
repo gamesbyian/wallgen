@@ -554,3 +554,13 @@ html[data-theme=cream] .metadata-fields label{
     color:#625b6c;
   }
 }
+
+/* The original stylesheet scopes gallery copy under
+   .workspace > .gallery-section .gallery-head p (higher specificity than
+   the generic cream gallery correction). Match that source structure so
+   the measured 2.63:1 description actually receives compliant text ink. */
+@media(min-width:791px){
+  html[data-theme="cream"] .workspace > .gallery-section .gallery-head p{
+    color:#625b6c;
+  }
+}
