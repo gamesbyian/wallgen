@@ -46,6 +46,10 @@ try{
      await page.evaluate(t=>localStorage.setItem('roygbiv:studio-theme:v1',t),theme);
      await page.reload({waitUntil:'domcontentloaded'});
      await state.enter(page);
+     // Confirm these named source groups have a computed accessible role/name.
+     assert.equal(await page.getByRole('group',{name:'Generation shortcuts'}).count(),1);
+     if(state.name==='more-metadata')
+       assert.equal(await page.getByRole('group',{name:'Position the composition'}).count(),1);
      await page.addScriptTag({content:axe.source});
      const audit=await page.evaluate(async()=>window.axe.run(document,{
        runOnly:{type:'tag',values:['wcag2a','wcag2aa','wcag21a','wcag21aa']},
@@ -78,5 +82,8 @@ try{
  assert.equal(findings.length,24,'Missing an axe state or viewport sample');
  const total=findings.reduce((n,x)=>n+x.violations.length,0);
  assert.equal(total,0,'WCAG automated violation regression: inspect preserved axe evidence');
+ const unnamedRoleLabels=findings.flatMap(x=>x.incomplete.filter(v=>v.id==='aria-prohibited-attr'));
+ assert.deepEqual(unnamedRoleLabels,[],
+   'An aria-label on an unnamed semantic container still needs a valid role');
  console.log('INDEPENDENT_AXE_AUDIT_RECORDED');
 }finally{await browser.close();}
