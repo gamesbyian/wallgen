@@ -14,8 +14,8 @@ const out=resolve(process.env.ROYGBIV_EDITOR_AB_OUT||'artifacts/agent3-editor-fo
 await mkdir(out,{recursive:true});
 const browser=await chromium.launch({headless:true});
 const evidence=[],failures=[];
-async function setup(recipe,category,tool){
-  const page=await browser.newPage({viewport:{width:412,height:892},
+async function setup(recipe,category,tool,width,height){
+  const page=await browser.newPage({viewport:{width,height},
     isMobile:true,hasTouch:true,reducedMotion:'reduce'});
   page.setDefaultTimeout(18000);
   await page.goto(origin+'/?r='+encodeRecipe(normalizeRecipe(recipe)),
@@ -37,9 +37,10 @@ function expectedDelta(before,after,key,delta){
     'Changing '+key+' contaminated another recipe field');
 }
 async function capture(page,name){
-  await page.screenshot({path:join(out,name+'.png'),animations:'disabled'});
+  await page.screenshot({path:join(out,name+'-'+page.viewportSize().width+'x'+page.viewportSize().height+'.png'),animations:'disabled'});
 }
 try{
+  for(const [width,height] of [[412,892],[700,412]]){
   // Same initial recipe and same one-step intent in both interfaces.
   for(const item of [
     {name:'path-depth',category:'path',tool:'geometry',key:'shapeDepth',
@@ -50,7 +51,7 @@ try{
   ]){
     let full,one;
     try{
-      full=await setup(item.base,item.category,item.tool);
+      full=await setup(item.base,item.category,item.tool,width,height);
       const original=current(full);
       const field=card(full).locator('input[type="range"][name="'+item.key+'"]');
       assert.ok(await field.isVisible(),'Full inspector missing '+item.key);
@@ -63,7 +64,7 @@ try{
       expectedDelta(original,fullResult,item.key,increment);
       await capture(full,item.name+'-all');
 
-      one=await setup(item.base,item.category,item.tool);
+      one=await setup(item.base,item.category,item.tool,width,height);
       assert.deepEqual(current(one),original,'A/B starting recipes differ');
       await focus(one).click();
       assert.equal(await focus(one).getAttribute('aria-pressed'),'true');
@@ -81,7 +82,7 @@ try{
       assert.equal(await fieldOn(one,item.key).isVisible(),true,
         'All controls did not restore the original field');
       assert.deepEqual(current(one),fullResult,'Leaving Focus changed the recipe');
-      evidence.push({journey:item.name,field:item.key,step:increment,
+      evidence.push({viewport:[width,height],journey:item.name,field:item.key,step:increment,
         fullActionsAfterTool:['focus source slider','ArrowRight'],
         focusActionsAfterTool:['Focus','choose source parameter','+'],
         fullGestures:2,focusGestures:3,recipesIdentical:true,
@@ -91,7 +92,7 @@ try{
   // A contextually inactive Path scalar is selectable but cannot be edited.
   {
     const p=await setup({seed:'a3-ab-inactive',geometry:'straight',
-      shapeDepth:44},'path','geometry');
+      shapeDepth:44},'path','geometry',width,height);
     try{
       const before=current(p);
       const source=card(p).locator('input[name="shapeDepth"]');
@@ -108,7 +109,7 @@ try{
       assert.equal(await p.locator('.editor-focus-step[aria-label="Increase focused parameter"]').isDisabled(),true);
       assert.deepEqual(current(p),before,'Inactive Focus control changed saved value');
       await capture(p,'path-inactive-focus');
-      evidence.push({journey:'path-inactive',sourceDisabled:true,focusDisabled:true,
+      evidence.push({viewport:[width,height],journey:'path-inactive',sourceDisabled:true,focusDisabled:true,
         help:'contextually inactive',recipeUnchanged:true});
     }finally{await p.close();}
   }
@@ -117,7 +118,7 @@ try{
   {
     const p=await setup({seed:'a3-ab-locked',material:'linen',
       textureStrength:63,lockedSettings:['textureStrength']},
-      'material','finish1');
+      'material','finish1',width,height);
     try{
       const before=current(p);
       assert.equal(await card(p).locator('input[name="textureStrength"]').isDisabled(),true);
@@ -133,7 +134,7 @@ try{
       assert.equal(await card(p).locator('input[name="textureStrength"]').isDisabled(),true);
       assert.deepEqual(current(p),before,'Focus exit bypassed Material lock');
       await capture(p,'material-locked-all');
-      evidence.push({journey:'material-locked',originalLock:true,
+      evidence.push({viewport:[width,height],journey:'material-locked',originalLock:true,
         focusLock:true,recipeUnchanged:true,allExitRetained:true});
     }finally{await p.close();}
   }
@@ -141,7 +142,7 @@ try{
   // say so and provide a real return route, leaving source controls usable.
   {
     const p=await setup({seed:'a3-ab-colour',palette:'classic',
-      reverseStripes:false},'colour','rainbow');
+      reverseStripes:false},'colour','rainbow',width,height);
     try{
       const before=current(p);
       await focus(p).click();
@@ -155,14 +156,15 @@ try{
       const checkbox=card(p).locator('input[name="reverseStripes"]');
       await checkbox.check();
       assert.deepEqual(current(p),normalizeRecipe({...before,reverseStripes:true}));
-      evidence.push({journey:'colour-nonrange',focusEmpty:true,
+      evidence.push({viewport:[width,height],journey:'colour-nonrange',focusEmpty:true,
         otherControlsAvailableAfterExit:true,colourChangeSaved:true});
     }finally{await p.close();}
+  }
   }
 }catch(e){failures.push({message:String(e),stack:e.stack});throw e;}
 finally{
   await writeFile(join(out,'evidence.json'),JSON.stringify({
-    baseline:'latest main, real Chromium 412x892',
+    baseline:'latest main, real Chromium 412x892 and 700x412',
     classification:failures.length?'NOT VERIFIED':'bounded A/B behavior verified',
     recommendation:'Retain All controls by default pending human comparative usability testing.',
     limitations:['Interaction count is an operational proxy, not user preference.',
