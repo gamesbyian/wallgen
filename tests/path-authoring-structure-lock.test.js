@@ -63,8 +63,8 @@ test('real entry, lock-sync, async image Apply and detected angle all enforce th
   assert.match(draw,/button\.disabled=!!drawAuthoringLockReason\(recipe\)/);
   assert.match(image,/launch\.disabled=!!drawAuthoringLockReason\(recipe\)/);
   const gateCalls=image.match(/drawAuthoringLockReason\(getRecipe\(\)\)/g)||[];
-  assert.equal(gateCalls.length,3,
-    'image selection launch, async load, and actual Apply each recheck locks');
+  assert.equal(gateCalls.length,4,
+    'image selection launch, async load, Choose another and actual Apply each recheck locks');
   assert.match(image,/status\.textContent=drawAuthoringLockMessage\(blocked\)/);
   assert.match(app,/pathStructureLockedOutsidePaths\(base\)/,
     'detected angle cannot claim success on a locked Radial or Regions scene');

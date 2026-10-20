@@ -80,7 +80,14 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle}){
     if(!file)return;
     const revision=++loadRevision;
     const blocked=drawAuthoringLockReason(getRecipe());
-    if(blocked){onNotice(drawAuthoringLockMessage(blocked));return;}
+    if(blocked){
+      // A file selection is not an import when a lock disallows it. Clear
+      // the native input so retrying that SAME file after unlocking emits
+      // another change event, rather than silently doing nothing.
+      fileInput.value='';
+      onNotice(drawAuthoringLockMessage(blocked));
+      return;
+    }
     if(!dialog.open)dialog.showModal();
     setPhase('analyzing');
     working=true;apply.disabled=true;angleButton.disabled=true;another.disabled=true;chooser.disabled=true;
@@ -128,7 +135,11 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle}){
   });
   fileInput.addEventListener('change',()=>{void load(fileInput.files?.[0]);});
   chooser.addEventListener('change',()=>choose(Number(chooser.value)));
-  another.addEventListener('click',()=>fileInput.click());
+  another.addEventListener('click',()=>{
+    const blocked=drawAuthoringLockReason(getRecipe());
+    if(blocked){onNotice(drawAuthoringLockMessage(blocked));return;}
+    fileInput.click();
+  });
   closeButton.addEventListener('click',()=>dialog.close());
   canvas.addEventListener('pointerdown',event=>{
     if(!candidates.length)return;
