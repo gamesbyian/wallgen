@@ -28,7 +28,8 @@ try{
       await page.locator('#mobileMore').click();
       assert.equal(await page.evaluate(()=>document.activeElement?.id),'mobileToolsClose',
         'Opening More should start keyboard focus at visible close control');
-      const required=['seedInput','applySeed','batch','importRecipePNG',
+      // Generate 12 is an Explore-owned action, not part of the More sheet.
+      const required=['seedInput','applySeed','importRecipePNG',
         'metadataToggle','copyLink','copyRecipe','downloadRecipe'];
       const visited=new Set(),names=[];
       let metadataExpanded=false,ended=false;
