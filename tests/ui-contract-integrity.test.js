@@ -91,3 +91,38 @@ test('every qualified requirement points to available source and verification ev
       assert.ok(item.status.includes('not implemented')||item.status.includes('NOT implemented'));
   }
 });
+
+test('studio contract distinguishes serialized camera state from authored geometry',()=>{
+  const studio=spec.screens.find(screen=>screen.id==='studio');
+  assert.ok(studio,'Canonical Studio plate missing');
+  assert.match(spec.global.panStatus,/implemented/i,'Viewport Pan is no longer only proposed');
+  assert.match(spec.global.fitStatus,/implemented/i,'Fit is no longer only proposed');
+  assert.match(spec.global.cameraZoomState,/viewZoom=1/);
+  assert.match(spec.global.cameraZoomState,/viewPanX\/Y=0/);
+  assert.match(spec.global.cameraSemantics,/recipe\.viewZoom/);
+  assert.match(spec.global.cameraSemantics,/recipe\.positionX\/Y/);
+  assert.match(spec.global.cameraSemantics,/recipe\.viewPanX\/Y/);
+  assert.ok(studio.required.some(item=>/Viewport Pan/.test(item)));
+  assert.ok(studio.required.some(item=>/Fit/.test(item)));
+  assert.ok(studio.forbidden.some(item=>/authored geometry.*composition positionX\/Y/.test(item)),
+    'Camera may be saved in the recipe but must not alter authored geometry or output dimensions');
+  assert.ok(!studio.forbidden.some(item=>/^Recipe mutation from camera pan or zoom$/.test(item)),
+    'This obsolete prohibition contradicts the persisted viewZoom/viewPan camera fields');
+});
+
+test('canonical icon approval status agrees with actual 68-symbol source manifest',()=>{
+  const manifest=JSON.parse(read('assets/icons/roygbiv/manifest.json'));
+  const extensions=manifest.icons.filter(icon=>icon.extension==='canvas-first-v2');
+  const integrated=extensions.filter(icon=>icon.status==='integrated');
+  const candidates=extensions.filter(icon=>icon.status?.startsWith('candidate'));
+  assert.equal(manifest.icons.length,68);
+  assert.equal(extensions.length,12);
+  assert.deepEqual(integrated.map(icon=>icon.name).sort(),
+    ['edit-controls','export-png','fit-canvas','import-path']);
+  assert.deepEqual(candidates.map(icon=>icon.name).sort(),
+    ['anchor-points','extend-path','focus-slider','metadata','pan',
+      'restore-variation','smooth-path','weave']);
+  assert.ok(spec.notes.some(note=>/Four extension glyphs are integrated and eight remain unwired/.test(note)));
+  assert.ok(!integrated.some(icon=>icon.name==='pan'),
+    'Implemented viewport Pan action does not imply approval of candidate Pan icon');
+});
