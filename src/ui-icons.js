@@ -15,8 +15,9 @@ export function iconSrc(name){
 export function iconMarkup(name){
   if(!hasIcon(name))throw new RangeError('Unknown ROYGBIV icon: '+name);
   const size=name==='app-icon'?'120 120':'32 32';
+  const stroke=name==='app-icon'?'none':'currentColor';
   return '<svg xmlns="http://www.w3.org/2000/svg" class="ui-icon" data-roygbiv-icon="'+name+'"'+
-    ' viewBox="0 0 '+size+'" fill="none" stroke="currentColor" stroke-width="2.4"'+
+    ' viewBox="0 0 '+size+'" fill="none" stroke="'+stroke+'" stroke-width="2.4"'+
     ' stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'+
     DRAWINGS[name]+'</svg>';
 }
