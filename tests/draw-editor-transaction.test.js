@@ -745,3 +745,60 @@ test('image-imported two-node path Re-smooth keeps its exact uncommitted geometr
     assert.deepEqual(f.recipe,f.snap);
   }finally{f.cleanup();}
 });
+
+test('Drawn scratch stroke loses fit source after Edit points then Hide points',()=>{
+  const f=fixture({seed:'fresh-edited-no-refit',structure:'paths',
+    geometry:'wave',viewZoom:.5,viewPanX:15,positionX:12});
+  try{
+    f.nodes.drawPathToggle.click();
+    assert.equal(f.nodes.drawSmooth.disabled,false);
+    assert.equal(f.nodes.drawGeometric.disabled,false);
+    pointer(f.nodes.drawOverlay,'pointerdown',{
+      pointerId:141,isPrimary:true,clientX:130,clientY:190});
+    pointer(f.nodes.drawOverlay,'pointermove',{
+      pointerId:141,isPrimary:true,clientX:250,clientY:510});
+    pointer(f.nodes.drawOverlay,'pointerup',{
+      pointerId:141,isPrimary:true,clientX:350,clientY:810});
+    assert.equal(f.nodes.drawPathPanel.dataset.phase,'refine');
+    assert.equal(f.nodes.drawSmooth.disabled,false,
+      'raw gesture exists and is still refittable');
+    assert.equal(f.nodes.drawGeometric.disabled,false);
+    f.nodes.drawEditPoints.click();
+    assert.equal(f.nodes.drawPathPanel.dataset.phase,'anchors');
+    assert.equal(f.nodes.drawSmoothingStrength.disabled,false,
+      'strength still belongs to explicit point Re-smooth');
+    f.nodes.drawEditPoints.click();
+    assert.equal(f.nodes.drawPathPanel.dataset.phase,'refine');
+    for(const id of ['drawSmooth','drawGeometric','drawSmoothingStrength'])
+      assert.equal(f.nodes[id].disabled,true,
+        id+' must not advertise a refit after manual source was discarded');
+    f.nodes.drawAgain.click();
+    assert.equal(f.nodes.drawPathPanel.dataset.phase,'sketch');
+    for(const id of ['drawSmooth','drawGeometric','drawSmoothingStrength'])
+      assert.equal(f.nodes[id].disabled,false,id+' must be restored for new sketch');
+    assert.deepEqual(f.recipe,f.snap);
+    assert.equal(f.calls.length,0);
+  }finally{f.cleanup();}
+});
+
+test('imported path keeps fit controls until Edit points -> Hide points commits manual ownership',()=>{
+  const f=fixture({seed:'imported-edited-no-refit',structure:'paths',
+    geometry:'wave',viewZoom:1.3,viewPanY:-9,positionY:11});
+  try{
+    assert.equal(f.tool.loadPath({points:path,anchors:[2],corners:[2]}),true);
+    assert.equal(f.nodes.drawSmooth.disabled,false);
+    assert.equal(f.nodes.drawGeometric.disabled,false);
+    f.nodes.drawEditPoints.click();
+    assert.equal(f.nodes.drawSmoothingStrength.disabled,false);
+    f.nodes.drawEditPoints.click();
+    for(const id of ['drawSmooth','drawGeometric','drawSmoothingStrength'])
+      assert.equal(f.nodes[id].disabled,true);
+    f.nodes.drawEditPoints.click();
+    assert.equal(f.nodes.drawPathPanel.dataset.phase,'anchors');
+    assert.equal(f.nodes.drawSmoothingStrength.disabled,false,
+      'explicit point resmoothing remains available');
+    f.nodes.drawCancel.click();
+    assert.equal(f.calls.length,0);
+    assert.deepEqual(f.recipe,f.snap);
+  }finally{f.cleanup();}
+});
