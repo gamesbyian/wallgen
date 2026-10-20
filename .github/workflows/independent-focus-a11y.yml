@@ -16,6 +16,7 @@ on:
       - 'tests/independent-focus-transitions.mjs'
       - 'tests/independent-axe-diagnostic.mjs'
       - 'tests/independent-desktop-axe-diagnostic.mjs'
+      - 'tests/independent-keyboard-focus-journey.mjs'
       - 'assets/icons/roygbiv/manifest.json'
       - 'assets/icons/roygbiv/state-matrix.html'
       - '.github/workflows/independent-focus-a11y.yml'
@@ -42,6 +43,7 @@ jobs:
           node --check tests/independent-focus-transitions.mjs
           node --check tests/independent-axe-diagnostic.mjs
           node --check tests/independent-desktop-axe-diagnostic.mjs
+          node --check tests/independent-keyboard-focus-journey.mjs
       - run: npm test
       - run: npm install --no-save playwright@1.56.1 serve@14.2.5 axe-core@4.10.3
       - run: npx playwright install --with-deps chromium
@@ -59,6 +61,8 @@ jobs:
         run: node tests/independent-svg-candidates-acceptance.mjs
       - name: Capture independent WCAG automated diagnostics without falsely certifying accessibility
         run: node tests/independent-axe-diagnostic.mjs
+      - name: Prove cold keyboard navigation from Edit through Focus and All
+        run: node tests/independent-keyboard-focus-journey.mjs
       - name: Independently audit 791px and 1024px desktop WCAG 2.2 screen states
         run: node tests/independent-desktop-axe-diagnostic.mjs
       - name: Preserve measurements and failure screenshots
@@ -72,5 +76,6 @@ jobs:
             artifacts/independent-focus-transitions/
             artifacts/independent-axe-audit/
             artifacts/independent-desktop-axe/
+            artifacts/independent-keyboard-focus/
           retention-days: 14
           if-no-files-found: warn
