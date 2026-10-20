@@ -85,6 +85,16 @@ try{
 
       await begin();
       await stroke();
+      // Real Draw again must discard the provisional curve (not the recipe)
+      // and restore a genuinely blank Sketch state before replacing it.
+      await page.locator('#drawAgain').click();
+      assert.equal(await page.locator('#drawPathPanel').getAttribute('data-phase'),
+        'sketch','Draw again did not reset back to Sketch');
+      assert.equal(await page.locator('#drawApply').isDisabled(),true,
+        'Draw again left stale interpreted geometry Apply-able');
+      assert.deepEqual(current(),baseline,'Draw again mutated the saved recipe');
+      record.steps.push('Draw again erased only the provisional interpretation');
+      await stroke();
       await page.locator('#drawExtendPath').check();
       assert.equal(await page.locator('#drawExtendPath').isChecked(),true);
       await page.locator('#drawApply').click();
