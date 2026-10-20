@@ -10,6 +10,9 @@ import {resolve,join} from 'node:path';
 const output=resolve(process.argv.find(x=>x.startsWith('--out='))?.slice(6)||'artifacts/visual-agent1-dpr');
 const base=process.argv.find(x=>x.startsWith('--base-url='))?.slice(11)||'http://127.0.0.1:4173';
 const profiles=[
+  // The declared minimum supported portrait width was missing from the
+  // high-density *touch* journey, despite having source-click screenshot checks.
+  {id:'minimum-320-portrait',width:320,height:700,dpr:3},
   {id:'narrow-360-portrait',width:360,height:740,dpr:3},
   {id:'pixel6pro-css-proxy',width:412,height:892,dpr:3.5},
   {id:'edge-499-portrait',width:499,height:892,dpr:3},
