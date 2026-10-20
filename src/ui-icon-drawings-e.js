@@ -10,6 +10,6 @@ export const DRAWINGS_E=Object.freeze({
   "weave": "<path d=\"M4 25 12 17m5-5 11-10\" stroke=\"#FF474E\" stroke-width=\"5\"/><path d=\"M4 5 28 27\" stroke=\"#53AAFF\" stroke-width=\"5\"/><path d=\"m12 17 5-5\" stroke=\"#FF474E\" stroke-width=\"5\"/>",
   "focus-slider": "<path d=\"M4 10h24M4 22h24\"/><circle cx=\"21\" cy=\"10\" r=\"3.3\" fill=\"#53AAFF\" stroke=\"#18151F\"/><circle cx=\"9\" cy=\"22\" r=\"2.4\" fill=\"#FFF8EF\" stroke=\"#18151F\"/><path d=\"M5 3h5m12 26h5\" stroke=\"#BB64ED\"/>",
   "export-png": "<rect x=\"4\" y=\"3\" width=\"23\" height=\"17\" rx=\"3\" fill=\"#FFF8EF\"/><circle cx=\"11\" cy=\"9\" r=\"2\" fill=\"#FFE25B\" stroke=\"none\"/><path d=\"m7 17 6-6 4 4 4-6 3 8\" stroke=\"#4FDD87\"/><path d=\"M16 20v10m-4-4 4 4 4-4\" stroke=\"#53AAFF\"/>",
-  "metadata": "<path d=\"M6 4h16l4 5v19H6z\" fill=\"#FFF8EF\"/><path d=\"M22 4v6h4M10 14h12M10 19h12M10 24h8\" /><circle cx=\"11\" cy=\"10\" r=\"2\" fill=\"#FFB7C4\" stroke=\"none\"/>",
+  "metadata": "<path d=\"M6 4h16l4 5v19H6z\" fill=\"#FFF8EF\" stroke=\"#18151F\"/><path d=\"M22 4v6h4M10 14h12M10 19h12M10 24h8\" stroke=\"#18151F\"/><circle cx=\"11\" cy=\"10\" r=\"2\" fill=\"#FFB7C4\" stroke=\"none\"/>",
   "restore-variation": "<rect x=\"12\" y=\"11\" width=\"16\" height=\"17\" rx=\"2.8\" fill=\"#FFF8EF\"/><path d=\"m15 23 4-5 3 3 3-4\" stroke=\"#4FDD87\"/><path d=\"M3 18a10 10 0 1 1 5 8M3 10v8h8\" stroke=\"#53AAFF\" stroke-width=\"2.2\"/>"
 });
