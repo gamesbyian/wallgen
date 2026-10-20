@@ -153,10 +153,12 @@ try{
     assert.equal(await depth.inputValue(),'0');
     assert.ok(await shape.isDisabled()&&await depth.isDisabled());
     for(const key of ['shapeFrequency','shapeDepth']){
-      const row=page.locator('.editor-tool-card[data-editor-tool="geometry"] '+
-        '[data-setting="'+key+'"]');
-      assert.ok(await row.count(),dormantGeometry+': missing '+key+' row');
-      assert.equal(await row.locator('.setting-lock').isDisabled(),true,
+      const field=page.locator('.editor-tool-card[data-editor-tool="geometry"] '+
+        '[name="'+key+'"]');
+      assert.equal(await field.count(),1,dormantGeometry+': missing '+key+' field');
+      const lockDisabled=await field.evaluate(el=>
+        el.closest('.lockable-setting')?.querySelector('.setting-lock')?.disabled);
+      assert.equal(lockDisabled,true,
         dormantGeometry+': dormant '+key+' lock was operable');
     }
     await geometry.selectOption('zigzag');
