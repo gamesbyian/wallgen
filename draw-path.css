@@ -206,3 +206,38 @@ body.path-drawing .studio-stage>#drawOverlay{cursor:crosshair}
   body.mobile-studio .draw-point-controls button{min-height:36px!important}
   body.mobile-studio .draw-path-panel #drawPathHint{font-size:10px!important}
 }
+
+/* Genuine 700x412 Chromium Draw testing exposed a blocked anchor: the
+   bottom-centred controls occupied the same screen pixels as the wallpaper.
+   Constrained landscape has enough horizontal gutter for a compact sidecar.
+   Keep the visible wallpaper and original pointer overlay unobstructed.
+   Controls scroll inside their OWN sidecar without covering the source rails
+   or moving the recipe camera; portrait retains the familiar bottom tray. */
+@media(min-width:600px) and (max-width:790px) and (max-height:500px){
+  body.mobile-studio.path-drawing .draw-path-panel{
+    left:auto!important;right:55px!important;transform:none!important;
+    width:min(190px,calc((100vw - 240px)/2))!important;
+    max-height:min(65dvh,244px)!important;
+    bottom:5px!important;
+    overflow-y:auto;overscroll-behavior:contain;
+    padding:6px 5px!important;gap:5px!important;
+  }
+  body.mobile-studio.path-drawing .draw-path-controls:not(.draw-point-controls){
+    grid-template-columns:minmax(0,1fr)!important;
+  }
+  body.mobile-studio.path-drawing .draw-path-controls .draw-finish-group{
+    grid-column:1!important;
+  }
+  body.mobile-studio.path-drawing .draw-point-controls{
+    display:flex;flex-wrap:wrap;justify-content:center;
+  }
+  body.mobile-studio.path-drawing .draw-point-controls button{
+    flex:1 1 65px!important;min-width:0!important;
+  }
+  body.mobile-studio.path-drawing .draw-smoothing-row{
+    grid-template-columns:minmax(0,1fr) 32px!important;
+  }
+  body.mobile-studio.path-drawing .draw-smoothing-row>span{
+    grid-column:1/-1;
+  }
+}
