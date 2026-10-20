@@ -32,10 +32,17 @@ jobs:
             tests/draw-editor-transaction.test.js \
             tests/path-point-editor.test.js \
             tests/redesign-draw-geometry-matrix.test.js
-      - name: Install one real Chromium
+      - name: Reuse runner Chrome when available
         run: |
           npm install --no-save playwright@1.56.1 serve@14.2.5
-          npx playwright install --with-deps chromium
+          CHROME_BIN="$(command -v google-chrome || command -v chromium || true)"
+          if [ -n "$CHROME_BIN" ]; then
+            echo "CHROME_BIN=$CHROME_BIN" >> "$GITHUB_ENV"
+            "$CHROME_BIN" --version
+          else
+            echo "Runner Chrome not installed; installing Playwright Chromium"
+            npx playwright install chromium
+          fi
       - name: Serve production UI
         run: |
           npx serve . -l 4173 > /tmp/agent3-focused-draw.log 2>&1 &
