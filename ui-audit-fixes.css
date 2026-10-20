@@ -134,3 +134,11 @@ html[data-theme="cream"] #notice{color:#28583f!important}
   #drawPathPanel input[type=range]{
     accent-color:var(--roygbiv-slider-color,#2778dc)!important}
 }
+
+/* Agent 4: 1024px Chromium exposed under-24px desktop secondary actions
+ * in both themes. Preserve their text styling and handlers; enlarge only the
+ * source buttons' hit area, without changing the mobile More grid. */
+@media(min-width:791px){
+  .workspace>.secondary-actions button,
+  .workspace>.export-metadata>button{min-height:28px}
+}
