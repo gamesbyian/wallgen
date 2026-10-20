@@ -73,7 +73,7 @@ test('unsupported and malicious compressed links fail explicitly without resetti
   for(const record of [
     {v:1,r:{}},
     {v:1,r:{seed:'valid',structure:'alien'}},
-    {v:1,r:{seed:'valid',structure:'paths',__proto__:'__danger'}},
+    {v:1,r:{seed:'valid',structure:'paths',['__proto__']:'__danger'}},
     {v:1,r:{seed:'valid',structure:'paths',viewZoom:1}},
     {v:2,r:{seed:'valid',structure:'paths'}}
   ]){
