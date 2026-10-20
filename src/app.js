@@ -607,6 +607,14 @@ async function copyText(text) {
 }
 function setBusy(button,busy,label) {
   button.disabled=busy;
+  // Saved contains the live #favoriteCount status element. Replacing its
+  // innerHTML during thumbnail loading used to delete that element; a second
+  // storage event then threw during count refresh and left stale Saved cards.
+  // Keep the original DOM/accessible count mounted even while the action is busy.
+  if(button.id==='showFavorites'){
+    button.setAttribute('aria-busy',String(busy));
+    return;
+  }
   if(busy){button.dataset.previous=button.innerHTML;button.textContent=label;}
   else if(button.dataset.previous){button.innerHTML=button.dataset.previous;delete button.dataset.previous;}
 }
