@@ -1241,7 +1241,9 @@ function createCard(recipe,index) {
   const name=document.createElement('span');name.className='thumb-caption';name.textContent=titleCase(scene.family);
   const sub=document.createElement('span');sub.className='thumb-sub';sub.textContent=`${titleCase(scene.materialSummary)} · ${scene.orientation}`;
   card.append(name,sub);
-  card.addEventListener('click',()=>changeRecipe(recipe,{scroll:true}));
+  // A Saved/Explore choice replaces the complete design, including its own locks.
+  // Current-art locks apply to edits/randomization, not to loading an archive.
+  card.addEventListener('click',()=>changeRecipe(recipe,{scroll:true,bypassLocks:true}));
   // Append the card immediately; bitmap rendering happens off the main
   // thread and updates it only while it is still in the active gallery.
   drawThumbnail(canvas,recipe,()=>card.isConnected).catch(error=>
