@@ -1029,6 +1029,20 @@ function syncInteriorUI(){
       update('colorSlots',next.length===7?[]:next);
     });
   });
+  if(active.objectIds.length){
+    // Imported recipes can target specific object IDs. Those IDs may no
+    // longer exist after changing Structure, leaving correct ink invisible.
+    // Expose the minimal reversible recovery without discarding colour
+    // filters or changing the geometry/targeting contract.
+    const clearShapes=make(interiorCards['interior-targets'],'button',
+      'All shapes · clear '+active.objectIds.length+' selected');
+    clearShapes.type='button';
+    clearShapes.className='text-link-button';
+    clearShapes.dataset.interiorFocus='field.objectIds.clear';
+    clearShapes.setAttribute('aria-label',
+      'Remove selected shape restrictions; keep colour targeting');
+    clearShapes.addEventListener('click',()=>update('objectIds',[]));
+  }
   if(stackLocked){
     // A locked element stack is read-only. Leaving these controls enabled
     // while respectSettingLocks silently ignored changes looked like a

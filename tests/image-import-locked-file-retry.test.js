@@ -13,7 +13,7 @@ class Stub extends EventTarget{
     this.clicks++;
     this.dispatchEvent(new Event('click'));
   }
-  getContext(){return {};}
+  getContext(){return {clearRect(){},fillRect(){}};}
   querySelector(){return new Stub('phase');}
   showModal(){this.open=true;}
   close(){this.open=false;this.dispatchEvent(new Event('close'));}
@@ -73,10 +73,20 @@ test('an already-open import dialog cannot launch Choose another under a new loc
       imagePathFile:file,importPathToggle:launch}=f.nodes;
     dialog.open=true; // An asynchronous old candidate may still be visible.
     f.setRecipe({...f.recipe,structure:'radial',lockedSettings:['structure']});
+    assert.equal(dialog.open,true);
+    assert.equal(f.nodes.imagePathApply.disabled,true);
+    assert.equal(f.nodes.imagePathAngle.disabled,true);
+    assert.equal(another.disabled,true,
+      'the open modal must not invite a file picker forbidden by its new lock');
     another.click();
     assert.equal(file.clicks,0);
-    assert.match(f.notices.at(-1),/Unlock Layout structure/);
+    assert.match(f.nodes.imagePathStatus.textContent,/Unlock Layout structure/,
+      'a disabled modal action must explain the lock without a fake click');
     f.setRecipe({...f.recipe,structure:'paths'});
+    assert.equal(another.disabled,false,
+      'unlock restores file picker without forcing dialog close');
+    assert.equal(f.nodes.imagePathApply.disabled,true,
+      'no candidate has been analyzed yet');
     another.click();
     assert.equal(file.clicks,1);
     assert.equal(launch.disabled,false);

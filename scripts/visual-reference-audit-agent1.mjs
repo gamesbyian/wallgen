@@ -26,6 +26,21 @@ const profiles=[
   // These are actual mobile Chromium layouts, never CSS-root zoom proxies.
   {id:'minimum-320x640',width:320,height:640,cases:['studio','geometry','material','more','explore','explore-populated','saved-empty','saved-populated','draw']},
   {id:'edge-360x740',width:360,height:740,cases:['studio','geometry','material','more','explore','saved-empty','saved-populated','focus']},
+  // Height-constrained portrait and the two-row rotation 399/400px boundary.
+  // Gallery thumbnail size must not cliff at this exact media-query edge.
+  {id:'edge-399x740',width:399,height:740,cases:['studio','material','saved-empty','saved-populated']},
+  {id:'edge-400x740',width:400,height:740,cases:['studio','material','saved-empty','saved-populated']},
+  {id:'short-phone-412x740',width:412,height:740,cases:['studio','material','saved-empty','saved-populated','explore-populated']},
+  // Probe the handoff among <=670px short landscape, 680px compact
+  // portrait, and >790px normal-height thumbnail recipes.
+  {id:'height-edge-412x670',width:412,height:670,cases:['studio','saved-populated']},
+  {id:'height-edge-412x671',width:412,height:671,cases:['studio','saved-populated']},
+  {id:'height-edge-412x679',width:412,height:679,cases:['studio','saved-populated']},
+  {id:'height-edge-412x680',width:412,height:680,cases:['studio','saved-populated']},
+  {id:'height-edge-412x790',width:412,height:790,cases:['studio','saved-populated']},
+  {id:'height-edge-412x791',width:412,height:791,cases:['studio','saved-populated']},
+  {id:'short-edge-499x740',width:499,height:740,cases:['studio','material','saved-populated']},
+  {id:'short-edge-500x740',width:500,height:740,cases:['studio','material','saved-populated']},
   {id:'phone-412x892',width:412,height:892,cases:[...all,'explore-populated','saved-empty','saved-populated']},
   {id:'edge-499x892',width:499,height:892,cases:['studio','geometry','material','more','focus']},
   {id:'edge-500x892',width:500,height:892,cases:all},
@@ -36,6 +51,21 @@ const profiles=[
 ];
 const errors=[],shots=[];
 const pause=ms=>new Promise(done=>setTimeout(done,ms));
+// Cards are inserted before their async bitmap work finishes. A real
+// screenshot must never certify an allocated-but-unpainted <canvas>.
+// Alpha at a background corner discriminates a cleared canvas from actual
+// wallpaper artwork without imposing a motif-specific colour requirement.
+const awaitPaintedThumbnails=async(page,required)=>{
+  await page.waitForFunction(count=>{
+    const cards=[...document.querySelectorAll('#gallery .thumb canvas')];
+    if(cards.length<count)return false;
+    return cards.slice(0,count).every(canvas=>{
+      if(!canvas.width||!canvas.height)return false;
+      try{return canvas.getContext('2d').getImageData(0,0,1,1).data[3]>0;}
+      catch{return false;}
+    });
+  },required,{timeout:90000});
+};
 const click=async(page,selector)=>{
   const control=page.locator(selector).first();
   if(!await control.count())throw Error('Source action absent: '+selector);
@@ -158,7 +188,8 @@ const scenarios={
     await page.waitForFunction(()=>document.querySelector('#gallery')?.dataset.view==='saved'&&
       document.querySelectorAll('#gallery .thumb').length===1&&
       !document.querySelector('#gallery')?.hasAttribute('aria-busy'));
-    await pause(400);
+    await awaitPaintedThumbnails(page,1);
+    await pause(150);
     const capture=await page.evaluate(()=>{
       const grid=document.querySelector('#gallery');
       const card=grid.querySelector('.thumb');
@@ -191,7 +222,8 @@ const scenarios={
     await click(page,'#batch');
     await page.waitForFunction(()=>document.querySelectorAll('#gallery .thumb').length>=12,
       null,{timeout:60000});
-    await pause(650);
+    await awaitPaintedThumbnails(page,12);
+    await pause(150);
   },
   more:async(page,profile)=>{
     if(profile.width<=790){
@@ -366,7 +398,7 @@ try{
               console.error('VISUAL FAILURE '+key+' '+error);
             }
           }
-          if(profile.width<=360&&name==='material'){
+          if(profile.width<=412&&name==='material'){
             // Optical inventory first: the current raster appears crowded.
             // Keep source-accurate boxes/centre hit targets in the artifact
             // before deciding whether another production CSS change is safe.

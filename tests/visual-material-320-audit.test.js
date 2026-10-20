@@ -9,7 +9,7 @@ test('the real mobile material toolbar reports six source-backed interactive cel
   assert.match(live,/document\.elementFromPoint/);
   assert.match(live,/centerTarget:el===probe\|\|el\.contains\(probe\)/);
   assert.match(live,/MATERIAL ROTATION/);
-  assert.match(live,/profile\.width<=360&&name==='material'/);
+  assert.match(live,/profile\.width<=412&&name==='material'/);
 });
 test('the minimum-width populated gallery must show a complete card and caption',()=>{
   assert.match(live,/minimum-320x640'.*'explore-populated'/);

@@ -27,8 +27,8 @@ test('Saved wallpaper and actual caption must remain wholly inside visible galle
 });
 test('only compact 341–399px portrait filmstrips use complete, smaller wallpaper art',()=>{
   const css=readFileSync('studio-themes.css','utf8');
-  const scoped=css.slice(css.lastIndexOf('/* Real 360×740 Saved and Explore'));
-  assert.match(scoped,/@media\(min-width:341px\) and \(max-width:399px\) and \(min-height:680px\) and \(max-height:790px\)/);
+  const scoped=css.slice(css.lastIndexOf('/* Short portrait gallery clip height'));
+  assert.match(scoped,/@media\(min-width:341px\) and \(max-width:790px\) and \(min-height:680px\) and \(max-height:790px\)/);
   assert.match(scoped,/body\.mobile-gallery-open \.gallery-grid \.thumb canvas/);
   assert.match(scoped,/width:auto!important;height:140px!important/);
   assert.match(scoped,/object-fit:contain/);
