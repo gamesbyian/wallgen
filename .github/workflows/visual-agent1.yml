@@ -62,13 +62,47 @@ jobs:
         run: node scripts/visual-reference-audit-agent1.mjs
       - name: Census all reachable source setting rows in real Chromium
         run: node scripts/visual-setting-row-census-agent1.mjs
-      - name: Measure native slider tracks, label ink and source controls across breakpoints
-        run: node scripts/visual-narrow-desktop-range-agent1.mjs
       - name: Upload 12-plate comparison gallery and measured geometry
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: agent1-canonical-live-visual-evidence
           path: artifacts/visual-agent1/
+          retention-days: 14
+          if-no-files-found: warn
+
+  narrow-desktop-sliders:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate source slider audit
+        run: node --check scripts/visual-narrow-desktop-range-agent1.mjs
+      - name: Install Chromium for real source geometry
+        run: |
+          npm install --no-save playwright@1.56.1 serve@14.2.5
+          npx playwright install --with-deps chromium
+      - name: Serve original UI
+        run: |
+          npx serve . -l 4173 >/tmp/visual-narrow-sliders.log 2>&1 &
+          for i in $(seq 1 40); do
+            if curl --fail --silent http://127.0.0.1:4173/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/visual-narrow-sliders.log
+          exit 1
+      - name: Qualify source slider tracks in 10 viewport profiles and both themes
+        run: node scripts/visual-narrow-desktop-range-agent1.mjs
+      - name: Preserve live numeric evidence and source screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent1-narrow-desktop-slider-geometry
+          path: |
+            artifacts/visual-agent1/narrow-desktop-range-audit.json
+            artifacts/visual-agent1/range-screens/
           retention-days: 14
           if-no-files-found: warn
