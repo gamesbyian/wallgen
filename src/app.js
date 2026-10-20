@@ -13,6 +13,8 @@ import {newInteriorElementId,INTERIOR_LIMITS,resolveInteriorSelection,interiorTa
 import {STYLE_PRESETS} from './editor-schema.js?v=20261018-icons2';
 import {installExplorationHistory} from './exploration-history.js';
 import {parseStoredFavorites} from './favorites-store.js';
+import {encodePortableRecipe,decodePortableRecipe,portableShareUrl,portableShareTokenFromLocation,
+  MAX_PORTABLE_LINK_CHARS} from './share-recipe.js';
 import {iconMarkup,setIconSource,hydrateStaticIcons} from './ui-icons.js';
 
 const form = document.getElementById('controls');
@@ -418,10 +420,21 @@ function syncTextureLayerVisibility(){
   document.getElementById('textureLayer2Panel').hidden=false;
   document.getElementById('textureLayer3Panel').hidden=false;
 }
+let retainedPortableToken=null,retainedPortableRecipe=null;
 function syncURL() {
   try {
     const url=new URL(location.href);
-    url.searchParams.set('r',encodeRecipe(current));
+    if(retainedPortableToken&&retainedPortableRecipe&&
+       sameRecipe(current,retainedPortableRecipe)){
+      // A self-contained compact link must not immediately rewrite its
+      // fragment as a giant query the static host might reject.
+      url.searchParams.delete('r');
+      url.hash='s='+retainedPortableToken;
+    }else{
+      retainedPortableToken=retainedPortableRecipe=null;
+      if(portableShareTokenFromLocation(url))url.hash='';
+      url.searchParams.set('r',encodeRecipe(current));
+    }
     history.replaceState(null,'',url);
   } catch { /* Local file previews may prohibit History API. */ }
 }
@@ -1305,17 +1318,26 @@ for(const button of document.querySelectorAll('[data-rotate-target]')){
 document.getElementById('undo').addEventListener('click',undo);
 document.getElementById('download').addEventListener('click',downloadPNG);
 document.getElementById('copyRecipe').addEventListener('click',()=>copyText(JSON.stringify(current,null,2)));
-// Long URL-encoded recipes can exceed request-line limits on ordinary static
-// hosts. An apparently successful clipboard operation must not promise an
-// unusable link. JSON and embedded-PNG recipes are the lossless share fallback.
-const SAFE_SHARE_URL_CHARS=8192;
-document.getElementById('copyLink').addEventListener('click',()=>{
+// Normal links retain their original ?r= format. Larger valid designs are
+// compressed using only nondefault canonical fields and placed in a fragment
+// that the static hosting server never receives as an HTTP request.
+document.getElementById('copyLink').addEventListener('click',async()=>{
   const url=location.href;
-  if(url.length>SAFE_SHARE_URL_CHARS){
-    showNotice('Design link is too long to open reliably. Use Save recipe JSON or Download PNG to share this wallpaper.');
+  if(url.length<=MAX_PORTABLE_LINK_CHARS){
+    await copyText(url);
     return;
   }
-  void copyText(url);
+  const snapshot=normalizeRecipe(current);
+  try{
+    const token=await encodePortableRecipe(snapshot);
+    if(!sameRecipe(current,snapshot)){
+      showNotice('Design changed while preparing a link. Try Copy Link again.');
+      return;
+    }
+    await copyText(portableShareUrl(location.href,token));
+  }catch(error){
+    showNotice('Design link is too long to open reliably. Use Save recipe JSON or Download PNG to share this wallpaper. '+error.message);
+  }
 });
 document.getElementById('downloadRecipe').addEventListener('click',()=>downloadBlob(new Blob([JSON.stringify(current,null,2)+'\n'],{type:'application/json'}),`roygbiv-${safeFilename(current.seed)}.json`));
 favoriteButton.addEventListener('click',()=>{
@@ -1442,7 +1464,17 @@ document.addEventListener('roygbiv-gallery-view-request',event=>{
 });
 
 const query=new URLSearchParams(location.search).get('r');
-const loaded=query?decodeRecipe(query):null;
+let loaded=query?decodeRecipe(query):null;
+const portableToken=portableShareTokenFromLocation(location);
+if(portableToken){
+  try{
+    loaded=await decodePortableRecipe(portableToken);
+    retainedPortableToken=portableToken;
+    retainedPortableRecipe=loaded;
+  }catch(error){
+    showNotice('Cannot restore compressed design link: '+error.message);
+  }
+}
 toControls(loaded||current);
 // The dynamic interior cards were first mounted against the empty default
 // recipe. URL restoration changes current directly through toControls(), not
