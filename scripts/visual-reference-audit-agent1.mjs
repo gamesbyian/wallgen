@@ -337,7 +337,8 @@ try{
               frame:measured.rotationFrame,cells:measured.rotationCells}));
             const frame=measured.rotationFrame,cells=measured.rotationCells;
             const blocked=!frame||cells.length!==6||cells.some(cell=>
-              !cell.centerTarget||cell.x<frame.x-1||cell.right>frame.right+1||
+              !cell.centerTarget||cell.width<24||cell.height<24||
+              cell.x<frame.x-1||cell.right>frame.right+1||
               cell.y<frame.y-1||cell.bottom>frame.bottom+1);
             if(blocked){
               const error='One or more of six Material rotation targets clipped or blocked: '+
