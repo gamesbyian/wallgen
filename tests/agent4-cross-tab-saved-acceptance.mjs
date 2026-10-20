@@ -85,6 +85,10 @@ try{
     cards.map(c=>c.dataset.recipeSeed)),[first.seed,second.seed],
     'Cancelled thumbnail batch contaminated remote Saved updates');
   assert.equal(await b.locator('#favoriteCount').textContent(),'2');
+  assert.equal(await b.locator('#showFavorites').isEnabled(),true,
+    'Cancelled gallery reload left Saved control disabled');
+  assert.equal(await b.locator('#showFavorites').getAttribute('data-previous'),null,
+    'Cancelled gallery reload corrupted the original source button text');
   await a.evaluate(storageKey=>localStorage.setItem(storageKey,'{bad json'),key);
   await b.waitForFunction(()=>document.querySelectorAll('#gallery .thumb').length===0
     && document.querySelector('#gallery').getAttribute('aria-busy')!=='true');
