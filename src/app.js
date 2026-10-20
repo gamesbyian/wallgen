@@ -190,6 +190,25 @@ function fromControls() {
   for (const key of FIELDS) { const field=form.elements.namedItem(key); data[key]=field.dataset.inactive==='true'?current[key]:(field.type==='checkbox'?field.checked:field.value); }
   return normalizeRecipe(data);
 }
+function syncScopedSettingDice(){
+  // The form's first URL import calls toControls() directly, not
+  // changeRecipe(). Keep each miniature die truthful from the first paint,
+  // even when the source slider is already locked or dormant. Safety is an
+  // editorial guardrail: randomizeScope intentionally NEVER flips it.
+  for(const die of form.querySelectorAll('[data-random-setting]')){
+    const key=die.dataset.randomSetting;
+    const field=form.elements.namedItem(key);
+    const editorial=key==='geometrySafety';
+    const unavailable=!field||field.disabled||field.dataset.inactive==='true';
+    die.disabled=editorial||unavailable;
+    if(editorial){
+      die.title='Safety is never randomized. Change Constraints manually.';
+      die.setAttribute('aria-label','Safety is not randomized; adjust Constraints manually');
+    }else{
+      die.title=unavailable?'Setting is unavailable or locked':'Randomize only '+key;
+    }
+  }
+}
 function toControls(recipe) {
   current=normalizeRecipe(recipe);
   seedInput.value=current.seed;
@@ -206,6 +225,7 @@ function toControls(recipe) {
   syncDiagonalUI();
   syncSettingLocks();
   syncInactiveSettings();
+  syncScopedSettingDice();
   syncEditorStructure(current.structure,current.regionMode,current.construction);
   const effective=document.getElementById('geometrySafetyStatus');
   if(effective){
@@ -488,11 +508,6 @@ function changeRecipe(recipe,options={}){
   const elementState=JSON.stringify([current.interiorElements,
     current.lockedSettings.includes('interiorElements')]);
   if(elementState!==lastInteriorState)syncInteriorUI();
-  for(const die of form.querySelectorAll('[data-random-setting]')){
-    const field=form.elements.namedItem(die.dataset.randomSetting);
-    die.disabled=!field||field.disabled||field.dataset.inactive==='true';
-    die.title=die.disabled?'Setting is unavailable or locked':'Randomize only '+die.dataset.randomSetting;
-  }
   // Other inspectors (notably the optional Focus slider) share the ORIGINAL
   // form fields. Undo, randomize and import can rewrite them without a
   // bubbling native input/change event, so announce settled source state
