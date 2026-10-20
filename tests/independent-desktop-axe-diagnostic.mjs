@@ -51,6 +51,8 @@ try{
      assert.equal(await page.evaluate(()=>document.body.classList.contains('mobile-studio')),false,
        'Desktop audit unexpectedly operating in the mobile Studio shell');
      await scenario.enter(page);
+     assert.equal(await page.getByRole('img',{name:'Red orange yellow green blue indigo violet'}).count(),1,
+       'Decorative seven-colour stack has no reliable computed accessible name');
      await page.addScriptTag({content:axe.source});
      const report=await page.evaluate(()=>window.axe.run(document,{
        runOnly:{type:'tag',values:['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa']},
