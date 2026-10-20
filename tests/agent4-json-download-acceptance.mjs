@@ -113,6 +113,42 @@ try{
   evidence.push({seed:latest.seed,kind:'legacy-double-recipe-import',
     newerRecipeRestored:true,sourceFileInput:true});
   console.log('AGENT4_LEGACY_DOUBLE_RECIPE_BROWSER',JSON.stringify(evidence.at(-1)));
+  // A structurally valid iTXt with a valid CRC but no meaningful seed must
+  // fail visibly, without changing wallpaper or Undo. A subsequent re-import
+  // of the good legacy file must recover in the SAME file-input instance.
+  await page.goto(origin+'/?r='+encodeRecipe(original),{waitUntil:'domcontentloaded'});
+  await page.locator('#mobileMore').click();
+  const malformed=Buffer.from(legacy);
+  const seedOffset=malformed.lastIndexOf(Buffer.from(latest.seed,'utf8'));
+  assert.ok(seedOffset>iend&&seedOffset<iend+newChunk.length);
+  malformed.fill(0x20,seedOffset,seedOffset+Buffer.byteLength(latest.seed));
+  const payloadLength=newChunk.readUInt32BE(0);
+  let checksum=0xffffffff;
+  for(const byte of malformed.subarray(iend+4,iend+8+payloadLength)){
+    checksum^=byte;
+    for(let bit=0;bit<8;bit++)
+      checksum=(checksum&1)?(0xedb88320^(checksum>>>1)):(checksum>>>1);
+  }
+  malformed.writeUInt32BE((checksum^0xffffffff)>>>0,iend+8+payloadLength);
+  await page.locator('#importRecipeFile').setInputFiles({
+    name:'invalid-identity.png',mimeType:'image/png',buffer:malformed});
+  await page.waitForFunction(()=>document.querySelector('#studioStatus')
+    ?.textContent?.includes('Damaged recipe metadata identity'));
+  assert.deepEqual(decodeRecipe(new URL(page.url()).searchParams.get('r')),original,
+    'Checksummed but invalid recipe changed current wallpaper');
+  assert.equal(await page.locator('#importRecipeFile').inputValue(),'');
+  await page.locator('#importRecipeFile').setInputFiles({
+    name:'recovered-double-recipe.png',mimeType:'image/png',buffer:legacy});
+  await page.waitForFunction(seed=>document.querySelector('#seedInput')?.value===seed,
+    latest.seed);
+  assert.deepEqual(decodeRecipe(new URL(page.url()).searchParams.get('r')),latest);
+  await page.locator('#mobileToolsClose').click();
+  await page.locator('#undo').click();
+  assert.deepEqual(decodeRecipe(new URL(page.url()).searchParams.get('r')),original,
+    'Rejected import inserted a phantom Undo checkpoint');
+  evidence.push({kind:'invalid-recipe-identity-recovery',
+    rejectedWithoutMutation:true,goodReimport:true,undoProvenance:true});
+
  }catch(e){
   errors.push({name:'legacy-double-recipe-import',message:String(e),stack:e.stack});
   await page.screenshot({path:join(out,'failure-legacy-double-recipe.png'),
