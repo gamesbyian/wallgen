@@ -32,7 +32,7 @@ CI: `.github/workflows/agent3-mobile-acceptance.yml` runs all seventeen independ
 
 **Queue 5: PARTIAL, unchecked.** Camera and geometry invariants across all current *major* structures have much more source coverage; exhaustive native conditional outputs remain open.
 
-**Queue 9: STRONG BOUNDED BROWSER EVIDENCE, unchecked.** Actual freehand sketch/Interpret/Draw again/Edit points and saved geometry now exercise corner, nudge, point Undo, 10× resmooth, real handle drag, insertion, deletion, Cancel and Apply at both 412×892 and 700×412. Full combinations/native hardware are still outside this gate.
+**Queue 9: CHECKED, REAL BROWSER LIFECYCLE VERIFIED.** Actual freehand sketch/Interpret/Draw again/Edit points and saved geometry now exercise corner, nudge, point Undo, 10× resmooth, real handle drag, insertion, deletion, Cancel and Apply at both 412×892 and 700×412. Full combinations/native hardware are still outside this gate.
 
 **Queue 10: CHECKED, BOUNDED BEHAVIOR VERIFIED.** World-space extrapolation, source-immutable crossing geometry and painted Canvas2D order distinctions are qualified at two camera scales, with **real downloaded 3024×6552 off-frame Over/Under/Weave PNGs**, all with complete original normalized recipes and **zero sampled native/direct foreground pixel mismatches**. Stochastic textured permutations and physical Android remain explicitly separate *release-wide* gates.
 
@@ -71,3 +71,14 @@ The [17-suite Chromium run 39377693618](https://github.com/gamesbyian/wallgen/ac
 **Acceptance entry 9 remains unchecked**, although the [green 17-suite run 39378143046](https://github.com/gamesbyian/wallgen/actions/runs/39378143046) established that actual 10× Resmooth changes overlay pixels and all earlier live source actions work. The [new continuous freehand Draw→Interpret→Edit anchor→Apply run 39378328111](https://github.com/gamesbyian/wallgen/actions/runs/39378328111) separately printed success records for both phone and landscape, but the aggregate was terminated by a **GitHub runner shutdown**, including its manual retry, before executing the *new* pixel-exact local Resmooth→point Undo assertion. Neither canceled attempt is credited as green for that assertion. Preserve it and run with a stable Actions slot.
 
 The last clean full-suite head and last clean eight-file native head precede the extra pixel-exact Undo check. General validation passed on the later source heads. Reviewers should use exact green head/run identities, not the PR's latest SHA alone, when determining which regression requirements were executed.
+
+## Focused Draw completion verdict, 2026-10-20
+
+The [focused Draw lifecycle CI run 39380936613](https://github.com/gamesbyian/wallgen/actions/runs/39380936613) **succeeded** at commit `a0bd01bca63f93888b74a5f45d85e93e06aac738`. All **43 source-level tests passed** and both real Chromium 412×892 and 700×412 advanced and continuous fresh-Draw journeys passed:
+
+- A sparse pinned source curve correctly **did not** change under a 10× Resmooth request, and it did not create an extra Undo snapshot. Earlier attempted pixel-change assertion on this fixture was wrong and is retained in the CI history as an explicit false-positive acceptance-test design, not a production defect.
+- A separate genuinely rough **96-sample** source curve **did visibly change** when a user clicked 10× Resmooth; the next real point Undo restored the underlying HTML Canvas pixel data **exactly**, and Cancel preserved the original complete normalized recipe.
+- Saved centreline point nudge, corner toggle, Edit points hide/reentry, physical tangent handle dragging, sparse midpoint Add/Delete, Apply and Cancel maintained source transaction boundaries and left all unrelated settings (including camera and placement) unchanged.
+- Fresh freehand input followed the *continuous* Draw → Interpret → Edit the first anchor → Apply path, including a prior Draw again reset, actual pointer movement, a keyboard nudge, 10× interpretive Smooth/Geometric, Undo availability, extension and Cancel rollback.
+
+These combined browser and source authorities now satisfy **the specifically named Draw acceptance #9**, which was checked in the queue alongside already checked crossing #10. Physical Android touch/stylus, OS-level pointer cancellation and exhaustive combinatorial interleavings are retained as broader quality questions, not fabricated coverage. Entry #5 remains partial; #11 still needs real, counterbalanced human testing before any default Focus promotion. `All` stays default.
