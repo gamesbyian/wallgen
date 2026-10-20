@@ -100,8 +100,11 @@ try{
       await chip(p,'shapeDepth').click();
       assert.equal(await p.locator('.editor-focus-slider').isDisabled(),true);
       assert.match(await p.locator('.editor-focus-help').textContent(),/inactive/i);
+      // Straight geometry's effective depth is correctly displayed as 0,
+      // while the dormant 44 remains in the saved recipe for reactivation.
       assert.equal((await p.locator('.editor-focus-value').textContent()).trim(),
-        String(before.shapeDepth),'Inactive stored value must remain legible');
+        '0','Contextual zero must describe the current Straight output');
+      assert.equal(before.shapeDepth,44,'Dormant authored depth must be retained');
       assert.equal(await p.locator('.editor-focus-step[aria-label="Increase focused parameter"]').isDisabled(),true);
       assert.deepEqual(current(p),before,'Inactive Focus control changed saved value');
       await capture(p,'path-inactive-focus');
