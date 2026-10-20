@@ -1,0 +1,60 @@
+name: Agent 2 conditional locked-field return acceptance
+
+on:
+  push:
+    branches:
+      - agent2/conditional-lock-return-20261020
+    paths:
+      - 'tests/agent2-conditional-lock-return.mjs'
+      - '.github/workflows/agent2-conditional-lock-return.yml'
+  pull_request:
+    paths:
+      - 'tests/agent2-conditional-lock-return.mjs'
+      - '.github/workflows/agent2-conditional-lock-return.yml'
+      - 'src/app.js'
+      - 'src/editor-layout.js'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: agent2-lock-return-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  negative-locks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate source and journey script
+        run: |
+          node --check tests/agent2-conditional-lock-return.mjs
+          node --test tests/inactive-conditional-roundtrip.test.js
+      - name: Install browser
+        run: |
+          npm install --no-save playwright@1.56.1 serve@14.2.5
+          npx playwright install --with-deps chromium
+      - name: Serve site
+        run: |
+          npx serve . -l 4173 > /tmp/agent2-negative-http.log 2>&1 &
+          for i in $(seq 1 40); do
+            if curl --fail --silent http://127.0.0.1:4173/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/agent2-negative-http.log
+          exit 1
+      - name: Lock, deactivate, reactivate and unlock each field
+        run: node tests/agent2-conditional-lock-return.mjs
+      - name: Retain evidence and negative screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent2-conditional-lock-return
+          path: artifacts/agent2-lock-return/
+          retention-days: 14
+          if-no-files-found: warn
