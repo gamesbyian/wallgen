@@ -1798,25 +1798,43 @@ try{
     pointer('pointermove',x+14,y-11);
     pointer('pointerup',x+14,y-11);
     const undoAvailable=!document.getElementById('drawUndoPoint').disabled;
+    const panel=document.getElementById('drawPathPanel');
+    const stage=document.querySelector('.studio-stage');
+    const overlayBox=overlay.getBoundingClientRect();
+    const overlayVisible=!overlay.hidden&&overlayBox.width>0&&overlayBox.height>0;
+    const beforePan=[recipe.viewPanX,recipe.viewPanY];
+    const beforeComposition=[recipe.positionX,recipe.positionY];
+    return {anchor,hitInside,x,y,undoAvailable,before,overlayVisible,
+      editing:panel.dataset.phase==='anchors',stagePan:[
+        Number(stage.dataset.viewPanX),Number(stage.dataset.viewPanY)],
+      beforePan,beforeComposition};
+  })()`);
+  assert.ok(pannedAnchorEditing.overlayVisible&&pannedAnchorEditing.editing,
+    'the screenshot must capture visible point handles, not a finished wallpaper');
+  assert.deepEqual(pannedAnchorEditing.stagePan,pannedAnchorEditing.beforePan);
+  await captureUI('draw-anchor-editing-world-pan-412x915');
+  // This separately retained after-Apply screenshot proves recipe persistence,
+  // while the screenshot above actually records the editing interface.
+  const appliedAnchor=await evaluate(`(()=>{
     document.getElementById('drawApply').click();
     const after=JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get('r')));
-    return {anchor,hitInside,x,y,undoAvailable,
-      changed:JSON.stringify(after.customPath)!==before,
-      anchors:after.drawnAnchors.length,
-      beforePan:[recipe.viewPanX,recipe.viewPanY],
+    return {path:after.customPath,anchors:after.drawnAnchors.length,
       afterPan:[after.viewPanX,after.viewPanY],
-      beforeComposition:[recipe.positionX,recipe.positionY],
       afterComposition:[after.positionX,after.positionY]};
   })()`);
   assert.ok(pannedAnchorEditing.hitInside,
     'selected saved anchor should remain inside the panned wallpaper window');
-  assert.ok(pannedAnchorEditing.undoAvailable&&pannedAnchorEditing.changed&&
-    pannedAnchorEditing.anchors>0,
+  assert.ok(pannedAnchorEditing.undoAvailable&&
+    JSON.stringify(appliedAnchor.path)!==pannedAnchorEditing.before&&
+    appliedAnchor.anchors>0,
     'pointer drag on the actually projected panned anchor must edit and pin it');
-  assert.deepEqual(pannedAnchorEditing.afterPan,pannedAnchorEditing.beforePan);
-  assert.deepEqual(pannedAnchorEditing.afterComposition,pannedAnchorEditing.beforeComposition);
+  assert.deepEqual(appliedAnchor.afterPan,pannedAnchorEditing.beforePan);
+  assert.deepEqual(appliedAnchor.afterComposition,pannedAnchorEditing.beforeComposition);
   await captureUI('draw-anchor-world-pan-aligned-412x915');
-  console.log('PANNED_DRAW_ANCHOR_POINTER_ALIGNMENT',JSON.stringify(pannedAnchorEditing));
+  console.log('PANNED_DRAW_ANCHOR_POINTER_ALIGNMENT',JSON.stringify({
+    ...pannedAnchorEditing,applied:{anchors:appliedAnchor.anchors,
+      afterPan:appliedAnchor.afterPan,afterComposition:appliedAnchor.afterComposition}
+  }));
 
   // Preserve the desktop viewport expected by the following Material and
   // geometry probes. Breakpoint boundaries are tested separately later.
