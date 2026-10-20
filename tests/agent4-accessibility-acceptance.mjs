@@ -50,6 +50,14 @@ try{
         control.id+' falls below 40px destination touch target');
       assert.ok(control.accessibleName,control.id+' is unnamed');
     }
+    // Query Chromium's accessibility tree names, not just author attributes.
+    // The source buttons are allowed to use visible text or aria-label, but
+    // the computed names must be unique inside the true navigation landmark.
+    const ariaNames=['Studio canvas','Edit','Explore','Saved wallpapers','More'];
+    const nav=page.locator('#mobileActionDock');
+    for(const name of ariaNames)
+      assert.equal(await nav.getByRole('button',{name,exact:true}).count(),1,
+        'Computed accessibility name missing or ambiguous: '+name);
     // Real keyboard activation, not dispatchEvent('click') or a forced click.
     await page.locator('#mobileMore').focus();
     await page.keyboard.press('Enter');
@@ -72,6 +80,18 @@ try{
     assert.ok(toastContrast>=4.5,'Global status label contrast '+toastContrast);
     assert.equal(measured.toastTransition,'0s',
       'Reduced motion must disable global status fade');
+    const recipeBeforeMotion=new URL(page.url()).searchParams.get('r');
+    await page.emulateMedia({reducedMotion:'no-preference'});
+    const regularTransition=await page.locator('#studioStatus').evaluate(el=>
+      getComputedStyle(el).transitionDuration);
+    assert.notEqual(regularTransition,'0s',
+      'Normal-motion global feedback unexpectedly has no transition');
+    await page.emulateMedia({reducedMotion:'reduce'});
+    assert.equal(await page.locator('#studioStatus').evaluate(el=>
+      getComputedStyle(el).transitionDuration),'0s',
+      'Switching back to reduced motion did not disable fade');
+    assert.equal(new URL(page.url()).searchParams.get('r'),recipeBeforeMotion,
+      'Motion preference unexpectedly changed the wallpaper recipe');
     assert.deepEqual(measured.toastSemantics,{role:'status',live:'polite',atomic:'true'});
     await page.keyboard.press('Escape');
     assert.equal(await page.evaluate(()=>document.activeElement?.id),'mobileMore',
@@ -93,6 +113,7 @@ try{
     observations.push({viewport:[width,height],theme,dock,
       selectedContrast,toastContrast,toastTransition:measured.toastTransition,
       keyboard:['More','Escape','Saved','Escape','Explore'],
+      ariaNames,motionPreferences:['reduce','no-preference','reduce'],regularTransition,
       focusReturned:true,selectedStatus:true});
     console.log('AGENT4_A11Y_MEASURED',JSON.stringify(observations.at(-1)));
    }catch(e){
