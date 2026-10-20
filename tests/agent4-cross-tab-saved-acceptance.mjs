@@ -9,6 +9,8 @@ const browser=await chromium.launch({headless:true});
 try{
   const context=await browser.newContext({viewport:{width:412,height:892},isMobile:true,hasTouch:true});
   const a=await context.newPage(), b=await context.newPage();
+  const pageErrors=[];
+  for(const page of [a,b])page.on('pageerror',error=>pageErrors.push(String(error)));
   const first=normalizeRecipe({seed:'agent4-tab-a'});
   const second=normalizeRecipe({seed:'agent4-tab-b'});
   const key='wallgen:favorites:v1';
@@ -106,6 +108,12 @@ try{
     'Cancelled gallery reload left Saved control disabled');
   assert.equal(await b.locator('#showFavorites').getAttribute('data-previous'),null,
     'Cancelled gallery reload corrupted the original source button text');
+  assert.equal(await b.locator('#showFavorites').getAttribute('aria-busy'),'false',
+    'Saved action failed to settle after overlapping requests');
+  const events=await b.evaluate(()=>window.__a4StorageTimeline);
+  assert.equal(events.length,2,'Missing one of the real cross-tab storage events');
+  assert.ok(events.every(entry=>entry.count!==undefined),
+    'A loading-state Saved button removed the original favourite count from the DOM');
   await a.evaluate(storageKey=>localStorage.setItem(storageKey,'{bad json'),key);
   await b.waitForFunction(()=>document.querySelectorAll('#gallery .thumb').length===0
     && document.querySelector('#gallery').getAttribute('aria-busy')!=='true');
@@ -122,6 +130,8 @@ try{
   assert.equal(await b.locator('#favorite .ui-icon').getAttribute('data-roygbiv-icon'),
     'favourite');
 
+  assert.deepEqual(pageErrors,[],
+    'Cross-tab updates threw uncaught browser errors during Saved rendering');
   console.log('AGENT4_TWO_TAB_SAVED_SUCCESS');
   await context.close();
 }finally{await browser.close();}
