@@ -565,3 +565,53 @@ test('an imported provisional curve still offers both usable fit modes',()=>{
     assert.deepEqual(f.recipe,f.snap);
   }finally{f.cleanup();}
 });
+
+test('late extension lock reconciles an open Draw checkbox with authoritative recipe',()=>{
+  const f=fixture({seed:'locked-extension-preview',structure:'paths',
+    geometry:'drawn',customPath:path,extendDrawnPath:true,
+    viewZoom:.5,viewPanX:12,positionY:-8});
+  try{
+    f.nodes.drawPathToggle.click();
+    assert.equal(f.nodes.drawExtendPath.checked,true);
+    assert.equal(f.nodes.drawExtendPath.disabled,false);
+    // A user's provisional choice stays local while the setting is unlocked.
+    f.nodes.drawExtendPath.checked=false;
+    f.nodes.drawExtendPath.dispatchEvent(new Event('change'));
+    f.tool.sync(f.recipe);
+    assert.equal(f.nodes.drawExtendPath.checked,false);
+    assert.equal(f.nodes.drawExtendPath.disabled,false);
+    // An external Restore/Lock makes the source value authoritative. The
+    // disabled checkbox and the overlay must represent that same value.
+    const prior=f.nodes.drawOverlay.canvasCalls.length;
+    f.recipe.lockedSettings.push('extendDrawnPath');
+    f.tool.sync(f.recipe);
+    assert.equal(f.nodes.drawExtendPath.checked,true);
+    assert.equal(f.nodes.drawExtendPath.disabled,true);
+    assert.ok(f.nodes.drawOverlay.canvasCalls.slice(prior)
+      .some(op=>op.key==='lineTo'),'the saved curve is repainted under lock');
+    f.nodes.drawEditPoints.click();
+    f.nodes.drawApply.click();
+    assert.equal(f.calls.length,1);
+    assert.equal(f.calls[0][3],true,'Apply can only use the now locked extension');
+    assert.equal(f.calls[0][4],true);
+    assert.equal(f.snap.extendDrawnPath,true);
+  }finally{f.cleanup();}
+});
+
+test('locked false extension also overrides an uncommitted true preview',()=>{
+  const f=fixture({seed:'locked-extension-false',structure:'paths',
+    geometry:'drawn',customPath:path,extendDrawnPath:false});
+  try{
+    f.nodes.drawPathToggle.click();
+    f.nodes.drawExtendPath.checked=true;
+    f.tool.sync(f.recipe);
+    assert.equal(f.nodes.drawExtendPath.checked,true,
+      'an unlocked editor draft is not silently discarded on ordinary sync');
+    f.recipe.lockedSettings.push('extendDrawnPath');
+    f.tool.sync(f.recipe);
+    assert.equal(f.nodes.drawExtendPath.checked,false);
+    assert.equal(f.nodes.drawExtendPath.disabled,true);
+    f.nodes.drawEditPoints.click();f.nodes.drawApply.click();
+    assert.equal(f.calls[0][3],false);
+  }finally{f.cleanup();}
+});
