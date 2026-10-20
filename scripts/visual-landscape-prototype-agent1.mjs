@@ -40,6 +40,13 @@ const proposedCss=`
    padding:0 8px 4px!important;border-radius:0!important;
    transform:translateY(0)!important;overflow:hidden!important;
  }
+ /* Experiment with honest two-row labels, not overlapping seven text tabs. */
+ body.mobile-studio.mobile-edit-open .sidebar .settings-tabs{
+   grid-template-columns:repeat(4,minmax(0,1fr))!important;
+   grid-template-rows:repeat(2,35px)!important;
+   height:70px!important;min-height:70px!important;max-height:70px!important;
+   flex:0 0 70px!important;
+ }
 }`;
 const rect=e=>{if(!e)return null;const r=e.getBoundingClientRect();
  return {x:r.x,y:r.y,width:r.width,height:r.height,
@@ -96,6 +103,10 @@ try{
         .filter(e=>get(e).width&&get(e).height)
         .map(e=>({key:e.dataset.controlKeys,rect:get(e)})):[],
        numberOfSourceInputs:card?.querySelectorAll('input,select').length||0,
+       rotationActions:card?[...card.querySelectorAll('.rotation-controls button,.rotation-controls input[type=number]')]
+         .map(e=>({name:e.getAttribute('aria-label')||e.getAttribute('title')||e.textContent?.trim(),
+           rect:get(e),hit:hit(e),disabled:!!e.disabled,
+           visible:get(e).width>0&&get(e).height>0})):[],
        scrollWidth:document.documentElement.scrollWidth
       };
      },scene.tool);
@@ -126,6 +137,10 @@ try{
       selectedToolHitAfter:after.targets.find(t=>t.id==='selectedTool')?.hit,
       sourceControlHitBefore:before.targets.find(t=>t.id==='sourceControl')?.hit,
       sourceControlHitAfter:after.targets.find(t=>t.id==='sourceControl')?.hit,
+      rotationHitBefore:before.rotationActions.filter(a=>a.visible&&!a.disabled&&a.hit).length+
+       '/'+before.rotationActions.filter(a=>a.visible&&!a.disabled).length,
+      rotationHitAfter:after.rotationActions.filter(a=>a.visible&&!a.disabled&&a.hit).length+
+       '/'+after.rotationActions.filter(a=>a.visible&&!a.disabled).length,
       sourceCardFitsAfter:!!after.selectedCard&&!!after.sidebar&&
        after.selectedCard.bottom<=after.sidebar.bottom+1,
       portraitUnchanged:!portrait||Math.abs(after.preview.width-before.preview.width)<.2
