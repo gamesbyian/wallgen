@@ -84,4 +84,14 @@ test('too-large named recipe reports explicit bounded error; huge foreign iTXt i
   const unrelated=insertBeforeIDAT(png,chunk('iTXt',foreign));
   assert.equal(extractPngRecipe(unrelated),null,
     'Large unrelated ancillary records should not be interpreted as recipes');
+  const source=largeValidRecipe(2);
+  const reexport=embedPngMetadata(unrelated,{}, {recipe:source});
+  assert.equal(extractPngRecipe(reexport).seed,source.seed,
+    'Unrelated large iTXt prevented a legitimate PNG recipe export');
+  const inputChunks=chunks(unrelated),outputChunks=chunks(reexport);
+  const foreignBefore=inputChunks.find(c=>c.type==='iTXt').data;
+  const foreignAfter=outputChunks.find(c=>c.type==='iTXt'&&
+    Buffer.from(c.data.subarray(0,8)).toString()==='Unrelate')?.data;
+  assert.deepEqual(foreignAfter,foreignBefore,
+    'Re-export must preserve opaque unrelated ancillary bytes verbatim');
 });
