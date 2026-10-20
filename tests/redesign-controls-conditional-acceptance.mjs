@@ -467,6 +467,24 @@ try{
     record('conditional-'+scenario.name,{dormant:scenario.dormant,
       active:scenario.active,retainedRecipe:true});
   }
+  // A positive-minimum range must not retain the temporary inactive zero
+  // boundary after its scene becomes applicable again.
+  const regionsCount=page.locator('#controls [name="regionCount"]');
+  assert.equal(await regionsCount.inputValue(),'0');
+  assert.equal(await regionsCount.getAttribute('min'),'0');
+  await nav('mobileEdit');
+  await page.locator('#tab-layout').click();
+  await page.locator('.editor-tool-chooser [data-editor-tool="structure-mode"]').click();
+  await page.locator('#controls [name="structure"]').selectOption('regions');
+  assert.equal(current().structure,'regions');
+  assert.equal(await regionsCount.getAttribute('min'),'7');
+  assert.equal(await regionsCount.inputValue(),String(current().regionCount));
+  await page.locator('#controls [name="structure"]').selectOption('paths');
+  assert.equal(await regionsCount.inputValue(),'0');
+  assert.equal(await regionsCount.getAttribute('min'),'0');
+  record('positive-minimum-range-restoration',{inactiveMinimum:0,
+    activeMinimum:7,storedCount:current().regionCount,
+    structureTransitions:['paths','regions','paths']});
   assert.deepEqual(errors,[],'Runtime JavaScript errors');
   await writeFile(join(out,'evidence.json'),JSON.stringify({
     classification:'live Chromium pointer/clipboard/file/download/conditional-state acceptance',
