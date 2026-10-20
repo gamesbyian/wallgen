@@ -207,3 +207,28 @@ This qualifies only the automated checks and exact tested source head.
 Automated axe completion is not a substitute for complete WCAG
 conformance, TalkBack/VoiceOver interaction, independent human A/B
 preference or physical touch-device use. Entries **2, 11, 15 remain open**.
+
+## Accessible-name counterexample discovered by retained axe incompletes
+
+The expanded diagnostic samples at head
+`591891baf879e00e57ea7cae1f65686a7ba69803`
+([CI run 39395530721](https://github.com/gamesbyian/wallgen/actions/runs/39395530721))
+exposed **`aria-prohibited-attr` manual-review warnings**:
+`.mobile-preview-rail-left` used `aria-label="Generation shortcuts"`
+on a generic, unroled `div` in every tested state. The original
+`.composition-positioner` used `aria-label="Position the composition"`
+on another generic `div`, appearing in expanded More. These author names
+are not reliably part of a computed accessible-name contract without a
+valid semantic role.
+
+The containers hold related controls rather than interactive controls
+themselves, so both now receive **`role="group"`**, retaining their
+existing labels and all descendants, listener identities and layout.
+The 24-state real-browser check now requires exactly one computed
+`Generation shortcuts` group in every state, a computed
+`Position the composition` group in expanded More and zero unresolved
+`aria-prohibited-attr` axe results. Require a green post-change head
+before treating this as verified. The remaining axe `color-contrast`
+incompletes on single-character coloured title glyphs and symbol-only
+seed buttons remain manual-review data and are **not** automatically
+certified by the other zero-violation checks.
