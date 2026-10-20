@@ -481,9 +481,12 @@ html[data-theme="dark"] .gallery-placeholder>span{color:#c5becf}
    partially visible textarea to count as keyboard accessible. */
 @media(max-width:790px){
   body.mobile-studio.mobile-tools-open .mobile-utility-sheet:not([hidden]){
-    scroll-padding-block:12px 70px;
+    scroll-padding-block:68px 80px;
   }
-  body.mobile-studio.mobile-tools-open .mobile-utility-sheet :is(input,textarea,select,button):focus-visible{
-    scroll-margin-block:12px 70px;
+  /* Reserve the sticky 53px sheet heading as well as the bottom dock.
+     Nonfocused controls also need this gutter for pointer hit-test
+     scrollIntoView, not only focused keyboard targets. */
+  body.mobile-studio.mobile-tools-open .mobile-utility-sheet :is(input,textarea,select,button){
+    scroll-margin-block:68px 80px;
   }
 }
