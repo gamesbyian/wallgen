@@ -61,3 +61,18 @@ post-fix 92-case Actions run before being marked behaviour-verified.
 All axe `incomplete` warnings still require manual assessment,
 including background-image select fields. Native Android/TalkBack and
 human visual/UX acceptance remain pending.
+
+## Cold keyboard-only Focus A/B route (separate gate)
+
+`tests/independent-keyboard-focus-journey.mjs` adds **four** source
+Chromium cases: 412×892 and 700×412 × two themes. Every action after page
+load uses physical Playwright keyboard input: Tab until the real
+`mobileEdit` destination, Enter opens Edit, Tab to the active Layout
+category, ArrowRight switches to Path, Tab to Focus, Enter opens it,
+Tab to its parameter chip, End selects a source slider, Tab to its
+real range proxy, ArrowRight edits it, Shift+Tab to All, Enter exits.
+The test records Tab counts, unobstructed focus, exactly one changed
+recipe field and preservation of the adjusted wallpaper after exit,
+without `.focus()`, `.click()` or direct DOM `input` dispatches.
+This is a **pending witness** until actual CI passes. It does not
+substitute for screen-reader speech or physical keyboard evaluation.
