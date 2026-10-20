@@ -44,6 +44,7 @@ try{
           const hit=r&&x>=0&&x<innerWidth&&y>=0&&y<innerHeight?
             document.elementFromPoint(x,y):null;
           return {id:el?.id||'',tag:el?.tagName||'',name:el?.name||'',
+            withinMore:!!el?.closest('#mobileToolsSheet'),
             hidden:!r||r.width<1||r.height<1||s.display==='none'||
               s.visibility==='hidden'||!!el.closest('[inert],[hidden]'),
             offscreen:!r||r.bottom<=0||r.top>=innerHeight||
@@ -54,6 +55,10 @@ try{
         if(state.hidden)record.hiddenFocus.push(state);
         assert.ok(!state.hidden,
           'Hidden or inert More keyboard stop: '+JSON.stringify({width,height,i,state}));
+        if(state.withinMore){
+          assert.ok(!state.offscreen&&state.centerHit,
+            'More keyboard focus is offscreen or covered: '+JSON.stringify({width,height,i,state}));
+        }
         record.focusSequence.push(state.id||state.name||state.tag);
         if(required.includes(state.id))visited.add(state.id);
         if(state.id==='metadataToggle'&&!metadataExpanded){
