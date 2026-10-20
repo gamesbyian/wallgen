@@ -25,7 +25,8 @@ const all=Object.keys(plates).filter(name=>!['explore-populated','saved-empty','
 // fabricated proposal plate. Label each state in the screenshot manifest.
 Object.assign(plates,{'more-expanded':'more','interior':'colour',
   'outlines':'geometry','material-layer2':'material','material-layer3':'material',
-  'effects':'colour','import-modal':'draw'});
+  'effects':'colour','import-modal':'draw',
+  'desktop-gallery':'explore','desktop-favourites':'history'});
 const deepMobile=['more-expanded','interior','outlines','material-layer2','material-layer3','effects','import-modal'];
 const profiles=[
   // Exact lower-width CSS boundary plus the app's minimum supported width.
@@ -65,10 +66,10 @@ const profiles=[
   {id:'short-edge-499x740',width:499,height:740,cases:['studio','material','saved-populated']},
   {id:'short-edge-500x740',width:500,height:740,cases:['studio','material','saved-populated']},
   {id:'phone-412x892',width:412,height:892,cases:[...all,...deepMobile,'explore-populated','saved-empty','saved-populated']},
-  {id:'edge-499x892',width:499,height:892,cases:[...all,...deepMobile,'saved-empty','saved-populated']},
-  {id:'edge-500x892',width:500,height:892,cases:[...all,...deepMobile,'saved-empty','saved-populated']},
-  {id:'edge-790x892',width:790,height:892,cases:[...all,...deepMobile,'saved-empty','saved-populated']},
-  {id:'desktop-791x892',width:791,height:892,cases:['studio','geometry','material','colour','diagonal','compact','focus','history','search','interior','outlines','material-layer2','material-layer3','effects','import-modal']},
+  {id:'edge-499x892',width:499,height:892,cases:[...all,...deepMobile,'explore-populated','saved-empty','saved-populated']},
+  {id:'edge-500x892',width:500,height:892,cases:[...all,...deepMobile,'explore-populated','saved-empty','saved-populated']},
+  {id:'edge-790x892',width:790,height:892,cases:[...all,...deepMobile,'explore-populated','saved-empty','saved-populated']},
+  {id:'desktop-791x892',width:791,height:892,cases:['studio','geometry','material','colour','diagonal','compact','focus','history','search','interior','outlines','material-layer2','material-layer3','effects','import-modal','more-expanded','desktop-gallery','desktop-favourites']},
   {id:'landscape-700x412',width:700,height:412,cases:[...all,...deepMobile,'explore-populated','saved-empty','saved-populated']},
   {id:'zoom-out-412x892',width:412,height:892,cases:['studio','geometry','more'],zoom:.75}
 ];
@@ -254,6 +255,20 @@ const scenarios={
       await page.locator('#mobileToolsSheet:not([hidden])').waitFor({state:'visible'});
     }
   },
+  'desktop-gallery':async(page)=>{
+    await click(page,'#batch');
+    await page.waitForFunction(()=>document.querySelectorAll('#gallery .thumb').length>=12,
+      null,{timeout:60000});
+    await awaitPaintedThumbnails(page,12);
+    await page.locator('.gallery-section').scrollIntoViewIfNeeded();
+  },
+  'desktop-favourites':async(page)=>{
+    await click(page,'#favorite');await click(page,'#showFavorites');
+    await page.waitForFunction(()=>document.querySelectorAll('#gallery .thumb').length>=1,
+      null,{timeout:60000});
+    await awaitPaintedThumbnails(page,1);
+    await page.locator('.gallery-section').scrollIntoViewIfNeeded();
+  },
   'more-expanded':async(page,profile)=>{
     if(profile.width<=790){
       await click(page,'#mobileMore');
@@ -261,8 +276,7 @@ const scenarios={
     }
     await click(page,'#metadataToggle');
     await page.locator('#metadataPanel:not([hidden])').waitFor({state:'visible'});
-    if(profile.width<=790)
-      await page.locator('#metadataPanel').evaluate(el=>el.scrollIntoView({block:'nearest',inline:'nearest'}));
+    await page.locator('#metadataPanel').evaluate(el=>el.scrollIntoView({block:'nearest',inline:'nearest'}));
   },
   material:async(page,profile)=>{
     await edit(page,profile);await field(page,'structure','paths');
