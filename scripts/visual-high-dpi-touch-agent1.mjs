@@ -90,7 +90,10 @@ try{
            caption:caption?{left:caption.left,right:caption.right,top:caption.top,bottom:caption.bottom}:null,
            hit:hit===el||el.contains(hit)};
        });
+       const dockNode=document.querySelector('#mobileActionDock');
        return {stage,surface,dock,overlap,labels,
+         dockInert:!!dockNode?.inert||
+           [...(dockNode?.querySelectorAll('button')||[])].every(b=>b.inert||!!b.closest('[inert]')),
          horizontalScroll:document.documentElement.scrollWidth>innerWidth+1,
          cssViewport:{width:innerWidth,height:innerHeight},
          scale:window.visualViewport?.scale};
@@ -109,10 +112,20 @@ try{
        throw Error('Unexpected physical PNG resolution '+JSON.stringify(png));
      if(geometry.horizontalScroll||geometry.overlap>1)
        throw Error('Layout overflow or stage/sheet intersection '+JSON.stringify(geometry));
-     if(geometry.labels.length!==5||geometry.labels.some(x=>!x.hit||!x.caption||
-       x.caption.left<x.rect.left-1||x.caption.right>x.rect.right+1||
-       x.caption.top<x.rect.top-1||x.caption.bottom>x.rect.bottom+1))
-       throw Error('Dock target or caption obstructed in high-DPI touch emulation');
+     // The full editor deliberately moves the bottom dock off-screen and
+     // makes it inert. Only visible mobile destinations should be hittable.
+     const editing=state.id.startsWith('edit-');
+     const unobstructed=geometry.labels.every(x=>x.hit);
+     const completelyOffscreen=geometry.labels.every(x=>
+       x.rect.left>=profile.width-1||x.rect.right<=1);
+     const captionContained=geometry.labels.every(x=>x.caption&&
+       x.caption.left>=x.rect.left-1&&x.caption.right<=x.rect.right+1&&
+       x.caption.top>=x.rect.top-1&&x.caption.bottom<=x.rect.bottom+1);
+     if(geometry.labels.length!==5||!captionContained||
+       (editing?(!completelyOffscreen||!geometry.dockInert):!unobstructed))
+       throw Error('Dock visibility/hidden-inert state violates source navigation: '+
+         JSON.stringify({editing,unobstructed,completelyOffscreen,
+           dockInert:geometry.dockInert,labels:geometry.labels}));
      console.log('HIGH-DPI CAPTURE '+key+' physical='+png.width+'x'+png.height);
     }catch(e){
      errors.push({key,error:String(e)});
