@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - 'scripts/visual-high-dpi-touch-agent1.mjs'
+      - 'scripts/visual-focus-label-contrast-agent1.mjs'
       - '.github/workflows/visual-high-dpi-agent1.yml'
       - 'studio-themes.css'
       - 'mobile-compact.css'
@@ -10,6 +11,7 @@ on:
       - 'mobile-editor-rail.css'
       - 'editor-redesign.css'
       - 'editor-setting-rows.css'
+      - 'editor-focus.css'
       - 'index.html'
   workflow_dispatch:
 permissions:
@@ -27,7 +29,9 @@ jobs:
         with:
           node-version: '22'
       - name: Source script syntax
-        run: node --check scripts/visual-high-dpi-touch-agent1.mjs
+        run: |
+          node --check scripts/visual-high-dpi-touch-agent1.mjs
+          node --check scripts/visual-focus-label-contrast-agent1.mjs
       - name: Install independent Chromium
         run: |
           npm install --no-save playwright@1.56.1 serve@14.2.5
@@ -43,6 +47,8 @@ jobs:
           exit 1
       - name: Capture high-DPI source UI with real touch taps
         run: node scripts/visual-high-dpi-touch-agent1.mjs
+      - name: Assert live Focus caption contrast and reversible touch state
+        run: node scripts/visual-focus-label-contrast-agent1.mjs
       - name: Upload physical pixel screenshots and geometry
         if: always()
         uses: actions/upload-artifact@v4
