@@ -44,7 +44,7 @@ jobs:
       - name: Syntax and unit-level scoped randomization contracts
         run: |
           node --check tests/agent2-scoped-randomization-browser-matrix.mjs
-          node --test tests/scoped-random.test.js
+          node --test tests/editor-schema.test.js tests/scoped-optional-layer-activation.test.js
       - name: Install real Chromium
         run: |
           npm install --no-save playwright@1.56.1 serve@14.2.5
