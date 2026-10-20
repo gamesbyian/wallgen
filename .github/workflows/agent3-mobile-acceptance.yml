@@ -14,6 +14,7 @@ on:
       - 'tests/redesign-cold-keyboard-editor.mjs'
       - 'tests/redesign-global-status-acceptance.mjs'
       - 'tests/redesign-negative-png-import.mjs'
+      - 'tests/redesign-clipboard-denial-recovery.mjs'
       - '.github/workflows/agent3-mobile-acceptance.yml'
       - 'docs/ui-reference/source-control-inventory.json'
       - 'src/editor-*.js'
@@ -49,7 +50,8 @@ jobs:
             tests/redesign-keyboard-roving-tools.mjs \
             tests/redesign-cold-keyboard-editor.mjs \
             tests/redesign-global-status-acceptance.mjs \
-            tests/redesign-negative-png-import.mjs; do
+            tests/redesign-negative-png-import.mjs \
+            tests/redesign-clipboard-denial-recovery.mjs; do
             node --check "$test"
           done
           node --test \
@@ -58,7 +60,7 @@ jobs:
             tests/interior-combined-scope.test.js \
             tests/interior-selected-id.test.js \
             tests/material-three-layer-adversarial.test.js
-      - name: One Chromium/browser install for ten acceptance suites
+      - name: One Chromium/browser install for eleven acceptance suites
         run: |
           npm install --no-save playwright@1.56.1 serve@14.2.5
           npx playwright install --with-deps chromium
@@ -71,7 +73,7 @@ jobs:
           done
           cat /tmp/agent3-consolidated.log
           exit 1
-      - name: Exercise all ten independently authored browser gates
+      - name: Exercise all eleven independently authored browser gates
         run: |
           status=0
           for test in \
@@ -84,7 +86,8 @@ jobs:
             tests/redesign-keyboard-roving-tools.mjs \
             tests/redesign-cold-keyboard-editor.mjs \
             tests/redesign-global-status-acceptance.mjs \
-            tests/redesign-negative-png-import.mjs; do
+            tests/redesign-negative-png-import.mjs \
+            tests/redesign-clipboard-denial-recovery.mjs; do
             echo "::group::$test"
             node "$test" || status=1
             echo "::endgroup::"
@@ -106,5 +109,6 @@ jobs:
             artifacts/agent3-cold-keyboard/
             artifacts/agent3-global-status/
             artifacts/agent3-negative-png-import/
+            artifacts/agent3-clipboard-denial/
           retention-days: 14
           if-no-files-found: warn
