@@ -321,6 +321,20 @@ function syncInactiveSettings(){
       for(const el of host.querySelectorAll('.step-button,.slider-number'))el.disabled=isInactive||locked;
     }
     if(field.type==='range'){
+      // A native range clamps an attempted zero to its minimum (7 for
+      // region/ray counts). Temporarily expand only the inactive control's
+      // visual range; restore its exact authored minimum on reactivation.
+      // This is presentation-only: current[key] and the serialized recipe
+      // retain their actual value throughout the inactive interval.
+      if(isInactive && Number(field.min)>0){
+        if(field.dataset.activeMin===undefined)
+          field.dataset.activeMin=field.getAttribute('min')||'';
+        field.min='0';
+      }else if(!isInactive && field.dataset.activeMin!==undefined){
+        if(field.dataset.activeMin)field.min=field.dataset.activeMin;
+        else field.removeAttribute('min');
+        delete field.dataset.activeMin;
+      }
       field.value=isInactive?'0':String(current[key]);
       const numeric=form.querySelector('[data-number-for="'+key+'"]');
       if(numeric)numeric.value=isInactive?'0':String(current[key]);
