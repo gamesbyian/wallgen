@@ -12,6 +12,7 @@ on:
       - 'tests/redesign-camera-structure-acceptance.mjs'
       - 'tests/redesign-keyboard-roving-tools.mjs'
       - 'tests/redesign-cold-keyboard-editor.mjs'
+      - 'tests/redesign-global-status-acceptance.mjs'
       - '.github/workflows/agent3-mobile-acceptance.yml'
       - 'docs/ui-reference/source-control-inventory.json'
       - 'src/editor-*.js'
@@ -45,7 +46,8 @@ jobs:
             tests/redesign-material-rotation-browser.mjs \
             tests/redesign-camera-structure-acceptance.mjs \
             tests/redesign-keyboard-roving-tools.mjs \
-            tests/redesign-cold-keyboard-editor.mjs; do
+            tests/redesign-cold-keyboard-editor.mjs \
+            tests/redesign-global-status-acceptance.mjs; do
             node --check "$test"
           done
           node --test \
@@ -54,7 +56,7 @@ jobs:
             tests/interior-combined-scope.test.js \
             tests/interior-selected-id.test.js \
             tests/material-three-layer-adversarial.test.js
-      - name: One Chromium/browser install for eight acceptance suites
+      - name: One Chromium/browser install for nine acceptance suites
         run: |
           npm install --no-save playwright@1.56.1 serve@14.2.5
           npx playwright install --with-deps chromium
@@ -67,7 +69,7 @@ jobs:
           done
           cat /tmp/agent3-consolidated.log
           exit 1
-      - name: Exercise all eight independently authored browser gates
+      - name: Exercise all nine independently authored browser gates
         run: |
           status=0
           for test in \
@@ -78,7 +80,8 @@ jobs:
             tests/redesign-material-rotation-browser.mjs \
             tests/redesign-camera-structure-acceptance.mjs \
             tests/redesign-keyboard-roving-tools.mjs \
-            tests/redesign-cold-keyboard-editor.mjs; do
+            tests/redesign-cold-keyboard-editor.mjs \
+            tests/redesign-global-status-acceptance.mjs; do
             echo "::group::$test"
             node "$test" || status=1
             echo "::endgroup::"
@@ -98,5 +101,6 @@ jobs:
             artifacts/agent3-camera-isolation/
             artifacts/agent3-tool-keyboard/
             artifacts/agent3-cold-keyboard/
+            artifacts/agent3-global-status/
           retention-days: 14
           if-no-files-found: warn
