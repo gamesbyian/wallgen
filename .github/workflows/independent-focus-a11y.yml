@@ -10,6 +10,7 @@ on:
       - 'studio-themes.css'
       - 'index.html'
       - 'src/mobile-*.js'
+      - 'src/mobile-preview-tools.js'
       - 'tests/independent-focus-a11y-acceptance.mjs'
       - 'tests/independent-svg-candidates-acceptance.mjs'
       - 'tests/independent-focus-transitions.mjs'
