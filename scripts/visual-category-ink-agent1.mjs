@@ -35,9 +35,11 @@ try{
    const page=await context.newPage();
    try{
     await page.goto(base,{waitUntil:'domcontentloaded'});
+    // The original app moves its header offscreen in Edit: change theme
+    // through an actually visible Studio control BEFORE opening the tray.
+    await page.locator('[data-studio-theme="'+theme+'"]').tap();
     await page.locator('#mobileEdit').tap();
     await page.locator('#tab-layout').waitFor({state:'visible'});
-    await page.locator('[data-studio-theme="'+theme+'"]').tap();
     await page.evaluate(async()=>{await document.fonts.ready;});
     const inspect=async()=>page.evaluate(()=>{
       const nav=document.querySelector('body.mobile-studio .sidebar .settings-tabs');
