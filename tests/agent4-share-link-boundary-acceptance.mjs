@@ -100,6 +100,13 @@ try{
     await linked.waitForFunction(seed=>document.querySelector('#seedInput')?.value===seed,
       large.seed,{timeout:30000});
     assert.equal(portableShareTokenFromLocation(new URL(linked.url())),token);
+    // A real subsequent edit must invalidate the old compressed share link
+    // rather than continuing to advertise the PREVIOUS wallpaper.
+    await linked.locator('#randomizeAll').click();
+    await linked.waitForFunction(()=>
+      !location.hash.startsWith('#s=')&&
+      new URLSearchParams(location.search).has('r'));
+    assert.notEqual(await linked.locator('#seedInput').inputValue(),large.seed);
     await linked.goto(origin+'/#s=v1.broken!',{waitUntil:'domcontentloaded'});
     await linked.waitForFunction(()=>document.querySelector('#studioStatus')
       ?.textContent?.includes('Cannot restore compressed design link'));
@@ -199,7 +206,7 @@ try{
   }finally{await opened.close();}
   const row={largeUrlChars:urlSize,compactUrlChars:compact.length,
     compressedStandaloneLink:true,cleanBrowserOpened:true,
-    sourceJSONDownloadedFromSharedBrowser:true,malformedTokenRejected:true,unsupportedCompressionFallback:true,
+    sourceJSONDownloadedFromSharedBrowser:true,shareEditInvalidatesOldToken:true,malformedTokenRejected:true,unsupportedCompressionFallback:true,
     staleShortHistoryLinkRejected:true,exactCanonicalRecipe:true,downloadedAndReimportedJSON:true,
     normalCopiedLinkNavigated:true};
   evidence.push(row);
