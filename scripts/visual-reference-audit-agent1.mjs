@@ -21,6 +21,14 @@ const plates={
   compact:'compact',focus:'focus',history:'history',search:'search'
 };
 const all=Object.keys(plates).filter(name=>!['explore-populated','saved-empty','saved-populated'].includes(name));
+// Deep states are compared to their nearest canonical *contract*, not a
+// fabricated proposal plate. Label each state in the screenshot manifest.
+Object.assign(plates,{'more-expanded':'more','interior':'colour',
+  'outlines':'geometry','material-layer2':'material','material-layer3':'material',
+  'effects':'colour','import-modal':'draw',
+  'desktop-gallery':'explore','desktop-favourites':'history',
+  'desktop-focus':'focus'});
+const deepMobile=['more-expanded','interior','outlines','material-layer2','material-layer3','effects','import-modal'];
 const profiles=[
   // Exact lower-width CSS boundary plus the app's minimum supported width.
   // These are actual mobile Chromium layouts, never CSS-root zoom proxies.
@@ -58,12 +66,12 @@ const profiles=[
   {id:'wrap-edge-320x892',width:320,height:892,cases:['studio','saved-empty','saved-populated']},
   {id:'short-edge-499x740',width:499,height:740,cases:['studio','material','saved-populated']},
   {id:'short-edge-500x740',width:500,height:740,cases:['studio','material','saved-populated']},
-  {id:'phone-412x892',width:412,height:892,cases:[...all,'explore-populated','saved-empty','saved-populated']},
-  {id:'edge-499x892',width:499,height:892,cases:['studio','geometry','material','more','focus']},
-  {id:'edge-500x892',width:500,height:892,cases:all},
-  {id:'edge-790x892',width:790,height:892,cases:['studio','geometry','material','more','explore']},
-  {id:'desktop-791x892',width:791,height:892,cases:['studio','geometry','material']},
-  {id:'landscape-700x412',width:700,height:412,cases:['studio','geometry','draw','more','explore','explore-populated','saved-empty','saved-populated']},
+  {id:'phone-412x892',width:412,height:892,cases:[...all,...deepMobile,'explore-populated','saved-empty','saved-populated']},
+  {id:'edge-499x892',width:499,height:892,cases:[...all,...deepMobile,'explore-populated','saved-empty','saved-populated']},
+  {id:'edge-500x892',width:500,height:892,cases:[...all,...deepMobile,'explore-populated','saved-empty','saved-populated']},
+  {id:'edge-790x892',width:790,height:892,cases:[...all,...deepMobile,'explore-populated','saved-empty','saved-populated']},
+  {id:'desktop-791x892',width:791,height:892,cases:['studio','geometry','material','colour','diagonal','compact','desktop-focus','history','search','interior','outlines','material-layer2','material-layer3','effects','import-modal','more-expanded','desktop-gallery','desktop-favourites']},
+  {id:'landscape-700x412',width:700,height:412,cases:[...all,...deepMobile,'explore-populated','saved-empty','saved-populated']},
   {id:'zoom-out-412x892',width:412,height:892,cases:['studio','geometry','more'],zoom:.75}
 ];
 const errors=[],shots=[];
@@ -248,9 +256,67 @@ const scenarios={
       await page.locator('#mobileToolsSheet:not([hidden])').waitFor({state:'visible'});
     }
   },
+  'desktop-gallery':async(page)=>{
+    await click(page,'#batch');
+    await page.waitForFunction(()=>document.querySelectorAll('#gallery .thumb').length>=12,
+      null,{timeout:60000});
+    await awaitPaintedThumbnails(page,12);
+    await page.locator('.gallery-section').scrollIntoViewIfNeeded();
+  },
+  'desktop-favourites':async(page)=>{
+    await click(page,'#favorite');await click(page,'#showFavorites');
+    await page.waitForFunction(()=>document.querySelectorAll('#gallery .thumb').length>=1,
+      null,{timeout:60000});
+    await awaitPaintedThumbnails(page,1);
+    await page.locator('.gallery-section').scrollIntoViewIfNeeded();
+  },
+  'more-expanded':async(page,profile)=>{
+    if(profile.width<=790){
+      await click(page,'#mobileMore');
+      await page.locator('#mobileToolsSheet:not([hidden])').waitFor({state:'visible'});
+    }
+    await click(page,'#metadataToggle');
+    await page.locator('#metadataPanel:not([hidden])').waitFor({state:'visible'});
+    await page.locator('#metadataPanel').evaluate(el=>el.scrollIntoView({block:'nearest',inline:'nearest'}));
+  },
   material:async(page,profile)=>{
     await edit(page,profile);await field(page,'structure','paths');
     await field(page,'material','grain');await tool(page,'material','finish1');
+  },
+  'material-layer2':async(page,profile)=>{
+    await edit(page,profile);await field(page,'structure','paths');
+    await field(page,'textureLayer2Enabled',true);
+    await field(page,'material2','linen');await tool(page,'material','finish2');
+  },
+  'material-layer3':async(page,profile)=>{
+    await edit(page,profile);await field(page,'structure','paths');
+    await field(page,'textureLayer2Enabled',true);
+    await field(page,'textureLayer3Enabled',true);
+    await field(page,'material3','foil');await tool(page,'material','finish3');
+  },
+  effects:async(page,profile)=>{
+    await edit(page,profile);await tool(page,'effects','lighting');
+  },
+  'import-modal':async(page)=>{
+    // Actual native file-input selection and image decoding. Do not create
+    // or paint synthetic dialog nodes, and don't pretend the file has paths.
+    const svg='<svg xmlns="http://www.w3.org/2000/svg" width="320" height="520">'+
+      '<rect width="320" height="520" fill="white"/>'+
+      '<path d="M28 450 L292 70" stroke="black" stroke-width="18"/></svg>';
+    await page.locator('#imagePathFile').setInputFiles({
+      name:'agent1-source-diagonal.svg',mimeType:'image/svg+xml',buffer:Buffer.from(svg)
+    });
+    await page.locator('#imagePathDialog[open]').waitFor({state:'visible'});
+    await page.waitForFunction(()=>{
+      const el=document.querySelector('#imagePathDialog');
+      return el&&['ready','empty'].includes(el.dataset.phase);
+    },null,{timeout:20000});
+  },
+  interior:async(page,profile)=>{
+    await edit(page,profile);await tool(page,'details','interior');
+  },
+  outlines:async(page,profile)=>{
+    await edit(page,profile);await tool(page,'details','outlines');
   },
   colour:async(page,profile)=>{
     await edit(page,profile);await tool(page,'colour','rainbow');
@@ -268,6 +334,20 @@ const scenarios={
     await click(page,'.editor-focus-toggle');
     await click(page,'.editor-focus-chip[data-focus-key=stripeWidth]');
     await page.locator('#editorFocusPanel:not([hidden])').waitFor({state:'visible'});
+  },
+  'desktop-focus':async(page,profile)=>{
+    if(profile.width<=790)throw Error('Desktop Focus guard requires desktop breakpoint');
+    await edit(page,profile);
+    await tool(page,'stripes','structure');
+    // The optional one-slider experiment is deliberately mobile-only.
+    // Its desktop toggle exists but may not activate the hidden panel.
+    const toggle=page.locator('.editor-focus-toggle');
+    await toggle.waitFor({state:'attached'});
+    const before=await page.locator('#editorFocusPanel').isHidden();
+    await click(page,'.editor-focus-toggle');
+    const after=await page.locator('#editorFocusPanel').isHidden();
+    if(!before||!after||await toggle.getAttribute('aria-pressed')!=='false')
+      throw Error('Desktop must retain source full inspector, not enter mobile-only Focus');
   },
   history:async(page,profile)=>{
     await edit(page,profile);await click(page,'#randomize');
@@ -316,6 +396,22 @@ function geometryFromPage(page){
           x:r.left,right:r.right,y:r.top,bottom:r.bottom,width:r.width,height:r.height,
           centerTarget:el===probe||el.contains(probe)};
       }):[];
+    // Actual, visible source-row geometry; never synthetic controls.
+    const rows=[...document.querySelectorAll('.editor-tool-card:not([hidden]) .editor-setting-row')]
+      .filter(el=>{const r=el.getBoundingClientRect(),s=getComputedStyle(el);
+        return r.width>0&&r.height>0&&s.display!=='none'&&s.visibility!=='hidden';})
+      .map(el=>{
+        const r=el.getBoundingClientRect();
+        const card=el.closest('.editor-tool-card')?.getBoundingClientRect();
+        const inputs=[...el.querySelectorAll('input:not([type=hidden]),select,textarea')];
+        return {tool:el.dataset.controlTool,kind:el.dataset.controlKind,
+          keys:el.dataset.controlKeys,rotation:el.classList.contains('texture-rotation-field'),
+          grid:getComputedStyle(el).gridTemplateColumns,
+          left:r.left,right:r.right,top:r.top,bottom:r.bottom,
+          cardLeft:card?.left,cardRight:card?.right,
+          inputCount:inputs.length,buttonCount:el.querySelectorAll('.rotation-controls button').length,
+          overflow:card?Math.max(0,card.left-r.left,r.right-card.right):0};
+      });
     const stage=rect('.studio-stage'),sidebar=rect('.sidebar'),
       gallery=rect('.gallery-section'),more=rect('#mobileToolsSheet');
     const openSheet=body.classList.contains('mobile-edit-open')?sidebar:
@@ -332,7 +428,7 @@ function geometryFromPage(page){
       firstThumbCanvas:rect('#gallery .thumb canvas'),
       firstThumbCaption:rect('#gallery .thumb-caption'),
       galleryGridOverflowY:document.querySelector('#gallery')?getComputedStyle(document.querySelector('#gallery')).overflowY:null,
-      stageOverlap,actionTargets,
+      stageOverlap,rows,actionTargets,
       undersized24:actionTargets.filter(el=>el.width<24||el.height<24)
         .map(el=>el.selector),
       categoryDisabled:[...document.querySelectorAll('.settings-tabs .settings-tab:disabled')]
@@ -433,7 +529,18 @@ try{
               console.error('VISUAL FAILURE '+key+' '+error);
             }
           }
-          if(profile.width<=360){
+          if(!profile.zoom&&measured.rows.some(row=>row.overflow>1)){
+             const badRows=measured.rows.filter(row=>row.overflow>1);
+             const error='Visible setting row exceeds source card horizontally: '+JSON.stringify(badRows);
+             errors.push({key,error});console.error('VISUAL FAILURE '+key+' '+error);
+           }
+           for(const row of measured.rows.filter(row=>row.rotation)){
+             if(row.buttonCount!==5||row.inputCount!==1){
+               const error='Special rotation controls missing: '+JSON.stringify(row);
+               errors.push({key,error});console.error('VISUAL FAILURE '+key+' '+error);
+             }
+           }
+           if(profile.width<=360){
             for(const [name,rect] of [['preview',measured.stage],['dock',measured.dock]]){
               if(rect?.visible&&(rect.x< -1||rect.right>profile.width+1)){
                 const error='Narrow phone '+name+' extends outside '+profile.width+
@@ -498,8 +605,13 @@ try{
   await mkdir(join(output,'icons'),{recursive:true});
   await page.screenshot({path:join(output,'icons','all-68-state-matrix.png'),fullPage:true,animations:'disabled'});
   for(const candidate of iconCandidates){
-    await page.locator('#filter').fill(candidate);
-    await pause(90);
+    // Plain `pan` also matches the title "Expand". The review must display
+    // exactly the candidate source glyph, never a similarly named original.
+    await page.locator('#filter').fill('='+candidate);
+    await page.waitForFunction(name=>{
+      const cards=[...document.querySelectorAll('#grid .card')];
+      return cards.length===1&&cards[0].querySelector('code')?.textContent===name;
+    },candidate);
     const file='icons/'+candidate+'-states.png';
     await page.screenshot({path:join(output,file),fullPage:true,animations:'disabled'});
     iconShots.push({candidate,file,states:'20/24/28px, cream/dark, normal/selected/disabled/focus'});
@@ -514,9 +626,45 @@ await writeFile(join(output,'icon-review.html'),
   '<p>This is source-backed multi-state optical evidence, not approval or permission to wire icons. Full established matrix: <a href="icons/all-68-state-matrix.png">68 symbols</a>.</p>'+
   iconCards+'</html>');
 
+// Never promote a failing capture to an implementation reference. Only a
+// completely green *real Chromium* run stages the actual 412×892 screenshot
+// plates in the artifact. The schematic SVGs remain unchanged and authoritative
+// for required/conditional feature inventory until a human design sign-off.
+const implementationPlates=[];
+if(errors.length===0){
+  const referenceScreens=['studio','geometry','draw','explore','more','material',
+    'colour','diagonal','compact','focus','history','search'];
+  await mkdir(join(output,'implemented-plates'),{recursive:true});
+  for(const screenshot of shots.filter(s=>s.profile==='phone-412x892'&&referenceScreens.includes(s.screen))){
+    const imagePath='implemented-plates/'+screenshot.theme+'-'+screenshot.screen+'.png';
+    await copyFile(join(output,screenshot.file),join(output,imagePath));
+    implementationPlates.push({screen:screenshot.screen,theme:screenshot.theme,
+      source:screenshot.file,image:imagePath,
+      sourceCommit:process.env.GITHUB_SHA||'local checkout (see script invocation)',
+      viewport:'412×892 native CSS Chromium',plate:plates[screenshot.screen],
+      review:'evidence only; human optical approval outstanding'});
+  }
+  if(implementationPlates.length!==referenceScreens.length*2){
+    errors.push({key:'implementation-plates',
+      error:'Missing real screenshot reference: '+implementationPlates.length+'/24'});
+  }else{
+    const realCards=implementationPlates.map(s=>'<article><h2>'+s.screen+' / '+s.theme+
+      '</h2><figure><img src="'+s.image.split('/').pop()+'" alt="Actual implemented '+s.screen+
+      ' screen in '+s.theme+'"></figure><p>Source screenshot: '+s.source+'</p></article>').join('');
+    await writeFile(join(output,'implemented-plates','index.html'),
+      '<!doctype html><html lang="en"><meta charset="utf-8"><title>Live ROYGBIV implementation plates</title>'+
+      '<style>body{font:14px system-ui;background:#f7f2eb;color:#18151f;margin:20px}'+
+      'article{display:inline-block;vertical-align:top;width:300px;margin:8px;padding:10px;background:#fff}'+
+      'img{width:100%;height:auto;border:1px solid #ddd}h2{font-size:15px}</style>'+
+      '<h1>Actual implementation at 412×892</h1>'+
+      '<p>Captured directly from Chromium and source UI. These are conditional evidence plates, '+
+      'not regenerated mockups or human aesthetic approval. SVG inventory contracts remain authoritative.</p>'+
+      realCards+'</html>');
+  }
+}
 await writeFile(join(output,'manifest.json'),JSON.stringify({
   source:'git checkout used by Action',plateSource:'docs/ui-reference',profiles,shots,errors,
-  iconCandidates:iconFindings,iconScreenshots:iconShots,notes:[
+  iconCandidates:iconFindings,iconScreenshots:iconShots,implementationPlates,notes:[
     'No visual/human sign-off inferred from passing geometry or screenshot capture',
     'Candidate icon matrix lives at assets/icons/roygbiv/state-matrix.html',
     'Original application controls remain live; only source click handlers are invoked',
