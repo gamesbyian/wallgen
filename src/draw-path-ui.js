@@ -25,12 +25,16 @@ export function activeSavedDrawnPath(recipe){
   return recipe?.structure==='paths'&&recipe.geometry==='drawn'&&
     Array.isArray(recipe.customPath)&&recipe.customPath.length>=2;
 }
-/** An open saved-path transaction belongs to the precise source geometry.
- * Changes to camera or materials remain independent, but restoring a
- * different path makes old provisional edits stale and unsafe to Apply. */
+/** One saved Draw editor transaction owns the exact curve AND its human
+ * authoring constraints. Undo may restore changed pins/corners while keeping
+ * identical curve pixels; applying a stale point editor must not erase them. */
+export function savedDrawSourceKey(recipe){
+  if(!activeSavedDrawnPath(recipe))return null;
+  return JSON.stringify([recipe.customPath,recipe.drawnAnchors||[],
+    recipe.drawnCorners||[]]);
+}
 export function savedDrawSourceMatches(sourceKey,recipe){
-  return typeof sourceKey==='string'&&activeSavedDrawnPath(recipe)&&
-    JSON.stringify(recipe.customPath)===sourceKey;
+  return typeof sourceKey==='string'&&sourceKey===savedDrawSourceKey(recipe);
 }
 
 // The freehand overlay is also the optional point editor: one shared camera,
@@ -234,7 +238,7 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
       // path into a replacement and silently zero composition position.
       if(ready.length<2&&saved){
         editingSavedPath=true;
-        savedSourcePath=JSON.stringify(source.customPath);
+        savedSourcePath=savedDrawSourceKey(source);
       }
       const pins=ready.length>=2?pendingPins:getRecipe().drawnAnchors;
       const corners=ready.length>=2?pendingCorners:getRecipe().drawnCorners;
