@@ -1,0 +1,44 @@
+name: Independent Focus all-tool inventory
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'src/editor-focus.js'
+      - 'src/editor-layout.js'
+      - 'src/editor-schema.js'
+      - 'tests/independent-focus-tool-inventory.mjs'
+      - '.github/workflows/independent-focus-inventory.yml'
+permissions:
+  contents: read
+concurrency:
+  group: focus-tool-inventory-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  browser-matrix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check tests/independent-focus-tool-inventory.mjs
+      - run: npm test
+      - run: npm install --no-save playwright@1.56.1 serve@14.2.5
+      - run: npx playwright install --with-deps chromium
+      - name: Serve unmodified source
+        run: |
+          npx serve . -l 4173 > /tmp/focus-inventory-serve.log 2>&1 &
+          for i in $(seq 1 40); do curl -fs http://127.0.0.1:4173/ >/dev/null && exit 0; sleep 1; done
+          cat /tmp/focus-inventory-serve.log
+          exit 1
+      - name: Real Chromium all-applicable-tool Focus parity
+        run: node tests/independent-focus-tool-inventory.mjs
+      - name: Preserve screenshots and exact counterexamples
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: independent-focus-inventory-evidence
+          path: artifacts/independent-focus-inventory/
+          retention-days: 14
+          if-no-files-found: warn
