@@ -19,7 +19,7 @@ npx serve . -l 4173
 node scripts/visual-landscape-prototype-agent1.mjs
 ```
 
-The temporary CSS prototype is guarded by **570–790px wide, ≤530px high and orientation: landscape**, with an original-source inspector occupying 47% of the width and the original canvas stage taking 53%, both at full viewport height. The proposed ratio is **for research only**; it is not a feature or an approved product layout.
+The temporary CSS prototype is guarded by **570–790px wide, ≤530px high and orientation: landscape**. The current trial uses a **420px wide source inspector** with the remaining viewport width allocated to the original canvas stage, both full-height, and a two-row original category-strip arrangement. This is **for research only**, not a feature or approved product layout. The source rotation control itself is never restyled, shortened or replaced.
 
 The script captures actual production and style-injected scenes at **600×360**, **700×412**, **790×500**, and a **412×700 portrait negative control**, in **cream/dark themes**, across **Path Geometry**, **Material Finish**, and **Colour Rainbow**. That's 24 direct A/B pairs and 48 source-browser screenshots. Each pair records real preview/canvas/stage/sidebar bounding boxes, source form-field inventory, selected row/cell coordinates, horizontal page overflow, hover-independent centre hit tests and whether the stage and inspector intersect.
 
@@ -34,3 +34,20 @@ The prototype should earn further work only if it substantially increases the re
 - The 412×700 portrait negative control: no injected layout effect whatsoever
 
 **No default change is requested or justified by this study alone.** Real phone/stylus/on-screen keyboard tests and independent aesthetic/user review remain required; do not check redesign visual acceptance entry 6 or replace canonical screen plates. A green experiment-run check means evidence captured and basic invariants passed, **not** that the alternative design has been approved.
+
+## Negative and interim independent Chromium evidence
+
+Before attempting any product change, the first two rounds exposed both an existing defect and unsafe prototype tradeoffs:
+
+| Run and prototype | 600×360 actual preview | 700×412 actual preview | Material's six original actions at 600 / 700 |
+| --- | --- | --- | --- |
+| Production source (unaltered) | **0px** | **23.1px** | 6/6, 6/6 |
+| [Initial 47% inspector / 53% stage, run 39403144781](https://github.com/gamesbyian/wallgen/actions/runs/39403144781) | 140.3px | 164.3px | **2/6, 3/6**, unfit |
+| [62% inspector / 38% stage, run 39403890788](https://github.com/gamesbyian/wallgen/actions/runs/39403890788) | 80px | 118px | **5/6, 6/6**, still unfit |
+| [64% inspector / 36% stage, run 39404491641](https://github.com/gamesbyian/wallgen/actions/runs/39404491641) | 68px | 104px | **5/6, 6/6**, still unfit |
+
+All dimensions are actual Chromium `#preview.getBoundingClientRect().width`, not a marketing mock-up or export resolution. The source canvas at 600×360 is actually **0×0**; this functional loss is now tracked in [issue #301](https://github.com/gamesbyian/wallgen/issues/301), separately from the discretionary landscape visual design issue #294. No prototype that loses the Reset rotation button is eligible to ship regardless of wallpaper gain.
+
+A fixed **420px** source-inspector trial is next. The independent Playwright runner now explicitly **fails** if any of the original six rotation controls, selected category, selected named tool or active source setting control is covered; it also checks original control count, no stage/inspector overlap, card bottom clipping and portrait negative-control invariance. Each failure is retained in screenshot/JSON artifacts rather than rewritten into a passing contract.
+
+Do not merge any proposal into product defaults solely because the experiment itself passes. Source-accurate UI aesthetics, real device navigation, form keyboard, OS overlays and ongoing functional accessibility remain separate signoffs.
