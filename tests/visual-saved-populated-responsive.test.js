@@ -28,13 +28,13 @@ test('Saved wallpaper and actual caption must remain wholly inside visible galle
 test('responsive Saved thumbnails derive complete artwork height from reserved gallery space',()=>{
   const css=readFileSync('studio-themes.css','utf8');
   const scoped=css.slice(css.indexOf('/* A mobile gallery loses height'));
-  assert.match(scoped,/@media\\(max-width:790px\\) and \\(min-height:671px\\)/);
-  assert.match(scoped,/body\\.mobile-gallery-open \\.gallery-grid \\.thumb canvas/);
+  assert.match(scoped,/@media\(max-width:790px\) and \(min-height:671px\)/);
+  assert.match(scoped,/body\.mobile-gallery-open \.gallery-grid \.thumb canvas/);
   assert.ok(scoped.includes('height:clamp(46px,calc(var(--mobile-tray-height) - var(--mobile-gallery-canvas-overhead)),195px)!important'));
   assert.match(scoped,/--mobile-gallery-canvas-overhead:170px/);
-  assert.match(scoped,/@media\\(max-width:340px\\) and \\(min-height:671px\\)/);
+  assert.match(scoped,/@media\(max-width:340px\) and \(min-height:671px\)/);
   assert.match(scoped,/--mobile-gallery-canvas-overhead:197px/);
   assert.match(scoped,/object-fit:contain/);
-  assert.match(scoped,/body\\.mobile-gallery-open \\.gallery-grid \\.thumb-caption/);
+  assert.match(scoped,/body\.mobile-gallery-open \.gallery-grid \.thumb-caption/);
   assert.doesNotMatch(scoped,/height:132px!important|height:160px!important/);
 });
