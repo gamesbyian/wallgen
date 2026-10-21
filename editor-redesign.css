@@ -1088,6 +1088,10 @@ html[data-theme="cream"] body.mobile-studio .sidebar .settings-tabs .settings-ta
     flex:0 0 44px!important;height:44px!important;
     min-height:44px!important;max-height:44px!important;
     padding:0 1px!important;
+    /* A native centered scroll must not park a named tool behind the
+       two pinned source controls (Focus 67px + Tool 62px + gaps). */
+    scroll-padding-inline-start:143px!important;
+    scroll-padding-inline-end:3px!important;
   }
   body.mobile-studio .sidebar .editor-tool-tab:not([hidden]){
     height:44px!important;min-height:44px!important;max-height:44px!important;
