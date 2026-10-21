@@ -23,7 +23,8 @@
    across the 790/791 CSS breakpoint. Never trap the user in fullscreen. */
 html:fullscreen .mobile-fullscreen-toggle:not([hidden]){
   display:flex!important;position:fixed;z-index:65;
-  top:calc(6px + env(safe-area-inset-top,0px));
+  /* In Studio, keep clear of masthead theme selectors; don't steal taps. */
+  top:calc(74px + env(safe-area-inset-top,0px));
   right:calc(6px + env(safe-area-inset-right,0px));
   align-items:center;justify-content:center;
   width:44px;height:44px;min-width:44px;min-height:44px;
@@ -34,3 +35,8 @@ html:fullscreen .mobile-fullscreen-toggle:not([hidden]){
 }
 html:fullscreen .mobile-fullscreen-toggle .fullscreen-enter-glyph{display:none}
 html:fullscreen .mobile-fullscreen-toggle .fullscreen-exit-glyph{display:block}
+
+/* In Edit the masthead is already moved away, so reclaim its top corner. */
+html:fullscreen body.mobile-edit-open .mobile-fullscreen-toggle:not([hidden]){
+  top:calc(6px + env(safe-area-inset-top,0px));
+}
