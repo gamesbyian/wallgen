@@ -288,15 +288,21 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
       (event.clientY-px.top)*overlay.height/px.height
     ];
     const radius=17*m.scale;
+    // Exact centre touches take priority over a previously selected node's
+    // tangent: two authored stations can be 7–16 screen pixels apart on narrow
+    // phones, entirely inside the older selected-handle tolerance. Pick the
+    // *closest* real anchor in the six-pixel centre core, not just the one
+    // already selected. Retain the full 17px tangent tolerance outside cores.
+    let direct=null,directDistance=6*m.scale;
+    for(const i of editor.anchors){
+      const d=distance(mouse,project(m,editor.points[i]));
+      if(d<=directDistance){
+        directDistance=d;
+        direct={type:'anchor',index:i,at:editor.points[i]};
+      }
+    }
+    if(direct)return direct;
     if(editor.selected!==-1){
-      // On narrow phones the inferred tangent tips can lie inside the full
-      // 17 CSS px pointer tolerance around the selected square. Handle-first
-      // hit testing then steals a drag started precisely on the anchor.
-      // Keep a small six-pixel *anchor centre* core before trying tangents;
-      // the original larger tangent radius remains outside that core.
-      const selected=editor.selected,at=editor.points[selected];
-      if(distance(mouse,project(m,at))<=6*m.scale)
-        return {type:'anchor',index:selected,at};
       const handles=pointHandles(editor,editor.selected);
       for(const side of editablePointHandleSides(editor,editor.selected)){
         if(distance(mouse,project(m,handles[side]))<=radius)
