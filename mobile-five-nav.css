@@ -25,8 +25,10 @@
   body.mobile-studio.mobile-five-nav .mobile-five-shortcuts>#mobileFavorite,
   body.mobile-studio.mobile-five-nav .mobile-five-shortcuts>#mobileDownload{
     display:flex;align-items:center;justify-content:center;
-    width:43px;height:38px;min-width:43px;min-height:38px;
-    flex:0 0 38px;padding:3px;border:1px solid var(--line);
+    /* Expand the native action itself, not a pseudo-hitbox that overlaps a
+       sibling. The existing 46px preview rail already reserves this width. */
+    width:44px;height:44px;min-width:44px;min-height:44px;
+    flex:0 0 44px;padding:3px;border:1px solid var(--line);
     border-radius:8px;background:var(--surface);color:inherit;
     cursor:pointer;
   }
