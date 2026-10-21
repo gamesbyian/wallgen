@@ -94,10 +94,10 @@ html[data-theme="dark"] .editor-focus-all{background:#51374f;color:#fff;border-c
 }
 @media(max-width:499px) and (min-height:740px){
   body.mobile-studio.mobile-edit-open:has(#controls.editor-focus-active){
-    --mobile-tray-height:clamp(308px,calc(34dvh + 13px),343px)!important;
+    --mobile-tray-height:clamp(318px,calc(34dvh + 23px),353px)!important;
   }
   body.mobile-studio.mobile-edit-open:has(#controls.editor-focus-active.editor-focus-empty){
-    --mobile-tray-height:clamp(205px,calc(23dvh + 13px),228px)!important;
+    --mobile-tray-height:clamp(225px,calc(23dvh + 33px),248px)!important;
   }
 }
 
@@ -108,7 +108,7 @@ html[data-theme="dark"] .editor-focus-all{background:#51374f;color:#fff;border-c
 @media(max-width:360px){
   body.mobile-studio.mobile-edit-open:has(
     #controls.editor-focus-active:not(.editor-focus-empty)){
-    --mobile-tray-height:clamp(320px,calc(34dvh + 27px),357px)!important;
+    --mobile-tray-height:clamp(330px,calc(34dvh + 37px),367px)!important;
   }
 }
 
