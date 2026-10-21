@@ -29,12 +29,45 @@ try{
     const tabs=page.locator('.sidebar .settings-tabs .settings-tab:not([hidden])');
     assert.equal(await tabs.count(),EDITOR_CATEGORIES.length,
       'Mobile category source tab inventory is not seven');
-    const settings=await page.locator('.sidebar .settings-tabs').boundingBox();
+    const rail=page.locator('.sidebar .settings-tabs');
+    const settings=await rail.boundingBox();
+    // A real horizontal finger gesture, not scrollIntoView(), must make
+    // previously clipped later categories reachable at narrow widths.
+    await rail.evaluate(el=>{el.scrollLeft=0});
+    const track=await rail.evaluate(el=>({
+      client:el.clientWidth,content:el.scrollWidth,overflow:getComputedStyle(el).overflowX
+    }));
+    assert.equal(track.overflow,'auto','Seven categories have no swipeable source rail');
+    let fingerScroll=0;
+    if(track.content>track.client+2){
+      const cdp=await context.newCDPSession(page);
+      const x=settings.x+settings.width-20,y=settings.y+settings.height/2;
+      await cdp.send('Input.dispatchTouchEvent',{
+        type:'touchStart',touchPoints:[{x,y,id:1}]
+      });
+      for(let i=1;i<=9;i++){
+        await cdp.send('Input.dispatchTouchEvent',{
+          type:'touchMove',touchPoints:[{x:x-19*i,y,id:1}]
+        });
+        await page.waitForTimeout(16);
+      }
+      await cdp.send('Input.dispatchTouchEvent',{
+        type:'touchEnd',touchPoints:[]
+      });
+      await page.waitForTimeout(140);
+      fingerScroll=await rail.evaluate(el=>el.scrollLeft);
+      assert.ok(fingerScroll>=5,'Native category strip does not respond to finger swipe: '+
+        JSON.stringify({width,theme,track,fingerScroll}));
+    }
+    await rail.evaluate(el=>{el.scrollLeft=0});
     const items=[];
     for(let i=0;i<EDITOR_CATEGORIES.length;i++){
       const category=EDITOR_CATEGORIES[i];
       const tab=page.locator('#tab-'+category.id);
       assert.equal(await tab.count(),1,'Duplicate source tab '+category.id);
+      // Scroll each real tab within the *same* user-swipeable source rail
+      // before measuring its full touch region. This never creates clones.
+      await tab.scrollIntoViewIfNeeded();
       const datum=await tab.evaluate(el=>{
         const r=el.getBoundingClientRect();
         const rail=el.closest('.settings-tabs').getBoundingClientRect();
@@ -64,6 +97,7 @@ try{
     }
     assert.deepEqual(errors,[]);
     const record={width,theme,tabCount:items.length,rail:settings,
+      scroll:track,fingerScroll,
       under44:items.filter(x=>x.under44).length,items,
       sevenNativeCategoryTouches:true,recipeUnchanged:true};
     rows.push(record);
