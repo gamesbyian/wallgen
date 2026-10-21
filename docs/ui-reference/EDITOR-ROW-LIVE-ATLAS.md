@@ -1,3 +1,5 @@
+**Final independent optical component review:** [234 live source cards and two verified visual defect repairs](INDEPENDENT-ROW-OPTICAL-REVIEW-2026-10-20.md). Human/physical approval remains separately pending.
+
 # Real source editor row optical atlas
 
 The visually dense settings inspector needs more than a source schema and bounding-box tests. The independent [Agent 1 Chromium source-row census](../../scripts/visual-setting-row-census-agent1.mjs) now publishes two complementary artifacts for the original seven-category editor:
