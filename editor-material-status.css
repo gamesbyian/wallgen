@@ -52,3 +52,15 @@
     line-height:1.1!important;
   }
 }
+
+/* Supported 320x640/700 portrait exposes a shorter mobile Edit tray than
+   320x892. Only when an actual selected Finish 2/3 card contains its visible
+   inactive explanation, return 16px of vertical room for the original 5+1
+   rotation controls. Keep other tools and the canvas-first default unchanged. */
+@media(max-width:360px) and (max-height:740px){
+  body.mobile-studio.mobile-edit-open:has(
+    .editor-tool-card[data-editor-tool^="finish"]:not([hidden])
+      >.material-finish-help:not([hidden])){
+    --mobile-tray-height:284px!important;
+  }
+}
