@@ -8,7 +8,7 @@
 
 Fixture selection covers Paths/Ribbon, hairpin/loop/loops/stepped/chevron/Drawn, floating, radial pinwheel, Voronoi and nested Regions, diagonal transform, material layers and light/shadow. The test intentionally excludes historical `tonalContrast`: its only native creation route, Tonal construction, remains HTML-disabled. The two genuine layer-enable checkboxes are *not* part of the 87 `data-setting` inputs; they are hidden source fields controlled by the actual Material layer UI and have separate regression coverage in #268 and #202.
 
-The script is **a test proposal until its own CI passes**. The precise count of proven action witnesses, failures, locks and unexpected multi-key changes must come from `evidence.json` produced by CI. Do not infer 86/86 success from source inventory.
+**Historical test-creation note (superseded by final CI below):** when this source test was first authored, successful action counts were not yet established. The later exact-head Chromium run verifies **86/86 source-applicable original actions**; the 87th legacy Tonal control is correctly excluded. These counts derive from actual `evidence.json`, not source inventory.
 
 ## Reproducibility
 
@@ -28,7 +28,7 @@ Cause: `src/mobile-preview-tools.js` reparented the *actual* Primes checkbox int
 
 Repair: delegate the original form-owned settings' `change` handling from `document`, guarded by `event.target.form === form`, using the unchanged `updateControlsFromInputs()` source transaction. Remove ineffective synthetic forwarding from `mobile-preview-tools.js`; refresh script version keys in `index.html`. The test now uses a live DOM-global `data-setting` census to include the preview-mounted Primes field, checks its real recipe change, and verifies the same field after it returns inside `#controls` on desktop. The source count remains **87 globally**, although only **86 are DOM descendants of the form** at 412px: Primes retains `formOwner: controls`.
 
-**Final proof still pending** at the repaired PR head. Do not claim 86/86 until all four shards and main validation pass again; no acceptance item is checked by this repair alone.
+**Historical rebase warning (resolved):** the repair required fresh proof on the final reconciled head. That exact-head proof subsequently passed in all four shards and full repo validation; see the verified disposition below. The repair itself did not close the unrelated uncommon-state, visual or physical-device gates.
 
 ## Reconciliation after concurrent merges
 
@@ -37,3 +37,9 @@ The original green PR #282 could not be auto-merged because subsequent main-line
 ### Final latest-main reconciliation
 
 This PR branch was force-with-lease rebased to exact integrated main `e799abf9f1a5e559df54128367bbc769ececd317` (which includes Agent4 recovery #281 and queue evidence #290), then the three original source changes and three test/evidence assets were replayed. The current app and toolbar module versions use `20261020-primes3`. All checks on the new exact branch head are required again. Original initial passing runs are preserved as historical reproduction, not substituted for current-head CI.
+
+### Final exact-head verified disposition
+
+Merged [#289](https://github.com/gamesbyian/wallgen/pull/289) at `8cf0696f949592347981cb4db3fda18dc03e7ba1` after **all 15 final-head workflows completed successfully** at `cf4f4088501baf1bf7425c7c1d937de29af9ebb5`. The [source-field action matrix run 39400591189](https://github.com/gamesbyian/wallgen/actions/runs/39400591189) and [Validate Wallgen run 39400591090](https://github.com/gamesbyian/wallgen/actions/runs/39400591090) are reproducible checkout-specific evidence for the 86/86 available original direct field actions, plus separate intentional legacy Tonal exception, lock gates and repaired Primes change event. [#347](https://github.com/gamesbyian/wallgen/pull/347) later accepted the **finite original-control reachability** top-level entry based on this and additional tool/dice/browser matrices, while leaving every conditional permutation, human semantic inspection, native OS/AT and visual screen gates unchanged.
+
+This conclusion supersedes only the earlier in-progress status notes in this document, which are retained as historical debugging context rather than assertions about current `main`.
