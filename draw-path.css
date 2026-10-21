@@ -241,3 +241,28 @@ body.path-drawing .studio-stage>#drawOverlay{cursor:crosshair}
     grid-column:1/-1;
   }
 }
+
+/* Tall narrow phone precision authoring: all *existing* Draw point actions
+   gain actual 44px high DOM hit regions, as do Finish/Cancel/Edit points.
+   Preserve the opaque, internally scrollable source panel and never add a
+   toolbar across the wallpaper. Short portraits retain compact geometry.
+   Pointer/recipe/renderer semantics are unchanged. */
+@media(max-width:499px) and (min-height:840px){
+  body.mobile-studio.path-drawing .draw-path-panel
+    .draw-path-controls button,
+  body.mobile-studio.path-drawing .draw-path-panel
+    .draw-point-controls button{
+    box-sizing:border-box!important;
+    min-height:44px!important;
+    height:44px!important;
+    padding:7px 8px!important;
+  }
+  body.mobile-studio.path-drawing .draw-path-panel
+    .draw-path-controls #drawApply,
+  body.mobile-studio.path-drawing .draw-path-panel
+    .draw-path-controls #drawCancel,
+  body.mobile-studio.path-drawing .draw-path-panel
+    .draw-path-controls #drawEditPoints{
+    min-height:44px!important;
+  }
+}
