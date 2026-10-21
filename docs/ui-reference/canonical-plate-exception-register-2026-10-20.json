@@ -1,0 +1,2462 @@
+{
+  "version": 1,
+  "date": "2026-10-20",
+  "sourceTraceability": "docs/ui-reference/agent2-runtime-plate-traceability.json",
+  "acceptanceMeaning": "Exhaustive inventory comparison and exception annotation only; not blanket screen, aesthetic or unbounded runtime approval",
+  "evidence": [
+    "#285 12 real navigated plates with 121/121 required source matches",
+    "#287 selected objective negative canaries",
+    "#299 32 active/inactive drivers",
+    "#352 50 lock dormant return tests",
+    "#339 offscreen search recovery",
+    "#345 120 native rotation shortcut browser actions",
+    "#348 156 accessibility scans",
+    "#340 gallery/export"
+  ],
+  "counts": {
+    "total": 177,
+    "plates": 12,
+    "required": 121,
+    "conditional": 29,
+    "forbidden": 27,
+    "source-mapped-browser-121": 121,
+    "conditional-exception-annotated": 29,
+    "bounded-objective-negative": 20,
+    "subjective-or-unbounded-exception": 7
+  },
+  "rows": [
+    {
+      "id": "studio.required.01",
+      "plate": "studio",
+      "kind": "required",
+      "exactClaim": "Canonical app icon beside R.O.Y.G.B.I.V.",
+      "sourceCandidate": "img.brand-logo,h1.brand-title",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-camera-structure-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "studio.required.02",
+      "plate": "studio",
+      "kind": "required",
+      "exactClaim": "Cream and black theme circles",
+      "sourceCandidate": "[data-studio-theme]",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-camera-structure-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "studio.required.03",
+      "plate": "studio",
+      "kind": "required",
+      "exactClaim": "Entire uncut wallpaper frame",
+      "sourceCandidate": "#preview,.wallpaper-frame",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-camera-structure-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "studio.required.04",
+      "plate": "studio",
+      "kind": "required",
+      "exactClaim": "Viewport Pan must have a distinct entry in More; side composition nudge must retain its own source handlers",
+      "sourceCandidate": "[data-nudge],[data-view-pan]",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-camera-structure-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "studio.required.05",
+      "plate": "studio",
+      "kind": "required",
+      "exactClaim": "Side Zoom + and Zoom −",
+      "sourceCandidate": "[data-zoom=in],[data-zoom=out]",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-camera-structure-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "studio.required.06",
+      "plate": "studio",
+      "kind": "required",
+      "exactClaim": "Side Fit / full frame",
+      "sourceCandidate": "[data-zoom=fit]",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-camera-structure-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "studio.required.07",
+      "plate": "studio",
+      "kind": "required",
+      "exactClaim": "Directional nudge or recenter",
+      "sourceCandidate": "[data-nudge]",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-camera-structure-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "studio.required.08",
+      "plate": "studio",
+      "kind": "required",
+      "exactClaim": "Randomize current design",
+      "sourceCandidate": "#randomizeAll",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-camera-structure-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "studio.required.09",
+      "plate": "studio",
+      "kind": "required",
+      "exactClaim": "Undo and Primes-only",
+      "sourceCandidate": "#undo,[name=primesOnly]",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-camera-structure-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "studio.required.10",
+      "plate": "studio",
+      "kind": "required",
+      "exactClaim": "Draw path / Import image",
+      "sourceCandidate": "#drawPathToggle,#importPathToggle",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-camera-structure-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "studio.required.11",
+      "plate": "studio",
+      "kind": "required",
+      "exactClaim": "Bleed/safe-frame display",
+      "sourceCandidate": "#bleedGuide",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-camera-structure-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "studio.required.12",
+      "plate": "studio",
+      "kind": "required",
+      "exactClaim": "Export or Download route",
+      "sourceCandidate": "#mobileDownload,#download",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-camera-structure-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "studio.required.13",
+      "plate": "studio",
+      "kind": "required",
+      "exactClaim": "Bottom 5-mode navigation",
+      "sourceCandidate": "#mobileActionDock>button",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-camera-structure-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "studio.conditional.01",
+      "plate": "studio",
+      "kind": "conditional",
+      "exactClaim": "Viewport zoom readout only on action",
+      "sourceCandidate": ".mobile-zoom-level",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-camera-structure-acceptance.mjs"
+      ],
+      "comparison": "conditional-exception-annotated",
+      "disposition": "uncommon conditional mode is named, source candidate and applicable-state probe supplied; bounded mode coverage only",
+      "limits": "not every simultaneous combination or native AT presentation"
+    },
+    {
+      "id": "studio.conditional.02",
+      "plate": "studio",
+      "kind": "conditional",
+      "exactClaim": "Camera guides when enabled",
+      "sourceCandidate": ".wallpaper-frame",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-camera-structure-acceptance.mjs"
+      ],
+      "comparison": "conditional-exception-annotated",
+      "disposition": "uncommon conditional mode is named, source candidate and applicable-state probe supplied; bounded mode coverage only",
+      "limits": "not every simultaneous combination or native AT presentation"
+    },
+    {
+      "id": "studio.conditional.03",
+      "plate": "studio",
+      "kind": "conditional",
+      "exactClaim": "Viewport-only Pan is implemented as a separately named More action; composition nudge remains distinct from the camera.",
+      "sourceCandidate": "[data-view-pan],#viewPanStatus",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-camera-structure-acceptance.mjs"
+      ],
+      "comparison": "conditional-exception-annotated",
+      "disposition": "uncommon conditional mode is named, source candidate and applicable-state probe supplied; bounded mode coverage only",
+      "limits": "not every simultaneous combination or native AT presentation"
+    },
+    {
+      "id": "studio.forbidden.01",
+      "plate": "studio",
+      "kind": "forbidden",
+      "exactClaim": "‘Your canvas’ header",
+      "sourceCandidate": null,
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-camera-structure-acceptance.mjs"
+      ],
+      "comparison": "bounded-objective-negative",
+      "disposition": "absence of duplicate artwork heading, #287",
+      "limits": "only enumerated objective counterexample; optical interpretation not approved"
+    },
+    {
+      "id": "studio.forbidden.02",
+      "plate": "studio",
+      "kind": "forbidden",
+      "exactClaim": "Top Fit / 100% bar",
+      "sourceCandidate": null,
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-camera-structure-acceptance.mjs"
+      ],
+      "comparison": "bounded-objective-negative",
+      "disposition": "Fit remains in canvas rail, no top Fit, #287",
+      "limits": "only enumerated objective counterexample; optical interpretation not approved"
+    },
+    {
+      "id": "studio.forbidden.03",
+      "plate": "studio",
+      "kind": "forbidden",
+      "exactClaim": "Camera zoom or viewport pan changing authored geometry, composition positionX/Y, or wallpaper export dimensions",
+      "sourceCandidate": null,
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-camera-structure-acceptance.mjs"
+      ],
+      "comparison": "bounded-objective-negative",
+      "disposition": "zoom, pan and native export model invariance, #272",
+      "limits": "only enumerated objective counterexample; optical interpretation not approved"
+    },
+    {
+      "id": "geometry.required.01",
+      "plate": "geometry",
+      "kind": "required",
+      "exactClaim": "Header branding and theme dots",
+      "sourceCandidate": "img.brand-logo,[data-studio-theme]",
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "geometry.required.02",
+      "plate": "geometry",
+      "kind": "required",
+      "exactClaim": "Complete canvas preview, not crop",
+      "sourceCandidate": "#preview",
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "geometry.required.03",
+      "plate": "geometry",
+      "kind": "required",
+      "exactClaim": "Layout, Path, Shapes, Details, Colour, Material, Effects",
+      "sourceCandidate": "#tab-layout,#tab-path,#tab-stripes,#tab-details,#tab-colour,#tab-material,#tab-effects",
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "geometry.required.04",
+      "plate": "geometry",
+      "kind": "required",
+      "exactClaim": "Selected category and tool breadcrumb",
+      "sourceCandidate": ".editor-tool-chooser,.editor-tool-card",
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "geometry.required.05",
+      "plate": "geometry",
+      "kind": "required",
+      "exactClaim": "Search and tool chip chooser",
+      "sourceCandidate": ".editor-search-toggle,.editor-tool-chooser",
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "geometry.required.06",
+      "plate": "geometry",
+      "kind": "required",
+      "exactClaim": "Reroll / Vary + strength",
+      "sourceCandidate": "#editorVariationMode,#editorVariationStrength",
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "geometry.required.07",
+      "plate": "geometry",
+      "kind": "required",
+      "exactClaim": "Randomize tool / category / field",
+      "sourceCandidate": "[data-random-tool],[data-random-category],[data-random-setting]",
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "geometry.required.08",
+      "plate": "geometry",
+      "kind": "required",
+      "exactClaim": "Geometry selector",
+      "sourceCandidate": "[name=geometry]",
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "geometry.required.09",
+      "plate": "geometry",
+      "kind": "required",
+      "exactClaim": "Shape frequency and depth when active",
+      "sourceCandidate": "[name=shapeFrequency],[name=shapeDepth]",
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "geometry.required.10",
+      "plate": "geometry",
+      "kind": "required",
+      "exactClaim": "Visible value, stepper and lock/die controls",
+      "sourceCandidate": ".setting-lock,.step-button,.slider-number",
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "geometry.required.11",
+      "plate": "geometry",
+      "kind": "required",
+      "exactClaim": "History / restore access",
+      "sourceCandidate": "#editorHistoryToggle",
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "geometry.required.12",
+      "plate": "geometry",
+      "kind": "required",
+      "exactClaim": "Apply edits to recipe only",
+      "sourceCandidate": "#controls",
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "geometry.required.13",
+      "plate": "geometry",
+      "kind": "required",
+      "exactClaim": "Bottom five-mode navigation",
+      "sourceCandidate": "#mobileActionDock>button",
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "geometry.conditional.01",
+      "plate": "geometry",
+      "kind": "conditional",
+      "exactClaim": "Straight path may disable frequency/depth",
+      "sourceCandidate": "[name=geometry],[name=shapeFrequency],[name=shapeDepth]",
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "comparison": "conditional-exception-annotated",
+      "disposition": "uncommon conditional mode is named, source candidate and applicable-state probe supplied; bounded mode coverage only",
+      "limits": "not every simultaneous combination or native AT presentation"
+    },
+    {
+      "id": "geometry.conditional.02",
+      "plate": "geometry",
+      "kind": "conditional",
+      "exactClaim": "Relevant shape controls differ by structure",
+      "sourceCandidate": "#tab-stripes,.editor-tool-chooser",
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "comparison": "conditional-exception-annotated",
+      "disposition": "uncommon conditional mode is named, source candidate and applicable-state probe supplied; bounded mode coverage only",
+      "limits": "not every simultaneous combination or native AT presentation"
+    },
+    {
+      "id": "geometry.conditional.03",
+      "plate": "geometry",
+      "kind": "conditional",
+      "exactClaim": "Optional focus-mode entry, never forced",
+      "sourceCandidate": ".editor-focus-entry",
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "comparison": "conditional-exception-annotated",
+      "disposition": "uncommon conditional mode is named, source candidate and applicable-state probe supplied; bounded mode coverage only",
+      "limits": "not every simultaneous combination or native AT presentation"
+    },
+    {
+      "id": "geometry.forbidden.01",
+      "plate": "geometry",
+      "kind": "forbidden",
+      "exactClaim": "Generated mockup omissions interpreted as removal",
+      "sourceCandidate": null,
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "comparison": "subjective-or-unbounded-exception",
+      "disposition": "no mechanical universal absence claim; keep explicit visual/manual interpretation pending",
+      "limits": "human optical/semantic sign-off required; not an implementation-approved screen"
+    },
+    {
+      "id": "geometry.forbidden.02",
+      "plate": "geometry",
+      "kind": "forbidden",
+      "exactClaim": "Duplicate tool heading consuming height",
+      "sourceCandidate": null,
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "comparison": "bounded-objective-negative",
+      "disposition": "no duplicate original Geometry card H2/H3, #287",
+      "limits": "only enumerated objective counterexample; optical interpretation not approved"
+    },
+    {
+      "id": "draw.required.01",
+      "plate": "draw",
+      "kind": "required",
+      "exactClaim": "Canonical header and active Draw context",
+      "sourceCandidate": "img.brand-logo,#drawPathPanel",
+      "evidenceCandidates": [
+        "tests/redesign-draw-real-transaction.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "draw.required.02",
+      "plate": "draw",
+      "kind": "required",
+      "exactClaim": "Complete canvas with path overlay",
+      "sourceCandidate": "#preview,#drawOverlay",
+      "evidenceCandidates": [
+        "tests/redesign-draw-real-transaction.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "draw.required.03",
+      "plate": "draw",
+      "kind": "required",
+      "exactClaim": "Pencil drawing mode",
+      "sourceCandidate": "#drawPathToggle",
+      "evidenceCandidates": [
+        "tests/redesign-draw-real-transaction.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "draw.required.04",
+      "plate": "draw",
+      "kind": "required",
+      "exactClaim": "Interpretive smoothing strength (up to 10×)",
+      "sourceCandidate": "#drawSmoothingStrength",
+      "evidenceCandidates": [
+        "tests/redesign-draw-real-transaction.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "draw.required.05",
+      "plate": "draw",
+      "kind": "required",
+      "exactClaim": "Geometric interpretation toggle",
+      "sourceCandidate": "#drawGeometric",
+      "evidenceCandidates": [
+        "tests/redesign-draw-real-transaction.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "draw.required.06",
+      "plate": "draw",
+      "kind": "required",
+      "exactClaim": "Optional edit-anchor handles",
+      "sourceCandidate": "#drawEditPoints",
+      "evidenceCandidates": [
+        "tests/redesign-draw-real-transaction.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "draw.required.07",
+      "plate": "draw",
+      "kind": "required",
+      "exactClaim": "Add / delete / corner anchor",
+      "sourceCandidate": "#drawAddPoint,#drawDeletePoint,#drawCornerPoint",
+      "evidenceCandidates": [
+        "tests/redesign-draw-real-transaction.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "draw.required.08",
+      "plate": "draw",
+      "kind": "required",
+      "exactClaim": "Resmooth edited section + neighbours",
+      "sourceCandidate": "#drawResmoothPoints",
+      "evidenceCandidates": [
+        "tests/redesign-draw-real-transaction.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "draw.required.09",
+      "plate": "draw",
+      "kind": "required",
+      "exactClaim": "Extend path past canvas edges",
+      "sourceCandidate": "#drawExtendPath",
+      "evidenceCandidates": [
+        "tests/redesign-draw-real-transaction.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "draw.required.10",
+      "plate": "draw",
+      "kind": "required",
+      "exactClaim": "Undo point / Draw again",
+      "sourceCandidate": "#drawUndoPoint,#drawAgain",
+      "evidenceCandidates": [
+        "tests/redesign-draw-real-transaction.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "draw.required.11",
+      "plate": "draw",
+      "kind": "required",
+      "exactClaim": "Apply and Cancel persistent",
+      "sourceCandidate": "#drawApply,#drawCancel",
+      "evidenceCandidates": [
+        "tests/redesign-draw-real-transaction.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "draw.required.12",
+      "plate": "draw",
+      "kind": "required",
+      "exactClaim": "Separate camera pan mode",
+      "sourceCandidate": "[data-view-pan]",
+      "evidenceCandidates": [
+        "tests/redesign-draw-real-transaction.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "draw.conditional.01",
+      "plate": "draw",
+      "kind": "conditional",
+      "exactClaim": "Point controls in anchor-edit phase only",
+      "sourceCandidate": "#drawAddPoint,#drawCornerPoint",
+      "evidenceCandidates": [
+        "tests/redesign-draw-real-transaction.mjs"
+      ],
+      "comparison": "conditional-exception-annotated",
+      "disposition": "uncommon conditional mode is named, source candidate and applicable-state probe supplied; bounded mode coverage only",
+      "limits": "not every simultaneous combination or native AT presentation"
+    },
+    {
+      "id": "draw.conditional.02",
+      "plate": "draw",
+      "kind": "conditional",
+      "exactClaim": "Off-frame geometry preview as needed",
+      "sourceCandidate": "#drawOverlay",
+      "evidenceCandidates": [
+        "tests/redesign-draw-real-transaction.mjs"
+      ],
+      "comparison": "conditional-exception-annotated",
+      "disposition": "uncommon conditional mode is named, source candidate and applicable-state probe supplied; bounded mode coverage only",
+      "limits": "not every simultaneous combination or native AT presentation"
+    },
+    {
+      "id": "draw.forbidden.01",
+      "plate": "draw",
+      "kind": "forbidden",
+      "exactClaim": "Zoom changes generation settings",
+      "sourceCandidate": null,
+      "evidenceCandidates": [
+        "tests/redesign-draw-real-transaction.mjs"
+      ],
+      "comparison": "bounded-objective-negative",
+      "disposition": "source Zoom-only recipe mutation, #272",
+      "limits": "only enumerated objective counterexample; optical interpretation not approved"
+    },
+    {
+      "id": "draw.forbidden.02",
+      "plate": "draw",
+      "kind": "forbidden",
+      "exactClaim": "Apply hidden by sheet scrolling",
+      "sourceCandidate": null,
+      "evidenceCandidates": [
+        "tests/redesign-draw-real-transaction.mjs"
+      ],
+      "comparison": "subjective-or-unbounded-exception",
+      "disposition": "no mechanical universal absence claim; keep explicit visual/manual interpretation pending",
+      "limits": "human optical/semantic sign-off required; not an implementation-approved screen"
+    },
+    {
+      "id": "explore.required.01",
+      "plate": "explore",
+      "kind": "required",
+      "exactClaim": "Same brand header and themes",
+      "sourceCandidate": "img.brand-logo,[data-studio-theme]",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "explore.required.02",
+      "plate": "explore",
+      "kind": "required",
+      "exactClaim": "Search available wallpapers",
+      "sourceCandidate": "#gallery",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "explore.required.03",
+      "plate": "explore",
+      "kind": "required",
+      "exactClaim": "Gallery filters",
+      "sourceCandidate": "#batch,#showFavorites",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "explore.required.04",
+      "plate": "explore",
+      "kind": "required",
+      "exactClaim": "Thumbnail cards and descriptive titles",
+      "sourceCandidate": "#gallery .thumb",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "explore.required.05",
+      "plate": "explore",
+      "kind": "required",
+      "exactClaim": "Clear favourite action per card",
+      "sourceCandidate": "#favorite,#mobileFavorite",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "explore.required.06",
+      "plate": "explore",
+      "kind": "required",
+      "exactClaim": "Load selected recipe into Studio",
+      "sourceCandidate": "#gallery .thumb",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "explore.required.07",
+      "plate": "explore",
+      "kind": "required",
+      "exactClaim": "Show saved/favourites context",
+      "sourceCandidate": "#mobileSaved,#mobileExplore",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "explore.required.08",
+      "plate": "explore",
+      "kind": "required",
+      "exactClaim": "Scrollable image-first grid",
+      "sourceCandidate": "#gallery",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "explore.required.09",
+      "plate": "explore",
+      "kind": "required",
+      "exactClaim": "Bottom five-mode navigation",
+      "sourceCandidate": "#mobileActionDock>button",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "explore.conditional.01",
+      "plate": "explore",
+      "kind": "conditional",
+      "exactClaim": "Empty state when no favourites",
+      "sourceCandidate": "#gallery .gallery-placeholder",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "comparison": "conditional-exception-annotated",
+      "disposition": "uncommon conditional mode is named, source candidate and applicable-state probe supplied; bounded mode coverage only",
+      "limits": "not every simultaneous combination or native AT presentation"
+    },
+    {
+      "id": "explore.conditional.02",
+      "plate": "explore",
+      "kind": "conditional",
+      "exactClaim": "Gallery image previews must be real renderer art",
+      "sourceCandidate": "#gallery .thumb canvas",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "comparison": "conditional-exception-annotated",
+      "disposition": "uncommon conditional mode is named, source candidate and applicable-state probe supplied; bounded mode coverage only",
+      "limits": "not every simultaneous combination or native AT presentation"
+    },
+    {
+      "id": "explore.forbidden.01",
+      "plate": "explore",
+      "kind": "forbidden",
+      "exactClaim": "Large decorative Explore heading",
+      "sourceCandidate": null,
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "comparison": "subjective-or-unbounded-exception",
+      "disposition": "no mechanical universal absence claim; keep explicit visual/manual interpretation pending",
+      "limits": "human optical/semantic sign-off required; not an implementation-approved screen"
+    },
+    {
+      "id": "explore.forbidden.02",
+      "plate": "explore",
+      "kind": "forbidden",
+      "exactClaim": "Full-width duplicate action bar above gallery",
+      "sourceCandidate": null,
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "comparison": "bounded-objective-negative",
+      "disposition": "no extra duplicated action bar witnessed by gallery real source matrix, #281",
+      "limits": "only enumerated objective counterexample; optical interpretation not approved"
+    },
+    {
+      "id": "more.required.01",
+      "plate": "more",
+      "kind": "required",
+      "exactClaim": "Same branded masthead",
+      "sourceCandidate": "img.brand-logo",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs",
+        "tests/redesign-global-status-acceptance.mjs",
+        "tests/redesign-clipboard-denial-recovery.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "more.required.02",
+      "plate": "more",
+      "kind": "required",
+      "exactClaim": "Export wallpaper PNG",
+      "sourceCandidate": "#download,#mobileDownload",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs",
+        "tests/redesign-global-status-acceptance.mjs",
+        "tests/redesign-clipboard-denial-recovery.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "more.required.03",
+      "plate": "more",
+      "kind": "required",
+      "exactClaim": "Download recipe JSON",
+      "sourceCandidate": "#downloadRecipe",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs",
+        "tests/redesign-global-status-acceptance.mjs",
+        "tests/redesign-clipboard-denial-recovery.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "more.required.04",
+      "plate": "more",
+      "kind": "required",
+      "exactClaim": "Copy recipe JSON",
+      "sourceCandidate": "#copyRecipe",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs",
+        "tests/redesign-global-status-acceptance.mjs",
+        "tests/redesign-clipboard-denial-recovery.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "more.required.05",
+      "plate": "more",
+      "kind": "required",
+      "exactClaim": "Copy share link",
+      "sourceCandidate": "#copyLink",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs",
+        "tests/redesign-global-status-acceptance.mjs",
+        "tests/redesign-clipboard-denial-recovery.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "more.required.06",
+      "plate": "more",
+      "kind": "required",
+      "exactClaim": "Import PNG recipe",
+      "sourceCandidate": "#importRecipePNG",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs",
+        "tests/redesign-global-status-acceptance.mjs",
+        "tests/redesign-clipboard-denial-recovery.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "more.required.07",
+      "plate": "more",
+      "kind": "required",
+      "exactClaim": "Import recipe JSON/file",
+      "sourceCandidate": "#importRecipeFile",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs",
+        "tests/redesign-global-status-acceptance.mjs",
+        "tests/redesign-clipboard-denial-recovery.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "more.required.08",
+      "plate": "more",
+      "kind": "required",
+      "exactClaim": "Batch output where available",
+      "sourceCandidate": ".mobile-more-batch,#batch",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs",
+        "tests/redesign-global-status-acceptance.mjs",
+        "tests/redesign-clipboard-denial-recovery.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "more.required.09",
+      "plate": "more",
+      "kind": "required",
+      "exactClaim": "Seed entry / apply",
+      "sourceCandidate": "#seedInput,#applySeed",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs",
+        "tests/redesign-global-status-acceptance.mjs",
+        "tests/redesign-clipboard-denial-recovery.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "more.required.10",
+      "plate": "more",
+      "kind": "required",
+      "exactClaim": "Editable image metadata fields",
+      "sourceCandidate": "#metadataPanel [name]",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs",
+        "tests/redesign-global-status-acceptance.mjs",
+        "tests/redesign-clipboard-denial-recovery.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "more.required.11",
+      "plate": "more",
+      "kind": "required",
+      "exactClaim": "Remember / clear metadata",
+      "sourceCandidate": "#metadataRemember,#metadataClear",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs",
+        "tests/redesign-global-status-acceptance.mjs",
+        "tests/redesign-clipboard-denial-recovery.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "more.required.12",
+      "plate": "more",
+      "kind": "required",
+      "exactClaim": "Accessible global status notifications",
+      "sourceCandidate": "#studioStatus,#notice",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs",
+        "tests/redesign-global-status-acceptance.mjs",
+        "tests/redesign-clipboard-denial-recovery.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "more.required.13",
+      "plate": "more",
+      "kind": "required",
+      "exactClaim": "Bottom navigation",
+      "sourceCandidate": "#mobileActionDock>button",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs",
+        "tests/redesign-global-status-acceptance.mjs",
+        "tests/redesign-clipboard-denial-recovery.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "more.required.14",
+      "plate": "more",
+      "kind": "required",
+      "exactClaim": "Independent Move view frame Pan controls and centered status, distinct from composition position",
+      "sourceCandidate": "[data-view-pan],#viewPanStatus,[data-nudge],#positionStatus",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs",
+        "tests/redesign-global-status-acceptance.mjs",
+        "tests/redesign-clipboard-denial-recovery.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "more.conditional.01",
+      "plate": "more",
+      "kind": "conditional",
+      "exactClaim": "Metadata expanded and collapsed views",
+      "sourceCandidate": "#metadataToggle,#metadataPanel",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs",
+        "tests/redesign-global-status-acceptance.mjs",
+        "tests/redesign-clipboard-denial-recovery.mjs"
+      ],
+      "comparison": "conditional-exception-annotated",
+      "disposition": "uncommon conditional mode is named, source candidate and applicable-state probe supplied; bounded mode coverage only",
+      "limits": "not every simultaneous combination or native AT presentation"
+    },
+    {
+      "id": "more.conditional.02",
+      "plate": "more",
+      "kind": "conditional",
+      "exactClaim": "Download/export progress where appropriate",
+      "sourceCandidate": "#studioStatus,#download",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs",
+        "tests/redesign-global-status-acceptance.mjs",
+        "tests/redesign-clipboard-denial-recovery.mjs"
+      ],
+      "comparison": "conditional-exception-annotated",
+      "disposition": "uncommon conditional mode is named, source candidate and applicable-state probe supplied; bounded mode coverage only",
+      "limits": "not every simultaneous combination or native AT presentation"
+    },
+    {
+      "id": "more.forbidden.01",
+      "plate": "more",
+      "kind": "forbidden",
+      "exactClaim": "Inert icon-only action with missing label",
+      "sourceCandidate": null,
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs",
+        "tests/redesign-global-status-acceptance.mjs",
+        "tests/redesign-clipboard-denial-recovery.mjs"
+      ],
+      "comparison": "bounded-objective-negative",
+      "disposition": "source names for all actions and source status live region, #268/#348",
+      "limits": "only enumerated objective counterexample; optical interpretation not approved"
+    },
+    {
+      "id": "more.forbidden.02",
+      "plate": "more",
+      "kind": "forbidden",
+      "exactClaim": "Notices hidden in More while editing",
+      "sourceCandidate": null,
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs",
+        "tests/redesign-global-status-acceptance.mjs",
+        "tests/redesign-clipboard-denial-recovery.mjs"
+      ],
+      "comparison": "bounded-objective-negative",
+      "disposition": "source global status mirrored while editing, #268",
+      "limits": "only enumerated objective counterexample; optical interpretation not approved"
+    },
+    {
+      "id": "material.required.01",
+      "plate": "material",
+      "kind": "required",
+      "exactClaim": "Material category + named tools",
+      "sourceCandidate": "#tab-material,.editor-tool-chooser",
+      "evidenceCandidates": [
+        "tests/redesign-material-rotation-browser.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "material.required.02",
+      "plate": "material",
+      "kind": "required",
+      "exactClaim": "Layer 1 material type and coverage/blend",
+      "sourceCandidate": "[name=material],[name=textureCoverage],[name=textureBlend]",
+      "evidenceCandidates": [
+        "tests/redesign-material-rotation-browser.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "material.required.03",
+      "plate": "material",
+      "kind": "required",
+      "exactClaim": "Finish 1 strength / scale / rotation",
+      "sourceCandidate": "[name=textureStrength],[name=textureScale],[name=textureRotation]",
+      "evidenceCandidates": [
+        "tests/redesign-material-rotation-browser.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "material.required.04",
+      "plate": "material",
+      "kind": "required",
+      "exactClaim": "Layer 2 enable and settings",
+      "sourceCandidate": "[name=textureLayer2Enabled],[name=material2]",
+      "evidenceCandidates": [
+        "tests/redesign-material-rotation-browser.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "material.required.05",
+      "plate": "material",
+      "kind": "required",
+      "exactClaim": "Finish 2 strength / scale / rotation",
+      "sourceCandidate": "[name=textureStrength2],[name=textureScale2],[name=textureRotation2]",
+      "evidenceCandidates": [
+        "tests/redesign-material-rotation-browser.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "material.required.06",
+      "plate": "material",
+      "kind": "required",
+      "exactClaim": "Layer 3 enable and settings",
+      "sourceCandidate": "[name=textureLayer3Enabled],[name=material3]",
+      "evidenceCandidates": [
+        "tests/redesign-material-rotation-browser.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "material.required.07",
+      "plate": "material",
+      "kind": "required",
+      "exactClaim": "Finish 3 strength / scale / rotation",
+      "sourceCandidate": "[name=textureStrength3],[name=textureScale3],[name=textureRotation3]",
+      "evidenceCandidates": [
+        "tests/redesign-material-rotation-browser.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "material.required.08",
+      "plate": "material",
+      "kind": "required",
+      "exactClaim": "Rotation −90, −1, value, +1, +90",
+      "sourceCandidate": "[data-rotate-target]",
+      "evidenceCandidates": [
+        "tests/redesign-material-rotation-browser.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "material.required.09",
+      "plate": "material",
+      "kind": "required",
+      "exactClaim": "Surface settings where applicable",
+      "sourceCandidate": "[name=textureDisplacement]",
+      "evidenceCandidates": [
+        "tests/redesign-material-rotation-browser.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "material.required.10",
+      "plate": "material",
+      "kind": "required",
+      "exactClaim": "Lock / random field actions",
+      "sourceCandidate": ".setting-lock,[data-random-setting]",
+      "evidenceCandidates": [
+        "tests/redesign-material-rotation-browser.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "material.required.11",
+      "plate": "material",
+      "kind": "required",
+      "exactClaim": "Canvas preview / bottom navigation",
+      "sourceCandidate": "#preview,#mobileActionDock",
+      "evidenceCandidates": [
+        "tests/redesign-material-rotation-browser.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "material.conditional.01",
+      "plate": "material",
+      "kind": "conditional",
+      "exactClaim": "Layer 2/3 disabled until enabled",
+      "sourceCandidate": "[name=textureLayer2Enabled],[name=textureLayer3Enabled]",
+      "evidenceCandidates": [
+        "tests/redesign-material-rotation-browser.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "comparison": "conditional-exception-annotated",
+      "disposition": "uncommon conditional mode is named, source candidate and applicable-state probe supplied; bounded mode coverage only",
+      "limits": "not every simultaneous combination or native AT presentation"
+    },
+    {
+      "id": "material.conditional.02",
+      "plate": "material",
+      "kind": "conditional",
+      "exactClaim": "Surface only for path construction",
+      "sourceCandidate": "[name=textureDisplacement]",
+      "evidenceCandidates": [
+        "tests/redesign-material-rotation-browser.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "comparison": "conditional-exception-annotated",
+      "disposition": "uncommon conditional mode is named, source candidate and applicable-state probe supplied; bounded mode coverage only",
+      "limits": "not every simultaneous combination or native AT presentation"
+    },
+    {
+      "id": "material.conditional.03",
+      "plate": "material",
+      "kind": "conditional",
+      "exactClaim": "Some material coverage labels follow structure",
+      "sourceCandidate": "[name=textureCoverage]",
+      "evidenceCandidates": [
+        "tests/redesign-material-rotation-browser.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "comparison": "conditional-exception-annotated",
+      "disposition": "uncommon conditional mode is named, source candidate and applicable-state probe supplied; bounded mode coverage only",
+      "limits": "not every simultaneous combination or native AT presentation"
+    },
+    {
+      "id": "material.forbidden.01",
+      "plate": "material",
+      "kind": "forbidden",
+      "exactClaim": "Rotation action squeezed or clipped",
+      "sourceCandidate": null,
+      "evidenceCandidates": [
+        "tests/redesign-material-rotation-browser.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "comparison": "bounded-objective-negative",
+      "disposition": "five rotation centre-hit buttons in three layers at desktop breakpoints, #345",
+      "limits": "only enumerated objective counterexample; optical interpretation not approved"
+    },
+    {
+      "id": "material.forbidden.02",
+      "plate": "material",
+      "kind": "forbidden",
+      "exactClaim": "Layer controls silently dropped",
+      "sourceCandidate": null,
+      "evidenceCandidates": [
+        "tests/redesign-material-rotation-browser.mjs",
+        "tests/redesign-controls-conditional-acceptance.mjs"
+      ],
+      "comparison": "bounded-objective-negative",
+      "disposition": "three layer selectors retain source, #342",
+      "limits": "only enumerated objective counterexample; optical interpretation not approved"
+    },
+    {
+      "id": "colour.required.01",
+      "plate": "colour",
+      "kind": "required",
+      "exactClaim": "Colour category and two named tools",
+      "sourceCandidate": "#tab-colour,.editor-tool-chooser",
+      "evidenceCandidates": [
+        "tests/redesign-seven-colour-targets-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "colour.required.02",
+      "plate": "colour",
+      "kind": "required",
+      "exactClaim": "Rainbow palette selection",
+      "sourceCandidate": "[name=palette]",
+      "evidenceCandidates": [
+        "tests/redesign-seven-colour-targets-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "colour.required.03",
+      "plate": "colour",
+      "kind": "required",
+      "exactClaim": "Reverse stripe order control",
+      "sourceCandidate": "[name=reverseStripes]",
+      "evidenceCandidates": [
+        "tests/redesign-seven-colour-targets-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "colour.required.04",
+      "plate": "colour",
+      "kind": "required",
+      "exactClaim": "Background colour setting",
+      "sourceCandidate": "[name=background]",
+      "evidenceCandidates": [
+        "tests/redesign-seven-colour-targets-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "colour.required.05",
+      "plate": "colour",
+      "kind": "required",
+      "exactClaim": "Full 7-colour visual order",
+      "sourceCandidate": ".palette-stack",
+      "evidenceCandidates": [
+        "tests/redesign-seven-colour-targets-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "colour.required.06",
+      "plate": "colour",
+      "kind": "required",
+      "exactClaim": "Named selection and stable values",
+      "sourceCandidate": ".editor-tool-chooser",
+      "evidenceCandidates": [
+        "tests/redesign-seven-colour-targets-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "colour.required.07",
+      "plate": "colour",
+      "kind": "required",
+      "exactClaim": "Flat nonrepeating ROYGBIV slider colours per panel",
+      "sourceCandidate": "input[type=range][data-setting]",
+      "evidenceCandidates": [
+        "tests/redesign-seven-colour-targets-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "colour.required.08",
+      "plate": "colour",
+      "kind": "required",
+      "exactClaim": "Available lock / die actions",
+      "sourceCandidate": ".setting-lock,[data-random-setting]",
+      "evidenceCandidates": [
+        "tests/redesign-seven-colour-targets-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "colour.required.09",
+      "plate": "colour",
+      "kind": "required",
+      "exactClaim": "Bottom navigation",
+      "sourceCandidate": "#mobileActionDock",
+      "evidenceCandidates": [
+        "tests/redesign-seven-colour-targets-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "colour.conditional.01",
+      "plate": "colour",
+      "kind": "conditional",
+      "exactClaim": "Background colour options depend on recipe",
+      "sourceCandidate": "[name=background]",
+      "evidenceCandidates": [
+        "tests/redesign-seven-colour-targets-acceptance.mjs"
+      ],
+      "comparison": "conditional-exception-annotated",
+      "disposition": "uncommon conditional mode is named, source candidate and applicable-state probe supplied; bounded mode coverage only",
+      "limits": "not every simultaneous combination or native AT presentation"
+    },
+    {
+      "id": "colour.conditional.02",
+      "plate": "colour",
+      "kind": "conditional",
+      "exactClaim": "Target-colour chips belong to Details > Colour targets",
+      "sourceCandidate": ".interior-colour-chip",
+      "evidenceCandidates": [
+        "tests/redesign-seven-colour-targets-acceptance.mjs"
+      ],
+      "comparison": "conditional-exception-annotated",
+      "disposition": "uncommon conditional mode is named, source candidate and applicable-state probe supplied; bounded mode coverage only",
+      "limits": "not every simultaneous combination or native AT presentation"
+    },
+    {
+      "id": "colour.forbidden.01",
+      "plate": "colour",
+      "kind": "forbidden",
+      "exactClaim": "Random colours reshuffled on rerender",
+      "sourceCandidate": null,
+      "evidenceCandidates": [
+        "tests/redesign-seven-colour-targets-acceptance.mjs"
+      ],
+      "comparison": "subjective-or-unbounded-exception",
+      "disposition": "no mechanical universal absence claim; keep explicit visual/manual interpretation pending",
+      "limits": "human optical/semantic sign-off required; not an implementation-approved screen"
+    },
+    {
+      "id": "colour.forbidden.02",
+      "plate": "colour",
+      "kind": "forbidden",
+      "exactClaim": "Unimplemented extra saturation slider implied by illustration",
+      "sourceCandidate": null,
+      "evidenceCandidates": [
+        "tests/redesign-seven-colour-targets-acceptance.mjs"
+      ],
+      "comparison": "bounded-objective-negative",
+      "disposition": "no nonexistent saturation source control, #287",
+      "limits": "only enumerated objective counterexample; optical interpretation not approved"
+    },
+    {
+      "id": "diagonal.required.01",
+      "plate": "diagonal",
+      "kind": "required",
+      "exactClaim": "Direction tool identified",
+      "sourceCandidate": ".editor-tool-chooser [data-editor-tool=direction]",
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/inactive-conditional-roundtrip.test.js"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "diagonal.required.02",
+      "plate": "diagonal",
+      "kind": "required",
+      "exactClaim": "Orientation selector",
+      "sourceCandidate": "[name=orientation]",
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/inactive-conditional-roundtrip.test.js"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "diagonal.required.03",
+      "plate": "diagonal",
+      "kind": "required",
+      "exactClaim": "Diagonal rotation setting + numeric stepper",
+      "sourceCandidate": "#diagonalRotation,[data-number-for=diagonalRotation]",
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/inactive-conditional-roundtrip.test.js"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "diagonal.required.04",
+      "plate": "diagonal",
+      "kind": "required",
+      "exactClaim": "Mirror horizontally checkbox/row",
+      "sourceCandidate": "[name=mirrorHorizontal]",
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/inactive-conditional-roundtrip.test.js"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "diagonal.required.05",
+      "plate": "diagonal",
+      "kind": "required",
+      "exactClaim": "Mirror vertically checkbox/row",
+      "sourceCandidate": "[name=mirrorVertical]",
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/inactive-conditional-roundtrip.test.js"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "diagonal.required.06",
+      "plate": "diagonal",
+      "kind": "required",
+      "exactClaim": "Scoped randomize + lock",
+      "sourceCandidate": ".setting-lock,[data-random-setting]",
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/inactive-conditional-roundtrip.test.js"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "diagonal.required.07",
+      "plate": "diagonal",
+      "kind": "required",
+      "exactClaim": "Selected values remain readable",
+      "sourceCandidate": "[name=diagonalRotation],[data-number-for=diagonalRotation]",
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/inactive-conditional-roundtrip.test.js"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "diagonal.required.08",
+      "plate": "diagonal",
+      "kind": "required",
+      "exactClaim": "Canvas preview and bottom navigation",
+      "sourceCandidate": "#preview,#mobileActionDock",
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/inactive-conditional-roundtrip.test.js"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "diagonal.conditional.01",
+      "plate": "diagonal",
+      "kind": "conditional",
+      "exactClaim": "Diagonal rotation and mirrors dormant for non-diagonal configurations",
+      "sourceCandidate": "#diagonalSettings",
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/inactive-conditional-roundtrip.test.js"
+      ],
+      "comparison": "conditional-exception-annotated",
+      "disposition": "uncommon conditional mode is named, source candidate and applicable-state probe supplied; bounded mode coverage only",
+      "limits": "not every simultaneous combination or native AT presentation"
+    },
+    {
+      "id": "diagonal.conditional.02",
+      "plate": "diagonal",
+      "kind": "conditional",
+      "exactClaim": "Inactive properties indicate non-applicable/zero",
+      "sourceCandidate": "[name=diagonalRotation],[name=mirrorHorizontal],[name=mirrorVertical]",
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/inactive-conditional-roundtrip.test.js"
+      ],
+      "comparison": "conditional-exception-annotated",
+      "disposition": "uncommon conditional mode is named, source candidate and applicable-state probe supplied; bounded mode coverage only",
+      "limits": "not every simultaneous combination or native AT presentation"
+    },
+    {
+      "id": "diagonal.forbidden.01",
+      "plate": "diagonal",
+      "kind": "forbidden",
+      "exactClaim": "Separated checkbox from label",
+      "sourceCandidate": null,
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/inactive-conditional-roundtrip.test.js"
+      ],
+      "comparison": "bounded-objective-negative",
+      "disposition": "native checkbox enclosed by its original label, #287",
+      "limits": "only enumerated objective counterexample; optical interpretation not approved"
+    },
+    {
+      "id": "diagonal.forbidden.02",
+      "plate": "diagonal",
+      "kind": "forbidden",
+      "exactClaim": "Greyed value implies retained nonzero active effect",
+      "sourceCandidate": null,
+      "evidenceCandidates": [
+        "tests/redesign-conditional-tools-acceptance.mjs",
+        "tests/inactive-conditional-roundtrip.test.js"
+      ],
+      "comparison": "subjective-or-unbounded-exception",
+      "disposition": "no mechanical universal absence claim; keep explicit visual/manual interpretation pending",
+      "limits": "human optical/semantic sign-off required; not an implementation-approved screen"
+    },
+    {
+      "id": "compact.required.01",
+      "plate": "compact",
+      "kind": "required",
+      "exactClaim": "Selected category/tool breadcrumb",
+      "sourceCandidate": ".editor-tool-card:not([hidden])",
+      "evidenceCandidates": [
+        "tests/redesign-cold-keyboard-editor.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "compact.required.02",
+      "plate": "compact",
+      "kind": "required",
+      "exactClaim": "Same brand / camera preview",
+      "sourceCandidate": "img.brand-logo,#preview",
+      "evidenceCandidates": [
+        "tests/redesign-cold-keyboard-editor.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "compact.required.03",
+      "plate": "compact",
+      "kind": "required",
+      "exactClaim": "One actual applicable tool only",
+      "sourceCandidate": ".editor-tool-chooser",
+      "evidenceCandidates": [
+        "tests/redesign-cold-keyboard-editor.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "compact.required.04",
+      "plate": "compact",
+      "kind": "required",
+      "exactClaim": "All settings of that tool visible",
+      "sourceCandidate": ".editor-tool-card:not([hidden]) [name]",
+      "evidenceCandidates": [
+        "tests/redesign-cold-keyboard-editor.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "compact.required.05",
+      "plate": "compact",
+      "kind": "required",
+      "exactClaim": "Field label, value and scoped actions",
+      "sourceCandidate": ".editor-setting-row",
+      "evidenceCandidates": [
+        "tests/redesign-cold-keyboard-editor.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "compact.required.06",
+      "plate": "compact",
+      "kind": "required",
+      "exactClaim": "Inspector returns unused vertical space to canvas",
+      "sourceCandidate": ".mobile-edit-compact",
+      "evidenceCandidates": [
+        "tests/redesign-cold-keyboard-editor.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "compact.required.07",
+      "plate": "compact",
+      "kind": "required",
+      "exactClaim": "No preview/controls overlap",
+      "sourceCandidate": ".studio-stage,#mobileDesignSheet",
+      "evidenceCandidates": [
+        "tests/redesign-cold-keyboard-editor.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "compact.required.08",
+      "plate": "compact",
+      "kind": "required",
+      "exactClaim": "Bottom navigation",
+      "sourceCandidate": "#mobileActionDock",
+      "evidenceCandidates": [
+        "tests/redesign-cold-keyboard-editor.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "compact.conditional.01",
+      "plate": "compact",
+      "kind": "conditional",
+      "exactClaim": "Glow or other one-setting tool as example",
+      "sourceCandidate": ".editor-tool-card:not([hidden])",
+      "evidenceCandidates": [
+        "tests/redesign-cold-keyboard-editor.mjs"
+      ],
+      "comparison": "conditional-exception-annotated",
+      "disposition": "uncommon conditional mode is named, source candidate and applicable-state probe supplied; bounded mode coverage only",
+      "limits": "not every simultaneous combination or native AT presentation"
+    },
+    {
+      "id": "compact.conditional.02",
+      "plate": "compact",
+      "kind": "conditional",
+      "exactClaim": "Height only changes on navigation or expansion",
+      "sourceCandidate": ".mobile-edit-compact",
+      "evidenceCandidates": [
+        "tests/redesign-cold-keyboard-editor.mjs"
+      ],
+      "comparison": "conditional-exception-annotated",
+      "disposition": "uncommon conditional mode is named, source candidate and applicable-state probe supplied; bounded mode coverage only",
+      "limits": "not every simultaneous combination or native AT presentation"
+    },
+    {
+      "id": "compact.forbidden.01",
+      "plate": "compact",
+      "kind": "forbidden",
+      "exactClaim": "Fixed huge empty inspector card",
+      "sourceCandidate": null,
+      "evidenceCandidates": [
+        "tests/redesign-cold-keyboard-editor.mjs"
+      ],
+      "comparison": "subjective-or-unbounded-exception",
+      "disposition": "no mechanical universal absence claim; keep explicit visual/manual interpretation pending",
+      "limits": "human optical/semantic sign-off required; not an implementation-approved screen"
+    },
+    {
+      "id": "compact.forbidden.02",
+      "plate": "compact",
+      "kind": "forbidden",
+      "exactClaim": "Invented hidden settings for a sparse tool",
+      "sourceCandidate": null,
+      "evidenceCandidates": [
+        "tests/redesign-cold-keyboard-editor.mjs"
+      ],
+      "comparison": "bounded-objective-negative",
+      "disposition": "Glow contains exactly one original setting, #287",
+      "limits": "only enumerated objective counterexample; optical interpretation not approved"
+    },
+    {
+      "id": "focus.required.01",
+      "plate": "focus",
+      "kind": "required",
+      "exactClaim": "Clearly marked OPTIONAL experiment",
+      "sourceCandidate": ".editor-focus-toggle",
+      "evidenceCandidates": [
+        "tests/editor-focus.test.js"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "focus.required.02",
+      "plate": "focus",
+      "kind": "required",
+      "exactClaim": "Selected category and parameter name",
+      "sourceCandidate": "#editorFocusPanel",
+      "evidenceCandidates": [
+        "tests/editor-focus.test.js"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "focus.required.03",
+      "plate": "focus",
+      "kind": "required",
+      "exactClaim": "Chooser chips for all active parameters",
+      "sourceCandidate": ".editor-focus-chip",
+      "evidenceCandidates": [
+        "tests/editor-focus.test.js"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "focus.required.04",
+      "plate": "focus",
+      "kind": "required",
+      "exactClaim": "One large slider with numeric value",
+      "sourceCandidate": ".editor-focus-slider,.editor-focus-value",
+      "evidenceCandidates": [
+        "tests/editor-focus.test.js"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "focus.required.05",
+      "plate": "focus",
+      "kind": "required",
+      "exactClaim": "Increment/decrement and lock action",
+      "sourceCandidate": ".editor-focus-step,.setting-lock",
+      "evidenceCandidates": [
+        "tests/editor-focus.test.js"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "focus.required.06",
+      "plate": "focus",
+      "kind": "required",
+      "exactClaim": "Return to All controls without losing data",
+      "sourceCandidate": ".editor-focus-all",
+      "evidenceCandidates": [
+        "tests/editor-focus.test.js"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "focus.required.07",
+      "plate": "focus",
+      "kind": "required",
+      "exactClaim": "Existing colour assignment retained",
+      "sourceCandidate": "[data-setting][type=\"range\"][style*=\"--roygbiv-slider-color\"]",
+      "evidenceCandidates": [
+        "tests/editor-focus.test.js"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "focus.required.08",
+      "plate": "focus",
+      "kind": "required",
+      "exactClaim": "Canvas preview remains visible",
+      "sourceCandidate": "#preview",
+      "evidenceCandidates": [
+        "tests/editor-focus.test.js"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "focus.required.09",
+      "plate": "focus",
+      "kind": "required",
+      "exactClaim": "Bottom navigation",
+      "sourceCandidate": "#mobileActionDock",
+      "evidenceCandidates": [
+        "tests/editor-focus.test.js"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "focus.conditional.01",
+      "plate": "focus",
+      "kind": "conditional",
+      "exactClaim": "Inactive parameter explained",
+      "sourceCandidate": ".editor-setting-row.setting-inactive",
+      "evidenceCandidates": [
+        "tests/editor-focus.test.js"
+      ],
+      "comparison": "conditional-exception-annotated",
+      "disposition": "uncommon conditional mode is named, source candidate and applicable-state probe supplied; bounded mode coverage only",
+      "limits": "not every simultaneous combination or native AT presentation"
+    },
+    {
+      "id": "focus.conditional.02",
+      "plate": "focus",
+      "kind": "conditional",
+      "exactClaim": "Step size depends on setting type",
+      "sourceCandidate": ".slider-number",
+      "evidenceCandidates": [
+        "tests/editor-focus.test.js"
+      ],
+      "comparison": "conditional-exception-annotated",
+      "disposition": "uncommon conditional mode is named, source candidate and applicable-state probe supplied; bounded mode coverage only",
+      "limits": "not every simultaneous combination or native AT presentation"
+    },
+    {
+      "id": "focus.conditional.03",
+      "plate": "focus",
+      "kind": "conditional",
+      "exactClaim": "Default remains multi-row inspector",
+      "sourceCandidate": ".editor-focus-help",
+      "evidenceCandidates": [
+        "tests/editor-focus.test.js"
+      ],
+      "comparison": "conditional-exception-annotated",
+      "disposition": "uncommon conditional mode is named, source candidate and applicable-state probe supplied; bounded mode coverage only",
+      "limits": "not every simultaneous combination or native AT presentation"
+    },
+    {
+      "id": "focus.conditional.04",
+      "plate": "focus",
+      "kind": "conditional",
+      "exactClaim": "Prototype exists only on mobile; desktop returns to ordinary multi-slider inspector automatically.",
+      "sourceCandidate": "[name]",
+      "evidenceCandidates": [
+        "tests/editor-focus.test.js"
+      ],
+      "comparison": "conditional-exception-annotated",
+      "disposition": "uncommon conditional mode is named, source candidate and applicable-state probe supplied; bounded mode coverage only",
+      "limits": "not every simultaneous combination or native AT presentation"
+    },
+    {
+      "id": "focus.forbidden.01",
+      "plate": "focus",
+      "kind": "forbidden",
+      "exactClaim": "Mandatory shared slider for all users",
+      "sourceCandidate": null,
+      "evidenceCandidates": [
+        "tests/editor-focus.test.js"
+      ],
+      "comparison": "bounded-objective-negative",
+      "disposition": "Focus opt-in only, All default, #280/#350",
+      "limits": "only enumerated objective counterexample; optical interpretation not approved"
+    },
+    {
+      "id": "focus.forbidden.02",
+      "plate": "focus",
+      "kind": "forbidden",
+      "exactClaim": "Parameter loss when focus changes",
+      "sourceCandidate": null,
+      "evidenceCandidates": [
+        "tests/editor-focus.test.js"
+      ],
+      "comparison": "bounded-objective-negative",
+      "disposition": "source recipe exact between Focus and All, #324/#333",
+      "limits": "only enumerated objective counterexample; optical interpretation not approved"
+    },
+    {
+      "id": "focus.forbidden.03",
+      "plate": "focus",
+      "kind": "forbidden",
+      "exactClaim": "Colour reassignment on switching",
+      "sourceCandidate": null,
+      "evidenceCandidates": [
+        "tests/editor-focus.test.js"
+      ],
+      "comparison": "bounded-objective-negative",
+      "disposition": "roygbiv slider colours unchanged by Focus chip, #285",
+      "limits": "only enumerated objective counterexample; optical interpretation not approved"
+    },
+    {
+      "id": "focus.forbidden.04",
+      "plate": "focus",
+      "kind": "forbidden",
+      "exactClaim": "A focused control editing a locked source field",
+      "sourceCandidate": null,
+      "evidenceCandidates": [
+        "tests/editor-focus.test.js"
+      ],
+      "comparison": "bounded-objective-negative",
+      "disposition": "locked Focus control disables editing, #326/#311",
+      "limits": "only enumerated objective counterexample; optical interpretation not approved"
+    },
+    {
+      "id": "history.required.01",
+      "plate": "history",
+      "kind": "required",
+      "exactClaim": "Recent variations title",
+      "sourceCandidate": "#editorHistoryToggle",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "history.required.02",
+      "plate": "history",
+      "kind": "required",
+      "exactClaim": "Visible Back to tool action",
+      "sourceCandidate": ".editor-history-close",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "history.required.03",
+      "plate": "history",
+      "kind": "required",
+      "exactClaim": "Sequence of selectable prior states",
+      "sourceCandidate": ".editor-history-choice",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "history.required.04",
+      "plate": "history",
+      "kind": "required",
+      "exactClaim": "Clear thumbnails & restore affordance",
+      "sourceCandidate": ".editor-history-choice",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "history.required.05",
+      "plate": "history",
+      "kind": "required",
+      "exactClaim": "Restore selected recipe + close history",
+      "sourceCandidate": "#favorite,#mobileFavorite",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "history.required.06",
+      "plate": "history",
+      "kind": "required",
+      "exactClaim": "Maintain favourite distinction",
+      "sourceCandidate": "#mobileActionDock,#studioStatus",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "history.required.07",
+      "plate": "history",
+      "kind": "required",
+      "exactClaim": "Bottom navigation and global feedback",
+      "sourceCandidate": "#editorHistory",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "history.conditional.01",
+      "plate": "history",
+      "kind": "conditional",
+      "exactClaim": "Empty recent history illustration",
+      "sourceCandidate": "#editorHistory",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs"
+      ],
+      "comparison": "conditional-exception-annotated",
+      "disposition": "uncommon conditional mode is named, source candidate and applicable-state probe supplied; bounded mode coverage only",
+      "limits": "not every simultaneous combination or native AT presentation"
+    },
+    {
+      "id": "history.conditional.02",
+      "plate": "history",
+      "kind": "conditional",
+      "exactClaim": "History may contain previous/next ghost states",
+      "sourceCandidate": ".editor-history-choice",
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs"
+      ],
+      "comparison": "conditional-exception-annotated",
+      "disposition": "uncommon conditional mode is named, source candidate and applicable-state probe supplied; bounded mode coverage only",
+      "limits": "not every simultaneous combination or native AT presentation"
+    },
+    {
+      "id": "history.forbidden.01",
+      "plate": "history",
+      "kind": "forbidden",
+      "exactClaim": "History overlaps active tool controls",
+      "sourceCandidate": null,
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs"
+      ],
+      "comparison": "subjective-or-unbounded-exception",
+      "disposition": "no mechanical universal absence claim; keep explicit visual/manual interpretation pending",
+      "limits": "human optical/semantic sign-off required; not an implementation-approved screen"
+    },
+    {
+      "id": "history.forbidden.02",
+      "plate": "history",
+      "kind": "forbidden",
+      "exactClaim": "Restoration silently randomizes settings",
+      "sourceCandidate": null,
+      "evidenceCandidates": [
+        "tests/redesign-navigation-acceptance.mjs"
+      ],
+      "comparison": "bounded-objective-negative",
+      "disposition": "history restoration preserves exact recipe, #340",
+      "limits": "only enumerated objective counterexample; optical interpretation not approved"
+    },
+    {
+      "id": "search.required.01",
+      "plate": "search",
+      "kind": "required",
+      "exactClaim": "Search input with descriptive placeholder",
+      "sourceCandidate": ".editor-search-input",
+      "evidenceCandidates": [
+        "tests/editor-tool-search.test.js"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "search.required.02",
+      "plate": "search",
+      "kind": "required",
+      "exactClaim": "Visible close search button + Escape",
+      "sourceCandidate": ".editor-search-close",
+      "evidenceCandidates": [
+        "tests/editor-tool-search.test.js"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "search.required.03",
+      "plate": "search",
+      "kind": "required",
+      "exactClaim": "Find matching settings and tools",
+      "sourceCandidate": "#editorSearchStatus",
+      "evidenceCandidates": [
+        "tests/editor-tool-search.test.js"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "search.required.04",
+      "plate": "search",
+      "kind": "required",
+      "exactClaim": "Navigation to exact category and tool",
+      "sourceCandidate": ".editor-search-toggle,.editor-tool-chooser",
+      "evidenceCandidates": [
+        "tests/editor-tool-search.test.js"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "search.required.05",
+      "plate": "search",
+      "kind": "required",
+      "exactClaim": "Selected target chip scrolled into view",
+      "sourceCandidate": ".editor-tool-chooser",
+      "evidenceCandidates": [
+        "tests/editor-tool-search.test.js"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "search.required.06",
+      "plate": "search",
+      "kind": "required",
+      "exactClaim": "Preserve manual horizontal chip position",
+      "sourceCandidate": ".editor-tool-card:not([hidden])",
+      "evidenceCandidates": [
+        "tests/editor-tool-search.test.js"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "search.required.07",
+      "plate": "search",
+      "kind": "required",
+      "exactClaim": "Reveal needed controls after selection",
+      "sourceCandidate": "#mobileActionDock",
+      "evidenceCandidates": [
+        "tests/editor-tool-search.test.js"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "search.required.08",
+      "plate": "search",
+      "kind": "required",
+      "exactClaim": "Bottom navigation",
+      "sourceCandidate": ".editor-search-input",
+      "evidenceCandidates": [
+        "tests/editor-tool-search.test.js"
+      ],
+      "comparison": "source-mapped-browser-121",
+      "disposition": "required source candidate has a browser-proven applicable trace; per-action proof is in its referenced functional suite",
+      "limits": "literal screenshot fidelity and human recognition not assessed here"
+    },
+    {
+      "id": "search.conditional.01",
+      "plate": "search",
+      "kind": "conditional",
+      "exactClaim": "No results / filtered out inapplicable tools",
+      "sourceCandidate": "#editorSearchStatus",
+      "evidenceCandidates": [
+        "tests/editor-tool-search.test.js"
+      ],
+      "comparison": "conditional-exception-annotated",
+      "disposition": "uncommon conditional mode is named, source candidate and applicable-state probe supplied; bounded mode coverage only",
+      "limits": "not every simultaneous combination or native AT presentation"
+    },
+    {
+      "id": "search.conditional.02",
+      "plate": "search",
+      "kind": "conditional",
+      "exactClaim": "Keyboard and touch search focus states",
+      "sourceCandidate": ".editor-search-input",
+      "evidenceCandidates": [
+        "tests/editor-tool-search.test.js"
+      ],
+      "comparison": "conditional-exception-annotated",
+      "disposition": "uncommon conditional mode is named, source candidate and applicable-state probe supplied; bounded mode coverage only",
+      "limits": "not every simultaneous combination or native AT presentation"
+    },
+    {
+      "id": "search.forbidden.01",
+      "plate": "search",
+      "kind": "forbidden",
+      "exactClaim": "Expanded input covers only close affordance",
+      "sourceCandidate": null,
+      "evidenceCandidates": [
+        "tests/editor-tool-search.test.js"
+      ],
+      "comparison": "bounded-objective-negative",
+      "disposition": "separately reachable search close affordance, #287",
+      "limits": "only enumerated objective counterexample; optical interpretation not approved"
+    },
+    {
+      "id": "search.forbidden.02",
+      "plate": "search",
+      "kind": "forbidden",
+      "exactClaim": "Manual tool scroll snaps on unrelated actions",
+      "sourceCandidate": null,
+      "evidenceCandidates": [
+        "tests/editor-tool-search.test.js"
+      ],
+      "comparison": "bounded-objective-negative",
+      "disposition": "search reveals category without resetting swipes, #339",
+      "limits": "only enumerated objective counterexample; optical interpretation not approved"
+    }
+  ]
+}
