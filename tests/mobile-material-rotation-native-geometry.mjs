@@ -44,7 +44,6 @@ try{
     const buttons=selectors.map(s=>card.locator('[data-rotate-target="'+key+'"]'+s));
     const number=card.locator('input[name="'+key+'"]');
     assert.equal(await number.count(),1);
-    const measured=[];
     const rotationRail=card.locator('.texture-rotation-field .rotation-controls');
     const track=await rotationRail.evaluate(el=>({client:el.clientWidth,
       scroll:el.scrollWidth,overflow:getComputedStyle(el).overflowX}));
