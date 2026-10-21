@@ -1,0 +1,39 @@
+name: Midwidth mobile 44px named tool and Focus
+on:
+  pull_request:
+    paths:
+      - editor-redesign.css
+      - editor-focus.css
+      - tests/midwidth-44-tool-strip.mjs
+      - .github/workflows/midwidth-44-tool-strip.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  midwidth-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check tests/midwidth-44-tool-strip.mjs
+      - run: npm install --no-save playwright@1.56.1 serve@14.2.5
+      - run: npx playwright install --with-deps chromium
+      - name: Serve source
+        run: |
+          npx serve . -l 4173 >/tmp/midwidth-tool-source.log 2>&1 &
+          for i in $(seq 1 40); do
+            curl -fsS http://127.0.0.1:4173/ >/dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/midwidth-tool-source.log
+          exit 1
+      - run: node tests/midwidth-44-tool-strip.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: midwidth-native-tool-and-focus-evidence
+          path: artifacts/midwidth-44-tool-strip/
+          if-no-files-found: warn
