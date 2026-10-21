@@ -15,7 +15,7 @@ const source=normalizeRecipe({seed:'tall-phone-camera-safe-space',
 const browser=await chromium.launch({headless:true});
 const rows=[];
 try{
-  for(const width of [320,412,499])for(const theme of ['cream','dark']){
+  for(const width of [320,360,412,499])for(const theme of ['cream','dark']){
     const context=await browser.newContext({viewport:{width,height:892},
       isMobile:true,hasTouch:true,reducedMotion:'reduce'});
     const page=await context.newPage(),errors=[];
