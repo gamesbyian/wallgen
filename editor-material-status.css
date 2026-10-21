@@ -37,3 +37,18 @@
 @media(min-width:500px){
   .editor-tool-card>.material-finish-help{font-size:11px}
 }
+
+/* Independent screenshot inspection found inactive Finish 2/3 cards at
+   320/412 portrait truncating the entire bottom of the original rotation
+   shortcuts. The descriptive state message was consuming several rows of
+   compact tray height. Keep it visible but reduce only its vertical chrome;
+   never hide the original source angle buttons, input or explanatory text. */
+@media(max-width:790px){
+  body.mobile-studio .sidebar .editor-tool-card[data-editor-tool^="finish"]
+    >.material-finish-help:not([hidden]){
+    margin:0 0 1px!important;
+    padding:1px 4px!important;
+    font-size:10px!important;
+    line-height:1.1!important;
+  }
+}
