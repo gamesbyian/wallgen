@@ -1,0 +1,37 @@
+name: Mobile seven category tab touch matrix
+on:
+  pull_request:
+    paths:
+      - tests/mobile-seven-category-tab-hit-matrix.mjs
+      - .github/workflows/mobile-seven-category-tab-hit-matrix.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native-chromium:
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check tests/mobile-seven-category-tab-hit-matrix.mjs
+      - run: npm install --no-save playwright@1.56.1 serve@14.2.5
+      - run: npx playwright install --with-deps chromium
+      - name: Serve real app
+        run: |
+          npx serve . -l 4173 >/tmp/category-source.log 2>&1 &
+          for i in $(seq 1 40); do
+            curl -fsS http://127.0.0.1:4173/ >/dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/category-source.log
+          exit 1
+      - run: node tests/mobile-seven-category-tab-hit-matrix.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: seven-category-source-geometry
+          path: artifacts/mobile-seven-category-tabs/
+          if-no-files-found: warn
