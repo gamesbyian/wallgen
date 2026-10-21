@@ -14,7 +14,7 @@ const baseline=normalizeRecipe({seed:'category-hit-geometry',structure:'paths',
   geometry:'zigzag',shapeFrequency:61,shapeDepth:79,lockedSettings:[]});
 const browser=await chromium.launch({headless:true}),rows=[];
 try{
- for(const width of [320,360,412,499,500]){
+ for(const width of [320,360,412,499,500,790]){
   for(const theme of ['cream','dark']){
    const context=await browser.newContext({viewport:{width,height:892},
      isMobile:true,hasTouch:true,reducedMotion:'reduce'});
@@ -89,7 +89,7 @@ try{
           contained:r.left>=rail.left-1&&r.right<=rail.right+1,
           aria:el.getAttribute('aria-label')||el.textContent.trim()};
       });
-      assert.ok(datum.width>=44&&datum.height>=24&&datum.nineOwn&&
+      assert.ok(datum.width>=44&&datum.height>=44&&datum.nineOwn&&
         !datum.overlaps&&datum.contained,
         'Source category tab is blocked/out of bounds: '+
         JSON.stringify({width,theme,category:category.id,datum}));
@@ -101,6 +101,12 @@ try{
       await page.waitForTimeout(220);
       items.push({id:category.id,...datum,under44:datum.width<44||datum.height<44});
     }
+    const stage=await page.locator('.studio-stage').boundingBox();
+    const tray=await page.locator('#mobileDesignSheet').boundingBox();
+    assert.ok(stage.y+stage.height<=tray.y+2,
+      'Taller category row obscured the wallpaper stage: '+JSON.stringify({width,theme,stage,tray}));
+    assert.ok(items.every(item=>!item.under44),
+      'Each source category must own a 44px by 44px region');
     assert.deepEqual(errors,[]);
     const record={width,theme,tabCount:items.length,rail:settings,
       scroll:track,fingerScroll,
