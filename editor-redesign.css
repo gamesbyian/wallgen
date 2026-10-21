@@ -203,21 +203,25 @@
  /* A single row of seven labels always occupies its own flow position. Never
     inherit position:sticky or top:51px from the retired four-tab editor. */
  body.mobile-studio .sidebar .settings-tabs{
-   display:grid!important;position:static!important;top:auto!important;
+   /* The seven source labels do not fit into one 320px grid. Use one
+      native swipe strip without adding another vertical editing row. */
+   display:flex!important;position:static!important;top:auto!important;
    inset:auto!important;z-index:auto!important;transform:none!important;
-   grid-template-columns:repeat(7,minmax(0,1fr))!important;
-   grid-template-rows:minmax(34px,auto)!important;
    flex:0 0 35px!important;height:35px!important;
    min-height:35px!important;max-height:35px!important;
-   gap:0!important;margin:0!important;padding:0!important;
+   width:100%!important;min-width:0!important;align-items:center;
+   gap:2px!important;margin:0!important;padding:0 1px!important;
    border:0!important;border-radius:0!important;background:transparent!important;
-   box-shadow:none!important;overflow:visible!important;
+   box-shadow:none!important;overflow-x:auto!important;overflow-y:hidden!important;
+   overscroll-behavior-x:contain;touch-action:pan-x;scrollbar-width:thin;
+   scroll-snap-type:x proximity;scroll-padding-inline:2px;
  }
  body.mobile-studio .sidebar .settings-tabs .settings-tab{
    display:flex!important;align-items:center;justify-content:center;
-   position:static!important;min-width:0!important;width:100%!important;
+   position:static!important;flex:0 0 auto!important;
+   min-width:44px!important;width:auto!important;max-width:none!important;
    height:34px!important;min-height:34px!important;max-height:34px!important;
-   padding:0 1px!important;margin:0!important;
+   padding:0 8px!important;margin:0!important;scroll-snap-align:start;
    line-height:1.12!important;font-size:10px!important;
    white-space:nowrap;letter-spacing:-.01em;
    border:0!important;border-radius:0!important;
