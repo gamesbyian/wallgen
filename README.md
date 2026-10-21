@@ -75,7 +75,8 @@ coverage and blending, and a **Finish** tool for strength, scale and rotation.
 Layer 2 and 3 materials can be chosen directly, without Add/Remove controls or
 an extra lock. Their default Smooth selection means off.
 The same named pattern applies to layers 1, 2 and 3, so all adjustments
-remain accessible without scrolling inside any card.
+remain available through their named tools. At the narrowest tall-phone widths,
+the Material rotation shortcuts use one horizontally swipeable 44px control row.
 
 The seven-category metadata in `src/editor-schema.js` supplies the canonical
 tool membership, dependencies and `WIZARD_STEPS` ordering. A future opt-in
