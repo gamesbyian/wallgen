@@ -51,7 +51,7 @@ byId('errorCount').textContent=data.errors.length;
 byId('skipCount').textContent=data.inapplicable.length;
 byId('missingCount').textContent=data.missingExpected.length;
 byId('issues').textContent=JSON.stringify({errors:data.errors,missingExpected:data.missingExpected,inapplicable:data.inapplicable},null,2);
-const inspectionCounts={scanned:0,ignoredScroll:0,reported:0,measuredTouchTargets:0,smallActionCount:0,under44Count:0,under24SpacingAssessedCount:0,under24SpacingCandidateCount:0};
+const inspectionCounts={scanned:0,ignoredScroll:0,reported:0,measuredTouchTargets:0,smallActionCount:0,under44Count:0,under24SpacingAssessedCount:0,under24SpacingCandidateCount:0,buttonHitSampled:0,buttonHitBlocked:0};
 const diagnosticGroups=new Map();
 const touchDiagnosticGroups=new Map();
 for(const capture of data.cases){
@@ -64,6 +64,8 @@ for(const capture of data.cases){
  inspectionCounts.under44Count+=(scan.under44Count||0);
  inspectionCounts.under24SpacingAssessedCount+=(scan.under24SpacingAssessedCount||0);
  inspectionCounts.under24SpacingCandidateCount+=(scan.under24SpacingCandidateCount||0);
+ inspectionCounts.buttonHitSampled+=(scan.buttonHitSampled||0);
+ inspectionCounts.buttonHitBlocked+=(scan.buttonHitBlocked||0);
  for(const finding of scan.under24SpacingCandidates||[]){
    const key=[capture.profile,finding.element].join('::');
    let item=touchDiagnosticGroups.get(key);
@@ -102,6 +104,8 @@ info.textContent=inspectionCounts.scanned+' examined controls · '+
  inspectionCounts.under24SpacingCandidateCount+' potential 24px spacing conflicts / '+
  inspectionCounts.under24SpacingAssessedCount+' undersized-target observations (diagnostic only) · '+
  inspectionCounts.under44Count+' below 44px ergonomic target observations · '+
+ inspectionCounts.buttonHitBlocked+' blocked 3x3 points among '+
+ inspectionCounts.buttonHitSampled+' sampled small buttons (candidate only) · '+
  diagnosticGroups.size+' unique viewport/control combinations';
 diag.append(info);
 const tbl=document.createElement('table');
