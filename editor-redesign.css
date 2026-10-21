@@ -1076,3 +1076,41 @@ html[data-theme="cream"] body.mobile-studio .sidebar .settings-tabs .settings-ta
     padding:0 8px!important;white-space:nowrap!important;
   }
 }
+
+/* Portrait experiment: the 27px Focus and Tool dice had genuine 27px hit
+   rectangles, with only 6px between them (#385). On narrow portrait, use
+   the existing horizontal scroller as one 44px native touch row.
+   Budget precisely 13px in the bounded editor tray, not on neighbouring
+   element hitboxes. Tablet/desktop and Material rotation are unchanged. */
+@media(max-width:499px){
+  body.mobile-studio.mobile-edit-open{
+    --mobile-tray-height:clamp(281px,calc(34dvh + 13px),315px)!important;
+  }
+  body.mobile-studio .sidebar .editor-tool-chooser{
+    flex:0 0 44px!important;height:44px!important;
+    min-height:44px!important;max-height:44px!important;
+    padding:0 1px!important;
+    /* A native centered scroll must not park a named tool behind the
+       two pinned source controls (Focus 67px + Tool 62px + gaps). */
+    scroll-padding-inline-start:143px!important;
+    scroll-padding-inline-end:3px!important;
+  }
+  body.mobile-studio .sidebar .editor-tool-tab:not([hidden]){
+    height:44px!important;min-height:44px!important;max-height:44px!important;
+  }
+  body.mobile-studio .sidebar
+  .editor-tool-chooser>.editor-tool-reroll:not([hidden]){
+    height:44px!important;min-height:44px!important;max-height:44px!important;
+  }
+}
+
+/* A 320×700 real Chromium row census exposed Material Finish 2/3 rotation
+   controls 7.5px below their card after the 44px chooser change. Give
+   short portrait sheets 12px additional height so *all* six rotation
+   children remain within the original card, rather than clipping a source
+   ±1/±90/reset/number action. The wallpaper stage shrinks, never overlays. */
+@media(max-width:360px) and (max-height:739px){
+  body.mobile-studio.mobile-edit-open{
+    --mobile-tray-height:clamp(305px,calc(34dvh + 38px),340px)!important;
+  }
+}

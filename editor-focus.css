@@ -82,3 +82,42 @@ html[data-theme="dark"] .editor-focus-all{background:#51374f;color:#fff;border-c
     --mobile-tray-height:clamp(192px,23dvh,215px)!important;
   }
 }
+
+/* Match the 44px named-tool strip on narrow portrait only. Focus stays
+   opt-in and the original All return remains an independent 44px control.
+   Preserve the already-verified 412×892 help fit by budgeting the exact
+   additional row height inside the Focus tray, not stealing slider height. */
+@media(max-width:499px){
+  body.mobile-studio .sidebar .editor-tool-chooser .editor-focus-toggle{
+    height:44px!important;min-height:44px!important;max-height:44px!important;
+  }
+}
+@media(max-width:499px) and (min-height:740px){
+  body.mobile-studio.mobile-edit-open:has(#controls.editor-focus-active){
+    --mobile-tray-height:clamp(308px,calc(34dvh + 13px),343px)!important;
+  }
+  body.mobile-studio.mobile-edit-open:has(#controls.editor-focus-active.editor-focus-empty){
+    --mobile-tray-height:clamp(205px,calc(23dvh + 13px),228px)!important;
+  }
+}
+
+/* Two-line contextual help at 320/360px needs another ~11px beyond the
+   row's original 13px growth (actual Chromium source at 320x892). Reserve
+   14px inside the Focus-only tray; do not clip/help-scroll or shrink 44px
+   source actions. The sliderless Colour Focus uses its own smaller height. */
+@media(max-width:360px){
+  body.mobile-studio.mobile-edit-open:has(
+    #controls.editor-focus-active:not(.editor-focus-empty)){
+    --mobile-tray-height:clamp(320px,calc(34dvh + 27px),357px)!important;
+  }
+}
+
+/* Sliderless Colour Focus retains its own compact tray, but narrow
+   two-line help needs another 7px at 320px after the taller chooser.
+   Reclaim 10px here instead of suppressing the help or reducing touch cells. */
+@media(max-width:360px) and (min-height:740px){
+  body.mobile-studio.mobile-edit-open:has(
+    #controls.editor-focus-active.editor-focus-empty){
+    --mobile-tray-height:clamp(215px,calc(23dvh + 23px),238px)!important;
+  }
+}
