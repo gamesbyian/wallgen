@@ -144,6 +144,30 @@ body.mobile-studio .sidebar .editor-tool-card[data-editor-tool^="interior"]>labe
   .editor-tool-card[data-editor-tool="interior-targets"] .interior-targets
   .interior-colour-chip{min-height:44px!important}
 }
+/* 320–411px: the edit tray is narrower than seven independent 44px cells.
+   Keep source-order ROYGBIV in one swipeable, keyboard-scrollable rail rather
+   than shrinking the live checkbox-label targets or clipping the last hue.
+   Overflow is visible via a partially exposed next chip and a thin scrollbar.
+   No vertical row is added to the fixed-height editor tray. */
+@media (max-width:411px){
+  body.mobile-studio .sidebar
+  .editor-tool-card[data-editor-tool="interior-targets"] .interior-targets{
+    grid-template-columns:none!important;
+    grid-auto-flow:column;grid-auto-columns:44px;
+    justify-content:start;align-items:center;
+    width:100%;max-width:100%;min-width:0;
+    overflow-x:auto!important;overflow-y:hidden!important;
+    overscroll-behavior-x:contain;touch-action:pan-x;
+    scroll-snap-type:x proximity;scroll-padding-inline:2px;
+    scrollbar-width:thin;padding-bottom:3px;
+  }
+  body.mobile-studio .sidebar
+  .editor-tool-card[data-editor-tool="interior-targets"] .interior-targets
+  .interior-colour-chip{
+    min-width:44px!important;width:44px!important;min-height:44px!important;
+    box-sizing:border-box;scroll-snap-align:start;
+  }
+}
 .editor-tool-card .interior-colour-chip input{position:absolute;inset:0;width:100%;
   height:100%;margin:0;opacity:0;cursor:pointer}
 .editor-tool-card .interior-colour-chip span{pointer-events:none;font-weight:750}
