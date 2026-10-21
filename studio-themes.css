@@ -564,3 +564,16 @@ html[data-theme=cream] .metadata-fields label{
     color:#625b6c;
   }
 }
+
+/* Character tool's original homogeneity override inherited dark-text inks
+   over cream surfaces (1.10:1) and a dim helper (3.09:1); dark helper was
+   4.22:1. Keep both labels and the original control behavior intact. */
+html[data-theme="cream"] .editor-tool-card .homogeneity-override{
+  color:#514757;
+}
+html[data-theme="cream"] .editor-tool-card .homogeneity-override small{
+  color:#66586a;
+}
+html[data-theme="dark"] .editor-tool-card .homogeneity-override small{
+  color:#c0c2d0;
+}
