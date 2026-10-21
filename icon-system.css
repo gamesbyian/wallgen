@@ -74,11 +74,12 @@ body.mobile-studio .sidebar .editor-explore-actions>.editor-scope-button::before
  }
 }
 
-/* Narrow preview tools all share the SAME 43px slot at phone widths,
-   growing uniformly to 55px at wider zoom. Do not widen Import independently. */
+/* Match the existing actual 44px source preview actions inside their
+   46px reserved rail. A later icon rule must not shrink Import back to 43px.
+   Preserve the separate 55px variant at wider zoom. */
 @media(max-width:790px){
  body.mobile-studio .mobile-preview-rail-left #importPathToggle{
-   width:43px!important;min-width:43px!important;max-width:43px!important;
+   width:44px!important;min-width:44px!important;max-width:44px!important;
    box-sizing:border-box;height:46px!important;min-height:46px!important;
    padding:2px 1px!important;
  }
