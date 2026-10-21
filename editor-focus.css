@@ -111,3 +111,13 @@ html[data-theme="dark"] .editor-focus-all{background:#51374f;color:#fff;border-c
     --mobile-tray-height:clamp(320px,calc(34dvh + 27px),357px)!important;
   }
 }
+
+/* Sliderless Colour Focus retains its own compact tray, but narrow
+   two-line help needs another 7px at 320px after the taller chooser.
+   Reclaim 10px here instead of suppressing the help or reducing touch cells. */
+@media(max-width:360px) and (min-height:740px){
+  body.mobile-studio.mobile-edit-open:has(
+    #controls.editor-focus-active.editor-focus-empty){
+    --mobile-tray-height:clamp(215px,calc(23dvh + 23px),238px)!important;
+  }
+}
