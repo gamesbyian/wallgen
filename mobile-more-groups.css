@@ -44,7 +44,9 @@
   body.mobile-studio .mobile-more-group-body>#mobileShuffle,
   body.mobile-studio .mobile-more-group-body #mobileShuffle{
     display:flex;align-items:center;justify-content:center;gap:8px;
-    width:100%;min-height:40px;padding:6px 10px;
+    /* Keep the actual source Randomize button finger-sized without
+       borrowing hit area from neighbouring More controls. */
+    width:100%;min-height:44px;padding:6px 10px;
     border:1px solid var(--line);border-radius:9px;
     background:var(--surface);color:inherit;font-size:12px;font-weight:750;
   }
