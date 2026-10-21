@@ -29,8 +29,9 @@ try{
       'Fullscreen activation target must be exposed: '+JSON.stringify(geometry));
     assert.ok(geometry.bottom<geometry.dockTop,'Fullscreen overlay must not cover the dock');
     await btn.tap();
-    await page.waitForFunction(()=>Boolean(document.fullscreenElement),null,{timeout:8000});
-    assert.equal(await btn.getAttribute('aria-label'),'Exit fullscreen');
+    await page.waitForFunction(()=>Boolean(document.fullscreenElement)&&
+      document.querySelector('#mobileFullscreenToggle')?.getAttribute('aria-label')==='Exit fullscreen',
+      null,{timeout:8000});
     await page.locator('#mobileEdit').click();
     const editor=await page.locator('#mobileDesignSheet').isVisible();
     assert.equal(editor,true);
@@ -45,8 +46,9 @@ try{
     assert.ok(exitHit.height>=44&&exitHit.all,'Exit must have unobstructed hit region: '+
       JSON.stringify(exitHit));
     await btn.tap();
-    await page.waitForFunction(()=>!document.fullscreenElement,null,{timeout:8000});
-    assert.equal(await btn.getAttribute('aria-label'),'Enter fullscreen');
+    await page.waitForFunction(()=>!document.fullscreenElement&&
+      document.querySelector('#mobileFullscreenToggle')?.getAttribute('aria-label')==='Enter fullscreen',
+      null,{timeout:8000});
     assert.equal(page.url(),before,'Fullscreen enter/exit modified the source recipe URL');
     assert.deepEqual(errors,[]);
     console.log('FULLSCREEN_BROWSER_PASS',JSON.stringify({width,geometry,exitHit}));
