@@ -1,5 +1,7 @@
 # Implementation-safe ROYGBIV phone references
 
+**Final human/device release step:** [five-minute live portrait-phone and human visual decision sheet](FINAL-HUMAN-PHONE-VISUAL-SIGNOFF.md). Automated browser and independent AI optical checks do not substitute for these physical/user judgments. The final supported-layout checkbox must remain open until the session is actually performed.
+
 **Permanent, independently inspected app screenshots:** [24 actual 412×892 cream/dark implementation plates and eight unchanged icon candidate matrices](ACTUAL-IMPLEMENTATION-COMPANION.md), with exact source/hash proof in [review-provenance.json](actual-implementation/review-provenance.json). The schematic SVG contracts remain intact. The [full conditional Chromium artifact comparison](LIVE-IMPLEMENTATION-PLATES.md) continues to cover additional viewports and unresolved optical/physical judgments. These screenshot-only artifacts are staged after a completely green browser geometry audit; they do not replace the canonical SVG feature contracts or imply human aesthetic sign-off.
 
 Twelve deterministic SVGs render **real ROYGBIV SVG paths**, with an explicit side inventory of required, conditional and forbidden elements. The phone is an explanatory schematic, not a generated app screenshot or fixed-pixel implementation layout. **The inventory and [canonical-screen-contract.json](canonical-screen-contract.json) take priority over artwork.**
