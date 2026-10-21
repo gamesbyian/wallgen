@@ -1316,3 +1316,96 @@ html[data-theme="cream"] body.mobile-studio .sidebar .settings-tabs .settings-ta
     height:44px!important;min-height:44px!important;
   }
 }
+
+/* Tall narrow Shapes > Structure: the original stripe-width range row
+   originally holds a 24×26 lock/die beside 21×25 stepper buttons. Give this
+   original row a labelled 44px header and 44px stepper line within the
+   existing editor tray; never expand invisible hotspots over siblings.
+   Limit this application to its own source card, without stacking multiple
+   92px rows in one 200px editor panel. Compact short-height and desktop rows are unchanged. */
+@media(max-width:499px) and (min-height:840px){
+  body.mobile-studio.mobile-edit-open:has(
+    .editor-tool-card[data-editor-tool="structure"]:not([hidden])){
+    --mobile-tray-height:clamp(350px,40dvh,394px)!important;
+  }
+  body.mobile-studio .sidebar
+    .editor-tool-card[data-editor-tool="structure"]
+    .lockable-setting:has(input[name="stripeWidth"]){
+    display:flex!important;flex-direction:column!important;
+    position:relative!important;
+    min-height:92px!important;
+    width:100%!important;align-items:stretch!important;
+    gap:4px!important;padding:0!important;margin:0!important;
+  }
+  body.mobile-studio .sidebar
+    .editor-tool-card[data-editor-tool="structure"]
+    .lockable-setting:has(input[name="stripeWidth"])>.field.range-field{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr)!important;
+    grid-template-rows:44px 44px!important;
+    gap:4px!important;align-items:center!important;
+    width:100%!important;height:92px!important;min-height:92px!important;
+    padding:0!important;margin:0!important;
+  }
+  body.mobile-studio .sidebar
+    .editor-tool-card[data-editor-tool="structure"]
+    .lockable-setting:has(input[name="stripeWidth"])>.field.range-field>span:not(.stepper){
+    grid-column:1!important;grid-row:1!important;
+    max-width:calc(100% - 100px)!important;
+    height:44px!important;display:flex!important;align-items:center!important;
+    font-size:12px!important;
+  }
+  body.mobile-studio .sidebar
+    .editor-tool-card[data-editor-tool="structure"]
+    .lockable-setting:has(input[name="stripeWidth"])>.field.range-field>.stepper{
+    grid-column:1!important;grid-row:2!important;
+    display:flex!important;align-items:center!important;
+    width:100%!important;min-width:0!important;
+    height:44px!important;min-height:44px!important;
+    gap:4px!important;margin:0!important;padding:0!important;
+  }
+  body.mobile-studio .sidebar
+    .editor-tool-card[data-editor-tool="structure"]
+    .lockable-setting:has(input[name="stripeWidth"])>.editor-setting-die,
+  body.mobile-studio .sidebar
+    .editor-tool-card[data-editor-tool="structure"]
+    .lockable-setting:has(input[name="stripeWidth"])>.setting-lock{
+    position:absolute!important;top:0!important;
+    box-sizing:border-box!important;z-index:1!important;
+    width:44px!important;min-width:44px!important;max-width:44px!important;
+    height:44px!important;min-height:44px!important;max-height:44px!important;
+    padding:2px!important;
+  }
+  body.mobile-studio .sidebar
+    .editor-tool-card[data-editor-tool="structure"]
+    .lockable-setting:has(input[name="stripeWidth"])>.editor-setting-die{
+    right:48px!important;
+  }
+  body.mobile-studio .sidebar
+    .editor-tool-card[data-editor-tool="structure"]
+    .lockable-setting:has(input[name="stripeWidth"])>.setting-lock{
+    right:0!important;
+  }
+  body.mobile-studio .sidebar
+    .editor-tool-card[data-editor-tool="structure"]
+    .lockable-setting:has(input[name="stripeWidth"])
+    .stepper>.step-button,
+  body.mobile-studio .sidebar
+    .editor-tool-card[data-editor-tool="structure"]
+    .lockable-setting:has(input[name="stripeWidth"])
+    .stepper>.slider-number{
+    box-sizing:border-box!important;
+    flex:0 0 44px!important;
+    width:44px!important;min-width:44px!important;max-width:44px!important;
+    height:44px!important;min-height:44px!important;max-height:44px!important;
+  }
+  body.mobile-studio .sidebar
+    .editor-tool-card[data-editor-tool="structure"]
+    .lockable-setting:has(input[name="stripeWidth"])
+    .stepper>input[type=range]{
+    flex:1 1 auto!important;
+    min-width:28px!important;
+    width:auto!important;
+    height:44px!important;min-height:44px!important;
+  }
+}
