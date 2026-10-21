@@ -135,6 +135,15 @@ body.mobile-studio .sidebar .editor-tool-card[data-editor-tool^="interior"]>labe
   position:relative;display:flex!important;min-height:38px!important;
   border:1px solid var(--line);border-radius:8px;background:var(--surface);
   cursor:pointer;padding:2px!important;justify-content:center;align-items:center}
+/* At standard portrait widths the actual seven-column swatch cells have room
+   for a 44px-high clickable label, without inflating the preview reservation.
+   Below 412px, seven cells cannot be guaranteed 44px wide in the existing
+   drawer: preserve current layout until responsive 4+3/scroll A/B is proven. */
+@media (min-width:412px) and (max-width:790px){
+  body.mobile-studio .sidebar
+  .editor-tool-card[data-editor-tool="interior-targets"] .interior-targets
+  .interior-colour-chip{min-height:44px!important}
+}
 .editor-tool-card .interior-colour-chip input{position:absolute;inset:0;width:100%;
   height:100%;margin:0;opacity:0;cursor:pointer}
 .editor-tool-card .interior-colour-chip span{pointer-events:none;font-weight:750}
