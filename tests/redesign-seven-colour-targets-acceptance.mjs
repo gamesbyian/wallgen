@@ -88,6 +88,18 @@ try{
   observations.push({name:'seven-target-44px-pointer-regions',targetGeometry});
   await evidence('initial-all-seven');
 
+  // Genuine touch emulation against the actual label surface, not a JS click,
+  // proves the larger hit cell delegates to the original checkbox and back.
+  const touchBefore=current();
+  const firstLabel=page.locator('.editor-tool-card[data-editor-tool="interior-targets"] .interior-colour-chip').first();
+  await firstLabel.tap();
+  assert.deepEqual(slots(0),[1,2,3,4,5,6],
+    'Touching the Red label should deselect only Red');
+  await firstLabel.tap();
+  assert.deepEqual(current(),touchBefore,
+    'Two genuine source label taps must exactly recover the complete recipe');
+  observations.push({name:'red-chip-native-touch-roundtrip',recovered:true});
+
   // A colorSlots=[] recipe means "all"; turning one off materializes the
   // remaining six, rather than silently excluding a different hue.
   for(const index of [0,2,4,5,6,3]){
