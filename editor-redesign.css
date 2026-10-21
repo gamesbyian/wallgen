@@ -581,8 +581,10 @@
  body.mobile-studio .mobile-preview-rail-right .nudge-pad{width:43px!important}
  body.mobile-studio .mobile-preview-rail-right .nudge-pad .nudge-button,
  body.mobile-studio .mobile-zoom-button{
-   width:43px!important;min-width:43px!important;max-width:43px!important;
-   height:43px!important;min-height:43px!important;
+   /* The existing 47px rail already reserves the full 44px native
+      target; only the source button, not the wallpaper, must grow. */
+   width:44px!important;min-width:44px!important;max-width:44px!important;
+   height:44px!important;min-height:44px!important;
    font-size:20px!important;
  }
  body.mobile-studio .mobile-zoom-level{font-size:11px!important}
