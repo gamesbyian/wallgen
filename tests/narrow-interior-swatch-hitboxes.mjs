@@ -44,6 +44,31 @@ try{
         assert.ok(baseRail.content>baseRail.width+15&&baseRail.scrollable==='auto'&&
           baseRail.grid==='column',
           'Seven genuinely wide swatches must be horizontally scrollable: '+JSON.stringify(baseRail));
+        // Native Chrome gesture witness: scrollIntoView() alone could mask
+        // touch-action interference from the nested editor panel.
+        await rail.evaluate(el=>{el.scrollLeft=0});
+        const railRect=await rail.boundingBox();
+        const cdp=await ctx.newCDPSession(page);
+        const y=railRect.y+railRect.height/2;
+        const begin=railRect.x+railRect.width-24;
+        await cdp.send('Input.dispatchTouchEvent',{
+          type:'touchStart',touchPoints:[{x:begin,y,id:1}]
+        });
+        for(let n=1;n<=9;n++){
+          await cdp.send('Input.dispatchTouchEvent',{
+            type:'touchMove',touchPoints:[{x:begin-n*17,y,id:1}]
+          });
+          await page.waitForTimeout(18);
+        }
+        await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+        await page.waitForTimeout(170);
+        const gesture=await rail.evaluate(el=>({
+          scrollLeft:el.scrollLeft,maxScroll:el.scrollWidth-el.clientWidth
+        }));
+        assert.ok(gesture.scrollLeft>=15,
+          'A real finger swipe must scroll the native 44px colour row: '+
+          JSON.stringify({width,theme,baseRail,gesture}));
+        await rail.evaluate(el=>{el.scrollLeft=0});
         const measured=[];
         for(let i=0;i<7;i++){
           const chip=chips.nth(i);
@@ -79,7 +104,7 @@ try{
         assert.ok(Math.abs(afterPreview.height-preview.height)<1,
           'The hit area reflow must not sacrifice preview height');
         assert.deepEqual(errors,[],'No runtime page errors');
-        const observation={width,theme,rail:baseRail,measured,
+        const observation={width,theme,rail:baseRail,swipe:gesture,measured,
           exactRecipeRoundTrip:true,previewHeight:preview.height};
         observations.push(observation);
         await page.screenshot({path:join(out,width+'-'+theme+'.png'),animations:'disabled'});
