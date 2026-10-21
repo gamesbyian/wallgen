@@ -294,11 +294,14 @@ html[data-theme=cream] body.mobile-studio .mobile-zoom-level{
    source hit cell cannot fit in the existing 35px rail without extending
    into artwork. Reserve a genuine 46px rail and move only its matching
    preview inner edge by 11px. Preserve the 600×1300 wallpaper and camera.
-   Short portrait retains its compact source layout until independently
+   Portraits under 840px retain their compact source layout until independently
    qualified; desktop and 500–790px own separate camera sizing rules. */
-@media(max-width:499px) and (min-height:740px){
+@media(max-width:499px) and (min-height:840px){
   body.mobile-studio .mobile-preview-rail-right{
-    right:2px;width:46px;
+    /* The top-right immersive toggle occupies an independent 44px cell
+       below the masthead. Shift the camera rail down within taller stages
+       so its first nudge never steals that toggle's touch region. */
+    top:80px;bottom:4px;right:2px;width:46px;
   }
   body.mobile-studio .studio-stage .stage-inner{
     margin-right:43px;
