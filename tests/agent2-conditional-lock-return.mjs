@@ -52,8 +52,11 @@ const journeys=[
 const browser=await chromium.launch({headless:true});
 const cases=[],failures=[];
 const variants=[
-  {name:'portrait',viewport:{width:412,height:892}},
-  {name:'landscape',viewport:{width:700,height:412}}
+  {name:'narrow-cream',viewport:{width:320,height:700},theme:'cream'},
+  {name:'portrait',viewport:{width:412,height:892},theme:'cream'},
+  {name:'transition-before',viewport:{width:499,height:892},theme:'cream'},
+  {name:'transition-after-dark',viewport:{width:500,height:892},theme:'dark'},
+  {name:'landscape',viewport:{width:700,height:412},theme:'dark'}
 ];
 async function choose(page,key){
   const loc=SETTING_TOOL[key];
@@ -87,7 +90,7 @@ for(const variant of variants){
     reducedMotion:'reduce'
   });
   const page=await context.newPage();
-  page.setDefaultTimeout(12000);
+  page.setDefaultTimeout(16000);
   const errors=[];
   page.on('pageerror',e=>errors.push(String(e)));
   const current=()=>decodeRecipe(new URL(page.url()).searchParams.get('r'));
@@ -97,6 +100,11 @@ for(const variant of variants){
         seed:'agent2-negative-'+journey.id+'-'+variant.name});
       await page.goto(origin+'/?r='+encodeRecipe(source),{
         waitUntil:'domcontentloaded'});
+      await page.evaluate(theme=>localStorage.setItem('roygbiv:studio-theme:v1',theme),
+        variant.theme);
+      await page.reload({waitUntil:'domcontentloaded'});
+      assert.equal(await page.evaluate(()=>document.documentElement.dataset.theme),
+        variant.theme);
       await page.waitForFunction(()=>document.body.classList.contains('mobile-five-nav'));
       assert.deepEqual(current(),source);
       await page.locator('#mobileEdit').click();
@@ -117,6 +125,17 @@ for(const variant of variants){
       await choose(page,journey.dependent);
       assert.equal(await dependent.getAttribute('data-inactive'),'true');
       assert.equal(await dependent.isDisabled(),true);
+      const inactiveSemantics=await dependent.evaluate(el=>{
+        const row=el.closest('.lockable-setting');
+        const label=el.labels?.[0]?.textContent?.trim()||
+          row?.querySelector('label')?.textContent?.trim()||'';
+        return {rowInactive:row?.classList.contains('setting-inactive'),
+          label,accessibleName:el.getAttribute('aria-label')||label};
+      });
+      assert.ok(inactiveSemantics.rowInactive,
+        journey.id+': zero output not visibly marked inactive');
+      assert.ok(inactiveSemantics.accessibleName.length>2,
+        journey.id+': disabled original input lost its source label');
       if(await dependent.getAttribute('type')==='checkbox')
         assert.equal(await dependent.isChecked(),false);
       else assert.equal(await dependent.inputValue(),'0',
@@ -142,8 +161,9 @@ for(const variant of variants){
       assert.equal(await dependent.isEnabled(),true);
       assert.ok(!current().lockedSettings.includes(journey.dependent));
       assert.deepEqual(current(),source,journey.id+': negative journey failed full recipe return');
-      const sample={viewport:variant.name,id:journey.id,dependent:journey.dependent,
-        driver:journey.driver,original,off:journey.off,
+      const sample={viewport:variant.name,theme:variant.theme,id:journey.id,
+        dependent:journey.dependent,driver:journey.driver,original,off:journey.off,
+        sourceLabel:inactiveSemantics.accessibleName,zeroAndDimmed:true,
         lockDuringDormancy:true,sourceRestored:true};
       cases.push(sample);
       console.log('AGENT2_NEGATIVE_LOCK',JSON.stringify(sample));
