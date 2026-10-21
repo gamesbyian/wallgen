@@ -12,6 +12,26 @@ try{
     const page=await context.newPage();
     const errors=[];page.on('pageerror',e=>errors.push(String(e)));
     await page.goto(url,{waitUntil:'domcontentloaded'});
+    if(width===320){
+      const install=await page.evaluate(async()=>{
+        const manifestURL=document.querySelector('link[rel=manifest]')?.href;
+        if(!manifestURL)return null;
+        const response=await fetch(manifestURL);
+        const config=await response.json();
+        const icons=await Promise.all(config.icons
+          .filter(icon=>['192x192','512x512'].includes(icon.sizes))
+          .map(async icon=>({
+            size:icon.sizes,
+            status:(await fetch(new URL(icon.src,manifestURL))).status
+          })));
+        return {id:config.id,display:config.display,icons};
+      });
+      assert.equal(install?.id,'./');
+      assert.equal(install?.display,'standalone');
+      assert.deepEqual(install.icons.map(i=>i.size),['192x192','512x512']);
+      assert.ok(install.icons.every(i=>i.status===200),
+        'Chrome installation icon URLs must serve actual assets: '+JSON.stringify(install));
+    }
     const btn=page.locator('#mobileFullscreenToggle');
     if(width>790){
       assert.equal(await btn.isVisible(),false);
