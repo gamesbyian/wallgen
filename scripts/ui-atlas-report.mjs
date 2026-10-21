@@ -33,6 +33,9 @@ code{overflow-wrap:anywhere}
 <details id="diagnosticSummary"><summary>Actionable control clipping report (<span id="diagnosticCount">0</span> findings)</summary>
 <p class="small">Deduplicated by viewport and source selector. Scrollable tool strips and offscreen gallery children are excluded. Inspect the linked screenshot before classifying any entry as a defect.</p>
 <div id="diagnostics"></div></details>
+<details id="touchDiagnosticSummary"><summary>Undersized touch-target spacing candidates (<span id="touchDiagnosticCount">0</span> unique selector/viewport pairs)</summary>
+<p class="small">Rectangle-only WCAG 2.2 24px spacing candidates, not conformance failures: associated labels, painted shapes, overlays and actual pointer dispatch require review. A 44px recommendation is a separate ergonomic measurement. Counts aggregate screenshot observations, not unique live controls.</p>
+<pre id="touchDiagnostics"></pre></details>
 <section id="status" class="small"></section><div id="grid" class="grid"></div></main>
 <script id="atlas-data" type="application/json">${payload}</script>
 <script>
@@ -50,6 +53,7 @@ byId('missingCount').textContent=data.missingExpected.length;
 byId('issues').textContent=JSON.stringify({errors:data.errors,missingExpected:data.missingExpected,inapplicable:data.inapplicable},null,2);
 const inspectionCounts={scanned:0,ignoredScroll:0,reported:0,measuredTouchTargets:0,smallActionCount:0,under44Count:0,under24SpacingAssessedCount:0,under24SpacingCandidateCount:0};
 const diagnosticGroups=new Map();
+const touchDiagnosticGroups=new Map();
 for(const capture of data.cases){
  const scan=capture.inspection||{};
  inspectionCounts.scanned+=(scan.scanned||0);
@@ -60,6 +64,13 @@ for(const capture of data.cases){
  inspectionCounts.under44Count+=(scan.under44Count||0);
  inspectionCounts.under24SpacingAssessedCount+=(scan.under24SpacingAssessedCount||0);
  inspectionCounts.under24SpacingCandidateCount+=(scan.under24SpacingCandidateCount||0);
+ for(const finding of scan.under24SpacingCandidates||[]){
+   const key=[capture.profile,finding.element].join('::');
+   let item=touchDiagnosticGroups.get(key);
+   if(!item){item={viewport:capture.profile,...finding,observations:0,example:capture.file};
+     touchDiagnosticGroups.set(key,item);}
+   item.observations++;
+ }
  for(const finding of scan.findings||[]){
    const key=[capture.profile,finding.type,finding.element].join('::');
    let row=diagnosticGroups.get(key);
@@ -75,6 +86,9 @@ for(const capture of data.cases){
  }
 }
 byId('diagnosticCount').textContent=inspectionCounts.reported;
+byId('touchDiagnosticCount').textContent=touchDiagnosticGroups.size;
+byId('touchDiagnostics').textContent=JSON.stringify(
+ [...touchDiagnosticGroups.values()].sort((a,b)=>b.observations-a.observations).slice(0,80),null,2);
 const diagnostics=[...diagnosticGroups.values()].sort((a,b)=>
  b.maxPixels-a.maxPixels||b.frequency-a.frequency).slice(0,80);
 const diag=document.createElement('div');
