@@ -87,17 +87,24 @@ try{
      await el.tap({position:{x:b.width*point.fx,y:b.height*point.fy}});
    };
    for(const point of taps){
+    // Undo restores the wallpaper recipe, not transient selected-element
+    // focus. Explicitly select the intended source ID through its original
+    // chooser before each identity-sensitive native action.
+    await chooser.selectOption('0');
+    assert.equal(recipe().interiorElements[0].id,'manager-alpha');
     await at(add,point);
     assert.equal(recipe().interiorElements.length,3,'Native Add corner missed source action');
     assert.deepEqual(recipe().interiorElements.slice(0,2),base.interiorElements);
     await page.locator('#undo').tap();
     assert.deepEqual(recipe(),base,'Original Add→global Undo changed original IDs');
-
+    await chooser.selectOption('0');
+    assert.equal(await chooser.inputValue(),'0','Removal must target explicitly selected first ID');
     await at(remove,point);
     assert.deepEqual(recipe().interiorElements.map(e=>e.id),['manager-beta'],
       'Native Remove corner targeted wrong original element');
     await page.locator('#undo').tap();
     assert.deepEqual(recipe(),base,'Remove→Undo lost original source fields');
+    await chooser.selectOption('0');
 
     assert.equal(await up.isDisabled(),true);
     await at(down,point);
