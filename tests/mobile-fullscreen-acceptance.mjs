@@ -45,7 +45,17 @@ try{
     });
     assert.ok(exitHit.height>=44&&exitHit.all,'Exit must have unobstructed hit region: '+
       JSON.stringify(exitHit));
-    await btn.tap();
+    if(width===412){
+      // Fullscreen must retain its EXIT affordance even if the viewport
+      // crosses into the desktop CSS breakpoint during device rotation.
+      await page.setViewportSize({width:900,height:412});
+      await page.waitForFunction(()=>window.innerWidth>=791);
+      assert.equal(await btn.isVisible(),true,'Rotating fullscreen hid the exit action');
+      assert.equal(await btn.getAttribute('aria-label'),'Exit fullscreen');
+      await btn.tap();
+    }else{
+      await btn.tap();
+    }
     await page.waitForFunction(()=>!document.fullscreenElement&&
       document.querySelector('#mobileFullscreenToggle')?.getAttribute('aria-label')==='Enter fullscreen',
       null,{timeout:8000});
