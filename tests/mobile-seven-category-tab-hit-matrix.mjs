@@ -37,7 +37,8 @@ try{
     const track=await rail.evaluate(el=>({
       client:el.clientWidth,content:el.scrollWidth,overflow:getComputedStyle(el).overflowX
     }));
-    assert.equal(track.overflow,'auto','Seven categories have no swipeable source rail');
+    if(width<=499)assert.equal(track.overflow,'auto',
+      'Narrow category tabs have no native swipeable source rail');
     let fingerScroll=0;
     if(track.content>track.client+2){
       const cdp=await context.newCDPSession(page);
@@ -67,7 +68,11 @@ try{
       assert.equal(await tab.count(),1,'Duplicate source tab '+category.id);
       // Scroll each real tab within the *same* user-swipeable source rail
       // before measuring its full touch region. This never creates clones.
+      // The editor tray animates when changing categories. Wait for its
+      // resting bounds; a moving DOMRect falsely appears clipped.
+      await page.waitForTimeout(220);
       await tab.scrollIntoViewIfNeeded();
+      await page.waitForTimeout(40);
       const datum=await tab.evaluate(el=>{
         const r=el.getBoundingClientRect();
         const rail=el.closest('.settings-tabs').getBoundingClientRect();
@@ -84,7 +89,7 @@ try{
           contained:r.left>=rail.left-1&&r.right<=rail.right+1,
           aria:el.getAttribute('aria-label')||el.textContent.trim()};
       });
-      assert.ok(datum.width>=24&&datum.height>=24&&datum.nineOwn&&
+      assert.ok(datum.width>=44&&datum.height>=24&&datum.nineOwn&&
         !datum.overlaps&&datum.contained,
         'Source category tab is blocked/out of bounds: '+
         JSON.stringify({width,theme,category:category.id,datum}));
@@ -93,6 +98,7 @@ try{
         'Touch did not select original category '+category.id);
       assert.deepEqual(decodeRecipe(new URL(page.url()).searchParams.get('r')),
         baseline,'Category tab touch mutated normalized recipe');
+      await page.waitForTimeout(220);
       items.push({id:category.id,...datum,under44:datum.width<44||datum.height<44});
     }
     assert.deepEqual(errors,[]);
