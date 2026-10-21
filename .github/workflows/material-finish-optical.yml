@@ -1,0 +1,44 @@
+name: Material Finish compact portrait optical regression
+
+on:
+  pull_request:
+    paths:
+      - 'tests/visual-material-finish-inactive-browser.mjs'
+      - 'editor-material-status.css'
+      - 'index.html'
+      - '.github/workflows/material-finish-optical.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-finish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax and source semantics
+        run: |
+          node --check tests/visual-material-finish-inactive-browser.mjs
+          node --test tests/material-three-layer-adversarial.test.js
+      - run: npm install --no-save playwright@1.56.1 serve@14.2.5
+      - run: npx playwright install --with-deps chromium
+      - name: Serve original UI
+        run: |
+          npx serve . -l 4173 > /tmp/material-finish-optical.log 2>&1 &
+          for i in $(seq 1 40); do curl -fsS http://127.0.0.1:4173/ >/dev/null && exit 0; sleep 1; done
+          cat /tmp/material-finish-optical.log
+          exit 1
+      - name: Optical card/rotation bounds in 28 live Material Finish states
+        run: node tests/visual-material-finish-inactive-browser.mjs
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: material-finish-source-optical
+          path: artifacts/inactive-material-visual/
+          retention-days: 14
+          if-no-files-found: warn
