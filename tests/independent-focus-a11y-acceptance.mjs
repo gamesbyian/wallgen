@@ -64,12 +64,18 @@ try{
      const hit=await page.locator('.editor-focus-all').evaluate(el=>{
        const r=el.getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2;
        const top=document.elementFromPoint(x,y);
+       const points=[.18,.5,.82].flatMap(fy=>[.18,.5,.82].map(fx=>{
+         const owner=document.elementFromPoint(r.left+r.width*fx,r.top+r.height*fy);
+         return owner===el||el.contains(owner);
+       }));
        return {width:r.width,height:r.height,
          inside:x>=0&&y>=0&&x<innerWidth&&y<innerHeight,
-         centerHit:top===el||el.contains(top)};
+         centerHit:top===el||el.contains(top),nineUnobstructed:points.every(Boolean)};
      });
-     assert.ok(hit.inside&&hit.centerHit&&hit.width>=24&&hit.height>=24,
-       'Focus → All escape is not touch reachable: '+JSON.stringify(hit));
+     assert.ok(hit.inside&&hit.centerHit&&hit.width>=44&&hit.height>=44&&
+       hit.nineUnobstructed,
+       'Focus → All native exit must expose an unobstructed 44px hit region: '+
+       JSON.stringify(hit));
      const chips=page.locator('.editor-focus-chip[data-focus-key]');
      assert.equal(await chips.count(),allFields.length,'Focus chips must match original visible sliders');
      if(allFields.length){
@@ -133,7 +139,7 @@ try{
       assert.deepEqual(recipe(page),before);
      }
      const focusedRecipe=recipe(page);
-     await page.locator('.editor-focus-all').click();
+     await page.locator('.editor-focus-all').tap();
      assert.equal(await toggle.getAttribute('aria-pressed'),'false');
      assert.deepEqual(recipe(page),focusedRecipe,'All exit lost Focus edit');
      // Reopening and closing must not accumulate listeners or mutate the saved recipe.
