@@ -1,0 +1,46 @@
+name: Independent all-tool accessibility audit
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'tests/independent-all-tool-axe-sweep.mjs'
+      - 'src/editor-*.js'
+      - 'src/app.js'
+      - 'editor-redesign.css'
+      - '.github/workflows/independent-all-tool-axe.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  all-tool-axe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Source and test syntax
+        run: |
+          node --check tests/independent-all-tool-axe-sweep.mjs
+          node --test tests/editor-tool-applicability.test.js
+      - run: npm install --no-save playwright@1.56.1 serve@14.2.5 axe-core@4.10.3
+      - run: npx playwright install --with-deps chromium
+      - name: Serve current app
+        run: |
+          npx serve . -l 4173 >/tmp/all-tool-axe.log 2>&1 &
+          for i in $(seq 1 40); do curl -fsS http://127.0.0.1:4173/ >/dev/null && exit 0; sleep 1; done
+          cat /tmp/all-tool-axe.log
+          exit 1
+      - name: Audit every supported named editor tool in actual Chromium
+        run: node tests/independent-all-tool-axe-sweep.mjs
+      - name: Upload names violations and actual screenshot witnesses
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: independent-39-tool-axe-evidence
+          path: artifacts/independent-all-tool-axe/
+          retention-days: 14
+          if-no-files-found: warn
