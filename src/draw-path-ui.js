@@ -289,6 +289,14 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
     ];
     const radius=17*m.scale;
     if(editor.selected!==-1){
+      // On narrow phones the inferred tangent tips can lie inside the full
+      // 17 CSS px pointer tolerance around the selected square. Handle-first
+      // hit testing then steals a drag started precisely on the anchor.
+      // Keep a small six-pixel *anchor centre* core before trying tangents;
+      // the original larger tangent radius remains outside that core.
+      const selected=editor.selected,at=editor.points[selected];
+      if(distance(mouse,project(m,at))<=6*m.scale)
+        return {type:'anchor',index:selected,at};
       const handles=pointHandles(editor,editor.selected);
       for(const side of editablePointHandleSides(editor,editor.selected)){
         if(distance(mouse,project(m,handles[side]))<=radius)
