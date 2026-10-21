@@ -277,3 +277,14 @@
 html[data-theme=cream] body.mobile-studio .mobile-zoom-level{
   color:#696576;
 }
+
+/* Actual 320 and 412px screenshots exposed the full Character help prose
+   painted outside its compact source card and clipped halfway through a
+   sentence. Keep the full explanation in the checkbox's aria-description;
+   never render half-visible explanatory text in a fixed-height mobile tray. */
+@media(max-width:790px){
+  body.mobile-studio .sidebar .editor-tool-card[data-editor-tool="character"]
+    .homogeneity-override small{
+    display:none!important;
+  }
+}
