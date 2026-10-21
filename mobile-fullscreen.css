@@ -40,3 +40,39 @@ html:fullscreen .mobile-fullscreen-toggle .fullscreen-exit-glyph{display:block}
 html:fullscreen body.mobile-edit-open .mobile-fullscreen-toggle:not([hidden]){
   top:calc(6px + env(safe-area-inset-top,0px));
 }
+
+/* The original importer's native modal is a top-layer surface: a fixed child
+   of the BODY cannot stay over it. Put the SAME fullscreen button in its
+   header while open, as a true flex cell next to the original Close action.
+   No added vertical band and no overlaid/tap-stealing pseudo-target. */
+@media(max-width:790px){
+  .image-path-dialog .image-path-top .mobile-fullscreen-toggle:not([hidden]){
+    display:flex!important;position:static!important;z-index:auto;
+    inset:auto!important;flex:0 0 44px;
+    width:44px;height:44px;min-width:44px;min-height:44px;
+    margin:0!important;align-items:center;justify-content:center;
+    padding:12px;border:1px solid var(--line);border-radius:10px;
+    background:var(--surface);color:inherit;opacity:1;
+    box-shadow:none;touch-action:manipulation;
+  }
+}
+/* Fullscreen exit must remain inside the importer if the phone rotates across
+   790/791, not return to a covered BODY overlay. */
+html:fullscreen .image-path-dialog .image-path-top .mobile-fullscreen-toggle:not([hidden]){
+  display:flex!important;position:static!important;z-index:auto;
+  inset:auto!important;flex:0 0 44px;
+  width:44px;height:44px;min-width:44px;min-height:44px;
+  margin:0!important;align-items:center;justify-content:center;
+  padding:12px;border:1px solid var(--line);border-radius:10px;
+  background:var(--surface);color:inherit;opacity:1;box-shadow:none;
+  touch-action:manipulation;
+}
+/* This phase is also announced by #imagePathStatus underneath the header.
+   Reclaim its duplicate visible badge only on the tightest modal widths. */
+@media(max-width:399px){
+  .image-path-dialog .image-path-top:has(>.mobile-fullscreen-toggle:not([hidden]))
+  .image-path-phase{display:none}
+  .image-path-dialog .image-path-top:has(>.mobile-fullscreen-toggle:not([hidden])){
+    gap:5px;
+  }
+}
