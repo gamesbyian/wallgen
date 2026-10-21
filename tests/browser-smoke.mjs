@@ -1273,11 +1273,18 @@ try{
     await evaluate('document.getElementById("tab-material").click()');
     for(const n of [1,2,3]){
       await evaluate('document.querySelector("[data-editor-tool=finish'+n+']").click()');
-      const rot=await evaluate('(()=>{const node=document.querySelector(".editor-tool-card:not([hidden]) .texture-rotation-field");const row=node.getBoundingClientRect(),input=node.querySelector("input[type=number]").getBoundingClientRect(),label=node.querySelector("span").getBoundingClientRect();return {row:{top:row.top,bottom:row.bottom},input:{top:input.top,bottom:input.bottom},label:{top:label.top,bottom:label.bottom}}})()');
+      const rot=await evaluate('(()=>{const node=document.querySelector(".editor-tool-card:not([hidden]) .texture-rotation-field");const row=node.getBoundingClientRect(),input=node.querySelector("input[type=number]").getBoundingClientRect(),label=node.querySelector("span").getBoundingClientRect(),rail=node.querySelector(".rotation-controls").getBoundingClientRect();const stacked=document.body.classList.contains("mobile-studio")&&innerWidth<=499&&innerHeight>=840;return {stacked,row:{top:row.top,bottom:row.bottom},input:{top:input.top,bottom:input.bottom},label:{top:label.top,bottom:label.bottom},rail:{top:rail.top,bottom:rail.bottom}}})()');
       assert.ok(rot.input.top>=rot.row.top-2&&rot.input.bottom<=rot.row.bottom+2,
-        'Rotation must fit on one line in Finish '+n+' at '+name+': '+JSON.stringify(rot));
-      assert.ok(Math.abs((rot.label.top+rot.label.bottom)-(rot.input.top+rot.input.bottom))<12,
-        'Rotation label and number must align in Finish '+n+' at '+name);
+        'Rotation input must fit its source field in Finish '+n+' at '+name+': '+JSON.stringify(rot));
+      if(rot.stacked){
+        assert.ok(rot.label.bottom<=rot.rail.top+2&&
+          rot.input.top>=rot.rail.top-2&&rot.input.bottom<=rot.rail.bottom+2,
+          'Tall-phone 44px Material rotation row must stack beneath original label: '+
+          JSON.stringify({name,n,rot}));
+      }else{
+        assert.ok(Math.abs((rot.label.top+rot.label.bottom)-(rot.input.top+rot.input.bottom))<12,
+          'Compact/desktop rotation label and number must align in Finish '+n+' at '+name);
+      }
     }
     await evaluate('document.querySelector("[data-editor-tool=layer1]").click()');
     const noClippedTools=await evaluate(`(()=>{
@@ -1290,6 +1297,12 @@ try{
           const frame=card.getBoundingClientRect();
           for(const el of card.querySelectorAll('input:not([type=hidden]),select,button')){
             if(!el.getClientRects().length||el.closest('[hidden]'))continue;
+            // A qualified 44px mobile Material source rail is horizontally
+            // swipeable. Validate *after* native scroll-into-view, rather than
+            // treating intentionally offscreen buttons as permanent clipping.
+            const rail=el.closest('.texture-rotation-field .rotation-controls');
+            if(rail&&getComputedStyle(rail).overflowX==='auto')
+              el.scrollIntoView({behavior:'instant',inline:'nearest',block:'nearest'});
             const b=el.getBoundingClientRect();
             if(b.top<frame.top-2||b.bottom>frame.bottom+2||
                b.left<frame.left-2||b.right>frame.right+2)
