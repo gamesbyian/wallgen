@@ -15,7 +15,9 @@
     transition:transform .22s ease,visibility .22s ease;
   }
   body.mobile-studio .mobile-dock button{
-    min-height:39px!important;height:42px;max-height:45px;
+    /* Keep icon/caption artwork compact, but fill the reserved 52px dock
+       with a 44px-high actual native button hit region. */
+    min-height:44px!important;height:44px;max-height:45px;
     padding:2px 1px!important;gap:1px;border-radius:9px;
   }
   body.mobile-studio .mobile-dock button>span{font-size:19px}
