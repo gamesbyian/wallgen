@@ -63,6 +63,26 @@ try{
     assert.ok(!studioExit.intersectsTheme&&studioExit.buttonTop>=studioExit.headerBottom-3,
       'Fullscreen Studio exit cannot intercept masthead/theme touch controls: '+
       JSON.stringify(studioExit));
+    // "Always visible" also includes the real Explore, Saved and More
+    // destinations. A high z-index is not proof of pointer accessibility.
+    for(const destination of ['mobileExplore','mobileSaved','mobileMore','mobileStudio']){
+      await page.locator('#'+destination).tap();
+      await page.waitForFunction(id=>
+        document.getElementById(id)?.getAttribute('aria-current')==='page',
+      destination);
+      const reachable=await btn.evaluate(el=>{
+        const r=el.getBoundingClientRect();
+        const samples=[.18,.5,.82].flatMap(fy=>[.18,.5,.82].map(fx=>{
+          const owner=document.elementFromPoint(r.left+r.width*fx,r.top+r.height*fy);
+          return owner===el||el.contains(owner);
+        }));
+        return {width:r.width,height:r.height,unobstructed:samples.every(Boolean),
+          visible:!el.hidden&&r.width>0&&r.height>0};
+      });
+      assert.ok(reachable.visible&&reachable.width>=44&&reachable.height>=44&&
+        reachable.unobstructed,
+        'Fullscreen exit obstructed by '+destination+': '+JSON.stringify(reachable));
+    }
     await page.locator('#mobileEdit').click();
     const editor=await page.locator('#mobileDesignSheet').isVisible();
     assert.equal(editor,true);
