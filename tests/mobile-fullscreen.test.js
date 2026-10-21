@@ -15,7 +15,9 @@ test('fullscreen is a user-invoked mobile control, not an automatic page-load re
 });
 test('fullscreen control overlays rather than allocating a taller dock or editor tray',()=>{
   const html=read('index.html'),css=read('mobile-fullscreen.css');
-  assert.match(html,/id="mobileFullscreenToggle"/);
+  assert.doesNotMatch(html,/id="mobileFullscreenToggle"/,
+    'Fullscreen control is dynamic so frozen source DOM census stays unchanged');
+  assert.match(read('src/mobile-fullscreen.js'),/button.id='mobileFullscreenToggle'/);
   assert.match(html,/rel="manifest" href="manifest\.webmanifest"/);
   assert.match(html,/src="src\/mobile-fullscreen\.js/);
   assert.match(css,/position:fixed;z-index:65/);
