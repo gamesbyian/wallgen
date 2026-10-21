@@ -202,3 +202,9 @@ html[data-theme="cream"] .editor-tool-card .interior-empty-guidance{
 html[data-theme="dark"] .editor-tool-card .interior-empty-guidance{
   color:#bfc1ce;
 }
+/* Earlier interior-card prose had 80% opacity. That composited the new cream
+   ink to #837989 on white (4.08:1) even though its declared colour passes.
+   Empty guidance is an actionable instruction, so render the chosen ink fully. */
+.editor-tool-card[data-editor-tool="interior"] > p.interior-empty-guidance{
+  opacity:1;
+}
