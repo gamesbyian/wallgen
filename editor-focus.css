@@ -100,3 +100,14 @@ html[data-theme="dark"] .editor-focus-all{background:#51374f;color:#fff;border-c
     --mobile-tray-height:clamp(205px,calc(23dvh + 13px),228px)!important;
   }
 }
+
+/* Two-line contextual help at 320/360px needs another ~11px beyond the
+   row's original 13px growth (actual Chromium source at 320x892). Reserve
+   14px inside the Focus-only tray; do not clip/help-scroll or shrink 44px
+   source actions. The sliderless Colour Focus uses its own smaller height. */
+@media(max-width:360px){
+  body.mobile-studio.mobile-edit-open:has(
+    #controls.editor-focus-active:not(.editor-focus-empty)){
+    --mobile-tray-height:clamp(320px,calc(34dvh + 27px),357px)!important;
+  }
+}
