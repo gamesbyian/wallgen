@@ -3,7 +3,21 @@
  * request fullscreen; never silently hijack unrelated edit/navigation taps.
  * Installed manifest standalone mode independently removes browser chrome.
  */
-const button=document.getElementById('mobileFullscreenToggle');
+// Attach after the fixed editor recovery button, not in the five-way dock
+// or the source setting-card roving-focus groups. Keep the historical static
+// HTML ID snapshot intact; this is presentation-only dynamic UI.
+const button=document.createElement('button');
+button.type='button';
+button.id='mobileFullscreenToggle';
+button.className='mobile-fullscreen-toggle';
+button.hidden=true;
+button.setAttribute('aria-label','Enter fullscreen');
+button.title='Enter fullscreen';
+button.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+
+  '<path class="fullscreen-enter-glyph" d="M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5"/>'+
+  '<path class="fullscreen-exit-glyph" d="M3 8h5V3M21 8h-5V3M3 16h5v5M21 16h-5v5"/>'+
+  '</svg>';
+(document.getElementById('mobileDockExpand')||document.body.lastElementChild)?.after(button);
 const compact=window.matchMedia('(max-width:790px)');
 const supported=Boolean(document.documentElement.requestFullscreen&&document.exitFullscreen);
 const live=()=>Boolean(document.fullscreenElement);
