@@ -80,10 +80,55 @@ try{
             JSON.stringify(point));
           assert.equal(await die.isEnabled(),true);
         }
+        // The die is an independent neighbouring source button. Its own nine
+        // true native touch positions must dispatch to the die, never the lock.
+        // Reroll is stochastic, so count actual click ownership even if a
+        // legitimate reroll returns the same value; Undo only real mutations.
+        const dieGeometry=await die.evaluate(el=>{
+          const r=el.getBoundingClientRect();
+          const lock=el.closest('.lockable-setting').querySelector('.setting-lock');
+          const owners=[.12,.5,.88].flatMap(fy=>[.12,.5,.88].map(fx=>{
+            const top=document.elementFromPoint(r.left+r.width*fx,r.top+r.height*fy);
+            return top===el||el.contains(top);
+          }));
+          window.__sourceDieTouchCount=0;
+          el.addEventListener('click',()=>{window.__sourceDieTouchCount++});
+          return {width:r.width,height:r.height,owners,
+            lockDisabled:lock.disabled};
+        });
+        assert.ok(dieGeometry.width>=24&&dieGeometry.height>=24&&
+          dieGeometry.owners.every(Boolean),
+          'Original die is obstructed/under 24px in source row: '+JSON.stringify(dieGeometry));
+        const dieActions=[];
+        for(const point of points){
+          await die.scrollIntoViewIfNeeded();
+          const r=await die.boundingBox(),before=current();
+          const clicksBefore=await page.evaluate(()=>window.__sourceDieTouchCount);
+          await die.tap({position:{x:r.width*point.fx,y:r.height*point.fy}});
+          const clicksAfter=await page.evaluate(()=>window.__sourceDieTouchCount);
+          assert.equal(clicksAfter,clicksBefore+1,
+            'Die edge tap missed the original source die: '+JSON.stringify(point));
+          const after=current();
+          for(const key of Object.keys(before).filter(k=>k!=='shapeFrequency'))
+            assert.deepEqual(after[key],before[key],
+              'Die edge tap changed unrelated source field '+key);
+          assert.ok(!after.lockedSettings.includes('shapeFrequency'),
+            'Die touch accidentally locked its neighbour');
+          if(after.shapeFrequency!==before.shapeFrequency){
+            await page.locator('#undo').tap();
+            assert.deepEqual(current(),before,
+              'Scoped die source mutation failed exact full-recipe Undo');
+          }
+          dieActions.push({...point,clickDispatched:true,
+            valueChanged:after.shapeFrequency!==before.shapeFrequency});
+        }
+        assert.deepEqual(current(),fixture,
+          'Native die edge matrix changed original source recipe');
         assert.deepEqual(errors,[],'Source browser errors');
-        const observation={width,theme,initial,touched:points,
+        const observation={width,theme,initial,touched:points,dieGeometry,dieActions,
           exactRoundTrips:points.length,recipePreserved:true,
-          under44:initial.lock.width<44||initial.lock.height<44};
+          under44:initial.lock.width<44||initial.lock.height<44||
+            dieGeometry.width<44||dieGeometry.height<44};
         observations.push(observation);
         await page.screenshot({path:join(out,width+'-'+theme+'.png'),
           animations:'disabled'});
@@ -92,11 +137,12 @@ try{
     }
   }
   await writeFile(join(out,'evidence.json'),JSON.stringify({
-    source:'real mobile Chromium, nine independent native touches per scene',
+    source:'real mobile Chromium, nine independent native lock and die touches per scene',
     observations,claims:[
       'Representative original lock reachability and exact native lock/unlock',
+      'Neighbour die 9-position real touch dispatch, setting-only scope and exact Undo',
       'Original 24px target is not necessarily ergonomic 44px target'
-    ],exclusions:['all 83 setting dice','all lockable rows',
+    ],exclusions:['other 82 setting dice','other lockable rows',
       'physical Android finger precision','TalkBack and human visual review']
   },null,2));
 }finally{await browser.close()}
