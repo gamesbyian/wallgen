@@ -241,3 +241,43 @@ html[data-theme="dark"] .editor-tool-card .interior-empty-guidance{
 .editor-tool-card[data-editor-tool="interior"] > p.interior-empty-guidance{
   opacity:1;
 }
+
+/* Tall narrow Elements tool: make original add/select/remove/reorder/lock
+   controls genuinely finger-sized. Their two existing horizontal rows stay
+   in the original card with the Enabled source checkbox; no new toolbar,
+   overlapping pseudo-hitbox or preview reservation. The short portrait
+   remains compact until a separate physical usability qualification. */
+@media(max-width:499px) and (min-height:840px){
+  body.mobile-studio .sidebar
+    .editor-tool-card[data-editor-tool="interior"] .interior-toolbar,
+  body.mobile-studio .sidebar
+    .editor-tool-card[data-editor-tool="interior"] .interior-actions{
+    box-sizing:border-box!important;
+    min-height:44px!important;height:44px!important;
+    flex:0 0 44px!important;gap:5px!important;
+    display:flex!important;align-items:center!important;
+  }
+  body.mobile-studio .sidebar
+    .editor-tool-card[data-editor-tool="interior"] .interior-toolbar select{
+    box-sizing:border-box!important;
+    height:44px!important;min-height:44px!important;
+    flex:1 1 auto!important;min-width:44px!important;
+    font-size:12px!important;
+  }
+  body.mobile-studio .sidebar
+    .editor-tool-card[data-editor-tool="interior"] .interior-toolbar button,
+  body.mobile-studio .sidebar
+    .editor-tool-card[data-editor-tool="interior"] .interior-actions button{
+    box-sizing:border-box!important;display:flex!important;
+    align-items:center!important;justify-content:center!important;
+    height:44px!important;min-height:44px!important;
+    min-width:44px!important;flex:0 0 auto!important;
+    padding:5px 7px!important;
+  }
+  body.mobile-studio .sidebar
+    .editor-tool-card[data-editor-tool="interior"]>label.interior-toggle{
+    box-sizing:border-box!important;
+    min-height:44px!important;height:44px!important;
+    flex:0 0 44px!important;
+  }
+}
