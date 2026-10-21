@@ -262,6 +262,30 @@ export async function inspectAtlasState(page,ctx,slug,meta={}){
         }))
       });
     }
+    // Bounded actual-browser stacking probe for visibly small native buttons.
+    // elementFromPoint observes the current pointer owner at a 3x3 sample;
+    // it does NOT dispatch a tap or establish user accuracy, and rounded-corner
+    // paint/scroll containers can need manual classification.
+    let buttonHitSampled=0,buttonHitBlocked=0;
+    const buttonHitCandidates=[];
+    for(const record of touchRecords){
+      if(!record.el.matches('button')||!record.size.under44||buttonHitSampled>=32)continue;
+      const box=record.el.getBoundingClientRect();
+      if(box.width<=0||box.height<=0)continue;
+      buttonHitSampled++;
+      for(const fy of [.18,.5,.82])for(const fx of [.18,.5,.82]){
+        const x=box.left+box.width*fx,y=box.top+box.height*fy;
+        if(x<0||y<0||x>=innerWidth||y>=innerHeight)continue;
+        const owner=document.elementFromPoint(x,y);
+        if(owner===record.el||record.el.contains(owner))continue;
+        buttonHitBlocked++;
+        if(buttonHitCandidates.length<16)buttonHitCandidates.push({
+          element:record.name,label:record.label,
+          at:[Math.round(fx*100),Math.round(fy*100)],
+          owner:owner?(selector(owner.closest('button,input,select,textarea')||owner)):null
+        });
+      }
+    }
     findings.sort((a,b)=>b.missingPixels-a.missingPixels);
     const totalFindings=findings.length;
     // The summary exposes the unbounded count; its detail is bounded for
@@ -271,6 +295,7 @@ export async function inspectAtlasState(page,ctx,slug,meta={}){
       ['mobile-edit-open','mobile-gallery-open','mobile-tools-open'].find(x=>root.classList.contains(x))||'mobile-preview':
       'desktop',focus:meta.focusSelector||null,scanned,ignoredScroll,measuredTouchTargets,smallActionCount,under44Count,undersizedActions,
       under24SpacingAssessedCount,under24SpacingCandidateCount,
-      under24SpacingCandidates,totalFindings,sourceControls,findings};
+      under24SpacingCandidates,buttonHitSampled,buttonHitBlocked,
+      buttonHitCandidates,totalFindings,sourceControls,findings};
   },{slug,meta,mobile:ctx.surface.mobile});
 }
