@@ -7,6 +7,7 @@
   <meta name="description" content="R.O.Y.G.B.I.V. — Rainbow-Only. You Generate Based on Individual Variables. A procedural rainbow wallpaper studio.">
   <title>R.O.Y.G.B.I.V. | Rainbow-Only Wallpaper Studio</title>
   <link rel="icon" type="image/svg+xml" href="assets/roygbiv-logo.svg">
+  <link rel="manifest" href="manifest.webmanifest">
   <script>
     // Apply the saved theme before stylesheets paint to avoid a dark flash.
     try { document.documentElement.dataset.theme = localStorage.getItem('roygbiv:studio-theme:v1') || 'cream'; }
@@ -16,6 +17,7 @@
   <link rel="stylesheet" href="studio-themes.css?v=20261020a11y4">
   <link rel="stylesheet" href="mobile-compact.css?v=20261016-dock2">
   <link rel="stylesheet" href="mobile-five-nav.css?v=20261018-default1">
+  <link rel="stylesheet" href="mobile-fullscreen.css?v=20261021-1">
   <link rel="stylesheet" href="mobile-editor-rail.css?v=20261020-character-crop1">
   <link rel="stylesheet" href="design-transform.css?v=20261016-transform1">
   <link rel="stylesheet" href="draw-path.css?v=20261019-touch1">
@@ -423,6 +425,7 @@
   </dialog>
   <script type="module" src="src/app.js?v=20261020-controlsfix1"></script>
   <script type="module" src="src/mobile-studio.js?v=20261018-default1"></script>
+  <script type="module" src="src/mobile-fullscreen.js?v=20261021-1"></script>
   <script type="module" src="src/mobile-swipes.js?v=20261017-explore1"></script>
   <script type="module" src="src/mobile-preview-tools.js?v=20261020-primes3"></script>
 </body>

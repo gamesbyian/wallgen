@@ -1,0 +1,42 @@
+/* Mobile-only immersive toggle; its real 44px hit cell consumes no
+   stage, editor-tray, masthead or five-dock vertical reservation. */
+.mobile-fullscreen-toggle{display:none!important}
+.mobile-fullscreen-toggle svg{width:19px;height:19px;flex:0 0 19px}
+.mobile-fullscreen-toggle:focus-visible{outline:3px solid #6359e5;outline-offset:2px;opacity:1}
+.mobile-fullscreen-toggle:hover,.mobile-fullscreen-toggle:active{opacity:1}
+.mobile-fullscreen-toggle .fullscreen-exit-glyph{display:none}
+@media(max-width:790px){
+  .mobile-fullscreen-toggle:not([hidden]){
+    display:flex!important;position:fixed;z-index:65;
+    top:calc(74px + env(safe-area-inset-top,0px));
+    right:calc(6px + env(safe-area-inset-right,0px));
+    align-items:center;justify-content:center;
+    width:44px;height:44px;min-width:44px;min-height:44px;
+    margin:0;padding:12px;border:1px solid var(--line);
+    border-radius:12px;background:var(--surface);
+    color:inherit;opacity:.84;
+    box-shadow:0 2px 8px #0002;cursor:pointer;
+    touch-action:manipulation;
+  }
+}
+/* Keep a *working, visible exit* even if a fullscreen Android device rotates
+   across the 790/791 CSS breakpoint. Never trap the user in fullscreen. */
+html:fullscreen .mobile-fullscreen-toggle:not([hidden]){
+  display:flex!important;position:fixed;z-index:65;
+  /* In Studio, keep clear of masthead theme selectors; don't steal taps. */
+  top:calc(74px + env(safe-area-inset-top,0px));
+  right:calc(6px + env(safe-area-inset-right,0px));
+  align-items:center;justify-content:center;
+  width:44px;height:44px;min-width:44px;min-height:44px;
+  margin:0;padding:12px;border:1px solid var(--line);
+  border-radius:12px;background:var(--surface);
+  color:inherit;opacity:.84;box-shadow:0 2px 8px #0002;
+  cursor:pointer;touch-action:manipulation;
+}
+html:fullscreen .mobile-fullscreen-toggle .fullscreen-enter-glyph{display:none}
+html:fullscreen .mobile-fullscreen-toggle .fullscreen-exit-glyph{display:block}
+
+/* In Edit the masthead is already moved away, so reclaim its top corner. */
+html:fullscreen body.mobile-edit-open .mobile-fullscreen-toggle:not([hidden]){
+  top:calc(6px + env(safe-area-inset-top,0px));
+}

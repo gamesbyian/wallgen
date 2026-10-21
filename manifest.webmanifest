@@ -1,0 +1,24 @@
+{
+  "name": "R.O.Y.G.B.I.V. Rainbow Wallpaper Studio",
+  "short_name": "ROYGBIV",
+  "description": "Offline-friendly rainbow wallpaper creator",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#08090e",
+  "theme_color": "#08090e",
+  "icons": [
+    {
+      "src": "assets/roygbiv-logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/roygbiv-logo-dark.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
