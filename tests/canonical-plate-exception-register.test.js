@@ -9,7 +9,7 @@ test('exactly all 177 original canonical plate claims have audited dispositions'
  assert.deepEqual(register.counts,{
   total:177,plates:12,required:121,conditional:29,forbidden:27,
   'source-mapped-browser-121':121,'conditional-exception-annotated':29,
-  'bounded-objective-negative':20,'subjective-or-unbounded-exception':7
+  'bounded-objective-evidence':20,'subjective-or-unbounded-exception':7
  });
  assert.deepEqual(register.rows.map(({id,plate,kind,exactClaim,sourceCandidate})=>
   ({id,plate,kind,exactClaim,sourceCandidate})),
@@ -33,7 +33,7 @@ test('all 12 plates declare every conditional and forbidden exception independen
    assert.match(row.limits,/not every/i);
   }else{
    assert.equal(row.sourceCandidate,null);
-   assert.ok(['bounded-objective-negative','subjective-or-unbounded-exception']
+   assert.ok(['bounded-objective-evidence','subjective-or-unbounded-exception']
     .includes(row.comparison));
    if(row.comparison==='subjective-or-unbounded-exception')
     assert.match(row.limits,/human/i);
