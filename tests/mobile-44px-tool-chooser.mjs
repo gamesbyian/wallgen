@@ -52,8 +52,19 @@ try{
     const chips=[];
     for(let i=0;i<n;i++){
       const chip=tools.nth(i);
-      await chip.evaluate(el=>el.scrollIntoView({block:'nearest',inline:'center',
-        behavior:'instant'}));
+      // Browser-native keyboard focus / scrollIntoView can centre a chip
+      // behind sticky siblings. Honour the pinned controls as a real reserved
+      // pointer lane and prove this particular source tab becomes reachable.
+      await chip.scrollIntoViewIfNeeded();
+      await chip.evaluate(el=>{
+        const rail=el.closest('.editor-tool-chooser');
+        const blocker=rail.querySelector('.editor-tool-reroll:not([hidden])');
+        const before=el.getBoundingClientRect();
+        const left=blocker.getBoundingClientRect().right+6;
+        const right=rail.getBoundingClientRect().right-3;
+        if(before.left<left)rail.scrollLeft-=left-before.left;
+        else if(before.right>right)rail.scrollLeft+=before.right-right;
+      });
       const b=await pointChecks(chip);
       assert.ok(b.width>=44&&b.height>=44&&b.nineUnobstructed,
         'Source named-tool tab not finger-sized or overlapped: '+JSON.stringify({i,b}));
