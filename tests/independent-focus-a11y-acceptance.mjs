@@ -72,6 +72,20 @@ try{
        'Focus → All escape is not touch reachable: '+JSON.stringify(hit));
      const chips=page.locator('.editor-focus-chip[data-focus-key]');
      assert.equal(await chips.count(),allFields.length,'Focus chips must match original visible sliders');
+     if(allFields.length){
+       const measured=await chips.evaluateAll(els=>els.map(el=>{
+         const r=el.getBoundingClientRect();
+         const hits=[.18,.5,.82].flatMap(fy=>[.18,.5,.82].map(fx=>{
+           const owner=document.elementFromPoint(r.left+r.width*fx,r.top+r.height*fy);
+           return owner===el||el.contains(owner);
+         }));
+         return {key:el.dataset.focusKey,width:r.width,height:r.height,
+           nineUnobstructed:hits.every(Boolean)};
+       }));
+       assert.ok(measured.every(v=>v.width>=44&&v.height>=44&&v.nineUnobstructed),
+         'Focus parameter chips require 44px and unobstructed 3x3 regions: '+
+         JSON.stringify(measured));
+     }
      if(item.key){
       const chosen=page.locator('.editor-focus-chip[data-focus-key="'+item.key+'"]');
       assert.equal(await chosen.count(),1,'Missing Focus representation for '+item.key);
