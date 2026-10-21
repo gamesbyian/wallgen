@@ -17,10 +17,11 @@ This is a living **implementation and evidence** addendum to [multilingual resea
 | [#371](https://github.com/gamesbyian/wallgen/pull/371) | Native Favourite and Download controls enlarged to 44×44px in the original preview shortcut rail | [Chromium touch/export](https://github.com/gamesbyian/wallgen/actions/runs/39562845487): 320/412px cream/dark nine hit probes, real favourite/unfavourite and PNG download, exact recipe, unchanged preview; high-DPI, atlas, agent3, visual green |
 | [#372](https://github.com/gamesbyian/wallgen/pull/372) | Native preview Random and Primes Only controls enlarged: Random 44×44px, Primes label 44×46px | [Chromium touch](https://github.com/gamesbyian/wallgen/actions/runs/39563297636): 320/412 both themes, full hit ownership, original random recipe action, Primes-only toggle/restore, unchanged preview; all relevant workflows green |
 | [#374](https://github.com/gamesbyian/wallgen/pull/374) | Standalone Chrome app launcher hardened with stable manifest ID, 192px original-logo SVG and 512px icon | Browser fetches both real assets and validates manifest; no extra dependencies, new art or fullscreen policy changes; physical Pixel installation still unverified |
+| [#375](https://github.com/gamesbyian/wallgen/pull/375) | Focus **Return to All** native exit enlarged from 34px to 44px, independent of parameter-chip strip and browser fullscreen exit | [Independent 30-state Focus/accessibility Chromium](https://github.com/gamesbyian/wallgen/actions/runs/39565026665) confirms nine-point unobstructed exit and real touch return, no recipe changes; Node, high-DPI, agent3, atlas all green |
 
-## Additional active work (not yet merged)
+## Current implementation boundary
 
-- [#375](https://github.com/gamesbyian/wallgen/pull/375): proposed Focus `Return to All` native exit from 34px to 44px, with nine-point ownership and real touch within the existing 30-state independent Focus/All Chromium matrix. **Draft:** remain unverified until exact-head CI and available visual evidence complete. Do not equate the focused inspector exit with the unrelated browser fullscreen exit.
+The merged stages above finish the **specified source controls only**. No current PR is a human/device approval or a claim that every 24–35px setting die, lock, category tab, numeric stepper, drawing handle, and zoom/pan action has a 44px independent target. These remain on the open follow-up queue [#365](https://github.com/gamesbyian/wallgen/issues/365).
 
 ## Remaining action classes
 
