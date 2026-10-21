@@ -192,3 +192,13 @@ body.mobile-studio .sidebar .editor-tool-card[data-editor-tool^="interior"]>labe
   border-radius:9px;background:var(--surface);color:var(--muted);
   font-size:11px;line-height:1.4;
 }
+
+/* Screen-reader-friendly empty Interior guidance needs legible contrast in
+   both themes. The generic --muted token was 3.12:1 cream / 4.31:1 dark
+   against these card surfaces at desktop, per the real all-tool axe sweep. */
+html[data-theme="cream"] .editor-tool-card .interior-empty-guidance{
+  color:#64586d;
+}
+html[data-theme="dark"] .editor-tool-card .interior-empty-guidance{
+  color:#bfc1ce;
+}
