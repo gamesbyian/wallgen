@@ -68,6 +68,24 @@ try{
   await selectElement(0);
   assert.equal(await targets().count(),7);
   await assertChips([true,true,true,true,true,true,true]);
+  const targetGeometry=await targets().evaluateAll(nodes=>nodes.map(input=>{
+    const label=input.closest('label'),rect=label.getBoundingClientRect();
+    const card=label.closest('.editor-tool-card').getBoundingClientRect();
+    const probes=[.18,.5,.82].flatMap(y=>[.18,.5,.82].map(x=>{
+      const child=document.elementFromPoint(rect.left+rect.width*x,rect.top+rect.height*y);
+      return child===label||label.contains(child);
+    }));
+    return {label:input.getAttribute('aria-label'),width:rect.width,height:rect.height,
+      insideCard:rect.top>=card.top-1&&rect.bottom<=card.bottom+1&&
+        rect.left>=card.left-1&&rect.right<=card.right+1,
+      ninePoints:probes.every(Boolean)};
+  }));
+  assert.equal(targetGeometry.length,7);
+  assert.ok(targetGeometry.every(g=>g.width>=44&&g.height>=44&&
+    g.insideCard&&g.ninePoints),
+    'All seven 412px colour targets need non-overlapping 44px cells: '+
+    JSON.stringify(targetGeometry));
+  observations.push({name:'seven-target-44px-pointer-regions',targetGeometry});
   await evidence('initial-all-seven');
 
   // A colorSlots=[] recipe means "all"; turning one off materializes the
@@ -146,7 +164,7 @@ try{
   assert.deepEqual(errors,[],'Uncaught browser error');
   await writeFile(join(output,'evidence.json'),JSON.stringify({
     classification:'behavior-verified for tested actual mobile element targeting',
-    tested:'all seven named inputs; last-hue guard; full-selection normalization; custom ink; per-ID separation; whole-stack lock',
+    tested:'all seven named inputs; 44px visible hit regions and 3x3 owner probes at 412px; last-hue guard; full-selection normalization; custom ink; per-ID separation; whole-stack lock',
     exclusions:['native assistive technology speech','all interiors combinations',
       'pixel-level textured export parity','Android physical device'],
     observations,errors
