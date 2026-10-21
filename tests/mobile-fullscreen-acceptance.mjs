@@ -32,6 +32,17 @@ try{
     await page.waitForFunction(()=>Boolean(document.fullscreenElement)&&
       document.querySelector('#mobileFullscreenToggle')?.getAttribute('aria-label')==='Exit fullscreen',
       null,{timeout:8000});
+    const studioExit=await btn.evaluate(el=>{
+      const action=el.getBoundingClientRect();
+      const theme=document.querySelector('.theme-switcher').getBoundingClientRect();
+      const header=document.querySelector('.masthead').getBoundingClientRect();
+      return {buttonTop:action.top,headerBottom:header.bottom,
+        intersectsTheme:action.left<theme.right&&action.right>theme.left&&
+          action.top<theme.bottom&&action.bottom>theme.top};
+    });
+    assert.ok(!studioExit.intersectsTheme&&studioExit.buttonTop>=studioExit.headerBottom-3,
+      'Fullscreen Studio exit cannot intercept masthead/theme touch controls: '+
+      JSON.stringify(studioExit));
     await page.locator('#mobileEdit').click();
     const editor=await page.locator('#mobileDesignSheet').isVisible();
     assert.equal(editor,true);
