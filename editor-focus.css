@@ -47,6 +47,9 @@
 @media(max-width:790px){
  body.mobile-studio .sidebar .editor-focus-panel{
    flex:1 1 0!important;min-height:0!important;overflow:auto!important;
+   /* Return to All must stay 44px. Reclaim a few pixels from spacing,
+      not from the critical exit or the source slider/help itself. */
+   gap:8px!important;
    margin:0!important;padding:7px 9px!important}
  body.mobile-studio .sidebar .editor-focus-heading strong{font-size:11px}
  body.mobile-studio .sidebar .editor-focus-help{font-size:10px}
