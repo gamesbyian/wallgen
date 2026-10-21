@@ -23,7 +23,7 @@ const supported=Boolean(document.documentElement.requestFullscreen&&document.exi
 const live=()=>Boolean(document.fullscreenElement);
 function sync(){
   if(!button)return;
-  const available=compact.matches&&supported;
+  const available=supported&&(compact.matches||live());
   button.hidden=!available;
   if(!available)return;
   const entered=live();
@@ -33,7 +33,7 @@ function sync(){
 }
 if(button){
   button.addEventListener('click',()=>{
-    if(!supported||!compact.matches)return;
+    if(!supported||(!compact.matches&&!live()))return;
     // Call requestFullscreen directly in the activating handler. Awaiting a
     // preliminary promise or using setTimeout would lose transient activation.
     const action=live()?document.exitFullscreen():
