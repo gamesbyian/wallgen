@@ -1998,6 +1998,15 @@ try{
     const quickHost=favorite.closest('.mobile-five-shortcuts');
     const quick=!!quickHost&&quickHost===download.closest('.mobile-five-shortcuts');
     const rects=dock.map(b=>b.getBoundingClientRect());
+    const hitCells=dock.map(button=>{
+      const r=button.getBoundingClientRect();
+      const probe=[.18,.5,.82].flatMap(fy=>[.18,.5,.82].map(fx=>{
+        const top=document.elementFromPoint(r.left+r.width*fx,r.top+r.height*fy);
+        return top===button||button.contains(top);
+      }));
+      return {id:button.id,width:r.width,height:r.height,
+        sampleCount:probe.length,unobstructed:probe.every(Boolean)};
+    });
     document.getElementById('mobileSaved').click();
     const saved={mode:document.getElementById('gallery').dataset.view,
       selected:document.getElementById('mobileSaved').getAttribute('aria-current'),
@@ -2013,7 +2022,7 @@ try{
     return {ids,allNamed:['mobileShuffle','mobileFavorite','mobileDownload'].every(hasAction),
       quick,shuffleInMore:!!shuffle.closest('#mobileToolsContent .mobile-more-group'),
       iconCount:dock.filter(b=>!!b.querySelector('svg.ui-icon')).length,
-      widths:rects.map(b=>b.width),
+      widths:rects.map(b=>b.width),hitCells,
       saved,explore,studio};
   })()`);
   assert.deepEqual(fiveNav.ids,
@@ -2021,6 +2030,10 @@ try{
   assert.ok(fiveNav.allNamed&&fiveNav.quick&&fiveNav.shuffleInMore);
   assert.equal(fiveNav.iconCount,5);
   assert.ok(fiveNav.widths.every(width=>width>45));
+  assert.ok(fiveNav.hitCells.every(c=>c.width>=44&&c.height>=44&&
+    c.sampleCount===9&&c.unobstructed),
+    'Each real five-way dock button must expose unobstructed 44px hit area: '+
+    JSON.stringify(fiveNav.hitCells));
   assert.deepEqual(fiveNav.saved,{mode:'saved',selected:'page',expanded:'true',open:true});
   assert.deepEqual(fiveNav.explore,{mode:'explore',selected:'page',open:true});
   assert.deepEqual(fiveNav.studio,{selected:'page',galleryClosed:true});
