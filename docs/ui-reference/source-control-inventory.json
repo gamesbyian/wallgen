@@ -4,7 +4,7 @@
   "referenceCommit": "base current main + camera-pan PR #143",
   "extraction": "Source reviewed 2026-10-19 for separate viewport Pan; original IDs retained",
   "counts": {
-    "staticIds": 116,
+    "staticIds": 117,
     "settings": 87,
     "categories": 7,
     "namedTools": 40,
@@ -119,6 +119,7 @@
     "mobileMore",
     "mobileEditorActionRail",
     "mobileDockExpand",
+    "mobileFullscreenToggle",
     "imagePathDialog",
     "imagePathCancel",
     "imagePathStatus",
