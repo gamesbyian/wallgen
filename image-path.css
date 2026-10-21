@@ -69,8 +69,8 @@
   body.mobile-studio .mobile-preview-rail-left #importPathToggle{
     display:flex!important;align-items:center;justify-content:center;
     flex-direction:column;gap:1px;
-    width:43px!important;min-width:43px!important;
-    height:34px!important;min-height:34px!important;
+    width:44px!important;min-width:44px!important;
+    height:44px!important;min-height:44px!important;
     padding:2px!important;font-size:13px!important;line-height:1;
     background:var(--surface);color:inherit;border:1px solid var(--line);
   }
@@ -95,9 +95,15 @@ html[data-theme="cream"] .image-path-dialog #imagePathApply{
 html[data-theme="cream"] .image-path-dialog #imagePathAngle:not(:disabled){
   background:#ece7fa;color:#42346c;border-color:#c7b2e7}
 @media(max-width:790px){
+  /* Original image-import actions have independent native 44px cells:
+     same modal, same source buttons, no pseudo-target or extra toolbar. */
   .image-path-dialog .image-path-top button,
-  .image-path-dialog .image-path-actions button{min-height:40px}
-  .image-path-dialog .image-path-choice select{min-height:40px}
+  .image-path-dialog .image-path-actions button{min-height:44px}
+  .image-path-dialog .image-path-top #imagePathCancel{
+    width:44px;min-width:44px;min-height:44px;
+    flex:0 0 44px;
+  }
+  .image-path-dialog .image-path-choice select{min-height:44px}
 }
 
 
