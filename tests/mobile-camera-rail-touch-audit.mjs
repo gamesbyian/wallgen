@@ -18,7 +18,7 @@ const source=normalizeRecipe({seed:'camera-rail-ergonomics',structure:'paths',
 const browser=await chromium.launch({headless:true});
 const results=[];
 try{
- for(const width of [320,412,499]){
+ for(const width of [320,412,499,500,790]){
   for(const theme of ['cream','dark']){
    const context=await browser.newContext({viewport:{width,height:892},
      isMobile:true,hasTouch:true,reducedMotion:'reduce'});
@@ -54,6 +54,10 @@ try{
           below44:r.width<44||r.height<44};
       });
       assert.ok(m.width>0&&m.height>0,'Source action has no measurable hit box: '+selector);
+      if(width>=500)assert.ok(m.width>=44&&m.height>=44&&
+        m.nineOwners===9&&m.withinRail,
+        'Reserved 47px camera rail must expose independent native 44px buttons: '+
+        JSON.stringify({width,theme,selector,m}));
       measured.push({selector,...m});
     }
     const unchangedExcept=(before,after,allow,claim)=>{
