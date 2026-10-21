@@ -74,7 +74,7 @@ try{
         }
         const close=await page.locator('#imagePathCancel').boundingBox();
         const fs=await page.locator('#mobileFullscreenToggle').boundingBox();
-        assert.ok(fs&&close&&fs.right<=close.x+1,
+        assert.ok(fs&&close&&fs.x+fs.width<=close.x+1,
           'Importer Close and fullscreen exit touch areas overlap: '+
           JSON.stringify({close,fullscreen:fs}));
         const modal=await page.locator('#imagePathDialog').boundingBox();
