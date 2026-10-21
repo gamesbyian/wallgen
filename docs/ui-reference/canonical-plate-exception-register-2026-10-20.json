@@ -21,7 +21,7 @@
     "forbidden": 27,
     "source-mapped-browser-121": 121,
     "conditional-exception-annotated": 29,
-    "bounded-objective-negative": 20,
+    "bounded-objective-evidence": 20,
     "subjective-or-unbounded-exception": 7
   },
   "rows": [
@@ -259,7 +259,7 @@
         "tests/redesign-navigation-acceptance.mjs",
         "tests/redesign-camera-structure-acceptance.mjs"
       ],
-      "comparison": "bounded-objective-negative",
+      "comparison": "bounded-objective-evidence",
       "disposition": "absence of duplicate artwork heading, #287",
       "limits": "only enumerated objective counterexample; optical interpretation not approved"
     },
@@ -273,7 +273,7 @@
         "tests/redesign-navigation-acceptance.mjs",
         "tests/redesign-camera-structure-acceptance.mjs"
       ],
-      "comparison": "bounded-objective-negative",
+      "comparison": "bounded-objective-evidence",
       "disposition": "Fit remains in canvas rail, no top Fit, #287",
       "limits": "only enumerated objective counterexample; optical interpretation not approved"
     },
@@ -287,7 +287,7 @@
         "tests/redesign-navigation-acceptance.mjs",
         "tests/redesign-camera-structure-acceptance.mjs"
       ],
-      "comparison": "bounded-objective-negative",
+      "comparison": "bounded-objective-evidence",
       "disposition": "zoom, pan and native export model invariance, #272",
       "limits": "only enumerated objective counterexample; optical interpretation not approved"
     },
@@ -539,7 +539,7 @@
         "tests/redesign-conditional-tools-acceptance.mjs",
         "tests/redesign-controls-conditional-acceptance.mjs"
       ],
-      "comparison": "bounded-objective-negative",
+      "comparison": "bounded-objective-evidence",
       "disposition": "no duplicate original Geometry card H2/H3, #287",
       "limits": "only enumerated objective counterexample; optical interpretation not approved"
     },
@@ -734,7 +734,7 @@
       "evidenceCandidates": [
         "tests/redesign-draw-real-transaction.mjs"
       ],
-      "comparison": "bounded-objective-negative",
+      "comparison": "bounded-objective-evidence",
       "disposition": "source Zoom-only recipe mutation, #272",
       "limits": "only enumerated objective counterexample; optical interpretation not approved"
     },
@@ -929,7 +929,7 @@
         "tests/redesign-navigation-acceptance.mjs",
         "tests/redesign-controls-conditional-acceptance.mjs"
       ],
-      "comparison": "bounded-objective-negative",
+      "comparison": "bounded-objective-evidence",
       "disposition": "no extra duplicated action bar witnessed by gallery real source matrix, #281",
       "limits": "only enumerated objective counterexample; optical interpretation not approved"
     },
@@ -1201,7 +1201,7 @@
         "tests/redesign-global-status-acceptance.mjs",
         "tests/redesign-clipboard-denial-recovery.mjs"
       ],
-      "comparison": "bounded-objective-negative",
+      "comparison": "bounded-objective-evidence",
       "disposition": "source names for all actions and source status live region, #268/#348",
       "limits": "only enumerated objective counterexample; optical interpretation not approved"
     },
@@ -1217,7 +1217,7 @@
         "tests/redesign-global-status-acceptance.mjs",
         "tests/redesign-clipboard-denial-recovery.mjs"
       ],
-      "comparison": "bounded-objective-negative",
+      "comparison": "bounded-objective-evidence",
       "disposition": "source global status mirrored while editing, #268",
       "limits": "only enumerated objective counterexample; optical interpretation not approved"
     },
@@ -1427,7 +1427,7 @@
         "tests/redesign-material-rotation-browser.mjs",
         "tests/redesign-controls-conditional-acceptance.mjs"
       ],
-      "comparison": "bounded-objective-negative",
+      "comparison": "bounded-objective-evidence",
       "disposition": "five rotation centre-hit buttons in three layers at desktop breakpoints, #345",
       "limits": "only enumerated objective counterexample; optical interpretation not approved"
     },
@@ -1441,7 +1441,7 @@
         "tests/redesign-material-rotation-browser.mjs",
         "tests/redesign-controls-conditional-acceptance.mjs"
       ],
-      "comparison": "bounded-objective-negative",
+      "comparison": "bounded-objective-evidence",
       "disposition": "three layer selectors retain source, #342",
       "limits": "only enumerated objective counterexample; optical interpretation not approved"
     },
@@ -1610,7 +1610,7 @@
       "evidenceCandidates": [
         "tests/redesign-seven-colour-targets-acceptance.mjs"
       ],
-      "comparison": "bounded-objective-negative",
+      "comparison": "bounded-objective-evidence",
       "disposition": "no nonexistent saturation source control, #287",
       "limits": "only enumerated objective counterexample; optical interpretation not approved"
     },
@@ -1764,7 +1764,7 @@
         "tests/redesign-conditional-tools-acceptance.mjs",
         "tests/inactive-conditional-roundtrip.test.js"
       ],
-      "comparison": "bounded-objective-negative",
+      "comparison": "bounded-objective-evidence",
       "disposition": "native checkbox enclosed by its original label, #287",
       "limits": "only enumerated objective counterexample; optical interpretation not approved"
     },
@@ -1934,7 +1934,7 @@
       "evidenceCandidates": [
         "tests/redesign-cold-keyboard-editor.mjs"
       ],
-      "comparison": "bounded-objective-negative",
+      "comparison": "bounded-objective-evidence",
       "disposition": "Glow contains exactly one original setting, #287",
       "limits": "only enumerated objective counterexample; optical interpretation not approved"
     },
@@ -2116,7 +2116,7 @@
       "evidenceCandidates": [
         "tests/editor-focus.test.js"
       ],
-      "comparison": "bounded-objective-negative",
+      "comparison": "bounded-objective-evidence",
       "disposition": "Focus opt-in only, All default, #280/#350",
       "limits": "only enumerated objective counterexample; optical interpretation not approved"
     },
@@ -2129,7 +2129,7 @@
       "evidenceCandidates": [
         "tests/editor-focus.test.js"
       ],
-      "comparison": "bounded-objective-negative",
+      "comparison": "bounded-objective-evidence",
       "disposition": "source recipe exact between Focus and All, #324/#333",
       "limits": "only enumerated objective counterexample; optical interpretation not approved"
     },
@@ -2142,7 +2142,7 @@
       "evidenceCandidates": [
         "tests/editor-focus.test.js"
       ],
-      "comparison": "bounded-objective-negative",
+      "comparison": "bounded-objective-evidence",
       "disposition": "roygbiv slider colours unchanged by Focus chip, #285",
       "limits": "only enumerated objective counterexample; optical interpretation not approved"
     },
@@ -2155,7 +2155,7 @@
       "evidenceCandidates": [
         "tests/editor-focus.test.js"
       ],
-      "comparison": "bounded-objective-negative",
+      "comparison": "bounded-objective-evidence",
       "disposition": "locked Focus control disables editing, #326/#311",
       "limits": "only enumerated objective counterexample; optical interpretation not approved"
     },
@@ -2298,7 +2298,7 @@
       "evidenceCandidates": [
         "tests/redesign-navigation-acceptance.mjs"
       ],
-      "comparison": "bounded-objective-negative",
+      "comparison": "bounded-objective-evidence",
       "disposition": "history restoration preserves exact recipe, #340",
       "limits": "only enumerated objective counterexample; optical interpretation not approved"
     },
@@ -2441,7 +2441,7 @@
       "evidenceCandidates": [
         "tests/editor-tool-search.test.js"
       ],
-      "comparison": "bounded-objective-negative",
+      "comparison": "bounded-objective-evidence",
       "disposition": "separately reachable search close affordance, #287",
       "limits": "only enumerated objective counterexample; optical interpretation not approved"
     },
@@ -2454,7 +2454,7 @@
       "evidenceCandidates": [
         "tests/editor-tool-search.test.js"
       ],
-      "comparison": "bounded-objective-negative",
+      "comparison": "bounded-objective-evidence",
       "disposition": "search reveals category without resetting swipes, #339",
       "limits": "only enumerated objective counterexample; optical interpretation not approved"
     }
