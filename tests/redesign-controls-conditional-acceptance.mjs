@@ -214,6 +214,36 @@ try{
     explore:true,saved:true,emptyState:true,offscreenDockInert:true});
 
   await nav('mobileMore');
+  // Phone More is scrollable, so each original source action must be measured
+  // after scrolling into view. Do not treat an offscreen rect as a blocked tap.
+  // Guard two portrait widths, independent hit ownership, and existing scroll.
+  const moreHitCells=[];
+  for(const width of [320,412]){
+    await page.setViewportSize({width,height:892});
+    const entries=page.locator(
+      '#mobileToolsContent .mobile-more-group-body>.secondary-actions button,'+
+      '#mobileToolsContent .mobile-more-group-body>.export-metadata>button');
+    const count=await entries.count();
+    assert.ok(count>=4,'Grouped More lost visible original actions: '+count);
+    for(let i=0;i<count;i++){
+      const node=entries.nth(i);
+      if(!await node.isVisible())continue;
+      await node.scrollIntoViewIfNeeded();
+      const box=await node.evaluate(el=>{
+        const r=el.getBoundingClientRect();
+        const probes=[.18,.5,.82].flatMap(y=>[.18,.5,.82].map(x=>{
+          const top=document.elementFromPoint(r.left+r.width*x,r.top+r.height*y);
+          return top===el||el.contains(top);
+        }));
+        return {id:el.id||el.textContent.trim().slice(0,32),
+          width:r.width,height:r.height,visible:probes.every(Boolean)};
+      });
+      assert.ok(box.width>=44&&box.height>=44&&box.visible,
+        'More source action has a blocked/sub-44 touch cell: '+JSON.stringify({width,box}));
+      moreHitCells.push({viewport:width,...box});
+    }
+  }
+  record('more-original-action-touch-cells',{sampled:moreHitCells.length,moreHitCells});
   const groups=await page.locator('#mobileToolsContent > .mobile-more-group').evaluateAll(nodes=>
     nodes.map(el=>({title:el.querySelector('h3')?.textContent,
       children:[...el.querySelectorAll('button,input')].map(x=>x.id||x.className)})));
