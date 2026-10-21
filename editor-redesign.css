@@ -1074,3 +1074,26 @@ html[data-theme="cream"] body.mobile-studio .sidebar .settings-tabs .settings-ta
     padding:0 5px!important;white-space:nowrap!important;
   }
 }
+
+/* Portrait experiment: the 27px Focus and Tool dice had genuine 27px hit
+   rectangles, with only 6px between them (#385). On narrow portrait, use
+   the existing horizontal scroller as one 44px native touch row.
+   Budget precisely 13px in the bounded editor tray, not on neighbouring
+   element hitboxes. Tablet/desktop and Material rotation are unchanged. */
+@media(max-width:499px){
+  body.mobile-studio.mobile-edit-open{
+    --mobile-tray-height:clamp(281px,calc(34dvh + 13px),315px)!important;
+  }
+  body.mobile-studio .sidebar .editor-tool-chooser{
+    flex:0 0 44px!important;height:44px!important;
+    min-height:44px!important;max-height:44px!important;
+    padding:0 1px!important;
+  }
+  body.mobile-studio .sidebar .editor-tool-tab:not([hidden]){
+    height:44px!important;min-height:44px!important;max-height:44px!important;
+  }
+  body.mobile-studio .sidebar
+  .editor-tool-chooser>.editor-tool-reroll:not([hidden]){
+    height:44px!important;min-height:44px!important;max-height:44px!important;
+  }
+}
