@@ -1,6 +1,6 @@
 # Mobile touch-target implementation plan and evidence ledger
 
-**Created:** 2026-10-21. **Base:** `6389e4ec7dc3a71f37656ba2b72ad04a747d6e2e`. **Owner lane:** cross-surface *touch geometry, browser instrumentation and ergonomic QA*. **Companion:** [multilingual R&D report](MOBILE-TOUCH-TARGET-RESEARCH-2026-10-21.md).
+**Created:** 2026-10-21. **Base:** `6389e4ec7dc3a71f37656ba2b72ad04a747d6e2e`. **Owner lane:** cross-surface *touch geometry, browser instrumentation and ergonomic QA*. **Companion:** [multilingual R&D report](MOBILE-TOUCH-TARGET-RESEARCH-2026-10-21.md). **Current implementation status:** [delivery and measured-evidence ledger](MOBILE-TOUCH-TARGET-DELIVERY-2026-10-21.md).
 
 This is an additive ergonomics initiative. Do **not** reopen historically completed functional checkboxes in `docs/UI-REDESIGN-IMPLEMENTATION-QUEUE.md` or conflate the remaining supported-layout **human visual approval** gate with a new numeric touch-target goal. Preserve source controls, actual behaviour, normalized recipes, camera invariants, generated output, five-way dock, Focus opt-in, icon authorization, and portrait-first support policy.
 
@@ -24,8 +24,9 @@ This is an additive ergonomics initiative. Do **not** reopen historically comple
 ## Stage B: source-specific target corrections (P1; owner: owning visual/editor component agents)
 
 - [ ] Mobile `.settings-tab` (24px), per-setting `.setting-lock` (26px), scoped dice and Focus toggle/chips: measure **actual** effective regions first; compare 44/48px reserved cells versus full-row labels without collision.
-- [ ] Interior select/range/colour controls (27px), seven ROYGBIV targets with 2px gaps: preserve every colour, tool identity, selected state, keyboard/arrow semantics and recipe scope; at 320px favour reflow/scroll over false 44px claims.
-- [ ] Mobile dock 42px and preview 43x38px actions: verify whole region and physical top/bottom safe-area clearance; only change after confirming a real gap.
+- [ ] Interior select/range controls (27px) remain to be measured and redesigned; seven ROYGBIV chips at 412–790px now have 44px native labels in merged [#367](https://github.com/gamesbyian/wallgen/pull/367). The 320–411px horizontally swipeable variant is proposed in [#370](https://github.com/gamesbyian/wallgen/pull/370), with a genuine touchscreen swipe gate, not merely programmatic scroll.
+- [x] Five-destination mobile dock 42px → 44px via merged [#366](https://github.com/gamesbyian/wallgen/pull/366), actual click/3×3/visual tests green. Remaining physical safe-area and native Android acceptance still open.
+- [ ] Preview shortcut actions: source Favourite/PNG 43×38 → 44×44 proposed in [#371](https://github.com/gamesbyian/wallgen/pull/371), and Random/Primes 44px proposed in [#372](https://github.com/gamesbyian/wallgen/pull/372). Do not mark completed until exact-head CI/merge. Other preview controls still need audit.
 - [ ] Material 1/2/3 rotation and the special four-column rail: test all six controls, clipping/spacing, locks and active/dormant states; never generalize generic setting-row columns.
 - [ ] Add **target-specific browser regression** including no accidental sibling activation, scroll still available, right/error states, before/after recipe deltas and width/theme screenshots.
 - **Gate:** PR-specific source evidence, no regression in canonical plates/camera/export, all required workflows green.
