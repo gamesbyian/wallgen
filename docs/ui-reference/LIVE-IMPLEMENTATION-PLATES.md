@@ -1,6 +1,6 @@
 # Live implementation screen plates: real source screenshots
 
-The twelve SVGs in this directory are **canonical inventory-first schematic contracts**, not literal screen goldens. The [Agent 1 live Chromium audit](../../scripts/visual-reference-audit-agent1.mjs) now stages **24 actual 412×892 source UI screenshots** (12 modes × cream/dark) under `implemented-plates/`, but **only if the complete browser census reports zero errors**.
+The twelve SVGs in this directory are **canonical inventory-first schematic contracts**, not literal screen goldens. **Permanent implementation screenshots are now preserved in [the actual implementation companion](ACTUAL-IMPLEMENTATION-COMPANION.md)**. Those 24 PNGs and eight icon-state images were copied *byte for byte* from the independently inspected [green source run 39527554784](https://github.com/gamesbyian/wallgen/actions/runs/39527554784) with a fixed combined SHA-256, all 24 canonical browser-screen comparisons, frozen presentation source and original on-disk file provenance. They are historical, source-bound implementation evidence; user preference, icon adoption and physical-phone approval are distinct. The [Agent 1 live Chromium audit](../../scripts/visual-reference-audit-agent1.mjs) now stages **24 actual 412×892 source UI screenshots** (12 modes × cream/dark) under `implemented-plates/`, but **only if the complete browser census reports zero errors**.
 
 | Screen | Verified source UI scenario | Real file basename |
 | --- | --- | --- |
