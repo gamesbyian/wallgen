@@ -1159,3 +1159,67 @@ html[data-theme="cream"] body.mobile-studio .sidebar .settings-tabs .settings-ta
     margin-top:0!important;
   }
 }
+
+/* Tall compact portraits: the six original Material rotation source actions
+   cannot all attain 44px inside the legacy 4-column 26px-tall rail.
+   Give each Finish card a second *internal* horizontal swipe row, preserving
+   its label and independently operable die/lock. The artwork and camera
+   remain above the sheet; no hitbox overlay or extra toolbar is introduced.
+   Short-height phones keep the separately qualified compact presentation.
+   Experimental until actual-source browser and physical thumb review. */
+@media(max-width:499px) and (min-height:840px){
+  body.mobile-studio.mobile-edit-open:has(
+    .editor-tool-card[data-editor-tool^="finish"]:not([hidden])){
+    --mobile-tray-height:clamp(370px,calc(34dvh + 68px),406px)!important;
+  }
+  body.mobile-studio .sidebar .editor-tool-card[data-editor-tool^="finish"]
+    .texture-rotation-field{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) 44px 44px!important;
+    grid-template-rows:44px 44px!important;
+    column-gap:4px!important;row-gap:4px!important;
+    min-height:92px!important;max-height:none!important;
+    align-items:center!important;
+  }
+  body.mobile-studio .sidebar .editor-tool-card[data-editor-tool^="finish"]
+    .texture-rotation-field>span{
+    grid-column:1!important;grid-row:1!important;
+  }
+  body.mobile-studio .sidebar .editor-tool-card[data-editor-tool^="finish"]
+    .texture-rotation-field>.editor-setting-die{
+    grid-column:2!important;grid-row:1!important;
+    box-sizing:border-box!important;
+    width:44px!important;min-width:44px!important;
+    height:44px!important;min-height:44px!important;max-height:44px!important;
+  }
+  body.mobile-studio .sidebar .editor-tool-card[data-editor-tool^="finish"]
+    .texture-rotation-field>.setting-lock{
+    grid-column:3!important;grid-row:1!important;
+    box-sizing:border-box!important;
+    width:44px!important;min-width:44px!important;
+    height:44px!important;min-height:44px!important;max-height:44px!important;
+  }
+  body.mobile-studio .sidebar .editor-tool-card[data-editor-tool^="finish"]
+    .texture-rotation-field .rotation-controls{
+    grid-column:1/-1!important;grid-row:2!important;
+    display:flex!important;flex-flow:row nowrap!important;
+    width:100%!important;min-width:0!important;height:44px!important;
+    min-height:44px!important;max-height:44px!important;
+    gap:4px!important;justify-content:flex-start!important;
+    padding:0 1px!important;margin:0!important;
+    overflow-x:auto!important;overflow-y:hidden!important;
+    touch-action:pan-x!important;overscroll-behavior-x:contain;
+    -webkit-overflow-scrolling:touch;scrollbar-width:none;
+  }
+  body.mobile-studio .sidebar .editor-tool-card[data-editor-tool^="finish"]
+    .texture-rotation-field .rotation-controls::-webkit-scrollbar{display:none}
+  body.mobile-studio .sidebar .editor-tool-card[data-editor-tool^="finish"]
+    .texture-rotation-field .rotation-controls button,
+  body.mobile-studio .sidebar .editor-tool-card[data-editor-tool^="finish"]
+    .texture-rotation-field .rotation-controls input[type=number]{
+    box-sizing:border-box!important;flex:0 0 44px!important;
+    width:44px!important;min-width:44px!important;max-width:44px!important;
+    height:44px!important;min-height:44px!important;max-height:44px!important;
+    align-self:center!important;
+  }
+}
