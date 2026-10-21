@@ -1,0 +1,44 @@
+name: Character hint optical reachability
+
+on:
+  pull_request:
+    paths:
+      - 'tests/visual-character-helper-browser.mjs'
+      - 'mobile-editor-rail.css'
+      - 'index.html'
+      - '.github/workflows/character-hint-optical.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-character:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Static syntax and source-setting parity
+        run: |
+          node --check tests/visual-character-helper-browser.mjs
+          npm test
+      - run: npm install --no-save playwright@1.56.1 serve@14.2.5
+      - run: npx playwright install --with-deps chromium
+      - name: Serve current production app
+        run: |
+          npx serve . -l 4173 > /tmp/visual-character.log 2>&1 &
+          for i in $(seq 1 40); do curl -fsS http://127.0.0.1:4173/ >/dev/null && exit 0; sleep 1; done
+          cat /tmp/visual-character.log
+          exit 1
+      - name: Inspect actual helper glyphs and native checkbox at eight responsive widths
+        run: node tests/visual-character-helper-browser.mjs
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: character-helper-source-visuals
+          path: artifacts/character-helper-optical/
+          retention-days: 14
+          if-no-files-found: warn
