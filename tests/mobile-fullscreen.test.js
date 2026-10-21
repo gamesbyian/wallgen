@@ -28,5 +28,12 @@ test('manifest allows installed Chrome to launch without the browser address bar
   const manifest=JSON.parse(read('manifest.webmanifest'));
   assert.equal(manifest.display,'standalone');
   assert.equal(manifest.start_url,'./');
+  assert.equal(manifest.id,'./','Installed app identity cannot depend on future URL changes');
   assert.ok(manifest.icons.some(icon=>icon.sizes==='512x512'));
+  assert.ok(manifest.icons.some(icon=>icon.sizes==='192x192'),
+    'Chrome installation should have a usable 192px launcher source');
+  const source=read('assets/roygbiv-logo.svg');
+  const sized=read('assets/roygbiv-logo-192.svg');
+  assert.equal(sized.replace('width="192" height="192" ',''),source,
+    '192px app icon must reuse original ROYGBIV line art exactly');
 });
