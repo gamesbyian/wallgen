@@ -1147,3 +1147,15 @@ html[data-theme="cream"] body.mobile-studio .sidebar .settings-tabs .settings-ta
     max-height:44px!important;
   }
 }
+
+/* Narrow Character source card: the legacy desktop .homogeneity-override
+   margin-top:19px survives on the nested checkbox label and pushes its
+   complete text below the compact mobile card at 320px after 44px tabs.
+   Remove only that inherited separation; retain checkbox padding, wording,
+   mobile aria-description, source handler and unchanged preview reservation. */
+@media(max-width:360px){
+  body.mobile-studio .sidebar .editor-tool-card[data-editor-tool="character"]
+    .homogeneity-override{
+    margin-top:0!important;
+  }
+}
