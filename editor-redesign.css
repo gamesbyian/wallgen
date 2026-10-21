@@ -1101,3 +1101,14 @@ html[data-theme="cream"] body.mobile-studio .sidebar .settings-tabs .settings-ta
     height:44px!important;min-height:44px!important;max-height:44px!important;
   }
 }
+
+/* A 320×700 real Chromium row census exposed Material Finish 2/3 rotation
+   controls 7.5px below their card after the 44px chooser change. Give
+   short portrait sheets 12px additional height so *all* six rotation
+   children remain within the original card, rather than clipping a source
+   ±1/±90/reset/number action. The wallpaper stage shrinks, never overlays. */
+@media(max-width:360px) and (max-height:739px){
+  body.mobile-studio.mobile-edit-open{
+    --mobile-tray-height:clamp(293px,calc(34dvh + 26px),328px)!important;
+  }
+}
