@@ -103,8 +103,9 @@ try{
             visible,rotation,captionCollision,rotationControls,
             captionInk:ink?{left:ink.left,right:ink.right,top:ink.top,bottom:ink.bottom}:null,
             firstRotationButton:button?{left:button.left,right:button.right,top:button.top,bottom:button.bottom}:null,
-            left:r.left,right:r.right,cardLeft:bounds?.left,
-            cardRight:bounds?.right,width:r.width,
+            left:r.left,right:r.right,top:r.top,bottom:r.bottom,
+            cardLeft:bounds?.left,cardRight:bounds?.right,
+            cardTop:bounds?.top,cardBottom:bounds?.bottom,width:r.width,
             opacity:Number(css.opacity),textColor:css.color,
             buttons:rotation?controls?.querySelectorAll('button').length:undefined,
             numbers:rotation?controls?.querySelectorAll('input[type=number]').length:undefined};
@@ -129,11 +130,13 @@ try{
           throw Error('Material rotation label ink overlaps first shortcut: '+JSON.stringify(row));
         if(row.rotation&&row.visible){
           // Do not mistake the outer source row fitting for its *six*
-          // descendants fitting. The supported 320px two-row layout had
-          // historically lost the final shortcut beyond its control frame.
+          // descendants fitting. Horizontal-only bounds missed visually
+          // sliced-off vertical buttons under the inactive Finish help card;
+          // check all four card edges across the source mode inventory.
           if(row.rotationControls.length!==6||
              row.rotationControls.some(b=>b.width<1||b.height<1||
-               b.left<row.cardLeft-1||b.right>row.cardRight+1))
+               b.left<row.cardLeft-1||b.right>row.cardRight+1||
+               b.top<row.cardTop-1||b.bottom>row.cardBottom+1))
             throw Error('Rotation child escapes live card or collapses: '+JSON.stringify(row));
           const controls=row.rotationControls;
           for(let a=0;a<controls.length;a++)for(let b=a+1;b<controls.length;b++){
