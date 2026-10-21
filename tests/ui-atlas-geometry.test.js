@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {inspectGeometry,expectedPageScroll,inspectTargetBox} from '../scripts/ui-atlas-geometry.mjs';
+import {inspectGeometry,expectedPageScroll,inspectTargetBox,inspectTargetSpacing} from '../scripts/ui-atlas-geometry.mjs';
 const target=(l,t,r,b)=>({left:l,top:t,right:r,bottom:b});
 const viewport=target(0,0,412,892);
 test('in-viewport or subpixel clipping does not flood atlas findings',()=>{
@@ -71,3 +71,46 @@ test('atlas collects touch target boxes independently of screenshot clipping fai
 function requireSource(){
   return readFileSync(new URL('../scripts/ui-atlas-inspect.mjs',import.meta.url),'utf8');
 }
+
+
+test('WCAG 24px size-sufficient target needs no spacing exception',()=>{
+  assert.deepEqual(inspectTargetSpacing(target(0,0,44,44),[
+    target(20,20,40,40)]),{
+    under24:false,spacingCandidatePass:true,conflictingIndices:[]
+  });
+});
+test('undersized neighbours require distinct radius-12 circles without intersection',()=>{
+  const small=target(0,0,20,20);
+  const result=inspectTargetSpacing(small,[
+    target(24,0,44,20), // 24px between centres, exactly tangent: allowed
+    target(23,0,43,20), // 23px between centres: candidate failure
+    target(0,24,20,44), // vertically tangent: allowed
+    target(0,23,20,43), // vertically intersecting
+    target(17,17,37,37), // diagonal centres 24.04px apart
+    target(16,16,36,36) // diagonal centres 22.63px apart
+  ]);
+  assert.equal(result.under24,true);
+  assert.equal(result.spacingCandidatePass,false);
+  assert.deepEqual(result.conflictingIndices,[1,3,5]);
+});
+test('undersized circle tests closest point to a full-size neighbouring target',()=>{
+  const small=target(0,0,20,20); // centre at 10,10
+  const peers=[
+    target(22,0,66,44),  // 12px away, tangent
+    target(21,0,65,44),  // 11px away, intersects
+    target(22,22,66,66), // diagonal nearest distance > 12
+    target(20,20,64,64), // diagonal nearest distance 14.14 > 12
+    target(0,22,44,66),  // 12px vertically, tangent
+    target(0,21,44,65),  // 11px vertically, intersects
+    target(50,50,50,50)  // degenerate: skip
+  ];
+  const result=inspectTargetSpacing(small,peers);
+  assert.deepEqual(result.conflictingIndices,[1,5]);
+});
+test('associated labels must be deduplicated by the caller before spacing comparison',()=>{
+  const wrappedCheckboxTarget=target(0,0,44,44);
+  const neighbour=target(52,0,72,20);
+  assert.equal(inspectTargetSpacing(wrappedCheckboxTarget,[neighbour]).under24,false);
+  // Bounding box alone cannot infer DOM associations or WCAG equivalents.
+  assert.deepEqual(inspectTargetSpacing(target(10,10,26,26),[]).conflictingIndices,[]);
+});
