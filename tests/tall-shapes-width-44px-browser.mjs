@@ -13,7 +13,7 @@ const source=normalizeRecipe({seed:'tall-shapes-width-native-44',structure:'path
  viewZoom:.8,viewPanX:3,viewPanY:-4});
 const browser=await chromium.launch({headless:true}),rows=[],failures=[];
 try{
- for(const [width,height] of [[320,892],[412,892],[499,892],[320,700]])for(const theme of ['cream','dark']){
+ for(const [width,height] of [[320,892],[360,892],[412,892],[499,892],[320,700]])for(const theme of ['cream','dark']){
   const context=await browser.newContext({viewport:{width,height},
     isMobile:true,hasTouch:true,reducedMotion:'reduce'});
   const page=await context.newPage(),errors=[];
