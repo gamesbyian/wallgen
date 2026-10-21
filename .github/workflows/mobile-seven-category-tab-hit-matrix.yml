@@ -2,6 +2,7 @@ name: Mobile seven category tab touch matrix
 on:
   pull_request:
     paths:
+      - editor-redesign.css
       - tests/mobile-seven-category-tab-hit-matrix.mjs
       - .github/workflows/mobile-seven-category-tab-hit-matrix.yml
   workflow_dispatch:
