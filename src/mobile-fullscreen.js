@@ -31,6 +31,29 @@ function sync(){
   button.title=entered?'Exit fullscreen':'Enter fullscreen';
   button.setAttribute('aria-pressed',String(entered));
 }
+// Native showModal() moves the importer above normal page overlays. Rehome
+// this SAME button inside the modal's top layer, then return it to the shell.
+// No cloned controls, duplicate IDs/listeners, new row or focus-trap escape.
+const importer=document.getElementById('imagePathDialog');
+const importerHeader=importer?.querySelector('.image-path-top');
+const importerClose=document.getElementById('imagePathCancel');
+const dockExpand=document.getElementById('mobileDockExpand');
+function syncImporterPlacement(){
+  if(!importerHeader||!dockExpand)return;
+  if(importer.open){
+    if(button.parentElement!==importerHeader)
+      importerHeader.insertBefore(button,importerClose||null);
+  }else if(button.previousElementSibling!==dockExpand){
+    dockExpand.after(button);
+  }
+  sync();
+}
+if(importer){
+  new MutationObserver(syncImporterPlacement).observe(importer,{
+    attributes:true,attributeFilter:['open']
+  });
+  importer.addEventListener('close',syncImporterPlacement);
+}
 if(button){
   button.addEventListener('click',()=>{
     if(!supported||(!compact.matches&&!live()))return;

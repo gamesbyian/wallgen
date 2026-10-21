@@ -37,3 +37,16 @@ test('manifest allows installed Chrome to launch without the browser address bar
   assert.equal(sized.replace('width="192" height="192" ',''),source,
     '192px app icon must reuse original ROYGBIV line art exactly');
 });
+
+test('native image-import modal retains a single accessible fullscreen exit in its top layer',()=>{
+  const ui=read('src/mobile-fullscreen.js');
+  const css=read('mobile-fullscreen.css');
+  assert.match(ui,/new MutationObserver\(syncImporterPlacement\)/);
+  assert.match(ui,/importerHeader\.insertBefore\(button,importerClose\|\|null\)/);
+  assert.match(ui,/dockExpand\.after\(button\)/);
+  assert.match(ui,/button\.addEventListener\('click'/);
+  assert.match(css,/\.image-path-dialog \.image-path-top \.mobile-fullscreen-toggle:not\(\[hidden\]\)/);
+  assert.match(css,/flex:0 0 44px/);
+  assert.doesNotMatch(read('index.html'),/id="mobileFullscreenToggle"/,
+    'Dynamic fullscreen control must not gain a duplicate static ID');
+});
