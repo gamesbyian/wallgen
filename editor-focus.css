@@ -97,7 +97,7 @@ html[data-theme="dark"] .editor-focus-all{background:#51374f;color:#fff;border-c
     --mobile-tray-height:clamp(318px,calc(34dvh + 23px),353px)!important;
   }
   body.mobile-studio.mobile-edit-open:has(#controls.editor-focus-active.editor-focus-empty){
-    --mobile-tray-height:clamp(225px,calc(23dvh + 33px),248px)!important;
+    --mobile-tray-height:clamp(215px,calc(23dvh + 23px),238px)!important;
   }
 }
 
@@ -118,6 +118,6 @@ html[data-theme="dark"] .editor-focus-all{background:#51374f;color:#fff;border-c
 @media(max-width:360px) and (min-height:740px){
   body.mobile-studio.mobile-edit-open:has(
     #controls.editor-focus-active.editor-focus-empty){
-    --mobile-tray-height:clamp(215px,calc(23dvh + 23px),238px)!important;
+    --mobile-tray-height:clamp(225px,calc(23dvh + 33px),248px)!important;
   }
 }
