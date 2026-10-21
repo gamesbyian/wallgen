@@ -48,7 +48,7 @@ try{
         // touch-action interference from the nested editor panel.
         await rail.evaluate(el=>{el.scrollLeft=0});
         const railRect=await rail.boundingBox();
-        const cdp=await ctx.newCDPSession(page);
+        const cdp=await context.newCDPSession(page);
         const y=railRect.y+railRect.height/2;
         const begin=railRect.x+railRect.width-24;
         await cdp.send('Input.dispatchTouchEvent',{
