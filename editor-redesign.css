@@ -1109,6 +1109,6 @@ html[data-theme="cream"] body.mobile-studio .sidebar .settings-tabs .settings-ta
    ±1/±90/reset/number action. The wallpaper stage shrinks, never overlays. */
 @media(max-width:360px) and (max-height:739px){
   body.mobile-studio.mobile-edit-open{
-    --mobile-tray-height:clamp(293px,calc(34dvh + 26px),328px)!important;
+    --mobile-tray-height:clamp(305px,calc(34dvh + 38px),340px)!important;
   }
 }
