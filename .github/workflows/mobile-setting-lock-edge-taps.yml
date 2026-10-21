@@ -1,0 +1,41 @@
+name: Mobile source lock native edge-tap audit
+on:
+  pull_request:
+    paths:
+      - tests/mobile-setting-lock-edge-taps.mjs
+      - .github/workflows/mobile-setting-lock-edge-taps.yml
+      - editor-redesign.css
+      - mobile-editor-rail.css
+      - mobile-compact.css
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  chromium-edges:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check tests/mobile-setting-lock-edge-taps.mjs
+      - run: npm install --no-save playwright@1.56.1 serve@14.2.5
+      - run: npx playwright install --with-deps chromium
+      - name: Serve real app
+        run: |
+          npx serve . -l 4173 >/tmp/mobile-setting-lock-edges-serve.log 2>&1 &
+          for i in $(seq 1 40); do
+            curl -fsS http://127.0.0.1:4173/ >/dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/mobile-setting-lock-edges-serve.log
+          exit 1
+      - run: node tests/mobile-setting-lock-edge-taps.mjs
+      - name: Preserve source screenshots and edge-tap geometry
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: roygbiv-setting-lock-edge-evidence
+          path: artifacts/mobile-setting-lock-edges/
+          if-no-files-found: warn
