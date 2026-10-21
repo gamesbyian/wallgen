@@ -113,6 +113,63 @@ try{
    }finally{await context.close()}
   }
  }
+ // 320×700 short portrait: a canonical real-source Material rotation row
+ // previously escaped its clipped card after the taller pinned chooser.
+ // Verify every original +/-1, +/-90, reset and numeric control still fits.
+ for(const width of [320,360]){
+  for(const theme of ['cream','dark']){
+   const context=await browser.newContext({viewport:{width,height:700},
+     isMobile:true,hasTouch:true,reducedMotion:'reduce'});
+   const page=await context.newPage();page.setDefaultTimeout(16000);
+   try{
+    const fixture=normalizeRecipe({...initial,material:'linen',
+      textureLayer2Enabled:true,material2:'foil',
+      textureLayer3Enabled:true,material3:'grain'});
+    await page.goto(origin+'/?r='+encodeRecipe(fixture),{waitUntil:'domcontentloaded'});
+    await page.evaluate(t=>localStorage.setItem('roygbiv:studio-theme:v1',t),theme);
+    await page.reload({waitUntil:'domcontentloaded'});
+    await page.locator('#mobileEdit').tap();
+    await page.locator('#tab-material').tap();
+    const rotations=[];
+    for(const id of ['finish2','finish3']){
+      await page.locator('.editor-tool-tab[data-editor-tool="'+id+'"]').tap();
+      const card=page.locator('.editor-tool-card[data-editor-tool="'+id+'"]');
+      const witness=await card.evaluate(el=>{
+        const r=el.getBoundingClientRect();
+        const rot=el.querySelector('.texture-rotation-field .rotation-controls');
+        if(!rot)return {missing:true};
+        const children=[...rot.querySelectorAll('button,input')]
+          .filter(node=>getComputedStyle(node).display!=='none')
+          .map(node=>{
+            const b=node.getBoundingClientRect();
+            return {tag:node.tagName,left:b.left,right:b.right,top:b.top,
+              bottom:b.bottom,width:b.width,height:b.height,
+              contained:b.left>=r.left-1&&b.right<=r.right+1&&
+                b.top>=r.top-1&&b.bottom<=r.bottom+1};
+          });
+        return {card:{top:r.top,bottom:r.bottom,left:r.left,right:r.right},
+          children};
+      });
+      assert.ok(!witness.missing&&witness.children.length===6&&
+        witness.children.every(x=>x.contained&&x.width>=24&&x.height>=24),
+        'Short portrait original Material rotation children escape card: '+
+        JSON.stringify({width,theme,id,witness}));
+      rotations.push({id,witness});
+    }
+    assert.deepEqual(decodeRecipe(new URL(page.url()).searchParams.get('r')),fixture,
+      'Inspecting Material rotation changed recipe');
+    const stage=await page.locator('.studio-stage').boundingBox();
+    const tray=await page.locator('#mobileDesignSheet').boundingBox();
+    assert.ok(stage.y+stage.height<=tray.y+2,
+      'Short-portrait Material panel overlaps preview');
+    observations.push({width,height:700,theme,rotations,
+      recipeUnchanged:true,previewSeparated:true});
+    await page.screenshot({path:join(out,width+'x700-'+theme+'.png'),
+      animations:'disabled'});
+    console.log('SHORT_MATERIAL_44PX_PASS',JSON.stringify(observations.at(-1)));
+   }finally{await context.close()}
+  }
+ }
  await writeFile(join(out,'evidence.json'),JSON.stringify({observations,
   exclusions:['physical mobile hand', 'TalkBack', 'human aesthetic review',
     'actual browser chrome heights and font scaling']},null,2));
