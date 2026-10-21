@@ -1,0 +1,53 @@
+name: Independent adversarial dynamic exploration
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'tests/independent-runtime-exploratory.mjs'
+      - 'tests/independent-svg-candidates-acceptance.mjs'
+      - 'src/editor-*.js'
+      - 'src/mobile-*.js'
+      - 'src/app.js'
+      - 'assets/icons/roygbiv/**'
+      - '.github/workflows/independent-dynamic-adversarial.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  adversarial:
+    runs-on: ubuntu-latest
+    timeout-minutes: 28
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate test source
+        run: |
+          node --check tests/independent-runtime-exploratory.mjs
+          node --check tests/independent-svg-candidates-acceptance.mjs
+          node --test tests/agent2-plate-traceability.test.js
+      - run: npm install --no-save playwright@1.56.1 serve@14.2.5
+      - run: npx playwright install --with-deps chromium
+      - name: Serve actual app and source icon registry
+        run: |
+          npx serve . -l 4173 >/tmp/independent-exploratory.log 2>&1 &
+          for i in $(seq 1 40); do curl -fsS http://127.0.0.1:4173/ >/dev/null && exit 0; sleep 1; done
+          cat /tmp/independent-exploratory.log
+          exit 1
+      - name: Explore genuine app states via state-dependent next actions
+        run: node tests/independent-runtime-exploratory.mjs
+      - name: Independently verify eight candidate SVGs in 192 source-rendered samples
+        run: node tests/independent-svg-candidates-acceptance.mjs
+      - name: Keep reproducible source screenshots, click ledger and SVG fixtures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: independent-dynamic-exploratory-evidence
+          path: |
+            artifacts/independent-exploratory/
+            artifacts/independent-svg-qa/
+          retention-days: 14
+          if-no-files-found: warn
