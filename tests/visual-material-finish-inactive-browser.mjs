@@ -14,10 +14,15 @@ const original=normalizeRecipe({seed:'material-inactive-card-optical',
 const browser=await chromium.launch({headless:true});
 const records=[],failures=[];
 try{
- for(const width of [320,360,412,499,500,790,791]){
+ const profiles=[
+  {width:320,height:640},{width:320,height:700},{width:320,height:892},
+  {width:360,height:740},{width:412,height:892},{width:499,height:892},
+  {width:500,height:892},{width:790,height:892},{width:791,height:892}
+ ];
+ for(const {width,height} of profiles){
   for(const theme of ['cream','dark']){
    const mobile=width<=790;
-   const ctx=await browser.newContext({viewport:{width,height:892},
+   const ctx=await browser.newContext({viewport:{width,height},
      isMobile:mobile,hasTouch:mobile,reducedMotion:'reduce'});
    const page=await ctx.newPage();page.setDefaultTimeout(20000);
    const errors=[];page.on('pageerror',e=>errors.push(String(e)));
@@ -55,19 +60,19 @@ try{
        r.left>=rects.card.left-1&&r.right<=rects.card.right+1&&
        r.width>9&&r.height>9,
        'Material Finish disabled rotation is visibly clipped: '+
-        JSON.stringify({width,theme,id,rects}));
+        JSON.stringify({width,height,theme,id,rects}));
      assert.ok(rects.controls.every(x=>x.disabled),
       'Disabled Material layer rotation became operational');
-     records.push({width,theme,id,rects});
-     await card.screenshot({path:join(out,theme+'-'+width+'-'+id+'.png'),
+     records.push({width,height,theme,id,rects});
+     await card.screenshot({path:join(out,theme+'-'+width+'x'+height+'-'+id+'.png'),
       animations:'disabled'});
     }
     assert.deepEqual(decodeRecipe(new URL(page.url()).searchParams.get('r')),original);
     assert.deepEqual(errors,[]);
-    console.log('INACTIVE_MATERIAL_FINISH_OPTICAL_PASS',JSON.stringify({width,theme}));
+    console.log('INACTIVE_MATERIAL_FINISH_OPTICAL_PASS',JSON.stringify({width,height,theme}));
    }catch(e){
-    failures.push({width,theme,error:String(e),stack:e.stack,errors});
-    await page.screenshot({path:join(out,'failure-'+theme+'-'+width+'.png'),
+    failures.push({width,height,theme,error:String(e),stack:e.stack,errors});
+    await page.screenshot({path:join(out,'failure-'+theme+'-'+width+'x'+height+'.png'),
      animations:'disabled'}).catch(()=>{});
    }finally{await ctx.close();}
   }
@@ -75,5 +80,5 @@ try{
  await writeFile(join(out,'evidence.json'),JSON.stringify({records,failures,
   exclusions:['native Android','visual human approval','other condition permutations']},null,2));
  assert.deepEqual(failures,[],'Inactive Finish controls cut by card');
- assert.equal(records.length,28);
+ assert.equal(records.length,36);
 }finally{await browser.close();}
