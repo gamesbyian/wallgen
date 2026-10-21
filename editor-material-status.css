@@ -64,6 +64,8 @@
     /* The tool chooser now owns a 44px native hit row, 13px taller than
        the original 31px strip. Preserve all six inactive Material rotation
        controls instead of letting the late Finish help rule steal that space. */
-    --mobile-tray-height:297px!important;
+    /* The source category bar is now 10px taller; retain the six rotation
+       actions inside the Finish card at 320×700 without touching the art. */
+    --mobile-tray-height:307px!important;
   }
 }
