@@ -5,7 +5,7 @@
  */
 export async function inspectAtlasState(page,ctx,slug,meta={}){
   return page.evaluate(async ({slug,meta,mobile})=>{
-    const {inspectGeometry,expectedPageScroll,inspectTargetBox}=await import('/scripts/ui-atlas-geometry.mjs');
+    const {inspectGeometry,expectedPageScroll,inspectTargetBox,inspectTargetSpacing}=await import('/scripts/ui-atlas-geometry.mjs');
     const root=document.body;
     const g=id=>document.querySelector(id);
     const visible=el=>{
@@ -159,6 +159,9 @@ export async function inspectAtlasState(page,ctx,slug,meta={}){
     let scanned=0,ignoredScroll=0,smallActionCount=0,measuredTouchTargets=0;
     let under44Count=0;
     const undersizedActions=[];
+    // Diagnostic census only. These are independent DOM controls with their
+    // associated checkbox/radio LABEL rectangle replacing the tiny input box.
+    const touchRecords=[];
     function label(el){
       return (el.getAttribute('aria-label')||el.getAttribute('title')||
         el.labels?.[0]?.textContent||el.textContent||'').trim().replace(/\s+/g,' ').slice(0,68);
@@ -218,6 +221,8 @@ export async function inspectAtlasState(page,ctx,slug,meta={}){
         const checkbox=el.matches('input[type="checkbox"],input[type="radio"]');
         const target=checkbox?(el.labels?.[0]?.getBoundingClientRect()||rect):rect;
         const size=inspectTargetBox(target);
+        touchRecords.push({el,name:selector(el),label:label(el),
+          rect:{left:target.left,top:target.top,right:target.right,bottom:target.bottom},size});
         measuredTouchTargets++;
         if(size.under44)under44Count++;
         if(size.under24){
@@ -237,6 +242,26 @@ export async function inspectAtlasState(page,ctx,slug,meta={}){
         visibleFraction:geometry.visibleFraction,size,
         clipSources:geometry.clipSources});
     }
+    // SC 2.5.8 spacing is evaluated separately from a 44px ergonomic goal.
+    // We never award conformance from rectangles: real shapes, paint, pseudo-
+    // elements, equivalent controls and pointer dispatch need further tests.
+    let under24SpacingAssessedCount=0,under24SpacingCandidateCount=0;
+    const under24SpacingCandidates=[];
+    for(const record of touchRecords){
+      if(!record.size.under24)continue;
+      under24SpacingAssessedCount++;
+      const peers=touchRecords.filter(other=>other!==record &&
+        !record.el.contains(other.el)&&!other.el.contains(record.el));
+      const diagnostic=inspectTargetSpacing(record.rect,peers.map(other=>other.rect));
+      if(diagnostic.spacingCandidatePass)continue;
+      under24SpacingCandidateCount++;
+      if(under24SpacingCandidates.length<16)under24SpacingCandidates.push({
+        element:record.name,label:record.label,size:record.size,
+        neighbours:diagnostic.conflictingIndices.slice(0,8).map(i=>({
+          element:peers[i].name,label:peers[i].label,size:peers[i].size
+        }))
+      });
+    }
     findings.sort((a,b)=>b.missingPixels-a.missingPixels);
     const totalFindings=findings.length;
     // The summary exposes the unbounded count; its detail is bounded for
@@ -244,6 +269,8 @@ export async function inspectAtlasState(page,ctx,slug,meta={}){
     findings.length=Math.min(findings.length,24);
     return {verified:true,surfaceMode:mobile?
       ['mobile-edit-open','mobile-gallery-open','mobile-tools-open'].find(x=>root.classList.contains(x))||'mobile-preview':
-      'desktop',focus:meta.focusSelector||null,scanned,ignoredScroll,measuredTouchTargets,smallActionCount,under44Count,undersizedActions,totalFindings,sourceControls,findings};
+      'desktop',focus:meta.focusSelector||null,scanned,ignoredScroll,measuredTouchTargets,smallActionCount,under44Count,undersizedActions,
+      under24SpacingAssessedCount,under24SpacingCandidateCount,
+      under24SpacingCandidates,totalFindings,sourceControls,findings};
   },{slug,meta,mobile:ctx.surface.mobile});
 }
