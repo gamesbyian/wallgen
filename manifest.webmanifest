@@ -9,6 +9,12 @@
   "theme_color": "#08090e",
   "icons": [
     {
+      "src": "assets/roygbiv-logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
       "src": "assets/roygbiv-logo-dark.png",
       "sizes": "512x512",
       "type": "image/png",
