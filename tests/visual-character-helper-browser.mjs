@@ -44,8 +44,10 @@ try{
         clickedAtCentre:element===cb||label.contains(element),
         accessibleText:label.innerText};
     });
+    assert.ok(bounds.label[0]>=bounds.card[0]-1&&bounds.label[1]<=bounds.card[1]+1,
+      'Whole Character label extends beyond source card: '+JSON.stringify({width,theme,bounds}));
     assert.ok(bounds.primary[1]<=bounds.card[1]+1,
-      'Character label extends beyond source card: '+JSON.stringify({width,theme,bounds}));
+      'Character label text extends beyond source card: '+JSON.stringify({width,theme,bounds}));
     assert.ok(bounds.clickedAtCentre,'Original Character checkbox is occluded');
     assert.ok(bounds.accessibleText.includes('Override pattern homogeneity'));
     if(mobile)assert.equal(bounds.helper,'none',
