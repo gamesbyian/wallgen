@@ -122,10 +122,63 @@ try{
           dieActions.push({...point,clickDispatched:true,
             valueChanged:after.shapeFrequency!==before.shapeFrequency});
         }
+        // Nearby native minus, plus and numeric controls are the next
+        // independently undersized class. Exercise real touch positions while
+        // the lock/die stay adjacent, without substituting a Focus slider.
+        const stepper=lock.locator('xpath=..').locator('.stepper');
+        const buttons=stepper.locator('.step-button');
+        const numeric=stepper.locator('.slider-number');
+        assert.equal(await buttons.count(),2);
+        assert.equal(await numeric.count(),1);
+        const stepGeometry=[];
+        for(const el of [buttons.nth(0),buttons.nth(1),numeric]){
+          const m=await el.evaluate(node=>{
+            const r=node.getBoundingClientRect();
+            const owners=[.12,.5,.88].flatMap(fy=>[.12,.5,.88].map(fx=>{
+              const top=document.elementFromPoint(r.left+r.width*fx,r.top+r.height*fy);
+              return top===node||node.contains(top);
+            }));
+            return {width:r.width,height:r.height,owners};
+          });
+          assert.ok(m.width>=20&&m.height>=24&&m.owners.every(Boolean),
+            'Original numeric stepper child clipped/blocked: '+JSON.stringify(m));
+          stepGeometry.push(m);
+        }
+        const step=Number(await source.getAttribute('step'))||1;
+        const stepTouches=[];
+        for(const point of points){
+          const before=current(),plus=buttons.nth(1),minus=buttons.nth(0);
+          const pr=await plus.boundingBox();
+          await plus.tap({position:{x:pr.width*point.fx,y:pr.height*point.fy}});
+          assert.deepEqual(current(),{...before,shapeFrequency:before.shapeFrequency+step},
+            'Native plus edge touch mutated unexpected source field');
+          const mr=await minus.boundingBox();
+          await minus.tap({position:{x:mr.width*point.fx,y:mr.height*point.fy}});
+          assert.deepEqual(current(),before,
+            'Paired original +/- native edge touches failed exact recipe restoration');
+          stepTouches.push({...point,pairedRoundTrip:true});
+        }
+        const beforeNumeric=current();
+        await numeric.tap();
+        await numeric.fill(String(beforeNumeric.shapeFrequency+step));
+        await numeric.press('Tab');
+        assert.deepEqual(current(),{...beforeNumeric,
+          shapeFrequency:beforeNumeric.shapeFrequency+step},
+          'Native numeric source edit changed an unrelated field');
+        await numeric.fill(String(beforeNumeric.shapeFrequency));
+        await numeric.press('Tab');
+        assert.deepEqual(current(),beforeNumeric,
+          'Native numeric value could not restore original whole recipe');
+        await lock.tap();
+        assert.equal(await buttons.nth(0).isDisabled(),true);
+        assert.equal(await buttons.nth(1).isDisabled(),true);
+        assert.equal(await numeric.isDisabled(),true);
+        await lock.tap();
+        assert.deepEqual(current(),fixture,'Stepper lock/unlock lost source recipe');
         assert.deepEqual(current(),fixture,
           'Native die edge matrix changed original source recipe');
         assert.deepEqual(errors,[],'Source browser errors');
-        const observation={width,theme,initial,touched:points,dieGeometry,dieActions,
+        const observation={width,theme,initial,touched:points,dieGeometry,dieActions,stepGeometry,stepTouches,
           exactRoundTrips:points.length,recipePreserved:true,
           under44:initial.lock.width<44||initial.lock.height<44||
             dieGeometry.width<44||dieGeometry.height<44};
@@ -137,10 +190,11 @@ try{
     }
   }
   await writeFile(join(out,'evidence.json'),JSON.stringify({
-    source:'real mobile Chromium, nine independent native lock and die touches per scene',
+    source:'real mobile Chromium, nine independent native lock, die, +/- stepper touch pairs per scene',
     observations,claims:[
       'Representative original lock reachability and exact native lock/unlock',
       'Neighbour die 9-position real touch dispatch, setting-only scope and exact Undo',
+      'Original plus/minus 9-position paired native touch, numeric edit and lock gates',
       'Original 24px target is not necessarily ergonomic 44px target'
     ],exclusions:['other 82 setting dice','other lockable rows',
       'physical Android finger precision','TalkBack and human visual review']
