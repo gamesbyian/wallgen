@@ -316,7 +316,34 @@
       "category": "camera",
       "notes": "Viewport movement only. Distinct from editing path anchor positions.",
       "extension": "canvas-first-v2",
-      "status": "candidate; not wired into UI"
+      "status": "candidate; not wired into UI",
+      "independentOpticalReview": {
+        "status": "conditional-pass-for-labelled-use",
+        "reviewer": "AI independent source-pixel inspection; not human approval",
+        "date": "2026-10-20",
+        "originalSourceRun": "https://github.com/gamesbyian/wallgen/actions/runs/39527554784",
+        "exactPixelSheet": "docs/ui-reference/actual-implementation/icons/pan-states.png",
+        "sizesSeen": [
+          20,
+          24,
+          28
+        ],
+        "themesSeen": [
+          "cream",
+          "dark"
+        ],
+        "statesSeen": [
+          "normal",
+          "selected",
+          "disabled",
+          "focus"
+        ],
+        "minimumRecommendedSizePx": 20,
+        "requiredVisibleActionLabel": "Move view frame",
+        "opticalDecision": "Four cardinal arrows and centre mark read consistently; not the canvas composition nudge",
+        "actualUserApproval": false,
+        "liveWiringAuthorized": false
+      }
     },
     {
       "name": "fit-canvas",
@@ -346,7 +373,34 @@
       "category": "drawing",
       "notes": "Differentiates path vertices/handles from viewport pan.",
       "extension": "canvas-first-v2",
-      "status": "candidate; not wired into UI"
+      "status": "candidate; not wired into UI",
+      "independentOpticalReview": {
+        "status": "conditional-pass-for-labelled-use",
+        "reviewer": "AI independent source-pixel inspection; not human approval",
+        "date": "2026-10-20",
+        "originalSourceRun": "https://github.com/gamesbyian/wallgen/actions/runs/39527554784",
+        "exactPixelSheet": "docs/ui-reference/actual-implementation/icons/anchor-points-states.png",
+        "sizesSeen": [
+          20,
+          24,
+          28
+        ],
+        "themesSeen": [
+          "cream",
+          "dark"
+        ],
+        "statesSeen": [
+          "normal",
+          "selected",
+          "disabled",
+          "focus"
+        ],
+        "minimumRecommendedSizePx": 24,
+        "requiredVisibleActionLabel": "Edit points",
+        "opticalDecision": "Handles remain identifiable but small nodes lose prominence at 20px",
+        "actualUserApproval": false,
+        "liveWiringAuthorized": false
+      }
     },
     {
       "name": "smooth-path",
@@ -354,7 +408,34 @@
       "category": "drawing",
       "notes": "Smooth intended geometric segments, preserve deliberate corners.",
       "extension": "canvas-first-v2",
-      "status": "candidate; not wired into UI"
+      "status": "candidate; not wired into UI",
+      "independentOpticalReview": {
+        "status": "conditional-pass-for-labelled-use",
+        "reviewer": "AI independent source-pixel inspection; not human approval",
+        "date": "2026-10-20",
+        "originalSourceRun": "https://github.com/gamesbyian/wallgen/actions/runs/39527554784",
+        "exactPixelSheet": "docs/ui-reference/actual-implementation/icons/smooth-path-states.png",
+        "sizesSeen": [
+          20,
+          24,
+          28
+        ],
+        "themesSeen": [
+          "cream",
+          "dark"
+        ],
+        "statesSeen": [
+          "normal",
+          "selected",
+          "disabled",
+          "focus"
+        ],
+        "minimumRecommendedSizePx": 20,
+        "requiredVisibleActionLabel": "Interpret / Resmooth",
+        "opticalDecision": "Dotted transformed curve is distinct from an ordinary drawing pencil, with text",
+        "actualUserApproval": false,
+        "liveWiringAuthorized": false
+      }
     },
     {
       "name": "extend-path",
@@ -362,7 +443,34 @@
       "category": "drawing",
       "notes": "Extends editable path beyond canvas, not cropping or camera zoom.",
       "extension": "canvas-first-v2",
-      "status": "candidate; not wired into UI"
+      "status": "candidate; not wired into UI",
+      "independentOpticalReview": {
+        "status": "conditional-pass-for-labelled-use",
+        "reviewer": "AI independent source-pixel inspection; not human approval",
+        "date": "2026-10-20",
+        "originalSourceRun": "https://github.com/gamesbyian/wallgen/actions/runs/39527554784",
+        "exactPixelSheet": "docs/ui-reference/actual-implementation/icons/extend-path-states.png",
+        "sizesSeen": [
+          20,
+          24,
+          28
+        ],
+        "themesSeen": [
+          "cream",
+          "dark"
+        ],
+        "statesSeen": [
+          "normal",
+          "selected",
+          "disabled",
+          "focus"
+        ],
+        "minimumRecommendedSizePx": 24,
+        "requiredVisibleActionLabel": "Extend path",
+        "opticalDecision": "Frame and extrapolating line become visually dense at 20px",
+        "actualUserApproval": false,
+        "liveWiringAuthorized": false
+      }
     },
     {
       "name": "weave",
@@ -370,7 +478,34 @@
       "category": "drawing",
       "notes": "Intersections policy (above/below/weave), not simply line pattern.",
       "extension": "canvas-first-v2",
-      "status": "candidate; not wired into UI"
+      "status": "candidate; not wired into UI",
+      "independentOpticalReview": {
+        "status": "conditional-pass-for-labelled-use",
+        "reviewer": "AI independent source-pixel inspection; not human approval",
+        "date": "2026-10-20",
+        "originalSourceRun": "https://github.com/gamesbyian/wallgen/actions/runs/39527554784",
+        "exactPixelSheet": "docs/ui-reference/actual-implementation/icons/weave-states.png",
+        "sizesSeen": [
+          20,
+          24,
+          28
+        ],
+        "themesSeen": [
+          "cream",
+          "dark"
+        ],
+        "statesSeen": [
+          "normal",
+          "selected",
+          "disabled",
+          "focus"
+        ],
+        "minimumRecommendedSizePx": 24,
+        "requiredVisibleActionLabel": "Over / under crossings",
+        "opticalDecision": "Two-colour crossing resembles Cancel without nearby explanatory text",
+        "actualUserApproval": false,
+        "liveWiringAuthorized": false
+      }
     },
     {
       "name": "focus-slider",
@@ -378,7 +513,34 @@
       "category": "editor",
       "notes": "Optional single shared slider surface, not replacement of full inspector.",
       "extension": "canvas-first-v2",
-      "status": "candidate; not wired into UI"
+      "status": "candidate; not wired into UI",
+      "independentOpticalReview": {
+        "status": "conditional-pass-for-labelled-use",
+        "reviewer": "AI independent source-pixel inspection; not human approval",
+        "date": "2026-10-20",
+        "originalSourceRun": "https://github.com/gamesbyian/wallgen/actions/runs/39527554784",
+        "exactPixelSheet": "docs/ui-reference/actual-implementation/icons/focus-slider-states.png",
+        "sizesSeen": [
+          20,
+          24,
+          28
+        ],
+        "themesSeen": [
+          "cream",
+          "dark"
+        ],
+        "statesSeen": [
+          "normal",
+          "selected",
+          "disabled",
+          "focus"
+        ],
+        "minimumRecommendedSizePx": 24,
+        "requiredVisibleActionLabel": "Focus",
+        "opticalDecision": "Sliders are legible but potentially confused with existing Edit controls icon",
+        "actualUserApproval": false,
+        "liveWiringAuthorized": false
+      }
     },
     {
       "name": "export-png",
@@ -397,7 +559,34 @@
       "category": "output",
       "notes": "Title/description/creator/editable metadata, not design parameters.",
       "extension": "canvas-first-v2",
-      "status": "candidate; not wired into UI"
+      "status": "candidate; not wired into UI",
+      "independentOpticalReview": {
+        "status": "conditional-pass-for-labelled-use",
+        "reviewer": "AI independent source-pixel inspection; not human approval",
+        "date": "2026-10-20",
+        "originalSourceRun": "https://github.com/gamesbyian/wallgen/actions/runs/39527554784",
+        "exactPixelSheet": "docs/ui-reference/actual-implementation/icons/metadata-states.png",
+        "sizesSeen": [
+          20,
+          24,
+          28
+        ],
+        "themesSeen": [
+          "cream",
+          "dark"
+        ],
+        "statesSeen": [
+          "normal",
+          "selected",
+          "disabled",
+          "focus"
+        ],
+        "minimumRecommendedSizePx": 20,
+        "requiredVisibleActionLabel": "Image metadata",
+        "opticalDecision": "Page edge and rules remain present in both themes after dark-surface colour fix",
+        "actualUserApproval": false,
+        "liveWiringAuthorized": false
+      }
     },
     {
       "name": "restore-variation",
@@ -405,7 +594,34 @@
       "category": "history",
       "notes": "Restore historical recipe to editor, not browser Back or undo.",
       "extension": "canvas-first-v2",
-      "status": "candidate; not wired into UI"
+      "status": "candidate; not wired into UI",
+      "independentOpticalReview": {
+        "status": "conditional-pass-for-labelled-use",
+        "reviewer": "AI independent source-pixel inspection; not human approval",
+        "date": "2026-10-20",
+        "originalSourceRun": "https://github.com/gamesbyian/wallgen/actions/runs/39527554784",
+        "exactPixelSheet": "docs/ui-reference/actual-implementation/icons/restore-variation-states.png",
+        "sizesSeen": [
+          20,
+          24,
+          28
+        ],
+        "themesSeen": [
+          "cream",
+          "dark"
+        ],
+        "statesSeen": [
+          "normal",
+          "selected",
+          "disabled",
+          "focus"
+        ],
+        "minimumRecommendedSizePx": 24,
+        "requiredVisibleActionLabel": "Restore variation",
+        "opticalDecision": "Overlapping loop/papers are busy at 20px and resemble generic refresh",
+        "actualUserApproval": false,
+        "liveWiringAuthorized": false
+      }
     }
   ],
   "referenceVector": "../references/roygbiv-icon-system-approved.svg",
