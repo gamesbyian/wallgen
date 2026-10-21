@@ -46,7 +46,7 @@ screen size without changing the artwork's saved zoom or crop. No editor,
 popover or history view covers a stripe. There is **no vertical scrolling** in
 the editor.
 
-The old Design/Colour/Texture/Refine mixture has been replaced by six
+The old Design/Colour/Texture/Refine mixture has been replaced by seven
 unambiguous creative categories: **Layout, Path, Shapes, Details, Colour, Material and
 Effects**. Each category contains named tools; tap a category and its tool for
 direct access. A sideways swipe can advance to the next *named* tool, but
@@ -75,9 +75,10 @@ coverage and blending, and a **Finish** tool for strength, scale and rotation.
 Layer 2 and 3 materials can be chosen directly, without Add/Remove controls or
 an extra lock. Their default Smooth selection means off.
 The same named pattern applies to layers 1, 2 and 3, so all adjustments
-remain accessible without scrolling inside any card.
+remain available through their named tools. At the narrowest tall-phone widths,
+the Material rotation shortcuts use one horizontally swipeable 44px control row.
 
-The six-category metadata in `src/editor-schema.js` supplies the canonical
+The seven-category metadata in `src/editor-schema.js` supplies the canonical
 tool membership, dependencies and `WIZARD_STEPS` ordering. A future opt-in
 Wizard Mode can reuse the existing control objects and scoped randomization
 without duplicating settings, renderer logic or recipes. No wizard UI is
@@ -98,10 +99,12 @@ The primary interface is designed for the **Pixel 6 Pro portrait viewport** (the
 wallpaper itself is still drawn at a 600 × 1300 logical aspect ratio, exported
 at 3024 × 6552). At 790 CSS pixels and narrower the available viewport is shared
 between a live wallpaper preview and any open adjustment tray; with trays
-closed, the wallpaper regains the full preview area. A thumb-accessible, compact six-button dock provides
-Edit, Explore, Randomize, Favourite, Download and More. When editing, the dock
-moves off to the right, the header recedes upward, and the horizontal
-setting-card editor occupies the reclaimed bottom strip. Explore opens a horizontal, swipeable
+closed, the wallpaper regains the full preview area. A thumb-accessible,
+five-destination dock provides **Studio, Edit, Explore, Saved and More**.
+Random, Primes Only, Undo, Favourite, Draw Path, Download and camera controls
+remain available in the original preview-side rails. When editing, the main
+dock yields to a compact quick-action rail, the header recedes upward, and
+the horizontal setting-card editor occupies the reclaimed bottom strip. Explore opens a horizontal, swipeable
 gallery; selecting a variation closes it and reveals the preview. More reveals
 seed editing, Undo, New variation, nudge, the full metadata editor, link and
 recipe export, and detailed scene information. The actual generating model,
