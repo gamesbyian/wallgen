@@ -68,7 +68,17 @@ try{
         assert.ok(controls.every(c=>c.y>=sourceRail.stageTop-1&&
           c.bottom<=sourceRail.stageBottom+1),
           'Camera controls escape real tall-phone stage: '+JSON.stringify(controls));
-        return {sourceRail,controls};
+        // The ordinary persistent fullscreen toggle shares this top-right
+        // region in Studio. No 44px camera cell may steal any of its points.
+        const toggle=await page.locator('#mobileFullscreenToggle').boundingBox();
+        assert.ok(toggle,'Mobile immersive exit/entry vanished from Studio');
+        const collisions=controls.filter(c=>
+          c.x<toggle.x+toggle.width&&c.x+c.w>toggle.x&&
+          c.y<toggle.y+toggle.height&&c.bottom>toggle.y);
+        assert.deepEqual(collisions,[],
+          'Camera rail collides with the always-visible fullscreen control: '+
+          JSON.stringify({toggle,collisions}));
+        return {sourceRail,controls,fullscreenToggle:toggle};
       };
       const studio=await measure();
       const only=(before,after,keys,label)=>{
