@@ -222,6 +222,19 @@ try{
   for(const id of ['seedInput','applySeed','randomize','download','importRecipePNG',
     'metadataToggle','copyLink','copyRecipe','downloadRecipe','mobileShuffle'])
     await hit('#'+id);
+  // More's source-backed Shuffle action must have an actual finger-sized cell,
+  // not merely a large parent while a different button intercepts corners.
+  const shuffle=await page.locator('#mobileShuffle').evaluate(el=>{
+    const r=el.getBoundingClientRect();
+    const hits=[.18,.5,.82].flatMap(fy=>[.18,.5,.82].map(fx=>{
+      const top=document.elementFromPoint(r.left+r.width*fx,r.top+r.height*fy);
+      return top===el||el.contains(top);
+    }));
+    return {width:r.width,height:r.height,nineUnobstructed:hits.every(Boolean)};
+  });
+  assert.ok(shuffle.width>=44&&shuffle.height>=44&&shuffle.nineUnobstructed,
+    'More Shuffle has no independent 44px source hit target: '+JSON.stringify(shuffle));
+  record('more-shuffle-native-touch-region',{shuffle});
   const batchHit=await hit('.mobile-more-batch');
   record('more-groups-hit-tests',{groups,batchHit});
 
