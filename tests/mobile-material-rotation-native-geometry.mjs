@@ -45,7 +45,32 @@ try{
     const number=card.locator('input[name="'+key+'"]');
     assert.equal(await number.count(),1);
     const measured=[];
+    const rotationRail=card.locator('.texture-rotation-field .rotation-controls');
+    const track=await rotationRail.evaluate(el=>({client:el.clientWidth,
+      scroll:el.scrollWidth,overflow:getComputedStyle(el).overflowX}));
+    assert.equal(track.overflow,'auto','Original rotation rail must be finger scrollable');
+    let fingerScroll=0;
+    if(track.scroll>track.client+2){
+      const cdp=await context.newCDPSession(page);
+      const frame=await rotationRail.boundingBox(),x=frame.x+frame.width-22,
+        y=frame.y+frame.height/2;
+      await cdp.send('Input.dispatchTouchEvent',{
+        type:'touchStart',touchPoints:[{x,y,id:1}]});
+      for(let i=1;i<=9;i++){
+        await cdp.send('Input.dispatchTouchEvent',{
+          type:'touchMove',touchPoints:[{x:x-13*i,y,id:1}]});
+        await page.waitForTimeout(16);
+      }
+      await cdp.send('Input.dispatchTouchEvent',{
+        type:'touchEnd',touchPoints:[]});
+      await page.waitForTimeout(140);
+      fingerScroll=await rotationRail.evaluate(el=>el.scrollLeft);
+      assert.ok(fingerScroll>1,'Material source rotation strip rejected finger swipe');
+    }
+    await rotationRail.evaluate(el=>{el.scrollLeft=0});
+    const measured=[];
     for(const [index,el] of [...buttons,number].entries()){
+      await el.scrollIntoViewIfNeeded();
       const box=await el.evaluate(node=>{
         const r=node.getBoundingClientRect(),card=node.closest('.editor-tool-card')
           .getBoundingClientRect();
@@ -59,15 +84,32 @@ try{
           owners,disabled:node.disabled};
       });
       measured.push({kind:index<5?'shortcut':'number',index,...box});
-      assert.ok(box.w>=20&&box.h>=24&&box.withinCard&&box.owners.every(Boolean)&&!box.disabled,
+      assert.ok(box.w>=44&&box.h>=44&&box.withinCard&&box.owners.every(Boolean)&&!box.disabled,
         'Native Material rotation child unavailable: '+
           JSON.stringify({width,theme,layer,index,box}));
     }
-    for(let a=0;a<measured.length;a++)for(let b=a+1;b<measured.length;b++){
-      const p=measured[a],q=measured[b];
-      assert.ok(p.x+p.w<=q.x||q.x+q.w<=p.x||p.y+p.h<=q.y||q.y+q.h<=p.y,
-        'Independent Material controls have intersecting rectangles: '+
-          JSON.stringify({width,theme,layer,a,b,p,q}));
+    // Individual measurements occur after horizontal scrolling and thus
+    // belong to different scroll positions; comparing their recorded global
+    // x positions would manufacture false sibling overlaps. Query the live
+    // rail's unscrolled *layout* positions instead, in one DOM snapshot.
+    const siblingsOverlap=await rotationRail.evaluate(el=>{
+      const positions=[...el.children].filter(node=>!node.hidden).map(node=>({
+        left:node.offsetLeft,width:node.offsetWidth,top:node.offsetTop,
+        height:node.offsetHeight}));
+      let overlap=false;
+      for(let i=0;i<positions.length;i++)for(let j=i+1;j<positions.length;j++){
+        const a=positions[i],b=positions[j];
+        if(a.left<b.left+b.width-1&&b.left<a.left+a.width-1&&
+          a.top<b.top+b.height-1&&b.top<a.top+a.height-1)overlap=true;
+      }
+      return overlap;
+    });
+    assert.equal(siblingsOverlap,false,'Material 44px source cells overlap in layout');
+    for(const control of [card.locator('.texture-rotation-field>.editor-setting-die'),
+      card.locator('.texture-rotation-field>.setting-lock')]){
+      const r=await control.boundingBox();
+      assert.ok(r&&r.width>=44&&r.height>=44,
+        'Material header die/lock remain below44');
     }
     const actions=[-90,-1,1,90,null];
     for(let i=0;i<5;i++){
@@ -94,7 +136,7 @@ try{
       await minus.tap();
       assert.deepEqual(current(),before,'Paired Material ±1 did not exactly restore recipe');
     }
-    layers.push({layer,key,controls:measured,actions:5,
+    layers.push({layer,key,controls:measured,track,fingerScroll,actions:5,
       nativePlusEdgePairs:positions.length,under44:measured.filter(x=>x.w<44||x.h<44).length,
       sourceUnchangedFields:true});
     await page.screenshot({path:join(out,width+'-'+theme+'-finish'+layer+'.png'),
