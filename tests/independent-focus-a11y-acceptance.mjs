@@ -72,6 +72,30 @@ try{
        'Focus → All escape is not touch reachable: '+JSON.stringify(hit));
      const chips=page.locator('.editor-focus-chip[data-focus-key]');
      assert.equal(await chips.count(),allFields.length,'Focus chips must match original visible sliders');
+     if(allFields.length){
+       // A horizontally scrollable chip strip deliberately clips noncurrent
+       // choices. Scroll each REAL source button into view before probing
+       // pointer ownership; testing offscreen rectangles falsely reports an
+       // overlap and would reward deleting accessible overflow.
+       const measured=[];
+       for(let i=0;i<await chips.count();i++){
+         const chip=chips.nth(i);
+         await chip.scrollIntoViewIfNeeded();
+         const box=await chip.evaluate(el=>{
+           const r=el.getBoundingClientRect();
+           const hits=[.18,.5,.82].flatMap(fy=>[.18,.5,.82].map(fx=>{
+             const owner=document.elementFromPoint(r.left+r.width*fx,r.top+r.height*fy);
+             return owner===el||el.contains(owner);
+           }));
+           return {key:el.dataset.focusKey,width:r.width,height:r.height,
+             nineUnobstructed:hits.every(Boolean)};
+         });
+         measured.push(box);
+       }
+       assert.ok(measured.every(v=>v.width>=44&&v.height>=44&&v.nineUnobstructed),
+         'Each scrolled-into-view Focus chip needs 44px and unobstructed 3x3 regions: '+
+         JSON.stringify(measured));
+     }
      if(item.key){
       const chosen=page.locator('.editor-focus-chip[data-focus-key="'+item.key+'"]');
       assert.equal(await chosen.count(),1,'Missing Focus representation for '+item.key);
