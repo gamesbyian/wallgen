@@ -20,8 +20,8 @@
 .editor-focus-all{background:#ffe0bb;border:1px solid #d3a082;border-radius:8px;
   padding:6px 10px;min-height:34px;white-space:nowrap;color:#292433;font-weight:750}
 .editor-focus-chips{display:flex;align-items:center;gap:6px;flex:0 0 auto;
-  overflow:auto hidden;overscroll-behavior-x:contain;min-height:37px;scrollbar-width:thin}
-.editor-focus-chip{flex:0 0 auto;min-height:33px;max-width:170px;padding:5px 10px;
+  overflow:auto hidden;overscroll-behavior-x:contain;min-height:44px;scrollbar-width:thin}
+.editor-focus-chip{flex:0 0 auto;min-height:44px;max-width:170px;padding:5px 10px;
   color:inherit;background:var(--surface);border:1px solid var(--line);
   border-radius:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .editor-focus-chip[aria-pressed="true"]{background:#d660991e;border-color:#cb5994;font-weight:750}
