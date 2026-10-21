@@ -192,3 +192,19 @@ body.mobile-studio .sidebar .editor-tool-card[data-editor-tool^="interior"]>labe
   border-radius:9px;background:var(--surface);color:var(--muted);
   font-size:11px;line-height:1.4;
 }
+
+/* Screen-reader-friendly empty Interior guidance needs legible contrast in
+   both themes. The generic --muted token was 3.12:1 cream / 4.31:1 dark
+   against these card surfaces at desktop, per the real all-tool axe sweep. */
+html[data-theme="cream"] .editor-tool-card .interior-empty-guidance{
+  color:#64586d;
+}
+html[data-theme="dark"] .editor-tool-card .interior-empty-guidance{
+  color:#bfc1ce;
+}
+/* Earlier interior-card prose had 80% opacity. That composited the new cream
+   ink to #837989 on white (4.08:1) even though its declared colour passes.
+   Empty guidance is an actionable instruction, so render the chosen ink fully. */
+.editor-tool-card[data-editor-tool="interior"] > p.interior-empty-guidance{
+  opacity:1;
+}
