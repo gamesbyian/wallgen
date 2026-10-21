@@ -16,7 +16,7 @@
   <link rel="stylesheet" href="studio-themes.css?v=20261020a11y4">
   <link rel="stylesheet" href="mobile-compact.css?v=20261016-dock2">
   <link rel="stylesheet" href="mobile-five-nav.css?v=20261018-default1">
-  <link rel="stylesheet" href="mobile-editor-rail.css?v=20261020-zoomcontrast1">
+  <link rel="stylesheet" href="mobile-editor-rail.css?v=20261020-character-crop1">
   <link rel="stylesheet" href="design-transform.css?v=20261016-transform1">
   <link rel="stylesheet" href="draw-path.css?v=20261019-touch1">
   <link rel="stylesheet" href="image-path.css?v=20261019-importcontrast1">
@@ -256,7 +256,7 @@
           <label class="field range-field"><span>Stripe thickness </span><input type="range" name="stripeWidth" id="stripeWidth" data-setting="stripeWidth" min="0" max="100" value="52"></label>
           <label class="field range-field" title="Changes the spacing between stripes, not their thickness"><span>Stripe spacing </span><input type="range" name="spread" id="spread" data-setting="spread" min="0" max="100" value="56"></label>
           <label class="field range-field"><span>Stripe individuality </span><input type="range" name="individuality" id="individuality" data-setting="individuality" min="0" max="100" value="34"></label>
-          <label class="homogeneity-override"><input type="checkbox" name="overridePatternHomogeneity" data-setting="overridePatternHomogeneity"><span>Override pattern homogeneity with stripe individuality<small>When enabled, individuality introduces additional per-stripe differences in pattern size, orientation and transparency.</small></span></label>
+          <label class="homogeneity-override" title="When enabled, individuality introduces additional per-stripe differences in pattern size, orientation and transparency."><input type="checkbox" name="overridePatternHomogeneity" data-setting="overridePatternHomogeneity" aria-description="When enabled, individuality introduces additional per-stripe differences in pattern size, orientation and transparency."><span>Override pattern homogeneity with stripe individuality<small>When enabled, individuality introduces additional per-stripe differences in pattern size, orientation and transparency.</small></span></label>
           <label class="field range-field"><span>Outline thickness </span><input type="range" name="gap" id="gap" data-setting="gap" min="0" max="100" value="28"></label>
           <label class="field range-field"><span>Outline buffer </span><input type="range" name="outlineBuffer" id="outlineBuffer" data-setting="outlineBuffer" min="0" max="100" value="0" title="Distance between each stripe and its outline"></label>
           <label class="field range-field"><span>Floating stripe length</span><input type="range" name="pathLength" data-setting="pathLength" min="0" max="100" value="65"></label>
