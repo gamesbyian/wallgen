@@ -288,3 +288,34 @@ html[data-theme=cream] body.mobile-studio .mobile-zoom-level{
     display:none!important;
   }
 }
+
+/* Tall-phone native camera touch cells. The original seven plus composition
+   Reset are independent source controls, 31px on narrow widths. A 44px
+   source hit cell cannot fit in the existing 35px rail without extending
+   into artwork. Reserve a genuine 46px rail and move only its matching
+   preview inner edge by 11px. Preserve the 600×1300 wallpaper and camera.
+   Portraits under 840px retain their compact source layout until independently
+   qualified; desktop and 500–790px own separate camera sizing rules. */
+@media(max-width:499px) and (min-height:840px){
+  body.mobile-studio .mobile-preview-rail-right{
+    /* The top-right immersive toggle occupies an independent 44px cell
+       below the masthead. Shift the camera rail down within taller stages
+       so its first nudge never steals that toggle's touch region. */
+    top:80px;bottom:4px;right:2px;width:46px;
+  }
+  body.mobile-studio .studio-stage .stage-inner{
+    margin-right:43px;
+    width:calc(100% - 86px)!important;
+  }
+  body.mobile-studio .mobile-preview-rail-right .nudge-pad{
+    width:44px;gap:2px;
+  }
+  body.mobile-studio .mobile-preview-rail-right .nudge-pad .nudge-button,
+  body.mobile-studio .mobile-zoom-button{
+    width:44px!important;min-width:44px!important;max-width:44px!important;
+    height:44px!important;min-height:44px!important;max-height:44px!important;
+  }
+  body.mobile-studio .mobile-zoom-slot{
+    gap:2px;padding-top:5px;margin-top:3px;
+  }
+}
