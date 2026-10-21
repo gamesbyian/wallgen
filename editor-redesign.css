@@ -1059,7 +1059,9 @@ html[data-theme="cream"] body.mobile-studio .sidebar .settings-tabs .settings-ta
    Keep every category accessible in one line rather than shrinking labels,
    adding a second clipped row, or hiding tools. Category tabs follow the
    same horizontal-swipe pattern as their source tool chips at narrow widths. */
-@media (max-width:399px){
+/* Extend the pre-existing narrow-phone swipe strip to the 499px design
+   handoff. The 500px+ seven-column source layout remains unchanged. */
+@media (max-width:499px){
   body.mobile-studio .sidebar .settings-tabs{
     display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;
     gap:9px!important;justify-content:flex-start!important;align-items:stretch!important;
@@ -1070,7 +1072,7 @@ html[data-theme="cream"] body.mobile-studio .sidebar .settings-tabs .settings-ta
   }
   body.mobile-studio .sidebar .settings-tabs::-webkit-scrollbar{display:none}
   body.mobile-studio .sidebar .settings-tabs .settings-tab{
-    flex:0 0 auto!important;width:auto!important;min-width:max-content!important;
-    padding:0 5px!important;white-space:nowrap!important;
+    flex:0 0 auto!important;width:auto!important;min-width:44px!important;
+    padding:0 8px!important;white-space:nowrap!important;
   }
 }
