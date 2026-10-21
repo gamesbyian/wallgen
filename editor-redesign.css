@@ -1224,20 +1224,21 @@ html[data-theme="cream"] body.mobile-studio .sidebar .settings-tabs .settings-ta
   }
 }
 
-/* Tall narrow Path > Geometry trial: the actual shape-frequency range row
-   originally holds a 24×26 lock/die beside 21×25 stepper buttons. Give this
-   original row a labelled 44px header and 44px stepper line within the
-   existing editor tray; never expand invisible hotspots over siblings.
-   Limit the experiment to one source row before considering a typed rule
-   for other settings. Compact short-height and desktop rows are unchanged. */
+/* The two individually source-verified tall-phone 44px setting rows share an
+   identical physical-control grammar: Path Geometry > Shape frequency and
+   Shapes Structure > Stripe width. Keep one typed selector so future changes
+   cannot silently diverge or cause invisible overlapping hitboxes. Exactly
+   one enlarged 92px row belongs to each named tool card; all siblings and
+   short-height/desktop controls retain their existing compact geometry.
+   Both source touch suites and canonical live plates guard this contract. */
 @media(max-width:499px) and (min-height:840px){
   body.mobile-studio.mobile-edit-open:has(
-    .editor-tool-card[data-editor-tool="geometry"]:not([hidden])){
+    :is(.editor-tool-card[data-editor-tool="geometry"],.editor-tool-card[data-editor-tool="structure"]):not([hidden])){
     --mobile-tray-height:clamp(350px,40dvh,394px)!important;
   }
   body.mobile-studio .sidebar
-    .editor-tool-card[data-editor-tool="geometry"]
-    .lockable-setting:has(input[name="shapeFrequency"]){
+    :is(.editor-tool-card[data-editor-tool="geometry"],.editor-tool-card[data-editor-tool="structure"])
+    .lockable-setting:has(input:is([name="shapeFrequency"],[name="stripeWidth"])){
     display:flex!important;flex-direction:column!important;
     position:relative!important;
     min-height:92px!important;
@@ -1245,8 +1246,8 @@ html[data-theme="cream"] body.mobile-studio .sidebar .settings-tabs .settings-ta
     gap:4px!important;padding:0!important;margin:0!important;
   }
   body.mobile-studio .sidebar
-    .editor-tool-card[data-editor-tool="geometry"]
-    .lockable-setting:has(input[name="shapeFrequency"])>.field.range-field{
+    :is(.editor-tool-card[data-editor-tool="geometry"],.editor-tool-card[data-editor-tool="structure"])
+    .lockable-setting:has(input:is([name="shapeFrequency"],[name="stripeWidth"]))>.field.range-field{
     display:grid!important;
     grid-template-columns:minmax(0,1fr)!important;
     grid-template-rows:44px 44px!important;
@@ -1255,16 +1256,16 @@ html[data-theme="cream"] body.mobile-studio .sidebar .settings-tabs .settings-ta
     padding:0!important;margin:0!important;
   }
   body.mobile-studio .sidebar
-    .editor-tool-card[data-editor-tool="geometry"]
-    .lockable-setting:has(input[name="shapeFrequency"])>.field.range-field>span:not(.stepper){
+    :is(.editor-tool-card[data-editor-tool="geometry"],.editor-tool-card[data-editor-tool="structure"])
+    .lockable-setting:has(input:is([name="shapeFrequency"],[name="stripeWidth"]))>.field.range-field>span:not(.stepper){
     grid-column:1!important;grid-row:1!important;
     max-width:calc(100% - 100px)!important;
     height:44px!important;display:flex!important;align-items:center!important;
     font-size:12px!important;
   }
   body.mobile-studio .sidebar
-    .editor-tool-card[data-editor-tool="geometry"]
-    .lockable-setting:has(input[name="shapeFrequency"])>.field.range-field>.stepper{
+    :is(.editor-tool-card[data-editor-tool="geometry"],.editor-tool-card[data-editor-tool="structure"])
+    .lockable-setting:has(input:is([name="shapeFrequency"],[name="stripeWidth"]))>.field.range-field>.stepper{
     grid-column:1!important;grid-row:2!important;
     display:flex!important;align-items:center!important;
     width:100%!important;min-width:0!important;
@@ -1272,11 +1273,11 @@ html[data-theme="cream"] body.mobile-studio .sidebar .settings-tabs .settings-ta
     gap:4px!important;margin:0!important;padding:0!important;
   }
   body.mobile-studio .sidebar
-    .editor-tool-card[data-editor-tool="geometry"]
-    .lockable-setting:has(input[name="shapeFrequency"])>.editor-setting-die,
+    :is(.editor-tool-card[data-editor-tool="geometry"],.editor-tool-card[data-editor-tool="structure"])
+    .lockable-setting:has(input:is([name="shapeFrequency"],[name="stripeWidth"]))>.editor-setting-die,
   body.mobile-studio .sidebar
-    .editor-tool-card[data-editor-tool="geometry"]
-    .lockable-setting:has(input[name="shapeFrequency"])>.setting-lock{
+    :is(.editor-tool-card[data-editor-tool="geometry"],.editor-tool-card[data-editor-tool="structure"])
+    .lockable-setting:has(input:is([name="shapeFrequency"],[name="stripeWidth"]))>.setting-lock{
     position:absolute!important;top:0!important;
     box-sizing:border-box!important;z-index:1!important;
     width:44px!important;min-width:44px!important;max-width:44px!important;
@@ -1284,22 +1285,22 @@ html[data-theme="cream"] body.mobile-studio .sidebar .settings-tabs .settings-ta
     padding:2px!important;
   }
   body.mobile-studio .sidebar
-    .editor-tool-card[data-editor-tool="geometry"]
-    .lockable-setting:has(input[name="shapeFrequency"])>.editor-setting-die{
+    :is(.editor-tool-card[data-editor-tool="geometry"],.editor-tool-card[data-editor-tool="structure"])
+    .lockable-setting:has(input:is([name="shapeFrequency"],[name="stripeWidth"]))>.editor-setting-die{
     right:48px!important;
   }
   body.mobile-studio .sidebar
-    .editor-tool-card[data-editor-tool="geometry"]
-    .lockable-setting:has(input[name="shapeFrequency"])>.setting-lock{
+    :is(.editor-tool-card[data-editor-tool="geometry"],.editor-tool-card[data-editor-tool="structure"])
+    .lockable-setting:has(input:is([name="shapeFrequency"],[name="stripeWidth"]))>.setting-lock{
     right:0!important;
   }
   body.mobile-studio .sidebar
-    .editor-tool-card[data-editor-tool="geometry"]
-    .lockable-setting:has(input[name="shapeFrequency"])
+    :is(.editor-tool-card[data-editor-tool="geometry"],.editor-tool-card[data-editor-tool="structure"])
+    .lockable-setting:has(input:is([name="shapeFrequency"],[name="stripeWidth"]))
     .stepper>.step-button,
   body.mobile-studio .sidebar
-    .editor-tool-card[data-editor-tool="geometry"]
-    .lockable-setting:has(input[name="shapeFrequency"])
+    :is(.editor-tool-card[data-editor-tool="geometry"],.editor-tool-card[data-editor-tool="structure"])
+    .lockable-setting:has(input:is([name="shapeFrequency"],[name="stripeWidth"]))
     .stepper>.slider-number{
     box-sizing:border-box!important;
     flex:0 0 44px!important;
@@ -1307,101 +1308,8 @@ html[data-theme="cream"] body.mobile-studio .sidebar .settings-tabs .settings-ta
     height:44px!important;min-height:44px!important;max-height:44px!important;
   }
   body.mobile-studio .sidebar
-    .editor-tool-card[data-editor-tool="geometry"]
-    .lockable-setting:has(input[name="shapeFrequency"])
-    .stepper>input[type=range]{
-    flex:1 1 auto!important;
-    min-width:28px!important;
-    width:auto!important;
-    height:44px!important;min-height:44px!important;
-  }
-}
-
-/* Tall narrow Shapes > Structure: the original stripe-width range row
-   originally holds a 24×26 lock/die beside 21×25 stepper buttons. Give this
-   original row a labelled 44px header and 44px stepper line within the
-   existing editor tray; never expand invisible hotspots over siblings.
-   Limit this application to its own source card, without stacking multiple
-   92px rows in one 200px editor panel. Compact short-height and desktop rows are unchanged. */
-@media(max-width:499px) and (min-height:840px){
-  body.mobile-studio.mobile-edit-open:has(
-    .editor-tool-card[data-editor-tool="structure"]:not([hidden])){
-    --mobile-tray-height:clamp(350px,40dvh,394px)!important;
-  }
-  body.mobile-studio .sidebar
-    .editor-tool-card[data-editor-tool="structure"]
-    .lockable-setting:has(input[name="stripeWidth"]){
-    display:flex!important;flex-direction:column!important;
-    position:relative!important;
-    min-height:92px!important;
-    width:100%!important;align-items:stretch!important;
-    gap:4px!important;padding:0!important;margin:0!important;
-  }
-  body.mobile-studio .sidebar
-    .editor-tool-card[data-editor-tool="structure"]
-    .lockable-setting:has(input[name="stripeWidth"])>.field.range-field{
-    display:grid!important;
-    grid-template-columns:minmax(0,1fr)!important;
-    grid-template-rows:44px 44px!important;
-    gap:4px!important;align-items:center!important;
-    width:100%!important;height:92px!important;min-height:92px!important;
-    padding:0!important;margin:0!important;
-  }
-  body.mobile-studio .sidebar
-    .editor-tool-card[data-editor-tool="structure"]
-    .lockable-setting:has(input[name="stripeWidth"])>.field.range-field>span:not(.stepper){
-    grid-column:1!important;grid-row:1!important;
-    max-width:calc(100% - 100px)!important;
-    height:44px!important;display:flex!important;align-items:center!important;
-    font-size:12px!important;
-  }
-  body.mobile-studio .sidebar
-    .editor-tool-card[data-editor-tool="structure"]
-    .lockable-setting:has(input[name="stripeWidth"])>.field.range-field>.stepper{
-    grid-column:1!important;grid-row:2!important;
-    display:flex!important;align-items:center!important;
-    width:100%!important;min-width:0!important;
-    height:44px!important;min-height:44px!important;
-    gap:4px!important;margin:0!important;padding:0!important;
-  }
-  body.mobile-studio .sidebar
-    .editor-tool-card[data-editor-tool="structure"]
-    .lockable-setting:has(input[name="stripeWidth"])>.editor-setting-die,
-  body.mobile-studio .sidebar
-    .editor-tool-card[data-editor-tool="structure"]
-    .lockable-setting:has(input[name="stripeWidth"])>.setting-lock{
-    position:absolute!important;top:0!important;
-    box-sizing:border-box!important;z-index:1!important;
-    width:44px!important;min-width:44px!important;max-width:44px!important;
-    height:44px!important;min-height:44px!important;max-height:44px!important;
-    padding:2px!important;
-  }
-  body.mobile-studio .sidebar
-    .editor-tool-card[data-editor-tool="structure"]
-    .lockable-setting:has(input[name="stripeWidth"])>.editor-setting-die{
-    right:48px!important;
-  }
-  body.mobile-studio .sidebar
-    .editor-tool-card[data-editor-tool="structure"]
-    .lockable-setting:has(input[name="stripeWidth"])>.setting-lock{
-    right:0!important;
-  }
-  body.mobile-studio .sidebar
-    .editor-tool-card[data-editor-tool="structure"]
-    .lockable-setting:has(input[name="stripeWidth"])
-    .stepper>.step-button,
-  body.mobile-studio .sidebar
-    .editor-tool-card[data-editor-tool="structure"]
-    .lockable-setting:has(input[name="stripeWidth"])
-    .stepper>.slider-number{
-    box-sizing:border-box!important;
-    flex:0 0 44px!important;
-    width:44px!important;min-width:44px!important;max-width:44px!important;
-    height:44px!important;min-height:44px!important;max-height:44px!important;
-  }
-  body.mobile-studio .sidebar
-    .editor-tool-card[data-editor-tool="structure"]
-    .lockable-setting:has(input[name="stripeWidth"])
+    :is(.editor-tool-card[data-editor-tool="geometry"],.editor-tool-card[data-editor-tool="structure"])
+    .lockable-setting:has(input:is([name="shapeFrequency"],[name="stripeWidth"]))
     .stepper>input[type=range]{
     flex:1 1 auto!important;
     min-width:28px!important;
