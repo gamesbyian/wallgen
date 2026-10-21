@@ -31,4 +31,4 @@ References:
 
 ## Change ownership
 
-`src/mobile-fullscreen.js` owns state, event subscriptions and dynamic control instantiation. `mobile-fullscreen.css` owns its visual target geometry and safe-area positioning. The manifest controls installed launch only. No shared CSS overrides or renderer changes. Initial fullscreen PR: #369. Image-import top-layer continuity fix: subsequent follow-up PR (see GitHub history); physical device remains unverified.
+`src/mobile-fullscreen.js` owns state, event subscriptions and dynamic control instantiation. `mobile-fullscreen.css` owns its visual target geometry and safe-area positioning. The manifest controls installed launch only. No shared CSS overrides or renderer changes. Initial fullscreen PR: #369. Image-import top-layer continuity fix: #378. Independent regression discovered in the previous Focus heading enlargement is now repaired in merged #379 (the 412×892 browser smoke, atlas and Focus accessibility checks are green); this branch must still independently pass source-level and phone smoke on the **current integration base**. Physical Android device remains unverified.
