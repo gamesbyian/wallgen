@@ -1,0 +1,37 @@
+name: Mobile Focus entry source geometry
+on:
+  pull_request:
+    paths:
+      - tests/mobile-focus-entry-strip-geometry.mjs
+      - .github/workflows/mobile-focus-entry-strip-geometry.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native-touch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check tests/mobile-focus-entry-strip-geometry.mjs
+      - run: npm install --no-save playwright@1.56.1 serve@14.2.5
+      - run: npx playwright install --with-deps chromium
+      - name: Start source app
+        run: |
+          npx serve . -l 4173 >/tmp/focus-geometry-source.log 2>&1 &
+          for i in $(seq 1 40); do
+            curl -fsS http://127.0.0.1:4173/ >/dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/focus-geometry-source.log
+          exit 1
+      - run: node tests/mobile-focus-entry-strip-geometry.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: focus-entry-pinned-strip-evidence
+          path: artifacts/mobile-focus-entry-strip-geometry/
+          if-no-files-found: warn
