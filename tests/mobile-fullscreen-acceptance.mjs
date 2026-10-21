@@ -56,9 +56,16 @@ try{
     }else{
       await btn.tap();
     }
-    await page.waitForFunction(()=>!document.fullscreenElement&&
-      document.querySelector('#mobileFullscreenToggle')?.getAttribute('aria-label')==='Enter fullscreen',
-      null,{timeout:8000});
+    await page.waitForFunction(()=>!document.fullscreenElement,null,{timeout:8000});
+    if(width===412){
+      // After landscape exit the viewport is desktop-width: the *entry*
+      // button should disappear; only fullscreen exit must persist on resize.
+      await page.waitForFunction(()=>
+        document.querySelector('#mobileFullscreenToggle')?.hidden===true);
+    }else{
+      await page.waitForFunction(()=>
+        document.querySelector('#mobileFullscreenToggle')?.getAttribute('aria-label')==='Enter fullscreen');
+    }
     assert.equal(page.url(),before,'Fullscreen enter/exit modified the source recipe URL');
     assert.deepEqual(errors,[]);
     console.log('FULLSCREEN_BROWSER_PASS',JSON.stringify({width,geometry,exitHit}));
