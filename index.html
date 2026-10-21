@@ -7,6 +7,7 @@
   <meta name="description" content="R.O.Y.G.B.I.V. — Rainbow-Only. You Generate Based on Individual Variables. A procedural rainbow wallpaper studio.">
   <title>R.O.Y.G.B.I.V. | Rainbow-Only Wallpaper Studio</title>
   <link rel="icon" type="image/svg+xml" href="assets/roygbiv-logo.svg">
+  <link rel="manifest" href="manifest.webmanifest">
   <script>
     // Apply the saved theme before stylesheets paint to avoid a dark flash.
     try { document.documentElement.dataset.theme = localStorage.getItem('roygbiv:studio-theme:v1') || 'cream'; }
@@ -16,6 +17,7 @@
   <link rel="stylesheet" href="studio-themes.css?v=20261020a11y4">
   <link rel="stylesheet" href="mobile-compact.css?v=20261016-dock2">
   <link rel="stylesheet" href="mobile-five-nav.css?v=20261018-default1">
+  <link rel="stylesheet" href="mobile-fullscreen.css?v=20261021-1">
   <link rel="stylesheet" href="mobile-editor-rail.css?v=20261020-character-crop1">
   <link rel="stylesheet" href="design-transform.css?v=20261016-transform1">
   <link rel="stylesheet" href="draw-path.css?v=20261019-touch1">
@@ -408,6 +410,12 @@
       stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"
       aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>
   </button>
+  <button type="button" id="mobileFullscreenToggle" class="mobile-fullscreen-toggle" aria-label="Enter fullscreen" title="Enter fullscreen" hidden>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path class="fullscreen-enter-glyph" d="M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5"/>
+      <path class="fullscreen-exit-glyph" d="M3 8h5V3M21 8h-5V3M3 16h5v5M21 16h-5v5"/>
+    </svg>
+  </button>
   <dialog id="imagePathDialog" class="image-path-dialog" aria-label="Extract a path from an image" data-phase="idle">
     <div class="image-path-top"><strong>Import path from image</strong><span class="image-path-phase" aria-hidden="true">Choose image</span><button type="button" id="imagePathCancel" aria-label="Close image importer"><img class="ui-icon" src="assets/icons/roygbiv/close.svg" alt="" aria-hidden="true" draggable="false"></button></div>
     <p id="imagePathStatus" role="status" aria-live="polite">Choose a path from the image.</p>
@@ -423,6 +431,7 @@
   </dialog>
   <script type="module" src="src/app.js?v=20261020-controlsfix1"></script>
   <script type="module" src="src/mobile-studio.js?v=20261018-default1"></script>
+  <script type="module" src="src/mobile-fullscreen.js?v=20261021-1"></script>
   <script type="module" src="src/mobile-swipes.js?v=20261017-explore1"></script>
   <script type="module" src="src/mobile-preview-tools.js?v=20261020-primes3"></script>
 </body>
