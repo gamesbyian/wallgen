@@ -121,19 +121,29 @@ function applyVisibility(){
   overlay.style.clipPath=split?'inset(0 0 0 '+splitPosition+'%)':'none';
 }
 splitPositionSet(50);
-function updateState({announce=true}={}){
+function updateViewLabels(){
   const active=isEnabled();
+  const displayingSimulation=active&&!showOriginal;
   const description=mode.selectedOptions[0].textContent;
-  toggle.textContent=active?'Vision: '+description+' '+Math.round(strength*100)+'%':'Vision preview';
-  toggle.title=active?'Wallpaper shown with a simulated colour-vision difference; saved PNG remains original':'Inspect simulated colour-vision differences';
+  const severityText=Math.round(strength*100)+'%';
+  toggle.textContent=displayingSimulation?'Vision: '+description+' '+severityText:'Vision preview';
+  toggle.title=displayingSimulation?
+    'Wallpaper shown with a simulated colour-vision difference; downloaded PNG remains original':
+    active?'Original temporarily shown; colour-vision simulation is configured':
+    'Inspect simulated colour-vision differences';
   if(mobileMore){
-    mobileMore.dataset.visionActive=String(active);
-    mobileMore.setAttribute('aria-label',active?'More tools; colour vision simulation active':mobileMoreLabel);
+    mobileMore.dataset.visionActive=String(displayingSimulation);
+    mobileMore.setAttribute('aria-label',displayingSimulation?
+      'More tools; colour vision simulation active':mobileMoreLabel);
   }
-  if(active){
-    source.setAttribute('aria-label',originalSourceLabel+' (visible simulated preview: '+description+
-      ', '+Math.round(strength*100)+'%; downloaded art remains original)');
+  if(displayingSimulation){
+    source.setAttribute('aria-label',originalSourceLabel+
+      ' (visible simulated preview: '+description+', '+severityText+
+      '; downloaded art remains original)');
   }else source.setAttribute('aria-label',originalSourceLabel);
+}
+function updateState({announce=true}={}){
+  updateViewLabels();
   severity.disabled=selected==='original';
   compare.disabled=selected==='original';
   original.disabled=selected==='original';
@@ -292,8 +302,12 @@ original.addEventListener('click',()=>{
   showOriginal=!showOriginal;
   original.textContent=showOriginal?'Show simulation':'Show original';
   original.setAttribute('aria-pressed',String(showOriginal));
+  updateViewLabels();
   if(!showOriginal&&processedVersion!==frameVersion)requestConversion();
   applyVisibility();
+  status.textContent=showOriginal?'Showing original temporarily. The wallpaper is unchanged.':
+    'Showing '+mode.selectedOptions[0].textContent+' simulation at '+
+      Math.round(strength*100)+'%. Display only.';
 });
 divider.addEventListener('pointerdown',event=>{
   event.preventDefault();divider.setPointerCapture(event.pointerId);
