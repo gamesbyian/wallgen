@@ -6,7 +6,7 @@
 
 - **Working shipped art:** Rainbow Orbits + imported silhouettes and reusable geometry (#434), selected-object nudge/reset (#449) and opt-in direct canvas dragging (#456), scientific **display-only** colour-vision inspection (#432), Material/Finish consolidation and guided settings (#452/#454/#455/#459–#465). Preserve recipe/Undo/export semantics, and don't rebuild already shipping modes.
 - **Material quality not yet approved:** [#445](https://github.com/gamesbyian/wallgen/issues/445); a validated [seven-image review script](docs/MATERIAL-SEVEN-IMAGE-ART-REVIEW-2026-10-22.md) exists (#453/#458), but actual samples have not been visually inspected in this thread.
-- **NEW, planned rather than shipped:** [embroidery #467](https://github.com/gamesbyian/wallgen/issues/467) and [film #468](https://github.com/gamesbyian/wallgen/issues/468), with full specifications below. Implement small working artwork milestones and keep them independent.
+- **NEW, planned rather than shipped:** [embroidery #467](https://github.com/gamesbyian/wallgen/issues/467), [film #468](https://github.com/gamesbyian/wallgen/issues/468) and [digital-camera looks #471](https://github.com/gamesbyian/wallgen/issues/471), with full specifications below. **Film and Camera share one versioned photoLook and Light → Photo UI.** Implement small working artwork milestones and keep them independent.
 - **Specific usability decisions:** [#444](https://github.com/gamesbyian/wallgen/issues/444) C07/C09/C10/C11 after a few real art tasks, [#365](https://github.com/gamesbyian/wallgen/issues/365) only observed phone tap friction; short Draw issue #422 has been closed, extreme landscape #301 is low-priority.
 - **Verification policy:** [lean CI](docs/CI-OPERATIONS-2026-10-22.md): one quick Node PR gate; specialized Chromium/atlas workflows are voluntary. Tests for changed persistence or rendering paths should be proportional. Avoid claiming optical or physical-device verification without seeing/trying it.
 
@@ -46,13 +46,14 @@ For changes outside UX, the relevant application source, current project documen
 ## Proposed artistic systems (plans only, not yet implemented)
 
 - [Geometry-aware surface treatments and embroidery](docs/GEOMETRY-AWARE-EMBROIDERY-AND-SURFACE-TREATMENTS-PLAN-2026-10-22.md): stitch generation, material coordinate frames, target scopes, physically shaded thread, licenced reuse candidates, mobile Treatments inspector and proportionate delivery gates.
-- [Photographic film looks and filters](docs/PHOTO-FILM-LOOKS-AND-FILTERS-PLAN-2026-10-22.md): film colour response, grain, halation, bloom, final-composite processing, seeded export parity, compact Light > Film UX and implementation queue.
+- [Photographic film looks and filters](docs/PHOTO-FILM-LOOKS-AND-FILTERS-PLAN-2026-10-22.md): film colour response, grain, halation, bloom, final-composite processing, seeded export parity, Film as one family of the planned shared Light > Photo finishing inspector, with issue #468.
 
 These documents specify **proposals**, not existing controls or renderer behaviour. Reconcile current main and relevant active work before implementation; do not use them to alter baseline artwork, expand CI or redesign all navigation by default.
 
 ### Modern photography expansion and queue tracking
 
 - [Modern digital-camera and computational-photo looks](docs/DIGITAL-CAMERA-AND-COMPUTATIONAL-PHOTO-LOOKS-PLAN-2026-10-22.md): smartphone/iPhone-inspired HDR, Pixel-like tonal mapping, DSLR/RAW-like detail, webcam/early-digicam compression and sensor signatures; unified photoLook recipe and compact **Light > Photo** UX. This **supersedes the Film-only menu placement** in the earlier film draft without replacing the film algorithms.
+- [Digital-camera look implementation #471](https://github.com/gamesbyian/wallgen/issues/471): D0–D5, coordinated with film #468 via one shared neutral photoLook.
 - [Active roadmap queue](docs/ACTIVE-PRODUCT-ROADMAP-2026-10-22.md): explicit **E0–E5** embroidery, **F0–F5** film and **D0–D5** digital camera phases; all are *planned, not implemented*. Update stage status as work is merged. Avoid reopening old 43-tool IA, creating two Photo/Film engines or inflating routine CI.
 
 When researching modern photo looks, separate real camera/ISP research from approximate artistic simulation of an already rendered rainbow scene. Do not imply a synthetic iPhone/DSLR/Webcam preset reproduces proprietary hardware firmware or RAW acquisition.

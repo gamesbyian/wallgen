@@ -6,6 +6,8 @@
 
 **Not yet implemented:** [geometry-aware embroidery treatments](docs/GEOMETRY-AWARE-EMBROIDERY-AND-SURFACE-TREATMENTS-PLAN-2026-10-22.md) (delivery queue [#467](https://github.com/gamesbyian/wallgen/issues/467)) and [film-inspired finishing](docs/PHOTO-FILM-LOOKS-AND-FILTERS-PLAN-2026-10-22.md) (delivery queue [#468](https://github.com/gamesbyian/wallgen/issues/468)). Those plans specify potential UI and render algorithms; they are **not controls in today's app**.
 
+**Additional proposed creative system:** [modern smartphone/DSLR/webcam-inspired camera looks](docs/DIGITAL-CAMERA-AND-COMPUTATIONAL-PHOTO-LOOKS-PLAN-2026-10-22.md), [implementation queue #471](https://github.com/gamesbyian/wallgen/issues/471). These and film #468 are **not implemented** and must share one neutral `photoLook` model and **Light → Photo** tool (Camera/Film), rather than two competing finishing systems.
+
 **Artistic review unfinished:** the [seven-example real-render material comparison](docs/MATERIAL-SEVEN-IMAGE-ART-REVIEW-2026-10-22.md) is runnable, and #458 fixed recipe/renderer agreement, but the finished images have **not** been aesthetically inspected in this session. [Issue #445](https://github.com/gamesbyian/wallgen/issues/445) tracks the judgement and any genuinely needed fixes. Direct dragging has targeted code tests, not physical Pixel gesture approval.
 
 [Current work priorities](docs/ACTIVE-PRODUCT-ROADMAP-2026-10-22.md) · [Lean CI and optional quality checks](docs/CI-OPERATIONS-2026-10-22.md)
