@@ -6,8 +6,8 @@ const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 test('More groups preserve original settings and action node identities',()=>{
   const mobile=read('src/mobile-studio.js');
   const html=read('index.html');
-  for(const title of ['Create & seed','Import, export & share',
-    'Position & design details'])assert.ok(mobile.includes(title),title);
+  for(const title of ['Generate','Files & sharing',
+    'Position & info'])assert.ok(mobile.includes(title),title);
   for(const selector of ['.composition-positioner','.action-tray',
     '.export-metadata','.secondary-actions','.details-bar'])
     assert.ok(mobile.includes(selector),selector);
