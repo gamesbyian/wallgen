@@ -990,7 +990,7 @@ try{
   assert.ok(editor.previewHeight>260,'the complete frame remains appreciable during edits');
   assert.ok(Math.abs(editor.ratio-600/1300)<.06);
   assert.equal(editor.scrollY,'hidden');
-  assert.deepEqual(editor.tabs,['Layout','Path','Shapes','Details','Colour','Material','Effects']);
+  assert.deepEqual(editor.tabs,['Layout','Path','Stripes','Details','Colour','Texture','Light']);
   // Every live source category gets a distinct flat accent, without changing
   // slider values, disabled handlers or the four-column material rotation.
   const rowPalette=await evaluate(`(()=>{
