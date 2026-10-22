@@ -39,3 +39,10 @@ For changes outside UX, the relevant application source, current project documen
 - [Photographic film looks and filters](docs/PHOTO-FILM-LOOKS-AND-FILTERS-PLAN-2026-10-22.md): film colour response, grain, halation, bloom, final-composite processing, seeded export parity, compact Light > Film UX and implementation queue.
 
 These documents specify **proposals**, not existing controls or renderer behaviour. Reconcile current main and relevant active work before implementation; do not use them to alter baseline artwork, expand CI or redesign all navigation by default.
+
+### Modern photography expansion and queue tracking
+
+- [Modern digital-camera and computational-photo looks](docs/DIGITAL-CAMERA-AND-COMPUTATIONAL-PHOTO-LOOKS-PLAN-2026-10-22.md): smartphone/iPhone-inspired HDR, Pixel-like tonal mapping, DSLR/RAW-like detail, webcam/early-digicam compression and sensor signatures; unified photoLook recipe and compact **Light > Photo** UX. This **supersedes the Film-only menu placement** in the earlier film draft without replacing the film algorithms.
+- [Active roadmap queue](docs/ACTIVE-PRODUCT-ROADMAP-2026-10-22.md): explicit **E0–E5** embroidery, **F0–F5** film and **D0–D5** digital camera phases; all are *planned, not implemented*. Update stage status as work is merged. Avoid reopening old 43-tool IA, creating two Photo/Film engines or inflating routine CI.
+
+When researching modern photo looks, separate real camera/ISP research from approximate artistic simulation of an already rendered rainbow scene. Do not imply a synthetic iPhone/DSLR/Webcam preset reproduces proprietary hardware firmware or RAW acquisition.
