@@ -92,8 +92,8 @@ test('historical v1, missing recipes and malformed pixels remain safe refusals',
   const originalNamed=scanPngChunks(v1).chunks.find(c=>c.type==='iTXt');
   same(Buffer.from(archive.records[0].originalChunkBase64,'base64'),originalNamed.raw);
   assert.equal(archive.records[0].format,'roygbiv-recipe-v1');
-  assert.deepEqual(JSON.parse(Buffer.from(archive.records[0].originalChunkBase64,'base64')
-    .subarray(12+15)).recipe,raw,'archive preserves source recipe JSON');
+  // The complete original iTXt chunk was already checked byte-for-byte above.
+  // Do not reinterpret the PNG chunk terminator as part of its JSON text.
 });
 test('canonical migration is idempotent in recipe content, even when source had duplicate records',()=>{
   const first=migratePngMetadataOnly(emitted(native)).png;
