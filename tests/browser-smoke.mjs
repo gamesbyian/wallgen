@@ -2922,6 +2922,17 @@ try{
   assert.equal(visionSplit.visible,true);
   assert.equal(visionSplit.position,'55');
   assert.match(visionSplit.clip,/55%/);
+  // Real touch input moves the comparison plane without touching camera or recipe.
+  const touchTargets=await evaluate('(()=>{const s=document.getElementById("preview").getBoundingClientRect(),d=document.getElementById("visionCompareDivider").getBoundingClientRect();return {startX:d.left+d.width/2,startY:d.top+d.height/2,endX:s.left+s.width*.74,sourceWidth:s.width};})()');
+  assert.ok(touchTargets.sourceWidth>25,'touch comparison requires a genuinely visible artwork');
+  await command('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:touchTargets.startX,y:touchTargets.startY}]});
+  await command('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:touchTargets.endX,y:touchTargets.startY}]});
+  await command('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+  const visionTouch=await evaluate('(()=>({position:+document.getElementById("visionCompareDivider").getAttribute("aria-valuenow"),recipeUnchanged:location.search===window.__visionOriginalRecipe}))()');
+  assert.ok(visionTouch.position>=65&&visionTouch.position<=80,
+    'touch drag must move real split divider to ~74%: '+JSON.stringify(visionTouch));
+  assert.equal(visionTouch.recipeUnchanged,true);
+
   await evaluate('document.getElementById("visionShowOriginal").click()');
   assert.equal(await evaluate('document.getElementById("visionPreviewLayer").hidden'),true);
   await evaluate('document.getElementById("visionShowOriginal").click()');
@@ -2930,6 +2941,35 @@ try{
   const visionRestored=await evaluate('(()=>{return {layerHidden:document.getElementById("visionPreviewLayer").hidden,recipeUnchanged:location.search===window.__visionOriginalRecipe,sourceUnchanged:document.getElementById("preview").toDataURL("image/png")===window.__visionOriginalImage};})()');
   assert.deepEqual(visionRestored,{layerHidden:true,recipeUnchanged:true,sourceUnchanged:true});
   console.log('COLOUR_VISION_BROWSER_ISOLATION',JSON.stringify({visionInitial,visionActive,visionSplit,visionRestored}));
+  // Latest-wins worker conversion: rapidly switch modes and severities while
+  // earlier transforms may still be in flight. Only the final mode can show.
+  await evaluate('(()=>{const s=document.getElementById("visionMode");for(const value of ["protan","tritan","deutan","protan","tritan"]){s.value=value;s.dispatchEvent(new Event("change",{bubbles:true}));}const v=document.getElementById("visionSeverity");v.value="70";v.dispatchEvent(new Event("change",{bubbles:true}));})()');
+  await waitFor('document.getElementById("visionPreviewLayer").hidden===false',20000);
+  const visionLatest=await evaluate('(()=>({mode:document.getElementById("visionMode").value,severity:document.getElementById("visionSeverity").value,visible:!document.getElementById("visionPreviewLayer").hidden,sourceUnchanged:document.getElementById("preview").toDataURL("image/png")===window.__visionOriginalImage,recipeUnchanged:location.search===window.__visionOriginalRecipe,activeMore:document.getElementById("mobileMore").dataset.visionActive,ariaDescription:document.getElementById("preview").getAttribute("aria-label")}))()');
+  assert.equal(visionLatest.mode,'tritan');
+  assert.equal(visionLatest.severity,'70');
+  assert.equal(visionLatest.visible,true);
+  assert.equal(visionLatest.sourceUnchanged,true);
+  assert.equal(visionLatest.recipeUnchanged,true);
+  assert.equal(visionLatest.activeMore,'true');
+  assert.match(visionLatest.ariaDescription,/visible simulated preview/);
+  const visionViewports=[];
+  for(const [width,height] of [[320,700],[412,892],[700,412]]){
+    await command('Emulation.setDeviceMetricsOverride',{
+      width,height,deviceScaleFactor:1,mobile:true,screenWidth:width,screenHeight:height});
+    await delay(100);
+    const result=await evaluate('(()=>{const root=document.getElementById("mobileToolsSheet"),b=document.getElementById("visionPreviewToggle");b.scrollIntoView({block:"center"});const r=b.getBoundingClientRect(),hit=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);return {width:innerWidth,height:innerHeight,insideMore:root.contains(b),hit:b===hit||b.contains(hit),buttonSize:[r.width,r.height],overflow:document.documentElement.scrollWidth>innerWidth+1};})()');
+    visionViewports.push(result);
+    assert.equal(result.insideMore,true);
+    assert.ok(result.hit,'Vision entry centre must be reachable at '+width+'x'+height);
+    assert.ok(result.buttonSize[1]>=44);
+    assert.equal(result.overflow,false,'Vision must not cause horizontal page scroll');
+  }
+  // Restore canonical mobile metrics for downstream assertions (if any).
+  await command('Emulation.setDeviceMetricsOverride',{
+    width:412,height:892,deviceScaleFactor:1,mobile:true,screenWidth:412,screenHeight:892});
+  console.log('COLOUR_VISION_STRESS_VIEWPORT',JSON.stringify({visionTouch,visionLatest,visionViewports}));
+
   console.log('REDESIGN_EXPLORATION_ACCEPTANCE_SUCCESS');
 }finally{
   try{ws?.close()}catch{}
