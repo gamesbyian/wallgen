@@ -3,6 +3,7 @@ import { drawWallpaper, presentNudgedArtwork } from './renderer.js?v=20261022-ph
 import {normalizePhotoLook,PHOTO_PRESETS} from './photo-look.js';
 import {createPreviewCoordinator,createThumbnailQueue,exportWallpaperInWorker,closeFrame} from './render-coordinator.js';
 import { embedPngMetadata, extractPngRecipe, cleanMetadata, METADATA_FIELDS } from './png-metadata.js';
+import {inspectPngMigration,migratePngMetadataOnly} from './png-recipe-migration.js';
 import { installDrawTool } from './draw-path-ui.js?v=20261018-extend1';
 import {appliedDrawnPathRecipe} from './draw-apply-transaction.js';
 import { installImagePathTool } from './image-path-ui.js?v=20261022-shapes1';
@@ -819,6 +820,75 @@ const metadataPanel=document.getElementById('metadataPanel');
 const metadataToggle=document.getElementById('metadataToggle');
 const rememberMetadata=document.getElementById('metadataRemember');
 const METADATA_STORE='wallgen:export-metadata:v1';
+// Archive surgery in More: this does not mutate the editor, its Undo stack,
+// the displayed wallpaper, the current recipe or the export metadata fields.
+const migrationToggle=document.getElementById('migrateRecipeToggle');
+const migrationPanel=document.getElementById('migrateRecipePanel');
+const migrationFile=document.getElementById('migrateRecipeFile');
+const migrationStatus=document.getElementById('migrateRecipeStatus');
+const migrationDownload=document.getElementById('migrateRecipeDownload');
+const migrationReportDownload=document.getElementById('migrateRecipeReport');
+let migrationCandidate=null,migrationInspection=null,migrationFileName=null,migrationRevision=0;
+migrationToggle.addEventListener('click',()=>{
+  migrationPanel.hidden=!migrationPanel.hidden;
+  migrationToggle.setAttribute('aria-expanded',String(!migrationPanel.hidden));
+  migrationToggle.textContent=(migrationPanel.hidden?'▸':'▾')+' Update recipe inside existing PNG';
+  if(!migrationPanel.hidden)migrationFile.focus({preventScroll:true});
+});
+migrationFile.addEventListener('change',async()=>{
+  const selected=migrationFile.files?.[0],rev=++migrationRevision;
+  migrationCandidate=null;migrationInspection=null;migrationFileName=null;
+  migrationDownload.disabled=true;migrationReportDownload.disabled=true;
+  if(!selected){migrationStatus.textContent='No PNG selected.';return;}
+  migrationStatus.textContent='Inspecting '+selected.name+'…';
+  if(selected.size>150*1024*1024){
+    migrationStatus.textContent='PNG exceeds the 150 MB inspection limit.';return;
+  }
+  try{
+    const bytes=new Uint8Array(await selected.arrayBuffer());
+    if(rev!==migrationRevision)return;
+    const report=inspectPngMigration(bytes);
+    migrationInspection=report;migrationFileName=selected.name;
+    migrationReportDownload.disabled=false;
+    const summary=report.width+' × '+report.height+' · '+
+      (report.detectedFormat||'unknown recipe format')+' · '+report.recordCount+' recipe record(s). ';
+    migrationStatus.textContent=report.safe?
+      summary+'Safe to update. Original pixels and unrelated metadata will be preserved.':
+      summary+'Update unavailable: '+(report.reason||'Unsupported recipe')+'. '+
+      (report.unknownKeys.length?'Unknown keys: '+report.unknownKeys.slice(0,5).join(', ')+'. ':'')+
+      'The original PNG remains untouched.';
+    if(report.safe){migrationCandidate=bytes;migrationDownload.disabled=false;}
+  }catch(error){
+    if(rev!==migrationRevision)return;
+    migrationStatus.textContent='Could not inspect PNG: '+String(error.message||error);
+  }
+});
+migrationDownload.addEventListener('click',async()=>{
+  if(!migrationCandidate||!migrationInspection?.safe)return;
+  migrationDownload.disabled=true;
+  migrationStatus.textContent='Verifying all original PNG image and metadata chunks…';
+  const revision=migrationRevision;
+  await new Promise(resolve=>requestAnimationFrame(resolve));
+  if(revision!==migrationRevision)return;
+  try{
+    const {png,report}=migratePngMetadataOnly(migrationCandidate);
+    if(revision!==migrationRevision)return;
+    const stem=safeFilename((migrationFileName||'wallpaper').replace(/\.png$/i,''));
+    downloadBlob(new Blob([png],{type:'image/png'}),stem+'-recipe-updated.png');
+    migrationInspection=report;
+    migrationStatus.textContent='Downloaded updated recipe. '+
+      report.preservedChunks+' non-recipe chunks preserved byte-for-byte, including image data.';
+  }catch(error){
+    migrationStatus.textContent='No PNG written: '+String(error.message||error);
+  }finally{if(revision===migrationRevision)migrationDownload.disabled=!migrationCandidate;}
+});
+migrationReportDownload.addEventListener('click',()=>{
+  if(!migrationInspection)return;
+  const bytes=JSON.stringify(migrationInspection,null,2)+'\n';
+  downloadBlob(new Blob([bytes],{type:'application/json'}),
+    safeFilename((migrationFileName||'wallpaper').replace(/\.png$/i,''))+'-recipe-migration-report.json');
+});
+
 function metadataValues(){
   return cleanMetadata(Object.fromEntries(METADATA_FIELDS.map(key=>[key,metadataPanel.querySelector('[name="'+key+'"]').value])));
 }
