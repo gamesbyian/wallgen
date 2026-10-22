@@ -29,3 +29,22 @@ jobs:
       - name: Full Node suite (manual request only)
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.depth == 'full' }}
         run: npm run check
+
+      # ONE-OFF ART-REVIEW PROBE. Remove from this branch after saving the
+      # seven-picture evidence. Never merge these steps into main.
+      - name: One-time Chromium setup for seven-picture Photo review
+        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'review/photo-one-shot-20261022' }}
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+      - name: One-time seven-picture production Photo review
+        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'review/photo-one-shot-20261022' }}
+        run: node scripts/review-photo-looks.mjs --out-dir artifacts/photo-review
+      - name: Preserve Photo review images as GitHub Actions artifact
+        if: ${{ always() && github.event_name == 'pull_request' && github.head_ref == 'review/photo-one-shot-20261022' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: one-time-photo-art-review
+          path: artifacts/photo-review/
+          retention-days: 7
+          if-no-files-found: warn
