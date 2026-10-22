@@ -1,10 +1,6 @@
 name: Tall Interior manager native 44px source
+# Specialized evidence suite: explicit Actions dispatch only; normal PR gates live in the core workflows.
 on:
-  pull_request:
-    paths:
-      - detail-controls.css
-      - tests/tall-interior-manager-44px-browser.mjs
-      - .github/workflows/tall-interior-manager-44px.yml
   workflow_dispatch:
 permissions:
   contents: read

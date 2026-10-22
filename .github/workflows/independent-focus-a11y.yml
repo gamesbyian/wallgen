@@ -1,26 +1,8 @@
 name: Independent Focus and accessibility adversarial QA
 
+# Specialized evidence suite: explicit Actions dispatch only; normal PR gates live in the core workflows.
 on:
   workflow_dispatch:
-  pull_request:
-    paths:
-      - 'src/editor-focus.js'
-      - 'editor-focus.css'
-      - 'mobile-editor-rail.css'
-      - 'studio-themes.css'
-      - 'index.html'
-      - 'src/mobile-*.js'
-      - 'src/mobile-preview-tools.js'
-      - 'tests/independent-focus-a11y-acceptance.mjs'
-      - 'tests/independent-svg-candidates-acceptance.mjs'
-      - 'tests/independent-focus-transitions.mjs'
-      - 'tests/independent-axe-diagnostic.mjs'
-      - 'tests/independent-desktop-axe-diagnostic.mjs'
-      - 'tests/independent-keyboard-focus-journey.mjs'
-      - 'assets/icons/roygbiv/manifest.json'
-      - 'assets/icons/roygbiv/state-matrix.html'
-      - '.github/workflows/independent-focus-a11y.yml'
-
 concurrency:
   group: independent-focus-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true

@@ -1,20 +1,8 @@
 name: Agent 3 twenty-two-mode camera and native export acceptance
 
+# Specialized evidence suite: explicit Actions dispatch only; normal PR gates live in the core workflows.
 on:
   workflow_dispatch:
-  pull_request:
-    paths:
-      - '.github/workflows/agent3-camera-conditional-export.yml'
-      - 'tests/agent3-camera-conditional-export.mjs'
-      - 'src/composition-geometry.js'
-      - 'src/view-camera.js'
-      - 'src/render-coordinator.js'
-      - 'src/render-worker.js'
-      - 'src/renderer.js'
-      - 'src/model.js'
-      - 'src/mobile-five-nav.js'
-      - 'src/app.js'
-
 permissions:
   contents: read
 

@@ -1,18 +1,8 @@
 name: Agent 3 real native PNG download acceptance
 
+# Specialized evidence suite: explicit Actions dispatch only; normal PR gates live in the core workflows.
 on:
   workflow_dispatch:
-  pull_request:
-    paths:
-      - 'tests/redesign-native-download-acceptance.mjs'
-      - '.github/workflows/agent3-native-download.yml'
-      - 'src/app.js'
-      - 'src/renderer.js'
-      - 'src/render-coordinator.js'
-      - 'src/render-worker.js'
-      - 'src/png-metadata.js'
-      - 'src/model.js'
-      - 'src/mobile-five-nav.js'
 permissions:
   contents: read
 jobs:

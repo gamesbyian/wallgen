@@ -1,15 +1,8 @@
 name: Material source controls live acceptance
 
+# Specialized evidence suite: explicit Actions dispatch only; normal PR gates live in the core workflows.
 on:
   workflow_dispatch:
-  pull_request:
-    paths:
-      - 'tests/material-source-coverage-browser.mjs'
-      - 'src/app.js'
-      - 'src/model.js'
-      - 'src/editor-*.js'
-      - '.github/workflows/material-source-coverage.yml'
-
 permissions:
   contents: read
 

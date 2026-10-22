@@ -2,12 +2,9 @@ name: Native wallpaper gallery
 
 # Reproduce the first five wallpapers at the Pixel 6 Pro native export size.
 # Manual dispatch allows future reruns without changes to the studio.
+# Specialized evidence suite: explicit Actions dispatch only; normal PR gates live in the core workflows.
 on:
   workflow_dispatch:
-  pull_request:
-    paths:
-      - '.github/workflows/native-wallpaper-gallery.yml'
-
 jobs:
   native-wallpapers:
     runs-on: ubuntu-latest

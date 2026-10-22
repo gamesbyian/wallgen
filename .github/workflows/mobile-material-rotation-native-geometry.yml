@@ -1,9 +1,6 @@
 name: Mobile Material rotation actual six-control geometry
+# Specialized evidence suite: explicit Actions dispatch only; normal PR gates live in the core workflows.
 on:
-  pull_request:
-    paths:
-      - tests/mobile-material-rotation-native-geometry.mjs
-      - .github/workflows/mobile-material-rotation-native-geometry.yml
   workflow_dispatch:
 permissions:
   contents: read

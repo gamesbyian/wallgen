@@ -1,10 +1,6 @@
 name: Narrow rainbow swatch touch acceptance
+# Specialized evidence suite: explicit Actions dispatch only; normal PR gates live in the core workflows.
 on:
-  pull_request:
-    paths:
-      - 'detail-controls.css'
-      - 'tests/narrow-interior-swatch-hitboxes.mjs'
-      - '.github/workflows/narrow-swatch-touch.yml'
   workflow_dispatch:
 permissions:
   contents: read

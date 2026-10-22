@@ -1,12 +1,7 @@
 name: Material Finish compact portrait optical regression
 
+# Specialized evidence suite: explicit Actions dispatch only; normal PR gates live in the core workflows.
 on:
-  pull_request:
-    paths:
-      - 'tests/visual-material-finish-inactive-browser.mjs'
-      - 'editor-material-status.css'
-      - 'index.html'
-      - '.github/workflows/material-finish-optical.yml'
   workflow_dispatch:
 
 permissions:

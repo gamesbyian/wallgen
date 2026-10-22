@@ -1,11 +1,6 @@
 name: Midwidth mobile 44px named tool and Focus
+# Specialized evidence suite: explicit Actions dispatch only; normal PR gates live in the core workflows.
 on:
-  pull_request:
-    paths:
-      - editor-redesign.css
-      - editor-focus.css
-      - tests/midwidth-44-tool-strip.mjs
-      - .github/workflows/midwidth-44-tool-strip.yml
   workflow_dispatch:
 permissions:
   contents: read

@@ -1,12 +1,7 @@
 name: Character hint optical reachability
 
+# Specialized evidence suite: explicit Actions dispatch only; normal PR gates live in the core workflows.
 on:
-  pull_request:
-    paths:
-      - 'tests/visual-character-helper-browser.mjs'
-      - 'mobile-editor-rail.css'
-      - 'index.html'
-      - '.github/workflows/character-hint-optical.yml'
   workflow_dispatch:
 
 permissions:

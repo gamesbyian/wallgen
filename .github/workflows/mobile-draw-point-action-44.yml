@@ -1,10 +1,6 @@
 name: Tall Draw point actions 44px native touch
+# Specialized evidence suite: explicit Actions dispatch only; normal PR gates live in the core workflows.
 on:
-  pull_request:
-    paths:
-      - draw-path.css
-      - tests/mobile-draw-point-action-44.mjs
-      - .github/workflows/mobile-draw-point-action-44.yml
   workflow_dispatch:
 permissions:
   contents: read

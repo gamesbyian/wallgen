@@ -1,9 +1,6 @@
 name: Agent 1 landscape split-preview research (#294)
+# Specialized evidence suite: explicit Actions dispatch only; normal PR gates live in the core workflows.
 on:
-  pull_request:
-    paths:
-      - 'scripts/visual-landscape-prototype-agent1.mjs'
-      - '.github/workflows/visual-landscape-294.yml'
   workflow_dispatch:
 permissions:
   contents: read

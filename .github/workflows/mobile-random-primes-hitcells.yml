@@ -1,10 +1,6 @@
 name: Mobile Random and Primes hitboxes
+# Specialized evidence suite: explicit Actions dispatch only; normal PR gates live in the core workflows.
 on:
-  pull_request:
-    paths:
-      - mobile-editor-rail.css
-      - tests/mobile-random-primes-hitcells.mjs
-      - .github/workflows/mobile-random-primes-hitcells.yml
   workflow_dispatch:
 permissions:
   contents: read

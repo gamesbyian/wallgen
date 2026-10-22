@@ -1,11 +1,6 @@
 name: Mobile 44px pinned Tool and Focus chooser
+# Specialized evidence suite: explicit Actions dispatch only; normal PR gates live in the core workflows.
 on:
-  pull_request:
-    paths:
-      - editor-redesign.css
-      - editor-focus.css
-      - tests/mobile-44px-tool-chooser.mjs
-      - .github/workflows/mobile-44px-tool-chooser.yml
   workflow_dispatch:
 permissions:
   contents: read

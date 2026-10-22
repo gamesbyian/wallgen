@@ -1,10 +1,6 @@
 name: Mobile image-import source touch acceptance
+# Specialized evidence suite: explicit Actions dispatch only; normal PR gates live in the core workflows.
 on:
-  pull_request:
-    paths:
-      - image-path.css
-      - tests/mobile-image-import-hitcells.mjs
-      - .github/workflows/mobile-image-import-hitcells.yml
   workflow_dispatch:
 permissions:
   contents: read

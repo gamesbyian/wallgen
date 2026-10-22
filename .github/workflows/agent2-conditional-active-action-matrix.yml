@@ -1,19 +1,7 @@
 name: Agent 2 conditional source action reversibility
 
+# Specialized evidence suite: explicit Actions dispatch only; normal PR gates live in the core workflows.
 on:
-  pull_request:
-    paths:
-      - 'tests/agent2-conditional-active-action-matrix.mjs'
-      - '.github/workflows/agent2-conditional-active-action-matrix.yml'
-      - 'src/app.js'
-      - 'src/editor-layout.js'
-      - 'src/editor-schema.js'
-  push:
-    branches:
-      - agent2/conditional-matrix-live-actions-20261020
-    paths:
-      - 'tests/agent2-conditional-active-action-matrix.mjs'
-      - '.github/workflows/agent2-conditional-active-action-matrix.yml'
   workflow_dispatch:
 
 permissions:

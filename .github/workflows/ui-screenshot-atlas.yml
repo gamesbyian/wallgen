@@ -1,5 +1,6 @@
 name: UI state screenshot atlas
 
+# Specialized evidence suite: explicit Actions dispatch only; normal PR gates live in the core workflows.
 on:
   workflow_dispatch:
     inputs:
@@ -11,24 +12,6 @@ on:
         options:
           - full
           - smoke
-  pull_request:
-    paths:
-      - 'src/editor-*.js'
-      - 'src/mobile-*.js'
-      - 'src/app.js'
-      - 'src/draw-path-ui.js'
-      - 'src/image-path-ui.js'
-      - 'src/exploration-history.js'
-      - 'src/ui-*.js'
-      - 'assets/icons/**'
-      - '*.css'
-      - 'index.html'
-      - 'scripts/capture-ui-atlas.mjs'
-      - 'scripts/ui-atlas-*.mjs'
-      - 'tests/redesign-navigation-acceptance.mjs'
-      - 'tests/redesign-interior-browser-acceptance.mjs'
-      - '.github/workflows/ui-screenshot-atlas.yml'
-
 concurrency:
   group: ui-atlas-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true

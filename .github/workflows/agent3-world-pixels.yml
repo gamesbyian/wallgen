@@ -1,17 +1,8 @@
 name: Agent 3 painted-world pixel parity
 
+# Specialized evidence suite: explicit Actions dispatch only; normal PR gates live in the core workflows.
 on:
   workflow_dispatch:
-  pull_request:
-    paths:
-      - 'tests/redesign-world-pixel-acceptance.mjs'
-      - '.github/workflows/agent3-world-pixels.yml'
-      - 'src/renderer.js'
-      - 'src/model.js'
-      - 'src/view-camera.js'
-      - 'src/composition-geometry.js'
-      - 'src/interior-elements.js'
-      - 'src/path-geometry.js'
 permissions:
   contents: read
 concurrency:

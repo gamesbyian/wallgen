@@ -1,13 +1,7 @@
 name: Agent 2 individual setting dice browser matrix
 
+# Specialized evidence suite: explicit Actions dispatch only; normal PR gates live in the core workflows.
 on:
-  pull_request:
-    paths:
-      - 'tests/agent2-single-setting-die-matrix.mjs'
-      - '.github/workflows/agent2-single-setting-die-matrix.yml'
-      - 'src/scoped-random.js'
-      - 'src/editor-layout.js'
-      - 'src/app.js'
   workflow_dispatch:
 
 permissions:
