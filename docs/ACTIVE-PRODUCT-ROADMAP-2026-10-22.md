@@ -1,6 +1,11 @@
 # ROYGBIV: active product roadmap and work queue
 
-## Production Photo-look optical review made repeatable (PR pending, 2026-10-22)
+## Rescue malformed historical recipe records without parsing them (PR pending, 2026-10-22)
+
+The archival PNG rescue tool now decouples **copying original named `ROYGBIV Recipe` iTXt chunks** from `JSON.parse`. If the overall PNG container/CRC is valid but the old recipe text is malformed, uses an unsupported encoding or an unfamiliar dialect, `inspectPngRecipeArchive` detects recoverable named chunks. More → Files & sharing still refuses unsafe recipe updates but enables **Save original recipe records (exact bytes)**, with an informative report. The `png:migrate --archive` CLI writes that backup *before* attempting semantic inspection, returning a refusal status without changing the PNG. Archived record formats may be `null` if unreadable; binary length/type/text/CRC remain intact. Fixed bounds (64 records/16 MiB total/1 MiB each), intact-image validation, targeted UI and real CLI salvage tests. This advances the existing preservation queue rather than authorizing any unproven historical conversion. No new CI workflow or screenshot suites.
+
+
+## Production Photo-look optical review made repeatable (PR #491 merged, 2026-10-22)
 
 The optional [seven-image Photo art review](PHOTO-SEVEN-IMAGE-ART-REVIEW-2026-10-22.md) and `scripts/review-photo-looks.mjs` now generate six selected looks plus a neutral control through the *existing production headless renderer*, with exactly matching canonical recipe JSON for every PNG. A single seed, 600×1300 source scene and contact-gallery HTML make Grain Only, Halation, Slide, Negative Print, Smartphone HDR and Webcam Signal comparable without hundreds of screenshot jobs. This review is **not part of CI**, and **no output was run or visually inspected in this PR** because the local production browser/render harness was unavailable here. Next explicit creative acceptance: run the tool once, actually view the seven PNGs, record observed optical defects, repair just those defects. Full 19.8MP and physical Pixel proof remain separate.
 
