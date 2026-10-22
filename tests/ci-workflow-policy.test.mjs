@@ -31,6 +31,7 @@ test('personal project has only a small active workflow menu', async () => {
   };
   const manual = [
     'mobile-browser.yml', 'headless-render.yml', 'agent3-mobile-acceptance.yml',
+    'geometry-library-browser.yml',
     'visual-agent1.yml', 'ui-screenshot-atlas.yml', 'seven-vibes.yml',
     'native-wallpaper-gallery.yml', 'design-reference-assets.yml',
   ];

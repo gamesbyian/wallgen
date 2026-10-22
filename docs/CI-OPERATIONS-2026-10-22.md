@@ -12,7 +12,7 @@ Ordinary PR changes no longer start browser smoke, dozens of rendered wallpaper 
 
 ## Deep tests, when they actually help
 
-For major changes, use **Actions → Validate Wallgen → Run workflow → depth: full** to run `npm run check` (all Node tests, still no screenshots). The dedicated `mobile-browser.yml`, `headless-render.yml`, `agent3-mobile-acceptance.yml`, `visual-agent1.yml` and `ui-screenshot-atlas.yml` workflows remain available manually on the relevant branch. The two wallpaper-production and reference-asset workflows remain manually dispatchable.
+For major changes, use **Actions → Validate Wallgen → Run workflow → depth: full** to run `npm run check` (all Node tests, still no screenshots). The dedicated `geometry-library-browser.yml`, `mobile-browser.yml`, `headless-render.yml`, `agent3-mobile-acceptance.yml`, `visual-agent1.yml` and `ui-screenshot-atlas.yml` workflows remain available manually on the relevant branch. The two wallpaper-production and reference-asset workflows remain manually dispatchable.
 
 Reasonable decisions:
 - A text label, colour token, minor CSS spacing or isolated touch target change usually needs **only the quick check and a glance at the app**.
@@ -24,7 +24,7 @@ Reasonable decisions:
 
 ## Workflow archive
 
-The repository accumulated 66 Actions definitions, many created to verify one-off ergonomic issues. This change keeps only 12 operational workflows under `.github/workflows`; the other 54 are moved **without content changes** to `docs/ci-archive/workflows/`. Their original scripts and tests remain in the repository. Archived YAML does not run, but can be restored deliberately if an old investigative technique becomes useful again.
+The repository accumulated 66 Actions definitions, many created to verify one-off ergonomic issues. This change keeps only 13 operational workflows under `.github/workflows`; the other 54 are moved **without content changes** to `docs/ci-archive/workflows/`. Their original scripts and tests remain in the repository. Archived YAML does not run, but can be restored deliberately if an old investigative technique becomes useful again.
 
 Avoid adding a new automatic workflow for every bug. Extend a relevant test, run it locally or dispatch one of the existing specialized suites when warranted. Update `tests/ci-workflow-policy.test.mjs` if the workflow menu legitimately changes.
 

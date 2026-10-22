@@ -1,13 +1,6 @@
 name: Reusable geometry library browser acceptance
+# Optional: run only when geometry import/persistence needs real browser evidence.
 on:
-  pull_request:
-    paths:
-      - 'src/geometry-*.js'
-      - 'src/app.js'
-      - 'index.html'
-      - 'geometry-library.css'
-      - 'tests/geometry-library-browser.mjs'
-      - '.github/workflows/geometry-library-browser.yml'
   workflow_dispatch:
 permissions:
   contents: read
