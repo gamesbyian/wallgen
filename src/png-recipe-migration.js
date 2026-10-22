@@ -106,6 +106,7 @@ export function inspectPngMigration(input){
     selectedChunkIndex:raw.selected?.chunkIndex??null,
     safe:false,reason:null,unknownKeys:[],coercedKeys:[],synthesizedKeys:[],
     recordFormats:raw.records.map(record=>record.format),
+    conflictingChunkIndexes:[],
     warnings:[],
   };
   if(!raw.selected){report.reason='PNG contains no ROYGBIV Recipe record';return report;}
@@ -122,7 +123,18 @@ export function inspectPngMigration(input){
     report.warnings.push('Raw recipe is readable; no unverified conversion was attempted');
     return report;
   }
-  const polluted=findDangerousKeys(rawRecipe);
+  // Multiple exact duplicates may be safely consolidated, but discarding a
+  // different earlier raw recipe would erase historical composition evidence.
+  // The separate exact-byte archival export remains usable in this case.
+  report.conflictingChunkIndexes=raw.records.slice(0,-1)
+    .filter(record=>!jsonSame(record.envelope,raw.selected.envelope))
+    .map(record=>record.chunkIndex);
+  if(report.conflictingChunkIndexes.length){
+    report.reason='Conflicting embedded recipe records cannot be consolidated safely';
+    report.warnings.push('Save original recipe records as an exact-byte archive before deciding which recipe to use');
+    return report;
+  }
+    const polluted=findDangerousKeys(rawRecipe);
   if(polluted.length){
     report.reason='Unsafe object keys in original recipe';
     report.warnings.push('Disallowed keys: '+polluted.slice(0,8).join(', '));
