@@ -40,7 +40,9 @@ self.onmessage=async({data})=>{
         return;
       }
       cache={};
-      drawWallpaper(surface,recipe,{cache});
+      // Settled previews transfer unfiltered ink/background; the presenting
+      // compositor applies Photo exactly once, also when the user nudges.
+      drawWallpaper(surface,recipe,{cache,skipPhoto:true});
       // Transfer only the two immutable cached layers. The main thread
       // already has a pixel-identical compositor for nudge, shadows and
       // lighting; transferring a third full-frame bitmap wastes memory.
