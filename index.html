@@ -290,10 +290,16 @@
             <select name="embroideryTarget">
               <option value="off">Off · plain surfaces</option>
               <option value="all">All rainbow colours</option>
+              <option value="object">One chosen ribbon or region</option>
               <option value="0">Red only</option><option value="1">Orange only</option>
               <option value="2">Yellow only</option><option value="3">Green only</option>
               <option value="4">Blue only</option><option value="5">Indigo only</option>
               <option value="6">Violet only</option>
+            </select>
+          </label>
+          <label class="field embroidery-object-picker" hidden>Choose ribbon or region
+            <select name="embroideryObjectId" aria-label="Choose the single authored object to embroider">
+              <option value="">No eligible objects</option>
             </select>
           </label>
           <div class="control-grid range-grid">
