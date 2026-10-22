@@ -148,6 +148,38 @@ export function inspectPngMigration(input){
   report.warnings.push('Opening this saved recipe in a newer generator may produce a different picture');
   return report;
 }
+// Archival escape hatch for recipes that cannot yet be upgraded safely.
+// Preserve the EXACT named iTXt chunks including text spacing, duplicated
+// historical keys and original CRC, rather than normalizing/restringifying
+// early schema JSON. This is an export-only record bundle, never a PNG rewrite.
+// btoa operates on Latin-1 bytes and is available in browsers and Node 22.
+export function archivePngRecipeRecords(input){
+  validatePngMigrationContainer(input);
+  const {width,height,selected,records}=readRawPngRecipe(input);
+  const scan=scanPngChunks(input);
+  // Individual named recipe chunks are capped at 1 MB by the parser. Bound
+  // collective work if a hostile image contains many individually valid ones.
+  const total=records.reduce((sum,record)=>sum+record.bytes,0);
+  if(records.length>64||total>16*1024*1024)
+    throw Error('Too many recipe records for bounded archival export');
+  const saved=records.map(record=>{
+    const original=scan.chunks[record.chunkIndex].raw;
+    const pieces=[];
+    for(let offset=0;offset<original.length;offset+=16384)
+      pieces.push(String.fromCharCode(...original.subarray(offset,offset+16384)));
+    return {
+      format:record.format,chunkIndex:record.chunkIndex,
+      byteOffset:record.offset,byteLength:record.bytes,
+      // Complete original PNG chunk: length, iTXt, payload and CRC.
+      originalChunkBase64:btoa(pieces.join('')),
+    };
+  });
+  return {format:'roygbiv-recipe-archive-v1',width,height,
+    selectedChunkIndex:selected?.chunkIndex??null,
+    recordCount:saved.length,records:saved,
+    note:'Original named iTXt bytes only. The unmodified source PNG remains the master archive.'};
+}
+
 export function migratePngMetadataOnly(input){
   const bytes=input instanceof Uint8Array?input:new Uint8Array(input);
   const report=inspectPngMigration(bytes);
