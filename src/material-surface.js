@@ -150,7 +150,10 @@ function threads(ctx,layer,bounds,gap,opacity,axis='both'){
         const gapMark=hash(i,j,seed+1031)>.988;
         if(gapMark){if(started){ctx.stroke();started=false;}continue;}
         if(!started){
-          signedStroke(ctx,layer,x,y,opacity*(.6+hash(i,0,seed+1049)*.45));
+          // Stroke colour must be anchored to its world-space thread, not
+          // whichever crop boundary happens to start the path.
+          signedStroke(ctx,layer,vertical?base:0,vertical?0:base,
+            opacity*(.6+hash(i,0,seed+1049)*.45));
           ctx.beginPath();ctx.moveTo(x,y);started=true;
         }else ctx.lineTo(x,y);
       }
@@ -187,7 +190,7 @@ function grainLines(ctx,layer,bounds){
       if(hash(ix,j,seed+1613)>.992){
         if(started){ctx.stroke();started=false;}continue;
       }
-      if(!started){signedStroke(ctx,layer,x,y,.18);
+      if(!started){signedStroke(ctx,layer,base,0,.18);
         ctx.beginPath();ctx.moveTo(x,y);started=true;
       }else ctx.lineTo(x,y);
     }
@@ -255,10 +258,6 @@ export function paintMaterial(ctx,layer,bounds){
       threads(ctx,layer,bounds,9,.27);
       dots(ctx,layer,bounds,7,.7,.13);break;
     case 'denim':
-      ctx.save();ctx.rotate(-Math.PI/4);
-      // Rotated bounding ranges are generated in the caller's local space;
-      // use angled diagonal fibre segments rather than cropping rotated rows.
-      ctx.restore();
       flecks(ctx,layer,bounds,5.5,11,.28,'vertical');
       threads(ctx,layer,bounds,11,.14);
       dots(ctx,layer,bounds,9,.5,.15);break;
