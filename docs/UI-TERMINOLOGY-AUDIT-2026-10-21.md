@@ -39,10 +39,10 @@ The table is generated from the canonical 40-tool schema, not a legacy four-tab 
 
 | Category | Current tool (stable ID) | Outcome | Behavior / reason |
 |---|---|---|---|
-| Layout | Canvas structure (`structure-mode`) | **Design type** — PROPOSE | Selects path, radial or region construction; Canvas structure is currently the setting label, not tool name |
+| Layout | Canvas structure (`structure-mode`) | **Structure** — PROPOSE | Tool groups the canvas-construction type selector; label the selector **Design type** so header and setting are distinct |
 | Layout | Arrangement (`arrange`) | **Keep** | Current terminology correctly groups 3 settings. |
 | Layout | Direction (`direction`) | **Keep** | Current terminology correctly groups 4 settings. |
-| Layout | Variation (`variability`) | **Chaos** — PROPOSE | Contains only Controlled chaos; avoids overlap with Vary/Reroll terminology |
+| Layout | Variation (`variability`) | **Keep** | The group provides context for a Chaos slider; a duplicate Chaos tool and slider would add no information. Explain that it affects controlled geometric randomness, not Vary/Reroll scope |
 | Path | Geometry (`geometry`) | **Keep** | Current terminology correctly groups 3 settings. |
 | Path | Radial rays (`rays`) | **Keep** | Current terminology correctly groups 3 settings. |
 | Path | Ray shape (`ray-shape`) | **Ray detail** — PROPOSE | Controls twist, coverage and centre opening |
@@ -69,7 +69,7 @@ The table is generated from the canonical 40-tool schema, not a legacy four-tab 
 | Details | Dividers (`dividers`) | **Keep** | Current terminology correctly groups 2 settings. |
 | Details | Shadows (`shadows`) | **Keep** | Current terminology correctly groups 3 settings. |
 | Details | Glow (`glow`) | **Keep** | Current terminology correctly groups 1 settings. |
-| Colour | Rainbow (`rainbow`) | **Palette** — PROPOSE | Controls palette and colour order rather than rainbow geometry |
+| Colour | Rainbow (`rainbow`) | **Keep** | Encompasses the Palette selector and Reverse colour order toggle; changing tool and field both to Palette would duplicate words |
 | Colour | Background (`canvas`) | **Keep** | Current terminology correctly groups 1 settings. |
 | Material | Layer 1 (`layer1`) | **Keep** | Current terminology correctly groups 4 settings. |
 | Material | Finish 1 (`finish1`) | **Keep** | Current terminology correctly groups 3 settings. |
