@@ -1,0 +1,63 @@
+{
+  "schema": 1,
+  "description": "Verified lexical source lines from four pinned normalizeRecipe anchors, not complete field/default or renderer semantics",
+  "scope": "Field expression strings and local seed initializer; do not translate based on this alone",
+  "anchors": [
+    {
+      "id": "png-v1-introduction",
+      "commit": "37428b624e55a0d4526b992bfe6fdf4a01b5f420",
+      "modelBlobSha": "37ef7d429324c65773068bd06fd3452063a981e5",
+      "seedInitializer": "const seed = String(input.seed ?? 'rainbow-001').trim().slice(0, 90) || 'rainbow-001';",
+      "fields": {
+        "version": "version: 1",
+        "seed": "seed",
+        "stripeShadowEnabled": "stripeShadowEnabled: input.stripeShadowEnabled === true || input.stripeShadowEnabled === 'true'",
+        "stripeShadowStrength": "stripeShadowStrength: finiteRange(input.stripeShadowStrength, 45, 0, 100)",
+        "structure": null,
+        "viewZoom": null
+      }
+    },
+    {
+      "id": "shadow-flag-retirement",
+      "commit": "e88b30c3edf434b130b751ae855453c47755a83c",
+      "modelBlobSha": "7091e7bdc7e9278695893ac07defc22136f12e95",
+      "seedInitializer": "const seed = String(input.seed ?? 'rainbow-001').trim().slice(0, 90) || 'rainbow-001';",
+      "fields": {
+        "version": "version: 1",
+        "seed": "seed",
+        "stripeShadowEnabled": null,
+        "stripeShadowStrength": "stripeShadowStrength: finiteRange(input.stripeShadowStrength, 0, 0, 100)",
+        "structure": null,
+        "viewZoom": "viewZoom: Math.round(finiteRange(input.viewZoom, 1, .5, 2.5)*100)/100"
+      }
+    },
+    {
+      "id": "png-v2-structure-introduction",
+      "commit": "2e6039c8d7fcef85b74dfe70435ffeda03929b98",
+      "modelBlobSha": "3725f34a8ffaed542c95c6f66ef12626b92f4a6c",
+      "seedInitializer": "const seed = String(input.seed ?? 'rainbow-001').trim().slice(0, 90) || 'rainbow-001';",
+      "fields": {
+        "version": "version: 2",
+        "seed": "seed",
+        "stripeShadowEnabled": null,
+        "stripeShadowStrength": "stripeShadowStrength: finiteRange(input.stripeShadowStrength, 0, 0, 100)",
+        "structure": "structure: STRUCTURES.includes(input.structure) ? input.structure : 'paths'",
+        "viewZoom": "viewZoom: Math.round(finiteRange(input.viewZoom, 1, .5, 2.5)*100)/100"
+      }
+    },
+    {
+      "id": "current-model-after-photo-halation-and-archive",
+      "commit": "db4fb855e629506a2d1e1659ed92fa85d15ffc45",
+      "modelBlobSha": "6d3e9876c859b4c565f21d823a5428f63815d1ed",
+      "seedInitializer": "const seed = String(input.seed ?? 'rainbow-001').trim().slice(0, 90) || 'rainbow-001';",
+      "fields": {
+        "version": "version: 2",
+        "seed": "seed",
+        "stripeShadowEnabled": null,
+        "stripeShadowStrength": "stripeShadowStrength: finiteRange(input.stripeShadowStrength, 0, 0, 100)",
+        "structure": "structure: STRUCTURES.includes(input.structure) ? input.structure : 'paths'",
+        "viewZoom": "viewZoom: Math.round(finiteRange(input.viewZoom, 1, .5, 2.5)*100)/100"
+      }
+    }
+  ]
+}
