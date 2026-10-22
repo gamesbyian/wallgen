@@ -1,4 +1,6 @@
 # ROYGBIV: modern digital camera and photographic rendering looks
+
+> **CURRENT IMPLEMENTATION QUEUE · 2026-10-22:** This is a research/specification merged via [#469](https://github.com/gamesbyian/wallgen/pull/469), **not shipping source code**. [Camera issue #471](https://github.com/gamesbyian/wallgen/issues/471) owns D0–D5. [Film #468](https://github.com/gamesbyian/wallgen/issues/468) owns F0–F5; they share one versioned neutral photoLook and **Light → Photo (Camera/Film)**. [Embroidery #467](https://github.com/gamesbyian/wallgen/issues/467) is an independent surface stage. See [current roadmap](ACTIVE-PRODUCT-ROADMAP-2026-10-22.md). Use only targeted samples and regular lightweight PR CI; planning ≠ completion.
 ## Companion specification to film emulation, camera-style image processing and UX integration
 
 **Created:** 2026-10-22. **Status:** research and plan, not implemented. **Authoritative related plans:** [photographic finishing and film](PHOTO-FILM-LOOKS-AND-FILTERS-PLAN-2026-10-22.md) and [embroidered materials](GEOMETRY-AWARE-EMBROIDERY-AND-SURFACE-TREATMENTS-PLAN-2026-10-22.md). **Source snapshot:** main at 7e970906222ebf1d085b12527f2a6aa9106d9209; check new main before implementation.
