@@ -48,15 +48,25 @@ function stitchInk(ctx,brightness,relief){
 /** Draw transverse thread ribs along the same tangent/normal path as ribbon geometry.
  * Caller establishes the actual stripe footprint as the active clipping mask.
  */
-export function drawRibbonEmbroidery(ctx,stripe,extent,treatment){
-  if(!treatment)return 0;
+export function drawRibbonEmbroidery(ctx,stripe,extent,treatment,range=null){
+  if(!treatment||!Number.isFinite(extent)||extent<=0)return 0;
   const step=treatment.pitch;
   const interval=Math.max(step,2*extent/2500);
+  const start=Math.max(-extent,range?.start??-extent),
+    end=Math.min(extent,range?.end??extent);
+  if(!Number.isFinite(start)||!Number.isFinite(end)||end<start)return 0;
+  // Every segment samples the *same station lattice* as the full ribbon.
+  // Self-crossing touch-ups must never restart the stitch phase, nor rewalk
+  // 2,500 stations at every intersection. The optional range only changes
+  // the number of candidate stations, not their positions or appearance.
+  const first=Math.max(0,Math.ceil((start+extent)/interval-1e-9));
+  const last=Math.min(2500,Math.floor((end+extent)/interval+1e-9));
   let count=0;
   ctx.save();
   ctx.lineCap='round';
   ctx.lineWidth=Math.max(.7,Math.min(2.5,step*.26));
-  for(let station=-extent;station<=extent;station+=interval){
+  for(let i=first;i<=last;i++){
+    const station=-extent+i*interval;
     const p=samplePath(stripe,station,extent);
     const w=widthAt(stripe,station,extent)*.485;
     if(!Number.isFinite(w)||w<=0)continue;
