@@ -1,5 +1,11 @@
 # ROYGBIV: active product roadmap and work queue
 
+## Implementation checkpoint: shared Photo finish (PR #473, 2026-10-22)
+
+**First working slice, pending merge / physical visual approval:** [#473](https://github.com/gamesbyian/wallgen/pull/473) supplies an opt-in, deterministic `photoLook` recipe, a common post-composite film/camera **tone-and-grain** processor, seeded in-frame grain, six early looks, and a Light → Lighting/Photo pane with no extra top-level destination. The same processing function is reached by headless exports, worker exports, main-thread previews and cached nudge presentation. Quick Node CI passed at head `8e5d016`. No real Pixel screenshot or judged film/camera sample was examined here. Webcam mode is explicitly an *early colour preview*, **not** simulated webcam capture resolution or JPEG compression.
+
+**Queue accounting:** D1 unified data contract and initial D2 shared tone primitives have implementations; F0 neutral/persistence contract and F1 simple looks have implementation; F2 halation/true multiscale film grain and D3 virtual capture/compression remain open. F3/F4 and D4 are partial because the UI is a compact view of Lighting, with advanced Tone/Detail/Character cards, locks, randomization and Before control not built. F5/D5 artistry and device review are pending. Photo remains opt-in, previous wallpapers remain byte-identical when disabled. [Film #468](https://github.com/gamesbyian/wallgen/issues/468) and [digital #471](https://github.com/gamesbyian/wallgen/issues/471) remain open. No new CI workflow was added.
+
 ## Current artistic delivery board (authoritative as of 2026-10-22)
 
 **Source checkpoint:** `main` at `dab3e8593442e00ac9c8a326638e96d862abfff3` before this documentation reconciliation. **Live user interface:** seven Edit categories, **40 named tool cards and 95 canonical scalar keys**, with dynamic interior collections. This is a *personal* wallpaper studio: treat data preservation as important and screenshot perfection as optional. Use the smallest artifact/test that reveals an actual creative problem. Older 40/87 and 43/95 maps are deliberately dated research baselines.
