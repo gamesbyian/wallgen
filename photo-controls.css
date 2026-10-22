@@ -7,6 +7,7 @@
 .photo-controls .field{min-width:0}
 .photo-controls .field>select{max-width:100%;width:100%}
 .photo-controls .range-grid{min-width:0;gap:6px}
+.photo-controls [data-photo-secondary][hidden]{display:none!important}
 .photo-controls .range-field .stepper{min-width:0}
 .photo-controls small{line-height:1.35;opacity:.78}
 @media(max-width:420px){.photo-controls .range-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
