@@ -29,3 +29,21 @@ jobs:
       - name: Full Node suite (manual request only)
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.depth == 'full' }}
         run: npm run check
+
+      # TEMPORARY ART REVIEW: deliberately branch-limited, never merge to main.
+      - name: One-time Chromium setup for seven-material art review
+        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'review/material-one-shot-20261022' }}
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+      - name: One-time seven-image material production art review
+        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'review/material-one-shot-20261022' }}
+        run: node scripts/review-materials.mjs --out-dir artifacts/material-review
+      - name: Preserve seven-material art review
+        if: ${{ always() && github.event_name == 'pull_request' && github.head_ref == 'review/material-one-shot-20261022' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: one-time-material-art-review
+          path: artifacts/material-review/
+          retention-days: 7
+          if-no-files-found: warn
