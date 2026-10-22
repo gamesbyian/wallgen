@@ -172,3 +172,33 @@ test('archive exporter independently refuses damaged non-recipe PNG integrity',(
   const corrupt=input.slice();corrupt[image.offset+9]^=2;
   assert.throws(()=>archivePngRecipeRecords(corrupt),/IDAT checksum/);
 });
+
+test('identical duplicate recipes may consolidate; conflicting history is refused and archivable',()=>{
+  const current=emitted(native);
+  const named=scanPngChunks(current).chunks.find(c=>c.type==='iTXt');
+  const previous=emitted(normalizeRecipe({...native,seed:'different-previous-art'}));
+  const olderRecord=scanPngChunks(previous).chunks.find(c=>c.type==='iTXt');
+  const insert=(record)=>Buffer.concat([
+    current.subarray(0,named.offset),record.raw,current.subarray(named.offset)]);
+  const duplicates=insert(named);
+  const consistent=inspectPngMigration(duplicates);
+  assert.equal(consistent.safe,true,JSON.stringify(consistent));
+  assert.deepEqual(consistent.conflictingChunkIndexes,[]);
+  const collapsed=migratePngMetadataOnly(duplicates).png;
+  assert.equal(readRawPngRecipe(collapsed).records.length,1);
+
+  const conflicting=insert(olderRecord);
+  const report=inspectPngMigration(conflicting);
+  assert.equal(report.safe,false);
+  assert.match(report.reason,/Conflicting embedded recipe records/);
+  assert.equal(report.recordCount,2);
+  assert.deepEqual(report.conflictingChunkIndexes,
+    [readRawPngRecipe(conflicting).records[0].chunkIndex]);
+  assert.throws(()=>migratePngMetadataOnly(conflicting),/Conflicting/);
+  const archive=archivePngRecipeRecords(conflicting);
+  assert.equal(archive.recordCount,2);
+  same(Buffer.from(archive.records[0].originalChunkBase64,'base64'),olderRecord.raw);
+  same(Buffer.from(archive.records[1].originalChunkBase64,'base64'),named.raw);
+  assert.deepEqual(readRawPngRecipe(conflicting).selected.rawRecipe,native,
+    'latest selected recipe remains unchanged despite refusing metadata replacement');
+});

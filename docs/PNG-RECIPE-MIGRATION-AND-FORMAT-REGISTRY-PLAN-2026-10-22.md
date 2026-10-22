@@ -1,5 +1,8 @@
 # PNG recipe metadata migration without image changes
 
+**Duplicate-record conflict gate (2026-10-22, PR pending):** previously the metadata-only updater could select the latest fully current recipe and silently remove a different earlier recipe chunk. It now compares **full parsed source envelopes** from all original named records. If an earlier envelope differs, inspection reports its chunk index and blocks update; the exact-byte original-recipe JSON archive remains available independently. JSON-identical duplicates remain safely consolidatable. This is intentionally conservative (even a different generator/output envelope is retained as conflicting history); the normal PNG export writer still replaces historical duplicate recipe chunks as before. User archives must not have their provenance silently overwritten.
+
+
 **M0 source archaeology full 45-revision pass (2026-10-22, PR pending):** [complete expression snapshots](recipe-format-history/model-expression-sources-01.json), [10 source-expression changes across seven revisions](recipe-format-history/model-expression-ledger.json) and [human interpretation](recipe-format-history/EXPRESSION-CHANGE-LEDGER.md) expose historical v1 layer-three dependency flips, shadow default 45→0, Drawn path/anchor mapping, viewPan signed-zero normalization and v1→v2 schema version. Each source snapshot has its Git blob SHA, and every field set was checked against the 45-revision key ledger. This is **structural/source evidence**; it does not establish renderer or helper semantic parity and does not enable unsafe old PNG rewriting. Next: source-era renderer, helper and seed fixtures then narrow adapters.
 
 
