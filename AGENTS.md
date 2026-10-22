@@ -1,5 +1,9 @@
 # Agent orientation for ROYGBIV
 
+## Implementation alert: Photo work has begun (2026-10-22)
+
+[PR #473](https://github.com/gamesbyian/wallgen/pull/473) is the first actual shared Photo implementation: versioned opt-in `photoLook`, a simple sRGB tone/grain finish, and a compact Light-pane switch. It advances F0/F1 and D1/D2 but does **not** complete film optics, webcam compression, advanced inspector, real rendered-art review or phone signoff. Before working on photo finishing, inspect latest main and that PR's merge status; use `src/photo-look.js` as the sole film-and-camera postprocessor. Preserve old recipe pixels when Photo is off. Do not add a second Film tool or a second camera processor. See the active roadmap checkpoint.
+
 ## Live work authorities, as of 2026-10-22
 
 **START HERE:** [active product roadmap, art + UX queues](docs/ACTIVE-PRODUCT-ROADMAP-2026-10-22.md). It is the single authority for current priority, status, issue owner and closure conditions. Older plans and large QA ledgers retain historical evidence, **not** current per-PR gates. Current editor: seven categories, 40 named tools, 95 scalar settings.
