@@ -201,17 +201,28 @@ export function readRawPngRecipe(input){
   return {width:scan.width,height:scan.height,records,
     selected:records.at(-1)||null};
 }
-// The ordinary import API keeps its legacy normalization behavior. Archive
-// migration tools must call readRawPngRecipe instead, before deciding whether
-// the original recipe has a sufficiently well-defined schema to translate.
-export function extractPngRecipe(input){
-  const {selected}=readRawPngRecipe(input);
-  if(!selected)return null;
+// This import path keeps the established v1/v2 acceptance rules, but can
+// return source provenance without reparsing a potentially large PNG. Its
+// compatibility normalization is NOT proof the current renderer matches the
+// historical image. The strict no-render migration tool remains separate.
+export function extractPngRecipeWithProvenance(input){
+  const {selected,records}=readRawPngRecipe(input);
+  if(!selected)return {recipe:null,format:null,recordCount:0,
+    normalizedFieldsChanged:false};
   const {format,rawRecipe}=selected;
   if(![RECIPE_FORMAT,'roygbiv-recipe-v1'].includes(format))
     throw Error('Unsupported recipe metadata version');
   if(typeof rawRecipe.seed!=='string'||!rawRecipe.seed.trim()||
     (format===RECIPE_FORMAT&&!['paths','radial','regions'].includes(rawRecipe.structure)))
     throw Error('Damaged recipe metadata identity');
-  return normalizeRecipe(rawRecipe);
+  const recipe=normalizeRecipe(rawRecipe);
+  const fields=Object.keys(recipe),sourceKeys=Object.keys(rawRecipe);
+  const normalizedFieldsChanged=fields.length!==sourceKeys.length||
+    fields.some(key=>!Object.hasOwn(rawRecipe,key)||
+      JSON.stringify(rawRecipe[key])!==JSON.stringify(recipe[key]));
+  return {recipe,format,recordCount:records.length,normalizedFieldsChanged};
+}
+// Legacy importer API delegates to the same single raw read, unchanged result.
+export function extractPngRecipe(input){
+  return extractPngRecipeWithProvenance(input).recipe;
 }
