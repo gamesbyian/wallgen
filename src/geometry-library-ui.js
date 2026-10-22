@@ -13,6 +13,9 @@ const make=(parent,tag,text)=>{
 };
 const pathAvailable=recipe=>recipe?.structure==='paths'&&recipe.geometry==='drawn'&&
   Array.isArray(recipe.customPath)&&recipe.customPath.length>=2;
+const shapeAvailable=recipe=>recipe?.structure==='regions'&&
+  recipe.regionMode==='scattered'&&recipe.scatteredShapeKind==='imported'&&
+  recipe.scatteredShape?.geometry?.type==='compound-region';
 const safeName=s=>s.toLowerCase().replace(/[^a-z0-9_-]+/g,'-').slice(0,40)||'geometry';
 // Monochrome vector previews come from the geometry actually stored, never
 // from the image that happened to be on the wallpaper when Save was clicked.
@@ -89,11 +92,14 @@ export function installGeometryLibraryUI({getRecipe,applyPath,applyShape,onNotic
   const errorMessage=e=>e?.code==='duplicate'?'That geometry is already in your library.':
     e?.code==='conflict'?'This item changed in another tab. Refresh before editing.':
     e?.message||'Geometry library operation failed.';
-  const canSave=()=>pathAvailable(getRecipe());
+  const canSave=()=>pathAvailable(getRecipe())||shapeAvailable(getRecipe());
   const sync=()=>{
+    const shape=shapeAvailable(getRecipe());
     save.disabled=busy||!canSave();
-    save.title=canSave()?'Save the currently used drawn path':
-      'Switch to a wallpaper using a custom drawn or imported path to save it';
+    save.textContent=shape?'Save current shape':'Save current path';
+    name.placeholder=shape?'Name this shape (optional)':'Name this path (optional)';
+    save.title=canSave()?'Save the active geometry for reuse':
+      'Use an imported shape or drawn path to save it in your library';
   };
   const init=()=>loading||(loading=openGeometryLibrary().then(db=>{
     store=db;
@@ -165,7 +171,7 @@ export function installGeometryLibraryUI({getRecipe,applyPath,applyShape,onNotic
     dialog.showModal();
     if(filterKind==='shape'||filterKind==='path')filter.value=filterKind;
     sync();
-    if(canSave())name.value='Path '+getRecipe().seed.slice(0,25);
+    if(canSave())name.value=(shapeAvailable(getRecipe())?'Shape ':'Path ')+getRecipe().seed.slice(0,25);
     else name.value='';
     say('Loading your library…');
     try{await init();if(store.warning)say(store.warning);else say('');
@@ -190,8 +196,10 @@ export function installGeometryLibraryUI({getRecipe,applyPath,applyShape,onNotic
     busy=true;sync();say('Saving path…');
     try{
       const db=await init();
-      const asset=await db.add({name:name.value.trim()||'Untitled path',
-        geometry:drawPathToGeometry(getRecipe()),source:{kind:'drawn'}});
+      const recipe=getRecipe(),isShape=shapeAvailable(recipe);
+      const asset=await db.add({name:name.value.trim()||(isShape?'Untitled shape':'Untitled path'),
+        geometry:isShape?recipe.scatteredShape.geometry:drawPathToGeometry(recipe),
+        source:{kind:isShape?'imported':'drawn'}});
       say(db.durable?'Saved '+asset.name+'.':
         'Saved for this visit only. Browser storage is unavailable; export this item.');
       await refresh();
