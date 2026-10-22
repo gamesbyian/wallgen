@@ -1015,9 +1015,9 @@ try{
     rotation:document.querySelector('[data-random-setting="textureRotation"]')?.getAttribute('aria-label'),
     background:document.querySelector('[data-random-setting="background"]')?.getAttribute('aria-label')
   }))()`);
-  assert.equal(sourcedDieNames.stripe,'Randomize only Stripe thickness');
-  assert.match(sourcedDieNames.rotation,/^Randomize only Texture layer 1 rotation in degrees$/);
-  assert.equal(sourcedDieNames.background,'Randomize only Background');
+  assert.equal(sourcedDieNames.stripe,'Reroll only Stripe thickness');
+  assert.match(sourcedDieNames.rotation,/^Reroll only Texture layer 1 rotation in degrees$/);
+  assert.equal(sourcedDieNames.background,'Reroll only Background');
   console.log('SOURCE_SETTING_RANDOMIZE_LABELS',JSON.stringify(sourcedDieNames));
   const iconPlacement=await evaluate('(()=>({tabs:[...document.querySelectorAll(".settings-tab")].map(b=>({width:b.getBoundingClientRect().width,icon:!!b.querySelector("svg.ui-icon")})),dock:[...document.querySelectorAll("#mobileActionDock>button")].map(b=>({width:b.getBoundingClientRect().width,icon:!!b.querySelector("svg.ui-icon")})),rail:[...document.querySelectorAll("#mobileEditorActionRail>button")].map(b=>({width:b.getBoundingClientRect().width,icon:!!b.querySelector("svg.ui-icon")})),remoteImages:document.querySelectorAll("img.ui-icon").length,categoryHeight:document.querySelector(".settings-tabs").getBoundingClientRect().height}))()');
   assert.equal(iconPlacement.remoteImages,0,'inlined icons inherit theme contrast');
