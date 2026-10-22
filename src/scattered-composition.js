@@ -64,7 +64,9 @@ export function buildScatteredCircles(recipe){
     return {index:i,r:minRadius+(maxRadius-minRadius)*t,tie:sizeRng()};
   }).sort((a,b)=>b.r-a.r||a.tie-b.tie);
   const objects=[];
-  let mandatoryCrop=(!overlap&&crop>=.4&&count>=5)?2:0;
+  // A bounded, user-controlled fraction: the remaining circles stay fully
+  // in frame, giving cropped silhouettes meaningful negative-space contrast.
+  const mandatoryCrop=Math.min(count,Math.round(count*crop*.55));
   let croppedCount=0;
   const gap=clearance;
   for(const item of requested){
@@ -80,16 +82,15 @@ export function buildScatteredCircles(recipe){
       const mustCrop=croppedCount<mandatoryCrop;
       let best=null,bestScore=-Infinity;
       for(let tryIndex=0;tryIndex<280;tryIndex++){
-        const edgeTarget=mustCrop||
-          (crop>0&&placementRng()<crop*.11);
+        const edgeTarget=mustCrop;
         let cx,cy;
         if(edgeTarget){
           const edge=Math.floor(placementRng()*4);
           const penetration=between(placementRng,.13,.82);
-          if(edge===0){cx=radius*penetration;cy=between(placementRng,0,H);}
-          else if(edge===1){cx=W-radius*penetration;cy=between(placementRng,0,H);}
-          else if(edge===2){cy=radius*penetration;cx=between(placementRng,0,W);}
-          else {cy=H-radius*penetration;cx=between(placementRng,0,W);}
+          if(edge===0){cx=radius*penetration;cy=between(placementRng,radius,H-radius);}
+          else if(edge===1){cx=W-radius*penetration;cy=between(placementRng,radius,H-radius);}
+          else if(edge===2){cy=radius*penetration;cx=between(placementRng,radius,W-radius);}
+          else {cy=H-radius*penetration;cx=between(placementRng,radius,W-radius);}
         }else{
           // Tall disks with a radius > half canvas width can only succeed
           // when edge cropping is allowed.
