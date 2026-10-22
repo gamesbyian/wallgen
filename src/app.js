@@ -4,7 +4,7 @@ import {createPreviewCoordinator,createThumbnailQueue,exportWallpaperInWorker,cl
 import { embedPngMetadata, extractPngRecipe, cleanMetadata, METADATA_FIELDS } from './png-metadata.js';
 import { installDrawTool } from './draw-path-ui.js?v=20261018-extend1';
 import {appliedDrawnPathRecipe} from './draw-apply-transaction.js';
-import { installImagePathTool } from './image-path-ui.js?v=20261018-import1';
+import { installImagePathTool } from './image-path-ui.js?v=20261022-shapes1';
 import {importedAngleDeltaDegrees} from './import-angle-wrap.js';
 import {pathStructureLockedOutsidePaths} from './path-authoring-locks.js';
 import {mountEditor,selectEditorTool,syncEditorStructure} from './editor-layout.js?v=20261021-labels1';
@@ -14,6 +14,9 @@ import {STYLE_PRESETS,EDITOR_CATEGORIES,TOOL_LIST} from './editor-schema.js?v=20
 import {sourceSettingLabel} from './editor-control-roles.js?v=20261021-labels1';
 import {fullSettingName} from './editor-terminology.js';
 import {installExplorationHistory} from './exploration-history.js';
+import {installGeometryLibraryUI} from './geometry-library-ui.js';
+import {RAINBOW_ORBITS} from './scattered-composition.js';
+import {cloneGeometrySnapshot} from './geometry-asset.js';
 import {parseStoredFavorites} from './favorites-store.js';
 import {encodePortableRecipe,decodePortableRecipe,portableShareUrl,portableShareTokenFromLocation,
   MAX_PORTABLE_LINK_CHARS} from './share-recipe.js';
@@ -27,7 +30,7 @@ const notice = document.getElementById('notice');
 const studioStatus = document.getElementById('studioStatus');
 const favoriteButton = document.getElementById('favorite');
 const FAVORITES_KEY = 'wallgen:favorites:v1';
-const FIELDS = ['primesOnly','family','structure','radialMode','rayCount','rayRotation','rayTwist','rayCoverage','rayCore','fieldCenterX','fieldCenterY','regionMode','regionCount','regionJitter','regionSides','dividerColor','dividerWidth','composition','repeatCount','repeatSpacing','orientation','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','geometry','turnRadius','hairpinAngle','loopRadius','loopSweep','geometrySafety','extendDrawnPath','crossingMode','stepCount','chevronSharpness','loopAspect','construction','motif','lineStyle','pathLength','tonalContrast','brushRoughness','dotSize','dotSpacing','endTaper','shapeFrequency','shapeDepth','motifSize','motifFrequency','palette','material','outline','background','lightingMood','lightDirection','lightStrength','shadowStrength','stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection','textureCoverage','textureRotation','textureBlend','textureLayer2Enabled','material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2','textureLayer3Enabled','material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3','chaos','stripeWidth','spread','textureStrength','textureScale','textureDisplacement','individuality','patternHomogeneity','overridePatternHomogeneity','gap','outlineBuffer','glow'];
+const FIELDS = ['primesOnly','family','structure','radialMode','rayCount','rayRotation','rayTwist','rayCoverage','rayCore','fieldCenterX','fieldCenterY','regionMode','regionCount','regionJitter','regionSides','scatteredCount','scatteredMinSize','scatteredMaxSize','scatteredVariation','scatteredSpacing','scatteredEdgeCrop','scatteredOverlap','scatteredShapeKind','dividerColor','dividerWidth','composition','repeatCount','repeatSpacing','orientation','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','geometry','turnRadius','hairpinAngle','loopRadius','loopSweep','geometrySafety','extendDrawnPath','crossingMode','stepCount','chevronSharpness','loopAspect','construction','motif','lineStyle','pathLength','tonalContrast','brushRoughness','dotSize','dotSpacing','endTaper','shapeFrequency','shapeDepth','motifSize','motifFrequency','palette','material','outline','background','lightingMood','lightDirection','lightStrength','shadowStrength','stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection','textureCoverage','textureRotation','textureBlend','textureLayer2Enabled','material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2','textureLayer3Enabled','material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3','chaos','stripeWidth','spread','textureStrength','textureScale','textureDisplacement','individuality','patternHomogeneity','overridePatternHomogeneity','gap','outlineBuffer','glow'];
 let current = normalizeRecipe();
 let currentScene;
 const previewLayers={background:null,ink:null,scene:null,key:null,overhang:null};
@@ -192,7 +195,8 @@ function showNotice(message){
 function fromControls() {
   const data={seed:seedInput.value,positionX:current.positionX,positionY:current.positionY,
     viewZoom:current.viewZoom,viewPanX:current.viewPanX,viewPanY:current.viewPanY,
-    customPath:current.customPath,drawnAnchors:current.drawnAnchors,drawnCorners:current.drawnCorners,interiorElements:current.interiorElements};
+    customPath:current.customPath,drawnAnchors:current.drawnAnchors,drawnCorners:current.drawnCorners,interiorElements:current.interiorElements,
+    scatteredShape:current.scatteredShape};
   for (const key of FIELDS) { const field=form.elements.namedItem(key); data[key]=field.dataset.inactive==='true'?current[key]:(field.type==='checkbox'?field.checked:field.value); }
   return normalizeRecipe(data);
 }
@@ -236,6 +240,8 @@ function toControls(recipe) {
   syncInactiveSettings();
   syncScopedSettingDice();
   syncEditorStructure(current.structure,current.regionMode,current.construction);
+  const useShape=document.getElementById('chooseScatteredShape');
+  if(useShape)useShape.hidden=!(current.structure==='regions'&&current.regionMode==='scattered');
   const effective=document.getElementById('geometrySafetyStatus');
   if(effective){
     if(current.structure!=='paths')effective.textContent='Closed regions use connected polygon boundaries';
@@ -287,10 +293,12 @@ function inactiveSettingKeys(recipe,scene){
     if(recipe.radialMode==='spokes')inactive.add('rayTwist');
   }
   if(!regions){
-    for(const key of ['regionMode','regionCount','regionJitter','regionSides'])inactive.add(key);
+    for(const key of ['regionMode','regionCount','regionJitter','regionSides','scatteredCount','scatteredMinSize','scatteredMaxSize','scatteredVariation','scatteredSpacing','scatteredEdgeCrop','scatteredOverlap','scatteredShapeKind'])inactive.add(key);
   }else{
     if(recipe.regionMode!=='nested')inactive.add('regionSides');
-    if(recipe.regionMode==='nested')inactive.add('regionJitter');
+    if(recipe.regionMode==='nested'||recipe.regionMode==='scattered')inactive.add('regionJitter');
+    if(recipe.regionMode==='scattered')inactive.add('regionCount');
+    else for(const key of ['scatteredCount','scatteredMinSize','scatteredMaxSize','scatteredVariation','scatteredSpacing','scatteredEdgeCrop','scatteredOverlap','scatteredShapeKind'])inactive.add(key);
   }
   if(!(radial||(regions&&recipe.regionMode==='nested'))){
     inactive.add('fieldCenterX');inactive.add('fieldCenterY');
@@ -472,6 +480,17 @@ function render(recipe,{scroll=false,bypassLocks=false,interactive=false}={}) {
   // Primes Only is reflected by its selected control; no transient message.
   const key=artKey(current);
   currentScene=resolveScene(current);
+  const scatterStatus=document.getElementById('scatteredStatus');
+  if(scatterStatus){
+    const missing=current.structure==='regions'&&current.regionMode==='scattered'?
+      current.scatteredCount-currentScene.objects.length:0;
+    const noAsset=current.structure==='regions'&&current.regionMode==='scattered'&&
+      current.scatteredShapeKind==='imported'&&!current.scatteredShape;
+    scatterStatus.textContent=noAsset?'Choose a saved silhouette from the library.':
+      missing>0?'Only '+currentScene.objects.length+' of '+current.scatteredCount+
+      ' shapes fit. Reduce size or spacing, or allow overlaps.':'';
+    scatterStatus.hidden=!missing&&!noAsset;
+  }
   if(previewLayers.key===key && previewLayers.ink && previewLayers.background){
     clearSettledPreview();
     // Nudge and compositor-only changes remain immediate, even while an
@@ -554,10 +573,22 @@ const drawTool=installDrawTool({
     showNotice('Drawn path applied. Undo restores the previous wallpaper.');
   },
 });
+function applyImportedShape(geometry){
+  if((current.lockedSettings.includes('structure')&&current.structure!=='regions')||
+    (current.lockedSettings.includes('regionMode')&&current.regionMode!=='scattered')||
+    (current.lockedSettings.includes('scatteredShapeKind')&&current.scatteredShapeKind!=='imported')){
+    showNotice('Unlock structure, region layout and shape source before using a saved silhouette.');
+    return false;
+  }
+  changeRecipe({...current,structure:'regions',regionMode:'scattered',
+    scatteredShapeKind:'imported',scatteredShape:cloneGeometrySnapshot(geometry)});
+  return true;
+}
 const imagePathTool=installImagePathTool({
   getRecipe:()=>current,
   onNotice:showNotice,
   onPath:path=>drawTool.loadPath(path),
+  onShape:applyImportedShape,
   onAngle:angle=>{
     // Rotation is relative to the resolved seed direction, not fixed at 45°.
     const base=fromControls();
@@ -577,6 +608,32 @@ const imagePathTool=installImagePathTool({
     return true;
   },
 });
+// The library only stores geometry; using a saved path delegates to the
+// existing recipe and Undo transaction, while saving does not change artwork.
+const geometryLibrary=installGeometryLibraryUI({
+  getRecipe:()=>current,
+  onNotice:showNotice,
+  downloadBlob,
+  applyShape:applyImportedShape,
+  applyPath:({points,anchors=[],corners=[]})=>{
+    if(current.lockedSettings.includes('geometry')||
+      pathStructureLockedOutsidePaths(current)){
+      showNotice('Unlock Path geometry or Layout structure before using a saved path.');
+      return false;
+    }
+    const next=appliedDrawnPathRecipe(fromControls(),points,anchors,corners,false,false);
+    changeRecipe(next);
+    return true;
+  }
+});
+
+const useScatteredShape=document.createElement('button');
+useScatteredShape.type='button';useScatteredShape.id='chooseScatteredShape';
+useScatteredShape.className='button button-outline scattered-preset';
+useScatteredShape.textContent='Choose saved silhouette…';
+document.querySelector('.editor-tool-card[data-editor-tool="regions"]')?.append(useScatteredShape);
+useScatteredShape.addEventListener('click',()=>{void geometryLibrary.open({filterKind:'shape'});});
+useScatteredShape.hidden=current.structure!=='regions'||current.regionMode!=='scattered';
 function updatePositionStatus(){
   const label=document.getElementById('positionStatus');
   const x=current.positionX, y=current.positionY;
@@ -933,6 +990,31 @@ function syncSettingLocks(){
 }
 installSettingLocks();
 const editor=mountEditor();
+// Contextual preset, without growing the navigation. All affected values stay
+// ordinary editable settings, and locked fields remain protected.
+const regionTool=document.querySelector('.editor-tool-card[data-editor-tool="regions"]');
+const rainbowOrbitButton=document.createElement('button');
+rainbowOrbitButton.type='button';rainbowOrbitButton.id='rainbowOrbitsPreset';
+rainbowOrbitButton.className='button button-outline scattered-preset';
+rainbowOrbitButton.textContent='Try Rainbow Orbits';
+rainbowOrbitButton.title='Seven varied rainbow circles with black negative space';
+regionTool?.append(rainbowOrbitButton);
+rainbowOrbitButton.addEventListener('click',()=>{
+  const proposal=normalizeRecipe({...current,...RAINBOW_ORBITS});
+  const next=respectSettingLocks(current,proposal);
+  if(next.structure!=='regions'||next.regionMode!=='scattered'){
+    showNotice('Unlock Canvas structure and Region layout to apply Rainbow Orbits.');
+    return;
+  }
+  changeRecipe(next);
+  selectEditorTool('path','scattered-size');
+  showNotice('Rainbow Orbits selected. Adjust count, size, spacing and edge cropping.');
+});
+const scatterStatus=document.createElement('p');
+scatterStatus.id='scatteredStatus';scatterStatus.hidden=true;
+scatterStatus.className='scattered-diagnostic';scatterStatus.setAttribute('role','status');
+document.querySelector('.editor-tool-card[data-editor-tool="scattered-edges"]')
+  ?.append(scatterStatus);
 // Details controls deliberately live outside the fixed scalar setting schema:
 // ordered element objects are a recipe collection, not separately lockable sliders.
 const interiorCards=Object.fromEntries(['interior','interior-style','interior-motion','interior-placement','interior-targets']

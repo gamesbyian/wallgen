@@ -1,9 +1,10 @@
 // Resolution-independent geometry producers for ROYGBIV's unified scene.
 // All generated shapes are ordinary closed regions. Colours refer to one of
 // seven semantic palette slots, independent of the number of visible objects.
+import {buildScatteredObjects} from './scattered-composition.js';
 export const STRUCTURES=Object.freeze(['paths','radial','regions']);
 export const RADIAL_MODES=Object.freeze(['sunburst','starburst','pinwheel','spokes','concentric']);
-export const REGION_MODES=Object.freeze(['voronoi','organic','facets','blocks','nested']);
+export const REGION_MODES=Object.freeze(['voronoi','organic','facets','blocks','nested','scattered']);
 export const DIVIDER_MODES=Object.freeze(['none','background','black','white']);
 const W=600,H=1300,TAU=2*Math.PI;
 const clamp=(n,a,b)=>Math.min(b,Math.max(a,n));
@@ -194,6 +195,7 @@ export function buildCompositionObjects(recipe,colors,stripes,bundleOffsets){
       case 'facets':shapes=facets(recipe);break;
       case 'blocks':shapes=blocks(recipe);break;
       case 'nested':shapes=nested(recipe,false);break;
+      case 'scattered':shapes=buildScatteredObjects(recipe).objects;break;
       default:shapes=voronoi(recipe,false);
     }
   }
