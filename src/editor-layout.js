@@ -3,7 +3,7 @@ import {iconMarkup} from './ui-icons.js';
 import {annotateEditorSettingRow,sourceSettingLabel} from './editor-control-roles.js?v=20261021-labels1';
 import {installFocusedAdjustments} from './editor-focus.js';
 import {toolAppliesToScene} from './editor-tool-applicability.js';
-import {findEditorToolMatch,findEditorSearchHit} from './editor-tool-search.js?v=20261022-intent-search1';
+import {findEditorToolMatch,findEditorSearchHit,findEditorSearchHits} from './editor-tool-search.js?v=20261022-choice1';
 import {legacyToolAliases,legacyCategoryAliases,legacySettingAliases} from './editor-terminology.js';
 import {installMaterialLayerIndicators} from './editor-material-indicators.js';
 import {installMaterialInspectors} from './editor-material-inspector.js';
@@ -106,12 +106,17 @@ export function mountEditor(){
   searchStatus.id='editorSearchStatus';searchStatus.hidden=true;
   searchStatus.setAttribute('role','status');searchStatus.setAttribute('aria-live','polite');
   searchInput.setAttribute('aria-describedby',searchStatus.id);
+  const searchResults=create('div','editor-search-results');
+  searchResults.id='editorSearchResults';searchResults.hidden=true;
+  searchResults.setAttribute('role','listbox');
+  searchResults.setAttribute('aria-label','Matching wallpaper settings');
+  searchInput.setAttribute('aria-controls',searchResults.id);
   const searchClose=create('button','editor-search-close','×');
   searchClose.type='button';searchClose.hidden=true;
   searchClose.setAttribute('aria-label','Close setting search');
   searchClose.title='Close search';
   controls.append(scopeMode,strength,randomCategory,search);
-  explore.append(style,controls,searchInput,searchClose,searchStatus);
+  explore.append(style,controls,searchInput,searchClose,searchStatus,searchResults);
   nav.before(explore);
   nav.replaceChildren();
 
@@ -276,9 +281,49 @@ export function mountEditor(){
     if(cat!==activeCategory)selectEditorTool(cat,EDITOR_CATEGORIES.find(c=>c.id===cat).tools[0].id);
   });
   randomCategory.addEventListener('click',()=>{randomCategory.dataset.randomCategory=currentCategoryFromTabs();});
-  let matchedSearchHit=null;
+  let matchedSearchHit=null,rankedSearchHits=[],searchMatchIndex=0;
+  function renderSearchChoices(){
+    searchResults.replaceChildren();
+    searchResults.hidden=rankedSearchHits.length<2;
+    searchInput.removeAttribute('aria-activedescendant');
+    if(searchResults.hidden)return;
+    rankedSearchHits.forEach((hit,index)=>{
+      const option=create('button','editor-search-choice',
+        hit.label+' · '+(hit.tool.categoryLabel||hit.tool.category)+' → '+hit.tool.name);
+      option.id='editorSearchChoice'+index;
+      option.type='button';option.setAttribute('role','option');
+      option.dataset.searchIndex=String(index);
+      option.tabIndex=-1;
+      option.setAttribute('aria-selected',String(index===searchMatchIndex));
+      searchResults.append(option);
+    });
+    searchInput.setAttribute('aria-activedescendant','editorSearchChoice'+searchMatchIndex);
+  }
+  function chooseSearchResult(hit){
+    const {tool,key,label}=hit;
+    const field=key?form.elements.namedItem(key):null;
+    if(field?.disabled){
+      const reason=field.dataset.inactive==='true'
+        ?'not active in this design. Change its prerequisite to enable it.'
+        :'locked. Unlock it to edit.';
+      searchStatus.textContent=label+' is '+reason;
+      searchStatus.hidden=false;
+      return;
+    }
+    selectEditorTool(tool.category,tool.id,{source:'search'});
+    if(key)materialInspectors.showForSetting(key);
+    closeSearch({restoreFocus:false});
+    (field||tools.get(tool.id)?.chip)?.focus({preventScroll:true});
+  }
+  searchResults.addEventListener('click',event=>{
+    const index=Number(event.target.closest('[data-search-index]')?.dataset.searchIndex);
+    if(Number.isInteger(index)&&rankedSearchHits[index])
+      chooseSearchResult(rankedSearchHits[index]);
+  });
   function closeSearch({restoreFocus=true}={}){
-    matchedSearchHit=null;
+    matchedSearchHit=null;rankedSearchHits=[];searchMatchIndex=0;
+    searchResults.replaceChildren();searchResults.hidden=true;
+    searchInput.removeAttribute('aria-activedescendant');
     searchInput.hidden=true;searchClose.hidden=true;searchStatus.hidden=true;
     searchStatus.textContent='';
     explore.classList.remove('editor-search-open');
@@ -296,26 +341,23 @@ export function mountEditor(){
   searchClose.addEventListener('click',closeSearch);
   searchInput.addEventListener('keydown',event=>{
     if(event.key==='Escape'){event.preventDefault();closeSearch();return;}
-    if(event.key!=='Enter'||!matchedSearchHit)return;
-    event.preventDefault(); // Never submit the enclosing wallpaper form.
-    const {tool,key,label}=matchedSearchHit;
-    const field=key?form.elements.namedItem(key):null;
-    if(field?.disabled){
-      const reason=field.dataset.inactive==='true'
-        ?'not active in this design. Change its prerequisite to enable it.'
-        :'locked. Unlock it to edit.';
-      searchStatus.textContent=label+' is '+reason;
-      searchStatus.hidden=false;
+    if(['ArrowDown','ArrowUp'].includes(event.key)&&rankedSearchHits.length>1){
+      event.preventDefault();
+      const delta=event.key==='ArrowDown'?1:-1;
+      searchMatchIndex=(searchMatchIndex+delta+rankedSearchHits.length)%rankedSearchHits.length;
+      matchedSearchHit=rankedSearchHits[searchMatchIndex];
+      renderSearchChoices();
       return;
     }
-    selectEditorTool(tool.category,tool.id,{source:'search'});
-    if(key)materialInspectors.showForSetting(key);
-    closeSearch({restoreFocus:false});
-    (field||tools.get(tool.id)?.chip)?.focus({preventScroll:true});
+    if(event.key!=='Enter'||!matchedSearchHit)return;
+    event.preventDefault(); // Never submit the enclosing wallpaper form.
+    chooseSearchResult(matchedSearchHit);
   });
   searchInput.addEventListener('input',()=>{
     const query=searchInput.value.trim();
-    matchedSearchHit=null;
+    matchedSearchHit=null;rankedSearchHits=[];searchMatchIndex=0;
+    searchResults.hidden=true;searchResults.replaceChildren();
+    searchInput.removeAttribute('aria-activedescendant');
     searchStatus.hidden=true;
     searchStatus.textContent='';
     if(!query)return;
@@ -337,6 +379,8 @@ export function mountEditor(){
     }
     const match=findEditorSearchHit(query,TOOL_LIST,options);
     if(match){
+      rankedSearchHits=findEditorSearchHits(query,TOOL_LIST,options).slice(0,4);
+      searchMatchIndex=0;renderSearchChoices();
       matchedSearchHit=match;
       selectEditorTool(match.tool.category,match.tool.id,{source:'search'});
       if(match.key)materialInspectors.showForSetting(match.key);
@@ -347,7 +391,8 @@ export function mountEditor(){
         ?match.label+' · '+location+(form.elements.namedItem(match.key)?.disabled
           ?' · inactive or locked':' · Enter to focus')
         :location+' · Enter to open tool';
-      searchStatus.textContent=status;
+      searchStatus.textContent=rankedSearchHits.length>1
+        ?status+' · '+rankedSearchHits.length+' matches. Use ↑↓ or tap a choice.':status;
       searchStatus.hidden=false;
       return;
     }
