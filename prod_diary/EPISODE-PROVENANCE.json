@@ -9,7 +9,9 @@
       "event_date": "2026-10-16",
       "diary_file": "PRODUCTION-DIARY-2026-10-16-TO-2026-10-19.md",
       "pr_numbers": [],
-      "source_ids": [],
+      "source_ids": [
+        "reconstructed-2026-10-16-origin"
+      ],
       "record_kind": "retrospective_synthesis",
       "complete_verbatim_transcript_verified": false,
       "coverage": "partial",

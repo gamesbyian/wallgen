@@ -11,16 +11,23 @@ const sourceIndex = JSON.parse(await read('CONVERSATION-SOURCES.json'));
 const provenance = JSON.parse(await read('EPISODE-PROVENANCE.json'));
 assert.equal(sourceIndex.full_transcript_count, 0,
   'Do not declare full transcripts without a source export');
-assert.equal(sourceIndex.source_excerpt_count, sourceIndex.sources.length);
+assert.equal(sourceIndex.source_excerpt_count, sourceIndex.sources.filter(s => s.capture_kind === 'source_excerpt').length);
+assert.equal(sourceIndex.reconstructed_summary_count, sourceIndex.sources.filter(s => s.capture_kind === 'reconstructed_summary').length);
 const sourceIds = new Set();
 let countedUserMessages = 0;
 for (const source of sourceIndex.sources) {
   assert(!sourceIds.has(source.source_id), 'duplicate source ID');
   sourceIds.add(source.source_id);
-  assert.equal(source.capture_kind, 'source_excerpt');
+  assert(['source_excerpt', 'reconstructed_summary'].includes(source.capture_kind));
   assert.equal(source.full_transcript_verified, false);
   assert.equal(source.completeness, 'partial');
   await access(path.join(root, source.archive_path));
+  if (source.capture_kind === 'reconstructed_summary') {
+    assert.equal(source.verbatim_user_text, false);
+    const reconstruction = await readFile(path.join(root, source.archive_path), 'utf8');
+    assert(reconstruction.includes('не дословная стенограмма'));
+    continue;
+  }
   const archive = JSON.parse((await readFile(path.join(root, source.archive_path), 'utf8')));
   assert.equal(archive.source_id, source.source_id);
   assert.equal(archive.completeness, 'partial');
@@ -42,7 +49,8 @@ for (const episode of provenance.episodes) {
 assert.equal(ids.size, 16, 'expected sixteen dated chapters');
 const narratives = ['PROLOGUE-2026-10-22.md',
   'PRODUCTION-DIARY-2026-10-16-TO-2026-10-19.md',
-  'PRODUCTION-DIARY-2026-10-20-TO-2026-10-22.md'];
+  'PRODUCTION-DIARY-2026-10-20-TO-2026-10-22.md',
+  'RECONSTRUCTED-ORIGIN-2026-10-16.md'];
 for (const filename of narratives) {
   // References are code-facing URL destinations, not Russian-language prose.
   const prose = (await read(filename)).replace(/\]\([^)]+\)/g, ']').replace(/https?:\/\/[^\s)]+/g, '');

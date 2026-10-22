@@ -8,6 +8,22 @@
   "limitations": "No interface in this session exposes complete ChatGPT Project history or complete other-agent exchanges. These are bounded original user-turn excerpts, not complete conversations; further sessions may exist. A future authentic export is required for full coverage.",
   "sources": [
     {
+      "source_id": "reconstructed-2026-10-16-origin",
+      "archive_path": "prod_diary/RECONSTRUCTED-ORIGIN-2026-10-16.md",
+      "observed_date": "2026-10-16",
+      "title": "Ранняя постановка задачи об обоях",
+      "capture_kind": "reconstructed_summary",
+      "completeness": "partial",
+      "speakers": [
+        "user",
+        "assistant"
+      ],
+      "verbatim_user_text": false,
+      "full_transcript_verified": false,
+      "assistant_responses_archived": false,
+      "missing": "Полная исходная беседа, точный текст обеих сторон, порядок реализации и подтверждённые часы недоступны."
+    },
+    {
       "source_id": "2026-10-17-generative-art-progress",
       "archive_path": "prod_diary/transcripts/2026-10-17-generative-art-progress.json",
       "observed_date": "2026-10-17",
@@ -200,5 +216,6 @@
       "visible_user_message_count": 1
     }
   ],
-  "visible_user_message_count": 53
+  "visible_user_message_count": 53,
+  "reconstructed_summary_count": 1
 }
