@@ -66,27 +66,58 @@ export function simulateRgb(rgb,mode,severity=1){
 }
 
 /**
- * Operates on a canvas ImageData-like object, returning a newly owned array.
- * The provided pixels, alpha and image geometry are never altered.
- * The consumer may construct ImageData(result.data,result.width,result.height).
+ * Allocates an isolated, resumable pixel conversion job. processPixels() can
+ * run in small batches on the main thread without blocking UI for a full
+ * 600x1300 frame, or in one large batch inside a Worker.
+ *
+ * A job's data is its OWN buffer. The input RGBA and alpha remain unchanged.
  */
-export function simulateImageData(source,mode,severity=1){
+export function createColourVisionJob(source,mode,severity=1){
   const m=machadoMatrix(mode,severity);
   const {width,height,data}=source||{};
   if(!Number.isSafeInteger(width)||width<1||!Number.isSafeInteger(height)||height<1||
       width*height>100_000_000||!data||data.length!==width*height*4||
       !(data instanceof Uint8Array||data instanceof Uint8ClampedArray))
     throw new TypeError('Expected positive RGBA ImageData with 8-bit pixels');
-  // Explicitly copy even for identity to keep source and result independent.
   const output=new Uint8ClampedArray(data);
-  if(mode==='original'||severity===0)return {width,height,data:output};
-  for(let i=0;i<output.length;i+=4){
-    const r=decode[data[i]],g=decode[data[i+1]],b=decode[data[i+2]];
-    const result=simulatedLinear(r,g,b,m,mode,severity);
-    output[i]  =encodeLinear(result[0]);
-    output[i+1]=encodeLinear(result[1]);
-    output[i+2]=encodeLinear(result[2]);
-    // Alpha remains copied verbatim. The overlay canvas is never exported.
-  }
-  return {width,height,data:output};
+  const result={width,height,data:output};
+  const identity=mode==='original'||severity===0;
+  const tritan=mode==='tritan';
+  const {separation,wing1,wing2}=BRETTEL_TRITAN;
+  return {
+    result,
+    processPixels(start,end){
+      if(!Number.isSafeInteger(start)||!Number.isSafeInteger(end)||
+          start<0||end<start||end>width*height)
+        throw new RangeError('Invalid pixel range for colour-vision job');
+      if(identity)return;
+      for(let index=start;index<end;index++){
+        const i=index*4;
+        const r=decode[data[i]],g=decode[data[i+1]],b=decode[data[i+2]];
+        const transform=tritan?
+          (r*separation[0]+g*separation[1]+b*separation[2]>=0?wing1:wing2):m;
+        let R=r*transform[0]+g*transform[1]+b*transform[2];
+        let G=r*transform[3]+g*transform[4]+b*transform[5];
+        let B=r*transform[6]+g*transform[7]+b*transform[8];
+        if(tritan&&severity<1){
+          // Full tritanopia uses Brettel 1997. Partial tritanomaly is a
+          // documented approximation, interpolated in linear RGB.
+          R=r+(R-r)*severity;
+          G=g+(G-g)*severity;
+          B=b+(B-b)*severity;
+        }
+        output[i]=encodeLinear(R);
+        output[i+1]=encodeLinear(G);
+        output[i+2]=encodeLinear(B);
+        // No write to output[i+3] (alpha).
+      }
+    }
+  };
+}
+
+/** Complete synchronous conversion, intended for workers/tests. */
+export function simulateImageData(source,mode,severity=1){
+  const job=createColourVisionJob(source,mode,severity);
+  job.processPixels(0,job.result.width*job.result.height);
+  return job.result;
 }
