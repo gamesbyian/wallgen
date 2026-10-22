@@ -2,6 +2,12 @@
 
 2026-10-22. Historical design audit based on commit 75c5e1778a5f5789c44ba95098ca7a4c1161b7f8, followed by an implementation checkpoint. The original maps were documentation-only; later PRs #449, #452, #454 and #455 made focused runtime improvements. The audited architecture remains seven categories, 43 tools and 95 canonical settings.
 
+## Implementation checkpoint: pattern and dot activation guidance
+
+**C06 partly addressed.** Path-derived Dots and Motif Scale continue to have stable menu homes and source values, but if every setting in the selected card is **actually inactive**, it now explains the prerequisite and provides an explicit **Go to Patterns / Go to Structure** link to the existing enabling control. The hint disappears as soon as the native sliders are applicable. No incompatible design type is silently switched, no locked value is discarded, and the hint does not consume vertical space in ordinary active editing. `src/editor-pattern-prerequisites.js` reads `dataset.inactive` from the canonical `src/app.js` policy rather than replicating incomplete renderer rules.
+
+A more general causal availability model remains useful for other tools, but this specific false-affordance problem is addressed with a narrow form-preserving change. Tests validate the source keys, prerequisite destinations and absence of recipe mutation. No new CI.
+
 ## Implementation checkpoint: direct lighting-related navigation
 
 **C10 partially addressed.** Details > Stripe Shadows and Details > Glow now link directly to each other and to Light > Lighting; Light > Lighting exposes reciprocal shortcuts to both. These are standard, keyboard-accessible buttons inside the **existing** tool chooser, inserted beside the selected tool rather than in a new vertical row or a separate modal. The seven top-level categories, five mobile destinations, shader semantics and original controls are unchanged.
