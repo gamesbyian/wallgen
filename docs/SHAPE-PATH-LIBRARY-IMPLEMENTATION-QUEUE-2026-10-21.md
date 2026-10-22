@@ -1,5 +1,8 @@
 # Shape & Path Library + Scattered Shapes: executable implementation queue
 
+> **2026-10-22 CURRENT STATUS:** This 2026-10-21 unchecked implementation queue is a *historical original proposal*. #434 merged canonical assets, local IndexedDB library, import/export, scattered circles, Rainbow Orbits and compound silhouette stamps. #449 added per-object nudge/size/reset with portable recipe overrides; #456 added opt-in direct canvas drag including compound-hole selection and one Undo step on release. **Stages A–E shipped; optional parts of F are still open.** Use [issue #443](https://github.com/gamesbyian/wallgen/issues/443) and [active roadmap](ACTIVE-PRODUCT-ROADMAP-2026-10-22.md) for the remaining ZIP/source-image retention, layer ordering, and physical-device gesture observation. Do not implement the shipped stages again, or apply historical full-Chromium acceptance to routine PRs; [lean CI](CI-OPERATIONS-2026-10-22.md) takes precedence.
+
+
 **Status:** All boxes below are proposed and unchecked; no feature code has been implemented by this documentation PR.  
 **Companion specification:** [SHAPE-PATH-LIBRARY-AND-SCATTERED-SHAPES-PLAN-2026-10-21.md](SHAPE-PATH-LIBRARY-AND-SCATTERED-SHAPES-PLAN-2026-10-21.md)  
 **Target:** gamesbyian/wallgen, reconcile with current main and open PRs #429/#431/#432.  

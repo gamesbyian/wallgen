@@ -1,4 +1,7 @@
 # ROYGBIV: geometry-aware surfaces and procedural embroidery
+
+> **2026-10-22 EXECUTION QUEUE:** This *specification only* was merged by [#464](https://github.com/gamesbyian/wallgen/pull/464). Implementation is separately queued in [#467](https://github.com/gamesbyian/wallgen/issues/467), from E0 neutral recipe/target coordinates to E1 one clearly sewn stripe + an independently embroidered chosen region, followed by deterministic stitch planning, rendering and Texture Treatments UX. **No embroidery renderer or controls have shipped yet.** Every phase must be recorded in that issue and the [active roadmap](ACTIVE-PRODUCT-ROADMAP-2026-10-22.md); do not declare this design document proof of completion or impose new CI factories. Existing three texture layers and old PNG recipes must remain intact until an opt-in treatment is deliberately chosen.
+
 ## Implementable architecture, visual design, UX contract, research and phased delivery
 
 **Created:** 2026-10-22. **Status:** specification only; no renderer, UI, recipe or workflow changes. **Source checked:** gamesbyian/wallgen main at 7e970906222ebf1d085b12527f2a6aa9106d9209. Reconcile with live main before coding; other agents may merge meanwhile.

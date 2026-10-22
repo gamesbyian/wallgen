@@ -1,5 +1,15 @@
 # R.O.Y.G.B.I.V.
 
+## What's shipped, what's planned (October 22, 2026)
+
+**Live creative features:** Rainbow Orbits, editable/reusable imported silhouettes, and **Move shapes on canvas** with saved, undoable transforms (#434/#449/#456); optional Colour Vision Preview (#432); compact Material/Finish tools and clearer contextual settings (#452/#454/#455/#459–#465). Editor: seven categories / 40 named tools / 95 scalar settings.
+
+**Not yet implemented:** [geometry-aware embroidery treatments](docs/GEOMETRY-AWARE-EMBROIDERY-AND-SURFACE-TREATMENTS-PLAN-2026-10-22.md) (delivery queue [#467](https://github.com/gamesbyian/wallgen/issues/467)) and [film-inspired finishing](docs/PHOTO-FILM-LOOKS-AND-FILTERS-PLAN-2026-10-22.md) (delivery queue [#468](https://github.com/gamesbyian/wallgen/issues/468)). Those plans specify potential UI and render algorithms; they are **not controls in today's app**.
+
+**Artistic review unfinished:** the [seven-example real-render material comparison](docs/MATERIAL-SEVEN-IMAGE-ART-REVIEW-2026-10-22.md) is runnable, and #458 fixed recipe/renderer agreement, but the finished images have **not** been aesthetically inspected in this session. [Issue #445](https://github.com/gamesbyian/wallgen/issues/445) tracks the judgement and any genuinely needed fixes. Direct dragging has targeted code tests, not physical Pixel gesture approval.
+
+[Current work priorities](docs/ACTIVE-PRODUCT-ROADMAP-2026-10-22.md) · [Lean CI and optional quality checks](docs/CI-OPERATIONS-2026-10-22.md)
+
 ## UX improvements and follow-up work (October 22, 2026)
 
 The October 22 source-aware UX sequence [#459](https://github.com/gamesbyian/wallgen/pull/459)–[#465](https://github.com/gamesbyian/wallgen/pull/465) merged compact Material/Finish editing per layer, persistent interior object selection, clearer scattered-size/placeholder feedback, direct Light/Shadows/Glow navigation, prerequisite guidance for dormant dot/motif controls, and Design Type continuation. Exact-setting/artistic-intent search was introduced in [#455](https://github.com/gamesbyian/wallgen/pull/455). The live Edit tree has **7 categories, 40 named tools, 95 scalar setting keys**, plus dynamic interior-element objects; the earlier 43-tool inventory remains a dated snapshot.

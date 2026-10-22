@@ -1,10 +1,20 @@
 # Agent orientation for ROYGBIV
 
+## Live work authorities, as of 2026-10-22
+
+**START HERE:** [active product roadmap, art + UX queues](docs/ACTIVE-PRODUCT-ROADMAP-2026-10-22.md). It is the single authority for current priority, status, issue owner and closure conditions. Older plans and large QA ledgers retain historical evidence, **not** current per-PR gates. Current editor: seven categories, 40 named tools, 95 scalar settings.
+
+- **Working shipped art:** Rainbow Orbits + imported silhouettes and reusable geometry (#434), selected-object nudge/reset (#449) and opt-in direct canvas dragging (#456), scientific **display-only** colour-vision inspection (#432), Material/Finish consolidation and guided settings (#452/#454/#455/#459–#465). Preserve recipe/Undo/export semantics, and don't rebuild already shipping modes.
+- **Material quality not yet approved:** [#445](https://github.com/gamesbyian/wallgen/issues/445); a validated [seven-image review script](docs/MATERIAL-SEVEN-IMAGE-ART-REVIEW-2026-10-22.md) exists (#453/#458), but actual samples have not been visually inspected in this thread.
+- **NEW, planned rather than shipped:** [embroidery #467](https://github.com/gamesbyian/wallgen/issues/467) and [film #468](https://github.com/gamesbyian/wallgen/issues/468), with full specifications below. Implement small working artwork milestones and keep them independent.
+- **Specific usability decisions:** [#444](https://github.com/gamesbyian/wallgen/issues/444) C07/C09/C10/C11 after a few real art tasks, [#365](https://github.com/gamesbyian/wallgen/issues/365) only observed phone tap friction; short Draw issue #422 has been closed, extreme landscape #301 is low-priority.
+- **Verification policy:** [lean CI](docs/CI-OPERATIONS-2026-10-22.md): one quick Node PR gate; specialized Chromium/atlas workflows are voluntary. Tests for changed persistence or rendering paths should be proportional. Avoid claiming optical or physical-device verification without seeing/trying it.
+
 ## Live UX handoff and completion tracking (2026-10-22)
 
 **Live navigation:** 7 categories / **40** named tools / **95** canonical schema keys, after #459. Original 40/87 and intermediate 43/95 documents are historical samples, not current UI contracts. Six related incremental PRs [#459](https://github.com/gamesbyian/wallgen/pull/459), [#460](https://github.com/gamesbyian/wallgen/pull/460), [#461](https://github.com/gamesbyian/wallgen/pull/461), [#462](https://github.com/gamesbyian/wallgen/pull/462), [#463](https://github.com/gamesbyian/wallgen/pull/463) and [#465](https://github.com/gamesbyian/wallgen/pull/465) are merged, with regular Node CI green; physical-phone UX acceptance is still open.
 
-**Before taking more UX work:** read the current [active roadmap](docs/ACTIVE-PRODUCT-ROADMAP-2026-10-22.md), [redesign queue](docs/UI-REDESIGN-IMPLEMENTATION-QUEUE.md), and [C01–C17 live status ledger](docs/IA-SEMANTIC-CONTROL-AUDIT-AND-REVISION-PLAN-2026-10-22.md). Work from fresh `main`; respect [PR #464](https://github.com/gamesbyian/wallgen/pull/464)'s independent embroidery/film-filter planning. Prefer one user-visible fix plus targeted tests, preserving original recipe keys, short phone tray and five mobile destinations. Never close #444 simply because source mapping or Node tests pass.
+**Before taking more UX work:** read the current [active roadmap](docs/ACTIVE-PRODUCT-ROADMAP-2026-10-22.md), [redesign queue](docs/UI-REDESIGN-IMPLEMENTATION-QUEUE.md), and [C01–C17 live status ledger](docs/IA-SEMANTIC-CONTROL-AUDIT-AND-REVISION-PLAN-2026-10-22.md). Work from fresh `main`; read the now-merged [embroidery](docs/GEOMETRY-AWARE-EMBROIDERY-AND-SURFACE-TREATMENTS-PLAN-2026-10-22.md) and [film](docs/PHOTO-FILM-LOOKS-AND-FILTERS-PLAN-2026-10-22.md) specifications and their implementation issues #467/#468 before modifying material/render code. Prefer one user-visible fix plus targeted tests, preserving original recipe keys, short phone tray and five mobile destinations. Never close #444 simply because source mapping or Node tests pass.
 
 
 ---
