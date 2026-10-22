@@ -47,8 +47,8 @@ popover or history view covers a stripe. There is **no vertical scrolling** in
 the editor.
 
 The old Design/Colour/Texture/Refine mixture has been replaced by seven
-unambiguous creative categories: **Layout, Path, Shapes, Details, Colour, Material and
-Effects**. Each category contains named tools; tap a category and its tool for
+unambiguous creative categories: **Layout, Path, Stripes, Details, Colour, Texture and
+Light**. Each category contains named tools; tap a category and its tool for
 direct access. A sideways swipe can advance to the next *named* tool, but
 swiping blindly through a long stack is no longer required. The same real
 form controls, numeric steppers, locks and recipe fields serve desktop and
@@ -76,7 +76,7 @@ Layer 2 and 3 materials can be chosen directly, without Add/Remove controls or
 an extra lock. Their default Smooth selection means off.
 The same named pattern applies to layers 1, 2 and 3, so all adjustments
 remain available through their named tools. At the narrowest tall-phone widths,
-the Material rotation shortcuts use one horizontally swipeable 44px control row.
+the Texture rotation shortcuts use one horizontally swipeable 44px control row.
 
 The seven-category metadata in `src/editor-schema.js` supplies the canonical
 tool membership, dependencies and `WIZARD_STEPS` ordering. A future opt-in
@@ -528,7 +528,7 @@ definitions.
 
 ### Stripe-specific finishing controls
 
-**Shapes** contains ribbon construction, patterns, marks, motif scale and character, with the legacy tonal-contrast control shown only for imported legacy tonal recipes. **Details** contains interior element layers, outlines, closed-region dividers, shadows and glow. The editor only shows relevant controls for the current structure. **Effects** contains the independent canvas-wide Lighting tool. Shadow Strength 0 is Off; increasing it immediately casts shadows.
+**Shapes** contains ribbon construction, patterns, marks, motif scale and character, with the legacy tonal-contrast control shown only for imported legacy tonal recipes. **Details** contains interior element layers, outlines, closed-region dividers, shadows and glow. The editor only shows relevant controls for the current structure. **Light** contains the independent canvas-wide Lighting tool. Shadow Strength 0 is Off; increasing it immediately casts shadows.
 
 ## Output
 
