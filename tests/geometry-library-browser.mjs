@@ -117,6 +117,44 @@ try{
   assert.deepEqual(recipe.customPath,start.customPath);
   assert.deepEqual(recipe.drawnAnchors,start.drawnAnchors);
   assert.deepEqual(recipe.drawnCorners,start.drawnCorners);
+  // Exercise the real image importer: a WHITE donut on a transparent field
+  // would disappear in naïve RGB-based segmentation. Alpha must preserve both
+  // the filled silhouette and the true empty centre.
+  await evaluate("(async()=>{\n    const canvas=document.createElement('canvas');canvas.width=120;canvas.height=120;\n    const ctx=canvas.getContext('2d');\n    ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(60,60,44,0,Math.PI*2);ctx.fill();\n    ctx.globalCompositeOperation='destination-out';\n    ctx.beginPath();ctx.arc(60,60,19,0,Math.PI*2);ctx.fill();\n    const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));\n    const dt=new DataTransfer();\n    dt.items.add(new File([blob],'transparent-donut.png',{type:'image/png'}));\n    const input=document.getElementById('imagePathFile');\n    input.files=dt.files;\n    input.dispatchEvent(new Event('change',{bubbles:true}));\n    return true;\n  })()");
+  await until('document.querySelector("#imagePathShape")?.disabled===false');
+  assert.match(await evaluate('document.getElementById("imagePathStatus").textContent'),
+    /Fillable silhouette/);
+  await evaluate('document.getElementById("imagePathShape").click()');
+  await until('document.querySelector("select[name=regionMode]")?.value==="scattered" && document.querySelector("select[name=scatteredShapeKind]")?.value==="imported"');
+  const shapeUrl=await evaluate('new URLSearchParams(location.search).get("r")');
+  const stamp=decodeRecipe(shapeUrl);
+  assert.equal(stamp.scatteredShape.geometry.components[0].holes.length,1);
+  assert.equal(stamp.scatteredShapeKind,'imported');
+  await evaluate('document.getElementById("geometryLibraryToggle").click()');
+  await until('document.querySelector(".geometry-library-dialog")?.open===true');
+  assert.equal(await evaluate('document.querySelector(".geometry-library-save button").disabled'),
+    false,'Imported silhouette must be saveable independently');
+  await evaluate('(()=>{const d=document.querySelector(".geometry-library-dialog");'+
+    'd.querySelector(".geometry-library-save input").value="Browser Donut";'+
+    'd.querySelector(".geometry-library-save button").click();})()');
+  await until('document.querySelector(".geometry-library-status")?.textContent.includes("Saved Browser Donut")');
+  await evaluate('document.querySelector(".geometry-library-dialog header button").click()');
+  await send('Page.navigate',{url:origin+'/?r='+encodeRecipe(start)});
+  await until('document.readyState==="complete" && !!document.getElementById("geometryLibraryToggle")');
+  await evaluate('document.getElementById("geometryLibraryToggle").click()');
+  await until('Array.from(document.querySelectorAll(".geometry-library-item")).some(x=>x.textContent.includes("Browser Donut"))');
+  await evaluate("(()=>{\n    const item=[...document.querySelectorAll('.geometry-library-item')]\n      .find(el=>el.textContent.includes('Browser Donut'));\n    item.querySelector('.geometry-library-item-actions button').click();\n  })()");
+  await until('document.querySelector("select[name=scatteredShapeKind]")?.value==="imported"');
+  await until('document.getElementById("preview")?.dataset.renderPending==="false"');
+  const embedded=decodeRecipe(await evaluate('new URLSearchParams(location.search).get("r")'));
+  assert.deepEqual(embedded.scatteredShape,stamp.scatteredShape,
+    'Shape must restore from library as an independent recipe copy');
+  const stencil=await evaluate("(async()=>{\n    const {resolveScene}=await import('/src/model.js');\n    const {decodeRecipe}=await import('/src/model.js');\n    const recipe=decodeRecipe(new URLSearchParams(location.search).get('r'));\n    const objects=resolveScene(recipe).objects;\n    const canvas=document.getElementById('preview'),ctx=canvas.getContext('2d');\n    const fullyInside=objects.find(o=>{\n      const all=o.rings[0];\n      return all.every(p=>p.x>=1&&p.x<599&&p.y>=1&&p.y<1299);\n    });\n    if(!fullyInside)return {found:false};\n    const ring=fullyInside.rings[0],hole=fullyInside.rings[1];\n    const bounds=points=>{\n      const xs=points.map(p=>p.x),ys=points.map(p=>p.y);\n      return {x:(Math.min(...xs)+Math.max(...xs))/2,\n        y:(Math.min(...ys)+Math.max(...ys))/2,\n        r:(Math.max(...xs)-Math.min(...xs))/2};\n    };\n    const outer=bounds(ring),inner=bounds(hole);\n    const pixel=(x,y)=>Array.from(ctx.getImageData(Math.round(x),Math.round(y),1,1).data);\n    return {found:true,fill:pixel(outer.x+outer.r*.7,outer.y),\n      hole:pixel(inner.x,inner.y)};\n  })()");
+  assert.equal(stencil.found,true,'At least one complete silhouette should fit on screen');
+  assert.ok(stencil.fill[0]+stencil.fill[1]+stencil.fill[2]>60,
+    'Filled ring must be coloured');
+  assert.ok(stencil.hole[0]+stencil.hole[1]+stencil.hole[2]<35,
+    'Silhouette hole must reveal black background');
   // Cross-tab concurrency behaviour through two independent IndexedDB handles.
   const race=await evaluate('(async()=>{'+
     'const {openGeometryLibrary}=await import("/src/geometry-library-store.js");'+
@@ -129,7 +167,7 @@ try{
     'const latest=await a.get("race-example");a.close();b.close();'+
     'return {conflict,revision:latest.revision,name:latest.name};})()');
   assert.deepEqual(race,{conflict:true,revision:2,name:'Latest'});
-  console.log('PASS real Chromium library: save → reload → restore path, recipe parity, IndexedDB revision conflict');
+  console.log('PASS real Chromium library: persistent path, imported donut and hole pixels, source-independent recipe, IDB conflict');
 }finally{
   try{ws?.close();}catch{}
   proc.kill('SIGTERM');
