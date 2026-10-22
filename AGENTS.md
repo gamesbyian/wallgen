@@ -8,8 +8,10 @@ Read these documents **before recommending menu reorganisation or changing sourc
 
 - [Human expectations, creativity and procedural composition: agent field guide](docs/AGENT-HUMAN-EXPECTATIONS-AND-CREATIVE-COMPOSITION.md): evidence-backed HCI methodologies, artistic/perceptual vocabulary, research sources, and safeguards against simulated human evidence.
 - [Integrated 43-tool geometry and Colour Vision update](docs/IA-INTEGRATED-CURRENT-MAIN-2026-10-22.md): current-day source taxonomy, risk-aware interaction priorities and what remains unbuilt.
-- [40-tool historical navigation atlas](docs/HUMAN-CENTRED-NAVIGATION-MAP-2026-10-22.md): every current category, named tool and setting, its visual effect and closely interacting controls; distinguishes source implementation from proposals.
+- [40-tool historical navigation atlas](docs/HUMAN-CENTRED-NAVIGATION-MAP-2026-10-22.md): the original editor categories, named tools and settings, its visual effect and closely interacting controls; distinguishes source implementation from proposals.
 - [Applied HCI/creative composition IA assessment](docs/IA-RESEARCH-APPLIED-ASSESSMENT-2026-10-22.md): comparative cognitive walkthroughs, QOC options and structural-proxy findings.
+- [Semantic intent and prerequisite interrogation tool](scripts/ia-semantic-audit.mjs): current 95-key map, setting/goal/mode queries, source-linked findings and missing-workflow inventory; read-only analysis, not renderer truth or a human usability study.
+- [Current semantic control audit and phased revision plan](docs/IA-SEMANTIC-CONTROL-AUDIT-AND-REVISION-PLAN-2026-10-22.md): prioritised code-backed mismatches, pending object-authoring capabilities and a proportional implementation queue.
 - [Source-driven structural comparison utility](scripts/ia-structure-evaluate.mjs): a no-dependency comparison of two hypothetical trees across 16 explicit artistic goals; it does **not** measure humans.
 
 ### Operational requirements for this kind of work
