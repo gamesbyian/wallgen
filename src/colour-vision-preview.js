@@ -270,7 +270,10 @@ severity.addEventListener('input',()=>{
   strength=Number(severity.value)/100;
   updateState({announce:false});
 });
-severity.addEventListener('change',()=>updateState());
+severity.addEventListener('change',()=>{
+  strength=Number(severity.value)/100;
+  updateState();
+});
 compare.addEventListener('change',()=>{
   split=compare.checked;
   applyVisibility();splitPositionSet(splitPosition);
