@@ -66,7 +66,7 @@ Let an artist inspect **the exact currently rendered wallpaper** through useful 
 ## Implementation order and stop/go gates
 
 - [x] Inspect source render/canvas, UI navigation, responsive controls and test topology. Establish initial branch.
-- [ ] **A. Science core**: add isolated `src/colour-vision-matrices.js`, `src/colour-vision.js` and `tests/colour-vision.test.js`, keeping upstream provenance and MIT notice; test pure-math invariants before UI. First initial commit on this branch.
+- [x] **A. Science core**: add isolated `src/colour-vision-matrices.js`, `src/colour-vision.js` and `tests/colour-vision.test.js`, keeping upstream provenance and MIT notice; test pure-math invariants before UI. First initial commit on this branch.
 - [ ] **B. Async render adapter**: separate preview overlay and coalesced worker/fallback, revision discipline, mode-change cancellation, no impact on source render/export.
 - [ ] **C. Human-factors UI**: minimal desktop button, dedicated More section, text presets, native severity slider, split/hold-original controls; styles additive and theme-aware.
 - [ ] **D. Browser qualification**: automate real target centre-hit/keyboard/pointer and screenshots, render worker and fallback parity, source original isolation, persistent state isolation. Publish measured perf notes.
@@ -74,6 +74,14 @@ Let an artist inspect **the exact currently rendered wallpaper** through useful 
 - [ ] **F. Optional extensions**, after core is accepted: validated Brettel full tritanopia; multi-pane comparison if it can preserve legibility; quantitative pairwise distinctions with explicit perceptual metric/method and never an invented pass/fail score; optional export of a **separately named simulation** only if a user explicitly asks for such functionality.
 
 **Merge rule:** do not call a plan or pure core "finished preview". Require green Node + actual-browser acceptance for shipped UI and no unverified human/device approval. Keep this branch small and build milestones into focused commits.
+
+## Implementation checkpoint: 21 October 2026
+
+**Draft PR:** https://github.com/gamesbyian/wallgen/pull/432 . **Baseline:** main `47493b2`; implementation branch remains separate. Initial modules: `src/colour-vision-matrices.js`, `src/colour-vision.js`, `src/colour-vision-worker.js`, `src/colour-vision-preview.js`, `colour-vision-preview.css`, `tests/colour-vision.test.js`. `index.html` loads the presentation after the existing mobile shell.
+
+**Automated confirmation:** [Validate Wallgen run 39728271588](https://github.com/gamesbyian/wallgen/actions/runs/39728271588) completed successfully, including Node tests. [Mobile browser acceptance run 39728271684](https://github.com/gamesbyian/wallgen/actions/runs/39728271684) passed its actual Chromium 412×892 journey with this branch. Its dedicated `COLOUR_VISION_BROWSER_ISOLATION` record proves: Vision entry inside More and physically centre-hit reachable; original selected at startup; deutan transform visibly different (701 sampled pixels), original source PNG dataURL identical, URL recipe identical; source canvas retained its accessible image role and simulation overlay was aria-hidden; Split divider visible, right-arrow moved 50→55%, expected clip-path applied; Show original, restore simulation, and Original mode all worked without changing source or URL.
+
+**Important scope limit:** this qualifies the *basic mobile path and original-canvas isolation* only. It does not yet prove exact independent reference parity across all modes, worker exception fallback, 320px/short phone layout, pointer drag, physical Android experience, export invariance under active simulation, visual aesthetic sign-off, or performance under churn. The PR must stay draft until those gates are satisfied.
 
 ## Licensing
 
