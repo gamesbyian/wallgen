@@ -275,6 +275,12 @@ try{
         {seed:'worker-pinwheel',structure:'radial',radialMode:'pinwheel',
           rayCount:14,material:'linen',textureStrength:62,viewZoom:.8,
           dividerColor:'black'},
+        {seed:'worker-watercolor-overhang',structure:'paths',geometry:'wave',
+          material:'watercolor',textureStrength:71,textureCoverage:'both',
+          textureDisplacement:62,viewZoom:.86},
+        {seed:'worker-wood-overhang',structure:'paths',geometry:'loop',
+          material:'wood-grain',textureStrength:82,textureCoverage:'stripes',
+          textureDisplacement:57,viewZoom:1.15},
         {seed:'worker-facets',structure:'regions',regionMode:'facets',
           regionCount:14,material:'none',dividerColor:'white',glow:15,
           interiorElements:[{id:'rings',placement:'contour',width:1.4}]}
