@@ -42,6 +42,8 @@
 .geometry-library-thumb{grid-row:1/3;align-self:stretch;min-height:60px;
   display:grid;place-items:center;background:#111621;color:#e4b1fd;
   border:1px solid #484153;border-radius:7px}
+.geometry-library-thumb svg{display:block;width:100%;height:100%;max-height:80px;
+  min-height:60px;overflow:visible}
 .geometry-library-thumb span{font-size:35px;line-height:1}
 .geometry-library-item-info{min-width:0;display:flex;flex-direction:column;gap:4px}
 .geometry-library-item-info strong{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
