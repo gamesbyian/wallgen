@@ -1,5 +1,8 @@
 # ROYGBIV: photographic film looks and filters
 
+**Execution increment (2026-10-22):** `film-grain-only` adds the planned practical ability to put reproducible grain on the black substrate and all colours **without** unintentionally changing contrast, colour or vignette. Fine/coarse grain uses two deterministic noise frequencies in scene coordinates with no full-image intermediate buffer; older photoLooks continue through the unchanged first-generation grain sampler. Slider is the existing Photo Grain control; the new look is selected from the original Photo preset list. This is a first F2 grain-quality refinement, not proof of photographic emulsion accuracy or export/preview perceptual equivalence. Halation, warm/neutral bloom, luminance physics, advanced inspector and rendered sample reviews remain queued.
+
+
 > **2026-10-22 EXECUTION QUEUE:** This *specification only* was merged by [#464](https://github.com/gamesbyian/wallgen/pull/464). Implementation is separately queued in [#468](https://github.com/gamesbyian/wallgen/issues/468): F0 neutral film/seed/processing contract, F1 first actually attractive look, F2 seeded grain/halation, F3 shared Light → Photo (Film family), F4 parity and F5 optional sophistication. **Film controls, film grading and grain are not in the live app yet.** The [digital-camera companion #471](https://github.com/gamesbyian/wallgen/issues/471) shares the *same* photoLook schema, finished-frame processing and proposed UI; do not create a Film-only duplicate. Work independently of Embroidery #467, and update [active roadmap](ACTIVE-PRODUCT-ROADMAP-2026-10-22.md) on each shipped phase. Display-only Colour Vision Preview is **not** film emulation. Keep new CI proportional.
 
 ## Execution status after PR #473 (2026-10-22)
