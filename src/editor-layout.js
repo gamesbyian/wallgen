@@ -7,6 +7,7 @@ import {findEditorToolMatch,findEditorSearchHit} from './editor-tool-search.js?v
 import {legacyToolAliases,legacyCategoryAliases,legacySettingAliases} from './editor-terminology.js';
 import {installMaterialLayerIndicators} from './editor-material-indicators.js';
 import {installMaterialInspectors} from './editor-material-inspector.js';
+import {installRelatedLightTools} from './editor-related-light-tools.js';
 
 const byId=id=>document.getElementById(id);
 const form=byId('controls');
@@ -18,6 +19,7 @@ function fieldNode(key){
 }
 const tools=new Map();
 let activeCategory='layout',activeTool='arrange';
+let relatedLightLinks=null;
 let activeStructure='paths',activeRegionMode='voronoi',activeConstruction='ribbon';
 // Keep the editor populated only with tools that can modify the active scene.
 // Hidden tools retain all values and locks; changing structure restores them.
@@ -112,7 +114,7 @@ export function mountEditor(){
   nav.replaceChildren();
 
   const chooser=create('nav','editor-tool-chooser');
-  chooser.setAttribute('aria-label','Tools in selected category');
+  chooser.setAttribute('aria-label','Tools in selected category and related controls');
   nav.after(chooser);
   const updateChooserEdges=()=>{
     const max=chooser.scrollWidth-chooser.clientWidth;
@@ -164,6 +166,10 @@ export function mountEditor(){
       tools.set(tool.id,{spec:tool,card,chip,category:category.id});
     }
   }
+  // Related lighting links live in the existing tool strip, not another
+  // row or a second copy of the controls they lead to.
+  relatedLightLinks=installRelatedLightTools({chooser,
+    select:(category,tool)=>selectEditorTool(category,tool,{source:'related'})});
   // Composite controls must travel together; the current form's built-in
   // visibility/lock logic continues to target these unchanged DOM identities.
   const special={
@@ -390,7 +396,7 @@ export function selectEditorTool(category,tool,{source='manual'}={}){
   }
   // Preserve manual category swipes; reveal offscreen category tabs only for
   // search and keyboard selection, independently of the tool-chip scroll.
-  if(source==='search'||source==='keyboard'){
+  if(source==='search'||source==='keyboard'||source==='related'){
     const tabRail=document.querySelector('.settings-tabs');
     const selectedTab=tabRail?.querySelector('.settings-tab[aria-selected="true"]');
     if(selectedTab){
@@ -416,6 +422,7 @@ export function selectEditorTool(category,tool,{source='manual'}={}){
     if(chip.left<left)chooser.scrollLeft+=chip.left-left;
     else if(chip.right>right)chooser.scrollLeft+=chip.right-right;
   }
+  relatedLightLinks?.sync(category,tool);
   const reroll=document.querySelector('[data-random-category]');
   if(reroll)reroll.dataset.randomCategory=category;
   document.dispatchEvent(new CustomEvent('editor-tool-changed',{detail:{category,tool}}));
