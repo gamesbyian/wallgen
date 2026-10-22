@@ -13,6 +13,7 @@ assert.equal(sourceIndex.full_transcript_count, 0,
   'Do not declare full transcripts without a source export');
 assert.equal(sourceIndex.source_excerpt_count, sourceIndex.sources.length);
 const sourceIds = new Set();
+let countedUserMessages = 0;
 for (const source of sourceIndex.sources) {
   assert(!sourceIds.has(source.source_id), 'duplicate source ID');
   sourceIds.add(source.source_id);
@@ -24,8 +25,11 @@ for (const source of sourceIndex.sources) {
   assert.equal(archive.source_id, source.source_id);
   assert.equal(archive.completeness, 'partial');
   assert.equal(archive.agent_messages_available, false);
+  assert.equal(archive.messages.length, source.visible_user_message_count);
+  countedUserMessages += archive.messages.length;
   assert(archive.messages.every(message => message.role === 'user' && typeof message.text === 'string'));
 }
+assert.equal(countedUserMessages, sourceIndex.visible_user_message_count);
 const ids = new Set();
 for (const episode of provenance.episodes) {
   assert(!ids.has(episode.episode_id), 'duplicate episode ID');
