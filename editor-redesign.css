@@ -1100,6 +1100,31 @@ html[data-theme="cream"] body.mobile-studio .sidebar .settings-tabs .settings-ta
   }
 }
 
+/* The seven source category names need regular optical rhythm on phones.
+   The previous max-499px flex:auto cells had different widths, a fixed
+   9px inter-tab gap and asymmetric text packing. Allocate equal 48px+
+   source cells instead; distribute spare width equally when seven fit and
+   keep the existing one-row swipe overflow when they do not (320/360).
+   This does not insert a second row or alter any original tab handler. */
+@media(max-width:499px){
+  body.mobile-studio .sidebar .settings-tabs{
+    gap:3px!important;
+    justify-content:flex-start!important;
+    padding-inline:2px!important;
+  }
+  body.mobile-studio .sidebar .settings-tabs .settings-tab{
+    box-sizing:border-box!important;
+    flex:1 0 47px!important;
+    width:47px!important;
+    min-width:47px!important;
+    max-width:none!important;
+    padding:0 2px!important;
+    font-size:clamp(10px,2.4vw,12px)!important;
+    letter-spacing:-.025em!important;
+    text-align:center!important;
+  }
+}
+
 /* Portrait experiment: the 27px Focus and Tool dice had genuine 27px hit
    rectangles, with only 6px between them (#385). On narrow portrait, use
    the existing horizontal scroller as one 44px native touch row.
