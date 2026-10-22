@@ -2,6 +2,7 @@
 // Machado et al. 2009, linear sRGB; severity matrices reproduced with provenance
 // and upstream MIT notice in ./colour-vision-matrices.js.
 import {MACHADO_MATRICES} from './colour-vision-matrices.js';
+import {BRETTEL_TRITAN} from './colour-vision-brettel.js';
 
 export const COLOUR_VISION_MODES=Object.freeze(['original','protan','deutan','tritan']);
 const LUT_SIZE=16384;
@@ -27,7 +28,9 @@ function encodeLinear(n){
   // <= one quantization step away from the exact sRGB transfer function.
   return encode[Math.round(clamp01(n)*LUT_SIZE)];
 }
-export function colourVisionMatrix(mode,severity=1){
+// Tabulated Machado transform exposed for reference validation.
+// The tritan image simulation uses Brettel 1997 instead.
+export function machadoMatrix(mode,severity=1){
   validate(mode,severity);
   if(mode==='original'||severity===0)return [1,0,0,0,1,0,0,0,1];
   const key=severity*10;
@@ -37,17 +40,29 @@ export function colourVisionMatrix(mode,severity=1){
   const a=MACHADO_MATRICES[mode][lo],b=MACHADO_MATRICES[mode][hi];
   return t===0?a.slice():a.map((v,i)=>v+(b[i]-v)*t);
 }
+function simulatedLinear(r,g,b,m,mode,severity){
+  let transform=m;
+  if(mode==='tritan'){
+    const {separation,wing1,wing2}=BRETTEL_TRITAN;
+    transform=(r*separation[0]+g*separation[1]+b*separation[2])>=0?wing1:wing2;
+  }
+  const R=r*transform[0]+g*transform[1]+b*transform[2];
+  const G=r*transform[3]+g*transform[4]+b*transform[5];
+  const B=r*transform[6]+g*transform[7]+b*transform[8];
+  if(mode==='tritan'&&severity<1){
+    // Tritanopia is Brettel-grounded, intermediate tritanomaly is approximate.
+    const remain=1-severity;
+    return [R*severity+r*remain,G*severity+g*remain,B*severity+b*remain];
+  }
+  return [R,G,B];
+}
 export function simulateRgb(rgb,mode,severity=1){
-  const m=colourVisionMatrix(mode,severity);
+  const m=machadoMatrix(mode,severity);
   if(!rgb||rgb.length!==3||!Array.from(rgb).every(v=>Number.isInteger(v)&&v>=0&&v<=255))
     throw new RangeError('RGB must contain exactly three 8-bit channels');
   if(mode==='original'||severity===0)return Array.from(rgb);
   const r=decode[rgb[0]],g=decode[rgb[1]],b=decode[rgb[2]];
-  return [
-    encodeLinear(r*m[0]+g*m[1]+b*m[2]),
-    encodeLinear(r*m[3]+g*m[4]+b*m[5]),
-    encodeLinear(r*m[6]+g*m[7]+b*m[8])
-  ];
+  return simulatedLinear(r,g,b,m,mode,severity).map(encodeLinear);
 }
 
 /**
@@ -56,7 +71,7 @@ export function simulateRgb(rgb,mode,severity=1){
  * The consumer may construct ImageData(result.data,result.width,result.height).
  */
 export function simulateImageData(source,mode,severity=1){
-  const m=colourVisionMatrix(mode,severity);
+  const m=machadoMatrix(mode,severity);
   const {width,height,data}=source||{};
   if(!Number.isSafeInteger(width)||width<1||!Number.isSafeInteger(height)||height<1||
       width*height>100_000_000||!data||data.length!==width*height*4||
@@ -67,9 +82,10 @@ export function simulateImageData(source,mode,severity=1){
   if(mode==='original'||severity===0)return {width,height,data:output};
   for(let i=0;i<output.length;i+=4){
     const r=decode[data[i]],g=decode[data[i+1]],b=decode[data[i+2]];
-    output[i]  =encodeLinear(r*m[0]+g*m[1]+b*m[2]);
-    output[i+1]=encodeLinear(r*m[3]+g*m[4]+b*m[5]);
-    output[i+2]=encodeLinear(r*m[6]+g*m[7]+b*m[8]);
+    const result=simulatedLinear(r,g,b,m,mode,severity);
+    output[i]  =encodeLinear(result[0]);
+    output[i+1]=encodeLinear(result[1]);
+    output[i+2]=encodeLinear(result[2]);
     // Alpha remains copied verbatim. The overlay canvas is never exported.
   }
   return {width,height,data:output};
