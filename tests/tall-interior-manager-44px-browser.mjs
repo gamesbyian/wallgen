@@ -20,7 +20,7 @@ const base=normalizeRecipe({
 });
 const browser=await chromium.launch({headless:true}),rows=[],failures=[];
 try{
- for(const [width,height] of [[320,892],[360,892],[412,892],[499,892],[320,700]])
+ for(const [width,height] of [[320,892],[360,892],[412,892],[499,892],[500,892],[600,892],[790,892],[320,700],[500,700]])
  for(const theme of ['cream','dark']){
   const context=await browser.newContext({viewport:{width,height:892===height?892:height},
     isMobile:true,hasTouch:true,reducedMotion:'reduce'});
