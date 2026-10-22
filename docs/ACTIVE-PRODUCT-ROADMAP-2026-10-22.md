@@ -1,5 +1,10 @@
 # ROYGBIV: active product roadmap and work queue
 
+## New Film grain-only creative look (PR pending, 2026-10-22)
+
+Photo → Inspired look now includes **Film grain only**. Its expanded recipe is neutral for contrast, saturation, channels and vignette; only controllable seeded grain changes the authored image. A two-scale grain field adds fine emulsion speckles and subtle lower-frequency density variation anchored in authored canvas coordinates. Existing six presets retain their original code path and stored parameter values; the new effect is opt-in, works through the shared renderer/export/worker Photo finish, and adds no extra editor or CI workflow. Focused neutral-pixel, seed and multi-resolution tests cover the new mode. This advances Film F2 *grain variation only*: halation, physically meaningful density, device performance, and visual quality judgement remain unverified.
+
+
 ## PNG integrity gate before surgical recipe updates (PR pending, 2026-10-22)
 
 The non-render PNG recipe updater now validates **all original PNG chunk CRCs** (including opaque IDAT, colour and descriptive metadata), IHDR dimensions/mode, palette order, IDAT contiguity and unknown critical PNG chunks before making a replacement. Output is checked again. Invalid images are refused rather than receiving a deceptively valid modernized recipe. Validation reads existing bytes, never decodes the picture, and adds no screenshot factory or required CI workflow. A formerly reused 1×1 test PNG had an **invalid IDAT CRC**; the focused migration fixture was corrected. Historical v1 and incomplete early-v2 recipe translation remain separately gated. Focused unit tests cover the new refusal modes.
