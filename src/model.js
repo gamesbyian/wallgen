@@ -1,4 +1,5 @@
 import { SHAPES } from './path-geometry.js';
+import {normalizeCompoundRegion,GEOMETRY_SNAPSHOT_SCHEMA} from './geometry-asset.js';
 import { normalizeInteriorElements } from './interior-elements.js';
 import { STRUCTURES, RADIAL_MODES, REGION_MODES, DIVIDER_MODES, buildCompositionObjects } from './composition-geometry.js';
 export { STRUCTURES, RADIAL_MODES, REGION_MODES, DIVIDER_MODES };
@@ -26,7 +27,7 @@ export const LOCKABLE_SETTINGS = ['seed','family','orientation','geometry','moti
   'material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3',
   'textureDisplacement','patternHomogeneity','chaos','stripeWidth','spread','shapeFrequency','shapeDepth','motifSize','motifFrequency','lineStyle','individuality',
   'overridePatternHomogeneity','gap','outlineBuffer','glow','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','position',
-  'structure','radialMode','rayCount','rayRotation','rayTwist','rayCoverage','rayCore','fieldCenterX','fieldCenterY','regionMode','regionCount','regionJitter','regionSides','scatteredCount','scatteredMinSize','scatteredMaxSize','scatteredVariation','scatteredSpacing','scatteredEdgeCrop','scatteredOverlap','dividerColor','dividerWidth',
+  'structure','radialMode','rayCount','rayRotation','rayTwist','rayCoverage','rayCore','fieldCenterX','fieldCenterY','regionMode','regionCount','regionJitter','regionSides','scatteredCount','scatteredMinSize','scatteredMaxSize','scatteredVariation','scatteredSpacing','scatteredEdgeCrop','scatteredOverlap','scatteredShapeKind','dividerColor','dividerWidth',
   'composition','repeatCount','repeatSpacing','construction','crossingMode','turnRadius','hairpinAngle','loopRadius','loopSweep','geometrySafety','extendDrawnPath','stepCount','chevronSharpness','loopAspect','pathLength','endTaper','tonalContrast','brushRoughness','dotSize','dotSpacing','interiorElements'];
 export const PALETTES = ['classic', 'electric', 'pastel', 'jewel', 'muted', 'sunset', 'candy', 'arctic', 'earth', 'twilight', 'citrus'];
 export const TEXTURE_COVERAGES = ['both', 'stripes', 'background'];
@@ -66,6 +67,15 @@ export const normalizeRotation = (value, fallback = 0) => {
 const materialChoice = (value, fallback = 'none') => value === 'courduroy' ? 'corduroy' : MATERIALS.includes(value) ? value : fallback;
 const coverageChoice = (value) => TEXTURE_COVERAGES.includes(value) ? value : 'both';
 const blendChoice = (value) => BLEND_MODES.includes(value) ? value : 'normal';
+// Imported sources are inert unless an explicit, validated, self-contained
+// numeric geometry snapshot is present. Never resolve a local library ID in
+// the deterministic renderer; malformed legacy/share data degrades safely.
+function normalizeShapeSnapshot(input){
+  if(!input||input.schema!==GEOMETRY_SNAPSHOT_SCHEMA||input.version!==1)return null;
+  try{return {schema:GEOMETRY_SNAPSHOT_SCHEMA,version:1,
+    geometry:normalizeCompoundRegion(input.geometry)};}
+  catch{return null;}
+}
 const AUTO_CHOICES = {
   family:FAMILIES, orientation:['vertical','horizontal','diagonal'],
   geometry:GEOMETRIES.filter(x=>x!=='drawn'), motif:MOTIFS, palette:PALETTES,
@@ -125,6 +135,8 @@ export function normalizeRecipe(input = {}) {
     scatteredSpacing: finiteRange(input.scatteredSpacing,28,0,100),
     scatteredEdgeCrop: finiteRange(input.scatteredEdgeCrop,75,0,100),
     scatteredOverlap: ['separate','overlap'].includes(input.scatteredOverlap)?input.scatteredOverlap:'separate',
+    scatteredShapeKind: ['circle','imported'].includes(input.scatteredShapeKind)?input.scatteredShapeKind:'circle',
+    scatteredShape:normalizeShapeSnapshot(input.scatteredShape),
     dividerColor: DIVIDER_MODES.includes(input.dividerColor) ? input.dividerColor : 'background',
     dividerWidth: finiteRange(input.dividerWidth, 12, 0, 100),
     orientation: readChoice('orientation', ['vertical', 'horizontal', 'diagonal']),
@@ -504,6 +516,7 @@ export function randomizeAllRecipe({primesOnly=false}={}) {
     scatteredMaxSize:percent(),scatteredVariation:percent(),
     scatteredSpacing:percent(),scatteredEdgeCrop:percent(),
     scatteredOverlap:any(['separate','overlap']),
+    scatteredShapeKind:'circle',
     dividerColor:any(DIVIDER_MODES),dividerWidth:percent(),
     geometry:any(GEOMETRIES.filter(x=>x!=='drawn')), motif:any(MOTIFS), palette:any(PALETTES),
     reverseStripes:r()>.5,diagonalRotation:Math.floor(r()*361)-180,
