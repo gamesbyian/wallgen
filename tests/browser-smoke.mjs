@@ -3034,6 +3034,11 @@ try{
     width:412,height:892,deviceScaleFactor:1,mobile:true,screenWidth:412,screenHeight:892});
   console.log('COLOUR_VISION_STRESS_VIEWPORT',JSON.stringify({visionTouch,visionLatest,visionViewports}));
   await captureUI('colour-vision-tritan-70-412x892');
+  // Capture the real unobstructed Studio view as well as the open More tray.
+  await evaluate('document.getElementById("mobileMore").click()');
+  await waitFor('!document.body.classList.contains("mobile-tools-open")');
+  await captureUI('colour-vision-tritan-studio-412x892');
+
   // Force ONLY the view worker to fail on a fresh browser navigation.
   // Production artwork workers remain available. Test the actual chunked
   // compatibility conversion instead of assuming that fallback works.
