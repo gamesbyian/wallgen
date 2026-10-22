@@ -4,7 +4,7 @@ import {createPreviewCoordinator,createThumbnailQueue,exportWallpaperInWorker,cl
 import { embedPngMetadata, extractPngRecipe, cleanMetadata, METADATA_FIELDS } from './png-metadata.js';
 import { installDrawTool } from './draw-path-ui.js?v=20261018-extend1';
 import {appliedDrawnPathRecipe} from './draw-apply-transaction.js';
-import { installImagePathTool } from './image-path-ui.js?v=20261018-import1';
+import { installImagePathTool } from './image-path-ui.js?v=20261022-shapes1';
 import {importedAngleDeltaDegrees} from './import-angle-wrap.js';
 import {pathStructureLockedOutsidePaths} from './path-authoring-locks.js';
 import {mountEditor,selectEditorTool,syncEditorStructure} from './editor-layout.js?v=20261021-labels1';
