@@ -1,0 +1,997 @@
+{
+  "schema": 1,
+  "source": "45 verified GitHub main-history model.js blobs indexed in model-key-ledger.json",
+  "method": "Source-expression deltas computed from full top-level normalizeRecipe field text. Includes shorthand seed; strips standalone comments/optional spread lines.",
+  "warning": "Changes in helper modules, renderer, seeded RNG and enum definitions are not captured or proved equivalent. This dataset is not a safe auto-conversion licence.",
+  "count": 45,
+  "revisions": [
+    {
+      "commit": "e7e5f5c2eb33c2d54492edbc5073b578cecb744d",
+      "date": "2026-10-16T23:17:30Z",
+      "modelBlobSha": "972bd2954f1b439cb04bbf445d1d8238c8efe3d7",
+      "fieldCount": 17,
+      "added": [
+        {
+          "key": "chaos",
+          "expression": "finiteRange(input.chaos, 36, 0, 100)"
+        },
+        {
+          "key": "family",
+          "expression": "readChoice('family', FAMILIES)"
+        },
+        {
+          "key": "gap",
+          "expression": "finiteRange(input.gap, 28, 0, 100)"
+        },
+        {
+          "key": "geometry",
+          "expression": "readChoice('geometry', GEOMETRIES)"
+        },
+        {
+          "key": "glow",
+          "expression": "finiteRange(input.glow, 0, 0, 100)"
+        },
+        {
+          "key": "individuality",
+          "expression": "finiteRange(input.individuality, 34, 0, 100)"
+        },
+        {
+          "key": "material",
+          "expression": "readChoice('material', MATERIALS)"
+        },
+        {
+          "key": "motif",
+          "expression": "readChoice('motif', MOTIFS)"
+        },
+        {
+          "key": "orientation",
+          "expression": "readChoice('orientation', ['vertical', 'horizontal', 'diagonal'])"
+        },
+        {
+          "key": "outline",
+          "expression": "readChoice('outline', OUTLINES)"
+        },
+        {
+          "key": "palette",
+          "expression": "readChoice('palette', PALETTES)"
+        },
+        {
+          "key": "seed",
+          "expression": "[shorthand]"
+        },
+        {
+          "key": "spread",
+          "expression": "finiteRange(input.spread, 56, 0, 100)"
+        },
+        {
+          "key": "stripeWidth",
+          "expression": "finiteRange(input.stripeWidth, 52, 0, 100)"
+        },
+        {
+          "key": "textureScale",
+          "expression": "finiteRange(input.textureScale, 50, 0, 100)"
+        },
+        {
+          "key": "textureStrength",
+          "expression": "finiteRange(input.textureStrength, 52, 0, 100)"
+        },
+        {
+          "key": "version",
+          "expression": "1"
+        }
+      ],
+      "removed": [],
+      "changed": [],
+      "sourceBatch": 1
+    },
+    {
+      "commit": "c286de954234dace82aea00711fbf9f58443375b",
+      "date": "2026-10-16T23:44:42Z",
+      "modelBlobSha": "a933ceb9dfc1cf8e99dd940734f9589ce8448fca",
+      "fieldCount": 18,
+      "added": [
+        {
+          "key": "background",
+          "expression": "input.background === 'white' ? 'white' : 'black'"
+        }
+      ],
+      "removed": [],
+      "changed": [],
+      "sourceBatch": 1
+    },
+    {
+      "commit": "775469628c3cc45a6e416270d9c205039f79c3e3",
+      "date": "2026-10-16T23:57:50Z",
+      "modelBlobSha": "51a0d0e3083b80d60199f21e8549f6b18b2bddac",
+      "fieldCount": 19,
+      "added": [
+        {
+          "key": "textureCoverage",
+          "expression": "TEXTURE_COVERAGES.includes(input.textureCoverage) ? input.textureCoverage : 'both'"
+        }
+      ],
+      "removed": [],
+      "changed": [],
+      "sourceBatch": 1
+    },
+    {
+      "commit": "33f335fe1d60c63d94964a94e4a8019e4e126534",
+      "date": "2026-10-17T00:01:38Z",
+      "modelBlobSha": "40d30e8aaea5f90d0e2e620c7f45f9a033c2bab4",
+      "fieldCount": 19,
+      "added": [],
+      "removed": [],
+      "changed": [],
+      "sourceBatch": 1
+    },
+    {
+      "commit": "8c93620342904243435b9afcce471b0aa6bc6e16",
+      "date": "2026-10-17T00:05:25Z",
+      "modelBlobSha": "92564a7a1451c54929b012dc0893c4067606b7d1",
+      "fieldCount": 21,
+      "added": [
+        {
+          "key": "overridePatternHomogeneity",
+          "expression": "input.overridePatternHomogeneity === true || input.overridePatternHomogeneity === 'true'"
+        },
+        {
+          "key": "patternHomogeneity",
+          "expression": "finiteRange(input.patternHomogeneity, 100, 0, 100)"
+        }
+      ],
+      "removed": [],
+      "changed": [],
+      "sourceBatch": 1
+    },
+    {
+      "commit": "058ece57be079491f787359e5044d40aae3e78b9",
+      "date": "2026-10-17T00:33:39Z",
+      "modelBlobSha": "c39924cddb84046e5db26ba48c68226c554ee5b1",
+      "fieldCount": 23,
+      "added": [
+        {
+          "key": "positionX",
+          "expression": "finiteRange(input.positionX, 0, -30, 30)"
+        },
+        {
+          "key": "positionY",
+          "expression": "finiteRange(input.positionY, 0, -30, 30)"
+        }
+      ],
+      "removed": [],
+      "changed": [],
+      "sourceBatch": 1
+    },
+    {
+      "commit": "9725a668a3003841718332e03a2c6ad683a5211a",
+      "date": "2026-10-17T00:53:39Z",
+      "modelBlobSha": "84800e5a95ca5c978a16f2e283d08d2bc4528785",
+      "fieldCount": 39,
+      "added": [
+        {
+          "key": "material2",
+          "expression": "materialChoice(input.material2, 'none')"
+        },
+        {
+          "key": "material3",
+          "expression": "materialChoice(input.material3, 'none')"
+        },
+        {
+          "key": "textureBlend",
+          "expression": "blendChoice(input.textureBlend)"
+        },
+        {
+          "key": "textureBlend2",
+          "expression": "blendChoice(input.textureBlend2)"
+        },
+        {
+          "key": "textureBlend3",
+          "expression": "blendChoice(input.textureBlend3)"
+        },
+        {
+          "key": "textureCoverage2",
+          "expression": "coverageChoice(input.textureCoverage2)"
+        },
+        {
+          "key": "textureCoverage3",
+          "expression": "coverageChoice(input.textureCoverage3)"
+        },
+        {
+          "key": "textureLayer2Enabled",
+          "expression": "input.textureLayer2Enabled === true || input.textureLayer2Enabled === 'true'"
+        },
+        {
+          "key": "textureLayer3Enabled",
+          "expression": "input.textureLayer3Enabled === true || input.textureLayer3Enabled === 'true'"
+        },
+        {
+          "key": "textureRotation",
+          "expression": "normalizeRotation(input.textureRotation)"
+        },
+        {
+          "key": "textureRotation2",
+          "expression": "normalizeRotation(input.textureRotation2)"
+        },
+        {
+          "key": "textureRotation3",
+          "expression": "normalizeRotation(input.textureRotation3)"
+        },
+        {
+          "key": "textureScale2",
+          "expression": "finiteRange(input.textureScale2, 50, 0, 100)"
+        },
+        {
+          "key": "textureScale3",
+          "expression": "finiteRange(input.textureScale3, 50, 0, 100)"
+        },
+        {
+          "key": "textureStrength2",
+          "expression": "finiteRange(input.textureStrength2, 40, 0, 100)"
+        },
+        {
+          "key": "textureStrength3",
+          "expression": "finiteRange(input.textureStrength3, 30, 0, 100)"
+        }
+      ],
+      "removed": [],
+      "changed": [],
+      "sourceBatch": 1
+    },
+    {
+      "commit": "884281d1c51b928ba25ab67afa059203dfc0087e",
+      "date": "2026-10-17T00:56:06Z",
+      "modelBlobSha": "9b0c19fd9fbe30dd6a8d8fbafbe57c68f5eee270",
+      "fieldCount": 39,
+      "added": [],
+      "removed": [],
+      "changed": [
+        {
+          "key": "textureLayer3Enabled",
+          "before": "input.textureLayer3Enabled === true || input.textureLayer3Enabled === 'true'",
+          "after": "(input.textureLayer2Enabled === true || input.textureLayer2Enabled === 'true') && (input.textureLayer3Enabled === true || input.textureLayer3Enabled === 'true')"
+        }
+      ],
+      "sourceBatch": 1
+    },
+    {
+      "commit": "a7d60bd9acebd0cb7c416b06ace4a51d078d9a5a",
+      "date": "2026-10-17T01:00:54Z",
+      "modelBlobSha": "c74869ac8093502002ff2e3d618f45b069a704c7",
+      "fieldCount": 40,
+      "added": [
+        {
+          "key": "textureDisplacement",
+          "expression": "finiteRange(input.textureDisplacement, 0, 0, 100)"
+        }
+      ],
+      "removed": [],
+      "changed": [],
+      "sourceBatch": 1
+    },
+    {
+      "commit": "b3cbdfaf598c4ff78ccc20affb60a050d6b9db88",
+      "date": "2026-10-17T01:01:41Z",
+      "modelBlobSha": "371dcac435c7084d77277e60ea2a32171131724e",
+      "fieldCount": 40,
+      "added": [],
+      "removed": [],
+      "changed": [],
+      "sourceBatch": 1
+    },
+    {
+      "commit": "a49c9a7818d44e634604720729407bce36d78983",
+      "date": "2026-10-17T01:03:48Z",
+      "modelBlobSha": "6625c950ef2d82c43ee0ef5572e2a6301f12f093",
+      "fieldCount": 40,
+      "added": [],
+      "removed": [],
+      "changed": [],
+      "sourceBatch": 2
+    },
+    {
+      "commit": "8a80c84a93378fb84c764935cc8f76b24ccfe1b5",
+      "date": "2026-10-17T01:05:25Z",
+      "modelBlobSha": "163c4ee0f0a50d0db62c2e364ac3cd8b300aad8f",
+      "fieldCount": 40,
+      "added": [],
+      "removed": [],
+      "changed": [],
+      "sourceBatch": 2
+    },
+    {
+      "commit": "16f59901b812420daa906cfa182a478ccede9a59",
+      "date": "2026-10-17T01:22:39Z",
+      "modelBlobSha": "7787bb458b2f8cc0f162d00058061e03003d441a",
+      "fieldCount": 42,
+      "added": [
+        {
+          "key": "lockedResolved",
+          "expression": "Object.fromEntries(Object.entries(AUTO_CHOICES) .filter(([key, choices])=>Array.isArray(input.lockedSettings) && input.lockedSettings.includes(key) && choices.includes(input.lockedResolved?.[key])) .map(([key])=>[key,input.lockedResolved[key]]))"
+        },
+        {
+          "key": "lockedSettings",
+          "expression": "LOCKABLE_SETTINGS.filter(key=>Array.isArray(input.lockedSettings) && input.lockedSettings.includes(key))"
+        }
+      ],
+      "removed": [],
+      "changed": [],
+      "sourceBatch": 2
+    },
+    {
+      "commit": "7e63f98f36834d1565a18869f33ec756dc41fe9e",
+      "date": "2026-10-17T01:33:11Z",
+      "modelBlobSha": "b9de4eea71c8eacd56102447fd3f41f191925add",
+      "fieldCount": 43,
+      "added": [
+        {
+          "key": "primesOnly",
+          "expression": "input.primesOnly === true || input.primesOnly === 'true'"
+        }
+      ],
+      "removed": [],
+      "changed": [],
+      "sourceBatch": 2
+    },
+    {
+      "commit": "bbfdcb358a7bac4f902fb9018155bd46255bdc62",
+      "date": "2026-10-17T01:40:51Z",
+      "modelBlobSha": "d052f529ee988dbc6527aac09c907eccc10c63e9",
+      "fieldCount": 47,
+      "added": [
+        {
+          "key": "lightDirection",
+          "expression": "LIGHT_DIRECTIONS.includes(input.lightDirection) ? input.lightDirection : 'top-left'"
+        },
+        {
+          "key": "lightStrength",
+          "expression": "finiteRange(input.lightStrength, 45, 0, 100)"
+        },
+        {
+          "key": "lightingMood",
+          "expression": "LIGHTING_MOODS.includes(input.lightingMood) ? input.lightingMood : 'off'"
+        },
+        {
+          "key": "shadowStrength",
+          "expression": "finiteRange(input.shadowStrength, 28, 0, 100)"
+        }
+      ],
+      "removed": [],
+      "changed": [],
+      "sourceBatch": 2
+    },
+    {
+      "commit": "19422794186e10dbacd5b24fcb0ef4b800e1c1da",
+      "date": "2026-10-17T01:55:20Z",
+      "modelBlobSha": "b2e25274bc8845714098328de811948e459135cc",
+      "fieldCount": 47,
+      "added": [],
+      "removed": [],
+      "changed": [],
+      "sourceBatch": 2
+    },
+    {
+      "commit": "49ea3c3657b76f4060c648e48c39103fa9c6bb2b",
+      "date": "2026-10-17T02:02:45Z",
+      "modelBlobSha": "0361d19a0038870cf0b92559996235dd954bf6fc",
+      "fieldCount": 51,
+      "added": [
+        {
+          "key": "stripeShadowDirection",
+          "expression": "LIGHT_DIRECTIONS.includes(input.stripeShadowDirection) ? input.stripeShadowDirection : 'top-left'"
+        },
+        {
+          "key": "stripeShadowEnabled",
+          "expression": "input.stripeShadowEnabled === true || input.stripeShadowEnabled === 'true'"
+        },
+        {
+          "key": "stripeShadowSoftness",
+          "expression": "finiteRange(input.stripeShadowSoftness, 55, 0, 100)"
+        },
+        {
+          "key": "stripeShadowStrength",
+          "expression": "finiteRange(input.stripeShadowStrength, 45, 0, 100)"
+        }
+      ],
+      "removed": [],
+      "changed": [],
+      "sourceBatch": 2
+    },
+    {
+      "commit": "3fd27b003d99fa0a3105157e514adb01f9491d3c",
+      "date": "2026-10-17T02:54:50Z",
+      "modelBlobSha": "bcb493802c372a3ebfc83d2a86cb59b227885be9",
+      "fieldCount": 54,
+      "added": [
+        {
+          "key": "lineStyle",
+          "expression": "LINE_STYLES.includes(input.lineStyle) ? input.lineStyle : 'continuous'"
+        },
+        {
+          "key": "shapeDepth",
+          "expression": "finiteRange(input.shapeDepth, 50, 0, 100)"
+        },
+        {
+          "key": "shapeFrequency",
+          "expression": "finiteRange(input.shapeFrequency, 50, 0, 100)"
+        }
+      ],
+      "removed": [],
+      "changed": [],
+      "sourceBatch": 2
+    },
+    {
+      "commit": "37428b624e55a0d4526b992bfe6fdf4a01b5f420",
+      "date": "2026-10-17T05:43:27Z",
+      "modelBlobSha": "37ef7d429324c65773068bd06fd3452063a981e5",
+      "fieldCount": 58,
+      "added": [
+        {
+          "key": "diagonalRotation",
+          "expression": "finiteRange(input.diagonalRotation, 0, -180, 180)"
+        },
+        {
+          "key": "mirrorHorizontal",
+          "expression": "input.mirrorHorizontal === true || input.mirrorHorizontal === 'true'"
+        },
+        {
+          "key": "mirrorVertical",
+          "expression": "input.mirrorVertical === true || input.mirrorVertical === 'true'"
+        },
+        {
+          "key": "reverseStripes",
+          "expression": "input.reverseStripes === true || input.reverseStripes === 'true'"
+        }
+      ],
+      "removed": [],
+      "changed": [],
+      "sourceBatch": 2
+    },
+    {
+      "commit": "c7e856fcbf13feba51015daa56926d00a54ac566",
+      "date": "2026-10-17T07:37:59Z",
+      "modelBlobSha": "0f88c937e18dd0b41266c3b9a6e819866f29d0e2",
+      "fieldCount": 69,
+      "added": [
+        {
+          "key": "brushRoughness",
+          "expression": "finiteRange(input.brushRoughness, 0, 0, 100)"
+        },
+        {
+          "key": "composition",
+          "expression": "COMPOSITIONS.includes(input.composition) ? input.composition : 'single'"
+        },
+        {
+          "key": "construction",
+          "expression": "CONSTRUCTIONS.includes(input.construction) ? input.construction : 'ribbon'"
+        },
+        {
+          "key": "dotSize",
+          "expression": "finiteRange(input.dotSize, 50, 0, 100)"
+        },
+        {
+          "key": "dotSpacing",
+          "expression": "finiteRange(input.dotSpacing, 50, 0, 100)"
+        },
+        {
+          "key": "endTaper",
+          "expression": "finiteRange(input.endTaper, 0, 0, 100)"
+        },
+        {
+          "key": "pathLength",
+          "expression": "finiteRange(input.pathLength, 65, 0, 100)"
+        },
+        {
+          "key": "repeatCount",
+          "expression": "Math.round(finiteRange(input.repeatCount, 3, 2, 6))"
+        },
+        {
+          "key": "repeatSpacing",
+          "expression": "finiteRange(input.repeatSpacing, 50, 0, 100)"
+        },
+        {
+          "key": "tonalContrast",
+          "expression": "finiteRange(input.tonalContrast, 50, 0, 100)"
+        },
+        {
+          "key": "turnRadius",
+          "expression": "finiteRange(input.turnRadius, 50, 0, 100)"
+        }
+      ],
+      "removed": [],
+      "changed": [],
+      "sourceBatch": 2
+    },
+    {
+      "commit": "ebacf33c3065b44391075c7c29bc0d816b04e2b1",
+      "date": "2026-10-17T09:18:43Z",
+      "modelBlobSha": "246e6faddfa57ffaf08c9b3059e1dd3ebc7b1b4d",
+      "fieldCount": 70,
+      "added": [
+        {
+          "key": "customPath",
+          "expression": "normalizeDrawnPath(input.customPath)"
+        }
+      ],
+      "removed": [],
+      "changed": [],
+      "sourceBatch": 3
+    },
+    {
+      "commit": "96bb4496f71bc84f690d9acc03b974f91c1f92b1",
+      "date": "2026-10-17T09:56:45Z",
+      "modelBlobSha": "27cfec13c1d63fce6f4ca38a854a81d9d83fc624",
+      "fieldCount": 71,
+      "added": [
+        {
+          "key": "hairpinAngle",
+          "expression": "finiteRange(input.hairpinAngle, 180, 60, 180)"
+        }
+      ],
+      "removed": [],
+      "changed": [],
+      "sourceBatch": 3
+    },
+    {
+      "commit": "11353d1d0946d21d1513754f80de7d85bddba334",
+      "date": "2026-10-17T19:42:49Z",
+      "modelBlobSha": "bee812626d42f75b1aafad93a4807f228e276b02",
+      "fieldCount": 72,
+      "added": [
+        {
+          "key": "viewZoom",
+          "expression": "Math.round(finiteRange(input.viewZoom, 1, .5, 2.5)*100)/100"
+        }
+      ],
+      "removed": [],
+      "changed": [],
+      "sourceBatch": 3
+    },
+    {
+      "commit": "36e73ebbd02ae9dd2f298f852829a08cf7148973",
+      "date": "2026-10-17T20:13:46Z",
+      "modelBlobSha": "03a08957ef115e4a42709c0bb32774cf47447f60",
+      "fieldCount": 72,
+      "added": [],
+      "removed": [],
+      "changed": [],
+      "sourceBatch": 3
+    },
+    {
+      "commit": "4735ce180494d78f0622bf48e4b56f64ac25e7ca",
+      "date": "2026-10-17T21:11:10Z",
+      "modelBlobSha": "4d14f82ccf693c969df8e317c3f855abc08ff2bd",
+      "fieldCount": 72,
+      "added": [],
+      "removed": [],
+      "changed": [],
+      "sourceBatch": 3
+    },
+    {
+      "commit": "c66c477dca71ad4b1b1252333fab33228b9f5154",
+      "date": "2026-10-17T23:06:09Z",
+      "modelBlobSha": "55a1f0c5c5a8cf19eb5521e869b398a66ded1abf",
+      "fieldCount": 73,
+      "added": [
+        {
+          "key": "outlineBuffer",
+          "expression": "finiteRange(input.outlineBuffer, 0, 0, 100)"
+        }
+      ],
+      "removed": [],
+      "changed": [
+        {
+          "key": "textureLayer3Enabled",
+          "before": "(input.textureLayer2Enabled === true || input.textureLayer2Enabled === 'true') && (input.textureLayer3Enabled === true || input.textureLayer3Enabled === 'true')",
+          "after": "input.textureLayer3Enabled === true || input.textureLayer3Enabled === 'true'"
+        }
+      ],
+      "sourceBatch": 3
+    },
+    {
+      "commit": "a96e6fd17050f332303884b91272ea2957ea03b2",
+      "date": "2026-10-17T23:37:07Z",
+      "modelBlobSha": "6f092a6c578a6bbe299d201ec970c12fa6a69989",
+      "fieldCount": 79,
+      "added": [
+        {
+          "key": "chevronSharpness",
+          "expression": "finiteRange(input.chevronSharpness, 50, 0, 100)"
+        },
+        {
+          "key": "geometrySafety",
+          "expression": "!(input.geometrySafety===false || input.geometrySafety==='false')"
+        },
+        {
+          "key": "loopAspect",
+          "expression": "finiteRange(input.loopAspect, 50, 0, 100)"
+        },
+        {
+          "key": "motifFrequency",
+          "expression": "finiteRange(input.motifFrequency, 50, 0, 100)"
+        },
+        {
+          "key": "motifSize",
+          "expression": "finiteRange(input.motifSize, 50, 0, 100)"
+        },
+        {
+          "key": "stepCount",
+          "expression": "Math.round(finiteRange(input.stepCount, 4, 1, 16))"
+        }
+      ],
+      "removed": [],
+      "changed": [],
+      "sourceBatch": 3
+    },
+    {
+      "commit": "e88b30c3edf434b130b751ae855453c47755a83c",
+      "date": "2026-10-18T00:57:18Z",
+      "modelBlobSha": "7091e7bdc7e9278695893ac07defc22136f12e95",
+      "fieldCount": 78,
+      "added": [],
+      "removed": [
+        {
+          "key": "stripeShadowEnabled",
+          "expression": "input.stripeShadowEnabled === true || input.stripeShadowEnabled === 'true'"
+        }
+      ],
+      "changed": [
+        {
+          "key": "stripeShadowStrength",
+          "before": "finiteRange(input.stripeShadowStrength, 45, 0, 100)",
+          "after": "finiteRange(input.stripeShadowStrength, 0, 0, 100)"
+        }
+      ],
+      "sourceBatch": 3
+    },
+    {
+      "commit": "c50bff93635709f49c4ddef2e799221789a94b12",
+      "date": "2026-10-18T02:43:19Z",
+      "modelBlobSha": "51b007394f39a5237c257249e2de780d098e3b91",
+      "fieldCount": 80,
+      "added": [
+        {
+          "key": "loopRadius",
+          "expression": "finiteRange(input.loopRadius, 50, 0, 100)"
+        },
+        {
+          "key": "loopSweep",
+          "expression": "finiteRange(input.loopSweep, 360, 240, 450)"
+        }
+      ],
+      "removed": [],
+      "changed": [],
+      "sourceBatch": 3
+    },
+    {
+      "commit": "14ba2ea2923577ab4853e7751928be2c2c03c359",
+      "date": "2026-10-18T03:21:35Z",
+      "modelBlobSha": "0f72b0622294c4e7abc526fba7ab46d569d40489",
+      "fieldCount": 81,
+      "added": [
+        {
+          "key": "crossingMode",
+          "expression": "CROSSING_MODES.includes(input.crossingMode)?input.crossingMode:'over'"
+        }
+      ],
+      "removed": [],
+      "changed": [],
+      "sourceBatch": 3
+    },
+    {
+      "commit": "e2242baffa9efd495ae5806938db94331eaa2348",
+      "date": "2026-10-18T04:02:09Z",
+      "modelBlobSha": "419cbee510e0042313455bf635106e23eab36bba",
+      "fieldCount": 81,
+      "added": [],
+      "removed": [],
+      "changed": [],
+      "sourceBatch": 4
+    },
+    {
+      "commit": "9cb4f8c55dce3aad62e88b701f4336b981d0d721",
+      "date": "2026-10-18T05:03:13Z",
+      "modelBlobSha": "689d10fdde741aa4f8a771bcc9f8dbe989d92d52",
+      "fieldCount": 83,
+      "added": [
+        {
+          "key": "drawnAnchors",
+          "expression": "[...new Set((Array.isArray(input.drawnAnchors)?input.drawnAnchors:[]) .filter(i=>Number.isInteger(i)&&i>=0&&i<normalizeDrawnPath(input.customPath).length))] .sort((a,b)=>a-b).slice(0,96)"
+        },
+        {
+          "key": "drawnCorners",
+          "expression": "[...new Set((Array.isArray(input.drawnCorners)?input.drawnCorners:[]) .filter(i=>Number.isInteger(i)&&i>=0&&i<normalizeDrawnPath(input.customPath).length))] .sort((a,b)=>a-b).slice(0,96)"
+        }
+      ],
+      "removed": [],
+      "changed": [],
+      "sourceBatch": 4
+    },
+    {
+      "commit": "2e6039c8d7fcef85b74dfe70435ffeda03929b98",
+      "date": "2026-10-18T05:58:02Z",
+      "modelBlobSha": "3725f34a8ffaed542c95c6f66ef12626b92f4a6c",
+      "fieldCount": 98,
+      "added": [
+        {
+          "key": "dividerColor",
+          "expression": "DIVIDER_MODES.includes(input.dividerColor) ? input.dividerColor : 'background'"
+        },
+        {
+          "key": "dividerWidth",
+          "expression": "finiteRange(input.dividerWidth, 12, 0, 100)"
+        },
+        {
+          "key": "fieldCenterX",
+          "expression": "finiteRange(input.fieldCenterX, 50, -50, 150)"
+        },
+        {
+          "key": "fieldCenterY",
+          "expression": "finiteRange(input.fieldCenterY, 50, -50, 150)"
+        },
+        {
+          "key": "radialMode",
+          "expression": "RADIAL_MODES.includes(input.radialMode) ? input.radialMode : 'sunburst'"
+        },
+        {
+          "key": "rayCore",
+          "expression": "finiteRange(input.rayCore, 0, 0, 100)"
+        },
+        {
+          "key": "rayCount",
+          "expression": "Math.round(finiteRange(input.rayCount, 14, 7, 70)/7)*7"
+        },
+        {
+          "key": "rayCoverage",
+          "expression": "finiteRange(input.rayCoverage, 100, 0, 100)"
+        },
+        {
+          "key": "rayRotation",
+          "expression": "finiteRange(input.rayRotation, 0, -180, 180)"
+        },
+        {
+          "key": "rayTwist",
+          "expression": "finiteRange(input.rayTwist, 45, -180, 180)"
+        },
+        {
+          "key": "regionCount",
+          "expression": "Math.round(finiteRange(input.regionCount, 14, 7, 70)/7)*7"
+        },
+        {
+          "key": "regionJitter",
+          "expression": "finiteRange(input.regionJitter, 45, 0, 100)"
+        },
+        {
+          "key": "regionMode",
+          "expression": "REGION_MODES.includes(input.regionMode) ? input.regionMode : 'voronoi'"
+        },
+        {
+          "key": "regionSides",
+          "expression": "Math.round(finiteRange(input.regionSides, 0, 0, 12))"
+        },
+        {
+          "key": "structure",
+          "expression": "STRUCTURES.includes(input.structure) ? input.structure : 'paths'"
+        }
+      ],
+      "removed": [],
+      "changed": [
+        {
+          "key": "version",
+          "before": "1",
+          "after": "2"
+        }
+      ],
+      "sourceBatch": 4
+    },
+    {
+      "commit": "4728b33fd0d5da5d9ba2fd511ad834a52795e381",
+      "date": "2026-10-18T06:43:49Z",
+      "modelBlobSha": "9d34e1b1d9e59cd43ae5cad4bec5e2f0bc568b9d",
+      "fieldCount": 99,
+      "added": [
+        {
+          "key": "interiorElements",
+          "expression": "normalizeInteriorElements(input.interiorElements)"
+        }
+      ],
+      "removed": [],
+      "changed": [],
+      "sourceBatch": 4
+    },
+    {
+      "commit": "0cc9e7df8a1ec277b743133d393b066591af6760",
+      "date": "2026-10-18T07:02:02Z",
+      "modelBlobSha": "ae0a083a10e74a7fa74cbb0dea490c9c238dc1b8",
+      "fieldCount": 100,
+      "added": [
+        {
+          "key": "extendDrawnPath",
+          "expression": "input.extendDrawnPath===true||input.extendDrawnPath==='true'"
+        }
+      ],
+      "removed": [],
+      "changed": [],
+      "sourceBatch": 4
+    },
+    {
+      "commit": "e14c38754a94c6d4443ad484241fefea6c54e86f",
+      "date": "2026-10-19T19:06:07Z",
+      "modelBlobSha": "562472ebb7d6bbb4c10daac0b98dae3e45dce1a7",
+      "fieldCount": 102,
+      "added": [
+        {
+          "key": "viewPanX",
+          "expression": "Math.round(finiteRange(input.viewPanX, 0, -50, 50)*10)/10"
+        },
+        {
+          "key": "viewPanY",
+          "expression": "Math.round(finiteRange(input.viewPanY, 0, -50, 50)*10)/10"
+        }
+      ],
+      "removed": [],
+      "changed": [],
+      "sourceBatch": 4
+    },
+    {
+      "commit": "d8f5ea55373c96450f256f70c0eb1d109225acdc",
+      "date": "2026-10-19T21:49:48Z",
+      "modelBlobSha": "e625f30bedbba5a6f2d20f2a6b71c3d375c64051",
+      "fieldCount": 102,
+      "added": [],
+      "removed": [],
+      "changed": [
+        {
+          "key": "customPath",
+          "before": "normalizeDrawnPath(input.customPath)",
+          "after": "drawnPath.points"
+        },
+        {
+          "key": "drawnAnchors",
+          "before": "[...new Set((Array.isArray(input.drawnAnchors)?input.drawnAnchors:[]) .filter(i=>Number.isInteger(i)&&i>=0&&i<normalizeDrawnPath(input.customPath).length))] .sort((a,b)=>a-b).slice(0,96)",
+          "after": "mappedPathIndices(input.drawnAnchors)"
+        },
+        {
+          "key": "drawnCorners",
+          "before": "[...new Set((Array.isArray(input.drawnCorners)?input.drawnCorners:[]) .filter(i=>Number.isInteger(i)&&i>=0&&i<normalizeDrawnPath(input.customPath).length))] .sort((a,b)=>a-b).slice(0,96)",
+          "after": "mappedPathIndices(input.drawnCorners)"
+        }
+      ],
+      "sourceBatch": 4
+    },
+    {
+      "commit": "d961cc1af72ff77a0b60d96e7062c18bfaa72e1a",
+      "date": "2026-10-19T22:06:00Z",
+      "modelBlobSha": "e6c2a5cef0def4d57bb13192bb2f5ce142acc455",
+      "fieldCount": 102,
+      "added": [],
+      "removed": [],
+      "changed": [],
+      "sourceBatch": 4
+    },
+    {
+      "commit": "54f82997113af85e616406b1473c4c0f669faed1",
+      "date": "2026-10-20T09:40:59Z",
+      "modelBlobSha": "88c9b413a8ca18ed08dc41bb464abf58f030aa41",
+      "fieldCount": 102,
+      "added": [],
+      "removed": [],
+      "changed": [
+        {
+          "key": "viewPanX",
+          "before": "Math.round(finiteRange(input.viewPanX, 0, -50, 50)*10)/10",
+          "after": "canonicalZero(Math.round(finiteRange(input.viewPanX, 0, -50, 50)*10)/10)"
+        },
+        {
+          "key": "viewPanY",
+          "before": "Math.round(finiteRange(input.viewPanY, 0, -50, 50)*10)/10",
+          "after": "canonicalZero(Math.round(finiteRange(input.viewPanY, 0, -50, 50)*10)/10)"
+        }
+      ],
+      "sourceBatch": 4
+    },
+    {
+      "commit": "b728568e3f56860964b569e3b03f86a5cc8e9344",
+      "date": "2026-10-20T09:47:20Z",
+      "modelBlobSha": "45eac21795f26ce07415d4be5cea67a1d616c878",
+      "fieldCount": 102,
+      "added": [],
+      "removed": [],
+      "changed": [
+        {
+          "key": "interiorElements",
+          "before": "normalizeInteriorElements(input.interiorElements)",
+          "after": "normalizedInteriors"
+        }
+      ],
+      "sourceBatch": 4
+    },
+    {
+      "commit": "af0c552acc9087a0c9c539e623b0a6163c45d194",
+      "date": "2026-10-22T06:36:55Z",
+      "modelBlobSha": "f6f8dc02857fe96342ecaa4f744f7fbb76eb5ef3",
+      "fieldCount": 109,
+      "added": [
+        {
+          "key": "scatteredCount",
+          "expression": "Math.round(finiteRange(input.scatteredCount,7,1,70))"
+        },
+        {
+          "key": "scatteredEdgeCrop",
+          "expression": "finiteRange(input.scatteredEdgeCrop,75,0,100)"
+        },
+        {
+          "key": "scatteredMaxSize",
+          "expression": "finiteRange(input.scatteredMaxSize,83,0,100)"
+        },
+        {
+          "key": "scatteredMinSize",
+          "expression": "finiteRange(input.scatteredMinSize,10,0,100)"
+        },
+        {
+          "key": "scatteredOverlap",
+          "expression": "['separate','overlap'].includes(input.scatteredOverlap)?input.scatteredOverlap:'separate'"
+        },
+        {
+          "key": "scatteredSpacing",
+          "expression": "finiteRange(input.scatteredSpacing,28,0,100)"
+        },
+        {
+          "key": "scatteredVariation",
+          "expression": "finiteRange(input.scatteredVariation,92,0,100)"
+        }
+      ],
+      "removed": [],
+      "changed": [],
+      "sourceBatch": 5
+    },
+    {
+      "commit": "cb685ca35f9d32e9689835d5acc1aa28f33459b4",
+      "date": "2026-10-22T06:47:37Z",
+      "modelBlobSha": "1413b93c7675bb95d2f54df7588df06a67ca4422",
+      "fieldCount": 111,
+      "added": [
+        {
+          "key": "scatteredShape",
+          "expression": "normalizeShapeSnapshot(input.scatteredShape)"
+        },
+        {
+          "key": "scatteredShapeKind",
+          "expression": "['circle','imported'].includes(input.scatteredShapeKind)?input.scatteredShapeKind:'circle'"
+        }
+      ],
+      "removed": [],
+      "changed": [],
+      "sourceBatch": 5
+    },
+    {
+      "commit": "3be0d8bac8aa1bdef10948d28ae1f46c6e4e2462",
+      "date": "2026-10-22T09:14:56Z",
+      "modelBlobSha": "bd24339ac16ef0706118fb3d8d5983cf0c9ac4fc",
+      "fieldCount": 111,
+      "added": [],
+      "removed": [],
+      "changed": [],
+      "sourceBatch": 5
+    },
+    {
+      "commit": "9b55698e363b4575dc89b888f8a6697a155ba0ff",
+      "date": "2026-10-22T11:12:53Z",
+      "modelBlobSha": "d0448d0510f0e4977c4928d98d6fd2f865499f18",
+      "fieldCount": 111,
+      "added": [],
+      "removed": [],
+      "changed": [],
+      "sourceBatch": 5
+    },
+    {
+      "commit": "fd76264a5d994198ec6d97423eea9b10a22d8352",
+      "date": "2026-10-22T11:21:40Z",
+      "modelBlobSha": "6d3e9876c859b4c565f21d823a5428f63815d1ed",
+      "fieldCount": 111,
+      "added": [],
+      "removed": [],
+      "changed": [],
+      "sourceBatch": 5
+    }
+  ]
+}
