@@ -9,6 +9,17 @@ const directory = path.join(root, 'prod_diary');
 const read = async p => (await readFile(path.join(directory, p), 'utf8'));
 const sourceIndex = JSON.parse(await read('CONVERSATION-SOURCES.json'));
 const provenance = JSON.parse(await read('EPISODE-PROVENANCE.json'));
+const evidence = JSON.parse(await read('PR-EVIDENCE-2026-10-22.json'));
+assert.equal(evidence.schema, 'roygbiv-diary-pr-evidence/1');
+const prNumbers = new Set();
+for (const pr of evidence.sources) {
+  assert(!prNumbers.has(pr.number), 'duplicate PR evidence');
+  prNumbers.add(pr.number);
+  assert.equal(pr.url, `https://github.com/gamesbyian/wallgen/pull/${pr.number}`);
+  assert.equal(typeof pr.description, 'string');
+  assert.equal(typeof pr.draft_at_capture, 'boolean');
+}
+
 assert.equal(sourceIndex.full_transcript_count, 0,
   'Do not declare full transcripts without a source export');
 assert.equal(sourceIndex.source_excerpt_count, sourceIndex.sources.filter(s => s.capture_kind === 'source_excerpt').length);
@@ -43,6 +54,7 @@ for (const episode of provenance.episodes) {
   ids.add(episode.episode_id);
   assert.equal(episode.complete_verbatim_transcript_verified, false);
   for (const source of episode.source_ids) assert(sourceIds.has(source), 'unregistered source ' + source);
+  for (const number of episode.pr_numbers) assert(prNumbers.has(number), 'missing PR evidence ' + number);
   const diary = await read(episode.diary_file);
   assert(diary.includes('### ' + episode.episode_id + '.'), 'missing numbered episode ' + episode.episode_id);
 }
