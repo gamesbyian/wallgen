@@ -98,8 +98,10 @@ function dots(ctx,layer,bounds,step,size,opacity,count=1){
 }
 function flecks(ctx,layer,bounds,step,length,opacity,orientation='random'){
   const seed=layer.heightSeed|0,unit=materialUnit(layer),cell=step*unit;
-  const ix0=Math.floor(bounds.left/cell)-1,ix1=Math.ceil(bounds.right/cell)+1;
-  const iy0=Math.floor(bounds.top/cell)-1,iy1=Math.ceil(bounds.bottom/cell)+1;
+  // Long fibres can originate outside a crop but still enter it.
+  const reach=Math.ceil(length/step)+1;
+  const ix0=Math.floor(bounds.left/cell)-reach,ix1=Math.ceil(bounds.right/cell)+reach;
+  const iy0=Math.floor(bounds.top/cell)-reach,iy1=Math.ceil(bounds.bottom/cell)+reach;
   ctx.lineCap='round';
   for(let iy=iy0;iy<=iy1;iy++)for(let ix=ix0;ix<=ix1;ix++){
     const x=(ix+hash(ix,iy,seed+101))*cell;
@@ -115,8 +117,11 @@ function flecks(ctx,layer,bounds,step,length,opacity,orientation='random'){
 }
 function blooms(ctx,layer,bounds,spacing,radius,opacity){
   const seed=layer.heightSeed|0,unit=materialUnit(layer),cell=spacing*unit;
-  const ix0=Math.floor(bounds.left/cell)-1,ix1=Math.ceil(bounds.right/cell)+1;
-  const iy0=Math.floor(bounds.top/cell)-1,iy1=Math.ceil(bounds.bottom/cell)+1;
+  // Radial stains with large radii must remain present even when their
+  // centres lie several grid cells beyond the visible camera crop.
+  const reach=Math.ceil(radius*1.45/spacing)+2;
+  const ix0=Math.floor(bounds.left/cell)-reach,ix1=Math.ceil(bounds.right/cell)+reach;
+  const iy0=Math.floor(bounds.top/cell)-reach,iy1=Math.ceil(bounds.bottom/cell)+reach;
   for(let iy=iy0;iy<=iy1;iy++)for(let ix=ix0;ix<=ix1;ix++){
     if(hash(ix,iy,seed+600)<.22)continue;
     const x=(ix+hash(ix,iy,seed+607))*cell;
