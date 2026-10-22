@@ -1,5 +1,8 @@
 # Seven-image material review (opt-in)
 
+**First production art review completed 2026-10-22.** Existing seven-image script ran successfully in [Chromium Actions #39820925332](https://github.com/gamesbyian/wallgen/actions/runs/39820925332). The actual PNGs were downloaded and viewed; all seven decoded with valid complete PNG chunk CRC and each embedded ROYGBIV recipe matched its saved sidecar exactly. See the [observed material art review](MATERIAL-PRODUCTION-RENDER-FINDINGS-2026-10-22.md), particularly the linen crosshatch/toothed-edge artifact at 68 displacement. The opt-in directions below remain useful for repeat runs, but the earlier “not yet viewed” status is no longer true. Real Pixel/full-size and subtle texture/embroidery acceptance remain open.
+
+
 **Live work queue:** [material realism #445](https://github.com/gamesbyian/wallgen/issues/445), currently open. **Tooling shipped:** #453 created this comparison and #458 corrected it to save and render *the same exact seven recipes*. **Evidence not yet present:** the generated PNG gallery has not been opened and aesthetically reviewed in this session. The next owner should run the documented command, examine real images, and attach a concise conclusion or concrete observed defect to #445. Do not close from Node CI alone.
 
 This is an *artistic judgement* task, not a new CI gate. The existing
