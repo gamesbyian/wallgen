@@ -37,7 +37,7 @@ test('editor search matches labels and does not mutate or invent a fallback',()=
 test('live search reports an inapplicable match rather than selecting an unrelated tool',()=>{
   const js=readFileSync(new URL('../src/editor-layout.js',import.meta.url),'utf8');
   const css=readFileSync(new URL('../editor-redesign.css',import.meta.url),'utf8');
-  assert.match(js,/findEditorToolMatch\(query,TOOL_LIST,options\)/);
+  assert.match(js,/findEditorSearchHit\(query,TOOL_LIST,options\)/);
   assert.match(js,/applies:tool=>toolApplies\(tools\.get\(tool\.id\)\)/);
   assert.match(js,/That setting is unavailable for the current canvas structure/);
   assert.match(js,/searchStatus\.setAttribute\('role','status'\)/);
