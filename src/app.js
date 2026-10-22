@@ -795,8 +795,11 @@ for(const slider of form.querySelectorAll('input[type="range"]')){
   const numeric=document.createElement('input');
   numeric.type='number';numeric.className='slider-number';numeric.min=slider.min;numeric.max=slider.max;
   numeric.step=slider.step||'1';numeric.value=slider.value;numeric.dataset.numberFor=slider.name;
-  numeric.setAttribute('aria-label',['diagonalRotation','hairpinAngle','loopSweep'].includes(slider.name)?
-    fullSettingName(slider.name,slider.name)+' in degrees':fullSettingName(slider.name,slider.name)+(slider.step==='7'||slider.max==='16'?'':' percentage'));
+  const degreeControls=['diagonalRotation','hairpinAngle','loopSweep','rayRotation','rayTwist'];
+  const countControls=['rayCount','regionCount','regionSides','stepCount'];
+  const unit=degreeControls.includes(slider.name)?' in degrees':
+    countControls.includes(slider.name)?'':' percentage';
+  numeric.setAttribute('aria-label',fullSettingName(slider.name,slider.name)+unit);
   slider.parentNode.insertBefore(row,slider);row.append(minus,slider,plus,numeric);
   numeric.addEventListener('change',()=>{
     const raw=Number(numeric.value);
