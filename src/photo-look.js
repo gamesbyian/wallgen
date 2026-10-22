@@ -5,6 +5,7 @@ export const PHOTO_PRESETS=Object.freeze({
   'film-slide':Object.freeze({family:'film',contrast:1.20,saturation:1.13,shadow:0,highlight:0.07,red:0.014,green:0,blue:-0.014,grain:12,vignette:9}),
   'film-negative':Object.freeze({family:'film',contrast:0.93,saturation:0.87,shadow:0.035,highlight:0.055,red:0.014,green:0.005,blue:-0.012,grain:19,vignette:12}),
   'film-mono':Object.freeze({family:'film',contrast:1.13,saturation:0,shadow:0.009,highlight:0.05,red:0,green:0,blue:0,grain:16,vignette:8}),
+  'film-grain-only':Object.freeze({family:'film',contrast:1,saturation:1,shadow:0,highlight:0,red:0,green:0,blue:0,grain:58,vignette:0}),
   'camera-natural':Object.freeze({family:'camera',contrast:1.055,saturation:1.045,shadow:0.012,highlight:0.06,red:0,green:0,blue:0,grain:2,vignette:2}),
   'camera-hdr':Object.freeze({family:'camera',contrast:1.11,saturation:1.12,shadow:0.055,highlight:0.095,red:0.002,green:0.003,blue:0.002,grain:1,vignette:0}),
   'camera-webcam':Object.freeze({family:'camera',contrast:1.08,saturation:0.78,shadow:0.015,highlight:0.02,red:0.015,green:-0.003,blue:0.005,grain:22,vignette:5}),
@@ -13,6 +14,7 @@ export const PHOTO_PRESET_NAMES=Object.freeze({
   'film-slide':'Slide film inspired',
   'film-negative':'Muted negative print',
   'film-mono':'Monochrome print',
+  'film-grain-only':'Film grain only (no colour grade)',
   'camera-natural':'Natural digital camera',
   'camera-hdr':'Smartphone HDR inspired',
   'camera-webcam':'Old webcam colour (early preview)',
@@ -67,6 +69,11 @@ export function processPhotoPixels(data,width,height,rawLook,seed='rainbow-001')
     return values;
   });
   const grain=p.grain/100*24, vignette=p.vignette/100;
+  // Film grain only is a distinct opt-in effect, not a stronger print grade.
+  // Mix fine emulsion speckles and low-frequency density variations in authored
+  // coordinates. Keep the old single-scale sampler unchanged for existing
+  // recipes: already saved images must not shift when a new preset is added.
+  const layeredGrain=look.presetId==='film-grain-only';
   const hash=fastHash(String(seed)+':photo-v1:'+look.presetId);
   const yScale=1300/height,xScale=600/width;
   let i=0;
@@ -83,7 +90,12 @@ export function processPhotoPixels(data,width,height,rawLook,seed='rainbow-001')
       const nx=(x+.5)/width*2-1;
       const falloff=Math.min(1,Math.pow(nx*nx*.7+ny*ny*.7,1.35));
       const dark=1-vignette*falloff*.5;
-      const perturb=grain?noiseHash(Math.floor((x+.5)*xScale),yCell,hash)*grain*(.65+.35*(1-luma/255)):0;
+      const perturb=grain?(
+        layeredGrain
+          ? (.8*noiseHash(Math.floor((x+.5)*xScale*2.4),Math.floor((y+.5)*yScale*2.4),hash)+
+             .2*noiseHash(Math.floor((x+.5)*xScale*.42),Math.floor((y+.5)*yScale*.42),hash^0x9e3779b9))
+          : noiseHash(Math.floor((x+.5)*xScale),yCell,hash)
+        )*grain*(.65+.35*(1-luma/255)):0;
       data[i]=clampByte(r+(R*dark+perturb-r)*amount);
       data[i+1]=clampByte(g+(G*dark+perturb-g)*amount);
       data[i+2]=clampByte(b+(B*dark+perturb-b)*amount);
