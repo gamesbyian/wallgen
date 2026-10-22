@@ -88,7 +88,7 @@
           <label class="field">Design type <select name="structure" data-setting="structure"><option value="paths">Paths and ribbons</option><option value="radial">Radial and bursts</option><option value="regions">Regions and partitions</option></select></label>
           <label class="field">Starting style <select name="family" data-setting="family"><option value="auto">Surprise me</option><option value="studio">Studio / graphic</option><option value="currents">Neon currents</option><option value="fracture">Geometric fracture</option><option value="confetti">Particle ribbons</option><option value="deco">Art deco</option><option value="tapestry">Tapestry</option><option value="signal">Signal / digital</option><option value="contour">Topographic contour</option></select></label>
           <label class="field">Direction <select name="orientation" data-setting="orientation"><option value="auto">Surprise me</option><option value="vertical">Vertical</option><option value="horizontal">Horizontal</option><option value="diagonal">Diagonal</option></select></label>
-          <label class="field reverse-stripe-field"><input type="checkbox" name="reverseStripes" data-setting="reverseStripes"> Reverse stripe order (violet first)</label>
+          <label class="field reverse-stripe-field"><input type="checkbox" name="reverseStripes" data-setting="reverseStripes"> Reverse colour order (violet first)</label>
           <div class="diagonal-settings" id="diagonalSettings" hidden aria-label="Diagonal transform controls">
             <label class="field range-field"><span>Diagonal rotation</span>
               <input type="range" name="diagonalRotation" id="diagonalRotation" data-setting="diagonalRotation" min="-180" max="180" step="1" value="0">
@@ -311,7 +311,7 @@
           <div class="stage-side"><span class="side-vertical">SEVEN COLOURS / ONE BLACK CANVAS</span><div class="palette-stack" role="img" aria-label="Red orange yellow green blue indigo violet"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div></div>
         </div>
         <div class="mobile-five-shortcuts" role="group" aria-label="Save or download current artwork">
-    <button type="button" id="mobileFavorite" aria-label="Save or remove favourite"><span aria-hidden="true"><img class="ui-icon" src="assets/icons/roygbiv/favourite.svg" alt="" aria-hidden="true" draggable="false"></span><small>Favourite</small></button>
+    <button type="button" id="mobileFavorite" aria-label="Add to favourites"><span aria-hidden="true"><img class="ui-icon" src="assets/icons/roygbiv/favourite.svg" alt="" aria-hidden="true" draggable="false"></span><small>Favourite</small></button>
     <button type="button" id="mobileDownload" aria-label="Download wallpaper PNG"><span aria-hidden="true"><img class="ui-icon" src="assets/icons/roygbiv/export-png.svg" alt="" aria-hidden="true" draggable="false"></span><small>Download</small></button>
         </div>
         <canvas id="drawOverlay" width="600" height="1300" tabindex="0" hidden aria-label="Draw a path or use square anchors and tangent handles to edit it"></canvas>
@@ -345,10 +345,10 @@
       </div>
       <div class="action-tray">
         <div class="seed-group"><label for="seedInput">DESIGN SEED</label><input id="seedInput" type="text" maxlength="90" spellcheck="false" value="rainbow-001" aria-label="Design seed"><button id="applySeed" class="icon-btn" title="Render this seed" aria-label="Apply seed" type="button">↵</button></div>
-        <div class="main-actions"><button id="randomize" class="button button-outline" type="button"><img class="ui-icon" src="assets/icons/roygbiv/reroll.svg" alt="" aria-hidden="true" draggable="false"> <span>New variation</span></button><button id="download" class="button button-light" type="button"><img class="ui-icon" src="assets/icons/roygbiv/export-png.svg" alt="" aria-hidden="true" draggable="false"> <span>Download PNG</span></button><button id="favorite" class="button button-icon" title="Save to favourites" aria-label="Save to favourites" aria-pressed="false" type="button"><img class="ui-icon" src="assets/icons/roygbiv/favourite.svg" alt="" aria-hidden="true" draggable="false"></button></div>
+        <div class="main-actions"><button id="randomize" class="button button-outline" type="button" title="New seed; keep current settings"><img class="ui-icon" src="assets/icons/roygbiv/reroll.svg" alt="" aria-hidden="true" draggable="false"> <span>New variation</span></button><button id="download" class="button button-light" type="button"><img class="ui-icon" src="assets/icons/roygbiv/export-png.svg" alt="" aria-hidden="true" draggable="false"> <span>Download PNG</span></button><button id="favorite" class="button button-icon" title="Add to favourites" aria-label="Add to favourites" aria-pressed="false" type="button"><img class="ui-icon" src="assets/icons/roygbiv/favourite.svg" alt="" aria-hidden="true" draggable="false"></button></div>
       </div>
       <div class="export-metadata">
-        <button id="importRecipePNG" type="button" class="text-link-button" aria-label="Restore design from saved PNG or JSON recipe"><img class="ui-icon" src="assets/icons/roygbiv/path.svg" alt="" aria-hidden="true" draggable="false"> Restore design from PNG or JSON</button>
+        <button id="importRecipePNG" type="button" class="text-link-button" aria-label="Import design from PNG or JSON recipe"><img class="ui-icon" src="assets/icons/roygbiv/path.svg" alt="" aria-hidden="true" draggable="false"> Import design</button>
         <input id="importRecipeFile" type="file" accept="image/png,.png,application/json,.json" hidden aria-label="Choose a wallpaper PNG or recipe JSON to restore a design">
         <button id="metadataToggle" type="button" class="text-link-button metadata-toggle"
           aria-expanded="false" aria-controls="metadataPanel">▸ Edit image metadata</button>
@@ -399,7 +399,7 @@
     <button type="button" data-dock-proxy="mobileEdit" aria-label="Close editor" title="Close editor"><span aria-hidden="true"><img class="ui-icon" src="assets/icons/roygbiv/chevron-left.svg" alt="" aria-hidden="true" draggable="false"></span></button>
     <button type="button" data-dock-proxy="mobileExplore" aria-label="Explore wallpapers" title="Explore"><span aria-hidden="true"><img class="ui-icon" src="assets/icons/roygbiv/explore.svg" alt="" aria-hidden="true" draggable="false"></span></button>
     <button type="button" data-dock-proxy="mobileShuffle" aria-label="Randomize all settings" title="Randomize"><span aria-hidden="true"><img class="ui-icon" src="assets/icons/roygbiv/randomize.svg" alt="" aria-hidden="true" draggable="false"></span><small>Random</small></button>
-    <button type="button" data-dock-proxy="mobileFavorite" aria-label="Save or remove favourite" title="Favourite"><span aria-hidden="true"><img class="ui-icon" src="assets/icons/roygbiv/favourite.svg" alt="" aria-hidden="true" draggable="false"></span></button>
+    <button type="button" data-dock-proxy="mobileFavorite" aria-label="Add to favourites" title="Favourite"><span aria-hidden="true"><img class="ui-icon" src="assets/icons/roygbiv/favourite.svg" alt="" aria-hidden="true" draggable="false"></span></button>
     <button type="button" data-dock-proxy="mobileDownload" aria-label="Download PNG" title="Download"><span aria-hidden="true"><img class="ui-icon" src="assets/icons/roygbiv/export-png.svg" alt="" aria-hidden="true" draggable="false"></span></button>
     <button type="button" data-dock-proxy="mobileMore" aria-label="More tools" title="More tools"><span aria-hidden="true"><img class="ui-icon" src="assets/icons/roygbiv/more.svg" alt="" aria-hidden="true" draggable="false"></span></button>
   </nav>
