@@ -20,6 +20,7 @@ import {installGeometryLibraryUI} from './geometry-library-ui.js';
 import {RAINBOW_ORBITS,scatteredRadiusRange} from './scattered-composition.js';
 import {stripeContourDistortionAvailability} from './editor-effect-availability.js';
 import {normalizeScatteredOverrides} from './scattered-object-edits.js';
+import {embroideryObjectChoices,resolveEmbroideryObjectChoice} from './embroidery-target-choices.js';
 import {scatteredPixelToWorld,scatteredWorldToPixel,pickScatteredRegion,scatteredMoveOverride,clamp as clampScattered} from './scattered-drag.js';
 import {cloneGeometrySnapshot} from './geometry-asset.js';
 import {parseStoredFavorites} from './favorites-store.js';
@@ -225,6 +226,8 @@ function fromControls() {
     otherTreatments.unshift({
       id:'editor-stitches',enabled:true,materialFamily:'embroidery',style:'satin',
       target:target==='all'?{scope:'all',role:'fill',colorSlots:[],ids:[]}:
+        target==='object'?{scope:'object',role:'fill',colorSlots:[],
+          ids:[form.elements.namedItem('embroideryObjectId').value].filter(Boolean)}:
         {scope:'palette',role:'fill',colorSlots:[Number(target)],ids:[]},
       pitch:Number(form.elements.namedItem('embroideryPitch').value),
       relief:Number(form.elements.namedItem('embroideryRelief').value),
@@ -278,12 +281,34 @@ function toControls(recipe) {
   }
   const stitch=current.surfaceTreatments?.find(item=>item.id==='editor-stitches'&&item.enabled);
   const selected=stitch?.target.scope==='all'?'all':
+    stitch?.target.scope==='object'?'object':
     stitch?.target.scope==='palette'&&stitch.target.colorSlots.length===1?
       String(stitch.target.colorSlots[0]):'off';
-  form.elements.namedItem('embroideryTarget').value=selected;
+  const objectField=form.querySelector('.embroidery-object-picker');
+  const objectSelect=form.elements.namedItem('embroideryObjectId');
+  const choices=embroideryObjectChoices(currentScene||resolveScene(current));
+  const requested=stitch?.target.scope==='object'?stitch.target.ids[0]:objectSelect.value;
+  const {selected:objectId,options:objectChoices}=
+    resolveEmbroideryObjectChoice(choices,requested);
+  objectSelect.replaceChildren();
+  if(!objectChoices.length){
+    const option=document.createElement('option');
+    option.value='';option.textContent='No eligible objects';objectSelect.append(option);
+  }else for(const choice of objectChoices){
+    const option=document.createElement('option');
+    option.value=choice.id;option.textContent=choice.label;
+    objectSelect.append(option);
+  }
+  objectSelect.value=objectId;
+  objectField.hidden=selected!=='object';
+  const targetSelect=form.elements.namedItem('embroideryTarget');
+  const byObject=targetSelect.querySelector('option[value="object"]');
+  if(byObject)byObject.disabled=!choices.length&&selected!=='object';
+  targetSelect.value=selected;
   const threadSummary=form.querySelector('.thread-treatment-summary');
   if(threadSummary)threadSummary.textContent=selected==='off'?'Off':
-    selected==='all'?'All colours':NAMES[Number(selected)];
+    selected==='all'?'All colours':selected==='object'?
+      'One object · '+(objectId||'unavailable'):NAMES[Number(selected)];
   for(const [name,value] of [['embroideryPitch',stitch?.pitch??5],['embroideryRelief',stitch?.relief??65]]){
     form.elements.namedItem(name).value=String(value);
     const numeric=form.querySelector('[data-number-for="'+name+'"]');
@@ -1826,7 +1851,7 @@ document.addEventListener('change',event=>{
     if(preset)form.elements.namedItem('photoGrain').value=String(preset.grain);
   }
   if(['photoEnabled','photoPresetId','photoAmount','photoGrain',
-      'embroideryTarget','embroideryPitch','embroideryRelief'].includes(event.target.name)){
+      'embroideryTarget','embroideryObjectId','embroideryPitch','embroideryRelief'].includes(event.target.name)){
     clearTimeout(rangeTimeout);
     updateControlsFromInputs();
     return;
