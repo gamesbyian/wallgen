@@ -1,5 +1,8 @@
 # Seven-image Photo finishing art review (manual)
 
+**First actual review completed on 2026-10-22.** The seven-image Chromium run succeeded in [Actions #39819624080](https://github.com/gamesbyian/wallgen/actions/runs/39819624080). The exact production PNGs were downloaded, inspected visually side by side, and checked for complete image CRC and matching embedded recipes. See the [observed photographic treatment review](PHOTO-PRODUCTION-RENDER-FINDINGS-2026-10-22.md) for concrete results. The original opt-in script below remains reusable. Do not confuse **this completed first art review** with pending physical-device validation, composite materials/threads or actual film-stock emulation.
+
+
 **Purpose:** Judge what the actual ROYGBIV Photo presets *look like*, using the production renderer, instead of treating green unit tests or mathematical source properties as proof of aesthetic quality. This is a **manual, opt-in** contact gallery, not a CI gate or screenshot factory. The existence of the script is not evidence that its PNGs have been rendered or observed.
 
 Run from a full local checkout with Playwright and Chromium available, as required by [the existing headless renderer](../scripts/render-headless.mjs):
