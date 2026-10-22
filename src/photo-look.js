@@ -152,6 +152,19 @@ function makeHalationField(data,width,height){
   return {width:fieldWidth,height:fieldHeight,blurred:output};
 }
 
+// A neutral finish must not force a full-size Canvas2D getImageData and
+// putImageData on a 19.8 MP export. This checks actual normalized parameters,
+// not preset names: authored custom grading still runs, and the low-resolution
+// webcam *always* retains its spatial capture operation even with neutral
+// tone, grain and vignette.
+export function isNeutralPhotoLook(look){
+  if(look.presetId==='camera-webcam-signal')return false;
+  const p=look.parameters;
+  return p.contrast===1&&p.saturation===1&&p.shadow===0&&p.highlight===0&&
+    p.red===0&&p.green===0&&p.blue===0&&p.grain===0&&p.vignette===0&&
+    (p.halation===undefined||p.halation===0);
+}
+
 // Mutates the supplied pixel array. Destination alpha is never touched.
 // The grain grid is anchored in the authored 600x1300 frame, not device pixels.
 export function processPhotoPixels(data,width,height,rawLook,seed='rainbow-001'){
@@ -159,6 +172,7 @@ export function processPhotoPixels(data,width,height,rawLook,seed='rainbow-001')
   if(!look.enabled||look.amount===0)return data;
   if(!Number.isInteger(width)||!Number.isInteger(height)||width<=0||height<=0||
     data.length!==width*height*4)throw new RangeError('Invalid photo pixel buffer');
+  if(isNeutralPhotoLook(look))return data;
   const p=look.parameters,amount=look.amount/100;
   const table=[p.red,p.green,p.blue].map(shift=>{
     const values=new Float32Array(256);
@@ -243,8 +257,10 @@ export function processPhotoPixels(data,width,height,rawLook,seed='rainbow-001')
 }
 export function applyPhotoFinish(ctx,width,height,rawLook,seed){
   if(!rawLook?.enabled||Number(rawLook.amount)===0)return false;
+  const look=normalizePhotoLook(rawLook);
+  if(isNeutralPhotoLook(look))return false;
   const pixels=ctx.getImageData(0,0,width,height);
-  processPhotoPixels(pixels.data,width,height,rawLook,seed);
+  processPhotoPixels(pixels.data,width,height,look,seed);
   ctx.putImageData(pixels,0,0);
   return true;
 }
