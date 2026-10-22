@@ -1,0 +1,25 @@
+{
+  "schema": "roygbiv-conversation-excerpt/1",
+  "source_id": "2026-10-22-diary-request",
+  "project": "ROYGBIV",
+  "repo": "gamesbyian/wallgen",
+  "title_from_visible_project_context": "Russian production diary and transcripts",
+  "observed_date": "2026-10-22",
+  "precise_time_known": false,
+  "capture_kind": "source_excerpt",
+  "completeness": "partial",
+  "speaker_coverage": [
+    "user"
+  ],
+  "agent_messages_available": false,
+  "nontext_parts_preserved": false,
+  "all_project_sessions_included": false,
+  "integrity_note": "User-message excerpts from accessible project conversation context; not a complete two-sided transcript. Some displayed thread starts are truncated by the available context. Source text is preserved in its original language.",
+  "messages": [
+    {
+      "source_order": 1,
+      "role": "user",
+      "text": "Please look at the Uniracers repo for the methods and processes for creating the production diary and implement the same for this project. Upload complete transcripts of all conversations from this project, use them and pr descriptions to inform the diary.\n\nBut for this diary, keep it exclusively in russian, in Cyrillic, and make the narrating agent hilariously deadpan, dour and existentially hopeless. Not negative about the project or the work or the collaboration, just joyless and extravagantly, philosophically joyless. Sad russian stereotypes and root-vegetable talk are encouraged."
+    }
+  ]
+}

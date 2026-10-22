@@ -1,0 +1,75 @@
+{
+  "schema": "roygbiv-conversation-excerpt/1",
+  "source_id": "2026-10-19-agent-prompts",
+  "project": "ROYGBIV",
+  "repo": "gamesbyian/wallgen",
+  "title_from_visible_project_context": "Write Agent Prompts",
+  "observed_date": "2026-10-19",
+  "precise_time_known": false,
+  "capture_kind": "source_excerpt",
+  "completeness": "partial",
+  "speaker_coverage": [
+    "user"
+  ],
+  "agent_messages_available": false,
+  "nontext_parts_preserved": false,
+  "all_project_sessions_included": false,
+  "integrity_note": "User-message excerpts from accessible project conversation context; not a complete two-sided transcript. Some displayed thread starts are truncated by the available context. Source text is preserved in its original language.",
+  "messages": [
+    {
+      "source_order": 1,
+      "role": "user",
+      "text": "Go ahead as you think best. You're the only one working, so everything is yours"
+    },
+    {
+      "source_order": 2,
+      "role": "user",
+      "text": "Give me 4 new prompts covering everything that doesn't require human or physical-device checks. Make the prompts short and don't redundantly narrate the project or provide detail the agent will encounter in the repo. Include any shared instructions in all 4 prompts, not separately"
+    },
+    {
+      "source_order": 3,
+      "role": "user",
+      "text": "How are things looking now?"
+    },
+    {
+      "source_order": 4,
+      "role": "user",
+      "text": "Go on as you think best"
+    },
+    {
+      "source_order": 5,
+      "role": "user",
+      "text": "Keep closing anything that can we closed with human or physical device testing"
+    },
+    {
+      "source_order": 6,
+      "role": "user",
+      "text": "Please keep going, as far as you can. You have my confidence and full autonomy. Be voracious and restless. When you must wait, find other things to do."
+    },
+    {
+      "source_order": 7,
+      "role": "user",
+      "text": "Session stalled... no big deal! Please recover and resume."
+    },
+    {
+      "source_order": 8,
+      "role": "user",
+      "text": "Please keep going, as far as you can. You have my confidence and full autonomy. Be voracious and restless. When you must wait, find other things to do. I'd like two more closures before you're done"
+    },
+    {
+      "source_order": 9,
+      "role": "user",
+      "text": "3 more closures please. I'll still respect you if you can't manage it, but think of how impressed I'll be if you do!"
+    },
+    {
+      "source_order": 10,
+      "role": "user",
+      "text": "Bring it home and you're the MVP!"
+    },
+    {
+      "source_order": 11,
+      "role": "user",
+      "text": "Session stalled, it probably couldn't contain your awesomness! Please carefully recover your work and thinking, then keep on as you think best."
+    }
+  ]
+}

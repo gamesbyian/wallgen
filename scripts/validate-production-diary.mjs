@@ -1,0 +1,47 @@
+#!/usr/bin/env node
+import assert from 'node:assert/strict';
+import { readFile, access } from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const directory = path.join(root, 'prod_diary');
+const read = async p => (await readFile(path.join(directory, p), 'utf8'));
+const sourceIndex = JSON.parse(await read('CONVERSATION-SOURCES.json'));
+const provenance = JSON.parse(await read('EPISODE-PROVENANCE.json'));
+assert.equal(sourceIndex.full_transcript_count, 0,
+  'Do not declare full transcripts without a source export');
+assert.equal(sourceIndex.source_excerpt_count, sourceIndex.sources.length);
+const sourceIds = new Set();
+for (const source of sourceIndex.sources) {
+  assert(!sourceIds.has(source.source_id), 'duplicate source ID');
+  sourceIds.add(source.source_id);
+  assert.equal(source.capture_kind, 'source_excerpt');
+  assert.equal(source.full_transcript_verified, false);
+  assert.equal(source.completeness, 'partial');
+  await access(path.join(root, source.archive_path));
+  const archive = JSON.parse((await readFile(path.join(root, source.archive_path), 'utf8')));
+  assert.equal(archive.source_id, source.source_id);
+  assert.equal(archive.completeness, 'partial');
+  assert.equal(archive.agent_messages_available, false);
+  assert(archive.messages.every(message => message.role === 'user' && typeof message.text === 'string'));
+}
+const ids = new Set();
+for (const episode of provenance.episodes) {
+  assert(!ids.has(episode.episode_id), 'duplicate episode ID');
+  ids.add(episode.episode_id);
+  assert.equal(episode.complete_verbatim_transcript_verified, false);
+  for (const source of episode.source_ids) assert(sourceIds.has(source), 'unregistered source ' + source);
+  const diary = await read(episode.diary_file);
+  assert(diary.includes('### ' + episode.episode_id + '.'), 'missing numbered episode ' + episode.episode_id);
+}
+assert.equal(ids.size, 16, 'expected sixteen dated chapters');
+const narratives = ['PROLOGUE-2026-10-22.md',
+  'PRODUCTION-DIARY-2026-10-16-TO-2026-10-19.md',
+  'PRODUCTION-DIARY-2026-10-20-TO-2026-10-22.md'];
+for (const filename of narratives) {
+  // References are code-facing URL destinations, not Russian-language prose.
+  const prose = (await read(filename)).replace(/\]\([^)]+\)/g, ']').replace(/https?:\/\/[^\s)]+/g, '');
+  assert(!/[A-Za-z]/.test(prose), 'Non-Cyrillic literary prose in ' + filename);
+}
+process.stdout.write('Verified source classes, sixteen episodes and Cyrillic-only literary prose.\n');

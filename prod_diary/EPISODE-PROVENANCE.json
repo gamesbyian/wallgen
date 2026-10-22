@@ -1,0 +1,251 @@
+{
+  "schema": "roygbiv-diary-episodes/1",
+  "created": "2026-10-22",
+  "note": "PRs are qualified evidence leads; open drafts remain proposals. Partial user excerpts are not complete two-sided transcripts.",
+  "episodes": [
+    {
+      "episode_id": 1,
+      "title": "Радуга обретает фактуру",
+      "event_date": "2026-10-16",
+      "diary_file": "PRODUCTION-DIARY-2026-10-16-TO-2026-10-19.md",
+      "pr_numbers": [],
+      "source_ids": [],
+      "record_kind": "retrospective_synthesis",
+      "complete_verbatim_transcript_verified": false,
+      "coverage": "partial",
+      "publication_date": "2026-10-22"
+    },
+    {
+      "episode_id": 2,
+      "title": "У одних полос могут быть разные судьбы",
+      "event_date": "2026-10-17",
+      "diary_file": "PRODUCTION-DIARY-2026-10-16-TO-2026-10-19.md",
+      "pr_numbers": [
+        1
+      ],
+      "source_ids": [
+        "2026-10-17-generative-art-progress"
+      ],
+      "record_kind": "retrospective_synthesis",
+      "complete_verbatim_transcript_verified": false,
+      "coverage": "partial",
+      "publication_date": "2026-10-22"
+    },
+    {
+      "episode_id": 3,
+      "title": "Линия должна помнить руку",
+      "event_date": "2026-10-17",
+      "diary_file": "PRODUCTION-DIARY-2026-10-16-TO-2026-10-19.md",
+      "pr_numbers": [
+        25
+      ],
+      "source_ids": [],
+      "record_kind": "retrospective_synthesis",
+      "complete_verbatim_transcript_verified": false,
+      "coverage": "partial",
+      "publication_date": "2026-10-22"
+    },
+    {
+      "episode_id": 4,
+      "title": "Интерфейс освобождает место",
+      "event_date": "2026-10-17",
+      "diary_file": "PRODUCTION-DIARY-2026-10-16-TO-2026-10-19.md",
+      "pr_numbers": [
+        15,
+        28
+      ],
+      "source_ids": [],
+      "record_kind": "retrospective_synthesis",
+      "complete_verbatim_transcript_verified": false,
+      "coverage": "partial",
+      "publication_date": "2026-10-22"
+    },
+    {
+      "episode_id": 5,
+      "title": "Изображение возвращает линию",
+      "event_date": "2026-10-18",
+      "diary_file": "PRODUCTION-DIARY-2026-10-16-TO-2026-10-19.md",
+      "pr_numbers": [
+        43
+      ],
+      "source_ids": [],
+      "record_kind": "retrospective_synthesis",
+      "complete_verbatim_transcript_verified": false,
+      "coverage": "partial",
+      "publication_date": "2026-10-22"
+    },
+    {
+      "episode_id": 6,
+      "title": "Пятьдесят пять символов",
+      "event_date": "2026-10-18",
+      "diary_file": "PRODUCTION-DIARY-2026-10-16-TO-2026-10-19.md",
+      "pr_numbers": [
+        52
+      ],
+      "source_ids": [
+        "2026-10-18-icon-system"
+      ],
+      "record_kind": "retrospective_synthesis",
+      "complete_verbatim_transcript_verified": false,
+      "coverage": "partial",
+      "publication_date": "2026-10-22"
+    },
+    {
+      "episode_id": 7,
+      "title": "Приближение двусмысленно",
+      "event_date": "2026-10-19",
+      "diary_file": "PRODUCTION-DIARY-2026-10-16-TO-2026-10-19.md",
+      "pr_numbers": [
+        79
+      ],
+      "source_ids": [
+        "2026-10-18-zoom-behavior"
+      ],
+      "record_kind": "retrospective_synthesis",
+      "complete_verbatim_transcript_verified": false,
+      "coverage": "partial",
+      "publication_date": "2026-10-22"
+    },
+    {
+      "episode_id": 8,
+      "title": "Проверки становятся предметнее",
+      "event_date": "2026-10-19",
+      "diary_file": "PRODUCTION-DIARY-2026-10-16-TO-2026-10-19.md",
+      "pr_numbers": [
+        176
+      ],
+      "source_ids": [],
+      "record_kind": "retrospective_synthesis",
+      "complete_verbatim_transcript_verified": false,
+      "coverage": "partial",
+      "publication_date": "2026-10-22"
+    },
+    {
+      "episode_id": 9,
+      "title": "Нельзя проверять одним взглядом",
+      "event_date": "2026-10-20",
+      "diary_file": "PRODUCTION-DIARY-2026-10-20-TO-2026-10-22.md",
+      "pr_numbers": [
+        299
+      ],
+      "source_ids": [
+        "2026-10-20-qa-controls"
+      ],
+      "record_kind": "retrospective_synthesis",
+      "complete_verbatim_transcript_verified": false,
+      "coverage": "partial",
+      "publication_date": "2026-10-22"
+    },
+    {
+      "episode_id": 10,
+      "title": "Продолжение без амнезии",
+      "event_date": "2026-10-20",
+      "diary_file": "PRODUCTION-DIARY-2026-10-20-TO-2026-10-22.md",
+      "pr_numbers": [],
+      "source_ids": [
+        "2026-10-19-agent-prompts"
+      ],
+      "record_kind": "retrospective_synthesis",
+      "complete_verbatim_transcript_verified": false,
+      "coverage": "partial",
+      "publication_date": "2026-10-22"
+    },
+    {
+      "episode_id": 11,
+      "title": "Сорок четыре пикселя",
+      "event_date": "2026-10-21",
+      "diary_file": "PRODUCTION-DIARY-2026-10-20-TO-2026-10-22.md",
+      "pr_numbers": [
+        388,
+        402
+      ],
+      "source_ids": [
+        "2026-10-20-touch-target-research",
+        "2026-10-21-ergonomics"
+      ],
+      "record_kind": "retrospective_synthesis",
+      "complete_verbatim_transcript_verified": false,
+      "coverage": "partial",
+      "publication_date": "2026-10-22"
+    },
+    {
+      "episode_id": 12,
+      "title": "Большой экран без большой кнопки",
+      "event_date": "2026-10-21",
+      "diary_file": "PRODUCTION-DIARY-2026-10-20-TO-2026-10-22.md",
+      "pr_numbers": [
+        369
+      ],
+      "source_ids": [
+        "2026-10-20-touch-target-research"
+      ],
+      "record_kind": "retrospective_synthesis",
+      "complete_verbatim_transcript_verified": false,
+      "coverage": "partial",
+      "publication_date": "2026-10-22"
+    },
+    {
+      "episode_id": 13,
+      "title": "Окружности требуют права на существование",
+      "event_date": "2026-10-22",
+      "diary_file": "PRODUCTION-DIARY-2026-10-20-TO-2026-10-22.md",
+      "pr_numbers": [
+        433,
+        434
+      ],
+      "source_ids": [
+        "2026-10-21-regions-and-partitions"
+      ],
+      "record_kind": "retrospective_synthesis",
+      "complete_verbatim_transcript_verified": false,
+      "coverage": "partial",
+      "publication_date": "2026-10-22"
+    },
+    {
+      "episode_id": 14,
+      "title": "Попытка увидеть чужие цвета",
+      "event_date": "2026-10-22",
+      "diary_file": "PRODUCTION-DIARY-2026-10-20-TO-2026-10-22.md",
+      "pr_numbers": [
+        432
+      ],
+      "source_ids": [
+        "2026-10-21-colour-vision"
+      ],
+      "record_kind": "retrospective_synthesis",
+      "complete_verbatim_transcript_verified": false,
+      "coverage": "partial",
+      "publication_date": "2026-10-22"
+    },
+    {
+      "episode_id": 15,
+      "title": "Названия обязаны работать",
+      "event_date": "2026-10-22",
+      "diary_file": "PRODUCTION-DIARY-2026-10-20-TO-2026-10-22.md",
+      "pr_numbers": [
+        431
+      ],
+      "source_ids": [
+        "2026-10-21-labels-and-textures"
+      ],
+      "record_kind": "retrospective_synthesis",
+      "complete_verbatim_transcript_verified": false,
+      "coverage": "partial",
+      "publication_date": "2026-10-22"
+    },
+    {
+      "episode_id": 16,
+      "title": "Память и красота",
+      "event_date": "2026-10-22",
+      "diary_file": "PRODUCTION-DIARY-2026-10-20-TO-2026-10-22.md",
+      "pr_numbers": [],
+      "source_ids": [
+        "2026-10-22-diary-request"
+      ],
+      "record_kind": "retrospective_synthesis",
+      "complete_verbatim_transcript_verified": false,
+      "coverage": "partial",
+      "publication_date": "2026-10-22"
+    }
+  ]
+}
