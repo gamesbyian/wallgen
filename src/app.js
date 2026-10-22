@@ -308,7 +308,8 @@ function toControls(recipe) {
   const threadSummary=form.querySelector('.thread-treatment-summary');
   if(threadSummary)threadSummary.textContent=selected==='off'?'Off':
     selected==='all'?'All colours':selected==='object'?
-      'One object · '+(objectId||'unavailable'):NAMES[Number(selected)];
+      'One object · '+(objectChoices.find(choice=>choice.id===objectId)?.label||'unavailable'):
+      NAMES[Number(selected)];
   for(const [name,value] of [['embroideryPitch',stitch?.pitch??5],['embroideryRelief',stitch?.relief??65]]){
     form.elements.namedItem(name).value=String(value);
     const numeric=form.querySelector('[data-number-for="'+name+'"]');
