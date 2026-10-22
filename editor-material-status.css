@@ -70,3 +70,14 @@
     --mobile-tray-height:307px!important;
   }
 }
+
+
+/* First opt-in semantic textile treatment, inside the existing Surface card. */
+.embroidery-controls{display:grid;gap:8px;min-width:0}
+.embroidery-controls[hidden]{display:none!important}
+.embroidery-controls>strong{font-weight:650}
+.embroidery-controls>.field,.embroidery-controls>.range-grid{min-width:0}
+.embroidery-controls .range-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.embroidery-controls select{width:100%;max-width:100%}
+.embroidery-controls small{line-height:1.3;opacity:.76}
+@media(max-width:390px){.embroidery-controls .range-grid{gap:5px}}
