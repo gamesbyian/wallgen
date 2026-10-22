@@ -1,5 +1,8 @@
 # ROYGBIV: photographic film looks and filters
 
+**F5 actual-image observation (2026-10-22):** The [first seven real production Photo outputs](PHOTO-PRODUCTION-RENDER-FINDINGS-2026-10-22.md) were generated and viewed, rather than only planned. Grain clearly works without chromatic tone shift, slide/negative treatments differ materially, and warm-edge halation is spatially present but visibly **subtle even at 100%** at contact-gallery size. A stronger or wider bloom should be an explicitly distinct recipe behavior, not a silent change to existing saved presets. The review confirms small production export/preset differentiation but does **not** certify physical film realism, Pixel device output or multi-layer art. Permanent PR CI remains lean; one-shot browser workflow removed.
+
+
 **Neutral effect performance safeguard (2026-10-22, PR pending):** Grain Only at Grain 0 and Warm Halation with Halation/Grain 0 now bypass full Canvas2D readback and per-pixel postprocessing when their *entire normalized transform* is neutral. Custom non-neutral tone/colour values still run, as does low-res webcam spatial sampling even if its tonal parameters are neutral. This avoids needless large RGBA allocation and transfer in a genuine no-effect state, while keeping stored Photo recipes, disabled/off behavior and all non-neutral picture pixels unchanged. Tests cover 3024×6552 no-readback path and active webcam. Real Pixel speed and full-image artistic inspection remain to be measured.
 
 
