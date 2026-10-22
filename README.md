@@ -1,5 +1,14 @@
 # R.O.Y.G.B.I.V.
 
+## UX improvements and follow-up work (October 22, 2026)
+
+The October 22 source-aware UX sequence [#459](https://github.com/gamesbyian/wallgen/pull/459)–[#465](https://github.com/gamesbyian/wallgen/pull/465) merged compact Material/Finish editing per layer, persistent interior object selection, clearer scattered-size/placeholder feedback, direct Light/Shadows/Glow navigation, prerequisite guidance for dormant dot/motif controls, and Design Type continuation. Exact-setting/artistic-intent search was introduced in [#455](https://github.com/gamesbyian/wallgen/pull/455). The live Edit tree has **7 categories, 40 named tools, 95 scalar setting keys**, plus dynamic interior-element objects; the earlier 43-tool inventory remains a dated snapshot.
+
+The [living UX implementation queue](docs/UI-REDESIGN-IMPLEMENTATION-QUEUE.md) and [active product board](docs/ACTIVE-PRODUCT-ROADMAP-2026-10-22.md) track remaining device checks and possible interior inspector/search follow-ups under [#444](https://github.com/gamesbyian/wallgen/issues/444). These regular-CI-verified changes are **not** claimed to have completed physical Pixel/device acceptance.
+
+
+---
+
 *Rainbow-Only. You Generate Based on Individual Variables.*
 
 [**Производственная летопись на русском языке**](prod_diary/README.md): история проекта, творческих решений, инженерных проверок и происхождения доступных свидетельств.
