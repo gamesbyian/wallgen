@@ -74,4 +74,4 @@ for (const filename of narratives) {
   const prose = (await read(filename)).replace(/\]\([^)]+\)/g, ']').replace(/https?:\/\/[^\s)]+/g, '');
   assert(!/[A-Za-z]/.test(prose), 'Non-Cyrillic literary prose in ' + filename);
 }
-process.stdout.write('Verified source classes, sixteen episodes and Cyrillic-only literary prose.\n');
+process.stdout.write('Verified source classes, twenty episodes and Cyrillic-only literary prose.\n');
