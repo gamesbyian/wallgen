@@ -1,6 +1,8 @@
 import test from 'node:test';
 import {pathPosition} from '../src/path-geometry.js';
 import {outlineDimensions} from '../src/renderer.js';
+import {materialHeight,materialContourHeight} from '../src/material-surface.js';
+import {readFileSync} from 'node:fs';
 import assert from 'node:assert/strict';
 import { DESIGN_WIDTH, DESIGN_HEIGHT, OUTPUT_WIDTH, OUTPUT_HEIGHT, HUES, NAMES, FAMILIES, GEOMETRIES, MOTIFS, MATERIALS, OUTLINES, normalizeRecipe, resolveScene, rng, encodeRecipe, decodeRecipe, TEXTURE_COVERAGES, BLEND_MODES, normalizeRotation, randomizeAllRecipe, LOCKABLE_SETTINGS, respectSettingLocks, isPrime, PRIME_PERCENTAGES, PRIME_ROTATIONS, LIGHTING_MOODS, LIGHT_DIRECTIONS, LINE_STYLES } from '../src/model.js';
 
@@ -546,4 +548,41 @@ test('outline buffer moves the edge without changing outline thickness',()=>{
     assert.equal(thickened.separation,first.separation,outline);
     assert.ok(thickened.thickness>first.thickness,outline);
   }
+});
+
+test('soft-edge linen is an explicit serialized material, not a change to legacy linen',()=>{
+  assert.ok(MATERIALS.includes('linen'));
+  assert.ok(MATERIALS.includes('linen-soft'));
+  const old=normalizeRecipe({seed:'weave-old',material:'linen',textureStrength:72,
+    textureDisplacement:68});
+  const newer=normalizeRecipe({...old,material:'linen-soft'});
+  assert.equal(old.material,'linen');
+  assert.equal(newer.material,'linen-soft');
+  assert.deepEqual(decodeRecipe(encodeRecipe(old)),old);
+  assert.deepEqual(decodeRecipe(encodeRecipe(newer)),newer);
+  const source=readFileSync(new URL('../index.html',import.meta.url),'utf8');
+  assert.equal(source.split('value="linen-soft"').length-1,3,
+    'reuse existing Layer 1/2/3 material selectors without extra editor row');
+  const seeded={heightSeed:12345,scale:43};
+  const legacy={...seeded,material:'linen'};
+  const soft={...seeded,material:'linen-soft'};
+  const other={...seeded,material:'concrete'};
+  let roughBefore=0,roughAfter=0;
+  for(let i=0;i<240;i++){
+    const x=i*1.38, y=87+i*.31;
+    assert.equal(materialContourHeight(legacy,x,y),materialHeight(legacy,x,y),
+      'legacy material contour must remain byte-compatible');
+    assert.equal(materialContourHeight(other,x,y),materialHeight(other,x,y));
+    assert.equal(materialHeight(soft,x,y),materialHeight(legacy,x,y),
+      'new material retains the same visibly painted weave height field');
+    if(i){
+      const px=(i-1)*1.38,py=87+(i-1)*.31;
+      roughBefore+=Math.abs(materialContourHeight(legacy,x,y)-
+        materialContourHeight(legacy,px,py));
+      roughAfter+=Math.abs(materialContourHeight(soft,x,y)-
+        materialContourHeight(soft,px,py));
+    }
+  }
+  assert.ok(roughAfter<roughBefore*.85,
+    'soft variant should actually suppress periodic edge relief rather than just relabel it');
 });
