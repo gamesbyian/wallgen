@@ -1,5 +1,8 @@
 # ROYGBIV recipe format registry
 
+**Historical duplicate recipe preservation (2026-10-22, PR pending):** `inspectPngMigration` now returns `conflictingChunkIndexes` for multiple differing named `ROYGBIV Recipe` iTXt envelopes and refuses replacement. Only JSON-identical duplicate envelopes can be consolidated during metadata-only migration. All conflicting chunks may still be exported byte-exact in the existing `roygbiv-recipe-archive-v1` JSON backup, allowing informed future adjudication. Normal unmodified source PNG remains the master record.
+
+
 **45 complete source-expression snapshots (2026-10-22, PR pending):** The [machine-readable changed-expression matrix](model-expression-ledger.json), [human interpretation of ten changes](EXPRESSION-CHANGE-LEDGER.md) and [five source-backed expression snapshot batches](model-expression-sources-01.json) extend the verified key ledger across **all** its 45 model revisions. This reveals layer-three activation dependency, shadow default drift, Drawn anchor/path remapping and camera signed-zero updates. The seed initializer is lexically stable but RNG consumption/renderer equivalence remains **unproven**. Do not use this ledger alone to authorize historical v1/v2 migrations.
 
 
