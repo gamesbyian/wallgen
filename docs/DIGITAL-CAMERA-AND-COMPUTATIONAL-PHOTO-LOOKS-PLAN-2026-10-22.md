@@ -1,5 +1,8 @@
 # ROYGBIV: modern digital camera and photographic rendering looks
 
+**D3/D5 judged-picture prerequisite (2026-10-22, PR pending):** The opt-in [seven-image Photo study](PHOTO-SEVEN-IMAGE-ART-REVIEW-2026-10-22.md) pairs Smartphone HDR and Low-res Webcam Capture with four film looks and an untreated original from the production renderer, exactly matching saved recipes. This provides one controlled, small 600×1300 canvas for a visual audit of simulated chroma bandwidth, resolution loss, black preservation and bright-colour identity. Script authored and source-wired only: visual judgment, real 19.8MP runtime and Pixel feel remain unverified. No extra CI jobs or mandatory screenshot matrices.
+
+
 **D3 working implementation increment (2026-10-22):** In the existing Photo look selector, **Low-res webcam capture** now introduces a bounded miniature sensor grid, four-source-point filtering per sample, shared 2×2 chroma, and luma/chroma quantization before the existing tone/grain finish. This is an honest **signal-loss simulation**, distinct from the older, still unchanged Webcam colours (preview). The sensor is at most 200×520 for extreme ratios, approximately 200×433 for the studio portrait. Alpha and authored recipe remain stable; source and export use the shared `src/photo-look.js` pipeline without another full-size image allocation. It is **not** actual JPEG/MJPEG codec emulation, camera sensor RAW, measured 480p output or a performance-certified Pixel 6 Pro feature. D3 more realistic codec ringing/quantization and D4/D5 visual/device judgement remain queued. Focused Node tests, no new CI workflow.
 
 
