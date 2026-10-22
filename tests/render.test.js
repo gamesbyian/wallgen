@@ -1,8 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { drawWallpaper, presentNudgedArtwork, motifFits, balanceStripeEnds, stripeFrameContacts, textureHeight, stripeShadowParameters, nudgeOverhang, stripeLineMarks } from '../src/renderer.js';
-import { MATERIALS, MOTIFS, GEOMETRIES, OUTLINES, resolveScene } from '../src/model.js';
-import {samplePath} from '../src/path-geometry.js';
+import { DESIGN_WIDTH, DESIGN_HEIGHT, MATERIALS, MOTIFS, GEOMETRIES, OUTLINES, resolveScene } from '../src/model.js';
+import {samplePath, widthAt} from '../src/path-geometry.js';
+import {materialHeight,MATERIAL_CHARACTER} from '../src/material-surface.js';
 
 // Node's lightweight Canvas API spy catches geometry/material code path errors
 // without requiring a native browser, raster library, or platform build step.
@@ -20,7 +21,7 @@ class FakeContext {
     if(this.shadowBlur>0)calls.push(['lightingShadow',this.shadowBlur,this.shadowOffsetX,this.shadowOffsetY,this.shadowColor]);
     calls.push(['drawImage',this.globalCompositeOperation,this.tag,...args]);
   }
-  createPattern(){return '#pattern';}
+  createPattern(){calls.push(['repeatingPattern']);return '#pattern';}
   createRadialGradient(...coords){calls.push(['ambientGlow',this.tag,...coords]);return {addColorStop(offset,color){calls.push(['ambientGlowStop',this.tag,offset,color]);}};}
   createLinearGradient(...coords){
     calls.push(['lightingGradient',...coords]);
@@ -161,11 +162,11 @@ test('material-informed height field is deterministic, bounded, and disabled by 
   const scene=resolveScene({...base,textureDisplacement:85});
   const stripe=scene.stripes[3];
   assert.equal(textureHeight(none,none.stripes[3],153,1),0);
-  // No active stripe material uses seeded neutral grain instead of a dead slider.
+  // No stripe material means no physical texture to displace the outline.
   const bare=resolveScene({...base,material:'none',textureDisplacement:85});
   const bgOnly=resolveScene({...base,textureCoverage:'background',textureDisplacement:85});
-  assert.notEqual(textureHeight(bare,bare.stripes[3],153,1),0);
-  assert.notEqual(textureHeight(bgOnly,bgOnly.stripes[3],153,1),0);
+  assert.equal(textureHeight(bare,bare.stripes[3],153,1),0);
+  assert.equal(textureHeight(bgOnly,bgOnly.stripes[3],153,1),0);
   const first=textureHeight(scene,stripe,153,1);
   assert.equal(first,textureHeight(scene,stripe,153,1));
   const max=Math.min(28,stripe.width*.34)*Math.pow(.85,.85);
@@ -283,7 +284,7 @@ test('nudge reuses immutable geometry while moving under stationary ambient ligh
   assert.deepEqual(resolveScene({...recipe,positionX:14,positionY:-6}).stripes,
     resolveScene(recipe).stripes);
 });
-test('texture displacement yields visible bounded silhouette movement with and without texture',()=>{
+test('texture displacement yields visible bounded silhouette movement only with stripe material',()=>{
   for(const material of ['none','stucco','stone','linen','wood-grain']){
     const opts={seed:'relief-visibility',material,orientation:'vertical',
       stripeWidth:55,textureCoverage:'stripes'};
@@ -292,12 +293,79 @@ test('texture displacement yields visible bounded silhouette movement with and w
     const stripe=high.stripes[3];
     const samples=Array.from({length:250},(_,i)=>textureHeight(high,stripe,-750+i*6,1));
     const magnitude=Math.max(...samples.map(Math.abs));
-    assert.ok(magnitude>Math.min(4,stripe.width*.17),material+' relief too subtle: '+magnitude);
+    if(material==='none')assert.equal(magnitude,0);
+    else assert.ok(magnitude>Math.min(2.5,stripe.width*.11),material+' relief too subtle: '+magnitude);
     assert.ok(samples.every(v=>Math.abs(v)<=Math.min(28,stripe.width*.34)+1e-8));
     assert.equal(textureHeight(zero,zero.stripes[3],330,1),0);
     assert.equal(textureHeight(high,stripe,330,1),textureHeight(high,stripe,330,1));
     assert.deepEqual(high.stripes,zero.stripes);
   }
+});
+
+test('surface materials use unbounded non-repeating coordinates and seed-specific character',()=>{
+  for(const material of MATERIALS.filter(name=>name!=='none')){
+    assert.ok(MATERIAL_CHARACTER[material],material+' missing material parameters');
+    const scene=resolveScene({seed:'aperiodic:'+material,material,textureStrength:80});
+    const layer=scene.textureLayers[0];
+    const field=(x,y)=>materialHeight(layer,x,y);
+    assert.equal(field(123.5,-74.3),field(123.5,-74.3));
+    assert.ok(Math.abs(field(123.5,-74.3))<=1);
+    // The old implementation repeated the very same ~50-242px stamp.
+    assert.notEqual(field(123.5,-74.3),field(123.5+176,-74.3+176),
+      material+' field must not tile at a fixed wallpaper interval');
+    const other=resolveScene({seed:'fresh-seed:'+material,material,textureStrength:80});
+    assert.notEqual(field(123.5,-74.3),materialHeight(other.textureLayers[0],123.5,-74.3),
+      material+' variations should receive unique surface detail');
+  }
+});
+
+test('material relief follows the visible surface field and layer strength',()=>{
+  const recipe={seed:'shared-material-field',material:'linen',textureCoverage:'stripes',
+    textureDisplacement:60,textureStrength:100,textureScale:45,
+    textureRotation:39,orientation:'diagonal'};
+  const full=resolveScene(recipe),stripe=full.stripes[3],x=126.7,side=1;
+  const p=samplePath(stripe,x,full.extent);
+  const d=side*widthAt(stripe,x,full.extent)*.5;
+  const localX=p.x+p.nx*d,localY=p.y+p.ny*d;
+  const c=Math.cos(full.angle),sin=Math.sin(full.angle);
+  const wx=full.centerX+localX*c-localY*sin-DESIGN_WIDTH/2;
+  const wy=full.centerY+localX*sin+localY*c-DESIGN_HEIGHT/2;
+  const layer=full.textureLayers[0];
+  const tx=wx*layer.heightCos+wy*layer.heightSin;
+  const ty=-wx*layer.heightSin+wy*layer.heightCos;
+  const cap=Math.min(28,stripe.width*.34)*Math.pow(.60,.85);
+  assert.ok(Math.abs(textureHeight(full,stripe,x,side)-
+    materialHeight(layer,tx,ty)*cap)<1e-8);
+  const faint=resolveScene({...recipe,textureStrength:10});
+  assert.ok(Math.abs(textureHeight(faint,faint.stripes[3],x,side)-
+    textureHeight(full,stripe,x,side)*.1)<1e-8,
+    'texture strength should reduce geometric relief, not cancel in normalization');
+  const low=resolveScene({...recipe,textureDisplacement:0});
+  assert.equal(textureHeight(low,low.stripes[3],x,side),0);
+  const rotated=resolveScene({...recipe,textureRotation:92});
+  assert.notEqual(textureHeight(rotated,rotated.stripes[3],x,side),textureHeight(full,stripe,x,side));
+  const scaled=resolveScene({...recipe,textureScale:93});
+  assert.notEqual(textureHeight(scaled,scaled.stripes[3],x,side),textureHeight(full,stripe,x,side));
+});
+
+test('material layers sum their own world fields without tiling or strength normalization',()=>{
+  const recipe={seed:'layered-material-fields',material:'stone',textureStrength:50,
+    textureCoverage:'stripes',textureLayer2Enabled:true,material2:'wood-grain',
+    textureStrength2:25,textureCoverage2:'stripes',textureDisplacement:45};
+  const both=resolveScene(recipe),stripe=both.stripes[3],x=87;
+  const one=resolveScene({...recipe,material2:'none'});
+  const two=resolveScene({...recipe,material:'none'});
+  const b=textureHeight(both,stripe,x,1);
+  const a=textureHeight(one,one.stripes[3],x,1);
+  const c=textureHeight(two,two.stripes[3],x,1);
+  assert.ok(Math.abs(b-a-c)<1e-7);
+  const bg=resolveScene({...recipe,textureCoverage2:'background'});
+  assert.ok(Math.abs(textureHeight(bg,bg.stripes[3],x,1)-a)<1e-7);
+  calls.length=0;
+  const canvas={width:480,height:1040,getContext:()=>new FakeContext('main')};
+  drawWallpaper(canvas,recipe);
+  assert.ok(!calls.some(item=>item[0]==='repeatingPattern'),
+    'canvas pattern repeat cannot reproduce real-looking materials without seams');
 });
 
 test('stripe shadow strength alone enables casting, independently of ambient light',()=>{
