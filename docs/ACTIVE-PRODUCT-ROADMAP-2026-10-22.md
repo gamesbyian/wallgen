@@ -1,16 +1,21 @@
 # ROYGBIV: active product roadmap and work queue
 
-## Historical source-default archaeology (PR pending, 2026-10-22)
+## Full source-expression migration matrix (PR pending, 2026-10-22)
+
+The 45 main-history normalizer source revisions now have [five complete, SHA/Blob-pinned expression snapshots](recipe-format-history/model-expression-sources-01.json), a [machine-readable chronological diff](recipe-format-history/model-expression-ledger.json) and [human audit notes](recipe-format-history/EXPRESSION-CHANGE-LEDGER.md). Verified **10 changed top-level expressions across seven commits**, including independent/dependent third texture-layer enabling, v1 shadow default 45→0, v2 model version, Drawn path/anchor remapping and signed-zero camera pan. Source fields were mechanically cross-checked against the canonical 45-revision key ledger. **Unchanged top-level expressions do not prove unchanged helpers, palette, RNG or renderer.** This narrows the next work to source-era executable fixtures and specific adapters, not a default-based blanket migration. Existing lean CI only. 
+
+
+## Historical source-default archaeology (PR #488 merged, 2026-10-22)
 
 The existing 45-revision membership ledger is supplemented by [a source-expression comparison utility](../scripts/build-recipe-format-history.mjs) and [four SHA/Blob-pinned semantic anchors](recipe-format-history/SEMANTIC-EXPRESSION-ANCHORS.json), with a [specific default/translation-gate matrix](recipe-format-history/SEMANTIC-DEFAULTS-AND-ADAPTER-GATES.md). Verified old PNG v1 shadow state used **an enable flag plus a strength default of 45**, while the later normalizer removed the flag and changed strength fallback to 0. PNG v2 introduced a paths-defaulting structure field. These are **concrete adapter requirements**, not enough to prove equivalent old/new renderer pixels. Optional local `--semantic-out` generates expression changes across full reachable history without overwriting the 45-revision key ledger or adding any CI workflow. Historical automatic conversions stay off until renderer/seed/helper semantics and golden fixtures are proven.
 
 
-## Exact-byte historical recipe backup without conversion (PR pending, 2026-10-22)
+## Exact-byte historical recipe backup without conversion (PR #487 merged, 2026-10-22)
 
 More → Files & sharing → Update recipe inside existing PNG now also offers **Save original recipe records (exact bytes)**, available whenever a structurally valid ROYGBIV PNG contains named recipe records, *including historical v1, unsupported dialects and otherwise unsafe-to-migrate recipes*. It writes a separate, versioned JSON dossier with each original iTXt chunk encoded byte-for-byte (including text, whitespace, duplicated historic fields, envelope, CRC, order/offset) and selected record provenance. Does not modify the PNG or active editor. The same export is available with `npm run png:migrate -- --in old.png --archive original-recipes.json --dry-run`; this CLI still exits nonzero if a requested migration is unsafe. Bounded archive memory (64 records/16 MiB chunk bytes), unchanged CRC validation. This provides concrete preservation while conservative historical translation remains gated. Tests cover refused v1, duplicate chunks, byte fidelity and UI routing. No new CI workflow.
 
 
-## Warm film halation shipped as isolated treatment (PR pending, 2026-10-22)
+## Warm film halation shipped as isolated treatment (PR #486 merged, 2026-10-22)
 
 Light → Photo → Inspired look adds **Warm film halation**. A 600×1300-or-smaller sampling field extracts luminance-selected bright areas from the *original completed frame*, blurs them with bounded separable passes, and spills a red-orange glow only into neighboring darker pixels. This is a real spatial finishing operation, not the original per-pixel tone/grain or geometry-specific object Glow. It uses one small temporary spatial mask (plus intermediate), the existing Photo renderer/export/worker path, Amount mixing, Undo, saved recipe and metadata; old presets and disabled looks remain unchanged. Only this new preset serializes an explicit `parameters.halation`, leaving older parameter shapes stable. Focused tests cover seed determinism, edge localization, hue, neutral output and archived parameter shape. No additional editor destination or CI workflow.
 

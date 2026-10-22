@@ -84,3 +84,41 @@ test('four source-blob-pinned boundary anchors expose concrete v1/v2 semantic ch
       sourceLine.slice(sourceLine.indexOf(':')+1).trim());
   }
 });
+
+test('full 45-revision field-expression matrix is reproducible from pinned source batches',()=>{
+  const keyHistory=JSON.parse(read('docs/recipe-format-history/model-key-ledger.json'));
+  const expressionHistory=JSON.parse(read('docs/recipe-format-history/model-expression-ledger.json'));
+  const raw=[1,2,3,4,5].flatMap(n=>JSON.parse(read(
+    'docs/recipe-format-history/model-expression-sources-'+String(n).padStart(2,'0')+'.json')).revisions);
+  assert.equal(raw.length,45);
+  assert.equal(expressionHistory.count,45);
+  assert.equal(expressionHistory.revisions.length,45);
+  let previous={},priorSeed=null,changedCount=0;
+  for(let i=0;i<45;i++){
+    const record=raw[i],expected=expressionHistory.revisions[i],structural=keyHistory.revisions[i];
+    assert.equal(record.commit,expected.commit);
+    assert.equal(record.commit,structural.sha);
+    assert.equal(record.modelBlobSha,structural.modelBlobSha);
+    assert.deepEqual(Object.keys(record.fields).sort(),
+      [...structural.explicitKeys,'seed'].sort());
+    const changes=sourceExpressionDiff(previous,record.fields);
+    assert.deepEqual(expected.added.map(x=>x.key),changes.added);
+    assert.deepEqual(expected.removed.map(x=>x.key),changes.removed);
+    assert.deepEqual(expected.changed.map(x=>x.key),changes.changed);
+    for(const change of expected.changed){
+      assert.equal(change.before,previous[change.key]);
+      assert.equal(change.after,record.fields[change.key]);
+    }
+    changedCount+=changes.changed.length;
+    assert.equal(record.seedInitializer,priorSeed??record.seedInitializer,
+      'source-era seed initializer is stable in these observed main revisions');
+    priorSeed=record.seedInitializer;previous=record.fields;
+  }
+  assert.equal(changedCount,10);
+  const latest=extractRecipeFieldExpressions(read('src/model.js'));
+  assert.deepEqual(latest,raw.at(-1).fields);
+  const rows=expressionHistory.revisions;
+  assert.ok(rows.some(row=>row.changed.some(change=>
+    change.key==='stripeShadowStrength'&&change.before.includes('45, 0, 100')&&
+    change.after.includes('0, 0, 100'))));
+});

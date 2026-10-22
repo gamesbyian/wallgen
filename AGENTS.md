@@ -1,5 +1,10 @@
 # Agent orientation for ROYGBIV
 
+## Fully indexed 45-revision normalization expression history (2026-10-22)
+
+Before implementing v1/early-v2 adapters, inspect the [source-blob-pinned expression ledger](docs/recipe-format-history/model-expression-ledger.json), [10 changes/7 revision summary](docs/recipe-format-history/EXPRESSION-CHANGE-LEDGER.md) and [original source-expression snapshots](docs/recipe-format-history/model-expression-sources-01.json) (five 10-revision batches). Every parsed field set agrees with the original 45-revision structural key ledger. Verified source-expression changes cover third-layer activation dependency, v1 shadow 45→0 fallback, Drawn path/anchor remapping, camera signed zero and schema version. These are **lexical field expression** facts, not runtime parity across helper modules, RNG or renderer. Keep automatic history conversion gated until golden source-era fixtures prove preservation. No routine new CI workflow.
+
+
 ## Historical default conversion evidence (2026-10-22)
 
 The 45-revision field-membership ledger now has companion [SHA/Blob-pinned semantic expression anchors](docs/recipe-format-history/SEMANTIC-EXPRESSION-ANCHORS.json) and [migration decision matrix](docs/recipe-format-history/SEMANTIC-DEFAULTS-AND-ADAPTER-GATES.md). `scripts/build-recipe-format-history.mjs --semantic-out <path>` can inventory lexical normalizer field changes from a full Git clone. First concrete hazard: PNG v1 originally stored `stripeShadowEnabled` and defaulted `stripeShadowStrength` to 45; a later revision removed the boolean and defaulted strength to 0. V2 added `structure` default `paths`. Lexical source changes are *not* renderer/seed semantic proof. Keep historic conversions gated until full adapters and fixtures exist; no routine new workflow.

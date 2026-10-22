@@ -1,5 +1,8 @@
 # PNG recipe metadata migration without image changes
 
+**M0 source archaeology full 45-revision pass (2026-10-22, PR pending):** [complete expression snapshots](recipe-format-history/model-expression-sources-01.json), [10 source-expression changes across seven revisions](recipe-format-history/model-expression-ledger.json) and [human interpretation](recipe-format-history/EXPRESSION-CHANGE-LEDGER.md) expose historical v1 layer-three dependency flips, shadow default 45→0, Drawn path/anchor mapping, viewPan signed-zero normalization and v1→v2 schema version. Each source snapshot has its Git blob SHA, and every field set was checked against the 45-revision key ledger. This is **structural/source evidence**; it does not establish renderer or helper semantic parity and does not enable unsafe old PNG rewriting. Next: source-era renderer, helper and seed fixtures then narrow adapters.
+
+
 **M0 historical default evidence (2026-10-22, PR pending):** [Pinned v1/v2 semantic anchors](recipe-format-history/SEMANTIC-EXPRESSION-ANCHORS.json) and [source-derived translator gate matrix](recipe-format-history/SEMANTIC-DEFAULTS-AND-ADAPTER-GATES.md) now distinguish field introduction/removal from default-expression changes. An early v1 `stripeShadowEnabled` separate boolean disappeared while `stripeShadowStrength` fallback shifted **45 → 0**, and v2 introduced `structure` with a paths fallback. A Git-history `--semantic-out` script inventories lexical normalizer expression changes between commits without altering the canonical key ledger. **No unsafe v1 conversions were enabled.** Confirm historical renderer, helper and exact source defaults before shipping an adapter.
 
 
