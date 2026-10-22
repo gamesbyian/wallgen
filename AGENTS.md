@@ -1,5 +1,10 @@
 # Agent orientation for ROYGBIV
 
+## First actual Photo artwork review is no longer pending (2026-10-22)
+
+[Photo production-render findings](docs/PHOTO-PRODUCTION-RENDER-FINDINGS-2026-10-22.md) document seven downloaded, visually inspected 600×1300 production PNGs from one-shot Chromium Actions #39819624080, plus independent per-image CRC and recipe equality checks. The temporary review PR #496 was closed **unmerged** after restoring `.github/workflows/check.yml` exactly. Do not reintroduce browser reviews into routine CI. Halation currently looks subtly localized even at max; Muted Negative visibly raises black toward warm charcoal. Address artist/visual expectations in separately named or explicitly versioned treatments, not by silently shifting stored preset semantics. Physical Pixel/material/embroidery QA remains open.
+
+
 ## Neutral Photo optimization without skipping spatial effects (2026-10-22)
 
 `isNeutralPhotoLook` tests the **entire normalized transform**, not just the Grain or Halation slider, before skipping `applyPhotoFinish` get/put image data. An active `camera-webcam-signal` must always run because its downsample/chroma-loss stage is inherently non-neutral. Even a neutral active `processPhotoPixels` call still rejects invalid pixel-buffer dimensions. Preserve stored recipes and non-neutral output exactly. This reduces avoidable 19.8 MP readbacks without introducing screenshot CI or claiming device-benchmark evidence.

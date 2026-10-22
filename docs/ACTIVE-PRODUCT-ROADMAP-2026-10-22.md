@@ -1,5 +1,10 @@
 # ROYGBIV: active product roadmap and work queue
 
+## Seven actual production Photo images viewed and inspected (2026-10-22, PR pending)
+
+A one-time, branch-gated Chromium Actions probe **successfully generated seven real 600×1300 wallpapers**, and its artifact was downloaded and visually reviewed. The original, Slide, Muted Negative, Grain Only, Warm Halation, Smartphone HDR and Low-res Webcam show distinct actual Photo results. All seven source PNG files passed independent CRC/decoder checks and exact embedded-recipe-vs-sidecar equality checks. See [direct observed findings, measured pixel differences and two specific aesthetic follow-ups](PHOTO-PRODUCTION-RENDER-FINDINGS-2026-10-22.md). Notable nuance: halation is correctly localized but almost invisible at thumbnail scale even at strength 100, while Muted Negative lifts black to warm charcoal. Do **not** silently change saved Photo presets to correct those aesthetic questions. The one-off Actions probe was **removed** from the branch and its temporary PR #496 closed unmerged: permanent quick CI is unchanged. Pixel-native performance, multi-material compositions and physically accurate camera simulation remain open.
+
+
 ## Neutral Photo finishing skips export-size readback (PR pending, 2026-10-22)
 
 `src/photo-look.js` now detects a **fully neutral normalized Photo treatment** (e.g., Grain Only at Grain 0 or Warm Halation at Halation 0 and Grain 0) before asking Canvas2D for an entire image buffer. Both the production compositor and pure in-place pixel processor skip expensive work when absolutely no tone, colour, grain, vignette or halation transform remains. The opt-in simulated low-res webcam **cannot** use this optimization because its spatial capture still changes pixels despite neutral tone settings. Existing non-neutral looks, saved recipe data and rendering math remain unchanged. Focused tests assert zero read/write calls at full 3024×6552 dimensions and unchanged active spatial-camera and grain behavior. This is a source-level performance win, **not** a measured Pixel device speedup. No new CI workflow.
