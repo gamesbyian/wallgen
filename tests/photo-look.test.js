@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {PHOTO_PRESETS,normalizePhotoLook,processPhotoPixels,applyPhotoFinish} from '../src/photo-look.js';
 import {normalizeRecipe,encodeRecipe,decodeRecipe,resolveScene} from '../src/model.js';
 
@@ -219,4 +220,18 @@ test('zero halation and zero overall amount are strict no-op for neutral new pre
     processPhotoPixels(out,80,80,settings,'neutral');
     assert.deepEqual(out,input);
   }
+});
+
+test('seven-image photo review uses exact matching recipes and production headless renderer',()=>{
+  const script=readFileSync(new URL('../scripts/review-photo-looks.mjs',import.meta.url),'utf8');
+  assert.match(script,/const cases=Object\.freeze\(\[/);
+  const presets=[...script.matchAll(/presetId:'([a-z-]+)'/g)].map(m=>m[1]);
+  assert.deepEqual(presets,['film-slide','film-negative','film-grain-only',
+    'film-halation-only','camera-hdr','camera-webcam-signal']);
+  assert.match(script,/presetId:null/);
+  assert.match(script,/normalizeRecipe\(\{\.\.\.base,seed:opts\.seed/);
+  assert.match(script,/JSON\.stringify\(recipe,null,2\)/);
+  assert.match(script,/\['--recipe',source,'--width','600','--height','1300','--out',image\]/);
+  assert.match(script,/Review output already exists/);
+  assert.match(script,/produced-awaiting-human-review/);
 });

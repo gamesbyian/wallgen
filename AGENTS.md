@@ -1,5 +1,10 @@
 # Agent orientation for ROYGBIV
 
+## Photo appearance evidence, not screenshot factories (2026-10-22)
+
+Before asserting F2/D3 optical quality or closing Film/Camera issues, use the optional `scripts/review-photo-looks.mjs` with the [seven-image manual guide](docs/PHOTO-SEVEN-IMAGE-ART-REVIEW-2026-10-22.md). It exports six opt-in Photo looks plus untreated source through `render-headless.mjs --recipe` using one canonical seed/source state and matching PNG/JSON. The tool is **not CI**; its existence is not evidence that art samples have been generated, viewed or approved. Record precise visual findings before tuning render effects. Avoid expanding to large routine screenshot suites.
+
+
 ## Conflicting historical PNG recipe records are evidence, not debris (2026-10-22)
 
 The metadata-only updater must refuse to replace a PNG containing distinct previous `ROYGBIV Recipe` envelopes, even when the selected latest one is canonical. `inspectPngMigration` exposes `conflictingChunkIndexes` and points to `archivePngRecipeRecords` for exact-byte backup. JSON-identical duplicates may be consolidated. Do not loosen this rule merely to widen historical coverage; investigate each source-era record, preserve provenance, and test conversion fixtures first. This does not change ordinary PNG export behavior or add CI.

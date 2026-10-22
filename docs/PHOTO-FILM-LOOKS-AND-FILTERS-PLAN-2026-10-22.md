@@ -1,5 +1,8 @@
 # ROYGBIV: photographic film looks and filters
 
+**F2/F5 manual visual-review tool (2026-10-22, PR pending):** `node scripts/review-photo-looks.mjs --out-dir artifacts/photo-review` generates a seven-file headless production gallery with one untreated original, Slide, Negative, Grain Only, Halation Only, Smartphone HDR and Webcam Signal. Every PNG has exactly its manifest-matching normalized recipe. The [review guide](PHOTO-SEVEN-IMAGE-ART-REVIEW-2026-10-22.md) specifies questions for edge glow, grain repeat, black preservation and colour identity. It is manual and opt-in, not part of regular CI. No images have actually been rendered/observed in this PR; implementation progress must not be confused with optical approval.
+
+
 **F2 implemented slice (2026-10-22):** `film-halation-only` adds a distinct, opt-in warm light-bleed response to bright edges using a luminance-thresholded 600×1300-or-smaller field and bounded separable blur. It glows preferentially into black regions beside luminous colours, rather than simply tinting every stripe or adding a global layer of CSS blur; original hue and interiors stay unaltered when the grade is neutral. `parameters.halation` is expanded **only** for this new preset, and remains stable in saved recipes; older preset parameter lists stay byte-compatible. The existing Grain and Amount controls still apply. No scratch 20MP RGBA buffer, extra workflow or top-level tab. This is a practical creative approximation in encoded sRGB, *not* calibrated photochemical/linear optics. Two-radius bloom, photochemical response, physical device validation and a dedicated compact halation strength inspector remain open.
 
 

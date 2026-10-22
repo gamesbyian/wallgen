@@ -1,6 +1,11 @@
 # ROYGBIV: active product roadmap and work queue
 
-## Conflicting historical recipe-record preservation (PR pending, 2026-10-22)
+## Production Photo-look optical review made repeatable (PR pending, 2026-10-22)
+
+The optional [seven-image Photo art review](PHOTO-SEVEN-IMAGE-ART-REVIEW-2026-10-22.md) and `scripts/review-photo-looks.mjs` now generate six selected looks plus a neutral control through the *existing production headless renderer*, with exactly matching canonical recipe JSON for every PNG. A single seed, 600×1300 source scene and contact-gallery HTML make Grain Only, Halation, Slide, Negative Print, Smartphone HDR and Webcam Signal comparable without hundreds of screenshot jobs. This review is **not part of CI**, and **no output was run or visually inspected in this PR** because the local production browser/render harness was unavailable here. Next explicit creative acceptance: run the tool once, actually view the seven PNGs, record observed optical defects, repair just those defects. Full 19.8MP and physical Pixel proof remain separate.
+
+
+## Conflicting historical recipe-record preservation (PR #490 merged, 2026-10-22)
 
 More → Update recipe inside existing PNG now **refuses** to collapse multiple `ROYGBIV Recipe` records when their original recipe envelopes differ, even if the last one is current and otherwise normalized. A report names all conflicting original PNG chunk indexes; the existing **Save original recipe records (exact bytes)** action remains available to preserve every record. Multiple JSON-identical duplicates can still be consolidated into one current recipe with verified non-recipe PNG byte preservation. This closes a silent loss-of-history path without touching the ordinary PNG export writer, rendering, library, active recipe or Undo. Focused tests cover both outcomes and the archival fallback. No new workflow.
 
