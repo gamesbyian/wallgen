@@ -102,20 +102,8 @@ function makeMemory({idFactory,now},warning){
       for(const item of additions)assets.set(item.id,internal(item));
       return {added:additions.length,skipped};
     },
-    async importMany(inputs){
-      const incoming=await prepareBatch(inputs,{idFactory,now});
-      return transaction(db,['assets'],'readwrite',(tx,set,abortWith)=>{
-        const store=tx.objectStore('assets'),read=store.getAll();
-        read.onsuccess=()=>{
-          let changes;
-          try{changes=planImport(incoming,read.result);}
-          catch(e){abortWith(e);return;}
-          for(const item of changes.additions)store.add(internal(item));
-          set({added:changes.additions.length,skipped:changes.skipped});
-        };
-      });
-    },
-
+    async saveDraft(input){
+      const record=await prepared(input,{idFactory,now});
       drafts.set(record.id,internal(record));
       await api.pruneDrafts();
       return display(record);
@@ -237,6 +225,19 @@ function idbStore(db,{idFactory,now}){
             return;
           }
           store.delete(id);set(true);
+        };
+      });
+    },
+    async importMany(inputs){
+      const incoming=await prepareBatch(inputs,{idFactory,now});
+      return transaction(db,['assets'],'readwrite',(tx,set,abortWith)=>{
+        const store=tx.objectStore('assets'),read=store.getAll();
+        read.onsuccess=()=>{
+          let changes;
+          try{changes=planImport(incoming,read.result);}
+          catch(e){abortWith(e);return;}
+          for(const item of changes.additions)store.add(internal(item));
+          set({added:changes.additions.length,skipped:changes.skipped});
         };
       });
     },
