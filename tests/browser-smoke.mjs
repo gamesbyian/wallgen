@@ -581,7 +581,7 @@ try{
     'JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r")))');
   assert.deepEqual(fitted,beforeZoom,'Fit changed artwork instead of framing');
   assert.equal(await evaluate('document.querySelector(".mobile-fit-button").getAttribute("aria-label")'),
-    'Fit entire wallpaper (100% framing)');
+    'Reset view: zoom and frame position');
   assert.equal(await evaluate('document.querySelector(".mobile-fit-button").disabled'),true);
   // Move the CAMERA via its own controls in More. Never invoke data-nudge
   // or mutate the source composition position. The resulting frame is saved.
@@ -2111,7 +2111,7 @@ try{
       placement,visible,closed:!document.body.classList.contains('mobile-tools-open')};
   })()`);
   assert.deepEqual(moreGroups.headings,[
-    'Create & seed','Import, export & share','Position & design details'
+    'Generate','Files & sharing','Position & info'
   ]);
   assert.ok(Object.values(moreGroups.placement).every(Boolean));
   assert.ok(moreGroups.visible&&moreGroups.closed);
@@ -2405,7 +2405,7 @@ try{
       assert.ok(moreReachability.scrollRange>0,
         'More must scroll to expose lower source controls at '+width+'×'+height);
       assert.deepEqual(moreReachability.headings,
-        ['Create & seed','Import, export & share','Position & design details']);
+        ['Generate','Files & sharing','Position & info']);
       assert.deepEqual(moreReachability.targets.map(x=>x.action),
         ['up','left','reset','right','down']);
       assert.ok(moreReachability.targets.every(x=>x.width>=34&&x.height>=34&&
