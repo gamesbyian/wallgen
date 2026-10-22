@@ -58,7 +58,7 @@ const noiseHash=(x,y,seed)=>{
 // Sensor samples are complete BEFORE the destination pixels are changed.
 function makeWebcamCapture(data,width,height){
   const sensorWidth=Math.min(width,200);
-  const sensorHeight=Math.min(height,Math.max(1,Math.round(sensorWidth*height/width)));
+  const sensorHeight=Math.min(height,520,Math.max(1,Math.round(sensorWidth*height/width)));
   const chromaWidth=Math.ceil(sensorWidth/2);
   const chromaHeight=Math.ceil(sensorHeight/2);
   const luma=new Float32Array(sensorWidth*sensorHeight);
