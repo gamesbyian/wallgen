@@ -2,6 +2,8 @@
 
 *Rainbow-Only. You Generate Based on Individual Variables.*
 
+[**Производственная летопись на русском языке**](prod_diary/README.md): история проекта, творческих решений, инженерных проверок и происхождения доступных свидетельств.
+
 ## Made with ChatGPT · Free for absolutely anyone
 
 R.O.Y.G.B.I.V. was made by its project creator with **ChatGPT**. The creator
