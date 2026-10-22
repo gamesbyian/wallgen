@@ -1,4 +1,4 @@
-import {drawWallpaper} from './renderer.js?v=20261018-worker1';
+import {drawWallpaper} from './renderer.js?v=20261022-photo1';
 
 // Sole rendering worker entry point. No DOM access; Canvas2D is shared with
 // the reference renderer via createRenderSurface() and OffscreenCanvas.
@@ -40,7 +40,9 @@ self.onmessage=async({data})=>{
         return;
       }
       cache={};
-      drawWallpaper(surface,recipe,{cache});
+      // Settled previews transfer unfiltered ink/background; the presenting
+      // compositor applies Photo exactly once, also when the user nudges.
+      drawWallpaper(surface,recipe,{cache,skipPhoto:true});
       // Transfer only the two immutable cached layers. The main thread
       // already has a pixel-identical compositor for nudge, shadows and
       // lighting; transferring a third full-frame bitmap wastes memory.

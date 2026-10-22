@@ -39,6 +39,7 @@
   <link rel="stylesheet" href="editor-setting-rows.css?v=20261019-rotationlabel1">
   <link rel="stylesheet" href="editor-material-status.css?v=20261022-texture-workspace1">
   <link rel="stylesheet" href="colour-vision-preview.css?v=20261022-1">
+  <link rel="stylesheet" href="photo-controls.css?v=20261022-photo1">
 </head>
 <body>
   <header class="masthead">
@@ -228,6 +229,32 @@
               </label>
             </div>
             <p class="lighting-help">Ambient light and shade cover the entire wallpaper. Stripe shadows, outlines and glow are in Details.</p>
+            <div class="photo-pane-switch" role="group" aria-label="Choose lighting or photographic finishing">
+              <button type="button" data-photo-pane="lighting" aria-pressed="true">Lighting</button>
+              <button type="button" data-photo-pane="photo" aria-pressed="false">Photo</button>
+            </div>
+            <div class="photo-controls" hidden>
+              <label class="field"><input type="checkbox" name="photoEnabled"> Enable photo finish</label>
+              <label class="field">Inspired look
+                <select name="photoPresetId">
+                  <option value="film-slide">Slide film</option>
+                  <option value="film-negative">Muted print</option>
+                  <option value="film-mono">Monochrome film</option>
+                  <option value="camera-natural">Natural digital camera</option>
+                  <option value="camera-hdr">Smartphone HDR</option>
+                  <option value="camera-webcam">Old webcam colours (preview)</option>
+                </select>
+              </label>
+              <div class="control-grid range-grid">
+                <label class="field range-field"><span>Amount</span>
+                  <input type="range" name="photoAmount" min="0" max="100" value="75">
+                </label>
+                <label class="field range-field"><span>Grain</span>
+                  <input type="range" name="photoGrain" min="0" max="100" value="12">
+                </label>
+              </div>
+              <small>Photo processes the completed wallpaper. The colours are artistic approximations, not calibrated camera or film profiles. Turn off to see the original.</small>
+            </div>
           </div>
         </section>
         <section class="settings-panel" id="panel-textures" role="tabpanel" aria-labelledby="tab-textures" tabindex="0" hidden>
