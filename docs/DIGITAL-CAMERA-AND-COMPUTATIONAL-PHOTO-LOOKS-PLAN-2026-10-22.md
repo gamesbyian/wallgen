@@ -1,5 +1,8 @@
 # ROYGBIV: modern digital camera and photographic rendering looks
 
+**D5 actual-image observation (2026-10-22):** [Seven real production Chromium renders were downloaded and viewed](PHOTO-PRODUCTION-RENDER-FINDINGS-2026-10-22.md). The Smartphone HDR inspiration visibly boosts bright hues while broadly retaining black; simulated low-resolution webcam capture visibly reduces spatial/chroma detail and roughens ribbon edges. This is evidence of the intended *distinct visual categories*, not calibrated capture from a named device, codec benchmarking or Pixel phone acceptance. Original PNG recipes exactly match their per-file JSON sidecars. The one-off render was fully removed from permanent CI.
+
+
 **D3/D5 judged-picture prerequisite (2026-10-22, PR pending):** The opt-in [seven-image Photo study](PHOTO-SEVEN-IMAGE-ART-REVIEW-2026-10-22.md) pairs Smartphone HDR and Low-res Webcam Capture with four film looks and an untreated original from the production renderer, exactly matching saved recipes. This provides one controlled, small 600×1300 canvas for a visual audit of simulated chroma bandwidth, resolution loss, black preservation and bright-colour identity. Script authored and source-wired only: visual judgment, real 19.8MP runtime and Pixel feel remain unverified. No extra CI jobs or mandatory screenshot matrices.
 
 
