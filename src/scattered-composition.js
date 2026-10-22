@@ -1,3 +1,4 @@
+import {normalizeScatteredOverrides} from './scattered-object-edits.js';
 // Independent, deterministic circles in the 600 × 1300 design plane.
 // Placement consumes its own namespaced PRNG: palette, texture and camera
 // variation never cause the same geometry to move or change diameter.
@@ -134,11 +135,24 @@ export function buildScatteredCircles(recipe){
   }
   objects.sort((a,b)=>a.colorIndex-b.colorIndex||
     Number(a.id.slice(7))-Number(b.id.slice(7)));
+  // User-authored edits win over procedural packing, without reflowing every
+  // other circle. IDs are palette/index slots and survive a seed change.
+  // They intentionally may overlap even when generated objects are separate.
+  const manual=new Map(normalizeScatteredOverrides(recipe.scatteredOverrides)
+    .map(entry=>[entry.index,entry]));
+  for(const object of objects){
+    const edit=manual.get(Number(object.id.slice(7)));
+    if(!edit)continue;
+    const cx=edit.x*W,cy=edit.y*H,r=edit.radius*W;
+    object.circle={cx,cy,r};
+    object.origin=point(cx,cy);
+    object.vertices=rim(cx,cy,r);
+  }
   const placed=objects.length;
   return {objects,requested:count,placed,
     diagnostic:placed<count?
       'Only '+placed+' of '+count+' circles fit with the selected minimum size and spacing. Reduce size, spacing, or count.':
-      null,cropped:croppedCount};
+      null,cropped:objects.filter(object=>cropped(object.circle)).length};
 }
 
 
@@ -167,6 +181,7 @@ export function buildScatteredObjects(recipe){
     return {
       kind:'region',id:source.id,colorIndex:source.colorIndex,
       origin:point(cx,cy),vertices:rings[0],rings,
+      editCircle:{cx,cy,r}, // editor-only transform; painter uses compound rings
       // Bounding circle intentionally omitted: the painter must use the
       // compound path, including subtractive holes and detached islands.
     };

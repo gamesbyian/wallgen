@@ -1,4 +1,4 @@
-import { OUTPUT_WIDTH, OUTPUT_HEIGHT, normalizeRecipe, resolveScene, encodeRecipe, decodeRecipe, newSeed, randomizeAllRecipe, respectSettingLocks, LOCKABLE_SETTINGS } from './model.js';
+import { OUTPUT_WIDTH, OUTPUT_HEIGHT, NAMES, normalizeRecipe, resolveScene, encodeRecipe, decodeRecipe, newSeed, randomizeAllRecipe, respectSettingLocks, LOCKABLE_SETTINGS } from './model.js';
 import { drawWallpaper, presentNudgedArtwork } from './renderer.js?v=20261018-worker1';
 import {createPreviewCoordinator,createThumbnailQueue,exportWallpaperInWorker,closeFrame} from './render-coordinator.js';
 import { embedPngMetadata, extractPngRecipe, cleanMetadata, METADATA_FIELDS } from './png-metadata.js';
@@ -16,6 +16,7 @@ import {fullSettingName} from './editor-terminology.js';
 import {installExplorationHistory} from './exploration-history.js';
 import {installGeometryLibraryUI} from './geometry-library-ui.js';
 import {RAINBOW_ORBITS} from './scattered-composition.js';
+import {normalizeScatteredOverrides} from './scattered-object-edits.js';
 import {cloneGeometrySnapshot} from './geometry-asset.js';
 import {parseStoredFavorites} from './favorites-store.js';
 import {encodePortableRecipe,decodePortableRecipe,portableShareUrl,portableShareTokenFromLocation,
@@ -196,7 +197,7 @@ function fromControls() {
   const data={seed:seedInput.value,positionX:current.positionX,positionY:current.positionY,
     viewZoom:current.viewZoom,viewPanX:current.viewPanX,viewPanY:current.viewPanY,
     customPath:current.customPath,drawnAnchors:current.drawnAnchors,drawnCorners:current.drawnCorners,interiorElements:current.interiorElements,
-    scatteredShape:current.scatteredShape};
+    scatteredShape:current.scatteredShape,scatteredOverrides:current.scatteredOverrides};
   for (const key of FIELDS) { const field=form.elements.namedItem(key); data[key]=field.dataset.inactive==='true'?current[key]:(field.type==='checkbox'?field.checked:field.value); }
   return normalizeRecipe(data);
 }
@@ -546,6 +547,7 @@ function render(recipe,{scroll=false,bypassLocks=false,interactive=false}={}) {
 function changeRecipe(recipe,options={}){
   if(pendingControlFrame){cancelAnimationFrame(pendingControlFrame);pendingControlFrame=0;}
   render(recipe,options);toControls(current);showResolvedSelections(currentScene);
+  syncScatteredObjectEditor();
   const elementState=JSON.stringify([current.interiorElements,
     current.lockedSettings.includes('interiorElements')]);
   if(elementState!==lastInteriorState)syncInteriorUI();
@@ -1000,7 +1002,7 @@ rainbowOrbitButton.textContent='Try Rainbow Orbits';
 rainbowOrbitButton.title='Seven varied rainbow circles with black negative space';
 regionTool?.append(rainbowOrbitButton);
 rainbowOrbitButton.addEventListener('click',()=>{
-  const proposal=normalizeRecipe({...current,...RAINBOW_ORBITS});
+  const proposal=normalizeRecipe({...current,...RAINBOW_ORBITS,scatteredOverrides:[]});
   const next=respectSettingLocks(current,proposal);
   if(next.structure!=='regions'||next.regionMode!=='scattered'){
     showNotice('Unlock Canvas structure and Region layout to apply Rainbow Orbits.');
@@ -1010,6 +1012,102 @@ rainbowOrbitButton.addEventListener('click',()=>{
   selectEditorTool('path','scattered-size');
   showNotice('Rainbow Orbits selected. Adjust count, size, spacing and edge cropping.');
 });
+// A compact, contextual *per-circle* inspector. Manual offsets live in the
+// recipe so Undo, favourites, PNG metadata, links and headless render agree.
+const orbitEditor=document.createElement('section');
+orbitEditor.id='scatteredObjectEditor';
+orbitEditor.className='scattered-object-editor';
+orbitEditor.hidden=true;
+const orbitTitle=document.createElement('strong');
+orbitTitle.textContent='Edit one circle';
+orbitEditor.append(orbitTitle);
+const orbitPicker=document.createElement('select');
+orbitPicker.id='scatteredObjectPicker';
+orbitPicker.setAttribute('aria-label','Circle to edit');
+orbitEditor.append(orbitPicker);
+const orbitCommands=document.createElement('div');
+orbitCommands.className='scattered-object-commands';
+for(const [action,label,accessible] of [
+  ['left','←','Move circle left'],['up','↑','Move circle up'],
+  ['down','↓','Move circle down'],['right','→','Move circle right'],
+  ['smaller','−','Make selected circle smaller'],['larger','+','Make selected circle larger'],
+  ['reset','Reset','Restore automatic position and size for this circle']]){
+  const button=document.createElement('button');
+  button.type='button';button.dataset.orbitAction=action;
+  button.textContent=label;button.setAttribute('aria-label',accessible);
+  orbitCommands.append(button);
+}
+orbitEditor.append(orbitCommands);
+const orbitNote=document.createElement('small');
+orbitNote.className='scattered-object-note';
+orbitNote.setAttribute('aria-live','polite');
+orbitEditor.append(orbitNote);
+document.querySelector('.editor-tool-card[data-editor-tool="scattered-edges"]')
+  ?.append(orbitEditor);
+
+function syncScatteredObjectEditor(){
+  const root=document.getElementById('scatteredObjectEditor');
+  if(!root)return; // First render can precede mountEditor().
+  const objects=currentScene?.objects?.filter(o=>o.circle||o.editCircle)||[];
+  const active=current.structure==='regions'&&
+    current.regionMode==='scattered'&&objects.length>0;
+  root.hidden=!active;
+  root.querySelector('strong').textContent=current.scatteredShapeKind==='imported'?
+    'Edit one shape':'Edit one circle';
+  if(!active)return;
+  const key=current.scatteredShapeKind+':'+objects.map(o=>o.id).join('|');
+  const picker=root.querySelector('select');
+  if(root.dataset.members!==key){
+    const before=picker.value;
+    picker.replaceChildren();
+    for(const object of objects){
+      const index=Number(object.id.slice(7));
+      const option=document.createElement('option');
+      option.value=String(index);
+      option.textContent=NAMES[index%7]+' · '+
+        (current.scatteredShapeKind==='imported'?'Shape ':'Circle ')+(index+1);
+      picker.append(option);
+    }
+    if([...picker.options].some(o=>o.value===before))picker.value=before;
+    root.dataset.members=key;
+  }
+  const index=Number(picker.value);
+  const object=objects.find(o=>o.id==='region-'+index);
+  const circle=object?.circle||object?.editCircle;
+  const customized=normalizeScatteredOverrides(current.scatteredOverrides)
+    .some(o=>o.index===index);
+  root.querySelector('[data-orbit-action="reset"]').disabled=!customized;
+  root.querySelector('.scattered-object-note').textContent=circle?
+    (customized?'Manually positioned · ':'Seeded position · ')+
+    'X '+Math.round(circle.cx)+
+    ' · Y '+Math.round(circle.cy)+
+    ' · Radius '+Math.round(circle.r):'No shape selected';
+}
+orbitPicker.addEventListener('change',syncScatteredObjectEditor);
+orbitCommands.addEventListener('click',event=>{
+  const button=event.target.closest('button[data-orbit-action]');
+  if(!button)return;
+  const index=Number(orbitPicker.value);
+  const object=currentScene?.objects?.find(o=>o.id==='region-'+index);
+  const circle=object?.circle||object?.editCircle;
+  if(!circle)return;
+  const action=button.dataset.orbitAction;
+  const next=normalizeScatteredOverrides(current.scatteredOverrides)
+    .filter(o=>o.index!==index);
+  if(action!=='reset'){
+    const {cx,cy,r}=circle;
+    const dx=action==='left'?-18:action==='right'?18:0;
+    const dy=action==='up'?-18:action==='down'?18:0;
+    const dr=action==='smaller'?-12:action==='larger'?12:0;
+    const limit=(value,min,max)=>Math.max(min,Math.min(max,value));
+    next.push({index,
+      x:limit((cx+dx)/600,-.5,1.5),
+      y:limit((cy+dy)/1300,-.5,1.5),
+      radius:limit((r+dr)/600,.01,1.2)});
+  }
+  changeRecipe({...current,scatteredOverrides:next});
+});
+
 const scatterStatus=document.createElement('p');
 scatterStatus.id='scatteredStatus';scatterStatus.hidden=true;
 scatterStatus.className='scattered-diagnostic';scatterStatus.setAttribute('role','status');
