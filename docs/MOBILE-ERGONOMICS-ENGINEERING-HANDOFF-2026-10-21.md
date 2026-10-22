@@ -1,5 +1,8 @@
 # Mobile touch ergonomics: engineering handoff
 
+> **2026-10-22 CURRENT STATUS:** [PR #451](https://github.com/gamesbyian/wallgen/pull/451) added reversible collapse for Draw point actions on short portrait; [issue #422](https://github.com/gamesbyian/wallgen/issues/422) is now **closed** in GitHub. This does **not** assert that every Pixel finger target or original 500×700 hit cell has been recently retested on hardware. [#365](https://github.com/gamesbyian/wallgen/issues/365) is a *small evidence-driven optional backlog* and #301 extreme phone landscape is deferred. All original comprehensive viewport/3×3 grids below are historical sprint evidence, not new CI prerequisites. Use the [current roadmap](ACTIVE-PRODUCT-ROADMAP-2026-10-22.md).
+
+
 **Status:** The current ergonomics implementation sprint is **wrapped up** (2026-10-21). All ergonomics PRs from this line through [#426](https://github.com/gamesbyian/wallgen/pull/426) are merged to `main`; the implementation is **not** being declared universally ergonomic or fully device-accepted. The broad tracker [#365](https://github.com/gamesbyian/wallgen/issues/365) and concrete short-portrait bug [#422](https://github.com/gamesbyian/wallgen/issues/422) remain open.
 
 The authoritative detailed, source-bound run-by-run ledger is [MOBILE-TOUCH-TARGET-DELIVERY-2026-10-21.md](MOBILE-TOUCH-TARGET-DELIVERY-2026-10-21.md). This document is the shorter *stop-work / next-owner* decision record, not a replacement for the test evidence.

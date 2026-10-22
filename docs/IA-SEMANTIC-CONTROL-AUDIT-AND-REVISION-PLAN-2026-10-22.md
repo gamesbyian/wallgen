@@ -1,5 +1,8 @@
 # ROYGBIV semantic control audit and revision plan
 
+> **2026-10-22 EXECUTION QUEUE:** Incremental UX work #454/#455/#459–#463/#465 has landed; current live editor is **40 tool cards / 95 schema scalar settings**. [#444](https://github.com/gamesbyian/wallgen/issues/444) and the [live UX section of the roadmap](ACTIVE-PRODUCT-ROADMAP-2026-10-22.md) own remaining C07/C09/C10/C11 and optional Pixel observations. Original intermediate 43-tool maps are historical, not demands to reintroduce duplicated Material/Finish cards. New Embroidery #467 and Film #468 are only proposed future Texture/Light tools; don't score them as discoverable today.
+
+
 ## Authoritative findings and closure ledger (2026-10-22)
 
 **Current `main` checkpoint:** 7 Edit categories, **40 named tool cards, 95 canonical schema setting keys**; separate dynamic interior-element objects, Shape & Path Library, five mobile destinations. This supersedes the historical 40/87 and intermediate 43/95 maps for **live navigation**. Old snapshots remain historical research records, not today's menu specification. The original recipe/PNG/Saved identifiers were not migrated for these navigation fixes.

@@ -1,4 +1,7 @@
 # ROYGBIV: photographic film looks and filters
+
+> **2026-10-22 EXECUTION QUEUE:** This *specification only* was merged by [#464](https://github.com/gamesbyian/wallgen/pull/464). Implementation is separately queued in [#468](https://github.com/gamesbyian/wallgen/issues/468): F0 neutral film/seed/processing contract, F1 first actually attractive look, F2 seeded grain/halation, F3 compact Light > Film, F4 parity and F5 optional sophistication. **Film controls, film grading and grain are not in the live app yet.** Work independently of Embroidery #467, and update [active roadmap](ACTIVE-PRODUCT-ROADMAP-2026-10-22.md) on each shipped phase. Display-only Colour Vision Preview is **not** film emulation. Keep new CI proportional.
+
 ## Research-backed image-processing plan, app architecture, UI/UX, presets and implementation queue
 
 **Created:** 2026-10-22. **Status:** proposed, not implemented. **Reviewed repository:** gamesbyian/wallgen main commit 7e970906222ebf1d085b12527f2a6aa9106d9209; reconcile latest main before implementation.
