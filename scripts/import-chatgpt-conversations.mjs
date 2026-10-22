@@ -6,6 +6,7 @@
  * Usage: node scripts/import-chatgpt-conversations.mjs
  *   --input /private/conversations.json --ids /private/project-ids.txt
  *   --out /private/review-directory [--dry-run]
+ *   Or list source conversation IDs without content: --input /private/conversations.json --list
  *
  * The ID file contains exactly one export conversation ID per line. Excluding
  * system/developer/tool messages and non-text parts is intentional; metadata
@@ -20,13 +21,16 @@ function argsFrom(argv) {
   const opts = {};
   for (let i = 0; i < argv.length; i++) {
     if (argv[i] === '--dry-run') { opts.dryRun = true; continue; }
+    if (argv[i] === '--list') { opts.list = true; continue; }
     if (!['--input', '--ids', '--out'].includes(argv[i]) || !argv[i + 1]) {
       throw new Error('Usage: --input conversations.json --ids selected-ids.txt --out review-dir [--dry-run]');
     }
     if (opts[argv[i].slice(2)]) throw new Error('Duplicate argument: ' + argv[i]);
     opts[argv[i].slice(2)] = argv[++i];
   }
-  for (const k of ['input', 'ids', 'out']) if (!opts[k]) throw new Error('Missing --' + k);
+  for (const k of (opts.list ? ['input'] : ['input', 'ids', 'out'])) {
+    if (!opts[k]) throw new Error('Missing --' + k);
+  }
   return opts;
 }
 
@@ -91,6 +95,12 @@ async function main() {
   const parsed = JSON.parse(exportBytes.toString('utf8'));
   const conversations = Array.isArray(parsed) ? parsed : parsed?.conversations;
   if (!Array.isArray(conversations)) throw new Error('Expected a ChatGPT conversations JSON array');
+  if (opts.list) {
+    process.stdout.write(JSON.stringify({ count: conversations.length,
+      conversations: conversations.map(c => ({ id: c.id || null,
+        title: c.title || null, created_at: iso(c.create_time) })) }, null, 2) + '\n');
+    return;
+  }
   const idLines = (await readFile(opts.ids, 'utf8')).split(/\r?\n/);
   const selected = idLines.map(x => x.trim()).filter(x => x && !x.startsWith('#'));
   if (!selected.length || new Set(selected).size !== selected.length) {
