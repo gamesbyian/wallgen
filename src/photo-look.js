@@ -6,6 +6,7 @@ export const PHOTO_PRESETS=Object.freeze({
   'film-negative':Object.freeze({family:'film',contrast:0.93,saturation:0.87,shadow:0.035,highlight:0.055,red:0.014,green:0.005,blue:-0.012,grain:19,vignette:12}),
   'film-mono':Object.freeze({family:'film',contrast:1.13,saturation:0,shadow:0.009,highlight:0.05,red:0,green:0,blue:0,grain:16,vignette:8}),
   'film-grain-only':Object.freeze({family:'film',contrast:1,saturation:1,shadow:0,highlight:0,red:0,green:0,blue:0,grain:58,vignette:0}),
+  'film-halation-only':Object.freeze({family:'film',contrast:1,saturation:1,shadow:0,highlight:0,red:0,green:0,blue:0,grain:0,vignette:0,halation:75}),
   'camera-natural':Object.freeze({family:'camera',contrast:1.055,saturation:1.045,shadow:0.012,highlight:0.06,red:0,green:0,blue:0,grain:2,vignette:2}),
   'camera-hdr':Object.freeze({family:'camera',contrast:1.11,saturation:1.12,shadow:0.055,highlight:0.095,red:0.002,green:0.003,blue:0.002,grain:1,vignette:0}),
   'camera-webcam':Object.freeze({family:'camera',contrast:1.08,saturation:0.78,shadow:0.015,highlight:0.02,red:0.015,green:-0.003,blue:0.005,grain:22,vignette:5}),
@@ -16,6 +17,7 @@ export const PHOTO_PRESET_NAMES=Object.freeze({
   'film-negative':'Muted negative print',
   'film-mono':'Monochrome print',
   'film-grain-only':'Film grain only (no colour grade)',
+  'film-halation-only':'Warm film halation only',
   'camera-natural':'Natural digital camera',
   'camera-hdr':'Smartphone HDR inspired',
   'camera-webcam':'Old webcam colour (early preview)',
@@ -37,6 +39,10 @@ export function normalizePhotoLook(value={}){
   const candidate=source.parameters&&typeof source.parameters==='object'?source.parameters:{};
   const parameters=Object.fromEntries(Object.entries(limits).map(([key,[min,max]])=>
     [key,finite(candidate[key],preset[key],min,max)]));
+  // Legacy presets preserve their exact serialized parameter sets. Only this
+  // new optic has a version-one expanded halation amount in saved PNGs/URLs.
+  if(presetId==='film-halation-only')
+    parameters.halation=finite(candidate.halation,preset.halation,0,100);
   return {version:1,enabled:source.enabled===true||source.enabled==='true',
     family:preset.family,presetId,amount:finite(source.amount,75,0,100),parameters};
 }
@@ -96,6 +102,56 @@ function makeWebcamCapture(data,width,height){
   return {width:sensorWidth,height:sensorHeight,pixels:rgb};
 }
 
+// Deterministic, spatial warm halation approximation. The source is sampled
+// BEFORE any in-place finishing, on an aspect-matched <=600x1300 authored frame.
+// Only bright *luminance* emits glow, not saturated max-channel values. Two
+// separable box passes cost O(frame pixels), not O(radius * export pixels).
+// This is a perceptual film-inspired effect, not a linear-light optical model.
+function makeHalationField(data,width,height){
+  const fieldWidth=Math.min(600,width);
+  const fieldHeight=Math.min(1300,height,
+    Math.max(1,Math.round(fieldWidth*height/width)));
+  const size=fieldWidth*fieldHeight;
+  const sources=new Uint8Array(size);
+  for(let y=0;y<fieldHeight;y++)for(let x=0;x<fieldWidth;x++){
+    let luma=0;
+    for(const dy of [.25,.75])for(const dx of [.25,.75]){
+      const px=Math.min(width-1,Math.floor((x+dx)*width/fieldWidth));
+      const py=Math.min(height-1,Math.floor((y+dy)*height/fieldHeight));
+      const i=(py*width+px)*4;
+      luma+=(.2126*data[i]+.7152*data[i+1]+.0722*data[i+2])*.25;
+    }
+    sources[y*fieldWidth+x]=Math.round(255*Math.min(1,Math.max(0,(luma-125)/115)));
+  }
+  // Radius is in authored-world units; smaller canvases scale proportionally.
+  const radius=Math.max(1,Math.round(fieldWidth*9/600));
+  const horizontal=new Float32Array(size);
+  const output=new Uint8Array(size);
+  const diameter=radius*2+1;
+  for(let y=0;y<fieldHeight;y++){
+    const row=y*fieldWidth;
+    let sum=0;
+    for(let k=-radius;k<=radius;k++)
+      sum+=sources[row+Math.min(fieldWidth-1,Math.max(0,k))];
+    for(let x=0;x<fieldWidth;x++){
+      horizontal[row+x]=sum/diameter;
+      sum+=sources[row+Math.min(fieldWidth-1,x+radius+1)]-
+        sources[row+Math.max(0,x-radius)];
+    }
+  }
+  for(let x=0;x<fieldWidth;x++){
+    let sum=0;
+    for(let k=-radius;k<=radius;k++)
+      sum+=horizontal[Math.min(fieldHeight-1,Math.max(0,k))*fieldWidth+x];
+    for(let y=0;y<fieldHeight;y++){
+      output[y*fieldWidth+x]=Math.round(sum/diameter);
+      sum+=horizontal[Math.min(fieldHeight-1,y+radius+1)*fieldWidth+x]-
+        horizontal[Math.max(0,y-radius)*fieldWidth+x];
+    }
+  }
+  return {width:fieldWidth,height:fieldHeight,blurred:output};
+}
+
 // Mutates the supplied pixel array. Destination alpha is never touched.
 // The grain grid is anchored in the authored 600x1300 frame, not device pixels.
 export function processPhotoPixels(data,width,height,rawLook,seed='rainbow-001'){
@@ -123,6 +179,8 @@ export function processPhotoPixels(data,width,height,rawLook,seed='rainbow-001')
   const layeredGrain=look.presetId==='film-grain-only';
   const webcamSignal=look.presetId==='camera-webcam-signal'?
     makeWebcamCapture(data,width,height):null;
+  const halation=look.presetId==='film-halation-only'&&p.halation>0?
+    makeHalationField(data,width,height):null;
   const hash=fastHash(String(seed)+':photo-v1:'+look.presetId);
   const yScale=1300/height,xScale=600/width;
   let i=0;
@@ -131,6 +189,10 @@ export function processPhotoPixels(data,width,height,rawLook,seed='rainbow-001')
     const yCell=Math.floor((y+.5)*yScale);
     const signalRow=webcamSignal?
       Math.min(webcamSignal.height-1,Math.floor((y+.5)/height*webcamSignal.height))*webcamSignal.width:0;
+    const haloY=halation?(y+.5)/height*halation.height-.5:0;
+    const hy0=halation?Math.max(0,Math.min(halation.height-1,Math.floor(haloY))):0;
+    const hy1=halation?Math.min(halation.height-1,hy0+1):0;
+    const hfy=halation?Math.max(0,Math.min(1,haloY-hy0)):0;
     for(let x=0;x<width;x++,i+=4){
       const r=data[i],g=data[i+1],b=data[i+2];
       // The cached simulated sensor never reads already graded destination
@@ -154,9 +216,25 @@ export function processPhotoPixels(data,width,height,rawLook,seed='rainbow-001')
              .2*noiseHash(Math.floor((x+.5)*xScale*.42),Math.floor((y+.5)*yScale*.42),hash^0x9e3779b9))
           : noiseHash(Math.floor((x+.5)*xScale),yCell,hash)
         )*grain*(.65+.35*(1-luma/255)):0;
-      data[i]=clampByte(r+(R*dark+perturb-r)*amount);
-      data[i+1]=clampByte(g+(G*dark+perturb-g)*amount);
-      data[i+2]=clampByte(b+(B*dark+perturb-b)*amount);
+      let warmSpill=0;
+      if(halation){
+        const haloX=(x+.5)/width*halation.width-.5;
+        const hx0=Math.max(0,Math.min(halation.width-1,Math.floor(haloX)));
+        const hx1=Math.min(halation.width-1,hx0+1);
+        const hfx=Math.max(0,Math.min(1,haloX-hx0));
+        const top=halation.blurred[hy0*halation.width+hx0]*(1-hfx)+
+          halation.blurred[hy0*halation.width+hx1]*hfx;
+        const bottom=halation.blurred[hy1*halation.width+hx0]*(1-hfx)+
+          halation.blurred[hy1*halation.width+hx1]*hfx;
+        // Suppress spill in illuminated source pixels: glow belongs just
+        // outside the edge, and black pixels need not change far away.
+        const originalLuma=.2126*r+.7152*g+.0722*b;
+        warmSpill=(top*(1-hfy)+bottom*hfy)/255*
+          Math.max(0,1-originalLuma/185)*(p.halation/100);
+      }
+      data[i]=clampByte(r+(R*dark+perturb+warmSpill*94-r)*amount);
+      data[i+1]=clampByte(g+(G*dark+perturb+warmSpill*24-g)*amount);
+      data[i+2]=clampByte(b+(B*dark+perturb+warmSpill*5-b)*amount);
     }
   }
   return data;
