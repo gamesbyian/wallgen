@@ -229,7 +229,7 @@ underlying seven colours never change. Element geometry is clipped to its
 owner shape, participates in path intersection re-painting, and is preserved
 in saved/exported recipes and headless generation.
 
-The mobile editor separates **Shapes** (coloured geometry construction)
+The mobile editor separates **Stripes** (ribbon construction and patterns)
 from **Details** (interior decoration, borders/dividers, shadows and glow)
 so the additional controls do not require vertical scrolling.
 See [the interior element architecture](docs/INTERIOR-ELEMENTS.md).
@@ -237,7 +237,7 @@ See [the interior element architecture](docs/INTERIOR-ELEMENTS.md).
 ## Open-path continuation
 
 Drawn and image-imported paths preserve their exact stored points. Optional
-**Extend open drawn path** in **Path → Endpoints** (also in the drawing editor)
+**Extend open paths** in **Path → Endpoints** (also in the drawing editor)
 continues the terminal tangents beyond the frame, including zoom-out/nudge
 overscan and export. It defaults off; closed shapes and deliberately floating
 compositions retain their ends. Dashed guides preview the extension.
@@ -248,7 +248,7 @@ when re-applied.
 
 The renderer uses the same path sampling functions for straight and nonlinear lines, including hairpins and looping paths. Each path yields a tangent and normal so width, taper, outlines and procedural materials can follow bends. Returning hairpins may have two endpoints crossing the same image edge intentionally; loops can fold back over their own earlier path.
 
-The capabilities are equal members of the corresponding Geometry, Shapes, Details, Layout, Material and Effects tools. There is no separate mode for the reference images, no fixed style priority, and no option to add arbitrary extra colours or switch to monochrome. **Exactly seven hues remain in each rainbow.**
+The capabilities are equal members of the corresponding Geometry, Stripes, Details, Layout, Texture and Light tools. There is no separate mode for the reference images, no fixed style priority, and no option to add arbitrary extra colours or switch to monochrome. **Exactly seven hues remain in each rainbow.**
 
 The headless renderer accepts the same saved recipe options as the studio:
 
@@ -528,7 +528,7 @@ definitions.
 
 ### Stripe-specific finishing controls
 
-**Shapes** contains ribbon construction, patterns, marks, motif scale and character, with the legacy tonal-contrast control shown only for imported legacy tonal recipes. **Details** contains interior element layers, outlines, closed-region dividers, shadows and glow. The editor only shows relevant controls for the current structure. **Light** contains the independent canvas-wide Lighting tool. Shadow Strength 0 is Off; increasing it immediately casts shadows.
+**Stripes** contains ribbon construction, patterns, marks, motif scale and character, with the legacy tonal-contrast control shown only for imported legacy tonal recipes. **Details** contains interior element layers, outlines, closed-region dividers, shadows and glow. The editor only shows relevant controls for the current structure. **Light** contains the independent canvas-wide Lighting tool. Shadow Strength 0 is Off; increasing it immediately casts shadows.
 
 ## Output
 
@@ -544,7 +544,7 @@ The app uses `assets/roygbiv-logo.svg` as its masthead mark and browser icon. Pa
 
 ## Stripe ordering and diagonal transformations
 
-The Design category includes **Reverse stripe order**. When enabled, violet
+The Layout category includes **Reverse colour order**. When enabled, violet
 takes the first position and red the last; path positions, width and line
 geometry remain unchanged. The colour reversal is saved in shareable recipes
 and PNG exports, and is independently lockable for randomization.
@@ -560,7 +560,7 @@ and disappear when a non-diagonal direction is explicitly selected.
 
 ## Controls and workspace
 
-The settings column uses four accessible tabs: **Design** (family, direction, paths and patterns), **Colour** (palette, background, outlines, light and shadow), **Texture** (three independent material layers and relief), and **Refine** (spacing, thickness, individuality, glow). Tab selection is remembered in the browser session, works with keyboard arrow keys, and does not re-render the current wallpaper. On narrow devices the four tabs remain in one compact horizontal row, with shorter labels where needed.
+The settings column now uses seven categories: **Layout**, **Path** (or **Geometry** for non-path canvases), **Stripes**, **Details**, **Colour**, **Texture** and **Light**. Each reveals applicable named tools, with keyboard-accessible category/tool navigation; the mobile category strip can be swiped horizontally. Selecting a category does not change or re-render the recipe.
 
 **Explore Variations** now lives in the preview column below the canvas, with responsive thumbnails, its own Generate 12 control and favourites; it no longer spans both columns.
 
@@ -568,19 +568,19 @@ The balanced-width **Randomize** button sits next to an equally prominent, alway
 
 - Eight scene families: Studio, Currents, Fracture, Confetti, Deco, Tapestry, Signal and Contour.
 - Orientation: vertical, horizontal, diagonal or seeded selection. Stripes that meet the wallpaper edge on one side without reaching the opposite edge get paired inset ends; stripes that traverse opposed edges remain continuous.
-- Geometry: straight, wave, zigzag, **chevron**, jagged, stepped, arc, contour, **hairpin** (returning nested curves), **single loop** (one circular turn with tangent-connected entrance and exit), and **continuous loops** (repeated looping paths). A shared parametric path sampler supplies centreline, tangent, normal and normal-offset boundaries to outlines, ribbon silhouettes, marks and frame-contact tests. Shape frequency and depth control the repeated-loops pitch/amplitude. Hairpins have their own turn radius/angle; Single loop has independent radius and sweep-angle controls.
+- Geometry: straight, wave, zigzag, **chevron**, jagged, stepped, arc, contour, **hairpin** (returning nested curves), **single loop** (one circular turn with tangent-connected entrance and exit), and **continuous loops** (repeated looping paths). A shared parametric path sampler supplies centreline, tangent, normal and normal-offset boundaries to outlines, ribbon silhouettes, marks and frame-contact tests. Bend frequency and depth control the repeated-loops pitch/amplitude. Hairpins have their own turn radius/angle; Single loop has independent radius and sweep-angle controls.
 - **Composition:** a single seven-colour rainbow, repeated complete seven-colour groups (two to six) with adjustable inter-group spacing, or seven independently inset paths with configurable physical length. Inset paths can end in visible tapers. Repetition never creates an eighth hue; it paints additional instances of the same seven stripe identities.
-- **Stripe construction:** existing patterned ribbons, fine continuous pen lines, multitone ribbons and woven diagonal lattice columns. These are ordinary construction choices that combine with geometry, palette and texture, not separate gallery presets.
+- **Stripe type:** existing patterned ribbons, fine continuous pen lines, multitone ribbons and woven diagonal lattice columns. These are ordinary construction choices that combine with geometry, palette and texture, not separate gallery presets.
 - **Brush and mark controls:** adjustable dotted-line diameter and pitch, end taper, tonal contrast and procedural ink wear/roughness. Inapplicable controls appear disabled and show zero while retaining their stored values.
-- All of these settings participate in seeded randomization, per-setting locks, undo, favourites, share links, headless rendering and embedded PNG recipe restoration. The Design tab's **Shape frequency** slider changes how often wave/zigzag/chevron/stepped/jagged/contour bends repeat; **Shape depth** varies their amplitude. Both have a neutral 50% midpoint that preserves legacy designs.
+- All of these settings participate in seeded randomization, per-setting locks, undo, favourites, share links, headless rendering and embedded PNG recipe restoration. The **Path → Geometry** tool's **Bend frequency** slider changes how often wave/zigzag/chevron/stepped/jagged/contour bends repeat; **Bend depth** varies their amplitude. Both have a neutral 50% midpoint that preserves legacy designs.
 - **Stripe line style** is independent of the **Stripe pattern** selector. Continuous, dotted and dashed *ribbon silhouettes* can be combined with **any path geometry**, whether straight, wavy or chevron, and independently combined with the existing filled dot/dash/chevron/checker/etc. motif patterns. Dotted styles use separate circular segments; dashed styles use short pieces of the selected path. These styles work with the existing material, outline and nudge pipeline.
 - Stripe patterns (previously called Stripe construction): solid, dots, stars, dashes, diamonds, chevrons, hatch and checker.
 - Palettes: classic, electric, pastel, jewel and muted. Their hues stay in ROYGBIV order.
 - Outlines: none, white or black hairline, solid, double, broken and single-side, with a buffer coloured to match the selected background.
-- **Ambient light & shade (Effects → Lighting):** choose Off (default), Soft daylight, Golden hour or Cool moonlight, and a corner for the light source. Light intensity adds a soft warm/cool wash across the **whole canvas**, including the background and stripes; Canvas shade darkens the opposite region with a broad gradient. Canvas ambience does not cast shadows from the stripe silhouettes. **Stripe shadows** live under **Details → Shadows**. Shadow Strength at **0** is Off, with no separate checkbox; softness and light direction become dormant at zero and return when strength increases. The shadows move with the stripes, while ambient light stays fixed in canvas space. Their settings remain lockable, deterministic and saved in recipes.
+- **Ambient light & shade (Light → Lighting):** choose Off (default), Soft daylight, Golden hour or Cool moonlight, and a corner for the light source. Light intensity adds a soft warm/cool wash across the **whole canvas**, including the background and stripes; Shading darkens the opposite region with a broad gradient. Canvas ambience does not cast shadows from the stripe silhouettes. **Stripe shadows** live under **Details → Shadows**. Shadow Strength at **0** is Off, with no separate checkbox; softness and light direction become dormant at zero and return when strength increases. The shadows move with the stripes, while ambient light stays fixed in canvas space. Their settings remain lockable, deterministic and saved in recipes.
 - Materials: paper grain, watercolour, construction paper, handmade paper, corrugated board, linen, canvas, denim, knit, felt, corduroy, concrete, stucco, stone, adobe, drywall, wood grain, vinyl sheet, foil, and glossy paper. The ungrouped menu works across three independent material layers. Layers 2 and 3 remain available as named tools, initially set to **No texture / smooth**. Selecting a real material activates that layer, and choosing Smooth disables it. Layer 3 can be used independently of Layer 2, without Add/Remove buttons. Each layer has its own strength, scale, surface coverage (background, stripes, or both), ±90° buttons, freely editable angle (including fractional degrees), and blend mode (normal, multiply, screen, overlay, soft light, difference). Rotations and enabled layers persist in URLs, saved recipes, favourites and PNG exports.
-- Chaos, thickness, **stripe spacing**, geometric individuality, pattern homogeneity, glow, outline thickness and outline buffer. Stripe spacing now adjusts only the distance between stripe centres, while thickness is controlled solely by Stripe thickness; at tight settings the ribbons can deliberately overlap. Every slider has −/+ adjustment buttons and an editable numeric percentage field immediately after +. Individuality adjusts per-stripe directions, parallelism, shape and edge profile, while all stripes retain the same motif.
-- **Texture displacement** (0–100%) actually warps the stripe contours using a higher-resolution procedural height field. Material type, rotation, scale and strength change the relief, and a seeded neutral grain is used when no stripe texture is selected, so the slider is never silently inert. Increased sampling and bounded displacement make the effect visible on phone previews without allowing the stripe edges to cross. At 0% the original crisp geometry is unchanged. This is edge-geometry displacement, not GPU bump mapping.
+- Chaos, thickness, **stripe spacing**, geometric individuality, pattern uniformity, glow, outline thickness and outline offset. Stripe spacing now adjusts only the distance between stripe centres, while thickness is controlled solely by Stripe thickness; at tight settings the ribbons can deliberately overlap. Every slider has −/+ adjustment buttons and an editable numeric percentage field immediately after +. Individuality adjusts per-stripe directions, parallelism, shape and edge profile, while all stripes retain the same motif.
+- **Contour distortion** (0–100%, stored as `textureDisplacement`) warps stripe edges using the same seeded world-space fields as the painted stripe textures. It requires at least one enabled texture layer applied to stripes: selecting no texture or background-only coverage produces no contour deformation. Material type, rotation, scale and strength shape the relief, while a bounded displacement prevents stripe crossings. At 0% edges remain crisp. This is actual edge-geometry displacement, not GPU bump mapping.
 - Five compact directional controls in a single row above the preview nudge the **already composed artwork** up/down/left/right by 2% of frame size per press (up to ±30% per axis), plus reset. The preview caches stripe ink **with 30% off-frame overscan on every side**, so ribbons that already run outside the wallpaper remain unbroken when nudged; stripes intentionally ending inside the frame retain those endpoints. Nudge clicks move this immutable image under a stationary background, without rerunning edge-balancing or regenerating geometry. Full-resolution exports generate only the overhang needed for the saved offset to limit memory usage, while preserving the same composition and background textures. These offsets travel with saved recipes, links, favourites, Undo and PNG export. **Undo** restores prior designs and their locks (up to 80 changes). **New variation** changes the seed unless it's locked. **Randomize**, now above the settings tabs, changes only unlocked settings and respects the optional prime-number constraint; each setting (including seed, composition position, texture rotations and whether layers are enabled) has a small line-art open/closed padlock control. Locking an automatic setting also freezes its actual resolved choice, and locks survive saved recipes, favourites and share links. `Auto` settings resolve according to the seeded style family.
 - Generate twelve thumbnails, open any thumbnail, save up to sixty local favourites, download a PNG, copy a share URL or a portable JSON recipe.
 
@@ -603,7 +603,7 @@ At 3024 × 6552, PNG rendering needs multiple substantial canvas buffers; textur
 
 A `Publish Wallgen` workflow tests and deploys the root static site on pushes to `main`. On first use, enable **Settings → Pages → Build and deployment → Source: GitHub Actions** in the GitHub repository if it is not enabled already. The expected URL is `https://gamesbyian.github.io/wallgen/` once a deployment succeeds. There is no domain, cloud infrastructure or API dependency.
 
-### Shorter Materials editor, Bleed and outlines (October 2026)
+### Texture editor, Safe area and outlines (October 2026)
 
 The mobile Edit panel is roughly 12% shorter, and optional texture layer
 selectors stay available instead of requiring add/remove buttons. The rotation
@@ -611,12 +611,12 @@ angle uses a narrow numeric input in the same row as its label, ±90° shortcuts
 per-setting reroll and lock. Save and Favourite from the vertical Edit action
 rail no longer collapse the editor.
 
-The preview-only 90% Bleed guide follows the rounded frame corners. Its
+The preview-only 90% Safe area guide follows the rounded frame corners. Its
 hairline is white for a black wallpaper background and black for white,
 regardless of the stripe colours crossing the guide; it is never exported.
 
 **Outline thickness** is the old adjustable outline-width parameter (the
-historical `gap` recipe field). A separate **Outline buffer** (`outlineBuffer`)
+historical `gap` recipe field). A separate **Outline offset** (`outlineBuffer`)
 sets the transparent distance between the stripe edge and that outline. The
 buffer reveals the actual backdrop, including paper/material textures, and
 does not alter outline thickness. Both values are serialized in the recipe.
