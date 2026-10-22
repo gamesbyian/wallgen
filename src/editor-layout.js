@@ -4,6 +4,7 @@ import {annotateEditorSettingRow,sourceSettingLabel} from './editor-control-role
 import {installFocusedAdjustments} from './editor-focus.js';
 import {toolAppliesToScene} from './editor-tool-applicability.js';
 import {findEditorToolMatch} from './editor-tool-search.js';
+import {legacyToolAliases,legacyCategoryAliases,legacySettingAliases} from './editor-terminology.js';
 import {installMaterialLayerIndicators} from './editor-material-indicators.js';
 
 const byId=id=>document.getElementById(id);
@@ -36,7 +37,7 @@ export function syncEditorStructure(structure,regionMode,construction='ribbon'){
     pathTab.lastChild.textContent=structure==='paths'?' Path':' Geometry';
   const shapesTab=byId('tab-stripes');
   if(shapesTab?.lastChild?.nodeType===3)
-    shapesTab.lastChild.textContent=' Shapes';
+    shapesTab.lastChild.textContent=' Stripes';
   if(shapesTab){
     shapesTab.disabled=structure!=='paths';
     shapesTab.setAttribute('aria-disabled',String(structure!=='paths'));
@@ -72,8 +73,8 @@ export function mountEditor(){
   // Preserve the actual form nodes and event/lock behavior, never proxies.
   const explore=create('div','editor-explore');
   const style=create('div','editor-style');
-  const styleHeading=create('strong',null,'Starting style');
-  style.append(styleHeading,oldFamily);
+  // The original field label is already Starting style. Avoid a duplicate.
+  style.append(oldFamily);
   const controls=create('div','editor-explore-actions');
   const scopeMode=create('select','editor-variation-mode');
   scopeMode.id='editorVariationMode';scopeMode.setAttribute('aria-label','Randomization style');
@@ -287,18 +288,44 @@ export function mountEditor(){
     searchStatus.textContent='';
     if(!query)return;
     const labelFor=key=>sourceSettingLabel(form.elements.namedItem(key),key);
-    const options={labelFor,applies:tool=>toolApplies(tools.get(tool.id))};
+    const options={labelFor,applies:tool=>toolApplies(tools.get(tool.id)),
+      aliasesForTool:legacyToolAliases,aliasesForCategory:legacyCategoryAliases,
+      aliasesForSetting:legacySettingAliases};
     const match=findEditorToolMatch(query,TOOL_LIST,options);
     if(match){
       selectEditorTool(match.category,match.id,{source:'search'});
       return;
     }
-    const dormant=findEditorToolMatch(query,TOOL_LIST,{labelFor});
+    const dormant=findEditorToolMatch(query,TOOL_LIST,{labelFor,
+      aliasesForTool:legacyToolAliases,aliasesForCategory:legacyCategoryAliases,
+      aliasesForSetting:legacySettingAliases});
     searchStatus.textContent=dormant
       ?'That setting is unavailable for the current canvas structure.'
       :'No matching settings.';
     searchStatus.hidden=false;
   });
+  // The visible Tool / Category / setting dice are concise; their spoken
+  // action must identify the actual scope and the currently selected mode.
+  function syncScopeActionLabels(){
+    const verb=scopeMode.value==='vary'?'Vary':'Reroll';
+    const selectedCategory=EDITOR_CATEGORIES.find(c=>c.id===activeCategory);
+    const catName=activeCategory==='path'&&activeStructure!=='paths'?'Geometry':
+      selectedCategory?.label||activeCategory;
+    randomCategory.setAttribute('aria-label',verb+' '+catName+' category');
+    for(const entry of tools.values()){
+      const button=chooser.querySelector('[data-random-tool="'+entry.spec.id+'"]');
+      if(button)button.setAttribute('aria-label',verb+' '+entry.spec.name+' tool');
+    }
+    for(const die of form.querySelectorAll('[data-random-setting]')){
+      const key=die.dataset.randomSetting;
+      const full=sourceSettingLabel(form.elements.namedItem(key),key);
+      if(key==='geometrySafety')continue; // source guard forbids randomization
+      die.setAttribute('aria-label',verb+' only '+full);
+    }
+  }
+  scopeMode.addEventListener('change',syncScopeActionLabels);
+  document.addEventListener('editor-tool-changed',syncScopeActionLabels);
+  syncScopeActionLabels();
   selectEditorTool('layout','arrange');
   const focused=installFocusedAdjustments({form,chooser});
   installMaterialLayerIndicators({form,tools});
