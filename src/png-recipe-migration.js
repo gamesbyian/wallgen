@@ -5,6 +5,61 @@ import {embedPngMetadata,extractPngRecipe,readRawPngRecipe,scanPngChunks,
 // Version names are scoped to PNG envelopes. Compressed share-v1 and local
 // favourites use different transports and must never be inferred from these.
 export const PNG_MIGRATION_VERSION=1;
+
+// A valid recipe checksum does not establish that the *image* is a valid PNG.
+// For a no-render archival rewrite, reject damaged opaque chunks rather than
+// preserving them under a misleading newly valid recipe envelope. Stream CRC
+// over existing chunk views: no IDAT decompression, canvas or pixel allocation.
+const pngCrcTable=Uint32Array.from({length:256},(_,index)=>{
+  let value=index;
+  for(let i=0;i<8;i++)value=(value&1)?(0xedb88320^(value>>>1)):(value>>>1);
+  return value>>>0;
+});
+function pngCrc(bytes){
+  let value=0xffffffff;
+  for(let i=0;i<bytes.length;i++)
+    value=pngCrcTable[(value^bytes[i])&255]^(value>>>8);
+  return (value^0xffffffff)>>>0;
+}
+function uint32(bytes,offset){
+  return (bytes[offset]*0x1000000+(bytes[offset+1]<<16)+
+    (bytes[offset+2]<<8)+bytes[offset+3])>>>0;
+}
+export function validatePngMigrationContainer(input){
+  const scan=scanPngChunks(input);
+  if(scan.width<1||scan.height<1||scan.width>0x7fffffff||scan.height>0x7fffffff)
+    throw Error('Invalid PNG image dimensions');
+  const ihdr=scan.chunks[0].data;
+  const allowedDepth={0:[1,2,4,8,16],2:[8,16],3:[1,2,4,8],4:[8,16],6:[8,16]};
+  const depth=ihdr[8],color=ihdr[9];
+  if(!allowedDepth[color]?.includes(depth)||ihdr[10]!==0||ihdr[11]!==0||
+    ![0,1].includes(ihdr[12]))
+    throw Error('Unsupported or damaged PNG image header');
+  let palette=false,seenIdat=false,finishedIdat=false;
+  for(const [index,item] of scan.chunks.entries()){
+    const raw=item.raw;
+    if(uint32(raw,raw.length-4)!==pngCrc(raw.subarray(4,raw.length-4)))
+      throw Error('Damaged PNG '+item.type+' checksum');
+    if(item.type==='IHDR'&&index!==0)throw Error('Duplicate PNG image header');
+    if(item.type==='PLTE'){
+      if(palette||seenIdat||item.size===0||item.size%3!==0||item.size>768)
+        throw Error('Invalid PNG palette order or length');
+      palette=true;
+    }
+    if(item.type==='IDAT'){
+      if(finishedIdat)throw Error('Non-contiguous PNG image data');
+      seenIdat=true;
+    }else if(seenIdat)finishedIdat=true;
+    if(item.type==='IEND'&&item.size!==0)throw Error('Invalid PNG image end');
+    // Unknown critical PNG chunks require an unsupported image decoder.
+    if(item.type[0]===item.type[0].toUpperCase()&&
+      !['IHDR','PLTE','IDAT','IEND'].includes(item.type))
+      throw Error('Unsupported critical PNG chunk: '+item.type);
+  }
+  if(color===3&&!palette)throw Error('Indexed PNG lacks required palette');
+  if([0,4].includes(color)&&palette)throw Error('Grayscale PNG cannot contain a palette');
+  return {validatedPngChunks:scan.chunks.length,validatedPngCrc:true};
+}
 const isPollutionKey=key=>['__proto__','prototype','constructor'].includes(key);
 const jsonSame=(left,right)=>JSON.stringify(left)===JSON.stringify(right);
 function findDangerousKeys(value,path='$',depth=0,seen={count:0}){
@@ -19,6 +74,7 @@ function findDangerousKeys(value,path='$',depth=0,seen={count:0}){
 }
 function compareOpaqueChunks(source,target){
   const original=scanPngChunks(source),updated=scanPngChunks(target);
+  validatePngMigrationContainer(target);
   const withoutRecipe=scan=>scan.chunks.filter(chunk=>!isRecipePngChunk(chunk));
   const left=withoutRecipe(original),right=withoutRecipe(updated);
   if(left.length!==right.length)throw Error('PNG rewrite changed non-recipe chunk count');
@@ -41,9 +97,10 @@ function compareOpaqueChunks(source,target){
     outputRecipeChunks:records.length};
 }
 export function inspectPngMigration(input){
+  const container=validatePngMigrationContainer(input);
   const raw=readRawPngRecipe(input);
   const report={
-    migrationVersion:PNG_MIGRATION_VERSION,
+    migrationVersion:PNG_MIGRATION_VERSION,...container,
     width:raw.width,height:raw.height,recordCount:raw.records.length,
     detectedFormat:raw.selected?.format||null,
     selectedChunkIndex:raw.selected?.chunkIndex??null,
