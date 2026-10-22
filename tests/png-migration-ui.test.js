@@ -37,3 +37,12 @@ test('raw recipe archive remains available for refused historical PNG migration'
   assert.match(cli,/--archive/);
   assert.match(cli,/archivePngRecipeRecords\(bytes\)/);
 });
+
+test('More offers exact-byte salvage even when recipe JSON inspection throws',()=>{
+  const app=file('src/app.js');
+  assert.match(app,/inspectPngRecipeArchive\(bytes\)/);
+  assert.match(app,/migrationArchiveSource=bytes;migrationFileName=selected\.name/);
+  assert.match(app,/migrationArchiveDownload\.disabled=false/);
+  assert.match(app,/migrationInspection=\{\.\.\.archive,safe:false/);
+  assert.match(app,/Save original recipe records \(exact bytes\)/);
+});

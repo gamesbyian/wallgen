@@ -24,12 +24,19 @@ if(!opts.dry&&output===source)throw Error('Output must differ from original PNG'
 const handle=await stat(source);
 if(handle.size>150*1024*1024)throw Error('PNG exceeds 150 MB inspection limit');
 const bytes=await readFile(source);
-const report=inspectPngMigration(bytes);
-if(opts.report)await writeFile(resolve(opts.report),JSON.stringify(report,null,2)+'\n');
+// Archive first. If the historical recipe is malformed, the PNG's original
+// named iTXt chunks are still recoverable even though migration is refused.
 if(opts.archive){
   const bundle=archivePngRecipeRecords(bytes);
   await writeFile(resolve(opts.archive),JSON.stringify({sourceFile:filename.base,...bundle},null,2)+'\n',{flag:'wx'});
 }
+let report;
+try{report=inspectPngMigration(bytes);}
+catch(error){
+  report={safe:false,reason:'Recipe inspection failed: '+String(error.message||error),
+    warning:'An exact-byte archive may still be available with --archive'};
+}
+if(opts.report)await writeFile(resolve(opts.report),JSON.stringify(report,null,2)+'\n');
 if(!report.safe){process.stderr.write(JSON.stringify(report,null,2)+'\n');process.exitCode=2;}
 else if(opts.dry)process.stdout.write(JSON.stringify(report,null,2)+'\n');
 else {

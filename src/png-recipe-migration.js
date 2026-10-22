@@ -160,36 +160,54 @@ export function inspectPngMigration(input){
   report.warnings.push('Opening this saved recipe in a newer generator may produce a different picture');
   return report;
 }
-// Archival escape hatch for recipes that cannot yet be upgraded safely.
-// Preserve the EXACT named iTXt chunks including text spacing, duplicated
-// historical keys and original CRC, rather than normalizing/restringifying
-// early schema JSON. This is an export-only record bundle, never a PNG rewrite.
-// btoa operates on Latin-1 bytes and is available in browsers and Node 22.
-export function archivePngRecipeRecords(input){
-  validatePngMigrationContainer(input);
-  const {width,height,selected,records}=readRawPngRecipe(input);
+// The archive is an independent *byte recovery* path, not a recipe parser.
+// A malformed JSON string, unknown future format or unsupported iTXt text
+// encoding must not prevent preservation of a structurally valid named chunk.
+export function inspectPngRecipeArchive(input){
+  const integrity=validatePngMigrationContainer(input);
   const scan=scanPngChunks(input);
-  // Individual named recipe chunks are capped at 1 MB by the parser. Bound
-  // collective work if a hostile image contains many individually valid ones.
-  const total=records.reduce((sum,record)=>sum+record.bytes,0);
-  if(records.length>64||total>16*1024*1024)
-    throw Error('Too many recipe records for bounded archival export');
-  const saved=records.map(record=>{
-    const original=scan.chunks[record.chunkIndex].raw;
-    const pieces=[];
-    for(let offset=0;offset<original.length;offset+=16384)
-      pieces.push(String.fromCharCode(...original.subarray(offset,offset+16384)));
-    return {
-      format:record.format,chunkIndex:record.chunkIndex,
-      byteOffset:record.offset,byteLength:record.bytes,
-      // Complete original PNG chunk: length, iTXt, payload and CRC.
-      originalChunkBase64:btoa(pieces.join('')),
-    };
-  });
-  return {format:'roygbiv-recipe-archive-v1',width,height,
-    selectedChunkIndex:selected?.chunkIndex??null,
+  const chunks=scan.chunks.filter(isRecipePngChunk);
+  const total=chunks.reduce((sum,item)=>sum+item.raw.length,0);
+  if(chunks.length>64||total>16*1024*1024||
+    chunks.some(item=>item.size>1024*1024))
+    throw Error('Recipe metadata exceeds bounded archival export limits');
+  return {width:scan.width,height:scan.height,recordCount:chunks.length,
+    archiveByteCount:total,...integrity};
+}
+function archiveRecordFormat(item){
+  // Optional best-effort label for a valid legacy record. Parse failure is
+  // NOT fatal: the complete original bytes remain the archival authority.
+  const data=item.data,at=data.indexOf(0);
+  if(at<0||at+5>data.length||data[at+1]!==0||data[at+2]!==0||
+    data[at+3]!==0||data[at+4]!==0)return null;
+  try{
+    const source=new TextDecoder('utf-8',{fatal:true}).decode(data.subarray(at+5));
+    const envelope=JSON.parse(source);
+    return envelope&&typeof envelope==='object'&&!Array.isArray(envelope)&&
+      typeof envelope.format==='string'?envelope.format:null;
+  }catch{return null;}
+}
+// Returns original length/type/payload/CRC bytes in PNG order. It does not
+// normalize, rewrite, render or even require interpretable recipe JSON.
+// btoa accepts Latin-1 strings in both browsers and the supported Node engine.
+export function archivePngRecipeRecords(input){
+  const preview=inspectPngRecipeArchive(input);
+  const scan=scanPngChunks(input),saved=[];
+  for(const [chunkIndex,item] of scan.chunks.entries()){
+    if(!isRecipePngChunk(item))continue;
+    const parts=[];
+    for(let offset=0;offset<item.raw.length;offset+=16384)
+      parts.push(String.fromCharCode(...item.raw.subarray(offset,offset+16384)));
+    saved.push({
+      format:archiveRecordFormat(item),chunkIndex,
+      byteOffset:item.offset,byteLength:item.raw.length,
+      originalChunkBase64:btoa(parts.join('')),
+    });
+  }
+  return {format:'roygbiv-recipe-archive-v1',width:preview.width,
+    height:preview.height,selectedChunkIndex:saved.at(-1)?.chunkIndex??null,
     recordCount:saved.length,records:saved,
-    note:'Original named iTXt bytes only. The unmodified source PNG remains the master archive.'};
+    note:'Original named iTXt bytes only. Invalid or unrecognized JSON is retained verbatim. Keep the source PNG as the master archive.'};
 }
 
 export function migratePngMetadataOnly(input){

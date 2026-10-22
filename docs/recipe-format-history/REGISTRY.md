@@ -1,5 +1,8 @@
 # ROYGBIV recipe format registry
 
+**Byte-level recovery independent of JSON (2026-10-22, PR pending):** Even a **malformed or unsupported** named historical recipe iTXt can now be preserved via `inspectPngRecipeArchive` → `archivePngRecipeRecords`, with full original bytes including CRC (valid outer PNG required). The More UI enables exact-byte rescue after parsing failure; CLI `--archive` runs before inspection and still refuses unsafe migration. `format:null` denotes unreadable record text, never silently replaces the source with modern defaults. Standard recipe importer remains strict. Bounded archive and no-render integrity guarantees remain.
+
+
 **Historical duplicate recipe preservation (2026-10-22, PR pending):** `inspectPngMigration` now returns `conflictingChunkIndexes` for multiple differing named `ROYGBIV Recipe` iTXt envelopes and refuses replacement. Only JSON-identical duplicate envelopes can be consolidated during metadata-only migration. All conflicting chunks may still be exported byte-exact in the existing `roygbiv-recipe-archive-v1` JSON backup, allowing informed future adjudication. Normal unmodified source PNG remains the master record.
 
 
