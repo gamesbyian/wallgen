@@ -5,7 +5,7 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {normalizeRecipe} from '../src/model.js';
-import {embedPngMetadata,readRawPngRecipe,extractPngRecipe,scanPngChunks,RECIPE_FORMAT}
+import {embedPngMetadata,readRawPngRecipe,extractPngRecipe,extractPngRecipeWithProvenance,scanPngChunks,RECIPE_FORMAT}
   from '../src/png-metadata.js';
 import {inspectPngMigration,migratePngMetadataOnly,validatePngMigrationContainer,inspectPngRecipeArchive,archivePngRecipeRecords} from '../src/png-recipe-migration.js';
 const tiny=Uint8Array.from(Buffer.from(
@@ -88,6 +88,11 @@ test('historical v1, missing recipes and malformed pixels remain safe refusals',
   const v1=Buffer.concat([tiny.subarray(0,offset),chunk,tiny.subarray(offset)]);
   assert.deepEqual(readRawPngRecipe(v1).selected.rawRecipe,raw);
   assert.deepEqual(extractPngRecipe(v1),normalizeRecipe(raw));
+  const legacy=extractPngRecipeWithProvenance(v1);
+  assert.equal(legacy.format,'roygbiv-recipe-v1');
+  assert.equal(legacy.recordCount,1);
+  assert.equal(legacy.normalizedFieldsChanged,true);
+  assert.deepEqual(legacy.recipe,normalizeRecipe(raw));
   const report=inspectPngMigration(v1);
   assert.equal(report.safe,false);assert.match(report.reason,/v1 defaults/);
   const archive=archivePngRecipeRecords(v1);
@@ -255,4 +260,18 @@ test('CLI --archive writes original bytes even when PNG metadata migration canno
     assert.match(JSON.parse(readFileSync(report,'utf8')).reason,/inspection failed/i);
     same(readFileSync(input),image);
   }finally{rmSync(folder,{recursive:true,force:true});}
+});
+
+test('single-pass importer reports canonical versus duplicate/partial recipe provenance',()=>{
+  const current=emitted(native);
+  const clean=extractPngRecipeWithProvenance(current);
+  assert.equal(clean.format,RECIPE_FORMAT);
+  assert.equal(clean.recordCount,1);
+  assert.equal(clean.normalizedFieldsChanged,false);
+  assert.deepEqual(clean.recipe,extractPngRecipe(current));
+  const named=scanPngChunks(current).chunks.find(c=>c.type==='iTXt');
+  const duplicated=beforeIdat(current,named.raw);
+  const multiple=extractPngRecipeWithProvenance(duplicated);
+  assert.equal(multiple.recordCount,2);
+  assert.equal(multiple.normalizedFieldsChanged,false);
 });
