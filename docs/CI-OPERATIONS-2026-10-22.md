@@ -15,10 +15,11 @@ Source precedents: Pathfinder-Game uses a central PR CI gate, per-PR cancellatio
 | `headless-render.yml` | Renderer/source, CLI, and related PR paths, manual | Production headless render and export assertions |
 | `agent3-mobile-acceptance.yml` | Broad editor/mobile/functional PR paths, manual | Consolidated independent mobile acceptance |
 | `visual-agent1.yml` | Owned CSS, HTML, SVG/icon and visual-audit PR paths, manual | Source-bound Chromium visual review; required for presentation changes |
+| `promote-source-visual-plates.yml` | Changes to screenshot promotion script/workflow | Provenance-gated binary plate promotion, intentionally same-repository PR-only; manual event does not execute the PR-only job |
 | `pages.yml` | Main push or manual | Publish production site; latest main publish supersedes stale deploy |
 | `logo-raster.yml` | Logo-specific push paths or manual | Original raster assets workflow, unchanged |
 
-The remaining **59 specialized workflows** are retained in `.github/workflows/` with their complete test jobs, scripts, artifact capture, and manual Actions `workflow_dispatch` entry. Their automatic PR/legacy feature-branch push triggers are intentionally retired; no test or artifact producer has been deleted. Their underlying test scripts continue to run under Node/Chromium on demand.
+The remaining **58 specialized workflows** are retained in `.github/workflows/` with their complete test jobs, scripts, artifact capture, and manual Actions `workflow_dispatch` entry. Their automatic PR/legacy feature-branch push triggers are intentionally retired; no test or artifact producer has been deleted. Their underlying test scripts continue to run under Node/Chromium on demand.
 
 ## Reviewer evidence matrix: run the right deep suite
 
@@ -42,6 +43,6 @@ To run a specialist suite: open GitHub **Actions**, select the named workflow, c
 
 ## Audit / status
 
-Baseline 2026-10-22: 66 workflow files. Five automatic PR entrypoints, three main-push entrypoints (Validate, Pages, logo-specific). Fifty-nine manual-only specialized suites. Future workflow files default to manual-only unless they explicitly justify an expanded budget. `npm run check` includes the policy regression test.
+Baseline 2026-10-22: 66 workflow files. Six automatic PR entrypoints, three main-push entrypoints (Validate, Pages, logo-specific). Fifty-eight manual-only specialized suites. Future workflow files default to manual-only unless they explicitly justify an expanded budget. `npm run check` includes the policy regression test.
 
 The Actions queue is a scheduling state, not proof the source is healthy or broken. This PR does not assert that previously queued jobs completed, that every deep suite passed, or that runner capacity recovered.
