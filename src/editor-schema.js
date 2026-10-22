@@ -3,7 +3,7 @@
 // use these definitions rather than maintaining competing control taxonomies.
 export const EDITOR_CATEGORIES=[
   {id:'layout',label:'Layout',icon:'layout',tools:[
-    {id:'structure-mode',name:'Canvas structure',settings:['structure']},
+    {id:'structure-mode',name:'Structure',settings:['structure']},
     {id:'arrange',name:'Arrangement',settings:['composition','repeatCount','repeatSpacing']},
     {id:'direction',name:'Direction',settings:['orientation','diagonalRotation','mirrorHorizontal','mirrorVertical']},
     {id:'variability',name:'Variation',settings:['chaos']},
@@ -11,30 +11,30 @@ export const EDITOR_CATEGORIES=[
   {id:'path',label:'Path',icon:'path',tools:[
     {id:'geometry',name:'Geometry',settings:['geometry','shapeFrequency','shapeDepth']},
     {id:'rays',name:'Radial rays',settings:['radialMode','rayCount','rayRotation']},
-    {id:'ray-shape',name:'Ray shape',settings:['rayTwist','rayCoverage','rayCore']},
+    {id:'ray-shape',name:'Ray detail',settings:['rayTwist','rayCoverage','rayCore']},
     {id:'origin',name:'Origin',settings:['fieldCenterX','fieldCenterY']},
     {id:'regions',name:'Regions',settings:['regionMode','regionCount']},
     {id:'region-detail',name:'Region detail',settings:['regionJitter','regionSides']},
     {id:'safety',name:'Constraints',settings:['geometrySafety','crossingMode']},
     {id:'turn',name:'Turns',settings:['turnRadius','hairpinAngle']},
-    {id:'single-loop',name:'Single loop',settings:['loopRadius','loopSweep']},
+    {id:'single-loop',name:'Loop',settings:['loopRadius','loopSweep']},
     {id:'shape-details',name:'Shape detail',settings:['stepCount','chevronSharpness','loopAspect']},
     {id:'ends',name:'Endpoints',settings:['pathLength','endTaper','extendDrawnPath']},
   ]},
-  {id:'stripes',label:'Shapes',icon:'stripes',tools:[
+  {id:'stripes',label:'Stripes',icon:'stripes',tools:[
     {id:'structure',name:'Structure',settings:['construction','stripeWidth','spread']},
     {id:'patterns',name:'Patterns',settings:['motif','lineStyle','patternHomogeneity']},
-    {id:'marks',name:'Marks',settings:['dotSize','dotSpacing']},
+    {id:'marks',name:'Dots',settings:['dotSize','dotSpacing']},
     {id:'motif-scale',name:'Motif scale',settings:['motifSize','motifFrequency']},
     {id:'tone',name:'Band tones',settings:['tonalContrast']},
-    {id:'character',name:'Character',settings:['individuality','overridePatternHomogeneity']},
+    {id:'character',name:'Variation',settings:['individuality','overridePatternHomogeneity']},
   ]},
   {id:'details',label:'Details',icon:'interior-elements',tools:[
     {id:'interior',name:'Elements',settings:[]},
-    {id:'interior-style',name:'Element style',settings:[]},
-    {id:'interior-motion',name:'Element motion',settings:[]},
+    {id:'interior-style',name:'Style',settings:[]},
+    {id:'interior-motion',name:'Wave',settings:[]},
     {id:'interior-placement',name:'Placement',settings:[]},
-    {id:'interior-targets',name:'Colour targets',settings:[]},
+    {id:'interior-targets',name:'Ink & targets',settings:[]},
     {id:'outlines',name:'Outlines',settings:['outline','gap','outlineBuffer']},
     {id:'dividers',name:'Dividers',settings:['dividerColor','dividerWidth']},
     {id:'shadows',name:'Shadows',settings:['stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection']},
@@ -44,7 +44,7 @@ export const EDITOR_CATEGORIES=[
     {id:'rainbow',name:'Rainbow',settings:['palette','reverseStripes']},
     {id:'canvas',name:'Background',settings:['background']},
   ]},
-  {id:'material',label:'Material',icon:'material',tools:[
+  {id:'material',label:'Texture',icon:'material',tools:[
     {id:'layer1',name:'Layer 1',settings:['material','textureCoverage','textureBlend','textureLayer2Enabled']},
     {id:'finish1',name:'Finish 1',settings:['textureStrength','textureScale','textureRotation']},
     {id:'layer2',name:'Layer 2',settings:['material2','textureCoverage2','textureBlend2','textureLayer3Enabled']},
@@ -53,7 +53,7 @@ export const EDITOR_CATEGORIES=[
     {id:'finish3',name:'Finish 3',settings:['textureStrength3','textureScale3','textureRotation3']},
     {id:'surface',name:'Surface',settings:['textureDisplacement','brushRoughness']},
   ]},
-  {id:'effects',label:'Effects',icon:'effects',tools:[
+  {id:'effects',label:'Light',icon:'effects',tools:[
     {id:'lighting',name:'Lighting',settings:['lightingMood','lightDirection','lightStrength','shadowStrength']},
   ]},
 ];
