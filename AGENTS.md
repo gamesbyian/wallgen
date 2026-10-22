@@ -1,5 +1,10 @@
 # Agent orientation for ROYGBIV
 
+## Historical default conversion evidence (2026-10-22)
+
+The 45-revision field-membership ledger now has companion [SHA/Blob-pinned semantic expression anchors](docs/recipe-format-history/SEMANTIC-EXPRESSION-ANCHORS.json) and [migration decision matrix](docs/recipe-format-history/SEMANTIC-DEFAULTS-AND-ADAPTER-GATES.md). `scripts/build-recipe-format-history.mjs --semantic-out <path>` can inventory lexical normalizer field changes from a full Git clone. First concrete hazard: PNG v1 originally stored `stripeShadowEnabled` and defaulted `stripeShadowStrength` to 45; a later revision removed the boolean and defaulted strength to 0. V2 added `structure` default `paths`. Lexical source changes are *not* renderer/seed semantic proof. Keep historic conversions gated until full adapters and fixtures exist; no routine new workflow.
+
+
 ## Historical PNG rescue even when schema migration is unsafe (2026-10-22)
 
 Use `archivePngRecipeRecords` in `src/png-recipe-migration.js` to export exact original ROYGBIV named iTXt chunks (base64-encoded as full chunk bytes, with order/offset metadata) into a separate JSON backup. More → Files & sharing and `png:migrate --archive` expose this even when v1/early-v2 translation is refused. Retain original PNG as master; archival bundle is **not** a normalized or safely upgraded recipe. Bounds: at most 64 named records/16 MiB total. No UI editor mutation or new CI workflow.
