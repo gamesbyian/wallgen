@@ -1,6 +1,7 @@
 // Browser-independent geometry extraction from an RGBA raster.
 // No network calls, AI model, or image data is retained in wallpaper recipes.
 import {normalizeDrawnPath, resamplePath, simplifyPath} from './drawn-path.js';
+import {normalizeCompoundRegion} from './geometry-asset.js';
 
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const dist=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]);
@@ -220,4 +221,102 @@ export function pathToWallpaper(candidate,width,height){
     }
   }
   return {points:normalized,anchors:corners,corners};
+}
+
+
+// Shape extraction shares the source raster, background estimate, components
+// and contour edge walk with path extraction, but keeps ALL closed boundary
+// rings instead of retaining only the longest stroke per component.
+// This adapter cannot return executable SVG, URLs, or source image bytes.
+function shapeEdgeLoops(component,w,h){
+  const occupied=new Set(component.members),edges=new Map();
+  const add=(x1,y1,x2,y2)=>{
+    const key=y1*(w+1)+x1,next=y2*(w+1)+x2;
+    if(!edges.has(key))edges.set(key,[]);
+    edges.get(key).push(next);
+  };
+  for(const p of component.members){
+    const x=p%w,y=(p/w)|0;
+    if(y===0||!occupied.has(p-w))add(x,y,x+1,y);
+    if(x===w-1||!occupied.has(p+1))add(x+1,y,x+1,y+1);
+    if(y===h-1||!occupied.has(p+w))add(x+1,y+1,x,y+1);
+    if(x===0||!occupied.has(p-1))add(x,y+1,x,y);
+  }
+  const loops=[];
+  let steps=0;
+  while(edges.size&&steps<2*w*h*6){
+    const start=edges.keys().next().value;
+    const ring=[],visited=new Set();let at=start;
+    while(edges.has(at)&&!visited.has(at)){
+      visited.add(at);steps++;
+      ring.push([at%(w+1),Math.floor(at/(w+1))]);
+      const next=edges.get(at).pop();
+      if(!edges.get(at).length)edges.delete(at);
+      at=next;
+      if(at===start)break;
+    }
+    if(at!==start||ring.length<4)continue;
+    const closed=[...ring,ring[0]];
+    const reduced=simplifyPixels(closed.length>2000?
+      resamplePixelPolyline(closed,2000):closed,Math.max(.6,Math.min(w,h)*.0025));
+    if(reduced.length>=4)loops.push(reduced.slice(0,-1));
+  }
+  return loops;
+}
+function ringArea(ring){
+  return ring.reduce((sum,a,i)=>{
+    const b=ring[(i+1)%ring.length];return sum+a[0]*b[1]-a[1]*b[0];
+  },0)/2;
+}
+function silhouetteMask({data,width:w,height:h}){
+  if(!data||!Number.isInteger(w)||!Number.isInteger(h)||w<12||h<12||
+    data.length!==w*h*4||w*h>650000)throw Error('Unsupported analysis image size');
+  const bg=backgroundColour(data,w,h);
+  let transparent=0;
+  for(let p=0;p<w*h;p++)if(data[4*p+3]<64)transparent++;
+  // A transparent-background image declares its own silhouette. This also
+  // captures white artwork on transparent pixels, which RGB contrast misses.
+  const alphaFirst=transparent>Math.max(4,w*h*.003);
+  const mask=new Uint8Array(w*h);
+  for(let p=0;p<w*h;p++){
+    const i=p*4,a=data[i+3];
+    if(a<64)continue;
+    const d=Math.hypot(data[i]-bg[0],data[i+1]-bg[1],data[i+2]-bg[2]);
+    if(alphaFirst?a>=64:d>53)mask[p]=1;
+  }
+  return mask;
+}
+export function extractImageShapeCandidates(image){
+  const {width:w,height:h}=image,mask=silhouetteMask(image);
+  const regions=components(mask,w,h,Math.max(24,Math.floor(w*h*.001)));
+  const parts=[];
+  for(const c of regions){
+    if(c.area>w*h*.92)continue;
+    const loops=shapeEdgeLoops(c,w,h)
+      .sort((a,b)=>Math.abs(ringArea(b))-Math.abs(ringArea(a)));
+    if(!loops.length)continue;
+    const outer=loops[0],holes=loops.slice(1).filter(r=>Math.abs(ringArea(r))>=4);
+    parts.push({outer,holes});
+  }
+  if(!parts.length)return [];
+  const result=[];
+  // A composite candidate retains separate disconnected islands (e.g. two
+  // dots of an i). Individual parts remain independently selectable.
+  for(const included of [parts,...parts.map(part=>[part])]){
+    if(result.length>=8)break;
+    const components=included.map(part=>({outer:part.outer,holes:part.holes}));
+    let geometry;
+    try{geometry=normalizeCompoundRegion({
+      type:'compound-region',space:'asset-local',viewBox:[0,0,w,h],
+      components,fillRule:'evenodd'
+    });}catch{continue;}
+    const outer=included[0].outer;
+    result.push({kind:'shape',closed:true,
+      label:included.length>1?'All silhouettes ('+included.length+' parts)':
+        'Filled silhouette'+(included[0].holes.length?' with holes':''),
+      points:outer.map(([x,y])=>[x/w,y/h]),
+      geometry,score:included.reduce((n,c)=>n+Math.abs(ringArea(c.outer)),0)});
+  }
+  // Do not duplicate the composite and individual item if one component.
+  return parts.length===1?result.slice(0,1):result;
 }
