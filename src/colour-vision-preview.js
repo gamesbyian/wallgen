@@ -262,6 +262,11 @@ toggle.addEventListener('click',()=>{
 close.addEventListener('click',()=>{
   panel.hidden=true;toggle.setAttribute('aria-expanded','false');toggle.focus();
 });
+panel.addEventListener('keydown',event=>{
+  if(event.key!=='Escape')return;
+  event.preventDefault();event.stopPropagation();
+  panel.hidden=true;toggle.setAttribute('aria-expanded','false');toggle.focus();
+});
 mode.addEventListener('change',()=>{
   selected=mode.value;showOriginal=false;
   updateState();
