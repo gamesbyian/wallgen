@@ -14,18 +14,19 @@ prime.setAttribute('form','controls'); // Preserve form.elements while reparente
 // app.js now receives the real form-associated input change at document
 // scope. Synthetic changes dispatched from the form would lose the input
 // identity and could never update the actual Primes source setting.
-// Bleed is a visual screen-safe-area guide only, never part of the recipe,
+// The safe-area overlay is a screen framing guide only, never part of the recipe,
  // rendering canvas, export, or saved image.
 const bleed=document.getElementById('bleedGuide');
 const wallpaperSurface=document.querySelector('.wallpaper-surface');
-// The actual wallpaper canvas, not the responsive outer frame, defines bleed.
+// The wallpaper canvas, not the responsive outer frame, defines the inset guide.
 // The frame can have a different height when Edit opens or the dock returns.
 wallpaperSurface.append(bleed);
 const bleedButton=document.createElement('button');
 bleedButton.type='button';bleedButton.id='mobileBleed';
 bleedButton.className='mobile-bleed-button';
-bleedButton.textContent='Bleed';
-bleedButton.setAttribute('aria-label','Toggle 90 percent wallpaper framing guide');
+bleedButton.textContent='Safe area';
+bleedButton.title='Show 90% safe-area guide (preview only)';
+bleedButton.setAttribute('aria-label','Show 90% safe-area guide (preview only)');
 bleedButton.setAttribute('aria-pressed','false');
 function updateBleedContrast(event){
   // Contrast follows the actual wallpaper *background*, not sampled stripe
@@ -37,6 +38,8 @@ function updateBleedContrast(event){
 bleedButton.addEventListener('click',()=>{
   bleed.hidden=!bleed.hidden;
   bleedButton.setAttribute('aria-pressed',String(!bleed.hidden));
+  bleedButton.setAttribute('aria-label',bleed.hidden?
+    'Show 90% safe-area guide (preview only)':'Hide 90% safe-area guide (preview only)');
   updateBleedContrast();
 });
 stage.addEventListener('roygbiv-wallpaper-rendered',updateBleedContrast);
@@ -60,8 +63,8 @@ for(const [el,mode,glyph,label] of [
 // Fit is a first-class side-camera operation, not another top toolbar.
 zoomFit.type='button';zoomFit.className='mobile-zoom-button mobile-fit-button';
 zoomFit.dataset.zoom='fit';zoomFit.innerHTML=iconMarkup('fit-canvas');
-zoomFit.setAttribute('aria-label','Fit entire wallpaper (100% framing)');
-zoomFit.title='Fit whole wallpaper at 100%';
+zoomFit.setAttribute('aria-label','Reset view: zoom and frame position');
+zoomFit.title='Reset zoom and frame position';
 zoomFit.addEventListener('click',()=>
   stage.dispatchEvent(new CustomEvent('roygbiv-view-fit-request')));
 const zoomValue=document.createElement('output');
