@@ -2948,6 +2948,14 @@ try{
   const visionLatest=await evaluate('(()=>({mode:document.getElementById("visionMode").value,severity:document.getElementById("visionSeverity").value,visible:!document.getElementById("visionPreviewLayer").hidden,sourceUnchanged:document.getElementById("preview").toDataURL("image/png")===window.__visionOriginalImage,recipeUnchanged:location.search===window.__visionOriginalRecipe,activeMore:document.getElementById("mobileMore").dataset.visionActive,ariaDescription:document.getElementById("preview").getAttribute("aria-label")}))()');
   assert.equal(visionLatest.mode,'tritan');
   assert.equal(visionLatest.severity,'70');
+  assert.match(visionLatest.ariaDescription,/70%/,
+    'actual accessible simulation state must match severity control');
+  const visionExactSeverity=await evaluate('(async()=>{const {simulateRgb}=await import("/src/colour-vision.js");const a=document.getElementById("preview"),b=document.getElementById("visionPreviewLayer");const original=a.getContext("2d").getImageData(0,0,a.width,a.height).data,simulated=b.getContext("2d").getImageData(0,0,b.width,b.height).data;let examined=0,maxError=0,contrast=0;for(let i=0;i<original.length;i+=4){if(examined>=100)return {examined,maxError,contrast};const input=[original[i],original[i+1],original[i+2]];const expected=simulateRgb(input,"tritan",.7);const full=simulateRgb(input,"tritan",1);if(expected.some((v,k)=>Math.abs(v-full[k])>2)){examined++;for(let k=0;k<3;k++)maxError=Math.max(maxError,Math.abs(expected[k]-simulated[i+k]));contrast+=expected.reduce((s,v,k)=>s+Math.abs(v-full[k]),0);}}return {examined,maxError,contrast};})()');
+  assert.ok(visionExactSeverity.examined>=10,'test must actually sample severity-discriminating colours');
+  assert.ok(visionExactSeverity.contrast>30,'70% should differ from a 100% simulation');
+  assert.ok(visionExactSeverity.maxError<=1,
+    'on-screen image must use the actual selected 70% model: '+JSON.stringify(visionExactSeverity));
+
   assert.equal(visionLatest.visible,true);
   assert.equal(visionLatest.sourceUnchanged,true);
   assert.equal(visionLatest.recipeUnchanged,true);
