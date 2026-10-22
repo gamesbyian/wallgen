@@ -1,5 +1,11 @@
 # ROYGBIV: geometry-aware surfaces and procedural embroidery
 
+## One authored-object treatment picker (PR #482, 2026-10-22)
+
+[#482](https://github.com/gamesbyian/wallgen/pull/482) exposes the already-supported explicit `target.scope='object'` in the compact Thread workspace. The picker enumerates actual unified-scene generated `region-N` and `bundle-N/stripe-M` IDs. Selection is narrow and does not change another object's paint, global palette colours or texture layers; the recipe preserves identity through Undo, downloads and scene changes. If a saved target no longer exists, it remains selectable with an unavailable label rather than being arbitrarily mapped to a new region.
+
+This is partial E1/E4; there is no direct canvas click-to-embroider shortcut or multi-treatment authoring panel yet. No physical device evidence or optically judged thread-quality signoff.
+
 ## Crossing stitch continuity correction (PR #481, 2026-10-22)
 
 The initial E1 implementation overpainted ribbons at geometric self-intersections without replaying their new thread surface. [#481](https://github.com/gamesbyian/wallgen/pull/481) uses identical stitched station coordinates for full ribbons and bounded crossing touch-ups, clipped to the foreground branch. This resolves a specific source-verified seam and bounds performance by crossing segment length. Still not physical-device artistic acceptance or final E2–E5 thread science.
