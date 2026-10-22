@@ -271,8 +271,12 @@ severity.addEventListener('input',()=>{
   updateState({announce:false});
 });
 severity.addEventListener('change',()=>{
-  strength=Number(severity.value)/100;
-  updateState();
+  const next=Number(severity.value)/100;
+  if(next!==strength){strength=next;updateState();return;}
+  // Native range emits input before change. Announce the committed value
+  // without scheduling a redundant full-frame conversion.
+  status.textContent=selected==='original'||strength===0?'Showing original wallpaper.':
+    'Simulating '+mode.selectedOptions[0].textContent+', '+Math.round(strength*100)+'%. Display only.';
 });
 compare.addEventListener('change',()=>{
   split=compare.checked;
