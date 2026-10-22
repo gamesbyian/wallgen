@@ -2,7 +2,7 @@
   "schema": "roygbiv-diary-pr-evidence/1",
   "captured_on": "2026-10-22",
   "repository": "gamesbyian/wallgen",
-  "scope": "Cited PR descriptions and dispositions only. A claim in a PR body is not independent proof that source was executed or accepted.",
+  "scope": "Cited PR descriptions and dispositions only. A claim in a PR body is not independent proof that source was executed or accepted. Additional original-source PR descriptions recovered from newly uploaded conversation archives.",
   "sources": [
     {
       "number": 1,
@@ -201,6 +201,39 @@
       "created_at": "2026-10-22T06:06:13Z",
       "head_sha_at_capture": "044ae099e2622e1abb468c733765efc0dbc83605",
       "url": "https://github.com/gamesbyian/wallgen/pull/434"
+    },
+    {
+      "number": 11,
+      "title": "Keep exiting stripes continuous during nudges with overscan rendering",
+      "description": "Fix crop artifacts introduced by translating the frame-sized cached stripe bitmap. For previews, paint extra ink 30% beyond all four edges once and keep it cached, so ±30% nudge controls translate a complete uninterrupted off-frame stripe continuation without re-solving geometry or moving inset endpoints. For full-resolution exports and thumbnails, allocate only the overscan needed in the direction of the selected offset to reduce memory overhead. Preserve the original composition, outline/motif placement rules and fixed textured background by translating offscreen transforms and cropping background textures appropriately. Preserve separate ambient and stripe-cast shadows. Add regression tests for nine extreme pan combinations, export margins, patterned/material overscan, cache behavior and composition invariants. JavaScript model+renderer tests: 52/52 passed.",
+      "state_at_capture": "closed",
+      "draft_at_capture": false,
+      "merged_at": "2026-10-17T02:37:05Z",
+      "created_at": "2026-10-17T02:36:26Z",
+      "head_sha_at_capture": "a0335e43af8ea2ed97ca4e8762b43e4c146017c5",
+      "url": "https://github.com/gamesbyian/wallgen/pull/11"
+    },
+    {
+      "number": 14,
+      "title": "Keep wallpaper live and visible during mobile edits with photo-editor adjustment tray",
+      "description": "Fix the Pixel/Android editor obscuring its canvas. Replace the full-height modal covering the image with a nonmodal, scrollable adjustment tray occupying reserved space BELOW the live wallpaper: preview resizes above, editor tabs and all existing sliders/locks remain accessible. Add a one-tap Larger preview/More controls height toggle and Done action; tapping the image restores the full preview. Explore gallery and More (including nudge) also share the viewport rather than occluding the preview; no dimming backdrop. Keep both Cream Studio and Original Dark. Expand real Chromium phone smoke to require zero overlap, live canvas repaint while editing, compact-mode increased preview, and separate-space Explore/More on a 412×915 portrait viewport. README updated.",
+      "state_at_capture": "closed",
+      "draft_at_capture": false,
+      "merged_at": "2026-10-17T03:46:56Z",
+      "created_at": "2026-10-17T03:44:58Z",
+      "head_sha_at_capture": "a8b19b29cb56d77f7ccd4d8c4441fddb984cde4f",
+      "url": "https://github.com/gamesbyian/wallgen/pull/14"
+    },
+    {
+      "number": 22,
+      "title": "Render seven requested vibe wallpapers with ROYGBIV",
+      "description": "Runs the actual headless ROYGBIV Chromium renderer for 50s, 60s, 70s, 80s, Joy, Rage, Sex. Uses deliberate existing generator settings, 3024×6552 PNG output, embedded recipe checks, machine-readable JSON recipes, downloadable workflow artifact. No image-generation service, new renderer, or visual duplication.",
+      "state_at_capture": "closed",
+      "draft_at_capture": false,
+      "merged_at": "2026-10-17T07:12:26Z",
+      "created_at": "2026-10-17T07:10:42Z",
+      "head_sha_at_capture": "d8693edb9ac91af7d72fc13c742b85a2ee7eacbf",
+      "url": "https://github.com/gamesbyian/wallgen/pull/22"
     }
   ]
 }
