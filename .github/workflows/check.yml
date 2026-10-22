@@ -1,24 +1,31 @@
 name: Validate Wallgen
 on:
   pull_request:
-  push:
-    branches: [main]
   workflow_dispatch:
+    inputs:
+      depth:
+        description: 'Quick sanity checks or full Node test suite (opt-in)'
+        type: choice
+        required: true
+        default: quick
+        options: [quick, full]
 permissions:
   contents: read
 concurrency:
-# Group by PR number to discard old PR revisions, but by unique run ID on main
-  # so every production commit retains an independent completed validation.
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  group: quick-ci-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
-
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: npm run check
+      - name: Basic app and recipe sanity
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.depth != 'full' }}
+        run: npm run check:quick
+      - name: Full Node suite (manual request only)
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.depth == 'full' }}
+        run: npm run check

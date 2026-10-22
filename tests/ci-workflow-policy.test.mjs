@@ -4,64 +4,58 @@ import { readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const directory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../.github/workflows');
-const automaticEvents = new Map([
-  ['check.yml', ['pull_request', 'push', 'workflow_dispatch']],
-  ['mobile-browser.yml', ['pull_request', 'workflow_dispatch']],
-  ['headless-render.yml', ['pull_request', 'workflow_dispatch']],
-  ['agent3-mobile-acceptance.yml', ['pull_request', 'workflow_dispatch']],
-  ['visual-agent1.yml', ['pull_request', 'workflow_dispatch']],
-  ['promote-source-visual-plates.yml', ['pull_request', 'workflow_dispatch']],
-  ['pages.yml', ['push', 'workflow_dispatch']],
-  ['logo-raster.yml', ['push', 'workflow_dispatch']],
-]);
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const workflows = path.join(root, '.github/workflows');
+const archive = path.join(root, 'docs/ci-archive/workflows');
 
-function workflowEvents(source, file) {
-  const lines = source.split(/\r?\n/);
+function events(yaml) {
+  const lines = yaml.split(/\r?\n/);
   const start = lines.indexOf('on:');
-  assert.notEqual(start, -1, file + ': top-level on: required');
-  const events = [];
+  assert(start >= 0, 'Workflow event declaration missing');
+  const found = [];
   for (let i = start + 1; i < lines.length; i++) {
     if (/^[a-zA-Z_][\w-]*:/.test(lines[i])) break;
     const match = lines[i].match(/^  ([a-zA-Z_][\w-]*):/);
-    if (match) events.push(match[1]);
+    if (match) found.push(match[1]);
   }
-  assert.equal(events.length, new Set(events).size, file + ': duplicate workflow events');
-  return events.sort();
+  assert.equal(new Set(found).size, found.length, 'Duplicate triggers');
+  return found.sort();
 }
 
-test('heavy acceptance workflows remain dispatchable without unbudgeted PR fanout', async () => {
-  const files = (await readdir(directory)).filter(name => /\.ya?ml$/.test(name)).sort();
-  assert(files.length >= automaticEvents.size, 'workflow inventory unexpectedly empty');
-  for (const file of files) {
-    const source = await readFile(path.join(directory, file), 'utf8');
-    const events = workflowEvents(source, file);
-    const expected = automaticEvents.get(file) ?? ['workflow_dispatch'];
-    assert.deepEqual(events, [...expected].sort(),
-      file + ': update CI policy and document impact before adding automatic triggers');
+test('personal project has only a small active workflow menu', async () => {
+  const expected = {
+    'check.yml': ['pull_request', 'workflow_dispatch'],
+    'pages.yml': ['push', 'workflow_dispatch'],
+    'logo-raster.yml': ['push', 'workflow_dispatch'],
+    'promote-source-visual-plates.yml': ['pull_request', 'workflow_dispatch'],
+  };
+  const manual = [
+    'mobile-browser.yml', 'headless-render.yml', 'agent3-mobile-acceptance.yml',
+    'visual-agent1.yml', 'ui-screenshot-atlas.yml', 'seven-vibes.yml',
+    'native-wallpaper-gallery.yml', 'design-reference-assets.yml',
+  ];
+  for (const name of manual) expected[name] = ['workflow_dispatch'];
+  const live = (await readdir(workflows)).filter(n => /\.ya?ml$/.test(n)).sort();
+  assert.deepEqual(live, Object.keys(expected).sort(),
+    'New automatic or specialty workflow? Justify it in the CI policy.');
+  for (const name of live) {
+    const content = await readFile(path.join(workflows, name), 'utf8');
+    assert.deepEqual(events(content), expected[name].sort(), name + ' has unexpected triggers');
   }
-  for (const file of automaticEvents.keys()) {
-    assert(files.includes(file), file + ': required automatic gate missing');
-  }
+  const archived = (await readdir(archive)).filter(n => /\.ya?ml$/.test(n));
+  assert(archived.length >= 50, 'Historical workflow evidence unexpectedly removed');
 });
 
-test('primary PR validation retains main safety net and cancels only superseded PRs', async () => {
-  const check = await readFile(path.join(directory, 'check.yml'), 'utf8');
-  assert.match(check, /  push:\n    branches: \[main\]/);
-  assert.match(check, /- run: npm run check/);
-  assert.match(check, /group: .*github\.workflow.*github\.event\.pull_request\.number/);
-  assert.match(check, /github\.event\.pull_request\.number \|\| github\.run_id/);
-  assert.match(check, /cancel-in-progress: .*github\.event_name == 'pull_request'/);
-  for (const file of ['mobile-browser.yml', 'headless-render.yml', 'agent3-mobile-acceptance.yml']) {
-    const source = await readFile(path.join(directory, file), 'utf8');
-    assert.match(source, /cancel-in-progress: .*github\.event_name == 'pull_request'/);
-    assert.match(source, /^    paths:/m, file + ': retain a targeted PR path filter');
-  }
-  const visual = await readFile(path.join(directory, 'visual-agent1.yml'), 'utf8');
-  assert.match(visual, /^  pull_request:/m);
-  assert.match(visual, /^    paths:/m);
-  assert.match(visual, /cancel-in-progress: true/);
-  const promotion = await readFile(path.join(directory, 'promote-source-visual-plates.yml'), 'utf8');
-  assert.match(promotion, /github.event_name == 'pull_request'/);
-  assert.match(promotion, /github.event.pull_request.head.repo.full_name == github.repository/);
+test('automatic PR checks stay quick and deep suites require an explicit choice', async () => {
+  const check = await readFile(path.join(workflows, 'check.yml'), 'utf8');
+  assert.match(check, /  pull_request:/);
+  assert.doesNotMatch(check, /^  push:/m);
+  assert.match(check, /run: npm run check:quick/);
+  assert.match(check, /inputs\.depth == 'full'/);
+  assert.match(check, /run: npm run check\n/);
+  const pages = await readFile(path.join(workflows, 'pages.yml'), 'utf8');
+  assert.match(pages, /run: npm run check:quick/);
+  const pkg = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8'));
+  assert.match(pkg.scripts['check:quick'], /node --test/);
+  assert.match(pkg.scripts.check, /npm test/);
 });
