@@ -1,6 +1,6 @@
 # ROYGBIV: active product roadmap and work queue
 
-## Seven material production renders visually reviewed (2026-10-22, PR pending)
+## Seven material production renders visually reviewed (2026-10-22, PR #499 merged)
 
 The opt-in material-quality review **actually ran** in Chromium Actions [#39820925332](https://github.com/gamesbyian/wallgen/actions/runs/39820925332), and its seven 480×1040 PNGs were downloaded, visually inspected, CRC-validated and matched against each original sidecar recipe. See [concrete appearance findings](MATERIAL-PRODUCTION-RENDER-FINDINGS-2026-10-22.md). At the deliberately strong `textureStrength:72`/`textureDisplacement:68`, linen shows a graph-like crosshatch and sawtooth/frayed stripe edges in both seeds; watercolour paper shows broad cloudy substrate absorption-like shading; concrete is subtly speckled. This is *actual quality evidence* rather than unrun screenshot tooling, though it does not certify photorealism or phone-device appearance. Next efficient check: **one same-seed three-image linen displacement sweep** at 0/20/68 before changing saved material behavior. Temporary workflow PR #498 was closed unmerged, leaving routine CI unchanged.
 
