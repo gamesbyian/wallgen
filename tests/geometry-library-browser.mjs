@@ -135,5 +135,9 @@ try{
   proc.kill('SIGTERM');
   try{await new Promise(resolve=>{if(proc.exitCode!==null)return resolve();
     proc.once('exit',resolve);setTimeout(resolve,2500);});}catch{}
-  rmSync(profile,{recursive:true,force:true});server.close();
+  // Chrome can recreate a profile file for a moment after SIGTERM on CI.
+  // An already-passing product assertion must not fail on ephemeral cleanup.
+  try{rmSync(profile,{recursive:true,force:true,maxRetries:12,retryDelay:150});}
+  catch(e){process.stderr.write('Nonfatal Chromium profile cleanup: '+e.message+'\\n');}
+  server.close();
 }
