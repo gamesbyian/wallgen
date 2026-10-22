@@ -1,5 +1,7 @@
 # ROYGBIV recipe format registry
 
+**Additional source archaeology (PR #480):** [chronological field change ledger](SCHEMA-CHANGE-LEDGER.md) and [45 source-pinned key snapshots](model-key-ledger.json) now track the explicit `normalizeRecipe` field set across the full observed `src/model.js` main-history sequence. Key additions/removals alone do not prove units, defaults or render semantics, but provide a concrete field-by-field starting point for historical adapters.
+
 **Status:** verified PNG envelope origins, partial model-field archaeology. Last checked 2026-10-22. Machine-readable references: [manifest.json](manifest.json). These are **version namespaces**, not a claim that every model default changed only when the PNG envelope changed.
 
 | Format / period | Source evidence | Supported archival action |
