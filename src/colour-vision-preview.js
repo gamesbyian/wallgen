@@ -46,7 +46,7 @@ for(const [value,text] of [
   ['original','Original colour'],
   ['protan','Protan (red-weak)'],
   ['deutan','Deutan (green-weak)'],
-  ['tritan','Tritan (approx.)']
+  ['tritan','Tritan (blue-yellow)']
 ]){
   const option=make('option','',text);option.value=value;mode.append(option);
 }
@@ -68,14 +68,22 @@ original.setAttribute('aria-pressed','false');
 const explanatory=make('p','vision-explanation',
   'Approximation of colour discrimination, not exactly what any person sees. Your saved wallpaper is unchanged.');
 const caveat=make('p','vision-tritan-caveat',
-  'Tritan simulation is especially approximate; severe tritanopia is not faithfully represented.');
+  'Full tritanopia uses Brettel (1997). Partial severity is an approximation of tritanomaly.');
 caveat.hidden=true;
 const status=make('output','vision-status');
 status.id='visionStatus';status.setAttribute('role','status');status.setAttribute('aria-live','polite');
 const actions=make('div','vision-actions');
 actions.append(compareLabel,original);
-panel.append(header,modeLabel,severityLabel,actions,caveat,explanatory,status);
+const disclosure=make('details','vision-method-info');
+const summary=make('summary','','How this works');
+const method=make('p','',
+  'Protan and Deutan use the Machado (2009) physiological simulation at adjustable severity. Tritan uses Brettel (1997) with a two-plane projection; intermediate strengths are approximate. Colour displays, lighting and individual vision vary.');
+disclosure.append(summary,method);
+panel.append(header,modeLabel,severityLabel,actions,caveat,explanatory,disclosure,status);
 
+const originalSourceLabel=source.getAttribute('aria-label')||'Wallpaper';
+const mobileMore=document.getElementById('mobileMore');
+const mobileMoreLabel=mobileMore?.getAttribute('aria-label')||'More tools';
 const desktopSlot=make('div','vision-desktop-slot');
 desktopSlot.append(toggle);
 desktopHead.append(desktopSlot);
@@ -114,6 +122,18 @@ function applyVisibility(){
 }
 splitPositionSet(50);
 function updateState({announce=true}={}){
+  const active=isEnabled();
+  const description=mode.selectedOptions[0].textContent;
+  toggle.textContent=active?'Vision: '+description+' '+Math.round(strength*100)+'%':'Vision preview';
+  toggle.title=active?'Wallpaper shown with a simulated colour-vision difference; saved PNG remains original':'Inspect simulated colour-vision differences';
+  if(mobileMore){
+    mobileMore.dataset.visionActive=String(active);
+    mobileMore.setAttribute('aria-label',active?'More tools; colour vision simulation active':mobileMoreLabel);
+  }
+  if(active){
+    source.setAttribute('aria-label',originalSourceLabel+' (visible simulated preview: '+description+
+      ', '+Math.round(strength*100)+'%; downloaded art remains original)');
+  }else source.setAttribute('aria-label',originalSourceLabel);
   severity.disabled=selected==='original';
   compare.disabled=selected==='original';
   original.disabled=selected==='original';
