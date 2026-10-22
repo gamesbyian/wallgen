@@ -29,3 +29,39 @@ jobs:
       - name: Full Node suite (manual request only)
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.depth == 'full' }}
         run: npm run check
+
+      # Temporary two-sample art acceptance. Remove/close branch; never merge.
+      - name: One-time Chromium install for opt-in linen proof
+        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'review/linen-soft-art-proof-once' }}
+        run: |
+          npm install --no-save playwright
+          npx playwright install chromium
+      - name: Two real images, legacy linen vs opt-in soft edge
+        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'review/linen-soft-art-proof-once' }}
+        run: |
+          mkdir -p artifacts/linen-soft-proof
+          node --input-type=module <<'JS'
+          import {writeFile} from 'node:fs/promises';
+          import {normalizeRecipe} from './src/model.js';
+          const common={family:'studio',structure:'paths',orientation:'diagonal',
+            geometry:'wave',motif:'solid',outline:'none',palette:'classic',
+            background:'white',textureCoverage:'both',textureScale:43,
+            textureStrength:72,textureDisplacement:68,
+            lightingMood:'off',seed:'material-study-rose'};
+          for(const material of ['linen','linen-soft']){
+            const recipe=normalizeRecipe({...common,material});
+            await writeFile('artifacts/linen-soft-proof/'+material+'.recipe.json',
+              JSON.stringify(recipe,null,2)+'\n');
+          }
+          JS
+          for material in linen linen-soft; do
+            npm run render -- --recipe "artifacts/linen-soft-proof/${material}.recipe.json" --width 480 --height 1040 --out "artifacts/linen-soft-proof/${material}.png"
+          done
+      - name: Save exactly two linen art samples
+        if: ${{ always() && github.event_name == 'pull_request' && github.head_ref == 'review/linen-soft-art-proof-once' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: one-time-linen-soft-art-proof
+          path: artifacts/linen-soft-proof/
+          retention-days: 7
+          if-no-files-found: warn
