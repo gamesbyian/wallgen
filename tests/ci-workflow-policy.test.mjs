@@ -10,6 +10,7 @@ const automaticEvents = new Map([
   ['mobile-browser.yml', ['pull_request', 'workflow_dispatch']],
   ['headless-render.yml', ['pull_request', 'workflow_dispatch']],
   ['agent3-mobile-acceptance.yml', ['pull_request', 'workflow_dispatch']],
+  ['visual-agent1.yml', ['pull_request', 'workflow_dispatch']],
   ['pages.yml', ['push', 'workflow_dispatch']],
   ['logo-raster.yml', ['push', 'workflow_dispatch']],
 ]);
@@ -54,4 +55,8 @@ test('primary PR validation retains main safety net and cancels only superseded 
     assert.match(source, /cancel-in-progress: .*github\.event_name == 'pull_request'/);
     assert.match(source, /^    paths:/m, file + ': retain a targeted PR path filter');
   }
+  const visual = await readFile(path.join(directory, 'visual-agent1.yml'), 'utf8');
+  assert.match(visual, /^  pull_request:/m);
+  assert.match(visual, /^    paths:/m);
+  assert.match(visual, /cancel-in-progress: true/);
 });

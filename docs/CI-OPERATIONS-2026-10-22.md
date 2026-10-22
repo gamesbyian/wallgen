@@ -14,15 +14,16 @@ Source precedents: Pathfinder-Game uses a central PR CI gate, per-PR cancellatio
 | `mobile-browser.yml` | Relevant UI/logic PR paths, manual | Real mobile-browser smoke for UI changes |
 | `headless-render.yml` | Renderer/source, CLI, and related PR paths, manual | Production headless render and export assertions |
 | `agent3-mobile-acceptance.yml` | Broad editor/mobile/functional PR paths, manual | Consolidated independent mobile acceptance |
+| `visual-agent1.yml` | Owned CSS, HTML, SVG/icon and visual-audit PR paths, manual | Source-bound Chromium visual review; required for presentation changes |
 | `pages.yml` | Main push or manual | Publish production site; latest main publish supersedes stale deploy |
 | `logo-raster.yml` | Logo-specific push paths or manual | Original raster assets workflow, unchanged |
 
-The remaining **60 specialized workflows** are retained in `.github/workflows/` with their complete test jobs, scripts, artifact capture, and manual Actions `workflow_dispatch` entry. Their automatic PR/legacy feature-branch push triggers are intentionally retired; no test or artifact producer has been deleted. Their underlying test scripts continue to run under Node/Chromium on demand.
+The remaining **59 specialized workflows** are retained in `.github/workflows/` with their complete test jobs, scripts, artifact capture, and manual Actions `workflow_dispatch` entry. Their automatic PR/legacy feature-branch push triggers are intentionally retired; no test or artifact producer has been deleted. Their underlying test scripts continue to run under Node/Chromium on demand.
 
 ## Reviewer evidence matrix: run the right deep suite
 
 - Renderer, masks, texture displacement, camera or recipe/export changes: automatic Headless render smoke plus applicable `agent3-world-pixels.yml`, `agent3-camera-conditional-export.yml`, `agent4-native-reimport.yml`, and full native export tests as needed.
-- Mobile layout, touch geometry, dark/cream themes, draw/import, and accessibility: automatic Mobile browser and consolidated mobile acceptance, plus the owning `mobile-*.yml`, `visual-agent1.yml`, `independent-focus-a11y.yml` or `ui-screenshot-atlas.yml` where the change carries a relevant risk.
+- Mobile layout, touch geometry, dark/cream themes, draw/import, and accessibility: automatic Mobile browser, consolidated mobile acceptance and Agent 1 visual audit (on its owned presentation paths), plus the owning `mobile-*.yml`, `independent-focus-a11y.yml` or `ui-screenshot-atlas.yml` where the change carries a relevant risk.
 - Geometry library, imported shapes or persistent browser state: run branch-provided geometry-library browser workflow when available, confirm IndexedDB revision conflicts and safe restore, and retain human device approval as a separate gate.
 - Release or nontrivial redesign: run selected visual atlas, native PNG and accessibility suites against the exact PR head. For production release, record which suites ran, their conclusion and exact SHA in the PR; do not mark an unexecuted optional suite green.
 - Documentation-only PRs need the automatic `Validate Wallgen` gate; forcing dozens of browser suites for prose edits provides no relevant assurance.
@@ -41,6 +42,6 @@ To run a specialist suite: open GitHub **Actions**, select the named workflow, c
 
 ## Audit / status
 
-Baseline 2026-10-22: 66 workflow files. Four automatic PR entrypoints, three main-push entrypoints (Validate, Pages, logo-specific). Sixty manual-only specialized suites. Future workflow files default to manual-only unless they explicitly justify an expanded budget. `npm run check` includes the policy regression test.
+Baseline 2026-10-22: 66 workflow files. Five automatic PR entrypoints, three main-push entrypoints (Validate, Pages, logo-specific). Fifty-nine manual-only specialized suites. Future workflow files default to manual-only unless they explicitly justify an expanded budget. `npm run check` includes the policy regression test.
 
 The Actions queue is a scheduling state, not proof the source is healthy or broken. This PR does not assert that previously queued jobs completed, that every deep suite passed, or that runner capacity recovered.
