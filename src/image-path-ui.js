@@ -1,5 +1,6 @@
 import {extractImagePathCandidates,extractImageShapeCandidates,imagePlacement,pathToWallpaper} from './image-path.js?v=20261018-import1';
 import {drawAuthoringLockReason,drawAuthoringLockMessage,pathStructureLockedOutsidePaths} from './path-authoring-locks.js';
+import {verifyLocalSilhouetteSvg} from './svg-import-safety.js';
 
 /** A live import dialog must match the current authoritative lock state,
  * even if a recipe restores a lock while image decoding is in flight. */
@@ -98,6 +99,8 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle,onShape}
     if(!file||!allowed.test(file.type)&&!(/\.(png|jpe?g|webp|svg)$/i.test(file.name)))
       throw new Error('Choose a PNG, JPEG, WebP or SVG image.');
     if(file.size>12*1024*1024)throw new Error('Image must be smaller than 12 MB.');
+    if(file.type==='image/svg+xml'||/\.svg$/i.test(file.name))
+      verifyLocalSilhouetteSvg(await file.text());
     const url=URL.createObjectURL(file);
     try{
       const img=new Image();
