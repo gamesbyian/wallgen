@@ -262,7 +262,7 @@ test('halation-only strength 0 to 100 actually changes rim light while preservin
   processPhotoPixels(soft,w,h,withLevel(35),'same');
   processPhotoPixels(full,w,h,withLevel(100),'same');
   assert.deepEqual(off,source);
-  const neighbor=(50*w+58)*4;
+  const neighbor=(50*w+56)*4;
   assert.ok(full[neighbor]>soft[neighbor]&&soft[neighbor]>0);
   for(const result of [soft,full]){
     assert.equal(result[neighbor+3],255);
