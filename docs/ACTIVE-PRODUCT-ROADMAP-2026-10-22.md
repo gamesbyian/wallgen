@@ -1,5 +1,11 @@
 # ROYGBIV: active product roadmap and work queue
 
+## Creative navigation checkpoint: ranked setting search (PR #475, 2026-10-22)
+
+**C07 source-level implementation in [#475](https://github.com/gamesbyian/wallgen/pull/475):** Search still prioritizes exact named settings and visual-intent aliases, and now offers up to four ranked, explicitly labelled alternatives when a phrase matches multiple applicable tools. Users can tap an option or use ↑/↓ and Enter; results are bounded in a floating listbox instead of increasing the fixed-height phone edit tray. The old first-match API remains compatible, canonical form nodes stay authoritative, dormant-mode results remain excluded, and inactive or locked fields keep prerequisite feedback. Lean targeted Node tests cover ranking and keyboard/source structure.
+
+**Unverified:** this is source/CI delivery, not a real Pixel tap/keyboard/screen-reader check. C07 should remain partially open until such a journey confirms readability and focus. C09 selected-object inspector, C10 combined effects, C11 Arrange/Form, and physical fit remain open. No new permanent CI workflow or mandatory screenshot matrix.
+
 ## Implementation checkpoint: first embroidery artwork (PR #474, 2026-10-22)
 
 **Working branch, awaiting CI/merge and optical review:** [#474](https://github.com/gamesbyian/wallgen/pull/474) begins E0/E1: bounded optional `surfaceTreatments` with explicit object/palette/all-fill targeting; translucent path-transverse relief threads clipped to real ribbon edges and row-based stitches clipped to closed-region fills (including compound even-odd masks). A compact Texture → Surface section exposes all-hues / one-hue / Off, stitch spacing and relief. This preserves three legacy texture layers and the 40-tool navigation, with no extra randomization or branch-specific renderer. It reuses the original geometry, worker, saved recipe, Undo, PNG and headless paths.
