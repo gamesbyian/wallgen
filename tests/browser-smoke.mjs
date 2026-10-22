@@ -2899,6 +2899,36 @@ try{
   assert.ok(interiorStackJourney.selectedCardVisible);
   await captureUI('interior-stack-four-unique-elements-412x892');
   console.log('INTERIOR_STACK_ACTUAL_UI_JOURNEY',JSON.stringify(interiorStackJourney));
+  // Display-only colour-vision simulation must not change the source canvas,
+  // serialized recipe, or original-vs-simulation split/keyboard state.
+  await evaluate('document.getElementById("mobileMore").click()');
+  await waitFor('document.body.classList.contains("mobile-tools-open")');
+  const visionInitial=await evaluate('(()=>{ const c=document.getElementById("preview"); window.__visionOriginalImage=c.toDataURL("image/png"); window.__visionOriginalRecipe=location.search; const b=document.getElementById("visionPreviewToggle"); b.scrollIntoView({block:"center"}); const r=b.getBoundingClientRect(); const hit=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2); return {insideMore:!!b.closest(".mobile-more-group"),mode:document.getElementById("visionMode").value,centerHit:b===hit||b.contains(hit),panelHidden:document.getElementById("visionPanel").hidden};})()');
+  assert.equal(visionInitial.insideMore,true);
+  assert.equal(visionInitial.mode,'original');
+  assert.equal(visionInitial.panelHidden,true);
+  assert.equal(visionInitial.centerHit,true,'real mobile More Vision entry must have reachable centre');
+  await evaluate('(()=>{document.getElementById("visionPreviewToggle").click();const select=document.getElementById("visionMode");select.value="deutan";select.dispatchEvent(new Event("change",{bubbles:true}));})()');
+  await waitFor('document.getElementById("visionPreviewLayer").hidden===false',20000);
+  const visionActive=await evaluate('(()=>{ const c=document.getElementById("preview"),overlay=document.getElementById("visionPreviewLayer"),a=c.getContext("2d").getImageData(0,0,c.width,c.height).data,b=overlay.getContext("2d").getImageData(0,0,c.width,c.height).data; let differences=0; for(let i=0;i<a.length;i+=160){if(a[i]!==b[i]||a[i+1]!==b[i+1]||a[i+2]!==b[i+2])differences++;}return {differences,sourceUnchanged:c.toDataURL("image/png")===window.__visionOriginalImage,recipeUnchanged:location.search===window.__visionOriginalRecipe,originalPixelsStillAccessible:c.getAttribute("role")==="img",overlayA11yHidden:overlay.getAttribute("aria-hidden")==="true",mode:document.getElementById("visionMode").value};})()');
+  assert.ok(visionActive.differences>10,'the preview should apply actual pixel transforms');
+  assert.equal(visionActive.sourceUnchanged,true,'simulation must not repaint source wallpaper');
+  assert.equal(visionActive.recipeUnchanged,true,'simulation must not enter the URL recipe');
+  assert.equal(visionActive.originalPixelsStillAccessible,true);
+  assert.equal(visionActive.overlayA11yHidden,true);
+  await evaluate('(()=>{ const cb=document.getElementById("visionCompare");cb.click();document.getElementById("visionCompareDivider").dispatchEvent(new KeyboardEvent("keydown",{key:"ArrowRight",bubbles:true}));})()');
+  const visionSplit=await evaluate('(()=>{const d=document.getElementById("visionCompareDivider");return {visible:!d.hidden,position:d.getAttribute("aria-valuenow"),mode:document.getElementById("visionMode").value,clip:document.getElementById("visionPreviewLayer").style.clipPath};})()');
+  assert.equal(visionSplit.visible,true);
+  assert.equal(visionSplit.position,'55');
+  assert.match(visionSplit.clip,/55%/);
+  await evaluate('document.getElementById("visionShowOriginal").click()');
+  assert.equal(await evaluate('document.getElementById("visionPreviewLayer").hidden'),true);
+  await evaluate('document.getElementById("visionShowOriginal").click()');
+  await waitFor('document.getElementById("visionPreviewLayer").hidden===false',20000);
+  await evaluate('(()=>{const select=document.getElementById("visionMode");select.value="original";select.dispatchEvent(new Event("change",{bubbles:true}));})()');
+  const visionRestored=await evaluate('(()=>{return {layerHidden:document.getElementById("visionPreviewLayer").hidden,recipeUnchanged:location.search===window.__visionOriginalRecipe,sourceUnchanged:document.getElementById("preview").toDataURL("image/png")===window.__visionOriginalImage};})()');
+  assert.deepEqual(visionRestored,{layerHidden:true,recipeUnchanged:true,sourceUnchanged:true});
+  console.log('COLOUR_VISION_BROWSER_ISOLATION',JSON.stringify({visionInitial,visionActive,visionSplit,visionRestored}));
   console.log('REDESIGN_EXPLORATION_ACCEPTANCE_SUCCESS');
 }finally{
   try{ws?.close()}catch{}
