@@ -11,7 +11,13 @@ export async function captureSpecialStates({page,ctx,capture,navigate,change,set
   const snap=(id,extra={})=>capture(page,ctx,'special-'+id,{kind:'stateful-journey',...extra});
   const choose=async(tool,label,value)=>{
     const card=page.locator('.editor-tool-card[data-editor-tool="'+tool+'"]');
-    await card.locator('label').filter({hasText:label}).first().locator('select').selectOption(value);
+    // Dynamic interior selectors have stable property identities. Look them
+    // up before their human-readable captions, which deliberately evolve.
+    const fields={Type:'field.type',Shape:'field.shape',Ink:'field.color',
+      Placement:'field.placement'};
+    const source=fields[label]?card.locator('select[data-interior-focus="'+fields[label]+'"]'):
+      card.locator('label').filter({hasText:label}).first().locator('select');
+    await source.selectOption(value);
     await settle(page);
   };
   const forceClick=async(selector)=>{
@@ -114,7 +120,7 @@ export async function captureSpecialStates({page,ctx,capture,navigate,change,set
   });
   await attempt('interior-band',async()=>{
     await navigate(page,'details','interior-style');
-    await choose('interior-style','Element','band');
+    await choose('interior-style','Type','band');
     await snap('interior-band-style');
     await navigate(page,'details','interior-placement');
     await snap('interior-band-width');
@@ -125,7 +131,7 @@ export async function captureSpecialStates({page,ctx,capture,navigate,change,set
   });
   await attempt('interior-straight',async()=>{
     await navigate(page,'details','interior-style');
-    await choose('interior-style','Geometry','straight');
+    await choose('interior-style','Shape','straight');
     await navigate(page,'details','interior-motion');
     await snap('interior-straight-disabled-motion');
   });

@@ -54,7 +54,7 @@
         <button type="button" class="theme-dot theme-dot-cream" data-studio-theme="cream"
           aria-label="Cream theme" title="Cream theme" aria-pressed="true"></button>
         <button type="button" class="theme-dot theme-dot-dark" data-studio-theme="dark"
-          aria-label="Black theme" title="Black theme" aria-pressed="false"></button>
+          aria-label="Dark theme" title="Dark theme" aria-pressed="false"></button>
       </div>
     </div>
   </header>
@@ -86,10 +86,10 @@
         <section class="settings-panel" id="panel-design" role="tabpanel" aria-labelledby="tab-design" tabindex="0">
           <div class="settings-panel-heading"><h2>Design the composition</h2><p>Choose the overall style, direction and stripe pattern.</p></div>
           <div class="control-grid">
-          <label class="field">Canvas structure <select name="structure" data-setting="structure"><option value="paths">Paths and ribbons</option><option value="radial">Radial and bursts</option><option value="regions">Regions and partitions</option></select></label>
-          <label class="field">Visual family <select name="family" data-setting="family"><option value="auto">Surprise me</option><option value="studio">Studio / graphic</option><option value="currents">Neon currents</option><option value="fracture">Geometric fracture</option><option value="confetti">Particle ribbons</option><option value="deco">Art deco</option><option value="tapestry">Tapestry</option><option value="signal">Signal / digital</option><option value="contour">Topographic contour</option></select></label>
+          <label class="field">Design type <select name="structure" data-setting="structure"><option value="paths">Paths and ribbons</option><option value="radial">Radial and bursts</option><option value="regions">Regions and partitions</option></select></label>
+          <label class="field">Starting style <select name="family" data-setting="family"><option value="auto">Surprise me</option><option value="studio">Studio / graphic</option><option value="currents">Neon currents</option><option value="fracture">Geometric fracture</option><option value="confetti">Particle ribbons</option><option value="deco">Art deco</option><option value="tapestry">Tapestry</option><option value="signal">Signal / digital</option><option value="contour">Topographic contour</option></select></label>
           <label class="field">Direction <select name="orientation" data-setting="orientation"><option value="auto">Surprise me</option><option value="vertical">Vertical</option><option value="horizontal">Horizontal</option><option value="diagonal">Diagonal</option></select></label>
-          <label class="field reverse-stripe-field"><input type="checkbox" name="reverseStripes" data-setting="reverseStripes"> Reverse stripe order (violet first)</label>
+          <label class="field reverse-stripe-field"><input type="checkbox" name="reverseStripes" data-setting="reverseStripes"> Reverse colour order (violet first)</label>
           <div class="diagonal-settings" id="diagonalSettings" hidden aria-label="Diagonal transform controls">
             <label class="field range-field"><span>Diagonal rotation</span>
               <input type="range" name="diagonalRotation" id="diagonalRotation" data-setting="diagonalRotation" min="-180" max="180" step="1" value="0">
@@ -99,7 +99,7 @@
             <label class="field mirror-field"><input type="checkbox" name="mirrorVertical" data-setting="mirrorVertical"> Mirror vertically</label>
           </div>
           <label class="field">Composition <select name="composition" data-setting="composition"><option value="single">Single rainbow</option><option value="repeat">Repeat rainbow group</option><option value="floating">Independent inset stripes</option></select></label>
-          <label class="field">Rainbow repetitions <select name="repeatCount" data-setting="repeatCount">
+          <label class="field">Repeats <select name="repeatCount" data-setting="repeatCount">
             <option value="2">2 groups</option><option value="3">3 groups</option><option value="4">4 groups</option>
             <option value="5">5 groups</option><option value="6">6 groups</option>
           </select></label>
@@ -109,14 +109,14 @@
           <label class="field range-field"><span>Ray rotation</span><input type="range" name="rayRotation" data-setting="rayRotation" min="-180" max="180" step="1" value="0"></label>
           <label class="field range-field"><span>Ray twist</span><input type="range" name="rayTwist" data-setting="rayTwist" min="-180" max="180" step="1" value="45"></label>
           <label class="field range-field"><span>Ray coverage</span><input type="range" name="rayCoverage" data-setting="rayCoverage" min="0" max="100" value="100"><small>Lower values reveal more background between rays.</small></label>
-          <label class="field range-field"><span>Centre clearance</span><input type="range" name="rayCore" data-setting="rayCore" min="0" max="100" value="0"></label>
+          <label class="field range-field"><span>Centre gap</span><input type="range" name="rayCore" data-setting="rayCore" min="0" max="100" value="0"></label>
           <label class="field range-field"><span>Origin X</span><input type="range" name="fieldCenterX" data-setting="fieldCenterX" min="-50" max="150" value="50"></label>
           <label class="field range-field"><span>Origin Y</span><input type="range" name="fieldCenterY" data-setting="fieldCenterY" min="-50" max="150" value="50"></label>
           <label class="field">Region layout <select name="regionMode" data-setting="regionMode"><option value="voronoi">Voronoi / stained glass</option><option value="organic">Organic territories</option><option value="facets">Triangular facets</option><option value="blocks">Recursive rectangles</option><option value="nested">Nested silhouettes</option></select></label>
-          <label class="field range-field"><span>Region complexity</span><input type="range" name="regionCount" data-setting="regionCount" min="7" max="70" step="7" value="14"></label>
-          <label class="field range-field"><span>Region irregularity</span><input type="range" name="regionJitter" data-setting="regionJitter" min="0" max="100" value="45"></label>
-          <label class="field range-field"><span>Nested shape sides</span><input type="range" name="regionSides" data-setting="regionSides" min="0" max="12" step="1" value="0"><small>0 = circular, 3–12 = polygons.</small></label>
-          <label class="field">Path geometry <select name="geometry" data-setting="geometry"><option value="auto">Follow family</option><option value="straight">Straight</option><option value="wave">Wavy</option><option value="zigzag">Zigzag</option><option value="chevron">Chevron / pointed V</option><option value="jagged">Jagged / fractured</option><option value="stepped">Stepped</option><option value="arc">Sweeping arcs</option><option value="contour">Topographic</option><option value="hairpin">Hairpin / returning curve</option><option value="loop">Single loop / circular turn</option><option value="loops">Continuous loops</option><option value="drawn" disabled>Drawn path</option></select></label>
+          <label class="field range-field"><span>Region count</span><input type="range" name="regionCount" data-setting="regionCount" min="7" max="70" step="7" value="14"></label>
+          <label class="field range-field"><span>Irregularity</span><input type="range" name="regionJitter" data-setting="regionJitter" min="0" max="100" value="45"></label>
+          <label class="field range-field"><span>Shape sides</span><input type="range" name="regionSides" data-setting="regionSides" min="0" max="12" step="1" value="0"><small>0 = circular, 3–12 = polygons.</small></label>
+          <label class="field">Path geometry <select name="geometry" data-setting="geometry"><option value="auto">Follow style</option><option value="straight">Straight</option><option value="wave">Wavy</option><option value="zigzag">Zigzag</option><option value="chevron">Chevron / pointed V</option><option value="jagged">Jagged / fractured</option><option value="stepped">Stepped</option><option value="arc">Sweeping arcs</option><option value="contour">Topographic</option><option value="hairpin">Hairpin / returning curve</option><option value="loop">Single loop / circular turn</option><option value="loops">Continuous loops</option><option value="drawn" disabled>Drawn path</option></select></label>
           <label class="field range-field"><span>Hairpin radius</span><input type="range" name="turnRadius" data-setting="turnRadius" min="0" max="100" value="50"></label>
           <label class="field range-field"><span>Hairpin turn angle</span><input type="range" name="hairpinAngle" data-setting="hairpinAngle" min="60" max="180" value="180" step="1"></label>
           <label class="field range-field"><span>Loop radius</span><input type="range" name="loopRadius" data-setting="loopRadius" min="0" max="100" value="50"></label>
@@ -125,13 +125,13 @@
           <label class="field range-field"><span>Chevron sharpness</span><input type="range" name="chevronSharpness" data-setting="chevronSharpness" min="0" max="100" value="50"></label>
           <label class="field range-field"><span>Loop aspect</span><input type="range" name="loopAspect" data-setting="loopAspect" min="0" max="100" value="50"></label>
           <label class="field geometry-safety-toggle" title="Protect stripe order and keep curves coherent. Switch off to allow extreme intersections and folds."><span>Preserve stripe coherence</span><input type="checkbox" name="geometrySafety" data-setting="geometrySafety" checked></label>
-          <label class="field">At intersections <select name="crossingMode" data-setting="crossingMode"><option value="over">Over · later path above</option><option value="under">Under · earlier path above</option><option value="weave">Weave · alternate rainbow stripes</option></select></label>
+          <label class="field">Crossing order <select name="crossingMode" data-setting="crossingMode"><option value="over">Over · later path above</option><option value="under">Under · earlier path above</option><option value="weave">Weave · alternate rainbow stripes</option></select></label>
           <small id="geometrySafetyStatus" class="geometry-safety-status" aria-live="polite">Coherent geometry</small>
-          <label class="field">Stripe construction <select name="construction" data-setting="construction"><option value="ribbon">Patterned / solid ribbon</option><option value="stroke">Fine continuous line</option><option value="tonal" hidden disabled>Legacy layered tonal bands</option><option value="woven">Woven diagonal lattice</option></select></label>
-          <label class="field">Stripe pattern <select name="motif" data-setting="motif"><option value="auto">Follow family</option><option value="solid">Solid</option><option value="dots">Dots</option><option value="stars">Stars</option><option value="dashes">Dashes</option><option value="diamonds">Diamonds</option><option value="chevrons">Chevrons</option><option value="hatch">Hatching</option><option value="checker">Checkerboard</option></select></label>
+          <label class="field">Stripe type <select name="construction" data-setting="construction"><option value="ribbon">Patterned / solid ribbon</option><option value="stroke">Fine continuous line</option><option value="tonal" hidden disabled>Legacy layered tonal bands</option><option value="woven">Woven diagonal lattice</option></select></label>
+          <label class="field">Stripe pattern <select name="motif" data-setting="motif"><option value="auto">Follow style</option><option value="solid">Solid</option><option value="dots">Dots</option><option value="stars">Stars</option><option value="dashes">Dashes</option><option value="diamonds">Diamonds</option><option value="chevrons">Chevrons</option><option value="hatch">Hatching</option><option value="checker">Checkerboard</option></select></label>
           <label class="field range-field"><span>Tonal contrast</span><input type="range" name="tonalContrast" data-setting="tonalContrast" min="0" max="100" value="50"></label>
           <label class="field range-field"><span>Pigment roughness</span><input type="range" name="brushRoughness" data-setting="brushRoughness" min="0" max="100" value="0"></label>
-          <label class="field">Stripe line style
+          <label class="field">Line style
             <select name="lineStyle" data-setting="lineStyle">
               <option value="continuous">Continuous</option>
               <option value="dotted">Dotted line</option>
@@ -145,27 +145,27 @@
           <label class="field range-field"><span>Motif density</span><input type="range" name="motifFrequency" data-setting="motifFrequency" min="0" max="100" value="50"></label>
           <label class="field range-field"><span>Dot diameter</span><input type="range" name="dotSize" data-setting="dotSize" min="0" max="100" value="50"></label>
           <label class="field range-field"><span>Dot spacing</span><input type="range" name="dotSpacing" data-setting="dotSpacing" min="0" max="100" value="50"></label>
-          <label class="field range-field"><span>Shape frequency</span>
+          <label class="field range-field"><span>Bend frequency</span>
             <input type="range" name="shapeFrequency" id="shapeFrequency" data-setting="shapeFrequency" min="0" max="100" value="50">
             <small>Fewer broad bends ← → More tight bends</small>
           </label>
-          <label class="field range-field"><span>Shape depth</span>
+          <label class="field range-field"><span>Bend depth</span>
             <input type="range" name="shapeDepth" id="shapeDepth" data-setting="shapeDepth" min="0" max="100" value="50">
-            <small>Subtle motion ← → Dramatic motion</small>
+            <small>Subtle bends ← → Deep bends</small>
           </label>
         </div>
-        <label class="field range-field pattern-homogeneity"><span>Pattern homogeneity </span><input type="range" name="patternHomogeneity" id="patternHomogeneity" data-setting="patternHomogeneity" min="0" max="100" value="100"><small>100% uniform · 0% varied size, rotation and opacity</small></label>
+        <label class="field range-field pattern-homogeneity"><span>Pattern uniformity </span><input type="range" name="patternHomogeneity" id="patternHomogeneity" data-setting="patternHomogeneity" min="0" max="100" value="100"><small>100% uniform · 0% varied size, rotation and opacity</small></label>
         <div class="stripe-shadow-section">
           <div class="stripe-shadow-controls" id="stripeShadowControls">
             <div class="control-grid range-grid">
-              <label class="field range-field"><span>Shadow strength</span>
+              <label class="field range-field"><span>Strength</span>
                 <input type="range" name="stripeShadowStrength" id="stripeShadowStrength" data-setting="stripeShadowStrength" min="0" max="100" value="0">
               </label>
-              <label class="field range-field"><span>Shadow softness</span>
+              <label class="field range-field"><span>Softness</span>
                 <input type="range" name="stripeShadowSoftness" id="stripeShadowSoftness" data-setting="stripeShadowSoftness" min="0" max="100" value="55">
               </label>
             </div>
-            <label class="field">Shadow light source
+            <label class="field">Light direction
               <select name="stripeShadowDirection" data-setting="stripeShadowDirection">
                 <option value="top-left">Upper left ↘</option>
                 <option value="top-right">Upper right ↙</option>
@@ -173,17 +173,17 @@
                 <option value="bottom-right">Lower right ↖</option>
               </select>
             </label>
-            <small class="stripe-shadow-help">Zero shadow strength turns stripe shadows off. Canvas lighting is controlled separately under Effects.</small>
+            <small class="stripe-shadow-help">Zero shadow strength turns stripe shadows off. Canvas lighting is controlled separately under Light.</small>
           </div>
         </div>
         </section>
         <section class="settings-panel" id="panel-colour" role="tabpanel" aria-labelledby="tab-colour" tabindex="0" hidden>
           <div class="settings-panel-heading"><h2>Colour & edges</h2><p>Tune the rainbow, canvas and outlines.</p></div>
           <div class="control-grid">
-          <label class="field">Colour story <select name="palette" data-setting="palette"><option value="auto">Follow family</option><option value="classic">Classic rainbow</option><option value="electric">Electric / neon</option><option value="pastel">Pastel</option><option value="jewel">Jewel tones</option><option value="muted">Muted / vintage</option><option value="sunset">Sunset glow</option><option value="candy">Candy pop</option><option value="arctic">Arctic ice</option><option value="earth">Earth &amp; mineral</option><option value="twilight">Twilight violet</option><option value="citrus">Citrus punch</option></select></label>
-          <label class="field">Stripe outlines <select name="outline" data-setting="outline"><option value="auto">Follow family</option><option value="none">None</option><option value="hairline">Hairline</option><option value="white">White outlined</option><option value="double">Double white</option><option value="broken">Dashed white</option><option value="one-side">Single white edge</option><option value="black">Black outlined</option><option value="black-hairline">Black hairline</option><option value="black-double">Double black</option><option value="black-broken">Dashed black</option><option value="black-one-side">Single black edge</option></select></label>
+          <label class="field">Palette <select name="palette" data-setting="palette"><option value="auto">Follow style</option><option value="classic">Classic rainbow</option><option value="electric">Electric / neon</option><option value="pastel">Pastel</option><option value="jewel">Jewel tones</option><option value="muted">Muted / vintage</option><option value="sunset">Sunset glow</option><option value="candy">Candy pop</option><option value="arctic">Arctic ice</option><option value="earth">Earth &amp; mineral</option><option value="twilight">Twilight violet</option><option value="citrus">Citrus punch</option></select></label>
+          <label class="field">Outline style <select name="outline" data-setting="outline"><option value="auto">Follow style</option><option value="none">None</option><option value="hairline">Hairline</option><option value="white">White outlined</option><option value="double">Double white</option><option value="broken">Dashed white</option><option value="one-side">Single white edge</option><option value="black">Black outlined</option><option value="black-hairline">Black hairline</option><option value="black-double">Double black</option><option value="black-broken">Dashed black</option><option value="black-one-side">Single black edge</option></select></label>
         </div>
-        <label class="field">Region dividers <select name="dividerColor" data-setting="dividerColor"><option value="none">No divider</option><option value="background">Use background colour</option><option value="black">Black</option><option value="white">White</option></select></label>
+        <label class="field">Divider colour <select name="dividerColor" data-setting="dividerColor"><option value="none">No divider</option><option value="background">Use background colour</option><option value="black">Black</option><option value="white">White</option></select></label>
         <label class="field range-field"><span>Divider thickness</span><input type="range" name="dividerWidth" data-setting="dividerWidth" min="0" max="100" value="12"></label>
         <label class="field background-field">Background <select name="background" data-setting="background"><option value="black">Black</option><option value="white">White</option></select></label>
           <div class="lighting-subsection">
@@ -191,7 +191,7 @@
               <div><h3>Light &amp; shadow</h3><p>Ambient illumination across the entire canvas, not shadows cast by stripes.</p></div>
             </div>
             <div class="control-grid">
-              <label class="field">Lighting mood
+              <label class="field">Mood
                 <select name="lightingMood" data-setting="lightingMood">
                   <option value="off">Off / original colours</option>
                   <option value="daylight">Soft daylight</option>
@@ -199,7 +199,7 @@
                   <option value="moonlight">Cool moonlight</option>
                 </select>
               </label>
-              <label class="field">Light from
+              <label class="field">Direction
                 <select name="lightDirection" data-setting="lightDirection">
                   <option value="top-left">Upper left ↘</option>
                   <option value="top-right">Upper right ↙</option>
@@ -209,10 +209,10 @@
               </label>
             </div>
             <div class="control-grid range-grid">
-              <label class="field range-field"><span>Light intensity</span>
+              <label class="field range-field"><span>Intensity</span>
                 <input type="range" name="lightStrength" data-setting="lightStrength" min="0" max="100" value="45">
               </label>
-              <label class="field range-field"><span>Canvas shade</span>
+              <label class="field range-field"><span>Shading</span>
                 <input type="range" name="shadowStrength" data-setting="shadowStrength" min="0" max="100" value="28">
               </label>
             </div>
@@ -220,52 +220,52 @@
           </div>
         </section>
         <section class="settings-panel" id="panel-textures" role="tabpanel" aria-labelledby="tab-textures" tabindex="0" hidden>
-          <div class="settings-panel-heading"><h2>Material layers</h2><p>Build surfaces with independent paper, textile and construction textures.</p></div>
+          <div class="settings-panel-heading"><h2>Texture layers</h2><p>Build surfaces with independent paper, textile and construction textures.</p></div>
           <input type="checkbox" id="textureLayer2Enabled" name="textureLayer2Enabled" hidden>
 <input type="checkbox" id="textureLayer3Enabled" name="textureLayer3Enabled" hidden>
 <div class="texture-layer-group">
-<label class="field">Texture layer 1<select name="material" data-setting="material"><option value="auto">Follow family</option><option value="none">No texture / smooth</option><option value="grain">Fine paper grain</option><option value="watercolor">Watercolour paper</option><option value="construction">Construction paper</option><option value="handmade">Handmade fibrous paper</option><option value="corrugated">Corrugated cardboard</option><option value="linen">Linen</option><option value="canvas">Cotton canvas</option><option value="denim">Denim twill</option><option value="knit">Knitted fabric</option><option value="felt">Wool felt</option><option value="corduroy">Corduroy</option><option value="concrete">Concrete</option><option value="stucco">Stucco</option><option value="stone">Stone</option><option value="adobe">Adobe</option><option value="drywall">Drywall</option><option value="wood-grain">Wood grain</option><option value="vinyl-sheet">Vinyl sheet</option><option value="foil">Foil</option><option value="glossy-paper">Glossy paper</option></select></label>
-<label class="field">Apply texture to<select name="textureCoverage" data-setting="textureCoverage"><option value="both">Background and stripes</option><option value="background">Background only</option><option value="stripes">Stripes only</option></select></label>
-<div class="control-grid range-grid"><label class="field range-field"><span>Layer 1 strength</span><input type="range" name="textureStrength" id="textureStrength" data-setting="textureStrength" min="0" max="100" value="52"></label><label class="field range-field"><span>Layer 1 scale</span><input type="range" name="textureScale" id="textureScale" data-setting="textureScale" min="0" max="100" value="50"></label></div>
-<div class="texture-rotation-field"><span>Layer 1 rotation</span><div class="rotation-controls"><button type="button" class="rotation-button" data-rotate-target="textureRotation" data-rotate-delta="-90" aria-label="Rotate layer 1 counterclockwise 90 degrees">−90°</button><button type="button" class="rotation-button rotation-step" data-rotate-target="textureRotation" data-rotate-delta="-1" aria-label="Decrease layer 1 rotation by one degree">−1°</button><input type="number" name="textureRotation" id="textureRotation" data-setting="textureRotation" value="0" step="0.1" inputmode="decimal" aria-label="Texture layer 1 rotation in degrees"><button type="button" class="rotation-button rotation-step" data-rotate-target="textureRotation" data-rotate-delta="1" aria-label="Increase layer 1 rotation by one degree">+1°</button><button type="button" class="rotation-button" data-rotate-target="textureRotation" data-rotate-delta="90" aria-label="Rotate layer 1 clockwise 90 degrees">+90°</button><button type="button" class="rotation-button rotation-reset" data-rotate-target="textureRotation" data-rotate-set="0" aria-label="Reset layer 1 rotation">0°</button></div></div>
+<label class="field">Texture layer 1<select name="material" data-setting="material"><option value="auto">Follow style</option><option value="none">No texture / smooth</option><option value="grain">Fine paper grain</option><option value="watercolor">Watercolour paper</option><option value="construction">Construction paper</option><option value="handmade">Handmade fibrous paper</option><option value="corrugated">Corrugated cardboard</option><option value="linen">Linen</option><option value="canvas">Cotton canvas</option><option value="denim">Denim twill</option><option value="knit">Knitted fabric</option><option value="felt">Wool felt</option><option value="corduroy">Corduroy</option><option value="concrete">Concrete</option><option value="stucco">Stucco</option><option value="stone">Stone</option><option value="adobe">Adobe</option><option value="drywall">Drywall</option><option value="wood-grain">Wood grain</option><option value="vinyl-sheet">Vinyl sheet</option><option value="foil">Foil</option><option value="glossy-paper">Glossy paper</option></select></label>
+<label class="field">Apply to<select name="textureCoverage" data-setting="textureCoverage"><option value="both">Background and stripes</option><option value="background">Background only</option><option value="stripes">Stripes only</option></select></label>
+<div class="control-grid range-grid"><label class="field range-field"><span>Strength</span><input type="range" name="textureStrength" id="textureStrength" data-setting="textureStrength" min="0" max="100" value="52"></label><label class="field range-field"><span>Scale</span><input type="range" name="textureScale" id="textureScale" data-setting="textureScale" min="0" max="100" value="50"></label></div>
+<div class="texture-rotation-field"><span>Rotation</span><div class="rotation-controls"><button type="button" class="rotation-button" data-rotate-target="textureRotation" data-rotate-delta="-90" aria-label="Rotate layer 1 counterclockwise 90 degrees">−90°</button><button type="button" class="rotation-button rotation-step" data-rotate-target="textureRotation" data-rotate-delta="-1" aria-label="Decrease layer 1 rotation by one degree">−1°</button><input type="number" name="textureRotation" id="textureRotation" data-setting="textureRotation" value="0" step="0.1" inputmode="decimal" aria-label="Texture layer 1 rotation in degrees"><button type="button" class="rotation-button rotation-step" data-rotate-target="textureRotation" data-rotate-delta="1" aria-label="Increase layer 1 rotation by one degree">+1°</button><button type="button" class="rotation-button" data-rotate-target="textureRotation" data-rotate-delta="90" aria-label="Rotate layer 1 clockwise 90 degrees">+90°</button><button type="button" class="rotation-button rotation-reset" data-rotate-target="textureRotation" data-rotate-set="0" aria-label="Reset layer 1 rotation">0°</button></div></div>
 <label class="field">Blend mode<select name="textureBlend" data-setting="textureBlend"><option value="normal">Normal</option><option value="multiply">Multiply</option><option value="screen">Screen</option><option value="overlay">Overlay</option><option value="soft-light">Soft light</option><option value="difference">Difference</option></select></label>
 
 </div><div id="textureLayer2Panel" class="texture-layer-panel" hidden>
 <label class="field">Texture layer 2<select name="material2" data-setting="material2"><option value="none">No texture / smooth</option><option value="grain">Fine paper grain</option><option value="watercolor">Watercolour paper</option><option value="construction">Construction paper</option><option value="handmade">Handmade fibrous paper</option><option value="corrugated">Corrugated cardboard</option><option value="linen">Linen</option><option value="canvas">Cotton canvas</option><option value="denim">Denim twill</option><option value="knit">Knitted fabric</option><option value="felt">Wool felt</option><option value="corduroy">Corduroy</option><option value="concrete">Concrete</option><option value="stucco">Stucco</option><option value="stone">Stone</option><option value="adobe">Adobe</option><option value="drywall">Drywall</option><option value="wood-grain">Wood grain</option><option value="vinyl-sheet">Vinyl sheet</option><option value="foil">Foil</option><option value="glossy-paper">Glossy paper</option></select></label>
-<label class="field">Apply texture to<select name="textureCoverage2" data-setting="textureCoverage2"><option value="both">Background and stripes</option><option value="background">Background only</option><option value="stripes">Stripes only</option></select></label>
-<div class="control-grid range-grid"><label class="field range-field"><span>Layer 2 strength</span><input type="range" name="textureStrength2" id="textureStrength2" data-setting="textureStrength2" min="0" max="100" value="40"></label><label class="field range-field"><span>Layer 2 scale</span><input type="range" name="textureScale2" id="textureScale2" data-setting="textureScale2" min="0" max="100" value="50"></label></div>
-<div class="texture-rotation-field"><span>Layer 2 rotation</span><div class="rotation-controls"><button type="button" class="rotation-button" data-rotate-target="textureRotation2" data-rotate-delta="-90" aria-label="Rotate layer 2 counterclockwise 90 degrees">−90°</button><button type="button" class="rotation-button rotation-step" data-rotate-target="textureRotation2" data-rotate-delta="-1" aria-label="Decrease layer 2 rotation by one degree">−1°</button><input type="number" name="textureRotation2" id="textureRotation2" data-setting="textureRotation2" value="0" step="0.1" inputmode="decimal" aria-label="Texture layer 2 rotation in degrees"><button type="button" class="rotation-button rotation-step" data-rotate-target="textureRotation2" data-rotate-delta="1" aria-label="Increase layer 2 rotation by one degree">+1°</button><button type="button" class="rotation-button" data-rotate-target="textureRotation2" data-rotate-delta="90" aria-label="Rotate layer 2 clockwise 90 degrees">+90°</button><button type="button" class="rotation-button rotation-reset" data-rotate-target="textureRotation2" data-rotate-set="0" aria-label="Reset layer 2 rotation">0°</button></div></div>
+<label class="field">Apply to<select name="textureCoverage2" data-setting="textureCoverage2"><option value="both">Background and stripes</option><option value="background">Background only</option><option value="stripes">Stripes only</option></select></label>
+<div class="control-grid range-grid"><label class="field range-field"><span>Strength</span><input type="range" name="textureStrength2" id="textureStrength2" data-setting="textureStrength2" min="0" max="100" value="40"></label><label class="field range-field"><span>Scale</span><input type="range" name="textureScale2" id="textureScale2" data-setting="textureScale2" min="0" max="100" value="50"></label></div>
+<div class="texture-rotation-field"><span>Rotation</span><div class="rotation-controls"><button type="button" class="rotation-button" data-rotate-target="textureRotation2" data-rotate-delta="-90" aria-label="Rotate layer 2 counterclockwise 90 degrees">−90°</button><button type="button" class="rotation-button rotation-step" data-rotate-target="textureRotation2" data-rotate-delta="-1" aria-label="Decrease layer 2 rotation by one degree">−1°</button><input type="number" name="textureRotation2" id="textureRotation2" data-setting="textureRotation2" value="0" step="0.1" inputmode="decimal" aria-label="Texture layer 2 rotation in degrees"><button type="button" class="rotation-button rotation-step" data-rotate-target="textureRotation2" data-rotate-delta="1" aria-label="Increase layer 2 rotation by one degree">+1°</button><button type="button" class="rotation-button" data-rotate-target="textureRotation2" data-rotate-delta="90" aria-label="Rotate layer 2 clockwise 90 degrees">+90°</button><button type="button" class="rotation-button rotation-reset" data-rotate-target="textureRotation2" data-rotate-set="0" aria-label="Reset layer 2 rotation">0°</button></div></div>
 <label class="field">Blend mode<select name="textureBlend2" data-setting="textureBlend2"><option value="normal">Normal</option><option value="multiply">Multiply</option><option value="screen">Screen</option><option value="overlay">Overlay</option><option value="soft-light">Soft light</option><option value="difference">Difference</option></select></label>
 
 </div><div id="textureLayer3Panel" class="texture-layer-panel" hidden>
 <label class="field">Texture layer 3<select name="material3" data-setting="material3"><option value="none">No texture / smooth</option><option value="grain">Fine paper grain</option><option value="watercolor">Watercolour paper</option><option value="construction">Construction paper</option><option value="handmade">Handmade fibrous paper</option><option value="corrugated">Corrugated cardboard</option><option value="linen">Linen</option><option value="canvas">Cotton canvas</option><option value="denim">Denim twill</option><option value="knit">Knitted fabric</option><option value="felt">Wool felt</option><option value="corduroy">Corduroy</option><option value="concrete">Concrete</option><option value="stucco">Stucco</option><option value="stone">Stone</option><option value="adobe">Adobe</option><option value="drywall">Drywall</option><option value="wood-grain">Wood grain</option><option value="vinyl-sheet">Vinyl sheet</option><option value="foil">Foil</option><option value="glossy-paper">Glossy paper</option></select></label>
-<label class="field">Apply texture to<select name="textureCoverage3" data-setting="textureCoverage3"><option value="both">Background and stripes</option><option value="background">Background only</option><option value="stripes">Stripes only</option></select></label>
-<div class="control-grid range-grid"><label class="field range-field"><span>Layer 3 strength</span><input type="range" name="textureStrength3" id="textureStrength3" data-setting="textureStrength3" min="0" max="100" value="30"></label><label class="field range-field"><span>Layer 3 scale</span><input type="range" name="textureScale3" id="textureScale3" data-setting="textureScale3" min="0" max="100" value="50"></label></div>
-<div class="texture-rotation-field"><span>Layer 3 rotation</span><div class="rotation-controls"><button type="button" class="rotation-button" data-rotate-target="textureRotation3" data-rotate-delta="-90" aria-label="Rotate layer 3 counterclockwise 90 degrees">−90°</button><button type="button" class="rotation-button rotation-step" data-rotate-target="textureRotation3" data-rotate-delta="-1" aria-label="Decrease layer 3 rotation by one degree">−1°</button><input type="number" name="textureRotation3" id="textureRotation3" data-setting="textureRotation3" value="0" step="0.1" inputmode="decimal" aria-label="Texture layer 3 rotation in degrees"><button type="button" class="rotation-button rotation-step" data-rotate-target="textureRotation3" data-rotate-delta="1" aria-label="Increase layer 3 rotation by one degree">+1°</button><button type="button" class="rotation-button" data-rotate-target="textureRotation3" data-rotate-delta="90" aria-label="Rotate layer 3 clockwise 90 degrees">+90°</button><button type="button" class="rotation-button rotation-reset" data-rotate-target="textureRotation3" data-rotate-set="0" aria-label="Reset layer 3 rotation">0°</button></div></div>
+<label class="field">Apply to<select name="textureCoverage3" data-setting="textureCoverage3"><option value="both">Background and stripes</option><option value="background">Background only</option><option value="stripes">Stripes only</option></select></label>
+<div class="control-grid range-grid"><label class="field range-field"><span>Strength</span><input type="range" name="textureStrength3" id="textureStrength3" data-setting="textureStrength3" min="0" max="100" value="30"></label><label class="field range-field"><span>Scale</span><input type="range" name="textureScale3" id="textureScale3" data-setting="textureScale3" min="0" max="100" value="50"></label></div>
+<div class="texture-rotation-field"><span>Rotation</span><div class="rotation-controls"><button type="button" class="rotation-button" data-rotate-target="textureRotation3" data-rotate-delta="-90" aria-label="Rotate layer 3 counterclockwise 90 degrees">−90°</button><button type="button" class="rotation-button rotation-step" data-rotate-target="textureRotation3" data-rotate-delta="-1" aria-label="Decrease layer 3 rotation by one degree">−1°</button><input type="number" name="textureRotation3" id="textureRotation3" data-setting="textureRotation3" value="0" step="0.1" inputmode="decimal" aria-label="Texture layer 3 rotation in degrees"><button type="button" class="rotation-button rotation-step" data-rotate-target="textureRotation3" data-rotate-delta="1" aria-label="Increase layer 3 rotation by one degree">+1°</button><button type="button" class="rotation-button" data-rotate-target="textureRotation3" data-rotate-delta="90" aria-label="Rotate layer 3 clockwise 90 degrees">+90°</button><button type="button" class="rotation-button rotation-reset" data-rotate-target="textureRotation3" data-rotate-set="0" aria-label="Reset layer 3 rotation">0°</button></div></div>
 <label class="field">Blend mode<select name="textureBlend3" data-setting="textureBlend3"><option value="normal">Normal</option><option value="multiply">Multiply</option><option value="screen">Screen</option><option value="overlay">Overlay</option><option value="soft-light">Soft light</option><option value="difference">Difference</option></select></label>
 
 </div>
         <div class="texture-displacement-control">
-          <label class="field range-field"><span>Texture displacement</span>
+          <label class="field range-field"><span>Contour distortion</span>
             <input type="range" name="textureDisplacement" id="textureDisplacement" data-setting="textureDisplacement" min="0" max="100" value="0">
           </label>
-          <small>Distort the actual stripe contours, not just their colour. Visible even with no material selected (neutral grain fallback). 0% keeps crisp edges.</small>
+          <small>Distort the actual stripe contours, not just their colour. Requires a texture applied to stripes. Background-only textures do not deform stripes. 0% keeps crisp edges.</small>
         </div>
         </section>
         <section class="settings-panel" id="panel-refine" role="tabpanel" aria-labelledby="tab-refine" tabindex="0" hidden>
           <div class="settings-panel-heading"><h2>Fine-tune the geometry</h2><p>Adjust spacing, thickness, edge profiles and glow.</p></div>
           <div class="control-grid range-grid">
-          <label class="field range-field"><span>Controlled chaos </span><input type="range" name="chaos" id="chaos" data-setting="chaos" min="0" max="100" value="36"></label>
+          <label class="field range-field"><span>Chaos </span><input type="range" name="chaos" id="chaos" data-setting="chaos" min="0" max="100" value="36"></label>
           <label class="field range-field"><span>Stripe thickness </span><input type="range" name="stripeWidth" id="stripeWidth" data-setting="stripeWidth" min="0" max="100" value="52"></label>
           <label class="field range-field" title="Changes the spacing between stripes, not their thickness"><span>Stripe spacing </span><input type="range" name="spread" id="spread" data-setting="spread" min="0" max="100" value="56"></label>
-          <label class="field range-field"><span>Stripe individuality </span><input type="range" name="individuality" id="individuality" data-setting="individuality" min="0" max="100" value="34"></label>
-          <label class="homogeneity-override" title="When enabled, individuality introduces additional per-stripe differences in pattern size, orientation and transparency."><input type="checkbox" name="overridePatternHomogeneity" data-setting="overridePatternHomogeneity" aria-description="When enabled, individuality introduces additional per-stripe differences in pattern size, orientation and transparency."><span>Override pattern homogeneity with stripe individuality<small>When enabled, individuality introduces additional per-stripe differences in pattern size, orientation and transparency.</small></span></label>
+          <label class="field range-field"><span>Stripe variation </span><input type="range" name="individuality" id="individuality" data-setting="individuality" min="0" max="100" value="34"></label>
+          <label class="homogeneity-override" title="When enabled, individuality introduces additional per-stripe differences in pattern size, orientation and transparency."><input type="checkbox" name="overridePatternHomogeneity" data-setting="overridePatternHomogeneity" aria-description="When enabled, individuality introduces additional per-stripe differences in pattern size, orientation and transparency."><span>Vary patterns too<small>When enabled, individuality introduces additional per-stripe differences in pattern size, orientation and transparency.</small></span></label>
           <label class="field range-field"><span>Outline thickness </span><input type="range" name="gap" id="gap" data-setting="gap" min="0" max="100" value="28"></label>
-          <label class="field range-field"><span>Outline buffer </span><input type="range" name="outlineBuffer" id="outlineBuffer" data-setting="outlineBuffer" min="0" max="100" value="0" title="Distance between each stripe and its outline"></label>
-          <label class="field range-field"><span>Floating stripe length</span><input type="range" name="pathLength" data-setting="pathLength" min="0" max="100" value="65"></label>
-          <label class="field path-extension-toggle" title="Continue open drawn and imported paths beyond the frame at any zoom or nudge. Closed and floating paths retain their ends."><span>Extend open drawn path</span><input type="checkbox" name="extendDrawnPath" data-setting="extendDrawnPath"></label>
-          <label class="field range-field"><span>Taper stripe ends</span><input type="range" name="endTaper" data-setting="endTaper" min="0" max="100" value="0"></label>
-          <label class="field range-field"><span>Neon glow </span><input type="range" name="glow" id="glow" data-setting="glow" min="0" max="100" value="0"></label>
+          <label class="field range-field"><span>Outline offset </span><input type="range" name="outlineBuffer" id="outlineBuffer" data-setting="outlineBuffer" min="0" max="100" value="0" title="Distance between each stripe and its outline"></label>
+          <label class="field range-field"><span>Stripe length</span><input type="range" name="pathLength" data-setting="pathLength" min="0" max="100" value="65"></label>
+          <label class="field path-extension-toggle" title="Continue open drawn and imported paths beyond the frame at any zoom or nudge. Closed and floating paths retain their ends."><span>Extend open paths</span><input type="checkbox" name="extendDrawnPath" data-setting="extendDrawnPath"></label>
+          <label class="field range-field"><span>End taper</span><input type="range" name="endTaper" data-setting="endTaper" min="0" max="100" value="0"></label>
+          <label class="field range-field"><span>Glow </span><input type="range" name="glow" id="glow" data-setting="glow" min="0" max="100" value="0"></label>
         </div>
         
         <p class="control-note">Geometric individuality changes path direction, parallelism, and edge profiles, never stripe pattern types. New variation retains settings; Randomize all changes everything.</p>
@@ -312,7 +312,7 @@
           <div class="stage-side"><span class="side-vertical">SEVEN COLOURS / ONE BLACK CANVAS</span><div class="palette-stack" role="img" aria-label="Red orange yellow green blue indigo violet"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div></div>
         </div>
         <div class="mobile-five-shortcuts" role="group" aria-label="Save or download current artwork">
-    <button type="button" id="mobileFavorite" aria-label="Save or remove favourite"><span aria-hidden="true"><img class="ui-icon" src="assets/icons/roygbiv/favourite.svg" alt="" aria-hidden="true" draggable="false"></span><small>Favourite</small></button>
+    <button type="button" id="mobileFavorite" aria-label="Add to favourites"><span aria-hidden="true"><img class="ui-icon" src="assets/icons/roygbiv/favourite.svg" alt="" aria-hidden="true" draggable="false"></span><small>Favourite</small></button>
     <button type="button" id="mobileDownload" aria-label="Download wallpaper PNG"><span aria-hidden="true"><img class="ui-icon" src="assets/icons/roygbiv/export-png.svg" alt="" aria-hidden="true" draggable="false"></span><small>Download</small></button>
         </div>
         <canvas id="drawOverlay" width="600" height="1300" tabindex="0" hidden aria-label="Draw a path or use square anchors and tangent handles to edit it"></canvas>
@@ -346,10 +346,10 @@
       </div>
       <div class="action-tray">
         <div class="seed-group"><label for="seedInput">DESIGN SEED</label><input id="seedInput" type="text" maxlength="90" spellcheck="false" value="rainbow-001" aria-label="Design seed"><button id="applySeed" class="icon-btn" title="Render this seed" aria-label="Apply seed" type="button">↵</button></div>
-        <div class="main-actions"><button id="randomize" class="button button-outline" type="button"><img class="ui-icon" src="assets/icons/roygbiv/reroll.svg" alt="" aria-hidden="true" draggable="false"> <span>New variation</span></button><button id="download" class="button button-light" type="button"><img class="ui-icon" src="assets/icons/roygbiv/export-png.svg" alt="" aria-hidden="true" draggable="false"> <span>Download PNG</span></button><button id="favorite" class="button button-icon" title="Save to favourites" aria-label="Save to favourites" aria-pressed="false" type="button"><img class="ui-icon" src="assets/icons/roygbiv/favourite.svg" alt="" aria-hidden="true" draggable="false"></button></div>
+        <div class="main-actions"><button id="randomize" class="button button-outline" type="button" title="New seed; keep current settings"><img class="ui-icon" src="assets/icons/roygbiv/reroll.svg" alt="" aria-hidden="true" draggable="false"> <span>New variation</span></button><button id="download" class="button button-light" type="button"><img class="ui-icon" src="assets/icons/roygbiv/export-png.svg" alt="" aria-hidden="true" draggable="false"> <span>Download PNG</span></button><button id="favorite" class="button button-icon" title="Add to favourites" aria-label="Add to favourites" aria-pressed="false" type="button"><img class="ui-icon" src="assets/icons/roygbiv/favourite.svg" alt="" aria-hidden="true" draggable="false"></button></div>
       </div>
       <div class="export-metadata">
-        <button id="importRecipePNG" type="button" class="text-link-button" aria-label="Restore design from saved PNG or JSON recipe"><img class="ui-icon" src="assets/icons/roygbiv/path.svg" alt="" aria-hidden="true" draggable="false"> Restore design from PNG or JSON</button>
+        <button id="importRecipePNG" type="button" class="text-link-button" aria-label="Import design from PNG or JSON recipe"><img class="ui-icon" src="assets/icons/roygbiv/path.svg" alt="" aria-hidden="true" draggable="false"> Import design</button>
         <input id="importRecipeFile" type="file" accept="image/png,.png,application/json,.json" hidden aria-label="Choose a wallpaper PNG or recipe JSON to restore a design">
         <button id="metadataToggle" type="button" class="text-link-button metadata-toggle"
           aria-expanded="false" aria-controls="metadataPanel">▸ Edit image metadata</button>
@@ -376,14 +376,14 @@
         </div>
       </div>
       <div class="secondary-actions"><button id="copyLink" type="button">↗ Copy design link</button><button id="copyRecipe" type="button"><img class="ui-icon" src="assets/icons/roygbiv/copy.svg" alt="" aria-hidden="true" draggable="false"> Copy recipe JSON</button><button id="downloadRecipe" type="button"><img class="ui-icon" src="assets/icons/roygbiv/download.svg" alt="" aria-hidden="true" draggable="false"> Save recipe JSON</button><span id="notice" hidden aria-hidden="true"></span></div>
-      <div class="details-bar"><div><span class="details-label">FAMILY</span><strong id="detailFamily">—</strong></div><div><span class="details-label">PATH</span><strong id="detailGeometry">—</strong></div><div><span class="details-label">MATERIAL</span><strong id="detailMaterial">—</strong></div><div><span class="details-label">COLOURS</span><strong>ROYGBIV · 7/7</strong></div></div>
+      <div class="details-bar"><div><span class="details-label">STYLE</span><strong id="detailFamily">—</strong></div><div><span class="details-label">PATH</span><strong id="detailGeometry">—</strong></div><div><span class="details-label">TEXTURE</span><strong id="detailMaterial">—</strong></div><div><span class="details-label">COLOURS</span><strong>ROYGBIV · 7/7</strong></div></div>
       <section class="gallery-section" aria-labelledby="galleryTitle"><div class="gallery-head"><div><span class="eyebrow">DISCOVER / 02</span><h2 id="galleryTitle">Explore variations</h2><p>Generate a contact sheet, inspect the possibilities, then open one for full-resolution export.</p></div><div class="gallery-buttons"><button id="batch" class="button button-outline" type="button"><img class="ui-icon" src="assets/icons/roygbiv/randomize.svg" alt="" aria-hidden="true" draggable="false"> Generate 12</button><button id="showFavorites" class="button button-outline" type="button"><img class="ui-icon" src="assets/icons/roygbiv/favourite.svg" alt="" aria-hidden="true" draggable="false"> Favourites <span id="favoriteCount">0</span></button></div></div><div id="gallery" class="gallery-grid" aria-live="polite"><div class="gallery-placeholder">A blank contact sheet is an invitation.<br><span>Generate twelve different directions.</span></div></div></section>
     </main>
     <footer><span>R.O.Y.G.B.I.V. / V1.0</span><span>Generative. Deterministic. Made of light.</span><span>BLACK × ROYGBIV</span></footer>
   </div>
   <div id="mobileSheetBackdrop" class="mobile-sheet-backdrop" hidden></div>
   <section id="mobileToolsSheet" class="mobile-utility-sheet" aria-label="More design tools" hidden>
-    <div class="mobile-sheet-head"><strong>More tools</strong><button type="button" id="mobileToolsClose" aria-label="Close tools"><img class="ui-icon" src="assets/icons/roygbiv/close.svg" alt="" aria-hidden="true" draggable="false"></button></div>
+    <div class="mobile-sheet-head"><strong>More</strong><button type="button" id="mobileToolsClose" aria-label="Close tools"><img class="ui-icon" src="assets/icons/roygbiv/close.svg" alt="" aria-hidden="true" draggable="false"></button></div>
     <div class="mobile-tools-content" id="mobileToolsContent">
     <button type="button" id="mobileShuffle" aria-label="Randomize all settings"><span aria-hidden="true"><img class="ui-icon" src="assets/icons/roygbiv/randomize.svg" alt="" aria-hidden="true" draggable="false"></span><small>Randomize</small></button>
     </div>
@@ -400,7 +400,7 @@
     <button type="button" data-dock-proxy="mobileEdit" aria-label="Close editor" title="Close editor"><span aria-hidden="true"><img class="ui-icon" src="assets/icons/roygbiv/chevron-left.svg" alt="" aria-hidden="true" draggable="false"></span></button>
     <button type="button" data-dock-proxy="mobileExplore" aria-label="Explore wallpapers" title="Explore"><span aria-hidden="true"><img class="ui-icon" src="assets/icons/roygbiv/explore.svg" alt="" aria-hidden="true" draggable="false"></span></button>
     <button type="button" data-dock-proxy="mobileShuffle" aria-label="Randomize all settings" title="Randomize"><span aria-hidden="true"><img class="ui-icon" src="assets/icons/roygbiv/randomize.svg" alt="" aria-hidden="true" draggable="false"></span><small>Random</small></button>
-    <button type="button" data-dock-proxy="mobileFavorite" aria-label="Save or remove favourite" title="Favourite"><span aria-hidden="true"><img class="ui-icon" src="assets/icons/roygbiv/favourite.svg" alt="" aria-hidden="true" draggable="false"></span></button>
+    <button type="button" data-dock-proxy="mobileFavorite" aria-label="Add to favourites" title="Favourite"><span aria-hidden="true"><img class="ui-icon" src="assets/icons/roygbiv/favourite.svg" alt="" aria-hidden="true" draggable="false"></span></button>
     <button type="button" data-dock-proxy="mobileDownload" aria-label="Download PNG" title="Download"><span aria-hidden="true"><img class="ui-icon" src="assets/icons/roygbiv/export-png.svg" alt="" aria-hidden="true" draggable="false"></span></button>
     <button type="button" data-dock-proxy="mobileMore" aria-label="More tools" title="More tools"><span aria-hidden="true"><img class="ui-icon" src="assets/icons/roygbiv/more.svg" alt="" aria-hidden="true" draggable="false"></span></button>
   </nav>
@@ -415,20 +415,20 @@
     <div class="image-path-top"><strong>Import path from image</strong><span class="image-path-phase" aria-hidden="true">Choose image</span><button type="button" id="imagePathCancel" aria-label="Close image importer"><img class="ui-icon" src="assets/icons/roygbiv/close.svg" alt="" aria-hidden="true" draggable="false"></button></div>
     <p id="imagePathStatus" role="status" aria-live="polite">Choose a path from the image.</p>
     <div class="image-path-preview"><canvas id="imagePathCanvas" width="600" height="1300" aria-label="Image with selectable extracted paths"></canvas></div>
-    <label class="image-path-choice">Detected geometry
+    <label class="image-path-choice">Detected paths
       <select id="imagePathCandidate" aria-label="Choose detected path"></select>
     </label>
     <div class="image-path-actions">
       <button type="button" id="imagePathAnother">Another image</button>
       <button type="button" id="imagePathAngle" disabled>Use angle</button>
-      <button type="button" id="imagePathApply" disabled>Edit / Use path</button>
+      <button type="button" id="imagePathApply" disabled>Edit path</button>
     </div>
   </dialog>
-  <script type="module" src="src/app.js?v=20261020-controlsfix1"></script>
-  <script type="module" src="src/mobile-studio.js?v=20261018-default1"></script>
+  <script type="module" src="src/app.js?v=20261021-labels1"></script>
+  <script type="module" src="src/mobile-studio.js?v=20261021-labels1"></script>
   <script type="module" src="src/mobile-fullscreen.js?v=20261021-1"></script>
   <script type="module" src="src/mobile-swipes.js?v=20261017-explore1"></script>
-  <script type="module" src="src/mobile-preview-tools.js?v=20261020-primes3"></script>
+  <script type="module" src="src/mobile-preview-tools.js?v=20261021-labels1"></script>
   <script type="module" src="src/colour-vision-preview.js?v=20261021-1"></script>
 </body>
 </html>

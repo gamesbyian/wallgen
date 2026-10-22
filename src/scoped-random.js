@@ -91,9 +91,15 @@ export function randomizeScope(currentInput,{scope,name,mode='reroll',strength='
     if(key==='geometry'&&current.geometry==='drawn')continue;
     const el=control?.(key);
     if(el?.dataset.inactive==='true')continue;
-    const choices=el?.tagName==='SELECT'?[...el.options].filter(o=>!o.disabled)
-      .map(o=>o.value):null;
     const v=current[key];
+    const sourceChoices=el?.tagName==='SELECT'?[...el.options]
+      .filter(o=>!o.disabled).map(o=>o.value):null;
+    // Native <option> values are strings, even for integer recipe fields
+    // such as repeatCount. Compare like types: a string "3" is not an
+    // alternative to numeric 3, and normalization would erase the change.
+    const choices=sourceChoices&&typeof v==='number'&&
+      sourceChoices.every(x=>x.trim()!==''&&Number.isFinite(Number(x)))?
+      sourceChoices.map(Number):sourceChoices;
     let target=candidate[key];
     if(mode==='vary'){
       if(typeof v==='number'){
@@ -143,5 +149,11 @@ export function randomizeScope(currentInput,{scope,name,mode='reroll',strength='
       }
     }
   }
-  return {recipe:normalizeRecipe(next),modified,scope,name,mode};
+  const recipe=normalizeRecipe(next);
+  // A UI action succeeds only if its serialized source value really moved.
+  // In particular, a native select may report a string that normalizes back
+  // to the original number. Never announce a no-op as a change.
+  const actualModified=[...new Set(modified)].filter(key=>
+    JSON.stringify(recipe[key])!==JSON.stringify(current[key]));
+  return {recipe,modified:actualModified,scope,name,mode};
 }

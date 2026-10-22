@@ -115,7 +115,10 @@ async function editOriginal(key,field){
     const before=Number(await field.inputValue());
     const max=Number(await field.getAttribute('max'));
     const direction=before<max?'Increase':'Decrease';
-    const step=page.locator('#controls .step-button[aria-label="'+direction+' '+key+'"]');
+    // The original range owns its two stepper buttons. Their spoken names
+    // now use readable setting labels, never raw recipe field identifiers.
+    const step=field.locator('xpath=..').locator('button.step-button')
+      .nth(direction==='Increase'?1:0);
     assert.equal(await step.count(),1,key+': source native range stepper missing');
     await step.click();
     return {action:'pointer-step',direction,from:before};

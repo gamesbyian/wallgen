@@ -148,6 +148,46 @@ try{
   assert.ok(declaredExpansions.every(x=>x.ariaControls&&
     ['true','false'].includes(x.ariaExpanded)));
   console.log('MOBILE_ACCESSIBLE_ACTION_CENSUS',JSON.stringify(mobileSemantics));
+  // Live DOM terminology must be compact without losing unique accessible
+  // names for multiple texture layers, shadows or scoped controls.
+  const language=await evaluate(`(()=>{
+    const form=document.getElementById('controls');
+    const labels=keys=>Object.fromEntries(keys.map(key=>
+      [key,form.elements.namedItem(key)?.getAttribute('aria-label')]));
+    return {
+      tabs:[...document.querySelectorAll('.settings-tab')].map(tab=>tab.textContent.trim()),
+      tools:document.querySelectorAll('.editor-tool-tab[data-editor-tool]').length,
+      names:labels(['textureStrength','textureStrength2','textureStrength3',
+        'textureRotation2','textureDisplacement','stripeShadowStrength','lightingMood']),
+      safeArea:document.getElementById('mobileBleed')?.textContent,
+      safeAreaAction:document.getElementById('mobileBleed')?.getAttribute('aria-label'),
+      more:[...document.querySelectorAll('.mobile-more-group h3')].map(el=>el.textContent),
+      favorite:document.getElementById('mobileFavorite')?.getAttribute('aria-label'),
+      styleHeadings:document.querySelectorAll('.editor-style>strong').length,
+      styleLabel:form.elements.namedItem('family')?.closest('label')?.textContent.trim().slice(0,14),
+      currentTool:document.querySelector('[data-random-tool=arrange]')?.getAttribute('aria-label'),
+    };
+  })()`);
+  assert.deepEqual(language.tabs,
+    ['Layout','Path','Stripes','Details','Colour','Texture','Light']);
+  assert.equal(language.tools,40);
+  assert.equal(new Set([
+    language.names.textureStrength,language.names.textureStrength2,
+    language.names.textureStrength3]).size,3);
+  assert.equal(language.names.textureStrength2,'Texture layer 2 strength');
+  assert.equal(language.names.textureRotation2,'Texture layer 2 rotation in degrees');
+  assert.equal(language.names.textureDisplacement,'Texture-driven contour distortion');
+  assert.equal(language.names.stripeShadowStrength,'Stripe shadow strength');
+  assert.equal(language.names.lightingMood,'Lighting mood');
+  assert.equal(language.safeArea,'Safe area');
+  assert.match(language.safeAreaAction,/Show 90% safe-area guide/);
+  assert.deepEqual(language.more,['Generate','Files & sharing','Position & info']);
+  assert.equal(language.favorite,'Add to favourites');
+  assert.equal(language.styleHeadings,0);
+  assert.match(language.styleLabel,/Starting style/);
+  assert.equal(language.currentTool,'Reroll Arrangement tool');
+  console.log('EDITOR_LANGUAGE_CONTRACT',JSON.stringify(language));
+
   // Saved and Explore share the grid but must never share navigation mode.
   // On an empty fresh profile, Saved has its own heading and empty copy;
   // returning via Explore restores the independent exploration view.
@@ -541,7 +581,7 @@ try{
     'JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r")))');
   assert.deepEqual(fitted,beforeZoom,'Fit changed artwork instead of framing');
   assert.equal(await evaluate('document.querySelector(".mobile-fit-button").getAttribute("aria-label")'),
-    'Fit entire wallpaper (100% framing)');
+    'Reset view: zoom and frame position');
   assert.equal(await evaluate('document.querySelector(".mobile-fit-button").disabled'),true);
   // Move the CAMERA via its own controls in More. Never invoke data-nudge
   // or mutate the source composition position. The resulting frame is saved.
@@ -950,7 +990,7 @@ try{
   assert.ok(editor.previewHeight>260,'the complete frame remains appreciable during edits');
   assert.ok(Math.abs(editor.ratio-600/1300)<.06);
   assert.equal(editor.scrollY,'hidden');
-  assert.deepEqual(editor.tabs,['Layout','Path','Shapes','Details','Colour','Material','Effects']);
+  assert.deepEqual(editor.tabs,['Layout','Path','Stripes','Details','Colour','Texture','Light']);
   // Every live source category gets a distinct flat accent, without changing
   // slider values, disabled handlers or the four-column material rotation.
   const rowPalette=await evaluate(`(()=>{
@@ -975,9 +1015,9 @@ try{
     rotation:document.querySelector('[data-random-setting="textureRotation"]')?.getAttribute('aria-label'),
     background:document.querySelector('[data-random-setting="background"]')?.getAttribute('aria-label')
   }))()`);
-  assert.equal(sourcedDieNames.stripe,'Randomize only Stripe thickness');
-  assert.match(sourcedDieNames.rotation,/^Randomize only Texture layer 1 rotation in degrees$/);
-  assert.equal(sourcedDieNames.background,'Randomize only Background');
+  assert.equal(sourcedDieNames.stripe,'Reroll only Stripe thickness');
+  assert.match(sourcedDieNames.rotation,/^Reroll only Texture layer 1 rotation in degrees$/);
+  assert.equal(sourcedDieNames.background,'Reroll only Background');
   console.log('SOURCE_SETTING_RANDOMIZE_LABELS',JSON.stringify(sourcedDieNames));
   const iconPlacement=await evaluate('(()=>({tabs:[...document.querySelectorAll(".settings-tab")].map(b=>({width:b.getBoundingClientRect().width,icon:!!b.querySelector("svg.ui-icon")})),dock:[...document.querySelectorAll("#mobileActionDock>button")].map(b=>({width:b.getBoundingClientRect().width,icon:!!b.querySelector("svg.ui-icon")})),rail:[...document.querySelectorAll("#mobileEditorActionRail>button")].map(b=>({width:b.getBoundingClientRect().width,icon:!!b.querySelector("svg.ui-icon")})),remoteImages:document.querySelectorAll("img.ui-icon").length,categoryHeight:document.querySelector(".settings-tabs").getBoundingClientRect().height}))()');
   assert.equal(iconPlacement.remoteImages,0,'inlined icons inherit theme contrast');
@@ -2071,7 +2111,7 @@ try{
       placement,visible,closed:!document.body.classList.contains('mobile-tools-open')};
   })()`);
   assert.deepEqual(moreGroups.headings,[
-    'Create & seed','Import, export & share','Position & design details'
+    'Generate','Files & sharing','Position & info'
   ]);
   assert.ok(Object.values(moreGroups.placement).every(Boolean));
   assert.ok(moreGroups.visible&&moreGroups.closed);
@@ -2365,7 +2405,7 @@ try{
       assert.ok(moreReachability.scrollRange>0,
         'More must scroll to expose lower source controls at '+width+'×'+height);
       assert.deepEqual(moreReachability.headings,
-        ['Create & seed','Import, export & share','Position & design details']);
+        ['Generate','Files & sharing','Position & info']);
       assert.deepEqual(moreReachability.targets.map(x=>x.action),
         ['up','left','reset','right','down']);
       assert.ok(moreReachability.targets.every(x=>x.width>=34&&x.height>=34&&
