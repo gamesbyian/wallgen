@@ -278,7 +278,7 @@ try{
         {seed:'worker-watercolor-overhang',structure:'paths',geometry:'wave',
           material:'watercolor',textureStrength:71,textureCoverage:'both',
           textureDisplacement:62,viewZoom:.86},
-        {seed:'worker-wood-overhang',structure:'paths',geometry:'loop',
+        {seed:'worker-wood-overhang',structure:'paths',geometry:'wave',
           material:'wood-grain',textureStrength:82,textureCoverage:'stripes',
           textureDisplacement:57,viewZoom:1.15},
         {seed:'worker-facets',structure:'regions',regionMode:'facets',
