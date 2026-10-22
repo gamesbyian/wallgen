@@ -1,5 +1,8 @@
 # ROYGBIV: modern digital camera and photographic rendering looks
 
+**D3 working implementation increment (2026-10-22):** In the existing Photo look selector, **Low-res webcam capture** now introduces a bounded miniature sensor grid, four-source-point filtering per sample, shared 2×2 chroma, and luma/chroma quantization before the existing tone/grain finish. This is an honest **signal-loss simulation**, distinct from the older, still unchanged Webcam colours (preview). The sensor is at most 200×520 for extreme ratios, approximately 200×433 for the studio portrait. Alpha and authored recipe remain stable; source and export use the shared `src/photo-look.js` pipeline without another full-size image allocation. It is **not** actual JPEG/MJPEG codec emulation, camera sensor RAW, measured 480p output or a performance-certified Pixel 6 Pro feature. D3 more realistic codec ringing/quantization and D4/D5 visual/device judgement remain queued. Focused Node tests, no new CI workflow.
+
+
 > **CURRENT IMPLEMENTATION QUEUE · 2026-10-22:** This is a research/specification merged via [#469](https://github.com/gamesbyian/wallgen/pull/469), **not shipping source code**. [Camera issue #471](https://github.com/gamesbyian/wallgen/issues/471) owns D0–D5. [Film #468](https://github.com/gamesbyian/wallgen/issues/468) owns F0–F5; they share one versioned neutral photoLook and **Light → Photo (Camera/Film)**. [Embroidery #467](https://github.com/gamesbyian/wallgen/issues/467) is an independent surface stage. See [current roadmap](ACTIVE-PRODUCT-ROADMAP-2026-10-22.md). Use only targeted samples and regular lightweight PR CI; planning ≠ completion.
 ## Companion specification to film emulation, camera-style image processing and UX integration
 

@@ -122,3 +122,46 @@ test('layered emulsion grain is deterministic, resolution-aware and finer than l
   assert.equal(left[3],255);
   assert.equal(left[left.length-1],255);
 });
+
+test('simulated low-res webcam has real spatial sampling, quantization and stable alpha',()=>{
+  const width=600,height=60,raw=pixels(128,128,128,width,height);
+  // Input contains one-pixel-wide vertical black/white stripes that are
+  // finer than the simulated 200-column sensor can resolve.
+  for(let y=0;y<height;y++)for(let x=0;x<width;x++){
+    const at=(y*width+x)*4,level=(x%2)*255;
+    raw[at]=level;raw[at+1]=level;raw[at+2]=level;
+  }
+  const camera=normalizePhotoLook({enabled:true,presetId:'camera-webcam-signal',
+    amount:100,parameters:{grain:0,vignette:0,contrast:1,saturation:1,
+      shadow:0,highlight:0,red:0,green:0,blue:0}});
+  const a=raw.slice(),b=raw.slice();
+  processPhotoPixels(a,width,height,camera,'my-sensor');
+  processPhotoPixels(b,width,height,camera,'my-sensor');
+  assert.deepEqual(a,b);
+  assert.notDeepEqual(a,raw);
+  for(let y of [0,30,59])for(let x=0;x<width;x+=3){
+    const first=(y*width+x)*4;
+    assert.deepEqual([...a.slice(first,first+3)],
+      [...a.slice(first+4,first+7)],'adjacent output pixels share sensor sample');
+    assert.deepEqual([...a.slice(first,first+3)],
+      [...a.slice(first+8,first+11)],'bounded capture resolution survives upscaling');
+    assert.equal(a[first+3],255);
+  }
+});
+test('webcam capture changes chroma spatial bandwidth, with neutral amount bypass',()=>{
+  const width=300,height=120,raw=pixels(0,0,0,width,height);
+  for(let y=0;y<height;y++)for(let x=0;x<width;x++){
+    const at=(y*width+x)*4;
+    if(Math.floor(x/2)%2){raw[at]=255;raw[at+2]=0;}
+    else{raw[at]=0;raw[at+2]=255;}
+  }
+  const camera=normalizePhotoLook({enabled:true,presetId:'camera-webcam-signal',amount:100,
+    parameters:{grain:0,vignette:0,contrast:1,saturation:1,shadow:0,highlight:0,
+      red:0,green:0,blue:0}});
+  const filtered=raw.slice();
+  processPhotoPixels(filtered,width,height,camera,'chroma');
+  assert.notDeepEqual(filtered,raw,'4:2:0-style chroma reduction must affect source');
+  const disabled=raw.slice();
+  processPhotoPixels(disabled,width,height,{...camera,amount:0},'chroma');
+  assert.deepEqual(disabled,raw,'neutral amount must not change bytes');
+});

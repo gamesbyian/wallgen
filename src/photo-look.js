@@ -9,6 +9,7 @@ export const PHOTO_PRESETS=Object.freeze({
   'camera-natural':Object.freeze({family:'camera',contrast:1.055,saturation:1.045,shadow:0.012,highlight:0.06,red:0,green:0,blue:0,grain:2,vignette:2}),
   'camera-hdr':Object.freeze({family:'camera',contrast:1.11,saturation:1.12,shadow:0.055,highlight:0.095,red:0.002,green:0.003,blue:0.002,grain:1,vignette:0}),
   'camera-webcam':Object.freeze({family:'camera',contrast:1.08,saturation:0.78,shadow:0.015,highlight:0.02,red:0.015,green:-0.003,blue:0.005,grain:22,vignette:5}),
+  'camera-webcam-signal':Object.freeze({family:'camera',contrast:1.06,saturation:0.84,shadow:0.02,highlight:0.015,red:0.012,green:-0.006,blue:0.008,grain:7,vignette:4}),
 });
 export const PHOTO_PRESET_NAMES=Object.freeze({
   'film-slide':'Slide film inspired',
@@ -18,6 +19,7 @@ export const PHOTO_PRESET_NAMES=Object.freeze({
   'camera-natural':'Natural digital camera',
   'camera-hdr':'Smartphone HDR inspired',
   'camera-webcam':'Old webcam colour (early preview)',
+  'camera-webcam-signal':'Low-resolution webcam capture (simulated)',
 });
 const finite=(x,fallback,min,max)=>{
   const n=Number(x);
@@ -49,6 +51,51 @@ const noiseHash=(x,y,seed)=>{
   h=Math.imul(h^(h>>>13),1274126177);
   return ((h^(h>>>16))>>>0)/4294967296-.5;
 };
+// Artistic approximation of a low-bandwidth webcam signal, not a JPEG codec.
+// Work in a tiny bounded sensor frame instead of allocating a second 20MP RGBA
+// raster. Four source samples per sensor cell temper hard-edge aliasing.
+// Neighbouring 2x2 sensor cells share quantized chroma (4:2:0-like sampling).
+// Sensor samples are complete BEFORE the destination pixels are changed.
+function makeWebcamCapture(data,width,height){
+  const sensorWidth=Math.min(width,200);
+  const sensorHeight=Math.min(height,520,Math.max(1,Math.round(sensorWidth*height/width)));
+  const chromaWidth=Math.ceil(sensorWidth/2);
+  const chromaHeight=Math.ceil(sensorHeight/2);
+  const luma=new Float32Array(sensorWidth*sensorHeight);
+  const cb=new Float32Array(chromaWidth*chromaHeight);
+  const cr=new Float32Array(chromaWidth*chromaHeight);
+  const count=new Uint8Array(chromaWidth*chromaHeight);
+  for(let y=0;y<sensorHeight;y++)for(let x=0;x<sensorWidth;x++){
+    let r=0,g=0,b=0;
+    for(const oy of [.25,.75])for(const ox of [.25,.75]){
+      const px=Math.min(width-1,Math.floor((x+ox)*width/sensorWidth));
+      const py=Math.min(height-1,Math.floor((y+oy)*height/sensorHeight));
+      const at=(py*width+px)*4;
+      r+=data[at];g+=data[at+1];b+=data[at+2];
+    }
+    r/=4;g/=4;b/=4;
+    const at=y*sensorWidth+x;
+    const luminance=.299*r+.587*g+.114*b;
+    luma[at]=luminance;
+    const block=(y>>1)*chromaWidth+(x>>1);
+    cb[block]+=b-luminance;
+    cr[block]+=r-luminance;
+    count[block]++;
+  }
+  const rgb=new Uint8Array(sensorWidth*sensorHeight*3);
+  for(let y=0;y<sensorHeight;y++)for(let x=0;x<sensorWidth;x++){
+    const at=y*sensorWidth+x;
+    const block=(y>>1)*chromaWidth+(x>>1);
+    const Y=Math.round(luma[at]/6)*6;
+    const Cb=Math.round((cb[block]/count[block])/16)*16;
+    const Cr=Math.round((cr[block]/count[block])/16)*16;
+    const r=clampByte(Y+Cr),b=clampByte(Y+Cb);
+    const g=clampByte((Y-.299*r-.114*b)/.587);
+    rgb[at*3]=r;rgb[at*3+1]=g;rgb[at*3+2]=b;
+  }
+  return {width:sensorWidth,height:sensorHeight,pixels:rgb};
+}
+
 // Mutates the supplied pixel array. Destination alpha is never touched.
 // The grain grid is anchored in the authored 600x1300 frame, not device pixels.
 export function processPhotoPixels(data,width,height,rawLook,seed='rainbow-001'){
@@ -74,15 +121,26 @@ export function processPhotoPixels(data,width,height,rawLook,seed='rainbow-001')
   // coordinates. Keep the old single-scale sampler unchanged for existing
   // recipes: already saved images must not shift when a new preset is added.
   const layeredGrain=look.presetId==='film-grain-only';
+  const webcamSignal=look.presetId==='camera-webcam-signal'?
+    makeWebcamCapture(data,width,height):null;
   const hash=fastHash(String(seed)+':photo-v1:'+look.presetId);
   const yScale=1300/height,xScale=600/width;
   let i=0;
   for(let y=0;y<height;y++){
     const ny=(y+.5)/height*2-1;
     const yCell=Math.floor((y+.5)*yScale);
+    const signalRow=webcamSignal?
+      Math.min(webcamSignal.height-1,Math.floor((y+.5)/height*webcamSignal.height))*webcamSignal.width:0;
     for(let x=0;x<width;x++,i+=4){
       const r=data[i],g=data[i+1],b=data[i+2];
-      let R=table[0][r],G=table[1][g],B=table[2][b];
+      // The cached simulated sensor never reads already graded destination
+      // pixels. Other looks use the exact original direct RGB branch.
+      const sample=webcamSignal?
+        (signalRow+Math.min(webcamSignal.width-1,
+          Math.floor((x+.5)/width*webcamSignal.width)))*3:0;
+      let R=table[0][webcamSignal?webcamSignal.pixels[sample]:r],
+        G=table[1][webcamSignal?webcamSignal.pixels[sample+1]:g],
+        B=table[2][webcamSignal?webcamSignal.pixels[sample+2]:b];
       const luma=.2126*R+.7152*G+.0722*B;
       R=luma+(R-luma)*p.saturation;
       G=luma+(G-luma)*p.saturation;
