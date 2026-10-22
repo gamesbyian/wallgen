@@ -194,8 +194,7 @@ test('identical duplicate recipes may consolidate; conflicting history is refuse
   assert.equal(report.recordCount,2);
   assert.deepEqual(report.conflictingChunkIndexes,
     [readRawPngRecipe(conflicting).records[0].chunkIndex]);
-  const blocked=assert.throws(()=>migratePngMetadataOnly(conflicting));
-  assert.match(String(blocked?.message||report.reason),/Conflicting/);
+  assert.throws(()=>migratePngMetadataOnly(conflicting),/Conflicting/);
   const archive=archivePngRecipeRecords(conflicting);
   assert.equal(archive.recordCount,2);
   same(Buffer.from(archive.records[0].originalChunkBase64,'base64'),olderRecord.raw);
