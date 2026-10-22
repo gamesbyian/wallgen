@@ -61,6 +61,8 @@ function makeMemory({idFactory,now},warning){
       const next=await prepared({...current,...patch,id,
         createdAt:current.createdAt,revision:current.revision+1,
         modifiedAt:now()},{idFactory,now});
+      if(assets.get(id)?.revision!==current.revision)
+        throw error('conflict','This item changed while preparing the update.');
       assets.set(id,internal(next));
       return display(next);
     },
