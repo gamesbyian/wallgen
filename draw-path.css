@@ -242,12 +242,12 @@ body.path-drawing .studio-stage>#drawOverlay{cursor:crosshair}
   }
 }
 
-/* Tall narrow phone precision authoring: all *existing* Draw point actions
+/* Tall mobile precision authoring: all *existing* Draw point actions
    gain actual 44px high DOM hit regions, as do Finish/Cancel/Edit points.
    Preserve the opaque, internally scrollable source panel and never add a
    toolbar across the wallpaper. Short portraits retain compact geometry.
    Pointer/recipe/renderer semantics are unchanged. */
-@media(max-width:499px) and (min-height:840px){
+@media(max-width:790px) and (min-height:840px){
   body.mobile-studio.path-drawing .draw-path-panel
     .draw-path-controls button,
   body.mobile-studio.path-drawing .draw-path-panel
