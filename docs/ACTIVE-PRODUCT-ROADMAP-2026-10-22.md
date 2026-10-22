@@ -1,5 +1,11 @@
 # ROYGBIV: active product roadmap and work queue
 
+## Embroidery object targeting exposed in editor (PR #482, 2026-10-22)
+
+[#482](https://github.com/gamesbyian/wallgen/pull/482) connects the existing `surfaceTreatments.target.scope='object'` implementation to Texture → Surface → Thread. A contextual single-object picker now lists actual generated region IDs and each authored ribbon ID, including repeat bundles, and keeps missing saved IDs visible instead of silently changing targets after a scene edit. Source controls retain the same single `editor-stitches` treatment and Undo/PNG recipe path; unrelated custom treatment entries stay intact. No new top-level destinations, cloned controls, renderers, randomization lanes or CI workflows.
+
+**Still open:** paint-scene or gallery click-to-target shortcuts, more than one simultaneous editor-owned treatment, outlines/interior stitches, artistic device review and advanced thread science. This advances E1 object selection and E4 UX without declaring full #467 acceptance.
+
 ## Stitch continuity correction: foreground crossings (PR #481, 2026-10-22)
 
 [#481](https://github.com/gamesbyian/wallgen/pull/481) corrects the first embroidery renderer's missing thread layer on self-crossing foreground branches. Loop/drawn crossing repaint now restores the original ribbon's stitches inside the *same branch clipping mask*, with a bounded station interval and no change to baseline designs. The sampling lattice is unchanged, so optical thread spacing does not jump at intersections, and repeated crossing touch-ups do not iterate the full 2,500-station field. Focused direct tests cover deterministic lattice subsequences and geometry variants. Visual Pixel proof and physically realistic thread shading remain open. No new workflow.
