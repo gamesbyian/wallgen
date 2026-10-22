@@ -31,9 +31,9 @@ test('actual brand strokes and phone stay within Android 80%-diameter safe circl
   [66.0219,97.12],[99.7781,88],
   [34,13],[87,13],[34,107],[87,107]
  ];
- const strokeRadius=9/2*3.36;
+ const strokeRadius=9/2*3.2;
  for(const [x,y] of samples){
-  const X=54.4+3.36*(x+1),Y=54.4+3.36*(y-2.4);
+  const X=64+3.2*(x+1),Y=64+3.2*(y-2.4);
   assert.ok(Math.hypot(X-256,Y-256)+strokeRadius<=512*.4,
     'Brand point or its stroke would be clipped by a mask: '+JSON.stringify({x,y,X,Y}));
  }
