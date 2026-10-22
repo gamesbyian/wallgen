@@ -17,7 +17,7 @@ const creamLogo=read('assets/roygbiv-logo-cream.svg');
 
 test('Cream Studio defaults on but Original Dark remains selectable and untouched',()=>{
   assert.match(html,/data-studio-theme="cream"[^>]*aria-label="Cream theme"[^>]*aria-pressed="true"/);
-  assert.match(html,/data-studio-theme="dark"[^>]*aria-label="Black theme"[^>]*aria-pressed="false"/);
+  assert.match(html,/data-studio-theme="dark"[^>]*aria-label="Dark theme"[^>]*aria-pressed="false"/);
   assert.match(mobile,/button\.dataset\.studioTheme===theme/);
   assert.match(css,/theme-dot-dark::before\{background:#08090e\}/);
   assert.match(html,/localStorage\.getItem\('roygbiv:studio-theme:v1'\) \|\| 'cream'/);
@@ -133,7 +133,7 @@ test('all settings have a single tool home and no nested mobile vertical scrolli
   const schema=read('src/editor-schema.js');
   const layout=read('src/editor-layout.js');
   const css=read('editor-redesign.css');
-  for(const name of ['Geometry','Patterns','Shadows','Outlines','Lighting','Character'])
+  for(const name of ['Geometry','Patterns','Shadows','Outlines','Lighting','Variation'])
     assert.ok(schema.includes("name:'"+name+"'"),name);
   assert.match(layout,/const root=fieldNode\(key\)/);
   assert.match(layout,/annotateEditorSettingRow\(root,form\.elements\.namedItem\(key\),key,/);
