@@ -181,6 +181,7 @@ export function mountEditor(){
     layer1:['texture-layer-group'],
     layer2:['textureLayer2Panel'],
     layer3:['textureLayer3Panel'],
+    surface:['embroidery-controls'],
   };
   for(const [toolId,selectors] of Object.entries(special)){
     const host=tools.get(toolId).card;

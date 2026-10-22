@@ -1,10 +1,11 @@
-import { DESIGN_WIDTH, DESIGN_HEIGHT, resolveScene, rng } from './model.js';
+import { DESIGN_WIDTH, DESIGN_HEIGHT, resolveScene, rng, NAMES } from './model.js';
 import { samplePath, ribbonEdge, widthAt, noise1D } from './path-geometry.js';
 import {drawRegionInteriors,elementInk,elementWave,lineDash,elementApplies} from './interior-elements.js';
 import { viewCamera } from './view-camera.js';
 import {findPathCrossings,crossingTopIsLater,crossingBranchClip} from './crossing-order.js';
 import {materialHeight,paintMaterial} from './material-surface.js';
 import {applyPhotoFinish} from './photo-look.js';
+import {matchingEmbroidery,drawRibbonEmbroidery,drawRegionEmbroidery} from './embroidery.js';
 
 const TAU = Math.PI * 2;
 const geometryAt=(x,stripe,extent)=>samplePath(stripe,x,extent).y;
@@ -864,8 +865,17 @@ export function drawRegionObjects(ctx,scene){
     ctx.fillStyle=object.color;
     if(object.rings)ctx.fill('evenodd');else ctx.fill();
     ctx.shadowBlur=0;
+    const stitch=matchingEmbroidery(scene.surfaceTreatments,{id:object.id,colorSlot:object.colorIndex});
+    if(stitch){
+      ctx.save();
+      trace(object);
+      ctx.clip(object.rings?'evenodd':'nonzero');
+      drawRegionEmbroidery(ctx,object,stitch);
+      ctx.restore();
+    }
     drawRegionInteriors(ctx,object,scene.interiorElements,scene.structure,scene.renderBounds);
     if(!hasDivider){
+      if(stitch)trace(object);
       ctx.strokeStyle=object.color;
       ctx.lineWidth=1;
       ctx.lineJoin='round';
@@ -962,6 +972,13 @@ export function drawWallpaper(canvas, recipe, options={}) {
     drawOutline(g,path,stripe,scene);
     g.fillStyle=stripe.color;g.strokeStyle=stripe.color;
     fillMotif(g,stripe,scene.extent,scene);
+    const stitch=matchingEmbroidery(scene.surfaceTreatments,{
+      id:stripe.objectId,colorSlot:NAMES.indexOf(stripe.name)});
+    if(stitch&&scene.construction==='ribbon'&&scene.lineStyle==='continuous'&&scene.motif==='solid'){
+      g.save();g.clip(stripeFillPath(stripe,scene.extent,scene));
+      drawRibbonEmbroidery(g,stripe,scene.extent,stitch);
+      g.restore();
+    }
     if(scene.construction!=='woven')drawBrushWear(g,stripe,scene.extent,scene);
     drawPathInteriors(g,stripe,scene.extent,scene);
   }

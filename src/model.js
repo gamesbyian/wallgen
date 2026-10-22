@@ -1,5 +1,6 @@
 import { SHAPES } from './path-geometry.js';
 import {normalizePhotoLook} from './photo-look.js';
+import {normalizeSurfaceTreatments} from './embroidery.js';
 import {normalizeCompoundRegion,GEOMETRY_SNAPSHOT_SCHEMA} from './geometry-asset.js';
 import {normalizeScatteredOverrides} from './scattered-object-edits.js';
 import { normalizeInteriorElements } from './interior-elements.js';
@@ -112,6 +113,7 @@ export function normalizeRecipe(input = {}) {
     interiorElements:normalizedInteriors,
     // Old recipes have no Photo key, leaving their saved representation and pixels intact.
     ...(input.photoLook?{photoLook:normalizePhotoLook(input.photoLook)}:{}),
+    ...(Array.isArray(input.surfaceTreatments)?{surfaceTreatments:normalizeSurfaceTreatments(input.surfaceTreatments)}:{}),
     seed,
     primesOnly: input.primesOnly === true || input.primesOnly === 'true',
     lockedSettings: LOCKABLE_SETTINGS.filter(key=>Array.isArray(input.lockedSettings) && input.lockedSettings.includes(key)),

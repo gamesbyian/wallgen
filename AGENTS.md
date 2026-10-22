@@ -1,5 +1,9 @@
 # Agent orientation for ROYGBIV
 
+## Embroidery implementation alert (PR #474, 2026-10-22)
+
+[#474](https://github.com/gamesbyian/wallgen/pull/474) starts E0/E1 in `src/embroidery.js` with strict optional `surfaceTreatments` and palette/object/global fill targeting, first path/region stitch overlays and a small Texture → Surface editor. Keep all old artwork pixel-unchanged when omitted, and do not duplicate material layers, change the 40-tool navigation, or claim finished stitch physically accurate. Planned stages E2–E5, object selection/outline/interior treatments and actual image/device review remain open; see the active roadmap. No third-party code copied.
+
 ## Implementation alert: Photo work has begun (2026-10-22)
 
 [PR #473](https://github.com/gamesbyian/wallgen/pull/473) is the first actual shared Photo implementation: versioned opt-in `photoLook`, a simple sRGB tone/grain finish, and a compact Light-pane switch. It advances F0/F1 and D1/D2 but does **not** complete film optics, webcam compression, advanced inspector, real rendered-art review or phone signoff. Before working on photo finishing, inspect latest main and that PR's merge status; use `src/photo-look.js` as the sole film-and-camera postprocessor. Preserve old recipe pixels when Photo is off. Do not add a second Film tool or a second camera processor. See the active roadmap checkpoint.
