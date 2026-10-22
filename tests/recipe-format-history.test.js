@@ -25,7 +25,11 @@ test('current model has the same explicit recipe field list as latest historical
   const latest=ledger.revisions.at(-1);
   const current=extractRecipeKeyInventory(read('src/model.js'));
   assert.deepEqual(current.explicitKeys,latest.explicitKeys);
-  assert.ok(current.explicitKeys.includes('seed'));
+  // This first archaeological pass indexes "name: expression" properties.
+  // The literal "seed," shorthand is covered by runtime normalization,
+  // not by this explicit-property-only source ledger.
+  assert.ok(!current.explicitKeys.includes('seed'));
+  assert.match(read('src/model.js'),/^    seed,?$/m);
   assert.ok(current.explicitKeys.includes('structure'));
   assert.ok(current.explicitKeys.includes('viewZoom'));
   assert.ok(current.explicitKeys.includes('viewPanX'));
