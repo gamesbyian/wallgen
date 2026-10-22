@@ -89,3 +89,36 @@ test('finished-compositor adapter reads once and applies pixel data once',()=>{
   assert.equal(ctx.writes,1);
   assert.notDeepEqual(ctx.last,original);
 });
+
+test('grain-only look has neutral tone, hue and vignette when grain is zero',()=>{
+  const look=normalizePhotoLook({enabled:true,presetId:'film-grain-only',amount:100,
+    parameters:{grain:0}});
+  assert.equal(look.parameters.contrast,1);
+  assert.equal(look.parameters.saturation,1);
+  assert.equal(look.parameters.vignette,0);
+  for(const rgb of [[0,0,0],[255,255,255],[15,100,213],[250,50,6]]){
+    const original=pixels(...rgb,21,19),output=original.slice();
+    processPhotoPixels(output,21,19,look,'neutral');
+    assert.deepEqual(output,original,'grain zero must not recolour authored hues');
+  }
+});
+test('layered emulsion grain is deterministic, resolution-aware and finer than logical pixels',()=>{
+  const look=normalizePhotoLook({enabled:true,presetId:'film-grain-only',amount:100,
+    parameters:{grain:100}});
+  const source=pixels(128,128,128,1200,16);
+  const left=source.slice(),again=source.slice(),alternate=source.slice();
+  processPhotoPixels(left,1200,16,look,'emulsion');
+  processPhotoPixels(again,1200,16,look,'emulsion');
+  processPhotoPixels(alternate,1200,16,look,'other-film');
+  assert.deepEqual(left,again);
+  assert.notDeepEqual(left,alternate);
+  // At 2 output pixels per authored horizontal unit, an old 600-cell
+  // sampler would repeat its noise value inside every same-cell pair.
+  // This new mode resolves fine-grain variation without resampling pixels.
+  let adjacentDifferences=0;
+  for(let x=0;x<1200;x+=2)
+    if(left[x*4]!==left[(x+1)*4])adjacentDifferences++;
+  assert.ok(adjacentDifferences>200,adjacentDifferences+' distinct fine-grain pairs');
+  assert.equal(left[3],255);
+  assert.equal(left[left.length-1],255);
+});
