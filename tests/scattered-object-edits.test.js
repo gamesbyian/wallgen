@@ -51,7 +51,10 @@ test('imported silhouette stamps inherit individual transforms but keep compound
   const stamp=scene.objects.find(o=>o.id==='region-0');
   assert.ok(stamp,'first shape is present');
   assert.equal(stamp.circle,undefined,'renderer must draw compound paths, never its bounding disk');
-  assert.deepEqual(stamp.editCircle,{cx:420,cy:429,r:102});
+  assert.equal(stamp.editCircle.cx,420);
+  assert.equal(stamp.editCircle.cy,429);
+  assert.ok(Math.abs(stamp.editCircle.r-102)<1e-9,
+    'the transformed radius is stable to sub-pixel floating-point precision');
   assert.ok(stamp.rings[0].length>=4);
   assert.deepEqual(decodeRecipe(encodeRecipe(recipe)),recipe);
 });
