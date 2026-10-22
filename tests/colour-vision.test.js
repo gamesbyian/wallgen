@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {MACHADO_MATRICES} from '../src/colour-vision-matrices.js';
-import {COLOUR_VISION_MODES,colourVisionMatrix,simulateRgb,simulateImageData} from '../src/colour-vision.js';
+import {COLOUR_VISION_MODES,machadoMatrix,simulateRgb,simulateImageData} from '../src/colour-vision.js';
 
 const identity=[1,0,0,0,1,0,0,0,1];
 const image=(width,height,pixels)=>({width,height,data:new Uint8ClampedArray(pixels)});
@@ -14,25 +14,25 @@ test('supported modes and 33 upstream severity matrices are complete',()=>{
       assert.equal(row.length,9);
       assert.ok(row.every(Number.isFinite));
     }
-    assert.deepEqual(colourVisionMatrix(mode,0),identity);
-    assert.deepEqual(colourVisionMatrix(mode,1),MACHADO_MATRICES[mode][10]);
+    assert.deepEqual(machadoMatrix(mode,0),identity);
+    assert.deepEqual(machadoMatrix(mode,1),MACHADO_MATRICES[mode][10]);
   }
 });
 test('intermediate severities use matrix interpolation, never pixel blending',()=>{
   for(const mode of ['protan','deutan','tritan']){
     const a=MACHADO_MATRICES[mode][5],b=MACHADO_MATRICES[mode][6];
-    const m=colourVisionMatrix(mode,.55);
+    const m=machadoMatrix(mode,.55);
     m.forEach((v,i)=>assert.ok(Math.abs(v-(a[i]+b[i])/2)<1e-12));
     for(let step=1;step<10;step++){
-      const boundary=step/10,below=colourVisionMatrix(mode,boundary-1e-8);
-      const above=colourVisionMatrix(mode,boundary+1e-8);
+      const boundary=step/10,below=machadoMatrix(mode,boundary-1e-8);
+      const above=machadoMatrix(mode,boundary+1e-8);
       below.forEach((v,i)=>assert.ok(Math.abs(v-above[i])<1e-6));
     }
   }
 });
 test('validates type, mode, severity and RGBA geometry strictly',()=>{
-  for(const mode of ['unknown',null,'monochrome']) assert.throws(()=>colourVisionMatrix(mode,1),RangeError);
-  for(const s of [-.01,1.01,NaN,Infinity,-Infinity,'1',null]) assert.throws(()=>colourVisionMatrix('protan',s),RangeError);
+  for(const mode of ['unknown',null,'monochrome']) assert.throws(()=>machadoMatrix(mode,1),RangeError);
+  for(const s of [-.01,1.01,NaN,Infinity,-Infinity,'1',null]) assert.throws(()=>machadoMatrix('protan',s),RangeError);
   for(const rgb of [[1,2],[-1,0,0],[256,0,0],[1.1,1,1]]) assert.throws(()=>simulateRgb(rgb,'deutan',1),RangeError);
   assert.throws(()=>simulateImageData(image(1,1,[1,2,3]),'protan',1),TypeError);
   assert.throws(()=>simulateImageData(image(0,2,[]),'protan',1),TypeError);
@@ -82,4 +82,26 @@ test('extreme and saturated colours transform meaningfully and remain finite',()
     }
     assert.ok(changed>=4,mode+' ought to change chromatic distinctions');
   }
+});
+
+test('Brettel 1997 tritan separates the two LMS projection wings',()=>{
+  // Golden RGB fixtures independently evaluated from libDaltonLens two-plane
+  // projection parameters, gamma 2.4 sRGB round-trip, and clamping.
+  const examples=[
+    [[255,0,0],[255,0,78]],   // first half-plane
+    [[0,255,0],[121,233,255]],// second half-plane
+    [[0,0,255],[0,98,136]],
+    [[255,255,0],[255,238,241]],
+    [[0,255,255],[71,248,255]],
+    [[255,0,255],[239,102,122]],
+    [[128,128,128],[128,128,128]],
+  ];
+  for(const [rgb,expected] of examples){
+    const got=simulateRgb(rgb,'tritan',1);
+    got.forEach((v,i)=>assert.ok(Math.abs(v-expected[i])<=1,
+      'Brettel tritan '+rgb.join(',')+' channel '+i+' expected '+expected[i]+' got '+v));
+  }
+  // At 50% severity, interpolation must occur in linear RGB, not sRGB bytes.
+  assert.deepEqual(simulateRgb([0,255,0],'tritan',.5),[87,244,198]);
+  assert.deepEqual(simulateRgb([0,0,255],'tritan',0),[0,0,255]);
 });
