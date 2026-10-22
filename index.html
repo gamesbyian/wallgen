@@ -40,6 +40,7 @@
   <link rel="stylesheet" href="editor-material-status.css?v=20261022-texture-workspace1">
   <link rel="stylesheet" href="colour-vision-preview.css?v=20261022-1">
   <link rel="stylesheet" href="photo-controls.css?v=20261022-photo1">
+  <link rel="stylesheet" href="png-recipe-migration.css?v=20261022-m1">
 </head>
 <body>
   <header class="masthead">
@@ -411,6 +412,17 @@
       <div class="export-metadata">
         <button id="importRecipePNG" type="button" class="text-link-button" aria-label="Import design from PNG or JSON recipe"><img class="ui-icon" src="assets/icons/roygbiv/path.svg" alt="" aria-hidden="true" draggable="false"> Import design</button>
         <input id="importRecipeFile" type="file" accept="image/png,.png,application/json,.json" hidden aria-label="Choose a wallpaper PNG or recipe JSON to restore a design">
+        <button id="migrateRecipeToggle" type="button" class="text-link-button"
+          aria-expanded="false" aria-controls="migrateRecipePanel">▸ Update recipe inside existing PNG</button>
+        <section id="migrateRecipePanel" class="png-migration-panel" hidden aria-label="Update PNG recipe metadata without changing the image">
+          <p>Choose a ROYGBIV PNG. The image and all other metadata stay unchanged. Only a confidently understood recipe can be updated.</p>
+          <input type="file" id="migrateRecipeFile" accept="image/png,.png"
+            aria-label="Choose PNG for recipe update">
+          <p id="migrateRecipeStatus" role="status" aria-live="polite">No PNG selected.</p>
+          <button id="migrateRecipeDownload" type="button" disabled>Download PNG with updated recipe</button>
+          <button id="migrateRecipeReport" type="button" disabled>Save migration report JSON</button>
+          <small>A PNG's existing picture stays identical. Re-rendering a historical recipe in newer ROYGBIV may look different.</small>
+        </section>
         <button id="metadataToggle" type="button" class="text-link-button metadata-toggle"
           aria-expanded="false" aria-controls="metadataPanel">▸ Edit image metadata</button>
         <div id="metadataPanel" class="metadata-panel" hidden>
@@ -487,7 +499,7 @@
       <button type="button" id="imagePathShape" disabled>Use silhouette as shape</button>
     </div>
   </dialog>
-  <script type="module" src="src/app.js?v=20261022-design-next1"></script>
+  <script type="module" src="src/app.js?v=20261022-png-migrate1"></script>
   <script type="module" src="src/mobile-studio.js?v=20261021-labels1"></script>
   <script type="module" src="src/mobile-fullscreen.js?v=20261021-1"></script>
   <script type="module" src="src/mobile-swipes.js?v=20261017-explore1"></script>

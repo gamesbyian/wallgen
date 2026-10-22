@@ -1,0 +1,65 @@
+{
+  "schema": 1,
+  "updated": "2026-10-22",
+  "provenance": "GitHub commit history of src/png-metadata.js, src/model.js and src/share-recipe.js; inspect historical source at each anchor",
+  "entries": [
+    {
+      "id": "png-metadata-no-recipe",
+      "transport": "PNG iTXt/eXIf descriptive metadata",
+      "introduced": "137382968319eeb58643f12a9eb6f0c12940732c",
+      "date": "2026-10-17T01:45:57Z",
+      "recipeEnvelope": null,
+      "normalizer": "historical model version 1",
+      "migration": "refuse: no embedded recipe"
+    },
+    {
+      "id": "png-roygbiv-v1",
+      "transport": "PNG uncompressed iTXt",
+      "keyword": "ROYGBIV Recipe",
+      "envelope": "roygbiv-recipe-v1",
+      "introduced": "37428b624e55a0d4526b992bfe6fdf4a01b5f420",
+      "date": "2026-10-17T05:43:27Z",
+      "modelVersion": 1,
+      "output": {
+        "width": 3024,
+        "height": 6552
+      },
+      "migration": "raw-read only until period-specific defaults proven"
+    },
+    {
+      "id": "png-roygbiv-v2",
+      "transport": "PNG uncompressed iTXt",
+      "keyword": "ROYGBIV Recipe",
+      "envelope": "roygbiv-recipe-v2",
+      "introduced": "2e6039c8d7fcef85b74dfe70435ffeda03929b98",
+      "date": "2026-10-18T05:58:02Z",
+      "modelVersion": 2,
+      "output": {
+        "width": 3024,
+        "height": 6552
+      },
+      "revisions": [
+        {
+          "commit": "21d97e1de7f251c71a0c0a7ff17f68c97388c63c",
+          "date": "2026-10-20T09:18:56Z",
+          "change": "Reader accepts historical v1; duplicates under investigation"
+        },
+        {
+          "commit": "c9313b0655634e9b72cfa213b08b0d20dbc3a692",
+          "date": "2026-10-20T10:11:36Z",
+          "change": "1 MiB named iTXt reader/export cap"
+        }
+      ],
+      "migration": "conservative current-complete canonical values only"
+    },
+    {
+      "id": "share-token-v1",
+      "transport": "Compressed #s=v1 share fragment",
+      "introduced": "03d7efaba995fdf57e9698993162881623e4ec78",
+      "date": "2026-10-20T19:02:27Z",
+      "versionNamespace": "share-token, NOT PNG recipe v1",
+      "migration": "not part of PNG ancillary updater"
+    }
+  ],
+  "unknown": true
+}

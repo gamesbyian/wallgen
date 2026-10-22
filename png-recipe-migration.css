@@ -1,0 +1,15 @@
+/* Archival PNG recipe update, deliberately in Files & sharing / More. */
+.png-migration-panel{display:flex;flex-direction:column;gap:8px;min-width:0;
+  margin:3px 0;padding:10px;border:1px solid var(--line);border-radius:10px;
+  background:var(--surface)}
+.png-migration-panel[hidden]{display:none!important}
+.png-migration-panel p,.png-migration-panel small{margin:0;line-height:1.35;font-size:12px}
+.png-migration-panel input[type=file]{display:block;max-width:100%;width:100%;min-height:44px;
+  color:inherit;font:inherit;font-size:12px}
+.png-migration-panel button{min-height:44px;padding:8px;border:1px solid var(--line);
+  border-radius:8px;background:var(--surface);color:inherit;font:inherit;font-size:12px;text-align:center}
+.png-migration-panel button:disabled{opacity:.45;cursor:default}
+.png-migration-panel button:focus-visible,.png-migration-panel input:focus-visible{
+  outline:2px solid currentColor;outline-offset:2px}
+.png-migration-panel #migrateRecipeStatus{overflow-wrap:anywhere}
+@media(max-width:790px){body.mobile-studio .png-migration-panel{width:100%;box-sizing:border-box}}

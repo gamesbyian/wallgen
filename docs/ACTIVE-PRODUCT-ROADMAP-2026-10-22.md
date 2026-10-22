@@ -1,5 +1,11 @@
 # ROYGBIV: active product roadmap and work queue
 
+## PNG recipe preservation and migration checkpoint (PR #479, 2026-10-22)
+
+[#479](https://github.com/gamesbyian/wallgen/pull/479) advances the concurrent PNG format-registry queue. It adds raw historical metadata inspection, exact field fidelity audit, byte-identity checks across all unchanged PNG chunks, an opt-in More → Files & sharing recipe update, no-render CLI, first source-pinned format registry and quick tests. Original picture, unrelated metadata, current editing state and history stay intact.
+
+**Eligible in first slice:** normalized, fully recognized canonical PNG v2 with no synthesized/coerced/unknown fields. **Still queued:** historical v1 and early-v2 era-specific default matrices, exact backward conversion adapters/fixtures, real mobile UX/large PNG empirical testing. Unsafe files produce a report without modification. This is partial M0–M5, not an assertion that every historical recipe can yet be upgraded. No extra CI workflows.
+
 ## Compact embroidery inspector checkpoint (PR #478, 2026-10-22)
 
 [#478](https://github.com/gamesbyian/wallgen/pull/478) refines the merged first embroidery E1 implementation: Thread treatment is now a native expandable workspace nested in Texture → Surface, with selected-hue status visible when folded and the two ordinary surface sliders hidden only while Thread is expanded. This avoids vertical tray growth and preserves the canonical original controls, Undo and recipe serialization. Node source-contract checks are part of the existing lean gate; **real Pixel portrait fit/accessibility observations are still outstanding**. This is incremental E4 UX; selected-object treatments, advanced thread realism, outlines/interiors and film/embroidery combined visual proof remain queued.
