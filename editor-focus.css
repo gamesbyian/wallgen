@@ -121,3 +121,22 @@ html[data-theme="dark"] .editor-focus-all{background:#51374f;color:#fff;border-c
     --mobile-tray-height:clamp(225px,calc(23dvh + 33px),248px)!important;
   }
 }
+
+/* Match the independently enlarged 500–790px tall source tool strip.
+   Focus stays opt-in and pinned in its original lane. Reserving the chooser's
+   additional 3px in the Focus tray keeps full help/All reachable and avoids
+   stealing wallpaper taps with invisible target padding. */
+@media(min-width:500px) and (max-width:790px) and (min-height:840px){
+  body.mobile-studio .sidebar .editor-tool-chooser .editor-focus-toggle{
+    box-sizing:border-box!important;
+    height:44px!important;min-height:44px!important;max-height:44px!important;
+  }
+  body.mobile-studio.mobile-edit-open:has(
+    #controls.editor-focus-active:not(.editor-focus-empty)){
+    --mobile-tray-height:clamp(298px,calc(34dvh + 3px),333px)!important;
+  }
+  body.mobile-studio.mobile-edit-open:has(
+    #controls.editor-focus-active.editor-focus-empty){
+    --mobile-tray-height:clamp(195px,calc(23dvh + 3px),218px)!important;
+  }
+}
