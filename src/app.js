@@ -215,6 +215,23 @@ function fromControls() {
   });
   if(prior||photo.enabled||presetId!=='film-slide'||photo.amount!==75||
     photo.parameters.grain!==PHOTO_PRESETS['film-slide'].grain)data.photoLook=photo;
+  // Treat editor stitches as one managed assignment; preserve externally
+  // authored object-specific assignments instead of flattening them.
+  const otherTreatments=(current.surfaceTreatments||[])
+    .filter(item=>item.id!=='editor-stitches');
+  const target=form.elements.namedItem('embroideryTarget').value;
+  if(target!=='off'){
+    otherTreatments.unshift({
+      id:'editor-stitches',enabled:true,materialFamily:'embroidery',style:'satin',
+      target:target==='all'?{scope:'all',role:'fill',colorSlots:[],ids:[]}:
+        {scope:'palette',role:'fill',colorSlots:[Number(target)],ids:[]},
+      pitch:Number(form.elements.namedItem('embroideryPitch').value),
+      relief:Number(form.elements.namedItem('embroideryRelief').value),
+      direction:38,
+    });
+  }
+  if(current.surfaceTreatments||otherTreatments.length)
+    data.surfaceTreatments=otherTreatments;
   return normalizeRecipe(data);
 }
 function syncScopedSettingDice(){
@@ -254,6 +271,16 @@ function toControls(recipe) {
   form.elements.namedItem('photoEnabled').checked=photo.enabled;
   form.elements.namedItem('photoPresetId').value=photo.presetId;
   for(const [name,value] of [['photoAmount',photo.amount],['photoGrain',photo.parameters.grain]]){
+    form.elements.namedItem(name).value=String(value);
+    const numeric=form.querySelector('[data-number-for="'+name+'"]');
+    if(numeric)numeric.value=String(value);
+  }
+  const stitch=current.surfaceTreatments?.find(item=>item.id==='editor-stitches'&&item.enabled);
+  const selected=stitch?.target.scope==='all'?'all':
+    stitch?.target.scope==='palette'&&stitch.target.colorSlots.length===1?
+      String(stitch.target.colorSlots[0]):'off';
+  form.elements.namedItem('embroideryTarget').value=selected;
+  for(const [name,value] of [['embroideryPitch',stitch?.pitch??5],['embroideryRelief',stitch?.relief??65]]){
     form.elements.namedItem(name).value=String(value);
     const numeric=form.querySelector('[data-number-for="'+name+'"]');
     if(numeric)numeric.value=String(value);
@@ -1700,7 +1727,7 @@ form.addEventListener('change',event=>{
 let rangeTimeout;
 form.addEventListener('input',event=>{
   const key=event.target.name;
-  if(!FIELDS.includes(key)&&!['photoAmount','photoGrain'].includes(key))return;
+  if(!FIELDS.includes(key)&&!['photoAmount','photoGrain','embroideryPitch','embroideryRelief'].includes(key))return;
   if(event.target.type!=='range')return;
   const output=form.querySelector(`output[for="${key}"]`);
   if(output)output.textContent=`${event.target.value}%`;
@@ -1725,7 +1752,8 @@ document.addEventListener('change',event=>{
     const preset=PHOTO_PRESETS[event.target.value];
     if(preset)form.elements.namedItem('photoGrain').value=String(preset.grain);
   }
-  if(['photoEnabled','photoPresetId','photoAmount','photoGrain'].includes(event.target.name)){
+  if(['photoEnabled','photoPresetId','photoAmount','photoGrain',
+      'embroideryTarget','embroideryPitch','embroideryRelief'].includes(event.target.name)){
     clearTimeout(rangeTimeout);
     updateControlsFromInputs();
     return;
