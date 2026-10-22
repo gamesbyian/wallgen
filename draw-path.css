@@ -266,3 +266,44 @@ body.path-drawing .studio-stage>#drawOverlay{cursor:crosshair}
     min-height:44px!important;
   }
 }
+
+/* Explicit, reversible access to the ORIGINAL Draw action panel. No duplicate
+   buttons, controls or camera adjustments. Native focus/Undo/Cancel stay intact. */
+.draw-path-intro>.draw-panel-minimize{
+  min-height:32px;min-width:86px;padding:4px 7px;
+  border:1px solid #977b94;border-radius:7px;
+  color:#fff;background:#383045;font:inherit;cursor:pointer
+}
+.draw-path-intro>.draw-panel-minimize:focus-visible{
+  outline:2px solid #f1b7f0;outline-offset:2px
+}
+.draw-path-panel[data-controls-collapsed="true"]>:not(.draw-path-intro){
+  display:none!important
+}
+.draw-path-panel[data-controls-collapsed="true"] .draw-path-intro>strong,
+.draw-path-panel[data-controls-collapsed="true"] .draw-path-intro>.draw-phase{
+  display:none!important
+}
+.draw-path-panel[data-controls-collapsed="true"] .draw-path-intro{
+  justify-content:center
+}
+@media(max-width:790px){
+  body.mobile-studio .draw-path-intro>.draw-panel-minimize{
+    min-height:44px;min-width:96px
+  }
+}
+/* At 500×700, the preview is tall and narrow. Move the collapsed single
+   Show-controls button into the available right gutter, not across anchors. */
+@media(min-width:480px) and (max-width:599px) and (max-height:760px) and (orientation:portrait){
+  body.mobile-studio.path-drawing .draw-path-panel[data-controls-collapsed="true"]{
+    box-sizing:border-box!important;
+    left:auto!important;right:5px!important;bottom:9px!important;
+    transform:none!important;width:104px!important;max-width:104px!important;
+    max-height:70px!important;min-height:0!important;
+    padding:5px!important;gap:0!important;overflow:visible!important
+  }
+  body.mobile-studio.path-drawing .draw-path-panel[data-controls-collapsed="true"]
+    .draw-path-intro>.draw-panel-minimize{
+    width:100%;min-width:0;font-size:10px
+  }
+}
