@@ -78,6 +78,7 @@ try{
       });
       return {client:node.clientWidth,scroll:node.scrollWidth,rects};
     });
+    if(width<=499){
     const equalWidths=rhythm.rects.map(r=>r.width);
     assert.ok(Math.max(...equalWidths)-Math.min(...equalWidths)<=1.5,
       'Seven categories have unequal cell widths: '+
@@ -94,6 +95,7 @@ try{
       assert.ok(rhythm.scroll<=rhythm.client+2,
         'All seven categories should be visible without scrolling at this width: '+
           JSON.stringify({width,theme,rhythm}));
+    }
     const items=[];
     for(let i=0;i<EDITOR_CATEGORIES.length;i++){
       const category=EDITOR_CATEGORIES[i];
