@@ -55,12 +55,36 @@ try{
      assert.ok(rects.note.bottom<=rects.card.bottom+1);
      assert.equal(rects.controls.length,6,
       'Original disabled source five-shortcut/numeric grammar changed');
-     for(const r of rects.controls)
-      assert.ok(r.top>=rects.card.top-1&&r.bottom<=rects.card.bottom+1&&
-       r.left>=rects.card.left-1&&r.right<=rects.card.right+1&&
-       r.width>9&&r.height>9,
-       'Material Finish disabled rotation is visibly clipped: '+
-        JSON.stringify({width,height,theme,id,rects}));
+     // Tall compact phones intentionally use a horizontally scrollable
+     // six-control strip so each original source action can retain a genuine
+     // 44px touch cell. Check every cell after scrolling it into the visible
+     // viewport, rather than demanding 6 x 44px fit simultaneously in 264px.
+     const rotationCells=card.locator('.rotation-controls button, .rotation-controls input[type="number"]');
+     for(let index=0;index<6;index++){
+      const cell=rotationCells.nth(index);
+      await cell.evaluate(el=>el.scrollIntoView({behavior:'instant',inline:'nearest',block:'nearest'}));
+      const geometry=await cell.evaluate(el=>{
+       const r=el.getBoundingClientRect();
+       const cr=el.closest('.editor-tool-card').getBoundingClientRect();
+       const rail=el.closest('.rotation-controls').getBoundingClientRect();
+       const x=(r.left+r.right)/2,y=(r.top+r.bottom)/2;
+       const hit=document.elementFromPoint(x,y);
+       return {top:r.top,bottom:r.bottom,left:r.left,right:r.right,
+        width:r.width,height:r.height,
+        visibleLeft:Math.max(cr.left,rail.left),
+        visibleRight:Math.min(cr.right,rail.right),
+        visibleTop:Math.max(cr.top,rail.top),
+        visibleBottom:Math.min(cr.bottom,rail.bottom),
+        hit:hit===el||el.contains(hit)};
+      });
+      assert.ok(geometry.top>=geometry.visibleTop-1&&
+       geometry.bottom<=geometry.visibleBottom+1&&
+       geometry.left>=geometry.visibleLeft-1&&
+       geometry.right<=geometry.visibleRight+1&&
+       geometry.width>9&&geometry.height>9&&geometry.hit,
+       'Material Finish source rotation cell is not scroll-reachable and centre-hittable: '+
+        JSON.stringify({width,height,theme,id,index,geometry,rects}));
+     }
      assert.ok(rects.controls.every(x=>x.disabled),
       'Disabled Material layer rotation became operational');
      records.push({width,height,theme,id,rects});
