@@ -175,7 +175,7 @@ try{
     language.names.textureStrength,language.names.textureStrength2,
     language.names.textureStrength3]).size,3);
   assert.equal(language.names.textureStrength2,'Texture layer 2 strength');
-  assert.equal(language.names.textureRotation2,'Texture layer 2 rotation');
+  assert.equal(language.names.textureRotation2,'Texture layer 2 rotation in degrees');
   assert.equal(language.names.textureDisplacement,'Texture-driven contour distortion');
   assert.equal(language.names.stripeShadowStrength,'Stripe shadow strength');
   assert.equal(language.names.lightingMood,'Lighting mood');
