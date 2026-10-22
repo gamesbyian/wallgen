@@ -3,7 +3,7 @@ import { drawWallpaper, presentNudgedArtwork } from './renderer.js?v=20261022-ph
 import {normalizePhotoLook,PHOTO_PRESETS} from './photo-look.js';
 import {createPreviewCoordinator,createThumbnailQueue,exportWallpaperInWorker,closeFrame} from './render-coordinator.js';
 import { embedPngMetadata, extractPngRecipe, cleanMetadata, METADATA_FIELDS } from './png-metadata.js';
-import {inspectPngMigration,migratePngMetadataOnly,archivePngRecipeRecords} from './png-recipe-migration.js';
+import {inspectPngMigration,migratePngMetadataOnly,inspectPngRecipeArchive,archivePngRecipeRecords} from './png-recipe-migration.js';
 import { installDrawTool } from './draw-path-ui.js?v=20261018-extend1';
 import {appliedDrawnPathRecipe} from './draw-apply-transaction.js';
 import { installImagePathTool } from './image-path-ui.js?v=20261022-shapes1';
@@ -872,8 +872,9 @@ migrationFile.addEventListener('change',async()=>{
   if(selected.size>150*1024*1024){
     migrationStatus.textContent='PNG exceeds the 150 MB inspection limit.';return;
   }
+  let bytes;
   try{
-    const bytes=new Uint8Array(await selected.arrayBuffer());
+    bytes=new Uint8Array(await selected.arrayBuffer());
     if(rev!==migrationRevision)return;
     const report=inspectPngMigration(bytes);
     migrationInspection=report;migrationFileName=selected.name;
@@ -889,7 +890,30 @@ migrationFile.addEventListener('change',async()=>{
     if(report.safe){migrationCandidate=bytes;migrationDownload.disabled=false;}
   }catch(error){
     if(rev!==migrationRevision)return;
-    migrationStatus.textContent='Could not inspect PNG: '+String(error.message||error);
+    const reason=String(error.message||error);
+    // An unreadable historical recipe need not mean its exact source bytes
+    // are lost. Gate archival by the PNG container CRCs, not by JSON.parse.
+    if(bytes){
+      try{
+        const archive=inspectPngRecipeArchive(bytes);
+        if(archive.recordCount){
+          migrationArchiveSource=bytes;migrationFileName=selected.name;
+          migrationArchiveDownload.disabled=false;
+          migrationInspection={...archive,safe:false,detectedFormat:null,
+            reason:'Recipe cannot be interpreted: '+reason,unknownKeys:[],
+            coercedKeys:[],synthesizedKeys:[],warnings:[
+              'Exact-byte backup remains available without parsing or changing the PNG']};
+          migrationReportDownload.disabled=false;
+          migrationStatus.textContent='Recipe update unavailable: '+reason+
+            '. Save original recipe records (exact bytes) to preserve the historical metadata.';
+          return;
+        }
+      }catch{
+        // Damaged PNG framing/CRC or archival limits must not masquerade
+        // as a recoverable recipe. Keep the source file unchanged.
+      }
+    }
+    migrationStatus.textContent='Could not inspect PNG: '+reason;
   }
 });
 migrationDownload.addEventListener('click',async()=>{
