@@ -1,5 +1,10 @@
 # Agent orientation for ROYGBIV
 
+## Photo secondary control is contextual (2026-10-22)
+
+Light → Photo uses the same two-slot grid for Amount + a preset-dependent second control: Grain for most looks, Halation for `film-halation-only`. Keep original `photoGrain` source control and the contextual `photoHalation` input. `syncPhotoSecondarySlot` hides the irrelevant field, with CSS `[hidden]` taking precedence over generic range styles, and `fromControls` maps active halation to `photoLook.parameters.halation`. Do not add a duplicate control row, top-level destination, hidden grade changes or expensive CI. Real Pixel tray fit still needs manual confirmation.
+
+
 ## Exact-byte rescue does not require valid historical JSON (2026-10-22)
 
 `archivePngRecipeRecords` is now a raw iTXt **byte collector**, not a semantic recipe reader. `inspectPngRecipeArchive` validates the complete original PNG structure/CRC, bounds count and chunk sizes, and finds named recipe records even when JSON is malformed or text encoding cannot be interpreted. More → Files & sharing exposes the archive despite `inspectPngMigration` throwing; CLI `--archive` writes it before semantic inspection. Formats for unreadable records are null; full original chunk bytes remain. Do not weaken ordinary recipe parsing or permit automatic conversion of unknown/ambiguous metadata. Source PNG remains the authority, and no CI expansion is needed.

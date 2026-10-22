@@ -198,6 +198,13 @@ function showNotice(message){
     }
   },5500);
 }
+function syncPhotoSecondarySlot(presetId){
+  // Exactly one secondary slider is visible: keep the compact phone tray's
+  // two-column geometry while letting the chosen optical look be adjusted.
+  const active=presetId==='film-halation-only';
+  form.querySelector('[data-photo-secondary="grain"]').hidden=active;
+  form.querySelector('[data-photo-secondary="halation"]').hidden=!active;
+}
 function fromControls() {
   const data={seed:seedInput.value,positionX:current.positionX,positionY:current.positionY,
     viewZoom:current.viewZoom,viewPanX:current.viewPanX,viewPanY:current.viewPanY,
@@ -213,7 +220,9 @@ function fromControls() {
     enabled:form.elements.namedItem('photoEnabled').checked,
     presetId,amount:form.elements.namedItem('photoAmount').value,
     parameters:{...(samePreset?prior.parameters:{}),
-      grain:Number(form.elements.namedItem('photoGrain').value)},
+      grain:Number(form.elements.namedItem('photoGrain').value),
+      ...(presetId==='film-halation-only'?{
+        halation:Number(form.elements.namedItem('photoHalation').value)}:{})},
   });
   if(prior||photo.enabled||presetId!=='film-slide'||photo.amount!==75||
     photo.parameters.grain!==PHOTO_PRESETS['film-slide'].grain)data.photoLook=photo;
@@ -274,11 +283,13 @@ function toControls(recipe) {
   const photo=normalizePhotoLook(current.photoLook);
   form.elements.namedItem('photoEnabled').checked=photo.enabled;
   form.elements.namedItem('photoPresetId').value=photo.presetId;
-  for(const [name,value] of [['photoAmount',photo.amount],['photoGrain',photo.parameters.grain]]){
+  for(const [name,value] of [['photoAmount',photo.amount],['photoGrain',photo.parameters.grain],
+    ['photoHalation',photo.parameters.halation??PHOTO_PRESETS['film-halation-only'].halation]]){
     form.elements.namedItem(name).value=String(value);
     const numeric=form.querySelector('[data-number-for="'+name+'"]');
     if(numeric)numeric.value=String(value);
   }
+  syncPhotoSecondarySlot(photo.presetId);
   const stitch=current.surfaceTreatments?.find(item=>item.id==='editor-stitches'&&item.enabled);
   const selected=stitch?.target.scope==='all'?'all':
     stitch?.target.scope==='object'?'object':
@@ -1876,7 +1887,7 @@ form.addEventListener('change',event=>{
 let rangeTimeout;
 form.addEventListener('input',event=>{
   const key=event.target.name;
-  if(!FIELDS.includes(key)&&!['photoAmount','photoGrain','embroideryPitch','embroideryRelief'].includes(key))return;
+  if(!FIELDS.includes(key)&&!['photoAmount','photoGrain','photoHalation','embroideryPitch','embroideryRelief'].includes(key))return;
   if(event.target.type!=='range')return;
   const output=form.querySelector(`output[for="${key}"]`);
   if(output)output.textContent=`${event.target.value}%`;
@@ -1899,9 +1910,14 @@ document.addEventListener('change',event=>{
   if(event.target.form!==form)return;
   if(event.target.name==='photoPresetId'){
     const preset=PHOTO_PRESETS[event.target.value];
-    if(preset)form.elements.namedItem('photoGrain').value=String(preset.grain);
+    if(preset){
+      form.elements.namedItem('photoGrain').value=String(preset.grain);
+      form.elements.namedItem('photoHalation').value=
+        String(preset.halation??PHOTO_PRESETS['film-halation-only'].halation);
+      syncPhotoSecondarySlot(event.target.value);
+    }
   }
-  if(['photoEnabled','photoPresetId','photoAmount','photoGrain',
+  if(['photoEnabled','photoPresetId','photoAmount','photoGrain','photoHalation',
       'embroideryTarget','embroideryObjectId','embroideryPitch','embroideryRelief'].includes(event.target.name)){
     clearTimeout(rangeTimeout);
     updateControlsFromInputs();

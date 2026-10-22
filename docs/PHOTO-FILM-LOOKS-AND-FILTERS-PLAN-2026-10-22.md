@@ -1,5 +1,8 @@
 # ROYGBIV: photographic film looks and filters
 
+**F3 compact optical control refinement (2026-10-22, PR pending):** Warm Film Halation's previously recipe-only `parameters.halation` is now edited from the *existing Photo secondary slider position*, which displays Halation for that look and Grain for all others. Amount stays the shared first slider. The inactive sibling is actually hidden from compact tray layout, so this does not create a third slider row or an eighth editor tab. Saved and restored Halation recipes retain their explicit value; choosing a new look resets secondary value to that look's defaults. No changes to older look rendering or serialized keys. Manual image comparison and Pixel viewport accessibility remain explicit pending work.
+
+
 **F2/F5 manual visual-review tool (2026-10-22, PR pending):** `node scripts/review-photo-looks.mjs --out-dir artifacts/photo-review` generates a seven-file headless production gallery with one untreated original, Slide, Negative, Grain Only, Halation Only, Smartphone HDR and Webcam Signal. Every PNG has exactly its manifest-matching normalized recipe. The [review guide](PHOTO-SEVEN-IMAGE-ART-REVIEW-2026-10-22.md) specifies questions for edge glow, grain repeat, black preservation and colour identity. It is manual and opt-in, not part of regular CI. No images have actually been rendered/observed in this PR; implementation progress must not be confused with optical approval.
 
 

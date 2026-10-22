@@ -235,3 +235,38 @@ test('seven-image photo review uses exact matching recipes and production headle
   assert.match(script,/Review output already exists/);
   assert.match(script,/produced-awaiting-human-review/);
 });
+
+test('halation editor reuses the second Photo slider slot without growing the tray',()=>{
+  const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
+  const html=read('index.html'),app=read('src/app.js'),css=read('photo-controls.css');
+  assert.match(html,/data-photo-secondary="grain"/);
+  assert.match(html,/data-photo-secondary="halation" hidden/);
+  assert.match(html,/name="photoHalation" min="0" max="100" value="75"/);
+  assert.match(css,/\[data-photo-secondary\]\[hidden\]\{display:none!important\}/);
+  assert.match(app,/function syncPhotoSecondarySlot\(presetId\)/);
+  assert.match(app,/syncPhotoSecondarySlot\(photo\.presetId\)/);
+  assert.match(app,/halation:Number\(form\.elements\.namedItem\('photoHalation'\)\.value\)/);
+  assert.match(app,/\['photoHalation',photo\.parameters\.halation\?\?/);
+  assert.match(app,/syncPhotoSecondarySlot\(event\.target\.value\)/);
+  assert.match(app,/photoAmount','photoGrain','photoHalation'/);
+});
+test('halation-only strength 0 to 100 actually changes rim light while preserving original colors',()=>{
+  const w=100,h=100,source=pixels(0,0,0,w,h);
+  for(let y=20;y<80;y++)for(let x=24;x<56;x++){
+    const pos=(y*w+x)*4;source[pos]=255;source[pos+1]=230;
+  }
+  const withLevel=value=>normalizePhotoLook({enabled:true,presetId:'film-halation-only',
+    amount:100,parameters:{halation:value,grain:0,vignette:0}});
+  const off=source.slice(),soft=source.slice(),full=source.slice();
+  processPhotoPixels(off,w,h,withLevel(0),'same');
+  processPhotoPixels(soft,w,h,withLevel(35),'same');
+  processPhotoPixels(full,w,h,withLevel(100),'same');
+  assert.deepEqual(off,source);
+  const neighbor=(50*w+56)*4;
+  assert.ok(full[neighbor]>soft[neighbor]&&soft[neighbor]>0);
+  for(const result of [soft,full]){
+    assert.equal(result[neighbor+3],255);
+    const center=(50*w+35)*4;
+    assert.deepEqual(result.slice(center,center+4),source.slice(center,center+4));
+  }
+});
