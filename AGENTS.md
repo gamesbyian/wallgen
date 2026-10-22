@@ -12,7 +12,7 @@ Read these documents **before recommending menu reorganisation or changing sourc
 - [Applied HCI/creative composition IA assessment](docs/IA-RESEARCH-APPLIED-ASSESSMENT-2026-10-22.md): comparative cognitive walkthroughs, QOC options and structural-proxy findings.
 - [Semantic intent and prerequisite interrogation tool](scripts/ia-semantic-audit.mjs): current 95-key map, setting/goal/mode queries, source-linked findings and missing-workflow inventory; read-only analysis, not renderer truth or a human usability study.
 - [Current semantic control audit and phased revision plan](docs/IA-SEMANTIC-CONTROL-AUDIT-AND-REVISION-PLAN-2026-10-22.md): prioritised code-backed mismatches, pending object-authoring capabilities and a proportional implementation queue.
-- [Source-driven structural comparison utility](scripts/ia-structure-evaluate.mjs): a no-dependency comparison of two hypothetical trees across 16 explicit artistic goals; it does **not** measure humans.
+- [Source-driven structural comparison utility](scripts/ia-structure-evaluate.mjs): a no-dependency comparison of two hypothetical trees across 17 explicit artistic goals; it does **not** measure humans.
 
 ### Operational requirements for this kind of work
 
