@@ -2,6 +2,12 @@
 
 2026-10-22. Historical design audit based on commit 75c5e1778a5f5789c44ba95098ca7a4c1161b7f8, followed by an implementation checkpoint. The original maps were documentation-only; later PRs #449, #452, #454 and #455 made focused runtime improvements. The audited architecture remains seven categories, 43 tools and 95 canonical settings.
 
+## Implementation checkpoint: direct lighting-related navigation
+
+**C10 partially addressed.** Details > Stripe Shadows and Details > Glow now link directly to each other and to Light > Lighting; Light > Lighting exposes reciprocal shortcuts to both. These are standard, keyboard-accessible buttons inside the **existing** tool chooser, inserted beside the selected tool rather than in a new vertical row or a separate modal. The seven top-level categories, five mobile destinations, shader semantics and original controls are unchanged.
+
+The light controls are still physically located in different categories, which preserves the distinction between local cast shadows, glow and global ambience. A fully unified Light inspector remains a possible future prototype, but direct cross-links already remove a significant part of its practical navigation cost without risking cramped mobile cards. Source: `src/editor-related-light-tools.js` and its small contract test.
+
 ## Implementation checkpoint: scattered-shape range and imported placeholders
 
 **C05 is addressed** without changing the generated picture. The circle packer now shares its effective min/max radius calculation with a read-only UI explanation. The Objects editor only shows a short note when **Smallest effectively determines Largest**, or when an ambitious maximum is being limited by a large count of shapes. Normal unconflicted generation gets no extra chrome. All source percentages remain intact in saved recipes.
