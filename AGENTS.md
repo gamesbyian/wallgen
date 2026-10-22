@@ -1,5 +1,14 @@
 # Agent orientation for ROYGBIV
 
+## Live UX handoff and completion tracking (2026-10-22)
+
+**Live navigation:** 7 categories / **40** named tools / **95** canonical schema keys, after #459. Original 40/87 and intermediate 43/95 documents are historical samples, not current UI contracts. Six related incremental PRs [#459](https://github.com/gamesbyian/wallgen/pull/459), [#460](https://github.com/gamesbyian/wallgen/pull/460), [#461](https://github.com/gamesbyian/wallgen/pull/461), [#462](https://github.com/gamesbyian/wallgen/pull/462), [#463](https://github.com/gamesbyian/wallgen/pull/463) and [#465](https://github.com/gamesbyian/wallgen/pull/465) are merged, with regular Node CI green; physical-phone UX acceptance is still open.
+
+**Before taking more UX work:** read the current [active roadmap](docs/ACTIVE-PRODUCT-ROADMAP-2026-10-22.md), [redesign queue](docs/UI-REDESIGN-IMPLEMENTATION-QUEUE.md), and [C01–C17 live status ledger](docs/IA-SEMANTIC-CONTROL-AUDIT-AND-REVISION-PLAN-2026-10-22.md). Work from fresh `main`; respect [PR #464](https://github.com/gamesbyian/wallgen/pull/464)'s independent embroidery/film-filter planning. Prefer one user-visible fix plus targeted tests, preserving original recipe keys, short phone tray and five mobile destinations. Never close #444 simply because source mapping or Node tests pass.
+
+
+---
+
 The code and current product behavior are authoritative; design plans and research documents are hypotheses until deliberately implemented and verified.
 
 ## If working on navigation, UX, visual controls or AI-directed design
