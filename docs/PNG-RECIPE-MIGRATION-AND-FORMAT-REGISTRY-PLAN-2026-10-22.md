@@ -1,4 +1,6 @@
 # PNG recipe metadata migration without image changes
+
+**M0 archaeology checkpoint (PR #480, 2026-10-22):** A 45-revision, source-blob-pinned model field ledger is available at [SCHEMA-CHANGE-LEDGER.md](recipe-format-history/SCHEMA-CHANGE-LEDGER.md) and [model-key-ledger.json](recipe-format-history/model-key-ledger.json), together with a reproducible local Git script. It captures every top-level explicit key added/removed during observed main-history `src/model.js` revisions. **This is structural evidence, not completed semantic/default translation.** Historical v1 and incomplete early-v2 PNGs remain gated until the precise source-era enum/default/renderer comparisons and fixtures are verified.
 Status: **M0 partly documented; M1/M3/M4 first safe implementation in PR #479; M2 historical conversion remains gated.** 2026-10-22.
 
 ## First working slice: non-destructive recipe inspection and conservative update (PR #479)

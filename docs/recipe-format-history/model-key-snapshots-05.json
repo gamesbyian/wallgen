@@ -1,0 +1,139 @@
+{
+  "schema": 1,
+  "gitLogPage": {
+    "start": 40,
+    "count": 5
+  },
+  "revisionSource": "GitHub main ancestry, source path src/model.js",
+  "revisions": [
+    {
+      "sha": "8c93620342904243435b9afcce471b0aa6bc6e16",
+      "date": "2026-10-17T00:05:25Z",
+      "subject": "Pattern homogeneity with optional stripe individuality override (#1)",
+      "blobSha": "92564a7a1451c54929b012dc0893c4067606b7d1",
+      "explicitKeys": [
+        "background",
+        "chaos",
+        "family",
+        "gap",
+        "geometry",
+        "glow",
+        "individuality",
+        "material",
+        "motif",
+        "orientation",
+        "outline",
+        "overridePatternHomogeneity",
+        "palette",
+        "patternHomogeneity",
+        "spread",
+        "stripeWidth",
+        "textureCoverage",
+        "textureScale",
+        "textureStrength",
+        "version"
+      ]
+    },
+    {
+      "sha": "33f335fe1d60c63d94964a94e4a8019e4e126534",
+      "date": "2026-10-17T00:01:38Z",
+      "subject": "Make geometric individuality effective even at low chaos",
+      "blobSha": "40d30e8aaea5f90d0e2e620c7f45f9a033c2bab4",
+      "explicitKeys": [
+        "background",
+        "chaos",
+        "family",
+        "gap",
+        "geometry",
+        "glow",
+        "individuality",
+        "material",
+        "motif",
+        "orientation",
+        "outline",
+        "palette",
+        "spread",
+        "stripeWidth",
+        "textureCoverage",
+        "textureScale",
+        "textureStrength",
+        "version"
+      ]
+    },
+    {
+      "sha": "775469628c3cc45a6e416270d9c205039f79c3e3",
+      "date": "2026-10-16T23:57:50Z",
+      "subject": "Keep stripe individuality geometric and add texture coverage and full randomization model",
+      "blobSha": "51a0d0e3083b80d60199f21e8549f6b18b2bddac",
+      "explicitKeys": [
+        "background",
+        "chaos",
+        "family",
+        "gap",
+        "geometry",
+        "glow",
+        "individuality",
+        "material",
+        "motif",
+        "orientation",
+        "outline",
+        "palette",
+        "spread",
+        "stripeWidth",
+        "textureCoverage",
+        "textureScale",
+        "textureStrength",
+        "version"
+      ]
+    },
+    {
+      "sha": "c286de954234dace82aea00711fbf9f58443375b",
+      "date": "2026-10-16T23:44:42Z",
+      "subject": "Model white backgrounds and black outline variants",
+      "blobSha": "a933ceb9dfc1cf8e99dd940734f9589ce8448fca",
+      "explicitKeys": [
+        "background",
+        "chaos",
+        "family",
+        "gap",
+        "geometry",
+        "glow",
+        "individuality",
+        "material",
+        "motif",
+        "orientation",
+        "outline",
+        "palette",
+        "spread",
+        "stripeWidth",
+        "textureScale",
+        "textureStrength",
+        "version"
+      ]
+    },
+    {
+      "sha": "e7e5f5c2eb33c2d54492edbc5073b578cecb744d",
+      "date": "2026-10-16T23:17:30Z",
+      "subject": "Build seeded ROYGBIV wallpaper studio with procedural material textures",
+      "blobSha": "972bd2954f1b439cb04bbf445d1d8238c8efe3d7",
+      "explicitKeys": [
+        "chaos",
+        "family",
+        "gap",
+        "geometry",
+        "glow",
+        "individuality",
+        "material",
+        "motif",
+        "orientation",
+        "outline",
+        "palette",
+        "spread",
+        "stripeWidth",
+        "textureScale",
+        "textureStrength",
+        "version"
+      ]
+    }
+  ]
+}

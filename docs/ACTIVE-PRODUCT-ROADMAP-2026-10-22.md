@@ -1,5 +1,9 @@
 # ROYGBIV: active product roadmap and work queue
 
+## Historical recipe format-recovery advance (PR #480, 2026-10-22)
+
+[#480](https://github.com/gamesbyian/wallgen/pull/480) adds the 45-commit source-pinned explicit field inventory and chronological change matrix needed to build safe v1/early-v2 PNG recipe migration adapters, plus a local full-Git-history regeneration script. It complements the merged #479 non-destructive PNG rewrite implementation and does **not** relax its conservative refusal policy. Next: source-era defaults/seed/render semantics, golden historical fixtures and narrowly proved conversion adapters. No new CI workflows, only a tiny ledger-integrity check.
+
 ## PNG recipe preservation and migration checkpoint (PR #479, 2026-10-22)
 
 [#479](https://github.com/gamesbyian/wallgen/pull/479) advances the concurrent PNG format-registry queue. It adds raw historical metadata inspection, exact field fidelity audit, byte-identity checks across all unchanged PNG chunks, an opt-in More → Files & sharing recipe update, no-render CLI, first source-pinned format registry and quick tests. Original picture, unrelated metadata, current editing state and history stay intact.
