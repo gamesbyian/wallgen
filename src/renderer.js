@@ -39,7 +39,7 @@ export function textureHeight(scene,stripe,x,side=0){
   }
   const cap=Math.min(28,stripe.width*.34)*
     Math.pow(scene.textureDisplacement/100,.85);
-  return Math.max(-cap,Math.min(cap,field*cap));
+  return Math.max(-cap,Math.min(cap,field*cap*1.5));
 }
 // This is an independent line rendering style, NOT the dot/dash motif.
 // Marks are anchored to the full unnudged ribbon so nudging and overscan
@@ -1054,11 +1054,26 @@ export function drawWallpaper(canvas, recipe, options={}) {
       left=Math.min(left,tx);right=Math.max(right,tx);
       top=Math.min(top,ty);bottom=Math.max(bottom,ty);
     }
+    // Rasterize the material in stable logical coordinates *before* camera
+    // scaling. Otherwise fractional vector strokes are antialiased differently
+    // in HTMLCanvas and OffscreenCanvas, shifting worker/export pixels.
+    const x0=Math.floor(left)-2,y0=Math.floor(top)-2;
+    const w=Math.ceil(right)-x0+2,h=Math.ceil(bottom)-y0+2;
+    const targetScale=Math.min(2,Math.max(1,Math.round(Math.max(scaleX,scaleY))));
+    const rasterScale=Math.min(targetScale,Math.sqrt(7000000/(w*h)));
+    const tw=Math.max(1,Math.ceil(w*rasterScale));
+    const th=Math.max(1,Math.ceil(h*rasterScale));
+    const surface=createRenderSurface(tw,th,options.canvasFactory);
+    const t=surface.getContext('2d');
+    if(!t)throw new Error('Material surface unavailable');
+    t.setTransform(rasterScale,0,0,rasterScale,-x0*rasterScale,-y0*rasterScale);
+    t.globalAlpha=layer.strength/100;
+    paintMaterial(t,layer,{left,right,top,bottom});
     s.setTransform(scaleX,0,0,scaleY,margin.left+offsetX,margin.top+offsetY);
     s.translate(DESIGN_WIDTH/2,DESIGN_HEIGHT/2);
     s.rotate(radians);
-    s.globalAlpha=layer.strength/100;
-    paintMaterial(s,layer,{left,right,top,bottom});
+    s.globalAlpha=1;
+    s.drawImage(surface,x0,y0,w,h);
     s.setTransform(1,0,0,1,0,0);s.globalAlpha=1;
   };
   const blend=layer=>layer.blend==='normal'?'source-over':layer.blend;
