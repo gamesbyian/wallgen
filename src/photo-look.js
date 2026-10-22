@@ -208,7 +208,9 @@ export function processPhotoPixels(data,width,height,rawLook,seed='rainbow-001')
       G=luma+(G-luma)*p.saturation;
       B=luma+(B-luma)*p.saturation;
       const nx=(x+.5)/width*2-1;
-      const falloff=Math.min(1,Math.pow(nx*nx*.7+ny*ny*.7,1.35));
+      // Avoid millions of expensive pow() calls when the selected look has
+      // no vignette (grain-only, halation-only, HDR). Nonzero paths unchanged.
+      const falloff=vignette?Math.min(1,Math.pow(nx*nx*.7+ny*ny*.7,1.35)):0;
       const dark=1-vignette*falloff*.5;
       const perturb=grain?(
         layeredGrain
