@@ -1,5 +1,10 @@
 # Agent orientation for ROYGBIV
 
+## Neutral Photo optimization without skipping spatial effects (2026-10-22)
+
+`isNeutralPhotoLook` tests the **entire normalized transform**, not just the Grain or Halation slider, before skipping `applyPhotoFinish` get/put image data. An active `camera-webcam-signal` must always run because its downsample/chroma-loss stage is inherently non-neutral. Even a neutral active `processPhotoPixels` call still rejects invalid pixel-buffer dimensions. Preserve stored recipes and non-neutral output exactly. This reduces avoidable 19.8 MP readbacks without introducing screenshot CI or claiming device-benchmark evidence.
+
+
 ## Legacy PNG restoration must not claim pixel equivalence (2026-10-22)
 
 `extractPngRecipeWithProvenance` in `src/png-metadata.js` provides one-read validated v1/v2 importer provenance (normalizer changes and duplicate-record count); existing `extractPngRecipe` delegates with its original return contract. The ordinary Restore UI shows a short caution when current normalization alters old fields or a v1/multiple-record PNG is imported. Import remains available through existing recipe/Undo transaction. Do **not** mislabel successful import as exact historical renderer/pixel regeneration or conflate import with the strict, no-render migration/archival path. No new CI workload.

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {PHOTO_PRESETS,normalizePhotoLook,processPhotoPixels,applyPhotoFinish} from '../src/photo-look.js';
+import {PHOTO_PRESETS,normalizePhotoLook,isNeutralPhotoLook,processPhotoPixels,applyPhotoFinish} from '../src/photo-look.js';
 import {normalizeRecipe,encodeRecipe,decodeRecipe,resolveScene} from '../src/model.js';
 
 const pixels=(r=200,g=120,b=40,w=8,h=9)=>{
@@ -269,4 +269,47 @@ test('halation-only strength 0 to 100 actually changes rim light while preservin
     const center=(50*w+35)*4;
     assert.deepEqual(result.slice(center,center+4),source.slice(center,center+4));
   }
+});
+
+test('zero optical/grain effect bypasses large Canvas readback with unchanged recipe',()=>{
+  const ctx={getImageData(){throw Error('neutral look must never allocate ImageData');},
+    putImageData(){throw Error('neutral look must never write ImageData');}};
+  for(const value of [
+    {enabled:true,presetId:'film-grain-only',amount:100,parameters:{grain:0}},
+    {enabled:true,presetId:'film-halation-only',amount:100,
+      parameters:{grain:0,halation:0}},
+    {enabled:true,presetId:'film-slide',amount:100,
+      parameters:{contrast:1,saturation:1,shadow:0,highlight:0,
+        red:0,green:0,blue:0,grain:0,vignette:0}},
+  ]){
+    const before=normalizePhotoLook(value);
+    assert.equal(isNeutralPhotoLook(before),true);
+    assert.equal(applyPhotoFinish(ctx,3024,6552,value,'no-pixels'),false);
+    assert.deepEqual(normalizePhotoLook(value),before,
+      'neutral optimization must not mutate authored Photo settings');
+    const raw=pixels(14,190,77),copy=raw.slice();
+    assert.strictEqual(processPhotoPixels(copy,8,9,value,'no-pixels'),copy);
+    assert.deepEqual(copy,raw);
+  }
+});
+test('spatial webcam capture and active film grain are not falsely optimized away',()=>{
+  const neutralSignal=normalizePhotoLook({enabled:true,presetId:'camera-webcam-signal',
+    amount:100,parameters:{contrast:1,saturation:1,shadow:0,highlight:0,
+      red:0,green:0,blue:0,grain:0,vignette:0}});
+  const activeGrain=normalizePhotoLook({enabled:true,presetId:'film-grain-only',
+    amount:100,parameters:{grain:30}});
+  assert.equal(isNeutralPhotoLook(neutralSignal),false);
+  assert.equal(isNeutralPhotoLook(activeGrain),false);
+  let reads=0,writes=0;
+  const ctx={
+    getImageData(x,y,w,h){reads++;return {data:pixels(80,150,220,w,h)};},
+    putImageData(){writes++;}
+  };
+  assert.equal(applyPhotoFinish(ctx,6,6,neutralSignal,'sensor'),true);
+  assert.equal(applyPhotoFinish(ctx,6,6,activeGrain,'emulsion'),true);
+  assert.deepEqual([reads,writes],[2,2]);
+  assert.throws(()=>processPhotoPixels(new Uint8ClampedArray(3),8,9,
+    {enabled:true,presetId:'film-grain-only',parameters:{grain:0}}),
+    /Invalid photo pixel buffer/,
+    'invalid active buffer is still validated even if look is neutral');
 });

@@ -1,6 +1,11 @@
 # ROYGBIV: active product roadmap and work queue
 
-## Historical PNG Restore gets truthful renderer-compatibility feedback (PR pending, 2026-10-22)
+## Neutral Photo finishing skips export-size readback (PR pending, 2026-10-22)
+
+`src/photo-look.js` now detects a **fully neutral normalized Photo treatment** (e.g., Grain Only at Grain 0 or Warm Halation at Halation 0 and Grain 0) before asking Canvas2D for an entire image buffer. Both the production compositor and pure in-place pixel processor skip expensive work when absolutely no tone, colour, grain, vignette or halation transform remains. The opt-in simulated low-res webcam **cannot** use this optimization because its spatial capture still changes pixels despite neutral tone settings. Existing non-neutral looks, saved recipe data and rendering math remain unchanged. Focused tests assert zero read/write calls at full 3024×6552 dimensions and unchanged active spatial-camera and grain behavior. This is a source-level performance win, **not** a measured Pixel device speedup. No new CI workflow.
+
+
+## Historical PNG Restore gets truthful renderer-compatibility feedback (PR #494 merged, 2026-10-22)
 
 The ordinary **Restore design from PNG** journey has continued to accept legacy v1/v2 recipe records through the same `normalizeRecipe` semantics; it previously said “Restored original wallpaper settings”, which implied exact source-image reconstruction despite verified historical default/renderer drift. The importer now returns the validated selected recipe and provenance in **one raw read**. The UI detects v1 dialects, fields that today's normalizer changes/synthesizes, and multi-record files, and reports that the restored artwork may differ under the current generator while asking the user to keep the source PNG. A fully current canonical PNG receives a shorter, still honest cross-version note. This is an **informational notification**, not a confirmation dialog, import rejection, automatic migration or changed Undo flow; exact-byte archival rescue and strict metadata-only migration remain separate. Focused import/notice tests and no extra CI.
 
