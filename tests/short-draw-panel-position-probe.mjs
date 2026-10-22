@@ -38,7 +38,7 @@ try{
    const preview=await page.locator('#preview').boundingBox();
    const anchor={x:preview.x+preview.width*source.customPath[2][0],
      y:preview.y+preview.height*source.customPath[2][1]};
-   const style=await page.addStyleTag({content:''});
+   const style=await page.addStyleTag({content:'/* temporary panel probe */'});
    for(const [id,css] of variants){
     await style.evaluate((el,css)=>el.textContent=css?
       'body.mobile-studio.path-drawing .draw-path-panel{'+css+'}':'',css);
