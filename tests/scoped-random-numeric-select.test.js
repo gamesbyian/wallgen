@@ -4,7 +4,7 @@ import {normalizeRecipe} from '../src/model.js';
 import {randomizeScope} from '../src/scoped-random.js';
 
 const repeatSelect={
-  tagName:'SELECT',
+  tagName:'SELECT',dataset:{inactive:'false'},
   options:[2,3,4,5,6].map(value=>({value:String(value),disabled:false}))
 };
 const control=key=>key==='repeatCount'?repeatSelect:null;
