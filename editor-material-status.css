@@ -96,3 +96,15 @@
 .editor-tool-card[data-editor-tool="surface"]:has(>.embroidery-controls[open]) > :not(.embroidery-controls){
   display:none!important
 }
+
+
+/* Only show one saved authored-object picker when explicitly requested. */
+.embroidery-controls .embroidery-object-picker[hidden]{display:none!important}
+.embroidery-controls .embroidery-object-picker{min-width:0;display:grid;gap:4px}
+.embroidery-controls .embroidery-object-picker select{width:100%;max-width:100%;min-height:44px}
+.embroidery-controls .embroidery-object-picker select:focus-visible{
+  outline:2px solid currentColor;outline-offset:2px
+}
+.embroidery-controls .thread-treatment-summary{
+  min-width:0;max-width:62%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap
+}
