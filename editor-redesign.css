@@ -698,6 +698,27 @@
  }
 }
 
+/* Real 500–790px tall-phone native tool-strip touch cells: the historical
+   41px chooser exposed 36px named-tool/Tool actions and a 27px Focus button.
+   Raise only this existing strip to 44px, reserving its additional 3px in
+   the Edit tray instead of painting new click areas over adjacent controls.
+   Short portraits and the 790/791 desktop handoff retain their own layout.
+   Fullscreen uses only transient browser activation and is unaffected. */
+@media(min-width:500px) and (max-width:790px) and (min-height:840px){
+  body.mobile-studio.mobile-edit-open:not(:has(#controls.editor-focus-active)){
+    --mobile-tray-height:clamp(344px,calc(36dvh + 4px),434px)!important;
+  }
+  body.mobile-studio .sidebar .editor-tool-chooser{
+    flex:0 0 44px!important;height:44px!important;
+    min-height:44px!important;max-height:44px!important;
+  }
+  body.mobile-studio .sidebar .editor-tool-tab:not([hidden]),
+  body.mobile-studio .sidebar .editor-tool-chooser>.editor-tool-reroll:not([hidden]){
+    box-sizing:border-box!important;height:44px!important;
+    min-height:44px!important;max-height:44px!important;
+  }
+}
+
 /* Optional texture layers are regular selectable tools, not extra add/remove
    forms. A smooth material is simply inactive, without a dedicated action row.
    Collapse rotation into a single label + controls + die + lock line. */
