@@ -35,7 +35,7 @@ jobs:
         if: ${{ github.event_name == 'pull_request' && github.head_ref == 'review/linen-three-displacements-once' }}
         run: |
           npm install --no-save playwright
-          npx playwright install --with-deps chromium
+          npx playwright install chromium
       - name: One-shot render linen at fixed seed with 0, 20 and 68 distortion
         if: ${{ github.event_name == 'pull_request' && github.head_ref == 'review/linen-three-displacements-once' }}
         run: |
