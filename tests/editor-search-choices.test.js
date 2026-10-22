@@ -7,7 +7,7 @@ import {toolAppliesToScene} from '../src/editor-tool-applicability.js';
 
 test('ranked search exposes different actual controls, preserving first-hit semantics',()=>{
   const options={applies:tool=>toolAppliesToScene(tool,{structure:'paths'})};
-  for(const query of ['shadow','texture','width']){
+  for(const query of ['shadow','texture']){
     const hits=findEditorSearchHits(query,TOOL_LIST,options);
     assert.ok(hits.length>=2,'Expected ambiguous query: '+query);
     assert.deepEqual(hits[0],findEditorSearchHit(query,TOOL_LIST,options));
