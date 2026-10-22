@@ -21,7 +21,9 @@
   <link rel="stylesheet" href="mobile-editor-rail.css?v=20261020-character-crop1">
   <link rel="stylesheet" href="design-transform.css?v=20261016-transform1">
   <link rel="stylesheet" href="draw-path.css?v=20261019-touch1">
-  <link rel="stylesheet" href="image-path.css?v=20261019-importcontrast1">
+  <link rel="stylesheet" href="image-path.css?v=20261022-shapes1">
+  <link rel="stylesheet" href="geometry-library.css?v=20261022-foundation1">
+  <link rel="stylesheet" href="scattered-shapes.css?v=20261022-1">
   <link rel="stylesheet" href="editor-redesign.css?v=20261020-sticky-hit1">
   <link rel="stylesheet" href="bleed-and-action-rail.css?v=20261018-five-default1">
   <link rel="stylesheet" href="detail-controls.css?v=20261020a11y1">
@@ -111,10 +113,19 @@
           <label class="field range-field"><span>Centre gap</span><input type="range" name="rayCore" data-setting="rayCore" min="0" max="100" value="0"></label>
           <label class="field range-field"><span>Origin X</span><input type="range" name="fieldCenterX" data-setting="fieldCenterX" min="-50" max="150" value="50"></label>
           <label class="field range-field"><span>Origin Y</span><input type="range" name="fieldCenterY" data-setting="fieldCenterY" min="-50" max="150" value="50"></label>
-          <label class="field">Region layout <select name="regionMode" data-setting="regionMode"><option value="voronoi">Voronoi / stained glass</option><option value="organic">Organic territories</option><option value="facets">Triangular facets</option><option value="blocks">Recursive rectangles</option><option value="nested">Nested silhouettes</option></select></label>
+          <label class="field">Region layout <select name="regionMode" data-setting="regionMode"><option value="voronoi">Voronoi / stained glass</option><option value="organic">Organic territories</option><option value="facets">Triangular facets</option><option value="blocks">Recursive rectangles</option><option value="nested">Nested silhouettes</option><option value="scattered">Scattered shapes</option></select></label>
+          <label class="field">Shape source <select name="scatteredShapeKind" data-setting="scatteredShapeKind"><option value="circle">Perfect circles</option><option value="imported">Imported silhouette</option></select></label>
           <label class="field range-field"><span>Region count</span><input type="range" name="regionCount" data-setting="regionCount" min="7" max="70" step="7" value="14"></label>
           <label class="field range-field"><span>Irregularity</span><input type="range" name="regionJitter" data-setting="regionJitter" min="0" max="100" value="45"></label>
           <label class="field range-field"><span>Shape sides</span><input type="range" name="regionSides" data-setting="regionSides" min="0" max="12" step="1" value="0"><small>0 = circular, 3–12 = polygons.</small></label>
+          <label class="field range-field"><span>Shape count</span><input type="range" name="scatteredCount" data-setting="scatteredCount" min="1" max="70" step="1" value="7"></label>
+          <label class="field range-field"><span>Smallest shape</span><input type="range" name="scatteredMinSize" data-setting="scatteredMinSize" min="0" max="100" value="10"></label>
+          <label class="field range-field"><span>Largest shape</span><input type="range" name="scatteredMaxSize" data-setting="scatteredMaxSize" min="0" max="100" value="83"></label>
+          <label class="field range-field"><span>Size contrast</span><input type="range" name="scatteredVariation" data-setting="scatteredVariation" min="0" max="100" value="92"></label>
+          <label class="field range-field"><span>Minimum clearance</span><input type="range" name="scatteredSpacing" data-setting="scatteredSpacing" min="0" max="100" value="28"></label>
+          <label class="field range-field"><span>Edge cropping</span><input type="range" name="scatteredEdgeCrop" data-setting="scatteredEdgeCrop" min="0" max="100" value="75"></label>
+          <label class="field">Overlap <select name="scatteredOverlap" data-setting="scatteredOverlap"><option value="separate">Keep circles separate</option><option value="overlap">Allow overlaps</option></select></label>
+          
           <label class="field">Path geometry <select name="geometry" data-setting="geometry"><option value="auto">Follow style</option><option value="straight">Straight</option><option value="wave">Wavy</option><option value="zigzag">Zigzag</option><option value="chevron">Chevron / pointed V</option><option value="jagged">Jagged / fractured</option><option value="stepped">Stepped</option><option value="arc">Sweeping arcs</option><option value="contour">Topographic</option><option value="hairpin">Hairpin / returning curve</option><option value="loop">Single loop / circular turn</option><option value="loops">Continuous loops</option><option value="drawn" disabled>Drawn path</option></select></label>
           <label class="field range-field"><span>Hairpin radius</span><input type="range" name="turnRadius" data-setting="turnRadius" min="0" max="100" value="50"></label>
           <label class="field range-field"><span>Hairpin turn angle</span><input type="range" name="hairpinAngle" data-setting="hairpinAngle" min="60" max="180" value="180" step="1"></label>
@@ -422,8 +433,11 @@
       <button type="button" id="imagePathAngle" disabled>Use angle</button>
       <button type="button" id="imagePathApply" disabled>Edit path</button>
     </div>
+    <div class="image-shape-actions">
+      <button type="button" id="imagePathShape" disabled>Use silhouette as shape</button>
+    </div>
   </dialog>
-  <script type="module" src="src/app.js?v=20261021-labels1"></script>
+  <script type="module" src="src/app.js?v=20261022-shapes1"></script>
   <script type="module" src="src/mobile-studio.js?v=20261021-labels1"></script>
   <script type="module" src="src/mobile-fullscreen.js?v=20261021-1"></script>
   <script type="module" src="src/mobile-swipes.js?v=20261017-explore1"></script>

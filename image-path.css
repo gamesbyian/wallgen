@@ -124,3 +124,12 @@ html[data-theme="cream"] .image-path-dialog[data-phase="empty"] .image-path-phas
   .image-path-top strong{font-size:13px}
   .image-path-phase{font-size:9px;padding:3px 5px}
 }
+
+/* Filled silhouettes are a distinct import outcome, not a fourth cramped
+   inline action. Preserve the main image preview on compact phone screens. */
+.image-shape-actions{display:flex;flex:0 0 auto}
+.image-shape-actions button{width:100%;min-height:44px;border:1px solid #b98ac2;
+  border-radius:9px;background:#774177;color:#fff;font-size:12px;font-weight:750}
+.image-shape-actions button:disabled{opacity:.4;cursor:default}
+html[data-theme="cream"] .image-shape-actions button:not(:disabled){
+  background:#7b3569;color:white;border-color:#944176}

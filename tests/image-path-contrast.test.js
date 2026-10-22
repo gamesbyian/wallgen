@@ -25,6 +25,6 @@ test('contrast change retains original source import actions',()=>{
   for(const id of ['imagePathApply','imagePathAngle','imagePathCancel',
     'imagePathCandidate','imagePathAnother'])
     assert.equal([...html.matchAll(new RegExp('id="'+id+'"','g'))].length,1,id);
-  assert.match(html,/image-path\.css\?v=20261019-importcontrast1/);
+  assert.match(html,/image-path\.css\?v=20261022-shapes1/);
   assert.doesNotMatch(css,/linear-gradient|radial-gradient|conic-gradient/i);
 });

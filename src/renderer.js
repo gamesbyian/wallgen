@@ -835,10 +835,20 @@ export function drawRegionObjects(ctx,scene){
   const hasDivider=scene.dividerColor!=='none'&&scene.dividerWidth>0;
   const trace=object=>{
     ctx.beginPath();
-    ctx.moveTo(object.vertices[0].x,object.vertices[0].y);
-    for(let i=1;i<object.vertices.length;i++)
-      ctx.lineTo(object.vertices[i].x,object.vertices[i].y);
-    ctx.closePath();
+    if(object.circle){
+      const {cx,cy,r}=object.circle;
+      // Exact circle in the design coordinate plane. Export and preview
+      // share the same camera mapping without polygonal chord flattening.
+      ctx.arc(cx,cy,r,0,2*Math.PI);
+    }else{
+      // A compound imported silhouette can contain islands and holes.
+      // Even-odd filling must use ALL rings in the same Canvas path.
+      for(const ring of object.rings||[object.vertices]){
+        ctx.moveTo(ring[0].x,ring[0].y);
+        for(let i=1;i<ring.length;i++)ctx.lineTo(ring[i].x,ring[i].y);
+        ctx.closePath();
+      }
+    }
   };
   const regions=scene.objects.filter(o=>o.kind==='region'&&o.vertices.length>=3);
   // First paint every fill. A tiny matching stroke closes antialiasing seams
@@ -850,7 +860,7 @@ export function drawRegionObjects(ctx,scene){
       ctx.shadowBlur=scene.glow/100*32;
     }
     ctx.fillStyle=object.color;
-    ctx.fill();
+    if(object.rings)ctx.fill('evenodd');else ctx.fill();
     ctx.shadowBlur=0;
     drawRegionInteriors(ctx,object,scene.interiorElements,scene.structure,scene.renderBounds);
     if(!hasDivider){

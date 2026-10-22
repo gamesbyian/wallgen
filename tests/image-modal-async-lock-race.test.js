@@ -24,7 +24,7 @@ test('image decode completing after Structure lock does not re-enable invalid mo
   const old={document:globalThis.document,Image:globalThis.Image,
     createURL:URL.createObjectURL,revokeURL:URL.revokeObjectURL};
   const ids=['importPathToggle','imagePathFile','imagePathDialog','imagePathCanvas',
-    'imagePathCandidate','imagePathStatus','imagePathApply','imagePathAngle',
+    'imagePathCandidate','imagePathStatus','imagePathApply','imagePathShape','imagePathAngle',
     'imagePathAnother','imagePathCancel'];
   const nodes=Object.fromEntries(ids.map(id=>[id,new Element(id)]));
   globalThis.document={
@@ -68,6 +68,7 @@ test('image decode completing after Structure lock does not re-enable invalid mo
     tool.sync(recipe);
     assert.equal(nodes.imagePathApply.disabled,true);
     assert.equal(nodes.imagePathAngle.disabled,true);
+    assert.equal(nodes.imagePathShape.disabled,true);
     assert.equal(nodes.imagePathAnother.disabled,true);
     completeDecode();
     await new Promise(resolve=>setImmediate(resolve));

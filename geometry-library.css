@@ -1,0 +1,79 @@
+/* Reusable geometry chooser. The wallpaper editor and its seven categories are
+   untouched; the chooser owns scrolling and works over either theme. */
+.geometry-library-dialog{
+  box-sizing:border-box;width:min(680px,calc(100vw - 18px));
+  height:min(760px,calc(100dvh - 24px));max-width:none;max-height:none;
+  margin:auto;padding:16px;overflow:hidden;overscroll-behavior:contain;
+  border-radius:14px;border:1px solid #686278;background:#191b27;color:#f9f6ff;
+  box-shadow:0 20px 70px #000b;
+}
+.geometry-library-dialog[open]{display:flex;flex-direction:column;gap:12px}
+.geometry-library-dialog::backdrop{background:#080910cc}
+.geometry-library-dialog header,
+.geometry-library-dialog footer,
+.geometry-library-toolbar,
+.geometry-library-save{display:flex;align-items:center;gap:9px}
+.geometry-library-dialog header{justify-content:space-between}
+.geometry-library-dialog header strong{font-size:17px}
+.geometry-library-dialog button,.geometry-library-dialog select,
+.geometry-library-dialog input{
+  font:inherit;min-height:44px;border-radius:9px;border:1px solid #686477;
+  padding:8px 12px;background:#2a2b39;color:inherit;
+}
+.geometry-library-dialog button{font-size:12px;font-weight:750}
+.geometry-library-dialog button:disabled{opacity:.45;cursor:default}
+.geometry-library-dialog button:focus-visible,
+.geometry-library-dialog select:focus-visible,
+.geometry-library-dialog input:focus-visible{outline:3px solid #edb0ec;outline-offset:2px}
+.geometry-library-dialog header button{flex:0 0 auto}
+.geometry-library-note{font-size:12px;line-height:1.45;margin:0;color:#d3c8e2}
+.geometry-library-toolbar input{flex:1;min-width:0}
+.geometry-library-toolbar select{width:min(140px,36%)}
+.geometry-library-save input{flex:1;min-width:0}
+.geometry-library-save button{background:#a92f71;color:#fff;border-color:#cd6fa6}
+.geometry-library-status{font-size:12px;line-height:1.45;color:#e6d0fa;margin:0;min-height:18px}
+.geometry-library-list{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;align-content:start}
+.geometry-library-empty{grid-column:1/-1;color:#d1c7dc;line-height:1.6;
+  margin:12px 0;text-align:center}
+.geometry-library-item{min-width:0;display:grid;grid-template-columns:52px minmax(0,1fr);
+  align-items:center;gap:8px;padding:9px;background:#222431;border:1px solid #4d4a5e;
+  border-radius:10px}
+.geometry-library-thumb{grid-row:1/3;align-self:stretch;min-height:60px;
+  display:grid;place-items:center;background:#111621;color:#e4b1fd;
+  border:1px solid #484153;border-radius:7px}
+.geometry-library-thumb svg{display:block;width:100%;height:100%;max-height:80px;
+  min-height:60px;overflow:visible}
+.geometry-library-thumb span{font-size:35px;line-height:1}
+.geometry-library-item-info{min-width:0;display:flex;flex-direction:column;gap:4px}
+.geometry-library-item-info strong{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.geometry-library-item-info small{font-size:11px;color:#c0b3d0}
+.geometry-library-item-actions{grid-column:2;display:flex;flex-wrap:wrap;gap:6px}
+.geometry-library-item-actions button{min-height:44px;padding:8px 9px}
+.geometry-library-item-actions span{font-size:10px;line-height:1.35;color:#c8becd}
+.geometry-library-dialog footer{flex-wrap:wrap;border-top:1px solid #4d475b;padding-top:9px}
+.geometry-library-dialog footer button{flex:1;min-width:165px}
+html[data-theme="cream"] .geometry-library-dialog{background:#fffdf8;
+  color:#292638;border-color:#ded2db;box-shadow:0 18px 60px #231b286b}
+html[data-theme="cream"] .geometry-library-dialog button,
+html[data-theme="cream"] .geometry-library-dialog select,
+html[data-theme="cream"] .geometry-library-dialog input{
+  background:#fff;color:#282539;border-color:#cfc4d1}
+html[data-theme="cream"] .geometry-library-save button{
+  background:#9f2968;color:#fff;border-color:#9f2968}
+html[data-theme="cream"] .geometry-library-note,
+html[data-theme="cream"] .geometry-library-status,
+html[data-theme="cream"] .geometry-library-empty{color:#62516b}
+html[data-theme="cream"] .geometry-library-item{background:#fbf5ec;border-color:#ded1db}
+html[data-theme="cream"] .geometry-library-thumb{background:#2b2631;color:#e7b6fd}
+html[data-theme="cream"] .geometry-library-item-info small,
+html[data-theme="cream"] .geometry-library-item-actions span{color:#6e586f}
+@media(max-width:790px){
+  .geometry-library-dialog{width:calc(100vw - 12px);
+    height:calc(100dvh - 16px);padding:10px;gap:9px}
+  .geometry-library-list{grid-template-columns:minmax(0,1fr)}
+  .geometry-library-dialog footer button{min-width:calc(50% - 6px)}
+}
+@media(prefers-reduced-motion:reduce){
+  .geometry-library-dialog *{scroll-behavior:auto}
+}
