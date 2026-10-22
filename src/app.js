@@ -921,8 +921,8 @@ migrationArchiveDownload.addEventListener('click',async()=>{
   try{
     const bundle=archivePngRecipeRecords(migrationArchiveSource);
     if(revision!==migrationRevision)return;
-    const filename=safeFilename((migrationFileName||'wallpaper').replace(/\\.png$/i,''));
-    const payload=JSON.stringify({sourceFile:migrationFileName,...bundle},null,2)+'\\n';
+    const filename=safeFilename((migrationFileName||'wallpaper').replace(/\.png$/i,''));
+    const payload=JSON.stringify({sourceFile:migrationFileName,...bundle},null,2)+'\n';
     downloadBlob(new Blob([payload],{type:'application/json'}),
       filename+'-original-recipe-records.json');
     migrationStatus.textContent='Saved '+bundle.recordCount+
