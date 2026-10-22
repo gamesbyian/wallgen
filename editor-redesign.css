@@ -1435,3 +1435,31 @@ html[data-theme="cream"] body.mobile-studio .sidebar .settings-tabs .settings-ta
     padding:2px 7px!important;font-size:11px!important;
   }
 }
+
+
+/* A dormant Pattern/Dots card tells the artist how to make its controls
+   meaningful. This hint is absent as soon as either native slider applies. */
+.editor-tool-card .editor-pattern-prerequisite{
+  display:flex;align-items:center;gap:5px;flex:0 0 auto;
+  margin:3px 0 0;padding:4px 5px;border-left:2px solid #b57ea5;
+  border-radius:4px;background:var(--surface);font-size:10px;line-height:1.15;
+  color:inherit;
+}
+.editor-tool-card .editor-pattern-prerequisite[hidden]{display:none!important}
+.editor-tool-card .editor-pattern-prerequisite span{flex:1;min-width:0}
+.editor-tool-card .editor-pattern-prerequisite button{
+  flex:0 0 auto;border:1px solid var(--line);border-radius:6px;
+  background:var(--surface);color:inherit;padding:3px 5px;
+  font-size:10px;min-height:27px;cursor:pointer;
+}
+.editor-tool-card .editor-pattern-prerequisite button:focus-visible{
+  outline:2px solid #c85092;outline-offset:1px;
+}
+@media(max-width:790px){
+  body.mobile-studio .sidebar .editor-pattern-prerequisite{
+    padding:2px 3px!important;margin-top:1px!important;gap:3px!important;
+  }
+  body.mobile-studio .sidebar .editor-pattern-prerequisite button{
+    min-height:26px!important;padding:2px 3px!important;
+  }
+}
