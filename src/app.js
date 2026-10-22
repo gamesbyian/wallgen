@@ -1346,6 +1346,32 @@ function syncInteriorUI(){
     return;
   }
   const active=items[selectedInterior];
+  // Keep the selected object's identity reachable from every editing tool.
+  // These are just views into the existing collection, not five independent
+  // copies of its properties. Changing the picker never mutates the recipe.
+  for(const [id,card] of Object.entries(interiorCards)){
+    if(id==='interior')continue; // Elements already owns its Add/Remove picker.
+    const context=make(card,'div');
+    context.className='interior-selection-context';
+    const label=make(context,'label','Editing');
+    const switcher=make(label,'select');
+    switcher.dataset.interiorSwitcher='true';
+    switcher.dataset.interiorFocus='context.'+id+'.choose';
+    switcher.setAttribute('aria-label','Interior element to edit');
+    for(const [i,item] of items.entries()){
+      const option=document.createElement('option');
+      option.value=String(i);
+      option.textContent=(i+1)+'. '+item.type+' · '+item.shape+
+        (item.enabled?'':' (hidden)');
+      switcher.append(option);
+    }
+    switcher.value=String(selectedInterior);
+    switcher.addEventListener('change',()=>{
+      selectedInterior=Number(switcher.value);
+      selectedInteriorId=items[selectedInterior]?.id??null;
+      syncInteriorUI();
+    });
+  }
   const update=(key,value)=>changeRecipe({...current,interiorElements:
     current.interiorElements.map((e,i)=>i===selectedInterior?{...e,[key]:value}:e)});
   const select=(card,name,key,options)=>{
@@ -1498,7 +1524,8 @@ function syncInteriorUI(){
     // failed preview refresh. Selection and Unlock remain possible.
     for(const card of Object.values(interiorCards))
       for(const control of card.querySelectorAll('input,select,button'))
-        if(control!==lock&&control!==choose)control.disabled=true;
+        if(control!==lock&&control!==choose&&
+          !control.hasAttribute('data-interior-switcher'))control.disabled=true;
   }
   restoreFocus();
 }
