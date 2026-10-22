@@ -1,3 +1,4 @@
+import {FULL_SETTING_LABELS} from './editor-terminology.js';
 /** Prefer the actual source-visible name over a camelCase recipe key.
  * Read a disposable label clone so nested option text, hints, numeric values
  * and per-setting dice never leak into screen-reader action names.
@@ -34,6 +35,9 @@ export function annotateEditorSettingRow(root,field,key,{category,tool}={}){
   if(!root||!field||!key||!category||!tool)
     throw new TypeError('Canonical source control, setting, category and tool required');
   const kind=controlKind(field,root);
+  // Short visible labels are safe only when the control retains a complete
+  // standalone name for the screen reader, Focus, steppers and setting dice.
+  if(FULL_SETTING_LABELS[key]&&!field.hasAttribute('aria-label'))field.setAttribute('aria-label',FULL_SETTING_LABELS[key]);
   // A composite can own more than one original setting. Never discard a key
   // or move a source input to fabricate a prettier row.
   const keys=new Set((root.dataset.controlKeys||'').split(' ').filter(Boolean));

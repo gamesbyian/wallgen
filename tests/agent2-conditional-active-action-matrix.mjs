@@ -111,20 +111,21 @@ async function changeSource(page,field,target){
     const before=Number(await field.inputValue());
     const max=Number(await field.getAttribute('max'));
     const forward=before<max;
-    const first=forward?'Increase':'Decrease';
-    const reverse=forward?'Decrease':'Increase';
-    const button=page.locator('#controls .step-button[aria-label="'+first+' '+name+'"]');
+    // The source range owns its actual minus/plus buttons in the same
+    // stepper. Their accessible names are user-facing and may evolve;
+    // select by the stable original field rather than a camelCase label.
+    const stepper=field.locator('xpath=..');
+    const button=stepper.locator('button.step-button').nth(forward?1:0);
     assert.equal(await button.count(),1,name+': missing original numeric step');
     await button.click();
-    return {kind:'range',previous:before,first,reverse};
+    return {kind:'range',previous:before,forward};
   }
   throw Error(name+': untested conditional native input kind '+kind);
 }
 async function undoSource(page,field,record){
   if(record.kind==='select')await field.selectOption(record.previous);
   else {
-    const name=await field.getAttribute('name');
-    const button=page.locator('#controls .step-button[aria-label="'+record.reverse+' '+name+'"]');
+    const button=field.locator('xpath=..').locator('button.step-button').nth(record.forward?0:1);
     await button.click();
   }
 }

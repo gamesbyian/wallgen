@@ -7,7 +7,7 @@ used by src/renderer.js for both visible texture and stripe-edge relief.
 
 - Only enabled texture layers covering stripes displace stripe contours.
   A texture with background-only coverage cannot modify a stripe edge.
-  With no stripe material, Texture Displacement produces no deformation.
+  With no stripe material, **Contour distortion** (the existing `textureDisplacement` recipe setting) produces no deformation.
 - Texture Strength controls the size of each layer's geometric effect,
   independently of other layers. A 10% material contributes one tenth of
   the same material at 100%, before the global displacement cap.
@@ -25,6 +25,7 @@ used by src/renderer.js for both visible texture and stripe-edge relief.
   link shares and PNG exports remain reproducible, so rendering the same
   recipe never secretly rerolls texture. Selecting the same material again
   with an unchanged seed intentionally preserves its original character.
+- At 0%, the original contours remain crisp.
 - Stripes cannot cross simply because displacement is high: total relief
   stays capped at the smaller of 28 logical units and 34% stripe width,
   multiplied by the global displacement setting.

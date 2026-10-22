@@ -248,7 +248,7 @@ try{
     nodes.map(el=>({title:el.querySelector('h3')?.textContent,
       children:[...el.querySelectorAll('button,input')].map(x=>x.id||x.className)})));
   assert.deepEqual(groups.map(x=>x.title),
-    ['Create & seed','Import, export & share','Position & design details']);
+    ['Generate','Files & sharing','Position & info']);
   for(const id of ['seedInput','applySeed','randomize','download','importRecipePNG',
     'metadataToggle','copyLink','copyRecipe','downloadRecipe','mobileShuffle'])
     await hit('#'+id);

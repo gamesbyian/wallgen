@@ -49,7 +49,7 @@ try{
     assert.ok(bounds.primary[1]<=bounds.card[1]+1,
       'Character label text extends beyond source card: '+JSON.stringify({width,theme,bounds}));
     assert.ok(bounds.clickedAtCentre,'Original Character checkbox is occluded');
-    assert.ok(bounds.accessibleText.includes('Override pattern homogeneity'));
+    assert.ok(bounds.accessibleText.includes('Vary patterns too'));
     if(mobile)assert.equal(bounds.helper,'none',
       'Mobile card still paints a half-cut explanation');
     else assert.notEqual(bounds.helper,'none',

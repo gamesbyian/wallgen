@@ -52,9 +52,9 @@ function syncRail(){
 const moreContent=document.getElementById('mobileToolsContent');
 const moreGroups=new Map();
 for(const [id,title] of [
-  ['generate','Create & seed'],
-  ['export','Import, export & share'],
-  ['inspect','Position & design details']
+  ['generate','Generate'],
+  ['export','Files & sharing'],
+  ['inspect','Position & info']
 ]){
   const section=document.createElement('section');
   section.className='mobile-more-group';
@@ -73,7 +73,7 @@ moreGroups.get('generate').append(document.getElementById('mobileShuffle'));
 const moreBatch=document.createElement('button');
 moreBatch.type='button';
 moreBatch.className='text-link-button mobile-more-batch';
-moreBatch.textContent='Generate 12 variations in Explore';
+moreBatch.textContent='Generate 12';
 moreBatch.setAttribute('aria-label','Generate 12 wallpapers and open Explore');
 moreBatch.addEventListener('click',()=>{
   document.getElementById('batch').click();
@@ -252,6 +252,12 @@ for(const [mobileId,targetId] of [
 function syncFavorite(){
   const chosen=document.getElementById('favorite').getAttribute('aria-pressed')==='true';
   favouriteBtn.setAttribute('aria-pressed',String(chosen));
+  const action=chosen?'Remove from favourites':'Add to favourites';
+  favouriteBtn.setAttribute('aria-label',action);
+  favouriteBtn.title=action;
+  const proxy=editRail.querySelector('[data-dock-proxy=mobileFavorite]');
+  proxy.setAttribute('aria-label',action);
+  proxy.title=action;
   syncRail();
   setIconSource(favouriteBtn,chosen?'favourite-filled':'favourite');
   setIconSource(editRail.querySelector('[data-dock-proxy=mobileFavorite]'),chosen?'favourite-filled':'favourite');

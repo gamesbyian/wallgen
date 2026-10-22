@@ -44,7 +44,7 @@ test('balanced primes-only randomizer sits above the design tab without a lock',
   assert.match(css,/\.randomize-bar\.randomize-toolbar/);
 });
 
-test('Light & Shadow is part of Colour, uses existing locks, and is explained clearly',()=>{
+test('canvas lighting retains source controls and is documented under Light',()=>{
   const colourStart=html.indexOf('id="panel-colour"');
   const textureStart=html.indexOf('id="panel-textures"');
   assert.ok(colourStart>=0 && textureStart>colourStart);
@@ -55,7 +55,7 @@ test('Light & Shadow is part of Colour, uses existing locks, and is explained cl
   }
   assert.match(colour,/Light &amp; shadow/);
   assert.match(css,/\.lighting-subsection/);
-  assert.match(readme,/Ambient light & shade \(Effects → Lighting\)/);
+  assert.match(readme,/Ambient light & shade \(Light → Lighting\)/);
 });
 
 test('public domain licence and documentation acknowledge ChatGPT and unrestricted use',()=>{
@@ -79,7 +79,7 @@ test('setting locks use the approved distinct SVG assets and preserve their acti
 });
 test('texture relief and ambient canvas illumination are described accurately',()=>{
   assert.match(html,/Gently roughen|Distort the actual stripe contours/);
-  assert.match(html,/Canvas shade/);
+  assert.match(html,/>Shading<\/span>/);
   assert.match(html,/Stripe shadows, outlines and glow are in Details/);
   assert.match(readme,/Canvas ambience does not cast shadows from the stripe silhouettes/);
 });
@@ -168,7 +168,7 @@ test('chevron geometry and independent shape controls are present in Design',()=
   const design=html.slice(html.indexOf('id="panel-design"'),html.indexOf('id="panel-colour"'));
   assert.match(design,/<option value="chevron">Chevron/);
   assert.match(design,/Stripe pattern <select name="motif"/);
-  assert.match(design,/Stripe construction <select name="construction"/);
+  assert.match(design,/Stripe type <select name="construction"/);
   assert.match(design,/<option value="hairpin">/);
   assert.match(design,/<option value="loops">/);
   for(const field of ['shapeFrequency','shapeDepth','lineStyle']){

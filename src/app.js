@@ -7,10 +7,12 @@ import {appliedDrawnPathRecipe} from './draw-apply-transaction.js';
 import { installImagePathTool } from './image-path-ui.js?v=20261018-import1';
 import {importedAngleDeltaDegrees} from './import-angle-wrap.js';
 import {pathStructureLockedOutsidePaths} from './path-authoring-locks.js';
-import {mountEditor,selectEditorTool,syncEditorStructure} from './editor-layout.js?v=20261020-sticky-hit1';
+import {mountEditor,selectEditorTool,syncEditorStructure} from './editor-layout.js?v=20261021-labels1';
 import {randomizeScope} from './scoped-random.js';
 import {newInteriorElementId,INTERIOR_LIMITS,resolveInteriorSelection,interiorTargetSummary,resolveInteriorFocusTarget,interiorSliderStep} from './interior-elements.js';
-import {STYLE_PRESETS} from './editor-schema.js?v=20261018-icons2';
+import {STYLE_PRESETS,EDITOR_CATEGORIES,TOOL_LIST} from './editor-schema.js?v=20261021-labels1';
+import {sourceSettingLabel} from './editor-control-roles.js?v=20261021-labels1';
+import {fullSettingName} from './editor-terminology.js';
 import {installExplorationHistory} from './exploration-history.js';
 import {parseStoredFavorites} from './favorites-store.js';
 import {encodePortableRecipe,decodePortableRecipe,portableShareUrl,portableShareTokenFromLocation,
@@ -134,6 +136,8 @@ let sessionOnlyFavorites=false;
 function syncFavoriteIndicators(){
   const selected=isFavorite(current);
   favoriteButton.setAttribute('aria-pressed',String(selected));
+  favoriteButton.setAttribute('aria-label',selected?'Remove from favourites':'Add to favourites');
+  favoriteButton.title=selected?'Remove from favourites':'Add to favourites';
   setIconSource(favoriteButton,selected?'favourite-filled':'favourite');
   document.getElementById('favoriteCount').textContent=String(favorites.length);
 }
@@ -207,7 +211,10 @@ function syncScopedSettingDice(){
       die.title='Safety is never randomized. Change Constraints manually.';
       die.setAttribute('aria-label','Safety is not randomized; adjust Constraints manually');
     }else{
-      die.title=unavailable?'Setting is unavailable or locked':'Randomize only '+key;
+      const mode=document.getElementById('editorVariationMode')?.value;
+      die.title=unavailable?'Setting is unavailable or locked':
+        (mode==='vary'?'Vary':'Reroll')+' only '+
+          fullSettingName(key,sourceSettingLabel(field,key));
     }
   }
 }
@@ -508,6 +515,8 @@ function render(recipe,{scroll=false,bypassLocks=false,interactive=false}={}) {
     currentScene.geometry:currentScene.structure==='radial'?currentScene.radialMode:currentScene.regionMode);
   document.getElementById('detailMaterial').textContent=titleCase(currentScene.materialSummary);
   favoriteButton.setAttribute('aria-pressed',String(isFavorite(current)));
+  favoriteButton.setAttribute('aria-label',isFavorite(current)?'Remove from favourites':'Add to favourites');
+  favoriteButton.title=isFavorite(current)?'Remove from favourites':'Add to favourites';
   setIconSource(favoriteButton,isFavorite(current)?'favourite-filled':'favourite');
   drawTool.sync(current);
   imagePathTool.sync(current);
@@ -783,13 +792,17 @@ function queueControlUpdate(){
 
 for(const slider of form.querySelectorAll('input[type="range"]')){
   const row=document.createElement('span');row.className='stepper';
-  const minus=document.createElement('button');minus.type='button';minus.className='step-button';minus.innerHTML=iconMarkup('minus');minus.setAttribute('aria-label','Decrease '+slider.name);
-  const plus=document.createElement('button');plus.type='button';plus.className='step-button';plus.innerHTML=iconMarkup('plus');plus.setAttribute('aria-label','Increase '+slider.name);
+  const accessibleName=fullSettingName(slider.name,sourceSettingLabel(slider,slider.name));
+  const minus=document.createElement('button');minus.type='button';minus.className='step-button';minus.innerHTML=iconMarkup('minus');minus.setAttribute('aria-label','Decrease '+accessibleName);
+  const plus=document.createElement('button');plus.type='button';plus.className='step-button';plus.innerHTML=iconMarkup('plus');plus.setAttribute('aria-label','Increase '+accessibleName);
   const numeric=document.createElement('input');
   numeric.type='number';numeric.className='slider-number';numeric.min=slider.min;numeric.max=slider.max;
   numeric.step=slider.step||'1';numeric.value=slider.value;numeric.dataset.numberFor=slider.name;
-  numeric.setAttribute('aria-label',['diagonalRotation','hairpinAngle','loopSweep'].includes(slider.name)?
-    slider.name+' in degrees':slider.name+' percentage');
+  const degreeControls=['diagonalRotation','hairpinAngle','loopSweep','rayRotation','rayTwist'];
+  const countControls=['rayCount','regionCount','regionSides','stepCount'];
+  const unit=degreeControls.includes(slider.name)?' in degrees':
+    countControls.includes(slider.name)?'':' percentage';
+  numeric.setAttribute('aria-label',accessibleName+unit);
   slider.parentNode.insertBefore(row,slider);row.append(minus,slider,plus,numeric);
   numeric.addEventListener('change',()=>{
     const raw=Number(numeric.value);
@@ -889,7 +902,8 @@ function syncSettingLocks(){
     for(const button of buttons){
       button.innerHTML=locked.has(key)?LOCK_ICON.locked:LOCK_ICON.unlocked;
       button.setAttribute('aria-pressed',String(locked.has(key)));
-      button.setAttribute('aria-label',(locked.has(key)?'Unlock ':'Lock ')+key);
+      button.setAttribute('aria-label',(locked.has(key)?'Unlock ':'Lock ')+
+        fullSettingName(key,sourceSettingLabel(form.elements.namedItem(key),key)));
       button.title=locked.has(key)?'Locked. Click to allow changes.':'Unlocked. Click to protect this setting.';
       button.classList.toggle('is-locked',locked.has(key));
     }
@@ -1054,14 +1068,14 @@ function syncInteriorUI(){
   toggle.dataset.interiorFocus='field.enabled';toggle.checked=active.enabled;
   make(activeRow,'span','Enabled');
   toggle.addEventListener('change',()=>update('enabled',toggle.checked));
-  const typeField=make(interiorCards['interior-style'],'label','Element');
+  const typeField=make(interiorCards['interior-style'],'label','Type');
   const typeSelect=make(typeField,'select');
   for(const kind of ['line','band']){const option=document.createElement('option');option.value=kind;option.textContent=kind;typeSelect.append(option);}
   typeSelect.dataset.interiorFocus='field.type';
   typeSelect.value=active.type;
   typeSelect.addEventListener('change',()=>changeRecipe({...current,interiorElements:
     current.interiorElements.map((e,i)=>i===selectedInterior?{...e,type:typeSelect.value,width:typeSelect.value==='band'?22:1.5}:e)}));
-  select(interiorCards['interior-style'],'Geometry','shape',['straight','wave','zigzag','loop']);
+  select(interiorCards['interior-style'],'Shape','shape',['straight','wave','zigzag','loop']);
   select(interiorCards['interior-style'],'Stroke','stroke',['solid','dashed','dotted']);
   select(interiorCards['interior-targets'],'Ink','color',['white','black','lighter','darker','custom']);
   const customLabel=make(interiorCards['interior-targets'],'label','Custom colour');
@@ -1257,8 +1271,14 @@ form.addEventListener('click',event=>{
   if(!modified.length){showNotice('No unlocked, applicable settings changed.');return;}
   explorationHistory.remember(current,'Before '+name);
   changeRecipe(recipe);
-  explorationHistory.remember(current,(mode==='vary'?'Vary ':'Reroll ')+name);
-  showNotice((mode==='vary'?'Varied ':'Rerolled ')+name.replace(/-/g,' ')+' ('+modified.length+' settings).');
+  const label=scope==='setting'?
+    fullSettingName(name,sourceSettingLabel(form.elements.namedItem(name),name)):
+    scope==='tool'?TOOL_LIST.find(tool=>tool.id===name)?.name:
+      EDITOR_CATEGORIES.find(category=>category.id===name)?.label;
+  const description=label||name.replace(/-/g,' ');
+  explorationHistory.remember(current,(mode==='vary'?'Vary ':'Reroll ')+description);
+  showNotice((mode==='vary'?'Varied ':'Rerolled ')+description+
+    ' ('+modified.length+' '+(modified.length===1?'setting':'settings')+').');
 });
 form.addEventListener('change',event=>{
   if(event.target.name!=='family')return;
@@ -1416,7 +1436,7 @@ function setGalleryMode(mode){
   gallery.dataset.view=saved?'saved':'explore';
   galleryTitle.textContent=saved?'Saved wallpapers':'Explore variations';
   galleryDescription.textContent=saved
-    ?'Your favourites stay here while you explore new variations.'
+    ?'Saved on this device. Your favourites stay here while you explore.'
     :exploreDescription;
   document.dispatchEvent(new CustomEvent('roygbiv-gallery-mode-changed',{
     detail:{mode:gallery.dataset.view}
