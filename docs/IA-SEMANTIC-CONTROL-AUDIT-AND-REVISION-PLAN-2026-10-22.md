@@ -13,9 +13,10 @@ This is a historical audit with a **live issue-status supplement**. Treat the st
 | C04: Individual scattered-object edits | **Implemented on main**, PR #449 | The `scatteredObjectEditor` supports selecting an instance, nudging, resizing, resetting, Undo and portable `scatteredOverrides`. Pointer dragging and z-order remain optional. |
 | C12: Contour distortion prerequisites | **Addressed on this branch** | `src/editor-effect-availability.js` reflects the same effective active stripe-applied texture-layer filter as the renderer; the visible inactive hint preserves prior setting values. The broader field-gate model remains future work. |
 | C13: Ambiguous Variation labels | **Addressed on this branch** | Layout/Irregularity versus Stripes/Stripe differences, retaining the separate Vary/Reroll action and old search aliases. |
-| C03, C05–C11, C14–C17 | **Open or deliberate design choices** | Resolve by the original evidence-based priorities, not all at once. |
+| C07: Exact setting search and goal synonyms | **Partly addressed on this branch** | Search ranks exact field names, aliases and selected visual-intent phrases, displays the actual category/tool, and Enter focuses the canonical field if active. Multi-result disambiguation remains a follow-up. |
+| C03, C05–C06, C08–C11, C14–C17 | **Open or deliberate design choices** | Resolve by the original evidence-based priorities, not all at once. |
 
-**Next scoped change after this branch:** improve the search destination (C07) or prototype one cohesive texture-layer editor (C08), whichever yields the highest benefit with the least cramped mobile presentation. Avoid a wholesale seven-category rewrite; protect stable recipe keys, locks, Undo, Saved and exported framing. Existing issue [#444](https://github.com/gamesbyian/wallgen/issues/444) remains the umbrella.
+**Next scoped change after this branch:** prototype one coherent texture-layer editor (C08) or a persistent interior-element inspector (C09), whichever fits the mobile edit tray without vertical settings scrolling. Search C07 can later gain a short disambiguated result list if single-best-match proves insufficient. Avoid a wholesale seven-category rewrite; protect stable recipe keys, locks, Undo, Saved and exported framing. Existing issue [#444](https://github.com/gamesbyian/wallgen/issues/444) remains the umbrella.
 
 ## How the map has changed
 
