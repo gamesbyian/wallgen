@@ -23,7 +23,7 @@ function fixture(input){
   const original=structuredClone(recipe),notices=[];
   const ids=['importPathToggle','imagePathFile','imagePathDialog',
     'imagePathCanvas','imagePathCandidate','imagePathStatus','imagePathApply',
-    'imagePathAngle','imagePathAnother','imagePathCancel'];
+    'imagePathShape','imagePathAngle','imagePathAnother','imagePathCancel'];
   const nodes=Object.fromEntries(ids.map(id=>[id,new Stub(id)]));
   const old=globalThis.document;
   globalThis.document={getElementById:id=>nodes[id]};
