@@ -1,0 +1,206 @@
+{
+  "schema": "roygbiv-diary-pr-evidence/1",
+  "captured_on": "2026-10-22",
+  "repository": "gamesbyian/wallgen",
+  "scope": "Cited PR descriptions and dispositions only. A claim in a PR body is not independent proof that source was executed or accepted.",
+  "sources": [
+    {
+      "number": 1,
+      "title": "Pattern homogeneity with optional stripe individuality override",
+      "description": "Adds a 0–100% pattern homogeneity slider for per-element size, angle and opacity, plus a checkbox allowing stripe individuality to introduce additional per-stripe variation. Preserves complete motif rendering and pattern type identity. Defaults retain existing wallpapers (100% homogeneity, override disabled). Checks: 18 model/render tests passed in JS harness.",
+      "state_at_capture": "closed",
+      "draft_at_capture": false,
+      "merged_at": "2026-10-17T00:05:25Z",
+      "created_at": "2026-10-17T00:05:15Z",
+      "head_sha_at_capture": "ac3a3821eada6e68be5834dcbdcdbf2302326de2",
+      "url": "https://github.com/gamesbyian/wallgen/pull/1"
+    },
+    {
+      "number": 15,
+      "title": "Swipe-first mobile editor with compact tabs, horizontal settings and pull-down dismissal",
+      "description": "Replace the vertically scrolling mobile adjustment tray with a Google Photos-style control rail. Keep the live wallpaper visible above; remove the heading, Larger preview, and Done. Place a tiny pull-down grabber above compact Randomize and Primes-only controls and category tabs. Native horizontal snap scrolling navigates one original setting/lock card at a time; horizontal gestures on tab bar switch categories and edge swipes cross category boundaries. Preserve all actual original fields and handlers, including dynamic texture layers and stripe shadows, with no duplicated state. Swipe downward anywhere noninteractive to dismiss; grabber tap/keyboard and dock toggle provide accessibility fallback. Show a tiny settings position counter. Desktop styles, both appearance themes, all exports and live rendering unchanged. Extend browser checks to validate horizontal cards, section navigation and dynamic layer access.",
+      "state_at_capture": "closed",
+      "draft_at_capture": false,
+      "merged_at": "2026-10-17T04:04:18Z",
+      "created_at": "2026-10-17T04:00:17Z",
+      "head_sha_at_capture": "20bd451cfb4a6c0a139ebe73ef03e10f86ddd202",
+      "url": "https://github.com/gamesbyian/wallgen/pull/15"
+    },
+    {
+      "number": 25,
+      "title": "Improve drawn-curve fairing, overscan drawing, and geometry/control ranges",
+      "description": "## Unified ROYGBIV control pass\n\nImplements all eight requested changes directly in the existing generator:\n\n1. **Flowier freehand paths:** arc-length resampling, stronger Gaussian fairing, and centripetal Catmull–Rom curve interpolation; Smooth remains separate from regularized Geometric.\n2. **Start outside the frame:** temporary pointer capture spans the full preview stage, with off-frame normalized coordinates retained in recipes and clipped only during rendering. Works with zoom.\n3. **Zoom out from first render:** mobile preview now ranges from 50% to 250% in 10% increments; default 100% retained.\n4. **Nudges halved:** nudge buttons change positioning 1% instead of 2%.\n5. **More spacing and thicker stripes:** broader independent spread/width mappings using the existing sliders.\n6. **Much wider chevron scales:** broader shape frequency/depth and independent chevron motif size/repetition control through the existing shape sliders.\n7. **Hairpin turn angle:** contextual 60°–180° slider next to turn radius; the exit stem remains tangent to the curved turn.\n8. **All swipe-card sliders get −/+ controls:** unhides and compacts the existing reusable stepper controls; no duplicate components or vertical scrolling.\n\n## Verification\n- 119 automated Node tests pass, including new shape range, smoothing, off-canvas path and angular-hairpin checks.\n- Chromium mobile acceptance passes for responsive cards, actual −/+ click behavior, zoom out from initial render, 1% nudges and zoom-safe touch drawing.\n- Chromium desktop acceptance passes actual outside-frame mouse press and drawing into the image, storing a negative normalized point.\n- Headless PNG smoke generates 18 actual images including the angled hairpin, expanded chevron/stripe controls and off-frame custom path; PNG recipe metadata round-trips.\n- Visual inspection of the generated images completed. No new modes, galleries or special prioritization of the original seven references.",
+      "state_at_capture": "closed",
+      "draft_at_capture": false,
+      "merged_at": "2026-10-17T09:56:45Z",
+      "created_at": "2026-10-17T09:46:08Z",
+      "head_sha_at_capture": "360e6c7c815cd4bfa756bdfe21e8132ac4ea4a21",
+      "url": "https://github.com/gamesbyian/wallgen/pull/25"
+    },
+    {
+      "number": 28,
+      "title": "Redesign the wallpaper editor around six creative categories and granular exploration",
+      "description": "## Exploration-first editor redesign\n\nThe four historical category tabs have been replaced by **six clear editing intentions**: Layout, Path, Stripes, Colour, Material and Effects. Each category exposes directly selectable named tools, with native controls for every existing setting. Tap to jump to a tool, optionally swipe between adjacent tools. All 63 existing named controls have one canonical home via src/editor-schema.js; their same lock, inactive-state, number stepper, renderer and recipe implementations are reused. A search shortcut jumps to matching tools.\n\n### Scoped exploration\n- Global Random remains the dominant experience, respecting locks.\n- **Reroll** or **Vary nearby** an individual setting, a named tool, or a category, each with Gentle / Moderate / Wild variation strength.\n- Scoped changes preserve seeds, saved crop/zoom, unrelated settings, locks and hand-drawn path identities. New styles populate real editable values; the hidden Visual Family stripe-width multiplier is removed.\n- **Recent variations** thumbnail strip lets users compare and restore alternatives without destroying Undo.\n- Texture layers have separate Material/Finish named tools rather than three duplicated sequences of full-size cards.\n- Wizard Mode is architecturally prepared by a shared six-step schema; no separate or mandatory wizard was introduced.\n\n### Preview-first responsive navigation\n- Editor occupies reserved space beneath the wallpaper; it never overlays the image, and workspace fit does not change saved artwork camera.\n- Every one of the 7 stripes remains visible while editing. All active controls in all named tools fit without vertical scrolling, verified by an actual Chromium per-tool bounding-box audit.\n- Removed the obsolete swipe-card JS and stylesheets, consolidating the responsive editor on one system. Existing zoom/nudge, PNG export, custom drawing, favourites, metadata and headless rendering preserved.\n\n### Acceptance\n- Exact PR head: **133/133 Node tests passing**.\n- Actual mobile Chrome acceptance passed, including six-category navigation, direct named tools, per-setting scope purity, locks, category and tool rerolls, near variations, presets, enabled material layers, all-tool clipping audit, history restoration, preview separation and desktop recovery.\n- Headless-render PNG smoke passed, including the full 3024 × 6552 export and recipe/metadata checks.\n- Existing user workflows remain accessible while their old disorganized settings tabs have been intentionally retired.",
+      "state_at_capture": "closed",
+      "draft_at_capture": false,
+      "merged_at": "2026-10-17T21:11:10Z",
+      "created_at": "2026-10-17T20:53:10Z",
+      "head_sha_at_capture": "436af5658143038edd8ad8bf32d6ee93e2c9ddab",
+      "url": "https://github.com/gamesbyian/wallgen/pull/28"
+    },
+    {
+      "number": 43,
+      "title": "Fix drawn-path knot spikes and crossing endcap artifacts",
+      "description": "## Fix for the reported wallpaper\n\nThe *exact* 96-point recipe from the screenshot (seed `t0b4v5-ice7lf`) is now checked in at `tests/fixtures/drawn-knot-t0b4v5.json` and rendered by the real mobile browser and headless PNG workflows.\n\n### Corrected root causes\n- **Curvature safety:** Previous 25th-percentile bend radius ignored the short sharp turns that made inward ribbons fold and sprout spurs. Compute smoothed multi-vertex curvature and preserve extra clearance around the tightest sustained bends. The reproducible recipe's seven-band spread is now **72.38 design pixels** in coherent mode. Turning safety off still permits extreme offset art.\n- **Drawn-path normals:** The old ±0.15px finite-difference tangent snapped almost instantaneously at polyline knots. The new symmetric ±9px tangent is stable without changing the stored artist-drawn centreline.\n- **Crossing repair:** Prevent local overpass rendering from restarting the original endpoint taper or drawing closed artificial transversal outline caps; repaint only the two open local outline edges.\n\n### Acceptance\n- All standard model/Node tests pass, including the exact 96-point geometry regression and the more conservative tight-turn test.\n- Real Chromium mobile acceptance passes and confirms the full original recipe is still drawn, with three crossing modes passing their established visual-distinctness tests.\n- Headless production PNG rendering of the same fixture passes, including embedded-recipe roundtrip.\n- All three checks green on exact PR head `a16e16f97c33fba25f80cc1de54027c33b140949`.\n\nRetains existing settings and saved recipe formats.",
+      "state_at_capture": "closed",
+      "draft_at_capture": false,
+      "merged_at": "2026-10-18T04:27:06Z",
+      "created_at": "2026-10-18T04:19:47Z",
+      "head_sha_at_capture": "a16e16f97c33fba25f80cc1de54027c33b140949",
+      "url": "https://github.com/gamesbyian/wallgen/pull/43"
+    },
+    {
+      "number": 52,
+      "title": "Stage approved ROYGBIV SVG icon system and original concept reference",
+      "description": "## Scope: assets only, no UI implementation\n\n- Adds **56 individually named SVGs**: 55 cohesive, gradient-free 32×32 interface glyphs and a verbatim copy of the existing canonical app icon.\n- Preserves the exact **original approved 1448×1086 PNG** at `assets/icons/references/roygbiv-icon-system-approved.png` (Git blob SHA `f8a27e238575906cfca4dfcce55b0bfda588cc29`). Includes an independent vector reconstruction for reference.\n- Adds a searchable `manifest.json`, design and accessibility guidance, and an independent static HTML icon preview.\n- Adds an asset-only Node test covering completeness, self-contained SVGs, gradient-free design, original reference integrity, and preview coverage.\n\n**Deliberate stop point:** no imports or references to these new icons have been added to the live app; `index.html`, application JS/CSS, rendering and recipe behavior remain unchanged. Implementation/replacement is a separate follow-up.\n\nPlease review the raster concept alongside `assets/icons/roygbiv/review.html` before starting the UI rollout.",
+      "state_at_capture": "closed",
+      "draft_at_capture": false,
+      "merged_at": "2026-10-18T08:15:25Z",
+      "created_at": "2026-10-18T08:14:23Z",
+      "head_sha_at_capture": "f6d9aea3dbe54c1e9e111af136de0b399cce9542",
+      "url": "https://github.com/gamesbyian/wallgen/pull/52"
+    },
+    {
+      "number": 79,
+      "title": "Correct camera semantics, freeze UI coverage and begin verified canvas-first changes",
+      "description": "## Scope and source-verified corrections\n\nThis is a bounded **first implementation slice plus contract reconciliation**, not a claim that the full 12-screen redesign is shipped.\n\n- Frozen independently source-derived inventory: **113 static DOM IDs**, **87 configuration attributes**, **7 editor categories, 40 named tools**, now **43 traced component/action groups**. Adds tests that force deliberate review when these change.\n- **17 evidence-qualified requirements** with source and test references; each marks implemented, proposed or partial coverage.\n- Corrected the central semantic confusion: **Zoom modifies only serialized recipe.viewZoom** and affects export framing; **composition nudges modify recipe.positionX/Y**. Pure viewport-only Pan is **not implemented** and must be specified separately.\n- Corrected the canonical Studio SVG plate and icon/document status so design assets cannot imply that Pan is already an operative control. Added an independent counterexample/negative QA protocol and amended existing planning documents.\n- **Visible production increment:** added canvas-side **Fit full wallpaper / 100%** beside Zoom + and −, preserving the original app icon, all six current dock actions and all generator functions. Replaced the Edit dock pencil with the new **approved-family adjustment-controls** glyph, leaving **Draw** on the existing pencil/path icon.\n- Strengthened actual Chromium tests for Fit and for right/left nudge vs camera zoom, including exact serialized-recipe equivalence.\n\n## Validation\n- Static/unit/contract inventory, design SVG asset validation, and mobile Chromium acceptance passed on commit ecd2136.\n- Full PNG/headless and screenshot-atlas smoke are still running on that commit; latest prior implementation code passed headless at commit 93aa30b.\n- Other proposed changes (5-destination navigation, one-slider Focus, actual viewport-only Pan, full setting-row refactor, gallery redesign) **remain unimplemented** and are explicitly tracked in docs/UI-REDESIGN-IMPLEMENTATION-QUEUE.md. No functionality was cut to conform to speculative mockups.\n\nNo conflicts with open video-tooling draft PR #53.\n",
+      "state_at_capture": "closed",
+      "draft_at_capture": false,
+      "merged_at": "2026-10-19T00:18:19Z",
+      "created_at": "2026-10-19T00:07:21Z",
+      "head_sha_at_capture": "ecd21364948b7727beb95f899a18acf4265c4bfa",
+      "url": "https://github.com/gamesbyian/wallgen/pull/79"
+    },
+    {
+      "number": 176,
+      "title": "Fix 18px live Explore overlap in constrained landscape",
+      "description": "Agent 1 visual-only follow-up to merged #157. Its **real Chromium** gallery showed `landscape-700x412/{cream,dark}/explore overlap=18` while all other 88 captures were clear. This is a genuine layout conflict: a late generic `--mobile-tray-height:clamp(300px,42dvh,420px)` in `ui-audit-fixes.css` overrides the smaller short-device gallery reservation in `studio-themes.css`, leaving less room than the masthead + dock + tray require.\n\nMove the portrait reservation to its actual component owner `studio-themes.css`, letting its existing later `max-height:670px` rule restore the intended 165px gallery tray in short landscape. The gallery content remains scrollable. The independent screenshot audit **now fails CI on stage/tray overlaps over 1 CSS px**, after storing screenshots/geometry, rather than reporting red metrics as a successful workflow. Static contract tests verify cascade ownership, order and assertion.\n\nScope: only the two visual CSS files, Agent 1's standalone screenshot script, and its new test. No `src/app.js`, rendering, shared browser-smoke, shared atlas or master queue touched. Require the new 90-screen live workflow and standard CI before merge; real-device signoff remains open.",
+      "state_at_capture": "closed",
+      "draft_at_capture": false,
+      "merged_at": "2026-10-19T21:44:39Z",
+      "created_at": "2026-10-19T21:40:36Z",
+      "head_sha_at_capture": "4ff7e40c3593f643c97c98fb1a554276f9516a17",
+      "url": "https://github.com/gamesbyian/wallgen/pull/176"
+    },
+    {
+      "number": 299,
+      "title": "Agent 2: reversible live conditional-field actions across sixteen modes",
+      "description": "## Verified 32/32 real-browser conditional source action journeys\n\nAll four independent Chromium shards passed at exact tested head `16a1b7bc74fb18a63e77b7f3b35aaa5e62c53854`, [run 39403426414](https://github.com/gamesbyian/wallgen/actions/runs/39403426414). **8 verified journeys in each shard, 32/32 total**, and [Validate Wallgen 39403426406](https://github.com/gamesbyian/wallgen/actions/runs/39403426406) passed.\n\nThese are not passive DOM/state snapshots: sixteen conditional modes at **412×892 portrait and 700×412 constrained landscape** each use genuine source category/tool navigation, a real native input step or select, exact changed URL recipe and retained dormant-source value, a required reactivation or continued dormancy, an actual reverse input action, and an exact full normalized recipe return. Covered Radial/Regions, lighting, Material layers 2/3, diagonal orientation, outlines, Region dividers, repetition, woven/ribbon construction, individuality checkbox, and stripe shadows.\n\nThe first failed browser run was a falsifiable **test fixture dependency mistake** (lighting direction was still active while shadow strength remained positive). The corrected fixture explicitly sets both light and shadow strengths to 0 before asserting direction dormancy; all its browser scenarios subsequently passed. No production defect was inferred from that test failure.\n\nMaster queue now records the separately merged [#289](https://github.com/gamesbyian/wallgen/pull/289) 86/86 source actions and 84 original lock cycles. Entries **1, 4 and 8 remain unchecked**, since no finite fixture set replaces all mode combinations or true native-device/AT/human approval. This PR changes only a new browser test, its CI, and evidence/queue documentation; no app logic or CSS.",
+      "state_at_capture": "closed",
+      "draft_at_capture": false,
+      "merged_at": "2026-10-20T09:51:30Z",
+      "created_at": "2026-10-20T09:47:21Z",
+      "head_sha_at_capture": "16a1b7bc74fb18a63e77b7f3b35aaa5e62c53854",
+      "url": "https://github.com/gamesbyian/wallgen/pull/299"
+    },
+    {
+      "number": 369,
+      "title": "Add mobile immersive fullscreen with persistent exit and installable standalone launch",
+      "description": "Mobile-only fullscreen implemented through explicit user-activated Fullscreen API (Chrome requires a user gesture), a fixed 44×44px exit/enter overlay that adds no vertical toolbar reservation, responsive visibility/ARIA state synchronization and a web app manifest for standalone launch from the Android home screen (no address bar). Overlay moves into upper safe-area when fullscreen, remains above editor surfaces without joining their roving-focus groups. Added source-only contract tests and a dedicated actual-Chromium 320/412/790/791 acceptance workflow checking enter/exit, effective hit regions, canvas/navigation separation, and unchanged recipe URL. Browser fullscreen is not automatically permitted on arbitrary initial page load; installed standalone auto-removes the URL bar but is not the same as OS immersive fullscreen. Pending: exact-head CI, screen captures and physical Pixel 6 Pro confirmation. Do not claim human/device approval or merge until tested. See MDN requestFullscreen transient activation and PWA manifest standalone docs.",
+      "state_at_capture": "closed",
+      "draft_at_capture": false,
+      "merged_at": "2026-10-21T07:14:36Z",
+      "created_at": "2026-10-21T06:49:43Z",
+      "head_sha_at_capture": "09feb53bdb10c2e7fbcf07dc0c56340f9e4bcfc7",
+      "url": "https://github.com/gamesbyian/wallgen/pull/369"
+    },
+    {
+      "number": 388,
+      "title": "Give every narrow-phone category tab a genuine 44px-wide swipe target",
+      "description": "Improves the **existing** ROYGBIV seven-category swipe rail without inventing a second row. The first raw geometry test measured some category tabs outside the viewport **before** scrolling them, but further cascade review confirmed `editor-redesign.css` already had a horizontal swipe implementation below 400px. That original overflow was **not** evidence of a broken 320px swipe. However, narrow tabs were often **32–50px wide** and only 34px high; the special swipe layout also ended at 399px.\n\n**Source-specific production change:** edit the existing bottom `@media(max-width:399px)` category-swipe rules in the owning `editor-redesign.css` to apply through **499px**, and give every original named tab `min-width:44px` with readable 8px side padding. Preserve seven original button identities/aria/handler/DOM order, current 35px editor-row height and source keyboard semantics, and leave the 500px+ grid layout exactly as before. Height remains 34px, explicitly **not a completed 44×44 ergonomic solution**, so vertical-space redesign remains a separate Stage C task.\n\n**Real-browser falsification:** 320/360/412/499/500px, cream/dark, one exact source recipe. Require full original seven-tab source inventory, genuine native CDP finger swipe and positive `scrollLeft` whenever overflowing, and check each tab **after scrolling inside the original rail and settling 220ms editor animation**. Assert ≥44px independent native width, ≥24px height, 3×3 pointer ownership, no overlap, 7 real source taps with truthful `aria-selected` and identical complete recipe. Screenshots/JSON retained. Preserve existing Node, mobile, a11y, atlas and visual comparison checks.\n\n**Physical Pixel, TalkBack, human optical approval and eventual 44px category *height* are explicitly unverified.** Draft until exact-head CI is green. Separate 44px pinned named-tool prototype #386 touches a disjoint part of the same component stylesheet.",
+      "state_at_capture": "closed",
+      "draft_at_capture": false,
+      "merged_at": "2026-10-21T19:27:51Z",
+      "created_at": "2026-10-21T19:05:38Z",
+      "head_sha_at_capture": "142c60db2d22ea8a4cd82cd9abc72e43802aeac7",
+      "url": "https://github.com/gamesbyian/wallgen/pull/388"
+    },
+    {
+      "number": 402,
+      "title": "QA: real mobile Drawn anchor finger drag versus overlapping tangents",
+      "description": "Independently falsify a consequential drawing precision concern in #365. After tapping a saved authored interior anchor, the draw overlay prioritizes *tangent handles* over anchors within the same 17px radius. On a narrow phone a tangent can sit fewer than 17 visible CSS px from the selected anchor centre, so attempting to drag the square may deform its tangent instead. This source-only diagnostic reproduces selection and drags via genuine Chromium CDP `Input.dispatchTouchEvent` at 320/412px cream/dark, asserts moved anchor position, separately drags the computed outgoing tangent with unchanged anchor centre, and verifies **full real Apply → global Undo** for both transactions, no camera/recipe contamination and screenshots.\n\n**Red-first draft:** do not merge on failed source drag. If reproducible, repair hit priority narrowly in the owning Draw module (prefer an exact anchor-centre touch over nearby tangent handle), retaining access to handles outside the anchor core. Re-run dedicated CI and unrelated Draw/Undo/precision gates. Do not claim physical thumb accuracy or crowded-geometry acceptance.",
+      "state_at_capture": "closed",
+      "draft_at_capture": false,
+      "merged_at": "2026-10-21T21:27:37Z",
+      "created_at": "2026-10-21T21:17:11Z",
+      "head_sha_at_capture": "5eb8bc5556c9c984260d61a72729263e6551e1cd",
+      "url": "https://github.com/gamesbyian/wallgen/pull/402"
+    },
+    {
+      "number": 428,
+      "title": "Make Android ROYGBIV launcher icon full-bleed and maskable",
+      "description": "Fix the actual Pixel Chrome install screenshot: existing manifest supplies only **`purpose: any`** icons, which Android shrinks into a large white circle. Keep all current ordinary icons and website branding unchanged, and add a **dedicated full-bleed, opaque dark maskable 512×512 SVG** in the original seven-stroke ROYGBIV phone design. Declare `purpose: maskable` in the PWA manifest, enabling Chrome on Android to crop the dark background to its launcher circle/squircle rather than padding a small black tile on white. Original white phone and seven coloured capsules are centred within the standard 80%-diameter adaptive safe zone, proven by an automated Node test. This intentionally uses Chrome-supported SVG with existing 512 PNG `any` fallback; no change to generation, studio UI, splash, favicon or recipe.\n\nRequire exact-head Node/check and existing browser/manifest gates. **Physical Android refresh and visual approval remain unperformed**; Chrome/Android may cache installed WebAPK icon, so after deploying this updated manifest, remove the old ROYGBIV launcher installation and reinstall from Chrome if it does not refresh. Different Android launcher masks may visually vary.",
+      "state_at_capture": "closed",
+      "draft_at_capture": false,
+      "merged_at": "2026-10-22T02:58:35Z",
+      "created_at": "2026-10-22T02:54:04Z",
+      "head_sha_at_capture": "76d1d95c97b4bfe671a9d057a78292c8def5b8b4",
+      "url": "https://github.com/gamesbyian/wallgen/pull/428"
+    },
+    {
+      "number": 430,
+      "title": "Replace tiled textures with seeded world-space materials and shared displacement",
+      "description": "## Summary\nReplace short repeated texture tiles with coordinate-anchored, seed-specific material painting, and drive stripe-edge displacement from the exact same spatial material field.\n\n## Improvements\n- Unique world-space flecks, fibres, fibres with interruptions, worn threads, irregular watercolor blooms, stone/concrete patches, wood grain, knit stitches and metallic creases: no `CanvasPattern` repetition at a small fixed interval.\n- Material-specific continuous anisotropic height fields. Rendered surface detail and geometric contour relief use matching material-space samples, with scale, rotation, construction transforms, and layer coverage respected.\n- Fix texture strength cancellation: each enabled stripe texture contributes proportionally, with multi-layer additions and a bounded stripe-width safeguard. With no active stripe material, Texture Displacement now produces no silent fallback grain.\n- Seed and layer variation remain deterministic, ensuring saved recipes, links and PNG exports reproduce the same material. World-space crop, zoom and pan no longer reroll the material or change thread colour.\n- Stable logical-space rasterization maintains worker/DOM pixel fidelity. View-framing overhang includes off-crop stains/fibres so seams do not appear at camera boundaries.\n- New tests for material identity/seed uniqueness, displacement/strength/scale/rotation, non-tiling, additive layers, crop/worker parity for linen, watercolour and wood; documented contract and manual acceptance in `docs/MATERIAL-SURFACE-ENGINE-2026-10-21.md`.\n\n## Validation\nAll **13 applicable checks on head `0bb383a9ffd98bb73090f2f9aa6d2ebb2bb55f54` passed**, including Validate Wallgen, Headless render smoke, real Chromium mobile smoke and worker parity, foreground pixel checks, native PNG export and metadata round-trip, and the six jobs in the 22-mode export matrix.\n\n## Remaining human QA\nSubjective aesthetic approval of all 21 finishes and Pixel 6 Pro physical latency/performance have not been performed. Functional browser tests and native export coverage are green; those claims must not be conflated with a human photographic-realism judgement.",
+      "state_at_capture": "closed",
+      "draft_at_capture": false,
+      "merged_at": "2026-10-22T03:51:41Z",
+      "created_at": "2026-10-22T03:36:44Z",
+      "head_sha_at_capture": "0bb383a9ffd98bb73090f2f9aa6d2ebb2bb55f54",
+      "url": "https://github.com/gamesbyian/wallgen/pull/430"
+    },
+    {
+      "number": 431,
+      "title": "Clarify ROYGBIV editor labels, mobile actions and accessible vocabulary",
+      "description": "Implement the source-backed 2026-10-21 terminology audit without changing any stable recipe keys, setting/tool IDs, navigation destinations or renderer semantics.\n\n- Rename the three ambiguous navigation categories to Stripes, Texture, Light; preserve Path/Geometry adaptation.\n- Rename confusing tools and source fields (Wave for static element motion, Palette, Repeats, Region count, Bend frequency/depth, Pattern uniformity, Starting style, etc.).\n- Use **Contour distortion** with accurate help because the improved material engine now correctly requires an active stripe texture. This intentionally updates the earlier audit's description, which reflected the old fallback behavior.\n- Correct Bleed to preview-only Safe area, Fit to Reset view, Detected geometry to Detected paths, and clarify More groups.\n- Keep all nine layered Strength/Scale/Rotation captions compact but provide full unique accessible names. Make Add/Remove favourites state-specific on desktop, mobile and edit rail.\n- Preserve old vocabulary in search during the transition and update scoped Reroll/Vary accessible action names.\n- Add Node coverage for all 7 categories/40 tools/87 settings and old/new vocabulary and real Chromium assertions for accessible category, setting and mobile labels.\n\n**Validation**: unit/CI checks and actual browser jobs pending. Visual approval and on-device label comprehension remain distinct human QA.",
+      "state_at_capture": "closed",
+      "draft_at_capture": false,
+      "merged_at": "2026-10-22T06:01:52Z",
+      "created_at": "2026-10-22T04:24:53Z",
+      "head_sha_at_capture": "64786b7e8128bf5103a81550b94613d61c09387c",
+      "url": "https://github.com/gamesbyian/wallgen/pull/431"
+    },
+    {
+      "number": 432,
+      "title": "[Draft] Science-grounded Colour Vision Preview: Machado, Brettel and split comparison",
+      "description": "## Colour Vision Preview (draft awaiting native-device / final visual acceptance)\n\n**Full scientific, visual/UX and integration plan:** [docs/COLOUR-VISION-PREVIEW-PLAN.md](https://github.com/gamesbyian/wallgen/blob/feature/colour-vision-preview/docs/COLOUR-VISION-PREVIEW-PLAN.md).\n\n### Shipped on this branch\n- **Machado 2009** protan/deutan simulation using linear-sRGB transfer functions and independently tested severity matrices; **Brettel 1997** two-plane tritanopia projection. Partial tritan anomaly is explicitly described as approximate. Anomaly versus anopia names and *Simulation strength* correctly avoid diagnosis claims.\n- Live wallpaper **display-only overlay**, original Canvas2D renderer and full-resolution recipe/PNG export unchanged; independent worker, latest-frame invalidation and time-sliced no-worker fallback.\n- Desktop canvas-heading entry and mobile **More > Position & info** entry (now first in that section), split comparison with 44px touch/keyboard divider, Show Original, accurate active-view indicator / accessible canvas description, Escape/focus restoration, model explanation and dark/cream tokens.\n- Public-domain/MIT attributions retained; no runtime dependency or network requirement; optional `npm run bench:vision` for Node CPU measurements only.\n- Latest `main` terminology work merged **into this feature branch only** at [6f3f5ce](https://github.com/gamesbyian/wallgen/commit/6f3f5ce0a238df05e9014b87543729d1e932353e). Main remains untouched by this PR.\n\n### Verified CI evidence (source-bound)\n- [Real Chromium 39732011513](https://github.com/gamesbyian/wallgen/actions/runs/39732011513): **1,486 sampled RGB points matched latest newly rendered wallpaper with max error 0** after background switched during simulation. 70%-strength model against per-pixel reference passed.\n- Same run: simulated ON versus OFF generated actual **byte-identical 160×346 PNG** with matching SHA-256 `8b9bd7c88d29048a866767370369cc4d8773ed07b0c6381356fb6c574991baf3` and 67,818 bytes. This is export-path isolation, not a full-res memory benchmark.\n- Same run: forced worker failure recovered through incremental compatibility conversion; original bitmap and URL preserved; desktop panel reparent and Escape restored focus.\n- [Mobile acceptance 39732428987](https://github.com/gamesbyian/wallgen/actions/runs/39732428987): actual 320×700, 412×892, 700×412 button centres were hit; touch slider moved to targeted 74%; no horizontal overflow. Included open-More and unobstructed Studio screenshots in [artifact 12406410706](https://github.com/gamesbyian/wallgen/actions/runs/39732428987/artifacts/12406410706), both directly inspected.\n- [Node validation 39732011692](https://github.com/gamesbyian/wallgen/actions/runs/39732011692) green; [Material Finish 39732011636](https://github.com/gamesbyian/wallgen/actions/runs/39732011636) green after main integration.\n\n### Remaining, transparently unclaimed\nReal Pixel 6 Pro touch/optical review, OS screen reader output, representative lower-power memory/performance p95, and any separate human approval for aesthetic choices. `npm run bench:vision` provides repeatable CPU instrumentation but cannot replace physical-device evidence. The PR remains **draft** until final acceptance. No claims that simulations exactly reproduce an individual's vision.\n\nAll scope-limited verification, outstanding gates and adoption guidance are documented in the plan.",
+      "state_at_capture": "open",
+      "draft_at_capture": true,
+      "merged_at": null,
+      "created_at": "2026-10-22T05:26:36Z",
+      "head_sha_at_capture": "8ed051a48e80239c94403f9f56fba832b5caf0da",
+      "url": "https://github.com/gamesbyian/wallgen/pull/432"
+    },
+    {
+      "number": 433,
+      "title": "Plan reusable shape/path library, imported silhouettes and scattered regions",
+      "description": "## Scope\nDocumentation-only, source-based design and implementation plan for the requested reusable Shape & Path Library plus Scattered Shapes / Rainbow Orbits.\n\n- Detailed architecture and UI/UX specification including IndexedDB, self-contained recipe snapshots, image and SVG import, holes, deterministic independent objects, offline backups, security and external dependency research.\n- Phased implementation queue A–F with named modules, file-level changes, unit and real-browser acceptance, compatibility gates, accessibility and explicit physical-device QA.\n- Existing UI/renderer/import/recipe constraints reviewed against main at 47493b2e3dad; active PRs #429, #431, #432 identified for coordination.\n\nDocs:\n- docs/SHAPE-PATH-LIBRARY-AND-SCATTERED-SHAPES-PLAN-2026-10-21.md\n- docs/SHAPE-PATH-LIBRARY-IMPLEMENTATION-QUEUE-2026-10-21.md\n\nNo feature implementation and no claimed run of source tests; this PR changes Markdown documentation only.",
+      "state_at_capture": "open",
+      "draft_at_capture": false,
+      "merged_at": null,
+      "created_at": "2026-10-22T05:41:24Z",
+      "head_sha_at_capture": "c99c77694c43a610bfae527fccfe1a79f17da78c",
+      "url": "https://github.com/gamesbyian/wallgen/pull/433"
+    },
+    {
+      "number": 434,
+      "title": "Build a reusable geometry library with portable paths and durable storage",
+      "description": "## Implements first usable slice of the Shape & Path Library (plan PR #433)\n\nThis implementation branch starts from main after terminology PR #431 merged.\n\n### Implemented\n- Pure portable normalized open paths and compound shapes with holes, disconnected components, canonical rings, bounds, strict validation, independent snapshots and SHA-256 fingerprints.\n- IndexedDB geometry library with explicitly session-only fallback, revision-safe changes, recent drafts, search, and atomic whole-library import.\n- Integrity-checked JSON backups for individual assets and full libraries.\n- First user-facing library dialog under existing More/metadata controls: Save the active drawn or imported path, browse/search, actual vector thumbnails, reuse through Draw/Undo, delete, export, and import JSON.\n- New Chromium acceptance script/workflow for persistence, moving between structures and revision conflicts; expanded Node tests.\n\n### Still open\n- Closing the loop from image silhouette extraction to compound-region wallpaper stamps.\n- Scattered circles / Rainbow Orbits and other independent-shape arrangements.\n- ZIP packaging, optional original-source blobs, advanced shape editing and physical-device/human visual review.\n\n### Compatibility\nOld paths, radial and regions rendering remain unchanged; recipe schema is untouched. Library is separate from Saved Wallpapers.\n\n### Verification\nExisting CI and new Chromium library acceptance should pass before merging. Draft status retained while checking them.",
+      "state_at_capture": "open",
+      "draft_at_capture": true,
+      "merged_at": null,
+      "created_at": "2026-10-22T06:06:13Z",
+      "head_sha_at_capture": "044ae099e2622e1abb468c733765efc0dbc83605",
+      "url": "https://github.com/gamesbyian/wallgen/pull/434"
+    }
+  ]
+}
