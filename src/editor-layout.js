@@ -114,7 +114,7 @@ export function mountEditor(){
   nav.replaceChildren();
 
   const chooser=create('nav','editor-tool-chooser');
-  chooser.setAttribute('aria-label','Tools in selected category');
+  chooser.setAttribute('aria-label','Tools in selected category and related controls');
   nav.after(chooser);
   const updateChooserEdges=()=>{
     const max=chooser.scrollWidth-chooser.clientWidth;
