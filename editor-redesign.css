@@ -1413,3 +1413,25 @@ html[data-theme="cream"] body.mobile-studio .sidebar .settings-tabs .settings-ta
     min-height:27px;padding:2px 7px;font-size:10px;
   }
 }
+
+/* Contextual navigation to jointly edited light effects. A related control
+   is a real button in the EXISTING horizontal tool strip, never a second
+   slider, settings row, mobile destination or recipe alias. */
+.editor-tool-chooser .editor-related-tool{
+  display:flex;align-items:center;justify-content:center;flex:0 0 auto;
+  min-width:0;min-height:27px;padding:3px 8px;border:1px dashed var(--line);
+  border-radius:7px;background:var(--surface);color:inherit;
+  font-size:10px;font-weight:650;cursor:pointer;white-space:nowrap;
+}
+.editor-tool-chooser .editor-related-tool[hidden]{display:none!important}
+.editor-tool-chooser .editor-related-tool:hover{border-color:#c85092}
+.editor-tool-chooser .editor-related-tool:focus-visible{
+  outline:2px solid #c85092;outline-offset:1px;
+}
+@media(max-width:790px){
+  body.mobile-studio .sidebar .editor-tool-chooser .editor-related-tool:not([hidden]){
+    display:flex!important;flex:0 0 auto!important;align-items:center;
+    min-height:27px!important;height:27px!important;max-height:27px!important;
+    padding:2px 7px!important;font-size:11px!important;
+  }
+}
