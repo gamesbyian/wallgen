@@ -2,6 +2,14 @@
 
 **Status:** design analysis and proposed IA only, not an implemented UI. **Date:** 2026-10-22. **Scope:** present main-branch control architecture, plus clearly labelled future integrations. **Source:** [editor schema](../src/editor-schema.js), [live editor assembly](../src/editor-layout.js), [scene applicability](../src/editor-tool-applicability.js), [mobile destinations](../src/mobile-five-nav.js), [mobile More](../src/mobile-studio.js), [actual static controls](../index.html), [interior elements UI](../src/app.js), [terminology audit](UI-TERMINOLOGY-AUDIT-2026-10-21.md), and [mobile destination notes](MOBILE-FIVE-DESTINATION-TRIAL.md).
 
+## Research foundation and first comparative check
+
+**Agent learning guide:** [Human expectations, creativity and procedural composition](AGENT-HUMAN-EXPECTATIONS-AND-CREATIVE-COMPOSITION.md) synthesizes cognitive walkthroughs, task analysis, card sorting, tree testing, information scent, QOC design rationale, creativity-support metrics, art composition, shape grammars, instructional generative art, and constraints against invented human results.
+
+**Applied evaluation:** [IA research assessment](IA-RESEARCH-APPLIED-ASSESSMENT-2026-10-22.md) compares the existing seven categories, five intention-led workspaces and a hybrid approach, with four example cognitive walkthroughs and an explicitly qualified **16-task route-travel proxy**. [Read the deterministic comparison tool](../scripts/ia-structure-evaluate.mjs), which validates all 87 schema setting keys and makes no claims about observed human success or time saved.
+
+**Current disposition:** The five-workspace model has promising structural locality for selected tasks, but a hairpin task is *worse*, and no human tree test has been performed. Prefer cheap self-contained texture/element editor prototypes and contextual cross-links before a wholesale navigation rewrite. This is comparative research, not authorisation to ship the proposed tree.
+
 ## 0. Read this as a design research instrument
 
 This document deliberately contains TWO distinct taxonomies, not a magical replacement of one menu with another.
