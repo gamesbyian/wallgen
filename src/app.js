@@ -15,6 +15,7 @@ import {sourceSettingLabel} from './editor-control-roles.js?v=20261021-labels1';
 import {fullSettingName} from './editor-terminology.js';
 import {installExplorationHistory} from './exploration-history.js';
 import {installGeometryLibraryUI} from './geometry-library-ui.js';
+import {RAINBOW_ORBITS} from './scattered-composition.js';
 import {parseStoredFavorites} from './favorites-store.js';
 import {encodePortableRecipe,decodePortableRecipe,portableShareUrl,portableShareTokenFromLocation,
   MAX_PORTABLE_LINK_CHARS} from './share-recipe.js';
@@ -28,7 +29,7 @@ const notice = document.getElementById('notice');
 const studioStatus = document.getElementById('studioStatus');
 const favoriteButton = document.getElementById('favorite');
 const FAVORITES_KEY = 'wallgen:favorites:v1';
-const FIELDS = ['primesOnly','family','structure','radialMode','rayCount','rayRotation','rayTwist','rayCoverage','rayCore','fieldCenterX','fieldCenterY','regionMode','regionCount','regionJitter','regionSides','dividerColor','dividerWidth','composition','repeatCount','repeatSpacing','orientation','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','geometry','turnRadius','hairpinAngle','loopRadius','loopSweep','geometrySafety','extendDrawnPath','crossingMode','stepCount','chevronSharpness','loopAspect','construction','motif','lineStyle','pathLength','tonalContrast','brushRoughness','dotSize','dotSpacing','endTaper','shapeFrequency','shapeDepth','motifSize','motifFrequency','palette','material','outline','background','lightingMood','lightDirection','lightStrength','shadowStrength','stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection','textureCoverage','textureRotation','textureBlend','textureLayer2Enabled','material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2','textureLayer3Enabled','material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3','chaos','stripeWidth','spread','textureStrength','textureScale','textureDisplacement','individuality','patternHomogeneity','overridePatternHomogeneity','gap','outlineBuffer','glow'];
+const FIELDS = ['primesOnly','family','structure','radialMode','rayCount','rayRotation','rayTwist','rayCoverage','rayCore','fieldCenterX','fieldCenterY','regionMode','regionCount','regionJitter','regionSides','scatteredCount','scatteredMinSize','scatteredMaxSize','scatteredVariation','scatteredSpacing','scatteredEdgeCrop','scatteredOverlap','dividerColor','dividerWidth','composition','repeatCount','repeatSpacing','orientation','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','geometry','turnRadius','hairpinAngle','loopRadius','loopSweep','geometrySafety','extendDrawnPath','crossingMode','stepCount','chevronSharpness','loopAspect','construction','motif','lineStyle','pathLength','tonalContrast','brushRoughness','dotSize','dotSpacing','endTaper','shapeFrequency','shapeDepth','motifSize','motifFrequency','palette','material','outline','background','lightingMood','lightDirection','lightStrength','shadowStrength','stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection','textureCoverage','textureRotation','textureBlend','textureLayer2Enabled','material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2','textureLayer3Enabled','material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3','chaos','stripeWidth','spread','textureStrength','textureScale','textureDisplacement','individuality','patternHomogeneity','overridePatternHomogeneity','gap','outlineBuffer','glow'];
 let current = normalizeRecipe();
 let currentScene;
 const previewLayers={background:null,ink:null,scene:null,key:null,overhang:null};
@@ -288,10 +289,12 @@ function inactiveSettingKeys(recipe,scene){
     if(recipe.radialMode==='spokes')inactive.add('rayTwist');
   }
   if(!regions){
-    for(const key of ['regionMode','regionCount','regionJitter','regionSides'])inactive.add(key);
+    for(const key of ['regionMode','regionCount','regionJitter','regionSides','scatteredCount','scatteredMinSize','scatteredMaxSize','scatteredVariation','scatteredSpacing','scatteredEdgeCrop','scatteredOverlap'])inactive.add(key);
   }else{
     if(recipe.regionMode!=='nested')inactive.add('regionSides');
-    if(recipe.regionMode==='nested')inactive.add('regionJitter');
+    if(recipe.regionMode==='nested'||recipe.regionMode==='scattered')inactive.add('regionJitter');
+    if(recipe.regionMode==='scattered')inactive.add('regionCount');
+    else for(const key of ['scatteredCount','scatteredMinSize','scatteredMaxSize','scatteredVariation','scatteredSpacing','scatteredEdgeCrop','scatteredOverlap'])inactive.add(key);
   }
   if(!(radial||(regions&&recipe.regionMode==='nested'))){
     inactive.add('fieldCenterX');inactive.add('fieldCenterY');
@@ -473,6 +476,14 @@ function render(recipe,{scroll=false,bypassLocks=false,interactive=false}={}) {
   // Primes Only is reflected by its selected control; no transient message.
   const key=artKey(current);
   currentScene=resolveScene(current);
+  const scatterStatus=document.getElementById('scatteredStatus');
+  if(scatterStatus){
+    const missing=current.structure==='regions'&&current.regionMode==='scattered'?
+      current.scatteredCount-currentScene.objects.length:0;
+    scatterStatus.textContent=missing>0?
+      'Only '+currentScene.objects.length+' of '+current.scatteredCount+' circles fit. Reduce size or spacing, or allow overlaps.':'';
+    scatterStatus.hidden=!missing;
+  }
   if(previewLayers.key===key && previewLayers.ink && previewLayers.background){
     clearSettledPreview();
     // Nudge and compositor-only changes remain immediate, even while an
@@ -952,6 +963,31 @@ function syncSettingLocks(){
 }
 installSettingLocks();
 const editor=mountEditor();
+// Contextual preset, without growing the navigation. All affected values stay
+// ordinary editable settings, and locked fields remain protected.
+const regionTool=document.querySelector('.editor-tool-card[data-editor-tool="regions"]');
+const rainbowOrbitButton=document.createElement('button');
+rainbowOrbitButton.type='button';rainbowOrbitButton.id='rainbowOrbitsPreset';
+rainbowOrbitButton.className='button button-outline scattered-preset';
+rainbowOrbitButton.textContent='Try Rainbow Orbits';
+rainbowOrbitButton.title='Seven varied rainbow circles with black negative space';
+regionTool?.append(rainbowOrbitButton);
+rainbowOrbitButton.addEventListener('click',()=>{
+  const proposal=normalizeRecipe({...current,...RAINBOW_ORBITS,seed:'rainbow-orbits-001'});
+  const next=respectSettingLocks(current,proposal);
+  if(next.structure!=='regions'||next.regionMode!=='scattered'){
+    showNotice('Unlock Canvas structure and Region layout to apply Rainbow Orbits.');
+    return;
+  }
+  changeRecipe(next);
+  selectEditorTool('path','scattered-size');
+  showNotice('Rainbow Orbits selected. Adjust count, size, spacing and edge cropping.');
+});
+const scatterStatus=document.createElement('p');
+scatterStatus.id='scatteredStatus';scatterStatus.hidden=true;
+scatterStatus.className='scattered-diagnostic';scatterStatus.setAttribute('role','status');
+document.querySelector('.editor-tool-card[data-editor-tool="scattered-edges"]')
+  ?.append(scatterStatus);
 // Details controls deliberately live outside the fixed scalar setting schema:
 // ordered element objects are a recipe collection, not separately lockable sliders.
 const interiorCards=Object.fromEntries(['interior','interior-style','interior-motion','interior-placement','interior-targets']
