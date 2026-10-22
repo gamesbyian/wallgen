@@ -88,95 +88,95 @@ The table is generated from the canonical 40-tool schema, not a legacy four-tab 
 
 There are **87 unique keys** in `EDITOR_CATEGORIES`; two are hidden state switches (`textureLayer2Enabled` and `textureLayer3Enabled`) and have no direct independent setting label. `family` (starting style) and `primesOnly` (generation constraint) sit outside the ordinary category schema. Every defined editor key is accounted for below. "Keep" means the actual current user-visible label remains sensible, not that a lower-level engine key should be exposed.
 
-| Category/tool | Stable setting key | Outcome |
-|---|---| 
-| Layout / Canvas structure | `structure` | **Design type** (PROPOSE) — Three genuinely different construction modes |
-| Layout / Arrangement | `composition` | **Keep current label** |
-| Layout / Arrangement | `repeatCount` | **Repeats** (PROPOSE) — Counts 2–6 rainbow groups |
-| Layout / Arrangement | `repeatSpacing` | **Keep current label** |
-| Layout / Direction | `orientation` | **Keep current label** |
-| Layout / Direction | `diagonalRotation` | **Rotation** (CONTEXTUAL) — Inside Direction, a shorter label works only if the relative-angle hint stays |
-| Layout / Direction | `mirrorHorizontal` | **Keep current label** |
-| Layout / Direction | `mirrorVertical` | **Keep current label** |
-| Layout / Variation | `chaos` | **Chaos** (PROPOSE) — Conventional creative-control label; remove Controlled |
-| Path / Geometry | `geometry` | **Keep current label** |
-| Path / Geometry | `shapeFrequency` | **Bend frequency** (PROPOSE) — Low = broad bends; high = tight bends, as existing help says |
-| Path / Geometry | `shapeDepth` | **Bend depth** (PROPOSE) — Amplitude of geometry deformation |
-| Path / Radial rays | `radialMode` | **Keep current label** |
-| Path / Radial rays | `rayCount` | **Keep current label** |
-| Path / Radial rays | `rayRotation` | **Keep current label** |
-| Path / Ray shape | `rayTwist` | **Keep current label** |
-| Path / Ray shape | `rayCoverage` | **Keep current label** |
-| Path / Ray shape | `rayCore` | **Centre gap** (PROPOSE) — Inner opening rather than unclear Clearance |
-| Path / Origin | `fieldCenterX` | **Keep current label** |
-| Path / Origin | `fieldCenterY` | **Keep current label** |
-| Path / Regions | `regionMode` | **Keep current label** |
-| Path / Regions | `regionCount` | **Region count** (PROPOSE) — Controls discrete region count, not abstract complexity |
-| Path / Region detail | `regionJitter` | **Irregularity** (CONTEXTUAL) — Within Region detail; source label is Region irregularity |
-| Path / Region detail | `regionSides` | **Shape sides** (PROPOSE) — Keep 0 = circle and 3–12 = polygon hint; 'Polygon sides' alone hides the zero mode |
-| Path / Constraints | `geometrySafety` | **Keep current label** |
-| Path / Constraints | `crossingMode` | **Crossing order** (PROPOSE) — Over, under, weave at intersections |
-| Path / Turns | `turnRadius` | **Keep current label** |
-| Path / Turns | `hairpinAngle` | **Keep current label** |
-| Path / Single loop | `loopRadius` | **Keep current label** |
-| Path / Single loop | `loopSweep` | **Keep current label** |
-| Path / Shape detail | `stepCount` | **Keep current label** |
-| Path / Shape detail | `chevronSharpness` | **Keep current label** |
-| Path / Shape detail | `loopAspect` | **Keep current label** |
-| Path / Endpoints | `pathLength` | **Stripe length** (CONTEXTUAL) — Only for floating stripes; clarify in contextual help |
-| Path / Endpoints | `endTaper` | **End taper** (PROPOSE) — Short established visual-editing term |
-| Path / Endpoints | `extendDrawnPath` | **Extend open paths** (PROPOSE) — Also applies to imported paths; current drawn-only label omits that |
-| Shapes / Structure | `construction` | **Stripe type** (PROPOSE) — Ribbon, line, tonal stripe construction |
-| Shapes / Structure | `stripeWidth` | **Stripe thickness** (KEEP) — Matches actual width/thickness rendering |
-| Shapes / Structure | `spread` | **Stripe spacing** (KEEP) — Distinguishes spacing from thickness |
-| Shapes / Patterns | `motif` | **Keep current label** |
-| Shapes / Patterns | `lineStyle` | **Line style** (PROPOSE) — Continuous/dotted/dashed; category supplies Stripe context |
-| Shapes / Patterns | `patternHomogeneity` | **Pattern uniformity** (PROPOSE) — More familiar; same behavior across 0–100% |
-| Shapes / Marks | `dotSize` | **Keep current label** |
-| Shapes / Marks | `dotSpacing` | **Keep current label** |
-| Shapes / Motif scale | `motifSize` | **Keep current label** |
-| Shapes / Motif scale | `motifFrequency` | **Motif density** (KEEP) — Already describes repeats/density |
-| Shapes / Band tones | `tonalContrast` | **Keep current label** |
-| Shapes / Character | `individuality` | **Stripe variation** (PROPOSE) — Describes per-stripe geometric differences; avoids personification |
-| Shapes / Character | `overridePatternHomogeneity` | **Vary patterns too** (PROPOSE / TEST) — Meaning is to let individuality affect motif size/rotation/opacity; must preserve full help text |
-| Details / Outlines | `outline` | **Outline style** (PROPOSE) — Current Stripe outlines includes style options, not just on/off |
-| Details / Outlines | `gap` | **Keep current label** |
-| Details / Outlines | `outlineBuffer` | **Outline offset** (PROPOSE) — Gap between stripe and outline; conventional stroke-offset term |
-| Details / Dividers | `dividerColor` | **Divider colour** (CONTEXTUAL) — Options select divider colour (including none) |
-| Details / Dividers | `dividerWidth` | **Keep current label** |
-| Details / Shadows | `stripeShadowStrength` | **Strength** (CONTEXTUAL) — Within Shadows tool, no need for Shadow prefix |
-| Details / Shadows | `stripeShadowSoftness` | **Softness** (CONTEXTUAL) — Within Shadows tool, no need for Shadow prefix |
-| Details / Shadows | `stripeShadowDirection` | **Light direction** (CONTEXTUAL) — Within Shadows tool, sets shadow light source |
-| Details / Glow | `glow` | **Glow** (CONTEXTUAL) — Within Glow tool, Neon glow may be shortened |
-| Colour / Rainbow | `palette` | **Palette** (PROPOSE) — Current Colour story is evocative but not an actionable property label |
-| Colour / Rainbow | `reverseStripes` | **Reverse colour order** (PROPOSE) — Works beyond stripe layouts; retain violet-first explanatory hint |
-| Colour / Background | `background` | **Keep current label** |
-| Material / Layer 1 | `material` | **Keep current label** |
-| Material / Layer 1 | `textureCoverage` | **Apply to** (CONTEXTUAL) — Already inside texture layer tool |
-| Material / Layer 1 | `textureBlend` | **Keep current label** |
-| Material / Layer 1 | `textureLayer2Enabled` | **Internal, keep hidden** (material selection controls activation) |
-| Material / Finish 1 | `textureStrength` | **Strength** (CONTEXTUAL) — Within Finish 1 card, removes redundant Layer 1 |
-| Material / Finish 1 | `textureScale` | **Scale** (CONTEXTUAL) — Within Finish 1 card |
-| Material / Finish 1 | `textureRotation` | **Rotation** (CONTEXTUAL) — Within Finish 1 card |
-| Material / Layer 2 | `material2` | **Keep current label** |
-| Material / Layer 2 | `textureCoverage2` | **Apply to** (CONTEXTUAL) — Already inside texture layer tool |
-| Material / Layer 2 | `textureBlend2` | **Keep current label** |
-| Material / Layer 2 | `textureLayer3Enabled` | **Internal, keep hidden** (material selection controls activation) |
-| Material / Finish 2 | `textureStrength2` | **Strength** (CONTEXTUAL) — Within Finish 2 card, removes redundant Layer 2 |
-| Material / Finish 2 | `textureScale2` | **Scale** (CONTEXTUAL) — Within Finish 2 card |
-| Material / Finish 2 | `textureRotation2` | **Rotation** (CONTEXTUAL) — Within Finish 2 card |
-| Material / Layer 3 | `material3` | **Keep current label** |
-| Material / Layer 3 | `textureCoverage3` | **Apply to** (CONTEXTUAL) — Already inside texture layer tool |
-| Material / Layer 3 | `textureBlend3` | **Keep current label** |
-| Material / Finish 3 | `textureStrength3` | **Strength** (CONTEXTUAL) — Within Finish 3 card, removes redundant Layer 3 |
-| Material / Finish 3 | `textureScale3` | **Scale** (CONTEXTUAL) — Within Finish 3 card |
-| Material / Finish 3 | `textureRotation3` | **Rotation** (CONTEXTUAL) — Within Finish 3 card |
-| Material / Surface | `textureDisplacement` | **Contour distortion** (PRIORITY) — Changes actual stripe contour edges even with no material selected, as on-screen help explicitly states |
-| Material / Surface | `brushRoughness` | **Keep current label** |
-| Effects / Lighting | `lightingMood` | **Mood** (CONTEXTUAL) — Inside Lighting tool only; source label Lighting mood |
-| Effects / Lighting | `lightDirection` | **Direction** (CONTEXTUAL) — Inside Lighting tool only; source label Light from |
-| Effects / Lighting | `lightStrength` | **Intensity** (CONTEXTUAL) — Inside Lighting tool only; source label Light intensity |
-| Effects / Lighting | `shadowStrength` | **Shading** (CONTEXTUAL) — Inside Lighting tool only; source label Canvas shade |
+| Category/tool | Stable setting key | Current source label | Outcome |
+|---|---|---|---|
+| Layout / Canvas structure | `structure` | Canvas structure | **Design type** (PROPOSE) — Three genuinely different construction modes |
+| Layout / Arrangement | `composition` | Composition | **Keep current label** |
+| Layout / Arrangement | `repeatCount` | Rainbow repetitions | **Repeats** (PROPOSE) — Counts 2–6 rainbow groups |
+| Layout / Arrangement | `repeatSpacing` | Repeat spacing | **Keep current label** |
+| Layout / Direction | `orientation` | Direction | **Keep current label** |
+| Layout / Direction | `diagonalRotation` | Diagonal rotation | **Rotation** (CONTEXTUAL) — Inside Direction, a shorter label works only if the relative-angle hint stays |
+| Layout / Direction | `mirrorHorizontal` | Mirror horizontally | **Keep current label** |
+| Layout / Direction | `mirrorVertical` | Mirror vertically | **Keep current label** |
+| Layout / Variation | `chaos` | Controlled chaos | **Chaos** (PROPOSE) — Conventional creative-control label; remove Controlled |
+| Path / Geometry | `geometry` | Path geometry | **Keep current label** |
+| Path / Geometry | `shapeFrequency` | Shape frequency | **Bend frequency** (PROPOSE) — Low = broad bends; high = tight bends, as existing help says |
+| Path / Geometry | `shapeDepth` | Shape depth | **Bend depth** (PROPOSE) — Amplitude of geometry deformation |
+| Path / Radial rays | `radialMode` | Radial design | **Keep current label** |
+| Path / Radial rays | `rayCount` | Ray count | **Keep current label** |
+| Path / Radial rays | `rayRotation` | Ray rotation | **Keep current label** |
+| Path / Ray shape | `rayTwist` | Ray twist | **Keep current label** |
+| Path / Ray shape | `rayCoverage` | Ray coverage | **Keep current label** |
+| Path / Ray shape | `rayCore` | Centre clearance | **Centre gap** (PROPOSE) — Inner opening rather than unclear Clearance |
+| Path / Origin | `fieldCenterX` | Origin X | **Keep current label** |
+| Path / Origin | `fieldCenterY` | Origin Y | **Keep current label** |
+| Path / Regions | `regionMode` | Region layout | **Keep current label** |
+| Path / Regions | `regionCount` | Region complexity | **Region count** (PROPOSE) — Controls discrete region count, not abstract complexity |
+| Path / Region detail | `regionJitter` | Region irregularity | **Irregularity** (CONTEXTUAL) — Within Region detail; source label is Region irregularity |
+| Path / Region detail | `regionSides` | Nested shape sides | **Shape sides** (PROPOSE) — Keep 0 = circle and 3–12 = polygon hint; 'Polygon sides' alone hides the zero mode |
+| Path / Constraints | `geometrySafety` | Preserve stripe coherence | **Keep current label** |
+| Path / Constraints | `crossingMode` | At intersections | **Crossing order** (PROPOSE) — Over, under, weave at intersections |
+| Path / Turns | `turnRadius` | Hairpin radius | **Keep current label** |
+| Path / Turns | `hairpinAngle` | Hairpin turn angle | **Keep current label** |
+| Path / Single loop | `loopRadius` | Loop radius | **Keep current label** |
+| Path / Single loop | `loopSweep` | Loop turn angle | **Keep current label** |
+| Path / Shape detail | `stepCount` | Step count | **Keep current label** |
+| Path / Shape detail | `chevronSharpness` | Chevron sharpness | **Keep current label** |
+| Path / Shape detail | `loopAspect` | Loop aspect | **Keep current label** |
+| Path / Endpoints | `pathLength` | Floating stripe length | **Stripe length** (CONTEXTUAL) — Only for floating stripes; clarify in contextual help |
+| Path / Endpoints | `endTaper` | Taper stripe ends | **End taper** (PROPOSE) — Short established visual-editing term |
+| Path / Endpoints | `extendDrawnPath` | Extend open drawn path | **Extend open paths** (PROPOSE) — Also applies to imported paths; current drawn-only label omits that |
+| Shapes / Structure | `construction` | Stripe construction | **Stripe type** (PROPOSE) — Ribbon, line, tonal stripe construction |
+| Shapes / Structure | `stripeWidth` | Stripe thickness | **Stripe thickness** (KEEP) — Matches actual width/thickness rendering |
+| Shapes / Structure | `spread` | Stripe spacing | **Stripe spacing** (KEEP) — Distinguishes spacing from thickness |
+| Shapes / Patterns | `motif` | Stripe pattern | **Keep current label** |
+| Shapes / Patterns | `lineStyle` | Stripe line style | **Line style** (PROPOSE) — Continuous/dotted/dashed; category supplies Stripe context |
+| Shapes / Patterns | `patternHomogeneity` | Pattern homogeneity | **Pattern uniformity** (PROPOSE) — More familiar; same behavior across 0–100% |
+| Shapes / Marks | `dotSize` | Dot diameter | **Keep current label** |
+| Shapes / Marks | `dotSpacing` | Dot spacing | **Keep current label** |
+| Shapes / Motif scale | `motifSize` | Motif size | **Keep current label** |
+| Shapes / Motif scale | `motifFrequency` | Motif density | **Motif density** (KEEP) — Already describes repeats/density |
+| Shapes / Band tones | `tonalContrast` | Tonal contrast | **Keep current label** |
+| Shapes / Character | `individuality` | Stripe individuality | **Stripe variation** (PROPOSE) — Describes per-stripe geometric differences; avoids personification |
+| Shapes / Character | `overridePatternHomogeneity` | Override pattern homogeneity with stripe individuality | **Vary patterns too** (PROPOSE / TEST) — Meaning is to let individuality affect motif size/rotation/opacity; must preserve full help text |
+| Details / Outlines | `outline` | Stripe outlines | **Outline style** (PROPOSE) — Current Stripe outlines includes style options, not just on/off |
+| Details / Outlines | `gap` | Outline thickness | **Keep current label** |
+| Details / Outlines | `outlineBuffer` | Outline buffer | **Outline offset** (PROPOSE) — Gap between stripe and outline; conventional stroke-offset term |
+| Details / Dividers | `dividerColor` | Region dividers | **Divider colour** (CONTEXTUAL) — Options select divider colour (including none) |
+| Details / Dividers | `dividerWidth` | Divider thickness | **Keep current label** |
+| Details / Shadows | `stripeShadowStrength` | Shadow strength | **Strength** (CONTEXTUAL) — Within Shadows tool, no need for Shadow prefix |
+| Details / Shadows | `stripeShadowSoftness` | Shadow softness | **Softness** (CONTEXTUAL) — Within Shadows tool, no need for Shadow prefix |
+| Details / Shadows | `stripeShadowDirection` | Shadow light source | **Light direction** (CONTEXTUAL) — Within Shadows tool, sets shadow light source |
+| Details / Glow | `glow` | Neon glow | **Glow** (CONTEXTUAL) — Within Glow tool, Neon glow may be shortened |
+| Colour / Rainbow | `palette` | Colour story | **Palette** (PROPOSE) — Current Colour story is evocative but not an actionable property label |
+| Colour / Rainbow | `reverseStripes` | Reverse stripe order (violet first) | **Reverse colour order** (PROPOSE) — Works beyond stripe layouts; retain violet-first explanatory hint |
+| Colour / Background | `background` | Background | **Keep current label** |
+| Material / Layer 1 | `material` | Texture layer 1 | **Keep current label** |
+| Material / Layer 1 | `textureCoverage` | Apply texture to | **Apply to** (CONTEXTUAL) — Already inside texture layer tool |
+| Material / Layer 1 | `textureBlend` | Blend mode | **Keep current label** |
+| Material / Layer 1 | `textureLayer2Enabled` | (hidden layer flag) | **Internal, keep hidden** (material selection controls activation) |
+| Material / Finish 1 | `textureStrength` | Layer 1 strength | **Strength** (CONTEXTUAL) — Within Finish 1 card, removes redundant Layer 1 |
+| Material / Finish 1 | `textureScale` | Layer 1 scale | **Scale** (CONTEXTUAL) — Within Finish 1 card |
+| Material / Finish 1 | `textureRotation` | Layer 1 rotation | **Rotation** (CONTEXTUAL) — Within Finish 1 card |
+| Material / Layer 2 | `material2` | Texture layer 2 | **Keep current label** |
+| Material / Layer 2 | `textureCoverage2` | Apply texture to | **Apply to** (CONTEXTUAL) — Already inside texture layer tool |
+| Material / Layer 2 | `textureBlend2` | Blend mode | **Keep current label** |
+| Material / Layer 2 | `textureLayer3Enabled` | (hidden layer flag) | **Internal, keep hidden** (material selection controls activation) |
+| Material / Finish 2 | `textureStrength2` | Layer 2 strength | **Strength** (CONTEXTUAL) — Within Finish 2 card, removes redundant Layer 2 |
+| Material / Finish 2 | `textureScale2` | Layer 2 scale | **Scale** (CONTEXTUAL) — Within Finish 2 card |
+| Material / Finish 2 | `textureRotation2` | Layer 2 rotation | **Rotation** (CONTEXTUAL) — Within Finish 2 card |
+| Material / Layer 3 | `material3` | Texture layer 3 | **Keep current label** |
+| Material / Layer 3 | `textureCoverage3` | Apply texture to | **Apply to** (CONTEXTUAL) — Already inside texture layer tool |
+| Material / Layer 3 | `textureBlend3` | Blend mode | **Keep current label** |
+| Material / Finish 3 | `textureStrength3` | Layer 3 strength | **Strength** (CONTEXTUAL) — Within Finish 3 card, removes redundant Layer 3 |
+| Material / Finish 3 | `textureScale3` | Layer 3 scale | **Scale** (CONTEXTUAL) — Within Finish 3 card |
+| Material / Finish 3 | `textureRotation3` | Layer 3 rotation | **Rotation** (CONTEXTUAL) — Within Finish 3 card |
+| Material / Surface | `textureDisplacement` | Texture displacement | **Contour distortion** (PRIORITY) — Changes actual stripe contour edges even with no material selected, as on-screen help explicitly states |
+| Material / Surface | `brushRoughness` | Pigment roughness | **Keep current label** |
+| Effects / Lighting | `lightingMood` | Lighting mood | **Mood** (CONTEXTUAL) — Inside Lighting tool only; source label Lighting mood |
+| Effects / Lighting | `lightDirection` | Light from | **Direction** (CONTEXTUAL) — Inside Lighting tool only; source label Light from |
+| Effects / Lighting | `lightStrength` | Light intensity | **Intensity** (CONTEXTUAL) — Inside Lighting tool only; source label Light intensity |
+| Effects / Lighting | `shadowStrength` | Canvas shade | **Shading** (CONTEXTUAL) — Inside Lighting tool only; source label Canvas shade |
 
 Additional source controls: `family`: rename the visible "Visual family" to **Starting style** while removing the adjacent repeated Starting style heading; the chosen preset materializes actual editable settings. `primesOnly`: **keep Primes only**, plus existing exact hint that it constrains percentage and texture-angle randomization (not all numeric settings). Do not collapse its wording to "Prime mode" without explanation.
 
