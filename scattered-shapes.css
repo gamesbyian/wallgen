@@ -7,3 +7,22 @@
 .scattered-diagnostic{margin:8px 0 0;font-size:11px;line-height:1.5;
   color:#efbcca;max-width:100%}
 html[data-theme="cream"] .scattered-diagnostic{color:#802d52}
+
+/* A selected circle or imported silhouette can be adjusted without changing
+   the rest of the seeded scene. No on-canvas overlay affects PNG exports. */
+.scattered-object-editor{display:grid;gap:6px;margin-top:9px;padding-top:9px;
+  border-top:1px solid var(--line);min-width:0}
+.scattered-object-editor[hidden]{display:none}
+.scattered-object-editor>strong{font-size:12px;font-weight:650}
+.scattered-object-editor>select{width:100%;min-width:0;max-width:100%;
+  color:inherit;background:var(--surface);border:1px solid var(--line);
+  border-radius:7px;padding:5px}
+.scattered-object-commands{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
+.scattered-object-commands>button{min-width:0;min-height:44px;
+  border:1px solid var(--line);border-radius:8px;background:var(--surface);
+  color:inherit;font-size:18px;cursor:pointer}
+.scattered-object-commands>button[data-orbit-action="reset"]{grid-column:span 2;
+  font-size:12px}
+.scattered-object-commands>button:disabled{opacity:.45;cursor:default}
+.scattered-object-commands>button:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+.scattered-object-note{color:var(--muted,#888);line-height:1.35;font-size:11px}
