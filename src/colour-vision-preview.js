@@ -1,6 +1,6 @@
 // Display-only visual inspection. This module never imports the recipe model,
 // changes the authoring canvas, or participates in export/thumbnail workflows.
-import {simulateImageData} from './colour-vision.js';
+import {createColourVisionJob} from './colour-vision.js';
 
 const source=document.getElementById('preview');
 const surface=source?.closest('.wallpaper-surface');
@@ -210,14 +210,26 @@ function pump(){
         mode:selected,severity:strength},[pixels.data.buffer]);
     }catch(error){failWorker(error);}
   }else{
-    // Debounce before expensive synchronous fallback. Do not stall drag frames.
+    // Compatibility path is time-sliced: <=24 rows per task, no long
+    // main-thread colour-mapping loop. A stale job is abandoned immediately.
     clearTimeout(fallbackTimer);
-    fallbackTimer=setTimeout(()=>{
+    const job=createColourVisionJob(pixels,selected,strength);
+    const total=job.result.width*job.result.height;
+    const batch=Math.max(job.result.width,job.result.width*24);
+    let next=0;
+    const run=()=>{
       fallbackTimer=0;
-      if(version!==frameVersion){requestConversion();return;}
-      try{paint(simulateImageData(pixels,selected,strength),version);}
-      catch(error){status.textContent='Simulation preview unavailable; original artwork is unaffected.';}
-    },180);
+      if(version!==frameVersion||!isEnabled()||showOriginal||disposed)return;
+      try{
+        const end=Math.min(total,next+batch);
+        job.processPixels(next,end);next=end;
+        if(next<total)fallbackTimer=setTimeout(run,0);
+        else paint(job.result,version);
+      }catch(error){
+        status.textContent='Simulation preview unavailable; original artwork is unaffected.';
+      }
+    };
+    fallbackTimer=setTimeout(run,0);
   }
 }
 source.addEventListener('roygbiv-preview-presented',sourceChanged);
