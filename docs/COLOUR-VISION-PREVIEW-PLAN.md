@@ -67,8 +67,8 @@ Let an artist inspect **the exact currently rendered wallpaper** through useful 
 
 - [x] Inspect source render/canvas, UI navigation, responsive controls and test topology. Establish initial branch.
 - [x] **A. Science core**: add isolated `src/colour-vision-matrices.js`, `src/colour-vision.js` and `tests/colour-vision.test.js`, keeping upstream provenance and MIT notice; test pure-math invariants before UI. First initial commit on this branch.
-- [ ] **B. Async render adapter**: separate preview overlay and coalesced worker/fallback, revision discipline, mode-change cancellation, no impact on source render/export.
-- [ ] **C. Human-factors UI**: minimal desktop button, dedicated More section, text presets, native severity slider, split/hold-original controls; styles additive and theme-aware.
+- [x] **B. Async render adapter**: separate preview overlay and coalesced worker/fallback, revision discipline, mode-change cancellation, no impact on source render/export.
+- [x] **C. Human-factors UI**: minimal desktop button, dedicated More section, text presets, native severity slider, split/hold-original controls; styles additive and theme-aware.
 - [ ] **D. Browser qualification**: automate real target centre-hit/keyboard/pointer and screenshots, render worker and fallback parity, source original isolation, persistent state isolation. Publish measured perf notes.
 - [ ] **E. Independent review**: cross-validate reference fixtures incl tritan limitations; review visual copies/icons and mobile hardware; remove unsupported claims.
 - [ ] **F. Optional extensions**, after core is accepted: multi-pane comparison if it can preserve legibility; quantitative pairwise distinctions with explicit perceptual metric/method and never an invented pass/fail score; optional export of a **separately named simulation** only if a user explicitly asks for such functionality.
@@ -96,6 +96,24 @@ Let an artist inspect **the exact currently rendered wallpaper** through useful 
 ### Qualification discipline
 
 The original 412×892 worker-isolation test passed [run 39728271684](https://github.com/gamesbyian/wallgen/actions/runs/39728271684), but the later Brettel/fallback and cross-viewport test extensions require fresh CI before signoff. The [Material Finish 320px optical failure in 39728481851](https://github.com/gamesbyian/wallgen/actions/runs/39728481851) involves a disabled control row outside its card, on CSS not modified by this branch; verify against latest main and route independently. **Open:** physical Android test, independently audited perceptual fidelity, screenshot signoff, PNG export bytes under active preview, and representative p95 responsiveness/memory.
+
+## Integrated QA checkpoint: 22 October 2026
+
+**Source alignment.** Commit [6f3f5ce](https://github.com/gamesbyian/wallgen/commit/6f3f5ce0a238df05e9014b87543729d1e932353e) merged latest `main` at `35728ac9` *into this feature branch only*, retaining its terminology/schema, source tests and styling while preserving the colour-vision files. This was a true two-parent integration commit; neither `main` nor the unrelated editor work was overwritten. Current mobile More destination is named `Position & info`. The Vision entry now appears at the **start** of that section.
+
+**Automated browser evidence.** [Chromium run 39732011513](https://github.com/gamesbyian/wallgen/actions/runs/39732011513) completed green on the integrated source with:
+- `COLOUR_VISION_LATEST_SOURCE_REPAINT`: changed artwork background then checked 1,486 sampled RGB locations against the *new* frame; max channel error **0**, correct tritan 70% result.
+- `COLOUR_VISION_EXPORT_ISOLATION`: actual isolated PNG renderer with the preview **ON vs OFF** returned **identical** SHA-256 `8b9bd7c88d29048a866767370369cc4d8773ed07b0c6381356fb6c574991baf3`, both 67,818 bytes; test uses 160×346 to keep CI lean and does not claim an exhaustive 3024×6552 export benchmark.
+- `COLOUR_VISION_DESKTOP_KEYBOARD`: real 1180×860 responsive reparenting, 44px desktop entry, panel outside the wallpaper, Escape collapse and restored focus.
+- `COLOUR_VISION_CHUNKED_FALLBACK`: injected vision-worker constructor failure; original image and URL unaffected while asynchronous compatibility processing produced visible simulated pixels.
+- Live touch comparison, accurate 70%-strength severity, responsive 320×700 / 412×892 / 700×412 centre hits and no page horizontal overflow were also covered by the same Chromium test.
+- [Validation run 39732011692](https://github.com/gamesbyian/wallgen/actions/runs/39732011692) green after terminology merge. [Material Finish optical run 39732011636](https://github.com/gamesbyian/wallgen/actions/runs/39732011636) green on updated main integration, resolving the previously separate 320px regression.
+
+**Visual evidence.** The real 412×892 screenshots from [browser artifact 12406410706](https://github.com/gamesbyian/wallgen/actions/runs/39732428987/artifacts/12406410706) were inspected. The canvas remains in its reserved stage above the More sheet; split divider stays over the artwork only; dock and fullscreen control remain visible. An unobstructed Studio screenshot was added as `colour-vision-tritan-studio-412x892.png`. The More-sheet screenshot shows the Vision control directly under the `Position & info` group, ahead of general design details. The panel extends below the visible tray and relies on the existing native tray scrolling; actual touch target reachability on the 320px narrow viewport was separately tested. These screenshots qualify basic layout and legibility, **not human aesthetic approval or physical Android touch**.
+
+**Model language.** The control now calls its numerical value **Simulation strength**, rather than clinical severity, and distinguishes `protanomaly / protanopia`, `deuteranomaly / deuteranopia` and `tritanomaly / tritanopia` in supplemental text. Brettel at full tritan is reference-grounded; intermediate tritan values remain explicitly approximate. There is no diagnostic claim.
+
+**Open release gates.** Browser p50/p95 and memory under ten rapid render changes on representative lower-power devices, a user-native Pixel 6 Pro appearance/touch review, OS screen-reader announcement/output verification, and optional independent observer review remain non-automatable or unqualified. The opt-in `npm run bench:vision` script gives a repeatable **Node CPU** baseline but must never be labelled a Pixel 6 Pro benchmark. Leave this PR draft until those acceptance choices are consciously resolved.
 
 ## Licensing
 
