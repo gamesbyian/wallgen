@@ -60,7 +60,7 @@ export async function inspectAtlasState(page,ctx,slug,meta={}){
     // Guard the actual visible source controls on desktop AND mobile, not only screenshot pixels.
     // Mobile smoke also captures the second, enabled material layer as a
     // conditional state, so guard its actual Finish 2 control bounds too.
-    const rotationTool=meta.kind==='tool'&&/^layer[123]$/.test(meta.tool)?
+    const rotationTool=meta.kind==='tool'&&/^layer[123]$/.test(meta.tool)&&meta.materialView!=='material'?
       meta.tool:mobile&&slug==='conditional-material-layers'?'layer2':null;
     if(rotationTool){
       const row=g('.editor-tool-card[data-editor-tool="'+rotationTool+'"]:not([hidden]) .material-inspector-pane[data-material-view="finish"] .texture-rotation-field .rotation-controls');
