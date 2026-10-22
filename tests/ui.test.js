@@ -44,7 +44,7 @@ test('balanced primes-only randomizer sits above the design tab without a lock',
   assert.match(css,/\.randomize-bar\.randomize-toolbar/);
 });
 
-test('Light & Shadow is part of Colour, uses existing locks, and is explained clearly',()=>{
+test('canvas lighting retains source controls and is documented under Light',()=>{
   const colourStart=html.indexOf('id="panel-colour"');
   const textureStart=html.indexOf('id="panel-textures"');
   assert.ok(colourStart>=0 && textureStart>colourStart);
@@ -55,7 +55,7 @@ test('Light & Shadow is part of Colour, uses existing locks, and is explained cl
   }
   assert.match(colour,/Light &amp; shadow/);
   assert.match(css,/\.lighting-subsection/);
-  assert.match(readme,/Ambient light & shade \(Effects → Lighting\)/);
+  assert.match(readme,/Ambient light & shade \(Light → Lighting\)/);
 });
 
 test('public domain licence and documentation acknowledge ChatGPT and unrestricted use',()=>{
