@@ -5,6 +5,10 @@
 
 **Created:** 2026-10-22. **Status:** research and plan, not implemented. **Authoritative related plans:** [photographic finishing and film](PHOTO-FILM-LOOKS-AND-FILTERS-PLAN-2026-10-22.md) and [embroidered materials](GEOMETRY-AWARE-EMBROIDERY-AND-SURFACE-TREATMENTS-PLAN-2026-10-22.md). **Source snapshot:** main at 7e970906222ebf1d085b12527f2a6aa9106d9209; check new main before implementation.
 
+## Execution checkpoint: first shared Photo renderer (PR #473, 2026-10-22)
+
+[#473](https://github.com/gamesbyian/wallgen/pull/473) now implements **D1** normalized versioned `photoLook` and part of **D2** deterministic generic digital tone treatment inside the common final compositor; it also introduces preliminary Camera/FIlm choice via a preset selector inside **Light → Lighting → Photo**. The included Natural and Smartphone HDR presets emulate colour and global tonal cues only; the webcam preset is explicitly an early *colour* treatment. Do not claim actual sensor modelling, local detail, bilaterals, depth/RAW properties, capture downsampling, chroma subsampling, compression or optical calibration. These remain **D2 refinement and D3/D4/D5**. Source/preview/export routing is wired, but full-size Pixel performance and perceptual review have not occurred. This checkpoint is an implementation increment, not entire feature completion. No external dependencies added.
+
 ## Artistic intent and honest limitations
 
 Make *generated flat geometric artwork* look as though it passed through recognizable modern and historical digital photographic capture and processing pipelines: modern iPhone-style computational photography, Pixel/HDR+ smartphone processing, DSLR/mirrorless RAW development, point-and-shoot compact digital, inexpensive USB webcam, video-call processing, and early consumer digicam. No claim to perfectly clone proprietary firmware, physical lens blur, real depth reconstruction, camera sensor measurement, or a particular phone generation; digital *camera-inspired rendering* is the goal.
