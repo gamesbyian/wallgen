@@ -4,6 +4,7 @@ import {drawRegionInteriors,elementInk,elementWave,lineDash,elementApplies} from
 import { viewCamera } from './view-camera.js';
 import {findPathCrossings,crossingTopIsLater,crossingBranchClip} from './crossing-order.js';
 import {materialHeight,paintMaterial} from './material-surface.js';
+import {applyPhotoFinish} from './photo-look.js';
 
 const TAU = Math.PI * 2;
 const geometryAt=(x,stripe,extent)=>samplePath(stripe,x,extent).y;
@@ -825,6 +826,7 @@ export function presentNudgedArtwork(canvas, layers, recipe) {
   ctx.drawImage(layers.background,0,0);
   drawFinishedInk(ctx,layers.ink,recipe,layers.overhang);
   applyCanvasAtmosphere(ctx,canvas.width,canvas.height,recipe);
+  applyPhotoFinish(ctx,canvas.width,canvas.height,recipe.photoLook,recipe.seed);
 }
 
 // Closed-region objects share the same transparent ink, palette slots,
@@ -1117,5 +1119,6 @@ export function drawWallpaper(canvas, recipe, options={}) {
   }
   drawFinishedInk(ctx,ink,scene,margin);
   applyCanvasAtmosphere(ctx,canvas.width,canvas.height,scene);
+  if(!options.skipPhoto)applyPhotoFinish(ctx,canvas.width,canvas.height,scene.photoLook,scene.seed);
   return scene;
 }
