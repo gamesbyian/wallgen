@@ -250,6 +250,72 @@
       "complete_verbatim_transcript_verified": false,
       "coverage": "partial",
       "publication_date": "2026-10-22"
+    },
+    {
+      "episode_id": 17,
+      "title": "Полосы за пределами кадра",
+      "event_date": "2026-10-17",
+      "diary_file": "PRODUCTION-DIARY-EARLY-SOURCES-2026-10-22.md",
+      "pr_numbers": [
+        11
+      ],
+      "source_ids": [
+        "early-mobile-editor-436"
+      ],
+      "record_kind": "retrospective_synthesis",
+      "complete_verbatim_transcript_verified": false,
+      "coverage": "partial",
+      "publication_date": "2026-10-22"
+    },
+    {
+      "episode_id": 18,
+      "title": "Телефон как главный экран",
+      "event_date": "2026-10-17",
+      "diary_file": "PRODUCTION-DIARY-EARLY-SOURCES-2026-10-22.md",
+      "pr_numbers": [
+        14,
+        15
+      ],
+      "source_ids": [
+        "early-mobile-editor-436",
+        "early-mobile-editor-437"
+      ],
+      "record_kind": "retrospective_synthesis",
+      "complete_verbatim_transcript_verified": false,
+      "coverage": "partial",
+      "publication_date": "2026-10-22"
+    },
+    {
+      "episode_id": 19,
+      "title": "Случайность становится иерархией",
+      "event_date": "2026-10-17",
+      "diary_file": "PRODUCTION-DIARY-EARLY-SOURCES-2026-10-22.md",
+      "pr_numbers": [
+        28
+      ],
+      "source_ids": [
+        "geometry-editor-materials-436"
+      ],
+      "record_kind": "retrospective_synthesis",
+      "complete_verbatim_transcript_verified": false,
+      "coverage": "partial",
+      "publication_date": "2026-10-22"
+    },
+    {
+      "episode_id": 20,
+      "title": "Семь настроений",
+      "event_date": "2026-10-17",
+      "diary_file": "PRODUCTION-DIARY-EARLY-SOURCES-2026-10-22.md",
+      "pr_numbers": [
+        22
+      ],
+      "source_ids": [
+        "headless-seven-vibes-438"
+      ],
+      "record_kind": "retrospective_synthesis",
+      "complete_verbatim_transcript_verified": false,
+      "coverage": "partial",
+      "publication_date": "2026-10-22"
     }
   ]
 }

@@ -214,8 +214,81 @@
       "assistant_responses_archived": false,
       "missing": "Complete assistant replies, tool records, any unexposed messages, exact timestamps and attachments.",
       "visible_user_message_count": 1
+    },
+    {
+      "source_id": "early-mobile-editor-436",
+      "archive_path": "production-diary/transcripts/2026-10-22-wallgen-mobile-editor-session.md",
+      "observed_date": "2026-10-17",
+      "title": "Ранний мобильный редактор",
+      "capture_kind": "annotated_transcript",
+      "completeness": "partial",
+      "speakers": [
+        "user",
+        "assistant"
+      ],
+      "verbatim_user_text": true,
+      "full_transcript_verified": false,
+      "assistant_responses_archived": "selected excerpts and editorial reconstructions",
+      "missing": "No full two-sided original export, omitted tools/media",
+      "source_pr": 436,
+      "overlaps_with": null
+    },
+    {
+      "source_id": "early-mobile-editor-437",
+      "archive_path": "docs/production-diary/transcripts/2026-10-22-chat-session.md",
+      "observed_date": "2026-10-17",
+      "title": "Перекрывающийся архив мобильного редактора",
+      "capture_kind": "annotated_transcript",
+      "completeness": "partial",
+      "speakers": [
+        "user",
+        "assistant"
+      ],
+      "verbatim_user_text": true,
+      "full_transcript_verified": false,
+      "assistant_responses_archived": "selected excerpts and editorial reconstructions",
+      "missing": "No full two-sided original export, omitted tools/media",
+      "source_pr": 437,
+      "overlaps_with": "early-mobile-editor-436"
+    },
+    {
+      "source_id": "geometry-editor-materials-436",
+      "archive_path": "production-diary/transcripts/2026-10-22-editor-exploration-geometry-and-materials-session.md",
+      "observed_date": "2026-10-17",
+      "title": "Геометрия, интерфейс и фактуры",
+      "capture_kind": "annotated_transcript",
+      "completeness": "partial",
+      "speakers": [
+        "user",
+        "assistant"
+      ],
+      "verbatim_user_text": true,
+      "full_transcript_verified": false,
+      "assistant_responses_archived": "selected excerpts and editorial reconstructions",
+      "missing": "No full two-sided original export, omitted tools/media",
+      "source_pr": 436,
+      "overlaps_with": null
+    },
+    {
+      "source_id": "headless-seven-vibes-438",
+      "archive_path": "prod_diary/transcripts/2026-10-22-headless-seven-vibes.md",
+      "observed_date": "2026-10-17",
+      "title": "Безголовый генератор и семь настроений",
+      "capture_kind": "annotated_transcript",
+      "completeness": "partial",
+      "speakers": [
+        "user",
+        "assistant"
+      ],
+      "verbatim_user_text": true,
+      "full_transcript_verified": false,
+      "assistant_responses_archived": "selected excerpts and editorial reconstructions",
+      "missing": "No full two-sided original export, omitted tools/media",
+      "source_pr": 438,
+      "overlaps_with": null
     }
   ],
   "visible_user_message_count": 53,
-  "reconstructed_summary_count": 1
+  "reconstructed_summary_count": 1,
+  "annotated_transcript_count": 4
 }
