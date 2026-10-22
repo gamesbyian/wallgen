@@ -1000,7 +1000,7 @@ rainbowOrbitButton.textContent='Try Rainbow Orbits';
 rainbowOrbitButton.title='Seven varied rainbow circles with black negative space';
 regionTool?.append(rainbowOrbitButton);
 rainbowOrbitButton.addEventListener('click',()=>{
-  const proposal=normalizeRecipe({...current,...RAINBOW_ORBITS,seed:'rainbow-orbits-001'});
+  const proposal=normalizeRecipe({...current,...RAINBOW_ORBITS});
   const next=respectSettingLocks(current,proposal);
   if(next.structure!=='regions'||next.regionMode!=='scattered'){
     showNotice('Unlock Canvas structure and Region layout to apply Rainbow Orbits.');
