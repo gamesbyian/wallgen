@@ -1039,6 +1039,20 @@ export function drawWallpaper(canvas, recipe, options={}) {
           drawCrossingOutline(g,branch,scene);
           g.fillStyle=stripe.color;g.strokeStyle=stripe.color;
           fillMotif(g,branch,scene.extent,scene);
+          // The painter must replay exactly the top branch's thread surface,
+          // otherwise the foreground ribbon becomes smooth at self-crossings.
+          // Keep stitch stations anchored in the ORIGINAL ribbon so both
+          // traversals join without a phase seam. Use the crossing's bounded
+          // segment instead of recomputing the whole 2,500-station field.
+          const stitch=matchingEmbroidery(scene.surfaceTreatments,{
+            id:stripe.objectId,colorSlot:NAMES.indexOf(stripe.name)});
+          if(stitch&&scene.construction==='ribbon'&&
+             scene.lineStyle==='continuous'&&scene.motif==='solid'){
+            g.save();
+            g.clip(stripeFillPath(branch,scene.extent,scene));
+            drawRibbonEmbroidery(g,stripe,scene.extent,stitch,{start,end});
+            g.restore();
+          }
           drawPathInteriors(g,branch,scene.extent,scene);
           // Brush wear is seeded against the complete ribbon. Sample it
           // from the original path through the local branch mask so a
