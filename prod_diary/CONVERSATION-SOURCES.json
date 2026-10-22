@@ -20,7 +20,8 @@
       "verbatim_user_text": true,
       "full_transcript_verified": false,
       "assistant_responses_archived": false,
-      "missing": "Complete assistant replies, tool records, any unexposed messages, exact timestamps and attachments."
+      "missing": "Complete assistant replies, tool records, any unexposed messages, exact timestamps and attachments.",
+      "visible_user_message_count": 1
     },
     {
       "source_id": "2026-10-18-zoom-behavior",
@@ -35,7 +36,8 @@
       "verbatim_user_text": true,
       "full_transcript_verified": false,
       "assistant_responses_archived": false,
-      "missing": "Complete assistant replies, tool records, any unexposed messages, exact timestamps and attachments."
+      "missing": "Complete assistant replies, tool records, any unexposed messages, exact timestamps and attachments.",
+      "visible_user_message_count": 1
     },
     {
       "source_id": "2026-10-18-icon-system",
@@ -50,7 +52,8 @@
       "verbatim_user_text": true,
       "full_transcript_verified": false,
       "assistant_responses_archived": false,
-      "missing": "Complete assistant replies, tool records, any unexposed messages, exact timestamps and attachments."
+      "missing": "Complete assistant replies, tool records, any unexposed messages, exact timestamps and attachments.",
+      "visible_user_message_count": 2
     },
     {
       "source_id": "2026-10-19-agent-prompts",
@@ -65,7 +68,8 @@
       "verbatim_user_text": true,
       "full_transcript_verified": false,
       "assistant_responses_archived": false,
-      "missing": "Complete assistant replies, tool records, any unexposed messages, exact timestamps and attachments."
+      "missing": "Complete assistant replies, tool records, any unexposed messages, exact timestamps and attachments.",
+      "visible_user_message_count": 11
     },
     {
       "source_id": "2026-10-20-touch-target-research",
@@ -80,7 +84,8 @@
       "verbatim_user_text": true,
       "full_transcript_verified": false,
       "assistant_responses_archived": false,
-      "missing": "Complete assistant replies, tool records, any unexposed messages, exact timestamps and attachments."
+      "missing": "Complete assistant replies, tool records, any unexposed messages, exact timestamps and attachments.",
+      "visible_user_message_count": 7
     },
     {
       "source_id": "2026-10-20-qa-controls",
@@ -95,7 +100,8 @@
       "verbatim_user_text": true,
       "full_transcript_verified": false,
       "assistant_responses_archived": false,
-      "missing": "Complete assistant replies, tool records, any unexposed messages, exact timestamps and attachments."
+      "missing": "Complete assistant replies, tool records, any unexposed messages, exact timestamps and attachments.",
+      "visible_user_message_count": 5
     },
     {
       "source_id": "2026-10-20-qa-persistence",
@@ -110,7 +116,8 @@
       "verbatim_user_text": true,
       "full_transcript_verified": false,
       "assistant_responses_archived": false,
-      "missing": "Complete assistant replies, tool records, any unexposed messages, exact timestamps and attachments."
+      "missing": "Complete assistant replies, tool records, any unexposed messages, exact timestamps and attachments.",
+      "visible_user_message_count": 4
     },
     {
       "source_id": "2026-10-21-ergonomics",
@@ -125,7 +132,8 @@
       "verbatim_user_text": true,
       "full_transcript_verified": false,
       "assistant_responses_archived": false,
-      "missing": "Complete assistant replies, tool records, any unexposed messages, exact timestamps and attachments."
+      "missing": "Complete assistant replies, tool records, any unexposed messages, exact timestamps and attachments.",
+      "visible_user_message_count": 6
     },
     {
       "source_id": "2026-10-21-labels-and-textures",
@@ -140,7 +148,8 @@
       "verbatim_user_text": true,
       "full_transcript_verified": false,
       "assistant_responses_archived": false,
-      "missing": "Complete assistant replies, tool records, any unexposed messages, exact timestamps and attachments."
+      "missing": "Complete assistant replies, tool records, any unexposed messages, exact timestamps and attachments.",
+      "visible_user_message_count": 5
     },
     {
       "source_id": "2026-10-21-colour-vision",
@@ -155,7 +164,8 @@
       "verbatim_user_text": true,
       "full_transcript_verified": false,
       "assistant_responses_archived": false,
-      "missing": "Complete assistant replies, tool records, any unexposed messages, exact timestamps and attachments."
+      "missing": "Complete assistant replies, tool records, any unexposed messages, exact timestamps and attachments.",
+      "visible_user_message_count": 4
     },
     {
       "source_id": "2026-10-21-regions-and-partitions",
@@ -170,7 +180,8 @@
       "verbatim_user_text": true,
       "full_transcript_verified": false,
       "assistant_responses_archived": false,
-      "missing": "Complete assistant replies, tool records, any unexposed messages, exact timestamps and attachments."
+      "missing": "Complete assistant replies, tool records, any unexposed messages, exact timestamps and attachments.",
+      "visible_user_message_count": 6
     },
     {
       "source_id": "2026-10-22-diary-request",
@@ -185,7 +196,9 @@
       "verbatim_user_text": true,
       "full_transcript_verified": false,
       "assistant_responses_archived": false,
-      "missing": "Complete assistant replies, tool records, any unexposed messages, exact timestamps and attachments."
+      "missing": "Complete assistant replies, tool records, any unexposed messages, exact timestamps and attachments.",
+      "visible_user_message_count": 1
     }
-  ]
+  ],
+  "visible_user_message_count": 53
 }
