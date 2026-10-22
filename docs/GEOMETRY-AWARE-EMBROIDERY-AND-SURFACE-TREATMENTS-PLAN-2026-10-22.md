@@ -173,3 +173,7 @@ Primary question: "Which part do I want to make look stitched?" The UI should st
 - **Licensing/cost:** direct code reuse allowed where licence permits; record notices; package WASM assets locally for full offline PWA operation.
 
 **Decisions proposed for first implementation:** separate stitch geometry from rendering; adopt five material coordinate frames; per-role targeting instead of wallpaper-only coverage; make Auto + linked groups the default; put the new tool in Texture; keep film emulation as a separate final image pipeline (see linked plan). No runtime changes in this PR.
+
+## 9. Coordination with digital camera and film effects (2026-10-22)
+
+The photographic finishing plan now also covers [modern computational phone, DSLR and webcam looks](DIGITAL-CAMERA-AND-COMPUTATIONAL-PHOTO-LOOKS-PLAN-2026-10-22.md). Treat embroidery as an object-scoped *surface material* before scene composition is finalized; Photo remains a separately optional whole-image postprocessor, with one **Light > Photo** tool and Camera/Film families. Do not copy digital compression, sensor-noise or tone-mapping controls into Texture > Treatments; woven substrate and embroidered thread geometry are fundamentally different from camera image signals. Preview/export/light/camera ordering and shared worker constraints are specified by the companion photographic plans. These remain independent, unimplemented workstreams on the [active roadmap](ACTIVE-PRODUCT-ROADMAP-2026-10-22.md).
