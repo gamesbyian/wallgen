@@ -1252,7 +1252,7 @@ html[data-theme="cream"] body.mobile-studio .sidebar .settings-tabs .settings-ta
    one enlarged 92px row belongs to each named tool card; all siblings and
    short-height/desktop controls retain their existing compact geometry.
    Both source touch suites and canonical live plates guard this contract. */
-@media(max-width:499px) and (min-height:840px){
+@media(max-width:790px) and (min-height:840px){
   body.mobile-studio.mobile-edit-open:has(
     :is(.editor-tool-card[data-editor-tool="geometry"],.editor-tool-card[data-editor-tool="structure"]):not([hidden])){
     --mobile-tray-height:clamp(350px,40dvh,394px)!important;
