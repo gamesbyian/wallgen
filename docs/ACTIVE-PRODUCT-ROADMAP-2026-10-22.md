@@ -1,8 +1,20 @@
 # ROYGBIV: active product roadmap and work queue
 
-**Updated:** 2026-10-22 · **Source:** `main` at `a4a685021f789d6911484a926d858b192a0367ab` · **Scope:** this personal, offline-first wallpaper creator.  
+**Updated:** 2026-10-22 · **Source:** `main` at `6ef73211f1449b38fd90fe3755665748f985061b` · **Scope:** this personal, offline-first wallpaper creator.  
 **Working rule:** put real artistic capability and data continuity ahead of administrative polish, giant testing matrices, and blanket zero-regression claims. The quick PR gate runs automatically; optional tests are selected because a particular change warrants them.  
 **Use together with:** [reconciliation tracker #439](https://github.com/gamesbyian/wallgen/issues/439), [pragmatic CI policy](CI-OPERATIONS-2026-10-22.md), [geometry system specification](SHAPE-PATH-LIBRARY-AND-SCATTERED-SHAPES-PLAN-2026-10-21.md), [geometry implementation queue](SHAPE-PATH-LIBRARY-IMPLEMENTATION-QUEUE-2026-10-21.md), [terminology audit](UI-TERMINOLOGY-AUDIT-2026-10-21.md).
+
+## Integrated checkpoint (2026-10-22)
+
+Three formerly stranded features are now on `main`, not merely queued:
+
+- [#435](https://github.com/gamesbyian/wallgen/pull/435) **Russian production diary**, importer and explicitly partial provenance archives: merged `21ee31f`.
+- [#434](https://github.com/gamesbyian/wallgen/pull/434) **Shape & Path Library**, IndexedDB reuse, shape backups, scattered circles and imported silhouette stamp support: merged `b806497`. Focused Node integrity/backup checks and one real Chromium IndexedDB/image-import journey passed. The named **Rainbow Orbits** preset, effortless single-object editing and additional portability belong to #443, not a duplicate foundation.
+- [#432](https://github.com/gamesbyian/wallgen/pull/432) **Colour Vision Preview**, display-only Machado/Brettel simulation and split comparison: merged `6ef7321` without replacing the geometry editor. Quick checks passed; personal-device optical/performance observations are still unverified.
+
+The editor now has **7 categories / 43 tools / 95 source editor settings**, plus view-only vision and a distinct reusable shape/path library. Frozen 40/87 source inventories are historical verification artifacts; rectify those under #444 without removing new tools. A detailed [human-centred navigation study, PR #446](https://github.com/gamesbyian/wallgen/pull/446), has been authored from the earlier 40-tool baseline and awaits an integrated-main addendum. Retain its analysis; don't equate conceptual approval with shipping a redesign.
+
+**Current unresolved priority:** finish #443's user-facing Rainbow Orbits preset and direct compositional editing; integrate #446's human navigation map with today's settings; inspect actual texture quality #445; fix #422's obstructed Draw point when convenient. Leave extreme landscape #301 as acknowledged low priority. The single old video-preparation draft #53 remains a preserve/port-or-close decision.
 
 ## Product objectives, in priority order
 
@@ -17,11 +29,11 @@
 
 | Priority | Work | Currently | First executable action | Closure means |
 |---|---|---|---|---|
-| P0 | [#435 Russian diary](https://github.com/gamesbyian/wallgen/pull/435) | Non-draft branch, 20 literary episodes; 0 verified full two-sided transcripts | Integrate its unique files with current main without overwriting newer README/other transcripts; run importer and quick source tests | Diary, manifest, explicit partial-data disclosures and safe importer on main; authentic transcript restoration remains a separate future task |
-| P0 | [#434 geometry library](https://github.com/gamesbyian/wallgen/pull/434) | Draft, true 43-tool versus frozen 40-tool contract failures; independent image-shape browser timeout | Merge latest main into implementation, update only genuinely stale UI inventories and test actual image-shape activation | Save/reuse/export/import shapes and paths with explicit durability warning/fallback and data-preserving recovery on main |
-| P1 | [#432 colour-vision preview](https://github.com/gamesbyian/wallgen/pull/432) | Draft, substantive past Chromium and Node evidence; overlaps `index.html` with #434 | Reconcile current main and #434 interface before applying; verify display-only simulation and unchanged PNG/recipe export | Accessible opt-in simulation and split view available, no export alteration; device checks only for issues actually found |
-| P1 | [#443 new art modes](https://github.com/gamesbyian/wallgen/issues/443) | Full technical specification but artist-facing steps not shipped | Implement circles, off-canvas placement and preset first | One real seven-colour scattered-circles wallpaper can be generated, saved, edited, exported and reproduced |
-| P2 | [#444 conceptual navigation](https://github.com/gamesbyian/wallgen/issues/444) | Terminology audit exists; conceptual behavior map requested | Inventory source-backed controls and settings; rank effect size, frequency, interactions, flow | Complete comparison map and first high-value source-preserving UX changes |
+| Done | [#435 Russian diary](https://github.com/gamesbyian/wallgen/pull/435) | **Merged:** archive and safe importer in main, with authentic full transcripts explicitly unavailable | Add genuine exported conversation transcripts if later obtained, not a release gate | Current provenance and importer are integrated; no invented two-sided coverage |
+| Done | [#434 geometry library](https://github.com/gamesbyian/wallgen/pull/434) | **Merged:** reusable shapes/paths, local library, import/export, scattered composition foundation | Use the new tools artistically; advance #443 named preset/edit UX | Foundation on main with focused data-safety and Chromium checks; UI snapshot maintenance #444 |
+| Done | [#432 colour-vision preview](https://github.com/gamesbyian/wallgen/pull/432) | **Merged:** simulation, comparison UI and display-only integration | Optional physical-device glance only where useful | On main without changing native recipe/PNG export; no visual-perfection gate |
+| P1 | [#443 new art modes](https://github.com/gamesbyian/wallgen/issues/443) | Scattered circles and imported shape stamps now exist via #434; **Rainbow Orbits named preset and direct editing** still missing | Make the seven-circle reference wallpaper effortless to generate, adjust, save and reproduce | Useful art outcome, not hundreds of screenshot states |
+| P2 | [#444 conceptual navigation](https://github.com/gamesbyian/wallgen/issues/444) | Baseline design map [#446](https://github.com/gamesbyian/wallgen/pull/446) authored for 40 tools; current source has 43 tools/95 keys | Reconcile addendum then consider selective flow improvements | Source-backed intent/effect map and practical navigation choices, no large refactor by default |
 | P2 | [#445 texture quality](https://github.com/gamesbyian/wallgen/issues/445) | Texture displacement was repaired in #430; subjective realism not freshly assessed | Inspect material code and 3×2 samples; file concrete defects only | Material character and distortion are believable enough for personal creative use |
 | P2 | [#422 Draw occlusion](https://github.com/gamesbyian/wallgen/issues/422), [#365 targets](https://github.com/gamesbyian/wallgen/issues/365) | Some genuinely awkward controls remain | Solve measured 500×700 selected point obstruction; prioritize actual user annoyances | Unblocked point editing and visibly better frequent taps without making the canvas smaller |
 | P3 | [#53 video prep](https://github.com/gamesbyian/wallgen/pull/53) | Ancient draft; no footage permitted by scope | Inspect usefulness of source, port only self-contained safe manifest helper | Disposition recorded, no unfinished open ghost PR |
@@ -54,6 +66,6 @@
 
 ## Reconciliation and housekeeping
 
-Current snapshot: open PRs #435, #434, #432, #53; open issues #439, #422, #365, #301; newly queued issues #443, #444, #445. `main` includes lean CI via #441/#442; 12 active Actions definitions, 54 archived one-off suites. Two Pages deployment paths still appear in Actions, both historically successful, and can be consolidated via repository settings when convenient.
+Current snapshot: merged PRs #435/#434/#432; outstanding PRs #446 human-centred design study and #53 video preparer; open issues #439, #422, #365, #301, #443, #444, #445. `main` includes lean CI via #441/#442; 12 active Actions definitions, 54 archived one-off suites. Two Pages deployment paths still appear in Actions, both historically successful, and can be consolidated via repository settings when convenient.
 
 **Update rule:** after each integration, mark the corresponding board row merged and update its remaining next action. Keep this short board authoritative, link the older detailed plans rather than cloning them into a second giant unchecked list.
