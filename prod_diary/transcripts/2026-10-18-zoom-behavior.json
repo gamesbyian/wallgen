@@ -1,0 +1,25 @@
+{
+  "schema": "roygbiv-conversation-excerpt/1",
+  "source_id": "2026-10-18-zoom-behavior",
+  "project": "ROYGBIV",
+  "repo": "gamesbyian/wallgen",
+  "title_from_visible_project_context": "Fix Zoom Canvas Behavior",
+  "observed_date": "2026-10-18",
+  "precise_time_known": false,
+  "capture_kind": "source_excerpt",
+  "completeness": "partial",
+  "speaker_coverage": [
+    "user"
+  ],
+  "agent_messages_available": false,
+  "nontext_parts_preserved": false,
+  "all_project_sessions_included": false,
+  "integrity_note": "User-message excerpts from accessible project conversation context; not a complete two-sided transcript. Some displayed thread starts are truncated by the available context. Source text is preserved in its original language.",
+  "messages": [
+    {
+      "source_order": 1,
+      "role": "user",
+      "text": "The zoom buttons don't work correctly at all anymore! They change the settings of the generation rather than moving in the canvas view in and out. Please review the repo for the specifics of the intended functionality of the zoom feature and get things back to working, please."
+    }
+  ]
+}
