@@ -1,5 +1,9 @@
 # Implementation-safe ROYGBIV redesign queue
 
+## Latest implementation: bounded multi-match search (PR #475, 2026-10-22)
+
+[#475](https://github.com/gamesbyian/wallgen/pull/475) implements the missing C07 **labelled alternative results** for ambiguous editor searches. Exact-field precedence, applicability filtering, original source control focus, locked/inactive explanations and first-hit API are preserved. Up to four choices are accessible by touch or ArrowUp/ArrowDown/Enter in an overlay, keeping the no-scroll mobile tray budget. **Source implementation and quick CI only;** final C07 closure still requires a short real-phone keyboard/touch and screen-reader observation. Historical 'C07 not built' entries below describe the pre-#475 checkpoint and should not generate a duplicate implementation task. C09/C10/C11 and visual signoff remain open.
+
 ## Current UX/IA completion ledger (2026-10-22; source authority)
 
 > **Creative systems coexistence:** [#464](https://github.com/gamesbyian/wallgen/pull/464) merged implementation **plans**, not app controls, for [Embroidery #467](https://github.com/gamesbyian/wallgen/issues/467) and [Film #468](https://github.com/gamesbyian/wallgen/issues/468). Those Texture/Light UI plans must respect the seven-category/40-card/95-key baseline and compact no-scroll phone inspector. Art delivery phases belong to the [roadmap](ACTIVE-PRODUCT-ROADMAP-2026-10-22.md). Current #443 direct gestures are already shipped; #445 texture quality still needs visual judgement. These entries do not authorize extra compulsory screenshot runs.
