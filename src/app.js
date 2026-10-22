@@ -573,10 +573,22 @@ const drawTool=installDrawTool({
     showNotice('Drawn path applied. Undo restores the previous wallpaper.');
   },
 });
+function applyImportedShape(geometry){
+  if((current.lockedSettings.includes('structure')&&current.structure!=='regions')||
+    (current.lockedSettings.includes('regionMode')&&current.regionMode!=='scattered')||
+    (current.lockedSettings.includes('scatteredShapeKind')&&current.scatteredShapeKind!=='imported')){
+    showNotice('Unlock structure, region layout and shape source before using a saved silhouette.');
+    return false;
+  }
+  changeRecipe({...current,structure:'regions',regionMode:'scattered',
+    scatteredShapeKind:'imported',scatteredShape:cloneGeometrySnapshot(geometry)});
+  return true;
+}
 const imagePathTool=installImagePathTool({
   getRecipe:()=>current,
   onNotice:showNotice,
   onPath:path=>drawTool.loadPath(path),
+  onShape:applyImportedShape,
   onAngle:angle=>{
     // Rotation is relative to the resolved seed direction, not fixed at 45°.
     const base=fromControls();
@@ -602,17 +614,7 @@ const geometryLibrary=installGeometryLibraryUI({
   getRecipe:()=>current,
   onNotice:showNotice,
   downloadBlob,
-  applyShape:geometry=>{
-    if((current.lockedSettings.includes('structure')&&current.structure!=='regions')||
-      (current.lockedSettings.includes('regionMode')&&current.regionMode!=='scattered')||
-      (current.lockedSettings.includes('scatteredShapeKind')&&current.scatteredShapeKind!=='imported')){
-      showNotice('Unlock structure, region layout and shape source before using a saved silhouette.');
-      return false;
-    }
-    changeRecipe({...current,structure:'regions',regionMode:'scattered',
-      scatteredShapeKind:'imported',scatteredShape:cloneGeometrySnapshot(geometry)});
-    return true;
-  },
+  applyShape:applyImportedShape,
   applyPath:({points,anchors=[],corners=[]})=>{
     if(current.lockedSettings.includes('geometry')||
       pathStructureLockedOutsidePaths(current)){
