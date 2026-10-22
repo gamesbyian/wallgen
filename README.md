@@ -36,6 +36,20 @@ Run `npm test` to check the reproducibility and structural invariants, or `npm r
 
 CI contributors: see [CI operations and dispatch policy](docs/CI-OPERATIONS-2026-10-22.md) for automatic gates, opt-in browser evidence, and safe queue management.
 
+## Recently integrated creative tools
+
+**Scattered Rainbow Orbits:** In Layout → Canvas structure select Regions, then the Scattered shapes region layout. **Try Rainbow Orbits** creates seven seeded ROYGBIV circles on black, with varied sizes and deliberate off-frame crops. In the Edges & overlap tool, **Edit one circle / shape** selects an individual object for nudge, size change or reset without reshuffling the rest. These edits participate in Undo and travel with the recipe.
+
+**Shapes & paths:** The local Shape & Path Library saves and reuses imported/drawn geometry across designs. An imported silhouette can be used as a repeated region stamp, and its normalized geometry is embedded in the recipe, so the exported artwork does not depend on a later library lookup.
+
+**Colour Vision Preview:** Opt in to scientific simulations and an original/simulation comparison in the interface. These modes change the inspection layer, **not** the original wallpaper recipe or exported PNG.
+
+**Draw short portraits:** When editing points on an approximately 500×700 screen, the Draw action panel can collapse to a small Show controls button in the right gutter, exposing authored points. The original Undo/Cancel/Apply actions reopen rather than being replaced.
+
+**Tonal stripe bands:** Layered tonal bands are an explicit option under Stripe type, with Tonal contrast available conditionally. Global random generation does not silently select that older style.
+
+A preparatory `scripts/prepare-phone-video.mjs` helper can plan real-UI construction from a supplied recipe into JSON. It **does not** record footage, open a browser or authorize video production.
+
 ## Phone-first Studio interface
 
 **Cream Studio** is the new default appearance. The original charcoal **Original Dark**
