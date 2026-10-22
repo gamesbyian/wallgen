@@ -17,6 +17,78 @@ Human prompts used throughout: What can I see change? How dramatically? How comm
 
 **State legend:** applicable, dormant (retains value but cannot change current picture), active with no visible contribution (e.g. zero strength), view-only, irreversible/destructive, and global action. Dormancy should explain itself and never silently reset recipe data or locks.
 
+## Visual overview: compare the two trees
+
+The diagrams intentionally show hierarchy, not the complete 87-key setting table. The full setting-level relationship map follows below.
+
+### Current main-branch editor
+
+```mermaid
+flowchart TB
+  A["Mobile: Studio · Edit · Explore · Saved · More"] --> E["Edit: 7 categories"]
+  E --> L["Layout (4): Structure · Arrangement · Direction · Variation"]
+  E --> P["Path / Geometry (11): Geometry · Rays · Ray detail · Origin · Regions · Region detail · Constraints · Turns · Loop · Shape detail · Endpoints"]
+  E --> S["Stripes (6): Structure · Patterns · Dots · Motif scale · Band tones · Variation"]
+  E --> D["Details (9): Elements · Style · Wave · Placement · Ink & targets · Outlines · Dividers · Shadows · Glow"]
+  E --> C["Colour (2): Rainbow · Background"]
+  E --> T["Texture (7): Layer 1/Finish 1 · Layer 2/Finish 2 · Layer 3/Finish 3 · Surface"]
+  E --> G["Light (1): Lighting"]
+  P -. "Path, radial or region scene" .-> S
+  E -. "Search, Focus, scope dice, locks" .-> X["Cross-cutting editor actions"]
+  A -. "Canvas rails / More" .-> V["Position, framing, zoom, import/export"]
+```
+
+### Proposed intention-led editor
+
+```mermaid
+flowchart TB
+  A["Keep Studio · Edit · Explore · Saved · More"] --> E["Edit: 5 user questions"]
+  E --> B["Build: What am I making?"]
+  E --> R["Arrange: Where does it go?"]
+  E --> F["Form: What do the shapes look like?"]
+  E --> C["Colour: What is the colour relationship?"]
+  E --> T["Finish: How does it feel?"]
+  B --> B1["Design type · Starting style · Draw / Import / reuse path"]
+  R --> R1["Groups · Orientation · artwork position · frame"]
+  F --> F1["Paths: bends · bands · patterns · crossings"]
+  F --> F2["Radial: rays · twist · gaps · centre"]
+  F --> F3["Regions: layout · number · edges · origin"]
+  C --> C1["Palette · order · background · tonal context"]
+  T --> T1["Edges"]
+  T --> T2["Decorative elements"]
+  T --> T3["Texture layer cards"]
+  T --> T4["Global light · local shadows · glow"]
+  E -. "Always available" .-> V["Vary · lock · undo · find"]
+  A -. "Canvas-only" .-> W["Zoom · Fit · safe area · vision preview"]
+```
+
+### A causal relationship map, not a new menu
+
+```mermaid
+flowchart LR
+  Q["Wider / denser composition"] --- W["Stripe width"]
+  Q --- S["Stripe spacing"]
+  Q --- N["Repeats"]
+  Q --- O["Outline offset & thickness"]
+  H["More irregular form"] --- B["Bend frequency & depth"]
+  H --- C["Chaos"]
+  H --- I["Stripe individuality"]
+  H --- G["Geometry coherence"]
+  M["Physical material"] --- T["Selected texture"]
+  M --- U["Coverage & blend"]
+  M --- R["Strength / scale / rotation"]
+  M --- D["Texture-driven contour distortion"]
+  L["Perceived lighting"] --- X["Global light"]
+  L --- Y["Stripe shadow"]
+  L --- Z["Glow"]
+  V["Safe final crop"] --- P["Art position"]
+  V --- F["World-frame pan"]
+  V --- A["Safe-area overlay"]
+  V --- J["Preview zoom · view-only"]
+```
+
+**Interpretation:** A tree tells someone *where* to go. These causal clusters tell the interface *what else to bring within reach* after the person acts.
+
 ## 1. Existing UI: routes and mechanics
 
 ### 1.1 First level: mobile destinations
