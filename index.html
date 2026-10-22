@@ -253,8 +253,12 @@
                 <label class="field range-field"><span>Amount</span>
                   <input type="range" name="photoAmount" min="0" max="100" value="75">
                 </label>
-                <label class="field range-field"><span>Grain</span>
+                <label class="field range-field" data-photo-secondary="grain"><span>Grain</span>
                   <input type="range" name="photoGrain" min="0" max="100" value="12">
+                </label>
+                <label class="field range-field" data-photo-secondary="halation" hidden><span>Halation</span>
+                  <input type="range" name="photoHalation" min="0" max="100" value="75"
+                    aria-label="Warm film halation strength">
                 </label>
               </div>
               <small>Photo processes the completed wallpaper. The colours are artistic approximations, not calibrated camera or film profiles. Turn off to see the original.</small>
