@@ -1,0 +1,40 @@
+{
+  "schema": "roygbiv-conversation-excerpt/1",
+  "source_id": "2026-10-21-colour-vision",
+  "project": "ROYGBIV",
+  "repo": "gamesbyian/wallgen",
+  "title_from_visible_project_context": "Colour Vision Preview Algorithms",
+  "observed_date": "2026-10-21",
+  "precise_time_known": false,
+  "capture_kind": "source_excerpt",
+  "completeness": "partial",
+  "speaker_coverage": [
+    "user"
+  ],
+  "agent_messages_available": false,
+  "nontext_parts_preserved": false,
+  "all_project_sessions_included": false,
+  "integrity_note": "User-message excerpts from accessible project conversation context; not a complete two-sided transcript. Some displayed thread starts are truncated by the available context. Source text is preserved in its original language.",
+  "messages": [
+    {
+      "source_order": 1,
+      "role": "user",
+      "text": "Can we implement a genuinely reliable and useful system for showing what a wallpaper would look like to people with various common types of non-standard colour vision? Are there algos for that that we can borrow from somewhere?"
+    },
+    {
+      "source_order": 2,
+      "role": "user",
+      "text": "Write up a fully specified plan in the repo, including a carefully thought out visual/UX/UI implementation, examining the repo closely as needed for full context. Then get started on a new branch please"
+    },
+    {
+      "source_order": 3,
+      "role": "user",
+      "text": "Please keep going, as far as you can. You have my confidence and full autonomy. Be voracious and restless. When you must wait, find other things to do."
+    },
+    {
+      "source_order": 4,
+      "role": "user",
+      "text": "Please keep going, as far as you can. You have my confidence and full autonomy. Be voracious and restless. When you must wait, find other things to do."
+    }
+  ]
+}

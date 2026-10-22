@@ -1,0 +1,294 @@
+{
+  "schema": "roygbiv-conversation-sources/1",
+  "created_date": "2026-10-22",
+  "repository": "gamesbyian/wallgen",
+  "full_transcript_count": 0,
+  "source_excerpt_count": 12,
+  "collection_complete": false,
+  "limitations": "No interface in this session exposes complete ChatGPT Project history or complete other-agent exchanges. These are bounded original user-turn excerpts, not complete conversations; further sessions may exist. A future authentic export is required for full coverage.",
+  "sources": [
+    {
+      "source_id": "reconstructed-2026-10-16-origin",
+      "archive_path": "prod_diary/RECONSTRUCTED-ORIGIN-2026-10-16.md",
+      "observed_date": "2026-10-16",
+      "title": "Ранняя постановка задачи об обоях",
+      "capture_kind": "reconstructed_summary",
+      "completeness": "partial",
+      "speakers": [
+        "user",
+        "assistant"
+      ],
+      "verbatim_user_text": false,
+      "full_transcript_verified": false,
+      "assistant_responses_archived": false,
+      "missing": "Полная исходная беседа, точный текст обеих сторон, порядок реализации и подтверждённые часы недоступны."
+    },
+    {
+      "source_id": "2026-10-17-generative-art-progress",
+      "archive_path": "prod_diary/transcripts/2026-10-17-generative-art-progress.json",
+      "observed_date": "2026-10-17",
+      "title": "Generative Art Progress",
+      "capture_kind": "source_excerpt",
+      "completeness": "partial",
+      "speakers": [
+        "user"
+      ],
+      "verbatim_user_text": true,
+      "full_transcript_verified": false,
+      "assistant_responses_archived": false,
+      "missing": "Complete assistant replies, tool records, any unexposed messages, exact timestamps and attachments.",
+      "visible_user_message_count": 1
+    },
+    {
+      "source_id": "2026-10-18-zoom-behavior",
+      "archive_path": "prod_diary/transcripts/2026-10-18-zoom-behavior.json",
+      "observed_date": "2026-10-18",
+      "title": "Fix Zoom Canvas Behavior",
+      "capture_kind": "source_excerpt",
+      "completeness": "partial",
+      "speakers": [
+        "user"
+      ],
+      "verbatim_user_text": true,
+      "full_transcript_verified": false,
+      "assistant_responses_archived": false,
+      "missing": "Complete assistant replies, tool records, any unexposed messages, exact timestamps and attachments.",
+      "visible_user_message_count": 1
+    },
+    {
+      "source_id": "2026-10-18-icon-system",
+      "archive_path": "prod_diary/transcripts/2026-10-18-icon-system.json",
+      "observed_date": "2026-10-18",
+      "title": "Create Rainbow Icons",
+      "capture_kind": "source_excerpt",
+      "completeness": "partial",
+      "speakers": [
+        "user"
+      ],
+      "verbatim_user_text": true,
+      "full_transcript_verified": false,
+      "assistant_responses_archived": false,
+      "missing": "Complete assistant replies, tool records, any unexposed messages, exact timestamps and attachments.",
+      "visible_user_message_count": 2
+    },
+    {
+      "source_id": "2026-10-19-agent-prompts",
+      "archive_path": "prod_diary/transcripts/2026-10-19-agent-prompts.json",
+      "observed_date": "2026-10-19",
+      "title": "Write Agent Prompts",
+      "capture_kind": "source_excerpt",
+      "completeness": "partial",
+      "speakers": [
+        "user"
+      ],
+      "verbatim_user_text": true,
+      "full_transcript_verified": false,
+      "assistant_responses_archived": false,
+      "missing": "Complete assistant replies, tool records, any unexposed messages, exact timestamps and attachments.",
+      "visible_user_message_count": 11
+    },
+    {
+      "source_id": "2026-10-20-touch-target-research",
+      "archive_path": "prod_diary/transcripts/2026-10-20-touch-target-research.json",
+      "observed_date": "2026-10-20",
+      "title": "Research button hitboxes",
+      "capture_kind": "source_excerpt",
+      "completeness": "partial",
+      "speakers": [
+        "user"
+      ],
+      "verbatim_user_text": true,
+      "full_transcript_verified": false,
+      "assistant_responses_archived": false,
+      "missing": "Complete assistant replies, tool records, any unexposed messages, exact timestamps and attachments.",
+      "visible_user_message_count": 7
+    },
+    {
+      "source_id": "2026-10-20-qa-controls",
+      "archive_path": "prod_diary/transcripts/2026-10-20-qa-controls.json",
+      "observed_date": "2026-10-20",
+      "title": "2, control reachability agent",
+      "capture_kind": "source_excerpt",
+      "completeness": "partial",
+      "speakers": [
+        "user"
+      ],
+      "verbatim_user_text": true,
+      "full_transcript_verified": false,
+      "assistant_responses_archived": false,
+      "missing": "Complete assistant replies, tool records, any unexposed messages, exact timestamps and attachments.",
+      "visible_user_message_count": 5
+    },
+    {
+      "source_id": "2026-10-20-qa-persistence",
+      "archive_path": "prod_diary/transcripts/2026-10-20-qa-persistence.json",
+      "observed_date": "2026-10-20",
+      "title": "3, saved and history agent",
+      "capture_kind": "source_excerpt",
+      "completeness": "partial",
+      "speakers": [
+        "user"
+      ],
+      "verbatim_user_text": true,
+      "full_transcript_verified": false,
+      "assistant_responses_archived": false,
+      "missing": "Complete assistant replies, tool records, any unexposed messages, exact timestamps and attachments.",
+      "visible_user_message_count": 4
+    },
+    {
+      "source_id": "2026-10-21-ergonomics",
+      "archive_path": "prod_diary/transcripts/2026-10-21-ergonomics.json",
+      "observed_date": "2026-10-21",
+      "title": "ROYGBIV ergonomics plan",
+      "capture_kind": "source_excerpt",
+      "completeness": "partial",
+      "speakers": [
+        "user"
+      ],
+      "verbatim_user_text": true,
+      "full_transcript_verified": false,
+      "assistant_responses_archived": false,
+      "missing": "Complete assistant replies, tool records, any unexposed messages, exact timestamps and attachments.",
+      "visible_user_message_count": 6
+    },
+    {
+      "source_id": "2026-10-21-labels-and-textures",
+      "archive_path": "prod_diary/transcripts/2026-10-21-labels-and-textures.json",
+      "observed_date": "2026-10-21",
+      "title": "Review App Labels",
+      "capture_kind": "source_excerpt",
+      "completeness": "partial",
+      "speakers": [
+        "user"
+      ],
+      "verbatim_user_text": true,
+      "full_transcript_verified": false,
+      "assistant_responses_archived": false,
+      "missing": "Complete assistant replies, tool records, any unexposed messages, exact timestamps and attachments.",
+      "visible_user_message_count": 5
+    },
+    {
+      "source_id": "2026-10-21-colour-vision",
+      "archive_path": "prod_diary/transcripts/2026-10-21-colour-vision.json",
+      "observed_date": "2026-10-21",
+      "title": "Colour Vision Preview Algorithms",
+      "capture_kind": "source_excerpt",
+      "completeness": "partial",
+      "speakers": [
+        "user"
+      ],
+      "verbatim_user_text": true,
+      "full_transcript_verified": false,
+      "assistant_responses_archived": false,
+      "missing": "Complete assistant replies, tool records, any unexposed messages, exact timestamps and attachments.",
+      "visible_user_message_count": 4
+    },
+    {
+      "source_id": "2026-10-21-regions-and-partitions",
+      "archive_path": "prod_diary/transcripts/2026-10-21-regions-and-partitions.json",
+      "observed_date": "2026-10-21",
+      "title": "Regions and partitions option",
+      "capture_kind": "source_excerpt",
+      "completeness": "partial",
+      "speakers": [
+        "user"
+      ],
+      "verbatim_user_text": true,
+      "full_transcript_verified": false,
+      "assistant_responses_archived": false,
+      "missing": "Complete assistant replies, tool records, any unexposed messages, exact timestamps and attachments.",
+      "visible_user_message_count": 6
+    },
+    {
+      "source_id": "2026-10-22-diary-request",
+      "archive_path": "prod_diary/transcripts/2026-10-22-diary-request.json",
+      "observed_date": "2026-10-22",
+      "title": "Russian production diary and transcripts",
+      "capture_kind": "source_excerpt",
+      "completeness": "partial",
+      "speakers": [
+        "user"
+      ],
+      "verbatim_user_text": true,
+      "full_transcript_verified": false,
+      "assistant_responses_archived": false,
+      "missing": "Complete assistant replies, tool records, any unexposed messages, exact timestamps and attachments.",
+      "visible_user_message_count": 1
+    },
+    {
+      "source_id": "early-mobile-editor-436",
+      "archive_path": "production-diary/transcripts/2026-10-22-wallgen-mobile-editor-session.md",
+      "observed_date": "2026-10-17",
+      "title": "Ранний мобильный редактор",
+      "capture_kind": "annotated_transcript",
+      "completeness": "partial",
+      "speakers": [
+        "user",
+        "assistant"
+      ],
+      "verbatim_user_text": true,
+      "full_transcript_verified": false,
+      "assistant_responses_archived": "selected excerpts and editorial reconstructions",
+      "missing": "No full two-sided original export, omitted tools/media",
+      "source_pr": 436,
+      "overlaps_with": null
+    },
+    {
+      "source_id": "early-mobile-editor-437",
+      "archive_path": "docs/production-diary/transcripts/2026-10-22-chat-session.md",
+      "observed_date": "2026-10-17",
+      "title": "Перекрывающийся архив мобильного редактора",
+      "capture_kind": "annotated_transcript",
+      "completeness": "partial",
+      "speakers": [
+        "user",
+        "assistant"
+      ],
+      "verbatim_user_text": true,
+      "full_transcript_verified": false,
+      "assistant_responses_archived": "selected excerpts and editorial reconstructions",
+      "missing": "No full two-sided original export, omitted tools/media",
+      "source_pr": 437,
+      "overlaps_with": "early-mobile-editor-436"
+    },
+    {
+      "source_id": "geometry-editor-materials-436",
+      "archive_path": "production-diary/transcripts/2026-10-22-editor-exploration-geometry-and-materials-session.md",
+      "observed_date": "2026-10-17",
+      "title": "Геометрия, интерфейс и фактуры",
+      "capture_kind": "annotated_transcript",
+      "completeness": "partial",
+      "speakers": [
+        "user",
+        "assistant"
+      ],
+      "verbatim_user_text": true,
+      "full_transcript_verified": false,
+      "assistant_responses_archived": "selected excerpts and editorial reconstructions",
+      "missing": "No full two-sided original export, omitted tools/media",
+      "source_pr": 436,
+      "overlaps_with": null
+    },
+    {
+      "source_id": "headless-seven-vibes-438",
+      "archive_path": "prod_diary/transcripts/2026-10-22-headless-seven-vibes.md",
+      "observed_date": "2026-10-17",
+      "title": "Безголовый генератор и семь настроений",
+      "capture_kind": "annotated_transcript",
+      "completeness": "partial",
+      "speakers": [
+        "user",
+        "assistant"
+      ],
+      "verbatim_user_text": true,
+      "full_transcript_verified": false,
+      "assistant_responses_archived": "selected excerpts and editorial reconstructions",
+      "missing": "No full two-sided original export, omitted tools/media",
+      "source_pr": 438,
+      "overlaps_with": null
+    }
+  ],
+  "visible_user_message_count": 53,
+  "reconstructed_summary_count": 1,
+  "annotated_transcript_count": 4
+}
