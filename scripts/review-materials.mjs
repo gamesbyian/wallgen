@@ -53,9 +53,9 @@ async function main(){
     })))
   ];
   // Refuse to overwrite an earlier user's reference comparison.
-  for(const c of cases){
-    try{await access(join(out,c.id+'.png'));
-      throw Error('Image exists: '+c.id+'.png. Use a new --out-dir to preserve it.');
+  for(const c of cases)for(const extension of ['.png','.recipe.json']){
+    try{await access(join(out,c.id+extension));
+      throw Error('Output exists: '+c.id+extension+'. Use a new --out-dir to preserve it.');
     }catch(e){if(e.code!=='ENOENT')throw e;}
   }
   const records=[];
@@ -65,17 +65,20 @@ async function main(){
       ...(c.material==='none'?{textureStrength:0,textureDisplacement:0}:{}),
     });
     const png=join(out,c.id+'.png');
-    const opts=['--seed',recipe.seed,'--width','480','--height','1040',
+    const recipeFile=c.id+'.recipe.json';
+    const recipePath=join(out,recipeFile);
+    // Pass the EXACT same complete normalized recipe to the painter that
+    // appears in our manifest. Command-line --set reconstruction can silently
+    // omit a crucial setting (notably material), yielding mislabelled samples.
+    await writeFile(recipePath,JSON.stringify(recipe,null,2)+'\n');
+    const opts=['--recipe',recipePath,'--width','480','--height','1040',
       '--out',png];
-    for(const [k,v] of Object.entries(base))
-      if(k!=='seed')opts.push('--set',k+'='+(k==='material'?c.material:
-        c.material==='none'&&['textureStrength','textureDisplacement'].includes(k)?0:v));
     if(args.browser)opts.push('--browser',args.browser);
     const result=await exec(process.execPath,[renderer,...opts],{
       cwd:root,maxBuffer:1024*1024,timeout:120000
     });
     if(!result.stdout.includes('"file"'))throw Error('Production renderer returned no PNG details: '+c.id);
-    records.push({...c,filename:c.id+'.png',recipe});
+    records.push({...c,filename:c.id+'.png',recipeFile,recipe});
     console.log(c.id+': '+png);
   }
   const cards=records.map(c=>`<figure><img src="${esc(c.filename)}" alt="${esc(c.material+' texture, '+c.seed)}"><figcaption><b>${esc(c.material)}</b> · ${esc(c.seed)}</figcaption></figure>`).join('');
