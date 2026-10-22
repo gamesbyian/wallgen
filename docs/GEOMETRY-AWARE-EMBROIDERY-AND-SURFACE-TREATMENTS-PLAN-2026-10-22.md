@@ -1,5 +1,9 @@
 # ROYGBIV: geometry-aware surfaces and procedural embroidery
 
+## Crossing stitch continuity correction (PR #481, 2026-10-22)
+
+The initial E1 implementation overpainted ribbons at geometric self-intersections without replaying their new thread surface. [#481](https://github.com/gamesbyian/wallgen/pull/481) uses identical stitched station coordinates for full ribbons and bounded crossing touch-ups, clipped to the foreground branch. This resolves a specific source-verified seam and bounds performance by crossing segment length. Still not physical-device artistic acceptance or final E2–E5 thread science.
+
 ## Follow-up compact workspace (PR #478, 2026-10-22)
 
 [#478](https://github.com/gamesbyian/wallgen/pull/478) adds a native expandable Thread workspace within Texture → Surface. Closed, it leaves ordinary surface knobs accessible and reports the active palette selection. Open, it presents only the Thread controls, avoiding a permanently taller no-scroll phone card. The underlying treatment object, target IDs and original field identities do not change. This is a source-qualified E4 UX step, **not** a physical-device or complex thread realism acceptance gate.

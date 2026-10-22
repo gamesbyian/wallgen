@@ -1,5 +1,9 @@
 # ROYGBIV: active product roadmap and work queue
 
+## Stitch continuity correction: foreground crossings (PR #481, 2026-10-22)
+
+[#481](https://github.com/gamesbyian/wallgen/pull/481) corrects the first embroidery renderer's missing thread layer on self-crossing foreground branches. Loop/drawn crossing repaint now restores the original ribbon's stitches inside the *same branch clipping mask*, with a bounded station interval and no change to baseline designs. The sampling lattice is unchanged, so optical thread spacing does not jump at intersections, and repeated crossing touch-ups do not iterate the full 2,500-station field. Focused direct tests cover deterministic lattice subsequences and geometry variants. Visual Pixel proof and physically realistic thread shading remain open. No new workflow.
+
 ## Historical recipe format-recovery advance (PR #480, 2026-10-22)
 
 [#480](https://github.com/gamesbyian/wallgen/pull/480) adds the 45-commit source-pinned explicit field inventory and chronological change matrix needed to build safe v1/early-v2 PNG recipe migration adapters, plus a local full-Git-history regeneration script. It complements the merged #479 non-destructive PNG rewrite implementation and does **not** relax its conservative refusal policy. Next: source-era defaults/seed/render semantics, golden historical fixtures and narrowly proved conversion adapters. No new CI workflows, only a tiny ledger-integrity check.
