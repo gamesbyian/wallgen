@@ -10,7 +10,8 @@ import {pathStructureLockedOutsidePaths} from './path-authoring-locks.js';
 import {mountEditor,selectEditorTool,syncEditorStructure} from './editor-layout.js?v=20261020-sticky-hit1';
 import {randomizeScope} from './scoped-random.js';
 import {newInteriorElementId,INTERIOR_LIMITS,resolveInteriorSelection,interiorTargetSummary,resolveInteriorFocusTarget,interiorSliderStep} from './interior-elements.js';
-import {STYLE_PRESETS} from './editor-schema.js?v=20261018-icons2';
+import {STYLE_PRESETS,EDITOR_CATEGORIES,TOOL_LIST} from './editor-schema.js?v=20261018-icons2';
+import {sourceSettingLabel} from './editor-control-roles.js';
 import {fullSettingName} from './editor-terminology.js';
 import {installExplorationHistory} from './exploration-history.js';
 import {parseStoredFavorites} from './favorites-store.js';
@@ -212,7 +213,8 @@ function syncScopedSettingDice(){
     }else{
       const mode=document.getElementById('editorVariationMode')?.value;
       die.title=unavailable?'Setting is unavailable or locked':
-        (mode==='vary'?'Vary':'Reroll')+' only '+fullSettingName(key,key);
+        (mode==='vary'?'Vary':'Reroll')+' only '+
+          fullSettingName(key,sourceSettingLabel(field,key));
     }
   }
 }
@@ -790,8 +792,9 @@ function queueControlUpdate(){
 
 for(const slider of form.querySelectorAll('input[type="range"]')){
   const row=document.createElement('span');row.className='stepper';
-  const minus=document.createElement('button');minus.type='button';minus.className='step-button';minus.innerHTML=iconMarkup('minus');minus.setAttribute('aria-label','Decrease '+fullSettingName(slider.name,slider.name));
-  const plus=document.createElement('button');plus.type='button';plus.className='step-button';plus.innerHTML=iconMarkup('plus');plus.setAttribute('aria-label','Increase '+fullSettingName(slider.name,slider.name));
+  const accessibleName=fullSettingName(slider.name,sourceSettingLabel(slider,slider.name));
+  const minus=document.createElement('button');minus.type='button';minus.className='step-button';minus.innerHTML=iconMarkup('minus');minus.setAttribute('aria-label','Decrease '+accessibleName);
+  const plus=document.createElement('button');plus.type='button';plus.className='step-button';plus.innerHTML=iconMarkup('plus');plus.setAttribute('aria-label','Increase '+accessibleName);
   const numeric=document.createElement('input');
   numeric.type='number';numeric.className='slider-number';numeric.min=slider.min;numeric.max=slider.max;
   numeric.step=slider.step||'1';numeric.value=slider.value;numeric.dataset.numberFor=slider.name;
@@ -799,7 +802,7 @@ for(const slider of form.querySelectorAll('input[type="range"]')){
   const countControls=['rayCount','regionCount','regionSides','stepCount'];
   const unit=degreeControls.includes(slider.name)?' in degrees':
     countControls.includes(slider.name)?'':' percentage';
-  numeric.setAttribute('aria-label',fullSettingName(slider.name,slider.name)+unit);
+  numeric.setAttribute('aria-label',accessibleName+unit);
   slider.parentNode.insertBefore(row,slider);row.append(minus,slider,plus,numeric);
   numeric.addEventListener('change',()=>{
     const raw=Number(numeric.value);
@@ -899,7 +902,8 @@ function syncSettingLocks(){
     for(const button of buttons){
       button.innerHTML=locked.has(key)?LOCK_ICON.locked:LOCK_ICON.unlocked;
       button.setAttribute('aria-pressed',String(locked.has(key)));
-      button.setAttribute('aria-label',(locked.has(key)?'Unlock ':'Lock ')+fullSettingName(key,key));
+      button.setAttribute('aria-label',(locked.has(key)?'Unlock ':'Lock ')+
+        fullSettingName(key,sourceSettingLabel(form.elements.namedItem(key),key)));
       button.title=locked.has(key)?'Locked. Click to allow changes.':'Unlocked. Click to protect this setting.';
       button.classList.toggle('is-locked',locked.has(key));
     }
@@ -1267,8 +1271,14 @@ form.addEventListener('click',event=>{
   if(!modified.length){showNotice('No unlocked, applicable settings changed.');return;}
   explorationHistory.remember(current,'Before '+name);
   changeRecipe(recipe);
-  explorationHistory.remember(current,(mode==='vary'?'Vary ':'Reroll ')+name);
-  showNotice((mode==='vary'?'Varied ':'Rerolled ')+name.replace(/-/g,' ')+' ('+modified.length+' settings).');
+  const label=scope==='setting'?
+    fullSettingName(name,sourceSettingLabel(form.elements.namedItem(name),name)):
+    scope==='tool'?TOOL_LIST.find(tool=>tool.id===name)?.name:
+      EDITOR_CATEGORIES.find(category=>category.id===name)?.label;
+  const description=label||name.replace(/-/g,' ');
+  explorationHistory.remember(current,(mode==='vary'?'Vary ':'Reroll ')+description);
+  showNotice((mode==='vary'?'Varied ':'Rerolled ')+description+
+    ' ('+modified.length+' '+(modified.length===1?'setting':'settings')+').');
 });
 form.addEventListener('change',event=>{
   if(event.target.name!=='family')return;
