@@ -75,9 +75,15 @@ export const RECIPE_FORMAT='roygbiv-recipe-v2';
 // reader bound. Still cap named metadata before parsing untrusted JSON.
 export const MAX_RECIPE_ITXT_BYTES=1024*1024;
 const recipeKeywordBytes=encoder.encode(RECIPE_KEYWORD);
-export function serializePngRecipe(recipe){
+export function serializePngRecipe(recipe,{output}={}){
+  // Historical PNG migrations document THEIR actual IHDR dimensions rather
+  // than claiming a previously exported image was current native resolution.
+  const dimensions=output&&Number.isSafeInteger(output.width)&&output.width>0&&
+    Number.isSafeInteger(output.height)&&output.height>0?
+      {width:output.width,height:output.height}:
+      {width:OUTPUT_WIDTH,height:OUTPUT_HEIGHT};
   return JSON.stringify({format:RECIPE_FORMAT,recipe:normalizeRecipe(recipe),
-    output:{width:OUTPUT_WIDTH,height:OUTPUT_HEIGHT},generator:'R.O.Y.G.B.I.V.'});
+    output:dimensions,generator:'R.O.Y.G.B.I.V.'});
 }
 export function embedPngMetadata(input,values={},options={}){
   const bytes=input instanceof Uint8Array?input:new Uint8Array(input);
@@ -92,7 +98,7 @@ export function embedPngMetadata(input,values={},options={}){
     cameraMake:'Camera Make',cameraModel:'Camera Model'};
   const chunks=Object.entries(metadata).map(([key,value])=>utf8Text(names[key],value));
   if(options.recipe!==undefined){
-    const embedded= utf8Text(RECIPE_KEYWORD,serializePngRecipe(options.recipe));
+    const embedded= utf8Text(RECIPE_KEYWORD,serializePngRecipe(options.recipe,{output:options.output}));
     if(embedded.length-12>MAX_RECIPE_ITXT_BYTES)
       throw Error('PNG recipe metadata exceeds 1 MB export limit');
     chunks.push(embedded);
@@ -133,52 +139,79 @@ export function embedPngMetadata(input,values={},options={}){
   return result;
 }
 
-// Reads a PNG recipe without decoding or altering its potentially huge IDAT.
-// Only our explicit iTXt keyword is accepted; freeform comments are ignored.
-// This can be used on exported images even when optional EXIF was left blank.
-export function extractPngRecipe(input){
+// Structural scan shares the same strict PNG chunk framing used by the
+// metadata writer. Slices borrow bytes from the caller; no IDAT is decoded or
+// copied, even for full-resolution files.
+export function scanPngChunks(input){
   const bytes=input instanceof Uint8Array?input:new Uint8Array(input);
-  if(bytes.length<20||!PNG_SIGNATURE.every((v,i)=>bytes[i]===v))throw Error('Input is not a PNG');
-  const decoder=new TextDecoder('utf-8',{fatal:true});
-  let offset=8,latestRecipe=null;
+  if(bytes.length<20||!PNG_SIGNATURE.every((v,i)=>bytes[i]===v))
+    throw Error('Input is not a PNG');
+  const chunks=[];
+  let offset=8,sawEnd=false;
   while(offset+12<=bytes.length){
     const size=u32(bytes,offset);
     if(size>bytes.length-offset-12)throw Error('Damaged PNG chunk');
+    const end=offset+12+size;
     const type=String.fromCharCode(...bytes.subarray(offset+4,offset+8));
-    if(type==='iTXt'){
-      // Peek at a fixed-size keyword before touching potentially enormous
-      // unrelated ancillary data. An explicit recipe must never be silently
-      // treated as absent merely because it exceeds the supported bound.
-      const targeted=size>recipeKeywordBytes.length &&
-        recipeKeywordBytes.every((value,i)=>bytes[offset+8+i]===value) &&
-        bytes[offset+8+recipeKeywordBytes.length]===0;
-      if(targeted){
-        if(size>MAX_RECIPE_ITXT_BYTES)
-          throw Error('PNG recipe metadata exceeds 1 MB import limit');
-        const data=bytes.subarray(offset+8,offset+8+size);
-        const end=data.indexOf(0);
-        if(end+5>data.length||data[end+1]!==0||data[end+2]!==0||
-           data[end+3]!==0||data[end+4]!==0)throw Error('Unsupported recipe metadata encoding');
-        const stored=u32(bytes,offset+8+size);
-        if(stored!==crc(bytes.subarray(offset+4,offset+8+size)))throw Error('Damaged recipe metadata checksum');
-        let envelope;
-        try{envelope=JSON.parse(decoder.decode(data.subarray(end+5)));}
-        catch{throw Error('Damaged recipe metadata');}
-        if(![RECIPE_FORMAT,'roygbiv-recipe-v1'].includes(envelope?.format)||typeof envelope.recipe!=='object'||
-           !envelope.recipe||Array.isArray(envelope.recipe))throw Error('Unsupported recipe metadata version');
-        // An unrelated PNG must never restore the silent default wallpaper
-        // simply by claiming the correct envelope format.
-        if(typeof envelope.recipe.seed!=='string'||!envelope.recipe.seed.trim()||
-           (envelope.format===RECIPE_FORMAT&&
-            !['paths','radial','regions'].includes(envelope.recipe.structure)))
-          throw Error('Damaged recipe metadata identity');
-        // A legacy writer could append a newer recipe without removing its
-        // previous record. Honour the last valid record for compatibility.
-        latestRecipe=normalizeRecipe(envelope.recipe);
-      }
-    }
-    if(type==='IEND')break;
-    offset+=size+12;
+    if(!/^[A-Za-z]{4}$/.test(type))throw Error('Damaged PNG chunk type');
+    chunks.push({type,size,offset,raw:bytes.subarray(offset,end),
+      data:bytes.subarray(offset+8,offset+8+size)});
+    offset=end;
+    if(type==='IEND'){sawEnd=true;break;}
   }
-  return latestRecipe;
+  if(!sawEnd||chunks[0]?.type!=='IHDR'||chunks[0].size!==13||
+    !chunks.some(chunk=>chunk.type==='IDAT'))
+    throw Error('Damaged PNG image structure');
+  return {bytes,chunks,afterIend:bytes.subarray(offset),
+    width:u32(bytes,chunks[0].offset+8),height:u32(bytes,chunks[0].offset+12)};
+}
+export const isRecipePngChunk=record=>{
+  if(record.type!=='iTXt'||record.size<=recipeKeywordBytes.length)return false;
+  return recipeKeywordBytes.every((value,i)=>record.data[i]===value)&&
+    record.data[recipeKeywordBytes.length]===0;
+};
+// Unlike extractPngRecipe, this archival entry point never silently
+// normalizes away an unknown historical field. Return every recipe record in
+// PNG order because old exporters sometimes left duplicates after IDAT.
+export function readRawPngRecipe(input){
+  const scan=scanPngChunks(input);
+  const decoder=new TextDecoder('utf-8',{fatal:true});
+  const records=[];
+  for(const [index,record] of scan.chunks.entries()){
+    if(!isRecipePngChunk(record))continue;
+    if(record.size>MAX_RECIPE_ITXT_BYTES)
+      throw Error('PNG recipe metadata exceeds 1 MB import limit');
+    const data=record.data;
+    const end=data.indexOf(0);
+    if(end+5>data.length||data[end+1]!==0||data[end+2]!==0||
+      data[end+3]!==0||data[end+4]!==0)
+      throw Error('Unsupported recipe metadata encoding');
+    const stored=u32(scan.bytes,record.offset+8+record.size);
+    if(stored!==crc(scan.bytes.subarray(record.offset+4,record.offset+8+record.size)))
+      throw Error('Damaged recipe metadata checksum');
+    let envelope;
+    try{envelope=JSON.parse(decoder.decode(data.subarray(end+5)));}
+    catch{throw Error('Damaged recipe metadata');}
+    if(!envelope||typeof envelope!=='object'||Array.isArray(envelope)||
+      !envelope.recipe||typeof envelope.recipe!=='object'||Array.isArray(envelope.recipe))
+      throw Error('Unsupported recipe metadata version');
+    records.push({format:envelope.format??null,rawRecipe:envelope.recipe,
+      envelope,chunkIndex:index,offset:record.offset,bytes:record.raw.length});
+  }
+  return {width:scan.width,height:scan.height,records,
+    selected:records.at(-1)||null};
+}
+// The ordinary import API keeps its legacy normalization behavior. Archive
+// migration tools must call readRawPngRecipe instead, before deciding whether
+// the original recipe has a sufficiently well-defined schema to translate.
+export function extractPngRecipe(input){
+  const {selected}=readRawPngRecipe(input);
+  if(!selected)return null;
+  const {format,rawRecipe}=selected;
+  if(![RECIPE_FORMAT,'roygbiv-recipe-v1'].includes(format))
+    throw Error('Unsupported recipe metadata version');
+  if(typeof rawRecipe.seed!=='string'||!rawRecipe.seed.trim()||
+    (format===RECIPE_FORMAT&&!['paths','radial','regions'].includes(rawRecipe.structure)))
+    throw Error('Damaged recipe metadata identity');
+  return normalizeRecipe(rawRecipe);
 }
