@@ -1,5 +1,6 @@
 import { OUTPUT_WIDTH, OUTPUT_HEIGHT, NAMES, normalizeRecipe, resolveScene, encodeRecipe, decodeRecipe, newSeed, randomizeAllRecipe, respectSettingLocks, LOCKABLE_SETTINGS } from './model.js';
-import { drawWallpaper, presentNudgedArtwork } from './renderer.js?v=20261018-worker1';
+import { drawWallpaper, presentNudgedArtwork } from './renderer.js?v=20261022-photo1';
+import {normalizePhotoLook,PHOTO_PRESETS} from './photo-look.js';
 import {createPreviewCoordinator,createThumbnailQueue,exportWallpaperInWorker,closeFrame} from './render-coordinator.js';
 import { embedPngMetadata, extractPngRecipe, cleanMetadata, METADATA_FIELDS } from './png-metadata.js';
 import { installDrawTool } from './draw-path-ui.js?v=20261018-extend1';
@@ -201,6 +202,19 @@ function fromControls() {
     customPath:current.customPath,drawnAnchors:current.drawnAnchors,drawnCorners:current.drawnCorners,interiorElements:current.interiorElements,
     scatteredShape:current.scatteredShape,scatteredOverrides:current.scatteredOverrides};
   for (const key of FIELDS) { const field=form.elements.namedItem(key); data[key]=field.dataset.inactive==='true'?current[key]:(field.type==='checkbox'?field.checked:field.value); }
+  // A single nested recipe travels in links, saved designs, PNG and workers.
+  // Do not add an Off-only Photo key to untouched legacy recipes.
+  const prior=current.photoLook;
+  const presetId=form.elements.namedItem('photoPresetId').value;
+  const samePreset=prior?.presetId===presetId;
+  const photo=normalizePhotoLook({
+    enabled:form.elements.namedItem('photoEnabled').checked,
+    presetId,amount:form.elements.namedItem('photoAmount').value,
+    parameters:{...(samePreset?prior.parameters:{}),
+      grain:Number(form.elements.namedItem('photoGrain').value)},
+  });
+  if(prior||photo.enabled||presetId!=='film-slide'||photo.amount!==75||
+    photo.parameters.grain!==PHOTO_PRESETS['film-slide'].grain)data.photoLook=photo;
   return normalizeRecipe(data);
 }
 function syncScopedSettingDice(){
@@ -235,6 +249,14 @@ function toControls(recipe) {
     if(output) output.textContent=key==='repeatCount'?String(current[key]):`${current[key]}%`;
     const numeric=form.querySelector(`[data-number-for="${key}"]`);
     if(numeric)numeric.value=current[key];
+  }
+  const photo=normalizePhotoLook(current.photoLook);
+  form.elements.namedItem('photoEnabled').checked=photo.enabled;
+  form.elements.namedItem('photoPresetId').value=photo.presetId;
+  for(const [name,value] of [['photoAmount',photo.amount],['photoGrain',photo.parameters.grain]]){
+    form.elements.namedItem(name).value=String(value);
+    const numeric=form.querySelector('[data-number-for="'+name+'"]');
+    if(numeric)numeric.value=String(value);
   }
   syncTextureLayerVisibility();
   syncStripeShadowUI();
@@ -1678,7 +1700,8 @@ form.addEventListener('change',event=>{
 let rangeTimeout;
 form.addEventListener('input',event=>{
   const key=event.target.name;
-  if(!FIELDS.includes(key)||event.target.type!=='range')return;
+  if(!FIELDS.includes(key)&&!['photoAmount','photoGrain'].includes(key))return;
+  if(event.target.type!=='range')return;
   const output=form.querySelector(`output[for="${key}"]`);
   if(output)output.textContent=`${event.target.value}%`;
   const numeric=form.querySelector(`[data-number-for="${key}"]`);
@@ -1697,10 +1720,33 @@ form.addEventListener('input',event=>{
 // Handle genuine form-owned input changes at document level so both mobile
 // and desktop have exactly the same authoritative recipe update.
 document.addEventListener('change',event=>{
-  if(event.target.form!==form||!FIELDS.includes(event.target.name)||
-    event.target.name==='family')return;
+  if(event.target.form!==form)return;
+  if(event.target.name==='photoPresetId'){
+    const preset=PHOTO_PRESETS[event.target.value];
+    if(preset)form.elements.namedItem('photoGrain').value=String(preset.grain);
+  }
+  if(['photoEnabled','photoPresetId','photoAmount','photoGrain'].includes(event.target.name)){
+    clearTimeout(rangeTimeout);
+    updateControlsFromInputs();
+    return;
+  }
+  if(!FIELDS.includes(event.target.name)||event.target.name==='family')return;
   clearTimeout(rangeTimeout);
   updateControlsFromInputs();
+});
+// Switch the original Light controls and new Photo controls in place. The
+// same existing Light destination, short edit tray and DOM inputs are retained.
+const lightHost=form.querySelector('.lighting-subsection');
+const photoPaneButtons=[...lightHost.querySelectorAll('[data-photo-pane]')];
+for(const button of photoPaneButtons)button.addEventListener('click',()=>{
+  const photo=button.dataset.photoPane==='photo';
+  for(const node of lightHost.children){
+    if(node.classList.contains('control-grid')||node.classList.contains('lighting-help'))
+      node.hidden=photo;
+  }
+  lightHost.querySelector('.photo-controls').hidden=!photo;
+  for(const option of photoPaneButtons)
+    option.setAttribute('aria-pressed',String(option===button));
 });
 form.addEventListener('submit',event=>event.preventDefault());
 seedInput.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();render(fromControls());}});
