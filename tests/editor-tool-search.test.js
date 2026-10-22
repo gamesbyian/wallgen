@@ -4,6 +4,7 @@ import {readFileSync} from 'node:fs';
 import {TOOL_LIST} from '../src/editor-schema.js';
 import {toolAppliesToScene} from '../src/editor-tool-applicability.js';
 import {findEditorToolMatch} from '../src/editor-tool-search.js';
+import {legacyToolAliases} from '../src/editor-terminology.js';
 
 const choose=(query,scene)=>findEditorToolMatch(query,TOOL_LIST,{
   applies:tool=>toolAppliesToScene(tool,scene)
@@ -51,4 +52,14 @@ test('a user can find rotation controls by visible accessible words or internal 
   assert.equal(findEditorToolMatch('textureRotation3',TOOL_LIST,options)?.id,'finish3');
   const layout=readFileSync(new URL('../src/editor-layout.js',import.meta.url),'utf8');
   assert.match(layout,/const labelFor=key=>sourceSettingLabel\(form\.elements\.namedItem\(key\),key\)/);
+});
+
+
+test('geometric and per-stripe Variation tools have distinct names with legacy search aliases',()=>{
+  assert.equal(TOOL_LIST.find(tool=>tool.id==='variability').name,'Irregularity');
+  assert.equal(TOOL_LIST.find(tool=>tool.id==='character').name,'Stripe differences');
+  const options={aliasesForTool:legacyToolAliases};
+  assert.equal(findEditorToolMatch('Controlled chaos',TOOL_LIST,options)?.id,'variability');
+  assert.equal(findEditorToolMatch('Stripe variation',TOOL_LIST,options)?.id,'character');
+  assert.equal(findEditorToolMatch('Variation',TOOL_LIST,options)?.id,'variability');
 });
