@@ -1318,7 +1318,8 @@ try{
     assert.ok(await evaluate('!document.querySelector("[name=material2]").disabled && !document.querySelector(".add-texture-layer")'));
     await evaluate('document.getElementById("tab-material").click()');
     for(const n of [1,2,3]){
-      await evaluate('document.querySelector("[data-editor-tool=finish'+n+']").click()');
+      await evaluate('document.querySelector("[data-editor-tool=layer'+n+']").click()');
+      await evaluate('document.querySelector(".editor-tool-card[data-editor-tool=layer'+n+'] .material-inspector-tab:last-child").click()');
       const rot=await evaluate('(()=>{const node=document.querySelector(".editor-tool-card:not([hidden]) .texture-rotation-field");const row=node.getBoundingClientRect(),input=node.querySelector("input[type=number]").getBoundingClientRect(),label=node.querySelector("span").getBoundingClientRect(),rail=node.querySelector(".rotation-controls").getBoundingClientRect();const stacked=document.body.classList.contains("mobile-studio")&&innerWidth<=499&&innerHeight>=840;return {stacked,row:{top:row.top,bottom:row.bottom},input:{top:input.top,bottom:input.bottom},label:{top:label.top,bottom:label.bottom},rail:{top:rail.top,bottom:rail.bottom}}})()');
       assert.ok(rot.input.top>=rot.row.top-2&&rot.input.bottom<=rot.row.bottom+2,
         'Rotation input must fit its source field in Finish '+n+' at '+name+': '+JSON.stringify(rot));
