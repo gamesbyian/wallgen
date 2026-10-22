@@ -1366,3 +1366,50 @@ html[data-theme="cream"] body.mobile-studio .sidebar .settings-tabs .settings-ta
     height:44px!important;min-height:44px!important;
   }
 }
+
+
+/* One source-backed material object at a time, with two compact inspections.
+   The original recipe inputs stay mounted exactly once; only their containing
+   panel changes. Neither view adds a vertical scroll area to the mobile tray. */
+.editor-tool-card .material-inspector-nav{
+  display:grid;grid-template-columns:1fr 1fr;gap:4px;flex:0 0 auto;
+  min-width:0;margin:0 0 2px;padding:0;
+}
+.editor-tool-card .material-inspector-tab{
+  min-width:0;min-height:28px;padding:3px 8px;border:1px solid var(--line);
+  border-radius:7px;background:var(--surface);color:inherit;
+  font-size:11px;font-weight:650;cursor:pointer;
+}
+.editor-tool-card .material-inspector-tab[aria-pressed=true]{
+  border-color:#c85092;background:#d6609928;font-weight:800;
+}
+.editor-tool-card .material-inspector-tab:focus-visible{
+  outline:2px solid #c85092;outline-offset:1px;
+}
+.editor-tool-card .material-inspector-pane{
+  display:flex;flex-direction:column;gap:2px;min-width:0;min-height:0;
+  margin:0;padding:0;
+}
+.editor-tool-card .material-inspector-pane[hidden]{display:none!important}
+.editor-tool-card .material-inspector-pane>.lockable-setting{
+  display:grid;grid-template-columns:minmax(0,1fr) 22px 22px;
+  align-items:center;gap:2px;min-height:0;padding:0;margin:0;
+  border:0;background:transparent;
+}
+.editor-tool-card .material-inspector-pane>.lockable-setting>.field{
+  grid-column:1;grid-row:1;min-width:0;
+}
+.editor-tool-card .material-inspector-pane>.lockable-setting>.setting-lock{
+  grid-column:3;grid-row:1;width:22px;height:22px;
+}
+.editor-tool-card .material-inspector-pane>.lockable-setting>.editor-setting-die{
+  grid-column:2;grid-row:1;
+}
+@media(max-width:790px){
+  body.mobile-studio .sidebar .material-inspector-nav{
+    gap:3px;margin-bottom:1px;
+  }
+  body.mobile-studio .sidebar .material-inspector-tab{
+    min-height:27px;padding:2px 7px;font-size:10px;
+  }
+}
