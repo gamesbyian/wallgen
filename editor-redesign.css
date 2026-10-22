@@ -1108,18 +1108,18 @@ html[data-theme="cream"] body.mobile-studio .sidebar .settings-tabs .settings-ta
    This does not insert a second row or alter any original tab handler. */
 @media(max-width:499px){
   body.mobile-studio .sidebar .settings-tabs{
-    gap:4px!important;
+    gap:3px!important;
     justify-content:flex-start!important;
     padding-inline:2px!important;
   }
   body.mobile-studio .sidebar .settings-tabs .settings-tab{
     box-sizing:border-box!important;
-    flex:1 0 48px!important;
-    width:48px!important;
-    min-width:48px!important;
+    flex:1 0 46px!important;
+    width:46px!important;
+    min-width:46px!important;
     max-width:none!important;
     padding:0 2px!important;
-    font-size:clamp(10px,2.65vw,12px)!important;
+    font-size:clamp(10px,2.4vw,12px)!important;
     letter-spacing:-.025em!important;
     text-align:center!important;
   }
