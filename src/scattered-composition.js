@@ -168,7 +168,10 @@ export function buildScatteredObjects(recipe){
   if(recipe.scatteredShapeKind!=='imported')return placed;
   const geometry=recipe.scatteredShape?.geometry;
   if(geometry?.type!=='compound-region'||!Array.isArray(geometry.components)||
-    !geometry.components.length)return {...placed,diagnostic:'Choose an imported shape from your library.'};
+    !geometry.components.length)return {...placed,objects:[],placed:0,cropped:0,
+      diagnostic:'Choose an imported shape from your library.'};
+  // Do not silently paint circles when a user has explicitly requested
+  // an imported silhouette but no portable source geometry exists.
   const [vx,vy,vw,vh]=geometry.viewBox;
   const ox=vx+vw/2,oy=vy+vh/2;
   const all=geometry.components.flatMap(component=>[component.outer,...component.holes].flat());

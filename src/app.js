@@ -298,7 +298,12 @@ function inactiveSettingKeys(recipe,scene){
   }else{
     if(recipe.regionMode!=='nested')inactive.add('regionSides');
     if(recipe.regionMode==='nested'||recipe.regionMode==='scattered')inactive.add('regionJitter');
-    if(recipe.regionMode==='scattered')inactive.add('regionCount');
+    if(recipe.regionMode==='scattered'){
+      inactive.add('regionCount');
+      // The packing algorithm explicitly ignores clearance when overlap is
+      // allowed. Visually disable its slider, retaining the saved preference.
+      if(recipe.scatteredOverlap==='overlap')inactive.add('scatteredSpacing');
+    }
     else for(const key of ['scatteredCount','scatteredMinSize','scatteredMaxSize','scatteredVariation','scatteredSpacing','scatteredEdgeCrop','scatteredOverlap','scatteredShapeKind'])inactive.add(key);
   }
   if(!(radial||(regions&&recipe.regionMode==='nested'))){
