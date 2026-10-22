@@ -49,6 +49,7 @@ test('primary PR validation retains main safety net and cancels only superseded 
   assert.match(check, /  push:\n    branches: \[main\]/);
   assert.match(check, /- run: npm run check/);
   assert.match(check, /group: .*github\.workflow.*github\.event\.pull_request\.number/);
+  assert.match(check, /github\.event\.pull_request\.number \|\| github\.run_id/);
   assert.match(check, /cancel-in-progress: .*github\.event_name == 'pull_request'/);
   for (const file of ['mobile-browser.yml', 'headless-render.yml', 'agent3-mobile-acceptance.yml']) {
     const source = await readFile(path.join(directory, file), 'utf8');
