@@ -9,7 +9,7 @@ test('PNG metadata updater is in existing Files & sharing group, not the live de
     editAt=html.indexOf('id="metadataToggle"');
   assert.ok(exportStart>=0&&exportStart<panelAt&&panelAt<editAt);
   for(const name of ['migrateRecipeToggle','migrateRecipePanel','migrateRecipeFile',
-    'migrateRecipeStatus','migrateRecipeDownload','migrateRecipeReport'])
+    'migrateRecipeStatus','migrateRecipeDownload','migrateRecipeReport','migrateRecipeArchive'])
     assert.equal((html.match(new RegExp('id="'+name+'"','g'))||[]).length,1);
   assert.match(html,/<input type="file" id="migrateRecipeFile" accept="image\/png,\.png"/);
   assert.match(html,/id="migrateRecipeStatus" role="status" aria-live="polite"/);
@@ -24,4 +24,16 @@ test('More uses source controls and compact 44px touch targets',()=>{
   assert.match(css,/min-height:44px/);
   assert.match(css,/\.png-migration-panel\[hidden\]/);
   assert.match(css,/focus-visible/);
+});
+
+test('raw recipe archive remains available for refused historical PNG migration',()=>{
+  const html=file('index.html'),app=file('src/app.js'),
+    cli=file('scripts/update-png-recipe.mjs');
+  assert.match(html,/id="migrateRecipeArchive" type="button" disabled/);
+  assert.match(app,/if\(report\.recordCount>0\)\{migrationArchiveSource=bytes;/);
+  assert.match(app,/archivePngRecipeRecords\(migrationArchiveSource\)/);
+  assert.match(app,/original-recipe-records\.json/);
+  assert.match(app,/migrationCandidate=null;migrationArchiveSource=null/);
+  assert.match(cli,/--archive/);
+  assert.match(cli,/archivePngRecipeRecords\(bytes\)/);
 });
