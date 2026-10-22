@@ -1,5 +1,10 @@
 # Agent orientation for ROYGBIV
 
+## Photo optical preview boundary (2026-10-22)
+
+The shared Photo compositor now includes `film-halation-only`: an opt-in source-luminance, authored-resolution spatial mask that spills warm light around edges, distinct from geometry Glow, and does not allocate another export-scale RGBA buffer. This is an approximation, not linear-light film-stock physics. `parameters.halation` belongs only to the new preset; preserve historical `photoLook.parameters` shapes and noise kernels for prior looks. Photo remains after all surface treatments in the existing shared renderer/worker/export path. Device visual approval is pending.
+
+
 ## PNG migration input integrity (2026-10-22)
 
 Before any archival recipe rewrite, `validatePngMigrationContainer` in `src/png-recipe-migration.js` now checks every original PNG chunk CRC, legal IHDR/header structure, PLTE and IDAT ordering, and refuses unknown critical chunks. `inspectPngMigration` and `migratePngMetadataOnly` use this shared gate; rewritten output is validated too. It preserves all pixels and non-recipe ancillary bytes unchanged. Never relax historical recipe semantic refusal just because the PNG framing is valid. Keep testing proportional; no permanent workflow needed.
