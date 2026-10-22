@@ -242,12 +242,12 @@ html[data-theme="dark"] .editor-tool-card .interior-empty-guidance{
   opacity:1;
 }
 
-/* Tall narrow Elements tool: make original add/select/remove/reorder/lock
+/* Tall mobile Elements tool: make original add/select/remove/reorder/lock
    controls genuinely finger-sized. Their two existing horizontal rows stay
    in the original card with the Enabled source checkbox; no new toolbar,
    overlapping pseudo-hitbox or preview reservation. The short portrait
    remains compact until a separate physical usability qualification. */
-@media(max-width:499px) and (min-height:840px){
+@media(max-width:790px) and (min-height:840px){
   body.mobile-studio .sidebar
     .editor-tool-card[data-editor-tool="interior"] .interior-toolbar,
   body.mobile-studio .sidebar
