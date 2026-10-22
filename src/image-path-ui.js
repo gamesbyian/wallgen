@@ -1,4 +1,4 @@
-import {extractImagePathCandidates,imagePlacement,pathToWallpaper} from './image-path.js?v=20261018-import1';
+import {extractImagePathCandidates,extractImageShapeCandidates,imagePlacement,pathToWallpaper} from './image-path.js?v=20261018-import1';
 import {drawAuthoringLockReason,drawAuthoringLockMessage,pathStructureLockedOutsidePaths} from './path-authoring-locks.js';
 
 /** A live import dialog must match the current authoritative lock state,
@@ -15,7 +15,11 @@ export function imagePathActionAvailability(recipe,candidate,working=false){
   return {
     blocked,
     angleBlocked,
-    canApply:!working&&!blocked&&!!candidate,
+    canApply:!working&&!blocked&&!!candidate&&candidate.kind!=='shape',
+    canShape:!working&&candidate?.kind==='shape'&&
+      !(locks.includes('structure')&&recipe?.structure!=='regions')&&
+      !(locks.includes('regionMode')&&recipe?.regionMode!=='scattered')&&
+      !(locks.includes('scatteredShapeKind')&&recipe?.scatteredShapeKind!=='imported'),
     canAngle:!working&&!angleBlocked&&candidate?.kind==='line',
     canChooseAnother:!working&&!blocked
   };
@@ -23,17 +27,18 @@ export function imagePathActionAvailability(recipe,candidate,working=false){
 
 // The image is transient: only the selected vector centreline enters the recipe.
 // A native dialog provides an accessible, phone-friendly full-stage workspace.
-export function installImagePathTool({getRecipe,onNotice,onPath,onAngle}){
+export function installImagePathTool({getRecipe,onNotice,onPath,onAngle,onShape}){
   const byId=id=>document.getElementById(id);
   const launch=byId('importPathToggle'),fileInput=byId('imagePathFile'),
     dialog=byId('imagePathDialog'),canvas=byId('imagePathCanvas'),
     chooser=byId('imagePathCandidate'),status=byId('imagePathStatus'),
-    apply=byId('imagePathApply'),angleButton=byId('imagePathAngle'),another=byId('imagePathAnother'),
+    apply=byId('imagePathApply'),shapeButton=byId('imagePathShape'),
+    angleButton=byId('imagePathAngle'),another=byId('imagePathAnother'),
     closeButton=byId('imagePathCancel');
   const ctx=canvas.getContext('2d');
   let image=null,candidates=[],selected=0,width=0,height=0,working=false;
   let loadRevision=0;
-  const phases={idle:'Choose image',analyzing:'Analyzing',ready:'Select path',empty:'No paths'};
+  const phases={idle:'Choose image',analyzing:'Analyzing',ready:'Select geometry',empty:'No geometry'};
   const phaseLabel=dialog.querySelector('.image-path-phase');
   function setPhase(next){
     dialog.dataset.phase=next;
@@ -67,12 +72,14 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle}){
     const candidate=candidates[selected];
     const access=imagePathActionAvailability(getRecipe(),candidate,working);
     apply.disabled=!access.canApply;
+    shapeButton.disabled=!access.canShape||!onShape;
     angleButton.disabled=!access.canAngle;
     another.disabled=!access.canChooseAnother;
     setPhase(candidate?'ready':'empty');
     status.textContent=access.blocked?
       access.canAngle?'Path import is locked; this detected line angle can still be applied.':
         drawAuthoringLockMessage(access.blocked):candidate?
+      candidate.kind==='shape'? 'Fillable silhouette. Use it as repeated rainbow shapes.':
       candidate.kind==='contour'?
         'Shape outline. It may be closed; inspect the join after applying.':
       candidate.kind==='arc'?
@@ -114,7 +121,7 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle}){
     }
     if(!dialog.open)dialog.showModal();
     setPhase('analyzing');
-    working=true;apply.disabled=true;angleButton.disabled=true;another.disabled=true;chooser.disabled=true;
+    working=true;apply.disabled=true;shapeButton.disabled=true;angleButton.disabled=true;another.disabled=true;chooser.disabled=true;
     // Hide candidates from the previous import until this image's analysis
     // has completed. Their old labels must not be mistaken for new results.
     chooser.replaceChildren();candidates=[];image=null;
@@ -131,8 +138,9 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle}){
       dc.drawImage(image,0,0,downsample.width,downsample.height);
       const pixels=dc.getImageData(0,0,downsample.width,downsample.height);
       const extracted=extractImagePathCandidates(pixels);
+      const shapeCandidates=extractImageShapeCandidates(pixels);
       if(revision!==loadRevision||!dialog.open)return;
-      candidates=extracted;
+      candidates=[...extracted,...shapeCandidates].slice(0,18);
       chooser.replaceChildren();
       candidates.forEach((item,i)=>{
         const option=document.createElement('option');
@@ -142,7 +150,7 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle}){
       selected=0;working=false;choose(0);
     }catch(error){
       if(revision!==loadRevision)return;
-      image=null;candidates=[];chooser.replaceChildren();apply.disabled=true;angleButton.disabled=true;
+      image=null;candidates=[];chooser.replaceChildren();apply.disabled=true;shapeButton.disabled=true;angleButton.disabled=true;
       setPhase('empty');
       status.textContent=error?.message||'Image analysis failed.';
       paint();
@@ -190,6 +198,18 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle}){
     if(working||candidates[selected]?.kind!=='line')return;
     if(onAngle(candidates[selected].angle))dialog.close();
   });
+  shapeButton.addEventListener('click',()=>{
+    const candidate=candidates[selected];
+    if(working||candidate?.kind!=='shape'||!onShape)return;
+    if(!imagePathActionAvailability(getRecipe(),candidate,working).canShape){
+      status.textContent='Unlock structure, region layout or shape source before using this silhouette.';
+      return;
+    }
+    if(onShape(candidate.geometry)){
+      dialog.close();
+      onNotice('Imported a fillable silhouette. Save it in My shapes & paths for later reuse.');
+    }
+  });
   apply.addEventListener('click',()=>{
     if(working)return;
     const candidate=candidates[selected];
@@ -221,6 +241,7 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle}){
     // The picker may have opened before a lock was restored. Do not expose
     // an Apply button that will be rejected after the user taps it.
     apply.disabled=!access.canApply;
+    shapeButton.disabled=!access.canShape||!onShape;
     angleButton.disabled=!access.canAngle;
     another.disabled=!access.canChooseAnother;
     if(access.blocked)status.textContent=access.canAngle?
