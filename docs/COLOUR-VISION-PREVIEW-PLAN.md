@@ -13,7 +13,7 @@ Let an artist inspect **the exact currently rendered wallpaper** through useful 
 - DaltonLens technical context: https://daltonlens.org/opensource-cvd-simulation/ ; https://daltonlens.org/understanding-cvd-simulation/ . Established models Brettel 1997 and Viénot 1999 provide separate, testable dichromacy reference behaviour.
 - sRGB transfer: decode `C_sRGB <= .04045 ? C/12.92 : ((C+.055)/1.055)^2.4`, matrix-multiply linear RGB, clamp out-of-gamut linear components to [0,1], encode `C_linear <= .0031308 ? 12.92*C : 1.055*C^(1/2.4)-.055`. Preserve exact alpha. Never apply the matrices to gamma-encoded 8-bit bytes.
 - For mild-to-strong **protan** and **deutan**, expose a continuously adjustable model severity 0–100. Display full severity as *protanopia* or *deuteranopia*, and partial severity as *protanomaly* or *deuteranomaly* in expanded explanation, not ambiguous "red/green blind" buttons.
-- **Tritan caveat:** Machado tritanomaly relies on a shifted-cone approximation and its strongest preset should not be presented as a clinically faithful simulation of tritanopia. Ship with honest `Tritan (approx.)` copy until a benchmarked Brettel 1997 full-dichromacy implementation is integrated; preserve the underlying model identity in code. Compare reference tritan behaviour separately.
+- **Tritan resolution:** Full tritanopia now uses Brettel (1997)'s two-plane projection derived from the public-domain DaltonLens/libDaltonLens reference. Partial severity is linear-light interpolation between original and the Brettel projection, explicitly an *approximation* of tritanomaly. The UI explains this distinction. The Machado tritan matrices remain only as research comparators, not the shipped tritan simulation.
 - **Achromatopsia:** do not conflate ordinary grayscale with total achromatopsia, which also involves acuity/photophobia/other effects. Potential future *Monochrome reference* must be labelled plainly and excluded from diagnostic-sounding claims.
 - Device colour management, wide-gamut content, metamerism, brightness adaptation, individual severity and environmental conditions limit fidelity. Treat RGBA canvas readback as sRGB and validate browser colour-space assumptions; if canvas is in a different colour space, make conversion explicit or disable the claim.
 
@@ -71,7 +71,7 @@ Let an artist inspect **the exact currently rendered wallpaper** through useful 
 - [ ] **C. Human-factors UI**: minimal desktop button, dedicated More section, text presets, native severity slider, split/hold-original controls; styles additive and theme-aware.
 - [ ] **D. Browser qualification**: automate real target centre-hit/keyboard/pointer and screenshots, render worker and fallback parity, source original isolation, persistent state isolation. Publish measured perf notes.
 - [ ] **E. Independent review**: cross-validate reference fixtures incl tritan limitations; review visual copies/icons and mobile hardware; remove unsupported claims.
-- [ ] **F. Optional extensions**, after core is accepted: validated Brettel full tritanopia; multi-pane comparison if it can preserve legibility; quantitative pairwise distinctions with explicit perceptual metric/method and never an invented pass/fail score; optional export of a **separately named simulation** only if a user explicitly asks for such functionality.
+- [ ] **F. Optional extensions**, after core is accepted: multi-pane comparison if it can preserve legibility; quantitative pairwise distinctions with explicit perceptual metric/method and never an invented pass/fail score; optional export of a **separately named simulation** only if a user explicitly asks for such functionality.
 
 **Merge rule:** do not call a plan or pure core "finished preview". Require green Node + actual-browser acceptance for shipped UI and no unverified human/device approval. Keep this branch small and build milestones into focused commits.
 
@@ -82,6 +82,20 @@ Let an artist inspect **the exact currently rendered wallpaper** through useful 
 **Automated confirmation:** [Validate Wallgen run 39728271588](https://github.com/gamesbyian/wallgen/actions/runs/39728271588) completed successfully, including Node tests. [Mobile browser acceptance run 39728271684](https://github.com/gamesbyian/wallgen/actions/runs/39728271684) passed its actual Chromium 412×892 journey with this branch. Its dedicated `COLOUR_VISION_BROWSER_ISOLATION` record proves: Vision entry inside More and physically centre-hit reachable; original selected at startup; deutan transform visibly different (701 sampled pixels), original source PNG dataURL identical, URL recipe identical; source canvas retained its accessible image role and simulation overlay was aria-hidden; Split divider visible, right-arrow moved 50→55%, expected clip-path applied; Show original, restore simulation, and Original mode all worked without changing source or URL.
 
 **Important scope limit:** this qualifies the *basic mobile path and original-canvas isolation* only. It does not yet prove exact independent reference parity across all modes, worker exception fallback, 320px/short phone layout, pointer drag, physical Android experience, export invariance under active simulation, visual aesthetic sign-off, or performance under churn. The PR must stay draft until those gates are satisfied.
+
+## Engineering continuation checkpoint: 22 October 2026
+
+### Science, performance and interaction
+
+- Added `src/colour-vision-brettel.js` with attributed two-wing Brettel tritan projection and plane-selection normal; full tritanopia uses this in production. Partial tritanomaly interpolation remains explicitly approximate.
+- Refactored `src/colour-vision.js` to offer `createColourVisionJob()`: a pure, resumable pixel batch without per-pixel temporary JS arrays. The Worker computes in one pass; fallback processes at most 24 scanlines per yielded task, abandons obsolete revisions and never touches original pixels.
+- Added golden RGB tests for Brettel tritan on both wings, independent public Machado `#E74C3C`→ protan `#786D39` / deutan `#9F8F36`, intermediate severity and exact chunked-vs-single-pass RGBA parity.
+- Added `How this works` scientific disclosure, a labelled active simulation state in the accessible wallpaper name, and an unobtrusive active dot on mobile More.
+- Extended actual Chromium integration to physically drag split by touch, switch five vision modes rapidly, change severity during in-flight processing, check 320×700 / 412×892 / 700×412 centre hitboxes, capture the tritan preview, and deliberately disable **only** the colour-vision worker on page load to exercise the actual incremental fallback.
+
+### Qualification discipline
+
+The original 412×892 worker-isolation test passed [run 39728271684](https://github.com/gamesbyian/wallgen/actions/runs/39728271684), but the later Brettel/fallback and cross-viewport test extensions require fresh CI before signoff. The [Material Finish 320px optical failure in 39728481851](https://github.com/gamesbyian/wallgen/actions/runs/39728481851) involves a disabled control row outside its card, on CSS not modified by this branch; verify against latest main and route independently. **Open:** physical Android test, independently audited perceptual fidelity, screenshot signoff, PNG export bytes under active preview, and representative p95 responsiveness/memory.
 
 ## Licensing
 
