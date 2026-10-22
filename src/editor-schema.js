@@ -13,7 +13,7 @@ export const EDITOR_CATEGORIES=[
     {id:'rays',name:'Radial rays',settings:['radialMode','rayCount','rayRotation']},
     {id:'ray-shape',name:'Ray detail',settings:['rayTwist','rayCoverage','rayCore']},
     {id:'origin',name:'Origin',settings:['fieldCenterX','fieldCenterY']},
-    {id:'regions',name:'Regions',settings:['regionMode','regionCount']},
+    {id:'regions',name:'Regions',settings:['regionMode','regionCount','scatteredShapeKind']},
     {id:'region-detail',name:'Region detail',settings:['regionJitter','regionSides']},
     {id:'scattered-size',name:'Objects',settings:['scatteredCount','scatteredMinSize','scatteredMaxSize']},
     {id:'scattered-distribution',name:'Distribution',settings:['scatteredVariation','scatteredSpacing']},
