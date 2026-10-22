@@ -2969,6 +2969,22 @@ try{
   await command('Emulation.setDeviceMetricsOverride',{
     width:412,height:892,deviceScaleFactor:1,mobile:true,screenWidth:412,screenHeight:892});
   console.log('COLOUR_VISION_STRESS_VIEWPORT',JSON.stringify({visionTouch,visionLatest,visionViewports}));
+  await captureUI('colour-vision-tritan-70-412x892');
+  // Force ONLY the view worker to fail on a fresh browser navigation.
+  // Production artwork workers remain available. Test the actual chunked
+  // compatibility conversion instead of assuming that fallback works.
+  await command('Page.addScriptToEvaluateOnNewDocument',{source:
+    '(()=>{const NativeWorker=window.Worker;window.Worker=class extends NativeWorker{constructor(url,opts){if(String(url).includes("colour-vision-worker.js")){window.__visionBlocked=true;throw Error("test-only vision worker unavailable");}super(url,opts);}};})()'});
+  await command('Page.navigate',{url});
+  await waitFor('document.body&&document.body.classList.contains("mobile-studio")',15000);
+  await waitFor('document.getElementById("visionMode")&&document.getElementById("preview").dataset.renderPending!=="true"',20000);
+  await evaluate('(()=>{window.__fallbackSource=document.getElementById("preview").toDataURL("image/png");window.__fallbackRecipe=location.search;document.getElementById("mobileMore").click();const sel=document.getElementById("visionMode");sel.value="protan";sel.dispatchEvent(new Event("change",{bubbles:true}));})()');
+  await waitFor('document.getElementById("visionPreviewLayer").hidden===false',20000);
+  const visionFallback=await evaluate('(()=>({workerBlocked:window.__visionBlocked===true,visible:!document.getElementById("visionPreviewLayer").hidden,sourceUnchanged:document.getElementById("preview").toDataURL("image/png")===window.__fallbackSource,recipeUnchanged:location.search===window.__fallbackRecipe}))()');
+  assert.deepEqual(visionFallback,{workerBlocked:true,visible:true,sourceUnchanged:true,recipeUnchanged:true},
+    'compatibility path must transform without any source modification');
+  console.log('COLOUR_VISION_CHUNKED_FALLBACK',JSON.stringify(visionFallback));
+
 
   console.log('REDESIGN_EXPLORATION_ACCEPTANCE_SUCCESS');
 }finally{
