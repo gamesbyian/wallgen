@@ -10,7 +10,7 @@ Read with [HCI and generative-art research field guide](AGENT-HUMAN-EXPECTATIONS
 
 ## 1. Deterministic structure comparison, with caveats
 
-Validation: source and proposed keys each 87, no omissions/duplicates, 16 task routes. Static analysis independently recomputed the same sequences from the committed script definitions; the Node executable itself has not been independently executed in a checked-out repository in this analysis environment.
+Validation: source and proposed keys each 87, no omissions/duplicates, 16 task routes. The authored script's evaluation functions were executed in an isolated V8 harness against the real schema data with a source-equivalent applicability adapter, confirming 87/87 coverage and the reported totals; the standalone Node CLI was not executed from a checked-out repository in this environment.
 
 | Metric, **not** a human usability measurement | Existing 7-category editor | Proposed 5-intent editor |
 |---|---:|---:|
