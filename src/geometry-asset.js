@@ -91,7 +91,15 @@ function normalizeRing(input,clockwise){
       points[j],points[(j+1)%points.length]))fail('outline crosses itself');
   }
   if((signed<0)!==clockwise)points.reverse();
-  return points;
+  // Starting vertex is not meaningful in a closed region. Canonicalize it
+  // so different tracing starts produce the same geometry content hash.
+  let first=0;
+  for(let i=1;i<points.length;i++){
+    if(points[i][0]<points[first][0]||
+      (points[i][0]===points[first][0]&&points[i][1]<points[first][1]))
+      first=i;
+  }
+  return first?[...points.slice(first),...points.slice(0,first)]:points;
 }
 function checkedViewBox(value){
   if(!Array.isArray(value)||value.length!==4||!value.every(finite))
