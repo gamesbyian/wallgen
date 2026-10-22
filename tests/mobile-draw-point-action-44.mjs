@@ -88,7 +88,8 @@ try{
     assert.deepEqual(current(),source,'Enlarged Cancel mutated source recipe');
     assert.deepEqual(errors,[]);
     const row={width,height,theme,regions,
-      sourceAnchorTouch:anchorReachable,pointLocalUndo:anchorReachable,\n      compactPreexistingOcclusion:!anchorReachable,fullRecipeStable:true,
+      sourceAnchorTouch:anchorReachable,pointLocalUndo:anchorReachable,
+      compactPreexistingOcclusion:!anchorReachable,fullRecipeStable:true,
       panel:{height:rect.height,width:rect.width}};
     rows.push(row);
     await page.screenshot({path:join(out,width+'x'+height+'-'+theme+'.png'),animations:'disabled'});
