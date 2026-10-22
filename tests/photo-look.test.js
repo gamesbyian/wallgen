@@ -165,3 +165,58 @@ test('webcam capture changes chroma spatial bandwidth, with neutral amount bypas
   processPhotoPixels(disabled,width,height,{...camera,amount:0},'chroma');
   assert.deepEqual(disabled,raw,'neutral amount must not change bytes');
 });
+
+test('warm film halation is a stable recipe field only for the new optical look',()=>{
+  const optical=normalizePhotoLook({enabled:true,presetId:'film-halation-only',
+    parameters:{halation:150,grain:0}});
+  assert.equal(optical.parameters.halation,100);
+  assert.equal(optical.parameters.grain,0);
+  assert.equal(optical.parameters.contrast,1);
+  assert.equal(optical.parameters.saturation,1);
+  assert.deepEqual(normalizePhotoLook(optical),optical);
+  const saved=normalizeRecipe({seed:'halation-stored',photoLook:optical});
+  assert.deepEqual(decodeRecipe(encodeRecipe(saved)),saved);
+  for(const id of ['film-slide','film-grain-only','camera-webcam','camera-webcam-signal']){
+    const old=normalizePhotoLook({enabled:true,presetId:id});
+    assert.equal(Object.hasOwn(old.parameters,'halation'),false,
+      'older saved preset parameter shape must not be upgraded silently');
+  }
+});
+test('warm halation lights dark neighbours of bright ribbons without altering source',()=>{
+  const w=180,h=160;
+  const original=pixels(0,0,0,w,h);
+  // Yellow is luminous; the red band is visually saturated but not high-luma.
+  for(let y=35;y<125;y++)for(let x=50;x<82;x++){
+    const i=(y*w+x)*4;original[i]=255;original[i+1]=235;original[i+2]=0;
+  }
+  const look=normalizePhotoLook({enabled:true,presetId:'film-halation-only',amount:100,
+    parameters:{halation:100,grain:0,vignette:0}});
+  const snapshot=original.slice();
+  const a=original.slice(),b=original.slice();
+  processPhotoPixels(a,w,h,look,'same-emulsion');
+  processPhotoPixels(b,w,h,look,'same-emulsion');
+  assert.deepEqual(a,b,'optical effect must be reproducible');
+  const at=(x,y)=>(y*w+x)*4;
+  const adjacent=at(85,80),far=at(150,80),center=at(65,80);
+  assert.ok(a[adjacent]>8,'warm bleed should appear beyond the light edge');
+  assert.ok(a[adjacent]>a[adjacent+1]*2,
+    'red-orange spill must not be a neutral-white blur');
+  assert.equal(a[far],0,'distant black background should remain true black');
+  assert.deepEqual([...a.slice(center,center+4)],
+    [...original.slice(center,center+4)],'opaque luminous center should stay intact');
+  assert.equal(a[adjacent+3],255,'alpha remains unchanged');
+  assert.deepEqual(original,snapshot,'photo finish must not mutate source sample');
+});
+test('zero halation and zero overall amount are strict no-op for neutral new preset',()=>{
+  const input=pixels(10,50,200,80,80);
+  for(const settings of [
+    {enabled:true,presetId:'film-halation-only',amount:100,
+      parameters:{halation:0,grain:0}},
+    {enabled:true,presetId:'film-halation-only',amount:0,
+      parameters:{halation:100,grain:0}},
+  ]){
+    const out=input.slice();
+    processPhotoPixels(out,80,80,settings,'neutral');
+    assert.deepEqual(out,input);
+  }
+});
