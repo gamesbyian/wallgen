@@ -2,6 +2,21 @@
 
 2026-10-22. Design audit from current main commit 75c5e1778a5f5789c44ba95098ca7a4c1161b7f8. Documentation and read-only analysis only. No live UI, recipe, renderer, storage or CI-workflow changes.
 
+## Implementation checkpoint, 22 October 2026
+
+This is a historical audit with a **live issue-status supplement**. Treat the statuses below and the source-linked `scripts/ia-semantic-audit.mjs` register as authoritative; the original finding descriptions further down preserve the reasoning at discovery time.
+
+| Finding | Current status | Implemented evidence / next action |
+|---|---|---|
+| C01: Clearance under Allow Overlaps | **Resolved on main**, PR #452 | `src/app.js::inactiveSettingKeys` disables `scatteredSpacing` when overlap is allowed, retaining its recipe value. |
+| C02: Inaccessible Tonal Bands | **Resolved on main**, PR #452 | The Tonal construction is selectable; global random generation still intentionally excludes it. |
+| C04: Individual scattered-object edits | **Implemented on main**, PR #449 | The `scatteredObjectEditor` supports selecting an instance, nudging, resizing, resetting, Undo and portable `scatteredOverrides`. Pointer dragging and z-order remain optional. |
+| C12: Contour distortion prerequisites | **Addressed on this branch** | `src/editor-effect-availability.js` reflects the same effective active stripe-applied texture-layer filter as the renderer; the visible inactive hint preserves prior setting values. The broader field-gate model remains future work. |
+| C13: Ambiguous Variation labels | **Addressed on this branch** | Layout/Irregularity versus Stripes/Stripe differences, retaining the separate Vary/Reroll action and old search aliases. |
+| C03, C05–C11, C14–C17 | **Open or deliberate design choices** | Resolve by the original evidence-based priorities, not all at once. |
+
+**Next scoped change after this branch:** improve the search destination (C07) or prototype one cohesive texture-layer editor (C08), whichever yields the highest benefit with the least cramped mobile presentation. Avoid a wholesale seven-category rewrite; protect stable recipe keys, locks, Undo, Saved and exported framing. Existing issue [#444](https://github.com/gamesbyian/wallgen/issues/444) remains the umbrella.
+
 ## How the map has changed
 
 The historical navigation map enumerated 40 named tools and 87 setting keys. The integrated main now contains **seven editor categories, 43 tools, 95 schema keys**, plus substantial non-scalar workflows: interior element collection, Draw/Import, reusable geometry library, seeded scattered shapes, colour vision inspection, variation/locks/history, viewport/framing and export.
