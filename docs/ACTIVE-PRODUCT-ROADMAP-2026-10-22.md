@@ -1,5 +1,10 @@
 # ROYGBIV: active product roadmap and work queue
 
+## PNG integrity gate before surgical recipe updates (PR pending, 2026-10-22)
+
+The non-render PNG recipe updater now validates **all original PNG chunk CRCs** (including opaque IDAT, colour and descriptive metadata), IHDR dimensions/mode, palette order, IDAT contiguity and unknown critical PNG chunks before making a replacement. Output is checked again. Invalid images are refused rather than receiving a deceptively valid modernized recipe. Validation reads existing bytes, never decodes the picture, and adds no screenshot factory or required CI workflow. A formerly reused 1×1 test PNG had an **invalid IDAT CRC**; the focused migration fixture was corrected. Historical v1 and incomplete early-v2 recipe translation remain separately gated. Focused unit tests cover the new refusal modes.
+
+
 ## Embroidery object targeting exposed in editor (PR #482, 2026-10-22)
 
 [#482](https://github.com/gamesbyian/wallgen/pull/482) connects the existing `surfaceTreatments.target.scope='object'` implementation to Texture → Surface → Thread. A contextual single-object picker now lists actual generated region IDs and each authored ribbon ID, including repeat bundles, and keeps missing saved IDs visible instead of silently changing targets after a scene edit. Source controls retain the same single `editor-stitches` treatment and Undo/PNG recipe path; unrelated custom treatment entries stay intact. No new top-level destinations, cloned controls, renderers, randomization lanes or CI workflows.
