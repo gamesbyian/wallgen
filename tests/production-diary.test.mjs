@@ -40,6 +40,10 @@ test('ChatGPT export importer selects explicit IDs, preserves branches, excludes
   await writeFile(idsPath, 'selected-123\n');
   const launch = (...extra) => spawnSync(process.execPath,
     [importer, '--input', exportPath, '--ids', idsPath, '--out', output, ...extra], { encoding: 'utf8' });
+  const catalog = spawnSync(process.execPath, [importer, '--input', exportPath, '--list'], { encoding: 'utf8' });
+  assert.equal(catalog.status, 0, catalog.stderr);
+  assert.deepEqual(JSON.parse(catalog.stdout).conversations.map(c => c.id), ['selected-123', 'other-456']);
+  assert(!catalog.stdout.includes('unrelated private chat'), 'catalog should display metadata only');
   const dry = launch('--dry-run');
   assert.equal(dry.status, 0, dry.stderr);
   assert.equal(JSON.parse(dry.stdout).count, 1);
