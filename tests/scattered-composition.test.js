@@ -6,7 +6,7 @@ import {normalizeRecipe,resolveScene,encodeRecipe,decodeRecipe,
 import {validateEditorSchema} from '../src/editor-schema.js';
 import {toolAppliesToScene} from '../src/editor-tool-applicability.js';
 
-const hero=normalizeRecipe({...RAINBOW_ORBITS,seed:'rainbow-orbits-001'});
+const hero=normalizeRecipe(RAINBOW_ORBITS);
 const filled=objects=>objects.map(x=>x.circle);
 const cropped=o=>o.cx-o.r<0||o.cy-o.r<0||o.cx+o.r>600||o.cy+o.r>1300;
 const intersects=(a,b,spacing)=>Math.hypot(a.cx-b.cx,a.cy-b.cy)<a.r+b.r+spacing-1e-6;
