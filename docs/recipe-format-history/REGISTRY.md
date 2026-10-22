@@ -1,5 +1,8 @@
 # ROYGBIV recipe format registry
 
+**Semantic archaeology evidence (2026-10-22, PR pending):** [Four source-blob-pinned default-expression anchors](SEMANTIC-EXPRESSION-ANCHORS.json) and the [v1/v2 semantic adapter gate](SEMANTIC-DEFAULTS-AND-ADAPTER-GATES.md) record verified historical shadow-toggle/strength changes and v2 paths fallback. The 45-source key ledger is still structural only. A full local Git clone can run `node scripts/build-recipe-format-history.mjs --semantic-out docs/recipe-format-history/model-expression-history.json` to enumerate changed source expressions without assuming helper/renderer equivalence or overwriting the baseline ledger. Historic migrations remain refused until semantic parity is separately proved.
+
+
 **Exact historical backup (2026-10-22, PR pending):** A migration refusal no longer means the UI can save only a status report. The independent `archivePngRecipeRecords` export produces `roygbiv-recipe-archive-v1` JSON containing the original named iTXt chunk bytes as base64, with record order/offset, latest-selected index, source dimensions and optional original filename. This preserves the original textual/byte-level record even if modern JSON normalization would lose duplicate keys or historical semantics. Available from the More PNG tool and `png:migrate --archive`, including v1 refused sources. It does **not** claim to upgrade any historical dialect, nor replace the original PNG.
 
 

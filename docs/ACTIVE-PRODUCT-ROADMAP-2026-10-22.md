@@ -1,5 +1,10 @@
 # ROYGBIV: active product roadmap and work queue
 
+## Historical source-default archaeology (PR pending, 2026-10-22)
+
+The existing 45-revision membership ledger is supplemented by [a source-expression comparison utility](../scripts/build-recipe-format-history.mjs) and [four SHA/Blob-pinned semantic anchors](recipe-format-history/SEMANTIC-EXPRESSION-ANCHORS.json), with a [specific default/translation-gate matrix](recipe-format-history/SEMANTIC-DEFAULTS-AND-ADAPTER-GATES.md). Verified old PNG v1 shadow state used **an enable flag plus a strength default of 45**, while the later normalizer removed the flag and changed strength fallback to 0. PNG v2 introduced a paths-defaulting structure field. These are **concrete adapter requirements**, not enough to prove equivalent old/new renderer pixels. Optional local `--semantic-out` generates expression changes across full reachable history without overwriting the 45-revision key ledger or adding any CI workflow. Historical automatic conversions stay off until renderer/seed/helper semantics and golden fixtures are proven.
+
+
 ## Exact-byte historical recipe backup without conversion (PR pending, 2026-10-22)
 
 More → Files & sharing → Update recipe inside existing PNG now also offers **Save original recipe records (exact bytes)**, available whenever a structurally valid ROYGBIV PNG contains named recipe records, *including historical v1, unsupported dialects and otherwise unsafe-to-migrate recipes*. It writes a separate, versioned JSON dossier with each original iTXt chunk encoded byte-for-byte (including text, whitespace, duplicated historic fields, envelope, CRC, order/offset) and selected record provenance. Does not modify the PNG or active editor. The same export is available with `npm run png:migrate -- --in old.png --archive original-recipes.json --dry-run`; this CLI still exits nonzero if a requested migration is unsafe. Bounded archive memory (64 records/16 MiB chunk bytes), unchanged CRC validation. This provides concrete preservation while conservative historical translation remains gated. Tests cover refused v1, duplicate chunks, byte fidelity and UI routing. No new CI workflow.
