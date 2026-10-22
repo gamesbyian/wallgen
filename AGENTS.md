@@ -1,5 +1,10 @@
 # Agent orientation for ROYGBIV
 
+## PNG migration input integrity (2026-10-22)
+
+Before any archival recipe rewrite, `validatePngMigrationContainer` in `src/png-recipe-migration.js` now checks every original PNG chunk CRC, legal IHDR/header structure, PLTE and IDAT ordering, and refuses unknown critical chunks. `inspectPngMigration` and `migratePngMetadataOnly` use this shared gate; rewritten output is validated too. It preserves all pixels and non-recipe ancillary bytes unchanged. Never relax historical recipe semantic refusal just because the PNG framing is valid. Keep testing proportional; no permanent workflow needed.
+
+
 ## Historical recipe archaeology (PR #480, 2026-10-22)
 
 To implement v1 or early-v2 recipe migration, consult [45-revision key ledger](docs/recipe-format-history/model-key-ledger.json), [chronological model changes](docs/recipe-format-history/SCHEMA-CHANGE-LEDGER.md) and [format registry](docs/recipe-format-history/REGISTRY.md). The ledger is **source-field membership**, not default or renderer semantic proof. A complete Git clone can reproduce it via `node scripts/build-recipe-format-history.mjs`. Current PNG migration refuses ambiguous historic conversions by design; never infer unobserved defaults from newest `normalizeRecipe`.

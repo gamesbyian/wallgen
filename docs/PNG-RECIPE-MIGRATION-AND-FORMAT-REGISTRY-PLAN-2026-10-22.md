@@ -1,5 +1,8 @@
 # PNG recipe metadata migration without image changes
 
+**Source-image integrity checkpoint (2026-10-22):** the opt-in migration path now refuses corrupt checksums anywhere in the PNG container, invalid IHDR modes/dimensions, misordered image data or palettes, and unknown critical chunks. The existing reader's checksum validation covered only the named ROYGBIV recipe chunk; preserving corrupt IDAT or an unrelated damaged colour/text chunk would have created a newly stamped but invalid archive. The additional check is CRC-only and no-render, with the same bounded focused test suite. Record verified image-chunk count/CRC status in the migration report. The correction to a historically faulty base64 1×1 test image fixture is **not** a renderer change. This does not authorize any historically ambiguous recipe dialect: v1/early-v2 migration remains gated.
+
+
 **M0 archaeology checkpoint (PR #480, 2026-10-22):** A 45-revision, source-blob-pinned model field ledger is available at [SCHEMA-CHANGE-LEDGER.md](recipe-format-history/SCHEMA-CHANGE-LEDGER.md) and [model-key-ledger.json](recipe-format-history/model-key-ledger.json), together with a reproducible local Git script. It captures every top-level explicit key added/removed during observed main-history `src/model.js` revisions. **This is structural evidence, not completed semantic/default translation.** Historical v1 and incomplete early-v2 PNGs remain gated until the precise source-era enum/default/renderer comparisons and fixtures are verified.
 Status: **M0 partly documented; M1/M3/M4 first safe implementation in PR #479; M2 historical conversion remains gated.** 2026-10-22.
 

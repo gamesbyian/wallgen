@@ -3,9 +3,9 @@ import assert from 'node:assert/strict';
 import {normalizeRecipe} from '../src/model.js';
 import {embedPngMetadata,readRawPngRecipe,extractPngRecipe,scanPngChunks,RECIPE_FORMAT}
   from '../src/png-metadata.js';
-import {inspectPngMigration,migratePngMetadataOnly} from '../src/png-recipe-migration.js';
+import {inspectPngMigration,migratePngMetadataOnly,validatePngMigrationContainer} from '../src/png-recipe-migration.js';
 const tiny=Uint8Array.from(Buffer.from(
-  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScL/9QAAAABJRU5ErkJggg==','base64'));
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/mXPo5QAAAABJRU5ErkJggg==','base64'));
 const same=(a,b)=>assert.equal(Buffer.compare(Buffer.from(a),Buffer.from(b)),0);
 const emitted=(raw)=>embedPngMetadata(tiny,{}, {recipe:raw});
 const native=normalizeRecipe({seed:'archive-🌈',family:'currents',geometry:'loop',
@@ -94,4 +94,47 @@ test('canonical migration is idempotent in recipe content, even when source had 
   const raw=readRawPngRecipe(first);
   assert.equal(raw.records.length,1);
   assert.equal(raw.selected.envelope.output.width,1);
+});
+
+function ancillaryChunk(type,payload){
+  const data=Buffer.from(payload),result=Buffer.alloc(data.length+12);
+  result.writeUInt32BE(data.length,0);
+  result.write(type,4,'ascii');data.copy(result,8);
+  let crc=0xffffffff;
+  for(const byte of result.subarray(4,result.length-4)){
+    crc^=byte;
+    for(let i=0;i<8;i++)crc=crc&1?0xedb88320^(crc>>>1):crc>>>1;
+  }
+  result.writeUInt32BE((crc^0xffffffff)>>>0,result.length-4);
+  return result;
+}
+function beforeIdat(image,chunk){
+  const at=scanPngChunks(image).chunks.find(c=>c.type==='IDAT').offset;
+  return Buffer.concat([image.subarray(0,at),chunk,image.subarray(at)]);
+}
+test('migration validates every PNG chunk, not only recipe text, before rewriting',()=>{
+  const input=emitted(native);
+  const intact=inspectPngMigration(input);
+  assert.equal(intact.validatedPngCrc,true);
+  assert.ok(intact.validatedPngChunks>=4);
+  const idat=scanPngChunks(input).chunks.find(c=>c.type==='IDAT');
+  const damagedImage=input.slice();damagedImage[idat.offset+9]^=1;
+  assert.throws(()=>inspectPngMigration(damagedImage),/IDAT checksum/);
+  assert.throws(()=>migratePngMetadataOnly(damagedImage),/IDAT checksum/);
+  const extended=beforeIdat(input,ancillaryChunk('tEXt',Buffer.from('Comment\0untouched')));
+  assert.equal(inspectPngMigration(extended).safe,true);
+  const textChunk=scanPngChunks(extended).chunks.find(c=>c.type==='tEXt');
+  const damagedText=Uint8Array.from(extended);
+  damagedText[textChunk.offset+10]^=1;
+  assert.throws(()=>inspectPngMigration(damagedText),/tEXt checksum/);
+});
+test('migration refuses valid-checksum unknown critical chunks and malformed chunk ordering',()=>{
+  const input=emitted(native);
+  const unknown=beforeIdat(input,ancillaryChunk('FAKE',Buffer.from([42])));
+  assert.throws(()=>inspectPngMigration(unknown),/Unsupported critical PNG chunk: FAKE/);
+  const extraIdat=ancillaryChunk('IDAT',Buffer.from([1,2,3]));
+  const scan=scanPngChunks(input),iend=scan.chunks.find(c=>c.type==='IEND').offset;
+  const noncontiguous=Buffer.concat([input.subarray(0,iend),
+    ancillaryChunk('tEXt',Buffer.from('Comment\0gap')),extraIdat,input.subarray(iend)]);
+  assert.throws(()=>validatePngMigrationContainer(noncontiguous),/Non-contiguous PNG image data/);
 });
