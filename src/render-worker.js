@@ -1,4 +1,4 @@
-import {drawWallpaper} from './renderer.js?v=20261018-worker1';
+import {drawWallpaper} from './renderer.js?v=20261022-photo1';
 
 // Sole rendering worker entry point. No DOM access; Canvas2D is shared with
 // the reference renderer via createRenderSurface() and OffscreenCanvas.
