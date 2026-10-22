@@ -1,5 +1,13 @@
 # Materials: first seven actual production-rendered appearance findings
 
+## Controlled source of linen sawtooth identified, 2026-10-22
+
+[Chromium experiment #39823468097](https://github.com/gamesbyian/wallgen/actions/runs/39823468097), artifact [#12446026709](https://github.com/gamesbyian/wallgen/actions/runs/39823468097/artifacts/12446026709), produced **three same-seed 480×1040 linen wallpapers** at contour displacement 0, 20 and 68. All other normalized recipe fields matched exactly, and the d68 PNG's pixels were *identical* to the prior `linen-1` art study. The d0 picture retained a visible fabric thread grid with **smooth ribbon boundaries**; 20 caused moderate teeth and 68 visibly aggressive serrations. Thus the stripe-boundary artifact is specifically the high-frequency material-height field being transferred to contour geometry, not the existence of painted fabric threads.
+
+**Implementation experiment queued (PR pending):** `linen-soft` selects an independent, opt-in contour-only five-point relief prefilter while keeping old linen material and the visible threads unchanged. Do not re-tune historical `linen` or silently cap `textureDisplacement`. After one real `linen-soft` image, judge whether it reduces teeth without erasing broader cloth undulation. The original seven-image visual findings continue below.
+
+
+
 **Completed:** 2026-10-22, one-off [Chromium production-render run #39820925332](https://github.com/gamesbyian/wallgen/actions/runs/39820925332) in disposable [PR #498](https://github.com/gamesbyian/wallgen/pull/498). The [seven-image artifact](https://github.com/gamesbyian/wallgen/actions/runs/39820925332/artifacts/12445010899) contains real 480×1040 PNGs, matching complete `.recipe.json` files, a `manifest.json`, and an HTML gallery. It was downloaded and visually inspected. The temporary workflow step was reverted byte-for-byte, and PR #498 was **closed unmerged**. Artifact retention: seven days.
 
 ## Checked evidence
