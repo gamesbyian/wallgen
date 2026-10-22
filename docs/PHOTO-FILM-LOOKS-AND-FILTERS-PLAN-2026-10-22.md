@@ -2,6 +2,12 @@
 
 > **2026-10-22 EXECUTION QUEUE:** This *specification only* was merged by [#464](https://github.com/gamesbyian/wallgen/pull/464). Implementation is separately queued in [#468](https://github.com/gamesbyian/wallgen/issues/468): F0 neutral film/seed/processing contract, F1 first actually attractive look, F2 seeded grain/halation, F3 shared Light → Photo (Film family), F4 parity and F5 optional sophistication. **Film controls, film grading and grain are not in the live app yet.** The [digital-camera companion #471](https://github.com/gamesbyian/wallgen/issues/471) shares the *same* photoLook schema, finished-frame processing and proposed UI; do not create a Film-only duplicate. Work independently of Embroidery #467, and update [active roadmap](ACTIVE-PRODUCT-ROADMAP-2026-10-22.md) on each shipped phase. Display-only Colour Vision Preview is **not** film emulation. Keep new CI proportional.
 
+## Execution status after PR #473 (2026-10-22)
+
+The first working increment is in [#473](https://github.com/gamesbyian/wallgen/pull/473): `src/photo-look.js` implements deterministic, in-place sRGB tone/saturation/colour, vignette and seeded grain for three generic film styles (slide, muted print, monochrome); `normalizeRecipe` persists an optional self-contained `photoLook`; final compositing includes Photo after lighting in both full render and cached nudge. The UI is temporarily **Light → Lighting → Photo pane**, not yet a separate named Photo tool. Disabled/Amount 0 bypasses image pixel readback. Quick Node PR gate is green; **output appearance, runtime memory and phone ergonomics remain unverified**.
+
+Status: **F0 partially implemented; F1 basic look on branch; F2 pending** (linear-light optics, halation/bloom, grain quality); **F3/F4 partially implemented** (shared export path/compact pane, missing full before/after and advanced controls); **F5 pending**. Avoid duplicating this implementation, and do not claim photo-real calibrated stock response. New user-facing comparison and a judged contact sheet should precede choosing optics parameters. Digital camera variants deliberately share this processor, see [the camera plan](DIGITAL-CAMERA-AND-COMPUTATIONAL-PHOTO-LOOKS-PLAN-2026-10-22.md).
+
 ## Research-backed image-processing plan, app architecture, UI/UX, presets and implementation queue
 
 **Created:** 2026-10-22. **Status:** proposed, not implemented. **Reviewed repository:** gamesbyian/wallgen main commit 7e970906222ebf1d085b12527f2a6aa9106d9209; reconcile latest main before implementation.
