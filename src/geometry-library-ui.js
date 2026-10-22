@@ -52,7 +52,7 @@ function drawThumbnail(container,asset){
   container.append(svg);
 }
 
-export function installGeometryLibraryUI({getRecipe,applyPath,onNotice,downloadBlob}){
+export function installGeometryLibraryUI({getRecipe,applyPath,applyShape,onNotice,downloadBlob}){
   const dialog=make(document.body,'dialog');
   dialog.className='geometry-library-dialog';
   dialog.setAttribute('aria-label','My shapes and paths');
@@ -135,7 +135,13 @@ export function installGeometryLibraryUI({getRecipe,applyPath,onNotice,downloadB
           onNotice('Applied saved path. Undo restores the previous wallpaper.');
         }catch(e){say(errorMessage(e));}
       });
-      else make(actions,'span','Available for Scattered shapes soon');
+      else button(actions,'Use shape',()=>{
+        try{
+          if(!applyShape?.(item.geometry))return;
+          dialog.close();
+          onNotice('Applied saved silhouette. The wallpaper embeds its own copy.');
+        }catch(e){say(errorMessage(e));}
+      });
       button(actions,'Export',async()=>{
         try{download(await serializeGeometryAsset(item),
           'roygbiv-'+safeName(item.name)+'.geometry.json');
@@ -150,13 +156,14 @@ export function installGeometryLibraryUI({getRecipe,applyPath,onNotice,downloadB
       });
     }
   }
-  async function open(){
+  async function open({filterKind}={}){
     opener=document.activeElement;
     if(dialog.open)return;
     // More is a nonmodal mobile sheet. Avoid leaving it in front of a modal.
     const tools=document.getElementById('mobileToolsSheet');
     if(tools&&!tools.hidden)document.getElementById('mobileToolsClose')?.click();
     dialog.showModal();
+    if(filterKind==='shape'||filterKind==='path')filter.value=filterKind;
     sync();
     if(canSave())name.value='Path '+getRecipe().seed.slice(0,25);
     else name.value='';
