@@ -283,6 +283,28 @@
 <label class="field">Blend mode<select name="textureBlend3" data-setting="textureBlend3"><option value="normal">Normal</option><option value="multiply">Multiply</option><option value="screen">Screen</option><option value="overlay">Overlay</option><option value="soft-light">Soft light</option><option value="difference">Difference</option></select></label>
 
 </div>
+        <div class="embroidery-controls" role="group" aria-label="Surface embroidery">
+          <strong>Thread treatment</strong>
+          <label class="field">Embroider
+            <select name="embroideryTarget">
+              <option value="off">Off · plain surfaces</option>
+              <option value="all">All rainbow colours</option>
+              <option value="0">Red only</option><option value="1">Orange only</option>
+              <option value="2">Yellow only</option><option value="3">Green only</option>
+              <option value="4">Blue only</option><option value="5">Indigo only</option>
+              <option value="6">Violet only</option>
+            </select>
+          </label>
+          <div class="control-grid range-grid">
+            <label class="field range-field"><span>Stitch spacing</span>
+              <input type="range" name="embroideryPitch" min="2" max="16" value="5">
+            </label>
+            <label class="field range-field"><span>Thread relief</span>
+              <input type="range" name="embroideryRelief" min="0" max="100" value="65">
+            </label>
+          </div>
+          <small>Opt-in thread shading follows each selected stripe or region fill. Independent of your three texture layers; outlines and intricate stitch styles are forthcoming.</small>
+        </div>
         <div class="texture-displacement-control">
           <label class="field range-field"><span>Contour distortion</span>
             <input type="range" name="textureDisplacement" id="textureDisplacement" data-setting="textureDisplacement" min="0" max="100" value="0">
