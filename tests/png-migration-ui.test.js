@@ -46,3 +46,15 @@ test('More offers exact-byte salvage even when recipe JSON inspection throws',()
   assert.match(app,/migrationInspection=\{\.\.\.archive,safe:false/);
   assert.match(app,/Save original recipe records \(exact bytes\)/);
 });
+
+test('ordinary PNG restore warns when legacy source is normalized, without disabling import',()=>{
+  const app=file('src/app.js'),png=file('src/png-metadata.js');
+  assert.match(png,/export function extractPngRecipeWithProvenance\(input\)/);
+  assert.match(png,/normalizedFieldsChanged/);
+  assert.match(png,/return extractPngRecipeWithProvenance\(input\)\.recipe/);
+  assert.match(app,/extractPngRecipeWithProvenance\(await file\.arrayBuffer\(\)\)/);
+  assert.match(app,/historicalInterpretation=recovered\.format!==/);
+  assert.match(app,/recovered\.normalizedFieldsChanged\|\|recovered\.recordCount>1/);
+  assert.match(app,/Artwork may differ from the saved image; retain the original PNG/);
+  assert.match(app,/changeRecipe\(recipe,\{bypassLocks:true\}\)/);
+});

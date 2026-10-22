@@ -2,7 +2,7 @@ import { OUTPUT_WIDTH, OUTPUT_HEIGHT, NAMES, normalizeRecipe, resolveScene, enco
 import { drawWallpaper, presentNudgedArtwork } from './renderer.js?v=20261022-photo1';
 import {normalizePhotoLook,PHOTO_PRESETS} from './photo-look.js';
 import {createPreviewCoordinator,createThumbnailQueue,exportWallpaperInWorker,closeFrame} from './render-coordinator.js';
-import { embedPngMetadata, extractPngRecipe, cleanMetadata, METADATA_FIELDS } from './png-metadata.js';
+import { embedPngMetadata, extractPngRecipeWithProvenance, cleanMetadata, METADATA_FIELDS } from './png-metadata.js';
 import {inspectPngMigration,migratePngMetadataOnly,inspectPngRecipeArchive,archivePngRecipeRecords} from './png-recipe-migration.js';
 import { installDrawTool } from './draw-path-ui.js?v=20261018-extend1';
 import {appliedDrawnPathRecipe} from './draw-apply-transaction.js';
@@ -1074,7 +1074,7 @@ importRecipeFile.addEventListener('change',async()=>{
     const limit=isJSON?10*1024*1024:150*1024*1024;
     if(file.size>limit)throw Error(isJSON?
       'JSON exceeds the 10 MB import limit':'PNG exceeds the 150 MB import limit');
-    let recipe;
+    let recipe,historicalInterpretation=false;
     if(isJSON){
       let raw;
       try{raw=JSON.parse(await file.text());}
@@ -1085,12 +1085,17 @@ importRecipeFile.addEventListener('change',async()=>{
         throw Error('JSON must contain a wallpaper recipe with seed and structure');
       recipe=normalizeRecipe(raw);
     }else{
-      recipe=extractPngRecipe(await file.arrayBuffer());
+      const recovered=extractPngRecipeWithProvenance(await file.arrayBuffer());
+      recipe=recovered.recipe;
       if(!recipe)throw Error('This PNG has no R.O.Y.G.B.I.V. recipe metadata');
+      historicalInterpretation=recovered.format!=='roygbiv-recipe-v2'||
+        recovered.normalizedFieldsChanged||recovered.recordCount>1;
     }
     changeRecipe(recipe,{bypassLocks:true});
     showNotice(isJSON?'Restored wallpaper settings from JSON recipe.':
-      'Restored original wallpaper settings from PNG recipe.');
+      historicalInterpretation?
+        'Restored historical PNG settings through the current generator. Artwork may differ from the saved image; retain the original PNG.':
+        'Restored PNG recipe settings. Rendering may differ across app versions.');
   }catch(error){showNotice('Cannot restore design: '+error.message);}
 });
 

@@ -1,6 +1,11 @@
 # ROYGBIV: active product roadmap and work queue
 
-## Contextual Photo halation strength without a taller tray (PR pending, 2026-10-22)
+## Historical PNG Restore gets truthful renderer-compatibility feedback (PR pending, 2026-10-22)
+
+The ordinary **Restore design from PNG** journey has continued to accept legacy v1/v2 recipe records through the same `normalizeRecipe` semantics; it previously said “Restored original wallpaper settings”, which implied exact source-image reconstruction despite verified historical default/renderer drift. The importer now returns the validated selected recipe and provenance in **one raw read**. The UI detects v1 dialects, fields that today's normalizer changes/synthesizes, and multi-record files, and reports that the restored artwork may differ under the current generator while asking the user to keep the source PNG. A fully current canonical PNG receives a shorter, still honest cross-version note. This is an **informational notification**, not a confirmation dialog, import rejection, automatic migration or changed Undo flow; exact-byte archival rescue and strict metadata-only migration remain separate. Focused import/notice tests and no extra CI.
+
+
+## Contextual Photo halation strength without a taller tray (PR #493 merged, 2026-10-22)
 
 The existing Light → Photo controls now expose the previously hidden **Warm Halation strength** through the *same second slider slot* occupied by Grain for every other Photo look. Selecting Warm Film Halation swaps Grain for Halation while keeping Amount alongside it, a two-control grid and no additional tool destination or vertical settings scroll. The contextual value travels through normal `photoLook.parameters.halation` normalization, Undo, exported PNG, favorites and headless/worker processing. Switching between looks restores their own preset values rather than leaking the previous effect's controls. All prior Photo presets and their original parameter serialization remain unchanged. Lean focused tests check the exact control arrangement, restoration wiring and real numeric change in warm edge pixels. Full visual/physical Pixel acceptance remains queued.
 

@@ -1,5 +1,10 @@
 # Agent orientation for ROYGBIV
 
+## Legacy PNG restoration must not claim pixel equivalence (2026-10-22)
+
+`extractPngRecipeWithProvenance` in `src/png-metadata.js` provides one-read validated v1/v2 importer provenance (normalizer changes and duplicate-record count); existing `extractPngRecipe` delegates with its original return contract. The ordinary Restore UI shows a short caution when current normalization alters old fields or a v1/multiple-record PNG is imported. Import remains available through existing recipe/Undo transaction. Do **not** mislabel successful import as exact historical renderer/pixel regeneration or conflate import with the strict, no-render migration/archival path. No new CI workload.
+
+
 ## Photo secondary control is contextual (2026-10-22)
 
 Light → Photo uses the same two-slot grid for Amount + a preset-dependent second control: Grain for most looks, Halation for `film-halation-only`. Keep original `photoGrain` source control and the contextual `photoHalation` input. `syncPhotoSecondarySlot` hides the irrelevant field, with CSS `[hidden]` taking precedence over generic range styles, and `fromControls` maps active halation to `photoLook.parameters.halation`. Do not add a duplicate control row, top-level destination, hidden grade changes or expensive CI. Real Pixel tray fit still needs manual confirmation.
