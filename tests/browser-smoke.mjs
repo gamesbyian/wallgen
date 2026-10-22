@@ -2999,6 +2999,20 @@ try{
   assert.equal(visionExportIsolation.overlayOff,true);
   assert.equal(visionExportIsolation.recipeUnchanged,true);
   console.log('COLOUR_VISION_EXPORT_ISOLATION',JSON.stringify(visionExportIsolation));
+  await command('Emulation.setDeviceMetricsOverride',{
+    width:1180,height:860,deviceScaleFactor:1,mobile:false,screenWidth:1180,screenHeight:860});
+  await delay(100);
+  const desktopVision=await evaluate('(()=>{const b=document.getElementById("visionPreviewToggle"),panel=document.getElementById("visionPanel"),anchor=document.querySelector(".vision-panel-anchor");return {isDesktop:!matchMedia("(max-width:790px)").matches,entryInDesktop:document.querySelector(".vision-desktop-slot").contains(b),panelInAdjacentSlot:anchor.contains(panel),panelOutsideWallpaper:!document.querySelector(".wallpaper-surface").contains(panel),entryHeight:b.getBoundingClientRect().height};})()');
+  assert.equal(desktopVision.isDesktop,true);
+  assert.equal(desktopVision.entryInDesktop,true);
+  assert.equal(desktopVision.panelInAdjacentSlot,true);
+  assert.equal(desktopVision.panelOutsideWallpaper,true);
+  assert.ok(desktopVision.entryHeight>=44);
+  await evaluate('document.getElementById("visionPreviewToggle").click()');
+  const desktopEscape=await evaluate('(()=>{const p=document.getElementById("visionPanel");p.dispatchEvent(new KeyboardEvent("keydown",{key:"Escape",bubbles:true}));return {panelHidden:p.hidden,collapsed:document.getElementById("visionPreviewToggle").getAttribute("aria-expanded")==="false",focusRestored:document.activeElement===document.getElementById("visionPreviewToggle")};})()');
+  assert.deepEqual(desktopEscape,{panelHidden:true,collapsed:true,focusRestored:true});
+  console.log('COLOUR_VISION_DESKTOP_KEYBOARD',JSON.stringify({desktopVision,desktopEscape}));
+
 
 
 
