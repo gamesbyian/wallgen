@@ -121,7 +121,7 @@ test('migration validates every PNG chunk, not only recipe text, before rewritin
   const damagedImage=input.slice();damagedImage[idat.offset+9]^=1;
   assert.throws(()=>inspectPngMigration(damagedImage),/IDAT checksum/);
   assert.throws(()=>migratePngMetadataOnly(damagedImage),/IDAT checksum/);
-  const extended=beforeIdat(input,ancillaryChunk('tEXt',Buffer.from('Comment\\0untouched')));
+  const extended=beforeIdat(input,ancillaryChunk('tEXt',Buffer.from('Comment\0untouched')));
   assert.equal(inspectPngMigration(extended).safe,true);
   const textChunk=scanPngChunks(extended).chunks.find(c=>c.type==='tEXt');
   const damagedText=Uint8Array.from(extended);
@@ -135,6 +135,6 @@ test('migration refuses valid-checksum unknown critical chunks and malformed chu
   const extraIdat=ancillaryChunk('IDAT',Buffer.from([1,2,3]));
   const scan=scanPngChunks(input),iend=scan.chunks.find(c=>c.type==='IEND').offset;
   const noncontiguous=Buffer.concat([input.subarray(0,iend),
-    ancillaryChunk('tEXt',Buffer.from('Comment\\0gap')),extraIdat,input.subarray(iend)]);
+    ancillaryChunk('tEXt',Buffer.from('Comment\0gap')),extraIdat,input.subarray(iend)]);
   assert.throws(()=>validatePngMigrationContainer(noncontiguous),/Non-contiguous PNG image data/);
 });
