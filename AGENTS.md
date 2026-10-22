@@ -23,3 +23,10 @@ Read these documents **before recommending menu reorganisation or changing sourc
 5. Prefer small comparison prototypes, contextual deep links and narrow source checks. Documentation/IA study does not call for exhaustive screenshot suites or extra per-PR CI requirements.
 
 For changes outside UX, the relevant application source, current project documentation and active PRs take precedence. This file is a map of relevant research, not a replacement for specific engineering requirements.
+
+## Proposed artistic systems (plans only, not yet implemented)
+
+- [Geometry-aware surface treatments and embroidery](docs/GEOMETRY-AWARE-EMBROIDERY-AND-SURFACE-TREATMENTS-PLAN-2026-10-22.md): stitch generation, material coordinate frames, target scopes, physically shaded thread, licenced reuse candidates, mobile Treatments inspector and proportionate delivery gates.
+- [Photographic film looks and filters](docs/PHOTO-FILM-LOOKS-AND-FILTERS-PLAN-2026-10-22.md): film colour response, grain, halation, bloom, final-composite processing, seeded export parity, compact Light > Film UX and implementation queue.
+
+These documents specify **proposals**, not existing controls or renderer behaviour. Reconcile current main and relevant active work before implementation; do not use them to alter baseline artwork, expand CI or redesign all navigation by default.
