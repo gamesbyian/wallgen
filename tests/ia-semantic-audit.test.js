@@ -12,7 +12,7 @@ test('live schema has exactly one domain and candidate home per source setting',
   assert.equal(a.inventory.domainKeys,a.inventory.sourceKeys);
   assert.equal(a.inventory.candidateKeys,candidateHomes().length);
   assert.equal(a.inventory.categories,7);
-  assert.equal(a.inventory.tools,43);
+  assert.equal(a.inventory.tools,40);
   assert.equal(a.inventory.sourceKeys,95);
 });
 test('goals, prerequisites and evidence do not point at nonexistent keys',()=>{
