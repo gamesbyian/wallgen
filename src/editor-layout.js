@@ -8,6 +8,7 @@ import {legacyToolAliases,legacyCategoryAliases,legacySettingAliases} from './ed
 import {installMaterialLayerIndicators} from './editor-material-indicators.js';
 import {installMaterialInspectors} from './editor-material-inspector.js';
 import {installRelatedLightTools} from './editor-related-light-tools.js';
+import {installPatternPrerequisites} from './editor-pattern-prerequisites.js';
 
 const byId=id=>document.getElementById(id);
 const form=byId('controls');
@@ -369,6 +370,8 @@ export function mountEditor(){
   selectEditorTool('layout','arrange');
   const focused=installFocusedAdjustments({form,chooser});
   installMaterialLayerIndicators({form,tools});
+  installPatternPrerequisites({form,tools,
+    select:(category,tool)=>selectEditorTool(category,tool,{source:'related'})});
   return {focused,materialInspectors,getCurrent:()=>({category:activeCategory,tool:activeTool}),tools,chooser,searchInput};
 }
 export function selectEditorTool(category,tool,{source='manual'}={}){
