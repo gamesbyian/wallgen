@@ -280,6 +280,9 @@ function toControls(recipe) {
     stitch?.target.scope==='palette'&&stitch.target.colorSlots.length===1?
       String(stitch.target.colorSlots[0]):'off';
   form.elements.namedItem('embroideryTarget').value=selected;
+  const threadSummary=form.querySelector('.thread-treatment-summary');
+  if(threadSummary)threadSummary.textContent=selected==='off'?'Off':
+    selected==='all'?'All colours':NAMES[Number(selected)];
   for(const [name,value] of [['embroideryPitch',stitch?.pitch??5],['embroideryRelief',stitch?.relief??65]]){
     form.elements.namedItem(name).value=String(value);
     const numeric=form.querySelector('[data-number-for="'+name+'"]');
