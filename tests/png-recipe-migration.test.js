@@ -208,10 +208,14 @@ test('identical duplicate recipes may consolidate; conflicting history is refuse
 });
 
 test('exact-byte archive survives valid-PNG malformed recipe JSON, unsupported text flags and duplicates',()=>{
-  const broken=ancillaryChunk('iTXt',
-    Buffer.from('ROYGBIV Recipe\0\\0\\0\\0\\0{"format":"v1","recipe":{'));
-  const encoded=ancillaryChunk('iTXt',
-    Buffer.from('ROYGBIV Recipe\0\1\\0\\0\\0unknown-compression'));
+  const broken=ancillaryChunk('iTXt',Buffer.concat([
+    Buffer.from('ROYGBIV Recipe'),Buffer.from([0,0,0,0,0]),
+    Buffer.from('{"format":"v1","recipe":{')
+  ]));
+  const encoded=ancillaryChunk('iTXt',Buffer.concat([
+    Buffer.from('ROYGBIV Recipe'),Buffer.from([0,1,0,0,0]),
+    Buffer.from('unknown-compression')
+  ]));
   const source=beforeIdat(beforeIdat(tiny,broken),encoded);
   assert.throws(()=>readRawPngRecipe(source),/Unsupported recipe metadata encoding|Damaged recipe metadata/);
   assert.throws(()=>inspectPngMigration(source),/Unsupported recipe metadata encoding|Damaged recipe metadata/);
@@ -229,8 +233,10 @@ test('exact-byte archive survives valid-PNG malformed recipe JSON, unsupported t
   same(source,intact,'unparseable source must not be modified by recovery');
 });
 test('CLI --archive writes original bytes even when PNG metadata migration cannot parse JSON',()=>{
-  const damagedText=ancillaryChunk('iTXt',
-    Buffer.from('ROYGBIV Recipe\0\\0\\0\\0\\0not-json'));
+  const damagedText=ancillaryChunk('iTXt',Buffer.concat([
+    Buffer.from('ROYGBIV Recipe'),Buffer.from([0,0,0,0,0]),
+    Buffer.from('not-json')
+  ]));
   const image=beforeIdat(tiny,damagedText);
   const folder=mkdtempSync(join(tmpdir(),'roygbiv-archive-test-'));
   try{
