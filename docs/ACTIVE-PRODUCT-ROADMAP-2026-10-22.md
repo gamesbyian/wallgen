@@ -1,6 +1,11 @@
 # ROYGBIV: active product roadmap and work queue
 
-## Rescue malformed historical recipe records without parsing them (PR pending, 2026-10-22)
+## Contextual Photo halation strength without a taller tray (PR pending, 2026-10-22)
+
+The existing Light → Photo controls now expose the previously hidden **Warm Halation strength** through the *same second slider slot* occupied by Grain for every other Photo look. Selecting Warm Film Halation swaps Grain for Halation while keeping Amount alongside it, a two-control grid and no additional tool destination or vertical settings scroll. The contextual value travels through normal `photoLook.parameters.halation` normalization, Undo, exported PNG, favorites and headless/worker processing. Switching between looks restores their own preset values rather than leaking the previous effect's controls. All prior Photo presets and their original parameter serialization remain unchanged. Lean focused tests check the exact control arrangement, restoration wiring and real numeric change in warm edge pixels. Full visual/physical Pixel acceptance remains queued.
+
+
+## Rescue malformed historical recipe records without parsing them (PR #492 merged, 2026-10-22)
 
 The archival PNG rescue tool now decouples **copying original named `ROYGBIV Recipe` iTXt chunks** from `JSON.parse`. If the overall PNG container/CRC is valid but the old recipe text is malformed, uses an unsupported encoding or an unfamiliar dialect, `inspectPngRecipeArchive` detects recoverable named chunks. More → Files & sharing still refuses unsafe recipe updates but enables **Save original recipe records (exact bytes)**, with an informative report. The `png:migrate --archive` CLI writes that backup *before* attempting semantic inspection, returning a refusal status without changing the PNG. Archived record formats may be `null` if unreadable; binary length/type/text/CRC remain intact. Fixed bounds (64 records/16 MiB total/1 MiB each), intact-image validation, targeted UI and real CLI salvage tests. This advances the existing preservation queue rather than authorizing any unproven historical conversion. No new CI workflow or screenshot suites.
 
