@@ -27,7 +27,7 @@ const cropped=({cx,cy,r})=>cx-r<0||cx+r>W||cy-r<0||cy+r>H;
 const within=({cx,cy,r})=>cx-r>=0&&cx+r<=W&&cy-r>=0&&cy+r<=H;
 
 export const RAINBOW_ORBITS=Object.freeze({
-  structure:'regions',regionMode:'scattered',scatteredShapeKind:'circle',scatteredCount:7,
+  seed:'orbits-209',structure:'regions',regionMode:'scattered',scatteredShapeKind:'circle',scatteredCount:7,
   scatteredMinSize:10,scatteredMaxSize:83,scatteredVariation:92,
   scatteredSpacing:28,scatteredEdgeCrop:75,scatteredOverlap:'separate',
   palette:'classic',background:'black',material:'none',
@@ -53,20 +53,30 @@ export function buildScatteredCircles(recipe){
   const clearance=clamp(Number(recipe.scatteredSpacing)||0,0,100)*.65;
   const overlap=recipe.scatteredOverlap==='overlap';
   const minRadius=8+minPercent*.65;
-  const maxRadius=Math.max(minRadius,20+maxPercent*2.12);
+  const maxRadius=Math.max(minRadius,Math.min(20+maxPercent*3.4,
+    count<=10?Infinity:170*Math.sqrt(10/count)));
   const sizeRng=randomStream(recipe.seed+':scattered-sizes:v1');
   const placementRng=randomStream(recipe.seed+':scattered-positions:v1');
   // Mix radically large and small pieces for the seven-circle archetype.
   // Order by radius during packing, then restore stable colour-index order.
+  // Stratification guarantees a real range of small and large circles,
+  // instead of a seven-sample accident where every radius is similar.
+  // Shuffle size ranks independently from pigment slots and placement.
+  const ranks=Array.from({length:count},(_,i)=>i);
+  for(let i=count-1;i>0;i--){
+    const j=Math.floor(sizeRng()*(i+1));
+    [ranks[i],ranks[j]]=[ranks[j],ranks[i]];
+  }
   const requested=Array.from({length:count},(_,i)=>{
-    const sample=sizeRng();
-    const t=(1-variation)*.5+variation*Math.pow(sample,1.65);
+    const sample=(ranks[i]+.15+.7*sizeRng())/count;
+    const t=(1-variation)*.5+variation*Math.pow(sample,1.1);
     return {index:i,r:minRadius+(maxRadius-minRadius)*t,tie:sizeRng()};
   }).sort((a,b)=>b.r-a.r||a.tie-b.tie);
   const objects=[];
   // A bounded, user-controlled fraction: the remaining circles stay fully
   // in frame, giving cropped silhouettes meaningful negative-space contrast.
-  const mandatoryCrop=Math.min(count,Math.round(count*crop*.55));
+  const mandatoryCrop=Math.min(count,Math.round(count*crop*.55),
+    Math.max(1,Math.ceil(Math.sqrt(count))));
   let croppedCount=0;
   const gap=clearance;
   for(const item of requested){
