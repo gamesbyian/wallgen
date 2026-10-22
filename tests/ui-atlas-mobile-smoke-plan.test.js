@@ -14,7 +14,7 @@ test('one stable named tool from each source category is in the mobile screensho
 test('mobile capture plan retains camera, Focus, complex, cream/dark and navigation journeys',()=>{
  const expected=[
   'studio-default','editor-open','special-mobile-edit-rail',
-  'tool-paths-material-finish1','tool-paths-details-interior-targets',
+  'tool-paths-material-layer1','tool-paths-details-interior-targets',
   'special-focus-stripe-width','conditional-diagonal',
   'conditional-material-layers','special-dark-theme',
   'shell-mobile-more','shell-mobile-explore','special-view-pan',
