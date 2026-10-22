@@ -1,5 +1,8 @@
 # Material surface and displacement contract
 
+**Opt-in linen contour prefilter (2026-10-22, PR pending):** The same-seed [three-image experiment #39823468097](https://github.com/gamesbyian/wallgen/actions/runs/39823468097) proved the fabric grid is independent of contour distortion: d0 retains weave but has smooth borders; d20 introduces visible teeth, d68 strong serrations, with identical geometry and recipe except the one setting. New `linen-soft` keeps the existing visible linen thread paint and height field, but `materialContourHeight` averages five samples at half-weave pitch only for stripe-edge relief. Old `linen` recipes still use exact unfiltered historical samples and preserve prior pixels. Material selection for any of the three layers is via its existing native select; no taller editor. This is an opt-in visual-arts refinement, not proof of native-resolution/device photorealism.
+
+
 **Visual evidence update 2026-10-22:** Seven real source-consistent production material PNGs were generated in Chromium and visually inspected. See [material review findings](MATERIAL-PRODUCTION-RENDER-FINDINGS-2026-10-22.md). The relief field is visibly connected to stripe-edge displacement. At a fairly strong 68 displacement, linen’s periodic crosshatch produces sawtooth/frayed ribbon contours, while concrete remains subtly flecked and watercolour paper cloudy. Material realism **remains open**, but the art review is no longer merely scheduled. Do not alter historic material appearance blindly; first isolate linen effect with a same-seed 0/20/68 displacement sweep. The temporary GHA run was removed without changing routine CI.
 
 
