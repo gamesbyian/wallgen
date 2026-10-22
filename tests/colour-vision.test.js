@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {MACHADO_MATRICES} from '../src/colour-vision-matrices.js';
-import {COLOUR_VISION_MODES,machadoMatrix,simulateRgb,simulateImageData} from '../src/colour-vision.js';
+import {COLOUR_VISION_MODES,machadoMatrix,simulateRgb,simulateImageData,createColourVisionJob} from '../src/colour-vision.js';
 
 const identity=[1,0,0,0,1,0,0,0,1];
 const image=(width,height,pixels)=>({width,height,data:new Uint8ClampedArray(pixels)});
@@ -104,4 +104,27 @@ test('Brettel 1997 tritan separates the two LMS projection wings',()=>{
   // At 50% severity, interpolation must occur in linear RGB, not sRGB bytes.
   assert.deepEqual(simulateRgb([0,255,0],'tritan',.5),[87,244,198]);
   assert.deepEqual(simulateRgb([0,0,255],'tritan',0),[0,0,255]);
+});
+
+test('chunked processing exactly matches synchronous single-pass output',()=>{
+  const width=17,height=37,data=new Uint8ClampedArray(width*height*4);
+  for(let i=0;i<data.length;i++)data[i]=(i*73+19)%256;
+  const src={width,height,data};
+  const before=new Uint8ClampedArray(data);
+  for(const mode of ['original','protan','deutan','tritan']){
+    for(const severity of [0,.1,.55,1]){
+      const expected=simulateImageData(src,mode,severity);
+      const job=createColourVisionJob(src,mode,severity);
+      let at=0;
+      while(at<width*height){const end=Math.min(width*height,at+13);
+        job.processPixels(at,end);at=end;
+      }
+      assert.deepEqual(job.result.data,expected.data,mode+' '+severity);
+      assert.deepEqual(src.data,before,'no source mutation '+mode+' '+severity);
+      assert.ok(job.result.data.every(Number.isFinite));
+    }
+  }
+  const job=createColourVisionJob(src,'protan',1);
+  assert.throws(()=>job.processPixels(-1,1),RangeError);
+  assert.throws(()=>job.processPixels(0,width*height+1),RangeError);
 });
