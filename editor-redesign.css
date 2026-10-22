@@ -1483,3 +1483,18 @@ html[data-theme="cream"] body.mobile-studio .sidebar .settings-tabs .settings-ta
     min-height:28px!important;padding:2px 5px!important;margin-top:3px!important;
   }
 }
+
+
+/* Small ranked choice overlay: editing sheet retains its fixed height. */
+.editor-explore{position:relative}
+.editor-search-results{position:absolute;z-index:24;top:100%;left:0;right:0;
+  padding:3px;max-height:186px;overflow-y:auto;border:1px solid var(--line);
+  border-radius:9px;background:var(--surface);box-shadow:0 5px 14px #0004}
+.editor-search-results[hidden]{display:none!important}
+.editor-search-choice{display:block;width:100%;min-height:36px;text-align:left;font:inherit;
+  font-size:11px;line-height:1.3;color:inherit;background:transparent;
+  border:0;border-bottom:1px solid var(--line);padding:6px 8px;cursor:pointer}
+.editor-search-choice:last-child{border-bottom:0}
+.editor-search-choice:hover,.editor-search-choice[aria-selected=true]{
+  background:rgba(125,130,160,.18);font-weight:650}
+.editor-search-choice:focus-visible{outline:2px solid currentColor;outline-offset:-2px}

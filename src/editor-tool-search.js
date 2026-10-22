@@ -59,17 +59,14 @@ const bestTextScore=(query,values,{exact=120,prefix=90,substring=60}={})=>{
  * An inactive field is still found within a visible tool so the UI can
  * explain its prerequisite rather than pretending the setting is missing.
  */
-export function findEditorSearchHit(query,toolList,{
+export function findEditorSearchHits(query,toolList,{
   applies=()=>true,labelFor=key=>key,aliasesForTool=()=>[],
   aliasesForSetting=()=>[],aliasesForCategory=()=>[]
 }={}){
   const term=normalizeQuery(query);
-  if(!term)return null;
-  let winner=null,order=0;
-  const consider=result=>{
-    if(!winner||result.score>winner.score||
-      (result.score===winner.score&&result.order<winner.order))winner=result;
-  };
+  if(!term)return [];
+  const found=[];let order=0;
+  const consider=result=>{found.push(result);};
   for(const tool of toolList){
     const sequence=order++;
     if(!applies(tool))continue;
@@ -92,7 +89,12 @@ export function findEditorSearchHit(query,toolList,{
       if(score)consider({tool,key,label,score,order:sequence,kind:'setting'});
     }
   }
-  if(!winner)return null;
-  const {order:_order,...result}=winner;
-  return result;
+  return found
+    .sort((a,b)=>b.score-a.score||a.order-b.order)
+    .slice(0,8)
+    .map(({order:_order,...result})=>result);
+}
+/** Preserve the stable first-match API for existing callers and tests. */
+export function findEditorSearchHit(query,toolList,options={}){
+  return findEditorSearchHits(query,toolList,options)[0]||null;
 }
