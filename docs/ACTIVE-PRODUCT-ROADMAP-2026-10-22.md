@@ -1,5 +1,10 @@
 # ROYGBIV: active product roadmap and work queue
 
+## Camera-inspired low-resolution capture preview (PR pending, 2026-10-22)
+
+The common Photo engine now offers a **separate Low-res webcam capture** preset alongside the earlier colour-only webcam preview. This new opt-in mode samples a bounded 200-column sensor image (aspect-matched, at most 520 rows) from the final composed wallpaper, averages small source neighborhoods, shares colour information across 2×2 sensor blocks, and quantizes luminance/chroma. It then upscales the signal through the same deterministic final Photo stage; only the low-resolution temporary buffer is allocated, never another 20MP image. Original webcam colour and all prior presets keep their original rendering branches. Tests cover detail loss, stable output, alpha and zero-amount neutrality. This advances Camera D3 signal quality, **not** actual MJPEG/JPEG entropy coding, device sensor models or calibrated 480p performance. Actual phone render quality and runtime remain open.
+
+
 ## New Film grain-only creative look (PR pending, 2026-10-22)
 
 Photo → Inspired look now includes **Film grain only**. Its expanded recipe is neutral for contrast, saturation, channels and vignette; only controllable seeded grain changes the authored image. A two-scale grain field adds fine emulsion speckles and subtle lower-frequency density variation anchored in authored canvas coordinates. Existing six presets retain their original code path and stored parameter values; the new effect is opt-in, works through the shared renderer/export/worker Photo finish, and adds no extra editor or CI workflow. Focused neutral-pixel, seed and multi-resolution tests cover the new mode. This advances Film F2 *grain variation only*: halation, physically meaningful density, device performance, and visual quality judgement remain unverified.
