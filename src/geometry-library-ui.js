@@ -14,6 +14,43 @@ const make=(parent,tag,text)=>{
 const pathAvailable=recipe=>recipe?.structure==='paths'&&recipe.geometry==='drawn'&&
   Array.isArray(recipe.customPath)&&recipe.customPath.length>=2;
 const safeName=s=>s.toLowerCase().replace(/[^a-z0-9_-]+/g,'-').slice(0,40)||'geometry';
+// Monochrome vector previews come from the geometry actually stored, never
+// from the image that happened to be on the wallpaper when Save was clicked.
+function drawThumbnail(container,asset){
+  const ns='http://www.w3.org/2000/svg';
+  const svg=document.createElementNS(ns,'svg');
+  svg.setAttribute('aria-hidden','true');
+  svg.setAttribute('preserveAspectRatio','xMidYMid meet');
+  const geometry=asset.geometry;
+  let all=[],rings=[];
+  if(geometry.type==='open-path'){
+    all=geometry.points.map(([x,y])=>[x*600,y*1300]);
+    const path=document.createElementNS(ns,'polyline');
+    path.setAttribute('points',all.map(p=>p.join(',')).join(' '));
+    path.setAttribute('fill','none');
+    path.setAttribute('stroke','#d8c4ff');
+    path.setAttribute('stroke-linejoin','round');
+    path.setAttribute('stroke-linecap','round');
+    path.setAttribute('stroke-width','5');
+    path.setAttribute('vector-effect','non-scaling-stroke');
+    svg.append(path);
+  }else{
+    rings=geometry.components.flatMap(c=>[c.outer,...c.holes]);
+    all=rings.flat();
+    const shape=document.createElementNS(ns,'path');
+    shape.setAttribute('d',rings.map(r=>
+      'M '+r.map(p=>p.join(' ')).join(' L ')+' Z').join(' '));
+    shape.setAttribute('fill-rule','evenodd');
+    shape.setAttribute('fill','#e7b5fc');
+    svg.append(shape);
+  }
+  const xs=all.map(p=>p[0]),ys=all.map(p=>p[1]);
+  const x=Math.min(...xs),y=Math.min(...ys),w=Math.max(...xs)-x,h=Math.max(...ys)-y;
+  const padding=Math.max(w,h,1)*.09;
+  svg.setAttribute('viewBox',[x-padding,y-padding,Math.max(w,1)+2*padding,
+    Math.max(h,1)+2*padding].join(' '));
+  container.append(svg);
+}
 
 export function installGeometryLibraryUI({getRecipe,applyPath,onNotice,downloadBlob}){
   const dialog=make(document.body,'dialog');
@@ -86,8 +123,7 @@ export function installGeometryLibraryUI({getRecipe,applyPath,onNotice,downloadB
     for(const item of items){
       const card=make(list,'article');card.className='geometry-library-item';
       const thumb=make(card,'div');thumb.className='geometry-library-thumb';
-      const icon=make(thumb,'span',item.kind==='path'?'∿':'◇');
-      icon.setAttribute('aria-hidden','true');
+      drawThumbnail(thumb,item);
       const data=make(card,'div');data.className='geometry-library-item-info';
       make(data,'strong',item.name);
       make(data,'small',item.kind==='path'?'Path':'Shape');
