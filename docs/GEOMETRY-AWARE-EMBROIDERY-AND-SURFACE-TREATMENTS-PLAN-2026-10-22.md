@@ -1,5 +1,9 @@
 # ROYGBIV: geometry-aware surfaces and procedural embroidery
 
+## Follow-up compact workspace (PR #478, 2026-10-22)
+
+[#478](https://github.com/gamesbyian/wallgen/pull/478) adds a native expandable Thread workspace within Texture → Surface. Closed, it leaves ordinary surface knobs accessible and reports the active palette selection. Open, it presents only the Thread controls, avoiding a permanently taller no-scroll phone card. The underlying treatment object, target IDs and original field identities do not change. This is a source-qualified E4 UX step, **not** a physical-device or complex thread realism acceptance gate.
+
 > **2026-10-22 EXECUTION QUEUE:** This *specification only* was merged by [#464](https://github.com/gamesbyian/wallgen/pull/464). Implementation is separately queued in [#467](https://github.com/gamesbyian/wallgen/issues/467), from E0 neutral recipe/target coordinates to E1 one clearly sewn stripe + an independently embroidered chosen region, followed by deterministic stitch planning, rendering and Texture Treatments UX. **No embroidery renderer or controls have shipped yet.** Every phase must be recorded in that issue and the [active roadmap](ACTIVE-PRODUCT-ROADMAP-2026-10-22.md); do not declare this design document proof of completion or impose new CI factories. Existing three texture layers and old PNG recipes must remain intact until an opt-in treatment is deliberately chosen.
 
 ## First implementation checkpoint (PR #474, 2026-10-22)
