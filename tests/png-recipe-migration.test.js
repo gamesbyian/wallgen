@@ -1,9 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {mkdtempSync,writeFileSync,readFileSync,rmSync,existsSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {spawnSync} from 'node:child_process';
 import {normalizeRecipe} from '../src/model.js';
 import {embedPngMetadata,readRawPngRecipe,extractPngRecipe,scanPngChunks,RECIPE_FORMAT}
   from '../src/png-metadata.js';
-import {inspectPngMigration,migratePngMetadataOnly,validatePngMigrationContainer,archivePngRecipeRecords} from '../src/png-recipe-migration.js';
+import {inspectPngMigration,migratePngMetadataOnly,validatePngMigrationContainer,inspectPngRecipeArchive,archivePngRecipeRecords} from '../src/png-recipe-migration.js';
 const tiny=Uint8Array.from(Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/mXPo5QAAAABJRU5ErkJggg==','base64'));
 const same=(a,b)=>assert.equal(Buffer.compare(Buffer.from(a),Buffer.from(b)),0);
@@ -201,4 +205,48 @@ test('identical duplicate recipes may consolidate; conflicting history is refuse
   same(Buffer.from(archive.records[1].originalChunkBase64,'base64'),named.raw);
   assert.deepEqual(readRawPngRecipe(conflicting).selected.rawRecipe,native,
     'latest selected recipe remains unchanged despite refusing metadata replacement');
+});
+
+test('exact-byte archive survives valid-PNG malformed recipe JSON, unsupported text flags and duplicates',()=>{
+  const broken=ancillaryChunk('iTXt',
+    Buffer.from('ROYGBIV Recipe\0\\0\\0\\0\\0{"format":"v1","recipe":{'));
+  const encoded=ancillaryChunk('iTXt',
+    Buffer.from('ROYGBIV Recipe\0\1\\0\\0\\0unknown-compression'));
+  const source=beforeIdat(beforeIdat(tiny,broken),encoded);
+  assert.throws(()=>readRawPngRecipe(source),/Unsupported recipe metadata encoding|Damaged recipe metadata/);
+  assert.throws(()=>inspectPngMigration(source),/Unsupported recipe metadata encoding|Damaged recipe metadata/);
+  const intact=Uint8Array.from(source);
+  const info=inspectPngRecipeArchive(source);
+  assert.equal(info.recordCount,2);
+  assert.equal(info.validatedPngCrc,true);
+  const archived=archivePngRecipeRecords(source);
+  assert.equal(archived.recordCount,2);
+  assert.equal(archived.records[0].format,null);
+  assert.equal(archived.records[1].format,null);
+  const named=scanPngChunks(source).chunks.filter(c=>c.type==='iTXt');
+  for(let i=0;i<2;i++)
+    same(Buffer.from(archived.records[i].originalChunkBase64,'base64'),named[i].raw);
+  same(source,intact,'unparseable source must not be modified by recovery');
+});
+test('CLI --archive writes original bytes even when PNG metadata migration cannot parse JSON',()=>{
+  const damagedText=ancillaryChunk('iTXt',
+    Buffer.from('ROYGBIV Recipe\0\\0\\0\\0\\0not-json'));
+  const image=beforeIdat(tiny,damagedText);
+  const folder=mkdtempSync(join(tmpdir(),'roygbiv-archive-test-'));
+  try{
+    const input=join(folder,'before.png'),out=join(folder,'recovery.json'),
+      report=join(folder,'report.json'),output=join(folder,'should-not-exist.png');
+    writeFileSync(input,image);
+    const run=spawnSync(process.execPath,[
+      new URL('../scripts/update-png-recipe.mjs',import.meta.url).pathname,
+      '--in',input,'--archive',out,'--report',report,'--out',output
+    ],{encoding:'utf8',timeout:15000});
+    assert.equal(run.status,2,run.stderr||String(run.error));
+    assert.equal(existsSync(output),false,'unsafe migration never rewrites an image');
+    const backup=JSON.parse(readFileSync(out,'utf8'));
+    assert.equal(backup.recordCount,1);
+    same(Buffer.from(backup.records[0].originalChunkBase64,'base64'),damagedText);
+    assert.match(JSON.parse(readFileSync(report,'utf8')).reason,/inspection failed/i);
+    same(readFileSync(input),image);
+  }finally{rmSync(folder,{recursive:true,force:true});}
 });
