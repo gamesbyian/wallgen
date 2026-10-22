@@ -16,6 +16,7 @@ import {fullSettingName} from './editor-terminology.js';
 import {installExplorationHistory} from './exploration-history.js';
 import {installGeometryLibraryUI} from './geometry-library-ui.js';
 import {RAINBOW_ORBITS} from './scattered-composition.js';
+import {cloneGeometrySnapshot} from './geometry-asset.js';
 import {parseStoredFavorites} from './favorites-store.js';
 import {encodePortableRecipe,decodePortableRecipe,portableShareUrl,portableShareTokenFromLocation,
   MAX_PORTABLE_LINK_CHARS} from './share-recipe.js';
@@ -29,7 +30,7 @@ const notice = document.getElementById('notice');
 const studioStatus = document.getElementById('studioStatus');
 const favoriteButton = document.getElementById('favorite');
 const FAVORITES_KEY = 'wallgen:favorites:v1';
-const FIELDS = ['primesOnly','family','structure','radialMode','rayCount','rayRotation','rayTwist','rayCoverage','rayCore','fieldCenterX','fieldCenterY','regionMode','regionCount','regionJitter','regionSides','scatteredCount','scatteredMinSize','scatteredMaxSize','scatteredVariation','scatteredSpacing','scatteredEdgeCrop','scatteredOverlap','dividerColor','dividerWidth','composition','repeatCount','repeatSpacing','orientation','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','geometry','turnRadius','hairpinAngle','loopRadius','loopSweep','geometrySafety','extendDrawnPath','crossingMode','stepCount','chevronSharpness','loopAspect','construction','motif','lineStyle','pathLength','tonalContrast','brushRoughness','dotSize','dotSpacing','endTaper','shapeFrequency','shapeDepth','motifSize','motifFrequency','palette','material','outline','background','lightingMood','lightDirection','lightStrength','shadowStrength','stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection','textureCoverage','textureRotation','textureBlend','textureLayer2Enabled','material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2','textureLayer3Enabled','material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3','chaos','stripeWidth','spread','textureStrength','textureScale','textureDisplacement','individuality','patternHomogeneity','overridePatternHomogeneity','gap','outlineBuffer','glow'];
+const FIELDS = ['primesOnly','family','structure','radialMode','rayCount','rayRotation','rayTwist','rayCoverage','rayCore','fieldCenterX','fieldCenterY','regionMode','regionCount','regionJitter','regionSides','scatteredCount','scatteredMinSize','scatteredMaxSize','scatteredVariation','scatteredSpacing','scatteredEdgeCrop','scatteredOverlap','scatteredShapeKind','dividerColor','dividerWidth','composition','repeatCount','repeatSpacing','orientation','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','geometry','turnRadius','hairpinAngle','loopRadius','loopSweep','geometrySafety','extendDrawnPath','crossingMode','stepCount','chevronSharpness','loopAspect','construction','motif','lineStyle','pathLength','tonalContrast','brushRoughness','dotSize','dotSpacing','endTaper','shapeFrequency','shapeDepth','motifSize','motifFrequency','palette','material','outline','background','lightingMood','lightDirection','lightStrength','shadowStrength','stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection','textureCoverage','textureRotation','textureBlend','textureLayer2Enabled','material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2','textureLayer3Enabled','material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3','chaos','stripeWidth','spread','textureStrength','textureScale','textureDisplacement','individuality','patternHomogeneity','overridePatternHomogeneity','gap','outlineBuffer','glow'];
 let current = normalizeRecipe();
 let currentScene;
 const previewLayers={background:null,ink:null,scene:null,key:null,overhang:null};
@@ -194,7 +195,8 @@ function showNotice(message){
 function fromControls() {
   const data={seed:seedInput.value,positionX:current.positionX,positionY:current.positionY,
     viewZoom:current.viewZoom,viewPanX:current.viewPanX,viewPanY:current.viewPanY,
-    customPath:current.customPath,drawnAnchors:current.drawnAnchors,drawnCorners:current.drawnCorners,interiorElements:current.interiorElements};
+    customPath:current.customPath,drawnAnchors:current.drawnAnchors,drawnCorners:current.drawnCorners,interiorElements:current.interiorElements,
+    scatteredShape:current.scatteredShape};
   for (const key of FIELDS) { const field=form.elements.namedItem(key); data[key]=field.dataset.inactive==='true'?current[key]:(field.type==='checkbox'?field.checked:field.value); }
   return normalizeRecipe(data);
 }
@@ -238,6 +240,8 @@ function toControls(recipe) {
   syncInactiveSettings();
   syncScopedSettingDice();
   syncEditorStructure(current.structure,current.regionMode,current.construction);
+  const useShape=document.getElementById('chooseScatteredShape');
+  if(useShape)useShape.hidden=!(current.structure==='regions'&&current.regionMode==='scattered');
   const effective=document.getElementById('geometrySafetyStatus');
   if(effective){
     if(current.structure!=='paths')effective.textContent='Closed regions use connected polygon boundaries';
@@ -289,12 +293,12 @@ function inactiveSettingKeys(recipe,scene){
     if(recipe.radialMode==='spokes')inactive.add('rayTwist');
   }
   if(!regions){
-    for(const key of ['regionMode','regionCount','regionJitter','regionSides','scatteredCount','scatteredMinSize','scatteredMaxSize','scatteredVariation','scatteredSpacing','scatteredEdgeCrop','scatteredOverlap'])inactive.add(key);
+    for(const key of ['regionMode','regionCount','regionJitter','regionSides','scatteredCount','scatteredMinSize','scatteredMaxSize','scatteredVariation','scatteredSpacing','scatteredEdgeCrop','scatteredOverlap','scatteredShapeKind'])inactive.add(key);
   }else{
     if(recipe.regionMode!=='nested')inactive.add('regionSides');
     if(recipe.regionMode==='nested'||recipe.regionMode==='scattered')inactive.add('regionJitter');
     if(recipe.regionMode==='scattered')inactive.add('regionCount');
-    else for(const key of ['scatteredCount','scatteredMinSize','scatteredMaxSize','scatteredVariation','scatteredSpacing','scatteredEdgeCrop','scatteredOverlap'])inactive.add(key);
+    else for(const key of ['scatteredCount','scatteredMinSize','scatteredMaxSize','scatteredVariation','scatteredSpacing','scatteredEdgeCrop','scatteredOverlap','scatteredShapeKind'])inactive.add(key);
   }
   if(!(radial||(regions&&recipe.regionMode==='nested'))){
     inactive.add('fieldCenterX');inactive.add('fieldCenterY');
@@ -480,9 +484,12 @@ function render(recipe,{scroll=false,bypassLocks=false,interactive=false}={}) {
   if(scatterStatus){
     const missing=current.structure==='regions'&&current.regionMode==='scattered'?
       current.scatteredCount-currentScene.objects.length:0;
-    scatterStatus.textContent=missing>0?
-      'Only '+currentScene.objects.length+' of '+current.scatteredCount+' circles fit. Reduce size or spacing, or allow overlaps.':'';
-    scatterStatus.hidden=!missing;
+    const noAsset=current.structure==='regions'&&current.regionMode==='scattered'&&
+      current.scatteredShapeKind==='imported'&&!current.scatteredShape;
+    scatterStatus.textContent=noAsset?'Choose a saved silhouette from the library.':
+      missing>0?'Only '+currentScene.objects.length+' of '+current.scatteredCount+
+      ' shapes fit. Reduce size or spacing, or allow overlaps.':'';
+    scatterStatus.hidden=!missing&&!noAsset;
   }
   if(previewLayers.key===key && previewLayers.ink && previewLayers.background){
     clearSettledPreview();
@@ -591,10 +598,21 @@ const imagePathTool=installImagePathTool({
 });
 // The library only stores geometry; using a saved path delegates to the
 // existing recipe and Undo transaction, while saving does not change artwork.
-installGeometryLibraryUI({
+const geometryLibrary=installGeometryLibraryUI({
   getRecipe:()=>current,
   onNotice:showNotice,
   downloadBlob,
+  applyShape:geometry=>{
+    if((current.lockedSettings.includes('structure')&&current.structure!=='regions')||
+      (current.lockedSettings.includes('regionMode')&&current.regionMode!=='scattered')||
+      (current.lockedSettings.includes('scatteredShapeKind')&&current.scatteredShapeKind!=='imported')){
+      showNotice('Unlock structure, region layout and shape source before using a saved silhouette.');
+      return false;
+    }
+    changeRecipe({...current,structure:'regions',regionMode:'scattered',
+      scatteredShapeKind:'imported',scatteredShape:cloneGeometrySnapshot(geometry)});
+    return true;
+  },
   applyPath:({points,anchors=[],corners=[]})=>{
     if(current.lockedSettings.includes('geometry')||
       pathStructureLockedOutsidePaths(current)){
@@ -607,6 +625,13 @@ installGeometryLibraryUI({
   }
 });
 
+const useScatteredShape=document.createElement('button');
+useScatteredShape.type='button';useScatteredShape.id='chooseScatteredShape';
+useScatteredShape.className='button button-outline scattered-preset';
+useScatteredShape.textContent='Choose saved silhouette…';
+document.querySelector('.editor-tool-card[data-editor-tool="regions"]')?.append(useScatteredShape);
+useScatteredShape.addEventListener('click',()=>{void geometryLibrary.open({filterKind:'shape'});});
+useScatteredShape.hidden=current.structure!=='regions'||current.regionMode!=='scattered';
 function updatePositionStatus(){
   const label=document.getElementById('positionStatus');
   const x=current.positionX, y=current.positionY;
