@@ -1,5 +1,12 @@
 # ROYGBIV: active product roadmap and work queue
 
+## Warm film halation shipped as isolated treatment (PR pending, 2026-10-22)
+
+Light → Photo → Inspired look adds **Warm film halation**. A 600×1300-or-smaller sampling field extracts luminance-selected bright areas from the *original completed frame*, blurs them with bounded separable passes, and spills a red-orange glow only into neighboring darker pixels. This is a real spatial finishing operation, not the original per-pixel tone/grain or geometry-specific object Glow. It uses one small temporary spatial mask (plus intermediate), the existing Photo renderer/export/worker path, Amount mixing, Undo, saved recipe and metadata; old presets and disabled looks remain unchanged. Only this new preset serializes an explicit `parameters.halation`, leaving older parameter shapes stable. Focused tests cover seed determinism, edge localization, hue, neutral output and archived parameter shape. No additional editor destination or CI workflow.
+
+**Still open:** visual artistic sample approval, physically accurate linear-light scattering and multi-radius diffusion, 19.8MP Pixel performance, a dedicated fine-tuning halation slider, complex stack authoring, combined embroidery/photo judgement. This advances Film F2 **first halation** but not full photochemical simulation.
+
+
 ## Camera-inspired low-resolution capture preview (PR pending, 2026-10-22)
 
 The common Photo engine now offers a **separate Low-res webcam capture** preset alongside the earlier colour-only webcam preview. This new opt-in mode samples a bounded 200-column sensor image (aspect-matched, at most 520 rows) from the final composed wallpaper, averages small source neighborhoods, shares colour information across 2×2 sensor blocks, and quantizes luminance/chroma. It then upscales the signal through the same deterministic final Photo stage; only the low-resolution temporary buffer is allocated, never another 20MP image. Original webcam colour and all prior presets keep their original rendering branches. Tests cover detail loss, stable output, alpha and zero-amount neutrality. This advances Camera D3 signal quality, **not** actual MJPEG/JPEG entropy coding, device sensor models or calibrated 480p performance. Actual phone render quality and runtime remain open.
