@@ -1,5 +1,35 @@
 # ROYGBIV semantic control audit and revision plan
 
+## Authoritative findings and closure ledger (2026-10-22)
+
+**Current `main` checkpoint:** 7 Edit categories, **40 named tool cards, 95 canonical schema setting keys**; separate dynamic interior-element objects, Shape & Path Library, five mobile destinations. This supersedes the historical 40/87 and intermediate 43/95 maps for **live navigation**. Old snapshots remain historical research records, not today's menu specification. The original recipe/PNG/Saved identifiers were not migrated for these navigation fixes.
+
+**Shipped and tested:** [#452](https://github.com/gamesbyian/wallgen/pull/452) truthful overlap/tonal choice; [#454](https://github.com/gamesbyian/wallgen/pull/454) contour prerequisites / Variation naming; [#455](https://github.com/gamesbyian/wallgen/pull/455) exact-field search and selected artistic-intent terms; [#459](https://github.com/gamesbyian/wallgen/pull/459) unified Texture Layer 1–3 with Material/Finish views (**43→40 tool cards**); [#460](https://github.com/gamesbyian/wallgen/pull/460) same selected interior element switchable in Style/Wave/Placement/Ink & Targets; [#461](https://github.com/gamesbyian/wallgen/pull/461) honest scattered size and imported-placeholder feedback; [#462](https://github.com/gamesbyian/wallgen/pull/462) direct Light/Shadow/Glow links; [#463](https://github.com/gamesbyian/wallgen/pull/463) dormant Dots/Motif Scale activation routes; [#465](https://github.com/gamesbyian/wallgen/pull/465) deliberate Design Type → relevant Geometry next step. All applicable existing PR Node CI passed; **a new physical-phone usability or multi-breakpoint visual acceptance was not run for these changes**.
+
+**Outstanding, not silently closed:** C07 search multiple-match disambiguation and keyboard flow; C09 optional reduction of the five interior-element *tool* destinations into a cohesive selected-object inspector (persistent selection is already shipped); C10 evaluate whether direct lighting links suffice before making a giant mixed-effects card; C11 optional intent-first Arrange/Form prototype; C03 decision on temporary silhouette placeholder versus alternative empty state; targeted Pixel portrait fit, screen-reader/touch/restore checks for the recent controls; review other live semantic findings C14–C17 before marking them inapplicable. Remain within a small evidence budget and avoid compulsory CI screenshot matrices. Main [roadmap](docs/ACTIVE-PRODUCT-ROADMAP-2026-10-22.md) and [UX queue](docs/UI-REDESIGN-IMPLEMENTATION-QUEUE.md) are the operational tracking authorities; [#444](https://github.com/gamesbyian/wallgen/issues/444) remains the umbrella.
+
+### Source-grounded finding disposition
+
+| Finding | Current outcome | Remaining action |
+|---|---|---|
+| C01–C02 | Already resolved by #452 | Only regressions; no duplicate task |
+| C03 | **Partial** #461 placeholder warning | Decide empty/imported state with tested asset restore |
+| C04 | Implemented #449/#456 direct circle editing | Follow real drag/selection friction |
+| C05 | Implemented #461 effective size feedback | Check compact text doesn't obscure controls |
+| C06 | Implemented initial #463 dormant dot/motif guidance | Test additional triggering cases only if observed |
+| C07 | **Partial** #455 exact-field search | Multi-result ambiguity if materially useful |
+| C08 | Implemented #459 three unified layer cards | Phone fit/rotation/locks; no redundant Finish tools |
+| C09 | **Partial** #460 cross-panel selected object | Decide inspector consolidation |
+| C10 | **Partial** #462 reciprocal Light/Shadows/Glow links | Evaluate before moving control homes |
+| C11 | **Partial** #465 design-type continuation | Evaluate Arrange/Form concept before structural changes |
+| C12–C13 | Addressed #454 conditional distortion and language | Regressions only |
+| C14–C17 | Not declared resolved by this delivery sequence | Re-evaluate against 40/95 source; prioritize actual omissions |
+
+**Readiness:** production merges and regular Node CI, **not** physical Pixel usability, aesthetic judgement or comprehensive responsive acceptance. The operational queue is [UI-REDESIGN-IMPLEMENTATION-QUEUE.md](UI-REDESIGN-IMPLEMENTATION-QUEUE.md), mirrored in the active [product board](ACTIVE-PRODUCT-ROADMAP-2026-10-22.md); issue #444 remains open.
+
+
+---
+
 2026-10-22. Historical design audit based on commit 75c5e1778a5f5789c44ba95098ca7a4c1161b7f8, followed by an implementation checkpoint. The original maps were documentation-only; later PRs #449, #452, #454 and #455 made focused runtime improvements. The audited architecture remains seven categories, 43 tools and 95 canonical settings.
 
 ## Implementation checkpoint: creative continuation after Design Type
@@ -56,7 +86,7 @@ This is a historical audit with a **live issue-status supplement**. Treat the st
 | C07: Exact setting search and goal synonyms | **Partly addressed on main**, PR #455 | Search ranks exact field names, aliases and selected visual-intent phrases, displays the actual category/tool, and Enter focuses the canonical field if active. Multi-result disambiguation remains a follow-up. |
 | C03, C05–C06, C08–C11, C14–C17 | **Open or deliberate design choices** | Resolve by the original evidence-based priorities, not all at once. |
 
-**Next scoped change after these merges:** prototype one coherent texture-layer editor (C08) or a persistent interior-element inspector (C09), whichever fits the mobile edit tray without vertical settings scrolling. Search C07 can later gain a short disambiguated result list if single-best-match proves insufficient. Avoid a wholesale seven-category rewrite; protect stable recipe keys, locks, Undo, Saved and exported framing. Existing issue [#444](https://github.com/gamesbyian/wallgen/issues/444) remains the umbrella.
+**Current disposition:** C08's compact Material/Finish layer editor merged in #459, and C09's persistent cross-panel selected-element picker merged in #460. The remaining C09 work is *optional consolidation*, not another attempt to implement the already-shipped picker. See the authoritative status table above. Search C07 can later gain a short disambiguated result list if single-best-match proves insufficient. Avoid a wholesale seven-category rewrite; protect stable recipe keys, locks, Undo, Saved and exported framing. Existing issue [#444](https://github.com/gamesbyian/wallgen/issues/444) remains the umbrella.
 
 ## How the map has changed
 
