@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {TOOL_LIST} from '../src/editor-schema.js';
 import {toolAppliesToScene} from '../src/editor-tool-applicability.js';
-import {findEditorToolMatch} from '../src/editor-tool-search.js';
+import {findEditorToolMatch,findEditorSearchHit} from '../src/editor-tool-search.js';
 import {legacyToolAliases} from '../src/editor-terminology.js';
 
 const choose=(query,scene)=>findEditorToolMatch(query,TOOL_LIST,{
@@ -62,4 +62,41 @@ test('geometric and per-stripe Variation tools have distinct names with legacy s
   assert.equal(findEditorToolMatch('Controlled chaos',TOOL_LIST,options)?.id,'variability');
   assert.equal(findEditorToolMatch('Stripe variation',TOOL_LIST,options)?.id,'character');
   assert.equal(findEditorToolMatch('Variation',TOOL_LIST,options)?.id,'variability');
+});
+
+test('exact settings outrank similarly named tools and carry their canonical home',()=>{
+  const matches=(query,scene)=>findEditorSearchHit(query,TOOL_LIST,{
+    applies:tool=>toolAppliesToScene(tool,scene),
+    labelFor:key=>key==='textureRotation3'?'Texture layer 3 rotation in degrees':
+      key==='textureDisplacement'?'Contour distortion':key
+  });
+  const result=matches('Contour distortion',{structure:'paths'});
+  assert.equal(result?.key,'textureDisplacement');
+  assert.equal(result.tool.id,'surface');
+  assert.equal(matches('textureRotation3',{structure:'paths'})?.tool.id,'finish3');
+  assert.equal(matches('Structure',{structure:'paths'})?.key,'structure');
+  assert.equal(matches('Radial rays',{structure:'paths'}),null);
+  assert.equal(matches('Radial rays',{structure:'radial'})?.kind,'tool');
+  assert.equal(matches('   ',{structure:'paths'}),null);
+});
+
+test('intent synonyms identify creative outcomes only when their tool is available',()=>{
+  const find=(query,scene)=>findEditorSearchHit(query,TOOL_LIST,{
+    applies:tool=>toolAppliesToScene(tool,scene)
+  });
+  assert.equal(find('breathing room',{structure:'paths'})?.key,'spread');
+  assert.equal(find('space between circles',{structure:'regions',regionMode:'scattered'})?.key,'scatteredSpacing');
+  assert.equal(find('space between circles',{structure:'paths'}),null);
+  assert.equal(find('texture changes edges',{structure:'paths'})?.key,'textureDisplacement');
+  assert.equal(find('texture changes edges',{structure:'radial'}),null);
+  assert.equal(find('neon',{structure:'paths'})?.key,'glow');
+});
+
+test('live editor provides visible location and explicit keyboard focus without new fields',()=>{
+  const js=readFileSync(new URL('../src/editor-layout.js',import.meta.url),'utf8');
+  assert.match(js,/findEditorSearchHit\(query,TOOL_LIST,options\)/);
+  assert.match(js,/matchedSearchHit/);
+  assert.match(js,/event.key!=='Enter'/);
+  assert.match(js,/event.preventDefault\(\); \/\/ Never submit/);
+  assert.match(js,/focus\(\{preventScroll:true\}\)/);
 });
