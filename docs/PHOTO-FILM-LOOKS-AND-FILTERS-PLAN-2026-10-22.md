@@ -1,5 +1,8 @@
 # ROYGBIV: photographic film looks and filters
 
+**F2 implemented slice (2026-10-22):** `film-halation-only` adds a distinct, opt-in warm light-bleed response to bright edges using a luminance-thresholded 600×1300-or-smaller field and bounded separable blur. It glows preferentially into black regions beside luminous colours, rather than simply tinting every stripe or adding a global layer of CSS blur; original hue and interiors stay unaltered when the grade is neutral. `parameters.halation` is expanded **only** for this new preset, and remains stable in saved recipes; older preset parameter lists stay byte-compatible. The existing Grain and Amount controls still apply. No scratch 20MP RGBA buffer, extra workflow or top-level tab. This is a practical creative approximation in encoded sRGB, *not* calibrated photochemical/linear optics. Two-radius bloom, photochemical response, physical device validation and a dedicated compact halation strength inspector remain open.
+
+
 **Execution increment (2026-10-22):** `film-grain-only` adds the planned practical ability to put reproducible grain on the black substrate and all colours **without** unintentionally changing contrast, colour or vignette. Fine/coarse grain uses two deterministic noise frequencies in scene coordinates with no full-image intermediate buffer; older photoLooks continue through the unchanged first-generation grain sampler. Slider is the existing Photo Grain control; the new look is selected from the original Photo preset list. This is a first F2 grain-quality refinement, not proof of photographic emulsion accuracy or export/preview perceptual equivalence. Halation, warm/neutral bloom, luminance physics, advanced inspector and rendered sample reviews remain queued.
 
 
