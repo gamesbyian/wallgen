@@ -1,0 +1,31 @@
+name: Reusable geometry library browser acceptance
+on:
+  pull_request:
+    paths:
+      - 'src/geometry-*.js'
+      - 'src/app.js'
+      - 'index.html'
+      - 'geometry-library.css'
+      - 'tests/geometry-library-browser.mjs'
+      - '.github/workflows/geometry-library-browser.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  real-chromium-library:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check geometry modules and browser acceptance source
+        run: |
+          node --check src/geometry-asset.js
+          node --check src/geometry-library-store.js
+          node --check src/geometry-library-backup.js
+          node --check src/geometry-library-ui.js
+          node --check tests/geometry-library-browser.mjs
+      - name: Exercise installed source with real Chromium and IndexedDB
+        run: node tests/geometry-library-browser.mjs
