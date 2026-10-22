@@ -1,5 +1,9 @@
 # ROYGBIV: active product roadmap and work queue
 
+## Compact embroidery inspector checkpoint (PR #478, 2026-10-22)
+
+[#478](https://github.com/gamesbyian/wallgen/pull/478) refines the merged first embroidery E1 implementation: Thread treatment is now a native expandable workspace nested in Texture → Surface, with selected-hue status visible when folded and the two ordinary surface sliders hidden only while Thread is expanded. This avoids vertical tray growth and preserves the canonical original controls, Undo and recipe serialization. Node source-contract checks are part of the existing lean gate; **real Pixel portrait fit/accessibility observations are still outstanding**. This is incremental E4 UX; selected-object treatments, advanced thread realism, outlines/interiors and film/embroidery combined visual proof remain queued.
+
 ## P1/P2 preservation queue: non-destructive historical PNG recipe modernization (#476)
 
 **Planned, not implemented:** [#476](https://github.com/gamesbyian/wallgen/issues/476) and the [migration specification](PNG-RECIPE-MIGRATION-AND-FORMAT-REGISTRY-PLAN-2026-10-22.md). Existing PNG v1/v2 import and IDAT-preserving re-embed are reusable infrastructure but normalize historical raw fields immediately and are not proof of comprehensive schema migration. Queue M0 history/registry/fixtures → M1 raw parsing/dialect recognition → M2 loss-aware semantic adapters → M3 surgical recipe-only PNG rewriting → M4 More import/inspect/download UI → M5 lean targeted tests. Preserve the image and unrelated metadata byte-for-byte; preserve recipe composition meaning or explicitly refuse/report ambiguity. Do not block current Photo/Embroidery work or add routine screenshot CI.

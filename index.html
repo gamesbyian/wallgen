@@ -283,8 +283,8 @@
 <label class="field">Blend mode<select name="textureBlend3" data-setting="textureBlend3"><option value="normal">Normal</option><option value="multiply">Multiply</option><option value="screen">Screen</option><option value="overlay">Overlay</option><option value="soft-light">Soft light</option><option value="difference">Difference</option></select></label>
 
 </div>
-        <div class="embroidery-controls" role="group" aria-label="Surface embroidery">
-          <strong>Thread treatment</strong>
+        <details class="embroidery-controls" aria-label="Surface embroidery">
+          <summary>Thread treatment <span class="thread-treatment-summary" aria-live="polite">Off</span></summary>
           <label class="field">Embroider
             <select name="embroideryTarget">
               <option value="off">Off · plain surfaces</option>
@@ -304,7 +304,7 @@
             </label>
           </div>
           <small>Opt-in thread shading follows each selected stripe or region fill. Independent of your three texture layers; outlines and intricate stitch styles are forthcoming.</small>
-        </div>
+        </details>
         <div class="texture-displacement-control">
           <label class="field range-field"><span>Contour distortion</span>
             <input type="range" name="textureDisplacement" id="textureDisplacement" data-setting="textureDisplacement" min="0" max="100" value="0">
