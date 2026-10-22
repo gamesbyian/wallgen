@@ -3,7 +3,7 @@ import {iconMarkup} from './ui-icons.js';
 import {annotateEditorSettingRow,sourceSettingLabel} from './editor-control-roles.js?v=20261021-labels1';
 import {installFocusedAdjustments} from './editor-focus.js';
 import {toolAppliesToScene} from './editor-tool-applicability.js';
-import {findEditorToolMatch} from './editor-tool-search.js?v=20261021-labels1';
+import {findEditorToolMatch,findEditorSearchHit} from './editor-tool-search.js?v=20261022-intent-search1';
 import {legacyToolAliases,legacyCategoryAliases,legacySettingAliases} from './editor-terminology.js';
 import {installMaterialLayerIndicators} from './editor-material-indicators.js';
 
@@ -263,13 +263,15 @@ export function mountEditor(){
     if(cat!==activeCategory)selectEditorTool(cat,EDITOR_CATEGORIES.find(c=>c.id===cat).tools[0].id);
   });
   randomCategory.addEventListener('click',()=>{randomCategory.dataset.randomCategory=currentCategoryFromTabs();});
-  function closeSearch(){
+  let matchedSearchHit=null;
+  function closeSearch({restoreFocus=true}={}){
+    matchedSearchHit=null;
     searchInput.hidden=true;searchClose.hidden=true;searchStatus.hidden=true;
     searchStatus.textContent='';
     explore.classList.remove('editor-search-open');
     search.setAttribute('aria-expanded','false');
     searchInput.value='';
-    search.focus({preventScroll:true});
+    if(restoreFocus)search.focus({preventScroll:true});
   }
   search.addEventListener('click',()=>{
     if(!searchInput.hidden){closeSearch();return;}
@@ -280,10 +282,26 @@ export function mountEditor(){
   });
   searchClose.addEventListener('click',closeSearch);
   searchInput.addEventListener('keydown',event=>{
-    if(event.key==='Escape'){event.preventDefault();closeSearch();}
+    if(event.key==='Escape'){event.preventDefault();closeSearch();return;}
+    if(event.key!=='Enter'||!matchedSearchHit)return;
+    event.preventDefault(); // Never submit the enclosing wallpaper form.
+    const {tool,key,label}=matchedSearchHit;
+    const field=key?form.elements.namedItem(key):null;
+    if(field?.disabled){
+      const reason=field.dataset.inactive==='true'
+        ?'not active in this design. Change its prerequisite to enable it.'
+        :'locked. Unlock it to edit.';
+      searchStatus.textContent=label+' is '+reason;
+      searchStatus.hidden=false;
+      return;
+    }
+    selectEditorTool(tool.category,tool.id,{source:'search'});
+    closeSearch({restoreFocus:false});
+    (field||tools.get(tool.id)?.chip)?.focus({preventScroll:true});
   });
   searchInput.addEventListener('input',()=>{
     const query=searchInput.value.trim();
+    matchedSearchHit=null;
     searchStatus.hidden=true;
     searchStatus.textContent='';
     if(!query)return;
@@ -291,9 +309,17 @@ export function mountEditor(){
     const options={labelFor,applies:tool=>toolApplies(tools.get(tool.id)),
       aliasesForTool:legacyToolAliases,aliasesForCategory:legacyCategoryAliases,
       aliasesForSetting:legacySettingAliases};
-    const match=findEditorToolMatch(query,TOOL_LIST,options);
+    const match=findEditorSearchHit(query,TOOL_LIST,options);
     if(match){
-      selectEditorTool(match.category,match.id,{source:'search'});
+      matchedSearchHit=match;
+      selectEditorTool(match.tool.category,match.tool.id,{source:'search'});
+      const location=(match.tool.categoryLabel||match.tool.category)+' → '+match.tool.name;
+      const status=match.key
+        ?match.label+' · '+location+(form.elements.namedItem(match.key)?.disabled
+          ?' · inactive or locked':' · Enter to focus')
+        :location+' · Enter to open tool';
+      searchStatus.textContent=status;
+      searchStatus.hidden=false;
       return;
     }
     const dormant=findEditorToolMatch(query,TOOL_LIST,{labelFor,
