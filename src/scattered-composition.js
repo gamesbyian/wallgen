@@ -130,3 +130,36 @@ export function buildScatteredCircles(recipe){
       'Only '+placed+' of '+count+' circles fit with the selected minimum size and spacing. Reduce size, spacing, or count.':
       null,cropped:croppedCount};
 }
+
+
+/**
+ * Convert a saved compound silhouette into repeatable, independently placed
+ * region stamps. Packing against circumscribed disks is conservative for
+ * concave polygons and guarantees separation even before polygon booleans.
+ * A complete canonical shape snapshot lives in the wallpaper recipe; there
+ * is no lookup into IndexedDB in a render worker or headless export.
+ */
+export function buildScatteredObjects(recipe){
+  const placed=buildScatteredCircles(recipe);
+  if(recipe.scatteredShapeKind!=='imported')return placed;
+  const geometry=recipe.scatteredShape?.geometry;
+  if(geometry?.type!=='compound-region'||!Array.isArray(geometry.components)||
+    !geometry.components.length)return {...placed,diagnostic:'Choose an imported shape from your library.'};
+  const [vx,vy,vw,vh]=geometry.viewBox;
+  const ox=vx+vw/2,oy=vy+vh/2;
+  const all=geometry.components.flatMap(component=>[component.outer,...component.holes].flat());
+  const bound=Math.max(1e-9,...all.map(p=>Math.hypot(p[0]-ox,p[1]-oy)));
+  const objects=placed.objects.map(source=>{
+    const {cx,cy,r}=source.circle,scale=r/bound;
+    const transform=ring=>ring.map(([x,y])=>point(
+      cx+(x-ox)*scale,cy+(y-oy)*scale));
+    const rings=geometry.components.flatMap(c=>[transform(c.outer),...c.holes.map(transform)]);
+    return {
+      kind:'region',id:source.id,colorIndex:source.colorIndex,
+      origin:point(cx,cy),vertices:rings[0],rings,
+      // Bounding circle intentionally omitted: the painter must use the
+      // compound path, including subtractive holes and detached islands.
+    };
+  });
+  return {...placed,objects};
+}
