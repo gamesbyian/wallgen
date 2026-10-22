@@ -1,5 +1,11 @@
 # ROYGBIV: active product roadmap and work queue
 
+## Implementation checkpoint: first embroidery artwork (PR #474, 2026-10-22)
+
+**Working branch, awaiting CI/merge and optical review:** [#474](https://github.com/gamesbyian/wallgen/pull/474) begins E0/E1: bounded optional `surfaceTreatments` with explicit object/palette/all-fill targeting; translucent path-transverse relief threads clipped to real ribbon edges and row-based stitches clipped to closed-region fills (including compound even-odd masks). A compact Texture → Surface section exposes all-hues / one-hue / Off, stitch spacing and relief. This preserves three legacy texture layers and the 40-tool navigation, with no extra randomization or branch-specific renderer. It reuses the original geometry, worker, saved recipe, Undo, PNG and headless paths.
+
+**Status:** E0/first E1 implemented on branch. E1 visual artistry and a user-selectable **specific** individual object remain unverified; E2/3 stitch-field refinements, fibres, physical normals, seam quality, masked-outline and interior targeting, E4 contextual Treatments inspector/locks, and E5 optional creative breadth remain open. Do not close [#467](https://github.com/gamesbyian/wallgen/issues/467) or infer physical-device/visual acceptance from Node CI. The code creates no upstream licensing obligation: no third-party code copied.
+
 ## Implementation checkpoint: shared Photo finish (PR #473, 2026-10-22)
 
 **First working slice, pending merge / physical visual approval:** [#473](https://github.com/gamesbyian/wallgen/pull/473) supplies an opt-in, deterministic `photoLook` recipe, a common post-composite film/camera **tone-and-grain** processor, seeded in-frame grain, six early looks, and a Light → Lighting/Photo pane with no extra top-level destination. The same processing function is reached by headless exports, worker exports, main-thread previews and cached nudge presentation. Quick Node CI passed at head `8e5d016`. No real Pixel screenshot or judged film/camera sample was examined here. Webcam mode is explicitly an *early colour preview*, **not** simulated webcam capture resolution or JPEG compression.
