@@ -92,3 +92,21 @@ test('Different libraries have no shared session fallback and data never leaks i
   assert.equal(JSON.stringify(record).includes('data:image'),false);
   assert.equal(record.geometry.type,'open-path');
 });
+
+
+test('Atomic batch import skips identical geometry but rejects conflicting IDs without partial write',async()=>{
+  const db=await memory();
+  const a=await db.add({id:'existing',name:'Original',geometry});
+  const b={id:'new',name:'Second',geometry:shape};
+  assert.deepEqual(await db.importMany([a,b]),{added:1,skipped:1});
+  assert.deepEqual(await db.importMany([a,b]),{added:0,skipped:2});
+  const conflicts=[
+    {id:'extra',name:'Should not be committed',geometry:shape},
+    {id:'existing',name:'Different shape',geometry:shape}
+  ];
+  await assert.rejects(db.importMany(conflicts),{code:'conflict'});
+  assert.equal(await db.get('extra'),null,'one bad conflict aborts all staged additions');
+  assert.equal((await db.get('existing')).contentHash,a.contentHash);
+  await assert.rejects(db.importMany([b,b]),{code:'invalid-import'});
+  assert.equal((await db.list()).length,2);
+});
