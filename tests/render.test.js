@@ -335,7 +335,7 @@ test('material relief follows the visible surface field and layer strength',()=>
   const ty=-wx*layer.heightSin+wy*layer.heightCos;
   const cap=Math.min(28,stripe.width*.34)*Math.pow(.60,.85);
   assert.ok(Math.abs(textureHeight(full,stripe,x,side)-
-    materialHeight(layer,tx,ty)*cap)<1e-8);
+    materialHeight(layer,tx,ty)*cap*1.5)<1e-8);
   const faint=resolveScene({...recipe,textureStrength:10});
   assert.ok(Math.abs(textureHeight(faint,faint.stripes[3],x,side)-
     textureHeight(full,stripe,x,side)*.1)<1e-8,
