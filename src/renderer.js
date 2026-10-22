@@ -3,7 +3,7 @@ import { samplePath, ribbonEdge, widthAt, noise1D } from './path-geometry.js';
 import {drawRegionInteriors,elementInk,elementWave,lineDash,elementApplies} from './interior-elements.js';
 import { viewCamera } from './view-camera.js';
 import {findPathCrossings,crossingTopIsLater,crossingBranchClip} from './crossing-order.js';
-import {materialHeight,paintMaterial} from './material-surface.js';
+import {materialContourHeight,paintMaterial} from './material-surface.js';
 import {applyPhotoFinish} from './photo-look.js';
 import {matchingEmbroidery,drawRibbonEmbroidery,drawRegionEmbroidery} from './embroidery.js';
 
@@ -37,7 +37,7 @@ export function textureHeight(scene,stripe,x,side=0){
     const ty=-dx*layer.heightSin+dy*layer.heightCos;
     // Do NOT divide by sum of strengths. A 10% layer must induce much less
     // relief than the same layer at 100%, and inactive layers contribute zero.
-    field+=materialHeight(layer,tx,ty)*(layer.strength/100);
+    field+=materialContourHeight(layer,tx,ty)*(layer.strength/100);
   }
   const cap=Math.min(28,stripe.width*.34)*
     Math.pow(scene.textureDisplacement/100,.85);
