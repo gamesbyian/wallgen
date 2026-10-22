@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {normalizeRecipe} from '../src/model.js';
 import {embedPngMetadata,readRawPngRecipe,extractPngRecipe,scanPngChunks,RECIPE_FORMAT}
   from '../src/png-metadata.js';
-import {inspectPngMigration,migratePngMetadataOnly,validatePngMigrationContainer} from '../src/png-recipe-migration.js';
+import {inspectPngMigration,migratePngMetadataOnly,validatePngMigrationContainer,archivePngRecipeRecords} from '../src/png-recipe-migration.js';
 const tiny=Uint8Array.from(Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/mXPo5QAAAABJRU5ErkJggg==','base64'));
 const same=(a,b)=>assert.equal(Buffer.compare(Buffer.from(a),Buffer.from(b)),0);
@@ -86,6 +86,14 @@ test('historical v1, missing recipes and malformed pixels remain safe refusals',
   assert.deepEqual(extractPngRecipe(v1),normalizeRecipe(raw));
   const report=inspectPngMigration(v1);
   assert.equal(report.safe,false);assert.match(report.reason,/v1 defaults/);
+  const archive=archivePngRecipeRecords(v1);
+  assert.equal(archive.format,'roygbiv-recipe-archive-v1');
+  assert.equal(archive.recordCount,1,'refusing v1 migration must not block backup');
+  const originalNamed=scanPngChunks(v1).chunks.find(c=>c.type==='iTXt');
+  same(Buffer.from(archive.records[0].originalChunkBase64,'base64'),originalNamed.raw);
+  assert.equal(archive.records[0].format,'roygbiv-recipe-v1');
+  assert.deepEqual(JSON.parse(Buffer.from(archive.records[0].originalChunkBase64,'base64')
+    .subarray(12+15)).recipe,raw,'archive preserves source recipe JSON');
 });
 test('canonical migration is idempotent in recipe content, even when source had duplicate records',()=>{
   const first=migratePngMetadataOnly(emitted(native)).png;
@@ -137,4 +145,30 @@ test('migration refuses valid-checksum unknown critical chunks and malformed chu
   const noncontiguous=Buffer.concat([input.subarray(0,iend),
     ancillaryChunk('tEXt',Buffer.from('Comment\0gap')),extraIdat,input.subarray(iend)]);
   assert.throws(()=>validatePngMigrationContainer(noncontiguous),/Non-contiguous PNG image data/);
+});
+
+test('archival export keeps every named record verbatim and preserves PNG input',()=>{
+  const input=emitted(native);
+  const src=scanPngChunks(input);
+  const named=src.chunks.find(c=>c.type==='iTXt');
+  const before=Buffer.from(input);
+  const duplicated=Buffer.concat([
+    input.subarray(0,named.offset),named.raw,input.subarray(named.offset)
+  ]);
+  const archive=archivePngRecipeRecords(duplicated);
+  assert.equal(archive.width,1);assert.equal(archive.height,1);
+  assert.equal(archive.recordCount,2);
+  assert.equal(archive.records.length,2);
+  for(const record of archive.records)
+    same(Buffer.from(record.originalChunkBase64,'base64'),named.raw);
+  assert.equal(archive.selectedChunkIndex,archive.records[1].chunkIndex);
+  same(duplicated,Buffer.concat([before.subarray(0,named.offset),
+    named.raw,before.subarray(named.offset)]),
+    'archive leaves original byte sequence untouched');
+  assert.equal(JSON.parse(JSON.stringify(archive)).records.length,2);
+});
+test('archive exporter independently refuses damaged non-recipe PNG integrity',()=>{
+  const input=emitted(native),image=scanPngChunks(input).chunks.find(c=>c.type==='IDAT');
+  const corrupt=input.slice();corrupt[image.offset+9]^=2;
+  assert.throws(()=>archivePngRecipeRecords(corrupt),/IDAT checksum/);
 });
