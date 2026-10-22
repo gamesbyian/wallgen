@@ -128,3 +128,18 @@ test('chunked processing exactly matches synchronous single-pass output',()=>{
   assert.throws(()=>job.processPixels(-1,1),RangeError);
   assert.throws(()=>job.processPixels(0,width*height+1),RangeError);
 });
+
+test('independent reference colours match published Machado sRGB outputs',()=>{
+  // An independently published worked example (CalcOpenly, 16 Oct 2026)
+  // #E74C3C -> #786D39 protanopia, #9F8F36 deuteranopia.
+  // https://www.calcopenly.com/programming/color-blindness-simulator
+  const input=[0xE7,0x4C,0x3C];
+  for(const [mode,expected] of [
+    ['protan',[0x78,0x6D,0x39]],
+    ['deutan',[0x9F,0x8F,0x36]]
+  ]){
+    const result=simulateRgb(input,mode,1);
+    result.forEach((actual,i)=>assert.ok(Math.abs(actual-expected[i])<=1,
+      mode+' reference '+input+' channel '+i+' actual '+actual));
+  }
+});
