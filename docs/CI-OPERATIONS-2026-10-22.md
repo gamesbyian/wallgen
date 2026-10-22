@@ -1,5 +1,7 @@
 # Pragmatic CI for a personal wallpaper app
 
+**Current authority (2026-10-22):** this document governs CI for Embroidery #467, Film #468, material judgement #445, shape editing #443 and UI #444 just as it does ordinary PRs. References to mandatory full Node + 1000-image screenshot acceptance in older design plans are historical, not a requirement today. Render-related changes should carry a few meaningful deterministic samples and focused recipe tests; actual material quality needs a human/agent optical review of real generated images, not a guessed pass.
+
 This policy supersedes the earlier release-style CI rules. ROYGBIV is a personal creative tool. A slight control-spacing regression is an annoyance to fix, not a safety-critical incident. The purpose of CI is to catch basic breakage cheaply, not to prove every pixel and interaction unchanged after every edit.
 
 ## What runs automatically

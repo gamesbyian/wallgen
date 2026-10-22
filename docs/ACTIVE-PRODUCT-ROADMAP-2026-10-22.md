@@ -1,12 +1,42 @@
 # ROYGBIV: active product roadmap and work queue
 
+## Current artistic delivery board (authoritative as of 2026-10-22)
+
+**Source checkpoint:** `main` at `dab3e8593442e00ac9c8a326638e96d862abfff3` before this documentation reconciliation. **Live user interface:** seven Edit categories, **40 named tool cards and 95 canonical scalar keys**, with dynamic interior collections. This is a *personal* wallpaper studio: treat data preservation as important and screenshot perfection as optional. Use the smallest artifact/test that reveals an actual creative problem. Older 40/87 and 43/95 maps are deliberately dated research baselines.
+
+| Priority | Outcome / accountable queue | Already implemented | Next concrete action and what closes the thread |
+|---|---|---|---|
+| **P0: artistic judgement** | [#445 Material realism](https://github.com/gamesbyian/wallgen/issues/445) · materials/render owner | Seeded material fields and material-dependent contour relief #430/#454; [#453](https://github.com/gamesbyian/wallgen/pull/453) seven-PNG review script, fixed to use **exact matching recipes** in [#458](https://github.com/gamesbyian/wallgen/pull/458) | **Actually run and LOOK at** `node scripts/review-materials.mjs --out-dir artifacts/material-review` (watercolour/linen/concrete × two seeds + neutral control). Record observed seams, repetition or weak material identity; fix only defects that exist. CLI passing ≠ pictures rendered or artistically approved. No screenshot atlas. |
+| **P1: new art** | [#467 Embroidery and role-scoped treatments](https://github.com/gamesbyian/wallgen/issues/467) · renderer/material + UX owner | [Embroidery architecture](GEOMETRY-AWARE-EMBROIDERY-AND-SURFACE-TREATMENTS-PLAN-2026-10-22.md) merged in #464, **planning only** | E0 neutral recipe/material role contracts → E1 *one genuinely embroidered stripe and one chosen region* → E2/E3 deterministic stitches and 2.5D thread → E4 compact Texture Treatments → E5 optional artistry. Close only after usable artwork on main. |
+| **P1: new art** | [#468 Film-inspired finishing](https://github.com/gamesbyian/wallgen/issues/468) · image pipeline + UX owner | [Film architecture](PHOTO-FILM-LOOKS-AND-FILTERS-PLAN-2026-10-22.md) merged in #464, **planning only** | F0 pixel/seed/export contract → F1 attractive opt-in tone/look → F2 seeded grain/halation → F3 compact Light Film → F4 saved/worker/export parity → F5 optional LUT/damage. Independent of embroidery. Close only after an actual finish ships. |
+| **P2: responsive interaction** | [#443 Scattered shapes](https://github.com/gamesbyian/wallgen/issues/443) · art/editor owner | Library/imported compound silhouettes #434, Rainbow Orbits, nudge/reset + saved overrides #449, **opt-in direct finger dragging** #456. Actual Pixel feel **not yet verified** | Optionally try the drag on a phone, then improve only witnessed friction; ZIP/source blobs, ordering, advanced shape controls remain elective. Don't requeue the preset or direct drag. |
+| **P2: creative UX** | [#444 Navigation and control semantics](https://github.com/gamesbyian/wallgen/issues/444) · UX owner | Research #446/#450, source-truth and contextual edits #452/#454/#455/#459–#463/#465, **40/95 live editor** | A few practical Pixel journeys of Material/Finish, selected interior object, Dots, shape handling and direct links. Evaluate C07/C09/C10/C11 and stale C14–C17 *only if* use exposes friction. See the detailed live UX queue below. |
+| **P3: tangible phone friction** | [#365 Mobile targets](https://github.com/gamesbyian/wallgen/issues/365) · responsive owner | Extensive 2026-10-21 target fixes, #451 short Draw collapsing panel, [#422](https://github.com/gamesbyian/wallgen/issues/422) **closed** | A small number of real troublesome taps if encountered; document and repair concrete collision. No mandatory 320–790px atlas on every PR. |
+| **Deferred** | [#301 600×360 phone-landscape](https://github.com/gamesbyian/wallgen/issues/301) | Known 0×0 canvas, historically reproduced, outside preferred portrait scope | Don't treat as blocker. Reconsider only if an in-scope portrait/desktop mode also breaks. |
+
+### Next-work dispatch and stop conditions
+
+1. **Material realism:** generate only the seven exact-source examples from the [review guide](MATERIAL-SEVEN-IMAGE-ART-REVIEW-2026-10-22.md). Record whether images were generated and visually viewed, then update #445; a tool existing isn't a completed artistic review.
+2. **Embroidery:** start E0/E1 on a new implementation branch; get one obviously embroidered stripe and one independent selected surface into a wallpaper before expanding to elaborate stitch types. Source roles/geometry and old recipes must survive unchanged when Off.
+3. **Film:** start F0/F1 independently, with a neutral zero-amount implementation and one compelling film-look comparison on both a dark and bright wallpaper. Grain, halation and extra UI come after the look is convincing.
+4. **Phone and editor:** gather only meaningful observations; prioritize frequent taps, a selected-object experience or obstructed preview. Keep tiny UX fixes independent of render features.
+5. **Optional advanced shapes:** ask whether precise ordering, SVG/ZIP bulk transport or source blobs would really improve this one person's artwork before building large infrastructure.
+
+**Closure vocabulary:** `proposed` ≠ `implemented on branch` ≠ `merged to main` ≠ `focused CI passed` ≠ `real output viewed` ≠ `physical device accepted`. Update linked issue checkboxes, this board, and any affected plan once the actual stage occurs. **No new permanent automated CI or giant screenshot pass** is authorized by these plans.
+
+### Integration dependencies and preservation
+
+Embroidery and Film share a seeded, composable rendering pipeline but **neither requires the other to ship first**. Embroidery targets individual region/path/outline roles and preserves the three legacy texture layers; Film is initially an opt-in *final full-image finish*. Their order must be explicit when both are active. Version recipe additions; absent/Off treatments must preserve every old saved design, local library item, PNG metadata and camera/pan behavior. Use a few hand-picked examples and focused round-trip checks as needed.
+
+[Archival reconciliation #439](https://github.com/gamesbyian/wallgen/issues/439) is **closed**; [CI policy](CI-OPERATIONS-2026-10-22.md) supersedes the old exhaustive acceptance language in 2026-10-19/21 ledgers. [Embroidery](GEOMETRY-AWARE-EMBROIDERY-AND-SURFACE-TREATMENTS-PLAN-2026-10-22.md), [Film](PHOTO-FILM-LOOKS-AND-FILTERS-PLAN-2026-10-22.md), [geometry original plan](SHAPE-PATH-LIBRARY-AND-SCATTERED-SHAPES-PLAN-2026-10-21.md) and [UX causal audit](IA-SEMANTIC-CONTROL-AUDIT-AND-REVISION-PLAN-2026-10-22.md) contain detail, but **this board owns priorities and current status**.
+
 ## Live UX delivery and completion queue (2026-10-22)
 
 **Current `main` checkpoint:** 7 Edit categories, **40 named tool cards, 95 canonical schema setting keys**; separate dynamic interior-element objects, Shape & Path Library, five mobile destinations. This supersedes the historical 40/87 and intermediate 43/95 maps for **live navigation**. Old snapshots remain historical research records, not today's menu specification. The original recipe/PNG/Saved identifiers were not migrated for these navigation fixes.
 
 **Shipped and tested:** [#452](https://github.com/gamesbyian/wallgen/pull/452) truthful overlap/tonal choice; [#454](https://github.com/gamesbyian/wallgen/pull/454) contour prerequisites / Variation naming; [#455](https://github.com/gamesbyian/wallgen/pull/455) exact-field search and selected artistic-intent terms; [#459](https://github.com/gamesbyian/wallgen/pull/459) unified Texture Layer 1–3 with Material/Finish views (**43→40 tool cards**); [#460](https://github.com/gamesbyian/wallgen/pull/460) same selected interior element switchable in Style/Wave/Placement/Ink & Targets; [#461](https://github.com/gamesbyian/wallgen/pull/461) honest scattered size and imported-placeholder feedback; [#462](https://github.com/gamesbyian/wallgen/pull/462) direct Light/Shadow/Glow links; [#463](https://github.com/gamesbyian/wallgen/pull/463) dormant Dots/Motif Scale activation routes; [#465](https://github.com/gamesbyian/wallgen/pull/465) deliberate Design Type → relevant Geometry next step. All applicable existing PR Node CI passed; **a new physical-phone usability or multi-breakpoint visual acceptance was not run for these changes**.
 
-**Outstanding, not silently closed:** C07 search multiple-match disambiguation and keyboard flow; C09 optional reduction of the five interior-element *tool* destinations into a cohesive selected-object inspector (persistent selection is already shipped); C10 evaluate whether direct lighting links suffice before making a giant mixed-effects card; C11 optional intent-first Arrange/Form prototype; C03 decision on temporary silhouette placeholder versus alternative empty state; targeted Pixel portrait fit, screen-reader/touch/restore checks for the recent controls; review other live semantic findings C14–C17 before marking them inapplicable. Remain within a small evidence budget and avoid compulsory CI screenshot matrices. Main [roadmap](docs/ACTIVE-PRODUCT-ROADMAP-2026-10-22.md) and [UX queue](docs/UI-REDESIGN-IMPLEMENTATION-QUEUE.md) are the operational tracking authorities; [#444](https://github.com/gamesbyian/wallgen/issues/444) remains the umbrella.
+**Outstanding, not silently closed:** C07 search multiple-match disambiguation and keyboard flow; C09 optional reduction of the five interior-element *tool* destinations into a cohesive selected-object inspector (persistent selection is already shipped); C10 evaluate whether direct lighting links suffice before making a giant mixed-effects card; C11 optional intent-first Arrange/Form prototype; C03 decision on temporary silhouette placeholder versus alternative empty state; targeted Pixel portrait fit, screen-reader/touch/restore checks for the recent controls; review other live semantic findings C14–C17 before marking them inapplicable. Remain within a small evidence budget and avoid compulsory CI screenshot matrices. The [active art/UX board](ACTIVE-PRODUCT-ROADMAP-2026-10-22.md) and [UX queue](UI-REDESIGN-IMPLEMENTATION-QUEUE.md) are the operational tracking authorities; [#444](https://github.com/gamesbyian/wallgen/issues/444) remains the umbrella.
 
 ### Execution order and closure gates
 
@@ -19,80 +49,6 @@
 | **P2 · shape/editor agent** | **C03 imported silhouette fallback** | Decide whether explicit *temporary circles* are sufficient or imported-with-no-asset should render empty/offer inline library entry. | Safe deterministic fallback, recoverable imported geometry, Undo/Saved correctness; don't silently change content. |
 | **P3 · audit agent** | **C14–C17 / terminology and map drift** | Re-run source semantic audit, compare 40/95 schema and current pending feature PRs; clear superseded findings or open tiny reproducible issues. | Current receipts and status per finding, with only relevant code evidence. |
 
-**Ordering:** first qualify the smallest real-phone journeys, then decide whether C09 consolidation produces a real gain, followed by C07 if confusion is demonstrated. Cross-category context shortcuts are shipped; do not requeue them as unbuilt. Embroidery and film-filter work on separate [PR #464](https://github.com/gamesbyian/wallgen/pull/464) is a planning track, not part of these merged UX implementations. The semantic findings document is research/evidence; this board is the actionable queue.
+**Ordering:** first qualify the smallest real-phone journeys, then decide whether C09 consolidation produces a real gain, followed by C07 if confusion is demonstrated. Cross-category context shortcuts are shipped; do not requeue them as unbuilt. Embroidery and film-filter specifications merged in [PR #464](https://github.com/gamesbyian/wallgen/pull/464); implementing them is queued in [#467](https://github.com/gamesbyian/wallgen/issues/467) and [#468](https://github.com/gamesbyian/wallgen/issues/468), not part of these UX receipts, not part of these merged UX implementations. The semantic findings document is research/evidence; this board is the actionable queue.
 
 
----
-
-**Updated:** 2026-10-22 · **Live UX checkpoint:** `main` after #465 (40 named tools / 95 keys); earlier embedded SHA is historical · **Scope:** this personal, offline-first wallpaper creator.  
-**Working rule:** put real artistic capability and data continuity ahead of administrative polish, giant testing matrices, and blanket zero-regression claims. The quick PR gate runs automatically; optional tests are selected because a particular change warrants them.  
-**Use together with:** [reconciliation tracker #439](https://github.com/gamesbyian/wallgen/issues/439), [pragmatic CI policy](CI-OPERATIONS-2026-10-22.md), [geometry system specification](SHAPE-PATH-LIBRARY-AND-SCATTERED-SHAPES-PLAN-2026-10-21.md), [geometry implementation queue](SHAPE-PATH-LIBRARY-IMPLEMENTATION-QUEUE-2026-10-21.md), [terminology audit](UI-TERMINOLOGY-AUDIT-2026-10-21.md).
-
-## Integrated checkpoint (2026-10-22)
-
-**Later same-day progress:** PR #446 integration of the human-centred map; #449 portable individual-circle/silhouette editing; #53 safe manifest salvage; #451 short-portrait Draw panel unblocking candidate; #450 semantic audit, with targeted follow-up for misleading scatter-spacing state, missing imported shape fallback and optional tonal construction. Their current status is reflected in the table below; do not requeue already merged implementations.
-
-
-Three formerly stranded features are now on `main`, not merely queued:
-
-- [#435](https://github.com/gamesbyian/wallgen/pull/435) **Russian production diary**, importer and explicitly partial provenance archives: merged `21ee31f`.
-- [#434](https://github.com/gamesbyian/wallgen/pull/434) **Shape & Path Library**, IndexedDB reuse, shape backups, scattered circles and imported silhouette stamp support: merged `b806497`. Focused Node integrity/backup checks and one real Chromium IndexedDB/image-import journey passed. The named **Rainbow Orbits** preset, effortless single-object editing and additional portability belong to #443, not a duplicate foundation.
-- [#432](https://github.com/gamesbyian/wallgen/pull/432) **Colour Vision Preview**, display-only Machado/Brettel simulation and split comparison: merged `6ef7321` without replacing the geometry editor. Quick checks passed; personal-device optical/performance observations are still unverified.
-
-At the **historical integration checkpoint**, the editor had **7 categories / 43 tools / 95 source editor settings**, plus view-only vision and a distinct reusable shape/path library. Frozen 40/87 source inventories are historical verification artifacts; rectify those under #444 without removing new tools. A detailed [human-centred navigation study, PR #446](https://github.com/gamesbyian/wallgen/pull/446), has been authored from the earlier 40-tool baseline and awaits an integrated-main addendum. Retain its analysis; don't equate conceptual approval with shipping a redesign.
-
-**Current unresolved priority:** review actual texture quality #445; refine only the navigation mismatches that demonstrably make artwork harder to create (#444); verify the short-portrait Draw control remedy #422 and react to real user friction. Rainbow Orbits and individual circle/shape editing are already on main. The 17 source-backed semantic findings from #450 form a scoped candidate backlog, not a mandate to implement all 17. Leave extreme landscape #301 as acknowledged low priority. The single old video-preparation draft #53 remains a preserve/port-or-close decision.
-
-## Product objectives, in priority order
-
-1. **Preserve and integrate work already done.** Get the Russian diary and repeatable archive flow (#435) safely into `main`; integrate reusable geometry (#434); integrate colour vision (#432). Do not duplicate unmerged implementations on new branches. Protect existing personal artwork, favourites, imported paths and round-trip recipes.
-2. **Unlock new artwork.** Use the geometry library to ship scattered ROYGBIV circles and Rainbow Orbits, then image-defined silhouettes and compound region stamps: [#443](https://github.com/gamesbyian/wallgen/issues/443). A minimal creative interaction beats a perfect multi-mode UI.
-3. **Make the settings intelligible.** Produce a source-backed human-concept navigation map, compare alternatives and act on high-impact moves, not superficial relabeling: [#444](https://github.com/gamesbyian/wallgen/issues/444).
-4. **Improve artistic texture where warranted.** Examine actual materials and displacement, sample a tiny set, repair confirmed repetition or realism defects: [#445](https://github.com/gamesbyian/wallgen/issues/445).
-5. **Fix experienced friction, not hypothetical ergonomic edge cases.** Correct the 500×700 Draw overlay occlusion [#422](https://github.com/gamesbyian/wallgen/issues/422), then cherry-pick real, visible touch-target improvements from parent [#365](https://github.com/gamesbyian/wallgen/issues/365). Keep 600×360 landscape collapse [#301](https://github.com/gamesbyian/wallgen/issues/301) low-priority unless it affects supported views.
-6. **Resolve small stranded branches and housekeeping.** Decide whether old phone-video preparation draft #53 is valuable enough to forward-port; otherwise close with preservation note. De-duplicate GitHub Pages build configuration if useful; leave branch protection optional for a solo app. Keep [#439](https://github.com/gamesbyian/wallgen/issues/439) until PR dispositions are reconciled.
-
-## Immediate execution board
-
-| Priority | Work | Currently | First executable action | Closure means |
-|---|---|---|---|---|
-| Done | [#435 Russian diary](https://github.com/gamesbyian/wallgen/pull/435) | **Merged:** archive and safe importer in main, with authentic full transcripts explicitly unavailable | Add genuine exported conversation transcripts if later obtained, not a release gate | Current provenance and importer are integrated; no invented two-sided coverage |
-| Done | [#434 geometry library](https://github.com/gamesbyian/wallgen/pull/434) | **Merged:** reusable shapes/paths, local library, import/export, scattered composition foundation | Use the new tools artistically; advance #443 named preset/edit UX | Foundation on main with focused data-safety and Chromium checks; UI snapshot maintenance #444 |
-| Done | [#432 colour-vision preview](https://github.com/gamesbyian/wallgen/pull/432) | **Merged:** simulation, comparison UI and display-only integration | Optional physical-device glance only where useful | On main without changing native recipe/PNG export; no visual-perfection gate |
-| Done / optional polish | [#443 shapes & Rainbow Orbits](https://github.com/gamesbyian/wallgen/issues/443) | **Merged:** named Rainbow Orbits preset already existed in #434; #449 adds independent circle/silhouette position/size/reset with recipe and Undo | Optionally consider direct finger dragging, advanced ordering and ZIP portability only if artistically useful | Seeded seven-circle design, saved overrides and compound stamp geometry are working foundations |
-| P1 device check / P2 follow-ups | [#444 creative navigation](https://github.com/gamesbyian/wallgen/issues/444) | **Merged:** research #446/#450 and focused implementation #452/#454/#455/#459/#460/#461/#462/#463/#465 | Run focused portrait UX spot-check; then prioritize C09 selected-element inspector or C07 search ambiguity against observed friction | Research taxonomy and focused mapping checks on main; source IDs remain stable |
-| P2 | [#445 texture quality](https://github.com/gamesbyian/wallgen/issues/445) | Texture displacement was repaired in #430; subjective realism not freshly assessed | Inspect material code and 3×2 samples; file concrete defects only | Material character and distortion are believable enough for personal creative use |
-| Verification | [#422 Draw occlusion](https://github.com/gamesbyian/wallgen/issues/422), [#365 targets](https://github.com/gamesbyian/wallgen/issues/365) | **Candidate merged #451:** short portrait Draw controls auto-collapse into right gutter when editing anchors | Confirm 500×700 actual finger hit ownership if convenient; address further *experienced* touch friction only | Source-level remedy merged, hardware/browser hit test explicitly unverified |
-| Done | [#53 manifest preparation](https://github.com/gamesbyian/wallgen/pull/53) | **Merged:** safe JSON-only manifest helper salvaged onto latest main | Do not record, render or dispatch without an explicit separate request | Old draft reconciled, no media produced |
-| P3 | [#301 landscape](https://github.com/gamesbyian/wallgen/issues/301) | Known 600×360 collapse | Defer | Work only if it affects supported portrait or normal desktop views |
-
-## Actual dependencies and collisions
-
-```text
-#435 archive --------> merge independently, then later recover complete authentic exports
-#434 library --------> #443 circles/preset --------> image silhouette and region stamps
-                 \
-                  \---> #444 map refresh (new library tools)
-#432 colour vision --> reconcile #434's index.html/app presentation, not renderer/export
-#444 navigation -----> selective moves, terminology and conditional control cleanup
-#445 material -------> source-driven realism fixes (can proceed independently)
-#422 touch ----------> #365 broader ergonomic backlog (do not expand scope by default)
-#53 video prep ------> disposition independent of user wallpaper features
-```
-
-**Potential merge conflicts:** #434 and #432 both affect the editor and `index.html`, and #435 modifies README from an old base. Integrate by semantic behavior, not “theirs wins.” Scripts and archives should not silently overwrite more recent contents.
-
-## Implementation principles
-
-- **Each patch should do something tangible.** One user-visible capability or a directly enabling foundation. Stage optional enhancements afterward. Avoid one-assertion PRs and administrative churn.
-- **Personal artwork is the high-stakes asset.** Preserve recipe v1/v2 recovery, PNG metadata, image assets, IndexedDB/library semantics, favourites and undo. Changes in schema/import/storage get focused round-trip tests and backups; visual spacing does not demand a regression atlas.
-- **Simple changes:** Node quick check plus an informed glance; **new renderer geometry:** focused unit tests and one representative wallpaper; **persistence changes:** conflict and import/export recovery tests; **major UI flow:** one supported phone viewport, not every breakpoint.
-- **Truthful statuses:** planned, implemented on branch, merged, tested, user/device-approved are separate claims. Optional old browser suites are not required checks. A failure in a retired 40-tool inventory may mean the inventory is stale, not that three new controls should be deleted.
-- **No compulsory physical-device human approval** to merge low-stakes work. Still mention unverified device/visual concerns that materially impact the change, rather than describing them as passed.
-- **Retain source and history.** Do not delete a feature branch until recoverable unique work is on main or its disposition is explicitly recorded. An unfinished request is not closed by documentation alone.
-
-## Reconciliation and housekeeping
-
-Current snapshot: merged #435, #434, #432, #446 navigation research, #449 individual-shape editing, #450 semantic audit, #53 preparation-only video manifest, and #451 short-portrait Draw candidate. No legacy unfinished PRs remain. Open product queues #443, #444, #445; live ergonomic issues #422, #365 and low-priority #301. The current CI is one quick PR gate, with optional deep suites. `main` includes lean CI via #441/#442; 12 active Actions definitions, 54 archived one-off suites. Two Pages deployment paths still appear in Actions, both historically successful, and can be consolidated via repository settings when convenient.
-
-**Update rule:** after each integration, mark the corresponding board row merged and update its remaining next action. Keep this short board authoritative, link the older detailed plans rather than cloning them into a second giant unchecked list.

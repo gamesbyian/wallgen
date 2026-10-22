@@ -1,5 +1,8 @@
 # Colour Vision Preview: implementation and acceptance plan
 
+> **2026-10-22 CURRENT STATUS:** [PR #432](https://github.com/gamesbyian/wallgen/pull/432) is **MERGED**. The optional Machado/Brettel-based original-versus-simulation preview is display-only; normal wallpaper source, recipe/PNG export and favourites are unchanged by inspection. The 'implementation in progress / draft branch' statements below are historical. Pixel 6 Pro optical behaviour, TalkBack and low-power performance are **not verified**; those are optional observations under [lean CI policy](CI-OPERATIONS-2026-10-22.md), not permission to block unrelated artwork development.
+
+
 **Status:** implementation in progress on `feature/colour-vision-preview`. **Scope:** ROYGBIV's offline, static, unbundled ES-module application. **Primary viewport:** Pixel 6 Pro portrait, with desktop, short viewport, zoom and fullscreen coverage. **Owner:** this branch. **Data/model:** Machado, Oliveira & Fernandes (2009), cross-checked against DaltonLens-Python; Brettel, Viénot & Mollon (1997) is an independent reference, not an unverified drop-in alternative.
 
 ## Goal and truthful promise

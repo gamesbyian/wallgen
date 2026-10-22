@@ -1,4 +1,7 @@
 # ROYGBIV: Shape & Path Library and Scattered Shapes
+
+> **2026-10-22 CURRENT STATUS:** Original technical specification, **not a claim the source geometry is unimplemented**. #434 built library, silhouette stamp import, seeded circles, Rainbow Orbits and portable geometry; #449 built independent nudge/resize/reset and #456 on-canvas movement. These features are merged to main with focused tests. Advanced layer ordering, ZIP/raw-source retention and subjective Pixel gesture feel are optional later work under [#443](https://github.com/gamesbyian/wallgen/issues/443). Today's editor has **40 tool cards / 95 setting keys** after #459, rather than the intermediate 43-tool reference. [Roadmap](ACTIVE-PRODUCT-ROADMAP-2026-10-22.md) owns closure and sequencing.
+
 ## Architecture, product specification, UX and implementation plan
 
 **Date:** 2026-10-21 (America/Edmonton)  

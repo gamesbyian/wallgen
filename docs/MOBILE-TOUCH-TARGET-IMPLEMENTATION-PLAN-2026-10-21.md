@@ -1,5 +1,8 @@
 # Mobile touch-target implementation plan and evidence ledger
 
+> **2026-10-22 CURRENT STATUS:** The 2026-10-21 instrumentation and selected target improvements have landed; consult the [current handoff](MOBILE-ERGONOMICS-ENGINEERING-HANDOFF-2026-10-21.md) for qualified history. #451 addressed short-portrait Draw panel at source level and #422 was closed. [#365](https://github.com/gamesbyian/wallgen/issues/365) stays open for **actual annoying taps**, not speculative perfection. Historical full-device hit grids are no longer compulsory on ordinary PRs; [lean CI](CI-OPERATIONS-2026-10-22.md) governs. Keep original measurement data for provenance.
+
+
 **Created:** 2026-10-21. **Base:** `6389e4ec7dc3a71f37656ba2b72ad04a747d6e2e`. **Owner lane:** cross-surface *touch geometry, browser instrumentation and ergonomic QA*. **Companion:** [multilingual R&D report](MOBILE-TOUCH-TARGET-RESEARCH-2026-10-21.md). **Current implementation status:** [delivery and measured-evidence ledger](MOBILE-TOUCH-TARGET-DELIVERY-2026-10-21.md).
 
 This is an additive ergonomics initiative. Do **not** reopen historically completed functional checkboxes in `docs/UI-REDESIGN-IMPLEMENTATION-QUEUE.md` or conflate the remaining supported-layout **human visual approval** gate with a new numeric touch-target goal. Preserve source controls, actual behaviour, normalized recipes, camera invariants, generated output, five-way dock, Focus opt-in, icon authorization, and portrait-first support policy.

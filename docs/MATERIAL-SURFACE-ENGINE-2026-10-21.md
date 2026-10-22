@@ -1,5 +1,8 @@
 # Material surface and displacement contract
 
+> **2026-10-22 CURRENT STATUS:** Seeded per-material relief and stripe-contour response are real shipped features (#430). #454 now truthfully deactivates contour distortion when no effective stripe-applied texture exists, and #459 consolidated layers into Material/Finish views. **Material believability is not approved**: [#445](https://github.com/gamesbyian/wallgen/issues/445) needs the exact-recipe [seven-image review](MATERIAL-SEVEN-IMAGE-ART-REVIEW-2026-10-22.md), built in #453 and corrected in #458. The giant worker/browser tests described below are historical optional diagnostic suites, not automatic PR gates. Procedural embroidery is **planned separately** as [#467](https://github.com/gamesbyian/wallgen/issues/467), not yet provided by this material engine.
+
+
 The new world-space material engine lives in src/material-surface.js and is
 used by src/renderer.js for both visible texture and stripe-edge relief.
 

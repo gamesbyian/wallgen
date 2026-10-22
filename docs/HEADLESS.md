@@ -1,5 +1,8 @@
 # Headless generation
 
+> **2026-10-22 EXECUTION QUEUE:** Material quality #445 now has an opt-in seven-example renderer driver, [`scripts/review-materials.mjs`](../scripts/review-materials.mjs), introduced in #453 and corrected in #458. Run `node scripts/review-materials.mjs --out-dir artifacts/material-review` with Playwright/Chromium installed. Each exact normalized JSON recipe is passed to `render-headless.mjs --recipe`, resulting in a restorable PNG, gallery and manifest. **No samples have been visually examined by this session yet**; producing a PNG or passing Node CI cannot close #445. See [the small artistic review plan](MATERIAL-SEVEN-IMAGE-ART-REVIEW-2026-10-22.md). Do not add this to automatic CI.
+
+
 The headless CLI uses the **same** `src/model.js`, `src/renderer.js` and
 `src/png-metadata.js` as the interactive studio. No alternate artwork
 implementation or approximations are maintained.

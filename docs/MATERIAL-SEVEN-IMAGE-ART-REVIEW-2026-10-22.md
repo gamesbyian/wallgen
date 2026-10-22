@@ -1,5 +1,7 @@
 # Seven-image material review (opt-in)
 
+**Live work queue:** [material realism #445](https://github.com/gamesbyian/wallgen/issues/445), currently open. **Tooling shipped:** #453 created this comparison and #458 corrected it to save and render *the same exact seven recipes*. **Evidence not yet present:** the generated PNG gallery has not been opened and aesthetically reviewed in this session. The next owner should run the documented command, examine real images, and attach a concise conclusion or concrete observed defect to #445. Do not close from Node CI alone.
+
 This is an *artistic judgement* task, not a new CI gate. The existing
 source in `src/material-surface.js` uses a seeded, world-space, aperiodic
 height field shared by contour distortion and visible texture marks. That
