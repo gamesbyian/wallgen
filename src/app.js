@@ -18,6 +18,7 @@ import {installGeometryLibraryUI} from './geometry-library-ui.js';
 import {RAINBOW_ORBITS} from './scattered-composition.js';
 import {stripeContourDistortionAvailability} from './editor-effect-availability.js';
 import {normalizeScatteredOverrides} from './scattered-object-edits.js';
+import {scatteredPixelToWorld,scatteredWorldToPixel,pickScatteredRegion,scatteredMoveOverride,clamp as clampScattered} from './scattered-drag.js';
 import {cloneGeometrySnapshot} from './geometry-asset.js';
 import {parseStoredFavorites} from './favorites-store.js';
 import {encodePortableRecipe,decodePortableRecipe,portableShareUrl,portableShareTokenFromLocation,
@@ -1073,8 +1074,127 @@ const orbitNote=document.createElement('small');
 orbitNote.className='scattered-object-note';
 orbitNote.setAttribute('aria-live','polite');
 orbitEditor.append(orbitNote);
+const moveOnCanvas=document.createElement('button');
+moveOnCanvas.type='button';
+moveOnCanvas.id='scatteredMoveOnCanvas';
+moveOnCanvas.className='button button-outline scattered-preset';
+moveOnCanvas.textContent='Move shapes on canvas';
+moveOnCanvas.setAttribute('aria-pressed','false');
+moveOnCanvas.title='Tap and drag a circle or silhouette on the wallpaper, then Done';
+orbitEditor.append(moveOnCanvas);
 document.querySelector('.editor-tool-card[data-editor-tool="scattered-edges"]')
   ?.append(orbitEditor);
+
+// Direct manipulation is opt-in: normal preview taps, app navigation, Draw,
+// and camera controls are otherwise completely unchanged. Only pointerup
+// commits a recipe, making the whole drag ONE Undo step.
+let scatteredDirectActive=false,scatteredDirectDrag=null;
+const scatteredDirectOutline=document.createElement('div');
+scatteredDirectOutline.id='scatteredDirectOutline';
+scatteredDirectOutline.className='scattered-direct-outline';
+scatteredDirectOutline.hidden=true;
+document.querySelector('.wallpaper-surface')?.append(scatteredDirectOutline);
+const scatteredDirectDone=document.createElement('button');
+scatteredDirectDone.type='button';
+scatteredDirectDone.id='scatteredDirectDone';
+scatteredDirectDone.textContent='Done moving';
+scatteredDirectDone.hidden=true;
+document.querySelector('.studio-stage')?.append(scatteredDirectDone);
+function setScatteredDirectActive(next){
+  scatteredDirectActive=!!next;
+  scatteredDirectDrag=null;
+  document.body.classList.toggle('scattered-direct-active',scatteredDirectActive);
+  moveOnCanvas.setAttribute('aria-pressed',String(scatteredDirectActive));
+  moveOnCanvas.textContent=scatteredDirectActive?'Stop moving shapes':'Move shapes on canvas';
+  scatteredDirectDone.hidden=!scatteredDirectActive;
+  if(scatteredDirectActive)syncScatteredDirectOutline();
+  else scatteredDirectOutline.hidden=true;
+}
+function pixelFromPointer(event){
+  const rect=preview.getBoundingClientRect();
+  return {x:(event.clientX-rect.left)*preview.width/Math.max(rect.width,1),
+    y:(event.clientY-rect.top)*preview.height/Math.max(rect.height,1)};
+}
+function syncScatteredDirectOutline(temporaryCircle=null){
+  if(!scatteredDirectActive){scatteredDirectOutline.hidden=true;return;}
+  const id=Number(orbitPicker.value);
+  const object=currentScene?.objects?.find(o=>o.id==='region-'+id);
+  const circle=temporaryCircle||object?.circle||object?.editCircle;
+  if(!circle){scatteredDirectOutline.hidden=true;return;}
+  const pixel=scatteredWorldToPixel(current,preview.width,preview.height,circle.cx,circle.cy);
+  const canvasRect=preview.getBoundingClientRect();
+  const surfaceRect=preview.closest('.wallpaper-surface').getBoundingClientRect();
+  const scaleX=canvasRect.width/preview.width,scaleY=canvasRect.height/preview.height;
+  const radiusX=circle.r*pixel.radiusScaleX*scaleX;
+  const radiusY=circle.r*pixel.radiusScaleY*scaleY;
+  scatteredDirectOutline.style.left=(canvasRect.left-surfaceRect.left+pixel.x*scaleX-radiusX)+'px';
+  scatteredDirectOutline.style.top=(canvasRect.top-surfaceRect.top+pixel.y*scaleY-radiusY)+'px';
+  scatteredDirectOutline.style.width=(radiusX*2)+'px';
+  scatteredDirectOutline.style.height=(radiusY*2)+'px';
+  scatteredDirectOutline.hidden=false;
+}
+moveOnCanvas.addEventListener('click',()=>{
+  if(!scatteredDirectActive && document.body.classList.contains('mobile-edit-open'))
+    document.getElementById('mobileDismissHandle')?.click();
+  setScatteredDirectActive(!scatteredDirectActive);
+});
+scatteredDirectDone.addEventListener('click',()=>setScatteredDirectActive(false));
+preview.addEventListener('pointerdown',event=>{
+  if(!scatteredDirectActive||scatteredDirectDrag||event.button!==0)return;
+  const rect=preview.getBoundingClientRect();
+  const pos=pixelFromPointer(event);
+  const world=scatteredPixelToWorld(current,preview.width,preview.height,pos.x,pos.y);
+  const projection=scatteredWorldToPixel(current,preview.width,preview.height,world.x,world.y);
+  const tolerance=14*preview.width/Math.max(rect.width,1)/projection.radiusScaleX;
+  const object=pickScatteredRegion(currentScene?.objects,world,tolerance);
+  if(!object)return;
+  event.preventDefault();event.stopPropagation();
+  const circle=object.circle||object.editCircle;
+  if(!circle)return;
+  const index=Number(object.id.slice(7));
+  orbitPicker.value=String(index);
+  syncScatteredObjectEditor();
+  scatteredDirectDrag={pointerId:event.pointerId,index,
+    startWorld:world,circle:{...circle},current:{...circle},moved:false};
+  try{preview.setPointerCapture(event.pointerId);}catch{}
+});
+preview.addEventListener('pointermove',event=>{
+  const drag=scatteredDirectDrag;
+  if(!scatteredDirectActive||!drag||drag.pointerId!==event.pointerId)return;
+  event.preventDefault();event.stopPropagation();
+  const pos=pixelFromPointer(event);
+  const world=scatteredPixelToWorld(current,preview.width,preview.height,pos.x,pos.y);
+  const cx=clampScattered(drag.circle.cx+world.x-drag.startWorld.x,-300,900);
+  const cy=clampScattered(drag.circle.cy+world.y-drag.startWorld.y,-650,1950);
+  drag.current={...drag.circle,cx,cy};
+  drag.moved=Math.hypot(cx-drag.circle.cx,cy-drag.circle.cy)>.9;
+  syncScatteredDirectOutline(drag.current);
+});
+preview.addEventListener('pointerup',event=>{
+  const drag=scatteredDirectDrag;
+  if(!drag||drag.pointerId!==event.pointerId)return;
+  event.preventDefault();event.stopPropagation();
+  scatteredDirectDrag=null;
+  try{preview.releasePointerCapture(event.pointerId);}catch{}
+  if(drag.moved){
+    const overrides=scatteredMoveOverride(current,drag.index,drag.circle,
+      {x:drag.current.cx,y:drag.current.cy});
+    changeRecipe({...current,scatteredOverrides:overrides});
+  }
+  syncScatteredDirectOutline();
+});
+preview.addEventListener('pointercancel',event=>{
+  if(!scatteredDirectDrag||scatteredDirectDrag.pointerId!==event.pointerId)return;
+  scatteredDirectDrag=null;
+  syncScatteredDirectOutline(); // Cancellation leaves recipe untouched.
+});
+window.addEventListener('resize',()=>{if(scatteredDirectActive)syncScatteredDirectOutline();});
+window.addEventListener('keydown',event=>{
+  if(event.key==='Escape'&&scatteredDirectActive){
+    setScatteredDirectActive(false);
+    event.preventDefault();
+  }
+});
 
 function syncScatteredObjectEditor(){
   const root=document.getElementById('scatteredObjectEditor');
@@ -1083,6 +1203,7 @@ function syncScatteredObjectEditor(){
   const active=current.structure==='regions'&&
     current.regionMode==='scattered'&&objects.length>0;
   root.hidden=!active;
+  if(!active&&scatteredDirectActive)setScatteredDirectActive(false);
   root.querySelector('strong').textContent=current.scatteredShapeKind==='imported'?
     'Edit one shape':'Edit one circle';
   if(!active)return;
@@ -1113,6 +1234,7 @@ function syncScatteredObjectEditor(){
     'X '+Math.round(circle.cx)+
     ' · Y '+Math.round(circle.cy)+
     ' · Radius '+Math.round(circle.r):'No shape selected';
+  if(scatteredDirectActive&&!scatteredDirectDrag)syncScatteredDirectOutline();
 }
 orbitPicker.addEventListener('change',syncScatteredObjectEditor);
 orbitCommands.addEventListener('click',event=>{

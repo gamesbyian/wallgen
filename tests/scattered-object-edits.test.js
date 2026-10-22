@@ -58,3 +58,44 @@ test('imported silhouette stamps inherit individual transforms but keep compound
   assert.ok(stamp.rings[0].length>=4);
   assert.deepEqual(decodeRecipe(encodeRecipe(recipe)),recipe);
 });
+
+import {scatteredWorldToPixel,scatteredPixelToWorld,
+  pickScatteredRegion,scatteredMoveOverride} from '../src/scattered-drag.js';
+
+test('scattered drag camera round trips under zoom, pan and composition nudge',()=>{
+  const recipe=normalizeRecipe({...RAINBOW_ORBITS,
+    viewZoom:1.7,viewPanX:19,viewPanY:-13,positionX:14,positionY:-9});
+  for(const [x,y] of [[100,200],[335,844],[-80,1340]]){
+    const px=scatteredWorldToPixel(recipe,600,1300,x,y);
+    const back=scatteredPixelToWorld(recipe,600,1300,px.x,px.y);
+    assert.ok(Math.abs(back.x-x)<1e-8);
+    assert.ok(Math.abs(back.y-y)<1e-8);
+  }
+});
+
+test('touch selection respects topmost disk and holes in imported compound silhouettes',()=>{
+  const round={kind:'region',id:'region-0',circle:{cx:100,cy:100,r:80}};
+  const front={kind:'region',id:'region-1',circle:{cx:125,cy:120,r:60}};
+  assert.equal(pickScatteredRegion([round,front],{x:115,y:110}).id,'region-1');
+  const donut={kind:'region',id:'region-2',rings:[
+    [{x:0,y:0},{x:90,y:0},{x:90,y:90},{x:0,y:90}],
+    [{x:25,y:25},{x:65,y:25},{x:65,y:65},{x:25,y:65}]
+  ]};
+  assert.equal(pickScatteredRegion([donut],{x:5,y:5}).id,'region-2');
+  assert.equal(pickScatteredRegion([donut],{x:45,y:45}),null);
+  assert.equal(pickScatteredRegion([round],{x:182,y:100},3)?.id,'region-0');
+});
+
+test('single pointerup move retains unrelated authored transforms and saved recipe',()=>{
+  const base=normalizeRecipe({...RAINBOW_ORBITS,scatteredOverrides:[
+    {index:3,x:.2,y:.48,radius:.22}]});
+  const circle={cx:390,cy:600,r:63};
+  const edited=scatteredMoveOverride(base,2,circle,{x:198,y:936});
+  assert.deepEqual(edited.map(z=>z.index),[2,3]);
+  assert.equal(edited[0].x,.33);
+  assert.equal(edited[0].y,.72);
+  assert.equal(edited[0].radius,.105);
+  assert.deepEqual(edited[1],base.scatteredOverrides[0]);
+  const recipe=normalizeRecipe({...base,scatteredOverrides:edited});
+  assert.deepEqual(decodeRecipe(encodeRecipe(recipe)),recipe);
+});

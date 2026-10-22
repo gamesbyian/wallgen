@@ -38,7 +38,7 @@ CI contributors: see [CI operations and dispatch policy](docs/CI-OPERATIONS-2026
 
 ## Recently integrated creative tools
 
-**Scattered Rainbow Orbits:** In Layout → Canvas structure select Regions, then the Scattered shapes region layout. **Try Rainbow Orbits** creates seven seeded ROYGBIV circles on black, with varied sizes and deliberate off-frame crops. In the Edges & overlap tool, **Edit one circle / shape** selects an individual object for nudge, size change or reset without reshuffling the rest. These edits participate in Undo and travel with the recipe.
+**Scattered Rainbow Orbits:** In Layout → Canvas structure select Regions, then the Scattered shapes region layout. **Try Rainbow Orbits** creates seven seeded ROYGBIV circles on black, with varied sizes and deliberate off-frame crops. In the Edges & overlap tool, **Edit one circle / shape** selects an individual object for nudge, size change or reset without reshuffling the rest. These edits participate in Undo and travel with the recipe. The optional **Move shapes on canvas** action in Edges & overlap lets you drag an existing object directly on the wallpaper; its temporary outline is feedback only and the new position commits on finger release as one Undo step. Tap **Done moving** to restore normal preview touch behavior.
 
 **Shapes & paths:** The local Shape & Path Library saves and reuses imported/drawn geometry across designs. An imported silhouette can be used as a repeated region stamp, and its normalized geometry is embedded in the recipe, so the exported artwork does not depend on a later library lookup.
 
