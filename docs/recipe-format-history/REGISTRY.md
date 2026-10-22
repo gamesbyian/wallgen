@@ -1,5 +1,8 @@
 # ROYGBIV recipe format registry
 
+**45 complete source-expression snapshots (2026-10-22, PR pending):** The [machine-readable changed-expression matrix](model-expression-ledger.json), [human interpretation of ten changes](EXPRESSION-CHANGE-LEDGER.md) and [five source-backed expression snapshot batches](model-expression-sources-01.json) extend the verified key ledger across **all** its 45 model revisions. This reveals layer-three activation dependency, shadow default drift, Drawn anchor/path remapping and camera signed-zero updates. The seed initializer is lexically stable but RNG consumption/renderer equivalence remains **unproven**. Do not use this ledger alone to authorize historical v1/v2 migrations.
+
+
 **Semantic archaeology evidence (2026-10-22, PR pending):** [Four source-blob-pinned default-expression anchors](SEMANTIC-EXPRESSION-ANCHORS.json) and the [v1/v2 semantic adapter gate](SEMANTIC-DEFAULTS-AND-ADAPTER-GATES.md) record verified historical shadow-toggle/strength changes and v2 paths fallback. The 45-source key ledger is still structural only. A full local Git clone can run `node scripts/build-recipe-format-history.mjs --semantic-out docs/recipe-format-history/model-expression-history.json` to enumerate changed source expressions without assuming helper/renderer equivalence or overwriting the baseline ledger. Historic migrations remain refused until semantic parity is separately proved.
 
 
