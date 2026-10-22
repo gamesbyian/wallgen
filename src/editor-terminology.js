@@ -34,10 +34,11 @@ export const FULL_SETTING_LABELS=Object.freeze({
 });
 const LEGACY_TOOLS=Object.freeze({
   'structure-mode':['Canvas structure'],
+  variability:['Variation','Controlled chaos'],
+  character:['Variation','Stripe variation','Character'],
   'ray-shape':['Ray shape'],
   'single-loop':['Single loop'],
   marks:['Marks'],
-  character:['Character'],
   'interior-style':['Element style'],
   'interior-motion':['Element motion'],
   'interior-targets':['Colour targets'],
