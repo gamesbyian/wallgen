@@ -1,5 +1,9 @@
 # Agent orientation for ROYGBIV
 
+## Historical recipe archaeology (PR #480, 2026-10-22)
+
+To implement v1 or early-v2 recipe migration, consult [45-revision key ledger](docs/recipe-format-history/model-key-ledger.json), [chronological model changes](docs/recipe-format-history/SCHEMA-CHANGE-LEDGER.md) and [format registry](docs/recipe-format-history/REGISTRY.md). The ledger is **source-field membership**, not default or renderer semantic proof. A complete Git clone can reproduce it via `node scripts/build-recipe-format-history.mjs`. Current PNG migration refuses ambiguous historic conversions by design; never infer unobserved defaults from newest `normalizeRecipe`.
+
 ## Historical PNG recipe migration work queue (#476)
 
 [Specification](docs/PNG-RECIPE-MIGRATION-AND-FORMAT-REGISTRY-PLAN-2026-10-22.md) · [issue](https://github.com/gamesbyian/wallgen/issues/476). Implement raw source-era schema detection and conversion before modern normalization. Preserve original PNG critical chunk bytes, ancillary metadata and historical recipe semantics where possible; report ambiguity and do not claim regenerating the same old pixels. This is a More/PNG utility, not a new editor destination. Planned M0–M5; no new CI screenshot burden.
