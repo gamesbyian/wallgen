@@ -2,6 +2,12 @@
 
 2026-10-22. Historical design audit based on commit 75c5e1778a5f5789c44ba95098ca7a4c1161b7f8, followed by an implementation checkpoint. The original maps were documentation-only; later PRs #449, #452, #454 and #455 made focused runtime improvements. The audited architecture remains seven categories, 43 tools and 95 canonical settings.
 
+## Implementation checkpoint: creative continuation after Design Type
+
+**C11 partially addressed.** Layout > Structure now offers a deliberate **Continue → Edit Paths / Edit radial rays / Edit regions / Edit scattered shapes** button based on the currently selected type and active region mode. A person who chooses an archetype is shown its next natural creative action instead of being left in an otherwise sparse Layout panel. The button navigates to existing source-grounded Path/Geometry tools and never automatically changes settings or interrupts artwork preview. This uses the original seven categories and applicable scene rules. Source: `src/editor-design-next.js` and `tests/editor-design-next.test.js`.
+
+Still optional later: wider conditional structure-specific **Arrange/Form** redesign, if actual phone use suggests one. No new CI requirements.
+
 ## Implementation checkpoint: pattern and dot activation guidance
 
 **C06 partly addressed.** Path-derived Dots and Motif Scale continue to have stable menu homes and source values, but if every setting in the selected card is **actually inactive**, it now explains the prerequisite and provides an explicit **Go to Patterns / Go to Structure** link to the existing enabling control. The hint disappears as soon as the native sliders are applicable. No incompatible design type is silently switched, no locked value is discarded, and the hint does not consume vertical space in ordinary active editing. `src/editor-pattern-prerequisites.js` reads `dataset.inactive` from the canonical `src/app.js` policy rather than replicating incomplete renderer rules.

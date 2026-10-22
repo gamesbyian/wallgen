@@ -9,6 +9,7 @@ import {installMaterialLayerIndicators} from './editor-material-indicators.js';
 import {installMaterialInspectors} from './editor-material-inspector.js';
 import {installRelatedLightTools} from './editor-related-light-tools.js';
 import {installPatternPrerequisites} from './editor-pattern-prerequisites.js';
+import {installDesignTypeNext} from './editor-design-next.js';
 
 const byId=id=>document.getElementById(id);
 const form=byId('controls');
@@ -371,6 +372,8 @@ export function mountEditor(){
   const focused=installFocusedAdjustments({form,chooser});
   installMaterialLayerIndicators({form,tools});
   installPatternPrerequisites({form,tools,
+    select:(category,tool)=>selectEditorTool(category,tool,{source:'related'})});
+  installDesignTypeNext({form,tools,
     select:(category,tool)=>selectEditorTool(category,tool,{source:'related'})});
   return {focused,materialInspectors,getCurrent:()=>({category:activeCategory,tool:activeTool}),tools,chooser,searchInput};
 }

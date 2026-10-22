@@ -1463,3 +1463,23 @@ html[data-theme="cream"] body.mobile-studio .sidebar .settings-tabs .settings-ta
     min-height:26px!important;padding:2px 3px!important;
   }
 }
+
+
+/* Deliberate next creative step after Design Type: no surprise navigation on
+   selection, no extra tool rail or replacement for existing Geometry tools. */
+.editor-tool-card .editor-design-next{
+  display:flex;align-items:center;justify-content:center;flex:0 0 auto;
+  min-height:31px;width:100%;margin:6px 0 0;padding:4px 7px;
+  border:1px solid var(--line);border-radius:7px;
+  background:var(--surface);color:inherit;font-size:11px;
+  font-weight:700;cursor:pointer;
+}
+.editor-tool-card .editor-design-next:hover{border-color:#c85092}
+.editor-tool-card .editor-design-next:focus-visible{
+  outline:2px solid #c85092;outline-offset:1px;
+}
+@media(max-width:790px){
+  body.mobile-studio .sidebar .editor-design-next{
+    min-height:28px!important;padding:2px 5px!important;margin-top:3px!important;
+  }
+}
