@@ -7,6 +7,7 @@
     "dev": "npx serve . -l 4173",
     "test": "node --test",
     "check": "node --check src/model.js && node --check src/renderer.js && node --check src/app.js && node --check scripts/render-headless.mjs && npm test",
-    "render": "node scripts/render-headless.mjs"
+    "render": "node scripts/render-headless.mjs",
+    "check:quick": "node --check src/model.js && node --check src/renderer.js && node --check src/app.js && node --test tests/model.test.js tests/editor-schema.test.js tests/png-metadata.test.js tests/composition-geometry.test.js"
   }
 }
