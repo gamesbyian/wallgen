@@ -1,5 +1,10 @@
 # Agent orientation for ROYGBIV
 
+## Historical PNG recipe migration work queue (#476)
+
+[Specification](docs/PNG-RECIPE-MIGRATION-AND-FORMAT-REGISTRY-PLAN-2026-10-22.md) · [issue](https://github.com/gamesbyian/wallgen/issues/476). Implement raw source-era schema detection and conversion before modern normalization. Preserve original PNG critical chunk bytes, ancillary metadata and historical recipe semantics where possible; report ambiguity and do not claim regenerating the same old pixels. This is a More/PNG utility, not a new editor destination. Planned M0–M5; no new CI screenshot burden.
+
+
 ## Embroidery implementation alert (PR #474, 2026-10-22)
 
 [#474](https://github.com/gamesbyian/wallgen/pull/474) starts E0/E1 in `src/embroidery.js` with strict optional `surfaceTreatments` and palette/object/global fill targeting, first path/region stitch overlays and a small Texture → Surface editor. Keep all old artwork pixel-unchanged when omitted, and do not duplicate material layers, change the 40-tool navigation, or claim finished stitch physically accurate. Planned stages E2–E5, object selection/outline/interior treatments and actual image/device review remain open; see the active roadmap. No third-party code copied.

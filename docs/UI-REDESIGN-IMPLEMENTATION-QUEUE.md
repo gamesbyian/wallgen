@@ -1,5 +1,10 @@
 # Implementation-safe ROYGBIV redesign queue
 
+## Queued More utility: update historical PNG recipe metadata (#476)
+
+[Plan](PNG-RECIPE-MIGRATION-AND-FORMAT-REGISTRY-PLAN-2026-10-22.md) · [Issue](https://github.com/gamesbyian/wallgen/issues/476). Add 'Update recipe in an existing PNG' in More/PNG metadata utilities rather than a new Edit tool. Upload, identify dialect, show translation report, and download updated PNG without altering raster, unrelated metadata, current composition or Undo. Disabled download when field migration is ambiguous. M0–M5 are tracked in the active roadmap; this is **planned only**. Keep 44px touch behavior and compact phone inspector; avoid new permanent CI.
+
+
 ## Latest implementation: bounded multi-match search (PR #475, 2026-10-22)
 
 [#475](https://github.com/gamesbyian/wallgen/pull/475) implements the missing C07 **labelled alternative results** for ambiguous editor searches. Exact-field precedence, applicability filtering, original source control focus, locked/inactive explanations and first-hit API are preserved. Up to four choices are accessible by touch or ArrowUp/ArrowDown/Enter in an overlay, keeping the no-scroll mobile tray budget. **Source implementation and quick CI only;** final C07 closure still requires a short real-phone keyboard/touch and screen-reader observation. Historical 'C07 not built' entries below describe the pre-#475 checkpoint and should not generate a duplicate implementation task. C09/C10/C11 and visual signoff remain open.
