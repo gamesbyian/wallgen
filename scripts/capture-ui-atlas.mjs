@@ -110,7 +110,14 @@ async function exercise(page,ctx){
             continue;
           }
           await navigate(page,category.id,tool.id);
-          await capture(page,ctx,'tool-'+structure+'-'+category.id+'-'+tool.id,{kind:'tool',structure,category:category.id,tool:tool.id,settings:tool.settings});
+          if(/^layer[123]$/.test(tool.id)){
+            await capture(page,ctx,'tool-'+structure+'-'+category.id+'-'+tool.id+'-material',
+              {kind:'tool',structure,category:category.id,tool:tool.id,materialView:'material',settings:tool.settings});
+            await page.locator('.editor-tool-card[data-editor-tool="'+tool.id+'"] .material-inspector-tab').last().click();
+          }
+          await capture(page,ctx,'tool-'+structure+'-'+category.id+'-'+tool.id,
+            {kind:'tool',structure,category:category.id,tool:tool.id,
+              materialView:/^layer[123]$/.test(tool.id)?'finish':undefined,settings:tool.settings});
           // Reveal controls below a scrollable card's fold.
           const last=page.locator('.editor-tool-card[data-editor-tool="'+tool.id+'"] input:not([type=hidden]),.editor-tool-card[data-editor-tool="'+tool.id+'"] select,.editor-tool-card[data-editor-tool="'+tool.id+'"] button').last();
           if(await last.count()){
@@ -220,6 +227,8 @@ async function exerciseMobileSmoke(page,ctx){
   await change(page,'structure','paths');
   for(const {category,tool} of MOBILE_ATLAS_SMOKE_TOOLS){
     await navigate(page,category,tool);
+    if(/^layer[123]$/.test(tool))
+      await page.locator('.editor-tool-card[data-editor-tool="'+tool+'"] .material-inspector-tab').last().click();
     const spec=EDITOR_CATEGORIES.find(c=>c.id===category)?.tools.find(t=>t.id===tool);
     if(!spec)throw Error('Unregistered mobile smoke tool '+category+'/'+tool);
     await capture(page,ctx,'tool-paths-'+category+'-'+tool,
@@ -242,7 +251,8 @@ async function exerciseMobileSmoke(page,ctx){
   await change(page,'orientation','vertical');
   await change(page,'material','grain');
   await change(page,'textureLayer2Enabled',true);
-  await navigate(page,'material','finish2');
+  await navigate(page,'material','layer2');
+  await page.locator('.editor-tool-card[data-editor-tool="layer2"] .material-inspector-tab').last().click();
   await capture(page,ctx,'conditional-material-layers',{kind:'conditional'});
   // The masthead is hidden during editing; invoke the real theme button
   // handler rather than synthesizing an impossible pointer click.
