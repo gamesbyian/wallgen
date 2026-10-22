@@ -3033,6 +3033,15 @@ try{
   await command('Emulation.setDeviceMetricsOverride',{
     width:412,height:892,deviceScaleFactor:1,mobile:true,screenWidth:412,screenHeight:892});
   console.log('COLOUR_VISION_STRESS_VIEWPORT',JSON.stringify({visionTouch,visionLatest,visionViewports}));
+  // Timed **real on-screen** Worker requests in CI Chromium, distinct from
+  // the Node pure-CPU benchmark. These results inform engineering decisions,
+  // not a claim about Android/Pixel 6 Pro performance.
+  const visionTiming=await evaluate('(async()=>{const s=document.querySelector(".wallpaper-surface"),mode=document.getElementById("visionMode");const modes=["deutan","protan","tritan","deutan","protan","tritan","deutan","protan","tritan","deutan","protan","tritan"];const samples=[];for(let i=0;i<modes.length;i++){const target=modes[i],start=performance.now();await new Promise((resolve,reject)=>{const timer=setTimeout(()=>{s.removeEventListener("roygbiv-vision-presented",onResult);reject(Error("Timed out waiting for vision frame"));},15000);function onResult(event){if(event.detail?.mode!==target||event.detail?.severity!==.7)return;clearTimeout(timer);s.removeEventListener("roygbiv-vision-presented",onResult);resolve();}s.addEventListener("roygbiv-vision-presented",onResult);mode.value=target;mode.dispatchEvent(new Event("change",{bubbles:true}));});if(i>=2)samples.push(performance.now()-start);}samples.sort((a,b)=>a-b);const pick=p=>+samples[Math.ceil(p*samples.length)-1].toFixed(2);mode.value="tritan";mode.dispatchEvent(new Event("change",{bubbles:true}));return {sampleCount:samples.length,p50Ms:pick(.5),p95Ms:pick(.95),minMs:+samples[0].toFixed(2),maxMs:+samples[samples.length-1].toFixed(2),dimensions:document.getElementById("preview").width+"x"+document.getElementById("preview").height,devicePixelRatio:window.devicePixelRatio,note:"CI Chromium simulated device metrics; NOT Pixel hardware"};})()');
+  assert.equal(visionTiming.sampleCount,10);
+  assert.ok(visionTiming.p50Ms>=0&&visionTiming.p95Ms>=visionTiming.p50Ms);
+  console.log('COLOUR_VISION_BROWSER_ROUND_TRIP',JSON.stringify(visionTiming));
+  await waitFor('document.getElementById("visionPreviewLayer").hidden===false',20000);
+
   await captureUI('colour-vision-tritan-70-412x892');
   // Capture the real unobstructed Studio view as well as the open More tray.
   await evaluate('document.getElementById("mobileMore").click()');
