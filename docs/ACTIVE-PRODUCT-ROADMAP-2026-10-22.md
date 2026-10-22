@@ -1,6 +1,11 @@
 # ROYGBIV: active product roadmap and work queue
 
-## Full source-expression migration matrix (PR pending, 2026-10-22)
+## Conflicting historical recipe-record preservation (PR pending, 2026-10-22)
+
+More → Update recipe inside existing PNG now **refuses** to collapse multiple `ROYGBIV Recipe` records when their original recipe envelopes differ, even if the last one is current and otherwise normalized. A report names all conflicting original PNG chunk indexes; the existing **Save original recipe records (exact bytes)** action remains available to preserve every record. Multiple JSON-identical duplicates can still be consolidated into one current recipe with verified non-recipe PNG byte preservation. This closes a silent loss-of-history path without touching the ordinary PNG export writer, rendering, library, active recipe or Undo. Focused tests cover both outcomes and the archival fallback. No new workflow.
+
+
+## Full source-expression migration matrix (PR #489 merged, 2026-10-22)
 
 The 45 main-history normalizer source revisions now have [five complete, SHA/Blob-pinned expression snapshots](recipe-format-history/model-expression-sources-01.json), a [machine-readable chronological diff](recipe-format-history/model-expression-ledger.json) and [human audit notes](recipe-format-history/EXPRESSION-CHANGE-LEDGER.md). Verified **10 changed top-level expressions across seven commits**, including independent/dependent third texture-layer enabling, v1 shadow default 45→0, v2 model version, Drawn path/anchor remapping and signed-zero camera pan. Source fields were mechanically cross-checked against the canonical 45-revision key ledger. **Unchanged top-level expressions do not prove unchanged helpers, palette, RNG or renderer.** This narrows the next work to source-era executable fixtures and specific adapters, not a default-based blanket migration. Existing lean CI only. 
 
