@@ -79,7 +79,7 @@ test('setting locks use the approved distinct SVG assets and preserve their acti
 });
 test('texture relief and ambient canvas illumination are described accurately',()=>{
   assert.match(html,/Gently roughen|Distort the actual stripe contours/);
-  assert.match(html,/Canvas shade/);
+  assert.match(html,/>Shading<\/span>/);
   assert.match(html,/Stripe shadows, outlines and glow are in Details/);
   assert.match(readme,/Canvas ambience does not cast shadows from the stripe silhouettes/);
 });
@@ -168,7 +168,7 @@ test('chevron geometry and independent shape controls are present in Design',()=
   const design=html.slice(html.indexOf('id="panel-design"'),html.indexOf('id="panel-colour"'));
   assert.match(design,/<option value="chevron">Chevron/);
   assert.match(design,/Stripe pattern <select name="motif"/);
-  assert.match(design,/Stripe construction <select name="construction"/);
+  assert.match(design,/Stripe type <select name="construction"/);
   assert.match(design,/<option value="hairpin">/);
   assert.match(design,/<option value="loops">/);
   for(const field of ['shapeFrequency','shapeDepth','lineStyle']){
