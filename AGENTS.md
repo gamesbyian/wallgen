@@ -1,5 +1,10 @@
 # Agent orientation for ROYGBIV
 
+## Material realism now has actual judged PNG output (2026-10-22)
+
+[Seven-image material production review](docs/MATERIAL-PRODUCTION-RENDER-FINDINGS-2026-10-22.md): [Chromium Actions run #39820925332](https://github.com/gamesbyian/wallgen/actions/runs/39820925332) generated seven exact-recipe 480×1040 images. All PNG CRCs, embedded source recipes and sidecars independently matched; images actually viewed. Linen at displacement 68 shows regular grid texture and sawtooth edges, watercolor paper cloudy texture, concrete fine speckles. This is controlled evidence **at strong displacement, not a verdict on all user defaults**. If improving linen, first compare same seed/geometry at displacement 0/20/68; avoid silent old recipe changes. Temporary review workflow removed and PR #498 closed unmerged. No screenshot CI expansion.
+
+
 ## First actual Photo artwork review is no longer pending (2026-10-22)
 
 [Photo production-render findings](docs/PHOTO-PRODUCTION-RENDER-FINDINGS-2026-10-22.md) document seven downloaded, visually inspected 600×1300 production PNGs from one-shot Chromium Actions #39819624080, plus independent per-image CRC and recipe equality checks. The temporary review PR #496 was closed **unmerged** after restoring `.github/workflows/check.yml` exactly. Do not reintroduce browser reviews into routine CI. Halation currently looks subtly localized even at max; Muted Negative visibly raises black toward warm charcoal. Address artist/visual expectations in separately named or explicitly versioned treatments, not by silently shifting stored preset semantics. Physical Pixel/material/embroidery QA remains open.
