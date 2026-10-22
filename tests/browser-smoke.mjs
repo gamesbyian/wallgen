@@ -2934,7 +2934,8 @@ try{
   assert.equal(visionTouch.recipeUnchanged,true);
 
   await evaluate('document.getElementById("visionShowOriginal").click()');
-  assert.equal(await evaluate('document.getElementById("visionPreviewLayer").hidden'),true);
+  const temporarilyOriginal=await evaluate('(()=>({hidden:document.getElementById("visionPreviewLayer").hidden,accessibleOriginal:!document.getElementById("preview").getAttribute("aria-label").includes("visible simulated preview"),moreInactive:document.getElementById("mobileMore").dataset.visionActive==="false"}))()');
+  assert.deepEqual(temporarilyOriginal,{hidden:true,accessibleOriginal:true,moreInactive:true});
   await evaluate('document.getElementById("visionShowOriginal").click()');
   await waitFor('document.getElementById("visionPreviewLayer").hidden===false',20000);
   await evaluate('(()=>{const select=document.getElementById("visionMode");select.value="original";select.dispatchEvent(new Event("change",{bubbles:true}));})()');
@@ -2955,6 +2956,21 @@ try{
   assert.ok(visionExactSeverity.contrast>30,'70% should differ from a 100% simulation');
   assert.ok(visionExactSeverity.maxError<=1,
     'on-screen image must use the actual selected 70% model: '+JSON.stringify(visionExactSeverity));
+  // A wallpaper recipe change while simulated must hide its old transformed
+  // overlay, then repaint it against the NEW source frame, not the old one.
+  const visionPreRecipe=await evaluate('(()=>({png:document.getElementById("preview").toDataURL("image/png"),background:document.querySelector("[name=background]").value}))()');
+  await evaluate('(()=>{const b=document.querySelector("[name=background]");b.value=b.value==="black"?"white":"black";b.dispatchEvent(new Event("change",{bubbles:true}));})()');
+  await waitFor('document.getElementById("preview").dataset.renderPending!=="true"',20000);
+  await waitFor('document.getElementById("visionPreviewLayer").hidden===false',20000);
+  const visionRecipeRefresh=await evaluate('(async()=>{const {simulateRgb}=await import("/src/colour-vision.js");const a=document.getElementById("preview"),b=document.getElementById("visionPreviewLayer"),s=a.getContext("2d").getImageData(0,0,a.width,a.height).data,v=b.getContext("2d").getImageData(0,0,b.width,b.height).data;let maxError=0,checked=0;for(let i=0;i<s.length;i+=2100){const expected=simulateRgb([s[i],s[i+1],s[i+2]],"tritan",.7);for(let k=0;k<3;k++)maxError=Math.max(maxError,Math.abs(v[i+k]-expected[k]));checked++;}return {checked,maxError,png:a.toDataURL("image/png"),background:document.querySelector("[name=background]").value,mode:document.getElementById("visionMode").value,visible:!b.hidden};})()');
+  assert.notEqual(visionRecipeRefresh.background,visionPreRecipe.background);
+  assert.notEqual(visionRecipeRefresh.png,visionPreRecipe.png,'new render must actually replace source');
+  assert.ok(visionRecipeRefresh.checked>=50);
+  assert.ok(visionRecipeRefresh.maxError<=1,'overlay must match the latest artwork: '+JSON.stringify({error:visionRecipeRefresh.maxError}));
+  assert.equal(visionRecipeRefresh.visible,true);
+  assert.equal(visionRecipeRefresh.mode,'tritan');
+  console.log('COLOUR_VISION_LATEST_SOURCE_REPAINT',JSON.stringify({checked:visionRecipeRefresh.checked,maxError:visionRecipeRefresh.maxError,background:visionRecipeRefresh.background}));
+
 
   assert.equal(visionLatest.visible,true);
   assert.equal(visionLatest.sourceUnchanged,true);
