@@ -52,13 +52,16 @@ for(const [value,text] of [
 }
 modeLabel.append(mode);
 const severityLabel=make('label','vision-control');
-const severityTitle=make('span','','Severity ');
+const severityTitle=make('span','','Simulation strength ');
 const severityOutput=make('output','','100%');severityOutput.id='visionSeverityValue';
 severityTitle.append(severityOutput);severityLabel.append(severityTitle);
 const severity=make('input');severity.id='visionSeverity';
 severity.type='range';severity.min='0';severity.max='100';severity.step='10';severity.value='100';
-severity.setAttribute('aria-label','Simulated colour-vision deficiency severity');
+severity.setAttribute('aria-label','Colour vision simulation strength, not a clinical measurement');
 severity.disabled=true;severityLabel.append(severity);
+const diagnosis=make('p','vision-diagnosis');
+diagnosis.textContent='Select a simulation to inspect colour differences.';
+severityLabel.append(diagnosis);
 const compareLabel=make('label','vision-compare-option');
 const compare=make('input');compare.type='checkbox';compare.id='visionCompare';
 compare.disabled=true;compareLabel.append(compare,make('span','','Split: original left, simulated right'));
@@ -144,6 +147,11 @@ function updateViewLabels(){
 }
 function updateState({announce=true}={}){
   updateViewLabels();
+  const name=selected==='protan'?'protan':selected==='deutan'?'deuteran':'tritan';
+  diagnosis.textContent=selected==='original'||strength===0?
+    'Original colour vision reference.':
+    'Approximates '+name+(strength===1?'opia':'omaly')+
+      (strength===1?'.':' at a model-defined strength, not a clinical severity.');
   severity.disabled=selected==='original';
   compare.disabled=selected==='original';
   original.disabled=selected==='original';
