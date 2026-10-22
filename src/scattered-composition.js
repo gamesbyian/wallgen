@@ -45,17 +45,28 @@ export const RAINBOW_ORBITS=Object.freeze({
  * never violates the requested minimum, overlap mode or colour semantics.
  * A typed diagnostic and requested/placed counts expose any shortfall.
  */
-export function buildScatteredCircles(recipe){
+/** The same effective shape-size limits that placement uses.
+ * A high object count can cap the maximum, and Smallest may force the
+ * maximum upward. Report these facts without changing authored preferences.
+ */
+export function scatteredRadiusRange(recipe){
   const count=clamp(Math.round(Number(recipe.scatteredCount)||7),1,70);
   const minPercent=clamp(Number(recipe.scatteredMinSize)||0,0,100);
   const maxPercent=clamp(Number(recipe.scatteredMaxSize)||0,0,100);
+  const minRadius=8+minPercent*.65;
+  const requestedMax=20+maxPercent*3.4;
+  const countCap=count<=10?Infinity:170*Math.sqrt(10/count);
+  const maxRadius=Math.max(minRadius,Math.min(requestedMax,countCap));
+  return {count,minRadius,maxRadius,
+    collapsed:Math.abs(maxRadius-minRadius)<1e-9,
+    countCapped:count>10&&requestedMax>countCap};
+}
+export function buildScatteredCircles(recipe){
+  const {count,minRadius,maxRadius}=scatteredRadiusRange(recipe);
   const variation=clamp(Number(recipe.scatteredVariation)||0,0,100)/100;
   const crop=clamp(Number(recipe.scatteredEdgeCrop)||0,0,100)/100;
   const clearance=clamp(Number(recipe.scatteredSpacing)||0,0,100)*.65;
   const overlap=recipe.scatteredOverlap==='overlap';
-  const minRadius=8+minPercent*.65;
-  const maxRadius=Math.max(minRadius,Math.min(20+maxPercent*3.4,
-    count<=10?Infinity:170*Math.sqrt(10/count)));
   const sizeRng=randomStream(recipe.seed+':scattered-sizes:v1');
   const placementRng=randomStream(recipe.seed+':scattered-positions:v1');
   // Mix radically large and small pieces for the seven-circle archetype.

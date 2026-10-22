@@ -43,3 +43,14 @@ body.scattered-direct-active #preview:active{cursor:grabbing}
 #scatteredDirectDone:focus-visible{outline:2px solid #fff;outline-offset:3px}
 #scatteredMoveOnCanvas[aria-pressed="true"]{background:#4a2442;color:#fff;
   border-color:#e995c4}
+
+/* Only surface a source-truth explanation when a chosen range is not
+   attainable. Compact and non-interactive, so normal artwork still owns
+   the phone rather than gaining another settings row. */
+.scattered-effective-hint{margin:2px 0 0;padding:3px 6px;border-left:2px solid #bb6d99;
+  background:var(--surface);color:var(--muted,#888);font-size:10px;line-height:1.25;
+  max-width:100%;flex:0 0 auto}
+.scattered-effective-hint[hidden]{display:none!important}
+@media(max-width:790px){
+  body.mobile-studio .sidebar .scattered-effective-hint{margin-top:0;padding:1px 4px;font-size:10px}
+}

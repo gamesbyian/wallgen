@@ -2,6 +2,14 @@
 
 2026-10-22. Historical design audit based on commit 75c5e1778a5f5789c44ba95098ca7a4c1161b7f8, followed by an implementation checkpoint. The original maps were documentation-only; later PRs #449, #452, #454 and #455 made focused runtime improvements. The audited architecture remains seven categories, 43 tools and 95 canonical settings.
 
+## Implementation checkpoint: scattered-shape range and imported placeholders
+
+**C05 is addressed** without changing the generated picture. The circle packer now shares its effective min/max radius calculation with a read-only UI explanation. The Objects editor only shows a short note when **Smallest effectively determines Largest**, or when an ambitious maximum is being limited by a large count of shapes. Normal unconflicted generation gets no extra chrome. All source percentages remain intact in saved recipes.
+
+**C03 is partly addressed:** selecting Imported silhouette with no valid saved source can still show safe fallback circles, but now the Regions tool explicitly labels them as **temporary placeholders**, with the existing asset chooser in that same tool. The fallback renderer remains deterministic and legacy-friendly; replacing placeholders with an empty scene would require a separate product decision.
+
+Source: `src/scattered-composition.js::scatteredRadiusRange`, `src/app.js::render`, `tests/scattered-size-range.test.js`. No extra CI or screenshot matrix. Verify once in the existing short mobile editor card when next doing a phone visual check.
+
 ## Implementation checkpoint: selected interior element stays accessible
 
 **C09 partially addressed.** Details retains five specialised element tools for now (Elements, Style, Wave, Placement and Ink & Targets), but every specialist card exposes a compact selector for the **same underlying ordered element**. Switching to another line or band updates its selected stable element ID without mutating the recipe or requiring a return trip to Elements. Selection works even when the element stack is locked; actual edits remain disabled. Normal sync, Undo, imported collections and focus restoration still build controls from canonical `current.interiorElements`.

@@ -15,7 +15,7 @@ import {sourceSettingLabel} from './editor-control-roles.js?v=20261021-labels1';
 import {fullSettingName} from './editor-terminology.js';
 import {installExplorationHistory} from './exploration-history.js';
 import {installGeometryLibraryUI} from './geometry-library-ui.js';
-import {RAINBOW_ORBITS} from './scattered-composition.js';
+import {RAINBOW_ORBITS,scatteredRadiusRange} from './scattered-composition.js';
 import {stripeContourDistortionAvailability} from './editor-effect-availability.js';
 import {normalizeScatteredOverrides} from './scattered-object-edits.js';
 import {scatteredPixelToWorld,scatteredWorldToPixel,pickScatteredRegion,scatteredMoveOverride,clamp as clampScattered} from './scattered-drag.js';
@@ -519,10 +519,27 @@ function render(recipe,{scroll=false,bypassLocks=false,interactive=false}={}) {
       current.scatteredCount-currentScene.objects.length:0;
     const noAsset=current.structure==='regions'&&current.regionMode==='scattered'&&
       current.scatteredShapeKind==='imported'&&!current.scatteredShape;
-    scatterStatus.textContent=noAsset?'Choose a saved silhouette from the library.':
+    scatterStatus.textContent=noAsset?'Showing temporary circles, not an imported silhouette. Choose a saved shape in Regions.':
       missing>0?'Only '+currentScene.objects.length+' of '+current.scatteredCount+
       ' shapes fit. Reduce size or spacing, or allow overlaps.':'';
     scatterStatus.hidden=!missing&&!noAsset;
+  }
+  const inScatter=current.structure==='regions'&&current.regionMode==='scattered';
+  const missingSilhouette=inScatter&&current.scatteredShapeKind==='imported'&&!current.scatteredShape;
+  const sourceHint=document.getElementById('scatteredSourceNotice');
+  if(sourceHint){
+    sourceHint.hidden=!missingSilhouette;
+    sourceHint.textContent=missingSilhouette?
+      'Circles are placeholders. Choose a saved silhouette to replace them.':'';
+  }
+  const sizeHint=document.getElementById('scatteredSizeRangeStatus');
+  if(sizeHint){
+    const range=inScatter?scatteredRadiusRange(current):null;
+    sizeHint.textContent=range?.collapsed?
+      'Smallest size is setting the effective maximum. Lower Smallest or raise Largest for variety.':
+      range?.countCapped?
+        'With this many shapes, Largest size is capped to keep placement feasible.':'';
+    sizeHint.hidden=!sizeHint.textContent;
   }
   if(previewLayers.key===key && previewLayers.ink && previewLayers.background){
     clearSettledPreview();
@@ -1024,6 +1041,16 @@ function syncSettingLocks(){
 }
 installSettingLocks();
 const editor=mountEditor();
+// Source-linked guidance lives beside the controls it describes. It does not
+// change the saved recipe, geometry or layout outside the relevant card.
+for(const [id,tool] of [['scatteredSourceNotice','regions'],
+  ['scatteredSizeRangeStatus','scattered-size']]){
+  const card=document.querySelector('.editor-tool-card[data-editor-tool="'+tool+'"]');
+  const hint=document.createElement('p');
+  hint.id=id;hint.hidden=true;hint.className='scattered-effective-hint';
+  hint.setAttribute('role','note');
+  card?.append(hint);
+}
 // Contextual preset, without growing the navigation. All affected values stay
 // ordinary editable settings, and locked fields remain protected.
 const regionTool=document.querySelector('.editor-tool-card[data-editor-tool="regions"]');
