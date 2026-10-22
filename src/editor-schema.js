@@ -48,12 +48,11 @@ export const EDITOR_CATEGORIES=[
     {id:'canvas',name:'Background',settings:['background']},
   ]},
   {id:'material',label:'Texture',icon:'material',tools:[
-    {id:'layer1',name:'Layer 1',settings:['material','textureCoverage','textureBlend','textureLayer2Enabled']},
-    {id:'finish1',name:'Finish 1',settings:['textureStrength','textureScale','textureRotation']},
-    {id:'layer2',name:'Layer 2',settings:['material2','textureCoverage2','textureBlend2','textureLayer3Enabled']},
-    {id:'finish2',name:'Finish 2',settings:['textureStrength2','textureScale2','textureRotation2']},
-    {id:'layer3',name:'Layer 3',settings:['material3','textureCoverage3','textureBlend3']},
-    {id:'finish3',name:'Finish 3',settings:['textureStrength3','textureScale3','textureRotation3']},
+    // Each material is one artistic object. Its compact Material/Finish views
+    // present the SAME canonical inputs rather than two competing tool homes.
+    {id:'layer1',name:'Layer 1',settings:['material','textureCoverage','textureBlend','textureStrength','textureScale','textureRotation','textureLayer2Enabled']},
+    {id:'layer2',name:'Layer 2',settings:['material2','textureCoverage2','textureBlend2','textureStrength2','textureScale2','textureRotation2','textureLayer3Enabled']},
+    {id:'layer3',name:'Layer 3',settings:['material3','textureCoverage3','textureBlend3','textureStrength3','textureScale3','textureRotation3']},
     {id:'surface',name:'Surface',settings:['textureDisplacement','brushRoughness']},
   ]},
   {id:'effects',label:'Light',icon:'effects',tools:[
