@@ -1,5 +1,10 @@
 # Agent orientation for ROYGBIV
 
+## Conflicting historical PNG recipe records are evidence, not debris (2026-10-22)
+
+The metadata-only updater must refuse to replace a PNG containing distinct previous `ROYGBIV Recipe` envelopes, even when the selected latest one is canonical. `inspectPngMigration` exposes `conflictingChunkIndexes` and points to `archivePngRecipeRecords` for exact-byte backup. JSON-identical duplicates may be consolidated. Do not loosen this rule merely to widen historical coverage; investigate each source-era record, preserve provenance, and test conversion fixtures first. This does not change ordinary PNG export behavior or add CI.
+
+
 ## Fully indexed 45-revision normalization expression history (2026-10-22)
 
 Before implementing v1/early-v2 adapters, inspect the [source-blob-pinned expression ledger](docs/recipe-format-history/model-expression-ledger.json), [10 changes/7 revision summary](docs/recipe-format-history/EXPRESSION-CHANGE-LEDGER.md) and [original source-expression snapshots](docs/recipe-format-history/model-expression-sources-01.json) (five 10-revision batches). Every parsed field set agrees with the original 45-revision structural key ledger. Verified source-expression changes cover third-layer activation dependency, v1 shadow 45→0 fallback, Drawn path/anchor remapping, camera signed zero and schema version. These are **lexical field expression** facts, not runtime parity across helper modules, RNG or renderer. Keep automatic history conversion gated until golden source-era fixtures prove preservation. No routine new CI workflow.
