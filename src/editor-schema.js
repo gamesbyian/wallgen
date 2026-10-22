@@ -6,7 +6,7 @@ export const EDITOR_CATEGORIES=[
     {id:'structure-mode',name:'Structure',settings:['structure']},
     {id:'arrange',name:'Arrangement',settings:['composition','repeatCount','repeatSpacing']},
     {id:'direction',name:'Direction',settings:['orientation','diagonalRotation','mirrorHorizontal','mirrorVertical']},
-    {id:'variability',name:'Variation',settings:['chaos']},
+    {id:'variability',name:'Irregularity',settings:['chaos']},
   ]},
   {id:'path',label:'Path',icon:'path',tools:[
     {id:'geometry',name:'Geometry',settings:['geometry','shapeFrequency','shapeDepth']},
@@ -30,7 +30,7 @@ export const EDITOR_CATEGORIES=[
     {id:'marks',name:'Dots',settings:['dotSize','dotSpacing']},
     {id:'motif-scale',name:'Motif scale',settings:['motifSize','motifFrequency']},
     {id:'tone',name:'Band tones',settings:['tonalContrast']},
-    {id:'character',name:'Variation',settings:['individuality','overridePatternHomogeneity']},
+    {id:'character',name:'Stripe differences',settings:['individuality','overridePatternHomogeneity']},
   ]},
   {id:'details',label:'Details',icon:'interior-elements',tools:[
     {id:'interior',name:'Elements',settings:[]},
