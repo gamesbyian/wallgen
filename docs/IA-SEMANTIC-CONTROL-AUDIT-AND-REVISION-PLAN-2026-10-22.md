@@ -2,6 +2,12 @@
 
 2026-10-22. Historical design audit based on commit 75c5e1778a5f5789c44ba95098ca7a4c1161b7f8, followed by an implementation checkpoint. The original maps were documentation-only; later PRs #449, #452, #454 and #455 made focused runtime improvements. The audited architecture remains seven categories, 43 tools and 95 canonical settings.
 
+## Implementation checkpoint: selected interior element stays accessible
+
+**C09 partially addressed.** Details retains five specialised element tools for now (Elements, Style, Wave, Placement and Ink & Targets), but every specialist card exposes a compact selector for the **same underlying ordered element**. Switching to another line or band updates its selected stable element ID without mutating the recipe or requiring a return trip to Elements. Selection works even when the element stack is locked; actual edits remain disabled. Normal sync, Undo, imported collections and focus restoration still build controls from canonical `current.interiorElements`.
+
+This is an intermediate improvement, not a claim that the five tool destinations have been consolidated. A full selected-element inspector should be prototyped only after one real compact-phone check, to avoid making the 5-tab workflow shorter at the cost of hiding the colour targets or wave controls.
+
 ## Implementation checkpoint: material layer workspaces (current PR)
 
 The previously identified **C08 Layer/Finish fragmentation** is addressed by grouping each texture into **one canonical layer tool with two compact in-card views**: Material (material, coverage, blend) and Finish (strength, scale, rotation). The Texture category therefore changes from seven tool chips to four (Layer 1, Layer 2, Layer 3, Surface), and the whole editor from 43 to **40 named tools**, while retaining **all 95 setting keys** and the same seven categories and five mobile destinations.
