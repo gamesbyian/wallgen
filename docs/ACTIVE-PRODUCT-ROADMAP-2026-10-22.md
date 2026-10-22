@@ -1,5 +1,10 @@
 # ROYGBIV: active product roadmap and work queue
 
+## Exact-byte historical recipe backup without conversion (PR pending, 2026-10-22)
+
+More → Files & sharing → Update recipe inside existing PNG now also offers **Save original recipe records (exact bytes)**, available whenever a structurally valid ROYGBIV PNG contains named recipe records, *including historical v1, unsupported dialects and otherwise unsafe-to-migrate recipes*. It writes a separate, versioned JSON dossier with each original iTXt chunk encoded byte-for-byte (including text, whitespace, duplicated historic fields, envelope, CRC, order/offset) and selected record provenance. Does not modify the PNG or active editor. The same export is available with `npm run png:migrate -- --in old.png --archive original-recipes.json --dry-run`; this CLI still exits nonzero if a requested migration is unsafe. Bounded archive memory (64 records/16 MiB chunk bytes), unchanged CRC validation. This provides concrete preservation while conservative historical translation remains gated. Tests cover refused v1, duplicate chunks, byte fidelity and UI routing. No new CI workflow.
+
+
 ## Warm film halation shipped as isolated treatment (PR pending, 2026-10-22)
 
 Light → Photo → Inspired look adds **Warm film halation**. A 600×1300-or-smaller sampling field extracts luminance-selected bright areas from the *original completed frame*, blurs them with bounded separable passes, and spills a red-orange glow only into neighboring darker pixels. This is a real spatial finishing operation, not the original per-pixel tone/grain or geometry-specific object Glow. It uses one small temporary spatial mask (plus intermediate), the existing Photo renderer/export/worker path, Amount mixing, Undo, saved recipe and metadata; old presets and disabled looks remain unchanged. Only this new preset serializes an explicit `parameters.halation`, leaving older parameter shapes stable. Focused tests cover seed determinism, edge localization, hue, neutral output and archived parameter shape. No additional editor destination or CI workflow.

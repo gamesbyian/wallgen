@@ -1,5 +1,8 @@
 # ROYGBIV recipe format registry
 
+**Exact historical backup (2026-10-22, PR pending):** A migration refusal no longer means the UI can save only a status report. The independent `archivePngRecipeRecords` export produces `roygbiv-recipe-archive-v1` JSON containing the original named iTXt chunk bytes as base64, with record order/offset, latest-selected index, source dimensions and optional original filename. This preserves the original textual/byte-level record even if modern JSON normalization would lose duplicate keys or historical semantics. Available from the More PNG tool and `png:migrate --archive`, including v1 refused sources. It does **not** claim to upgrade any historical dialect, nor replace the original PNG.
+
+
 **Additional source archaeology (PR #480):** [chronological field change ledger](SCHEMA-CHANGE-LEDGER.md) and [45 source-pinned key snapshots](model-key-ledger.json) now track the explicit `normalizeRecipe` field set across the full observed `src/model.js` main-history sequence. Key additions/removals alone do not prove units, defaults or render semantics, but provide a concrete field-by-field starting point for historical adapters.
 
 **Status:** verified PNG envelope origins, partial model-field archaeology. Last checked 2026-10-22. Machine-readable references: [manifest.json](manifest.json). These are **version namespaces**, not a claim that every model default changed only when the PNG envelope changed.

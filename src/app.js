@@ -3,7 +3,7 @@ import { drawWallpaper, presentNudgedArtwork } from './renderer.js?v=20261022-ph
 import {normalizePhotoLook,PHOTO_PRESETS} from './photo-look.js';
 import {createPreviewCoordinator,createThumbnailQueue,exportWallpaperInWorker,closeFrame} from './render-coordinator.js';
 import { embedPngMetadata, extractPngRecipe, cleanMetadata, METADATA_FIELDS } from './png-metadata.js';
-import {inspectPngMigration,migratePngMetadataOnly} from './png-recipe-migration.js';
+import {inspectPngMigration,migratePngMetadataOnly,archivePngRecipeRecords} from './png-recipe-migration.js';
 import { installDrawTool } from './draw-path-ui.js?v=20261018-extend1';
 import {appliedDrawnPathRecipe} from './draw-apply-transaction.js';
 import { installImagePathTool } from './image-path-ui.js?v=20261022-shapes1';
@@ -854,7 +854,8 @@ const migrationFile=document.getElementById('migrateRecipeFile');
 const migrationStatus=document.getElementById('migrateRecipeStatus');
 const migrationDownload=document.getElementById('migrateRecipeDownload');
 const migrationReportDownload=document.getElementById('migrateRecipeReport');
-let migrationCandidate=null,migrationInspection=null,migrationFileName=null,migrationRevision=0;
+const migrationArchiveDownload=document.getElementById('migrateRecipeArchive');
+let migrationCandidate=null,migrationArchiveSource=null,migrationInspection=null,migrationFileName=null,migrationRevision=0;
 migrationToggle.addEventListener('click',()=>{
   migrationPanel.hidden=!migrationPanel.hidden;
   migrationToggle.setAttribute('aria-expanded',String(!migrationPanel.hidden));
@@ -863,8 +864,9 @@ migrationToggle.addEventListener('click',()=>{
 });
 migrationFile.addEventListener('change',async()=>{
   const selected=migrationFile.files?.[0],rev=++migrationRevision;
-  migrationCandidate=null;migrationInspection=null;migrationFileName=null;
+  migrationCandidate=null;migrationArchiveSource=null;migrationInspection=null;migrationFileName=null;
   migrationDownload.disabled=true;migrationReportDownload.disabled=true;
+  migrationArchiveDownload.disabled=true;
   if(!selected){migrationStatus.textContent='No PNG selected.';return;}
   migrationStatus.textContent='Inspecting '+selected.name+'…';
   if(selected.size>150*1024*1024){
@@ -876,6 +878,7 @@ migrationFile.addEventListener('change',async()=>{
     const report=inspectPngMigration(bytes);
     migrationInspection=report;migrationFileName=selected.name;
     migrationReportDownload.disabled=false;
+    if(report.recordCount>0){migrationArchiveSource=bytes;migrationArchiveDownload.disabled=false;}
     const summary=report.width+' × '+report.height+' · '+
       (report.detectedFormat||'unknown recipe format')+' · '+report.recordCount+' recipe record(s). ';
     migrationStatus.textContent=report.safe?
@@ -907,6 +910,29 @@ migrationDownload.addEventListener('click',async()=>{
   }catch(error){
     migrationStatus.textContent='No PNG written: '+String(error.message||error);
   }finally{if(revision===migrationRevision)migrationDownload.disabled=!migrationCandidate;}
+});
+migrationArchiveDownload.addEventListener('click',async()=>{
+  if(!migrationArchiveSource||!migrationInspection?.recordCount)return;
+  const revision=migrationRevision;
+  migrationArchiveDownload.disabled=true;
+  migrationStatus.textContent='Preserving exact original recipe chunks as a separate JSON archive…';
+  await new Promise(resolve=>requestAnimationFrame(resolve));
+  if(revision!==migrationRevision)return;
+  try{
+    const bundle=archivePngRecipeRecords(migrationArchiveSource);
+    if(revision!==migrationRevision)return;
+    const filename=safeFilename((migrationFileName||'wallpaper').replace(/\.png$/i,''));
+    const payload=JSON.stringify({sourceFile:migrationFileName,...bundle},null,2)+'\n';
+    downloadBlob(new Blob([payload],{type:'application/json'}),
+      filename+'-original-recipe-records.json');
+    migrationStatus.textContent='Saved '+bundle.recordCount+
+      ' original recipe chunk(s) with exact metadata bytes. The PNG is unchanged.';
+  }catch(error){
+    migrationStatus.textContent='Could not archive original recipe records: '+String(error.message||error);
+  }finally{
+    if(revision===migrationRevision)
+      migrationArchiveDownload.disabled=!migrationArchiveSource;
+  }
 });
 migrationReportDownload.addEventListener('click',()=>{
   if(!migrationInspection)return;

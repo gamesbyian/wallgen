@@ -1,5 +1,10 @@
 # Agent orientation for ROYGBIV
 
+## Historical PNG rescue even when schema migration is unsafe (2026-10-22)
+
+Use `archivePngRecipeRecords` in `src/png-recipe-migration.js` to export exact original ROYGBIV named iTXt chunks (base64-encoded as full chunk bytes, with order/offset metadata) into a separate JSON backup. More → Files & sharing and `png:migrate --archive` expose this even when v1/early-v2 translation is refused. Retain original PNG as master; archival bundle is **not** a normalized or safely upgraded recipe. Bounds: at most 64 named records/16 MiB total. No UI editor mutation or new CI workflow.
+
+
 ## Photo optical preview boundary (2026-10-22)
 
 The shared Photo compositor now includes `film-halation-only`: an opt-in source-luminance, authored-resolution spatial mask that spills warm light around edges, distinct from geometry Glow, and does not allocate another export-scale RGBA buffer. This is an approximation, not linear-light film-stock physics. `parameters.halation` belongs only to the new preset; preserve historical `photoLook.parameters` shapes and noise kernels for prior looks. Photo remains after all surface treatments in the existing shared renderer/worker/export path. Device visual approval is pending.
