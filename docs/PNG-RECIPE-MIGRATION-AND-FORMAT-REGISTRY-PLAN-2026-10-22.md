@@ -1,5 +1,14 @@
 # PNG recipe metadata migration without image changes
-Status: specified and queued, not implemented. 2026-10-22.
+Status: **M0 partly documented; M1/M3/M4 first safe implementation in PR #479; M2 historical conversion remains gated.** 2026-10-22.
+
+## First working slice: non-destructive recipe inspection and conservative update (PR #479)
+
+`src/png-metadata.js` now offers **`readRawPngRecipe`** with ordered chunk provenance without first normalizing. `src/png-recipe-migration.js` audits raw fields against the canonical recipe before exporting and verifies every original non-recipe PNG chunk byte-for-byte. The existing `embedPngMetadata` remains the only writer, and the replacement recipe documents the PNG's actual IHDR dimensions rather than falsely claiming current native resolution. A tiny `npm run png:migrate` CLI and **Files & sharing → Update recipe inside existing PNG** UI share the same routine, leave the original artwork and editor unchanged, and offer a JSON report.
+
+Conservative safety policy: **a canonical current-format v2 recipe with exact, fully recognized explicit settings is eligible**. Unknown fields, normalized/coerced values, new synthesized defaults, unsafe keys and v1 historical dialects are reported as ineligible. This is intentionally stricter than the normal PNG importer, which still normalizes on load. A source-current recipe rewrite can remove duplicate named iTXt records without changing other ancillary text/EXIF, images or trailing bytes. No visual-equivalence claim is made. No new CI workflow.
+
+Initial source archaeology has verified the introduction of uncompressed v1 named iTXt in commit `37428b62` (2026-10-17), the v2/radial-region conversion in `2e6039c8` (2026-10-18), v1 compatibility fix `21d97e1d` and 1 MiB cap `c9313b06` (2026-10-20). See [recipe format registry](recipe-format-history/REGISTRY.md) and [machine-readable manifest](recipe-format-history/manifest.json). Historical v1 defaults and early-v2 fingerprint intervals still need actual model-history comparison, frozen fixtures and narrow adapters before those files can be automatically upgraded. Real Chrome/Pixel export inspection remains outstanding.
+
 
 ## User contract
 Upload a ROYGBIV PNG containing a recognized historical recipe, inspect migration outcomes, then download a PNG with **the original image unchanged** and exactly one current-format embedded recipe. This is archival modernization, not a render or retouch. Never replace the historical visual truth with a claim of current-renderer equivalence that cannot be demonstrated.
