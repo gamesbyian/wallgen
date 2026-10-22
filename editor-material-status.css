@@ -23,29 +23,29 @@
   .editor-tool-chooser .editor-tool-tab[data-material-state]{transition:none}
 }
 
-/* Finish tabs expose conditional settings, but a texture set to None (or
+/* Finish views expose conditional settings, but a texture set to None (or
    strength 0) intentionally disables its controls. Show the reason in the
-   real tool card rather than inventing an alternate material switch. */
-.editor-tool-card>.material-finish-help{
+   same layer card rather than inventing an alternate material switch. */
+.editor-tool-card .material-inspector-pane>.material-finish-help{
   display:block;margin:1px 0 5px;padding:5px 7px;
   border-left:3px solid #9d89bb;border-radius:5px;
   background:var(--surface);color:var(--muted);
   font-size:10px;line-height:1.35;
   white-space:normal;flex:0 0 auto;
 }
-.editor-tool-card>.material-finish-help[hidden]{display:none!important}
+.editor-tool-card .material-inspector-pane>.material-finish-help[hidden]{display:none!important}
 @media(min-width:500px){
-  .editor-tool-card>.material-finish-help{font-size:11px}
+  .editor-tool-card .material-inspector-pane>.material-finish-help{font-size:11px}
 }
 
-/* Independent screenshot inspection found inactive Finish 2/3 cards at
+/* Earlier screenshot inspection found inactive Finish 2/3 cards at
    320/412 portrait truncating the entire bottom of the original rotation
    shortcuts. The descriptive state message was consuming several rows of
    compact tray height. Keep it visible but reduce only its vertical chrome;
    never hide the original source angle buttons, input or explanatory text. */
 @media(max-width:790px){
-  body.mobile-studio .sidebar .editor-tool-card[data-editor-tool^="finish"]
-    >.material-finish-help:not([hidden]){
+  body.mobile-studio .sidebar .editor-tool-card[data-editor-tool^="layer"]
+    .material-inspector-pane[data-material-view="finish"]>.material-finish-help:not([hidden]){
     margin:0 0 1px!important;
     padding:1px 4px!important;
     font-size:10px!important;
@@ -59,7 +59,8 @@
    rotation controls. Keep other tools and the canvas-first default unchanged. */
 @media(max-width:360px) and (max-height:740px){
   body.mobile-studio.mobile-edit-open:has(
-    .editor-tool-card[data-editor-tool^="finish"]:not([hidden])
+    .editor-tool-card[data-editor-tool^="layer"]:not([hidden])
+      .material-inspector-pane[data-material-view="finish"]:not([hidden])
       >.material-finish-help:not([hidden])){
     /* The tool chooser now owns a 44px native hit row, 13px taller than
        the original 31px strip. Preserve all six inactive Material rotation
