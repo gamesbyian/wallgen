@@ -148,6 +148,46 @@ try{
   assert.ok(declaredExpansions.every(x=>x.ariaControls&&
     ['true','false'].includes(x.ariaExpanded)));
   console.log('MOBILE_ACCESSIBLE_ACTION_CENSUS',JSON.stringify(mobileSemantics));
+  // Live DOM terminology must be compact without losing unique accessible
+  // names for multiple texture layers, shadows or scoped controls.
+  const language=await evaluate(`(()=>{
+    const form=document.getElementById('controls');
+    const labels=keys=>Object.fromEntries(keys.map(key=>
+      [key,form.elements.namedItem(key)?.getAttribute('aria-label')]));
+    return {
+      tabs:[...document.querySelectorAll('.settings-tab')].map(tab=>tab.textContent.trim()),
+      tools:document.querySelectorAll('.editor-tool-tab[data-editor-tool]').length,
+      names:labels(['textureStrength','textureStrength2','textureStrength3',
+        'textureRotation2','textureDisplacement','stripeShadowStrength','lightingMood']),
+      safeArea:document.getElementById('mobileBleed')?.textContent,
+      safeAreaAction:document.getElementById('mobileBleed')?.getAttribute('aria-label'),
+      more:[...document.querySelectorAll('.mobile-more-group h3')].map(el=>el.textContent),
+      favorite:document.getElementById('mobileFavorite')?.getAttribute('aria-label'),
+      styleHeadings:document.querySelectorAll('.editor-style>strong').length,
+      styleLabel:form.elements.namedItem('family')?.closest('label')?.textContent.trim().slice(0,14),
+      currentTool:document.querySelector('[data-random-tool=arrange]')?.getAttribute('aria-label'),
+    };
+  })()`);
+  assert.deepEqual(language.tabs,
+    ['Layout','Path','Stripes','Details','Colour','Texture','Light']);
+  assert.equal(language.tools,40);
+  assert.equal(new Set([
+    language.names.textureStrength,language.names.textureStrength2,
+    language.names.textureStrength3]).size,3);
+  assert.equal(language.names.textureStrength2,'Texture layer 2 strength');
+  assert.equal(language.names.textureRotation2,'Texture layer 2 rotation');
+  assert.equal(language.names.textureDisplacement,'Texture-driven contour distortion');
+  assert.equal(language.names.stripeShadowStrength,'Stripe shadow strength');
+  assert.equal(language.names.lightingMood,'Lighting mood');
+  assert.equal(language.safeArea,'Safe area');
+  assert.match(language.safeAreaAction,/Show 90% safe-area guide/);
+  assert.deepEqual(language.more,['Generate','Files & sharing','Position & info']);
+  assert.equal(language.favorite,'Add to favourites');
+  assert.equal(language.styleHeadings,0);
+  assert.match(language.styleLabel,/Starting style/);
+  assert.equal(language.currentTool,'Reroll Arrangement tool');
+  console.log('EDITOR_LANGUAGE_CONTRACT',JSON.stringify(language));
+
   // Saved and Explore share the grid but must never share navigation mode.
   // On an empty fresh profile, Saved has its own heading and empty copy;
   // returning via Explore restores the independent exploration view.
