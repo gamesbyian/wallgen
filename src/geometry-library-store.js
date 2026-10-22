@@ -24,6 +24,29 @@ async function prepared(input,{idFactory,now}){
   const asset=normalizeGeometryAsset(input,{idFactory,now});
   return {...asset,contentHash:await geometryContentHash(asset.geometry)};
 }
+async function prepareBatch(inputs,dependencies){
+  if(!Array.isArray(inputs)||inputs.length>500)
+    throw error('invalid-import','Library import may contain at most 500 items');
+  const checked=[],ids=new Set();
+  for(const input of inputs){
+    const record=await prepared(input,dependencies);
+    if(ids.has(record.id))throw error('invalid-import','Backup has duplicate geometry IDs');
+    ids.add(record.id);checked.push(record);
+  }
+  return checked;
+}
+function planImport(records,existing){
+  const current=new Map(existing.map(item=>[item.id,item]));
+  const additions=[];let skipped=0;
+  for(const item of records){
+    const previous=current.get(item.id);
+    if(!previous){additions.push(item);continue;}
+    if(previous.contentHash!==item.contentHash)
+      throw error('conflict','Asset ID '+item.id+' has different geometry. No items imported.');
+    skipped++;
+  }
+  return {additions,skipped};
+}
 function ordered(records,{kind,query='',limit=60,offset=0}={}){
   if(kind!==undefined&&!['path','shape'].includes(kind))
     throw error('filter','Unrecognized asset kind');
@@ -73,8 +96,26 @@ function makeMemory({idFactory,now},warning){
       assets.delete(id);
       return true;
     },
-    async saveDraft(input){
-      const record=await prepared(input,{idFactory,now});
+    async importMany(inputs){
+      const incoming=await prepareBatch(inputs,{idFactory,now});
+      const {additions,skipped}=planImport(incoming,[...assets.values()]);
+      for(const item of additions)assets.set(item.id,internal(item));
+      return {added:additions.length,skipped};
+    },
+    async importMany(inputs){
+      const incoming=await prepareBatch(inputs,{idFactory,now});
+      return transaction(db,['assets'],'readwrite',(tx,set,abortWith)=>{
+        const store=tx.objectStore('assets'),read=store.getAll();
+        read.onsuccess=()=>{
+          let changes;
+          try{changes=planImport(incoming,read.result);}
+          catch(e){abortWith(e);return;}
+          for(const item of changes.additions)store.add(internal(item));
+          set({added:changes.additions.length,skipped:changes.skipped});
+        };
+      });
+    },
+
       drafts.set(record.id,internal(record));
       await api.pruneDrafts();
       return display(record);
