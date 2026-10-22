@@ -14,6 +14,7 @@ import {STYLE_PRESETS,EDITOR_CATEGORIES,TOOL_LIST} from './editor-schema.js?v=20
 import {sourceSettingLabel} from './editor-control-roles.js?v=20261021-labels1';
 import {fullSettingName} from './editor-terminology.js';
 import {installExplorationHistory} from './exploration-history.js';
+import {installGeometryLibraryUI} from './geometry-library-ui.js';
 import {parseStoredFavorites} from './favorites-store.js';
 import {encodePortableRecipe,decodePortableRecipe,portableShareUrl,portableShareTokenFromLocation,
   MAX_PORTABLE_LINK_CHARS} from './share-recipe.js';
@@ -577,6 +578,24 @@ const imagePathTool=installImagePathTool({
     return true;
   },
 });
+// The library only stores geometry; using a saved path delegates to the
+// existing recipe and Undo transaction, while saving does not change artwork.
+installGeometryLibraryUI({
+  getRecipe:()=>current,
+  onNotice:showNotice,
+  downloadBlob,
+  applyPath:({points,anchors=[],corners=[]})=>{
+    if(current.lockedSettings.includes('geometry')||
+      pathStructureLockedOutsidePaths(current)){
+      showNotice('Unlock Path geometry or Layout structure before using a saved path.');
+      return false;
+    }
+    const next=appliedDrawnPathRecipe(fromControls(),points,anchors,corners,false,false);
+    changeRecipe(next);
+    return true;
+  }
+});
+
 function updatePositionStatus(){
   const label=document.getElementById('positionStatus');
   const x=current.positionX, y=current.positionY;
