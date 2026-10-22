@@ -1,5 +1,10 @@
 # Agent orientation for ROYGBIV
 
+## Exact-byte rescue does not require valid historical JSON (2026-10-22)
+
+`archivePngRecipeRecords` is now a raw iTXt **byte collector**, not a semantic recipe reader. `inspectPngRecipeArchive` validates the complete original PNG structure/CRC, bounds count and chunk sizes, and finds named recipe records even when JSON is malformed or text encoding cannot be interpreted. More → Files & sharing exposes the archive despite `inspectPngMigration` throwing; CLI `--archive` writes it before semantic inspection. Formats for unreadable records are null; full original chunk bytes remain. Do not weaken ordinary recipe parsing or permit automatic conversion of unknown/ambiguous metadata. Source PNG remains the authority, and no CI expansion is needed.
+
+
 ## Photo appearance evidence, not screenshot factories (2026-10-22)
 
 Before asserting F2/D3 optical quality or closing Film/Camera issues, use the optional `scripts/review-photo-looks.mjs` with the [seven-image manual guide](docs/PHOTO-SEVEN-IMAGE-ART-REVIEW-2026-10-22.md). It exports six opt-in Photo looks plus untreated source through `render-headless.mjs --recipe` using one canonical seed/source state and matching PNG/JSON. The tool is **not CI**; its existence is not evidence that art samples have been generated, viewed or approved. Record precise visual findings before tuning render effects. Avoid expanding to large routine screenshot suites.
