@@ -1,0 +1,79 @@
+/* View-only colour-vision preview. Adds no permanent mobile screen chrome.
+   Surface is the canvas-sized positioning context; paint never enters recipe/export. */
+.wallpaper-surface>.vision-preview-layer{
+  position:absolute;inset:0;width:100%!important;height:100%!important;
+  border-radius:inherit;z-index:6;display:block;pointer-events:none;
+  background:transparent;object-fit:fill;
+}
+.wallpaper-surface>.vision-preview-layer[hidden],
+.wallpaper-surface>.vision-compare-divider[hidden],
+.vision-panel[hidden],.vision-tritan-caveat[hidden]{display:none!important}
+.wallpaper-surface>.vision-compare-divider{
+  position:absolute;top:0;bottom:0;transform:translateX(-50%);
+  width:44px;z-index:10;cursor:ew-resize;touch-action:none;
+  outline-offset:-3px;user-select:none;
+}
+.vision-compare-divider:before{
+  content:"";position:absolute;inset:0 auto 0 50%;
+  width:2px;background:#fff;box-shadow:0 0 2px 1px #000c;
+}
+.vision-compare-divider:after{
+  content:"↔";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  display:grid;place-items:center;box-sizing:border-box;
+  width:30px;height:40px;border:2px solid #fff;border-radius:14px;
+  background:#24242d;color:#fff;font:700 19px/1 system-ui;
+  box-shadow:0 1px 5px #000b;
+}
+.vision-compare-divider:focus-visible{outline:3px solid #fff}
+.vision-desktop-slot{display:flex;align-items:center;margin-left:auto}
+.vision-entry,.vision-panel-close,.vision-show-original{
+  min-height:44px;padding:9px 13px;border:1px solid var(--line);
+  background:var(--surface);color:inherit;font:inherit;
+  font-size:13px;font-weight:650;border-radius:10px;cursor:pointer;
+}
+.vision-entry[aria-expanded="true"]{box-shadow:0 0 0 2px currentColor inset}
+.vision-entry:focus-visible,.vision-panel button:focus-visible,
+.vision-panel select:focus-visible,.vision-compare-option input:focus-visible,
+.vision-panel input[type="range"]:focus-visible{outline:3px solid #7364d1;outline-offset:2px}
+.vision-panel-anchor:not(:empty){margin:0 0 12px}
+.vision-panel{
+  box-sizing:border-box;display:flex;flex-direction:column;gap:11px;
+  max-width:460px;padding:14px;border:1px solid var(--line);
+  border-radius:14px;color:inherit;background:var(--surface);
+}
+.vision-panel-head{display:flex;gap:12px;align-items:center;justify-content:space-between}
+.vision-panel-head strong{font-size:15px;line-height:1.4}
+.vision-panel-close{font-size:12px}
+.vision-control{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600}
+.vision-control select{
+  box-sizing:border-box;width:100%;min-height:44px;padding:7px 10px;
+  border:1px solid var(--line);border-radius:9px;
+  background:var(--paper,var(--surface));color:inherit;font:inherit;
+}
+.vision-control input[type=range]{width:100%;min-height:44px;margin:0;accent-color:#aa4782}
+.vision-control input:disabled{opacity:.45}
+.vision-actions{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.vision-compare-option{
+  display:flex;align-items:center;gap:8px;min-height:44px;flex:1 1 180px;
+  font-size:12px;line-height:1.35;font-weight:600;
+}
+.vision-compare-option input{width:20px;height:20px;accent-color:#aa4782}
+.vision-show-original:disabled{opacity:.5;cursor:default}
+.vision-explanation,.vision-tritan-caveat{
+  margin:0;font-size:12px;line-height:1.5;color:var(--muted);
+}
+.vision-tritan-caveat{font-weight:650}
+.vision-status{display:block;min-height:1.2em;color:var(--muted);font-size:12px;line-height:1.4}
+@media(min-width:791px){
+  .workspace-head{flex-wrap:wrap}
+  .vision-desktop-slot{flex:0 0 auto}
+}
+@media(max-width:790px){
+  .vision-desktop-slot,.vision-panel-anchor{display:none!important}
+  .mobile-more-group .vision-entry{width:100%;text-align:left}
+  .mobile-more-group .vision-panel{max-width:none;width:100%;box-shadow:none}
+  .vision-panel{font-size:14px}
+}
+@media(prefers-reduced-motion:reduce){
+  .vision-preview-layer,.vision-compare-divider{transition:none!important;animation:none!important}
+}
