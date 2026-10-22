@@ -1,0 +1,100 @@
+// Shared, opt-in final-picture processor for film and digital-camera inspired looks.
+// No external assets, nondeterministic random streams or secondary full-size buffers.
+// Version 1 operates in encoded sRGB; linear-light optics are deliberately future work.
+export const PHOTO_PRESETS=Object.freeze({
+  'film-slide':Object.freeze({family:'film',contrast:1.20,saturation:1.13,shadow:0,highlight:0.07,red:0.014,green:0,blue:-0.014,grain:12,vignette:9}),
+  'film-negative':Object.freeze({family:'film',contrast:0.93,saturation:0.87,shadow:0.035,highlight:0.055,red:0.014,green:0.005,blue:-0.012,grain:19,vignette:12}),
+  'film-mono':Object.freeze({family:'film',contrast:1.13,saturation:0,shadow:0.009,highlight:0.05,red:0,green:0,blue:0,grain:16,vignette:8}),
+  'camera-natural':Object.freeze({family:'camera',contrast:1.055,saturation:1.045,shadow:0.012,highlight:0.06,red:0,green:0,blue:0,grain:2,vignette:2}),
+  'camera-hdr':Object.freeze({family:'camera',contrast:1.11,saturation:1.12,shadow:0.055,highlight:0.095,red:0.002,green:0.003,blue:0.002,grain:1,vignette:0}),
+  'camera-webcam':Object.freeze({family:'camera',contrast:1.08,saturation:0.78,shadow:0.015,highlight:0.02,red:0.015,green:-0.003,blue:0.005,grain:22,vignette:5}),
+});
+export const PHOTO_PRESET_NAMES=Object.freeze({
+  'film-slide':'Slide film inspired',
+  'film-negative':'Muted negative print',
+  'film-mono':'Monochrome print',
+  'camera-natural':'Natural digital camera',
+  'camera-hdr':'Smartphone HDR inspired',
+  'camera-webcam':'Old webcam colour (early preview)',
+});
+const finite=(x,fallback,min,max)=>{
+  const n=Number(x);
+  return Number.isFinite(n)?Math.min(max,Math.max(min,n)):fallback;
+};
+const limits={
+  contrast:[0.5,1.8],saturation:[0,1.8],shadow:[-.15,.2],highlight:[-.15,.2],
+  red:[-.15,.15],green:[-.15,.15],blue:[-.15,.15],grain:[0,100],vignette:[0,100]
+};
+// Canonical, expanded parameters survive preset refactoring and travel inside PNG/URLs.
+export function normalizePhotoLook(value={}){
+  const source=value&&typeof value==='object'&&!Array.isArray(value)?value:{};
+  const presetId=Object.hasOwn(PHOTO_PRESETS,source.presetId)?source.presetId:'film-slide';
+  const preset=PHOTO_PRESETS[presetId];
+  const candidate=source.parameters&&typeof source.parameters==='object'?source.parameters:{};
+  const parameters=Object.fromEntries(Object.entries(limits).map(([key,[min,max]])=>
+    [key,finite(candidate[key],preset[key],min,max)]));
+  return {version:1,enabled:source.enabled===true||source.enabled==='true',
+    family:preset.family,presetId,amount:finite(source.amount,75,0,100),parameters};
+}
+const clampByte=n=>Math.max(0,Math.min(255,Math.round(n)));
+const fastHash=s=>{
+  let h=2166136261;
+  for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}
+  return h>>>0;
+};
+const noiseHash=(x,y,seed)=>{
+  let h=seed^Math.imul(x,374761393)^Math.imul(y,668265263);
+  h=Math.imul(h^(h>>>13),1274126177);
+  return ((h^(h>>>16))>>>0)/4294967296-.5;
+};
+// Mutates the supplied pixel array. Destination alpha is never touched.
+// The grain grid is anchored in the authored 600x1300 frame, not device pixels.
+export function processPhotoPixels(data,width,height,rawLook,seed='rainbow-001'){
+  const look=normalizePhotoLook(rawLook);
+  if(!look.enabled||look.amount===0)return data;
+  if(!Number.isInteger(width)||!Number.isInteger(height)||width<=0||height<=0||
+    data.length!==width*height*4)throw new RangeError('Invalid photo pixel buffer');
+  const p=look.parameters,amount=look.amount/100;
+  const table=[p.red,p.green,p.blue].map(shift=>{
+    const values=new Float32Array(256);
+    for(let v=0;v<256;v++){
+      let x=v/255;
+      x=(x-.5)*p.contrast+.5+shift;
+      x+=p.shadow*Math.pow(1-Math.max(0,Math.min(1,x)),2);
+      x-=p.highlight*Math.pow(Math.max(0,Math.min(1,x)-.55),2);
+      values[v]=Math.max(0,Math.min(1,x))*255;
+    }
+    return values;
+  });
+  const grain=p.grain/100*24, vignette=p.vignette/100;
+  const hash=fastHash(String(seed)+':photo-v1:'+look.presetId);
+  const yScale=1300/height,xScale=600/width;
+  let i=0;
+  for(let y=0;y<height;y++){
+    const ny=(y+.5)/height*2-1;
+    const yCell=Math.floor((y+.5)*yScale);
+    for(let x=0;x<width;x++,i+=4){
+      const r=data[i],g=data[i+1],b=data[i+2];
+      let R=table[0][r],G=table[1][g],B=table[2][b];
+      const luma=.2126*R+.7152*G+.0722*B;
+      R=luma+(R-luma)*p.saturation;
+      G=luma+(G-luma)*p.saturation;
+      B=luma+(B-luma)*p.saturation;
+      const nx=(x+.5)/width*2-1;
+      const falloff=Math.min(1,Math.pow(nx*nx*.7+ny*ny*.7,1.35));
+      const dark=1-vignette*falloff*.5;
+      const perturb=grain?noiseHash(Math.floor((x+.5)*xScale),yCell,hash)*grain*(.65+.35*(1-luma/255)):0;
+      data[i]=clampByte(r+(R*dark+perturb-r)*amount);
+      data[i+1]=clampByte(g+(G*dark+perturb-g)*amount);
+      data[i+2]=clampByte(b+(B*dark+perturb-b)*amount);
+    }
+  }
+  return data;
+}
+export function applyPhotoFinish(ctx,width,height,rawLook,seed){
+  if(!rawLook?.enabled||Number(rawLook.amount)===0)return false;
+  const pixels=ctx.getImageData(0,0,width,height);
+  processPhotoPixels(pixels.data,width,height,rawLook,seed);
+  ctx.putImageData(pixels,0,0);
+  return true;
+}
