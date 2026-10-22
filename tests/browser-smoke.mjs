@@ -2903,6 +2903,7 @@ try{
   // serialized recipe, or original-vs-simulation split/keyboard state.
   await evaluate('document.getElementById("mobileMore").click()');
   await waitFor('document.body.classList.contains("mobile-tools-open")');
+  await waitFor('document.getElementById("preview").dataset.renderPending!=="true"',20000);
   const visionInitial=await evaluate('(()=>{ const c=document.getElementById("preview"); window.__visionOriginalImage=c.toDataURL("image/png"); window.__visionOriginalRecipe=location.search; const b=document.getElementById("visionPreviewToggle"); b.scrollIntoView({block:"center"}); const r=b.getBoundingClientRect(); const hit=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2); return {insideMore:!!b.closest(".mobile-more-group"),mode:document.getElementById("visionMode").value,centerHit:b===hit||b.contains(hit),panelHidden:document.getElementById("visionPanel").hidden};})()');
   assert.equal(visionInitial.insideMore,true);
   assert.equal(visionInitial.mode,'original');
