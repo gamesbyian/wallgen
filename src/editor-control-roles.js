@@ -37,7 +37,7 @@ export function annotateEditorSettingRow(root,field,key,{category,tool}={}){
   const kind=controlKind(field,root);
   // Short visible labels are safe only when the control retains a complete
   // standalone name for the screen reader, Focus, steppers and setting dice.
-  if(FULL_SETTING_LABELS[key])field.setAttribute('aria-label',FULL_SETTING_LABELS[key]);
+  if(FULL_SETTING_LABELS[key]&&!field.hasAttribute('aria-label'))field.setAttribute('aria-label',FULL_SETTING_LABELS[key]);
   // A composite can own more than one original setting. Never discard a key
   // or move a source input to fabricate a prettier row.
   const keys=new Set((root.dataset.controlKeys||'').split(' ').filter(Boolean));
