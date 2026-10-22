@@ -322,6 +322,18 @@ export function mountEditor(){
     const options={labelFor,applies:tool=>toolApplies(tools.get(tool.id)),
       aliasesForTool:legacyToolAliases,aliasesForCategory:legacyCategoryAliases,
       aliasesForSetting:legacySettingAliases};
+    // Photo lives in a compact second view of Light during this first
+    // implementation phase. Explicit artistic-intent search can reveal it
+    // without manufacturing duplicate scalar controls or a new phone tab.
+    if(/^(photo|photography|film|35mm|smartphone|iphone|pixel camera|dslr|webcam|digital camera|cinematic|halation)(\\b|$)/i.test(query)){
+      const photoTool=TOOL_LIST.find(tool=>tool.id==='lighting');
+      matchedSearchHit={tool:photoTool,key:null,label:'Photo finish',kind:'tool'};
+      selectEditorTool('effects','lighting',{source:'search'});
+      document.querySelector('[data-photo-pane="photo"]')?.click();
+      searchStatus.textContent='Photo finish · Light → Photo · Enter to open';
+      searchStatus.hidden=false;
+      return;
+    }
     const match=findEditorSearchHit(query,TOOL_LIST,options);
     if(match){
       matchedSearchHit=match;
@@ -384,6 +396,10 @@ export function selectEditorTool(category,tool,{source='manual'}={}){
   }
   if(!selected)return;
   activeCategory=category;activeTool=tool;
+  // A direct Light/Shadow link should reveal lighting even if the user last
+  // selected the adjacent Photo view; routine render sync preserves the view.
+  if(source==='related'&&category==='effects'&&tool==='lighting')
+    document.querySelector('[data-photo-pane="lighting"]')?.click();
   const chooser=document.querySelector('.editor-tool-chooser');
   for(const [id,entry] of tools){
     entry.card.hidden=id!==tool;
