@@ -132,10 +132,11 @@ function transaction(db,stores,mode,work){
     catch(e){reject(e);return;}
     const fail=e=>{if(!finished){finished=true;reject(e);}};
     const setResult=next=>{value=next;};
+    const abortWith=reason=>{try{tx.abort();}catch{}fail(reason);};
     tx.oncomplete=()=>{if(!finished){finished=true;resolve(copy(value));}};
     tx.onerror=()=>fail(tx.error||error('storage','Library transaction failed'));
     tx.onabort=()=>fail(tx.error||error('storage','Library transaction cancelled'));
-    try{work(tx,setResult);}
+    try{work(tx,setResult,abortWith);}
     catch(e){try{tx.abort();}catch{}fail(e);}
   });
 }
@@ -148,14 +149,18 @@ function idbStore(db,{idFactory,now}){
   const api={
     durable:true,warning:null,
     get,
-    list(options){return transaction(db,['assets'],'readonly',(tx,set)=>{
+    list(options){return transaction(db,['assets'],'readonly',(tx,set,abortWith)=>{
       const req=tx.objectStore('assets').getAll();
-      req.onsuccess=()=>{try{set(ordered(req.result,options));}catch(e){tx.abort();}};
+      req.onsuccess=()=>{try{set(ordered(req.result,options));}catch(e){abortWith(e);}};
     });},
     async add(input){
       const record=await prepared(input,{idFactory,now});
-      await transaction(db,['assets'],'readwrite',(tx,set)=>{
-        tx.objectStore('assets').add(internal(record));set(display(record));
+      await transaction(db,['assets'],'readwrite',(tx,set,abortWith)=>{
+        const store=tx.objectStore('assets'),read=store.get(record.id);
+        read.onsuccess=()=>{
+          if(read.result){abortWith(error('duplicate','That item ID already exists'));return;}
+          store.add(internal(record));set(display(record));
+        };
       });
       return display(record);
     },
@@ -167,37 +172,29 @@ function idbStore(db,{idFactory,now}){
         createdAt:original.createdAt,revision:original.revision+1,
         modifiedAt:now()},{idFactory,now});
       // Verify under the write lock again: async hashing happened before this tx.
-      return transaction(db,['assets'],'readwrite',(tx,set)=>{
+      return transaction(db,['assets'],'readwrite',(tx,set,abortWith)=>{
         const store=tx.objectStore('assets'),read=store.get(id);
         read.onsuccess=()=>{
-          if(!read.result||read.result.revision!==original.revision){
-            tx.abort();return;
+          if(!read.result){abortWith(error('not-found','Library item was deleted'));return;}
+          if(read.result.revision!==original.revision){
+            abortWith(error('conflict','This item changed in another tab. Reload it before saving.'));
+            return;
           }
           store.put(internal(next));set(display(next));
         };
-      }).catch(async failure=>{
-        if(failure?.name==='AbortError'){
-          const present=await get(id);
-          if(!present)throw error('not-found','Library item was deleted');
-          throw error('conflict','This item changed in another tab. Reload it before saving.');
-        }
-        throw failure;
       });
     },
     delete(id,{ifRevision}={}){
-      return transaction(db,['assets'],'readwrite',(tx,set)=>{
+      return transaction(db,['assets'],'readwrite',(tx,set,abortWith)=>{
         const store=tx.objectStore('assets'),read=store.get(id);
         read.onsuccess=()=>{
           if(!read.result){set(false);return;}
           if(ifRevision!==undefined&&read.result.revision!==ifRevision){
-            tx.abort();return;
+            abortWith(error('conflict','This item changed in another tab. Reload it before deleting.'));
+            return;
           }
           store.delete(id);set(true);
         };
-      }).catch(failure=>{
-        if(failure?.name==='AbortError')
-          throw error('conflict','This item changed in another tab. Reload it before deleting.');
-        throw failure;
       });
     },
     async saveDraft(input){
@@ -225,21 +222,18 @@ function idbStore(db,{idFactory,now}){
       });
     },
     promoteDraft(id){
-      return transaction(db,['assets','drafts'],'readwrite',(tx,set)=>{
+      return transaction(db,['assets','drafts'],'readwrite',(tx,set,abortWith)=>{
         const assets=tx.objectStore('assets'),drafts=tx.objectStore('drafts');
         const draftRead=drafts.get(id);
         draftRead.onsuccess=()=>{
-          if(!draftRead.result){tx.abort();return;}
+          if(!draftRead.result){abortWith(error('not-found','Recent item not found'));return;}
           const current=assets.get(id);
           current.onsuccess=()=>{
-            if(current.result){tx.abort();return;}
+            if(current.result){abortWith(error('duplicate','That item is already in your library'));return;}
             assets.add(draftRead.result);drafts.delete(id);
             set(display(draftRead.result));
           };
         };
-      }).catch(failure=>{
-        if(failure?.name==='AbortError')throw error('conflict','Recent item is missing or already saved');
-        throw failure;
       });
     },
     close(){db.close();}
