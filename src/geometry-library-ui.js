@@ -135,11 +135,6 @@ export function installGeometryLibraryUI({getRecipe,applyPath,onNotice,downloadB
   openDesktop.id='geometryLibraryToggle';openDesktop.type='button';
   openDesktop.className='text-link-button geometry-library-open';
   openDesktop.addEventListener('click',open);
-  const mobileMore=document.getElementById('mobileToolsContent');
-  const openMobile=make(mobileMore,'button','My shapes & paths');
-  openMobile.id='mobileGeometryLibrary';openMobile.type='button';
-  openMobile.className='geometry-library-mobile-entry';
-  openMobile.addEventListener('click',open);
   close.addEventListener('click',()=>dialog.close());
   dialog.addEventListener('close',()=>{
     ++request;opener?.focus?.();opener=null;
