@@ -1,8 +1,6 @@
 name: Seven ROYGBIV vibes
+# Specialized evidence suite: explicit Actions dispatch only; normal PR gates live in the core workflows.
 on:
-  pull_request:
-    paths:
-      - '.github/workflows/seven-vibes.yml'
   workflow_dispatch:
 jobs:
   wallpapers:

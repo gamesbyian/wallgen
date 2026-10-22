@@ -1,10 +1,6 @@
 name: Tall Path source 44px native setting row
+# Specialized evidence suite: explicit Actions dispatch only; normal PR gates live in the core workflows.
 on:
-  pull_request:
-    paths:
-      - editor-redesign.css
-      - tests/tall-path-frequency-44px-browser.mjs
-      - .github/workflows/tall-path-frequency-44px.yml
   workflow_dispatch:
 permissions:
   contents: read

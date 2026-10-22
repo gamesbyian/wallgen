@@ -1,9 +1,6 @@
 name: Native touchscreen Draw anchor precision
+# Specialized evidence suite: explicit Actions dispatch only; normal PR gates live in the core workflows.
 on:
-  pull_request:
-    paths:
-      - tests/mobile-drawn-touch-precision.mjs
-      - .github/workflows/mobile-drawn-touch-precision.yml
   workflow_dispatch:
 permissions:
   contents: read

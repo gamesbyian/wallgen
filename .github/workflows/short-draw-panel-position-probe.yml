@@ -1,9 +1,6 @@
 name: Short 500x700 Draw panel occlusion source probe
+# Specialized evidence suite: explicit Actions dispatch only; normal PR gates live in the core workflows.
 on:
-  pull_request:
-    paths:
-      - tests/short-draw-panel-position-probe.mjs
-      - .github/workflows/short-draw-panel-position-probe.yml
   workflow_dispatch:
 permissions:
   contents: read

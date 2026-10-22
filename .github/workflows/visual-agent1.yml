@@ -1,31 +1,6 @@
 name: Agent 1 canonical/live visual comparisons
+# Specialized evidence suite: explicit Actions dispatch only; normal PR gates live in the core workflows.
 on:
-  pull_request:
-    paths:
-      - 'scripts/visual-reference-audit-agent1.mjs'
-      - 'scripts/visual-setting-row-census-agent1.mjs'
-      - 'scripts/visual-narrow-desktop-range-agent1.mjs'
-      - '.github/workflows/visual-agent1.yml'
-      - 'docs/ui-reference/*.svg'
-      # All owning production presentation surfaces. An attractive PR should
-      # never evade the real browser atlas merely by changing CSS alone.
-      - 'styles.css'
-      - 'studio-themes.css'
-      - 'mobile-compact.css'
-      - 'mobile-five-nav.css'
-      - 'mobile-more-groups.css'
-      - 'mobile-editor-rail.css'
-      - 'editor-redesign.css'
-      - 'editor-setting-rows.css'
-      - 'editor-material-status.css'
-      - 'detail-controls.css'
-      - 'image-path.css'
-      - 'draw-path.css'
-      - 'ui-audit-fixes.css'
-      - 'index.html'
-      - 'assets/icons/roygbiv/*.svg'
-      - 'assets/icons/roygbiv/state-matrix.html'
-      - 'src/ui-icon-drawings-*.js'
   workflow_dispatch:
 permissions:
   contents: read

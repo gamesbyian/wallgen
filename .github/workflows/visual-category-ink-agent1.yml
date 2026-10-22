@@ -1,13 +1,6 @@
 name: Agent 1 category ink and touch acceptance
+# Specialized evidence suite: explicit Actions dispatch only; normal PR gates live in the core workflows.
 on:
-  pull_request:
-    paths:
-      - 'scripts/visual-category-ink-agent1.mjs'
-      - '.github/workflows/visual-category-ink-agent1.yml'
-      - 'editor-redesign.css'
-      - 'mobile-editor-rail.css'
-      - 'styles.css'
-      - 'index.html'
   workflow_dispatch:
 permissions:
   contents: read

@@ -1,9 +1,6 @@
 name: Mobile source camera rail touch audit
+# Specialized evidence suite: explicit Actions dispatch only; normal PR gates live in the core workflows.
 on:
-  pull_request:
-    paths:
-      - tests/mobile-camera-rail-touch-audit.mjs
-      - .github/workflows/mobile-camera-rail-touch-audit.yml
   workflow_dispatch:
 permissions:
   contents: read

@@ -1,10 +1,6 @@
 name: Tall-phone camera rail native 44px acceptance
+# Specialized evidence suite: explicit Actions dispatch only; normal PR gates live in the core workflows.
 on:
-  pull_request:
-    paths:
-      - mobile-editor-rail.css
-      - tests/tall-phone-camera-rail-44px.mjs
-      - .github/workflows/tall-phone-camera-rail-44px.yml
   workflow_dispatch:
 permissions:
   contents: read

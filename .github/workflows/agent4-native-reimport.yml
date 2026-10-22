@@ -1,17 +1,8 @@
 name: Agent 4 native PNG re-import and compatibility export
 
+# Specialized evidence suite: explicit Actions dispatch only; normal PR gates live in the core workflows.
 on:
   workflow_dispatch:
-  pull_request:
-    paths:
-      - 'tests/agent4-native-reimport-acceptance.mjs'
-      - '.github/workflows/agent4-native-reimport.yml'
-      - 'src/png-metadata.js'
-      - 'src/app.js'
-      - 'src/model.js'
-      - 'src/renderer.js'
-      - 'src/render-coordinator.js'
-
 concurrency:
   group: agent4-native-reimport-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true

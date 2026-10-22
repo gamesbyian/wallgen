@@ -1,10 +1,6 @@
 name: Native sparse Drawn insert and delete
+# Specialized evidence suite: explicit Actions dispatch only; normal PR gates live in the core workflows.
 on:
-  pull_request:
-    paths:
-      - tests/mobile-drawn-sparse-insert-delete.mjs
-      - .github/workflows/mobile-drawn-sparse-insert-delete.yml
-      - src/draw-path-ui.js
   workflow_dispatch:
 permissions:
   contents: read

@@ -1,10 +1,6 @@
 name: Mobile seven category tab touch matrix
+# Specialized evidence suite: explicit Actions dispatch only; normal PR gates live in the core workflows.
 on:
-  pull_request:
-    paths:
-      - editor-redesign.css
-      - tests/mobile-seven-category-tab-hit-matrix.mjs
-      - .github/workflows/mobile-seven-category-tab-hit-matrix.yml
   workflow_dispatch:
 permissions:
   contents: read

@@ -1,18 +1,7 @@
 name: Agent 2 source dice initial import state
 
+# Specialized evidence suite: explicit Actions dispatch only; normal PR gates live in the core workflows.
 on:
-  pull_request:
-    paths:
-      - 'src/app.js'
-      - 'index.html'
-      - 'tests/agent2-initial-setting-dice.mjs'
-      - '.github/workflows/agent2-initial-setting-dice.yml'
-  push:
-    branches:
-      - agent2/safety-die-editorial-policy-20261020
-    paths:
-      - 'tests/agent2-initial-setting-dice.mjs'
-      - '.github/workflows/agent2-initial-setting-dice.yml'
   workflow_dispatch:
 
 permissions:

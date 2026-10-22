@@ -1,10 +1,6 @@
 name: Native touch selected Drawn anchor vs tangent
+# Specialized evidence suite: explicit Actions dispatch only; normal PR gates live in the core workflows.
 on:
-  pull_request:
-    paths:
-      - src/draw-path-ui.js
-      - tests/mobile-drawn-anchor-drag-priority.mjs
-      - .github/workflows/mobile-drawn-anchor-drag-priority.yml
   workflow_dispatch:
 permissions:
   contents: read

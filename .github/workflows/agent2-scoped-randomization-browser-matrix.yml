@@ -1,20 +1,7 @@
 name: Agent 2 real scoped variation non-interference
 
+# Specialized evidence suite: explicit Actions dispatch only; normal PR gates live in the core workflows.
 on:
-  pull_request:
-    paths:
-      - 'tests/agent2-scoped-randomization-browser-matrix.mjs'
-      - '.github/workflows/agent2-scoped-randomization-browser-matrix.yml'
-      - 'src/app.js'
-      - 'src/scoped-random.js'
-      - 'src/editor-layout.js'
-      - 'src/editor-schema.js'
-  push:
-    branches:
-      - agent2/scoped-variation-browser-matrix-20261020
-    paths:
-      - 'tests/agent2-scoped-randomization-browser-matrix.mjs'
-      - '.github/workflows/agent2-scoped-randomization-browser-matrix.yml'
   workflow_dispatch:
 
 permissions:

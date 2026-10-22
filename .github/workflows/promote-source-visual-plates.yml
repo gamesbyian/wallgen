@@ -1,10 +1,7 @@
 name: Promote independently inspected source screenshots
 
+# Specialized evidence suite: explicit Actions dispatch only; normal PR gates live in the core workflows.
 on:
-  pull_request:
-    paths:
-      - 'scripts/promote-reviewed-visual-plates.mjs'
-      - '.github/workflows/promote-source-visual-plates.yml'
   workflow_dispatch:
 
 permissions:

@@ -1,10 +1,6 @@
 name: Mobile preview Draw and Undo 44px touch cells
+# Specialized evidence suite: explicit Actions dispatch only; normal PR gates live in the core workflows.
 on:
-  pull_request:
-    paths:
-      - draw-path.css
-      - tests/mobile-draw-undo-hitcells.mjs
-      - .github/workflows/mobile-draw-undo-hitcells.yml
   workflow_dispatch:
 permissions:
   contents: read

@@ -1,12 +1,6 @@
 name: Mobile source lock native edge-tap audit
+# Specialized evidence suite: explicit Actions dispatch only; normal PR gates live in the core workflows.
 on:
-  pull_request:
-    paths:
-      - tests/mobile-setting-lock-edge-taps.mjs
-      - .github/workflows/mobile-setting-lock-edge-taps.yml
-      - editor-redesign.css
-      - mobile-editor-rail.css
-      - mobile-compact.css
   workflow_dispatch:
 permissions:
   contents: read

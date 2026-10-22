@@ -1,17 +1,8 @@
 name: Independent adversarial dynamic exploration
 
+# Specialized evidence suite: explicit Actions dispatch only; normal PR gates live in the core workflows.
 on:
   workflow_dispatch:
-  pull_request:
-    paths:
-      - 'tests/independent-runtime-exploratory.mjs'
-      - 'tests/independent-svg-candidates-acceptance.mjs'
-      - 'src/editor-*.js'
-      - 'src/mobile-*.js'
-      - 'src/app.js'
-      - 'assets/icons/roygbiv/**'
-      - '.github/workflows/independent-dynamic-adversarial.yml'
-
 permissions:
   contents: read
 

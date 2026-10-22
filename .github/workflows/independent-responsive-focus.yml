@@ -1,11 +1,7 @@
 name: Independent responsive keyboard focus
+# Specialized evidence suite: explicit Actions dispatch only; normal PR gates live in the core workflows.
 on:
   workflow_dispatch:
-  pull_request:
-    paths:
-      - 'src/editor-focus.js'
-      - 'tests/independent-responsive-focus-handoff.mjs'
-      - '.github/workflows/independent-responsive-focus.yml'
 permissions:
   contents: read
 concurrency:

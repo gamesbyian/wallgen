@@ -1,16 +1,8 @@
 name: Sparse Draw import native export acceptance
 
+# Specialized evidence suite: explicit Actions dispatch only; normal PR gates live in the core workflows.
 on:
   workflow_dispatch:
-  pull_request:
-    paths:
-      - 'tests/issue170-sparse-native-import.mjs'
-      - 'src/draw-path-ui.js'
-      - 'src/path-point-editor.js'
-      - 'src/app.js'
-      - 'src/model.js'
-      - '.github/workflows/sparse-native-issue170.yml'
-
 permissions:
   contents: read
 

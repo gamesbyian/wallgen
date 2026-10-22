@@ -1,9 +1,6 @@
 name: Native mobile full creation to embedded PNG
+# Specialized evidence suite: explicit Actions dispatch only; normal PR gates live in the core workflows.
 on:
-  pull_request:
-    paths:
-      - tests/mobile-full-source-create-to-png.mjs
-      - .github/workflows/mobile-full-source-create-to-png.yml
   workflow_dispatch:
 permissions:
   contents: read

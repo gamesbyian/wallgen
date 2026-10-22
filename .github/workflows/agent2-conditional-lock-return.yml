@@ -1,18 +1,7 @@
 name: Agent 2 conditional locked-field return acceptance
 
+# Specialized evidence suite: explicit Actions dispatch only; normal PR gates live in the core workflows.
 on:
-  push:
-    branches:
-      - agent2/conditional-lock-return-20261020
-    paths:
-      - 'tests/agent2-conditional-lock-return.mjs'
-      - '.github/workflows/agent2-conditional-lock-return.yml'
-  pull_request:
-    paths:
-      - 'tests/agent2-conditional-lock-return.mjs'
-      - '.github/workflows/agent2-conditional-lock-return.yml'
-      - 'src/app.js'
-      - 'src/editor-layout.js'
   workflow_dispatch:
 
 permissions:

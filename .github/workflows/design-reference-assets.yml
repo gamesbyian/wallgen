@@ -1,12 +1,6 @@
 name: Design reference assets
+# Specialized evidence suite: explicit Actions dispatch only; normal PR gates live in the core workflows.
 on:
-  pull_request:
-    paths:
-      - 'docs/ui-reference/**'
-      - 'assets/icons/roygbiv/**'
-      - 'src/ui-icon-drawings-*.js'
-      - 'tests/design-reference-pack.test.js'
-      - '.github/workflows/design-reference-assets.yml'
   workflow_dispatch:
 permissions:
   contents: read

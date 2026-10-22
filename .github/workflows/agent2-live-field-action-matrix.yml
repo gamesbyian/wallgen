@@ -1,19 +1,7 @@
 name: Agent 2 original source-field live action matrix
 
+# Specialized evidence suite: explicit Actions dispatch only; normal PR gates live in the core workflows.
 on:
-  pull_request:
-    paths:
-      - 'tests/agent2-live-field-action-matrix.mjs'
-      - '.github/workflows/agent2-live-field-action-matrix.yml'
-      - 'src/app.js'
-      - 'src/editor-layout.js'
-      - 'src/model.js'
-  push:
-    branches:
-      - agent2/live-field-action-census-20261020
-    paths:
-      - 'tests/agent2-live-field-action-matrix.mjs'
-      - '.github/workflows/agent2-live-field-action-matrix.yml'
   workflow_dispatch:
 
 permissions:

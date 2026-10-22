@@ -1,15 +1,7 @@
 name: Mobile fullscreen acceptance
 
+# Specialized evidence suite: explicit Actions dispatch only; normal PR gates live in the core workflows.
 on:
-  pull_request:
-    paths:
-      - 'index.html'
-      - 'src/mobile-fullscreen.js'
-      - 'mobile-fullscreen.css'
-      - 'manifest.webmanifest'
-      - 'tests/mobile-fullscreen*.mjs'
-      - 'tests/mobile-fullscreen.test.js'
-      - '.github/workflows/mobile-fullscreen.yml'
   workflow_dispatch:
 
 permissions:

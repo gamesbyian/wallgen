@@ -1,15 +1,8 @@
 name: Independent all-tool accessibility audit
 
+# Specialized evidence suite: explicit Actions dispatch only; normal PR gates live in the core workflows.
 on:
   workflow_dispatch:
-  pull_request:
-    paths:
-      - 'tests/independent-all-tool-axe-sweep.mjs'
-      - 'src/editor-*.js'
-      - 'src/app.js'
-      - 'editor-redesign.css'
-      - '.github/workflows/independent-all-tool-axe.yml'
-
 permissions:
   contents: read
 

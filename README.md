@@ -30,6 +30,8 @@ Open `http://localhost:4173` on your computer. To access from a phone on the sam
 
 Run `npm test` to check the reproducibility and structural invariants, or `npm run check` for syntax plus tests. Host the root directory on GitHub Pages for installation-free access.
 
+CI contributors: see [CI operations and dispatch policy](docs/CI-OPERATIONS-2026-10-22.md) for automatic gates, opt-in browser evidence, and safe queue management.
+
 ## Phone-first Studio interface
 
 **Cream Studio** is the new default appearance. The original charcoal **Original Dark**
