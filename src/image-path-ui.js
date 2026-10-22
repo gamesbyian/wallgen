@@ -54,10 +54,16 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle,onShape}
     ctx.drawImage(image,box.x,box.y,box.width,box.height);
     candidates.forEach((candidate,index)=>{
       if(candidate.points.length<2)return;
+      const contours=candidate.kind==='shape'?
+        candidate.geometry.components.flatMap(c=>[c.outer,...c.holes].map(ring=>
+          ring.map(([x,y])=>[x/width,y/height]))):[candidate.points];
       ctx.beginPath();
-      for(let i=0;i<candidate.points.length;i++){
-        const [x,y]=candidate.points[i],px=box.x+x*box.width,py=box.y+y*box.height;
-        if(i===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);
+      for(const contour of contours){
+        for(let i=0;i<contour.length;i++){
+          const [x,y]=contour[i],px=box.x+x*box.width,py=box.y+y*box.height;
+          if(i===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);
+        }
+        if(candidate.kind==='shape')ctx.closePath();
       }
       ctx.lineJoin='round';ctx.lineCap='round';
       ctx.lineWidth=index===selected?5:2;
