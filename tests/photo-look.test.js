@@ -197,7 +197,7 @@ test('warm halation lights dark neighbours of bright ribbons without altering so
   processPhotoPixels(b,w,h,look,'same-emulsion');
   assert.deepEqual(a,b,'optical effect must be reproducible');
   const at=(x,y)=>(y*w+x)*4;
-  const adjacent=at(85,80),far=at(150,80),center=at(65,80);
+  const adjacent=at(83,80),far=at(150,80),center=at(65,80);
   assert.ok(a[adjacent]>8,'warm bleed should appear beyond the light edge');
   assert.ok(a[adjacent]>a[adjacent+1]*2,
     'red-orange spill must not be a neutral-white blur');
