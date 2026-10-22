@@ -1,0 +1,80 @@
+# Colour Vision Preview: implementation and acceptance plan
+
+**Status:** implementation in progress on `feature/colour-vision-preview`. **Scope:** ROYGBIV's offline, static, unbundled ES-module application. **Primary viewport:** Pixel 6 Pro portrait, with desktop, short viewport, zoom and fullscreen coverage. **Owner:** this branch. **Data/model:** Machado, Oliveira & Fernandes (2009), cross-checked against DaltonLens-Python; Brettel, Viénot & Mollon (1997) is an independent reference, not an unverified drop-in alternative.
+
+## Goal and truthful promise
+
+Let an artist inspect **the exact currently rendered wallpaper** through useful approximations of common colour-vision differences, and discover distinctions that may become hard to perceive. The screen must say *simulated preview*, **never** claim to show exactly what any person sees or infer a diagnosis. Keep artwork, recipe, seed, camera, saved history, favourites, generated thumbnails, links and PNG metadata untouched unless a later **explicit and separately named** assistive transformation is introduced. Do not invent a colour-blindness "accessibility score" for art.
+
+### Research and algorithm selection
+
+- Machado et al., *A Physiologically-Based Model for Simulation of Color Vision Deficiency*, IEEE TVCG 15(6), 2009. DOI: https://doi.org/10.1109/TVCG.2009.113 . Applies a severity-indexed family of 3x3 matrices to **linear-light RGB**. Severity 0 must be exactly original; severity 1 approximates dichromacy.
+- Reference implementation: https://github.com/DaltonLens/DaltonLens-Python (`daltonlens/simulate.py`; MIT-licensed; preserve notices for reused tables). The 11 reference matrices at severities 0, .1, ..., 1 for each protan/deutan/tritan family come from Machado's precomputed model; interpolate **matrices between adjacent tabulated levels**. Do not blend original and fully simulated bitmaps as a substitute.
+- DaltonLens technical context: https://daltonlens.org/opensource-cvd-simulation/ ; https://daltonlens.org/understanding-cvd-simulation/ . Established models Brettel 1997 and Viénot 1999 provide separate, testable dichromacy reference behaviour.
+- sRGB transfer: decode `C_sRGB <= .04045 ? C/12.92 : ((C+.055)/1.055)^2.4`, matrix-multiply linear RGB, clamp out-of-gamut linear components to [0,1], encode `C_linear <= .0031308 ? 12.92*C : 1.055*C^(1/2.4)-.055`. Preserve exact alpha. Never apply the matrices to gamma-encoded 8-bit bytes.
+- For mild-to-strong **protan** and **deutan**, expose a continuously adjustable model severity 0–100. Display full severity as *protanopia* or *deuteranopia*, and partial severity as *protanomaly* or *deuteranomaly* in expanded explanation, not ambiguous "red/green blind" buttons.
+- **Tritan caveat:** Machado tritanomaly relies on a shifted-cone approximation and its strongest preset should not be presented as a clinically faithful simulation of tritanopia. Ship with honest `Tritan (approx.)` copy until a benchmarked Brettel 1997 full-dichromacy implementation is integrated; preserve the underlying model identity in code. Compare reference tritan behaviour separately.
+- **Achromatopsia:** do not conflate ordinary grayscale with total achromatopsia, which also involves acuity/photophobia/other effects. Potential future *Monochrome reference* must be labelled plainly and excluded from diagnostic-sounding claims.
+- Device colour management, wide-gamut content, metamerism, brightness adaptation, individual severity and environmental conditions limit fidelity. Treat RGBA canvas readback as sRGB and validate browser colour-space assumptions; if canvas is in a different colour space, make conversion explicit or disable the claim.
+
+## Source architecture reviewed (20–21 October 2026)
+
+- `index.html`: 600×1300 `#preview` under `.wallpaper-frame > .wallpaper-surface`; `#bleedGuide` lives beside it; Draw canvas `#drawOverlay` and tools are elsewhere in `.studio-stage`. Main dock is Studio/Edit/Explore/Saved/More. More content is `#mobileToolsContent`.
+- `src/app.js`: `mainThreadPreview()`, `previewPresented()`, worker `onFrame` and cached `presentNudgedArtwork()` repaint the **same authoritative visible canvas**. Settled frames dispatch `roygbiv-preview-presented`; reduced transient frames dispatch `roygbiv-preview-interactive`. `render()` updates camera and emits `roygbiv-wallpaper-rendered`, **which may precede async raster readiness**. Never sample the latter event as if rendering were complete.
+- `src/render-coordinator.js`, `src/render-worker.js`, `docs/WORKER-RENDERING.md`: latest-wins worker requests, fast cached camera/nudge presentations, main-thread fallback, and separate recipe-based export and thumbnail workers. Renderer is Canvas2D and its GPU probes are research-only.
+- `src/mobile-studio.js`: relocates true controls into More's `Create & seed`, `Import, export & share`, `Position & design details` groups. The responsive tray reserves space instead of covering the wallpaper; do not append a floating modal over the art or another permanent navigation destination.
+- `src/mobile-preview-tools.js`, `mobile-five-nav.css`, `mobile-fullscreen.css`: scarce 44px side-rail targets, fixed five-button dock, fullscreen exit that must remain reachable; do not add another stage-side icon, another dock item, or a fake tap hitbox.
+- `src/editor-schema.js`: seven creative categories. Vision is an **inspection/view tool**, not a recipe property or eighth material/colour category.
+- `tests/browser-smoke.mjs` and Node `node --test` suite: test actual browser behavior as well as pure math. Test via real settled and worker-preview journeys, rather than string checks alone.
+
+## Interaction/visual design contract
+
+### Entry and layout
+
+1. **Desktop/tablet:** compact secondary control **`Vision preview`**, located next to the existing `The canvas` heading/action area, with an unobtrusive icon and no persistent overlay when closed. On click, open an inline labelled panel in a **reserved adjacent area**. Never squeeze the composition to an unexpected aspect ratio; available width may scale its CSS size, not its pixels.
+2. **Phone (<=790px):** put the **`Vision preview`** affordance in **More > Position & design details**, with short explanation `See simulated colour-vision differences`. An opened control group uses the *existing More reserved tray*, leaving the full wallpaper unobstructed. No extra permanent rail/dock item, floating hamburger, stage top/bottom chrome, or faux category tab. Because opened More consumes part of the screen, controls must be reachable with native vertical scrolling and focus auto-visibility (at 320×700 as well as 412×892).
+3. Both shells operate on **one shared state and one preview overlay**. Moving a panel between desktop and More at breakpoint cannot duplicate IDs, listeners, or transforms. Closing More need not turn the simulated preview off; an unobtrusive `Simulated · Deutan 60%` descriptor outside the artwork may remain in Studio when active. Reopening reveals the same selection.
+4. When the tool opens, Original is preselected on a first visit; provide an obvious **`Original`** action, do not automatically enable a deficiency. Recommended mode controls: `Original`, `Protan`, `Deutan`, `Tritan (approx.)`; default severity 100% after first deficiency selection, visibly adjustable 0–100% in steps of 10 initially, with more precision only if measured useful. Don't use red vs green alone to distinguish selections: use text, border, state, and focus.
+5. A `Compare` segmented mode offers `Full` and `Split`. In Split, original on the **left**, simulation on the **right**; a neutral high-contrast vertical divider starts at 50%, can be dragged by touch or moved from keyboard via a genuine slider (Home/End and arrow keys), and has accessible labels `Original` and `Simulated`. Dragging must not pan, draw on, or zoom the wallpaper. Also offer a focusable `Hold for original` button using pointer/keyboard release, with click/touch fallback and no stuck state after visibility change. Treat all split/hold states as ephemeral view controls only.
+6. One short, visible disclosure `Approximation of colour differences, not exactly what anyone sees` with a `How it works` expandable explanation citing the underlying model and tritan limitation. No surprising popover anchored on top of colours. With tool closed, there is **zero** status badge covering the wallpaper.
+7. Mark active simulated mode explicitly in sighted UI **and** in a single polite status announcement on committed mode/severity changes, not on every slider pixel or worker frame. `aria-pressed` or native select semantics must remain correct. Screen reader should distinguish actual screenshot/export from simulated screen-only overlay.
+8. Preview view controls persist for the browser tab **only** by default (or explicitly opt-in local preference later), never in URL, JSON recipe, rendered metadata, gallery identity, Undo stack, favourites, or history; refresh defaults to Original unless persistent preference later has an explicit UI and versioned storage key.
+9. On theme switch, the control panel uses existing light/dark tokens. On `prefers-reduced-motion`, no animated divider/overlay fade. Touch surfaces >=44×44 CSS px with real centre-hit targets. No continuously running animation.
+
+### Rendering/dataflow contract
+
+- Use a **separate display-only canvas** stacked exactly on top of `#preview` within `.wallpaper-surface`; its CSS and pixel dimensions always track the source canvas. It has `aria-hidden="true"` and `pointer-events:none`. The source preview remains the authority and maintains its existing accessible image role. Do not modify its pixels, rendering layers or source image bitmap, and do not intercept the Draw/bleed touch path.
+- Subscribe to `roygbiv-preview-presented` **and** `roygbiv-preview-interactive`, so every complete/cached/fallback/temporary frame updates eventually. A later async revision must supersede a prior conversion and never show a mismatched wallpaper under a new recipe.
+- Use a small dedicated colour-conversion Worker if supported. Transfer a **copied** source ImageData buffer into the Worker; do not transfer/control the main preview OffscreenCanvas. Pair every request with a generation and configuration revision; ignore/close stale output. Coalesce transient frames; prioritize settled and changed modes. Limit memory to the current input/output plus one waiting request; terminate on fatal errors. No network/dependencies.
+- Deterministic Canvas2D fallback if worker cannot start or transferable buffers unavailable, chunk if needed to avoid a long UI stall. Never make render()/export() await simulation. If source canvas readback fails, announce `Preview unavailable` and continue showing the unchanged original.
+- Only show the overlay **after** complete transformed pixels from the latest source frame are ready, hiding old overlays while newer source art is already visible. `Original` / severity 0 must immediately hide overlay, with source canvas pixel bytes unchanged.
+- Compute full preview resolution or display-equivalent sampling; pixelate/blur must not create a false report about fine stripes. Split comparison should visually mask the *transformed overlay* to the right, revealing source original on the left; do not apply a half-image transform that produces seam errors. The compare divider must not export.
+- No custom CSS `filter`, hue rotation, SVG feColorMatrix over gamma-encoded bytes, direct saturation hack, or colour contrast invention. Avoid processing gallery thumbnails, metadata, downloads and arbitrary UI icon colours.
+
+### Acceptance/QA matrix
+
+**Unit/science**: exact identity at severity 0; correct sRGB gamma boundary; neutral greys remain achromatic within <=1 8-bit unit; saturated RGB/CMY, near black/white, mid-tones and real rainbow sample grid match independent DaltonLens-Python/Machado reference within <=1–2 8-bit units after rounding and gamut clamp; row/column matrix ordering; severity 0.1 & 0.55 & 1; continuity across every matrix boundary; finite bounded outputs; alpha exactly preserved; source input unchanged; invalid mode/severity throws rather than silently lying. Baseline fixture/reference SHA and license provenance committed to docs. Triad must differ meaningfully rather than grayscale/desaturation.
+
+**Renderer**: live worker settled, transient, fallback, cached nudge, rapid random, Undo, zoom, pan, texture, white and black backgrounds, seed/recipe restore; stale frame rejection; mode switched between worker renders; no overlay blank flashes that hide real art. Authoritative canvas pixels unchanged with simulation on/off.
+
+**Noninterference**: same PNG byte-level dimensions and pixels/metadata (apart from normal time-dependent metadata) with tool active/inactive; same share URL, Undo history length, favourite selection, gallery recipes, saved history and randomization seed. Contrast-finding analyses must not mutate recipes.
+
+**Layout/accessibility**: real-browser 320×700, 360×640, 412×892, 700×412, 790/791/840 CSS edges, normal desktop, fullscreen 412×892, Edit vs More vs Draw vs Saved, dark/cream and reduced motion. Verify clipping, non-overlap with fullscreen exit and bottom dock, centre-click physical targets, correct focus return, keyboard-only operation and escape/closing; actual screenshot evidence. A native Pixel 6 Pro/browser hardware run is an explicit *human/device* gate, not asserted by CI.
+
+**Performance**: profile on 600×1300 preview in Chromium/Pixel 6 Pro-like throttling: conversion must not block pointer interaction or stall drawing; measure average/p95 after warmup, memory peak, churn under 10 rapid renders, and return-to-Original latency. If budget is exceeded, process only after settled frame and explain deferred transient behaviour. No memory leak after repeated opens/closes.
+
+## Implementation order and stop/go gates
+
+- [x] Inspect source render/canvas, UI navigation, responsive controls and test topology. Establish initial branch.
+- [ ] **A. Science core**: add isolated `src/colour-vision-matrices.js`, `src/colour-vision.js` and `tests/colour-vision.test.js`, keeping upstream provenance and MIT notice; test pure-math invariants before UI. First initial commit on this branch.
+- [ ] **B. Async render adapter**: separate preview overlay and coalesced worker/fallback, revision discipline, mode-change cancellation, no impact on source render/export.
+- [ ] **C. Human-factors UI**: minimal desktop button, dedicated More section, text presets, native severity slider, split/hold-original controls; styles additive and theme-aware.
+- [ ] **D. Browser qualification**: automate real target centre-hit/keyboard/pointer and screenshots, render worker and fallback parity, source original isolation, persistent state isolation. Publish measured perf notes.
+- [ ] **E. Independent review**: cross-validate reference fixtures incl tritan limitations; review visual copies/icons and mobile hardware; remove unsupported claims.
+- [ ] **F. Optional extensions**, after core is accepted: validated Brettel full tritanopia; multi-pane comparison if it can preserve legibility; quantitative pairwise distinctions with explicit perceptual metric/method and never an invented pass/fail score; optional export of a **separately named simulation** only if a user explicitly asks for such functionality.
+
+**Merge rule:** do not call a plan or pure core "finished preview". Require green Node + actual-browser acceptance for shipped UI and no unverified human/device approval. Keep this branch small and build milestones into focused commits.
+
+## Licensing
+
+ROYGBIV's authored work remains Unlicense, but upstream numerical matrices in DaltonLens-Python are MIT-licensed. Keep their copyright and license text alongside the tables (e.g. `docs/licenses/DaltonLens-Python-MIT.txt`) and cite exact upstream file. No runtime dependency, font download, telemetry or cloud. The model's scientific publication is credited separately.
