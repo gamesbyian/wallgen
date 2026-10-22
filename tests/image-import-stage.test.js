@@ -7,7 +7,7 @@ test('image path importer presents transient progress, ready and empty states fr
   assert.match(html,/id="imagePathDialog"[^>]*data-phase="idle"/);
   assert.match(html,/class="image-path-phase" aria-hidden="true">Choose image/);
   assert.match(html,/id="imagePathStatus" role="status" aria-live="polite"/);
-  assert.match(js,/const phases=\{idle:'Choose image',analyzing:'Analyzing',ready:'Select path',empty:'No paths'\}/);
+  assert.match(js,/const phases=\{idle:'Choose image',analyzing:'Analyzing',ready:'Select geometry',empty:'No geometry'\}/);
   assert.match(js,/dialog\.dataset\.phase=next/);
   assert.match(js,/setPhase\('analyzing'\)/);
   assert.match(js,/setPhase\(candidate\?'ready':'empty'\)/);
