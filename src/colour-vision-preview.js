@@ -94,7 +94,9 @@ const panelAnchor=make('div','vision-panel-anchor');
 stage.before(panelAnchor);
 function placeControls(){
   if(matchMedia('(max-width:790px)').matches){
-    moreInspect.append(toggle,panel);
+    // Inspecting colour differences should not require scrolling past all
+    // position controls and recipe details first.
+    moreInspect.prepend(toggle,panel);
   }else{
     desktopSlot.append(toggle);
     panelAnchor.append(panel);
