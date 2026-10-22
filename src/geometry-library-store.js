@@ -109,6 +109,7 @@ function makeMemory({idFactory,now},warning){
       return display(record);
     },
     async listDrafts(){return recent([...drafts.values()],now()).map(display);},
+    async deleteDraft(id){return drafts.delete(id);},
     async pruneDrafts(){
       const keep=new Set(recent([...drafts.values()],now()).map(r=>r.id));
       for(const id of drafts.keys())if(!keep.has(id))drafts.delete(id);
@@ -253,6 +254,15 @@ function idbStore(db,{idFactory,now}){
       return transaction(db,['drafts'],'readonly',(tx,set)=>{
         const req=tx.objectStore('drafts').getAll();
         req.onsuccess=()=>set(recent(req.result,now()).map(display));
+      });
+    },
+    deleteDraft(id){
+      return transaction(db,['drafts'],'readwrite',(tx,set)=>{
+        const store=tx.objectStore('drafts'),req=store.get(id);
+        req.onsuccess=()=>{
+          if(!req.result){set(false);return;}
+          store.delete(id);set(true);
+        };
       });
     },
     pruneDrafts(){
