@@ -325,7 +325,7 @@ export function mountEditor(){
     // Photo lives in a compact second view of Light during this first
     // implementation phase. Explicit artistic-intent search can reveal it
     // without manufacturing duplicate scalar controls or a new phone tab.
-    if(/^(photo|photography|film|35mm|smartphone|iphone|pixel camera|dslr|webcam|digital camera|cinematic|halation)(\\b|$)/i.test(query)){
+    if(/^(photo|photography|film|35mm|smartphone|iphone|pixel camera|dslr|webcam|digital camera|cinematic|halation)(?:$|[^a-z])/i.test(query)){
       const photoTool=TOOL_LIST.find(tool=>tool.id==='lighting');
       matchedSearchHit={tool:photoTool,key:null,label:'Photo finish',kind:'tool'};
       selectEditorTool('effects','lighting',{source:'search'});
