@@ -1,4 +1,4 @@
-import {extractImagePathCandidates,extractImageShapeCandidates,imagePlacement,pathToWallpaper} from './image-path.js?v=20261018-import1';
+import {extractImagePathCandidates,extractImageShapeCandidates,imagePlacement,pathToWallpaper} from './image-path.js?v=20261022-shapes1';
 import {drawAuthoringLockReason,drawAuthoringLockMessage,pathStructureLockedOutsidePaths} from './path-authoring-locks.js';
 import {verifyLocalSilhouetteSvg} from './svg-import-safety.js';
 
