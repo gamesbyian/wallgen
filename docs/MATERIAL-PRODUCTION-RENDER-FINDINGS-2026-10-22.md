@@ -1,5 +1,13 @@
 # Materials: first seven actual production-rendered appearance findings
 
+## Controlled source of linen sawtooth identified, 2026-10-22
+
+[Chromium experiment #39823468097](https://github.com/gamesbyian/wallgen/actions/runs/39823468097), artifact [#12446026709](https://github.com/gamesbyian/wallgen/actions/runs/39823468097/artifacts/12446026709), produced **three same-seed 480×1040 linen wallpapers** at contour displacement 0, 20 and 68. All other normalized recipe fields matched exactly, and the d68 PNG's pixels were *identical* to the prior `linen-1` art study. The d0 picture retained a visible fabric thread grid with **smooth ribbon boundaries**; 20 caused moderate teeth and 68 visibly aggressive serrations. Thus the stripe-boundary artifact is specifically the high-frequency material-height field being transferred to contour geometry, not the existence of painted fabric threads.
+
+**New soft-edge option actually reviewed (PR #502):** [Chromium #39824713944](https://github.com/gamesbyian/wallgen/actions/runs/39824713944), [two-image artifact #12445822684](https://github.com/gamesbyian/wallgen/actions/runs/39824713944/artifacts/12445822684), compared old `linen` and opt-in `linen-soft` with every other recipe field identical. Both 480×1040 outputs were viewed; the soft version retains the same woven grid and broad relief but greatly reduces the high-frequency serrated edges. Every PNG chunk CRC verified and both embedded recipes match their sidecars. The old-render output was **pixel-identical** to original `linen-1`, confirming backward compatibility. This controlled scene supports acceptance of a selectable *smoother-contour* option, not any claim of physical photorealism. The two-image disposable PR #503 was closed unmerged after reverting temporary CI. Original seven-image findings continue below.
+
+
+
 **Completed:** 2026-10-22, one-off [Chromium production-render run #39820925332](https://github.com/gamesbyian/wallgen/actions/runs/39820925332) in disposable [PR #498](https://github.com/gamesbyian/wallgen/pull/498). The [seven-image artifact](https://github.com/gamesbyian/wallgen/actions/runs/39820925332/artifacts/12445010899) contains real 480×1040 PNGs, matching complete `.recipe.json` files, a `manifest.json`, and an HTML gallery. It was downloaded and visually inspected. The temporary workflow step was reverted byte-for-byte, and PR #498 was **closed unmerged**. Artifact retention: seven days.
 
 ## Checked evidence

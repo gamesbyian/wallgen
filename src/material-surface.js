@@ -26,7 +26,7 @@ function fractal(x,y,seed){
 export const MATERIAL_CHARACTER=Object.freeze({
   grain:[7,0,0,.84],watercolor:[69,0,0,.23],
   construction:[10,0,0,.68],handmade:[24,0,0,.63],
-  linen:[13,5,.27,.53],canvas:[18,9,.31,.62],
+  linen:[13,5,.27,.53], 'linen-soft':[13,5,.27,.53],canvas:[18,9,.31,.62],
   denim:[12,6,.34,.72],knit:[24,13,.34,.5],
   felt:[9,0,0,.8],corrugated:[30,15,.67,.38],
   concrete:[49,0,0,.56],stucco:[16,0,0,.9],
@@ -54,7 +54,7 @@ export function materialHeight(layer,x,y){
       layer.material==='knit'?wx+wy*.18:wx;
     const ribs=Math.sin(skew/(pitch*unit)*TAU+warp/(p*.55));
     ridge=layer.material==='knit'?ribs*Math.sin(wy/(pitch*unit)*TAU):ribs;
-    if(layer.material==='linen'||layer.material==='canvas')
+    if(layer.material==='linen'||layer.material==='linen-soft'||layer.material==='canvas')
       ridge=(ridge+Math.sin((wy+warp*.4)/(pitch*unit*1.12)*TAU))*.5;
   }
   // Full-strength height is controlled by displacement and texture strength,
@@ -62,6 +62,21 @@ export function materialHeight(layer,x,y){
   return clamp((coarse*.57+fine*rough*.58)*(1-ridgeWeight*.55)+ridge*ridgeWeight,
     -1,1);
 }
+// Smooth the *contour only* for the opt-in soft-edge linen. The source's
+// physical weave remains visible through paintMaterial/materialHeight. The
+// old 'linen' path returns its historic height sample unchanged, preserving
+// already-saved PNG recipes. A symmetric 5-point kernel half a thread pitch
+// apart suppresses periodic high-frequency edge teeth while retaining the
+// larger aperiodic cloth undulations and world-coordinate seam continuity.
+export function materialContourHeight(layer,x,y){
+  if(layer.material!=='linen-soft')return materialHeight(layer,x,y);
+  const unit=materialUnit(layer);
+  const offsetX=5*unit*.5,offsetY=5*1.12*unit*.5;
+  return (materialHeight(layer,x,y)+
+    materialHeight(layer,x-offsetX,y)+materialHeight(layer,x+offsetX,y)+
+    materialHeight(layer,x,y-offsetY)+materialHeight(layer,x,y+offsetY))/5;
+}
+
 function colour(sign,alpha){
   return 'rgba('+(sign?'255,255,255':'0,0,0')+','+clamp(alpha,0,.75).toFixed(3)+')';
 }
@@ -257,6 +272,7 @@ export function paintMaterial(ctx,layer,bounds){
       dots(ctx,layer,bounds,8,1.2,.24,2);
       flecks(ctx,layer,bounds,8,14,.28);break;
     case 'linen':
+    case 'linen-soft':
       threads(ctx,layer,bounds,5,.20);
       dots(ctx,layer,bounds,9,.5,.15);break;
     case 'canvas':

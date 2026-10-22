@@ -1,5 +1,10 @@
 # Agent orientation for ROYGBIV
 
+## Opt-in soft-edge linen, not a legacy material rewrite (2026-10-22)
+
+Actual [Chromium three-image linen experiment #39823468097](https://github.com/gamesbyian/wallgen/actions/runs/39823468097) isolated the serrated stripe outlines to high `textureDisplacement` (0 smooth, 20 visible, 68 strong); the original painted weave stays at displacement zero. New normalized `linen-soft` uses the same paint and `materialHeight` as `linen`, but `materialContourHeight` applies a bounded half-pitch five-point prefilter **only** when sampling edge relief. Old linen never changes pixels, and the existing three material selectors display both choices. Avoid auto-converting old recipes, duplicating inspector controls or installing permanent screenshot CI. **One controlled visual comparison was completed:** [Chromium #39824713944](https://github.com/gamesbyian/wallgen/actions/runs/39824713944) renders visibly smoother soft-edge linen at 68 displacement with unchanged fabric background; both recipes/PNG metadata verified and old linen pixel-identical to previous baseline. Do not extrapolate to physical Pixel/native-resolution/material realism, which remain open.
+
+
 ## Material realism now has actual judged PNG output (2026-10-22)
 
 [Seven-image material production review](docs/MATERIAL-PRODUCTION-RENDER-FINDINGS-2026-10-22.md): [Chromium Actions run #39820925332](https://github.com/gamesbyian/wallgen/actions/runs/39820925332) generated seven exact-recipe 480×1040 images. All PNG CRCs, embedded source recipes and sidecars independently matched; images actually viewed. Linen at displacement 68 shows regular grid texture and sawtooth edges, watercolor paper cloudy texture, concrete fine speckles. This is controlled evidence **at strong displacement, not a verdict on all user defaults**. If improving linen, first compare same seed/geometry at displacement 0/20/68; avoid silent old recipe changes. Temporary review workflow removed and PR #498 closed unmerged. No screenshot CI expansion.
