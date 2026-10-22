@@ -1,5 +1,8 @@
 # ROYGBIV: photographic film looks and filters
 
+**Neutral effect performance safeguard (2026-10-22, PR pending):** Grain Only at Grain 0 and Warm Halation with Halation/Grain 0 now bypass full Canvas2D readback and per-pixel postprocessing when their *entire normalized transform* is neutral. Custom non-neutral tone/colour values still run, as does low-res webcam spatial sampling even if its tonal parameters are neutral. This avoids needless large RGBA allocation and transfer in a genuine no-effect state, while keeping stored Photo recipes, disabled/off behavior and all non-neutral picture pixels unchanged. Tests cover 3024×6552 no-readback path and active webcam. Real Pixel speed and full-image artistic inspection remain to be measured.
+
+
 **F3 compact optical control refinement (2026-10-22, PR pending):** Warm Film Halation's previously recipe-only `parameters.halation` is now edited from the *existing Photo secondary slider position*, which displays Halation for that look and Grain for all others. Amount stays the shared first slider. The inactive sibling is actually hidden from compact tray layout, so this does not create a third slider row or an eighth editor tab. Saved and restored Halation recipes retain their explicit value; choosing a new look resets secondary value to that look's defaults. No changes to older look rendering or serialized keys. Manual image comparison and Pixel viewport accessibility remain explicit pending work.
 
 
