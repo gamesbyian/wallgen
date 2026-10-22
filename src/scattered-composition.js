@@ -27,7 +27,7 @@ const cropped=({cx,cy,r})=>cx-r<0||cx+r>W||cy-r<0||cy+r>H;
 const within=({cx,cy,r})=>cx-r>=0&&cx+r<=W&&cy-r>=0&&cy+r<=H;
 
 export const RAINBOW_ORBITS=Object.freeze({
-  structure:'regions',regionMode:'scattered',scatteredCount:7,
+  structure:'regions',regionMode:'scattered',scatteredShapeKind:'circle',scatteredCount:7,
   scatteredMinSize:10,scatteredMaxSize:83,scatteredVariation:92,
   scatteredSpacing:28,scatteredEdgeCrop:75,scatteredOverlap:'separate',
   palette:'classic',background:'black',material:'none',
