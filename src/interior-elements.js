@@ -167,9 +167,15 @@ export function drawRegionInteriors(ctx,object,elements,structure,renderBounds){
   const xs=object.vertices.map(p=>p.x),ys=object.vertices.map(p=>p.y);
   const x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys);
   const cx=(x0+x1)/2,cy=(y0+y1)/2;
-  ctx.save();ctx.beginPath();ctx.moveTo(object.vertices[0].x,object.vertices[0].y);
-  for(const p of object.vertices.slice(1))ctx.lineTo(p.x,p.y);
-  ctx.closePath();ctx.clip();
+  ctx.save();ctx.beginPath();
+  if(object.circle){
+    ctx.arc(object.circle.cx,object.circle.cy,object.circle.r,0,Math.PI*2);
+  }else{
+    ctx.moveTo(object.vertices[0].x,object.vertices[0].y);
+    for(const p of object.vertices.slice(1))ctx.lineTo(p.x,p.y);
+    ctx.closePath();
+  }
+  ctx.clip();
   // A stack of strokes can share the same geometric insets. Resolve each
   // distance only once per object and render, independent of ink/stroke style.
   const insetCache=new Map();
