@@ -45,6 +45,25 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
   const overlay=byId('drawOverlay'),wallpaper=byId('preview');
   const hint=byId('drawPathHint'),apply=byId('drawApply');
   const phase=panel.querySelector('.draw-phase');
+  // Short portrait Draw controls can cover an authored point. Collapse the
+  // ORIGINAL action panel into the right gutter while editing, keeping a
+  // keyboard/touch button to reopen its existing Undo/Use/Cancel controls.
+  const minimize=document.createElement('button');
+  minimize.type='button';
+  minimize.className='draw-panel-minimize';
+  panel.querySelector('.draw-path-intro').append(minimize);
+  function setPanelCollapsed(collapse){
+    panel.dataset.controlsCollapsed=String(collapse);
+    minimize.textContent=collapse?'Show controls':'Hide controls';
+    minimize.setAttribute('aria-expanded',String(!collapse));
+    minimize.setAttribute('aria-label',collapse?
+      'Show drawing and point editing controls':'Hide drawing controls to uncover the canvas');
+  }
+  minimize.addEventListener('click',()=>setPanelCollapsed(
+    panel.dataset.controlsCollapsed!=='true'));
+  const shortPortrait=()=>window.matchMedia(
+    '(min-width:480px) and (max-width:599px) and (max-height:760px) and (orientation:portrait)').matches;
+  setPanelCollapsed(false);
   const smooth=byId('drawSmooth'),geometric=byId('drawGeometric');
   const again=byId('drawAgain'),cancel=byId('drawCancel');
   const power=byId('drawSmoothingStrength'),powerLabel=byId('drawSmoothingValue');
@@ -178,8 +197,15 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
     // new workflow engine; no recipe data or pointer state is duplicated.
     const step=editing?'anchors':
       ready.length>=2||showingSavedPath?'refine':'sketch';
+    const previousPhase=panel.dataset.phase;
     panel.dataset.phase=step;
     phase.textContent=step==='anchors'?'Edit points':step==='refine'?'Refine':'Sketch';
+    // Auto-uncover precisely when an editable anchor enters the screen.
+    // An explicit Show tap remains respected during subsequent selections.
+    if(step==='anchors'&&previousPhase!=='anchors'&&shortPortrait())
+      setPanelCollapsed(true);
+    else if(step!=='anchors'&&previousPhase==='anchors')
+      setPanelCollapsed(false);
   }
   function setFit(mode){
     fit=mode;
@@ -204,6 +230,7 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
     editor=null;editing=false;adding=false;history=[];
     editingSavedPath=false;showingSavedPath=false;
     savedSourcePath=null;
+    setPanelCollapsed(false);
     draw([]);syncPointControls();
     hint.textContent='Draw anywhere on the preview, including beyond the frame.';
   }
