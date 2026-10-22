@@ -16,6 +16,7 @@ import {fullSettingName} from './editor-terminology.js';
 import {installExplorationHistory} from './exploration-history.js';
 import {installGeometryLibraryUI} from './geometry-library-ui.js';
 import {RAINBOW_ORBITS} from './scattered-composition.js';
+import {stripeContourDistortionAvailability} from './editor-effect-availability.js';
 import {normalizeScatteredOverrides} from './scattered-object-edits.js';
 import {cloneGeometrySnapshot} from './geometry-asset.js';
 import {parseStoredFavorites} from './favorites-store.js';
@@ -311,6 +312,11 @@ function inactiveSettingKeys(recipe,scene){
   }
   if(paths){inactive.add('dividerColor');inactive.add('dividerWidth');}
   else if(recipe.dividerColor==='none')inactive.add('dividerWidth');
+  // The renderer samples relief only from effective layers applied to stripes.
+  // Use resolveScene's filtered layers so optional/zero-strength/background-only
+  // materials never leave an apparently functional but inert slider.
+  if(!stripeContourDistortionAvailability(scene).available)
+    inactive.add('textureDisplacement');
   // Decorative motifs have separate size/density knobs; straight geometry
   // never has curve frequency/depth, even when marked with chevrons.
   if(['straight','hairpin','loop','drawn'].includes(scene.geometry))
@@ -383,7 +389,8 @@ function inactiveSettingKeys(recipe,scene){
   return inactive;
 }
 function syncInactiveSettings(){
-  const inactive=inactiveSettingKeys(current,currentScene||resolveScene(current));
+  const scene=currentScene||resolveScene(current);
+  const inactive=inactiveSettingKeys(current,scene);
   for(const key of FIELDS){
     const field=form.elements.namedItem(key);
     if(!field)continue;
@@ -437,6 +444,25 @@ function syncInactiveSettings(){
     if(key.startsWith('textureRotation') || key==='diagonalRotation'){
       for(const button of document.querySelectorAll('[data-rotate-target="'+key+'"]'))
         button.disabled=isInactive||locked;
+    }
+  }
+  // Explain the otherwise surprising zero value without changing the recipe.
+  const distortion=form.elements.namedItem('textureDisplacement');
+  if(distortion){
+    const state=stripeContourDistortionAvailability(scene);
+    const field=distortion.closest('label');
+    let reason=document.getElementById('contourDistortionRequirement');
+    if(field){
+      if(!reason){
+        reason=document.createElement('p');
+        reason.id='contourDistortionRequirement';
+        reason.className='editor-effect-gate';
+      }
+      if(reason.previousElementSibling!==field)field.after(reason);
+      reason.textContent=state.reason;
+      reason.hidden=state.available||current.structure!=='paths';
+      if(reason.hidden)distortion.removeAttribute('aria-describedby');
+      else distortion.setAttribute('aria-describedby',reason.id);
     }
   }
   for(const button of document.querySelectorAll('.setting-inactive > .setting-lock')){
