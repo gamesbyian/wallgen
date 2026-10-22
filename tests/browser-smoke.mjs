@@ -170,7 +170,7 @@ try{
   })()`);
   assert.deepEqual(language.tabs,
     ['Layout','Path','Stripes','Details','Colour','Texture','Light']);
-  assert.equal(language.tools,43);
+  assert.equal(language.tools,40);
   assert.equal(new Set([
     language.names.textureStrength,language.names.textureStrength2,
     language.names.textureStrength3]).size,3);
@@ -1108,8 +1108,8 @@ try{
   assert.ok(await evaluate('document.querySelector("[name=material2]").disabled===false'));
   await evaluate('(()=>{const f=document.querySelector("[name=material2]");f.value="none";f.dispatchEvent(new Event("change",{bubbles:true}))})()');
   await waitFor('document.querySelector("[data-editor-tool=layer2]").dataset.materialState==="off"');
-  const finish2Off=await evaluate('(()=>{const n=document.querySelector("[data-editor-tool=finish2] .material-finish-help");return {hidden:n.hidden,text:n.textContent}})()');
-  assert.ok(!finish2Off.hidden&&finish2Off.text.includes('Choose a texture in Layer 2'));
+  const finish2Off=await evaluate('(()=>{const n=document.querySelector("[data-editor-tool=layer2] .material-finish-help");return {hidden:n.hidden,text:n.textContent}})()');
+  assert.ok(!finish2Off.hidden&&finish2Off.text.includes('Choose a texture in Material'));
   await evaluate('(()=>{const el=document.querySelector("[name=material2]");el.value="linen";el.dispatchEvent(new Event("change",{bubbles:true}))})()');
   await waitFor('document.getElementById("textureLayer2Enabled").checked===true');
   assert.ok(await evaluate('document.querySelector("#panel-material .editor-tool-card:not([hidden]) [name=material2]")!==null'));
@@ -1119,7 +1119,7 @@ try{
   const layer2Status=await evaluate('(()=>{const b=document.querySelector("[data-editor-tool=layer2]");return {state:b.dataset.materialState,label:b.getAttribute("aria-label"),title:b.title}})()');
   assert.equal(layer2Status.label,'Layer 2: Texture selected');
   assert.equal(layer2Status.title,layer2Status.label);
-  assert.ok(await evaluate('document.querySelector("[data-editor-tool=finish2] .material-finish-help").hidden'),
+  assert.ok(await evaluate('document.querySelector("[data-editor-tool=layer2] .material-finish-help").hidden'),
     'Finish 2 explanation must disappear when a real texture activates the layer');
   await evaluate('(()=>{const f=document.querySelector("[name=material3]");f.value="foil";f.dispatchEvent(new Event("change",{bubbles:true}))})()');
   await waitFor('document.querySelector("[data-editor-tool=layer3]").dataset.materialState==="on"');
@@ -1127,8 +1127,8 @@ try{
   await waitFor('document.querySelector("[data-editor-tool=layer3]").dataset.materialState==="zero"');
   const layer3Zero=await evaluate('document.querySelector("[data-editor-tool=layer3]").getAttribute("aria-label")');
   assert.equal(layer3Zero,'Layer 3: Strength 0%');
-  const finish3Zero=await evaluate('(()=>{const n=document.querySelector("[data-editor-tool=finish3] .material-finish-help");return {hidden:n.hidden,text:n.textContent}})()');
-  assert.ok(!finish3Zero.hidden&&finish3Zero.text.includes('0% strength'));
+  const finish3Zero=await evaluate('(()=>{const n=document.querySelector("[data-editor-tool=layer3] .material-finish-help");return {hidden:n.hidden,text:n.textContent}})()');
+  assert.ok(!finish3Zero.hidden&&finish3Zero.text.includes('Strength is 0%'));
   await evaluate('(()=>{const f=document.querySelector("[name=material3]");f.value="none";f.dispatchEvent(new Event("change",{bubbles:true}))})()');
   await waitFor('document.querySelector("[data-editor-tool=layer3]").dataset.materialState==="off"');
   console.log('MATERIAL_SOURCE_STATUS_STATES',JSON.stringify({layer2Status,layer3Zero}));
@@ -1318,7 +1318,8 @@ try{
     assert.ok(await evaluate('!document.querySelector("[name=material2]").disabled && !document.querySelector(".add-texture-layer")'));
     await evaluate('document.getElementById("tab-material").click()');
     for(const n of [1,2,3]){
-      await evaluate('document.querySelector("[data-editor-tool=finish'+n+']").click()');
+      await evaluate('document.querySelector("[data-editor-tool=layer'+n+']").click()');
+      await evaluate('document.querySelector(".editor-tool-card[data-editor-tool=layer'+n+'] .material-inspector-tab:last-child").click()');
       const rot=await evaluate('(()=>{const node=document.querySelector(".editor-tool-card:not([hidden]) .texture-rotation-field");const row=node.getBoundingClientRect(),input=node.querySelector("input[type=number]").getBoundingClientRect(),label=node.querySelector("span").getBoundingClientRect(),rail=node.querySelector(".rotation-controls").getBoundingClientRect();const stacked=document.body.classList.contains("mobile-studio")&&innerWidth<=499&&innerHeight>=840;return {stacked,row:{top:row.top,bottom:row.bottom},input:{top:input.top,bottom:input.bottom},label:{top:label.top,bottom:label.bottom},rail:{top:rail.top,bottom:rail.bottom}}})()');
       assert.ok(rot.input.top>=rot.row.top-2&&rot.input.bottom<=rot.row.bottom+2,
         'Rotation input must fit its source field in Finish '+n+' at '+name+': '+JSON.stringify(rot));
@@ -1361,9 +1362,10 @@ try{
     if(noClippedTools.length){
       const diagnostic=await evaluate(`(()=>{
         const result=[];
-        for(const tool of ['finish1','finish2','finish3']){
+        for(const tool of ['layer1','layer2','layer3']){
           document.getElementById('tab-material').click();
           document.querySelector('[data-editor-tool='+tool+'].editor-tool-tab').click();
+          document.querySelector('[data-editor-tool='+tool+'] .material-inspector-tab:last-child')?.click();
           const card=document.querySelector('.editor-tool-card:not([hidden])');
           const cb=card.getBoundingClientRect();
           const controls=card.querySelector('.rotation-controls');
@@ -1573,8 +1575,9 @@ try{
   const desktopRotationBoxes=await evaluate(`(()=>{
     const problems=[];
     document.querySelector('#tab-material').click();
-    for(const tool of ['finish1','finish2','finish3']){
+    for(const tool of ['layer1','layer2','layer3']){
       document.querySelector('[data-editor-tool="'+tool+'"].editor-tool-tab').click();
+      document.querySelector('[data-editor-tool='+tool+'] .material-inspector-tab:last-child')?.click();
       const card=document.querySelector('.editor-tool-card[data-editor-tool="'+tool+'"]:not([hidden])');
       const row=card.querySelector('.texture-rotation-field .rotation-controls');
       if(!row){problems.push({tool,error:'missing original rotation row'});continue;}
@@ -2622,7 +2625,7 @@ try{
       if(JSON.stringify(values)!==JSON.stringify(after.get(tool)))
         failures.push(tool+':reshuffled');
     }
-    const source=document.querySelector('.editor-tool-card[data-editor-tool=finish1] input[type=range]');
+    const source=document.querySelector('.editor-tool-card[data-editor-tool=layer1] input[type=range]');
     const accentColour=source?getComputedStyle(source).accentColor:'';
     return {panels:before.size,ranges,distinctTracks:hues.size,accentColour,failures};
   })()`);
@@ -2659,8 +2662,8 @@ try{
   })()`);
   assert.ok(chooserSearch.max>5&&chooserSearch.start>5);
   assert.ok(Math.abs(chooserSearch.afterTap-chooserSearch.start)<=2,'manual tool taps preserve scroll');
-  assert.ok(chooserSearch.visible&&chooserSearch.human==='finish3','search reveals source-named rotation tool');
-  assert.equal(chooserSearch.legacy,'finish3');
+  assert.ok(chooserSearch.visible&&chooserSearch.human==='layer3','search reveals source-named rotation tool');
+  assert.equal(chooserSearch.legacy,'layer3');
   console.log('TOOL_STRIP_MANUAL_SCROLL_AND_SOURCE_SEARCH',JSON.stringify(chooserSearch));
   // A disabling geometry must DISPLAY zero but never overwrite the real
   // source recipe values. This is a visual/state promise from the user,

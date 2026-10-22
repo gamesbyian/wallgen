@@ -48,8 +48,8 @@ test('live search reports an inapplicable match rather than selecting an unrelat
 test('a user can find rotation controls by visible accessible words or internal key',()=>{
   const options={applies:()=>true,labelFor:key=>
     key==='textureRotation3'?'Texture layer 3 rotation in degrees':key};
-  assert.equal(findEditorToolMatch('layer 3 rotation',TOOL_LIST,options)?.id,'finish3');
-  assert.equal(findEditorToolMatch('textureRotation3',TOOL_LIST,options)?.id,'finish3');
+  assert.equal(findEditorToolMatch('layer 3 rotation',TOOL_LIST,options)?.id,'layer3');
+  assert.equal(findEditorToolMatch('textureRotation3',TOOL_LIST,options)?.id,'layer3');
   const layout=readFileSync(new URL('../src/editor-layout.js',import.meta.url),'utf8');
   assert.match(layout,/const labelFor=key=>sourceSettingLabel\(form\.elements\.namedItem\(key\),key\)/);
 });

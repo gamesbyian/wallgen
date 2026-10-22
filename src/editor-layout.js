@@ -6,6 +6,7 @@ import {toolAppliesToScene} from './editor-tool-applicability.js';
 import {findEditorToolMatch,findEditorSearchHit} from './editor-tool-search.js?v=20261022-intent-search1';
 import {legacyToolAliases,legacyCategoryAliases,legacySettingAliases} from './editor-terminology.js';
 import {installMaterialLayerIndicators} from './editor-material-indicators.js';
+import {installMaterialInspectors} from './editor-material-inspector.js';
 
 const byId=id=>document.getElementById(id);
 const form=byId('controls');
@@ -210,6 +211,9 @@ export function mountEditor(){
     die.title='Reroll or vary '+name+' only';
     root.append(die);
   }
+  // Each layer presents its original controls in Material or Finish without
+  // creating extra tool cards, inputs, scrollbars or recipe copies.
+  const materialInspectors=installMaterialInspectors({tools,fieldNode});
   for(const old of originals){old.hidden=true;old.setAttribute('aria-hidden','true');}
   chooser.querySelectorAll('[data-editor-tool]').forEach(button=>
     button.addEventListener('click',()=>selectEditorTool(button.dataset.category,button.dataset.editorTool)));
@@ -296,6 +300,7 @@ export function mountEditor(){
       return;
     }
     selectEditorTool(tool.category,tool.id,{source:'search'});
+    if(key)materialInspectors.showForSetting(key);
     closeSearch({restoreFocus:false});
     (field||tools.get(tool.id)?.chip)?.focus({preventScroll:true});
   });
@@ -313,6 +318,9 @@ export function mountEditor(){
     if(match){
       matchedSearchHit=match;
       selectEditorTool(match.tool.category,match.tool.id,{source:'search'});
+      if(match.key)materialInspectors.showForSetting(match.key);
+      else if(/^finish\s*[123]$/i.test(query)&&match.tool.id.startsWith('layer'))
+        materialInspectors.show(match.tool.id,'finish');
       const location=(match.tool.categoryLabel||match.tool.category)+' → '+match.tool.name;
       const status=match.key
         ?match.label+' · '+location+(form.elements.namedItem(match.key)?.disabled
@@ -355,7 +363,7 @@ export function mountEditor(){
   selectEditorTool('layout','arrange');
   const focused=installFocusedAdjustments({form,chooser});
   installMaterialLayerIndicators({form,tools});
-  return {focused,getCurrent:()=>({category:activeCategory,tool:activeTool}),tools,chooser,searchInput};
+  return {focused,materialInspectors,getCurrent:()=>({category:activeCategory,tool:activeTool}),tools,chooser,searchInput};
 }
 export function selectEditorTool(category,tool,{source='manual'}={}){
   let selected=tools.get(tool);

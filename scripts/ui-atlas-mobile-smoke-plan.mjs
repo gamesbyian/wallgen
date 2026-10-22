@@ -5,7 +5,7 @@
 export const MOBILE_ATLAS_SMOKE_TOOLS=Object.freeze([
   ['layout','arrange'],['path','geometry'],['stripes','structure'],
   ['details','interior-targets'],['colour','rainbow'],
-  ['material','finish1'],['effects','lighting']
+  ['material','layer1'],['effects','lighting']
 ].map(([category,tool])=>Object.freeze({category,tool})));
 export const MOBILE_ATLAS_SMOKE_STATES=Object.freeze([
   'studio-default','editor-open','special-mobile-edit-rail',

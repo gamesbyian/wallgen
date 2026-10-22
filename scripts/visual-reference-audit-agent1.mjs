@@ -295,18 +295,21 @@ const scenarios={
   },
   material:async(page,profile)=>{
     await edit(page,profile);await field(page,'structure','paths');
-    await field(page,'material','grain');await tool(page,'material','finish1');
+    await field(page,'material','grain');await tool(page,'material','layer1');
+    await page.locator('.editor-tool-card[data-editor-tool="layer1"] .material-inspector-tab').last().click();
   },
   'material-layer2':async(page,profile)=>{
     await edit(page,profile);await field(page,'structure','paths');
     await field(page,'textureLayer2Enabled',true);
-    await field(page,'material2','linen');await tool(page,'material','finish2');
+    await field(page,'material2','linen');await tool(page,'material','layer2');
+    await page.locator('.editor-tool-card[data-editor-tool="layer2"] .material-inspector-tab').last().click();
   },
   'material-layer3':async(page,profile)=>{
     await edit(page,profile);await field(page,'structure','paths');
     await field(page,'textureLayer2Enabled',true);
     await field(page,'textureLayer3Enabled',true);
-    await field(page,'material3','foil');await tool(page,'material','finish3');
+    await field(page,'material3','foil');await tool(page,'material','layer3');
+    await page.locator('.editor-tool-card[data-editor-tool="layer3"] .material-inspector-tab').last().click();
   },
   effects:async(page,profile)=>{
     await edit(page,profile);await tool(page,'effects','lighting');
@@ -400,7 +403,7 @@ function geometryFromPage(page){
     // rotation toolbar as displayed on tiny phones, including actual paint
     // order at each interactive element's centre.
     const rotationRow=document.querySelector(
-      '.editor-tool-card[data-editor-tool="finish1"] .texture-rotation-field .rotation-controls');
+      '.editor-tool-card[data-editor-tool="layer1"] .material-inspector-pane[data-material-view="finish"] .texture-rotation-field .rotation-controls');
     const rotationFrame=rotationRow?.getBoundingClientRect();
     const rotationCells=rotationRow?[...rotationRow.querySelectorAll('button,input[type=number]')]
       .map(el=>{

@@ -2,6 +2,14 @@
 
 2026-10-22. Historical design audit based on commit 75c5e1778a5f5789c44ba95098ca7a4c1161b7f8, followed by an implementation checkpoint. The original maps were documentation-only; later PRs #449, #452, #454 and #455 made focused runtime improvements. The audited architecture remains seven categories, 43 tools and 95 canonical settings.
 
+## Implementation checkpoint: material layer workspaces (current PR)
+
+The previously identified **C08 Layer/Finish fragmentation** is addressed by grouping each texture into **one canonical layer tool with two compact in-card views**: Material (material, coverage, blend) and Finish (strength, scale, rotation). The Texture category therefore changes from seven tool chips to four (Layer 1, Layer 2, Layer 3, Surface), and the whole editor from 43 to **40 named tools**, while retaining **all 95 setting keys** and the same seven categories and five mobile destinations.
+
+The original lockable DOM controls, scope dice, saved material values, enabled flags, optional layer semantics and Undo/restoration remain intact. The two views are mutually exclusive to fit the portrait mobile edit tray without vertical scrolling. Material status indicators and disabled Finish explanations remain attached to the same layer. The old Finish 1–3 search terms resolve to their corresponding layer, with the Finish view shown.
+
+The agent research map `scripts/ia-semantic-audit.mjs` continues to derive the physical owner from the schema and its historical 43-tool snapshot is preserved in the audit provenance. Candidate five-workspace plans remain **unimplemented comparisons**, not a claim that reorganizing all tabs is universally correct. The next candidate is **C09, persistent selected interior-element editing**, ideally with the same original-node/no-duplicate approach and a small phone viewport check.
+
 ## Implementation checkpoint, 22 October 2026
 
 This is a historical audit with a **live issue-status supplement**. Treat the statuses below and the source-linked `scripts/ia-semantic-audit.mjs` register as authoritative; the original finding descriptions further down preserve the reasoning at discovery time.
