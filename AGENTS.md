@@ -5,6 +5,10 @@
 [Specification](docs/PNG-RECIPE-MIGRATION-AND-FORMAT-REGISTRY-PLAN-2026-10-22.md) · [issue](https://github.com/gamesbyian/wallgen/issues/476). Implement raw source-era schema detection and conversion before modern normalization. Preserve original PNG critical chunk bytes, ancillary metadata and historical recipe semantics where possible; report ambiguity and do not claim regenerating the same old pixels. This is a More/PNG utility, not a new editor destination. Planned M0–M5; no new CI screenshot burden.
 
 
+## PNG preservation implementation alert (PR #479, 2026-10-22)
+
+[#479](https://github.com/gamesbyian/wallgen/pull/479) adds raw versioned recipe inspection and an opt-in non-destructive PNG recipe updater. Use `readRawPngRecipe` for archaeology, **not** `extractPngRecipe` (which normalizes away unknown fields). The same `migratePngMetadataOnly` API backs Files & sharing and a headless CLI, and refuses v1/early-v2 uncertain conversions until frozen history fixtures exist. The sole PNG metadata writer remains `embedPngMetadata`, and image bytes/EXIF/ICC remain unchanged. See the format registry and migration plan before touching serialization. No background overhaul, new CI workflow or unqualified historical migration claims.
+
 ## Embroidery implementation alert (PR #474, 2026-10-22)
 
 [#474](https://github.com/gamesbyian/wallgen/pull/474) starts E0/E1 in `src/embroidery.js` with strict optional `surfaceTreatments` and palette/object/global fill targeting, first path/region stitch overlays and a small Texture → Surface editor. Keep all old artwork pixel-unchanged when omitted, and do not duplicate material layers, change the 40-tool navigation, or claim finished stitch physically accurate. Planned stages E2–E5, object selection/outline/interior treatments and actual image/device review remain open; see the active roadmap. No third-party code copied.
