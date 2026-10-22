@@ -16,13 +16,13 @@ export function installMaterialLayerIndicators({form,tools}){
     {id:'layer3',name:'material3',strength:'textureStrength3',enabled:'textureLayer3Enabled'}
   ];
   const finishHelp=sources.map((config,i)=>{
-    const card=tools.get('finish'+(i+1))?.card;
-    if(!card)throw new Error('Missing material finish tool '+(i+1));
+    const pane=tools.get(config.id)?.card.querySelector('[data-material-view="finish"]');
+    if(!pane)throw new Error('Missing material finish view for layer '+(i+1));
     const note=document.createElement('p');
     note.className='material-finish-help';
     note.setAttribute('role','note');
     note.hidden=true;
-    card.prepend(note);
+    pane.prepend(note);
     return note;
   });
   function update(){
@@ -41,9 +41,9 @@ export function installMaterialLayerIndicators({form,tools}){
       const note=finishHelp[i];
       note.hidden=state!=='off'&&state!=='zero';
       const message=state==='off'?
-        'Finish '+(i+1)+' is inactive. Choose a texture in Layer '+(i+1)+'.':
+        'Choose a texture in Material to enable Finish.':
         state==='zero'?
-          'Finish '+(i+1)+' has 0% strength. Increase layer strength to enable its effects.':'';
+          'Strength is 0%. Raise it to activate this layer.':'';
       if(note.textContent!==message)note.textContent=message;
     }
   }
