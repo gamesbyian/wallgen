@@ -1,5 +1,10 @@
 # ROYGBIV: active product roadmap and work queue
 
+## P1/P2 preservation queue: non-destructive historical PNG recipe modernization (#476)
+
+**Planned, not implemented:** [#476](https://github.com/gamesbyian/wallgen/issues/476) and the [migration specification](PNG-RECIPE-MIGRATION-AND-FORMAT-REGISTRY-PLAN-2026-10-22.md). Existing PNG v1/v2 import and IDAT-preserving re-embed are reusable infrastructure but normalize historical raw fields immediately and are not proof of comprehensive schema migration. Queue M0 history/registry/fixtures → M1 raw parsing/dialect recognition → M2 loss-aware semantic adapters → M3 surgical recipe-only PNG rewriting → M4 More import/inspect/download UI → M5 lean targeted tests. Preserve the image and unrelated metadata byte-for-byte; preserve recipe composition meaning or explicitly refuse/report ambiguity. Do not block current Photo/Embroidery work or add routine screenshot CI.
+
+
 ## Creative navigation checkpoint: ranked setting search (PR #475, 2026-10-22)
 
 **C07 source-level implementation in [#475](https://github.com/gamesbyian/wallgen/pull/475):** Search still prioritizes exact named settings and visual-intent aliases, and now offers up to four ranked, explicitly labelled alternatives when a phrase matches multiple applicable tools. Users can tap an option or use ↑/↓ and Enter; results are bounded in a floating listbox instead of increasing the fixed-height phone edit tray. The old first-match API remains compatible, canonical form nodes stay authoritative, dormant-mode results remain excluded, and inactive or locked fields keep prerequisite feedback. Lean targeted Node tests cover ranking and keyboard/source structure.
