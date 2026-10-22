@@ -26,7 +26,7 @@ export const LOCKABLE_SETTINGS = ['seed','family','orientation','geometry','moti
   'material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3',
   'textureDisplacement','patternHomogeneity','chaos','stripeWidth','spread','shapeFrequency','shapeDepth','motifSize','motifFrequency','lineStyle','individuality',
   'overridePatternHomogeneity','gap','outlineBuffer','glow','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','position',
-  'structure','radialMode','rayCount','rayRotation','rayTwist','rayCoverage','rayCore','fieldCenterX','fieldCenterY','regionMode','regionCount','regionJitter','regionSides','dividerColor','dividerWidth',
+  'structure','radialMode','rayCount','rayRotation','rayTwist','rayCoverage','rayCore','fieldCenterX','fieldCenterY','regionMode','regionCount','regionJitter','regionSides','scatteredCount','scatteredMinSize','scatteredMaxSize','scatteredVariation','scatteredSpacing','scatteredEdgeCrop','scatteredOverlap','dividerColor','dividerWidth',
   'composition','repeatCount','repeatSpacing','construction','crossingMode','turnRadius','hairpinAngle','loopRadius','loopSweep','geometrySafety','extendDrawnPath','stepCount','chevronSharpness','loopAspect','pathLength','endTaper','tonalContrast','brushRoughness','dotSize','dotSpacing','interiorElements'];
 export const PALETTES = ['classic', 'electric', 'pastel', 'jewel', 'muted', 'sunset', 'candy', 'arctic', 'earth', 'twilight', 'citrus'];
 export const TEXTURE_COVERAGES = ['both', 'stripes', 'background'];
@@ -118,6 +118,13 @@ export function normalizeRecipe(input = {}) {
     regionCount: Math.round(finiteRange(input.regionCount, 14, 7, 70)/7)*7,
     regionJitter: finiteRange(input.regionJitter, 45, 0, 100),
     regionSides: Math.round(finiteRange(input.regionSides, 0, 0, 12)),
+    scatteredCount: Math.round(finiteRange(input.scatteredCount,7,1,70)),
+    scatteredMinSize: finiteRange(input.scatteredMinSize,10,0,100),
+    scatteredMaxSize: finiteRange(input.scatteredMaxSize,83,0,100),
+    scatteredVariation: finiteRange(input.scatteredVariation,92,0,100),
+    scatteredSpacing: finiteRange(input.scatteredSpacing,28,0,100),
+    scatteredEdgeCrop: finiteRange(input.scatteredEdgeCrop,75,0,100),
+    scatteredOverlap: ['separate','overlap'].includes(input.scatteredOverlap)?input.scatteredOverlap:'separate',
     dividerColor: DIVIDER_MODES.includes(input.dividerColor) ? input.dividerColor : 'background',
     dividerWidth: finiteRange(input.dividerWidth, 12, 0, 100),
     orientation: readChoice('orientation', ['vertical', 'horizontal', 'diagonal']),
@@ -493,6 +500,10 @@ export function randomizeAllRecipe({primesOnly=false}={}) {
     rayCoverage:percent(),rayCore:percent(),fieldCenterX:percent(),fieldCenterY:percent(),
     regionMode:any(REGION_MODES),regionCount:7*(1+Math.floor(r()*10)),
     regionJitter:percent(),regionSides:Math.floor(r()*13),
+    scatteredCount:1+Math.floor(r()*70),scatteredMinSize:percent(),
+    scatteredMaxSize:percent(),scatteredVariation:percent(),
+    scatteredSpacing:percent(),scatteredEdgeCrop:percent(),
+    scatteredOverlap:any(['separate','overlap']),
     dividerColor:any(DIVIDER_MODES),dividerWidth:percent(),
     geometry:any(GEOMETRIES.filter(x=>x!=='drawn')), motif:any(MOTIFS), palette:any(PALETTES),
     reverseStripes:r()>.5,diagonalRotation:Math.floor(r()*361)-180,
