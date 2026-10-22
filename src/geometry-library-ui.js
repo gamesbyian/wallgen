@@ -2,8 +2,8 @@
 // primary destination or a competing image-import/Draw editor.
 import {openGeometryLibrary} from './geometry-library-store.js';
 import {drawPathToGeometry,assetToDrawPath} from './geometry-asset.js';
-import {serializeGeometryAsset,parseGeometryAsset,serializeGeometryLibrary
-} from './geometry-library-backup.js';
+import {serializeGeometryAsset,parseGeometryAsset,serializeGeometryLibrary,
+  parseGeometryLibraryBackup,MAX_BACKUP_BYTES} from './geometry-library-backup.js';
 
 const make=(parent,tag,text)=>{
   const node=document.createElement(tag);
@@ -82,7 +82,7 @@ export function installGeometryLibraryUI({getRecipe,applyPath,onNotice,downloadB
   const list=make(dialog,'div');list.className='geometry-library-list';
   const foot=make(dialog,'footer');
   const exportAll=make(foot,'button','Export library JSON');exportAll.type='button';
-  const importOne=make(foot,'button','Import geometry JSON');importOne.type='button';
+  const importOne=make(foot,'button','Import shape / library JSON');importOne.type='button';
   const upload=make(foot,'input');upload.type='file';upload.accept='.json,application/json';upload.hidden=true;
   let store=null,loading=null,request=0,opener=null,busy=false;
   const say=message=>{status.textContent=message;};
@@ -194,6 +194,8 @@ export function installGeometryLibraryUI({getRecipe,applyPath,onNotice,downloadB
   exportAll.addEventListener('click',async()=>{
     try{
       const db=await init(),items=await db.list({limit:500});
+      if((await db.list({limit:1,offset:500})).length)
+        throw new Error('Library exceeds 500 items. Export in smaller batches.');
       const content=await serializeGeometryLibrary(items);
       download(content,'roygbiv-shapes-and-paths.json');
       say('Exported '+items.length+' geometry items.');
@@ -204,12 +206,21 @@ export function installGeometryLibraryUI({getRecipe,applyPath,onNotice,downloadB
     const file=upload.files?.[0];upload.value='';
     if(!file)return;
     try{
-      if(file.size>1024*1024)throw new Error('Single geometry JSON must be 1 MiB or smaller');
-      const imported=await parseGeometryAsset(await file.text());
-      const db=await init();
-      await db.add(imported);
-      say(db.durable?'Imported '+imported.name+'.':
-        'Imported for this visit only. Export a copy to preserve it.');
+      if(file.size>MAX_BACKUP_BYTES)throw new Error('Geometry JSON exceeds the 16 MiB limit');
+      const text=await file.text(),db=await init();
+      let manifest;
+      try{manifest=JSON.parse(text);}catch{throw new Error('Invalid geometry JSON');}
+      if(manifest?.format==='roygbiv.geometry-library'){
+        const assets=await parseGeometryLibraryBackup(text);
+        const result=await db.importMany(assets);
+        say('Imported '+result.added+' items; skipped '+result.skipped+
+          ' identical items.'+(db.durable?'':' These are session-only: export a copy.'));
+      }else{
+        const imported=await parseGeometryAsset(text);
+        await db.importMany([imported]);
+        say(db.durable?'Imported '+imported.name+'.':
+          'Imported for this visit only. Export a copy to preserve it.');
+      }
       await refresh();
     }catch(e){say('Could not import: '+errorMessage(e));}
   });
