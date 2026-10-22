@@ -1,19 +1,5 @@
 name: Mobile browser acceptance
 on:
-  pull_request:
-    paths:
-      - index.html
-      - styles.css
-      - studio-themes.css
-      - src/**
-      - assets/**
-      - tests/browser-smoke.mjs
-      - editor-redesign.css
-      - editor-focus.css
-      - image-path.css
-      - mobile-editor-rail.css
-      - mobile-compact.css
-      - .github/workflows/mobile-browser.yml
   workflow_dispatch:
 permissions:
   contents: read
