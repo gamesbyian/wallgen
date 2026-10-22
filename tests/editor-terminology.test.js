@@ -23,7 +23,7 @@ test('short visible names still give each layered texture and light setting a di
     ['textureStrength2','Texture layer 2 strength'],
     ['textureStrength3','Texture layer 3 strength'],
     ['textureScale2','Texture layer 2 scale'],
-    ['textureRotation3','Texture layer 3 rotation'],
+    ['textureRotation3','Texture layer 3 rotation in degrees'],
     ['textureCoverage2','Texture layer 2 coverage'],
     ['textureDisplacement','Texture-driven contour distortion'],
     ['stripeShadowStrength','Stripe shadow strength'],
