@@ -12,7 +12,9 @@ function downloadLog(data){
   document.body.append(a);a.click();a.remove();
   setTimeout(()=>URL.revokeObjectURL(url),20000);
 }
-export function installCreativeRecorderUI({recorder,getRecipe,store}){
+export function installCreativeRecorderUI({
+  recorder,getRecipe,store,onStopOrClear=()=>{}
+}){
   const host=document.querySelector('.secondary-actions');
   if(!host)return;
   const launch=document.createElement('button');
@@ -116,7 +118,10 @@ export function installCreativeRecorderUI({recorder,getRecipe,store}){
   dialog.addEventListener('close',()=>launch.focus());
   enabled.addEventListener('change',()=>{
     const value=enabled.checked;
-    if(!value){connectionRevision++;sync.cancel();}
+    if(!value){
+      connectionRevision++;sync.cancel();
+      onStopOrClear(); // A visible survey must not survive opt-out.
+    }
     try{localStorage.setItem(USAGE_MODE_KEY,value?'local':'off');}
     catch{ /* Session-only mode is still explicit. */ }
     recorder.setEnabled(value,getRecipe());
@@ -129,7 +134,13 @@ export function installCreativeRecorderUI({recorder,getRecipe,store}){
   });
   dialog.querySelector('[data-usage-clear]').addEventListener('click',async()=>{
     if(!confirm('Delete all local creative activity records? This cannot be undone. Previously uploaded records remain on GitHub.'))return;
-    try{connectionRevision++;sync.cancel();await recorder.clear();if(recorder.enabled)recorder.start(getRecipe());await refresh();}
+    try{
+      connectionRevision++;sync.cancel();
+      onStopOrClear(); // Do not answer a question about a deleted episode.
+      await recorder.clear();
+      if(recorder.enabled)recorder.start(getRecipe());
+      await refresh();
+    }
     catch(error){status.textContent='Could not delete records: '+String(error.message||error);}
   });
   dialog.querySelector('[data-usage-prune]').addEventListener('click',async()=>{
