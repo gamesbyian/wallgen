@@ -21,7 +21,7 @@ import {installGeometryLibraryUI} from './geometry-library-ui.js';
 import {RAINBOW_ORBITS,scatteredRadiusRange} from './scattered-composition.js';
 import {stripeContourDistortionAvailability} from './editor-effect-availability.js';
 import {normalizeScatteredOverrides} from './scattered-object-edits.js';
-import {embroideryObjectChoices,resolveEmbroideryObjectChoice} from './embroidery-target-choices.js';
+import {embroideryObjectChoices,resolveEmbroideryObjectChoice,reconcileEmbroideryObjectOptions} from './embroidery-target-choices.js';
 import {scatteredPixelToWorld,scatteredWorldToPixel,pickScatteredRegion,scatteredMoveOverride,clamp as clampScattered} from './scattered-drag.js';
 import {cloneGeometrySnapshot} from './geometry-asset.js';
 import {parseStoredFavorites} from './favorites-store.js';
@@ -328,16 +328,7 @@ function toControls(recipe) {
   const requested=stitch?.target.scope==='object'?stitch.target.ids[0]:objectSelect.value;
   const {selected:objectId,options:objectChoices}=
     resolveEmbroideryObjectChoice(choices,requested);
-  objectSelect.replaceChildren();
-  if(!objectChoices.length){
-    const option=document.createElement('option');
-    option.value='';option.textContent='No eligible objects';objectSelect.append(option);
-  }else for(const choice of objectChoices){
-    const option=document.createElement('option');
-    option.value=choice.id;option.textContent=choice.label;
-    objectSelect.append(option);
-  }
-  objectSelect.value=objectId;
+  reconcileEmbroideryObjectOptions(objectSelect,objectChoices,objectId);
   objectField.hidden=selected!=='object';
   const targetSelect=form.elements.namedItem('embroideryTarget');
   const byObject=targetSelect.querySelector('option[value="object"]');

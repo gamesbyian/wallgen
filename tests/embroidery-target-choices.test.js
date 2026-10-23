@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {normalizeRecipe,resolveScene} from '../src/model.js';
-import {embroideryObjectChoices,resolveEmbroideryObjectChoice}
+import {embroideryObjectChoices,resolveEmbroideryObjectChoice,reconcileEmbroideryObjectOptions}
   from '../src/embroidery-target-choices.js';
 import {matchingEmbroidery,normalizeSurfaceTreatments} from '../src/embroidery.js';
 const js=file=>readFileSync(new URL('../'+file,import.meta.url),'utf8');
@@ -62,4 +62,29 @@ test('visible target selector uses original form fields and preserves missing ta
   assert.match(app,/resolveEmbroideryObjectChoice\(choices,requested\)/);
   assert.match(app,/ids:\[form\.elements\.namedItem\('embroideryObjectId'\)\.value\]/);
   assert.match(css,/\.embroidery-object-picker\[hidden\]/);
+});
+
+test('native object picker retains option identity and focus when recipe rerenders',()=>{
+  const select={options:[],value:'',replacements:0,
+    ownerDocument:{createElement:()=>({value:'',textContent:''})},
+    replaceChildren(...nodes){this.options=nodes;this.replacements++;}
+  };
+  const choices=[{id:'region-0',label:'Red · Shape 1'},
+    {id:'region-1',label:'Orange · Shape 2'}];
+  assert.equal(reconcileEmbroideryObjectOptions(select,choices,'region-0'),true);
+  const original=select.options[0];
+  // Exactly the ordinary slider/Undo sync: same content, regenerated array.
+  assert.equal(reconcileEmbroideryObjectOptions(select,choices.map(c=>({...c})),'region-0'),false);
+  assert.equal(select.replacements,1,'no native picker teardown during editing');
+  assert.strictEqual(select.options[0],original,'preserve focused native option element');
+  assert.equal(reconcileEmbroideryObjectOptions(select,choices,'region-1'),false);
+  assert.equal(select.value,'region-1');
+  assert.equal(select.replacements,1,'selection changes do not rebuild the menu');
+  const missing=resolveEmbroideryObjectChoice(choices,'deleted-region');
+  assert.equal(reconcileEmbroideryObjectOptions(select,missing.options,missing.selected),true);
+  assert.equal(select.options.at(-1).value,'deleted-region');
+  assert.equal(select.value,'deleted-region','missing authored target remains explicit');
+  assert.equal(reconcileEmbroideryObjectOptions(select,[],''),true);
+  assert.equal(select.options[0].textContent,'No eligible objects');
+  assert.match(js('src/app.js'),/reconcileEmbroideryObjectOptions\(objectSelect,objectChoices,objectId\)/);
 });
