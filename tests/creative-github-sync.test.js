@@ -217,7 +217,7 @@ test('unbackupable shape in one session cannot trap independent sessions in the 
 
 test('a blocked earlier session does not displace other sessions even when timestamps roll back',()=>{
   const rows=[
-    {eventId:'too-big',sessionId:'blocked',seq:1,at:'2026-10-23T09:00:00Z',
+    {eventId:'too-big',sessionId:'blocked',seq:1,at:'2026-10-23T08:58:00Z',
       changes:[{after:'z'.repeat(900000)}]},
     {eventId:'later',sessionId:'allowed',seq:1,at:'2026-10-23T08:59:00Z'},
     {eventId:'later2',sessionId:'allowed',seq:2,at:'2026-10-23T09:01:00Z'}
