@@ -72,7 +72,7 @@ try{
         'The counter must follow the same canonical selected tool');
       assert.equal(after.selectedVisible,true,
         'Newly swiped tool must be physically visible past sticky actions');
-      const search=page.locator('.editor-search-toggle');
+      const search=page.getByRole('button',{name:'Find a setting'});
       await search.tap();
       assert.equal(await page.locator('.editor-search-input').isVisible(),true);
       await page.keyboard.press('Escape');
