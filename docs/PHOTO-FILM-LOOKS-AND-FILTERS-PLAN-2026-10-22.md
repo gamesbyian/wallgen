@@ -1,5 +1,12 @@
 # ROYGBIV: photographic film looks and filters
 
+## Final Film disposition and memory improvement (23 October 2026)
+
+Film issue [#468](https://github.com/gamesbyian/wallgen/issues/468) is **closed completed** for the working opt-in shared Photo family, following the actual source-rendered PNG reviews and named Wide Halation Diffusion/Deep-black Negative improvements below. [#553](https://github.com/gamesbyian/wallgen/pull/553) now avoids a whole-frame Canvas2D readback for Film grading, monochrome and seeded grain by processing at most 2 MiB of pixels per strip. The two-frequency Grain Only y-grid, single-scale grain, vignette and other Film output match whole-frame processing **pixel-for-pixel in targeted deterministic tests**. Nonzero Halation uses the existing full-frame source field. No film preset, recipe or existing grading constants were retuned.
+
+PR quick CI passed; this does **not** measure native 3024×6552 Pixel 6 Pro time/peak heap, prove actual art visuals were reviewed again after the strip optimization, or establish physical film fidelity. Historical 'PR pending' and 'not implemented' subsections below are dated development snapshots and must not reopen #468 by implication. Pursue additional finishing effects only against concrete real rendered quality defects.
+
+
 **Current status and agent action:** Film is a working, opt-in shared `photoLook` subsystem with Before/After, Muted Negative, separately black-preserving Negative, seeded grain/halation and actual output samples. The remaining [#468](https://github.com/gamesbyian/wallgen/issues/468) questions concern opt-in artistic quality and real handset behaviour, not initial engine or UI implementation. Preserve existing Film recipe pixels and avoid another generic film filter without an observed need. See [authoritative handoff](AGENT-HANDOFF-2026-10-22.md).
 
 ## F2 independently named wide warm diffusion, real artwork review (2026-10-22)
