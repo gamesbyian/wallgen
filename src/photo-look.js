@@ -164,7 +164,7 @@ function makeLensAcutanceField(data,width,height){
 // Only bright *luminance* emits glow, not saturated max-channel values. Two
 // separable box passes cost O(frame pixels), not O(radius * export pixels).
 // This is a perceptual film-inspired effect, not a linear-light optical model.
-function makeHalationField(data,width,height,profile='original'){
+function makeHalationField(data,width,height,profile='original',pixelReader=null){
   const fieldWidth=Math.min(600,width);
   const fieldHeight=Math.min(1300,height,
     Math.max(1,Math.round(fieldWidth*height/width)));
@@ -175,8 +175,18 @@ function makeHalationField(data,width,height,profile='original'){
     for(const dy of [.25,.75])for(const dx of [.25,.75]){
       const px=Math.min(width-1,Math.floor((x+dx)*width/fieldWidth));
       const py=Math.min(height-1,Math.floor((y+dy)*height/fieldHeight));
-      const i=(py*width+px)*4;
-      luma+=(.2126*data[i]+.7152*data[i+1]+.0722*data[i+2])*.25;
+      // The source colour sampling and arithmetic stay identical whether
+      // sourced from an in-memory RGBA frame or a bounded Canvas2D row cache.
+      // Preserve the original fast direct-buffer branch for callers of
+      // processPhotoPixels and older rendered recipes.
+      if(pixelReader){
+        pixelReader.read(px,py);
+        luma+=(.2126*pixelReader.r+.7152*pixelReader.g+
+          .0722*pixelReader.b)*.25;
+      }else{
+        const i=(py*width+px)*4;
+        luma+=(.2126*data[i]+.7152*data[i+1]+.0722*data[i+2])*.25;
+      }
     }
     // The new diffusion profile admits lower midtone highlights (especially
     // orange) into a broad veil; original's luma gate is frozen for old PNGs.
@@ -212,6 +222,26 @@ function makeHalationField(data,width,height,profile='original'){
   return {width:fieldWidth,height:fieldHeight,blurred:output};
 }
 
+// Keep a small, original-pixel read cache for precomputing a spatial finish.
+// Unlike drawImage downscaling, this visits exactly the four authored source
+// sample locations per halation cell, preserving the existing source gate and
+// seeded halation pixels. The cache never reads the already finished canvas.
+function makeBoundedSourcePixelReader(ctx,width,height){
+  const rows=Math.max(1,Math.floor((2*1024*1024)/(width*4)));
+  let start=-1,storedRows=0,buffer=null;
+  return {r:0,g:0,b:0,
+    read(x,y){
+      if(!buffer||y<start||y>=start+storedRows){
+        start=Math.floor(y/rows)*rows;
+        storedRows=Math.min(rows,height-start);
+        buffer=ctx.getImageData(0,start,width,storedRows).data;
+      }
+      const i=((y-start)*width+x)*4;
+      this.r=buffer[i];this.g=buffer[i+1];this.b=buffer[i+2];
+    }
+  };
+}
+
 // A neutral finish must not force a full-size Canvas2D getImageData and
 // putImageData on a 19.8 MP export. This checks actual normalized parameters,
 // not preset names: authored custom grading still runs, and the low-resolution
@@ -229,7 +259,7 @@ export function isNeutralPhotoLook(look){
 // Mutates the supplied pixel array. Destination alpha is never touched.
 // The grain grid is anchored in the authored 600x1300 frame, not device pixels.
 export function processPhotoPixels(data,width,height,rawLook,seed='rainbow-001',
-    {frameHeight=height,rowOffset=0}={}){
+    {frameHeight=height,rowOffset=0,halationField=null}={}){
   const look=normalizePhotoLook(rawLook);
   if(!look.enabled||look.amount===0)return data;
   if(!Number.isInteger(width)||!Number.isInteger(height)||width<=0||height<=0||
@@ -241,7 +271,7 @@ export function processPhotoPixels(data,width,height,rawLook,seed='rainbow-001',
   if((rowOffset!==0||frameHeight!==height)&&
     (['camera-webcam-signal','camera-digicam-signal','camera-dslr-optics'].includes(look.presetId)||
       (['film-halation-only','film-halation-diffusion'].includes(look.presetId)&&
-       look.parameters.halation>0)))
+       look.parameters.halation>0&&!halationField)))
     throw new RangeError('Spatial photo finish requires whole-frame source');
   if(isNeutralPhotoLook(look))return data;
   const p=look.parameters,amount=look.amount/100;
@@ -267,7 +297,8 @@ export function processPhotoPixels(data,width,height,rawLook,seed='rainbow-001',
       look.presetId==='camera-digicam-signal'?'digicam':'webcam'):null;
   const diffusedHalation=look.presetId==='film-halation-diffusion';
   const halation=(look.presetId==='film-halation-only'||diffusedHalation)&&p.halation>0?
-    makeHalationField(data,width,height,diffusedHalation?'diffusion':'original'):null;
+    (halationField||makeHalationField(data,width,height,
+      diffusedHalation?'diffusion':'original')):null;
   const lens=look.presetId==='camera-dslr-optics'?
     makeLensAcutanceField(data,width,height):null;
   // No extra image buffer or synthetic scene depth.
@@ -285,7 +316,7 @@ export function processPhotoPixels(data,width,height,rawLook,seed='rainbow-001',
     const yCell=Math.floor((sourceY+.5)*yScale);
     const signalRow=webcamSignal?
       Math.min(webcamSignal.height-1,Math.floor((y+.5)/height*webcamSignal.height))*webcamSignal.width:0;
-    const haloY=halation?(y+.5)/height*halation.height-.5:0;
+    const haloY=halation?(sourceY+.5)/frameHeight*halation.height-.5:0;
     const hy0=halation?Math.max(0,Math.min(halation.height-1,Math.floor(haloY))):0;
     const hy1=halation?Math.min(halation.height-1,hy0+1):0;
     const hfy=halation?Math.max(0,Math.min(1,haloY-hy0)):0;
@@ -382,14 +413,16 @@ export function applyPhotoFinish(ctx,width,height,rawLook,seed){
   if(!rawLook?.enabled||Number(rawLook.amount)===0)return false;
   const look=normalizePhotoLook(rawLook);
   if(isNeutralPhotoLook(look))return false;
-  // A full 3024×6552 readback alone occupies ~79 MB. Keep the original
-  // whole-frame path for sampled optics, but stream ordinary grading, grain,
-  // vignette and point flash through <=2 MiB strips. World coordinates are
-  // retained across strips, so seed and vignette output match exactly.
+  // Precompute Film halation from the exact original four source samples per
+  // bounded cell. Then stream finishing rows without ever materializing an
+  // export-sized RGBA buffer. Other capture/acutance fields remain full-frame.
+  const halationOn=['film-halation-only','film-halation-diffusion'].includes(look.presetId)&&
+    look.parameters.halation>0;
+  const reader=halationOn?makeBoundedSourcePixelReader(ctx,width,height):null;
+  const halationField=reader?makeHalationField(null,width,height,
+    look.presetId==='film-halation-diffusion'?'diffusion':'original',reader):null;
   const spatial=['camera-webcam-signal','camera-digicam-signal',
-    'camera-dslr-optics'].includes(look.presetId)||
-    (['film-halation-only','film-halation-diffusion'].includes(look.presetId)&&
-     look.parameters.halation>0);
+    'camera-dslr-optics'].includes(look.presetId);
   if(spatial){
     const pixels=ctx.getImageData(0,0,width,height);
     processPhotoPixels(pixels.data,width,height,look,seed);
@@ -399,7 +432,8 @@ export function applyPhotoFinish(ctx,width,height,rawLook,seed){
     for(let y=0;y<height;y+=rows){
       const h=Math.min(rows,height-y);
       const pixels=ctx.getImageData(0,y,width,h);
-      processPhotoPixels(pixels.data,width,h,look,seed,{frameHeight:height,rowOffset:y});
+      processPhotoPixels(pixels.data,width,h,look,seed,
+        {frameHeight:height,rowOffset:y,halationField});
       ctx.putImageData(pixels,0,y);
     }
   }
