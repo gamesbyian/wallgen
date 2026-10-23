@@ -103,6 +103,14 @@ const escapeHtml=value=>String(value).replace(/&/g,'&amp;')
   .replace(/</g,'&lt;').replace(/>/g,'&gt;')
   .replace(/"/g,'&quot;');
 
+function equalImageChunks(a,b){
+  const original=a.filter(chunk=>chunk.type==='IDAT');
+  const copied=b.filter(chunk=>chunk.type==='IDAT');
+  if(original.length!==copied.length)return false;
+  return original.every((chunk,i)=>chunk.raw.length===copied[i].raw.length &&
+    chunk.raw.every((value,k)=>value===copied[i].raw[k]));
+}
+
 async function generate(options){
   const destination=resolve(options.outDir);
   const filenames=['index.html','manifest.json',...RECONSTRUCTION_R0_CASES.flatMap(item=>[
@@ -133,8 +141,7 @@ async function generate(options){
     if(extractPngRecipe(anonymous)!==null)throw Error('Recipe survived metadata removal');
     const source=scanPngChunks(originalBytes),clean=scanPngChunks(anonymous);
     if(source.width!==clean.width||source.height!==clean.height||
-      JSON.stringify(source.chunks.filter(c=>c.type==='IDAT').map(c=>Array.from(c.raw)))!==
-      JSON.stringify(clean.chunks.filter(c=>c.type==='IDAT').map(c=>Array.from(c.raw))))
+      !equalImageChunks(source.chunks,clean.chunks))
       throw Error('Source and evaluation IDAT differ: '+item.id);
     await writeFile(join(destination,stripped),anonymous);
     records.push({id:item.id,goal:item.goal,original,metadataFree:stripped,
