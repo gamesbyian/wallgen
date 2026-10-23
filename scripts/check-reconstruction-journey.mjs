@@ -120,24 +120,30 @@ async function run(args){
         applyTarget:rect('imageRecipeApply'),dismissTarget:rect('imagePathCancel'),
         whyTarget:rect('imageRecipeWhy'),
         summaryText:document.getElementById('imageRecipeStatus').textContent,
-        summaryFits:(()=>{
+        summaryBox:(()=>{
           const el=document.getElementById('imageRecipeStatus');
-          return el.scrollHeight<=el.clientHeight+1;
+          return {clientHeight:el.clientHeight,scrollHeight:el.scrollHeight};
         })(),
-        cardFits:(()=>{
+        cardBox:(()=>{
           const el=document.getElementById('imageRecipeWorkspace');
-          return el.scrollHeight<=el.clientHeight+1;
+          return {clientHeight:el.clientHeight,scrollHeight:el.scrollHeight};
+        })(),
+        controlsBox:(()=>{
+          const el=document.querySelector('.image-recipe-controls');
+          return {clientHeight:el.clientHeight,scrollHeight:el.scrollHeight};
         })()};
     });
+    await page.screenshot({path:join(output,'import-portrait.png'),fullPage:false});
     assert.ok(preview.source.pigmentPixels>0&&preview.output.pigmentPixels>0,
       'Source and reconstructed previews must both contain genuine coloured ink');
     assert.ok(preview.applyTarget.height>=44&&preview.dismissTarget.height>=44&&
       preview.whyTarget.height>=44,
       'Touchable portrait Apply/Close/Why targets must be at least 44 px high');
-    assert.ok(preview.summaryFits&&preview.cardFits,
+    console.log('RECONSTRUCTION_PORTRAIT_LAYOUT '+JSON.stringify(preview));
+    assert.ok(preview.summaryBox.scrollHeight<=preview.summaryBox.clientHeight+1&&
+      preview.cardBox.scrollHeight<=preview.cardBox.clientHeight+1,
       'Readable summary and full reconstruction card must fit without clipped text');
     assert.match(preview.summaryText,/lower is better/);
-    await page.screenshot({path:join(output,'import-portrait.png'),fullPage:false});
     await page.locator('#imageRecipeWhy').click();
     await page.locator('#imageRecipeExplanation:popover-open').waitFor({timeout:10000});
     const fullExplanation=await page.locator('#imageRecipeExplanationText').textContent();
