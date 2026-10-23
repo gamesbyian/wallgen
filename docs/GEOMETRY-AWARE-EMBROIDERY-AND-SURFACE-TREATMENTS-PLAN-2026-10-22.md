@@ -1,5 +1,10 @@
 # ROYGBIV: geometry-aware surfaces and procedural embroidery
 
+## Repeatable appearance comparison (E2/E3, 2026-10-22)
+
+The opt-in [seven-image embroidery review](EMBROIDERY-SEVEN-IMAGE-ART-REVIEW-2026-10-22.md) uses the existing production renderer for precisely three paired loop ribbon styles and four paired scattered-region treatments. It records exact canonical sidecar and embedded recipes, source seeds, names and a local contact gallery; it does **not** add mandatory CI or certify the actual visual output. Next artistic action is to run and **look at the seven wallpapers** before tuning physical thread models or loosening the legacy render contract.
+
+
 ## E2 practical slice: longitudinal running seams and safe multi-ring bounds (2026-10-22)
 
 The original Satin strokes remain pixel-unchanged, while a new **Running seams** style uses three interrupted strands along the authored tangent/normal centreline of a ribbon, with a globally anchored station lattice so self-crossing branch overpainting keeps identical stitches. For regions, Running uses paired staggered short fill segments through the existing even-odd clip, distinct from three-offset Tatami. The current native Texture → Surface style picker supports all three and preserves its value across Save/Undo/PNG. Stitch intervals and full-width samples are bounded, with no new texture fields, random seeds, compositor, tool cards or CI. Imported multi-ring bounds now iterate finite vertices without risky `Math.min(...hugeArray)` argument lists, including a negative test for corrupt points. Focused unit tests establish source and transport behavior; real embroidery appearance, phone feel, fabric/underlay simulation and small-feature split stitch are still open.

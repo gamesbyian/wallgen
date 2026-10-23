@@ -1,5 +1,10 @@
 # ROYGBIV: active product roadmap and work queue
 
+## E2/E3 minimal real-image embroidery review preparation (2026-10-22)
+
+An opt-in [seven-image embroidery review](EMBROIDERY-SEVEN-IMAGE-ART-REVIEW-2026-10-22.md) now compares untreated/Satin/Running **same-seed loop ribbons** and untreated/Tatami/Running/one-object **same-seed scattered regions** with exact normalized PNG/JSON recipes and an HTML gallery. It uses the production headless browser renderer, not a fake stroke illustration or new CI workflow. **Tool authored; this change does not claim PNGs were rendered, downloaded or visually inspected.** The next meaningful validation is one actual run and judgement of seam continuity, clip realism, material integration and object isolation. Avoid broader atlasses without a concrete defect.
+
+
 ## PNG preservation M0/M5: readable original source values in inspection report (2026-10-22)
 
 More → Update recipe in existing PNG → Save report now includes the **original selected parsed recipe envelope** (including unknown keys and exact numerical authoring values) plus metadata for every original record, even when conversion is unsafe. No decoded/rewritten pixels, no active recipe mutation and no new phone controls. The existing raw iTXt archive remains the only exact-byte source; readable JSON can lose original whitespace or duplicate keys. Automatic v1/early-v2 migration **remains refused** pending source-era golden fixtures/semantic adapters. Adds focused provenance tests, not an ongoing CI job. See [#476](https://github.com/gamesbyian/wallgen/issues/476).
