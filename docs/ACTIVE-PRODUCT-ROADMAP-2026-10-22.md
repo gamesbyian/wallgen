@@ -1,5 +1,12 @@
 # ROYGBIV: active product roadmap and work queue
 
+## Current owner priorities: canonical recipe evolution and image import reconstruction (22 October evening)
+
+**Authoritative priority override:** During this early development phase, prefer the most capable, coherent **current** recipe system. Backwards compatibility of all kinds with older exported artwork, legacy recipes, old seed/pixel behaviour and historical renderer generations is a **nice-to-have**. It is not a blocker, high priority or release gate. Old chronology and pixel-parity research in lower sections is historical/optional; do not treat #476 or legacy parity as P0 merely because older entries say so. Keep unmodified originals safe, accurately report breaks and migration limits, and test current functionality proportionately. Agents should consolidate common underlying mechanisms using the [shared engineering contract](ENGINEERING-REUSE-AND-SEMANTIC-OWNERSHIP.md), not add duplicate engines.
+
+**New image-to-recipe track:** [Research and implementation plan](IMAGE-TO-RECIPE-RECONSTRUCTION-PLAN-2026-10-22.md). R0 ground-truth current-artwork baseline plus a small external geometric-image set → R1 shared raster descriptors → R2 current canonical recipe candidates → R3 bounded real-render fitting → R4 normal editor/transport integration → optional R5 advanced representation/vision. Scope includes metadata-free ROYGBIV image reconstruction and external-image interpretation, prioritizing useful editable visual matches over unverifiable original seed recovery. Reuse existing import, geometry, scene, renderer, worker and state infrastructure. **Initial next action:** small actual-image study and documented failure cases; no speculative broad rewrite or screenshot CI. This is a queued development track, not an implemented full inverse renderer.
+
+
 ## New completed Film, Camera and navigation slices (#468 / #471 / #444, Oct 22 evening)
 
 **#468 Film:** Merged [#528](https://github.com/gamesbyian/wallgen/pull/528) creates a separately named, visibly broader warm halation/diffusion look. Three real same-seed 600×1300 ROYGBIV source PNGs were viewed and CRC/recipe verified ([Chromium review #39897810550](https://github.com/gamesbyian/wallgen/actions/runs/39897810550)); black-neighbour glow >4 red counts 25,875→105,925 compared with the untouched original Halation mode. Full details and caveats in [Film plan](PHOTO-FILM-LOOKS-AND-FILTERS-PLAN-2026-10-22.md). Future: judge on complex textures and native Pixel only when useful; no silent parameter retuning.
