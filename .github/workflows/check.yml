@@ -29,29 +29,3 @@ jobs:
       - name: Full Node suite (manual request only)
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.depth == 'full' }}
         run: npm run check
-
-  # TEMPORARY: original-v1 modern-parity experiment on this branch only.
-  # Remove byte-for-byte before merging (quick gate remains the only PR check).
-  v1-parity-one-off:
-    if: github.event_name == 'pull_request' && github.head_ref == 'agent-476-v1-render-parity-probe-20261022'
-    runs-on: ubuntu-latest
-    timeout-minutes: 18
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - name: Browser dependency for this one probe
-        run: |
-          npm install --no-save playwright@1.56.1
-          npx playwright install --with-deps chromium
-      - name: Original-v1 versus current renderer (four canvases)
-        run: |
-          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/roygbiv-parity-http.log 2>&1 &
-          node scripts/review-historical-v1-parity.mjs --out-dir artifacts/v1-parity
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: v1-versus-modern-original-source-parity
-          path: artifacts/v1-parity
-          retention-days: 5
