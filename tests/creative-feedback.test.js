@@ -16,3 +16,10 @@ test('replacement survey requires substantial manual edits, engaged time and une
     assert.equal(shouldOfferCreativeQuestion('superseded',{...good,...bad}),false);
   assert.equal(shouldOfferCreativeQuestion('wrong',good),false);
 });
+
+test('a pending PNG export suppresses the misleading abandoned-design survey',()=>{
+  const good={manualEdits:3,engagedMs:45000,finalExported:false,finalExportPending:false};
+  assert.equal(shouldOfferCreativeQuestion('superseded',good),true);
+  assert.equal(shouldOfferCreativeQuestion('superseded',
+    {...good,finalExportPending:true}),false);
+});
