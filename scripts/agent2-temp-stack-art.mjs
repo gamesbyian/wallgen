@@ -55,7 +55,10 @@ for(const [id,recipe] of items){
   writeFileSync(recipePath,JSON.stringify(recipe,null,2)+'\n');
   execFileSync(process.execPath,[
     'scripts/render-headless.mjs','--recipe',recipePath,
-    '--width','600','--height','1300','--out',pngPath
+    '--width','600','--height','1300','--out',pngPath,
+    ...(['02-mixed-material-chain-wide-film',
+      '03-mixed-material-satin-fibre-digicam'].includes(id)?
+      ['--verify-photo-stream']:[])
   ],{stdio:'inherit',timeout:150000});
 }
 writeFileSync(join(out,'manifest.json'),JSON.stringify({
