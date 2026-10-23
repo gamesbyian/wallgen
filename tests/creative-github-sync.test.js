@@ -146,3 +146,21 @@ test('private archive batch paths identify one source session and retain later s
   assert.match(next.path,/\/session-2\/next\.json$/);
   assert.equal(makeUsageBatch(rows,first.eventIds.concat(next.eventIds)),null);
 });
+
+test('clock rollback cannot reorder per-session private batches or strand old events',()=>{
+  const rows=[
+    {eventId:'first',at:'2026-10-23T12:00:01Z',sessionId:'phone',seq:1},
+    {eventId:'second',at:'2026-10-23T11:59:58Z',sessionId:'phone',seq:2},
+    {eventId:'third',at:'2026-10-23T11:59:59Z',sessionId:'phone',seq:3},
+    {eventId:'other',at:'2026-10-23T12:00:02Z',sessionId:'other-tab',seq:1}
+  ];
+  const first=makeUsageBatch(rows,[],{maxEvents:2,id:()=> 'batch-one'});
+  assert.deepEqual(first.eventIds,['first','second']);
+  const second=makeUsageBatch(rows,first.eventIds,{maxEvents:2,id:()=> 'batch-two'});
+  assert.deepEqual(second.eventIds,['third']);
+  const third=makeUsageBatch(rows,first.eventIds.concat(second.eventIds),{
+    maxEvents:2,id:()=> 'batch-three'
+  });
+  assert.deepEqual(third.eventIds,['other']);
+  assert.equal(makeUsageBatch(rows,[...first.eventIds,...second.eventIds,...third.eventIds]),null);
+});
