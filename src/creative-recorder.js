@@ -316,13 +316,16 @@ export function createCreativeRecorder({store,id=()=>globalThis.crypto.randomUUI
   }
   function action(type,recipe,details={}){
     if(!active)return;
+    // Async exports can finish after opting out, clearing history, or opting
+    // in anew. Never import a pre-revocation result into the new session.
+    if(details.targetSessionId&&details.targetSessionId!==sessionId)return;
     if(!episodeId)begin(recipe??latest);
     const allowed=['navigation','favorite_added','favorite_removed','export_requested',
       'download_initiated','export_failed','save_recipe_json','photo_compare',
       'hidden_unconfirmed','visible_again','survey_answer','survey_offered',
       'survey_skipped','session_interrupted'];
     if(!allowed.includes(type))throw new Error('Invalid usage event type');
-    const item={...details};
+    const {targetSessionId:_targetSessionId,...item}=details;
     const targetEpisodeId=details.targetEpisodeId||episodeId;
     const historical=targetEpisodeId!==episodeId;
     if(!historical){
@@ -375,6 +378,7 @@ export function createCreativeRecorder({store,id=()=>globalThis.crypto.randomUUI
   }
   return {
     get enabled(){return active;},get episodeId(){return episodeId;},
+    get sessionId(){return sessionId;},
     get durable(){return store.durable;},episodeStats,
     get error(){return failed;},get warning(){return store.warning;},
     start,recoverPrevious,transition,action,supersede,setEnabled,exportJSON,clear,
