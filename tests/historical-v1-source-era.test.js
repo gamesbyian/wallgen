@@ -18,7 +18,7 @@ const tiny=Uint8Array.from(Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/mXPo5QAAAABJRU5ErkJggg==',
   'base64'));
 const hashGitBlob=source=>createHash('sha1').update(
-  Buffer.concat([Buffer.from('blob '+source.length+'\\0'),source])).digest('hex');
+  Buffer.concat([Buffer.from('blob '+source.length),Buffer.from([0]),source])).digest('hex');
 
 // These unchanged files are the actual first v1 Git blobs, not retyped shadow
 // defaults or guessed copy/paste render logic. CI fails if either is edited.
