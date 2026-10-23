@@ -37,10 +37,16 @@ export function installCreativeRecorderUI({recorder,getRecipe,store}){
       <option value="never">Never ask</option>
     </select>
     <p data-usage-status role="status" aria-live="polite"></p>
+    <details class="creative-activity-recent">
+      <summary>Review latest recorded events</summary>
+      <ol data-usage-recent></ol>
+    </details>
     <div class="creative-activity-actions">
       <button type="button" data-usage-export>Export my activity JSON</button>
-      <button type="button" data-usage-clear>Delete recorded activity</button>
+      <button type="button" data-usage-clear>Delete all local activity</button>
     </div>
+    <p>Local records are kept until you delete them or your browser clears storage. You can optionally remove complete sessions over 90 days old after their remote backup has been acknowledged. No unsent or active session is pruned.</p>
+    <button type="button" data-usage-prune>Remove backed-up local sessions older than 90 days</button>
     <details class="creative-activity-backup">
       <summary>Private GitHub backup (optional)</summary>
       <p>Upload batches only to the existing private <code>gamesbyian/general-purpose</code> repository, branch <code>data/roygbiv-usage</code>. No GitHub Actions or new repository required.</p>
@@ -75,6 +81,20 @@ export function installCreativeRecorderUI({recorder,getRecipe,store}){
       ' · '+records.length+' event'+(records.length===1?'':'s')+
       (recorder.durable?' saved locally.':'. '+recorder.warning)+
       (recorder.error?' Recent write failed; export your records if possible.':'');
+    const recent=dialog.querySelector('[data-usage-recent]');
+    recent.replaceChildren();
+    for(const item of records.slice(-12).reverse()){
+      const row=document.createElement('li');
+      const keys=Array.isArray(item.changes)?item.changes.map(x=>x.key)
+        .filter(key=>typeof key==='string').slice(0,6).join(', '):'';
+      row.textContent=[item.at,item.type,item.cause,keys].filter(Boolean).join(' · ');
+      recent.append(row);
+    }
+    if(!recent.children.length){
+      const row=document.createElement('li');
+      row.textContent='No activity recorded on this device.';
+      recent.append(row);
+    }
   }
   launch.addEventListener('click',()=>{
     void refresh();
@@ -103,6 +123,21 @@ export function installCreativeRecorderUI({recorder,getRecipe,store}){
     if(!confirm('Delete all local creative activity records? This cannot be undone. Previously uploaded records remain on GitHub.'))return;
     try{sync.cancel();await recorder.clear();if(recorder.enabled)recorder.start(getRecipe());await refresh();}
     catch(error){status.textContent='Could not delete records: '+String(error.message||error);}
+  });
+  dialog.querySelector('[data-usage-prune]').addEventListener('click',async()=>{
+    if(!recorder.durable){
+      status.textContent='Persistent storage is unavailable; there is no durable history to prune.';
+      return;
+    }
+    if(!confirm('Delete only fully backed-up local sessions older than 90 days? This cannot be undone locally. Copies in GitHub history remain.'))return;
+    try{
+      sync.cancel();
+      await recorder.flush();
+      const cutoff=new Date(Date.now()-90*24*60*60*1000).toISOString();
+      const removed=await store.pruneSyncedBefore(cutoff);
+      await refresh();
+      status.textContent+=' Removed '+removed+' old locally backed-up event(s); no unsent or current session events were deleted.';
+    }catch(error){status.textContent='Could not prune backed-up records: '+String(error.message||error);}
   });
 
   const sync=createGithubUsageSync({store,recorder});

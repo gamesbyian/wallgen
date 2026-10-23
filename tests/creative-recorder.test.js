@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createCreativeRecorder,memoryUsageStore,recipeDiff,replayEpisode,recipeDigest} from '../src/creative-recorder.js';
+import {createCreativeRecorder,memoryUsageStore,recipeDiff,replayEpisode,recipeDigest,
+  prunableSyncedEventIds} from '../src/creative-recorder.js';
 import {normalizeRecipe} from '../src/model.js';
 
 function rig(enabled=true){
@@ -216,4 +217,42 @@ test('unconfirmed previous-session recovery is a verified terminal checkpoint',a
   assert.deepEqual(replayEpisode(oldEpisode),b);
   oldEpisode.at(-1).recipe.gap=100;
   assert.throws(()=>replayEpisode(oldEpisode),/inconsistent recipe journey/);
+});
+
+test('retention removes only complete acknowledged sessions and protects live/partial/outbox data',()=>{
+  const old='2025-01-02T12:00:00.000Z';
+  const recent='2026-10-23T12:00:00.000Z';
+  const rows=[
+    {sessionId:'old',eventId:'old-a',at:old},
+    {sessionId:'old',eventId:'old-b',at:old},
+    {sessionId:'partial',eventId:'part-a',at:old},
+    {sessionId:'partial',eventId:'part-b',at:old},
+    {sessionId:'current',eventId:'cur',at:recent},
+    {sessionId:'reserved',eventId:'pending',at:old}
+  ];
+  assert.deepEqual(prunableSyncedEventIds(rows,
+    ['old-a','old-b','part-a','cur','pending'],'2026-01-01T00:00:00Z',{
+      protectedSessionIds:['current'],reservedEventIds:['pending']
+    }),['old-a','old-b']);
+  assert.throws(()=>prunableSyncedEventIds(rows,[],'invalid'),/cutoff/);
+});
+test('explicit local retention keeps latest checkpoint and never deletes unsent records',async()=>{
+  const store=memoryUsageStore();
+  const old='2025-01-02T12:00:00.000Z';
+  for(const id of ['old-a','old-b'])
+    await store.append({schema:1,eventId:id,sessionId:'old',at:old,seq:1},
+      {sessionId:'old',recipe:normalizeRecipe({seed:'old'})});
+  await store.append({schema:1,eventId:'cur',sessionId:'current',
+    at:'2026-10-23T12:00:00.000Z',seq:1},
+    {sessionId:'current',recipe:normalizeRecipe({seed:'current'})});
+  const batch=await store.reserveBatch();
+  await store.ackBatch(batch.id);
+  const removed=await store.pruneSyncedBefore('2026-01-01T00:00:00Z');
+  assert.equal(removed,2);
+  assert.deepEqual((await store.all()).map(e=>e.eventId),['cur']);
+  assert.equal((await store.last()).sessionId,'current');
+  await store.append({schema:1,eventId:'pending',sessionId:'unsent',
+    at:old,seq:1},{sessionId:'unsent',recipe:normalizeRecipe({seed:'unsent'})});
+  assert.equal(await store.pruneSyncedBefore('2026-01-01T00:00:00Z'),0);
+  assert.ok((await store.all()).some(e=>e.eventId==='pending'));
 });

@@ -52,6 +52,28 @@ export function replayEpisode(records){
   }
   return result?normalizeRecipe(result):null;
 }
+// Retention is opt-in and session-atomic: never leave a partial journey,
+// discard unsent activity or prune the last-known live session.
+export function prunableSyncedEventIds(rows,syncedIds,before,{
+  protectedSessionIds=[],reservedEventIds=[]
+}={}){
+  const cutoff=Date.parse(before);
+  if(!Number.isFinite(cutoff))throw new Error('Invalid activity retention cutoff');
+  const synced=new Set(syncedIds),reserved=new Set(reservedEventIds);
+  const protectedIds=new Set(protectedSessionIds);
+  const sessions=new Map();
+  for(const event of rows){
+    if(typeof event.sessionId!=='string'||typeof event.eventId!=='string')continue;
+    if(!sessions.has(event.sessionId))
+      sessions.set(event.sessionId,{allSyncedAndOld:!protectedIds.has(event.sessionId),ids:[]});
+    const group=sessions.get(event.sessionId);
+    group.ids.push(event.eventId);
+    const at=Date.parse(event.at);
+    if(!Number.isFinite(at)||at>=cutoff||!synced.has(event.eventId)||
+      reserved.has(event.eventId))group.allSyncedAndOld=false;
+  }
+  return [...sessions.values()].filter(s=>s.allSyncedAndOld).flatMap(s=>s.ids);
+}
 export function memoryUsageStore(warning='Temporary session-only records'){
   const events=new Map();let last=null,outbox=null,synced=new Set();
   return {
@@ -67,6 +89,14 @@ export function memoryUsageStore(warning='Temporary session-only records'){
       if(!outbox||outbox.id!==id)throw new Error('Unknown activity batch');
       for(const eventId of outbox.eventIds)synced.add(eventId);
       outbox=null;
+    },
+    async pruneSyncedBefore(before){
+      const ids=prunableSyncedEventIds([...events.values()],synced,before,{
+        protectedSessionIds:last?[last.sessionId]:[],
+        reservedEventIds:outbox?.eventIds||[]
+      });
+      for(const eventId of ids){events.delete(eventId);synced.delete(eventId);}
+      return ids.length;
     },
     async clear(){events.clear();last=null;outbox=null;synced.clear();}
   };
@@ -137,6 +167,32 @@ export async function openUsageStore(factory=globalThis.indexedDB){
             for(const eventId of batch.eventIds)ids.add(eventId);
             state.put({key:'synced',value:[...ids]});
             state.delete('outbox');
+          };
+        };
+      }),
+      pruneSyncedBefore:before=>txRun(['events','state'],'readwrite',(tx,set)=>{
+        const events=tx.objectStore('events'),state=tx.objectStore('state');
+        const all=events.getAll();
+        all.onsuccess=()=>{
+          const synced=state.get('synced');
+          synced.onsuccess=()=>{
+            const outbox=state.get('outbox');
+            outbox.onsuccess=()=>{
+              const last=state.get('last');
+              last.onsuccess=()=>{
+                const ids=prunableSyncedEventIds(all.result,synced.result?.value||[],before,{
+                  protectedSessionIds:last.result?.value?[last.result.value.sessionId]:[],
+                  reservedEventIds:outbox.result?.value?.eventIds||[]
+                });
+                if(ids.length){
+                  const deleted=new Set(ids);
+                  for(const id of ids)events.delete(id);
+                  state.put({key:'synced',value:(synced.result?.value||[])
+                    .filter(id=>!deleted.has(id))});
+                }
+                set(ids.length);
+              };
+            };
           };
         };
       }),
