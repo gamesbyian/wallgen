@@ -46,7 +46,7 @@ test('thumb dock connects to existing controls rather than duplicating model fun
   }
   assert.match(mobile,/moveUtilities\(mobile\.matches\)/);
   assert.match(mobile,/closeSurfaces\(\{restoreFocus:false\}\)/);
-  assert.match(mobile,/event\.key==='Escape'/);
+  assert.match(mobile,/event\.key!=='Escape'\|\|event\.defaultPrevented/);
   assert.match(html,/id="mobileSheetBackdrop"/);
 });
 test('all original configuration and output surfaces remain in the DOM',()=>{
