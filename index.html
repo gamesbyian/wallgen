@@ -315,14 +315,21 @@
               <option value="">No eligible objects</option>
             </select>
           </label>
-          <label class="field">Stitch style
-            <select name="embroideryStyle">
-              <option value="satin">Satin ribs</option>
-              <option value="satin-soft">Soft satin (gentle shading)</option>
-              <option value="tatami">Tatami fill (regions)</option>
-              <option value="running">Running seams (path-following)</option>
-            </select>
-          </label>
+          <div class="embroidery-style-grid">
+            <label class="field">Stitch style
+              <select name="embroideryStyle">
+                <option value="satin">Satin ribs</option>
+                <option value="satin-soft">Soft satin (gentle shading)</option>
+                <option value="tatami">Tatami fill (regions)</option>
+                <option value="running">Running seams (path-following)</option>
+              </select>
+            </label>
+            <label class="field">Region angle
+              <input type="number" name="embroideryDirection" min="-180" max="180"
+                step="0.1" inputmode="decimal" value="38"
+                aria-label="Regional embroidery direction in degrees">
+            </label>
+          </div>
           <div class="control-grid range-grid">
             <label class="field range-field"><span>Stitch spacing</span>
               <input type="range" name="embroideryPitch" min="2" max="16" value="5">

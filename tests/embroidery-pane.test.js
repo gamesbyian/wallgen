@@ -27,7 +27,7 @@ test('surface stitch style is one native persisted control, not a separate tab',
   assert.match(html,/<option value="tatami">Tatami fill \(regions\)<\/option>/);
   assert.match(app,/style:form\.elements\.namedItem\('embroideryStyle'\)\.value/);
   assert.match(app,/namedItem\('embroideryStyle'\)\.value=stitch\?\.style\?\?'satin'/);
-  assert.match(app,/'embroideryObjectId','embroideryStyle','embroideryPitch'/);
+  assert.match(app,/'embroideryObjectId','embroideryStyle','embroideryDirection'/);
 });
 
 test('running style is selectable through the same persisted native Thread field',()=>{
@@ -42,4 +42,17 @@ test('Soft satin is a distinct style option with existing recipe-bound style sel
   assert.equal((html.match(/value="satin-soft"/g)||[]).length,1);
   assert.match(html,/Soft satin \(gentle shading\)/);
   assert.match(app,/style:form\.elements\.namedItem\('embroideryStyle'\)\.value/);
+});
+
+test('region angle restores authored direction and stays beside Stitch style',()=>{
+  const html=source('index.html'),app=source('src/app.js'),css=source('editor-material-status.css');
+  assert.equal((html.match(/name="embroideryDirection"/g)||[]).length,1);
+  assert.match(html,/step="0\.1" inputmode="decimal" value="38"/);
+  assert.match(css,/\.embroidery-style-grid\{display:grid/);
+  assert.match(app,/direction:regionAngle/);
+  assert.match(app,/regionAngleField\.value\.trim\(\)===''\?/);
+  assert.match(app,/regionAngleInput\.value=String\(stitch\?\.direction\?\?38\)/);
+  assert.match(app,/regionAngleInput\.disabled=current\.structure==='paths'/);
+  assert.doesNotMatch(app,/direction:38,\s*\}\);/);
+  assert.match(app,/'embroideryStyle','embroideryDirection'/);
 });

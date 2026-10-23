@@ -195,3 +195,18 @@ test('soft satin region retains same stroke geometry with reduced tint',()=>{
   assert.equal(old.records[0].ink,'rgba(0,0,0,.25)');
   assert.equal(gentle.records[0].ink,'rgba(0,0,0,.09)');
 });
+
+test('authored regional stitch directions survive normalization and recipe transport',()=>{
+  for(const direction of [-120.5,0,68.75,180]){
+    const recipe=normalizeRecipe({seed:'angle-restore',structure:'regions',
+      regionMode:'scattered',surfaceTreatments:[{id:'editor-stitches',
+        enabled:true,style:'tatami',
+        target:{scope:'all',role:'fill',colorSlots:[],ids:[]},
+        direction,pitch:5,relief:65}]});
+    assert.equal(recipe.surfaceTreatments[0].direction,direction);
+    assert.deepEqual(decodeRecipe(encodeRecipe(recipe)),recipe);
+    assert.deepEqual(normalizeRecipe(recipe),recipe);
+  }
+  assert.equal(normalizeSurfaceTreatments([{id:'safe',enabled:true,direction:900}])[0].direction,180);
+  assert.equal(normalizeSurfaceTreatments([{id:'safe',enabled:true,direction:'invalid'}])[0].direction,38);
+});
