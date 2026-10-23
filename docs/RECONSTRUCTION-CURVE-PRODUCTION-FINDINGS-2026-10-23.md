@@ -61,3 +61,24 @@ The deliberately **single** ≤10-render parameter-refinement budget is reassign
 **Visual inspection:** Diagonal source has black gaps between seven adjacent diagonally oriented bands; fitted diagonal has largely contiguous colour, so width/separation remain wrong despite correct overall angle. Wave candidate now draws wide independently coloured, slightly wavy horizontal bands instead of one hairline, but the upper stripe is clipped and gaps/phase differ. Jagged now paints broad separated angled ribbons like the source, with imperfect bend and end alignment. Hairpin U topology is recognizable but its rainbow lanes blend together more and bend more gently than the source. No case is asserted to be pixel-identical, author-approved, or physically validated on Pixel.
 
 **Next:** infer per-colour band centre distances and thickness from the already shared import descriptors; preserve pigment-specific negative-space gaps and improve stripe contour/turn calibration with the same forward renderer. Source-preserving provenance, Undo, locks, save/metadata round-trip, pointer feedback and actual Pixel memory/touch remain tracked separately under #557. The one-off browser workflow was removed before merge.
+
+
+## Measured seven-pigment ribbon spacing and thickness (23 October)
+
+**Actual current-renderer verification:** [final five-source Chromium run #39941056985](https://github.com/gamesbyian/wallgen/actions/runs/39941056985), cases 02 Diagonal, 03 Wave, 04 Jagged, 05 Hairpin and 11 Scattered circles. Generated current 480×1040 PNGs and retained IDAT-identical metadata-free copies, genuine truth recipe sidecars, blind fitted current canonical recipes, and all six candidate previews. The original source PNGs and fitted output were visually compared, as were diagnostic source hue regions. Ordinary quick CI passed separately. **No physical Pixel device evaluation**.
+
+The shared connected-component hue extractor now exposes each already-computed pigment's **major/minor standard deviations**. Without rescanning image pixels, coherent elongated seven-pigment components reveal source ribbon centre distances and thickness using the area divided by longitudinal extent. At 277×600 analysis size, the reviewed genuine Wave source measured approximately **65.5 px gap and 27.7 px pigment width**, and Jagged approximately **45.4 px gap measured perpendicular to its -42° axes and 29.0 px pigment width**. The algorithm converts this evidence via the existing image-to-design placement and algebraically inverts the **current canonical** `resolveScene` spread/width equations; it does not create a new rasterizer or claim original source settings.
+
+**Cross-validated output:**
+
+| Case | Previous best | Final best ↓ | Status |
+| --- | ---: | ---: | --- |
+| Jagged | .204590 | **.165655** | Further 19.0% error reduction; recognizably thicker separated diagonal pigments on the actual preview |
+| Wave | .204330 | **.204330** | Hold prior recipe; applying physical width seed blindly worsened it, so the new start is gated to observed oblique hue axes |
+| Diagonal straight | .085835 | **.085835** | Third proven axis-angle source control preserved |
+| Hairpin | .107867 | **.107867** | Previously recovered U topology preserved |
+| Scattered circles | .008329 | **.008329** | No false classification as parallel ribbons |
+
+A preliminary full application of the measured starting guesses gave Jagged **.165655** but regressed Wave to **.206789**. A later contour-kind conditional accidentally removed Jagged's advantage because image-path contour labels can misidentify coherent angled ribbons. Final selection keys off the actual measured hue **axis angle** (oblique 12–78°, seven consistent components), and a repeated five-PNG study verified both the Jagged improvement and exact Wave restoration. These are genuine pixel/coverage scores with unchanged scoring and fit budget, not human perceptual success percentages. Inferred provenance remains honestly labelled; no input PNG is modified in the product.
+
+**Open:** explicit centreline phase matching, individual ribbon gap and edge microgeometry at actual-phone output, Wave vertical displacement and wave phase, source overlaps/missing hues, new materials and arbitrary external media. Region widths are trustworthy on *strong, separate, elongated pigments*, not on loops, partially occluded source photos, or unrelated circles. Width/span estimates outside current canonical parameter range are refused. Keep R0 evidence optional and don't retain screenshot CI.
