@@ -342,3 +342,62 @@ test('source transaction contract flushes both pending slider stages before outp
   assert.match(between('function changeRecipe(recipe,options={}){','render(recipe,options);'),
     /cancelQueuedControlUpdate\(\)/);
 });
+
+test('late worker export cannot cross an opt-out and renewed consent session',async()=>{
+  const {recorder}=rig();
+  const old={seed:'before'},next={seed:'after'};
+  recorder.start(old);
+  const targetSessionId=recorder.sessionId;
+  const targetEpisodeId=recorder.episodeId;
+  recorder.action('export_requested',old,{
+    exportId:'slow',targetSessionId,targetEpisodeId
+  });
+  recorder.setEnabled(false,old);
+  recorder.setEnabled(true,next);
+  assert.notEqual(recorder.sessionId,targetSessionId);
+  assert.equal(recorder.action('download_initiated',old,{
+    exportId:'slow',targetSessionId,targetEpisodeId
+  }),undefined);
+  assert.equal(recorder.action('export_failed',old,{
+    exportId:'slow',targetSessionId,targetEpisodeId
+  }),undefined);
+  const rows=await recorder.records();
+  assert.equal(rows.filter(e=>e.type==='download_initiated').length,0);
+  assert.equal(rows.filter(e=>e.type==='export_failed').length,0);
+  assert.equal(rows.at(-1).type,'episode_start');
+  assert.equal(rows.at(-1).sessionId,recorder.sessionId);
+});
+
+test('late export after deleting local records is not imported into the new session',async()=>{
+  const {recorder}=rig();
+  recorder.start({seed:'old'});
+  const targetSessionId=recorder.sessionId,targetEpisodeId=recorder.episodeId;
+  await recorder.clear();
+  recorder.start({seed:'new'});
+  recorder.action('download_initiated',{seed:'old'},{
+    exportId:'erased',targetSessionId,targetEpisodeId
+  });
+  const rows=await recorder.records();
+  assert.deepEqual(rows.map(e=>e.type),['episode_start']);
+  assert.notEqual(rows[0].sessionId,targetSessionId);
+});
+
+test('async download after Randomize All still belongs to the old episode in the same session',async()=>{
+  const {recorder}=rig();
+  const old={seed:'old'},next={seed:'random'};
+  recorder.start(old);
+  const targetSessionId=recorder.sessionId,targetEpisodeId=recorder.episodeId;
+  recorder.action('export_requested',old,{
+    exportId:'slow',targetSessionId,targetEpisodeId
+  });
+  recorder.supersede(old,next);
+  recorder.action('download_initiated',old,{
+    exportId:'slow',targetSessionId,targetEpisodeId
+  });
+  const rows=await recorder.records();
+  const download=rows.find(e=>e.type==='download_initiated');
+  assert.ok(download);
+  assert.equal(download.sessionId,targetSessionId);
+  assert.equal(download.episodeId,targetEpisodeId);
+  assert.equal((await recorder.last()).episodeId,recorder.episodeId);
+});

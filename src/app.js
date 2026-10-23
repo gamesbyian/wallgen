@@ -1082,7 +1082,12 @@ async function downloadPNG(){
   const snapshot=normalizeRecipe(current);
   const exportId=crypto.randomUUID();
   const targetEpisodeId=usageRecorder?.episodeId||null;
-  usageRecorder?.action('export_requested',snapshot,{exportId,targetEpisodeId});
+  const targetSessionId=usageRecorder?.enabled?usageRecorder.sessionId:null;
+  const sameConsentedSession=()=>Boolean(targetSessionId&&
+    usageRecorder?.enabled&&usageRecorder.sessionId===targetSessionId);
+  usageRecorder?.action('export_requested',snapshot,{
+    exportId,targetEpisodeId,targetSessionId
+  });
   const metadata=metadataValues();
   const button=document.getElementById('download');
   setBusy(button,true,'Rendering 19.8 MP…');
@@ -1114,11 +1119,21 @@ async function downloadPNG(){
     const result=new Blob([embedPngMetadata(await blob.arrayBuffer(),metadata,{recipe:snapshot})],
       {type:'image/png'});
     downloadBlob(result,`roygbiv-${safeFilename(snapshot.seed)}-${OUTPUT_WIDTH}x${OUTPUT_HEIGHT}.png`);
-    usageRecorder?.action('download_initiated',snapshot,{exportId,targetEpisodeId});
-    creativeFeedback?.showExport({exportId,targetEpisodeId});
-    void usageGitHubSync?.syncNow(); // Back up after exports, never block PNG save.
+    if(sameConsentedSession()){
+      usageRecorder.action('download_initiated',snapshot,{
+        exportId,targetEpisodeId,targetSessionId
+      });
+      creativeFeedback?.showExport({exportId,targetEpisodeId});
+      void usageGitHubSync?.syncNow(); // Never block PNG save.
+    }
     showNotice(`Exported the framed ${Math.round(snapshot.viewZoom*100)}% view at ${OUTPUT_WIDTH} × ${OUTPUT_HEIGHT}, with recipe metadata.`);
-  }catch(error){usageRecorder?.action('export_failed',snapshot,{exportId,targetEpisodeId});console.error(error);showNotice(`Export failed: ${error.message}`);}
+  }catch(error){
+    if(sameConsentedSession())usageRecorder.action('export_failed',snapshot,{
+      exportId,targetEpisodeId,targetSessionId
+    });
+    console.error(error);
+    showNotice(`Export failed: ${error.message}`);
+  }
   finally { if(big){big.width=0;big.height=0;}setBusy(button,false); }
 }
 const importRecipeButton=document.getElementById('importRecipePNG');
