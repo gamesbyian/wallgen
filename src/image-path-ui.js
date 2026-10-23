@@ -1,7 +1,7 @@
-import {extractImagePathCandidates,extractImageShapeCandidates,imagePlacement,pathToWallpaper} from './image-path.js?v=20261023-reconstruction1';
+import {extractImagePathCandidates,extractImageShapeCandidates,imagePlacement,pathToWallpaper} from './image-path.js?v=20261023-fullframe1';
 import {drawAuthoringLockReason,drawAuthoringLockMessage,pathStructureLockedOutsidePaths} from './path-authoring-locks.js';
 import {verifyLocalSilhouetteSvg} from './svg-import-safety.js';
-import {reconstructionCandidates,rankReconstructionCandidates,describeReconstructionImage,reconstructionPlacement,RECONSTRUCTION_FRAME} from './image-reconstruction.js';
+import {reconstructionCandidates,rankReconstructionCandidates,describeReconstructionImage,reconstructionPlacement,RECONSTRUCTION_FRAME} from './image-reconstruction.js?v=20261023-fullframe1';
 
 /** A live import dialog must match the current authoritative lock state,
  * even if a recipe restores a lock while image decoding is in flight. */
