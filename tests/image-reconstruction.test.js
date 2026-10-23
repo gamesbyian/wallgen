@@ -515,7 +515,7 @@ test('refinement never previews locked settings including composite Position, ev
  const recipe=normalizeRecipe({
    seed:'protected-wave',structure:'paths',geometry:'wave',orientation:'horizontal',
    spread:61,stripeWidth:73,positionX:11,positionY:-7,
-   lockedSettings:['position','spread','stripeWidth']
+   lockedSettings:['position','spread','stripeWidth','shapeDepth','shapeFrequency']
  });
  assert.ok(recipe.lockedSettings.includes('position'));
  const candidate={kind:'wave',recipe,label:'Protected wave',error:.6,waveOffsetY:-15};
