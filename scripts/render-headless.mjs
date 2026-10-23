@@ -16,7 +16,8 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const types = {'.js':'text/javascript','.css':'text/css','.html':'text/html','.json':'application/json','.svg':'image/svg+xml'};
 const usage = `Usage: node scripts/render-headless.mjs [--recipe design.json] [--seed text]
   [--set key=value ...] [--width pixels] [--height pixels] [--out image.png]
-  [--metadata metadata.json] [--browser path] [--backend reference|worker] [--help]
+  [--metadata metadata.json] [--browser path] [--backend reference|worker]
+  [--verify-photo-stream] [--help]
 
 Examples:
   npm run render -- --seed rainbow-001 --out wallpaper.png
@@ -31,6 +32,7 @@ function parseArgs(args) {
   for (let i=0;i<args.length;i++) {
     const key=args[i];
     if(key==='--help'||key==='-h'){values.help=true;continue;}
+    if(key==='--verify-photo-stream'){values.verifyPhotoStream=true;continue;}
     if(!['--recipe','--seed','--set','--width','--height','--out','--metadata','--browser','--backend'].includes(key))
       throw Error('Unknown option: '+key);
     if(i+1===args.length||args[i+1].startsWith('--'))throw Error('Missing value for '+key);
@@ -97,6 +99,43 @@ async function main(){
     browser=await chromium.launch({headless:true,...(args.browser?{executablePath:args.browser}:{})});
     const page=await browser.newPage({viewport:{width:800,height:900},deviceScaleFactor:1});
     await page.goto('http://127.0.0.1:'+port+'/',{waitUntil:'domcontentloaded'});
+    // One opt-in production-art parity check. It paints real ROYGBIV source
+    // pixels through the ordinary renderer, then compares the old direct
+    // Photo processor with the new bounded Canvas2D readback path and the
+    // independent normal drawWallpaper Photo output. No second rasterizer.
+    const photoStreamProof=args.verifyPhotoStream?
+      await page.evaluate(async({recipe,width,height})=>{
+        const {drawWallpaper}=await import('/src/renderer.js');
+        const {normalizeRecipe}=await import('/src/model.js');
+        const {processPhotoPixels,applyPhotoFinish}=await import('/src/photo-look.js');
+        const look=recipe.photoLook;
+        if(!look?.enabled||!Number(look.amount))throw Error('Photo stream proof requires an active Photo look');
+        const canvas=()=>{const el=document.createElement('canvas');el.width=width;el.height=height;return el;};
+        const original=canvas(),rendered=canvas(),streamed=canvas();
+        drawWallpaper(original,normalizeRecipe({...recipe,photoLook:{...look,enabled:false}}));
+        drawWallpaper(rendered,recipe);
+        const source=original.getContext('2d').getImageData(0,0,width,height);
+        const direct=new ImageData(new Uint8ClampedArray(source.data),width,height);
+        const streamCtx=streamed.getContext('2d');
+        streamCtx.putImageData(source,0,0);
+        processPhotoPixels(direct.data,width,height,look,recipe.seed);
+        if(!applyPhotoFinish(streamCtx,width,height,look,recipe.seed))
+          throw Error('Photo stream proof unexpectedly skipped finishing');
+        const streamedPixels=streamCtx.getImageData(0,0,width,height).data;
+        const renderedPixels=rendered.getContext('2d').getImageData(0,0,width,height).data;
+        let sourceToStream=-1,sourceToProduction=-1,changedRgb=0;
+        for(let i=0;i<direct.data.length;i++){
+          if(sourceToStream<0&&direct.data[i]!==streamedPixels[i])sourceToStream=i;
+          if(sourceToProduction<0&&direct.data[i]!==renderedPixels[i])sourceToProduction=i;
+          if(i%4!==3&&source.data[i]!==direct.data[i])changedRgb++;
+        }
+        if(sourceToStream>=0||sourceToProduction>=0)
+          throw Error('Actual Photo PNG stream mismatch: '+recipe.photoLook.presetId+
+            ', first strip '+sourceToStream+', first production '+sourceToProduction);
+        return {presetId:look.presetId,width,height,source:'actual production drawWallpaper',
+          comparedBytes:direct.data.length,changedRgbChannels:changedRgb,
+          exactStripParity:true,exactProductionParity:true};
+      },{recipe,width,height}):null;
     const base64=await page.evaluate(async({recipe,width,height,backend})=>{
       if(backend==='worker'){
         const {exportWallpaperInWorker}=await import('/src/render-coordinator.js');
@@ -119,7 +158,8 @@ async function main(){
       throw Error('PNG recipe round-trip failed');
     await mkdir(dirname(out),{recursive:true});
     await writeFile(out,png);
-    process.stdout.write(JSON.stringify({file:out,width,height,seed:recipe.seed,bytes:png.length})+'\n');
+    process.stdout.write(JSON.stringify({file:out,width,height,seed:recipe.seed,bytes:png.length,
+      ...(photoStreamProof?{photoStreamProof}:{})})+'\n');
   }finally{
     await browser?.close();
     if(server.listening)await new Promise(resolve=>server.close(resolve));

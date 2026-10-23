@@ -46,6 +46,8 @@ function args(argv){
     if(key==='--focus-lens'){values.focusLens=true;continue;}
     if(key==='--focus-flash'){values.focusFlash=true;continue;}
     if(key==='--focus-diffusion'){values.focusDiffusion=true;continue;}
+    if(key==='--focus-stream-parity'){values.focusStreamParity=true;continue;}
+    if(key==='--verify-stream'){values.verifyStream=true;continue;}
     if(!['--out-dir','--seed','--browser'].includes(key)||!argv[i+1]||
       argv[i+1].startsWith('--'))throw Error('Unknown or missing option '+key);
     values[key==='--out-dir'?'outDir':key.slice(2)]=argv[++i];
@@ -59,13 +61,23 @@ function safe(value){
 async function main(){
   const opts=args(process.argv.slice(2));
   if(opts.help){
-    console.log('Usage: node scripts/review-photo-looks.mjs [--out-dir folder] [--seed text] [--browser Chromium-path] [--focus-deep-black|--focus-camera|--focus-lens|--focus-diffusion|--focus-flash]');
+    console.log('Usage: node scripts/review-photo-looks.mjs [--out-dir folder] [--seed text] [--browser Chromium-path] [--focus-deep-black|--focus-camera|--focus-lens|--focus-diffusion|--focus-flash|--focus-stream-parity] [--verify-stream]');
     return;
   }
-  if(Number(!!opts.focusDeepBlack)+Number(!!opts.focusCamera)+Number(!!opts.focusLens)+Number(!!opts.focusDiffusion)+Number(!!opts.focusFlash)>1)
+  if(Number(!!opts.focusDeepBlack)+Number(!!opts.focusCamera)+Number(!!opts.focusLens)+Number(!!opts.focusDiffusion)+Number(!!opts.focusFlash)+Number(!!opts.focusStreamParity)>1)
     throw Error('Choose only one focused art review');
   const out=resolve(opts.outDir);
-  const studies=opts.focusFlash?[cases[0],cases[5],
+  // One small current-art acceptance set spanning photochemical diffusion,
+  // quantized digital signal and spatial optical acutance, all with the
+  // existing shared renderer and independently stored recipes.
+  const studies=opts.focusStreamParity?[cases[0],
+    {id:'11-wide-warm-diffusion',name:'Wide halation diffusion',
+      look:'film-halation-diffusion',amount:100,parameters:{grain:0,halation:100}},
+    {id:'09-camera-digicam',name:'Early compact camera signal',
+      look:'camera-digicam-signal',amount:95,parameters:{grain:5}},
+    {id:'10-camera-dslr',name:'Lens-inspired acutance',
+      look:'camera-dslr-optics',amount:95}
+  ]:opts.focusFlash?[cases[0],cases[5],
     {id:'12-pocket-flash',name:'Direct-flash point and shoot',
       look:'camera-pocket-flash',amount:100,parameters:{grain:0,vignette:0}}
   ]:opts.focusDiffusion?[cases[0],cases[4],
@@ -109,12 +121,19 @@ async function main(){
     await writeFile(source,JSON.stringify(recipe,null,2)+'\n');
     const flags=['--recipe',source,'--width','600','--height','1300','--out',image];
     if(opts.browser)flags.push('--browser',opts.browser);
+    if(opts.verifyStream&&presetId)flags.push('--verify-photo-stream');
     const result=await exec(process.execPath,[renderer,...flags],{
       cwd:root,maxBuffer:1024*1024,timeout:180000
     });
     if(!result.stdout.includes('"file"'))
       throw Error('Headless renderer did not confirm PNG: '+study.id);
-    records.push({...study,presetId,imageFile,recipeFile,recipe});
+    const rendered=JSON.parse(result.stdout);
+    if(opts.verifyStream&&presetId&&
+      (!rendered.photoStreamProof?.exactStripParity||
+       !rendered.photoStreamProof?.exactProductionParity))
+      throw Error('No actual wallpaper Photo-stream parity proof: '+study.id);
+    records.push({...study,presetId,imageFile,recipeFile,recipe,
+      photoStreamProof:rendered.photoStreamProof||null});
     console.log(study.id+': '+image);
   }
   const gallery=records.map(record=>'<figure><img src="'+safe(record.imageFile)+
@@ -142,12 +161,14 @@ async function main(){
   await writeFile(join(out,'index.html'),html);
   await writeFile(join(out,'manifest.json'),JSON.stringify({
     schema:'roygbiv-photo-art-review/v1',
-    comparison:opts.focusFlash?'camera-flash-three':
+    comparison:opts.focusStreamParity?'photo-readback-four':
+      opts.focusFlash?'camera-flash-three':
       opts.focusDiffusion?'wide-warm-diffusion-three':
       opts.focusLens?'camera-lens-three':
       opts.focusCamera?'camera-family-five':
       opts.focusDeepBlack?'deep-black-negative':'seven-photo-looks',
     status:'produced-awaiting-human-review',
+    actualProductionStreamParity:opts.verifyStream?'verified-for-active-looks':'not-run',
     seed:opts.seed,width:600,height:1300,base,items:records
   },null,2)+'\n');
   console.log('Open '+join(out,'index.html')+' to examine the pictures.');
