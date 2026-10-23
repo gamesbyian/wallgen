@@ -1,7 +1,7 @@
 // Inverse-graphics candidate synthesis, not a second scene model.
 // The analysis source is bounded by image-path.js; every output is a normal
 // editable wallpaper recipe. No source pixels or alleged original seed persist.
-import {HUES,normalizeRecipe} from './model.js';
+import {HUES,normalizeRecipe,respectSettingLocks} from './model.js';
 import {cloneGeometrySnapshot} from './geometry-asset.js';
 import {appliedDrawnPathRecipe} from './draw-apply-transaction.js';
 import {extractImagePathCandidates,extractImageColourRegions,extractImageShapeCandidates,imagePlacement,pathToWallpaper} from './image-path.js';
@@ -58,7 +58,8 @@ function strippedCandidateBase(input,background){
 /** Return a few independently editable canonical alternatives. */
 export function reconstructionCandidates(image,recipe){
   const desc=describeReconstructionImage(image);
-  const base=strippedCandidateBase(recipe,desc.background);
+  const current=normalizeRecipe(recipe);
+  const base=strippedCandidateBase(current,desc.background);
   const candidates=[];
   if(desc.sevenColourRegions){
     // Colour slot identity comes from the shared model HUES. Overrides live
@@ -154,7 +155,19 @@ export function reconstructionCandidates(image,recipe){
         recipe:candidate});
     }
   }
-  return candidates.slice(0,RECONSTRUCTION_RENDER_LIMIT);
+  // A preview must depict exactly what Apply can commit. The same canonical
+  // lock policy governs both; never rank an uncommittable unlocked ideal.
+  const essential=candidate=>candidate.kind==='regions'||candidate.kind==='shape'?
+    ['structure','regionMode','scatteredShapeKind']:
+    candidate.kind==='path'||candidate.kind==='straight'||candidate.kind==='loop'?
+      ['structure','geometry']:['structure'];
+  return candidates.map(candidate=>{
+    const effective=respectSettingLocks(current,candidate.recipe);
+    const blocked=current.lockedSettings.filter(key=>
+      JSON.stringify(effective[key])!==JSON.stringify(candidate.recipe[key]));
+    return {...candidate,recipe:effective,lockedChanges:blocked};
+  }).filter(candidate=>!essential(candidate).some(key=>
+    candidate.lockedChanges.includes(key))).slice(0,RECONSTRUCTION_RENDER_LIMIT);
 }
 
 /** Shape-aware but inexpensive comparison at an explicitly bounded resolution.
