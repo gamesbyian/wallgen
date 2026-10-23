@@ -1,5 +1,8 @@
 # Image-to-recipe reconstruction: native and external imports
 
+**23 October portrait R4 actual-app acceptance:** [PR #607](https://github.com/gamesbyian/wallgen/pull/607), [genuine 412×892 touch Chromium run #39943939880](https://github.com/gamesbyian/wallgen/actions/runs/39943939880) and [complete reproducible findings](RECONSTRUCTION-PORTRAIT-JOURNEY-2026-10-23.md) validate metadata-free PNG source → ranked renderer preview → editable canonical Wave → PNG export with honest inference metadata → exact Undo → full PNG-recipe re-import, without modifying source bytes. Timings 1.09s fit/0.29s export in GitHub runner only; no physical Pixel proof. The portrait dialog fits its viewport and 44px actions but its uncertainty prose is visually clipped and deserves a separate focused UX polish. Script is opt-in only; temporary Chromium workflow removed.
+
+
 **23 October Wave source registration acceptance:** [PR #606](https://github.com/gamesbyian/wallgen/pull/606), actual current-art production [run #39942638256](https://github.com/gamesbyian/wallgen/actions/runs/39942638256) and [visually inspected PNG findings](RECONSTRUCTION-CURVE-PRODUCTION-FINDINGS-2026-10-23.md). Wave's seven differently coloured horizontal regions now recover spread/thickness, then their shared −7% vertical location within the same normal canonical renderer ≤6 coarse + ≤10 refinement budget. Wave error **.20433→.04614**, four controls unchanged. Both source-derived spacing and rigid positioning were required; neither alone worked. Keep R0 measured-but-not-exact, leave wave phase/fine edges and actual handheld acceptance open. No routine Chromium workflow.
 
 
