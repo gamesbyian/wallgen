@@ -5,7 +5,7 @@ import {HUES,normalizeRecipe,resolveScene,respectSettingLocks} from './model.js'
 import {importedAngleDeltaDegrees} from './import-angle-wrap.js';
 import {cloneGeometrySnapshot} from './geometry-asset.js';
 import {appliedDrawnPathRecipe} from './draw-apply-transaction.js';
-import {extractImagePathCandidates,extractImageColourRegions,extractImageShapeCandidates,imagePlacement,pathToWallpaper} from './image-path.js';
+import {extractImagePathCandidates,extractImageColourRegions,extractImageShapeCandidates,imagePlacement,pathToWallpaper} from './image-path.js?v=20261023-band-measure1';
 
 const RECONSTRUCTION_WIDTH=96, RECONSTRUCTION_HEIGHT=208;
 // Reconstruction explains the entire imported frame, unlike padded manual
