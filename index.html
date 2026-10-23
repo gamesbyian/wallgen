@@ -235,7 +235,11 @@
               <button type="button" data-photo-pane="photo" aria-pressed="false">Photo</button>
             </div>
             <div class="photo-controls" hidden>
-              <label class="field"><input type="checkbox" name="photoEnabled"> Enable photo finish</label>
+              <div class="photo-compare-row">
+                <label class="field"><input type="checkbox" name="photoEnabled"> Enable photo finish</label>
+                <button type="button" data-photo-compare aria-pressed="false" disabled
+                  aria-label="Toggle before and after photographic finishing">Before</button>
+              </div>
               <label class="field">Inspired look
                 <select name="photoPresetId">
                   <option value="film-slide">Slide film</option>
@@ -262,7 +266,7 @@
                     aria-label="Warm film halation strength">
                 </label>
               </div>
-              <small>Photo processes the completed wallpaper. The colours are artistic approximations, not calibrated camera or film profiles. Turn off to see the original.</small>
+              <small>Photo processes the completed wallpaper. The colours are artistic approximations, not calibrated camera or film profiles. Tap Before to compare without changing your saved design.</small>
             </div>
           </div>
         </section>

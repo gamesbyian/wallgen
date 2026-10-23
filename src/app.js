@@ -1,6 +1,7 @@
 import { OUTPUT_WIDTH, OUTPUT_HEIGHT, NAMES, normalizeRecipe, resolveScene, encodeRecipe, decodeRecipe, newSeed, randomizeAllRecipe, respectSettingLocks, LOCKABLE_SETTINGS } from './model.js';
 import { drawWallpaper, presentNudgedArtwork } from './renderer.js?v=20261022-photo1';
 import {normalizePhotoLook,PHOTO_PRESETS} from './photo-look.js';
+import {photoPreviewRecipe} from './photo-preview-compare.js';
 import {createPreviewCoordinator,createThumbnailQueue,exportWallpaperInWorker,closeFrame} from './render-coordinator.js';
 import { embedPngMetadata, extractPngRecipeWithProvenance, cleanMetadata, METADATA_FIELDS } from './png-metadata.js';
 import {inspectPngMigration,migratePngMetadataOnly,inspectPngRecipeArchive,archivePngRecipeRecords} from './png-recipe-migration.js';
@@ -43,6 +44,20 @@ const previewLayers={background:null,ink:null,scene:null,key:null,overhang:null}
 let previewWorker=null;
 let previewPainted=false;
 let settledPreviewTimer=null;
+// Compare uses the cached composed artwork and never commits a recipe change.
+const photoCompareButton=form.querySelector('[data-photo-compare]');
+let photoBeforeActive=false;
+const canComparePhoto=()=>Boolean(current.photoLook?.enabled&&
+  current.photoLook.amount>0&&previewLayers.key===artKey(current)&&
+  previewLayers.background&&previewLayers.ink);
+const previewDisplayRecipe=()=>photoPreviewRecipe(current,photoBeforeActive);
+function syncPhotoCompareButton(){
+  photoCompareButton.disabled=!canComparePhoto();
+  photoCompareButton.setAttribute('aria-pressed',String(photoBeforeActive));
+  photoCompareButton.textContent=photoBeforeActive?'After':'Before';
+  photoCompareButton.title=photoBeforeActive?
+    'Show the finished photo effect':'Show the original before photo finishing';
+}
 const clearSettledPreview=()=>{
   if(settledPreviewTimer!==null)clearTimeout(settledPreviewTimer);
   settledPreviewTimer=null;
@@ -55,6 +70,7 @@ function releasePreviewLayers(){
   previewLayers.key=null;
 }
 function previewPresented(){
+  syncPhotoCompareButton();
   preview.dataset.renderPending='false';
   preview.removeAttribute('aria-busy');
   preview.dispatchEvent(new CustomEvent('roygbiv-preview-presented',{
@@ -65,6 +81,7 @@ function mainThreadPreview(){
   releasePreviewLayers();
   currentScene=drawWallpaper(preview,current,{cache:previewLayers});
   previewLayers.key=artKey(current);
+  if(photoBeforeActive)presentNudgedArtwork(preview,previewLayers,previewDisplayRecipe());
   previewLayers.scene=currentScene;
   previewPainted=true;
   previewPresented();
@@ -77,6 +94,9 @@ function startPreviewWorker(){
       // recipe may also have changed through Undo or a cached nudge.
       if(message.key!==artKey(current)){closeFrame(message);return;}
       if(message.quality==='interactive'){
+        // A worker's reduced-quality frame already has its Photo finish.
+        // Keep an active Before view untouched until the settled cached ink arrives.
+        if(photoBeforeActive){closeFrame(message);return;}
         // Upscale temporary ink, but never mark a reduced-resolution frame
         // as the definitive, reusable nudge cache.
         const ctx=preview.getContext('2d',{alpha:false});
@@ -92,7 +112,7 @@ function startPreviewWorker(){
       previewLayers.overhang=message.overhang;
       previewLayers.key=message.key;
       previewLayers.scene=resolveScene(current);
-      presentNudgedArtwork(preview,previewLayers,current);
+      presentNudgedArtwork(preview,previewLayers,previewDisplayRecipe());
       previewPresented();
     },
     onFailure:reason=>{
@@ -291,6 +311,8 @@ function toControls(recipe) {
     if(numeric)numeric.value=String(value);
   }
   syncPhotoSecondarySlot(photo.presetId);
+  if(!photo.enabled||photo.amount===0)photoBeforeActive=false;
+  syncPhotoCompareButton();
   const stitch=current.surfaceTreatments?.find(item=>item.id==='editor-stitches'&&item.enabled);
   const selected=stitch?.target.scope==='all'?'all':
     stitch?.target.scope==='object'?'object':
@@ -638,7 +660,7 @@ function render(recipe,{scroll=false,bypassLocks=false,interactive=false}={}) {
     // Nudge and compositor-only changes remain immediate, even while an
     // older, expensive worker paint is winding down.
     previewWorker?.invalidate();
-    presentNudgedArtwork(preview,previewLayers,current);
+    presentNudgedArtwork(preview,previewLayers,previewDisplayRecipe());
     previewPresented();
   }else{
     clearSettledPreview();
@@ -1936,6 +1958,12 @@ document.addEventListener('change',event=>{
 });
 // Switch the original Light controls and new Photo controls in place. The
 // same existing Light destination, short edit tray and DOM inputs are retained.
+photoCompareButton.addEventListener('click',()=>{
+  if(!canComparePhoto())return;
+  photoBeforeActive=!photoBeforeActive;
+  presentNudgedArtwork(preview,previewLayers,previewDisplayRecipe());
+  syncPhotoCompareButton();
+});
 const lightHost=form.querySelector('.lighting-subsection');
 const photoPaneButtons=[...lightHost.querySelectorAll('[data-photo-pane]')];
 for(const button of photoPaneButtons)button.addEventListener('click',()=>{

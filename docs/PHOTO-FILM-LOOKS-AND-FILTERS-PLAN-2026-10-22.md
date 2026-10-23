@@ -1,5 +1,10 @@
 # ROYGBIV: photographic film looks and filters
 
+## F3: reversible Before/After on the existing preview (2026-10-22)
+
+Light → Photo now has an accessible **Before / After** comparison button beside Enable. It repaints the **already cached composed background and ink** while temporarily disabling only the Photo finish in a short-lived display recipe. It never mutates the saved recipe, URL, favourites or Undo; ordinary exported PNGs are unaffected. The button only enables with an active nonzero Photo and settled artwork cache, and the preview worker does not flash finished reduced-quality frames over an active Before view. Any worker settle repaints the selected comparison state, and switching Photo Off resets it. No added control row, full export-size bitmap, new category or CI suite; source, deterministic recipe and wiring tests are included. Manual touch and optical approval remain pending.
+
+
 **F5 actual-image observation (2026-10-22):** The [first seven real production Photo outputs](PHOTO-PRODUCTION-RENDER-FINDINGS-2026-10-22.md) were generated and viewed, rather than only planned. Grain clearly works without chromatic tone shift, slide/negative treatments differ materially, and warm-edge halation is spatially present but visibly **subtle even at 100%** at contact-gallery size. A stronger or wider bloom should be an explicitly distinct recipe behavior, not a silent change to existing saved presets. The review confirms small production export/preset differentiation but does **not** certify physical film realism, Pixel device output or multi-layer art. Permanent PR CI remains lean; one-shot browser workflow removed.
 
 
