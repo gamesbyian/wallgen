@@ -105,3 +105,23 @@ Actual visual review shows the fitted Wave now paints seven broad, clearly separ
 The first isolated centroid-registration version made no real improvement: although the code could detect seven coherent hues in a source-relative frame, only a competing lower-initial-error Jagged candidate received the ten-render fit budget. The final implementation prioritizes a measured seven-hue coherent Wave translation within the same single budget, and still judges the final candidate using actual painter pixels. The final run verified the result and its four independent controls. The temporary Chromium evidence workflow was removed before merge; only normal lean quick CI remains.
 
 **Next:** improve precise wave contour phase/amplitude, Jagged angular end caps, multicolour occlusion and region-layer disambiguation; validate with owner-provided/licensed arbitrary images and a real Pixel phone, retaining the current early-development canonical recipe policy.
+
+
+## 23 October: bounded Wave contour-depth/frequency fit with six genuine sources
+
+[Opt-in current-renderer six-image study #40017482324](https://github.com/gamesbyian/wallgen/actions/runs/40017482324) generated authentic 480×1040 ROYGBIV image/recipe pairs, stripped metadata only on IDAT-identical blind evaluation inputs, and scored normal canonical real-render candidates at 96×208. Short-lived artifact `wave-contour-amplitude-six-current-pngs` contains source/selected raster previews, all six alternatives, source PNGs and ground-truth recipe sidecars. The source and new best Wave preview were **downloaded and visually compared** side by side with the previous actual-R0 best from run #39942638256.
+
+The fitter previously devoted four post-position trials to stripe width and two to spacing, even after `#605`/#606 directly estimated those from seven colour regions and rigid registered Y. [PR #611](https://github.com/gamesbyian/wallgen/pull/611) keeps **exactly** the same six initial candidates plus **≤10** actual-render refinement trials, but uses four registered Y position trials, two `shapeDepth` trials, two `shapeFrequency` trials and two `stripeWidth` trials for procedural Wave. The same canonical lock resolver protects every trial; synchronous R0 and cooperative portrait UI share the single generator. No new model, renderer, source-image retention or mobile render allocation.
+
+| Genuine source | Previous measured ↓ | New measured ↓ | Result |
+| --- | ---: | ---: | --- |
+| 03 Wave | **.04614442** | **.04121536** | 10.7% lower colour/coverage pixel error; remains `paths/wave` |
+| 01 Vertical Straight | .05414624 | .05414624 | No change |
+| 02 Diagonal Straight | .08583479 | .08583479 | No change |
+| 04 Jagged | .16565524 | .16565524 | No change |
+| 05 Hairpin | .10786670 | .10786670 | No change |
+| 11 Scattered circles | .00832891 | .00832891 | No change |
+
+**Actual visual nuance:** newly inferred Wave bands are somewhat **flatter** than the genuine current-art source, even though they score more accurately overall than the previous, over-oscillating candidate. Seven-colour order, broad thickness, spacing and background negative-space positions are close. Fine source-specific phase, individual colour contours and gradients still differ. Do **not** interpret the 10.7% numerical improvement as recovered authoring settings, a human aesthetic preference result, or acceptance on a physical Pixel. The true current recipe's render error remains near .00873 under this downsampled comparison.
+
+A prior pure test incorrectly assumed that a Wave with `position`, `spread` and `stripeWidth` locked had **zero** editable parameters. New optional depth/frequency trials can legally update them. The all-locked zero-render test was corrected to include both controls, while an independent partially-locked Wave test proves legal contour fitting and identical sync/async results. One-off Chromium workflow removed before merge. Any further contour tuning should verify multiple independent seeds and genuinely new external sample shapes instead of overfitting this one source.
