@@ -212,8 +212,8 @@ function makeHalationField(data,width,height){
 // webcam *always* retains its spatial capture operation even with neutral
 // tone, grain and vignette.
 export function isNeutralPhotoLook(look){
-  if(['camera-webcam-signal','camera-digicam-signal','camera-dslr-optics']
-    .includes(look.presetId))return false;
+  if(['camera-webcam-signal','camera-digicam-signal','camera-dslr-optics',
+      'camera-pocket-flash'].includes(look.presetId))return false;
   const p=look.parameters;
   return p.contrast===1&&p.saturation===1&&p.shadow===0&&p.highlight===0&&
     p.red===0&&p.green===0&&p.blue===0&&p.grain===0&&p.vignette===0&&
