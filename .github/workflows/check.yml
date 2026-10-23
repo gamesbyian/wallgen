@@ -26,6 +26,21 @@ jobs:
       - name: Basic app and recipe sanity
         if: ${{ github.event_name != 'workflow_dispatch' || inputs.depth != 'full' }}
         run: npm run check:quick
+      # Temporary one-off art review for PR #510. Delete before merging.
+      - name: Install Chromium for one-time embroidery art review
+        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'tools/embroidery-7-art-review-20261022' }}
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+      - name: Produce seven real embroidered wallpapers
+        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'tools/embroidery-7-art-review-20261022' }}
+        run: node scripts/review-embroidery.mjs --out-dir artifacts/embroidery-one-shot
+      - uses: actions/upload-artifact@v4
+        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'tools/embroidery-7-art-review-20261022' }}
+        with:
+          name: one-time-embroidery-art-review
+          path: artifacts/embroidery-one-shot/
+          retention-days: 7
       - name: Full Node suite (manual request only)
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.depth == 'full' }}
         run: npm run check
