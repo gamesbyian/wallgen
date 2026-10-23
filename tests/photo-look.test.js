@@ -583,7 +583,7 @@ test('Canvas2D adapter reads no more than 2 MiB per non-spatial strip',()=>{
   assert.deepEqual(calls,[[0,256],[256,1]]);
 });
 
-test('spatial finishes keep whole-frame source sampling and reject partial fields',()=>{
+test('spatial source effects never grade partial frames without a precomputed field',()=>{
   const source=pixels(200,100,20,8,9);
   for(const presetId of ['film-halation-diffusion','camera-webcam-signal',
     'camera-digicam-signal','camera-dslr-optics']){
@@ -592,7 +592,10 @@ test('spatial finishes keep whole-frame source sampling and reject partial field
       getImageData(x,y,w,h){assert.deepEqual([x,y,w,h],[0,0,8,9]);this.reads++;return {data:source.slice()};},
       putImageData(_pixels,x,y){assert.deepEqual([x,y],[0,0]);this.writes++;}};
     assert.equal(applyPhotoFinish(ctx,8,9,look,'spatial'),true);
-    assert.equal(ctx.reads,1);assert.equal(ctx.writes,1);
+    // Halation builds its source field before a second bounded destination
+    // read; capture/acutance modes retain their one full-frame read.
+    assert.equal(ctx.reads,presetId==='film-halation-diffusion'?2:1);
+    assert.equal(ctx.writes,1);
     assert.throws(()=>processPhotoPixels(source.slice(),8,9,look,'spatial',
       {frameHeight:20,rowOffset:2}),/whole-frame source/);
   }
