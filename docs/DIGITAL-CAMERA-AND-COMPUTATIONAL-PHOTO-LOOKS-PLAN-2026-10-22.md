@@ -1,5 +1,10 @@
 # ROYGBIV: modern digital camera and photographic rendering looks
 
+## D2 independent optical edge-acutance preset (2026-10-22)
+
+A distinct `camera-dslr-optics` recipe preserves older Natural/HDR/Webcam/Digicam outputs while adding true **spatial** luminance local-contrast detail. It borrows the traditional [unsharp mask rationale](https://www.cambridgeincolour.com/tutorials/unsharp-mask.htm) but uses a bounded 600×1300 sampled field rather than a full-size frame, a small 3×3 Gaussian blur and bilinear sampling to minimize block discontinuities. Small threshold and strict ±18 unit gain reduce objectionable colour fringes and halos; corner falloff remains soft. This is an artistic high-acutance interchangeable-lens signature, not any particular camera's optical transfer function, RAW capture, bokeh or depth effect. The [three-picture opt-in actual output review](DSLR-OPTICS-PRODUCTION-REVIEW-2026-10-22.md) should determine whether extra optical complexity is justified. Existing saved Photo recipes retain their exact code paths.
+
+
 ## Targeted D3 camera-image quality acceptance (2026-10-22)
 
 An opt-in [five-image Photo comparison](CAMERA-FIVE-IMAGE-ART-REVIEW-2026-10-22.md) reuses the headless Chromium production renderer, same-seed normalized recipes and contact gallery for untreated, Natural Digital, HDR, 200-column Webcam and 360-column Digicam. The first [actual production picture review](CAMERA-PRODUCTION-RENDER-FINDINGS-2026-10-22.md) was executed, retrieved and visually inspected: Natural, HDR, Webcam and Digicam produce distinct real saved wallpapers, with 5/5 CRC and recipe checks. Source samples reveal noticeable colour and edge changes; Digicam is still visually more distinguished by punchy colours than specific optics. This does not certify emulation of named devices or native-size performance. The browser probe was removed from routine CI.

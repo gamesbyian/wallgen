@@ -11,6 +11,7 @@ export const PHOTO_PRESETS=Object.freeze({
   'film-halation-only':Object.freeze({family:'film',contrast:1,saturation:1,shadow:0,highlight:0,red:0,green:0,blue:0,grain:0,vignette:0,halation:75}),
   'camera-natural':Object.freeze({family:'camera',contrast:1.055,saturation:1.045,shadow:0.012,highlight:0.06,red:0,green:0,blue:0,grain:2,vignette:2}),
   'camera-hdr':Object.freeze({family:'camera',contrast:1.11,saturation:1.12,shadow:0.055,highlight:0.095,red:0.002,green:0.003,blue:0.002,grain:1,vignette:0}),
+  'camera-dslr-optics':Object.freeze({family:'camera',contrast:1.06,saturation:1.025,shadow:0,highlight:0.045,red:0,green:0,blue:0,grain:1,vignette:10}),
   'camera-webcam':Object.freeze({family:'camera',contrast:1.08,saturation:0.78,shadow:0.015,highlight:0.02,red:0.015,green:-0.003,blue:0.005,grain:22,vignette:5}),
   'camera-webcam-signal':Object.freeze({family:'camera',contrast:1.06,saturation:0.84,shadow:0.02,highlight:0.015,red:0.012,green:-0.006,blue:0.008,grain:7,vignette:4}),
   'camera-digicam-signal':Object.freeze({family:'camera',contrast:1.14,saturation:1.22,shadow:0,highlight:-0.025,red:0.012,green:-0.004,blue:-0.009,grain:13,vignette:3}),
@@ -24,6 +25,7 @@ export const PHOTO_PRESET_NAMES=Object.freeze({
   'film-halation-only':'Warm film halation only',
   'camera-natural':'Natural digital camera',
   'camera-hdr':'Smartphone HDR inspired',
+  'camera-dslr-optics':'Interchangeable-lens digital (simulated)',
   'camera-webcam':'Old webcam colour (early preview)',
   'camera-webcam-signal':'Low-resolution webcam capture (simulated)',
   'camera-digicam-signal':'Early digital compact camera (simulated)',
@@ -113,6 +115,43 @@ function makeWebcamCapture(data,width,height,variant='webcam'){
   return {width:sensorWidth,height:sensorHeight,pixels:rgb};
 }
 
+// Bounded, high-frequency source-luminance field for an opt-in photographic
+// acutance finish. Small gaussian 3x3 blur is subtracted from luminance;
+// positive and negative edge residuals are then mixed into all RGB channels
+// equally, limiting chromatic fringes. No fake scene depth/RAW sensor data.
+// For 19.8 MP exports this uses <=600x1300 authored samples and three bounded
+// float arrays, never a second export-sized RGBA buffer. Sample BEFORE grading.
+function makeLensAcutanceField(data,width,height){
+  const fieldWidth=Math.min(600,width);
+  const fieldHeight=Math.min(1300,height,
+    Math.max(1,Math.round(fieldWidth*height/width)));
+  const size=fieldWidth*fieldHeight;
+  const original=new Float32Array(size),horizontal=new Float32Array(size);
+  const detail=new Float32Array(size);
+  for(let y=0;y<fieldHeight;y++)for(let x=0;x<fieldWidth;x++){
+    let sum=0;
+    for(const dy of [.25,.75])for(const dx of [.25,.75]){
+      const px=Math.min(width-1,Math.floor((x+dx)*width/fieldWidth));
+      const py=Math.min(height-1,Math.floor((y+dy)*height/fieldHeight));
+      const i=(py*width+px)*4;
+      sum+=.2126*data[i]+.7152*data[i+1]+.0722*data[i+2];
+    }
+    original[y*fieldWidth+x]=sum*.25;
+  }
+  for(let y=0;y<fieldHeight;y++)for(let x=0;x<fieldWidth;x++){
+    const at=y*fieldWidth+x;
+    horizontal[at]=(original[y*fieldWidth+Math.max(0,x-1)]+
+      original[at]*2+original[y*fieldWidth+Math.min(fieldWidth-1,x+1)])*.25;
+  }
+  for(let y=0;y<fieldHeight;y++)for(let x=0;x<fieldWidth;x++){
+    const at=y*fieldWidth+x;
+    const blurred=(horizontal[Math.max(0,y-1)*fieldWidth+x]+
+      horizontal[at]*2+horizontal[Math.min(fieldHeight-1,y+1)*fieldWidth+x])*.25;
+    detail[at]=original[at]-blurred;
+  }
+  return {width:fieldWidth,height:fieldHeight,detail};
+}
+
 // Deterministic, spatial warm halation approximation. The source is sampled
 // BEFORE any in-place finishing, on an aspect-matched <=600x1300 authored frame.
 // Only bright *luminance* emits glow, not saturated max-channel values. Two
@@ -169,8 +208,8 @@ function makeHalationField(data,width,height){
 // webcam *always* retains its spatial capture operation even with neutral
 // tone, grain and vignette.
 export function isNeutralPhotoLook(look){
-  if(look.presetId==='camera-webcam-signal'||look.presetId==='camera-digicam-signal')
-    return false;
+  if(['camera-webcam-signal','camera-digicam-signal','camera-dslr-optics']
+    .includes(look.presetId))return false;
   const p=look.parameters;
   return p.contrast===1&&p.saturation===1&&p.shadow===0&&p.highlight===0&&
     p.red===0&&p.green===0&&p.blue===0&&p.grain===0&&p.vignette===0&&
@@ -208,6 +247,8 @@ export function processPhotoPixels(data,width,height,rawLook,seed='rainbow-001')
       look.presetId==='camera-digicam-signal'?'digicam':'webcam'):null;
   const halation=look.presetId==='film-halation-only'&&p.halation>0?
     makeHalationField(data,width,height):null;
+  const lens=look.presetId==='camera-dslr-optics'?
+    makeLensAcutanceField(data,width,height):null;
   // The deep-black variant deliberately shares the legacy negative's grain
   // identity. Bright source pixels can therefore remain pixel-exactly equal.
   const grainPresetId=look.presetId==='film-negative-deepblack'?
@@ -224,6 +265,10 @@ export function processPhotoPixels(data,width,height,rawLook,seed='rainbow-001')
     const hy0=halation?Math.max(0,Math.min(halation.height-1,Math.floor(haloY))):0;
     const hy1=halation?Math.min(halation.height-1,hy0+1):0;
     const hfy=halation?Math.max(0,Math.min(1,haloY-hy0)):0;
+    const lensY=lens?(y+.5)/height*lens.height-.5:0;
+    const ly0=lens?Math.max(0,Math.min(lens.height-1,Math.floor(lensY))):0;
+    const ly1=lens?Math.min(lens.height-1,ly0+1):0;
+    const lfy=lens?Math.max(0,Math.min(1,lensY-ly0)):0;
     for(let x=0;x<width;x++,i+=4){
       const r=data[i],g=data[i+1],b=data[i+2];
       // The cached simulated sensor never reads already graded destination
@@ -238,6 +283,22 @@ export function processPhotoPixels(data,width,height,rawLook,seed='rainbow-001')
       R=luma+(R-luma)*p.saturation;
       G=luma+(G-luma)*p.saturation;
       B=luma+(B-luma)*p.saturation;
+      if(lens){
+        const lensX=(x+.5)/width*lens.width-.5;
+        const lx0=Math.max(0,Math.min(lens.width-1,Math.floor(lensX)));
+        const lx1=Math.min(lens.width-1,lx0+1);
+        const lfx=Math.max(0,Math.min(1,lensX-lx0));
+        const top=lens.detail[ly0*lens.width+lx0]*(1-lfx)+
+          lens.detail[ly0*lens.width+lx1]*lfx;
+        const bottom=lens.detail[ly1*lens.width+lx0]*(1-lfx)+
+          lens.detail[ly1*lens.width+lx1]*lfx;
+        const highPass=top*(1-lfy)+bottom*lfy;
+        // Small threshold avoids sharpening low-level noise; bounded neutral
+        // luminance boost improves edge clarity without large colour halos.
+        const acutance=Math.sign(highPass)*
+          Math.min(18,Math.max(0,Math.abs(highPass)-1.3)*.7);
+        R+=acutance;G+=acutance;B+=acutance;
+      }
       const nx=(x+.5)/width*2-1;
       // Avoid millions of expensive pow() calls when the selected look has
       // no vignette (grain-only, halation-only, HDR). Nonzero paths unchanged.

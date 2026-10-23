@@ -423,3 +423,44 @@ test('deep-black negative lives in the original Light Photo selector',()=>{
   const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
   assert.equal((html.match(/value="film-negative-deepblack"/g)||[]).length,1);
 });
+
+test('new DSLR-inspired acutance uses a bounded source-luma edge field and no false spatial no-op',()=>{
+  const width=150,height=90,source=pixels(0,0,0,width,height);
+  for(let y=12;y<78;y++)for(let x=35;x<114;x++){
+    const at=(y*width+x)*4;
+    source[at]=180;source[at+1]=82;source[at+2]=28;
+  }
+  const neutralParams={contrast:1,saturation:1,shadow:0,highlight:0,
+    red:0,green:0,blue:0,grain:0,vignette:0};
+  const lens=normalizePhotoLook({enabled:true,presetId:'camera-dslr-optics',
+    amount:100,parameters:neutralParams});
+  const reference=normalizePhotoLook({enabled:true,presetId:'camera-natural',
+    amount:100,parameters:neutralParams});
+  assert.equal(isNeutralPhotoLook(lens),false,'optical pass remains active at neutral grade');
+  assert.equal(isNeutralPhotoLook(reference),true);
+  const first=source.slice(),again=source.slice(),unchanged=source.slice();
+  processPhotoPixels(first,width,height,lens,'lens-seed');
+  processPhotoPixels(again,width,height,lens,'lens-seed');
+  processPhotoPixels(unchanged,width,height,reference,'lens-seed');
+  assert.deepEqual(first,again,'reproducible optical edge field');
+  assert.deepEqual(unchanged,source,'neutral reference should preserve exact source');
+  assert.notDeepEqual(first,source,'lens acuity must do real spatial processing');
+  const pixel=(a,x,y,c=0)=>a[(y*width+x)*4+c];
+  assert.equal(pixel(first,5,5),0,'flat black field stays black');
+  assert.equal(pixel(first,65,40),pixel(source,65,40),'flat stripe centre stays true-colour');
+  assert.ok([34,35,36,112,113,114].some(x=>pixel(first,x,40)!==pixel(source,x,40)),
+    'only actual high-contrast boundaries should sharpen');
+  for(let at=3;at<first.length;at+=4)assert.equal(first[at],source[at],'unchanged alpha');
+  const off=source.slice();processPhotoPixels(off,width,height,{...lens,amount:0});
+  assert.deepEqual(off,source);
+  const saved=normalizeRecipe({seed:'lens-optics',photoLook:lens});
+  assert.deepEqual(decodeRecipe(encodeRecipe(saved)),saved);
+});
+test('DSLR-inspired optic shares the original Photo selector and bounded authored frame',()=>{
+  const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
+  const code=readFileSync(new URL('../src/photo-look.js',import.meta.url),'utf8');
+  assert.equal((html.match(/value="camera-dslr-optics"/g)||[]).length,1);
+  assert.match(code,/fieldWidth=Math\.min\(600,width\)/);
+  assert.match(code,/fieldHeight=Math\.min\(1300,height/);
+  assert.match(code,/const lens=look\.presetId==='camera-dslr-optics'/);
+});

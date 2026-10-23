@@ -1,5 +1,10 @@
 # ROYGBIV: active product roadmap and work queue
 
+## Camera D2/D3: separate bounded-luminance optical acutance look (2026-10-22)
+
+The actual [five-picture camera review](CAMERA-PRODUCTION-RENDER-FINDINGS-2026-10-22.md) showed Early Digicam was distinguishable but primarily through saturated tone. A new opt-in `camera-dslr-optics` treatment adds a **different physical-image category**: restrained luminance-only spatial high-pass/acutance after a bounded separable 3×3 blur, combined with subtle camera tone and lens vignetting, using a single 600×1300-or-smaller analysis field and no second export-sized raster. Existing Photo modes are unchanged and the same normalized recipe, Undo, preview, worker, JSON/PNG pass carries this look. The opt-in [three-image lens comparison](DSLR-OPTICS-PRODUCTION-REVIEW-2026-10-22.md) is required for real art approval; source/Node passing is not an art verdict. No new UI category or permanent CI.
+
+
 ## Next camera D3 picture judgement: opt-in five-image comparison (2026-10-22)
 
 The previously unreviewed opt-in `camera-digicam-signal` capture has a proportional [five-image production art reviewer](CAMERA-FIVE-IMAGE-ART-REVIEW-2026-10-22.md): source, Natural Digital, HDR, Webcam and Digicam under identical authored geometry. **Actual run and image review are complete:** [Actions #39887351549](https://github.com/gamesbyian/wallgen/actions/runs/39887351549) rendered all five PNGs; [documented image findings](CAMERA-PRODUCTION-RENDER-FINDINGS-2026-10-22.md) include independent chunk CRC and recipe checks. Digicam differs substantially from Webcam, but at this scale its stronger saturated tone is more obvious than its capture artifacts. D3 first artistic gate passes; Pixel/native export and genuinely new optics remain open. Use findings to choose genuinely useful D3 image-quality improvements, rather than proliferating uncalibrated camera knobs. `--focus-camera` extends the existing manual Photo tool without a permanent CI job or another image-processing engine.
