@@ -539,6 +539,18 @@
       <button type="button" id="imagePathAngle" disabled>Use angle</button>
       <button type="button" id="imagePathApply" disabled>Edit path</button>
     </div>
+    <div id="imageRecipeWorkspace" class="image-recipe-workspace" hidden>
+      <div class="image-recipe-controls">
+        <label for="imageRecipeCandidate">Editable recipe approximations</label>
+        <select id="imageRecipeCandidate" aria-label="Choose reconstructed editable recipe"></select>
+        <p id="imageRecipeStatus" role="status" aria-live="polite"></p>
+        <button type="button" id="imageRecipeApply" disabled>Use editable recipe</button>
+      </div>
+      <div class="image-recipe-result">
+        <span>Rendered approximation</span>
+        <canvas id="imageRecipeCanvas" width="96" height="208" aria-label="Actual ROYGBIV renderer approximation"></canvas>
+      </div>
+    </div>
     <div class="image-shape-actions">
       <button type="button" id="imagePathShape" disabled>Use silhouette as shape</button>
     </div>
