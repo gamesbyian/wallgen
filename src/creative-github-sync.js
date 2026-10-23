@@ -18,14 +18,22 @@ export function makeUsageBatch(events,syncedIds=[],{
   const synced=new Set(syncedIds),records=[];
   const waiting=orderUsageEvents(events).filter(event=>!synced.has(event.eventId));
   if(!waiting.length)return null;
-  // Pick a session once, then preserve its causal sequence. A device clock
-  // correction must not upload seq 20 before seq 1 just because at went back.
-  // Events from other sessions remain eligible for the next bounded batch.
-  const selectedSession=waiting[0].sessionId;
-  const ordered=waiting.filter(event=>event.sessionId===selectedSession)
-    .sort((a,b)=>Number(a.seq)-Number(b.seq)||
-      String(a.eventId).localeCompare(String(b.eventId)));
   const encoder=new TextEncoder();
+  // Each immutable file contains one session's events in causal seq order.
+  // If its first pending event is genuinely too large for verified GitHub
+  // Contents readback, keep it locally and allow OTHER sessions to progress.
+  // Never jump past a missing event within that same session.
+  let ordered=null;
+  for(const sessionId of new Set(waiting.map(event=>event.sessionId))){
+    const session=waiting.filter(event=>event.sessionId===sessionId)
+      .sort((a,b)=>Number(a.seq)-Number(b.seq)||
+        String(a.eventId).localeCompare(String(b.eventId)));
+    if(encoder.encode(JSON.stringify([session[0]])).byteLength<=maxSingleEventBytes){
+      ordered=session;break;
+    }
+  }
+  if(!ordered)
+    throw new Error('All pending sessions begin with an event exceeding the 850 KB private backup file limit. Retained locally.');
   for(const event of ordered){
     const projected=[...records,event];
     const projectedBytes=encoder.encode(JSON.stringify(projected)).byteLength;
