@@ -539,3 +539,54 @@ test('DSLR-inspired optic shares the original Photo selector and bounded authore
   assert.match(code,/fieldHeight=Math\.min\(1300,height/);
   assert.match(code,/const lens=look\.presetId==='camera-dslr-optics'/);
 });
+
+// Whole-frame Canvas2D readback is avoidable for ordinary Photo looks. Verify
+// strips reproduce legacy pixel arithmetic, including grain/vignette/flash
+// world coordinates, rather than merely testing that more than one read occurs.
+test('Film and Camera non-spatial finishes stream bounded strips with exact original pixels',()=>{
+  const width=512,height=1150,original=new Uint8ClampedArray(width*height*4);
+  for(let y=0;y<height;y++)for(let x=0;x<width;x++){
+    const i=(y*width+x)*4;
+    const black=(x+y)%13===0;
+    original[i]=black?0:(x*19+y*3)%256;
+    original[i+1]=black?0:(x*7+y*13)%256;
+    original[i+2]=black?0:(x*5+y*11)%256;
+    original[i+3]=(x+y)%11===0?124:255;
+  }
+  for(const presetId of ['film-negative','film-negative-deepblack','film-grain-only',
+    'film-mono','camera-natural','camera-hdr','camera-pocket-flash']){
+    const look=normalizePhotoLook({enabled:true,presetId,amount:83});
+    const expected=original.slice(),actual=original.slice(),reads=[];
+    processPhotoPixels(expected,width,height,look,'strip-parity');
+    const ctx={
+      getImageData(x,y,w,h){
+        assert.equal(x,0);assert.equal(w,width);
+        assert.ok(w*h*4<=2*1024*1024);
+        reads.push([y,h]);
+        return {data:actual.slice(y*width*4,(y+h)*width*4)};
+      },
+      putImageData(image,x,y){
+        assert.equal(x,0);
+        actual.set(image.data,y*width*4);
+      }
+    };
+    assert.equal(applyPhotoFinish(ctx,width,height,look,'strip-parity'),true);
+    assert.ok(reads.length>1,presetId+' must use multiple strips');
+    assert.deepEqual(actual,expected,presetId+' pixel parity across strip boundary');
+  }
+});
+
+test('spatial finishes keep whole-frame source sampling and reject partial fields',()=>{
+  const source=pixels(200,100,20,8,9);
+  for(const presetId of ['film-halation-diffusion','camera-webcam-signal',
+    'camera-digicam-signal','camera-dslr-optics']){
+    const look=normalizePhotoLook({enabled:true,presetId,amount:80});
+    const ctx={reads:0,writes:0,
+      getImageData(x,y,w,h){assert.deepEqual([x,y,w,h],[0,0,8,9]);this.reads++;return {data:source.slice()};},
+      putImageData(_pixels,x,y){assert.deepEqual([x,y],[0,0]);this.writes++;}};
+    assert.equal(applyPhotoFinish(ctx,8,9,look,'spatial'),true);
+    assert.equal(ctx.reads,1);assert.equal(ctx.writes,1);
+    assert.throws(()=>processPhotoPixels(source.slice(),8,9,look,'spatial',
+      {frameHeight:20,rowOffset:2}),/whole-frame source/);
+  }
+});
