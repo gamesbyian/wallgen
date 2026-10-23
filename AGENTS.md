@@ -1,5 +1,12 @@
 # Agent orientation for ROYGBIV
 
+## READ FIRST: authoritative handoff and source state (22 October 2026)
+
+Incoming agents must start at [the **current agent handoff**](docs/AGENT-HANDOFF-2026-10-22.md), then check live `main`, current PRs/issues, the [live roadmap](docs/ACTIVE-PRODUCT-ROADMAP-2026-10-22.md), and [lean CI](docs/CI-OPERATIONS-2026-10-22.md). The original v1 renderer/writer/model goldens (#523/#524) and restored four-state mobile Thread panel (#521) **have shipped**, as has the bounded source-era integrity test in quick CI (#525). Avoid implementing any “planned” work based on a lower dated section of this file unless current source proves the work is missing. Older entries below are historically useful **receipts**, not a competing dispatch board.
+
+**Priority:** original-v1 versus modern rendered parity research (without permitting unsafe PNG conversion) and genuinely improved opt-in thread fibre art. Next UX work should be based on actual physical handset observations. Coordinate shared `index.html`/`src/app.js` edits, preserve earlier recipe pixels, and remove any one-off Chromium workflow before merging.
+
+
 ## Verified actual first-v1 historical wallpaper images (2026-10-22)
 
 The exact 17 Oct 2026 original normalizer/renderer/PNG writer were executed in Chromium, yielding **two authentic source-era PNGs**, inspected and validated in [run #39894186610](https://github.com/gamesbyian/wallgen/actions/runs/39894186610). [Pixel findings](docs/recipe-format-history/source-era/v1-37428b/ACTUAL-RENDER-FINDINGS-2026-10-22.md) and [original recipe/IDAT manifest](docs/recipe-format-history/source-era/v1-37428b/SHADOW-IMAGE-GOLDENS.json) prove 40,662 pixels respond to legacy shadow toggle. They do **not** prove the current renderer reproduces those pixels or unlock v1 conversion. Temporary Chromium CI was removed.

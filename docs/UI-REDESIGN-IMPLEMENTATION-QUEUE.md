@@ -1,5 +1,8 @@
 # Implementation-safe ROYGBIV redesign queue
 
+**Current dispatch authority:** [the reconciled agent handoff](AGENT-HANDOFF-2026-10-22.md) and [active product roadmap](ACTIVE-PRODUCT-ROADMAP-2026-10-22.md). Historical phase and initial “queued” descriptions below do not override already-merged Thread, Photo and PNG implementations. The Thread four-state browser test is complete; physical handset checks remain separate.
+
+
 ## Thread portrait final four-state acceptance (2026-10-22)
 
 [PR #521](https://github.com/gamesbyian/wallgen/pull/521) reorganized the compact expanded Thread workspace into two rows with its 44px native controls and a conditional single-object picker. Four production-page Chromium screenshots were **actually examined** at 412×892 and 320×700, in both All/One object modes ([run #39894741272](https://github.com/gamesbyian/wallgen/actions/runs/39894741272)). All form hitboxes were at least 44px, no input clipped below the card, no child card overflow, and previews remained nonzero. Historical initial failures and the false visible [hidden] picker are fully reconciled in [evidence](THREAD-PORTRAIT-INSPECTION-2026-10-22.md). The Chromium job was temporary, not a standing CI suite. Physical Pixel 6 Pro touch/focus and extreme browser font scaling remain open.

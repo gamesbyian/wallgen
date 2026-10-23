@@ -1,5 +1,8 @@
 # PNG recipe metadata migration without image changes
 
+**Active completion gate:** See [the agent handoff](AGENT-HANDOFF-2026-10-22.md), [historical source registry](recipe-format-history/REGISTRY.md), and [actual first-v1 image proof](recipe-format-history/source-era/v1-37428b/ACTUAL-RENDER-FINDINGS-2026-10-22.md). Original v1 field/renderer source archaeology, old exporter samples and exact metadata archives are now implemented. What's **not** implemented is a verified era-specific v1→v2 recipe adapter; leave migration refusal intact until old-versus-current pixels and semantics are demonstrably compatible.
+
+
 ## Authentic original-v1 image evidence retrieved (2026-10-22)
 
 The original v1 renderer, model and metadata writer produced two full-function 600×1300 source-era PNGs with real v1 recipes under the historical shadow flag. The actual files were downloaded, CRC-checked, visually opened and measured ([observations](recipe-format-history/source-era/v1-37428b/ACTUAL-RENDER-FINDINGS-2026-10-22.md), [digests](recipe-format-history/source-era/v1-37428b/SHADOW-IMAGE-GOLDENS.json)). This surpasses lexical expression archaeology without asserting current-v2 pixel equivalence; v1 migration remains refused and the original PNG remains master.
