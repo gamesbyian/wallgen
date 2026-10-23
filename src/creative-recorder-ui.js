@@ -37,6 +37,7 @@ export function installCreativeRecorderUI({recorder,getRecipe,store}){
       <option value="never">Never ask</option>
     </select>
     <p data-usage-status role="status" aria-live="polite"></p>
+    <p data-usage-queue>Backup queue: no status available yet.</p>
     <details class="creative-activity-recent">
       <summary>Review latest recorded events</summary>
       <ol data-usage-recent></ol>
@@ -66,6 +67,8 @@ export function installCreativeRecorderUI({recorder,getRecipe,store}){
   document.body.append(dialog);
   const enabled=dialog.querySelector('[data-usage-enabled]');
   const status=dialog.querySelector('[data-usage-status]');
+  const queueStatus=dialog.querySelector('[data-usage-queue]');
+  let connectionRevision=0;
   const feedbackSelect=dialog.querySelector('[data-usage-feedback]');
   try{
     const pref=localStorage.getItem(FEEDBACK_PREF_KEY);
@@ -76,11 +79,16 @@ export function installCreativeRecorderUI({recorder,getRecipe,store}){
   });
   async function refresh(){
     const records=await recorder.records();
+    const summary=await store.syncSummary();
     enabled.checked=recorder.enabled;
     status.textContent=(recorder.enabled?'Recording on':'Recording off')+
       ' · '+records.length+' event'+(records.length===1?'':'s')+
       (recorder.durable?' saved locally.':'. '+recorder.warning)+
       (recorder.error?' Recent write failed; export your records if possible.':'');
+    queueStatus.textContent='Backup queue: '+summary.pending+
+      ' not yet confirmed, '+summary.backedUp+' confirmed remotely'+
+      (summary.reserved?' ('+summary.reserved+' held for safe retry)':'')+
+      '. Local data is retained until you explicitly delete it.';
     const recent=dialog.querySelector('[data-usage-recent]');
     recent.replaceChildren();
     for(const item of records.slice(-12).reverse()){
@@ -108,7 +116,7 @@ export function installCreativeRecorderUI({recorder,getRecipe,store}){
   dialog.addEventListener('close',()=>launch.focus());
   enabled.addEventListener('change',()=>{
     const value=enabled.checked;
-    if(!value)sync.cancel();
+    if(!value){connectionRevision++;sync.cancel();}
     try{localStorage.setItem(USAGE_MODE_KEY,value?'local':'off');}
     catch{ /* Session-only mode is still explicit. */ }
     recorder.setEnabled(value,getRecipe());
@@ -121,7 +129,7 @@ export function installCreativeRecorderUI({recorder,getRecipe,store}){
   });
   dialog.querySelector('[data-usage-clear]').addEventListener('click',async()=>{
     if(!confirm('Delete all local creative activity records? This cannot be undone. Previously uploaded records remain on GitHub.'))return;
-    try{sync.cancel();await recorder.clear();if(recorder.enabled)recorder.start(getRecipe());await refresh();}
+    try{connectionRevision++;sync.cancel();await recorder.clear();if(recorder.enabled)recorder.start(getRecipe());await refresh();}
     catch(error){status.textContent='Could not delete records: '+String(error.message||error);}
   });
   dialog.querySelector('[data-usage-prune]').addEventListener('click',async()=>{
@@ -131,7 +139,7 @@ export function installCreativeRecorderUI({recorder,getRecipe,store}){
     }
     if(!confirm('Delete only fully backed-up local sessions older than 90 days? This cannot be undone locally. Copies in GitHub history remain.'))return;
     try{
-      sync.cancel();
+      connectionRevision++;sync.cancel();
       await recorder.flush();
       const cutoff=new Date(Date.now()-90*24*60*60*1000).toISOString();
       const removed=await store.pruneSyncedBefore(cutoff);
@@ -153,14 +161,22 @@ export function installCreativeRecorderUI({recorder,getRecipe,store}){
   if(token)syncStatus.textContent='Backup token available on this device. Sync is ready.';
   async function syncNow(){
     if(!token||!recorder.enabled||!recorder.durable)return {uploaded:0};
+    const revision=connectionRevision;
     syncStatus.textContent='Uploading queued activity batches…';
     try{
       const result=await sync.run(token,{maxBatches:5});
-      syncStatus.textContent='Private GitHub backup confirmed: '+result.uploaded+
-        ' additional event(s) uploaded this attempt.';
+      // An asynchronous request may complete after the user disconnected,
+      // disabled recording or deleted history. Never overwrite that choice.
+      if(revision===connectionRevision&&token&&recorder.enabled){
+        syncStatus.textContent='Private GitHub backup confirmed: '+result.uploaded+
+          ' additional event(s) uploaded this attempt.';
+        if(dialog.open)await refresh();
+      }
       return result;
     }catch(error){
-      syncStatus.textContent='Backup not confirmed. Local queue retained. '+String(error.message||error);
+      if(revision===connectionRevision&&token&&recorder.enabled)
+        syncStatus.textContent='Backup not confirmed. Local queue retained. '+
+          String(error.message||error);
       return {uploaded:0,error};
     }
   }
@@ -184,7 +200,7 @@ export function installCreativeRecorderUI({recorder,getRecipe,store}){
     }
   });
   dialog.querySelector('[data-usage-disconnect]').addEventListener('click',()=>{
-    sync.cancel();
+    connectionRevision++;sync.cancel();
     token='';tokenInput.value='';remember.checked=false;
     try{sessionStorage.removeItem(USAGE_TOKEN_KEY);localStorage.removeItem(USAGE_TOKEN_KEY);}catch{}
     syncStatus.textContent='Disconnected on this device. Existing remote files remain in '+GITHUB_USAGE_REPO+'.';

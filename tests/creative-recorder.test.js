@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createCreativeRecorder,memoryUsageStore,recipeDiff,replayEpisode,recipeDigest,
-  prunableSyncedEventIds} from '../src/creative-recorder.js';
+  prunableSyncedEventIds,summarizeUsageBacklog} from '../src/creative-recorder.js';
 import {normalizeRecipe} from '../src/model.js';
 
 function rig(enabled=true){
@@ -255,4 +255,34 @@ test('explicit local retention keeps latest checkpoint and never deletes unsent 
     at:old,seq:1},{sessionId:'unsent',recipe:normalizeRecipe({seed:'unsent'})});
   assert.equal(await store.pruneSyncedBefore('2026-01-01T00:00:00Z'),0);
   assert.ok((await store.all()).some(e=>e.eventId==='pending'));
+});
+
+test('backlog status counts only remotely acknowledged records, including a reserved retry',async()=>{
+  assert.deepEqual(summarizeUsageBacklog(['one','two','three'],['one','orphan'],{
+    eventIds:['two','gone']
+  }),{total:3,backedUp:1,pending:2,reserved:1});
+  const {recorder,store}=rig();
+  recorder.start({seed:'start'});
+  recorder.transition({seed:'start'},{seed:'next'});
+  await recorder.flush();
+  assert.deepEqual(await store.syncSummary(),{
+    total:2,backedUp:0,pending:2,reserved:0
+  });
+  const batch=await store.reserveBatch();
+  assert.deepEqual(await store.syncSummary(),{
+    total:2,backedUp:0,pending:2,reserved:2
+  });
+  await store.ackBatch(batch.id);
+  assert.deepEqual(await store.syncSummary(),{
+    total:2,backedUp:2,pending:0,reserved:0
+  });
+  recorder.action('navigation',{seed:'next'},{route:'edit'});
+  await recorder.flush();
+  assert.deepEqual(await store.syncSummary(),{
+    total:3,backedUp:2,pending:1,reserved:0
+  });
+  await recorder.clear();
+  assert.deepEqual(await store.syncSummary(),{
+    total:0,backedUp:0,pending:0,reserved:0
+  });
 });

@@ -74,6 +74,17 @@ export function prunableSyncedEventIds(rows,syncedIds,before,{
   }
   return [...sessions.values()].filter(s=>s.allSyncedAndOld).flatMap(s=>s.ids);
 }
+// Counts are derived from durable event IDs and acknowledgements, not the
+// presence of a configured token. A reserved outbox is still unconfirmed.
+export function summarizeUsageBacklog(eventIds,syncedIds,reservedBatch=null){
+  const present=new Set(eventIds);
+  const synced=new Set(syncedIds);
+  const backedUp=[...present].filter(id=>synced.has(id)).length;
+  const reserved=(reservedBatch?.eventIds||[]).filter(id=>
+    present.has(id)&&!synced.has(id)).length;
+  return {total:present.size,backedUp,
+    pending:present.size-backedUp,reserved};
+}
 export function memoryUsageStore(warning='Temporary session-only records'){
   const events=new Map();let last=null,outbox=null,synced=new Set();
   return {
@@ -81,6 +92,9 @@ export function memoryUsageStore(warning='Temporary session-only records'){
     async append(event,snapshot){events.set(event.eventId,clone(event));last=clone(snapshot);},
     async all(){return clone(orderUsageEvents([...events.values()]));},
     async last(){return clone(last);},
+    async syncSummary(){
+      return summarizeUsageBacklog([...events.keys()],[...synced],outbox);
+    },
     async reserveBatch(){
       if(!outbox)outbox=makeUsageBatch([...events.values()],[...synced]);
       return clone(outbox);
@@ -138,6 +152,18 @@ export async function openUsageStore(factory=globalThis.indexedDB){
       last:()=>txRun(['state'],'readonly',(tx,set)=>{
         const request=tx.objectStore('state').get('last');
         request.onsuccess=()=>set(request.result?.value??null);
+      }),
+      syncSummary:()=>txRun(['events','state'],'readonly',(tx,set)=>{
+        const request=tx.objectStore('events').getAllKeys();
+        request.onsuccess=()=>{
+          const state=tx.objectStore('state'),synced=state.get('synced');
+          synced.onsuccess=()=>{
+            const reserved=state.get('outbox');
+            reserved.onsuccess=()=>set(summarizeUsageBacklog(
+              request.result,synced.result?.value||[],reserved.result?.value
+            ));
+          };
+        };
       }),
       reserveBatch:()=>txRun(['events','state'],'readwrite',(tx,set)=>{
         const state=tx.objectStore('state'),old=state.get('outbox');
