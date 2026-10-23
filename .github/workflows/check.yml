@@ -29,3 +29,18 @@ jobs:
       - name: Full Node suite (manual request only)
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.depth == 'full' }}
         run: npm run check
+      # TEMP one-off R0 wave artwork experiment; remove before PR #599 merge
+      - name: TEMP actual wave and two control wallpapers
+        if: ${{ github.head_ref == 'agent3/wave-after-cooperative-fit-20261023' }}
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+          node scripts/review-reconstruction.mjs --only 01-vertical-straight,03-wave,11-scattered-circles --out-dir artifacts/reconstruction-wave-599
+          node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/reconstruction-wave-599
+      - name: TEMP archive actual wave and controls
+        if: ${{ github.head_ref == 'agent3/wave-after-cooperative-fit-20261023' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: reconstruction-wave-599
+          path: artifacts/reconstruction-wave-599/
+          retention-days: 2
