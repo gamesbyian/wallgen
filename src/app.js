@@ -10,7 +10,7 @@ import {appliedDrawnPathRecipe} from './draw-apply-transaction.js';
 import { installImagePathTool } from './image-path-ui.js?v=20261023-wave-contour1';
 import {importedAngleDeltaDegrees} from './import-angle-wrap.js';
 import {pathStructureLockedOutsidePaths} from './path-authoring-locks.js';
-import {mountEditor,selectEditorTool,syncEditorStructure} from './editor-layout.js?v=20261022-search-choice1';
+import {mountEditor,selectEditorTool,syncEditorStructure} from './editor-layout.js?v=20261023-single-editor1';
 import {randomizeScope} from './scoped-random.js';
 import {newInteriorElementId,INTERIOR_LIMITS,resolveInteriorSelection,interiorTargetSummary,resolveInteriorFocusTarget,interiorSliderStep} from './interior-elements.js';
 import {STYLE_PRESETS,EDITOR_CATEGORIES,TOOL_LIST} from './editor-schema.js?v=20261021-labels1';
