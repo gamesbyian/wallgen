@@ -434,6 +434,26 @@ export function rankReconstructionCandidates(candidates,source,render){
   return results.sort((a,b)=>a.error-b.error);
 }
 
+/**
+ * A thin traced Draw path can win initial pixel error despite missing all
+ * seven separately spaced ribbons. Permit exactly ONE promising procedural
+ * challenger to spend the SAME ten-render fitting budget (not ten per kind).
+ * The final fit must beat the original winner to be selected.
+ */
+export function reconstructionRefinementIndex(ranked){
+  if(!Array.isArray(ranked)||!ranked.length)return -1;
+  const best=ranked[0];
+  if(best.kind!=='path'||!Number.isFinite(best.error)||best.error<=.15)return 0;
+  let index=-1,lowest=Infinity;
+  for(let i=1;i<ranked.length;i++){
+    const c=ranked[i];
+    if(!['wave','jagged','hairpin'].includes(c.kind)||
+      !Number.isFinite(c.error)||c.error>=Math.min(.55,best.error+.16))continue;
+    if(c.error<lowest){lowest=c.error;index=i;}
+  }
+  return index>=0?index:0;
+}
+
 export const RECONSTRUCTION_FRAME=Object.freeze({
   width:RECONSTRUCTION_WIDTH,height:RECONSTRUCTION_HEIGHT
 });
@@ -458,9 +478,14 @@ function refinementFields(candidate){
   ]:candidate.kind==='loop'?[
     ['positionX',[-6,6]],['positionY',[-6,6]],
     ['loopRadius',[-10,10]],['spread',[-10,10]],['stripeWidth',[-15,15]]
-  ]:candidate.kind==='wave'||candidate.kind==='jagged'?[
-    ['shapeDepth',[-18,18]],['shapeFrequency',[-20,20]],
-    ['spread',[-12,12]],['stripeWidth',[-15,15]],['positionY',[-6,6]]
+  ]:candidate.kind==='wave'?[
+    // The reviewed source has independent widely spaced ribbons. Position,
+    // inter-band spread and thickness dominate before subtle oscillation.
+    ['positionY',[-25,-15,15,25]],['spread',[-18,18]],
+    ['stripeWidth',[-25,-15,15,25]]
+  ]:candidate.kind==='jagged'?[
+    ['positionX',[-20,20]],['positionY',[-20,20]],
+    ['spread',[-15,15]],['stripeWidth',[-25,-10,10,25]]
   ]:candidate.kind==='hairpin'?[
     ['turnRadius',[-15,15]],['hairpinAngle',[-25,25]],
     ['spread',[-10,10]],['positionX',[-7,7]],['positionY',[-7,7]]
