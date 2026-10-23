@@ -226,3 +226,21 @@ export function extractPngRecipeWithProvenance(input){
 export function extractPngRecipe(input){
   return extractPngRecipeWithProvenance(input).recipe;
 }
+
+
+/**
+ * Make a disposable inference/evaluation PNG with image data and colour
+ * management intact but no descriptive metadata or embedded true recipe.
+ * The caller's original bytes are never edited. This is NOT PNG migration.
+ */
+export function stripPngDescriptiveMetadata(input){
+  const {bytes,chunks,afterIend}=scanPngChunks(input);
+  const remove=new Set(['iTXt','tEXt','zTXt','eXIf','tIME']);
+  const parts=[bytes.subarray(0,8),
+    ...chunks.filter(record=>!remove.has(record.type)).map(record=>record.raw),
+    afterIend];
+  const result=new Uint8Array(parts.reduce((size,p)=>size+p.length,0));
+  let offset=0;
+  for(const part of parts){result.set(part,offset);offset+=part.length;}
+  return result;
+}
