@@ -29,3 +29,8 @@
 .creative-feedback-answers button{font-size:13px}
 .creative-feedback-never{font-size:13px;opacity:.84}
 .creative-feedback button:focus-visible{outline:3px solid #387bce;outline-offset:2px}
+
+.creative-activity-recent{border-top:1px solid currentColor;border-bottom:1px solid currentColor}
+.creative-activity-recent summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-weight:700}
+.creative-activity-recent ol{max-height:170px;overflow:auto;margin:0;padding:0 0 9px 24px;font-size:12px;line-height:1.6;overflow-wrap:anywhere}
+.creative-activity-panel [data-usage-prune]{font-size:13px}
