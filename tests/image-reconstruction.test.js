@@ -293,3 +293,43 @@ test('cooperative refinement reuses identical bounded parameter trials, and disc
   assert.equal(renderCalls,0);
   assert.deepEqual(item.recipe,recipe,'cancel never mutates original current art');
 });
+
+test('a gently curving family of full-width hue bands offers editable procedural wave recipes',()=>{
+  const curved=raster(180,330,(x,y)=>{
+    const bend=Math.sin(x/19)*7;
+    for(let i=0;i<7;i++)if(Math.abs(y-(42+i*34+bend))<8)
+      return colour(HUES[i]);
+    return [0,0,0,255];
+  });
+  const desc=describeReconstructionImage(curved);
+  assert.equal(desc.lineDirection,'horizontal');
+  assert.equal(desc.horizontalWave,true);
+  const fit=reconstructionCandidates(curved,{seed:'unknown-import'});
+  assert.ok(fit.some(x=>x.kind==='wave'&&x.recipe.geometry==='wave'&&
+    x.recipe.structure==='paths'&&x.recipe.orientation==='horizontal'));
+  assert.ok(fit.filter(x=>x.kind==='wave').length<=3);
+  const straight=raster(180,330,(x,y)=>{
+    for(let i=0;i<7;i++)if(Math.abs(y-(42+i*34))<8)
+      return colour(HUES[i]);
+    return [0,0,0,255];
+  });
+  assert.equal(describeReconstructionImage(straight).horizontalWave,false);
+});
+
+test('wave refining takes at most ten shared renderer probes',()=>{
+  const source=raster(RECONSTRUCTION_FRAME.width,RECONSTRUCTION_FRAME.height,
+    ()=>[0,0,0,255]);
+  const recipe=normalizeRecipe({seed:'wave-fit',structure:'paths',geometry:'wave',
+    orientation:'horizontal',positionY:0});
+  const candidate={kind:'wave',label:'wave',recipe,error:1};
+  let renders=0;
+  const result=refineReconstructionCandidate(candidate,source,(next,w,h)=>{
+    renders++;
+    const shade=Math.round(Math.abs(next.positionY-8)*12);
+    return raster(w,h,()=>[shade,shade,shade,255]);
+  },{maxRenders:10});
+  assert.ok(result.error<1);
+  assert.equal(result.recipe.geometry,'wave');
+  assert.equal(result.refinementRenders,renders);
+  assert.ok(renders<=10);
+});
