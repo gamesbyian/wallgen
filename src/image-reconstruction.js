@@ -3,7 +3,7 @@
 // editable wallpaper recipe. No source pixels or alleged original seed persist.
 import {HUES,normalizeRecipe} from './model.js';
 import {appliedDrawnPathRecipe} from './draw-apply-transaction.js';
-import {extractImagePathCandidates,extractImageColourRegions,pathToWallpaper} from './image-path.js';
+import {extractImagePathCandidates,extractImageColourRegions,imagePlacement,pathToWallpaper} from './image-path.js';
 
 const RECONSTRUCTION_WIDTH=96, RECONSTRUCTION_HEIGHT=208;
 export const RECONSTRUCTION_RENDER_LIMIT=6;
@@ -42,10 +42,12 @@ export function reconstructionCandidates(image,recipe){
   if(desc.sevenColourRegions){
     // Colour slot identity comes from the shared model HUES. Overrides live
     // in normal scattered recipes and can be dragged / undone / exported.
+    const placed=imagePlacement(image.width,image.height);
     const overrides=desc.colourRegions.map(region=>({
       index:region.index,
-      x:region.cx,y:region.cy,
-      radius:clamp(Math.sqrt(region.area/Math.PI)/image.width,.01,1.2)
+      x:(placed.x+region.cx*placed.width)/600,
+      y:(placed.y+region.cy*placed.height)/1300,
+      radius:clamp(Math.sqrt(region.area/Math.PI)*placed.width/image.width/600,.01,1.2)
     }));
     candidates.push({kind:'regions',label:'Seven colour regions (editable circles)',
       uncertainty:'Approximates each colour region with a circle; holes, overlaps and fine edges may differ.',
