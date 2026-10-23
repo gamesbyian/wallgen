@@ -227,17 +227,21 @@ export function refineReconstructionCandidate(candidate,source,render,{maxRender
     ['positionX',[-6,6]],['positionY',[-6,6]],
     ['loopRadius',[-10,10]],['spread',[-10,10]],['stripeWidth',[-15,15]]
   ];
-  for(const [field,deltas] of fields)for(const delta of deltas){
-    if(renders>=maxRenders)break;
-    const recipe=normalizeRecipe({...best.recipe,
-      [field]:best.recipe[field]+delta});
-    if(recipe[field]===best.recipe[field])continue;
-    const result=render(recipe,RECONSTRUCTION_WIDTH,RECONSTRUCTION_HEIGHT);
-    renders++;
-    const error=compareReconstructionPixels(source,result);
-    if(error+1e-9<best.error)
-      best={...best,recipe,error,label:candidate.label+' · fitted',
-        adjustments:[...(best.adjustments||[]),{field,value:recipe[field]}]};
+  for(const [field,deltas] of fields){
+    // Compare all deltas to the same coordinate baseline, rather than
+    // chasing a newly improved value and skipping the true neighbouring fit.
+    const origin=best.recipe[field];
+    for(const delta of deltas){
+      if(renders>=maxRenders)break;
+      const recipe=normalizeRecipe({...best.recipe,[field]:origin+delta});
+      if(recipe[field]===best.recipe[field])continue;
+      const result=render(recipe,RECONSTRUCTION_WIDTH,RECONSTRUCTION_HEIGHT);
+      renders++;
+      const error=compareReconstructionPixels(source,result);
+      if(error+1e-9<best.error)
+        best={...best,recipe,error,label:candidate.label+' · fitted',
+          adjustments:[...(best.adjustments||[]),{field,value:recipe[field]}]};
+    }
   }
   return {...best,refinementRenders:renders};
 }
