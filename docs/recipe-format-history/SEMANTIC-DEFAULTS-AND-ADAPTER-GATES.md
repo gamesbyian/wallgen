@@ -1,5 +1,9 @@
 # Source-anchored recipe default and expression boundaries
 
+## Executable first-source v1 model and PNG writer now preserved (2026-10-22)
+
+[The exact first-v1 JavaScript source modules](source-era/v1-37428b/README.md) are imported directly by a focused Node test, not recreated by rewriting today's normalizer. Four raw-v1 inputs exercise disabled and enabled shadows, missing strength and Layer 3 dependency; their original `roygbiv-recipe-v1` envelopes are created using the original exporter and archived without modification. Git blob checksums guard accidental edits. This establishes concrete **original normalizer/serializer behaviour**; source renderer pixel parity and multiple later v1 eras still need independent fixtures. No historical converter is enabled.
+
 ## Read-only v1 shadow evidence implemented (2026-10-22)
 
 The historical original [renderer at 37428b6](https://github.com/gamesbyian/wallgen/blob/37428b624e55a0d4526b992bfe6fdf4a01b5f420/src/renderer.js#L556-L570) explicitly requires `stripeShadowEnabled && stripeShadowStrength > 0`; its matching model uses old strength fallback 45. At the later [flag-removal renderer](https://github.com/gamesbyian/wallgen/blob/e88b30c3edf434b130b751ae855453c47755a83c/src/renderer.js#L729-L735), only positive strength remains. The current migration inspector emits **read-only** `historicalShadowEvidence` only for explicit former flag presence, retains exact original raw field values in `sourceEnvelope`, and refuses v1 conversion regardless of this narrow certainty. Do not guess a v1 source era when the flag is absent or infer full render equivalence from this isolated semantic rule.
