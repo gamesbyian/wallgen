@@ -22,7 +22,7 @@ export function normalizeSurfaceTreatments(input){
       .filter(i=>typeof i==='string'&&/^[a-zA-Z0-9_\/-]{1,84}$/.test(i)))].slice(0,16);
     out.push({
       id,enabled:raw.enabled===true||raw.enabled==='true',
-      materialFamily:'embroidery',style:['satin','tatami'].includes(raw.style)?raw.style:'satin',
+      materialFamily:'embroidery',style:['satin','tatami','running'].includes(raw.style)?raw.style:'satin',
       target:{scope,role:'fill',colorSlots,ids},
       pitch:bounds(raw.pitch,5,2,16),relief:bounds(raw.relief,65,0,100),
       direction:bounds(raw.direction,38,-180,180),
@@ -60,6 +60,40 @@ export function drawRibbonEmbroidery(ctx,stripe,extent,treatment,range=null){
   const start=Math.max(-extent,range?.start??-extent),
     end=Math.min(extent,range?.end??extent);
   if(!Number.isFinite(start)||!Number.isFinite(end)||end<start)return 0;
+  if(treatment.style==='running'){
+    // Three slender interrupted seams follow the authored centreline, rather
+    // than drawing transverse satin ribs. All segments use one immutable
+    // station lattice, so crossing branch replay remains exactly in phase.
+    const runInterval=Math.max(step*2.6,2*extent/1600);
+    const firstRun=Math.max(0,Math.ceil((start+extent)/runInterval-1e-9));
+    const lastRun=Math.min(1600,Math.floor((end+extent)/runInterval+1e-9));
+    let count=0;
+    ctx.save();
+    ctx.lineCap='round';
+    ctx.lineWidth=Math.max(.7,Math.min(2.2,step*.25));
+    for(let i=firstRun;i<=lastRun;i++){
+      const station=-extent+i*runInterval;
+      const endStation=Math.min(extent,station+runInterval*.64);
+      if(endStation-station<.75)continue;
+      const a=samplePath(stripe,station,extent);
+      const b=samplePath(stripe,endStation,extent);
+      const aw=widthAt(stripe,station,extent)*.48;
+      const bw=widthAt(stripe,endStation,extent)*.48;
+      if(![a.x,a.y,b.x,b.y,a.nx,a.ny,b.nx,b.ny,aw,bw].every(Number.isFinite)||
+        aw<=0||bw<=0)continue;
+      for(const lane of [-.68,0,.68]){
+        const ax=a.x+a.nx*aw*lane,ay=a.y+a.ny*aw*lane;
+        const bx=b.x+b.nx*bw*lane,by=b.y+b.ny*bw*lane;
+        ctx.beginPath();ctx.moveTo(ax+.48,ay+.48);ctx.lineTo(bx+.48,by+.48);
+        ctx.strokeStyle='rgba(0,0,0,.31)';ctx.stroke();
+        ctx.beginPath();ctx.moveTo(ax-.38,ay-.38);ctx.lineTo(bx-.38,by-.38);
+        stitchInk(ctx,1,treatment.relief);ctx.stroke();
+        count++;
+      }
+    }
+    ctx.restore();
+    return count;
+  }
   // Every segment samples the *same station lattice* as the full ribbon.
   // Self-crossing touch-ups must never restart the stitch phase, nor rewalk
   // 2,500 stations at every intersection. The optional range only changes
@@ -88,9 +122,20 @@ export function drawRibbonEmbroidery(ctx,stripe,extent,treatment,range=null){
 }
 const regionBounds=object=>{
   if(object.circle){const {cx,cy,r}=object.circle;return {left:cx-r,right:cx+r,top:cy-r,bottom:cy+r};}
-  const points=(object.rings||[object.vertices]).flat();
-  return {left:Math.min(...points.map(p=>p.x)),right:Math.max(...points.map(p=>p.x)),
-    top:Math.min(...points.map(p=>p.y)),bottom:Math.max(...points.map(p=>p.y))};
+  // Imported multi-ring silhouettes can have tens of thousands of vertices.
+  // Avoid spreading them as function arguments (engine-dependent call limit),
+  // copying all coordinates, or treating an empty ring as a real bound.
+  let left=Infinity,right=-Infinity,top=Infinity,bottom=-Infinity;
+  for(const ring of object.rings||[object.vertices]){
+    if(!Array.isArray(ring))continue;
+    for(const p of ring){
+      if(!Number.isFinite(p?.x)||!Number.isFinite(p?.y))
+        return {left:NaN,right:NaN,top:NaN,bottom:NaN};
+      left=Math.min(left,p.x);right=Math.max(right,p.x);
+      top=Math.min(top,p.y);bottom=Math.max(bottom,p.y);
+    }
+  }
+  return {left,right,top,bottom};
 };
 /** Fill with crossed half-tone rows clipped by the caller's even-odd region
  * path (including holes and disjoint imported islands). No mask allocations.
@@ -107,7 +152,9 @@ export function drawRegionEmbroidery(ctx,object,treatment){
   // Segment length grows for huge bounds to cap Canvas2D stroke work. The
   // enclosing renderer's even-odd clip handles silhouette islands and holes.
   const tatami=treatment.style==='tatami';
-  const segment=Math.max(8,treatment.pitch*3.2,
+  const running=treatment.style==='running';
+  const shortRows=tatami||running;
+  const segment=Math.max(8,treatment.pitch*(tatami?3.2:2.2),
     diagonal*1.6*(2*n+1)/18000);
   let stitches=0;
   ctx.save();
@@ -118,9 +165,10 @@ export function drawRegionEmbroidery(ctx,object,treatment){
   for(let k=-n;k<=n;k++){
     const y=k*treatment.pitch;
     if(Math.abs(y)>diagonal*.7)continue;
-    if(tatami){
+    if(shortRows){
       const limit=diagonal*.8;
-      const offset=((k%3+3)%3)*segment/3;
+      const period=tatami?3:2;
+      const offset=((k%period+period)%period)*segment/period;
       for(let x=-limit-segment+offset;x<limit;x+=segment){
         const a=Math.max(-limit,x+.7),b=Math.min(limit,x+segment-.7);
         if(b-a<1)continue;

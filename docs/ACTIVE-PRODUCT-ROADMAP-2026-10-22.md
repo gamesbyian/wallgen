@@ -1,5 +1,10 @@
 # ROYGBIV: active product roadmap and work queue
 
+## E2 thread artwork: opt-in ribbon Running seams and safe imported bounds (2026-10-22)
+
+Texture → Surface now offers **Running seams** in addition to existing Satin/Tatami. New path-following interrupted ribs maintain world-stable stitch stations at self-crossings; region running rows use shorter alternating breaks through the same hole-aware clip. Original Satin/Tatami outputs and absent-treatment art remain unchanged. Large multi-ring imported silhouettes no longer rely on unbounded array spread to compute their bounding box. Normalized recipe/Save/Undo/PNG all use the existing style field; no new navigation or CI jobs. Focused source tests are included; actual artistic appearance, advanced thread physicality and Pixel responsiveness still require judging.
+
+
 ## Shared Film/Camera F3/D4: Photo Before/After inspector preview (2026-10-22)
 
 The common Light → Photo pane now has a compact accessible **Before / After** comparison beside Enable. It reuses existing cached preview layers and `presentNudgedArtwork`; a temporary non-persisted display recipe bypasses Photo finishing without touching current recipe, Undo, Saved or export. It disables during absence of settled cache/active finish and holds comparison through worker settle. A new slider row, alternative camera engine and screenshot CI were deliberately avoided. Focused source/pure data tests; real physical-phone comparison remains pending. Film #468 and Camera #471 both benefit.

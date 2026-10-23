@@ -101,3 +101,56 @@ test('tatami on a clipped region draws staggered short rows; satin remains long 
   drawRegionEmbroidery(repeat,rectangle,select({style:'tatami',pitch:8}));
   assert.deepEqual(tatami.strokes,repeat.strokes,'same authored grid, no RNG');
 });
+
+test('running stitch is an opt-in stable path-following alternative to satin',()=>{
+  const source=resolveScene({seed:'stitch-run',structure:'paths',geometry:'wave',motif:'solid'});
+  const base=source.stripes[1],step=6;
+  const segments=()=>{const strokes=[];let from=null;
+    return {strokes,save(){},restore(){},beginPath(){},
+      moveTo(x,y){from=[x,y]},lineTo(x,y){strokes.push([from,[x,y]])},
+      stroke(){}};
+  };
+  const satin=segments(),running=segments(),repeat=segments();
+  const satinCount=drawRibbonEmbroidery(satin,base,source.extent,select({style:'satin',pitch:step}));
+  const runStyle=select({style:'running',pitch:step});
+  const runCount=drawRibbonEmbroidery(running,base,source.extent,runStyle);
+  drawRibbonEmbroidery(repeat,base,source.extent,runStyle);
+  assert.ok(satinCount>50&&runCount>50);
+  assert.deepEqual(repeat.strokes,running.strokes);
+  assert.notDeepEqual(running.strokes.slice(0,6),satin.strokes.slice(0,6));
+  assert.equal(running.strokes.length,runCount*2);
+  assert.ok(runCount<=1601*3,'full image must have bounded path-seam work');
+  const packed=normalizeRecipe({seed:'stitch-run',surfaceTreatments:[runStyle]});
+  assert.equal(decodeRecipe(encodeRecipe(packed)).surfaceTreatments[0].style,'running');
+  assert.equal(normalizeSurfaceTreatments([{id:'x',enabled:true,style:'unknown'}])[0].style,'satin');
+});
+
+test('a crossing stitch replay uses original global lattice, not restarted local phase',()=>{
+  const scene=resolveScene({seed:'run-crossings',structure:'paths',geometry:'loop'});
+  const stripe=scene.stripes[0],style=select({style:'running',pitch:5});
+  const segments=()=>{const strokes=[];let first=null;
+    return {strokes,save(){},restore(){},beginPath(){},
+      moveTo(x,y){first=[x,y]},lineTo(x,y){strokes.push([first,[x,y]])},stroke(){}};
+  };
+  const full=segments(),partial=segments();
+  drawRibbonEmbroidery(full,stripe,scene.extent,style);
+  drawRibbonEmbroidery(partial,stripe,scene.extent,style,
+    {start:-scene.extent*.27,end:scene.extent*.27});
+  assert.ok(partial.strokes.length>0&&partial.strokes.length<full.strokes.length);
+  const key=stroke=>JSON.stringify(stroke);
+  const all=new Set(full.strokes.map(key));
+  assert.ok(partial.strokes.every(stroke=>all.has(key(stroke))),
+    'foreground repaint must reproduce exactly the original seam stations');
+});
+
+test('many imported silhouette vertices never overflow region bound reduction',()=>{
+  const ring=[];
+  for(let i=0;i<60000;i++){
+    const theta=i*Math.PI*2/60000;
+    ring.push({x:250+Math.cos(theta)*75,y:340+Math.sin(theta)*45});
+  }
+  const ctx=fakeContext();
+  assert.ok(drawRegionEmbroidery(ctx,{rings:[ring]},select({style:'running'}))>0);
+  assert.equal(drawRegionEmbroidery(ctx,{rings:[[]]},select({style:'running'})),0);
+  assert.equal(drawRegionEmbroidery(ctx,{rings:[[{x:Infinity,y:0}]]},select({style:'running'})),0);
+});

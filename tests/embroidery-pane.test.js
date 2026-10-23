@@ -29,3 +29,10 @@ test('surface stitch style is one native persisted control, not a separate tab',
   assert.match(app,/namedItem\('embroideryStyle'\)\.value=stitch\?\.style\?\?'satin'/);
   assert.match(app,/'embroideryObjectId','embroideryStyle','embroideryPitch'/);
 });
+
+test('running style is selectable through the same persisted native Thread field',()=>{
+  const html=source('index.html'),app=source('src/app.js'),algorithm=source('src/embroidery.js');
+  assert.equal((html.match(/value="running"/g)||[]).length,1);
+  assert.match(app,/style:form\.elements\.namedItem\('embroideryStyle'\)\.value/);
+  assert.match(algorithm,/const runInterval=Math\.max\(step\*2\.6,2\*extent\/1600\)/);
+});
