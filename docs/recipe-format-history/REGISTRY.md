@@ -1,5 +1,10 @@
 # ROYGBIV recipe format registry
 
+## Active preservation contract and historical scope closure (23 October 2026)
+
+[#476](https://github.com/gamesbyian/wallgen/issues/476) is **closed not planned** for new historical translators, under the owner's current-canonical-first directive. The utility still safely updates **only fully recognized current canonical v2** metadata into a separate output PNG, leaving the original imported PNG, IDAT and unrelated chunks intact. Exact-byte named-iTXt archive and source reports remain available even where migration is refused. All v1, incomplete/unknown/ambiguous v2 and conflicting records remain a **strict refusal**, not a conversion promise. The authenticated original-v1 candidate failed actual artwork comparison (29.54%/31.47% pixels >2 RGB different); preserve the report but do not spend primary engineering cycles on its parity. Lower 'next' lists are archived hypotheses, not current queue items.
+
+
 ## 22 October first-v1 pixel incompatibility checkpoint
 
 **A proposed narrow preview adapter has been falsified by actual image evidence.** [Four real Chromium Canvas outputs from #530](source-era/v1-37428b/ACTUAL-MODERN-PARITY-FINDINGS-2026-10-22.md) reproduce both original-v1 source-era PNG IDAT goldens **exactly**, but differ from modern candidate previews at **230,413 (29.54%)** and **245,471 (31.47%)** pixels (>2 RGB). Historical separate, slim ribbons become substantially wider and frequently adjoining with changed endpoints in the contemporary painter. The adapter's original-only field is `stripeShadowEnabled` and 54 modern-only fields are normalized; matching most shared scalar fields is not semantic/pixel parity. All historical v1 conversion remains **refused** and the production metadata-only converter is unchanged. The opt-in parity script is for investigation only; retained original PNGs and unmodified iTXt archiving are the master preservation route. Next: source-era scene-width/placement comparisons and pinned subsequent-v1 intervals before any source-specific rewrite. Temporary Chromium CI was removed; quick CI remains the sole gate.
