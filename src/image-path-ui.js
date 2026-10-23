@@ -106,7 +106,7 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle,onShape,
     if(!candidate)return;
     recipeStatus.textContent=candidate.label+'. Estimated colour/coverage difference: '+
       candidate.error.toFixed(3)+' (lower is better). '+candidate.uncertainty+
-      ' ' This is an inferred approximation, never the original source recipe.';
+      ' This is an inferred approximation, never the original source recipe.';
     try{onRender(candidate.recipe,recipeCanvas);}
     catch(error){recipeStatus.textContent+=' Preview unavailable: '+error.message;}
   }
