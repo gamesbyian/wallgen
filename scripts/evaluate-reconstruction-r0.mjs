@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
- * Opt-in read-only R0 evaluation against ACTUAL existing production PNGs.
+ * Opt-in read-only evaluation against actual current-renderer PNGs OR
+ * separately authored, metadata-free PNG graphics with no canonical truth.
  * Uses the existing image descriptors, canonical candidate normalizer and
  * drawWallpaper renderer, never constructs a second rasterizer.
  *
@@ -15,6 +16,7 @@ import {createServer} from 'node:http';
 import {readFile,writeFile,access} from 'node:fs/promises';
 import {join,resolve,dirname,extname} from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {extractPngRecipe} from '../src/png-metadata.js';
 
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const mime={'.js':'text/javascript','.json':'application/json','.css':'text/css'};
@@ -50,18 +52,42 @@ function pngBytes(dataUri){
   return Buffer.from(dataUri.split(',')[1],'base64');
 }
 
+/**
+ * R0 production truth and independently authored/owner-provided graphics use
+ * the SAME pixel inference. External inputs have no source ROYGBIV recipe:
+ * never invent one merely to fill a report table.
+ */
+export function classifyReconstructionManifest(manifest){
+  const external=manifest?.schema==='roygbiv-reconstruction-external/v1';
+  if(!external&&manifest?.schema!=='roygbiv-reconstruction-r0/v1')
+    throw Error('Unsupported reconstruction manifest');
+  if(!Array.isArray(manifest.items)||manifest.items.length<1||
+    manifest.items.length>(external?4:13))throw Error('Invalid reconstruction fixture count');
+  const ids=new Set(),sources=new Set();
+  for(const item of manifest.items){
+    if(!item||typeof item.id!=='string'||!/^[-\w]+$/.test(item.id)||
+      ids.has(item.id))throw Error('Invalid/duplicate reconstruction fixture id');
+    if(typeof item.metadataFree!=='string'||
+      !/^[\w-]+\.png$/.test(item.metadataFree)||
+      sources.has(item.metadataFree))throw Error('Invalid/duplicate PNG filename');
+    if(external){
+      if(Object.hasOwn(item,'recipeFile')||Object.hasOwn(item,'seed'))
+        throw Error('External graphic cannot claim a ROYGBIV source recipe');
+    }else if(typeof item.recipeFile!=='string'||
+      !/^[\w-]+\.recipe\.json$/.test(item.recipeFile))
+      throw Error('Current-art R0 fixture requires a separate truth recipe');
+    ids.add(item.id);sources.add(item.metadataFree);
+  }
+  return {external,items:manifest.items};
+}
 async function evaluate(opts){
   const dir=resolve(opts.dir);
   const manifest=JSON.parse(await readFile(join(dir,'manifest.json'),'utf8'));
-  if(manifest.schema!=='roygbiv-reconstruction-r0/v1'||!Array.isArray(manifest.items)||
-     !manifest.items.length||manifest.items.length>13)
-    throw Error('Unsupported R0 manifest');
-  // Files outside the specific manifest folder are never read.
-  for(const item of manifest.items){
-    for(const name of [item.metadataFree,item.recipeFile]){
-      if(typeof name!=='string'||!/^[-\w.]+$/.test(name))throw Error('Invalid fixture filename');
-      await access(join(dir,name));
-    }
+  const {external,items}=classifyReconstructionManifest(manifest);
+  // The manifest may name only simple files inside this explicit folder.
+  for(const item of items){
+    for(const name of external?[item.metadataFree]:
+      [item.metadataFree,item.recipeFile])await access(join(dir,name));
   }
   const {chromium}=await import('playwright').catch(()=>{
     throw Error('Playwright required; install locally per README');
@@ -75,8 +101,11 @@ async function evaluate(opts){
     const page=await browser.newPage({viewport:{width:420,height:900}});
     await page.goto('http://127.0.0.1:'+server.address().port+'/',{waitUntil:'domcontentloaded'});
     const results=[];
-    for(const item of manifest.items){
+    for(const item of items){
       const input=new Uint8Array(await readFile(join(dir,item.metadataFree)));
+      if(input.length>12*1024*1024)throw Error('Source PNG is too large for image import');
+      if(external&&extractPngRecipe(input)!==null)
+        throw Error('External input must not contain a ROYGBIV source recipe');
       // Inference only sees image pixels, never this item's recipe.
       const inferred=await page.evaluate(async ({base64,includeAlternatives})=>{
         const {reconstructionCandidates,rankReconstructionCandidates,
@@ -139,8 +168,11 @@ async function evaluate(opts){
         };
       },{base64:Buffer.from(input).toString('base64'),
         includeAlternatives:!!opts.alternatives});
-      const truth=JSON.parse(await readFile(join(dir,item.recipeFile),'utf8'));
-      const truthError=await page.evaluate(async ({recipe,reference})=>{
+      // External work has NO original ROYGBIV recipe or true-render floor.
+      // Only actual current-production PNGs have blinded truth sidecars.
+      const truth=external?null:JSON.parse(await readFile(join(dir,item.recipeFile),'utf8'));
+      const truthError=truth?await page.evaluate(async ({recipe,reference})=>
+{
         const {drawWallpaper}=await import('/src/renderer.js');
         const {compareReconstructionPixels}=await import('/src/image-reconstruction.js');
         const bitmap=await createImageBitmap(await(await fetch(reference)).blob());
@@ -154,7 +186,7 @@ async function evaluate(opts){
         return compareReconstructionPixels(
           source.getContext('2d',{willReadFrequently:true}).getImageData(0,0,96,208),
           truth.getContext('2d',{willReadFrequently:true}).getImageData(0,0,96,208));
-      },{recipe:truth,reference:inferred.sourcePreview});
+      },{recipe:truth,reference:inferred.sourcePreview}):null;
       // Do not include truth in the inference phase: appearance match is
       // measured separately from structural/parameter truth below.
       const record={id:item.id,source:item.metadataFree,candidateCount:inferred.candidateCount,
@@ -165,7 +197,7 @@ async function evaluate(opts){
         bestLabel:inferred.selected?.label??null,
         selectedPositionY:inferred.selected?.recipe.positionY??null,
         selectedWaveOffsetY:inferred.selected?.waveOffsetY??null,
-        trueStructure:truth.structure,trueGeometry:truth.geometry,
+        trueStructure:truth?.structure??null,trueGeometry:truth?.geometry??null,
         recoveredStructure:inferred.selected?.structure??null,
         recoveredGeometry:inferred.selected?.geometry??null,
         alternatives:inferred.alternatives,
@@ -182,8 +214,10 @@ async function evaluate(opts){
       results.push(record);
       console.log('R0_EVAL '+JSON.stringify(record));
     }
-    const report={schema:'roygbiv-reconstruction-r0-evaluation/v1',
-      status:'measured-production-pngs-not-human-reviewed',
+    const report={schema:external?'roygbiv-reconstruction-external-evaluation/v1':
+        'roygbiv-reconstruction-r0-evaluation/v1',
+      status:external?'external-source-no-recipe-truth-not-human-reviewed':
+        'measured-production-pngs-not-human-reviewed',
       sourceManifest:'manifest.json',samples:results};
     await writeFile(join(dir,'evaluation.json'),JSON.stringify(report,null,2)+'\n');
     const cards=results.map(item=>'<figure><h2>'+esc(item.id)+'</h2><div>'+
@@ -211,9 +245,11 @@ async function evaluate(opts){
       '.variants{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}',
       '.variants figure{width:auto;margin:0;padding:4px}.variants img{width:100%}',
       '.variants figcaption{overflow-wrap:anywhere}</style>',
-      '<h1>R0: actual production sources compared with inferred renderer output</h1>',
+      external?'<h1>External-style graphics vs inferred ROYGBIV renderer</h1>':
+        '<h1>R0: actual production sources compared with inferred renderer output</h1>',
       '<p>Quantitative code evidence, not artistic or handset approval. This report does not claim',
-      ' recovery of original seeds or render settings. Candidates were selected before truth was read.</p>',
+      external?' recovery of any original ROYGBIV recipe, because these images have none.</p>':
+        ' recovery of original seeds or render settings. Candidates were selected before truth was read.</p>',
       cards,'</html>'
     ].join(''));
     console.log('R0_RESULT '+JSON.stringify({count:results.length,
