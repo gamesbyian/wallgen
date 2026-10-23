@@ -62,6 +62,35 @@ export function validatePngMigrationContainer(input){
 }
 const isPollutionKey=key=>['__proto__','prototype','constructor'].includes(key);
 const jsonSame=(left,right)=>JSON.stringify(left)===JSON.stringify(right);
+
+// Read-only diagnostic for one *source-proven* v1-era renderer rule.
+// An explicit old flag is a usable positive source signature; missing it
+// does not date a v1 PNG, and this evidence NEVER authorizes conversion.
+// See model/renderer at commit 37428b624e55a0d4526b992bfe6fdf4a01b5f420.
+export function inspectHistoricalShadowIntent(rawRecipe,format){
+  if(format!=='roygbiv-recipe-v1'||!rawRecipe||
+    typeof rawRecipe!=='object'||Array.isArray(rawRecipe)||
+    !Object.hasOwn(rawRecipe,'stripeShadowEnabled'))return null;
+  const flag=rawRecipe.stripeShadowEnabled;
+  const enabled=flag===true||flag==='true';
+  const number=Number(rawRecipe.stripeShadowStrength);
+  const strength=Number.isFinite(number)?Math.max(0,Math.min(100,number)):45;
+  const visible=enabled&&strength>0;
+  return {
+    sourceSignature:'v1-with-stripeShadowEnabled',
+    sourceModelCommit:'37428b624e55a0d4526b992bfe6fdf4a01b5f420',
+    sourceRendererPredicate:'stripeShadowEnabled && stripeShadowStrength > 0',
+    sourceStrengthFallback:45,
+    sourceRawEnabled:flag,
+    sourceRawStrength:Object.hasOwn(rawRecipe,'stripeShadowStrength')?
+      rawRecipe.stripeShadowStrength:null,
+    normalizedEraEnabled:enabled,normalizedEraStrength:strength,
+    sourceShadowWouldPaint:visible,
+    possibleCurrentStrengthForSameShadowVisibility:visible?strength:0,
+    confidence:'shadow-toggle-only; not source-era renderer or full recipe equivalence',
+    warning:'Advisory, read-only evidence: do not automatically migrate or replace original PNG recipe.'
+  };
+}
 function findDangerousKeys(value,path='$',depth=0,seen={count:0}){
   if(depth>32||++seen.count>300000)throw Error('Recipe inspection complexity limit exceeded');
   if(!value||typeof value!=='object')return [];
@@ -111,7 +140,7 @@ export function inspectPngMigration(input){
     // when historical exports contain many duplicate recipe envelopes.
     sourceRecords:raw.records.map(record=>({format:record.format,
       chunkIndex:record.chunkIndex,byteOffset:record.offset,byteLength:record.bytes})),
-    sourceEnvelope:null,sourceSnapshotNotice:
+    sourceEnvelope:null,historicalShadowEvidence:null,sourceSnapshotNotice:
       'Parsed JSON values for inspection only; byte-for-byte whitespace and duplicate keys require the separate original-chunk archive.',
     conflictingChunkIndexes:[],
     warnings:[],
@@ -122,6 +151,7 @@ export function inspectPngMigration(input){
   // Never feed this object back to the current editor or metadata writer.
   report.sourceEnvelope=raw.selected.envelope;
   const {format,rawRecipe}=raw.selected;
+  report.historicalShadowEvidence=inspectHistoricalShadowIntent(rawRecipe,format);
   if(![RECIPE_FORMAT,'roygbiv-recipe-v1'].includes(format)){
     report.reason='Unsupported PNG recipe dialect; preserve original';return report;
   }

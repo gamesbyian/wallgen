@@ -1,5 +1,10 @@
 # Source-anchored recipe default and expression boundaries
 
+## Read-only v1 shadow evidence implemented (2026-10-22)
+
+The historical original [renderer at 37428b6](https://github.com/gamesbyian/wallgen/blob/37428b624e55a0d4526b992bfe6fdf4a01b5f420/src/renderer.js#L556-L570) explicitly requires `stripeShadowEnabled && stripeShadowStrength > 0`; its matching model uses old strength fallback 45. At the later [flag-removal renderer](https://github.com/gamesbyian/wallgen/blob/e88b30c3edf434b130b751ae855453c47755a83c/src/renderer.js#L729-L735), only positive strength remains. The current migration inspector emits **read-only** `historicalShadowEvidence` only for explicit former flag presence, retains exact original raw field values in `sourceEnvelope`, and refuses v1 conversion regardless of this narrow certainty. Do not guess a v1 source era when the flag is absent or infer full render equivalence from this isolated semantic rule.
+
+
 **Evidence level:** four verified `src/model.js` blobs and a reproducible full-history **source-expression diff tool**. Lexical property expressions are not proof of the resulting renderer pixels. Do **not** turn these findings into a blanket v1→v2 migration.
 
 [Machine-readable pinned lines](SEMANTIC-EXPRESSION-ANCHORS.json) record commit SHA, model blob SHA, seed initializer and selected exact source expressions. [The earlier 45-revision key ledger](model-key-ledger.json) tracks explicit property membership but intentionally omits shorthand `seed,`, optional spreads and helper/renderer changes.

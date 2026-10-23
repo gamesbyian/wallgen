@@ -310,3 +310,40 @@ test('source report reads all record locations without discarding divergent hist
   const archive=archivePngRecipeRecords(mixed);
   assert.equal(archive.recordCount,2,'readable report cannot replace exact-byte backup');
 });
+
+test('read-only v1 historical shadow provenance uses explicit source-era renderer guard',()=>{
+  const marked=JSON.parse(JSON.stringify(native));
+  for(const [flag,strength,visible,candidate] of [
+    [false,100,false,0],['true',55,true,55],[true,0,false,0],
+    [true,'invalid',true,45]
+  ]){
+    const v1={...marked,version:1,stripeShadowEnabled:flag,
+      stripeShadowStrength:strength};
+    const source=beforeIdat(tiny,ancillaryChunk('iTXt',Buffer.concat([
+      Buffer.from('ROYGBIV Recipe\0\0\0\0\0'),
+      Buffer.from(JSON.stringify({format:'roygbiv-recipe-v1',recipe:v1}))
+    ])));
+    const old=Buffer.from(source);
+    const report=inspectPngMigration(source);
+    assert.equal(report.safe,false,'source renderer detail must not enable conversion');
+    assert.match(report.reason,/Historical v1/);
+    const evidence=report.historicalShadowEvidence;
+    assert.equal(evidence.sourceSignature,'v1-with-stripeShadowEnabled');
+    assert.equal(evidence.normalizedEraEnabled,flag===true||flag==='true');
+    assert.equal(evidence.sourceShadowWouldPaint,visible);
+    assert.equal(evidence.possibleCurrentStrengthForSameShadowVisibility,candidate);
+    assert.equal(evidence.sourceRawStrength,strength);
+    assert.match(evidence.warning,/do not automatically migrate/);
+    same(source,old,'forensic inspection may not write image pixels or metadata');
+  }
+});
+test('unknown v1 era and current v2 never invent legacy shadow advice',()=>{
+  const shadowless={...native,version:1};
+  const v1=beforeIdat(tiny,ancillaryChunk('iTXt',Buffer.concat([
+    Buffer.from('ROYGBIV Recipe\0\0\0\0\0'),
+    Buffer.from(JSON.stringify({format:'roygbiv-recipe-v1',recipe:shadowless}))
+  ])));
+  assert.equal(inspectPngMigration(v1).historicalShadowEvidence,null);
+  const v2=emitted({...native,stripeShadowStrength:55});
+  assert.equal(inspectPngMigration(v2).historicalShadowEvidence,null);
+});
