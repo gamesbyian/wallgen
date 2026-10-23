@@ -164,3 +164,32 @@ test('clock rollback cannot reorder per-session private batches or strand old ev
   assert.deepEqual(third.eventIds,['other']);
   assert.equal(makeUsageBatch(rows,[...first.eventIds,...second.eventIds,...third.eventIds]),null);
 });
+
+test('a geometry-heavy event is isolated rather than blocking otherwise bounded batches',()=>{
+  const time='2026-10-23T12:00:00Z';
+  const records=[
+    {eventId:'before',sessionId:'shape-session',seq:1,at:time,type:'episode_start'},
+    {eventId:'shape',sessionId:'shape-session',seq:2,at:time,type:'recipe_commit',
+      changes:[{key:'scatteredShape',after:{geometry:'x'.repeat(150000)}}]},
+    {eventId:'after',sessionId:'shape-session',seq:3,at:time,type:'navigation'}
+  ];
+  const first=makeUsageBatch(records,[],{id:()=> 'small'});
+  assert.deepEqual(first.eventIds,['before']);
+  const middle=makeUsageBatch(records,first.eventIds,{id:()=> 'large'});
+  assert.deepEqual(middle.eventIds,['shape']);
+  assert.ok(new TextEncoder().encode(middle.json).byteLength<1024*1024,
+    'byte-exact GitHub Contents readback needs to remain in the sub-1MiB API range');
+  const last=makeUsageBatch(records,first.eventIds.concat(middle.eventIds),{
+    id:()=> 'last'
+  });
+  assert.deepEqual(last.eventIds,['after']);
+  assert.equal(makeUsageBatch(records,records.map(r=>r.eventId)),null);
+});
+
+test('a single excessively large event remains local rather than creating an unverifiable remote file',()=>{
+  const excessive={eventId:'huge',sessionId:'shape-session',seq:1,
+    at:'2026-10-23T12:00:00Z',type:'recipe_commit',
+    changes:[{key:'scatteredShape',after:'x'.repeat(900000)}]};
+  assert.throws(()=>makeUsageBatch([excessive],[],{id:()=> 'huge'}),
+    /850 KB private backup file limit/);
+});

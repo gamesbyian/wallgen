@@ -13,7 +13,7 @@ export function orderUsageEvents(rows){
 }
 export function makeUsageBatch(events,syncedIds=[],{
   id=()=>globalThis.crypto.randomUUID(),now=()=>new Date().toISOString(),
-  maxEvents=20,maxBytes=130000
+  maxEvents=20,maxBytes=130000,maxSingleEventBytes=850000
 }={}){
   const synced=new Set(syncedIds),records=[];
   const waiting=orderUsageEvents(events).filter(event=>!synced.has(event.eventId));
@@ -25,13 +25,17 @@ export function makeUsageBatch(events,syncedIds=[],{
   const ordered=waiting.filter(event=>event.sessionId===selectedSession)
     .sort((a,b)=>Number(a.seq)-Number(b.seq)||
       String(a.eventId).localeCompare(String(b.eventId)));
+  const encoder=new TextEncoder();
   for(const event of ordered){
     const projected=[...records,event];
-    if(records.length&&(
-      projected.length>maxEvents||
-      new TextEncoder().encode(JSON.stringify(projected)).byteLength>maxBytes))break;
-    if(new TextEncoder().encode(JSON.stringify(projected)).byteLength>maxBytes)
-      throw new Error('An activity event exceeds the private backup batch limit. Retained locally.');
+    const projectedBytes=encoder.encode(JSON.stringify(projected)).byteLength;
+    // A complex editable imported shape can exceed the compact batch target.
+    // Isolate that one event instead of permanently blocking this session's
+    // outbox. Keep the entire resulting GitHub Contents file below 1 MiB so
+    // authenticated GET readback still returns its base64 content.
+    if(records.length&&(projected.length>maxEvents||projectedBytes>maxBytes))break;
+    if(projectedBytes>maxSingleEventBytes)
+      throw new Error('An activity event exceeds the 850 KB private backup file limit. Retained locally.');
     records.push(copy(event));
   }
   if(!records.length)return null;
