@@ -320,7 +320,7 @@ test('read-only v1 historical shadow provenance uses explicit source-era rendere
     const v1={...marked,version:1,stripeShadowEnabled:flag,
       stripeShadowStrength:strength};
     const source=beforeIdat(tiny,ancillaryChunk('iTXt',Buffer.concat([
-      Buffer.from('ROYGBIV Recipe\\0\\0\\0\\0\\0'),
+      Buffer.from('ROYGBIV Recipe\0\0\0\0\0'),
       Buffer.from(JSON.stringify({format:'roygbiv-recipe-v1',recipe:v1}))
     ])));
     const old=Buffer.from(source);
@@ -340,7 +340,7 @@ test('read-only v1 historical shadow provenance uses explicit source-era rendere
 test('unknown v1 era and current v2 never invent legacy shadow advice',()=>{
   const shadowless={...native,version:1};
   const v1=beforeIdat(tiny,ancillaryChunk('iTXt',Buffer.concat([
-    Buffer.from('ROYGBIV Recipe\\0\\0\\0\\0\\0'),
+    Buffer.from('ROYGBIV Recipe\0\0\0\0\0'),
     Buffer.from(JSON.stringify({format:'roygbiv-recipe-v1',recipe:shadowless}))
   ])));
   assert.equal(inspectPngMigration(v1).historicalShadowEvidence,null);
