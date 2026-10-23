@@ -53,9 +53,11 @@ export function radialImageSignature({data,width,height}){
   centreAngular/=Math.max(1,centreAC);
   const centreKind=centreAngular>.11&&centreAngular>centreRadial*1.7?'rays':
     centreRadial>.11&&centreRadial>centreAngular*1.7?'rings':null;
-  if(centreKind)return {kind:centreKind,radialVariation:centreRadial,
-    angularVariation:centreAngular,centerX:50,centerY:50};
-  // Test displaced centres only when the proven classifier is uncertain.
+  const centreStrength=centreKind==='rings'?
+    centreRadial-centreAngular*1.7:
+    centreAngular-centreRadial*1.7;
+  // Test displaced centres while retaining the established answer unless
+  // an off-centre hypothesis is overwhelmingly more coherent.
   // Test the frame centre first, then a small, fixed set of off-centre
   // hypotheses. These are cheap image reads, not additional renderer trials.
   // Keep a common radius across hypotheses to avoid favoring a smaller crop.
@@ -96,6 +98,11 @@ export function radialImageSignature({data,width,height}){
     if(next.kind&&next.strength>Math.max(.13,best.strength+.045))
       best=next;
   }
+  if(centreKind&&!(best.kind===centreKind&&
+    (best.centerX!==50||best.centerY!==50)&&
+    best.strength>.28&&best.strength>centreStrength*2.5))
+    return {kind:centreKind,radialVariation:centreRadial,
+      angularVariation:centreAngular,centerX:50,centerY:50};
   return {kind:best.kind,radialVariation:best.radialVariation,
     angularVariation:best.angularVariation,
     centerX:best.kind?best.centerX:50,centerY:best.kind?best.centerY:50};
