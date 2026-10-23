@@ -1,0 +1,29 @@
+# TEMP production image proof; remove before any merge.
+name: Temporary Agent1 Draw winding R0 review
+on:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  study:
+    if: github.head_ref == 'agent1/reconstruction-vertical-centreline-20261023'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          npm install --no-save --package-lock=false playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Authentic present-day Draw and curvature source/fit
+        run: |
+          node scripts/review-reconstruction.mjs --only 03-wave,04-jagged,05-hairpin,06-loop,07-drawn,16-offset-jagged --out-dir artifacts/agent1-winding
+          node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/agent1-winding --alternatives
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent1-winding-source-and-fit
+          path: artifacts/agent1-winding/
+          retention-days: 2
