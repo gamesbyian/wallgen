@@ -44,6 +44,7 @@ function args(argv){
     if(key==='--focus-deep-black'){values.focusDeepBlack=true;continue;}
     if(key==='--focus-camera'){values.focusCamera=true;continue;}
     if(key==='--focus-lens'){values.focusLens=true;continue;}
+    if(key==='--focus-flash'){values.focusFlash=true;continue;}
     if(!['--out-dir','--seed','--browser'].includes(key)||!argv[i+1]||
       argv[i+1].startsWith('--'))throw Error('Unknown or missing option '+key);
     values[key==='--out-dir'?'outDir':key.slice(2)]=argv[++i];
@@ -57,13 +58,16 @@ function safe(value){
 async function main(){
   const opts=args(process.argv.slice(2));
   if(opts.help){
-    console.log('Usage: node scripts/review-photo-looks.mjs [--out-dir folder] [--seed text] [--browser Chromium-path] [--focus-deep-black|--focus-camera|--focus-lens]');
+    console.log('Usage: node scripts/review-photo-looks.mjs [--out-dir folder] [--seed text] [--browser Chromium-path] [--focus-deep-black|--focus-camera|--focus-lens|--focus-flash]');
     return;
   }
-  if(Number(!!opts.focusDeepBlack)+Number(!!opts.focusCamera)+Number(!!opts.focusLens)>1)
+  if(Number(!!opts.focusDeepBlack)+Number(!!opts.focusCamera)+Number(!!opts.focusLens)+Number(!!opts.focusFlash)>1)
     throw Error('Choose only one focused art review');
   const out=resolve(opts.outDir);
-  const studies=opts.focusLens?[cases[0],
+  const studies=opts.focusFlash?[cases[0],cases[5],
+    {id:'12-pocket-flash',name:'Direct-flash point and shoot',
+      look:'camera-pocket-flash',amount:100,parameters:{grain:0,vignette:0}}
+  ]:opts.focusLens?[cases[0],
     {id:'08-camera-natural',name:'Natural digital camera',
       look:'camera-natural',amount:95},
     {id:'10-camera-dslr',name:'Interchangeable-lens crisp look',
@@ -133,7 +137,8 @@ async function main(){
   await writeFile(join(out,'index.html'),html);
   await writeFile(join(out,'manifest.json'),JSON.stringify({
     schema:'roygbiv-photo-art-review/v1',
-    comparison:opts.focusLens?'camera-lens-three':
+    comparison:opts.focusFlash?'camera-flash-three':
+      opts.focusLens?'camera-lens-three':
       opts.focusCamera?'camera-family-five':
       opts.focusDeepBlack?'deep-black-negative':'seven-photo-looks',
     status:'produced-awaiting-human-review',
