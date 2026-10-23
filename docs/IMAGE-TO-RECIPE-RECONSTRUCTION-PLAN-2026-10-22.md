@@ -1,5 +1,8 @@
 # Image-to-recipe reconstruction: native and external imports
 
+**23 Oct real winding Draw improvement (#630):** [View-backed current-renderer R0 study](https://github.com/gamesbyian/wallgen/actions/runs/40040643861) corrected the shared colour-band centreline's X-only scan to select the dominant axis, preserving downward S-turns rather than joining unrelated X-column crossings. Actual 07 Draw best-fit error **.045805→.044523** (2.8% lower), with visibly much smoother bends; Wave, Jagged, Hairpin, Loop and displaced-Jagged winner scores unchanged. One new small path-extractor test entered the quick gate, while the extra screenshot workflow was removed. This fixes a concrete current-art deficiency, not general skeletonization or source-seed truth. [Full optical and score findings](RECONSTRUCTION-DRAW-AXIS-GENUINE-FINDINGS-2026-10-23.md).
+
+
 **23 Oct Jagged genuine-source discriminator (#628 rejected; baseline fixture proposed in #629):** [Viewed real-control PNGs](https://github.com/gamesbyian/wallgen/actions/runs/40039691336) and [new real off-centre Jagged image](https://github.com/gamesbyian/wallgen/actions/runs/40039872858) demonstrate 04 Jagged error **.165655** and 16 displaced Jagged **.222146**. Neither permits coherent seven-hue X registration; the speculative coupled X/Y fit passed synthetic tests but earned no genuine-art win, so **it was closed unmerged**. Retain the 16th source as an authentic negative fixture, not the unsupported optimizer. Next R3 target is non-rigid per-colour bent contours, phase, and spacing drift in the existing canonical geometry. Full evidence: [Jagged negative findings](RECONSTRUCTION-JAGGED-NEGATIVE-FINDINGS-2026-10-23.md). #557 remains open.
 
 

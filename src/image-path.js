@@ -98,22 +98,31 @@ function resamplePixelPolyline(points,count){
   return out;
 }
 function colourCentreline(component,w,h){
-  if(component.maxX-component.minX<w*.14)return [];
-  const buckets=Array.from({length:w},()=>[]);
-  for(const i of component.members)buckets[i%w].push((i/w)|0);
-  const line=[];
-  for(let x=component.minX;x<=component.maxX;x++){
-    if(buckets[x].length<3)continue;
-    const ys=buckets[x].sort((a,b)=>a-b);
-    // Midrange resists asymmetric noise better than mean on wide colour bands.
-    line.push([x/w,(ys[Math.floor(ys.length*.10)]+ys[Math.floor(ys.length*.90)])/(2*h)]);
+  const vertical=component.maxY-component.minY>(component.maxX-component.minX)*1.25;
+  const start=vertical?component.minY:component.minX;
+  const end=vertical?component.maxY:component.maxX;
+  const n=vertical?h:w;
+  if(end-start<n*.14)return [];
+  const buckets=Array.from({length:n},()=>[]);
+  for(const i of component.members){
+    const x=i%w,y=(i/w)|0;
+    buckets[vertical?y:x].push(vertical?x:y);
   }
-  if(line.length<Math.max(12,w*.08))return [];
-  // Light moving-average filtering cleans pixel staircases without global circle fitting.
+  const line=[];
+  for(let station=start;station<=end;station++){
+    if(buckets[station].length<3)continue;
+    const a=buckets[station].sort((x,y)=>x-y);
+    const value=(a[Math.floor(a.length*.1)]+a[Math.floor(a.length*.9)])/2;
+    line.push(vertical?[value/w,station/h]:[station/w,value/h]);
+  }
+  if(line.length<Math.max(12,n*.08))return [];
+  const minor=vertical?0:1;
   const filtered=line.map((p,i)=>{
-    let sum=0,n=0;
-    for(let j=Math.max(0,i-4);j<=Math.min(line.length-1,i+4);j++){sum+=line[j][1];n++;}
-    return [p[0],sum/n];
+    let sum=0,count=0;
+    for(let j=Math.max(0,i-4);j<=Math.min(line.length-1,i+4);j++){
+      sum+=line[j][minor];count++;
+    }
+    const next=p.slice();next[minor]=sum/count;return next;
   });
   return filtered.filter((_,i)=>i%3===0||i===filtered.length-1);
 }
@@ -180,7 +189,8 @@ export function extractImagePathCandidates({data,width:w,height:h}){
   const colourRegions=components(colourful,w,h,minArea);
   for(const region of colourRegions.slice(0,2)){
     const p=colourCentreline(region,w,h);
-    if(p.length>=12&&region.maxX-region.minX>w*.2)
+    if(p.length>=12&&Math.max((region.maxX-region.minX)/w,
+      (region.maxY-region.minY)/h)>.2)
       result.push({kind:'arc',label:'Colour-band centreline',points:p,
         score:region.area*1.3,closed:false});
   }
