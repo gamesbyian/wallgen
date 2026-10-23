@@ -275,3 +275,38 @@ test('single-pass importer reports canonical versus duplicate/partial recipe pro
   assert.equal(multiple.recordCount,2);
   assert.equal(multiple.normalizedFieldsChanged,false);
 });
+
+test('read-only migration report retains selected source JSON even when migration is forbidden',()=>{
+  const raw={...native,unrecognizedArtistField:{kind:'photogram',
+    customDirection:327.25,active:false,sequence:[5,2,9]}};
+  const serialized=JSON.stringify({format:RECIPE_FORMAT,recipe:raw,
+    generator:'archived-generator-build',output:{width:300,height:600}});
+  const sample=beforeIdat(tiny,ancillaryChunk('iTXt',
+    Buffer.concat([Buffer.from('ROYGBIV Recipe\0\0\0\0\0'),Buffer.from(serialized)])));
+  const source=Buffer.from(sample),report=inspectPngMigration(sample);
+  assert.equal(report.safe,false);
+  assert.equal(report.sourceEnvelope.generator,'archived-generator-build');
+  assert.deepEqual(report.sourceEnvelope.recipe,raw);
+  assert.deepEqual(report.sourceRecords.map(item=>item.format),[RECIPE_FORMAT]);
+  assert.equal(report.sourceRecords[0].chunkIndex,1);
+  assert.match(report.sourceSnapshotNotice,/Parsed JSON/);
+  assert.ok(report.unknownKeys.includes('unrecognizedArtistField'));
+  assert.deepEqual(JSON.parse(JSON.stringify(report)).sourceEnvelope.recipe,raw);
+  same(sample,source,'read-only report must never change source PNG bytes');
+  assert.throws(()=>migratePngMetadataOnly(sample),/discard, coerce or synthesize/);
+});
+test('source report reads all record locations without discarding divergent history',()=>{
+  const first=emitted(native),selected=readRawPngRecipe(first).selected;
+  const earlier=emitted(normalizeRecipe({...native,seed:'older-artwork'}));
+  const oldChunk=scanPngChunks(earlier).chunks.find(record=>record.type==='iTXt').raw;
+  const mixed=Buffer.concat([first.subarray(0,selected.offset),
+    oldChunk,first.subarray(selected.offset)]);
+  const report=inspectPngMigration(mixed);
+  assert.equal(report.safe,false);
+  assert.equal(report.recordCount,2);
+  assert.equal(report.sourceRecords.length,2);
+  assert.equal(report.sourceEnvelope.recipe.seed,native.seed);
+  assert.ok(report.conflictingChunkIndexes.includes(report.sourceRecords[0].chunkIndex));
+  const archive=archivePngRecipeRecords(mixed);
+  assert.equal(archive.recordCount,2,'readable report cannot replace exact-byte backup');
+});

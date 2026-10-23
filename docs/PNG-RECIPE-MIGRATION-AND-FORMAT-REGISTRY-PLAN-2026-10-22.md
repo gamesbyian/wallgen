@@ -1,5 +1,10 @@
 # PNG recipe metadata migration without image changes
 
+## Readable forensic source report (M0/M5, 2026-10-22)
+
+The existing More → Save report JSON now includes the **selected original parsed JSON envelope** (`sourceEnvelope`) and all original record locations/formats/sizes (`sourceRecords`), even when the update is refused because a historical v1 format, unknown fields or conflicting records cannot be converted safely. It remains a read-only report, never passed to `normalizeRecipe` for the source snapshot, never imported into the editor, never used to write the image. Parsing JSON necessarily loses insignificant whitespace and duplicate-key spellings; the separate exact-byte iTXt archive continues to be the forensic authority, especially for malformed/unsupported text. This saves an extra manual base64 decode during archaeology without pretending to enable unsafe schema translation or growing the phone UI. Focused Node tests and no new workflow.
+
+
 **Ordinary importer truth-in-labeling (2026-10-22, PR pending):** `extractPngRecipeWithProvenance` shares the strict existing PNG v1/v2 acceptance/validation in one raw read and reports original format, record count and whether the current normalizer altered, removed or synthesized top-level source fields. The Restore UI keeps its established `changeRecipe(recipe,{bypassLocks:true})` behavior but now warns when historical settings are interpreted through today's renderer and may not reproduce the PNG's exact artwork. Complete modern recipes still carry a gentle cross-version caution. This is **not** `inspectPngMigration` eligibility, not a converter, not a claim of visual equivalence and not a second full-image pass. The original PNG remains the archival master.
 
 
