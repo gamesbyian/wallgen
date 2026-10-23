@@ -790,3 +790,44 @@ test('long-baseline bends recognize authored V corners after shared importer smo
  const wave=imageCurveSignature([{kind:'arc',points:gentle}],240,240);
  assert.equal(wave.angularBends,0,'a gentle flowing curve is not an angular V');
 });
+
+test('interior dark seams on true radial colour fields invite canonical dividers without inventing them on nested fills',()=>{
+ const rays=(divided)=>raster(200,200,(x,y)=>{
+   const a=(Math.atan2(y-99.5,x-99.5)+Math.PI)/(2*Math.PI)*21;
+   const slot=Math.floor(a),fraction=a-slot;
+   return divided&&(fraction<.075||fraction>.925)?
+     [0,0,0,255]:colour(HUES[slot%7]);
+ });
+ const rings=(divided)=>raster(200,200,(x,y)=>{
+   const radius=Math.hypot(x-99.5,y-99.5)/11;
+   const slot=Math.floor(radius),fraction=radius-slot;
+   return divided&&fraction<.16?
+     [0,0,0,255]:colour(HUES[slot%7]);
+ });
+ for(const [kind,base] of [['rays',rays],['rings',rings]]){
+   const source=base(true),plain=base(false);
+   const dark=radialImageSignature(source),clean=radialImageSignature(plain);
+   assert.equal(dark.kind,kind);
+   assert.equal(clean.kind,kind);
+   assert.equal(dark.dividerEvidence,true,kind+' has dark interior borders');
+   assert.equal(clean.dividerEvidence,false,kind+' solid pigments have no gap evidence');
+   const bordered=reconstructionCandidates(source,{seed:'sample-source'});
+   assert.ok(bordered.length<=RECONSTRUCTION_RENDER_LIMIT);
+   assert.ok(bordered.some(c=>c.recipe.dividerColor==='background'&&
+     c.recipe.dividerWidth===12&&
+     c.kind===(kind==='rays'?'radial-rays':'radial-rings')),
+   'offer the current canonical dark-gap treatment for '+kind);
+   const options=reconstructionCandidates(plain,{seed:'clean-sample'});
+   assert.ok(options.every(c=>c.recipe.dividerColor!=='background'),
+     'black separators cannot be inferred from unbordered '+kind);
+   assert.ok(bordered.some(c=>c.recipe.dividerColor==='none'),
+     'preserve undecorated family for uncertainty and actual renderer scoring');
+   const locked=reconstructionCandidates(source,normalizeRecipe({seed:'locked-gap',
+     dividerColor:'none',dividerWidth:0,
+     lockedSettings:['dividerColor','dividerWidth']}));
+   assert.ok(locked.every(c=>c.recipe.dividerColor==='none'&&
+     c.recipe.dividerWidth===0),'project every trial into ordinary locks');
+ }
+ const blank=raster(200,200,()=>[0,0,0,255]);
+ assert.equal(radialImageSignature(blank).dividerEvidence,false);
+});
