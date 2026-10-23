@@ -96,9 +96,9 @@ To implement v1 or early-v2 recipe migration, consult [45-revision key ledger](d
 **START HERE:** [active product roadmap, art + UX queues](docs/ACTIVE-PRODUCT-ROADMAP-2026-10-22.md). It is the single authority for current priority, status, issue owner and closure conditions. Older plans and large QA ledgers retain historical evidence, **not** current per-PR gates. Current editor: seven categories, 40 named tools, 95 scalar settings.
 
 - **Working shipped art:** Rainbow Orbits + imported silhouettes and reusable geometry (#434), selected-object nudge/reset (#449) and opt-in direct canvas dragging (#456), scientific **display-only** colour-vision inspection (#432), Material/Finish consolidation and guided settings (#452/#454/#455/#459–#465). Preserve recipe/Undo/export semantics, and don't rebuild already shipping modes.
-- **Material quality not yet approved:** [#445](https://github.com/gamesbyian/wallgen/issues/445); a validated [seven-image review script](docs/MATERIAL-SEVEN-IMAGE-ART-REVIEW-2026-10-22.md) exists (#453/#458), but actual samples have not been visually inspected in this thread.
-- **NEW, planned rather than shipped:** [embroidery #467](https://github.com/gamesbyian/wallgen/issues/467), [film #468](https://github.com/gamesbyian/wallgen/issues/468) and [digital-camera looks #471](https://github.com/gamesbyian/wallgen/issues/471), with full specifications below. **Film and Camera share one versioned photoLook and Light → Photo UI.** Implement small working artwork milestones and keep them independent.
-- **Specific usability decisions:** [#444](https://github.com/gamesbyian/wallgen/issues/444) C07/C09/C10/C11 after a few real art tasks, [#365](https://github.com/gamesbyian/wallgen/issues/365) only observed phone tap friction; short Draw issue #422 has been closed, extreme landscape #301 is low-priority.
+- **Material quality reviewed in production PNGs:** #499 visually inspected seven real material samples; #502 compared opt-in soft-edge linen at identical strong displacement with preserved historical linen pixels. Broader material art/physical Pixel acceptance remains open under [#445](https://github.com/gamesbyian/wallgen/issues/445).
+- **Shipped but incomplete art:** Embroidery #467 (#474/#478/#481/#482/#504) now supports exact object precedence and region tatami; Film #468 and Camera #471 share the opt-in versioned Photo compositor, grain, halation, webcam and new early-digicam capture (#473/#486/#493/#505). Advanced E2–E5/F2–F5/D3–D5 remain scoped art/UX work, not invitations to rebuild the engines.
+- **Specific usability decisions:** [#444](https://github.com/gamesbyian/wallgen/issues/444) C07 multi-match routing shipped #475 (physical keyboard validation pending); C09/C10/C11 are optional observed-workflow prototypes. [#365](https://github.com/gamesbyian/wallgen/issues/365) should advance only on actual phone tap friction; #301 short landscape remains low priority.
 - **Verification policy:** [lean CI](docs/CI-OPERATIONS-2026-10-22.md): one quick Node PR gate; specialized Chromium/atlas workflows are voluntary. Tests for changed persistence or rendering paths should be proportional. Avoid claiming optical or physical-device verification without seeing/trying it.
 
 ## Live UX handoff and completion tracking (2026-10-22)
@@ -134,12 +134,12 @@ Read these documents **before recommending menu reorganisation or changing sourc
 
 For changes outside UX, the relevant application source, current project documentation and active PRs take precedence. This file is a map of relevant research, not a replacement for specific engineering requirements.
 
-## Proposed artistic systems (plans only, not yet implemented)
+## Artistic systems (original proposals, now partly implemented)
 
 - [Geometry-aware surface treatments and embroidery](docs/GEOMETRY-AWARE-EMBROIDERY-AND-SURFACE-TREATMENTS-PLAN-2026-10-22.md): stitch generation, material coordinate frames, target scopes, physically shaded thread, licenced reuse candidates, mobile Treatments inspector and proportionate delivery gates.
 - [Photographic film looks and filters](docs/PHOTO-FILM-LOOKS-AND-FILTERS-PLAN-2026-10-22.md): film colour response, grain, halation, bloom, final-composite processing, seeded export parity, Film as one family of the planned shared Light > Photo finishing inspector, with issue #468.
 
-These documents specify **proposals**, not existing controls or renderer behaviour. Reconcile current main and relevant active work before implementation; do not use them to alter baseline artwork, expand CI or redesign all navigation by default.
+These documents combine original proposals with later implementation checkpoints. Read current main and the active roadmap before changing features: old artwork, existing UI destinations, and lean CI remain protected.
 
 ### Modern photography expansion and queue tracking
 
