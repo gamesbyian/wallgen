@@ -68,7 +68,7 @@ export function classifyReconstructionManifest(manifest){
     if(!item||typeof item.id!=='string'||!/^[-\w]+$/.test(item.id)||
       ids.has(item.id))throw Error('Invalid/duplicate reconstruction fixture id');
     if(typeof item.metadataFree!=='string'||
-      !/^[\w-]+\.png$/.test(item.metadataFree)||
+      !/^[A-Za-z0-9][\w.-]*\.png$/.test(item.metadataFree)||
       sources.has(item.metadataFree))throw Error('Invalid/duplicate PNG filename');
     if(external){
       if(Object.hasOwn(item,'recipeFile')||Object.hasOwn(item,'seed'))
