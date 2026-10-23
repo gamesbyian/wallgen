@@ -1,5 +1,10 @@
 # ROYGBIV: geometry-aware surfaces and procedural embroidery
 
+## E3 compound hole and detached island acceptance (2026-10-22)
+
+A small pure authored [geometry fixture](../scripts/compound-stitch-fixture.mjs) is an actual normalized portable Shape Library snapshot with two components, one interior hole and one detached island. The [two-picture art study](EMBROIDERY-COMPOUND-HOLE-ART-REVIEW-2026-10-22.md) uses the shipped scene builder, the existing even-odd mask in `drawRegionObjects` and opt-in Tatami. Unlike previous circle images, it probes negative-space preservation, disconnected regions and single-object target semantics together; tests ensure the source geometry itself survives recipe transport. This is additive evidence, not a change to any existing stitch painter or export pipeline. Real rendered images must be inspected before declaring Canvas masking accepted.
+
+
 ## E4 preservation: make existing regional stitch direction editable (2026-10-22)
 
 The `surfaceTreatments[].direction` value was already normalized and used by the region renderer, but the editor previously hardcoded `direction:38` on every edit, silently replacing a restored non-default angle. A native numeric **Region angle** now lives in the **same grid row** as Stitch style, restores the authored decimal value and participates in normal Save/Undo/PNG. The input disables for ribbon/path scenes (where the tangent determines stitch direction) without deleting the stored direction for future region use. Source, bound and recipe tests cover the preservation contract. This advances [issue #514](https://github.com/gamesbyian/wallgen/issues/514) without another mobile row, renderer rewrite or screenshot CI.
