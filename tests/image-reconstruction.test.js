@@ -5,7 +5,7 @@ import {imagePlacement,extractImageColourRegions} from '../src/image-path.js';
 import {describeReconstructionImage,reconstructionCandidates,
   rankReconstructionCandidates,compareReconstructionPixels,refineReconstructionCandidate,reconstructionPlacement,
   radialImageSignature,imageStripeAngle,imageCurveSignature,diverseReconstructionCandidates,reconstructionRefinementIndex,
-  measuredRainbowRibbonBands,seedMeasuredRibbonControls,coherentWaveOffsetY,coherentVerticalBandOffsetX,coherentExpandedDrawOffsetY,measuredExpandedDrawRegistration,
+  measuredRainbowRibbonBands,seedMeasuredRibbonControls,coherentWaveOffsetY,coherentVerticalBandOffsetX,coherentJaggedOffsetX,coherentJaggedOffsetY,coherentExpandedDrawOffsetY,measuredExpandedDrawRegistration,
   rankReconstructionCandidatesCooperatively,refineReconstructionCandidateCooperatively,
   RECONSTRUCTION_FRAME,RECONSTRUCTION_RENDER_LIMIT} from '../src/image-reconstruction.js';
 
@@ -791,6 +791,55 @@ test('actual seven-colour gap drift becomes canonical wide Draw spread followed 
    {...candidate,error:.226618,angularBends:2},
    {kind:'wave',error:.36,waveOffsetY:-4}
  ]),1,'independently measured two angular turns justify the wide Draw budget');
+});
+
+test('Jagged registration reuses measured seven-pigment X/Y offsets within fixed fit budget',async()=>{
+ const w=RECONSTRUCTION_FRAME.width,h=RECONSTRUCTION_FRAME.height;
+ const sample=(dx=0,dy=0,moveOne=false)=>raster(w,h,(x,y)=>{
+   for(let index=0;index<7;index++){
+     const cx=20+7*(index%3)+dx+(moveOne&&index===3?15:0);
+     const cy=18+25*index+dy;
+     if(Math.hypot(x-cx,y-cy)<5)return colour(HUES[index]);
+   }
+   return [0,0,0,255];
+ });
+ const source=sample(),offset=sample(6,12);
+ assert.equal(coherentJaggedOffsetX(source,offset),-6);
+ assert.equal(coherentJaggedOffsetY(source,offset),-6);
+ assert.equal(coherentJaggedOffsetX(source,sample(6,12,true)),null,
+   'one independently moved pigment cannot imply a rigid correction');
+ assert.equal(coherentJaggedOffsetY(source,sample(6,12,true)),-6);
+ const recipe=normalizeRecipe({structure:'paths',geometry:'jagged',
+   positionX:0,positionY:0,seed:'jagged-registration-test'});
+ const candidate={kind:'jagged',recipe,error:.7,label:'Jagged test'};
+ let renders=0;
+ const painter=next=>{
+   renders++;
+   return sample(6+Math.round(next.positionX*w/100),
+     12+Math.round(next.positionY*h/100));
+ };
+ const ranked=rankReconstructionCandidates([candidate],source,painter)[0];
+ assert.equal(ranked.jaggedOffsetX,-6);
+ assert.equal(ranked.jaggedOffsetY,-6);
+ const fitted=refineReconstructionCandidate(ranked,source,painter);
+ assert.equal(fitted.recipe.positionX,-6);
+ assert.equal(fitted.recipe.positionY,-6);
+ assert.equal(fitted.error,0);
+ assert.ok(fitted.refinementRenders<=10);
+ assert.equal(renders,1+fitted.refinementRenders);
+ const coop=(await rankReconstructionCandidatesCooperatively([candidate],
+   source,painter))[0];
+ const asyncFit=await refineReconstructionCandidateCooperatively(coop,
+   source,painter);
+ assert.deepEqual(asyncFit,fitted);
+ const locked=normalizeRecipe({...recipe,lockedSettings:['position']});
+ const protectedInput={...ranked,recipe:locked,error:.7};
+ const protectedRenders=[];
+ refineReconstructionCandidate(protectedInput,source,r=>{
+   protectedRenders.push([r.positionX,r.positionY]);return painter(r);
+ });
+ assert.ok(protectedRenders.every(([x,y])=>x===0&&y===0),
+   'composite Position lock cannot be bypassed by registration');
 });
 
 test('long-baseline bends recognize authored V corners after shared importer smoothing, not gentle waves',()=>{
