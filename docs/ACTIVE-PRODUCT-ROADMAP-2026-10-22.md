@@ -1,5 +1,17 @@
 # ROYGBIV: active product roadmap and work queue
 
+
+## Art and focused native-input completion: #514, #445, #365 (22 October evening)
+
+**#514 fibre image quality advanced:** [#529](https://github.com/gamesbyian/wallgen/pull/529) merged saved opt-in Satin Fibre and Tatami Fibre treatments, with local-direction light, underlay, narrow filaments and phase-stable glints. Historical five stitch styles and already saved recipes retain original painter branches. Six actual Chromium source wallpapers, with inspected pixels and independently validated recipe/CRC, show gentler highlights and better preservation of saturated inner-loop reds and oranges. [Findings](EMBROIDERY-FIBRE-PRODUCTION-FINDINGS-2026-10-22.md). Remaining: physical yarn realism, difficult nested Chain density and actual phone/native-export performance, subject to a specific observed defect.
+
+**#445 seeded organic weave:** [#535](https://github.com/gamesbyian/wallgen/pull/535) merged distinct `linen-organic` material in three existing texture layers, with bent fibres, restrained glints and soft edge-contour relief. Two sequential four-image **actual** production runs were inspected; the first ruled-grid glint flaw was fixed before the final review. Legacy Linen and Soft Linen pixels stayed identical. [Visual evidence](MATERIAL-ORGANIC-LINEN-PRODUCTION-FINDINGS-2026-10-22.md). Extreme distortion remains artistically rough, so don't change old material presets or claim physical cloth simulation.
+
+**#365 native picker stability:** [#532](https://github.com/gamesbyian/wallgen/pull/532) merged preserved native object-select option node identity across unrelated recipe changes, removing needless picker teardown and keeping stale authored-object selections explicit. Focused Node check plus quick CI passed. Do not repeat #521 four-state Thread layout tests; remaining #365 work requires genuine physical Pixel touch/focus/keyboard observation and an actual reproduced friction point.
+
+All three PRs merged with ordinary lean quick CI. Temporary Chromium art jobs used solely to produce actual source wallpapers were **fully removed before merge**. No routine browser testing or layout redesign was added. Prior priority #476 v1 original-modern mismatch and #443 shape portability progress remain unchanged.
+
+
 ## Latest verified material progress and remaining decisions (22 October evening)
 
 **P0 #476 historical preservation:** [#530](https://github.com/gamesbyian/wallgen/pull/530) shipped an opt-in, archival-original-v1 → modern-renderer comparison with four **actual Chromium Canvas images** and independently validated original golden IDAT hashes. Controlled v1 shadow-off/on modern previews differ at **29.54% / 31.47%** of 780,000 pixels (>2 in a colour channel); inspection shows broader, often touching modern ribbons and different negative-space composition. [Actual visual and numeric findings](recipe-format-history/source-era/v1-37428b/ACTUAL-MODERN-PARITY-FINDINGS-2026-10-22.md) refute the hypothetical adapter. **Do not ship v1→v2 migration**, alter source PNG bytes, or confuse normalized fields with pixel parity. Next sequence: compare the original and modern scene geometry/widths and renderer behaviours, then sample subsequent v1 chronological intervals with exact source goldens and formulate only proven source-specific conversions. Canonical-v2 safe metadata-only rewriting and original-chunk archives remain operational. One-shot browser CI has been entirely removed, quick tests passed.
