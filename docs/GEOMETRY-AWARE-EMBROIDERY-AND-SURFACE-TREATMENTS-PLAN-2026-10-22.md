@@ -1,5 +1,10 @@
 # ROYGBIV: geometry-aware surfaces and procedural embroidery
 
+## E3 gentle highlight/shadow Satin variant (2026-10-22)
+
+The [first actual production picture review](EMBROIDERY-PRODUCTION-ART-FINDINGS-2026-10-22.md) exposed strong desaturation on tight red/orange Satin loops. A separately selectable `satin-soft` recipe style now uses exactly the old satin geometry, but reduces black underlay and white raised-ridge alpha on ribbons and regions. This is an artistically oriented low-overpaint finish, not physical fibre simulation; legacy `satin` stays byte/pixel stable. The existing compact inspector gains only one option. The opt-in reviewer supports `--focus-soft-satin` for three matched real wallpapers rather than introducing broad CI. Pixel/native export and nuanced fibre effects remain open.
+
+
 ## Repeatable appearance comparison (E2/E3, 2026-10-22)
 
 The opt-in [seven-image embroidery review](EMBROIDERY-SEVEN-IMAGE-ART-REVIEW-2026-10-22.md) uses the existing production renderer for precisely three paired loop ribbon styles and four paired scattered-region treatments. It records exact canonical sidecar and embedded recipes, source seeds, names and a local contact gallery; it does **not** add mandatory CI. The first seven PNGs **were actually rendered, retrieved and visually judged** with exact recipe/CRC validation in [run #39883744519](https://github.com/gamesbyian/wallgen/actions/runs/39883744519). See [observed strengths and limitations](EMBROIDERY-PRODUCTION-ART-FINDINGS-2026-10-22.md): source-isolated targeting works, Satin is dense/desaturating on tight inner loops, and short regional lines still read as procedural hatching. Full 2.5D realism and physical device approval remain open.

@@ -1,5 +1,10 @@
 # ROYGBIV: active product roadmap and work queue
 
+## E3 colour-preserving Satin option, grounded in real art (2026-10-22)
+
+Actual first embroidery art [showed](EMBROIDERY-PRODUCTION-ART-FINDINGS-2026-10-22.md) strong Satin shadow/highlight overwriting vivid red and orange on tight loop turns. A new opt-in `satin-soft` style retains **the identical stitch station coordinates and line geometry** but tones down just that style's shadow and white ridge alpha. Previous `satin` recipes and all untouched artwork keep the exact legacy painter branch and output. The current style dropdown and stored recipe transport require no new model fields, categories or CI. Three-image optional `review-embroidery.mjs --focus-soft-satin` produces original, legacy Satin and soft Satin for a direct production-render comparison. Art/Pixel acceptance should be based on the actual rendered trio, not a source-level promise.
+
+
 ## E2/E3 minimal real-image embroidery review preparation (2026-10-22)
 
 An opt-in [seven-image embroidery review](EMBROIDERY-SEVEN-IMAGE-ART-REVIEW-2026-10-22.md) now compares untreated/Satin/Running **same-seed loop ribbons** and untreated/Tatami/Running/one-object **same-seed scattered regions** with exact normalized PNG/JSON recipes and an HTML gallery. It uses the production headless browser renderer, not a fake stroke illustration or new CI workflow. **First actual run, download, visual inspection and exact embedded-recipe verification are complete:** [Actions #39883744519](https://github.com/gamesbyian/wallgen/actions/runs/39883744519), [observed visual findings](EMBROIDERY-PRODUCTION-ART-FINDINGS-2026-10-22.md). Satin ribs are very prominent and partially desaturate tight red/orange loop regions; Running produces separated longitudinal seams. Region Tatami/Running are distinguishable at fine scale but similarly diagonal at contact size. One-object change was confined to x=191..355/y=785..950 (600×1300). Remaining physical-device, imported complex holes and advanced 2.5D realism are still open. Avoid broader atlasses without a concrete defect.

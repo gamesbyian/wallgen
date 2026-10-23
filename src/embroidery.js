@@ -22,7 +22,7 @@ export function normalizeSurfaceTreatments(input){
       .filter(i=>typeof i==='string'&&/^[a-zA-Z0-9_\/-]{1,84}$/.test(i)))].slice(0,16);
     out.push({
       id,enabled:raw.enabled===true||raw.enabled==='true',
-      materialFamily:'embroidery',style:['satin','tatami','running'].includes(raw.style)?raw.style:'satin',
+      materialFamily:'embroidery',style:['satin','satin-soft','tatami','running'].includes(raw.style)?raw.style:'satin',
       target:{scope,role:'fill',colorSlots,ids},
       pitch:bounds(raw.pitch,5,2,16),relief:bounds(raw.relief,65,0,100),
       direction:bounds(raw.direction,38,-180,180),
@@ -56,6 +56,7 @@ function stitchInk(ctx,brightness,relief){
 export function drawRibbonEmbroidery(ctx,stripe,extent,treatment,range=null){
   if(!treatment||!Number.isFinite(extent)||extent<=0)return 0;
   const step=treatment.pitch;
+  const gentle=treatment.style==='satin-soft';
   const interval=Math.max(step,2*extent/2500);
   const start=Math.max(-extent,range?.start??-extent),
     end=Math.min(extent,range?.end??extent);
@@ -112,9 +113,9 @@ export function drawRibbonEmbroidery(ctx,stripe,extent,treatment,range=null){
     const ax=p.x-p.nx*w,ay=p.y-p.ny*w,bx=p.x+p.nx*w,by=p.y+p.ny*w;
     // Dark underlay and offset bright ridge create a restrained raised cord.
     ctx.beginPath();ctx.moveTo(ax+.55,ay+.55);ctx.lineTo(bx+.55,by+.55);
-    ctx.strokeStyle='rgba(0,0,0,.31)';ctx.stroke();
+    ctx.strokeStyle=gentle?'rgba(0,0,0,.11)':'rgba(0,0,0,.31)';ctx.stroke();
     ctx.beginPath();ctx.moveTo(ax-.42,ay-.42);ctx.lineTo(bx-.42,by-.42);
-    stitchInk(ctx,1,treatment.relief);ctx.stroke();
+    stitchInk(ctx,gentle?.43:1,treatment.relief);ctx.stroke();
     count++;
   }
   ctx.restore();
@@ -152,6 +153,7 @@ export function drawRegionEmbroidery(ctx,object,treatment){
   // Segment length grows for huge bounds to cap Canvas2D stroke work. The
   // enclosing renderer's even-odd clip handles silhouette islands and holes.
   const tatami=treatment.style==='tatami';
+  const gentle=treatment.style==='satin-soft';
   const running=treatment.style==='running';
   const shortRows=tatami||running;
   const segment=Math.max(8,treatment.pitch*(tatami?3.2:2.2),
@@ -180,9 +182,9 @@ export function drawRegionEmbroidery(ctx,object,treatment){
       }
     }else{
       ctx.beginPath();ctx.moveTo(-diagonal*.8,y+.5);ctx.lineTo(diagonal*.8,y+.5);
-      ctx.strokeStyle='rgba(0,0,0,.25)';ctx.stroke();
+      ctx.strokeStyle=gentle?'rgba(0,0,0,.09)':'rgba(0,0,0,.25)';ctx.stroke();
       ctx.beginPath();ctx.moveTo(-diagonal*.8,y-.5);ctx.lineTo(diagonal*.8,y-.5);
-      stitchInk(ctx,.82,treatment.relief);ctx.stroke();
+      stitchInk(ctx,gentle?.37:.82,treatment.relief);ctx.stroke();
       stitches++;
     }
   }
