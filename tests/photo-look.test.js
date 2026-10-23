@@ -354,3 +354,36 @@ test('early digicam uses the existing Light Photo selector, without a new catego
   const old=normalizePhotoLook({enabled:true,presetId:'camera-webcam-signal'});
   assert.equal(Object.hasOwn(old.parameters,'halation'),false);
 });
+
+test('Photo Before uses a temporary view-only recipe and never changes saved settings',async()=>{
+  const {photoPreviewRecipe}=await import('../src/photo-preview-compare.js');
+  const original=normalizeRecipe({seed:'compare-film',
+    positionX:18,viewZoom:1.4,viewPanX:-9,
+    photoLook:normalizePhotoLook({enabled:true,presetId:'film-halation-only',
+      amount:100,parameters:{halation:88}})});
+  const snapshot=JSON.stringify(original);
+  const before=photoPreviewRecipe(original,true);
+  assert.notStrictEqual(before,original);
+  assert.equal(before.photoLook.enabled,false);
+  assert.equal(before.photoLook.presetId,original.photoLook.presetId);
+  assert.equal(before.photoLook.parameters.halation,88);
+  assert.equal(before.positionX,original.positionX);
+  assert.equal(before.viewZoom,original.viewZoom);
+  assert.equal(before.viewPanX,original.viewPanX);
+  assert.equal(JSON.stringify(original),snapshot,'comparison cannot mutate Undo, PNG or URL state');
+  assert.strictEqual(photoPreviewRecipe(original,false),original);
+  assert.strictEqual(photoPreviewRecipe({...original,photoLook:{...original.photoLook,
+    enabled:false}},true).photoLook.enabled,false);
+});
+test('Photo Before button reuses cached stage and is accessible without enlarging control grid',()=>{
+  const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
+  const app=readFileSync(new URL('../src/app.js',import.meta.url),'utf8');
+  const css=readFileSync(new URL('../photo-controls.css',import.meta.url),'utf8');
+  assert.equal((html.match(/data-photo-compare/g)||[]).length,1);
+  assert.match(html,/data-photo-compare aria-pressed="false" disabled/);
+  assert.match(css,/\.photo-compare-row\{display:flex/);
+  assert.match(app,/presentNudgedArtwork\(preview,previewLayers,previewDisplayRecipe\(\)\)/);
+  assert.match(app,/photoCompareButton\.addEventListener\('click'/);
+  assert.match(app,/if\(photoBeforeActive\)\{closeFrame\(message\);return;\}/);
+  assert.match(app,/photoBeforeActive=false;/);
+});

@@ -1,5 +1,10 @@
 # ROYGBIV: active product roadmap and work queue
 
+## Shared Film/Camera F3/D4: Photo Before/After inspector preview (2026-10-22)
+
+The common Light → Photo pane now has a compact accessible **Before / After** comparison beside Enable. It reuses existing cached preview layers and `presentNudgedArtwork`; a temporary non-persisted display recipe bypasses Photo finishing without touching current recipe, Undo, Saved or export. It disables during absence of settled cache/active finish and holds comparison through worker settle. A new slider row, alternative camera engine and screenshot CI were deliberately avoided. Focused source/pure data tests; real physical-phone comparison remains pending. Film #468 and Camera #471 both benefit.
+
+
 ## Digital camera D3: independent early-digicam capture preset (2026-10-22)
 
 The existing Light → Photo pipeline supports an opt-in **simulated early digital compact camera** next to the already-shipped 200-column webcam capture. A 360-column bounded capture, quantized luminance/4:2:0-like chroma and punchier grade emulate an older camera style without another 20MP source buffer. Same normalizer, Undo/Save/worker/PNG path and compact editor; previous webcam rendering constants remain unchanged. Artistic/physical-phone verdict and full-resolution performance remain open; no new CI workflow or UI category. See [camera plan](DIGITAL-CAMERA-AND-COMPUTATIONAL-PHOTO-LOOKS-PLAN-2026-10-22.md) and [#471](https://github.com/gamesbyian/wallgen/issues/471).
