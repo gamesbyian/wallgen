@@ -42,6 +42,7 @@ function args(argv){
     const key=argv[i];
     if(key==='--help'||key==='-h'){values.help=true;continue;}
     if(key==='--focus-deep-black'){values.focusDeepBlack=true;continue;}
+    if(key==='--focus-camera'){values.focusCamera=true;continue;}
     if(!['--out-dir','--seed','--browser'].includes(key)||!argv[i+1]||
       argv[i+1].startsWith('--'))throw Error('Unknown or missing option '+key);
     values[key==='--out-dir'?'outDir':key.slice(2)]=argv[++i];
@@ -55,11 +56,19 @@ function safe(value){
 async function main(){
   const opts=args(process.argv.slice(2));
   if(opts.help){
-    console.log('Usage: node scripts/review-photo-looks.mjs [--out-dir folder] [--seed text] [--browser Chromium-path] [--focus-deep-black]');
+    console.log('Usage: node scripts/review-photo-looks.mjs [--out-dir folder] [--seed text] [--browser Chromium-path] [--focus-deep-black|--focus-camera]');
     return;
   }
+  if(opts.focusDeepBlack&&opts.focusCamera)
+    throw Error('Choose only one focused art review');
   const out=resolve(opts.outDir);
-  const studies=opts.focusDeepBlack?[cases[0],cases[2],
+  const studies=opts.focusCamera?[cases[0],
+    {id:'08-camera-natural',name:'Natural digital camera',
+      look:'camera-natural',amount:95},
+    cases[5],cases[6],
+    {id:'09-camera-digicam',name:'Early digital compact signal',
+      look:'camera-digicam-signal',amount:95,parameters:{grain:5}}
+  ]:opts.focusDeepBlack?[cases[0],cases[2],
     {id:'07-deep-black',name:'Deep-black negative print',
       look:'film-negative-deepblack',amount:85}]:cases;
   await mkdir(out,{recursive:true});
@@ -108,17 +117,18 @@ async function main(){
     'figcaption{padding:8px 4px;display:grid;gap:4px}',
     'figcaption span{opacity:.78;font-size:12px}</style>',
     '<h1>Photo finishing · '+records.length+' production pictures</h1>',
-    '<p>Seven real ROYGBIV wallpapers (600 × 1300), one seed and identical base geometry.',
-    ' Compare every Photo finish against the untreated original. Inspect edge glow around',
-    ' yellow/green ribbons, grain scale, crushed blacks, HDR overprocessing, webcam',
-    ' resolution/chroma loss and colour identity. This is not an automatic aesthetic score.',
-    ' Every PNG includes its exact matching stored recipe.</p>',
+    '<p>'+records.length+' real ROYGBIV wallpapers (600 × 1300), one seed and',
+    ' identical base geometry. Compare colours, edge quality, detail, grain,',
+    ' chroma bandwidth and shadow preservation against the untreated original.',
+    ' The independent capture simulations are artistic approximations.',
+    ' This is not an automatic aesthetic score. Every PNG includes its exact matching stored recipe.</p>',
     '<main class="gallery">',gallery,'</main></html>',
   ].join('');
   await writeFile(join(out,'index.html'),html);
   await writeFile(join(out,'manifest.json'),JSON.stringify({
     schema:'roygbiv-photo-art-review/v1',
-    comparison:opts.focusDeepBlack?'deep-black-negative':'seven-photo-looks',
+    comparison:opts.focusCamera?'camera-family-five':
+      opts.focusDeepBlack?'deep-black-negative':'seven-photo-looks',
     status:'produced-awaiting-human-review',
     seed:opts.seed,width:600,height:1300,base,items:records
   },null,2)+'\n');
