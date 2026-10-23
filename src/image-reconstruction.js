@@ -682,7 +682,13 @@ function* refinementTrials(candidate,maxRenders){
     const origin=best.recipe[field];
     for(const delta of deltas){
       if(renders>=maxRenders)break;
-      const recipe=normalizeRecipe({...best.recipe,[field]:origin+delta});
+      // Inference already projects coarse candidates through the canonical
+      // lock owner. Refinement must do the same for each trial, including
+      // composite locks such as "position" that protect BOTH axes. Otherwise
+      // the preview can visibly move a protected field while Apply restores
+      // it, violating the preview-is-committable contract.
+      const recipe=respectSettingLocks(best.recipe,
+        normalizeRecipe({...best.recipe,[field]:origin+delta}));
       if(recipe[field]===best.recipe[field])continue;
       const error=yield recipe;
       renders++;
