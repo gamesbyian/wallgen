@@ -1,5 +1,8 @@
 # Image-to-recipe reconstruction: native and external imports
 
+**23 Oct bounded fitter lock safety (#609):** the same normalized, shared `respectSettingLocks` contract now protects each of the 10 forward fitting trials, including umbrella Position holding both coordinates. Previously the preview could be fitted into a locked position that the Apply transaction would reject. Tests prove zero impossible renders, partial-lock allowed updates, and sync/async result parity. This is source-code acceptance, not another artistic R0 PNG comparison; established genuine current-art scores are unchanged. See [#609](https://github.com/gamesbyian/wallgen/pull/609).
+
+
 **Focused portrait readability acceptance (23 Oct):** [#608](https://github.com/gamesbyian/wallgen/pull/608) replaces scroll-truncated fit/provenance prose with unclipped concise "Difference ... lower is better ... inferred" and a 44px native "Why?" popover containing the full truthful explanation and locks. [Authentic touch-Chromium run #40013772974](https://github.com/gamesbyian/wallgen/actions/runs/40013772974) repeated the full existing import→PNG→Undo→PNG reimport journey, checked preview retention and no scroll overflow, and captured/reviewed source and explanation states. [Full findings](RECONSTRUCTION-PORTRAIT-JOURNEY-2026-10-23.md). Do not claim physical Pixel accessibility/timing approval. No persistent screenshot workflow.
 
 
