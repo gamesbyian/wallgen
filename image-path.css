@@ -231,3 +231,9 @@ html[data-theme="cream"] .image-recipe-explanation[popover]{
 html[data-theme="cream"] .image-recipe-explanation button{
   background:#7b3569;color:white;border-color:#944176;
 }
+
+/* Verified compact Chromium geometry: 44px select/Why/Apply need 151px of
+   card content at 412x892; the former 149px hard cap clipped four pixels.
+   Save two pixels of internal padding, with a tiny cap increase rather
+   than shrinking or scrolling either production-rendered preview. */
+.image-recipe-workspace:not([hidden]){max-height:155px;padding-block:6px}
