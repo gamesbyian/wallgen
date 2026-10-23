@@ -44,6 +44,14 @@ test('Soft satin is a distinct style option with existing recipe-bound style sel
   assert.match(app,/style:form\.elements\.namedItem\('embroideryStyle'\)\.value/);
 });
 
+test('directional fibre styles stay opt-in in the one persisted native selector',()=>{
+  const html=source('index.html'),code=source('src/embroidery.js');
+  assert.equal((html.match(/value="satin-fibre"/g)||[]).length,1);
+  assert.equal((html.match(/value="tatami-fibre"/g)||[]).length,1);
+  assert.match(code,/function fibreSpan\(/);
+  assert.match(code,/const fibre=treatment\.style==='satin-fibre'/);
+});
+
 test('region angle restores authored direction and stays beside Stitch style',()=>{
   const html=source('index.html'),app=source('src/app.js'),css=source('editor-material-status.css');
   assert.equal((html.match(/name="embroideryDirection"/g)||[]).length,1);
