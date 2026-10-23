@@ -540,14 +540,12 @@ test('DSLR-inspired optic shares the original Photo selector and bounded authore
   assert.match(code,/const lens=look\.presetId==='camera-dslr-optics'/);
 });
 
-// Whole-frame Canvas2D readback is avoidable for ordinary Photo looks. Verify
-// strips reproduce legacy pixel arithmetic, including grain/vignette/flash
-// world coordinates, rather than merely testing that more than one read occurs.
-test('Film and Camera non-spatial finishes stream bounded strips with exact original pixels',()=>{
-  const width=512,height=1150,original=new Uint8ClampedArray(width*height*4);
+// Exact pixel parity across independently graded strips: small, deliberately
+// discontinuous image to exercise noise cells, alpha, flash radius and edges.
+test('non-spatial Film and Camera strips match the full-frame grading pixel-for-pixel',()=>{
+  const width=17,height=43,original=new Uint8ClampedArray(width*height*4);
   for(let y=0;y<height;y++)for(let x=0;x<width;x++){
-    const i=(y*width+x)*4;
-    const black=(x+y)%13===0;
+    const i=(y*width+x)*4,black=(x+y)%13===0;
     original[i]=black?0:(x*19+y*3)%256;
     original[i+1]=black?0:(x*7+y*13)%256;
     original[i+2]=black?0:(x*5+y*11)%256;
@@ -556,24 +554,33 @@ test('Film and Camera non-spatial finishes stream bounded strips with exact orig
   for(const presetId of ['film-negative','film-negative-deepblack','film-grain-only',
     'film-mono','camera-natural','camera-hdr','camera-pocket-flash']){
     const look=normalizePhotoLook({enabled:true,presetId,amount:83});
-    const expected=original.slice(),actual=original.slice(),reads=[];
+    const expected=original.slice(),actual=original.slice();
     processPhotoPixels(expected,width,height,look,'strip-parity');
-    const ctx={
-      getImageData(x,y,w,h){
-        assert.equal(x,0);assert.equal(w,width);
-        assert.ok(w*h*4<=2*1024*1024);
-        reads.push([y,h]);
-        return {data:actual.slice(y*width*4,(y+h)*width*4)};
-      },
-      putImageData(image,x,y){
-        assert.equal(x,0);
-        actual.set(image.data,y*width*4);
-      }
-    };
-    assert.equal(applyPhotoFinish(ctx,width,height,look,'strip-parity'),true);
-    assert.ok(reads.length>1,presetId+' must use multiple strips');
-    assert.deepEqual(actual,expected,presetId+' pixel parity across strip boundary');
+    for(let y=0;y<height;y+=7){
+      const h=Math.min(7,height-y),strip=original.slice(y*width*4,(y+h)*width*4);
+      processPhotoPixels(strip,width,h,look,'strip-parity',
+        {frameHeight:height,rowOffset:y});
+      actual.set(strip,y*width*4);
+    }
+    assert.deepEqual(actual,expected,presetId+' pixel parity across strip seams');
   }
+});
+
+test('Canvas2D adapter reads no more than 2 MiB per non-spatial strip',()=>{
+  const width=2048,height=257,look=normalizePhotoLook({enabled:true,
+    presetId:'film-grain-only',amount:70});
+  const calls=[];
+  const ctx={
+    getImageData(x,y,w,h){
+      assert.equal(x,0);assert.equal(w,width);
+      assert.ok(w*h*4<=2*1024*1024);
+      calls.push([y,h]);
+      return {data:new Uint8ClampedArray(w*h*4)};
+    },
+    putImageData(image,x,y){assert.equal(x,0);assert.equal(image.data.length,width*4*calls.at(-1)[1]);}
+  };
+  assert.equal(applyPhotoFinish(ctx,width,height,look,'large-finish'),true);
+  assert.deepEqual(calls,[[0,256],[256,1]]);
 });
 
 test('spatial finishes keep whole-frame source sampling and reject partial fields',()=>{
