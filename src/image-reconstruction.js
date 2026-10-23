@@ -360,13 +360,14 @@ export const RECONSTRUCTION_FRAME=Object.freeze({
  * outputs and cannot exceed the supplied render budget. Useful only after
  * topology selection, not a claim to identify historical parameters.
  */
-export function refineReconstructionCandidate(candidate,source,render,{maxRenders=10}={}){
-  if(!candidate||!['straight','loop','radial-rays','radial-rings','nested-rings']
-    .includes(candidate.kind)||!Number.isFinite(candidate.error))return candidate;
-  if(!Number.isInteger(maxRenders)||maxRenders<0||maxRenders>16)
-    throw Error('Invalid reconstruction fitting budget');
-  let best=candidate,renders=0;
-  const fields=candidate.kind==='straight'?[
+/**
+ * The same sequence of canonical candidate recipes powers synchronous Node R0
+ * evidence and cooperative browser fitting. The caller returns each actual
+ * drawWallpaper comparison score. Coordinate baselines update between fields,
+ * not in the middle of an offset sweep.
+ */
+function refinementFields(candidate){
+  return candidate.kind==='straight'?[
     [candidate.recipe.orientation==='horizontal'?'positionY':'positionX',[-8,-4,4,8]],
     ['spread',[-16,-8,8,16]],['stripeWidth',[-15,15]]
   ]:candidate.kind==='loop'?[
@@ -376,27 +377,79 @@ export function refineReconstructionCandidate(candidate,source,render,{maxRender
     ['rayRotation',[-10,-5,5,10]],['fieldCenterX',[-5,5]],
     ['fieldCenterY',[-5,5]],['rayCore',[-10,10]]
   ]:candidate.kind==='radial-rings'?[
-    ['fieldCenterX',[-5,5]],['fieldCenterY',[-5,5]],
-    ['rayCount',[-7,7]]
+    ['fieldCenterX',[-5,5]],['fieldCenterY',[-5,5]],['rayCount',[-7,7]]
   ]:[
-    ['fieldCenterX',[-5,5]],['fieldCenterY',[-5,5]],
-    ['regionCount',[-7,7]]
+    ['fieldCenterX',[-5,5]],['fieldCenterY',[-5,5]],['regionCount',[-7,7]]
   ];
-  for(const [field,deltas] of fields){
-    // Compare all deltas to the same coordinate baseline, rather than
-    // chasing a newly improved value and skipping the true neighbouring fit.
+}
+function canRefine(candidate,maxRenders){
+  if(!candidate||!['straight','loop','radial-rays','radial-rings','nested-rings']
+    .includes(candidate.kind)||!Number.isFinite(candidate.error))return false;
+  if(!Number.isInteger(maxRenders)||maxRenders<0||maxRenders>16)
+    throw Error('Invalid reconstruction fitting budget');
+  return true;
+}
+function* refinementTrials(candidate,maxRenders){
+  let best=candidate,renders=0;
+  for(const [field,deltas] of refinementFields(candidate)){
     const origin=best.recipe[field];
     for(const delta of deltas){
       if(renders>=maxRenders)break;
       const recipe=normalizeRecipe({...best.recipe,[field]:origin+delta});
       if(recipe[field]===best.recipe[field])continue;
-      const result=render(recipe,RECONSTRUCTION_WIDTH,RECONSTRUCTION_HEIGHT);
+      const error=yield recipe;
       renders++;
-      const error=compareReconstructionPixels(source,result);
-      if(error+1e-9<best.error)
+      if(Number.isFinite(error)&&error+1e-9<best.error)
         best={...best,recipe,error,label:candidate.label+' · fitted',
           adjustments:[...(best.adjustments||[]),{field,value:recipe[field]}]};
     }
   }
   return {...best,refinementRenders:renders};
+}
+function trialError(source,recipe,render){
+  try{
+    return compareReconstructionPixels(source,
+      render(recipe,RECONSTRUCTION_WIDTH,RECONSTRUCTION_HEIGHT));
+  }catch{return Infinity;}
+}
+export function refineReconstructionCandidate(candidate,source,render,{maxRenders=10}={}){
+  if(!canRefine(candidate,maxRenders))return candidate;
+  const trial=refinementTrials(candidate,maxRenders);
+  let step=trial.next();
+  while(!step.done)step=trial.next(trialError(source,step.value,render));
+  return step.value;
+}
+
+/** Yield BEFORE every expensive renderer invocation; a newer import or closed
+ * dialog cancels without another render. The scheduler belongs to the UI
+ * (requestAnimationFrame) and is injected so Node tests remain deterministic.
+ * A cancelled job returns null; no partial candidate set can be committed.
+ */
+export async function rankReconstructionCandidatesCooperatively(
+  candidates,source,render,{yieldControl=async()=>{},isCancelled=()=>false}={}){
+  // Keep the exact synchronous contract and shared per-candidate comparator.
+  rankReconstructionCandidates([],source,render);
+  if(!Array.isArray(candidates)||candidates.length>RECONSTRUCTION_RENDER_LIMIT)
+    throw Error('Reconstruction render budget exceeded');
+  const results=[];
+  for(const candidate of candidates){
+    if(isCancelled())return null;
+    await yieldControl();
+    if(isCancelled())return null;
+    results.push(rankReconstructionCandidates([candidate],source,render)[0]);
+  }
+  return results.sort((a,b)=>a.error-b.error);
+}
+export async function refineReconstructionCandidateCooperatively(
+  candidate,source,render,{maxRenders=10,yieldControl=async()=>{},isCancelled=()=>false}={}){
+  if(!canRefine(candidate,maxRenders))return candidate;
+  const trial=refinementTrials(candidate,maxRenders);
+  let step=trial.next();
+  while(!step.done){
+    if(isCancelled())return null;
+    await yieldControl();
+    if(isCancelled())return null;
+    step=trial.next(trialError(source,step.value,render));
+  }
+  return step.value;
 }
