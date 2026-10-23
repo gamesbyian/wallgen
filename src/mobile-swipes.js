@@ -41,7 +41,7 @@ editor.addEventListener('touchend',event=>{
   // Scene-inapplicable chips are already hidden by the canonical editor.
   // Swiping must not count or select them, or fallback can jump backwards.
   const next=adjacentVisibleMobileTool(availableTools(),active.tool,dx<0?1:-1);
-  if(next)selectEditorTool(active.category,next);
+  if(next)selectEditorTool(active.category,next,{source:'swipe'});
 },{passive:false});
 handle.addEventListener('keydown',event=>{
   if(event.key==='ArrowDown'){event.preventDefault();handle.click();}
