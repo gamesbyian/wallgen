@@ -24,6 +24,7 @@ export function readReconstructionEvalArgs(argv){
   const opts={dir:'artifacts/reconstruction-r0'};
   for(let i=0;i<argv.length;i++){
     const key=argv[i];
+    if(key==='--alternatives'){opts.alternatives=true;continue;}
     if(key==='--help'||key==='-h'){opts.help=true;continue;}
     if(!['--dir','--browser'].includes(key)||!argv[i+1]||argv[i+1].startsWith('--'))
       throw Error('Unknown/incomplete option '+key);
@@ -77,7 +78,7 @@ async function evaluate(opts){
     for(const item of manifest.items){
       const input=new Uint8Array(await readFile(join(dir,item.metadataFree)));
       // Inference only sees image pixels, never this item's recipe.
-      const inferred=await page.evaluate(async base64=>{
+      const inferred=await page.evaluate(async ({base64,includeAlternatives})=>{
         const {reconstructionCandidates,rankReconstructionCandidates,
           reconstructionPlacement,RECONSTRUCTION_FRAME,
           refineReconstructionCandidate,
@@ -127,9 +128,14 @@ async function evaluate(opts){
             recipe:best.recipe,refinementRenders:best.refinementRenders??0}:null,
           alternatives:ranked.map(x=>({kind:x.kind,label:x.label,error:x.error})),
           sourcePreview:fit.toDataURL('image/png'),
-          candidatePreview:preview?.toDataURL('image/png')??null
+          candidatePreview:preview?.toDataURL('image/png')??null,
+          candidateVariants:includeAlternatives?ranked.map((item,i)=>({
+            image:render(item.recipe).toDataURL('image/png'),
+            label:item.label,error:item.error,kind:item.kind,index:i
+          })):[]
         };
-      },Buffer.from(input).toString('base64'));
+      },{base64:Buffer.from(input).toString('base64'),
+        includeAlternatives:!!opts.alternatives});
       const truth=JSON.parse(await readFile(join(dir,item.recipeFile),'utf8'));
       const truthError=await page.evaluate(async ({recipe,reference})=>{
         const {drawWallpaper}=await import('/src/renderer.js');
@@ -157,12 +163,17 @@ async function evaluate(opts){
         trueStructure:truth.structure,trueGeometry:truth.geometry,
         recoveredStructure:inferred.selected?.structure??null,
         recoveredGeometry:inferred.selected?.geometry??null,
-        alternatives:inferred.alternatives};
+        alternatives:inferred.alternatives,
+        ...(opts.alternatives?{variantPreviews:inferred.candidateVariants.map((_,i)=>
+          item.id+'.r0-alternative-'+String(i+1).padStart(2,'0')+'.png')}: {})};
       // Report two previews next to each other; no claim of human inspection.
       const first=item.id+'.r0-source-preview.png';
       await writeFile(join(dir,first),pngBytes(inferred.sourcePreview));
       if(inferred.candidatePreview)
         await writeFile(join(dir,item.id+'.r0-best-preview.png'),pngBytes(inferred.candidatePreview));
+      for(const [index,variant] of inferred.candidateVariants.entries()){
+        await writeFile(join(dir,record.variantPreviews[index]),pngBytes(variant.image));
+      }
       results.push(record);
       console.log('R0_EVAL '+JSON.stringify(record));
     }
@@ -175,7 +186,14 @@ async function evaluate(opts){
       (item.candidateCount?'<img src="'+esc(item.id)+'.r0-best-preview.png" alt="Recovered current-renderer recipe">':'')+
       '</div><figcaption>Actual source / inferred candidate · best error '+
       esc(item.bestError??'No candidate')+' · structure '+esc(item.trueStructure)+
-      ' → '+esc(item.recoveredStructure??'none')+'</figcaption></figure>').join('');
+      ' → '+esc(item.recoveredStructure??'none')+'</figcaption>'+
+      (item.variantPreviews?.length?'<details><summary>All evaluated candidates ('+
+        item.variantPreviews.length+')</summary><section class="variants">'+
+        item.variantPreviews.map((file,i)=>'<figure><img src="'+esc(file)+
+          '" alt="Actual candidate '+(i+1)+'">'+
+          '<figcaption>'+esc(item.alternatives[i].label)+' · '+
+          Number(item.alternatives[i].error).toFixed(4)+'</figcaption></figure>').join('')+
+        '</section></details>':'')+'</figure>').join('');
     await writeFile(join(dir,'evaluation.html'),[
       '<!doctype html><html lang="en"><meta charset="utf-8">',
       '<meta name="viewport" content="width=device-width,initial-scale=1">',
@@ -184,7 +202,10 @@ async function evaluate(opts){
       'figure{display:inline-block;vertical-align:top;width:min(280px,95vw);padding:9px;',
       'background:#292931;border-radius:10px;margin:8px}',
       'figure div{display:flex;gap:6px}img{width:calc(50% - 3px);object-fit:contain}',
-      'figcaption{font-size:12px;line-height:1.4}h2{font-size:14px}</style>',
+      'figcaption{font-size:12px;line-height:1.4}h2{font-size:14px}',
+      '.variants{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}',
+      '.variants figure{width:auto;margin:0;padding:4px}.variants img{width:100%}',
+      '.variants figcaption{overflow-wrap:anywhere}</style>',
       '<h1>R0: actual production sources compared with inferred renderer output</h1>',
       '<p>Quantitative code evidence, not artistic or handset approval. This report does not claim',
       ' recovery of original seeds or render settings. Candidates were selected before truth was read.</p>',
@@ -200,7 +221,7 @@ async function evaluate(opts){
 }
 async function main(){
   const opts=readReconstructionEvalArgs(process.argv.slice(2));
-  if(opts.help){console.log('node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/reconstruction-r0 [--browser executable]');return;}
+  if(opts.help){console.log('node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/reconstruction-r0 [--browser executable] [--alternatives]');return;}
   await evaluate(opts);
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
