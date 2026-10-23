@@ -28,6 +28,8 @@ import {parseStoredFavorites} from './favorites-store.js';
 import {encodePortableRecipe,decodePortableRecipe,portableShareUrl,portableShareTokenFromLocation,
   MAX_PORTABLE_LINK_CHARS} from './share-recipe.js';
 import {iconMarkup,setIconSource,hydrateStaticIcons} from './ui-icons.js';
+import {createCreativeRecorder,openUsageStore,USAGE_MODE_KEY} from './creative-recorder.js';
+import {installCreativeRecorderUI} from './creative-recorder-ui.js';
 
 const form = document.getElementById('controls');
 const preview = document.getElementById('preview');
@@ -39,6 +41,7 @@ const favoriteButton = document.getElementById('favorite');
 const FAVORITES_KEY = 'wallgen:favorites:v1';
 const FIELDS = ['primesOnly','family','structure','radialMode','rayCount','rayRotation','rayTwist','rayCoverage','rayCore','fieldCenterX','fieldCenterY','regionMode','regionCount','regionJitter','regionSides','scatteredCount','scatteredMinSize','scatteredMaxSize','scatteredVariation','scatteredSpacing','scatteredEdgeCrop','scatteredOverlap','scatteredShapeKind','dividerColor','dividerWidth','composition','repeatCount','repeatSpacing','orientation','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','geometry','turnRadius','hairpinAngle','loopRadius','loopSweep','geometrySafety','extendDrawnPath','crossingMode','stepCount','chevronSharpness','loopAspect','construction','motif','lineStyle','pathLength','tonalContrast','brushRoughness','dotSize','dotSpacing','endTaper','shapeFrequency','shapeDepth','motifSize','motifFrequency','palette','material','outline','background','lightingMood','lightDirection','lightStrength','shadowStrength','stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection','textureCoverage','textureRotation','textureBlend','textureLayer2Enabled','material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2','textureLayer3Enabled','material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3','chaos','stripeWidth','spread','textureStrength','textureScale','textureDisplacement','individuality','patternHomogeneity','overridePatternHomogeneity','gap','outlineBuffer','glow'];
 let current = normalizeRecipe();
+let usageRecorder=null; // Initialized after first render; no default collection.
 let currentScene;
 const previewLayers={background:null,ink:null,scene:null,key:null,overhang:null};
 let previewWorker=null;
@@ -154,7 +157,7 @@ function undo(){
   clearTimeout(rangeTimeout);
   const previous=undoStack.pop();
   undoing=true;
-  try{changeRecipe(previous,{bypassLocks:true});showNotice('Undid last design change.');}finally{undoing=false;updateUndoButton();}
+  try{changeRecipe(previous,{bypassLocks:true,cause:'undo'});showNotice('Undid last design change.');}finally{undoing=false;updateUndoButton();}
 }
 
 function readFavorites() {
@@ -622,9 +625,13 @@ function syncURL() {
   } catch { /* Local file previews may prohibit History API. */ }
 }
 function titleCase(value){return value.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase());}
-function render(recipe,{scroll=false,bypassLocks=false,interactive=false}={}) {
+function render(recipe,{scroll=false,bypassLocks=false,interactive=false,cause='edit',record=true}={}) {
   const next=bypassLocks?normalizeRecipe(recipe):respectSettingLocks(current,recipe);
+  const previous=current;
   current=checkpoint(next);
+  if(record)usageRecorder?.transition(previous,current,{cause,context:{
+    category:document.querySelector('.settings-tab[aria-selected="true"]')?.dataset.tab||null
+  }});
   // Primes Only is reflected by its selected control; no transient message.
   const key=artKey(current);
   currentScene=resolveScene(current);
@@ -1049,6 +1056,8 @@ async function downloadPNG(){
     updateControlsFromInputs();
   }
   const snapshot=normalizeRecipe(current);
+  const exportId=crypto.randomUUID();
+  usageRecorder?.action('export_requested',snapshot,{exportId});
   const metadata=metadataValues();
   const button=document.getElementById('download');
   setBusy(button,true,'Rendering 19.8 MP…');
@@ -1080,8 +1089,9 @@ async function downloadPNG(){
     const result=new Blob([embedPngMetadata(await blob.arrayBuffer(),metadata,{recipe:snapshot})],
       {type:'image/png'});
     downloadBlob(result,`roygbiv-${safeFilename(snapshot.seed)}-${OUTPUT_WIDTH}x${OUTPUT_HEIGHT}.png`);
+    usageRecorder?.action('download_initiated',snapshot,{exportId});
     showNotice(`Exported the framed ${Math.round(snapshot.viewZoom*100)}% view at ${OUTPUT_WIDTH} × ${OUTPUT_HEIGHT}, with recipe metadata.`);
-  }catch(error){console.error(error);showNotice(`Export failed: ${error.message}`);}
+  }catch(error){usageRecorder?.action('export_failed',snapshot,{exportId});console.error(error);showNotice(`Export failed: ${error.message}`);}
   finally { if(big){big.width=0;big.height=0;}setBusy(button,false); }
 }
 const importRecipeButton=document.getElementById('importRecipePNG');
@@ -1829,6 +1839,7 @@ window.addEventListener('pagehide',()=>{
   previewWorker?.dispose();
   thumbnailWorker?.dispose();
   releasePreviewLayers();
+  usageRecorder?.action('hidden_unconfirmed',current);
 });
 
 const explorationHistory=installExplorationHistory({
@@ -1987,10 +1998,12 @@ document.getElementById('randomize').addEventListener('click',()=>{
   explorationHistory.remember(current,'New seed');
 });
 document.getElementById('randomizeAll').addEventListener('click',()=>{
+  const previous=current;
   explorationHistory.remember(current,'Before Random');
   changeRecipe({...randomizeAllRecipe({primesOnly:current.primesOnly}),
     viewZoom:current.viewZoom,viewPanX:current.viewPanX,viewPanY:current.viewPanY,
-    geometrySafety:current.geometrySafety});
+    geometrySafety:current.geometrySafety},{record:false,cause:'randomize_all'});
+  usageRecorder?.supersede(previous,current,'randomize_all');
   explorationHistory.remember(current,'Random');
 });
 // Optional material layers activate by selecting an actual material, with
@@ -2050,13 +2063,16 @@ document.getElementById('copyLink').addEventListener('click',async()=>{
     showNotice('Design link is too long to open reliably. Use Save recipe JSON or Download PNG to share this wallpaper. '+error.message);
   }
 });
-document.getElementById('downloadRecipe').addEventListener('click',()=>downloadBlob(new Blob([JSON.stringify(current,null,2)+'\n'],{type:'application/json'}),`roygbiv-${safeFilename(current.seed)}.json`));
+document.getElementById('downloadRecipe').addEventListener('click',()=>{
+  usageRecorder?.action('save_recipe_json',current);
+  downloadBlob(new Blob([JSON.stringify(current,null,2)+'\n'],{type:'application/json'}),`roygbiv-${safeFilename(current.seed)}.json`);
+});
 favoriteButton.addEventListener('click',()=>{
   // A local click does not fire a storage event in this tab. Read the latest
   // shared state before mutating it so an intervening remote write survives.
   reconcileFavoritesFromStorage();
-  if(isFavorite(current)){favorites=favorites.filter(item=>!sameRecipe(item,current));showNotice('Removed from favourites.');}
-  else {favorites.unshift({...current});favorites=favorites.slice(0,60);showNotice('Added to favourites.');}
+  if(isFavorite(current)){favorites=favorites.filter(item=>!sameRecipe(item,current));showNotice('Removed from favourites.');usageRecorder?.action('favorite_removed',current);}
+  else {favorites.unshift({...current});favorites=favorites.slice(0,60);showNotice('Added to favourites.');usageRecorder?.action('favorite_added',current);}
   saveFavorites();render(current);
   // Desktop can keep Saved visible while its heart action changes the list.
   // Its cards must refresh without waiting for a non-existent same-tab event.
@@ -2198,3 +2214,33 @@ render(current);
 startPreviewWorker();
 
 hydrateStaticIcons();
+
+// The first render never waits for tracking. Recording is off unless the
+// owner explicitly enabled this locally in an earlier visit.
+const usageStore=await openUsageStore();
+let usageOptedIn=false;
+try{usageOptedIn=localStorage.getItem(USAGE_MODE_KEY)==='local';}catch{}
+usageRecorder=createCreativeRecorder({
+  store:usageStore,enabled:usageOptedIn,
+  onError:error=>console.warn('Local activity storage unavailable:',error)
+});
+usageRecorder.start(current);
+installCreativeRecorderUI({recorder:usageRecorder,getRecipe:()=>current});
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='hidden')
+    usageRecorder?.action('hidden_unconfirmed',current);
+  else usageRecorder?.action('visible_again',current);
+});
+for(const eventName of ['editor-category-change','editor-tool-changed',
+  'roygbiv-mobile-navigation-changed','roygbiv-gallery-mode-changed']){
+  document.addEventListener(eventName,event=>{
+    const detail=event.detail;
+    // Only route names are recorded; never search text or arbitrary form input.
+    const route=typeof detail==='string'?detail:
+      typeof detail?.mode==='string'?detail.mode: 'changed';
+    usageRecorder?.action('navigation',current,{routeKind:eventName,route:route.slice(0,80)});
+  });
+}
+photoCompareButton.addEventListener('click',()=>
+  usageRecorder?.action('photo_compare',current,{before:photoBeforeActive}));
+
