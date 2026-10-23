@@ -193,3 +193,38 @@ test('a single excessively large event remains local rather than creating an unv
   assert.throws(()=>makeUsageBatch([excessive],[],{id:()=> 'huge'}),
     /850 KB private backup file limit/);
 });
+
+test('unbackupable shape in one session cannot trap independent sessions in the private outbox',()=>{
+  const at='2026-10-23T12:00:00Z';
+  const rows=[
+    {eventId:'a1',sessionId:'art-a',seq:1,at,type:'episode_start'},
+    {eventId:'a2',sessionId:'art-a',seq:2,at,type:'recipe_commit',
+      changes:[{key:'scatteredShape',after:'x'.repeat(900000)}]},
+    {eventId:'a3',sessionId:'art-a',seq:3,at,type:'episode_end'},
+    {eventId:'b1',sessionId:'art-b',seq:1,at,type:'episode_start'},
+    {eventId:'b2',sessionId:'art-b',seq:2,at,type:'episode_end'}
+  ];
+  const first=makeUsageBatch(rows,[],{id:()=> 'a-first'});
+  assert.deepEqual(first.eventIds,['a1']);
+  const other=makeUsageBatch(rows,first.eventIds,{id:()=> 'b-next'});
+  assert.deepEqual(other.eventIds,['b1','b2']);
+  assert.match(other.path,/\/art-b\/b-next\.json$/);
+  const synced=first.eventIds.concat(other.eventIds);
+  assert.throws(()=>makeUsageBatch(rows,synced),/850 KB private backup file limit/);
+  assert.ok(!synced.includes('a2'));
+  assert.ok(!synced.includes('a3'),'never skip a missing causal event inside the blocked session');
+});
+
+test('a blocked earlier session does not displace other sessions even when timestamps roll back',()=>{
+  const rows=[
+    {eventId:'too-big',sessionId:'blocked',seq:1,at:'2026-10-23T08:58:00Z',
+      changes:[{after:'z'.repeat(900000)}]},
+    {eventId:'later',sessionId:'allowed',seq:1,at:'2026-10-23T08:59:00Z'},
+    {eventId:'later2',sessionId:'allowed',seq:2,at:'2026-10-23T09:01:00Z'}
+  ];
+  const batch=makeUsageBatch(rows,[],{id:()=> 'allowed-one'});
+  assert.deepEqual(batch.eventIds,['later','later2']);
+  assert.equal(JSON.parse(batch.json).events[0].seq,1);
+  assert.throws(()=>makeUsageBatch(rows,batch.eventIds),
+    /850 KB private backup file limit/);
+});
