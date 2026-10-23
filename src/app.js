@@ -765,6 +765,19 @@ const imagePathTool=installImagePathTool({
   onNotice:showNotice,
   onPath:path=>drawTool.loadPath(path),
   onShape:applyImportedShape,
+  onRender:(recipe,canvas)=>drawWallpaper(canvas,recipe),
+  onRecipe:(candidate,description)=>{
+    // Exactly one standard Undo transaction. Locks are respected, including
+    // otherwise dormant settings that the candidate wants to change.
+    const effective=respectSettingLocks(current,candidate);
+    const blocked=Object.keys(candidate).filter(key=>
+      current.lockedSettings.includes(key)&&
+      JSON.stringify(effective[key])!==JSON.stringify(candidate[key]));
+    changeRecipe(candidate,{cause:'image-reconstruction'});
+    showNotice('Applied inferred '+description.kind+' recipe. Undo restores the prior design.'+
+      (blocked.length?' '+blocked.length+' locked settings were preserved.':''));
+    return true;
+  },
   onAngle:angle=>{
     // Rotation is relative to the resolved seed direction, not fixed at 45°.
     const base=fromControls();
