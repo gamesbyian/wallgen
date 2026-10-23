@@ -347,7 +347,9 @@ test('spatial webcam capture and active film grain are not falsely optimized awa
   };
   assert.equal(applyPhotoFinish(ctx,6,6,neutralSignal,'sensor'),true);
   assert.equal(applyPhotoFinish(ctx,6,6,activeGrain,'emulsion'),true);
-  assert.deepEqual([reads,writes],[2,2]);
+  // Webcam first gathers the original sensor signal, then grades a bounded
+  // destination strip. Ordinary grain still needs only the destination.
+  assert.deepEqual([reads,writes],[3,2]);
   assert.throws(()=>processPhotoPixels(new Uint8ClampedArray(3),8,9,
     {enabled:true,presetId:'film-grain-only',parameters:{grain:0}}),
     /Invalid photo pixel buffer/,
