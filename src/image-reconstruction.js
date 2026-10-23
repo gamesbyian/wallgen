@@ -206,3 +206,38 @@ export function rankReconstructionCandidates(candidates,source,render){
 export const RECONSTRUCTION_FRAME=Object.freeze({
   width:RECONSTRUCTION_WIDTH,height:RECONSTRUCTION_HEIGHT
 });
+
+
+/**
+ * Deliberately small, deterministic coarse-to-fine fit using the canonical
+ * painter callback. One candidate at a time; never holds multiple raster
+ * outputs and cannot exceed the supplied render budget. Useful only after
+ * topology selection, not a claim to identify historical parameters.
+ */
+export function refineReconstructionCandidate(candidate,source,render,{maxRenders=10}={}){
+  if(!candidate||!['straight','loop'].includes(candidate.kind)||
+    !Number.isFinite(candidate.error))return candidate;
+  if(!Number.isInteger(maxRenders)||maxRenders<0||maxRenders>16)
+    throw Error('Invalid reconstruction fitting budget');
+  let best=candidate,renders=0;
+  const fields=candidate.kind==='straight'?[
+    [candidate.recipe.orientation==='horizontal'?'positionY':'positionX',[-8,-4,4,8]],
+    ['spread',[-16,-8,8,16]],['stripeWidth',[-15,15]]
+  ]:[
+    ['positionX',[-6,6]],['positionY',[-6,6]],
+    ['loopRadius',[-10,10]],['spread',[-10,10]],['stripeWidth',[-15,15]]
+  ];
+  for(const [field,deltas] of fields)for(const delta of deltas){
+    if(renders>=maxRenders)break;
+    const recipe=normalizeRecipe({...best.recipe,
+      [field]:best.recipe[field]+delta});
+    if(recipe[field]===best.recipe[field])continue;
+    const result=render(recipe,RECONSTRUCTION_WIDTH,RECONSTRUCTION_HEIGHT);
+    renders++;
+    const error=compareReconstructionPixels(source,result);
+    if(error+1e-9<best.error)
+      best={...best,recipe,error,label:candidate.label+' · fitted',
+        adjustments:[...(best.adjustments||[]),{field,value:recipe[field]}]};
+  }
+  return {...best,refinementRenders:renders};
+}
