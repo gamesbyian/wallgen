@@ -69,10 +69,15 @@ async function run(args){
     const failures=[];
     page.on('pageerror',err=>failures.push(err.message));
     await page.goto(args.url,{waitUntil:'domcontentloaded',timeout:30000});
-    await page.locator('#downloadRecipe').waitFor({timeout:30000});
+    // Mobile layout hides the auxiliary recipe JSON toolbar item. Verify
+    // that its handler exists, then invoke that utility action explicitly;
+    // the primary image-import Apply/Close targets are still TAP tested.
+    await page.locator('#downloadRecipe').waitFor({state:'attached',timeout:30000});
     async function saveDownload(selector,name,timeout=60000){
       const request=page.waitForEvent('download',{timeout});
-      await page.locator(selector).click();
+      const button=page.locator(selector);
+      if(await button.isVisible())await button.click();
+      else await button.evaluate(node=>node.click());
       const download=await request;
       await download.saveAs(join(output,name));
       return join(output,name);
