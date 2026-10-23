@@ -358,13 +358,25 @@ export function reconstructionCandidates(image,recipe){
   for(const path of distinct){
     const mapped=pathToWallpaper(path,image.width,image.height,0);
     if(!mapped)continue;
+    // The ordinary safe path stays available. For a diagnosed wavy/jagged
+    // seven-colour strip pack, let the renderer also try a full-width path:
+    // the shared safeDrawnBandSpan curvature clamp can collapse all seven
+    // offsets on importer pixel wiggles. This opt-in candidate deliberately
+    // relaxes only its own canonical geometrySafety, never the manual editor.
+    const expanded=['wave','jagged'].includes(desc.curve.kind)&&
+      desc.colourRegions.length>=5&&!desc.radial.kind;
     for(const spread of [30,65]){
+      const geometrySafety=spread===30||!expanded;
       const candidate=appliedDrawnPathRecipe({...base,spread,stripeWidth:52,
         composition:'single',construction:'ribbon',chaos:0,
-        individuality:0,geometrySafety:true},mapped.points,
+        individuality:0,geometrySafety},mapped.points,
       mapped.anchors,mapped.corners,false,false);
-      candidates.push({kind:'path',label:path.label+' / spread '+spread,
-        uncertainty:'Estimated shared centreline and spacing; individual stripe geometry and materials were not recovered.',
+      candidates.push({kind:'path',
+        label:path.label+' / '+(geometrySafety?'safely spaced':'expanded ribbons')+
+          ' / spread '+spread,
+        uncertainty:geometrySafety?
+          'Estimated centreline and conservative curvature-safe spacing; wide source ribbons may be compressed.':
+          'Wider parallel ribbons use the original extracted path without the local curvature clamp; bends can intersect, so accept only after examining the actual candidate preview.',
         recipe:candidate});
     }
   }
@@ -385,6 +397,22 @@ export function reconstructionCandidates(image,recipe){
     return {...candidate,recipe:effective,lockedChanges:blocked};
   }).filter(candidate=>!essential(candidate).some(key=>
     candidate.lockedChanges.includes(key)));
+  // Preserve the current conservative Draw candidate as a guaranteed
+  // alternative while allowing ONE expanded full-ribbon Draw candidate to
+  // compete in exactly the same bounded six-render budget. Only wave/jagged
+  // import evidence triggers the reserved second path slot. Never invent a
+  // new geometry type or bypass a creator's Geometry safety setting lock.
+  if(['wave','jagged'].includes(desc.curve.kind)&&
+    desc.colourRegions.length>=5&&!desc.radial.kind){
+    const safe=committable.find(c=>c.kind==='path'&&c.recipe.geometrySafety);
+    const wide=committable.find(c=>c.kind==='path'&&
+      !c.recipe.geometrySafety&&!c.lockedChanges.includes('geometrySafety'));
+    if(safe&&wide){
+      const procedural=diverseReconstructionCandidates(
+        committable.filter(c=>c.kind!=='path'),RECONSTRUCTION_RENDER_LIMIT-2);
+      return [...procedural,safe,wide];
+    }
+  }
   return diverseReconstructionCandidates(committable);
 }
 
