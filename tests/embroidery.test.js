@@ -154,3 +154,44 @@ test('many imported silhouette vertices never overflow region bound reduction',(
   assert.equal(drawRegionEmbroidery(ctx,{rings:[[]]},select({style:'running'})),0);
   assert.equal(drawRegionEmbroidery(ctx,{rings:[[{x:Infinity,y:0}]]},select({style:'running'})),0);
 });
+
+test('Soft satin is opt-in, preserves exact stitch paths and keeps legacy shadow/ink values',()=>{
+  const scene=resolveScene({seed:'soft-vs-legacy',structure:'paths',geometry:'loop'});
+  const stripe=scene.stripes[1];
+  const inkCapture=()=>{const strokes=[];let from=null;return{
+    strokes,save(){},restore(){},beginPath(){},
+    moveTo(x,y){from=[x,y]},lineTo(x,y){this.to=[x,y]},
+    stroke(){strokes.push({start:from,end:this.to,ink:this.strokeStyle})}
+  }};
+  const old=inkCapture(),soft=inkCapture(),again=inkCapture();
+  const previous=select({style:'satin',pitch:5,relief:65});
+  const gentle=select({style:'satin-soft',pitch:5,relief:65});
+  assert.equal(drawRibbonEmbroidery(old,stripe,scene.extent,previous),
+    drawRibbonEmbroidery(soft,stripe,scene.extent,gentle));
+  drawRibbonEmbroidery(again,stripe,scene.extent,gentle);
+  assert.deepEqual(soft.strokes,again.strokes,'new style must be deterministic');
+  assert.ok(soft.strokes.length>100);
+  assert.deepEqual(soft.strokes.map(s=>[s.start,s.end]),
+    old.strokes.map(s=>[s.start,s.end]),'no changes to station geometry');
+  assert.equal(old.strokes[0].ink,'rgba(0,0,0,.31)');
+  assert.equal(soft.strokes[0].ink,'rgba(0,0,0,.11)');
+  assert.notEqual(old.strokes[1].ink,soft.strokes[1].ink,'highlight reduced');
+  const encoded=normalizeRecipe({seed:'soft-persist',surfaceTreatments:[gentle]});
+  assert.deepEqual(decodeRecipe(encodeRecipe(encoded)),encoded);
+  assert.equal(encoded.surfaceTreatments[0].style,'satin-soft');
+});
+test('soft satin region retains same stroke geometry with reduced tint',()=>{
+  const region={circle:{cx:100,cy:120,r:35}};
+  const capture=()=>{const records=[];let start=null;return {records,
+    save(){},restore(){},translate(){},rotate(){},beginPath(){},
+    moveTo(x,y){start=[x,y]},lineTo(x,y){this.end=[x,y]},
+    stroke(){records.push({start,end:this.end,ink:this.strokeStyle})}
+  }};
+  const old=capture(),gentle=capture();
+  const previous=drawRegionEmbroidery(old,region,select({style:'satin'}));
+  const modified=drawRegionEmbroidery(gentle,region,select({style:'satin-soft'}));
+  assert.equal(previous,modified);
+  assert.deepEqual(old.records.map(s=>[s.start,s.end]),gentle.records.map(s=>[s.start,s.end]));
+  assert.equal(old.records[0].ink,'rgba(0,0,0,.25)');
+  assert.equal(gentle.records[0].ink,'rgba(0,0,0,.09)');
+});

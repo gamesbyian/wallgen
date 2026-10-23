@@ -48,6 +48,7 @@ const options=argv=>{
   for(let i=0;i<argv.length;i++){
     const flag=argv[i];
     if(flag==='--help'||flag==='-h'){result.help=true;continue;}
+    if(flag==='--focus-soft-satin'){result.focusSoftSatin=true;continue;}
     if(!['--out-dir','--seed','--browser'].includes(flag)||!argv[i+1]||
       argv[i+1].startsWith('--'))throw Error('Unknown or incomplete option '+flag);
     result[flag==='--out-dir'?'outDir':flag.slice(2)]=argv[++i];
@@ -74,19 +75,22 @@ function makeRecipe(study,seed){
 async function main(){
   const opts=options(process.argv.slice(2));
   if(opts.help){
-    console.log('node scripts/review-embroidery.mjs [--out-dir folder] [--seed text] [--browser Chromium-path]');
+    console.log('node scripts/review-embroidery.mjs [--out-dir folder] [--seed text] [--browser Chromium-path] [--focus-soft-satin]');
     return;
   }
   const out=resolve(opts.outDir);
+  const studies=opts.focusSoftSatin?
+    [cases[0],cases[1],{id:'07-ribbon-soft-satin',
+      name:'Loop ribbon · soft satin',scene:'ribbon',style:'satin-soft'}]:cases;
   await mkdir(out,{recursive:true});
   // Never overwrite a user-reviewed comparison or a previous attempt.
   for(const file of ['index.html','manifest.json',
-    ...cases.flatMap(study=>[study.id+'.png',study.id+'.recipe.json'])]){
+    ...studies.flatMap(study=>[study.id+'.png',study.id+'.recipe.json'])]){
     try{await access(join(out,file));throw Error('Review output exists: '+file);}
     catch(error){if(error.code!=='ENOENT')throw error;}
   }
   const records=[];
-  for(const study of cases){
+  for(const study of studies){
     const recipe=makeRecipe(study,opts.seed);
     const recipeFile=study.id+'.recipe.json';
     const imageFile=study.id+'.png';
@@ -115,7 +119,7 @@ async function main(){
     'figure{padding:8px;background:#2b2d30;border-radius:12px;margin:0}',
     'img{width:100%;display:block;border-radius:8px}',
     'figcaption{padding:8px 4px;display:grid;gap:4px}figcaption span{opacity:.72}</style>',
-    '<h1>Embroidery · seven production-rendered pictures</h1>',
+    '<h1>Embroidery · '+records.length+' production-rendered pictures</h1>',
     '<p>Within each scene group, only embroidery style and targeting differ.',
     ' Inspect path-following station continuity at loop crossings, region stitch',
     ' gaps, visible weave, clipping at circular edges, background preservation and',
@@ -127,6 +131,7 @@ async function main(){
   await writeFile(join(out,'index.html'),html);
   await writeFile(join(out,'manifest.json'),JSON.stringify({
     schema:'roygbiv-embroidery-art-review/v1',
+    comparison:opts.focusSoftSatin?'soft-satin-versus-legacy':'seven-stitch-styles',
     status:'produced-awaiting-actual-visual-review',
     width:600,height:1300,seed:opts.seed,base,ribbon,region,items:records
   },null,2)+'\n');

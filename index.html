@@ -317,6 +317,7 @@
           <label class="field">Stitch style
             <select name="embroideryStyle">
               <option value="satin">Satin ribs</option>
+              <option value="satin-soft">Soft satin (gentle shading)</option>
               <option value="tatami">Tatami fill (regions)</option>
               <option value="running">Running seams (path-following)</option>
             </select>
@@ -329,7 +330,7 @@
               <input type="range" name="embroideryRelief" min="0" max="100" value="65">
             </label>
           </div>
-          <small>Thread follows the chosen colour or object. Tatami uses offset short rows on regions. Running uses interrupted, path-following seams on ribbons and short stitches on regions. Independent of the three texture layers.</small>
+          <small>Thread follows the chosen colour or object. Soft satin retains satin geometry with gentler dark and light shading. Tatami uses offset short rows on regions; Running follows ribbon paths. Independent of the three texture layers.</small>
         </details>
         <div class="texture-displacement-control">
           <label class="field range-field"><span>Contour distortion</span>

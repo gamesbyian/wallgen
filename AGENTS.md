@@ -1,5 +1,10 @@
 # Agent orientation for ROYGBIV
 
+## Soft Satin correction visually supported (2026-10-22)
+
+An opt-in `satin-soft` treatment now reduces overpaint on tight red/orange loops while retaining legacy `satin` unchanged. [Three actual production PNGs](docs/SOFT-SATIN-ART-FINDINGS-2026-10-22.md) were downloaded, visually opened, CRC-checked and matched to their stored recipes (Actions #39884499923): measured RGB deviation fell from 8.535 to 3.457 on one controlled scene. The temporary Chromium probe was removed before merge. Physical Pixel optics/performance and further textile realism remain unverified.
+
+
 ## First actual embroidery picture review complete (2026-10-22)
 
 [Seven real production-rendered samples](docs/EMBROIDERY-PRODUCTION-ART-FINDINGS-2026-10-22.md) were downloaded, viewed, CRC-validated and matched to saved PNG recipes (Actions #39883744519). Running seams visibly follow loops; targeted Satin changes only one circle; Satin on tight inner loops can visibly desaturate rainbow ink and short regional stitches remain mechanically repetitive. This is **real output evidence**, but does not approve physical Pixel rendering or realistic sewn fibre. The one-off Chromium gate was removed byte-for-byte. Advance any realism work opt-in, retaining earlier saved pixels.
