@@ -255,3 +255,48 @@ test('chain region courses use curved loops within bounded work without repainti
   assert.equal(saved.surfaceTreatments[0].style,'chain');
   assert.equal(normalizeSurfaceTreatments([{id:'x',enabled:true,style:'old-invalid'}])[0].style,'satin');
 });
+
+test('opt-in fibre shading preserves legacy branches, recipe identity and crossing phase',()=>{
+  const scene=resolveScene({seed:'fibre-loop',structure:'paths',geometry:'loop',motif:'solid'});
+  const stripe=scene.stripes[2],style=select({style:'satin-fibre',pitch:6,relief:80});
+  const capture=()=>{const strokes=[];let start,end;return{
+    strokes,save(){},restore(){},beginPath(){},moveTo(x,y){start=[x,y]},
+    lineTo(x,y){end=[x,y]},stroke(){strokes.push({start,end,ink:this.strokeStyle,width:this.lineWidth})}
+  }};
+  const full=capture(),repeat=capture(),partial=capture(),legacy=capture();
+  const count=drawRibbonEmbroidery(full,stripe,scene.extent,style);
+  drawRibbonEmbroidery(repeat,stripe,scene.extent,style);
+  const partialCount=drawRibbonEmbroidery(partial,stripe,scene.extent,style,
+    {start:-scene.extent*.28,end:scene.extent*.28});
+  drawRibbonEmbroidery(legacy,stripe,scene.extent,select({style:'satin',pitch:6,relief:80}));
+  assert.ok(count>25&&partialCount>0&&partialCount<count);
+  assert.equal(full.strokes.length,count*4,'underlay, shadow, strand and glint per station');
+  assert.deepEqual(repeat.strokes,full.strokes,'fibre appearance is deterministic');
+  const all=new Set(full.strokes.map(JSON.stringify));
+  assert.ok(partial.strokes.every(item=>all.has(JSON.stringify(item))),
+    'replayed crossing strokes keep their original glint phase');
+  assert.match(legacy.strokes[0].ink,/rgba\\(0,0,0,\\.31\\)/);
+  assert.ok(full.strokes.some(item=>item.ink.startsWith('rgba(255,255,255,')));
+  assert.ok(full.strokes.some(item=>item.ink.startsWith('rgba(0,0,0,')));
+  const recipe=normalizeRecipe({seed:'fibre-transport',surfaceTreatments:[style]});
+  assert.equal(recipe.surfaceTreatments[0].style,'satin-fibre');
+  assert.deepEqual(decodeRecipe(encodeRecipe(recipe)),recipe);
+});
+test('opt-in tatami fibre remains clipped by its caller and bounded on a region',()=>{
+  const region={rings:[[{x:0,y:0},{x:180,y:0},{x:180,y:90},{x:0,y:90}]],
+    vertices:[{x:0,y:0},{x:180,y:0},{x:180,y:90},{x:0,y:90}]};
+  const capture=()=>{let strokes=0,curves=0;return{
+    get strokes(){return strokes},get curves(){return curves},
+    save(){},restore(){},translate(){},rotate(){},beginPath(){},
+    moveTo(){},lineTo(){},stroke(){strokes++},bezierCurveTo(){curves++}
+  }};
+  const fibre=capture(),plain=capture();
+  const count=drawRegionEmbroidery(fibre,region,select({style:'tatami-fibre',pitch:7}));
+  const prior=drawRegionEmbroidery(plain,region,select({style:'tatami',pitch:7}));
+  assert.ok(count>prior/2&&count<=18000);
+  assert.equal(fibre.strokes,count*4);
+  assert.equal(plain.strokes,prior*2,'old Tatami continues its original painter');
+  assert.equal(fibre.curves,0);
+  assert.equal(normalizeSurfaceTreatments([{id:'s',enabled:true,style:'tatami-fibre'}])[0].style,
+    'tatami-fibre');
+});
