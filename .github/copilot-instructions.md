@@ -1,0 +1,1 @@
+Use `../AGENTS.md` for canonical ROYGBIV instructions and specialist routing. Verify current source and active issue before implementing, reuse recipe/scene/render/worker contracts, and distinguish generated-art review from real human/device observations. Historical compatibility is optional during early development; preserve source image bytes and provenance.
