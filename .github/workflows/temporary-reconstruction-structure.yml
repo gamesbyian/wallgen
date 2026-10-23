@@ -1,0 +1,30 @@
+# TEMPORARY source-backed targeted experiment. Remove before merge.
+name: Temporary Structural Reconstruction Study
+on:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  measure:
+    if: github.head_ref == 'agent/reconstruction-structural-radial-diagonal-20261023'
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install opt-in browser
+        run: |
+          npm install --no-save --package-lock=false playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Actually render diagonal, radial and nested sources and fit
+        run: |
+          node scripts/review-reconstruction.mjs --only 02-diagonal-straight,08-radial-rays,09-radial-rings,10-regions-nested --out-dir artifacts/r0-structural
+          node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/r0-structural
+      - name: Archive real source and measured candidate previews
+        uses: actions/upload-artifact@v4
+        with:
+          name: structural-reconstruction-4
+          path: artifacts/r0-structural/
+          retention-days: 2
