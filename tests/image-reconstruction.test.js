@@ -5,6 +5,7 @@ import {imagePlacement,extractImageColourRegions} from '../src/image-path.js';
 import {describeReconstructionImage,reconstructionCandidates,
   rankReconstructionCandidates,compareReconstructionPixels,refineReconstructionCandidate,reconstructionPlacement,
   radialImageSignature,imageStripeAngle,
+  rankReconstructionCandidatesCooperatively,refineReconstructionCandidateCooperatively,
   RECONSTRUCTION_FRAME,RECONSTRUCTION_RENDER_LIMIT} from '../src/image-reconstruction.js';
 
 function colour(hue){
@@ -242,4 +243,53 @@ test('coherent diagonal hue axes survive radial classifier integration without h
   });
   assert.equal(describeReconstructionImage(rays).radial.kind,'rays');
   assert.ok(reconstructionCandidates(rays,{}).some(x=>x.kind==='radial-rays'));
+});
+
+
+test('cooperative candidate ranking yields per render, matches synchronous scores and honours cancellation',async()=>{
+  const w=RECONSTRUCTION_FRAME.width,h=RECONSTRUCTION_FRAME.height;
+  const reference=raster(w,h,()=>[0,0,0,255]);
+  const choices=[{kind:'bad',recipe:{seed:'bad'},label:'bad',uncertainty:'guess'},
+    {kind:'good',recipe:{seed:'good'},label:'good',uncertainty:'guess'}];
+  const render=recipe=>raster(w,h,()=>recipe.seed==='good'?
+    [0,0,0,255]:[250,250,250,255]);
+  const expected=rankReconstructionCandidates(choices,reference,render);
+  let yields=0,renders=0;
+  const observed=await rankReconstructionCandidatesCooperatively(
+    choices,reference,r=>{renders++;return render(r);},
+    {yieldControl:async()=>{yields++;}});
+  assert.deepEqual(observed,expected);
+  assert.equal(renders,2);assert.equal(yields,2);
+  let cancelled=false;
+  const aborted=await rankReconstructionCandidatesCooperatively(
+    choices,reference,()=>{throw Error('must never draw after cancellation');},
+    {yieldControl:async()=>{cancelled=true;},isCancelled:()=>cancelled});
+  assert.equal(aborted,null);
+});
+test('cooperative refinement reuses identical bounded parameter trials, and discards stale jobs',async()=>{
+  const w=RECONSTRUCTION_FRAME.width,h=RECONSTRUCTION_FRAME.height;
+  const source=raster(w,h,()=>[0,0,0,255]);
+  const recipe=normalizeRecipe({seed:'cooperative',structure:'paths',
+    geometry:'straight',orientation:'vertical',positionX:0,chaos:0});
+  const painter=recipe=>raster(w,h,()=>{
+    const x=Math.min(255,Math.round(Math.abs(recipe.positionX-8)*15));
+    return [x,x,x,255];
+  });
+  const item={kind:'straight',label:'straight',recipe,
+    error:compareReconstructionPixels(source,painter(recipe))};
+  const expected=refineReconstructionCandidate(item,source,painter);
+  let count=0,frames=0;
+  const actual=await refineReconstructionCandidateCooperatively(item,source,
+    r=>{count++;return painter(r);},{yieldControl:async()=>{frames++;}});
+  assert.deepEqual(actual,expected);
+  assert.equal(count,10);assert.equal(frames,10);
+  let cancelled=false,renderCalls=0;
+  const abandoned=await refineReconstructionCandidateCooperatively(item,source,
+    r=>{renderCalls++;return painter(r);},{
+      yieldControl:async()=>{cancelled=true;},
+      isCancelled:()=>cancelled
+    });
+  assert.equal(abandoned,null);
+  assert.equal(renderCalls,0);
+  assert.deepEqual(item.recipe,recipe,'cancel never mutates original current art');
 });
