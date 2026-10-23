@@ -393,6 +393,32 @@ export function extractImageColourRegions({data,width:w,height:h},hueTargets){
       axisAngle,axisRatio,
       bounds:[part.minX/w,part.minY/h,(part.maxX+1)/w,(part.maxY+1)/h]});
   }
+  // Angular colour transitions around the source-frame centre distinguish
+  // a repeated radial rainbow fan from seven detached colour regions.
+  // Sample the ALREADY classified seven component masks; there is no second
+  // RGB→hue decision or alternative image engine.
+  const radius=Math.max(2,Math.round(Math.min(w,h)*.35));
+  const samples=56;
+  const angular=[];
+  for(let i=0;i<samples;i++){
+    const angle=i*Math.PI*2/samples;
+    const x=clamp(Math.round((w-1)/2+radius*Math.cos(angle)),0,w-1);
+    const y=clamp(Math.round((h-1)/2+radius*Math.sin(angle)),0,h-1);
+    const p=y*w+x;
+    let slot=0;
+    for(let k=0;k<7;k++)if(masks[k][p]){slot=k+1;break;}
+    angular.push(slot);
+  }
+  let angularTransitions=0,angularCoverage=0;
+  const distinct=new Set();
+  for(let i=0;i<samples;i++){
+    const a=angular[i],b=angular[(i+1)%samples];
+    if(a){angularCoverage++;distinct.add(a);}
+    if(a&&b&&a!==b)angularTransitions++;
+  }
+  const radialHueEvidence={angularTransitions,
+    angularCoverage:angularCoverage/samples,
+    distinctHues:distinct.size};
   return {background:backdrop,backgroundRGB:bg,
-    coverage:coloured/(w*h),regions};
+    coverage:coloured/(w*h),regions,radialHueEvidence};
 }
