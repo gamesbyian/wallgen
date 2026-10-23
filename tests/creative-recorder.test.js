@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createCreativeRecorder,memoryUsageStore,recipeDiff,replayEpisode} from '../src/creative-recorder.js';
+import {createCreativeRecorder,memoryUsageStore,recipeDiff,replayEpisode,recipeDigest} from '../src/creative-recorder.js';
 import {normalizeRecipe} from '../src/model.js';
 
 function rig(enabled=true){
@@ -160,4 +160,60 @@ test('recording off cannot retroactively inspect or reconcile saved episodes',as
   const off=createCreativeRecorder({store,enabled:false});
   assert.equal(off.recoverPrevious(await store.last()),false);
   assert.equal((await off.records()).filter(e=>e.type==='session_interrupted').length,0);
+});
+
+test('recorded predecessor and successor checksums reject missing or reordered edits',async()=>{
+  const {recorder}=rig();
+  const a=normalizeRecipe({seed:'a',stripeWidth:20,gap:12});
+  const b=normalizeRecipe({...a,stripeWidth:25});
+  const next=normalizeRecipe({...b,gap:18});
+  recorder.start(a);
+  recorder.transition(a,b);
+  recorder.transition(b,next);
+  const events=await recorder.records();
+  assert.equal(events[1].beforeDigest,recipeDigest(a));
+  assert.equal(events[1].afterDigest,recipeDigest(b));
+  assert.deepEqual(replayEpisode(events),next);
+  assert.throws(()=>replayEpisode([events[0],events[2]]),/predecessor checksum/);
+  assert.throws(()=>replayEpisode([events[0],events[2],events[1]]),/predecessor checksum/);
+  const corrupted=structuredClone(events);
+  corrupted[1].changes[0].after=99;
+  assert.throws(()=>replayEpisode(corrupted),/successor checksum/);
+});
+
+test('periodic full checkpoints detect inconsistent patches instead of silently repairing them',async()=>{
+  const {recorder}=rig();
+  let previous=normalizeRecipe({seed:'check',stripeWidth:20});
+  recorder.start(previous);
+  for(let i=0;i<10;i++){
+    const next=normalizeRecipe({...previous,stripeWidth:21+i});
+    recorder.transition(previous,next);
+    previous=next;
+  }
+  const events=await recorder.records();
+  const tenth=events.at(-1);
+  assert.deepEqual(tenth.recipe,previous);
+  assert.deepEqual(replayEpisode(events),previous);
+  const altered=structuredClone(events);
+  altered.at(-1).recipe.stripeWidth=999;
+  assert.throws(()=>replayEpisode(altered),/full checkpoint/);
+});
+
+test('unconfirmed previous-session recovery is a verified terminal checkpoint',async()=>{
+  const store=memoryUsageStore();let count=0;
+  const id=()=>String(++count);
+  const original=createCreativeRecorder({store,id,enabled:true});
+  const a=normalizeRecipe({seed:'old',gap:16});
+  const b=normalizeRecipe({...a,gap:33});
+  original.start(a);
+  original.transition(a,b);
+  await original.flush();
+  const continued=createCreativeRecorder({store,id,enabled:true});
+  continued.recoverPrevious(await store.last());
+  continued.start({seed:'new'});
+  const rows=await continued.records();
+  const oldEpisode=rows.filter(e=>e.episodeId===rows[0].episodeId);
+  assert.deepEqual(replayEpisode(oldEpisode),b);
+  oldEpisode.at(-1).recipe.gap=100;
+  assert.throws(()=>replayEpisode(oldEpisode),/inconsistent recipe journey/);
 });
