@@ -581,6 +581,11 @@ export const coherentWaveOffsetY=(source,rendered)=>
   coherentHueOffset(source,rendered,'cy');
 export const coherentVerticalBandOffsetX=(source,rendered)=>
   coherentHueOffset(source,rendered,'cx');
+// An existing expanded canonical Draw ribbon can have the correct topology
+// but be collectively displaced. Only seven coherent pigment translations
+// qualify; a rough single-path silhouette must not drive global movement.
+export const coherentExpandedDrawOffsetY=(source,rendered)=>
+  coherentHueOffset(source,rendered,'cy');
 
 /** One synchronous bounded fit pass. The UI can cancel between revisions.
  * render(candidate,width,height) must call the existing renderer and return
@@ -602,9 +607,14 @@ export function rankReconstructionCandidates(candidates,source,render){
         const bandOffsetX=candidate.kind==='straight'&&
           candidate.recipe.orientation==='vertical'?
           coherentVerticalBandOffsetX(source,pixels):null;
+        const drawOffsetY=candidate.kind==='path'&&
+          candidate.recipe.geometry==='drawn'&&
+          candidate.recipe.geometrySafety===false?
+          coherentExpandedDrawOffsetY(source,pixels):null;
         results.push({...candidate,error,
           ...(waveOffsetY!==null?{waveOffsetY}:{}),
-          ...(bandOffsetX!==null?{bandOffsetX}:{})});
+          ...(bandOffsetX!==null?{bandOffsetX}:{}),
+          ...(drawOffsetY!==null?{drawOffsetY}:{})});
       }
     }catch(error){
       results.push({...candidate,error:Infinity,
@@ -632,6 +642,16 @@ export function reconstructionRefinementIndex(ranked){
     Number.isFinite(item.error)&&
     item.error<=Math.min(.55,best.error+.20));
   if(registered>=0)return registered;
+  // Preserve the existing safe Draw and all procedural alternatives. When a
+  // wider Draw trial demonstrably has the same seven pigments displaced by
+  // one amount, give it the ONE already-budgeted refinement opportunity.
+  // The actual renderer score still decides whether it overtakes safe Draw.
+  const wideDraw=ranked.findIndex((item,index)=>index>0&&
+    item.kind==='path'&&item.recipe?.geometry==='drawn'&&
+    item.recipe.geometrySafety===false&&
+    Number.isFinite(item.drawOffsetY)&&Number.isFinite(item.error)&&
+    item.error<=Math.min(.55,best.error+.14));
+  if(wideDraw>=0)return wideDraw;
   let winner=-1,lowest=Infinity;
   for(let i=1;i<ranked.length;i++){
     const candidate=ranked[i];
@@ -661,7 +681,13 @@ export const RECONSTRUCTION_FRAME=Object.freeze({
  * not in the middle of an offset sweep.
  */
 function refinementFields(candidate){
-  return candidate.kind==='straight'?[
+  return candidate.kind==='path'?[
+    // Four rigid trials, then existing editable parallel-band dimensions.
+    // No centreline point mutations, additional rasterizer or new field.
+    ['positionY',[candidate.drawOffsetY,candidate.drawOffsetY-4,
+      candidate.drawOffsetY+4,candidate.drawOffsetY-8]],
+    ['spread',[-16,-8,8,16]],['stripeWidth',[-15,15]]
+  ]:candidate.kind==='straight'?[
     [candidate.recipe.orientation==='horizontal'?'positionY':'positionX',
       candidate.recipe.orientation==='vertical'&&Number.isFinite(candidate.bandOffsetX)?
         [candidate.bandOffsetX,candidate.bandOffsetX-4,
@@ -701,8 +727,14 @@ function refinementFields(candidate){
   ];
 }
 function canRefine(candidate,maxRenders){
-  if(!candidate||!['straight','loop','wave','jagged','hairpin','radial-rays','radial-rings','nested-rings']
+  if(!candidate||!['straight','loop','wave','jagged','hairpin','radial-rays','radial-rings','nested-rings','path']
     .includes(candidate.kind)||!Number.isFinite(candidate.error))return false;
+  // An unregistered arbitrary Draw outline remains an honest coarse preview,
+  // never a ten-render blind search. The safer Draw is always untouched.
+  if(candidate.kind==='path'&&
+    (candidate.recipe?.geometry!=='drawn'||
+      candidate.recipe.geometrySafety!==false||
+      !Number.isFinite(candidate.drawOffsetY)))return false;
   if(!Number.isInteger(maxRenders)||maxRenders<0||maxRenders>16)
     throw Error('Invalid reconstruction fitting budget');
   return true;
