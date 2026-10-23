@@ -13,16 +13,42 @@ export function recipeDiff(before,after){
     .filter(key=>JSON.stringify(a[key])!==JSON.stringify(b[key]))
     .map(key=>({key,before:clone(a[key]),after:clone(b[key])}));
 }
+// A compact, deterministic corruption detector over the canonical recipe.
+// FNV-1a is a checksum, not authentication or a tamper-resistant signature.
+export function recipeDigest(recipe){
+  const bytes=new TextEncoder().encode(JSON.stringify(normalizeRecipe(recipe)));
+  let hash=0x811c9dc5;
+  for(const byte of bytes)hash=Math.imul(hash^byte,0x01000193)>>>0;
+  return 'fnv1a32:'+hash.toString(16).padStart(8,'0');
+}
 export function replayEpisode(records){
   let result=null;
   for(const record of records){
-    if(record.type==='episode_start')result=clone(record.recipe);
-    else if(record.type==='recipe_commit'&&result){
-      for(const {key,after} of record.changes)result[key]=clone(after);
-    }else if(record.type==='episode_end'&&result){
-      if(JSON.stringify(normalizeRecipe(result))!==JSON.stringify(normalizeRecipe(record.recipe)))
+    if(record.type==='episode_start'){
+      if(result)throw new Error('Multiple starts in one recipe episode');
+      if(!record.recipe)throw new Error('Missing initial recipe checkpoint');
+      result=normalizeRecipe(record.recipe);
+    }else if(record.type==='recipe_commit'){
+      if(!result)throw new Error('Missing initial recipe checkpoint');
+      if(!Array.isArray(record.changes))
+        throw new Error('Missing committed recipe changes');
+      if(record.beforeDigest&&record.beforeDigest!==recipeDigest(result))
+        throw new Error('Recipe replay predecessor checksum mismatch');
+      for(const {key,before,after} of record.changes){
+        if(JSON.stringify(result[key])!==JSON.stringify(before))
+          throw new Error('Recipe replay before-value mismatch: '+key);
+        result[key]=clone(after);
+      }
+      result=normalizeRecipe(result);
+      if(record.recipe&&
+        JSON.stringify(result)!==JSON.stringify(normalizeRecipe(record.recipe)))
+        throw new Error('Recipe replay full checkpoint mismatch');
+    }else if((record.type==='episode_end'||record.type==='session_interrupted')&&result){
+      if(JSON.stringify(result)!==JSON.stringify(normalizeRecipe(record.recipe)))
         throw new Error('Incomplete or inconsistent recipe journey');
     }
+    if(result&&record.afterDigest&&record.afterDigest!==recipeDigest(result))
+      throw new Error('Recipe replay successor checksum mismatch');
   }
   return result?normalizeRecipe(result):null;
 }
@@ -157,7 +183,8 @@ export function createCreativeRecorder({store,id=()=>globalThis.crypto.randomUUI
     episodeId=id();commits=0;manualEdits=0;engagedMs=0;lastActivityMs=null;
     lastExportedRecipe=null;lastRequestedRecipe=null;lastManualKey=null;lastManualAt=null;
     const normalized=normalizeRecipe(recipe);
-    event('episode_start',normalized,{cause,recipe:clone(normalized)});
+    event('episode_start',normalized,{cause,recipe:clone(normalized),
+      afterDigest:recipeDigest(normalized)});
   }
   function recoverPrevious(previous){
     // Only the existing last durable snapshot may be reconciled. No browser
@@ -172,7 +199,8 @@ export function createCreativeRecorder({store,id=()=>globalThis.crypto.randomUUI
     const item={schema:1,eventId,sessionId:previous.sessionId,
       episodeId:previous.episodeId,seq,at,type:'session_interrupted',
       cause:'next_startup_found_last_known_snapshot',uncertain:true,
-      lastObservedAt:previous.at||null,recipe:clone(snapshot)};
+      lastObservedAt:previous.at||null,recipe:clone(snapshot),
+      afterDigest:recipeDigest(snapshot)};
     enqueue(item,{sessionId:previous.sessionId,episodeId:previous.episodeId,
       seq,at,type:'session_interrupted',recipe:snapshot});
     return true;
@@ -200,6 +228,7 @@ export function createCreativeRecorder({store,id=()=>globalThis.crypto.randomUUI
     }
     const normalized=normalizeRecipe(after);
     event('recipe_commit',normalized,{cause,changes,
+      beforeDigest:recipeDigest(before),afterDigest:recipeDigest(normalized),
       ...(context?{context:clone(context)}:{}),
       ...(commits%10===0?{recipe:clone(normalized)}:{})});
   }
@@ -236,7 +265,7 @@ export function createCreativeRecorder({store,id=()=>globalThis.crypto.randomUUI
     if(!episodeId)begin(before);
     const previousEpisodeId=episodeId,stats=episodeStats(before);
     event('episode_end',before,{cause,recipe:clone(normalizeRecipe(before)),
-      committedEdits:commits,...stats});
+      afterDigest:recipeDigest(before),committedEdits:commits,...stats});
     begin(after,cause);
     return {targetEpisodeId:previousEpisodeId,...stats};
   }
