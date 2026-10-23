@@ -19,3 +19,12 @@ test('production evaluator CLI is opt-in and read-only by default',()=>{
  assert.throws(()=>readReconstructionEvalArgs(['--dir']),/incomplete/);
  assert.throws(()=>readReconstructionEvalArgs(['--unsafe-upload']),/Unknown/);
 });
+
+
+test('optional alternative preview output requires an explicit opt-in flag',()=>{
+ assert.deepEqual(readReconstructionEvalArgs(['--alternatives']),
+   {dir:'artifacts/reconstruction-r0',alternatives:true});
+ assert.deepEqual(readReconstructionEvalArgs(['--dir','artifacts/a','--alternatives']),
+   {dir:'artifacts/a',alternatives:true});
+ assert.throws(()=>readReconstructionEvalArgs(['--variants']),/Unknown/);
+});
