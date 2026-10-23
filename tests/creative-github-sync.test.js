@@ -20,7 +20,7 @@ test('batch is bounded, namespaced, and contains no upload credentials',()=>{
     const rows=await store.all();
     const batch=makeUsageBatch(rows,[],{id:()=> 'batch-1'});
     assert.equal(batch.eventIds.length,2);
-    assert.match(batch.path,/^telemetry\/roygbiv\/2026\/10\/22\/batch-1\.json$/);
+    assert.match(batch.path,/^telemetry\/roygbiv\/2026\/10\/22\/record-1\/batch-1\.json$/);
     assert.deepEqual(JSON.parse(batch.json).events,rows);
     assert.ok(!batch.json.includes(token));
     assert.equal(atob(encodeGithubContent('æ ♥')).includes('æ'),false,
@@ -130,4 +130,19 @@ test('revocation during an in-flight write keeps the reserved batch for consente
   assert.deepEqual(await store.reserveBatch(),reserved);
   recorder.setEnabled(false,{seed:'second'});
   assert.equal((await sync.run(token)).uploaded,0);
+});
+
+test('private archive batch paths identify one source session and retain later sessions',()=>{
+  const rows=[
+    {eventId:'a',at:'2026-10-22T00:00:00Z',sessionId:'session-1',seq:1},
+    {eventId:'b',at:'2026-10-22T00:00:01Z',sessionId:'session-2',seq:1},
+    {eventId:'c',at:'2026-10-22T00:00:02Z',sessionId:'session-2',seq:2}
+  ];
+  const first=makeUsageBatch(rows,[],{id:()=> 'first'});
+  assert.deepEqual(first.eventIds,['a']);
+  assert.match(first.path,/\/session-1\/first\.json$/);
+  const next=makeUsageBatch(rows,first.eventIds,{id:()=> 'next'});
+  assert.deepEqual(next.eventIds,['b','c']);
+  assert.match(next.path,/\/session-2\/next\.json$/);
+  assert.equal(makeUsageBatch(rows,first.eventIds.concat(next.eventIds)),null);
 });
