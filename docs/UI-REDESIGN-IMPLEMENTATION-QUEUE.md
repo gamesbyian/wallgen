@@ -2,7 +2,7 @@
 
 ## Thread Surface expanded: two-size real-browser portrait inspection (2026-10-22)
 
-The optional `scripts/review-thread-portrait.mjs` opens the actual mobile Studio editor, selects Texture → Surface, expands the original native Thread disclosure, enables all-colour Chain, and captures **only two real Chromium screens** (412×892 Pixel-proxy and tight 320×700) plus field rectangle/scroll evidence. This is a low-cost observed-UI probe for newly added Region angle and Chain style, rather than the earlier 1,000-screen atlas. It does not certify a real Pixel, real Android virtual keyboard or actual 44px finger hit regions; report actual clipping before considering a tiny layout patch.
+The optional `scripts/review-thread-portrait.mjs` opens the actual mobile Studio editor, selects Texture → Surface, expands the original native Thread disclosure, enables all-colour Chain, and captures **only two real Chromium screens** (412×892 Pixel-proxy and tight 320×700) plus field rectangle/scroll evidence. This is a low-cost observed-UI probe for newly added Region angle and Chain style, rather than the earlier 1,000-screen atlas. The first real screenshots revealed clipped sliders and 27px selectors. A two-row responsive source reflow and native-hidden picker correction have now been implemented, while all Save/Undo field identities remain unchanged. [Chronological actual measurements and the outstanding final browser check](THREAD-PORTRAIT-INSPECTION-2026-10-22.md) distinguish completed intermediate image captures from the **unverified final CSS tweak**, since Chromium installation stalled on the last run. This is not real Pixel acceptance or a new required screenshot gate.
 
 
 
