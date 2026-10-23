@@ -1,5 +1,12 @@
 # ROYGBIV handoff: current authority and independently actionable work
 
+## Owner directive superseding older priority tables (22 October evening)
+
+ROYGBIV is in **early development**. Optimize the most capable and internally coherent **current recipe model and current renderer**. Backwards compatibility with any previously generated artwork, old recipes, stored pixels, source-era PRNG decisions or historical PNG revisions is **nice-to-have only** and must **not** block current improvements, drive the primary queue or trigger exhaustive regression work. The older P0 #476 parity/archaeology priority and blanket instructions to preserve every previous recipe pixel are superseded as development priorities; historical tools/reports can remain without being pursued urgently. Preserve original imported PNG bytes and state provenance honestly, but do not conflate that data-safety rule with frozen historical rendering semantics.
+
+**New workstream:** [Image-to-recipe reconstruction](IMAGE-TO-RECIPE-RECONSTRUCTION-PLAN-2026-10-22.md) for metadata-free native PNGs and arbitrary external graphics. Begin with a small R0 actual-current-art image baseline; reuse the image importer, shared geometry, `normalizeRecipe`, `resolveScene`, `drawWallpaper`, workers and normal saved recipe flows. Investigate semantic reconstruction and real bounded render/compare fitting. Read the [engineering reuse contract](ENGINEERING-REUSE-AND-SEMANTIC-OWNERSHIP.md). Do not make a second image picker, independent recipe format or parallel graphics engine. No full reconstruction implementation is claimed.
+
+
 ## Film, Camera and navigation: independent merged work (22 Oct evening)
 
 **#468 Film:** [#528](https://github.com/gamesbyian/wallgen/pull/528) added separately named `film-halation-diffusion`, preserving every older Photo look. Three actual production 600×1300 images, CRC/embedded-recipe checked and viewed ([run #39897810550](https://github.com/gamesbyian/wallgen/actions/runs/39897810550)), show a visibly wider red/orange fringe; dark pixels showing >4 red increase rose 25,875→105,925 against original narrow halation. The [Film plan](PHOTO-FILM-LOOKS-AND-FILTERS-PLAN-2026-10-22.md) records evidence and limits.

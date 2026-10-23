@@ -1,5 +1,12 @@
 # Agent orientation for ROYGBIV
 
+## CURRENT DEVELOPMENT PRIORITY: current best recipe, not historical compatibility
+
+**Owner direction (22 October 2026):** ROYGBIV is in early development. Build and normalize the **best recipe schema and renderer for current functionality**. Compatibility with *any* previous generated artwork, saved recipe, source-era PNG or old rendering pixels is **nice-to-have, not a blocker, high priority or release gate**. Agents may refine current defaults, change schemas/semantics and consolidate implementations when demonstrably beneficial. Prefer a clear migration, documented break or new canonical representation over convoluted legacy branching. Use focused tests for the *current* product; do not demand pixel-exact historical matrices. Still protect uploaded/source image bytes against unintended destructive writes, describe breaking changes accurately and avoid falsely claiming provenance. Older instructions below requiring universal pixel identity, exact historical compatibility or refusing improvements for that reason are superseded by this directive. Existing narrow legacy tools may remain, but their completion is optional, not required to make progress.
+
+**New creative track:** [Image-to-recipe reconstruction plan](docs/IMAGE-TO-RECIPE-RECONSTRUCTION-PLAN-2026-10-22.md) covers both ROYGBIV artwork without metadata and arbitrary external images, via shared import, geometry, recipe, scene and renderer boundaries. Follow [engineering reuse](docs/ENGINEERING-REUSE-AND-SEMANTIC-OWNERSHIP.md); avoid parallel mini-engines.
+
+
 ## READ FIRST: authoritative handoff and source state (22 October 2026)
 
 Incoming agents must start at [the **current agent handoff**](docs/AGENT-HANDOFF-2026-10-22.md), then check live `main`, current PRs/issues, the [live roadmap](docs/ACTIVE-PRODUCT-ROADMAP-2026-10-22.md), and [lean CI](docs/CI-OPERATIONS-2026-10-22.md). The original v1 renderer/writer/model goldens (#523/#524) and restored four-state mobile Thread panel (#521) **have shipped**, as has the bounded source-era integrity test in quick CI (#525). Avoid implementing any “planned” work based on a lower dated section of this file unless current source proves the work is missing. Older entries below are historically useful **receipts**, not a competing dispatch board.

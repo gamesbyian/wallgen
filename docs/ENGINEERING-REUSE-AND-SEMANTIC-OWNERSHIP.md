@@ -1,5 +1,10 @@
 # Engineering reuse and semantic ownership contract
 
+## Updated product-development compatibility policy (owner direction, 22 October 2026)
+
+**This overrides contrary historical compatibility requirements elsewhere in this document.** The project is early-development, and the current best recipe system is the source of truth. Exact old recipe schemas, old saved images, historic seed streams, former pixels and backwards-compatible transports are **nice-to-have only**. Never block a useful schema, algorithm, renderer or shared-engine improvement on historical fidelity. Consolidate genuine duplication even if a documented legacy visual break is unavoidable and warranted; evaluate current functionality with focused tests. Preserve raw imported/source artwork from unintended mutation and never falsely present a reconstructed recipe as authentic. Historical import/archival aids remain available as optional separate utilities, not a dependency of everyday development. New image reconstruction must follow the [shared inverse-graphics plan](IMAGE-TO-RECIPE-RECONSTRUCTION-PLAN-2026-10-22.md).
+
+
 **Status:** active contributor guidance, 22 October 2026. Applies to all ROYGBIV development, not only image-to-recipe reconstruction. Source inventory reviewed against `main` at `6abe1f89bbec2f86490d81b948b257860c033fc1`. Recheck current source before implementing: paths and responsibilities can evolve.
 
 ## Intent
