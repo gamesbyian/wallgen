@@ -19,13 +19,13 @@ jobs:
         run: |
           npm install --no-save --package-lock=false playwright@1.56.1
           npx playwright install --with-deps chromium
-      - name: Render four ACTUAL current-art images without precomputed recipes in inference
+      - name: Render all thirteen ACTUAL current-art images without leaking source recipes
         run: |
-          node scripts/review-reconstruction.mjs --only 01-vertical-straight,06-loop,11-scattered-circles,13-holed-shape --out-dir artifacts/r0-evidence
+          node scripts/review-reconstruction.mjs --out-dir artifacts/r0-evidence
           node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/r0-evidence
       - name: Archive source, metadata-free twins, candidate previews and measured report
         uses: actions/upload-artifact@v4
         with:
-          name: reconstruction-r0-observed-4
+          name: reconstruction-r0-observed-13
           path: artifacts/r0-evidence/
           retention-days: 2
