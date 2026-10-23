@@ -405,13 +405,15 @@ export function reconstructionCandidates(image,recipe){
     for(const preset of presets){
       candidates.push({kind:preset.kind,label:preset.label,
         uncertainty:'Procedural curvature is a fit hypothesis; turning radius, modulation, phase, spacing and seed are not recovered.',
-        // Real R0 cross-validation: oblique ribbons benefited
-        // .20459→.16565, while near-horizontal Wave regressed. Infer from
-        // actual source hue geometry, NOT the loose contour kind (it can
-        // classify a clearly jagged source as an ordinary contour/wave).
-        recipe:preset.kind==='jagged'&&desc.ribbonBands&&
-          Math.abs(desc.ribbonBands.angle)>=12&&
-          Math.abs(desc.ribbonBands.angle)<=78?
+        // Current-image calibration works for oblique Jagged by itself.
+        // Horizontal Wave needs both its physically measured gap/width AND
+        // the coherent same-hue image registration during forward fitting:
+        // either correction in isolation had previously scored worse.
+        recipe:desc.ribbonBands&&(
+          (preset.kind==='jagged'&&
+            Math.abs(desc.ribbonBands.angle)>=12&&
+            Math.abs(desc.ribbonBands.angle)<=78)||
+          (preset.kind==='wave'&&Math.abs(desc.ribbonBands.angle)<=10))?
           seedMeasuredRibbonControls(
             normalizeRecipe({...base,structure:'paths',composition:'single',
               construction:'ribbon',chaos:0,individuality:0,...preset.recipe}),
