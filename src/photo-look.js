@@ -61,6 +61,7 @@ export function normalizePhotoLook(value={}){
     family:preset.family,presetId,amount:finite(source.amount,75,0,100),parameters};
 }
 const clampByte=n=>Math.max(0,Math.min(255,Math.round(n)));
+const MAX_PHOTO_READBACK_BYTES=2*1024*1024;
 const fastHash=s=>{
   let h=2166136261;
   for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}
@@ -227,7 +228,7 @@ function makeHalationField(data,width,height,profile='original',pixelReader=null
 // sample locations per halation cell, preserving the existing source gate and
 // seeded halation pixels. The cache never reads the already finished canvas.
 function makeBoundedSourcePixelReader(ctx,width,height){
-  const rows=Math.max(1,Math.floor((2*1024*1024)/(width*4)));
+  const rows=Math.max(1,Math.floor(MAX_PHOTO_READBACK_BYTES/(width*4)));
   let start=-1,storedRows=0,buffer=null;
   return {r:0,g:0,b:0,
     read(x,y){
@@ -428,7 +429,7 @@ export function applyPhotoFinish(ctx,width,height,rawLook,seed){
     processPhotoPixels(pixels.data,width,height,look,seed);
     ctx.putImageData(pixels,0,0);
   }else{
-    const rows=Math.max(1,Math.floor((2*1024*1024)/(width*4)));
+    const rows=Math.max(1,Math.floor(MAX_PHOTO_READBACK_BYTES/(width*4)));
     for(let y=0;y<height;y+=rows){
       const h=Math.min(rows,height-y);
       const pixels=ctx.getImageData(0,y,width,h);
