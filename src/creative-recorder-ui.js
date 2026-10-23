@@ -79,31 +79,45 @@ export function installCreativeRecorderUI({
   feedbackSelect.addEventListener('change',()=>{
     try{localStorage.setItem(FEEDBACK_PREF_KEY,feedbackSelect.value);}catch{}
   });
+  let refreshRevision=0;
   async function refresh(){
-    const records=await recorder.records();
-    const summary=await store.syncSummary();
+    const revision=++refreshRevision;
+    // Consent is independent of the health of IndexedDB. Display the current
+    // choice immediately even if reading the stored activity later fails.
     enabled.checked=recorder.enabled;
-    status.textContent=(recorder.enabled?'Recording on':'Recording off')+
-      ' · '+records.length+' event'+(records.length===1?'':'s')+
-      (recorder.durable?' saved locally.':'. '+recorder.warning)+
-      (recorder.error?' Recent write failed; export your records if possible.':'');
-    queueStatus.textContent='Backup queue: '+summary.pending+
-      ' not yet confirmed, '+summary.backedUp+' confirmed remotely'+
-      (summary.reserved?' ('+summary.reserved+' held for safe retry)':'')+
-      '. Local data is retained until you explicitly delete it.';
-    const recent=dialog.querySelector('[data-usage-recent]');
-    recent.replaceChildren();
-    for(const item of records.slice(-12).reverse()){
-      const row=document.createElement('li');
-      const keys=Array.isArray(item.changes)?item.changes.map(x=>x.key)
-        .filter(key=>typeof key==='string').slice(0,6).join(', '):'';
-      row.textContent=[item.at,item.type,item.cause,keys].filter(Boolean).join(' · ');
-      recent.append(row);
-    }
-    if(!recent.children.length){
-      const row=document.createElement('li');
-      row.textContent='No activity recorded on this device.';
-      recent.append(row);
+    try{
+      const records=await recorder.records();
+      const summary=await store.syncSummary();
+      if(revision!==refreshRevision)return; // An older read cannot repaint a newer one.
+      enabled.checked=recorder.enabled;
+      status.textContent=(recorder.enabled?'Recording on':'Recording off')+
+        ' · '+records.length+' event'+(records.length===1?'':'s')+
+        (recorder.durable?' saved locally.':'. '+recorder.warning)+
+        (recorder.error?' Recent write failed; export your records if possible.':'');
+      queueStatus.textContent='Backup queue: '+summary.pending+
+        ' not yet confirmed, '+summary.backedUp+' confirmed remotely'+
+        (summary.reserved?' ('+summary.reserved+' held for safe retry)':'')+
+        '. Local data is retained until you explicitly delete it.';
+      const recent=dialog.querySelector('[data-usage-recent]');
+      recent.replaceChildren();
+      for(const item of records.slice(-12).reverse()){
+        const row=document.createElement('li');
+        const keys=Array.isArray(item.changes)?item.changes.map(x=>x.key)
+          .filter(key=>typeof key==='string').slice(0,6).join(', '):'';
+        row.textContent=[item.at,item.type,item.cause,keys].filter(Boolean).join(' · ');
+        recent.append(row);
+      }
+      if(!recent.children.length){
+        const row=document.createElement('li');
+        row.textContent='No activity recorded on this device.';
+        recent.append(row);
+      }
+    }catch(error){
+      if(revision!==refreshRevision)return;
+      status.textContent='Cannot read local activity: '+String(error.message||error)+
+        '. You can still turn recording off or try exporting your records.';
+      queueStatus.textContent='Backup status unavailable; no new remote confirmation was made.';
+      dialog.querySelector('[data-usage-recent]').replaceChildren();
     }
   }
   launch.addEventListener('click',()=>{
