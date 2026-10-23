@@ -586,3 +586,30 @@ test('soft-edge linen is an explicit serialized material, not a change to legacy
   assert.ok(roughAfter<roughBefore*.85,
     'soft variant should actually suppress periodic edge relief rather than just relabel it');
 });
+
+test('organic linen is opt-in, stable under transport, and keeps old weave field unchanged',()=>{
+  const base=normalizeRecipe({seed:'handwoven-linen',material:'linen',
+    textureStrength:72,textureDisplacement:68,textureScale:43});
+  const soft=normalizeRecipe({...base,material:'linen-soft'});
+  const organic=normalizeRecipe({...base,material:'linen-organic'});
+  assert.ok(MATERIALS.includes('linen-organic'));
+  assert.equal(base.material,'linen');
+  assert.equal(soft.material,'linen-soft');
+  assert.equal(organic.material,'linen-organic');
+  assert.deepEqual(decodeRecipe(encodeRecipe(organic)),organic);
+  assert.deepEqual(normalizeRecipe(organic),organic);
+  const legacyLayer={material:'linen',scale:43,heightSeed:1042};
+  const oldSamples=[[27,81],[122,3],[-54,90],[360,710]].map(([x,y])=>
+    materialHeight(legacyLayer,x,y));
+  const organicLayer={...legacyLayer,material:'linen-organic'};
+  const newSamples=[[27,81],[122,3],[-54,90],[360,710]].map(([x,y])=>
+    materialHeight(organicLayer,x,y));
+  assert.ok(newSamples.some((value,i)=>Math.abs(value-oldSamples[i])>.015));
+  assert.deepEqual([[27,81],[122,3],[-54,90],[360,710]].map(([x,y])=>
+    materialHeight(legacyLayer,x,y)),oldSamples,
+    'new material sampling never changes historical linen relief');
+  assert.ok(Number.isFinite(materialContourHeight(organicLayer,27,81)));
+  const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
+  assert.equal((html.match(/value="linen-organic"/g)||[]).length,3,
+    'new fabric must be selectable on each independently layered material');
+});
