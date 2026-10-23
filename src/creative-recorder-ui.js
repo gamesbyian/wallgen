@@ -28,7 +28,7 @@ export function installCreativeRecorderUI({recorder,getRecipe,store}){
       <h2 id="creativeActivityTitle">Creative activity</h2>
       <button type="button" data-usage-close aria-label="Close activity settings">Close</button>
     </div>
-    <p>Optionally keep a private, reconstructable history of your design sessions on this device. It records recipe changes, navigation, exports and superseded designs. It does not record your typing, imported photos or the image itself.</p>
+    <p>Optionally keep a private, reconstructable history of your design sessions on this device. It records recipe changes, navigation, exports and superseded designs. It does not store raw typing, imported source photos or rendered images. It does preserve editable recipe geometry, including shapes derived from imports.</p>
     <label class="creative-activity-choice"><input type="checkbox" data-usage-enabled> Record my creative activity locally</label>
     <label for="creativeFeedbackFrequency">Optional one-question surveys</label>
     <select id="creativeFeedbackFrequency" data-usage-feedback>
@@ -83,10 +83,12 @@ export function installCreativeRecorderUI({recorder,getRecipe,store}){
   });
   dialog.querySelector('[data-usage-close]').addEventListener('click',()=>{
     if(typeof dialog.close==='function')dialog.close();
-    else dialog.removeAttribute('open');
+    else {dialog.removeAttribute('open');launch.focus();}
   });
+  dialog.addEventListener('close',()=>launch.focus());
   enabled.addEventListener('change',()=>{
     const value=enabled.checked;
+    if(!value)sync.cancel();
     try{localStorage.setItem(USAGE_MODE_KEY,value?'local':'off');}
     catch{ /* Session-only mode is still explicit. */ }
     recorder.setEnabled(value,getRecipe());
@@ -99,7 +101,7 @@ export function installCreativeRecorderUI({recorder,getRecipe,store}){
   });
   dialog.querySelector('[data-usage-clear]').addEventListener('click',async()=>{
     if(!confirm('Delete all local creative activity records? This cannot be undone. Previously uploaded records remain on GitHub.'))return;
-    try{await recorder.clear();if(recorder.enabled)recorder.start(getRecipe());await refresh();}
+    try{sync.cancel();await recorder.clear();if(recorder.enabled)recorder.start(getRecipe());await refresh();}
     catch(error){status.textContent='Could not delete records: '+String(error.message||error);}
   });
 
@@ -147,16 +149,25 @@ export function installCreativeRecorderUI({recorder,getRecipe,store}){
     }
   });
   dialog.querySelector('[data-usage-disconnect]').addEventListener('click',()=>{
+    sync.cancel();
     token='';tokenInput.value='';remember.checked=false;
     try{sessionStorage.removeItem(USAGE_TOKEN_KEY);localStorage.removeItem(USAGE_TOKEN_KEY);}catch{}
     syncStatus.textContent='Disconnected on this device. Existing remote files remain in '+GITHUB_USAGE_REPO+'.';
   });
   // Network writes are bounded, not one per gesture. Sessions with expired
   // credentials simply keep their local outbox for the next manual retry.
-  const timer=setInterval(()=>{
+  setInterval(()=>{
     if(document.visibilityState==='visible'&&token&&recorder.enabled)
       void syncNow();
   },180000);
-  window.addEventListener('pagehide',()=>clearInterval(timer),{once:true});
+  // Do not permanently stop retries on pagehide: Android may return to the
+  // very same BFCache page. Abort only the in-flight request; its outbox stays.
+  window.addEventListener('pagehide',()=>sync.cancel());
+  window.addEventListener('online',()=>{
+    if(token&&recorder.enabled&&document.visibilityState==='visible')void syncNow();
+  });
+  document.addEventListener('visibilitychange',()=>{
+    if(token&&recorder.enabled&&document.visibilityState==='visible')void syncNow();
+  });
   return {syncNow};
 }

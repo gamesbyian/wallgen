@@ -42,16 +42,23 @@ test('a reserved batch survives new events, a failed upload, and retry',async()=
 });
 test('upload requests write only the intended private branch and batch',async()=>{
   const calls=[];
+  let expectedContent='';
   const writer=createGithubUsageWriter({fetchImpl:async(url,request)=>{
     calls.push({url,request});
-    return {status:201};
+    if(request.method==='PUT'){
+      expectedContent=JSON.parse(request.body).content;
+      return {status:201};
+    }
+    return {ok:true,json:async()=>({encoding:'base64',content:expectedContent})};
   }});
   const batch=makeUsageBatch([{eventId:'e',at:'2026-10-22T00:00:00Z',
     sessionId:'s',seq:1,type:'test'}],[],{id:()=> 'unique'});
   const result=await writer.upload(batch,token);
   assert.deepEqual(result,{uploaded:true,existing:false});
-  assert.equal(calls.length,1);
+  assert.equal(calls.length,2);
   assert.equal(calls[0].request.method,'PUT');
+  assert.ok(calls[1].url.endsWith('?ref='+encodeURIComponent(GITHUB_USAGE_BRANCH)));
+  assert.equal(calls[1].request.cache,'no-store');
   const body=JSON.parse(calls[0].request.body);
   assert.equal(body.branch,GITHUB_USAGE_BRANCH);
   assert.deepEqual(JSON.parse(new TextDecoder().decode(Uint8Array.from(
@@ -71,7 +78,7 @@ test('ambiguous create collision confirms exact bytes, rejects foreign content',
   const bad=createGithubUsageWriter({fetchImpl:async(_url,req)=>
     req.method==='PUT'?{status:422}:{ok:true,json:async()=>({
       encoding:'base64',content:encodeGithubContent('different')})}});
-  await assert.rejects(()=>bad.upload(batch,token),/collision/);
+  await assert.rejects(()=>bad.upload(batch,token),/readback differs/);
 });
 test('sync only acknowledges after confirmed upload, retains failed batch',async()=>{
   const {store,recorder}=fixture();
@@ -87,4 +94,40 @@ test('sync only acknowledges after confirmed upload, retains failed batch',async
   const outcome=await sync.run(token);
   assert.equal(outcome.uploaded,2);
   assert.equal(await store.reserveBatch(),null);
+});
+
+test('a fresh 201 response is never acknowledged without matching readback',async()=>{
+  const batch=makeUsageBatch([{eventId:'e',at:'2026-10-22T00:00:00Z',
+    sessionId:'s',seq:1}],[],{id:()=> 'fresh'});
+  const unavailable=createGithubUsageWriter({fetchImpl:async(_url,req)=>
+    req.method==='PUT'?{status:201}:{ok:false,status:404}});
+  await assert.rejects(()=>unavailable.upload(batch,token),/readback failed/);
+  const mismatch=createGithubUsageWriter({fetchImpl:async(_url,req)=>
+    req.method==='PUT'?{status:201}:{ok:true,json:async()=>({
+      encoding:'base64',content:encodeGithubContent('wrong bytes')})}});
+  await assert.rejects(()=>mismatch.upload(batch,token),/readback differs/);
+});
+
+test('revocation during an in-flight write keeps the reserved batch for consented retry',async()=>{
+  const {store,recorder}=fixture();
+  await recorder.flush();
+  let started,finish;
+  const startedPromise=new Promise(resolve=>{started=resolve;});
+  const finishing=new Promise(resolve=>{finish=resolve;});
+  const writer={upload:async(_batch,_token,{signal})=>{
+    assert.ok(signal);
+    started();
+    await finishing;
+    return {uploaded:true};
+  }};
+  const sync=createGithubUsageSync({store,recorder,writer});
+  const pending=sync.run(token);
+  await startedPromise;
+  const reserved=await store.reserveBatch();
+  sync.cancel();
+  finish();
+  assert.equal((await pending).uploaded,0);
+  assert.deepEqual(await store.reserveBatch(),reserved);
+  recorder.setEnabled(false,{seed:'second'});
+  assert.equal((await sync.run(token)).uploaded,0);
 });

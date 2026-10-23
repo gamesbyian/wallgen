@@ -52,7 +52,7 @@ export function createGithubUsageWriter({fetchImpl=globalThis.fetch,
     Accept:'application/vnd.github+json',
     'X-GitHub-Api-Version':'2022-11-28'
   });
-  async function upload(batch,token){
+  async function upload(batch,token,{signal}={}){
     if(typeof token!=='string'||token.trim().length<20)
       throw new Error('Enter a valid GitHub fine-grained personal access token.');
     const content=encodeGithubContent(batch.json);
@@ -61,22 +61,22 @@ export function createGithubUsageWriter({fetchImpl=globalThis.fetch,
     const response=await fetchImpl(url,{
       method:'PUT',headers:{...headers(token),'Content-Type':'application/json'},
       body:JSON.stringify({message:'data: save ROYGBIV creative activity batch '+batch.id,
-        content,branch})
+        content,branch}),signal
     });
-    if(response.status===201)return {uploaded:true,existing:false};
-    // An interrupted response after GitHub stored the file must be safe to
-    // retry. Only acknowledge a 422 collision after verifying exact contents.
-    if(response.status===422){
+    if(response.status===201||response.status===422){
+      // A successful PUT response alone cannot prove the intended bytes are
+      // retrievable. The same readback also makes retries after an ambiguous
+      // network failure idempotent, without overwriting an unrelated file.
       const check=await fetchImpl(url+'?ref='+encodeURIComponent(branch),{
-        headers:headers(token)
+        headers:headers(token),signal,cache:'no-store'
       });
-      if(check.ok){
-        const existing=await check.json();
-        if(existing.encoding==='base64'&&
-          String(existing.content||'').replace(/\s/g,'')===content)
-          return {uploaded:true,existing:true};
-      }
-      throw new Error('GitHub path collision: existing file differs. Retained local batch.');
+      if(!check.ok)
+        throw new Error('GitHub backup readback failed (HTTP '+check.status+'). Local batch retained.');
+      const existing=await check.json();
+      if(existing.encoding!=='base64'||
+        String(existing.content||'').replace(/\s/g,'')!==content)
+        throw new Error('GitHub backup readback differs from local batch. Local batch retained.');
+      return {uploaded:true,existing:response.status===422};
     }
     const message=response.status===401||response.status===403?
       'GitHub backup was refused; check token permissions/expiry and API limits.':
@@ -86,24 +86,30 @@ export function createGithubUsageWriter({fetchImpl=globalThis.fetch,
   return {upload};
 }
 export function createGithubUsageSync({store,recorder,writer=createGithubUsageWriter()}){
-  let busy=null;
+  let busy=null,controller=null;
   async function run(token,{maxBatches=3}={}){
     if(busy)return busy;
+    const attempt=new AbortController();
+    controller=attempt;
     busy=(async()=>{
-      if(!token)return {uploaded:0,remaining:'unknown'};
+      if(!token||!recorder.enabled)return {uploaded:0};
       if(recorder.error)throw new Error('Local recording failed. Resolve storage before backing up.');
       await recorder.flush();
       let total=0;
       for(let i=0;i<maxBatches;i++){
+        if(!recorder.enabled||attempt.signal.aborted)break;
         const batch=await store.reserveBatch();
-        if(!batch)break;
-        await writer.upload(batch,token);
+        if(!batch||!recorder.enabled||attempt.signal.aborted)break;
+        await writer.upload(batch,token,{signal:attempt.signal});
+        // If the owner opted out while a request was in flight, leave the
+        // batch unacknowledged. A later consensual retry verifies exact bytes.
+        if(!recorder.enabled||attempt.signal.aborted)break;
         await store.ackBatch(batch.id);
         total+=batch.eventIds.length;
       }
       return {uploaded:total};
     })();
-    try{return await busy;}finally{busy=null;}
+    try{return await busy;}finally{busy=null;controller=null;}
   }
-  return {run};
+  return {run,cancel:()=>controller?.abort()};
 }
