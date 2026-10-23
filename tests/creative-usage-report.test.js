@@ -92,3 +92,39 @@ test('missing or repeated session events are visibly incomplete, even if recipe 
   assert.match(ambiguous.sessions[0].sequenceError,/Duplicate session event sequence number/);
   assert.match(ambiguous.episodes[0].replayError,/Duplicate session/);
 });
+
+test('analysis exposes factual navigation and edit-command counts without inventing motives',async()=>{
+  const store=memoryUsageStore();let i=0,ms=0;
+  const recorder=createCreativeRecorder({store,enabled:true,
+    id:()=>String(++i),clock:()=>ms,
+    now:()=> '2026-10-23T12:00:00.000Z'});
+  const first={seed:'original',gap:15};
+  const edited={...first,gap:20};
+  const rerolled={...edited,seed:'new-seed'};
+  recorder.start(first);
+  ms=1500;recorder.transition(first,edited,{cause:'edit'});
+  recorder.action('navigation',edited,{routeKind:'editor-tool-changed',route:'geometry'});
+  ms=4000;recorder.transition(edited,rerolled,{cause:'seed_reroll'});
+  recorder.action('export_requested',rerolled,{exportId:'one'});
+  recorder.action('export_failed',rerolled,{exportId:'one'});
+  const retired=recorder.supersede(rerolled,{seed:'next'},'randomize_all');
+  assert.equal(retired.manualEdits,1);
+  const report=analyzeCreativeUsage([{source:'local',data:payload(await recorder.records())}]);
+  const episode=report.episodes[0];
+  assert.deepEqual(episode.recipeChangeCauses,[
+    {name:'edit',count:1},{name:'seed_reroll',count:1}
+  ]);
+  assert.deepEqual(episode.navigationRoutes,[
+    {name:'editor-tool-changed → geometry',count:1}
+  ]);
+  assert.equal(episode.exportFailures,1);
+  assert.equal(episode.editBurstsAtSupersession,1);
+  assert.ok(episode.engagedMsAtSupersession>=0);
+  assert.equal(episode.lastRevisionExportedAtSupersession,false);
+  assert.equal(report.episodes[1].editBurstsAtSupersession,null);
+  assert.deepEqual(report.recipeActionCounts,episode.recipeChangeCauses);
+  const md=markdownCreativeUsageReport(report);
+  assert.match(md,/Observed recipe actions/);
+  assert.match(md,/editor-tool-changed/);
+  assert.match(md,/not failed searches, hesitation, confusion or task success/);
+});
