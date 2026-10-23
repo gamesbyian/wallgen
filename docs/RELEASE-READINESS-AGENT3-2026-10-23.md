@@ -1,0 +1,43 @@
+# ROYGBIV release-readiness and owner-dependent acceptance ledger
+**23 October 2026 · Agent 3 checkpoint following merged PR #616**
+
+This is a current-product readiness ledger, **not** a declaration that the whole app is release-complete, visually approved, or physically handset-tested. Source-level inspection and targeted GitHub Node quick checks are the evidence available in this lane. No invented participant, on-device credential, live authenticated GitHub transfer, native Pixel action or TalkBack session is counted as a pass.
+
+## Delivered and verified in software
+
+| Scope | Delivered | Specific evidence / remaining boundary |
+| --- | --- | --- |
+| Seven-category creative editor | 7 established categories, 40 tool cards / 95 schema scalar keys, original control and lock identity, Focus, Undo, presets and scoped randomization | Main source, source inventory and existing Node/browser evidence. The category model is retained. |
+| Navigation, C07/C10/C11 | Multi-result field search with arrow/Enter selection and original-field focus; local/global Light/Shadows/Glow crosslinks; design-type continuation; Photo navigation | #455/#462/#465/#475 and subsequent merged source. Real Pixel virtual-keyboard/TalkBack familiarity is not yet tested. |
+| Material and object workflows, C09 | Three layer Material/Finish inspectors reuse original inputs; object picker and five targeted interior-element cards retain stable IDs; Thread options preserve native select identity during unrelated sync | #459/#460/#532 and source. A larger one-card inspector is a *candidate*, not a proven improvement. |
+| Portrait reach | Earlier browser source renders measured 320×700 and 412×892 Thread acceptance with no reported overflow and measured >=44px interactive controls (#521); #616 reveals selected first tool after **manual category changes** rather than inheriting a previous category's offscreen tool strip; same-category manual swipes remain undisturbed | #616 Node keyboard/source contracts and merged quick CI. Previous browser proof is dated; no fresh handset tap evidence. |
+| Optional activity and surveys | Off by default; explicit local consent; canonical transitions and recipe diffs; timestamps + authoritative session sequence; restart/supersession/export checkpoints; bounded one-question opt-in surveys, skip, no more prompts after opt-out/deletion | #548–#552, #566, #572, #575 and existing recorder/feedback tests. PNG download *initiated* is not a saved/applied wallpaper. |
+| Local retrieval and private backup software | IndexedDB journal, inspect/export JSON/delete, protected old-session pruning, private `general-purpose` batch archive with exact readback before ack, offline/revoked retries, session-scoped paths, oversized-event containment, truthful pending/reserved/acknowledged counts | #554/#558/#560/#568/#570/#583/#593 and other merged Node tests. Network transport **simulated** by tests only; no actual token, upload or external GET. |
+| Corruption recovery | #616 refuses malformed previous last-known IDs, missing recipes and unsafe sequence integers, without fabricating an interrupted ending. The Activity log reports the unreconciled checkpoint while retaining existing local events for export | #616 dedicated Node test + `npm run check:quick` successful [run #40024170890](https://github.com/gamesbyian/wallgen/actions/runs/40024170890). This is bounded fault isolation, not guaranteed recovery after browser eviction or every possible IndexedDB failure. |
+| Integration/CI | #616 changes no canonical model or renderer, no historical PNG rewrite, no seven-category redesign, no automatic screenshot workflow and no upload service | Merged [PR #616](https://github.com/gamesbyian/wallgen/pull/616), lean quick CI green. |
+
+## Live implementation defects and pending external checks
+
+There are no remaining **reproduced, unaddressed Agent 3 source-level defects** in the specific journeys reviewed. This is not proof that no mobile defects exist; the following acceptance is still outstanding.
+
+1. **Physical Pixel / Chrome / PWA:** On actual Pixel 6 Pro portrait, test 320-ish compact proxy only if relevant, then native 9:19: switch categories after horizontally scrolling a long tool list (new selected tool must be visible), return to same category and swipe within it; tap search, use Android IME/Go/Enter and close it; native selects (especially Thread and Material), Focus, selection/lock/Undo, object editing and C09–C11 continuation/crosslinks; observe preview fraction, actual thumb reach, accidental neighbour hits, screen-reader names/focus and TalkBack. Record device/build/selector and before/after for any failure. No one has claimed this real pass yet.
+2. **Consented activity:** In Activity log, explicitly opt in locally, create a nontrivial recipe, modify several controls, Undo, export a PNG, answer or Skip the brief survey, use Randomize All to supersede an edited draft, hide/reopen or force-stop/reopen the PWA, inspect the recovered *unconfirmed* episode, export JSON and verify its chronology. Disable recording and confirm no new events; clear locally if desired. Do not infer an intentional abandonment from a browser kill.
+3. **Optional private GitHub live acceptance:** Only if the owner accepts that the on-device fine-grained Contents-read/write token grants scope to the **entire** private `gamesbyian/general-purpose` repository (not only `telemetry/roygbiv/` or its branch), configure it inside Activity log. Confirm an actual authenticated PUT and exact GET readback on `data/roygbiv-usage`, then deliberately test offline/expired or revoked token and recover with a manual retry. Verify de-duplication, accurate remaining queue, no token or raw image in uploaded JSON, and disconnect. **No token was provided to this agent.**
+4. **Storage limits:** Browser storage eviction/clear can irretrievably erase unsynced events; a forced Android kill may provide no lifecycle event; concurrent tabs are not transactionally synchronized as a single human session; locally deleting/pruning cannot erase committed Git history. These are disclosed caveats, not software acceptance that has occurred.
+5. **Real creator evidence:** The recorder currently has **zero verified genuine human-use studies** in this lane. Agent predictions and browser scripts are not human observations. Any actual consented corpus can be processed with `scripts/summarize-creative-usage.mjs`.
+
+## Cross-lane release work, independently owned
+
+- **Agent 1:** #557 reconstruction remains active. At this checkpoint PR #615 proposes an existing wide Draw seven-hue registration route and has a temporary one-shot comparison workflow that must be removed before merge. No inference of original seed, external-image provenance or physical Pixel performance is allowed without evidence.
+- **Agent 2:** #445 material realism and #514 embroidery are active. PR #617 proposes relief on crowding of Chain stitches in tight curves; real full-art before/after visual inspection still belongs to that owner. This lane did not rewrite renderer math or pronounce artistic fidelity accepted.
+- **Deliberately nonblocking:** #476 historical PNG conversion is an optional compatibility aid; #301 extreme phone-landscape case is unsupported in the portrait-first product. Neither is a current canonical recipe/portrait release gate absent new evidence.
+
+## Software lane disposition
+
+**#365:** Engineering delivery complete for the specifically reproduced cases; further acceptance needs native Pixel observation. Close as software-complete, and reopen with device/selector evidence rather than standing screenshot-matrix tasks.
+
+**#444:** Existing seven-category, selected-object, contextual links/search and continuation are implemented. C09 inspector consolidation and structural C10/C11 reorganizations remain optional design experiments pending evidence that they beat the current workflow. No perpetual open feature checklist.
+
+**#542:** Local privacy/consent/replay/export/terminal/survey/retention/batch software delivered and tested; corrupted-last-known guard added. Real user and authenticated remote acceptance is owner-dependent. Close software ticket with limitations above; open a new sharply scoped defect on an actually observed failure. No silent remote upload and no declaration of live service success.
+
+**Stop condition:** Product release may proceed when the owner is satisfied with actual mobile art and creation experience. Claims of complete hardware accessibility, real authenticated telemetry or artistic output approval must remain explicit pending evidence.
