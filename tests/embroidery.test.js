@@ -70,3 +70,34 @@ test('closed circle and compound silhouette produce deterministic thread rows',(
   assert.equal(ctx.counters.saves,ctx.counters.restores);
   assert.equal(drawRegionEmbroidery(ctx,circle,null),0);
 });
+
+test('specific target outranks palette and all treatments regardless of array order',()=>{
+  const global=select({id:'global',target:{scope:'all',role:'fill',colorSlots:[],ids:[]}});
+  const palette=select({id:'palette',target:{scope:'palette',role:'fill',colorSlots:[2],ids:[]}});
+  const object=select({id:'object',target:{scope:'object',role:'fill',colorSlots:[],ids:['region-4']}});
+  for(const treatments of [[global,palette,object],[object,global,palette],[palette,object,global]]){
+    assert.strictEqual(matchingEmbroidery(treatments,{id:'region-4',colorSlot:2}),object);
+    assert.strictEqual(matchingEmbroidery(treatments,{id:'region-5',colorSlot:2}),palette);
+    assert.strictEqual(matchingEmbroidery(treatments,{id:'region-5',colorSlot:3}),global);
+    assert.strictEqual(matchingEmbroidery(treatments,{id:'region-4',colorSlot:2,role:'outline'}),null);
+  }
+  assert.strictEqual(matchingEmbroidery([global,global],{id:'anything',colorSlot:4}),global);
+});
+test('tatami on a clipped region draws staggered short rows; satin remains long ribs',()=>{
+  const rectangle={rings:[[{x:0,y:0},{x:200,y:0},{x:200,y:80},{x:0,y:80}]],
+    vertices:[{x:0,y:0},{x:200,y:0},{x:200,y:80},{x:0,y:80}]};
+  const segments=()=>{const strokes=[];let first=null;
+    return {strokes,save(){},restore(){},translate(){},rotate(){},beginPath(){},
+      moveTo(x,y){first=[x,y]},lineTo(x,y){strokes.push([first,[x,y]])},stroke(){}};
+  };
+  const satin=segments(),tatami=segments();
+  const long=drawRegionEmbroidery(satin,rectangle,select({style:'satin',pitch:8}));
+  const short=drawRegionEmbroidery(tatami,rectangle,select({style:'tatami',pitch:8}));
+  assert.ok(long>0&&short>long);
+  assert.equal(satin.strokes.length,long*2);
+  assert.equal(tatami.strokes.length,short*2);
+  assert.ok(tatami.strokes.every(([[a],[b]])=>b-a<80),'tatami threads must be short');
+  const repeat=segments();
+  drawRegionEmbroidery(repeat,rectangle,select({style:'tatami',pitch:8}));
+  assert.deepEqual(tatami.strokes,repeat.strokes,'same authored grid, no RNG');
+});

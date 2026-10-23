@@ -20,3 +20,12 @@ test('compact Surface disclosure hides mutually exclusive sets without changing 
   assert.match(app,/threadSummary\.textContent=selected==='off'/);
   assert.match(app,/NAMES\[Number\(selected\)\]/);
 });
+
+test('surface stitch style is one native persisted control, not a separate tab',()=>{
+  const html=source('index.html'),app=source('src/app.js');
+  assert.equal((html.match(/name="embroideryStyle"/g)||[]).length,1);
+  assert.match(html,/<option value="tatami">Tatami fill \(regions\)<\/option>/);
+  assert.match(app,/style:form\.elements\.namedItem\('embroideryStyle'\)\.value/);
+  assert.match(app,/namedItem\('embroideryStyle'\)\.value=stitch\?\.style\?\?'satin'/);
+  assert.match(app,/'embroideryObjectId','embroideryStyle','embroideryPitch'/);
+});

@@ -33,13 +33,18 @@ export function normalizeSurfaceTreatments(input){
 }
 export function matchingEmbroidery(treatments,{id,colorSlot,role='fill'}={}){
   if(role!=='fill')return null;
+  // A specific authored object wins over its colour group, which wins over
+  // the blanket fill. Equal-scope ties retain their saved order. Otherwise an
+  // editor-owned "All" layer could silently mask precise imported assignments.
+  let best=null,priority=0;
   for(const item of treatments||[]){
     if(!item.enabled||item.materialFamily!=='embroidery'||item.target.role!=='fill')continue;
-    if(item.target.scope==='all')return item;
-    if(item.target.scope==='object'&&item.target.ids.includes(id))return item;
-    if(item.target.scope==='palette'&&item.target.colorSlots.includes(colorSlot))return item;
+    const match=item.target.scope==='object'&&item.target.ids.includes(id)?3:
+      item.target.scope==='palette'&&item.target.colorSlots.includes(colorSlot)?2:
+      item.target.scope==='all'?1:0;
+    if(match>priority){best=item;priority=match;}
   }
-  return null;
+  return best;
 }
 function stitchInk(ctx,brightness,relief){
   const alpha=(.10+relief/100*.24)*brightness;
@@ -98,6 +103,13 @@ export function drawRegionEmbroidery(ctx,object,treatment){
   const diagonal=Math.hypot(width,height);
   if(diagonal>5000||diagonal<1)return 0;
   const n=Math.min(1000,Math.ceil(diagonal/treatment.pitch));
+  // Short interlocking tatami segments follow a stable world-space row lattice.
+  // Segment length grows for huge bounds to cap Canvas2D stroke work. The
+  // enclosing renderer's even-odd clip handles silhouette islands and holes.
+  const tatami=treatment.style==='tatami';
+  const segment=Math.max(8,treatment.pitch*3.2,
+    diagonal*1.6*(2*n+1)/18000);
+  let stitches=0;
   ctx.save();
   ctx.translate((left+right)/2,(top+bottom)/2);
   ctx.rotate((treatment.direction+((height>width)?90:0))*Math.PI/180);
@@ -106,11 +118,26 @@ export function drawRegionEmbroidery(ctx,object,treatment){
   for(let k=-n;k<=n;k++){
     const y=k*treatment.pitch;
     if(Math.abs(y)>diagonal*.7)continue;
-    ctx.beginPath();ctx.moveTo(-diagonal*.8,y+.5);ctx.lineTo(diagonal*.8,y+.5);
-    ctx.strokeStyle='rgba(0,0,0,.25)';ctx.stroke();
-    ctx.beginPath();ctx.moveTo(-diagonal*.8,y-.5);ctx.lineTo(diagonal*.8,y-.5);
-    stitchInk(ctx,.82,treatment.relief);ctx.stroke();
+    if(tatami){
+      const limit=diagonal*.8;
+      const offset=((k%3+3)%3)*segment/3;
+      for(let x=-limit-segment+offset;x<limit;x+=segment){
+        const a=Math.max(-limit,x+.7),b=Math.min(limit,x+segment-.7);
+        if(b-a<1)continue;
+        ctx.beginPath();ctx.moveTo(a,y+.5);ctx.lineTo(b,y+.5);
+        ctx.strokeStyle='rgba(0,0,0,.25)';ctx.stroke();
+        ctx.beginPath();ctx.moveTo(a,y-.5);ctx.lineTo(b,y-.5);
+        stitchInk(ctx,.82,treatment.relief);ctx.stroke();
+        stitches++;
+      }
+    }else{
+      ctx.beginPath();ctx.moveTo(-diagonal*.8,y+.5);ctx.lineTo(diagonal*.8,y+.5);
+      ctx.strokeStyle='rgba(0,0,0,.25)';ctx.stroke();
+      ctx.beginPath();ctx.moveTo(-diagonal*.8,y-.5);ctx.lineTo(diagonal*.8,y-.5);
+      stitchInk(ctx,.82,treatment.relief);ctx.stroke();
+      stitches++;
+    }
   }
   ctx.restore();
-  return n*2+1;
+  return stitches;
 }

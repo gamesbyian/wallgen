@@ -1,5 +1,10 @@
 # ROYGBIV: geometry-aware surfaces and procedural embroidery
 
+## Current next slice: scoped treatment precedence and tatami region stitch style (2026-10-22)
+
+The existing optional `surfaceTreatments` array now resolves **authored object > palette slot > all fills**, regardless of serial order; ties retain their original first-match priority. This lets an exact region override a palette group and a palette group override a global treatment without rewriting recipes or changing any untreated artwork. Existing `tatami` recipes now render bounded, offset short thread segments on regions (using the existing even-odd geometry clip); `satin` continues to use the established long fill rows. Texture → Surface exposes the style through the current compact Thread disclosure, restoring the saved value instead of hardcoding satin on every change. Ribbons intentionally keep path-following ribs in both styles; more sophisticated stitch angle and physical thread relief remain E2/E3 follow-ups. Focused Node tests validate routing, deterministic row geometry, editor round-trip wiring. **Source-verified implementation, not an artistically approved physical-phone render.**
+
+
 ## One authored-object treatment picker (PR #482, 2026-10-22)
 
 [#482](https://github.com/gamesbyian/wallgen/pull/482) exposes the already-supported explicit `target.scope='object'` in the compact Thread workspace. The picker enumerates actual unified-scene generated `region-N` and `bundle-N/stripe-M` IDs. Selection is narrow and does not change another object's paint, global palette colours or texture layers; the recipe preserves identity through Undo, downloads and scene changes. If a saved target no longer exists, it remains selectable with an unavailable label rather than being arbitrarily mapped to a new region.

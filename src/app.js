@@ -233,7 +233,8 @@ function fromControls() {
   const target=form.elements.namedItem('embroideryTarget').value;
   if(target!=='off'){
     otherTreatments.unshift({
-      id:'editor-stitches',enabled:true,materialFamily:'embroidery',style:'satin',
+      id:'editor-stitches',enabled:true,materialFamily:'embroidery',
+      style:form.elements.namedItem('embroideryStyle').value,
       target:target==='all'?{scope:'all',role:'fill',colorSlots:[],ids:[]}:
         target==='object'?{scope:'object',role:'fill',colorSlots:[],
           ids:[form.elements.namedItem('embroideryObjectId').value].filter(Boolean)}:
@@ -316,6 +317,7 @@ function toControls(recipe) {
   const byObject=targetSelect.querySelector('option[value="object"]');
   if(byObject)byObject.disabled=!choices.length&&selected!=='object';
   targetSelect.value=selected;
+  form.elements.namedItem('embroideryStyle').value=stitch?.style??'satin';
   const threadSummary=form.querySelector('.thread-treatment-summary');
   if(threadSummary)threadSummary.textContent=selected==='off'?'Off':
     selected==='all'?'All colours':selected==='object'?
@@ -1923,7 +1925,7 @@ document.addEventListener('change',event=>{
     }
   }
   if(['photoEnabled','photoPresetId','photoAmount','photoGrain','photoHalation',
-      'embroideryTarget','embroideryObjectId','embroideryPitch','embroideryRelief'].includes(event.target.name)){
+      'embroideryTarget','embroideryObjectId','embroideryStyle','embroideryPitch','embroideryRelief'].includes(event.target.name)){
     clearTimeout(rangeTimeout);
     updateControlsFromInputs();
     return;
