@@ -122,6 +122,21 @@ export function reconstructionCandidates(image,recipe){
     }
   }
 
+  // Closed multi-hue silhouettes can originate from looped rainbow ribbons.
+  // A traced *outside contour* is usually a poor centreline: offer genuine
+  // editable procedural loops instead of overfitting that boundary.
+  if(!desc.lineDirection&&desc.colourRegions.length>=3&&
+    desc.paths.some(path=>path.kind==='contour'&&path.closed)){
+    for(const orientation of ['vertical','diagonal']){
+      candidates.push({kind:'loop',label:'Procedural '+orientation+' loop',
+        uncertainty:'Recognized closed rainbow topology, but loop radius, seed offsets and crossing/occlusion order remain approximate.',
+        recipe:normalizeRecipe({...base,structure:'paths',geometry:'loop',
+          orientation,composition:'single',construction:'ribbon',
+          chaos:0,individuality:0,loopRadius:56,loopSweep:355,
+          spread:46,stripeWidth:52})});
+    }
+  }
+
   // Colour-band arcs are usually stronger than generic contours; the same
   // extracted geometry and path transaction already power manual image import.
   const distinct=desc.paths.filter(p=>['arc','line','contour'].includes(p.kind) &&
