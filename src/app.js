@@ -7,7 +7,7 @@ import { embedPngMetadata, extractPngRecipeWithProvenance, cleanMetadata, METADA
 import {inspectPngMigration,migratePngMetadataOnly,inspectPngRecipeArchive,archivePngRecipeRecords} from './png-recipe-migration.js';
 import { installDrawTool } from './draw-path-ui.js?v=20261018-extend1';
 import {appliedDrawnPathRecipe} from './draw-apply-transaction.js';
-import { installImagePathTool } from './image-path-ui.js?v=20261023-fullframe1';
+import { installImagePathTool } from './image-path-ui.js?v=20261023-r0-observed2';
 import {importedAngleDeltaDegrees} from './import-angle-wrap.js';
 import {pathStructureLockedOutsidePaths} from './path-authoring-locks.js';
 import {mountEditor,selectEditorTool,syncEditorStructure} from './editor-layout.js?v=20261022-search-choice1';
@@ -776,7 +776,8 @@ const imagePathTool=installImagePathTool({
       JSON.stringify(effective[key])!==JSON.stringify(candidate[key]));
     changeRecipe(candidate,{cause:'image-reconstruction'});
     showNotice('Applied inferred '+description.kind+' recipe. Undo restores the prior design.'+
-      (blocked.length?' '+blocked.length+' locked settings were preserved.':''));
+      ((description.lockedChanges?.length||blocked.length)?
+        ' Locked settings preserved: '+(description.lockedChanges||blocked).join(', ')+'.':''));
     return true;
   },
   onAngle:angle=>{

@@ -1,9 +1,10 @@
 // Inverse-graphics candidate synthesis, not a second scene model.
 // The analysis source is bounded by image-path.js; every output is a normal
 // editable wallpaper recipe. No source pixels or alleged original seed persist.
-import {HUES,normalizeRecipe} from './model.js';
+import {HUES,normalizeRecipe,respectSettingLocks} from './model.js';
+import {cloneGeometrySnapshot} from './geometry-asset.js';
 import {appliedDrawnPathRecipe} from './draw-apply-transaction.js';
-import {extractImagePathCandidates,extractImageColourRegions,imagePlacement,pathToWallpaper} from './image-path.js';
+import {extractImagePathCandidates,extractImageColourRegions,extractImageShapeCandidates,imagePlacement,pathToWallpaper} from './image-path.js';
 
 const RECONSTRUCTION_WIDTH=96, RECONSTRUCTION_HEIGHT=208;
 // Reconstruction explains the entire imported frame, unlike padded manual
@@ -16,11 +17,28 @@ const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
 export function describeReconstructionImage(image){
   const colour=extractImageColourRegions(image,HUES);
   const paths=extractImagePathCandidates(image);
+  const aspect=region=>{
+    const [x0,y0,x1,y1]=region.bounds;
+    const w=Math.max(1,(x1-x0)*image.width);
+    const h=Math.max(1,(y1-y0)*image.height);
+    return Math.max(w/h,h/w);
+  };
   const seven=colour.regions.length===7&&
     colour.regions.every(region=>region.area>=image.width*image.height*.001&&
-      region.fillRatio>=.45);
+      region.fillRatio>=.32&&aspect(region)<2.7);
+  const elongated=colour.regions.filter(region=>aspect(region)>3);
+  const vertical=elongated.filter(region=>{
+    const [x0,y0,x1,y1]=region.bounds;
+    return (y1-y0)*image.height>(x1-x0)*image.width;
+  });
+  const horizontal=elongated.filter(region=>{
+    const [x0,y0,x1,y1]=region.bounds;
+    return (x1-x0)*image.width>(y1-y0)*image.height;
+  });
+  const lineDirection=vertical.length>=5?'vertical':
+    horizontal.length>=5?'horizontal':null;
   return {background:colour.background,colourRegions:colour.regions,
-    paths:paths.slice(0,4),sevenColourRegions:seven,
+    paths:paths.slice(0,6),sevenColourRegions:seven,lineDirection,
     coverage:colour.coverage,dimensions:[image.width,image.height]};
 }
 
@@ -40,7 +58,8 @@ function strippedCandidateBase(input,background){
 /** Return a few independently editable canonical alternatives. */
 export function reconstructionCandidates(image,recipe){
   const desc=describeReconstructionImage(image);
-  const base=strippedCandidateBase(recipe,desc.background);
+  const current=normalizeRecipe(recipe);
+  const base=strippedCandidateBase(current,desc.background);
   const candidates=[];
   if(desc.sevenColourRegions){
     // Colour slot identity comes from the shared model HUES. Overrides live
@@ -59,6 +78,66 @@ export function reconstructionCandidates(image,recipe){
         scatteredOverlap:'overlap',scatteredEdgeCrop:0,scatteredSpacing:0,
         scatteredOverrides:overrides})});
   }
+  // Long separate colour components describe procedural bands more honestly
+  // than a ring of seven giant circles. Keep direct thickness/spacing editing.
+  if(desc.lineDirection){
+    for(const spread of [38,56,74]){
+      candidates.push({kind:'straight',label:'Procedural '+desc.lineDirection+
+        ' bands / spread '+spread,
+        uncertainty:'Fitted orientation and approximate spacing; the original seed, group offset, thickness and palette nuances were not recovered.',
+        recipe:normalizeRecipe({...base,structure:'paths',geometry:'straight',
+          orientation:desc.lineDirection,composition:'single',
+          construction:'ribbon',chaos:0,individuality:0,
+          stripeWidth:52,spread})});
+    }
+  }
+
+  // A single dominant filled silhouette, including source holes and detached
+  // islands, can be represented as ONE portable compound shape. This uses the
+  // existing asset snapshot and scattered-region scene, not a bitmap overlay.
+  // Reject multicolour scenes to avoid painting a seven-hue drawing as red.
+  if(desc.colourRegions.length<=2){
+    const shape=extractImageShapeCandidates(image).find(c=>c.geometry?.components?.length);
+    if(shape){
+      const geometry=shape.geometry;
+      const [vx,vy,vw,vh]=geometry.viewBox,ox=vx+vw/2,oy=vy+vh/2;
+      const box=reconstructionPlacement(image.width,image.height);
+      const sourceRings=geometry.components.flatMap(comp=>[comp.outer,...comp.holes]);
+      let maxRadius=0;
+      for(const ring of sourceRings)for(const [x,y] of ring)
+        maxRadius=Math.max(maxRadius,Math.hypot(x-ox,y-oy));
+      const radius=clamp(maxRadius*box.width/image.width/600,.01,1.2);
+      if(radius>.01&&radius<=1.2){
+        candidates.push({kind:'shape',
+          label:'One editable compound silhouette'+
+            (sourceRings.length>1?' with preserved holes/islands':''),
+          uncertainty:'Recognized geometry is portable and independently editable; pigment remains the first ROYGBIV colour and material/lighting are not inferred.',
+          recipe:normalizeRecipe({...base,structure:'regions',regionMode:'scattered',
+            scatteredShapeKind:'imported',scatteredShape:cloneGeometrySnapshot(geometry),
+            scatteredCount:1,scatteredOverlap:'overlap',scatteredSpacing:0,
+            scatteredOverrides:[{index:0,
+              x:(box.x+ox*box.width/image.width)/600,
+              y:(box.y+oy*box.height/image.height)/1300,
+              radius}]})});
+      }
+    }
+  }
+
+  // Closed multi-hue silhouettes can originate from looped rainbow ribbons.
+  // A traced *outside contour* is usually a poor centreline: offer genuine
+  // editable procedural loops instead of overfitting that boundary.
+  if(!desc.lineDirection&&desc.colourRegions.length>=3&&
+    desc.paths.some(path=>path.kind==='contour'&&path.closed)){
+    for(const orientation of ['vertical','diagonal']){
+      candidates.push({kind:'loop',label:'Procedural '+orientation+' loop',
+        uncertainty:'Recognized closed rainbow topology, but loop radius, seed offsets and crossing/occlusion order remain approximate.',
+        recipe:normalizeRecipe({...base,structure:'paths',geometry:'loop',
+          orientation,composition:'single',construction:'ribbon',
+          chaos:0,individuality:0,loopRadius:56,loopSweep:355,
+          spread:46,stripeWidth:52})});
+    }
+  }
+
   // Colour-band arcs are usually stronger than generic contours; the same
   // extracted geometry and path transaction already power manual image import.
   const distinct=desc.paths.filter(p=>['arc','line','contour'].includes(p.kind) &&
@@ -76,7 +155,19 @@ export function reconstructionCandidates(image,recipe){
         recipe:candidate});
     }
   }
-  return candidates.slice(0,RECONSTRUCTION_RENDER_LIMIT);
+  // A preview must depict exactly what Apply can commit. The same canonical
+  // lock policy governs both; never rank an uncommittable unlocked ideal.
+  const essential=candidate=>candidate.kind==='regions'||candidate.kind==='shape'?
+    ['structure','regionMode','scatteredShapeKind']:
+    candidate.kind==='path'||candidate.kind==='straight'||candidate.kind==='loop'?
+      ['structure','geometry']:['structure'];
+  return candidates.map(candidate=>{
+    const effective=respectSettingLocks(current,candidate.recipe);
+    const blocked=current.lockedSettings.filter(key=>
+      JSON.stringify(effective[key])!==JSON.stringify(candidate.recipe[key]));
+    return {...candidate,recipe:effective,lockedChanges:blocked};
+  }).filter(candidate=>!essential(candidate).some(key=>
+    candidate.lockedChanges.includes(key))).slice(0,RECONSTRUCTION_RENDER_LIMIT);
 }
 
 /** Shape-aware but inexpensive comparison at an explicitly bounded resolution.
@@ -128,3 +219,42 @@ export function rankReconstructionCandidates(candidates,source,render){
 export const RECONSTRUCTION_FRAME=Object.freeze({
   width:RECONSTRUCTION_WIDTH,height:RECONSTRUCTION_HEIGHT
 });
+
+
+/**
+ * Deliberately small, deterministic coarse-to-fine fit using the canonical
+ * painter callback. One candidate at a time; never holds multiple raster
+ * outputs and cannot exceed the supplied render budget. Useful only after
+ * topology selection, not a claim to identify historical parameters.
+ */
+export function refineReconstructionCandidate(candidate,source,render,{maxRenders=10}={}){
+  if(!candidate||!['straight','loop'].includes(candidate.kind)||
+    !Number.isFinite(candidate.error))return candidate;
+  if(!Number.isInteger(maxRenders)||maxRenders<0||maxRenders>16)
+    throw Error('Invalid reconstruction fitting budget');
+  let best=candidate,renders=0;
+  const fields=candidate.kind==='straight'?[
+    [candidate.recipe.orientation==='horizontal'?'positionY':'positionX',[-8,-4,4,8]],
+    ['spread',[-16,-8,8,16]],['stripeWidth',[-15,15]]
+  ]:[
+    ['positionX',[-6,6]],['positionY',[-6,6]],
+    ['loopRadius',[-10,10]],['spread',[-10,10]],['stripeWidth',[-15,15]]
+  ];
+  for(const [field,deltas] of fields){
+    // Compare all deltas to the same coordinate baseline, rather than
+    // chasing a newly improved value and skipping the true neighbouring fit.
+    const origin=best.recipe[field];
+    for(const delta of deltas){
+      if(renders>=maxRenders)break;
+      const recipe=normalizeRecipe({...best.recipe,[field]:origin+delta});
+      if(recipe[field]===best.recipe[field])continue;
+      const result=render(recipe,RECONSTRUCTION_WIDTH,RECONSTRUCTION_HEIGHT);
+      renders++;
+      const error=compareReconstructionPixels(source,result);
+      if(error+1e-9<best.error)
+        best={...best,recipe,error,label:candidate.label+' · fitted',
+          adjustments:[...(best.adjustments||[]),{field,value:recipe[field]}]};
+    }
+  }
+  return {...best,refinementRenders:renders};
+}
