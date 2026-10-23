@@ -640,3 +640,46 @@ test('measured Wave refinement spends fixed renderer budget on genuine contour c
  assert.deepEqual(asyncResult,result);
  assert.ok(result.refinementRenders<=10);
 });
+
+
+test('source-detected multicolour contours can propose existing canonical pointed Chevron geometry',()=>{
+ const w=RECONSTRUCTION_FRAME.width,h=RECONSTRUCTION_FRAME.height;
+ const image=raster(w,h,(x,y)=>{
+   for(let i=0;i<7;i++){
+     const centre=26+i*19+Math.abs(x-46)*.38;
+     if(Math.abs(y-centre)<6)return colour(HUES[i]);
+   }
+   return [0,0,0,255];
+ });
+ const options=reconstructionCandidates(image,normalizeRecipe({seed:'independent-chevron-test'}));
+ // This is a hypothesis, not a presumption of recovery: score all candidates
+ // with the same production forward-renderer contract before offering Apply.
+ assert.ok(options.length<=RECONSTRUCTION_RENDER_LIMIT);
+ const chevron=options.find(candidate=>candidate.kind==='chevron');
+ assert.ok(chevron,'Existing editable chevron should be available for angular ribbons');
+ assert.equal(chevron.recipe.geometry,'chevron');
+ assert.equal(chevron.recipe.structure,'paths');
+ assert.ok(chevron.recipe.chevronSharpness>=80);
+ assert.deepEqual(normalizeRecipe(chevron.recipe),chevron.recipe);
+});
+
+test('chevron refinement stays within ten genuine-render probes and preserves locks',()=>{
+ const w=RECONSTRUCTION_FRAME.width,h=RECONSTRUCTION_FRAME.height;
+ const source=raster(w,h,()=>[0,0,0,255]);
+ const recipe=normalizeRecipe({seed:'chevron-art',geometry:'chevron',
+   structure:'paths',shapeDepth:67,shapeFrequency:8,spread:58,
+   positionY:7,lockedSettings:['position','spread']});
+ const candidate={kind:'chevron',recipe,label:'Editable pointed chevron',
+   error:.3};
+ const renderCalls=[];
+ const render=next=>{
+   renderCalls.push(next);
+   return raster(w,h,()=>[0,0,0,255]);
+ };
+ const normal=refineReconstructionCandidate(candidate,source,render);
+ assert.ok(renderCalls.length<=10&&renderCalls.length>0);
+ assert.ok(renderCalls.every(r=>r.positionY===7&&r.spread===58));
+ const asyncFit=await refineReconstructionCandidateCooperatively(candidate,source,render);
+ assert.deepEqual(asyncFit,normal);
+ assert.equal(normal.recipe.geometry,'chevron');
+});
