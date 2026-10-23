@@ -1913,7 +1913,7 @@ form.addEventListener('click',event=>{
   });
   if(!modified.length){showNotice('No unlocked, applicable settings changed.');return;}
   explorationHistory.remember(current,'Before '+name);
-  changeRecipe(recipe);
+  changeRecipe(recipe,{cause:'scoped_'+mode+'_'+scope});
   const label=scope==='setting'?
     fullSettingName(name,sourceSettingLabel(form.elements.namedItem(name),name)):
     scope==='tool'?TOOL_LIST.find(tool=>tool.id===name)?.name:
@@ -2000,7 +2000,7 @@ seedInput.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preve
 document.getElementById('applySeed').addEventListener('click',()=>render(fromControls()));
 document.getElementById('randomize').addEventListener('click',()=>{
   explorationHistory.remember(current,'Before seed');
-  changeRecipe({...fromControls(),seed:newSeed()});
+  changeRecipe({...fromControls(),seed:newSeed()},{cause:'seed_reroll'});
   explorationHistory.remember(current,'New seed');
 });
 document.getElementById('randomizeAll').addEventListener('click',()=>{
