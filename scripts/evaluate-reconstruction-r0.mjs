@@ -81,7 +81,7 @@ async function evaluate(opts){
       const inferred=await page.evaluate(async ({base64,includeAlternatives})=>{
         const {reconstructionCandidates,rankReconstructionCandidates,
           reconstructionPlacement,RECONSTRUCTION_FRAME,
-          refineReconstructionCandidate,
+          refineReconstructionCandidate,reconstructionRefinementIndex,
           compareReconstructionPixels}=await import('/src/image-reconstruction.js');
         const {drawWallpaper}=await import('/src/renderer.js');
         const {normalizeRecipe}=await import('/src/model.js');
@@ -113,7 +113,8 @@ async function evaluate(opts){
           recipe=>render(recipe).getContext('2d',{willReadFrequently:true})
             .getImageData(0,0,fit.width,fit.height));
         if(ranked[0]){
-          ranked[0]=refineReconstructionCandidate(ranked[0],reference,
+          const fitIndex=reconstructionRefinementIndex(ranked);
+          ranked[fitIndex]=refineReconstructionCandidate(ranked[fitIndex],reference,
             recipe=>render(recipe).getContext('2d',{willReadFrequently:true})
               .getImageData(0,0,fit.width,fit.height));
           ranked.sort((a,b)=>a.error-b.error);
