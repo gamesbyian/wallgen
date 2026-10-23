@@ -240,7 +240,9 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle,onShape,
   recipeApply.addEventListener('click',()=>{
     const candidate=reconstructed[Number(recipeChooser.value)];
     if(working||!candidate||!onRecipe)return;
-    if(onRecipe(candidate.recipe,candidate)){dialog.close();}
+    if(onRecipe(candidate.recipe,{...candidate,sourceWidth:width,sourceHeight:height})){
+      dialog.close();
+    }
   });
   another.addEventListener('click',()=>{
     const blocked=drawAuthoringLockReason(getRecipe());
