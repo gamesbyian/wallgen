@@ -1,0 +1,64 @@
+{
+  "schema": "roygbiv-first-v1-image-golden/v1",
+  "sourceCommit": "37428b624e55a0d4526b992bfe6fdf4a01b5f420",
+  "sourceBlobs": {
+    "model": "37ef7d429324c65773068bd06fd3452063a981e5",
+    "renderer": "5c12b7c505e7044db6a6ca04ddd31938ffd7f05b",
+    "pngWriter": "37adaec2063b787713e094ee331758c04bd504c1"
+  },
+  "actionsRun": 39894186610,
+  "artifact": 12475469830,
+  "source": {
+    "seed": "historical-v1-shadow-image-001",
+    "family": "studio",
+    "orientation": "diagonal",
+    "geometry": "wave",
+    "motif": "solid",
+    "palette": "classic",
+    "outline": "none",
+    "material": "none",
+    "background": "black",
+    "lightingMood": "off",
+    "stripeWidth": 75,
+    "spread": 56,
+    "chaos": 23,
+    "individuality": 0,
+    "stripeShadowStrength": 45,
+    "stripeShadowSoftness": 55
+  },
+  "actualIhdr": {
+    "width": 600,
+    "height": 1300
+  },
+  "originalWriterEnvelope": {
+    "width": 3024,
+    "height": 6552
+  },
+  "samples": [
+    {
+      "id": "v1-shadow-off",
+      "enabled": false,
+      "pngBytes": 112912,
+      "idatSha256": "6de06318f36aed432fd7fc7e02535a7ff9e010416d444c89c1e2d8abaa5c31dc"
+    },
+    {
+      "id": "v1-shadow-on",
+      "enabled": true,
+      "pngBytes": 188858,
+      "idatSha256": "8c5fe670bd23b921922261d68bc4b694492bb6b0abd3a0849eb56a5273c1314f"
+    }
+  ],
+  "comparison": {
+    "pixels": 780000,
+    "meanAbsRgb": 0.197,
+    "pixelsDiffOver2": 40662,
+    "originalBlackPixels": 416496,
+    "originalBlackChangedOver2": 37837
+  },
+  "limits": [
+    "Original source-era output, not visual parity with modern model/renderer.",
+    "Encoded PNG IDAT SHA may depend on browser version and is not a cross-Chromium gate.",
+    "Original exporter reports native dimensions regardless of preview IHDR.",
+    "Historical v1 conversion remains disallowed."
+  ]
+}

@@ -1,5 +1,9 @@
 # PNG recipe metadata migration without image changes
 
+## Authentic original-v1 image evidence retrieved (2026-10-22)
+
+The original v1 renderer, model and metadata writer produced two full-function 600×1300 source-era PNGs with real v1 recipes under the historical shadow flag. The actual files were downloaded, CRC-checked, visually opened and measured ([observations](recipe-format-history/source-era/v1-37428b/ACTUAL-RENDER-FINDINGS-2026-10-22.md), [digests](recipe-format-history/source-era/v1-37428b/SHADOW-IMAGE-GOLDENS.json)). This surpasses lexical expression archaeology without asserting current-v2 pixel equivalence; v1 migration remains refused and the original PNG remains master.
+
 ## First authentic v1 renderer capture (2026-10-22)
 
 [The unmodified original renderer](recipe-format-history/source-era/v1-37428b/README.md) joins original model/exporter in an importable frozen source tree. The opt-in [browser capture script](../scripts/review-historical-v1-render.mjs) executes those actual 17 October modules, saves original-v1 PNG recipe metadata and IDAT checksums for shadow-off/shadow-on artwork. This advances visual fixture archaeology without importing the original painter into the live app or enabling automatic historical migrations; source-era images and cross-era parity must be reviewed distinctly.

@@ -1,5 +1,9 @@
 # ROYGBIV: active product roadmap and work queue
 
+## Historical v1: authentic source-era raster proof completed (2026-10-22)
+
+The first-v1 source archive now has **actual** original Canvas-painted images for shadow-off/on (Actions #39894186610), reviewed with PNG CRC and exact recipe checks. See [art observations](recipe-format-history/source-era/v1-37428b/ACTUAL-RENDER-FINDINGS-2026-10-22.md) and [pinned IDAT/recipe manifest](recipe-format-history/source-era/v1-37428b/SHADOW-IMAGE-GOLDENS.json). The original shadow changes 40,662 pixels; the old exporter declares native 3024×6552 dimensions even on these 600×1300 thumbnails, a documented source-era distinction. **Next #476 work:** explicitly compare modern renderer with original golden PNG using a proposed adapter, then reproduce other v1 source intervals before permitting migration. No automatic converter and no permanent browser CI.
+
 ## M0 original v1 renderer now pinned, targeted shadow image fixture (2026-10-22)
 
 The first-v1 recipe source archive now includes **unchanged original renderer source** with Git blob SHA pinning and an [opt-in authentic first-era Chromium render script](../scripts/review-historical-v1-render.mjs). It produces two same-seed original-v1 wallpapers using the original model, Canvas painter and old iTXt exporter, including original shadow on/off. This is a source-era **image golden generation path**, unlike earlier lexical/default comparisons, but only the actual browser run and saved images establish the pixel receipt. It cannot justify a general v1→v2 adapter: modern material/geometry choices and later v1 periods remain unproven.
