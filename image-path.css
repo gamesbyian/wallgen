@@ -180,3 +180,54 @@ html[data-theme="cream"] .image-recipe-controls button{
 .image-recipe-result canvas{height:94px}
 .image-recipe-workspace:not([hidden]){max-height:149px}
 @media(max-width:790px){.image-recipe-result canvas{height:91px}}
+
+/* Keep the accessible recipe label without a fourth visible row. In the
+   source-backed 412x892 screenshot that label protruded through the clipped
+   card border while the long disclaimer was silently scroll-truncated. */
+.image-recipe-accessible-label{
+  position:absolute!important;width:1px!important;height:1px!important;
+  padding:0!important;margin:-1px!important;overflow:hidden!important;
+  clip-path:inset(50%);white-space:nowrap;border:0;
+}
+.image-recipe-summary{display:flex;align-items:center;gap:4px;min-width:0;min-height:42px}
+.image-recipe-controls .image-recipe-summary p{
+  flex:1;min-width:0;margin:0;max-height:none;overflow:visible;
+  font-size:10px;line-height:1.3;overflow-wrap:break-word;
+}
+.image-recipe-summary button{
+  flex:0 0 44px;min-width:44px;min-height:44px;
+  border:1px solid #8f809e;border-radius:7px;
+  background:#312c42;color:#f7f1ff;font-size:11px;font-weight:750;
+  cursor:pointer;
+}
+.image-recipe-summary button:disabled{opacity:.45;cursor:default}
+html[data-theme="cream"] .image-recipe-summary button{
+  background:#faf4eb;color:#392e49;border-color:#c6b8cc;
+}
+.image-recipe-summary button:focus-visible{
+  outline:2px solid #f4c0e9;outline-offset:2px;
+}
+/* Native, dismissible top-layer popover keeps a complete readable explanation
+   without a second modal, tiny scroll region, or shrinking the image preview. */
+.image-recipe-explanation[popover]{
+  box-sizing:border-box;margin:auto;width:min(345px,calc(100vw - 32px));
+  max-height:min(60dvh,470px);overflow:auto;overscroll-behavior:contain;
+  padding:18px;border:1px solid #82718f;border-radius:12px;
+  background:#232234;color:#f5f1fc;box-shadow:0 16px 45px #000b;
+  line-height:1.45;font-size:13px;
+}
+.image-recipe-explanation strong{display:block;font-size:15px;margin-bottom:9px}
+.image-recipe-explanation p{margin:0 0 16px;white-space:normal;overflow-wrap:anywhere}
+.image-recipe-explanation button{
+  min-height:44px;padding:9px 18px;border-radius:8px;
+  background:#774177;color:#fff;border:1px solid #b98ac2;font-weight:750;
+}
+.image-recipe-explanation button:focus-visible{
+  outline:2px solid #f4c0e9;outline-offset:2px;
+}
+html[data-theme="cream"] .image-recipe-explanation[popover]{
+  background:#fffdf8;color:#342b42;border-color:#cbbfd2;
+}
+html[data-theme="cream"] .image-recipe-explanation button{
+  background:#7b3569;color:white;border-color:#944176;
+}
