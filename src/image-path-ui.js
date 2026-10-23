@@ -1,7 +1,7 @@
 import {extractImagePathCandidates,extractImageShapeCandidates,imagePlacement,pathToWallpaper} from './image-path.js?v=20261023-fullframe1';
 import {drawAuthoringLockReason,drawAuthoringLockMessage,pathStructureLockedOutsidePaths} from './path-authoring-locks.js';
 import {verifyLocalSilhouetteSvg} from './svg-import-safety.js';
-import {reconstructionCandidates,rankReconstructionCandidates,refineReconstructionCandidate,describeReconstructionImage,reconstructionPlacement,RECONSTRUCTION_FRAME} from './image-reconstruction.js?v=20261023-radial1';
+import {reconstructionCandidates,rankReconstructionCandidates,refineReconstructionCandidate,describeReconstructionImage,reconstructionPlacement,RECONSTRUCTION_FRAME} from './image-reconstruction.js?v=20261023-radial-provenance1';
 
 /** A live import dialog must match the current authoritative lock state,
  * even if a recipe restores a lock while image decoding is in flight. */
@@ -240,7 +240,9 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle,onShape,
   recipeApply.addEventListener('click',()=>{
     const candidate=reconstructed[Number(recipeChooser.value)];
     if(working||!candidate||!onRecipe)return;
-    if(onRecipe(candidate.recipe,candidate)){dialog.close();}
+    if(onRecipe(candidate.recipe,{...candidate,sourceWidth:width,sourceHeight:height})){
+      dialog.close();
+    }
   });
   another.addEventListener('click',()=>{
     const blocked=drawAuthoringLockReason(getRecipe());
