@@ -127,3 +127,37 @@ test('random seed and scoped randomization are not misclassified as manual editi
   recorder.transition(b,c,{cause:'scoped_vary_setting'});
   assert.equal(recorder.episodeStats(c).manualEdits,0);
 });
+
+test('a new opted-in launch preserves the previous episode last-known recipe without guessing intent',async()=>{
+  const store=memoryUsageStore();let serial=0;
+  const id=()=>String(++serial);
+  const now=()=> '2026-10-23T05:00:00.000Z';
+  const old=createCreativeRecorder({store,id,now,enabled:true});
+  const first=normalizeRecipe({seed:'first'});
+  const adjusted=normalizeRecipe({...first,stripeWidth:42});
+  old.start(first);old.transition(first,adjusted);
+  await old.flush();
+  const oldSession=(await store.last()).sessionId;
+  const oldEpisode=(await store.last()).episodeId;
+  const next=createCreativeRecorder({store,id,now,enabled:true});
+  assert.equal(next.recoverPrevious(await store.last()),true);
+  next.start({seed:'fresh'});
+  const events=await next.records();
+  const recovered=events.find(e=>e.type==='session_interrupted');
+  assert.equal(recovered.uncertain,true);
+  assert.equal(recovered.sessionId,oldSession);
+  assert.equal(recovered.episodeId,oldEpisode);
+  assert.deepEqual(recovered.recipe,adjusted);
+  assert.equal((await next.last()).recipe.seed,'fresh');
+  assert.notEqual((await next.last()).episodeId,oldEpisode);
+  assert.equal(events.filter(e=>e.type==='session_interrupted').length,1);
+});
+test('recording off cannot retroactively inspect or reconcile saved episodes',async()=>{
+  const store=memoryUsageStore(),enabled=createCreativeRecorder({store,enabled:true,
+    id:(()=>{let i=0;return ()=>String(++i);})()});
+  enabled.start({seed:'previous'});
+  await enabled.flush();
+  const off=createCreativeRecorder({store,enabled:false});
+  assert.equal(off.recoverPrevious(await store.last()),false);
+  assert.equal((await off.records()).filter(e=>e.type==='session_interrupted').length,0);
+});
