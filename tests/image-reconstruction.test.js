@@ -161,3 +161,20 @@ test('renderer-backed geometric refinement is deterministic, bounded and improve
   assert.equal(a.refinementRenders,10);
   assert.equal(refineReconstructionCandidate({...current,kind:'shape'},black,paint).kind,'shape');
 });
+
+
+test('inferred candidates honor present editor locks before being scored or displayed',()=>{
+ const frozen=normalizeRecipe({
+   seed:'locked-reconstruction',background:'white',
+   structure:'paths',geometry:'straight',orientation:'horizontal',
+   lockedSettings:['structure','background','orientation']
+ });
+ const alternatives=reconstructionCandidates(original,frozen);
+ assert.ok(alternatives.every(x=>x.recipe.structure==='paths'));
+ assert.ok(alternatives.every(x=>x.recipe.background==='white'));
+ assert.ok(alternatives.every(x=>x.recipe.orientation==='horizontal'));
+ assert.ok(alternatives.every(x=>x.lockedChanges?.includes('background')));
+ assert.ok(alternatives.every(x=>!['regions','shape'].includes(x.kind)));
+ const unlocked=reconstructionCandidates(original,{seed:'free'});
+ assert.ok(unlocked.some(x=>x.kind==='regions'));
+});
