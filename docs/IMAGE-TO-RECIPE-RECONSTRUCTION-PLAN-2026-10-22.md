@@ -1,5 +1,8 @@
 # Image-to-recipe reconstruction: native and external imports
 
+**Measured R0 production acceptance (23 Oct):** Thirteen real current renderer PNGs and IDAT-identical metadata-free twins were generated and measured in [run #39924582158](https://github.com/gamesbyian/wallgen/actions/runs/39924582158); see [13-image measured findings](RECONSTRUCTION-R0-ACTUAL-ART-FINDINGS-2026-10-23.md). Four controlled cases improved: loop error 0.266→0.0538 after structural candidate and ten-render bounded fitting, holed compound geometry 0.0301→0.00265, vertical straight 0.212→0.157, seven-scattered 0.00833 unchanged. Radial rays/rings, nested regions, diagonal bands and wave/jagged/hairpin remain high-error and should be the **next semantic topology target**. These were actual production PNG measurements, not physical Pixel use, calibrated perceptual quality or viewed art approval. The one-off Chromium workflow was removed before merge; no routine browser CI. Source recipes were held separate until after inference. All thirteen actual source PNGs and their gallery are preserved in the temporary Actions artifact.
+
+
 **R0 reproducibility checkpoint (23 October):** [PR #564](https://github.com/gamesbyian/wallgen/pull/564) adds opt-in `scripts/review-reconstruction.mjs`.
 Execute from repo root with Playwright/Chromium installed:
 
