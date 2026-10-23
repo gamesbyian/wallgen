@@ -187,3 +187,17 @@
     display:flex!important;min-width:0;flex:0 0 auto;
   }
 }
+
+/* Grid-only mobile styles must not override native hidden="": the former
+ * caused the target-specific picker to occupy a full row even on All colours.
+ * Keep the real input hitbox 44px on the paired numeric slider controls too. */
+@media(max-width:790px) and (orientation:portrait){
+  body.mobile-studio .sidebar .editor-tool-card[data-editor-tool="surface"]
+    .embroidery-controls[open] .embroidery-object-picker[hidden]{
+    display:none!important;
+  }
+  body.mobile-studio .sidebar .editor-tool-card[data-editor-tool="surface"]
+    .embroidery-controls[open] .range-grid input:not([type="range"]){
+    height:44px!important;min-height:44px!important;
+  }
+}
