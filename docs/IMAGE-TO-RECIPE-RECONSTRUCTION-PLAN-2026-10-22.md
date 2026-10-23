@@ -1,5 +1,8 @@
 # Image-to-recipe reconstruction: native and external imports
 
+**23 Oct Vertical Straight measured fit #610:** genuine-source [run #40015324666](https://github.com/gamesbyian/wallgen/actions/runs/40015324666), actual viewed source/output [findings](RECONSTRUCTION-R0-ACTUAL-ART-FINDINGS-2026-10-23.md), source error **.15743→.054146**, while Diagonal .085835, Wave .046144, Jagged .165655 and scattered circles .008329 unchanged. Reuses shared hue width/spacing inference + one measured X position offset for clean vertical 7-band images, with current fitted painter, lock-safe ≤6+≤10 renders and no added import/export path. Remaining quality: individual pigment gap/edge treatment, true external art and actual Pixel approval. Chromium one-shot workflow removed.
+
+
 **23 Oct bounded fitter lock safety (#609):** the same normalized, shared `respectSettingLocks` contract now protects each of the 10 forward fitting trials, including umbrella Position holding both coordinates. Previously the preview could be fitted into a locked position that the Apply transaction would reject. Tests prove zero impossible renders, partial-lock allowed updates, and sync/async result parity. This is source-code acceptance, not another artistic R0 PNG comparison; established genuine current-art scores are unchanged. See [#609](https://github.com/gamesbyian/wallgen/pull/609).
 
 
