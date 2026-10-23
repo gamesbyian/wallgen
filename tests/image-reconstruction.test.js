@@ -760,5 +760,33 @@ test('actual seven-colour gap drift becomes canonical wide Draw spread followed 
      error:.192433},
    {...candidate,error:.226618},
    {kind:'wave',error:.36,waveOffsetY:-4}
- ]),2,'known coherent Wave registration keeps its proven renderer budget');
+ ]),2,'smooth source retains known coherent Wave registration');
+ assert.equal(reconstructionRefinementIndex([
+   {kind:'path',error:.192433,recipe:normalizeRecipe({...wide,geometrySafety:true})},
+   {...candidate,error:.226618,angularBends:2},
+   {kind:'wave',error:.36,waveOffsetY:-4}
+ ]),1,'independently measured two angular turns justify the wide Draw budget');
+});
+
+test('long-baseline bends recognize authored V corners after shared importer smoothing, not gentle waves',()=>{
+ const angular=[];
+ for(let x=0;x<=240;x+=3){
+   const y=x<=78?36+x*.37:x<=153?65-(x-78)*.36:38+(x-153)*.43;
+   angular.push([x/240,y/240]);
+ }
+ // Nine-station smoothing approximates the image importer's low-pass.
+ const smooth=angular.map(([x],i)=>{
+   let y=0,n=0;
+   for(let j=Math.max(0,i-4);j<=Math.min(angular.length-1,i+4);j++){
+     y+=angular[j][1];n++;
+   }
+   return [x,y/n];
+ });
+ const result=imageCurveSignature([{kind:'arc',points:smooth}],240,240);
+ assert.ok(result.angularBends>=2,'two zig corners should survive a smoothed centreline');
+ const gentle=Array.from({length:81},(_,i)=>{
+   const x=i/80;return [x,.35+.035*Math.sin(x*Math.PI*2)];
+ });
+ const wave=imageCurveSignature([{kind:'arc',points:gentle}],240,240);
+ assert.equal(wave.angularBends,0,'a gentle flowing curve is not an angular V');
 });
