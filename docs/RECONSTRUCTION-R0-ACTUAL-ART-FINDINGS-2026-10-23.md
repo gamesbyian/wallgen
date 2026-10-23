@@ -28,3 +28,16 @@ The evaluator decoded each metadata-free source in Chromium, bounded import anal
 **What this actually supports:** Existing canonical scattered circles and imported compound shapes can recover useful editable appearance without original metadata. Procedural loops are recoverable with a bounded real-render fit pass. Broad full-scene reconstruction is **not accomplished**: diagonal orientation, multi-band wave/jagged/hairpin, radial, nested regions and organic finishes still have large representation/classification errors. Scores are comparative raster distances, **not** a perceptual realism metric, appearance certificate or recovery of original control values. Actual visual inspection of the preserved contact gallery and external permitted geometric images remain work in [#557](https://github.com/gamesbyian/wallgen/issues/557).
 
 **Next executable experiment:** Add *measured, source-backed* structural classification for diagonal bands, radiating wedge fans and concentric rings. Use only current `STRUCTURES`, `RADIAL_MODES`, `REGION_MODES`, `resolveScene` and `drawWallpaper`, then run selected original cases against this exact baseline. Include a score improvement before revising editor UX. On actual phone, verify total fit time, memory, correct lock/Undo transaction and the visible preview comparison. Finish truthful inferred-recipe provenance separately. Do not reinstall permanent screenshot CI or re-run R0 simply because an agent changed a comment.
+
+## Targeted radial/diagonal follow-through (23 October)
+
+[Run #39925723314](https://github.com/gamesbyian/wallgen/actions/runs/39925723314), source branch `agent/reconstruction-structural-radial-diagonal-20261023`, generated four more genuine current-PNG comparisons (diagonal straight, radial rays, concentric rings, nested regions). The temporary Chromium workflow was removed on its branch and is not part of the clean integration PR. Blind candidate synthesis and renderer-based fitting produced:
+
+| Case | Previous R0 score | New score | Recovered candidate |
+| --- | ---: | ---: | --- |
+| Diagonal straight | 0.28408 | 0.28408 | False seven circles; **unresolved** |
+| Radial wedges | 0.37294 | **0.04298** | Procedural radial, 21 wedges with angular fitting |
+| Concentric rings | 0.58121 | **0.10091** | Procedural concentric, 21 rings with centre fitting |
+| Nested regions | 0.29038 | **0.01195** | 14 concentric canonical regions, presented as radial mode |
+
+The last nested/radial choice is inherently ambiguous: same centre/count and shape painter can yield **identical image pixels** for `regions:nested` and `radial:concentric`, so appearance fit cannot authenticate the source setting. The image's recipe truth was consulted only after candidate selection. Physical visual inspection of the artifact and Pixel memory/timing remain unverified. The diagonal case still needs a colour-edge principal-direction descriptor because disconnected hue centroids fail to produce a credible oblique candidate. Avoid claiming the diagonal lane is fixed.
