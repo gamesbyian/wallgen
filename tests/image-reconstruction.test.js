@@ -217,3 +217,29 @@ test('PCA recognizes oblique parallel stripes but refuses scattered unrelated ce
  assert.equal(imageStripeAngle(notAligned,200,200),null);
  assert.equal(imageStripeAngle(sloping.slice(0,3),200,200),null);
 });
+
+test('coherent diagonal hue axes survive radial classifier integration without harming rays or circles',()=>{
+  const diagonal=raster(160,320,(x,y)=>{
+    const along=x+y*.48,slot=Math.floor((along-5)/27);
+    return slot>=0&&slot<7&&along-5-slot*27<15?
+      colour(HUES[slot]):[0,0,0,255];
+  });
+  const description=describeReconstructionImage(diagonal);
+  assert.ok(description.componentDiagonalAngle>12&&description.componentDiagonalAngle<78);
+  assert.equal(description.radial.kind,null,'linear bands must not be radial');
+  assert.equal(description.sevenColourRegions,false);
+  const fit=reconstructionCandidates(diagonal,{seed:'shared-image-axes'});
+  assert.ok(fit.some(x=>x.kind==='straight'&&
+    x.recipe.geometry==='straight'&&x.recipe.orientation==='diagonal'));
+  assert.ok(!fit.some(x=>x.kind==='regions'),
+    'independent circles may not replace a coherent diagonal ribbon set');
+  const circles=describeReconstructionImage(original);
+  assert.equal(circles.componentDiagonalAngle,null);
+  assert.ok(reconstructionCandidates(original,{}).some(x=>x.kind==='regions'));
+  const rays=raster(160,320,(x,y)=>{
+    const angle=(Math.atan2(y-159.5,x-79.5)+Math.PI)/(Math.PI*2);
+    return colour(HUES[Math.floor(angle*21)%7]);
+  });
+  assert.equal(describeReconstructionImage(rays).radial.kind,'rays');
+  assert.ok(reconstructionCandidates(rays,{}).some(x=>x.kind==='radial-rays'));
+});

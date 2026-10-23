@@ -84,7 +84,17 @@ export function describeReconstructionImage(image){
     const h=Math.max(1,(y1-y0)*image.height);
     return Math.max(w/h,h/w);
   };
-  const seven=colour.regions.length===7&&
+  // The per-hue component principal axes already computed by the shared
+  // importer (#581) resolve true diagonal ribbons that centroid-only PCA
+  // cannot distinguish from dispersed circles. Keep #584's radial signature
+  // as independent stronger topology evidence for rays/rings/nested fields.
+  const axes=colour.regions.filter(region=>region.axisRatio>=3.2&&
+    Math.abs(region.axisAngle)>=12&&Math.abs(region.axisAngle)<=78);
+  const angles=axes.map(region=>region.axisAngle).sort((a,b)=>a-b);
+  const median=angles[Math.floor(angles.length/2)];
+  const coherent=axes.filter(region=>Math.abs(region.axisAngle-median)<=10);
+  const componentDiagonalAngle=coherent.length>=5?Math.abs(median):null;
+  const seven=componentDiagonalAngle===null&&colour.regions.length===7&&
     colour.regions.every(region=>region.area>=image.width*image.height*.001&&
       region.fillRatio>=.32&&aspect(region)<2.7);
   const elongated=colour.regions.filter(region=>aspect(region)>3);
@@ -102,7 +112,7 @@ export function describeReconstructionImage(image){
   const stripeAngle=imageStripeAngle(colour.regions,image.width,image.height);
   return {background:colour.background,colourRegions:colour.regions,
     paths:paths.slice(0,6),sevenColourRegions:seven,lineDirection,
-    stripeAngle,radial,coverage:colour.coverage,
+    stripeAngle,componentDiagonalAngle,radial,coverage:colour.coverage,
     dimensions:[image.width,image.height]};
 }
 
@@ -125,6 +135,23 @@ export function reconstructionCandidates(image,recipe){
   const current=normalizeRecipe(recipe);
   const base=strippedCandidateBase(current,desc.background);
   const candidates=[];
+  // Restore the proven #581 diagonal-band hypothesis, *alongside* #584's
+  // radial and centroid fitting. Prior #581 actual artwork reached .08583,
+  // whereas centroid-only recognition left it at .28408. Respect the same
+  // current canonical recipe, locks, renderer and six-candidate budget.
+  if(desc.componentDiagonalAngle!==null&&!desc.radial.kind){
+    for(const offset of [-10,0,10]){
+      const diagonalRotation=clamp(
+        Math.round(desc.componentDiagonalAngle+offset),0,85);
+      candidates.push({kind:'straight',
+        label:'Principal-axis diagonal rainbow bands / '+diagonalRotation+'°',
+        uncertainty:'Coherent colour-region axes identify diagonal strips; authored gaps, width, positions, seed and orientation offsets remain inferred.',
+        recipe:normalizeRecipe({...base,structure:'paths',geometry:'straight',
+          orientation:'diagonal',diagonalRotation,composition:'single',
+          construction:'ribbon',chaos:0,individuality:0,
+          stripeWidth:75,spread:58})});
+    }
+  }
   if(desc.sevenColourRegions){
     // Colour slot identity comes from the shared model HUES. Overrides live
     // in normal scattered recipes and can be dragged / undone / exported.
