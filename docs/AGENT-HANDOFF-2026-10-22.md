@@ -1,5 +1,10 @@
 # ROYGBIV handoff: current authority and independently actionable work
 
+## 23 Oct readable portrait reconstruction acceptance
+
+[PR #608](https://github.com/gamesbyian/wallgen/pull/608) closes the specific internal text truncation diagnosed by actual #607's 412×892 screenshot: accessible candidate label no longer collides with border, short honest live fit summary plus full native "Why?" explanation; the source/real-render comparison remains visible. [New real-browser acceptance run #40013772974](https://github.com/gamesbyian/wallgen/actions/runs/40013772974) exercised source import→Apply→PNG→Undo→PNG re-import plus readable/cancellable complete explanation. Measured parent/card/paragraph scroll equality and ≥44px Apply/Close/Why targets, no page errors. Temporary evidence screenshots were visually inspected; [findings and limitations](RECONSTRUCTION-PORTRAIT-JOURNEY-2026-10-23.md). Initial four-pixel overflow failed honestly and was fixed; one-off Chromium workflow removed. Physical Pixel/TalkBack/real external art still open.
+
+
 ## 23 October actual app portrait reconstruction journey
 
 [PR #607](https://github.com/gamesbyian/wallgen/pull/607) adds an **opt-in** real browser acceptance script, *not* a permanent CI workflow. [One-off 412×892 touch-emulated Chromium run #39943939880](https://github.com/gamesbyian/wallgen/actions/runs/39943939880) passed metadata-free source import, cooperative real-render preview, Apply, actual full-resolution PNG export with inferred provenance, exact Undo restoring baseline recipe and PNG re-import exact accepted recipe, with source SHA-256 unchanged. Observed candidate Wave score **.040538** for UI seed, fit **1087ms**, PNG export **293ms**, full flow **3001ms**, no page errors, 44px Apply/Close targets, no dialog overflow. See [reproducible acceptance findings](RECONSTRUCTION-PORTRAIT-JOURNEY-2026-10-23.md). Screenshot was downloaded and inspected: remaining short status/uncertainty text is internally clipped, but source/reconstructed previews and actions are visible. No actual Pixel 6 Pro / TalkBack / external-image acceptance. Temporary Chromium workflow removed. #557 remains open.
