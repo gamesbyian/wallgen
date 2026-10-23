@@ -19,7 +19,7 @@ The app is a mobile-first, one-screen portrait creative tool for constructing RO
 | Physical portrait touch, control reach, focus and navigation | Current #365 / #444 dispositions in roadmap and corresponding source; observe actual phone when available |
 | Materials, embroidery, film/digital camera effects | Owning art specification in roadmap, `src/material-surface.js`, `src/embroidery.js`, `src/photo-look.js`, shared painter |
 | Existing generated PNG metadata or historical recovery | [Recipe history registry](docs/recipe-format-history/REGISTRY.md), [PNG migration plan](docs/PNG-RECIPE-MIGRATION-AND-FORMAT-REGISTRY-PLAN-2026-10-22.md); **optional compatibility**, never an automatic priority |
-| Human session evidence or opt-in usage recorder | [Human-expectations guide](docs/AGENT-HUMAN-EXPECTATIONS-AND-CREATIVE-COMPOSITION.md), [creative behaviour recorder proposal](docs/CREATIVE-BEHAVIOUR-RECORDER-PLAN-2026-10-22.md), issues #537/#542; distinguish proposal from implementation |
+| Human session evidence or opt-in usage recorder | [Human-expectations guide](docs/AGENT-HUMAN-EXPECTATIONS-AND-CREATIVE-COMPOSITION.md), [implemented creative behaviour recorder and live acceptance](docs/CREATIVE-BEHAVIOUR-RECORDER-PLAN-2026-10-22.md), issues #537/#542; recording is opt-in, and code/test evidence is not human-device observation |
 | Test, browser run or workflow change | [Lean CI policy](docs/CI-OPERATIONS-2026-10-22.md), relevant unit/headless fixture and workflow source |
 
 Read the owning section and relevant current source, not the whole multi-month archive. Never infer task priority from the length of a historical research document.
