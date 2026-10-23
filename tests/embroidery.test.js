@@ -300,3 +300,46 @@ test('opt-in tatami fibre remains clipped by its caller and bounded on a region'
   assert.equal(normalizeSurfaceTreatments([{id:'s',enabled:true,style:'tatami-fibre'}])[0].style,
     'tatami-fibre');
 });
+
+
+test('Chain preserves straight links but eases inner-turn crowding on the canonical loop',()=>{
+  const treatment=select({style:'chain',pitch:5,relief:85});
+  const capture=()=>{const paths=[];let current;return{
+    paths,save(){},restore(){},beginPath(){current=[];paths.push(current);},
+    moveTo(x,y){current.push([x,y])},
+    bezierCurveTo(...args){current.push(args)},stroke(){}
+  }};
+  const lengths=(ctx)=>ctx.paths.filter((_,i)=>i%2===0).map(path=>
+    Math.hypot(path[1][4]-path[0][0],path[1][5]-path[0][1]));
+  const straight=resolveScene({seed:'chain-bend-test',geometry:'straight'});
+  const fullStraight=capture();
+  drawRibbonEmbroidery(fullStraight,straight.stripes[0],straight.extent,treatment);
+  const originalStep=Math.max(treatment.pitch*2.8,2*straight.extent/950);
+  assert.ok(lengths(fullStraight).every(d=>Math.abs(d-originalStep*1.02)<1e-6),
+    'unchanged straight links retain their original 51% half-length');
+
+  const loop=resolveScene({seed:'stitch-art-review-001',structure:'paths',
+    composition:'single',construction:'ribbon',geometry:'loop',
+    stripeWidth:72,spread:54,chaos:0,individuality:0});
+  let shortened=0,normal=0;
+  for(const stripe of loop.stripes){
+    const whole=capture(),again=capture(),partial=capture();
+    const count=drawRibbonEmbroidery(whole,stripe,loop.extent,treatment);
+    drawRibbonEmbroidery(again,stripe,loop.extent,treatment);
+    drawRibbonEmbroidery(partial,stripe,loop.extent,treatment,
+      {start:-loop.extent*.28,end:loop.extent*.28});
+    assert.ok(count>0&&count<=950*3);
+    assert.deepEqual(whole.paths,again.paths,'local bend sampling is deterministic');
+    const seen=new Set(whole.paths.map(JSON.stringify));
+    assert.ok(partial.paths.every(path=>seen.has(JSON.stringify(path))),
+      'local crossing repaint must reproduce original bent links exactly');
+    const nominal=Math.max(treatment.pitch*2.8,2*loop.extent/950)*1.02;
+    for(const chord of lengths(whole)){
+      assert.ok(chord<=nominal+1e-6);
+      if(chord<nominal*.90)shortened++;
+      if(chord>nominal*.999)normal++;
+    }
+  }
+  assert.ok(shortened>0,'some tight inner loops must actually be uncrowded');
+  assert.ok(normal>0,'outer/open spans must retain existing Chain geometry');
+});

@@ -139,10 +139,37 @@ export function drawRibbonEmbroidery(ctx,stripe,extent,treatment,range=null){
       const halfWidth=widthAt(stripe,station+linkStep*.5,extent)*.46;
       if(![p.x,p.y,p.tx,p.ty,p.nx,p.ny,halfWidth].every(Number.isFinite)||
         halfWidth<=0)continue;
-      const half=linkStep*.51,loft=Math.min(step*.72,half*.62,halfWidth*.48);
+      // On a tight loop the inner lane advances less distance between two
+      // world-anchored stitch stations than the outer lane. Keeping the same
+      // tangent-length loop there piles several glossy links on top of one
+      // another (visible in the red/orange eye of the production Chain PNG).
+      // Neighbour sampling is shared across all three lanes and bounded to
+      // two extra path/width evaluations per station. It changes neither the
+      // original station lattice nor crossing replay phase.
+      const neighbours=[];
+      for(const delta of [-linkStep,linkStep]){
+        const next=station+linkStep*.5+delta;
+        if(next<-extent||next>extent)continue;
+        const q=samplePath(stripe,next,extent);
+        const w=widthAt(stripe,next,extent)*.46;
+        if([q.x,q.y,q.nx,q.ny,w].every(Number.isFinite)&&w>0)
+          neighbours.push({x:q.x,y:q.y,nx:q.nx,ny:q.ny,w});
+      }
       for(const lane of [-.66,0,.66]){
-        chainLink(ctx,p.x+p.nx*halfWidth*lane,p.y+p.ny*halfWidth*lane,
-          p.tx,p.ty,p.nx,p.ny,half,loft,treatment.relief);
+        const cx=p.x+p.nx*halfWidth*lane,cy=p.y+p.ny*halfWidth*lane;
+        let spacing=linkStep;
+        for(const q of neighbours)
+          spacing=Math.min(spacing,Math.hypot(cx-q.x-q.nx*q.w*lane,
+            cy-q.y-q.ny*q.w*lane));
+        // Full-sized on straight/open paths; shrink smoothly only where
+        // neighbouring centres are less than 94% of their nominal spacing.
+        // The 20% floor prevents a collapsed bend from producing zero-area
+        // links without increasing our <=950*3 candidate budget.
+        const half=linkStep*.51*Math.min(1,
+          Math.max(.20,spacing/linkStep)/.94);
+        const loft=Math.min(step*.72,half*.62,halfWidth*.48);
+        chainLink(ctx,cx,cy,p.tx,p.ty,p.nx,p.ny,
+          half,loft,treatment.relief);
         count++;
       }
     }
