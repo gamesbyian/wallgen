@@ -6,7 +6,6 @@
  *
  * node scripts/review-thread-portrait.mjs --out-dir artifacts/thread-portrait
  */
-import {chromium} from 'playwright';
 import {mkdir,access,writeFile} from 'node:fs/promises';
 import {join,resolve} from 'node:path';
 
@@ -27,6 +26,7 @@ for(const path of ['report.json','412x892.png','320x700.png']){
   try{await access(join(out,path));throw Error('Output exists: '+path);}
   catch(err){if(err.code!=='ENOENT')throw err;}
 }
+const {chromium}=await import('playwright');
 const browser=await chromium.launch({headless:true});
 const results=[];
 try{
