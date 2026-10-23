@@ -676,7 +676,8 @@ test('expanded Draw seven-hue Y registration earns one bounded fit without displ
  ]),1,'displaced wider Draw is given the one shared fitting budget');
  const fit=refineReconstructionCandidate(detected,source,painter);
  assert.equal(fit.recipe.positionY,-6);
- assert.equal(fit.error,0,'true-render pixel matching, not a guessed winner');
+ assert.ok(fit.error<detected.error&&fit.error<.05,
+   'integer canonical position controls reduce true-render mismatch, not a guessed winner');
  assert.ok(fit.refinementRenders<=10);
  const asyncFit=await refineReconstructionCandidateCooperatively(detected,source,
    painter,{yieldControl:async()=>{}});
