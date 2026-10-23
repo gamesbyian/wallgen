@@ -469,7 +469,8 @@ export function selectEditorTool(category,tool,{source='manual'}={}){
   // Keep a manually swiped tool rail in place within one category, but a
   // category switch must reveal its newly selected tool. Otherwise the prior
   // category's scroll offset can hide the first chip behind sticky controls.
-  if(source==='search'||source==='keyboard'||source==='related'||categoryChanged){
+  if(source==='search'||source==='keyboard'||source==='swipe'||
+     source==='related'||categoryChanged){
     const tabRail=document.querySelector('.settings-tabs');
     const selectedTab=tabRail?.querySelector('.settings-tab[aria-selected="true"]');
     if(selectedTab){
