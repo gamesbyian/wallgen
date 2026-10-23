@@ -48,6 +48,7 @@ export function analyzeCreativeUsage(sources){
     const end=rows.findLast(e=>e.type==='episode_end');
     const exported=rows.filter(e=>e.type==='download_initiated');
     const requested=rows.filter(e=>e.type==='export_requested');
+    const hadUnconfirmedRestart=rows.some(e=>e.type==='session_interrupted');
     const answers=rows.filter(e=>e.type==='survey_answer').map(e=>({
       kind:e.surveyKind,answer:e.answer,exportId:e.exportId||null,
       eventId:e.eventId
@@ -66,7 +67,9 @@ export function analyzeCreativeUsage(sources){
       surveysOffered:rows.filter(e=>e.type==='survey_offered').length,
       surveysSkipped:rows.filter(e=>e.type==='survey_skipped').length,
       surveyAnswers:answers,
-      outcome:end?'superseded_by_'+(end.cause||'unknown'):'open_or_interrupted_unconfirmed',
+      outcome:end?'superseded_by_'+(end.cause||'unknown'):
+        hadUnconfirmedRestart?'prior_session_status_unconfirmed_at_next_launch':
+          'open_or_interrupted_unconfirmed',
       replayError:error,
       initialRecipe:first?.recipe?normalizeRecipe(first.recipe):null,
       finalKnownRecipe:recipe,

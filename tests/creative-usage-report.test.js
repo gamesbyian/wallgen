@@ -44,3 +44,15 @@ test('incomplete episode is reported without claiming user abandonment',()=>{
   assert.equal(report.episodes[0].finalKnownRecipe.seed,'a');
   assert.equal(report.downloadInitiationCount,0);
 });
+
+test('a reconciled prior session stays explicitly unconfirmed in reports',()=>{
+  const first={schema:1,eventId:'start',sessionId:'old-session',
+    episodeId:'old-episode',seq:1,type:'episode_start',
+    at:'2026-10-22T12:00:00Z',recipe:{seed:'original'}};
+  const interruption={schema:1,eventId:'seen',sessionId:'old-session',
+    episodeId:'old-episode',seq:2,type:'session_interrupted',
+    at:'2026-10-23T05:00:00Z',uncertain:true,recipe:{seed:'original'}};
+  const report=analyzeCreativeUsage([{source:'local',data:payload([first,interruption])}]);
+  assert.equal(report.episodes[0].outcome,'prior_session_status_unconfirmed_at_next_launch');
+  assert.equal(report.episodes[0].finalKnownRecipe.seed,'original');
+});

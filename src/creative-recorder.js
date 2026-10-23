@@ -159,6 +159,24 @@ export function createCreativeRecorder({store,id=()=>globalThis.crypto.randomUUI
     const normalized=normalizeRecipe(recipe);
     event('episode_start',normalized,{cause,recipe:clone(normalized)});
   }
+  function recoverPrevious(previous){
+    // Only the existing last durable snapshot may be reconciled. No browser
+    // unload event is reliable enough to prove a session ended intentionally.
+    // Another tab may even still be active: this is explicitly unconfirmed.
+    if(!active||episodeId||!previous||previous.type==='session_interrupted'||
+      typeof previous.sessionId!=='string'||typeof previous.episodeId!=='string'||
+      !previous.recipe)return false;
+    const snapshot=normalizeRecipe(previous.recipe),at=now();
+    const seq=Math.max(0,Number(previous.seq)||0)+1;
+    const eventId=id();
+    const item={schema:1,eventId,sessionId:previous.sessionId,
+      episodeId:previous.episodeId,seq,at,type:'session_interrupted',
+      cause:'next_startup_found_last_known_snapshot',uncertain:true,
+      lastObservedAt:previous.at||null,recipe:clone(snapshot)};
+    enqueue(item,{sessionId:previous.sessionId,episodeId:previous.episodeId,
+      seq,at,type:'session_interrupted',recipe:snapshot});
+    return true;
+  }
   function start(recipe){
     if(!active||episodeId)return;
     latest=normalizeRecipe(recipe);
@@ -244,7 +262,7 @@ export function createCreativeRecorder({store,id=()=>globalThis.crypto.randomUUI
     get enabled(){return active;},get episodeId(){return episodeId;},
     get durable(){return store.durable;},episodeStats,
     get error(){return failed;},get warning(){return store.warning;},
-    start,transition,action,supersede,setEnabled,exportJSON,clear,
+    start,recoverPrevious,transition,action,supersede,setEnabled,exportJSON,clear,
     flush:()=>queue,records:async()=>{await queue;return store.all();},
     last:async()=>{await queue;return store.last();}
   };
