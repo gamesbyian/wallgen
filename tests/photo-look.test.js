@@ -347,7 +347,9 @@ test('spatial webcam capture and active film grain are not falsely optimized awa
   };
   assert.equal(applyPhotoFinish(ctx,6,6,neutralSignal,'sensor'),true);
   assert.equal(applyPhotoFinish(ctx,6,6,activeGrain,'emulsion'),true);
-  assert.deepEqual([reads,writes],[2,2]);
+  // Webcam first gathers the original sensor signal, then grades a bounded
+  // destination strip. Ordinary grain still needs only the destination.
+  assert.deepEqual([reads,writes],[3,2]);
   assert.throws(()=>processPhotoPixels(new Uint8ClampedArray(3),8,9,
     {enabled:true,presetId:'film-grain-only',parameters:{grain:0}}),
     /Invalid photo pixel buffer/,
@@ -592,9 +594,9 @@ test('spatial source effects never grade partial frames without a precomputed fi
       getImageData(x,y,w,h){assert.deepEqual([x,y,w,h],[0,0,8,9]);this.reads++;return {data:source.slice()};},
       putImageData(_pixels,x,y){assert.deepEqual([x,y],[0,0]);this.writes++;}};
     assert.equal(applyPhotoFinish(ctx,8,9,look,'spatial'),true);
-    // Halation builds its source field before a second bounded destination
-    // read; capture/acutance modes retain their one full-frame read.
-    assert.equal(ctx.reads,presetId==='film-halation-diffusion'?2:1);
+    // All spatial looks now read an unmodified bounded source sample field
+    // first, then a separate bounded destination before finishing.
+    assert.equal(ctx.reads,2);
     assert.equal(ctx.writes,1);
     assert.throws(()=>processPhotoPixels(source.slice(),8,9,look,'spatial',
       {frameHeight:20,rowOffset:2}),/whole-frame source/);
@@ -641,4 +643,39 @@ test('partial halation buffers require a precomputed source field',()=>{
   const look=normalizePhotoLook({enabled:true,presetId:'film-halation-only',amount:80});
   assert.throws(()=>processPhotoPixels(pixels(100,40,20,8,9),8,9,look,'partial',
     {frameHeight:20,rowOffset:3}),/Spatial photo finish requires whole-frame source/);
+});
+
+// The same small source sample grid is used for full-frame and bounded
+// finishing. Check fidelity without fabricating physical-sensor equivalence.
+test('Webcam, Digicam and DSLR finish exact pixels with bounded source and output reads',()=>{
+  const width=1024,height=520,raw=new Uint8ClampedArray(width*height*4);
+  for(let y=0;y<height;y++)for(let x=0;x<width;x++){
+    const i=(y*width+x)*4;
+    const band=Math.abs((x+Math.round(y*.37))%123-61)<13;
+    raw[i]=band?251:(x*13+y*3)%256;
+    raw[i+1]=band?57:(x*5+y*11)%256;
+    raw[i+2]=band?9:(x*17+y*7)%256;
+    raw[i+3]=(x+y)%19===0?111:255;
+  }
+  for(const presetId of ['camera-webcam-signal','camera-digicam-signal',
+    'camera-dslr-optics']){
+    const look=normalizePhotoLook({enabled:true,presetId,amount:91,
+      parameters:{grain:11,vignette:8}});
+    const expected=raw.slice(),actual=raw.slice(),reads=[];
+    processPhotoPixels(expected,width,height,look,'spatial-source-parity');
+    const ctx={
+      getImageData(x,y,w,h){
+        assert.equal(x,0);assert.equal(w,width);
+        assert.ok(w*h*4<=2*1024*1024,'at most 2 MiB readback');
+        reads.push([y,h]);
+        return {data:actual.slice(y*width*4,(y+h)*width*4)};
+      },
+      putImageData(image,x,y){assert.equal(x,0);actual.set(image.data,y*width*4);}
+    };
+    assert.equal(applyPhotoFinish(ctx,width,height,look,'spatial-source-parity'),true);
+    assert.ok(reads.length>=4,presetId+' should read source and write multiple strips');
+    let mismatch=-1;
+    for(let i=0;i<expected.length;i++)if(expected[i]!==actual[i]){mismatch=i;break;}
+    assert.equal(mismatch,-1,presetId+' must preserve all old RGB and alpha bytes');
+  }
 });

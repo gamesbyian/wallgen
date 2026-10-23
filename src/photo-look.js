@@ -77,7 +77,7 @@ const noiseHash=(x,y,seed)=>{
 // raster. Four source samples per sensor cell temper hard-edge aliasing.
 // Neighbouring 2x2 sensor cells share quantized chroma (4:2:0-like sampling).
 // Sensor samples are complete BEFORE the destination pixels are changed.
-function makeWebcamCapture(data,width,height,variant='webcam'){
+function makeWebcamCapture(data,width,height,variant='webcam',pixelReader=null){
   // Retain webcam-v1 capture settings byte-for-byte for existing saved recipes.
   // The opt-in early digicam gets a finer sensor but punchier, quantized chroma.
   const digicam=variant==='digicam';
@@ -95,8 +95,13 @@ function makeWebcamCapture(data,width,height,variant='webcam'){
     for(const oy of [.25,.75])for(const ox of [.25,.75]){
       const px=Math.min(width-1,Math.floor((x+ox)*width/sensorWidth));
       const py=Math.min(height-1,Math.floor((y+oy)*height/sensorHeight));
-      const at=(py*width+px)*4;
-      r+=data[at];g+=data[at+1];b+=data[at+2];
+      if(pixelReader){
+        pixelReader.read(px,py);
+        r+=pixelReader.r;g+=pixelReader.g;b+=pixelReader.b;
+      }else{
+        const at=(py*width+px)*4;
+        r+=data[at];g+=data[at+1];b+=data[at+2];
+      }
     }
     r/=4;g/=4;b/=4;
     const at=y*sensorWidth+x;
@@ -129,7 +134,7 @@ function makeWebcamCapture(data,width,height,variant='webcam'){
 // equally, limiting chromatic fringes. No fake scene depth/RAW sensor data.
 // For 19.8 MP exports this uses <=600x1300 authored samples and three bounded
 // float arrays, never a second export-sized RGBA buffer. Sample BEFORE grading.
-function makeLensAcutanceField(data,width,height){
+function makeLensAcutanceField(data,width,height,pixelReader=null){
   const fieldWidth=Math.min(600,width);
   const fieldHeight=Math.min(1300,height,
     Math.max(1,Math.round(fieldWidth*height/width)));
@@ -141,8 +146,13 @@ function makeLensAcutanceField(data,width,height){
     for(const dy of [.25,.75])for(const dx of [.25,.75]){
       const px=Math.min(width-1,Math.floor((x+dx)*width/fieldWidth));
       const py=Math.min(height-1,Math.floor((y+dy)*height/fieldHeight));
-      const i=(py*width+px)*4;
-      sum+=.2126*data[i]+.7152*data[i+1]+.0722*data[i+2];
+      if(pixelReader){
+        pixelReader.read(px,py);
+        sum+=.2126*pixelReader.r+.7152*pixelReader.g+.0722*pixelReader.b;
+      }else{
+        const i=(py*width+px)*4;
+        sum+=.2126*data[i]+.7152*data[i+1]+.0722*data[i+2];
+      }
     }
     original[y*fieldWidth+x]=sum*.25;
   }
@@ -260,7 +270,7 @@ export function isNeutralPhotoLook(look){
 // Mutates the supplied pixel array. Destination alpha is never touched.
 // The grain grid is anchored in the authored 600x1300 frame, not device pixels.
 export function processPhotoPixels(data,width,height,rawLook,seed='rainbow-001',
-    {frameHeight=height,rowOffset=0,halationField=null}={}){
+    {frameHeight=height,rowOffset=0,halationField=null,webcamField=null,lensField=null}={}){
   const look=normalizePhotoLook(rawLook);
   if(!look.enabled||look.amount===0)return data;
   if(!Number.isInteger(width)||!Number.isInteger(height)||width<=0||height<=0||
@@ -270,7 +280,8 @@ export function processPhotoPixels(data,width,height,rawLook,seed='rainbow-001',
   // Strip processing is exact only for finishes without a source-wide spatial
   // sample field. The remaining modes retain the original whole-frame path.
   if((rowOffset!==0||frameHeight!==height)&&
-    (['camera-webcam-signal','camera-digicam-signal','camera-dslr-optics'].includes(look.presetId)||
+    ((['camera-webcam-signal','camera-digicam-signal'].includes(look.presetId)&&!webcamField)||
+      (look.presetId==='camera-dslr-optics'&&!lensField)||
       (['film-halation-only','film-halation-diffusion'].includes(look.presetId)&&
        look.parameters.halation>0&&!halationField)))
     throw new RangeError('Spatial photo finish requires whole-frame source');
@@ -294,14 +305,14 @@ export function processPhotoPixels(data,width,height,rawLook,seed='rainbow-001',
   // recipes: already saved images must not shift when a new preset is added.
   const layeredGrain=look.presetId==='film-grain-only';
   const webcamSignal=['camera-webcam-signal','camera-digicam-signal'].includes(look.presetId)?
-    makeWebcamCapture(data,width,height,
-      look.presetId==='camera-digicam-signal'?'digicam':'webcam'):null;
+    (webcamField||makeWebcamCapture(data,width,height,
+      look.presetId==='camera-digicam-signal'?'digicam':'webcam')):null;
   const diffusedHalation=look.presetId==='film-halation-diffusion';
   const halation=(look.presetId==='film-halation-only'||diffusedHalation)&&p.halation>0?
     (halationField||makeHalationField(data,width,height,
       diffusedHalation?'diffusion':'original')):null;
   const lens=look.presetId==='camera-dslr-optics'?
-    makeLensAcutanceField(data,width,height):null;
+    (lensField||makeLensAcutanceField(data,width,height)):null;
   // No extra image buffer or synthetic scene depth.
   const pocketFlash=look.presetId==='camera-pocket-flash';
   // The deep-black variant deliberately shares the legacy negative's grain
@@ -316,12 +327,12 @@ export function processPhotoPixels(data,width,height,rawLook,seed='rainbow-001',
     const ny=(sourceY+.5)/frameHeight*2-1;
     const yCell=Math.floor((sourceY+.5)*yScale);
     const signalRow=webcamSignal?
-      Math.min(webcamSignal.height-1,Math.floor((y+.5)/height*webcamSignal.height))*webcamSignal.width:0;
+      Math.min(webcamSignal.height-1,Math.floor((sourceY+.5)/frameHeight*webcamSignal.height))*webcamSignal.width:0;
     const haloY=halation?(sourceY+.5)/frameHeight*halation.height-.5:0;
     const hy0=halation?Math.max(0,Math.min(halation.height-1,Math.floor(haloY))):0;
     const hy1=halation?Math.min(halation.height-1,hy0+1):0;
     const hfy=halation?Math.max(0,Math.min(1,haloY-hy0)):0;
-    const lensY=lens?(y+.5)/height*lens.height-.5:0;
+    const lensY=lens?(sourceY+.5)/frameHeight*lens.height-.5:0;
     const ly0=lens?Math.max(0,Math.min(lens.height-1,Math.floor(lensY))):0;
     const ly1=lens?Math.min(lens.height-1,ly0+1):0;
     const lfy=lens?Math.max(0,Math.min(1,lensY-ly0)):0;
@@ -414,29 +425,29 @@ export function applyPhotoFinish(ctx,width,height,rawLook,seed){
   if(!rawLook?.enabled||Number(rawLook.amount)===0)return false;
   const look=normalizePhotoLook(rawLook);
   if(isNeutralPhotoLook(look))return false;
-  // Precompute Film halation from the exact original four source samples per
-  // bounded cell. Then stream finishing rows without ever materializing an
-  // export-sized RGBA buffer. Other capture/acutance fields remain full-frame.
+  // Every spatial source sample precedes the first destination write and
+  // uses the very same four source pixels and arithmetic as the original
+  // full-frame method. Only <=2 MiB of Canvas pixels are read at once;
+  // Webcam/Digicam quantization, DSLR acutance and halation fields remain
+  // bounded in authored coordinates and use the single Photo composer.
   const halationOn=['film-halation-only','film-halation-diffusion'].includes(look.presetId)&&
     look.parameters.halation>0;
-  const reader=halationOn?makeBoundedSourcePixelReader(ctx,width,height):null;
-  const halationField=reader?makeHalationField(null,width,height,
+  const signalOn=['camera-webcam-signal','camera-digicam-signal'].includes(look.presetId);
+  const lensOn=look.presetId==='camera-dslr-optics';
+  const reader=halationOn||signalOn||lensOn?
+    makeBoundedSourcePixelReader(ctx,width,height):null;
+  const halationField=halationOn?makeHalationField(null,width,height,
     look.presetId==='film-halation-diffusion'?'diffusion':'original',reader):null;
-  const spatial=['camera-webcam-signal','camera-digicam-signal',
-    'camera-dslr-optics'].includes(look.presetId);
-  if(spatial){
-    const pixels=ctx.getImageData(0,0,width,height);
-    processPhotoPixels(pixels.data,width,height,look,seed);
-    ctx.putImageData(pixels,0,0);
-  }else{
-    const rows=Math.max(1,Math.floor(MAX_PHOTO_READBACK_BYTES/(width*4)));
-    for(let y=0;y<height;y+=rows){
-      const h=Math.min(rows,height-y);
-      const pixels=ctx.getImageData(0,y,width,h);
-      processPhotoPixels(pixels.data,width,h,look,seed,
-        {frameHeight:height,rowOffset:y,halationField});
-      ctx.putImageData(pixels,0,y);
-    }
+  const webcamField=signalOn?makeWebcamCapture(null,width,height,
+    look.presetId==='camera-digicam-signal'?'digicam':'webcam',reader):null;
+  const lensField=lensOn?makeLensAcutanceField(null,width,height,reader):null;
+  const rows=Math.max(1,Math.floor(MAX_PHOTO_READBACK_BYTES/(width*4)));
+  for(let y=0;y<height;y+=rows){
+    const h=Math.min(rows,height-y);
+    const pixels=ctx.getImageData(0,y,width,h);
+    processPhotoPixels(pixels.data,width,h,look,seed,
+      {frameHeight:height,rowOffset:y,halationField,webcamField,lensField});
+    ctx.putImageData(pixels,0,y);
   }
   return true;
 }
