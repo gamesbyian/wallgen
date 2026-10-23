@@ -2231,6 +2231,7 @@ usageRecorder=createCreativeRecorder({
   store:usageStore,enabled:usageOptedIn,
   onError:error=>console.warn('Local activity storage unavailable:',error)
 });
+if(usageOptedIn)usageRecorder.recoverPrevious(await usageStore.last());
 usageRecorder.start(current);
 usageGitHubSync=installCreativeRecorderUI({recorder:usageRecorder,getRecipe:()=>current,store:usageStore});
 creativeFeedback=installCreativeFeedback({recorder:usageRecorder,getRecipe:()=>current});
