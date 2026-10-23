@@ -56,3 +56,12 @@ test('region angle restores authored direction and stays beside Stitch style',()
   assert.doesNotMatch(app,/direction:38,\s*\}\);/);
   assert.match(app,/'embroideryStyle','embroideryDirection'/);
 });
+
+test('interlinked chain stitch is opt-in in existing persisted embroidery style picker',()=>{
+  const html=source('index.html'),app=source('src/app.js'),code=source('src/embroidery.js');
+  assert.equal((html.match(/value="chain"/g)||[]).length,1);
+  assert.match(html,/Chain stitch \(linked loops\)/);
+  assert.match(app,/name='embroideryStyle'/);
+  assert.match(code,/const chainStep=Math\.max/);
+  assert.match(code,/chainLink\(ctx/);
+});

@@ -51,6 +51,7 @@ const options=argv=>{
     if(flag==='--help'||flag==='-h'){result.help=true;continue;}
     if(flag==='--focus-soft-satin'){result.focusSoftSatin=true;continue;}
     if(flag==='--focus-compound'){result.focusCompound=true;continue;}
+    if(flag==='--focus-chain'){result.focusChain=true;continue;}
     if(!['--out-dir','--seed','--browser'].includes(flag)||!argv[i+1]||
       argv[i+1].startsWith('--'))throw Error('Unknown or incomplete option '+flag);
     result[flag==='--out-dir'?'outDir':flag.slice(2)]=argv[++i];
@@ -78,13 +79,17 @@ function makeRecipe(study,seed){
 async function main(){
   const opts=options(process.argv.slice(2));
   if(opts.help){
-    console.log('node scripts/review-embroidery.mjs [--out-dir folder] [--seed text] [--browser Chromium-path] [--focus-soft-satin|--focus-compound]');
+    console.log('node scripts/review-embroidery.mjs [--out-dir folder] [--seed text] [--browser Chromium-path] [--focus-soft-satin|--focus-compound|--focus-chain]');
     return;
   }
-  if(opts.focusSoftSatin&&opts.focusCompound)
+  if(Number(!!opts.focusSoftSatin)+Number(!!opts.focusCompound)+
+    Number(!!opts.focusChain)>1)
     throw Error('Choose only one focused embroidery review');
   const out=resolve(opts.outDir);
-  const studies=opts.focusCompound?[
+  const studies=opts.focusChain?[
+    cases[0],{id:'10-ribbon-chain',name:'Loop ribbon · linked chain',scene:'ribbon',style:'chain'},
+    cases[3],{id:'11-region-chain',name:'Scattered circles · linked chain',scene:'region',style:'chain'}
+  ]:opts.focusCompound?[
     {id:'08-compound-plain',name:'Imported donut and island · plain',scene:'compound'},
     {id:'09-compound-tatami',name:'Imported donut and island · tatami',scene:'compound',style:'tatami'}
   ]:opts.focusSoftSatin?
@@ -139,7 +144,8 @@ async function main(){
   await writeFile(join(out,'index.html'),html);
   await writeFile(join(out,'manifest.json'),JSON.stringify({
     schema:'roygbiv-embroidery-art-review/v1',
-    comparison:opts.focusCompound?'imported-compound-hole':
+    comparison:opts.focusChain?'linked-chain-four':
+      opts.focusCompound?'imported-compound-hole':
       opts.focusSoftSatin?'soft-satin-versus-legacy':'seven-stitch-styles',
     status:'produced-awaiting-actual-visual-review',
     width:600,height:1300,seed:opts.seed,base,ribbon,region,items:records
