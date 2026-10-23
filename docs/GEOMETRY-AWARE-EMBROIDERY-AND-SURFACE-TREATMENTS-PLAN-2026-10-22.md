@@ -2,7 +2,7 @@
 
 ## E3 gentle highlight/shadow Satin variant (2026-10-22)
 
-The [first actual production picture review](EMBROIDERY-PRODUCTION-ART-FINDINGS-2026-10-22.md) exposed strong desaturation on tight red/orange Satin loops. A separately selectable `satin-soft` recipe style now uses exactly the old satin geometry, but reduces black underlay and white raised-ridge alpha on ribbons and regions. This is an artistically oriented low-overpaint finish, not physical fibre simulation; legacy `satin` stays byte/pixel stable. The existing compact inspector gains only one option. The opt-in reviewer supports `--focus-soft-satin` for three matched real wallpapers rather than introducing broad CI. Pixel/native export and nuanced fibre effects remain open.
+The [first actual production picture review](EMBROIDERY-PRODUCTION-ART-FINDINGS-2026-10-22.md) exposed strong desaturation on tight red/orange Satin loops. A separately selectable `satin-soft` recipe style now uses exactly the old satin geometry, but reduces black underlay and white raised-ridge alpha on ribbons and regions. This is an artistically oriented low-overpaint finish, not physical fibre simulation; legacy `satin` stays byte/pixel stable. The existing compact inspector gains only one option. The opt-in reviewer supports `--focus-soft-satin` for three matched real wallpapers rather than introducing broad CI. The real [three-image opt-in comparison](SOFT-SATIN-ART-FINDINGS-2026-10-22.md) was generated and viewed (Actions #39884499923). It confirms substantially improved red/orange hue retention on a tight loop compared with old Satin, without removing stitches. Original Satin remains untouched. Pixel/native export and nuanced fibre effects remain open.
 
 
 ## Repeatable appearance comparison (E2/E3, 2026-10-22)

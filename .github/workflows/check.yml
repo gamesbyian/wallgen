@@ -26,21 +26,6 @@ jobs:
       - name: Basic app and recipe sanity
         if: ${{ github.event_name != 'workflow_dispatch' || inputs.depth != 'full' }}
         run: npm run check:quick
-      # Temporary 3-picture optical review; restore before merging PR #511.
-      - name: Install Chromium for soft Satin artwork probe
-        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'feat/soft-satin-ink-preserving-20261022' }}
-        run: |
-          npm install --no-save playwright
-          npx playwright install --with-deps chromium
-      - name: Render old Satin versus new restrained Satin
-        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'feat/soft-satin-ink-preserving-20261022' }}
-        run: node scripts/review-embroidery.mjs --focus-soft-satin --out-dir artifacts/soft-satin-proof
-      - uses: actions/upload-artifact@v4
-        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'feat/soft-satin-ink-preserving-20261022' }}
-        with:
-          name: one-time-soft-satin-three-image-proof
-          path: artifacts/soft-satin-proof/
-          retention-days: 7
       - name: Full Node suite (manual request only)
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.depth == 'full' }}
         run: npm run check
