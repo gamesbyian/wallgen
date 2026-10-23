@@ -1,5 +1,12 @@
 # ROYGBIV: modern digital camera and photographic rendering looks
 
+## Final Camera disposition and memory improvement (23 October 2026)
+
+Camera issue [#471](https://github.com/gamesbyian/wallgen/issues/471) is **closed completed** for Natural Digital, Smartphone HDR, Webcam, Digicam, DSLR-inspired acutance and Pocket Flash in the one Photo engine. [#553](https://github.com/gamesbyian/wallgen/pull/553) now processes Natural/HDR/point-flash tone, seeded grain and vignette in <=2 MiB Canvas2D strips; whole-frame versus strip outputs are byte-exact in focused tests. The existing full-frame path is intentionally kept for source-sampled Webcam/Digicam and DSLR acutance. No camera preset parameters were retuned, and the output's geometry and saved recipe are unchanged.
+
+Prior 600×1300 camera PNGs were actually viewed and verified; current strip correctness is **source/test** evidence only. Peak device memory, real Pixel speed, native ergonomics and photographic calibration are still unverified. Dated implementation queues below are historical, not live blockers. Open follow-ups only for actual artistic defects or measured performance problems.
+
+
 **Current status and agent action:** Natural, Smartphone HDR, Webcam, early Digicam and restrained DSLR-inspired spatial optics are implemented in the common versioned Photo composer, all with real PNG review evidence. The remaining [#471](https://github.com/gamesbyian/wallgen/issues/471) is about specific opt-in improvements, real native-size/performance experiments and non-fabricated camera fidelity, not rebuilding the engine or replaying five-image discovery. See [authoritative handoff](AGENT-HANDOFF-2026-10-22.md).
 
 ## D5 independently named pocket-flash finish, real artwork evidence (2026-10-22)
