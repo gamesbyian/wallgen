@@ -1,6 +1,7 @@
 // Optional, local-first evidence from canonical recipe transactions.
 // No recording is performed until the owner explicitly enables it.
 import {normalizeRecipe} from './model.js';
+import {makeUsageBatch,orderUsageEvents} from './creative-github-sync.js';
 
 export const USAGE_DB='roygbiv-creative-usage-v1';
 export const USAGE_MODE_KEY='roygbiv:creative-usage-mode:v1';
@@ -26,13 +27,22 @@ export function replayEpisode(records){
   return result?normalizeRecipe(result):null;
 }
 export function memoryUsageStore(warning='Temporary session-only records'){
-  const events=new Map();let last=null;
+  const events=new Map();let last=null,outbox=null,synced=new Set();
   return {
     durable:false,warning,
     async append(event,snapshot){events.set(event.eventId,clone(event));last=clone(snapshot);},
-    async all(){return clone([...events.values()]);},
+    async all(){return clone(orderUsageEvents([...events.values()]));},
     async last(){return clone(last);},
-    async clear(){events.clear();last=null;}
+    async reserveBatch(){
+      if(!outbox)outbox=makeUsageBatch([...events.values()],[...synced]);
+      return clone(outbox);
+    },
+    async ackBatch(id){
+      if(!outbox||outbox.id!==id)throw new Error('Unknown activity batch');
+      for(const eventId of outbox.eventIds)synced.add(eventId);
+      outbox=null;
+    },
+    async clear(){events.clear();last=null;outbox=null;synced.clear();}
   };
 }
 export async function openUsageStore(factory=globalThis.indexedDB){
@@ -67,11 +77,42 @@ export async function openUsageStore(factory=globalThis.indexedDB){
       }),
       all:()=>txRun(['events'],'readonly',(tx,set)=>{
         const request=tx.objectStore('events').getAll();
-        request.onsuccess=()=>set(request.result);
+        request.onsuccess=()=>set(orderUsageEvents(request.result));
       }),
       last:()=>txRun(['state'],'readonly',(tx,set)=>{
         const request=tx.objectStore('state').get('last');
         request.onsuccess=()=>set(request.result?.value??null);
+      }),
+      reserveBatch:()=>txRun(['events','state'],'readwrite',(tx,set)=>{
+        const state=tx.objectStore('state'),old=state.get('outbox');
+        old.onsuccess=()=>{
+          if(old.result?.value){set(old.result.value);return;}
+          const request=tx.objectStore('events').getAll();
+          request.onsuccess=()=>{
+            const synced=state.get('synced');
+            synced.onsuccess=()=>{
+              try{
+                const batch=makeUsageBatch(request.result,synced.result?.value||[]);
+                if(batch)state.put({key:'outbox',value:batch});
+                set(batch);
+              }catch(error){console.warn('Cannot prepare usage backup:',error);tx.abort();}
+            };
+          };
+        };
+      }),
+      ackBatch:id=>txRun(['state'],'readwrite',tx=>{
+        const state=tx.objectStore('state'),old=state.get('outbox');
+        old.onsuccess=()=>{
+          const batch=old.result?.value;
+          if(batch?.id!==id){tx.abort();return;}
+          const previous=state.get('synced');
+          previous.onsuccess=()=>{
+            const ids=new Set(previous.result?.value||[]);
+            for(const eventId of batch.eventIds)ids.add(eventId);
+            state.put({key:'synced',value:[...ids]});
+            state.delete('outbox');
+          };
+        };
       }),
       clear:()=>txRun(['events','state'],'readwrite',tx=>{
         tx.objectStore('events').clear();tx.objectStore('state').clear();

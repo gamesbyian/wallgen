@@ -42,6 +42,7 @@ const FAVORITES_KEY = 'wallgen:favorites:v1';
 const FIELDS = ['primesOnly','family','structure','radialMode','rayCount','rayRotation','rayTwist','rayCoverage','rayCore','fieldCenterX','fieldCenterY','regionMode','regionCount','regionJitter','regionSides','scatteredCount','scatteredMinSize','scatteredMaxSize','scatteredVariation','scatteredSpacing','scatteredEdgeCrop','scatteredOverlap','scatteredShapeKind','dividerColor','dividerWidth','composition','repeatCount','repeatSpacing','orientation','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','geometry','turnRadius','hairpinAngle','loopRadius','loopSweep','geometrySafety','extendDrawnPath','crossingMode','stepCount','chevronSharpness','loopAspect','construction','motif','lineStyle','pathLength','tonalContrast','brushRoughness','dotSize','dotSpacing','endTaper','shapeFrequency','shapeDepth','motifSize','motifFrequency','palette','material','outline','background','lightingMood','lightDirection','lightStrength','shadowStrength','stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection','textureCoverage','textureRotation','textureBlend','textureLayer2Enabled','material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2','textureLayer3Enabled','material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3','chaos','stripeWidth','spread','textureStrength','textureScale','textureDisplacement','individuality','patternHomogeneity','overridePatternHomogeneity','gap','outlineBuffer','glow'];
 let current = normalizeRecipe();
 let usageRecorder=null; // Initialized after first render; no default collection.
+let usageGitHubSync=null;
 let currentScene;
 const previewLayers={background:null,ink:null,scene:null,key:null,overhang:null};
 let previewWorker=null;
@@ -1090,6 +1091,7 @@ async function downloadPNG(){
       {type:'image/png'});
     downloadBlob(result,`roygbiv-${safeFilename(snapshot.seed)}-${OUTPUT_WIDTH}x${OUTPUT_HEIGHT}.png`);
     usageRecorder?.action('download_initiated',snapshot,{exportId});
+    void usageGitHubSync?.syncNow(); // Back up after exports, never block PNG save.
     showNotice(`Exported the framed ${Math.round(snapshot.viewZoom*100)}% view at ${OUTPUT_WIDTH} × ${OUTPUT_HEIGHT}, with recipe metadata.`);
   }catch(error){usageRecorder?.action('export_failed',snapshot,{exportId});console.error(error);showNotice(`Export failed: ${error.message}`);}
   finally { if(big){big.width=0;big.height=0;}setBusy(button,false); }
@@ -2225,7 +2227,7 @@ usageRecorder=createCreativeRecorder({
   onError:error=>console.warn('Local activity storage unavailable:',error)
 });
 usageRecorder.start(current);
-installCreativeRecorderUI({recorder:usageRecorder,getRecipe:()=>current});
+usageGitHubSync=installCreativeRecorderUI({recorder:usageRecorder,getRecipe:()=>current,store:usageStore});
 document.addEventListener('visibilitychange',()=>{
   if(document.visibilityState==='hidden')
     usageRecorder?.action('hidden_unconfirmed',current);

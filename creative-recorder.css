@@ -11,3 +11,10 @@
 .creative-activity-actions{display:flex;flex-wrap:wrap;gap:8px}
 .creative-activity-actions button{flex:1}
 .creative-activity-foot{opacity:.75}
+
+.creative-activity-backup{border-top:1px solid currentColor;padding-top:10px;display:grid;gap:9px}
+.creative-activity-backup summary{cursor:pointer;font-weight:700;min-height:44px;display:flex;align-items:center}
+.creative-activity-backup[open]{display:grid;gap:9px}
+.creative-activity-backup code{overflow-wrap:anywhere}
+.creative-activity-backup [data-usage-token]{box-sizing:border-box;width:100%;min-height:44px;border:1px solid currentColor;border-radius:9px;padding:10px;font:inherit;background:transparent;color:inherit}
+.creative-activity-backup label:not(.creative-activity-choice){font-weight:600;font-size:13px}
