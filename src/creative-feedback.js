@@ -29,12 +29,18 @@ export function installCreativeFeedback({recorder,getRecipe}){
   const title=panel.querySelector('[data-feedback-title]');
   const question=panel.querySelector('[data-feedback-question]');
   const answers=panel.querySelector('[data-feedback-answers]');
-  let active=null;
+  let active=null,returnFocus=null;
   function preference(){
     try{return localStorage.getItem(FEEDBACK_PREF_KEY)||'every';}
     catch{return 'every';}
   }
-  function hide(){panel.hidden=true;active=null;}
+  function hide(){
+    const focusInside=panel.contains(document.activeElement);
+    panel.hidden=true;active=null;
+    if(focusInside&&returnFocus?.isConnected&&!returnFocus.disabled)
+      returnFocus.focus?.({preventScroll:true});
+    returnFocus=null;
+  }
   function respond(answer){
     if(!active)return;
     recorder.action(answer==='skip'?'survey_skipped':'survey_answer',getRecipe(),{
@@ -62,6 +68,7 @@ export function installCreativeFeedback({recorder,getRecipe}){
     }catch{}
     if(!shouldOfferCreativeQuestion(kind,{frequency:preference(),eligibleCount:count,...details}))
       return false;
+    returnFocus=document.activeElement;
     active={kind,targetEpisodeId:details.targetEpisodeId,
       exportId:details.exportId};
     title.textContent=kind==='export'?'A question about this export':'One quick question';
