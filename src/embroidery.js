@@ -22,7 +22,7 @@ export function normalizeSurfaceTreatments(input){
       .filter(i=>typeof i==='string'&&/^[a-zA-Z0-9_\/-]{1,84}$/.test(i)))].slice(0,16);
     out.push({
       id,enabled:raw.enabled===true||raw.enabled==='true',
-      materialFamily:'embroidery',style:['satin','satin-soft','tatami','running'].includes(raw.style)?raw.style:'satin',
+      materialFamily:'embroidery',style:['satin','satin-soft','tatami','running','chain'].includes(raw.style)?raw.style:'satin',
       target:{scope,role:'fill',colorSlots,ids},
       pitch:bounds(raw.pitch,5,2,16),relief:bounds(raw.relief,65,0,100),
       direction:bounds(raw.direction,38,-180,180),
@@ -50,6 +50,27 @@ function stitchInk(ctx,brightness,relief){
   const alpha=(.10+relief/100*.24)*brightness;
   ctx.strokeStyle='rgba(255,255,255,'+alpha.toFixed(3)+')';
 }
+// Two curved thread spans close into a linked oval. The link is an actual
+// cubic path rather than a dashed straight stroke. Adjacent links meet at
+// exactly the same globally anchored ends, with the following loop visually
+// trapping its predecessor. Coordinates are supplied by the existing
+// tangent/normal of a path, or the region's rotated local coordinate frame.
+// Two restrained offset strokes suggest depth without recolouring the ink.
+function chainLink(ctx,x,y,tx,ty,nx,ny,half,loft,relief){
+  const loop=(shift)=>{
+    const cx=x+nx*shift,cy=y+ny*shift;
+    const point=(along,across)=>[cx+tx*along+nx*across,
+      cy+ty*along+ny*across];
+    const a=point(-half,0),b=point(half,0);
+    const upper1=point(-half*.55,loft),upper2=point(half*.6,loft);
+    const lower1=point(half*.6,-loft),lower2=point(-half*.55,-loft);
+    ctx.beginPath();ctx.moveTo(...a);
+    ctx.bezierCurveTo(...upper1,...upper2,...b);
+    ctx.bezierCurveTo(...lower1,...lower2,...a);
+  };
+  loop(.42);ctx.strokeStyle='rgba(0,0,0,.20)';ctx.stroke();
+  loop(-.3);stitchInk(ctx,.68,relief);ctx.stroke();
+}
 /** Draw transverse thread ribs along the same tangent/normal path as ribbon geometry.
  * Caller establishes the actual stripe footprint as the active clipping mask.
  */
@@ -61,6 +82,33 @@ export function drawRibbonEmbroidery(ctx,stripe,extent,treatment,range=null){
   const start=Math.max(-extent,range?.start??-extent),
     end=Math.min(extent,range?.end??extent);
   if(!Number.isFinite(start)||!Number.isFinite(end)||end<start)return 0;
+  if(treatment.style==='chain'){
+    // Three rows of interlinked loops. One original-world station lattice
+    // serves both full painting and clipped crossing-branch replays.
+    const linkStep=Math.max(step*2.8,2*extent/950);
+    const firstLink=Math.max(0,Math.ceil((start+extent)/linkStep-1e-9));
+    const lastLink=Math.min(950,Math.floor((end+extent)/linkStep+1e-9));
+    let count=0;
+    ctx.save();
+    ctx.lineCap='round';ctx.lineJoin='round';
+    ctx.lineWidth=Math.max(.8,Math.min(2,step*.24));
+    for(let i=firstLink;i<=lastLink;i++){
+      const station=-extent+i*linkStep;
+      if(station+linkStep>extent)break;
+      const p=samplePath(stripe,station+linkStep*.5,extent);
+      const halfWidth=widthAt(stripe,station+linkStep*.5,extent)*.46;
+      if(![p.x,p.y,p.tx,p.ty,p.nx,p.ny,halfWidth].every(Number.isFinite)||
+        halfWidth<=0)continue;
+      const half=linkStep*.51,loft=Math.min(step*.72,half*.62,halfWidth*.48);
+      for(const lane of [-.66,0,.66]){
+        chainLink(ctx,p.x+p.nx*halfWidth*lane,p.y+p.ny*halfWidth*lane,
+          p.tx,p.ty,p.nx,p.ny,half,loft,treatment.relief);
+        count++;
+      }
+    }
+    ctx.restore();
+    return count;
+  }
   if(treatment.style==='running'){
     // Three slender interrupted seams follow the authored centreline, rather
     // than drawing transverse satin ribs. All segments use one immutable
@@ -153,6 +201,7 @@ export function drawRegionEmbroidery(ctx,object,treatment){
   // Segment length grows for huge bounds to cap Canvas2D stroke work. The
   // enclosing renderer's even-odd clip handles silhouette islands and holes.
   const tatami=treatment.style==='tatami';
+  const chain=treatment.style==='chain';
   const gentle=treatment.style==='satin-soft';
   const running=treatment.style==='running';
   const shortRows=tatami||running;
@@ -164,10 +213,27 @@ export function drawRegionEmbroidery(ctx,object,treatment){
   ctx.rotate((treatment.direction+((height>width)?90:0))*Math.PI/180);
   ctx.lineCap='round';
   ctx.lineWidth=Math.max(.7,Math.min(2.5,treatment.pitch*.25));
+  // Chain fills need fewer, distinct loop courses than closely stacked
+  // satin rows. Limit total curve work for large imported multi-ring art.
+  const chainStride=Math.max(2,Math.ceil((2*n+1)/120));
+  const chainRows=Math.ceil((2*n+1)/chainStride);
+  const chainStep=Math.max(treatment.pitch*2.8,
+    diagonal*1.6*(chainRows+1)/5200);
   for(let k=-n;k<=n;k++){
     const y=k*treatment.pitch;
     if(Math.abs(y)>diagonal*.7)continue;
-    if(shortRows){
+    if(chain){
+      if((k+n)%chainStride!==0)continue;
+      const limit=diagonal*.8;
+      const index=Math.floor((k+n)/chainStride);
+      const offset=(index%2)*chainStep*.5;
+      for(let x=-limit+offset;x+chainStep<=limit;x+=chainStep){
+        chainLink(ctx,x+chainStep*.5,y,1,0,0,1,
+          chainStep*.51,Math.min(treatment.pitch*.74,chainStep*.29),
+          treatment.relief);
+        stitches++;
+      }
+    }else if(shortRows){
       const limit=diagonal*.8;
       const period=tatami?3:2;
       const offset=((k%period+period)%period)*segment/period;

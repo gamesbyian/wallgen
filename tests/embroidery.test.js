@@ -210,3 +210,48 @@ test('authored regional stitch directions survive normalization and recipe trans
   assert.equal(normalizeSurfaceTreatments([{id:'safe',enabled:true,direction:900}])[0].direction,180);
   assert.equal(normalizeSurfaceTreatments([{id:'safe',enabled:true,direction:'invalid'}])[0].direction,38);
 });
+
+test('chain links use bounded cubic geometry with original-world crossing replay',()=>{
+  const scene=resolveScene({seed:'embroider-linked-loop',structure:'paths',geometry:'loop'});
+  const stripe=scene.stripes[0],thread=select({style:'chain',pitch:5});
+  const capture=()=>{const links=[];let last=null;return{
+    links,save(){},restore(){},beginPath(){last=[];links.push(last);},
+    moveTo(...a){last.push(['M',...a])},
+    bezierCurveTo(...a){last.push(['C',...a])},stroke(){}
+  }};
+  const full=capture(),partial=capture(),repeat=capture();
+  const a=drawRibbonEmbroidery(full,stripe,scene.extent,thread);
+  const b=drawRibbonEmbroidery(partial,stripe,scene.extent,thread,
+    {start:-scene.extent*.31,end:scene.extent*.31});
+  assert.ok(a>30&&b>0&&b<a);
+  assert.equal(full.links.length,a*2);
+  assert.equal(partial.links.length,b*2);
+  drawRibbonEmbroidery(repeat,stripe,scene.extent,thread);
+  assert.deepEqual(repeat.links,full.links);
+  const source=new Set(full.links.map(JSON.stringify));
+  assert.ok(partial.links.every(link=>source.has(JSON.stringify(link))),
+    'branch replay must use same world-anchored loop stations');
+  assert.ok(full.links.every(link=>link.filter(item=>item[0]==='C').length===2));
+  assert.ok(a<=950*3);
+});
+test('chain region courses use curved loops within bounded work without repainting legacy styles',()=>{
+  const region={rings:[[{x:20,y:30},{x:320,y:30},{x:320,y:570},{x:20,y:570}]],
+    vertices:[{x:20,y:30},{x:320,y:30},{x:320,y:570},{x:20,y:570}]};
+  const capture=()=>{const calls={curves:0,strokes:0};return{
+    calls,save(){},restore(){},beginPath(){},moveTo(){},
+    bezierCurveTo(){calls.curves++},stroke(){calls.strokes++},
+    translate(){},rotate(){}
+  }};
+  const ctx=capture(),again=capture();
+  const thread=select({style:'chain',direction:28,pitch:5});
+  const count=drawRegionEmbroidery(ctx,region,thread);
+  assert.ok(count>20&&count<=5200);
+  assert.equal(ctx.calls.strokes,count*2);
+  assert.equal(ctx.calls.curves,count*4);
+  assert.equal(drawRegionEmbroidery(again,region,thread),count);
+  assert.deepEqual(again.calls,ctx.calls);
+  const saved=normalizeRecipe({seed:'chain-stitches',surfaceTreatments:[thread]});
+  assert.deepEqual(decodeRecipe(encodeRecipe(saved)),saved);
+  assert.equal(saved.surfaceTreatments[0].style,'chain');
+  assert.equal(normalizeSurfaceTreatments([{id:'x',enabled:true,style:'old-invalid'}])[0].style,'satin');
+});
