@@ -27,6 +27,17 @@ function materializeRecipe(rows){
   try{return {recipe:replayEpisode(orderedBySequence(rows)),error:null};}
   catch(error){return {recipe:null,error:String(error.message||error)};}
 }
+function countNamedValues(items,read){
+  const counts=new Map();
+  for(const item of items){
+    const name=read(item);
+    if(typeof name!=='string'||!name.trim())continue;
+    const key=name.slice(0,120);
+    counts.set(key,(counts.get(key)||0)+1);
+  }
+  return [...counts].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]))
+    .map(([name,count])=>({name,count}));
+}
 export function analyzeCreativeUsage(sources){
   if(!Array.isArray(sources))throw new TypeError('Expected a list of activity exports or batches');
   const unique=new Map();
@@ -79,11 +90,26 @@ export function analyzeCreativeUsage(sources){
       eventId:e.eventId
     }));
     const {recipe,error}=materializeRecipe(rows);
+    const recipeEvents=rows.filter(e=>e.type==='recipe_commit');
+    const navigation=rows.filter(e=>e.type==='navigation');
     episodes.push({
       sessionId:rows[0].sessionId,episodeId:rows[0].episodeId,
       firstEvent:rows[0].at,lastEvent:rows.at(-1).at,
-      eventCount:rows.length,recipeChanges:rows.filter(e=>e.type==='recipe_commit').length,
-      navigationEvents:rows.filter(e=>e.type==='navigation').length,
+      eventCount:rows.length,recipeChanges:recipeEvents.length,
+      navigationEvents:navigation.length,
+      recipeChangeCauses:countNamedValues(recipeEvents,e=>e.cause),
+      navigationRoutes:countNamedValues(navigation,e=>
+        [e.routeKind,e.route].filter(v=>typeof v==='string').join(' → ')),
+      exportFailures:rows.filter(e=>e.type==='export_failed').length,
+      checkpoints:recipeEvents.filter(e=>Boolean(e.recipe)).length,
+      // These recorder estimates exist only on an explicit episode_end.
+      // Never fill absent values from wall-clock gaps or invented gestures.
+      editBurstsAtSupersession:Number.isSafeInteger(end?.manualEdits)?
+        end.manualEdits:null,
+      engagedMsAtSupersession:Number.isFinite(end?.engagedMs)?
+        end.engagedMs:null,
+      lastRevisionExportedAtSupersession:typeof end?.finalExported==='boolean'?
+        end.finalExported:null,
       exportsRequested:requested.length,downloadsInitiated:exported.length,
       exportSnapshots:exported.map(e=>({
         eventId:e.eventId,exportId:e.exportId||null,at:e.at,
@@ -112,6 +138,9 @@ export function analyzeCreativeUsage(sources){
     sessionCount:sessions.length,episodeCount:episodes.length,
     downloadInitiationCount:episodes.reduce((n,e)=>n+e.downloadsInitiated,0),
     surveyAnswerCount:episodes.reduce((n,e)=>n+e.surveyAnswers.length,0),
+    recipeActionCounts:countNamedValues(ordered.filter(e=>e.type==='recipe_commit'),e=>e.cause),
+    navigationRouteCounts:countNamedValues(ordered.filter(e=>e.type==='navigation'),
+      e=>[e.routeKind,e.route].filter(v=>typeof v==='string').join(' → ')),
     topChangedSettings:[...bySetting].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]))
       .map(([key,changes])=>({key,changes})),
     sessions,episodes,eventSources:Object.fromEntries(eventSources)
@@ -137,7 +166,15 @@ export function markdownCreativeUsageReport(report){
       ' | '+e.surveyAnswers.length+' | '+nice(e.replayError?
         'REPLAY INCOMPLETE: '+e.replayError:e.outcome)+' |');
   }
-  lines.push('','## Most changed recipe settings','');
+  lines.push('','## Observed recipe actions','');
+  if(!report.recipeActionCounts.length)lines.push('No committed recipe actions recorded.');
+  else for(const entry of report.recipeActionCounts.slice(0,15))
+    lines.push('- '+nice(entry.name)+': '+entry.count+' recipe transitions');
+  lines.push('','## Observed navigation routes','');
+  if(!report.navigationRouteCounts.length)lines.push('No navigation events recorded.');
+  else for(const entry of report.navigationRouteCounts.slice(0,15))
+    lines.push('- '+nice(entry.name)+': '+entry.count+' events');
+  lines.push('','**Interpretation limits:** Route counts indicate what the app reported, not failed searches, hesitation, confusion or task success. An edit transaction is not necessarily one intentional gesture. Bounded engagement and edit-burst estimates are available only for explicitly superseded episodes.','','## Most changed recipe settings','');
   if(!report.topChangedSettings.length)lines.push('No committed recipe changes recorded.');
   else for(const e of report.topChangedSettings.slice(0,15))
     lines.push('- '+nice(e.key)+': '+e.changes+' committed changes');
