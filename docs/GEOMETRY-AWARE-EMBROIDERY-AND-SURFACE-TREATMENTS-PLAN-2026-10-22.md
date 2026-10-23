@@ -2,7 +2,7 @@
 
 ## Repeatable appearance comparison (E2/E3, 2026-10-22)
 
-The opt-in [seven-image embroidery review](EMBROIDERY-SEVEN-IMAGE-ART-REVIEW-2026-10-22.md) uses the existing production renderer for precisely three paired loop ribbon styles and four paired scattered-region treatments. It records exact canonical sidecar and embedded recipes, source seeds, names and a local contact gallery; it does **not** add mandatory CI or certify the actual visual output. Next artistic action is to run and **look at the seven wallpapers** before tuning physical thread models or loosening the legacy render contract.
+The opt-in [seven-image embroidery review](EMBROIDERY-SEVEN-IMAGE-ART-REVIEW-2026-10-22.md) uses the existing production renderer for precisely three paired loop ribbon styles and four paired scattered-region treatments. It records exact canonical sidecar and embedded recipes, source seeds, names and a local contact gallery; it does **not** add mandatory CI. The first seven PNGs **were actually rendered, retrieved and visually judged** with exact recipe/CRC validation in [run #39883744519](https://github.com/gamesbyian/wallgen/actions/runs/39883744519). See [observed strengths and limitations](EMBROIDERY-PRODUCTION-ART-FINDINGS-2026-10-22.md): source-isolated targeting works, Satin is dense/desaturating on tight inner loops, and short regional lines still read as procedural hatching. Full 2.5D realism and physical device approval remain open.
 
 
 ## E2 practical slice: longitudinal running seams and safe multi-ring bounds (2026-10-22)

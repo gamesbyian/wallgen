@@ -1,5 +1,8 @@
 # Seven-image embroidery quality review (manual, opt-in)
 
+**First execution and actual visual review completed:** [Actions #39883744519](https://github.com/gamesbyian/wallgen/actions/runs/39883744519) produced all seven real source-rendered PNGs; the artifact was downloaded, opened, CRC-checked and each embedded recipe matched the exact sidecar. See [specific visual findings](EMBROIDERY-PRODUCTION-ART-FINDINGS-2026-10-22.md). The one-time Chromium CI addition was removed before merging; future runs stay explicitly opt-in. Physical Pixel and full-scale performance are still unverified.
+
+
 The production script is `scripts/review-embroidery.mjs`. It renders precisely **seven 600×1300 PNG wallpapers**, not fake schematic previews: three same-seed loop ribbon scenes (Off/Satin/Running) and four same-seed scattered regions (Off/Tatami/Running/one selected object's Satin). Each output embeds the exact normalized authoring recipe saved alongside it as `.recipe.json`. The tool also creates `manifest.json` and a local HTML contact gallery.
 
 Run in a full repository checkout with the same installed Playwright/Chromium required by `render-headless.mjs`:
