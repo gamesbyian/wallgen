@@ -217,3 +217,15 @@ test('PCA recognizes oblique parallel stripes but refuses scattered unrelated ce
  assert.equal(imageStripeAngle(notAligned,200,200),null);
  assert.equal(imageStripeAngle(sloping.slice(0,3),200,200),null);
 });
+
+test('oblique source line detector gives editable diagonal candidate when hue centroids are unreliable',()=>{
+  const slant=raster(180,300,(x,y)=>{
+    const band=Math.floor((x-y*.42+170)/25);
+    return band>=0&&band<7?colour(HUES[band]):[0,0,0,255];
+  });
+  const d=describeReconstructionImage(slant);
+  assert.ok(d.paths.some(p=>p.kind==='line')||d.stripeAngle!==null);
+  const candidates=reconstructionCandidates(slant,{seed:'oblique-cropped'});
+  assert.ok(candidates.some(c=>c.kind==='straight'&&c.recipe.orientation==='diagonal'),
+    'reuse detected oblique edge rather than restricting to free circles');
+});
