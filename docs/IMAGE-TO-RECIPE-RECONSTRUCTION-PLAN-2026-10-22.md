@@ -1,6 +1,6 @@
 # Image-to-recipe reconstruction: native and external imports
 
-**R0 reproducibility checkpoint (23 October):** PR #560 adds opt-in `scripts/review-reconstruction.mjs`.
+**R0 reproducibility checkpoint (23 October):** [PR #564](https://github.com/gamesbyian/wallgen/pull/564) adds opt-in `scripts/review-reconstruction.mjs`.
 Execute from repo root with Playwright/Chromium installed:
 
     node scripts/review-reconstruction.mjs --out-dir artifacts/reconstruction-r0-unique-run
