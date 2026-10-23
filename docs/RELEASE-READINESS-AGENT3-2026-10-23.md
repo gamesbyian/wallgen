@@ -1,4 +1,14 @@
 # ROYGBIV release-readiness and owner-dependent acceptance ledger
+
+## Additional verified 23 October portrait follow-through (#619, #620, #622)
+
+- **Merged [#619](https://github.com/gamesbyian/wallgen/pull/619):** The phone swipe handler and `N / total` use only the actual visible, scene-applicable editor chips, rather than all 40 static tool names. Swipes reveal the selected chip beyond sticky Focus/Tool controls. No recipe mutation or taxonomy change.
+- **Merged [#620](https://github.com/gamesbyian/wallgen/pull/620):** A child's consumed Escape (setting search) and an open native Activity dialog no longer trigger the global mobile tray dismissal, preserving search-toggle and editor focus.
+- **[PR #622](https://github.com/gamesbyian/wallgen/pull/622) browser-observed root-cause correction:** The app formerly imported `editor-layout.js?v=20261022-search-choice1` while the swipe controller imported `editor-layout.js` without a query. ES module URL identity created two independent `tools` Maps: the swipe controller's map was never mounted, making gestures inert even after #619's static-sequence fix. Both consumers now import exactly `./editor-layout.js?v=20261023-single-editor1`. A quick Node contract asserts the single URL and Pages script cache keys.
+- **Genuine headless Chromium runtime proof**, temporary one-off [run #40025952861](https://github.com/gamesbyian/wallgen/actions/runs/40025952861): mobile emulation at **320×700 and 412×892**, radial source (Rays/Ray detail/Origin, exactly three applicable chips), real browser `TouchEvent` objects dispatched to the noninteractive tray, successful Rays→Ray detail selection and `2 / 3` counter, selected chip visible outside sticky controls, Escape search closure with Edit and focus retained, native Activity dialog Escape retaining underlying Edit, exact unchanged source recipe, zero page errors. JSON and two screenshot captures were produced; screenshots were **not** visually inspected in this agent lane. Reusable `tests/agent3-portrait-swipes-escape.mjs` is **opt-in** and the temporary workflow was deleted before merge. Browser emulation still does **not** certify Pixel physical thumb gestures, real Android IME, TalkBack or human satisfaction.
+- At this checkpoint Agent 2's #445/#514 art software issues have been closed after separate source-backed review; #557 reconstruction is independently owned by Agent 1. Prior owner-dependent acceptance caveats below are unchanged.
+
+
 **23 October 2026 · Agent 3 checkpoint following merged PR #616**
 
 This is a current-product readiness ledger, **not** a declaration that the whole app is release-complete, visually approved, or physically handset-tested. Source-level inspection and targeted GitHub Node quick checks are the evidence available in this lane. No invented participant, on-device credential, live authenticated GitHub transfer, native Pixel action or TalkBack session is counted as a pass.
