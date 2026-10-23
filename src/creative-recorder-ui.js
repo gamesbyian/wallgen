@@ -46,7 +46,7 @@ export function installCreativeRecorderUI({
     </details>
     <div class="creative-activity-actions">
       <button type="button" data-usage-export>Export my activity JSON</button>
-      <button type="button" data-usage-clear>Delete all local activity</button>
+      <button type="button" data-usage-clear>Delete previous activity</button>
     </div>
     <p>Local records are kept until you delete them or your browser clears storage. You can optionally remove complete sessions over 90 days old after their remote backup has been acknowledged. No unsent or active session is pruned.</p>
     <button type="button" data-usage-prune>Remove backed-up local sessions older than 90 days</button>
@@ -133,7 +133,7 @@ export function installCreativeRecorderUI({
     catch(error){status.textContent='Export failed: '+String(error.message||error);}
   });
   dialog.querySelector('[data-usage-clear]').addEventListener('click',async()=>{
-    if(!confirm('Delete all local creative activity records? This cannot be undone. Previously uploaded records remain on GitHub.'))return;
+    if(!confirm('Delete all recorded local history? This cannot be undone. If recording remains on, a new episode begins immediately. Previously uploaded records remain on GitHub.'))return;
     try{
       connectionRevision++;sync.cancel();
       onStopOrClear(); // Do not answer a question about a deleted episode.
@@ -169,7 +169,7 @@ export function installCreativeRecorderUI({
       localStorage.getItem(USAGE_TOKEN_KEY)||'';
     remember.checked=Boolean(localStorage.getItem(USAGE_TOKEN_KEY));
   }catch{}
-  if(token)syncStatus.textContent='Backup token available on this device. Sync is ready.';
+  if(token)syncStatus.textContent='Backup token stored on this device. GitHub access has not been checked this visit.';
   async function syncNow(){
     if(!token||!recorder.enabled||!recorder.durable)return {uploaded:0};
     const revision=connectionRevision;
@@ -179,8 +179,15 @@ export function installCreativeRecorderUI({
       // An asynchronous request may complete after the user disconnected,
       // disabled recording or deleted history. Never overwrite that choice.
       if(revision===connectionRevision&&token&&recorder.enabled){
-        syncStatus.textContent='Private GitHub backup confirmed: '+result.uploaded+
-          ' additional event(s) uploaded this attempt.';
+        const summary=await store.syncSummary();
+        // A zero-batch run is not proof that a fresh GitHub request succeeded.
+        syncStatus.textContent=result.uploaded>0?
+          'Private GitHub readback confirmed: '+result.uploaded+
+            ' additional event(s) uploaded this attempt.':
+          summary.pending>0?
+            'No additional backup confirmed; '+summary.pending+
+              ' local event(s) remain for retry.':
+            'Nothing new to upload. All retained local events were already acknowledged.';
         if(dialog.open)await refresh();
       }
       return result;
