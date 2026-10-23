@@ -300,23 +300,18 @@
 </div>
         <details class="embroidery-controls" aria-label="Surface embroidery">
           <summary>Thread treatment <span class="thread-treatment-summary" aria-live="polite">Off</span></summary>
-          <label class="field">Embroider
-            <select name="embroideryTarget">
-              <option value="off">Off · plain surfaces</option>
-              <option value="all">All rainbow colours</option>
-              <option value="object">One chosen ribbon or region</option>
-              <option value="0">Red only</option><option value="1">Orange only</option>
-              <option value="2">Yellow only</option><option value="3">Green only</option>
-              <option value="4">Blue only</option><option value="5">Indigo only</option>
-              <option value="6">Violet only</option>
-            </select>
-          </label>
-          <label class="field embroidery-object-picker" hidden>Choose ribbon or region
-            <select name="embroideryObjectId" aria-label="Choose the single authored object to embroider">
-              <option value="">No eligible objects</option>
-            </select>
-          </label>
           <div class="embroidery-style-grid">
+            <label class="field">Embroider
+              <select name="embroideryTarget">
+                <option value="off">Off · plain surfaces</option>
+                <option value="all">All rainbow colours</option>
+                <option value="object">One chosen ribbon or region</option>
+                <option value="0">Red only</option><option value="1">Orange only</option>
+                <option value="2">Yellow only</option><option value="3">Green only</option>
+                <option value="4">Blue only</option><option value="5">Indigo only</option>
+                <option value="6">Violet only</option>
+              </select>
+            </label>
             <label class="field">Stitch style
               <select name="embroideryStyle">
                 <option value="satin">Satin ribs</option>
@@ -326,19 +321,26 @@
                 <option value="chain">Chain stitch (linked loops)</option>
               </select>
             </label>
+          </div>
+          <label class="field embroidery-object-picker" hidden>Choose ribbon or region
+            <select name="embroideryObjectId" aria-label="Choose the single authored object to embroider">
+              <option value="">No eligible objects</option>
+            </select>
+          </label>
+          <div class="embroidery-finish-grid">
             <label class="field">Region angle
               <input type="number" name="embroideryDirection" min="-180" max="180"
                 step="0.1" inputmode="decimal" value="38"
                 aria-label="Regional embroidery direction in degrees">
             </label>
-          </div>
-          <div class="control-grid range-grid">
-            <label class="field range-field"><span>Stitch spacing</span>
-              <input type="range" name="embroideryPitch" min="2" max="16" value="5">
-            </label>
-            <label class="field range-field"><span>Thread relief</span>
-              <input type="range" name="embroideryRelief" min="0" max="100" value="65">
-            </label>
+            <div class="control-grid range-grid">
+              <label class="field range-field"><span>Stitch spacing</span>
+                <input type="range" name="embroideryPitch" min="2" max="16" value="5">
+              </label>
+              <label class="field range-field"><span>Thread relief</span>
+                <input type="range" name="embroideryRelief" min="0" max="100" value="65">
+              </label>
+            </div>
           </div>
           <small>Thread follows the chosen colour or object. Soft satin retains satin geometry with gentler dark and light shading. Tatami uses offset short rows on regions; Running follows ribbon paths; Chain interlinks raised loops on ribbons and in region fill courses. Independent of the three texture layers.</small>
         </details>
