@@ -148,6 +148,28 @@ export function installGeometryLibraryUI({getRecipe,applyPath,applyShape,onNotic
           onNotice('Applied saved silhouette. The wallpaper embeds its own copy.');
         }catch(e){say(errorMessage(e));}
       });
+      button(actions,'Rename',async()=>{
+        const entered=prompt('Rename '+item.kind+'',item.name);
+        if(entered===null)return;
+        const next=entered.trim();
+        if(!next||next.length>80){say('Name must be 1–80 characters.');return;}
+        if(next===item.name)return;
+        try{
+          await db.update(item.id,{name:next},{ifRevision:item.revision});
+          say('Renamed '+item.name+' to '+next+'.');
+          await refresh();
+        }catch(e){say('Could not rename: '+errorMessage(e));}
+      });
+      button(actions,'Duplicate',async()=>{
+        try{
+          // A new ID and revision are allocated by storage. Source geometry,
+          // including compound holes and detached islands, is copied intact.
+          const copy=await db.add({name:item.name.slice(0,75)+' copy',
+            geometry:item.geometry,tags:item.tags,source:item.source});
+          say('Made an independent copy: '+copy.name+'.');
+          await refresh();
+        }catch(e){say('Could not duplicate: '+errorMessage(e));}
+      });
       button(actions,'Export',async()=>{
         try{download(await serializeGeometryAsset(item),
           'roygbiv-'+safeName(item.name)+'.geometry.json');
