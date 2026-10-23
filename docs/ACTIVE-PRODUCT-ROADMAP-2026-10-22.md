@@ -1,5 +1,8 @@
 # ROYGBIV: active product roadmap and work queue
 
+**Current reconstruction checkpoint (23 Oct):** [PR #556](https://github.com/gamesbyian/wallgen/pull/556) delivers first R1–R4 software slice through the existing importer/renderer/editor (seven-hue circles, editable paths, six-render low-resolution ranking, Undo). Focused synthetic tests/quick CI passed; **no genuine-current PNG baseline, real-art fit-quality assessment, or Pixel acceptance yet**. [#557](https://github.com/gamesbyian/wallgen/issues/557) now owns actual-current and external-art baselines, semantic/geometric improvement, cancellable fitting and provenance/correction follow-through. Original R0-first instruction remains unmet rather than silently marked done. Preserve #443/#445/#514 already delivered paths; pursue more artistic changes only against viewed real renders.
+
+
 ## Current owner priorities: canonical recipe evolution and image import reconstruction (22 October evening)
 
 **Authoritative priority override:** During this early development phase, prefer the most capable, coherent **current** recipe system. Backwards compatibility of all kinds with older exported artwork, legacy recipes, old seed/pixel behaviour and historical renderer generations is a **nice-to-have**. It is not a blocker, high priority or release gate. Old chronology and pixel-parity research in lower sections is historical/optional; do not treat #476 or legacy parity as P0 merely because older entries say so. Keep unmodified originals safe, accurately report breaks and migration limits, and test current functionality proportionately. Agents should consolidate common underlying mechanisms using the [shared engineering contract](ENGINEERING-REUSE-AND-SEMANTIC-OWNERSHIP.md), not add duplicate engines.
