@@ -397,6 +397,31 @@ export function reconstructionCandidates(image,recipe){
     return {...candidate,recipe:effective,lockedChanges:blocked};
   }).filter(candidate=>!essential(candidate).some(key=>
     candidate.lockedChanges.includes(key)));
+  // Confirmed by 02-diagonal current-renderer PNG: the third candidate
+  // (+10° principal-axis offset) scored .08583. Generic one-per-kind
+  // selection silently dropped it and worsened error to .14825. Reserve
+  // all three nearby angles, a Jagged alternative, AND both safe/expanded
+  // Draw fallbacks when this coherent diagonal geometry is present.
+  if(desc.componentDiagonalAngle!==null){
+    const angles=committable.filter(c=>c.kind==='straight'&&
+      c.recipe.orientation==='diagonal').slice(0,3);
+    if(angles.length===3){
+      const selected=[...angles];
+      const angular=committable.find(c=>c.kind==='jagged');
+      if(angular)selected.push(angular);
+      for(const path of committable.filter(c=>c.kind==='path')){
+        if(selected.length>=RECONSTRUCTION_RENDER_LIMIT)break;
+        if(!selected.some(c=>c.kind==='path'&&
+          c.recipe.geometrySafety===path.recipe.geometrySafety))
+          selected.push(path);
+      }
+      for(const candidate of diverseReconstructionCandidates(committable)){
+        if(selected.length>=RECONSTRUCTION_RENDER_LIMIT)break;
+        if(!selected.includes(candidate))selected.push(candidate);
+      }
+      return selected;
+    }
+  }
   // Preserve the current conservative Draw candidate as a guaranteed
   // alternative while allowing ONE expanded full-ribbon Draw candidate to
   // compete in exactly the same bounded six-render budget. Only wave/jagged
@@ -462,6 +487,27 @@ export function rankReconstructionCandidates(candidates,source,render){
   return results.sort((a,b)=>a.error-b.error);
 }
 
+/**
+ * The best initial Draw trace may paint only a thin line where the source
+ * contains seven widely separated ribbons. One structurally credible curve
+ * gets the SAME single ten-render search budget when Draw error is high.
+ * The original best remains eligible unless the challenger actually wins.
+ */
+export function reconstructionRefinementIndex(ranked){
+  if(!Array.isArray(ranked)||!ranked.length)return -1;
+  const best=ranked[0];
+  if(best.kind!=='path'||!Number.isFinite(best.error)||best.error<=.15)return 0;
+  let winner=-1,lowest=Infinity;
+  for(let i=1;i<ranked.length;i++){
+    const candidate=ranked[i];
+    if(!['wave','jagged','hairpin'].includes(candidate.kind)||
+      !Number.isFinite(candidate.error)||
+      candidate.error>=Math.min(.55,best.error+.16))continue;
+    if(candidate.error<lowest){winner=i;lowest=candidate.error;}
+  }
+  return winner>=0?winner:0;
+}
+
 export const RECONSTRUCTION_FRAME=Object.freeze({
   width:RECONSTRUCTION_WIDTH,height:RECONSTRUCTION_HEIGHT
 });
@@ -486,9 +532,12 @@ function refinementFields(candidate){
   ]:candidate.kind==='loop'?[
     ['positionX',[-6,6]],['positionY',[-6,6]],
     ['loopRadius',[-10,10]],['spread',[-10,10]],['stripeWidth',[-15,15]]
-  ]:candidate.kind==='wave'||candidate.kind==='jagged'?[
-    ['shapeDepth',[-18,18]],['shapeFrequency',[-20,20]],
-    ['spread',[-12,12]],['stripeWidth',[-15,15]],['positionY',[-6,6]]
+  ]:candidate.kind==='wave'?[
+    ['positionY',[-25,-15,15,25]],['spread',[-18,18]],
+    ['stripeWidth',[-25,-15,15,25]]
+  ]:candidate.kind==='jagged'?[
+    ['positionX',[-20,20]],['positionY',[-20,20]],
+    ['spread',[-15,15]],['stripeWidth',[-25,-10,10,25]]
   ]:candidate.kind==='hairpin'?[
     ['turnRadius',[-15,15]],['hairpinAngle',[-25,25]],
     ['spread',[-10,10]],['positionX',[-7,7]],['positionY',[-7,7]]
