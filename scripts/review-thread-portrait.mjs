@@ -22,7 +22,7 @@ for(let i=2;i<process.argv.length;i++){
 }
 const out=resolve(params.outDir);
 await mkdir(out,{recursive:true});
-for(const path of ['report.json','412x892.png','320x700.png']){
+for(const path of ['report.json','412x892.png','320x700.png','412x892-object.png','320x700-object.png']){
   try{await access(join(out,path));throw Error('Output exists: '+path);}
   catch(err){if(err.code!=='ENOENT')throw err;}
 }
@@ -74,7 +74,28 @@ try{
       });
       const image=viewport.width+'x'+viewport.height+'.png';
       await page.screenshot({path:join(out,image),fullPage:false,animations:'disabled'});
-      results.push({viewport,image,warnings,metrics});
+      // Measure the second meaningful source state: the extra authored-object
+      // picker must not disappear when 'One chosen ribbon or region' is active.
+      await details.locator('[name=embroideryTarget]').selectOption('object');
+      await page.waitForTimeout(120);
+      const objectMetrics=await page.evaluate(()=>{
+        const card=document.querySelector('.editor-tool-card[data-editor-tool=surface]');
+        const picker=card.querySelector('.embroidery-object-picker');
+        const frame=card.getBoundingClientRect();
+        const frameBottom=Math.min(frame.bottom,
+          document.querySelector('.sidebar').getBoundingClientRect().bottom);
+        const controls=[...card.querySelectorAll('.embroidery-controls select,.embroidery-controls input')].filter(el=>el.getBoundingClientRect().height>0);
+        const lastBottom=Math.max(...controls.map(el=>el.getBoundingClientRect().bottom));
+        return {pickerVisible:!picker.hidden&&picker.getBoundingClientRect().height>0,
+          lastBottom:Math.round(lastBottom),cardBottom:Math.round(frameBottom),
+          clipped:lastBottom>frameBottom+2,
+          scrollHeight:card.scrollHeight,clientHeight:card.clientHeight,
+          controls:controls.map(el=>({name:el.name,height:Math.round(el.getBoundingClientRect().height)}))};
+      });
+      const objectImage=viewport.width+'x'+viewport.height+'-object.png';
+      await page.screenshot({path:join(out,objectImage),fullPage:false,animations:'disabled'});
+      results.push({viewport,image,warnings,metrics,objectImage,objectMetrics});
+      console.log(objectImage+' objectClipped='+objectMetrics.clipped);
       console.log(image+' footerClipped='+metrics.controlBottomClipped+
         ' sub44='+metrics.anySub44+' cardScroll='+metrics.cardScrollHeight+'/'+metrics.cardHeight);
     }finally{await page.close();}

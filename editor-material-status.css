@@ -116,3 +116,78 @@
 .embroidery-style-grid input[type="number"]{min-width:0;width:100%;
   min-height:44px;box-sizing:border-box;font:inherit}
 .embroidery-style-grid select{min-width:0;width:100%}
+
+/* Observed in actual 412x892 and 320x700 Chromium: the previous Thread
+ * disclosure was ~326-365px tall inside a 166-178px card. Restore the
+ * no-vertical-scroll contract by composing two compact control rows, not by
+ * hiding inputs or forcing the artist to scroll to the last slider. */
+@media(max-width:790px) and (orientation:portrait){
+  body.mobile-studio.mobile-edit-open:has(
+    .editor-tool-card[data-editor-tool="surface"] .embroidery-controls[open]){
+    --mobile-tray-height:clamp(330px,39dvh,365px)!important;
+  }
+  body.mobile-studio .sidebar .editor-tool-card[data-editor-tool="surface"]
+    >.embroidery-controls[open]{
+    display:grid!important;
+    grid-template-columns:repeat(6,minmax(0,1fr));
+    column-gap:4px;row-gap:4px;align-content:start;
+  }
+  body.mobile-studio .sidebar .embroidery-controls[open]>summary{
+    grid-column:1/-1;grid-row:1;min-height:44px;margin:0;
+  }
+  body.mobile-studio .sidebar .embroidery-controls[open]>.field:not(.embroidery-object-picker){
+    grid-column:1/span 3;grid-row:2;
+  }
+  body.mobile-studio .sidebar .embroidery-controls[open]>.embroidery-style-grid,
+  body.mobile-studio .sidebar .embroidery-controls[open]>.range-grid{
+    display:contents!important;
+  }
+  body.mobile-studio .sidebar .embroidery-controls[open]>.embroidery-style-grid
+    >.field:first-child{grid-column:4/span 3;grid-row:2}
+  body.mobile-studio .sidebar .embroidery-controls[open]>.embroidery-style-grid
+    >.field:last-child{grid-column:1/span 2;grid-row:3}
+  body.mobile-studio .sidebar .embroidery-controls[open]>.range-grid
+    >.range-field:first-child{grid-column:3/span 2;grid-row:3}
+  body.mobile-studio .sidebar .embroidery-controls[open]>.range-grid
+    >.range-field:last-child{grid-column:5/span 2;grid-row:3}
+  body.mobile-studio .sidebar .embroidery-controls[open] .field{
+    gap:2px!important;min-width:0;margin:0!important;
+    font-size:10px;line-height:1.05;
+  }
+  body.mobile-studio .sidebar .embroidery-controls[open] .field select{
+    min-height:44px;height:44px;padding:5px 20px 5px 5px;font-size:10px;
+    background-position:right 5px center;
+  }
+  body.mobile-studio .sidebar .embroidery-controls[open]
+    input[name="embroideryDirection"]{
+    min-height:44px;height:44px;padding:5px;font-size:12px;
+  }
+  body.mobile-studio .sidebar .embroidery-controls[open] .range-field span{
+    font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  body.mobile-studio .sidebar .embroidery-controls[open] .range-field input[type="range"]{
+    min-height:44px;height:44px;margin:0;width:100%;
+  }
+  body.mobile-studio .sidebar .embroidery-controls[open]>small{
+    position:absolute!important;width:1px;height:1px;padding:0;
+    margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;
+  }
+  /* Choosing a specific object requires one honest extra 44px picker row.
+   * Reserve a little more tray *only in that rarer state*, not permanently.
+   * Never trade away the authored angle or the two real range controls. */
+  body.mobile-studio.mobile-edit-open:has(
+    .editor-tool-card[data-editor-tool="surface"]
+      .embroidery-controls[open] .embroidery-object-picker:not([hidden])){
+    --mobile-tray-height:clamp(390px,46dvh,450px)!important;
+  }
+  body.mobile-studio .sidebar .embroidery-controls[open]
+    >.embroidery-object-picker:not([hidden]){
+    grid-row:3;grid-column:1/-1;min-width:0;
+  }
+  body.mobile-studio .sidebar .embroidery-controls[open]:has(
+    .embroidery-object-picker:not([hidden]))>.embroidery-style-grid
+      >.field:last-child{grid-row:4}
+  body.mobile-studio .sidebar .embroidery-controls[open]:has(
+    .embroidery-object-picker:not([hidden]))>.range-grid
+      >.range-field{grid-row:4!important}
+}
