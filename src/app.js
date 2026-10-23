@@ -2053,6 +2053,8 @@ document.addEventListener('change',event=>{
 // same existing Light destination, short edit tray and DOM inputs are retained.
 photoCompareButton.addEventListener('click',()=>{
   if(!canComparePhoto())return;
+  // Compare the current settled artwork, not a value still in the slider timer.
+  flushQueuedControlUpdate();
   photoBeforeActive=!photoBeforeActive;
   presentNudgedArtwork(preview,previewLayers,previewDisplayRecipe());
   syncPhotoCompareButton();
@@ -2185,7 +2187,11 @@ function createCard(recipe,index) {
   const sub=document.createElement('span');sub.className='thumb-sub';sub.textContent=`${titleCase(scene.materialSummary)} · ${scene.orientation}`;
   card.append(name,sub);
   // Gallery selection restores the complete saved recipe, including its own locks.
-  card.addEventListener('click',()=>changeRecipe(recipe,{scroll:true,bypassLocks:true}));
+  card.addEventListener('click',()=>{
+    // Preserve the just-edited design in Undo before loading a saved variation.
+    flushQueuedControlUpdate();
+    changeRecipe(recipe,{scroll:true,bypassLocks:true});
+  });
   // Append the card immediately; bitmap rendering happens off the main
   // thread and updates it only while it is still in the active gallery.
   drawThumbnail(canvas,recipe,()=>card.isConnected).catch(error=>
