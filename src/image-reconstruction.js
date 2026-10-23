@@ -410,6 +410,13 @@ export function reconstructionCandidates(image,recipe){
       {kind:'jagged',label:'Editable angular rainbow',
         recipe:{geometry:'jagged',orientation:'diagonal',shapeDepth:60,
           shapeFrequency:65,spread:55,stripeWidth:65}},
+      // Chevron is ALREADY a current editable canonical geometry. One broad,
+      // clean angle is not well represented by the rough-noise Jagged family
+      // or a thin traced Draw centreline. Test its real painter pixels.
+      {kind:'chevron',label:'Editable pointed chevron ribbons',
+        recipe:{geometry:'chevron',orientation:'horizontal',
+          shapeDepth:67,shapeFrequency:8,chevronSharpness:88,
+          spread:62,stripeWidth:60}},
       {kind:'hairpin',label:'Editable hairpin turn',
         recipe:{geometry:'hairpin',orientation:'vertical',hairpinAngle:120,
           turnRadius:50,spread:42,stripeWidth:65}}
@@ -688,6 +695,9 @@ function refinementFields(candidate){
   ]:candidate.kind==='jagged'?[
     ['positionX',[-20,20]],['positionY',[-20,20]],
     ['spread',[-15,15]],['stripeWidth',[-25,-10,10,25]]
+  ]:candidate.kind==='chevron'?[
+    ['positionY',[-12,12]],['shapeDepth',[-16,16]],
+    ['shapeFrequency',[-8,8]],['spread',[-12,12]],['stripeWidth',[-15,15]]
   ]:candidate.kind==='hairpin'?[
     ['turnRadius',[-15,15]],['hairpinAngle',[-25,25]],
     ['spread',[-10,10]],['positionX',[-7,7]],['positionY',[-7,7]]
@@ -701,7 +711,7 @@ function refinementFields(candidate){
   ];
 }
 function canRefine(candidate,maxRenders){
-  if(!candidate||!['straight','loop','wave','jagged','hairpin','radial-rays','radial-rings','nested-rings']
+  if(!candidate||!['straight','loop','wave','jagged','chevron','hairpin','radial-rays','radial-rings','nested-rings']
     .includes(candidate.kind)||!Number.isFinite(candidate.error))return false;
   if(!Number.isInteger(maxRenders)||maxRenders<0||maxRenders>16)
     throw Error('Invalid reconstruction fitting budget');
