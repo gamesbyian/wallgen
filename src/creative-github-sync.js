@@ -16,11 +16,16 @@ export function makeUsageBatch(events,syncedIds=[],{
   maxEvents=20,maxBytes=130000
 }={}){
   const synced=new Set(syncedIds),records=[];
-  for(const event of orderUsageEvents(events)){
-    if(synced.has(event.eventId))continue;
-    // Keep each immutable archive batch inside one genuine session; the
-    // storage contract uses a session directory for owner-side retrieval.
-    if(records.length&&event.sessionId!==records[0].sessionId)break;
+  const waiting=orderUsageEvents(events).filter(event=>!synced.has(event.eventId));
+  if(!waiting.length)return null;
+  // Pick a session once, then preserve its causal sequence. A device clock
+  // correction must not upload seq 20 before seq 1 just because at went back.
+  // Events from other sessions remain eligible for the next bounded batch.
+  const selectedSession=waiting[0].sessionId;
+  const ordered=waiting.filter(event=>event.sessionId===selectedSession)
+    .sort((a,b)=>Number(a.seq)-Number(b.seq)||
+      String(a.eventId).localeCompare(String(b.eventId)));
+  for(const event of ordered){
     const projected=[...records,event];
     if(records.length&&(
       projected.length>maxEvents||
