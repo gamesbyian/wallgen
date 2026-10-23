@@ -106,10 +106,21 @@ export function inspectPngMigration(input){
     selectedChunkIndex:raw.selected?.chunkIndex??null,
     safe:false,reason:null,unknownKeys:[],coercedKeys:[],synthesizedKeys:[],
     recordFormats:raw.records.map(record=>record.format),
+    // Lightweight provenance of *every* source record. Full JSON from only
+    // the selected latest record follows separately, avoiding a huge report
+    // when historical exports contain many duplicate recipe envelopes.
+    sourceRecords:raw.records.map(record=>({format:record.format,
+      chunkIndex:record.chunkIndex,byteOffset:record.offset,byteLength:record.bytes})),
+    sourceEnvelope:null,sourceSnapshotNotice:
+      'Parsed JSON values for inspection only; byte-for-byte whitespace and duplicate keys require the separate original-chunk archive.',
     conflictingChunkIndexes:[],
     warnings:[],
   };
   if(!raw.selected){report.reason='PNG contains no ROYGBIV Recipe record';return report;}
+  // Keep the unnormalized parsed envelope in the downloaded report even if
+  // migration is refused (v1, unknown fields, conflicting records or dialect).
+  // Never feed this object back to the current editor or metadata writer.
+  report.sourceEnvelope=raw.selected.envelope;
   const {format,rawRecipe}=raw.selected;
   if(![RECIPE_FORMAT,'roygbiv-recipe-v1'].includes(format)){
     report.reason='Unsupported PNG recipe dialect; preserve original';return report;

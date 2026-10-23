@@ -1,5 +1,10 @@
 # ROYGBIV: active product roadmap and work queue
 
+## PNG preservation M0/M5: readable original source values in inspection report (2026-10-22)
+
+More → Update recipe in existing PNG → Save report now includes the **original selected parsed recipe envelope** (including unknown keys and exact numerical authoring values) plus metadata for every original record, even when conversion is unsafe. No decoded/rewritten pixels, no active recipe mutation and no new phone controls. The existing raw iTXt archive remains the only exact-byte source; readable JSON can lose original whitespace or duplicate keys. Automatic v1/early-v2 migration **remains refused** pending source-era golden fixtures/semantic adapters. Adds focused provenance tests, not an ongoing CI job. See [#476](https://github.com/gamesbyian/wallgen/issues/476).
+
+
 ## E2 thread artwork: opt-in ribbon Running seams and safe imported bounds (2026-10-22)
 
 Texture → Surface now offers **Running seams** in addition to existing Satin/Tatami. New path-following interrupted ribs maintain world-stable stitch stations at self-crossings; region running rows use shorter alternating breaks through the same hole-aware clip. Original Satin/Tatami outputs and absent-treatment art remain unchanged. Large multi-ring imported silhouettes no longer rely on unbounded array spread to compute their bounding box. Normalized recipe/Save/Undo/PNG all use the existing style field; no new navigation or CI jobs. Focused source tests are included; actual artistic appearance, advanced thread physicality and Pixel responsiveness still require judging.

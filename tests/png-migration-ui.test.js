@@ -58,3 +58,11 @@ test('ordinary PNG restore warns when legacy source is normalized, without disab
   assert.match(app,/Artwork may differ from the saved image; retain the original PNG/);
   assert.match(app,/changeRecipe\(recipe,\{bypassLocks:true\}\)/);
 });
+
+test('existing report download labels full parsed source truth without adding a new phone control',()=>{
+  const html=file('index.html'),source=file('src/png-recipe-migration.js');
+  assert.equal((html.match(/id="migrateRecipeReport"/g)||[]).length,1);
+  assert.match(html,/Save report \+ readable original recipe JSON/);
+  assert.match(source,/sourceEnvelope=raw\.selected\.envelope/);
+  assert.match(source,/sourceSnapshotNotice:/);
+});
