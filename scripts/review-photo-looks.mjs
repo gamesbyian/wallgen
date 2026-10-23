@@ -41,6 +41,7 @@ function args(argv){
   for(let i=0;i<argv.length;i++){
     const key=argv[i];
     if(key==='--help'||key==='-h'){values.help=true;continue;}
+    if(key==='--focus-deep-black'){values.focusDeepBlack=true;continue;}
     if(!['--out-dir','--seed','--browser'].includes(key)||!argv[i+1]||
       argv[i+1].startsWith('--'))throw Error('Unknown or missing option '+key);
     values[key==='--out-dir'?'outDir':key.slice(2)]=argv[++i];
@@ -54,22 +55,26 @@ function safe(value){
 async function main(){
   const opts=args(process.argv.slice(2));
   if(opts.help){
-    console.log('Usage: node scripts/review-photo-looks.mjs [--out-dir folder] [--seed text] [--browser Chromium-path]');
+    console.log('Usage: node scripts/review-photo-looks.mjs [--out-dir folder] [--seed text] [--browser Chromium-path] [--focus-deep-black]');
     return;
   }
   const out=resolve(opts.outDir);
+  const studies=opts.focusDeepBlack?[cases[0],cases[2],
+    {id:'07-deep-black',name:'Deep-black negative print',
+      look:'film-negative-deepblack',amount:85}]:cases;
   await mkdir(out,{recursive:true});
   for(const file of ['index.html','manifest.json',
-    ...cases.flatMap(c=>[c.id+'.png',c.id+'.recipe.json'])]){
+    ...studies.flatMap(c=>[c.id+'.png',c.id+'.recipe.json'])]){
     try{
       await access(join(out,file));
       throw Error('Review output already exists: '+file+'. Use a new --out-dir.');
     }catch(error){if(error.code!=='ENOENT')throw error;}
   }
   const records=[];
-  for(const study of cases){
+  for(const study of studies){
+    const presetId=study.look||study.presetId;
     const recipe=normalizeRecipe({...base,seed:opts.seed,
-      ...(study.presetId?{photoLook:{enabled:true,presetId:study.presetId,
+      ...(presetId?{photoLook:{enabled:true,presetId,
         amount:study.amount,parameters:study.parameters||{}}}:{})
     });
     const recipeFile=study.id+'.recipe.json';
@@ -85,7 +90,7 @@ async function main(){
     });
     if(!result.stdout.includes('"file"'))
       throw Error('Headless renderer did not confirm PNG: '+study.id);
-    records.push({...study,imageFile,recipeFile,recipe});
+    records.push({...study,presetId,imageFile,recipeFile,recipe});
     console.log(study.id+': '+image);
   }
   const gallery=records.map(record=>'<figure><img src="'+safe(record.imageFile)+
@@ -102,7 +107,7 @@ async function main(){
     'img{width:100%;display:block;border-radius:8px}',
     'figcaption{padding:8px 4px;display:grid;gap:4px}',
     'figcaption span{opacity:.78;font-size:12px}</style>',
-    '<h1>Photo finishing · seven-image production review</h1>',
+    '<h1>Photo finishing · '+records.length+' production pictures</h1>',
     '<p>Seven real ROYGBIV wallpapers (600 × 1300), one seed and identical base geometry.',
     ' Compare every Photo finish against the untreated original. Inspect edge glow around',
     ' yellow/green ribbons, grain scale, crushed blacks, HDR overprocessing, webcam',
@@ -112,7 +117,9 @@ async function main(){
   ].join('');
   await writeFile(join(out,'index.html'),html);
   await writeFile(join(out,'manifest.json'),JSON.stringify({
-    schema:'roygbiv-photo-art-review/v1',status:'produced-awaiting-human-review',
+    schema:'roygbiv-photo-art-review/v1',
+    comparison:opts.focusDeepBlack?'deep-black-negative':'seven-photo-looks',
+    status:'produced-awaiting-human-review',
     seed:opts.seed,width:600,height:1300,base,items:records
   },null,2)+'\n');
   console.log('Open '+join(out,'index.html')+' to examine the pictures.');

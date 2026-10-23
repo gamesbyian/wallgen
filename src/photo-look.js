@@ -4,6 +4,8 @@
 export const PHOTO_PRESETS=Object.freeze({
   'film-slide':Object.freeze({family:'film',contrast:1.20,saturation:1.13,shadow:0,highlight:0.07,red:0.014,green:0,blue:-0.014,grain:12,vignette:9}),
   'film-negative':Object.freeze({family:'film',contrast:0.93,saturation:0.87,shadow:0.035,highlight:0.055,red:0.014,green:0.005,blue:-0.012,grain:19,vignette:12}),
+  // Exact muted-negative grade and grain, but opt-in shadow floor preservation.
+  'film-negative-deepblack':Object.freeze({family:'film',contrast:0.93,saturation:0.87,shadow:0.035,highlight:0.055,red:0.014,green:0.005,blue:-0.012,grain:19,vignette:12}),
   'film-mono':Object.freeze({family:'film',contrast:1.13,saturation:0,shadow:0.009,highlight:0.05,red:0,green:0,blue:0,grain:16,vignette:8}),
   'film-grain-only':Object.freeze({family:'film',contrast:1,saturation:1,shadow:0,highlight:0,red:0,green:0,blue:0,grain:58,vignette:0}),
   'film-halation-only':Object.freeze({family:'film',contrast:1,saturation:1,shadow:0,highlight:0,red:0,green:0,blue:0,grain:0,vignette:0,halation:75}),
@@ -16,6 +18,7 @@ export const PHOTO_PRESETS=Object.freeze({
 export const PHOTO_PRESET_NAMES=Object.freeze({
   'film-slide':'Slide film inspired',
   'film-negative':'Muted negative print',
+  'film-negative-deepblack':'Deep-black negative print (dark backgrounds)',
   'film-mono':'Monochrome print',
   'film-grain-only':'Film grain only (no colour grade)',
   'film-halation-only':'Warm film halation only',
@@ -205,7 +208,11 @@ export function processPhotoPixels(data,width,height,rawLook,seed='rainbow-001')
       look.presetId==='camera-digicam-signal'?'digicam':'webcam'):null;
   const halation=look.presetId==='film-halation-only'&&p.halation>0?
     makeHalationField(data,width,height):null;
-  const hash=fastHash(String(seed)+':photo-v1:'+look.presetId);
+  // The deep-black variant deliberately shares the legacy negative's grain
+  // identity. Bright source pixels can therefore remain pixel-exactly equal.
+  const grainPresetId=look.presetId==='film-negative-deepblack'?
+    'film-negative':look.presetId;
+  const hash=fastHash(String(seed)+':photo-v1:'+grainPresetId);
   const yScale=1300/height,xScale=600/width;
   let i=0;
   for(let y=0;y<height;y++){
@@ -258,9 +265,16 @@ export function processPhotoPixels(data,width,height,rawLook,seed='rainbow-001')
         warmSpill=(top*(1-hfy)+bottom*hfy)/255*
           Math.max(0,1-originalLuma/185)*(p.halation/100);
       }
-      data[i]=clampByte(r+(R*dark+perturb+warmSpill*94-r)*amount);
-      data[i+1]=clampByte(g+(G*dark+perturb+warmSpill*24-g)*amount);
-      data[i+2]=clampByte(b+(B*dark+perturb+warmSpill*5-b)*amount);
+      // Film negative traditionally lifts the darkest tones to paper grey.
+      // This separately named AMOLED-friendly variant leaves true black and
+      // very deep near-black intact while keeping exactly the old processing
+      // for original source luminance >= 22. No legacy preset changes.
+      const shadowMask=look.presetId==='film-negative-deepblack'?
+        Math.max(0,Math.min(1,(.2126*r+.7152*g+.0722*b)/22)):1;
+      const mix=amount*shadowMask;
+      data[i]=clampByte(r+(R*dark+perturb+warmSpill*94-r)*mix);
+      data[i+1]=clampByte(g+(G*dark+perturb+warmSpill*24-g)*mix);
+      data[i+2]=clampByte(b+(B*dark+perturb+warmSpill*5-b)*mix);
     }
   }
   return data;

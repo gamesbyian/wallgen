@@ -387,3 +387,39 @@ test('Photo Before button reuses cached stage and is accessible without enlargin
   assert.match(app,/if\(photoBeforeActive\)\{closeFrame\(message\);return;\}/);
   assert.match(app,/photoBeforeActive=false;/);
 });
+
+test('deep-black negative is isolated from legacy film-negative on bright source pixels',()=>{
+  const input=pixels(0,0,0,60,30);
+  for(let y=0;y<30;y++)for(let x=20;x<40;x++){
+    const i=(y*60+x)*4;
+    input[i]=255;input[i+1]=83;input[i+2]=28;
+  }
+  for(let y=0;y<30;y++)for(let x=40;x<60;x++){
+    const i=(y*60+x)*4;
+    input[i]=12;input[i+1]=12;input[i+2]=12;
+  }
+  const old=normalizePhotoLook({enabled:true,presetId:'film-negative',amount:100});
+  const deep=normalizePhotoLook({enabled:true,presetId:'film-negative-deepblack',amount:100});
+  const normal=input.slice(),safe=input.slice(),again=input.slice();
+  processPhotoPixels(normal,60,30,old,'negative-seed');
+  processPhotoPixels(safe,60,30,deep,'negative-seed');
+  processPhotoPixels(again,60,30,deep,'negative-seed');
+  assert.deepEqual(safe,again,'deterministic');
+  const at=(x,y)=>(y*60+x)*4;
+  assert.deepEqual([...safe.slice(at(5,10),at(5,10)+3)],[0,0,0],
+    'true-black wallpaper background stays exactly black');
+  assert.ok(normal[at(5,10)]>0,'legacy negative must retain its original lifted floor');
+  assert.deepEqual(safe.slice(at(25,10),at(25,10)+4),
+    normal.slice(at(25,10),at(25,10)+4),
+    'same tones and seeded grain for brightly coloured artwork');
+  assert.ok(safe[at(45,10)]<normal[at(45,10)],
+    'deep near-black shadow must lift less strongly');
+  assert.equal(safe[at(5,10)+3],255);
+  const stored=normalizeRecipe({seed:'photo-dark',photoLook:deep});
+  assert.deepEqual(decodeRecipe(encodeRecipe(stored)),stored);
+  assert.deepEqual(normalizePhotoLook(stored.photoLook),deep);
+});
+test('deep-black negative lives in the original Light Photo selector',()=>{
+  const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
+  assert.equal((html.match(/value="film-negative-deepblack"/g)||[]).length,1);
+});

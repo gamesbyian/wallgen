@@ -1,5 +1,10 @@
 # ROYGBIV: active product roadmap and work queue
 
+## Film negative with preserved AMOLED black floor (F2/F3, 2026-10-22)
+
+Real earlier [photo-picture review](PHOTO-PRODUCTION-RENDER-FINDINGS-2026-10-22.md) showed ordinary Muted Negative lifting the black background. A new separate `film-negative-deepblack` look uses **exactly the old negative's parameter defaults and seeded grain identity** on bright artwork but continuously attenuates the finishing effect for original luminance below 22/255, preserving true black and near-black shadows. Historical `film-negative` pixels and recipes are unchanged. This is a named, opt-in aesthetic alternative in the same Light → Photo selector, not a universal rewrite of film science or a new category. Targeted Node tests and an opt-in `review-photo-looks.mjs --focus-deep-black` trio support actual visual judgement. No permanent CI addition.
+
+
 ## E3 colour-preserving Satin option, grounded in real art (2026-10-22)
 
 Actual first embroidery art [showed](EMBROIDERY-PRODUCTION-ART-FINDINGS-2026-10-22.md) strong Satin shadow/highlight overwriting vivid red and orange on tight loop turns. A new opt-in `satin-soft` style retains **the identical stitch station coordinates and line geometry** but tones down just that style's shadow and white ridge alpha. Previous `satin` recipes and all untouched artwork keep the exact legacy painter branch and output. The current style dropdown and stored recipe transport require no new model fields, categories or CI. Three-image optional `review-embroidery.mjs --focus-soft-satin` produces original, legacy Satin and soft Satin for a direct production-render comparison. **The actual trio was rendered, downloaded and visually inspected:** [run #39884499923](https://github.com/gamesbyian/wallgen/actions/runs/39884499923), [measured art observations](SOFT-SATIN-ART-FINDINGS-2026-10-22.md). Mean pixel-channel departure from untreated rainbow dropped **8.535 → 3.457**, while the stitch footprint remained visibly present. Legacy Satin remains separately available and unchanged; physical Pixel and full export acceptance are still pending.
