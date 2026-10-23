@@ -4,7 +4,7 @@ import {HUES,normalizeRecipe,resolveScene,encodeRecipe,decodeRecipe} from '../sr
 import {imagePlacement,extractImageColourRegions} from '../src/image-path.js';
 import {describeReconstructionImage,reconstructionCandidates,
   rankReconstructionCandidates,compareReconstructionPixels,refineReconstructionCandidate,reconstructionPlacement,
-  radialImageSignature,imageStripeAngle,
+  radialImageSignature,imageStripeAngle,imageCurveSignature,
   rankReconstructionCandidatesCooperatively,refineReconstructionCandidateCooperatively,
   RECONSTRUCTION_FRAME,RECONSTRUCTION_RENDER_LIMIT} from '../src/image-reconstruction.js';
 
@@ -292,4 +292,42 @@ test('cooperative refinement reuses identical bounded parameter trials, and disc
   assert.equal(abandoned,null);
   assert.equal(renderCalls,0);
   assert.deepEqual(item.recipe,recipe,'cancel never mutates original current art');
+});
+
+
+test('curvature classifier orders editable procedural hypotheses without replacing the real-render metric',()=>{
+  const rasterWidth=200,rasterHeight=200;
+  const arc=Array.from({length:36},(_,i)=>{
+    const x=i/35;
+    return [x,.5+.2*Math.sin(x*Math.PI*2)];
+  });
+  const wave=imageCurveSignature([{kind:'arc',points:arc}],rasterWidth,rasterHeight);
+  assert.equal(wave.kind,'wave');
+  const saw=Array.from({length:15},(_,i)=>[i/14,i%2?.3:.7]);
+  const jagged=imageCurveSignature([{kind:'contour',points:saw}],rasterWidth,rasterHeight);
+  assert.equal(jagged.kind,'jagged');
+  const hairpin=[
+    [.2,.05],[.2,.18],[.2,.32],[.25,.44],
+    [.37,.49],[.51,.48],[.59,.4],[.59,.28],[.59,.15]
+  ];
+  assert.equal(imageCurveSignature([{kind:'arc',points:hairpin}],200,200).kind,'hairpin');
+  assert.equal(imageCurveSignature([],200,200).kind,null);
+});
+
+test('wave jagged and hairpin fitted variants stay within ten true-render passes',()=>{
+ const w=RECONSTRUCTION_FRAME.width,h=RECONSTRUCTION_FRAME.height;
+ const empty=raster(w,h,()=>[0,0,0,255]);
+ for(const kind of ['wave','jagged','hairpin']){
+   const recipe=normalizeRecipe({seed:'curvature-'+kind,structure:'paths',
+     geometry:kind,orientation:kind==='hairpin'?'vertical':'horizontal'});
+   let renders=0;
+   const candidate={kind,label:kind,recipe,error:.2};
+   const fitted=refineReconstructionCandidate(candidate,empty,(r)=>{
+     renders++;return raster(w,h,()=>[0,0,0,255]);
+   },{maxRenders:10});
+   assert.ok(renders<=10);
+   assert.equal(fitted.error,0);
+   assert.equal(fitted.recipe.geometry,kind);
+   assert.ok(fitted.refinementRenders>0);
+ }
 });
