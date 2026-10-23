@@ -602,6 +602,14 @@ export function reconstructionRefinementIndex(ranked){
   if(!Array.isArray(ranked)||!ranked.length)return -1;
   const best=ranked[0];
   if(best.kind!=='path'||!Number.isFinite(best.error)||best.error<=.15)return 0;
+  // A real seven-hue source/rendered rigid translation is stronger evidence
+  // than an arbitrary initial full-frame colour distance. The shifted Wave
+  // has not been scored yet, so lend its one real-render fitting budget first.
+  const registered=ranked.findIndex((item,index)=>index>0&&
+    item.kind==='wave'&&Number.isFinite(item.waveOffsetY)&&
+    Number.isFinite(item.error)&&
+    item.error<=Math.min(.55,best.error+.20));
+  if(registered>=0)return registered;
   let winner=-1,lowest=Infinity;
   for(let i=1;i<ranked.length;i++){
     const candidate=ranked[i];
