@@ -50,7 +50,7 @@ try{
         const panel=card.querySelector('.embroidery-controls');
         const sidebar=document.querySelector('.sidebar');
         const finish=panel.querySelector('small');
-        const fields=[...panel.querySelectorAll('summary,select,input,small')]
+        const fields=[...panel.querySelectorAll('summary,select,input')]
           .filter(el=>el.getBoundingClientRect().height>0);
         const rect=el=>{const r=el.getBoundingClientRect();return {
           top:Math.round(r.top*10)/10,bottom:Math.round(r.bottom*10)/10,
@@ -65,7 +65,15 @@ try{
           pageClientHeight:document.documentElement.clientHeight,
           fields:fields.map(el=>({tag:el.tagName,name:el.name||el.textContent.slice(0,25),
             disabled:el.disabled===true,rect:rect(el)})),
-          controlBottomClipped:rect(finish).bottom>Math.min(cardRect.bottom,sidebarRect.bottom)+2,
+          // The help text is intentionally screen-reader-only on mobile:
+          // measuring its one-pixel box gave false confidence in panel fit.
+          // Only visible interactive controls and the summary define the
+          // physical bounding box that a finger must reach.
+          lastControlBottom:Math.max(...fields.map(el=>rect(el).bottom)),
+          hiddenPickerVisible:panel.querySelector('.embroidery-object-picker[hidden]')
+            ?.getBoundingClientRect().height>0||false,
+          controlBottomClipped:fields.some(el=>
+            rect(el).bottom>Math.min(cardRect.bottom,sidebarRect.bottom)+2),
           anySub44:fields.filter(el=>['SELECT','INPUT'].includes(el.tagName))
             .some(el=>rect(el).height<44),
           previewHeight:document.querySelector('canvas')?.getBoundingClientRect().height,
