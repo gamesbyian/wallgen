@@ -1,5 +1,8 @@
 # Image-to-recipe reconstruction: native and external imports
 
+**Integrated four-PNG curved acceptance (23 Oct):** [PR #604](https://github.com/gamesbyian/wallgen/pull/604), real run [#39939268860](https://github.com/gamesbyian/wallgen/actions/runs/39939268860) and [actually viewed source/fit findings](RECONSTRUCTION-CURVE-PRODUCTION-FINDINGS-2026-10-23.md): diagonal .085835 (restored), wave .204330, jagged .204590, hairpin .107867, all with normal canonical editor/recipe types. Exactly six coarse candidates plus ten fitting renders maximum, and #602 safe/expanded Draw preserved. Source image pigments/black gaps and turn microgeometry still diverge; real Pixel and external art remain unverified.
+
+
 **Curved current-art measurement and actual visual review (23 Oct):** [production findings](RECONSTRUCTION-CURVE-PRODUCTION-FINDINGS-2026-10-23.md) and [one-off run #39936947767](https://github.com/gamesbyian/wallgen/actions/runs/39936947767). Wave and Jagged source/fit pairs showed wrongly bunched, thin rainbow bundles vs wide seven-ribbon sources. Hairpin improved pixel/coverage error .215746→.107867, still visibly blends stripes; Loop held .053835. [PR #600](https://github.com/gamesbyian/wallgen/pull/600) supplies optional canonical procedural alternatives, diversity across six candidates and bounded same-renderer fitting, preserving honest inferred-mode provenance. This is not a claim of full Wave/Jagged reconstruction. **Prioritize per-hue geometric separation, ribbon width and negative-space metrics next.** No permanent browser workflow.
 
 

@@ -43,3 +43,21 @@ Opt-in all-six-candidate evidence [run #39937813358](https://github.com/gamesbyi
 **Jagged:** Actual procedural `jagged` renders recognizably broad, separated, angled, slightly broken ribbon bands, closer in shape than a narrow diagonal drawn hairline, but relative placement, turns and separation differ. Quantitative errors: Draw .26362, principal-axis Straight .27439, procedural Jagged **.28036**, Wave .29489, Loop .35021, Hairpin .38053. Colour occupancy source ~.42 versus Draw ~.05, Jagged ~.56. Distinct structural quality and current low-res pixel error are **different measurements**; neither can be silently relabelled as full recovery.
 
 **Critical next R3 issue:** The current fitter runs ten bounded renderer trials **only on the top initial candidate**. For Wave/Jagged the top is a Draw path and receives *zero useful procedural refinements*. Test choosing one structurally credible runner-up (prefer extracted curvature) for the **same single ten-render budget**, optimizing frame translation / spread / thickness first, comparing its improved error to the untouched original leader; never fit every hypothesis or block the mobile UI. Validate on the exact 03/04 PNGs, with 05 Hairpin, 06 Loop, diagonal and circles regression checks and ordinary independent UI cancellation tests.
+
+
+## Integrated safe-Draw plus one procedural challenger (23 October)
+
+**Observed evidence:** [one-off genuine-current-renderer Chromium run #39939268860](https://github.com/gamesbyian/wallgen/actions/runs/39939268860), four 480×1040 production PNGs, metadata-free IDAT-identical copies, separate original recipe truth and all six actual candidate raster previews. Candidate fitting remained blind to truth until after ranking. The PNG artifact **`reconstruction-integrated-proven-four`** was downloaded; source/best-fit pairs were visually opened and compared in a contact sheet, not accepted solely by numerical tests.
+
+| Source | Best canonical recipe | Before #600 | Post-#600 or #602 | Final integration ↓ | Current source-recipe render floor ↓ |
+| --- | --- | ---: | ---: | ---: | ---: |
+| Straight diagonal | `paths/straight` 24° | .284078 | .148254 (accidental rotation-budget regression) | **.085835** (restored original verified #589) | .008790 |
+| Gentle seven-ribbon Wave | `paths/wave` | .206789 | .206789 | **.204330** | .008732 |
+| Angular seven-ribbon Jagged | `paths/jagged` | .263117 | .251729 (expanded safe Draw in #602) | **.204590** | .010704 |
+| Coloured U-turn Hairpin | `paths/hairpin` | .215746 | .107867 | **.107867** | .023054 |
+
+The deliberately **single** ≤10-render parameter-refinement budget is reassigned to one credible Wave/Jagged/Hairpin candidate when a narrow generic Draw initially wins with poor error. The canonical 6-candidate budget is unchanged; this integration preserves #602 conservative and opt-in expanded Draw alternatives and restores all three significant principal-axis diagonal angles, the Jagged structural alternative and both available Draw alternatives within six. The same selection function powers cancellable browser fitting and synchronous opt-in R0 evidence.
+
+**Visual inspection:** Diagonal source has black gaps between seven adjacent diagonally oriented bands; fitted diagonal has largely contiguous colour, so width/separation remain wrong despite correct overall angle. Wave candidate now draws wide independently coloured, slightly wavy horizontal bands instead of one hairline, but the upper stripe is clipped and gaps/phase differ. Jagged now paints broad separated angled ribbons like the source, with imperfect bend and end alignment. Hairpin U topology is recognizable but its rainbow lanes blend together more and bend more gently than the source. No case is asserted to be pixel-identical, author-approved, or physically validated on Pixel.
+
+**Next:** infer per-colour band centre distances and thickness from the already shared import descriptors; preserve pigment-specific negative-space gaps and improve stripe contour/turn calibration with the same forward renderer. Source-preserving provenance, Undo, locks, save/metadata round-trip, pointer feedback and actual Pixel memory/touch remain tracked separately under #557. The one-off browser workflow was removed before merge.
