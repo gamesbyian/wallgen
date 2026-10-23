@@ -1,5 +1,8 @@
 # Image-to-recipe reconstruction: native and external imports
 
+**Wave contour refinement R3, 23 Oct:** [#611](https://github.com/gamesbyian/wallgen/pull/611), [six real-current-PNG evidence](https://github.com/gamesbyian/wallgen/actions/runs/40017482324). Preserves ≤6 initial+≤10 single fit painter budget and canonical lock projection; spends two probes each on actual `shapeDepth` and `shapeFrequency` after source hue band Y-registration, producing Wave error **.046144→.041215**, five other genuine PNG control scores unchanged. [Viewed source/fit evidence](RECONSTRUCTION-CURVE-PRODUCTION-FINDINGS-2026-10-23.md) shows slightly flattened Wave and other minor phase differences; no original-source-seed claim. Next validate independent wave seeds and consented/licensed non-ROYGBIV images rather than benchmark-only tuning.
+
+
 **23 Oct seven-band vertical source fit:** [PR #610](https://github.com/gamesbyian/wallgen/pull/610) confirmed on five authentic current-renderer PNGs in [run #40015324666](https://github.com/gamesbyian/wallgen/actions/runs/40015324666), with Vertical Straight error **.15743→.054146** and four no-regression controls. Shared hue covariance and existing canonical `spread`/`stripeWidth` estimates plus measured seven-hue X registration, capped at original ≤6+≤10 painter calls. Real downloaded image pair inspected. See [evidence](RECONSTRUCTION-R0-ACTUAL-ART-FINDINGS-2026-10-23.md). Original seed and microgeometry not recovered. Temporary screenshot CI removed.
 
 
