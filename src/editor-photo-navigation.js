@@ -27,9 +27,10 @@ const canonical=text=>String(text??'').toLowerCase().trim().replace(/\s+/g,' ');
 export function findPhotoIntent(query){
   const value=canonical(query);
   if(!value)return null;
+  let best=null;
   for(const [phrase,lookHint] of PHRASES)
-    if(value===phrase||value.startsWith(phrase+' ')||
-      value.startsWith(phrase+'-'))
-      return {lookHint};
-  return null;
+    if((value===phrase||value.startsWith(phrase+' ')||
+      value.startsWith(phrase+'-'))&&(!best||phrase.length>best.length))
+      best={length:phrase.length,lookHint};
+  return best?{lookHint:best.lookHint}:null;
 }
