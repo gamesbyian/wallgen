@@ -1,5 +1,10 @@
 # Agent orientation for ROYGBIV
 
+## Deep-black negative Photo output confirmed in real art (2026-10-22)
+
+The original Film negative remains unchanged. The new `film-negative-deepblack` opt-in setting protects dark wallpaper substrate instead. [Three controlled Chromium PNGs](docs/DEEP-BLACK-FILM-ART-FINDINGS-2026-10-22.md) were **rendered, opened and validated** (Actions #39885066432): original black stays (0,0,0), legacy negative lifts it to (17,16,13), and every one of 405,237 bright source pixels has exactly identical output under both film profiles. The temporary art probe was removed from workflow before merging. Pixel performance and photochemical fidelity remain untested.
+
+
 ## Soft Satin correction visually supported (2026-10-22)
 
 An opt-in `satin-soft` treatment now reduces overpaint on tight red/orange loops while retaining legacy `satin` unchanged. [Three actual production PNGs](docs/SOFT-SATIN-ART-FINDINGS-2026-10-22.md) were downloaded, visually opened, CRC-checked and matched to their stored recipes (Actions #39884499923): measured RGB deviation fell from 8.535 to 3.457 on one controlled scene. The temporary Chromium probe was removed before merge. Physical Pixel optics/performance and further textile realism remain unverified.
