@@ -74,6 +74,36 @@ export function imageStripeAngle(regions,width,height){
   return ((normal*180/Math.PI+90)%180+180)%180;
 }
 
+/**
+ * Lightweight curvature signal from the shared importer's already extracted
+ * arc/contour polylines. No second segmentation or source-image rasterizer.
+ * Use only to order hypotheses; measured renderer pixels select the winner.
+ */
+export function imageCurveSignature(paths,width,height){
+  const source=paths.find(p=>p.kind==='arc'&&p.points.length>=6)||
+    paths.find(p=>p.kind==='contour'&&p.points.length>=6);
+  if(!source)return {kind:null,sharpTurns:0,netTurn:0};
+  const vertices=source.points.map(([x,y])=>[x*width,y*height]);
+  let sharp=0,net=0,absolute=0,previous=null,turns=0;
+  for(let i=1;i<vertices.length;i++){
+    const [ax,ay]=vertices[i-1],[bx,by]=vertices[i];
+    const dx=bx-ax,dy=by-ay;
+    if(Math.hypot(dx,dy)<.5)continue;
+    const angle=Math.atan2(dy,dx);
+    if(previous!==null){
+      const turn=Math.atan2(Math.sin(angle-previous),Math.cos(angle-previous));
+      const magnitude=Math.abs(turn);
+      if(magnitude>.6)sharp++;
+      if(magnitude>.035){net+=turn;absolute+=magnitude;turns++;}
+    }
+    previous=angle;
+  }
+  const kind=Math.abs(net)>Math.PI*.95?'hairpin':
+    sharp>=3&&absolute>1.7?'jagged':
+    source.kind==='arc'&&turns>=2?'wave':null;
+  return {kind,sharpTurns:sharp,netTurn:net};
+}
+
 /** Geometry-first analysis. Colour slots carry no claim about source provenance. */
 export function describeReconstructionImage(image){
   const colour=extractImageColourRegions(image,HUES);
@@ -110,9 +140,10 @@ export function describeReconstructionImage(image){
     horizontal.length>=5?'horizontal':null;
   const radial=radialImageSignature(image);
   const stripeAngle=imageStripeAngle(colour.regions,image.width,image.height);
+  const curve=imageCurveSignature(paths,image.width,image.height);
   return {background:colour.background,colourRegions:colour.regions,
     paths:paths.slice(0,6),sevenColourRegions:seven,lineDirection,
-    stripeAngle,componentDiagonalAngle,radial,coverage:colour.coverage,
+    stripeAngle,componentDiagonalAngle,radial,curve,coverage:colour.coverage,
     dimensions:[image.width,image.height]};
 }
 
@@ -127,6 +158,29 @@ function strippedCandidateBase(input,background){
     surfaceTreatments:[],photoLook:{enabled:false},motif:'solid',
     outline:'none',stripeShadowStrength:0,
     viewZoom:1,viewPanX:0,viewPanY:0,positionX:0,positionY:0};
+}
+
+/**
+ * First spend the six-render budget on independent editable structures, then
+ * fill remaining slots with alternative offsets/spreads. Without this, three
+ * diagonal rotations and two loops silently crowd out the jagged hypothesis
+ * and even the Draw fallback that users need on unsupported art.
+ */
+export function diverseReconstructionCandidates(candidates,limit=RECONSTRUCTION_RENDER_LIMIT){
+  if(!Array.isArray(candidates)||!Number.isInteger(limit)||limit<0||
+    limit>RECONSTRUCTION_RENDER_LIMIT)throw Error('Invalid candidate budget');
+  const chosen=[],kinds=new Set(),included=new Set();
+  for(const candidate of candidates){
+    if(chosen.length===limit)break;
+    if(!kinds.has(candidate.kind)){
+      chosen.push(candidate);included.add(candidate);kinds.add(candidate.kind);
+    }
+  }
+  for(const candidate of candidates){
+    if(chosen.length===limit)break;
+    if(!included.has(candidate)){chosen.push(candidate);included.add(candidate);}
+  }
+  return chosen;
 }
 
 /** Return a few independently editable canonical alternatives. */
@@ -268,6 +322,35 @@ export function reconstructionCandidates(image,recipe){
     }
   }
 
+  // Offer the three existing editable procedural curvature families for
+  // nonradial multicolour outlines. The shared importer supplies rough
+  // curvature ordering; the existing true renderer, not our signature,
+  // decides whether any beats a traced Draw path.
+  if(!desc.radial.kind&&!desc.sevenColourRegions&&
+    (!desc.lineDirection||desc.paths.some(path=>path.kind==='arc'))&&
+    desc.colourRegions.length>=3&&
+    desc.paths.some(path=>path.kind==='arc'||path.kind==='contour')){
+    const presets=[
+      {kind:'wave',label:'Editable flowing wave',
+        recipe:{geometry:'wave',orientation:'horizontal',shapeDepth:60,
+          shapeFrequency:45,spread:65,stripeWidth:65}},
+      {kind:'jagged',label:'Editable angular rainbow',
+        recipe:{geometry:'jagged',orientation:'diagonal',shapeDepth:60,
+          shapeFrequency:65,spread:55,stripeWidth:65}},
+      {kind:'hairpin',label:'Editable hairpin turn',
+        recipe:{geometry:'hairpin',orientation:'vertical',hairpinAngle:120,
+          turnRadius:50,spread:42,stripeWidth:65}}
+    ];
+    presets.sort((a,b)=>(b.kind===desc.curve.kind?1:0)-
+      (a.kind===desc.curve.kind?1:0));
+    for(const preset of presets){
+      candidates.push({kind:preset.kind,label:preset.label,
+        uncertainty:'Procedural curvature is a fit hypothesis; turning radius, modulation, phase, spacing and seed are not recovered.',
+        recipe:normalizeRecipe({...base,structure:'paths',composition:'single',
+          construction:'ribbon',chaos:0,individuality:0,...preset.recipe})});
+    }
+  }
+
   // Colour-band arcs are usually stronger than generic contours; the same
   // extracted geometry and path transaction already power manual image import.
   const distinct=desc.paths.filter(p=>['arc','line','contour'].includes(p.kind) &&
@@ -292,15 +375,17 @@ export function reconstructionCandidates(image,recipe){
     candidate.kind==='nested-rings'?['structure','regionMode']:
     candidate.kind==='radial-rays'||candidate.kind==='radial-rings'?
       ['structure','radialMode']:
-    candidate.kind==='path'||candidate.kind==='straight'||candidate.kind==='loop'?
+    candidate.kind==='path'||candidate.kind==='straight'||candidate.kind==='loop'||
+    ['wave','jagged','hairpin'].includes(candidate.kind)?
       ['structure','geometry']:['structure'];
-  return candidates.map(candidate=>{
+  const committable=candidates.map(candidate=>{
     const effective=respectSettingLocks(current,candidate.recipe);
     const blocked=current.lockedSettings.filter(key=>
       JSON.stringify(effective[key])!==JSON.stringify(candidate.recipe[key]));
     return {...candidate,recipe:effective,lockedChanges:blocked};
   }).filter(candidate=>!essential(candidate).some(key=>
-    candidate.lockedChanges.includes(key))).slice(0,RECONSTRUCTION_RENDER_LIMIT);
+    candidate.lockedChanges.includes(key)));
+  return diverseReconstructionCandidates(committable);
 }
 
 /** Shape-aware but inexpensive comparison at an explicitly bounded resolution.
@@ -373,6 +458,12 @@ function refinementFields(candidate){
   ]:candidate.kind==='loop'?[
     ['positionX',[-6,6]],['positionY',[-6,6]],
     ['loopRadius',[-10,10]],['spread',[-10,10]],['stripeWidth',[-15,15]]
+  ]:candidate.kind==='wave'||candidate.kind==='jagged'?[
+    ['shapeDepth',[-18,18]],['shapeFrequency',[-20,20]],
+    ['spread',[-12,12]],['stripeWidth',[-15,15]],['positionY',[-6,6]]
+  ]:candidate.kind==='hairpin'?[
+    ['turnRadius',[-15,15]],['hairpinAngle',[-25,25]],
+    ['spread',[-10,10]],['positionX',[-7,7]],['positionY',[-7,7]]
   ]:candidate.kind==='radial-rays'?[
     ['rayRotation',[-10,-5,5,10]],['fieldCenterX',[-5,5]],
     ['fieldCenterY',[-5,5]],['rayCore',[-10,10]]
@@ -383,7 +474,7 @@ function refinementFields(candidate){
   ];
 }
 function canRefine(candidate,maxRenders){
-  if(!candidate||!['straight','loop','radial-rays','radial-rings','nested-rings']
+  if(!candidate||!['straight','loop','wave','jagged','hairpin','radial-rays','radial-rings','nested-rings']
     .includes(candidate.kind)||!Number.isFinite(candidate.error))return false;
   if(!Number.isInteger(maxRenders)||maxRenders<0||maxRenders>16)
     throw Error('Invalid reconstruction fitting budget');
