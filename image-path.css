@@ -174,3 +174,9 @@ html[data-theme="cream"] .image-recipe-controls button{
   .image-recipe-workspace:not([hidden]){max-height:149px}
   .image-recipe-result canvas{height:95px}
 }
+
+/* Compare identical source and candidate frames without switching dialogs. */
+.image-recipe-pair{display:flex;align-items:center;gap:5px}
+.image-recipe-result canvas{height:94px}
+.image-recipe-workspace:not([hidden]){max-height:149px}
+@media(max-width:790px){.image-recipe-result canvas{height:91px}}
