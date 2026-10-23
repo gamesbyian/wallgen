@@ -479,6 +479,11 @@ test('independent compact flash lights the center, darkens corners, and preserve
   const original=source.slice();
   processPhotoPixels(original,w,h,{...look,amount:0},'pocket-flash');
   assert.deepEqual(original,source,'zero amount leaves source alone');
+  const neutralFlash=normalizePhotoLook({enabled:true,presetId:'camera-pocket-flash',
+    amount:100,parameters:{contrast:1,saturation:1,shadow:0,highlight:0,
+      red:0,green:0,blue:0,grain:0,vignette:0}});
+  assert.equal(isNeutralPhotoLook(neutralFlash),false,
+    'center-weighted spatial flash must survive neutral tonal settings');
   const saved=normalizeRecipe({seed:'camera-flash',photoLook:look});
   assert.deepEqual(decodeRecipe(encodeRecipe(saved)),saved);
   const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
