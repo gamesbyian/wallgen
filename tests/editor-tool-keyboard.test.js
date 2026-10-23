@@ -13,16 +13,16 @@ test('named editor tool chooser supports roving keyboard focus',()=>{
   assert.match(source,/selectEditorTool\(next\.dataset\.category,next\.dataset\.editorTool,\{source:'keyboard'\}\)/);
   assert.match(source,/next\.focus\(\{preventScroll:true\}\)/);
   assert.match(source,/entry\.chip\.tabIndex=id===tool\?0:-1/);
-  assert.match(source,/if\(source==='search'\|\|source==='keyboard'\|\|source==='related'\|\|categoryChanged\)/);
+  assert.match(source,/if\(source==='search'\|\|source==='keyboard'\|\|source==='swipe'\|\|\s*source==='related'\|\|categoryChanged\)/);
 });
 
 test('manual tool clicks preserve existing horizontal scroll behavior',()=>{
   assert.match(source,/button\.addEventListener\('click',\(\)=>selectEditorTool\(button\.dataset\.category,button\.dataset\.editorTool\)\)/);
-  assert.match(source,/if\(source==='search'\|\|source==='keyboard'\|\|source==='related'\|\|categoryChanged\)/);
+  assert.match(source,/if\(source==='search'\|\|source==='keyboard'\|\|source==='swipe'\|\|\s*source==='related'\|\|categoryChanged\)/);
 });
 
 test('manual category switch reveals the active tool without resetting same-category tool swipes',()=>{
   assert.match(source,/const categoryChanged=activeCategory!==category/);
-  assert.match(source,/if\(source==='search'\|\|source==='keyboard'\|\|source==='related'\|\|categoryChanged\)/);
+  assert.match(source,/if\(source==='search'\|\|source==='keyboard'\|\|source==='swipe'\|\|\s*source==='related'\|\|categoryChanged\)/);
   assert.match(source,/if\(chip.left<left\)chooser.scrollLeft\+=chip.left-left/);
 });
