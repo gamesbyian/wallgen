@@ -682,12 +682,9 @@ export function reconstructionRefinementIndex(ranked){
     item.recipe.geometrySafety===false&&
     Number.isFinite(item.drawOffsetY)&&Number.isFinite(item.error)&&
     item.error<=Math.min(.55,best.error+.14));
-  // A strongly measured roughly doubled pigment gap is better evidence
-  // for the already available broad Draw than an unscored generic Wave shift.
-  // This applies only when the wide render is already significantly closer.
-  if(wideDraw>=0&&ranked[wideDraw].drawGapRatio>=1.35&&
-    (registered<0||ranked[wideDraw].error+.03<ranked[registered].error))
-    return wideDraw;
+  // The proven Wave registration is more predictive than an initial
+  // expanded-Draw error: real current-art Wave improves by >80% after fit.
+  // Preserve that budget while separate image evidence tests Draw's ability.
   if(registered>=0)return registered;
   if(wideDraw>=0)return wideDraw;
   let winner=-1,lowest=Infinity;
