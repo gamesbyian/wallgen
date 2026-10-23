@@ -49,10 +49,14 @@ export function installCreativeFeedback({recorder,getRecipe}){
   });
   function offer(kind,details={}){
     if(!recorder.enabled||preference()==='never')return false;
-    const count=Number(localStorage.getItem(FEEDBACK_COUNT_KEY)||0)+1;
+    let count=1;
+    try{
+      count=Number(localStorage.getItem(FEEDBACK_COUNT_KEY)||0)+1;
+      if(!Number.isSafeInteger(count)||count<1)count=1;
+      localStorage.setItem(FEEDBACK_COUNT_KEY,String(count));
+    }catch{}
     if(!shouldOfferCreativeQuestion(kind,{frequency:preference(),eligibleCount:count,...details}))
       return false;
-    try{localStorage.setItem(FEEDBACK_COUNT_KEY,String(count));}catch{}
     active={kind,targetEpisodeId:details.targetEpisodeId,
       exportId:details.exportId};
     title.textContent=kind==='export'?'A question about this export':'One quick question';
