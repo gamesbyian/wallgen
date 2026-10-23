@@ -80,6 +80,7 @@ async function evaluate(opts){
       const inferred=await page.evaluate(async base64=>{
         const {reconstructionCandidates,rankReconstructionCandidates,
           reconstructionPlacement,RECONSTRUCTION_FRAME,
+          refineReconstructionCandidate,
           compareReconstructionPixels}=await import('/src/image-reconstruction.js');
         const {drawWallpaper}=await import('/src/renderer.js');
         const {normalizeRecipe}=await import('/src/model.js');
@@ -110,6 +111,12 @@ async function evaluate(opts){
         const ranked=rankReconstructionCandidates(candidates,reference,
           recipe=>render(recipe).getContext('2d',{willReadFrequently:true})
             .getImageData(0,0,fit.width,fit.height));
+        if(ranked[0]){
+          ranked[0]=refineReconstructionCandidate(ranked[0],reference,
+            recipe=>render(recipe).getContext('2d',{willReadFrequently:true})
+              .getImageData(0,0,fit.width,fit.height));
+          ranked.sort((a,b)=>a.error-b.error);
+        }
         const best=ranked[0];
         const preview=best?render(best.recipe):null;
         bitmap.close();
@@ -117,7 +124,7 @@ async function evaluate(opts){
           candidateCount:ranked.length,
           selected:best?{kind:best.kind,label:best.label,error:best.error,
             structure:best.recipe.structure,geometry:best.recipe.geometry,
-            recipe:best.recipe}:null,
+            recipe:best.recipe,refinementRenders:best.refinementRenders??0}:null,
           alternatives:ranked.map(x=>({kind:x.kind,label:x.label,error:x.error})),
           sourcePreview:fit.toDataURL('image/png'),
           candidatePreview:preview?.toDataURL('image/png')??null
@@ -144,6 +151,7 @@ async function evaluate(opts){
       const record={id:item.id,source:item.metadataFree,candidateCount:inferred.candidateCount,
         bestKind:inferred.selected?.kind??null,
         bestError:inferred.selected?.error??null,
+        refinementRenders:inferred.selected?.refinementRenders??0,
         trueRecipeRenderError:truthError,
         bestLabel:inferred.selected?.label??null,
         trueStructure:truth.structure,trueGeometry:truth.geometry,
