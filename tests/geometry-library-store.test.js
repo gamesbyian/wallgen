@@ -110,3 +110,30 @@ test('Atomic batch import skips identical geometry but rejects conflicting IDs w
   await assert.rejects(db.importMany([b,b]),{code:'invalid-import'});
   assert.equal((await db.list()).length,2);
 });
+
+
+test('Library Rename and Duplicate keep source geometry portable and independent',async()=>{
+  let next=0;
+  const db=await openGeometryLibrary({indexedDB:null,
+    now:()=>baseClock,idFactory:()=>'copy-'+(++next)});
+  const original=await db.add({id:'original',name:'Original shape',
+    geometry:shape,tags:['custom'],source:{kind:'imported'}});
+  const duplicate=await db.add({name:original.name+' copy',
+    geometry:original.geometry,tags:original.tags,source:original.source});
+  assert.notEqual(duplicate.id,original.id);
+  assert.equal(duplicate.revision,1);
+  assert.equal(duplicate.contentHash,original.contentHash);
+  assert.deepEqual(duplicate.geometry,original.geometry);
+  const renamed=await db.update(duplicate.id,{name:'Reworked copy'},
+    {ifRevision:duplicate.revision});
+  assert.equal(renamed.name,'Reworked copy');
+  assert.equal(renamed.revision,2);
+  assert.equal((await db.get(original.id)).name,'Original shape');
+  await assert.rejects(db.update(duplicate.id,{name:'stale'},
+    {ifRevision:duplicate.revision}),{code:'conflict'});
+  await db.delete(original.id,{ifRevision:original.revision});
+  assert.equal((await db.get(duplicate.id)).name,'Reworked copy',
+    'deleting the source leaves the portable duplicate intact');
+  assert.deepEqual((await db.get(duplicate.id)).geometry,original.geometry);
+  db.close();
+});
