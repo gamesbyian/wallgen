@@ -29,18 +29,3 @@ jobs:
       - name: Full Node suite (manual request only)
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.depth == 'full' }}
         run: npm run check
-      # TEMP R0 DIAGONAL PROOF for PR #581; REMOVE BEFORE MERGE.
-      - name: TEMP render and evaluate two genuine current PNGs
-        if: ${{ github.head_ref == 'agent3/diagonal-image-recovery-20261023' }}
-        run: |
-          npm install --no-save playwright
-          npx playwright install --with-deps chromium
-          node scripts/review-reconstruction.mjs --only 02-diagonal-straight,11-scattered-circles --out-dir artifacts/r0-diagonal-581
-          node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/r0-diagonal-581
-      - name: TEMP archive real reconstruction comparisons
-        if: ${{ github.head_ref == 'agent3/diagonal-image-recovery-20261023' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: r0-diagonal-scattered-581
-          path: artifacts/r0-diagonal-581/
-          retention-days: 2
