@@ -199,9 +199,20 @@ function threads(ctx,layer,bounds,gap,opacity,axis='both'){
 // dimensions. Irregular bends, strand-width variation and a sparse thread
 // shadow/highlight pair disrupt the graph-paper uniformity seen in the first
 // real linen PNG review. This applies only to the opt-in Organic linen material.
+// Handwoven yarns: jittered thread stations and low-frequency displacement
+// create a world-anchored irregular loom. Muted core fibres are continuous;
+// only short, sparse glints mark raised crossings. In particular, do not draw
+// straight unwarped highlights: real images showed they read as graph paper.
 function organicLinenThreads(ctx,layer,bounds){
   const unit=materialUnit(layer),seed=layer.heightSeed|0;
   const pitch=5*unit,pointStep=13,span=pointStep*5;
+  const yarnPoint=(vertical,base,along)=>{
+    const x=vertical?base:along,y=vertical?along:base;
+    const bend=materialHeight(layer,x,y)*pitch*.32;
+    const wobble=fractal(x/62,y/62,seed+2161)*pitch*.14;
+    const across=base+bend+wobble;
+    return vertical?[across,along]:[along,across];
+  };
   ctx.lineCap='round';
   for(const vertical of [true,false]){
     const low=vertical?bounds.left:bounds.top;
@@ -209,37 +220,29 @@ function organicLinenThreads(ctx,layer,bounds){
     const alongMin=vertical?bounds.top:bounds.left;
     const alongMax=vertical?bounds.bottom:bounds.right;
     for(let i=Math.floor(low/pitch)-2;i<=Math.ceil(high/pitch)+2;i++){
-      const base=(i+(hash(i,0,seed+2101)-.5)*.52)*pitch;
-      const width=(.42+hash(i,0,seed+2111)*.75)*unit;
+      const base=(i+(hash(i,0,seed+2101)-.5)*.8)*pitch;
+      const width=(.40+hash(i,0,seed+2111)*.66)*unit;
+      const bright=hash(i,0,seed+2143)>.56;
       for(let j=Math.floor(alongMin/span)-1;j<=Math.ceil(alongMax/span)+1;j++){
-        // Most yarns are continuous across spans, but fibre depth and
-        // reflectance vary locally instead of using one infinite ruled line.
-        if(hash(i,j,seed+2129)<.025)continue;
-        const ink=(.095+hash(i,j,seed+2137)*.09);
+        const ink=.055+hash(i,j,seed+2137)*.065;
         ctx.lineWidth=width;
-        ctx.strokeStyle=colour(hash(i,j,seed+2143)>.52,ink);
+        ctx.strokeStyle=colour(bright,ink);
         ctx.beginPath();
         for(let k=0;k<=5;k++){
-          const along=(j*5+k)*pointStep;
-          const x=vertical?base:along,y=vertical?along:base;
-          const bend=materialHeight(layer,x,y)*pitch*.32;
-          const wobble=fractal(x/62,y/62,seed+2161)*pitch*.14;
-          const across=base+bend+wobble;
-          const px=vertical?across:along,py=vertical?along:across;
+          const [px,py]=yarnPoint(vertical,base,(j*5+k)*pointStep);
           if(k===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);
         }
         ctx.stroke();
-        // One fine incident-light edge along the world-space yarn, lower
-        // opacity than the core; avoid a luminous white rectangular grid.
-        if(hash(i,j,seed+2179)>.47){
-          ctx.lineWidth=Math.max(.3,width*.38);
-          ctx.strokeStyle=colour(true,ink*.49);
-          ctx.beginPath();
-          const a=j*span,b=(j+1)*span;
-          const shift=(vertical?-.37:.37)*unit;
-          if(vertical){ctx.moveTo(base+shift,a);ctx.lineTo(base+shift,b);}
-          else{ctx.moveTo(a,base+shift);ctx.lineTo(b,base+shift);}
-          ctx.stroke();
+        // Microscopic incident-light flashes follow the *same bent fibre*
+        // instead of tracing a second perfectly straight horizontal/vertical
+        // grid. Sparse world-space glints interrupt uniform reflectivity.
+        if(hash(i,j,seed+2179)>.82){
+          const along=(j+.16+hash(i,j,seed+2183)*.68)*span;
+          const [ax,ay]=yarnPoint(vertical,base,along);
+          const [bx,by]=yarnPoint(vertical,base,along+Math.min(6*unit,span*.16));
+          ctx.lineWidth=Math.max(.28,width*.27);
+          ctx.strokeStyle=colour(true,ink*.59);
+          ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(bx,by);ctx.stroke();
         }
       }
     }
