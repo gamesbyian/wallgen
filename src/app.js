@@ -2070,8 +2070,13 @@ for(const button of photoPaneButtons)button.addEventListener('click',()=>{
     option.setAttribute('aria-pressed',String(option===button));
 });
 form.addEventListener('submit',event=>event.preventDefault());
-seedInput.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();render(fromControls());}});
-document.getElementById('applySeed').addEventListener('click',()=>render(fromControls()));
+seedInput.addEventListener('keydown',event=>{
+  if(event.key==='Enter'){
+    event.preventDefault();
+    changeRecipe(fromControls());
+  }
+});
+document.getElementById('applySeed').addEventListener('click',()=>changeRecipe(fromControls()));
 document.getElementById('randomize').addEventListener('click',()=>{
   flushQueuedControlUpdate();
   explorationHistory.remember(current,'Before seed');
