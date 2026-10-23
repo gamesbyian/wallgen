@@ -26,6 +26,20 @@ jobs:
       - name: Basic app and recipe sanity
         if: ${{ github.event_name != 'workflow_dispatch' || inputs.depth != 'full' }}
         run: npm run check:quick
+      # TEMPORARY PR-only material-art evidence. Delete before merge.
+      - name: Temporary Agent 2 actual Chain wallpaper comparison
+        if: ${{ github.event_name == 'pull_request' }}
+        run: |
+          npm install --no-save playwright
+          npx playwright install chromium
+          node scripts/review-embroidery.mjs --focus-chain --out-dir /tmp/agent2-chain-art
+      - name: Upload temporary Chain comparison pictures
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent2-chain-art
+          path: /tmp/agent2-chain-art/
+          retention-days: 2
       - name: Full Node suite (manual request only)
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.depth == 'full' }}
         run: npm run check
