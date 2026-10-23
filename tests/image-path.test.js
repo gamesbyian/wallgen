@@ -48,6 +48,27 @@ test('rainbow against a blue field produces a chromatic centreline rather than s
   assert.ok(arc.points.every(p=>p[1]<.8),'background does not determine the centreline');
   assert.deepEqual(extractImagePathCandidates(rainbow),results,'extraction is deterministic');
 });
+test('upright winding colour band follows Y stations instead of collapsing X folds',()=>{
+  const raster=image(120,240,(x,y)=>{
+    if(y<20||y>220)return BLACK;
+    const centre=60+30*Math.sin((y-20)/200*Math.PI*2);
+    return Math.abs(x-centre)<6?[236,55,28]:BLACK;
+  });
+  const candidates=extractImagePathCandidates(raster);
+  const arc=candidates.find(x=>x.kind==='arc');
+  assert.ok(arc,'visible tall coloured path is a reconstructable arc');
+  assert.ok(arc.points.length>30);
+  assert.ok(arc.points.every((p,i)=>i===0||p[1]>=arc.points[i-1][1]),
+    'upright centreline progresses with Y without artificial reversals');
+  const at=y=>arc.points.reduce((best,p)=>
+    Math.abs(p[1]-y)<Math.abs(best[1]-y)?p:best);
+  assert.ok(at(.29)[0]>.68,'upper bulge remains on the right');
+  assert.ok(at(.71)[0]<.32,'lower bulge remains on the left');
+  const mapped=pathToWallpaper(arc,120,240,0);
+  assert.ok(mapped.points.length>20);
+  assert.deepEqual(extractImagePathCandidates(raster),candidates);
+});
+
 test('diagonal edge produces a selectable angle and stable two-point line',()=>{
   const raster=image(200,200,(x,y)=>Math.abs(y-(.7*x+20))<3?BLACK:WHITE);
   const line=extractImagePathCandidates(raster).find(c=>c.kind==='line');
