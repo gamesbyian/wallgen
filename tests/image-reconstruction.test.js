@@ -178,3 +178,31 @@ test('inferred candidates honor present editor locks before being scored or disp
  const unlocked=reconstructionCandidates(original,{seed:'free'});
  assert.ok(unlocked.some(x=>x.kind==='regions'));
 });
+
+test('coherent slanted seven-colour bands are editable procedural diagonals, not circles',()=>{
+  const w=160,h=320;
+  const bands=raster(w,h,(x,y)=>{
+    // Distinct long parallelograms with a common slope, deliberately spanning
+    // square-ish bounding boxes that a naive aspect test calls circles.
+    const track=x+y*.48;
+    const index=Math.floor((track-5)/27);
+    return index>=0&&index<7&&track-5-index*27<15?
+      colour(HUES[index]):[0,0,0,255];
+  });
+  const desc=describeReconstructionImage(bands);
+  assert.ok(Number.isFinite(desc.diagonalAngle),
+    'coherent per-hue covariance should establish diagonal topology');
+  assert.ok(desc.diagonalAngle>12&&desc.diagonalAngle<78);
+  assert.equal(desc.sevenColourRegions,false);
+  const options=reconstructionCandidates(bands,{seed:'diagonal-current'});
+  assert.ok(options.some(candidate=>candidate.kind==='straight'&&
+    candidate.recipe.orientation==='diagonal'&&
+    candidate.recipe.geometry==='straight'),
+    'ordinary canonical diagonal procedural scene');
+  assert.ok(!options.some(candidate=>candidate.kind==='regions'),
+    'slanted bands must not masquerade as detached circles');
+  const scattered=describeReconstructionImage(original);
+  assert.equal(scattered.diagonalAngle,null,
+    'seven genuinely compact coloured circles must remain independent objects');
+  assert.ok(reconstructionCandidates(original,{}).some(x=>x.kind==='regions'));
+});
