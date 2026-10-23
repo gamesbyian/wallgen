@@ -61,7 +61,7 @@ test('interlinked chain stitch is opt-in in existing persisted embroidery style 
   const html=source('index.html'),app=source('src/app.js'),code=source('src/embroidery.js');
   assert.equal((html.match(/value="chain"/g)||[]).length,1);
   assert.match(html,/Chain stitch \(linked loops\)/);
-  assert.match(app,/name='embroideryStyle'/);
+  assert.match(app,/namedItem\('embroideryStyle'\)/);
   assert.match(code,/const chainStep=Math\.max/);
   assert.match(code,/chainLink\(ctx/);
 });
