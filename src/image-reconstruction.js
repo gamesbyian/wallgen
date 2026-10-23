@@ -98,10 +98,38 @@ export function imageCurveSignature(paths,width,height){
     }
     previous=angle;
   }
+  // Importer smoothing intentionally spreads an authored V corner across
+  // several samples, so the adjacent-vertex sharpTurns value can be zero
+  // even for a double-kink ribbon. Evaluate the SAME already extracted
+  // centreline with a wider physical tangent baseline (no new pixel pass).
+  const bendPeaks=[];
+  if(source.kind==='arc'&&vertices.length>=12){
+    const reach=Math.max(10,width*.065),spaced=width*.13;
+    for(let i=2;i<vertices.length-2;i++){
+      let lo=i-1,hi=i+1;
+      while(lo>0&&vertices[i][0]-vertices[lo][0]<reach)lo--;
+      while(hi<vertices.length-1&&vertices[hi][0]-vertices[i][0]<reach)hi++;
+      if(vertices[i][0]-vertices[lo][0]<reach*.8||
+        vertices[hi][0]-vertices[i][0]<reach*.8)continue;
+      const u=[vertices[i][0]-vertices[lo][0],vertices[i][1]-vertices[lo][1]];
+      const v=[vertices[hi][0]-vertices[i][0],vertices[hi][1]-vertices[i][1]];
+      const bend=Math.abs(Math.atan2(u[0]*v[1]-u[1]*v[0],
+        u[0]*v[0]+u[1]*v[1]));
+      if(bend>.38)bendPeaks.push({x:vertices[i][0],bend});
+    }
+    bendPeaks.sort((a,b)=>b.bend-a.bend);
+    const separated=[];
+    for(const peak of bendPeaks){
+      if(separated.every(p=>Math.abs(p.x-peak.x)>spaced))separated.push(peak);
+      if(separated.length>=4)break;
+    }
+    bendPeaks.length=0;
+    bendPeaks.push(...separated);
+  }
   const kind=Math.abs(net)>Math.PI*.95?'hairpin':
     sharp>=3&&absolute>1.7?'jagged':
     source.kind==='arc'&&turns>=2?'wave':null;
-  return {kind,sharpTurns:sharp,netTurn:net};
+  return {kind,sharpTurns:sharp,netTurn:net,angularBends:bendPeaks.length};
 }
 
 /**
@@ -458,6 +486,9 @@ export function reconstructionCandidates(image,recipe){
         individuality:0,geometrySafety},mapped.points,
       mapped.anchors,mapped.corners,false,false);
       candidates.push({kind:'path',
+        // Measured from existing source centreline, not from a separate
+        // angular image classifier or fabricated canonical geometry.
+        ...(geometrySafety?{}:{angularBends:desc.curve.angularBends}),
         label:path.label+' / '+(geometrySafety?'safely spaced':'expanded ribbons')+
           ' / spread '+spread,
         uncertainty:geometrySafety?
@@ -682,9 +713,11 @@ export function reconstructionRefinementIndex(ranked){
     item.recipe.geometrySafety===false&&
     Number.isFinite(item.drawOffsetY)&&Number.isFinite(item.error)&&
     item.error<=Math.min(.55,best.error+.14));
-  // The proven Wave registration is more predictive than an initial
-  // expanded-Draw error: real current-art Wave improves by >80% after fit.
-  // Preserve that budget while separate image evidence tests Draw's ability.
+  // A coherent nearly doubled pigment gap plus two observed angular bends
+  // specifically justifies widening a traced source V. Smooth Wave lacks
+  // those abrupt bends: retain its proven Y registration priority otherwise.
+  if(wideDraw>=0&&ranked[wideDraw].angularBends>=2&&
+    ranked[wideDraw].drawGapRatio>=1.35)return wideDraw;
   if(registered>=0)return registered;
   if(wideDraw>=0)return wideDraw;
   let winner=-1,lowest=Infinity;
