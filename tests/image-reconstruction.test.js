@@ -473,6 +473,16 @@ test('seven matching hue centroids recover a rigid Wave displacement, not crooke
  const source=stripeImage();
  const displaced=stripeImage(15);
  assert.equal(coherentWaveOffsetY(source,displaced),-7);
+ assert.equal(reconstructionRefinementIndex([
+   {kind:'path',error:.206789},
+   {kind:'jagged',error:.25869},
+   {kind:'wave',error:.347079,waveOffsetY:-7}
+ ]),2,'measured rigid Wave shift gets one bounded fitting budget first');
+ assert.equal(reconstructionRefinementIndex([
+   {kind:'path',error:.206789},
+   {kind:'jagged',error:.25869},
+   {kind:'wave',error:.347079}
+ ]),1,'without a measured shift use ordinary lowest-error challenger');
  assert.equal(coherentWaveOffsetY(source,stripeImage(15,14)),null,
    'independent colour movement must not masquerade as whole-art translation');
  assert.equal(coherentWaveOffsetY(source,raster(w,h,()=>[0,0,0,255])),null);
