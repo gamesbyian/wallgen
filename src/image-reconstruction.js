@@ -109,11 +109,21 @@ export function describeReconstructionImage(image){
   const lineDirection=vertical.length>=5?'vertical':
     horizontal.length>=5?'horizontal':null;
   const radial=radialImageSignature(image);
+  // The existing colour-band centreline is a shared, bounded source for
+  // detecting broad near-horizontal ribbons with genuine oscillation.
+  // Straight colour bands have near-zero vertical variation.
+  const horizontalWave=lineDirection==='horizontal'&&radial.kind===null&&
+    paths.some(path=>{
+      if(path.kind!=='arc'||path.points.length<12)return false;
+      const xs=path.points.map(p=>p[0]),ys=path.points.map(p=>p[1]);
+      return Math.max(...xs)-Math.min(...xs)>=.65&&
+        (Math.max(...ys)-Math.min(...ys))*image.height>=2;
+    });
   const stripeAngle=imageStripeAngle(colour.regions,image.width,image.height);
   return {background:colour.background,colourRegions:colour.regions,
     paths:paths.slice(0,6),sevenColourRegions:seven,lineDirection,
-    stripeAngle,componentDiagonalAngle,radial,coverage:colour.coverage,
-    dimensions:[image.width,image.height]};
+    stripeAngle,componentDiagonalAngle,radial,horizontalWave,
+    coverage:colour.coverage,dimensions:[image.width,image.height]};
 }
 
 function strippedCandidateBase(input,background){
@@ -168,6 +178,22 @@ export function reconstructionCandidates(image,recipe){
         scatteredShapeKind:'circle',scatteredCount:7,
         scatteredOverlap:'overlap',scatteredEdgeCrop:0,scatteredSpacing:0,
         scatteredOverrides:overrides})});
+  }
+  // Procedural wave hypotheses from that same importer, not a second shape
+  // model. The existing shared renderer decides whether they fit better than
+  // straight/drawn alternatives. Conserve the six-candidate evaluation cap.
+  if(desc.horizontalWave){
+    for(const [shapeFrequency,shapeDepth,spread] of [
+      [30,65,65],[50,65,70],[65,80,55]
+    ]){
+      candidates.push({kind:'wave',
+        label:'Procedural horizontal wave / '+shapeFrequency+' frequency',
+        uncertainty:'Oscillating colour-centrelines imply parallel waves; source phase, bends, spacing and original seed remain inferred.',
+        recipe:normalizeRecipe({...base,structure:'paths',geometry:'wave',
+          orientation:'horizontal',composition:'single',
+          construction:'ribbon',chaos:0,individuality:0,
+          shapeFrequency,shapeDepth,spread,stripeWidth:55})});
+    }
   }
   // Long separate colour components describe procedural bands more honestly
   // than a ring of seven giant circles. Keep direct thickness/spacing editing.
@@ -292,8 +318,8 @@ export function reconstructionCandidates(image,recipe){
     candidate.kind==='nested-rings'?['structure','regionMode']:
     candidate.kind==='radial-rays'||candidate.kind==='radial-rings'?
       ['structure','radialMode']:
-    candidate.kind==='path'||candidate.kind==='straight'||candidate.kind==='loop'?
-      ['structure','geometry']:['structure'];
+    candidate.kind==='path'||candidate.kind==='straight'||candidate.kind==='loop'||
+    candidate.kind==='wave'?['structure','geometry']:['structure'];
   return candidates.map(candidate=>{
     const effective=respectSettingLocks(current,candidate.recipe);
     const blocked=current.lockedSettings.filter(key=>
@@ -373,6 +399,9 @@ function refinementFields(candidate){
   ]:candidate.kind==='loop'?[
     ['positionX',[-6,6]],['positionY',[-6,6]],
     ['loopRadius',[-10,10]],['spread',[-10,10]],['stripeWidth',[-15,15]]
+  ]:candidate.kind==='wave'?[
+    ['positionY',[-8,-4,4,8]],['spread',[-12,12]],
+    ['stripeWidth',[-12,12]],['shapeDepth',[-20,20]]
   ]:candidate.kind==='radial-rays'?[
     ['rayRotation',[-10,-5,5,10]],['fieldCenterX',[-5,5]],
     ['fieldCenterY',[-5,5]],['rayCore',[-10,10]]
@@ -383,7 +412,7 @@ function refinementFields(candidate){
   ];
 }
 function canRefine(candidate,maxRenders){
-  if(!candidate||!['straight','loop','radial-rays','radial-rings','nested-rings']
+  if(!candidate||!['straight','loop','wave','radial-rays','radial-rings','nested-rings']
     .includes(candidate.kind)||!Number.isFinite(candidate.error))return false;
   if(!Number.isInteger(maxRenders)||maxRenders<0||maxRenders>16)
     throw Error('Invalid reconstruction fitting budget');
