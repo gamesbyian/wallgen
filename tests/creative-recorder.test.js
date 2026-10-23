@@ -401,3 +401,21 @@ test('async download after Randomize All still belongs to the old episode in the
   assert.equal(download.episodeId,targetEpisodeId);
   assert.equal((await recorder.last()).episodeId,recorder.episodeId);
 });
+
+test('Activity settings survives a failed storage read and discards stale async refresh results',()=>{
+  const ui=readFileSync(new URL('../src/creative-recorder-ui.js',import.meta.url),'utf8');
+  const start=ui.indexOf('  let refreshRevision=0;');
+  const end=ui.indexOf("  launch.addEventListener('click'",start);
+  assert.ok(start>0&&end>start);
+  const refresh=ui.slice(start,end);
+  assert.match(refresh,/enabled\.checked=recorder\.enabled;\s*try\{/,
+    'the recording consent toggle must not depend on IndexedDB reads');
+  assert.match(refresh,/const records=await recorder\.records\(\)/);
+  assert.match(refresh,/const summary=await store\.syncSummary\(\)/);
+  assert.match(refresh,/if\(revision!==refreshRevision\)return/g);
+  assert.match(refresh,/catch\(error\)/);
+  assert.match(refresh,/Cannot read local activity:/);
+  assert.match(refresh,/Backup status unavailable; no new remote confirmation was made/);
+  assert.match(refresh,/querySelector\('\[data-usage-recent\]'\)\.replaceChildren\(\)/,
+    'do not show previously cached events when fresh storage is unreadable');
+});
