@@ -1,5 +1,10 @@
 # ROYGBIV handoff: current authority and independently actionable work
 
+## 23 Oct inverse-fitting lock integrity
+
+[PR #609](https://github.com/gamesbyian/wallgen/pull/609) fixes a real preview/commit parity defect in the final coordinate-descent reconstruction fitter: despite earlier coarse candidates respecting the app's direct and umbrella Position locks, the ≤10 actual-render fitting samples could previously violate them. Every trial now delegates to **canonical `respectSettingLocks`** before rendering. Fully protected Wave hypotheses generate zero invalid renders; partially protected Hairpin and other families still refine allowed fields. Focused Node tests check both direct and composite locks, every resulting painter call, and exact synchronous/cooperatively-cancellable parity. No image pixels or renderer were changed, no new background service, and the one CI gate remains `npm run check:quick`. Browser import/Undo/PNG journey and human-facing uncertainty fix are separately source-verified in [portrait acceptance](RECONSTRUCTION-PORTRAIT-JOURNEY-2026-10-23.md). Real physical Pixel/TalkBack remains unverified.
+
+
 ## 23 Oct readable portrait reconstruction acceptance
 
 [PR #608](https://github.com/gamesbyian/wallgen/pull/608) closes the specific internal text truncation diagnosed by actual #607's 412×892 screenshot: accessible candidate label no longer collides with border, short honest live fit summary plus full native "Why?" explanation; the source/real-render comparison remains visible. [New real-browser acceptance run #40013772974](https://github.com/gamesbyian/wallgen/actions/runs/40013772974) exercised source import→Apply→PNG→Undo→PNG re-import plus readable/cancellable complete explanation. Measured parent/card/paragraph scroll equality and ≥44px Apply/Close/Why targets, no page errors. Temporary evidence screenshots were visually inspected; [findings and limitations](RECONSTRUCTION-PORTRAIT-JOURNEY-2026-10-23.md). Initial four-pixel overflow failed honestly and was fixed; one-off Chromium workflow removed. Physical Pixel/TalkBack/real external art still open.

@@ -508,3 +508,55 @@ test('seven matching hue centroids recover a rigid Wave displacement, not crooke
  assert.deepEqual(asyncFitted,fitted);
  assert.equal(yields.length,1+fitted.refinementRenders);
 });
+
+test('refinement never previews locked settings including composite Position, even with a measured Wave offset',async()=>{
+ const width=RECONSTRUCTION_FRAME.width,height=RECONSTRUCTION_FRAME.height;
+ const source=raster(width,height,()=>[0,0,0,255]);
+ const recipe=normalizeRecipe({
+   seed:'protected-wave',structure:'paths',geometry:'wave',orientation:'horizontal',
+   spread:61,stripeWidth:73,positionX:11,positionY:-7,
+   lockedSettings:['position','spread','stripeWidth']
+ });
+ assert.ok(recipe.lockedSettings.includes('position'));
+ const candidate={kind:'wave',recipe,label:'Protected wave',error:.6,waveOffsetY:-15};
+ let paints=0;
+ const render=()=>{paints++;return raster(width,height,()=>[0,0,0,255]);};
+ const synchronous=refineReconstructionCandidate(candidate,source,render);
+ assert.equal(paints,0,'all three wave trial fields are locked, do not render impossible previews');
+ assert.equal(synchronous.refinementRenders,0);
+ assert.deepEqual(synchronous.recipe,recipe,'no protected field may move');
+ let yields=0;
+ const cooperative=await refineReconstructionCandidateCooperatively(candidate,source,
+   render,{yieldControl:async()=>{yields++;}});
+ assert.deepEqual(cooperative,synchronous);
+ assert.equal(yields,0);
+ assert.equal(paints,0);
+});
+
+test('direct and composite locks remain applied across every partially unlocked real-render fit trial',async()=>{
+ const width=RECONSTRUCTION_FRAME.width,height=RECONSTRUCTION_FRAME.height;
+ const source=raster(width,height,()=>[0,0,0,255]);
+ const recipe=normalizeRecipe({seed:'protected-hairpin',structure:'paths',geometry:'hairpin',
+   turnRadius:51,hairpinAngle:135,positionX:13,positionY:-9,stripeWidth:77,
+   lockedSettings:['position','stripeWidth']});
+ const candidates=[];
+ const painter=next=>{
+   candidates.push(next);
+   return raster(width,height,()=>[0,0,0,255]);
+ };
+ const item={kind:'hairpin',recipe,label:'hairpin with locked camera',error:.5};
+ const synchronous=refineReconstructionCandidate(item,source,painter);
+ assert.ok(candidates.length>0&&candidates.length<=10);
+ for(const tested of candidates){
+   assert.equal(tested.positionX,recipe.positionX);
+   assert.equal(tested.positionY,recipe.positionY);
+   assert.equal(tested.stripeWidth,recipe.stripeWidth);
+   assert.deepEqual(tested.lockedSettings,recipe.lockedSettings);
+ }
+ assert.equal(synchronous.recipe.positionX,recipe.positionX);
+ assert.equal(synchronous.recipe.positionY,recipe.positionY);
+ assert.equal(synchronous.recipe.stripeWidth,recipe.stripeWidth);
+ const cooperative=await refineReconstructionCandidateCooperatively(item,source,
+   ()=>raster(width,height,()=>[0,0,0,255]));
+ assert.deepEqual(cooperative,synchronous,'same canonical locked fit in browser and R0');
+});
