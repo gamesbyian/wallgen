@@ -24,31 +24,51 @@ export function radialImageSignature({data,width,height}){
   if(!data||!Number.isInteger(width)||!Number.isInteger(height)||
     width<24||height<24||data.length!==width*height*4||width*height>650000)
     throw Error('Invalid radial analysis image');
-  const cx=(width-1)/2,cy=(height-1)/2;
-  const maxRadius=Math.min(width,height)*.47;
-  const colour=(angle,radius)=>{
-    const x=clamp(Math.round(cx+Math.cos(angle)*radius),0,width-1);
-    const y=clamp(Math.round(cy+Math.sin(angle)*radius),0,height-1);
-    const at=4*(y*width+x);
-    return [data[at],data[at+1],data[at+2]];
-  };
   const distance=(a,b)=>(Math.abs(a[0]-b[0])+Math.abs(a[1]-b[1])+
     Math.abs(a[2]-b[2]))/(3*255);
-  const samples=Array.from({length:20},(_,i)=>
-    [.17,.35,.57,.78].map(t=>colour(i*Math.PI/10,maxRadius*t)));
-  let radial=0,angular=0,rc=0,ac=0;
-  for(let i=0;i<samples.length;i++){
-    for(let j=1;j<samples[i].length;j++){
-      radial+=distance(samples[i][j],samples[i][j-1]);rc++;
+  // Test the frame centre first, then a small, fixed set of off-centre
+  // hypotheses. These are cheap image reads, not additional renderer trials.
+  // Keep a common radius across hypotheses to avoid favoring a smaller crop.
+  const radius=Math.min(width,height)*.31;
+  const probe=(px,py)=>{
+    const cx=(width-1)*px,cy=(height-1)*py;
+    const colour=(angle,r)=>{
+      const x=clamp(Math.round(cx+Math.cos(angle)*r),0,width-1);
+      const y=clamp(Math.round(cy+Math.sin(angle)*r),0,height-1);
+      const at=4*(y*width+x);
+      return [data[at],data[at+1],data[at+2]];
+    };
+    const samples=Array.from({length:32},(_,i)=>
+      [.23,.42,.65,.90].map(t=>colour(i*Math.PI/16,radius*t)));
+    let radial=0,angular=0,rc=0,ac=0;
+    for(let i=0;i<samples.length;i++){
+      for(let j=1;j<samples[i].length;j++){
+        radial+=distance(samples[i][j],samples[i][j-1]);rc++;
+      }
+      for(let j=0;j<samples[i].length;j++){
+        angular+=distance(samples[i][j],samples[(i+1)%samples.length][j]);ac++;
+      }
     }
-    for(let j=0;j<samples[i].length;j++){
-      angular+=distance(samples[i][j],samples[(i+1)%samples.length][j]);ac++;
-    }
+    radial/=Math.max(1,rc);angular/=Math.max(1,ac);
+    const rayStrength=angular-radial*1.7;
+    const ringStrength=radial-angular*1.7;
+    return {radialVariation:radial,angularVariation:angular,
+      kind:rayStrength>.11?'rays':ringStrength>.11?'rings':null,
+      strength:Math.max(rayStrength,ringStrength),centerX:px*100,centerY:py*100};
+  };
+  const centre=probe(.5,.5);
+  let best=centre;
+  for(const [x,y] of [[.35,.5],[.65,.5],[.5,.35],[.5,.65],
+    [.35,.35],[.65,.35],[.35,.65],[.65,.65]]){
+    const next=probe(x,y);
+    // Require a substantial gain before displacing the centre, especially
+    // for nonradial source imagery that happens to have coloured patches.
+    if(next.kind&&next.strength>Math.max(.13,best.strength+.045))
+      best=next;
   }
-  radial/=Math.max(1,rc);angular/=Math.max(1,ac);
-  const kind=angular>.11&&angular>radial*1.7?'rays':
-    radial>.11&&radial>angular*1.7?'rings':null;
-  return {kind,radialVariation:radial,angularVariation:angular};
+  return {kind:best.kind,radialVariation:best.radialVariation,
+    angularVariation:best.angularVariation,
+    centerX:best.kind?best.centerX:50,centerY:best.kind?best.centerY:50};
 }
 
 /** PCA over the shared seven-colour connected-component centroids identifies
@@ -344,8 +364,8 @@ export function reconstructionCandidates(image,recipe){
         rayCount+' rays, '+rayRotation+'°',
         uncertainty:'Radial wedge family inferred; core, angle, count and source pigment sequence remain uncertain.',
         recipe:normalizeRecipe({...base,structure:'radial',radialMode:'sunburst',
-          rayCount,rayRotation,rayCore:10,rayCoverage:100,fieldCenterX:50,
-          fieldCenterY:50,dividerColor:'none',dividerWidth:0})});
+          rayCount,rayRotation,rayCore:10,rayCoverage:100,fieldCenterX:desc.radial.centerX,
+          fieldCenterY:desc.radial.centerY,dividerColor:'none',dividerWidth:0})});
     }
   }else if(desc.radial.kind==='rings'){
     for(const spec of [{kind:'radial-rings',structure:'radial',radialMode:'concentric',rayCount:14},
@@ -356,7 +376,7 @@ export function reconstructionCandidates(image,recipe){
         'Editable concentric rays '+spec.rayCount:'Editable nested regions '+spec.regionCount,
         uncertainty:'Concentric geometry inferred; ring count, centre and painter layer topology may differ.',
         recipe:normalizeRecipe({...base,...spec,dividerColor:'none',dividerWidth:0,
-          fieldCenterX:50,fieldCenterY:50,regionSides:0})});
+          fieldCenterX:desc.radial.centerX,fieldCenterY:desc.radial.centerY,regionSides:0})});
     }
   }
   // Collinear rainbow colour centres suggest oblique long bands. Derive the
