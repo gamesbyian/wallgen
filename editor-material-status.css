@@ -108,3 +108,11 @@
 .embroidery-controls .thread-treatment-summary{
   min-width:0;max-width:62%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap
 }
+
+/* An authored region angle beside Stitch style does not add another phone row. */
+.embroidery-style-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(80px,92px);
+  gap:8px;align-items:end;min-width:0}
+.embroidery-style-grid .field{min-width:0}
+.embroidery-style-grid input[type="number"]{min-width:0;width:100%;
+  min-height:44px;box-sizing:border-box;font:inherit}
+.embroidery-style-grid select{min-width:0;width:100%}

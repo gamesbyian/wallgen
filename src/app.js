@@ -251,6 +251,10 @@ function fromControls() {
   const otherTreatments=(current.surfaceTreatments||[])
     .filter(item=>item.id!=='editor-stitches');
   const target=form.elements.namedItem('embroideryTarget').value;
+  const regionAngleField=form.elements.namedItem('embroideryDirection');
+  const savedThread=current.surfaceTreatments?.find(item=>item.id==='editor-stitches');
+  const regionAngle=regionAngleField.value.trim()===''?
+    (savedThread?.direction??38):Number(regionAngleField.value);
   if(target!=='off'){
     otherTreatments.unshift({
       id:'editor-stitches',enabled:true,materialFamily:'embroidery',
@@ -261,7 +265,7 @@ function fromControls() {
         {scope:'palette',role:'fill',colorSlots:[Number(target)],ids:[]},
       pitch:Number(form.elements.namedItem('embroideryPitch').value),
       relief:Number(form.elements.namedItem('embroideryRelief').value),
-      direction:38,
+      direction:regionAngle,
     });
   }
   if(current.surfaceTreatments||otherTreatments.length)
@@ -340,6 +344,12 @@ function toControls(recipe) {
   if(byObject)byObject.disabled=!choices.length&&selected!=='object';
   targetSelect.value=selected;
   form.elements.namedItem('embroideryStyle').value=stitch?.style??'satin';
+  const regionAngleInput=form.elements.namedItem('embroideryDirection');
+  regionAngleInput.value=String(stitch?.direction??38);
+  regionAngleInput.disabled=current.structure==='paths';
+  regionAngleInput.title=regionAngleInput.disabled?
+    'Region stitch angle applies to circles and regions, not path-following ribbons':
+    'Turn the regional stitch direction in degrees';
   const threadSummary=form.querySelector('.thread-treatment-summary');
   if(threadSummary)threadSummary.textContent=selected==='off'?'Off':
     selected==='all'?'All colours':selected==='object'?
@@ -1947,7 +1957,8 @@ document.addEventListener('change',event=>{
     }
   }
   if(['photoEnabled','photoPresetId','photoAmount','photoGrain','photoHalation',
-      'embroideryTarget','embroideryObjectId','embroideryStyle','embroideryPitch','embroideryRelief'].includes(event.target.name)){
+      'embroideryTarget','embroideryObjectId','embroideryStyle','embroideryDirection',
+      'embroideryPitch','embroideryRelief'].includes(event.target.name)){
     clearTimeout(rangeTimeout);
     updateControlsFromInputs();
     return;
