@@ -419,3 +419,29 @@ test('Activity settings survives a failed storage read and discards stale async 
   assert.match(refresh,/querySelector\('\[data-usage-recent\]'\)\.replaceChildren\(\)/,
     'do not show previously cached events when fresh storage is unreadable');
 });
+
+test('corrupt previous snapshots cannot invent terminal outcomes or poison new sessions',async()=>{
+  const {recorder}=rig();
+  const malformed=[
+    {sessionId:'previous',episodeId:'episode',seq:Number.MAX_SAFE_INTEGER,recipe:{seed:'old'}},
+    {sessionId:'previous',episodeId:'episode',seq:0,recipe:{seed:'old'}},
+    {sessionId:'previous',episodeId:'episode',seq:1,recipe:null},
+    {sessionId:'',episodeId:'episode',seq:1,recipe:{seed:'old'}}
+  ];
+  for(const snapshot of malformed){
+    assert.equal(recorder.recoverPrevious(snapshot),false);
+    assert.match(recorder.recoveryWarning,/could not be verified/);
+  }
+  recorder.start({seed:'fresh'});
+  const rows=await recorder.records();
+  assert.deepEqual(rows.map(row=>row.type),['episode_start']);
+  assert.equal(rows[0].seq,1);
+  assert.equal(rows[0].recipe.seed,'fresh');
+  assert.ok(!rows.some(row=>row.sessionId==='previous'));
+  const report=analyzeCreativeUsage([{source:'after-corruption',
+    data:{schema:1,events:rows}}]);
+  assert.equal(report.sessions[0].sequenceError,null);
+  assert.equal(report.episodes[0].replayError,null);
+  await recorder.clear();
+  assert.equal(recorder.recoveryWarning,null);
+});
