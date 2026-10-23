@@ -189,7 +189,8 @@ export function extractImagePathCandidates({data,width:w,height:h}){
   const colourRegions=components(colourful,w,h,minArea);
   for(const region of colourRegions.slice(0,2)){
     const p=colourCentreline(region,w,h);
-    if(p.length>=12&&region.maxX-region.minX>w*.2)
+    if(p.length>=12&&Math.max((region.maxX-region.minX)/w,
+      (region.maxY-region.minY)/h)>.2)
       result.push({kind:'arc',label:'Colour-band centreline',points:p,
         score:region.area*1.3,closed:false});
   }
