@@ -349,3 +349,38 @@ test('six-render candidate selection preserves one independent type before redun
    ['straight','loop']);
  assert.throws(()=>diverseReconstructionCandidates(options,100),/budget/);
 });
+
+test('curved seven-band import compares a safe Draw fallback with explicit unclamped ribbons',()=>{
+  const source=raster(180,330,(x,y)=>{
+    const bend=Math.sin(x/17)*8;
+    for(let i=0;i<7;i++)if(Math.abs(y-(42+i*34+bend))<8)
+      return colour(HUES[i]);
+    return [0,0,0,255];
+  });
+  const desc=describeReconstructionImage(source);
+  assert.equal(desc.curve.kind,'wave');
+  const candidates=reconstructionCandidates(source,{seed:'not-authenticated'});
+  const paths=candidates.filter(c=>c.kind==='path');
+  assert.ok(paths.some(c=>c.recipe.geometrySafety===true),
+    'conservative working Draw recipe must remain a rankable choice');
+  assert.ok(paths.some(c=>c.recipe.geometrySafety===false),
+    'wide current-ribbon alternative uses ordinary canonical opt-out');
+  assert.ok(candidates.length<=RECONSTRUCTION_RENDER_LIMIT);
+  assert.ok(paths.every(c=>c.recipe.geometry==='drawn'&&
+    c.recipe.structure==='paths'&&c.recipe.customPath.length>1));
+  const locked=reconstructionCandidates(source,normalizeRecipe({
+    seed:'locked-current',geometrySafety:true,lockedSettings:['geometrySafety']
+  }));
+  assert.ok(locked.every(c=>c.recipe.geometrySafety===true),
+    'must not bypass a user lock in canonical Apply or preview');
+});
+
+test('straight seven-band imports do not relax curvature safety speculatively',()=>{
+  const flat=raster(180,330,(x,y)=>{
+    for(let i=0;i<7;i++)if(Math.abs(y-(42+i*34))<8)
+      return colour(HUES[i]);
+    return [0,0,0,255];
+  });
+  const candidates=reconstructionCandidates(flat,{seed:'straight'});
+  assert.ok(candidates.every(c=>c.recipe.geometrySafety!==false));
+});
