@@ -1,5 +1,7 @@
 # Source-anchored recipe default and expression boundaries
 
+**Current authority:** Use [the latest handoff](../AGENT-HANDOFF-2026-10-22.md). The original first-v1 normalizer, renderer and exporter are pinned, have produced source-era image receipts, and are now guarded by focused Node checks inside `npm run check:quick` (#525). The **next** meaningful historical milestone is *modern renderer parity against an explicitly proposed source-era adapter and held-out old pixels*, not rerunning the source-only v1 fixture or enabling generic conversions. Preserve all source bytes and refusal safeguards.
+
 ## Original-v1 painter pixels now available (2026-10-22)
 
 [Two genuine original v1 source-rendered artworks](source-era/v1-37428b/ACTUAL-RENDER-FINDINGS-2026-10-22.md) prove the historic `stripeShadowEnabled` gate changes 40,662 actual pixels under an otherwise fixed recipe. [The immutable source and image manifest](source-era/v1-37428b/SHADOW-IMAGE-GOLDENS.json) records exact Git blobs, IDAT hashes and legacy envelope dimensions. A **modern renderer parity run with an era-specific adapter** is the next semantic milestone, not immediate v1 metadata rewriting.
