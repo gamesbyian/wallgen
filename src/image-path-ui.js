@@ -1,7 +1,7 @@
 import {extractImagePathCandidates,extractImageShapeCandidates,imagePlacement,pathToWallpaper} from './image-path.js?v=20261023-fullframe1';
 import {drawAuthoringLockReason,drawAuthoringLockMessage,pathStructureLockedOutsidePaths} from './path-authoring-locks.js';
 import {verifyLocalSilhouetteSvg} from './svg-import-safety.js';
-import {reconstructionCandidates,rankReconstructionCandidates,refineReconstructionCandidate,describeReconstructionImage,reconstructionPlacement,RECONSTRUCTION_FRAME} from './image-reconstruction.js?v=20261023-radial-provenance1';
+import {reconstructionCandidates,rankReconstructionCandidatesCooperatively,refineReconstructionCandidateCooperatively,describeReconstructionImage,reconstructionPlacement,RECONSTRUCTION_FRAME} from './image-reconstruction.js?v=20261023-yielding1';
 
 /** A live import dialog must match the current authoritative lock state,
  * even if a recipe restores a lock while image decoding is in flight. */
@@ -112,7 +112,7 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle,onShape,
     try{onRender(candidate.recipe,recipeCanvas);}
     catch(error){recipeStatus.textContent+=' Preview unavailable: '+error.message;}
   }
-  function recoverRecipes(pixels){
+  async function recoverRecipes(pixels,revision){
     reconstructed=[];recipeChooser.replaceChildren();recipeWorkspace.hidden=true;
     if(!onRecipe||!onRender)return;
     const candidates=reconstructionCandidates(pixels,getRecipe());
@@ -132,13 +132,25 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle,onShape,
       onRender(recipe,rendered);
       return rendered.getContext('2d',{willReadFrequently:true}).getImageData(0,0,w,h);
     };
-    reconstructed=rankReconstructionCandidates(candidates,reference,renderPixels)
-      .filter(result=>Number.isFinite(result.error));
+    // Scheduling one real renderer pass per animation frame lets Close and
+    // Choose another take effect; revision checks discard stale results.
+    const isCancelled=()=>revision!==loadRevision||!dialog.open;
+    const yieldControl=()=>new Promise(resolve=>requestAnimationFrame(resolve));
+    recipeWorkspace.hidden=false;
+    recipeApply.disabled=true;
+    recipeStatus.textContent='Comparing editable candidates locally…';
+    const ranked=await rankReconstructionCandidatesCooperatively(
+      candidates,reference,renderPixels,{yieldControl,isCancelled});
+    if(!ranked||isCancelled())return;
+    reconstructed=ranked.filter(result=>Number.isFinite(result.error));
     if(reconstructed.length){
-      reconstructed[0]=refineReconstructionCandidate(reconstructed[0],
-        reference,renderPixels);
+      const improved=await refineReconstructionCandidateCooperatively(
+        reconstructed[0],reference,renderPixels,{yieldControl,isCancelled});
+      if(!improved||isCancelled())return;
+      reconstructed[0]=improved;
       reconstructed.sort((a,b)=>a.error-b.error);
     }
+    if(isCancelled())return;
     for(const [i,item] of reconstructed.entries()){
       const option=document.createElement('option');
       option.value=String(i);option.textContent=item.label+' ('+item.error.toFixed(3)+')';
@@ -213,7 +225,8 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle,onShape,
       selected=0;working=false;choose(0);
       // Recipe fitting is optional: original path/silhouette extraction
       // stays usable if a renderer or unsupported image defeats fitting.
-      try{recoverRecipes(pixels);}catch(error){
+      try{await recoverRecipes(pixels,revision);}catch(error){
+        if(revision!==loadRevision||!dialog.open)return;
         recipeWorkspace.hidden=false;recipeApply.disabled=true;
         recipeStatus.textContent='Editable recipe fitting unavailable: '+(error?.message||'unknown error');
       }
