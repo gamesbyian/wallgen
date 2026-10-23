@@ -29,18 +29,3 @@ jobs:
       - name: Full Node suite (manual request only)
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.depth == 'full' }}
         run: npm run check
-
-      # TEMPORARY #535 production-art proof: remove byte-for-byte before merging.
-      - name: One-off Organic linen real wallpapers
-        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 535 }}
-        run: |
-          npm install --no-save playwright
-          npx playwright install chromium
-          node scripts/review-materials.mjs --focus-organic --out-dir artifacts/organic-linen
-      - name: Archive one-off Organic linen PNGs
-        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 535 }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: organic-linen-four-real-pngs
-          path: artifacts/organic-linen/
-          retention-days: 7
