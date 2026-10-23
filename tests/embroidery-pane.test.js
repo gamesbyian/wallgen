@@ -65,3 +65,16 @@ test('interlinked chain stitch is opt-in in existing persisted embroidery style 
   assert.match(code,/const chainStep=Math\.max/);
   assert.match(code,/chainLink\(ctx/);
 });
+
+test('compact Thread keeps native hidden picker and 44px touch targets in portrait',()=>{
+  const html=source('index.html'),css=source('editor-material-status.css');
+  for(const field of ['embroideryTarget','embroideryStyle','embroideryObjectId',
+    'embroideryDirection','embroideryPitch','embroideryRelief'])
+    assert.equal((html.match(new RegExp('name="'+field+'"','g'))||[]).length,1);
+  assert.match(html,/<div class="embroidery-style-grid">[\s\S]*name="embroideryTarget"[\s\S]*name="embroideryStyle"/);
+  assert.match(html,/<div class="embroidery-finish-grid">[\s\S]*name="embroideryDirection"[\s\S]*class="control-grid range-grid"/);
+  assert.match(css,/\.embroidery-object-picker\[hidden\]\{\s*display:none!important/);
+  assert.match(css,/\.embroidery-controls\[open\] \.range-grid input:not\(\[type="range"\]\)/);
+  assert.match(css,/min-height:44px!important/);
+  assert.match(css,/--mobile-tray-height:clamp\(390px,46dvh,450px\)/);
+});

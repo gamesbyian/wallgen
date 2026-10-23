@@ -1,0 +1,115 @@
+#!/usr/bin/env node
+/**
+ * Two actual browser viewports of expanded Texture -> Surface -> Thread.
+ * Not a general UI atlas, automatic accessibility certificate, or routine CI.
+ * Requires local static app server + installed Playwright Chromium.
+ *
+ * node scripts/review-thread-portrait.mjs --out-dir artifacts/thread-portrait
+ */
+import {mkdir,access,writeFile} from 'node:fs/promises';
+import {join,resolve} from 'node:path';
+
+const params={outDir:'artifacts/thread-portrait',url:'http://127.0.0.1:4173'};
+for(let i=2;i<process.argv.length;i++){
+  const arg=process.argv[i];
+  if(arg==='--help'||arg==='-h'){
+    console.log('node scripts/review-thread-portrait.mjs [--out-dir folder] [--url local-http-url]');
+    process.exit(0);
+  }
+  if(!['--out-dir','--url'].includes(arg)||!process.argv[i+1])
+    throw Error('Unexpected or incomplete argument '+arg);
+  params[arg==='--out-dir'?'outDir':'url']=process.argv[++i];
+}
+const out=resolve(params.outDir);
+await mkdir(out,{recursive:true});
+for(const path of ['report.json','412x892.png','320x700.png','412x892-object.png','320x700-object.png']){
+  try{await access(join(out,path));throw Error('Output exists: '+path);}
+  catch(err){if(err.code!=='ENOENT')throw err;}
+}
+const {chromium}=await import('playwright');
+const browser=await chromium.launch({headless:true});
+const results=[];
+try{
+  for(const viewport of [{width:412,height:892},{width:320,height:700}]){
+    const page=await browser.newPage({viewport,deviceScaleFactor:1,isMobile:true,
+      hasTouch:true,reducedMotion:'reduce'});
+    const warnings=[];
+    page.on('pageerror',error=>warnings.push(String(error)));
+    try{
+      await page.goto(params.url,{waitUntil:'domcontentloaded',timeout:15000});
+      await page.locator('#mobileEdit').click({timeout:8000});
+      await page.locator('#tab-material').click({timeout:8000});
+      await page.locator('.editor-tool-tab[data-editor-tool=surface]').click({timeout:8000});
+      const details=page.locator('.editor-tool-card[data-editor-tool=surface] .embroidery-controls');
+      await details.locator('summary').click({timeout:8000});
+      await details.locator('[name=embroideryTarget]').selectOption('all');
+      await details.locator('[name=embroideryStyle]').selectOption('chain');
+      await page.waitForTimeout(180);
+      const metrics=await page.evaluate(()=>{
+        const card=document.querySelector('.editor-tool-card[data-editor-tool=surface]');
+        const panel=card.querySelector('.embroidery-controls');
+        const sidebar=document.querySelector('.sidebar');
+        const finish=panel.querySelector('small');
+        const fields=[...panel.querySelectorAll('summary,select,input')]
+          .filter(el=>el.getBoundingClientRect().height>0);
+        const rect=el=>{const r=el.getBoundingClientRect();return {
+          top:Math.round(r.top*10)/10,bottom:Math.round(r.bottom*10)/10,
+          left:Math.round(r.left*10)/10,right:Math.round(r.right*10)/10,
+          width:Math.round(r.width*10)/10,height:Math.round(r.height*10)/10};};
+        const cardRect=rect(card),sidebarRect=rect(sidebar);
+        return {
+          card:cardRect,sidebar:sidebarRect,thread:rect(panel),help:rect(finish),
+          cardHeight:card.clientHeight,cardScrollHeight:card.scrollHeight,
+          panelHeight:panel.clientHeight,panelScrollHeight:panel.scrollHeight,
+          pageScrollHeight:document.documentElement.scrollHeight,
+          pageClientHeight:document.documentElement.clientHeight,
+          fields:fields.map(el=>({tag:el.tagName,name:el.name||el.textContent.slice(0,25),
+            disabled:el.disabled===true,rect:rect(el)})),
+          // The help text is intentionally screen-reader-only on mobile:
+          // measuring its one-pixel box gave false confidence in panel fit.
+          // Only visible interactive controls and the summary define the
+          // physical bounding box that a finger must reach.
+          lastControlBottom:Math.max(...fields.map(el=>rect(el).bottom)),
+          hiddenPickerVisible:panel.querySelector('.embroidery-object-picker[hidden]')
+            ?.getBoundingClientRect().height>0||false,
+          controlBottomClipped:fields.some(el=>
+            rect(el).bottom>Math.min(cardRect.bottom,sidebarRect.bottom)+2),
+          anySub44:fields.filter(el=>['SELECT','INPUT'].includes(el.tagName))
+            .some(el=>rect(el).height<44),
+          previewHeight:document.querySelector('canvas')?.getBoundingClientRect().height,
+          scrollTop:card.scrollTop
+        };
+      });
+      const image=viewport.width+'x'+viewport.height+'.png';
+      await page.screenshot({path:join(out,image),fullPage:false,animations:'disabled'});
+      // Measure the second meaningful source state: the extra authored-object
+      // picker must not disappear when 'One chosen ribbon or region' is active.
+      await details.locator('[name=embroideryTarget]').selectOption('object');
+      await page.waitForTimeout(120);
+      const objectMetrics=await page.evaluate(()=>{
+        const card=document.querySelector('.editor-tool-card[data-editor-tool=surface]');
+        const picker=card.querySelector('.embroidery-object-picker');
+        const frame=card.getBoundingClientRect();
+        const frameBottom=Math.min(frame.bottom,
+          document.querySelector('.sidebar').getBoundingClientRect().bottom);
+        const controls=[...card.querySelectorAll('.embroidery-controls select,.embroidery-controls input')].filter(el=>el.getBoundingClientRect().height>0);
+        const lastBottom=Math.max(...controls.map(el=>el.getBoundingClientRect().bottom));
+        return {pickerVisible:!picker.hidden&&picker.getBoundingClientRect().height>0,
+          lastBottom:Math.round(lastBottom),cardBottom:Math.round(frameBottom),
+          clipped:lastBottom>frameBottom+2,
+          scrollHeight:card.scrollHeight,clientHeight:card.clientHeight,
+          controls:controls.map(el=>({name:el.name,height:Math.round(el.getBoundingClientRect().height)}))};
+      });
+      const objectImage=viewport.width+'x'+viewport.height+'-object.png';
+      await page.screenshot({path:join(out,objectImage),fullPage:false,animations:'disabled'});
+      results.push({viewport,image,warnings,metrics,objectImage,objectMetrics});
+      console.log(objectImage+' objectClipped='+objectMetrics.clipped);
+      console.log(image+' footerClipped='+metrics.controlBottomClipped+
+        ' sub44='+metrics.anySub44+' cardScroll='+metrics.cardScrollHeight+'/'+metrics.cardHeight);
+    }finally{await page.close();}
+  }
+}finally{await browser.close();}
+await writeFile(join(out,'report.json'),JSON.stringify({
+  study:'roygbiv-thread-portrait/v1',status:'actual-browser-measurement',
+  caveat:'Chromium touch emulation does not prove physical Pixel performance or virtual keyboard',
+  results},null,2)+'\n');

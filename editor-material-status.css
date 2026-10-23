@@ -116,3 +116,88 @@
 .embroidery-style-grid input[type="number"]{min-width:0;width:100%;
   min-height:44px;box-sizing:border-box;font:inherit}
 .embroidery-style-grid select{min-width:0;width:100%}
+
+/* Final layout based on real source screenshots, never a clipped
+ * six-column display:contents experiment. Keep original form nodes/handlers,
+ * use two real sibling grid rows and reserve slightly more tray only on Thread. */
+@media(max-width:790px) and (orientation:portrait){
+  body.mobile-studio.mobile-edit-open:has(
+    .editor-tool-card[data-editor-tool="surface"] .embroidery-controls[open]){
+    --mobile-tray-height:clamp(330px,39dvh,365px)!important;
+  }
+  body.mobile-studio .sidebar .editor-tool-card[data-editor-tool="surface"]
+    >.embroidery-controls[open]{
+    display:flex!important;flex-direction:column!important;gap:4px!important;
+    align-items:stretch;min-width:0;
+  }
+  body.mobile-studio .sidebar .embroidery-controls[open]>summary{
+    min-height:44px!important;flex:0 0 44px;margin:0!important;
+  }
+  body.mobile-studio .sidebar .embroidery-controls[open]>.embroidery-style-grid{
+    display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:4px!important;min-width:0;min-height:0;
+  }
+  body.mobile-studio .sidebar .embroidery-controls[open]>.embroidery-finish-grid{
+    display:grid!important;grid-template-columns:minmax(70px,.46fr) minmax(0,1fr)!important;
+    gap:4px!important;min-width:0;min-height:0;
+  }
+  body.mobile-studio .sidebar .embroidery-controls[open]
+    .embroidery-finish-grid>.range-grid{
+    display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:4px!important;min-width:0;min-height:0;
+  }
+  body.mobile-studio .sidebar .editor-tool-card[data-editor-tool="surface"]
+    .embroidery-controls[open] .field{
+    display:flex!important;flex-direction:column!important;
+    align-items:stretch!important;justify-content:start!important;
+    font-size:10px!important;line-height:1.05!important;
+    gap:2px!important;min-width:0;margin:0!important;padding:0!important;
+  }
+  body.mobile-studio .sidebar .editor-tool-card[data-editor-tool="surface"]
+    .embroidery-controls[open] .field select{
+    min-height:44px!important;height:44px!important;flex:0 0 44px!important;
+    padding:5px 21px 5px 5px!important;font-size:10px!important;
+    background-position:right 5px center!important;
+  }
+  body.mobile-studio .sidebar .embroidery-controls[open]
+    input[name="embroideryDirection"]{
+    min-height:44px!important;height:44px!important;
+    padding:4px!important;font-size:11px!important;
+  }
+  body.mobile-studio .sidebar .editor-tool-card[data-editor-tool="surface"]
+    .embroidery-controls[open] .range-field>span{
+    flex:0 0 auto!important;font-size:9px!important;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  body.mobile-studio .sidebar .embroidery-controls[open] .range-field input[type="range"]{
+    min-height:44px!important;height:44px!important;flex:1 1 44px!important;
+    margin:0!important;width:100%;
+  }
+  body.mobile-studio .sidebar .embroidery-controls[open]>small{
+    position:absolute!important;width:1px;height:1px;padding:0;
+    margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;
+  }
+  body.mobile-studio.mobile-edit-open:has(
+    .editor-tool-card[data-editor-tool="surface"]
+      .embroidery-controls[open] .embroidery-object-picker:not([hidden])){
+    --mobile-tray-height:clamp(390px,46dvh,450px)!important;
+  }
+  body.mobile-studio .sidebar .embroidery-controls[open]
+    >.embroidery-object-picker:not([hidden]){
+    display:flex!important;min-width:0;flex:0 0 auto;
+  }
+}
+
+/* Grid-only mobile styles must not override native hidden="": the former
+ * caused the target-specific picker to occupy a full row even on All colours.
+ * Keep the real input hitbox 44px on the paired numeric slider controls too. */
+@media(max-width:790px) and (orientation:portrait){
+  body.mobile-studio .sidebar .editor-tool-card[data-editor-tool="surface"]
+    .embroidery-controls[open] .embroidery-object-picker[hidden]{
+    display:none!important;
+  }
+  body.mobile-studio .sidebar .editor-tool-card[data-editor-tool="surface"]
+    .embroidery-controls[open] .range-grid input:not([type="range"]){
+    height:44px!important;min-height:44px!important;
+  }
+}
