@@ -22,7 +22,7 @@ export function normalizeSurfaceTreatments(input){
       .filter(i=>typeof i==='string'&&/^[a-zA-Z0-9_\/-]{1,84}$/.test(i)))].slice(0,16);
     out.push({
       id,enabled:raw.enabled===true||raw.enabled==='true',
-      materialFamily:'embroidery',style:['satin','satin-soft','tatami','running','chain'].includes(raw.style)?raw.style:'satin',
+      materialFamily:'embroidery',style:['satin','satin-soft','tatami','running','chain','satin-fibre','tatami-fibre'].includes(raw.style)?raw.style:'satin',
       target:{scope,role:'fill',colorSlots,ids},
       pitch:bounds(raw.pitch,5,2,16),relief:bounds(raw.relief,65,0,100),
       direction:bounds(raw.direction,38,-180,180),
@@ -71,6 +71,45 @@ function chainLink(ctx,x,y,tx,ty,nx,ny,half,loft,relief){
   loop(.42);ctx.strokeStyle='rgba(0,0,0,.20)';ctx.stroke();
   loop(-.3);stitchInk(ctx,.68,relief);ctx.stroke();
 }
+// Opt-in fibre appearance. An underlaid dark edge, two thin strands and a
+// softly interrupted glint respond to the *actual stitch direction*. Since
+// the coloured fill stays exposed between filaments, a saturated ribbon does
+// not turn into opaque grey hatching. Every stroke is clipped by the caller's
+// original ribbon/compound path, including holes and detached islands.
+// All phase values are lattice indices, so crossing replays paint identically.
+function fibreSpan(ctx,ax,ay,bx,by,pitch,relief,phase){
+  const dx=bx-ax,dy=by-ay,length=Math.hypot(dx,dy);
+  if(!Number.isFinite(length)||length<.75)return;
+  const nx=-dy/length,ny=dx/length,depth=relief/100;
+  const light=(nx-ny)/Math.SQRT2; // stable upper-left grazing illumination
+  const side=light>=0?1:-1;
+  const underlay=.03+depth*.085;
+  const strand=.028+depth*.075;
+  const highlight=(.025+depth*.10)*(.55+.45*Math.abs(light));
+  const offset=Math.min(.64,Math.max(.25,pitch*.105));
+  const path=(sx,sy,ex,ey)=>{
+    ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(ex,ey);ctx.stroke();
+  };
+  // Shallow underlay first; it belongs to this one stitch and does not shade
+  // adjacent unstitched ink or the substrate outside the clipped surface.
+  ctx.lineWidth=Math.min(3.2,Math.max(.8,pitch*.32));
+  ctx.strokeStyle='rgba(0,0,0,'+underlay.toFixed(3)+')';
+  path(ax+nx*.35+.18,ay+ny*.35+.18,bx+nx*.35+.18,by+ny*.35+.18);
+  ctx.lineWidth=Math.min(.9,Math.max(.4,pitch*.115));
+  ctx.strokeStyle='rgba(0,0,0,'+strand.toFixed(3)+')';
+  path(ax-nx*offset*side,ay-ny*offset*side,
+    bx-nx*offset*side,by-ny*offset*side);
+  ctx.strokeStyle='rgba(255,255,255,'+highlight.toFixed(3)+')';
+  path(ax+nx*offset*side,ay+ny*offset*side,
+    bx+nx*offset*side,by+ny*offset*side);
+  // Fibre twists interrupt specular reflection. Never use per-render RNG:
+  // alternate the glint position on the original world-space stitch lattice.
+  const start=(phase&1)? .13:.44,end=Math.min(.95,start+.32);
+  ctx.lineWidth=Math.min(.65,Math.max(.32,pitch*.085));
+  ctx.strokeStyle='rgba(255,255,255,'+(highlight*.65).toFixed(3)+')';
+  path(ax+dx*start+nx*offset*.4*side,ay+dy*start+ny*offset*.4*side,
+    ax+dx*end+nx*offset*.4*side,ay+dy*end+ny*offset*.4*side);
+}
 /** Draw transverse thread ribs along the same tangent/normal path as ribbon geometry.
  * Caller establishes the actual stripe footprint as the active clipping mask.
  */
@@ -78,6 +117,7 @@ export function drawRibbonEmbroidery(ctx,stripe,extent,treatment,range=null){
   if(!treatment||!Number.isFinite(extent)||extent<=0)return 0;
   const step=treatment.pitch;
   const gentle=treatment.style==='satin-soft';
+  const fibre=treatment.style==='satin-fibre'||treatment.style==='tatami-fibre';
   const interval=Math.max(step,2*extent/2500);
   const start=Math.max(-extent,range?.start??-extent),
     end=Math.min(extent,range?.end??extent);
@@ -159,6 +199,7 @@ export function drawRibbonEmbroidery(ctx,stripe,extent,treatment,range=null){
     const w=widthAt(stripe,station,extent)*.485;
     if(!Number.isFinite(w)||w<=0)continue;
     const ax=p.x-p.nx*w,ay=p.y-p.ny*w,bx=p.x+p.nx*w,by=p.y+p.ny*w;
+    if(fibre){fibreSpan(ctx,ax,ay,bx,by,step,treatment.relief,i);count++;continue;}
     // Dark underlay and offset bright ridge create a restrained raised cord.
     ctx.beginPath();ctx.moveTo(ax+.55,ay+.55);ctx.lineTo(bx+.55,by+.55);
     ctx.strokeStyle=gentle?'rgba(0,0,0,.11)':'rgba(0,0,0,.31)';ctx.stroke();
@@ -200,7 +241,8 @@ export function drawRegionEmbroidery(ctx,object,treatment){
   // Short interlocking tatami segments follow a stable world-space row lattice.
   // Segment length grows for huge bounds to cap Canvas2D stroke work. The
   // enclosing renderer's even-odd clip handles silhouette islands and holes.
-  const tatami=treatment.style==='tatami';
+  const tatami=treatment.style==='tatami'||treatment.style==='tatami-fibre';
+  const fibre=treatment.style==='satin-fibre'||treatment.style==='tatami-fibre';
   const chain=treatment.style==='chain';
   const gentle=treatment.style==='satin-soft';
   const running=treatment.style==='running';
@@ -240,6 +282,11 @@ export function drawRegionEmbroidery(ctx,object,treatment){
       for(let x=-limit-segment+offset;x<limit;x+=segment){
         const a=Math.max(-limit,x+.7),b=Math.min(limit,x+segment-.7);
         if(b-a<1)continue;
+        if(fibre){
+          fibreSpan(ctx,a,y,b,y,treatment.pitch,treatment.relief,
+            k*8191+Math.floor((x+limit+segment)/segment));
+          stitches++;continue;
+        }
         ctx.beginPath();ctx.moveTo(a,y+.5);ctx.lineTo(b,y+.5);
         ctx.strokeStyle='rgba(0,0,0,.25)';ctx.stroke();
         ctx.beginPath();ctx.moveTo(a,y-.5);ctx.lineTo(b,y-.5);
@@ -247,6 +294,11 @@ export function drawRegionEmbroidery(ctx,object,treatment){
         stitches++;
       }
     }else{
+      if(fibre){
+        fibreSpan(ctx,-diagonal*.8,y,diagonal*.8,y,
+          treatment.pitch,treatment.relief,k);
+        stitches++;continue;
+      }
       ctx.beginPath();ctx.moveTo(-diagonal*.8,y+.5);ctx.lineTo(diagonal*.8,y+.5);
       ctx.strokeStyle=gentle?'rgba(0,0,0,.09)':'rgba(0,0,0,.25)';ctx.stroke();
       ctx.beginPath();ctx.moveTo(-diagonal*.8,y-.5);ctx.lineTo(diagonal*.8,y-.5);
