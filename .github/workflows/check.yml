@@ -29,18 +29,3 @@ jobs:
       - name: Full Node suite (manual request only)
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.depth == 'full' }}
         run: npm run check
-      # TEMP radial art comparison; remove before merging #586.
-      - name: TEMP real rays and scattered-circles evaluation
-        if: ${{ github.head_ref == 'agent3/radial-rays-recognition-20261023' }}
-        run: |
-          npm install --no-save playwright
-          npx playwright install --with-deps chromium
-          node scripts/review-reconstruction.mjs --only 08-radial-rays,11-scattered-circles --out-dir artifacts/r0-rays-586
-          node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/r0-rays-586
-      - name: TEMP preserve two real source/candidate comparisons
-        if: ${{ github.head_ref == 'agent3/radial-rays-recognition-20261023' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: r0-rays-circle-586
-          path: artifacts/r0-rays-586/
-          retention-days: 2
