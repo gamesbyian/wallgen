@@ -1,5 +1,12 @@
 # ROYGBIV handoff: current authority and independently actionable work
 
+## 23 October mobile fitting and actually viewed curved-art findings
+
+[PR #597](https://github.com/gamesbyian/wallgen/pull/597) merged the cooperative, dismissible real-render candidate evaluation (one painter call per animation frame with revision cancellation; same canonical refinement trials as synchronous Node R0). This is code evidence, **not measured physical Pixel responsiveness**.
+
+The [curved production-art review](RECONSTRUCTION-CURVE-PRODUCTION-FINDINGS-2026-10-23.md) used **four authentic 480×1040 PNGs**, image-data-identical metadata-free inputs and actually viewed source/fit preview pairs ([one-off run #39936947767](https://github.com/gamesbyian/wallgen/actions/runs/39936947767)). Hairpin geometry recovery improved error .215746→.107867; Loop held .053835. Wave remains .206789, Jagged .263622 vs .263117 baseline, and their visual reconstructions are visibly too thin and tightly clustered. [PR #600](https://github.com/gamesbyian/wallgen/pull/600) offers bounded optional procedural curves, preserves one choice per geometry inside six-render budget and carries accurate inferred candidate provenance. The temporary Chromium workflow was deleted. **Next visual target is pigment-region spacing, ribbon thickness, separated negative-space gaps and contour alignment**, not a second engine or arbitrary CI. Human-supplied external references and actual Pixel/Undo/export session still unverified.
+
+
 ## Latest editor and consented-backup fixes (23 October)
 
 Four focused PRs now merged on `main`, each with ordinary `Validate Wallgen` quick CI green: [#591](https://github.com/gamesbyian/wallgen/pull/591) routes Seed Apply/Enter through the shared settled edit transaction rather than unguarded `render(fromControls())`; [#593](https://github.com/gamesbyian/wallgen/pull/593) bypasses a genuinely unsendable oversized event only when choosing an **independent** session for private backup, never skipping a later event in the blocked original session; [#594](https://github.com/gamesbyian/wallgen/pull/594) makes Activity read failures visible and keeps opt-in controls truthful when IndexedDB queries fail, ignoring stale asynchronous refresh results; [#595](https://github.com/gamesbyian/wallgen/pull/595) settles pending slider edits before opening a Saved/Explore thumbnail or toggling Photo Before/After, preserving the true Undo predecessor. No new recorder, service, logging mode, recipe dialect, category, browser CI or physical test assertion.
