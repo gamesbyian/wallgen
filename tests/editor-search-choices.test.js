@@ -4,6 +4,7 @@ import {readFileSync} from 'node:fs';
 import {TOOL_LIST} from '../src/editor-schema.js';
 import {findEditorSearchHit,findEditorSearchHits} from '../src/editor-tool-search.js';
 import {toolAppliesToScene} from '../src/editor-tool-applicability.js';
+import {findPhotoIntent} from '../src/editor-photo-navigation.js';
 
 test('ranked search exposes different actual controls, preserving first-hit semantics',()=>{
   const options={applies:tool=>toolAppliesToScene(tool,{structure:'paths'})};
@@ -38,4 +39,28 @@ test('multiple-choice UI has semantic listbox, keyboard navigation, click and es
   assert.match(js,/chooseSearchResult\(matchedSearchHit\)/);
   assert.match(css,/\.editor-search-results\[hidden\]/);
   assert.match(css,/max-height:186px/);
+});
+
+test('specific artistic photo terms navigate to one existing Light pane without changing look',()=>{
+  const examples={
+    'film grain':'Film grain',
+    'photo bloom':'Wide warm film diffusion',
+    'film halation':'Film finishing',
+    'warm fringe':'Wide warm film diffusion',
+    'negative print':'Muted negative print',
+    'colour negative':'Muted negative print',
+    'old digicam':'Early digital compact',
+    'high dynamic range':'Smartphone HDR',
+    'black and white print':'Monochrome film',
+    'photographic grain':'Film grain',
+    'iphone portraits':'Smartphone HDR'
+  };
+  for(const [query,expected] of Object.entries(examples))
+    assert.equal(findPhotoIntent(query)?.lookHint,expected,query);
+  for(const vague of ['grain','glow','texture','light','background','shadows',''])
+    assert.equal(findPhotoIntent(vague),null,'keep ordinary setting search: '+vague);
+  const layout=readFileSync(new URL('../src/editor-layout.js',import.meta.url),'utf8');
+  assert.match(layout,/findPhotoIntent\(query\)/);
+  assert.match(layout,/photoIntent\.lookHint/);
+  assert.match(layout,/\[data-photo-pane="photo"\]/);
 });

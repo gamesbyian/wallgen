@@ -10,6 +10,7 @@ import {installMaterialInspectors} from './editor-material-inspector.js';
 import {installRelatedLightTools} from './editor-related-light-tools.js';
 import {installPatternPrerequisites} from './editor-pattern-prerequisites.js';
 import {installDesignTypeNext} from './editor-design-next.js';
+import {findPhotoIntent} from './editor-photo-navigation.js';
 
 const byId=id=>document.getElementById(id);
 const form=byId('controls');
@@ -368,12 +369,14 @@ export function mountEditor(){
     // Photo lives in a compact second view of Light during this first
     // implementation phase. Explicit artistic-intent search can reveal it
     // without manufacturing duplicate scalar controls or a new phone tab.
-    if(/^(photo|photography|film|35mm|smartphone|iphone|pixel camera|dslr|webcam|digital camera|cinematic|halation)(?:$|[^a-z])/i.test(query)){
+    const photoIntent=findPhotoIntent(query);
+    if(photoIntent){
       const photoTool=TOOL_LIST.find(tool=>tool.id==='lighting');
       matchedSearchHit={tool:photoTool,key:null,label:'Photo finish',kind:'tool'};
       selectEditorTool('effects','lighting',{source:'search'});
       document.querySelector('[data-photo-pane="photo"]')?.click();
-      searchStatus.textContent='Photo finish · Light → Photo · Enter to open';
+      searchStatus.textContent='Light → Photo · '+photoIntent.lookHint+
+        ' · Choose a look (Enter to open); artwork unchanged';
       searchStatus.hidden=false;
       return;
     }
