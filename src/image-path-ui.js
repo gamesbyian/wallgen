@@ -1,6 +1,7 @@
 import {extractImagePathCandidates,extractImageShapeCandidates,imagePlacement,pathToWallpaper} from './image-path.js?v=20261022-shapes1';
 import {drawAuthoringLockReason,drawAuthoringLockMessage,pathStructureLockedOutsidePaths} from './path-authoring-locks.js';
 import {verifyLocalSilhouetteSvg} from './svg-import-safety.js';
+import {reconstructionCandidates,rankReconstructionCandidates,describeReconstructionImage,RECONSTRUCTION_FRAME} from './image-reconstruction.js';
 
 /** A live import dialog must match the current authoritative lock state,
  * even if a recipe restores a lock while image decoding is in flight. */
@@ -28,17 +29,20 @@ export function imagePathActionAvailability(recipe,candidate,working=false){
 
 // The image is transient: only the selected vector centreline enters the recipe.
 // A native dialog provides an accessible, phone-friendly full-stage workspace.
-export function installImagePathTool({getRecipe,onNotice,onPath,onAngle,onShape}){
+export function installImagePathTool({getRecipe,onNotice,onPath,onAngle,onShape,onRecipe,onRender}){
   const byId=id=>document.getElementById(id);
   const launch=byId('importPathToggle'),fileInput=byId('imagePathFile'),
     dialog=byId('imagePathDialog'),canvas=byId('imagePathCanvas'),
     chooser=byId('imagePathCandidate'),status=byId('imagePathStatus'),
     apply=byId('imagePathApply'),shapeButton=byId('imagePathShape'),
     angleButton=byId('imagePathAngle'),another=byId('imagePathAnother'),
-    closeButton=byId('imagePathCancel');
+    closeButton=byId('imagePathCancel'),
+    recipeWorkspace=byId('imageRecipeWorkspace'),recipeChooser=byId('imageRecipeCandidate'),
+    recipeApply=byId('imageRecipeApply'),recipeStatus=byId('imageRecipeStatus'),
+    recipeCanvas=byId('imageRecipeCanvas');
   const ctx=canvas.getContext('2d');
   let image=null,candidates=[],selected=0,width=0,height=0,working=false;
-  let loadRevision=0;
+  let loadRevision=0,reconstructed=[];
   const phases={idle:'Choose image',analyzing:'Analyzing',ready:'Select geometry',empty:'No geometry'};
   const phaseLabel=dialog.querySelector('.image-path-phase');
   function setPhase(next){
@@ -95,6 +99,44 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle,onShape}
       'No reliable geometry found. Try a cleaner image.';
     paint();
   }
+  function chooseReconstruction(index){
+    recipeChooser.value=String(index);
+    const candidate=reconstructed[index];
+    recipeApply.disabled=!candidate||working;
+    if(!candidate)return;
+    recipeStatus.textContent=candidate.label+'. Estimated colour/coverage difference: '+
+      candidate.error.toFixed(3)+' (lower is better). '+candidate.uncertainty+
+      ' This is an inferred approximation, never the original source recipe.';
+    try{onRender(candidate.recipe,recipeCanvas);}
+    catch(error){recipeStatus.textContent+=' Preview unavailable: '+error.message;}
+  }
+  function recoverRecipes(pixels){
+    reconstructed=[];recipeChooser.replaceChildren();recipeWorkspace.hidden=true;
+    if(!onRecipe||!onRender)return;
+    const candidates=reconstructionCandidates(pixels,getRecipe());
+    if(!candidates.length)return;
+    const frame=document.createElement('canvas');
+    frame.width=RECONSTRUCTION_FRAME.width;frame.height=RECONSTRUCTION_FRAME.height;
+    const g=frame.getContext('2d',{willReadFrequently:true});
+    const desc=describeReconstructionImage(pixels);
+    g.fillStyle=desc.background;g.fillRect(0,0,frame.width,frame.height);
+    const box=placement();
+    g.drawImage(image,box.x*frame.width/600,box.y*frame.height/1300,
+      box.width*frame.width/600,box.height*frame.height/1300);
+    const reference=g.getImageData(0,0,frame.width,frame.height);
+    reconstructed=rankReconstructionCandidates(candidates,reference,(recipe,w,h)=>{
+      const rendered=document.createElement('canvas');rendered.width=w;rendered.height=h;
+      onRender(recipe,rendered);
+      return rendered.getContext('2d',{willReadFrequently:true}).getImageData(0,0,w,h);
+    }).filter(result=>Number.isFinite(result.error));
+    for(const [i,item] of reconstructed.entries()){
+      const option=document.createElement('option');
+      option.value=String(i);option.textContent=item.label+' ('+item.error.toFixed(3)+')';
+      recipeChooser.append(option);
+    }
+    recipeWorkspace.hidden=!reconstructed.length;
+    if(reconstructed.length)chooseReconstruction(0);
+  }
   async function decode(file){
     if(!file||!allowed.test(file.type)&&!(/\.(png|jpe?g|webp|svg)$/i.test(file.name)))
       throw new Error('Choose a PNG, JPEG, WebP or SVG image.');
@@ -134,6 +176,7 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle,onShape}
     // Hide candidates from the previous import until this image's analysis
     // has completed. Their old labels must not be mistaken for new results.
     chooser.replaceChildren();candidates=[];image=null;
+    reconstructed=[];recipeWorkspace.hidden=true;recipeApply.disabled=true;
     status.textContent='Analyzing the image locally…';
     try{
       const decoded=await decode(file);
@@ -157,6 +200,12 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle,onShape}
         chooser.append(option);
       });
       selected=0;working=false;choose(0);
+      // Recipe fitting is optional: original path/silhouette extraction
+      // stays usable if a renderer or unsupported image defeats fitting.
+      try{recoverRecipes(pixels);}catch(error){
+        recipeWorkspace.hidden=false;recipeApply.disabled=true;
+        recipeStatus.textContent='Editable recipe fitting unavailable: '+(error?.message||'unknown error');
+      }
     }catch(error){
       if(revision!==loadRevision)return;
       image=null;candidates=[];chooser.replaceChildren();apply.disabled=true;shapeButton.disabled=true;angleButton.disabled=true;
@@ -179,6 +228,12 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle,onShape}
   });
   fileInput.addEventListener('change',()=>{void load(fileInput.files?.[0]);});
   chooser.addEventListener('change',()=>choose(Number(chooser.value)));
+  recipeChooser.addEventListener('change',()=>chooseReconstruction(Number(recipeChooser.value)));
+  recipeApply.addEventListener('click',()=>{
+    const candidate=reconstructed[Number(recipeChooser.value)];
+    if(working||!candidate||!onRecipe)return;
+    if(onRecipe(candidate.recipe,candidate)){dialog.close();}
+  });
   another.addEventListener('click',()=>{
     const blocked=drawAuthoringLockReason(getRecipe());
     if(blocked){onNotice(drawAuthoringLockMessage(blocked));return;}
@@ -241,7 +296,8 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle,onShape}
     if(dialog.open)return;
     ++loadRevision;working=false;
     setPhase('idle');
-    image=null;candidates=[];chooser.replaceChildren();fileInput.value='';
+    image=null;candidates=[];reconstructed=[];chooser.replaceChildren();
+    recipeChooser.replaceChildren();recipeWorkspace.hidden=true;fileInput.value='';
   });
   return {sync(recipe){
     const access=imagePathActionAvailability(recipe,candidates[selected],working);
@@ -253,6 +309,7 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle,onShape}
     shapeButton.disabled=!access.canShape||!onShape;
     angleButton.disabled=!access.canAngle;
     another.disabled=!access.canChooseAnother;
+    recipeApply.disabled=working||!reconstructed.length;
     if(access.blocked)status.textContent=access.canAngle?
       'Path import is locked; this detected line angle can still be applied.':
       drawAuthoringLockMessage(access.blocked);
