@@ -26,21 +26,6 @@ jobs:
       - name: Basic app and recipe sanity
         if: ${{ github.event_name != 'workflow_dispatch' || inputs.depth != 'full' }}
         run: npm run check:quick
-      # One-off chain artwork acceptance, removed before PR #520 merges.
-      - name: Install Chromium for chain thread art proof
-        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'feat/chain-stitch-art-20261022' }}
-        run: |
-          npm install --no-save playwright
-          npx playwright install --with-deps chromium
-      - name: Render four real linked-chain wallpapers
-        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'feat/chain-stitch-art-20261022' }}
-        run: node scripts/review-embroidery.mjs --focus-chain --out-dir artifacts/chain-stitch-proof
-      - uses: actions/upload-artifact@v4
-        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'feat/chain-stitch-art-20261022' }}
-        with:
-          name: one-time-chain-stitch-four-picture-proof
-          path: artifacts/chain-stitch-proof/
-          retention-days: 7
       - name: Full Node suite (manual request only)
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.depth == 'full' }}
         run: npm run check

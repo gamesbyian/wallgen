@@ -1,5 +1,10 @@
 # Agent orientation for ROYGBIV
 
+## Linked Chain embroidery has actual optical proof (2026-10-22)
+
+Chain is a separate opt-in texture style using world-anchored cubic linked loops, not another diagonal hatch. [Four real source PNGs](docs/EMBROIDERY-CHAIN-STITCH-IMAGE-FINDINGS-2026-10-22.md) were retrieved, viewed, CRC checked and recipe-verified (Actions #39890740813). Three lanes follow ribbons and staggered links fill region courses; both original black backgrounds remain unchanged. Tight inner-ring loop crowding is a real stylistic limitation, not a proof of sewing physics. The temporary Chromium workflow was removed before PR merge, retaining lean CI.
+
+
 ## Imported shape embroidery hole-clipping actually verified (2026-10-22)
 
 A real portable compound-region asset with one hole and one detached island was rendered twice in Chromium (untreated vs Tatami), retrieved, inspected, CRC-validated and matched to complete recipes in [run #39889647143](https://github.com/gamesbyian/wallgen/actions/runs/39889647143). [Pixel findings](docs/EMBROIDERY-COMPOUND-HOLE-PRODUCTION-FINDINGS-2026-10-22.md): all **730,320 originally black RGB pixels** remain byte-identical, including the hole and island gap, while both positive regions receive stitches. Do not queue a speculative even-odd masking rewrite. This does not establish all possible imported topology, physical thread realism or Pixel performance. The one-off Chromium gate was removed before merge.

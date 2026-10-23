@@ -69,7 +69,7 @@ CI contributors: see [CI operations and dispatch policy](docs/CI-OPERATIONS-2026
 
 **Tonal stripe bands:** Layered tonal bands are an explicit option under Stripe type, with Tonal contrast available conditionally. Global random generation does not silently select that older style.
 
-**Embroidery with preserved colour:** In Texture → Surface, open Thread treatment; enable all colours, a palette slot or a particular ribbon/region, then choose Satin, Soft Satin, Tatami or Running. Soft Satin was added after actual production artwork showed strong Satin shadow/highlight reducing saturated colours on tight bends. Thread settings are part of PNG/Undo/recipe transport and leave pre-existing untreated designs unchanged.
+**Embroidery with preserved colour:** In Texture → Surface, open Thread treatment; enable all colours, a palette slot or a particular ribbon/region, then choose Satin, Soft Satin, Tatami, Running or Chain (interlinked loops). Soft Satin was added after actual production artwork showed strong Satin shadow/highlight reducing saturated colours on tight bends. Thread settings are part of PNG/Undo/recipe transport and leave pre-existing untreated designs unchanged.
 
 **Film and camera finishing:** In Light → Photo, enable Photo and pick a film or camera-inspired preset, including **Interchangeable-lens crisp** (a restrained optical local-contrast look), then use Amount and its contextual Grain/Halation control. **Before / After** changes only the displayed comparison; the finished export still uses the saved active recipe. All looks are creative approximations, not reprocessed iPhone/DSLR RAW files.
 
