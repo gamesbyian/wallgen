@@ -199,6 +199,7 @@ export function buildCompositionObjects(recipe,colors,stripes,bundleOffsets){
       default:shapes=voronoi(recipe,false);
     }
   }
-  return shapes.map((shape,i)=>({...shape,id:'region-'+i,
+  return shapes.map((shape,i)=>({...shape,
+    id:recipe.structure==='regions'&&recipe.regionMode==='scattered'?shape.id:'region-'+i,
     origin:center(recipe),color:colors[shape.colorIndex]}));
 }
