@@ -1,0 +1,13 @@
+.creative-activity-dialog{box-sizing:border-box;border:1px solid rgba(130,130,150,.45);border-radius:18px;padding:0;max-width:min(480px,calc(100vw - 24px));width:100%;max-height:min(88dvh,740px);color:var(--text,#20202a);background:var(--surface,#fff);box-shadow:0 15px 65px #0005;overflow:auto}
+.creative-activity-dialog::backdrop{background:#0009}
+.creative-activity-panel{padding:20px;display:grid;gap:15px;font:inherit;line-height:1.5}
+.creative-activity-panel p{margin:0;font-size:14px}
+.creative-activity-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.creative-activity-head h2{font-size:22px;margin:0}
+.creative-activity-panel button{min-height:44px;padding:10px 12px;border:1px solid currentColor;border-radius:10px;color:inherit;background:transparent;font:inherit;cursor:pointer}
+.creative-activity-panel button:focus-visible,.creative-activity-choice input:focus-visible{outline:3px solid #387bce;outline-offset:3px}
+.creative-activity-choice{display:flex;align-items:center;gap:12px;font-weight:600}
+.creative-activity-choice input{width:23px;height:23px;flex-shrink:0}
+.creative-activity-actions{display:flex;flex-wrap:wrap;gap:8px}
+.creative-activity-actions button{flex:1}
+.creative-activity-foot{opacity:.75}
