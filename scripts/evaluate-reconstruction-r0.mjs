@@ -124,15 +124,27 @@ async function evaluate(opts){
         };
       },Buffer.from(input).toString('base64'));
       const truth=JSON.parse(await readFile(join(dir,item.recipeFile),'utf8'));
-      const truthMetric=await page.evaluate(recipe=>{
-        const {drawWallpaper}=window.__noop||{};
-        return null;
-      },truth).catch(()=>null);
+      const truthError=await page.evaluate(async ({recipe,reference})=>{
+        const {drawWallpaper}=await import('/src/renderer.js');
+        const {compareReconstructionPixels}=await import('/src/image-reconstruction.js');
+        const bitmap=await createImageBitmap(await(await fetch(reference)).blob());
+        const source=document.createElement('canvas');
+        source.width=96;source.height=208;
+        source.getContext('2d').drawImage(bitmap,0,0,96,208);
+        bitmap.close();
+        const truth=document.createElement('canvas');
+        truth.width=96;truth.height=208;
+        drawWallpaper(truth,recipe);
+        return compareReconstructionPixels(
+          source.getContext('2d',{willReadFrequently:true}).getImageData(0,0,96,208),
+          truth.getContext('2d',{willReadFrequently:true}).getImageData(0,0,96,208));
+      },{recipe:truth,reference:inferred.sourcePreview});
       // Do not include truth in the inference phase: appearance match is
       // measured separately from structural/parameter truth below.
       const record={id:item.id,source:item.metadataFree,candidateCount:inferred.candidateCount,
         bestKind:inferred.selected?.kind??null,
         bestError:inferred.selected?.error??null,
+        trueRecipeRenderError:truthError,
         bestLabel:inferred.selected?.label??null,
         trueStructure:truth.structure,trueGeometry:truth.geometry,
         recoveredStructure:inferred.selected?.structure??null,
