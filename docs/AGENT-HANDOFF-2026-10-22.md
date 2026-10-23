@@ -1,5 +1,14 @@
 # ROYGBIV handoff: current authority and independently actionable work
 
+## Film, Camera and navigation: independent merged work (22 Oct evening)
+
+**#468 Film:** [#528](https://github.com/gamesbyian/wallgen/pull/528) added separately named `film-halation-diffusion`, preserving every older Photo look. Three actual production 600×1300 images, CRC/embedded-recipe checked and viewed ([run #39897810550](https://github.com/gamesbyian/wallgen/actions/runs/39897810550)), show a visibly wider red/orange fringe; dark pixels showing >4 red increase rose 25,875→105,925 against original narrow halation. The [Film plan](PHOTO-FILM-LOOKS-AND-FILTERS-PLAN-2026-10-22.md) records evidence and limits.
+
+**#471 Camera:** [#533](https://github.com/gamesbyian/wallgen/pull/533) added separately named `camera-pocket-flash` using center-weighted exposure without another full-size canvas; original DSLR/Webcam/Digicam/HDR code paths remain intact. Three actual 600×1300 original/HDR/Flash wallpapers were viewed and source verified ([run #39899002018](https://github.com/gamesbyian/wallgen/actions/runs/39899002018)). All 372,824 originally pure-black pixels stayed exact black. Measured center +6.07 versus edge -4.47 average RGB per channel on medium-bright source pixels. This is a modest stylized spatial signature, not calibrated flash/scene depth or physical Pixel approval. The [Camera plan](DIGITAL-CAMERA-AND-COMPUTATIONAL-PHOTO-LOOKS-PLAN-2026-10-22.md) has details.
+
+**#444 artistic navigation:** [#531](https://github.com/gamesbyian/wallgen/pull/531) routes specific terms (negative print, film grain, photo bloom, retro digicam, etc.) to the existing Light → Photo workspace with a named artistic hint, without selecting a preset or changing the recipe. Vague “glow/grain/texture” still resolve through ordinary settings; seven categories and preview space stay unchanged. Quick CI passed. Still open: actual Pixel touch/focus/keyboard observations and optional C09 specialist inspector consolidation if direct user evidence warrants it.
+
+**CI/coordination:** All three feature PRs merged after final sole quick check; both one-off Chromium artwork jobs were removed byte-for-byte from the lean `.github/workflows/check.yml` before merging. Agent 2's Thread, fibre and organic linen work is preserved. Existing saved Photo recipes retain their old preset branches and pixels; no native-device benchmark, film-stock or calibrated camera claim. Historical checkpoints below remain historically accurate for their dates only.
 
 ## Latest independent art and portrait fixes: verified merged #529 / #532 / #535 (22 Oct evening)
 
