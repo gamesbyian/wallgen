@@ -84,3 +84,13 @@ test('actual original v1 exporter produces readable but never silently migratabl
     assert.throws(()=>migratePngMetadataOnly(saved),/Historical v1/);
   }
 });
+
+test('the pinned original v1 renderer is unchanged and the optional optical proof runs on source-era modules',()=>{
+  const renderer=readFileSync(new URL('src/renderer.js',root));
+  assert.equal(hashGitBlob(renderer),fixture.sourceBlobs.renderer);
+  const review=readFileSync(new URL('../scripts/review-historical-v1-render.mjs',import.meta.url),'utf8');
+  assert.match(review,/import\('\\/docs\\/recipe-format-history\\/source-era\\/v1-37428b\\/src\\/renderer\.js'\)/);
+  assert.match(review,/v1PngWriter\(png,\{\}, \{recipe:original\}\)/);
+  assert.match(review,/inspectPngMigration\(historic\)\.safe/);
+  assert.match(review,/idatSha256:createHash\('sha256'\)/);
+});
