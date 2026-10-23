@@ -66,7 +66,7 @@ test('later normal edits and Undo-lock pathway preserve acceptance-time provenan
 
 
 test('inferred procedural wave jagged and hairpin labels survive canonical PNG/JSON transport',()=>{
- for(const candidateKind of ['wave','jagged','hairpin']){
+ for(const candidateKind of ['wave','jagged','chevron','hairpin']){
    const recipe=normalizeRecipe({seed:'curved-source',reconstructionOrigin:{
      origin:'inferred-image',method:'current-render-fit-v1',
      candidateKind,sourceWidth:480,sourceHeight:1040,initialFitError:.11
