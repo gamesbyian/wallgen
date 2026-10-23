@@ -5,6 +5,7 @@ import {imagePlacement,extractImageColourRegions} from '../src/image-path.js';
 import {describeReconstructionImage,reconstructionCandidates,
   rankReconstructionCandidates,compareReconstructionPixels,refineReconstructionCandidate,reconstructionPlacement,
   radialImageSignature,imageStripeAngle,imageCurveSignature,diverseReconstructionCandidates,reconstructionRefinementIndex,
+  measuredRainbowRibbonBands,seedMeasuredRibbonControls,
   rankReconstructionCandidatesCooperatively,refineReconstructionCandidateCooperatively,
   RECONSTRUCTION_FRAME,RECONSTRUCTION_RENDER_LIMIT} from '../src/image-reconstruction.js';
 
@@ -418,4 +419,43 @@ test('only one structural challenger gets the ten-render budget when initial Dra
  assert.equal(calls,10,'same budget, not ten per candidate');
  assert.equal(improved.refinementRenders,10);
  assert.equal([path,improved].sort((a,b)=>a.error-b.error)[0].kind,'wave');
+});
+
+
+test('actual seven-pigment geometry inversion seeds canonical Wave spacing and width',()=>{
+ const bands=Array.from({length:7},(_,index)=>({
+   index,area:28*Math.sqrt(12)*80,cx:138/277,cy:(48+index*65)/600,
+   axisAngle:0,axisRatio:9,majorStd:80
+ }));
+ const metrics=measuredRainbowRibbonBands(bands,277,600);
+ assert.ok(metrics);
+ assert.ok(Math.abs(metrics.centreGapPx-65)<.001);
+ assert.ok(Math.abs(metrics.thicknessPx-28)<.001);
+ const defaultWave=normalizeRecipe({geometry:'wave',structure:'paths',
+   orientation:'horizontal',stripeWidth:65,spread:65});
+ const estimated=seedMeasuredRibbonControls(defaultWave,metrics,277,600);
+ assert.ok(estimated.spread>=69&&estimated.spread<=72);
+ assert.ok(estimated.stripeWidth>=52&&estimated.stripeWidth<=56);
+ assert.equal(estimated.geometry,'wave');
+ assert.equal(estimated.structure,'paths');
+ const reverted=seedMeasuredRibbonControls(defaultWave,null,277,600);
+ assert.deepEqual(reverted,defaultWave);
+});
+
+test('shared hue extractor reports longitudinal dispersion once and rejects unrelated dots',()=>{
+ const image=raster(220,420,(x,y)=>{
+   const index=Math.floor(y/60);
+   return index<7&&y%60<25?colour(HUES[index]):[0,0,0,255];
+ });
+ const values=extractImageColourRegions(image,HUES);
+ assert.equal(values.regions.length,7);
+ assert.ok(values.regions.every(r=>r.majorStd>20&&r.minorStd>0));
+ const metrics=measuredRainbowRibbonBands(values.regions,image.width,image.height);
+ assert.ok(metrics&&metrics.thicknessPx>20&&metrics.thicknessPx<27);
+ assert.ok(metrics.centreGapPx>=59&&metrics.centreGapPx<=61);
+ assert.equal(measuredRainbowRibbonBands(
+   extractImageColourRegions(original,HUES).regions,120,260),null);
+ const modified=values.regions.map((r,i)=>i===2?
+   {...r,axisAngle:55}:r);
+ assert.equal(measuredRainbowRibbonBands(modified,image.width,image.height),null);
 });
