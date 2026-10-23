@@ -1,7 +1,7 @@
 import {extractImagePathCandidates,extractImageShapeCandidates,imagePlacement,pathToWallpaper} from './image-path.js?v=20261023-fullframe1';
 import {drawAuthoringLockReason,drawAuthoringLockMessage,pathStructureLockedOutsidePaths} from './path-authoring-locks.js';
 import {verifyLocalSilhouetteSvg} from './svg-import-safety.js';
-import {reconstructionCandidates,rankReconstructionCandidatesCooperatively,refineReconstructionCandidateCooperatively,describeReconstructionImage,reconstructionPlacement,RECONSTRUCTION_FRAME} from './image-reconstruction.js?v=20261023-curves1';
+import {reconstructionCandidates,rankReconstructionCandidatesCooperatively,refineReconstructionCandidateCooperatively,reconstructionRefinementIndex,describeReconstructionImage,reconstructionPlacement,RECONSTRUCTION_FRAME} from './image-reconstruction.js?v=20261023-challenger1';
 
 /** A live import dialog must match the current authoritative lock state,
  * even if a recipe restores a lock while image decoding is in flight. */
@@ -144,10 +144,14 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle,onShape,
     if(!ranked||isCancelled())return;
     reconstructed=ranked.filter(result=>Number.isFinite(result.error));
     if(reconstructed.length){
+      // Never exceed ten fitting renders: one structure gets the budget.
+      // If a thin Draw result wins initially, refine an actual seven-ribbon
+      // challenger and retain Draw unless the refined art scores better.
+      const fitIndex=reconstructionRefinementIndex(reconstructed);
       const improved=await refineReconstructionCandidateCooperatively(
-        reconstructed[0],reference,renderPixels,{yieldControl,isCancelled});
+        reconstructed[fitIndex],reference,renderPixels,{yieldControl,isCancelled});
       if(!improved||isCancelled())return;
-      reconstructed[0]=improved;
+      reconstructed[fitIndex]=improved;
       reconstructed.sort((a,b)=>a.error-b.error);
     }
     if(isCancelled())return;
