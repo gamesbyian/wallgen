@@ -148,10 +148,22 @@ async function evaluate(opts){
               .getImageData(0,0,fit.width,fit.height));
           ranked.sort((a,b)=>a.error-b.error);
         }
+        // TEMP diagnostic for seven-hue centroid agreement. Remove before merge.
+        const {extractImageColourRegions}=await import('/src/image-path.js');
+        const {HUES}=await import('/src/model.js');
+        const sourceHues=extractImageColourRegions(reference,HUES).regions;
+        const wide=ranked.find(x=>x.kind==='path'&&!x.recipe.geometrySafety);
+        const wideImage=wide?render(wide.recipe).getContext('2d',
+          {willReadFrequently:true}).getImageData(0,0,fit.width,fit.height):null;
+        const wideHues=wideImage?extractImageColourRegions(wideImage,HUES).regions:[];
+        const diagnostic=wide?{wideError:wide.error,drawOffsetY:wide.drawOffsetY??null,
+          source:sourceHues.map(x=>({i:x.index,cy:x.cy,area:x.area})),
+          wide:wideHues.map(x=>({i:x.index,cy:x.cy,area:x.area}))}:null;
         const best=ranked[0];
         const preview=best?render(best.recipe):null;
         bitmap.close();
         return {
+          diagnostic,
           candidateCount:ranked.length,
           selected:best?{kind:best.kind,label:best.label,error:best.error,
             structure:best.recipe.structure,geometry:best.recipe.geometry,
@@ -168,6 +180,7 @@ async function evaluate(opts){
         };
       },{base64:Buffer.from(input).toString('base64'),
         includeAlternatives:!!opts.alternatives});
+      console.log('R0_HUE_DIAGNOSTIC '+JSON.stringify({id:item.id,...(inferred.diagnostic||{})}));
       // External work has NO original ROYGBIV recipe or true-render floor.
       // Only actual current-production PNGs have blinded truth sidecars.
       const truth=external?null:JSON.parse(await readFile(join(dir,item.recipeFile),'utf8'));
