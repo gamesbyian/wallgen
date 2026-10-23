@@ -368,12 +368,29 @@ export function extractImageColourRegions({data,width:w,height:h},hueTargets){
   for(let index=0;index<7;index++){
     const part=components(masks[index],w,h,minArea)[0];
     if(!part)continue;
-    let sx=0,sy=0;
-    for(const p of part.members){sx+=p%w;sy+=(p/w)|0;}
+    // Reuse these exact hue component members to record a principal axis.
+    // Bounding-box ratios misclassify diagonally tilted long ribbons as
+    // compact shapes; a covariance axis distinguishes them from circles
+    // without a second colour mask, pixel pass or scene geometry engine.
+    let sx=0,sy=0,sxx=0,syy=0,sxy=0;
+    for(const p of part.members){
+      const x=p%w,y=(p/w)|0;
+      sx+=x;sy+=y;sxx+=x*x;syy+=y*y;sxy+=x*y;
+    }
+    const mx=sx/part.area,my=sy/part.area;
+    const varianceX=Math.max(0,sxx/part.area-mx*mx);
+    const varianceY=Math.max(0,syy/part.area-my*my);
+    const covariance=sxy/part.area-mx*my;
+    const delta=Math.hypot(varianceX-varianceY,2*covariance);
+    const major=Math.max(0,(varianceX+varianceY+delta)/2);
+    const minor=Math.max(0,(varianceX+varianceY-delta)/2);
+    const axisAngle=Math.atan2(2*covariance,varianceX-varianceY)*90/Math.PI;
+    const axisRatio=Math.sqrt(major/Math.max(1,minor));
     const boxArea=(part.maxX-part.minX+1)*(part.maxY-part.minY+1);
     regions.push({index,area:part.area,
-      cx:(sx/part.area+.5)/w,cy:(sy/part.area+.5)/h,
+      cx:(mx+.5)/w,cy:(my+.5)/h,
       fillRatio:part.area/Math.max(1,boxArea),
+      axisAngle,axisRatio,
       bounds:[part.minX/w,part.minY/h,(part.maxX+1)/w,(part.maxY+1)/h]});
   }
   return {background:backdrop,backgroundRGB:bg,
