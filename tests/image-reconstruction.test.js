@@ -1,0 +1,89 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {HUES,normalizeRecipe,resolveScene,encodeRecipe,decodeRecipe} from '../src/model.js';
+import {imagePlacement,extractImageColourRegions} from '../src/image-path.js';
+import {describeReconstructionImage,reconstructionCandidates,
+  rankReconstructionCandidates,compareReconstructionPixels,
+  RECONSTRUCTION_FRAME,RECONSTRUCTION_RENDER_LIMIT} from '../src/image-reconstruction.js';
+
+function colour(hue){
+  const h=((hue%360)+360)%360/60,i=Math.floor(h),f=h-i;
+  const rgb=[[255,Math.round(255*f),0],[Math.round(255*(1-f)),255,0],
+    [0,255,Math.round(255*f)],[0,Math.round(255*(1-f)),255],
+    [Math.round(255*f),0,255],[255,0,Math.round(255*(1-f))]];
+  return [...rgb[i],255];
+}
+function raster(width,height,paint){
+  const data=new Uint8ClampedArray(width*height*4);
+  for(let y=0;y<height;y++)for(let x=0;x<width;x++)
+    data.set(paint(x,y),4*(y*width+x));
+  return {data,width,height};
+}
+const centers=[[20,32],[65,20],[99,51],[37,110],[94,143],[25,194],[76,222]];
+const original=raster(120,260,(x,y)=>{
+  for(let i=0;i<7;i++)if(Math.hypot(x-centers[i][0],y-centers[i][1])<10)
+    return colour(HUES[i]);
+  return [0,0,0,255];
+});
+
+test('Seven metadata-free rainbow regions map to portable editable canonical objects',()=>{
+  const descriptors=extractImageColourRegions(original,HUES);
+  assert.equal(descriptors.regions.length,7);
+  assert.equal(describeReconstructionImage(original).sevenColourRegions,true);
+  const results=reconstructionCandidates(original,normalizeRecipe({seed:'some-input'}));
+  const circles=results.find(x=>x.kind==='regions');
+  assert.ok(circles,'separate individual hue regions synthesize a scattered recipe');
+  assert.equal(circles.recipe.structure,'regions');
+  assert.equal(circles.recipe.regionMode,'scattered');
+  assert.equal(circles.recipe.scatteredOverrides.length,7);
+  const box=imagePlacement(120,260);
+  for(const [index,point] of centers.entries()){
+    const found=circles.recipe.scatteredOverrides[index];
+    assert.equal(found.index,index);
+    assert.ok(Math.abs(found.x-(box.x+point[0]/120*box.width)/600)<.006);
+    assert.ok(Math.abs(found.y-(box.y+point[1]/260*box.height)/1300)<.006);
+  }
+  const restored=decodeRecipe(encodeRecipe(circles.recipe));
+  assert.deepEqual(restored,circles.recipe,'existing JSON/PNG recipe transport');
+  const scene=resolveScene(restored);
+  assert.equal(scene.objects.length,7);
+  assert.ok(scene.objects.every(o=>o.circle?.r>0),'ordinary movable circles');
+});
+
+test('External opaque graphic provides a truthful editable path, not invented seven colours',()=>{
+  const external=raster(160,160,(x,y)=>x>=30&&x<=130&&y>=45&&y<=116?
+    [20,35,50,255]:[255,255,255,255]);
+  const descriptors=describeReconstructionImage(external);
+  assert.equal(descriptors.sevenColourRegions,false);
+  const candidates=reconstructionCandidates(external,{seed:'external'});
+  assert.ok(candidates.some(c=>c.kind==='path'));
+  assert.ok(candidates.every(c=>c.kind!=='regions'));
+  assert.ok(candidates.every(c=>c.recipe.geometry==='drawn'));
+});
+
+test('Candidate comparison obeys bounded real-render callback and ranks identical pixels first',()=>{
+  const w=RECONSTRUCTION_FRAME.width,h=RECONSTRUCTION_FRAME.height;
+  const blank=raster(w,h,()=>[0,0,0,255]);
+  const white=raster(w,h,()=>[255,255,255,255]);
+  assert.equal(compareReconstructionPixels(blank,blank),0);
+  assert.ok(compareReconstructionPixels(blank,white)>.9);
+  const a={kind:'a',label:'a',recipe:{seed:'good'},uncertainty:'Inferred'};
+  const b={kind:'b',label:'b',recipe:{seed:'bad'},uncertainty:'Inferred'};
+  let calls=0;
+  const ranked=rankReconstructionCandidates([b,a],blank,recipe=>{
+    calls++;return recipe.seed==='good'?blank:white;
+  });
+  assert.equal(calls,2);
+  assert.equal(ranked[0].kind,'a');
+  assert.equal(ranked[0].error,0);
+  assert.throws(()=>rankReconstructionCandidates(Array(RECONSTRUCTION_RENDER_LIMIT+1).fill(a),
+    blank,()=>blank),/budget exceeded/);
+  assert.throws(()=>compareReconstructionPixels(blank,{width:1,height:1,data:[]}),
+    /Mismatched/);
+});
+
+test('Blank or monochrome source does not hallucinate rainbow objects',()=>{
+  const image=raster(120,240,()=>[0,0,0,255]);
+  assert.equal(describeReconstructionImage(image).sevenColourRegions,false);
+  assert.equal(reconstructionCandidates(image,{}).length,0);
+});
