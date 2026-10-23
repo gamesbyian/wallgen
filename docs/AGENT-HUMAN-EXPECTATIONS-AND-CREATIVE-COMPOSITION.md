@@ -4,6 +4,21 @@
 
 This is an operational reading syllabus and evaluation protocol for AI agents proposing UI/UX or creative-control changes. Consult the [exhaustive control and navigation atlas](HUMAN-CENTRED-NAVIGATION-MAP-2026-10-22.md) before applying it. Source verification and live-renderer inspection are obligatory for claims about the current app.
 
+## Current practice: prediction versus real creative-use observation (#537)
+
+[Issue #537](https://github.com/gamesbyian/wallgen/issues/537) is the **single running observation and disposition record**. Its three pre-registered journeys cover (A) randomize → lock → vary → compare → save, (B) find and apply a digital-camera look, and (C) target embroidery to one shape, then recover with Undo/restore. These are low-confidence **agent predictions**, not tested user behaviour. The research [evidence map](https://github.com/gamesbyian/general-purpose/blob/main/docs/research/llm-agent-app-development-evidence-map-2026-10-22.md) is descriptive and privately held; it is not a universal method or compulsory new framework. This public guide and issue are sufficient to act.
+
+**For a small number of voluntary, actual creative sessions:**
+
+1. **Predict before observing:** Capture the goal in the person's own outcome-oriented language; the known starting recipe/editor state; likely first control, anticipated next control, likely misunderstanding and explicit uncertainty. Preserve the original prediction when results arrive.
+2. **Observe without coaching toward the prediction:** Record what the person actually chose first, route changes/backtracks, any tap/focus/keyboard trouble, whether the result met their artistic intent, and how Undo, locks and Save/Restore behaved. Record the environment (build, viewport, physical device/browser, input method and accessibility settings) if known. A brief firsthand note is valid qualitative evidence; screenshots or recordings are optional.
+3. **Distinguish evidence:** Label each observation or claim **agent prediction**, **source inspection**, **deterministic test**, **browser emulation**, **viewed exported PNG**, **physical handset**, or **human observation**. Mixed claims require separate provenance. Neither synthetic personas nor a structural route model, automated clicks or Playwright screenshots count as a person's comprehension, preference or creative satisfaction.
+4. **Act proportionately:** A demonstrated problem can justify one focused UI or accessibility improvement with an observable before/after result. Cross-reference [#365](https://github.com/gamesbyian/wallgen/issues/365) for touch/focus and [#444](https://github.com/gamesbyian/wallgen/issues/444) for tool discovery before opening duplicate work. Record non-findings as well as findings. Small usability defects can also be fixed from direct source/reproduction evidence without demanding owner participation.
+
+**Minimal issue-comment record:** `Task / initial state / agent prediction + uncertainty / observed actions + evidence type / outcome or confusion / proposed change or no-change / retest evidence or still unverified`. Track whether the change actually improved that task and any review burden, alongside merged functionality. Do not invent metrics from one session.
+
+**Scope and priority:** This is opportunistic learning during active feature development, **not a release gate, permission to redesign all seven categories, request for mandatory owner testing, synthetic-user campaign, new CI matrix or preservation mandate**. In early development, improve the current canonical recipe and shared architecture; older generated image/recipe pixel compatibility is optional. Keep original imported file bytes safe. Maintain ordinary `npm run check:quick` and target additional verification to the actual change.
+
 ## 1. What an agent must learn
 
 A parameter belongs to at least four overlapping systems:
