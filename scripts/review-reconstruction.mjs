@@ -94,7 +94,7 @@ export function readBaselineArgs(argv){
     if(flag==='--list'){options.list=true;continue;}
     if(!['--out-dir','--browser','--only'].includes(flag)||!argv[i+1]||
       argv[i+1].startsWith('--'))throw Error('Unknown or incomplete argument: '+flag);
-    options[flag==='--out-dir'?'outDir':'browser']=argv[++i];
+    options[flag==='--out-dir'?'outDir':flag.slice(2)]=argv[++i];
   }
   return options;
 }
