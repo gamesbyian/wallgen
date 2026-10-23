@@ -48,7 +48,40 @@ export function radialImageSignature({data,width,height}){
   radial/=Math.max(1,rc);angular/=Math.max(1,ac);
   const kind=angular>.11&&angular>radial*1.7?'rays':
     radial>.11&&radial>angular*1.7?'rings':null;
-  return {kind,radialVariation:radial,angularVariation:angular};
+  // When pigment lanes are genuinely radial, sample a bounded set of
+  // *interior* spokes/circumferences for a dark separating thread. Thin black
+  // seams between two chromatic samples are evidence for the existing
+  // canonical background-colour divider setting; large exterior black
+  // regions are not. This shares the same source pixels / radial sampler.
+  const isColour=rgb=>Math.max(...rgb)>85&&
+    Math.max(...rgb)-Math.min(...rgb)>40;
+  const isDark=rgb=>Math.max(...rgb)<55;
+  let dividerEvidence=false;
+  if(kind==='rays'){
+    const steps=160;
+    const ring=Array.from({length:steps},(_,i)=>
+      colour(i*2*Math.PI/steps,maxRadius*.64));
+    const seam=ring.filter((rgb,i)=>isDark(rgb)&&
+      [-3,-2,-1,1,2,3].some(delta=>
+        isColour(ring[(i+delta+steps)%steps]))).length;
+    dividerEvidence=seam>=4&&seam/steps>=.025&&seam/steps<.28;
+  }else if(kind==='rings'){
+    const steps=130;
+    let seams=0;
+    for(let a=0;a<4;a++){
+      const ray=Array.from({length:steps},(_,i)=>
+        colour(a*Math.PI/2,maxRadius*(.10+.80*i/(steps-1))));
+      for(let i=0;i<steps;i++){
+        if(!isDark(ray[i]))continue;
+        if([-4,-3,-2,-1,1,2,3,4].some(d=>
+          i+d>=0&&i+d<steps&&isColour(ray[i+d])))seams++;
+      }
+    }
+    dividerEvidence=seams>=12&&seams/(steps*4)>.035&&
+      seams/(steps*4)<.35;
+  }
+  return {kind,radialVariation:radial,angularVariation:angular,
+    dividerEvidence};
 }
 
 /** PCA over the shared seven-colour connected-component centroids identifies
@@ -339,23 +372,39 @@ export function reconstructionCandidates(image,recipe){
   }
 
   if(desc.radial.kind==='rays'){
-    for(const [rayCount,rayRotation] of [[14,0],[21,0],[21,30],[28,0]]){
+    // An optional measured dark seam provides an ordinary current-canonical
+    // divider candidate, never an image overlay or second radial renderer.
+    // Keep all undivided procedural counts as alternatives in the same ≤6.
+    const raySpecs=desc.radial.dividerEvidence?
+      [[21,30,true],[14,0,false],[21,0,false],[21,30,false],[28,0,false]]:
+      [[14,0,false],[21,0,false],[21,30,false],[28,0,false]];
+    for(const [rayCount,rayRotation,divided] of raySpecs){
       candidates.push({kind:'radial-rays',label:'Editable radial wedges / '+
-        rayCount+' rays, '+rayRotation+'°',
-        uncertainty:'Radial wedge family inferred; core, angle, count and source pigment sequence remain uncertain.',
+        rayCount+' rays, '+rayRotation+'°'+
+        (divided?' / visible dark separators':''),
+        uncertainty:'Radial wedge family inferred; ray count, divider size, twist, core and original seed remain uncertain.',
         recipe:normalizeRecipe({...base,structure:'radial',radialMode:'sunburst',
           rayCount,rayRotation,rayCore:10,rayCoverage:100,fieldCenterX:50,
-          fieldCenterY:50,dividerColor:'none',dividerWidth:0})});
+          fieldCenterY:50,dividerColor:divided?'background':'none',
+          dividerWidth:divided?12:0})});
     }
   }else if(desc.radial.kind==='rings'){
-    for(const spec of [{kind:'radial-rings',structure:'radial',radialMode:'concentric',rayCount:14},
+    const specs=[
+      ...(desc.radial.dividerEvidence?[{kind:'radial-rings',structure:'radial',
+        radialMode:'concentric',rayCount:21,divided:true}]:[]),
+      {kind:'radial-rings',structure:'radial',radialMode:'concentric',rayCount:14},
       {kind:'radial-rings',structure:'radial',radialMode:'concentric',rayCount:21},
       {kind:'nested-rings',structure:'regions',regionMode:'nested',regionCount:14},
-      {kind:'nested-rings',structure:'regions',regionMode:'nested',regionCount:21}]){
-      candidates.push({kind:spec.kind,label:spec.kind==='radial-rings'?
-        'Editable concentric rays '+spec.rayCount:'Editable nested regions '+spec.regionCount,
-        uncertainty:'Concentric geometry inferred; ring count, centre and painter layer topology may differ.',
-        recipe:normalizeRecipe({...base,...spec,dividerColor:'none',dividerWidth:0,
+      {kind:'nested-rings',structure:'regions',regionMode:'nested',regionCount:21}
+    ];
+    for(const spec of specs){
+      const {divided,...canonical}=spec;
+      candidates.push({kind:spec.kind,label:(spec.kind==='radial-rings'?
+        'Editable concentric rays '+spec.rayCount:'Editable nested regions '+spec.regionCount)+
+        (divided?' / visible dark separators':''),
+        uncertainty:'Concentric geometry and appearance inferred; count, separators, centre and whether source was nested regions or radial remain ambiguous.',
+        recipe:normalizeRecipe({...base,...canonical,
+          dividerColor:divided?'background':'none',dividerWidth:divided?12:0,
           fieldCenterX:50,fieldCenterY:50,regionSides:0})});
     }
   }
