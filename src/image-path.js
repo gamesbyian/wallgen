@@ -391,6 +391,11 @@ export function extractImageColourRegions({data,width:w,height:h},hueTargets){
       cx:(mx+.5)/w,cy:(my+.5)/h,
       fillRatio:part.area/Math.max(1,boxArea),
       axisAngle,axisRatio,
+      // Cross-section and longitudinal extent are from the SAME already
+      // collected hue members: expose dimensions without a second scan.
+      // Current inverse recipe fitting uses them to infer actual seven-band
+      // thickness and gaps rather than guessing arbitrary percentages.
+      majorStd:Math.sqrt(major),minorStd:Math.sqrt(minor),
       bounds:[part.minX/w,part.minY/h,(part.maxX+1)/w,(part.maxY+1)/h]});
   }
   return {background:backdrop,backgroundRGB:bg,

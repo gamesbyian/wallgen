@@ -1,5 +1,8 @@
 # Image-to-recipe reconstruction: native and external imports
 
+**23 October physically inferred seven-colour band geometry:** [PR #605](https://github.com/gamesbyian/wallgen/pull/605) added shared per-hue principal-axis longitudinal extent and optional canonical spread/stripeWidth starting guesses for coherent, oblique seven-colour compositions. Real five-PNG run [#39941056985](https://github.com/gamesbyian/wallgen/actions/runs/39941056985) measured Jagged .204590→.165655 and unchanged Wave .204330/Diagonal .085835/Hairpin .107867/scattered circles .008329. See [reviewed artistic detail](RECONSTRUCTION-CURVE-PRODUCTION-FINDINGS-2026-10-23.md). Wave-specific calibration failed to improve, so do **not** apply that estimate to Wave by default or mark wave placement/phase resolved. Optimizing *translation/phase and source-colour negative-space gaps* is the next acceptance target, preserving the one-set, ≤6 + ≤10 true-render budget.
+
+
 **Integrated four-PNG curved acceptance (23 Oct):** [PR #604](https://github.com/gamesbyian/wallgen/pull/604), real run [#39939268860](https://github.com/gamesbyian/wallgen/actions/runs/39939268860) and [actually viewed source/fit findings](RECONSTRUCTION-CURVE-PRODUCTION-FINDINGS-2026-10-23.md): diagonal .085835 (restored), wave .204330, jagged .204590, hairpin .107867, all with normal canonical editor/recipe types. Exactly six coarse candidates plus ten fitting renders maximum, and #602 safe/expanded Draw preserved. Source image pigments/black gaps and turn microgeometry still diverge; real Pixel and external art remain unverified.
 
 

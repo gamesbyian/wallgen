@@ -5,7 +5,7 @@ import {HUES,normalizeRecipe,resolveScene,respectSettingLocks} from './model.js'
 import {importedAngleDeltaDegrees} from './import-angle-wrap.js';
 import {cloneGeometrySnapshot} from './geometry-asset.js';
 import {appliedDrawnPathRecipe} from './draw-apply-transaction.js';
-import {extractImagePathCandidates,extractImageColourRegions,extractImageShapeCandidates,imagePlacement,pathToWallpaper} from './image-path.js';
+import {extractImagePathCandidates,extractImageColourRegions,extractImageShapeCandidates,imagePlacement,pathToWallpaper} from './image-path.js?v=20261023-band-measure1';
 
 const RECONSTRUCTION_WIDTH=96, RECONSTRUCTION_HEIGHT=208;
 // Reconstruction explains the entire imported frame, unlike padded manual
@@ -104,6 +104,64 @@ export function imageCurveSignature(paths,width,height){
   return {kind,sharpTurns:sharp,netTurn:net};
 }
 
+/**
+ * Reuse the component covariance and pigment counts already extracted by
+ * image-path.js. Seven parallel hue components provide independent physical
+ * measurements of ribbon centre-to-centre gap and ink width in source pixels.
+ * Ignore loops, sparse/reversed fragments and incoherent external pictures.
+ */
+export function measuredRainbowRibbonBands(regions,width,height){
+  if(!Array.isArray(regions)||regions.length!==7||!Number.isFinite(width)||
+    !Number.isFinite(height)||width<12||height<12)return null;
+  const bands=regions.filter(r=>r&&r.axisRatio>=4&&r.area>=16&&
+    Number.isFinite(r.majorStd)&&r.majorStd>3&&
+    Number.isFinite(r.axisAngle)&&Number.isFinite(r.cx)&&Number.isFinite(r.cy));
+  if(bands.length!==7)return null;
+  const median=items=>items.slice().sort((a,b)=>a-b)[Math.floor(items.length/2)];
+  const orientations=bands.map(r=>r.axisAngle).sort((a,b)=>a-b);
+  const angle=median(orientations);
+  if(orientations.some(a=>Math.abs(a-angle)>10))return null;
+  const radians=angle*Math.PI/180,nx=-Math.sin(radians),ny=Math.cos(radians);
+  const centres=bands.map(r=>(r.cx*width)*nx+(r.cy*height)*ny)
+    .sort((a,b)=>a-b);
+  const distances=centres.slice(1).map((v,i)=>v-centres[i]);
+  const gap=median(distances);
+  if(gap<3||distances.some(d=>d<gap*.55||d>gap*1.65))return null;
+  const widths=bands.map(r=>r.area/(Math.sqrt(12)*r.majorStd));
+  const thickness=median(widths);
+  if(thickness<2||widths.some(v=>v<thickness*.55||v>thickness*1.8)||
+    thickness/gap<.08||thickness/gap>1.5)return null;
+  return {angle,centreGapPx:gap,thicknessPx:thickness,
+    inkToGapRatio:thickness/gap};
+}
+
+/**
+ * Invert the *current canonical* scene spacing and fixed-reference-width
+ * equations, not an invented parallel-ribbon rasterizer. Source pixels
+ * indicate a plausible initial guess; drawWallpaper still chooses by fit.
+ */
+export function seedMeasuredRibbonControls(recipe,metrics,imageWidth,imageHeight){
+  if(!metrics||!Number.isFinite(metrics.centreGapPx)||
+    !Number.isFinite(metrics.thicknessPx))return recipe;
+  const placement=reconstructionPlacement(imageWidth,imageHeight);
+  const scale=placement.width/imageWidth;
+  if(!Number.isFinite(scale)||scale<=0)return recipe;
+  const angle=metrics.angle*Math.PI/180;
+  const span=600*Math.abs(Math.sin(angle))+1300*Math.abs(Math.cos(angle));
+  const spreadFactor=(metrics.centreGapPx*scale*6)/span;
+  const referenceFactor=.10+.335*Math.pow(56/50,1.5);
+  const thicknessFactor=(metrics.thicknessPx*scale*6)/(span*referenceFactor);
+  if(!Number.isFinite(spreadFactor)||!Number.isFinite(thicknessFactor)||
+    spreadFactor<=.10||thicknessFactor<=.12)return recipe;
+  const spread=50*Math.pow((spreadFactor-.10)/.335,2/3);
+  const stripeWidth=50*Math.pow((thicknessFactor-.12)/.395,1/1.85);
+  // Reject out-of-range estimates rather than hiding clipping of noncanonical
+  // input: this is only an optional measured starting guess for geometry.
+  if(spread<8||spread>110||stripeWidth<8||stripeWidth>110)return recipe;
+  return normalizeRecipe({...recipe,spread:clamp(Math.round(spread),0,100),
+    stripeWidth:clamp(Math.round(stripeWidth),0,100)});
+}
+
 /** Geometry-first analysis. Colour slots carry no claim about source provenance. */
 export function describeReconstructionImage(image){
   const colour=extractImageColourRegions(image,HUES);
@@ -141,9 +199,10 @@ export function describeReconstructionImage(image){
   const radial=radialImageSignature(image);
   const stripeAngle=imageStripeAngle(colour.regions,image.width,image.height);
   const curve=imageCurveSignature(paths,image.width,image.height);
+  const ribbonBands=measuredRainbowRibbonBands(colour.regions,image.width,image.height);
   return {background:colour.background,colourRegions:colour.regions,
     paths:paths.slice(0,6),sevenColourRegions:seven,lineDirection,
-    stripeAngle,componentDiagonalAngle,radial,curve,coverage:colour.coverage,
+    stripeAngle,componentDiagonalAngle,radial,curve,ribbonBands,coverage:colour.coverage,
     dimensions:[image.width,image.height]};
 }
 
@@ -346,8 +405,19 @@ export function reconstructionCandidates(image,recipe){
     for(const preset of presets){
       candidates.push({kind:preset.kind,label:preset.label,
         uncertainty:'Procedural curvature is a fit hypothesis; turning radius, modulation, phase, spacing and seed are not recovered.',
-        recipe:normalizeRecipe({...base,structure:'paths',composition:'single',
-          construction:'ribbon',chaos:0,individuality:0,...preset.recipe})});
+        // Real R0 cross-validation: oblique ribbons benefited
+        // .20459→.16565, while near-horizontal Wave regressed. Infer from
+        // actual source hue geometry, NOT the loose contour kind (it can
+        // classify a clearly jagged source as an ordinary contour/wave).
+        recipe:preset.kind==='jagged'&&desc.ribbonBands&&
+          Math.abs(desc.ribbonBands.angle)>=12&&
+          Math.abs(desc.ribbonBands.angle)<=78?
+          seedMeasuredRibbonControls(
+            normalizeRecipe({...base,structure:'paths',composition:'single',
+              construction:'ribbon',chaos:0,individuality:0,...preset.recipe}),
+            desc.ribbonBands,image.width,image.height):
+          normalizeRecipe({...base,structure:'paths',composition:'single',
+            construction:'ribbon',chaos:0,individuality:0,...preset.recipe})});
     }
   }
 
