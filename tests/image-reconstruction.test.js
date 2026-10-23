@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {HUES,normalizeRecipe,resolveScene,encodeRecipe,decodeRecipe} from '../src/model.js';
 import {imagePlacement,extractImageColourRegions} from '../src/image-path.js';
 import {describeReconstructionImage,reconstructionCandidates,
-  rankReconstructionCandidates,compareReconstructionPixels,reconstructionPlacement,
+  rankReconstructionCandidates,compareReconstructionPixels,refineReconstructionCandidate,reconstructionPlacement,
   RECONSTRUCTION_FRAME,RECONSTRUCTION_RENDER_LIMIT} from '../src/image-reconstruction.js';
 
 function colour(hue){
@@ -134,4 +134,30 @@ test('single opaque colour compound silhouette becomes a portable snapshot prese
  assert.ok(silhouette.recipe.scatteredShape.geometry.components.some(x=>x.holes.length===1));
  assert.equal(resolveScene(silhouette.recipe).objects[0].rings.length,3);
  assert.deepEqual(decodeRecipe(encodeRecipe(silhouette.recipe)),silhouette.recipe);
+});
+
+
+test('renderer-backed geometric refinement is deterministic, bounded and improves matching',()=>{
+  const width=RECONSTRUCTION_FRAME.width,height=RECONSTRUCTION_FRAME.height;
+  const black=raster(width,height,()=>[0,0,0,255]);
+  const paint=(recipe,w,h)=>{
+    const shade=Math.min(255,Math.round(Math.abs(recipe.positionX-8)*20));
+    return raster(w,h,()=>[shade,shade,shade,255]);
+  };
+  const start=normalizeRecipe({seed:'fitter',structure:'paths',geometry:'straight',
+    orientation:'vertical',positionX:0,spread:52,chaos:0});
+  const current={kind:'straight',label:'straight',recipe:start,
+    error:compareReconstructionPixels(black,paint(start,width,height))};
+  let paints=0;
+  const run=()=>refineReconstructionCandidate(current,black,(recipe,w,h)=>{
+    paints++;return paint(recipe,w,h);
+  },{maxRenders:10});
+  const a=run();const b=run();
+  assert.ok(a.error<current.error);
+  assert.equal(a.recipe.positionX,8);
+  assert.equal(a.error,0);
+  assert.deepEqual(a,b);
+  assert.equal(paints,20,'exactly two bounded runs');
+  assert.equal(a.refinementRenders,10);
+  assert.equal(refineReconstructionCandidate({...current,kind:'shape'},black,paint).kind,'shape');
 });
