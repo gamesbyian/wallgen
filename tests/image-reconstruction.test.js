@@ -4,7 +4,7 @@ import {HUES,normalizeRecipe,resolveScene,encodeRecipe,decodeRecipe} from '../sr
 import {imagePlacement,extractImageColourRegions} from '../src/image-path.js';
 import {describeReconstructionImage,reconstructionCandidates,
   rankReconstructionCandidates,compareReconstructionPixels,refineReconstructionCandidate,reconstructionPlacement,
-  radialImageSignature,imageStripeAngle,imageCurveSignature,diverseReconstructionCandidates,
+  radialImageSignature,imageStripeAngle,imageCurveSignature,diverseReconstructionCandidates,reconstructionRefinementIndex,
   rankReconstructionCandidatesCooperatively,refineReconstructionCandidateCooperatively,
   RECONSTRUCTION_FRAME,RECONSTRUCTION_RENDER_LIMIT} from '../src/image-reconstruction.js';
 
@@ -232,6 +232,11 @@ test('coherent diagonal hue axes survive radial classifier integration without h
   const fit=reconstructionCandidates(diagonal,{seed:'shared-image-axes'});
   assert.ok(fit.some(x=>x.kind==='straight'&&
     x.recipe.geometry==='straight'&&x.recipe.orientation==='diagonal'));
+  assert.equal(fit.filter(x=>x.kind==='straight'&&
+    x.recipe.orientation==='diagonal').length,3,
+    'all three principal-axis angles remain available before six-render fit');
+  assert.ok(fit.some(x=>x.kind==='path'),'retain source path alternative');
+  assert.ok(fit.some(x=>x.kind==='jagged'),'retain angular geometry hypothesis');
   assert.ok(!fit.some(x=>x.kind==='regions'),
     'independent circles may not replace a coherent diagonal ribbon set');
   const circles=describeReconstructionImage(original);
@@ -383,4 +388,34 @@ test('straight seven-band imports do not relax curvature safety speculatively',(
   });
   const candidates=reconstructionCandidates(flat,{seed:'straight'});
   assert.ok(candidates.every(c=>c.recipe.geometrySafety!==false));
+});
+
+
+test('only one structural challenger gets the ten-render budget when initial Draw is poor',()=>{
+ const path={kind:'path',label:'narrow Draw',error:.206};
+ const wave={kind:'wave',label:'wide Wave',error:.315};
+ const jagged={kind:'jagged',label:'Jagged',error:.327};
+ assert.equal(reconstructionRefinementIndex([path,wave,jagged]),1);
+ assert.equal(reconstructionRefinementIndex([
+   {kind:'path',error:.252},{kind:'straight',error:.274},
+   {kind:'jagged',error:.280},{kind:'wave',error:.295}]),2);
+ assert.equal(reconstructionRefinementIndex([{kind:'loop',error:.054},wave]),0);
+ assert.equal(reconstructionRefinementIndex([{kind:'path',error:.04},wave]),0);
+ assert.equal(reconstructionRefinementIndex([]),-1);
+ const reference=raster(RECONSTRUCTION_FRAME.width,RECONSTRUCTION_FRAME.height,
+   ()=>[0,0,0,255]);
+ const original=normalizeRecipe({structure:'paths',geometry:'wave',
+   orientation:'horizontal',positionY:0});
+ const initial={...wave,recipe:original};
+ let calls=0;
+ const improved=refineReconstructionCandidate(initial,reference,(candidate,w,h)=>{
+   calls++;
+   const delta=Math.min(255,Math.abs(candidate.positionY+25)*10);
+   return raster(w,h,()=>[delta,delta,delta,255]);
+ });
+ assert.equal(improved.recipe.positionY,-25);
+ assert.equal(improved.error,0);
+ assert.equal(calls,10,'same budget, not ten per candidate');
+ assert.equal(improved.refinementRenders,10);
+ assert.equal([path,improved].sort((a,b)=>a.error-b.error)[0].kind,'wave');
 });
