@@ -131,8 +131,6 @@ async function evaluate(opts){
         fg.drawImage(bitmap,p.x/600*fit.width,p.y/1300*fit.height,
           p.width/600*fit.width,p.height/1300*fit.height);
         const reference=fg.getImageData(0,0,fit.width,fit.height);
-        const {describeReconstructionImage}=await import('/src/image-reconstruction.js');
-        const angularShape=describeReconstructionImage(source).curve;
         const candidates=reconstructionCandidates(source,normalizeRecipe({seed:'r0-anonymous'}));
         const render=(recipe)=>{
           const canvas=document.createElement('canvas');
@@ -150,33 +148,10 @@ async function evaluate(opts){
               .getImageData(0,0,fit.width,fit.height));
           ranked.sort((a,b)=>a.error-b.error);
         }
-        // TEMP diagnostic for seven-hue centroid agreement. Remove before merge.
-        const {extractImageColourRegions}=await import('/src/image-path.js');
-        const {HUES}=await import('/src/model.js');
-        const sourceHues=extractImageColourRegions(reference,HUES).regions;
-        const wide=ranked.find(x=>x.kind==='path'&&!x.recipe.geometrySafety);
-        const wideImage=wide?render(wide.recipe).getContext('2d',
-          {willReadFrequently:true}).getImageData(0,0,fit.width,fit.height):null;
-        const wideHues=wideImage?extractImageColourRegions(wideImage,HUES).regions:[];
-        const diagnostic=wide?{wideError:wide.error,drawOffsetY:wide.drawOffsetY??null,
-          source:sourceHues.map(x=>({i:x.index,cy:x.cy,area:x.area})),
-          wide:wideHues.map(x=>({i:x.index,cy:x.cy,area:x.area}))}:null;
-        // TEMP R0 counterfactual, NEVER the user pipeline: compare wide Draw
-        // fitted alone so structural evidence is separable from winner choice.
-        const wideTrial=wide&&Number.isFinite(wide.drawOffsetY)?
-          refineReconstructionCandidate(wide,reference,
-            recipe=>render(recipe).getContext('2d',{willReadFrequently:true})
-              .getImageData(0,0,fit.width,fit.height)):null;
         const best=ranked[0];
         const preview=best?render(best.recipe):null;
         bitmap.close();
         return {
-          diagnostic,angularShape,
-          wideTrial:wideTrial?{beforeError:wide.error,error:wideTrial.error,
-            spread:wideTrial.recipe.spread,positionY:wideTrial.recipe.positionY,
-            stripeWidth:wideTrial.recipe.stripeWidth,
-            refinementRenders:wideTrial.refinementRenders,
-            preview:render(wideTrial.recipe).toDataURL('image/png')}:null,
           candidateCount:ranked.length,
           selected:best?{kind:best.kind,label:best.label,error:best.error,
             structure:best.recipe.structure,geometry:best.recipe.geometry,
@@ -193,13 +168,6 @@ async function evaluate(opts){
         };
       },{base64:Buffer.from(input).toString('base64'),
         includeAlternatives:!!opts.alternatives});
-      console.log('R0_CURVE_SIGNATURE '+JSON.stringify({id:item.id,curve:inferred.angularShape}));
-      console.log('R0_HUE_DIAGNOSTIC '+JSON.stringify({id:item.id,...(inferred.diagnostic||{})}));
-      if(inferred.wideTrial){
-        await writeFile(join(dir,item.id+'.r0-experimental-wide.png'),pngBytes(inferred.wideTrial.preview));
-        console.log('R0_WIDE_COUNTERFACTUAL '+JSON.stringify({id:item.id,
-          ...inferred.wideTrial,preview:undefined}));
-      }
       // External work has NO original ROYGBIV recipe or true-render floor.
       // Only actual current-production PNGs have blinded truth sidecars.
       const truth=external?null:JSON.parse(await readFile(join(dir,item.recipeFile),'utf8'));
