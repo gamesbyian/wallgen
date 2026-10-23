@@ -180,6 +180,8 @@ export function installCreativeRecorderUI({
       // disabled recording or deleted history. Never overwrite that choice.
       if(revision===connectionRevision&&token&&recorder.enabled){
         const summary=await store.syncSummary();
+        if(revision!==connectionRevision||!token||!recorder.enabled)
+          return result;
         // A zero-batch run is not proof that a fresh GitHub request succeeded.
         syncStatus.textContent=result.uploaded>0?
           'Private GitHub readback confirmed: '+result.uploaded+
