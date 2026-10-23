@@ -405,10 +405,13 @@ export function reconstructionCandidates(image,recipe){
     for(const preset of presets){
       candidates.push({kind:preset.kind,label:preset.label,
         uncertainty:'Procedural curvature is a fit hypothesis; turning radius, modulation, phase, spacing and seed are not recovered.',
-        // Real R0 cross-validation: this physical seed improved Jagged
-        // .20459→.16565 but degraded Wave. Keep Wave's measured better
-        // preexisting start until a separate phase/offset estimator wins.
-        recipe:preset.kind==='jagged'&&desc.curve.kind==='jagged'?
+        // Real R0 cross-validation: oblique ribbons benefited
+        // .20459→.16565, while near-horizontal Wave regressed. Infer from
+        // actual source hue geometry, NOT the loose contour kind (it can
+        // classify a clearly jagged source as an ordinary contour/wave).
+        recipe:preset.kind==='jagged'&&desc.ribbonBands&&
+          Math.abs(desc.ribbonBands.angle)>=12&&
+          Math.abs(desc.ribbonBands.angle)<=78?
           seedMeasuredRibbonControls(
             normalizeRecipe({...base,structure:'paths',composition:'single',
               construction:'ribbon',chaos:0,individuality:0,...preset.recipe}),
