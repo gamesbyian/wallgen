@@ -131,6 +131,8 @@ async function evaluate(opts){
         fg.drawImage(bitmap,p.x/600*fit.width,p.y/1300*fit.height,
           p.width/600*fit.width,p.height/1300*fit.height);
         const reference=fg.getImageData(0,0,fit.width,fit.height);
+        const {describeReconstructionImage}=await import('/src/image-reconstruction.js');
+        const angularShape=describeReconstructionImage(source).curve;
         const candidates=reconstructionCandidates(source,normalizeRecipe({seed:'r0-anonymous'}));
         const render=(recipe)=>{
           const canvas=document.createElement('canvas');
@@ -169,7 +171,7 @@ async function evaluate(opts){
         const preview=best?render(best.recipe):null;
         bitmap.close();
         return {
-          diagnostic,
+          diagnostic,angularShape,
           wideTrial:wideTrial?{beforeError:wide.error,error:wideTrial.error,
             spread:wideTrial.recipe.spread,positionY:wideTrial.recipe.positionY,
             stripeWidth:wideTrial.recipe.stripeWidth,
@@ -191,6 +193,7 @@ async function evaluate(opts){
         };
       },{base64:Buffer.from(input).toString('base64'),
         includeAlternatives:!!opts.alternatives});
+      console.log('R0_CURVE_SIGNATURE '+JSON.stringify({id:item.id,curve:inferred.angularShape}));
       console.log('R0_HUE_DIAGNOSTIC '+JSON.stringify({id:item.id,...(inferred.diagnostic||{})}));
       if(inferred.wideTrial){
         await writeFile(join(dir,item.id+'.r0-experimental-wide.png'),pngBytes(inferred.wideTrial.preview));
