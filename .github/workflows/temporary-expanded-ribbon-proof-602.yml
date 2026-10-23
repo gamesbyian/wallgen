@@ -1,0 +1,30 @@
+name: TEMP actual expanded-ribbon reconstruction proof #602
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  artwork:
+    if: ${{ github.head_ref == 'agent3/reconstruction-safe-v-wide-20261023' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install one-off Chromium
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+      - name: Actual four-current-PNG blind reconstruction
+        run: |
+          node scripts/review-reconstruction.mjs --only 03-wave,04-jagged,05-hairpin,06-loop --out-dir artifacts/r0-expanded-draw-602
+          node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/r0-expanded-draw-602
+      - name: Keep four source PNGs and best fits briefly
+        uses: actions/upload-artifact@v4
+        with:
+          name: r0-expanded-draw-602
+          path: artifacts/r0-expanded-draw-602/
+          retention-days: 2
