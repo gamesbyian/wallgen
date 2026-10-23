@@ -444,6 +444,7 @@ export function selectEditorTool(category,tool,{source='manual'}={}){
     tool=applicableTool(category);selected=tools.get(tool);
   }
   if(!selected)return;
+  const categoryChanged=activeCategory!==category;
   activeCategory=category;activeTool=tool;
   // A direct Light/Shadow link should reveal lighting even if the user last
   // selected the adjacent Photo view; routine render sync preserves the view.
@@ -465,9 +466,10 @@ export function selectEditorTool(category,tool,{source='manual'}={}){
     button.setAttribute('aria-selected',String(isActive));
     button.tabIndex=isActive?0:-1;
   }
-  // Preserve manual category swipes; reveal offscreen category tabs only for
-  // search and keyboard selection, independently of the tool-chip scroll.
-  if(source==='search'||source==='keyboard'||source==='related'){
+  // Keep a manually swiped tool rail in place within one category, but a
+  // category switch must reveal its newly selected tool. Otherwise the prior
+  // category's scroll offset can hide the first chip behind sticky controls.
+  if(source==='search'||source==='keyboard'||source==='related'||categoryChanged){
     const tabRail=document.querySelector('.settings-tabs');
     const selectedTab=tabRail?.querySelector('.settings-tab[aria-selected="true"]');
     if(selectedTab){
