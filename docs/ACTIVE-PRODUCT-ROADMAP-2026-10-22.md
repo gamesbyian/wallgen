@@ -1,5 +1,10 @@
 # ROYGBIV: active product roadmap and work queue
 
+## Digital camera D3: independent early-digicam capture preset (2026-10-22)
+
+The existing Light → Photo pipeline supports an opt-in **simulated early digital compact camera** next to the already-shipped 200-column webcam capture. A 360-column bounded capture, quantized luminance/4:2:0-like chroma and punchier grade emulate an older camera style without another 20MP source buffer. Same normalizer, Undo/Save/worker/PNG path and compact editor; previous webcam rendering constants remain unchanged. Artistic/physical-phone verdict and full-resolution performance remain open; no new CI workflow or UI category. See [camera plan](DIGITAL-CAMERA-AND-COMPUTATIONAL-PHOTO-LOOKS-PLAN-2026-10-22.md) and [#471](https://github.com/gamesbyian/wallgen/issues/471).
+
+
 ## Current E1/E2 embroidery slice: treatment specificity and regional tatami (2026-10-22)
 
 The source now chooses targeted treatment by **object > palette > all** rather than saved-array order, preventing broad editor-owned fills from eclipsing intentional exact-object styles. Region tatami is visually distinct from satin: staggered short shaded rows, bounded by the already-existing even-odd clip for holes and disjoint silhouettes. Thread style is selected in the existing Texture → Surface disclosure, with preservation through recipe rehydration and normal Save/Undo/export. Old wallpapers with no surface treatment take precisely the same renderer path, and existing satin geometry remains unchanged. Source-level and focused Node tests, not physical-device/optical acceptance. See [embroidery plan](GEOMETRY-AWARE-EMBROIDERY-AND-SURFACE-TREATMENTS-PLAN-2026-10-22.md) and [#467](https://github.com/gamesbyian/wallgen/issues/467). Remaining: ribbon running/split fallback, actual judged artwork, thread continuity/underlay and full role targets.

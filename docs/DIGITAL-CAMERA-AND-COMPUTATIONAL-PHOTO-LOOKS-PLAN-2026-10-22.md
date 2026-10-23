@@ -1,5 +1,10 @@
 # ROYGBIV: modern digital camera and photographic rendering looks
 
+## D3 working next increment: opt-in early digital compact capture (2026-10-22)
+
+Light → Photo now offers an independently saved `camera-digicam-signal` look alongside the original low-resolution webcam. It uses the **same bounded capture, chroma-subsampling and final Photo pipeline** with 360 sensor columns (rather than 200), at most 650 rows, four source samples per sensor cell, 2×2 shared chroma, distinct luminance/chroma quantization and a punchier early digital-camera tone response. No second export-size raster, no new top-level tool, no claim of true JPEG or hardware camera fidelity. All historical presets retain their original processing constants and stored parameter shapes; `amount:0` bypasses capture. Focused deterministic, alpha, zero-amount and saved-recipe tests are included. Optical approval and Pixel performance remain pending. D3 is **in progress**, not calibrated capture.
+
+
 **D5 actual-image observation (2026-10-22):** [Seven real production Chromium renders were downloaded and viewed](PHOTO-PRODUCTION-RENDER-FINDINGS-2026-10-22.md). The Smartphone HDR inspiration visibly boosts bright hues while broadly retaining black; simulated low-resolution webcam capture visibly reduces spatial/chroma detail and roughens ribbon edges. This is evidence of the intended *distinct visual categories*, not calibrated capture from a named device, codec benchmarking or Pixel phone acceptance. Original PNG recipes exactly match their per-file JSON sidecars. The one-off render was fully removed from permanent CI.
 
 

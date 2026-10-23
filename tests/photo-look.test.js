@@ -313,3 +313,44 @@ test('spatial webcam capture and active film grain are not falsely optimized awa
     /Invalid photo pixel buffer/,
     'invalid active buffer is still validated even if look is neutral');
 });
+
+test('early digicam gives its own bounded capture signature and deterministic alpha',()=>{
+  const width=900,height=72,raw=pixels(30,80,150,width,height);
+  for(let y=0;y<height;y++)for(let x=0;x<width;x++){
+    const i=(y*width+x)*4;
+    raw[i]=(x%4)<2?250:10;
+    raw[i+1]=y%3?80:220;
+    raw[i+2]=(Math.floor(x/3)%2)?240:20;
+  }
+  const snapshot=raw.slice();
+  const neutral={grain:0,vignette:0,contrast:1,saturation:1,shadow:0,
+    highlight:0,red:0,green:0,blue:0};
+  const newLook=normalizePhotoLook({enabled:true,presetId:'camera-digicam-signal',
+    amount:100,parameters:neutral});
+  const webcam=normalizePhotoLook({enabled:true,presetId:'camera-webcam-signal',
+    amount:100,parameters:neutral});
+  assert.equal(isNeutralPhotoLook(newLook),false);
+  const first=raw.slice(),again=raw.slice(),legacy=raw.slice();
+  processPhotoPixels(first,width,height,newLook,'same-photo');
+  processPhotoPixels(again,width,height,newLook,'same-photo');
+  processPhotoPixels(legacy,width,height,webcam,'same-photo');
+  assert.deepEqual(first,again);
+  assert.notDeepEqual(first,raw);
+  assert.notDeepEqual(first,legacy,'360-column virtual digicam differs from 200-column webcam');
+  assert.equal(first[3],255);
+  assert.equal(first[first.length-1],255);
+  const sample=(x,y)=>first[(y*width+x)*4];
+  assert.equal(sample(30,30),sample(31,30),'adjacent output pixels share a virtual sensor sample');
+  assert.deepEqual(raw,snapshot,'source pixels are unchanged');
+  const saved=normalizeRecipe({seed:'early-digicam',photoLook:newLook});
+  assert.deepEqual(decodeRecipe(encodeRecipe(saved)),saved);
+  assert.deepEqual(normalizePhotoLook(saved.photoLook),newLook);
+  const off=raw.slice();processPhotoPixels(off,width,height,{...newLook,amount:0},'same-photo');
+  assert.deepEqual(off,raw);
+});
+test('early digicam uses the existing Light Photo selector, without a new category',()=>{
+  const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
+  assert.equal((html.match(/value="camera-digicam-signal"/g)||[]).length,1);
+  const old=normalizePhotoLook({enabled:true,presetId:'camera-webcam-signal'});
+  assert.equal(Object.hasOwn(old.parameters,'halation'),false);
+});
