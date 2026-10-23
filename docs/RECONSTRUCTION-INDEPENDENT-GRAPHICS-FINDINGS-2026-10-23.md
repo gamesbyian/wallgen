@@ -1,5 +1,10 @@
 # Metadata-free independently authored graphics: reconstruction evidence (23 October 2026)
 
+## Chevron hypothesis disposition (23 October)
+
+[PR #613](https://github.com/gamesbyian/wallgen/pull/613) **closed without merge** after downloaded/visually inspected source and candidate PNGs from [one-off run #40020773615](https://github.com/gamesbyian/wallgen/actions/runs/40020773615). The independent angular V-band source scored .192433 with thin safe Draw, .215221 with the revised existing Chevron preset, and .226618 with a full-width Draw alternative. The last alternative visually follows the two angular bends but has an obvious vertical placement discrepancy. Original Chevron-first selection also displaced real Hairpin, regressing it from .107867 to .234696 in an earlier run; corrected prioritization restored Hairpin and the genuine Wave/Jagged controls but did not improve the failing external source. Do not ship or repeat this speculative Chevron configuration. A future source-informed translation/negative-space fit of the existing expanded Draw candidate is more promising. All source images in this trial are *independently authored test fixtures*, not owner-supplied external artworks. The one-off workflow is absent from main.
+
+
 **Evidence boundary:** Three SVG graphics were authored **independently of ROYGBIV's canonical renderer**, in this repository under `tests/fixtures/reconstruction-external/`, then rasterized into 480×1040 RGB PNG files using standard Chromium SVG image decoding. Their pixels were never created by `drawWallpaper`, nor do they contain or have an original ROYGBIV recipe/seed. They are **self-authored test graphics**, *not* user-provided human art or third-party works with demonstrated licences. Do not represent this study as a comprehensive external-art evaluation.
 
 ## Actual study
