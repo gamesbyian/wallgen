@@ -121,9 +121,19 @@ export async function openUsageStore(factory=globalThis.indexedDB){
   }catch(error){return memoryUsageStore('Persistent usage storage unavailable: '+String(error.message||error));}
 }
 export function createCreativeRecorder({store,id=()=>globalThis.crypto.randomUUID(),
-  now=()=>new Date().toISOString(),enabled=false,onError=()=>{}}){
+  now=()=>new Date().toISOString(),clock=()=>Date.now(),enabled=false,onError=()=>{}}){
   let active=Boolean(enabled),sessionId=id(),episodeId=null,seq=0,commits=0,latest=null;
   let queue=Promise.resolve(),failed=null;
+  let manualEdits=0,engagedMs=0,lastActivityMs=null,lastExportedRecipe=null;
+  const recipeKey=x=>JSON.stringify(normalizeRecipe(x));
+  const engagement=()=>{
+    if(lastActivityMs===null)return engagedMs;
+    return engagedMs+Math.max(0,Math.min(60000,clock()-lastActivityMs));
+  };
+  const episodeStats=recipe=>({
+    manualEdits,engagedMs:engagement(),
+    finalExported:lastExportedRecipe===recipeKey(recipe??latest)
+  });
   const enqueue=(record,snapshot)=>{
     queue=queue.then(()=>store.append(record,snapshot)).catch(error=>{
       failed=error;onError(error);
@@ -142,7 +152,7 @@ export function createCreativeRecorder({store,id=()=>globalThis.crypto.randomUUI
   }
   function begin(recipe,cause='session_start'){
     if(!active)return;
-    episodeId=id();commits=0;
+    episodeId=id();commits=0;manualEdits=0;engagedMs=0;lastActivityMs=null;lastExportedRecipe=null;
     const normalized=normalizeRecipe(recipe);
     event('episode_start',normalized,{cause,recipe:clone(normalized)});
   }
@@ -157,6 +167,12 @@ export function createCreativeRecorder({store,id=()=>globalThis.crypto.randomUUI
     if(!changes.length)return;
     if(!episodeId)begin(before);
     commits++;
+    if(cause==='edit'||cause==='slider_settled'){
+      manualEdits++;
+      const tick=clock();
+      if(lastActivityMs!==null)engagedMs+=Math.max(0,Math.min(60000,tick-lastActivityMs));
+      lastActivityMs=tick;
+    }
     const normalized=normalizeRecipe(after);
     event('recipe_commit',normalized,{cause,changes,
       ...(context?{context:clone(context)}:{}),
@@ -167,25 +183,33 @@ export function createCreativeRecorder({store,id=()=>globalThis.crypto.randomUUI
     if(!episodeId)begin(recipe??latest);
     const allowed=['navigation','favorite_added','favorite_removed','export_requested',
       'download_initiated','export_failed','save_recipe_json','photo_compare',
-      'hidden_unconfirmed','visible_again','survey_answer','session_interrupted'];
+      'hidden_unconfirmed','visible_again','survey_answer','survey_offered',
+      'survey_skipped','session_interrupted'];
     if(!allowed.includes(type))throw new Error('Invalid usage event type');
     const item={...details};
+    if(type==='download_initiated'&&
+      (!details.targetEpisodeId||details.targetEpisodeId===episodeId))
+      lastExportedRecipe=recipeKey(recipe??latest);
+    if(type==='hidden_unconfirmed')lastActivityMs=null;
     if(['export_requested','download_initiated','export_failed',
       'favorite_added','favorite_removed','save_recipe_json'].includes(type))
       item.recipe=clone(normalizeRecipe(recipe??latest));
     return event(type,recipe,item);
   }
   function supersede(before,after,cause='randomize_all'){
-    if(!active)return;
+    if(!active)return null;
     if(!episodeId)begin(before);
+    const previousEpisodeId=episodeId,stats=episodeStats(before);
     event('episode_end',before,{cause,recipe:clone(normalizeRecipe(before)),
-      committedEdits:commits});
+      committedEdits:commits,...stats});
     begin(after,cause);
+    return {targetEpisodeId:previousEpisodeId,...stats};
   }
   function setEnabled(next,recipe){
     if(active===Boolean(next))return;
     active=Boolean(next);
     sessionId=id();episodeId=null;seq=0;commits=0;
+    manualEdits=0;engagedMs=0;lastActivityMs=null;lastExportedRecipe=null;
     if(active)start(recipe);
   }
   async function exportJSON(){
@@ -193,9 +217,13 @@ export function createCreativeRecorder({store,id=()=>globalThis.crypto.randomUUI
     return JSON.stringify({schema:1,exportedAt:now(),source:'ROYGBIV local activity',
       durable:store.durable,events:await store.all(),lastKnown:await store.last()},null,2)+'\n';
   }
-  async function clear(){await queue;await store.clear();failed=null;episodeId=null;seq=0;commits=0;}
+  async function clear(){
+    await queue;await store.clear();failed=null;episodeId=null;seq=0;commits=0;
+    manualEdits=0;engagedMs=0;lastActivityMs=null;lastExportedRecipe=null;
+  }
   return {
-    get enabled(){return active;},get durable(){return store.durable;},
+    get enabled(){return active;},get episodeId(){return episodeId;},
+    get durable(){return store.durable;},episodeStats,
     get error(){return failed;},get warning(){return store.warning;},
     start,transition,action,supersede,setEnabled,exportJSON,clear,
     flush:()=>queue,records:async()=>{await queue;return store.all();},
