@@ -1,5 +1,10 @@
 # Agent orientation for ROYGBIV
 
+## Camera Photo output evidence now includes Early Digicam (2026-10-22)
+
+[Five actual source-rendered camera images](docs/CAMERA-PRODUCTION-RENDER-FINDINGS-2026-10-22.md) were downloaded, CRC validated, recipe-matched and visually inspected (Actions #39887351549). The 360-column Digicam is distinct from the 200-column Webcam, but mainly appears punchier in colour rather than showing true camera optics. Natural and HDR remain subtler stylized finishing choices. Preserve both original camera capture profiles and their saved recipes; prefer a meaningful separate DSLR/lens signature to yet another tonal grade. Browser proof was one-off only and removed before merge. Real Pixel/named-device fidelity is unverified.
+
+
 ## Deep-black negative Photo output confirmed in real art (2026-10-22)
 
 The original Film negative remains unchanged. The new `film-negative-deepblack` opt-in setting protects dark wallpaper substrate instead. [Three controlled Chromium PNGs](docs/DEEP-BLACK-FILM-ART-FINDINGS-2026-10-22.md) were **rendered, opened and validated** (Actions #39885066432): original black stays (0,0,0), legacy negative lifts it to (17,16,13), and every one of 405,237 bright source pixels has exactly identical output under both film profiles. The temporary art probe was removed from workflow before merging. Pixel performance and photochemical fidelity remain untested.

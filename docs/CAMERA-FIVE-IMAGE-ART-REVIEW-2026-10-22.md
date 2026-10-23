@@ -1,5 +1,7 @@
 # Camera Photo finishing: five-image production-render review
 
+**First actual execution and visual review completed 22 October 2026:** [run #39887351549](https://github.com/gamesbyian/wallgen/actions/runs/39887351549) produced five saved production PNGs that were downloaded, opened, CRC-checked and recipe-matched. See [observed findings](CAMERA-PRODUCTION-RENDER-FINDINGS-2026-10-22.md). The one-shot Chromium dependency was removed before PR merge; the script below remains opt-in.
+
 Run the existing opt-in production Photo reviewer with its `--focus-camera` option in a full local checkout that has Playwright/Chromium:
 
 ```sh

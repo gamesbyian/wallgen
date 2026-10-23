@@ -2,7 +2,7 @@
 
 ## Next camera D3 picture judgement: opt-in five-image comparison (2026-10-22)
 
-The previously unreviewed opt-in `camera-digicam-signal` capture has a proportional [five-image production art reviewer](CAMERA-FIVE-IMAGE-ART-REVIEW-2026-10-22.md): source, Natural Digital, HDR, Webcam and Digicam under identical authored geometry. Actual visual inspection and recipe integrity acceptance must be recorded independently after running it. Use findings to choose genuinely useful D3 image-quality improvements, rather than proliferating uncalibrated camera knobs. `--focus-camera` extends the existing manual Photo tool without a permanent CI job or another image-processing engine.
+The previously unreviewed opt-in `camera-digicam-signal` capture has a proportional [five-image production art reviewer](CAMERA-FIVE-IMAGE-ART-REVIEW-2026-10-22.md): source, Natural Digital, HDR, Webcam and Digicam under identical authored geometry. **Actual run and image review are complete:** [Actions #39887351549](https://github.com/gamesbyian/wallgen/actions/runs/39887351549) rendered all five PNGs; [documented image findings](CAMERA-PRODUCTION-RENDER-FINDINGS-2026-10-22.md) include independent chunk CRC and recipe checks. Digicam differs substantially from Webcam, but at this scale its stronger saturated tone is more obvious than its capture artifacts. D3 first artistic gate passes; Pixel/native export and genuinely new optics remain open. Use findings to choose genuinely useful D3 image-quality improvements, rather than proliferating uncalibrated camera knobs. `--focus-camera` extends the existing manual Photo tool without a permanent CI job or another image-processing engine.
 
 
 ## Film negative with preserved AMOLED black floor (F2/F3, 2026-10-22)

@@ -2,7 +2,7 @@
 
 ## Targeted D3 camera-image quality acceptance (2026-10-22)
 
-An opt-in [five-image Photo comparison](CAMERA-FIVE-IMAGE-ART-REVIEW-2026-10-22.md) reuses the headless Chromium production renderer, same-seed normalized recipes and contact gallery for untreated, Natural Digital, HDR, 200-column Webcam and 360-column Digicam. The first picture run should specifically check if simulated capture introduces recognizably different spatial detail and chroma signal loss while preserving rainbow identity. Do not infer artistic approval from green unit tests or add this browser probe permanently to CI.
+An opt-in [five-image Photo comparison](CAMERA-FIVE-IMAGE-ART-REVIEW-2026-10-22.md) reuses the headless Chromium production renderer, same-seed normalized recipes and contact gallery for untreated, Natural Digital, HDR, 200-column Webcam and 360-column Digicam. The first [actual production picture review](CAMERA-PRODUCTION-RENDER-FINDINGS-2026-10-22.md) was executed, retrieved and visually inspected: Natural, HDR, Webcam and Digicam produce distinct real saved wallpapers, with 5/5 CRC and recipe checks. Source samples reveal noticeable colour and edge changes; Digicam is still visually more distinguished by punchy colours than specific optics. This does not certify emulation of named devices or native-size performance. The browser probe was removed from routine CI.
 
 
 ## D3 working next increment: opt-in early digital compact capture (2026-10-22)
