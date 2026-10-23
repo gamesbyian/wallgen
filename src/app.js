@@ -221,7 +221,7 @@ function showNotice(message){
 function syncPhotoSecondarySlot(presetId){
   // Exactly one secondary slider is visible: keep the compact phone tray's
   // two-column geometry while letting the chosen optical look be adjusted.
-  const active=presetId==='film-halation-only';
+  const active=['film-halation-only','film-halation-diffusion'].includes(presetId);
   form.querySelector('[data-photo-secondary="grain"]').hidden=active;
   form.querySelector('[data-photo-secondary="halation"]').hidden=!active;
 }
@@ -241,7 +241,7 @@ function fromControls() {
     presetId,amount:form.elements.namedItem('photoAmount').value,
     parameters:{...(samePreset?prior.parameters:{}),
       grain:Number(form.elements.namedItem('photoGrain').value),
-      ...(presetId==='film-halation-only'?{
+      ...(['film-halation-only','film-halation-diffusion'].includes(presetId)?{
         halation:Number(form.elements.namedItem('photoHalation').value)}:{})},
   });
   if(prior||photo.enabled||presetId!=='film-slide'||photo.amount!==75||
