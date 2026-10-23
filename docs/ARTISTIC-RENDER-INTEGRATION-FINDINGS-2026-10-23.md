@@ -1,0 +1,25 @@
+# Artistic rendering: authentic stacked wallpapers and Chain curvature, 23 October 2026
+
+**Evidence tier:** actual current-browser ROYGBIV PNGs generated with the normal headless production renderer, independently viewed at full resolution and in tight-loop crops. No synthetic swatches or physical Pixel inspection.
+
+## Observed Chain crowding and focused correction
+
+The prior [four-image Chain production review](EMBROIDERY-CHAIN-STITCH-IMAGE-FINDINGS-2026-10-22.md) identified metallic-looking stacked linked loops in the tight red/orange eye. [PR #617](https://github.com/gamesbyian/wallgen/pull/617) retains canonical recipes, style IDs, stitch station phase, region painter, clipping and crossing replay while adapting each ribbon Chain link's tangent length to measured **lane-specific neighbouring centre spacing** on sharp bends. Straight links and open turns retain their previous geometry. Two shared path/width samples maximum per station; ≤950×3 link budget unchanged.
+
+Controlled genuine **600×1300** old/new/plain images were retrieved and visually compared: [previous source run](https://github.com/gamesbyian/wallgen/actions/runs/39890740813), [new render](https://github.com/gamesbyian/wallgen/actions/runs/40024241985). The red/orange concentric eye has substantially less pale/black link pile-up. Mean absolute RGB deviation from the unstitched source in the selected baseline red/orange crop fell **12.150 → 6.688** (old/new). Over the entire image old vs new changes **90,871 pixels by >2 RGB**, with **0 previously black pixels changed**. The unstitched ribbon, unstitched regions, and region Chain images remain pixel-identical across old and new runs. Every PNG chunk passed CRC32 and one embedded recipe matched each canonical sidecar. Deviation quantifies colour preservation, not universal embroidery realism.
+
+## Real material + embroidery + Photo integration
+
+The independent [five-wallpaper production run](https://github.com/gamesbyian/wallgen/actions/runs/40025001343) paints one canonical loop with **Organic Linen** (strength 50; contour displacement 32; both surfaces), an independently rotated background **Watercolour** layer (strength 20) and rotated **Stone** layer (strength 12; stripes only). Variants: untreated, Chain, Chain + Wide Warm Film Diffusion, Satin Fibre + Early Digicam Signal. A fifth genuine source-rendered image tests the canonical imported multi-ring donut/hole/detached-island geometry with Chain, Organic Linen and Film diffusion. Disposable review code and browser steps were removed before merge.
+
+All five **600×1300** PNGs were downloaded and viewed as full wallpapers and enlarged crops. All have complete valid PNG CRCs, and **one exact canonical embedded ROYGBIV Recipe** per matching normalized sidecar. Chain vs untreated material artwork changes **115,078 / 780,000 pixels by >2 RGB** (channel MAE **2.6855**) while **0 / 308,778** previously near-black substrate pixels changed. Adding Film diffusion changes **194,590 pixels by >2 RGB** (channel MAE **0.8956**) and 4,656 / 308,778 near-black pixels gain >2 RGB through intended warm spill. This is Film halation around bright sources, not a stitch-mask leak.
+
+The real **material + Chain + Film** and **material + Satin Fibre + Digicam** outputs independently passed byte-for-byte Photo direct/full-buffer, bounded readback strip and normal production comparison: **3,120,000 / 3,120,000 RGBA bytes exact for each** (same run logs). Compound-region hole centre (235,650) stays RGB (0,0,0), island gap (365,650) is (1,0,0) after deliberate Film spill, distant substrate (20,20) stays RGB (0,0,0). Threads remain in both coloured components, with intact hole/island negative space. No visible finish seams or broken ribbon silhouettes in the viewed outputs.
+
+## Disposition and limits
+
+- **#514 Embroidery:** shipped styles, authentic fibre, stable authored angles, real compound clipping and now measured Chain crowding fix. Remaining perfectly interlaced filaments, dynamic fabric puckering and mechanical thread tension are optional physical-simulation R&D, not demonstrated rendering correctness defects.
+- **#445 Materials:** severe historical Linen d68 sawtooth has already been addressed with opt-in Linen Soft and Organic. Here current multi-layer Organic d32, Watercolour and Stone produce distinguishable relief without new clipping/contour seam. Do not retune every material without a new reproducible visual failure.
+- Closed **Film #468 / Camera #471:** working shared Photo compositor, and this mixed-scene evidence specifically confirms full RGBA parity for Wide Diffusion and Digicam. No newly observed integration defect or rationale to reopen them.
+
+**External acceptance remains unclaimed:** native 3024×6552 Pixel 6 Pro speed/heap, actual OLED quality, Android lifecycle, owner creative judgment, broader independent image sets and authentic physical fibre/BRDF. A 600×1300 Chromium-run image cannot certify those. No new automatic Chromium workflow, duplicated renderer or speculative telemetry.
