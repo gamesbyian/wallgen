@@ -228,11 +228,21 @@ export function isNeutralPhotoLook(look){
 
 // Mutates the supplied pixel array. Destination alpha is never touched.
 // The grain grid is anchored in the authored 600x1300 frame, not device pixels.
-export function processPhotoPixels(data,width,height,rawLook,seed='rainbow-001'){
+export function processPhotoPixels(data,width,height,rawLook,seed='rainbow-001',
+    {frameHeight=height,rowOffset=0}={}){
   const look=normalizePhotoLook(rawLook);
   if(!look.enabled||look.amount===0)return data;
   if(!Number.isInteger(width)||!Number.isInteger(height)||width<=0||height<=0||
-    data.length!==width*height*4)throw new RangeError('Invalid photo pixel buffer');
+    data.length!==width*height*4||!Number.isInteger(frameHeight)||
+    !Number.isInteger(rowOffset)||rowOffset<0||frameHeight<rowOffset+height)
+    throw new RangeError('Invalid photo pixel buffer');
+  // Strip processing is exact only for finishes without a source-wide spatial
+  // sample field. The remaining modes retain the original whole-frame path.
+  if((rowOffset!==0||frameHeight!==height)&&
+    (['camera-webcam-signal','camera-digicam-signal','camera-dslr-optics'].includes(look.presetId)||
+      (['film-halation-only','film-halation-diffusion'].includes(look.presetId)&&
+       look.parameters.halation>0)))
+    throw new RangeError('Spatial photo finish requires whole-frame source');
   if(isNeutralPhotoLook(look))return data;
   const p=look.parameters,amount=look.amount/100;
   const table=[p.red,p.green,p.blue].map(shift=>{
@@ -267,11 +277,12 @@ export function processPhotoPixels(data,width,height,rawLook,seed='rainbow-001')
   const grainPresetId=look.presetId==='film-negative-deepblack'?
     'film-negative':look.presetId;
   const hash=fastHash(String(seed)+':photo-v1:'+grainPresetId);
-  const yScale=1300/height,xScale=600/width;
+  const yScale=1300/frameHeight,xScale=600/width;
   let i=0;
   for(let y=0;y<height;y++){
-    const ny=(y+.5)/height*2-1;
-    const yCell=Math.floor((y+.5)*yScale);
+    const sourceY=y+rowOffset;
+    const ny=(sourceY+.5)/frameHeight*2-1;
+    const yCell=Math.floor((sourceY+.5)*yScale);
     const signalRow=webcamSignal?
       Math.min(webcamSignal.height-1,Math.floor((y+.5)/height*webcamSignal.height))*webcamSignal.width:0;
     const haloY=halation?(y+.5)/height*halation.height-.5:0;
@@ -327,8 +338,8 @@ export function processPhotoPixels(data,width,height,rawLook,seed='rainbow-001')
       const dark=1-vignette*falloff*.5;
       const perturb=grain?(
         layeredGrain
-          ? (.8*noiseHash(Math.floor((x+.5)*xScale*2.4),Math.floor((y+.5)*yScale*2.4),hash)+
-             .2*noiseHash(Math.floor((x+.5)*xScale*.42),Math.floor((y+.5)*yScale*.42),hash^0x9e3779b9))
+          ? (.8*noiseHash(Math.floor((x+.5)*xScale*2.4),Math.floor((sourceY+.5)*yScale*2.4),hash)+
+             .2*noiseHash(Math.floor((x+.5)*xScale*.42),Math.floor((sourceY+.5)*yScale*.42),hash^0x9e3779b9))
           : noiseHash(Math.floor((x+.5)*xScale),yCell,hash)
         )*grain*(.65+.35*(1-luma/255)):0;
       let warmSpill=0;
@@ -371,8 +382,26 @@ export function applyPhotoFinish(ctx,width,height,rawLook,seed){
   if(!rawLook?.enabled||Number(rawLook.amount)===0)return false;
   const look=normalizePhotoLook(rawLook);
   if(isNeutralPhotoLook(look))return false;
-  const pixels=ctx.getImageData(0,0,width,height);
-  processPhotoPixels(pixels.data,width,height,look,seed);
-  ctx.putImageData(pixels,0,0);
+  // A full 3024×6552 readback alone occupies ~79 MB. Keep the original
+  // whole-frame path for sampled optics, but stream ordinary grading, grain,
+  // vignette and point flash through <=2 MiB strips. World coordinates are
+  // retained across strips, so seed and vignette output match exactly.
+  const spatial=['camera-webcam-signal','camera-digicam-signal',
+    'camera-dslr-optics'].includes(look.presetId)||
+    (['film-halation-only','film-halation-diffusion'].includes(look.presetId)&&
+     look.parameters.halation>0);
+  if(spatial){
+    const pixels=ctx.getImageData(0,0,width,height);
+    processPhotoPixels(pixels.data,width,height,look,seed);
+    ctx.putImageData(pixels,0,0);
+  }else{
+    const rows=Math.max(1,Math.floor((2*1024*1024)/(width*4)));
+    for(let y=0;y<height;y+=rows){
+      const h=Math.min(rows,height-y);
+      const pixels=ctx.getImageData(0,y,width,h);
+      processPhotoPixels(pixels.data,width,h,look,seed,{frameHeight:height,rowOffset:y});
+      ctx.putImageData(pixels,0,y);
+    }
+  }
   return true;
 }
