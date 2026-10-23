@@ -385,6 +385,24 @@ export function reconstructionCandidates(image,recipe){
     return {...candidate,recipe:effective,lockedChanges:blocked};
   }).filter(candidate=>!essential(candidate).some(key=>
     candidate.lockedChanges.includes(key)));
+  // A coherent diagonal's three nearby angles are substantive competing
+  // hypotheses, not redundant spread variants. R0 verified that its best
+  // source angle can be the THIRD candidate (24°); stripping it for generic
+  // diversity raised true PNG fit error .08583→.14825. Keep those three,
+  // then one Jagged, one Draw and one Loop for alternative topology.
+  if(desc.componentDiagonalAngle!==null){
+    const diagonals=committable.filter(item=>item.kind==='straight'&&
+      item.recipe.orientation==='diagonal').slice(0,3);
+    if(diagonals.length===3){
+      const selected=[...diagonals];
+      for(const kind of ['jagged','path','loop','wave','hairpin']){
+        const alternate=committable.find(item=>item.kind===kind);
+        if(alternate&&!selected.includes(alternate))selected.push(alternate);
+        if(selected.length===RECONSTRUCTION_RENDER_LIMIT)break;
+      }
+      return selected;
+    }
+  }
   return diverseReconstructionCandidates(committable);
 }
 
