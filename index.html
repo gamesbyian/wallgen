@@ -309,6 +309,12 @@
               <option value="">No eligible objects</option>
             </select>
           </label>
+          <label class="field">Stitch style
+            <select name="embroideryStyle">
+              <option value="satin">Satin ribs</option>
+              <option value="tatami">Tatami fill (regions)</option>
+            </select>
+          </label>
           <div class="control-grid range-grid">
             <label class="field range-field"><span>Stitch spacing</span>
               <input type="range" name="embroideryPitch" min="2" max="16" value="5">
@@ -317,7 +323,7 @@
               <input type="range" name="embroideryRelief" min="0" max="100" value="65">
             </label>
           </div>
-          <small>Opt-in thread shading follows each selected stripe or region fill. Independent of your three texture layers; outlines and intricate stitch styles are forthcoming.</small>
+          <small>Thread follows the chosen colour or object. Tatami uses offset short rows on regions; ribbons retain their path-following ribs. Independent of the three texture layers.</small>
         </details>
         <div class="texture-displacement-control">
           <label class="field range-field"><span>Contour distortion</span>
