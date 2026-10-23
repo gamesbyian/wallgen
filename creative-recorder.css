@@ -18,3 +18,14 @@
 .creative-activity-backup code{overflow-wrap:anywhere}
 .creative-activity-backup [data-usage-token]{box-sizing:border-box;width:100%;min-height:44px;border:1px solid currentColor;border-radius:9px;padding:10px;font:inherit;background:transparent;color:inherit}
 .creative-activity-backup label:not(.creative-activity-choice){font-weight:600;font-size:13px}
+
+.creative-activity-panel [data-usage-feedback]{min-height:44px;box-sizing:border-box;width:100%;border:1px solid currentColor;border-radius:9px;padding:9px;font:inherit;background:transparent;color:inherit}
+.creative-feedback{position:fixed;z-index:12000;bottom:calc(env(safe-area-inset-bottom,0px) + 84px);left:50%;transform:translateX(-50%);width:min(460px,calc(100vw - 18px));max-height:min(52dvh,330px);box-sizing:border-box;overflow:auto;padding:14px;background:var(--surface,#fff);color:var(--text,#20202a);border:1px solid currentColor;border-radius:16px;box-shadow:0 12px 50px #0007;display:grid;gap:10px;font:inherit}
+.creative-feedback[hidden]{display:none}
+.creative-feedback-title{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.creative-feedback p{font-size:14px;margin:0}
+.creative-feedback button{min-height:44px;border-radius:9px;padding:8px 10px;border:1px solid currentColor;background:transparent;color:inherit;font:inherit}
+.creative-feedback-answers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.creative-feedback-answers button{font-size:13px}
+.creative-feedback-never{font-size:13px;opacity:.84}
+.creative-feedback button:focus-visible{outline:3px solid #387bce;outline-offset:2px}

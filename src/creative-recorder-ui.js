@@ -1,5 +1,6 @@
 // One small, explicit local-recording control; no separate editor state.
 import {USAGE_MODE_KEY} from './creative-recorder.js';
+import {FEEDBACK_PREF_KEY,CREATIVE_FEEDBACK_OPTIONS} from './creative-feedback.js';
 import {createGithubUsageSync,USAGE_TOKEN_KEY,GITHUB_USAGE_REPO} from './creative-github-sync.js';
 
 const escapeFileName=()=>new Date().toISOString().replace(/[:.]/g,'-');
@@ -29,6 +30,12 @@ export function installCreativeRecorderUI({recorder,getRecipe,store}){
     </div>
     <p>Optionally keep a private, reconstructable history of your design sessions on this device. It records recipe changes, navigation, exports and superseded designs. It does not record your typing, imported photos or the image itself.</p>
     <label class="creative-activity-choice"><input type="checkbox" data-usage-enabled> Record my creative activity locally</label>
+    <label for="creativeFeedbackFrequency">Optional one-question surveys</label>
+    <select id="creativeFeedbackFrequency" data-usage-feedback>
+      <option value="every">After every eligible export or substantial restart</option>
+      <option value="occasionally">Occasionally (about one in three)</option>
+      <option value="never">Never ask</option>
+    </select>
     <p data-usage-status role="status" aria-live="polite"></p>
     <div class="creative-activity-actions">
       <button type="button" data-usage-export>Export my activity JSON</button>
@@ -53,6 +60,14 @@ export function installCreativeRecorderUI({recorder,getRecipe,store}){
   document.body.append(dialog);
   const enabled=dialog.querySelector('[data-usage-enabled]');
   const status=dialog.querySelector('[data-usage-status]');
+  const feedbackSelect=dialog.querySelector('[data-usage-feedback]');
+  try{
+    const pref=localStorage.getItem(FEEDBACK_PREF_KEY);
+    if(CREATIVE_FEEDBACK_OPTIONS.includes(pref))feedbackSelect.value=pref;
+  }catch{}
+  feedbackSelect.addEventListener('change',()=>{
+    try{localStorage.setItem(FEEDBACK_PREF_KEY,feedbackSelect.value);}catch{}
+  });
   async function refresh(){
     const records=await recorder.records();
     enabled.checked=recorder.enabled;

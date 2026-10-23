@@ -30,6 +30,7 @@ import {encodePortableRecipe,decodePortableRecipe,portableShareUrl,portableShare
 import {iconMarkup,setIconSource,hydrateStaticIcons} from './ui-icons.js';
 import {createCreativeRecorder,openUsageStore,USAGE_MODE_KEY} from './creative-recorder.js';
 import {installCreativeRecorderUI} from './creative-recorder-ui.js';
+import {installCreativeFeedback} from './creative-feedback.js';
 
 const form = document.getElementById('controls');
 const preview = document.getElementById('preview');
@@ -43,6 +44,7 @@ const FIELDS = ['primesOnly','family','structure','radialMode','rayCount','rayRo
 let current = normalizeRecipe();
 let usageRecorder=null; // Initialized after first render; no default collection.
 let usageGitHubSync=null;
+let creativeFeedback=null;
 let currentScene;
 const previewLayers={background:null,ink:null,scene:null,key:null,overhang:null};
 let previewWorker=null;
@@ -1058,7 +1060,8 @@ async function downloadPNG(){
   }
   const snapshot=normalizeRecipe(current);
   const exportId=crypto.randomUUID();
-  usageRecorder?.action('export_requested',snapshot,{exportId});
+  const targetEpisodeId=usageRecorder?.episodeId||null;
+  usageRecorder?.action('export_requested',snapshot,{exportId,targetEpisodeId});
   const metadata=metadataValues();
   const button=document.getElementById('download');
   setBusy(button,true,'Rendering 19.8 MP…');
@@ -1090,10 +1093,11 @@ async function downloadPNG(){
     const result=new Blob([embedPngMetadata(await blob.arrayBuffer(),metadata,{recipe:snapshot})],
       {type:'image/png'});
     downloadBlob(result,`roygbiv-${safeFilename(snapshot.seed)}-${OUTPUT_WIDTH}x${OUTPUT_HEIGHT}.png`);
-    usageRecorder?.action('download_initiated',snapshot,{exportId});
+    usageRecorder?.action('download_initiated',snapshot,{exportId,targetEpisodeId});
+    creativeFeedback?.showExport({exportId,targetEpisodeId});
     void usageGitHubSync?.syncNow(); // Back up after exports, never block PNG save.
     showNotice(`Exported the framed ${Math.round(snapshot.viewZoom*100)}% view at ${OUTPUT_WIDTH} × ${OUTPUT_HEIGHT}, with recipe metadata.`);
-  }catch(error){usageRecorder?.action('export_failed',snapshot,{exportId});console.error(error);showNotice(`Export failed: ${error.message}`);}
+  }catch(error){usageRecorder?.action('export_failed',snapshot,{exportId,targetEpisodeId});console.error(error);showNotice(`Export failed: ${error.message}`);}
   finally { if(big){big.width=0;big.height=0;}setBusy(button,false); }
 }
 const importRecipeButton=document.getElementById('importRecipePNG');
@@ -1909,7 +1913,7 @@ form.addEventListener('click',event=>{
   });
   if(!modified.length){showNotice('No unlocked, applicable settings changed.');return;}
   explorationHistory.remember(current,'Before '+name);
-  changeRecipe(recipe);
+  changeRecipe(recipe,{cause:'scoped_'+mode+'_'+scope});
   const label=scope==='setting'?
     fullSettingName(name,sourceSettingLabel(form.elements.namedItem(name),name)):
     scope==='tool'?TOOL_LIST.find(tool=>tool.id===name)?.name:
@@ -1996,7 +2000,7 @@ seedInput.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preve
 document.getElementById('applySeed').addEventListener('click',()=>render(fromControls()));
 document.getElementById('randomize').addEventListener('click',()=>{
   explorationHistory.remember(current,'Before seed');
-  changeRecipe({...fromControls(),seed:newSeed()});
+  changeRecipe({...fromControls(),seed:newSeed()},{cause:'seed_reroll'});
   explorationHistory.remember(current,'New seed');
 });
 document.getElementById('randomizeAll').addEventListener('click',()=>{
@@ -2005,7 +2009,8 @@ document.getElementById('randomizeAll').addEventListener('click',()=>{
   changeRecipe({...randomizeAllRecipe({primesOnly:current.primesOnly}),
     viewZoom:current.viewZoom,viewPanX:current.viewPanX,viewPanY:current.viewPanY,
     geometrySafety:current.geometrySafety},{record:false,cause:'randomize_all'});
-  usageRecorder?.supersede(previous,current,'randomize_all');
+  const retired=usageRecorder?.supersede(previous,current,'randomize_all');
+  if(retired)creativeFeedback?.showSuperseded(retired);
   explorationHistory.remember(current,'Random');
 });
 // Optional material layers activate by selecting an actual material, with
@@ -2228,6 +2233,7 @@ usageRecorder=createCreativeRecorder({
 });
 usageRecorder.start(current);
 usageGitHubSync=installCreativeRecorderUI({recorder:usageRecorder,getRecipe:()=>current,store:usageStore});
+creativeFeedback=installCreativeFeedback({recorder:usageRecorder,getRecipe:()=>current});
 document.addEventListener('visibilitychange',()=>{
   if(document.visibilityState==='hidden')
     usageRecorder?.action('hidden_unconfirmed',current);
