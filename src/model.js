@@ -2,7 +2,7 @@ import { SHAPES } from './path-geometry.js';
 import {normalizePhotoLook} from './photo-look.js';
 import {normalizeSurfaceTreatments} from './embroidery.js';
 import {normalizeCompoundRegion,GEOMETRY_SNAPSHOT_SCHEMA} from './geometry-asset.js';
-import {normalizeScatteredOverrides} from './scattered-object-edits.js';
+import {normalizeScatteredOverrides,normalizeScatteredLayerOrder} from './scattered-object-edits.js';
 import { normalizeInteriorElements } from './interior-elements.js';
 import { STRUCTURES, RADIAL_MODES, REGION_MODES, DIVIDER_MODES, buildCompositionObjects } from './composition-geometry.js';
 export { STRUCTURES, RADIAL_MODES, REGION_MODES, DIVIDER_MODES };
@@ -98,6 +98,7 @@ export function normalizeRecipe(input = {}) {
   }
   const normalizedInteriors=normalizeInteriorElements(input.interiorElements);
   const scatteredOverrides=normalizeScatteredOverrides(input.scatteredOverrides);
+  const scatteredLayerOrder=normalizeScatteredLayerOrder(input.scatteredLayerOrder);
   // Interior numeric controls have the same transport invariant. Normalize
   // only signed zeros, preserving all finite authored values and geometry.
   for(const element of normalizedInteriors)
@@ -146,6 +147,7 @@ export function normalizeRecipe(input = {}) {
     scatteredShape:normalizeShapeSnapshot(input.scatteredShape),
     // Preserve legacy recipe serialization exactly when no individual edits exist.
     ...(scatteredOverrides.length?{scatteredOverrides}:{}),
+    ...(scatteredLayerOrder.length?{scatteredLayerOrder}:{}),
     dividerColor: DIVIDER_MODES.includes(input.dividerColor) ? input.dividerColor : 'background',
     dividerWidth: finiteRange(input.dividerWidth, 12, 0, 100),
     orientation: readChoice('orientation', ['vertical', 'horizontal', 'diagonal']),

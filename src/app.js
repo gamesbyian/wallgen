@@ -20,7 +20,7 @@ import {installExplorationHistory} from './exploration-history.js';
 import {installGeometryLibraryUI} from './geometry-library-ui.js';
 import {RAINBOW_ORBITS,scatteredRadiusRange} from './scattered-composition.js';
 import {stripeContourDistortionAvailability} from './editor-effect-availability.js';
-import {normalizeScatteredOverrides} from './scattered-object-edits.js';
+import {normalizeScatteredOverrides,effectiveScatteredLayerOrder,moveScatteredLayer} from './scattered-object-edits.js';
 import {embroideryObjectChoices,resolveEmbroideryObjectChoice,reconcileEmbroideryObjectOptions} from './embroidery-target-choices.js';
 import {scatteredPixelToWorld,scatteredWorldToPixel,pickScatteredRegion,scatteredMoveOverride,clamp as clampScattered} from './scattered-drag.js';
 import {cloneGeometrySnapshot} from './geometry-asset.js';
@@ -235,7 +235,8 @@ function fromControls() {
   const data={seed:seedInput.value,positionX:current.positionX,positionY:current.positionY,
     viewZoom:current.viewZoom,viewPanX:current.viewPanX,viewPanY:current.viewPanY,
     customPath:current.customPath,drawnAnchors:current.drawnAnchors,drawnCorners:current.drawnCorners,interiorElements:current.interiorElements,
-    scatteredShape:current.scatteredShape,scatteredOverrides:current.scatteredOverrides};
+    scatteredShape:current.scatteredShape,scatteredOverrides:current.scatteredOverrides,
+    scatteredLayerOrder:current.scatteredLayerOrder};
   for (const key of FIELDS) { const field=form.elements.namedItem(key); data[key]=field.dataset.inactive==='true'?current[key]:(field.type==='checkbox'?field.checked:field.value); }
   // A single nested recipe travels in links, saved designs, PNG and workers.
   // Do not add an Off-only Photo key to untouched legacy recipes.
@@ -1329,7 +1330,7 @@ rainbowOrbitButton.textContent='Try Rainbow Orbits';
 rainbowOrbitButton.title='Seven varied rainbow circles with black negative space';
 regionTool?.append(rainbowOrbitButton);
 rainbowOrbitButton.addEventListener('click',()=>{
-  const proposal=normalizeRecipe({...current,...RAINBOW_ORBITS,scatteredOverrides:[]});
+  const proposal=normalizeRecipe({...current,...RAINBOW_ORBITS,scatteredOverrides:[],scatteredLayerOrder:[]});
   const next=respectSettingLocks(current,proposal);
   if(next.structure!=='regions'||next.regionMode!=='scattered'){
     showNotice('Unlock Canvas structure and Region layout to apply Rainbow Orbits.');
@@ -1365,6 +1366,16 @@ for(const [action,label,accessible] of [
   orbitCommands.append(button);
 }
 orbitEditor.append(orbitCommands);
+const orbitLayers=document.createElement('div');
+orbitLayers.className='scattered-layer-actions';
+for(const [action,label] of [['back','Move behind'],['front','Move in front']]){
+  const button=document.createElement('button');
+  button.type='button';button.dataset.orbitLayer=action;
+  button.textContent=label;
+  button.setAttribute('aria-label',label+' by one paint layer');
+  orbitLayers.append(button);
+}
+orbitEditor.append(orbitLayers);
 const orbitNote=document.createElement('small');
 orbitNote.className='scattered-object-note';
 orbitNote.setAttribute('aria-live','polite');
@@ -1524,14 +1535,31 @@ function syncScatteredObjectEditor(){
   const customized=normalizeScatteredOverrides(current.scatteredOverrides)
     .some(o=>o.index===index);
   root.querySelector('[data-orbit-action="reset"]').disabled=!customized;
+  const order=effectiveScatteredLayerOrder(current.scatteredLayerOrder,
+    objects.map(o=>Number(o.id.slice(7))));
+  const layer=order.indexOf(index);
+  orbitLayers.querySelector('[data-orbit-layer="back"]').disabled=layer<=0;
+  orbitLayers.querySelector('[data-orbit-layer="front"]').disabled=layer>=order.length-1;
   root.querySelector('.scattered-object-note').textContent=circle?
     (customized?'Manually positioned · ':'Seeded position · ')+
     'X '+Math.round(circle.cx)+
     ' · Y '+Math.round(circle.cy)+
-    ' · Radius '+Math.round(circle.r):'No shape selected';
+    ' · Radius '+Math.round(circle.r)+
+    ' · Layer '+(layer+1)+' of '+order.length:'No shape selected';
   if(scatteredDirectActive&&!scatteredDirectDrag)syncScatteredDirectOutline();
 }
 orbitPicker.addEventListener('change',syncScatteredObjectEditor);
+orbitLayers.addEventListener('click',event=>{
+  const button=event.target.closest('button[data-orbit-layer]');
+  if(!button||button.disabled)return;
+  const index=Number(orbitPicker.value);
+  const available=(currentScene?.objects||[])
+    .filter(o=>o.circle||o.editCircle).map(o=>Number(o.id.slice(7)));
+  const order=moveScatteredLayer(current.scatteredLayerOrder,index,
+    button.dataset.orbitLayer==='front'?1:-1,available);
+  if(order===null)return;
+  changeRecipe({...current,scatteredLayerOrder:order});
+});
 orbitCommands.addEventListener('click',event=>{
   const button=event.target.closest('button[data-orbit-action]');
   if(!button)return;

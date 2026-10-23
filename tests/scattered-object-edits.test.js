@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { normalizeRecipe, encodeRecipe, decodeRecipe, resolveScene } from '../src/model.js';
 import { RAINBOW_ORBITS, buildScatteredObjects } from '../src/scattered-composition.js';
-import { normalizeScatteredOverrides } from '../src/scattered-object-edits.js';
+import { normalizeScatteredOverrides,normalizeScatteredLayerOrder,
+  effectiveScatteredLayerOrder,moveScatteredLayer } from '../src/scattered-object-edits.js';
 import { GEOMETRY_SNAPSHOT_SCHEMA } from '../src/geometry-asset.js';
 
 test('bounded manual transforms are canonical, sorted and reject malformed input', () => {
@@ -98,4 +99,45 @@ test('single pointerup move retains unrelated authored transforms and saved reci
   assert.deepEqual(edited[1],base.scatteredOverrides[0]);
   const recipe=normalizeRecipe({...base,scatteredOverrides:edited});
   assert.deepEqual(decodeRecipe(encodeRecipe(recipe)),recipe);
+});
+
+
+test('layer order is bounded, identity-based and survives recipe transport',()=>{
+  assert.deepEqual(normalizeScatteredLayerOrder([3,1,3,-1,70,0,2.5,2]),[3,1,0,2]);
+  assert.deepEqual(normalizeScatteredLayerOrder('0,1,2'),[]);
+  const defaultRecipe=normalizeRecipe(RAINBOW_ORBITS);
+  assert.equal(Object.hasOwn(defaultRecipe,'scatteredLayerOrder'),false);
+  const initial=Array.from({length:7},(_,i)=>i);
+  assert.equal(moveScatteredLayer(undefined,0,-1,initial),null);
+  const moved=moveScatteredLayer(undefined,0,1,initial);
+  assert.deepEqual(moved,[1,0,2,3,4,5,6]);
+  const recipe=normalizeRecipe({...defaultRecipe,scatteredLayerOrder:moved});
+  assert.deepEqual(recipe.scatteredLayerOrder,moved);
+  assert.deepEqual(decodeRecipe(encodeRecipe(recipe)),recipe);
+  const ordered=resolveScene(recipe).objects;
+  assert.deepEqual(ordered.slice(0,2).map(o=>o.id),['region-1','region-0']);
+  assert.equal(ordered.find(o=>o.id==='region-0').colorIndex,0);
+  assert.equal(ordered.find(o=>o.id==='region-1').colorIndex,1);
+  assert.deepEqual(moveScatteredLayer(moved,0,-1,initial),[],
+    'reversing the move omits the default-order field');
+});
+
+test('paint order controls overlap hit-testing without altering geometry or imported holes',()=>{
+  const before=normalizeRecipe({...RAINBOW_ORBITS,scatteredOverlap:'overlap',
+    scatteredOverrides:[
+      {index:0,x:.5,y:.5,radius:.2},
+      {index:1,x:.5,y:.5,radius:.2}]});
+  const moved=normalizeRecipe({...before,
+    scatteredLayerOrder:[1,0,2,3,4,5,6]});
+  const a=resolveScene(before).objects,b=resolveScene(moved).objects;
+  for(const id of ['region-0','region-1']){
+    assert.deepEqual(a.find(o=>o.id===id).circle,b.find(o=>o.id===id).circle);
+  }
+  const beforeOverlap=a.filter(o=>['region-0','region-1'].includes(o.id));
+  const afterOverlap=b.filter(o=>['region-0','region-1'].includes(o.id));
+  assert.equal(pickScatteredRegion(beforeOverlap,{x:300,y:650})?.id,'region-1');
+  assert.equal(pickScatteredRegion(afterOverlap,{x:300,y:650})?.id,'region-0');
+  assert.deepEqual(effectiveScatteredLayerOrder(moved.scatteredLayerOrder,[0,1,2]),
+    [1,0,2]);
+  assert.deepEqual(effectiveScatteredLayerOrder([3,1,0,2],[0,1,2]),[1,0,2]);
 });

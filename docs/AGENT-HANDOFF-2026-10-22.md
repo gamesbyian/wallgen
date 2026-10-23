@@ -1,5 +1,10 @@
 # ROYGBIV handoff: current authority and independently actionable work
 
+## #443 optional painter-layer completion (23 October)
+
+[PR #559](https://github.com/gamesbyian/wallgen/pull/559) implements detailed back/front ordering for scattered circles and imported silhouette stamps. The existing contextual shape inspector now has two one-layer controls; `scatteredLayerOrder` is a bounded optional canonical recipe field; `buildScatteredCircles` reorders paint objects without changing geometry or colour-index identity; `buildCompositionObjects` preserves stable `region-N` IDs for editing, renderer and reverse-order hit-testing. Undo, saved PNG/JSON and shape snapshots remain shared. Default ordering omits the field. Focused tests cover layers, portability, overlap selection and bounds. **No actual Pixel tap/drag or actual PNG art review is claimed for this slice.** Remaining #443 ZIP/source blobs and placement modes are optional.
+
+
 ## Reconstruction first software slice (23 October)
 
 [PR #556](https://github.com/gamesbyian/wallgen/pull/556) adds canonical seven-hue scattered-object and drawn-path recovery, ranks at most six candidates via actual shared renderer at 96×208, and offers editable, uncertainty-labelled acceptance through the original importer and Undo. New `src/image-reconstruction.js`, shared `extractImageColourRegions` and focused tests. PR `Validate Wallgen` passed. **Only synthetic source rasters tested.** No genuine-current stripped PNG corpus, viewed artist-quality reconstruction, physical Pixel check, optimization beyond coarse alternative ranking, or persistent source attribution is claimed. [#557](https://github.com/gamesbyian/wallgen/issues/557) owns the next runnable R0/R3/R4 work. Do not repeat existing #443 seven-circle dragging, #445 organic linen, or #514 fibre modes. Existing appearance validation is specific to their prior PRs, not inverse reconstruction.

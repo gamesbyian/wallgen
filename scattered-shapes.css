@@ -54,3 +54,15 @@ body.scattered-direct-active #preview:active{cursor:grabbing}
 @media(max-width:790px){
   body.mobile-studio .sidebar .scattered-effective-hint{margin-top:0;padding:1px 4px;font-size:10px}
 }
+
+
+/* Independent back-to-front painting order, with full-size portrait tap
+   targets. No second object editor or hidden drag mode. */
+.scattered-layer-actions{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.scattered-layer-actions>button{
+  min-height:44px;min-width:0;border:1px solid var(--line);
+  border-radius:8px;background:var(--surface);color:inherit;
+  font-size:11px;font-weight:750;
+}
+.scattered-layer-actions>button:disabled{opacity:.42}
+.scattered-layer-actions>button:focus-visible{outline:2px solid currentColor;outline-offset:2px}
