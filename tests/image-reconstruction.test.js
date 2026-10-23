@@ -5,7 +5,7 @@ import {imagePlacement,extractImageColourRegions} from '../src/image-path.js';
 import {describeReconstructionImage,reconstructionCandidates,
   rankReconstructionCandidates,compareReconstructionPixels,refineReconstructionCandidate,reconstructionPlacement,
   radialImageSignature,imageStripeAngle,imageCurveSignature,diverseReconstructionCandidates,reconstructionRefinementIndex,
-  measuredRainbowRibbonBands,seedMeasuredRibbonControls,coherentWaveOffsetY,
+  measuredRainbowRibbonBands,seedMeasuredRibbonControls,coherentWaveOffsetY,coherentVerticalBandOffsetX,
   rankReconstructionCandidatesCooperatively,refineReconstructionCandidateCooperatively,
   RECONSTRUCTION_FRAME,RECONSTRUCTION_RENDER_LIMIT} from '../src/image-reconstruction.js';
 
@@ -559,4 +559,54 @@ test('direct and composite locks remain applied across every partially unlocked 
  const cooperative=await refineReconstructionCandidateCooperatively(item,source,
    ()=>raster(width,height,()=>[0,0,0,255]));
  assert.deepEqual(cooperative,synchronous,'same canonical locked fit in browser and R0');
+});
+
+
+test('seven coherent vertical hue strips reveal rigid X offset within existing straight fit budget',async()=>{
+ const w=RECONSTRUCTION_FRAME.width,h=RECONSTRUCTION_FRAME.height;
+ const image=(offset=0,oneShift=0)=>raster(w,h,(x,y)=>{
+   for(let i=0;i<7;i++){
+     const start=5+i*12+offset+(i===4?oneShift:0);
+     if(x>=start&&x<start+4)return colour(HUES[i]);
+   }
+   return [0,0,0,255];
+ });
+ const source=image(0),shifted=image(5);
+ assert.equal(coherentVerticalBandOffsetX(source,shifted),-5);
+ assert.equal(coherentVerticalBandOffsetX(source,image(5,12)),null);
+ assert.equal(coherentVerticalBandOffsetX(source,raster(w,h,()=>[0,0,0,255])),null);
+ const recipe=normalizeRecipe({seed:'source-registered-straight',geometry:'straight',
+   structure:'paths',orientation:'vertical',positionX:0});
+ const candidate={kind:'straight',label:'Vertical ribbons',
+   recipe,uncertainty:'Measured source',error:.3};
+ const render=r=>image(5+Math.round(r.positionX*w/100));
+ const ranked=rankReconstructionCandidates([candidate],source,render)[0];
+ assert.equal(ranked.bandOffsetX,-5);
+ const fitted=refineReconstructionCandidate(ranked,source,render);
+ assert.equal(fitted.recipe.positionX,-5);
+ assert.equal(fitted.error,0);
+ assert.ok(fitted.refinementRenders<=10);
+ const cooperative=(await rankReconstructionCandidatesCooperatively(
+   [candidate],source,render))[0];
+ assert.equal(cooperative.bandOffsetX,-5);
+ assert.deepEqual(await refineReconstructionCandidateCooperatively(
+   cooperative,source,render),fitted);
+});
+
+test('a protected X/Y Position prevents measured vertical offset fitting from rendering impossible candidates',()=>{
+ const width=RECONSTRUCTION_FRAME.width,height=RECONSTRUCTION_FRAME.height;
+ const source=raster(width,height,()=>[0,0,0,255]);
+ const recipe=normalizeRecipe({structure:'paths',geometry:'straight',
+   orientation:'vertical',positionX:11,positionY:-9,lockedSettings:['position']});
+ const calls=[];
+ const fitted=refineReconstructionCandidate({
+   kind:'straight',recipe,error:.5,label:'locked vertical',bandOffsetX:-5
+ },source,r=>{
+   calls.push(r);
+   return raster(width,height,()=>[0,0,0,255]);
+ });
+ assert.ok(calls.length>0);
+ assert.ok(calls.every(r=>r.positionX===11&&r.positionY===-9));
+ assert.equal(fitted.recipe.positionX,11);
+ assert.equal(fitted.recipe.positionY,-9);
 });

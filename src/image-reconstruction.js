@@ -285,6 +285,20 @@ export function reconstructionCandidates(image,recipe){
   // Long separate colour components describe procedural bands more honestly
   // than a ring of seven giant circles. Keep direct thickness/spacing editing.
   if(desc.lineDirection){
+    // For clean full-height vertical source bands, seven hue components
+    // actually measure thickness and gap. Invert the same canonical scene
+    // equations instead of guessing a fourth arbitrary spread preset.
+    if(desc.lineDirection==='vertical'&&desc.ribbonBands&&
+      Math.abs(desc.ribbonBands.angle)>=78){
+      const measured=seedMeasuredRibbonControls(
+        normalizeRecipe({...base,structure:'paths',geometry:'straight',
+          orientation:'vertical',composition:'single',construction:'ribbon',
+          chaos:0,individuality:0,spread:56,stripeWidth:52}),
+        desc.ribbonBands,image.width,image.height);
+      candidates.push({kind:'straight',label:'Measured editable vertical rainbow bands',
+        uncertainty:'Colour-component widths and centres estimate band spacing; seed/group offset and exact edge treatment are not recovered.',
+        recipe:measured});
+    }
     for(const spread of [38,56,74]){
       candidates.push({kind:'straight',label:'Procedural '+desc.lineDirection+
         ' bands / spread '+spread,
@@ -546,23 +560,27 @@ export function compareReconstructionPixels(source,rendered){
  * This is a hint for the NEXT ordinary drawWallpaper trial, not a new
  * renderer, source pixel storage or a claim of original setting recovery.
  */
-export function coherentWaveOffsetY(source,rendered){
+function coherentHueOffset(source,rendered,axis){
   if(!source||!rendered||source.width!==rendered.width||
     source.height!==rendered.height)return null;
   const a=extractImageColourRegions(source,HUES).regions;
   const b=extractImageColourRegions(rendered,HUES).regions;
   if(a.length!==7||b.length!==7)return null;
-  const dy=[];
+  const offsets=[];
   for(let i=0;i<7;i++){
     const s=a.find(r=>r.index===i),r=b.find(v=>v.index===i);
     if(!s||!r||s.area<16||r.area<16)return null;
-    dy.push((s.cy-r.cy)*100);
+    offsets.push((s[axis]-r[axis])*100);
   }
-  const sorted=dy.slice().sort((a,b)=>a-b),median=sorted[3];
+  const sorted=offsets.sort((a,b)=>a-b),median=sorted[3];
   if(sorted[6]-sorted[0]>4||Math.abs(median)<1||
     Math.abs(median)>30)return null;
   return Math.round(median);
 }
+export const coherentWaveOffsetY=(source,rendered)=>
+  coherentHueOffset(source,rendered,'cy');
+export const coherentVerticalBandOffsetX=(source,rendered)=>
+  coherentHueOffset(source,rendered,'cx');
 
 /** One synchronous bounded fit pass. The UI can cancel between revisions.
  * render(candidate,width,height) must call the existing renderer and return
@@ -581,8 +599,12 @@ export function rankReconstructionCandidates(candidates,source,render){
       if(Number.isFinite(error)){
         const waveOffsetY=candidate.kind==='wave'?
           coherentWaveOffsetY(source,pixels):null;
+        const bandOffsetX=candidate.kind==='straight'&&
+          candidate.recipe.orientation==='vertical'?
+          coherentVerticalBandOffsetX(source,pixels):null;
         results.push({...candidate,error,
-          ...(waveOffsetY!==null?{waveOffsetY}:{})});
+          ...(waveOffsetY!==null?{waveOffsetY}:{}),
+          ...(bandOffsetX!==null?{bandOffsetX}:{})});
       }
     }catch(error){
       results.push({...candidate,error:Infinity,
@@ -640,7 +662,11 @@ export const RECONSTRUCTION_FRAME=Object.freeze({
  */
 function refinementFields(candidate){
   return candidate.kind==='straight'?[
-    [candidate.recipe.orientation==='horizontal'?'positionY':'positionX',[-8,-4,4,8]],
+    [candidate.recipe.orientation==='horizontal'?'positionY':'positionX',
+      candidate.recipe.orientation==='vertical'&&Number.isFinite(candidate.bandOffsetX)?
+        [candidate.bandOffsetX,candidate.bandOffsetX-4,
+          candidate.bandOffsetX+4,candidate.bandOffsetX-8]:
+        [-8,-4,4,8]],
     ['spread',[-16,-8,8,16]],['stripeWidth',[-15,15]]
   ]:candidate.kind==='loop'?[
     ['positionX',[-6,6]],['positionY',[-6,6]],
