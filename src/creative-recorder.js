@@ -125,6 +125,7 @@ export function createCreativeRecorder({store,id=()=>globalThis.crypto.randomUUI
   let active=Boolean(enabled),sessionId=id(),episodeId=null,seq=0,commits=0,latest=null;
   let queue=Promise.resolve(),failed=null;
   let manualEdits=0,engagedMs=0,lastActivityMs=null,lastExportedRecipe=null;
+  let lastManualKey=null,lastManualAt=null,lastRequestedRecipe=null;
   const recipeKey=x=>JSON.stringify(normalizeRecipe(x));
   const engagement=()=>{
     if(lastActivityMs===null)return engagedMs;
@@ -132,7 +133,8 @@ export function createCreativeRecorder({store,id=()=>globalThis.crypto.randomUUI
   };
   const episodeStats=recipe=>({
     manualEdits,engagedMs:engagement(),
-    finalExported:lastExportedRecipe===recipeKey(recipe??latest)
+    finalExported:lastExportedRecipe===recipeKey(recipe??latest),
+    finalExportPending:lastRequestedRecipe===recipeKey(recipe??latest)
   });
   const enqueue=(record,snapshot)=>{
     queue=queue.then(()=>store.append(record,snapshot)).catch(error=>{
@@ -152,7 +154,8 @@ export function createCreativeRecorder({store,id=()=>globalThis.crypto.randomUUI
   }
   function begin(recipe,cause='session_start'){
     if(!active)return;
-    episodeId=id();commits=0;manualEdits=0;engagedMs=0;lastActivityMs=null;lastExportedRecipe=null;
+    episodeId=id();commits=0;manualEdits=0;engagedMs=0;lastActivityMs=null;
+    lastExportedRecipe=null;lastRequestedRecipe=null;lastManualKey=null;lastManualAt=null;
     const normalized=normalizeRecipe(recipe);
     event('episode_start',normalized,{cause,recipe:clone(normalized)});
   }
@@ -168,8 +171,12 @@ export function createCreativeRecorder({store,id=()=>globalThis.crypto.randomUUI
     if(!episodeId)begin(before);
     commits++;
     if(cause==='edit'||cause==='slider_settled'){
-      manualEdits++;
-      const tick=clock();
+      // Interactive slider preview frames are not distinct creative decisions.
+      // Consecutive edits to the same fields form one gesture within 1.2 s.
+      const tick=clock(),fieldSet=changes.map(x=>x.key).sort().join('|');
+      if(lastManualKey!==fieldSet||lastManualAt===null||
+        tick-lastManualAt>1200)manualEdits++;
+      lastManualKey=fieldSet;lastManualAt=tick;
       if(lastActivityMs!==null)engagedMs+=Math.max(0,Math.min(60000,tick-lastActivityMs));
       lastActivityMs=tick;
     }
@@ -187,14 +194,24 @@ export function createCreativeRecorder({store,id=()=>globalThis.crypto.randomUUI
       'survey_skipped','session_interrupted'];
     if(!allowed.includes(type))throw new Error('Invalid usage event type');
     const item={...details};
-    if(type==='download_initiated'&&
-      (!details.targetEpisodeId||details.targetEpisodeId===episodeId))
-      lastExportedRecipe=recipeKey(recipe??latest);
+    const targetEpisodeId=details.targetEpisodeId||episodeId;
+    const historical=targetEpisodeId!==episodeId;
+    if(!historical){
+      if(type==='export_requested')lastRequestedRecipe=recipeKey(recipe??latest);
+      if(type==='download_initiated'){
+        lastExportedRecipe=recipeKey(recipe??latest);
+        lastRequestedRecipe=null;
+      }
+      if(type==='export_failed')lastRequestedRecipe=null;
+    }
     if(type==='hidden_unconfirmed')lastActivityMs=null;
     if(['export_requested','download_initiated','export_failed',
       'favorite_added','favorite_removed','save_recipe_json'].includes(type))
       item.recipe=clone(normalizeRecipe(recipe??latest));
-    return event(type,recipe,item);
+    // A PNG may finish rendering after Randomize All started another episode.
+    // Retain the original export's episode attribution without regressing the
+    // currently active episode's durable last-known recipe checkpoint.
+    return event(type,historical?latest:recipe,{...item,episodeId:targetEpisodeId});
   }
   function supersede(before,after,cause='randomize_all'){
     if(!active)return null;
@@ -210,6 +227,7 @@ export function createCreativeRecorder({store,id=()=>globalThis.crypto.randomUUI
     active=Boolean(next);
     sessionId=id();episodeId=null;seq=0;commits=0;
     manualEdits=0;engagedMs=0;lastActivityMs=null;lastExportedRecipe=null;
+    lastRequestedRecipe=null;lastManualKey=null;lastManualAt=null;
     if(active)start(recipe);
   }
   async function exportJSON(){
@@ -220,6 +238,7 @@ export function createCreativeRecorder({store,id=()=>globalThis.crypto.randomUUI
   async function clear(){
     await queue;await store.clear();failed=null;episodeId=null;seq=0;commits=0;
     manualEdits=0;engagedMs=0;lastActivityMs=null;lastExportedRecipe=null;
+    lastRequestedRecipe=null;lastManualKey=null;lastManualAt=null;
   }
   return {
     get enabled(){return active;},get episodeId(){return episodeId;},
