@@ -320,3 +320,60 @@ export function extractImageShapeCandidates(image){
   // Do not duplicate the composite and individual item if one component.
   return parts.length===1?result.slice(0,1):result;
 }
+
+
+/**
+ * Recover rough rainbow-region geometry from the SAME bounded RGBA importer.
+ * Hue targets are supplied by the canonical palette owner, avoiding a second
+ * seven-colour definition. Components and border background are shared with
+ * path/silhouette extraction. Coordinates are source-image normalized.
+ */
+export function extractImageColourRegions({data,width:w,height:h},hueTargets){
+  if(!data||!Number.isInteger(w)||!Number.isInteger(h)||w<12||h<12||
+    w*h>650000||data.length!==w*h*4||
+    !Array.isArray(hueTargets)||hueTargets.length!==7||
+    hueTargets.some(h=>!Number.isFinite(h)))throw Error('Unsupported colour analysis image');
+  const bg=backgroundColour(data,w,h);
+  const backdrop=(.2126*bg[0]+.7152*bg[1]+.0722*bg[2])>128?'white':'black';
+  const masks=hueTargets.map(()=>new Uint8Array(w*h));
+  let coloured=0;
+  for(let p=0;p<w*h;p++){
+    const i=p*4,a=data[i+3],r=data[i],g=data[i+1],b=data[i+2];
+    if(a<96)continue;
+    const high=Math.max(r,g,b),low=Math.min(r,g,b),delta=high-low;
+    if(high<60||delta<55||delta/Math.max(high,1)<.3||
+      Math.hypot(r-bg[0],g-bg[1],b-bg[2])<52)continue;
+    let hue=0;
+    if(delta){
+      if(high===r)hue=((g-b)/delta)%6;
+      else if(high===g)hue=(b-r)/delta+2;
+      else hue=(r-g)/delta+4;
+      hue=(hue*60+360)%360;
+    }
+    let nearest=-1,distance=Infinity;
+    for(let k=0;k<7;k++){
+      const d=Math.abs(hue-hueTargets[k]);
+      const diff=Math.min(d,360-d);
+      if(diff<distance){distance=diff;nearest=k;}
+    }
+    // Broad enough for camera-tinted native art but do not falsely assign
+    // monochrome/neutral graphics to the nearest rainbow pigment.
+    if(distance>30)continue;
+    masks[nearest][p]=1;coloured++;
+  }
+  const minArea=Math.max(16,Math.floor(w*h*.0008));
+  const regions=[];
+  for(let index=0;index<7;index++){
+    const part=components(masks[index],w,h,minArea)[0];
+    if(!part)continue;
+    let sx=0,sy=0;
+    for(const p of part.members){sx+=p%w;sy+=(p/w)|0;}
+    const boxArea=(part.maxX-part.minX+1)*(part.maxY-part.minY+1);
+    regions.push({index,area:part.area,
+      cx:(sx/part.area+.5)/w,cy:(sy/part.area+.5)/h,
+      fillRatio:part.area/Math.max(1,boxArea),
+      bounds:[part.minX/w,part.minY/h,(part.maxX+1)/w,(part.maxY+1)/h]});
+  }
+  return {background:backdrop,backgroundRGB:bg,
+    coverage:coloured/(w*h),regions};
+}
