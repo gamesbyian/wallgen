@@ -1,0 +1,30 @@
+# TEMPORARY one-shot real-art experiment. Remove before merging code.
+name: Temporary Curved Reconstruction Evidence
+on:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  compare:
+    if: github.head_ref == 'agent/reconstruction-procedural-curves-20261023'
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Temporary Chromium setup for actual PNG evaluation
+        run: |
+          npm install --no-save --package-lock=false playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Render four real production sources and compare blind inverse fitting
+        run: |
+          node scripts/review-reconstruction.mjs --only 03-wave,04-jagged,05-hairpin,06-loop --out-dir artifacts/r0-curves
+          node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/r0-curves
+      - name: Preserve measured comparisons temporarily
+        uses: actions/upload-artifact@v4
+        with:
+          name: reconstruction-curve-evidence-4
+          path: artifacts/r0-curves/
+          retention-days: 2
