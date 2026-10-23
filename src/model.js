@@ -120,6 +120,7 @@ export function normalizeRecipe(input = {}) {
   }
   const normalizedInteriors=normalizeInteriorElements(input.interiorElements);
   const scatteredOverrides=normalizeScatteredOverrides(input.scatteredOverrides);
+  const reconstructionOrigin=normalizeReconstructionOrigin(input.reconstructionOrigin);
   const scatteredLayerOrder=normalizeScatteredLayerOrder(input.scatteredLayerOrder);
   // Interior numeric controls have the same transport invariant. Normalize
   // only signed zeros, preserving all finite authored values and geometry.
@@ -134,8 +135,7 @@ export function normalizeRecipe(input = {}) {
   return {
     version: 2,
     interiorElements:normalizedInteriors,
-    ...(normalizeReconstructionOrigin(input.reconstructionOrigin)?{
-      reconstructionOrigin:normalizeReconstructionOrigin(input.reconstructionOrigin)}:{}),
+    ...(reconstructionOrigin?{reconstructionOrigin}:{}),
     // Old recipes have no Photo key, leaving their saved representation and pixels intact.
     ...(input.photoLook?{photoLook:normalizePhotoLook(input.photoLook)}:{}),
     ...(Array.isArray(input.surfaceTreatments)?{surfaceTreatments:normalizeSurfaceTreatments(input.surfaceTreatments)}:{}),
