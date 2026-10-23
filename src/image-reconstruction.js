@@ -23,7 +23,17 @@ export function describeReconstructionImage(image){
     const h=Math.max(1,(y1-y0)*image.height);
     return Math.max(w/h,h/w);
   };
-  const seven=colour.regions.length===7&&
+  // A long diagonal band may occupy a roughly square bounding box and be
+  // falsely classified as a circle. A coherent principal axis across five
+  // separately coloured components is stronger evidence of straight bands.
+  // This is derived from the existing component masks, not another raster pass.
+  const diagonal=colour.regions.filter(region=>region.axisRatio>=3.2&&
+    Math.abs(region.axisAngle)>=12&&Math.abs(region.axisAngle)<=78);
+  const angles=diagonal.map(region=>region.axisAngle).sort((a,b)=>a-b);
+  const median=angles[Math.floor(angles.length/2)];
+  const consensus=diagonal.filter(region=>Math.abs(region.axisAngle-median)<=10);
+  const diagonalAngle=consensus.length>=5?Math.abs(median):null;
+  const seven=diagonalAngle===null&&colour.regions.length===7&&
     colour.regions.every(region=>region.area>=image.width*image.height*.001&&
       region.fillRatio>=.32&&aspect(region)<2.7);
   const elongated=colour.regions.filter(region=>aspect(region)>3);
@@ -38,7 +48,7 @@ export function describeReconstructionImage(image){
   const lineDirection=vertical.length>=5?'vertical':
     horizontal.length>=5?'horizontal':null;
   return {background:colour.background,colourRegions:colour.regions,
-    paths:paths.slice(0,6),sevenColourRegions:seven,lineDirection,
+    paths:paths.slice(0,6),sevenColourRegions:seven,lineDirection,diagonalAngle,
     coverage:colour.coverage,dimensions:[image.width,image.height]};
 }
 
@@ -61,6 +71,22 @@ export function reconstructionCandidates(image,recipe){
   const current=normalizeRecipe(recipe);
   const base=strippedCandidateBase(current,desc.background);
   const candidates=[];
+  // Place supported current procedural diagonal geometry ahead of generic
+  // contours. Bounded alternatives are ranked using the REAL renderer later.
+  // A diagonal line must never be painted as seven detached circles merely
+  // because its rotated bounding box looks compact.
+  if(desc.diagonalAngle!==null){
+    for(const offset of [-10,0,10]){
+      const diagonalRotation=clamp(Math.round(desc.diagonalAngle+offset),0,85);
+      candidates.push({kind:'straight',
+        label:'Procedural diagonal bands / '+diagonalRotation+'°',
+        uncertainty:'Colour-component axes agree on diagonal strips; orientation is estimated but stripe widths, seed and offsets are not recovered.',
+        recipe:normalizeRecipe({...base,structure:'paths',geometry:'straight',
+          orientation:'diagonal',diagonalRotation,composition:'single',
+          construction:'ribbon',chaos:0,individuality:0,
+          stripeWidth:75,spread:58})});
+    }
+  }
   if(desc.sevenColourRegions){
     // Colour slot identity comes from the shared model HUES. Overrides live
     // in normal scattered recipes and can be dragged / undone / exported.
