@@ -160,6 +160,29 @@ function strippedCandidateBase(input,background){
     viewZoom:1,viewPanX:0,viewPanY:0,positionX:0,positionY:0};
 }
 
+/**
+ * First spend the six-render budget on independent editable structures, then
+ * fill remaining slots with alternative offsets/spreads. Without this, three
+ * diagonal rotations and two loops silently crowd out the jagged hypothesis
+ * and even the Draw fallback that users need on unsupported art.
+ */
+export function diverseReconstructionCandidates(candidates,limit=RECONSTRUCTION_RENDER_LIMIT){
+  if(!Array.isArray(candidates)||!Number.isInteger(limit)||limit<0||
+    limit>RECONSTRUCTION_RENDER_LIMIT)throw Error('Invalid candidate budget');
+  const chosen=[],kinds=new Set(),included=new Set();
+  for(const candidate of candidates){
+    if(chosen.length===limit)break;
+    if(!kinds.has(candidate.kind)){
+      chosen.push(candidate);included.add(candidate);kinds.add(candidate.kind);
+    }
+  }
+  for(const candidate of candidates){
+    if(chosen.length===limit)break;
+    if(!included.has(candidate)){chosen.push(candidate);included.add(candidate);}
+  }
+  return chosen;
+}
+
 /** Return a few independently editable canonical alternatives. */
 export function reconstructionCandidates(image,recipe){
   const desc=describeReconstructionImage(image);
@@ -303,7 +326,8 @@ export function reconstructionCandidates(image,recipe){
   // nonradial multicolour outlines. The shared importer supplies rough
   // curvature ordering; the existing true renderer, not our signature,
   // decides whether any beats a traced Draw path.
-  if(!desc.radial.kind&&!desc.lineDirection&&!desc.sevenColourRegions&&
+  if(!desc.radial.kind&&!desc.sevenColourRegions&&
+    (!desc.lineDirection||desc.paths.some(path=>path.kind==='arc'))&&
     desc.colourRegions.length>=3&&
     desc.paths.some(path=>path.kind==='arc'||path.kind==='contour')){
     const presets=[
@@ -354,13 +378,14 @@ export function reconstructionCandidates(image,recipe){
     candidate.kind==='path'||candidate.kind==='straight'||candidate.kind==='loop'||
     ['wave','jagged','hairpin'].includes(candidate.kind)?
       ['structure','geometry']:['structure'];
-  return candidates.map(candidate=>{
+  const committable=candidates.map(candidate=>{
     const effective=respectSettingLocks(current,candidate.recipe);
     const blocked=current.lockedSettings.filter(key=>
       JSON.stringify(effective[key])!==JSON.stringify(candidate.recipe[key]));
     return {...candidate,recipe:effective,lockedChanges:blocked};
   }).filter(candidate=>!essential(candidate).some(key=>
-    candidate.lockedChanges.includes(key))).slice(0,RECONSTRUCTION_RENDER_LIMIT);
+    candidate.lockedChanges.includes(key)));
+  return diverseReconstructionCandidates(committable);
 }
 
 /** Shape-aware but inexpensive comparison at an explicitly bounded resolution.
