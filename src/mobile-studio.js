@@ -239,7 +239,12 @@ for(const name of ['mobileToolsClose']){
 }
 backstage.addEventListener('click',()=>closeSurfaces());
 document.addEventListener('keydown',event=>{
-  if(event.key==='Escape')closeSurfaces();
+  if(event.key!=='Escape'||event.defaultPrevented)return;
+  // Setting search, Draw and other children may already own Escape.
+  // An open native dialog also owns its own dismissal; never collapse the
+  // underlying editor or shift its focus on the same keyboard gesture.
+  if(event.target?.closest?.('dialog[open]'))return;
+  closeSurfaces();
 });
 for(const [mobileId,targetId] of [
   ['mobileShuffle','randomizeAll'],['mobileFavorite','favorite'],['mobileDownload','download']
