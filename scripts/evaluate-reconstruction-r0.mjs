@@ -62,7 +62,7 @@ export function classifyReconstructionManifest(manifest){
   if(!external&&manifest?.schema!=='roygbiv-reconstruction-r0/v1')
     throw Error('Unsupported reconstruction manifest');
   if(!Array.isArray(manifest.items)||manifest.items.length<1||
-    manifest.items.length>(external?4:15))throw Error('Invalid reconstruction fixture count');
+    manifest.items.length>(external?4:16))throw Error('Invalid reconstruction fixture count');
   const ids=new Set(),sources=new Set();
   for(const item of manifest.items){
     if(!item||typeof item.id!=='string'||!/^[-\w]+$/.test(item.id)||
@@ -158,7 +158,7 @@ async function evaluate(opts){
             recipe:best.recipe,refinementRenders:best.refinementRenders??0,
             waveOffsetY:best.waveOffsetY??null}:null,
           alternatives:ranked.map(x=>({kind:x.kind,label:x.label,error:x.error,
-            waveOffsetY:x.waveOffsetY??null,positionY:x.recipe.positionY})),
+            waveOffsetY:x.waveOffsetY??null,jaggedOffsetX:x.jaggedOffsetX??null,jaggedOffsetY:x.jaggedOffsetY??null,positionY:x.recipe.positionY})),
           sourcePreview:fit.toDataURL('image/png'),
           candidatePreview:preview?.toDataURL('image/png')??null,
           candidateVariants:includeAlternatives?ranked.map((item,i)=>({
