@@ -1,5 +1,10 @@
 # PNG recipe metadata migration without image changes
 
+## M0 bounded source-era shadow intent diagnostic (2026-10-22)
+
+`inspectPngMigration` now includes `historicalShadowEvidence` **only when a PNG v1 envelope explicitly contains the discontinued `stripeShadowEnabled` field**. [Pinned original model+renderer source](https://github.com/gamesbyian/wallgen/commit/37428b624e55a0d4526b992bfe6fdf4a01b5f420) establishes that the old renderer painted a shadow only if the boolean flag was enabled **and** the historical normalized strength was positive, with old absent/non-finite strength fallback 45. The report lists original raw values, the proven predicate, whether an old shadow would have painted, and a **visually suggestive but unverified destination strength**. Source era is NOT established when the flag is absent: later v1 files used a different strength-only guard. V1 migration **still refuses** and no PNG/recipe bytes are rewritten. This is a conservative semantic-forensics tool to move toward old-era golden fixtures, not a replacement for their remaining work.
+
+
 ## Readable forensic source report (M0/M5, 2026-10-22)
 
 The existing More → Save report JSON now includes the **selected original parsed JSON envelope** (`sourceEnvelope`) and all original record locations/formats/sizes (`sourceRecords`), even when the update is refused because a historical v1 format, unknown fields or conflicting records cannot be converted safely. It remains a read-only report, never passed to `normalizeRecipe` for the source snapshot, never imported into the editor, never used to write the image. Parsing JSON necessarily loses insignificant whitespace and duplicate-key spellings; the separate exact-byte iTXt archive continues to be the forensic authority, especially for malformed/unsupported text. This saves an extra manual base64 decode during archaeology without pretending to enable unsafe schema translation or growing the phone UI. Focused Node tests and no new workflow.
