@@ -29,17 +29,3 @@ jobs:
       - name: Full Node suite (manual request only)
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.depth == 'full' }}
         run: npm run check
-      # TEMP PHOTO ART/ALLOCATION PROOF for PR #573 only. REMOVE before merge.
-      - name: TEMP focused actual ROYGBIV Film and Camera stream proof
-        if: ${{ github.head_ref == 'agent3/photo-source-art-parity-20261023' }}
-        run: |
-          npm install --no-save playwright
-          npx playwright install --with-deps chromium
-          node scripts/review-photo-looks.mjs --focus-stream-parity --verify-stream --out-dir artifacts/photo-stream-parity
-      - name: TEMP focused source-picture artifact
-        if: ${{ github.head_ref == 'agent3/photo-source-art-parity-20261023' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: photo-stream-parity-four
-          path: artifacts/photo-stream-parity/
-          retention-days: 2
