@@ -243,3 +243,47 @@ test('coherent diagonal hue axes survive radial classifier integration without h
   assert.equal(describeReconstructionImage(rays).radial.kind,'rays');
   assert.ok(reconstructionCandidates(rays,{}).some(x=>x.kind==='radial-rays'));
 });
+
+test('broad oscillating ROYGBIV ribbons offer editable canonical waves, not only a hairline trace',()=>{
+  const curved=raster(180,330,(x,y)=>{
+    const bend=Math.sin(x/19)*7;
+    for(let i=0;i<7;i++)if(Math.abs(y-(42+i*34+bend))<8)
+      return colour(HUES[i]);
+    return [0,0,0,255];
+  });
+  const d=describeReconstructionImage(curved);
+  assert.equal(d.lineDirection,'horizontal');
+  assert.equal(d.horizontalWave,true);
+  const fit=reconstructionCandidates(curved,{seed:'not-known-original-seed'});
+  assert.ok(fit.some(x=>x.kind==='wave'&&x.recipe.geometry==='wave'&&
+    x.recipe.structure==='paths'&&x.recipe.orientation==='horizontal'));
+  assert.ok(fit.filter(x=>x.kind==='wave').length<=3);
+  const flat=raster(180,330,(x,y)=>{
+    for(let i=0;i<7;i++)if(Math.abs(y-(42+i*34))<8)
+      return colour(HUES[i]);
+    return [0,0,0,255];
+  });
+  assert.equal(describeReconstructionImage(flat).horizontalWave,false,
+    'straight transverse stripes should not create fake procedural waves');
+});
+
+test('wave fitting reuses the bounded shared renderer probe budget and current recipe',()=>{
+  const image=raster(RECONSTRUCTION_FRAME.width,RECONSTRUCTION_FRAME.height,
+    ()=>[0,0,0,255]);
+  const origin=normalizeRecipe({seed:'wave-original',structure:'paths',
+    geometry:'wave',orientation:'horizontal',positionY:0});
+  const candidate={kind:'wave',label:'wave',recipe:origin,
+    error:1};
+  let count=0;
+  const render=recipe=>{
+    count++;
+    const shade=Math.round(Math.abs(recipe.positionY-8)*12);
+    return raster(image.width,image.height,()=>[shade,shade,shade,255]);
+  };
+  const refined=refineReconstructionCandidate(candidate,image,render,{maxRenders:10});
+  assert.ok(refined.error<1);
+  assert.equal(refined.recipe.structure,'paths');
+  assert.equal(refined.recipe.geometry,'wave');
+  assert.ok(refined.refinementRenders<=10);
+  assert.equal(count,refined.refinementRenders);
+});
