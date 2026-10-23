@@ -1,5 +1,11 @@
 # Implementation-safe ROYGBIV redesign queue
 
+## Thread Surface expanded: two-size real-browser portrait inspection (2026-10-22)
+
+The optional `scripts/review-thread-portrait.mjs` opens the actual mobile Studio editor, selects Texture → Surface, expands the original native Thread disclosure, enables all-colour Chain, and captures **only two real Chromium screens** (412×892 Pixel-proxy and tight 320×700) plus field rectangle/scroll evidence. This is a low-cost observed-UI probe for newly added Region angle and Chain style, rather than the earlier 1,000-screen atlas. It does not certify a real Pixel, real Android virtual keyboard or actual 44px finger hit regions; report actual clipping before considering a tiny layout patch.
+
+
+
 ## Queued More utility: update historical PNG recipe metadata (#476)
 
 [Plan](PNG-RECIPE-MIGRATION-AND-FORMAT-REGISTRY-PLAN-2026-10-22.md) · [Issue](https://github.com/gamesbyian/wallgen/issues/476). Add 'Update recipe in an existing PNG' in More/PNG metadata utilities rather than a new Edit tool. Upload, identify dialect, show translation report, and download updated PNG without altering raster, unrelated metadata, current composition or Undo. Disabled download when field migration is ambiguous. M0–M5 are tracked in the active roadmap; this is **planned only**. Keep 44px touch behavior and compact phone inspector; avoid new permanent CI.
