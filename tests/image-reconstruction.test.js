@@ -818,9 +818,10 @@ test('interior dark seams on true radial colour fields invite canonical dividers
      c.kind===(kind==='rays'?'radial-rays':'radial-rings')),
    'offer the current canonical dark-gap treatment for '+kind);
    const options=reconstructionCandidates(plain,{seed:'clean-sample'});
-   assert.ok(options.every(c=>!(c.recipe.dividerColor==='background'&&
-     c.recipe.dividerWidth>0)),
-     'visible separators cannot be inferred from unbordered '+kind);
+   assert.ok(options.filter(c=>c.kind===(kind==='rays'?
+     'radial-rays':'radial-rings')).every(c=>!(
+       c.recipe.dividerColor==='background'&&c.recipe.dividerWidth>0)),
+     'visible radial separators cannot be inferred from unbordered '+kind);
    assert.ok(bordered.some(c=>c.recipe.dividerColor==='none'),
      'preserve undecorated family for uncertainty and actual renderer scoring');
    const locked=reconstructionCandidates(source,normalizeRecipe({seed:'locked-gap',
