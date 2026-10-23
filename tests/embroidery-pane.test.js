@@ -27,7 +27,7 @@ test('surface stitch style is one native persisted control, not a separate tab',
   assert.match(html,/<option value="tatami">Tatami fill \(regions\)<\/option>/);
   assert.match(app,/style:form\.elements\.namedItem\('embroideryStyle'\)\.value/);
   assert.match(app,/namedItem\('embroideryStyle'\)\.value=stitch\?\.style\?\?'satin'/);
-  assert.match(app,/'embroideryObjectId','embroideryStyle','embroideryPitch'/);
+  assert.match(app,/'embroideryObjectId','embroideryStyle','embroideryDirection'/);
 });
 
 test('running style is selectable through the same persisted native Thread field',()=>{
