@@ -50,7 +50,7 @@ test('touch coordinator and counter share one visible sequence and preserve dire
   assert.match(source,/const availableTools=\(\)=>visibleMobileTools\(/);
   assert.match(source,/const choices=availableTools\(\),index=choices.findIndex/);
   assert.match(source,/adjacentVisibleMobileTool\(availableTools\(\),active.tool,dx<0\?1:-1\)/);
-  assert.match(source,/if\(next\)selectEditorTool\(active.category,next\)/);
+  assert.match(source,/if\(next\)selectEditorTool\(active.category,next,\{source:'swipe'\}\)/);
   assert.match(source,/document.addEventListener\('editor-tool-changed'/);
   assert.doesNotMatch(source,/EDITOR_CATEGORIES/,
     'there is one owner for scene applicability, not a parallel static swipe taxonomy');
