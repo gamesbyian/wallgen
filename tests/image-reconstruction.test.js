@@ -5,7 +5,7 @@ import {imagePlacement,extractImageColourRegions} from '../src/image-path.js';
 import {describeReconstructionImage,reconstructionCandidates,
   rankReconstructionCandidates,compareReconstructionPixels,refineReconstructionCandidate,reconstructionPlacement,
   radialImageSignature,imageStripeAngle,imageCurveSignature,diverseReconstructionCandidates,reconstructionRefinementIndex,
-  measuredRainbowRibbonBands,seedMeasuredRibbonControls,coherentWaveOffsetY,coherentVerticalBandOffsetX,
+  measuredRainbowRibbonBands,seedMeasuredRibbonControls,coherentWaveOffsetY,coherentVerticalBandOffsetX,coherentExpandedDrawOffsetY,measuredExpandedDrawRegistration,
   rankReconstructionCandidatesCooperatively,refineReconstructionCandidateCooperatively,
   RECONSTRUCTION_FRAME,RECONSTRUCTION_RENDER_LIMIT} from '../src/image-reconstruction.js';
 
@@ -639,4 +639,154 @@ test('measured Wave refinement spends fixed renderer budget on genuine contour c
  const asyncResult=await refineReconstructionCandidateCooperatively(input,source,painter);
  assert.deepEqual(asyncResult,result);
  assert.ok(result.refinementRenders<=10);
+});
+
+
+test('expanded Draw seven-hue Y registration earns one bounded fit without displacing the conservative fallback',async()=>{
+ const w=RECONSTRUCTION_FRAME.width,h=RECONSTRUCTION_FRAME.height;
+ const bands=(shift=0,rogue=0,thickness=7)=>raster(w,h,(x,y)=>{
+   for(let i=0;i<7;i++){
+     const top=10+i*24+shift+(i===4?rogue:0);
+     if(y>=top&&y<top+thickness)return colour(HUES[i]);
+   }
+   return [0,0,0,255];
+ });
+ const source=bands(),shifted=bands(13);
+ assert.equal(coherentExpandedDrawOffsetY(source,shifted),-6);
+ assert.equal(coherentExpandedDrawOffsetY(source,bands(13,13)),null,
+   'disparate hue motion must never imply global translation');
+ assert.equal(coherentExpandedDrawOffsetY(source,
+   raster(w,h,()=>[0,0,0,255])),null);
+ const wide=normalizeRecipe({seed:'wide-draw',structure:'paths',geometry:'drawn',
+   geometrySafety:false,spread:65,stripeWidth:52,positionY:0});
+ const safe=normalizeRecipe({...wide,geometrySafety:true});
+ const painter=r=>bands(13+Math.round(r.positionY*h/100),0,
+   r.geometrySafety?2:7);
+ const ranked=rankReconstructionCandidates([
+   {kind:'path',label:'safe',recipe:safe,uncertainty:'inferred'},
+   {kind:'path',label:'wide',recipe:wide,uncertainty:'inferred'}
+ ],source,painter);
+ const detected=ranked.find(c=>!c.recipe.geometrySafety);
+ assert.equal(detected.drawOffsetY,-6);
+ assert.equal(ranked.find(c=>c.recipe.geometrySafety).drawOffsetY,undefined,
+   'safe candidate is kept outside the speculative registration pass');
+ assert.equal(reconstructionRefinementIndex([
+   {kind:'path',error:.192433,recipe:safe},
+   {...detected,error:.226618}
+ ]),1,'displaced wider Draw is given the one shared fitting budget');
+ const fit=refineReconstructionCandidate(detected,source,painter);
+ assert.equal(fit.recipe.positionY,-6);
+ assert.ok(fit.error<detected.error&&fit.error<.05,
+   'integer canonical position controls reduce true-render mismatch, not a guessed winner');
+ assert.ok(fit.refinementRenders<=10);
+ const asyncFit=await refineReconstructionCandidateCooperatively(detected,source,
+   painter,{yieldControl:async()=>{}});
+ assert.deepEqual(asyncFit,fit,'sync and cancellable paths share trial sequence');
+ assert.deepEqual(refineReconstructionCandidate(ranked.find(c=>
+   c.recipe.geometrySafety),source,painter),
+   ranked.find(c=>c.recipe.geometrySafety),
+   'the conservative fallback is never needlessly mutated');
+ assert.equal(reconstructionRefinementIndex([
+   {kind:'path',error:.192433,recipe:safe},
+   {...detected,error:.60}
+ ]),0,'an implausibly poor wide initial candidate gets no budget');
+});
+
+test('expanded Draw registration honours umbrella and direct setting locks and cancellable execution',async()=>{
+ const w=RECONSTRUCTION_FRAME.width,h=RECONSTRUCTION_FRAME.height;
+ const source=raster(w,h,()=>[0,0,0,255]);
+ const recipe=normalizeRecipe({seed:'protected-wide',structure:'paths',
+   geometry:'drawn',geometrySafety:false,positionX:12,positionY:-8,
+   spread:61,stripeWidth:69,
+   lockedSettings:['position','spread','stripeWidth']});
+ const candidate={kind:'path',label:'locked wide',recipe,error:.3,drawOffsetY:-6};
+ let paints=0;
+ const painter=()=>{paints++;return source;};
+ const result=refineReconstructionCandidate(candidate,source,painter);
+ assert.equal(paints,0);
+ assert.equal(result.refinementRenders,0);
+ assert.deepEqual(result.recipe,recipe);
+ const synced=await refineReconstructionCandidateCooperatively(candidate,source,painter);
+ assert.deepEqual(synced,result);
+ assert.equal(paints,0);
+ const partial=normalizeRecipe({...recipe,lockedSettings:['position','stripeWidth']});
+ const visited=[];
+ const fitted=refineReconstructionCandidate({...candidate,recipe:partial},
+   source,next=>{visited.push(next);return source;});
+ assert.ok(visited.length>0&&visited.length<=10);
+ assert.ok(visited.every(next=>next.positionX===12&&next.positionY===-8&&
+   next.stripeWidth===69));
+ let cancelled=false,afterCancel=0;
+ const halted=await refineReconstructionCandidateCooperatively(
+   {...candidate,recipe:partial},source,()=>{afterCancel++;return source;},
+   {yieldControl:async()=>{cancelled=true;},isCancelled:()=>cancelled});
+ assert.equal(halted,null);
+ assert.equal(afterCancel,0);
+});
+
+test('actual seven-colour gap drift becomes canonical wide Draw spread followed by whole-pack Y correction',async()=>{
+ const w=RECONSTRUCTION_FRAME.width,h=RECONSTRUCTION_FRAME.height;
+ const stripes=(centre,gap,width=8)=>raster(w,h,(x,y)=>{
+   for(let i=0;i<7;i++){
+     const y0=centre+(i-3)*gap;
+     if(y>=y0&&y<y0+width)return colour(HUES[i]);
+   }
+   return [0,0,0,255];
+ });
+ const source=stripes(90,24);
+ const initial=stripes(100,12);
+ const estimated=measuredExpandedDrawRegistration(source,initial);
+ assert.ok(estimated,'seven ordered hues retain a coherent linear spacing mismatch');
+ assert.ok(estimated.gapRatio>1.9&&estimated.gapRatio<2.1);
+ assert.equal(estimated.offsetY,-5);
+ const wide=normalizeRecipe({structure:'paths',geometry:'drawn',
+   geometrySafety:false,spread:65,stripeWidth:52,positionY:0});
+ const painter=r=>stripes(100+Math.round(r.positionY*h/100),
+   Math.round(12+(r.spread-65)*12/35));
+ const candidate=rankReconstructionCandidates(
+   [{kind:'path',label:'measured wide',recipe:wide,uncertainty:'inferred'}],
+   source,painter)[0];
+ assert.ok(candidate.drawGapRatio>1.9);
+ const fitted=refineReconstructionCandidate(candidate,source,painter);
+ assert.ok(fitted.refinementRenders<=10);
+ assert.ok(fitted.error<=candidate.error,
+   'fit accepts only a strictly improved real pixel score');
+ assert.ok([65,100].includes(fitted.recipe.spread)||fitted.recipe.spread>65,
+   'canonical fit may reject a physical gap proposal if source pixels score worse');
+ assert.deepEqual(await refineReconstructionCandidateCooperatively(
+   candidate,source,painter),fitted);
+ assert.equal(reconstructionRefinementIndex([
+   {kind:'path',label:'safe Draw',recipe:normalizeRecipe({...wide,geometrySafety:true}),
+     error:.192433},
+   {...candidate,error:.226618},
+   {kind:'wave',error:.36,waveOffsetY:-4}
+ ]),2,'smooth source retains known coherent Wave registration');
+ assert.equal(reconstructionRefinementIndex([
+   {kind:'path',error:.192433,recipe:normalizeRecipe({...wide,geometrySafety:true})},
+   {...candidate,error:.226618,angularBends:2},
+   {kind:'wave',error:.36,waveOffsetY:-4}
+ ]),1,'independently measured two angular turns justify the wide Draw budget');
+});
+
+test('long-baseline bends recognize authored V corners after shared importer smoothing, not gentle waves',()=>{
+ const angular=[];
+ for(let x=0;x<=240;x+=3){
+   const y=x<=78?36+x*.37:x<=153?65-(x-78)*.36:38+(x-153)*.43;
+   angular.push([x/240,y/240]);
+ }
+ // Nine-station smoothing approximates the image importer's low-pass.
+ const smooth=angular.map(([x],i)=>{
+   let y=0,n=0;
+   for(let j=Math.max(0,i-4);j<=Math.min(angular.length-1,i+4);j++){
+     y+=angular[j][1];n++;
+   }
+   return [x,y/n];
+ });
+ const result=imageCurveSignature([{kind:'arc',points:smooth}],240,240);
+ assert.ok(result.angularBends>=2,'two zig corners should survive a smoothed centreline');
+ const gentle=Array.from({length:81},(_,i)=>{
+   const x=i/80;return [x,.35+.035*Math.sin(x*Math.PI*2)];
+ });
+ const wave=imageCurveSignature([{kind:'arc',points:gentle}],240,240);
+ assert.equal(wave.angularBends,0,'a gentle flowing curve is not an angular V');
 });
