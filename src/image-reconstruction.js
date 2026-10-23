@@ -6,6 +6,9 @@ import {appliedDrawnPathRecipe} from './draw-apply-transaction.js';
 import {extractImagePathCandidates,extractImageColourRegions,imagePlacement,pathToWallpaper} from './image-path.js';
 
 const RECONSTRUCTION_WIDTH=96, RECONSTRUCTION_HEIGHT=208;
+// Reconstruction explains the entire imported frame, unlike padded manual
+// path extraction. Keep the shared fit/aspect math, including letterboxing.
+export const reconstructionPlacement=(width,height)=>imagePlacement(width,height,0);
 export const RECONSTRUCTION_RENDER_LIMIT=6;
 const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
 
@@ -42,7 +45,7 @@ export function reconstructionCandidates(image,recipe){
   if(desc.sevenColourRegions){
     // Colour slot identity comes from the shared model HUES. Overrides live
     // in normal scattered recipes and can be dragged / undone / exported.
-    const placed=imagePlacement(image.width,image.height);
+    const placed=reconstructionPlacement(image.width,image.height);
     const overrides=desc.colourRegions.map(region=>({
       index:region.index,
       x:(placed.x+region.cx*placed.width)/600,
@@ -61,7 +64,7 @@ export function reconstructionCandidates(image,recipe){
   const distinct=desc.paths.filter(p=>['arc','line','contour'].includes(p.kind) &&
     p.points.length>=2).slice(0,2);
   for(const path of distinct){
-    const mapped=pathToWallpaper(path,image.width,image.height);
+    const mapped=pathToWallpaper(path,image.width,image.height,0);
     if(!mapped)continue;
     for(const spread of [30,65]){
       const candidate=appliedDrawnPathRecipe({...base,spread,stripeWidth:52,
