@@ -1,5 +1,14 @@
 # ROYGBIV: active product roadmap and work queue
 
+## New completed Film, Camera and navigation slices (#468 / #471 / #444, Oct 22 evening)
+
+**#468 Film:** Merged [#528](https://github.com/gamesbyian/wallgen/pull/528) creates a separately named, visibly broader warm halation/diffusion look. Three real same-seed 600×1300 ROYGBIV source PNGs were viewed and CRC/recipe verified ([Chromium review #39897810550](https://github.com/gamesbyian/wallgen/actions/runs/39897810550)); black-neighbour glow >4 red counts 25,875→105,925 compared with the untouched original Halation mode. Full details and caveats in [Film plan](PHOTO-FILM-LOOKS-AND-FILTERS-PLAN-2026-10-22.md). Future: judge on complex textures and native Pixel only when useful; no silent parameter retuning.
+
+**#471 Camera:** Merged [#533](https://github.com/gamesbyian/wallgen/pull/533) separately opt-in simulated point-and-shoot flash, with on-axis exposure falloff, ordinary Photo save/worker path, and unchanged previous Camera presets. Three actual source-rendered images were reviewed ([Chromium #39899002018](https://github.com/gamesbyian/wallgen/actions/runs/39899002018)) and CRC/recipe-matched; all 372,824 pure-black substrate pixels were preserved. Central mid-brights rise +6.07 RGB/channel, frame-edge mid-brights fall -4.47 relative to original. Stylized look, not real optics or hardware emulation. [Camera plan](DIGITAL-CAMERA-AND-COMPUTATIONAL-PHOTO-LOOKS-PLAN-2026-10-22.md).
+
+**#444 artistic access:** Merged [#531](https://github.com/gamesbyian/wallgen/pull/531) recognizes concrete Photo artistic searches (negative print, monochrome print, warm fringe, high dynamic range, old digicam), directly opens one preexisting Light → Photo pane, and explains look hints without auto-mutating values. Ordinary terms like grain/glow retain their canonical search. Seven categories, 40 cards, and saved palette unchanged. Remaining C09 optional interior-inspector consolidation and real-phone input observations; don't recast conceptual IA design as automatically proven superior.
+
+**Lean acceptance:** All three focused PRs passed standard quick CI. One-shot true-art browser experiments removed before merge. Avoid new screenshot factories, redundant Photo categories, old preset retuning or claims of physical Pixel support from Chromium-only proof.
 
 ## Art and focused native-input completion: #514, #445, #365 (22 October evening)
 
