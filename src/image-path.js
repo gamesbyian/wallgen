@@ -202,8 +202,10 @@ export function imagePlacement(width,height,margin=.06){
   const drawWidth=width*scale,drawHeight=height*scale;
   return {x:(600-drawWidth)/2,y:(1300-drawHeight)/2,width:drawWidth,height:drawHeight};
 }
-export function pathToWallpaper(candidate,width,height){
-  const box=imagePlacement(width,height);
+export function pathToWallpaper(candidate,width,height,margin=.06){
+  // Ordinary Path imports keep protective padding; full-frame image fitting
+  // opts into zero inset without creating a second coordinate mapper.
+  const box=imagePlacement(width,height,margin);
   const points=candidate.points.map(([x,y])=>[(box.x+x*box.width)/600,(box.y+y*box.height)/1300]);
   // Densify straight and closed paths before storage so no implicit smoothing
   // changes intentional contour corners in prepareDrawnPath.
