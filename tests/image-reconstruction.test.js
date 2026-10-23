@@ -5,7 +5,7 @@ import {imagePlacement,extractImageColourRegions} from '../src/image-path.js';
 import {describeReconstructionImage,reconstructionCandidates,
   rankReconstructionCandidates,compareReconstructionPixels,refineReconstructionCandidate,reconstructionPlacement,
   radialImageSignature,imageStripeAngle,imageCurveSignature,diverseReconstructionCandidates,reconstructionRefinementIndex,
-  measuredRainbowRibbonBands,seedMeasuredRibbonControls,coherentWaveOffsetY,coherentVerticalBandOffsetX,
+  measuredRainbowRibbonBands,seedMeasuredRibbonControls,coherentWaveOffsetY,coherentVerticalBandOffsetX,coherentExpandedDrawOffsetY,
   rankReconstructionCandidatesCooperatively,refineReconstructionCandidateCooperatively,
   RECONSTRUCTION_FRAME,RECONSTRUCTION_RENDER_LIMIT} from '../src/image-reconstruction.js';
 
@@ -639,4 +639,86 @@ test('measured Wave refinement spends fixed renderer budget on genuine contour c
  const asyncResult=await refineReconstructionCandidateCooperatively(input,source,painter);
  assert.deepEqual(asyncResult,result);
  assert.ok(result.refinementRenders<=10);
+});
+
+
+test('expanded Draw seven-hue Y registration earns one bounded fit without displacing the conservative fallback',async()=>{
+ const w=RECONSTRUCTION_FRAME.width,h=RECONSTRUCTION_FRAME.height;
+ const bands=(shift=0,rogue=0,thickness=7)=>raster(w,h,(x,y)=>{
+   for(let i=0;i<7;i++){
+     const top=10+i*24+shift+(i===4?rogue:0);
+     if(y>=top&&y<top+thickness)return colour(HUES[i]);
+   }
+   return [0,0,0,255];
+ });
+ const source=bands(),shifted=bands(13);
+ assert.equal(coherentExpandedDrawOffsetY(source,shifted),-6);
+ assert.equal(coherentExpandedDrawOffsetY(source,bands(13,13)),null,
+   'disparate hue motion must never imply global translation');
+ assert.equal(coherentExpandedDrawOffsetY(source,
+   raster(w,h,()=>[0,0,0,255])),null);
+ const wide=normalizeRecipe({seed:'wide-draw',structure:'paths',geometry:'drawn',
+   geometrySafety:false,spread:65,stripeWidth:52,positionY:0});
+ const safe=normalizeRecipe({...wide,geometrySafety:true});
+ const painter=r=>bands(13+Math.round(r.positionY*h/100),0,
+   r.geometrySafety?2:7);
+ const ranked=rankReconstructionCandidates([
+   {kind:'path',label:'safe',recipe:safe,uncertainty:'inferred'},
+   {kind:'path',label:'wide',recipe:wide,uncertainty:'inferred'}
+ ],source,painter);
+ const detected=ranked.find(c=>!c.recipe.geometrySafety);
+ assert.equal(detected.drawOffsetY,-6);
+ assert.equal(ranked.find(c=>c.recipe.geometrySafety).drawOffsetY,undefined,
+   'safe candidate is kept outside the speculative registration pass');
+ assert.equal(reconstructionRefinementIndex([
+   {kind:'path',error:.192433,recipe:safe},
+   {...detected,error:.226618}
+ ]),1,'displaced wider Draw is given the one shared fitting budget');
+ const fit=refineReconstructionCandidate(detected,source,painter);
+ assert.equal(fit.recipe.positionY,-6);
+ assert.equal(fit.error,0,'true-render pixel matching, not a guessed winner');
+ assert.ok(fit.refinementRenders<=10);
+ const asyncFit=await refineReconstructionCandidateCooperatively(detected,source,
+   painter,{yieldControl:async()=>{}});
+ assert.deepEqual(asyncFit,fit,'sync and cancellable paths share trial sequence');
+ assert.deepEqual(refineReconstructionCandidate(ranked.find(c=>
+   c.recipe.geometrySafety),source,painter),
+   ranked.find(c=>c.recipe.geometrySafety),
+   'the conservative fallback is never needlessly mutated');
+ assert.equal(reconstructionRefinementIndex([
+   {kind:'path',error:.192433,recipe:safe},
+   {...detected,error:.60}
+ ]),0,'an implausibly poor wide initial candidate gets no budget');
+});
+
+test('expanded Draw registration honours umbrella and direct setting locks and cancellable execution',async()=>{
+ const w=RECONSTRUCTION_FRAME.width,h=RECONSTRUCTION_FRAME.height;
+ const source=raster(w,h,()=>[0,0,0,255]);
+ const recipe=normalizeRecipe({seed:'protected-wide',structure:'paths',
+   geometry:'drawn',geometrySafety:false,positionX:12,positionY:-8,
+   spread:61,stripeWidth:69,
+   lockedSettings:['position','spread','stripeWidth']});
+ const candidate={kind:'path',label:'locked wide',recipe,error:.3,drawOffsetY:-6};
+ let paints=0;
+ const painter=()=>{paints++;return source;};
+ const result=refineReconstructionCandidate(candidate,source,painter);
+ assert.equal(paints,0);
+ assert.equal(result.refinementRenders,0);
+ assert.deepEqual(result.recipe,recipe);
+ const synced=await refineReconstructionCandidateCooperatively(candidate,source,painter);
+ assert.deepEqual(synced,result);
+ assert.equal(paints,0);
+ const partial=normalizeRecipe({...recipe,lockedSettings:['position','stripeWidth']});
+ const visited=[];
+ const fitted=refineReconstructionCandidate({...candidate,recipe:partial},
+   source,next=>{visited.push(next);return source;});
+ assert.ok(visited.length>0&&visited.length<=10);
+ assert.ok(visited.every(next=>next.positionX===12&&next.positionY===-8&&
+   next.stripeWidth===69));
+ let cancelled=false,afterCancel=0;
+ const halted=await refineReconstructionCandidateCooperatively(
+   {...candidate,recipe:partial},source,()=>{afterCancel++;return source;},
+   {yieldControl:async()=>{cancelled=true;},isCancelled:()=>cancelled});
+ assert.equal(halted,null);
+ assert.equal(afterCancel,0);
 });
