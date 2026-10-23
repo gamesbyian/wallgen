@@ -208,6 +208,46 @@ test('warm halation lights dark neighbours of bright ribbons without altering so
   assert.equal(a[adjacent+3],255,'alpha remains unchanged');
   assert.deepEqual(original,snapshot,'photo finish must not mutate source sample');
 });
+test('wide warm film diffusion is separate, deterministic, bounded and saveable',()=>{
+  const w=180,h=160;
+  const source=pixels(0,0,0,w,h);
+  for(let y=35;y<125;y++)for(let x=50;x<82;x++){
+    const i=(y*w+x)*4;
+    source[i]=255;source[i+1]=235;source[i+2]=0;
+  }
+  const original=source.slice();
+  const preset=id=>normalizePhotoLook({enabled:true,presetId:id,amount:100,
+    parameters:{halation:100,grain:0,vignette:0}});
+  const old=source.slice(),newA=source.slice(),newB=source.slice();
+  const classic=preset('film-halation-only');
+  const diffused=preset('film-halation-diffusion');
+  assert.equal(diffused.parameters.halation,100);
+  assert.equal(isNeutralPhotoLook(diffused),false);
+  assert.deepEqual(decodeRecipe(encodeRecipe(
+    normalizeRecipe({seed:'warm-film',photoLook:diffused}))).photoLook,diffused);
+  processPhotoPixels(old,w,h,classic,'same-scene');
+  processPhotoPixels(newA,w,h,diffused,'same-scene');
+  processPhotoPixels(newB,w,h,diffused,'same-scene');
+  assert.deepEqual(newA,newB,'diffusion must be deterministic');
+  assert.deepEqual(source,original,'input must remain unchanged');
+  const at=(x,y)=>(y*w+x)*4;
+  assert.ok(newA[at(87,80)]>old[at(87,80)]+5,
+    'wide profile extends noticeably farther beyond a bright source');
+  assert.ok(newA[at(83,80)]>newA[at(83,80)+1]*2,
+    'warm red-biased spill should be perceptually distinct');
+  assert.equal(newA[at(160,80)],0,'distant black stays truly black');
+  for(let i=3;i<newA.length;i+=4)assert.equal(newA[i],255);
+  const neutral=source.slice();
+  processPhotoPixels(neutral,w,h,{enabled:true,presetId:'film-halation-diffusion',
+    amount:100,parameters:{halation:0,grain:0}},'same-scene');
+  assert.deepEqual(neutral,source,'zero optical strength is a strict no-op');
+});
+test('new diffusion selector remains a compact contextual Photo control',()=>{
+  const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
+  assert.match(read('index.html'),/<option value="film-halation-diffusion">/);
+  assert.match(read('src/app.js'),/\['film-halation-only','film-halation-diffusion'\]\.includes\(presetId\)/);
+  assert.match(read('scripts/review-photo-looks.mjs'),/--focus-diffusion/);
+});
 test('zero halation and zero overall amount are strict no-op for neutral new preset',()=>{
   const input=pixels(10,50,200,80,80);
   for(const settings of [
