@@ -858,12 +858,21 @@ function refinementFields(candidate){
     ['shapeDepth',[-12,12]],['shapeFrequency',[-12,12]],
     ['stripeWidth',[-15,15]]
   ]:candidate.kind==='jagged'?[
-    // Measured seven-hue translation replaces blind probes only where all
-    // pigments agree. No extra renderer passes; same ten-trial budget.
-    ['positionX',Number.isFinite(candidate.jaggedOffsetX)?
-      [candidate.jaggedOffsetX,candidate.jaggedOffsetX-5]:[-20,20]],
-    ['positionY',Number.isFinite(candidate.jaggedOffsetY)?
-      [candidate.jaggedOffsetY,candidate.jaggedOffsetY-5]:[-20,20]],
+    // Two coherent pigment offsets must be tested TOGETHER. A diagonally
+    // displaced image can reject X-only or Y-only moves despite perfect
+    // measurements. This replaces, not adds to, four blind trials.
+    ...(Number.isFinite(candidate.jaggedOffsetX)&&
+      Number.isFinite(candidate.jaggedOffsetY)?[
+      ['position',[ [candidate.jaggedOffsetX,candidate.jaggedOffsetY],
+        [candidate.jaggedOffsetX-5,candidate.jaggedOffsetY],
+        [candidate.jaggedOffsetX,candidate.jaggedOffsetY-5],
+        [candidate.jaggedOffsetX+5,candidate.jaggedOffsetY+5] ]]
+    ]:[
+      ['positionX',Number.isFinite(candidate.jaggedOffsetX)?
+        [candidate.jaggedOffsetX,candidate.jaggedOffsetX-5]:[-20,20]],
+      ['positionY',Number.isFinite(candidate.jaggedOffsetY)?
+        [candidate.jaggedOffsetY,candidate.jaggedOffsetY-5]:[-20,20]]
+    ]),
     ['spread',[-15,15]],['stripeWidth',[-25,-10,10,25]]
   ]:candidate.kind==='hairpin'?[
     ['turnRadius',[-15,15]],['hairpinAngle',[-25,25]],
@@ -896,17 +905,29 @@ function* refinementTrials(candidate,maxRenders){
     const origin=best.recipe[field];
     for(const delta of deltas){
       if(renders>=maxRenders)break;
-      // Use the canonical lock owner for every real-render trial, not only
-      // coarse candidates. Composite Position protects both X and Y, so a
-      // preview cannot be fitted into an arrangement Apply would later reject.
+      // Reuse canonical lock ownership, including umbrella Position.
+      // An inferred rigid Jagged translation is one physical hypothesis:
+      // judge BOTH coordinates in the same actual renderer trial.
+      const change=field==='position'?
+        {positionX:best.recipe.positionX+delta[0],
+          positionY:best.recipe.positionY+delta[1]}:
+        {[field]:origin+delta};
       const recipe=respectSettingLocks(best.recipe,
-        normalizeRecipe({...best.recipe,[field]:origin+delta}));
-      if(recipe[field]===best.recipe[field])continue;
+        normalizeRecipe({...best.recipe,...change}));
+      const changed=field==='position'?
+        recipe.positionX!==best.recipe.positionX||
+          recipe.positionY!==best.recipe.positionY:
+        recipe[field]!==best.recipe[field];
+      if(!changed)continue;
       const error=yield recipe;
       renders++;
       if(Number.isFinite(error)&&error+1e-9<best.error)
         best={...best,recipe,error,label:candidate.label+' · fitted',
-          adjustments:[...(best.adjustments||[]),{field,value:recipe[field]}]};
+          adjustments:[...(best.adjustments||[]),
+            ...(field==='position'?
+              [{field:'positionX',value:recipe.positionX},
+                {field:'positionY',value:recipe.positionY}]:
+              [{field,value:recipe[field]}])]};
     }
   }
   return {...best,refinementRenders:renders};
