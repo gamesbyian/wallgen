@@ -413,13 +413,18 @@ export function reconstructionCandidates(image,recipe){
       // Chevron is ALREADY a current editable canonical geometry. One broad,
       // clean angle is not well represented by the rough-noise Jagged family
       // or a thin traced Draw centreline. Test its real painter pixels.
-      {kind:'chevron',label:'Editable pointed chevron ribbons',
-        recipe:{geometry:'chevron',orientation:'horizontal',
-          shapeDepth:67,shapeFrequency:8,chevronSharpness:88,
-          spread:62,stripeWidth:60}},
+      // Hairpin must retain its formerly proven slot before another
+      // procedural hypothesis enters the six-render diversity budget.
       {kind:'hairpin',label:'Editable hairpin turn',
         recipe:{geometry:'hairpin',orientation:'vertical',hairpinAngle:120,
-          turnRadius:50,spread:42,stripeWidth:65}}
+          turnRadius:50,spread:42,stripeWidth:65}},
+      // Canonical frequency ~45 produces a ~330-design-px period, capable
+      // of two angular bends across a 600px frame. The initial 8% seed
+      // produced an almost flat ribbon in the real non-ROYGBIV SVG study.
+      {kind:'chevron',label:'Editable pointed chevron ribbons',
+        recipe:{geometry:'chevron',orientation:'horizontal',
+          shapeDepth:75,shapeFrequency:45,chevronSharpness:92,
+          spread:50,stripeWidth:44}}
     ];
     presets.sort((a,b)=>(b.kind===desc.curve.kind?1:0)-
       (a.kind===desc.curve.kind?1:0));
