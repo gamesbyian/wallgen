@@ -49,7 +49,7 @@ async function run(args){
   const originalDigest=sha(bytes);
   await mkdir(output,{recursive:true});
   for(const name of ['baseline.json','inferred.json','wallpaper.png','undone.json',
-    'restored.json','import-portrait.png','report.json']){
+    'restored.json','import-portrait.png','fit-explanation-portrait.png','report.json']){
     await assert.rejects(access(join(output,name)),undefined,
       'Never overwrite prior production evidence: '+name);
   }
@@ -117,13 +117,42 @@ async function run(args){
         output:inspect('imageRecipeCanvas'),
         choice:document.getElementById('imageRecipeCandidate').selectedOptions[0]?.textContent,
         importer:{clientHeight:dialog.clientHeight,scrollHeight:dialog.scrollHeight},
-        applyTarget:rect('imageRecipeApply'),dismissTarget:rect('imagePathCancel')};
+        applyTarget:rect('imageRecipeApply'),dismissTarget:rect('imagePathCancel'),
+        whyTarget:rect('imageRecipeWhy'),
+        summaryText:document.getElementById('imageRecipeStatus').textContent,
+        summaryBox:(()=>{
+          const el=document.getElementById('imageRecipeStatus');
+          return {clientHeight:el.clientHeight,scrollHeight:el.scrollHeight};
+        })(),
+        cardBox:(()=>{
+          const el=document.getElementById('imageRecipeWorkspace');
+          return {clientHeight:el.clientHeight,scrollHeight:el.scrollHeight};
+        })(),
+        controlsBox:(()=>{
+          const el=document.querySelector('.image-recipe-controls');
+          return {clientHeight:el.clientHeight,scrollHeight:el.scrollHeight};
+        })()};
     });
+    await page.screenshot({path:join(output,'import-portrait.png'),fullPage:false});
     assert.ok(preview.source.pigmentPixels>0&&preview.output.pigmentPixels>0,
       'Source and reconstructed previews must both contain genuine coloured ink');
-    assert.ok(preview.applyTarget.height>=44&&preview.dismissTarget.height>=44,
-      'Touchable portrait Apply/Close targets must be at least 44 px high');
-    await page.screenshot({path:join(output,'import-portrait.png'),fullPage:false});
+    assert.ok(preview.applyTarget.height>=44&&preview.dismissTarget.height>=44&&
+      preview.whyTarget.height>=44,
+      'Touchable portrait Apply/Close/Why targets must be at least 44 px high');
+    console.log('RECONSTRUCTION_PORTRAIT_LAYOUT '+JSON.stringify(preview));
+    assert.ok(preview.summaryBox.scrollHeight<=preview.summaryBox.clientHeight+1&&
+      preview.cardBox.scrollHeight<=preview.cardBox.clientHeight+1,
+      'Readable summary and full reconstruction card must fit without clipped text');
+    assert.match(preview.summaryText,/lower is better/);
+    await page.locator('#imageRecipeWhy').click();
+    await page.locator('#imageRecipeExplanation:popover-open').waitFor({timeout:10000});
+    const fullExplanation=await page.locator('#imageRecipeExplanationText').textContent();
+    assert.match(fullExplanation,/inferred editable approximation/);
+    assert.match(fullExplanation,/original recipe or seed/);
+    assert.ok(fullExplanation.length>preview.summaryText.length);
+    await page.screenshot({path:join(output,'fit-explanation-portrait.png'),fullPage:false});
+    await page.locator('#imageRecipeExplanation button').click();
+    await page.locator('#imageRecipeExplanation').waitFor({state:'hidden',timeout:10000});
     await page.locator('#imageRecipeApply').click();
     await page.locator('#imagePathDialog').waitFor({state:'hidden',timeout:10000});
     const inferred=await recipeDownload('inferred.json');
@@ -163,7 +192,8 @@ async function run(args){
       pngBytes:(await readFile(join(output,'wallpaper.png'))).length,
       pageErrors:failures,
       assertions:['blind metadata-free source','local 96x208 real-render previews',
-        '44px portrait actions','one Apply transaction','PNG recipe metadata',
+        '44px portrait actions','unclipped concise fit and readable full detail',
+        'one Apply transaction','PNG recipe metadata',
         'Undo exact prior recipe','PNG re-import exact accepted recipe',
         'unaltered source PNG bytes']};
     await writeFile(join(output,'report.json'),JSON.stringify(report,null,2)+'\n');

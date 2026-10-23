@@ -27,6 +27,27 @@ export function imagePathActionAvailability(recipe,candidate,working=false){
   };
 }
 
+/**
+ * The visible portrait card carries only decision-relevant text. All
+ * uncertainty and lock details remain readable on request, without a
+ * two-line scroll trap or claims about original authored settings.
+ */
+export function describeReconstructionChoice(candidate){
+  if(!candidate||!Number.isFinite(candidate.error))return {
+    summary:'No reliable editable recipe found.',
+    explanation:'No image-reconstruction candidate is ready.'
+  };
+  const difference=candidate.error.toFixed(3);
+  const locks=Array.isArray(candidate.lockedChanges)&&candidate.lockedChanges.length?
+    ' Locked settings preserved: '+candidate.lockedChanges.join(', ')+'.':'';
+  return {
+    summary:'Difference '+difference+' · lower is better · inferred',
+    explanation:candidate.label+'. Estimated colour and ink coverage difference: '+
+      difference+' (lower is better). '+(candidate.uncertainty||'Settings estimated from the image.')+
+      locks+' This is an inferred editable approximation, not the source image’s original recipe or seed.'
+  };
+}
+
 // The image is transient: only the selected vector centreline enters the recipe.
 // A native dialog provides an accessible, phone-friendly full-stage workspace.
 export function installImagePathTool({getRecipe,onNotice,onPath,onAngle,onShape,onRecipe,onRender}){
@@ -39,6 +60,9 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle,onShape,
     closeButton=byId('imagePathCancel'),
     recipeWorkspace=byId('imageRecipeWorkspace'),recipeChooser=byId('imageRecipeCandidate'),
     recipeApply=byId('imageRecipeApply'),recipeStatus=byId('imageRecipeStatus'),
+    recipeWhy=byId('imageRecipeWhy'),
+    recipeExplanation=byId('imageRecipeExplanation'),
+    recipeExplanationText=byId('imageRecipeExplanationText'),
     recipeCanvas=byId('imageRecipeCanvas'),
     sourceCanvas=byId('imageRecipeSourceCanvas');
   const ctx=canvas.getContext('2d');
@@ -104,16 +128,21 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle,onShape,
     recipeChooser.value=String(index);
     const candidate=reconstructed[index];
     recipeApply.disabled=!candidate||working;
+    recipeWhy.disabled=!candidate||working;
     if(!candidate)return;
-    recipeStatus.textContent=candidate.label+'. Estimated colour/coverage difference: '+
-      candidate.error.toFixed(3)+' (lower is better). '+candidate.uncertainty+
-      (candidate.lockedChanges?.length?' Locked settings kept: '+candidate.lockedChanges.join(', ')+'.':'')+
-      ' This is an inferred approximation, never the original source recipe.';
+    const description=describeReconstructionChoice(candidate);
+    recipeStatus.textContent=description.summary;
+    recipeExplanationText.textContent=description.explanation;
     try{onRender(candidate.recipe,recipeCanvas);}
-    catch(error){recipeStatus.textContent+=' Preview unavailable: '+error.message;}
+    catch(error){
+      recipeStatus.textContent='Preview unavailable. Check fit details.';
+      recipeExplanationText.textContent+=' Preview unavailable: '+error.message;
+    }
   }
   async function recoverRecipes(pixels,revision){
     reconstructed=[];recipeChooser.replaceChildren();recipeWorkspace.hidden=true;
+    recipeWhy.disabled=true;
+    if(recipeExplanation.matches(':popover-open'))recipeExplanation.hidePopover();
     if(!onRecipe||!onRender)return;
     const candidates=reconstructionCandidates(pixels,getRecipe());
     if(!candidates.length)return;
@@ -200,6 +229,8 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle,onShape,
     // has completed. Their old labels must not be mistaken for new results.
     chooser.replaceChildren();candidates=[];image=null;
     reconstructed=[];recipeWorkspace.hidden=true;recipeApply.disabled=true;
+    recipeWhy.disabled=true;
+    if(recipeExplanation.matches(':popover-open'))recipeExplanation.hidePopover();
     sourceCanvas.getContext('2d').clearRect(0,0,sourceCanvas.width,sourceCanvas.height);
     status.textContent='Analyzing the image locally…';
     try{
@@ -324,7 +355,9 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle,onShape,
     ++loadRevision;working=false;
     setPhase('idle');
     image=null;candidates=[];reconstructed=[];chooser.replaceChildren();
-    recipeChooser.replaceChildren();recipeWorkspace.hidden=true;fileInput.value='';
+    recipeChooser.replaceChildren();recipeWorkspace.hidden=true;recipeWhy.disabled=true;
+    if(recipeExplanation.matches(':popover-open'))recipeExplanation.hidePopover();
+    fileInput.value='';
   });
   return {sync(recipe){
     const access=imagePathActionAvailability(recipe,candidates[selected],working);

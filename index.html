@@ -21,7 +21,7 @@
   <link rel="stylesheet" href="mobile-editor-rail.css?v=20261020-character-crop1">
   <link rel="stylesheet" href="design-transform.css?v=20261016-transform1">
   <link rel="stylesheet" href="draw-path.css?v=20261019-touch1">
-  <link rel="stylesheet" href="image-path.css?v=20261023-source-pair1">
+  <link rel="stylesheet" href="image-path.css?v=20261023-readable-fit1">
   <link rel="stylesheet" href="geometry-library.css?v=20261022-foundation1">
   <link rel="stylesheet" href="scattered-shapes.css?v=20261023-layer-order1">
   <link rel="stylesheet" href="editor-redesign.css?v=20261022-search-choice1">
@@ -541,9 +541,13 @@
     </div>
     <div id="imageRecipeWorkspace" class="image-recipe-workspace" hidden>
       <div class="image-recipe-controls">
-        <label for="imageRecipeCandidate">Editable recipe approximations</label>
+        <label class="image-recipe-accessible-label" for="imageRecipeCandidate">Choose editable recipe approximation</label>
         <select id="imageRecipeCandidate" aria-label="Choose reconstructed editable recipe"></select>
-        <p id="imageRecipeStatus" role="status" aria-live="polite"></p>
+        <div class="image-recipe-summary">
+          <p id="imageRecipeStatus" role="status" aria-live="polite"></p>
+          <button type="button" id="imageRecipeWhy" popovertarget="imageRecipeExplanation"
+            aria-label="Why is this reconstructed recipe an approximation?" disabled>Why?</button>
+        </div>
         <button type="button" id="imageRecipeApply" disabled>Use editable recipe</button>
       </div>
       <div class="image-recipe-result">
@@ -554,11 +558,17 @@
         </div>
       </div>
     </div>
+    <div id="imageRecipeExplanation" class="image-recipe-explanation" popover="auto"
+      role="dialog" aria-labelledby="imageRecipeExplanationTitle">
+      <strong id="imageRecipeExplanationTitle">About this approximation</strong>
+      <p id="imageRecipeExplanationText"></p>
+      <button type="button" popovertarget="imageRecipeExplanation" popovertargetaction="hide">Close details</button>
+    </div>
     <div class="image-shape-actions">
       <button type="button" id="imagePathShape" disabled>Use silhouette as shape</button>
     </div>
   </dialog>
-  <script type="module" src="src/app.js?v=20261023-wave-register1"></script>
+  <script type="module" src="src/app.js?v=20261023-readable-fit1"></script>
   <script type="module" src="src/mobile-studio.js?v=20261021-labels1"></script>
   <script type="module" src="src/mobile-fullscreen.js?v=20261021-1"></script>
   <script type="module" src="src/mobile-swipes.js?v=20261017-explore1"></script>
