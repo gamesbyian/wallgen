@@ -1,5 +1,10 @@
 # ROYGBIV handoff: current authority and independently actionable work
 
+## 23 October source-backed integrated inverse fit
+
+[PR #604](https://github.com/gamesbyian/wallgen/pull/604) integrates #602 safe/expanded traced Draw and one credible procedural Wave/Jagged runner-up (one shared ten-render budget, cooperative cancel), preserving three original diagonal principal-axis candidates. Actual Chromium run [#39939268860](https://github.com/gamesbyian/wallgen/actions/runs/39939268860) scored diagonal **.085835** (restored), Wave **.204330** (was .206789), Jagged **.204590** (was .263117), Hairpin **.107867** (unchanged from #600). Genuine PNG source/fit pairs were downloaded and visually inspected. See [detailed current-art findings](RECONSTRUCTION-CURVE-PRODUCTION-FINDINGS-2026-10-23.md). Remaining: per-colour stripe spacing, visible black gaps, phase/turn alignment, physical Pixel 6 Pro verification, permitted third-party references. No permanent browser/screenshot CI; R0 evidence is not a release gate. Superseded #603 closed unmerged.
+
+
 ## 23 October mobile fitting and actually viewed curved-art findings
 
 [PR #597](https://github.com/gamesbyian/wallgen/pull/597) merged the cooperative, dismissible real-render candidate evaluation (one painter call per animation frame with revision cancellation; same canonical refinement trials as synchronous Node R0). This is code evidence, **not measured physical Pixel responsiveness**.
