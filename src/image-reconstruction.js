@@ -584,8 +584,39 @@ export const coherentVerticalBandOffsetX=(source,rendered)=>
 // An existing expanded canonical Draw ribbon can have the correct topology
 // but be collectively displaced. Only seven coherent pigment translations
 // qualify; a rough single-path silhouette must not drive global movement.
+/**
+ * A bent ribbon pack need not be rigidly displaced: an underestimated gap
+ * produces a LINEAR drift from red to violet. Measure that drift using the
+ * SAME existing seven-pigment connected components. Reject missing/reordered
+ * hues, occlusion and irregular neighbouring gaps; this evidence warrants a
+ * gap-and-centre fit only, not an assertion about the original Draw stroke.
+ */
+export function measuredExpandedDrawRegistration(source,rendered){
+  if(!source||!rendered||source.width!==rendered.width||
+    source.height!==rendered.height)return null;
+  const a=extractImageColourRegions(source,HUES).regions;
+  const b=extractImageColourRegions(rendered,HUES).regions;
+  if(a.length!==7||b.length!==7)return null;
+  const ordered=regions=>Array.from({length:7},(_,index)=>
+    regions.find(r=>r.index===index));
+  const original=ordered(a),candidate=ordered(b);
+  if(original.some(r=>!r||r.area<16)||candidate.some(r=>!r||r.area<16))
+    return null;
+  const gaps=regions=>regions.slice(1).map((r,i)=>r.cy-regions[i].cy);
+  const src=gaps(original),fit=gaps(candidate);
+  const median=values=>values.slice().sort((x,y)=>x-y)[Math.floor(values.length/2)];
+  const srcGap=median(src),fitGap=median(fit);
+  if(srcGap<.012||fitGap<.012||
+    src.some(x=>Math.abs(x-srcGap)>srcGap*.23)||
+    fit.some(x=>Math.abs(x-fitGap)>fitGap*.23))return null;
+  const gapRatio=srcGap/fitGap;
+  if(!Number.isFinite(gapRatio)||gapRatio<.75||gapRatio>3.25)return null;
+  const offsetY=Math.round((original[3].cy-candidate[3].cy)*100);
+  if(Math.abs(offsetY)>50)return null;
+  return {offsetY,gapRatio};
+}
 export const coherentExpandedDrawOffsetY=(source,rendered)=>
-  coherentHueOffset(source,rendered,'cy');
+  measuredExpandedDrawRegistration(source,rendered)?.offsetY??null;
 
 /** One synchronous bounded fit pass. The UI can cancel between revisions.
  * render(candidate,width,height) must call the existing renderer and return
@@ -607,14 +638,15 @@ export function rankReconstructionCandidates(candidates,source,render){
         const bandOffsetX=candidate.kind==='straight'&&
           candidate.recipe.orientation==='vertical'?
           coherentVerticalBandOffsetX(source,pixels):null;
-        const drawOffsetY=candidate.kind==='path'&&
+        const drawRegistration=candidate.kind==='path'&&
           candidate.recipe.geometry==='drawn'&&
           candidate.recipe.geometrySafety===false?
-          coherentExpandedDrawOffsetY(source,pixels):null;
+          measuredExpandedDrawRegistration(source,pixels):null;
         results.push({...candidate,error,
           ...(waveOffsetY!==null?{waveOffsetY}:{}),
           ...(bandOffsetX!==null?{bandOffsetX}:{}),
-          ...(drawOffsetY!==null?{drawOffsetY}:{})});
+          ...(drawRegistration?{drawOffsetY:drawRegistration.offsetY,
+            drawGapRatio:drawRegistration.gapRatio}:{})});
       }
     }catch(error){
       results.push({...candidate,error:Infinity,
@@ -641,7 +673,6 @@ export function reconstructionRefinementIndex(ranked){
     item.kind==='wave'&&Number.isFinite(item.waveOffsetY)&&
     Number.isFinite(item.error)&&
     item.error<=Math.min(.55,best.error+.20));
-  if(registered>=0)return registered;
   // Preserve the existing safe Draw and all procedural alternatives. When a
   // wider Draw trial demonstrably has the same seven pigments displaced by
   // one amount, give it the ONE already-budgeted refinement opportunity.
@@ -651,6 +682,13 @@ export function reconstructionRefinementIndex(ranked){
     item.recipe.geometrySafety===false&&
     Number.isFinite(item.drawOffsetY)&&Number.isFinite(item.error)&&
     item.error<=Math.min(.55,best.error+.14));
+  // A strongly measured roughly doubled pigment gap is better evidence
+  // for the already available broad Draw than an unscored generic Wave shift.
+  // This applies only when the wide render is already significantly closer.
+  if(wideDraw>=0&&ranked[wideDraw].drawGapRatio>=1.35&&
+    (registered<0||ranked[wideDraw].error+.03<ranked[registered].error))
+    return wideDraw;
+  if(registered>=0)return registered;
   if(wideDraw>=0)return wideDraw;
   let winner=-1,lowest=Infinity;
   for(let i=1;i<ranked.length;i++){
@@ -682,11 +720,21 @@ export const RECONSTRUCTION_FRAME=Object.freeze({
  */
 function refinementFields(candidate){
   return candidate.kind==='path'?[
-    // Four rigid trials, then existing editable parallel-band dimensions.
-    // No centreline point mutations, additional rasterizer or new field.
+    // Existing scene width equation is nonlinear; invert its CURRENT spread
+    // factor to turn the measured between-hue ratio into an editable guess.
+    // Fit separation before group translation so the latter is evaluated
+    // against the corrected seven-colour negative space.
+    ['spread',(()=>{
+      const spread=candidate.recipe.spread;
+      const factor=.10+.335*Math.pow(spread/50,1.5);
+      const target=clamp(50*Math.pow(Math.max(0,
+        (factor*candidate.drawGapRatio-.10)/.335),2/3),0,100);
+      const delta=Math.round(target-spread);
+      return [delta,Math.round(delta*.75),Math.round(delta*.5),-15];
+    })()],
     ['positionY',[candidate.drawOffsetY,candidate.drawOffsetY-4,
       candidate.drawOffsetY+4,candidate.drawOffsetY-8]],
-    ['spread',[-16,-8,8,16]],['stripeWidth',[-15,15]]
+    ['stripeWidth',[-15,15]]
   ]:candidate.kind==='straight'?[
     [candidate.recipe.orientation==='horizontal'?'positionY':'positionX',
       candidate.recipe.orientation==='vertical'&&Number.isFinite(candidate.bandOffsetX)?
