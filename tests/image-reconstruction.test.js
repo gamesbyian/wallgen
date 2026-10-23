@@ -206,3 +206,25 @@ test('coherent slanted seven-colour bands are editable procedural diagonals, not
     'seven genuinely compact coloured circles must remain independent objects');
   assert.ok(reconstructionCandidates(original,{}).some(x=>x.kind==='regions'));
 });
+
+test('a multicolour fan reuses canonical radial painter instead of a tiny traced line',()=>{
+  const w=160,h=320;
+  const image=raster(w,h,(x,y)=>{
+    const dx=x-(w-1)/2,dy=y-(h-1)/2;
+    if(Math.hypot(dx,dy)<3)return [0,0,0,255];
+    const angle=(Math.atan2(dy,dx)+Math.PI)/(2*Math.PI);
+    const wedge=Math.floor(angle*21)%21;
+    return colour(HUES[wedge%7]);
+  });
+  const desc=describeReconstructionImage(image);
+  assert.ok(desc.radialHueEvidence.angularTransitions>=12);
+  assert.equal(desc.radialRays,true);
+  assert.equal(desc.sevenColourRegions,false);
+  const candidates=reconstructionCandidates(image,{seed:'ray-fan'});
+  assert.ok(candidates.some(x=>x.kind==='radial-rays'&&
+    x.recipe.structure==='radial'&&x.recipe.radialMode==='sunburst'));
+  assert.ok(candidates.every(x=>x.kind!=='regions'),'not seven unrelated discs');
+  const circles=describeReconstructionImage(original);
+  assert.equal(circles.radialRays,false,'keep scattered circles');
+  assert.ok(reconstructionCandidates(original,{}).some(x=>x.kind==='regions'));
+});
