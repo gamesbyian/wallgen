@@ -275,7 +275,7 @@ test('opt-in fibre shading preserves legacy branches, recipe identity and crossi
   const all=new Set(full.strokes.map(JSON.stringify));
   assert.ok(partial.strokes.every(item=>all.has(JSON.stringify(item))),
     'replayed crossing strokes keep their original glint phase');
-  assert.match(legacy.strokes[0].ink,/rgba\\(0,0,0,\\.31\\)/);
+  assert.equal(legacy.strokes[0].ink,'rgba(0,0,0,.31)');
   assert.ok(full.strokes.some(item=>item.ink.startsWith('rgba(255,255,255,')));
   assert.ok(full.strokes.some(item=>item.ink.startsWith('rgba(0,0,0,')));
   const recipe=normalizeRecipe({seed:'fibre-transport',surfaceTreatments:[style]});
