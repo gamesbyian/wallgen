@@ -1,0 +1,133 @@
+# ROYGBIV creative behaviour recorder and recipe journey evidence
+
+**Status:** proposed; no instrumentation or data endpoint implemented. **Owner request:** capture real usage, recipe evolution, exports and superseded/unfinished work with minimal direct human involvement; selectively ask simple contextual questions. **Tracker:** [#542](https://github.com/gamesbyian/wallgen/issues/542), learning context [#537](https://github.com/gamesbyian/wallgen/issues/537). **Date:** 2026-10-22 (Calgary).
+
+## 1. Outcomes and truthful evidence
+
+The tool should let an authorized investigator reconstruct a real, consented creative **episode**: which initial wallpaper recipe was visible, which interface routes and controls were used, which parameter changes were attempted and committed, how locks, scoped randomization, Undo and restoration affected the artwork, the last recipe visible before changing direction or leaving, and which exact versions were exported or favourited.
+
+Capture **behaviour** automatically after a one-time informed setting choice. Capture **motivation** only from an explicit, optional question or separately identified owner annotation; never infer satisfaction, confusion or rejection merely from a Randomize All, Undo or lack of export. A participant's change-of-direction can be ordinary playful discovery.
+
+Evidence vocabulary:
+- `observed-app-event`: source-generated interaction or recipe transition with event ID, editor version and known limitations.
+- `observed-human-answer`: voluntary response associated with an actual episode; answer may be missing.
+- `derived-metric`: computed from complete or explicitly incomplete event history, documented denominator and uncertainty.
+- `agent-hypothesis`: predictive interpretation, always kept separate.
+- `interrupted-unconfirmed`: preserved last-known recipe, not proof of a deliberate abandonment, user dissatisfaction or true wall-clock session end.
+
+## 2. Verified insertion points, based on current `main`
+
+- `src/app.js` central `render(recipe)` performs lock-respecting normalization and `checkpoint()` before assigning `current`; `changeRecipe()` wraps render and synchronizes controls. Source-level recipe commits should be captured here, once per changed normalized state, **not** from each worker preview, animation frame, label update or unrelated `render(current)`.
+- `src/model.js` `normalizeRecipe()`, `randomizeAllRecipe()` and shared domain types are canonical. The telemetry layer may call them and compare two snapshots but must never acquire authority to modify them. Avoid a second recipe serialization/normalizer.
+- `src/app.js` `randomizeAll` click is a known **episode boundary**: take prior snapshot and classify, *then* run existing randomization; never record the new recipe as the old one's ending. `randomize` (seed-only), scoped dice, gallery selection, favourites, `undo()`, importer, drawing and `installExplorationHistory()` provide more specific semantic causes or branches.
+- `downloadPNG()` already captures `const snapshot=normalizeRecipe(current)` at request time before worker rendering and embeds that snapshot in PNG metadata. Reuse exactly this object in the `export_requested / render_succeeded / download_initiated / render_failed` events; do not take a later mutable `current`. Browser `downloadBlob()` initiation does **not** confirm a local file was retained, opened or installed as wallpaper.
+- Existing `editor-category-change`, `editor-tool-changed`, `roygbiv-mobile-navigation-changed` and `roygbiv-gallery-mode-changed` document real navigation, separate from recipe changes. Instrument Before/After, favourite, save JSON and Share at explicit handlers. Do not clone underlying inputs to observe them.
+- `src/geometry-library-store.js` provides a functioning IndexedDB pattern (transaction completion is authoritative) and session-memory fallback. Create a separate versioned study store; do not modify the shape-library database schema or share a new ad hoc storage framework when a small reusable adapter suffices. `src/exploration-history.js` is only an in-memory 10-item creative UI history; it is **not** durable research telemetry.
+
+The app is static-hosted (GitHub Pages) and has no native collection server. Current `localStorage` covers favourites/preferences and IndexedDB covers geometry, not uploaded behavioural research.
+
+## 3. Core data model and replay contract
+
+Hierarchical IDs use random UUIDs, *never* user-entered names: `installationId` (rotatable pseudonym, optional for longitudinal linkage), `sessionId` (page lifecycle), `episodeId` (single creative attempt), `eventId` (idempotency), `exportId`. Each event records `seq`, elapsed monotonic offset, coarse wall-clock time, app/build/recipe schema, privacy mode, event family, action cause, intent-capture provenance, prior/current hash and bounded payload. Cross-tab sessions are separate; interleaved writes cannot overwrite each other.
+
+Use a stable **canonical normalized recipe** plus deterministic digest for comparisons and checkpoints. Prefer top-level field diffs for scalars, typed patches for collections only when genuinely trustworthy, and full replacement for path/shape/object collections until a safe shared diff exists. Record `initial_full_recipe`, every N (initially ~10) committed changes, exact snapshots at export/favourite/supersession and last persisted state on hidden/idle. A replay verifier must obtain the same canonical final recipe and digest; a failure is marked `incomplete` rather than silently pretending events survived. Version telemetry envelopes independently from recipe schemas.
+
+Example, illustrative (never label as collected):
+```json
+{
+  "schema": 1, "eventId": "event-uuid", "sessionId": "session-uuid",
+  "episodeId": "episode-uuid", "seq": 17, "elapsedMs": 28200,
+  "type": "recipe_commit", "cause": "slider_settled",
+  "context": {"category": "Paths", "tool": "geometry"},
+  "changes": [{"key": "stripeWidth", "before": 18, "after": 27}],
+  "beforeDigest": "hash-a", "afterDigest": "hash-b"
+}
+```
+
+Event families:
+- **state**: episode begin, normalized recipe commit, full checkpoint, intended lock/unlock, Undo, restore/branch, input ignored because disabled/locked where cheaply observable.
+- **exploration**: Randomize All (boundary), seed reroll, scoped variation and primes-only, batch generation and chosen gallery variant, Compare toggles.
+- **navigation**: studio/edit/more/saved/explore, category/tool selection, meaningful search query *classification* (known matched term or result category, not arbitrary typed search strings), dismiss/cancel.
+- **outcome**: export request, render success/failure, download initiated, recipe JSON save, favourite add/remove, explicit share command, user survey response.
+- **session**: visible, hidden, idle start/end, autosave persisted, continuation/recovery, explicit collection opt-out.
+
+No raw typing, keystrokes, pointer traces, sensor readings, uploaded source images, complete browser URLs/query strings, clipboard, contact IDs or PNG text metadata. Imported paths/custom geometry may themselves be authored content: never upload without a clear, separate recipe-content disclosure. Avoid IP address or user-agent fingerprint as an identifier. Preserve useful interaction granularity without building invasive session replay.
+
+Coalesce a continuous slider/drawing gesture as a bounded episode of intent: start value, final value, duration, changes of direction/optional extrema, and at most a low-frequency sample for genuine exploratory analysis, all governed by the same transaction hooks. **Final committed normalized state cannot be downsampled away.** Distinguish user edits from source-driven preset resets (one command may change many keys). Capture rejected control attempts separately when directly available; a lock preventing a change should not fabricate a recipe mutation.
+
+## 4. Episode boundaries and abandonment semantics
+
+A **session** is one foreground/background/resume browser lifecycle, with timeout handling for meaningful periods of idleness. An **episode** is one attempted wallpaper or branch, and a session can contain many episodes. Generate separate IDs when the user changes projects (Randomize All, explicit restore/new gallery selection where appropriate). A seed reroll may be an in-episode experiment; preserve the branch rather than assume project abandonment.
+
+- At *every committed recipe change*, journal change plus most recent complete recipe, so a sudden Android process kill loses at most a pending browser transaction. Persist in IndexedDB asynchronously without blocking preview; write small events and checkpoint in one transaction; surface storage failures and cap the queue.
+- At **Randomize All**, persist the prior episode's terminal full snapshot, active/edit time, last successful exported snapshot/revision, number of manual edits since export, `superseded_by_randomize_all`; open the new episode with its own initial snapshot. Multiple exports are retained, and edits after an export remain separately visible.
+- At **export**, record the exact snapshot from `downloadPNG()`, separately track unsuccessful render or browser download initiation and optional feedback. Never infer 'applied as wallpaper'.
+- At **document hidden** (`visibilitychange`), persist the current recipe and foreground interval, mark `hidden_unconfirmed` without concluding the human quit. On return continue the episode. `pagehide` may help as best-effort secondary, but not a guaranteed final event.
+- At **idle threshold** (initial candidate: 10 min with no meaningful user interaction), checkpoint and mark `idle_unconfirmed`. A later action resumes or opens a new session depending on explicit policy. Active time is accumulated only in visible + recently engaged intervals, so elapsed browser-open time does not become 'editing time'.
+- On **next startup**, reconcile previous incomplete last-known snapshot and pending outbox, classify a genuinely interrupted previous session `interrupted_unconfirmed` while preserving its exact last-known recipe. Never invent an event after the last durable checkpoint. Avoid double-closing from repeated hidden/pagehide signals.
+
+Mobile browsers can suppress or skip unload events. Periodic/transactional persistence is the reliability mechanism; `navigator.sendBeacon` or `fetch(...,{keepalive:true})` for small batches is a *supplementary* upload attempt, not proof of receipt or permission to rely on unload. Keep small batches below 64 KiB for Beacon. [MDN Beacon](https://developer.mozilla.org/en-US/docs/Web/API/Navigator/sendBeacon), [Page Visibility](https://developer.mozilla.org/en-US/docs/Web/API/Page_Visibility_API), [browser storage durability](https://developer.mozilla.org/en-US/docs/Web/API/Storage_API/Storage_quotas_and_eviction_criteria).
+
+## 5. Survey UX
+
+A small non-blocking card in/adjacent to the existing Studio/More flow; no full-screen dialog, focus trap, preview occlusion or unsaved-state mutation. Surveys are optional and linked to the *old* episode ID when superseding. They must never prevent Export or Randomize All.
+
+**Export (eligible on every successful initiation; participant chooses Ask always / occasionally / never):**
+- `How close was this to what you wanted?` → `Exactly / Close / Exploring / Not really / Skip`.
+- Optional single second tap: `What mattered most?` → `Composition / Colour / Material / Effect / Other`.
+- Optional free-text note only with separate explicit research-text disclosure. No forced response.
+
+**Randomize All after substantial unsaved work:**
+- Trigger candidate: ≥3 meaningful **manual** committed edits and ≥45 seconds **engaged** since last relevant export, and the superseded revision was not exported. Exclude automated/preset-only changes. Thresholds are *initial hypotheses*, tuned by actual nuisance and feedback rates.
+- Show the **previous** artwork via a small recipe-derived thumbnail if inexpensive; never mislabel newly randomized wallpaper. `What happened to that design?` → `Just exploring / Wanted a different direction / Couldn't get the result / Accidentally changed it / Saved it another way / Skip`.
+- On repeated Randomize All avoid piling cards; always make them dismissible, expire opportunistically, never queue repeated nag prompts. Provide `Ask every time / Occasionally / Never` independent of data recording.
+
+These answers constrain interpretation but still have self-report limitations. Response absence is missing data, not 'unhappy'. No score called 'likability' should be inferred from raw export counts alone.
+
+## 6. Storage, retrieval and security options
+
+**Stage 1 (no backend):** Local, separately versioned IndexedDB event and episode stores with transactional `events`, `snapshots`, `outbox`, `consent`; export a bounded chronological JSON/NDJSON bundle plus optional aggregated CSV, with an integrity manifest. Display a compact `My activity data` panel under More → Files & sharing or a discreet Study setting: recording status, local storage usage, last durable checkpoint, Review/Download/Delete controls. Storage can be denied or evicted; remote syncing is optional and is what enables unattended researcher collection. Only after explicit one-time activation should recorder store behavioural data.
+
+**Stage 2 (automatic remote retrieval):** First-party HTTPS collector (recommended reference implementation: Cloudflare Worker + D1 relational events/snapshots, perhaps R2 only for large opt-in assets). Private authenticated reviewer access provides per-session timeline and JSONL/CSV export; no public GitHub issues/commits or embedded page secrets. Server must validate schema/version, cap request size/event rate/retention and payload types, and deduplicate by event ID. Browser origin checks/CORS alone are not authorization. For a limited personal study use an invitation/participant token with server quotas; rate-limit and revoke compromised clients. Bind sensitive admin read/delete endpoints to server-side secret, not static client code. Backend and platform credentials must be provisioned separately. Cloudflare D1 free limits are [documented](https://developers.cloudflare.com/d1/platform/pricing/) but are not a guaranteed lifetime cost assumption.
+
+**Transport:** queue locally; periodically send bounded batches while visible and online, resume on next launch; acknowledge stored event IDs before deletion from outbox. A successful `sendBeacon()` return means *queued*, not accepted by the server, so retries require idempotency. Detect consent withdrawal, immediately stop new collection/uploads, clear pending queue when requested, and provide server-side deletion by an authorized participant receipt or study owner. Avoid attaching external secrets to recipe URLs; never send full link fragments/query containing recipes.
+
+**Modes:** `Off` (default), `Keep activity on this device` (no upload), `Share usage research` (separate informed opt-in, can start without ongoing prompts). The app should remain completely usable with every mode disabled. Clear language should say recipe snapshots and navigation can reveal personal creative choices. Allow inspection before upload, revoke, local export, local delete and remote deletion request. If other people use the app, disclose purpose, categories, destination, retention and parties; do not silently switch them on. Relevant Canadian [meaningful-consent guidance](https://www.priv.gc.ca/en/privacy-topics/privacy-for-businesses/appropriate-handling-of-personal-information/collecting-personal-information-and-consent/consent/gl_omc_201805/). Anonymous random IDs are only **pseudonymous**, especially if retained between sessions.
+
+## 7. Research reports actually worth building
+
+Start with a plain local parser / private dashboard. Each statement links to a real sampled episode and raw evidence, with gaps marked.
+
+- Opening recipe, saved/final/last-known recipe and exact export checkpoint(s); diff heatmap by canonical setting/category and exported/unexported suffix.
+- Frequency and sequence of direct manual control changes versus random draws, lock use, branch resets, Undo and backtracking, search and category route detours.
+- Real active time to first intentional edit, to first export, to supersession; distinguish cumulative active work from a 3-hour background tab.
+- Controls visited but never changed, locked-setting attempts where captured, editing reversals/oscillation and multi-attempt exploration, with caveat that they do not automatically mean confusion.
+- Which aspects of a recipe persist across exploratory branches and which correlate with *observed* exports or survey responses, not assumed aesthetic appeal.
+- Navigation/recipe version compatibility and missing/replayed record counts.
+- Optional researcher-produced image plates from full recipe snapshots using the **existing** renderer rather than uploading bitmap screenshots by default. Rendered previews are reconstructed art and must be labeled as such, including renderer-version caveats.
+- For #537: compare *pre-existing* predictions with actual first control and route, without changing the earlier prediction; report observation source and confidence.
+
+## 8. Delivery sequence and acceptance
+
+**T0:** Lightweight telemetry data contract and mode controls; no captured events until opt-in; test policy/PII exclusion and data-schema compatibility.
+
+**T1:** Journal around canonical recipe commits, navigation and key commands; IndexedDB snapshots/checkpoints, no preview mutation, unique parallel-tab IDs. Node tests prove one logical drag transaction, full-change record, no-op exclusion, Undo and restore integrity; verify changing recording mode does not alter normalized recipe/PNG bytes.
+
+**T2:** Exact export/Randomize All and interrupted-session semantics; simulate process crash between edits, duplicate hidden events, offline/full storage, and failure mid-PNG; targeted tests only.
+
+**T3:** Compact surveys and explicit stored preferences, portrait keyboard/focus/touch + one real owner use review *when available*. No synthetic-user preference percentages.
+
+**T4:** Local-download recovery first, remote upload adapter when a controlled endpoint is provisioned; store acknowledgement and retry queues; test duplicate/out-of-order data. Owner can see data privately without giving visitors upload credentials.
+
+**T5:** Analysis script, per-episode chronology and export table. Keep raw evidence accessible, do not create parallel app-state/history engines.
+
+Use `npm run check:quick` as normal, plus focused telemetry tests. A single targeted real Pixel inspection may be worthwhile for new micro-survey UI, but no permanent screenshot or large regression test system. Current best recipe, reusable code, useful creative features and original imported file safety outrank historical pixel compatibility; backward migration of old artwork is **nice-to-have, not a condition** of study development.
+
+### Principal risks to validate
+1. UI and renderer responsiveness when editing rapidly; use transaction batching and async storage, never await database writes on the paint critical path.
+2. Misattributing passive renderer updates or preset cascades to intentional parameter edits.
+3. Inferring disinterest from absent Export; 'unexported' is a fact, 'rejected' requires other evidence.
+4. Missing last moments on Android sudden process kill; journal before reliance on lifecycle.
+5. Collecting author name/metadata/source-image contents through overbroad serialization or logging full URLs.
+6. Pretending a page-hosted static JavaScript secret can provide a secure upload API.
+7. Accidentally shipping research observation controls or telemetry as a mandatory workflow, slowing down the app's actual creative purpose.
