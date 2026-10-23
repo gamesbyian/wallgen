@@ -207,6 +207,31 @@ test('simple actual-raster ray and concentric fields have opposite radial signat
    .every(x=>x.recipe.structure==='radial'));
 });
 
+test('displaced radial centres remain editable hypotheses without changing the renderer budget',()=>{
+ const offX=.35,offY=.65,width=200,height=200;
+ const rings=raster(width,height,(x,y)=>{
+   const r=Math.hypot(x-(width-1)*offX,y-(height-1)*offY);
+   return colour(HUES[Math.floor(r/11)%7]);
+ });
+ const rays=raster(width,height,(x,y)=>{
+   const a=(Math.atan2(y-(height-1)*offY,x-(width-1)*offX)+Math.PI)/(Math.PI*2);
+   return colour(HUES[Math.floor(a*21)%7]);
+ });
+ for(const [image,kind,candidateKind] of [
+   [rings,'rings','radial-rings'],[rays,'rays','radial-rays']]){
+   const signature=radialImageSignature(image);
+   assert.equal(signature.kind,kind);
+   assert.equal(signature.centerX,35);
+   assert.equal(signature.centerY,65);
+   const candidates=reconstructionCandidates(image,{seed:'offset-radial'});
+   const radial=candidates.filter(x=>x.kind===candidateKind);
+   assert.ok(radial.length);
+   assert.ok(radial.every(x=>x.recipe.fieldCenterX===35&&
+     x.recipe.fieldCenterY===65));
+   assert.ok(candidates.length<=RECONSTRUCTION_RENDER_LIMIT);
+ }
+});
+
 test('PCA recognizes oblique parallel stripes but refuses scattered unrelated centroids',()=>{
  const sloping=Array.from({length:7},(_,i)=>({
    cx:.1+i*.12,cy:.9-i*.10,area:1000
