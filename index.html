@@ -21,7 +21,7 @@
   <link rel="stylesheet" href="mobile-editor-rail.css?v=20261020-character-crop1">
   <link rel="stylesheet" href="design-transform.css?v=20261016-transform1">
   <link rel="stylesheet" href="draw-path.css?v=20261019-touch1">
-  <link rel="stylesheet" href="image-path.css?v=20261023-reconstruction1">
+  <link rel="stylesheet" href="image-path.css?v=20261023-source-pair1">
   <link rel="stylesheet" href="geometry-library.css?v=20261022-foundation1">
   <link rel="stylesheet" href="scattered-shapes.css?v=20261023-layer-order1">
   <link rel="stylesheet" href="editor-redesign.css?v=20261022-search-choice1">
@@ -547,15 +547,18 @@
         <button type="button" id="imageRecipeApply" disabled>Use editable recipe</button>
       </div>
       <div class="image-recipe-result">
-        <span>Rendered approximation</span>
+        <span>Source / reconstructed</span>
+        <div class="image-recipe-pair">
+          <canvas id="imageRecipeSourceCanvas" width="96" height="208" aria-label="Source image normalized to the wallpaper frame"></canvas>
         <canvas id="imageRecipeCanvas" width="96" height="208" aria-label="Actual ROYGBIV renderer approximation"></canvas>
+        </div>
       </div>
     </div>
     <div class="image-shape-actions">
       <button type="button" id="imagePathShape" disabled>Use silhouette as shape</button>
     </div>
   </dialog>
-  <script type="module" src="src/app.js?v=20261023-radial-provenance1"></script>
+  <script type="module" src="src/app.js?v=20261023-source-pair1"></script>
   <script type="module" src="src/mobile-studio.js?v=20261021-labels1"></script>
   <script type="module" src="src/mobile-fullscreen.js?v=20261021-1"></script>
   <script type="module" src="src/mobile-swipes.js?v=20261017-explore1"></script>
