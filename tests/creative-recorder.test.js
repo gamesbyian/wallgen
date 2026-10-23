@@ -72,3 +72,58 @@ test('clear deletes all locally retained events and checkpoints',async()=>{
   assert.deepEqual(await recorder.records(),[]);
   assert.equal(await recorder.last(),null);
 });
+
+test('a slow PNG from a retired episode remains attributed there without overwriting the new draft',async()=>{
+  const {recorder}=rig();
+  const initial=normalizeRecipe({seed:'first'}),next=normalizeRecipe({seed:'second'});
+  recorder.start(initial);
+  const firstEpisode=recorder.episodeId;
+  recorder.action('export_requested',initial,{exportId:'slow',targetEpisodeId:firstEpisode});
+  const previous=recorder.supersede(initial,next);
+  assert.equal(previous.finalExportPending,true);
+  assert.equal(previous.finalExported,false);
+  const newerEpisode=recorder.episodeId;
+  recorder.action('download_initiated',initial,{exportId:'slow',targetEpisodeId:firstEpisode});
+  recorder.action('survey_answer',next,{surveyKind:'export',targetEpisodeId:firstEpisode,answer:'close'});
+  const events=await recorder.records();
+  assert.equal(events.at(-2).episodeId,firstEpisode);
+  assert.deepEqual(events.at(-2).recipe,initial);
+  assert.equal(events.at(-1).episodeId,firstEpisode);
+  assert.equal((await recorder.last()).episodeId,newerEpisode);
+  assert.deepEqual((await recorder.last()).recipe,next);
+  assert.deepEqual(recorder.episodeStats(next).finalExported,false);
+});
+
+test('a long exploratory slider gesture is not counted as multiple intentional edits',async()=>{
+  const store=memoryUsageStore();let index=0,ms=0;
+  const recorder=createCreativeRecorder({store,enabled:true,
+    id:()=>String(++index),clock:()=>ms,now:()=>new Date().toISOString()});
+  const base=normalizeRecipe({seed:'gesture',stripeWidth:20});
+  recorder.start(base);
+  let before=base;
+  for(let i=0;i<5;i++){
+    ms+=400;
+    const after=normalizeRecipe({...base,stripeWidth:21+i});
+    recorder.transition(before,after);
+    before=after;
+  }
+  assert.equal(recorder.episodeStats(before).manualEdits,1);
+  ms+=3000;
+  const other=normalizeRecipe({...before,gap:27});
+  recorder.transition(before,other);
+  assert.equal(recorder.episodeStats(other).manualEdits,2);
+  assert.ok(recorder.episodeStats(other).engagedMs>0);
+  const retired=recorder.supersede(other,normalizeRecipe({seed:'new'}));
+  assert.equal(retired.manualEdits,2);
+  assert.equal(recorder.episodeStats({seed:'new'}).manualEdits,0);
+});
+
+test('random seed and scoped randomization are not misclassified as manual editing',async()=>{
+  const {recorder}=rig();
+  const a=normalizeRecipe({seed:'a'}),b=normalizeRecipe({...a,seed:'b'});
+  const c=normalizeRecipe({...b,gap:30});
+  recorder.start(a);
+  recorder.transition(a,b,{cause:'seed_reroll'});
+  recorder.transition(b,c,{cause:'scoped_vary_setting'});
+  assert.equal(recorder.episodeStats(c).manualEdits,0);
+});
