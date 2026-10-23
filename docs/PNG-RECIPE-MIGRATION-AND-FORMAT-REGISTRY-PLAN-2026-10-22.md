@@ -1,5 +1,10 @@
 # PNG recipe metadata migration without image changes
 
+## Development priority update (22 October 2026)
+
+Historical PNG migration is an **optional archival convenience**, not a blocker or priority dependency for improving ROYGBIV's current recipe system. The owner explicitly prioritizes the best present-day schema, renderer and shared engine over preserving any previously generated artwork. Safe refusal behaviour for the existing *metadata-only, non-destructive* rewrite utility should remain truthful while it exists, but agents need not finish historical adapters, achieve legacy pixel parity or preserve old renderer semantics before changing the current product. Do not silently overwrite a user's original imported PNG, invent historical recipe provenance or claim old pixels are reproducible. For reconstruction from image pixels regardless of metadata, see [Image-to-recipe plan](IMAGE-TO-RECIPE-RECONSTRUCTION-PLAN-2026-10-22.md), a separate workflow that must share canonical current recipe/rendering machinery.
+
+
 **Active completion gate:** See [the agent handoff](AGENT-HANDOFF-2026-10-22.md), [historical source registry](recipe-format-history/REGISTRY.md), and [actual first-v1 image proof](recipe-format-history/source-era/v1-37428b/ACTUAL-RENDER-FINDINGS-2026-10-22.md). Original v1 field/renderer source archaeology, old exporter samples and exact metadata archives are now implemented. What's **not** implemented is a verified era-specific v1→v2 recipe adapter; leave migration refusal intact until old-versus-current pixels and semantics are demonstrably compatible.
 
 
