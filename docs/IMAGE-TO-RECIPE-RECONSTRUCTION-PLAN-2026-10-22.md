@@ -1,5 +1,8 @@
 # Image-to-recipe reconstruction: native and external imports
 
+**Focused portrait readability acceptance (23 Oct):** [#608](https://github.com/gamesbyian/wallgen/pull/608) replaces scroll-truncated fit/provenance prose with unclipped concise "Difference ... lower is better ... inferred" and a 44px native "Why?" popover containing the full truthful explanation and locks. [Authentic touch-Chromium run #40013772974](https://github.com/gamesbyian/wallgen/actions/runs/40013772974) repeated the full existing import→PNG→Undo→PNG reimport journey, checked preview retention and no scroll overflow, and captured/reviewed source and explanation states. [Full findings](RECONSTRUCTION-PORTRAIT-JOURNEY-2026-10-23.md). Do not claim physical Pixel accessibility/timing approval. No persistent screenshot workflow.
+
+
 **23 October portrait R4 actual-app acceptance:** [PR #607](https://github.com/gamesbyian/wallgen/pull/607), [genuine 412×892 touch Chromium run #39943939880](https://github.com/gamesbyian/wallgen/actions/runs/39943939880) and [complete reproducible findings](RECONSTRUCTION-PORTRAIT-JOURNEY-2026-10-23.md) validate metadata-free PNG source → ranked renderer preview → editable canonical Wave → PNG export with honest inference metadata → exact Undo → full PNG-recipe re-import, without modifying source bytes. Timings 1.09s fit/0.29s export in GitHub runner only; no physical Pixel proof. The portrait dialog fits its viewport and 44px actions but its uncertainty prose is visually clipped and deserves a separate focused UX polish. Script is opt-in only; temporary Chromium workflow removed.
 
 
