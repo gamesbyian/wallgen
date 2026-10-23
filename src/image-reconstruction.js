@@ -534,6 +534,34 @@ export function compareReconstructionPixels(source,rendered){
   return (colour*.75+mask*.25)/Math.max(1,samples);
 }
 
+/**
+ * A coherent seven-band image often differs from the first wave render by
+ * a rigid vertical translation. Use the ALREADY shared hue components to
+ * measure each colour's displacement in the same 96x208 scoring frame;
+ * require seven matching pigments and near-identical offsets to avoid
+ * shifting unrelated external artwork or a distorted/cropped composition.
+ *
+ * This is a hint for the NEXT ordinary drawWallpaper trial, not a new
+ * renderer, source pixel storage or a claim of original setting recovery.
+ */
+export function coherentWaveOffsetY(source,rendered){
+  if(!source||!rendered||source.width!==rendered.width||
+    source.height!==rendered.height)return null;
+  const a=extractImageColourRegions(source,HUES).regions;
+  const b=extractImageColourRegions(rendered,HUES).regions;
+  if(a.length!==7||b.length!==7)return null;
+  const dy=[];
+  for(let i=0;i<7;i++){
+    const s=a.find(r=>r.index===i),r=b.find(v=>v.index===i);
+    if(!s||!r||s.area<16||r.area<16)return null;
+    dy.push((s.cy-r.cy)*100);
+  }
+  const sorted=dy.slice().sort((a,b)=>a-b),median=sorted[3];
+  if(sorted[6]-sorted[0]>4||Math.abs(median)<1||
+    Math.abs(median)>30)return null;
+  return Math.round(median);
+}
+
 /** One synchronous bounded fit pass. The UI can cancel between revisions.
  * render(candidate,width,height) must call the existing renderer and return
  * ImageData-like pixels at the requested dimensions.
@@ -548,7 +576,12 @@ export function rankReconstructionCandidates(candidates,source,render){
     try{
       const pixels=render(candidate.recipe,RECONSTRUCTION_WIDTH,RECONSTRUCTION_HEIGHT);
       const error=compareReconstructionPixels(source,pixels);
-      if(Number.isFinite(error))results.push({...candidate,error});
+      if(Number.isFinite(error)){
+        const waveOffsetY=candidate.kind==='wave'?
+          coherentWaveOffsetY(source,pixels):null;
+        results.push({...candidate,error,
+          ...(waveOffsetY!==null?{waveOffsetY}:{})});
+      }
     }catch(error){
       results.push({...candidate,error:Infinity,
         uncertainty:candidate.uncertainty+' Rendering failed: '+(error?.message||'unknown error')});
@@ -603,8 +636,14 @@ function refinementFields(candidate){
     ['positionX',[-6,6]],['positionY',[-6,6]],
     ['loopRadius',[-10,10]],['spread',[-10,10]],['stripeWidth',[-15,15]]
   ]:candidate.kind==='wave'?[
-    ['positionY',[-25,-15,15,25]],['spread',[-18,18]],
-    ['stripeWidth',[-25,-15,15,25]]
+    // The first true-render probe uses the rigid seven-hue centroid offset
+    // when measured, then tests its immediate neighbourhood. Otherwise keep
+    // the proven static coarse displacement search unchanged.
+    ['positionY',Number.isFinite(candidate.waveOffsetY)?
+      [candidate.waveOffsetY,candidate.waveOffsetY-4,
+        candidate.waveOffsetY+4,candidate.waveOffsetY-10]:
+      [-25,-15,15,25]],
+    ['spread',[-18,18]],['stripeWidth',[-25,-15,15,25]]
   ]:candidate.kind==='jagged'?[
     ['positionX',[-20,20]],['positionY',[-20,20]],
     ['spread',[-15,15]],['stripeWidth',[-25,-10,10,25]]
