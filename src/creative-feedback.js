@@ -3,11 +3,11 @@ export const FEEDBACK_PREF_KEY='roygbiv:creative-feedback-frequency:v1';
 export const FEEDBACK_COUNT_KEY='roygbiv:creative-feedback-counter:v1';
 export const CREATIVE_FEEDBACK_OPTIONS=['every','occasionally','never'];
 export function shouldOfferCreativeQuestion(kind,{frequency='every',manualEdits=0,
-  engagedMs=0,finalExported=false,eligibleCount=1}={}){
+  engagedMs=0,finalExported=false,finalExportPending=false,eligibleCount=1}={}){
   if(!CREATIVE_FEEDBACK_OPTIONS.includes(frequency)||frequency==='never')
     return false;
   if(kind==='superseded'&&
-    (manualEdits<3||engagedMs<45000||finalExported))return false;
+    (manualEdits<3||engagedMs<45000||finalExported||finalExportPending))return false;
   if(kind!=='export'&&kind!=='superseded')return false;
   return frequency==='every'||eligibleCount%3===1;
 }
@@ -48,7 +48,10 @@ export function installCreativeFeedback({recorder,getRecipe}){
     respond('skip');
   });
   function offer(kind,details={}){
+    // Replacing a question counts as a skip, not a fabricated answer.
+    if(active)respond('skip');
     if(!recorder.enabled||preference()==='never')return false;
+    if(!shouldOfferCreativeQuestion(kind,{frequency:'every',...details}))return false;
     let count=1;
     try{
       count=Number(localStorage.getItem(FEEDBACK_COUNT_KEY)||0)+1;
