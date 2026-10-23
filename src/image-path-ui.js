@@ -1,7 +1,7 @@
 import {extractImagePathCandidates,extractImageShapeCandidates,imagePlacement,pathToWallpaper} from './image-path.js?v=20261023-fullframe1';
 import {drawAuthoringLockReason,drawAuthoringLockMessage,pathStructureLockedOutsidePaths} from './path-authoring-locks.js';
 import {verifyLocalSilhouetteSvg} from './svg-import-safety.js';
-import {reconstructionCandidates,rankReconstructionCandidates,describeReconstructionImage,reconstructionPlacement,RECONSTRUCTION_FRAME} from './image-reconstruction.js?v=20261023-r0-observed2';
+import {reconstructionCandidates,rankReconstructionCandidates,refineReconstructionCandidate,describeReconstructionImage,reconstructionPlacement,RECONSTRUCTION_FRAME} from './image-reconstruction.js?v=20261023-r0-observed2';
 
 /** A live import dialog must match the current authoritative lock state,
  * even if a recipe restores a lock while image decoding is in flight. */
@@ -106,7 +106,7 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle,onShape,
     if(!candidate)return;
     recipeStatus.textContent=candidate.label+'. Estimated colour/coverage difference: '+
       candidate.error.toFixed(3)+' (lower is better). '+candidate.uncertainty+
-      ' This is an inferred approximation, never the original source recipe.';
+      ' ' This is an inferred approximation, never the original source recipe.';
     try{onRender(candidate.recipe,recipeCanvas);}
     catch(error){recipeStatus.textContent+=' Preview unavailable: '+error.message;}
   }
@@ -124,11 +124,18 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle,onShape,
     g.drawImage(image,box.x*frame.width/600,box.y*frame.height/1300,
       box.width*frame.width/600,box.height*frame.height/1300);
     const reference=g.getImageData(0,0,frame.width,frame.height);
-    reconstructed=rankReconstructionCandidates(candidates,reference,(recipe,w,h)=>{
+    const renderPixels=(recipe,w,h)=>{
       const rendered=document.createElement('canvas');rendered.width=w;rendered.height=h;
       onRender(recipe,rendered);
       return rendered.getContext('2d',{willReadFrequently:true}).getImageData(0,0,w,h);
-    }).filter(result=>Number.isFinite(result.error));
+    };
+    reconstructed=rankReconstructionCandidates(candidates,reference,renderPixels)
+      .filter(result=>Number.isFinite(result.error));
+    if(reconstructed.length){
+      reconstructed[0]=refineReconstructionCandidate(reconstructed[0],
+        reference,renderPixels);
+      reconstructed.sort((a,b)=>a.error-b.error);
+    }
     for(const [i,item] of reconstructed.entries()){
       const option=document.createElement('option');
       option.value=String(i);option.textContent=item.label+' ('+item.error.toFixed(3)+')';
