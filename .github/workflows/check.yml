@@ -26,6 +26,23 @@ jobs:
       - name: Basic app and recipe sanity
         if: ${{ github.event_name != 'workflow_dispatch' || inputs.depth != 'full' }}
         run: npm run check:quick
+      # One-off two-viewport Thread control review; remove before PR #521 merges.
+      - name: Install Chromium for two-screen Thread inspector study
+        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'tools/thread-portrait-two-screen-review-20261022' }}
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+      - name: Capture expanded Thread at 412x892 and 320x700
+        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'tools/thread-portrait-two-screen-review-20261022' }}
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/roygbiv-ui-http.log 2>&1 &
+          node scripts/review-thread-portrait.mjs --out-dir artifacts/thread-portrait
+      - uses: actions/upload-artifact@v4
+        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'tools/thread-portrait-two-screen-review-20261022' }}
+        with:
+          name: one-time-thread-two-portrait-screens
+          path: artifacts/thread-portrait/
+          retention-days: 7
       - name: Full Node suite (manual request only)
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.depth == 'full' }}
         run: npm run check
