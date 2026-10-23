@@ -4,6 +4,7 @@ import {HUES,normalizeRecipe,resolveScene,encodeRecipe,decodeRecipe} from '../sr
 import {imagePlacement,extractImageColourRegions} from '../src/image-path.js';
 import {describeReconstructionImage,reconstructionCandidates,
   rankReconstructionCandidates,compareReconstructionPixels,refineReconstructionCandidate,reconstructionPlacement,
+  radialImageSignature,imageStripeAngle,
   RECONSTRUCTION_FRAME,RECONSTRUCTION_RENDER_LIMIT} from '../src/image-reconstruction.js';
 
 function colour(hue){
@@ -177,4 +178,42 @@ test('inferred candidates honor present editor locks before being scored or disp
  assert.ok(alternatives.every(x=>!['regions','shape'].includes(x.kind)));
  const unlocked=reconstructionCandidates(original,{seed:'free'});
  assert.ok(unlocked.some(x=>x.kind==='regions'));
+});
+
+
+test('simple actual-raster ray and concentric fields have opposite radial signatures',()=>{
+ const rings=raster(200,200,(x,y)=>{
+   const r=Math.hypot(x-99.5,y-99.5);
+   return colour(HUES[Math.floor(r/11)%7]);
+ });
+ const rays=raster(200,200,(x,y)=>{
+   const a=(Math.atan2(y-99.5,x-99.5)+Math.PI)/(Math.PI*2);
+   return colour(HUES[Math.floor(a*21)%7]);
+ });
+ const ringSignature=radialImageSignature(rings);
+ const raySignature=radialImageSignature(rays);
+ assert.equal(ringSignature.kind,'rings');
+ assert.equal(raySignature.kind,'rays');
+ assert.ok(ringSignature.radialVariation>ringSignature.angularVariation);
+ assert.ok(raySignature.angularVariation>raySignature.radialVariation);
+ const ringChoices=reconstructionCandidates(rings,{seed:'ring-external'});
+ const rayChoices=reconstructionCandidates(rays,{seed:'ray-external'});
+ assert.ok(ringChoices.some(x=>x.kind==='radial-rings'));
+ assert.ok(ringChoices.some(x=>x.kind==='nested-rings'));
+ assert.ok(rayChoices.some(x=>x.kind==='radial-rays'));
+ assert.ok(rayChoices.filter(x=>x.kind==='radial-rays')
+   .every(x=>x.recipe.structure==='radial'));
+});
+
+test('PCA recognizes oblique parallel stripes but refuses scattered unrelated centroids',()=>{
+ const sloping=Array.from({length:7},(_,i)=>({
+   cx:.1+i*.12,cy:.9-i*.10,area:1000
+ }));
+ const angle=imageStripeAngle(sloping,200,200);
+ assert.ok(Number.isFinite(angle)&&angle>10&&angle<170);
+ const notAligned=[
+   [.15,.15],[.8,.2],[.28,.77],[.78,.8],[.4,.5],[.2,.44],[.7,.51]
+ ].map(([cx,cy])=>({cx,cy,area:1000}));
+ assert.equal(imageStripeAngle(notAligned,200,200),null);
+ assert.equal(imageStripeAngle(sloping.slice(0,3),200,200),null);
 });
