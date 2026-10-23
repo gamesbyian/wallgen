@@ -347,9 +347,9 @@ test('spatial webcam capture and active film grain are not falsely optimized awa
   };
   assert.equal(applyPhotoFinish(ctx,6,6,neutralSignal,'sensor'),true);
   assert.equal(applyPhotoFinish(ctx,6,6,activeGrain,'emulsion'),true);
-  // Webcam first gathers the original sensor signal, then grades a bounded
-  // destination strip. Ordinary grain still needs only the destination.
-  assert.deepEqual([reads,writes],[3,2]);
+  // A canvas already within the 2 MiB budget keeps a single original
+  // source read, including neutral-graded Webcam; grain does the same.
+  assert.deepEqual([reads,writes],[2,2]);
   assert.throws(()=>processPhotoPixels(new Uint8ClampedArray(3),8,9,
     {enabled:true,presetId:'film-grain-only',parameters:{grain:0}}),
     /Invalid photo pixel buffer/,
@@ -594,9 +594,9 @@ test('spatial source effects never grade partial frames without a precomputed fi
       getImageData(x,y,w,h){assert.deepEqual([x,y,w,h],[0,0,8,9]);this.reads++;return {data:source.slice()};},
       putImageData(_pixels,x,y){assert.deepEqual([x,y],[0,0]);this.writes++;}};
     assert.equal(applyPhotoFinish(ctx,8,9,look,'spatial'),true);
-    // All spatial looks now read an unmodified bounded source sample field
-    // first, then a separate bounded destination before finishing.
-    assert.equal(ctx.reads,2);
+    // Small previews already fit the 2 MiB cap and reuse one direct read.
+    // Large exports get a bounded source pass plus separate output strips.
+    assert.equal(ctx.reads,1);
     assert.equal(ctx.writes,1);
     assert.throws(()=>processPhotoPixels(source.slice(),8,9,look,'spatial',
       {frameHeight:20,rowOffset:2}),/whole-frame source/);
@@ -677,5 +677,26 @@ test('Webcam, Digicam and DSLR finish exact pixels with bounded source and outpu
     let mismatch=-1;
     for(let i=0;i<expected.length;i++)if(expected[i]!==actual[i]){mismatch=i;break;}
     assert.equal(mismatch,-1,presetId+' must preserve all old RGB and alpha bytes');
+  }
+});
+
+// Preview surfaces should avoid the extra source pass when they already fit
+// the same strict readback cap. This is an optimization, not a preset retune.
+test('bounded small-frame fastpath reads and writes once for every Photo family',()=>{
+  const width=80,height=140,source=pixels(121,88,35,width,height);
+  for(const presetId of ['film-grain-only','film-halation-only','film-halation-diffusion',
+    'camera-dslr-optics','camera-webcam-signal','camera-digicam-signal',
+    'camera-pocket-flash']){
+    const look=normalizePhotoLook({enabled:true,presetId,amount:95});
+    const expected=source.slice(),actual=source.slice();
+    processPhotoPixels(expected,width,height,look,'compact-proof');
+    const calls=[];
+    const ctx={
+      getImageData(x,y,w,h){calls.push(['read',x,y,w,h]);return {data:actual.slice()};},
+      putImageData(image,x,y){calls.push(['write',x,y]);actual.set(image.data);}
+    };
+    assert.equal(applyPhotoFinish(ctx,width,height,look,'compact-proof'),true);
+    assert.deepEqual(calls,[['read',0,0,width,height],['write',0,0]],presetId);
+    assert.deepEqual(actual,expected,presetId+' exact original pixels');
   }
 });
