@@ -56,3 +56,39 @@ test('a reconciled prior session stays explicitly unconfirmed in reports',()=>{
   assert.equal(report.episodes[0].outcome,'prior_session_status_unconfirmed_at_next_launch');
   assert.equal(report.episodes[0].finalKnownRecipe.seed,'original');
 });
+
+test('recipe replay obeys session sequence across a backwards-moving device clock',async()=>{
+  const store=memoryUsageStore();let id=0,stamp=0;
+  const timestamps=['2026-10-23T12:00:05.000Z',
+    '2026-10-23T11:59:59.000Z','2026-10-23T11:59:58.000Z'];
+  const recorder=createCreativeRecorder({store,enabled:true,
+    id:()=>String(++id),now:()=>timestamps[stamp++]});
+  const a={seed:'first',gap:15},b={...a,gap:27},c={...b,gap:43};
+  recorder.start(a);recorder.transition(a,b);recorder.transition(b,c);
+  const rows=await recorder.records();
+  assert.deepEqual(rows.map(e=>e.seq),[3,2,1],
+    'the journal export remains timestamp-ordered and exposes clock drift');
+  const report=analyzeCreativeUsage([{source:'device',data:payload(rows)}]);
+  assert.equal(report.sessions[0].sequenceError,null);
+  assert.equal(report.episodes[0].replayError,null);
+  assert.equal(report.episodes[0].finalKnownRecipe.gap,43);
+  assert.deepEqual(report.episodes[0].eventIds,rows.map(e=>e.eventId).reverse());
+});
+
+test('missing or repeated session events are visibly incomplete, even if recipe patches replay',async()=>{
+  const store=memoryUsageStore();let id=0;
+  const recorder=createCreativeRecorder({store,enabled:true,id:()=>String(++id),
+    now:()=> '2026-10-23T12:00:00Z'});
+  recorder.start({seed:'start'});
+  recorder.action('navigation',{seed:'start'},{route:'edit'});
+  recorder.transition({seed:'start'},{seed:'finish'});
+  const complete=await recorder.records();
+  const lost=complete.filter(event=>event.type!=='navigation');
+  const incomplete=analyzeCreativeUsage([{source:'partial',data:payload(lost)}]);
+  assert.match(incomplete.episodes[0].replayError,/Missing session event sequence/);
+  assert.match(markdownCreativeUsageReport(incomplete),/REPLAY INCOMPLETE/);
+  const repeated=[...complete,{...complete[1],eventId:'other-id'}];
+  const ambiguous=analyzeCreativeUsage([{source:'duplicate-sequence',data:payload(repeated)}]);
+  assert.match(ambiguous.sessions[0].sequenceError,/Duplicate session event sequence number/);
+  assert.match(ambiguous.episodes[0].replayError,/Duplicate session/);
+});
