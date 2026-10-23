@@ -33,7 +33,10 @@ export function describeReconstructionImage(image){
   const median=angles[Math.floor(angles.length/2)];
   const consensus=diagonal.filter(region=>Math.abs(region.axisAngle-median)<=10);
   const diagonalAngle=consensus.length>=5?Math.abs(median):null;
-  const seven=diagonalAngle===null&&colour.regions.length===7&&
+  const radial=colour.radialHueEvidence;
+  const rays=radial?.angularTransitions>=12&&
+    radial.angularCoverage>=.75&&radial.distinctHues>=5;
+  const seven=!rays&&diagonalAngle===null&&colour.regions.length===7&&
     colour.regions.every(region=>region.area>=image.width*image.height*.001&&
       region.fillRatio>=.32&&aspect(region)<2.7);
   const elongated=colour.regions.filter(region=>aspect(region)>3);
@@ -49,6 +52,7 @@ export function describeReconstructionImage(image){
     horizontal.length>=5?'horizontal':null;
   return {background:colour.background,colourRegions:colour.regions,
     paths:paths.slice(0,6),sevenColourRegions:seven,lineDirection,diagonalAngle,
+    radialRays:rays,radialHueEvidence:radial,
     coverage:colour.coverage,dimensions:[image.width,image.height]};
 }
 
@@ -71,6 +75,22 @@ export function reconstructionCandidates(image,recipe){
   const current=normalizeRecipe(recipe);
   const base=strippedCandidateBase(current,desc.background);
   const candidates=[];
+  // Many repeated hue transitions while travelling around one source-centred
+  // circle are direct evidence of a multicolour ray fan. Use the existing
+  // current radial scene vocabulary and bounded real renderer alternatives;
+  // never trace a fan's outer edge into an unrelated tiny ribbon.
+  if(desc.radialRays){
+    for(const [rayCount,rayRotation,rayTwist] of [
+      [21,0,20],[21,35,20],[21,70,20],[14,35,20],[28,35,20]
+    ]){
+      candidates.push({kind:'radial-rays',
+        label:'Procedural rainbow rays / '+rayCount+' spokes, '+rayRotation+'°',
+        uncertainty:'Radiating hue transitions identified; spoke count, centre, twist and crop are inferred, not recovered original settings.',
+        recipe:normalizeRecipe({...base,structure:'radial',radialMode:'sunburst',
+          rayCount,rayRotation,rayTwist,rayCore:12,rayCoverage:100,
+          fieldCenterX:50,fieldCenterY:50})});
+    }
+  }
   // Place supported current procedural diagonal geometry ahead of generic
   // contours. Bounded alternatives are ranked using the REAL renderer later.
   // A diagonal line must never be painted as seven detached circles merely
@@ -186,7 +206,8 @@ export function reconstructionCandidates(image,recipe){
   const essential=candidate=>candidate.kind==='regions'||candidate.kind==='shape'?
     ['structure','regionMode','scatteredShapeKind']:
     candidate.kind==='path'||candidate.kind==='straight'||candidate.kind==='loop'?
-      ['structure','geometry']:['structure'];
+      ['structure','geometry']:candidate.kind==='radial-rays'?
+        ['structure','radialMode']:['structure'];
   return candidates.map(candidate=>{
     const effective=respectSettingLocks(current,candidate.recipe);
     const blocked=current.lockedSettings.filter(key=>
