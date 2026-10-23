@@ -29,18 +29,3 @@ jobs:
       - name: Full Node suite (manual request only)
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.depth == 'full' }}
         run: npm run check
-      # TEMP R0 integration acceptance for #589, remove before merge.
-      - name: TEMP five real reconstruction baseline preservation cases
-        if: ${{ github.head_ref == 'agent3/reconcile-diagonal-and-radial-20261023' }}
-        run: |
-          npm install --no-save playwright
-          npx playwright install --with-deps chromium
-          node scripts/review-reconstruction.mjs --only 02-diagonal-straight,08-radial-rays,09-radial-rings,10-regions-nested,11-scattered-circles --out-dir artifacts/reconstruction-integration-589
-          node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/reconstruction-integration-589
-      - name: TEMP preserve five original and inferred PNGs
-        if: ${{ github.head_ref == 'agent3/reconcile-diagonal-and-radial-20261023' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: r0-diagonal-radial-integration-589
-          path: artifacts/reconstruction-integration-589/
-          retention-days: 2
