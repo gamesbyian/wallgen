@@ -35,3 +35,26 @@ export function resolveEmbroideryObjectChoice(choices,storedId){
       {id:desired,label:'Unavailable saved object · '+desired,missing:true}]};
   return {selected:desired||choices[0]?.id||'',options:choices};
 }
+
+/**
+ * Keep an open native phone picker alive across unrelated recipe updates.
+ * Replacing identical <option> nodes on every slider/preview update dismisses
+ * some platform pickers and can reset touch/assistive focus. Only rebuild
+ * when the actual authored object list/labels have changed.
+ */
+export function reconcileEmbroideryObjectOptions(select,choices,selected){
+  const expected=choices.length?choices:[{id:'',label:'No eligible objects'}];
+  const existing=Array.from(select.options);
+  const stable=existing.length===expected.length&&existing.every((option,i)=>
+    option.value===expected[i].id&&option.textContent===expected[i].label);
+  if(!stable){
+    const nodes=expected.map(choice=>{
+      const option=select.ownerDocument.createElement('option');
+      option.value=choice.id;option.textContent=choice.label;
+      return option;
+    });
+    select.replaceChildren(...nodes);
+  }
+  if(select.value!==selected)select.value=selected;
+  return !stable;
+}

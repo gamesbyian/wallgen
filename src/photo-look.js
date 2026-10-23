@@ -9,14 +9,16 @@ export const PHOTO_PRESETS=Object.freeze({
   'film-mono':Object.freeze({family:'film',contrast:1.13,saturation:0,shadow:0.009,highlight:0.05,red:0,green:0,blue:0,grain:16,vignette:8}),
   'film-grain-only':Object.freeze({family:'film',contrast:1,saturation:1,shadow:0,highlight:0,red:0,green:0,blue:0,grain:58,vignette:0}),
   'film-halation-only':Object.freeze({family:'film',contrast:1,saturation:1,shadow:0,highlight:0,red:0,green:0,blue:0,grain:0,vignette:0,halation:75}),
+  // A separately named wide, optically soft red/orange diffusion treatment.
+  // The original narrow halation's pixel recipe remains exactly unchanged.
+  'film-halation-diffusion':Object.freeze({family:'film',contrast:1,saturation:1,shadow:0,highlight:0,red:0,green:0,blue:0,grain:0,vignette:0,halation:85}),
   'camera-natural':Object.freeze({family:'camera',contrast:1.055,saturation:1.045,shadow:0.012,highlight:0.06,red:0,green:0,blue:0,grain:2,vignette:2}),
   'camera-hdr':Object.freeze({family:'camera',contrast:1.11,saturation:1.12,shadow:0.055,highlight:0.095,red:0.002,green:0.003,blue:0.002,grain:1,vignette:0}),
   'camera-dslr-optics':Object.freeze({family:'camera',contrast:1.06,saturation:1.025,shadow:0,highlight:0.045,red:0,green:0,blue:0,grain:1,vignette:10}),
   'camera-webcam':Object.freeze({family:'camera',contrast:1.08,saturation:0.78,shadow:0.015,highlight:0.02,red:0.015,green:-0.003,blue:0.005,grain:22,vignette:5}),
   'camera-webcam-signal':Object.freeze({family:'camera',contrast:1.06,saturation:0.84,shadow:0.02,highlight:0.015,red:0.012,green:-0.006,blue:0.008,grain:7,vignette:4}),
   'camera-digicam-signal':Object.freeze({family:'camera',contrast:1.14,saturation:1.22,shadow:0,highlight:-0.025,red:0.012,green:-0.004,blue:-0.009,grain:13,vignette:3}),
-  // Opt-in bright point-and-shoot flash with center-weighted illumination.
-  // Old camera signal captures and global Photo looks remain pixel-identical.
+  // Opt-in small point-and-shoot flash, entirely separate from existing looks.
   'camera-pocket-flash':Object.freeze({family:'camera',contrast:1.13,saturation:1.11,shadow:0.008,highlight:-0.035,red:0.012,green:0,blue:-0.008,grain:8,vignette:2}),
 });
 export const PHOTO_PRESET_NAMES=Object.freeze({
@@ -26,6 +28,7 @@ export const PHOTO_PRESET_NAMES=Object.freeze({
   'film-mono':'Monochrome print',
   'film-grain-only':'Film grain only (no colour grade)',
   'film-halation-only':'Warm film halation only',
+  'film-halation-diffusion':'Wide warm film light diffusion',
   'camera-natural':'Natural digital camera',
   'camera-hdr':'Smartphone HDR inspired',
   'camera-dslr-optics':'Interchangeable-lens digital (simulated)',
@@ -52,7 +55,7 @@ export function normalizePhotoLook(value={}){
     [key,finite(candidate[key],preset[key],min,max)]));
   // Legacy presets preserve their exact serialized parameter sets. Only this
   // new optic has a version-one expanded halation amount in saved PNGs/URLs.
-  if(presetId==='film-halation-only')
+  if(presetId==='film-halation-only'||presetId==='film-halation-diffusion')
     parameters.halation=finite(candidate.halation,preset.halation,0,100);
   return {version:1,enabled:source.enabled===true||source.enabled==='true',
     family:preset.family,presetId,amount:finite(source.amount,75,0,100),parameters};
@@ -161,7 +164,7 @@ function makeLensAcutanceField(data,width,height){
 // Only bright *luminance* emits glow, not saturated max-channel values. Two
 // separable box passes cost O(frame pixels), not O(radius * export pixels).
 // This is a perceptual film-inspired effect, not a linear-light optical model.
-function makeHalationField(data,width,height){
+function makeHalationField(data,width,height,profile='original'){
   const fieldWidth=Math.min(600,width);
   const fieldHeight=Math.min(1300,height,
     Math.max(1,Math.round(fieldWidth*height/width)));
@@ -175,10 +178,13 @@ function makeHalationField(data,width,height){
       const i=(py*width+px)*4;
       luma+=(.2126*data[i]+.7152*data[i+1]+.0722*data[i+2])*.25;
     }
-    sources[y*fieldWidth+x]=Math.round(255*Math.min(1,Math.max(0,(luma-125)/115)));
+    // The new diffusion profile admits lower midtone highlights (especially
+    // orange) into a broad veil; original's luma gate is frozen for old PNGs.
+    sources[y*fieldWidth+x]=Math.round(255*Math.min(1,Math.max(0,
+      profile==='diffusion'?(luma-86)/132:(luma-125)/115)));
   }
   // Radius is in authored-world units; smaller canvases scale proportionally.
-  const radius=Math.max(1,Math.round(fieldWidth*9/600));
+  const radius=Math.max(1,Math.round(fieldWidth*(profile==='diffusion'?22:9)/600));
   const horizontal=new Float32Array(size);
   const output=new Uint8Array(size);
   const diameter=radius*2+1;
@@ -249,12 +255,12 @@ export function processPhotoPixels(data,width,height,rawLook,seed='rainbow-001')
   const webcamSignal=['camera-webcam-signal','camera-digicam-signal'].includes(look.presetId)?
     makeWebcamCapture(data,width,height,
       look.presetId==='camera-digicam-signal'?'digicam':'webcam'):null;
-  const halation=look.presetId==='film-halation-only'&&p.halation>0?
-    makeHalationField(data,width,height):null;
+  const diffusedHalation=look.presetId==='film-halation-diffusion';
+  const halation=(look.presetId==='film-halation-only'||diffusedHalation)&&p.halation>0?
+    makeHalationField(data,width,height,diffusedHalation?'diffusion':'original'):null;
   const lens=look.presetId==='camera-dslr-optics'?
     makeLensAcutanceField(data,width,height):null;
-  // A separate spatial exposure curve for an opt-in direct-flash style.
-  // No synthetic scene depth or calibrated camera/flash transport is implied.
+  // No extra image buffer or synthetic scene depth.
   const pocketFlash=look.presetId==='camera-pocket-flash';
   // The deep-black variant deliberately shares the legacy negative's grain
   // identity. Bright source pixels can therefore remain pixel-exactly equal.
@@ -352,9 +358,11 @@ export function processPhotoPixels(data,width,height,rawLook,seed='rainbow-001')
       const flashReflectance=pocketFlash?
         Math.max(0,Math.min(1,(.2126*r+.7152*g+.0722*b)/20)):1;
       const mix=amount*shadowMask*flashReflectance;
-      data[i]=clampByte(r+(R*dark+perturb+warmSpill*94-r)*mix);
-      data[i+1]=clampByte(g+(G*dark+perturb+warmSpill*24-g)*mix);
-      data[i+2]=clampByte(b+(B*dark+perturb+warmSpill*5-b)*mix);
+      // Wider red-biased photochemical-style diffusion has a clearly readable
+      // warm fringe at wallpaper size; narrow halation retains original mix.
+      data[i]=clampByte(r+(R*dark+perturb+warmSpill*(diffusedHalation?170:94)-r)*mix);
+      data[i+1]=clampByte(g+(G*dark+perturb+warmSpill*(diffusedHalation?44:24)-g)*mix);
+      data[i+2]=clampByte(b+(B*dark+perturb+warmSpill*(diffusedHalation?9:5)-b)*mix);
     }
   }
   return data;

@@ -52,6 +52,7 @@ const options=argv=>{
     if(flag==='--focus-soft-satin'){result.focusSoftSatin=true;continue;}
     if(flag==='--focus-compound'){result.focusCompound=true;continue;}
     if(flag==='--focus-chain'){result.focusChain=true;continue;}
+    if(flag==='--focus-fibre'){result.focusFibre=true;continue;}
     if(!['--out-dir','--seed','--browser'].includes(flag)||!argv[i+1]||
       argv[i+1].startsWith('--'))throw Error('Unknown or incomplete option '+flag);
     result[flag==='--out-dir'?'outDir':flag.slice(2)]=argv[++i];
@@ -79,14 +80,19 @@ function makeRecipe(study,seed){
 async function main(){
   const opts=options(process.argv.slice(2));
   if(opts.help){
-    console.log('node scripts/review-embroidery.mjs [--out-dir folder] [--seed text] [--browser Chromium-path] [--focus-soft-satin|--focus-compound|--focus-chain]');
+    console.log('node scripts/review-embroidery.mjs [--out-dir folder] [--seed text] [--browser Chromium-path] [--focus-soft-satin|--focus-compound|--focus-chain|--focus-fibre]');
     return;
   }
   if(Number(!!opts.focusSoftSatin)+Number(!!opts.focusCompound)+
-    Number(!!opts.focusChain)>1)
+    Number(!!opts.focusChain)+Number(!!opts.focusFibre)>1)
     throw Error('Choose only one focused embroidery review');
   const out=resolve(opts.outDir);
-  const studies=opts.focusChain?[
+  const studies=opts.focusFibre?[
+    cases[0],cases[1],
+    {id:'12-ribbon-satin-fibre',name:'Loop ribbon · directional satin fibre',scene:'ribbon',style:'satin-fibre'},
+    cases[3],cases[4],
+    {id:'13-region-tatami-fibre',name:'Scattered circles · soft woven fibre',scene:'region',style:'tatami-fibre'}
+  ]:opts.focusChain?[
     cases[0],{id:'10-ribbon-chain',name:'Loop ribbon · linked chain',scene:'ribbon',style:'chain'},
     cases[3],{id:'11-region-chain',name:'Scattered circles · linked chain',scene:'region',style:'chain'}
   ]:opts.focusCompound?[
@@ -144,7 +150,8 @@ async function main(){
   await writeFile(join(out,'index.html'),html);
   await writeFile(join(out,'manifest.json'),JSON.stringify({
     schema:'roygbiv-embroidery-art-review/v1',
-    comparison:opts.focusChain?'linked-chain-four':
+    comparison:opts.focusFibre?'directional-fibre-six':
+      opts.focusChain?'linked-chain-four':
       opts.focusCompound?'imported-compound-hole':
       opts.focusSoftSatin?'soft-satin-versus-legacy':'seven-stitch-styles',
     status:'produced-awaiting-actual-visual-review',

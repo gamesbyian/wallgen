@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
+import {firstV1PreviewCandidate} from '../scripts/historical-v1-preview-candidate.mjs';
 import {readFileSync} from 'node:fs';
 import {normalizeRecipe as originalNormalize,resolveScene as originalScene}
   from '../docs/recipe-format-history/source-era/v1-37428b/src/model.js';
@@ -93,4 +94,29 @@ test('the pinned original v1 renderer is unchanged and the optional optical proo
   assert.match(review,/v1PngWriter\(png,\{\}, \{recipe:original\}\)/);
   assert.match(review,/inspectPngMigration\(historic\)\.safe/);
   assert.match(review,/idatSha256:createHash\('sha256'\)/);
+});
+
+test('source-era-only parity candidates are audited and never permit metadata rewriting',()=>{
+  const manifest=JSON.parse(readFileSync(new URL('SHADOW-IMAGE-GOLDENS.json',root),'utf8'));
+  assert.equal(manifest.sourceCommit,fixture.originCommit);
+  for(const sample of manifest.samples){
+    const original=originalNormalize({...manifest.source,
+      stripeShadowEnabled:sample.enabled});
+    const snapshot=structuredClone(original);
+    const preview=firstV1PreviewCandidate(original);
+    assert.deepEqual(original,snapshot,'candidate creation never edits first-v1 recipe');
+    assert.equal(preview.safeForMigration,false);
+    assert.equal(preview.candidate.version,2);
+    assert.equal(preview.candidate.structure,'paths');
+    assert.equal(preview.candidate.stripeShadowStrength,
+      sample.enabled?original.stripeShadowStrength:0);
+    assert.ok(preview.fieldAudit.sourceOnly.includes('stripeShadowEnabled'));
+    assert.ok(preview.fieldAudit.modernOnly.includes('structure'));
+    assert.ok(preview.assumptions.some(s=>s.includes('unproven')));
+    const historical=originalWriter(tiny,{}, {recipe:original});
+    assert.equal(inspectPngMigration(historical).safe,false,
+      'candidate preview cannot bypass original-v1 refusal');
+  }
+  assert.throws(()=>firstV1PreviewCandidate({version:1,seed:'unproven'}),
+    /fully normalized/);
 });
