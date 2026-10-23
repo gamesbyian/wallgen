@@ -1,5 +1,7 @@
 # ROYGBIV recipe format registry
 
+**New executable original-v1 source anchor:** [The unchanged initial normalizer + PNG writer](source-era/v1-37428b/README.md) are pinned by **Git blob SHA**, and four source-era cases test the actual historical v1 exporter end-to-end into today's strict preservation tool. This is stronger than text-grep default inference: it proves original recipe normalization and original envelope semantics for this **one** specific 17 October commit. It is **not** image-pixel parity or a blanket v1 conversion gate. See [fixture file](source-era/v1-37428b/EXPECTED-SEMANTICS.json).
+
 **Byte-level recovery independent of JSON (2026-10-22, PR pending):** Even a **malformed or unsupported** named historical recipe iTXt can now be preserved via `inspectPngRecipeArchive` → `archivePngRecipeRecords`, with full original bytes including CRC (valid outer PNG required). The More UI enables exact-byte rescue after parsing failure; CLI `--archive` runs before inspection and still refuses unsafe migration. `format:null` denotes unreadable record text, never silently replaces the source with modern defaults. Standard recipe importer remains strict. Bounded archive and no-render integrity guarantees remain.
 
 
