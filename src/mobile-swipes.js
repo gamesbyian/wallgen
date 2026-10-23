@@ -2,17 +2,20 @@
 // gesture advances to the next named tool, while direct chips work immediately.
 // The editor occupies a separate reserved tray, leaving all seven visible
 // rainbow stripes above it at all times.
-import {EDITOR_CATEGORIES} from './editor-schema.js';
+import {visibleMobileTools,adjacentVisibleMobileTool} from './mobile-tool-sequence.js';
 import {selectEditorTool} from './editor-layout.js';
 const phone=window.matchMedia('(max-width:790px)');
 const editor=document.getElementById('mobileDesignSheet');
 const count=document.getElementById('mobileSettingPosition');
 const handle=document.getElementById('mobileDismissHandle');
+const chooser=document.querySelector('.editor-tool-chooser');
 let active={category:'layout',tool:'arrange'};
+const availableTools=()=>visibleMobileTools(
+  chooser.querySelectorAll('[data-editor-tool]'),active.category);
 function update(){
-  const category=EDITOR_CATEGORIES.find(c=>c.id===active.category);
-  const index=Math.max(0,category.tools.findIndex(t=>t.id===active.tool));
-  count.textContent=(index+1)+' / '+category.tools.length+' · '+category.tools[index].name;
+  const choices=availableTools(),index=choices.findIndex(t=>t.id===active.tool);
+  count.textContent=index<0?'No available tools':
+    (index+1)+' / '+choices.length+' · '+choices[index].name;
 }
 document.addEventListener('editor-tool-changed',event=>{active=event.detail;update();});
 let gesture=null;
@@ -35,10 +38,10 @@ editor.addEventListener('touchend',event=>{
   }
   if(start.interactive||Math.abs(dx)<45||Math.abs(dx)<Math.abs(dy)*1.4)return;
   if(event.cancelable)event.preventDefault();
-  const c=EDITOR_CATEGORIES.find(x=>x.id===active.category);
-  const i=c.tools.findIndex(x=>x.id===active.tool);
-  const next=Math.max(0,Math.min(c.tools.length-1,i+(dx<0?1:-1)));
-  if(i!==next)selectEditorTool(c.id,c.tools[next].id);
+  // Scene-inapplicable chips are already hidden by the canonical editor.
+  // Swiping must not count or select them, or fallback can jump backwards.
+  const next=adjacentVisibleMobileTool(availableTools(),active.tool,dx<0?1:-1);
+  if(next)selectEditorTool(active.category,next,{source:'swipe'});
 },{passive:false});
 handle.addEventListener('keydown',event=>{
   if(event.key==='ArrowDown'){event.preventDefault();handle.click();}
