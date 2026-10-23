@@ -4,7 +4,7 @@ import {HUES,normalizeRecipe,resolveScene,encodeRecipe,decodeRecipe} from '../sr
 import {imagePlacement,extractImageColourRegions} from '../src/image-path.js';
 import {describeReconstructionImage,reconstructionCandidates,
   rankReconstructionCandidates,compareReconstructionPixels,refineReconstructionCandidate,reconstructionPlacement,
-  radialImageSignature,imageStripeAngle,imageCurveSignature,
+  radialImageSignature,imageStripeAngle,imageCurveSignature,diverseReconstructionCandidates,
   rankReconstructionCandidatesCooperatively,refineReconstructionCandidateCooperatively,
   RECONSTRUCTION_FRAME,RECONSTRUCTION_RENDER_LIMIT} from '../src/image-reconstruction.js';
 
@@ -330,4 +330,22 @@ test('wave jagged and hairpin fitted variants stay within ten true-render passes
    assert.equal(fitted.recipe.geometry,kind);
    assert.ok(fitted.refinementRenders>0);
  }
+});
+
+
+test('six-render candidate selection preserves one independent type before redundant parameter copies',()=>{
+ const options=[
+  ...[30,40,50].map(n=>({kind:'straight',id:'rotation-'+n})),
+  {kind:'loop',id:'loop-a'},{kind:'loop',id:'loop-b'},
+  {kind:'wave',id:'wave-a'},{kind:'jagged',id:'jagged-a'},
+  {kind:'hairpin',id:'hairpin-a'},
+  {kind:'path',id:'manual-trace'}
+ ];
+ const selection=diverseReconstructionCandidates(options);
+ assert.deepEqual(selection.map(x=>x.kind),
+   ['straight','loop','wave','jagged','hairpin','path']);
+ assert.ok(selection.length<=RECONSTRUCTION_RENDER_LIMIT);
+ assert.deepEqual(diverseReconstructionCandidates(options,2).map(x=>x.kind),
+   ['straight','loop']);
+ assert.throws(()=>diverseReconstructionCandidates(options,100),/budget/);
 });
