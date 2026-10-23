@@ -1,5 +1,9 @@
 # Agent orientation for ROYGBIV
 
+## Verified actual first-v1 historical wallpaper images (2026-10-22)
+
+The exact 17 Oct 2026 original normalizer/renderer/PNG writer were executed in Chromium, yielding **two authentic source-era PNGs**, inspected and validated in [run #39894186610](https://github.com/gamesbyian/wallgen/actions/runs/39894186610). [Pixel findings](docs/recipe-format-history/source-era/v1-37428b/ACTUAL-RENDER-FINDINGS-2026-10-22.md) and [original recipe/IDAT manifest](docs/recipe-format-history/source-era/v1-37428b/SHADOW-IMAGE-GOLDENS.json) prove 40,662 pixels respond to legacy shadow toggle. They do **not** prove the current renderer reproduces those pixels or unlock v1 conversion. Temporary Chromium CI was removed.
+
 ## Linked Chain embroidery has actual optical proof (2026-10-22)
 
 Chain is a separate opt-in texture style using world-anchored cubic linked loops, not another diagonal hatch. [Four real source PNGs](docs/EMBROIDERY-CHAIN-STITCH-IMAGE-FINDINGS-2026-10-22.md) were retrieved, viewed, CRC checked and recipe-verified (Actions #39890740813). Three lanes follow ribbons and staggered links fill region courses; both original black backgrounds remain unchanged. Tight inner-ring loop crowding is a real stylistic limitation, not a proof of sewing physics. The temporary Chromium workflow was removed before PR merge, retaining lean CI.

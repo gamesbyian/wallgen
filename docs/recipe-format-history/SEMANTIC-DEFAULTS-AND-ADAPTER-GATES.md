@@ -1,5 +1,13 @@
 # Source-anchored recipe default and expression boundaries
 
+## Original-v1 painter pixels now available (2026-10-22)
+
+[Two genuine original v1 source-rendered artworks](source-era/v1-37428b/ACTUAL-RENDER-FINDINGS-2026-10-22.md) prove the historic `stripeShadowEnabled` gate changes 40,662 actual pixels under an otherwise fixed recipe. [The immutable source and image manifest](source-era/v1-37428b/SHADOW-IMAGE-GOLDENS.json) records exact Git blobs, IDAT hashes and legacy envelope dimensions. A **modern renderer parity run with an era-specific adapter** is the next semantic milestone, not immediate v1 metadata rewriting.
+
+## Pinned original v1 renderer and optical shadow fixture (2026-10-22)
+
+The exact first-v1 source renderer SHA `5c12b7c505e7044db6a6ca04ddd31938ffd7f05b` now lives alongside the original model and PNG writer in [the frozen source archive](source-era/v1-37428b/README.md). A standalone, optional Chromium [two-picture capture](../../scripts/review-historical-v1-render.mjs) executes the archived renderer and demonstrates the legacy shadow toggle at *source-era pixel* level, rather than only probing the current normalizer. The output must still be checked against modern output and subsequent v1 versions before permitting any adapter. It is never called by routine CI.
+
 ## Executable first-source v1 model and PNG writer now preserved (2026-10-22)
 
 [The exact first-v1 JavaScript source modules](source-era/v1-37428b/README.md) are imported directly by a focused Node test, not recreated by rewriting today's normalizer. Four raw-v1 inputs exercise disabled and enabled shadows, missing strength and Layer 3 dependency; their original `roygbiv-recipe-v1` envelopes are created using the original exporter and archived without modification. Git blob checksums guard accidental edits. This establishes concrete **original normalizer/serializer behaviour**; source renderer pixel parity and multiple later v1 eras still need independent fixtures. No historical converter is enabled.

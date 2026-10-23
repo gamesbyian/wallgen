@@ -1,5 +1,13 @@
 # ROYGBIV: active product roadmap and work queue
 
+## Historical v1: authentic source-era raster proof completed (2026-10-22)
+
+The first-v1 source archive now has **actual** original Canvas-painted images for shadow-off/on (Actions #39894186610), reviewed with PNG CRC and exact recipe checks. See [art observations](recipe-format-history/source-era/v1-37428b/ACTUAL-RENDER-FINDINGS-2026-10-22.md) and [pinned IDAT/recipe manifest](recipe-format-history/source-era/v1-37428b/SHADOW-IMAGE-GOLDENS.json). The original shadow changes 40,662 pixels; the old exporter declares native 3024×6552 dimensions even on these 600×1300 thumbnails, a documented source-era distinction. **Next #476 work:** explicitly compare modern renderer with original golden PNG using a proposed adapter, then reproduce other v1 source intervals before permitting migration. No automatic converter and no permanent browser CI.
+
+## M0 original v1 renderer now pinned, targeted shadow image fixture (2026-10-22)
+
+The first-v1 recipe source archive now includes **unchanged original renderer source** with Git blob SHA pinning and an [opt-in authentic first-era Chromium render script](../scripts/review-historical-v1-render.mjs). It produces two same-seed original-v1 wallpapers using the original model, Canvas painter and old iTXt exporter, including original shadow on/off. This is a source-era **image golden generation path**, unlike earlier lexical/default comparisons, but only the actual browser run and saved images establish the pixel receipt. It cannot justify a general v1→v2 adapter: modern material/geometry choices and later v1 periods remain unproven.
+
 ## PNG M0: executable first-era v1 preservation fixture (2026-10-22)
 
 Historical recipe archaeology now has a true [first-v1 original model/writer snapshot](recipe-format-history/source-era/v1-37428b/README.md), with Git-blob checks and a compact four-case source-era normalizer/export/modern-refusal test. Unlike earlier lexical-only key matrices, this checks real 2026-10-17 source execution, including the old shadow toggle and Layer 3 dependency. **It does not approve conversion or claim old raster reproduction.** Next safe work under #476 is source-era **renderer** golden PNG evidence and adapters isolated by exact release intervals, before modifying any original artwork metadata.

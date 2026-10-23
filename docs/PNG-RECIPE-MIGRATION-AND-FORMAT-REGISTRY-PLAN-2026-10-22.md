@@ -1,5 +1,13 @@
 # PNG recipe metadata migration without image changes
 
+## Authentic original-v1 image evidence retrieved (2026-10-22)
+
+The original v1 renderer, model and metadata writer produced two full-function 600×1300 source-era PNGs with real v1 recipes under the historical shadow flag. The actual files were downloaded, CRC-checked, visually opened and measured ([observations](recipe-format-history/source-era/v1-37428b/ACTUAL-RENDER-FINDINGS-2026-10-22.md), [digests](recipe-format-history/source-era/v1-37428b/SHADOW-IMAGE-GOLDENS.json)). This surpasses lexical expression archaeology without asserting current-v2 pixel equivalence; v1 migration remains refused and the original PNG remains master.
+
+## First authentic v1 renderer capture (2026-10-22)
+
+[The unmodified original renderer](recipe-format-history/source-era/v1-37428b/README.md) joins original model/exporter in an importable frozen source tree. The opt-in [browser capture script](../scripts/review-historical-v1-render.mjs) executes those actual 17 October modules, saves original-v1 PNG recipe metadata and IDAT checksums for shadow-off/shadow-on artwork. This advances visual fixture archaeology without importing the original painter into the live app or enabling automatic historical migrations; source-era images and cross-era parity must be reviewed distinctly.
+
 ## Authentic original v1 source-era normalization and writer tests (2026-10-22)
 
 The two exact first-v1 Git blobs ([original model and PNG writer](recipe-format-history/source-era/v1-37428b/README.md)) are now pinned as **unchanged executable fixtures**. [Four independent expected-value cases](recipe-format-history/source-era/v1-37428b/EXPECTED-SEMANTICS.json) cover original 45 shadow default, enabled/disabled shadow with retained strength, invalid strength fallback, and old Layer 3 requiring Layer 2. Focused offline tests hash the original Git blobs, run the **actual historical** normalizer/seeded scene builder, serialize **real v1 metadata with the old exporter**, verify the modern reader and exact-byte backup, and enforce historical migration refusal. This closes one important source-era *normalization/export* evidence gap without pretending to supply 2026 source-era rendered PNG pixels, full cross-version visual parity or a safe v1→v2 adapter. Next: pin exact renderer/helpers and reproduce actual legacy art through a dedicated frozen browser fixture.
