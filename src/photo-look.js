@@ -425,6 +425,15 @@ export function applyPhotoFinish(ctx,width,height,rawLook,seed){
   if(!rawLook?.enabled||Number(rawLook.amount)===0)return false;
   const look=normalizePhotoLook(rawLook);
   if(isNeutralPhotoLook(look))return false;
+  // For a preview already smaller than our 2 MiB readback budget, keep the
+  // original single Canvas read/write. This avoids a redundant source pass
+  // while retaining the exact preexisting spatial algorithms and pixels.
+  if(width*height*4<=MAX_PHOTO_READBACK_BYTES){
+    const pixels=ctx.getImageData(0,0,width,height);
+    processPhotoPixels(pixels.data,width,height,look,seed);
+    ctx.putImageData(pixels,0,0);
+    return true;
+  }
   // Every spatial source sample precedes the first destination write and
   // uses the very same four source pixels and arithmetic as the original
   // full-frame method. Only <=2 MiB of Canvas pixels are read at once;
