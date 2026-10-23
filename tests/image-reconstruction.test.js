@@ -232,6 +232,11 @@ test('coherent diagonal hue axes survive radial classifier integration without h
   const fit=reconstructionCandidates(diagonal,{seed:'shared-image-axes'});
   assert.ok(fit.some(x=>x.kind==='straight'&&
     x.recipe.geometry==='straight'&&x.recipe.orientation==='diagonal'));
+  assert.equal(fit.filter(x=>x.kind==='straight'&&
+    x.recipe.orientation==='diagonal').length,3,
+    'all three principal-axis angle trials survive diverse type budgeting');
+  assert.ok(fit.some(x=>x.kind==='path'),'retain editable Draw fallback');
+  assert.ok(fit.some(x=>x.kind==='jagged'),'retain a structural angular alternative');
   assert.ok(!fit.some(x=>x.kind==='regions'),
     'independent circles may not replace a coherent diagonal ribbon set');
   const circles=describeReconstructionImage(original);
