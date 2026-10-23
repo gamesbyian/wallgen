@@ -2274,7 +2274,10 @@ usageRecorder=createCreativeRecorder({
 });
 if(usageOptedIn)usageRecorder.recoverPrevious(await usageStore.last());
 usageRecorder.start(current);
-usageGitHubSync=installCreativeRecorderUI({recorder:usageRecorder,getRecipe:()=>current,store:usageStore});
+usageGitHubSync=installCreativeRecorderUI({
+  recorder:usageRecorder,getRecipe:()=>current,store:usageStore,
+  onStopOrClear:()=>creativeFeedback?.hide()
+});
 creativeFeedback=installCreativeFeedback({recorder:usageRecorder,getRecipe:()=>current});
 document.addEventListener('visibilitychange',()=>{
   if(document.visibilityState==='hidden')
