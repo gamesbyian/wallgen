@@ -156,8 +156,10 @@ function checkpoint(next){
   return normalized;
 }
 function undo(){
+  // The latest slider input may be waiting in the debounce stage. Commit
+  // that genuine edit first so Undo reverses it, not an older decision.
+  flushQueuedControlUpdate();
   if(!undoStack.length)return;
-  clearTimeout(rangeTimeout);
   const previous=undoStack.pop();
   undoing=true;
   try{changeRecipe(previous,{bypassLocks:true,cause:'undo'});showNotice('Undid last design change.');}finally{undoing=false;updateUndoButton();}
@@ -720,7 +722,8 @@ function render(recipe,{scroll=false,bypassLocks=false,interactive=false,cause='
   if(scroll) document.querySelector('.workspace-head').scrollIntoView({behavior:'smooth',block:'start'});
 }
 function changeRecipe(recipe,options={}){
-  if(pendingControlFrame){cancelAnimationFrame(pendingControlFrame);pendingControlFrame=0;}
+  // An explicit operation must not be overwritten by an older slider timer.
+  cancelQueuedControlUpdate();
   render(recipe,options);toControls(current);showResolvedSelections(currentScene);
   syncScatteredObjectEditor();
   const elementState=JSON.stringify([current.interiorElements,
@@ -1075,11 +1078,7 @@ async function downloadPNG(){
   // Commit an in-flight slider frame before taking the export snapshot.
   // Metadata and artwork describe the state at the user's click, even if
   // further controls are changed during PNG encoding.
-  if(pendingControlFrame){
-    cancelAnimationFrame(pendingControlFrame);
-    pendingControlFrame=0;
-    updateControlsFromInputs();
-  }
+  flushQueuedControlUpdate();
   const snapshot=normalizeRecipe(current);
   const exportId=crypto.randomUUID();
   const targetEpisodeId=usageRecorder?.episodeId||null;
@@ -1162,7 +1161,16 @@ importRecipeFile.addEventListener('change',async()=>{
   }catch(error){showNotice('Cannot restore design: '+error.message);}
 });
 
-let pendingControlFrame=0;
+let pendingControlFrame=0,rangeTimeout=0;
+function cancelQueuedControlUpdate(){
+  const pending=Boolean(rangeTimeout||pendingControlFrame);
+  if(rangeTimeout){clearTimeout(rangeTimeout);rangeTimeout=0;}
+  if(pendingControlFrame){cancelAnimationFrame(pendingControlFrame);pendingControlFrame=0;}
+  return pending;
+}
+function flushQueuedControlUpdate(){
+  if(cancelQueuedControlUpdate())updateControlsFromInputs();
+}
 function updateControlsFromInputs({interactive=false}={}){
   syncDiagonalUI();
   changeRecipe(fromControls(),{interactive});
@@ -1980,7 +1988,6 @@ form.addEventListener('change',event=>{
   // hidden multiplier after the player manually edits a field.
   changeRecipe({...current,family,...defaults});
 },true);
-let rangeTimeout;
 form.addEventListener('input',event=>{
   const key=event.target.name;
   if(!FIELDS.includes(key)&&!['photoAmount','photoGrain','photoHalation','embroideryPitch','embroideryRelief'].includes(key))return;
@@ -1990,7 +1997,10 @@ form.addEventListener('input',event=>{
   const numeric=form.querySelector(`[data-number-for="${key}"]`);
   if(numeric)numeric.value=event.target.value;
   clearTimeout(rangeTimeout);
-  rangeTimeout=setTimeout(queueControlUpdate,75);
+  rangeTimeout=setTimeout(()=>{
+    rangeTimeout=0;
+    queueControlUpdate();
+  },75);
 });
 // Selects and checkboxes fire input followed immediately by change. Handling
 // only their change event avoids rendering a recipe twice. A completed choice
@@ -2048,11 +2058,14 @@ form.addEventListener('submit',event=>event.preventDefault());
 seedInput.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();render(fromControls());}});
 document.getElementById('applySeed').addEventListener('click',()=>render(fromControls()));
 document.getElementById('randomize').addEventListener('click',()=>{
+  flushQueuedControlUpdate();
   explorationHistory.remember(current,'Before seed');
   changeRecipe({...fromControls(),seed:newSeed()},{cause:'seed_reroll'});
   explorationHistory.remember(current,'New seed');
 });
 document.getElementById('randomizeAll').addEventListener('click',()=>{
+  // Preserve the true final edited recipe in the superseded-episode snapshot.
+  flushQueuedControlUpdate();
   const previous=current;
   explorationHistory.remember(current,'Before Random');
   changeRecipe({...randomizeAllRecipe({primesOnly:current.primesOnly}),
@@ -2084,11 +2097,15 @@ for(const button of document.querySelectorAll('[data-rotate-target]')){
 }
 document.getElementById('undo').addEventListener('click',undo);
 document.getElementById('download').addEventListener('click',downloadPNG);
-document.getElementById('copyRecipe').addEventListener('click',()=>copyText(JSON.stringify(current,null,2)));
+document.getElementById('copyRecipe').addEventListener('click',()=>{
+  flushQueuedControlUpdate();
+  void copyText(JSON.stringify(current,null,2));
+});
 // Normal links retain their original ?r= format. Larger valid designs are
 // compressed using only nondefault canonical fields and placed in a fragment
 // that the static hosting server never receives as an HTTP request.
 document.getElementById('copyLink').addEventListener('click',async()=>{
+  flushQueuedControlUpdate();
   const url=location.href;
   // History API failures can leave a stale, deceptively short URL in the
   // address bar. A link is safe to copy only when it actually restores the
@@ -2120,10 +2137,12 @@ document.getElementById('copyLink').addEventListener('click',async()=>{
   }
 });
 document.getElementById('downloadRecipe').addEventListener('click',()=>{
+  flushQueuedControlUpdate();
   usageRecorder?.action('save_recipe_json',current);
   downloadBlob(new Blob([JSON.stringify(current,null,2)+'\n'],{type:'application/json'}),`roygbiv-${safeFilename(current.seed)}.json`);
 });
 favoriteButton.addEventListener('click',()=>{
+  flushQueuedControlUpdate();
   // A local click does not fire a storage event in this tab. Read the latest
   // shared state before mutating it so an intervening remote write survives.
   reconcileFavoritesFromStorage();
