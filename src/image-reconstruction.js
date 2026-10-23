@@ -682,7 +682,11 @@ function* refinementTrials(candidate,maxRenders){
     const origin=best.recipe[field];
     for(const delta of deltas){
       if(renders>=maxRenders)break;
-      const recipe=normalizeRecipe({...best.recipe,[field]:origin+delta});
+      // Use the canonical lock owner for every real-render trial, not only
+      // coarse candidates. Composite Position protects both X and Y, so a
+      // preview cannot be fitted into an arrangement Apply would later reject.
+      const recipe=respectSettingLocks(best.recipe,
+        normalizeRecipe({...best.recipe,[field]:origin+delta}));
       if(recipe[field]===best.recipe[field])continue;
       const error=yield recipe;
       renders++;
