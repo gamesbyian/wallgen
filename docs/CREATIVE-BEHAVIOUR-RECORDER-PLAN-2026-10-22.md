@@ -1,5 +1,11 @@
 # ROYGBIV creative behaviour recorder and recipe journey evidence
 
+### Additional merged session-boundary and interaction correctness (23 October)
+
+[#582](https://github.com/gamesbyian/wallgen/pull/582) makes local erase a genuine **new session**, rather than reusing the identity of archived events with reset sequence numbers. [#583](https://github.com/gamesbyian/wallgen/pull/583) isolates occasional geometry-rich journal events above the normal compact-batch target while keeping the complete private file under 1 MiB for byte-exact GitHub Contents readback; truly oversized events remain local, unacknowledged and untruncated. [#585](https://github.com/gamesbyian/wallgen/pull/585) synchronously commits two-stage slider debounce/frame updates before user-triggered PNG/JSON/copy/favourite/Undo/randomize transitions; this protects both output pixels and the final unexported supersession snapshot. [#587](https://github.com/gamesbyian/wallgen/pull/587) prevents asynchronous PNG success/failure from crossing a recording opt-out, erasure and renewed opt-in; a later PNG in the same session following Randomize All stays attributed to its original episode. All four passed the existing quick gate. Static source proof and deterministic mocks are **not** physical Pixel test evidence.
+
+The preexisting **private repository and `data/roygbiv-usage` branch exist** (repository branch-list check); no fine-grained PAT was installed in the app or used for a live backup. Repository-wide Contents permissions, stored-token tradeoffs, Git history persistence and actual opt-in acceptance remain explicit. No new backend, second creative-state engine, screenshot CI, automatic recording or silent data export.
+
 **Status:** local recording, private GitHub sync code, contextual surveys and evidence analysis implemented; unattended real-account use not yet verified. **Owner request:** capture real usage, recipe evolution, exports and superseded/unfinished work with minimal direct human involvement; selectively ask simple contextual questions. **Tracker:** [#542](https://github.com/gamesbyian/wallgen/issues/542), learning context [#537](https://github.com/gamesbyian/wallgen/issues/537). **Date:** 2026-10-22 (Calgary).
 
 ## Implementation checkpoint (23 October 2026)
