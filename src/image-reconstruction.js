@@ -26,6 +26,36 @@ export function radialImageSignature({data,width,height}){
     throw Error('Invalid radial analysis image');
   const distance=(a,b)=>(Math.abs(a[0]-b[0])+Math.abs(a[1]-b[1])+
     Math.abs(a[2]-b[2]))/(3*255);
+  // The established 20-spoke, wide-radius centre classifier is validated on
+  // production rings, rays and nested fields. The narrower offset probe alone
+  // misses production rings (#626 R0): preserve its answer exactly.
+  const midpointX=(width-1)/2,midpointY=(height-1)/2;
+  const legacyColour=(angle,radius)=>{
+    const x=clamp(Math.round(midpointX+Math.cos(angle)*radius),0,width-1);
+    const y=clamp(Math.round(midpointY+Math.sin(angle)*radius),0,height-1);
+    const at=4*(y*width+x);
+    return [data[at],data[at+1],data[at+2]];
+  };
+  const wideRadius=Math.min(width,height)*.47;
+  const centreSamples=Array.from({length:20},(_,i)=>
+    [.17,.35,.57,.78].map(t=>legacyColour(i*Math.PI/10,wideRadius*t)));
+  let centreRadial=0,centreAngular=0,centreRC=0,centreAC=0;
+  for(let i=0;i<centreSamples.length;i++){
+    for(let j=1;j<centreSamples[i].length;j++){
+      centreRadial+=distance(centreSamples[i][j],centreSamples[i][j-1]);centreRC++;
+    }
+    for(let j=0;j<centreSamples[i].length;j++){
+      centreAngular+=distance(centreSamples[i][j],
+        centreSamples[(i+1)%centreSamples.length][j]);centreAC++;
+    }
+  }
+  centreRadial/=Math.max(1,centreRC);
+  centreAngular/=Math.max(1,centreAC);
+  const centreKind=centreAngular>.11&&centreAngular>centreRadial*1.7?'rays':
+    centreRadial>.11&&centreRadial>centreAngular*1.7?'rings':null;
+  if(centreKind)return {kind:centreKind,radialVariation:centreRadial,
+    angularVariation:centreAngular,centerX:50,centerY:50};
+  // Test displaced centres only when the proven classifier is uncertain.
   // Test the frame centre first, then a small, fixed set of off-centre
   // hypotheses. These are cheap image reads, not additional renderer trials.
   // Keep a common radius across hypotheses to avoid favoring a smaller crop.
