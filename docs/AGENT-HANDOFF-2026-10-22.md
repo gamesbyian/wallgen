@@ -1,5 +1,10 @@
 # ROYGBIV handoff: current authority and independently actionable work
 
+## Reconstruction first software slice (23 October)
+
+[PR #556](https://github.com/gamesbyian/wallgen/pull/556) adds canonical seven-hue scattered-object and drawn-path recovery, ranks at most six candidates via actual shared renderer at 96×208, and offers editable, uncertainty-labelled acceptance through the original importer and Undo. New `src/image-reconstruction.js`, shared `extractImageColourRegions` and focused tests. PR `Validate Wallgen` passed. **Only synthetic source rasters tested.** No genuine-current stripped PNG corpus, viewed artist-quality reconstruction, physical Pixel check, optimization beyond coarse alternative ranking, or persistent source attribution is claimed. [#557](https://github.com/gamesbyian/wallgen/issues/557) owns the next runnable R0/R3/R4 work. Do not repeat existing #443 seven-circle dragging, #445 organic linen, or #514 fibre modes. Existing appearance validation is specific to their prior PRs, not inverse reconstruction.
+
+
 ## Owner directive superseding older priority tables (22 October evening)
 
 ROYGBIV is in **early development**. Optimize the most capable and internally coherent **current recipe model and current renderer**. Backwards compatibility with any previously generated artwork, old recipes, stored pixels, source-era PRNG decisions or historical PNG revisions is **nice-to-have only** and must **not** block current improvements, drive the primary queue or trigger exhaustive regression work. The older P0 #476 parity/archaeology priority and blanket instructions to preserve every previous recipe pixel are superseded as development priorities; historical tools/reports can remain without being pursued urgently. Preserve original imported PNG bytes and state provenance honestly, but do not conflate that data-safety rule with frozen historical rendering semantics.

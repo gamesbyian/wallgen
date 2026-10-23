@@ -1,5 +1,8 @@
 # Image-to-recipe reconstruction: native and external imports
 
+**23 October 2026 implementation checkpoint:** [PR #556](https://github.com/gamesbyian/wallgen/pull/556) introduces a working **R1–R4 first slice**: shared bounded seven-hue component descriptors; editable canonical seven-circle scattered overrides and drawn-path alternatives; no more than six real `drawWallpaper` evaluations at 96×208 with low-resolution pixel/coverage ranking; alternate choice and inferred-result disclosure inside the existing import modal; normal lock-respecting Undo/Save transport. Focused synthetic metadata-free and external-raster tests join the lean quick check. **Not yet proven:** R0 actual current-artwork PNG corpus or visual inspection; material reconstruction, fine segmentation, fully independent coloured shapes/layering, numerical iterative optimization, source provenance carried into saved output, real handset interaction and rendered-image artistic quality. Follow-up [#557](https://github.com/gamesbyian/wallgen/issues/557) owns those tasks. Green quick CI is only code/test evidence, not R0 or real-image acceptance.
+
+
 **Status:** proposed staged development track; no full-scene inverse renderer currently implemented. 22 October 2026. See [shared-engine ownership](ENGINEERING-REUSE-AND-SEMANTIC-OWNERSHIP.md) and the active roadmap. **Early-development priority:** optimize the best current recipe system; compatibility with past saved recipes, historical generator pixels, old exports or older schema generations is a nice-to-have, never a default blocker or high priority. Do not overwrite original imported images or misrepresent inferred recipes as authentic metadata.
 
 ## Purpose and two related input cases

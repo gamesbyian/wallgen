@@ -133,3 +133,44 @@ html[data-theme="cream"] .image-path-dialog[data-phase="empty"] .image-path-phas
 .image-shape-actions button:disabled{opacity:.4;cursor:default}
 html[data-theme="cream"] .image-shape-actions button:not(:disabled){
   background:#7b3569;color:white;border-color:#944176}
+
+
+/* One compact reconstruction choice inside the existing picker. The second
+   preview is from the real wallpaper painter; never a second import stage. */
+.image-recipe-workspace:not([hidden]){
+  display:flex;align-items:center;gap:10px;flex:0 0 auto;
+  max-height:134px;border:1px solid #726b83;border-radius:9px;
+  padding:7px;min-width:0;overflow:hidden;
+}
+.image-recipe-controls{min-width:0;flex:1;display:flex;flex-direction:column;gap:4px}
+.image-recipe-controls label,.image-recipe-result span{
+  font-size:10px;font-weight:800;line-height:1.2}
+.image-recipe-controls select{
+  width:100%;min-width:0;min-height:34px;border-radius:7px;
+  background:#312d3e;color:#fff;border:1px solid #8d819a;
+}
+.image-recipe-controls p{
+  margin:0;font-size:10px;line-height:1.25;max-height:39px;
+  overflow:auto;overscroll-behavior:contain;
+}
+.image-recipe-controls button{
+  min-height:35px;border-radius:7px;border:1px solid #b98ac2;
+  background:#774177;color:#fff;font-weight:750;
+}
+.image-recipe-controls button:disabled{opacity:.5}
+.image-recipe-result{display:flex;align-items:center;flex-direction:column;gap:2px}
+.image-recipe-result canvas{
+  width:auto;height:102px;aspect-ratio:96/208;border-radius:4px;
+  background:#111523;border:1px solid #555;object-fit:contain;
+}
+html[data-theme="cream"] .image-recipe-controls select{
+  background:#fff9f0;color:#302b3a;border-color:#bdb0c8;
+}
+html[data-theme="cream"] .image-recipe-controls button{
+  background:#7b3569;color:#fff;
+}
+@media(max-width:790px){
+  .image-recipe-controls button,.image-recipe-controls select{min-height:44px}
+  .image-recipe-workspace:not([hidden]){max-height:149px}
+  .image-recipe-result canvas{height:95px}
+}
