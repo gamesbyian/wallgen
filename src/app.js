@@ -7,7 +7,7 @@ import { embedPngMetadata, extractPngRecipeWithProvenance, cleanMetadata, METADA
 import {inspectPngMigration,migratePngMetadataOnly,inspectPngRecipeArchive,archivePngRecipeRecords} from './png-recipe-migration.js';
 import { installDrawTool } from './draw-path-ui.js?v=20261018-extend1';
 import {appliedDrawnPathRecipe} from './draw-apply-transaction.js';
-import { installImagePathTool } from './image-path-ui.js?v=20261022-shapes1';
+import { installImagePathTool } from './image-path-ui.js?v=20261023-reconstruction1';
 import {importedAngleDeltaDegrees} from './import-angle-wrap.js';
 import {pathStructureLockedOutsidePaths} from './path-authoring-locks.js';
 import {mountEditor,selectEditorTool,syncEditorStructure} from './editor-layout.js?v=20261022-search-choice1';
