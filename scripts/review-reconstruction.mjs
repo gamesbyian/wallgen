@@ -85,7 +85,11 @@ export const RECONSTRUCTION_R0_CASES=Object.freeze([
       rayRotation:35,rayTwist:20,rayCore:12,fieldCenterX:35,fieldCenterY:65}},
   {id:'15-offset-radial-rings',goal:'Displaced concentric origin under authentic rendering',
     recipe:{structure:'radial',radialMode:'concentric',rayCount:21,
-      fieldCenterX:35,fieldCenterY:65}}
+      fieldCenterX:35,fieldCenterY:65}},
+  {id:'16-offset-jagged',goal:'Diagonal Jagged pack translated on both canvas axes',
+    recipe:{structure:'paths',geometry:'jagged',orientation:'diagonal',
+      shapeFrequency:68,shapeDepth:55,spread:50,
+      positionX:18,positionY:-12}}
 ]);
 
 export function baselineRecipe(item){
