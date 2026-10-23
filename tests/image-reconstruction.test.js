@@ -663,7 +663,7 @@ test('source-detected multicolour contours can propose existing canonical pointe
  assert.deepEqual(normalizeRecipe(chevron.recipe),chevron.recipe);
 });
 
-test('chevron refinement stays within ten genuine-render probes and preserves locks',()=>{
+test('chevron refinement stays within ten genuine-render probes and preserves locks',async()=>{
  const w=RECONSTRUCTION_FRAME.width,h=RECONSTRUCTION_FRAME.height;
  const source=raster(w,h,()=>[0,0,0,255]);
  const recipe=normalizeRecipe({seed:'chevron-art',geometry:'chevron',
