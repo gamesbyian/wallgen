@@ -365,7 +365,11 @@ export function createCreativeRecorder({store,id=()=>globalThis.crypto.randomUUI
       durable:store.durable,events:await store.all(),lastKnown:await store.last()},null,2)+'\n';
   }
   async function clear(){
-    await queue;await store.clear();failed=null;episodeId=null;seq=0;commits=0;
+    await queue;await store.clear();
+    // The remote immutable archive may still contain events from the deleted
+    // session. A fresh locally consented history must not reuse its identity
+    // or restart its sequence inside that same historical session.
+    sessionId=id();failed=null;episodeId=null;seq=0;commits=0;
     manualEdits=0;engagedMs=0;lastActivityMs=null;lastExportedRecipe=null;
     lastRequestedRecipe=null;lastManualKey=null;lastManualAt=null;
   }
