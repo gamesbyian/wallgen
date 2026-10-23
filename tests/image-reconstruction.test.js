@@ -5,7 +5,7 @@ import {imagePlacement,extractImageColourRegions} from '../src/image-path.js';
 import {describeReconstructionImage,reconstructionCandidates,
   rankReconstructionCandidates,compareReconstructionPixels,refineReconstructionCandidate,reconstructionPlacement,
   radialImageSignature,imageStripeAngle,imageCurveSignature,diverseReconstructionCandidates,reconstructionRefinementIndex,
-  measuredRainbowRibbonBands,seedMeasuredRibbonControls,
+  measuredRainbowRibbonBands,seedMeasuredRibbonControls,coherentWaveOffsetY,
   rankReconstructionCandidatesCooperatively,refineReconstructionCandidateCooperatively,
   RECONSTRUCTION_FRAME,RECONSTRUCTION_RENDER_LIMIT} from '../src/image-reconstruction.js';
 
@@ -458,4 +458,53 @@ test('shared hue extractor reports longitudinal dispersion once and rejects unre
  const modified=values.regions.map((r,i)=>i===2?
    {...r,axisAngle:55}:r);
  assert.equal(measuredRainbowRibbonBands(modified,image.width,image.height),null);
+});
+
+
+test('seven matching hue centroids recover a rigid Wave displacement, not crooked or missing pigments',async()=>{
+ const w=RECONSTRUCTION_FRAME.width,h=RECONSTRUCTION_FRAME.height;
+ const stripeImage=(offset=0,oneExtra=0)=>raster(w,h,(x,y)=>{
+   for(let i=0;i<7;i++){
+     const top=14+i*23+offset+(i===4?oneExtra:0);
+     if(y>=top&&y<top+6)return colour(HUES[i]);
+   }
+   return [0,0,0,255];
+ });
+ const source=stripeImage();
+ const displaced=stripeImage(15);
+ assert.equal(coherentWaveOffsetY(source,displaced),-7);
+ assert.equal(reconstructionRefinementIndex([
+   {kind:'path',error:.206789},
+   {kind:'jagged',error:.25869},
+   {kind:'wave',error:.347079,waveOffsetY:-7}
+ ]),2,'measured rigid Wave shift gets one bounded fitting budget first');
+ assert.equal(reconstructionRefinementIndex([
+   {kind:'path',error:.206789},
+   {kind:'jagged',error:.25869},
+   {kind:'wave',error:.347079}
+ ]),1,'without a measured shift use ordinary lowest-error challenger');
+ assert.equal(coherentWaveOffsetY(source,stripeImage(15,14)),null,
+   'independent colour movement must not masquerade as whole-art translation');
+ assert.equal(coherentWaveOffsetY(source,raster(w,h,()=>[0,0,0,255])),null);
+ const wave=normalizeRecipe({seed:'aligned-wave-test',structure:'paths',
+   geometry:'wave',positionY:0});
+ const candidate={kind:'wave',label:'Wave',uncertainty:'fit trial',recipe:wave};
+ const painter=recipe=>{
+   const dy=15+Math.round(recipe.positionY*h/100);
+   return stripeImage(dy);
+ };
+ const ranked=rankReconstructionCandidates([candidate],source,painter)[0];
+ assert.equal(ranked.waveOffsetY,-7);
+ const fitted=refineReconstructionCandidate(ranked,source,painter);
+ assert.equal(fitted.recipe.positionY,-7);
+ assert.equal(fitted.error,0);
+ assert.ok(fitted.refinementRenders<=10);
+ const yields=[];
+ const cooperative=(await rankReconstructionCandidatesCooperatively([candidate],
+   source,painter,{yieldControl:async()=>yields.push('coarse')}))[0];
+ assert.equal(cooperative.waveOffsetY,-7);
+ const asyncFitted=await refineReconstructionCandidateCooperatively(
+   cooperative,source,painter,{yieldControl:async()=>yields.push('fit')});
+ assert.deepEqual(asyncFitted,fitted);
+ assert.equal(yields.length,1+fitted.refinementRenders);
 });

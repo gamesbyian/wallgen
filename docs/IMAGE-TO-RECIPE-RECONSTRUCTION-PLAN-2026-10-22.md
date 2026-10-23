@@ -1,5 +1,8 @@
 # Image-to-recipe reconstruction: native and external imports
 
+**23 October Wave source registration acceptance:** [PR #606](https://github.com/gamesbyian/wallgen/pull/606), actual current-art production [run #39942638256](https://github.com/gamesbyian/wallgen/actions/runs/39942638256) and [visually inspected PNG findings](RECONSTRUCTION-CURVE-PRODUCTION-FINDINGS-2026-10-23.md). Wave's seven differently coloured horizontal regions now recover spread/thickness, then their shared −7% vertical location within the same normal canonical renderer ≤6 coarse + ≤10 refinement budget. Wave error **.20433→.04614**, four controls unchanged. Both source-derived spacing and rigid positioning were required; neither alone worked. Keep R0 measured-but-not-exact, leave wave phase/fine edges and actual handheld acceptance open. No routine Chromium workflow.
+
+
 **23 October physically inferred seven-colour band geometry:** [PR #605](https://github.com/gamesbyian/wallgen/pull/605) added shared per-hue principal-axis longitudinal extent and optional canonical spread/stripeWidth starting guesses for coherent, oblique seven-colour compositions. Real five-PNG run [#39941056985](https://github.com/gamesbyian/wallgen/actions/runs/39941056985) measured Jagged .204590→.165655 and unchanged Wave .204330/Diagonal .085835/Hairpin .107867/scattered circles .008329. See [reviewed artistic detail](RECONSTRUCTION-CURVE-PRODUCTION-FINDINGS-2026-10-23.md). Wave-specific calibration failed to improve, so do **not** apply that estimate to Wave by default or mark wave placement/phase resolved. Optimizing *translation/phase and source-colour negative-space gaps* is the next acceptance target, preserving the one-set, ≤6 + ≤10 true-render budget.
 
 
