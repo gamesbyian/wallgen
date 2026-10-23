@@ -1,5 +1,11 @@
 # Engineering reuse and semantic ownership contract
 
+## Stateful browser ES module identity: shared importer contract (23 October)
+
+**Do not instantiate a second copy of a stateful browser owner by changing only its import URL.** ES module specifiers with and without a `?v=...` cache key are different modules, including separate top-level Maps, selected-tool pointers and event ownership. [Agent 3 PR #622](https://github.com/gamesbyian/wallgen/pull/622) demonstrated this in live 320/412 Chromium: `src/app.js` mounted a versioned `editor-layout.js`, but mobile-swipes loaded the unversioned file and called `selectEditorTool` on an empty private tool registry. The shared canonical editor now has **one exactly matching import URL in both consumers** and `tests/editor-singleton-import.test.js` is in the lean quick gate. When refreshing a Pages cache-busting query for a stateful module, update **every importer that shares its state** together; test real navigation, not only source counters. Pure stateless helpers do not need this coupling. This rule reinforces one editor/recipe owner and does not justify a second navigation controller.
+
+
+
 ## Updated product-development compatibility policy (owner direction, 22 October 2026)
 
 **This overrides contrary historical compatibility requirements elsewhere in this document.** The project is early-development, and the current best recipe system is the source of truth. Exact old recipe schemas, old saved images, historic seed streams, former pixels and backwards-compatible transports are **nice-to-have only**. Never block a useful schema, algorithm, renderer or shared-engine improvement on historical fidelity. Consolidate genuine duplication even if a documented legacy visual break is unavoidable and warranted; evaluate current functionality with focused tests. Preserve raw imported/source artwork from unintended mutation and never falsely present a reconstructed recipe as authentic. Historical import/archival aids remain available as optional separate utilities, not a dependency of everyday development. New image reconstruction must follow the [shared inverse-graphics plan](IMAGE-TO-RECIPE-RECONSTRUCTION-PLAN-2026-10-22.md).
