@@ -1,5 +1,7 @@
 # Imported compound silhouette: one focused embroidery visual proof
 
+**First actual real-PNG review complete (22 October 2026):** [Actions #39889647143](https://github.com/gamesbyian/wallgen/actions/runs/39889647143) successfully rendered both pictures. They were downloaded, viewed, validated for full PNG CRC and embedded recipe equality, and compared pixel-by-pixel. [Observed result](EMBROIDERY-COMPOUND-HOLE-PRODUCTION-FINDINGS-2026-10-22.md): all 730,320 originally black pixels remain exactly unchanged, including the cutout, while both positive-shape components receive stitch ink. Browser CI was removed before PR merge.
+
 This optional study uses the real Shape Library's canonical `roygbiv.geometry-snapshot` recipe format, with **one rectangular region containing a central cutout and a detached island**. The geometry is authored numerically and validated by the existing compound-region normalizer. One explicitly positioned scarlet object is stamped onto the 600×1300 art frame.
 
 ```sh
