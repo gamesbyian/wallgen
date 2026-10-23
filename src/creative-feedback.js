@@ -15,9 +15,11 @@ export function installCreativeFeedback({recorder,getRecipe}){
   const panel=document.createElement('section');
   panel.id='creativeFeedback';panel.className='creative-feedback';
   panel.hidden=true;
-  panel.setAttribute('aria-label','Optional feedback about your wallpaper');
+  panel.setAttribute('role','region');
+  panel.setAttribute('aria-labelledby','creativeFeedbackTitle');
+  panel.setAttribute('aria-live','polite');
   panel.innerHTML=`<div class="creative-feedback-title">
-      <strong data-feedback-title></strong>
+      <strong id="creativeFeedbackTitle" data-feedback-title></strong>
       <button type="button" data-feedback-close aria-label="Dismiss feedback">Skip</button>
     </div>
     <p data-feedback-question></p>
