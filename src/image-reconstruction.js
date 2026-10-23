@@ -679,7 +679,12 @@ function refinementFields(candidate){
       [candidate.waveOffsetY,candidate.waveOffsetY-4,
         candidate.waveOffsetY+4,candidate.waveOffsetY-10]:
       [-25,-15,15,25]],
-    ['spread',[-18,18]],['stripeWidth',[-25,-15,15,25]]
+    // Once physically measured separation and pigment thickness are close,
+    // remaining source differences are contour amplitude and rhythm.
+    // Spend exactly the existing ten probes on those editable controls,
+    // keeping four position probes for the measured seven-hue Y offset.
+    ['shapeDepth',[-12,12]],['shapeFrequency',[-12,12]],
+    ['stripeWidth',[-15,15]]
   ]:candidate.kind==='jagged'?[
     ['positionX',[-20,20]],['positionY',[-20,20]],
     ['spread',[-15,15]],['stripeWidth',[-25,-10,10,25]]

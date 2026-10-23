@@ -515,7 +515,7 @@ test('refinement never previews locked settings including composite Position, ev
  const recipe=normalizeRecipe({
    seed:'protected-wave',structure:'paths',geometry:'wave',orientation:'horizontal',
    spread:61,stripeWidth:73,positionX:11,positionY:-7,
-   lockedSettings:['position','spread','stripeWidth']
+   lockedSettings:['position','spread','stripeWidth','shapeDepth','shapeFrequency']
  });
  assert.ok(recipe.lockedSettings.includes('position'));
  const candidate={kind:'wave',recipe,label:'Protected wave',error:.6,waveOffsetY:-15};
@@ -609,4 +609,34 @@ test('a protected X/Y Position prevents measured vertical offset fitting from re
  assert.ok(calls.every(r=>r.positionX===11&&r.positionY===-9));
  assert.equal(fitted.recipe.positionX,11);
  assert.equal(fitted.recipe.positionY,-9);
+});
+
+
+test('measured Wave refinement spends fixed renderer budget on genuine contour controls, preserving locks and optional Y registration',async()=>{
+ const w=RECONSTRUCTION_FRAME.width,h=RECONSTRUCTION_FRAME.height;
+ const source=raster(w,h,()=>[0,0,0,255]);
+ const recipe=normalizeRecipe({seed:'wave-profile-probe',structure:'paths',
+   geometry:'wave',orientation:'horizontal',shapeDepth:60,shapeFrequency:45,
+   positionY:0,spread:70,stripeWidth:63,
+   lockedSettings:['spread','stripeWidth']});
+ const input={kind:'wave',label:'Wave',recipe,error:.8,waveOffsetY:-7};
+ const seen=[];
+ const painter=next=>{
+   seen.push(next);
+   const deviation=Math.abs(next.shapeDepth-72)+
+     Math.abs(next.shapeFrequency-33)+
+     Math.abs(next.positionY+7);
+   const v=Math.min(255,Math.round(deviation*5));
+   return raster(w,h,()=>[v,v,v,255]);
+ };
+ const result=refineReconstructionCandidate(input,source,painter);
+ assert.ok(seen.length<=10&&seen.length>=6);
+ assert.ok(seen.every(r=>r.spread===70&&r.stripeWidth===63));
+ assert.equal(result.recipe.positionY,-7);
+ assert.equal(result.recipe.shapeDepth,72);
+ assert.equal(result.recipe.shapeFrequency,33);
+ assert.equal(result.error,0);
+ const asyncResult=await refineReconstructionCandidateCooperatively(input,source,painter);
+ assert.deepEqual(asyncResult,result);
+ assert.ok(result.refinementRenders<=10);
 });
