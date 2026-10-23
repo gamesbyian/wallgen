@@ -531,9 +531,19 @@ export function reconstructionCandidates(image,recipe){
     const wide=committable.find(c=>c.kind==='path'&&
       !c.recipe.geometrySafety&&!c.lockedChanges.includes('geometrySafety'));
     if(safe&&wide){
+      // A real pointed bend in the ALREADY extracted contour deserves one
+      // extra independent canonical procedural hypothesis. Preserve the
+      // conservative Draw fallback and all proven Hairpin possibilities;
+      // spend the expanded-Draw slot only for a sharp, mostly non-U contour.
+      // Smooth waves still keep both Draw safety variations unchanged.
+      const hasPointedTurn=desc.curve.sharpTurns>=1&&
+        Math.abs(desc.curve.netTurn)<2.3&&
+        desc.lineDirection!=='vertical';
       const procedural=diverseReconstructionCandidates(
-        committable.filter(c=>c.kind!=='path'),RECONSTRUCTION_RENDER_LIMIT-2);
-      return [...procedural,safe,wide];
+        committable.filter(c=>c.kind!=='path'),
+        RECONSTRUCTION_RENDER_LIMIT-(hasPointedTurn?1:2));
+      return [...procedural,safe,
+        ...(procedural.length<RECONSTRUCTION_RENDER_LIMIT-1?[wide]:[])];
     }
   }
   return diverseReconstructionCandidates(committable);
