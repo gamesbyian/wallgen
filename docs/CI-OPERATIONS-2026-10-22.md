@@ -1,5 +1,12 @@
 # Pragmatic CI for a personal wallpaper app
 
+## Exact current quick gate and optional art proof (2026-10-22)
+
+The sole PR `Validate Wallgen` check still runs **`npm run check:quick`**, with no Chromium, snapshots, screen recordings or full Node suite by default. After [#525](https://github.com/gamesbyian/wallgen/pull/525), its existing explicit Node test roster contains `tests/historical-v1-source-era.test.js`, a **small in-process source-integrity/recipe-refusal test**, not browser rendering. It exposed and fixed a malformed original-v1 test before merge, so genuine immutable archive proof is now checked rather than merely present in the repository.
+
+The last one-shot art/UI browser jobs (source-era v1 #524, Thread 4-state #521) have been removed from `.github/workflows/check.yml` before integration. Browser screenshots and native device acceptance remain **opt-in targeted evidence** only. See [handoff](AGENT-HANDOFF-2026-10-22.md) for current work lanes and [source-era image findings](recipe-format-history/source-era/v1-37428b/ACTUAL-RENDER-FINDINGS-2026-10-22.md) for what is genuinely proven.
+
+
 **Current authority (2026-10-22):** this document governs CI for Embroidery #467, Film #468, material judgement #445, shape editing #443 and UI #444 just as it does ordinary PRs. References to mandatory full Node + 1000-image screenshot acceptance in older design plans are historical, not a requirement today. Render-related changes should carry a few meaningful deterministic samples and focused recipe tests; actual material quality needs a human/agent optical review of real generated images, not a guessed pass.
 
 This policy supersedes the earlier release-style CI rules. ROYGBIV is a personal creative tool. A slight control-spacing regression is an annoyance to fix, not a safety-critical incident. The purpose of CI is to catch basic breakage cheaply, not to prove every pixel and interaction unchanged after every edit.

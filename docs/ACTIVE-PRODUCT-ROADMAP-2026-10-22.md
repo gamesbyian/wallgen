@@ -1,5 +1,12 @@
 # ROYGBIV: active product roadmap and work queue
 
+## AUTHORITATIVE handoff checkpoint (2026-10-22)
+
+**Incoming agent entrypoint:** [current live handoff and task ownership plan](AGENT-HANDOFF-2026-10-22.md). This overrides lower, historically dated “next run” and “PR pending” notes. Source `main` was checked at `de990e744bf53af68121e689416da0d53989f237` immediately after the historical integrity [#525](https://github.com/gamesbyian/wallgen/pull/525) merge, with zero open PRs. The Thread 320×700/412×892 **four-state source-browser fix** is merged [#521](https://github.com/gamesbyian/wallgen/pull/521), the original-v1 normalizer/writer/renderer are archived and their real historical PNG evidence is pinned [#523](https://github.com/gamesbyian/wallgen/pull/523)/[#524](https://github.com/gamesbyian/wallgen/pull/524). In particular, older text suggesting that the initial browser Thread confirmation, Chain image review or original-v1 renderer run is *still pending* is now superseded.
+
+**Live next decisions:** (1) source-era-by-source-era **render parity** without enabling automatic v1 conversion, (2) independently named fibre/underlay visual improvements while preserving legacy Satin/Tatami/Running/Chain pixels, (3) actual handset focus/touch/virtual-keyboard checks rather than new responsive atlases. Photo/Film/Camera and scattered shapes already have working shipped foundations and real output evidence. Validate changes through [proportionate CI policy](CI-OPERATIONS-2026-10-22.md); the full archival source test is now part of `npm run check:quick` as a short offline Node test.
+
+
 ## Historical v1: authentic source-era raster proof completed (2026-10-22)
 
 The first-v1 source archive now has **actual** original Canvas-painted images for shadow-off/on (Actions #39894186610), reviewed with PNG CRC and exact recipe checks. See [art observations](recipe-format-history/source-era/v1-37428b/ACTUAL-RENDER-FINDINGS-2026-10-22.md) and [pinned IDAT/recipe manifest](recipe-format-history/source-era/v1-37428b/SHADOW-IMAGE-GOLDENS.json). The original shadow changes 40,662 pixels; the old exporter declares native 3024×6552 dimensions even on these 600×1300 thumbnails, a documented source-era distinction. **Next #476 work:** explicitly compare modern renderer with original golden PNG using a proposed adapter, then reproduce other v1 source intervals before permitting migration. No automatic converter and no permanent browser CI.
