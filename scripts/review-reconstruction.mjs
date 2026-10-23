@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Opt-in R0 inverse-graphics baseline. Generates twelve actual current
+ * Opt-in R0 inverse-graphics baseline. Generates thirteen actual current
  * production-renderer PNGs and disposable metadata-free twins.
  *
  * node scripts/review-reconstruction.mjs --out-dir artifacts/reconstruction-r0
@@ -92,7 +92,7 @@ export function readBaselineArgs(argv){
     const flag=argv[i];
     if(flag==='--help'||flag==='-h'){options.help=true;continue;}
     if(flag==='--list'){options.list=true;continue;}
-    if(!['--out-dir','--browser'].includes(flag)||!argv[i+1]||
+    if(!['--out-dir','--browser','--only'].includes(flag)||!argv[i+1]||
       argv[i+1].startsWith('--'))throw Error('Unknown or incomplete argument: '+flag);
     options[flag==='--out-dir'?'outDir':'browser']=argv[++i];
   }
@@ -113,7 +113,14 @@ function equalImageChunks(a,b){
 
 async function generate(options){
   const destination=resolve(options.outDir);
-  const filenames=['index.html','manifest.json',...RECONSTRUCTION_R0_CASES.flatMap(item=>[
+  const selections=options.only?new Set(options.only.split(',').map(s=>s.trim())):null;
+  if(selections?.size){
+    const known=new Set(RECONSTRUCTION_R0_CASES.map(item=>item.id));
+    for(const id of selections)if(!known.has(id))throw Error('Unknown R0 case: '+id);
+  }
+  const cases=selections?RECONSTRUCTION_R0_CASES.filter(item=>selections.has(item.id)):
+    RECONSTRUCTION_R0_CASES;
+  const filenames=['index.html','manifest.json',...cases.flatMap(item=>[
     item.id+'.png',item.id+'.no-metadata.png',item.id+'.recipe.json'])];
   // Treat evidence as immutable; any repeat run must choose a different path.
   for(const name of filenames){
@@ -122,7 +129,7 @@ async function generate(options){
   }
   await mkdir(destination,{recursive:true});
   const records=[];
-  for(const item of RECONSTRUCTION_R0_CASES){
+  for(const item of cases){
     const recipe=baselineRecipe(item),recipeName=item.id+'.recipe.json';
     const original=item.id+'.png',stripped=item.id+'.no-metadata.png';
     const originalPath=join(destination,original);
