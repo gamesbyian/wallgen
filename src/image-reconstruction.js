@@ -669,6 +669,11 @@ export const coherentWaveOffsetY=(source,rendered)=>
   coherentHueOffset(source,rendered,'cy');
 export const coherentVerticalBandOffsetX=(source,rendered)=>
   coherentHueOffset(source,rendered,'cx');
+// Reuse exactly the same seven-hue gate for whole-pack Jagged registration.
+export const coherentJaggedOffsetX=(source,rendered)=>
+  coherentHueOffset(source,rendered,'cx');
+export const coherentJaggedOffsetY=(source,rendered)=>
+  coherentHueOffset(source,rendered,'cy');
 // An existing expanded canonical Draw ribbon can have the correct topology
 // but be collectively displaced. Only seven coherent pigment translations
 // qualify; a rough single-path silhouette must not drive global movement.
@@ -726,6 +731,10 @@ export function rankReconstructionCandidates(candidates,source,render){
         const bandOffsetX=candidate.kind==='straight'&&
           candidate.recipe.orientation==='vertical'?
           coherentVerticalBandOffsetX(source,pixels):null;
+        const jaggedOffsetX=candidate.kind==='jagged'?
+          coherentJaggedOffsetX(source,pixels):null;
+        const jaggedOffsetY=candidate.kind==='jagged'?
+          coherentJaggedOffsetY(source,pixels):null;
         const drawRegistration=candidate.kind==='path'&&
           candidate.recipe.geometry==='drawn'&&
           candidate.recipe.geometrySafety===false?
@@ -733,6 +742,8 @@ export function rankReconstructionCandidates(candidates,source,render){
         results.push({...candidate,error,
           ...(waveOffsetY!==null?{waveOffsetY}:{}),
           ...(bandOffsetX!==null?{bandOffsetX}:{}),
+          ...(jaggedOffsetX!==null?{jaggedOffsetX}:{}),
+          ...(jaggedOffsetY!==null?{jaggedOffsetY}:{}),
           ...(drawRegistration?{drawOffsetY:drawRegistration.offsetY,
             drawGapRatio:drawRegistration.gapRatio}:{})});
       }
@@ -847,7 +858,12 @@ function refinementFields(candidate){
     ['shapeDepth',[-12,12]],['shapeFrequency',[-12,12]],
     ['stripeWidth',[-15,15]]
   ]:candidate.kind==='jagged'?[
-    ['positionX',[-20,20]],['positionY',[-20,20]],
+    // Measured seven-hue translation replaces blind probes only where all
+    // pigments agree. No extra renderer passes; same ten-trial budget.
+    ['positionX',Number.isFinite(candidate.jaggedOffsetX)?
+      [candidate.jaggedOffsetX,candidate.jaggedOffsetX-5]:[-20,20]],
+    ['positionY',Number.isFinite(candidate.jaggedOffsetY)?
+      [candidate.jaggedOffsetY,candidate.jaggedOffsetY-5]:[-20,20]],
     ['spread',[-15,15]],['stripeWidth',[-25,-10,10,25]]
   ]:candidate.kind==='hairpin'?[
     ['turnRadius',[-15,15]],['hairpinAngle',[-25,25]],
