@@ -1,4 +1,4 @@
-import {normalizeScatteredOverrides} from './scattered-object-edits.js';
+import {normalizeScatteredOverrides,effectiveScatteredLayerOrder} from './scattered-object-edits.js';
 // Independent, deterministic circles in the 600 × 1300 design plane.
 // Placement consumes its own namespaced PRNG: palette, texture and camera
 // variation never cause the same geometry to move or change diameter.
@@ -158,6 +158,13 @@ export function buildScatteredCircles(recipe){
     object.circle={cx,cy,r};
     object.origin=point(cx,cy);
     object.vertices=rim(cx,cy,r);
+  }
+  if(recipe.scatteredLayerOrder?.length){
+    const paintOrder=effectiveScatteredLayerOrder(recipe.scatteredLayerOrder,
+      objects.map(o=>Number(o.id.slice(7))));
+    const layers=new Map(paintOrder.map((id,i)=>[id,i]));
+    objects.sort((a,b)=>layers.get(Number(a.id.slice(7)))-
+      layers.get(Number(b.id.slice(7))));
   }
   const placed=objects.length;
   return {objects,requested:count,placed,
