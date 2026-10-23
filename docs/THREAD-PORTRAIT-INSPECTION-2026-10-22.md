@@ -1,5 +1,19 @@
 # Thread portrait UX correction: actual browser measurements, bounded follow-up
 
+## Final confirmed four-state acceptance (22 October 2026)
+
+Final real browser production-page run [Actions #39894741272](https://github.com/gamesbyian/wallgen/actions/runs/39894741272), [artifact #12476675759](https://github.com/gamesbyian/wallgen/actions/runs/39894741272/artifacts/12476675759), captured and inspected **all four** original page screenshots and `report.json`, after fixing the hidden object picker. The quick Node gate and source-page screenshot job both passed. In both viewport sizes, all relevant inputs have **44px** hitboxes, the expanded Thread card reports **zero internal scroll-height overrun**, the last control lies within the card bottom in both All and One-object targeting states, and browser warnings were empty.
+
+| Viewport | Mode | Card bottom | Last active input bottom | Clipped | Preview height |
+| --- | --- | ---: | ---: | --- | ---: |
+| 412×892 | All colours | y=888 | y=853.1 | No | 482.1px |
+| 412×892 | One object | y=888 | y=847 | No | nonzero; observed in screenshot |
+| 320×700 | All colours | y=696 | y=679 | No | 308.0px |
+| 320×700 | One object | y=696 | y=676 | No | nonzero; observed in screenshot |
+
+The hidden object picker is **not visible** in All mode, but becomes visible in One-object mode. Both cases fit. This clears the earlier source-only reservation and prior failed CI dependency attempts. The temporary Chromium CI steps were removed before merging; the reusable manual script remains. Some native selector label text truncates at 320px, but full labels remain available to the form and this is *not* evidence of physically tested Android tap or keyboard behaviour. Do not confuse these 4 actual viewport receipts with Pixel 6 Pro hardware acceptance.
+
+
 ## Evidence from completed real Chromium runs (22 October 2026)
 
 The actual app was opened in the editor at **412×892** and **320×700**, not a mock, using the browser in [Actions #39891398707](https://github.com/gamesbyian/wallgen/actions/runs/39891398707). When Thread treatment was expanded, the first layout contained 326.2px/364.8px of content within only 178px/168px of a fixed editor card; the footer and sliders were clipped. At that point native selector heights were less than 44px. These were **real defects**.

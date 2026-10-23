@@ -1,5 +1,10 @@
 # Implementation-safe ROYGBIV redesign queue
 
+## Thread portrait final four-state acceptance (2026-10-22)
+
+[PR #521](https://github.com/gamesbyian/wallgen/pull/521) reorganized the compact expanded Thread workspace into two rows with its 44px native controls and a conditional single-object picker. Four production-page Chromium screenshots were **actually examined** at 412×892 and 320×700, in both All/One object modes ([run #39894741272](https://github.com/gamesbyian/wallgen/actions/runs/39894741272)). All form hitboxes were at least 44px, no input clipped below the card, no child card overflow, and previews remained nonzero. Historical initial failures and the false visible [hidden] picker are fully reconciled in [evidence](THREAD-PORTRAIT-INSPECTION-2026-10-22.md). The Chromium job was temporary, not a standing CI suite. Physical Pixel 6 Pro touch/focus and extreme browser font scaling remain open.
+
+
 ## Thread Surface expanded: two-size real-browser portrait inspection (2026-10-22)
 
 The optional `scripts/review-thread-portrait.mjs` opens the actual mobile Studio editor, selects Texture → Surface, expands the original native Thread disclosure, enables all-colour Chain, and captures **only two real Chromium screens** (412×892 Pixel-proxy and tight 320×700) plus field rectangle/scroll evidence. This is a low-cost observed-UI probe for newly added Region angle and Chain style, rather than the earlier 1,000-screen atlas. The first real screenshots revealed clipped sliders and 27px selectors. A two-row responsive source reflow and native-hidden picker correction have now been implemented, while all Save/Undo field identities remain unchanged. [Chronological actual measurements and the outstanding final browser check](THREAD-PORTRAIT-INSPECTION-2026-10-22.md) distinguish completed intermediate image captures from the **unverified final CSS tweak**, since Chromium installation stalled on the last run. This is not real Pixel acceptance or a new required screenshot gate.
