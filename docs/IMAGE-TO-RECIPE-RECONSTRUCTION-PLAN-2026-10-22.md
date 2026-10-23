@@ -1,5 +1,8 @@
 # Image-to-recipe reconstruction: native and external imports
 
+**23 Oct first independently authored non-ROYGBIV graphic evidence (#612):** [Actual browser run #40018856507](https://github.com/gamesbyian/wallgen/actions/runs/40018856507) and [visually inspected results](RECONSTRUCTION-INDEPENDENT-GRAPHICS-FINDINGS-2026-10-23.md) show Wave editable bands (.104807), seven editable circular islands (.049353) and angular ribbon failure (.192433, seven V bands collapse into thin traced line). This is **hand-created test art**, not owner-provided or third-party licensed art, so R0 user-approval gap remains. Existing evaluator now offers separate no-truth source manifest (max four), refuses fabricated seed/recipe and runs the same canonical bounded fitting; original 13-case production truth path unchanged. Next target existing `geometry:'chevron'` for angular source. No permanent browser workflow.
+
+
 **Wave contour refinement R3, 23 Oct:** [#611](https://github.com/gamesbyian/wallgen/pull/611), [six real-current-PNG evidence](https://github.com/gamesbyian/wallgen/actions/runs/40017482324). Preserves ≤6 initial+≤10 single fit painter budget and canonical lock projection; spends two probes each on actual `shapeDepth` and `shapeFrequency` after source hue band Y-registration, producing Wave error **.046144→.041215**, five other genuine PNG control scores unchanged. [Viewed source/fit evidence](RECONSTRUCTION-CURVE-PRODUCTION-FINDINGS-2026-10-23.md) shows slightly flattened Wave and other minor phase differences; no original-source-seed claim. Next validate independent wave seeds and consented/licensed non-ROYGBIV images rather than benchmark-only tuning.
 
 
