@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {HUES,normalizeRecipe,resolveScene,encodeRecipe,decodeRecipe} from '../src/model.js';
 import {imagePlacement,extractImageColourRegions} from '../src/image-path.js';
 import {describeReconstructionImage,reconstructionCandidates,
-  rankReconstructionCandidates,compareReconstructionPixels,
+  rankReconstructionCandidates,compareReconstructionPixels,reconstructionPlacement,
   RECONSTRUCTION_FRAME,RECONSTRUCTION_RENDER_LIMIT} from '../src/image-reconstruction.js';
 
 function colour(hue){
@@ -36,7 +36,7 @@ test('Seven metadata-free rainbow regions map to portable editable canonical obj
   assert.equal(circles.recipe.structure,'regions');
   assert.equal(circles.recipe.regionMode,'scattered');
   assert.equal(circles.recipe.scatteredOverrides.length,7);
-  const box=imagePlacement(120,260);
+  const box=reconstructionPlacement(120,260);
   for(const [index,point] of centers.entries()){
     const found=circles.recipe.scatteredOverrides[index];
     assert.equal(found.index,index);
@@ -86,4 +86,16 @@ test('Blank or monochrome source does not hallucinate rainbow objects',()=>{
   const image=raster(120,240,()=>[0,0,0,255]);
   assert.equal(describeReconstructionImage(image).sevenColourRegions,false);
   assert.equal(reconstructionCandidates(image,{}).length,0);
+});
+
+
+test('full-frame reconstruction fits an existing wallpaper edge-to-edge without changing manual import padding',()=>{
+  const padded=imagePlacement(480,1040);
+  assert.ok(padded.x>0&&padded.y>0,'manual path import retains safety margin');
+  const fitted=reconstructionPlacement(480,1040);
+  assert.deepEqual(fitted,{x:0,y:0,width:600,height:1300});
+  const letterbox=reconstructionPlacement(600,600);
+  assert.equal(letterbox.width,600);
+  assert.equal(letterbox.height,600);
+  assert.equal(letterbox.y,350);
 });

@@ -1,7 +1,7 @@
-import {extractImagePathCandidates,extractImageShapeCandidates,imagePlacement,pathToWallpaper} from './image-path.js?v=20261023-reconstruction1';
+import {extractImagePathCandidates,extractImageShapeCandidates,imagePlacement,pathToWallpaper} from './image-path.js?v=20261023-fullframe1';
 import {drawAuthoringLockReason,drawAuthoringLockMessage,pathStructureLockedOutsidePaths} from './path-authoring-locks.js';
 import {verifyLocalSilhouetteSvg} from './svg-import-safety.js';
-import {reconstructionCandidates,rankReconstructionCandidates,describeReconstructionImage,RECONSTRUCTION_FRAME} from './image-reconstruction.js';
+import {reconstructionCandidates,rankReconstructionCandidates,describeReconstructionImage,reconstructionPlacement,RECONSTRUCTION_FRAME} from './image-reconstruction.js?v=20261023-fullframe1';
 
 /** A live import dialog must match the current authoritative lock state,
  * even if a recipe restores a lock while image decoding is in flight. */
@@ -120,7 +120,7 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle,onShape,
     const g=frame.getContext('2d',{willReadFrequently:true});
     const desc=describeReconstructionImage(pixels);
     g.fillStyle=desc.background;g.fillRect(0,0,frame.width,frame.height);
-    const box=placement();
+    const box=reconstructionPlacement(width,height);
     g.drawImage(image,box.x*frame.width/600,box.y*frame.height/1300,
       box.width*frame.width/600,box.height*frame.height/1300);
     const reference=g.getImageData(0,0,frame.width,frame.height);
