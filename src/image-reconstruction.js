@@ -415,16 +415,19 @@ export function reconstructionCandidates(image,recipe){
       // or a thin traced Draw centreline. Test its real painter pixels.
       // Hairpin must retain its formerly proven slot before another
       // procedural hypothesis enters the six-render diversity budget.
-      {kind:'hairpin',label:'Editable hairpin turn',
-        recipe:{geometry:'hairpin',orientation:'vertical',hairpinAngle:120,
-          turnRadius:50,spread:42,stripeWidth:65}},
-      // Canonical frequency ~45 produces a ~330-design-px period, capable
-      // of two angular bends across a 600px frame. The initial 8% seed
-      // produced an almost flat ribbon in the real non-ROYGBIV SVG study.
-      {kind:'chevron',label:'Editable pointed chevron ribbons',
+      // A horizontal single-peak ribbon can be Chevrons; a U-turn is not.
+      // Only offer this independent mode when the already-shared pigment
+      // geometry supports mostly horizontal bands. Genuine vertical
+      // Hairpin retains its previous six-candidate slot.
+      ...(desc.lineDirection==='horizontal'?[{
+        kind:'chevron',label:'Editable pointed chevron ribbons',
         recipe:{geometry:'chevron',orientation:'horizontal',
           shapeDepth:75,shapeFrequency:45,chevronSharpness:92,
-          spread:50,stripeWidth:44}}
+          spread:50,stripeWidth:44}
+      }]:[]),
+      {kind:'hairpin',label:'Editable hairpin turn',
+        recipe:{geometry:'hairpin',orientation:'vertical',hairpinAngle:120,
+          turnRadius:50,spread:42,stripeWidth:65}}
     ];
     presets.sort((a,b)=>(b.kind===desc.curve.kind?1:0)-
       (a.kind===desc.curve.kind?1:0));
@@ -531,19 +534,9 @@ export function reconstructionCandidates(image,recipe){
     const wide=committable.find(c=>c.kind==='path'&&
       !c.recipe.geometrySafety&&!c.lockedChanges.includes('geometrySafety'));
     if(safe&&wide){
-      // A real pointed bend in the ALREADY extracted contour deserves one
-      // extra independent canonical procedural hypothesis. Preserve the
-      // conservative Draw fallback and all proven Hairpin possibilities;
-      // spend the expanded-Draw slot only for a sharp, mostly non-U contour.
-      // Smooth waves still keep both Draw safety variations unchanged.
-      const hasPointedTurn=desc.curve.sharpTurns>=1&&
-        Math.abs(desc.curve.netTurn)<2.3&&
-        desc.lineDirection!=='vertical';
       const procedural=diverseReconstructionCandidates(
-        committable.filter(c=>c.kind!=='path'),
-        RECONSTRUCTION_RENDER_LIMIT-(hasPointedTurn?1:2));
-      return [...procedural,safe,
-        ...(procedural.length<RECONSTRUCTION_RENDER_LIMIT-1?[wide]:[])];
+        committable.filter(c=>c.kind!=='path'),RECONSTRUCTION_RENDER_LIMIT-2);
+      return [...procedural,safe,wide];
     }
   }
   return diverseReconstructionCandidates(committable);
