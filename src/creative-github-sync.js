@@ -18,6 +18,9 @@ export function makeUsageBatch(events,syncedIds=[],{
   const synced=new Set(syncedIds),records=[];
   for(const event of orderUsageEvents(events)){
     if(synced.has(event.eventId))continue;
+    // Keep each immutable archive batch inside one genuine session; the
+    // storage contract uses a session directory for owner-side retrieval.
+    if(records.length&&event.sessionId!==records[0].sessionId)break;
     const projected=[...records,event];
     if(records.length&&(
       projected.length>maxEvents||
@@ -31,8 +34,11 @@ export function makeUsageBatch(events,syncedIds=[],{
   const date=/^\d{4}-\d{2}-\d{2}$/.test(day)?day:'unknown-date';
   const [year,month,dayPart]=date.split('-');
   const safeId=String(batchId).replace(/[^a-zA-Z0-9-]/g,'').slice(0,90);
-  if(!safeId)throw new Error('No valid activity batch ID');
-  const path=GITHUB_USAGE_PATH+'/'+year+'/'+month+'/'+dayPart+'/'+safeId+'.json';
+  const safeSession=String(records[0].sessionId||'')
+    .replace(/[^a-zA-Z0-9-]/g,'').slice(0,90);
+  if(!safeId||!safeSession)throw new Error('Invalid activity batch or session ID');
+  const path=GITHUB_USAGE_PATH+'/'+year+'/'+month+'/'+dayPart+'/'+
+    safeSession+'/'+safeId+'.json';
   const json=JSON.stringify({schema:1,source:'ROYGBIV consented creative activity',
     batchId:safeId,createdAt:now(),events:records},null,0)+'\n';
   return {id:safeId,path,json,eventIds:records.map(row=>row.eventId)};
