@@ -39,7 +39,8 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle,onShape,
     closeButton=byId('imagePathCancel'),
     recipeWorkspace=byId('imageRecipeWorkspace'),recipeChooser=byId('imageRecipeCandidate'),
     recipeApply=byId('imageRecipeApply'),recipeStatus=byId('imageRecipeStatus'),
-    recipeCanvas=byId('imageRecipeCanvas');
+    recipeCanvas=byId('imageRecipeCanvas'),
+    sourceCanvas=byId('imageRecipeSourceCanvas');
   const ctx=canvas.getContext('2d');
   let image=null,candidates=[],selected=0,width=0,height=0,working=false;
   let loadRevision=0,reconstructed=[];
@@ -125,6 +126,7 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle,onShape,
     g.drawImage(image,box.x*frame.width/600,box.y*frame.height/1300,
       box.width*frame.width/600,box.height*frame.height/1300);
     const reference=g.getImageData(0,0,frame.width,frame.height);
+    sourceCanvas.getContext('2d').putImageData(reference,0,0);
     const renderPixels=(recipe,w,h)=>{
       const rendered=document.createElement('canvas');rendered.width=w;rendered.height=h;
       onRender(recipe,rendered);
@@ -185,6 +187,7 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle,onShape,
     // has completed. Their old labels must not be mistaken for new results.
     chooser.replaceChildren();candidates=[];image=null;
     reconstructed=[];recipeWorkspace.hidden=true;recipeApply.disabled=true;
+    sourceCanvas.getContext('2d').clearRect(0,0,sourceCanvas.width,sourceCanvas.height);
     status.textContent='Analyzing the image locally…';
     try{
       const decoded=await decode(file);
