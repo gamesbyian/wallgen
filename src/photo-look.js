@@ -338,8 +338,8 @@ export function processPhotoPixels(data,width,height,rawLook,seed='rainbow-001',
       const dark=1-vignette*falloff*.5;
       const perturb=grain?(
         layeredGrain
-          ? (.8*noiseHash(Math.floor((x+.5)*xScale*2.4),Math.floor((y+.5)*yScale*2.4),hash)+
-             .2*noiseHash(Math.floor((x+.5)*xScale*.42),Math.floor((y+.5)*yScale*.42),hash^0x9e3779b9))
+          ? (.8*noiseHash(Math.floor((x+.5)*xScale*2.4),Math.floor((sourceY+.5)*yScale*2.4),hash)+
+             .2*noiseHash(Math.floor((x+.5)*xScale*.42),Math.floor((sourceY+.5)*yScale*.42),hash^0x9e3779b9))
           : noiseHash(Math.floor((x+.5)*xScale),yCell,hash)
         )*grain*(.65+.35*(1-luma/255)):0;
       let warmSpill=0;
