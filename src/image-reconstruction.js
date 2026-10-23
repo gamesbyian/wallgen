@@ -99,7 +99,15 @@ export function describeReconstructionImage(image){
   const lineDirection=vertical.length>=5?'vertical':
     horizontal.length>=5?'horizontal':null;
   const radial=radialImageSignature(image);
-  const stripeAngle=imageStripeAngle(colour.regions,image.width,image.height);
+  const centroidAngle=imageStripeAngle(colour.regions,image.width,image.height);
+  // The source importer already computes bounded Hough line hypotheses from
+  // actual pixel edges. In oblique full-frame stripes, individual hue bands
+  // may be cropped and centroids cease to be collinear: use the strongest
+  // existing line detector as a fallback, not another edge scanner.
+  const lineCandidates=paths.filter(p=>p.kind==='line'&&
+    Number.isFinite(p.angle)&&Number.isFinite(p.score)&&p.score>0);
+  const strongest=lineCandidates.sort((a,b)=>b.score-a.score)[0];
+  const stripeAngle=centroidAngle??strongest?.angle??null;
   return {background:colour.background,colourRegions:colour.regions,
     paths:paths.slice(0,6),sevenColourRegions:seven,lineDirection,
     stripeAngle,radial,coverage:colour.coverage,
@@ -125,6 +133,24 @@ export function reconstructionCandidates(image,recipe){
   const current=normalizeRecipe(recipe);
   const base=strippedCandidateBase(current,desc.background);
   const candidates=[];
+  // Collinear rainbow colour centres suggest oblique long bands. Derive the
+  // absolute tangent from the source and convert to the existing RELATIVE
+  // diagonalRotation convention rather than inventing a new angle field.
+  if(!desc.lineDirection&&!desc.radial.kind&&
+    desc.stripeAngle!==null&&desc.stripeAngle>10&&desc.stripeAngle<170){
+    for(const spread of [45,65]){
+      const trial=normalizeRecipe({...base,structure:'paths',geometry:'straight',
+        orientation:'diagonal',chaos:0,individuality:0,spread,
+        stripeWidth:52,diagonalRotation:0});
+      const baseline=resolveScene(trial).angle*180/Math.PI;
+      candidates.push({kind:'straight',
+        label:'Oblique straight ribbons / spread '+spread,
+        uncertainty:'Angle estimated from colour centroids; width, seed offset and palette are fitted approximations.',
+        recipe:normalizeRecipe({...trial,
+          diagonalRotation:importedAngleDeltaDegrees(desc.stripeAngle,baseline)})});
+    }
+  }
+
   if(desc.sevenColourRegions){
     // Colour slot identity comes from the shared model HUES. Overrides live
     // in normal scattered recipes and can be dragged / undone / exported.
@@ -177,24 +203,6 @@ export function reconstructionCandidates(image,recipe){
           fieldCenterX:50,fieldCenterY:50,regionSides:0})});
     }
   }
-  // Collinear rainbow colour centres suggest oblique long bands. Derive the
-  // absolute tangent from the source and convert to the existing RELATIVE
-  // diagonalRotation convention rather than inventing a new angle field.
-  if(!desc.lineDirection&&!desc.radial.kind&&
-    desc.stripeAngle!==null&&desc.stripeAngle>10&&desc.stripeAngle<170){
-    for(const spread of [45,65]){
-      const trial=normalizeRecipe({...base,structure:'paths',geometry:'straight',
-        orientation:'diagonal',chaos:0,individuality:0,spread,
-        stripeWidth:52,diagonalRotation:0});
-      const baseline=resolveScene(trial).angle*180/Math.PI;
-      candidates.push({kind:'straight',
-        label:'Oblique straight ribbons / spread '+spread,
-        uncertainty:'Angle estimated from colour centroids; width, seed offset and palette are fitted approximations.',
-        recipe:normalizeRecipe({...trial,
-          diagonalRotation:importedAngleDeltaDegrees(desc.stripeAngle,baseline)})});
-    }
-  }
-
   // A single dominant filled silhouette, including source holes and detached
   // islands, can be represented as ONE portable compound shape. This uses the
   // existing asset snapshot and scattered-region scene, not a bitmap overlay.
