@@ -79,7 +79,13 @@ export const RECONSTRUCTION_R0_CASES=Object.freeze([
       textureStrength:48,textureDisplacement:20,
       surfaceTreatments:satin}},
   {id:'13-holed-shape',goal:'Compound shape with hole plus island, independently portable',
-    recipe:compoundStitchRecipe('r0-donut-island')}
+    recipe:compoundStitchRecipe('r0-donut-island')},
+  {id:'14-offset-radial-rays',goal:'Displaced radial wedge origin under authentic rendering',
+    recipe:{structure:'radial',radialMode:'sunburst',rayCount:21,
+      rayRotation:35,rayTwist:20,rayCore:12,fieldCenterX:35,fieldCenterY:65}},
+  {id:'15-offset-radial-rings',goal:'Displaced concentric origin under authentic rendering',
+    recipe:{structure:'radial',radialMode:'concentric',rayCount:21,
+      fieldCenterX:35,fieldCenterY:65}}
 ]);
 
 export function baselineRecipe(item){
