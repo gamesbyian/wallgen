@@ -4,6 +4,8 @@
 
 Incoming agents must start at [the **current agent handoff**](docs/AGENT-HANDOFF-2026-10-22.md), then check live `main`, current PRs/issues, the [live roadmap](docs/ACTIVE-PRODUCT-ROADMAP-2026-10-22.md), and [lean CI](docs/CI-OPERATIONS-2026-10-22.md). The original v1 renderer/writer/model goldens (#523/#524) and restored four-state mobile Thread panel (#521) **have shipped**, as has the bounded source-era integrity test in quick CI (#525). Avoid implementing any “planned” work based on a lower dated section of this file unless current source proves the work is missing. Older entries below are historically useful **receipts**, not a competing dispatch board.
 
+**Shared-engine rule for ALL new work:** Read [Engineering reuse and semantic ownership](docs/ENGINEERING-REUSE-AND-SEMANTIC-OWNERSHIP.md). Reuse the existing canonical recipe, geometry, image-import, renderer, worker/export and state/transport boundaries; audit for equivalent logic before adding helpers. Consolidate genuinely identical semantics, but preserve established historical RNG/noise, old recipe pixels and deliberately different colour-space/math contracts. Apply the short PR decision checklist without speculative refactors or new routine CI.
+
 **Priority:** original-v1 versus modern rendered parity research (without permitting unsafe PNG conversion) and genuinely improved opt-in thread fibre art. Next UX work should be based on actual physical handset observations. Coordinate shared `index.html`/`src/app.js` edits, preserve earlier recipe pixels, and remove any one-off Chromium workflow before merging.
 
 
