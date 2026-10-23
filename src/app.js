@@ -774,8 +774,15 @@ const imagePathTool=installImagePathTool({
     const blocked=Object.keys(candidate).filter(key=>
       current.lockedSettings.includes(key)&&
       JSON.stringify(effective[key])!==JSON.stringify(candidate[key]));
-    changeRecipe(candidate,{cause:'image-reconstruction'});
-    showNotice('Applied inferred '+description.kind+' recipe. Undo restores the prior design.'+
+    const inferred=normalizeRecipe({...candidate,reconstructionOrigin:{
+      origin:'inferred-image',method:'current-render-fit-v1',
+      candidateKind:description.kind,sourceWidth:description.sourceWidth,
+      sourceHeight:description.sourceHeight,initialFitError:description.error
+    }});
+    changeRecipe(inferred,{cause:'image-reconstruction'});
+    showNotice('Applied inferred '+description.kind+
+      ' recipe (initial render error '+Number(description.error).toFixed(3)+
+      '). This does not recover the original image settings. Undo restores the prior design.'+
       ((description.lockedChanges?.length||blocked.length)?
         ' Locked settings preserved: '+(description.lockedChanges||blocked).join(', ')+'.':''));
     return true;
