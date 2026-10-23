@@ -4,8 +4,27 @@ import {normalizeRecipe} from './model.js';
 import {replayEpisode} from './creative-recorder.js';
 import {orderUsageEvents} from './creative-github-sync.js';
 
+// Each session has a monotonic sequence; wall clocks may jump on Android.
+function orderedBySequence(rows){
+  return [...rows].sort((a,b)=>a.seq-b.seq||
+    String(a.eventId).localeCompare(String(b.eventId)));
+}
+function sessionSequenceError(rows){
+  const ordered=orderedBySequence(rows);
+  if(!ordered.length)return null;
+  if(ordered[0].seq!==1)
+    return 'Missing start of session event sequence (first seq '+ordered[0].seq+')';
+  for(let i=1;i<ordered.length;i++){
+    if(ordered[i].seq===ordered[i-1].seq)
+      return 'Duplicate session event sequence number '+ordered[i].seq;
+    if(ordered[i].seq!==ordered[i-1].seq+1)
+      return 'Missing session event sequence between '+ordered[i-1].seq+
+        ' and '+ordered[i].seq;
+  }
+  return null;
+}
 function materializeRecipe(rows){
-  try{return {recipe:replayEpisode(rows),error:null};}
+  try{return {recipe:replayEpisode(orderedBySequence(rows)),error:null};}
   catch(error){return {recipe:null,error:String(error.message||error)};}
 }
 export function analyzeCreativeUsage(sources){
@@ -32,8 +51,11 @@ export function analyzeCreativeUsage(sources){
   const eventSources=new Map([...unique].map(([id,{sources}])=>[id,[...new Set(sources)]]));
   for(const event of ordered){
     const sk=event.sessionId,ek=sk+'\u0000'+event.episodeId;
-    if(!bySession.has(sk))bySession.set(sk,{id:sk,events:0,episodes:new Set()});
-    const session=bySession.get(sk);session.events++;session.episodes.add(ek);
+    if(!bySession.has(sk))bySession.set(sk,{
+      id:sk,events:0,episodes:new Set(),rows:[]
+    });
+    const session=bySession.get(sk);
+    session.events++;session.episodes.add(ek);session.rows.push(event);
     if(!byEpisode.has(ek))byEpisode.set(ek,[]);
     byEpisode.get(ek).push(event);
     if(event.type==='recipe_commit')
@@ -42,8 +64,11 @@ export function analyzeCreativeUsage(sources){
           bySetting.set(edit.key,(bySetting.get(edit.key)||0)+1);
       }
   }
+  const sessionErrors=new Map([...bySession].map(([id,s])=>
+    [id,sessionSequenceError(s.rows)]));
   const episodes=[];
-  for(const [key,rows] of byEpisode){
+  for(const [key,unsortedRows] of byEpisode){
+    const rows=orderedBySequence(unsortedRows);
     const first=rows.find(e=>e.type==='episode_start');
     const end=rows.findLast(e=>e.type==='episode_end');
     const exported=rows.filter(e=>e.type==='download_initiated');
@@ -70,7 +95,7 @@ export function analyzeCreativeUsage(sources){
       outcome:end?'superseded_by_'+(end.cause||'unknown'):
         hadUnconfirmedRestart?'prior_session_status_unconfirmed_at_next_launch':
           'open_or_interrupted_unconfirmed',
-      replayError:error,
+      replayError:error||sessionErrors.get(rows[0].sessionId),
       initialRecipe:first?.recipe?normalizeRecipe(first.recipe):null,
       finalKnownRecipe:recipe,
       terminalRecipe:end?.recipe?normalizeRecipe(end.recipe):null,
@@ -78,7 +103,8 @@ export function analyzeCreativeUsage(sources){
     });
   }
   const sessions=[...bySession.values()].map(s=>({
-    sessionId:s.id,eventCount:s.events,episodeCount:s.episodes.size
+    sessionId:s.id,eventCount:s.events,episodeCount:s.episodes.size,
+    sequenceError:sessionErrors.get(s.id)
   }));
   return {
     schema:1,sourceCount:sources.length,uniqueEventCount:ordered.length,
@@ -115,6 +141,6 @@ export function markdownCreativeUsageReport(report){
   if(!report.topChangedSettings.length)lines.push('No committed recipe changes recorded.');
   else for(const e of report.topChangedSettings.slice(0,15))
     lines.push('- '+nice(e.key)+': '+e.changes+' committed changes');
-  lines.push('','**Evidence gaps:** This report cannot measure visual quality, actual wallpaper installation, satisfaction without a survey answer, nor interactions that were never durably recorded.');
+  lines.push('','**Integrity:** Recipe replay follows per-session sequence numbers, not wall-clock time. Missing or duplicated event sequence numbers are reported as incomplete evidence.','','**Evidence gaps:** This report cannot measure visual quality, actual wallpaper installation, satisfaction without a survey answer, nor interactions that were never durably recorded.');
   return lines.join('\n')+'\n';
 }
