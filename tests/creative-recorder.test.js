@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {createCreativeRecorder,memoryUsageStore,recipeDiff,replayEpisode,recipeDigest,
   prunableSyncedEventIds,summarizeUsageBacklog} from '../src/creative-recorder.js';
 import {normalizeRecipe} from '../src/model.js';
+import {analyzeCreativeUsage} from '../src/creative-usage-report.js';
 
 function rig(enabled=true){
   const store=memoryUsageStore();let counter=0;
@@ -285,4 +286,32 @@ test('backlog status counts only remotely acknowledged records, including a rese
   assert.deepEqual(await store.syncSummary(),{
     total:0,backedUp:0,pending:0,reserved:0
   });
+});
+
+test('local deletion starts a new session identity so immutable remote history does not collide',async()=>{
+  const {recorder,store}=rig();
+  recorder.start({seed:'old'});
+  recorder.transition({seed:'old'},{seed:'changed'});
+  await recorder.flush();
+  const archived=await store.reserveBatch();
+  await store.ackBatch(archived.id);
+  const oldEvents=JSON.parse(archived.json).events;
+  assert.equal(oldEvents[0].seq,1);
+  const oldSession=oldEvents[0].sessionId;
+  await recorder.clear();
+  assert.deepEqual(await recorder.records(),[]);
+  recorder.start({seed:'new'});
+  const newEvents=await recorder.records();
+  assert.equal(newEvents[0].seq,1);
+  assert.notEqual(newEvents[0].sessionId,oldSession);
+  const report=analyzeCreativeUsage([
+    {source:'immutable-private-batch',data:JSON.parse(archived.json)},
+    {source:'local-after-delete',data:{schema:1,events:newEvents}}
+  ]);
+  assert.equal(report.sessionCount,2);
+  assert.ok(report.sessions.every(s=>s.sequenceError===null));
+  assert.ok(report.episodes.every(e=>e.replayError===null));
+  const later=await store.reserveBatch();
+  assert.notEqual(later.path,archived.path);
+  assert.match(later.path,new RegExp('/'+newEvents[0].sessionId+'/'));
 });
