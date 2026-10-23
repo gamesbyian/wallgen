@@ -1,5 +1,10 @@
 # ROYGBIV: photographic film looks and filters
 
+## F2 opt-in negative print with black-floor protection (2026-10-22)
+
+Observed [production output](PHOTO-PRODUCTION-RENDER-FINDINGS-2026-10-22.md) confirms legacy Muted Negative raises true-black wallpaper pixels toward charcoal. A separate named `film-negative-deepblack` profile now shares its exact grade and noise hash for bright pixels but smoothly scales processing toward zero below source luminance 22, protecting black backgrounds. The old negative remains untouched pixel-for-pixel; deep-black is a deliberately different saved preset. The existing Light → Photo controls remain compact; `--focus-deep-black` produces original/old/new production samples for inspection. This is artistic black preservation, not authentic historical photographic printing or guaranteed display-wide AMOLED power analysis. Actual same-seed **real rendered art** was inspected in [run #39885066432](https://github.com/gamesbyian/wallgen/actions/runs/39885066432) and [measured findings](DEEP-BLACK-FILM-ART-FINDINGS-2026-10-22.md): 372,824 original-black pixels stay black; all 405,237 brighter pixels match original Muted Negative exactly. Pixel device tests and colour-science fidelity remain outstanding.
+
+
 ## F3: reversible Before/After on the existing preview (2026-10-22)
 
 Light → Photo now has an accessible **Before / After** comparison button beside Enable. It repaints the **already cached composed background and ink** while temporarily disabling only the Photo finish in a short-lived display recipe. It never mutates the saved recipe, URL, favourites or Undo; ordinary exported PNGs are unaffected. The button only enables with an active nonzero Photo and settled artwork cache, and the preview worker does not flash finished reduced-quality frames over an active Before view. Any worker settle repaints the selected comparison state, and switching Photo Off resets it. No added control row, full export-size bitmap, new category or CI suite; source, deterministic recipe and wiring tests are included. Manual touch and optical approval remain pending.
