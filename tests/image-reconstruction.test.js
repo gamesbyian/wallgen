@@ -58,7 +58,9 @@ test('External opaque graphic provides a truthful editable path, not invented se
   const candidates=reconstructionCandidates(external,{seed:'external'});
   assert.ok(candidates.some(c=>c.kind==='path'));
   assert.ok(candidates.every(c=>c.kind!=='regions'));
-  assert.ok(candidates.every(c=>c.recipe.geometry==='drawn'));
+  assert.ok(candidates.some(c=>c.recipe.geometry==='drawn'));
+  assert.ok(candidates.some(c=>c.kind==='shape'),
+    'existing compound silhouette extraction is also available as canonical shape');
 });
 
 test('Candidate comparison obeys bounded real-render callback and ranks identical pixels first',()=>{
@@ -98,4 +100,38 @@ test('full-frame reconstruction fits an existing wallpaper edge-to-edge without 
   assert.equal(letterbox.width,600);
   assert.equal(letterbox.height,600);
   assert.equal(letterbox.y,350);
+});
+
+
+test('elongated seven-colour bands propose editable procedural straight geometry rather than seven discs',()=>{
+ const stripe=raster(140,280,(x,y)=>{
+   const index=Math.floor(x/20);
+   return colour(HUES[Math.min(6,index)]);
+ });
+ const described=describeReconstructionImage(stripe);
+ assert.equal(described.lineDirection,'vertical');
+ assert.equal(described.sevenColourRegions,false);
+ const options=reconstructionCandidates(stripe,{seed:'straight-example'});
+ assert.ok(options.some(x=>x.kind==='straight'), 'offer real procedural orientation');
+ assert.equal(options.filter(x=>x.kind==='regions').length,0);
+ assert.ok(options.filter(x=>x.kind==='straight').every(x=>
+   x.recipe.geometry==='straight'&&x.recipe.orientation==='vertical'));
+});
+
+test('single opaque colour compound silhouette becomes a portable snapshot preserving holes and islands',()=>{
+ const image=raster(160,180,(x,y)=>{
+   const outer=x>=18&&x<=94&&y>=20&&y<=125;
+   const hole=x>=39&&x<=65&&y>=53&&y<=83;
+   const island=x>=116&&x<=144&&y>=80&&y<=113;
+   return outer&&!hole||island?colour(HUES[0]):[0,0,0,255];
+ });
+ const choices=reconstructionCandidates(image,{seed:'donut-external'});
+ const silhouette=choices.find(x=>x.kind==='shape');
+ assert.ok(silhouette);
+ assert.equal(silhouette.recipe.structure,'regions');
+ assert.equal(silhouette.recipe.scatteredCount,1);
+ assert.equal(silhouette.recipe.scatteredShape.geometry.components.length,2);
+ assert.ok(silhouette.recipe.scatteredShape.geometry.components.some(x=>x.holes.length===1));
+ assert.equal(resolveScene(silhouette.recipe).objects[0].rings.length,3);
+ assert.deepEqual(decodeRecipe(encodeRecipe(silhouette.recipe)),silhouette.recipe);
 });
