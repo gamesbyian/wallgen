@@ -26,6 +26,21 @@ jobs:
       - name: Basic app and recipe sanity
         if: ${{ github.event_name != 'workflow_dispatch' || inputs.depth != 'full' }}
         run: npm run check:quick
+      # Three optical images, this PR only. Revert the probe before merging.
+      - name: Install Chromium for opt-in optical artwork review
+        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'feat/dslr-optical-acutance-photo-20261022' }}
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+      - name: Render untreated, Natural and new lens Photo
+        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'feat/dslr-optical-acutance-photo-20261022' }}
+        run: node scripts/review-photo-looks.mjs --focus-lens --out-dir artifacts/dslr-optics
+      - uses: actions/upload-artifact@v4
+        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'feat/dslr-optical-acutance-photo-20261022' }}
+        with:
+          name: one-time-dslr-optical-three-images
+          path: artifacts/dslr-optics/
+          retention-days: 7
       - name: Full Node suite (manual request only)
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.depth == 'full' }}
         run: npm run check
