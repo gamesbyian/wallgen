@@ -18,6 +18,8 @@ export const PHOTO_PRESETS=Object.freeze({
   'camera-webcam':Object.freeze({family:'camera',contrast:1.08,saturation:0.78,shadow:0.015,highlight:0.02,red:0.015,green:-0.003,blue:0.005,grain:22,vignette:5}),
   'camera-webcam-signal':Object.freeze({family:'camera',contrast:1.06,saturation:0.84,shadow:0.02,highlight:0.015,red:0.012,green:-0.006,blue:0.008,grain:7,vignette:4}),
   'camera-digicam-signal':Object.freeze({family:'camera',contrast:1.14,saturation:1.22,shadow:0,highlight:-0.025,red:0.012,green:-0.004,blue:-0.009,grain:13,vignette:3}),
+  // Opt-in small point-and-shoot flash, entirely separate from existing looks.
+  'camera-pocket-flash':Object.freeze({family:'camera',contrast:1.13,saturation:1.11,shadow:0.008,highlight:-0.035,red:0.012,green:0,blue:-0.008,grain:8,vignette:2}),
 });
 export const PHOTO_PRESET_NAMES=Object.freeze({
   'film-slide':'Slide film inspired',
@@ -33,6 +35,7 @@ export const PHOTO_PRESET_NAMES=Object.freeze({
   'camera-webcam':'Old webcam colour (early preview)',
   'camera-webcam-signal':'Low-resolution webcam capture (simulated)',
   'camera-digicam-signal':'Early digital compact camera (simulated)',
+  'camera-pocket-flash':'Direct-flash point-and-shoot (simulated)',
 });
 const finite=(x,fallback,min,max)=>{
   const n=Number(x);
@@ -215,8 +218,8 @@ function makeHalationField(data,width,height,profile='original'){
 // webcam *always* retains its spatial capture operation even with neutral
 // tone, grain and vignette.
 export function isNeutralPhotoLook(look){
-  if(['camera-webcam-signal','camera-digicam-signal','camera-dslr-optics']
-    .includes(look.presetId))return false;
+  if(['camera-webcam-signal','camera-digicam-signal','camera-dslr-optics',
+      'camera-pocket-flash'].includes(look.presetId))return false;
   const p=look.parameters;
   return p.contrast===1&&p.saturation===1&&p.shadow===0&&p.highlight===0&&
     p.red===0&&p.green===0&&p.blue===0&&p.grain===0&&p.vignette===0&&
@@ -257,6 +260,8 @@ export function processPhotoPixels(data,width,height,rawLook,seed='rainbow-001')
     makeHalationField(data,width,height,diffusedHalation?'diffusion':'original'):null;
   const lens=look.presetId==='camera-dslr-optics'?
     makeLensAcutanceField(data,width,height):null;
+  // No extra image buffer or synthetic scene depth.
+  const pocketFlash=look.presetId==='camera-pocket-flash';
   // The deep-black variant deliberately shares the legacy negative's grain
   // identity. Bright source pixels can therefore remain pixel-exactly equal.
   const grainPresetId=look.presetId==='film-negative-deepblack'?
@@ -287,6 +292,14 @@ export function processPhotoPixels(data,width,height,rawLook,seed='rainbow-001')
       let R=table[0][webcamSignal?webcamSignal.pixels[sample]:r],
         G=table[1][webcamSignal?webcamSignal.pixels[sample+1]:g],
         B=table[2][webcamSignal?webcamSignal.pixels[sample+2]:b];
+      if(pocketFlash){
+        // An on-axis small flash is brightest near image center and falls off
+        // toward corners. Keep this cheap at full 19.8 MP export resolution.
+        const flashX=(x+.5)/width*2-1;
+        const radius=Math.min(1,flashX*flashX*.40+ny*ny*.60);
+        const exposure=1.27-.38*radius;
+        R*=exposure;G*=exposure;B*=exposure;
+      }
       const luma=.2126*R+.7152*G+.0722*B;
       R=luma+(R-luma)*p.saturation;
       G=luma+(G-luma)*p.saturation;
@@ -340,7 +353,11 @@ export function processPhotoPixels(data,width,height,rawLook,seed='rainbow-001')
       // for original source luminance >= 22. No legacy preset changes.
       const shadowMask=look.presetId==='film-negative-deepblack'?
         Math.max(0,Math.min(1,(.2126*r+.7152*g+.0722*b)/22)):1;
-      const mix=amount*shadowMask;
+      // Exact black represents the wallpaper substrate and cannot reflect
+      // a direct flash; avoid lifting it with tone/grain in the opt-in look.
+      const flashReflectance=pocketFlash?
+        Math.max(0,Math.min(1,(.2126*r+.7152*g+.0722*b)/20)):1;
+      const mix=amount*shadowMask*flashReflectance;
       // Wider red-biased photochemical-style diffusion has a clearly readable
       // warm fringe at wallpaper size; narrow halation retains original mix.
       data[i]=clampByte(r+(R*dark+perturb+warmSpill*(diffusedHalation?170:94)-r)*mix);

@@ -496,6 +496,41 @@ test('new DSLR-inspired acutance uses a bounded source-luma edge field and no fa
   const saved=normalizeRecipe({seed:'lens-optics',photoLook:lens});
   assert.deepEqual(decodeRecipe(encodeRecipe(saved)),saved);
 });
+test('independent compact flash lights the center, darkens corners, and preserves black',()=>{
+  const w=120,h=180,source=pixels(120,85,40,w,h);
+  for(let y=15;y<45;y++)for(let x=15;x<45;x++){
+    const at=(y*w+x)*4;
+    source[at]=0;source[at+1]=0;source[at+2]=0;
+  }
+  const look=normalizePhotoLook({enabled:true,presetId:'camera-pocket-flash',
+    amount:100,parameters:{grain:0,vignette:0}});
+  assert.equal(look.family,'camera');
+  assert.equal(look.parameters.grain,0);
+  const a=source.slice(),b=source.slice();
+  processPhotoPixels(a,w,h,look,'pocket-flash');
+  processPhotoPixels(b,w,h,look,'pocket-flash');
+  assert.deepEqual(a,b,'deterministic on-axis illumination');
+  const at=(x,y)=>(y*w+x)*4;
+  assert.ok(a[at(60,90)]>a[at(110,165)]+25,
+    'a flat surface must have a distinctive on-axis exposure hotspot');
+  assert.deepEqual([...a.slice(at(20,20),at(20,20)+3)],[0,0,0],
+    'nonreflective black substrate stays black');
+  for(let i=3;i<a.length;i+=4)assert.equal(a[i],255,'alpha untouched');
+  const original=source.slice();
+  processPhotoPixels(original,w,h,{...look,amount:0},'pocket-flash');
+  assert.deepEqual(original,source,'zero amount leaves source alone');
+  const neutralFlash=normalizePhotoLook({enabled:true,presetId:'camera-pocket-flash',
+    amount:100,parameters:{contrast:1,saturation:1,shadow:0,highlight:0,
+      red:0,green:0,blue:0,grain:0,vignette:0}});
+  assert.equal(isNeutralPhotoLook(neutralFlash),false,
+    'center-weighted spatial flash must survive neutral tonal settings');
+  const saved=normalizeRecipe({seed:'camera-flash',photoLook:look});
+  assert.deepEqual(decodeRecipe(encodeRecipe(saved)),saved);
+  const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
+  assert.match(html,/<option value="camera-pocket-flash">/);
+  const reviewer=readFileSync(new URL('../scripts/review-photo-looks.mjs',import.meta.url),'utf8');
+  assert.match(reviewer,/--focus-flash/);
+});
 test('DSLR-inspired optic shares the original Photo selector and bounded authored frame',()=>{
   const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
   const code=readFileSync(new URL('../src/photo-look.js',import.meta.url),'utf8');
