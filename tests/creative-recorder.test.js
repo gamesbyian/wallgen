@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {createCreativeRecorder,memoryUsageStore,recipeDiff,replayEpisode,recipeDigest,
   prunableSyncedEventIds,summarizeUsageBacklog} from '../src/creative-recorder.js';
 import {normalizeRecipe} from '../src/model.js';
@@ -314,4 +315,30 @@ test('local deletion starts a new session identity so immutable remote history d
   const later=await store.reserveBatch();
   assert.notEqual(later.path,archived.path);
   assert.match(later.path,new RegExp('/'+newEvents[0].sessionId+'/'));
+});
+
+test('source transaction contract flushes both pending slider stages before outputs',()=>{
+  const app=readFileSync(new URL('../src/app.js',import.meta.url),'utf8');
+  const between=(start,end)=>{
+    const a=app.indexOf(start),b=app.indexOf(end,a+start.length);
+    assert.ok(a>=0&&b>a,'Expected live editor section '+start);
+    return app.slice(a,b);
+  };
+  assert.match(app,/function cancelQueuedControlUpdate\(\)/);
+  assert.match(app,/if\(rangeTimeout\)\{clearTimeout\(rangeTimeout\);rangeTimeout=0;\}/);
+  assert.match(app,/if\(pendingControlFrame\)\{cancelAnimationFrame\(pendingControlFrame\);pendingControlFrame=0;\}/);
+  assert.match(app,/function flushQueuedControlUpdate\(\)\{[\s\S]*?if\(cancelQueuedControlUpdate\(\)\)updateControlsFromInputs\(\)/);
+  assert.match(app,/rangeTimeout=setTimeout\(\(\)=>\{\s*rangeTimeout=0;\s*queueControlUpdate\(\);\s*\},75\)/);
+  assert.match(between('async function downloadPNG(){','const snapshot=normalizeRecipe(current);'),
+    /flushQueuedControlUpdate\(\)/);
+  for(const [start,end] of [
+    ["document.getElementById('copyRecipe').addEventListener('click',()=>{","void copyText"],
+    ["document.getElementById('copyLink').addEventListener('click',async()=>{","const url=location.href;"],
+    ["document.getElementById('downloadRecipe').addEventListener('click',()=>{","usageRecorder?.action('save_recipe_json'"],
+    ["favoriteButton.addEventListener('click',()=>{","reconcileFavoritesFromStorage();"],
+    ["document.getElementById('randomizeAll').addEventListener('click',()=>{","const previous=current;"],
+    ["function undo(){","const previous=undoStack.pop();"]
+  ])assert.match(between(start,end),/flushQueuedControlUpdate\(\)/);
+  assert.match(between('function changeRecipe(recipe,options={}){','render(recipe,options);'),
+    /cancelQueuedControlUpdate\(\)/);
 });
