@@ -1,5 +1,10 @@
 # Agent orientation for ROYGBIV
 
+## First actual embroidery picture review complete (2026-10-22)
+
+[Seven real production-rendered samples](docs/EMBROIDERY-PRODUCTION-ART-FINDINGS-2026-10-22.md) were downloaded, viewed, CRC-validated and matched to saved PNG recipes (Actions #39883744519). Running seams visibly follow loops; targeted Satin changes only one circle; Satin on tight inner loops can visibly desaturate rainbow ink and short regional stitches remain mechanically repetitive. This is **real output evidence**, but does not approve physical Pixel rendering or realistic sewn fibre. The one-off Chromium gate was removed byte-for-byte. Advance any realism work opt-in, retaining earlier saved pixels.
+
+
 ## Opt-in soft-edge linen, not a legacy material rewrite (2026-10-22)
 
 Actual [Chromium three-image linen experiment #39823468097](https://github.com/gamesbyian/wallgen/actions/runs/39823468097) isolated the serrated stripe outlines to high `textureDisplacement` (0 smooth, 20 visible, 68 strong); the original painted weave stays at displacement zero. New normalized `linen-soft` uses the same paint and `materialHeight` as `linen`, but `materialContourHeight` applies a bounded half-pitch five-point prefilter **only** when sampling edge relief. Old linen never changes pixels, and the existing three material selectors display both choices. Avoid auto-converting old recipes, duplicating inspector controls or installing permanent screenshot CI. **One controlled visual comparison was completed:** [Chromium #39824713944](https://github.com/gamesbyian/wallgen/actions/runs/39824713944) renders visibly smoother soft-edge linen at 68 displacement with unchanged fabric background; both recipes/PNG metadata verified and old linen pixel-identical to previous baseline. Do not extrapolate to physical Pixel/native-resolution/material realism, which remain open.
