@@ -547,15 +547,18 @@
         <button type="button" id="imageRecipeApply" disabled>Use editable recipe</button>
       </div>
       <div class="image-recipe-result">
-        <span>Rendered approximation</span>
+        <span>Source / reconstructed</span>
+        <div class="image-recipe-pair">
+          <canvas id="imageRecipeSourceCanvas" width="96" height="208" aria-label="Source image normalized to the wallpaper frame"></canvas>
         <canvas id="imageRecipeCanvas" width="96" height="208" aria-label="Actual ROYGBIV renderer approximation"></canvas>
+        </div>
       </div>
     </div>
     <div class="image-shape-actions">
       <button type="button" id="imagePathShape" disabled>Use silhouette as shape</button>
     </div>
   </dialog>
-  <script type="module" src="src/app.js?v=20261023-radial-provenance1"></script>
+  <script type="module" src="src/app.js?v=20261023-source-pair1"></script>
   <script type="module" src="src/mobile-studio.js?v=20261021-labels1"></script>
   <script type="module" src="src/mobile-fullscreen.js?v=20261021-1"></script>
   <script type="module" src="src/mobile-swipes.js?v=20261017-explore1"></script>
