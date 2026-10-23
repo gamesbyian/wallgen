@@ -1,11 +1,18 @@
 # PNG recipe metadata migration without image changes
 
+## Final supported subset: optional archival utility (23 October 2026)
+
+[#476](https://github.com/gamesbyian/wallgen/issues/476) is **closed not planned** for additional historical dialect translation. Current supported action: take a wholly recognized, fully canonical current-v2 envelope and write a new metadata-only PNG preserving original IDAT, all non-recipe chunks and the untouched imported source; report refusal for partial/unknown/conflicting schemas; expose original named metadata as exact-byte archive, including unreadable JSON. The utility does **not** re-render or prove current-canonical edit parity against old PNG pixels.
+
+Verified initial-v1 candidate is **rejected** after actual original/modern render comparisons showed 29.54% and 31.47% pixel disagreement above tolerance. V1 and ambiguous early-v2 upgrades remain refused. No extensive later-v1 archaeology or source-era parity is queued in active development. Reconsider only a narrowly proven, provenance-identifiable translation with present-day user benefit. Current-art image-to-recipe reconstruction is separately implemented as an initial slice in [#556](https://github.com/gamesbyian/wallgen/pull/556), with real-art acceptance still [#557](https://github.com/gamesbyian/wallgen/issues/557).
+
+
 ## Development priority update (22 October 2026)
 
 Historical PNG migration is an **optional archival convenience**, not a blocker or priority dependency for improving ROYGBIV's current recipe system. The owner explicitly prioritizes the best present-day schema, renderer and shared engine over preserving any previously generated artwork. Safe refusal behaviour for the existing *metadata-only, non-destructive* rewrite utility should remain truthful while it exists, but agents need not finish historical adapters, achieve legacy pixel parity or preserve old renderer semantics before changing the current product. Do not silently overwrite a user's original imported PNG, invent historical recipe provenance or claim old pixels are reproducible. For reconstruction from image pixels regardless of metadata, see [Image-to-recipe plan](IMAGE-TO-RECIPE-RECONSTRUCTION-PLAN-2026-10-22.md), a separate workflow that must share canonical current recipe/rendering machinery.
 
 
-**Active completion gate:** See [the agent handoff](AGENT-HANDOFF-2026-10-22.md), [historical source registry](recipe-format-history/REGISTRY.md), and [actual first-v1 image proof](recipe-format-history/source-era/v1-37428b/ACTUAL-RENDER-FINDINGS-2026-10-22.md). Original v1 field/renderer source archaeology, old exporter samples and exact metadata archives are now implemented. What's **not** implemented is a verified era-specific v1→v2 recipe adapter; leave migration refusal intact until old-versus-current pixels and semantics are demonstrably compatible.
+**Historical implementation evidence (no active completion gate):** See [the agent handoff](AGENT-HANDOFF-2026-10-22.md), [historical source registry](recipe-format-history/REGISTRY.md), and [actual first-v1 image proof](recipe-format-history/source-era/v1-37428b/ACTUAL-RENDER-FINDINGS-2026-10-22.md). Original v1 field/renderer source archaeology, old exporter samples and exact metadata archives are now implemented. What's **not** implemented is a verified era-specific v1→v2 recipe adapter; leave migration refusal intact until old-versus-current pixels and semantics are demonstrably compatible.
 
 
 ## Authentic original-v1 image evidence retrieved (2026-10-22)
