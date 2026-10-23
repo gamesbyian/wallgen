@@ -26,6 +26,21 @@ jobs:
       - name: Basic app and recipe sanity
         if: ${{ github.event_name != 'workflow_dispatch' || inputs.depth != 'full' }}
         run: npm run check:quick
+      # One-off five-picture optical probe on this PR only. Remove before merge.
+      - name: Install Chromium for targeted camera art review
+        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'tools/camera-five-art-review-20261022' }}
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+      - name: Render five camera comparisons
+        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'tools/camera-five-art-review-20261022' }}
+        run: node scripts/review-photo-looks.mjs --focus-camera --out-dir artifacts/camera-5-proof
+      - uses: actions/upload-artifact@v4
+        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'tools/camera-five-art-review-20261022' }}
+        with:
+          name: one-time-camera-five-image-proof
+          path: artifacts/camera-5-proof/
+          retention-days: 7
       - name: Full Node suite (manual request only)
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.depth == 'full' }}
         run: npm run check
