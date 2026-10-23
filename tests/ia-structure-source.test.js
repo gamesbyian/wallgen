@@ -27,3 +27,13 @@ test('manual Seed Apply and Enter use canonical transaction instead of unsynchro
   assert.doesNotMatch(handlers,/render\(fromControls\(\)\)/);
   assert.match(app,/function changeRecipe\(recipe,options=\{\}\)\{[\s\S]*?cancelQueuedControlUpdate\(\)/);
 });
+
+test('Photo comparison and Saved thumbnail restore settle latest slider edit before switching',()=>{
+  const app=readFileSync(new URL('../src/app.js',import.meta.url),'utf8');
+  const photo=app.slice(app.indexOf("photoCompareButton.addEventListener('click',()=>{"),
+    app.indexOf('const lightHost=form.querySelector'));
+  assert.match(photo,/if\(!canComparePhoto\(\)\)return;\s*\/\/[\s\S]*?flushQueuedControlUpdate\(\);\s*photoBeforeActive=/);
+  const gallery=app.slice(app.indexOf("card.addEventListener('click',()=>{"),
+    app.indexOf('drawThumbnail(canvas,recipe',app.indexOf("card.addEventListener('click',()=>{")));
+  assert.match(gallery,/flushQueuedControlUpdate\(\);\s*changeRecipe\(recipe,\{scroll:true,bypassLocks:true\}\)/);
+});
