@@ -30,6 +30,7 @@ function options(argv){
   for(let i=0;i<argv.length;i++){
     const k=argv[i];
     if(k==='--help'){o.help=true;continue;}
+    if(k==='--focus-organic'){o.focusOrganic=true;continue;}
     if(!['--out-dir','--browser'].includes(k))throw Error('Unknown argument: '+k);
     if(!argv[i+1]||argv[i+1].startsWith('--'))throw Error('Missing value for '+k);
     o[k==='--out-dir'?'outDir':'browser']=argv[++i];
@@ -41,12 +42,17 @@ const esc=x=>String(x).replace(/&/g,'&amp;').replace(/</g,'&lt;')
 async function main(){
   const args=options(process.argv.slice(2));
   if(args.help){
-    console.log('node scripts/review-materials.mjs [--out-dir path] [--browser Chromium-path]');
+    console.log('node scripts/review-materials.mjs [--out-dir path] [--browser Chromium-path] [--focus-organic]');
     return;
   }
   const out=resolve(args.outDir);
   await mkdir(out,{recursive:true});
-  const cases=[
+  const cases=args.focusOrganic?[
+    {id:'linen-original-68',material:'linen',seed:seeds[0]},
+    {id:'linen-soft-68',material:'linen-soft',seed:seeds[0]},
+    {id:'linen-organic-68',material:'linen-organic',seed:seeds[0]},
+    {id:'linen-organic-20',material:'linen-organic',seed:seeds[0],displacement:20},
+  ]:[
     {id:'00-no-texture',material:'none',seed:seeds[0]},
     ...materialKinds.flatMap(material=>seeds.map((seed,i)=>({
       id:material+'-'+(i+1),material,seed
@@ -62,6 +68,7 @@ async function main(){
   for(const c of cases){
     const recipe=normalizeRecipe({...base,
       seed:c.seed,material:c.material,
+      ...(c.displacement!==undefined?{textureDisplacement:c.displacement}:{}),
       ...(c.material==='none'?{textureStrength:0,textureDisplacement:0}:{}),
     });
     const png=join(out,c.id+'.png');
@@ -99,6 +106,7 @@ async function main(){
   await writeFile(join(out,'index.html'),html);
   await writeFile(join(out,'manifest.json'),JSON.stringify({
     schema:'roygbiv-material-art-review/v1',status:'produced-for-human-review',
+    comparison:args.focusOrganic?'four-organic-linen-same-seed':'original-seven',
     width:480,height:1040,controls:base,items:records
   },null,2)+'\n');
   console.log('Review '+join(out,'index.html'));

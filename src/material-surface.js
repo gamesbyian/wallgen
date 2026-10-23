@@ -26,7 +26,8 @@ function fractal(x,y,seed){
 export const MATERIAL_CHARACTER=Object.freeze({
   grain:[7,0,0,.84],watercolor:[69,0,0,.23],
   construction:[10,0,0,.68],handmade:[24,0,0,.63],
-  linen:[13,5,.27,.53], 'linen-soft':[13,5,.27,.53],canvas:[18,9,.31,.62],
+  linen:[13,5,.27,.53], 'linen-soft':[13,5,.27,.53],
+  'linen-organic':[13,5,.27,.53],canvas:[18,9,.31,.62],
   denim:[12,6,.34,.72],knit:[24,13,.34,.5],
   felt:[9,0,0,.8],corrugated:[30,15,.67,.38],
   concrete:[49,0,0,.56],stucco:[16,0,0,.9],
@@ -57,6 +58,19 @@ export function materialHeight(layer,x,y){
     if(layer.material==='linen'||layer.material==='linen-soft'||layer.material==='canvas')
       ridge=(ridge+Math.sin((wy+warp*.4)/(pitch*unit*1.12)*TAU))*.5;
   }
+  if(layer.material==='linen-organic'){
+    // Opt-in uneven warp/weft. The seed-anchored low-frequency drift bends
+    // individual yarns without repeating a flat square tile. Alternating
+    // overlaps change which raised strand catches light at each intersection.
+    const period=5*unit;
+    const driftX=fractal(x/(p*2.9),y/(p*2.9),seed+761)*period*.88;
+    const driftY=fractal(x/(p*3.7)+13,y/(p*3.7)-23,seed+787)*period*.93;
+    const a=(wx+driftX)/period*TAU;
+    const b=(wy+driftY)/(period*1.12)*TAU;
+    const cross=Math.cos(a)*Math.cos(b);
+    ridge=(Math.sin(a)*(.45+.15*Math.cos(b))+
+      Math.sin(b)*(.45-.15*Math.cos(a))+.16*cross)*.82;
+  }
   // Full-strength height is controlled by displacement and texture strength,
   // never normalized by total layer weight.
   return clamp((coarse*.57+fine*rough*.58)*(1-ridgeWeight*.55)+ridge*ridgeWeight,
@@ -69,7 +83,7 @@ export function materialHeight(layer,x,y){
 // apart suppresses periodic high-frequency edge teeth while retaining the
 // larger aperiodic cloth undulations and world-coordinate seam continuity.
 export function materialContourHeight(layer,x,y){
-  if(layer.material!=='linen-soft')return materialHeight(layer,x,y);
+  if(layer.material!=='linen-soft'&&layer.material!=='linen-organic')return materialHeight(layer,x,y);
   const unit=materialUnit(layer);
   const offsetX=5*unit*.5,offsetY=5*1.12*unit*.5;
   return (materialHeight(layer,x,y)+
@@ -181,6 +195,59 @@ function threads(ctx,layer,bounds,gap,opacity,axis='both'){
     }
   }
 }
+// Handwoven yarn paths use world-anchored strand and span indices, not crop
+// dimensions. Irregular bends, strand-width variation and a sparse thread
+// shadow/highlight pair disrupt the graph-paper uniformity seen in the first
+// real linen PNG review. This applies only to the opt-in Organic linen material.
+// Handwoven yarns: jittered thread stations and low-frequency displacement
+// create a world-anchored irregular loom. Muted core fibres are continuous;
+// only short, sparse glints mark raised crossings. In particular, do not draw
+// straight unwarped highlights: real images showed they read as graph paper.
+function organicLinenThreads(ctx,layer,bounds){
+  const unit=materialUnit(layer),seed=layer.heightSeed|0;
+  const pitch=5*unit,pointStep=13,span=pointStep*5;
+  const yarnPoint=(vertical,base,along)=>{
+    const x=vertical?base:along,y=vertical?along:base;
+    const bend=materialHeight(layer,x,y)*pitch*.32;
+    const wobble=fractal(x/62,y/62,seed+2161)*pitch*.14;
+    const across=base+bend+wobble;
+    return vertical?[across,along]:[along,across];
+  };
+  ctx.lineCap='round';
+  for(const vertical of [true,false]){
+    const low=vertical?bounds.left:bounds.top;
+    const high=vertical?bounds.right:bounds.bottom;
+    const alongMin=vertical?bounds.top:bounds.left;
+    const alongMax=vertical?bounds.bottom:bounds.right;
+    for(let i=Math.floor(low/pitch)-2;i<=Math.ceil(high/pitch)+2;i++){
+      const base=(i+(hash(i,0,seed+2101)-.5)*.8)*pitch;
+      const width=(.40+hash(i,0,seed+2111)*.66)*unit;
+      const bright=hash(i,0,seed+2143)>.56;
+      for(let j=Math.floor(alongMin/span)-1;j<=Math.ceil(alongMax/span)+1;j++){
+        const ink=.055+hash(i,j,seed+2137)*.065;
+        ctx.lineWidth=width;
+        ctx.strokeStyle=colour(bright,ink);
+        ctx.beginPath();
+        for(let k=0;k<=5;k++){
+          const [px,py]=yarnPoint(vertical,base,(j*5+k)*pointStep);
+          if(k===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);
+        }
+        ctx.stroke();
+        // Microscopic incident-light flashes follow the *same bent fibre*
+        // instead of tracing a second perfectly straight horizontal/vertical
+        // grid. Sparse world-space glints interrupt uniform reflectivity.
+        if(hash(i,j,seed+2179)>.82){
+          const along=(j+.16+hash(i,j,seed+2183)*.68)*span;
+          const [ax,ay]=yarnPoint(vertical,base,along);
+          const [bx,by]=yarnPoint(vertical,base,along+Math.min(6*unit,span*.16));
+          ctx.lineWidth=Math.max(.28,width*.27);
+          ctx.strokeStyle=colour(true,ink*.59);
+          ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(bx,by);ctx.stroke();
+        }
+      }
+    }
+  }
+}
 function knitStitches(ctx,layer,bounds){
   const seed=layer.heightSeed|0,unit=materialUnit(layer),step=13*unit;
   const x0=Math.floor(bounds.left/step)-1,x1=Math.ceil(bounds.right/step)+1;
@@ -271,6 +338,9 @@ export function paintMaterial(ctx,layer,bounds){
     case 'handmade':
       dots(ctx,layer,bounds,8,1.2,.24,2);
       flecks(ctx,layer,bounds,8,14,.28);break;
+    case 'linen-organic':
+      organicLinenThreads(ctx,layer,bounds);
+      dots(ctx,layer,bounds,9,.5,.12);break;
     case 'linen':
     case 'linen-soft':
       threads(ctx,layer,bounds,5,.20);
