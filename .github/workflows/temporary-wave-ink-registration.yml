@@ -1,0 +1,29 @@
+# TEMPORARY source-backed Wave translation study, never merge to main.
+name: Temporary Wave Ink Registration Proof
+on:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  measure:
+    if: github.head_ref == 'agent/reconstruction-wave-ink-registration-20261023'
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Chromium dependency only for actual image study
+        run: |
+          npm install --no-save --package-lock=false playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Blind authentic Wave, Jagged, Diagonal, Hairpin and circles study
+        run: |
+          node scripts/review-reconstruction.mjs --only 02-diagonal-straight,03-wave,04-jagged,05-hairpin,11-scattered-circles --out-dir artifacts/r0-wave-registration
+          node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/r0-wave-registration --alternatives
+      - uses: actions/upload-artifact@v4
+        with:
+          name: reconstruction-wave-alignment-5
+          path: artifacts/r0-wave-registration/
+          retention-days: 2
