@@ -93,7 +93,8 @@ export function installCreativeRecorderUI({
       status.textContent=(recorder.enabled?'Recording on':'Recording off')+
         ' · '+records.length+' event'+(records.length===1?'':'s')+
         (recorder.durable?' saved locally.':'. '+recorder.warning)+
-        (recorder.error?' Recent write failed; export your records if possible.':'');
+        (recorder.error?' Recent write failed; export your records if possible.':'')+
+        (recorder.recoveryWarning?' '+recorder.recoveryWarning:'');
       queueStatus.textContent='Backup queue: '+summary.pending+
         ' not yet confirmed, '+summary.backedUp+' confirmed remotely'+
         (summary.reserved?' ('+summary.reserved+' held for safe retry)':'')+
