@@ -26,6 +26,23 @@ jobs:
       - name: Basic app and recipe sanity
         if: ${{ github.event_name != 'workflow_dispatch' || inputs.depth != 'full' }}
         run: npm run check:quick
+      # Source-era v1 first painter capture, one PR only. Remove before merge.
+      - name: Install Chromium for original v1 artwork evidence
+        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'research/authentic-v1-render-image-20261022' }}
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+      - name: Render authentic first-v1 shadow-off and shadow-on images
+        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'research/authentic-v1-render-image-20261022' }}
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/v1-server.log 2>&1 &
+          node scripts/review-historical-v1-render.mjs --out-dir artifacts/v1-authentic-shadow
+      - uses: actions/upload-artifact@v4
+        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'research/authentic-v1-render-image-20261022' }}
+        with:
+          name: one-time-authentic-first-v1-shadow-images
+          path: artifacts/v1-authentic-shadow/
+          retention-days: 7
       - name: Full Node suite (manual request only)
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.depth == 'full' }}
         run: npm run check
