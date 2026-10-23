@@ -5,7 +5,7 @@ import {imagePlacement,extractImageColourRegions} from '../src/image-path.js';
 import {describeReconstructionImage,reconstructionCandidates,
   rankReconstructionCandidates,compareReconstructionPixels,refineReconstructionCandidate,reconstructionPlacement,
   radialImageSignature,imageStripeAngle,imageCurveSignature,diverseReconstructionCandidates,reconstructionRefinementIndex,
-  measuredRainbowRibbonBands,seedMeasuredRibbonControls,coherentWaveOffsetY,coherentVerticalBandOffsetX,coherentExpandedDrawOffsetY,
+  measuredRainbowRibbonBands,seedMeasuredRibbonControls,coherentWaveOffsetY,coherentVerticalBandOffsetX,coherentExpandedDrawOffsetY,measuredExpandedDrawRegistration,
   rankReconstructionCandidatesCooperatively,refineReconstructionCandidateCooperatively,
   RECONSTRUCTION_FRAME,RECONSTRUCTION_RENDER_LIMIT} from '../src/image-reconstruction.js';
 
@@ -722,4 +722,42 @@ test('expanded Draw registration honours umbrella and direct setting locks and c
    {yieldControl:async()=>{cancelled=true;},isCancelled:()=>cancelled});
  assert.equal(halted,null);
  assert.equal(afterCancel,0);
+});
+
+test('actual seven-colour gap drift becomes canonical wide Draw spread followed by whole-pack Y correction',async()=>{
+ const w=RECONSTRUCTION_FRAME.width,h=RECONSTRUCTION_FRAME.height;
+ const stripes=(centre,gap,width=8)=>raster(w,h,(x,y)=>{
+   for(let i=0;i<7;i++){
+     const y0=centre+(i-3)*gap;
+     if(y>=y0&&y<y0+width)return colour(HUES[i]);
+   }
+   return [0,0,0,255];
+ });
+ const source=stripes(90,24);
+ const initial=stripes(100,12);
+ const estimated=measuredExpandedDrawRegistration(source,initial);
+ assert.ok(estimated,'seven ordered hues retain a coherent linear spacing mismatch');
+ assert.ok(estimated.gapRatio>1.9&&estimated.gapRatio<2.1);
+ assert.equal(estimated.offsetY,-5);
+ const wide=normalizeRecipe({structure:'paths',geometry:'drawn',
+   geometrySafety:false,spread:65,stripeWidth:52,positionY:0});
+ const painter=r=>stripes(100+Math.round(r.positionY*h/100),
+   Math.round(12+(r.spread-65)*12/35));
+ const candidate=rankReconstructionCandidates(
+   [{kind:'path',label:'measured wide',recipe:wide,uncertainty:'inferred'}],
+   source,painter)[0];
+ assert.ok(candidate.drawGapRatio>1.9);
+ const fitted=refineReconstructionCandidate(candidate,source,painter);
+ assert.equal(fitted.recipe.spread,100,'physical gap ratio maps to canonical spread');
+ assert.equal(fitted.recipe.positionY,-5);
+ assert.equal(fitted.error,0,'real-render scoring accepts the measured separation and translation');
+ assert.ok(fitted.refinementRenders<=10);
+ assert.deepEqual(await refineReconstructionCandidateCooperatively(
+   candidate,source,painter),fitted);
+ assert.equal(reconstructionRefinementIndex([
+   {kind:'path',label:'safe Draw',recipe:normalizeRecipe({...wide,geometrySafety:true}),
+     error:.192433},
+   {...candidate,error:.226618},
+   {kind:'wave',error:.36,waveOffsetY:-4}
+ ]),1,'strong measured wide-gap evidence outranks a worse generic wave hypothesis');
 });
