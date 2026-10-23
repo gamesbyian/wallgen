@@ -1,5 +1,10 @@
 # ROYGBIV: modern digital camera and photographic rendering looks
 
+## Targeted D3 camera-image quality acceptance (2026-10-22)
+
+An opt-in [five-image Photo comparison](CAMERA-FIVE-IMAGE-ART-REVIEW-2026-10-22.md) reuses the headless Chromium production renderer, same-seed normalized recipes and contact gallery for untreated, Natural Digital, HDR, 200-column Webcam and 360-column Digicam. The first picture run should specifically check if simulated capture introduces recognizably different spatial detail and chroma signal loss while preserving rainbow identity. Do not infer artistic approval from green unit tests or add this browser probe permanently to CI.
+
+
 ## D3 working next increment: opt-in early digital compact capture (2026-10-22)
 
 Light → Photo now offers an independently saved `camera-digicam-signal` look alongside the original low-resolution webcam. It uses the **same bounded capture, chroma-subsampling and final Photo pipeline** with 360 sensor columns (rather than 200), at most 650 rows, four source samples per sensor cell, 2×2 shared chroma, distinct luminance/chroma quantization and a punchier early digital-camera tone response. No second export-size raster, no new top-level tool, no claim of true JPEG or hardware camera fidelity. All historical presets retain their original processing constants and stored parameter shapes; `amount:0` bypasses capture. Focused deterministic, alpha, zero-amount and saved-recipe tests are included. Optical approval and Pixel performance remain pending. D3 is **in progress**, not calibrated capture.

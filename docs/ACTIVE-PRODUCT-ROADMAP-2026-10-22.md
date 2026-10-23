@@ -1,5 +1,10 @@
 # ROYGBIV: active product roadmap and work queue
 
+## Next camera D3 picture judgement: opt-in five-image comparison (2026-10-22)
+
+The previously unreviewed opt-in `camera-digicam-signal` capture has a proportional [five-image production art reviewer](CAMERA-FIVE-IMAGE-ART-REVIEW-2026-10-22.md): source, Natural Digital, HDR, Webcam and Digicam under identical authored geometry. Actual visual inspection and recipe integrity acceptance must be recorded independently after running it. Use findings to choose genuinely useful D3 image-quality improvements, rather than proliferating uncalibrated camera knobs. `--focus-camera` extends the existing manual Photo tool without a permanent CI job or another image-processing engine.
+
+
 ## Film negative with preserved AMOLED black floor (F2/F3, 2026-10-22)
 
 Real earlier [photo-picture review](PHOTO-PRODUCTION-RENDER-FINDINGS-2026-10-22.md) showed ordinary Muted Negative lifting the black background. A new separate `film-negative-deepblack` look uses **exactly the old negative's parameter defaults and seeded grain identity** on bright artwork but continuously attenuates the finishing effect for original luminance below 22/255, preserving true black and near-black shadows. Historical `film-negative` pixels and recipes are unchanged. This is a named, opt-in aesthetic alternative in the same Light → Photo selector, not a universal rewrite of film science or a new category. Targeted Node tests and an opt-in `review-photo-looks.mjs --focus-deep-black` trio support actual visual judgement. The **three real PNGs have now been generated and visually inspected** in [Actions #39885066432](https://github.com/gamesbyian/wallgen/actions/runs/39885066432): [source-checked findings](DEEP-BLACK-FILM-ART-FINDINGS-2026-10-22.md) confirm true-black pixels remain black, while every bright-source pixel exactly matches the older negative treatment (405,237/405,237). No permanent CI addition.
