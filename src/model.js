@@ -85,6 +85,28 @@ const AUTO_CHOICES = {
   material:MATERIALS, outline:OUTLINES,
 };
 
+/**
+ * A recovered PNG recipe is the genuine generator recipe for its NEW output,
+ * but the uploaded image provided only pixels. Carry an explicit, bounded
+ * acceptance-time provenance receipt; never invent original seed/settings.
+ * Later edits may diverge, so the score is named INITIAL error.
+ */
+function normalizeReconstructionOrigin(input){
+  if(!input||typeof input!=='object'||Array.isArray(input)||
+    input.origin!=='inferred-image'||input.method!=='current-render-fit-v1')return null;
+  const width=input.sourceWidth,height=input.sourceHeight,error=input.initialFitError;
+  if(!Number.isSafeInteger(width)||!Number.isSafeInteger(height)||
+    width<12||height<12||width>10000||height>10000||
+    width*height>40000000||typeof error!=='number'||
+    !Number.isFinite(error)||error<0||error>1)return null;
+  const kind=['regions','shape','path','straight','loop',
+    'radial-rays','radial-rings','nested-rings'].includes(input.candidateKind)?
+    input.candidateKind:'path';
+  return {origin:'inferred-image',method:'current-render-fit-v1',
+    candidateKind:kind,sourceWidth:width,sourceHeight:height,
+    initialFitError:Math.round(error*1e6)/1e6};
+}
+
 export function normalizeRecipe(input = {}) {
   const readChoice = (key, allowed) => allowed.includes(input[key]) ? input[key] : 'auto';
   const seed = String(input.seed ?? 'rainbow-001').trim().slice(0, 90) || 'rainbow-001';
@@ -98,6 +120,7 @@ export function normalizeRecipe(input = {}) {
   }
   const normalizedInteriors=normalizeInteriorElements(input.interiorElements);
   const scatteredOverrides=normalizeScatteredOverrides(input.scatteredOverrides);
+  const reconstructionOrigin=normalizeReconstructionOrigin(input.reconstructionOrigin);
   const scatteredLayerOrder=normalizeScatteredLayerOrder(input.scatteredLayerOrder);
   // Interior numeric controls have the same transport invariant. Normalize
   // only signed zeros, preserving all finite authored values and geometry.
@@ -112,6 +135,7 @@ export function normalizeRecipe(input = {}) {
   return {
     version: 2,
     interiorElements:normalizedInteriors,
+    ...(reconstructionOrigin?{reconstructionOrigin}:{}),
     // Old recipes have no Photo key, leaving their saved representation and pixels intact.
     ...(input.photoLook?{photoLook:normalizePhotoLook(input.photoLook)}:{}),
     ...(Array.isArray(input.surfaceTreatments)?{surfaceTreatments:normalizeSurfaceTreatments(input.surfaceTreatments)}:{}),
