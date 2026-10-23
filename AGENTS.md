@@ -1,5 +1,10 @@
 # Agent orientation for ROYGBIV
 
+## Imported shape embroidery hole-clipping actually verified (2026-10-22)
+
+A real portable compound-region asset with one hole and one detached island was rendered twice in Chromium (untreated vs Tatami), retrieved, inspected, CRC-validated and matched to complete recipes in [run #39889647143](https://github.com/gamesbyian/wallgen/actions/runs/39889647143). [Pixel findings](docs/EMBROIDERY-COMPOUND-HOLE-PRODUCTION-FINDINGS-2026-10-22.md): all **730,320 originally black RGB pixels** remain byte-identical, including the hole and island gap, while both positive regions receive stitches. Do not queue a speculative even-odd masking rewrite. This does not establish all possible imported topology, physical thread realism or Pixel performance. The one-off Chromium gate was removed before merge.
+
+
 ## DSLR-style optical look reviewed in actual production images (2026-10-22)
 
 A restrained opt-in `camera-dslr-optics` uses a bounded 600×1300 luminance unsharp-mask field, not a second export-size image or another generic colour preset. Three real Chromium PNGs were downloaded/viewed and passed CRC/recipe checks in [Actions #39888307174](https://github.com/gamesbyian/wallgen/actions/runs/39888307174), [documented evidence](docs/DSLR-OPTICAL-PRODUCTION-FINDINGS-2026-10-22.md). At abstract rainbow edges it is *subtle*, with no obvious large colour fringes and original black backgrounds left black. This is an artistically useful, limited style, not exact DSLR hardware, depth of field or RAW optics. Original Photo presets remain untouched and temporary browser CI was removed.

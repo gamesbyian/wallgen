@@ -1,5 +1,10 @@
 # ROYGBIV: active product roadmap and work queue
 
+## E3 imported compound-region embroidery: minimal hole/island study (2026-10-22)
+
+The next meaningful E3 acceptance question after seven clean circles is an actual imported stamp with a **cutout and detached island**, specifically requested by [#514](https://github.com/gamesbyian/wallgen/issues/514). A pure canonical [Shape Library fixture](../scripts/compound-stitch-fixture.mjs) and [opt-in two-image production reviewer](EMBROIDERY-COMPOUND-HOLE-ART-REVIEW-2026-10-22.md) compare the identical source plain vs targeted Tatami, using a real `scatteredShape` snapshot rather than drawing a fake diagram. Source normalization/transport checks are included. **Real rendered acceptance completed:** [two PNGs from run #39889647143](https://github.com/gamesbyian/wallgen/actions/runs/39889647143) were retrieved, visually viewed and CRC/recipe checked; [pixel evidence](EMBROIDERY-COMPOUND-HOLE-PRODUCTION-FINDINGS-2026-10-22.md) shows all 730,320 original-black pixels unchanged, including the internal cutout and island gap. E3 imported holed geometry no longer awaits an initial art proof, although advanced thread physicality and Pixel acceptance remain open. No additional routine browser test.
+
+
 ## Live dispatch summary after actual camera and embroidery art reviews (2026-10-22)
 
 **Source:** current main after [#517](https://github.com/gamesbyian/wallgen/pull/517), SHA `1ea674537f162aff197167b91b3bdc4e9d1b2eca`. All PRs through #517 are reconciled, with no open PR as of this checkpoint. **Use the board below for work**, not historical “PR pending” paragraphs or original phase proposals. The personal wallpaper app prioritizes meaningful new art and preserved recipes over generalized regression factories.
