@@ -4,7 +4,7 @@ import {HUES,normalizeRecipe,resolveScene,encodeRecipe,decodeRecipe} from '../sr
 import {imagePlacement,extractImageColourRegions} from '../src/image-path.js';
 import {describeReconstructionImage,reconstructionCandidates,
   rankReconstructionCandidates,compareReconstructionPixels,refineReconstructionCandidate,reconstructionPlacement,
-  radialImageSignature,imageStripeAngle,imageCurveSignature,diverseReconstructionCandidates,
+  radialImageSignature,imageStripeAngle,imageCurveSignature,diverseReconstructionCandidates,reconstructionRefinementIndex,
   rankReconstructionCandidatesCooperatively,refineReconstructionCandidateCooperatively,
   RECONSTRUCTION_FRAME,RECONSTRUCTION_RENDER_LIMIT} from '../src/image-reconstruction.js';
 
@@ -348,4 +348,38 @@ test('six-render candidate selection preserves one independent type before redun
  assert.deepEqual(diverseReconstructionCandidates(options,2).map(x=>x.kind),
    ['straight','loop']);
  assert.throws(()=>diverseReconstructionCandidates(options,100),/budget/);
+});
+
+
+test('a poor Draw result lends exactly one ten-render fitting budget to a credible wide-band curve',()=>{
+ const path={kind:'path',label:'thin trace',error:.206};
+ const wave={kind:'wave',label:'full ribbon wave',error:.315};
+ const jagged={kind:'jagged',label:'angular',error:.327};
+ const ranked=[path,wave,jagged];
+ assert.equal(reconstructionRefinementIndex(ranked),1);
+ assert.equal(reconstructionRefinementIndex([
+   {kind:'path',error:.263},{kind:'straight',error:.274},
+   {kind:'jagged',error:.280},{kind:'wave',error:.295}]),2);
+ assert.equal(reconstructionRefinementIndex([{kind:'loop',error:.054},wave]),0,
+   'retain existing successful procedural loop');
+ assert.equal(reconstructionRefinementIndex([{kind:'path',error:.04},wave]),0,
+   'no costly low-value challenger on an already close result');
+ assert.equal(reconstructionRefinementIndex([]),-1);
+ const frame=raster(RECONSTRUCTION_FRAME.width,RECONSTRUCTION_FRAME.height,
+   ()=>[0,0,0,255]);
+ let paints=0;
+ const procedural=normalizeRecipe({seed:'widened',structure:'paths',
+   geometry:'wave',orientation:'horizontal',positionY:0});
+ const adjusted=refineReconstructionCandidate({...wave,recipe:procedural},frame,
+   (recipe,w,h)=>{
+     paints++;
+     const diff=Math.min(255,Math.abs(recipe.positionY+25)*10);
+     return raster(w,h,()=>[diff,diff,diff,255]);
+   });
+ assert.equal(adjusted.error,0);
+ assert.equal(adjusted.recipe.positionY,-25);
+ assert.equal(adjusted.refinementRenders,10);
+ assert.equal(paints,10);
+ assert.equal([path,adjusted].sort((a,b)=>a.error-b.error)[0].kind,'wave',
+   'a better fitted procedural challenger displaces a thin generic Draw');
 });
