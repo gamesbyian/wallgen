@@ -231,7 +231,7 @@ export async function openUsageStore(factory=globalThis.indexedDB){
 export function createCreativeRecorder({store,id=()=>globalThis.crypto.randomUUID(),
   now=()=>new Date().toISOString(),clock=()=>Date.now(),enabled=false,onError=()=>{}}){
   let active=Boolean(enabled),sessionId=id(),episodeId=null,seq=0,commits=0,latest=null;
-  let queue=Promise.resolve(),failed=null;
+  let queue=Promise.resolve(),failed=null,recoveryWarning=null;
   let manualEdits=0,engagedMs=0,lastActivityMs=null,lastExportedRecipe=null;
   let lastManualKey=null,lastManualAt=null,lastRequestedRecipe=null;
   const recipeKey=x=>JSON.stringify(normalizeRecipe(x));
@@ -272,17 +272,33 @@ export function createCreativeRecorder({store,id=()=>globalThis.crypto.randomUUI
     // Only the existing last durable snapshot may be reconciled. No browser
     // unload event is reliable enough to prove a session ended intentionally.
     // Another tab may even still be active: this is explicitly unconfirmed.
-    if(!active||episodeId||!previous||previous.type==='session_interrupted'||
-      typeof previous.sessionId!=='string'||typeof previous.episodeId!=='string'||
-      !previous.recipe)return false;
-    const snapshot=normalizeRecipe(previous.recipe),at=now();
-    const seq=Math.max(0,Number(previous.seq)||0)+1;
+    if(!active||episodeId||!previous||previous.type==='session_interrupted')
+      return false;
+    // IndexedDB can survive an interrupted or partially migrated session.
+    // Do not turn a corrupt checkpoint into a fabricated "interrupted" event,
+    // nor write an unsafe sequence that poisons downstream replay forever.
+    const invalid=()=>{
+      recoveryWarning='Previous activity checkpoint could not be verified. '+
+        'Its existing events remain available to inspect/export; no terminal event was invented.';
+      return false;
+    };
+    if(typeof previous.sessionId!=='string'||!previous.sessionId||
+      typeof previous.episodeId!=='string'||!previous.episodeId||
+      !Number.isSafeInteger(previous.seq)||previous.seq<1||
+      previous.seq>=Number.MAX_SAFE_INTEGER||!previous.recipe)
+      return invalid();
+    let snapshot,digest;
+    try{
+      snapshot=normalizeRecipe(previous.recipe);
+      digest=recipeDigest(snapshot);
+    }catch{return invalid();}
+    const at=now(),seq=previous.seq+1;
     const eventId=id();
     const item={schema:1,eventId,sessionId:previous.sessionId,
       episodeId:previous.episodeId,seq,at,type:'session_interrupted',
       cause:'next_startup_found_last_known_snapshot',uncertain:true,
       lastObservedAt:previous.at||null,recipe:clone(snapshot),
-      afterDigest:recipeDigest(snapshot)};
+      afterDigest:digest};
     enqueue(item,{sessionId:previous.sessionId,episodeId:previous.episodeId,
       seq,at,type:'session_interrupted',recipe:snapshot});
     return true;
@@ -372,7 +388,7 @@ export function createCreativeRecorder({store,id=()=>globalThis.crypto.randomUUI
     // The remote immutable archive may still contain events from the deleted
     // session. A fresh locally consented history must not reuse its identity
     // or restart its sequence inside that same historical session.
-    sessionId=id();failed=null;episodeId=null;seq=0;commits=0;
+    sessionId=id();failed=null;recoveryWarning=null;episodeId=null;seq=0;commits=0;
     manualEdits=0;engagedMs=0;lastActivityMs=null;lastExportedRecipe=null;
     lastRequestedRecipe=null;lastManualKey=null;lastManualAt=null;
   }
@@ -381,6 +397,7 @@ export function createCreativeRecorder({store,id=()=>globalThis.crypto.randomUUI
     get sessionId(){return sessionId;},
     get durable(){return store.durable;},episodeStats,
     get error(){return failed;},get warning(){return store.warning;},
+    get recoveryWarning(){return recoveryWarning;},
     start,recoverPrevious,transition,action,supersede,setEnabled,exportJSON,clear,
     flush:()=>queue,records:async()=>{await queue;return store.all();},
     last:async()=>{await queue;return store.last();}
