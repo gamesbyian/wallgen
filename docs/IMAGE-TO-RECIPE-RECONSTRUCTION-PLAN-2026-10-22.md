@@ -1,5 +1,15 @@
 # Image-to-recipe reconstruction: native and external imports
 
+**R0 reproducibility checkpoint (23 October):** PR #560 adds opt-in `scripts/review-reconstruction.mjs`.
+Execute from repo root with Playwright/Chromium installed:
+
+    node scripts/review-reconstruction.mjs --out-dir artifacts/reconstruction-r0-unique-run
+
+`--browser /usr/bin/chromium` can specify an installed binary. `--list` inspects thirteen cases without browser. The script invokes the **existing** `render-headless.mjs` for 13 standardized straight/diagonal/curved/jagged/hairpin/loop/drawn/radial/nested/scattered/material/fibre/compound cases at 480×1040, verifies embedded canonical source recipes, then creates IDAT-identical metadata-free evaluation copies through `scanPngChunks`, retaining original full images and `.recipe.json` truth separately. It refuses to overwrite prior evidence, writes `manifest.json` and local gallery with status `produced-not-reviewed`.
+
+**This script has not been executed against actual Chromium production PNGs by this agent.** R0 actual-render and visually inspected acceptance remain open in #557. External graphic examples must be permissioned/supplied, never fabricated. No automatic browser CI or historical PNG parity tests were added.
+
+
 **23 October 2026 implementation checkpoint:** [PR #556](https://github.com/gamesbyian/wallgen/pull/556) introduces a working **R1–R4 first slice**: shared bounded seven-hue component descriptors; editable canonical seven-circle scattered overrides and drawn-path alternatives; no more than six real `drawWallpaper` evaluations at 96×208 with low-resolution pixel/coverage ranking; alternate choice and inferred-result disclosure inside the existing import modal; normal lock-respecting Undo/Save transport. Focused synthetic metadata-free and external-raster tests join the lean quick check. **Not yet proven:** R0 actual current-artwork PNG corpus or visual inspection; material reconstruction, fine segmentation, fully independent coloured shapes/layering, numerical iterative optimization, source provenance carried into saved output, real handset interaction and rendered-image artistic quality. Follow-up [#557](https://github.com/gamesbyian/wallgen/issues/557) owns those tasks. Green quick CI is only code/test evidence, not R0 or real-image acceptance.
 
 
