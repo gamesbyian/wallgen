@@ -187,7 +187,25 @@ export function extractImagePathCandidates({data,width:w,height:h}){
   }
   const minArea=Math.max(30,Math.floor(w*h*.0015)),result=[];
   const colourRegions=components(colourful,w,h,minArea);
-  for(const region of colourRegions.slice(0,2)){
+  // A complete rainbow of seven wide, spatially separated bands has a
+  // measured central component. Tracing the largest random pigment instead
+  // can place a wide Draw baseline three or more gaps from the centre,
+  // aggravating inward normal-offset folds at angular corners. Use the same
+  // already-extracted flood-fill components to choose the median track,
+  // without a new hue parser or an extra real-render candidate.
+  const horizontalStack=colourRegions.length===7&&colourRegions.every(r=>
+    (r.maxX-r.minX)>=w*.45&&(r.maxY-r.minY)<=h*.55);
+  const verticalStack=colourRegions.length===7&&!horizontalStack&&
+    colourRegions.every(r=>
+      (r.maxY-r.minY)>=h*.45&&(r.maxX-r.minX)<=w*.55);
+  const medianBand=horizontalStack?
+    [...colourRegions].sort((a,b)=>(a.minY+a.maxY)-(b.minY+b.maxY))[3]:
+    verticalStack?
+    [...colourRegions].sort((a,b)=>(a.minX+a.maxX)-(b.minX+b.maxX))[3]:
+    null;
+  const orderedBands=medianBand?[medianBand,...colourRegions.filter(r=>r!==medianBand)]:
+    colourRegions;
+  for(const region of orderedBands.slice(0,2)){
     const p=colourCentreline(region,w,h);
     if(p.length>=12&&Math.max((region.maxX-region.minX)/w,
       (region.maxY-region.minY)/h)>.2)
