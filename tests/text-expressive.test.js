@@ -109,3 +109,17 @@ test('curved native tracking remains bounded and painter follows resolution-scal
   assert.ok(largeFill[6]>fills[0][6]*4.5);
   assert.ok(largeFill[7]>fills[0][7]*4.5);
 });
+
+test('multiline curves separate along their tangent normals without crossing',()=>{
+  const item={text:'WW\nWW',path:'wave',pathHeight:80,size:50,
+    lineSpacing:75,colour:'black',outline:'none'};
+  const ctx=fake();
+  drawTextOverlays(ctx,600,1300,resolveScene(normalizeRecipe({textOverlays:[item]})));
+  const glyphPositions=ctx.calls.filter(c=>c[0]==='translate'&&
+    Math.abs(c[1])>1&&Math.abs(c[1])<250&&Math.abs(c[2])<300);
+  assert.equal(glyphPositions.length,4,'four independent glyph translations');
+  const separation=Math.hypot(glyphPositions[2][1]-glyphPositions[0][1],
+    glyphPositions[2][2]-glyphPositions[0][2]);
+  assert.ok(Math.abs(separation-50*1.17*1.75)<.01,
+    'same-station glyphs are separated by true line leading along path normal');
+});
