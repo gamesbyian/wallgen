@@ -32,7 +32,10 @@ try{
   const pageErrors=[];
   page.on('pageerror',error=>pageErrors.push(error.message));
   await page.goto('http://127.0.0.1:'+server.address().port+'/',{waitUntil:'domcontentloaded'});
-  await page.waitForSelector('.editor-tool-card[data-editor-tool="typography"]',{timeout:30000});
+  await page.waitForSelector('.editor-tool-card[data-editor-tool="typography"]',
+    {state:'attached',timeout:30000});
+  // Portrait mode keeps the editor in a closed utility sheet until opened.
+  await page.locator('#mobileEdit').click();
   await page.locator('.settings-tab[data-tab="details"]').click();
   await page.locator('.editor-tool-tab[data-editor-tool="typography"]').click();
   await page.locator('[data-text-add]').click();
