@@ -1,0 +1,25 @@
+/* Text lives in Details, using the existing mobile editor card and tool rail. */
+.text-overlay-editor{display:grid;gap:10px;min-width:0;font-size:.88rem}
+.text-overlay-editor label{display:grid;gap:4px;min-width:0;line-height:1.25;color:var(--ink,inherit)}
+.text-overlay-editor select,.text-overlay-editor textarea{
+  width:100%;min-width:0;box-sizing:border-box;min-height:44px;
+  border:1px solid var(--line,#8a8a8a);border-radius:10px;
+  background:var(--surface,#fff);color:inherit;padding:8px 10px;font:inherit
+}
+.text-overlay-editor textarea{min-height:66px;resize:vertical;max-height:145px}
+.text-overlay-commands{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:6px;align-items:end}
+.text-overlay-commands button{min-height:44px;border-radius:10px;border:1px solid var(--line,#888);padding:5px 10px;background:var(--surface,#fff);color:inherit;font:inherit}
+.text-overlay-commands button:disabled{opacity:.5}
+.text-overlay-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.text-overlay-grid select{max-width:100%}
+.text-overlay-grid input[type=range]{width:100%;min-height:30px;accent-color:#3f91da}
+.text-overlay-grid .text-overlay-check{display:flex;gap:8px;align-items:center;min-height:44px}
+.text-overlay-check input{width:20px;height:20px;flex:none}
+.text-overlay-hint{margin:0;color:var(--muted,#777);font-size:.78rem;line-height:1.4}
+.text-overlay-editor [hidden]{display:none!important}
+@media(max-width:420px){
+ .text-overlay-commands{grid-template-columns:minmax(0,1fr) 70px 76px}
+ .text-overlay-commands button{padding:5px;font-size:.8rem}
+ .text-overlay-grid{gap:7px}
+ .text-overlay-editor{font-size:.82rem}
+}
