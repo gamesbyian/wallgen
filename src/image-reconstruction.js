@@ -1,7 +1,7 @@
 // Inverse-graphics candidate synthesis, not a second scene model.
 // The analysis source is bounded by image-path.js; every output is a normal
 // editable wallpaper recipe. No source pixels or alleged original seed persist.
-import {HUES,normalizeRecipe,resolveScene,respectSettingLocks} from './model.js';
+import {HUES,PALETTES,COLOR_STORIES,normalizeRecipe,resolveScene,respectSettingLocks} from './model.js';
 import {importedAngleDeltaDegrees} from './import-angle-wrap.js';
 import {cloneGeometrySnapshot} from './geometry-asset.js';
 import {appliedDrawnPathRecipe} from './draw-apply-transaction.js';
@@ -256,6 +256,62 @@ export function seedMeasuredRibbonControls(recipe,metrics,imageWidth,imageHeight
     stripeWidth:clamp(Math.round(stripeWidth),0,100)});
 }
 
+/**
+ * Compare observed hue-mask pigment appearance with this product's CURRENT
+ * colour stories. This is a conservative source-only proposal, never an
+ * assertion that the original artwork used that palette or was made here.
+ * No parallel colour segmentation or extra forward renderer is introduced.
+ * Mixed paint, photographs, fading and partial hues should simply fall back
+ * to the established classic starting point and explicit uncertainty.
+ */
+export function measuredCanonicalPalette(regions){
+  if(!Array.isArray(regions)||regions.length!==7)return null;
+  const ordered=Array.from({length:7},(_,index)=>
+    regions.find(region=>region?.index===index));
+  if(ordered.some(region=>!region||region.area<16||
+    !Array.isArray(region.meanRGB)||region.meanRGB.length!==3||
+    region.meanRGB.some(value=>!Number.isFinite(value)||value<0||value>255)))
+    return null;
+  const observed=ordered.map(region=>{
+    const [r,g,b]=region.meanRGB.map(value=>value/255);
+    const hi=Math.max(r,g,b),lo=Math.min(r,g,b),delta=hi-lo;
+    const light=(hi+lo)/2;
+    const sat=delta/(1-Math.abs(2*light-1)||1);
+    let hue=0;
+    if(delta>0){
+      if(hi===r)hue=((g-b)/delta)%6;
+      else if(hi===g)hue=(b-r)/delta+2;
+      else hue=(r-g)/delta+4;
+    }
+    return {hue:(hue*60+360)%360,sat:sat*100,light:light*100};
+  });
+  // In muted, textured or photographed sources, apparent hue and lightness
+  // can disagree with every canonical colour story. Reject rather than
+  // assigning an implausible palette to seven coincidental hue components.
+  const ranked=PALETTES.map(palette=>{
+    const story=COLOR_STORIES[palette];
+    const perHue=observed.map((swatch,index)=>{
+      const expected=(HUES[index]+(story.hue?.[index]??0)+360)%360;
+      const delta=Math.abs(swatch.hue-expected);
+      const hueError=Math.min(delta,360-delta)/12;
+      const satError=Math.abs(swatch.sat-story.sat)/18;
+      const lightError=Math.abs(
+        swatch.light-story.light-(story.lights?.[index]??0))/13;
+      return hueError+satError+lightError;
+    });
+    return {palette,error:perHue.reduce((sum,v)=>sum+v,0)/7,
+      worst:Math.max(...perHue)};
+  }).sort((a,b)=>a.error-b.error);
+  const [best,next]=ranked;
+  const classic=ranked.find(item=>item.palette==='classic');
+  // Classic remains the noncommittal fallback. HSL stories that are too
+  // similar to distinguish do not warrant a source-provenance claim.
+  if(best.palette==='classic'||best.error>1||best.worst>2.1||
+    classic.error-best.error<.65||next.error-best.error<.2)return null;
+  return {palette:best.palette,appearanceError:best.error,
+    classicAppearanceError:classic.error};
+}
+
 /** Geometry-first analysis. Colour slots carry no claim about source provenance. */
 export function describeReconstructionImage(image){
   const colour=extractImageColourRegions(image,HUES,{includeRepeatShape:true});
@@ -306,7 +362,9 @@ export function describeReconstructionImage(image){
   const stripeAngle=imageStripeAngle(colour.regions,image.width,image.height);
   const curve=imageCurveSignature(paths,image.width,image.height);
   const ribbonBands=measuredRainbowRibbonBands(colour.regions,image.width,image.height);
+  const paletteHypothesis=measuredCanonicalPalette(colour.regions);
   return {background:colour.background,colourRegions:colour.regions,
+    paletteHypothesis,
     repeatShape:colour.repeatShape,
     repeatedColourRegions,
     paths:paths.slice(0,6),sevenColourRegions:seven,lineDirection,
@@ -354,7 +412,10 @@ export function diverseReconstructionCandidates(candidates,limit=RECONSTRUCTION_
 export function reconstructionCandidates(image,recipe){
   const desc=describeReconstructionImage(image);
   const current=normalizeRecipe(recipe);
-  const base=strippedCandidateBase(current,desc.background);
+  // Prefer a strongly distinguishable *appearance* hypothesis only. The
+  // canonical painter still ranks candidate geometry; history is unknown.
+  const base={...strippedCandidateBase(current,desc.background),
+    palette:desc.paletteHypothesis?.palette??'classic'};
   const candidates=[];
   if(desc.repeatShape){
     // Seven physically translated copies of one contour are directly
