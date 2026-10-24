@@ -58,10 +58,14 @@ test('per-letter cycles the live rainbow palette at preview and export sizes',()
   drawTextOverlays(small,600,1300,scene);
   drawTextOverlays(large,3024,6552,scene);
   const fills=c=>c.calls.filter(x=>x[0]==='fill');
-  assert.equal(fills(small).length,7);
-  assert.deepEqual(fills(small),fills(large));
-  assert.deepEqual(fills(small).map(x=>x[4]),scene.stripes.map(x=>x.color));
-  assert.equal(small.calls.filter(x=>x[0]==='stroke').length,7);
+  assert.equal(fills(small).length,1,'native glyph shaping must paint a line only once');
+  assert.equal(fills(small)[0][1],'RAINBOW');
+  assert.deepEqual(fills(small).map(x=>x.slice(0,4)),fills(large).map(x=>x.slice(0,4)));
+  const gradients=small.calls.filter(x=>x[0]==='gradient');
+  assert.equal(gradients.length,1);
+  assert.deepEqual(gradients[0][2].filter((_,i)=>i%2===0).slice(0,7)
+    .map(s=>s[1]),scene.stripes.map(x=>x.color));
+  assert.equal(small.calls.filter(x=>x[0]==='stroke').length,1);
   assert.deepEqual(small.calls.filter(x=>x[0]==='scale')[0],['scale',1,1]);
   assert.deepEqual(large.calls.filter(x=>x[0]==='scale')[0],['scale',3024/600,6552/1300]);
 });
@@ -74,11 +78,12 @@ test('per-word counts actual words, gradients draw seven stops, black has no str
   const ctx=fakeContext();
   drawTextOverlays(ctx,600,1300,scene);
   const tokens=ctx.calls.filter(x=>x[0]==='fill'&&x[1].trim());
-  assert.equal(tokens[0][1],'ONE');
-  assert.equal(tokens[1][1],'TWO');
-  assert.equal(tokens[0][4],scene.stripes[0].color);
-  assert.equal(tokens[1][4],scene.stripes[1].color);
-  assert.equal(ctx.calls.filter(x=>x[0]==='gradient')[0][2].length,7);
+  assert.deepEqual(tokens.map(x=>x[1]),['ONE TWO','RNBW','Hi']);
+  const gradients=ctx.calls.filter(x=>x[0]==='gradient');
+  assert.equal(gradients.length,2);
+  assert.equal(gradients[0][2][0][1],scene.stripes[0].color);
+  assert.equal(gradients[0][2].at(-1)[1],scene.stripes[1].color);
+  assert.equal(gradients[1][2].length,7);
   assert.equal(tokens.at(-1)[4],'#000000');
   assert.equal(ctx.calls.filter(x=>x[0]==='stroke').length,0);
 });

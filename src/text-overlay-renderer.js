@@ -2,14 +2,12 @@ import {DESIGN_WIDTH,DESIGN_HEIGHT} from './model.js';
 import {TEXT_FONTS} from './text-overlays.js';
 import {typefacesReady,typefaceCssFamily} from './typography-fonts.js';
 import {availableTextWidth} from './text-direct-geometry.js';
+import {rainbowTextStops} from './text-rainbow-shaping.js';
 
 // The same post-composite typography pass is used by reference, worker,
 // thumbnail, headless, and preview-cache composition. Never render DOM text
 // over the preview: it would disappear from PNG exports.
 const fallbackRainbow=['#FF474E','#FF9B39','#FFE25B','#4FDD87','#53AAFF','#6359E5','#BB64ED'];
-const graphemes=value=>typeof Intl!=='undefined'&&typeof Intl.Segmenter==='function'?
-  Array.from(new Intl.Segmenter(undefined,{granularity:'grapheme'}).segment(value),p=>p.segment):
-  Array.from(value);
 export function drawTextOverlays(ctx,width,height,scene){
   if(!scene?.textOverlays?.length)return;
   if(!typefacesReady(scene))throw Error('Typeface unavailable: prepare fonts before painting');
@@ -43,25 +41,26 @@ export function drawTextOverlays(ctx,width,height,scene){
       ctx.translate(0,(lineIndex-(lines.length-1)/2)*lineHeight);
       ctx.scale(shrink,1);
       const start=-total/2;
-      let x=start;
-      let units;
-      if(item.colour==='rainbow-letter')units=graphemes(line);
-      else if(item.colour==='rainbow-word')units=line.match(/\s+|\S+/gu)||[];
-      else units=[line];
-      const gradient=item.colour==='rainbow-gradient'&&total>0?
-        ctx.createLinearGradient(start,0,start+total,0):null;
-      if(gradient)colours.forEach((c,i)=>gradient.addColorStop(i/6,c));
-      for(const unit of units){
-        const unitWidth=ctx.measureText(unit).width;
-        if(item.outline!=='none'&&item.outlineWidth>0)ctx.strokeText(unit,x,0);
-        ctx.fillStyle=item.colour==='black'?'#000000':
-          item.colour==='white'?'#ffffff':gradient||
-          colours[colourIndex%colours.length];
-        ctx.fillText(unit,x,0);
-        x+=unitWidth;
-        if(item.colour==='rainbow-letter'&&unit.trim())colourIndex++;
-        if(item.colour==='rainbow-word'&&unit.trim())colourIndex++;
+      let gradient=null;
+      if(item.colour==='rainbow-gradient'&&total>0){
+        gradient=ctx.createLinearGradient(start,0,start+total,0);
+        colours.forEach((colour,i)=>gradient.addColorStop(i/6,colour));
+      }else if((item.colour==='rainbow-letter'||item.colour==='rainbow-word')&&total>0){
+        const coloursForLine=rainbowTextStops(line,item.colour,colours,colourIndex,
+          unit=>ctx.measureText(unit).width);
+        colourIndex=coloursForLine.nextIndex;
+        gradient=ctx.createLinearGradient(start,0,start+total,0);
+        for(const stop of coloursForLine.stops)
+          gradient.addColorStop(stop.offset,stop.colour);
       }
+      // Critical: draw the entire shaped run only once. Sharp gradient stops
+      // recolour letters/words, preserving native ligatures, joining and
+      // kerning even when colours change between grapheme clusters.
+      if(item.outline!=='none'&&item.outlineWidth>0)
+        ctx.strokeText(line,start,0);
+      ctx.fillStyle=item.colour==='black'?'#000000':
+        item.colour==='white'?'#ffffff':gradient||colours[colourIndex%colours.length];
+      ctx.fillText(line,start,0);
       ctx.restore();
     });
     ctx.restore();
