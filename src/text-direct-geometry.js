@@ -1,4 +1,5 @@
 import {DESIGN_WIDTH,DESIGN_HEIGHT} from './model.js';
+import {textGraphemes} from './text-rainbow-shaping.js';
 
 // Text overlay coordinates refer to the finished wallpaper, independent of
 // stripe/world coordinates and the editor's camera/nudge controls.
@@ -21,7 +22,8 @@ export function availableTextWidth(item){
 }
 export function measuredTextBounds(item,measure){
   const lines=String(item.text||'').split('\n');
-  const actualWidth=Math.max(0,...lines.map(line=>measure(line)));
+  const actualWidth=Math.max(0,...lines.map(line=>Math.max(0,
+    measure(line)+(item.letterSpacing??0)*textGraphemes(line).length)));
   const width=Math.min(availableTextWidth(item),actualWidth);
   const height=Math.max(1,lines.length)*item.size*1.17*(1+(item.lineSpacing??0)/100);
   if(item.path==='circle'){
