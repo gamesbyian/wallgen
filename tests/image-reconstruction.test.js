@@ -5,7 +5,7 @@ import {imagePlacement,extractImageColourRegions} from '../src/image-path.js';
 import {describeReconstructionImage,reconstructionCandidates,
   rankReconstructionCandidates,compareReconstructionPixels,refineReconstructionCandidate,reconstructionPlacement,
   radialImageSignature,imageStripeAngle,imageCurveSignature,diverseReconstructionCandidates,reconstructionRefinementIndex,
-  measuredRainbowRibbonBands,seedMeasuredRibbonControls,coherentWaveOffsetY,coherentVerticalBandOffsetX,coherentExpandedDrawOffsetY,measuredExpandedDrawRegistration,
+  measuredRainbowRibbonBands,seedMeasuredRibbonControls,coherentWaveOffsetY,coherentVerticalBandOffsetX,coherentExpandedDrawOffsetY,measuredExpandedDrawRegistration,measuredJaggedPixelShift,
   rankReconstructionCandidatesCooperatively,refineReconstructionCandidateCooperatively,
   RECONSTRUCTION_FRAME,RECONSTRUCTION_RENDER_LIMIT} from '../src/image-reconstruction.js';
 
@@ -1010,4 +1010,50 @@ test('seven repeated holed compound hue groups preserve two components and a rea
  });
  assert.equal(describeReconstructionImage(implausible).repeatShape,null,
    'missing detached island in one hue must not imply identical source semantics');
+});
+
+
+test('Jagged near-miss uses one real-render measured fine registration instead of oversized 20 percent jumps',async()=>{
+ const w=RECONSTRUCTION_FRAME.width,h=RECONSTRUCTION_FRAME.height;
+ const shifted=(dx=0,dy=0)=>raster(w,h,(x,y)=>{
+   for(let i=0;i<7;i++){
+     const band=15+i*23+Math.round(x*.13)+
+       Math.round(6*Math.abs(Math.sin(x/14)));
+     if(Math.abs(y-band-dy)<3&&x>6+dx&&x<w-5+dx)
+       return colour(HUES[i]);
+   }
+   return [0,0,0,255];
+ });
+ const source=shifted(),first=shifted(0,3);
+ const alignment=measuredJaggedPixelShift(source,first);
+ assert.ok(alignment&&alignment.measuredPixelGain>.04);
+ assert.ok(alignment.offsetY<0&&Math.abs(alignment.offsetY)<3);
+ const recipe=normalizeRecipe({seed:'angular-fine-registration',
+   geometry:'jagged',positionX:0,positionY:0,background:'black'});
+ const paint=next=>shifted(Math.round(next.positionX*w/100),
+   3+Math.round(next.positionY*h/100));
+ const ranked=rankReconstructionCandidates([
+   {kind:'jagged',label:'Measured Jagged',recipe,uncertainty:'inferred'}
+ ],source,paint);
+ assert.ok(ranked[0].jaggedShift);
+ const best=refineReconstructionCandidate(ranked[0],source,paint);
+ assert.ok(best.error<ranked[0].error*.55);
+ assert.ok(best.refinementRenders<=10);
+ assert.deepEqual(await refineReconstructionCandidateCooperatively(
+   ranked[0],source,paint,{yieldControl:async()=>{}}),best);
+ const locked=normalizeRecipe({...recipe,lockedSettings:['position']});
+ const tried=[];
+ const protectedCandidate={...ranked[0],recipe:locked};
+ const held=refineReconstructionCandidate(protectedCandidate,source,next=>{
+   tried.push(next);return source;});
+ assert.ok(tried.length<=10&&tried.every(r=>
+   r.positionX===0&&r.positionY===0));
+ assert.equal(held.recipe.positionX,0);
+ assert.equal(held.recipe.positionY,0);
+ const noShift=measuredJaggedPixelShift(source,source);
+ assert.equal(noShift,null);
+ const unrelated=raster(w,h,(x,y)=>
+   x>70&&x<90&&y>40&&y<150?[255,255,255,255]:[0,0,0,255]);
+ assert.equal(measuredJaggedPixelShift(source,unrelated),null,
+   'unrelated pixel masks do not authorize a fine phase-registration claim');
 });
