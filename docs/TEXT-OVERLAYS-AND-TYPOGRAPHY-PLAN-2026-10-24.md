@@ -1,4 +1,9 @@
 # Text overlays and typography: product specification and implementation queue
+
+## CURRENT T3 PRIORITIES · 24 October 2026
+
+[Live three-agent dispatch](CURRENT-WORK-QUEUE-2026-10-24.md) and [#653](https://github.com/gamesbyian/wallgen/issues/653) are the executable authorities. PRs #654–#663 have merged; #662 on-canvas 44px rotate/scale controls have actually passed source Chromium interaction and wallpaper review; #663 has verified a real 3024×6552 imported-TTF PNG through the production handler, **not** visible mobile Download-button navigation or physical device memory. Agent 2 owns canonical **text-on-path**, specialist Unicode/font coverage, and selectively valuable expressive controls; Agent 3 independently owns portrait touch/IME/keyboard/TalkBack evidence and the visible UI download journey. A device/creator test absent actual access stays explicitly NOT TESTED, not an imaginary acceptance failure. Do not reimplement shipped font libraries or scene composition.
+
 **Decision:** Owner-requested 24 October 2026. [Issue #653](https://github.com/gamesbyian/wallgen/issues/653). New, distinct creative feature: previous 23 October claims of completed editor/renderer work remain valid for their previous scope.
 
 ## Creator outcome
