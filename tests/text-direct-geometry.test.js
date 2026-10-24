@@ -19,7 +19,7 @@ test('bounds use renderer\'s canonical 94%-width shrink and authored multiline r
  const item={text:'X'.repeat(100)+'\nY',size:60};
  const bounds=measuredTextBounds(item,s=>s.length*10);
  assert.equal(bounds.width,564);
- assert.equal(bounds.height,140.4);
+ assert.ok(Math.abs(bounds.height-140.4)<1e-9);
 });
 test('topmost text wins overlap hit-test, rotated bbox and off-glyph misses are honored',()=>{
  const list=sample.textOverlays;
