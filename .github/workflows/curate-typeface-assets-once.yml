@@ -1,0 +1,32 @@
+name: One-shot curate OFL typeface assets
+on:
+  pull_request:
+    paths:
+      - 'scripts/fetch-curated-typefaces.mjs'
+      - '.github/workflows/curate-typeface-assets-once.yml'
+permissions:
+  contents: write
+jobs:
+  vendor:
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'agent/curated-typeface-pack-20261024' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Fetch pinned font data and exact upstream licence files
+        run: node scripts/fetch-curated-typefaces.mjs
+      - name: Commit reproducible OFL assets to same work branch
+        run: |
+          git config user.name "roygbiv-assets-bot"
+          git config user.email "roygbiv-assets-bot@users.noreply.github.com"
+          git add assets/fonts
+          if ! git diff --cached --quiet; then
+            git commit -m "assets: vendor 27 pinned OFL typefaces and licence texts"
+            git push origin HEAD:agent/curated-typeface-pack-20261024
+          fi
