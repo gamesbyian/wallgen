@@ -378,8 +378,10 @@ export function reconstructionCandidates(image,recipe){
         radius:clamp(radius*part.scale,.01,1.2)
       }));
       candidates.push({kind:'shape-repeats',
-        label:'Seven congruent editable colour-silhouette stamps',
-        uncertainty:'Seven similar translated hue masks share one portable contour; each stamp can be moved and resized. Source path, subtle per-hue variations, occlusion order, original pigments and seed are not recovered.',
+        label:geometry.components.length>1?
+          'Seven editable repeated compound silhouettes':
+          'Seven congruent editable colour-silhouette stamps',
+        uncertainty:'Seven measured translated hue masks share one portable shape snapshot, including detected holes and detached islands. Each stamp can be moved and resized. Original path, hidden colour variations, painter order, pigments and seed remain uncertain.',
         recipe:normalizeRecipe({...base,structure:'regions',regionMode:'scattered',
           scatteredShapeKind:'imported',scatteredShape:cloneGeometrySnapshot(geometry),
           scatteredCount:7,scatteredOverlap:'overlap',scatteredSpacing:0,
