@@ -103,6 +103,57 @@ test('missing or ambiguous pigmentation does not manufacture source palette sema
   assert.equal(describeReconstructionImage(original).paletteHypothesis,null);
 });
 
+test('occluded circular arcs and visible hue precedence recover editable reverse-layer disks',()=>{
+ const centres=[[38,58],[53,83],[68,108],[83,133],[77,170],[62,195],[47,220]];
+ const radius=22,w=160,h=320;
+ // Deliberately independent authored synthetic raster. This is a descriptor
+ // test, not production renderer image quality or original scene provenance.
+ const image=raster(w,h,(x,y)=>{
+   let colourValue=[0,0,0,255];
+   for(let i=6;i>=0;i--){
+     if(Math.hypot(x-centres[i][0],y-centres[i][1])<=radius)
+       colourValue=colour(HUES[i]);
+   }
+   return colourValue;
+ });
+ const masks=extractImageColourRegions(image,HUES,{includeRepeatShape:true});
+ assert.ok(Array.isArray(masks.circleHints)&&masks.circleHints.length===7);
+ masks.circleHints.forEach((hint,i)=>{
+   assert.ok(Math.abs(hint.cx*w-centres[i][0])<=2);
+   assert.ok(Math.abs(hint.cy*h-centres[i][1])<=2);
+   assert.ok(Math.abs(hint.radius*w-radius)<=2);
+ });
+ assert.deepEqual(masks.inferredCircleLayers?.order,[6,5,4,3,2,1,0],
+   'frontmost red is supported by actual visible overlap pixels');
+ const desc=describeReconstructionImage(image);
+ assert.deepEqual(desc.inferredCircleLayers?.order,[6,5,4,3,2,1,0]);
+ const options=reconstructionCandidates(image,normalizeRecipe({seed:'no-source-scene-truth'}));
+ assert.ok(options.length<=RECONSTRUCTION_RENDER_LIMIT);
+ const candidate=options.find(option=>option.kind==='regions');
+ assert.ok(candidate);
+ assert.deepEqual(candidate.recipe.scatteredLayerOrder,[6,5,4,3,2,1,0]);
+ assert.equal(candidate.recipe.dividerColor,'none');
+ assert.equal(candidate.recipe.dividerWidth,0);
+ assert.equal(resolveScene(candidate.recipe).objects.length,7);
+ assert.ok(/uncertain/.test(candidate.uncertainty));
+ const dividerLocked=normalizeRecipe({seed:'preserve-maker-lines',
+   structure:'regions',regionMode:'scattered',dividerColor:'white',
+   dividerWidth:18,lockedSettings:['dividerColor','dividerWidth']});
+ const lockedLines=reconstructionCandidates(image,dividerLocked)
+   .find(option=>option.kind==='regions');
+ assert.equal(lockedLines?.recipe.dividerColor,'white');
+ assert.equal(lockedLines?.recipe.dividerWidth,18);
+ assert.deepEqual(decodeRecipe(encodeRecipe(candidate.recipe)),candidate.recipe);
+ // Layer order is an editable canonical scene field but currently not a
+ // registered lockable setting. Respect the existing *structural* locks
+ // rather than pretending an unsupported layer-order lock is enforced.
+ const sourceLocked=normalizeRecipe({seed:'locked-overlap',structure:'paths',
+   regionMode:'nested',lockedSettings:['structure','regionMode']});
+ const protectedOptions=reconstructionCandidates(image,sourceLocked);
+ assert.ok(protectedOptions.every(option=>option.kind!=='regions'),
+   'a locked non-region scene cannot commit the proposed overlap circles');
+});
+
 test('five separate leading-hue pigment islands recover as five canonical movable circles',()=>{
  const points=[[22,30],[126,54],[58,115],[140,178],[42,246]];
  const partial=raster(180,290,(x,y)=>{

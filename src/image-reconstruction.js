@@ -378,6 +378,8 @@ export function describeReconstructionImage(image){
   return {background:colour.background,colourRegions:colour.regions,
     paletteHypothesis,
     repeatShape:colour.repeatShape,
+    circleHints:colour.circleHints,
+    inferredCircleLayers:colour.inferredCircleLayers,
     repeatedColourRegions,incompleteColourRegions,
     paths:paths.slice(0,6),sevenColourRegions:seven,lineDirection,
     stripeAngle,componentDiagonalAngle,radial,curve,ribbonBands,coverage:colour.coverage,
@@ -487,12 +489,20 @@ export function reconstructionCandidates(image,recipe){
     // pigment; do not claim to resolve overlaps or arbitrary colour orders.
     const repeated=editableRegions.length===14;
     const placed=reconstructionPlacement(image.width,image.height);
-    const overrides=editableRegions.map((region,index)=>({
-      index:repeated?index:region.index,
-      x:(placed.x+region.cx*placed.width)/600,
-      y:(placed.y+region.cy*placed.height)/1300,
-      radius:clamp(Math.sqrt(region.area/Math.PI)*placed.width/image.width/600,.01,1.2)
-    }));
+    const overrides=editableRegions.map((region,index)=>{
+      // When a circle hides part of another, the visible mask centroid/area
+      // underestimates its actual disk. Fit only a sufficiently long, clean
+      // exterior source-to-background arc; otherwise keep conservative area.
+      const measured=!repeated&&desc.circleHints?.[region.index];
+      return {
+        index:repeated?index:region.index,
+        x:(placed.x+(measured?.cx??region.cx)*placed.width)/600,
+        y:(placed.y+(measured?.cy??region.cy)*placed.height)/1300,
+        radius:measured?
+          clamp(measured.radius*placed.width/600,.01,1.2):
+          clamp(Math.sqrt(region.area/Math.PI)*placed.width/image.width/600,.01,1.2)
+      };
+    });
     const partial=editableRegions.length<7;
     candidates.push({kind:'regions',label:repeated?
       'Fourteen editable repeated-colour islands':
@@ -502,11 +512,20 @@ export function reconstructionCandidates(image,recipe){
         'Two compact regions of each ROYGBIV hue are independently editable circles; true contours, painter order, occlusion and noncanonical pigments remain uncertain.':
         partial?
           'Only a compact initial subset of rainbow hue slots is observed; circles are editable approximations. Missing colours, unseen occlusion, original painter order, palette and seed remain uncertain.':
-          'Approximates each colour region with a circle; holes, overlaps and fine edges may differ.',
+          (desc.inferredCircleLayers?
+            'Exposed circular arcs and source-visible pigment precedence support editable overlapping circles; hidden geometry, original painter order and fine edges remain uncertain.':
+            'Approximates each colour region with a circle; holes, overlaps and fine edges may differ.'),
       recipe:normalizeRecipe({...base,structure:'regions',regionMode:'scattered',
+        // Inverse art has no evidence for the editor's otherwise-default
+        // black cell dividers. On overlapping circles these introduced false
+        // dark lens-shaped arcs absent from actual clean source artwork.
+        // A creator's real Divider locks still project below.
+        dividerColor:'none',dividerWidth:0,
         scatteredShapeKind:'circle',scatteredCount:editableRegions.length,
         scatteredOverlap:'overlap',scatteredEdgeCrop:0,scatteredSpacing:0,
-        ...(repeated||partial?{scatteredLayerOrder:[],scatteredMinSize:0}:{}),
+        ...(desc.inferredCircleLayers&&!repeated?
+          {scatteredLayerOrder:desc.inferredCircleLayers.order,scatteredMinSize:0}:
+          repeated||partial?{scatteredLayerOrder:[],scatteredMinSize:0}:{}),
         scatteredOverrides:overrides})});
   }
   // Long separate colour components describe procedural bands more honestly

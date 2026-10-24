@@ -418,6 +418,102 @@ function repeatedHueStampShape(partsByHue,w,h){
 
 }
 
+/**
+ * Infer the underlying disk from its exposed substrate-contact arc. In a
+ * layered scene the visible pigment centroid/area is biased toward the
+ * unoccluded portion, but the exterior arc remains genuinely circular.
+ * This uses only the existing hue component and background measurements,
+ * never a new painter, separate segmentation or assumed hidden source data.
+ */
+function fitExposedCircleArc(part,data,bg,w,h){
+  const pts=[];
+  const background=p=>{
+    const i=p*4;
+    return Math.abs(data[i]-bg[0])+
+      Math.abs(data[i+1]-bg[1])+Math.abs(data[i+2]-bg[2])<110;
+  };
+  for(const p of part.members){
+    const x=p%w,y=(p/w)|0;
+    // Clipped frame boundaries are NOT evidence of a circle perimeter.
+    if(x===0||y===0||x===w-1||y===h-1)continue;
+    if(background(p-1)||background(p+1)||
+      background(p-w)||background(p+w))pts.push([x,y]);
+  }
+  if(pts.length<16)return null;
+  // Keep a deterministic bounded fitting sample even on a large import.
+  const step=Math.max(1,Math.ceil(pts.length/512));
+  const sampled=pts.filter((_,i)=>i%step===0);
+  const mx=sampled.reduce((s,p)=>s+p[0],0)/sampled.length;
+  const my=sampled.reduce((s,p)=>s+p[1],0)/sampled.length;
+  let xx=0,yy=0,xy=0,xb=0,yb=0;
+  for(const [x,y] of sampled){
+    const u=x-mx,v=y-my,r2=u*u+v*v;
+    xx+=u*u;yy+=v*v;xy+=u*v;
+    xb+=u*r2;yb+=v*r2;
+  }
+  const det=xx*yy-xy*xy;
+  if(det<Math.max(1e-6,xx*yy*.0005))return null;
+  const cx=mx+(yy*xb-xy*yb)/(2*det);
+  const cy=my+(xx*yb-xy*xb)/(2*det);
+  if(!Number.isFinite(cx)||!Number.isFinite(cy))return null;
+  const radius=sampled.reduce((s,[x,y])=>
+    s+Math.hypot(x-cx,y-cy),0)/sampled.length;
+  if(radius<4||radius>Math.min(w,h)*.49)return null;
+  const residual=sampled.reduce((s,[x,y])=>
+    s+Math.abs(Math.hypot(x-cx,y-cy)-radius),0)/sampled.length;
+  const arcBins=new Set(sampled.map(([x,y])=>
+    Math.floor((Math.atan2(y-cy,x-cx)+Math.PI)/(2*Math.PI)*16)%16));
+  const areaFraction=part.area/(Math.PI*radius*radius);
+  if(residual>Math.max(1.2,radius*.055)||arcBins.size<5||
+    areaFraction<.18||areaFraction>1.2||
+    cx<-.2*w||cx>1.2*w||cy<-.2*h||cy>1.2*h)return null;
+  return {cx:(cx+.5)/w,cy:(cy+.5)/h,radius:radius/w,
+    residual,arcBins:arcBins.size,visibleFraction:areaFraction};
+}
+
+/** A constrained order hypothesis from *visible* pairwise pigment overlap.
+ * This does not assert original paint order when overlaps are not observable.
+ */
+function inferVisibleCircleLayers(hints,masks,w,h){
+  if(!Array.isArray(hints)||hints.length!==7||hints.some(x=>!x))return null;
+  const outgoing=Array.from({length:7},()=>new Set()),indegree=Array(7).fill(0);
+  let constraints=0;
+  for(let i=0;i<7;i++)for(let j=i+1;j<7;j++){
+    const a=hints[i],b=hints[j];
+    const ra=a.radius*w,rb=b.radius*w;
+    const ax=a.cx*w-.5,ay=a.cy*h-.5,bx=b.cx*w-.5,by=b.cy*h-.5;
+    if(Math.hypot(ax-bx,ay-by)>=ra+rb-2)continue;
+    const x0=Math.max(0,Math.floor(Math.max(ax-ra,bx-rb)));
+    const x1=Math.min(w-1,Math.ceil(Math.min(ax+ra,bx+rb)));
+    const y0=Math.max(0,Math.floor(Math.max(ay-ra,by-rb)));
+    const y1=Math.min(h-1,Math.ceil(Math.min(ay+ra,by+rb)));
+    let countI=0,countJ=0;
+    for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){
+      if((x-ax)**2+(y-ay)**2>(ra-1)**2||
+        (x-bx)**2+(y-by)**2>(rb-1)**2)continue;
+      const p=y*w+x;
+      countI+=masks[i][p];countJ+=masks[j][p];
+    }
+    const high=Math.max(countI,countJ),low=Math.min(countI,countJ);
+    if(high<Math.max(5,Math.min(ra,rb)*.18)||high<low*3)continue;
+    const front=countI>countJ?i:j,back=countI>countJ?j:i;
+    if(!outgoing[back].has(front)){
+      outgoing[back].add(front);indegree[front]++;constraints++;
+    }
+  }
+  if(constraints<4)return null;
+  const order=[];
+  while(order.length<7){
+    const ready=Array.from({length:7},(_,i)=>i)
+      .filter(i=>indegree[i]===0&&!order.includes(i));
+    if(!ready.length)return null; // contradictory evidence: refuse
+    const next=ready[0];
+    order.push(next);indegree[next]=-1;
+    for(const dest of outgoing[next])indegree[dest]--;
+  }
+  return {order,constraints};
+}
+
 export function extractImageColourRegions({data,width:w,height:h},hueTargets,
   {includeRepeatShape=false}={}){
   if(!data||!Number.isInteger(w)||!Number.isInteger(h)||w<12||h<12||
@@ -489,6 +585,8 @@ export function extractImageColourRegions({data,width:w,height:h},hueTargets,
       // Source pigment appearance is measured from the same hue mask; it
       // is not evidence of original palette settings or photo treatment.
       const descriptor={index,area:part.area,
+        ...(includeRepeatShape&&backdrop==='black'?{
+          circleHint:fitExposedCircleArc(part,data,bg,w,h)}:{}),
         meanRGB:[sr/part.area,sg/part.area,sb/part.area],
         cx:(mx+.5)/w,cy:(my+.5)/h,
         fillRatio:part.area/Math.max(1,boxArea),
@@ -500,8 +598,15 @@ export function extractImageColourRegions({data,width:w,height:h},hueTargets,
       if(partNumber===0)regions.push(descriptor);
     }
   }
+  const circleHints=includeRepeatShape&&backdrop==='black'&&
+    regions.length===7&&componentRegions.length===7&&
+    regions.every((region,i)=>region.index===i&&region.circleHint)?
+    regions.map(region=>region.circleHint):null;
   return {background:backdrop,backgroundRGB:bg,
     coverage:coloured/(w*h),regions,componentRegions,
     ...(includeRepeatShape?{
-      repeatShape:repeatedHueStampShape(partsByHue,w,h)}:{})};
+      repeatShape:repeatedHueStampShape(partsByHue,w,h),
+      circleHints,
+      inferredCircleLayers:circleHints?
+        inferVisibleCircleLayers(circleHints,masks,w,h):null}:{})};
 }
