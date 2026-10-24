@@ -28,9 +28,10 @@ for(const useCache of [false,true]){
 }
 
 const noOp=()=>{};
-function proxyCanvasContext({throwOnPresent=false}={}){
+function proxyCanvasContext({throwOnPresent=false,throwOnPhoto=false}={}){
   const value={
     drawImage(){if(throwOnPresent)throw new Error('Injected final compositor failure');},
+    getImageData(){if(throwOnPhoto)throw new Error('Injected Photo readback failure');return {data:new Uint8ClampedArray(0)};},
     createLinearGradient(){return {addColorStop:noOp};},
     createRadialGradient(){return {addColorStop:noOp};}
   };
@@ -84,4 +85,41 @@ test('successful settled previews preserve only their two reusable cache surface
   assert.ok(cache.ink.width>0);
   assert.equal(cache.background.width,target.width);
   assert.equal(cache.background.height,target.height);
+});
+
+test('a late Photo readback failure releases both prepared preview layers',()=>{
+  const target={width:600,height:1300,
+    getContext(){return proxyCanvasContext({throwOnPhoto:true});}};
+  const surfaces=[],cache={};
+  const factory=(width,height)=>{
+    const c={width,height,getContext(){return proxyCanvasContext();}};
+    surfaces.push(c);
+    return c;
+  };
+  assert.throws(()=>drawWallpaper(target,normalizeRecipe({
+    seed:'photo-preview-exception',structure:'regions',regionMode:'nested',
+    material:'none',photoLook:{enabled:true,presetId:'film-slide',amount:100}
+  }),{cache,canvasFactory:factory}),/Injected Photo readback failure/);
+  assert.equal(surfaces.length,2);
+  assert.equal(cache.ink,undefined);
+  assert.equal(cache.background,undefined);
+  for(const c of surfaces)assert.deepEqual([c.width,c.height],[0,0]);
+});
+
+test('background cache allocation failure frees finished ink without publishing cache',()=>{
+  const target={width:600,height:1300,getContext(){return proxyCanvasContext();}};
+  const cache={},created=[];
+  assert.throws(()=>drawWallpaper(target,normalizeRecipe({
+    seed:'background-cache-allocation-failed',structure:'regions',regionMode:'nested',
+    material:'none'
+  }),{cache,canvasFactory:(width,height)=>{
+    if(created.length)throw Error('Injected cache allocation failure');
+    const ink={width,height,getContext(){return proxyCanvasContext();}};
+    created.push(ink);
+    return ink;
+  }}),/Injected cache allocation failure/);
+  assert.equal(created.length,1);
+  assert.deepEqual([created[0].width,created[0].height],[0,0]);
+  assert.equal(cache.ink,undefined);
+  assert.equal(cache.background,undefined);
 });
