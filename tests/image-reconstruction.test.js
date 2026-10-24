@@ -103,6 +103,48 @@ test('missing or ambiguous pigmentation does not manufacture source palette sema
   assert.equal(describeReconstructionImage(original).paletteHypothesis,null);
 });
 
+test('five separate leading-hue pigment islands recover as five canonical movable circles',()=>{
+ const points=[[22,30],[126,54],[58,115],[140,178],[42,246]];
+ const partial=raster(180,290,(x,y)=>{
+   for(let i=0;i<points.length;i++)
+     if(Math.hypot(x-points[i][0],y-points[i][1])<=12)
+       return colour(HUES[i]);
+   return [0,0,0,255];
+ });
+ const desc=describeReconstructionImage(partial);
+ assert.equal(desc.sevenColourRegions,false);
+ assert.equal(desc.incompleteColourRegions,true);
+ const candidates=reconstructionCandidates(partial,normalizeRecipe({seed:'partial-artwork'}));
+ assert.ok(candidates.length>0&&candidates.length<=RECONSTRUCTION_RENDER_LIMIT);
+ const regions=candidates.find(candidate=>candidate.kind==='regions');
+ assert.ok(regions,'valid incomplete scene must not disappear because two pigments are absent');
+ assert.equal(regions.recipe.scatteredCount,5);
+ assert.deepEqual(regions.recipe.scatteredOverrides.map(o=>o.index),[0,1,2,3,4]);
+ assert.ok(regions.uncertainty.includes('Missing colours'));
+ const scene=resolveScene(regions.recipe);
+ assert.equal(scene.objects.length,5);
+ assert.deepEqual(scene.objects.map(o=>o.colorIndex),[0,1,2,3,4]);
+ assert.deepEqual(decodeRecipe(encodeRecipe(regions.recipe)),regions.recipe);
+ const locked=reconstructionCandidates(partial,normalizeRecipe({
+   seed:'keep-existing-geometry',structure:'paths',
+   lockedSettings:['structure','regionMode']}));
+ assert.ok(locked.every(c=>c.kind!=='regions'),
+   'no uncommittable region preview may ignore existing creator locks');
+});
+
+test('missing middle pigment slots never invent colour order from compact islands',()=>{
+ const indices=[0,1,3,4,6],points=[[22,30],[130,50],[60,118],[139,182],[44,244]];
+ const noncontiguous=raster(180,290,(x,y)=>{
+   for(let i=0;i<points.length;i++)
+     if(Math.hypot(x-points[i][0],y-points[i][1])<12)
+       return colour(HUES[indices[i]]);
+   return [0,0,0,255];
+ });
+ assert.equal(describeReconstructionImage(noncontiguous).incompleteColourRegions,false);
+ assert.ok(reconstructionCandidates(noncontiguous,{}).every(c=>c.kind!=='regions'),
+   'do not silently repurpose indigo/violet as an earlier semantic hue slot');
+});
+
 test('External opaque graphic provides a truthful editable path, not invented seven colours',()=>{
   const external=raster(160,160,(x,y)=>x>=30&&x<=130&&y>=45&&y<=116?
     [20,35,50,255]:[255,255,255,255]);

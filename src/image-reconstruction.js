@@ -347,6 +347,18 @@ export function describeReconstructionImage(image){
     colour.componentRegions.length===7&&colour.regions.length===7&&
     colour.regions.every(region=>region.area>=image.width*image.height*.001&&
       region.fillRatio>=.32&&aspect(region)<2.7);
+  // A partially populated, compact first-N hue set is already a valid
+  // canonical scene of N editable circles. Earlier recognition required all
+  // seven pigments and wrongly discarded otherwise straightforward source
+  // geometry. Do not assume that arbitrary *missing middle* colour slots,
+  // overlapping fragments or elongated occlusions can be represented.
+  const incompleteColourRegions=colour.regions.length>=3&&
+    colour.regions.length<=6&&
+    colour.componentRegions.length===colour.regions.length&&
+    componentDiagonalAngle===null&&
+    colour.regions.every((region,index)=>region.index===index&&
+      region.area>=Math.max(16,image.width*image.height*.001)&&
+      region.fillRatio>=.48&&region.axisRatio<=1.9&&aspect(region)<2.3);
   const elongated=colour.regions.filter(region=>aspect(region)>3);
   const vertical=elongated.filter(region=>{
     const [x0,y0,x1,y1]=region.bounds;
@@ -366,7 +378,7 @@ export function describeReconstructionImage(image){
   return {background:colour.background,colourRegions:colour.regions,
     paletteHypothesis,
     repeatShape:colour.repeatShape,
-    repeatedColourRegions,
+    repeatedColourRegions,incompleteColourRegions,
     paths:paths.slice(0,6),sevenColourRegions:seven,lineDirection,
     stripeAngle,componentDiagonalAngle,radial,curve,ribbonBands,coverage:colour.coverage,
     dimensions:[image.width,image.height]};
@@ -467,7 +479,8 @@ export function reconstructionCandidates(image,recipe){
     }
   }
   const editableRegions=desc.repeatedColourRegions||
-    (desc.sevenColourRegions?desc.colourRegions:null);
+    ((desc.sevenColourRegions||
+      (desc.incompleteColourRegions&&!desc.radial.kind))?desc.colourRegions:null);
   if(editableRegions){
     // The canonical scattered painter repeats its seven semantic hues at
     // indices 7–13. Reuse those slots to restore a second island of each
@@ -480,15 +493,20 @@ export function reconstructionCandidates(image,recipe){
       y:(placed.y+region.cy*placed.height)/1300,
       radius:clamp(Math.sqrt(region.area/Math.PI)*placed.width/image.width/600,.01,1.2)
     }));
+    const partial=editableRegions.length<7;
     candidates.push({kind:'regions',label:repeated?
-      'Fourteen editable repeated-colour islands':'Seven colour regions (editable circles)',
+      'Fourteen editable repeated-colour islands':
+      partial?editableRegions.length+' editable incomplete-hue colour islands':
+      'Seven colour regions (editable circles)',
       uncertainty:repeated?
         'Two compact regions of each ROYGBIV hue are independently editable circles; true contours, painter order, occlusion and noncanonical pigments remain uncertain.':
-        'Approximates each colour region with a circle; holes, overlaps and fine edges may differ.',
+        partial?
+          'Only a compact initial subset of rainbow hue slots is observed; circles are editable approximations. Missing colours, unseen occlusion, original painter order, palette and seed remain uncertain.':
+          'Approximates each colour region with a circle; holes, overlaps and fine edges may differ.',
       recipe:normalizeRecipe({...base,structure:'regions',regionMode:'scattered',
         scatteredShapeKind:'circle',scatteredCount:editableRegions.length,
         scatteredOverlap:'overlap',scatteredEdgeCrop:0,scatteredSpacing:0,
-        ...(repeated?{scatteredLayerOrder:[],scatteredMinSize:0}:{}),
+        ...(repeated||partial?{scatteredLayerOrder:[],scatteredMinSize:0}:{}),
         scatteredOverrides:overrides})});
   }
   // Long separate colour components describe procedural bands more honestly
