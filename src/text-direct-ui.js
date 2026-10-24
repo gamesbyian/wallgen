@@ -63,6 +63,11 @@ export function installTextCanvasMover({
     outline.style.width=(bounds.width+2*extra)*rect.width/DESIGN_WIDTH+'px';
     outline.style.height=(bounds.height+2*extra)*rect.height/DESIGN_HEIGHT+'px';
     outline.style.transform='translate(-50%,-50%) rotate('+item.rotation+'deg)';
+    const angle=item.rotation*Math.PI/180;
+    const halfVerticalReach=(Math.abs(Math.sin(angle))*(bounds.width+2*extra)*
+      rect.width/DESIGN_WIDTH+Math.abs(Math.cos(angle))*(bounds.height+2*extra)*
+      rect.height/DESIGN_HEIGHT)/2;
+    outline.classList.toggle('text-direct-rotate-inset',y-halfVerticalReach<60);
     for(const handle of handles)handle.disabled=!!item.locked;
     outline.hidden=false;
   }
