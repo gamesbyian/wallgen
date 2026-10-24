@@ -47,7 +47,7 @@ export function installTextOverlayTool({getRecipe,changeRecipe,onFontNotice=()=>
           <label class="text-overlay-check"><input type="checkbox" data-text-key="enabled"> Visible</label>
           <label class="text-overlay-check"><input type="checkbox" data-text-key="locked"> Keep style when randomizing</label>
         </div>
-        <p>Curved baselines support independent glyphs. Joining and bidirectional scripts keep their native straight-line shaping.</p>
+        <p data-text-path-status aria-live="polite">Curved baselines support independent glyphs. Joining and bidirectional scripts keep their native straight-line shaping.</p>
       </details>
     </div>
     <div class="text-overlay-portability" role="group" aria-label="Portable design and private fonts">
@@ -99,7 +99,9 @@ export function installTextOverlayTool({getRecipe,changeRecipe,onFontNotice=()=>
     none:'No outline',black:'Black outline',white:'White outline'
   })[key]]));
   options(root.querySelector('[data-text-key="path"]'),TEXT_PATHS.map(key=>[
-    key,({none:'Straight · native shaping',wave:'Wave',arc:'Arch',circle:'Circle arc'})[key]
+    key,({none:'Straight · native shaping',wave:'Wave',arc:'Arch',
+      circle:'Circle arc',hairpin:'Hairpin turn',loop:'Loop turn',
+      drawn:'Follow my Draw path'})[key]
   ]));
   let selectedId=null;
   let mover=null;
@@ -122,7 +124,13 @@ export function installTextOverlayTool({getRecipe,changeRecipe,onFontNotice=()=>
       !library.some(entry=>entry.id===item.font)?
       'Font file unavailable on this device. Reimport its original TTF/OTF to restore rendering.':'';
     mover?.sync();
-    root.querySelector('[data-text-path-height]').hidden=!item.path||item.path==='none';
+    root.querySelector('[data-text-path-height]').hidden=!item.path||
+      item.path==='none'||item.path==='drawn';
+    root.querySelector('[data-text-path-status]').textContent=item.path==='drawn'?
+      (getRecipe().customPath?.length>=2?
+        'Using the authored Draw path shape; Horizontal/Vertical move the text along with its curve.':
+        'Draw a path in the Draw tool first. Until then, lettering stays straight.'):
+      'Curved baselines support separate graphemes; joining and bidirectional scripts keep their native straight-line shaping.';
     for(const control of fields.querySelectorAll('[data-text-key]')){
       const key=control.dataset.textKey;
       if(control.type==='checkbox')control.checked=Boolean(item[key]);

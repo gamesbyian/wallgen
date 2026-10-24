@@ -33,6 +33,18 @@ export function measuredTextBounds(item,measure){
   }
   if(item.path==='wave'||item.path==='arc')
     return {width,height:Math.min(DESIGN_HEIGHT,height+2*(item.pathHeight??90))};
+  if(item.path==='hairpin'||item.path==='loop'){
+    const diameter=2*(item.pathHeight??90)+item.size;
+    return {width:Math.min(DESIGN_WIDTH,diameter),
+      height:Math.min(DESIGN_HEIGHT,diameter+height)};
+  }
+  if(item.path==='drawn'){
+    // Draw may curve in both axes. Keep its selectable guide broad enough
+    // without importing inverse/renderer state into this pure hit module.
+    // Agent 3 owns precise on-device target/overlap acceptance.
+    return {width:Math.min(DESIGN_WIDTH,availableTextWidth(item)+item.size),
+      height:Math.min(DESIGN_HEIGHT,availableTextWidth(item)+2*height)};
+  }
   return {width,height};
 }
 export function hitTextOverlay(items,point,measureFor,{tolerance=0}={}){

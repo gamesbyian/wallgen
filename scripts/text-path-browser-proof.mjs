@@ -40,6 +40,13 @@ try{
         font:'editorial',colour:'rainbow-gradient',outline:'white',size:58,y:53},
       {name:'circle',text:'ROUND AND ROUND',path:'circle',pathHeight:185,
         font:'bold',colour:'rainbow-word',outline:'black',size:55,y:56},
+      {name:'drawn',text:'MY DRAW CURVE',path:'drawn',pathHeight:90,
+        customPath:[[.04,.36],[.21,.30],[.42,.46],[.60,.58],[.84,.37],[.97,.44]],
+        font:'modern',colour:'rainbow-gradient',outline:'black',size:61,y:54},
+      {name:'hairpin',text:'TURN AROUND',path:'hairpin',pathHeight:135,
+        font:'modern',colour:'white',outline:'black',size:70,y:55},
+      {name:'loop',text:'LOOP THE LOOP',path:'loop',pathHeight:145,
+        font:'bold',colour:'rainbow-letter',outline:'white',size:55,y:53},
       {name:'joining-fallback',text:'السَّلَامُ عَلَيْكُمْ',path:'wave',pathHeight:70,
         font:'modern',colour:'rainbow-letter',outline:'white',size:70,y:52},
     ];
@@ -51,11 +58,12 @@ try{
       return differences;
     };
     const results=[],data=[];
-    const thumb=make(480,270),tctx=thumb.getContext('2d');
+    const thumb=make(120*examples.length,270),tctx=thumb.getContext('2d');
     for(let index=0;index<examples.length;index++){
       const spec=examples[index];
       const recipe=normalizeRecipe({seed:'actual-text-path-'+spec.name,
         orientation:'vertical',palette:'classic',
+        ...(spec.customPath?{customPath:spec.customPath,geometry:'drawn'}:{}),
         textOverlays:[{id:'curved',x:50,enabled:true,...spec}]});
       await prepareTypefaces(recipe);
       const reference=make(480,1040),worker=make(480,1040),blank=make(480,1040);
@@ -107,9 +115,29 @@ try{
     Buffer.from(mosaic.split(',')[1],'base64'));
   // Allows independent optical review without relying on an unviewed artifact.
   console.log('TEXT_PATH_CONTACT_SHEET_BASE64='+mosaic.split(',')[1]);
+  // Exercise the real application's ordinary Random button, not just the
+  // pure geometry helpers. Authored Draw lettering must keep its canonical
+  // path even when the stripe geometry gets newly randomized.
+  const {normalizeRecipe,encodeRecipe}=await import('../src/model.js');
+  const saved=normalizeRecipe({seed:'keep-drawn-lettering',
+    geometry:'drawn',
+    customPath:[[.04,.36],[.21,.30],[.42,.46],[.60,.58],[.84,.37],[.97,.44]],
+    textOverlays:[{text:'NEVER LOSE MY PATH',path:'drawn',pathHeight:90}]});
+  await page.goto('http://127.0.0.1:'+server.address().port+'/?r='+
+    encodeURIComponent(encodeRecipe(saved)),{waitUntil:'domcontentloaded'});
+  await page.waitForSelector('#randomizeAll');
+  await page.evaluate(()=>document.getElementById('randomizeAll').click());
+  const randomResult=await page.evaluate(async()=>{
+    const {decodeRecipe}=await import('/src/model.js');
+    return decodeRecipe(new URL(location.href).searchParams.get('r'));
+  });
+  assert.deepEqual(randomResult.customPath,saved.customPath,
+    'Ordinary Random must retain the author-owned path used by lettering');
+  assert.equal(randomResult.textOverlays[0].path,'drawn');
+  assert.equal(randomResult.textOverlays[0].text,'NEVER LOSE MY PATH');
   assert.deepEqual(errors,[]);
   const proof={status:'PASS',viewport:'Chromium 412x892 emulated, not real Android',
-    browserErrors:errors,...report};
+    randomPreservedDrawPath:true,browserErrors:errors,...report};
   await writeFile(join(out,'report.json'),JSON.stringify(proof,null,2)+'\n');
   console.log('TEXT PATH PRODUCTION SOURCE PROOF '+JSON.stringify(proof));
 }finally{await browser?.close();server.close();}

@@ -14,7 +14,7 @@ export const TEXT_COLOURS=Object.freeze([
   'black','white','rainbow-letter','rainbow-word','rainbow-gradient'
 ]);
 export const TEXT_OUTLINES=Object.freeze(['none','black','white']);
-export const TEXT_PATHS=Object.freeze(['none','wave','arc','circle']);
+export const TEXT_PATHS=Object.freeze(['none','wave','arc','circle','hairpin','loop','drawn']);
 export const MAX_TEXT_OVERLAYS=8;
 const num=(value,fallback,min,max)=>{
   const n=Number(value);

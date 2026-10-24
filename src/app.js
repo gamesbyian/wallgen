@@ -2127,7 +2127,12 @@ document.getElementById('randomizeAll').addEventListener('click',()=>{
   explorationHistory.remember(current,'Before Random');
   changeRecipe({...randomizeAllRecipe({primesOnly:current.primesOnly}),
     viewZoom:current.viewZoom,viewPanX:current.viewPanX,viewPanY:current.viewPanY,
-    geometrySafety:current.geometrySafety,textOverlays:current.textOverlays},{record:false,cause:'randomize_all'});
+    geometrySafety:current.geometrySafety,textOverlays:current.textOverlays,
+    // A Draw-following text object is anchored to canonical customPath. The
+    // ordinary Random action preserves text styling, so retain that authored
+    // path even when the new rainbow chooses a different stripe geometry.
+    ...(current.textOverlays?.some(item=>item.path==='drawn')?
+      {customPath:current.customPath}:{})},{record:false,cause:'randomize_all'});
   const retired=usageRecorder?.supersede(previous,current,'randomize_all');
   if(retired)creativeFeedback?.showSuperseded(retired);
   explorationHistory.remember(current,'Random');

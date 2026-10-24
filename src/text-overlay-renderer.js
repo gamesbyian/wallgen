@@ -45,7 +45,8 @@ export function drawTextOverlays(ctx,width,height,scene){
       // scripts, the layout refuses splitting and falls through to the
       // untouched whole-line native Canvas paint below.
       const path=item.path&&item.path!=='none'?
-        layoutTextOnPath(item,line,unit=>ctx.measureText(unit).width):null;
+        layoutTextOnPath(item,line,unit=>ctx.measureText(unit).width,
+          scene.customPath):null;
       if(path?.supported){
         let inWord=false,wordColour=colours[colourIndex%colours.length];
         for(const glyph of path.glyphs){
