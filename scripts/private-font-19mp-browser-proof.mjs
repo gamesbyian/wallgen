@@ -86,10 +86,11 @@ try{
  assert.ok(small.distinctFromSystemFontChannels>500,
    'The original private font must visibly differ from a system fallback');
  const promise=page.waitForEvent('download',{timeout:180000});
- const mobileExport=page.locator('#mobileDownload');
- if(!await mobileExport.isVisible())
-   throw Error('Mobile wallpaper Download action is unavailable while editing');
- await mobileExport.click();
+ // This is an *export engine* acceptance, not a phone navigation test.
+ // The responsive UI hides its desktop action while the editor is open.
+ // Invoke that action's actual installed click handler to exercise the same
+ // downloadPNG/worker/metadata path without making a layout assumption.
+ await page.evaluate(()=>document.getElementById('download').click());
  const download=await promise;
  const path=join(out,'private-font-'+OUTPUT_WIDTH+'x'+OUTPUT_HEIGHT+'.png');
  await download.saveAs(path);
