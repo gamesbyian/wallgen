@@ -340,7 +340,68 @@ export function extractImageShapeCandidates(image){
  * seven-colour definition. Components and border background are shared with
  * path/silhouette extraction. Coordinates are source-image normalized.
  */
-export function extractImageColourRegions({data,width:w,height:h},hueTargets){
+/**
+ * A seven-hue stripe graphic can be seven translated copies of one *filled*
+ * silhouette. Reuse the exact per-hue component members and the existing
+ * portable compound-shape contour tracer, rather than approximating a kink
+ * with seven large normal offsets from one winding Draw centreline.
+ * Only strong translation congruence earns this additional editable scene
+ * hypothesis. A changed pigment, an occluded part or a diverging contour
+ * declines without inventing missing shape semantics.
+ */
+function repeatedHueStampShape(partsByHue,w,h){
+  if(!partsByHue||partsByHue.length!==7||
+    partsByHue.some(parts=>parts.length!==1))return null;
+  const parts=partsByHue.map(parts=>parts[0]);
+  const horizontal=parts.every(p=>
+    p.maxX-p.minX>=w*.45&&p.maxY-p.minY<=h*.55);
+  const vertical=!horizontal&&parts.every(p=>
+    p.maxY-p.minY>=h*.45&&p.maxX-p.minX<=w*.55);
+  if(!horizontal&&!vertical)return null;
+  const reference=parts[3];
+  const centre=p=>[(p.minX+p.maxX+1)/2,(p.minY+p.maxY+1)/2];
+  const [baseX,baseY]=centre(reference);
+  const occupied=new Set(reference.members);
+  let minOverlap=1;
+  for(const part of parts){
+    if(part.area<32||part.area<reference.area*.70||
+      part.area>reference.area*1.30)return null;
+    const [cx,cy]=centre(part),dx=Math.round(baseX-cx),
+      dy=Math.round(baseY-cy);
+    let intersection=0;
+    for(const pixel of part.members){
+      const x=pixel%w+dx,y=((pixel/w)|0)+dy;
+      if(x>=0&&x<w&&y>=0&&y<h&&occupied.has(y*w+x))
+        intersection++;
+    }
+    const overlap=intersection/(reference.area+part.area-intersection);
+    if(overlap<.76)return null;
+    minOverlap=Math.min(minOverlap,overlap);
+  }
+  const loops=shapeEdgeLoops(reference,w,h)
+    .sort((a,b)=>Math.abs(ringArea(b))-Math.abs(ringArea(a)));
+  if(!loops.length)return null;
+  const width=reference.maxX-reference.minX+1;
+  const height=reference.maxY-reference.minY+1;
+  const local=ring=>ring.map(([x,y])=>
+    [x-reference.minX,y-reference.minY]);
+  let geometry;
+  try{
+    geometry=normalizeCompoundRegion({
+      type:'compound-region',space:'asset-local',viewBox:[0,0,width,height],
+      components:[{outer:local(loops[0]),
+        holes:loops.slice(1).filter(r=>Math.abs(ringArea(r))>=4).map(local)}],
+      fillRule:'evenodd'
+    });
+  }catch{return null;}
+  return {geometry,placements:parts.map(part=>({
+    index:parts.indexOf(part),cx:centre(part)[0]/w,cy:centre(part)[1]/h,
+    scale:Math.sqrt(part.area/reference.area)
+  })),minOverlap};
+}
+
+export function extractImageColourRegions({data,width:w,height:h},hueTargets,
+  {includeRepeatShape=false}={}){
   if(!data||!Number.isInteger(w)||!Number.isInteger(h)||w<12||h<12||
     w*h>650000||data.length!==w*h*4||
     !Array.isArray(hueTargets)||hueTargets.length!==7||
@@ -375,12 +436,14 @@ export function extractImageColourRegions({data,width:w,height:h},hueTargets){
   }
   const minArea=Math.max(16,Math.floor(w*h*.0008));
   const regions=[],componentRegions=[];
+  const partsByHue=includeRepeatShape?[]:null;
   for(let index=0;index<7;index++){
     // Retain the largest per-hue component for existing ribbon metrics, but
     // also expose smaller genuine islands from the very same flood-fill.
     // This permits repeated editable colour objects without a second mask
     // pass, importer, rasterizer or noncanonical scene representation.
     const parts=components(masks[index],w,h,minArea);
+    if(partsByHue)partsByHue.push(parts);
     for(const [partNumber,part] of parts.entries()){
       let sx=0,sy=0,sxx=0,syy=0,sxy=0;
       for(const p of part.members){
@@ -409,5 +472,7 @@ export function extractImageColourRegions({data,width:w,height:h},hueTargets){
     }
   }
   return {background:backdrop,backgroundRGB:bg,
-    coverage:coloured/(w*h),regions,componentRegions};
+    coverage:coloured/(w*h),regions,componentRegions,
+    ...(includeRepeatShape?{
+      repeatShape:repeatedHueStampShape(partsByHue,w,h)}:{})};
 }

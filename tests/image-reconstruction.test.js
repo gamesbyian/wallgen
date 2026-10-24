@@ -928,3 +928,42 @@ test('two compact islands per hue use fourteen ordinary editable canonical circl
  assert.equal(irregular.repeatedColourRegions,null,
    'an elongated fragment cannot be misrepresented as a confidently repeated disk');
 });
+
+
+test('congruent seven-hue angular silhouettes become seven editable shared portable shape stamps',()=>{
+ const width=200,height=250;
+ const source=raster(width,height,(x,y)=>{
+   const bend=x<100?x*.16:(200-x)*.16;
+   for(let i=0;i<7;i++)
+     if(Math.abs(y-(16+i*30+bend))<=4)return colour(HUES[i]);
+   return [0,0,0,255];
+ });
+ assert.equal(extractImageColourRegions(source,HUES).repeatShape,undefined,
+   'normal painter-registration extraction must not do expensive contour work');
+ const desc=describeReconstructionImage(source);
+ assert.ok(desc.repeatShape?.geometry?.components.length===1,
+   'the measured repeated contour uses the existing imported shape snapshot');
+ assert.ok(desc.repeatShape.minOverlap>.76);
+ const candidates=reconstructionCandidates(source,normalizeRecipe({seed:'measured-stamps'}));
+ assert.ok(candidates.length<=RECONSTRUCTION_RENDER_LIMIT);
+ const stamp=candidates.find(c=>c.kind==='shape-repeats');
+ assert.ok(stamp,'genuine repeated shapes are offered among the six trials');
+ assert.equal(stamp.recipe.structure,'regions');
+ assert.equal(stamp.recipe.regionMode,'scattered');
+ assert.equal(stamp.recipe.scatteredCount,7);
+ assert.equal(stamp.recipe.scatteredOverrides.length,7);
+ assert.equal(stamp.recipe.scatteredShapeKind,'imported');
+ assert.equal(resolveScene(stamp.recipe).objects.length,7);
+ assert.deepEqual(decodeRecipe(encodeRecipe(stamp.recipe)),stamp.recipe);
+ assert.ok(stamp.recipe.scatteredShape.geometry.components[0].outer.length>=4);
+ const ambiguous=raster(width,height,(x,y)=>{
+   const bend=x<100?x*.16:(200-x)*.16;
+   for(let i=0;i<7;i++){
+     const malformed=i===4?16*Math.sin(x/18):0;
+     if(Math.abs(y-(16+i*30+bend+malformed))<=4)return colour(HUES[i]);
+   }
+   return [0,0,0,255];
+ });
+ assert.equal(describeReconstructionImage(ambiguous).repeatShape,null,
+   'one unrelated wave must not be asserted as a translated exact common shape');
+});
