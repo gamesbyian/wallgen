@@ -196,6 +196,8 @@ async function evaluate(opts){
         trueRecipeRenderError:truthError,
         bestLabel:inferred.selected?.label??null,
         selectedPositionY:inferred.selected?.recipe.positionY??null,
+        selectedStripeWidth:inferred.selected?.recipe.stripeWidth??null,
+        trueStripeWidth:truth?.stripeWidth??null,
         selectedWaveOffsetY:inferred.selected?.waveOffsetY??null,
         trueStructure:truth?.structure??null,trueGeometry:truth?.geometry??null,
         recoveredStructure:inferred.selected?.structure??null,
