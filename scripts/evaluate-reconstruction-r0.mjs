@@ -200,6 +200,9 @@ async function evaluate(opts){
         trueStructure:truth?.structure??null,trueGeometry:truth?.geometry??null,
         recoveredStructure:inferred.selected?.structure??null,
         recoveredGeometry:inferred.selected?.geometry??null,
+        // Appearance proposal is never the true recipe or a provenance claim.
+        truePalette:truth?.palette??null,
+        recoveredPalette:inferred.selected?.recipe.palette??null,
         alternatives:inferred.alternatives,
         ...(opts.alternatives?{variantPreviews:inferred.candidateVariants.map((_,i)=>
           item.id+'.r0-alternative-'+String(i+1).padStart(2,'0')+'.png')}: {})};
