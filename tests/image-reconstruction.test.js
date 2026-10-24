@@ -885,3 +885,46 @@ test('long-baseline angular recognition follows upright Y-ordered centreline wit
  });
  assert.equal(imageCurveSignature([{kind:'arc',points:flowing}],240,240).angularBends,0);
 });
+
+
+test('two compact islands per hue use fourteen ordinary editable canonical circles',()=>{
+ const sites=Array.from({length:14},(_,i)=>[
+   18+(i%4)*27,20+Math.floor(i/4)*58
+ ]);
+ const painted=(elongate=false)=>raster(120,260,(x,y)=>{
+   for(const [i,[cx,cy]] of sites.entries()){
+     const inside=elongate&&i===7?
+       Math.abs(x-cx)<=2&&Math.abs(y-cy)<=18:
+       Math.hypot(x-cx,y-cy)<=6;
+     if(inside)return colour(HUES[i%7]);
+   }
+   return [0,0,0,255];
+ });
+ const source=painted();
+ const colours=extractImageColourRegions(source,HUES);
+ assert.equal(colours.regions.length,7,'existing primary per-hue descriptors remain intact');
+ assert.equal(colours.componentRegions.length,14);
+ const desc=describeReconstructionImage(source);
+ assert.equal(desc.sevenColourRegions,false,
+   'largest-only segmentation must not collapse fourteen islands into seven');
+ assert.equal(desc.repeatedColourRegions.length,14);
+ const choices=reconstructionCandidates(source,normalizeRecipe({seed:'two-orbits'}));
+ assert.ok(choices.length<=RECONSTRUCTION_RENDER_LIMIT);
+ const circles=choices.find(choice=>choice.kind==='regions');
+ assert.ok(circles,'the existing scattered painter can express repeated hue slots');
+ assert.equal(circles.recipe.scatteredCount,14);
+ assert.equal(circles.recipe.scatteredOverrides.length,14);
+ const box=reconstructionPlacement(120,260);
+ for(const [index,[x,y]] of sites.entries()){
+   const actual=circles.recipe.scatteredOverrides[index];
+   assert.equal(actual.index,index);
+   assert.ok(Math.abs(actual.x-(box.x+x*box.width/120)/600)<.006);
+   assert.ok(Math.abs(actual.y-(box.y+y*box.height/260)/1300)<.006);
+ }
+ const restored=decodeRecipe(encodeRecipe(circles.recipe));
+ assert.deepEqual(restored,circles.recipe);
+ assert.equal(resolveScene(restored).objects.length,14);
+ const irregular=describeReconstructionImage(painted(true));
+ assert.equal(irregular.repeatedColourRegions,null,
+   'an elongated fragment cannot be misrepresented as a confidently repeated disk');
+});

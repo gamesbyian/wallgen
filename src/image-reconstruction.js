@@ -276,7 +276,19 @@ export function describeReconstructionImage(image){
   const median=angles[Math.floor(angles.length/2)];
   const coherent=axes.filter(region=>Math.abs(region.axisAngle-median)<=10);
   const componentDiagonalAngle=coherent.length>=5?Math.abs(median):null;
-  const seven=componentDiagonalAngle===null&&colour.regions.length===7&&
+  // Ordinary scattered objects can repeat the seven semantic colour slots.
+  // Preserve all connected islands only for the conservative 2-per-hue case:
+  // compact components must resemble disks, not occluded ribbon fragments.
+  // The existing 70-object scattered scene already supports this topology.
+  const repeatedByHue=Array.from({length:7},(_,index)=>
+    colour.componentRegions.filter(region=>region.index===index));
+  const repeatedColourRegions=repeatedByHue.every(group=>group.length===2&&
+    group.every(region=>region.area>=16&&region.fillRatio>=.48&&
+      region.axisRatio<=1.9))?
+    Array.from({length:14},(_,i)=>repeatedByHue[i%7][Math.floor(i/7)]):
+    null;
+  const seven=componentDiagonalAngle===null&&
+    colour.componentRegions.length===7&&colour.regions.length===7&&
     colour.regions.every(region=>region.area>=image.width*image.height*.001&&
       region.fillRatio>=.32&&aspect(region)<2.7);
   const elongated=colour.regions.filter(region=>aspect(region)>3);
@@ -295,6 +307,7 @@ export function describeReconstructionImage(image){
   const curve=imageCurveSignature(paths,image.width,image.height);
   const ribbonBands=measuredRainbowRibbonBands(colour.regions,image.width,image.height);
   return {background:colour.background,colourRegions:colour.regions,
+    repeatedColourRegions,
     paths:paths.slice(0,6),sevenColourRegions:seven,lineDirection,
     stripeAngle,componentDiagonalAngle,radial,curve,ribbonBands,coverage:colour.coverage,
     dimensions:[image.width,image.height]};
@@ -359,21 +372,29 @@ export function reconstructionCandidates(image,recipe){
           stripeWidth:75,spread:58})});
     }
   }
-  if(desc.sevenColourRegions){
-    // Colour slot identity comes from the shared model HUES. Overrides live
-    // in normal scattered recipes and can be dragged / undone / exported.
+  const editableRegions=desc.repeatedColourRegions||
+    (desc.sevenColourRegions?desc.colourRegions:null);
+  if(editableRegions){
+    // The canonical scattered painter repeats its seven semantic hues at
+    // indices 7–13. Reuse those slots to restore a second island of each
+    // pigment; do not claim to resolve overlaps or arbitrary colour orders.
+    const repeated=editableRegions.length===14;
     const placed=reconstructionPlacement(image.width,image.height);
-    const overrides=desc.colourRegions.map(region=>({
-      index:region.index,
+    const overrides=editableRegions.map((region,index)=>({
+      index:repeated?index:region.index,
       x:(placed.x+region.cx*placed.width)/600,
       y:(placed.y+region.cy*placed.height)/1300,
       radius:clamp(Math.sqrt(region.area/Math.PI)*placed.width/image.width/600,.01,1.2)
     }));
-    candidates.push({kind:'regions',label:'Seven colour regions (editable circles)',
-      uncertainty:'Approximates each colour region with a circle; holes, overlaps and fine edges may differ.',
+    candidates.push({kind:'regions',label:repeated?
+      'Fourteen editable repeated-colour islands':'Seven colour regions (editable circles)',
+      uncertainty:repeated?
+        'Two compact regions of each ROYGBIV hue are independently editable circles; true contours, painter order, occlusion and noncanonical pigments remain uncertain.':
+        'Approximates each colour region with a circle; holes, overlaps and fine edges may differ.',
       recipe:normalizeRecipe({...base,structure:'regions',regionMode:'scattered',
-        scatteredShapeKind:'circle',scatteredCount:7,
+        scatteredShapeKind:'circle',scatteredCount:editableRegions.length,
         scatteredOverlap:'overlap',scatteredEdgeCrop:0,scatteredSpacing:0,
+        ...(repeated?{scatteredLayerOrder:[],scatteredMinSize:0}:{}),
         scatteredOverrides:overrides})});
   }
   // Long separate colour components describe procedural bands more honestly
