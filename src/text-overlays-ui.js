@@ -59,6 +59,7 @@ export function installTextOverlayTool({getRecipe,changeRecipe,onFontNotice=()=>
             <label>Shadow softness <input type="range" data-text-key="shadowBlur" min="0" max="16" step="1"></label>
             <label>Shadow distance <input type="range" data-text-key="shadowDistance" min="0" max="16" step="1"></label>
           </div>
+          <p>Rainbow options work with rainbow lettering. Shadow controls unlock after choosing a shadow colour.</p>
         </details>
       </details>
     </div>
@@ -146,6 +147,12 @@ export function installTextOverlayTool({getRecipe,changeRecipe,onFontNotice=()=>
         'Using the authored Draw path shape; Horizontal/Vertical move the text along with its curve.':
         'Draw a path in the Draw tool first. Until then, lettering stays straight.'):
       'Curved baselines support separate graphemes; joining and bidirectional scripts keep their native straight-line shaping.';
+    const rainbowActive=item.colour?.startsWith('rainbow-');
+    const shadowActive=item.shadow==='black'||item.shadow==='white';
+    for(const key of ['rainbowOffset','rainbowReverse'])
+      root.querySelector('[data-text-key="'+key+'"]').disabled=!rainbowActive;
+    for(const key of ['shadowBlur','shadowDistance'])
+      root.querySelector('[data-text-key="'+key+'"]').disabled=!shadowActive;
     for(const control of fields.querySelectorAll('[data-text-key]')){
       const key=control.dataset.textKey;
       if(control.type==='checkbox')control.checked=Boolean(item[key]);
