@@ -63,8 +63,18 @@ try{
       await page.locator('[data-text-move]').tap();
       const scale=page.getByRole('button',{name:/^Scale text\. Drag or use/});
       const rotate=page.getByRole('button',{name:/^Rotate text\. Drag or use/});
+      const moveDiag=await page.evaluate(()=>({
+        active:document.body.classList.contains('text-direct-active'),
+        movePressed:document.querySelector('[data-text-move]')?.getAttribute('aria-pressed'),
+        outlineHidden:document.querySelector('.text-direct-outline')?.hidden,
+        doneHidden:document.getElementById('textDirectDone')?.hidden,
+        outlineRect:document.querySelector('.text-direct-outline')?.getBoundingClientRect().toJSON(),
+        scaleRect:document.querySelector('[data-text-handle="scale"]')?.getBoundingClientRect().toJSON(),
+        stageRect:document.querySelector('.wallpaper-frame')?.getBoundingClientRect().toJSON()
+      }));
+      console.log('AGENT3_MOVE_DIAG '+JSON.stringify(moveDiag));
       for(const handle of [scale,rotate]){
-        assert.equal(await handle.isVisible(),true,'text transform handle hidden');
+        assert.equal(await handle.isVisible(),true,'text transform handle hidden '+JSON.stringify(moveDiag));
         const size=await handle.boundingBox();
         assert.ok(size.width>=43&&size.height>=43,'transform handle below 44px reach');
       }
