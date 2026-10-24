@@ -1,0 +1,63 @@
+name: One-shot reconstruction #557 genuine optical discriminator
+on:
+  push:
+    branches: [agent1/557-displaced-jagged-coupled-registration-20261024]
+    paths: [.github/workflows/agent1-557-optics-once.yml]
+permissions:
+  contents: read
+jobs:
+  actual-render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install temporary headless painter dependency
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Generate four unchanged genuine renderer source PNGs
+        run: node scripts/review-reconstruction.mjs --out-dir artifacts/r0-source --only 04-jagged,05-hairpin,06-loop,16-offset-jagged
+      - name: Evaluate new inference blindly before reading truth
+        run: |
+          cp -a artifacts/r0-source artifacts/r0-experiment
+          node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/r0-experiment
+      - name: Evaluate identical source bytes against unmodified current main inverse logic
+        run: |
+          cp -a artifacts/r0-source artifacts/r0-control
+          git show origin/main:src/image-reconstruction.js > src/image-reconstruction.js
+          node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/r0-control
+      - name: Report before and after errors and protect controls
+        run: |
+          node --input-type=module <<'NODE'
+          import {readFile,writeFile} from 'node:fs/promises';
+          const old=JSON.parse(await readFile('artifacts/r0-control/evaluation.json','utf8'));
+          const now=JSON.parse(await readFile('artifacts/r0-experiment/evaluation.json','utf8'));
+          const rows=now.samples.map((s,i)=>({
+            id:s.id,control:old.samples[i].bestError,experiment:s.bestError,
+            difference:s.bestError-old.samples[i].bestError,
+            baselineKind:old.samples[i].bestKind,newKind:s.bestKind,
+            sourceTruthPresentationFloor:s.trueRecipeRenderError
+          }));
+          const report={source:'identical current renderer metadata-free PNG bytes',
+            compared:'same branch except src/image-reconstruction.js restored from main',
+            status:'quantified-not-visually-inspected',rows};
+          await writeFile('artifacts/r0-comparison.json',
+            JSON.stringify(report,null,2)+'\n');
+          for(const row of rows)console.log('OPTICAL_COMPARISON '+JSON.stringify(row));
+          NODE
+      - name: Preserve actual source and fitted PNGs for independent visual inspection
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reconstruction-557-jagged-paired-current-renderer
+          path: |
+            artifacts/r0-comparison.json
+            artifacts/r0-control/
+            artifacts/r0-experiment/
+          retention-days: 5
+          if-no-files-found: warn
