@@ -414,6 +414,38 @@ test('wave jagged and hairpin fitted variants stay within ten true-render passes
 });
 
 
+test('Hairpin fitting spends two existing true paints on stripe thickness and preserves locks',async()=>{
+ const w=RECONSTRUCTION_FRAME.width,h=RECONSTRUCTION_FRAME.height;
+ const visible=width=>raster(w,h,(x,y)=>{
+   if(x>=22&&x<22+Math.round(width/10)&&y>8&&y<h-8)
+     return colour(HUES[0]);
+   return [0,0,0,255];
+ });
+ const source=visible(50),recipe=normalizeRecipe({seed:'measured-hairpin-gaps',
+   structure:'paths',geometry:'hairpin',stripeWidth:65,spread:42});
+ const candidate={kind:'hairpin',label:'Hairpin gaps',recipe,
+   error:compareReconstructionPixels(source,visible(recipe.stripeWidth))};
+ const visits=[];
+ const paint=next=>{visits.push(next);return visible(next.stripeWidth);};
+ const fitted=refineReconstructionCandidate(candidate,source,paint);
+ assert.equal(fitted.recipe.stripeWidth,50,
+   'source dark gaps require a narrower editable painter stripe');
+ assert.ok(fitted.error<candidate.error);
+ assert.ok(visits.length<=10);
+ assert.ok(visits.some(next=>next.stripeWidth===50));
+ assert.ok(visits.every(next=>next.spread===42),
+   'no speculative replacement of gap width via overall ribbon spacing');
+ const parallel=await refineReconstructionCandidateCooperatively(candidate,source,
+   next=>visible(next.stripeWidth),{yieldControl:async()=>{}});
+ assert.deepEqual(parallel,fitted);
+ const protectedRecipe=normalizeRecipe({...recipe,lockedSettings:['stripeWidth']});
+ const locked=refineReconstructionCandidate({...candidate,recipe:protectedRecipe},
+   source,next=>{
+     assert.equal(next.stripeWidth,65);return visible(next.stripeWidth);
+   });
+ assert.equal(locked.recipe.stripeWidth,65,'normal Palette/Geometry/Width locks still own edits');
+});
+
 test('six-render candidate selection preserves one independent type before redundant parameter copies',()=>{
  const options=[
   ...[30,40,50].map(n=>({kind:'straight',id:'rotation-'+n})),
