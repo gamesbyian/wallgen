@@ -1,4 +1,5 @@
 import {drawWallpaper} from './renderer.js?v=20261024-text-overlays1';
+import {prepareLocalFonts} from './local-fonts.js';
 
 // Sole rendering worker entry point. No DOM access; Canvas2D is shared with
 // the reference renderer via createRenderSurface() and OffscreenCanvas.
@@ -22,6 +23,7 @@ self.onmessage=async({data})=>{
   try{
     if(!Number.isInteger(width)||!Number.isInteger(height)||width<1||height<1)
       throw Error('Invalid render dimensions');
+    await prepareLocalFonts(recipe);
     surface=new OffscreenCanvas(width,height);
     if(type==='thumbnail'){
       drawWallpaper(surface,recipe);
