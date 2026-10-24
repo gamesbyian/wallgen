@@ -132,8 +132,17 @@ test('occluded circular arcs and visible hue precedence recover editable reverse
  const candidate=options.find(option=>option.kind==='regions');
  assert.ok(candidate);
  assert.deepEqual(candidate.recipe.scatteredLayerOrder,[6,5,4,3,2,1,0]);
+ assert.equal(candidate.recipe.dividerColor,'none');
+ assert.equal(candidate.recipe.dividerWidth,0);
  assert.equal(resolveScene(candidate.recipe).objects.length,7);
  assert.ok(/uncertain/.test(candidate.uncertainty));
+ const dividerLocked=normalizeRecipe({seed:'preserve-maker-lines',
+   structure:'regions',regionMode:'scattered',dividerColor:'white',
+   dividerWidth:18,lockedSettings:['dividerColor','dividerWidth']});
+ const lockedLines=reconstructionCandidates(image,dividerLocked)
+   .find(option=>option.kind==='regions');
+ assert.equal(lockedLines?.recipe.dividerColor,'white');
+ assert.equal(lockedLines?.recipe.dividerWidth,18);
  assert.deepEqual(decodeRecipe(encodeRecipe(candidate.recipe)),candidate.recipe);
  // Layer order is an editable canonical scene field but currently not a
  // registered lockable setting. Respect the existing *structural* locks
