@@ -7,6 +7,7 @@ export const LOCAL_FONT_ID_PATTERN=/^user-[a-f0-9]{64}$/;
 const DB_NAME='roygbiv-local-fonts-v1';
 const STORE='fonts';
 const loaded=new Map();
+const ready=new Set();
 export const isLocalFontId=id=>typeof id==='string'&&LOCAL_FONT_ID_PATTERN.test(id);
 export const fontFamilyForId=id=>{
   if(!isLocalFontId(id))throw Error('Invalid local font ID');
@@ -67,6 +68,7 @@ async function registerFont(id,bytes){
     const face=new FontFace(fontFamilyForId(id),bytes,{style:'normal',weight:'700'});
     await face.load();  // Native browser parser, rejects malformed fonts.
     fontSet().add(face);
+    ready.add(id);
     return face;
   })();
   loaded.set(id,task);
@@ -79,7 +81,7 @@ export function recipeLocalFontIds(recipe){
     .map(x=>x.font).filter(isLocalFontId))];
 }
 export function localFontsReady(recipe){
-  return recipeLocalFontIds(recipe).every(id=>loaded.has(id));
+  return recipeLocalFontIds(recipe).every(id=>ready.has(id));
 }
 export async function prepareLocalFonts(recipe){
   for(const id of recipeLocalFontIds(recipe)){
