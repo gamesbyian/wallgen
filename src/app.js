@@ -31,6 +31,7 @@ import {iconMarkup,setIconSource,hydrateStaticIcons} from './ui-icons.js';
 import {createCreativeRecorder,openUsageStore,USAGE_MODE_KEY} from './creative-recorder.js';
 import {installCreativeRecorderUI} from './creative-recorder-ui.js';
 import {installCreativeFeedback} from './creative-feedback.js';
+import {installTextOverlayTool} from './text-overlays-ui.js';
 
 const form = document.getElementById('controls');
 const preview = document.getElementById('preview');
@@ -246,6 +247,7 @@ function fromControls() {
   const data={seed:seedInput.value,positionX:current.positionX,positionY:current.positionY,
     viewZoom:current.viewZoom,viewPanX:current.viewPanX,viewPanY:current.viewPanY,
     customPath:current.customPath,drawnAnchors:current.drawnAnchors,drawnCorners:current.drawnCorners,interiorElements:current.interiorElements,
+    textOverlays:current.textOverlays,
     scatteredShape:current.scatteredShape,scatteredOverrides:current.scatteredOverrides,
     scatteredLayerOrder:current.scatteredLayerOrder};
   for (const key of FIELDS) { const field=form.elements.namedItem(key); data[key]=field.dataset.inactive==='true'?current[key]:(field.type==='checkbox'?field.checked:field.value); }
@@ -1350,6 +1352,7 @@ function syncSettingLocks(){
 }
 installSettingLocks();
 const editor=mountEditor();
+const textTool=installTextOverlayTool({getRecipe:()=>current,changeRecipe});
 // Source-linked guidance lives beside the controls it describes. It does not
 // change the saved recipe, geometry or layout outside the relevant card.
 for(const [id,tool] of [['scatteredSourceNotice','regions'],
@@ -2101,7 +2104,7 @@ document.getElementById('randomizeAll').addEventListener('click',()=>{
   explorationHistory.remember(current,'Before Random');
   changeRecipe({...randomizeAllRecipe({primesOnly:current.primesOnly}),
     viewZoom:current.viewZoom,viewPanX:current.viewPanX,viewPanY:current.viewPanY,
-    geometrySafety:current.geometrySafety},{record:false,cause:'randomize_all'});
+    geometrySafety:current.geometrySafety,textOverlays:current.textOverlays},{record:false,cause:'randomize_all'});
   const retired=usageRecorder?.supersede(previous,current,'randomize_all');
   if(retired)creativeFeedback?.showSuperseded(retired);
   explorationHistory.remember(current,'Random');
