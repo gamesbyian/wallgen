@@ -312,26 +312,6 @@ export function measuredCanonicalPalette(regions){
     classicAppearanceError:classic.error};
 }
 
-/**
- * The canonical Hairpin uses the fixed 56-spread reference for ink thickness,
- * independently of actual between-ribbon spacing. Invert that SAME scene
- * equation from a measured unoccluded upper-leg cross-section. Insist on a
- * plausible source width: partial/merged pigment bands are not evidence.
- */
-export function seedMeasuredHairpinWidth(recipe,sourceWidthPx,imageWidth,imageHeight){
-  if(!Number.isFinite(sourceWidthPx)||sourceWidthPx<2||
-    !Number.isFinite(imageWidth)||imageWidth<12||!Number.isFinite(imageHeight)||
-    imageHeight<12)return recipe;
-  const placement=reconstructionPlacement(imageWidth,imageHeight);
-  const physicalWidth=sourceWidthPx*placement.width/imageWidth;
-  const referenceGap=600*(.10+.335*Math.pow(56/50,1.5))/6;
-  const factor=physicalWidth/referenceGap;
-  if(factor<=.13||factor>=.75)return recipe;
-  const inferred=50*Math.pow((factor-.12)/.395,1/1.85);
-  if(!Number.isFinite(inferred)||inferred<16||inferred>88)return recipe;
-  return normalizeRecipe({...recipe,stripeWidth:Math.round(inferred)});
-}
-
 /** Geometry-first analysis. Colour slots carry no claim about source provenance. */
 export function describeReconstructionImage(image){
   const colour=extractImageColourRegions(image,HUES,{includeRepeatShape:true});
@@ -385,7 +365,6 @@ export function describeReconstructionImage(image){
   const paletteHypothesis=measuredCanonicalPalette(colour.regions);
   return {background:colour.background,colourRegions:colour.regions,
     paletteHypothesis,
-    upperParallelHueWidthPx:colour.upperParallelHueWidthPx,
     repeatShape:colour.repeatShape,
     repeatedColourRegions,
     paths:paths.slice(0,6),sevenColourRegions:seven,lineDirection,
@@ -653,24 +632,17 @@ export function reconstructionCandidates(image,recipe){
         // Horizontal Wave needs both its physically measured gap/width AND
         // the coherent same-hue image registration during forward fitting:
         // either correction in isolation had previously scored worse.
-        recipe:(()=>{
-          const start=normalizeRecipe({...base,structure:'paths',
-            composition:'single',construction:'ribbon',chaos:0,
-            individuality:0,...preset.recipe});
-          // This one independently measured cross-section improves a Hairpin
-          // start without using (or displacing) any of its ten real paints.
-          if(preset.kind==='hairpin'&&desc.background==='black')
-            return seedMeasuredHairpinWidth(start,desc.upperParallelHueWidthPx,
-              image.width,image.height);
-          if(desc.ribbonBands&&(
-            (preset.kind==='jagged'&&
-              Math.abs(desc.ribbonBands.angle)>=12&&
-              Math.abs(desc.ribbonBands.angle)<=78)||
-            (preset.kind==='wave'&&Math.abs(desc.ribbonBands.angle)<=10)))
-            return seedMeasuredRibbonControls(start,desc.ribbonBands,
-              image.width,image.height);
-          return start;
-        })()});
+        recipe:desc.ribbonBands&&(
+          (preset.kind==='jagged'&&
+            Math.abs(desc.ribbonBands.angle)>=12&&
+            Math.abs(desc.ribbonBands.angle)<=78)||
+          (preset.kind==='wave'&&Math.abs(desc.ribbonBands.angle)<=10))?
+          seedMeasuredRibbonControls(
+            normalizeRecipe({...base,structure:'paths',composition:'single',
+              construction:'ribbon',chaos:0,individuality:0,...preset.recipe}),
+            desc.ribbonBands,image.width,image.height):
+          normalizeRecipe({...base,structure:'paths',composition:'single',
+            construction:'ribbon',chaos:0,individuality:0,...preset.recipe})});
     }
   }
 
@@ -1083,11 +1055,12 @@ function refinementFields(candidate){
       ['spread',[-15,15]],['stripeWidth',[-25,-10,10,25]]
     ]
   ):candidate.kind==='hairpin'?[
-    ['turnRadius',[-15,15]],['hairpinAngle',[-25,25]],
-    // Two previously tested ten-render reallocations reduced genuine Hairpin
-    // fidelity. Preserve all five geometry and registration controls; source
-    // stripe width is seeded BEFORE fitting using shared hue masks.
-    ['spread',[-10,10]],['positionX',[-7,7]],['positionY',[-7,7]]
+    // Genuine Hairpin #05 retains a tight U and a steep outgoing tangent.
+    // The initial coarse range jumps across that visual neighbourhood;
+    // choose closer radius/angle/spacing probes, preserving ten real paints
+    // and every existing adjustable field. Actual PNG proof required.
+    ['turnRadius',[-12,12]],['hairpinAngle',[-15,15]],
+    ['spread',[-6,6]],['positionX',[-7,7]],['positionY',[-7,7]]
   ]:candidate.kind==='radial-rays'?[
     ['rayRotation',[-10,-5,5,10]],['fieldCenterX',[-5,5]],
     ['fieldCenterY',[-5,5]],['rayCore',[-10,10]]
