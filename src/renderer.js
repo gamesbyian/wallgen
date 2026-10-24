@@ -1,4 +1,5 @@
 import { DESIGN_WIDTH, DESIGN_HEIGHT, resolveScene, rng, NAMES } from './model.js';
+import {drawTextOverlays} from './text-overlay-renderer.js';
 import { samplePath, ribbonEdge, widthAt, noise1D } from './path-geometry.js';
 import {drawRegionInteriors,elementInk,elementWave,lineDash,elementApplies} from './interior-elements.js';
 import { viewCamera } from './view-camera.js';
@@ -838,6 +839,7 @@ export function presentNudgedArtwork(canvas, layers, recipe) {
   drawFinishedInk(ctx,layers.ink,recipe,layers.overhang);
   applyCanvasAtmosphere(ctx,canvas.width,canvas.height,recipe);
   applyPhotoFinish(ctx,canvas.width,canvas.height,recipe.photoLook,recipe.seed);
+  drawTextOverlays(ctx,canvas.width,canvas.height,recipe);
 }
 
 // Closed-region objects share the same transparent ink, palette slots,
@@ -1169,6 +1171,7 @@ export function drawWallpaper(canvas, recipe, options={}) {
   drawFinishedInk(ctx,ink,scene,margin);
   applyCanvasAtmosphere(ctx,canvas.width,canvas.height,scene);
   if(!options.skipPhoto)applyPhotoFinish(ctx,canvas.width,canvas.height,scene.photoLook,scene.seed);
+  drawTextOverlays(ctx,canvas.width,canvas.height,scene);
   if(options.cache){
     options.cache.background=cachedBackground;
     options.cache.ink=ink;
