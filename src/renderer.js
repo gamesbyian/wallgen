@@ -649,6 +649,16 @@ export function createRenderSurface(width,height,canvasFactory){
   return canvas;
 }
 
+// Canvas2D retains a pixel backing store until GC unless its dimensions are
+// reset. Explicitly release intermediate surfaces after their final drawImage;
+// this matters at 3024×6552 where one opaque/transparent layer is ~79 MiB.
+// Do not release an ink/background surface retained by the preview cache.
+function releaseRenderSurface(canvas){
+  if(!canvas)return;
+  canvas.width=0;
+  canvas.height=0;
+}
+
 // Follow a single ribbon edge at an independently controlled OUTWARD
 // offset. This keeps one-sided outlines one-sided even with a buffer.
 function offsetStripeEdge(stripe,extent,scene,distance){
@@ -935,6 +945,8 @@ export function drawWallpaper(canvas, recipe, options={}) {
   const {scaleX,scaleY,offsetX,offsetY}=camera;
   scene.renderBounds=camera.boundsWithMargin(margin);
   const ink=createRenderSurface(inkWidth,inkHeight,options.canvasFactory);
+  let scratch,s;
+  try{
   const g=ink.getContext('2d');
   if(!g) throw new Error('Canvas ink layer unavailable');
   g.setTransform(scaleX,0,0,scaleY,
@@ -1072,7 +1084,6 @@ export function drawWallpaper(canvas, recipe, options={}) {
   // The stripe pass masks against the current ink alpha, so multiply/screen/etc
   // affect the stripe colours without spraying texture into negative space.
   const layers=scene.textureLayers;
-  let scratch,s;
   const active=layers.length>0;
   if(active){
     scratch=createRenderSurface(inkWidth,inkHeight,options.canvasFactory);
@@ -1107,16 +1118,20 @@ export function drawWallpaper(canvas, recipe, options={}) {
     const tw=Math.max(1,Math.ceil(w*rasterScale));
     const th=Math.max(1,Math.ceil(h*rasterScale));
     const surface=createRenderSurface(tw,th,options.canvasFactory);
-    const t=surface.getContext('2d');
-    if(!t)throw new Error('Material surface unavailable');
-    t.setTransform(rasterScale,0,0,rasterScale,-x0*rasterScale,-y0*rasterScale);
-    t.globalAlpha=layer.strength/100;
-    paintMaterial(t,layer,{left,right,top,bottom});
-    s.setTransform(scaleX,0,0,scaleY,margin.left+offsetX,margin.top+offsetY);
-    s.translate(DESIGN_WIDTH/2,DESIGN_HEIGHT/2);
-    s.rotate(radians);
-    s.globalAlpha=1;
-    s.drawImage(surface,x0,y0,w,h);
+    try{
+      const t=surface.getContext('2d');
+      if(!t)throw new Error('Material surface unavailable');
+      t.setTransform(rasterScale,0,0,rasterScale,-x0*rasterScale,-y0*rasterScale);
+      t.globalAlpha=layer.strength/100;
+      paintMaterial(t,layer,{left,right,top,bottom});
+      s.setTransform(scaleX,0,0,scaleY,margin.left+offsetX,margin.top+offsetY);
+      s.translate(DESIGN_WIDTH/2,DESIGN_HEIGHT/2);
+      s.rotate(radians);
+      s.globalAlpha=1;
+      s.drawImage(surface,x0,y0,w,h);
+    }finally{
+      releaseRenderSurface(surface);
+    }
     s.setTransform(1,0,0,1,0,0);s.globalAlpha=1;
   };
   const blend=layer=>layer.blend==='normal'?'source-over':layer.blend;
@@ -1152,4 +1167,10 @@ export function drawWallpaper(canvas, recipe, options={}) {
   applyCanvasAtmosphere(ctx,canvas.width,canvas.height,scene);
   if(!options.skipPhoto)applyPhotoFinish(ctx,canvas.width,canvas.height,scene.photoLook,scene.seed);
   return scene;
+  }finally{
+    releaseRenderSurface(scratch);
+    // A cached ink surface is reused by Undo/nudge/Photo comparison; release
+    // ordinary direct/worker exports and failed paints immediately instead.
+    if(options.cache?.ink!==ink)releaseRenderSurface(ink);
+  }
 }
