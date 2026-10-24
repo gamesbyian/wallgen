@@ -34,6 +34,7 @@ export const EDITOR_CATEGORIES=[
   ]},
   {id:'details',label:'Details',icon:'interior-elements',tools:[
     {id:'interior',name:'Elements',settings:[]},
+    {id:'typography',name:'Text',settings:[]},
     {id:'interior-style',name:'Style',settings:[]},
     {id:'interior-motion',name:'Wave',settings:[]},
     {id:'interior-placement',name:'Placement',settings:[]},

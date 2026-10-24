@@ -1,5 +1,6 @@
 import {normalizeRecipe,randomizeAllRecipe,newSeed} from './model.js';
 import {EDITOR_CATEGORIES,TOOL_LIST,SETTING_TOOL} from './editor-schema.js';
+import {TEXT_FONTS,TEXT_COLOURS,TEXT_OUTLINES} from './text-overlays.js';
 const PERCENT_PRIMES=Array.from({length:99},(_,i)=>i+2)
  .filter(n=>{for(let d=2;d*d<=n;d++)if(n%d===0)return false;return true;});
 const ANGLE_PRIMES=Array.from({length:358},(_,i)=>i+2)
@@ -81,6 +82,35 @@ export function randomizeScope(currentInput,{scope,name,mode='reroll',strength='
     next.interiorElements=active;
     if(JSON.stringify(active)!==JSON.stringify(current.interiorElements))
       modified.push('interiorElements');
+  }
+  // Written content is immutable under every randomizer. The Text tool
+  // changes only the display treatment of already-authored, unlocked objects.
+  if((scope==='tool'&&name==='typography')||
+     (scope==='category'&&name==='details')){
+    const pick=list=>list[Math.floor(random()*list.length)];
+    const vary=(v,min,max)=>clamp(v+(random()*2-1)*weight*(max-min),min,max);
+    const items=(current.textOverlays||[]).map(item=>{
+      if(item.locked)return item;
+      const nextItem={...item,
+        font:chooseAlternative(Object.keys(TEXT_FONTS),item.font,random),
+        colour:chooseAlternative(TEXT_COLOURS,item.colour,random),
+        outline:chooseAlternative(TEXT_OUTLINES,item.outline,random),
+        size:mode==='reroll'?20+Math.round(random()*130):Math.round(vary(item.size,12,180)),
+        rotation:mode==='reroll'?Math.round(random()*91)-45:Math.round(vary(item.rotation,-180,180)),
+        outlineWidth:mode==='reroll'?Math.round(random()*12):Math.round(vary(item.outlineWidth,0,20)),
+      };
+      // Keep letter placement stable for gentle variations. Only explicit
+      // wild rerolls reposition the art; visibility and authored text stay.
+      if(mode==='reroll'&&strength==='wild'){
+        nextItem.x=10+Math.round(random()*80);
+        nextItem.y=10+Math.round(random()*80);
+      }
+      return nextItem;
+    });
+    if(JSON.stringify(items)!==JSON.stringify(current.textOverlays||[])){
+      next.textOverlays=items;
+      modified.push('textOverlays');
+    }
   }
   for(const key of selected){
     if(current.lockedSettings.includes(key))continue;

@@ -4,6 +4,7 @@ import {normalizeSurfaceTreatments} from './embroidery.js';
 import {normalizeCompoundRegion,GEOMETRY_SNAPSHOT_SCHEMA} from './geometry-asset.js';
 import {normalizeScatteredOverrides,normalizeScatteredLayerOrder} from './scattered-object-edits.js';
 import { normalizeInteriorElements } from './interior-elements.js';
+import { normalizeTextOverlays } from './text-overlays.js';
 import { STRUCTURES, RADIAL_MODES, REGION_MODES, DIVIDER_MODES, buildCompositionObjects } from './composition-geometry.js';
 export { STRUCTURES, RADIAL_MODES, REGION_MODES, DIVIDER_MODES };
 import { normalizeDrawnPathWithIndexMap, prepareDrawnPath, safeDrawnBandSpan } from './drawn-path.js';
@@ -119,6 +120,7 @@ export function normalizeRecipe(input = {}) {
     point[1]=canonicalZero(point[1]);
   }
   const normalizedInteriors=normalizeInteriorElements(input.interiorElements);
+  const textOverlays=normalizeTextOverlays(input.textOverlays);
   const scatteredOverrides=normalizeScatteredOverrides(input.scatteredOverrides);
   const reconstructionOrigin=normalizeReconstructionOrigin(input.reconstructionOrigin);
   const scatteredLayerOrder=normalizeScatteredLayerOrder(input.scatteredLayerOrder);
@@ -135,6 +137,7 @@ export function normalizeRecipe(input = {}) {
   return {
     version: 2,
     interiorElements:normalizedInteriors,
+    ...(textOverlays.length?{textOverlays}:{}),
     ...(reconstructionOrigin?{reconstructionOrigin}:{}),
     // Old recipes have no Photo key, leaving their saved representation and pixels intact.
     ...(input.photoLook?{photoLook:normalizePhotoLook(input.photoLook)}:{}),

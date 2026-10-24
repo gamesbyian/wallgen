@@ -12,6 +12,8 @@ test('app and portrait gesture navigator import one identical stateful editor la
   assert.equal(spec(app).length,1);
   assert.match(spec(app)[0],/single-editor1/);
   const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
-  assert.match(html,/src\/app\.js\?v=20261023-single-editor1/);
+  assert.ok(html.includes('src/app.js?v=20261024-text-overlays1'));
+  // The independently cache-busted app entry may evolve without changing
+  // the shared editor-layout module identity (enforced above).
   assert.match(html,/src\/mobile-swipes\.js\?v=20261023-single-editor1/);
 });
