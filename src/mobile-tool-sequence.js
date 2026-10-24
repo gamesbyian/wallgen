@@ -14,3 +14,14 @@ export function adjacentVisibleMobileTool(choices,currentId,direction){
   const next=Math.max(0,Math.min(choices.length-1,index+Math.sign(direction)));
   return next===index?null:choices[next].id;
 }
+
+// The entire sheet sees bubbled touch events. Horizontal drags on the tool
+// rail or category rail must remain native scrolling gestures; touches on
+// labels/links/ARIA controls belong to those controls, not to tool navigation.
+// Only a genuine noninteractive tray surface may begin a tool swipe.
+export function isMobileToolSwipeSurface(target){
+  return !!target?.closest && !target.closest(
+    'input,select,textarea,button,label,a,[role="button"],[role="slider"],' +
+    '[role="option"],[contenteditable],.settings-tabs,.editor-tool-chooser'
+  );
+}
