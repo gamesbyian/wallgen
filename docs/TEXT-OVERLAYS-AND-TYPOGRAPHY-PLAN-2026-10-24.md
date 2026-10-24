@@ -21,8 +21,10 @@ Place and edit one or more phrases directly on a finished ROYGBIV wallpaper with
 - [x] New Text tool in Details, add/select/edit/remove with ordinary history and control synchronization.
 - [x] Text retained through control-based edits and global randomization; styles include black/white, rainbow letter/word/gradient, black/white strokes, size, rotation, x/y, opacity, visibility.
 - [x] Focused Node tests authored and appended to lean quick gate.
-- [ ] Confirm CI green, test actual browser art and mobile control reach (not inferred from code).
-- [ ] Compare direct and worker PNG bytes for text with palette reversal, Photo enabled, full-resolution camera nudge, multiline Unicode and complicated background; inspect actual output.
+- [x] Quick Node CI green and 412×892 emulated Chromium portrait Text-tool add/edit journey performed (not a physical Pixel test).
+- [x] Actual 600×1300 production wallpapers checked: letter rainbow with black stroke, reversed Jewel word rainbow with white outline, and rainbow gradient atop Photo. Reference versus independent worker PNG: **0 pixel-channel differences** across all three. Cache-versus-reference **text masks**: 0, 8 and 0 mismatched pixels respectively, versus ~10–16K actual text pixels each. The legacy background/ink caching path already has residual alpha-resampling differences independent of the new text overlay; these remain transparent in evidence, not falsely declared byte-identical.
+- [x] Actual emulated portrait wallpaper PNG screenshot downloaded and visually viewed, including visibly edited "RAINBOW TEST" text. Browser saw no page exceptions. [One-shot Chromium run #40116105474](https://github.com/gamesbyian/wallgen/actions/runs/40116105474), [preserved preview + JSON metrics](https://github.com/gamesbyian/wallgen/actions/runs/40116105474/artifacts/12567838619).
+- [ ] Full 3024×6552 production PNG and Android native/IME/accessibility confirmation; varied combining marks, emojis, user imported font and large camera nudge still need real proof.
 - [ ] Fix and measure any correctness, memory, mobile/IME/keyboard, focus or export gaps.
 - [ ] Update `#653` with evidence and merge when checks pass; don't mark external Pixel acceptance without handset evidence.
 
