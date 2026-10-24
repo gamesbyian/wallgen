@@ -57,6 +57,10 @@ try{
       const elapsedMs=Math.round(performance.now()-t0);
       const pixels=made.map(c=>({width:c.width,height:c.height}));
       const pixelArea=pixels.reduce((sum,c)=>sum+c.width*c.height,0);
+      let previewConsistency=null;
+      // Native-size stress proof avoids retaining a second ~80 MiB final
+      // canvas and two ~80 MiB preview surfaces just for diagnostics.
+      if(width*height<=1000000){
       // Settled preview paints the same canonical recipe with overscan and
       // photo compositing. Compare actual full RGBA, not CSS screenshots.
       const cacheSurface=document.createElement('canvas');
@@ -86,27 +90,40 @@ try{
       const cacheTemporaryPixels=unretained.reduce((n,c)=>n+c.width*c.height,0);
       const cachedBackingPixels=cache.ink.width*cache.ink.height+
         cache.background.width*cache.background.height;
-      const png=canvas.toDataURL('image/png').split(',')[1];
-      const previewConsistency={differingPixels:differing,
+      previewConsistency={differingPixels:differing,
         colourMAE:colourMAE/(width*height*3),maxDelta,
         cacheTemporaryPixels,cachedBackingPixels};
       // Match the same lifetime as the interactive main-thread preview.
       cache.ink.width=0;cache.ink.height=0;
       cache.background.width=0;cache.background.height=0;
+      }
+      let png=null,nativePngBytes=null,nativeSha256=null,encodingMs=null;
+      if(width*height<=1000000)png=canvas.toDataURL('image/png').split(',')[1];
+      else{
+        const encodeStart=performance.now();
+        const blob=await new Promise(ok=>canvas.toBlob(ok,'image/png'));
+        if(!blob||!blob.size)throw Error('Native-size canvas PNG encoding failed');
+        nativePngBytes=blob.size;
+        const digest=await crypto.subtle.digest('SHA-256',await blob.arrayBuffer());
+        nativeSha256=Array.from(new Uint8Array(digest)).map(x=>x.toString(16).padStart(2,'0')).join('');
+        encodingMs=Math.round(performance.now()-encodeStart);
+      }
       return {width,height,recipe,elapsedMs,created:made.length,pixels,
         retainedPixels:pixelArea,retainedBackingBytes:pixelArea*4,
-        previewConsistency,png};
+        previewConsistency,png,nativePngBytes,nativeSha256,encodingMs};
     },{width,height});
-    const png=Buffer.from(result.png,'base64');
+    const png=result.png?Buffer.from(result.png,'base64'):null;
     const record={width,height,elapsedMs:result.elapsedMs,created:result.created,
       retainedPixels:result.retainedPixels,retainedBackingBytes:result.retainedBackingBytes,
-      surfaces:result.pixels,previewConsistency:result.previewConsistency,sha256:createHash('sha256').update(png).digest('hex'),
-      pngBytes:png.length,seed:result.recipe.seed,photo:result.recipe.photoLook?.presetId};
+      surfaces:result.pixels,previewConsistency:result.previewConsistency,
+      sha256:png?createHash('sha256').update(png).digest('hex'):result.nativeSha256,
+      pngBytes:png?.length??result.nativePngBytes,encodingMs:result.encodingMs,
+      seed:result.recipe.seed,photo:result.recipe.photoLook?.presetId};
     console.log('AGENT2_RENDER_RESOURCE_EVIDENCE '+JSON.stringify(record));
     if(width<=280&&process.env.ROYGBIV_PRINT_IMAGE==='1')
       console.log('AGENT2_ART_PNG_BASE64 '+result.png);
     assert.equal(result.retainedPixels,0,'Temporary renderer Canvas2D backing stores must be released at return');
-    assert.equal(result.previewConsistency.cacheTemporaryPixels,0,'Preview cache must only retain actual ink/background');
+    if(result.previewConsistency)assert.equal(result.previewConsistency.cacheTemporaryPixels,0,'Preview cache must only retain actual ink/background');
   }
   assert.deepEqual(errors,[],'No page errors');
 }finally{await browser.close();await new Promise(ok=>server.close(ok));}
