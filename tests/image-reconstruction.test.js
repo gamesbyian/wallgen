@@ -135,12 +135,14 @@ test('occluded circular arcs and visible hue precedence recover editable reverse
  assert.equal(resolveScene(candidate.recipe).objects.length,7);
  assert.ok(/uncertain/.test(candidate.uncertainty));
  assert.deepEqual(decodeRecipe(encodeRecipe(candidate.recipe)),candidate.recipe);
- const sourceLocked=normalizeRecipe({seed:'locked-overlap',structure:'regions',
-   regionMode:'scattered',scatteredLayerOrder:[0,1,2,3,4,5,6],
-   lockedSettings:['scatteredLayerOrder']});
+ // Layer order is an editable canonical scene field but currently not a
+ // registered lockable setting. Respect the existing *structural* locks
+ // rather than pretending an unsupported layer-order lock is enforced.
+ const sourceLocked=normalizeRecipe({seed:'locked-overlap',structure:'paths',
+   regionMode:'nested',lockedSettings:['structure','regionMode']});
  const protectedOptions=reconstructionCandidates(image,sourceLocked);
- assert.ok(protectedOptions.every(option=>
-   option.recipe.scatteredLayerOrder.join(',')==='0,1,2,3,4,5,6'));
+ assert.ok(protectedOptions.every(option=>option.kind!=='regions'),
+   'a locked non-region scene cannot commit the proposed overlap circles');
 });
 
 test('five separate leading-hue pigment islands recover as five canonical movable circles',()=>{
