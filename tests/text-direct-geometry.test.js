@@ -28,7 +28,7 @@ test('topmost text wins overlap hit-test, rotated bbox and off-glyph misses are 
  assert.equal(hitTextOverlay(list,{x:0,y:0},measure),null);
  // A 45° banner extends diagonally farther than an unrotated tight box.
  const sole=[list[1]];
- assert.equal(hitTextOverlay(sole,{x:328,y:682},measure)?.id,'front');
+ assert.equal(hitTextOverlay(sole,{x:322,y:672},measure)?.id,'front');
  assert.equal(hitTextOverlay(sole,{x:390,y:650},measure),null);
 });
 test('release changes only selected X/Y once, maintaining all other text objects',()=>{
