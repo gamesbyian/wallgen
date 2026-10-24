@@ -1,5 +1,10 @@
 # ROYGBIV release-readiness and owner-dependent acceptance ledger
 
+## Verified merged-main receipt · 24 October 2026
+
+The exact merged-main engineering and hardware-status ledger is [**INTEGRATION-LEDGER-2026-10-24.md**](INTEGRATION-LEDGER-2026-10-24.md). Baseline `main c8c3644b` contains qualified Agent 2 curved text #668 (`a376ef05`) and Agent 3 real-browser accessibility/PNG/font/recorder QA #667 (`c8c3644b`). Both are **merged**, not outstanding; all temporary heavy workflows were removed. Original no-PR branches accounted for, with one useful test selectively rescued. #666 and #669 remain separate draft engineering PRs, #557/#653/#664 open. See the linked ledger for explicit browser passes versus **NOT TESTED** Pixel/IME/TalkBack/memory/human/authenticated remote gates.
+
+
 ## 24 October independent portrait acceptance · real Chromium and actual PNG pixels
 
 - **Software/browser validation PASSED:** [one-shot GitHub Actions #40140699944](https://github.com/gamesbyian/wallgen/actions/runs/40140699944), on Agent 3 [PR #667](https://github.com/gamesbyian/wallgen/pull/667), 320×700 and 412×892 separately. The temporary browser CI job was **removed** afterward so the normal `check:quick` remains lean. The artifact contains actual independently viewed screenshot PNGs and machine-readable evidence, rather than inferred source assertions. Both semantic 7-category/5-destination/10 metadata-label audits passed with zero app exceptions.

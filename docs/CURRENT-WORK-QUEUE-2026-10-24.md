@@ -1,5 +1,10 @@
 # Current ROYGBIV work queue and three-agent dispatch
 
+## Authoritative verified merged-main checkpoint · 24 October
+
+The definitive Agent 3 software merge/acceptance/branch-rescue receipt is [**INTEGRATION-LEDGER-2026-10-24.md**](INTEGRATION-LEDGER-2026-10-24.md), based on independently verified `main` **`c8c3644b`**: #668 curved typography **merged** at `a376ef05`, #667 accessibility and full two-viewport real Chromium acceptance **merged** at `c8c3644b`; both temporary heavy CI jobs retired. The older snapshots below saying `0 PRs` or labeling #668/#667 drafts are historical checkpoint data only. **Current active engineering PRs at this receipt:** #666 reconstruction draft, #669 authored-curves typography draft. All 12 original no-PR branches have explicit dispositions in the linked ledger. Issues #557, #653 and #664 remain open for genuinely unfinished engineering or owner-specific physical tests. Independently passed browser evidence is never physical Pixel/IME/TalkBack/heap or authenticated remote acceptance.
+
+
 ## Live Agent 3 acceptance and no-PR reconciliation · 24 October 2026
 
 This dated receipt supersedes the **0 open PRs at f404575** checkpoint immediately below, without rewriting the historical audit. The initial independent main was `c23635f47d5280567593170b04977cd1ca8418dd` (merged #665); live proposals are [#666](https://github.com/gamesbyian/wallgen/pull/666) inverse geometry, [#667](https://github.com/gamesbyian/wallgen/pull/667) independent QA/a11y and [#668](https://github.com/gamesbyian/wallgen/pull/668) opt-in curved text, all **draft and not merged at this receipt**. Issues #557, #653 and #664 remain open. Changes to these proposals must be rechecked at integration time.
