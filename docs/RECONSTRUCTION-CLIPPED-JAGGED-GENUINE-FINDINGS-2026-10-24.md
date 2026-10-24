@@ -27,6 +27,12 @@ The current source PNG's metadata-free SHA-256 for #16 is `19d5b10fb1a52ff026626
 
 **Visible result:** the new fit is a slightly better spatial match but remains conspicuously too crowded: source ribbons show independent broad black negative-space channels and displaced/cropped lower endpoints; inferred output still closes many gaps and paints the lower stripes too broadly. The metric improvement does **not** warrant calling #16 solved, source-exact or visually approved. Source truth-render scale/presentation error floor for #16 is .01442435348, not a claim of accessible original seed.
 
+## Third-trial negative evidence and rollback
+
+A deliberately clipped-family-only coupled Position X/Y refinement trial reused the ten existing paints and passed synthetic tests, but on the [genuine current-renderer comparison #40141022188](https://github.com/gamesbyian/wallgen/actions/runs/40141022188) its #16 pixel score was **.21359783497**, worse than this PR's simpler **.20873043929**. Jagged #04, Hairpin #05 and Loop #06 remained unchanged. The actual three-way PNG plate was downloaded and visually inspected. The coupled variant painted noticeably wider black channels but also moved their endpoints and gaps away from the source. Additional independent direct-PNG black-mask overlap at the 96 × 208 frame: source black area **62.18%**, simple clipped fit **51.22%**, coupled fit **53.71%**; however source-vs-fit black-mask F1 fell from **.78705** to **.76194** (IoU .64887 → .61543). Correct total pigment coverage is not sufficient if it occupies the wrong spatial channels.
+
+**Disposition: coupled candidate code/tests removed from PR #666.** Its render budget, locks and cancellation tests passed, but both baseline pixel error and independently measured black-mask localization were inferior. Further inversion work needs a *genuinely source-evidenced* registration that maintains correct between-ribbon spacing and positions, not more unguided paired trial slots. Two disposable Actions workflows used solely for real optical inspection and the tracked-source snapshot were deleted from the PR after evidence capture.
+
 ## Live remaining gates and non-goals
 
 1. **Jagged #16**: discriminate pigment-to-pigment negative-space drift and clipped endpoint/phase from actual before/after renderer hue footprints; avoid greedy spread collapse or unguided 2D shifts. Keep a single ≤10 canonical refinement paint budget and compare *actual rendered previews*.
