@@ -16,7 +16,11 @@ export function installTextCanvasMover({
   const outline=document.createElement('div');
   outline.className='text-direct-outline';
   outline.hidden=true;
-  outline.setAttribute('aria-hidden','true');
+  // This contains interactive rotate/scale buttons. Aria-hiding the visual
+  // selection frame also hides its descendants from the accessibility tree,
+  // even while those buttons remain visible and keyboard-focusable.
+  outline.setAttribute('role','group');
+  outline.setAttribute('aria-label','Selected text transform controls');
   // Transform handles are real DOM controls, not invisible bitmap hotspots.
   // They remain keyboard-accessible and are never drawn into saved PNGs.
   const handleSpecs=[
