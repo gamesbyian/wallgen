@@ -945,7 +945,8 @@ export function drawWallpaper(canvas, recipe, options={}) {
   const {scaleX,scaleY,offsetX,offsetY}=camera;
   scene.renderBounds=camera.boundsWithMargin(margin);
   const ink=createRenderSurface(inkWidth,inkHeight,options.canvasFactory);
-  let scratch,s;
+  let scratch,s,cachedBackground;
+  let cacheCommitted=false;
   try{
   const g=ink.getContext('2d');
   if(!g) throw new Error('Canvas ink layer unavailable');
@@ -1157,20 +1158,32 @@ export function drawWallpaper(canvas, recipe, options={}) {
   // stripes that exited the original frame keep going off-frame when nudged.
   // Intentionally inset stripe endpoints are unchanged.
   if(options.cache) {
-    const background=createRenderSurface(canvas.width,canvas.height,options.canvasFactory);
-    background.getContext('2d').drawImage(canvas,0,0);
-    options.cache.background=background;
-    options.cache.ink=ink;
-    options.cache.overhang=margin;
+    // Keep the unlit background separate until the complete final picture
+    // has been composed. Publishing either cache layer early makes a failed
+    // draw look reusable on subsequent nudge/Photo actions.
+    cachedBackground=createRenderSurface(canvas.width,canvas.height,options.canvasFactory);
+    const backgroundContext=cachedBackground.getContext('2d');
+    if(!backgroundContext)throw new Error('Canvas background layer unavailable');
+    backgroundContext.drawImage(canvas,0,0);
   }
   drawFinishedInk(ctx,ink,scene,margin);
   applyCanvasAtmosphere(ctx,canvas.width,canvas.height,scene);
   if(!options.skipPhoto)applyPhotoFinish(ctx,canvas.width,canvas.height,scene.photoLook,scene.seed);
+  if(options.cache){
+    options.cache.background=cachedBackground;
+    options.cache.ink=ink;
+    options.cache.overhang=margin;
+    cacheCommitted=true;
+  }
   return scene;
   }finally{
     releaseRenderSurface(scratch);
-    // A cached ink surface is reused by Undo/nudge/Photo comparison; release
-    // ordinary direct/worker exports and failed paints immediately instead.
-    if(options.cache?.ink!==ink)releaseRenderSurface(ink);
+    // The two settled preview layers survive only a successful paint. A
+    // failed context, compositor or Photo stage must not retain backing
+    // stores or advertise an incomplete frame for Undo/nudge reuse.
+    if(!cacheCommitted){
+      releaseRenderSurface(cachedBackground);
+      releaseRenderSurface(ink);
+    }
   }
 }

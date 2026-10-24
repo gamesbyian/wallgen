@@ -26,3 +26,100 @@ for(const useCache of [false,true]){
     assert.equal(cache.ink,undefined,'a failed paint is never a reusable cache');
   });
 }
+
+const noOp=()=>{};
+function proxyCanvasContext({throwOnPresent=false,throwOnPhoto=false}={}){
+  const value={
+    drawImage(){if(throwOnPresent)throw new Error('Injected final compositor failure');},
+    getImageData(){if(throwOnPhoto)throw new Error('Injected Photo readback failure');return {data:new Uint8ClampedArray(0)};},
+    createLinearGradient(){return {addColorStop:noOp};},
+    createRadialGradient(){return {addColorStop:noOp};}
+  };
+  return new Proxy(value,{get(target,key){return key in target?target[key]:noOp;},
+    set(target,key,next){target[key]=next;return true;}});
+}
+
+test('a final compositor error must not publish an incomplete preview cache or strand its canvases',()=>{
+  // Regions avoid browser Path2D and permit precise Node fault injection at
+  // the final destination drawImage, after background and ink were prepared.
+  const target={width:600,height:1300,
+    getContext(){return proxyCanvasContext({throwOnPresent:true});}};
+  const surfaces=[];
+  const previousInk={width:14,height:22};
+  const previousBackground={width:14,height:22};
+  const previousOverhang={left:1,top:2,width:14,height:22};
+  const cache={ink:previousInk,background:previousBackground,
+    overhang:previousOverhang};
+  const factory=(width,height)=>{
+    const surface={width,height,getContext(){return proxyCanvasContext();}};
+    surfaces.push(surface);
+    return surface;
+  };
+  assert.throws(()=>drawWallpaper(target,normalizeRecipe({
+    seed:'final-compositor-exception',structure:'regions',regionMode:'blocks',
+    material:'none',glow:0,lightingMood:'off',stripeShadowStrength:0
+  }),{cache,canvasFactory:factory}),/Injected final compositor failure/);
+  assert.equal(surfaces.length,2,'background and ink had been prepared');
+  assert.equal(cache.ink,previousInk,'failure must retain the previous good ink');
+  assert.equal(cache.background,previousBackground,'failure must retain the previous good background');
+  assert.equal(cache.overhang,previousOverhang,'failure must not publish new framing');
+  for(const surface of surfaces){
+    assert.equal(surface.width,0,'failed render must release every canvas width');
+    assert.equal(surface.height,0,'failed render must release every canvas height');
+  }
+});
+
+test('successful settled previews preserve only their two reusable cache surfaces',()=>{
+  const target={width:280,height:607,getContext(){return proxyCanvasContext();}};
+  const surfaces=[],cache={};
+  const factory=(width,height)=>{
+    const surface={width,height,getContext(){return proxyCanvasContext();}};
+    surfaces.push(surface);
+    return surface;
+  };
+  drawWallpaper(target,normalizeRecipe({
+    seed:'successful-cache-ownership',structure:'regions',regionMode:'blocks',
+    material:'none',lightingMood:'off'
+  }),{cache,canvasFactory:factory});
+  assert.equal(surfaces.length,2);
+  assert.ok(cache.ink.width>0);
+  assert.equal(cache.background.width,target.width);
+  assert.equal(cache.background.height,target.height);
+});
+
+test('a late Photo readback failure releases both prepared preview layers',()=>{
+  const target={width:600,height:1300,
+    getContext(){return proxyCanvasContext({throwOnPhoto:true});}};
+  const surfaces=[],cache={};
+  const factory=(width,height)=>{
+    const c={width,height,getContext(){return proxyCanvasContext();}};
+    surfaces.push(c);
+    return c;
+  };
+  assert.throws(()=>drawWallpaper(target,normalizeRecipe({
+    seed:'photo-preview-exception',structure:'regions',regionMode:'nested',
+    material:'none',photoLook:{enabled:true,presetId:'film-slide',amount:100}
+  }),{cache,canvasFactory:factory}),/Injected Photo readback failure/);
+  assert.equal(surfaces.length,2);
+  assert.equal(cache.ink,undefined);
+  assert.equal(cache.background,undefined);
+  for(const c of surfaces)assert.deepEqual([c.width,c.height],[0,0]);
+});
+
+test('background cache allocation failure frees finished ink without publishing cache',()=>{
+  const target={width:600,height:1300,getContext(){return proxyCanvasContext();}};
+  const cache={},created=[];
+  assert.throws(()=>drawWallpaper(target,normalizeRecipe({
+    seed:'background-cache-allocation-failed',structure:'regions',regionMode:'nested',
+    material:'none'
+  }),{cache,canvasFactory:(width,height)=>{
+    if(created.length)throw Error('Injected cache allocation failure');
+    const ink={width,height,getContext(){return proxyCanvasContext();}};
+    created.push(ink);
+    return ink;
+  }}),/Injected cache allocation failure/);
+  assert.equal(created.length,1);
+  assert.deepEqual([created[0].width,created[0].height],[0,0]);
+  assert.equal(cache.ink,undefined);
+  assert.equal(cache.background,undefined);
+});
