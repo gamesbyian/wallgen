@@ -1,5 +1,5 @@
 import { OUTPUT_WIDTH, OUTPUT_HEIGHT, NAMES, normalizeRecipe, resolveScene, encodeRecipe, decodeRecipe, newSeed, randomizeAllRecipe, respectSettingLocks, LOCKABLE_SETTINGS } from './model.js';
-import { drawWallpaper, presentNudgedArtwork } from './renderer.js?v=20261022-photo1';
+import { drawWallpaper, presentNudgedArtwork } from './renderer.js?v=20261024-text-overlays1';
 import {normalizePhotoLook,PHOTO_PRESETS} from './photo-look.js';
 import {photoPreviewRecipe} from './photo-preview-compare.js';
 import {createPreviewCoordinator,createThumbnailQueue,exportWallpaperInWorker,closeFrame} from './render-coordinator.js';
