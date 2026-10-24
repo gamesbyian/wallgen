@@ -1,6 +1,7 @@
 import {MAX_TEXT_OVERLAYS,newTextOverlay,TEXT_FONTS,TEXT_COLOURS,TEXT_OUTLINES} from './text-overlays.js';
 import {importLocalFont,listLocalFonts,isLocalFontId} from './local-fonts.js';
 import {BUNDLED_FONTS,isBundledFontId} from './bundled-fonts.js';
+import {exportPortableFontPack,importPortableFontPack,packageFontIds} from './portable-font-pack.js';
 
 // A tool inside the seven-category editor, not a floating DOM preview layer.
 // Every mutation takes the existing recipe/Undo path supplied by app.js.
@@ -44,7 +45,14 @@ export function installTextOverlayTool({getRecipe,changeRecipe,onFontNotice=()=>
         </div>
       </details>
     </div>
-    <p class="text-overlay-hint">27 included, licensed typefaces travel with ROYGBIV. Your imported fonts stay private on this device, never inside a PNG or link. Reimport your original TTF/OTF file on another device; missing fonts block export rather than silently substitute.</p>
+    <div class="text-overlay-portability" role="group" aria-label="Portable design and private fonts">
+      <button type="button" data-font-pack-export>Save design + my fonts</button>
+      <label>Open a portable design
+        <input type="file" data-font-pack-import accept=".json,.roygbiv-fontpack.json,application/json">
+      </label>
+      <p data-font-pack-status role="status" aria-live="polite"></p>
+    </div>
+    <p class="text-overlay-hint">27 included, licensed typefaces work across devices. Private TTF/OTF bytes normally stay only on this device. Use “Save design + my fonts” to deliberately create a separate transferable file. Share third-party fonts only if you have permission. Ordinary PNGs and share links never contain private font binaries.</p>
   `;
   card.append(root);
   const pick=root.querySelector('[data-text-picker]');
@@ -56,6 +64,9 @@ export function installTextOverlayTool({getRecipe,changeRecipe,onFontNotice=()=>
   const outline=root.querySelector('[data-text-key="outline"]');
   const fontFile=root.querySelector('[data-text-import]');
   const fontStatus=root.querySelector('[data-text-font-status]');
+  const packSave=root.querySelector('[data-font-pack-export]');
+  const packOpen=root.querySelector('[data-font-pack-import]');
+  const packStatus=root.querySelector('[data-font-pack-status]');
   let library=[];
   const options=(select,entries)=>select.replaceChildren(...entries.map(([value,label])=>{
     const option=document.createElement('option');option.value=value;option.textContent=label;return option;
@@ -93,6 +104,7 @@ export function installTextOverlayTool({getRecipe,changeRecipe,onFontNotice=()=>
     pick.disabled=!item;
     remove.disabled=!item;
     add.disabled=items.length>=MAX_TEXT_OVERLAYS;
+    packSave.disabled=!packageFontIds(getRecipe()).length;
     if(!item){fontStatus.textContent='';return;}
     refreshFontOptions(item.font);
     fontStatus.textContent=isLocalFontId(item.font)&&
@@ -131,6 +143,51 @@ export function installTextOverlayTool({getRecipe,changeRecipe,onFontNotice=()=>
     const value=event.target.type==='checkbox'?event.target.checked:
       event.target.type==='range'?Number(event.target.value):event.target.value;
     commit(currentItems().map(item=>item.id===selectedId?{...item,[key]:value}:item));
+  });
+  packSave.addEventListener('click',async()=>{
+    if(packSave.disabled)return;
+    packSave.disabled=true;
+    packStatus.textContent='Packaging your original private fonts…';
+    try{
+      const blob=await exportPortableFontPack(getRecipe());
+      const link=document.createElement('a');
+      const url=URL.createObjectURL(blob);
+      link.href=url;
+      const seed=String(getRecipe().seed||'design').replace(/[^A-Za-z0-9_-]/g,'-').slice(0,38);
+      link.download='roygbiv-'+seed+'.fontpack.json';
+      document.body.append(link);
+      try{link.click();}
+      finally{link.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);}
+      packStatus.textContent='Portable design saved with private fonts. Share only if licensed.';
+      onFontNotice('Saved portable font package to device.');
+    }catch(error){
+      packStatus.textContent=String(error?.message||error);
+      onFontNotice(packStatus.textContent);
+    }finally{packSave.disabled=!packageFontIds(getRecipe()).length;}
+  });
+  packOpen.addEventListener('change',async()=>{
+    const file=packOpen.files?.[0];
+    if(!file)return;
+    packOpen.disabled=true;
+    packStatus.textContent='Inspecting portable design and verifying font hashes…';
+    try{
+      const recipe=await importPortableFontPack(file,{
+        approve:({fontCount,totalBytes})=>window.confirm(
+          'Replace your current design with this portable design and import '+
+          fontCount+' private font file(s) ('+
+          (totalBytes/1048576).toFixed(1)+' MB)? Only continue if you trust its source.')
+      });
+      if(recipe){
+        library=await listLocalFonts();
+        changeRecipe(recipe,{bypassLocks:true,cause:'portable_font_package_import'});
+        sync();
+        packStatus.textContent='Design and '+library.length+' available private font(s) restored.';
+        onFontNotice('Portable design and exact fonts imported.');
+      }else packStatus.textContent='Cancelled. Your design and fonts were not changed.';
+    }catch(error){
+      packStatus.textContent='Cannot import package: '+String(error?.message||error);
+      onFontNotice(packStatus.textContent);
+    }finally{packOpen.value='';packOpen.disabled=false;}
   });
   fontFile.addEventListener('change',async()=>{
     const file=fontFile.files?.[0];
