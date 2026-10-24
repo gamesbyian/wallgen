@@ -1,0 +1,31 @@
+name: One-shot shaped rainbow text proof
+on:
+  pull_request:
+    paths:
+      - 'scripts/text-shaping-browser-proof.mjs'
+      - '.github/workflows/text-shaping-acceptance-once.yml'
+permissions:
+  contents: read
+jobs:
+  shaping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install isolated Chromium and verified bundled faces
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+      - name: Native glyph-shaping alpha mask and PNG worker parity
+        run: node scripts/text-shaping-browser-proof.mjs
+      - name: Preserve shaped Arabic rainbow bitmap and evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rainbow-native-shaping-acceptance
+          path: output/typography-shaping/
+          if-no-files-found: ignore
+          retention-days: 5
