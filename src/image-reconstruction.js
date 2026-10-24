@@ -207,10 +207,33 @@ export function imageCurveSignature(paths,width,height){
 export function measuredRainbowRibbonBands(regions,width,height){
   if(!Array.isArray(regions)||regions.length!==7||!Number.isFinite(width)||
     !Number.isFinite(height)||width<12||height<12)return null;
-  const bands=regions.filter(r=>r&&r.axisRatio>=4&&r.area>=16&&
+  const complete=regions.filter(r=>r&&r.axisRatio>=4&&r.area>=16&&
     Number.isFinite(r.majorStd)&&r.majorStd>3&&
     Number.isFinite(r.axisAngle)&&Number.isFinite(r.cx)&&Number.isFinite(r.cy));
-  if(bands.length!==7)return null;
+  let bands=complete;
+  if(bands.length!==7){
+    // Seven observed hues may contain four complete ribbon spans and three
+    // progressively clipped ends. Recover gap/ink estimates from the four
+    // intact spans ONLY when the truncated pigments corroborate one axis
+    // and the same physical ink width. Ordinary seven-ribbon proof wins first.
+    const head=regions.slice(0,4),tail=regions.slice(4);
+    const axis=head.map(r=>r?.axisAngle);
+    const common=axis.every(Number.isFinite)&&
+      axis.every(a=>Math.abs(a-axis[0])<5);
+    const wide=head.every(r=>r&&r.axisRatio>=7&&r.area>=16&&
+      r.bounds?.[0]<=.04&&r.bounds?.[2]>=.96&&
+      Number.isFinite(r.majorStd)&&r.majorStd>10);
+    const truncation=tail.every((r,i)=>r&&r.area>=16&&
+      Number.isFinite(r.axisAngle)&&Math.abs(r.axisAngle-axis[0])<=5&&
+      r.bounds?.[2]>=.96&&r.bounds?.[0]>=.15&&
+      r.bounds[0]>(i?tail[i-1].bounds[0]:head[3].bounds[0])+.05&&
+      r.majorStd<head[3].majorStd*(1-i*.16));
+    const widths=regions.map(r=>r?.minorStd);
+    const consistentWidth=widths.every(x=>Number.isFinite(x)&&x>2)&&
+      Math.max(...widths)/Math.min(...widths)<1.15;
+    if(!(common&&wide&&truncation&&consistentWidth))return null;
+    bands=head;
+  }
   const median=items=>items.slice().sort((a,b)=>a-b)[Math.floor(items.length/2)];
   const orientations=bands.map(r=>r.axisAngle).sort((a,b)=>a-b);
   const angle=median(orientations);
@@ -849,71 +872,6 @@ export function measuredJaggedPixelShift(source,rendered){
 }
 
 /**
- * Larger displaced Jagged inputs can change the visible endpoints and area
- * enough to defeat a narrow rigid-pixel scan. First ask the EXISTING hue
- * component extractor whether the seven pigments independently indicate the
- * same two-axis displacement. Only then test a small neighbourhood around
- * that measured offset against the existing real-render bitmap.
- *
- * This is deliberately not a general broad cross-correlation search: colour
- * continuity, pixel agreement and a strict gain must all support the proposal.
- * It cannot assert source phase/shape/seed or spend any renderer calls.
- */
-export function measuredJaggedHueShift(source,rendered){
-  if(!source||!rendered||source.width!==RECONSTRUCTION_WIDTH||
-    source.height!==RECONSTRUCTION_HEIGHT||
-    rendered.width!==source.width||rendered.height!==source.height||
-    source.data?.length!==rendered.data?.length)return null;
-  const a=extractImageColourRegions(source,HUES).regions;
-  const b=extractImageColourRegions(rendered,HUES).regions;
-  if(a.length!==7||b.length!==7)return null;
-  const dx=[],dy=[],w=source.width,h=source.height;
-  for(let i=0;i<7;i++){
-    const left=a.find(r=>r.index===i),right=b.find(r=>r.index===i);
-    if(!left||!right||left.area<16||right.area<16)return null;
-    dx.push((left.cx-right.cx)*w);
-    dy.push((left.cy-right.cy)*h);
-  }
-  const median=items=>items.slice().sort((x,y)=>x-y)[3];
-  const mx=median(dx),my=median(dy);
-  if(Math.abs(mx)>24||Math.abs(my)>32||
-    (Math.abs(mx)<6&&Math.abs(my)<6)||
-    dx.some(x=>Math.abs(x-mx)>7)||
-    dy.some(y=>Math.abs(y-my)>9))return null;
-
-  const src=source.data,fit=rendered.data;
-  const score=(shiftX,shiftY)=>{
-    let total=0,n=0;
-    for(let y=0;y<h;y+=2)for(let x=0;x<w;x+=2){
-      const i=(y*w+x)*4,rx=x-shiftX,ry=y-shiftY;
-      const valid=rx>=0&&rx<w&&ry>=0&&ry<h;
-      const j=valid?(ry*w+rx)*4:-1;
-      const ar=src[i],ag=src[i+1],ab=src[i+2];
-      const br=valid?fit[j]:0,bg=valid?fit[j+1]:0,bb=valid?fit[j+2]:0;
-      total+=.75*(Math.abs(ar-br)+Math.abs(ag-bg)+Math.abs(ab-bb))/(3*255)+
-        .25*Math.abs(Math.max(ar,ag,ab)-Math.max(br,bg,bb))/255;
-      n++;
-    }
-    return total/n;
-  };
-  const baseline=score(0,0);
-  let best=baseline,bestX=0,bestY=0;
-  // The median is the search centre, not a licence to roam the frame.
-  // Five-by-five at ±4 pixels also tolerates modest clipping/centroid bias.
-  for(let oy=-4;oy<=4;oy+=2)for(let ox=-4;ox<=4;ox+=2){
-    const sx=Math.round(mx+ox),sy=Math.round(my+oy);
-    if(Math.abs(sx)>24||Math.abs(sy)>32)continue;
-    const current=score(sx,sy);
-    if(current+1e-9<best){best=current;bestX=sx;bestY=sy;}
-  }
-  if(baseline-best<.035||best>baseline*.68)return null;
-  return {offsetX:Math.round(bestX*1000/w)/10,
-    offsetY:Math.round(bestY*1000/h)/10,
-    measuredPixelGain:Math.round((baseline-best)*1e6)/1e6,
-    coupled:true};
-}
-
-/**
  * A coherent seven-band image often differs from the first wave render by
  * a rigid vertical translation. Use the ALREADY shared hue components to
  * measure each colour's displacement in the same 96x208 scoring frame;
@@ -1011,8 +969,7 @@ export function rankReconstructionCandidates(candidates,source,render){
           coherentVerticalBandOffsetX(source,pixels):null;
         const jaggedShift=candidate.kind==='jagged'&&
           candidate.recipe.background==='black'?
-          (measuredJaggedPixelShift(source,pixels) ??
-            measuredJaggedHueShift(source,pixels)):null;
+          measuredJaggedPixelShift(source,pixels):null;
         const drawRegistration=candidate.kind==='path'&&
           candidate.recipe.geometry==='drawn'&&
           candidate.recipe.geometrySafety===false?
@@ -1144,18 +1101,7 @@ function refinementFields(candidate){
     ['shapeDepth',[-12,12]],['shapeFrequency',[-12,12]],
     ['stripeWidth',[-15,15]]
   ]:candidate.kind==='jagged'?(
-    candidate.jaggedShift?.coupled?[
-      // Large displacement needs a simultaneous X/Y proposal. Either
-      // coordinate alone can score worse and be discarded by greedy fitting.
-      // The true renderer must approve every candidate within the same ten.
-      ['positionXY',[
-        [candidate.jaggedShift.offsetX,candidate.jaggedShift.offsetY],
-        [candidate.jaggedShift.offsetX*.75,candidate.jaggedShift.offsetY*.75],
-        [candidate.jaggedShift.offsetX,candidate.jaggedShift.offsetY*.75],
-        [candidate.jaggedShift.offsetX*.75,candidate.jaggedShift.offsetY]
-      ]],
-      ['positionX',[-2,2]],['positionY',[-2,2]],['spread',[-10,10]]
-    ]:candidate.jaggedShift?[
+    candidate.jaggedShift?[
       // Once actual source versus first canonical paint measures a narrow
       // rigid offset, trial the inferred editable position before broad
       // shape guesses. The one 10-render budget and lock semantics stay.
@@ -1197,29 +1143,20 @@ function canRefine(candidate,maxRenders){
 function* refinementTrials(candidate,maxRenders){
   let best=candidate,renders=0;
   for(const [field,deltas] of refinementFields(candidate)){
-    const paired=field==='positionXY';
-    const origin=paired?
-      [best.recipe.positionX,best.recipe.positionY]:best.recipe[field];
+    const origin=best.recipe[field];
     for(const delta of deltas){
       if(renders>=maxRenders)break;
-      // Use the canonical lock owner for every real-render trial, including
-      // coupled Position proposals. An impossible Apply must never preview.
-      const proposal=paired?{
-        ...best.recipe,positionX:origin[0]+delta[0],
-        positionY:origin[1]+delta[1]
-      }:{...best.recipe,[field]:origin+delta};
-      const recipe=respectSettingLocks(best.recipe,normalizeRecipe(proposal));
-      if(paired?recipe.positionX===best.recipe.positionX&&
-        recipe.positionY===best.recipe.positionY:
-        recipe[field]===best.recipe[field])continue;
+      // Use the canonical lock owner for every real-render trial, not only
+      // coarse candidates. Composite Position protects both X and Y, so a
+      // preview cannot be fitted into an arrangement Apply would later reject.
+      const recipe=respectSettingLocks(best.recipe,
+        normalizeRecipe({...best.recipe,[field]:origin+delta}));
+      if(recipe[field]===best.recipe[field])continue;
       const error=yield recipe;
       renders++;
       if(Number.isFinite(error)&&error+1e-9<best.error)
         best={...best,recipe,error,label:candidate.label+' · fitted',
-          adjustments:[...(best.adjustments||[]),
-            ...(paired?[{field:'positionX',value:recipe.positionX},
-              {field:'positionY',value:recipe.positionY}]:
-              [{field,value:recipe[field]}])]};
+          adjustments:[...(best.adjustments||[]),{field,value:recipe[field]}]};
     }
   }
   return {...best,refinementRenders:renders};
