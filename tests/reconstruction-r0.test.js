@@ -36,7 +36,7 @@ test('metadata-free reconstruction source keeps every IDAT and image dimension v
 test('R0 baseline covers current renderer path/radial/shape/material/fibre modes',()=>{
   assert.equal(RECONSTRUCTION_R0_CASES.length,18);
   const names=new Set(RECONSTRUCTION_R0_CASES.map(c=>c.id));
-  assert.equal(names.size,16,'output names must be unique, no overwrite');
+  assert.equal(names.size,18,'output names must be unique, no overwrite');
   const cases=RECONSTRUCTION_R0_CASES.map(baselineRecipe);
   assert.ok(cases.some(c=>c.structure==='regions'&&c.regionMode==='scattered'&&
     c.scatteredOverrides?.length===7));
