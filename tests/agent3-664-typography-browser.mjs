@@ -82,14 +82,21 @@ try{
       await scale.focus();await scale.press('ArrowUp');
       assert.equal(recipe().textOverlays[0].size,beforeScale+8,
         'keyboard scale did not commit canonical recipe');
+      // In canvas move mode the original Undo lives in the Edit tray;
+      // reach it through the visible UI, never via hidden DOM clicks.
+      await page.locator('#textDirectDone').tap();
+      await page.locator('#mobileEdit').tap();
       await page.locator('#undo').tap();
       assert.equal(recipe().textOverlays[0].size,beforeScale,'Undo did not reverse scale');
+      await page.locator('[data-text-move]').tap();
       await rotate.focus();await rotate.press('ArrowRight');
       assert.equal(recipe().textOverlays[0].rotation,15,
         'keyboard rotate did not commit');
+      await page.locator('#textDirectDone').tap();
+      await page.locator('#mobileEdit').tap();
       await page.locator('#undo').tap();
       assert.equal(recipe().textOverlays[0].rotation,0,'Undo did not reverse rotation');
-      await page.locator('#textDirectDone').tap();
+      await page.locator('#mobileDismissHandle').tap();
       const saved=recipe();
       await page.screenshot({path:join(out,width+'x'+height+'-wallpaper.png'),
         animations:'disabled'});
