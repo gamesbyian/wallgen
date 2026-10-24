@@ -1,0 +1,38 @@
+name: Temporary Agent1 Jagged Fine Real-PNG Study
+on:
+  pull_request:
+    paths:
+      - 'src/image-reconstruction.js'
+      - '.github/workflows/temp-agent1-jagged-fine-registration-review.yml'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  native-jagged:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare opt-in actual canonical renderer
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+      - name: Retrieve unmodified source PNGs from prior review
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p artifacts/winding
+          gh run download 40045080862 --repo "$GITHUB_REPOSITORY" --name agent1-hardcases-current-canonical-review --dir artifacts/from-prior
+          cp artifacts/from-prior/winding/* artifacts/winding/
+          test -f artifacts/winding/04-jagged.no-metadata.png
+      - name: Re-evaluate source versus true renderer not bitmap translation
+        run: node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/winding --alternatives
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: agent1-jagged-fine-actual-source-fit
+          path: artifacts/winding/
+          retention-days: 2
