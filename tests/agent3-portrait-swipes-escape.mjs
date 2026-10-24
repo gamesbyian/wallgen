@@ -49,6 +49,46 @@ try{
         'Counter must represent the actual applicable tool list');
       assert.equal(before.selected,before.tools[0].id,
         'First applicable tool selected after category tap');
+      // Navigation rails intentionally scroll horizontally. A drag on the
+      // rail's EMPTY surface must not bubble into the sheet-wide tool switch.
+      for(const selector of ['.editor-tool-chooser','.settings-tabs']){
+        await page.evaluate(selector=>{
+          const target=document.querySelector(selector),rect=target.getBoundingClientRect();
+          const touch=x=>new Touch({identifier:19,target,
+            clientX:x,clientY:rect.top+rect.height/2,
+            screenX:x,screenY:rect.top+rect.height/2});
+          const start=touch(rect.right-15),end=touch(rect.left+15);
+          target.dispatchEvent(new TouchEvent('touchstart',{
+            touches:[start],targetTouches:[start],changedTouches:[start],
+            bubbles:true,cancelable:true}));
+          target.dispatchEvent(new TouchEvent('touchend',{
+            touches:[],targetTouches:[],changedTouches:[end],
+            bubbles:true,cancelable:true}));
+        },selector);
+        assert.equal((await read()).selected,before.selected,
+          'Horizontal rail scroll must preserve selected tool: '+selector);
+      }
+      // Cancelled touches, including Android's scroll interception, cannot
+      // leave a pending swipe for the next touchend to consume.
+      await page.evaluate(()=>{
+        const sheet=document.getElementById('mobileDesignSheet');
+        const rect=sheet.getBoundingClientRect();
+        const point=x=>new Touch({identifier:21,target:sheet,
+          clientX:x,clientY:rect.top+rect.height/2,
+          screenX:x,screenY:rect.top+rect.height/2});
+        const start=point(rect.right-15),end=point(rect.left+15);
+        sheet.dispatchEvent(new TouchEvent('touchstart',{
+          touches:[start],targetTouches:[start],changedTouches:[start],
+          bubbles:true,cancelable:true}));
+        sheet.dispatchEvent(new TouchEvent('touchcancel',{
+          touches:[],targetTouches:[],changedTouches:[start],
+          bubbles:true,cancelable:true}));
+        sheet.dispatchEvent(new TouchEvent('touchend',{
+          touches:[],targetTouches:[],changedTouches:[end],
+          bubbles:true,cancelable:true}));
+      });
+      assert.equal((await read()).selected,before.selected,
+        'Cancelled touch never changes tools');
       // Dispatch browser-native TouchEvent objects directly at the noninteractive
       // editor surface; this covers the production touch handler and routing.
       await page.evaluate(()=>{
@@ -98,7 +138,7 @@ try{
         swipedFrom:before.selected,swipedTo:after.selected,
         counter:after.position,selectedVisible:after.selectedVisible,
         searchEscapeKeepsEdit:true,dialogEscapeKeepsEdit:true,
-        recipePreserved:true,source:'Chromium synthetic TouchEvent and keyboard',
+        recipePreserved:true,railScrollPreserved:true,touchCancelSafe:true,source:'Chromium synthetic TouchEvent and keyboard',
         physicalPixel:false,humanUse:false};
       observations.push(result);
       await page.screenshot({path:join(output,width+'x'+height+'.png'),
