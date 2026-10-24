@@ -1,0 +1,30 @@
+# One-time source-browser experiment; remove before merge or close.
+name: TEMP Agent3 native picker Escape probe
+on:
+  pull_request:
+    paths:
+      - 'tests/agent3-native-select-escape-browser.mjs'
+      - '.github/workflows/agent3-temp-native-picker.yml'
+      - 'src/mobile-studio.js'
+permissions:
+  contents: read
+jobs:
+  native-picker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save playwright@1.56.1 serve@14.2.5
+      - run: npx playwright install --with-deps chromium
+      - run: |
+          npx serve . -l 4173 > /tmp/agent3-picker.log 2>&1 &
+          for i in $(seq 1 30); do
+            curl -fsS http://127.0.0.1:4173/ > /dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/agent3-picker.log
+          exit 1
+      - run: node tests/agent3-native-select-escape-browser.mjs
