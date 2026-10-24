@@ -10,11 +10,19 @@ export function designPointFromPointer(event,canvas){
     y:(event.clientY-rect.top)/rect.height*DESIGN_HEIGHT,
   };
 }
+// The finished-frame text anchor can move far from the centre. Reduce line
+// width progressively near an edge so dragging never drops an entire word
+// outside the final PNG (except deliberate exact-edge centering).
+export function availableTextWidth(item){
+  const x=Math.max(0,Math.min(DESIGN_WIDTH,DESIGN_WIDTH*item.x/100));
+  const room=2*Math.min(x,DESIGN_WIDTH-x)-12;
+  return Math.max(12,Math.min(DESIGN_WIDTH*.94,room));
+}
 export function measuredTextBounds(item,measure){
   const lines=String(item.text||'').split('\n');
   const actualWidth=Math.max(0,...lines.map(line=>measure(line)));
   return {
-    width:Math.min(DESIGN_WIDTH*.94,actualWidth),
+    width:Math.min(availableTextWidth(item),actualWidth),
     height:Math.max(1,lines.length)*item.size*1.17,
   };
 }
