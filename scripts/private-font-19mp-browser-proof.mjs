@@ -86,7 +86,10 @@ try{
  assert.ok(small.distinctFromSystemFontChannels>500,
    'The original private font must visibly differ from a system fallback');
  const promise=page.waitForEvent('download',{timeout:180000});
- await page.locator('#download').click();
+ const mobileExport=page.locator('#mobileDownload');
+ if(!await mobileExport.isVisible())
+   throw Error('Mobile wallpaper Download action is unavailable while editing');
+ await mobileExport.click();
  const download=await promise;
  const path=join(out,'private-font-'+OUTPUT_WIDTH+'x'+OUTPUT_HEIGHT+'.png');
  await download.saveAs(path);
