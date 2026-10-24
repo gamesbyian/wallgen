@@ -57,3 +57,15 @@ body.text-direct-active #preview:active{cursor:grabbing}
   box-shadow:0 3px 15px #0008}
 #textDirectDone[hidden]{display:none!important}
 #textDirectDone:focus-visible{outline:2px solid #fff;outline-offset:3px}
+
+/* Actual 44px touch targets are attached to the selected text frame.
+   They inherit its rotation and never appear in saved canvas pixels. */
+.text-direct-handle{position:absolute;display:grid;place-items:center;width:44px;height:44px;
+  padding:0;border:2px solid #fff;border-radius:50%;background:#38244f;color:white;
+  font-size:25px;font-weight:650;box-shadow:0 2px 9px #000a;
+  cursor:grab;touch-action:none;pointer-events:auto}
+.text-direct-handle:active{cursor:grabbing}
+.text-direct-handle:disabled{opacity:.55;cursor:not-allowed}
+.text-direct-handle:focus-visible{outline:3px solid #f7d77d;outline-offset:3px}
+.text-direct-rotate{left:50%;top:-34px;transform:translate(-50%,-50%)}
+.text-direct-scale{right:0;bottom:0;transform:translate(50%,50%)}
