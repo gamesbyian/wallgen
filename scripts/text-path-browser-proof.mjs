@@ -47,7 +47,7 @@ try{
         font:'modern',colour:'white',outline:'black',size:70,y:55},
       {name:'loop',text:'LOOP THE LOOP',path:'loop',pathHeight:145,
         font:'bold',colour:'rainbow-letter',outline:'white',size:55,y:53},
-      {name:'tracking-rainbow-shadow',text:'ROYGBIV COLOURS\\nIN MOTION',
+      {name:'tracking-rainbow-shadow',text:'ROYGBIV COLOURS\nIN MOTION',
         path:'wave',pathHeight:72,font:'pack-lobster',
         colour:'rainbow-letter',rainbowOffset:3,rainbowReverse:true,
         letterSpacing:2.5,lineSpacing:50,
@@ -82,6 +82,19 @@ try{
       drawWallpaper(blank,{...recipe,textOverlays:[]});
       const inkChannels=countDiff(reference,blank);
       ensure(inkChannels>1000,'No visible curved ink: '+spec.name);
+      let expressiveStyleChannels=0;
+      if(spec.name==='tracking-rainbow-shadow'||spec.name==='native-script-shadow'){
+        const flat=make(480,1040);
+        const neutral=normalizeRecipe({...recipe,textOverlays:recipe.textOverlays.map(item=>({
+          ...item,letterSpacing:0,lineSpacing:0,rainbowOffset:0,
+          rainbowReverse:false,shadow:'none'
+        }))});
+        drawWallpaper(flat,neutral);
+        expressiveStyleChannels=countDiff(reference,flat);
+        ensure(expressiveStyleChannels>1000,
+          'Optional expressive treatment did not alter real text pixels');
+        flat.width=0;
+      }
       const blob=await exportWallpaperInWorker({recipe,width:480,height:1040,
         timeoutMs:120000});
       const bmp=await createImageBitmap(blob);
@@ -97,7 +110,8 @@ try{
       mini.getContext('2d').drawImage(reference,0,0,180,390);
       tctx.drawImage(mini,index*180,0);
       data.push(reference.toDataURL('image/png'));
-      results.push({name:spec.name,inkChannels,workerPixelChannelDifferences:mismatch,
+      results.push({name:spec.name,inkChannels,expressiveStyleChannels,
+        workerPixelChannelDifferences:mismatch,
         workerPngBytes:blob.size,text:spec.text,path:recipe.textOverlays[0].path});
       reference.width=0;worker.width=0;blank.width=0;
     }
