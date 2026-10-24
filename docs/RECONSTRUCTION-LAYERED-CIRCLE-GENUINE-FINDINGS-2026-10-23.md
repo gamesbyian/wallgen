@@ -1,0 +1,26 @@
+# Genuine overlapped-circle reconstruction and visible paint-order evidence (23 October 2026)
+
+## Scope and source
+Agent 1 #557, focused [PR #652](https://github.com/gamesbyian/wallgen/pull/652). The shared canonical scene already supports arbitrary manually positioned overlapping circles and `scatteredLayerOrder`, but blind importer used each **visible** hue blob's biased centroid/area and defaulted to black cell dividers. No new scene dialect, renderer, mask system or painting budget was needed.
+
+R0 **#22 seven overlapping circles with reversed explicit canonical paint order**: genuine production `drawWallpaper` **480×1040** source PNG, withheld recipe sidecar, byte-identical IDAT metadata-free copy used in reconstruction, actual painter source/fit evaluation **96×208**. Two native isolated-controls: R0 #11 seven separate circles and #21 five partial-hue circles. Source, baseline fit, intervening arc-only fit, final fit and crop were downloaded and visually viewed side-by-side, including upper red/orange/yellow/green intersections. This is real image inspection and real canonical browser paint, **not** external artwork/human/native Pixel acceptance.
+
+## Structural correction
+The single existing seven-hue connected-component extractor `src/image-path.js` can now infer an underlying circle using the arc of its visible pigment contacting background (not a different hue), bounded to ≤512 representative edge points and conservative residual/visible-angle/area gates. This recovers the underlying centre/radius even where a foreground disk hides a section of its neighbour. Given seven credible disks, visible pigment evidence inside their predicted pairwise overlap regions builds **directional precedence constraints**; cycles or insufficient evidence yield no layer-order claim. The editor already has a native canonical `scatteredLayerOrder`; no other scene capability added. Original complete painter order and invisible hidden contours cannot be proven in arbitrary artwork, particularly for nonoverlapping unconstrained objects.
+
+The source-driven scene initially improved #22 from **0.02070921 to 0.01121706**, but visible dark overlap arcs remained. Investigation of actual exported PNGs found the importer had inadvertently inherited the canonical editor's default `dividerColor:'background',dividerWidth:12`, although the clean-source image explicitly had no divider. The existing *region candidate* now starts with `dividerColor:'none',dividerWidth:0`. Normal locked divider settings remain authoritative through `respectSettingLocks`; other candidate families, renderer and app controls are unchanged.
+
+## Actual image-backed comparison
+
+| Actual source R0 | Former best error | Final best error | Held-out true recipe re-render floor | Final real PNG inspection |
+| --- | ---: | ---: | ---: | --- |
+| #11 seven isolated circles | 0.00832891450 | **0.00562812264** | 0.00449680273 | All seven circles correctly placed, no spurious black ring; slight subpixel edge/size differences |
+| #21 five incomplete-hue circles | 0.00418414561 | **0.00281371763** | 0.00233952756 | All five colour objects and missing indigo/violet preserved, very close boundary alignment |
+| **#22 reversed-layer overlapping circles** | **0.02070921317** | **0.00467571644** | 0.00294402416 | Seven coloured disks recovered in visually correct foreground overlap order; no false black dark crescents; slight subpixel edge differences |
+
+Final improvement on the reproduced occlusion example: **77.4% reduction** in actual source/fitted error. The source/fit results came from genuine current production painter evaluation [run #40049317751](https://github.com/gamesbyian/wallgen/actions/runs/40049317751), whose uploaded source/fitted PNGs were inspected, not just metrics. Baseline [run #40048833131](https://github.com/gamesbyian/wallgen/actions/runs/40048833131) and intermediate [run #40049088857](https://github.com/gamesbyian/wallgen/actions/runs/40049088857) give the independently reproducible before/after. At most six coarse canonical trial renders and at most ten refinement paints remain unchanged. A small Node synthetic seven-circle reverse-order test checks measured geometry, canonical layers, source uncertainty, scene round-trip, honest structural and Divider locks.
+
+## Evidence limits and next actions
+This proves bounded **seven-hue circular overlap** inverse recognition, not arbitrary opaque painter layers or mixed colour compound regions, true source author identity, noncanonical/photo/material pigment semantics, or external creator acceptance. Acknowledged ambiguity: the **unobserved order of nonintersecting pairs** cannot be deduced; the algorithm uses deterministic semantic ordering when the visible DAG does not constrain them, and uncertainty text states original layering remains unknown. The circle arc gate requires enough accessible source-background perimeter; fully hidden circles cannot be inferred.
+
+Accept this narrow source-derived implementation only after the lean final quick test passes and the disposable Chromium workflow is removed. #557 stays open for still-reproduced native displaced Jagged #16, genuine Hairpin #05, arbitrary overlapping mixed-hue forms/occlusion, and owner-dependent actual external artwork/Pixel acceptance.
