@@ -249,8 +249,7 @@ export function measuredRainbowRibbonBands(regions,width,height){
   if(thickness<2||widths.some(v=>v<thickness*.55||v>thickness*1.8)||
     thickness/gap<.08||thickness/gap>1.5)return null;
   return {angle,centreGapPx:gap,thicknessPx:thickness,
-    inkToGapRatio:thickness/gap,
-    ...(bands.length===4?{partial:true}:{})};
+    inkToGapRatio:thickness/gap};
 }
 
 /**
@@ -971,18 +970,12 @@ export function rankReconstructionCandidates(candidates,source,render){
         const jaggedShift=candidate.kind==='jagged'&&
           candidate.recipe.background==='black'?
           measuredJaggedPixelShift(source,pixels):null;
-        const clippedJagged=candidate.kind==='jagged'&&
-          !!jaggedShift&&
-          measuredRainbowRibbonBands(
-            extractImageColourRegions(source,HUES).regions,source.width,source.height
-          )?.partial===true;
         const drawRegistration=candidate.kind==='path'&&
           candidate.recipe.geometry==='drawn'&&
           candidate.recipe.geometrySafety===false?
           measuredExpandedDrawRegistration(source,pixels):null;
         results.push({...candidate,error,
           ...(jaggedShift?{jaggedShift}:{}),
-          ...(clippedJagged?{clippedJagged:true}:{}),
           ...(waveOffsetY!==null?{waveOffsetY}:{}),
           ...(bandOffsetX!==null?{bandOffsetX}:{}),
           ...(drawRegistration?{
@@ -1108,18 +1101,7 @@ function refinementFields(candidate){
     ['shapeDepth',[-12,12]],['shapeFrequency',[-12,12]],
     ['stripeWidth',[-15,15]]
   ]:candidate.kind==='jagged'?(
-    candidate.clippedJagged&&candidate.jaggedShift?[
-      // Measured fine registration + physically corroborated progressive crop
-      // justify testing larger *paired* translations. Keep the source-derived
-      // ribbon-gap seed: ±15% greedy spread shrink destroys black channels.
-      ['positionXY',[
-        [candidate.jaggedShift.offsetX,candidate.jaggedShift.offsetY],
-        [candidate.jaggedShift.offsetX*2,candidate.jaggedShift.offsetY*.5],
-        [candidate.jaggedShift.offsetX*3,-candidate.jaggedShift.offsetY],
-        [candidate.jaggedShift.offsetX*4,-candidate.jaggedShift.offsetY*2]
-      ]],
-      ['positionX',[-4,4]],['positionY',[-4,4]],['spread',[-5,5]]
-    ]:candidate.jaggedShift?[
+    candidate.jaggedShift?[
       // Once actual source versus first canonical paint measures a narrow
       // rigid offset, trial the inferred editable position before broad
       // shape guesses. The one 10-render budget and lock semantics stay.
@@ -1161,28 +1143,20 @@ function canRefine(candidate,maxRenders){
 function* refinementTrials(candidate,maxRenders){
   let best=candidate,renders=0;
   for(const [field,deltas] of refinementFields(candidate)){
-    const paired=field==='positionXY';
-    const origin=paired?
-      [best.recipe.positionX,best.recipe.positionY]:best.recipe[field];
+    const origin=best.recipe[field];
     for(const delta of deltas){
       if(renders>=maxRenders)break;
-      // Both coupled fields use the SAME current canonical Apply lock policy.
-      // A locked Position cannot spend a render changing either coordinate.
-      const proposal=paired?{...best.recipe,
-        positionX:origin[0]+delta[0],positionY:origin[1]+delta[1]}:
-        {...best.recipe,[field]:origin+delta};
-      const recipe=respectSettingLocks(best.recipe,normalizeRecipe(proposal));
-      if(paired?recipe.positionX===best.recipe.positionX&&
-        recipe.positionY===best.recipe.positionY:
-        recipe[field]===best.recipe[field])continue;
+      // Use the canonical lock owner for every real-render trial, not only
+      // coarse candidates. Composite Position protects both X and Y, so a
+      // preview cannot be fitted into an arrangement Apply would later reject.
+      const recipe=respectSettingLocks(best.recipe,
+        normalizeRecipe({...best.recipe,[field]:origin+delta}));
+      if(recipe[field]===best.recipe[field])continue;
       const error=yield recipe;
       renders++;
       if(Number.isFinite(error)&&error+1e-9<best.error)
         best={...best,recipe,error,label:candidate.label+' · fitted',
-          adjustments:[...(best.adjustments||[]),
-            ...(paired?[{field:'positionX',value:recipe.positionX},
-              {field:'positionY',value:recipe.positionY}]:
-              [{field,value:recipe[field]}])]};
+          adjustments:[...(best.adjustments||[]),{field,value:recipe[field]}]};
     }
   }
   return {...best,refinementRenders:renders};
