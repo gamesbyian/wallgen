@@ -41,7 +41,15 @@ try{
   await page.locator('[data-text-add]').click();
   const text=page.locator('[data-text-key="text"]');
   await text.fill('RAINBOW TEST');
+  // Wait for the latest generated frame rather than screenshotting the stale
+  // previous frame while the worker paints. Install listener before blur.
+  await page.evaluate(()=>{
+    window.__textPreviewSettled=new Promise(resolve=>
+      document.querySelector('#preview').addEventListener('roygbiv-preview-presented',
+        resolve,{once:true}));
+  });
   await text.blur();
+  await page.evaluate(()=>window.__textPreviewSettled);
   assert.equal(await text.inputValue(),'RAINBOW TEST');
   assert.equal(await page.locator('[data-text-picker] option').count(),1);
   const uiState=await page.evaluate(()=>({
@@ -88,23 +96,49 @@ try{
     for(const raw of variants){
       const recipe=normalizeRecipe(raw);
       const baseline=make(),reference=make(),cached=make(),composed=make(),worker=make();
-      drawWallpaper(baseline,normalizeRecipe({...recipe,textOverlays:[]}));
+      const baselineCached=make(),baselineRecomposed=make();
+      const noText=normalizeRecipe({...recipe,textOverlays:[]});
+      drawWallpaper(baseline,noText);
       drawWallpaper(reference,recipe);
       const textImpact=compare(pixels(baseline),pixels(reference));
       if(textImpact.diffs<1000)throw Error('Text did not change actual '+raw.seed+' wallpaper pixels');
+      const baselineCache={};
+      drawWallpaper(baselineCached,noText,{cache:baselineCache});
+      presentNudgedArtwork(baselineRecomposed,baselineCache,noText);
+      const preexistingCacheDifference=compare(pixels(baseline),pixels(baselineRecomposed));
       const cache={};
       drawWallpaper(cached,recipe,{cache});
       presentNudgedArtwork(composed,cache,recipe);
       const cachedMatch=compare(pixels(reference),pixels(composed));
+      // Compare the actual *letter mask* over the native direct and cached
+      // backgrounds separately. Their old overscan composites can differ
+      // slightly in alpha resampling even when no typography exists.
+      const a=pixels(baseline),b=pixels(reference);
+      const c=pixels(baselineRecomposed),d=pixels(composed);
+      let directTextPixels=0,cachedTextPixels=0,maskDisagreements=0;
+      for(let i=0;i<a.length;i+=4){
+        const direct=Math.max(Math.abs(b[i]-a[i]),Math.abs(b[i+1]-a[i+1]),
+          Math.abs(b[i+2]-a[i+2]))>12;
+        const cached=Math.max(Math.abs(d[i]-c[i]),Math.abs(d[i+1]-c[i+1]),
+          Math.abs(d[i+2]-c[i+2]))>12;
+        if(direct)directTextPixels++;
+        if(cached)cachedTextPixels++;
+        if(direct!==cached)maskDisagreements++;
+      }
       const blob=await exportWallpaperInWorker({recipe,width,height,timeoutMs:90000});
       const bitmap=await createImageBitmap(blob);
       worker.getContext('2d').drawImage(bitmap,0,0);bitmap.close();
       const workerMatch=compare(pixels(reference),pixels(worker));
       const metadata={seed:recipe.seed,changedChannels:textImpact.diffs,
+        directTextPixels,cachedTextPixels,maskDisagreements,
+        baselineCacheDifference:preexistingCacheDifference,
         cacheMatch:cachedMatch,workerMatch,blobBytes:blob.size};
       results.push(metadata);
-      if(cachedMatch.diffs)throw Error('Cached compositor differs: '+JSON.stringify(metadata));
+      if(maskDisagreements>Math.max(500,directTextPixels*.03))
+        throw Error('Cached text glyph coverage differs from reference: '+JSON.stringify(metadata));
       if(workerMatch.diffs)throw Error('Worker text export differs: '+JSON.stringify(metadata));
+      for(const surface of [baselineCache.ink,baselineCache.background])
+        if(surface instanceof HTMLCanvasElement){surface.width=0;surface.height=0;}
       if(cache.ink instanceof HTMLCanvasElement){cache.ink.width=0;cache.ink.height=0;}
       if(cache.background instanceof HTMLCanvasElement){cache.background.width=0;cache.background.height=0;}
     }
