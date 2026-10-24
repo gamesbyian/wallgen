@@ -1,6 +1,7 @@
 import {DESIGN_WIDTH,DESIGN_HEIGHT} from './model.js';
 import {TEXT_FONTS} from './text-overlays.js';
 import {typefacesReady,typefaceCssFamily} from './typography-fonts.js';
+import {availableTextWidth} from './text-direct-geometry.js';
 
 // The same post-composite typography pass is used by reference, worker,
 // thumbnail, headless, and preview-cache composition. Never render DOM text
@@ -36,7 +37,8 @@ export function drawTextOverlays(ctx,width,height,scene){
     const lineHeight=item.size*1.17;
     lines.forEach((line,lineIndex)=>{
       const total=ctx.measureText(line).width;
-      const shrink=total>DESIGN_WIDTH*.94?DESIGN_WIDTH*.94/total:1;
+      const room=availableTextWidth(item);
+      const shrink=total>room?room/total:1;
       ctx.save();
       ctx.translate(0,(lineIndex-(lines.length-1)/2)*lineHeight);
       ctx.scale(shrink,1);
