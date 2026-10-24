@@ -70,7 +70,16 @@ const clearSettledPreview=()=>{
 };
 function releasePreviewLayers(){
   for(const layer of ['background','ink']){
-    try{previewLayers[layer]?.close?.();}catch{}
+    const surface=previewLayers[layer];
+    try{
+      // Workers transfer ImageBitmaps (close()); the direct-render fallback
+      // caches DOM canvases, which otherwise retain their backing pixels until
+      // eventual GC after every changed recipe.
+      if(typeof surface?.close==='function')surface.close();
+      else if(surface instanceof HTMLCanvasElement){
+        surface.width=0;surface.height=0;
+      }
+    }catch{}
     previewLayers[layer]=null;
   }
   previewLayers.key=null;
