@@ -22,10 +22,18 @@ export function availableTextWidth(item){
 export function measuredTextBounds(item,measure){
   const lines=String(item.text||'').split('\n');
   const actualWidth=Math.max(0,...lines.map(line=>measure(line)));
-  return {
-    width:Math.min(availableTextWidth(item),actualWidth),
-    height:Math.max(1,lines.length)*item.size*1.17,
-  };
+  const width=Math.min(availableTextWidth(item),actualWidth);
+  const height=Math.max(1,lines.length)*item.size*1.17;
+  if(item.path==='circle'){
+    // Conservative editor hit/handle bounds around the curved baseline.
+    // Do not pretend that the rectangular guide follows each glyph exactly.
+    const radius=Math.min(item.pathHeight??90,availableTextWidth(item)/2);
+    return {width:Math.min(availableTextWidth(item),2*radius+item.size),
+      height:Math.min(DESIGN_HEIGHT,2*radius+height)};
+  }
+  if(item.path==='wave'||item.path==='arc')
+    return {width,height:Math.min(DESIGN_HEIGHT,height+2*(item.pathHeight??90))};
+  return {width,height};
 }
 export function hitTextOverlay(items,point,measureFor,{tolerance=0}={}){
   if(!point)return null;
