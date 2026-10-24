@@ -34,7 +34,7 @@ test('metadata-free reconstruction source keeps every IDAT and image dimension v
 });
 
 test('R0 baseline covers current renderer path/radial/shape/material/fibre modes',()=>{
-  assert.equal(RECONSTRUCTION_R0_CASES.length,20);
+  assert.equal(RECONSTRUCTION_R0_CASES.length,21);
   const names=new Set(RECONSTRUCTION_R0_CASES.map(c=>c.id));
   assert.equal(names.size,RECONSTRUCTION_R0_CASES.length,'output names must be unique, no overwrite');
   const cases=RECONSTRUCTION_R0_CASES.map(baselineRecipe);
@@ -46,6 +46,9 @@ test('R0 baseline covers current renderer path/radial/shape/material/fibre modes
     c.surfaceTreatments?.some(t=>t.style==='satin-fibre')));
   assert.ok(cases.some(c=>c.palette==='jewel'&&c.geometry==='straight'));
   assert.ok(cases.some(c=>c.palette==='pastel'&&c.regionMode==='scattered'));
+  const partial=cases.find(c=>c.seed==='r0-five-hue-islands');
+  assert.equal(partial.scatteredCount,5);
+  assert.deepEqual(resolveScene(partial).objects.map(object=>object.colorIndex),[0,1,2,3,4]);
   const twice=cases.find(c=>c.seed==='r0-fourteen-colour-circles');
   assert.equal(twice.scatteredCount,14);
   assert.equal(resolveScene(twice).objects.length,14,
