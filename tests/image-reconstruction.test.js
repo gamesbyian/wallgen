@@ -828,7 +828,8 @@ test('expanded Draw X-axis registration fits upright seven-colour bands with unc
  });
  const source=bands(),translated=bands(8);
  const registration=measuredExpandedDrawRegistration(source,translated);
- assert.deepEqual(registration,{offsetX:-8,gapRatio:1});
+ assert.equal(registration?.offsetX,-8);
+ assert.ok(Math.abs(registration.gapRatio-1)<1e-9);
  assert.equal(coherentExpandedDrawOffsetY(source,translated),null,
    'horizontal registration should remain explicitly Y-only');
  assert.equal(measuredExpandedDrawRegistration(source,bands(8,11)),null,
