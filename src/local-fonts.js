@@ -150,13 +150,20 @@ export async function importLocalFontRecords(records){
   const already=await listLocalFonts();
   if(new Set([...already.map(x=>x.id),...distinct]).size>LOCAL_FONT_MAX_COUNT)
     throw Error('Not enough space in the 32-font library for this package');
-  // Load each face through the browser's actual parser *before* any database
-  // transaction. Failed native font decoding never creates a partial library.
-  for(const record of prepared)await registerFont(record.id,record.bytes);
+  // Validate each binary through the native font parser before writing.
+  // Do not populate the rendering cache until the group transaction commits.
+  if(typeof FontFace!=='function'||!fontSet()?.add)
+    throw Error('This browser cannot install portable fonts');
+  for(const record of prepared){
+    const trial=new FontFace(fontFamilyForId(record.id),record.bytes,
+      {style:'normal',weight:'700'});
+    await trial.load();
+  }
   await transact('readwrite',store=>{
     const first=store.put(prepared[0]);
     for(const next of prepared.slice(1))store.put(next);
     return first;
   });
+  for(const record of prepared)await registerFont(record.id,record.bytes);
   return prepared.map(({id,name,format,size})=>({id,name,format,size}));
 }
