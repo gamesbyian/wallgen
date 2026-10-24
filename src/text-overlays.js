@@ -14,6 +14,7 @@ export const TEXT_COLOURS=Object.freeze([
   'black','white','rainbow-letter','rainbow-word','rainbow-gradient'
 ]);
 export const TEXT_OUTLINES=Object.freeze(['none','black','white']);
+export const TEXT_PATHS=Object.freeze(['none','wave','arc','circle']);
 export const MAX_TEXT_OVERLAYS=8;
 const num=(value,fallback,min,max)=>{
   const n=Number(value);
@@ -44,6 +45,10 @@ export function normalizeTextOverlays(input){
       colour:TEXT_COLOURS.includes(v.colour)?v.colour:'rainbow-letter',
       outline:TEXT_OUTLINES.includes(v.outline)?v.outline:'black',
       outlineWidth:num(v.outlineWidth,5,0,20),
+      // Curved baselines are strictly opt-in. Old lettering is unchanged.
+      ...(TEXT_PATHS.includes(v.path)&&v.path!=='none'?{
+        path:v.path,pathHeight:num(v.pathHeight,90,20,240)
+      }:{}),
       locked:v.locked===true,
     };
   }).filter(item=>item.text.length>0);

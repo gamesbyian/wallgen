@@ -1,4 +1,4 @@
-import {MAX_TEXT_OVERLAYS,newTextOverlay,TEXT_FONTS,TEXT_COLOURS,TEXT_OUTLINES} from './text-overlays.js';
+import {MAX_TEXT_OVERLAYS,newTextOverlay,TEXT_FONTS,TEXT_COLOURS,TEXT_OUTLINES,TEXT_PATHS} from './text-overlays.js';
 import {importLocalFont,listLocalFonts,isLocalFontId} from './local-fonts.js';
 import {BUNDLED_FONTS,isBundledFontId} from './bundled-fonts.js';
 import {exportPortableFontPack,importPortableFontPack,packageFontIds} from './portable-font-pack.js';
@@ -39,12 +39,15 @@ export function installTextOverlayTool({getRecipe,changeRecipe,onFontNotice=()=>
       <details class="text-overlay-advanced">
         <summary>More text options</summary>
         <div class="text-overlay-grid">
+          <label>Text baseline<select data-text-key="path"></select></label>
+          <label data-text-path-height>Curve size <input type="range" data-text-key="pathHeight" min="20" max="240" step="5"></label>
           <label>Stroke width <input type="range" data-text-key="outlineWidth" min="0" max="20" step="1"></label>
           <label>Rotation <input type="range" data-text-key="rotation" min="-180" max="180" step="1"></label>
           <label>Opacity <input type="range" data-text-key="opacity" min="0" max="1" step="0.05"></label>
           <label class="text-overlay-check"><input type="checkbox" data-text-key="enabled"> Visible</label>
           <label class="text-overlay-check"><input type="checkbox" data-text-key="locked"> Keep style when randomizing</label>
         </div>
+        <p>Curved baselines support independent glyphs. Joining and bidirectional scripts keep their native straight-line shaping.</p>
       </details>
     </div>
     <div class="text-overlay-portability" role="group" aria-label="Portable design and private fonts">
@@ -95,6 +98,9 @@ export function installTextOverlayTool({getRecipe,changeRecipe,onFontNotice=()=>
   options(outline,TEXT_OUTLINES.map(key=>[key,({
     none:'No outline',black:'Black outline',white:'White outline'
   })[key]]));
+  options(root.querySelector('[data-text-key="path"]'),TEXT_PATHS.map(key=>[
+    key,({none:'Straight · native shaping',wave:'Wave',arc:'Arch',circle:'Circle arc'})[key]
+  ]));
   let selectedId=null;
   let mover=null;
   const currentItems=()=>getRecipe().textOverlays||[];
@@ -116,10 +122,15 @@ export function installTextOverlayTool({getRecipe,changeRecipe,onFontNotice=()=>
       !library.some(entry=>entry.id===item.font)?
       'Font file unavailable on this device. Reimport its original TTF/OTF to restore rendering.':'';
     mover?.sync();
+    root.querySelector('[data-text-path-height]').hidden=!item.path||item.path==='none';
     for(const control of fields.querySelectorAll('[data-text-key]')){
       const key=control.dataset.textKey;
       if(control.type==='checkbox')control.checked=Boolean(item[key]);
-      else if(control.value!==String(item[key]))control.value=String(item[key]);
+      else {
+        const value=key==='path'?(item.path||'none'):
+          key==='pathHeight'?(item.pathHeight??90):item[key];
+        if(control.value!==String(value))control.value=String(value);
+      }
     }
   }
   function commit(items){
