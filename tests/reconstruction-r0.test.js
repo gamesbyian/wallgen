@@ -34,9 +34,9 @@ test('metadata-free reconstruction source keeps every IDAT and image dimension v
 });
 
 test('R0 baseline covers current renderer path/radial/shape/material/fibre modes',()=>{
-  assert.equal(RECONSTRUCTION_R0_CASES.length,16);
+  assert.equal(RECONSTRUCTION_R0_CASES.length,18);
   const names=new Set(RECONSTRUCTION_R0_CASES.map(c=>c.id));
-  assert.equal(names.size,16,'output names must be unique, no overwrite');
+  assert.equal(names.size,18,'output names must be unique, no overwrite');
   const cases=RECONSTRUCTION_R0_CASES.map(baselineRecipe);
   assert.ok(cases.some(c=>c.structure==='regions'&&c.regionMode==='scattered'&&
     c.scatteredOverrides?.length===7));
@@ -44,6 +44,15 @@ test('R0 baseline covers current renderer path/radial/shape/material/fibre modes
     c.scatteredShape?.geometry?.components.length===2));
   assert.ok(cases.some(c=>c.material==='linen-organic'&&
     c.surfaceTreatments?.some(t=>t.style==='satin-fibre')));
+  const twice=cases.find(c=>c.seed==='r0-fourteen-colour-circles');
+  assert.equal(twice.scatteredCount,14);
+  assert.equal(resolveScene(twice).objects.length,14,
+    'two native objects for each canonical hue render without a new scene');
+  const holes=cases.find(c=>c.seed==='r0-seven-holed-stamps');
+  assert.equal(holes.scatteredCount,7);
+  assert.equal(resolveScene(holes).objects.length,7);
+  assert.ok(resolveScene(holes).objects.every(o=>o.rings?.length===3),
+    'seven hue stamps retain one hole and one detached island per source shape');
   assert.ok(cases.some(c=>c.structure==='radial'));
   assert.ok(cases.some(c=>c.geometry==='drawn'&&c.customPath.length>=2));
   for(const item of cases){
