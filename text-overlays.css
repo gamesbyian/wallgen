@@ -40,3 +40,20 @@
 .text-overlay-portability input[type=file]{width:100%;min-height:44px;font:inherit;min-width:0}
 .text-overlay-portability [data-font-pack-status]{font-size:.79rem;line-height:1.35;margin:0}
 .text-overlay-portability [data-font-pack-status]:empty{display:none}
+
+.text-overlay-move{border:1px solid var(--line,#777);border-radius:10px;min-height:44px;
+  padding:8px 10px;background:var(--surface,#fff);color:inherit;font:inherit}
+.text-overlay-move[aria-pressed="true"]{background:#4b285b;color:#fff;border-color:#d29fff}
+.text-overlay-move:disabled{opacity:.55}
+body.text-direct-active #preview{touch-action:none;cursor:grab}
+body.text-direct-active #preview:active{cursor:grabbing}
+.text-direct-outline{position:absolute;z-index:8;box-sizing:border-box;
+  border:2px dashed #fff;outline:1px solid #121212;border-radius:5px;
+  background:#ffffff0c;box-shadow:0 0 0 2px #1117;pointer-events:none}
+.text-direct-outline[hidden]{display:none!important}
+#textDirectDone{position:absolute;z-index:12;top:10px;right:10px;min-height:44px;
+  padding:8px 12px;min-width:125px;border-radius:11px;border:2px solid #ffaaff;
+  background:#322044;color:#fff;font-size:12px;font-weight:750;
+  box-shadow:0 3px 15px #0008}
+#textDirectDone[hidden]{display:none!important}
+#textDirectDone:focus-visible{outline:2px solid #fff;outline-offset:3px}

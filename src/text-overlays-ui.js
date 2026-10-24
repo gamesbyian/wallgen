@@ -2,6 +2,7 @@ import {MAX_TEXT_OVERLAYS,newTextOverlay,TEXT_FONTS,TEXT_COLOURS,TEXT_OUTLINES} 
 import {importLocalFont,listLocalFonts,isLocalFontId} from './local-fonts.js';
 import {BUNDLED_FONTS,isBundledFontId} from './bundled-fonts.js';
 import {exportPortableFontPack,importPortableFontPack,packageFontIds} from './portable-font-pack.js';
+import {installTextCanvasMover} from './text-direct-ui.js';
 
 // A tool inside the seven-category editor, not a floating DOM preview layer.
 // Every mutation takes the existing recipe/Undo path supplied by app.js.
@@ -30,6 +31,7 @@ export function installTextOverlayTool({getRecipe,changeRecipe,onFontNotice=()=>
         <label>Horizontal <input type="range" data-text-key="x" min="0" max="100" step="1"></label>
         <label>Vertical <input type="range" data-text-key="y" min="0" max="100" step="1"></label>
       </div>
+      <button type="button" data-text-move class="text-overlay-move" aria-pressed="false">Move text on wallpaper</button>
       <label class="text-overlay-import">Import a TTF/OTF font from this device
         <input type="file" data-text-import accept=".ttf,.otf,font/ttf,font/otf,application/x-font-ttf,application/x-font-opentype">
       </label>
@@ -64,6 +66,7 @@ export function installTextOverlayTool({getRecipe,changeRecipe,onFontNotice=()=>
   const outline=root.querySelector('[data-text-key="outline"]');
   const fontFile=root.querySelector('[data-text-import]');
   const fontStatus=root.querySelector('[data-text-font-status]');
+  const moveButton=root.querySelector('[data-text-move]');
   const packSave=root.querySelector('[data-font-pack-export]');
   const packOpen=root.querySelector('[data-font-pack-import]');
   const packStatus=root.querySelector('[data-font-pack-status]');
@@ -93,6 +96,7 @@ export function installTextOverlayTool({getRecipe,changeRecipe,onFontNotice=()=>
     none:'No outline',black:'Black outline',white:'White outline'
   })[key]]));
   let selectedId=null;
+  let mover=null;
   const currentItems=()=>getRecipe().textOverlays||[];
   function sync(){
     const items=currentItems();
@@ -104,12 +108,14 @@ export function installTextOverlayTool({getRecipe,changeRecipe,onFontNotice=()=>
     pick.disabled=!item;
     remove.disabled=!item;
     add.disabled=items.length>=MAX_TEXT_OVERLAYS;
+    moveButton.disabled=!items.some(item=>item.enabled&&item.text&&!item.locked);
     packSave.disabled=!packageFontIds(getRecipe()).length;
-    if(!item){fontStatus.textContent='';return;}
+    if(!item){fontStatus.textContent='';mover?.endCanvasMove();return;}
     refreshFontOptions(item.font);
     fontStatus.textContent=isLocalFontId(item.font)&&
       !library.some(entry=>entry.id===item.font)?
       'Font file unavailable on this device. Reimport its original TTF/OTF to restore rendering.':'';
+    mover?.sync();
     for(const control of fields.querySelectorAll('[data-text-key]')){
       const key=control.dataset.textKey;
       if(control.type==='checkbox')control.checked=Boolean(item[key]);
@@ -209,7 +215,12 @@ export function installTextOverlayTool({getRecipe,changeRecipe,onFontNotice=()=>
   void listLocalFonts().then(found=>{library=found;sync();}).catch(error=>{
     fontStatus.textContent='Local fonts unavailable: '+String(error?.message||error);
   });
+  mover=installTextCanvasMover({
+    getRecipe,changeRecipe,button:moveButton,onNotice:onFontNotice,
+    selectedId:()=>selectedId,
+    onSelect:id=>{selectedId=id;sync();}
+  });
   document.addEventListener('roygbiv-controls-synced',sync);
   sync();
-  return {sync};
+  return {sync,endCanvasMove:()=>mover.endCanvasMove()};
 }

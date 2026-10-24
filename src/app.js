@@ -1501,6 +1501,8 @@ function syncScatteredDirectOutline(temporaryCircle=null){
   scatteredDirectOutline.hidden=false;
 }
 moveOnCanvas.addEventListener('click',()=>{
+  // The same wallpaper cannot be in both direct-manipulation modes.
+  if(!scatteredDirectActive)textTool.endCanvasMove();
   if(!scatteredDirectActive && document.body.classList.contains('mobile-edit-open'))
     document.getElementById('mobileDismissHandle')?.click();
   setScatteredDirectActive(!scatteredDirectActive);
