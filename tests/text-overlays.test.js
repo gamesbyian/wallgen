@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import {normalizeRecipe,resolveScene} from '../src/model.js';
 import {normalizeTextOverlays,newTextOverlay,MAX_TEXT_OVERLAYS} from '../src/text-overlays.js';
 import {drawTextOverlays} from '../src/text-overlay-renderer.js';
+import {randomizeScope} from '../src/scoped-random.js';
+import {randomizeAllRecipe} from '../src/model.js';
 
 function fakeContext(){
   const calls=[];
@@ -84,4 +86,18 @@ test('zero text does not touch 2D context',()=>{
   const ctx=fakeContext();
   drawTextOverlays(ctx,600,1300,resolveScene(normalizeRecipe()));
   assert.deepEqual(ctx.calls,[]);
+});
+
+test('Text tool rerolls style, protects locked object and every letter',()=>{
+  const input=normalizeRecipe({seed:'hello',textOverlays:[
+    {id:'free',text:'Do not rewrite me',font:'bold',colour:'black'},
+    {id:'locked',text:'Nor me',font:'editorial',colour:'white',locked:true},
+  ]});
+  const {recipe,modified}=randomizeScope(input,{scope:'tool',name:'typography',seed:'text-roll'});
+  assert.ok(modified.includes('textOverlays'));
+  assert.equal(recipe.textOverlays[0].text,input.textOverlays[0].text);
+  assert.notEqual(recipe.textOverlays[0].font,input.textOverlays[0].font);
+  assert.deepEqual(recipe.textOverlays[1],input.textOverlays[1]);
+  assert.deepEqual(input.textOverlays.map(x=>x.text),
+    normalizeRecipe({...randomizeAllRecipe({}),textOverlays:input.textOverlays}).textOverlays.map(x=>x.text));
 });
