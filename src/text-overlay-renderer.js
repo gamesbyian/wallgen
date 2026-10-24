@@ -54,7 +54,7 @@ export function drawTextOverlays(ctx,width,height,scene){
       const room=availableTextWidth(item);
       const shrink=total>room?room/total:1;
       ctx.save();
-      ctx.translate(0,(lineIndex-(lines.length-1)/2)*lineHeight);
+      const lineOffset=(lineIndex-(lines.length-1)/2)*lineHeight;
       // Curved lettering uses the same final-frame transform, font resolver,
       // colour palette and compositing pass as ordinary text. For joining
       // scripts, the layout refuses splitting and falls through to the
@@ -62,6 +62,10 @@ export function drawTextOverlays(ctx,width,height,scene){
       const path=item.path&&item.path!=='none'?
         layoutTextOnPath(item,line,unit=>ctx.measureText(unit).width,
           scene.customPath):null;
+      // Shift multiple curved lines along the LOCAL PATH NORMAL. A simple
+      // vertical offset causes independent lines to cross on steep bends.
+      // Unsupported joined scripts still use the untouched straight line.
+      ctx.translate(0,path?.supported?0:lineOffset);
       if(path?.supported){
         let inWord=false,wordColour=colours[colourIndex%colours.length];
         for(const glyph of path.glyphs){
@@ -78,7 +82,8 @@ export function drawTextOverlays(ctx,width,height,scene){
             fill=wordColour;
           }
           ctx.save();
-          ctx.translate(glyph.x,glyph.y);
+          ctx.translate(glyph.x-Math.sin(glyph.angle)*lineOffset,
+            glyph.y+Math.cos(glyph.angle)*lineOffset);
           ctx.rotate(glyph.angle);
           ctx.scale(path.shrink,1);
           ctx.textAlign='center';
