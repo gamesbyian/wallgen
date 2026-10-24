@@ -13,7 +13,7 @@ import { normalizeRecipe, OUTPUT_WIDTH, OUTPUT_HEIGHT } from '../src/model.js';
 import { embedPngMetadata, extractPngRecipe } from '../src/png-metadata.js';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const types = {'.js':'text/javascript','.css':'text/css','.html':'text/html','.json':'application/json','.svg':'image/svg+xml'};
+const types = {'.js':'text/javascript','.css':'text/css','.html':'text/html','.json':'application/json','.svg':'image/svg+xml','.ttf':'font/ttf','.otf':'font/otf'};
 const usage = `Usage: node scripts/render-headless.mjs [--recipe design.json] [--seed text]
   [--set key=value ...] [--width pixels] [--height pixels] [--out image.png]
   [--metadata metadata.json] [--browser path] [--backend reference|worker]
@@ -107,6 +107,8 @@ async function main(){
       await page.evaluate(async({recipe,width,height})=>{
         const {drawWallpaper}=await import('/src/renderer.js');
         const {normalizeRecipe}=await import('/src/model.js');
+        const {prepareTypefaces}=await import('/src/typography-fonts.js');
+        await prepareTypefaces(recipe);
         const {processPhotoPixels,applyPhotoFinish}=await import('/src/photo-look.js');
         const look=recipe.photoLook;
         if(!look?.enabled||!Number(look.amount))throw Error('Photo stream proof requires an active Photo look');
@@ -148,6 +150,8 @@ async function main(){
         });
       }
       const {drawWallpaper}=await import('/src/renderer.js');
+      const {prepareTypefaces}=await import('/src/typography-fonts.js');
+      await prepareTypefaces(recipe);
       const canvas=document.createElement('canvas');
       canvas.width=width;canvas.height=height;
       drawWallpaper(canvas,recipe);

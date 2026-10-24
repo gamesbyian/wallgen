@@ -1,0 +1,39 @@
+{
+  "seed": "typography-full-resolution-20261024",
+  "family": "studio",
+  "structure": "paths",
+  "orientation": "diagonal",
+  "geometry": "wave",
+  "shapeFrequency": 28,
+  "shapeDepth": 28,
+  "stripeWidth": 60,
+  "spread": 75,
+  "palette": "electric",
+  "background": "black",
+  "outline": "white",
+  "textOverlays": [
+    {
+      "id": "full-title",
+      "text": "RAINBOW",
+      "font": "pack-bangers",
+      "colour": "rainbow-letter",
+      "outline": "black",
+      "outlineWidth": 8,
+      "size": 100,
+      "rotation": -8,
+      "x": 50,
+      "y": 36
+    },
+    {
+      "id": "full-subtitle",
+      "text": "A WORLD OF COLOUR",
+      "font": "pack-courgette",
+      "colour": "white",
+      "outline": "black",
+      "outlineWidth": 6,
+      "size": 48,
+      "x": 50,
+      "y": 63
+    }
+  ]
+}
