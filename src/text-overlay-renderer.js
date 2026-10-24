@@ -3,6 +3,7 @@ import {TEXT_FONTS} from './text-overlays.js';
 import {typefacesReady,typefaceCssFamily} from './typography-fonts.js';
 import {availableTextWidth} from './text-direct-geometry.js';
 import {rainbowTextStops} from './text-rainbow-shaping.js';
+import {layoutTextOnPath} from './text-path-geometry.js';
 
 // The same post-composite typography pass is used by reference, worker,
 // thumbnail, headless, and preview-cache composition. Never render DOM text
@@ -39,6 +40,47 @@ export function drawTextOverlays(ctx,width,height,scene){
       const shrink=total>room?room/total:1;
       ctx.save();
       ctx.translate(0,(lineIndex-(lines.length-1)/2)*lineHeight);
+      // Curved lettering uses the same final-frame transform, font resolver,
+      // colour palette and compositing pass as ordinary text. For joining
+      // scripts, the layout refuses splitting and falls through to the
+      // untouched whole-line native Canvas paint below.
+      const path=item.path&&item.path!=='none'?
+        layoutTextOnPath(item,line,unit=>ctx.measureText(unit).width):null;
+      if(path?.supported){
+        let inWord=false,wordColour=colours[colourIndex%colours.length];
+        for(const glyph of path.glyphs){
+          const ink=Boolean(glyph.text.trim());
+          let fill=item.colour==='black'?'#000000':item.colour==='white'?'#ffffff':null;
+          if(item.colour==='rainbow-letter'){
+            fill=colours[colourIndex%colours.length];
+            if(ink)colourIndex++;
+          }else if(item.colour==='rainbow-word'){
+            if(ink&&!inWord){
+              wordColour=colours[colourIndex%colours.length];colourIndex++;
+            }
+            inWord=ink;
+            fill=wordColour;
+          }
+          ctx.save();
+          ctx.translate(glyph.x,glyph.y);
+          ctx.rotate(glyph.angle);
+          ctx.scale(path.shrink,1);
+          ctx.textAlign='center';
+          if(item.colour==='rainbow-gradient'){
+            const left=-path.total/2-glyph.distance/path.shrink;
+            const gradient=ctx.createLinearGradient(left,0,left+path.total,0);
+            colours.forEach((colour,i)=>gradient.addColorStop(i/6,colour));
+            fill=gradient;
+          }
+          if(item.outline!=='none'&&item.outlineWidth>0)
+            ctx.strokeText(glyph.text,0,0);
+          ctx.fillStyle=fill||colours[colourIndex%colours.length];
+          ctx.fillText(glyph.text,0,0);
+          ctx.restore();
+        }
+        ctx.restore();
+        return;
+      }
       ctx.scale(shrink,1);
       const start=-total/2;
       let gradient=null;
