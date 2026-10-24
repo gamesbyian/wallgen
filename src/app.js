@@ -32,7 +32,7 @@ import {createCreativeRecorder,openUsageStore,USAGE_MODE_KEY} from './creative-r
 import {installCreativeRecorderUI} from './creative-recorder-ui.js';
 import {installCreativeFeedback} from './creative-feedback.js';
 import {installTextOverlayTool} from './text-overlays-ui.js';
-import {prepareLocalFonts,localFontsReady,recipeLocalFontIds} from './local-fonts.js';
+import {prepareTypefaces,typefacesReady,recipeHasCustomTypefaces} from './typography-fonts.js';
 
 const form = document.getElementById('controls');
 const preview = document.getElementById('preview');
@@ -681,13 +681,13 @@ function render(recipe,{scroll=false,bypassLocks=false,interactive=false,cause='
         'With this many shapes, Largest size is capped to keep placement feasible.':'';
     sizeHint.hidden=!sizeHint.textContent;
   }
-  if(recipeLocalFontIds(current).length&&!localFontsReady(current)){
+  if(recipeHasCustomTypefaces(current)&&!typefacesReady(current)){
     // A restored design may refer to a private font kept in IndexedDB.
     // Never paint fallback glyphs while native FontFace loading is pending.
     const expected=key;
     preview.dataset.renderPending='true';
     preview.setAttribute('aria-busy','true');
-    void prepareLocalFonts(current).then(()=>{
+    void prepareTypefaces(current).then(()=>{
       if(artKey(current)===expected)render(current,{record:false});
     }).catch(error=>{
       if(artKey(current)!==expected)return;
@@ -1122,7 +1122,7 @@ async function downloadPNG(){
   try {
     // Never export silently substituted glyphs if a shared recipe has a
     // missing or damaged private TTF/OTF font in this browser.
-    await prepareLocalFonts(snapshot);
+    await prepareTypefaces(snapshot);
     let blob;
     if(typeof Worker==='function'&&typeof OffscreenCanvas==='function'){
       try{
@@ -1925,7 +1925,7 @@ function getThumbnailWorker(){
 async function drawThumbnail(canvas,recipe,isRelevant=()=>true){
   // A missing user font is an error rather than an apparently valid thumbnail
   // using some unrelated system fallback typeface.
-  await prepareLocalFonts(recipe);
+  await prepareTypefaces(recipe);
   const worker=getThumbnailWorker();
   if(worker.enabled){
     try{
