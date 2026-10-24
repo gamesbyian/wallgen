@@ -15,7 +15,7 @@ Place and edit one or more phrases directly on a finished ROYGBIV wallpaper with
 
 ## Technical build & acceptance stages
 
-### T1: Foundational editable overlays (current PR scope)
+### T1: Foundational editable overlays (landed [PR #654](https://github.com/gamesbyian/wallgen/pull/654), 24 October 2026)
 - [x] `src/text-overlays.js`: bounded schema, safe textual normalization, deterministic IDs, fixed preset font registry.
 - [x] `src/text-overlay-renderer.js`: shared drawing used after Photo in direct/worker and re-applied once in cached nudge composer.
 - [x] New Text tool in Details, add/select/edit/remove with ordinary history and control synchronization.
