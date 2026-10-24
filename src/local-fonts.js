@@ -114,3 +114,56 @@ export async function importLocalFont(file){
   await putRecord({id,name,format,size,bytes});
   return {id,name,format,size,alreadyInstalled:!!existing};
 }
+
+// Portable packages explicitly selected by a user may retrieve only their
+// own locally stored font bytes. Ordinary PNG and share URLs still cannot.
+export async function getLocalFontRecord(id){
+  if(!isLocalFontId(id))throw Error('Invalid local font ID');
+  const record=await getRecord(id);
+  if(!record?.bytes)throw Error('Missing original local font '+id.slice(5,17));
+  if((await hashFontBytes(record.bytes))!==id)
+    throw Error('Local font integrity check failed: '+id.slice(5,17));
+  const {format,size}=inspectLocalFont(record.bytes,record.name);
+  return {id,name:record.name,format,size,bytes:record.bytes};
+}
+// Install a fully validated portable group in one IndexedDB transaction.
+// Validate *every* binary before writing anything: a corrupt second face
+// must not leave the first one half-imported.
+export async function importLocalFontRecords(records){
+  if(!Array.isArray(records)||!records.length||records.length>8)
+    throw Error('Expected 1 to 8 imported fonts');
+  const distinct=new Set();
+  const prepared=[];
+  for(const record of records){
+    const id=record?.id;
+    if(!isLocalFontId(id)||distinct.has(id))
+      throw Error('Invalid or repeated portable font identifier');
+    distinct.add(id);
+    const name=String(record.name||'');
+    const {format,size}=inspectLocalFont(record.bytes,name);
+    if(record.format!==format||record.size!==size)
+      throw Error('Portable font format or size mismatch');
+    if((await hashFontBytes(record.bytes))!==id)
+      throw Error('Portable font SHA-256 mismatch');
+    prepared.push({id,name,format,size,bytes:record.bytes});
+  }
+  const already=await listLocalFonts();
+  if(new Set([...already.map(x=>x.id),...distinct]).size>LOCAL_FONT_MAX_COUNT)
+    throw Error('Not enough space in the 32-font library for this package');
+  // Validate each binary through the native font parser before writing.
+  // Do not populate the rendering cache until the group transaction commits.
+  if(typeof FontFace!=='function'||!fontSet()?.add)
+    throw Error('This browser cannot install portable fonts');
+  for(const record of prepared){
+    const trial=new FontFace(fontFamilyForId(record.id),record.bytes,
+      {style:'normal',weight:'700'});
+    await trial.load();
+  }
+  await transact('readwrite',store=>{
+    const first=store.put(prepared[0]);
+    for(const next of prepared.slice(1))store.put(next);
+    return first;
+  });
+  for(const record of prepared)await registerFont(record.id,record.bytes);
+  return prepared.map(({id,name,format,size})=>({id,name,format,size}));
+}

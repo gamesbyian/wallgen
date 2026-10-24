@@ -32,3 +32,11 @@
 .text-overlay-import input[type=file]{width:100%;min-height:44px;min-width:0;box-sizing:border-box;font:inherit}
 .text-overlay-font-status{font-size:.77rem;line-height:1.35;margin:2px 0;color:var(--ink,inherit)}
 .text-overlay-font-status:empty{display:none}
+
+.text-overlay-portability{border-top:1px solid var(--line,#888);margin-top:6px;padding-top:8px;display:grid;gap:7px}
+.text-overlay-portability button{border:1px solid var(--line,#888);border-radius:10px;min-height:44px;background:var(--surface,#fff);color:inherit;padding:8px 10px;font:inherit}
+.text-overlay-portability button:disabled{opacity:.5}
+.text-overlay-portability label{font-size:.81rem}
+.text-overlay-portability input[type=file]{width:100%;min-height:44px;font:inherit;min-width:0}
+.text-overlay-portability [data-font-pack-status]{font-size:.79rem;line-height:1.35;margin:0}
+.text-overlay-portability [data-font-pack-status]:empty{display:none}
