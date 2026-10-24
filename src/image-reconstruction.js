@@ -690,18 +690,26 @@ export function measuredExpandedDrawRegistration(source,rendered){
   const original=ordered(a),candidate=ordered(b);
   if(original.some(r=>!r||r.area<16)||candidate.some(r=>!r||r.area<16))
     return null;
-  const gaps=regions=>regions.slice(1).map((r,i)=>r.cy-regions[i].cy);
-  const src=gaps(original),fit=gaps(candidate);
   const median=values=>values.slice().sort((x,y)=>x-y)[Math.floor(values.length/2)];
-  const srcGap=median(src),fitGap=median(fit);
-  if(srcGap<.012||fitGap<.012||
-    src.some(x=>Math.abs(x-srcGap)>srcGap*.23)||
-    fit.some(x=>Math.abs(x-fitGap)>fitGap*.23))return null;
-  const gapRatio=srcGap/fitGap;
-  if(!Number.isFinite(gapRatio)||gapRatio<.75||gapRatio>3.25)return null;
-  const offsetY=Math.round((original[3].cy-candidate[3].cy)*100);
-  if(Math.abs(offsetY)>50)return null;
-  return {offsetY,gapRatio};
+  // The same seven source and actual-render component centroids also support
+  // upright Draw bands, whose rainbow order separates along X rather than Y.
+  // Prefer the previously validated Y fit whenever both axes are coherent.
+  const measure=axis=>{
+    const gaps=regions=>regions.slice(1).map((r,i)=>r[axis]-regions[i][axis]);
+    const src=gaps(original),fit=gaps(candidate);
+    const srcGap=median(src),fitGap=median(fit);
+    // Matching SIGN matters: reversed hue order is not a rigidly registered
+    // ribbon stack. Signed gaps admit both left-to-right and right-to-left.
+    if(Math.abs(srcGap)<.012||Math.abs(fitGap)<.012||srcGap*fitGap<=0||
+      src.some(x=>Math.abs(x-srcGap)>Math.abs(srcGap)*.23)||
+      fit.some(x=>Math.abs(x-fitGap)>Math.abs(fitGap)*.23))return null;
+    const gapRatio=srcGap/fitGap;
+    if(!Number.isFinite(gapRatio)||gapRatio<.75||gapRatio>3.25)return null;
+    const offset=Math.round((original[3][axis]-candidate[3][axis])*100);
+    if(Math.abs(offset)>50)return null;
+    return axis==='cx'?{offsetX:offset,gapRatio}:{offsetY:offset,gapRatio};
+  };
+  return measure('cy')??measure('cx');
 }
 export const coherentExpandedDrawOffsetY=(source,rendered)=>
   measuredExpandedDrawRegistration(source,rendered)?.offsetY??null;
@@ -733,7 +741,11 @@ export function rankReconstructionCandidates(candidates,source,render){
         results.push({...candidate,error,
           ...(waveOffsetY!==null?{waveOffsetY}:{}),
           ...(bandOffsetX!==null?{bandOffsetX}:{}),
-          ...(drawRegistration?{drawOffsetY:drawRegistration.offsetY,
+          ...(drawRegistration?{
+            ...(Number.isFinite(drawRegistration.offsetY)?
+              {drawOffsetY:drawRegistration.offsetY}:{}),
+            ...(Number.isFinite(drawRegistration.offsetX)?
+              {drawOffsetX:drawRegistration.offsetX}:{}),
             drawGapRatio:drawRegistration.gapRatio}:{})});
       }
     }catch(error){
@@ -768,7 +780,8 @@ export function reconstructionRefinementIndex(ranked){
   const wideDraw=ranked.findIndex((item,index)=>index>0&&
     item.kind==='path'&&item.recipe?.geometry==='drawn'&&
     item.recipe.geometrySafety===false&&
-    Number.isFinite(item.drawOffsetY)&&Number.isFinite(item.error)&&
+    (Number.isFinite(item.drawOffsetY)||Number.isFinite(item.drawOffsetX))&&
+    Number.isFinite(item.error)&&
     item.error<=Math.min(.55,best.error+.14));
   // A coherent nearly doubled pigment gap plus two observed angular bends
   // specifically justifies widening a traced source V. Smooth Wave lacks
@@ -819,8 +832,12 @@ function refinementFields(candidate){
       const delta=Math.round(target-spread);
       return [delta,Math.round(delta*.75),Math.round(delta*.5),-15];
     })()],
-    ['positionY',[candidate.drawOffsetY,candidate.drawOffsetY-4,
-      candidate.drawOffsetY+4,candidate.drawOffsetY-8]],
+    [Number.isFinite(candidate.drawOffsetX)?'positionX':'positionY',
+      (()=>{
+        const offset=Number.isFinite(candidate.drawOffsetX)?
+          candidate.drawOffsetX:candidate.drawOffsetY;
+        return [offset,offset-4,offset+4,offset-8];
+      })()],
     ['stripeWidth',[-15,15]]
   ]:candidate.kind==='straight'?[
     [candidate.recipe.orientation==='horizontal'?'positionY':'positionX',
@@ -869,7 +886,8 @@ function canRefine(candidate,maxRenders){
   if(candidate.kind==='path'&&
     (candidate.recipe?.geometry!=='drawn'||
       candidate.recipe.geometrySafety!==false||
-      !Number.isFinite(candidate.drawOffsetY)))return false;
+      !(Number.isFinite(candidate.drawOffsetY)||
+        Number.isFinite(candidate.drawOffsetX))))return false;
   if(!Number.isInteger(maxRenders)||maxRenders<0||maxRenders>16)
     throw Error('Invalid reconstruction fitting budget');
   return true;
