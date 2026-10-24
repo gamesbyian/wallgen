@@ -109,7 +109,20 @@ export const RECONSTRUCTION_R0_CASES=Object.freeze([
         index,x:[.18,.50,.82][index%3],
         y:[.16,.45,.76][Math.floor(index/3)],
         radius:.092
-      }))}}
+      }))}},
+  {id:'19-jewel-vertical',goal:'Distinct current Jewel colour story on seven straight canonical stripes',
+    recipe:{structure:'paths',geometry:'straight',orientation:'vertical',
+      palette:'jewel',spread:52,stripeWidth:66}},
+  {id:'20-pastel-seven-circles',goal:'Bright current Pastel story on independently editable seven circles',
+    recipe:{...RAINBOW_ORBITS,seed:'r0-pastel-circles',palette:'pastel',
+      scatteredOverlap:'overlap',scatteredOverrides:[
+        {index:0,x:.22,y:.16,radius:.12},
+        {index:1,x:.70,y:.20,radius:.13},
+        {index:2,x:.35,y:.39,radius:.14},
+        {index:3,x:.76,y:.52,radius:.14},
+        {index:4,x:.24,y:.68,radius:.14},
+        {index:5,x:.73,y:.80,radius:.13},
+        {index:6,x:.35,y:.90,radius:.12}]}}
 ]);
 
 export function baselineRecipe(item){

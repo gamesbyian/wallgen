@@ -62,7 +62,7 @@ export function classifyReconstructionManifest(manifest){
   if(!external&&manifest?.schema!=='roygbiv-reconstruction-r0/v1')
     throw Error('Unsupported reconstruction manifest');
   if(!Array.isArray(manifest.items)||manifest.items.length<1||
-    manifest.items.length>(external?4:18))throw Error('Invalid reconstruction fixture count');
+    manifest.items.length>(external?4:20))throw Error('Invalid reconstruction fixture count');
   const ids=new Set(),sources=new Set();
   for(const item of manifest.items){
     if(!item||typeof item.id!=='string'||!/^[-\w]+$/.test(item.id)||
@@ -200,6 +200,9 @@ async function evaluate(opts){
         trueStructure:truth?.structure??null,trueGeometry:truth?.geometry??null,
         recoveredStructure:inferred.selected?.structure??null,
         recoveredGeometry:inferred.selected?.geometry??null,
+        // Appearance proposal is never the true recipe or a provenance claim.
+        truePalette:truth?.palette??null,
+        recoveredPalette:inferred.selected?.recipe.palette??null,
         alternatives:inferred.alternatives,
         ...(opts.alternatives?{variantPreviews:inferred.candidateVariants.map((_,i)=>
           item.id+'.r0-alternative-'+String(i+1).padStart(2,'0')+'.png')}: {})};

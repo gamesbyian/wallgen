@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {HUES,normalizeRecipe,resolveScene,encodeRecipe,decodeRecipe} from '../src/model.js';
+import {HUES,COLOR_STORIES,normalizeRecipe,resolveScene,encodeRecipe,decodeRecipe} from '../src/model.js';
 import {imagePlacement,extractImageColourRegions} from '../src/image-path.js';
 import {describeReconstructionImage,reconstructionCandidates,
   rankReconstructionCandidates,compareReconstructionPixels,refineReconstructionCandidate,reconstructionPlacement,
   radialImageSignature,imageStripeAngle,imageCurveSignature,diverseReconstructionCandidates,reconstructionRefinementIndex,
-  measuredRainbowRibbonBands,seedMeasuredRibbonControls,coherentWaveOffsetY,coherentVerticalBandOffsetX,coherentExpandedDrawOffsetY,measuredExpandedDrawRegistration,measuredJaggedPixelShift,
+  measuredRainbowRibbonBands,seedMeasuredRibbonControls,measuredCanonicalPalette,coherentWaveOffsetY,coherentVerticalBandOffsetX,coherentExpandedDrawOffsetY,measuredExpandedDrawRegistration,measuredJaggedPixelShift,
   rankReconstructionCandidatesCooperatively,refineReconstructionCandidateCooperatively,
   RECONSTRUCTION_FRAME,RECONSTRUCTION_RENDER_LIMIT} from '../src/image-reconstruction.js';
 
@@ -51,6 +51,56 @@ test('Seven metadata-free rainbow regions map to portable editable canonical obj
   const scene=resolveScene(restored);
   assert.equal(scene.objects.length,7);
   assert.ok(scene.objects.every(o=>o.circle?.r>0),'ordinary movable circles');
+});
+
+// Generate flat colours from the canonical model's own story definition.
+// This proves source-mask logic without confusing a synthetic raster with
+// independently inspected/current-renderer PNG aesthetic acceptance.
+function canonicalColour(index,palette){
+  const story=COLOR_STORIES[palette];
+  const hue=((HUES[index]+(story.hue?.[index]??0))%360+360)%360;
+  const light=(story.light+(story.lights?.[index]??0))/100;
+  const saturation=story.sat/100;
+  const chroma=(1-Math.abs(2*light-1))*saturation;
+  const x=chroma*(1-Math.abs((hue/60)%2-1));
+  const m=light-chroma/2;
+  const sector=Math.floor(hue/60);
+  const channels=[[chroma,x,0],[x,chroma,0],[0,chroma,x],
+    [0,x,chroma],[x,0,chroma],[chroma,0,x]][sector];
+  return [...channels.map(value=>Math.round((value+m)*255)),255];
+}
+function paletteSource(palette,{missingHue=-1}={}){
+  return raster(140,280,(x,y)=>{
+    if(x<6||x>=134||y<6||y>=274)return [0,0,0,255];
+    const index=Math.min(6,Math.floor((x-6)*7/128));
+    return index===missingHue?[0,0,0,255]:canonicalColour(index,palette);
+  });
+}
+test('clean canonical nonclassic colour stories become bounded appearance hypotheses, not provenance',()=>{
+  for(const palette of ['jewel','pastel','earth','twilight']){
+    const image=paletteSource(palette),desc=describeReconstructionImage(image);
+    assert.equal(desc.colourRegions.length,7,'seven known hue components');
+    assert.equal(desc.paletteHypothesis?.palette,palette,
+      'a well-separated current palette should be recognized from source appearance');
+    const candidates=reconstructionCandidates(image,normalizeRecipe({seed:'no-source-seed'}));
+    assert.ok(candidates.length>0&&candidates.length<=RECONSTRUCTION_RENDER_LIMIT);
+    assert.ok(candidates.every(candidate=>candidate.recipe.palette===palette));
+    assert.ok(candidates.every(candidate=>typeof candidate.uncertainty==='string'&&
+      /infer|approx|estimate|uncertain|source|pigment|original/i.test(candidate.uncertainty)));
+    assert.deepEqual(decodeRecipe(encodeRecipe(candidates[0].recipe)),candidates[0].recipe,
+      'ordinary recipe transport preserves the editable appearance proposal');
+    const protectedCandidates=reconstructionCandidates(image,normalizeRecipe({
+      seed:'retain-creator-palette',palette:'classic',lockedSettings:['palette']}));
+    assert.ok(protectedCandidates.every(candidate=>candidate.recipe.palette==='classic'),
+      'canonical palette lock overrides inferred appearance');
+  }
+});
+test('missing or ambiguous pigmentation does not manufacture source palette semantics',()=>{
+  assert.equal(measuredCanonicalPalette(
+    extractImageColourRegions(paletteSource('jewel',{missingHue:4}),HUES).regions),null);
+  assert.equal(describeReconstructionImage(paletteSource('classic')).paletteHypothesis,null);
+  // Fully saturated arbitrary HSV pigments are not any canonical HSL story.
+  assert.equal(describeReconstructionImage(original).paletteHypothesis,null);
 });
 
 test('External opaque graphic provides a truthful editable path, not invented seven colours',()=>{
