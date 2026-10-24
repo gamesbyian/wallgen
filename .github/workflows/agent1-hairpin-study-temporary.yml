@@ -1,0 +1,35 @@
+name: Agent1 temporary genuine Hairpin gap comparison
+on:
+  pull_request:
+permissions:
+  contents: read
+concurrency:
+  group: agent1-hairpin-study-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  hairpin-source-fit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install one-shot browser
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Produce genuine unchanged-IDAT sources with separate truth
+        run: |
+          node scripts/review-reconstruction.mjs --only 04-jagged,05-hairpin,06-loop,19-jewel-vertical --out-dir artifacts/agent1-hairpin
+      - name: Blind reconstruction with actual existing painter
+        run: |
+          node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/agent1-hairpin
+      - name: Preserve full source and fitted images for optical inspection
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent1-hairpin-source-and-fit
+          path: artifacts/agent1-hairpin/
+          retention-days: 10
+          if-no-files-found: warn
