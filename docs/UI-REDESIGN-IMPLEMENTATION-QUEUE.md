@@ -1,5 +1,7 @@
 # Implementation-safe ROYGBIV redesign queue
 
+**23 October 2026 operational disposition:** This is preserved implementation history, **not a live list of unchecked features to rebuild**. The seven-category editor, contextual navigation/search/crosslinks, native object picker/Thread controls, Focus, and Photo routes have shipped. Agent 3's #365/#444 software umbrellas are closed after focused fixes including [#619–#622](https://github.com/gamesbyian/wallgen/pull/622) and [#633](https://github.com/gamesbyian/wallgen/pull/633), with synthetic Chromium swipe/focus acceptance at 320×700 and 412×892. Physical Pixel, IME/native select and TalkBack acceptance remain explicitly outside that evidence. Follow [current handoff](AGENT-HANDOFF-2026-10-22.md), [active roadmap](ACTIVE-PRODUCT-ROADMAP-2026-10-22.md) and [release ledger](RELEASE-READINESS-AGENT3-2026-10-23.md), not original queued headings below. Optional C09/C10/C11 prototypes require actual observed creator friction; do not make them automatic release blockers.
+
 **Current dispatch authority:** [the reconciled agent handoff](AGENT-HANDOFF-2026-10-22.md) and [active product roadmap](ACTIVE-PRODUCT-ROADMAP-2026-10-22.md). Historical phase and initial “queued” descriptions below do not override already-merged Thread, Photo and PNG implementations. The Thread four-state browser test is complete; physical handset checks remain separate.
 
 
