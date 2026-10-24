@@ -68,4 +68,9 @@ body.text-direct-active #preview:active{cursor:grabbing}
 .text-direct-handle:disabled{opacity:.55;cursor:not-allowed}
 .text-direct-handle:focus-visible{outline:3px solid #f7d77d;outline-offset:3px}
 .text-direct-rotate{left:50%;top:-34px;transform:translate(-50%,-50%)}
-.text-direct-scale{right:0;bottom:0;transform:translate(50%,50%)}
+/* An inset 22px keeps the full 44px scale target reachable even when
+   a wide title touches the wallpaper's right edge. */
+.text-direct-scale{right:22px;bottom:22px;transform:translate(50%,50%)}
+.text-direct-outline.text-direct-rotate-inset .text-direct-rotate{
+  top:22px;transform:translate(-50%,-50%);
+}
