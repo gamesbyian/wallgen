@@ -350,54 +350,72 @@ export function extractImageShapeCandidates(image){
  * declines without inventing missing shape semantics.
  */
 function repeatedHueStampShape(partsByHue,w,h){
-  if(!partsByHue||partsByHue.length!==7||
-    partsByHue.some(parts=>parts.length!==1))return null;
-  const parts=partsByHue.map(parts=>parts[0]);
-  const horizontal=parts.every(p=>
-    p.maxX-p.minX>=w*.45&&p.maxY-p.minY<=h*.55);
-  const vertical=!horizontal&&parts.every(p=>
-    p.maxY-p.minY>=h*.45&&p.maxX-p.minX<=w*.55);
-  if(!horizontal&&!vertical)return null;
-  const reference=parts[3];
-  const centre=p=>[(p.minX+p.maxX+1)/2,(p.minY+p.maxY+1)/2];
+  if(!partsByHue||partsByHue.length!==7)return null;
+  const componentCount=partsByHue[0]?.length;
+  if(!componentCount||componentCount>3||
+    partsByHue.some(parts=>parts.length!==componentCount))return null;
+  // A sevenfold duplicated source shape can have several *disconnected*
+  // components, holes, or islands within each hue. Treat that hue as one
+  // rigid translated group. Existing compound-region snapshots already
+  // support this; never create a new dialect or infer hidden layer order.
+  const groups=partsByHue.map((parts,index)=>({
+    index,parts,area:parts.reduce((total,p)=>total+p.area,0),
+    minX:Math.min(...parts.map(p=>p.minX)),
+    minY:Math.min(...parts.map(p=>p.minY)),
+    maxX:Math.max(...parts.map(p=>p.maxX)),
+    maxY:Math.max(...parts.map(p=>p.maxY))
+  }));
+  const horizontal=groups.every(g=>
+    g.maxX-g.minX>=w*.45&&g.maxY-g.minY<=h*.55);
+  const vertical=!horizontal&&groups.every(g=>
+    g.maxY-g.minY>=h*.45&&g.maxX-g.minX<=w*.55);
+  // For a SINGLE component, refuse compact isolated spots. Multiple islands
+  // may instead form a small repeated compound stamp (including real holes).
+  if(componentCount===1&&!horizontal&&!vertical)return null;
+  const reference=groups[3];
+  const centre=g=>[(g.minX+g.maxX+1)/2,(g.minY+g.maxY+1)/2];
   const [baseX,baseY]=centre(reference);
-  const occupied=new Set(reference.members);
+  const occupied=new Set(reference.parts.flatMap(part=>part.members));
   let minOverlap=1;
-  for(const part of parts){
-    if(part.area<32||part.area<reference.area*.70||
-      part.area>reference.area*1.30)return null;
-    const [cx,cy]=centre(part),dx=Math.round(baseX-cx),
+  for(const group of groups){
+    if(group.area<32||group.area<reference.area*.70||
+      group.area>reference.area*1.30)return null;
+    const [cx,cy]=centre(group),dx=Math.round(baseX-cx),
       dy=Math.round(baseY-cy);
     let intersection=0;
-    for(const pixel of part.members){
+    for(const part of group.parts)for(const pixel of part.members){
       const x=pixel%w+dx,y=((pixel/w)|0)+dy;
       if(x>=0&&x<w&&y>=0&&y<h&&occupied.has(y*w+x))
         intersection++;
     }
-    const overlap=intersection/(reference.area+part.area-intersection);
+    const overlap=intersection/(reference.area+group.area-intersection);
     if(overlap<.76)return null;
     minOverlap=Math.min(minOverlap,overlap);
   }
-  const loops=shapeEdgeLoops(reference,w,h)
-    .sort((a,b)=>Math.abs(ringArea(b))-Math.abs(ringArea(a)));
-  if(!loops.length)return null;
   const width=reference.maxX-reference.minX+1;
   const height=reference.maxY-reference.minY+1;
   const local=ring=>ring.map(([x,y])=>
     [x-reference.minX,y-reference.minY]);
+  const components=[];
+  for(const part of reference.parts){
+    const loops=shapeEdgeLoops(part,w,h)
+      .sort((a,b)=>Math.abs(ringArea(b))-Math.abs(ringArea(a)));
+    if(!loops.length)return null;
+    components.push({outer:local(loops[0]),
+      holes:loops.slice(1).filter(r=>Math.abs(ringArea(r))>=4).map(local)});
+  }
   let geometry;
   try{
     geometry=normalizeCompoundRegion({
       type:'compound-region',space:'asset-local',viewBox:[0,0,width,height],
-      components:[{outer:local(loops[0]),
-        holes:loops.slice(1).filter(r=>Math.abs(ringArea(r))>=4).map(local)}],
-      fillRule:'evenodd'
+      components,fillRule:'evenodd'
     });
   }catch{return null;}
-  return {geometry,placements:parts.map(part=>({
-    index:parts.indexOf(part),cx:centre(part)[0]/w,cy:centre(part)[1]/h,
-    scale:Math.sqrt(part.area/reference.area)
+  return {geometry,placements:groups.map(group=>({
+    index:group.index,cx:centre(group)[0]/w,cy:centre(group)[1]/h,
+    scale:Math.sqrt(group.area/reference.area)
   })),minOverlap};
+
 }
 
 export function extractImageColourRegions({data,width:w,height:h},hueTargets,
@@ -442,9 +460,16 @@ export function extractImageColourRegions({data,width:w,height:h},hueTargets,
     // also expose smaller genuine islands from the very same flood-fill.
     // This permits repeated editable colour objects without a second mask
     // pass, importer, rasterizer or noncanonical scene representation.
-    const parts=components(masks[index],w,h,minArea);
+    // The primary ribbon/statistics threshold remains intact, but source
+    // topology discovery retains smaller *real* islands of a compound stamp
+    // (e.g. a satellite square beside a hollow square). One bounded flood
+    // fill per hue, over the same shared pixel mask. Painter scoring still
+    // calls this function with includeRepeatShape=false.
+    const parts=components(masks[index],w,h,
+      includeRepeatShape?Math.max(12,Math.floor(w*h*.0001)):minArea);
     if(partsByHue)partsByHue.push(parts);
-    for(const [partNumber,part] of parts.entries()){
+    const primaryParts=parts.filter(part=>part.area>=minArea);
+    for(const [partNumber,part] of primaryParts.entries()){
       let sx=0,sy=0,sxx=0,syy=0,sxy=0;
       for(const p of part.members){
         const x=p%w,y=(p/w)|0;
