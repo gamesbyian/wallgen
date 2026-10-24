@@ -418,44 +418,6 @@ function repeatedHueStampShape(partsByHue,w,h){
 
 }
 
-// Reuse the already classified hue masks to measure a straight, separated
-// seven-stripe leg near the TOP of a picture. This is a small topological
-// descriptor for procedural Hairpin reconstruction, not a new colour picker or
-// rasterizer. Occluded, touching, reordered or noisy rows are refused.
-function upperParallelHueWidth(masks,w,h){
-  const med=values=>values.slice().sort((a,b)=>a-b)[Math.floor(values.length/2)];
-  const widths=[];
-  for(const fraction of [.14,.24,.34]){
-    const y=Math.round(h*fraction),row=y*w,runs=[];
-    for(let hue=0;hue<7;hue++){
-      const mask=masks[hue],parts=[];
-      let begin=-1;
-      for(let x=0;x<=w;x++){
-        const on=x<w&&mask[row+x]===1;
-        if(on&&begin<0)begin=x;
-        if(!on&&begin>=0){parts.push({hue,start:begin,end:x,width:x-begin});begin=-1;}
-      }
-      if(parts.length!==1||parts[0].width<Math.max(2,Math.round(w*.008))){
-        runs.length=0;break;
-      }
-      runs.push(parts[0]);
-    }
-    if(runs.length!==7)continue;
-    runs.sort((a,b)=>a.start-b.start);
-    const order=runs.map(r=>r.hue);
-    if(!order.every((v,i)=>v===(order[0]===0?i:6-i)))continue;
-    const sizes=runs.map(r=>r.width),typical=med(sizes);
-    if(sizes.some(v=>v<typical*.68||v>typical*1.4))continue;
-    const gaps=runs.slice(1).map((run,i)=>run.start-runs[i].end);
-    if(gaps.some(gap=>gap<1||gap>typical*1.7))continue;
-    widths.push(typical);
-  }
-  if(widths.length<2)return null;
-  const typical=med(widths);
-  return widths.every(v=>Math.abs(v-typical)<=Math.max(1,typical*.22))?
-    typical:null;
-}
-
 export function extractImageColourRegions({data,width:w,height:h},hueTargets,
   {includeRepeatShape=false}={}){
   if(!data||!Number.isInteger(w)||!Number.isInteger(h)||w<12||h<12||
@@ -541,6 +503,5 @@ export function extractImageColourRegions({data,width:w,height:h},hueTargets,
   return {background:backdrop,backgroundRGB:bg,
     coverage:coloured/(w*h),regions,componentRegions,
     ...(includeRepeatShape?{
-      repeatShape:repeatedHueStampShape(partsByHue,w,h),
-      upperParallelHueWidthPx:upperParallelHueWidth(masks,w,h)}:{})};
+      repeatShape:repeatedHueStampShape(partsByHue,w,h)}:{})};
 }
