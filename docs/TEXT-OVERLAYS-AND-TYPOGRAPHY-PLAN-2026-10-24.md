@@ -58,6 +58,7 @@ Place and edit one or more phrases directly on a finished ROYGBIV wallpaper with
 
 ### T3: Expressive typography (subsequent)
 - [ ] Text drag handles, touch-safe pick/rotate/scale gestures, direct text editing without interfering with striped-object canvas drag; Undo a whole gesture once.
+  **New T3a vertical slice:** [PR #660](https://github.com/gamesbyian/wallgen/pull/660) adds an explicitly armed “Move text on wallpaper” mode with topmost hit-testing, correct wallpaper-coordinate transforms, rotated-glyph bounding boxes, move-preview guide, one commit on pointerup, cancellation/Escape/Done and exclusive ownership versus scattered object dragging. Rotation/scale gestures and precise character-glyph hit testing remain separate future tasks. Validate actual emulated phone pointer journey and worker output before marking this part complete.
 - [ ] Text-on-path anchored to canonical curves, circular/wave/hairpin placement; optional weaving/over-under with stripes and per-object stacking.
 - [ ] Character spacing, line spacing, alignment, dual outlines, shadows, custom rainbow offsets/reverse/reset-per-line, outline-only knockout, independent text-only shuffle in a compact interaction.
 - [ ] Glyph shaping and accessibility tests for combining marks, emoji, RTL, ligatures and non-Latin fonts, with honest graceful degradation when unsupported.
