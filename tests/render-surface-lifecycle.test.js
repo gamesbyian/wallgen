@@ -26,3 +26,57 @@ for(const useCache of [false,true]){
     assert.equal(cache.ink,undefined,'a failed paint is never a reusable cache');
   });
 }
+
+const noOp=()=>{};
+function proxyCanvasContext({throwOnPresent=false}={}){
+  const value={
+    drawImage(){if(throwOnPresent)throw new Error('Injected final compositor failure');},
+    createLinearGradient(){return {addColorStop:noOp};},
+    createRadialGradient(){return {addColorStop:noOp};}
+  };
+  return new Proxy(value,{get(target,key){return key in target?target[key]:noOp;},
+    set(target,key,next){target[key]=next;return true;}});
+}
+
+test('a final compositor error must not publish an incomplete preview cache or strand its canvases',()=>{
+  // Regions avoid browser Path2D and permit precise Node fault injection at
+  // the final destination drawImage, after background and ink were prepared.
+  const target={width:600,height:1300,
+    getContext(){return proxyCanvasContext({throwOnPresent:true});}};
+  const surfaces=[];
+  const cache={};
+  const factory=(width,height)=>{
+    const surface={width,height,getContext(){return proxyCanvasContext();}};
+    surfaces.push(surface);
+    return surface;
+  };
+  assert.throws(()=>drawWallpaper(target,normalizeRecipe({
+    seed:'final-compositor-exception',structure:'regions',regionMode:'blocks',
+    material:'none',glow:0,lightingMood:'off',stripeShadowStrength:0
+  }),{cache,canvasFactory:factory}),/Injected final compositor failure/);
+  assert.equal(surfaces.length,2,'background and ink had been prepared');
+  assert.equal(cache.ink,undefined,'a failed render cannot expose a reusable ink surface');
+  assert.equal(cache.background,undefined,'a failed render cannot expose incomplete background');
+  for(const surface of surfaces){
+    assert.equal(surface.width,0,'failed render must release every canvas width');
+    assert.equal(surface.height,0,'failed render must release every canvas height');
+  }
+});
+
+test('successful settled previews preserve only their two reusable cache surfaces',()=>{
+  const target={width:280,height:607,getContext(){return proxyCanvasContext();}};
+  const surfaces=[],cache={};
+  const factory=(width,height)=>{
+    const surface={width,height,getContext(){return proxyCanvasContext();}};
+    surfaces.push(surface);
+    return surface;
+  };
+  drawWallpaper(target,normalizeRecipe({
+    seed:'successful-cache-ownership',structure:'regions',regionMode:'blocks',
+    material:'none',lightingMood:'off'
+  }),{cache,canvasFactory:factory});
+  assert.equal(surfaces.length,2);
+  assert.ok(cache.ink.width>0);
+  assert.equal(cache.background.width,target.width);
+  assert.equal(cache.background.height,target.height);
+});
