@@ -5,7 +5,7 @@ import {imagePlacement,extractImageColourRegions} from '../src/image-path.js';
 import {describeReconstructionImage,reconstructionCandidates,
   rankReconstructionCandidates,compareReconstructionPixels,refineReconstructionCandidate,reconstructionPlacement,
   radialImageSignature,imageStripeAngle,imageCurveSignature,diverseReconstructionCandidates,reconstructionRefinementIndex,
-  measuredRainbowRibbonBands,seedMeasuredRibbonControls,measuredCanonicalPalette,coherentWaveOffsetY,coherentVerticalBandOffsetX,coherentExpandedDrawOffsetY,measuredExpandedDrawRegistration,measuredJaggedPixelShift,measuredJaggedHueShift,
+  measuredRainbowRibbonBands,seedMeasuredRibbonControls,measuredCanonicalPalette,coherentWaveOffsetY,coherentVerticalBandOffsetX,coherentExpandedDrawOffsetY,measuredExpandedDrawRegistration,measuredJaggedPixelShift,
   rankReconstructionCandidatesCooperatively,refineReconstructionCandidateCooperatively,
   RECONSTRUCTION_FRAME,RECONSTRUCTION_RENDER_LIMIT} from '../src/image-reconstruction.js';
 
@@ -1201,66 +1201,33 @@ test('Jagged near-miss uses one real-render measured fine registration instead o
    'unrelated pixel masks do not authorize a fine phase-registration claim');
 });
 
-
-test('large two-axis Jagged source shift requires hue agreement and a coupled real-render recovery',async()=>{
- const w=RECONSTRUCTION_FRAME.width,h=RECONSTRUCTION_FRAME.height;
- const discs=(dx=0,dy=0,rogue=0)=>raster(w,h,(x,y)=>{
-   for(let i=0;i<7;i++){
-     const cx=35+(i%2)*12+dx+(i===4?rogue:0);
-     const cy=30+i*24+dy;
-     if(Math.hypot(x-cx,y-cy)<10)return colour(HUES[i]);
-   }
-   return [0,0,0,255];
- });
- const source=discs(),displaced=discs(16,-22);
- const shift=measuredJaggedHueShift(source,displaced);
- assert.ok(shift,'seven independent pigments support a larger clipped-frame registration');
- assert.equal(shift.coupled,true);
- assert.ok(Math.abs(shift.offsetX+16/w*100)<2);
- assert.ok(Math.abs(shift.offsetY-22/h*100)<2);
- assert.equal(measuredJaggedHueShift(source,discs(16,-22,30)),null,
-   'one unrelated colour displacement vetoes a claimed rigid solution');
- assert.equal(measuredJaggedHueShift(source,source),null);
- const different=raster(w,h,(x,y)=>x>70&&y>35&&y<80?
-   [255,255,255,255]:[0,0,0,255]);
- assert.equal(measuredJaggedHueShift(source,different),null);
- const recipe=normalizeRecipe({seed:'displaced-canonical-jagged',
-   structure:'paths',geometry:'jagged',background:'black',
-   positionX:0,positionY:0});
- let calls=0;
- const painter=next=>{
-   calls++;
-   return discs(16+Math.round(next.positionX*w/100),
-     -22+Math.round(next.positionY*h/100));
- };
- const ranked=rankReconstructionCandidates([
-   {kind:'jagged',label:'displaced jagged',recipe,uncertainty:'inferred'}
- ],source,painter);
- assert.equal(ranked[0].jaggedShift?.coupled,true);
- assert.equal(calls,1,'shared six-render ranking uses one actual painter call');
- const best=refineReconstructionCandidate(ranked[0],source,painter);
- assert.ok(best.error<ranked[0].error*.65,
-   'single-parameter greedy steps cannot replace simultaneous XY fitting');
- assert.ok(best.refinementRenders<=10);
- assert.ok(calls<=11,'one coarse plus at most ten refinement renders');
- const asyncFit=await refineReconstructionCandidateCooperatively(
-   ranked[0],source,painter,{yieldControl:async()=>{}});
- assert.deepEqual(asyncFit,best);
- const fixed=normalizeRecipe({...recipe,lockedSettings:['position']});
- const locked=refineReconstructionCandidate({...ranked[0],recipe:fixed},source,
-   next=>{
-     assert.equal(next.positionX,0);
-     assert.equal(next.positionY,0);
-     return source;
-   });
- assert.equal(locked.recipe.positionX,0);
- assert.equal(locked.recipe.positionY,0);
- let cancelled=false,afterCancel=0;
- const stopped=await refineReconstructionCandidateCooperatively(
-   ranked[0],source,()=>{afterCancel++;return source;},{
-     yieldControl:async()=>{cancelled=true;},
-     isCancelled:()=>cancelled
-   });
- assert.equal(stopped,null);
- assert.equal(afterCancel,0);
+test('clipped coherent Jagged pigments recover their physical gap from four intact ribbon spans',()=>{
+ const regions=Array.from({length:7},(_,i)=>({
+   index:i,area:i<4?11360:[8000,5600,3100][i-4],
+   axisRatio:i<4?13.8:[9.8,6.9,3.8][i-4],
+   axisAngle:-46+(i-3)*.12,majorStd:i<4?115:[82,57,32][i-4],
+   minorStd:8.35,cx:i<4?.5:[.64,.75,.86][i-4],
+   cy:.31+i*.108,
+   bounds:i<4?[0,.05+i*.11,1,.59+i*.11]:
+     [[.25,.46,1,.85],[.46,.57,1,.86],[.69,.68,1,.86]][i-4]
+ }));
+ const metrics=measuredRainbowRibbonBands(regions,277,600);
+ assert.ok(metrics,'partially clipped source remains a measurable seven-hue system');
+ assert.ok(metrics.centreGapPx>40&&metrics.centreGapPx<51);
+ assert.ok(metrics.thicknessPx>26&&metrics.thicknessPx<31);
+ const defaultGuess=normalizeRecipe({geometry:'jagged',structure:'paths',
+   orientation:'diagonal',spread:55,stripeWidth:65});
+ const recovered=seedMeasuredRibbonControls(defaultGuess,metrics,277,600);
+ assert.ok(recovered.spread<defaultGuess.spread);
+ assert.ok(recovered.stripeWidth<defaultGuess.stripeWidth);
+ const inconsistent=regions.map((r,i)=>i===6?{...r,minorStd:15}:r);
+ assert.equal(measuredRainbowRibbonBands(inconsistent,277,600),null,
+   'one unrelated ink width prevents clipped-band extrapolation');
+ const disconnected=regions.map((r,i)=>i===5?
+   {...r,bounds:[0,.57,1,.86]}:r);
+ assert.equal(measuredRainbowRibbonBands(disconnected,277,600),null,
+   'truncation must be a progressively cropped same-side family');
+ const changedAxis=regions.map((r,i)=>i===4?{...r,axisAngle:-18}:r);
+ assert.equal(measuredRainbowRibbonBands(changedAxis,277,600),null,
+   'occluded nonparallel pigments must not become a broad ribbon claim');
 });
