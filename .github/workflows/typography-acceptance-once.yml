@@ -1,0 +1,31 @@
+name: Typography one-shot source browser acceptance
+on:
+  pull_request:
+    paths:
+      - 'scripts/text-overlay-browser-proof.mjs'
+      - '.github/workflows/typography-acceptance-once.yml'
+permissions:
+  contents: read
+jobs:
+  typography-art:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install isolated Chromium for actual PNG evidence
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+      - name: Render actual typography and test worker / cache parity
+        run: node scripts/text-overlay-browser-proof.mjs
+      - name: Preserve source-real visual and JSON evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: typography-portrait-and-parity
+          path: output/text-overlays/
+          if-no-files-found: ignore
+          retention-days: 5
