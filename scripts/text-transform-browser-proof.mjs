@@ -82,7 +82,7 @@ try{
   await scale.focus();
   await scale.press('ArrowUp');
   assert.equal((await selected()).size,initial.size+8);
-  await page.evaluate(()=>document.getElementById('undo').click');
+  await page.evaluate(()=>document.getElementById('undo').click());
   assert.equal((await selected()).size,initial.size);
   const workerProof=await page.evaluate(async()=>{
     const {decodeRecipe}=await import('/src/model.js');
