@@ -136,6 +136,10 @@ try{
       results.push(metadata);
       if(maskDisagreements>Math.max(500,directTextPixels*.03))
         throw Error('Cached text glyph coverage differs from reference: '+JSON.stringify(metadata));
+      // Palette changes must not add any meaningful discrepancy beyond the
+      // small pre-existing cache resampling delta in the text-free picture.
+      if(cachedMatch.diffs>preexistingCacheDifference.diffs+1000)
+        throw Error('Cached text palette/compositor differs: '+JSON.stringify(metadata));
       if(workerMatch.diffs)throw Error('Worker text export differs: '+JSON.stringify(metadata));
       for(const surface of [baselineCache.ink,baselineCache.background])
         if(surface instanceof HTMLCanvasElement){surface.width=0;surface.height=0;}
