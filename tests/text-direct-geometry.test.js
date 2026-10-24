@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {normalizeRecipe} from '../src/model.js';
-import {designPointFromPointer,measuredTextBounds,
+import {availableTextWidth,designPointFromPointer,measuredTextBounds,
   hitTextOverlay,dragTextOverlay} from '../src/text-direct-geometry.js';
 
 const sample=normalizeRecipe({textOverlays:[
@@ -50,4 +50,15 @@ test('locked or invalid gestures do not mutate the canonical recipe',()=>{
  const clamped=dragTextOverlay(sample,'front',{x:9999,y:-9999});
  assert.equal(clamped.textOverlays[1].x,100);
  assert.equal(clamped.textOverlays[1].y,0);
+});
+
+test('off-centre long phrases narrow to the available wallpaper frame',()=>{
+  assert.equal(availableTextWidth({x:50}),564);
+  assert.equal(availableTextWidth({x:63}),432);
+  assert.equal(availableTextWidth({x:97}),24);
+  const item={x:63,text:'X'.repeat(90),size:60};
+  const bounds=measuredTextBounds(item,s=>s.length*10);
+  assert.equal(bounds.width,432);
+  const rightmost=600*.63+bounds.width/2;
+  assert.ok(rightmost<=600-5,'text should stay within the right edge after movement');
 });
