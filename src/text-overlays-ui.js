@@ -1,5 +1,6 @@
 import {MAX_TEXT_OVERLAYS,newTextOverlay,TEXT_FONTS,TEXT_COLOURS,TEXT_OUTLINES} from './text-overlays.js';
 import {importLocalFont,listLocalFonts,isLocalFontId} from './local-fonts.js';
+import {BUNDLED_FONTS,isBundledFontId} from './bundled-fonts.js';
 
 // A tool inside the seven-category editor, not a floating DOM preview layer.
 // Every mutation takes the existing recipe/Undo path supplied by app.js.
@@ -43,7 +44,7 @@ export function installTextOverlayTool({getRecipe,changeRecipe,onFontNotice=()=>
         </div>
       </details>
     </div>
-    <p class="text-overlay-hint">Custom fonts stay on this device in private browser storage, never inside a PNG or design link. Reimport the same file when opening your recipe elsewhere; if it is missing, export is blocked instead of silently substituting a typeface.</p>
+    <p class="text-overlay-hint">27 included, licensed typefaces travel with ROYGBIV. Your imported fonts stay private on this device, never inside a PNG or link. Reimport your original TTF/OTF file on another device; missing fonts block export rather than silently substitute.</p>
   `;
   card.append(root);
   const pick=root.querySelector('[data-text-picker]');
@@ -64,7 +65,10 @@ export function installTextOverlayTool({getRecipe,changeRecipe,onFontNotice=()=>
     editorial:'Editorial serif',typewriter:'Typewriter',playful:'Playful'
   })[key]]);
   const refreshFontOptions=selected=>{
-    const names=[...baseFonts,...library.map(entry=>[entry.id,'My fonts · '+entry.name])];
+    const bundled=Object.entries(BUNDLED_FONTS)
+      .map(([id,entry])=>[id,entry.group+' · '+entry.label]);
+    const names=[...baseFonts,...bundled,
+      ...library.map(entry=>[entry.id,'My fonts · '+entry.name])];
     if(isLocalFontId(selected)&&!library.some(entry=>entry.id===selected))
       names.push([selected,'Missing imported font · reimport to restore']);
     options(font,names);
