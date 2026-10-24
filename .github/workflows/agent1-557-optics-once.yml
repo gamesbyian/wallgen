@@ -2,7 +2,7 @@ name: One-shot reconstruction #557 genuine optical discriminator
 on:
   push:
     branches: [agent1/557-displaced-jagged-coupled-registration-20261024]
-    paths: [.github/workflows/agent1-557-optics-once.yml, src/image-reconstruction.js]
+    paths: [.github/workflows/agent1-557-optics-once.yml, src/image-reconstruction.js, scripts/evaluate-reconstruction-r0.mjs]
 permissions:
   contents: read
 jobs:
