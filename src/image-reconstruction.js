@@ -161,23 +161,32 @@ export function imageCurveSignature(paths,width,height){
   // centreline with a wider physical tangent baseline (no new pixel pass).
   const bendPeaks=[];
   if(source.kind==='arc'&&vertices.length>=12){
-    const reach=Math.max(10,width*.065),spaced=width*.13;
+    // image-path.js may trace either X-ordered or Y-ordered colour centrelines
+    // (#630). Measuring every long-baseline bend against X alone discards
+    // genuine upright V/S turns, even when the shared path retains them.
+    const extent=axis=>Math.max(...vertices.map(p=>p[axis]))-
+      Math.min(...vertices.map(p=>p[axis]));
+    const dominant=extent(1)>extent(0)*1.25?1:0;
+    const station=p=>p[dominant];
+    const reach=Math.max(10,(dominant?height:width)*.065);
+    const spaced=(dominant?height:width)*.13;
     for(let i=2;i<vertices.length-2;i++){
       let lo=i-1,hi=i+1;
-      while(lo>0&&vertices[i][0]-vertices[lo][0]<reach)lo--;
-      while(hi<vertices.length-1&&vertices[hi][0]-vertices[i][0]<reach)hi++;
-      if(vertices[i][0]-vertices[lo][0]<reach*.8||
-        vertices[hi][0]-vertices[i][0]<reach*.8)continue;
+      while(lo>0&&station(vertices[i])-station(vertices[lo])<reach)lo--;
+      while(hi<vertices.length-1&&station(vertices[hi])-station(vertices[i])<reach)hi++;
+      if(station(vertices[i])-station(vertices[lo])<reach*.8||
+        station(vertices[hi])-station(vertices[i])<reach*.8)continue;
       const u=[vertices[i][0]-vertices[lo][0],vertices[i][1]-vertices[lo][1]];
       const v=[vertices[hi][0]-vertices[i][0],vertices[hi][1]-vertices[i][1]];
       const bend=Math.abs(Math.atan2(u[0]*v[1]-u[1]*v[0],
         u[0]*v[0]+u[1]*v[1]));
-      if(bend>.38)bendPeaks.push({x:vertices[i][0],bend});
+      if(bend>.38)bendPeaks.push({station:station(vertices[i]),bend});
     }
     bendPeaks.sort((a,b)=>b.bend-a.bend);
     const separated=[];
     for(const peak of bendPeaks){
-      if(separated.every(p=>Math.abs(p.x-peak.x)>spaced))separated.push(peak);
+      if(separated.every(p=>Math.abs(p.station-peak.station)>spaced))
+        separated.push(peak);
       if(separated.length>=4)break;
     }
     bendPeaks.length=0;
