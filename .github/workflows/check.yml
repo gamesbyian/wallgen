@@ -29,3 +29,11 @@ jobs:
       - name: Full Node suite (manual request only)
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.depth == 'full' }}
         run: npm run check
+
+      # TEMP Agent 2 one-shot memory/production art diagnostic; remove before merge.
+      - name: Temporary Chromium resource/production art evidence
+        if: ${{ github.event_name == 'pull_request' }}
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+          ROYGBIV_PRINT_IMAGE=1 node tests/render-surface-lifecycle-browser.mjs
