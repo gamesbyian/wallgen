@@ -34,7 +34,7 @@ test('metadata-free reconstruction source keeps every IDAT and image dimension v
 });
 
 test('R0 baseline covers current renderer path/radial/shape/material/fibre modes',()=>{
-  assert.equal(RECONSTRUCTION_R0_CASES.length,21);
+  assert.equal(RECONSTRUCTION_R0_CASES.length,22);
   const names=new Set(RECONSTRUCTION_R0_CASES.map(c=>c.id));
   assert.equal(names.size,RECONSTRUCTION_R0_CASES.length,'output names must be unique, no overwrite');
   const cases=RECONSTRUCTION_R0_CASES.map(baselineRecipe);
@@ -46,6 +46,11 @@ test('R0 baseline covers current renderer path/radial/shape/material/fibre modes
     c.surfaceTreatments?.some(t=>t.style==='satin-fibre')));
   assert.ok(cases.some(c=>c.palette==='jewel'&&c.geometry==='straight'));
   assert.ok(cases.some(c=>c.palette==='pastel'&&c.regionMode==='scattered'));
+  const overlapped=cases.find(c=>c.seed==='r0-overlap-reverse-layer');
+  assert.equal(overlapped.scatteredCount,7);
+  assert.deepEqual(overlapped.scatteredLayerOrder,[6,5,4,3,2,1,0]);
+  assert.deepEqual(resolveScene(overlapped).objects.map(object=>object.colorIndex),
+    [6,5,4,3,2,1,0],'actual source explicitly reverses paint/occlusion order');
   const partial=cases.find(c=>c.seed==='r0-five-hue-islands');
   assert.equal(partial.scatteredCount,5);
   assert.deepEqual(resolveScene(partial).objects.map(object=>object.colorIndex),[0,1,2,3,4]);
