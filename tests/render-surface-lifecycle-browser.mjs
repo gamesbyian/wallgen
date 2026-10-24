@@ -57,19 +57,56 @@ try{
       const elapsedMs=Math.round(performance.now()-t0);
       const pixels=made.map(c=>({width:c.width,height:c.height}));
       const pixelArea=pixels.reduce((sum,c)=>sum+c.width*c.height,0);
+      // Settled preview paints the same canonical recipe with overscan and
+      // photo compositing. Compare actual full RGBA, not CSS screenshots.
+      const cacheSurface=document.createElement('canvas');
+      cacheSurface.width=width;cacheSurface.height=height;
+      const cache={},cacheMade=[];
+      const cacheFactory=(w,h)=>{
+        const c=document.createElement('canvas');c.width=w;c.height=h;
+        cacheMade.push(c);return c;
+      };
+      drawWallpaper(cacheSurface,recipe,{cache,canvasFactory:cacheFactory});
+      presentNudgedArtwork(cacheSurface,cache,recipe);
+      const a=canvas.getContext('2d').getImageData(0,0,width,height).data;
+      const b=cacheSurface.getContext('2d').getImageData(0,0,width,height).data;
+      let differing=0,colourMAE=0,maxDelta=0;
+      for(let i=0;i<a.length;i+=4){
+        let changed=false;
+        for(let j=0;j<3;j++){
+          const delta=Math.abs(a[i+j]-b[i+j]);
+          colourMAE+=delta;maxDelta=Math.max(maxDelta,delta);
+          if(delta)changed=true;
+        }
+        if(changed)differing++;
+      }
+      // The retained cached ink/background are intentional, but all other
+      // per-layer composite buffers must already be zero-sized.
+      const unretained=cacheMade.filter(c=>c!==cache.ink&&c!==cache.background);
+      const cacheTemporaryPixels=unretained.reduce((n,c)=>n+c.width*c.height,0);
+      const cachedBackingPixels=cache.ink.width*cache.ink.height+
+        cache.background.width*cache.background.height;
       const png=canvas.toDataURL('image/png').split(',')[1];
+      const previewConsistency={differingPixels:differing,
+        colourMAE:colourMAE/(width*height*3),maxDelta,
+        cacheTemporaryPixels,cachedBackingPixels};
+      // Match the same lifetime as the interactive main-thread preview.
+      cache.ink.width=0;cache.ink.height=0;
+      cache.background.width=0;cache.background.height=0;
       return {width,height,recipe,elapsedMs,created:made.length,pixels,
-        retainedPixels:pixelArea,retainedBackingBytes:pixelArea*4,png};
+        retainedPixels:pixelArea,retainedBackingBytes:pixelArea*4,
+        previewConsistency,png};
     },{width,height});
     const png=Buffer.from(result.png,'base64');
     const record={width,height,elapsedMs:result.elapsedMs,created:result.created,
       retainedPixels:result.retainedPixels,retainedBackingBytes:result.retainedBackingBytes,
-      surfaces:result.pixels,sha256:createHash('sha256').update(png).digest('hex'),
+      surfaces:result.pixels,previewConsistency:result.previewConsistency,sha256:createHash('sha256').update(png).digest('hex'),
       pngBytes:png.length,seed:result.recipe.seed,photo:result.recipe.photoLook?.presetId};
     console.log('AGENT2_RENDER_RESOURCE_EVIDENCE '+JSON.stringify(record));
     if(width<=280&&process.env.ROYGBIV_PRINT_IMAGE==='1')
       console.log('AGENT2_ART_PNG_BASE64 '+result.png);
     assert.equal(result.retainedPixels,0,'Temporary renderer Canvas2D backing stores must be released at return');
+    assert.equal(result.previewConsistency.cacheTemporaryPixels,0,'Preview cache must only retain actual ink/background');
   }
   assert.deepEqual(errors,[],'No page errors');
 }finally{await browser.close();await new Promise(ok=>server.close(ok));}
