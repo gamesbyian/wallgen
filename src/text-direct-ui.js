@@ -68,7 +68,7 @@ export function installTextCanvasMover({
   }
   function redraw(){
     if(!active)return;
-    const candidate=(drag?.next||getRecipe()).textOverlays?.find(x=>x.id===selectedId());
+    const candidate=(transformDrag?.next||drag?.next||getRecipe()).textOverlays?.find(x=>x.id===selectedId());
     paintOutline(candidate);
     button.disabled=!(getRecipe().textOverlays||[]).some(x=>x.enabled&&x.text);
   }
