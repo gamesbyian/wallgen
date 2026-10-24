@@ -23,7 +23,7 @@ export function measuredTextBounds(item,measure){
   const lines=String(item.text||'').split('\n');
   const actualWidth=Math.max(0,...lines.map(line=>measure(line)));
   const width=Math.min(availableTextWidth(item),actualWidth);
-  const height=Math.max(1,lines.length)*item.size*1.17;
+  const height=Math.max(1,lines.length)*item.size*1.17*(1+(item.lineSpacing??0)/100);
   if(item.path==='circle'){
     // Conservative editor hit/handle bounds around the curved baseline.
     // Do not pretend that the rectangular guide follows each glyph exactly.
