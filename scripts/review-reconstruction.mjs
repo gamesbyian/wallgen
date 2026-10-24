@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Opt-in R0 inverse-graphics baseline. Generates thirteen actual current
+ * Opt-in R0 inverse-graphics baseline. Generates current authored
  * production-renderer PNGs and disposable metadata-free twins.
  *
  * node scripts/review-reconstruction.mjs --out-dir artifacts/reconstruction-r0
@@ -133,7 +133,21 @@ export const RECONSTRUCTION_R0_CASES=Object.freeze([
         {index:1,x:.74,y:.25,radius:.105},
         {index:2,x:.32,y:.46,radius:.112},
         {index:3,x:.78,y:.66,radius:.094},
-        {index:4,x:.28,y:.83,radius:.101}]}}
+        {index:4,x:.28,y:.83,radius:.101}]}},
+  {id:'22-overlapping-reversed-circles',
+    goal:'Seven canonical editable circles with real partial occlusion and reversed source paint order',
+    recipe:{...RAINBOW_ORBITS,seed:'r0-overlap-reverse-layer',
+      scatteredCount:7,scatteredOverlap:'overlap',scatteredMinSize:0,
+      scatteredSpacing:0,scatteredEdgeCrop:0,
+      scatteredLayerOrder:[6,5,4,3,2,1,0],
+      scatteredOverrides:[
+        {index:0,x:.27,y:.23,radius:.155},
+        {index:1,x:.40,y:.31,radius:.155},
+        {index:2,x:.53,y:.39,radius:.155},
+        {index:3,x:.66,y:.47,radius:.155},
+        {index:4,x:.60,y:.60,radius:.155},
+        {index:5,x:.46,y:.69,radius:.155},
+        {index:6,x:.32,y:.78,radius:.155}]}}
 ]);
 
 export function baselineRecipe(item){
