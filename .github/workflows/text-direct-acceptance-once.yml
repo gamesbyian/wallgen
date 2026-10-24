@@ -1,0 +1,31 @@
+name: Text direct move one-shot Chromium proof
+on:
+  pull_request:
+    paths:
+      - 'scripts/text-direct-browser-proof.mjs'
+      - '.github/workflows/text-direct-acceptance-once.yml'
+permissions:
+  contents: read
+jobs:
+  text-move:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser for actual tap and drag evidence
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+      - name: Exercise selected text movement and verify PNG render fidelity
+        run: node scripts/text-direct-browser-proof.mjs
+      - name: Retain actual wallpaper and interaction report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: text-direct-pointer-proof
+          path: output/text-drag/
+          if-no-files-found: ignore
+          retention-days: 5
