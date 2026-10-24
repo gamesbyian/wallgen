@@ -839,7 +839,13 @@ export function presentNudgedArtwork(canvas, layers, recipe) {
   drawFinishedInk(ctx,layers.ink,recipe,layers.overhang);
   applyCanvasAtmosphere(ctx,canvas.width,canvas.height,recipe);
   applyPhotoFinish(ctx,canvas.width,canvas.height,recipe.photoLook,recipe.seed);
-  drawTextOverlays(ctx,canvas.width,canvas.height,recipe);
+  // The fast preview presenter receives a recipe, not a resolved scene.
+  // Text hues MUST come from the actual seven resolved palette colours.
+  // Reuse the cached scene during nudges; reconstruct only for independent
+  // callers that supply the two bitmaps without a cached scene snapshot.
+  const textScene=layers.scene?.stripes?.length===7?layers.scene:resolveScene(recipe);
+  drawTextOverlays(ctx,canvas.width,canvas.height,
+    {...textScene,textOverlays:recipe.textOverlays});
 }
 
 // Closed-region objects share the same transparent ink, palette slots,
