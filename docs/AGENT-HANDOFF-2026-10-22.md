@@ -1,5 +1,10 @@
 # ROYGBIV handoff: current authority and independently actionable work
 
+## CURRENT AGENT HANDOFF · 24 October 2026
+
+Read the [live three-agent queue and 12-branch no-PR audit](CURRENT-WORK-QUEUE-2026-10-24.md) **first**. Live main at the audit was `f404575` (merged #663); **0 open PRs**, #557 reconstruction, #653 typography, #664 integration. Agent 1 owns measured inverse geometry, Agent 2 canonical typography/path rendering, Agent 3 independent mobile/export/a11y, rescued branch disposition and final merges. #632 is merged, #648 deliberately rejected, and older headings that speak of an active #632/only #557 are dated history. Physical Pixel, TalkBack, IME, memory and human creative observations are explicitly unverified.
+
+
 ## 24 October: typography programme #653
 
 New owner-requested typography work is integrated: **[#654](https://github.com/gamesbyian/wallgen/pull/654)** editable canonical text, **[#656](https://github.com/gamesbyian/wallgen/pull/656)** local TTF/OTF, **[#657](https://github.com/gamesbyian/wallgen/pull/657)** 27 licensed typefaces, **[#658](https://github.com/gamesbyian/wallgen/pull/658)** full 19.8MP text PNG, **[#659](https://github.com/gamesbyian/wallgen/pull/659)** explicitly portable font packages, **[#660](https://github.com/gamesbyian/wallgen/pull/660)** direct text drag and one Undo. All merged to main after source-browser checks. [#661](https://github.com/gamesbyian/wallgen/pull/661) is the merged shaping-safe line-level paint refinement, browser accepted with antialias-bounded alpha and exact worker-render parity. [#662](https://github.com/gamesbyian/wallgen/pull/662) delivers 44px rotate/scale pointer+keyboard grips in the existing text move guide; [real browser #40136765180](https://github.com/gamesbyian/wallgen/actions/runs/40136765180) verifies separate one-step Undo and no worker colour-channel differences, with viewed original screenshots.
