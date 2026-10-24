@@ -30,13 +30,20 @@ Place and edit one or more phrases directly on a finished ROYGBIV wallpaper with
 
 ### T2: Real font library and user TTF/OTF (required for owner feature completion)
 
-**24 October T2a implementation underway:** `agent/local-ttf-otf-fonts-20261024` is intentionally a self-contained first slice. It adds private IndexedDB TTF/OTF import, SHA-256 font IDs in recipes, preflight FontFace loading in the app/short-lived export worker/thumbnail worker, explicit missing-font refusal and a text-tool import picker. It does **not** silently pack private font binaries into metadata or claim cross-device portability without the same original file. A focused Node quick test and one-shot actual OS-font Chromium import/worker/reload/isolated-context proof are mandatory before merge. **This is distinct from the 25–40 bundled licensed font curation and optional font-package export remaining below.**
+**24 October T2a qualified for integration:** [PR #656](https://github.com/gamesbyian/wallgen/pull/656) implements private IndexedDB TTF/OTF import, SHA-256 font IDs in recipes, native FontFace checks on main/worker/thumbnail paths, a Text-tool library picker and explicit missing-font refusal. It does not package private bytes in PNG/JSON/links. **Actual OS-font Chromium proof** [#40124885632](https://github.com/gamesbyian/wallgen/actions/runs/40124885632) passed with [screenshot and machine metrics](https://github.com/gamesbyian/wallgen/actions/runs/40124885632/artifacts/12572044612): DejaVu TTF imported on emulated 412×892 portrait; native glyph image differs from system preset by **15,033 RGB channels**; direct versus worker rendered images differ by **0 RGB channels**; same-origin page reload restored IndexedDB font; isolated browser profile refused missing original font; no page exceptions. The actual wallpaper PNG was downloaded and inspected. This remains **distinct from 25–40 curated licensed built-in fonts, optional font bundle transfer, full 3024×6552 and physical Pixel acceptance**, still pending.
 
 - [ ] Curate 25–40 visually differentiated, OFL or equivalently redistribution-cleared typefaces with compact categories (poster, playful, editorial, futuristic, script, retro, geometry, stencil, etc.). Check actual files, licence notices and font coverage, not merely names. Optimize subset/variable WOFF2 for built-ins as permitted.
 - [ ] TTF/OTF import picker; reject oversized/malformed/unsupported files with useful explanation, no network upload; validate file signatures and types before `FontFace` loading. Consider privacy/safety and malformed font handling. Store validated local bytes under IndexedDB with local font IDs (not an arbitrary remote URL).
 - [ ] Font resolver loads matching data in **both** DOM and worker before a final paint, including the short-lived export worker. Preserve exact font face for thumbnails, gallery and headless when the file is supplied. If unavailable, show a conspicuous missing-font state, never silently claim pixel-identical replay. No unconditional font upload or multi-megabyte PNG metadata inflation.
 - [ ] Import/export font manifest with checksums and user-supplied licensed files as an explicit optional portable package. A PNG recipe may contain a font ID plus checksum, never force-pack private TTF/OTF bytes. Clarify that rights remain with the file's owner.
 - [ ] Test multiple font files (TTF/OTF, variable fonts, missing/invalid), Android font support, persistence/restart and deterministic full-size worker/fallback parity.
+
+### T2a verified acceptance · source browser
+- [x] Confirmed native TTF upload, same-origin IndexedDB persistence and worker font registration from actual bytes.
+- [x] Verified direct and fresh export worker **0 channel** mismatch at 480×1040 and visibly distinct glyphs versus system preset.
+- [x] Reopened recipe after reload; confirmed a genuinely isolated origin missing the TTF refuses rendering.
+- [x] Original source file never enters recipe metadata. Recorded a source screenshot, proof JSON and CI artifact.
+- [ ] Full native handset font-picker/IME and full 3024×6552 memory assessment.
 
 ### T3: Expressive typography (subsequent)
 - [ ] Text drag handles, touch-safe pick/rotate/scale gestures, direct text editing without interfering with striped-object canvas drag; Undo a whole gesture once.
