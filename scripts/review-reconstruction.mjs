@@ -122,7 +122,18 @@ export const RECONSTRUCTION_R0_CASES=Object.freeze([
         {index:3,x:.76,y:.52,radius:.14},
         {index:4,x:.24,y:.68,radius:.14},
         {index:5,x:.73,y:.80,radius:.13},
-        {index:6,x:.35,y:.90,radius:.12}]}}
+        {index:6,x:.35,y:.90,radius:.12}]}},
+  {id:'21-five-hue-islands',
+    goal:'Five independently editable source circles with missing indigo and violet slots',
+    recipe:{...RAINBOW_ORBITS,seed:'r0-five-hue-islands',
+      scatteredCount:5,scatteredOverlap:'overlap',scatteredMinSize:0,
+      scatteredSpacing:0,scatteredEdgeCrop:0,
+      scatteredOverrides:[
+        {index:0,x:.18,y:.17,radius:.090},
+        {index:1,x:.74,y:.25,radius:.105},
+        {index:2,x:.32,y:.46,radius:.112},
+        {index:3,x:.78,y:.66,radius:.094},
+        {index:4,x:.28,y:.83,radius:.101}]}}
 ]);
 
 export function baselineRecipe(item){
