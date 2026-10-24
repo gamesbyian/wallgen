@@ -47,6 +47,17 @@ try{
         font:'modern',colour:'white',outline:'black',size:70,y:55},
       {name:'loop',text:'LOOP THE LOOP',path:'loop',pathHeight:145,
         font:'bold',colour:'rainbow-letter',outline:'white',size:55,y:53},
+      {name:'tracking-rainbow-shadow',text:'ROYGBIV COLOURS\\nIN MOTION',
+        path:'wave',pathHeight:72,font:'pack-lobster',
+        colour:'rainbow-letter',rainbowOffset:3,rainbowReverse:true,
+        letterSpacing:2.5,lineSpacing:50,
+        shadow:'white',shadowBlur:5,shadowDistance:8,
+        outline:'black',size:54,y:48},
+      {name:'native-script-shadow',text:'السَّلَامُ عَلَيْكُمْ',
+        font:'modern',colour:'rainbow-word',rainbowOffset:2,
+        letterSpacing:1,lineSpacing:0,shadow:'black',
+        shadowBlur:5,shadowDistance:7,
+        outline:'white',size:70,y:55},
       {name:'joining-fallback',text:'السَّلَامُ عَلَيْكُمْ',path:'wave',pathHeight:70,
         font:'modern',colour:'rainbow-letter',outline:'white',size:70,y:52},
     ];
@@ -58,7 +69,7 @@ try{
       return differences;
     };
     const results=[],data=[];
-    const thumb=make(120*examples.length,270),tctx=thumb.getContext('2d');
+    const thumb=make(180*examples.length,390),tctx=thumb.getContext('2d');
     for(let index=0;index<examples.length;index++){
       const spec=examples[index];
       const recipe=normalizeRecipe({seed:'actual-text-path-'+spec.name,
@@ -82,9 +93,9 @@ try{
         drawWallpaper(original,{...recipe,textOverlays:[{...recipe.textOverlays[0],path:undefined}]});
         ensure(countDiff(reference,original)===0,'Native-shaped fallback changed its pixels');
       }
-      const mini=make(120,260);
-      mini.getContext('2d').drawImage(reference,0,0,120,260);
-      tctx.drawImage(mini,index*120,0);
+      const mini=make(180,390);
+      mini.getContext('2d').drawImage(reference,0,0,180,390);
+      tctx.drawImage(mini,index*180,0);
       data.push(reference.toDataURL('image/png'));
       results.push({name:spec.name,inkChannels,workerPixelChannelDifferences:mismatch,
         workerPngBytes:blob.size,text:spec.text,path:recipe.textOverlays[0].path});
@@ -95,7 +106,9 @@ try{
     // A genuine 19.8-megapixel exported curved design, decoded in Chromium.
     const high=normalizeRecipe({seed:'full-text-curve',
       textOverlays:[{text:'WAVES IN 4K',path:'wave',pathHeight:70,
-      font:'modern',colour:'rainbow-gradient',size:64,outline:'black'}]});
+      font:'modern',colour:'rainbow-gradient',size:64,outline:'black',
+      letterSpacing:2,rainbowOffset:3,shadow:'black',shadowBlur:5,
+      shadowDistance:7}]});
     await prepareTypefaces(high);
     const full=await exportWallpaperInWorker({recipe:high,width:3024,height:6552,
       timeoutMs:180000});
