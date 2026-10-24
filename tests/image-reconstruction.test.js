@@ -967,3 +967,47 @@ test('congruent seven-hue angular silhouettes become seven editable shared porta
  assert.equal(describeReconstructionImage(ambiguous).repeatShape,null,
    'one unrelated wave must not be asserted as a translated exact common shape');
 });
+
+
+test('seven repeated holed compound hue groups preserve two components and a real inner hole',()=>{
+ const positions=Array.from({length:7},(_,i)=>[
+   [45,105,165][i%3],[45,125,205][Math.floor(i/3)]
+ ]);
+ const source=raster(210,260,(x,y)=>{
+   for(const [i,[cx,cy]] of positions.entries()){
+     const square=Math.abs(x-cx)<=11&&Math.abs(y-cy)<=10;
+     const hole=Math.abs(x-cx)<=4&&Math.abs(y-cy)<=4;
+     const island=x>=cx+16&&x<=cx+22&&Math.abs(y-cy)<=3;
+     if((square&&!hole)||island)return colour(HUES[i]);
+   }
+   return [0,0,0,255];
+ });
+ const defaultRegions=extractImageColourRegions(source,HUES);
+ assert.ok(defaultRegions.componentRegions.length>=7,
+   'existing primary pigment-region metrics remain supported');
+ const desc=describeReconstructionImage(source);
+ assert.ok(desc.repeatShape,'source-only bounded low-area scan retains real satellite islands');
+ assert.equal(desc.repeatShape.geometry.components.length,2);
+ assert.equal(desc.repeatShape.geometry.components[0].holes.length,1);
+ assert.ok(desc.repeatShape.minOverlap>.95);
+ const candidates=reconstructionCandidates(source,normalizeRecipe({seed:'compound-duplicates'}));
+ assert.ok(candidates.length<=RECONSTRUCTION_RENDER_LIMIT);
+ const stamp=candidates.find(candidate=>candidate.kind==='shape-repeats');
+ assert.ok(stamp,'genuine compound hue repeats use the existing native stamp scene');
+ const scene=resolveScene(stamp.recipe);
+ assert.equal(scene.objects.length,7);
+ assert.ok(scene.objects.every(o=>o.rings?.length===3),
+   'each of seven instances has outer, inner hole and satellite outline');
+ assert.deepEqual(decodeRecipe(encodeRecipe(stamp.recipe)),stamp.recipe);
+ const implausible=raster(210,260,(x,y)=>{
+   for(const [i,[cx,cy]] of positions.entries()){
+     const square=Math.abs(x-cx)<=11&&Math.abs(y-cy)<=10;
+     const hole=Math.abs(x-cx)<=4&&Math.abs(y-cy)<=4;
+     const island=x>=cx+16&&x<=cx+22&&Math.abs(y-cy)<=3;
+     if((square&&!hole)||(island&&i!==3))return colour(HUES[i]);
+   }
+   return [0,0,0,255];
+ });
+ assert.equal(describeReconstructionImage(implausible).repeatShape,null,
+   'missing detached island in one hue must not imply identical source semantics');
+});
