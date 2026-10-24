@@ -1,0 +1,38 @@
+name: Temporary Agent1 Seven Hue Stamp Actual Image Review
+on:
+  pull_request:
+    paths:
+      - 'src/image-path.js'
+      - 'src/image-reconstruction.js'
+      - '.github/workflows/temp-agent1-stamps-v-review.yml'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  genuine-independent-v:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install opt-in image evaluation browser
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+      - name: Retrieve existing independently authored PNG source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p artifacts
+          gh run download 40025249788 --repo "$GITHUB_REPOSITORY" --name agent1-draw-source-and-current-renders --dir artifacts
+          test -f artifacts/r0-agent1-independent/independent-angular-stripes.png
+      - name: Measure unchanged source against canonical real painter
+        run: node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/r0-agent1-independent --alternatives
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: agent1-seven-stamps-real-source-fit
+          path: artifacts/r0-agent1-independent/
+          retention-days: 2
