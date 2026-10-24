@@ -1,0 +1,31 @@
+name: Curated typeface real-image acceptance once
+on:
+  pull_request:
+    paths:
+      - 'scripts/bundled-font-browser-proof.mjs'
+      - '.github/workflows/bundled-typeface-acceptance-once.yml'
+permissions:
+  contents: read
+jobs:
+  proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install isolated browser
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+      - name: Verify 27 native font loads and six genuine wallpaper PNGs
+        run: node scripts/bundled-font-browser-proof.mjs
+      - name: Preserve source visual screenshot and exact comparisons
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bundled-typeface-actual-browser
+          path: output/bundled-typefaces/
+          if-no-files-found: ignore
+          retention-days: 5
