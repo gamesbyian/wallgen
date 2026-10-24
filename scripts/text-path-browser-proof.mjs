@@ -28,6 +28,7 @@ try{
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto('http://127.0.0.1:'+server.address().port+'/',{waitUntil:'domcontentloaded'});
   const report=await page.evaluate(async()=>{
+    const ensure=(condition,message)=>{if(!condition)throw Error(message)};
     const {drawWallpaper}=await import('/src/renderer.js');
     const {normalizeRecipe}=await import('/src/model.js');
     const {prepareTypefaces}=await import('/src/typography-fonts.js');
@@ -61,17 +62,17 @@ try{
       drawWallpaper(reference,recipe);
       drawWallpaper(blank,{...recipe,textOverlays:[]});
       const inkChannels=countDiff(reference,blank);
-      assert.ok(inkChannels>1000,'No visible curved ink: '+spec.name);
+      ensure(inkChannels>1000,'No visible curved ink: '+spec.name);
       const blob=await exportWallpaperInWorker({recipe,width:480,height:1040,
         timeoutMs:120000});
       const bmp=await createImageBitmap(blob);
       worker.getContext('2d').drawImage(bmp,0,0);bmp.close();
       const mismatch=countDiff(reference,worker);
-      assert.equal(mismatch,0,'Reference/worker output mismatch: '+spec.name);
+      ensure(mismatch===0,'Reference/worker output mismatch: '+spec.name);
       if(spec.name==='joining-fallback'){
         const original=make(480,1040);
         drawWallpaper(original,{...recipe,textOverlays:[{...recipe.textOverlays[0],path:undefined}]});
-        assert.equal(countDiff(reference,original),0,'Native-shaped fallback changed its pixels');
+        ensure(countDiff(reference,original)===0,'Native-shaped fallback changed its pixels');
       }
       const mini=make(120,260);
       mini.getContext('2d').drawImage(reference,0,0,120,260);
@@ -92,7 +93,7 @@ try{
       timeoutMs:180000});
     const bitmap=await createImageBitmap(full);
     const megapixels={width:bitmap.width,height:bitmap.height,bytes:full.size};
-    assert.equal(bitmap.width,3024);assert.equal(bitmap.height,6552);
+    ensure(bitmap.width===3024&&bitmap.height===6552,'Full-size output dimensions incorrect');
     bitmap.close();
     return {results,megapixels};
   });
