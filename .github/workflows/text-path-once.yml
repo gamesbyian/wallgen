@@ -1,0 +1,31 @@
+name: One-shot text path artwork review
+on:
+  pull_request:
+    paths:
+      - scripts/text-path-browser-proof.mjs
+      - src/text-path-geometry.js
+      - src/text-overlay-renderer.js
+permissions:
+  contents: read
+jobs:
+  render-once:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install opt-in Chromium
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Actual source art, fresh worker and full-resolution output
+        run: node scripts/text-path-browser-proof.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: text-path-current-renderer-pngs
+          path: output/text-path/
+          retention-days: 7
+          if-no-files-found: warn
