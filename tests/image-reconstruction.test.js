@@ -815,3 +815,48 @@ test('long-baseline bends recognize authored V corners after shared importer smo
  const wave=imageCurveSignature([{kind:'arc',points:gentle}],240,240);
  assert.equal(wave.angularBends,0,'a gentle flowing curve is not an angular V');
 });
+
+
+test('expanded Draw X-axis registration fits upright seven-colour bands with unchanged budget',async()=>{
+ const w=RECONSTRUCTION_FRAME.width,h=RECONSTRUCTION_FRAME.height;
+ const bands=(shift=0,rogue=0)=>raster(w,h,(x,y)=>{
+   for(let i=0;i<7;i++){
+     const left=8+i*11+shift+(i===4?rogue:0);
+     if(x>=left&&x<left+5)return colour(HUES[i]);
+   }
+   return [0,0,0,255];
+ });
+ const source=bands(),translated=bands(8);
+ const registration=measuredExpandedDrawRegistration(source,translated);
+ assert.deepEqual(registration,{offsetX:-8,gapRatio:1});
+ assert.equal(coherentExpandedDrawOffsetY(source,translated),null,
+   'horizontal registration should remain explicitly Y-only');
+ assert.equal(measuredExpandedDrawRegistration(source,bands(8,11)),null,
+   'a disconnected per-hue displacement does not authorize a rigid X fit');
+ const wide=normalizeRecipe({seed:'upright-draw',structure:'paths',
+   geometry:'drawn',geometrySafety:false,spread:65,stripeWidth:52,positionX:0});
+ const painter=recipe=>bands(8+Math.round(recipe.positionX*w/100));
+ const ranked=rankReconstructionCandidates([
+   {kind:'path',label:'expanded upright Draw',recipe:wide,uncertainty:'inferred'}
+ ],source,painter);
+ assert.equal(ranked[0].drawOffsetX,-8);
+ assert.equal(ranked[0].drawOffsetY,undefined);
+ const fit=refineReconstructionCandidate(ranked[0],source,painter);
+ assert.equal(fit.recipe.positionX,-8);
+ assert.equal(fit.error,0);
+ assert.ok(fit.refinementRenders<=10);
+ assert.deepEqual(await refineReconstructionCandidateCooperatively(
+   ranked[0],source,painter),fit);
+ const safe=normalizeRecipe({...wide,geometrySafety:true});
+ assert.equal(reconstructionRefinementIndex([
+   {kind:'path',recipe:safe,error:.19},
+   {...ranked[0],error:.22,angularBends:2,drawGapRatio:1.5}
+ ]),1,'one registered upright challenger can use the shared refinement slot');
+ const locked=normalizeRecipe({...wide,lockedSettings:['position']});
+ let calls=0;
+ const lockedResult=refineReconstructionCandidate({...ranked[0],recipe:locked},
+   source,()=>{calls++;return source;});
+ assert.equal(calls,0);
+ assert.equal(lockedResult.refinementRenders,0);
+ assert.equal(lockedResult.recipe.positionX,0);
+});
