@@ -45,8 +45,8 @@ try{
  page.on('close',()=>lifecycle.push('page-closed'));
  browser.on('disconnected',()=>lifecycle.push('browser-disconnected'));
  const fixture=JSON.parse(await readFile(join(root,'tests/fixtures/typography-full-resolution.json'),'utf8'));
- const recipe=normalizeRecipe({...fixture,textOverlays:[]});
- const token=encodeRecipe(recipe);
+ const baselineRecipe=normalizeRecipe({...fixture,textOverlays:[]});
+ const token=encodeRecipe(baselineRecipe);
  await page.goto('http://127.0.0.1:'+server.address().port+'/?r='+encodeURIComponent(token),
    {waitUntil:'domcontentloaded'});
 
