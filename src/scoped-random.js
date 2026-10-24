@@ -1,6 +1,7 @@
 import {normalizeRecipe,randomizeAllRecipe,newSeed} from './model.js';
 import {EDITOR_CATEGORIES,TOOL_LIST,SETTING_TOOL} from './editor-schema.js';
 import {TEXT_FONTS,TEXT_COLOURS,TEXT_OUTLINES} from './text-overlays.js';
+import {BUNDLED_FONTS} from './bundled-fonts.js';
 const PERCENT_PRIMES=Array.from({length:99},(_,i)=>i+2)
  .filter(n=>{for(let d=2;d*d<=n;d++)if(n%d===0)return false;return true;});
 const ANGLE_PRIMES=Array.from({length:358},(_,i)=>i+2)
@@ -92,7 +93,7 @@ export function randomizeScope(currentInput,{scope,name,mode='reroll',strength='
     const items=(current.textOverlays||[]).map(item=>{
       if(item.locked)return item;
       const nextItem={...item,
-        font:chooseAlternative(Object.keys(TEXT_FONTS),item.font,random),
+        font:chooseAlternative([...Object.keys(TEXT_FONTS),...Object.keys(BUNDLED_FONTS)],item.font,random),
         colour:chooseAlternative(TEXT_COLOURS,item.colour,random),
         outline:chooseAlternative(TEXT_OUTLINES,item.outline,random),
         size:mode==='reroll'?20+Math.round(random()*130):Math.round(vary(item.size,12,180)),

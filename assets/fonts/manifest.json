@@ -1,0 +1,197 @@
+{
+  "schema": 1,
+  "source": "google/fonts",
+  "sourceCommit": "e7db6ca603fd4862010383ff17ffd6cc4ffac1c0",
+  "license": "OFL-1.1",
+  "entries": {
+    "bangers": {
+      "file": "bangers.ttf",
+      "bytes": 93148,
+      "sha256": "4160a7311de9342674cce9160cde9fcbb30f48190397d86ff1b70b455af65824",
+      "license": "licenses/bangers-OFL.txt",
+      "upstream": "ofl/bangers/Bangers-Regular.ttf"
+    },
+    "abrilfatface": {
+      "file": "abrilfatface.ttf",
+      "bytes": 67364,
+      "sha256": "5971d4a3758a922a9fedc7f6fb825a96341a2e718c45a4b2c9a6b417c8c4dbe9",
+      "license": "licenses/abrilfatface-OFL.txt",
+      "upstream": "ofl/abrilfatface/AbrilFatface-Regular.ttf"
+    },
+    "pacifico": {
+      "file": "pacifico.ttf",
+      "bytes": 329380,
+      "sha256": "5b6c0d5334a7bf77dea52b975c5a0c408878c0f7115ed5b6fb151f634b7bf701",
+      "license": "licenses/pacifico-OFL.txt",
+      "upstream": "ofl/pacifico/Pacifico-Regular.ttf"
+    },
+    "lobster": {
+      "file": "lobster.ttf",
+      "bytes": 406076,
+      "sha256": "d6568e697fd50cedc0be04d8aae4127fe95add607e7bff954ca88604be80c205",
+      "license": "licenses/lobster-OFL.txt",
+      "upstream": "ofl/lobster/Lobster-Regular.ttf"
+    },
+    "bebasneue": {
+      "file": "bebasneue.ttf",
+      "bytes": 61400,
+      "sha256": "08e4623805102d819f58601e46e345648846075e363b2ceb23313c2d1c83ec73",
+      "license": "licenses/bebasneue-OFL.txt",
+      "upstream": "ofl/bebasneue/BebasNeue-Regular.ttf"
+    },
+    "righteous": {
+      "file": "righteous.ttf",
+      "bytes": 43104,
+      "sha256": "2ffb3fe5c27d7e6571210b800448c4e234e651b46c6b4426c1bb567e5341348a",
+      "license": "licenses/righteous-OFL.txt",
+      "upstream": "ofl/righteous/Righteous-Regular.ttf"
+    },
+    "pressstart2p": {
+      "file": "pressstart2p.ttf",
+      "bytes": 118204,
+      "sha256": "034c77f1f05ec89421e4a63f0e3a4ca1ecf852cc6d2bf611f126f275728e017d",
+      "license": "licenses/pressstart2p-OFL.txt",
+      "upstream": "ofl/pressstart2p/PressStart2P-Regular.ttf"
+    },
+    "monoton": {
+      "file": "monoton.ttf",
+      "bytes": 51604,
+      "sha256": "951c4cea65ffede784a7c9672feec5d329a7e1e12216c42d53ecf36c90d04dea",
+      "license": "licenses/monoton-OFL.txt",
+      "upstream": "ofl/monoton/Monoton-Regular.ttf"
+    },
+    "cinzel": {
+      "file": "cinzel.ttf",
+      "bytes": 125468,
+      "sha256": "f4d83d34d1f6c741193e4acf4b3dff9531e5a67b6aa65228d00a7db72a4e0f34",
+      "license": "licenses/cinzel-OFL.txt",
+      "upstream": "ofl/cinzel/Cinzel[wght].ttf"
+    },
+    "audiowide": {
+      "file": "audiowide.ttf",
+      "bytes": 69916,
+      "sha256": "c7c0f2b0f6fad8c623e31772ce79f94a4edb9321ffce9fce978ea892d20ae730",
+      "license": "licenses/audiowide-OFL.txt",
+      "upstream": "ofl/audiowide/Audiowide-Regular.ttf"
+    },
+    "lilitaone": {
+      "file": "lilitaone.ttf",
+      "bytes": 28092,
+      "sha256": "f5b641c45c69d772ee4eda687bc9fda411d5cad6b0b45371491da4580cbc8d59",
+      "license": "licenses/lilitaone-OFL.txt",
+      "upstream": "ofl/lilitaone/LilitaOne-Regular.ttf"
+    },
+    "bungee": {
+      "file": "bungee.ttf",
+      "bytes": 118996,
+      "sha256": "c4f5361ce120af3e6b9156d0bf379fa19cda2ea0cd18ac01fd99596c6bf66e3f",
+      "license": "licenses/bungee-OFL.txt",
+      "upstream": "ofl/bungee/Bungee-Regular.ttf"
+    },
+    "bungeeshade": {
+      "file": "bungeeshade.ttf",
+      "bytes": 304936,
+      "sha256": "665c626082682b462f4e696308eafa7071c114da8f8ff3fb73a289c7ff7df482",
+      "license": "licenses/bungeeshade-OFL.txt",
+      "upstream": "ofl/bungeeshade/BungeeShade-Regular.ttf"
+    },
+    "shrikhand": {
+      "file": "shrikhand.ttf",
+      "bytes": 220804,
+      "sha256": "8ba32f6d6a96fb8dbc92fc1acfbc4d2123d5348063d89b2c3dd784e7afcb81af",
+      "license": "licenses/shrikhand-OFL.txt",
+      "upstream": "ofl/shrikhand/Shrikhand-Regular.ttf"
+    },
+    "rubikwetpaint": {
+      "file": "rubikwetpaint.ttf",
+      "bytes": 442628,
+      "sha256": "3f35d1c77219c5219826b23c2f0c72dd0eed46425a0d4fff21b8827cdce61693",
+      "license": "licenses/rubikwetpaint-OFL.txt",
+      "upstream": "ofl/rubikwetpaint/RubikWetPaint-Regular.ttf"
+    },
+    "sacramento": {
+      "file": "sacramento.ttf",
+      "bytes": 79696,
+      "sha256": "9341fda10adbfeb7efc94302b34507a3e227d7e7f5c432df3f5ac8753ff73d24",
+      "license": "licenses/sacramento-OFL.txt",
+      "upstream": "ofl/sacramento/Sacramento-Regular.ttf"
+    },
+    "fugazone": {
+      "file": "fugazone.ttf",
+      "bytes": 27868,
+      "sha256": "14fd5becce8b0ae987e44b3f9fa9e3e6c87463e9585ac15db6c8271462068a62",
+      "license": "licenses/fugazone-OFL.txt",
+      "upstream": "ofl/fugazone/FugazOne-Regular.ttf"
+    },
+    "rubikglitch": {
+      "file": "rubikglitch.ttf",
+      "bytes": 407304,
+      "sha256": "260245012483d56956269100ebece747aa95b4b67e5a9411a81a36e91f55e653",
+      "license": "licenses/rubikglitch-OFL.txt",
+      "upstream": "ofl/rubikglitch/RubikGlitch-Regular.ttf"
+    },
+    "blackopsone": {
+      "file": "blackopsone.ttf",
+      "bytes": 166532,
+      "sha256": "282a825b5f294377387e3969f765408157dbea8da0f5d0aae68c6bc704b145b3",
+      "license": "licenses/blackopsone-OFL.txt",
+      "upstream": "ofl/blackopsone/BlackOpsOne-Regular.ttf"
+    },
+    "notable": {
+      "file": "notable.ttf",
+      "bytes": 38216,
+      "sha256": "fe5105a1e0b5c4daf1ea10730aac2fbbeaec3a6431e67eb827bf56e3a966d3c6",
+      "license": "licenses/notable-OFL.txt",
+      "upstream": "ofl/notable/Notable-Regular.ttf"
+    },
+    "orbitron": {
+      "file": "orbitron.ttf",
+      "bytes": 38576,
+      "sha256": "f42db2dd16e642258e35782916eceb1dcdbea06fb958d77ad71dc5963587e8fd",
+      "license": "licenses/orbitron-OFL.txt",
+      "upstream": "ofl/orbitron/Orbitron[wght].ttf"
+    },
+    "nosifer": {
+      "file": "nosifer.ttf",
+      "bytes": 43272,
+      "sha256": "09c5ac35e34dc7a397d5f698b703c5640b59cf93d4d343ebae4f16f3859d09b8",
+      "license": "licenses/nosifer-OFL.txt",
+      "upstream": "ofl/nosifer/Nosifer-Regular.ttf"
+    },
+    "fascinateinline": {
+      "file": "fascinateinline.ttf",
+      "bytes": 59604,
+      "sha256": "413101810fe420520122880404d1f8e892269e6a6afa2e00e980f65ef632ee3b",
+      "license": "licenses/fascinateinline-OFL.txt",
+      "upstream": "ofl/fascinateinline/FascinateInline-Regular.ttf"
+    },
+    "limelight": {
+      "file": "limelight.ttf",
+      "bytes": 132292,
+      "sha256": "f5bf8a9159adfc5b9c756c85d812a4fd1299b8916fefdf39ad4b24ade6d8d0cf",
+      "license": "licenses/limelight-OFL.txt",
+      "upstream": "ofl/limelight/Limelight-Regular.ttf"
+    },
+    "courgette": {
+      "file": "courgette.ttf",
+      "bytes": 122072,
+      "sha256": "099739d22e66ee2b80656bba63847f9ed419ad7e3969ba2c1d3c437c0d08f3e3",
+      "license": "licenses/courgette-OFL.txt",
+      "upstream": "ofl/courgette/Courgette-Regular.ttf"
+    },
+    "changaone": {
+      "file": "changaone.ttf",
+      "bytes": 22736,
+      "sha256": "7ac4d26a3a45b4731904b59cbb8a9cc15b7b70d447fc2b5dda40ef17c5d2e16d",
+      "license": "licenses/changaone-OFL.txt",
+      "upstream": "ofl/changaone/ChangaOne-Regular.ttf"
+    },
+    "creepster": {
+      "file": "creepster.ttf",
+      "bytes": 62724,
+      "sha256": "402aeb734586c74aecd3dbdc454589b1fb12e2e1c71f782fd019ae68066d9f44",
+      "license": "licenses/creepster-OFL.txt",
+      "upstream": "ofl/creepster/Creepster-Regular.ttf"
+    }
+  }
+}
