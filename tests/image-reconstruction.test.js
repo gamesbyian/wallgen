@@ -433,8 +433,10 @@ test('Hairpin fitting spends two existing true paints on stripe thickness and pr
  assert.ok(fitted.error<candidate.error);
  assert.ok(visits.length<=10);
  assert.ok(visits.some(next=>next.stripeWidth===50));
- assert.ok(visits.every(next=>next.spread===42),
-   'no speculative replacement of gap width via overall ribbon spacing');
+ assert.ok(visits.every(next=>next.positionX===0),
+   'the bounded width addition replaces only the unproductive X-position probes');
+ assert.ok(visits.some(next=>next.spread!==42),
+   'retain the previously productive gap-spacing trials');
  const parallel=await refineReconstructionCandidateCooperatively(candidate,source,
    next=>visible(next.stripeWidth),{yieldControl:async()=>{}});
  assert.deepEqual(parallel,fitted);
