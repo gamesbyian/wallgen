@@ -853,7 +853,8 @@ test('expanded Draw X-axis registration fits upright seven-colour bands with unc
    {kind:'path',recipe:safe,error:.19},
    {...ranked[0],error:.22,angularBends:2,drawGapRatio:1.5}
  ]),1,'one registered upright challenger can use the shared refinement slot');
- const locked=normalizeRecipe({...wide,lockedSettings:['position']});
+ const locked=normalizeRecipe({...wide,
+   lockedSettings:['position','spread','stripeWidth']});
  let calls=0;
  const lockedResult=refineReconstructionCandidate({...ranked[0],recipe:locked},
    source,()=>{calls++;return source;});
