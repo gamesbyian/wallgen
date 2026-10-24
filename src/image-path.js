@@ -470,10 +470,11 @@ export function extractImageColourRegions({data,width:w,height:h},hueTargets,
     if(partsByHue)partsByHue.push(parts);
     const primaryParts=parts.filter(part=>part.area>=minArea);
     for(const [partNumber,part] of primaryParts.entries()){
-      let sx=0,sy=0,sxx=0,syy=0,sxy=0;
+      let sx=0,sy=0,sxx=0,syy=0,sxy=0,sr=0,sg=0,sb=0;
       for(const p of part.members){
-        const x=p%w,y=(p/w)|0;
+        const x=p%w,y=(p/w)|0,i=p*4;
         sx+=x;sy+=y;sxx+=x*x;syy+=y*y;sxy+=x*y;
+        sr+=data[i];sg+=data[i+1];sb+=data[i+2];
       }
       const mx=sx/part.area,my=sy/part.area;
       const varianceX=Math.max(0,sxx/part.area-mx*mx);
@@ -485,7 +486,10 @@ export function extractImageColourRegions({data,width:w,height:h},hueTargets,
       const axisAngle=Math.atan2(2*covariance,varianceX-varianceY)*90/Math.PI;
       const axisRatio=Math.sqrt(major/Math.max(1,minor));
       const boxArea=(part.maxX-part.minX+1)*(part.maxY-part.minY+1);
+      // Source pigment appearance is measured from the same hue mask; it
+      // is not evidence of original palette settings or photo treatment.
       const descriptor={index,area:part.area,
+        meanRGB:[sr/part.area,sg/part.area,sb/part.area],
         cx:(mx+.5)/w,cy:(my+.5)/h,
         fillRatio:part.area/Math.max(1,boxArea),
         axisAngle,axisRatio,
