@@ -258,7 +258,7 @@ export function seedMeasuredRibbonControls(recipe,metrics,imageWidth,imageHeight
 
 /** Geometry-first analysis. Colour slots carry no claim about source provenance. */
 export function describeReconstructionImage(image){
-  const colour=extractImageColourRegions(image,HUES);
+  const colour=extractImageColourRegions(image,HUES,{includeRepeatShape:true});
   const paths=extractImagePathCandidates(image);
   const aspect=region=>{
     const [x0,y0,x1,y1]=region.bounds;
@@ -307,6 +307,7 @@ export function describeReconstructionImage(image){
   const curve=imageCurveSignature(paths,image.width,image.height);
   const ribbonBands=measuredRainbowRibbonBands(colour.regions,image.width,image.height);
   return {background:colour.background,colourRegions:colour.regions,
+    repeatShape:colour.repeatShape,
     repeatedColourRegions,
     paths:paths.slice(0,6),sevenColourRegions:seven,lineDirection,
     stripeAngle,componentDiagonalAngle,radial,curve,ribbonBands,coverage:colour.coverage,
@@ -355,6 +356,36 @@ export function reconstructionCandidates(image,recipe){
   const current=normalizeRecipe(recipe);
   const base=strippedCandidateBase(current,desc.background);
   const candidates=[];
+  if(desc.repeatShape){
+    // Seven physically translated copies of one contour are directly
+    // expressible as existing portable imported-shape stamps. Preserve
+    // independent object moves, scaling, layer editing and canonical colour
+    // slots. This avoids the winding Draw normal-offset cusp for sharp Vs,
+    // but does not assert source path, original palette or painter order.
+    const geometry=desc.repeatShape.geometry;
+    const [vx,vy,vw,vh]=geometry.viewBox,ox=vx+vw/2,oy=vy+vh/2;
+    let bound=0;
+    for(const component of geometry.components)
+      for(const ring of [component.outer,...component.holes])
+        for(const [x,y] of ring)bound=Math.max(bound,Math.hypot(x-ox,y-oy));
+    const placed=reconstructionPlacement(image.width,image.height);
+    const radius=bound*placed.width/image.width/600;
+    if(radius>=.01&&radius<=1.2){
+      const overrides=desc.repeatShape.placements.map(part=>({
+        index:part.index,
+        x:(placed.x+part.cx*placed.width)/600,
+        y:(placed.y+part.cy*placed.height)/1300,
+        radius:clamp(radius*part.scale,.01,1.2)
+      }));
+      candidates.push({kind:'shape-repeats',
+        label:'Seven congruent editable colour-silhouette stamps',
+        uncertainty:'Seven similar translated hue masks share one portable contour; each stamp can be moved and resized. Source path, subtle per-hue variations, occlusion order, original pigments and seed are not recovered.',
+        recipe:normalizeRecipe({...base,structure:'regions',regionMode:'scattered',
+          scatteredShapeKind:'imported',scatteredShape:cloneGeometrySnapshot(geometry),
+          scatteredCount:7,scatteredOverlap:'overlap',scatteredSpacing:0,
+          scatteredEdgeCrop:0,scatteredOverrides:overrides})});
+    }
+  }
   // Restore the proven #581 diagonal-band hypothesis, *alongside* #584's
   // radial and centroid fitting. Prior #581 actual artwork reached .08583,
   // whereas centroid-only recognition left it at .28408. Respect the same
@@ -586,7 +617,7 @@ export function reconstructionCandidates(image,recipe){
   }
   // A preview must depict exactly what Apply can commit. The same canonical
   // lock policy governs both; never rank an uncommittable unlocked ideal.
-  const essential=candidate=>candidate.kind==='regions'||candidate.kind==='shape'?
+  const essential=candidate=>['regions','shape','shape-repeats'].includes(candidate.kind)?
     ['structure','regionMode','scatteredShapeKind']:
     candidate.kind==='nested-rings'?['structure','regionMode']:
     candidate.kind==='radial-rays'||candidate.kind==='radial-rings'?
