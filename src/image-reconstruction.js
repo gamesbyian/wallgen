@@ -702,6 +702,51 @@ export function compareReconstructionPixels(source,rendered){
 }
 
 /**
+ * Pure measured *registration hint*, never a second renderer or a second
+ * recipe score. When Jagged geometry already resembles the imported ink but
+ * the saved pixel pack is displaced by a few physical pixels, the existing
+ * coarse ±20% fit skips right across the solution. Compare at most 13×13
+ * small integer translations of the ONE already rendered 96×208 bitmap.
+ * Only a conspicuous relative and absolute improvement warrants spending
+ * the unchanged ten canonical painter trials on sub-percent Position.
+ */
+export function measuredJaggedPixelShift(source,rendered){
+  if(!source||!rendered||source.width!==RECONSTRUCTION_WIDTH||
+    source.height!==RECONSTRUCTION_HEIGHT||
+    rendered.width!==source.width||rendered.height!==source.height||
+    source.data?.length!==rendered.data?.length)return null;
+  const w=source.width,h=source.height,a=source.data,b=rendered.data;
+  // Limit work to one quarter of pixels for source registration. The actual
+  // reconstruction rank/refinement still scores full sampled render pixels.
+  const score=(dx,dy)=>{
+    let total=0,samples=0;
+    for(let y=0;y<h;y+=2)for(let x=0;x<w;x+=2){
+      const i=(y*w+x)*4,rx=x-dx,ry=y-dy;
+      const valid=rx>=0&&rx<w&&ry>=0&&ry<h;
+      const j=valid?(ry*w+rx)*4:-1;
+      const ar=a[i],ag=a[i+1],ab=a[i+2];
+      const br=valid?b[j]:0,bg=valid?b[j+1]:0,bb=valid?b[j+2]:0;
+      const colour=(Math.abs(ar-br)+Math.abs(ag-bg)+
+        Math.abs(ab-bb))/(3*255);
+      const mask=Math.abs(Math.max(ar,ag,ab)-Math.max(br,bg,bb))/255;
+      total+=colour*.75+mask*.25;samples++;
+    }
+    return total/samples;
+  };
+  const baseline=score(0,0);
+  let best=baseline,dxBest=0,dyBest=0;
+  for(let dy=-6;dy<=6;dy++)for(let dx=-6;dx<=6;dx++){
+    if(dx===0&&dy===0)continue;
+    const error=score(dx,dy);
+    if(error+1e-9<best){best=error;dxBest=dx;dyBest=dy;}
+  }
+  if(baseline-best<.04||best>baseline*.7)return null;
+  return {offsetX:Math.round(dxBest*1000/w)/10,
+    offsetY:Math.round(dyBest*1000/h)/10,
+    measuredPixelGain:Math.round((baseline-best)*1e6)/1e6};
+}
+
+/**
  * A coherent seven-band image often differs from the first wave render by
  * a rigid vertical translation. Use the ALREADY shared hue components to
  * measure each colour's displacement in the same 96x208 scoring frame;
@@ -797,11 +842,15 @@ export function rankReconstructionCandidates(candidates,source,render){
         const bandOffsetX=candidate.kind==='straight'&&
           candidate.recipe.orientation==='vertical'?
           coherentVerticalBandOffsetX(source,pixels):null;
+        const jaggedShift=candidate.kind==='jagged'&&
+          candidate.recipe.background==='black'?
+          measuredJaggedPixelShift(source,pixels):null;
         const drawRegistration=candidate.kind==='path'&&
           candidate.recipe.geometry==='drawn'&&
           candidate.recipe.geometrySafety===false?
           measuredExpandedDrawRegistration(source,pixels):null;
         results.push({...candidate,error,
+          ...(jaggedShift?{jaggedShift}:{}),
           ...(waveOffsetY!==null?{waveOffsetY}:{}),
           ...(bandOffsetX!==null?{bandOffsetX}:{}),
           ...(drawRegistration?{
@@ -926,10 +975,21 @@ function refinementFields(candidate){
     // keeping four position probes for the measured seven-hue Y offset.
     ['shapeDepth',[-12,12]],['shapeFrequency',[-12,12]],
     ['stripeWidth',[-15,15]]
-  ]:candidate.kind==='jagged'?[
-    ['positionX',[-20,20]],['positionY',[-20,20]],
-    ['spread',[-15,15]],['stripeWidth',[-25,-10,10,25]]
-  ]:candidate.kind==='hairpin'?[
+  ]:candidate.kind==='jagged'?(
+    candidate.jaggedShift?[
+      // Once actual source versus first canonical paint measures a narrow
+      // rigid offset, trial the inferred editable position before broad
+      // shape guesses. The one 10-render budget and lock semantics stay.
+      ['positionY',[candidate.jaggedShift.offsetY,
+        candidate.jaggedShift.offsetY-.5,candidate.jaggedShift.offsetY+.5]],
+      ['positionX',[candidate.jaggedShift.offsetX,
+        candidate.jaggedShift.offsetX-1,candidate.jaggedShift.offsetX+1]],
+      ['spread',[-15,15]],['stripeWidth',[-15,15]]
+    ]:[
+      ['positionX',[-20,20]],['positionY',[-20,20]],
+      ['spread',[-15,15]],['stripeWidth',[-25,-10,10,25]]
+    ]
+  ):candidate.kind==='hairpin'?[
     ['turnRadius',[-15,15]],['hairpinAngle',[-25,25]],
     ['spread',[-10,10]],['positionX',[-7,7]],['positionY',[-7,7]]
   ]:candidate.kind==='radial-rays'?[
