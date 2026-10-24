@@ -2316,6 +2316,9 @@ if(portableToken){
   }
 }
 toControls(loaded||current);
+// URL-restored typography must refresh its selector on the very first frame,
+// before any new edit emits the ordinary controls-synced notification.
+textTool.sync();
 // The dynamic interior cards were first mounted against the empty default
 // recipe. URL restoration changes current directly through toControls(), not
 // changeRecipe(), so refresh the actual collection UI before first paint.
