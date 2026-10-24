@@ -14,7 +14,8 @@ export function designPointFromPointer(event,canvas){
 // width progressively near an edge so dragging never drops an entire word
 // outside the final PNG (except deliberate exact-edge centering).
 export function availableTextWidth(item){
-  const x=Math.max(0,Math.min(DESIGN_WIDTH,DESIGN_WIDTH*item.x/100));
+  const percent=Number.isFinite(item?.x)?item.x:50;
+  const x=Math.max(0,Math.min(DESIGN_WIDTH,DESIGN_WIDTH*percent/100));
   const room=2*Math.min(x,DESIGN_WIDTH-x)-12;
   return Math.max(12,Math.min(DESIGN_WIDTH*.94,room));
 }
