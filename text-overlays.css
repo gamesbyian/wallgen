@@ -23,3 +23,7 @@
  .text-overlay-grid{gap:7px}
  .text-overlay-editor{font-size:.82rem}
 }
+
+.text-overlay-advanced{margin-top:8px;border-top:1px solid var(--line,#888);padding-top:5px}
+.text-overlay-advanced summary{display:flex;align-items:center;min-height:44px;font-weight:600;cursor:pointer}
+.text-overlay-advanced[open] .text-overlay-grid{padding-top:8px}
