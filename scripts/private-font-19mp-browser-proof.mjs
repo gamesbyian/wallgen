@@ -9,7 +9,7 @@ import {dirname,resolve,join,extname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {chromium} from 'playwright';
 import {extractPngRecipe} from '../src/png-metadata.js';
-import {OUTPUT_WIDTH,OUTPUT_HEIGHT} from '../src/model.js';
+import {OUTPUT_WIDTH,OUTPUT_HEIGHT,normalizeRecipe,encodeRecipe} from '../src/model.js';
 
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const out=join(root,'output','private-font-19mp');
@@ -34,13 +34,22 @@ const server=createServer(async(req,res)=>{
  }catch{res.writeHead(404).end('Not Found');}
 });
 let browser;
+const lifecycle=[];
 try{
  await new Promise((ok,bad)=>{server.once('error',bad);server.listen(0,'127.0.0.1',ok)});
  browser=await chromium.launch({headless:true,args:['--js-flags=--max-old-space-size=4096']});
  const page=await browser.newPage({viewport:{width:412,height:892},deviceScaleFactor:1,
    acceptDownloads:true});
  const errors=[];page.on('pageerror',e=>errors.push(String(e.message)));
- await page.goto('http://127.0.0.1:'+server.address().port+'/',{waitUntil:'domcontentloaded'});
+ page.on('crash',()=>lifecycle.push('page-crashed'));
+ page.on('close',()=>lifecycle.push('page-closed'));
+ browser.on('disconnected',()=>lifecycle.push('browser-disconnected'));
+ const fixture=JSON.parse(await readFile(join(root,'tests/fixtures/typography-full-resolution.json'),'utf8'));
+ const recipe=normalizeRecipe({...fixture,textOverlays:[]});
+ const token=encodeRecipe(recipe);
+ await page.goto('http://127.0.0.1:'+server.address().port+'/?r='+encodeURIComponent(token),
+   {waitUntil:'domcontentloaded'});
+
  await page.waitForSelector('.editor-tool-card[data-editor-tool="typography"]',
    {state:'attached'});
  await page.locator('#mobileEdit').click();
@@ -102,4 +111,8 @@ try{
  assert.deepEqual(errors,[]);
  await writeFile(join(out,'report.json'),JSON.stringify(proof,null,2)+'\n');
  console.log('PRIVATE-FONT FULL RES ACTUAL APP PROOF '+JSON.stringify(proof));
+}catch(error){
+ await writeFile(join(out,'failure-diagnostic.json'),
+   JSON.stringify({status:'FAIL',error:String(error),lifecycle},null,2)+'\n');
+ throw error;
 }finally{await browser?.close();server.close();}
