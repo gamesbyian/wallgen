@@ -1,0 +1,42 @@
+name: Temporary Agent1 Compound Hue Inverse Actual PNG Regression
+on:
+  pull_request:
+    paths:
+      - 'src/image-path.js'
+      - 'src/image-reconstruction.js'
+      - '.github/workflows/temp-agent1-compound-inverse-review.yml'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  compound-and-independent:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare genuine browser painter only for this image study
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+      - name: Recover unchanged real native and independent source PNGs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p artifacts/native artifacts/independent
+          gh run download 40044597282 --repo "$GITHUB_REPOSITORY" --name agent1-native-compound-repeat-source-fit --dir artifacts/native
+          gh run download 40044290115 --repo "$GITHUB_REPOSITORY" --name agent1-seven-stamps-real-source-fit --dir artifacts/independent
+          test -f artifacts/native/18-repeated-compound-hole-island.no-metadata.png
+          test -f artifacts/independent/independent-angular-stripes.png
+      - name: Blind fit authentic current painter sources
+        run: node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/native --alternatives
+      - name: Guard independent authored V Wave and circle controls
+        run: node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/independent --alternatives
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: agent1-compound-hue-source-prior-fit-reviewed
+          path: artifacts/
+          retention-days: 2
