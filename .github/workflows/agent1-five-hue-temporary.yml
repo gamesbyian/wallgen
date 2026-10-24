@@ -1,0 +1,35 @@
+name: Agent1 temporary five-hue source and reconstruction comparison
+on:
+  pull_request:
+permissions:
+  contents: read
+concurrency:
+  group: agent1-partial-pigment-optics-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  five-island-optics:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install disposable Playwright Chromium
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Generate genuine metadata-free source with separate withheld truth
+        run: |
+          node scripts/review-reconstruction.mjs --only 11-scattered-circles,17-repeated-hue-circles,21-five-hue-islands --out-dir artifacts/agent1-partial-five
+      - name: Blind bounded canonical painter inversion
+        run: |
+          node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/agent1-partial-five
+      - name: Preserve source/fitted PNG pairs and score report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent1-five-hue-optical-source-fit
+          path: artifacts/agent1-partial-five/
+          retention-days: 10
+          if-no-files-found: warn
