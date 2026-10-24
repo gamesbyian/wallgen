@@ -4,6 +4,7 @@ import {normalizeRecipe,resolveScene} from '../src/model.js';
 import {normalizeTextOverlays} from '../src/text-overlays.js';
 import {canCurveText,layoutTextOnPath,textPathStation} from '../src/text-path-geometry.js';
 import {drawTextOverlays} from '../src/text-overlay-renderer.js';
+import {hitTextOverlay,measuredTextBounds} from '../src/text-direct-geometry.js';
 function context(){
   const calls=[];
   return {calls,globalAlpha:1,
@@ -80,4 +81,17 @@ test('curved letters paint in existing shared pass, rainbow and stroke retained'
   assert.deepEqual(b.calls.filter(x=>x[0]==='scale')[0],['scale',3024/600,6552/1300]);
   assert.deepEqual(fills.map(x=>x[4]).filter((_,i)=>i!==4),
     scene.stripes.map(s=>s.color));
+});
+
+test('curved layout expands direct-manipulation hit guide without changing straight hit geometry',()=>{
+  const line={text:'RAINBOW',x:50,y:50,size:64,rotation:0,
+    enabled:true,outline:'none'};
+  const curved={...line,path:'circle',pathHeight:150};
+  const straight=measuredTextBounds(line,t=>t.length*13);
+  const curvedBounds=measuredTextBounds(curved,t=>t.length*13);
+  assert.equal(straight.height,64*1.17);
+  assert.ok(curvedBounds.height>straight.height+200);
+  const point={x:300,y:520};
+  assert.equal(hitTextOverlay([line],point,(item,t)=>t.length*13),null);
+  assert.equal(hitTextOverlay([curved],point,(item,t)=>t.length*13),curved);
 });
