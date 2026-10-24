@@ -4,7 +4,6 @@
 import {pathPosition} from './path-geometry.js';
 import {textGraphemes} from './text-rainbow-shaping.js';
 import {availableTextWidth} from './text-direct-geometry.js';
-export const TEXT_PATHS=Object.freeze(['none','wave','arc','circle']);
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 // Splitting joining or bidirectional runs into glyph paints is incorrect:
 // Canvas2D has no shaped-glyph-position API. Refuse curved segmentation and
@@ -42,7 +41,7 @@ export function layoutTextOnPath(item,line,measure){
   if(total<=0)return {supported:false,glyphs:[]};
   const room=availableTextWidth(item);
   const maxArc=item.path==='circle'?
-    Math.PI*1.55*clamp(item.pathHeight,Math.max(20,item.size*.7),Math.max(20,room/2)):
+    Math.PI*.92*clamp(item.pathHeight,Math.max(20,item.size*.7),Math.max(20,room/2)):
     room;
   const shrink=Math.min(1,maxArc/total);
   let cursor=-total*shrink/2;
