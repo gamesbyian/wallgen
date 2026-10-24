@@ -44,8 +44,8 @@ try{
       // Use an actual licensed TTF from the production font bundle as a
       // synthetic private import; never upload user data or third-party files.
       await page.locator('[data-text-import]').setInputFiles(resolve('assets/fonts/bangers.ttf'));
-      await page.waitForFunction(()=>document.querySelector('[data-text-font-status]')
-        ?.textContent.includes('Font installed locally:'));
+      await page.waitForFunction(()=>new URL(location.href).searchParams.get('r')&&
+        document.querySelector('[data-text-key="font"]')?.value?.startsWith('user-'));
       const withFont=recipe();
       const font=withFont.textOverlays[0].font;
       assert.match(font,/^user-[a-f0-9]{64}$/,'real private import missing');
