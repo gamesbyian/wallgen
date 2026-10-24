@@ -92,3 +92,30 @@ test('letterboxed image placement preserves aspect and goes through existing rec
   assert.equal(resolveScene(recipe).stripes.length,7);
   assert.deepEqual(decodeRecipe(encodeRecipe(recipe)),recipe);
 });
+
+
+test('full seven-band V source first traces the median actual ribbon, not an arbitrary peripheral stripe',()=>{
+ const hues=[[250,40,50],[252,142,29],[253,214,26],
+   [30,220,70],[35,110,242],[111,42,210],[173,40,195]];
+ const source=image(200,250,(x,y)=>{
+   const v=x<=100?x*.17:(200-x)*.17;
+   for(let i=0;i<7;i++)if(Math.abs(y-(16+i*30+v))<=4)return hues[i];
+   return BLACK;
+ });
+ const arcs=extractImagePathCandidates(source).filter(candidate=>candidate.kind==='arc');
+ assert.ok(arcs.length>=2,'keep a safe alternate source band');
+ const median=arcs[0].points.map(point=>point[1]).reduce((a,b)=>a+b,0)/
+   arcs[0].points.length;
+ assert.ok(median>.40&&median<.52,
+   'central green V should seed wide Draw instead of edge red or violet');
+ assert.deepEqual(extractImagePathCandidates(source).filter(p=>p.kind==='arc'),arcs,
+   'centrality selection remains deterministic');
+ const scattered=image(200,250,(x,y)=>{
+   for(let i=0;i<7;i++)if(Math.hypot(x-(20+(i%3)*70),y-(22+i*32))<7)
+     return hues[i];
+   return BLACK;
+ });
+ const components=extractImagePathCandidates(scattered);
+ assert.equal(components.filter(x=>x.kind==='arc').length,0,
+   'compact scattered dots must not invent a seven-band median stroke');
+});
