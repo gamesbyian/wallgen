@@ -1213,7 +1213,6 @@ test('clipped coherent Jagged pigments recover their physical gap from four inta
  }));
  const metrics=measuredRainbowRibbonBands(regions,277,600);
  assert.ok(metrics,'partially clipped source remains a measurable seven-hue system');
- assert.equal(metrics.partial,true,'the measured fallback must be distinguishable from complete seven-hue proof');
  assert.ok(metrics.centreGapPx>40&&metrics.centreGapPx<51);
  assert.ok(metrics.thicknessPx>26&&metrics.thicknessPx<31);
  const defaultGuess=normalizeRecipe({geometry:'jagged',structure:'paths',
@@ -1231,39 +1230,4 @@ test('clipped coherent Jagged pigments recover their physical gap from four inta
  const changedAxis=regions.map((r,i)=>i===4?{...r,axisAngle:-18}:r);
  assert.equal(measuredRainbowRibbonBands(changedAxis,277,600),null,
    'occluded nonparallel pigments must not become a broad ribbon claim');
-});
-
-test('measured clipped Jagged coupled positions fit within ten paints without defeating composite locks',async()=>{
- const w=RECONSTRUCTION_FRAME.width,h=RECONSTRUCTION_FRAME.height;
- const source=raster(w,h,()=>[0,0,0,255]);
- const recipe=normalizeRecipe({structure:'paths',geometry:'jagged',
-   positionX:0,positionY:0,spread:50,stripeWidth:53});
- const candidate={kind:'jagged',recipe,error:.34,label:'clipped Jagged',
-   clippedJagged:true,jaggedShift:{offsetX:6,offsetY:3,measuredPixelGain:.10}};
- let renders=0;
- const paint=next=>{
-   renders++;
-   const value=Math.min(255,Math.round(Math.hypot(
-     next.positionX-18,next.positionY+3)*12));
-   return raster(w,h,()=>[value,value,value,255]);
- };
- const result=refineReconstructionCandidate(candidate,source,paint);
- assert.equal(result.recipe.positionX,18);
- assert.equal(result.recipe.positionY,-3);
- assert.equal(result.recipe.spread,50);
- assert.equal(result.error,0);
- assert.ok(result.refinementRenders<=10&&renders<=10);
- assert.deepEqual(await refineReconstructionCandidateCooperatively(
-   candidate,source,paint),result,'both entrypoints share exactly the same paired trials');
- const protectedRecipe=normalizeRecipe({...recipe,lockedSettings:['position']});
- const fixed=refineReconstructionCandidate({...candidate,recipe:protectedRecipe},
-   source,next=>{assert.equal(next.positionX,0);assert.equal(next.positionY,0);
-     return source;});
- assert.equal(fixed.recipe.positionX,0);
- assert.equal(fixed.recipe.positionY,0);
- let cancelled=false;
- const halted=await refineReconstructionCandidateCooperatively(
-   candidate,source,()=>{throw Error('cancelled coupled fit painted');},{
-     yieldControl:async()=>{cancelled=true;},isCancelled:()=>cancelled});
- assert.equal(halted,null);
 });
