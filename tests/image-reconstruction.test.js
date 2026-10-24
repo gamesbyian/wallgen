@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {HUES,COLOR_STORIES,normalizeRecipe,resolveScene,respectSettingLocks,encodeRecipe,decodeRecipe} from '../src/model.js';
+import {HUES,COLOR_STORIES,normalizeRecipe,resolveScene,encodeRecipe,decodeRecipe} from '../src/model.js';
 import {imagePlacement,extractImageColourRegions} from '../src/image-path.js';
 import {describeReconstructionImage,reconstructionCandidates,
   rankReconstructionCandidates,compareReconstructionPixels,refineReconstructionCandidate,reconstructionPlacement,
   radialImageSignature,imageStripeAngle,imageCurveSignature,diverseReconstructionCandidates,reconstructionRefinementIndex,
-  measuredRainbowRibbonBands,seedMeasuredRibbonControls,seedMeasuredHairpinWidth,measuredCanonicalPalette,coherentWaveOffsetY,coherentVerticalBandOffsetX,coherentExpandedDrawOffsetY,measuredExpandedDrawRegistration,measuredJaggedPixelShift,
+  measuredRainbowRibbonBands,seedMeasuredRibbonControls,measuredCanonicalPalette,coherentWaveOffsetY,coherentVerticalBandOffsetX,coherentExpandedDrawOffsetY,measuredExpandedDrawRegistration,measuredJaggedPixelShift,
   rankReconstructionCandidatesCooperatively,refineReconstructionCandidateCooperatively,
   RECONSTRUCTION_FRAME,RECONSTRUCTION_RENDER_LIMIT} from '../src/image-reconstruction.js';
 
@@ -414,44 +414,34 @@ test('wave jagged and hairpin fitted variants stay within ten true-render passes
 });
 
 
-test('seven separated upper pigments seed canonical Hairpin width without spending extra paints',async()=>{
- const w=120,h=260;
- const source=raster(w,h,(x,y)=>{
-   if(y<10||y>=250)return [0,0,0,255];
-   for(let i=0;i<7;i++)if(x>=14+10*i&&x<19+10*i)
-     return colour(HUES[i]);
-   return [0,0,0,255];
- });
- const colourRegions=extractImageColourRegions(source,HUES,{includeRepeatShape:true});
- assert.equal(colourRegions.upperParallelHueWidthPx,5,
-   'shared hue component masks reveal authentic dark-separated upper leg widths');
- const recipe=normalizeRecipe({seed:'hairpin-source-spacing',structure:'paths',
-   geometry:'hairpin',spread:42,stripeWidth:65});
- const seeded=seedMeasuredHairpinWidth(recipe,
-   colourRegions.upperParallelHueWidthPx,w,h);
- assert.ok(Math.abs(seeded.stripeWidth-50)<=3,
-   'fixed reference stripe-width equation maps measured 25 design pixels to ~50%');
- assert.equal(seeded.spread,42,'measuring pigment thickness does not move centres');
- assert.equal(seedMeasuredHairpinWidth(recipe,null,w,h),recipe);
- assert.equal(seedMeasuredHairpinWidth(recipe,500,w,h),recipe,
-   'implausible widths remain neutral rather than hiding source ambiguity');
- // The proven five-field path is retained and cannot spend an extra render
- // probing width, which both genuine-image reallocations regressed.
- const empty=raster(RECONSTRUCTION_FRAME.width,RECONSTRUCTION_FRAME.height,
-   ()=>[0,0,0,255]);
- const candidate={kind:'hairpin',label:'Measured upper leg',recipe:seeded,error:.5};
- const visits=[];
- const paint=next=>{visits.push(next);return empty;};
- const result=refineReconstructionCandidate(candidate,empty,paint);
- assert.ok(visits.length<=10&&visits.length>0);
- assert.ok(visits.every(next=>next.stripeWidth===seeded.stripeWidth));
- const synced=await refineReconstructionCandidateCooperatively(candidate,empty,
-   next=>empty,{yieldControl:async()=>{}});
- assert.deepEqual(result,synced);
- const locked=normalizeRecipe({...recipe,lockedSettings:['stripeWidth']});
- const immutable=respectSettingLocks(locked,seeded);
- assert.equal(immutable.stripeWidth,65,
-   'normal canonical lock projection protects fitted geometry');
+test('Hairpin tighter radius and exit-angle probes preserve every field and ten-render cap',async()=>{
+ const w=RECONSTRUCTION_FRAME.width,h=RECONSTRUCTION_FRAME.height;
+ const source=raster(w,h,()=>[0,0,0,255]);
+ const recipe=normalizeRecipe({seed:'hairpin-inverse-geometry',structure:'paths',
+   geometry:'hairpin',turnRadius:50,hairpinAngle:120,spread:42,
+   positionX:0,positionY:0,stripeWidth:65});
+ const candidate={kind:'hairpin',label:'Hairpin angle',recipe,error:.5};
+ const trials=[];
+ const render=next=>{trials.push(next);return source;};
+ const fitted=refineReconstructionCandidate(candidate,source,render);
+ assert.equal(trials.length,10);
+ assert.deepEqual(trials.slice(0,2).map(next=>next.turnRadius),[38,62]);
+ assert.deepEqual(trials.slice(2,4).map(next=>next.hairpinAngle),[105,135]);
+ assert.deepEqual(trials.slice(4,6).map(next=>next.spread),[36,48]);
+ assert.ok(trials.some(next=>next.positionX===-7)&&
+   trials.some(next=>next.positionY===-7));
+ assert.ok(trials.every(next=>next.stripeWidth===65),
+   'failed source-width experiments do not displace existing geometry probes');
+ const cooperative=await refineReconstructionCandidateCooperatively(
+   candidate,source,()=>source,{yieldControl:async()=>{}});
+ assert.deepEqual(cooperative,fitted);
+ const locked=normalizeRecipe({...recipe,
+   lockedSettings:['position','turnRadius','hairpinAngle','spread']});
+ let calls=0;
+ const result=refineReconstructionCandidate({...candidate,recipe:locked},
+   source,()=>{calls++;return source;});
+ assert.equal(calls,0);
+ assert.deepEqual(result.recipe,locked);
 });
 
 test('six-render candidate selection preserves one independent type before redundant parameter copies',()=>{
