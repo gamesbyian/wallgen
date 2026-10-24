@@ -1056,10 +1056,12 @@ function refinementFields(candidate){
     ]
   ):candidate.kind==='hairpin'?[
     ['turnRadius',[-15,15]],['hairpinAngle',[-25,25]],
-    // Genuine #05 has dark gaps in its straight ribbon legs that disappear
-    // in the thick coarse fit; the former spread probes did not vary ink width.
-    // Preserve radius/angle and both position axes within the SAME 10 trials.
-    ['stripeWidth',[-15,15]],['positionX',[-7,7]],['positionY',[-7,7]]
+    // #05's source upper leg and recovered leg share similar horizontal
+    // registration, but source stripes retain dark gaps and the coarse fit
+    // fuses them. The previous actual-render winner needed Y=+7, so retain
+    // vertical position AND spread; trade unproductive coarse X probes for
+    // canonical width trials. Still precisely 10 painter evaluations.
+    ['spread',[-10,10]],['stripeWidth',[-15,15]],['positionY',[-7,7]]
   ]:candidate.kind==='radial-rays'?[
     ['rayRotation',[-10,-5,5,10]],['fieldCenterX',[-5,5]],
     ['fieldCenterY',[-5,5]],['rayCore',[-10,10]]
