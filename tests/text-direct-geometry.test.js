@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {normalizeRecipe} from '../src/model.js';
 import {availableTextWidth,designPointFromPointer,measuredTextBounds,
-  hitTextOverlay,dragTextOverlay} from '../src/text-direct-geometry.js';
+  hitTextOverlay,dragTextOverlay,dragTextTransform,transformTextOverlay} from '../src/text-direct-geometry.js';
 
 const sample=normalizeRecipe({textOverlays:[
  {id:'back',text:'ABCD',x:50,y:50,size:60,rotation:0,outline:'black'},
@@ -61,4 +61,40 @@ test('off-centre long phrases narrow to the available wallpaper frame',()=>{
   assert.equal(bounds.width,432);
   const rightmost=600*.63+bounds.width/2;
   assert.ok(rightmost<=600-5,'text should stay within the right edge after movement');
+});
+
+test('scaling is relative to canonical anchor, clamps 12–180 and changes only size',()=>{
+  const item=sample.textOverlays[1];
+  const origin={x:600*item.x/100,y:1300*item.y/100};
+  const start={x:origin.x+70,y:origin.y};
+  const current={x:origin.x+140,y:origin.y};
+  const result=dragTextTransform(sample,'front','scale',start,current);
+  assert.equal(result.textOverlays[1].size,130);
+  assert.equal(result.textOverlays[1].rotation,45);
+  assert.equal(result.textOverlays[1].text,item.text);
+  assert.deepEqual(result.textOverlays[0],sample.textOverlays[0]);
+  assert.equal(dragTextTransform(sample,'front','scale',start,
+    {x:origin.x+1000,y:origin.y}).textOverlays[1].size,180);
+  assert.equal(dragTextTransform(sample,'front','scale',start,
+    {x:origin.x+1,y:origin.y}).textOverlays[1].size,12);
+});
+test('rotating one handle keeps text anchor stable, wraps across ±180 and respects locks',()=>{
+  const item=sample.textOverlays[1];
+  const origin={x:600*item.x/100,y:1300*item.y/100};
+  const result=dragTextTransform(sample,'front','rotate',
+    {x:origin.x+100,y:origin.y},{x:origin.x,y:origin.y+100});
+  assert.equal(result.textOverlays[1].rotation,135);
+  assert.equal(result.textOverlays[1].size,item.size);
+  assert.equal(result.textOverlays[1].x,item.x);
+  assert.equal(result.textOverlays[1].y,item.y);
+  assert.equal(transformTextOverlay(sample,'front',{rotation:185}).textOverlays[1].rotation,-175);
+  assert.equal(transformTextOverlay(sample,'front',{size:65,rotation:45}),sample);
+  assert.equal(transformTextOverlay(sample,'locked',{size:155,rotation:100}),sample);
+  assert.equal(dragTextTransform(sample,'locked','rotate',{x:100,y:100},{x:200,y:200}),sample);
+});
+test('invalid transform gestures are no-op; zero-distance handle cannot jump',()=>{
+  assert.equal(dragTextTransform(sample,'front','rotate',null,{x:1,y:2}),sample);
+  assert.equal(dragTextTransform(sample,'front','skew',{x:1,y:2},{x:2,y:3}),sample);
+  assert.equal(dragTextTransform(sample,'front','scale',{x:300,y:650},{x:400,y:650}),sample);
+  assert.equal(transformTextOverlay(sample,'front',{size:Infinity,rotation:NaN}),sample);
 });
