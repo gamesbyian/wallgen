@@ -862,3 +862,26 @@ test('expanded Draw X-axis registration fits upright seven-colour bands with unc
  assert.equal(lockedResult.refinementRenders,0);
  assert.equal(lockedResult.recipe.positionX,0);
 });
+
+
+test('long-baseline angular recognition follows upright Y-ordered centreline without inventing smooth-wave corners',()=>{
+ const angular=[];
+ for(let y=0;y<=240;y+=3){
+   const x=y<=78?36+y*.37:y<=153?65-(y-78)*.36:38+(y-153)*.43;
+   angular.push([x/240,y/240]);
+ }
+ const smoothed=angular.map(([,y],i)=>{
+   let x=0,n=0;
+   for(let j=Math.max(0,i-4);j<=Math.min(angular.length-1,i+4);j++){
+     x+=angular[j][0];n++;
+   }
+   return [x/n,y];
+ });
+ const signature=imageCurveSignature([{kind:'arc',points:smoothed}],240,240);
+ assert.ok(signature.angularBends>=2,
+   'dominant-axis tracing should retain two real upright V corners');
+ const flowing=Array.from({length:81},(_,i)=>{
+   const y=i/80;return [.35+.035*Math.sin(y*Math.PI*2),y];
+ });
+ assert.equal(imageCurveSignature([{kind:'arc',points:flowing}],240,240).angularBends,0);
+});
