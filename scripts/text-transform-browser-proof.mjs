@@ -45,6 +45,11 @@ try{
   assert.equal(await scale.isVisible(),true);
   const rotateBox=await rotate.boundingBox();
   assert.ok(rotateBox&&rotateBox.width>=43&&rotateBox.height>=43);
+  const wallpaperBox=await page.locator('#preview').boundingBox();
+  const initialScaleBox=await scale.boundingBox();
+  assert.ok(initialScaleBox.x>=wallpaperBox.x-2&&
+    initialScaleBox.x+initialScaleBox.width<=wallpaperBox.x+wallpaperBox.width+2,
+    '44px scale touch target must stay inside the wide wallpaper, not half offscreen');
   assert.equal(await rotate.getAttribute('aria-label')!==null,true);
   const from={x:rotateBox.x+rotateBox.width/2,y:rotateBox.y+rotateBox.height/2};
   await page.mouse.move(from.x,from.y);
