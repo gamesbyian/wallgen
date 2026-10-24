@@ -516,6 +516,11 @@ export function reconstructionCandidates(image,recipe){
             'Exposed circular arcs and source-visible pigment precedence support editable overlapping circles; hidden geometry, original painter order and fine edges remain uncertain.':
             'Approximates each colour region with a circle; holes, overlaps and fine edges may differ.'),
       recipe:normalizeRecipe({...base,structure:'regions',regionMode:'scattered',
+        // Inverse art has no evidence for the editor's otherwise-default
+        // black cell dividers. On overlapping circles these introduced false
+        // dark lens-shaped arcs absent from actual clean source artwork.
+        // A creator's real Divider locks still project below.
+        dividerColor:'none',dividerWidth:0,
         scatteredShapeKind:'circle',scatteredCount:editableRegions.length,
         scatteredOverlap:'overlap',scatteredEdgeCrop:0,scatteredSpacing:0,
         ...(desc.inferredCircleLayers&&!repeated?
