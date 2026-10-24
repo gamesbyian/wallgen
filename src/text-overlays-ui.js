@@ -23,15 +23,20 @@ export function installTextOverlayTool({getRecipe,changeRecipe}){
         <label>Typeface<select data-text-key="font"></select></label>
         <label>Colour<select data-text-key="colour"></select></label>
         <label>Outline<select data-text-key="outline"></select></label>
-        <label>Stroke width <input type="range" data-text-key="outlineWidth" min="0" max="20" step="1"></label>
         <label>Text size <input type="range" data-text-key="size" min="12" max="180" step="1"></label>
-        <label>Rotation <input type="range" data-text-key="rotation" min="-180" max="180" step="1"></label>
         <label>Horizontal <input type="range" data-text-key="x" min="0" max="100" step="1"></label>
         <label>Vertical <input type="range" data-text-key="y" min="0" max="100" step="1"></label>
-        <label>Opacity <input type="range" data-text-key="opacity" min="0" max="1" step="0.05"></label>
-        <label class="text-overlay-check"><input type="checkbox" data-text-key="enabled"> Visible</label>
-        <label class="text-overlay-check"><input type="checkbox" data-text-key="locked"> Keep style when randomizing</label>
       </div>
+      <details class="text-overlay-advanced">
+        <summary>More text options</summary>
+        <div class="text-overlay-grid">
+          <label>Stroke width <input type="range" data-text-key="outlineWidth" min="0" max="20" step="1"></label>
+          <label>Rotation <input type="range" data-text-key="rotation" min="-180" max="180" step="1"></label>
+          <label>Opacity <input type="range" data-text-key="opacity" min="0" max="1" step="0.05"></label>
+          <label class="text-overlay-check"><input type="checkbox" data-text-key="enabled"> Visible</label>
+          <label class="text-overlay-check"><input type="checkbox" data-text-key="locked"> Keep style when randomizing</label>
+        </div>
+      </details>
     </div>
     <p class="text-overlay-hint">Text is part of your editable wallpaper and exported PNG. Text content stays unchanged when randomizing. Imported TTF/OTF fonts are planned for a following release.</p>
   `;
