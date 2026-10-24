@@ -2,7 +2,7 @@
 // gesture advances to the next named tool, while direct chips work immediately.
 // The editor occupies a separate reserved tray, leaving all seven visible
 // rainbow stripes above it at all times.
-import {visibleMobileTools,adjacentVisibleMobileTool} from './mobile-tool-sequence.js';
+import {visibleMobileTools,adjacentVisibleMobileTool,isMobileToolSwipeSurface} from './mobile-tool-sequence.js';
 import {selectEditorTool} from './editor-layout.js?v=20261023-single-editor1';
 const phone=window.matchMedia('(max-width:790px)');
 const editor=document.getElementById('mobileDesignSheet');
@@ -24,11 +24,12 @@ editor.addEventListener('touchstart',event=>{
     gesture=null;return;
   }
   const t=event.touches[0];
-  gesture={x:t.clientX,y:t.clientY,interactive:!!event.target.closest(
-    'input,select,textarea,button,[contenteditable]')};
+  gesture={x:t.clientX,y:t.clientY,interactive:!isMobileToolSwipeSurface(event.target)};
 },{passive:true});
+editor.addEventListener('touchcancel',()=>{gesture=null;},{passive:true});
 editor.addEventListener('touchend',event=>{
-  if(!gesture||!event.changedTouches.length)return;
+  if(!gesture||!phone.matches||!document.body.classList.contains('mobile-edit-open')||
+     !event.changedTouches.length){gesture=null;return;}
   const start=gesture;gesture=null;
   const t=event.changedTouches[0],dx=t.clientX-start.x,dy=t.clientY-start.y;
   if(!start.interactive&&dy>65&&Math.abs(dy)>Math.abs(dx)*1.5){

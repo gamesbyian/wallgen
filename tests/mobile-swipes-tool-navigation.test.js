@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {visibleMobileTools,adjacentVisibleMobileTool} from '../src/mobile-tool-sequence.js';
+import {visibleMobileTools,adjacentVisibleMobileTool,isMobileToolSwipeSurface} from '../src/mobile-tool-sequence.js';
 
 const chip=(category,id,name,{hidden=false,disabled=false}={})=>({
   dataset:{category,editorTool:id},hidden,disabled,textContent:name,
@@ -54,4 +54,22 @@ test('touch coordinator and counter share one visible sequence and preserve dire
   assert.match(source,/document.addEventListener\('editor-tool-changed'/);
   assert.doesNotMatch(source,/EDITOR_CATEGORIES/,
     'there is one owner for scene applicability, not a parallel static swipe taxonomy');
+});
+
+test('tool and category rail scrolling never navigates the full editor sheet',()=>{
+  const child=selector=>({closest:query=>query.includes(selector)?{}:null});
+  for(const selector of [
+    '.editor-tool-chooser','.settings-tabs','label','a','input',
+    'button','[role="slider"]','[role="option"]','[contenteditable]'
+  ])assert.equal(isMobileToolSwipeSurface(child(selector)),false,
+    selector+' keeps its own horizontal drag or input gesture');
+  assert.equal(isMobileToolSwipeSurface({closest:()=>null}),true,
+    'empty, noninteractive sheet area still accepts tool-to-tool swipes');
+  assert.equal(isMobileToolSwipeSurface(null),false,
+    'non-element touch targets do not trigger unowned navigation');
+  const source=readFileSync(new URL('../src/mobile-swipes.js',import.meta.url),'utf8');
+  assert.match(source,/interactive:!isMobileToolSwipeSurface\(event.target\)/);
+  assert.match(source,/touchcancel'.*gesture=null/);
+  assert.match(source,/!document.body.classList.contains\('mobile-edit-open'\)/,
+    'late touchend after editor dismissal cannot navigate invisibly');
 });
