@@ -1,6 +1,6 @@
 import {DESIGN_WIDTH,DESIGN_HEIGHT} from './model.js';
 import {TEXT_FONTS} from './text-overlays.js';
-import {fontFamilyForId,isLocalFontId,localFontsReady} from './local-fonts.js';
+import {typefacesReady,typefaceCssFamily} from './typography-fonts.js';
 
 // The same post-composite typography pass is used by reference, worker,
 // thumbnail, headless, and preview-cache composition. Never render DOM text
@@ -11,7 +11,7 @@ const graphemes=value=>typeof Intl!=='undefined'&&typeof Intl.Segmenter==='funct
   Array.from(value);
 export function drawTextOverlays(ctx,width,height,scene){
   if(!scene?.textOverlays?.length)return;
-  if(!localFontsReady(scene))throw Error('Local font unavailable: prepare fonts before painting');
+  if(!typefacesReady(scene))throw Error('Typeface unavailable: prepare fonts before painting');
   const colours=scene.stripes?.length===7?
     scene.stripes.map(item=>item.color):fallbackRainbow;
   ctx.save();
@@ -24,8 +24,7 @@ export function drawTextOverlays(ctx,width,height,scene){
     ctx.translate(DESIGN_WIDTH*item.x/100,DESIGN_HEIGHT*item.y/100);
     ctx.rotate(item.rotation*Math.PI/180);
     ctx.globalAlpha=item.opacity;
-    ctx.font='bold '+item.size+'px '+(isLocalFontId(item.font)?
-      '"'+fontFamilyForId(item.font)+'"':TEXT_FONTS[item.font]);
+    ctx.font='bold '+item.size+'px '+typefaceCssFamily(item.font);
     ctx.textAlign='left';
     ctx.textBaseline='middle';
     ctx.lineJoin='round';
