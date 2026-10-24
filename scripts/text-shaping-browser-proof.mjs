@@ -86,9 +86,16 @@ try{
         if((A[i]>127)!==(B[i]>127))binaryMaskDifference++;
         if(A[i])opaquePixels++;
       }
-      // Inspect exact and thresholded coverage before qualifying this as
-      // shaping-safe. Native coloured gradients can alter edge antialiasing
-      // slightly without changing the underlying glyph silhouette.
+      // Chromium's gradient text and solid text can differ by up to 16
+      // alpha levels at glyph-edge antialias samples. What matters for
+      // native joining is silhouette preservation, not exact edge colour.
+      // Require every alpha delta <= 16 and a >127 binary-mask drift
+      // smaller than 1% of actually painted pixels.
+      if(largestAlphaDelta>16||
+         binaryMaskDifference>Math.max(1,Math.floor(opaquePixels*.01)))
+        throw Error('Native text silhouette changed: '+JSON.stringify({
+          seed:spec.seed,largestAlphaDelta,binaryMaskDifference,opaquePixels
+        }));
       if(spec.seed==='shaping-ligature'){
         window.__diagnosticColour=actual.toDataURL('image/png');
         window.__diagnosticSolid=native.toDataURL('image/png');
@@ -135,6 +142,7 @@ try{
     Buffer.from(nativeArabic.split(',')[1],'base64'));
   await writeFile(join(out,'report.json'),
     JSON.stringify({status:'PASS',browser:'actual Chromium glyph shaper (not Pixel)',
+      guard:'max per-pixel alpha delta <=16; thresholded mask differences <=1% of ink pixels',
       browserErrors:errors,results:report},null,2)+'\n');
   console.log('RAINBOW SHAPING SOURCE PROOF '+JSON.stringify(report));
 }finally{await browser?.close();server.close();}
