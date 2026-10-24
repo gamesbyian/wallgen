@@ -692,7 +692,11 @@ export function reconstructionCandidates(image,recipe){
     const effective=respectSettingLocks(current,candidate.recipe);
     const blocked=current.lockedSettings.filter(key=>
       JSON.stringify(effective[key])!==JSON.stringify(candidate.recipe[key]));
-    return {...candidate,recipe:effective,lockedChanges:blocked};
+    const paletteDisclosure=desc.paletteHypothesis?
+      ' Source colours resemble the current '+desc.paletteHypothesis.palette+
+      ' story; original palette identity, material and processing remain unknown.':'';
+    return {...candidate,recipe:effective,lockedChanges:blocked,
+      uncertainty:candidate.uncertainty+paletteDisclosure};
   }).filter(candidate=>!essential(candidate).some(key=>
     candidate.lockedChanges.includes(key)));
   // Confirmed by 02-diagonal current-renderer PNG: the third candidate
