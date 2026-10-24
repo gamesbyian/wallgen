@@ -27,3 +27,8 @@
 .text-overlay-advanced{margin-top:8px;border-top:1px solid var(--line,#888);padding-top:5px}
 .text-overlay-advanced summary{display:flex;align-items:center;min-height:44px;font-weight:600;cursor:pointer}
 .text-overlay-advanced[open] .text-overlay-grid{padding-top:8px}
+
+.text-overlay-import{margin-top:8px;font-size:.81rem}
+.text-overlay-import input[type=file]{width:100%;min-height:44px;min-width:0;box-sizing:border-box;font:inherit}
+.text-overlay-font-status{font-size:.77rem;line-height:1.35;margin:2px 0;color:var(--ink,inherit)}
+.text-overlay-font-status:empty{display:none}

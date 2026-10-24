@@ -1,8 +1,9 @@
 import {MAX_TEXT_OVERLAYS,newTextOverlay,TEXT_FONTS,TEXT_COLOURS,TEXT_OUTLINES} from './text-overlays.js';
+import {importLocalFont,listLocalFonts,isLocalFontId} from './local-fonts.js';
 
 // A tool inside the seven-category editor, not a floating DOM preview layer.
 // Every mutation takes the existing recipe/Undo path supplied by app.js.
-export function installTextOverlayTool({getRecipe,changeRecipe}){
+export function installTextOverlayTool({getRecipe,changeRecipe,onFontNotice=()=>{}}){
   const card=document.querySelector('.editor-tool-card[data-editor-tool="typography"]');
   if(!card)throw Error('Typography card must be mounted before text controls');
   const root=document.createElement('div');
@@ -27,6 +28,10 @@ export function installTextOverlayTool({getRecipe,changeRecipe}){
         <label>Horizontal <input type="range" data-text-key="x" min="0" max="100" step="1"></label>
         <label>Vertical <input type="range" data-text-key="y" min="0" max="100" step="1"></label>
       </div>
+      <label class="text-overlay-import">Import a TTF/OTF font from this device
+        <input type="file" data-text-import accept=".ttf,.otf,font/ttf,font/otf,application/x-font-ttf,application/x-font-opentype">
+      </label>
+      <p class="text-overlay-font-status" data-text-font-status role="status" aria-live="polite"></p>
       <details class="text-overlay-advanced">
         <summary>More text options</summary>
         <div class="text-overlay-grid">
@@ -38,7 +43,7 @@ export function installTextOverlayTool({getRecipe,changeRecipe}){
         </div>
       </details>
     </div>
-    <p class="text-overlay-hint">Text is part of your editable wallpaper and exported PNG. Text content stays unchanged when randomizing. Imported TTF/OTF fonts are planned for a following release.</p>
+    <p class="text-overlay-hint">Custom fonts stay on this device in private browser storage, never inside a PNG or design link. Reimport the same file when opening your recipe elsewhere; if it is missing, export is blocked instead of silently substituting a typeface.</p>
   `;
   card.append(root);
   const pick=root.querySelector('[data-text-picker]');
@@ -48,13 +53,23 @@ export function installTextOverlayTool({getRecipe,changeRecipe}){
   const font=root.querySelector('[data-text-key="font"]');
   const colour=root.querySelector('[data-text-key="colour"]');
   const outline=root.querySelector('[data-text-key="outline"]');
+  const fontFile=root.querySelector('[data-text-import]');
+  const fontStatus=root.querySelector('[data-text-font-status]');
+  let library=[];
   const options=(select,entries)=>select.replaceChildren(...entries.map(([value,label])=>{
     const option=document.createElement('option');option.value=value;option.textContent=label;return option;
   }));
-  options(font,Object.keys(TEXT_FONTS).map(key=>[key,({
+  const baseFonts=Object.keys(TEXT_FONTS).map(key=>[key,({
     bold:'Poster bold',rounded:'Friendly rounded',modern:'Modern clean',
     editorial:'Editorial serif',typewriter:'Typewriter',playful:'Playful'
-  })[key]]));
+  })[key]]);
+  const refreshFontOptions=selected=>{
+    const names=[...baseFonts,...library.map(entry=>[entry.id,'My fonts · '+entry.name])];
+    if(isLocalFontId(selected)&&!library.some(entry=>entry.id===selected))
+      names.push([selected,'Missing imported font · reimport to restore']);
+    options(font,names);
+    if(selected)font.value=selected;
+  };
   options(colour,TEXT_COLOURS.map(key=>[key,({
     black:'Black',white:'White','rainbow-letter':'Rainbow · each letter',
     'rainbow-word':'Rainbow · each word','rainbow-gradient':'Rainbow · gradient'
@@ -74,7 +89,11 @@ export function installTextOverlayTool({getRecipe,changeRecipe}){
     pick.disabled=!item;
     remove.disabled=!item;
     add.disabled=items.length>=MAX_TEXT_OVERLAYS;
-    if(!item)return;
+    if(!item){fontStatus.textContent='';return;}
+    refreshFontOptions(item.font);
+    fontStatus.textContent=isLocalFontId(item.font)&&
+      !library.some(entry=>entry.id===item.font)?
+      'Font file unavailable on this device. Reimport its original TTF/OTF to restore rendering.':'';
     for(const control of fields.querySelectorAll('[data-text-key]')){
       const key=control.dataset.textKey;
       if(control.type==='checkbox')control.checked=Boolean(item[key]);
@@ -108,6 +127,26 @@ export function installTextOverlayTool({getRecipe,changeRecipe}){
     const value=event.target.type==='checkbox'?event.target.checked:
       event.target.type==='range'?Number(event.target.value):event.target.value;
     commit(currentItems().map(item=>item.id===selectedId?{...item,[key]:value}:item));
+  });
+  fontFile.addEventListener('change',async()=>{
+    const file=fontFile.files?.[0];
+    if(!file||!selectedId)return;
+    fontFile.disabled=true;
+    fontStatus.textContent='Checking and saving font on this device…';
+    try{
+      const installed=await importLocalFont(file);
+      library=await listLocalFonts();
+      fontStatus.textContent='Font installed locally: '+installed.name;
+      commit(currentItems().map(item=>item.id===selectedId?
+        {...item,font:installed.id}:item));
+      onFontNotice('Imported '+installed.name+' to this device.');
+    }catch(error){
+      fontStatus.textContent=String(error?.message||error);
+      onFontNotice(fontStatus.textContent);
+    }finally{fontFile.value='';fontFile.disabled=false;}
+  });
+  void listLocalFonts().then(found=>{library=found;sync();}).catch(error=>{
+    fontStatus.textContent='Local fonts unavailable: '+String(error?.message||error);
   });
   document.addEventListener('roygbiv-controls-synced',sync);
   sync();

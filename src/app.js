@@ -32,6 +32,7 @@ import {createCreativeRecorder,openUsageStore,USAGE_MODE_KEY} from './creative-r
 import {installCreativeRecorderUI} from './creative-recorder-ui.js';
 import {installCreativeFeedback} from './creative-feedback.js';
 import {installTextOverlayTool} from './text-overlays-ui.js';
+import {prepareLocalFonts,localFontsReady,recipeLocalFontIds} from './local-fonts.js';
 
 const form = document.getElementById('controls');
 const preview = document.getElementById('preview');
@@ -680,7 +681,21 @@ function render(recipe,{scroll=false,bypassLocks=false,interactive=false,cause='
         'With this many shapes, Largest size is capped to keep placement feasible.':'';
     sizeHint.hidden=!sizeHint.textContent;
   }
-  if(previewLayers.key===key && previewLayers.ink && previewLayers.background){
+  if(recipeLocalFontIds(current).length&&!localFontsReady(current)){
+    // A restored design may refer to a private font kept in IndexedDB.
+    // Never paint fallback glyphs while native FontFace loading is pending.
+    const expected=key;
+    preview.dataset.renderPending='true';
+    preview.setAttribute('aria-busy','true');
+    void prepareLocalFonts(current).then(()=>{
+      if(artKey(current)===expected)render(current,{record:false});
+    }).catch(error=>{
+      if(artKey(current)!==expected)return;
+      preview.dataset.renderPending='false';
+      preview.removeAttribute('aria-busy');
+      showNotice('Text requires its original font: '+String(error.message||error));
+    });
+  }else if(previewLayers.key===key && previewLayers.ink && previewLayers.background){
     clearSettledPreview();
     // Nudge and compositor-only changes remain immediate, even while an
     // older, expensive worker paint is winding down.
@@ -1105,6 +1120,9 @@ async function downloadPNG(){
   await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
   let big;
   try {
+    // Never export silently substituted glyphs if a shared recipe has a
+    // missing or damaged private TTF/OTF font in this browser.
+    await prepareLocalFonts(snapshot);
     let blob;
     if(typeof Worker==='function'&&typeof OffscreenCanvas==='function'){
       try{
@@ -1352,7 +1370,7 @@ function syncSettingLocks(){
 }
 installSettingLocks();
 const editor=mountEditor();
-const textTool=installTextOverlayTool({getRecipe:()=>current,changeRecipe});
+const textTool=installTextOverlayTool({getRecipe:()=>current,changeRecipe,onFontNotice:showNotice});
 // Source-linked guidance lives beside the controls it describes. It does not
 // change the saved recipe, geometry or layout outside the relevant card.
 for(const [id,tool] of [['scatteredSourceNotice','regions'],
@@ -1905,6 +1923,9 @@ function getThumbnailWorker(){
   return thumbnailWorker;
 }
 async function drawThumbnail(canvas,recipe,isRelevant=()=>true){
+  // A missing user font is an error rather than an apparently valid thumbnail
+  // using some unrelated system fallback typeface.
+  await prepareLocalFonts(recipe);
   const worker=getThumbnailWorker();
   if(worker.enabled){
     try{

@@ -8,6 +8,7 @@ export const TEXT_FONTS=Object.freeze({
   typewriter:"'Courier New', monospace",
   playful:"'Comic Sans MS', cursive",
 });
+import {isLocalFontId} from './local-fonts.js';
 export const TEXT_COLOURS=Object.freeze([
   'black','white','rainbow-letter','rainbow-word','rainbow-gradient'
 ]);
@@ -37,7 +38,7 @@ export function normalizeTextOverlays(input){
       x:num(v.x,50,0,100),y:num(v.y,50,0,100),
       size:num(v.size,64,12,180),rotation:num(v.rotation,0,-180,180),
       opacity:num(v.opacity,1,0,1),
-      font:Object.hasOwn(TEXT_FONTS,v.font)?v.font:'bold',
+      font:isLocalFontId(v.font)?v.font:Object.hasOwn(TEXT_FONTS,v.font)?v.font:'bold',
       colour:TEXT_COLOURS.includes(v.colour)?v.colour:'rainbow-letter',
       outline:TEXT_OUTLINES.includes(v.outline)?v.outline:'black',
       outlineWidth:num(v.outlineWidth,5,0,20),
