@@ -89,7 +89,27 @@ export const RECONSTRUCTION_R0_CASES=Object.freeze([
   {id:'16-offset-jagged',goal:'Jagged diagonals with non-rigid, two-axis inference failure',
     recipe:{structure:'paths',geometry:'jagged',orientation:'diagonal',
       shapeFrequency:68,shapeDepth:55,spread:50,
-      positionX:18,positionY:-12}}
+      positionX:18,positionY:-12}},
+  {id:'17-repeated-hue-circles',
+    goal:'Fourteen separate circles with two independent editable instances of each canonical hue',
+    recipe:{...RAINBOW_ORBITS,seed:'r0-fourteen-colour-circles',
+      scatteredCount:14,scatteredOverlap:'overlap',scatteredMinSize:0,
+      scatteredSpacing:0,scatteredEdgeCrop:0,
+      scatteredOverrides:Array.from({length:14},(_,index)=>({
+        index,x:[.13,.38,.63,.87][index%4],
+        y:[.13,.37,.61,.84][Math.floor(index/4)],
+        radius:.058
+      }))}},
+  {id:'18-repeated-compound-hole-island',
+    goal:'Seven translated copies of one canonical compound silhouette, each with a real hole and detached island',
+    recipe:{...compoundStitchRecipe('r0-seven-holed-stamps'),
+      scatteredCount:7,scatteredOverlap:'overlap',
+      scatteredMinSize:0,scatteredSpacing:0,scatteredEdgeCrop:0,
+      scatteredOverrides:Array.from({length:7},(_,index)=>({
+        index,x:[.18,.50,.82][index%3],
+        y:[.16,.45,.76][Math.floor(index/3)],
+        radius:.092
+      }))}}
 ]);
 
 export function baselineRecipe(item){
