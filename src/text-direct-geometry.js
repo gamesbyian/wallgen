@@ -59,3 +59,41 @@ export function dragTextOverlay(recipe,id,delta){
   });
   return changed?{...recipe,textOverlays:items}:recipe;
 }
+
+export function transformTextOverlay(recipe,id,{size,rotation}={}){
+  if(!id)return recipe;
+  let changed=false;
+  const items=(recipe.textOverlays||[]).map(item=>{
+    if(item.id!==id||item.locked)return item;
+    const updated={...item};
+    if(Number.isFinite(size))updated.size=Math.round(clamp(size,12,180)*10)/10;
+    if(Number.isFinite(rotation)){
+      const wrapped=((rotation+180)%360+360)%360-180;
+      updated.rotation=Math.round(wrapped*10)/10;
+    }
+    if(updated.size===item.size&&updated.rotation===item.rotation)return item;
+    changed=true;
+    return updated;
+  });
+  return changed?{...recipe,textOverlays:items}:recipe;
+}
+export function dragTextTransform(recipe,id,mode,start,current){
+  if(!['rotate','scale'].includes(mode)||!start||!current||
+      ![start.x,start.y,current.x,current.y].every(Number.isFinite))
+    return recipe;
+  const item=(recipe.textOverlays||[]).find(x=>x.id===id);
+  if(!item||item.locked)return recipe;
+  const origin={x:DESIGN_WIDTH*item.x/100,y:DESIGN_HEIGHT*item.y/100};
+  const a={x:start.x-origin.x,y:start.y-origin.y};
+  const b={x:current.x-origin.x,y:current.y-origin.y};
+  const initial=Math.hypot(a.x,a.y);
+  if(initial<10)return recipe;
+  if(mode==='scale'){
+    const ratio=Math.hypot(b.x,b.y)/initial;
+    return transformTextOverlay(recipe,id,{size:item.size*ratio});
+  }
+  const from=Math.atan2(a.y,a.x),to=Math.atan2(b.y,b.x);
+  // atan2 deltas preserve signed direction when a finger crosses ±180°.
+  const difference=((to-from+Math.PI)%(2*Math.PI)+2*Math.PI)%(2*Math.PI)-Math.PI;
+  return transformTextOverlay(recipe,id,{rotation:item.rotation+difference*180/Math.PI});
+}
