@@ -28,7 +28,7 @@ try{
     };
     const close=async()=>{
       await page.locator('[data-usage-close]').click();
-      await page.locator('#creativeActivityDialog:not([open])').waitFor();
+      await page.waitForFunction(()=>!document.getElementById('creativeActivityDialog').open);
     };
     const exportEvents=async()=>{
       const downloadPromise=page.waitForEvent('download');
@@ -42,7 +42,7 @@ try{
     };
     try{
       await page.goto(url,{waitUntil:'domcontentloaded'});
-      await page.locator('#creativeActivityOpen').waitFor();
+      await page.locator('#creativeActivityOpen').waitFor({state:'attached'});
       await open();
       assert.equal(await page.locator('[data-usage-enabled]').isChecked(),false,
         'fresh Chrome context must be recording OFF');
@@ -78,7 +78,7 @@ try{
       await close();
 
       await page.reload({waitUntil:'domcontentloaded'});
-      await page.locator('#creativeActivityOpen').waitFor();
+      await page.locator('#creativeActivityOpen').waitFor({state:'attached'});
       await open();
       assert.equal(await page.locator('[data-usage-enabled]').isChecked(),true,
         'explicit previous opt-in persists on reload');
@@ -105,7 +105,7 @@ try{
       assert.equal(record.lastKnown,null,'local deletion removes last-known recipe');
       await close();
       await page.reload({waitUntil:'domcontentloaded'});
-      await page.locator('#creativeActivityOpen').waitFor();
+      await page.locator('#creativeActivityOpen').waitFor({state:'attached'});
       await open();
       assert.equal(await page.locator('[data-usage-enabled]').isChecked(),false,
         'revocation stays effective after another restart');
