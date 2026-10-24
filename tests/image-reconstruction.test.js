@@ -5,7 +5,7 @@ import {imagePlacement,extractImageColourRegions} from '../src/image-path.js';
 import {describeReconstructionImage,reconstructionCandidates,
   rankReconstructionCandidates,compareReconstructionPixels,refineReconstructionCandidate,reconstructionPlacement,
   radialImageSignature,imageStripeAngle,imageCurveSignature,diverseReconstructionCandidates,reconstructionRefinementIndex,
-  measuredRainbowRibbonBands,seedMeasuredRibbonControls,measuredCanonicalPalette,coherentWaveOffsetY,coherentVerticalBandOffsetX,coherentExpandedDrawOffsetY,measuredExpandedDrawRegistration,measuredJaggedPixelShift,
+  measuredRainbowRibbonBands,seedMeasuredRibbonControls,measuredCanonicalPalette,coherentWaveOffsetY,coherentVerticalBandOffsetX,coherentExpandedDrawOffsetY,measuredExpandedDrawRegistration,measuredJaggedPixelShift,measuredJaggedHueShift,
   rankReconstructionCandidatesCooperatively,refineReconstructionCandidateCooperatively,
   RECONSTRUCTION_FRAME,RECONSTRUCTION_RENDER_LIMIT} from '../src/image-reconstruction.js';
 
@@ -1199,4 +1199,68 @@ test('Jagged near-miss uses one real-render measured fine registration instead o
    x>70&&x<90&&y>40&&y<150?[255,255,255,255]:[0,0,0,255]);
  assert.equal(measuredJaggedPixelShift(source,unrelated),null,
    'unrelated pixel masks do not authorize a fine phase-registration claim');
+});
+
+
+test('large two-axis Jagged source shift requires hue agreement and a coupled real-render recovery',async()=>{
+ const w=RECONSTRUCTION_FRAME.width,h=RECONSTRUCTION_FRAME.height;
+ const discs=(dx=0,dy=0,rogue=0)=>raster(w,h,(x,y)=>{
+   for(let i=0;i<7;i++){
+     const cx=35+(i%2)*12+dx+(i===4?rogue:0);
+     const cy=30+i*24+dy;
+     if(Math.hypot(x-cx,y-cy)<10)return colour(HUES[i]);
+   }
+   return [0,0,0,255];
+ });
+ const source=discs(),displaced=discs(16,-22);
+ const shift=measuredJaggedHueShift(source,displaced);
+ assert.ok(shift,'seven independent pigments support a larger clipped-frame registration');
+ assert.equal(shift.coupled,true);
+ assert.ok(Math.abs(shift.offsetX+16/w*100)<2);
+ assert.ok(Math.abs(shift.offsetY-22/h*100)<2);
+ assert.equal(measuredJaggedHueShift(source,discs(16,-22,30)),null,
+   'one unrelated colour displacement vetoes a claimed rigid solution');
+ assert.equal(measuredJaggedHueShift(source,source),null);
+ const different=raster(w,h,(x,y)=>x>70&&y>35&&y<80?
+   [255,255,255,255]:[0,0,0,255]);
+ assert.equal(measuredJaggedHueShift(source,different),null);
+ const recipe=normalizeRecipe({seed:'displaced-canonical-jagged',
+   structure:'paths',geometry:'jagged',background:'black',
+   positionX:0,positionY:0});
+ let calls=0;
+ const painter=next=>{
+   calls++;
+   return discs(16+Math.round(next.positionX*w/100),
+     -22+Math.round(next.positionY*h/100));
+ };
+ const ranked=rankReconstructionCandidates([
+   {kind:'jagged',label:'displaced jagged',recipe,uncertainty:'inferred'}
+ ],source,painter);
+ assert.equal(ranked[0].jaggedShift?.coupled,true);
+ assert.equal(calls,1,'shared six-render ranking uses one actual painter call');
+ const best=refineReconstructionCandidate(ranked[0],source,painter);
+ assert.ok(best.error<ranked[0].error*.65,
+   'single-parameter greedy steps cannot replace simultaneous XY fitting');
+ assert.ok(best.refinementRenders<=10);
+ assert.ok(calls<=11,'one coarse plus at most ten refinement renders');
+ const asyncFit=await refineReconstructionCandidateCooperatively(
+   ranked[0],source,painter,{yieldControl:async()=>{}});
+ assert.deepEqual(asyncFit,best);
+ const fixed=normalizeRecipe({...recipe,lockedSettings:['position']});
+ const locked=refineReconstructionCandidate({...ranked[0],recipe:fixed},source,
+   next=>{
+     assert.equal(next.positionX,0);
+     assert.equal(next.positionY,0);
+     return source;
+   });
+ assert.equal(locked.recipe.positionX,0);
+ assert.equal(locked.recipe.positionY,0);
+ let cancelled=false,afterCancel=0;
+ const stopped=await refineReconstructionCandidateCooperatively(
+   ranked[0],source,()=>{afterCancel++;return source;},{
+     yieldControl:async()=>{cancelled=true;},
+     isCancelled:()=>cancelled
+   });
+ assert.equal(stopped,null);
+ assert.equal(afterCancel,0);
 });
