@@ -1,5 +1,8 @@
 # ROYGBIV: agent instructions
 
+**Live dispatch (24 October 2026):** [three-agent current work queue and no-PR branch rescue audit](docs/CURRENT-WORK-QUEUE-2026-10-24.md). This is the current execution index; dated passages in the long roadmap and handoff below are historical unless reaffirmed against current main, issues and PRs.
+
+
 This is the **task router and permanent operating contract** for ROYGBIV. Do not treat it as a running changelog. For *what to do next*, reconcile current `main`, active PRs/issues and the [current handoff](docs/AGENT-HANDOFF-2026-10-22.md) against the [active product roadmap](docs/ACTIVE-PRODUCT-ROADMAP-2026-10-22.md). Their dated passages can be superseded by newer code and decisions. Historical implementation reports and the [previous agent-orientation snapshot](docs/archive/AGENT-ORIENTATION-SNAPSHOT-2026-10-22.md) are evidence, never another queue.
 
 ## Product priority and freedoms
