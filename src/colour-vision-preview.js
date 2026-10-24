@@ -86,7 +86,8 @@ panel.append(header,modeLabel,severityLabel,actions,caveat,explanatory,disclosur
 
 const originalSourceLabel=source.getAttribute('aria-label')||'Wallpaper';
 const mobileMore=document.getElementById('mobileMore');
-const mobileMoreLabel=mobileMore?.getAttribute('aria-label')||'More tools';
+const mobileMoreLabel=mobileMore?.getAttribute('aria-label')||
+  mobileMore?.textContent?.trim()||'More';
 const desktopSlot=make('div','vision-desktop-slot');
 desktopSlot.append(toggle);
 desktopHead.append(desktopSlot);
@@ -139,7 +140,7 @@ function updateViewLabels(){
   if(mobileMore){
     mobileMore.dataset.visionActive=String(displayingSimulation);
     mobileMore.setAttribute('aria-label',displayingSimulation?
-      'More tools; colour vision simulation active':mobileMoreLabel);
+      mobileMoreLabel+'; colour vision simulation active':mobileMoreLabel);
   }
   if(displayingSimulation){
     source.setAttribute('aria-label',originalSourceLabel+
