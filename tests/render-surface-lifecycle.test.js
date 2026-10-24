@@ -44,7 +44,11 @@ test('a final compositor error must not publish an incomplete preview cache or s
   const target={width:600,height:1300,
     getContext(){return proxyCanvasContext({throwOnPresent:true});}};
   const surfaces=[];
-  const cache={};
+  const previousInk={width:14,height:22};
+  const previousBackground={width:14,height:22};
+  const previousOverhang={left:1,top:2,width:14,height:22};
+  const cache={ink:previousInk,background:previousBackground,
+    overhang:previousOverhang};
   const factory=(width,height)=>{
     const surface={width,height,getContext(){return proxyCanvasContext();}};
     surfaces.push(surface);
@@ -55,8 +59,9 @@ test('a final compositor error must not publish an incomplete preview cache or s
     material:'none',glow:0,lightingMood:'off',stripeShadowStrength:0
   }),{cache,canvasFactory:factory}),/Injected final compositor failure/);
   assert.equal(surfaces.length,2,'background and ink had been prepared');
-  assert.equal(cache.ink,undefined,'a failed render cannot expose a reusable ink surface');
-  assert.equal(cache.background,undefined,'a failed render cannot expose incomplete background');
+  assert.equal(cache.ink,previousInk,'failure must retain the previous good ink');
+  assert.equal(cache.background,previousBackground,'failure must retain the previous good background');
+  assert.equal(cache.overhang,previousOverhang,'failure must not publish new framing');
   for(const surface of surfaces){
     assert.equal(surface.width,0,'failed render must release every canvas width');
     assert.equal(surface.height,0,'failed render must release every canvas height');
