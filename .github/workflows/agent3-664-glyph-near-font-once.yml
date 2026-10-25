@@ -1,4 +1,5 @@
 name: One-shot glyph warning near face on real portrait controls
+# Screenshot complete scrolled missing-glyph warning after initial viewport
 on:
   push:
     branches: [agent3/664-visible-glyph-warning-portrait-20261024]
