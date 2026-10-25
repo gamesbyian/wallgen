@@ -414,12 +414,21 @@ function repeatedHueStampShape(partsByHue,w,h){
   // Never apply this to compound groups, unordered cropping, absent colour,
   // or inconsistent intact silhouettes.
   const first=groups.slice(0,4),tail=groups.slice(4);
+  const shrinking=tail.every((g,i)=>
+    g.area<(i?tail[i-1].area:first[3].area)*.90&&
+    g.area>=first[2].area*.10);
+  const croppedFromLeft=tail.every((g,i)=>
+    g.maxX>=w*.98&&g.minX>w*.15&&
+    g.minX>(i?tail[i-1].minX:first[3].minX)+w*.05);
+  const croppedFromRight=tail.every((g,i)=>
+    g.minX<=w*.02&&g.maxX<w*.85&&
+    g.maxX<(i?tail[i-1].maxX:first[3].maxX)-w*.05);
+  // Both mirror directions are observed in current canonical Jagged art.
+  // The existing seven-hue axes/thickness and per-tail ridge rhythm
+  // validators still guard every accepted clipped-shape hypothesis.
   const clipped=componentCount===1&&
     first.every(g=>g.minX<=w*.02&&g.maxX>=w*.98&&g.area>100)&&
-    tail.every((g,i)=>g.maxX>=w*.98&&g.minX>w*.15&&
-      g.minX>(i?tail[i-1].minX:first[3].minX)+w*.05&&
-      g.area<(i?tail[i-1].area:first[3].area)*.90&&
-      g.area>=first[2].area*.10);
+    shrinking&&(croppedFromLeft||croppedFromRight);
   const matched=clipped?first:groups;
   const horizontal=matched.every(g=>
     g.maxX-g.minX>=w*.45&&g.maxY-g.minY<=h*.55);
