@@ -249,6 +249,8 @@ test('one and two directly representable first hues are editable without invente
    const choices=reconstructionCandidates(src,{seed:'source-first-contiguous-hues'});
    const regions=choices.find(c=>c.kind==='regions');
    assert.ok(regions,'first contiguous semantic colour slots can be kept editable');
+   if(count===2)assert.ok(choices.every(c=>c.kind!=='shape'),
+     'two observed pigments cannot be replaced with a one-red-shape proposal');
    assert.equal(regions.recipe.scatteredCount,count);
    assert.deepEqual(regions.recipe.scatteredOverrides.map(x=>x.index),
      Array.from({length:count},(_,i)=>i));
