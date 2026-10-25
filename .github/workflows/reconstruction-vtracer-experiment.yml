@@ -1,11 +1,6 @@
 name: R0 VTracer optical experiment
-# Temporary PR trigger for source-backed first run, remove after evidence review.
+# Manually dispatched only. Browser/raster evidence is opt-in, never default PR CI.
 on:
-  pull_request:
-    paths:
-      - '.github/workflows/reconstruction-vtracer-experiment.yml'
-      - 'src/reconstruction-distance-field.js'
-      - 'scripts/benchmark-reconstruction-vtracer.mjs'
   workflow_dispatch:
     inputs:
       cases:
