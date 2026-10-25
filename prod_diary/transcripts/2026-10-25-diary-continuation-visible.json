@@ -1,0 +1,27 @@
+{
+  "schema": "roygbiv-conversation-excerpt/1",
+  "source_id": "2026-10-25-diary-continuation-visible",
+  "observed_date": "2026-10-25",
+  "capture_kind": "source_excerpt",
+  "completeness": "partial",
+  "platform": "visible project conversation context",
+  "speaker_coverage": [
+    "user"
+  ],
+  "agent_messages_available": false,
+  "all_project_sessions_included": false,
+  "precise_time_known": false,
+  "integrity_note": "Exact text from visible current project conversation context only, not a full two-sided export.",
+  "messages": [
+    {
+      "source_order": 1,
+      "role": "user",
+      "text": "I had transcripts of the projects earliest convos uploaded to the repo by other agents, so you can integrate and update as you're able"
+    },
+    {
+      "source_order": 2,
+      "role": "user",
+      "text": "Please upload the fullest possible transcripts of any new conversations from this project and update the diary using the transcripts and PRs descriptions and your memory, per the conventions of the diary"
+    }
+  ]
+}

@@ -316,6 +316,139 @@
       "complete_verbatim_transcript_verified": false,
       "coverage": "partial",
       "publication_date": "2026-10-22"
+    },
+    {
+      "episode_id": 21,
+      "title": "Продолжение после молчания",
+      "event_date": "2026-10-23",
+      "diary_file": "PRODUCTION-DIARY-2026-10-23-TO-2026-10-25.md",
+      "pr_numbers": [],
+      "source_ids": [
+        "2026-10-24-reconstruction-agent1-visible"
+      ],
+      "record_kind": "retrospective_synthesis",
+      "complete_verbatim_transcript_verified": false,
+      "coverage": "partial",
+      "publication_date": "2026-10-25"
+    },
+    {
+      "episode_id": 22,
+      "title": "Цветная полоса против собственной тени",
+      "event_date": "2026-10-24",
+      "diary_file": "PRODUCTION-DIARY-2026-10-23-TO-2026-10-25.md",
+      "pr_numbers": [
+        704,
+        706
+      ],
+      "source_ids": [
+        "2026-10-24-reconstruction-agent1-visible",
+        "2026-10-25-reconstruction-research-visible"
+      ],
+      "record_kind": "retrospective_synthesis",
+      "complete_verbatim_transcript_verified": false,
+      "coverage": "partial",
+      "publication_date": "2026-10-25"
+    },
+    {
+      "episode_id": 23,
+      "title": "Буквы приобретают характер",
+      "event_date": "2026-10-24",
+      "diary_file": "PRODUCTION-DIARY-2026-10-23-TO-2026-10-25.md",
+      "pr_numbers": [
+        681,
+        684,
+        688
+      ],
+      "source_ids": [
+        "2026-10-24-typography-agent2-visible"
+      ],
+      "record_kind": "retrospective_synthesis",
+      "complete_verbatim_transcript_verified": false,
+      "coverage": "partial",
+      "publication_date": "2026-10-25"
+    },
+    {
+      "episode_id": 24,
+      "title": "Исчезающий мобильный черновик",
+      "event_date": "2026-10-24",
+      "diary_file": "PRODUCTION-DIARY-2026-10-23-TO-2026-10-25.md",
+      "pr_numbers": [
+        694
+      ],
+      "source_ids": [
+        "2026-10-24-accessibility-agent3-visible"
+      ],
+      "record_kind": "retrospective_synthesis",
+      "complete_verbatim_transcript_verified": false,
+      "coverage": "partial",
+      "publication_date": "2026-10-25"
+    },
+    {
+      "episode_id": 25,
+      "title": "Семь красок получают геометрию",
+      "event_date": "2026-10-25",
+      "diary_file": "PRODUCTION-DIARY-2026-10-23-TO-2026-10-25.md",
+      "pr_numbers": [
+        710,
+        711,
+        712
+      ],
+      "source_ids": [
+        "2026-10-25-reconstruction-research-visible"
+      ],
+      "record_kind": "retrospective_synthesis",
+      "complete_verbatim_transcript_verified": false,
+      "coverage": "partial",
+      "publication_date": "2026-10-25"
+    },
+    {
+      "episode_id": 26,
+      "title": "Круг оказался многоугольником",
+      "event_date": "2026-10-25",
+      "diary_file": "PRODUCTION-DIARY-2026-10-23-TO-2026-10-25.md",
+      "pr_numbers": [
+        722,
+        723
+      ],
+      "source_ids": [
+        "2026-10-25-reconstruction-research-visible"
+      ],
+      "record_kind": "retrospective_synthesis",
+      "complete_verbatim_transcript_verified": false,
+      "coverage": "partial",
+      "publication_date": "2026-10-25"
+    },
+    {
+      "episode_id": 27,
+      "title": "Восемь надписей",
+      "event_date": "2026-10-25",
+      "diary_file": "PRODUCTION-DIARY-2026-10-23-TO-2026-10-25.md",
+      "pr_numbers": [
+        698,
+        699,
+        705
+      ],
+      "source_ids": [
+        "2026-10-24-typography-agent2-visible"
+      ],
+      "record_kind": "retrospective_synthesis",
+      "complete_verbatim_transcript_verified": false,
+      "coverage": "partial",
+      "publication_date": "2026-10-25"
+    },
+    {
+      "episode_id": 28,
+      "title": "История должна помнить незнание",
+      "event_date": "2026-10-25",
+      "diary_file": "PRODUCTION-DIARY-2026-10-23-TO-2026-10-25.md",
+      "pr_numbers": [],
+      "source_ids": [
+        "2026-10-25-diary-continuation-visible"
+      ],
+      "record_kind": "retrospective_synthesis",
+      "complete_verbatim_transcript_verified": false,
+      "coverage": "partial",
+      "publication_date": "2026-10-25"
     }
   ]
 }

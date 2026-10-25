@@ -63,12 +63,13 @@ for (const episode of provenance.episodes) {
   const diary = await read(episode.diary_file);
   assert(diary.includes('### ' + episode.episode_id + '.'), 'missing numbered episode ' + episode.episode_id);
 }
-assert.equal(ids.size, 20, 'expected twenty dated chapters');
+assert.equal(ids.size, 28, 'expected twenty-eight dated chapters');
 const narratives = ['PROLOGUE-2026-10-22.md',
   'PRODUCTION-DIARY-2026-10-16-TO-2026-10-19.md',
   'PRODUCTION-DIARY-2026-10-20-TO-2026-10-22.md',
   'RECONSTRUCTED-ORIGIN-2026-10-16.md',
-  'PRODUCTION-DIARY-EARLY-SOURCES-2026-10-22.md'];
+  'PRODUCTION-DIARY-EARLY-SOURCES-2026-10-22.md',
+  'PRODUCTION-DIARY-2026-10-23-TO-2026-10-25.md'];
 for (const filename of narratives) {
   // References are code-facing URL destinations, not Russian-language prose.
   const prose = (await read(filename)).replace(/\]\([^)]+\)/g, ']').replace(/https?:\/\/[^\s)]+/g, '');

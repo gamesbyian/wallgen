@@ -1,0 +1,22 @@
+{
+  "schema": "roygbiv-conversation-excerpt/1",
+  "source_id": "2026-10-24-typography-agent2-visible",
+  "observed_date": "2026-10-24",
+  "capture_kind": "source_excerpt",
+  "completeness": "partial",
+  "platform": "visible project conversation context",
+  "speaker_coverage": [
+    "user"
+  ],
+  "agent_messages_available": false,
+  "all_project_sessions_included": false,
+  "precise_time_known": false,
+  "integrity_note": "Exact text from visible current project conversation context only, not a full two-sided export.",
+  "messages": [
+    {
+      "source_order": 1,
+      "role": "user",
+      "text": "Work autonomously in `gamesbyian/wallgen` as **Agent 2: Typography Completion and Rendering Quality**.\n\nOwn [issue #653](https://github.com/gamesbyian/wallgen/issues/653). Read `AGENTS.md`, the current work queue, typography plan and renderer ownership contract. Inspect current main, issues and PRs before editing.\n\nBuild on merged #654–#663. Prioritize editable canonical text-on-path using existing curves and shape geometry, then valuable typography refinements: spacing, outlines, shadows, rainbow controls and multilingual shaping/font coverage.\n\nPreserve the existing font library, private TTF/OTF system, canonical object model, worker/headless/export parity, Undo and opt-in defaults. Validate actual rendered wallpapers, complex glyphs, full-resolution export and realistic performance. Fix demonstrated rendering defects rather than rebuilding completed features.\n\nCoordinate UI ownership with Agent 3 and avoid Agent 1's reconstruction algorithms. Implement and test on focused branches, submit qualified PRs, update #653 and plans, and continue through remaining achievable engineering work. Do not claim physical Android acceptance from browser evidence."
+    }
+  ]
+}
