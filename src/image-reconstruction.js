@@ -476,6 +476,7 @@ export function reconstructionCandidates(image,recipe){
   // Preserve the ordinary six initial renderer paints by replacing ONE
   // structurally redundant low-priority hypothesis, never adding a seventh.
   const observedEligible=!desc.radial.kind&&
+    (!Number.isFinite(desc.componentDiagonalAngle)||desc.repeatShape?.clipped)&&
     !desc.sevenColourRegions&&desc.colourRegions.length===7&&
     (desc.repeatShape?.clipped||
       ['hairpin','loop'].includes(desc.curve.kind)||
