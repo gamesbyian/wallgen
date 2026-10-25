@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {HUES,normalizeRecipe,resolveScene,encodeRecipe,decodeRecipe} from '../src/model.js';
 import {extractImageColourRegions,extractVisibleHueCompound} from '../src/image-path.js';
 import {observedHueShapeRecipe} from '../src/image-hue-reconstruction.js';
+import {reconstructionCandidates,RECONSTRUCTION_RENDER_LIMIT} from '../src/image-reconstruction.js';
 
 function hueRgb(hue){
   const chroma=255,sector=hue/60,partial=chroma*(1-Math.abs(sector%2-1));
@@ -82,4 +83,18 @@ test('visible geometry is deterministic under repeated analysis and neutral base
   assert.deepEqual(before,after);
   assert.ok(before.croppedHueSlots.every(i=>i>=0&&i<=6));
   assert.equal(before.uncertainty.includes('source pixels'),true);
+});
+
+test('current inverse candidate synthesis never spends more than six paints with per-hue option',()=>{
+  const source=sevenShapes();
+  const normal=reconstructionCandidates(source,normalizeRecipe({seed:'synthesis'}));
+  assert.ok(normal.length<=RECONSTRUCTION_RENDER_LIMIT);
+  assert.ok(normal.every(item=>item.recipe&&typeof item.kind==='string'));
+  assert.ok(new Set(normal).size===normal.length);
+  if(normal.some(item=>item.kind==='hue-visible-shapes')){
+    assert.equal(normal[0].kind,'hue-visible-shapes');
+    assert.equal(normal[0].recipe.scatteredShapeOverrides.length,7);
+    assert.ok(normal.some(item=>item.kind!=='hue-visible-shapes'),
+      'source-shape appearance must not crowd out procedural alternatives');
+  }
 });
