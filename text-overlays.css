@@ -75,24 +75,9 @@ body.text-direct-active #preview:active{cursor:grabbing}
 .text-direct-outline.text-direct-rotate-inset .text-direct-rotate{
   top:22px;transform:translate(-50%,-50%);
 }
-/* Tiny text (including one-glyph titles) cannot share its ink with a 44px
-   corner scale button. Put the existing keyboard/touch target outside that
-   frame, flipping inward near right/bottom edges. This affects editor chrome
-   only; the saved wallpaper and canonical geometry remain unchanged. */
-.text-direct-outline.text-direct-compact .text-direct-scale{
-  right:-22px;bottom:-22px;transform:translate(50%,50%)
-}
-.text-direct-outline.text-direct-compact.text-direct-scale-left .text-direct-scale{
-  right:auto;left:-22px;transform:translate(-50%,50%)
-}
-.text-direct-outline.text-direct-compact.text-direct-scale-up .text-direct-scale{
-  bottom:auto;top:-22px;transform:translate(50%,-50%)
-}
-.text-direct-outline.text-direct-compact.text-direct-scale-left.text-direct-scale-up .text-direct-scale{
-  transform:translate(-50%,-50%)
-}
-/* The usual rotate-inset safety class would put a 44px circle directly over
-   a top-edge one-letter title. Keep it outside, below that compact frame. */
-.text-direct-outline.text-direct-compact.text-direct-rotate-inset .text-direct-rotate{
-  top:auto;bottom:-22px;transform:translate(-50%,50%)
+/* In compact mode, the normal 44px buttons are positioned by the bounded
+   CSS-pixel grip-layout helper. Inline left/top centres, rotated with the
+   selected frame, never become part of the wallpaper pixels. */
+.text-direct-outline.text-direct-compact .text-direct-handle{
+  right:auto!important;bottom:auto!important;transform:none!important
 }
