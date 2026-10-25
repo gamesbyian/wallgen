@@ -57,6 +57,60 @@ export function skeletonizePigment(mask,width,height,{maxIterations=48}={}){
     count:pixels.reduce((n,v)=>n+(v?1:0),0)};
 }
 
+/** Detect *visible* black channels between seven parallel colour bands near
+ * the upper frame, where Hairpin and Loop remain nearly straight. Reuses only
+ * the shared importer pigment masks; crowded crossings and partial hues are
+ * rejected instead of inventing a layer order or unseen strand geometry.
+ * This is one local observation, not a global stripeWidth control.
+ */
+export function measureUpperHueGaps(masks,width,height){
+  if(!Array.isArray(masks)||masks.length!==7||
+    !Number.isInteger(width)||!Number.isInteger(height)||
+    width<20||height<40||width*height>40000||
+    masks.some(mask=>!(mask instanceof Uint8Array)||
+      mask.length!==width*height))
+    throw new RangeError('Invalid source hue mask geometry');
+  const gaps=[],rows=[];
+  for(let y=Math.floor(height*.05);y<Math.floor(height*.25);y++){
+    const segments=[];
+    let valid=true;
+    for(let hue=0;hue<7;hue++){
+      const mask=masks[hue],runs=[];let start=-1;
+      for(let x=0;x<=width;x++){
+        const marked=x<width&&mask[y*width+x]!==0;
+        if(marked&&start<0)start=x;
+        else if(!marked&&start>=0){runs.push([start,x-1]);start=-1;}
+      }
+      runs.sort((a,b)=>(b[1]-b[0])-(a[1]-a[0]));
+      if(!runs.length||runs[0][1]-runs[0][0]<1||
+        runs[1]&&runs[1][1]-runs[1][0]>=
+          (runs[0][1]-runs[0][0])*.5){valid=false;break;}
+      segments.push({hue,start:runs[0][0],end:runs[0][1]});
+    }
+    if(!valid)continue;
+    segments.sort((a,b)=>a.start-b.start);
+    const order=segments.map(x=>x.hue);
+    if(![0,6].includes(order[0])||
+      order.some((h,i)=>i&&Math.abs(h-order[i-1])!==1))continue;
+    const local=[];
+    for(let i=1;i<segments.length;i++){
+      const gap=segments[i].start-segments[i-1].end-1;
+      if(gap<0||gap>width*.2){valid=false;break;}
+      local.push(gap);
+    }
+    if(!valid)continue;
+    rows.push(y);gaps.push(...local);
+  }
+  if(!gaps.length)return null;
+  return {usableRows:rows.length,observedPairs:gaps.length,
+    medianGap:pxRound(percentile(gaps,.5)),
+    meanGap:pxRound(gaps.reduce((s,x)=>s+x,0)/gaps.length),
+    gapPositiveFraction:pxRound(gaps.filter(x=>x>=1).length/gaps.length),
+    // Measurements refer to pixel grid spacing, not author stroke-width units.
+    sourcePixelsOnly:true};
+}
+const pxRound=value=>Math.round(value*10000)/10000;
+
 function describeMask(mask,width,height,{withSkeleton=true}={}){
   const topology=maskTopology(mask,width,height);
   let touchesFrame=false;
@@ -112,6 +166,8 @@ export function compareRainbowInkGeometry(source,rendered,{withSkeleton=true}={}
     throw new RangeError('Skeleton diagnostics require downsampled analysis');
   const a=extractImageColourRegions(source,HUES,{includeMasks:true});
   const b=extractImageColourRegions(rendered,HUES,{includeMasks:true});
+  const upperSourceGaps=measureUpperHueGaps(a.masks,w,h);
+  const upperRenderedGaps=measureUpperHueGaps(b.masks,w,h);
   const byHue=a.masks.map((mask,i)=>{
     const other=b.masks[i];
     const metric=compareMaskGeometry(mask,other,w,h);
@@ -127,6 +183,7 @@ export function compareRainbowInkGeometry(source,rendered,{withSkeleton=true}={}
   const average=(key,items=byHue)=>items.length?
     items.reduce((s,v)=>s+v[key],0)/items.length:null;
   return {width:w,height:h,
+    upperSourceGaps,upperRenderedGaps,
     sourceHues:a.regions.length,renderedHues:b.regions.length,
     meanIoU:average('iou'),meanEdgeChamfer:average('edgeChamfer'),
     missingHues:byHue.filter(item=>Boolean(item.source.ink)!==
