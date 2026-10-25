@@ -27,6 +27,12 @@ Other mirror displacements (`positionX:-36,0,+18,+36`) remain **unsupported** by
 
 The authentic R0 #16 non-mirrored source continues to fit at **.058721503425** after merged #679 and #682; the synthetic mirrored normal source with seven meaningful pigments is recognized, whereas mirrored tails with a different high-frequency contour are refused. Deterministic tests cover the symmetric crop gate, exact normal recipe JSON transport, seven canonical objects and refusal of fake repeated appearance. These are local production-painter and synthetic Node tests, **not** physical Pixel, Android IME/TalkBack, external human-art or final owner acceptance. Normal quick CI is reported separately in the PR.
 
+## Full 19.8MP PNG transport evidence (local, not handset)
+
+The selected `shape-repeats` candidate was normalized and exported using the existing canonical recipe and original `drawWallpaper` painter. A **3024×6552 PNG** was fully rasterized and encoded, then embedded with its recipe through the ordinary `embedPngMetadata` route and extracted through `extractPngRecipe`. JSON `encodeRecipe` → `decodeRecipe` and embedded-PNG recipe equality were exact, and `resolveScene` confirmed all seven ordinary editable objects.
+
+The locally measured complete `drawWallpaper` submission **plus PNG encoding** took **1.451 seconds** in Skia Canvas2D (submission alone 16 ms, not incorrectly reported as total rendering). Raw output was **559,405 bytes**, embedded-recipe PNG **564,718 bytes**, process RSS around **199 MiB**. Those numbers depend on this container and raster implementation; they are NOT physical Pixel 6 Pro mobile memory, browser-worker, thermal, Chrome Download-button or human approval evidence.
+
 ## Remaining
 
 Issue #557 stays open for genuine pigment topology under arbitrary occlusion, source-invisible geometry, noncontiguous semantic colour slots, Hairpin narrow black channels, Loop crossings and Photo/material ambiguity. Do not broaden mirror recognition without an authentic producer source and independent image review.
