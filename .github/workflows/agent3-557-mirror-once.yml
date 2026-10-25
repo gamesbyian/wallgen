@@ -1,0 +1,100 @@
+name: One-shot independent mirrored Jagged integration verification
+# QA rerun: emit actual browser 7 hue descriptors for unexpected 0% gain
+on:
+  push:
+    branches: [agent3/557-mirrored-coherent-ribbons-main-20261025]
+    paths: [.github/workflows/agent3-557-mirror-once.yml]
+permissions:
+  contents: read
+jobs:
+  real-source-inverse:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install headless production painter
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install chromium --only-shell
+      - name: Generate 2 ordinary genuine R0 sources
+        run: node scripts/review-reconstruction.mjs --out-dir artifacts/agent3-683-r0 --only 04-jagged,16-offset-jagged
+      - name: Generate honest mirrored source through existing painter only
+        run: |
+          node scripts/render-headless.mjs \
+            --recipe artifacts/agent3-683-r0/16-offset-jagged.recipe.json \
+            --set mirrorHorizontal=true --set positionX=-18 \
+            --width 480 --height 1040 \
+            --out artifacts/agent3-683-r0/16-mirrored.png
+          node --input-type=module <<'NODE'
+          import {readFile,writeFile,copyFile,mkdir} from 'node:fs/promises';
+          import {stripPngDescriptiveMetadata,extractPngRecipe} from './src/png-metadata.js';
+          const dir='artifacts/agent3-683-source';
+          await mkdir(dir,{recursive:true});
+          const original=new Uint8Array(await readFile('artifacts/agent3-683-r0/16-mirrored.png'));
+          const blinded=stripPngDescriptiveMetadata(original);
+          if(extractPngRecipe(blinded)!==null)throw Error('metadata/source recipe leaked');
+          await writeFile(dir+'/16-mirrored.no-metadata.png',blinded);
+          for(const id of ['04-jagged','16-offset-jagged'])
+            await copyFile('artifacts/agent3-683-r0/'+id+'.no-metadata.png',
+              dir+'/'+id+'.no-metadata.png');
+          await writeFile(dir+'/manifest.json',JSON.stringify({
+            schema:'roygbiv-reconstruction-external/v1',
+            items:[
+              {id:'04-jagged',metadataFree:'04-jagged.no-metadata.png'},
+              {id:'16-offset-jagged',metadataFree:'16-offset-jagged.no-metadata.png'},
+              {id:'16-mirrored',metadataFree:'16-mirrored.no-metadata.png'}
+            ]
+          },null,2)+'\n');
+          NODE
+      - name: Fit proposed #683 code using metadata-free current source
+        run: |
+          cp -a artifacts/agent3-683-source artifacts/agent3-683-new
+          node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/agent3-683-new
+      - name: Fit current merged main with identical source bytes
+        run: |
+          cp -a artifacts/agent3-683-source artifacts/agent3-683-old
+          git show origin/main:src/image-path.js > src/image-path.js
+          git show origin/main:src/image-reconstruction.js > src/image-reconstruction.js
+          node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/agent3-683-old
+      - name: Numeric before/after proof and paint budget
+        run: |
+          node --input-type=module <<'NODE'
+          import {readFile,writeFile} from 'node:fs/promises';
+          const prev=JSON.parse(await readFile('artifacts/agent3-683-old/evaluation.json','utf8'));
+          const next=JSON.parse(await readFile('artifacts/agent3-683-new/evaluation.json','utf8'));
+          const rows=next.samples.map(n=>{
+            const b=prev.samples.find(x=>x.id===n.id);
+            if(!b)throw Error('Unpaired fixture '+n.id);
+            const v={id:n.id,old:b.bestError,now:n.bestError,
+              improvement:((b.bestError-n.bestError)/b.bestError)*100,
+              oldKind:b.bestKind,newKind:n.bestKind,
+              beforePaints:b.refinementRenders,afterPaints:n.refinementRenders};
+            console.log('AGENT3_683_OPTO '+JSON.stringify(v));
+            if(v.afterPaints>10||v.afterPaints>v.beforePaints)
+              throw Error('Shared ten-paint budget violated '+n.id);
+            if(n.id==='16-mirrored'){
+              if(v.improvement<40||v.newKind!=='shape-repeats')
+                throw Error('Mirrored actual source not demonstrably improved');
+            }else if(Math.abs(v.old-v.now)>1e-9||v.newKind!==v.oldKind)
+              throw Error('Control regression '+n.id);
+            return v;
+          });
+          await writeFile('artifacts/agent3-683-numbers.json',JSON.stringify(rows,null,2)+'\n');
+          NODE
+      - name: Retain independent actual source/fitted PNGs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent3-683-mirrored-genuine-optics
+          path: |
+            artifacts/agent3-683-source/
+            artifacts/agent3-683-new/
+            artifacts/agent3-683-old/
+            artifacts/agent3-683-numbers.json
+          retention-days: 14
+          if-no-files-found: warn
