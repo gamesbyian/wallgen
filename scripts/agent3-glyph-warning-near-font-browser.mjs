@@ -78,6 +78,13 @@ try{
    await page.locator('[data-text-key="font"]').scrollIntoViewIfNeeded();
    await page.screenshot({path:join(output,'visible-near-typeface-'+width+'x'+height+'.png'),
       animations:'disabled'});
+   await page.locator('[data-text-glyph-status]').scrollIntoViewIfNeeded();
+   const readable=await page.locator('[data-text-glyph-status]').boundingBox();
+   assert.ok(readable&&readable.top>=-1 &&
+     readable.top+readable.height<=height+1,
+     'complete font warning must be revealable inside the real viewport');
+   await page.screenshot({path:join(output,'complete-warning-'+width+'x'+height+'.png'),
+      animations:'disabled'});
    await page.locator('[data-text-key="text"]').fill('HELLO');
    await page.locator('[data-text-key="text"]').blur();
    await page.waitForFunction(()=>document.querySelector('[data-text-glyph-status]')
