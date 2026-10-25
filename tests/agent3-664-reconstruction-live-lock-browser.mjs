@@ -52,7 +52,12 @@ try{
   assert.equal(await page.locator('#imagePathDialog').evaluate(x=>x.open),true,
     'stale, scored candidate was allowed to close dialog');
   assert.match(await page.locator('#imageRecipeStatus').textContent(),
-    /not applied.*settings changed/i);
+    /Locks changed\. Re-import image\./);
+  const lineFit=await page.locator('#imageRecipeStatus').evaluate(el=>({
+    height:el.clientHeight,scrollHeight:el.scrollHeight
+  }));
+  assert.ok(lineFit.scrollHeight<=lineFit.height+1,
+    'mobile fit-refusal notice clips its own two-line status');
   assert.equal(await page.locator('#imageRecipeApply').isDisabled(),true);
   assert.equal(current().structure,'paths','creator locked Structure was overwritten');
   assert.equal(current().reconstructionOrigin,undefined,
