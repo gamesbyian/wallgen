@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {normalizeRecipe,resolveScene} from '../src/model.js';
-import {normalizeTextOverlays,newTextOverlay,MAX_TEXT_OVERLAYS} from '../src/text-overlays.js';
+import {normalizeTextOverlays,newTextOverlay,MAX_TEXT_OVERLAYS,
+  boundTextContent} from '../src/text-overlays.js';
 import {drawTextOverlays} from '../src/text-overlay-renderer.js';
 import {randomizeScope} from '../src/scoped-random.js';
 import {randomizeAllRecipe} from '../src/model.js';
@@ -122,4 +123,41 @@ test('native whole-line Arabic rainbow maps logical first hue to the right edge'
   assert.equal(stops[0][1],scene.stripes[3].color);
   assert.equal(stops.at(-1)[1],scene.stripes[0].color);
   assert.ok(stops.every((s,i)=>i===0||s[0]>=stops[i-1][0]));
+});
+
+test('canonical limit never leaves orphan combining marks or incomplete joined emoji',()=>{
+  const plain='A'.repeat(159);
+  const joined='👩‍🔬';
+  assert.equal(boundTextContent(plain+joined+' HELLO'),plain,
+    'joined emoji is omitted atomically if it would exceed 160 codepoints');
+  assert.equal(boundTextContent(plain+'e\u0301'),plain,
+    'base+combining grapheme must never be split');
+  assert.equal(boundTextContent('A'.repeat(158)+'e\u0301'),'A'.repeat(158)+'e\u0301');
+  assert.equal(boundTextContent('🌈'.repeat(160)),'🌈'.repeat(160));
+  const recipe=normalizeRecipe({textOverlays:[{
+    text:'B'.repeat(159)+'👨‍👩‍👧‍👦🌈',font:'modern'
+  }]});
+  assert.equal(recipe.textOverlays[0].text,'B'.repeat(159));
+  assert.deepEqual(normalizeRecipe(JSON.parse(JSON.stringify(recipe))),recipe);
+});
+test('UTF-16 and multi-line boundaries remain bounded without fracturing graphemes',()=>{
+  const long='🌈'.repeat(165);
+  assert.equal([...boundTextContent(long)].length,160);
+  assert.equal(boundTextContent('one\ntwo\nthree\nfour\nfive'),
+    'one\ntwo\nthree\nfour');
+  assert.equal(boundTextContent('one\r\ntwo\tthree'),'one\ntwo three');
+  assert.equal(boundTextContent(null),'');
+  assert.equal(boundTextContent(''), '');
+  assert.equal(boundTextContent('A'.repeat(100000)).length,160);
+});
+
+test('Text textarea leaves UTF-16 room for complete joined emoji before canonical clipping',async()=>{
+  const {readFileSync}=await import('node:fs');
+  const markup=readFileSync(new URL('../src/text-overlays-ui.js',import.meta.url),'utf8');
+  assert.match(markup,/maxlength="4096"/);
+  assert.match(markup,/aria-describedby="textOverlayUnicodeLimit"/);
+  const raw='A'.repeat(158)+'👩‍🔬';
+  assert.equal(boundTextContent(raw),'A'.repeat(158),
+    'complete joined emoji cannot squeeze into the remaining two codepoints');
+  assert.equal(normalizeTextOverlays([{text:raw}])[0].text,'A'.repeat(158));
 });

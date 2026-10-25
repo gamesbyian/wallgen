@@ -23,7 +23,8 @@ export function installTextOverlayTool({getRecipe,changeRecipe,onFontNotice=()=>
     </div>
     <div data-text-fields>
       <label class="text-overlay-wide">Words
-        <textarea data-text-key="text" rows="2" maxlength="160" spellcheck="false" placeholder="Type a phrase"></textarea>
+        <textarea data-text-key="text" rows="2" maxlength="4096" spellcheck="false" placeholder="Type a phrase" aria-describedby="textOverlayUnicodeLimit"></textarea>
+        <span id="textOverlayUnicodeLimit" class="text-overlay-hint">Up to 160 Unicode codepoints and four lines. Complete emoji and accents stay intact.</span>
       </label>
       <div class="text-overlay-grid">
         <label>Typeface<select data-text-key="font"></select></label>
