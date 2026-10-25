@@ -1,0 +1,65 @@
+name: Source hue-mask browser CPU profile
+# One-shot PR proof; revert to workflow_dispatch before integration.
+on:
+  pull_request:
+    paths: ['.github/workflows/reconstruction-source-mask-profile.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: hue-mask-cpu-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: false
+jobs:
+  source-profile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Targeted read-only CLI tests
+        run: node --test tests/reconstruction-r0-evaluate.test.js tests/reconstruction-visible-hue-shapes.test.js
+      - name: Disposable browser, not an application dependency
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Generate five genuine current-painter anonymous sources
+        run: |
+          node scripts/review-reconstruction.mjs --out-dir artifacts/hue-mask-cpu \
+            --only 01-vertical-straight,05-hairpin,06-loop,16-offset-jagged,19-jewel-vertical
+      - name: Independently compare original and shared source analysis CPU in Chromium
+        run: |
+          node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/hue-mask-cpu --profile-hue-masks
+      - name: Verify paired shape recipe equality, baseline control and summarize
+        run: |
+          node --input-type=module -e '
+            import {readFileSync} from "node:fs";
+            const report=JSON.parse(readFileSync("artifacts/hue-mask-cpu/evaluation.json"));
+            if(report.samples.length!==5)throw Error("Expected five real source cases");
+            const all=report.samples.map(s=>({id:s.id,kind:s.bestKind,
+              winnerError:s.bestError,...s.hueMaskProfile}));
+            for(const item of all){
+              if(!item.sameRecipe||item.analysisPixels<10000||
+                item.baselineSamplesMs?.length!==6||
+                item.reusedSamplesMs?.length!==6||
+                !(item.baselineMedianMs>0)||!(item.reusedMedianMs>0))
+                throw Error("Invalid browser profile or recipe drift for "+item.id);
+            }
+            for(const item of all)console.log("SOURCE_MASK_PROFILE "+JSON.stringify(item));
+            const oldMedian=all.reduce((s,x)=>s+x.baselineMedianMs,0)/all.length;
+            const newMedian=all.reduce((s,x)=>s+x.reusedMedianMs,0)/all.length;
+            console.log("SOURCE_MASK_PROFILE_AGG "+JSON.stringify({
+              cases:all.length,meanCaseMedianBaselineMs:oldMedian,
+              meanCaseMedianReusedMs:newMedian,
+              ratio:oldMedian/Math.max(.000001,newMedian)
+            }));
+          '
+      - name: Save real-source pixel parity and timed samples for independent review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: r0-source-hue-mask-browser-cpu-receipt
+          path: artifacts/hue-mask-cpu
+          retention-days: 7
+          if-no-files-found: warn
