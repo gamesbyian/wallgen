@@ -41,6 +41,12 @@ test('source-mask browser profile is strictly opt-in and cannot be mistaken for 
  assert.equal(Object.hasOwn(readReconstructionEvalArgs([]),'profileHueMasks'),false);
 });
 
+test('observed source-shape signatures are opt-in research diagnostics',()=>{
+ assert.deepEqual(readReconstructionEvalArgs(['--source-signature']),
+   {dir:'artifacts/reconstruction-r0',sourceSignature:true});
+ assert.equal(Object.hasOwn(readReconstructionEvalArgs([]),'sourceSignature'),false);
+});
+
 test('independently authored external graphics have no invented canonical ground truth',()=>{
  const external={
    schema:'roygbiv-reconstruction-external/v1',items:[
