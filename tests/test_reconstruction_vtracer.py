@@ -42,6 +42,10 @@ class OfflineVectorTests(unittest.TestCase):
                 svg.write_text(data)
                 with self.assertRaises(ValueError):
                     oracle.raster_svg(svg,(80,160))
+                source=Path(tmp)/'source.png'
+                Image.new('RGB',(80,160),'black').save(source)
+                with self.assertRaises(ValueError):
+                    oracle.compare_one(source,svg,Path(tmp)/'unsafe.png')
 
     def test_absent_sources_or_vector_refused(self):
         with tempfile.TemporaryDirectory() as tmp:
