@@ -98,3 +98,23 @@ test('current inverse candidate synthesis never spends more than six paints with
       'source-shape appearance must not crowd out procedural alternatives');
   }
 });
+
+test('source-visible shape candidate neutralizes inherited Photo, texture and camera state',()=>{
+  const source=sevenShapes();
+  const polluted=normalizeRecipe({seed:'wrong-existing-picture',
+    material:'stone',textureStrength:95,material2:'foil',
+    textureLayer2Enabled:true,material3:'adobe',textureLayer3Enabled:true,
+    textureDisplacement:82,photoLook:{enabled:true,amount:80,style:'vintage'},
+    positionX:40,positionY:-45,viewZoom:.6,viewPanX:18,viewPanY:30,
+    motif:'stars'});
+  const result=observedHueShapeRecipe(source,placement,polluted);
+  assert.ok(result);
+  const r=result.recipe;
+  assert.equal(r.material,'none');
+  assert.equal(r.textureLayer2Enabled,false);
+  assert.equal(r.textureLayer3Enabled,false);
+  assert.equal(r.positionX,0);assert.equal(r.positionY,0);
+  assert.equal(r.viewZoom,1);assert.equal(r.viewPanX,0);
+  assert.equal(r.motif,'solid');
+  assert.equal(r.photoLook?.enabled,false);
+});
