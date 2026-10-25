@@ -28,6 +28,7 @@ export function installTextOverlayTool({getRecipe,changeRecipe,onFontNotice=()=>
       <div class="text-overlay-grid">
         <label>Typeface<select data-text-key="font"></select></label>
         <label>Colour<select data-text-key="colour"></select></label>
+        <p class="text-overlay-font-status text-overlay-glyph-status" data-text-glyph-status role="status" aria-live="polite"></p>
         <label>Outline<select data-text-key="outline"></select></label>
         <label>Text size <input type="range" data-text-key="size" min="12" max="180" step="1"></label>
         <label>Horizontal <input type="range" data-text-key="x" min="0" max="100" step="1"></label>
@@ -38,7 +39,6 @@ export function installTextOverlayTool({getRecipe,changeRecipe,onFontNotice=()=>
         <input type="file" data-text-import accept=".ttf,.otf,font/ttf,font/otf,application/x-font-ttf,application/x-font-opentype">
       </label>
       <p class="text-overlay-font-status" data-text-font-status role="status" aria-live="polite"></p>
-      <p class="text-overlay-font-status text-overlay-glyph-status" data-text-glyph-status role="status" aria-live="polite"></p>
       <details class="text-overlay-advanced">
         <summary>More text options</summary>
         <div class="text-overlay-grid">
