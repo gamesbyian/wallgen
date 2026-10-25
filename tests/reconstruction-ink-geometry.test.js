@@ -4,7 +4,7 @@ import {HUES} from '../src/model.js';
 import {extractImageColourRegions} from '../src/image-path.js';
 import {
   skeletonizePigment,describeRainbowInkGeometry,compareRainbowInkGeometry,
-  proposeMedialWidthDeltas
+  proposeMedialWidthDeltas,measureUpperHueGaps
 } from '../src/reconstruction-ink-geometry.js';
 
 const raster=(w,h,painter)=>{
@@ -107,4 +107,33 @@ test('medial-width probe refuses incoherent colours and estimates coherent narro
   assert.ok(hint.deltas.length<=3);
   assert.equal(proposeMedialWidthDeltas({byHue:[1,1,1,1,1,1,1].map(hue)},52),null);
   assert.equal(proposeMedialWidthDeltas({byHue:[.8,.8,.8].map(hue)},52),null);
+});
+
+test('upper-frame source black channels are measured locally and crossing rows refused',()=>{
+  const w=90,h=80;
+  const create=(gap)=>raster(w,h,(x,y)=>{
+    if(y<5||y>70)return black;
+    for(let hue=0;hue<7;hue++){
+      const start=3+hue*(8+gap);
+      if(x>=start&&x<=start+7){
+        const hues=[
+          [255,0,0,255],[255,124,0,255],[255,230,0,255],
+          [0,220,70,255],[0,120,255,255],[80,20,255,255],
+          [190,0,250,255]
+        ];
+        return hues[hue];
+      }
+    }
+    return black;
+  });
+  const a=extractImageColourRegions(create(2),HUES,{includeMasks:true});
+  const b=extractImageColourRegions(create(0),HUES,{includeMasks:true});
+  const gaps=measureUpperHueGaps(a.masks,w,h);
+  assert.equal(gaps.medianGap,2);
+  assert.equal(gaps.gapPositiveFraction,1);
+  assert.ok(gaps.usableRows>=8);
+  const touching=measureUpperHueGaps(b.masks,w,h);
+  assert.equal(touching.medianGap,0);
+  assert.equal(touching.gapPositiveFraction,0);
+  assert.throws(()=>measureUpperHueGaps([],w,h),RangeError);
 });
