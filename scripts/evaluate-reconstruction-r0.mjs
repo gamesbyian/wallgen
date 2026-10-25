@@ -31,6 +31,9 @@ export function readReconstructionEvalArgs(argv){
     if(key==='--probe-ink-width'){
       opts.inkGeometry=true;opts.probeInkWidth=true;continue;
     }
+    if(key==='--probe-ink-channels'){
+      opts.inkGeometry=true;opts.probeInkChannels=true;continue;
+    }
     if(key==='--help'||key==='-h'){opts.help=true;continue;}
     if(!['--dir','--browser'].includes(key)||!argv[i+1]||argv[i+1].startsWith('--'))
       throw Error('Unknown/incomplete option '+key);
@@ -112,7 +115,7 @@ async function evaluate(opts){
         throw Error('External input must not contain a ROYGBIV source recipe');
       // Inference only sees image pixels, never this item's recipe.
       const inferred=await page.evaluate(async ({base64,includeAlternatives,
-        includeInkGeometry,includeWidthProbe})=>{
+        includeInkGeometry,includeWidthProbe,includeChannelProbe})=>{
         const {reconstructionCandidates,rankReconstructionCandidates,
           reconstructionPlacement,RECONSTRUCTION_FRAME,
           refineReconstructionCandidate,reconstructionRefinementIndex,
@@ -196,8 +199,36 @@ async function evaluate(opts){
             }
           }
         }
+        let channelProbe=null;
+        if(includeChannelProbe&&inkGeometry&&best&&
+          (best.kind==='hairpin'||best.kind==='loop')){
+          const {proposeUpperGapTrials}=await import('/src/reconstruction-ink-geometry.js');
+          const hint=proposeUpperGapTrials(inkGeometry,best.kind);
+          channelProbe={kind:best.kind,baseError:best.error,hint,
+            variants:[],bestError:best.error,bestControls:null,bestImage:null};
+          for(const {widthDelta,spreadDelta} of hint?.trials||[]){
+            const candidate=normalizeRecipe({...best.recipe,
+              stripeWidth:best.recipe.stripeWidth+widthDelta,
+              spread:best.recipe.spread+spreadDelta});
+            if(candidate.stripeWidth===best.recipe.stripeWidth&&
+              candidate.spread===best.recipe.spread)continue;
+            const candidateCanvas=render(candidate);
+            const pixels=candidateCanvas.getContext('2d',
+              {willReadFrequently:true}).getImageData(0,0,fit.width,fit.height);
+            const error=compareReconstructionPixels(reference,pixels);
+            const controls={stripeWidth:candidate.stripeWidth,spread:candidate.spread};
+            channelProbe.variants.push({widthDelta,spreadDelta,controls,error,
+              image:candidateCanvas.toDataURL('image/png')});
+            if(error+1e-9<channelProbe.bestError){
+              channelProbe.bestError=error;
+              channelProbe.bestControls=controls;
+              channelProbe.bestImage=candidateCanvas.toDataURL('image/png');
+            }
+          }
+        }
         bitmap.close();
         return {
+          ...(includeChannelProbe?{channelProbe}:{}),
           ...(includeWidthProbe?{widthProbe}:{}),
           prefitAlternatives,
           ...(includeInkGeometry?{inkGeometry}:{}),
@@ -218,7 +249,8 @@ async function evaluate(opts){
       },{base64:Buffer.from(input).toString('base64'),
         includeAlternatives:!!opts.alternatives,
         includeInkGeometry:!!opts.inkGeometry,
-        includeWidthProbe:!!opts.probeInkWidth});
+        includeWidthProbe:!!opts.probeInkWidth,
+        includeChannelProbe:!!opts.probeInkChannels});
       // External work has NO original ROYGBIV recipe or true-render floor.
       // Only actual current-production PNGs have blinded truth sidecars.
       const truth=external?null:JSON.parse(await readFile(join(dir,item.recipeFile),'utf8'));
@@ -248,6 +280,13 @@ async function evaluate(opts){
         bestLabel:inferred.selected?.label??null,
         prefitAlternatives:inferred.prefitAlternatives,
         ...(opts.inkGeometry?{inkGeometry:inferred.inkGeometry}:{}),
+        ...(opts.probeInkChannels?{channelProbe:inferred.channelProbe?{
+          ...inferred.channelProbe,bestImage:undefined,
+          variants:inferred.channelProbe.variants.map((trial,i)=>({
+            ...trial,image:undefined,
+            preview:item.id+'.r0-gap-trial-'+(i+1)+'.png'})),
+          bestPreview:inferred.channelProbe.bestImage?
+            item.id+'.r0-gap-probe-best.png':null}:null}:{}),
         ...(opts.probeInkWidth?{widthProbe:inferred.widthProbe?{
           ...inferred.widthProbe,bestImage:undefined,
           variants:inferred.widthProbe.variants.map((trial,i)=>({
@@ -278,6 +317,13 @@ async function evaluate(opts){
       for(const [index,variant] of inferred.candidateVariants.entries()){
         await writeFile(join(dir,record.variantPreviews[index]),pngBytes(variant.image));
       }
+      for(const [i,trial] of (inferred.channelProbe?.variants||[]).entries()){
+        await writeFile(join(dir,item.id+'.r0-gap-trial-'+(i+1)+'.png'),
+          pngBytes(trial.image));
+      }
+      if(inferred.channelProbe?.bestImage)
+        await writeFile(join(dir,item.id+'.r0-gap-probe-best.png'),
+          pngBytes(inferred.channelProbe.bestImage));
       for(const [i,trial] of (inferred.widthProbe?.variants||[]).entries()){
         await writeFile(join(dir,item.id+'.r0-width-trial-'+(i+1)+'.png'),
           pngBytes(trial.image));
@@ -337,7 +383,7 @@ async function evaluate(opts){
 }
 async function main(){
   const opts=readReconstructionEvalArgs(process.argv.slice(2));
-  if(opts.help){console.log('node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/reconstruction-r0 [--browser executable] [--alternatives] [--ink-geometry] [--probe-ink-width]');return;}
+  if(opts.help){console.log('node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/reconstruction-r0 [--browser executable] [--alternatives] [--ink-geometry] [--probe-ink-width] [--probe-ink-channels]');return;}
   await evaluate(opts);
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
