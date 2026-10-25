@@ -1471,3 +1471,36 @@ test('mirrored partial ribbon measuring rejects incoherent width, axis and mixed
    'same-image mixed-side clipping cannot borrow a mirrored source claim');
 });
 
+
+test('cropped shared hue stamps refuse tail ink-width oscillation with an unchanged centreline',()=>{
+ const painted=distort=>raster(300,460,(x,y)=>{
+   for(let i=0;i<7;i++){
+     const left=i<4?0:[55,110,165][i-4];
+     if(x<left)continue;
+     const centre=30+i*50+Math.round(x*.13+3*Math.sin(x/17));
+     // All seven true objects remain elongated, so the established
+     // physical axes and globally averaged thickness checks still pass.
+     // Only the three crop tails alternate 9px and 33px locally, while
+     // maintaining their original centreline and mean thickness.
+     const half=distort&&i>=4?
+       (Math.floor((x-left)/12)%2===0?4:16):10;
+     if(Math.abs(y-centre)<=half)return colour(HUES[i]);
+   }
+   return [0,0,0,255];
+ });
+ const valid=painted(false),tampered=painted(true);
+ const sourceDescription=describeReconstructionImage(valid);
+ assert.equal(sourceDescription.repeatShape?.clipped,true,
+   'observed stable-width tails remain editable');
+ const tamperedDescription=describeReconstructionImage(tampered);
+ assert.equal(tamperedDescription.colourRegions.length,7);
+ assert.ok(tamperedDescription.ribbonBands,
+   'new refusal is NOT attributable to the existing all-seven average thickness/axis gate');
+ assert.equal(tamperedDescription.repeatShape,null,
+   'coincident ridges cannot excuse observably different per-column pigment widths');
+ const inferred=reconstructionCandidates(tampered,normalizeRecipe({seed:'different-width-tails'}));
+ assert.ok(!inferred.some(option=>option.kind==='shape-repeats'));
+ assert.ok(inferred.length<=RECONSTRUCTION_RENDER_LIMIT);
+ assert.ok(reconstructionCandidates(valid,normalizeRecipe({seed:'valid-width-tails'}))
+   .some(option=>option.kind==='shape-repeats'));
+});
