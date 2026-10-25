@@ -64,6 +64,33 @@ test('visible source hue shapes reuse canonical mask/holes and produce seven ind
   assert.deepEqual(original.data,bytes,'source bytes never changed');
 });
 
+test('neutral and two-hue source artwork never synthesizes a complete seven-pigment scene',()=>{
+  const source=sevenShapes(),original=source.data.slice();
+  const neutral={...source,data:source.data.slice()};
+  for(let i=0;i<neutral.data.length;i+=4){
+    if(neutral.data[i]||neutral.data[i+1]||neutral.data[i+2]){
+      neutral.data[i]=155;neutral.data[i+1]=155;neutral.data[i+2]=155;
+    }
+  }
+  const muted=extractImageColourRegions(neutral,HUES,{includeMasks:true});
+  assert.equal(muted.regions.length,0,'neutral greys cannot prove coloured pigments');
+  assert.equal(observedHueShapeRecipe(neutral,placement,{}),null);
+  const two={...source,data:source.data.slice()};
+  const red=hueRgb(HUES[0]),blue=hueRgb(HUES[4]);
+  for(let i=0;i<two.data.length;i+=4){
+    const match=rgb=>two.data[i]===rgb[0]&&
+      two.data[i+1]===rgb[1]&&two.data[i+2]===rgb[2];
+    if(!match(red)&&!match(blue)){
+      two.data[i]=0;two.data[i+1]=0;two.data[i+2]=0;
+    }
+  }
+  const analysis=extractImageColourRegions(two,HUES,{includeMasks:true});
+  assert.deepEqual(analysis.regions.map(region=>region.index),[0,4]);
+  assert.equal(observedHueShapeRecipe(two,placement,{}),null,
+    'five unobserved hues cannot be hallucinated from two real ones');
+  assert.deepEqual(source.data,original,'source artwork is immutable');
+});
+
 test('incomplete hue, contradictory locks and invalid geometry refuse instead of inventing pigment',()=>{
   const incomplete=sevenShapes({omit:3});
   assert.equal(observedHueShapeRecipe(incomplete,placement,{}),null);
