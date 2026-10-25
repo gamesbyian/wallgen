@@ -22,15 +22,36 @@ const num=(value,fallback,min,max)=>{
   const valid=Number.isFinite(n)?Math.max(min,Math.min(max,n)):fallback;
   return Object.is(valid,-0)?0:valid;
 };
+// A canonical 160-codepoint budget must never save half a combining cluster
+// or the head of a joined emoji. Iterate the grapheme segmentation lazily,
+// stopping at the budget rather than materializing arbitrary-length input.
+export function boundTextContent(value){
+  if(typeof value!=='string')return '';
+  const cleaned=value.slice(0,4096)
+    .replace(/[\u0000-\u0008\u000b-\u001f\u007f]/g,'')
+    .replace(/\t/g,' ');
+  let remaining=160,lines=1,result='';
+  const segmentation=typeof Intl!=='undefined'&&typeof Intl.Segmenter==='function'?
+    new Intl.Segmenter(undefined,{granularity:'grapheme'}).segment(cleaned):cleaned;
+  for(const unit of segmentation){
+    const cluster=typeof unit==='string'?unit:unit.segment;
+    const cost=Array.from(cluster).length;
+    if(cost>remaining)break;
+    const newLines=(cluster.match(/\n/g)||[]).length;
+    if(lines+newLines>4)break;
+    result+=cluster;
+    remaining-=cost;lines+=newLines;
+    if(!remaining)break;
+  }
+  return result;
+}
 export function normalizeTextOverlays(input){
   if(!Array.isArray(input))return [];
   const used=new Set();
   return input.slice(0,MAX_TEXT_OVERLAYS).map((value,index)=>{
     const v=value&&typeof value==='object'&&!Array.isArray(value)?value:{};
-    const raw=typeof v.text==='string'?v.text:'';
-    // Bound text early, before recipe URL, IndexedDB and PNG serialization.
-    const text=Array.from(raw.replace(/[\u0000-\u0008\u000b-\u001f\u007f]/g,'').replace(/\t/g,' '))
-      .slice(0,160).join('').split('\n').slice(0,4).join('\n');
+    // Bound text before recipe URL, IndexedDB, transport and export.
+    const text=boundTextContent(v.text);
     let id=typeof v.id==='string'&&/^[A-Za-z0-9_-]{1,48}$/.test(v.id)?
       v.id:'text-'+(index+1);
     if(used.has(id))id='text-'+(index+1);
