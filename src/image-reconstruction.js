@@ -476,7 +476,6 @@ export function reconstructionCandidates(image,recipe){
   // Preserve the ordinary six initial renderer paints by replacing ONE
   // structurally redundant low-priority hypothesis, never adding a seventh.
   const observedEligible=!desc.radial.kind&&
-    (!Number.isFinite(desc.componentDiagonalAngle)||desc.repeatShape?.clipped)&&
     !desc.sevenColourRegions&&desc.colourRegions.length===7&&
     (desc.repeatShape?.clipped||
       ['hairpin','loop'].includes(desc.curve.kind)||
@@ -499,7 +498,19 @@ export function reconstructionCandidates(image,recipe){
       // expanded Draw when its independent band geometry is supported.
       const last=result.findLastIndex((candidate,i)=>
         i>0&&candidate.kind!=='path');
-      if(redundant>=0)result.splice(redundant,1);
+      if(Number.isFinite(desc.componentDiagonalAngle)&&
+        !desc.repeatShape?.clipped){
+        // Three actual-source angular baselines, a Jagged hypothesis and a
+        // conservative Draw are independently proven. If a credible visible
+        // seven-hue scene can compete, yield only the SECOND (unclamped)
+        // Draw variant, never silently discard an angle or Jagged.
+        const secondaryPath=result.findLastIndex((candidate,index)=>
+          index>0&&candidate.kind==='path');
+        if(secondaryPath>=0)result.splice(secondaryPath,1);
+        else if(redundant>=0)result.splice(redundant,1);
+        else if(last>=0)result.splice(last,1);
+        else result.pop();
+      }else if(redundant>=0)result.splice(redundant,1);
       else if(last>=0)result.splice(last,1);
       else result.pop();
     }
