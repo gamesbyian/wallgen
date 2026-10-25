@@ -148,6 +148,10 @@ export function installTextOverlayTool({getRecipe,changeRecipe,onFontNotice=()=>
       drawn:'Follow my Draw path'})[key]
   ]));
   let selectedId=null;
+  // A background control refresh must not replace uncommitted Words drafts
+  // while a user is typing or composing with a mobile input method.
+  // Keep the last bound object ID so changing selections still refreshes.
+  let syncedTextOwnerId=null;
   let mover=null;
   const currentItems=()=>getRecipe().textOverlays||[];
   function sync(){
@@ -163,6 +167,7 @@ export function installTextOverlayTool({getRecipe,changeRecipe,onFontNotice=()=>
     moveButton.disabled=!items.some(item=>item.enabled&&item.text&&!item.locked);
     packSave.disabled=!packageFontIds(getRecipe()).length;
     if(!item){
+      syncedTextOwnerId=null;
       glyphCheckVersion++;glyphStatus.textContent='';
       fontStatus.textContent='';mover?.endCanvasMove();return;
     }
@@ -187,6 +192,13 @@ export function installTextOverlayTool({getRecipe,changeRecipe,onFontNotice=()=>
       root.querySelector('[data-text-key="'+key+'"]').disabled=!shadowActive;
     for(const control of fields.querySelectorAll('[data-text-key]')){
       const key=control.dataset.textKey;
+      // Textarea 'change' commits only after editing, deliberately avoiding
+      // redraw/IME-focus churn per keystroke. A background sync may happen
+      // while those keystrokes are still a focused, uncommitted draft.
+      // Preserve the DOM draft until its own change event, but never
+      // preserve a stale draft when a different text object is selected.
+      if(key==='text'&&document.activeElement===control&&
+        syncedTextOwnerId===item.id)continue;
       if(control.type==='checkbox')control.checked=Boolean(item[key]);
       else {
         const defaults={path:'none',pathHeight:90,letterSpacing:0,
@@ -195,6 +207,7 @@ export function installTextOverlayTool({getRecipe,changeRecipe,onFontNotice=()=>
         if(control.value!==String(value))control.value=String(value);
       }
     }
+    syncedTextOwnerId=item.id;
   }
   function commit(items){
     changeRecipe({...getRecipe(),textOverlays:items});
