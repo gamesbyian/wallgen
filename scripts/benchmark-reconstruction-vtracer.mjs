@@ -16,7 +16,7 @@ import {promisify} from 'node:util';
 import {createServer} from 'node:http';
 import {createHash} from 'node:crypto';
 import {readFile,writeFile,access,mkdir} from 'node:fs/promises';
-import {resolve,join,dirname,extname} from 'node:path';
+import {resolve,join,dirname,extname,relative} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {classifyReconstructionManifest} from './evaluate-reconstruction-r0.mjs';
 
@@ -119,7 +119,7 @@ export async function runVectorBenchmark(options,{
 }={}){
   const base=resolve(options.dir),out=resolve(options.outDir);
   // Never destroy prior evidence or accidentally use the input corpus directory.
-  if(out===base||out.startsWith(base+'/')&&out===join(base,''))
+  if(out===base)
     throw Error('Output directory must differ from input corpus');
   const manifest=JSON.parse(await readFile(join(base,'manifest.json'),'utf8'));
   const {external,items}=classifyReconstructionManifest(manifest);
@@ -183,8 +183,9 @@ export async function runVectorBenchmark(options,{
     '<p>Source at left, VTracer at right. No canonical recipe claimed;',
     'lower RGB/ink error is better, but all work still needs optical review.</p>',
     ...results.map(x=>'<figure><h2>'+esc(x.id)+'</h2>'+
-      '<a href="'+esc(x.svg)+'">SVG</a><div><img src="../'+
-      esc(x.source)+'"><img src="'+esc(x.preview)+'"></div>'+
+      '<a href="'+esc(x.svg)+'">SVG</a><div><img src="'+
+      esc(relative(out,join(base,x.source)).replaceAll('\\','/'))+
+      '"><img src="'+esc(x.preview)+'"></div>'+
       '<p>RGB/ink error '+x.rgbInkError.toFixed(6)+
       '; paths '+x.pathCount+'; '+x.tracerMilliseconds+' ms</p></figure>')
   ].join(''));
