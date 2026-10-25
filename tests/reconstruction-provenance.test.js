@@ -76,3 +76,30 @@ test('inferred procedural wave jagged and hairpin labels survive canonical PNG/J
      candidateKind);
  }
 });
+
+test('editable shape-repeats provenance persists through current recipe and embedded PNG transport',()=>{
+ const original=normalizeRecipe({seed:'seven-stamps',reconstructionOrigin:{
+   origin:'inferred-image',method:'current-render-fit-v1',
+   candidateKind:'shape-repeats',sourceWidth:480,sourceHeight:1040,
+   initialFitError:.05872150342508851,
+   uploadedSource:'must not be saved'
+ }});
+ assert.equal(original.reconstructionOrigin.candidateKind,'shape-repeats');
+ assert.equal(original.reconstructionOrigin.initialFitError,.058722);
+ assert.ok(!JSON.stringify(original).includes('uploadedSource'));
+ assert.deepEqual(decodeRecipe(encodeRecipe(original)),original,
+   'URL/JSON round trip cannot reclassify editable repeated shapes as a generic path');
+ const metadata=embedPngMetadata(png,{}, {recipe:original});
+ const saved=extractPngRecipeWithProvenance(metadata);
+ assert.equal(saved.format,'roygbiv-recipe-v2');
+ assert.equal(saved.recipe.reconstructionOrigin.candidateKind,'shape-repeats');
+ assert.deepEqual(saved.recipe.reconstructionOrigin,original.reconstructionOrigin);
+ assert.deepEqual(resolveScene(original).objects,
+   resolveScene({...original,reconstructionOrigin:undefined}).objects,
+   'inference receipt must never alter painted shape semantics');
+ const untrusted=normalizeRecipe({...original,reconstructionOrigin:{
+   ...original.reconstructionOrigin,candidateKind:'unvalidated-and-untrusted'
+ }});
+ assert.equal(untrusted.reconstructionOrigin.candidateKind,'path',
+   'unexpected future values still use the conservative fallback');
+});
