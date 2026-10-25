@@ -30,6 +30,16 @@ test('optional alternative preview output requires an explicit opt-in flag',()=>
 });
 
 
+test('source-mask browser profile is strictly opt-in and cannot be mistaken for an edit',()=>{
+ assert.deepEqual(readReconstructionEvalArgs(['--profile-hue-masks']),
+   {dir:'artifacts/reconstruction-r0',profileHueMasks:true});
+ assert.deepEqual(readReconstructionEvalArgs(['--dir','artifacts/r0',
+   '--hue-visible-shapes','--profile-hue-masks']),{
+     dir:'artifacts/r0',hueVisibleShapes:true,profileHueMasks:true
+   });
+ assert.equal(Object.hasOwn(readReconstructionEvalArgs([]),'profileHueMasks'),false);
+});
+
 test('independently authored external graphics have no invented canonical ground truth',()=>{
  const external={
    schema:'roygbiv-reconstruction-external/v1',items:[

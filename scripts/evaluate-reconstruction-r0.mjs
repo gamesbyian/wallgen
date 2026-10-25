@@ -40,6 +40,9 @@ export function readReconstructionEvalArgs(argv){
     if(key==='--hue-visible-shapes'){
       opts.hueVisibleShapes=true;continue;
     }
+    if(key==='--profile-hue-masks'){
+      opts.profileHueMasks=true;continue;
+    }
     if(key==='--help'||key==='-h'){opts.help=true;continue;}
     if(!['--dir','--browser'].includes(key)||!argv[i+1]||argv[i+1].startsWith('--'))
       throw Error('Unknown/incomplete option '+key);
@@ -122,7 +125,7 @@ async function evaluate(opts){
       // Inference only sees image pixels, never this item's recipe.
       const inferred=await page.evaluate(async ({base64,includeAlternatives,
         includeInkGeometry,includeWidthProbe,includeChannelProbe,includeLocalCurve,
-        includeHueVisibleShapes})=>{
+        includeHueVisibleShapes,includeHueMaskProfile})=>{
         const {reconstructionCandidates,rankReconstructionCandidates,
           reconstructionPlacement,RECONSTRUCTION_FRAME,
           refineReconstructionCandidate,reconstructionRefinementIndex,
@@ -147,6 +150,55 @@ async function evaluate(opts){
           p.width/600*fit.width,p.height/1300*fit.height);
         const reference=fg.getImageData(0,0,fit.width,fit.height);
         const candidates=reconstructionCandidates(source,normalizeRecipe({seed:'r0-anonymous'}));
+        // Opt-in browser CPU profiling, not part of recipe selection or
+        // ordinary image import. Compare the exact *same* candidate operation
+        // with and without reuse of the already computed seven source masks.
+        let hueMaskProfile=null;
+        if(includeHueMaskProfile){
+          const {describeReconstructionImage}=await import('/src/image-reconstruction.js');
+          const {observedHueShapeRecipe}=await import('/src/image-hue-reconstruction.js');
+          const initial=normalizeRecipe({seed:'r0-anonymous'});
+          const run=useShared=>{
+            const desc=describeReconstructionImage(source,
+              {includeColourMasks:useShared});
+            const hint=desc.paletteHypothesis?.palette??'classic';
+            return observedHueShapeRecipe(source,p,initial,{
+              paletteHint:hint,
+              ...(useShared?{colourAnalysis:{
+                background:desc.background,coverage:desc.coverage,
+                regions:desc.colourRegions,masks:desc.sourceHueMasks
+              }}:{})
+            });
+          };
+          const independently=run(false),shared=run(true);
+          if(JSON.stringify(independently)!==JSON.stringify(shared))
+            throw Error('Source pixel semantics changed during CPU comparison');
+          // Warm both paths; interleave forward/reverse pairs to reduce the
+          // impact of JIT, throttling, cache warmth and one-sided GC.
+          for(let i=0;i<2;i++){run(false);run(true);}
+          const baselineMs=[],reusedMs=[];
+          for(let i=0;i<6;i++){
+            const order=i%2?[true,false]:[false,true];
+            for(const useShared of order){
+              const start=performance.now();
+              run(useShared);
+              (useShared?reusedMs:baselineMs).push(performance.now()-start);
+            }
+          }
+          const median=values=>{
+            const ordered=values.slice().sort((a,b)=>a-b);
+            return (ordered[2]+ordered[3])/2;
+          };
+          const baselineMedianMs=median(baselineMs);
+          const reusedMedianMs=median(reusedMs);
+          hueMaskProfile={schema:'roygbiv-ephemeral-source-masks-cpu-v1',
+            analysisPixels:source.width*source.height,
+            baselineMedianMs,reusedMedianMs,
+            medianSavedMs:baselineMedianMs-reusedMedianMs,
+            medianRatio:baselineMedianMs/Math.max(.000001,reusedMedianMs),
+            baselineSamplesMs:baselineMs,reusedSamplesMs:reusedMs,
+            sameRecipe:true,eligible:Boolean(shared)};
+        }
         const render=(recipe)=>{
           const canvas=document.createElement('canvas');
           canvas.width=RECONSTRUCTION_FRAME.width;canvas.height=RECONSTRUCTION_FRAME.height;
@@ -295,6 +347,7 @@ async function evaluate(opts){
         }
         bitmap.close();
         return {
+          ...(includeHueMaskProfile?{hueMaskProfile}:{}),
           ...(includeHueVisibleShapes?{hueVisibleShapes}:{}),
           ...(includeLocalCurve?{localCurveProbe}:{}),
           ...(includeChannelProbe?{channelProbe}:{}),
@@ -321,7 +374,8 @@ async function evaluate(opts){
         includeWidthProbe:!!opts.probeInkWidth,
         includeChannelProbe:!!opts.probeInkChannels,
         includeLocalCurve:!!opts.probeLocalCurve,
-        includeHueVisibleShapes:!!opts.hueVisibleShapes});
+        includeHueVisibleShapes:!!opts.hueVisibleShapes,
+        includeHueMaskProfile:!!opts.profileHueMasks});
       // External work has NO original ROYGBIV recipe or true-render floor.
       // Only actual current-production PNGs have blinded truth sidecars.
       const truth=external?null:JSON.parse(await readFile(join(dir,item.recipeFile),'utf8'));
@@ -351,6 +405,7 @@ async function evaluate(opts){
         bestLabel:inferred.selected?.label??null,
         prefitAlternatives:inferred.prefitAlternatives,
         ...(opts.inkGeometry?{inkGeometry:inferred.inkGeometry}:{}),
+        ...(opts.profileHueMasks?{hueMaskProfile:inferred.hueMaskProfile}:{}),
         ...(opts.hueVisibleShapes?{hueVisibleShapes:inferred.hueVisibleShapes?{
           ...inferred.hueVisibleShapes,recipe:undefined,image:undefined,
           improved:inferred.hueVisibleShapes.error+1e-9<
@@ -429,6 +484,8 @@ async function evaluate(opts){
         await writeFile(join(dir,item.id+'.r0-ink-width-probe.png'),
           pngBytes(inferred.widthProbe.bestImage));
       }
+      if(opts.profileHueMasks)
+        console.log('HUE_MASK_CPU '+JSON.stringify({id:item.id,...record.hueMaskProfile}));
       results.push(record);
       console.log('R0_EVAL '+JSON.stringify(record));
     }

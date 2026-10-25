@@ -1,5 +1,9 @@
 # Current ROYGBIV work queue and three-agent dispatch
 
+## Measured real-browser source-mask reuse · 25 October 2026 (PR #715)
+
+[PR #715](https://github.com/gamesbyian/wallgen/pull/715) adds a **strictly opt-in paired Chromium CPU profiler** for merged single-pass source mask optimization #714, with zero normal import/runtime cost. [Actual production-renderer R0 run #40225513500](https://github.com/gamesbyian/wallgen/actions/runs/40225513500) generated five genuinely metadata-free source PNGs (Straight/Hairpin/Loop/displaced Jagged/Jewel) and verified exact prior-vs-shared full editable candidate equality before timing. Two warmups and six interleaved samples per route at 277×600 each showed median **8–24 ms less source-analysis CPU** per image, **15.99% mean case-median reduction**, with a 8.79–30.24% range. [Full methodology, samples and cautions](RECONSTRUCTION-SOURCE-MASK-CHROMIUM-PROFILE-2026-10-25.md). This is a Chromium/Linux *single analysis operation*, not measured overall app import or physical Pixel CPU/heap/thermal; preserve explicit handset verification and no heavy recurring CI. #557 remains open for mixed occlusion and external-source QA.
+
 ## Shared source mask one-pass reconstruction · 25 October 2026 (PR #714)
 
 [PR #714](https://github.com/gamesbyian/wallgen/pull/714) removes one redundant full-image hue classification in the normal seven-silhouette editable reconstruction candidate path. The existing `describeReconstructionImage` already creates exactly seven source masks for region/palette signatures; the new opt-in `includeColourMasks` handoff reuses those same in-memory masks when constructing the independent portable per-hue shapes. Normal standalone callers still receive no mask arrays, and all recipes remain masks-free. Rechecks the **stricter original meaningful-colour region threshold**, so sparse/partial false-positive sources cannot be newly accepted by the stamp-analysis threshold.
