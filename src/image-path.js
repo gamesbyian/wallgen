@@ -302,9 +302,14 @@ function silhouetteMask({data,width:w,height:h}){
 }
 export function extractImageShapeCandidates(image){
   const {width:w,height:h}=image,mask=silhouetteMask(image);
-  const regions=components(mask,w,h,Math.max(24,Math.floor(w*h*.001)));
+  // Request one overflow sentinel. The old top-eight scan silently
+  // advertised "All silhouettes" even when a ninth substantial island
+  // had been discarded. Keep individual selections available, but never
+  // manufacture a complete composite or inverse recipe from partial ink.
+  const regions=components(mask,w,h,Math.max(24,Math.floor(w*h*.001)),9);
+  const overflow=regions.length>8;
   const parts=[];
-  for(const c of regions){
+  for(const c of regions.slice(0,8)){
     if(c.area>w*h*.92)continue;
     const loops=shapeEdgeLoops(c,w,h)
       .sort((a,b)=>Math.abs(ringArea(b))-Math.abs(ringArea(a)));
@@ -316,7 +321,9 @@ export function extractImageShapeCandidates(image){
   const result=[];
   // A composite candidate retains separate disconnected islands (e.g. two
   // dots of an i). Individual parts remain independently selectable.
-  for(const included of [parts,...parts.map(part=>[part])]){
+  const proposals=overflow?parts.map(part=>[part]):
+    [parts,...parts.map(part=>[part])];
+  for(const [candidateIndex,included] of proposals.entries()){
     if(result.length>=8)break;
     const components=included.map(part=>({outer:part.outer,holes:part.holes}));
     let geometry;
@@ -326,8 +333,13 @@ export function extractImageShapeCandidates(image){
     });}catch{continue;}
     const outer=included[0].outer;
     result.push({kind:'shape',closed:true,
-      label:included.length>1?'All silhouettes ('+included.length+' parts)':
-        'Filled silhouette'+(included[0].holes.length?' with holes':''),
+      label:overflow?
+        'Individual silhouette '+(candidateIndex+1)+' (source has 9+ islands)':
+        included.length>1?'All silhouettes ('+included.length+' parts)':
+          'Filled silhouette'+(included[0].holes.length?' with holes':''),
+      // A selectable individual region is still useful, but may not be
+      // presented as a complete source-visible reconstruction.
+      sourceComplete:!overflow,
       points:outer.map(([x,y])=>[x/w,y/h]),
       geometry,score:included.reduce((n,c)=>n+Math.abs(ringArea(c.outer)),0)});
   }
