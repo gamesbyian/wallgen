@@ -220,3 +220,25 @@ export function proposeMedialWidthDeltas(geometry,stripeWidth){
   return {medianRatio:median,medianAbsDeviation:mad,
     deltas:[...new Set(values.filter(d=>d!==0))]};
 }
+
+// Research-only evidence gate for *coupled* negative-space experiments.
+// One source-local upper straight section does not prove the correct
+// procedural controls over a bent/crossing scene; painter pixels still decide.
+export function proposeUpperGapTrials(geometry,kind){
+  if(!['hairpin','loop'].includes(kind))return null;
+  const source=geometry?.upperSourceGaps,painted=geometry?.upperRenderedGaps;
+  if(!source||!painted||source.usableRows<8||painted.usableRows<8||
+    source.observedPairs<48||painted.observedPairs<48||
+    source.meanGap<.4||
+    source.gapPositiveFraction-painted.gapPositiveFraction<.25)
+    return null;
+  // Keep the proposed studies compact and bounded; these are not global
+  // renderer adjustments, not part of 6+10, and not new editor defaults.
+  const pairs=kind==='hairpin'?
+    [[-8,4],[-12,6],[-16,8]]:
+    [[-6,4],[-10,8],[-12,10]];
+  return {source,painted,
+    trials:pairs.map(([widthDelta,spreadDelta])=>({
+      widthDelta,spreadDelta
+    }))};
+}
