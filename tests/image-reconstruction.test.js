@@ -1308,3 +1308,29 @@ test('small Loop radius corrections recover the centre without extending the rea
  assert.ok(widthProbes>0&&radiusProbes>0,
    'mismatched first-render ink retains the original width and radius choices');
 });
+
+test('Loop ink agreement comes from the shared original hue masks without additional paints',()=>{
+ const w=RECONSTRUCTION_FRAME.width,h=RECONSTRUCTION_FRAME.height;
+ const stripes=(start,end)=>raster(w,h,(x,y)=>{
+   const index=Math.floor((y-10)/26);
+   return index>=0&&index<7&&x>=start&&x<end?
+     colour(HUES[index]):[0,0,0,255];
+ });
+ const source=stripes(12,82),matching=stripes(12,82),narrow=stripes(35,65);
+ const recipe=normalizeRecipe({structure:'paths',geometry:'loop',
+   background:'black',seed:'ink-agreement'});
+ const item={kind:'loop',recipe,label:'circle',uncertainty:'inferred'};
+ let renderCalls=0;
+ const matched=rankReconstructionCandidates([item],source,()=>{
+   renderCalls++;return matching;
+ })[0];
+ assert.equal(renderCalls,1,'the ink measurement is read-only over the first real render');
+ assert.ok(matched.loopInkRatio>.99&&matched.loopInkRatio<1.01);
+ const low=rankReconstructionCandidates([item],source,()=>narrow)[0];
+ assert.ok(low.loopInkRatio>1.1,
+   'a severe ink mismatch must keep original StripeWidth probes');
+ const noHues=rankReconstructionCandidates([item],
+   raster(w,h,()=>[0,0,0,255]),()=>matching)[0];
+ assert.equal(noHues.loopInkRatio,undefined,
+   'missing colours never invent a physically measured Loop ratio');
+});
