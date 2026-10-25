@@ -31,6 +31,8 @@ test('late creator locks project onto Apply and preserve provenance without chan
   assert.deepEqual(recipe.lockedSettings,old.lockedSettings);
   for(const field of ['structure','geometry','position','background'])
     assert.ok(lockedChanges.includes(field),'missing late-lock alert for '+field);
+  assert.equal(lockedChanges.length,4,
+    'a late lock invalidates the exact preview and fitted error');
   assert.deepEqual(fitted,original,'source fit must never be mutated');
   assert.equal(recipe.reconstructionOrigin.candidateKind,'shape-repeats');
   assert.equal(recipe.reconstructionOrigin.origin,'inferred-image');
@@ -58,8 +60,13 @@ test('the production UI uses the projected recipe rather than a stale candidate'
   const code=readFileSync(new URL('../src/app.js',import.meta.url),'utf8');
   assert.match(code,/const \{recipe:inferred,lockedChanges\}=prepareReconstructionApply\(\s*current,candidate,description\)/,
     'live App Apply must reproject locks at time of user confirmation');
+  assert.match(code,/if\(lockedChanges\.length\)\{[\s\S]*?return false;\s*\}/,
+    'mismatched preview must never be applied after lock drift');
   assert.match(code,/changeRecipe\(inferred,\{cause:'image-reconstruction'\}\)/);
   assert.match(code,/Locked settings preserved:/);
+  const ui=readFileSync(new URL('../src/image-path-ui.js',import.meta.url),'utf8');
+  assert.match(ui,/recipeApply\.disabled=true;[\s\S]*?Close|Close[\s\S]*?recipeApply\.disabled=true/,
+    'the modal must explain why the pending candidate was refused');
   assert.doesNotMatch(code,/const inferred=normalizeRecipe\(\{\.\.\.candidate,reconstructionOrigin:/,
     'must not commit raw pre-lock snapshot or drop the projected recipe');
 });
