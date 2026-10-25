@@ -28,11 +28,46 @@ All image triplets were downloaded and **directly inspected at equal scale**. Ha
 
 Native full-size **3024×6552 source-inferred Hairpin and Loop PNGs** were produced by ordinary headless production renderer, and embedded portable recipes verified; not a new image overlay, pixel-only restoration or historically authentic source control recovery.
 
+## Final 22-source production integration acceptance (completed)
+
+**[Full 22 R0 Chromium run #40220074924](https://github.com/gamesbyian/wallgen/actions/runs/40220074924) PASSED** after conservative candidate-budget reconciliation. The workflow used metadata-free renderer-authored source images, actual `drawWallpaper`, six initial candidate paints + at most ten refinement paints as before, and a separately labelled one-paint research comparator that **does not enter production selection**. It explicitly asserted five key native improvements and five established circle/compound controls against bounded upper error thresholds. Lean quick PR CI also passed after the original diagonal test caught and prevented the loss of all three measured angle guesses.
+
+| Genuine R0 art | Native new selected kind | Final current-painter error |
+| --- | --- | ---: |
+| #01 vertical straight | hue-visible-shapes | .01662896 |
+| #02 diagonal straight | hue-visible-shapes | **.01555587** |
+| #03 wave | hue-visible-shapes | **.01365135** |
+| #04 Jagged | hue-visible-shapes | **.01862755** |
+| #05 Hairpin | hue-visible-shapes | **.03053935** |
+| #06 Loop | hue-visible-shapes | **.03783583** |
+| #07 Draw | hue-visible-shapes | **.02354522** |
+| #08 rays | radial-rays | .04298436 |
+| #09 rings | radial-rings | .10091382 |
+| #10 nested regions | radial-rings | .01195128 |
+| #11 scattered circles | regions | **.00562812** |
+| #12 textured embroidery | hue-visible-shapes | .02230618 |
+| #13 holed single silhouette | shape | .00264777 |
+| #14 displaced rays | radial-rays | .03862013 |
+| #15 displaced rings | radial-rings | .06193792 |
+| #16 displaced Jagged | hue-visible-shapes | **.01330855** |
+| #17 fourteen same-colour circles | regions | **.00389299** |
+| #18 compound holes/islands | shape-repeats | **.00547219** |
+| #19 Jewel palette straight | straight | .02528595 |
+| #20 pastel seven circles | regions | **.00585024** |
+| #21 incomplete five hues | regions | .00281372 |
+| #22 overlapping reversed circles | regions | **.00467572** |
+
+The special diagonal selection keeps **three true measured angle options, a Jagged option and a safe Draw** even when visible shape geometry competes for one of six slots. The synthetic source-axis test in `tests/image-reconstruction.test.js` and actual #02 R0 were both checked. Wave and Jagged import preserve their strongest editable scene hypotheses even when the winner is an appearance-first per-hue recipe.
+
+A contact atlas covering 15 diverse R0 source/current/visible-shape image triplets was created from the **actual downloaded GHA artifact** and opened directly, not judged from names or scores. The result visibly restores Hairpin black channels and exit turn, Loop internal concentric colours and stem alignment, native Jagged sharp clipped shapes, and true Draw flow. Circle/compound cases preserve existing best choices; the visually inferior classic-coloured trace on pastel and overlapped circles correctly loses. The direct visible hue representation is still an **appearance hypothesis**, not recovered historic procedural settings, and may encode pixel-aliased fragments as small components (Loop case components up to 8/hue). It makes no claim about source-invisible crossed strands.
+
+Source-inferred Hairpin, Loop and displaced Jagged also completed native **3024×6552** generated PNG exports, using unchanged production renderer and embedded restorable recipe, in the opt-in workflow. This does not constitute physical Pixel/creator acceptance. The PR-triggered heavy GHA proof was removed after acceptance; the opt-in workflow remains for source-first investigation.
+
 ## Product integration acceptance and caveats
 
 The initial six-candidate integration exposed an actual protected diagonal regression: one of three proven source axis-angle hypotheses was displaced. Quick test `tests/image-reconstruction.test.js` caught it. The final selection policy retains all three angles and Jagged/Draw, and trades one lesser Draw alternative only when a bounded independent visible geometry candidate is truly supported. Do not remove this test or widen painter budget.
 
-Full **22** R0 source corpus is the authoritative final gate. Reject integration unless *all* 22 genuine samples are evaluated through actual browser forward painting, major Hairpin/Loop/Jagged gains reproduce and existing editable circles/islands and radial cases keep their established scores. Source truth sidecars are loaded only after candidate selection for the separate known floor, not for inverse inference. Inspect all original/current/proposed PNGs, log source crop/fragment notices and keep manual-only Chromium GHA rather than default heavy PR CI. No unattended Pixel 6 Pro, TalkBack, IME or human creative acceptance can be claimed.
+Full **22** R0 source corpus was actually executed and passed its explicit native acceptance gate. Keep rejecting future regressions unless *all* 22 genuine samples are evaluated through actual browser forward painting, major Hairpin/Loop/Jagged gains reproduce and existing editable circles/islands and radial cases keep their established scores. Source truth sidecars are loaded only after candidate selection for the separate known floor, not for inverse inference. Inspect all original/current/proposed PNGs, log source crop/fragment notices and keep manual-only Chromium GHA rather than default heavy PR CI. No unattended Pixel 6 Pro, TalkBack, IME or human creative acceptance can be claimed.
 
 ## Next independent fidelity tasks
 
