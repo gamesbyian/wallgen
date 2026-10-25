@@ -1,6 +1,13 @@
 # Current ROYGBIV work queue and three-agent dispatch
 
-## Loop #06 observed-island completeness · 25 October 2026 (PR #711)
+## Live restoration and source colour-story gate · 25 October 2026
+
+**Confirmed merged on main:** [#711](https://github.com/gamesbyian/wallgen/pull/711) the source-visible Loop island overflow fix, and [#706](https://github.com/gamesbyian/wallgen/pull/706) the independently verified, pinned VTracer offline upper-bound oracle (not a new app dependency). #711 improved genuine current-renderer Loop #06 .03783583→.03725952 (retains 13/11/9 red/orange/yellow visible components), all 21 control scores unchanged. #706's six genuine source/SVG vectorized comparisons and separately optional Python tests passed. The full actionable ledger for the latter is [VTracer oracle findings](RECONSTRUCTION-VTRACER-ACTUAL-ORACLE-2026-10-25.md). Both PRs are merged, not stranded or pending integration.
+
+**[PR #712](https://github.com/gamesbyian/wallgen/pull/712)** addresses a newly verified palette inconsistency: source-visible seven-hue editable shapes hardcoded Classic even when the *existing shared* measured source colour-story hypothesis identified Jewel. A source-blind, real 22-case Chromium renderer run [#40222117789](https://github.com/gamesbyian/wallgen/actions/runs/40222117789) improved genuine Jewel stripes #19 from .025285947712→**.015307629462** (39.46% lower error), with *all 21 other best fits unchanged*, including Hairpin/Loop/Jagged, circle, radial and compound controls. A second genuine 22-case run [#40222298069](https://github.com/gamesbyian/wallgen/actions/runs/40222298069) verified that the optional research-only comparator now also paints the measured Jewel story, rather than misleading bright Classic. Source/previous/updated actual PNGs directly inspected. [Full source-palette acceptance and limits](RECONSTRUCTION-SOURCE-PALETTE-REUSE-FINDINGS-2026-10-25.md). No added normal paint, source truth leak, history inference, PWA runtime dependency, new model or lost palette lock. Optical GHA back to manual-only after qualified PR validation; no physical Pixel/human signoff.
+
+
+## Loop #06 observed-island completeness · 25 October 2026 (MERGED #711)
 
 The first accepted independent-per-hue source-to-canonical renderer reconstruction [merged #710](https://github.com/gamesbyian/wallgen/pull/710) has a targeted follow-through [PR #711](https://github.com/gamesbyian/wallgen/pull/711). Previously each source hue contour returned the largest **8** significant disconnected components. The new **visible hue only** adapter accepts up to **16**, requesting 17 to *fail closed* instead of silently dropping a meaningful observed source pigment region; **all other legacy callers keep 8**.
 
