@@ -1,5 +1,21 @@
 # Agent 3 verified merged-main integration ledger · 24 October 2026
 
+## Verified post-baseline merged-main follow-through · 24 October local
+
+The earlier `c8c3644b` baseline recorded below is retained for audit; the **new exact live main verification is `e57a8a4f79dfffc49e471fa12a366416c9ff0b81`**. Additional qualified merges after the previous two are:
+
+| PR | Merged commit | Independent integration and acceptance disposition |
+| --- | --- | --- |
+| [#669](https://github.com/gamesbyian/wallgen/pull/669) | `d3ff56c0` | Native canonical Draw/Hairpin/Loop text-follow geometry, seven current-renderer PNGs visually reviewed; worker versus reference raster 0 differing channels on all seven; merge from clean main, no temporary CI. |
+| [#666](https://github.com/gamesbyian/wallgen/pull/666) | `a1cad88` | Four intact ROYGBIV hue ribbons with coherent clipped remainder seed physically measured Jagged thickness/gaps. Genuine R0 #16 source/fit error **.22214612→.20873044 (6.04% relative)**, controls unchanged, no extra canonical render trials; source/new-fit PNG inspected. Does not solve all black-space, cropped-end or Hairpin/Loop defects. |
+| [#673](https://github.com/gamesbyian/wallgen/pull/673) | `2d22ce67` | Native tracking/leading, rainbow offset and reversal, opt-in bounded text shadows. Constructed new 8-file commit from `main` after verifying old stacked parent blobs **exactly matched** current source on all eight paths. Nine independent genuine Chromium art samples reviewed, 0 worker pixel-channel differences, full 3024×6552 output. Fresh clean-head quick CI passed. Superseded stacked #672 closed unmerged, no lost implementation. |
+| [#674](https://github.com/gamesbyian/wallgen/pull/674) | `e57a8a4f` | Independent **actual Chromium interaction** at 320×700 and 412×892, [run #40153624899](https://github.com/gamesbyian/wallgen/actions/runs/40153624899); real UI nested Details/Text/Expressive editing, keyboard sliders, focus-control gating, shadow Undo, Random retaining Draw/typography, Undo Random, visible Studio PNG tap and metadata equality for **2,070,819-byte full-resolution image**, zero exceptions and remote requests. Screenshots with real stripe background independently downloaded and viewed. One-shot workflow retired; lean quick CI green for merged head. |
+
+After these merges the newly opened [#675](https://github.com/gamesbyian/wallgen/pull/675) is **draft/unmerged**: Agent 1 reports promising genuine Hairpin/Loop reductions using the same ten painter trials, but independent latest-art and exact-head validation must precede integration. Outstanding ownership issues: [#557](https://github.com/gamesbyian/wallgen/issues/557), [#653](https://github.com/gamesbyian/wallgen/issues/653), [#664](https://github.com/gamesbyian/wallgen/issues/664). Existing 12 stranded no-PR branch dispositions remain in force.
+
+**NOT TESTED:** physical Pixel 6 Pro, actual Android Chrome/PWA gesture ergonomics and input method, TalkBack, prolonged device heap/thermal/performance, real-human creative acceptance, licensed owner-supplied fonts, and authenticated opted-in external telemetry. Browser interaction and actual raster proof do not imply those gates.
+
+
 **Code baseline verified:** GitHub `gamesbyian/wallgen` `main` at `c8c3644b09da71124953f98eed13bdb4ab41a999` (squash-merged #667 over squash-merged #668). This is a verified merge SHA rather than a forecast. Subsequent documentation commits may change the tip without changing this code baseline. Issue [#664](https://github.com/gamesbyian/wallgen/issues/664) remains open strictly for owner-dependent hardware and human evidence, not a fictional remaining browser release task.
 
 ## Actually integrated and inspected
