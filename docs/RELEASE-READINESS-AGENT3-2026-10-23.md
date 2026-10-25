@@ -1,5 +1,10 @@
 # ROYGBIV release-readiness and owner-dependent acceptance ledger
 
+## Latest merged-main release evidence · 24 October local
+
+The current verified engineering baseline is **`e57a8a4f`**, with #669, #666, #673 and #674 merged in addition to the earlier #667/#668; details, exact image metrics, 12 historical branch dispositions and links are in [INTEGRATION-LEDGER-2026-10-24.md](INTEGRATION-LEDGER-2026-10-24.md). The independent real source Chromium test [#40153624899](https://github.com/gamesbyian/wallgen/actions/runs/40153624899) passed **320×700 and 412×892** including authored Draw-following expressive text UI changes, Undo, Random preservation and visible **3024×6552 PNG** exact recipe transport. Real screenshots independently inspected, disposable workflow retired before merge. Newly opened draft #675 Hairpin/Loop remains pending independent proof. **NOT TESTED:** physical Pixel/Chrome/PWA ergonomics, Android IME, TalkBack, physical device heap/thermal, human creator study or authenticated external telemetry. Keep #664/#653/#557 open for those limits and remaining engineering.
+
+
 ## Verified merged-main receipt · 24 October 2026
 
 The exact merged-main engineering and hardware-status ledger is [**INTEGRATION-LEDGER-2026-10-24.md**](INTEGRATION-LEDGER-2026-10-24.md). Baseline `main c8c3644b` contains qualified Agent 2 curved text #668 (`a376ef05`) and Agent 3 real-browser accessibility/PNG/font/recorder QA #667 (`c8c3644b`). Both are **merged**, not outstanding; all temporary heavy workflows were removed. Original no-PR branches accounted for, with one useful test selectively rescued. #666 and #669 remain separate draft engineering PRs, #557/#653/#664 open. See the linked ledger for explicit browser passes versus **NOT TESTED** Pixel/IME/TalkBack/memory/human/authenticated remote gates.
