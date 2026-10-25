@@ -2,14 +2,12 @@ name: R0 source-visible hue shape oracle
 # Source/fit screenshots and full-resolution export remain manually opt-in.
 on:
   workflow_dispatch:
-  # One-time PR #721 qualification. Restore manual-only before merge.
-  pull_request:
-    paths:
-      - 'src/image-reconstruction.js'
-      - 'scripts/review-reconstruction.mjs'
-      - 'tests/image-reconstruction.test.js'
-      - 'tests/reconstruction-r0.test.js'
-      - '.github/workflows/reconstruction-hue-shapes-experiment.yml'
+    inputs:
+      include_holdouts:
+        description: 'Additionally evaluate eight blinded current-renderer Hairpin/Loop variants'
+        type: boolean
+        required: false
+        default: false
 permissions:
   contents: read
 concurrency:
@@ -99,13 +97,16 @@ jobs:
             fi
           done
       - name: Generate eight independent source-blind Hairpin and Loop holdouts
+        if: ${{ inputs.include_holdouts }}
         run: |
           node scripts/review-reconstruction.mjs \
             --out-dir artifacts/r0-loop-holdouts --contour-holdouts
       - name: Reconstruct all eight holdouts with the NORMAL six-plus-ten production path
+        if: ${{ inputs.include_holdouts }}
         run: |
           node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/r0-loop-holdouts
       - name: Verify real-renderer source-shape rescue with no extra normal paints
+        if: ${{ inputs.include_holdouts }}
         run: |
           node --input-type=module -e '
             import {readFileSync} from "node:fs";
