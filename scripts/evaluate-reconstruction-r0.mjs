@@ -141,6 +141,13 @@ async function evaluate(opts){
         const ranked=rankReconstructionCandidates(candidates,reference,
           recipe=>render(recipe).getContext('2d',{willReadFrequently:true})
             .getImageData(0,0,fit.width,fit.height));
+        const prefitAlternatives=ranked.map(item=>({
+          kind:item.kind,error:item.error,geometry:item.recipe.geometry,
+          positionX:item.recipe.positionX,positionY:item.recipe.positionY,
+          spread:item.recipe.spread,stripeWidth:item.recipe.stripeWidth,
+          shapeDepth:item.recipe.shapeDepth,shapeFrequency:item.recipe.shapeFrequency,
+          jaggedShift:item.jaggedShift??null
+        }));
         if(ranked[0]){
           const fitIndex=reconstructionRefinementIndex(ranked);
           ranked[fitIndex]=refineReconstructionCandidate(ranked[fitIndex],reference,
@@ -152,6 +159,7 @@ async function evaluate(opts){
         const preview=best?render(best.recipe):null;
         bitmap.close();
         return {
+          prefitAlternatives,
           candidateCount:ranked.length,
           selected:best?{kind:best.kind,label:best.label,error:best.error,
             structure:best.recipe.structure,geometry:best.recipe.geometry,
@@ -195,6 +203,11 @@ async function evaluate(opts){
         refinementRenders:inferred.selected?.refinementRenders??0,
         trueRecipeRenderError:truthError,
         bestLabel:inferred.selected?.label??null,
+        prefitAlternatives:inferred.prefitAlternatives,
+        selectedControls:inferred.selected?Object.fromEntries(
+          ['positionX','positionY','spread','stripeWidth','shapeDepth','shapeFrequency',
+            'turnRadius','hairpinAngle','loopRadius','loopSweep']
+            .map(key=>[key,inferred.selected.recipe[key]])):null,
         selectedPositionY:inferred.selected?.recipe.positionY??null,
         selectedWaveOffsetY:inferred.selected?.waveOffsetY??null,
         trueStructure:truth?.structure??null,trueGeometry:truth?.geometry??null,

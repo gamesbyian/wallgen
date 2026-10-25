@@ -1200,3 +1200,34 @@ test('Jagged near-miss uses one real-render measured fine registration instead o
  assert.equal(measuredJaggedPixelShift(source,unrelated),null,
    'unrelated pixel masks do not authorize a fine phase-registration claim');
 });
+
+test('clipped coherent Jagged pigments recover their physical gap from four intact ribbon spans',()=>{
+ const regions=Array.from({length:7},(_,i)=>({
+   index:i,area:i<4?11360:[8000,5600,3100][i-4],
+   axisRatio:i<4?13.8:[9.8,6.9,3.8][i-4],
+   axisAngle:-46+(i-3)*.12,majorStd:i<4?115:[82,57,32][i-4],
+   minorStd:8.35,cx:i<4?.5:[.64,.75,.86][i-4],
+   cy:.31+i*.108,
+   bounds:i<4?[0,.05+i*.11,1,.59+i*.11]:
+     [[.25,.46,1,.85],[.46,.57,1,.86],[.69,.68,1,.86]][i-4]
+ }));
+ const metrics=measuredRainbowRibbonBands(regions,277,600);
+ assert.ok(metrics,'partially clipped source remains a measurable seven-hue system');
+ assert.ok(metrics.centreGapPx>40&&metrics.centreGapPx<51);
+ assert.ok(metrics.thicknessPx>26&&metrics.thicknessPx<31);
+ const defaultGuess=normalizeRecipe({geometry:'jagged',structure:'paths',
+   orientation:'diagonal',spread:55,stripeWidth:65});
+ const recovered=seedMeasuredRibbonControls(defaultGuess,metrics,277,600);
+ assert.ok(recovered.spread<defaultGuess.spread);
+ assert.ok(recovered.stripeWidth<defaultGuess.stripeWidth);
+ const inconsistent=regions.map((r,i)=>i===6?{...r,minorStd:15}:r);
+ assert.equal(measuredRainbowRibbonBands(inconsistent,277,600),null,
+   'one unrelated ink width prevents clipped-band extrapolation');
+ const disconnected=regions.map((r,i)=>i===5?
+   {...r,bounds:[0,.57,1,.86]}:r);
+ assert.equal(measuredRainbowRibbonBands(disconnected,277,600),null,
+   'truncation must be a progressively cropped same-side family');
+ const changedAxis=regions.map((r,i)=>i===4?{...r,axisAngle:-18}:r);
+ assert.equal(measuredRainbowRibbonBands(changedAxis,277,600),null,
+   'occluded nonparallel pigments must not become a broad ribbon claim');
+});

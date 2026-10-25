@@ -207,10 +207,33 @@ export function imageCurveSignature(paths,width,height){
 export function measuredRainbowRibbonBands(regions,width,height){
   if(!Array.isArray(regions)||regions.length!==7||!Number.isFinite(width)||
     !Number.isFinite(height)||width<12||height<12)return null;
-  const bands=regions.filter(r=>r&&r.axisRatio>=4&&r.area>=16&&
+  const complete=regions.filter(r=>r&&r.axisRatio>=4&&r.area>=16&&
     Number.isFinite(r.majorStd)&&r.majorStd>3&&
     Number.isFinite(r.axisAngle)&&Number.isFinite(r.cx)&&Number.isFinite(r.cy));
-  if(bands.length!==7)return null;
+  let bands=complete;
+  if(bands.length!==7){
+    // Seven observed hues may contain four complete ribbon spans and three
+    // progressively clipped ends. Recover gap/ink estimates from the four
+    // intact spans ONLY when the truncated pigments corroborate one axis
+    // and the same physical ink width. Ordinary seven-ribbon proof wins first.
+    const head=regions.slice(0,4),tail=regions.slice(4);
+    const axis=head.map(r=>r?.axisAngle);
+    const common=axis.every(Number.isFinite)&&
+      axis.every(a=>Math.abs(a-axis[0])<5);
+    const wide=head.every(r=>r&&r.axisRatio>=7&&r.area>=16&&
+      r.bounds?.[0]<=.04&&r.bounds?.[2]>=.96&&
+      Number.isFinite(r.majorStd)&&r.majorStd>10);
+    const truncation=tail.every((r,i)=>r&&r.area>=16&&
+      Number.isFinite(r.axisAngle)&&Math.abs(r.axisAngle-axis[0])<=5&&
+      r.bounds?.[2]>=.96&&r.bounds?.[0]>=.15&&
+      r.bounds[0]>(i?tail[i-1].bounds[0]:head[3].bounds[0])+.05&&
+      r.majorStd<head[3].majorStd*(1-i*.16));
+    const widths=regions.map(r=>r?.minorStd);
+    const consistentWidth=widths.every(x=>Number.isFinite(x)&&x>2)&&
+      Math.max(...widths)/Math.min(...widths)<1.15;
+    if(!(common&&wide&&truncation&&consistentWidth))return null;
+    bands=head;
+  }
   const median=items=>items.slice().sort((a,b)=>a-b)[Math.floor(items.length/2)];
   const orientations=bands.map(r=>r.axisAngle).sort((a,b)=>a-b);
   const angle=median(orientations);
