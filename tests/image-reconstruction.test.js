@@ -1406,7 +1406,7 @@ test('cropped repeated stamps refuse unrelated pigment tails despite identical c
    'genuine full plus cropped ribbons still reach the same canonical path');
 });
 
-test('unsupported opposite-edge crop does not become an invented repeated-stamp claim',()=>{
+test('genuine mirrored same-edge Jagged hue truncation is measured and stays canonically editable',()=>{
  const w=220,h=350;
  const original=raster(w,h,(x,y)=>{
    for(let i=0;i<7;i++){
@@ -1416,15 +1416,58 @@ test('unsupported opposite-edge crop does not become an invented repeated-stamp 
    }
    return [0,0,0,255];
  });
- const reversed=raster(w,h,(x,y)=>{
+ const mirrored=raster(w,h,(x,y)=>{
    const at=4*(y*w+(w-x-1));
    return Array.from(original.data.subarray(at,at+4));
  });
- const signature=describeReconstructionImage(reversed);
- assert.equal(signature.repeatShape?.clipped,undefined,
-   'current canonical recognizer has source-backed right-edge crop only');
- assert.ok(signature.ribbonBands,'pigment axes can remain coherent without crop topology proof');
- assert.ok(!reconstructionCandidates(reversed,normalizeRecipe({seed:'mirror'}))
-   .some(candidate=>candidate.kind==='shape-repeats'),
-   'unsupported mirrored topology must not borrow the source-backed right-edge claim');
+ const signature=describeReconstructionImage(mirrored);
+ assert.ok(signature.ribbonBands,
+   'all seven genuine pigment axes and same-width cropped right edges must measure');
+ assert.equal(signature.repeatShape?.clipped,true,
+   'the shared shape must be corroborated by source contour rhythm');
+ const fitted=reconstructionCandidates(mirrored,normalizeRecipe({seed:'mirror'}))
+   .find(candidate=>candidate.kind==='shape-repeats');
+ assert.ok(fitted,'mirrored source warrants seven separately editable hue stamps');
+ assert.equal(fitted.recipe.scatteredCount,7);
+ assert.equal(resolveScene(fitted.recipe).objects.length,7);
+ assert.deepEqual(decodeRecipe(encodeRecipe(fitted.recipe)),fitted.recipe);
+ const distorted=raster(w,h,(x,y)=>{
+   for(let i=0;i<7;i++){
+     if(x<(i<4?0:[48,90,133][i-4]))continue;
+     const period=i<4?17:9;
+     if(Math.abs(y-(14+i*44+Math.round(x*.22+4*Math.sin(x/period))))<=5)
+       return colour(HUES[i]);
+   }
+   return [0,0,0,255];
+ });
+ const unrelated=raster(w,h,(x,y)=>{
+   const at=4*(y*w+(w-x-1));
+   return Array.from(distorted.data.subarray(at,at+4));
+ });
+ assert.notEqual(describeReconstructionImage(unrelated).repeatShape?.clipped,true,
+   'mirroring cannot infer unobserved, wrong-frequency tail contours');
+ assert.ok(!reconstructionCandidates(unrelated,normalizeRecipe({seed:'impostor'}))
+   .some(candidate=>candidate.kind==='shape-repeats'));
 });
+
+test('mirrored partial ribbon measuring rejects incoherent width, axis and mixed-edge crops',()=>{
+ const original=Array.from({length:7},(_,i)=>({
+   index:i,area:i<4?11360:[8000,5600,3100][i-4],
+   axisRatio:i<4?13.8:[9.8,6.9,3.8][i-4],
+   axisAngle:46+(i-3)*.12,majorStd:i<4?115:[82,57,32][i-4],
+   minorStd:8.35,cx:i<4?.5:[.64,.75,.86][i-4],cy:.31+i*.108,
+   bounds:i<4?[0,.05+i*.11,1,.59+i*.11]:
+     [[0,.46,.75,.85],[0,.57,.54,.86],[0,.68,.31,.86]][i-4]
+ }));
+ assert.ok(measuredRainbowRibbonBands(original,277,600),
+   'coherent mirrored seven-colour source supports physical width/spacing');
+ const widthMismatch=original.map((r,i)=>i===6?{...r,minorStd:17}:r);
+ assert.equal(measuredRainbowRibbonBands(widthMismatch,277,600),null);
+ const axisMismatch=original.map((r,i)=>i===5?{...r,axisAngle:10}:r);
+ assert.equal(measuredRainbowRibbonBands(axisMismatch,277,600),null);
+ const mixed=original.map((r,i)=>i===5?
+   {...r,bounds:[.5,.57,1,.86]}:r);
+ assert.equal(measuredRainbowRibbonBands(mixed,277,600),null,
+   'same-image mixed-side clipping cannot borrow a mirrored source claim');
+});
+
