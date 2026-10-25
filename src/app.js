@@ -8,6 +8,7 @@ import {inspectPngMigration,migratePngMetadataOnly,inspectPngRecipeArchive,archi
 import { installDrawTool } from './draw-path-ui.js?v=20261018-extend1';
 import {appliedDrawnPathRecipe} from './draw-apply-transaction.js';
 import { installImagePathTool } from './image-path-ui.js?v=20261023-wave-contour1';
+import {prepareReconstructionApply} from './reconstruction-apply-transaction.js';
 import {importedAngleDeltaDegrees} from './import-angle-wrap.js';
 import {pathStructureLockedOutsidePaths} from './path-authoring-locks.js';
 import {mountEditor,selectEditorTool,syncEditorStructure} from './editor-layout.js?v=20261023-single-editor1';
@@ -799,21 +800,15 @@ const imagePathTool=installImagePathTool({
   onRecipe:(candidate,description)=>{
     // Exactly one standard Undo transaction. Locks are respected, including
     // otherwise dormant settings that the candidate wants to change.
-    const effective=respectSettingLocks(current,candidate);
-    const blocked=Object.keys(candidate).filter(key=>
-      current.lockedSettings.includes(key)&&
-      JSON.stringify(effective[key])!==JSON.stringify(candidate[key]));
-    const inferred=normalizeRecipe({...candidate,reconstructionOrigin:{
-      origin:'inferred-image',method:'current-render-fit-v1',
-      candidateKind:description.kind,sourceWidth:description.sourceWidth,
-      sourceHeight:description.sourceHeight,initialFitError:description.error
-    }});
+    const {recipe:inferred,lockedChanges}=prepareReconstructionApply(
+      current,candidate,description);
     changeRecipe(inferred,{cause:'image-reconstruction'});
     showNotice('Applied inferred '+description.kind+
       ' recipe (initial render error '+Number(description.error).toFixed(3)+
       '). This does not recover the original image settings. Undo restores the prior design.'+
-      ((description.lockedChanges?.length||blocked.length)?
-        ' Locked settings preserved: '+(description.lockedChanges||blocked).join(', ')+'.':''));
+      ((description.lockedChanges?.length||lockedChanges.length)?
+        ' Locked settings preserved: '+
+        [...new Set([...(description.lockedChanges||[]),...lockedChanges])].join(', ')+'.':''));
     return true;
   },
   onAngle:angle=>{
