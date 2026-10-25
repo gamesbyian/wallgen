@@ -25,7 +25,7 @@ export const LOW_CHROMA_EXTERNAL_CASES=Object.freeze([
   {id:'partial-two-hues',goal:'Only red and blue polygons; no invented five missing pigments'}
 ]);
 export function parseExternalPigmentArgs(argv){
-  const opts={outDir:'artifacts/external-pigment-r0',collection:'original'};
+  const opts={outDir:'artifacts/external-pigment-r0'};
   for(let i=0;i<argv.length;i++){
     if(argv[i]==='--out-dir'&&argv[i+1]&&!argv[i+1].startsWith('--')){
       opts.outDir=argv[++i];continue;
