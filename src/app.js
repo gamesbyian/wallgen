@@ -802,6 +802,14 @@ const imagePathTool=installImagePathTool({
     // otherwise dormant settings that the candidate wants to change.
     const {recipe:inferred,lockedChanges}=prepareReconstructionApply(
       current,candidate,description);
+    if(lockedChanges.length){
+      // A changed lock can make the painted preview and fitted error false.
+      // Refit the image under the new locks instead of applying an artwork
+      // that was never displayed or scored.
+      showNotice('Reconstruction not applied. Locked since the preview was fitted: '+
+        lockedChanges.join(', ')+'. Close and re-import to fit the new settings.');
+      return false;
+    }
     changeRecipe(inferred,{cause:'image-reconstruction'});
     showNotice('Applied inferred '+description.kind+
       ' recipe (initial render error '+Number(description.error).toFixed(3)+
