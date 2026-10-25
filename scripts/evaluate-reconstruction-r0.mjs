@@ -108,7 +108,7 @@ async function evaluate(opts){
         throw Error('External input must not contain a ROYGBIV source recipe');
       // Inference only sees image pixels, never this item's recipe.
       const inferred=await page.evaluate(async ({base64,includeAlternatives})=>{
-        const {reconstructionCandidates,rankReconstructionCandidates,
+        const {describeReconstructionImage,reconstructionCandidates,rankReconstructionCandidates,
           reconstructionPlacement,RECONSTRUCTION_FRAME,
           refineReconstructionCandidate,reconstructionRefinementIndex,
           compareReconstructionPixels}=await import('/src/image-reconstruction.js');
@@ -131,6 +131,18 @@ async function evaluate(opts){
         fg.drawImage(bitmap,p.x/600*fit.width,p.y/1300*fit.height,
           p.width/600*fit.width,p.height/1300*fit.height);
         const reference=fg.getImageData(0,0,fit.width,fit.height);
+        const desc=describeReconstructionImage(source);
+        const diag={
+          size:[source.width,source.height],
+          repeatShape:desc.repeatShape?{clipped:desc.repeatShape.clipped,
+            minOverlap:desc.repeatShape.minOverlap,placements:desc.repeatShape.placements?.length}:null,
+          ribbonBands:desc.ribbonBands,
+          regions:desc.colourRegions.map(x=>({
+            index:x.index,area:x.area,axisRatio:x.axisRatio,
+            axisAngle:x.axisAngle,minorStd:x.minorStd,majorStd:x.majorStd,
+            bounds:x.bounds
+          }))
+        };
         const candidates=reconstructionCandidates(source,normalizeRecipe({seed:'r0-anonymous'}));
         const render=(recipe)=>{
           const canvas=document.createElement('canvas');
@@ -159,7 +171,7 @@ async function evaluate(opts){
         const preview=best?render(best.recipe):null;
         bitmap.close();
         return {
-          prefitAlternatives,
+          diag,prefitAlternatives,
           candidateCount:ranked.length,
           selected:best?{kind:best.kind,label:best.label,error:best.error,
             structure:best.recipe.structure,geometry:best.recipe.geometry,
@@ -176,6 +188,7 @@ async function evaluate(opts){
         };
       },{base64:Buffer.from(input).toString('base64'),
         includeAlternatives:!!opts.alternatives});
+      if(item.id==='16-mirrored')console.log('AGENT3_MIRROR_DESC '+JSON.stringify(inferred.diag));
       // External work has NO original ROYGBIV recipe or true-render floor.
       // Only actual current-production PNGs have blinded truth sidecars.
       const truth=external?null:JSON.parse(await readFile(join(dir,item.recipeFile),'utf8'));
