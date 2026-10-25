@@ -1,4 +1,5 @@
 name: One-shot real PNG reconstruction with live lock drift
+# Re-run compact visible status after actual portrait screenshot review
 on:
   push:
     branches: [agent3/664-reconstruction-lock-apply-20261024]
