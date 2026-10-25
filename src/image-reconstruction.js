@@ -485,9 +485,17 @@ export function reconstructionCandidates(image,recipe){
   // when seven *complete source-visible* editable hue compounds are present,
   // let that independently evidenced appearance compete with genuine rings.
   // True rays and compact seven-circles keep their existing stronger routes.
+  // Compact colour blobs need not be circles. The shared source importer
+  // has already fitted each exposed pigment arc: seven clean disk fits are
+  // strong direct evidence for the existing movable-circle hypothesis.
+  // If any circle fit fails, offer *source-visible* compound shapes as one
+  // bounded alternative; do not assume historical polygon painter order.
+  // Every proposal still requires all seven valid source hue masks/rings.
+  const compactNonCircles=desc.sevenColourRegions&&!desc.circleHints;
   const observedEligible=desc.radial.kind!=='rays'&&
-    !desc.sevenColourRegions&&desc.colourRegions.length===7&&
-    (desc.radial.kind==='rings'||desc.repeatShape?.clipped||
+    (!desc.sevenColourRegions||compactNonCircles)&&
+    desc.colourRegions.length===7&&
+    (compactNonCircles||desc.radial.kind==='rings'||desc.repeatShape?.clipped||
       ['hairpin','loop'].includes(desc.curve.kind)||
       desc.paths.some(path=>path.kind==='contour'&&path.closed));
   const observed=observedEligible?observedHueShapeRecipe(image,

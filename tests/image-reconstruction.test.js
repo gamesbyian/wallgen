@@ -29,6 +29,46 @@ const original=raster(120,260,(x,y)=>{
   return [0,0,0,255];
 });
 
+test('compact noncircular pigment geometry competes without displacing provably round circles',()=>{
+  const points=Array.from({length:7},(_,i)=>[49+(i%2)*85,57+Math.floor(i/2)*95]);
+  const make=kind=>raster(180,430,(x,y)=>{
+    for(let i=0;i<points.length;i++){
+      const [cx,cy]=points[i],dx=x-cx,dy=y-cy;
+      const filled=kind==='triangle'?
+        (dy>=-21&&dy<=21&&Math.abs(dx)<=(dy+21)*.59):
+        Math.hypot(dx,dy)<=18;
+      if(filled)return colour(HUES[i]);
+    }
+    return [0,0,0,255];
+  });
+  const triangular=make('triangle'),round=make('circle');
+  const polygonSignature=describeReconstructionImage(triangular);
+  const roundSignature=describeReconstructionImage(round);
+  assert.equal(polygonSignature.sevenColourRegions,true);
+  assert.equal(roundSignature.sevenColourRegions,true);
+  assert.equal(polygonSignature.circleHints,null,
+    'observed polygon contours do not support all seven circular fits');
+  assert.equal(roundSignature.circleHints?.length,7,
+    'all exposed disc arcs independently support circular editable objects');
+  const polygonChoices=reconstructionCandidates(triangular,
+    normalizeRecipe({seed:'no-external-original'}));
+  const roundChoices=reconstructionCandidates(round,
+    normalizeRecipe({seed:'no-external-original'}));
+  assert.ok(polygonChoices.length<=RECONSTRUCTION_RENDER_LIMIT);
+  assert.ok(roundChoices.length<=RECONSTRUCTION_RENDER_LIMIT);
+  assert.ok(polygonChoices.some(x=>x.kind==='hue-visible-shapes'),
+    'the already supported seven per-hue compound regions should compete');
+  assert.ok(polygonChoices.some(x=>x.kind==='regions'),
+    'keep circles as a harmless real-renderer ranked control');
+  assert.ok(!roundChoices.some(x=>x.kind==='hue-visible-shapes'),
+    'measured complete exposed circular arcs preserve normal circle candidates');
+  assert.ok(roundChoices.some(x=>x.kind==='regions'));
+  const observed=polygonChoices.find(x=>x.kind==='hue-visible-shapes');
+  assert.equal(observed.recipe.scatteredShapeOverrides.length,7);
+  assert.deepEqual(decodeRecipe(encodeRecipe(observed.recipe)),observed.recipe);
+  assert.ok(resolveScene(observed.recipe).objects.every(o=>o.kind==='region'));
+});
+
 test('Seven metadata-free rainbow regions map to portable editable canonical objects',()=>{
   const descriptors=extractImageColourRegions(original,HUES);
   assert.equal(descriptors.regions.length,7);
