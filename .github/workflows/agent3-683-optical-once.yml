@@ -1,4 +1,5 @@
 name: One-shot independent mirrored Jagged actual-painter comparison
+# QA rerun: emit actual browser 7 hue descriptors for unexpected 0% gain
 on:
   push:
     branches: [agent3/683-independent-mirror-optical-20261024]
