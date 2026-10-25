@@ -1,6 +1,8 @@
 name: R0 ink geometry optical experiment
 # Manual-only optical evidence. Normal PR CI remains the lean quick suite.
 on:
+  pull_request:
+    paths: ['.github/workflows/reconstruction-ink-geometry-experiment.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -28,7 +30,7 @@ jobs:
           node scripts/review-reconstruction.mjs             --out-dir artifacts/r0-ink-geometry             --only 05-hairpin,06-loop,16-offset-jagged,18-repeated-compound-hole-island,22-overlapping-reversed-circles
       - name: Reuse existing canonical fit and measure visible ink geometry
         run: |
-          node scripts/evaluate-reconstruction-r0.mjs             --dir artifacts/r0-ink-geometry --ink-geometry --probe-ink-width --probe-ink-channels
+          node scripts/evaluate-reconstruction-r0.mjs             --dir artifacts/r0-ink-geometry --ink-geometry --probe-local-curve
       - name: Report measured gaps, width and topology without rank changes
         run: |
           node --input-type=module -e '
@@ -36,6 +38,8 @@ jobs:
             const report=JSON.parse(readFileSync("artifacts/r0-ink-geometry/evaluation.json"));
             for(const s of report.samples){
               const g=s.inkGeometry;
+              if(s.localCurveProbe)console.log("LOCAL_CURVE_PROBE "+JSON.stringify({
+                id:s.id,...s.localCurveProbe}));
               if(s.channelProbe)console.log("GAP_PROBE "+JSON.stringify({
                 id:s.id,...s.channelProbe}));
               if(s.widthProbe)console.log("WIDTH_PROBE "+JSON.stringify({
