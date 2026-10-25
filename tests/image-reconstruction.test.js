@@ -1430,13 +1430,14 @@ test('unsupported opposite-edge crop does not become an invented repeated-stamp 
 });
 
 test('cropped shared hue stamps refuse tail ink-width oscillation with an unchanged centreline',()=>{
- const painted=distort=>raster(220,350,(x,y)=>{
+ const painted=distort=>raster(300,460,(x,y)=>{
    for(let i=0;i<7;i++){
-     const left=i<4?0:[48,90,133][i-4];
+     const left=i<4?0:[55,110,165][i-4];
      if(x<left)continue;
-     const centre=29+i*43+Math.round(x*.14+3*Math.sin(x/17));
-     // Tail ink has the identical ridge and almost identical *mean* width,
-     // but alternating 3px and 39px widths describe unrelated contours.
+     const centre=30+i*50+Math.round(x*.13+3*Math.sin(x/17));
+     // All seven true objects remain long ribbons, preserving the same
+     // principal axes, mean physical width and pigment order. Only the last
+     // three alternate 3px and 39px locally without moving their centrelines.
      const half=distort&&i>=4?
        (Math.floor((x-left)/12)%2===0?1:19):10;
      if(Math.abs(y-centre)<=half)return colour(HUES[i]);
@@ -1446,12 +1447,13 @@ test('cropped shared hue stamps refuse tail ink-width oscillation with an unchan
  const valid=painted(false),tampered=painted(true);
  const sourceDescription=describeReconstructionImage(valid);
  assert.equal(sourceDescription.repeatShape?.clipped,true,
-   'actual exposed matching tails remain editable');
+   'observed stable-width tails remain editable');
  const tamperedDescription=describeReconstructionImage(tampered);
- assert.equal(tamperedDescription.colourRegions.length,7,
-   'all seven pigment regions remain observed');
+ assert.equal(tamperedDescription.colourRegions.length,7);
+ assert.ok(tamperedDescription.ribbonBands,
+   'new refusal is NOT attributable to the existing all-seven average thickness/axis gate');
  assert.equal(tamperedDescription.repeatShape,null,
-   'global hue averages and coincident ridges cannot excuse wrong tail widths');
+   'coincident ridges cannot excuse observably different per-column pigment widths');
  const inferred=reconstructionCandidates(tampered,normalizeRecipe({seed:'different-width-tails'}));
  assert.ok(!inferred.some(option=>option.kind==='shape-repeats'));
  assert.ok(inferred.length<=RECONSTRUCTION_RENDER_LIMIT);
