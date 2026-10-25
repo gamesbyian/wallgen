@@ -1,8 +1,6 @@
 name: R0 ink geometry optical experiment
 # Manual-only optical evidence. Normal PR CI remains the lean quick suite.
 on:
-  pull_request:
-    paths: ['.github/workflows/reconstruction-ink-geometry-experiment.yml']
   workflow_dispatch:
 permissions:
   contents: read
