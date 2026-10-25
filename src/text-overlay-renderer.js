@@ -3,7 +3,7 @@ import {TEXT_FONTS} from './text-overlays.js';
 import {typefacesReady,typefaceCssFamily} from './typography-fonts.js';
 import {availableTextWidth} from './text-direct-geometry.js';
 import {rainbowTextStops,isSimpleRightToLeft} from './text-rainbow-shaping.js';
-import {layoutTextOnPath} from './text-path-geometry.js';
+import {layoutTextOnPath,prepareTextFollowPath} from './text-path-geometry.js';
 
 // The same post-composite typography pass is used by reference, worker,
 // thumbnail, headless, and preview-cache composition. Never render DOM text
@@ -73,6 +73,9 @@ export function drawTextOverlays(ctx,width,height,scene){
     ctx.lineWidth=item.size*item.outlineWidth/100;
     ctx.strokeStyle=item.outline==='white'?'#ffffff':'#000000';
     const lines=item.text.split('\n');
+    // Shared immutable geometry for all lines of this text object.
+    const preparedPath=['drawn','hairpin','loop'].includes(item.path)?
+      prepareTextFollowPath(item,scene.customPath):undefined;
     let colourIndex=0;
     const lineHeight=item.size*1.17*(1+(item.lineSpacing??0)/100);
     lines.forEach((line,lineIndex)=>{
@@ -87,7 +90,7 @@ export function drawTextOverlays(ctx,width,height,scene){
       // untouched whole-line native Canvas paint below.
       const path=item.path&&item.path!=='none'?
         layoutTextOnPath(item,line,unit=>ctx.measureText(unit).width,
-          scene.customPath):null;
+          scene.customPath,{preparedPath}):null;
       // Shift multiple curved lines along the LOCAL PATH NORMAL. A simple
       // vertical offset causes independent lines to cross on steep bends.
       // Unsupported joined scripts still use the untouched straight line.
