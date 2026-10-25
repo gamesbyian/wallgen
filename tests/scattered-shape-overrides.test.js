@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {normalizeRecipe,resolveScene,encodeRecipe,decodeRecipe,respectSettingLocks} from '../src/model.js';
 import {GEOMETRY_SNAPSHOT_SCHEMA} from '../src/geometry-asset.js';
 import {normalizeScatteredShapeOverrides} from '../src/scattered-shape-overrides.js';
+import {buildScatteredObjects} from '../src/scattered-composition.js';
 
 const rect={type:'compound-region',space:'asset-local',viewBox:[0,0,100,100],
   fillRule:'evenodd',components:[{outer:[[5,5],[95,5],[95,95],[5,95]],
@@ -35,7 +36,7 @@ test('missing slots never become accidental circles; shared imported shape is fa
   const partial=normalizeRecipe({...base,scatteredShapeOverrides:[{index:0,shape:shape(rect)}]});
   const scene=resolveScene(partial);
   assert.equal(scene.objects.length,1);
-  assert.match(scene.diagnostic,/Missing 6 portable imported pigment/);
+  assert.match(buildScatteredObjects(partial).diagnostic,/Missing 6 portable imported pigment/);
   const circled=normalizeRecipe({...partial,scatteredShapeKind:'circle'});
   assert.equal(resolveScene(circled).objects.length,7);
   assert.ok(resolveScene(circled).objects.every(o=>o.circle));
