@@ -57,6 +57,10 @@ The source-inferred **230-vertex, seven-object portable shape** was normalized, 
 
 This verifies the portable current headless/reference painter and actual PNG recipe encoding seam in the container. It does **not** establish actual production Download-button use, dedicated browser rendering worker acceptance, a native Android memory budget or real human acceptance.
 
+## Exact inferred-stamp provenance repair
+
+The canonical `normalizeReconstructionOrigin` previously omitted `shape-repeats` from its accepted `candidateKind` values, silently relabeling a genuinely inferred editable stamp ensemble as a generic `path` in the saved receipt. That already affected earlier seven-stamp inference, not merely the newly cropped example. PR #679 corrects the **shared canonical provenance allowlist**, preserving `shape-repeats` without accepting arbitrary untrusted kinds. Focused tests cover normalize → JSON/URL encode/decode → embedded PNG metadata extraction; the receipt is independent of rendered scene and excludes raw source bytes. Exact shape geometry/normal scene persists separately through the previously tested portable asset snapshot.
+
 ## Engineering guardrails and remaining work
 
 - Synthetic/Node tests: seven slots, shared geometry snapshot, exact serialize/deserialize, current scene, raw source-image immutability, canonical structure locks, ≤6 initial candidate count, and refusal of absent/unordered/unrelated pigment evidence.
