@@ -390,7 +390,7 @@ export function describeReconstructionImage(image,{includeColourMasks=false}={})
   // seven pigments and wrongly discarded otherwise straightforward source
   // geometry. Do not assume that arbitrary *missing middle* colour slots,
   // overlapping fragments or elongated occlusions can be represented.
-  const incompleteColourRegions=colour.regions.length>=3&&
+  const incompleteColourRegions=colour.regions.length>=1&&
     colour.regions.length<=6&&
     colour.componentRegions.length===colour.regions.length&&
     componentDiagonalAngle===null&&
@@ -470,6 +470,15 @@ export function diverseReconstructionCandidates(candidates,limit=RECONSTRUCTION_
 export function reconstructionCandidates(image,recipe){
   const desc=describeReconstructionImage(image,{includeColourMasks:true});
   const current=normalizeRecipe(recipe);
+  // Scattered scene slots are contiguous 0..N-1, not arbitrary hue IDs.
+  // One blue region, or isolated red and blue without orange/yellow/green,
+  // cannot be represented as one/two objects without silently recolouring
+  // the pixels or fabricating missing hue objects. Manual contour import
+  // remains available as a geometry-only edit; automated pixel fidelity
+  // must refuse this impossible partial colour assignment.
+  if(desc.colourRegions.length>0&&desc.colourRegions.length<=2&&
+    desc.colourRegions.some((region,index)=>region.index!==index))
+    return [];
   // Prefer a strongly distinguishable *appearance* hypothesis only. The
   // canonical painter still ranks candidate geometry; history is unknown.
   const base={...strippedCandidateBase(current,desc.background),
@@ -739,9 +748,13 @@ export function reconstructionCandidates(image,recipe){
       const radius=clamp(maxRadius*box.width/image.width/600,.01,1.2);
       if(radius>.01&&radius<=1.2){
         candidates.push({kind:'shape',
-          label:'One editable compound silhouette'+
+          label:(desc.colourRegions.length===0?
+            'Editable observed geometry (source pigment not inferred)':
+            'One editable compound silhouette')+
             (sourceRings.length>1?' with preserved holes/islands':''),
-          uncertainty:'Recognized geometry is portable and independently editable; pigment remains the first ROYGBIV colour and material/lighting are not inferred.',
+          uncertainty:desc.colourRegions.length===0?
+            'Only source geometry is inferred. Source pigment colour is not one of the confidently classified ROYGBIV hue slots; the red rendered placeholder is NOT recovered source colour. Manual recolouring is required; material and lighting are also unknown.':
+            'Recognized geometry is portable and independently editable; visible first ROYGBIV pigment is inferred but original paint process, material and lighting are not recovered.',
           recipe:normalizeRecipe({...base,structure:'regions',regionMode:'scattered',
             scatteredShapeKind:'imported',scatteredShape:cloneGeometrySnapshot(geometry),
             scatteredCount:1,scatteredOverlap:'overlap',scatteredSpacing:0,
