@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import {HUES} from '../src/model.js';
 import {extractImageColourRegions} from '../src/image-path.js';
 import {
-  skeletonizePigment,describeRainbowInkGeometry,compareRainbowInkGeometry
+  skeletonizePigment,describeRainbowInkGeometry,compareRainbowInkGeometry,
+  proposeMedialWidthDeltas
 } from '../src/reconstruction-ink-geometry.js';
 
 const raster=(w,h,painter)=>{
@@ -91,4 +92,19 @@ test('diagnostics reject mismatched/unbounded inputs before allocation',()=>{
   assert.throws(()=>skeletonizePigment(new Uint8Array(4),3,3),RangeError);
   assert.throws(()=>skeletonizePigment(new Uint8Array(9),3,3,
     {maxIterations:999}),RangeError);
+});
+
+test('medial-width probe refuses incoherent colours and estimates coherent narrow ink',()=>{
+  const hue=(r)=>({source:{ink:200,skeletonComplete:true},
+    rendered:{ink:220,skeletonComplete:true},widthRatio:r});
+  const noisy={byHue:[.75,1.4,1.2,.66,1,.71,1.5].map(hue)};
+  assert.equal(proposeMedialWidthDeltas(noisy,65),null,
+    'do not shrink real Hairpin #05 from inconsistent per-hue widths');
+  const coherent={byHue:[.78,.79,.82,.80,.77,.81,.79].map(hue)};
+  const hint=proposeMedialWidthDeltas(coherent,52);
+  assert.ok(hint);
+  assert.ok(hint.deltas.every(d=>d<0&&d>=-22));
+  assert.ok(hint.deltas.length<=3);
+  assert.equal(proposeMedialWidthDeltas({byHue:[1,1,1,1,1,1,1].map(hue)},52),null);
+  assert.equal(proposeMedialWidthDeltas({byHue:[.8,.8,.8].map(hue)},52),null);
 });
