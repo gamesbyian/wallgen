@@ -1,9 +1,6 @@
 name: Per-hue shape canonical optical proof
-# Temporary narrow PR trigger for initial artifact validation.
-# Remove pull_request after independent image review; retain manual-only.
+# Manual-only optical evidence, normal PR quick checks remain lean.
 on:
-  pull_request:
-    paths: ['.github/workflows/per-hue-shape-optical.yml']
   workflow_dispatch:
 permissions:
   contents: read
