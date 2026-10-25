@@ -1504,3 +1504,55 @@ test('cropped shared hue stamps refuse tail ink-width oscillation with an unchan
  assert.ok(reconstructionCandidates(valid,normalizeRecipe({seed:'valid-width-tails'}))
    .some(option=>option.kind==='shape-repeats'));
 });
+
+test('registered candidates share one source hue analysis across sync/cooperative ranking',async()=>{
+ const w=RECONSTRUCTION_FRAME.width,h=RECONSTRUCTION_FRAME.height;
+ const sample=(offset=0)=>raster(w,h,(x,y)=>{
+   for(let i=0;i<7;i++)if(Math.abs(x-(7+i*13+offset))<=3)
+     return colour(HUES[i]);
+   return [0,0,0,255];
+ });
+ const source=sample(),painted=sample(2),other=sample(1);
+ const sourceRegions=extractImageColourRegions(source,HUES).regions;
+ assert.deepEqual(coherentWaveOffsetY(source,painted,sourceRegions),
+   coherentWaveOffsetY(source,painted));
+ assert.deepEqual(coherentVerticalBandOffsetX(source,painted,sourceRegions),
+   coherentVerticalBandOffsetX(source,painted));
+ assert.deepEqual(measuredExpandedDrawRegistration(source,painted,sourceRegions),
+   measuredExpandedDrawRegistration(source,painted));
+ const recipe=normalizeRecipe({structure:'paths',geometry:'wave'});
+ const selections=[
+   {kind:'wave',label:'Wave current',recipe},
+   {kind:'straight',label:'Vertical stripes',
+     recipe:normalizeRecipe({...recipe,geometry:'straight',orientation:'vertical'})},
+   {kind:'path',label:'Draw expected',
+     recipe:normalizeRecipe({...recipe,geometry:'drawn',geometrySafety:false})}
+ ];
+ let paints=0;
+ const render=()=>{paints++;return painted;};
+ const cache={};
+ const first=rankReconstructionCandidates([selections[0]],source,render,
+   {referenceCache:cache});
+ assert.equal(paints,1,'reference segmentation does not repaint');
+ const seen=cache.analysis;
+ assert.ok(seen?.regions&&seen.regions.length===7);
+ rankReconstructionCandidates([selections[1]],source,render,
+   {referenceCache:cache});
+ assert.strictEqual(cache.analysis,seen,'identical source frame reuses hue descriptors');
+ rankReconstructionCandidates([selections[0]],other,render,
+   {referenceCache:cache});
+ assert.notStrictEqual(cache.analysis,seen,'new source pixels require new segmentation');
+ assert.strictEqual(cache.source,other);
+ const sync=rankReconstructionCandidates(selections,source,render);
+ const coop=await rankReconstructionCandidatesCooperatively(selections,source,
+   render,{yieldControl:async()=>{},isCancelled:()=>false});
+ const summary=list=>list.map(x=>({
+   kind:x.kind,error:x.error,loopInkRatio:x.loopInkRatio??null,
+   waveOffsetY:x.waveOffsetY??null,bandOffsetX:x.bandOffsetX??null,
+   drawOffsetX:x.drawOffsetX??null,drawOffsetY:x.drawOffsetY??null,
+   drawGapRatio:x.drawGapRatio??null
+ }));
+ assert.deepEqual(summary(coop),summary(sync),
+   'cooperative shared cache cannot change rank, hints or paint score');
+ assert.equal(paints,9,'each selected hypothesis paints once per rank call');
+});
