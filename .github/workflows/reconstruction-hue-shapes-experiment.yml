@@ -2,6 +2,12 @@ name: R0 source-visible hue shape oracle
 # Source/fit screenshots and full-resolution export remain manually opt-in.
 on:
   workflow_dispatch:
+    inputs:
+      include_holdouts:
+        description: 'Additionally evaluate eight blinded current-renderer Hairpin/Loop variants'
+        type: boolean
+        required: false
+        default: false
 permissions:
   contents: read
 concurrency:
@@ -51,6 +57,11 @@ jobs:
             if(r.samples.length!==22)throw Error("Expected all 22 source R0 inputs");
             const expectations={
               "02-diagonal-straight":.021,
+              "08-radial-rays":.042985,
+              "09-radial-rings":.100914,
+              "10-regions-nested":.011952,
+              "14-offset-radial-rays":.038621,
+              "15-offset-radial-rings":.061939,
               "04-jagged":.027,
               "05-hairpin":.041,
               "06-loop":.046,
@@ -85,11 +96,43 @@ jobs:
               echo "Unrepresentable source pigment: $case_id (no fabricated recipe)"
             fi
           done
+      - name: Generate eight independent source-blind Hairpin and Loop holdouts
+        if: ${{ inputs.include_holdouts }}
+        run: |
+          node scripts/review-reconstruction.mjs \
+            --out-dir artifacts/r0-loop-holdouts --contour-holdouts
+      - name: Reconstruct all eight holdouts with the NORMAL six-plus-ten production path
+        if: ${{ inputs.include_holdouts }}
+        run: |
+          node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/r0-loop-holdouts
+      - name: Verify real-renderer source-shape rescue with no extra normal paints
+        if: ${{ inputs.include_holdouts }}
+        run: |
+          node --input-type=module -e '
+            import {readFileSync} from "node:fs";
+            const r=JSON.parse(readFileSync("artifacts/r0-loop-holdouts/evaluation.json"));
+            if(r.samples.length!==8)throw Error("Expected eight independent sources");
+            const failing=["23-hairpin-tight","25-hairpin-diagonal","28-loop-wide",
+              "29-loop-oblique","30-loop-shifted"];
+            for(const source of r.samples){
+              console.log("LOOP_HOLDOUT_R0 "+JSON.stringify({
+                id:source.id,kind:source.bestKind,error:source.bestError,
+                paints:source.candidateCount,refinement:source.refinementRenders
+              }));
+              if(source.candidateCount>6||source.refinementRenders>10)
+                throw Error("Exceeded canonical painter budget: "+source.id);
+              if(failing.includes(source.id)&&
+                (source.bestKind!=="hue-visible-shapes"||!(source.bestError<.045)))
+                throw Error("Source-visible rescue not demonstrated: "+source.id);
+            }
+          '
       - name: Save original, existing fitted, proposed and full-resolution PNG proof
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: genuine-r0-source-visible-hue-recipes
-          path: artifacts/r0-hue-shapes
+          path: |
+            artifacts/r0-hue-shapes
+            artifacts/r0-loop-holdouts
           if-no-files-found: warn
           retention-days: 7

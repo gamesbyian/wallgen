@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {RECONSTRUCTION_R0_CASES,baselineRecipe,readBaselineArgs}
+import {RECONSTRUCTION_R0_CASES,RECONSTRUCTION_CONTOUR_HOLDOUTS,baselineRecipe,readBaselineArgs}
   from '../scripts/review-reconstruction.mjs';
 import {embedPngMetadata,stripPngDescriptiveMetadata,scanPngChunks,
   extractPngRecipe} from '../src/png-metadata.js';
@@ -69,6 +69,21 @@ test('R0 baseline covers current renderer path/radial/shape/material/fibre modes
     const scene=resolveScene(item);
     assert.ok(scene&&scene.objects?.length,'each study must resolve current scene objects');
   }
+});
+
+test('heldout source collection preserves the fixed R0 contract',()=>{
+  assert.equal(RECONSTRUCTION_R0_CASES.length,22);
+  assert.equal(RECONSTRUCTION_CONTOUR_HOLDOUTS.length,8);
+  const ids=RECONSTRUCTION_CONTOUR_HOLDOUTS.map(item=>item.id);
+  assert.equal(new Set(ids).size,8);
+  assert.ok(ids.every(id=>!RECONSTRUCTION_R0_CASES.some(item=>item.id===id)));
+  const images=RECONSTRUCTION_CONTOUR_HOLDOUTS.map(baselineRecipe);
+  assert.equal(images.filter(item=>item.geometry==='hairpin').length,4);
+  assert.equal(images.filter(item=>item.geometry==='loop').length,4);
+  assert.equal(new Set(images.map(item=>item.seed)).size,8);
+  assert.ok(images.every(recipe=>resolveScene(recipe).stripes.length===7));
+  assert.equal(readBaselineArgs(['--contour-holdouts']).contourHoldouts,true);
+  assert.equal(Object.hasOwn(readBaselineArgs([]),'contourHoldouts'),false);
 });
 
 test('R0 command-line supports list/help and rejects accidental flags',()=>{

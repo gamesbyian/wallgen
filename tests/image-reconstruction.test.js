@@ -350,6 +350,35 @@ test('simple actual-raster ray and concentric fields have opposite radial signat
    .every(x=>x.recipe.structure==='radial'));
 });
 
+test('ring-like seven-pigment stem can rank editable visible geometry without evicting rings',()=>{
+  // Authored source-style adversarial raster. A concentric colour turn can
+  // cause radial signature to confuse a genuine stem + return with rings.
+  const image=raster(200,420,(x,y)=>{
+    const radius=Math.hypot(x-99.5,y-209.5);
+    if(radius>=24&&radius<87){
+      const index=Math.floor((radius-24)/9);
+      return colour(HUES[Math.min(6,index)]);
+    }
+    if(x>=26&&x<82&&y>=5&&y<415)
+      return colour(HUES[Math.min(6,Math.floor((x-26)/8))]);
+    return [0,0,0,255];
+  });
+  const desc=describeReconstructionImage(image);
+  assert.equal(desc.radial.kind,'rings',
+    'turning rainbow and upper stem resemble concentric rings in the source');
+  assert.equal(desc.colourRegions.length,7);
+  const candidates=reconstructionCandidates(image,{seed:'unknown-ring-stem'});
+  assert.ok(candidates.length<=RECONSTRUCTION_RENDER_LIMIT);
+  assert.ok(candidates.some(c=>c.kind==='hue-visible-shapes'),
+    'source-observed seven-pigment geometry must not disappear on radial confusion');
+  assert.ok(candidates.some(c=>c.kind==='radial-rings'));
+  assert.ok(candidates.some(c=>c.kind==='nested-rings'));
+  assert.ok(candidates.some(c=>c.kind==='path'),
+    'retain a procedural-independent curve/outline alternative');
+  assert.ok(candidates.find(c=>c.kind==='hue-visible-shapes')
+    ?.sourceVisibleOnly,'never allege recovery of hidden ring painter order');
+});
+
 test('displaced radial centres remain editable hypotheses without changing the renderer budget',()=>{
  const offX=.35,offY=.65,width=200,height=200;
  const rings=raster(width,height,(x,y)=>{

@@ -480,9 +480,14 @@ export function reconstructionCandidates(image,recipe){
   // Source contour evidence cannot prove hidden strands or source seed.
   // Preserve the ordinary six initial renderer paints by replacing ONE
   // structurally redundant low-priority hypothesis, never adding a seventh.
-  const observedEligible=!desc.radial.kind&&
+  // A looped seven-pigment path can look like concentric radial rings
+  // near its turn. The existing radial signature is useful but ambiguous:
+  // when seven *complete source-visible* editable hue compounds are present,
+  // let that independently evidenced appearance compete with genuine rings.
+  // True rays and compact seven-circles keep their existing stronger routes.
+  const observedEligible=desc.radial.kind!=='rays'&&
     !desc.sevenColourRegions&&desc.colourRegions.length===7&&
-    (desc.repeatShape?.clipped||
+    (desc.radial.kind==='rings'||desc.repeatShape?.clipped||
       ['hairpin','loop'].includes(desc.curve.kind)||
       desc.paths.some(path=>path.kind==='contour'&&path.closed));
   const observed=observedEligible?observedHueShapeRecipe(image,
@@ -509,7 +514,17 @@ export function reconstructionCandidates(image,recipe){
       // expanded Draw when its independent band geometry is supported.
       const last=result.findLastIndex((candidate,i)=>
         i>0&&candidate.kind!=='path');
-      if(Number.isFinite(desc.componentDiagonalAngle)&&
+      // Keep the full existing four radial/nested true-render hypotheses
+      // when optical evidence resembles rings. Prefer replacing a duplicate
+      // source-outline path, never discarding a proven real radial choice.
+      if(desc.radial.kind==='rings'){
+        const secondaryPath=result.findLastIndex((candidate,i)=>
+          i>0&&candidate.kind==='path');
+        if(secondaryPath>=0)result.splice(secondaryPath,1);
+        else if(redundant>=0)result.splice(redundant,1);
+        else if(last>=0)result.splice(last,1);
+        else result.pop();
+      }else if(Number.isFinite(desc.componentDiagonalAngle)&&
         !desc.repeatShape?.clipped){
         // Three actual-source angular baselines, a Jagged hypothesis and a
         // conservative Draw are independently proven. If a credible visible
