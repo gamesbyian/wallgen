@@ -22,7 +22,7 @@ function fake(){
     rotate(...args){calls.push(['rotate',...args]);},
     measureText(t){return {width:[...t].length*12};},
     fillText(text,x,y){calls.push(['fill',text,x,y,this.letterSpacing,this.shadowColor,
-      this.shadowBlur,this.shadowOffsetX,this.fillStyle]);},
+      this.shadowBlur,this.shadowOffsetX,this.fillStyle,this.shadowOffsetY]);},
     strokeText(text,x,y){calls.push(['stroke',text,x,y,this.shadowColor,
       this.strokeStyle,this.lineWidth]);},
     createLinearGradient(){
@@ -181,4 +181,59 @@ test('curved rainbow letters reuse identical two-ring semantics per grapheme',()
     assert.equal(strokes[2*i][4],'rgba(0,0,0,0)');
     assert.equal(fills[i][5],'rgba(255,255,255,.86)');
   }
+});
+
+test('new directional shadows are opt-in, canonical and dormant without a shadow',()=>{
+  const legacy=normalizeTextOverlays([{text:'WORDS',shadow:'black'}])[0];
+  assert.ok(!Object.hasOwn(legacy,'shadowAngle'));
+  const dormant=normalizeTextOverlays([{text:'WORDS',shadow:'none',shadowAngle:270}])[0];
+  assert.ok(!Object.hasOwn(dormant,'shadowAngle'));
+  for(const [raw,expected] of [[-80,0],[90,90],[400,359],[12.9,13]]){
+    const item=normalizeTextOverlays([{text:'WAVE',shadow:'white',shadowAngle:raw}])[0];
+    assert.equal(item.shadowAngle,expected);
+    assert.deepEqual(normalizeTextOverlays([item]),[item]);
+  }
+});
+test('45° authored angle and absent angle preserve the exact old single-shadow pixels',()=>{
+  const base={id:'shade',text:'ROYGBIV',shadow:'black',shadowDistance:10,
+    shadowBlur:7,outline:'white',path:'wave',pathHeight:75};
+  const old=resolveScene(normalizeRecipe({textOverlays:[base]}));
+  const angled=resolveScene(normalizeRecipe({textOverlays:[{...base,shadowAngle:45}]}));
+  const a=fake(),b=fake();
+  drawTextOverlays(a,600,1300,old);
+  drawTextOverlays(b,600,1300,angled);
+  assert.deepEqual(a.calls,b.calls,'default and explicit 45° shadow offsets must match');
+  const fill=a.calls.find(c=>c[0]==='fill');
+  assert.equal(fill[7],10);
+  assert.equal(fill[9],10);
+});
+test('shadow angle rotates the cast vector for straight and curved text',()=>{
+  const cases=[[0,Math.SQRT2*9,0],[90,0,Math.SQRT2*9],
+    [180,-Math.SQRT2*9,0],[270,0,-Math.SQRT2*9]];
+  for(const path of [undefined,'circle']){
+    for(const [shadowAngle,x,y] of cases){
+      const item={text:'INK',colour:'white',shadow:'white',
+        shadowBlur:5,shadowDistance:9,shadowAngle,
+        path,pathHeight:90,outline:'black'};
+      const ctx=fake();
+      drawTextOverlays(ctx,600,1300,resolveScene(normalizeRecipe({textOverlays:[item]})));
+      const fills=ctx.calls.filter(c=>c[0]==='fill');
+      assert.ok(fills.length>=1);
+      for(const fill of fills){
+        assert.ok(Math.abs(fill[7]-x)<1e-9,shadowAngle+' offset X');
+        assert.ok(Math.abs(fill[9]-y)<1e-9,shadowAngle+' offset Y');
+        assert.equal(fill[5],'rgba(255,255,255,.86)');
+      }
+      assert.ok(ctx.calls.filter(c=>c[0]==='stroke')
+        .every(c=>c[4]==='rgba(0,0,0,0)'));
+    }
+  }
+});
+test('shadow-angle editor control has an accessible mapping and is disabled until active',async()=>{
+  const {readFileSync}=await import('node:fs');
+  const markup=readFileSync(new URL('../src/text-overlays-ui.js',import.meta.url),'utf8');
+  assert.match(markup,/data-text-key="shadowAngle" min="0" max="359"/);
+  assert.match(markup,/aria-label="Shadow angle: degrees clockwise from right"/);
+  assert.match(markup,/\['shadowBlur','shadowDistance','shadowAngle'\]/);
+  assert.match(markup,/shadowAngle:45/);
 });

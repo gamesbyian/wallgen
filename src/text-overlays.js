@@ -74,7 +74,8 @@ export function normalizeTextOverlays(input){
       ...(v.rainbowReverse===true?{rainbowReverse:true}:{}),
       ...(TEXT_SHADOWS.includes(v.shadow)&&v.shadow!=='none'?{
         shadow:v.shadow,shadowBlur:num(v.shadowBlur,6,0,16),
-        shadowDistance:num(v.shadowDistance,7,0,16)
+        shadowDistance:num(v.shadowDistance,7,0,16),
+        ...(v.shadowAngle!==undefined?{shadowAngle:Math.round(num(v.shadowAngle,45,0,359))}:{})
       }:{}),
       // Curved baselines are strictly opt-in. Old lettering is unchanged.
       ...(TEXT_PATHS.includes(v.path)&&v.path!=='none'?{

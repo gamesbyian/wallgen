@@ -64,8 +64,22 @@ export function drawTextOverlays(ctx,width,height,scene){
       (item.shadow==='white'?'rgba(255,255,255,.86)':'rgba(0,0,0,.86)'):
       'rgba(0,0,0,0)';
     ctx.shadowBlur=shadowEnabled?(item.shadowBlur??6)*pixelScale:0;
-    ctx.shadowOffsetX=shadowEnabled?(item.shadowDistance??7)*pixelScale:0;
-    ctx.shadowOffsetY=shadowEnabled?(item.shadowDistance??7)*pixelScale:0;
+    const shadowDistance=(item.shadowDistance??7)*pixelScale;
+    // Absent direction retains EXACT legacy diagonal offsets and pixels.
+    // Authored directions rotate that diagonal's Euclidean vector around the
+    // screen, so moving the slider to 45° preserves its old visual distance.
+    let shadowX=shadowEnabled?shadowDistance:0;
+    let shadowY=shadowEnabled?shadowDistance:0;
+    if(shadowEnabled&&item.shadowAngle!==undefined&&item.shadowAngle!==45){
+      const angle=item.shadowAngle*Math.PI/180;
+      const radial=shadowDistance*Math.SQRT2;
+      shadowX=radial*Math.cos(angle);
+      shadowY=radial*Math.sin(angle);
+      if(Math.abs(shadowX)<1e-8)shadowX=0;
+      if(Math.abs(shadowY)<1e-8)shadowY=0;
+    }
+    ctx.shadowOffsetX=shadowX;
+    ctx.shadowOffsetY=shadowY;
     ctx.textAlign='left';
     ctx.textBaseline='middle';
     ctx.lineJoin='round';
