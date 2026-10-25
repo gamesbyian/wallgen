@@ -291,7 +291,7 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle,onShape,
     if(onRecipe(candidate.recipe,{...candidate,sourceWidth:width,sourceHeight:height})){
       dialog.close();
     }else{
-      recipeStatus.textContent='Reconstruction not applied: settings changed after the fit. Close and re-import the image to fit the new locks.';
+      recipeStatus.textContent='Locks changed. Re-import image.';
       recipeApply.disabled=true;
     }
   });
