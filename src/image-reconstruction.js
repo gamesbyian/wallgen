@@ -4,6 +4,7 @@
 import {HUES,PALETTES,COLOR_STORIES,normalizeRecipe,resolveScene,respectSettingLocks} from './model.js';
 import {importedAngleDeltaDegrees} from './import-angle-wrap.js';
 import {cloneGeometrySnapshot} from './geometry-asset.js';
+import {observedHueShapeRecipe} from './image-hue-reconstruction.js';
 import {appliedDrawnPathRecipe} from './draw-apply-transaction.js';
 import {extractImagePathCandidates,extractImageColourRegions,extractImageShapeCandidates,imagePlacement,pathToWallpaper} from './image-path.js?v=20261023-band-measure1';
 
@@ -469,6 +470,40 @@ export function reconstructionCandidates(image,recipe){
   const base={...strippedCandidateBase(current,desc.background),
     palette:desc.paletteHypothesis?.palette??'classic'};
   const candidates=[];
+  // Appearance-first per-hue silhouettes are a normal *editable* canonical
+  // recipe, but only credible for observed multi-band nonradial geometry.
+  // Source contour evidence cannot prove hidden strands or source seed.
+  // Preserve the ordinary six initial renderer paints by replacing ONE
+  // structurally redundant low-priority hypothesis, never adding a seventh.
+  const observedEligible=!desc.radial.kind&&
+    !desc.sevenColourRegions&&desc.colourRegions.length===7&&
+    (desc.repeatShape?.clipped||
+      ['hairpin','loop'].includes(desc.curve.kind)||
+      desc.paths.some(path=>path.kind==='contour'&&path.closed));
+  const observed=observedEligible?observedHueShapeRecipe(image,
+    reconstructionPlacement(image.width,image.height),current):null;
+  const includeObserved=prior=>{
+    if(!observed)return prior;
+    const result=[...prior];
+    if(result.length>=RECONSTRUCTION_RENDER_LIMIT){
+      let redundant=-1;
+      for(let i=result.length-1;i>0;i--){
+        if(result.slice(0,i).some(other=>other.kind===result[i].kind&&
+          (other.kind!=='path'||
+            other.recipe.geometrySafety===result[i].recipe.geometrySafety))){
+          redundant=i;break;
+        }
+      }
+      // Keep the first/proven highest-priority hypothesis, safe Draw, and
+      // expanded Draw when its independent band geometry is supported.
+      const last=result.findLastIndex((candidate,i)=>
+        i>0&&candidate.kind!=='path');
+      if(redundant>=0)result.splice(redundant,1);
+      else if(last>=0)result.splice(last,1);
+      else result.pop();
+    }
+    return [observed,...result].slice(0,RECONSTRUCTION_RENDER_LIMIT);
+  };
   if(desc.repeatShape){
     // Seven physically translated copies of one contour are directly
     // expressible as existing portable imported-shape stamps. Preserve
@@ -808,7 +843,7 @@ export function reconstructionCandidates(image,recipe){
         if(selected.length>=RECONSTRUCTION_RENDER_LIMIT)break;
         if(!selected.includes(candidate))selected.push(candidate);
       }
-      return selected;
+      return includeObserved(selected);
     }
   }
   // Preserve the current conservative Draw candidate as a guaranteed
@@ -824,10 +859,10 @@ export function reconstructionCandidates(image,recipe){
     if(safe&&wide){
       const procedural=diverseReconstructionCandidates(
         committable.filter(c=>c.kind!=='path'),RECONSTRUCTION_RENDER_LIMIT-2);
-      return [...procedural,safe,wide];
+      return includeObserved([...procedural,safe,wide]);
     }
   }
-  return diverseReconstructionCandidates(committable);
+  return includeObserved(diverseReconstructionCandidates(committable));
 }
 
 /** Shape-aware but inexpensive comparison at an explicitly bounded resolution.
