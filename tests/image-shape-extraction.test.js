@@ -4,6 +4,7 @@ import {extractImageShapeCandidates,extractImagePathCandidates} from '../src/ima
 import {normalizeCompoundRegion,cloneGeometrySnapshot} from '../src/geometry-asset.js';
 import {RAINBOW_ORBITS,buildScatteredObjects} from '../src/scattered-composition.js';
 import {normalizeRecipe,resolveScene,encodeRecipe,decodeRecipe} from '../src/model.js';
+import {reconstructionCandidates} from '../src/image-reconstruction.js';
 
 function raster(width,height,paint){
   const data=new Uint8ClampedArray(width*height*4);
@@ -43,6 +44,36 @@ test('Two disjoint marks are one reusable shape with two independent islands',()
   assert.equal(candidates[1].geometry.components.length,1);
   assert.equal(candidates[2].geometry.components.length,1);
   assert.equal(candidates[0].kind,'shape');
+});
+
+test('a ninth significant silhouette cannot produce a falsely complete compound',()=>{
+  const make=count=>raster(210,210,(x,y)=>{
+    for(let i=0;i<count;i++){
+      const bx=8+(i%4)*49,by=8+Math.floor(i/4)*58;
+      if(x>=bx&&x<bx+15&&y>=by&&y<by+15)return [...dark,255];
+    }
+    return [0,0,0,0];
+  });
+  const complete=extractImageShapeCandidates(make(8));
+  assert.equal(complete[0]?.geometry.components.length,8,
+    'eight islands remain representable as one complete portable geometry');
+  assert.equal(complete[0]?.sourceComplete,true);
+  const nineSource=make(9),original=nineSource.data.slice();
+  const partial=extractImageShapeCandidates(nineSource);
+  assert.equal(partial.length,8,'the eight strongest may still be selected');
+  assert.ok(partial.every(x=>x.geometry.components.length===1),
+    'do not advertise an all-silhouettes compound missing the ninth');
+  assert.ok(partial.every(x=>x.sourceComplete===false&&
+    /9\\+ islands/.test(x.label)),
+  'every selectable partial shape must disclose missing geometry');
+  assert.equal(extractImageShapeCandidates(make(12)).length,8,
+    'overflow sentinel is an upper-bound refusal, not an invented exact count');
+  assert.deepEqual(nineSource.data,original,'raw source pixels stay untouched');
+  assert.deepEqual(extractImageShapeCandidates(nineSource),partial,
+    'same source produces identical editable individual choices');
+  assert.ok(!reconstructionCandidates(nineSource,normalizeRecipe({seed:'partial'}))
+    .some(c=>c.kind==='shape'),
+  'automatic one-shape inverse hypothesis refuses incomplete source topology');
 });
 
 test('Opaque dark shape on pale background extracts without requiring alpha',()=>{
