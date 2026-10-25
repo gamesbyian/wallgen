@@ -1,3 +1,4 @@
+import {rememberFontCoverage} from './font-glyph-coverage.js';
 // 27 visually distinct OFL faces, vendored from one pinned Google Fonts
 // commit with a verbatim license per family. Loaded only when a recipe needs
 // the face; worker and document independently check the same SHA-256 bytes.
@@ -83,6 +84,7 @@ export async function prepareBundledFonts(recipe){
       const face=new FontFace(bundledFontFamily(id),bytes,{style:'normal',weight:'700'});
       await face.load();
       fontSet().add(face);
+      if(typeof document!=='undefined')rememberFontCoverage(id,bytes); // Already SHA-256-checked and natively decoded.
       ready.add(id);
     })();
     inflight.set(id,task);

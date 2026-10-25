@@ -3,6 +3,8 @@ import {importLocalFont,listLocalFonts,isLocalFontId} from './local-fonts.js';
 import {BUNDLED_FONTS,isBundledFontId} from './bundled-fonts.js';
 import {exportPortableFontPack,importPortableFontPack,packageFontIds} from './portable-font-pack.js';
 import {installTextCanvasMover} from './text-direct-ui.js';
+import {prepareTypefaces} from './typography-fonts.js';
+import {cachedFontCoverage,fontCoverageChecked,missingGlyphNotice} from './font-glyph-coverage.js';
 
 // A tool inside the seven-category editor, not a floating DOM preview layer.
 // Every mutation takes the existing recipe/Undo path supplied by app.js.
@@ -36,6 +38,7 @@ export function installTextOverlayTool({getRecipe,changeRecipe,onFontNotice=()=>
         <input type="file" data-text-import accept=".ttf,.otf,font/ttf,font/otf,application/x-font-ttf,application/x-font-opentype">
       </label>
       <p class="text-overlay-font-status" data-text-font-status role="status" aria-live="polite"></p>
+      <p class="text-overlay-font-status text-overlay-glyph-status" data-text-glyph-status role="status" aria-live="polite"></p>
       <details class="text-overlay-advanced">
         <summary>More text options</summary>
         <div class="text-overlay-grid">
@@ -82,11 +85,35 @@ export function installTextOverlayTool({getRecipe,changeRecipe,onFontNotice=()=>
   const outline=root.querySelector('[data-text-key="outline"]');
   const fontFile=root.querySelector('[data-text-import]');
   const fontStatus=root.querySelector('[data-text-font-status]');
+  const glyphStatus=root.querySelector('[data-text-glyph-status]');
   const moveButton=root.querySelector('[data-text-move]');
   const packSave=root.querySelector('[data-font-pack-export]');
   const packOpen=root.querySelector('[data-font-pack-import]');
   const packStatus=root.querySelector('[data-font-pack-status]');
-  let library=[];
+  let library=[],glyphCheckVersion=0;
+  // A selection may change during an async font load. Keep warnings tied to
+  // the current authored text object and leave the actual renderer untouched.
+  const checkGlyphs=item=>{
+    const version=++glyphCheckVersion;
+    const supportedType=isLocalFontId(item.font)||isBundledFontId(item.font);
+    if(!supportedType){glyphStatus.textContent='';return;}
+    if(fontCoverageChecked(item.font)){
+      glyphStatus.textContent=missingGlyphNotice(
+        cachedFontCoverage(item.font),item.text);
+      return;
+    }
+    glyphStatus.textContent='Checking this font’s character coverage…';
+    const {id,font,text}=item;
+    void prepareTypefaces({textOverlays:[item]}).then(()=>{
+      if(version!==glyphCheckVersion)return;
+      const active=(getRecipe().textOverlays||[]).find(x=>x.id===id);
+      if(!active||active.font!==font||active.text!==text)return;
+      glyphStatus.textContent=missingGlyphNotice(cachedFontCoverage(font),text);
+    }).catch(error=>{
+      if(version!==glyphCheckVersion)return;
+      glyphStatus.textContent='Unable to check font glyphs: '+String(error?.message||error);
+    });
+  };
   const options=(select,entries)=>select.replaceChildren(...entries.map(([value,label])=>{
     const option=document.createElement('option');option.value=value;option.textContent=label;return option;
   }));
@@ -134,8 +161,12 @@ export function installTextOverlayTool({getRecipe,changeRecipe,onFontNotice=()=>
     add.disabled=items.length>=MAX_TEXT_OVERLAYS;
     moveButton.disabled=!items.some(item=>item.enabled&&item.text&&!item.locked);
     packSave.disabled=!packageFontIds(getRecipe()).length;
-    if(!item){fontStatus.textContent='';mover?.endCanvasMove();return;}
+    if(!item){
+      glyphCheckVersion++;glyphStatus.textContent='';
+      fontStatus.textContent='';mover?.endCanvasMove();return;
+    }
     refreshFontOptions(item.font);
+    checkGlyphs(item);
     fontStatus.textContent=isLocalFontId(item.font)&&
       !library.some(entry=>entry.id===item.font)?
       'Font file unavailable on this device. Reimport its original TTF/OTF to restore rendering.':'';

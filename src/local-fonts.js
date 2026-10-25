@@ -1,3 +1,4 @@
+import {rememberFontCoverage} from './font-glyph-coverage.js';
 // Private user-supplied TTF/OTF storage. Fonts are never sent to a server
 // and are not embedded into PNG/JSON/share URLs. SHA-256 identifiers are the
 // only information preserved in ordinary canonical recipes.
@@ -68,6 +69,7 @@ async function registerFont(id,bytes){
     const face=new FontFace(fontFamilyForId(id),bytes,{style:'normal',weight:'700'});
     await face.load();  // Native browser parser, rejects malformed fonts.
     fontSet().add(face);
+    if(typeof document!=='undefined')rememberFontCoverage(id,bytes); // Keep only codepoint coverage, not binary copies.
     ready.add(id);
     return face;
   })();
