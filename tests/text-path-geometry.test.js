@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {normalizeRecipe,resolveScene} from '../src/model.js';
 import {normalizeTextOverlays} from '../src/text-overlays.js';
-import {canCurveText,layoutTextOnPath,textPathStation,prepareTextFollowPath} from '../src/text-path-geometry.js';
+import {canCurveText,layoutTextOnPath,textPathStation,prepareTextFollowPath,
+  hitTextAtLayout} from '../src/text-path-geometry.js';
 import {drawTextOverlays} from '../src/text-overlay-renderer.js';
 import {hitTextOverlay,measuredTextBounds} from '../src/text-direct-geometry.js';
 function context(){
@@ -137,4 +138,52 @@ test('new path modes survive transport and conservative hit bounds are finite',(
     const bounds=measuredTextBounds(item,t=>t.length*17);
     assert.ok([bounds.width,bounds.height].every(x=>Number.isFinite(x)&&x>0));
   }
+});
+
+const pickMeasure=(item,value)=>[...value].length*item.size*.55;
+test('direct picking ignores hollow arc centre, exposes underlying text and selects actual glyph stations',()=>{
+  const bottom={id:'bottom',text:'X',enabled:true,x:50,y:50,size:64,
+    rotation:0,outline:'none'};
+  const top={id:'top',text:'RAINBOW',enabled:true,x:50,y:50,
+    size:64,rotation:0,path:'circle',pathHeight:175,outline:'none'};
+  const center={x:300,y:650};
+  assert.equal(hitTextOverlay([bottom,top],center,pickMeasure)?.id,'top',
+    'historic broad guide falsely captures the hollow centre');
+  assert.equal(hitTextAtLayout([bottom,top],center,pickMeasure)?.id,'bottom');
+  const shaped=layoutTextOnPath(top,top.text,s=>pickMeasure(top,s));
+  const glyph=shaped.glyphs.find(g=>g.text==='N');
+  const onInk={x:300+glyph.x,y:650+glyph.y};
+  assert.equal(hitTextAtLayout([bottom,top],onInk,pickMeasure)?.id,'top');
+  assert.equal(hitTextAtLayout([top],center,pickMeasure),null);
+});
+test('multiline blank gutter is not a text hit even within overall guide',()=>{
+  const item={id:'two',text:'TOP\nBOTTOM',enabled:true,
+    x:50,y:50,size:42,rotation:0,lineSpacing:100,outline:'none'};
+  assert.ok(measuredTextBounds(item,s=>pickMeasure(item,s)).height>170);
+  assert.equal(hitTextAtLayout([item],{x:300,y:650},pickMeasure),null);
+  const offset=item.size*1.17*2/2;
+  assert.equal(hitTextAtLayout([item],{x:300,y:650-offset},pickMeasure)?.id,'two');
+  assert.equal(hitTextAtLayout([item],{x:300,y:650+offset},pickMeasure)?.id,'two');
+});
+test('rotated authored Draw pick tracks actual editable source geometry',()=>{
+  const customPath=[[.08,.45],[.3,.38],[.5,.52],[.76,.62],[.94,.54]];
+  const item={id:'drawn',text:'FOLLOW',enabled:true,
+    x:50,y:50,size:64,rotation:55,path:'drawn',
+    outline:'none',pathHeight:80};
+  const layout=layoutTextOnPath(item,item.text,s=>pickMeasure(item,s),customPath);
+  assert.equal(layout.supported,true);
+  const glyph=layout.glyphs.find(g=>g.text==='O');
+  const theta=item.rotation*Math.PI/180;
+  const point={x:300+glyph.x*Math.cos(theta)-glyph.y*Math.sin(theta),
+    y:650+glyph.x*Math.sin(theta)+glyph.y*Math.cos(theta)};
+  assert.equal(hitTextAtLayout([item],point,pickMeasure,{customPath})?.id,'drawn');
+  assert.equal(hitTextAtLayout([item],{x:0,y:0},pickMeasure,{customPath}),null);
+  assert.equal(hitTextAtLayout([item],{x:300,y:650},pickMeasure,
+    {customPath:[]})?.id,'drawn',
+    'missing Draw path falls back to native straight-line hit');
+});
+test('unsupported joining scripts are selected as whole native lines',()=>{
+  const item={id:'rtl',text:'مرحبا',enabled:true,
+    x:50,y:50,size:64,path:'wave',outline:'none'};
+  assert.equal(hitTextAtLayout([item],{x:300,y:650},pickMeasure)?.id,'rtl');
 });
