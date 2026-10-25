@@ -40,6 +40,9 @@ export function readReconstructionEvalArgs(argv){
     if(key==='--hue-visible-shapes'){
       opts.hueVisibleShapes=true;continue;
     }
+    if(key==='--source-signature'){
+      opts.sourceSignature=true;continue;
+    }
     if(key==='--profile-hue-masks'){
       opts.profileHueMasks=true;continue;
     }
@@ -125,7 +128,7 @@ async function evaluate(opts){
       // Inference only sees image pixels, never this item's recipe.
       const inferred=await page.evaluate(async ({base64,includeAlternatives,
         includeInkGeometry,includeWidthProbe,includeChannelProbe,includeLocalCurve,
-        includeHueVisibleShapes,includeHueMaskProfile})=>{
+        includeHueVisibleShapes,includeHueMaskProfile,includeSourceSignature})=>{
         const {reconstructionCandidates,rankReconstructionCandidates,
           reconstructionPlacement,RECONSTRUCTION_FRAME,
           refineReconstructionCandidate,reconstructionRefinementIndex,
@@ -345,9 +348,27 @@ async function evaluate(opts){
             };
           }
         }
+        // Read-only source descriptors from the authoritative importer.
+        // This research receipt never enters candidate selection, ranking,
+        // serialized recipes or normally executed image processing.
+        let sourceSignature=null;
+        if(includeSourceSignature){
+          const {describeReconstructionImage}=await import('/src/image-reconstruction.js');
+          const d=describeReconstructionImage(source);
+          sourceSignature={sevenColourRegions:d.sevenColourRegions,
+            regionCount:d.colourRegions.length,
+            circleHintCount:d.circleHints?.length??0,
+            circleResiduals:d.circleHints?.map(x=>x.residual)??null,
+            regionFillRatios:d.colourRegions.map(x=>x.fillRatio),
+            regionAxisRatios:d.colourRegions.map(x=>x.axisRatio),
+            radialKind:d.radial.kind,
+            componentDiagonalAngle:d.componentDiagonalAngle,
+            pathKinds:d.paths.map(x=>x.kind),coverage:d.coverage};
+        }
         bitmap.close();
         return {
           ...(includeHueMaskProfile?{hueMaskProfile}:{}),
+          ...(includeSourceSignature?{sourceSignature}:{}),
           ...(includeHueVisibleShapes?{hueVisibleShapes}:{}),
           ...(includeLocalCurve?{localCurveProbe}:{}),
           ...(includeChannelProbe?{channelProbe}:{}),
@@ -375,7 +396,8 @@ async function evaluate(opts){
         includeChannelProbe:!!opts.probeInkChannels,
         includeLocalCurve:!!opts.probeLocalCurve,
         includeHueVisibleShapes:!!opts.hueVisibleShapes,
-        includeHueMaskProfile:!!opts.profileHueMasks});
+        includeHueMaskProfile:!!opts.profileHueMasks,
+        includeSourceSignature:!!opts.sourceSignature});
       // External work has NO original ROYGBIV recipe or true-render floor.
       // Only actual current-production PNGs have blinded truth sidecars.
       const truth=external?null:JSON.parse(await readFile(join(dir,item.recipeFile),'utf8'));
@@ -406,6 +428,7 @@ async function evaluate(opts){
         prefitAlternatives:inferred.prefitAlternatives,
         ...(opts.inkGeometry?{inkGeometry:inferred.inkGeometry}:{}),
         ...(opts.profileHueMasks?{hueMaskProfile:inferred.hueMaskProfile}:{}),
+        ...(opts.sourceSignature?{sourceSignature:inferred.sourceSignature}:{}),
         ...(opts.hueVisibleShapes?{hueVisibleShapes:inferred.hueVisibleShapes?{
           ...inferred.hueVisibleShapes,recipe:undefined,image:undefined,
           improved:inferred.hueVisibleShapes.error+1e-9<
