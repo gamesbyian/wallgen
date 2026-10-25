@@ -150,6 +150,35 @@ export const RECONSTRUCTION_R0_CASES=Object.freeze([
         {index:6,x:.32,y:.78,radius:.155}]}}
 ]);
 
+// One-shot independent current-renderer holdouts for the contour research gate.
+ // Not integrated into the fixed public 22-case acceptance catalogue.
+export const RECONSTRUCTION_CONTOUR_HOLDOUTS=Object.freeze([
+  {id:'23-hairpin-tight',goal:'Hairpin narrow bend, unseen seed/curvature',
+    recipe:{structure:'paths',geometry:'hairpin',orientation:'vertical',
+      hairpinAngle:110,turnRadius:32,spread:36,stripeWidth:55}},
+  {id:'24-hairpin-wide',goal:'Hairpin open turn and wider ribbons',
+    recipe:{structure:'paths',geometry:'hairpin',orientation:'vertical',
+      hairpinAngle:151,turnRadius:55,spread:47,stripeWidth:64}},
+  {id:'25-hairpin-diagonal',goal:'Hairpin oblique orientation, unseen seed',
+    recipe:{structure:'paths',geometry:'hairpin',orientation:'diagonal',
+      hairpinAngle:124,turnRadius:45,spread:40,stripeWidth:56}},
+  {id:'26-hairpin-offset',goal:'Hairpin cropped offset, alternate turn',
+    recipe:{structure:'paths',geometry:'hairpin',orientation:'vertical',
+      hairpinAngle:141,turnRadius:48,spread:42,stripeWidth:60,positionX:13}},
+  {id:'27-loop-tight',goal:'Loop compact radius and incomplete sweep',
+    recipe:{structure:'paths',geometry:'loop',orientation:'vertical',
+      loopRadius:40,loopSweep:310,spread:43,stripeWidth:54}},
+  {id:'28-loop-wide',goal:'Loop expanded radial crossing, alternate widths',
+    recipe:{structure:'paths',geometry:'loop',orientation:'vertical',
+      loopRadius:70,loopSweep:344,spread:48,stripeWidth:62}},
+  {id:'29-loop-oblique',goal:'Loop oblique orientation and crossing',
+    recipe:{structure:'paths',geometry:'loop',orientation:'diagonal',
+      loopRadius:55,loopSweep:355,spread:46,stripeWidth:64}},
+  {id:'30-loop-shifted',goal:'Loop shifted crop and reduced sweep',
+    recipe:{structure:'paths',geometry:'loop',orientation:'vertical',
+      loopRadius:49,loopSweep:288,spread:50,stripeWidth:58,positionX:14}}
+]);
+
 export function baselineRecipe(item){
   return normalizeRecipe({...fixed,seed:'reconstruction-r0-'+item.id,...item.recipe});
 }
@@ -160,6 +189,7 @@ export function readBaselineArgs(argv){
     const flag=argv[i];
     if(flag==='--help'||flag==='-h'){options.help=true;continue;}
     if(flag==='--list'){options.list=true;continue;}
+    if(flag==='--contour-holdouts'){options.contourHoldouts=true;continue;}
     if(!['--out-dir','--browser','--only'].includes(flag)||!argv[i+1]||
       argv[i+1].startsWith('--'))throw Error('Unknown or incomplete argument: '+flag);
     options[flag==='--out-dir'?'outDir':flag.slice(2)]=argv[++i];
@@ -181,13 +211,15 @@ function equalImageChunks(a,b){
 
 async function generate(options){
   const destination=resolve(options.outDir);
+  const selectionPool=options.contourHoldouts?
+    RECONSTRUCTION_CONTOUR_HOLDOUTS:RECONSTRUCTION_R0_CASES;
   const selections=options.only?new Set(options.only.split(',').map(s=>s.trim())):null;
   if(selections?.size){
-    const known=new Set(RECONSTRUCTION_R0_CASES.map(item=>item.id));
+    const known=new Set(selectionPool.map(item=>item.id));
     for(const id of selections)if(!known.has(id))throw Error('Unknown R0 case: '+id);
   }
-  const cases=selections?RECONSTRUCTION_R0_CASES.filter(item=>selections.has(item.id)):
-    RECONSTRUCTION_R0_CASES;
+  const cases=selections?selectionPool.filter(item=>selections.has(item.id)):
+    selectionPool;
   const filenames=['index.html','manifest.json',...cases.flatMap(item=>[
     item.id+'.png',item.id+'.no-metadata.png',item.id+'.recipe.json'])];
   // Treat evidence as immutable; any repeat run must choose a different path.
@@ -252,7 +284,7 @@ async function generate(options){
 async function main(){
   const opts=readBaselineArgs(process.argv.slice(2));
   if(opts.help){console.log('node scripts/review-reconstruction.mjs [--out-dir path] [--browser Chromium-path] [--list]');return;}
-  if(opts.list){for(const item of RECONSTRUCTION_R0_CASES)console.log(item.id+': '+item.goal);return;}
+  if(opts.list){for(const item of opts.contourHoldouts?RECONSTRUCTION_CONTOUR_HOLDOUTS:RECONSTRUCTION_R0_CASES)console.log(item.id+': '+item.goal);return;}
   await generate(opts);
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
