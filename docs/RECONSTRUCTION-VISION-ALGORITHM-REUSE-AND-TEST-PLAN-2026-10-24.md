@@ -1,4 +1,11 @@
 # Inverse vision: algorithm reuse, evaluation and implementation backlog
+
+## First executable evidence · 24 October 2026 (merge candidate)
+
+[PR #704](https://github.com/gamesbyian/wallgen/pull/704) implements the first **read-only, dependency-free distance-field/topology oracle** and the GHA-only **VTracer vector comparison runner**. Genuine Chromium/CLI [run 40167263389](https://github.com/gamesbyian/wallgen/actions/runs/40167263389) passed eight focused tests and five actual current-renderer R0 source versus current-canonical versus VTracer comparisons. Independent optically inspected images and numerical measurements are recorded in [first genuine-art findings](RECONSTRUCTION-VTRACER-GENUINE-ART-FINDINGS-2026-10-24.md). A temporary heavy PR workflow trigger was removed after the proof, leaving manual opt-in GHA only. No external dependency, new ranking metric, imported vector recipe or inferred Hue mask integration is shipped; real Pixel/creator acceptance remains open.
+
+**Next specific Agent 1 hypothesis:** expose source read-only existing per-hue masks through the shared importer, test measured EDT/medial-axis ribbon width and negative spaces against genuine Hairpin #05 and Loop #06, then trial any source-backed parameter constraint in the normal ≤6+10 true-render budget. Avoid wholesale importing VTracer's 107-path Loop and avoid duplicate HSV segmentation.
+
 Status: research and test-ready proposal, 24 October 2026 (Calgary). Owner: Agent 1 / issue #557. This is a subordinate plan, **not** a second work queue. Validate against live main before implementing. No library has yet been integrated or benchmarked under this plan.
 
 ## What exists on main, and why this is a focused extension
