@@ -65,8 +65,10 @@ test('the production UI uses the projected recipe rather than a stale candidate'
   assert.match(code,/changeRecipe\(inferred,\{cause:'image-reconstruction'\}\)/);
   assert.match(code,/Locked settings preserved:/);
   const ui=readFileSync(new URL('../src/image-path-ui.js',import.meta.url),'utf8');
-  assert.match(ui,/recipeApply\.disabled=true;[\s\S]*?Close|Close[\s\S]*?recipeApply\.disabled=true/,
-    'the modal must explain why the pending candidate was refused');
+  assert.match(ui,/Locks changed\. Re-import image\./,
+    'short mobile card must explain rejected fit without clipping');
+  assert.match(ui,/recipeApply\.disabled=true;/,
+    'a stale candidate cannot be applied twice in the same dialog');
   assert.doesNotMatch(code,/const inferred=normalizeRecipe\(\{\.\.\.candidate,reconstructionOrigin:/,
     'must not commit raw pre-lock snapshot or drop the projected recipe');
 });
