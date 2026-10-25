@@ -34,6 +34,9 @@ export function readReconstructionEvalArgs(argv){
     if(key==='--probe-ink-channels'){
       opts.inkGeometry=true;opts.probeInkChannels=true;continue;
     }
+    if(key==='--probe-local-curve'){
+      opts.inkGeometry=true;opts.probeLocalCurve=true;continue;
+    }
     if(key==='--help'||key==='-h'){opts.help=true;continue;}
     if(!['--dir','--browser'].includes(key)||!argv[i+1]||argv[i+1].startsWith('--'))
       throw Error('Unknown/incomplete option '+key);
@@ -115,7 +118,7 @@ async function evaluate(opts){
         throw Error('External input must not contain a ROYGBIV source recipe');
       // Inference only sees image pixels, never this item's recipe.
       const inferred=await page.evaluate(async ({base64,includeAlternatives,
-        includeInkGeometry,includeWidthProbe,includeChannelProbe})=>{
+        includeInkGeometry,includeWidthProbe,includeChannelProbe,includeLocalCurve})=>{
         const {reconstructionCandidates,rankReconstructionCandidates,
           reconstructionPlacement,RECONSTRUCTION_FRAME,
           refineReconstructionCandidate,reconstructionRefinementIndex,
@@ -226,8 +229,44 @@ async function evaluate(opts){
             }
           }
         }
+        let localCurveProbe=null;
+        if(includeLocalCurve&&inkGeometry&&best&&
+          (best.kind==='hairpin'||best.kind==='loop')){
+          const {localCurveProbeSpecs}=await import('/src/reconstruction-ink-geometry.js');
+          const specs=localCurveProbeSpecs(inkGeometry,best.kind,best.recipe);
+          localCurveProbe={kind:best.kind,baseError:best.error,
+            envelopeResiduals:inkGeometry.envelopeResiduals,
+            variants:[],bestError:best.error,bestControls:null,bestImage:null};
+          const fields=['stripeWidth','spread','turnRadius','hairpinAngle',
+            'loopRadius','positionX','loopSweep'];
+          for(const spec of specs){
+            const adjustments={};
+            for(const field of fields){
+              const delta=spec[field+'Delta'];
+              if(Number.isFinite(delta))
+                adjustments[field]=best.recipe[field]+delta;
+            }
+            const recipe=normalizeRecipe({...best.recipe,...adjustments});
+            if(fields.every(field=>recipe[field]===best.recipe[field]))continue;
+            const canvas=render(recipe);
+            const pixels=canvas.getContext('2d',
+              {willReadFrequently:true}).getImageData(0,0,fit.width,fit.height);
+            const score=compareReconstructionPixels(reference,pixels);
+            const image=canvas.toDataURL('image/png');
+            localCurveProbe.variants.push({label:spec.label,
+              controls:Object.fromEntries(fields.filter(field=>
+                recipe[field]!==best.recipe[field]).map(field=>[field,recipe[field]])),
+              error:score,image});
+            if(score+1e-9<localCurveProbe.bestError){
+              localCurveProbe.bestError=score;
+              localCurveProbe.bestControls=localCurveProbe.variants.at(-1).controls;
+              localCurveProbe.bestImage=image;
+            }
+          }
+        }
         bitmap.close();
         return {
+          ...(includeLocalCurve?{localCurveProbe}:{}),
           ...(includeChannelProbe?{channelProbe}:{}),
           ...(includeWidthProbe?{widthProbe}:{}),
           prefitAlternatives,
@@ -250,7 +289,8 @@ async function evaluate(opts){
         includeAlternatives:!!opts.alternatives,
         includeInkGeometry:!!opts.inkGeometry,
         includeWidthProbe:!!opts.probeInkWidth,
-        includeChannelProbe:!!opts.probeInkChannels});
+        includeChannelProbe:!!opts.probeInkChannels,
+        includeLocalCurve:!!opts.probeLocalCurve});
       // External work has NO original ROYGBIV recipe or true-render floor.
       // Only actual current-production PNGs have blinded truth sidecars.
       const truth=external?null:JSON.parse(await readFile(join(dir,item.recipeFile),'utf8'));
@@ -280,6 +320,13 @@ async function evaluate(opts){
         bestLabel:inferred.selected?.label??null,
         prefitAlternatives:inferred.prefitAlternatives,
         ...(opts.inkGeometry?{inkGeometry:inferred.inkGeometry}:{}),
+        ...(opts.probeLocalCurve?{localCurveProbe:inferred.localCurveProbe?{
+          ...inferred.localCurveProbe,bestImage:undefined,
+          variants:inferred.localCurveProbe.variants.map((trial,i)=>({
+            ...trial,image:undefined,
+            preview:item.id+'.r0-local-curve-'+(i+1)+'.png'})),
+          bestPreview:inferred.localCurveProbe.bestImage?
+            item.id+'.r0-local-curve-best.png':null}:null}:{}),
         ...(opts.probeInkChannels?{channelProbe:inferred.channelProbe?{
           ...inferred.channelProbe,bestImage:undefined,
           variants:inferred.channelProbe.variants.map((trial,i)=>({
@@ -317,6 +364,13 @@ async function evaluate(opts){
       for(const [index,variant] of inferred.candidateVariants.entries()){
         await writeFile(join(dir,record.variantPreviews[index]),pngBytes(variant.image));
       }
+      for(const [i,trial] of (inferred.localCurveProbe?.variants||[]).entries()){
+        await writeFile(join(dir,item.id+'.r0-local-curve-'+(i+1)+'.png'),
+          pngBytes(trial.image));
+      }
+      if(inferred.localCurveProbe?.bestImage)
+        await writeFile(join(dir,item.id+'.r0-local-curve-best.png'),
+          pngBytes(inferred.localCurveProbe.bestImage));
       for(const [i,trial] of (inferred.channelProbe?.variants||[]).entries()){
         await writeFile(join(dir,item.id+'.r0-gap-trial-'+(i+1)+'.png'),
           pngBytes(trial.image));
@@ -383,7 +437,7 @@ async function evaluate(opts){
 }
 async function main(){
   const opts=readReconstructionEvalArgs(process.argv.slice(2));
-  if(opts.help){console.log('node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/reconstruction-r0 [--browser executable] [--alternatives] [--ink-geometry] [--probe-ink-width] [--probe-ink-channels]');return;}
+  if(opts.help){console.log('node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/reconstruction-r0 [--browser executable] [--alternatives] [--ink-geometry] [--probe-ink-width] [--probe-ink-channels] [--probe-local-curve]');return;}
   await evaluate(opts);
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
