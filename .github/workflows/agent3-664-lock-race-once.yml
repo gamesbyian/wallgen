@@ -1,0 +1,43 @@
+name: One-shot real PNG reconstruction with live lock drift
+on:
+  push:
+    branches: [agent3/664-reconstruction-lock-apply-20261024]
+    paths: [.github/workflows/agent3-664-lock-race-once.yml]
+permissions:
+  contents: read
+jobs:
+  source-to-stamps:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install headless painter/browser
+        run: |
+          npm install --no-save playwright@1.56.1 serve@14.2.5
+          npx playwright install chromium --only-shell
+      - name: Create actual renderer metadata-free Jagged source
+        run: node scripts/review-reconstruction.mjs --out-dir artifacts/agent3-680-source --only 16-offset-jagged
+      - name: Start real static app
+        run: |
+          npx serve . -l 4173 >/tmp/agent3-680-serve.log 2>&1 &
+          for i in $(seq 1 45); do
+            if curl -fsS http://127.0.0.1:4173/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/agent3-680-serve.log
+          exit 1
+      - name: Reproduce late lock, refusal, reimport, full PNG and Undo
+        run: node tests/agent3-664-reconstruction-live-lock-browser.mjs
+      - name: Preserve real source and browser images
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent3-680-live-lock-optical
+          path: |
+            artifacts/agent3-680-source/16-offset-jagged.no-metadata.png
+            artifacts/agent3-680-lock-browser/
+          retention-days: 14
+          if-no-files-found: warn
