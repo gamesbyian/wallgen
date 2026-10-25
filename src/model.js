@@ -3,6 +3,7 @@ import {normalizePhotoLook} from './photo-look.js';
 import {normalizeSurfaceTreatments} from './embroidery.js';
 import {normalizeCompoundRegion,GEOMETRY_SNAPSHOT_SCHEMA} from './geometry-asset.js';
 import {normalizeScatteredOverrides,normalizeScatteredLayerOrder} from './scattered-object-edits.js';
+import {normalizeScatteredShapeOverrides} from './scattered-shape-overrides.js';
 import { normalizeInteriorElements } from './interior-elements.js';
 import { normalizeTextOverlays } from './text-overlays.js';
 import { STRUCTURES, RADIAL_MODES, REGION_MODES, DIVIDER_MODES, buildCompositionObjects } from './composition-geometry.js';
@@ -31,7 +32,7 @@ export const LOCKABLE_SETTINGS = ['seed','family','orientation','geometry','moti
   'material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3',
   'textureDisplacement','patternHomogeneity','chaos','stripeWidth','spread','shapeFrequency','shapeDepth','motifSize','motifFrequency','lineStyle','individuality',
   'overridePatternHomogeneity','gap','outlineBuffer','glow','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','position',
-  'structure','radialMode','rayCount','rayRotation','rayTwist','rayCoverage','rayCore','fieldCenterX','fieldCenterY','regionMode','regionCount','regionJitter','regionSides','scatteredCount','scatteredMinSize','scatteredMaxSize','scatteredVariation','scatteredSpacing','scatteredEdgeCrop','scatteredOverlap','scatteredShapeKind','dividerColor','dividerWidth',
+  'structure','radialMode','rayCount','rayRotation','rayTwist','rayCoverage','rayCore','fieldCenterX','fieldCenterY','regionMode','regionCount','regionJitter','regionSides','scatteredCount','scatteredMinSize','scatteredMaxSize','scatteredVariation','scatteredSpacing','scatteredEdgeCrop','scatteredOverlap','scatteredShapeKind','scatteredShapeOverrides','dividerColor','dividerWidth',
   'composition','repeatCount','repeatSpacing','construction','crossingMode','turnRadius','hairpinAngle','loopRadius','loopSweep','geometrySafety','extendDrawnPath','stepCount','chevronSharpness','loopAspect','pathLength','endTaper','tonalContrast','brushRoughness','dotSize','dotSpacing','interiorElements'];
 export const PALETTES = ['classic', 'electric', 'pastel', 'jewel', 'muted', 'sunset', 'candy', 'arctic', 'earth', 'twilight', 'citrus'];
 export const TEXTURE_COVERAGES = ['both', 'stripes', 'background'];
@@ -122,6 +123,7 @@ export function normalizeRecipe(input = {}) {
   const normalizedInteriors=normalizeInteriorElements(input.interiorElements);
   const textOverlays=normalizeTextOverlays(input.textOverlays);
   const scatteredOverrides=normalizeScatteredOverrides(input.scatteredOverrides);
+  const scatteredShapeOverrides=normalizeScatteredShapeOverrides(input.scatteredShapeOverrides);
   const reconstructionOrigin=normalizeReconstructionOrigin(input.reconstructionOrigin);
   const scatteredLayerOrder=normalizeScatteredLayerOrder(input.scatteredLayerOrder);
   // Interior numeric controls have the same transport invariant. Normalize
@@ -172,6 +174,8 @@ export function normalizeRecipe(input = {}) {
     scatteredOverlap: ['separate','overlap'].includes(input.scatteredOverlap)?input.scatteredOverlap:'separate',
     scatteredShapeKind: ['circle','imported'].includes(input.scatteredShapeKind)?input.scatteredShapeKind:'circle',
     scatteredShape:normalizeShapeSnapshot(input.scatteredShape),
+    // Per-hue snapshots are strictly opt-in and absent from legacy recipes.
+    ...(scatteredShapeOverrides.length?{scatteredShapeOverrides}:{}),
     // Preserve legacy recipe serialization exactly when no individual edits exist.
     ...(scatteredOverrides.length?{scatteredOverrides}:{}),
     ...(scatteredLayerOrder.length?{scatteredLayerOrder}:{}),
