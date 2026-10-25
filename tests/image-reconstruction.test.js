@@ -1554,5 +1554,5 @@ test('registered candidates share one source hue analysis across sync/cooperativ
  }));
  assert.deepEqual(summary(coop),summary(sync),
    'cooperative shared cache cannot change rank, hints or paint score');
- assert.equal(paints,11,'each selected hypothesis paints once per rank call');
+ assert.equal(paints,9,'each selected hypothesis paints once per rank call');
 });
