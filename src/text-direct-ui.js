@@ -65,8 +65,20 @@ export function installTextCanvasMover({
     const y=rect.top-parent.top+rect.height*item.y/100;
     outline.style.left=x+'px';
     outline.style.top=y+'px';
-    outline.style.width=(bounds.width+2*extra)*rect.width/DESIGN_WIDTH+'px';
-    outline.style.height=(bounds.height+2*extra)*rect.height/DESIGN_HEIGHT+'px';
+    const physicalWidth=(bounds.width+2*extra)*rect.width/DESIGN_WIDTH;
+    const physicalHeight=(bounds.height+2*extra)*rect.height/DESIGN_HEIGHT;
+    outline.style.width=physicalWidth+'px';
+    outline.style.height=physicalHeight+'px';
+    // The standard 44px corner handle can fully cover a one-letter title.
+    // Move only genuinely compact text targets outside the frame, choosing
+    // inward sides when the wallpaper edge is nearby. The actual canvas
+    // pointer handler, 44px controls and one-Undo path remain unchanged.
+    const compact=physicalWidth<80&&physicalHeight<100;
+    outline.classList.toggle('text-direct-compact',compact);
+    outline.classList.toggle('text-direct-scale-left',compact&&
+      rect.width*item.x/100+physicalWidth/2+60>rect.width);
+    outline.classList.toggle('text-direct-scale-up',compact&&
+      rect.height*item.y/100+physicalHeight/2+60>rect.height);
     outline.style.transform='translate(-50%,-50%) rotate('+item.rotation+'deg)';
     const angle=item.rotation*Math.PI/180;
     const halfVerticalReach=(Math.abs(Math.sin(angle))*(bounds.width+2*extra)*
