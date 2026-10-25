@@ -4,7 +4,8 @@ import {HUES} from '../src/model.js';
 import {extractImageColourRegions} from '../src/image-path.js';
 import {
   skeletonizePigment,describeRainbowInkGeometry,compareRainbowInkGeometry,
-  proposeMedialWidthDeltas,measureUpperHueGaps
+  proposeMedialWidthDeltas,measureUpperHueGaps,
+  proposeUpperGapTrials
 } from '../src/reconstruction-ink-geometry.js';
 
 const raster=(w,h,painter)=>{
@@ -136,4 +137,20 @@ test('upper-frame source black channels are measured locally and crossing rows r
   assert.equal(touching.medianGap,0);
   assert.equal(touching.gapPositiveFraction,0);
   assert.throws(()=>measureUpperHueGaps([],w,h),RangeError);
+});
+
+test('coupled-gap experiment demands real source-visible missing channels',()=>{
+  const good={upperSourceGaps:{
+    usableRows:20,observedPairs:120,meanGap:1,gapPositiveFraction:1
+  },upperRenderedGaps:{
+    usableRows:20,observedPairs:120,meanGap:.33,gapPositiveFraction:.33
+  }};
+  const hairpin=proposeUpperGapTrials(good,'hairpin');
+  assert.equal(hairpin.trials.length,3);
+  assert.ok(hairpin.trials.every(x=>x.widthDelta<0&&x.spreadDelta>0));
+  assert.equal(proposeUpperGapTrials(good,'straight'),null);
+  assert.equal(proposeUpperGapTrials({
+    ...good,upperRenderedGaps:good.upperSourceGaps},'loop'),null);
+  assert.equal(proposeUpperGapTrials({
+    ...good,upperSourceGaps:{...good.upperSourceGaps,usableRows:2}},'loop'),null);
 });
