@@ -137,7 +137,9 @@ export function installTextOverlayTool({getRecipe,changeRecipe,onFontNotice=()=>
     'rainbow-word':'Rainbow · each word','rainbow-gradient':'Rainbow · gradient'
   })[key]]));
   options(outline,TEXT_OUTLINES.map(key=>[key,({
-    none:'No outline',black:'Black outline',white:'White outline'
+    none:'No outline',black:'Black outline',white:'White outline',
+    'black-white':'Black outer · white inner',
+    'white-black':'White outer · black inner'
   })[key]]));
   options(root.querySelector('[data-text-key="shadow"]'),TEXT_SHADOWS.map(key=>[
     key,({none:'No shadow',black:'Black shadow',white:'White shadow'})[key]

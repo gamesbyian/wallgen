@@ -13,7 +13,7 @@ import {isBundledFontId} from './bundled-fonts.js';
 export const TEXT_COLOURS=Object.freeze([
   'black','white','rainbow-letter','rainbow-word','rainbow-gradient'
 ]);
-export const TEXT_OUTLINES=Object.freeze(['none','black','white']);
+export const TEXT_OUTLINES=Object.freeze(['none','black','white','black-white','white-black']);
 export const TEXT_PATHS=Object.freeze(['none','wave','arc','circle','hairpin','loop','drawn']);
 export const TEXT_SHADOWS=Object.freeze(['none','black','white']);
 export const MAX_TEXT_OVERLAYS=8;
