@@ -362,32 +362,44 @@ function croppedHueTailContoursCoherent(groups,reference,w,h){
       sum[x]+=Math.floor(p/w);
       count[x]++;
     }
-    const out=new Float64Array(w).fill(NaN);
-    for(let x=0;x<w;x++)if(count[x])out[x]=sum[x]/count[x];
-    return out;
+    const centre=new Float64Array(w).fill(NaN);
+    for(let x=0;x<w;x++)if(count[x])centre[x]=sum[x]/count[x];
+    return {centre,count};
   };
   const base=ridge(reference),limit=Math.max(2,h*.0075);
+  const baseColumns=base.count.reduce((n,v)=>n+(v>0?1:0),0);
+  // Pixel width is a separate piece of observed contour evidence. A tail
+  // can follow the right centreline yet alternate between too thin and too
+  // thick, even while its global mean width and hue axis look correct.
+  // Allow natural source anti-alias/crop variation, but not large local drift.
+  const baseWidth=reference.area/Math.max(1,baseColumns);
+  const thicknessLimit=Math.max(3,baseWidth*.35);
   for(const tail of groups.slice(4)){
-    const observed=ridge(tail),columns=observed.reduce((n,y)=>
+    const observed=ridge(tail),columns=observed.centre.reduce((n,y)=>
       n+(Number.isFinite(y)?1:0),0);
     if(columns<12)return false;
-    let best=Infinity;
+    let supported=false;
     const span=Math.floor(w*.6);
     for(let dx=-span;dx<=span;dx++){
-      let count=0,sum=0,square=0;
+      let count=0,sum=0,square=0,widthSquare=0;
       for(let x=0;x<w;x++){
         const q=x-dx;
-        if(q<0||q>=w||!Number.isFinite(observed[x])||
-          !Number.isFinite(base[q]))continue;
-        const d=observed[x]-base[q];
+        if(q<0||q>=w||!Number.isFinite(observed.centre[x])||
+          !Number.isFinite(base.centre[q]))continue;
+        const d=observed.centre[x]-base.centre[q];
+        const widthDelta=observed.count[x]-base.count[q];
         count++;sum+=d;square+=d*d;
+        widthSquare+=widthDelta*widthDelta;
       }
       if(count<Math.ceil(columns*.8))continue;
       const residual=Math.sqrt(Math.max(0,square/count-(sum/count)**2));
-      if(residual<best)best=residual;
-      if(best<=limit)break;
+      const widthResidual=Math.sqrt(widthSquare/count);
+      if(residual<=limit&&widthResidual<=thicknessLimit){
+        supported=true;
+        break;
+      }
     }
-    if(best>limit)return false;
+    if(!supported)return false;
   }
   return true;
 }
