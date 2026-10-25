@@ -1342,7 +1342,8 @@ test('four intact hue silhouettes and three real ordered crop tails become edita
      if(bad==='missing'&&i===6)continue;
      if(x<(bad==='unordered'&&i===5?10:cut))continue;
      const distortion=bad==='unrelated'&&i===2?15*Math.sin(x/6):0;
-     const bend=Math.round(.22*x+4*Math.sin(x/17)+distortion);
+     const bend=Math.round(.22*x+4*Math.sin(x/(
+       bad==='changed-tail-frequency'&&i>=4?9:17))+distortion);
      if(Math.abs(y-(14+i*44+bend))<=5)return colour(HUES[i]);
    }
    return [0,0,0,255];
@@ -1368,7 +1369,7 @@ test('four intact hue silhouettes and three real ordered crop tails become edita
  }));
  assert.ok(!locked.some(c=>c.kind==='shape-repeats'),
    'canonical object/structure locks prevent impossible Apply previews');
- for(const failure of ['unordered','missing','unrelated'])
+ for(const failure of ['unordered','missing','unrelated','changed-tail-frequency'])
    assert.notEqual(describeReconstructionImage(source(failure)).repeatShape?.clipped,
      true,'never extrapolate unrelated, unordered, or unobserved pigment contours');
 });
@@ -1403,4 +1404,26 @@ test('cropped repeated stamps refuse unrelated pigment tails despite identical c
  assert.ok(reconstructionCandidates(supported,normalizeRecipe({seed:'supported-tails'}))
    .some(candidate=>candidate.kind==='shape-repeats'),
    'genuine full plus cropped ribbons still reach the same canonical path');
+});
+
+test('cropped shared hue contours remain recognizable after left-right reflection',()=>{
+ const w=220,h=350;
+ const original=raster(w,h,(x,y)=>{
+   for(let i=0;i<7;i++){
+     if(x<(i<4?0:[48,90,133][i-4]))continue;
+     if(Math.abs(y-(14+i*44+Math.round(x*.22+4*Math.sin(x/17))))<=5)
+       return colour(HUES[i]);
+   }
+   return [0,0,0,255];
+ });
+ const reversed=raster(w,h,(x,y)=>{
+   const at=4*(y*w+(w-x-1));
+   return Array.from(original.data.subarray(at,at+4));
+ });
+ const signature=describeReconstructionImage(reversed);
+ assert.equal(signature.repeatShape?.clipped,true,
+   'genuine translated ribbons may be progressively cropped from either edge');
+ assert.ok(signature.ribbonBands,'all seven observed pigments are coherent');
+ assert.ok(reconstructionCandidates(reversed,normalizeRecipe({seed:'mirror'}))
+   .some(candidate=>candidate.kind==='shape-repeats'));
 });
