@@ -1085,7 +1085,9 @@ function refinementFields(candidate){
     ['spread',[-16,-8,8,16]],['stripeWidth',[-15,15]]
   ]:candidate.kind==='loop'?[
     ['positionX',[-6,6]],['positionY',[-6,6]],
-    ['loopRadius',[-10,10]],['spread',[-10,10]],['stripeWidth',[-15,15]]
+    // Source-fitted current loops tend to have a small residual radius error.
+    // Keep the same two radius paints but sample nearer the selected scale.
+    ['loopRadius',[-6,6]],['spread',[-10,10]],['stripeWidth',[-15,15]]
   ]:candidate.kind==='wave'?[
     // The first true-render probe uses the rigid seven-hue centroid offset
     // when measured, then tests its immediate neighbourhood. Otherwise keep
@@ -1115,8 +1117,11 @@ function refinementFields(candidate){
       ['spread',[-15,15]],['stripeWidth',[-25,-10,10,25]]
     ]
   ):candidate.kind==='hairpin'?[
-    ['turnRadius',[-15,15]],['hairpinAngle',[-25,25]],
-    ['spread',[-10,10]],['positionX',[-7,7]],['positionY',[-7,7]]
+    // A U-turn's departure angle is meaningful only after the U position and
+    // ribbon separation have been fitted. Testing angle first locks the
+    // greedy scorer into a shallow exit even when a steeper one fits better.
+    ['turnRadius',[-15,15]],['spread',[-10,10]],
+    ['positionX',[-7,7]],['positionY',[-7,7]],['hairpinAngle',[-25,25]]
   ]:candidate.kind==='radial-rays'?[
     ['rayRotation',[-10,-5,5,10]],['fieldCenterX',[-5,5]],
     ['fieldCenterY',[-5,5]],['rayCore',[-10,10]]
