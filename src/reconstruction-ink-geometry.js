@@ -132,3 +132,30 @@ export function compareRainbowInkGeometry(source,rendered,{withSkeleton=true}={}
     topologyMismatch:byHue.reduce((s,v)=>s+v.topologyMismatch,0),
     byHue};
 }
+
+// Deliberately conservative offline hypothesis, NOT a production tuning rule.
+// Trust a global ink-width trial only when most visible hues independently
+// show the same signed departure. Hairpin's real #05 mismatched hue widths
+// should fail closed instead of blindly altering all bands.
+export function proposeMedialWidthDeltas(geometry,stripeWidth){
+  if(!geometry||!Array.isArray(geometry.byHue)||
+    !Number.isFinite(stripeWidth)||stripeWidth<5||stripeWidth>100)
+    return null;
+  const ratios=geometry.byHue.filter(h=>
+    h.source?.ink>=32&&h.rendered?.ink>=32&&
+    h.source.skeletonComplete===true&&
+    h.rendered.skeletonComplete===true&&
+    Number.isFinite(h.widthRatio)&&h.widthRatio>.45&&h.widthRatio<1.8)
+    .map(h=>h.widthRatio).sort((a,b)=>a-b);
+  if(ratios.length<6)return null;
+  const median=percentile(ratios,.5);
+  const deviations=ratios.map(r=>Math.abs(r-median));
+  const mad=percentile(deviations,.5);
+  if(mad>.10||median>.96&&median<1.04||
+    median<.65||median>1.45)return null;
+  const centre=clamp(Math.round(stripeWidth*(median-1)),-22,22);
+  if(Math.abs(centre)<3)return null;
+  const values=[centre,Math.round(centre*.5),Math.round(centre*1.5)];
+  return {medianRatio:median,medianAbsDeviation:mad,
+    deltas:[...new Set(values.filter(d=>d!==0))]};
+}
