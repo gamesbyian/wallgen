@@ -1,0 +1,49 @@
+name: Per-hue shape canonical optical proof
+# Temporary narrow PR trigger for initial artifact validation.
+# Remove pull_request after independent image review; retain manual-only.
+on:
+  pull_request:
+    paths: ['.github/workflows/per-hue-shape-optical.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: per-hue-shape-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: false
+jobs:
+  optical:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify canonical shape and transport tests
+        run: node --test tests/scattered-shape-overrides.test.js
+      - name: Install temporary browser
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Create portable seven-shape authoring fixture
+        run: node scripts/review-per-hue-shapes.mjs artifacts/per-hue-shapes
+      - name: Draw actual 480×1040 reference renderer wallpaper
+        run: |
+          node scripts/render-headless.mjs --recipe artifacts/per-hue-shapes/recipe.json             --width 480 --height 1040 --backend reference             --out artifacts/per-hue-shapes/reference.png
+      - name: Draw matching 480×1040 production worker wallpaper
+        run: |
+          node scripts/render-headless.mjs --recipe artifacts/per-hue-shapes/recipe.json             --width 480 --height 1040 --backend worker             --out artifacts/per-hue-shapes/worker.png
+      - name: Independently decode and compare all production pixels and PNG recipes
+        run: |
+          node scripts/compare-per-hue-pngs.mjs             artifacts/per-hue-shapes/reference.png             artifacts/per-hue-shapes/worker.png
+      - name: Produce full 3024×6552 self-contained recipe PNG
+        run: |
+          node scripts/render-headless.mjs --recipe artifacts/per-hue-shapes/recipe.json             --width 3024 --height 6552 --backend reference             --out artifacts/per-hue-shapes/full-resolution.png
+      - name: Save independently inspectable original images, recipe and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: canonical-per-hue-shapes-png-receipt
+          path: artifacts/per-hue-shapes
+          retention-days: 7
+          if-no-files-found: warn
