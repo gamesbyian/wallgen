@@ -41,7 +41,7 @@ A local top-of-frame scan of the **same shared canonical hue masks** avoids cros
 
 Jagged #16, compound #18 and circles #22 were correctly rejected as noncoherent top-of-frame seven-band sequences. This identifies a real **missing narrow-black-channel** mismatch independently of global per-hue median thickness. It does not determine original stroke widths, source render seed, U-turn radius, or Loop crossing paint precedence.
 
-Additional source/canonical/three alternate Loop PNGs were downloaded from [run #40168711677](https://github.com/gamesbyian/wallgen/actions/runs/40168711677) and directly inspected together at the same scale. Global stripe narrowing visibly produced increasingly over-wide black channels throughout the Loop and the long vertical stem, compromising already well-aligned pigment geometry. This directly confirms the numeric decline. A separately gated **coupled spacing and width** source-backed trial is the next bounded research test; no production change is authorized unless the actual painter comparison wins.
+Additional source/canonical/three alternate Loop PNGs were downloaded from [run #40168711677](https://github.com/gamesbyian/wallgen/actions/runs/40168711677) and directly inspected together at the same scale. Global stripe narrowing visibly produced increasingly over-wide black channels throughout the Loop and the long vertical stem, compromising already well-aligned pigment geometry. This directly confirms the numeric decline. A separately gated **coupled spacing and width** test has since been run and also **failed**, as documented below. The mismatch needs spatially localized geometry, not another global width adjustment.
 
 ## Real negative result: coherent Loop width hint is NOT sufficient
 
@@ -55,6 +55,23 @@ The current best Loop source-vs-fit per-hue median width ratio was **0.79057**, 
 | Source-width suggested −16 | 36 | 0.11040528 (worse) |
 
 This is the reason the shipped code **does not** change `refinementFields`, candidate ordering, or creative defaults. The observed seven-band width discrepancy is strongly coupled to loop geometry and registration; a plausible local descriptor cannot directly dictate a global renderer setting. No physical Pixel, owner creative judgement, source-invisible geometry or exact lost seed has been claimed.
+
+## Genuine painter result: coupled spacing + width also fails
+
+The opt-in [real Chromium paired trial #40169042777](https://github.com/gamesbyian/wallgen/actions/runs/40169042777) passed **13 focused Node tests** and rerendered actual R0 #05 and #06 source and candidate PNGs. The local upper-band gap evidence correctly triggered three conservative `stripeWidth`/ `spread` paired research paints per source. Each was evaluated by the existing real-painter RGB+brightness metric and saved as a separate PNG without changing the app winner or the ≤6+10 product search.
+
+| Source | Existing best error | Paired research trial | Actual new error | Direction |
+| --- | ---: | --- | ---: | --- |
+| #05 Hairpin | **.08447791** | stripeWidth 57, spread 36 | .08753191 | Worse |
+| #05 Hairpin | **.08447791** | stripeWidth 53, spread 38 | .11136151 | Worse |
+| #05 Hairpin | **.08447791** | stripeWidth 49, spread 40 | .13607694 | Worse |
+| #06 Loop | **.04977317** | stripeWidth 46, spread 50 | .06176451 | Worse |
+| #06 Loop | **.04977317** | stripeWidth 42, spread 54 | .07905266 | Worse |
+| #06 Loop | **.04977317** | stripeWidth 40, spread 56 | .08958235 | Worse |
+
+The actual **source / baseline / all six trial PNGs were downloaded and directly inspected at identical image scale**. The paired Hairpin changes reconstruct visible black gaps in the straight section but expand/reposition the lower coloured U-turn and outgoing leg incorrectly. The Loop changes reveal more black between rings but progressively distort the spiral/vertical-strand registration and pigment area, aggravating crossover artifacts. Numerical losses correspond to meaningful artistic defects, not merely metric sensitivity. The real current baseline therefore remains the verified winner on both cases.
+
+**Conclusion:** Neither uniform thickness nor globally coupled thickness-plus-spread is a defensible fix. The genuine deficiency involves *spatially varying* curve placement, ring/leg separation and source-visible crossing precedence. Any next production proposal needs a genuinely independent local geometry explanation, such as control-point/normal-offset profiles or visible pigment boundaries mapped into canonical Draw/shape geometry; do not add blind multidimensional search or repaint calls.
 
 ## Disposition / next engineering directions
 
