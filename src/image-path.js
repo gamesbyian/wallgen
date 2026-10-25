@@ -414,12 +414,21 @@ function repeatedHueStampShape(partsByHue,w,h){
   // Never apply this to compound groups, unordered cropping, absent colour,
   // or inconsistent intact silhouettes.
   const first=groups.slice(0,4),tail=groups.slice(4);
+  const shrinking=tail.every((g,i)=>
+    g.area<(i?tail[i-1].area:first[3].area)*.90&&
+    g.area>=first[2].area*.10);
+  const croppedFromLeft=tail.every((g,i)=>
+    g.maxX>=w*.98&&g.minX>w*.15&&
+    g.minX>(i?tail[i-1].minX:first[3].minX)+w*.05);
+  const croppedFromRight=tail.every((g,i)=>
+    g.minX<=w*.02&&g.maxX<w*.85&&
+    g.maxX<(i?tail[i-1].maxX:first[3].maxX)-w*.05);
+  // Crop direction must be consistent across all three observed tails.
+  // All seven physical axes/ink widths and the >=80% shared contour rhythm
+  // are independently validated before a source-backed stamp is accepted.
   const clipped=componentCount===1&&
     first.every(g=>g.minX<=w*.02&&g.maxX>=w*.98&&g.area>100)&&
-    tail.every((g,i)=>g.maxX>=w*.98&&g.minX>w*.15&&
-      g.minX>(i?tail[i-1].minX:first[3].minX)+w*.05&&
-      g.area<(i?tail[i-1].area:first[3].area)*.90&&
-      g.area>=first[2].area*.10);
+    shrinking&&(croppedFromLeft||croppedFromRight);
   const matched=clipped?first:groups;
   const horizontal=matched.every(g=>
     g.maxX-g.minX>=w*.45&&g.maxY-g.minY<=h*.55);
