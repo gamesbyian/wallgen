@@ -5,6 +5,7 @@ import {pathPosition} from './path-geometry.js';
 import {prepareDrawnPath,pointOnDrawnPath} from './drawn-path.js';
 import {textGraphemes} from './text-rainbow-shaping.js';
 import {availableTextWidth} from './text-direct-geometry.js';
+import {DESIGN_WIDTH,DESIGN_HEIGHT} from './model.js';
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 // Splitting joining or bidirectional runs into glyph paints is incorrect:
 // Canvas2D has no shaped-glyph-position API. Refuse curved segmentation and
@@ -117,4 +118,55 @@ export function layoutTextOnPath(item,line,measure,drawnPoints){
       x:point.x,y:point.y,angle:point.angle};
   });
   return {supported:true,glyphs,shrink,total,room};
+}
+
+// Pointer picking is a separate operation from the visible editor rectangle.
+// That rectangle remains a 44px-handle guide; selection follows the actual
+// authored line stations instead of claiming the empty centre of an arc.
+// These are deliberately conservative ink-near *advance* bounds, NOT an
+// expensive per-pixel glyph raster or a false character-exact ink claim.
+export function hitTextAtLayout(items,point,measureFor,{tolerance=0,customPath}={}){
+  if(!point||![point.x,point.y].every(Number.isFinite))return null;
+  const reach=Math.max(0,Number.isFinite(tolerance)?tolerance:0);
+  for(let i=(items?.length||0)-1;i>=0;i--){
+    const item=items[i];
+    if(!item?.enabled||!item.text||!Number.isFinite(item.size))continue;
+    const angle=(item.rotation||0)*Math.PI/180;
+    const px=point.x-DESIGN_WIDTH*item.x/100,
+      py=point.y-DESIGN_HEIGHT*item.y/100;
+    // Undo the object's overall rotation before testing any text stations.
+    const x=px*Math.cos(angle)+py*Math.sin(angle);
+    const y=-px*Math.sin(angle)+py*Math.cos(angle);
+    const lines=item.text.split('\n');
+    const leading=item.size*1.17*(1+(item.lineSpacing??0)/100);
+    const stroke=item.outline==='none'?0:item.size*item.outlineWidth/100;
+    const extra=stroke+reach;
+    for(let lineIndex=0;lineIndex<lines.length;lineIndex++){
+      const line=lines[lineIndex];
+      if(!line.trim())continue;
+      const offset=(lineIndex-(lines.length-1)/2)*leading;
+      const layout=item.path&&item.path!=='none'?
+        layoutTextOnPath(item,line,unit=>measureFor(item,unit),customPath):null;
+      if(layout?.supported){
+        for(const glyph of layout.glyphs){
+          if(!glyph.text.trim())continue; // authored spaces have no ink
+          const centerX=glyph.x-Math.sin(glyph.angle)*offset,
+            centerY=glyph.y+Math.cos(glyph.angle)*offset;
+          const dx=x-centerX,dy=y-centerY,
+            ux=dx*Math.cos(glyph.angle)+dy*Math.sin(glyph.angle),
+            uy=-dx*Math.sin(glyph.angle)+dy*Math.cos(glyph.angle);
+          if(Math.abs(ux)<=glyph.width*layout.shrink/2+extra&&
+             Math.abs(uy)<=item.size*.57+extra)return item;
+        }
+        continue;
+      }
+      // Straight and unsupported joining/RTL scripts share one native-shaped
+      // run. Hit its line, never independently "hit" a joining glyph.
+      const total=Math.max(0,Number(measureFor(item,line))||0);
+      const width=Math.min(availableTextWidth(item),total);
+      if(Math.abs(x)<=width/2+extra&&
+         Math.abs(y-offset)<=item.size*.57+extra)return item;
+    }
+  }
+  return null;
 }

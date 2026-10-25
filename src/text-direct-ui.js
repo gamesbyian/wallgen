@@ -1,7 +1,8 @@
 import {DESIGN_WIDTH,DESIGN_HEIGHT} from './model.js';
 import {typefaceCssFamily} from './typography-fonts.js';
-import {designPointFromPointer,hitTextOverlay,dragTextOverlay,
+import {designPointFromPointer,dragTextOverlay,
   dragTextTransform,transformTextOverlay,measuredTextBounds} from './text-direct-geometry.js';
+import {hitTextAtLayout} from './text-path-geometry.js';
 
 // Opt-in touch gesture, with the same one-pointerup/one-Undo contract already
 // used by scattered-object dragging. Neither guide rectangle nor Done button
@@ -111,7 +112,10 @@ export function installTextCanvasMover({
     const point=designPointFromPointer(event,canvas);
     const rect=canvas.getBoundingClientRect();
     const tolerance=14*DESIGN_WIDTH/Math.max(rect.width,1);
-    const item=hitTextOverlay(getRecipe().textOverlays,point,measure,{tolerance});
+    const current=getRecipe();
+    const item=hitTextAtLayout(current.textOverlays,point,measure,{
+      tolerance,customPath:current.customPath
+    });
     if(!item)return;
     event.preventDefault();event.stopImmediatePropagation();
     onSelect(item.id);
