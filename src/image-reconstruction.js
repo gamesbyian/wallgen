@@ -476,10 +476,14 @@ export function reconstructionCandidates(image,recipe){
         radius:clamp(radius*part.scale,.01,1.2)
       }));
       candidates.push({kind:'shape-repeats',
-        label:geometry.components.length>1?
-          'Seven editable repeated compound silhouettes':
-          'Seven congruent editable colour-silhouette stamps',
-        uncertainty:'Seven measured translated hue masks share one portable shape snapshot, including detected holes and detached islands. Each stamp can be moved and resized. Original path, hidden colour variations, painter order, pigments and seed remain uncertain.',
+        label:desc.repeatShape.clipped?
+          'Seven editable partly-cropped hue silhouettes':
+          geometry.components.length>1?
+            'Seven editable repeated compound silhouettes':
+            'Seven congruent editable colour-silhouette stamps',
+        uncertainty:desc.repeatShape.clipped?
+          'Four exposed source silhouettes are strongly congruent; three visibly progressively cropped colour regions are smaller editable appearances of that same portable stamp. Their missing contours, original spacing, painter order and seed cannot be recovered from the raster.':
+          'Seven measured translated hue masks share one portable shape snapshot, including detected holes and detached islands. Each stamp can be moved and resized. Original path, hidden colour variations, painter order, pigments and seed remain uncertain.',
         recipe:normalizeRecipe({...base,structure:'regions',regionMode:'scattered',
           scatteredShapeKind:'imported',scatteredShape:cloneGeometrySnapshot(geometry),
           scatteredCount:7,scatteredOverlap:'overlap',scatteredSpacing:0,
@@ -769,6 +773,14 @@ export function reconstructionCandidates(image,recipe){
       c.recipe.orientation==='diagonal').slice(0,3);
     if(angles.length===3){
       const selected=[...angles];
+      // Coherent four-complete/three-clipped silhouette evidence is stronger
+      // than a redundant third unrefined straight angle. Preserve two angles,
+      // a procedural Jagged and both safe/expanded Draw alternatives within
+      // the *same* six initial current-renderer paints.
+      if(desc.repeatShape?.clipped&&desc.ribbonBands){
+        const stamp=committable.find(c=>c.kind==='shape-repeats');
+        if(stamp)selected[0]=stamp;
+      }
       const angular=committable.find(c=>c.kind==='jagged');
       if(angular)selected.push(angular);
       for(const path of committable.filter(c=>c.kind==='path')){
