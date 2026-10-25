@@ -1,0 +1,67 @@
+name: One-shot independent cropped-stamp false-positive guard
+on:
+  push:
+    branches: [agent3/682-independent-source-proof-20261024]
+    paths: [.github/workflows/agent3-682-source-once.yml]
+permissions:
+  contents: read
+jobs:
+  actual-painter-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install headless Chromium for exact current painter
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install chromium --only-shell
+      - name: Generate authentic same current painter source PNGs
+        run: node scripts/review-reconstruction.mjs --out-dir artifacts/agent3-682-source --only 04-jagged,16-offset-jagged,17-repeated-hue-circles,18-repeated-compound-hole-island
+      - name: Fit with #682 proposed inverse, blind to truth
+        run: |
+          cp -a artifacts/agent3-682-source artifacts/agent3-682-proposed
+          node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/agent3-682-proposed
+      - name: Fit with merged #679 baseline using IDENTICAL source bytes
+        run: |
+          cp -a artifacts/agent3-682-source artifacts/agent3-682-main
+          git show origin/main:src/image-path.js > src/image-path.js
+          git show origin/main:src/image-reconstruction.js > src/image-reconstruction.js
+          node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/agent3-682-main
+      - name: Validate unchanged real source scores and render budgets
+        run: |
+          node --input-type=module <<'NODE'
+          import {readFile,writeFile} from 'node:fs/promises';
+          const control=JSON.parse(await readFile('artifacts/agent3-682-main/evaluation.json','utf8'));
+          const trial=JSON.parse(await readFile('artifacts/agent3-682-proposed/evaluation.json','utf8'));
+          const rows=trial.samples.map(t=>{
+            const c=control.samples.find(x=>x.id===t.id);
+            if(!c)throw Error('Missing control '+t.id);
+            const row={id:t.id,old:c.bestError,new:t.bestError,
+              delta:t.bestError-c.bestError,oldKind:c.bestKind,
+              newKind:t.bestKind,paints:t.refinementRenders};
+            console.log('AGENT3_682_R0 '+JSON.stringify(row));
+            if(Math.abs(row.delta)>1e-9||row.newKind!==row.oldKind||
+              !Number.isFinite(row.new)||row.paints>10)
+              throw Error('Regression against identical genuine source '+t.id);
+            return row;
+          });
+          await writeFile('artifacts/agent3-682-controls.json',
+            JSON.stringify(rows,null,2)+'\n');
+          NODE
+      - name: Preserve real source/new/old fitted PNG evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent3-682-current-source-controls
+          path: |
+            artifacts/agent3-682-source/
+            artifacts/agent3-682-proposed/
+            artifacts/agent3-682-main/
+            artifacts/agent3-682-controls.json
+          retention-days: 14
+          if-no-files-found: warn
