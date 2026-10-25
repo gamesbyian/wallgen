@@ -12,7 +12,7 @@ const origin=process.env.ROYGBIV_URL||'http://127.0.0.1:4173';
 const out=resolve('artifacts/agent3-664-expressive-portrait');
 await mkdir(out,{recursive:true});
 const base=normalizeRecipe({
-  seed:'agent3-expressive-acceptance',structure:'paths',geometry:'drawn',
+  seed:'agent3-expressive-acceptance',structure:'paths',geometry:'wave',
   customPath:[[.04,.36],[.21,.30],[.42,.46],[.60,.58],[.84,.37],[.97,.44]],
   textOverlays:[{id:'expressive-proof',text:'ROYGBIV IN MOTION',
     font:'bold',colour:'rainbow-letter',outline:'white',size:58,
