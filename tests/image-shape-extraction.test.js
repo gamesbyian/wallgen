@@ -64,7 +64,7 @@ test('a ninth significant silhouette cannot produce a falsely complete compound'
   assert.ok(partial.every(x=>x.geometry.components.length===1),
     'do not advertise an all-silhouettes compound missing the ninth');
   assert.ok(partial.every(x=>x.sourceComplete===false&&
-    /9\\+ islands/.test(x.label)),
+    x.label.includes('9+ islands')),
   'every selectable partial shape must disclose missing geometry');
   assert.equal(extractImageShapeCandidates(make(12)).length,8,
     'overflow sentinel is an upper-bound refusal, not an invented exact count');
