@@ -168,6 +168,8 @@ export function compareRainbowInkGeometry(source,rendered,{withSkeleton=true}={}
   const b=extractImageColourRegions(rendered,HUES,{includeMasks:true});
   const upperSourceGaps=measureUpperHueGaps(a.masks,w,h);
   const upperRenderedGaps=measureUpperHueGaps(b.masks,w,h);
+  const sourceEnvelopes=measureHueEnvelopeZones(a.masks,w,h);
+  const renderedEnvelopes=measureHueEnvelopeZones(b.masks,w,h);
   const byHue=a.masks.map((mask,i)=>{
     const other=b.masks[i];
     const metric=compareMaskGeometry(mask,other,w,h);
@@ -183,6 +185,17 @@ export function compareRainbowInkGeometry(source,rendered,{withSkeleton=true}={}
   const average=(key,items=byHue)=>items.length?
     items.reduce((s,v)=>s+v[key],0)/items.length:null;
   return {width:w,height:h,
+    envelopeResiduals:sourceEnvelopes.map((zone,i)=>{
+      const render=renderedEnvelopes[i];
+      if(!zone?.valid||!render?.valid)return {zone:i,valid:false};
+      return {zone:i,valid:true,range:zone.range,
+        source:zone,rendered:render,
+        centroidDeltaX:pxRound(zone.meanX-render.meanX),
+        leftDeltaX:pxRound(zone.leftEdge-render.leftEdge),
+        rightDeltaX:pxRound(zone.rightEdge-render.rightEdge),
+        inkRatio:pxRound(zone.pixels/Math.max(1,render.pixels)),
+        meanRunCountDifference:pxRound(zone.meanRowRuns-render.meanRowRuns)};
+    }),
     upperSourceGaps,upperRenderedGaps,
     sourceHues:a.regions.length,renderedHues:b.regions.length,
     meanIoU:average('iou'),meanEdgeChamfer:average('edgeChamfer'),
@@ -241,4 +254,84 @@ export function proposeUpperGapTrials(geometry,kind){
     trials:pairs.map(([widthDelta,spreadDelta])=>({
       widthDelta,spreadDelta
     }))};
+}
+
+/** Source-visible occupancy envelope at five fixed vertical ROIs. Unlike a
+ * global stripe-width estimate, this locates *where* the rendered geometry
+ * diverges (top stem, bend, crossing, lower stem). Every statistic comes
+ * from the original seven segmented masks; no hidden shape is extrapolated.
+ * The envelope records occupied pixels, not a unique spline centreline.
+ */
+export function measureHueEnvelopeZones(masks,width,height){
+  if(!Array.isArray(masks)||masks.length!==7||
+    !Number.isInteger(width)||!Number.isInteger(height)||
+    width<12||height<24||width*height>40000||
+    masks.some(mask=>!(mask instanceof Uint8Array)||
+      mask.length!==width*height))
+    throw new RangeError('Invalid bounded hue envelope input');
+  const zones=[[.05,.24],[.24,.42],[.42,.60],[.60,.78],[.78,.96]];
+  return zones.map(([from,to])=>{
+    const y0=Math.floor(height*from),y1=Math.min(height,Math.ceil(height*to));
+    let pixels=0,sumX=0,validRows=0,runTotal=0;
+    let left=Infinity,right=-Infinity;
+    for(let y=y0;y<y1;y++){
+      let previous=false,rowInk=0,rowRuns=0;
+      for(let x=0;x<width;x++){
+        const p=y*width+x;
+        let ink=false;
+        for(const mask of masks)if(mask[p]){ink=true;break;}
+        if(ink){
+          rowInk++;pixels++;sumX+=x;
+          left=Math.min(left,x);right=Math.max(right,x);
+          if(!previous)rowRuns++;
+        }
+        previous=ink;
+      }
+      if(rowInk){validRows++;runTotal+=rowRuns;}
+    }
+    if(validRows<Math.max(3,Math.floor((y1-y0)*.2))||
+      pixels<14)return {valid:false,range:[y0,y1]};
+    return {valid:true,range:[y0,y1],pixels,
+      validRows,meanX:pxRound(sumX/pixels),
+      leftEdge:left,rightEdge:right,
+      meanRowRuns:pxRound(runTotal/validRows)};
+  });
+}
+
+/** Research-only candidate parameters. The original and all trial outputs
+ * are compared by the existing true renderer, NEVER used to mutate the
+ * normal six-plus-ten fit. These narrow probes isolate potentially coupled
+ * controls and remain provisional regardless of apparent geometric hints.
+ */
+export function localCurveProbeSpecs(report,kind,recipe){
+  if(!['hairpin','loop'].includes(kind)||!Array.isArray(report?.envelopeResiduals)||
+    report.envelopeResiduals.length!==5||
+    !Number.isFinite(recipe?.stripeWidth)||!Number.isFinite(recipe?.spread))
+    return [];
+  const good=report.envelopeResiduals.filter(zone=>zone.valid);
+  if(good.length<3)return [];
+  if(kind==='hairpin'){
+    if(!report.upperSourceGaps||!report.upperRenderedGaps||
+      report.upperSourceGaps.gapPositiveFraction-
+        report.upperRenderedGaps.gapPositiveFraction<.25)return [];
+    return [
+      {label:'hairpin width -8 only',stripeWidthDelta:-8},
+      {label:'hairpin width -13 only',stripeWidthDelta:-13},
+      {label:'hairpin spread +6 only',spreadDelta:6},
+      {label:'hairpin spread +12 only',spreadDelta:12},
+      {label:'hairpin bend radius +7 only',turnRadiusDelta:7},
+      {label:'hairpin exit angle -10 only',hairpinAngleDelta:-10}
+    ];
+  }
+  if(!report.upperSourceGaps||!report.upperRenderedGaps||
+    report.upperSourceGaps.gapPositiveFraction-
+      report.upperRenderedGaps.gapPositiveFraction<.25)return [];
+  return [
+    {label:'loop radius -6 only',loopRadiusDelta:-6},
+    {label:'loop radius +6 only',loopRadiusDelta:6},
+    {label:'loop horizontal registration -6 only',positionXDelta:-6},
+    {label:'loop horizontal registration +6 only',positionXDelta:6},
+    {label:'loop sweep -10 only',loopSweepDelta:-10},
+    {label:'loop sweep +5 only',loopSweepDelta:5}
+  ];
 }
