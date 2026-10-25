@@ -15,6 +15,7 @@ export const TEXT_COLOURS=Object.freeze([
 ]);
 export const TEXT_OUTLINES=Object.freeze(['none','black','white']);
 export const TEXT_PATHS=Object.freeze(['none','wave','arc','circle','hairpin','loop','drawn']);
+export const TEXT_SHADOWS=Object.freeze(['none','black','white']);
 export const MAX_TEXT_OVERLAYS=8;
 const num=(value,fallback,min,max)=>{
   const n=Number(value);
@@ -45,6 +46,15 @@ export function normalizeTextOverlays(input){
       colour:TEXT_COLOURS.includes(v.colour)?v.colour:'rainbow-letter',
       outline:TEXT_OUTLINES.includes(v.outline)?v.outline:'black',
       outlineWidth:num(v.outlineWidth,5,0,20),
+      // Expressive treatment is opt-in; absent keys retain exact legacy ink.
+      ...(v.letterSpacing!==undefined?{letterSpacing:num(v.letterSpacing,0,-3,18)}:{}),
+      ...(v.lineSpacing!==undefined?{lineSpacing:num(v.lineSpacing,0,-20,100)}:{}),
+      ...(v.rainbowOffset!==undefined?{rainbowOffset:Math.round(num(v.rainbowOffset,0,0,6))}:{}),
+      ...(v.rainbowReverse===true?{rainbowReverse:true}:{}),
+      ...(TEXT_SHADOWS.includes(v.shadow)&&v.shadow!=='none'?{
+        shadow:v.shadow,shadowBlur:num(v.shadowBlur,6,0,16),
+        shadowDistance:num(v.shadowDistance,7,0,16)
+      }:{}),
       // Curved baselines are strictly opt-in. Old lettering is unchanged.
       ...(TEXT_PATHS.includes(v.path)&&v.path!=='none'?{
         path:v.path,pathHeight:num(v.pathHeight,90,20,240)
