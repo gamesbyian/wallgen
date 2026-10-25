@@ -1,8 +1,6 @@
 name: Source hue-mask browser CPU profile
-# One-shot PR proof; revert to workflow_dispatch before integration.
+# Manually opt-in to browser CPU profiling. Never default PR CI.
 on:
-  pull_request:
-    paths: ['.github/workflows/reconstruction-source-mask-profile.yml']
   workflow_dispatch:
 permissions:
   contents: read
