@@ -141,6 +141,38 @@ test('source-visible pigment retains 9–16 genuine islands, refuses 17+ instead
     'overflow refuses rather than issuing a source-completeness claim');
 });
 
+test('fragment-heavy hue masks retain the exact eight largest components in source order on ties',()=>{
+  const width=360,height=360,islands=225;
+  const data=new Uint8ClampedArray(width*height*4);
+  for(let p=0;p<width*height;p++)data[p*4+3]=255;
+  const stamp=index=>{
+    const size=11+index%4;
+    const x=4+index%15*24,y=4+Math.floor(index/15)*24;
+    for(let yy=y;yy<y+size;yy++)for(let xx=x;xx<x+size;xx++){
+      const p=(yy*width+xx)*4;data[p]=255;
+    }
+    return {index,size,x,y};
+  };
+  const placements=Array.from({length:islands},(_,i)=>stamp(i));
+  const source={data,width,height};
+  const bytes=data.slice();
+  const found=extractImageColourRegions(source,HUES);
+  const expected=placements.slice().sort((a,b)=>b.size-a.size||
+    a.index-b.index).slice(0,8);
+  assert.equal(found.coverage>0,true);
+  assert.equal(found.componentRegions.length,8,
+    'shared primary importer retains only its historical eight');
+  assert.deepEqual(found.componentRegions.map(region=>region.bounds.slice(0,2)),
+    expected.map(({x,y})=>[x/width,y/height]),
+    'large late components beat early small ones, stable ties keep earlier islands');
+  assert.deepEqual(extractImageColourRegions(source,HUES).componentRegions,
+    found.componentRegions,'fragment selection remains deterministic');
+  assert.deepEqual(data,bytes,'input pixels remain immutable');
+  const pigment=extractImageColourRegions(source,HUES,{includeMasks:true});
+  assert.equal(extractVisibleHueCompound(pigment.masks[0],width,height),null,
+    'the separate 17th-significant-island sentinel still refuses incomplete geometry');
+});
+
 test('appearance-first source contours share a separately measured canonical story, not historical provenance',()=>{
   const image=sevenShapes();
   const selected=observedHueShapeRecipe(image,placement,

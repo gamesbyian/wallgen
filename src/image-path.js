@@ -17,6 +17,13 @@ function backgroundColour(data,w,h){
 }
 function components(mask,w,h,minArea,maxResults=8){
   const seen=new Uint8Array(w*h),result=[],stack=[];
+  // Retain only the largest N qualifying islands while scanning. The
+  // appearance-only inverse adapter needs 16 + an overflow sentinel; other
+  // consumers need eight. The old sort-then-slice kept *every* substantial
+  // disconnected island alive until classification finished, which makes
+  // heavily fragmented imports allocate unbounded component-member arrays.
+  // A scan ordinal preserves exactly the previous stable equal-area ordering.
+  let ordinal=0;
   for(let start=0;start<mask.length;start++){
     if(!mask[start]||seen[start])continue;
     seen[start]=1;stack.push(start);
@@ -29,11 +36,26 @@ function components(mask,w,h,minArea,maxResults=8){
         if(n>=0&&mask[n]&&!seen[n]){seen[n]=1;stack.push(n);}
       }
     }
-    if(members.length>=minArea)result.push({members,minX,maxX,minY,maxY,area:members.length});
+    if(members.length>=minArea){
+      const part={members,minX,maxX,minY,maxY,area:members.length};
+      const entry={part,ordinal:ordinal++};
+      if(result.length<maxResults)result.push(entry);
+      else{
+        // Prefer evicting the *last* equally small item so earlier components
+        // win ties exactly as they did under stable sort + slice.
+        let weakest=0;
+        for(let i=1;i<result.length;i++)
+          if(result[i].part.area<result[weakest].part.area||
+            (result[i].part.area===result[weakest].part.area&&
+              result[i].ordinal>result[weakest].ordinal))weakest=i;
+        if(part.area>result[weakest].part.area)result[weakest]=entry;
+      }
+    }
   }
-  // Existing callers retain exactly the historical eight-component ceiling.
-  // The new visible-hue inverse adapter may request one overflow sentinel.
-  return result.sort((a,b)=>b.area-a.area).slice(0,maxResults);
+  // Existing callers retain exactly eight; source-visible hue shapes request
+  // sixteen plus one overflow sentinel. No partial 17+ island shapes escape.
+  return result.sort((a,b)=>b.part.area-a.part.area||
+    a.ordinal-b.ordinal).map(entry=>entry.part);
 }
 // Trace exposed pixel edges, preserving concavities (unlike radial silhouettes).
 function contour(component,w,h){
