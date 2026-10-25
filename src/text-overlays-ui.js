@@ -62,8 +62,9 @@ export function installTextOverlayTool({getRecipe,changeRecipe,onFontNotice=()=>
             <label>Text shadow <select data-text-key="shadow"></select></label>
             <label>Shadow softness <input type="range" data-text-key="shadowBlur" min="0" max="16" step="1"></label>
             <label>Shadow distance <input type="range" data-text-key="shadowDistance" min="0" max="16" step="1"></label>
+            <label>Shadow angle <input type="range" data-text-key="shadowAngle" min="0" max="359" step="1" aria-label="Shadow angle: degrees clockwise from right"></label>
           </div>
-          <p>Rainbow options work with rainbow lettering. Shadow controls unlock after choosing a shadow colour.</p>
+          <p>Rainbow options work with rainbow lettering. Shadow controls unlock after choosing a shadow colour. Shadow angle: 0° right, 90° down, 180° left, 270° up; 45° keeps the previous diagonal.</p>
         </details>
       </details>
     </div>
@@ -190,7 +191,7 @@ export function installTextOverlayTool({getRecipe,changeRecipe,onFontNotice=()=>
     const shadowActive=item.shadow==='black'||item.shadow==='white';
     for(const key of ['rainbowOffset','rainbowReverse'])
       root.querySelector('[data-text-key="'+key+'"]').disabled=!rainbowActive;
-    for(const key of ['shadowBlur','shadowDistance'])
+    for(const key of ['shadowBlur','shadowDistance','shadowAngle'])
       root.querySelector('[data-text-key="'+key+'"]').disabled=!shadowActive;
     for(const control of fields.querySelectorAll('[data-text-key]')){
       const key=control.dataset.textKey;
@@ -204,7 +205,8 @@ export function installTextOverlayTool({getRecipe,changeRecipe,onFontNotice=()=>
       if(control.type==='checkbox')control.checked=Boolean(item[key]);
       else {
         const defaults={path:'none',pathHeight:90,letterSpacing:0,
-          lineSpacing:0,rainbowOffset:0,shadow:'none',shadowBlur:6,shadowDistance:7};
+          lineSpacing:0,rainbowOffset:0,shadow:'none',shadowBlur:6,shadowDistance:7,
+          shadowAngle:45};
         const value=item[key]??defaults[key];
         if(control.value!==String(value))control.value=String(value);
       }
