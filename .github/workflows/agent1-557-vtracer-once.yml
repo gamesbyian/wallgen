@@ -1,0 +1,98 @@
+name: One-shot genuine VTracer vector oracle
+on:
+  push:
+    branches: [agent1/557-vtracer-optin-genuine-vector-oracle-20261025]
+    paths: [.github/workflows/agent1-557-vtracer-once.yml]
+permissions:
+  contents: read
+jobs:
+  independent-vector-oracle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install real current Chromium renderer and standalone SVG metrics
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+          python -m pip install --disable-pip-version-check Pillow==12.3.0 numpy==2.3.5 CairoSVG==2.8.2
+      - name: Fetch externally pinned VTracer CLI, checksum before executing
+        run: |
+          curl --fail --location --retry 3 --output /tmp/vtracer.tar.gz https://github.com/visioncortex/vtracer/releases/download/1.0.0-alpha.4/vtracer-x86_64-unknown-linux-musl.tar.gz
+          echo '2058f611b48ed49497f78883bde47435531e9e17e3a79428432d1528bdb12e2a  /tmp/vtracer.tar.gz' | sha256sum -c -
+          mkdir -p /tmp/vtracer-pinned
+          tar xzf /tmp/vtracer.tar.gz -C /tmp/vtracer-pinned
+          find /tmp/vtracer-pinned -maxdepth 4 -type f
+          FOUND="$(find /tmp/vtracer-pinned -type f -name vtracer | head -1)"
+          test -n "$FOUND"
+          install -m 755 "$FOUND" /usr/local/bin/vtracer
+          vtracer --help > /tmp/vtracer-help.txt
+      - name: Generate actual independent current-renderer ROYGBIV source PNGs
+        run: node scripts/review-reconstruction.mjs --out-dir artifacts/source --only 04-jagged,05-hairpin,06-loop,16-offset-jagged,18-repeated-compound-hole-island,22-overlapping-reversed-circles
+      - name: Run pinned vector oracle and compare actual SVG raster pixels
+        run: |
+          mkdir -p artifacts/vtracer
+          python - <<'PY'
+          from pathlib import Path
+          from xml.etree import ElementTree as ET
+          import io,json,subprocess,time
+          import numpy as np
+          import cairosvg
+          from PIL import Image
+          root=Path('artifacts/source')
+          out=Path('artifacts/vtracer')
+          rows=[]
+          for src in sorted(root.glob('*.no-metadata.png')):
+              name=src.name.removesuffix('.no-metadata.png')
+              svg=out/(name+'.svg')
+              t=time.perf_counter()
+              completed=subprocess.run(['/usr/local/bin/vtracer',str(src),str(svg)],
+                  capture_output=True,text=True,timeout=100)
+              elapsed=time.perf_counter()-t
+              if completed.returncode or not svg.exists():
+                  raise RuntimeError(f'Vector oracle failure {name}: {completed.stderr[:1200]}')
+              tree=ET.parse(svg)
+              paths=[x for x in tree.iter() if x.tag.rsplit('}',1)[-1]=='path']
+              svgraster=cairosvg.svg2png(url=str(svg),output_width=480,output_height=1040)
+              image=Image.open(io.BytesIO(svgraster)).convert('RGBA')
+              flattened=Image.new('RGBA',image.size,(0,0,0,255))
+              flattened.alpha_composite(image)
+              raster=out/(name+'.oracle.png')
+              flattened.convert('RGB').save(raster)
+              inp=np.asarray(Image.open(src).convert('RGB'),dtype=np.float32)
+              rec=np.asarray(flattened.convert('RGB'),dtype=np.float32)
+              err=float(np.abs(inp-rec).mean()/255)
+              source_ink=inp.max(axis=2)>50
+              traced_ink=rec.max(axis=2)>50
+              iou=float(np.logical_and(source_ink,traced_ink).sum()/
+                  max(1,int(np.logical_or(source_ink,traced_ink).sum())))
+              d=[p.attrib.get('d','') for p in paths]
+              row={'case':name,'rasterMAE':err,'foregroundIoU':iou,
+                   'elapsedSeconds':round(elapsed,4),'svgBytes':svg.stat().st_size,
+                   'pathCount':len(paths),'pathDataChars':sum(map(len,d)),
+                   'maxPathDataChars':max(map(len,d),default=0),
+                   'nonpathElements':sum(1 for x in tree.iter()
+                       if x.tag.rsplit('}',1)[-1] in {'polygon','polyline','circle','rect'})}
+              print('VTRACER_REAL_SOURCE '+json.dumps(row,sort_keys=True),flush=True)
+              rows.append(row)
+          (out/'results.json').write_text(json.dumps({
+            'status':'offline-candidate-oracle-not-a-canonical-recipe',
+            'binary':'vtracer-cli 1.0.0-alpha.4',
+            'sha256':'2058f611b48ed49497f78883bde47435531e9e17e3a79428432d1528bdb12e2a',
+            'rasterizedBy':'CairoSVG 2.8.2, composited black',
+            'cases':rows},indent=2)+'\n')
+          PY
+      - name: Retain genuine source PNG, external SVG, rasterized vector and metrics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reconstruction-557-vtracer-pinned-oracle
+          path: artifacts/
+          retention-days: 4
+          if-no-files-found: warn
