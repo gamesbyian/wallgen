@@ -1,12 +1,6 @@
 name: R0 source-visible hue shape oracle
 # Source/fit screenshots and full-resolution export remain manually opt-in.
 on:
-  # One-shot source-backed #723 gate; revert before merging.
-  pull_request:
-    paths:
-      - 'src/image-reconstruction.js'
-      - 'tests/image-reconstruction.test.js'
-      - '.github/workflows/reconstruction-hue-shapes-experiment.yml'
   workflow_dispatch:
     inputs:
       include_external_pigments:
@@ -40,13 +34,13 @@ jobs:
           npm install --no-save playwright@1.56.1
           npx playwright install --with-deps chromium
       - name: Generate four independent non-ROYGBIV Canvas source images
-        if: ${{ github.event_name == 'pull_request' || inputs.include_external_pigments }}
+        if: ${{ inputs.include_external_pigments }}
         run: node scripts/review-reconstruction-external-pigments.mjs --out-dir artifacts/external-pigment-r0
       - name: Reconstruct independent metadata-free art with ordinary six-plus-ten painter
-        if: ${{ github.event_name == 'pull_request' || inputs.include_external_pigments }}
+        if: ${{ inputs.include_external_pigments }}
         run: node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/external-pigment-r0 --hue-visible-shapes --source-signature
       - name: Report independent artwork and separate existing shape proposal errors
-        if: ${{ github.event_name == 'pull_request' || inputs.include_external_pigments }}
+        if: ${{ inputs.include_external_pigments }}
         run: |
           node --input-type=module -e '
             import {readFileSync} from "node:fs";
@@ -60,31 +54,6 @@ jobs:
                 proposedKind:s.hueVisibleShapes?.kind??null,
                 components:s.hueVisibleShapes?.componentCounts??null,
                 candidateCount:s.candidateCount,sourceSignature:s.sourceSignature??null}));
-          '
-      - name: Qualify three noncircular wins without regressing round pigment control
-        if: ${{ github.event_name == 'pull_request' }}
-        run: |
-          node --input-type=module -e '
-            import {readFileSync} from "node:fs";
-            const r=JSON.parse(readFileSync("artifacts/external-pigment-r0/evaluation.json"));
-            const expected={
-              "polygon-seven":.0359,
-              "concave-seven":.0357,
-              "occluded-mixed-seven":.0374
-            };
-            for(const [id,ceiling] of Object.entries(expected)){
-              const s=r.samples.find(x=>x.id===id);
-              if(!s||s.bestKind!=="hue-visible-shapes"||s.bestError>ceiling||
-                s.candidateCount>6||s.refinementRenders>10)
-                throw Error("External shape not recovered within production budget: "+
-                  id+" "+JSON.stringify(s?.bestError));
-            }
-            const control=r.samples.find(x=>x.id==="round-seven-control");
-            if(!control||control.bestKind!=="regions"||
-              control.bestError>.03669||control.candidateCount>6)
-              throw Error("Measured real-circle control regressed");
-            console.log("EXTERNAL_SHAPE_FIDELITY_CONFIRMED "+JSON.stringify(
-              r.samples.map(s=>({id:s.id,kind:s.bestKind,error:s.bestError}))));
           '
       - name: Generate all 22 genuine metadata-free current-renderer R0 images
         run: |
@@ -142,44 +111,6 @@ jobs:
                 .filter(x=>x.bestKind==="hue-visible-shapes")
                 .map(x=>({id:x.id,error:x.bestError}))
             }));
-          '
-      - name: Verify original 22 source winner errors never worsen
-        if: ${{ github.event_name == 'pull_request' }}
-        run: |
-          node --input-type=module -e '
-            import {readFileSync} from "node:fs";
-            const samples=JSON.parse(readFileSync("artifacts/r0-hue-shapes/evaluation.json")).samples;
-            const old={
-              "01-vertical-straight":.016628959276018502,
-              "02-diagonal-straight":.015555869783811552,
-              "03-wave":.013651351967069089,
-              "04-jagged":.018627549176722432,
-              "05-hairpin":.03053935316113644,
-              "06-loop":.03725951718828642,
-              "07-drawn":.02354522137380604,
-              "08-radial-rays":.04298436321644187,
-              "09-radial-rings":.10091381504524934,
-              "10-regions-nested":.011951278909000317,
-              "11-scattered-circles":.005628122643288287,
-              "12-textured-embroidered":.02230618008421348,
-              "13-holed-shape":.0026477658371040678,
-              "14-offset-radial-rays":.03862012553418767,
-              "15-offset-radial-rings":.05010232057566684,
-              "16-offset-jagged":.013308548579688537,
-              "17-repeated-hue-circles":.003892993495475121,
-              "18-repeated-compound-hole-island":.005472186871543504,
-              "19-jewel-vertical":.015307629462041908,
-              "20-pastel-seven-circles":.00585024274132744,
-              "21-five-hue-islands":.0028137176344896872,
-              "22-overlapping-reversed-circles":.004675716440422474
-            };
-            if(samples.length!==22)throw Error("Expected all 22 historical sources");
-            for(const s of samples){
-              if(s.bestError>old[s.id]+1e-8||
-                s.candidateCount>6||s.refinementRenders>10)
-                throw Error("Source R0 regression: "+s.id+" "+s.bestError);
-            }
-            console.log("ORIGINAL_R0_NONREGRESSION "+samples.length);
           '
       - name: High-resolution portable Hairpin/Loop source-shape exports, where representable
         run: |
