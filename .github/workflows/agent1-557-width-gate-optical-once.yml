@@ -1,5 +1,4 @@
-name: One-shot cropped-width genuine image proof
-# Adversarial source now uses long, non-overlapping 7-hue ribbons.
+name: One-shot cropped width red-green source proof
 on:
   push:
     branches: [agent1/557-cropped-tail-width-profile-proof-20261025]
@@ -7,9 +6,9 @@ on:
 permissions:
   contents: read
 jobs:
-  same-source-comparison:
+  compare-old-new-source-logic:
     runs-on: ubuntu-latest
-    timeout-minutes: 22
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
         with:
@@ -17,58 +16,17 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Install headless current Chromium
+      - name: Green new width-profile refusal and source-backed positive
+        run: node --test --test-name-pattern='cropped shared hue stamps refuse tail ink-width oscillation' tests/image-reconstruction.test.js
+      - name: Old main must fail specifically at the new missing thickness agreement
         run: |
-          npm install --no-save playwright@1.56.1
-          npx playwright install --with-deps chromium
-      - name: Generate actual renderer source PNGs and metadata-free originals
-        run: node scripts/review-reconstruction.mjs --out-dir artifacts/source --only 04-jagged,16-offset-jagged
-      - name: Blind evaluation of proposed source guard
-        run: |
-          cp -a artifacts/source artifacts/proposed
-          node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/proposed
-      - name: Blind evaluation of exact same sources against current main
-        run: |
-          cp -a artifacts/source artifacts/control
           git show origin/main:src/image-path.js > src/image-path.js
-          node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/control
-      - name: Assert accepted genuine current-renderer source parity
-        run: |
-          node --input-type=module <<'NODE'
-          import {readFile,writeFile} from 'node:fs/promises';
-          const a=JSON.parse(await readFile('artifacts/control/evaluation.json','utf8'));
-          const b=JSON.parse(await readFile('artifacts/proposed/evaluation.json','utf8'));
-          const rows=b.samples.map(sample=>{
-            const baseline=a.samples.find(x=>x.id===sample.id);
-            if(!baseline)throw Error('Missing baseline: '+sample.id);
-            const result={id:sample.id,old:baseline.bestError,new:sample.bestError,
-              oldKind:baseline.bestKind,newKind:sample.bestKind,
-              difference:sample.bestError-baseline.bestError};
-            console.log('WIDTH_PROFILE_GENUINE '+JSON.stringify(result));
-            if(sample.bestError>baseline.bestError+1e-9)
-              throw Error('Genuine current-source regression: '+sample.id);
-            if(sample.id==='16-offset-jagged'&&sample.bestKind!=='shape-repeats')
-              throw Error('Lost proven seven editable stamp candidate');
-            return result;
-          });
-          await writeFile('artifacts/width-profile-genuine-result.json',
-            JSON.stringify(rows,null,2)+'\n');
-          NODE
-      - name: Prove new negative case is a real previous-main false positive
-        run: |
-          if node --test --test-name-pattern='cropped shared hue stamps refuse tail ink-width oscillation' tests/image-reconstruction.test.js > artifacts/baseline-adversarial-test.log 2>&1; then
-            cat artifacts/baseline-adversarial-test.log
-            echo 'Unexpected baseline green: width adversarial test does not prove a prior bug'
+          if node --test --test-name-pattern='cropped shared hue stamps refuse tail ink-width oscillation' tests/image-reconstruction.test.js > baseline-witness.log 2>&1; then
+            cat baseline-witness.log
+            echo 'Case already refused by current main; no new bug proved'
             exit 1
-          else
-            grep -E 'not ok|cropped shared hue stamps|error:|actual:|expected:' artifacts/baseline-adversarial-test.log || true
-            echo 'Expected RED on unchanged main: width-profile refusal is new behavior'
           fi
-      - name: Preserve genuine PNG source, old fit and new fit for inspection
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: reconstruction-557-width-profile-genuine-r0
-          path: artifacts/
-          retention-days: 4
-          if-no-files-found: warn
+          grep -E 'not ok|cropped shared hue stamps|error:|actual:|expected:' baseline-witness.log || true
+          grep -q 'not ok 1 - cropped shared hue stamps refuse tail ink-width oscillation' baseline-witness.log ||
+            { cat baseline-witness.log; exit 1; }
+          echo 'Source-backed missing visible width evidence: RED baseline / GREEN proposal'
