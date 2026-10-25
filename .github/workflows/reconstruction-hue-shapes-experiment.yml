@@ -3,6 +3,11 @@ name: R0 source-visible hue shape oracle
 on:
   workflow_dispatch:
     inputs:
+      include_external_pigments:
+        description: 'Include four independent Canvas-authored noncircular pigment artworks'
+        type: boolean
+        required: false
+        default: false
       include_holdouts:
         description: 'Additionally evaluate eight blinded current-renderer Hairpin/Loop variants'
         type: boolean
@@ -28,6 +33,28 @@ jobs:
         run: |
           npm install --no-save playwright@1.56.1
           npx playwright install --with-deps chromium
+      - name: Generate four independent non-ROYGBIV Canvas source images
+        if: ${{ inputs.include_external_pigments }}
+        run: node scripts/review-reconstruction-external-pigments.mjs --out-dir artifacts/external-pigment-r0
+      - name: Reconstruct independent metadata-free art with ordinary six-plus-ten painter
+        if: ${{ inputs.include_external_pigments }}
+        run: node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/external-pigment-r0 --hue-visible-shapes --source-signature
+      - name: Report independent artwork and separate existing shape proposal errors
+        if: ${{ inputs.include_external_pigments }}
+        run: |
+          node --input-type=module -e '
+            import {readFileSync} from "node:fs";
+            const report=JSON.parse(readFileSync("artifacts/external-pigment-r0/evaluation.json"));
+            if(report.schema!=="roygbiv-reconstruction-external-evaluation/v1"||
+              report.samples.length!==4||report.samples.some(s=>s.trueStructure!==null))
+              throw Error("Fabricated or incomplete external source evidence");
+            for(const s of report.samples)console.log("EXTERNAL_PIGMENT_R0 "+
+              JSON.stringify({id:s.id,currentKind:s.bestKind,currentError:s.bestError,
+                proposalError:s.hueVisibleShapes?.error??null,
+                proposedKind:s.hueVisibleShapes?.kind??null,
+                components:s.hueVisibleShapes?.componentCounts??null,
+                candidateCount:s.candidateCount,sourceSignature:s.sourceSignature??null}));
+          '
       - name: Generate all 22 genuine metadata-free current-renderer R0 images
         run: |
           node scripts/review-reconstruction.mjs             --out-dir artifacts/r0-hue-shapes             
@@ -134,5 +161,6 @@ jobs:
           path: |
             artifacts/r0-hue-shapes
             artifacts/r0-loop-holdouts
+            artifacts/external-pigment-r0
           if-no-files-found: warn
           retention-days: 7
