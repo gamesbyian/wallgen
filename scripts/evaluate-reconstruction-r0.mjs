@@ -40,6 +40,9 @@ export function readReconstructionEvalArgs(argv){
     if(key==='--hue-visible-shapes'){
       opts.hueVisibleShapes=true;continue;
     }
+    if(key==='--probe-hue-contours'){
+      opts.probeHueContours=true;continue;
+    }
     if(key==='--profile-hue-masks'){
       opts.profileHueMasks=true;continue;
     }
@@ -125,7 +128,7 @@ async function evaluate(opts){
       // Inference only sees image pixels, never this item's recipe.
       const inferred=await page.evaluate(async ({base64,includeAlternatives,
         includeInkGeometry,includeWidthProbe,includeChannelProbe,includeLocalCurve,
-        includeHueVisibleShapes,includeHueMaskProfile})=>{
+        includeHueVisibleShapes,includeHueMaskProfile,includeHueContourProbe})=>{
         const {reconstructionCandidates,rankReconstructionCandidates,
           reconstructionPlacement,RECONSTRUCTION_FRAME,
           refineReconstructionCandidate,reconstructionRefinementIndex,
@@ -345,10 +348,37 @@ async function evaluate(opts){
             };
           }
         }
+        // Source-only contour detail trials are deliberately independent of
+        // the production six-coarse plus ten-refinement paint budget.
+        let hueContourProbe=null;
+        if(includeHueContourProbe){
+          const {observedHueShapeRecipe}=await import('/src/image-hue-reconstruction.js');
+          const {describeReconstructionImage}=await import('/src/image-reconstruction.js');
+          const palette=describeReconstructionImage(source).paletteHypothesis?.palette??'classic';
+          const original=normalizeRecipe({seed:'r0-anonymous'});
+          hueContourProbe={baseError:best?.error??null,baseKind:best?.kind??null,variants:[]};
+          for(const tolerance of [.5,.6,.8,1.0,1.3]){
+            const trial=observedHueShapeRecipe(source,p,original,
+              {paletteHint:palette,simplifyTolerance:tolerance});
+            if(!trial){
+              hueContourProbe.variants.push({tolerance,refused:true});continue;
+            }
+            const canvas=render(trial.recipe);
+            const pixels=canvas.getContext('2d',{willReadFrequently:true})
+              .getImageData(0,0,fit.width,fit.height);
+            hueContourProbe.variants.push({tolerance,refused:false,
+              error:compareReconstructionPixels(reference,pixels),
+              vertices:trial.recipe.scatteredShapeOverrides.reduce((total,entry)=>
+                total+entry.shape.geometry.components.reduce((n,component)=>
+                  n+component.outer.length+component.holes.reduce((q,h)=>q+h.length,0),0),0),
+              image:canvas.toDataURL('image/png')});
+          }
+        }
         bitmap.close();
         return {
           ...(includeHueMaskProfile?{hueMaskProfile}:{}),
           ...(includeHueVisibleShapes?{hueVisibleShapes}:{}),
+          ...(includeHueContourProbe?{hueContourProbe}:{}),
           ...(includeLocalCurve?{localCurveProbe}:{}),
           ...(includeChannelProbe?{channelProbe}:{}),
           ...(includeWidthProbe?{widthProbe}:{}),
@@ -375,7 +405,8 @@ async function evaluate(opts){
         includeChannelProbe:!!opts.probeInkChannels,
         includeLocalCurve:!!opts.probeLocalCurve,
         includeHueVisibleShapes:!!opts.hueVisibleShapes,
-        includeHueMaskProfile:!!opts.profileHueMasks});
+        includeHueMaskProfile:!!opts.profileHueMasks,
+        includeHueContourProbe:!!opts.probeHueContours});
       // External work has NO original ROYGBIV recipe or true-render floor.
       // Only actual current-production PNGs have blinded truth sidecars.
       const truth=external?null:JSON.parse(await readFile(join(dir,item.recipeFile),'utf8'));
@@ -405,6 +436,11 @@ async function evaluate(opts){
         bestLabel:inferred.selected?.label??null,
         prefitAlternatives:inferred.prefitAlternatives,
         ...(opts.inkGeometry?{inkGeometry:inferred.inkGeometry}:{}),
+        ...(opts.probeHueContours?{hueContourProbe:inferred.hueContourProbe?{
+          ...inferred.hueContourProbe,variants:inferred.hueContourProbe.variants.map(
+            (v,i)=>({...v,image:undefined,
+              preview:v.refused?null:item.id+'.r0-hue-contour-'+i+'.png'}))
+        }:null}:{}),
         ...(opts.profileHueMasks?{hueMaskProfile:inferred.hueMaskProfile}:{}),
         ...(opts.hueVisibleShapes?{hueVisibleShapes:inferred.hueVisibleShapes?{
           ...inferred.hueVisibleShapes,recipe:undefined,image:undefined,
@@ -456,6 +492,13 @@ async function evaluate(opts){
       for(const [index,variant] of inferred.candidateVariants.entries()){
         await writeFile(join(dir,record.variantPreviews[index]),pngBytes(variant.image));
       }
+      for(const [i,trial] of (inferred.hueContourProbe?.variants||[]).entries()){
+        if(!trial.refused)
+          await writeFile(join(dir,item.id+'.r0-hue-contour-'+i+'.png'),
+            pngBytes(trial.image));
+      }
+      if(opts.probeHueContours)console.log('HUE_CONTOUR_PROBE '+JSON.stringify({
+        id:item.id,...record.hueContourProbe}));
       if(inferred.hueVisibleShapes){
         await writeFile(join(dir,item.id+'.r0-hue-visible.png'),
           pngBytes(inferred.hueVisibleShapes.image));
