@@ -349,6 +349,49 @@ export function extractImageShapeCandidates(image){
  * hypothesis. A changed pigment, an occluded part or a diverging contour
  * declines without inventing missing shape semantics.
  */
+/**
+ * Progressive crop bounds are insufficient proof of a shared contour.
+ * Reuse connected-component pixels to check the visible transverse ridge
+ * rhythm after translation. No second importer or forward renderer passes.
+ */
+function croppedHueTailContoursCoherent(groups,reference,w,h){
+  const ridge=group=>{
+    const sum=new Float64Array(w),count=new Uint32Array(w);
+    for(const part of group.parts)for(const p of part.members){
+      const x=p%w;
+      sum[x]+=Math.floor(p/w);
+      count[x]++;
+    }
+    const out=new Float64Array(w).fill(NaN);
+    for(let x=0;x<w;x++)if(count[x])out[x]=sum[x]/count[x];
+    return out;
+  };
+  const base=ridge(reference),limit=Math.max(2,h*.0075);
+  for(const tail of groups.slice(4)){
+    const observed=ridge(tail),columns=observed.reduce((n,y)=>
+      n+(Number.isFinite(y)?1:0),0);
+    if(columns<12)return false;
+    let best=Infinity;
+    const span=Math.floor(w*.6);
+    for(let dx=-span;dx<=span;dx++){
+      let count=0,sum=0,square=0;
+      for(let x=0;x<w;x++){
+        const q=x-dx;
+        if(q<0||q>=w||!Number.isFinite(observed[x])||
+          !Number.isFinite(base[q]))continue;
+        const d=observed[x]-base[q];
+        count++;sum+=d;square+=d*d;
+      }
+      if(count<Math.ceil(columns*.8))continue;
+      const residual=Math.sqrt(Math.max(0,square/count-(sum/count)**2));
+      if(residual<best)best=residual;
+      if(best<=limit)break;
+    }
+    if(best>limit)return false;
+  }
+  return true;
+}
+
 function repeatedHueStampShape(partsByHue,w,h){
   if(!partsByHue||partsByHue.length!==7)return null;
   const componentCount=partsByHue[0]?.length;
@@ -405,6 +448,10 @@ function repeatedHueStampShape(partsByHue,w,h){
     if(overlap<(clipped?.82:.76))return null;
     minOverlap=Math.min(minOverlap,overlap);
   }
+  // Same overall hue axes and thickness can still hide an unrelated wave
+  // frequency. Cropped pigment ridges must also match the intact stamp,
+  // allowing X/Y translation but never inventing unseen contours.
+  if(clipped&&!croppedHueTailContoursCoherent(groups,reference,w,h))return null;
   const width=reference.maxX-reference.minX+1;
   const height=reference.maxY-reference.minY+1;
   const local=ring=>ring.map(([x,y])=>
