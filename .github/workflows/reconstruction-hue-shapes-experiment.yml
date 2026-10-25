@@ -1,8 +1,19 @@
 name: R0 source-visible hue shape oracle
 # Source/fit screenshots and full-resolution export remain manually opt-in.
 on:
+  # One-shot low-chroma independent art research; remove PR trigger before merge.
+  pull_request:
+    paths:
+      - 'scripts/review-reconstruction-external-pigments.mjs'
+      - 'tests/reconstruction-r0-evaluate.test.js'
+      - '.github/workflows/reconstruction-hue-shapes-experiment.yml'
   workflow_dispatch:
     inputs:
+      include_low_chroma:
+        description: 'Also evaluate the independent dark, soft, grey and incomplete-hue controls'
+        type: boolean
+        required: false
+        default: false
       include_external_pigments:
         description: 'Include four independent Canvas-authored noncircular pigment artworks'
         type: boolean
@@ -55,13 +66,38 @@ jobs:
                 components:s.hueVisibleShapes?.componentCounts??null,
                 candidateCount:s.candidateCount,sourceSignature:s.sourceSignature??null}));
           '
+      - name: Author four independent low-chroma/neutral external source images
+        if: ${{ github.event_name == 'pull_request' || inputs.include_low_chroma }}
+        run: node scripts/review-reconstruction-external-pigments.mjs --collection low-chroma --out-dir artifacts/external-low-chroma
+      - name: Score low-chroma source-only input through real canonical six-plus-ten painter
+        if: ${{ github.event_name == 'pull_request' || inputs.include_low_chroma }}
+        run: node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/external-low-chroma --source-signature --hue-visible-shapes
+      - name: Report source pigment confidence and refusal without inferred original recipe
+        if: ${{ github.event_name == 'pull_request' || inputs.include_low_chroma }}
+        run: |
+          node --input-type=module -e '
+            import {readFileSync} from "node:fs";
+            const r=JSON.parse(readFileSync("artifacts/external-low-chroma/evaluation.json"));
+            if(r.samples.length!==4||r.samples.some(s=>s.trueStructure!==null))
+              throw Error("External pigment evidence malformed or secretly sourced");
+            for(const s of r.samples)
+              console.log("LOW_CHROMA_SOURCE "+JSON.stringify({
+                id:s.id,chosen:s.bestKind,error:s.bestError,
+                hueRegions:s.sourceSignature?.regionCount,
+                coverage:s.sourceSignature?.coverage,
+                optionalShapeError:s.hueVisibleShapes?.error??null,
+                candidateCount:s.candidateCount}));
+          '
       - name: Generate all 22 genuine metadata-free current-renderer R0 images
+        if: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
           node scripts/review-reconstruction.mjs             --out-dir artifacts/r0-hue-shapes             
       - name: Evaluate all 22 normal six-plus-ten candidate selections plus opt-in per-hue proof
+        if: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
           node scripts/evaluate-reconstruction-r0.mjs             --dir artifacts/r0-hue-shapes --hue-visible-shapes
       - name: Print source-backed candidate outcomes, with no hidden score sidecar
+        if: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
           node --input-type=module -e '
             import {readFileSync} from "node:fs";
@@ -77,6 +113,7 @@ jobs:
               }));
           '
       - name: Verify exact source-first wins and known no-regression controls
+        if: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
           node --input-type=module -e '
             import {readFileSync} from "node:fs";
@@ -113,6 +150,7 @@ jobs:
             }));
           '
       - name: High-resolution portable Hairpin/Loop source-shape exports, where representable
+        if: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
           set -euo pipefail
           for case_id in 05-hairpin 06-loop 16-offset-jagged; do
@@ -161,6 +199,7 @@ jobs:
           path: |
             artifacts/r0-hue-shapes
             artifacts/r0-loop-holdouts
+            artifacts/external-low-chroma
             artifacts/external-pigment-r0
           if-no-files-found: warn
           retention-days: 7
