@@ -37,6 +37,9 @@ export function readReconstructionEvalArgs(argv){
     if(key==='--probe-local-curve'){
       opts.inkGeometry=true;opts.probeLocalCurve=true;continue;
     }
+    if(key==='--hue-visible-shapes'){
+      opts.hueVisibleShapes=true;continue;
+    }
     if(key==='--help'||key==='-h'){opts.help=true;continue;}
     if(!['--dir','--browser'].includes(key)||!argv[i+1]||argv[i+1].startsWith('--'))
       throw Error('Unknown/incomplete option '+key);
@@ -118,7 +121,8 @@ async function evaluate(opts){
         throw Error('External input must not contain a ROYGBIV source recipe');
       // Inference only sees image pixels, never this item's recipe.
       const inferred=await page.evaluate(async ({base64,includeAlternatives,
-        includeInkGeometry,includeWidthProbe,includeChannelProbe,includeLocalCurve})=>{
+        includeInkGeometry,includeWidthProbe,includeChannelProbe,includeLocalCurve,
+        includeHueVisibleShapes})=>{
         const {reconstructionCandidates,rankReconstructionCandidates,
           reconstructionPlacement,RECONSTRUCTION_FRAME,
           refineReconstructionCandidate,reconstructionRefinementIndex,
@@ -264,8 +268,28 @@ async function evaluate(opts){
             }
           }
         }
+        let hueVisibleShapes=null;
+        if(includeHueVisibleShapes){
+          const {observedHueShapeRecipe}=await import('/src/image-hue-reconstruction.js');
+          const candidate=observedHueShapeRecipe(source,p,
+            normalizeRecipe({seed:'r0-anonymous'}));
+          if(candidate){
+            const canvas=render(candidate.recipe);
+            const pixels=canvas.getContext('2d',
+              {willReadFrequently:true}).getImageData(0,0,fit.width,fit.height);
+            hueVisibleShapes={
+              kind:candidate.kind,error:compareReconstructionPixels(reference,pixels),
+              sourceVisibleOnly:candidate.sourceVisibleOnly,
+              uncertainty:candidate.uncertainty,
+              componentCounts:candidate.componentCounts,
+              croppedHueSlots:candidate.croppedHueSlots,
+              recipe:candidate.recipe,image:canvas.toDataURL('image/png')
+            };
+          }
+        }
         bitmap.close();
         return {
+          ...(includeHueVisibleShapes?{hueVisibleShapes}:{}),
           ...(includeLocalCurve?{localCurveProbe}:{}),
           ...(includeChannelProbe?{channelProbe}:{}),
           ...(includeWidthProbe?{widthProbe}:{}),
@@ -290,7 +314,8 @@ async function evaluate(opts){
         includeInkGeometry:!!opts.inkGeometry,
         includeWidthProbe:!!opts.probeInkWidth,
         includeChannelProbe:!!opts.probeInkChannels,
-        includeLocalCurve:!!opts.probeLocalCurve});
+        includeLocalCurve:!!opts.probeLocalCurve,
+        includeHueVisibleShapes:!!opts.hueVisibleShapes});
       // External work has NO original ROYGBIV recipe or true-render floor.
       // Only actual current-production PNGs have blinded truth sidecars.
       const truth=external?null:JSON.parse(await readFile(join(dir,item.recipeFile),'utf8'));
@@ -320,6 +345,12 @@ async function evaluate(opts){
         bestLabel:inferred.selected?.label??null,
         prefitAlternatives:inferred.prefitAlternatives,
         ...(opts.inkGeometry?{inkGeometry:inferred.inkGeometry}:{}),
+        ...(opts.hueVisibleShapes?{hueVisibleShapes:inferred.hueVisibleShapes?{
+          ...inferred.hueVisibleShapes,recipe:undefined,image:undefined,
+          improved:inferred.hueVisibleShapes.error+1e-9<
+            (inferred.selected?.error??Infinity),
+          preview:item.id+'.r0-hue-visible.png',
+          recipeFile:item.id+'.r0-hue-visible.recipe.json'}:null}:{}),
         ...(opts.probeLocalCurve?{localCurveProbe:inferred.localCurveProbe?{
           ...inferred.localCurveProbe,bestImage:undefined,
           variants:inferred.localCurveProbe.variants.map((trial,i)=>({
@@ -363,6 +394,12 @@ async function evaluate(opts){
         await writeFile(join(dir,item.id+'.r0-best-preview.png'),pngBytes(inferred.candidatePreview));
       for(const [index,variant] of inferred.candidateVariants.entries()){
         await writeFile(join(dir,record.variantPreviews[index]),pngBytes(variant.image));
+      }
+      if(inferred.hueVisibleShapes){
+        await writeFile(join(dir,item.id+'.r0-hue-visible.png'),
+          pngBytes(inferred.hueVisibleShapes.image));
+        await writeFile(join(dir,item.id+'.r0-hue-visible.recipe.json'),
+          JSON.stringify(inferred.hueVisibleShapes.recipe,null,2)+'\n');
       }
       for(const [i,trial] of (inferred.localCurveProbe?.variants||[]).entries()){
         await writeFile(join(dir,item.id+'.r0-local-curve-'+(i+1)+'.png'),
@@ -452,7 +489,7 @@ async function evaluate(opts){
 }
 async function main(){
   const opts=readReconstructionEvalArgs(process.argv.slice(2));
-  if(opts.help){console.log('node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/reconstruction-r0 [--browser executable] [--alternatives] [--ink-geometry] [--probe-ink-width] [--probe-ink-channels] [--probe-local-curve]');return;}
+  if(opts.help){console.log('node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/reconstruction-r0 [--browser executable] [--alternatives] [--ink-geometry] [--probe-ink-width] [--probe-ink-channels] [--probe-local-curve] [--hue-visible-shapes]');return;}
   await evaluate(opts);
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){

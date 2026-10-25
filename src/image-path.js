@@ -334,6 +334,53 @@ export function extractImageShapeCandidates(image){
 }
 
 
+// Opt-in, source-visible per-hue silhouette extraction. Reuses the existing
+// binary hue mask, flood fill, edge loops and validated compound geometry;
+// never classifies colours again or guesses an unseen original backface.
+export function extractVisibleHueCompound(mask,w,h){
+  if(!(mask instanceof Uint8Array)||!Number.isInteger(w)||!Number.isInteger(h)||
+    w<12||h<12||w*h>650000||mask.length!==w*h)
+    throw new RangeError('Unsupported visible hue mask');
+  const minimum=Math.max(8,Math.floor(w*h*.00010));
+  const parts=components(mask,w,h,minimum);
+  if(!parts.length)return null;
+  const foreground=parts.reduce((sum,part)=>sum+part.area,0);
+  if(foreground<Math.max(40,Math.floor(w*h*.0005)))return null;
+  // The existing component finder intentionally bounds visible islands to 8.
+  // Do not claim complete recovery when more tiny aliased patches may exist.
+  const minX=Math.min(...parts.map(p=>p.minX));
+  const minY=Math.min(...parts.map(p=>p.minY));
+  const maxX=Math.max(...parts.map(p=>p.maxX));
+  const maxY=Math.max(...parts.map(p=>p.maxY));
+  const bx=maxX-minX+1,by=maxY-minY+1;
+  const toLocal=ring=>ring.map(([x,y])=>[x-minX,y-minY]);
+  const outlines=[];
+  for(const part of parts){
+    const rings=shapeEdgeLoops(part,w,h)
+      .sort((a,b)=>Math.abs(ringArea(b))-Math.abs(ringArea(a)));
+    if(!rings.length)return null;
+    outlines.push({outer:toLocal(rings[0]),
+      holes:rings.slice(1).filter(r=>Math.abs(ringArea(r))>=4).map(toLocal)});
+  }
+  if(outlines.reduce((n,c)=>n+c.outer.length+
+    c.holes.reduce((sum,hole)=>sum+hole.length,0),0)>1200)return null;
+  let geometry;
+  try{
+    geometry=normalizeCompoundRegion({
+      type:'compound-region',space:'asset-local',viewBox:[0,0,bx,by],
+      fillRule:'evenodd',components:outlines
+    });
+  }catch{return null;} // Touching self-crossing corners fail closed.
+  const cx=bx/2,cy=by/2;
+  const pixels=geometry.components.flatMap(c=>[...c.outer,...c.holes.flat()]);
+  const radiusPixels=Math.max(1,...pixels.map(p=>Math.hypot(p[0]-cx,p[1]-cy)));
+  return {geometry,centrePixels:[minX+cx,minY+cy],radiusPixels,
+    visibleInkPixels:foreground,components:parts.length,
+    touchesFrame:minX===0||minY===0||maxX===w-1||maxY===h-1,
+    visibility:'source-visible-only'};
+}
+
+
 /**
  * Recover rough rainbow-region geometry from the SAME bounded RGBA importer.
  * Hue targets are supplied by the canonical palette owner, avoiding a second

@@ -102,7 +102,8 @@ function normalizeReconstructionOrigin(input){
     width*height>40000000||typeof error!=='number'||
     !Number.isFinite(error)||error<0||error>1)return null;
   const kind=['regions','shape','shape-repeats','path','straight','loop',
-    'radial-rays','radial-rings','nested-rings','wave','jagged','hairpin'].includes(input.candidateKind)?
+    'radial-rays','radial-rings','nested-rings','wave','jagged','hairpin',
+    'hue-visible-shapes'].includes(input.candidateKind)?
     input.candidateKind:'path';
   return {origin:'inferred-image',method:'current-render-fit-v1',
     candidateKind:kind,sourceWidth:width,sourceHeight:height,
