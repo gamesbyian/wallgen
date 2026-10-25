@@ -245,7 +245,7 @@ test('one and two directly representable first hues are editable without invente
  for(const [kind,count] of [['one',1],['two',2]]){
    const src=source(kind);
    const desc=describeReconstructionImage(src);
-   assert.equal(desc.incompleteColourRegions?.length,count);
+   assert.equal(desc.incompleteColourRegions?.length,count,JSON.stringify({kind,regions:desc.colourRegions,diagonal:desc.componentDiagonalAngle,radial:desc.radial}));
    const choices=reconstructionCandidates(src,{seed:'source-first-contiguous-hues'});
    const regions=choices.find(c=>c.kind==='regions');
    assert.ok(regions,'first contiguous semantic colour slots can be kept editable');
