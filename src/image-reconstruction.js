@@ -730,8 +730,11 @@ export function reconstructionCandidates(image,recipe){
   // A single dominant filled silhouette, including source holes and detached
   // islands, can be represented as ONE portable compound shape. This uses the
   // existing asset snapshot and scattered-region scene, not a bitmap overlay.
-  // Reject multicolour scenes to avoid painting a seven-hue drawing as red.
-  if(desc.colourRegions.length<=2){
+  // Even TWO independently observed hues cannot be painted by one object:
+  // the old <=2 gate repainted the source's orange/blue shape red. Permit
+  // just a genuine one-slot red pigment, or source-only geometry when no
+  // confidently classified hue exists (with explicit colour uncertainty).
+  if(desc.colourRegions.length<=1){
     // Nine or more visible islands cannot be collapsed into a complete
     // one-object source hypothesis: the general importer still offers
     // individually editable visible islands, explicitly marked partial.
