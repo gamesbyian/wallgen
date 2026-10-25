@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readBaselineArgs,RECONSTRUCTION_R0_CASES} from '../scripts/review-reconstruction.mjs';
 import {readReconstructionEvalArgs,classifyReconstructionManifest} from '../scripts/evaluate-reconstruction-r0.mjs';
-import {parseExternalPigmentArgs,externalPigmentManifest,EXTERNAL_PIGMENT_CASES} from '../scripts/review-reconstruction-external-pigments.mjs';
+import {parseExternalPigmentArgs,externalPigmentManifest,EXTERNAL_PIGMENT_CASES,LOW_CHROMA_EXTERNAL_CASES} from '../scripts/review-reconstruction-external-pigments.mjs';
 
 test('focused R0 generation targets known source studies without resetting browser arg',()=>{
  const opts=readBaselineArgs(['--only','01-vertical-straight,11-scattered-circles',
@@ -100,4 +100,23 @@ test('independently Canvas-authored pigments have no alleged native source truth
  }
  assert.ok(!Object.hasOwn(manifest,'recipe'),
    'external pixels are never accompanied by a fictitious ROYGBIV source recipe');
+});
+
+test('new low-chroma independent sources are a separate truthless bounded collection',()=>{
+ assert.equal(LOW_CHROMA_EXTERNAL_CASES.length,4);
+ assert.equal(new Set(LOW_CHROMA_EXTERNAL_CASES.map(c=>c.id)).size,4);
+ assert.equal(LOW_CHROMA_EXTERNAL_CASES.some(x=>x.id==='neutral-seven-control'),true);
+ assert.equal(LOW_CHROMA_EXTERNAL_CASES.some(x=>x.id==='partial-two-hues'),true);
+ const args=parseExternalPigmentArgs(['--collection','low-chroma',
+   '--out-dir','artifacts/external-low-contrast']);
+ assert.deepEqual(args,{outDir:'artifacts/external-low-contrast',
+   collection:'low-chroma'});
+ assert.throws(()=>parseExternalPigmentArgs(['--collection','wrong']),/Unknown\/incomplete/);
+ const manifest=externalPigmentManifest('low-chroma');
+ assert.equal(classifyReconstructionManifest(manifest).external,true);
+ assert.equal(manifest.items.length,4);
+ assert.deepEqual(externalPigmentManifest(),externalPigmentManifest('original'),
+   'existing external-art set remains the default, exact semantic contract');
+ assert.ok(manifest.items.every(item=>!Object.hasOwn(item,'seed')&&
+   !Object.hasOwn(item,'recipeFile')));
 });
