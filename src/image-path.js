@@ -365,19 +365,32 @@ function repeatedHueStampShape(partsByHue,w,h){
     maxX:Math.max(...parts.map(p=>p.maxX)),
     maxY:Math.max(...parts.map(p=>p.maxY))
   }));
-  const horizontal=groups.every(g=>
+  // A coherent rainbow ribbon pack may expose four complete source
+  // silhouettes and three progressively left-cropped pigments. The prior
+  // sevenfold-equal-area rule rejected those observable shapes altogether.
+  // Never apply this to compound groups, unordered cropping, absent colour,
+  // or inconsistent intact silhouettes.
+  const first=groups.slice(0,4),tail=groups.slice(4);
+  const clipped=componentCount===1&&
+    first.every(g=>g.minX<=w*.02&&g.maxX>=w*.98&&g.area>100)&&
+    tail.every((g,i)=>g.maxX>=w*.98&&g.minX>w*.15&&
+      g.minX>(i?tail[i-1].minX:first[3].minX)+w*.05&&
+      g.area<(i?tail[i-1].area:first[3].area)*.90&&
+      g.area>=first[2].area*.10);
+  const matched=clipped?first:groups;
+  const horizontal=matched.every(g=>
     g.maxX-g.minX>=w*.45&&g.maxY-g.minY<=h*.55);
-  const vertical=!horizontal&&groups.every(g=>
+  const vertical=!horizontal&&matched.every(g=>
     g.maxY-g.minY>=h*.45&&g.maxX-g.minX<=w*.55);
   // For a SINGLE component, refuse compact isolated spots. Multiple islands
   // may instead form a small repeated compound stamp (including real holes).
   if(componentCount===1&&!horizontal&&!vertical)return null;
-  const reference=groups[3];
+  const reference=clipped?groups[2]:groups[3];
   const centre=g=>[(g.minX+g.maxX+1)/2,(g.minY+g.maxY+1)/2];
   const [baseX,baseY]=centre(reference);
   const occupied=new Set(reference.parts.flatMap(part=>part.members));
   let minOverlap=1;
-  for(const group of groups){
+  for(const group of matched){
     if(group.area<32||group.area<reference.area*.70||
       group.area>reference.area*1.30)return null;
     const [cx,cy]=centre(group),dx=Math.round(baseX-cx),
@@ -389,7 +402,7 @@ function repeatedHueStampShape(partsByHue,w,h){
         intersection++;
     }
     const overlap=intersection/(reference.area+group.area-intersection);
-    if(overlap<.76)return null;
+    if(overlap<(clipped?.82:.76))return null;
     minOverlap=Math.min(minOverlap,overlap);
   }
   const width=reference.maxX-reference.minX+1;
@@ -411,7 +424,7 @@ function repeatedHueStampShape(partsByHue,w,h){
       components,fillRule:'evenodd'
     });
   }catch{return null;}
-  return {geometry,placements:groups.map(group=>({
+  return {geometry,clipped,placements:groups.map(group=>({
     index:group.index,cx:centre(group)[0]/w,cy:centre(group)[1]/h,
     scale:Math.sqrt(group.area/reference.area)
   })),minOverlap};

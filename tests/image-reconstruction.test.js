@@ -1334,3 +1334,41 @@ test('Loop ink agreement comes from the shared original hue masks without additi
  assert.equal(noHues.loopInkRatio,undefined,
    'missing colours never invent a physically measured Loop ratio');
 });
+
+test('four intact hue silhouettes and three real ordered crop tails become editable canonical stamps',()=>{
+ const source=(bad='')=>raster(220,350,(x,y)=>{
+   for(let i=0;i<7;i++){
+     const cut=i<4?0:[48,90,133][i-4];
+     if(bad==='missing'&&i===6)continue;
+     if(x<(bad==='unordered'&&i===5?10:cut))continue;
+     const distortion=bad==='unrelated'&&i===2?15*Math.sin(x/6):0;
+     const bend=Math.round(.22*x+4*Math.sin(x/17)+distortion);
+     if(Math.abs(y-(14+i*44+bend))<=5)return colour(HUES[i]);
+   }
+   return [0,0,0,255];
+ });
+ const original=source(),untouched=new Uint8ClampedArray(original.data);
+ const description=describeReconstructionImage(original);
+ assert.equal(description.repeatShape?.clipped,true);
+ assert.ok(description.repeatShape.minOverlap>.82);
+ assert.equal(description.repeatShape.placements.length,7);
+ const candidates=reconstructionCandidates(original,normalizeRecipe({seed:'blind-shape-source'}));
+ assert.ok(candidates.length<=RECONSTRUCTION_RENDER_LIMIT);
+ const stamps=candidates.find(option=>option.kind==='shape-repeats');
+ assert.ok(stamps,'an observable repeated contour belongs among normal six candidates');
+ assert.match(stamps.uncertainty,/missing contours/);
+ assert.equal(stamps.recipe.scatteredCount,7);
+ assert.equal(stamps.recipe.scatteredOverrides.length,7);
+ assert.equal(stamps.recipe.scatteredShapeKind,'imported');
+ assert.equal(resolveScene(stamps.recipe).objects.length,7);
+ assert.deepEqual(decodeRecipe(encodeRecipe(stamps.recipe)),stamps.recipe);
+ assert.deepEqual(original.data,untouched,'image inference must never mutate source pixels');
+ const locked=reconstructionCandidates(original,normalizeRecipe({
+   structure:'paths',regionMode:'nested',lockedSettings:['structure','regionMode']
+ }));
+ assert.ok(!locked.some(c=>c.kind==='shape-repeats'),
+   'canonical object/structure locks prevent impossible Apply previews');
+ for(const failure of ['unordered','missing','unrelated'])
+   assert.notEqual(describeReconstructionImage(source(failure)).repeatShape?.clipped,
+     true,'never extrapolate unrelated, unordered, or unobserved pigment contours');
+});
