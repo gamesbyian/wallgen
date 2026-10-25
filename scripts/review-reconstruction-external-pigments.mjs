@@ -13,9 +13,9 @@ import {extractPngRecipe} from '../src/png-metadata.js';
 const WIDTH=480,HEIGHT=1040;
 export const EXTERNAL_PIGMENT_CASES=Object.freeze([
   {id:'polygon-seven',goal:'Seven independently designed noncircular polygon pigments'},
-  {id:'concave-seven',goal:'Seven individually concave six-point pigment stars'},
+  {id:'concave-seven',goal:'Seven individually concave six-point pigment stars with 62% radial notches'},
   {id:'round-seven-control',goal:'Seven native-circle-like, clearly separated pigments'},
-  {id:'occluded-mixed-seven',goal:'Seven compact polygons with visibly crossed and occluded regions'}
+  {id:'occluded-mixed-seven',goal:'Seven layered polygons, some pigments almost fully occluded'}
 ]);
 
 export function parseExternalPigmentArgs(argv){
@@ -68,7 +68,7 @@ async function generate(opts){
           ctx.beginPath();
           const count=inner?2*sides:sides;
           for(let p=0;p<count;p++){
-            const radius=inner&&p%2?inner:outer;
+            const radius=inner&&p%2?outer*inner:outer;
             const t=angle+p*Math.PI*2/count;
             const px=x+Math.cos(t)*radius,py=y+Math.sin(t)*radius;
             if(p===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);
