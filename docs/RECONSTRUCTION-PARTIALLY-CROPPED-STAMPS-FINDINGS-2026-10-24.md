@@ -43,6 +43,12 @@ The #16 presentation/reference truth-render floor for this R0 source is .0144243
 
 The 480×1040 source / prior Jagged fitted image / new 480×1040 actual-stamp painter output were **opened and visually inspected side-by-side**, not accepted only by metric. Seven separate black channels, colour order, and last three cropped endings are appreciably closer. Angular microdetails, exact hidden crop geometry, source seed and some edge joins remain approximate. Independent SVG-authored ribbons, full handset acceptance and arbitrary mixed independent objects are **not** proven.
 
+## Full-resolution canonical PNG transport proof (local renderer, not handset)
+
+The source-inferred **230-vertex, seven-object portable shape** was normalized, encoded and decoded through the existing canonical recipe transport. The **same production `drawWallpaper`** Canvas2D painter successfully rendered a **3024×6552** output. This container's run measured **3.70 seconds wall time, ~425 MiB peak process RSS** (Skia Canvas2D, not browser worker or physical Pixel; do not extrapolate memory/thermal/touch performance). The PNG before metadata embedding was **505,767 bytes**. It was then processed through the app's existing `embedPngMetadata(...,{recipe,output:{width:3024,height:6552}})` and `extractPngRecipe` routines: normalized recipe equality was exact after PNG extraction, all source IDAT compressed chunks remained **byte-identical** when the recipe metadata was added, and the self-contained 3024×6552 recipe PNG was **511,103 bytes**. The underlying creator-uploaded R0 source was never modified.
+
+This verifies the portable current headless/reference painter and actual PNG recipe encoding seam in the container. It does **not** establish actual production Download-button use, dedicated browser rendering worker acceptance, a native Android memory budget or real human acceptance.
+
 ## Engineering guardrails and remaining work
 
 - Synthetic/Node tests: seven slots, shared geometry snapshot, exact serialize/deserialize, current scene, raw source-image immutability, canonical structure locks, ≤6 initial candidate count, and refusal of absent/unordered/unrelated pigment evidence.
