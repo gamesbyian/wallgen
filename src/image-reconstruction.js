@@ -223,11 +223,21 @@ export function measuredRainbowRibbonBands(regions,width,height){
     const wide=head.every(r=>r&&r.axisRatio>=7&&r.area>=16&&
       r.bounds?.[0]<=.04&&r.bounds?.[2]>=.96&&
       Number.isFinite(r.majorStd)&&r.majorStd>10);
-    const truncation=tail.every((r,i)=>r&&r.area>=16&&
+    // Every shortened hue must be clipped by the SAME image edge.
+    // Mirroring canonical Jagged art reverses only which edge advances.
+    // The original seven-axis/ink-width checks and clipped-contour-rhythm
+    // gate in image-path.js remain mandatory; never blend partial sides.
+    const intactTail=tail.every((r,i)=>r&&r.area>=16&&
       Number.isFinite(r.axisAngle)&&Math.abs(r.axisAngle-axis[0])<=5&&
-      r.bounds?.[2]>=.96&&r.bounds?.[0]>=.15&&
-      r.bounds[0]>(i?tail[i-1].bounds[0]:head[3].bounds[0])+.05&&
+      Number.isFinite(r.majorStd)&&
       r.majorStd<head[3].majorStd*(1-i*.16));
+    const fromLeft=intactTail&&tail.every((r,i)=>
+      r.bounds?.[2]>=.96&&r.bounds?.[0]>=.15&&
+      r.bounds[0]>(i?tail[i-1].bounds[0]:head[3].bounds[0])+.05);
+    const fromRight=intactTail&&tail.every((r,i)=>
+      r.bounds?.[0]<=.04&&r.bounds?.[2]<=.85&&
+      r.bounds[2]<(i?tail[i-1].bounds[2]:head[3].bounds[2])-.05);
+    const truncation=fromLeft||fromRight;
     const widths=regions.map(r=>r?.minorStd);
     const consistentWidth=widths.every(x=>Number.isFinite(x)&&x>2)&&
       Math.max(...widths)/Math.min(...widths)<1.15;
