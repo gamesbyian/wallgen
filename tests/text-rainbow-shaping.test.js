@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {rainbowTextStops,textGraphemes} from '../src/text-rainbow-shaping.js';
+import {rainbowTextStops,textGraphemes,isSimpleRightToLeft} from '../src/text-rainbow-shaping.js';
 
 const palette=['R','O','Y','G','B','I','V'];
 const width=unit=>Array.from(unit).length*5;
@@ -55,4 +55,36 @@ test('zero-width or malformed advances cannot create invalid Canvas gradient sto
  const weird=rainbowTextStops('AB','rainbow-letter',palette,0,
    unit=>unit==='A'?Infinity:2);
  assert.ok(weird.stops.every(s=>Number.isFinite(s.offset)));
+});
+
+test('only unambiguous Arabic/Hebrew lines opt in to visual-right first colour',()=>{
+  assert.equal(isSimpleRightToLeft('السَّلَامُ عَلَيْكُمْ'),true);
+  assert.equal(isSimpleRightToLeft('שָׁלוֹם עולם'),true);
+  assert.equal(isSimpleRightToLeft('Hello مرحبا'),false);
+  assert.equal(isSimpleRightToLeft('مرحبا 2026'),false);
+  assert.equal(isSimpleRightToLeft('नमस्ते مرحبا'),false);
+  assert.equal(isSimpleRightToLeft('HELLO'),false);
+  assert.equal(isSimpleRightToLeft('🌈'),false);
+});
+test('RTL lettering reverses only rainbow stops, not logical graphemes or colour sequence',()=>{
+  const line='سلام';
+  const left=rainbowTextStops(line,'rainbow-letter',palette,0,width);
+  const right=rainbowTextStops(line,'rainbow-letter',palette,0,width,{rightToLeft:true});
+  assert.equal(right.nextIndex,left.nextIndex);
+  assert.equal(right.nextIndex,4);
+  assert.equal(right.stops[0].colour,'G','last logical RTL character appears at left');
+  assert.equal(right.stops.at(-1).colour,'R','first logical character appears at right');
+  assert.deepEqual(right.stops,left.stops.slice().reverse().map(stop=>({
+    offset:1-stop.offset,colour:stop.colour
+  })));
+  assert.ok(right.stops.every((s,i)=>i===0||s.offset>=right.stops[i-1].offset));
+});
+test('RTL word boundaries preserve each logical word colour on its visual side',()=>{
+  const first=rainbowTextStops('سلام  دنیا','rainbow-word',palette,3,width);
+  const rtl=rainbowTextStops('سلام  دنیا','rainbow-word',palette,3,width,{rightToLeft:true});
+  assert.equal(rtl.nextIndex,first.nextIndex);
+  assert.equal(rtl.nextIndex,5);
+  assert.equal(rtl.stops.at(-1).colour,'G');
+  assert.equal(rtl.stops[0].colour,'B');
+  assert.equal(rtl.stops.length,first.stops.length);
 });

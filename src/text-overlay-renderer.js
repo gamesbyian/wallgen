@@ -2,7 +2,7 @@ import {DESIGN_WIDTH,DESIGN_HEIGHT} from './model.js';
 import {TEXT_FONTS} from './text-overlays.js';
 import {typefacesReady,typefaceCssFamily} from './typography-fonts.js';
 import {availableTextWidth} from './text-direct-geometry.js';
-import {rainbowTextStops} from './text-rainbow-shaping.js';
+import {rainbowTextStops,isSimpleRightToLeft} from './text-rainbow-shaping.js';
 import {layoutTextOnPath} from './text-path-geometry.js';
 
 // The same post-composite typography pass is used by reference, worker,
@@ -117,7 +117,8 @@ export function drawTextOverlays(ctx,width,height,scene){
         colours.forEach((colour,i)=>gradient.addColorStop(i/6,colour));
       }else if((item.colour==='rainbow-letter'||item.colour==='rainbow-word')&&total>0){
         const coloursForLine=rainbowTextStops(line,item.colour,colours,colourIndex,
-          unit=>ctx.measureText(unit).width);
+          unit=>ctx.measureText(unit).width,
+          {rightToLeft:isSimpleRightToLeft(line)});
         colourIndex=coloursForLine.nextIndex;
         gradient=ctx.createLinearGradient(start,0,start+total,0);
         for(const stop of coloursForLine.stops)
