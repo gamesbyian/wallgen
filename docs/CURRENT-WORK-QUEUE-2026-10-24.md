@@ -1,6 +1,14 @@
 # Current ROYGBIV work queue and three-agent dispatch
 
-## Portable canonical per-hue shape foundation · 25 October 2026 (#709)
+## Source-visible seven-hue reconstruction breakthrough · 25 October 2026 (PR #710)
+
+[PR #710](https://github.com/gamesbyian/wallgen/pull/710) now connects merged #709 independent per-hue geometry snapshots to the **existing** seven-pigment image importer and actual canonical painter, with source-only masks, holes and islands, portable image-derived positioning, lock-safe fail-closed apply and honest `hue-visible-shapes` receipt provenance. It does **not** create a second renderer or store bitmap pixels as a recipe. One such candidate can replace a low-priority guess **inside the established six initial paints**; the optional R0 research comparator uses a separately labelled single true-painter evaluation. Default generation/texture/Photo behavior unchanged.
+
+The [independent genuine five-image Chromium comparison #40219197445](https://github.com/gamesbyian/wallgen/actions/runs/40219197445) demonstrated **Hairpin .08447791→.03054387**, **Loop .04977317→.03783583** and **displaced Jagged .05872150→.01328233** using seven genuinely independently editable visible silhouettes. The app refused repeated compound hole/island #18 where unsupported, and did not promote the inferior overlapping-circles alternative #22. Source/current/proposal PNGs directly inspected; genuine Hairpin black channels and U-return improved visibly. Source-inferred Hairpin/Loop native 3024×6552 PNG + portable recipe exported in optional proof. See [actual optical/art, metrics, provenance and caveats](RECONSTRUCTION-HUE-VISIBLE-SOURCE-R0-FINDINGS-2026-10-25.md).
+
+**Critical current gate before production merge:** full 22-case actual Chromium no-regression corpus, keep all three independent diagonal-angle controls and Jagged/Draw fallback, keep ≤6 initial +≤10 refinement true-painter budget, verify default lean CI then remove temporary PR-triggered heavy experiment, retain manual dispatch. Do not claim exact source seed, hidden Loop overlap order, clipped-off shape or physically tested Pixel acceptance. #557 stays OPEN.
+
+## Portable canonical per-hue shape foundation · 25 October 2026 (MERGED #709)
 
 [PR #709](https://github.com/gamesbyian/wallgen/pull/709) supplies an **opt-in native seven-slot independent shape snapshot** on ordinary scattered objects. Real [GHA proof #40218632661](https://github.com/gamesbyian/wallgen/actions/runs/40218632661) completed four unit acceptance cases; 480×1040 browser reference versus worker produced **zero differing RGBA pixels** across 499,200 pixels, 38,346 visible coloured pixels, and complete identical embedded portable recipes. A **3024×6552** actual production PNG+recipe export completed. Downloaded original 480×1040 artwork was directly inspected: seven distinct colours/contours, red hole and satellite, all visible and correct. [Acceptance and design limits](RECONSTRUCTION-PER-HUE-CANONICAL-SHAPE-ACCEPTANCE-2026-10-25.md).
 
