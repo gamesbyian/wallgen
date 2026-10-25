@@ -3,7 +3,7 @@
   "created_date": "2026-10-22",
   "repository": "gamesbyian/wallgen",
   "full_transcript_count": 0,
-  "source_excerpt_count": 12,
+  "source_excerpt_count": 17,
   "collection_complete": false,
   "limitations": "No interface in this session exposes complete ChatGPT Project history or complete other-agent exchanges. These are bounded original user-turn excerpts, not complete conversations; further sessions may exist. A future authentic export is required for full coverage.",
   "sources": [
@@ -286,9 +286,95 @@
       "missing": "No full two-sided original export, omitted tools/media",
       "source_pr": 438,
       "overlaps_with": null
+    },
+    {
+      "source_id": "2026-10-24-reconstruction-agent1-visible",
+      "title": "Агент реконструкции: поручение",
+      "observed_date": "2026-10-24",
+      "capture_kind": "source_excerpt",
+      "completeness": "partial",
+      "verbatim_user_text": true,
+      "full_transcript_verified": false,
+      "archive_path": "prod_diary/transcripts/2026-10-24-reconstruction-agent1-visible.json",
+      "speakers": [
+        "user"
+      ],
+      "visible_user_message_count": 2,
+      "assistant_responses_archived": false,
+      "missing": "Incomplete accessible conversation excerpts: assistant replies, unexposed preceding/following messages, attachments, tool events, precise timestamps and complete sessions.",
+      "limitations": "First directive is truncated at its original visible contextual boundary."
+    },
+    {
+      "source_id": "2026-10-24-typography-agent2-visible",
+      "title": "Агент типографики: поручение",
+      "observed_date": "2026-10-24",
+      "capture_kind": "source_excerpt",
+      "completeness": "partial",
+      "verbatim_user_text": true,
+      "full_transcript_verified": false,
+      "archive_path": "prod_diary/transcripts/2026-10-24-typography-agent2-visible.json",
+      "speakers": [
+        "user"
+      ],
+      "visible_user_message_count": 1,
+      "assistant_responses_archived": false,
+      "missing": "Incomplete accessible conversation excerpts: assistant replies, unexposed preceding/following messages, attachments, tool events, precise timestamps and complete sessions.",
+      "limitations": null
+    },
+    {
+      "source_id": "2026-10-24-accessibility-agent3-visible",
+      "title": "Агент приёмки: поручение",
+      "observed_date": "2026-10-24",
+      "capture_kind": "source_excerpt",
+      "completeness": "partial",
+      "verbatim_user_text": true,
+      "full_transcript_verified": false,
+      "archive_path": "prod_diary/transcripts/2026-10-24-accessibility-agent3-visible.json",
+      "speakers": [
+        "user"
+      ],
+      "visible_user_message_count": 2,
+      "assistant_responses_archived": false,
+      "missing": "Incomplete accessible conversation excerpts: assistant replies, unexposed preceding/following messages, attachments, tool events, precise timestamps and complete sessions.",
+      "limitations": "First directive is truncated by accessible contextual summary."
+    },
+    {
+      "source_id": "2026-10-25-reconstruction-research-visible",
+      "title": "Исследование распознавания изображений",
+      "observed_date": "2026-10-25",
+      "capture_kind": "source_excerpt",
+      "completeness": "partial",
+      "verbatim_user_text": true,
+      "full_transcript_verified": false,
+      "archive_path": "prod_diary/transcripts/2026-10-25-reconstruction-research-visible.json",
+      "speakers": [
+        "user"
+      ],
+      "visible_user_message_count": 6,
+      "assistant_responses_archived": false,
+      "missing": "Incomplete accessible conversation excerpts: assistant replies, unexposed preceding/following messages, attachments, tool events, precise timestamps and complete sessions.",
+      "limitations": null
+    },
+    {
+      "source_id": "2026-10-25-diary-continuation-visible",
+      "title": "Продолжение архивной работы",
+      "observed_date": "2026-10-25",
+      "capture_kind": "source_excerpt",
+      "completeness": "partial",
+      "verbatim_user_text": true,
+      "full_transcript_verified": false,
+      "archive_path": "prod_diary/transcripts/2026-10-25-diary-continuation-visible.json",
+      "speakers": [
+        "user"
+      ],
+      "visible_user_message_count": 2,
+      "assistant_responses_archived": false,
+      "missing": "Incomplete accessible conversation excerpts: assistant replies, unexposed preceding/following messages, attachments, tool events, precise timestamps and complete sessions.",
+      "limitations": null
     }
   ],
-  "visible_user_message_count": 53,
+  "visible_user_message_count": 66,
   "reconstructed_summary_count": 1,
-  "annotated_transcript_count": 4
+  "annotated_transcript_count": 4,
+  "last_update_date": "2026-10-25"
 }

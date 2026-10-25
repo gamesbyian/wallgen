@@ -1,0 +1,47 @@
+{
+  "schema": "roygbiv-conversation-excerpt/1",
+  "source_id": "2026-10-25-reconstruction-research-visible",
+  "observed_date": "2026-10-25",
+  "capture_kind": "source_excerpt",
+  "completeness": "partial",
+  "platform": "visible project conversation context",
+  "speaker_coverage": [
+    "user"
+  ],
+  "agent_messages_available": false,
+  "all_project_sessions_included": false,
+  "precise_time_known": false,
+  "integrity_note": "Exact text from visible current project conversation context only, not a full two-sided export.",
+  "messages": [
+    {
+      "source_order": 1,
+      "role": "user",
+      "text": "Are there any existing projects or algos or math or tools that we could crib from in developing our image recognition and feature-extraction tools? Make sure your response is based on the current state of the app and repo"
+    },
+    {
+      "source_order": 2,
+      "role": "user",
+      "text": "Write it all up, get it integrated into plans and docs as needed and get the repo tidy and ready to start testing and building"
+    },
+    {
+      "source_order": 3,
+      "role": "user",
+      "text": "Sweet! Get going!"
+    },
+    {
+      "source_order": 4,
+      "role": "user",
+      "text": "Do it!"
+    },
+    {
+      "source_order": 5,
+      "role": "user",
+      "text": "Please go on!"
+    },
+    {
+      "source_order": 6,
+      "role": "user",
+      "text": "Session stalled, please carefully recover your thinking and work, come to a safe stopping point and give me a prompt to continue this work in a fresh session."
+    }
+  ]
+}
