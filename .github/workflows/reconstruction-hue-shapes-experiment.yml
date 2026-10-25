@@ -24,10 +24,10 @@ jobs:
         run: |
           npm install --no-save playwright@1.56.1
           npx playwright install --with-deps chromium
-      - name: Generate five real metadata-free current-renderer R0 images
+      - name: Generate all 22 genuine metadata-free current-renderer R0 images
         run: |
-          node scripts/review-reconstruction.mjs             --out-dir artifacts/r0-hue-shapes             --only 05-hairpin,06-loop,16-offset-jagged,18-repeated-compound-hole-island,22-overlapping-reversed-circles
-      - name: Evaluate ordinary six-plus-ten rank then one opt-in per-hue shape painter
+          node scripts/review-reconstruction.mjs             --out-dir artifacts/r0-hue-shapes             
+      - name: Evaluate all 22 normal six-plus-ten candidate selections plus opt-in per-hue proof
         run: |
           node scripts/evaluate-reconstruction-r0.mjs             --dir artifacts/r0-hue-shapes --hue-visible-shapes
       - name: Print source-backed candidate outcomes, with no hidden score sidecar
@@ -48,7 +48,7 @@ jobs:
       - name: High-resolution portable Hairpin/Loop source-shape exports, where representable
         run: |
           set -euo pipefail
-          for case_id in 05-hairpin 06-loop; do
+          for case_id in 05-hairpin 06-loop 16-offset-jagged; do
             recipe="artifacts/r0-hue-shapes/$case_id.r0-hue-visible.recipe.json"
             if test -f "$recipe"; then
               node scripts/render-headless.mjs --recipe "$recipe"                 --width 3024 --height 6552 --backend reference                 --out "artifacts/r0-hue-shapes/$case_id.r0-hue-visible.full.png"
