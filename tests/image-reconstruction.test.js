@@ -1231,3 +1231,69 @@ test('clipped coherent Jagged pigments recover their physical gap from four inta
  assert.equal(measuredRainbowRibbonBands(changedAxis,277,600),null,
    'occluded nonparallel pigments must not become a broad ribbon claim');
 });
+
+test('U-turn exit angle refines after radius, separation and placement in the same ten paints',async()=>{
+ const w=RECONSTRUCTION_FRAME.width,h=RECONSTRUCTION_FRAME.height;
+ const source=raster(w,h,()=>[0,0,0,255]);
+ const recipe=normalizeRecipe({seed:'turn-and-exit',structure:'paths',
+   geometry:'hairpin',turnRadius:50,hairpinAngle:120,spread:42,
+   positionX:0,positionY:0});
+ const paint=next=>{
+   const aligned=next.turnRadius===35&&next.spread===32&&
+     next.positionX===7&&next.positionY===7;
+   const deviation=Math.abs(next.turnRadius-35)*.3+
+     Math.abs(next.spread-32)*.3+
+     Math.abs(next.positionX-7)+Math.abs(next.positionY-7)+
+     Math.abs(next.hairpinAngle-(aligned?145:120))*.5;
+   const v=Math.min(255,Math.round(deviation*2));
+   return raster(w,h,()=>[v,v,v,255]);
+ };
+ const candidate={kind:'hairpin',recipe,label:'editable turn',error:.8};
+ let renders=0;
+ const fit=refineReconstructionCandidate(candidate,source,next=>{
+   renders++;return paint(next);
+ });
+ assert.equal(renders,10,'one shared bounded ten-render refinement');
+ assert.equal(fit.refinementRenders,10);
+ assert.equal(fit.recipe.turnRadius,35);
+ assert.equal(fit.recipe.spread,32);
+ assert.equal(fit.recipe.positionX,7);
+ assert.equal(fit.recipe.positionY,7);
+ assert.equal(fit.recipe.hairpinAngle,145,
+   'the source-compatible steeper exit is evaluated only after alignment');
+ assert.equal(fit.error,0);
+ assert.deepEqual(await refineReconstructionCandidateCooperatively(
+   candidate,source,paint),fit,'cooperative and synchronous trials remain identical');
+ const protectedRecipe=normalizeRecipe({...recipe,lockedSettings:['position']});
+ const checked=refineReconstructionCandidate({...candidate,recipe:protectedRecipe},
+   source,next=>{
+     assert.equal(next.positionX,0);assert.equal(next.positionY,0);
+     return paint(next);
+   });
+ assert.equal(checked.recipe.positionX,0);
+ assert.equal(checked.recipe.positionY,0);
+});
+
+test('small Loop radius corrections recover the centre without extending the real-render budget',async()=>{
+ const w=RECONSTRUCTION_FRAME.width,h=RECONSTRUCTION_FRAME.height;
+ const reference=raster(w,h,()=>[0,0,0,255]);
+ const recipe=normalizeRecipe({seed:'loop-inner-ring',structure:'paths',
+   geometry:'loop',loopRadius:56,positionX:0,positionY:0});
+ const painter=next=>{
+   const v=Math.min(255,Math.round(
+     Math.abs(next.positionX-6)*5+Math.abs(next.positionY)*3+
+     Math.abs(next.loopRadius-62)*2));
+   return raster(w,h,()=>[v,v,v,255]);
+ };
+ const candidate={kind:'loop',recipe,error:.8,label:'editable loop'};
+ let calls=0;
+ const best=refineReconstructionCandidate(candidate,reference,next=>{
+   calls++;return painter(next);
+ });
+ assert.equal(calls,10);
+ assert.equal(best.recipe.positionX,6);
+ assert.equal(best.recipe.loopRadius,62);
+ assert.equal(best.error,0);
+ assert.deepEqual(await refineReconstructionCandidateCooperatively(
+   candidate,reference,painter),best);
+});
