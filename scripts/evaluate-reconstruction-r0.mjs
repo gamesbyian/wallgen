@@ -407,7 +407,22 @@ async function evaluate(opts){
           '" alt="Actual candidate '+(i+1)+'">'+
           '<figcaption>'+esc(item.alternatives[i].label)+' · '+
           Number(item.alternatives[i].error).toFixed(4)+'</figcaption></figure>').join('')+
-        '</section></details>':'')+'</figure>').join('');
+        '</section></details>':'')+
+      (item.localCurveProbe?.variants?.length?
+        '<details><summary>Opt-in local curve trials ('+
+        item.localCurveProbe.variants.length+', research only)</summary>'+
+        '<p>Actual source / canonical best shown above. Trials below are true '+
+        'painter outputs, not adopted recipes. Lower RGB/ink error is better.</p>'+
+        '<section class="variants">'+
+        item.localCurveProbe.variants.map((trial,i)=>
+          '<figure><img src="'+esc(trial.preview)+
+          '" alt="Experimentally painted local curve variant '+(i+1)+'">'+
+          '<figcaption>'+esc(trial.label)+' · '+
+          Number(trial.error).toFixed(6)+
+          (trial.error<item.bestError?' · improves baseline':' · no win')+
+          '</figcaption></figure>').join('')+'</section>'+
+        '<p>Reference baseline error '+Number(item.bestError).toFixed(6)+
+        '</p></details>':'')+'</figure>').join('');
     await writeFile(join(dir,'evaluation.html'),[
       '<!doctype html><html lang="en"><meta charset="utf-8">',
       '<meta name="viewport" content="width=device-width,initial-scale=1">',
