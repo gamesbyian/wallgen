@@ -75,13 +75,18 @@ test('neutral and two-hue source artwork never synthesizes a complete seven-pigm
   const muted=extractImageColourRegions(neutral,HUES,{includeMasks:true});
   assert.equal(muted.regions.length,0,'neutral greys cannot prove coloured pigments');
   assert.equal(observedHueShapeRecipe(neutral,placement,{}),null);
-  const two={...source,data:source.data.slice()};
-  const red=hueRgb(HUES[0]),blue=hueRgb(HUES[4]);
-  for(let i=0;i<two.data.length;i+=4){
-    const match=rgb=>two.data[i]===rgb[0]&&
-      two.data[i+1]===rgb[1]&&two.data[i+2]===rgb[2];
-    if(!match(red)&&!match(blue)){
-      two.data[i]=0;two.data[i+1]=0;two.data[i+2]=0;
+  // Author two isolated coloured rectangles directly, not by masking a
+  // compound source whose anti-aliased/fleck membership is an unrelated test.
+  const w=240,h=520,two={width:w,height:h,
+    data:new Uint8ClampedArray(w*h*4)};
+  for(let p=0;p<w*h;p++)two.data[p*4+3]=255;
+  for(const [x0,y0,rgb] of [
+    [35,45,hueRgb(HUES[0])],[145,270,hueRgb(HUES[4])]]){
+    for(let y=y0;y<y0+85;y++)for(let x=x0;x<x0+55;x++){
+      const at=4*(y*w+x);
+      two.data[at]=rgb[0];
+      two.data[at+1]=rgb[1];
+      two.data[at+2]=rgb[2];
     }
   }
   const analysis=extractImageColourRegions(two,HUES,{includeMasks:true});

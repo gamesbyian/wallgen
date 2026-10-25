@@ -1,12 +1,6 @@
 name: R0 source-visible hue shape oracle
 # Source/fit screenshots and full-resolution export remain manually opt-in.
 on:
-  # One-shot low-chroma independent art research; remove PR trigger before merge.
-  pull_request:
-    paths:
-      - 'scripts/review-reconstruction-external-pigments.mjs'
-      - 'tests/reconstruction-r0-evaluate.test.js'
-      - '.github/workflows/reconstruction-hue-shapes-experiment.yml'
   workflow_dispatch:
     inputs:
       include_low_chroma:
@@ -67,13 +61,13 @@ jobs:
                 candidateCount:s.candidateCount,sourceSignature:s.sourceSignature??null}));
           '
       - name: Author four independent low-chroma/neutral external source images
-        if: ${{ github.event_name == 'pull_request' || inputs.include_low_chroma }}
+        if: ${{ inputs.include_low_chroma }}
         run: node scripts/review-reconstruction-external-pigments.mjs --collection low-chroma --out-dir artifacts/external-low-chroma
       - name: Score low-chroma source-only input through real canonical six-plus-ten painter
-        if: ${{ github.event_name == 'pull_request' || inputs.include_low_chroma }}
+        if: ${{ inputs.include_low_chroma }}
         run: node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/external-low-chroma --source-signature --hue-visible-shapes
       - name: Report source pigment confidence and refusal without inferred original recipe
-        if: ${{ github.event_name == 'pull_request' || inputs.include_low_chroma }}
+        if: ${{ inputs.include_low_chroma }}
         run: |
           node --input-type=module -e '
             import {readFileSync} from "node:fs";
