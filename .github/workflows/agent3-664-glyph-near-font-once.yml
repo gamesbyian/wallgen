@@ -1,6 +1,7 @@
 name: One-shot glyph warning near face on real portrait controls
 # Screenshot complete scrolled missing-glyph warning after initial viewport
 # Diagnostic: capture actual visual scroll ancestor sizes before hard assertion
+# Fix assertion: Playwright boundingBox reports y, not top
 on:
   push:
     branches: [agent3/664-visible-glyph-warning-portrait-20261024]
