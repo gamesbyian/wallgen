@@ -27,6 +27,7 @@ export function readReconstructionEvalArgs(argv){
   for(let i=0;i<argv.length;i++){
     const key=argv[i];
     if(key==='--alternatives'){opts.alternatives=true;continue;}
+    if(key==='--ink-geometry'){opts.inkGeometry=true;continue;}
     if(key==='--help'||key==='-h'){opts.help=true;continue;}
     if(!['--dir','--browser'].includes(key)||!argv[i+1]||argv[i+1].startsWith('--'))
       throw Error('Unknown/incomplete option '+key);
@@ -107,7 +108,7 @@ async function evaluate(opts){
       if(external&&extractPngRecipe(input)!==null)
         throw Error('External input must not contain a ROYGBIV source recipe');
       // Inference only sees image pixels, never this item's recipe.
-      const inferred=await page.evaluate(async ({base64,includeAlternatives})=>{
+      const inferred=await page.evaluate(async ({base64,includeAlternatives,includeInkGeometry})=>{
         const {reconstructionCandidates,rankReconstructionCandidates,
           reconstructionPlacement,RECONSTRUCTION_FRAME,
           refineReconstructionCandidate,reconstructionRefinementIndex,
@@ -157,9 +158,17 @@ async function evaluate(opts){
         }
         const best=ranked[0];
         const preview=best?render(best.recipe):null;
+        // Reuse this ALREADY painted best-preview canvas; do not spend an
+        // additional canonical painter call for diagnostic comparison.
+        const inkGeometry=includeInkGeometry&&preview?
+          (await import('/src/reconstruction-ink-geometry.js'))
+            .compareRainbowInkGeometry(reference,preview.getContext('2d',
+              {willReadFrequently:true}).getImageData(0,0,fit.width,fit.height)):
+          null;
         bitmap.close();
         return {
           prefitAlternatives,
+          ...(includeInkGeometry?{inkGeometry}:{}),
           candidateCount:ranked.length,
           selected:best?{kind:best.kind,label:best.label,error:best.error,
             structure:best.recipe.structure,geometry:best.recipe.geometry,
@@ -175,7 +184,8 @@ async function evaluate(opts){
           })):[]
         };
       },{base64:Buffer.from(input).toString('base64'),
-        includeAlternatives:!!opts.alternatives});
+        includeAlternatives:!!opts.alternatives,
+        includeInkGeometry:!!opts.inkGeometry});
       // External work has NO original ROYGBIV recipe or true-render floor.
       // Only actual current-production PNGs have blinded truth sidecars.
       const truth=external?null:JSON.parse(await readFile(join(dir,item.recipeFile),'utf8'));
@@ -204,6 +214,7 @@ async function evaluate(opts){
         trueRecipeRenderError:truthError,
         bestLabel:inferred.selected?.label??null,
         prefitAlternatives:inferred.prefitAlternatives,
+        ...(opts.inkGeometry?{inkGeometry:inferred.inkGeometry}:{}),
         selectedControls:inferred.selected?Object.fromEntries(
           ['positionX','positionY','spread','stripeWidth','shapeDepth','shapeFrequency',
             'turnRadius','hairpinAngle','loopRadius','loopSweep']
@@ -278,7 +289,7 @@ async function evaluate(opts){
 }
 async function main(){
   const opts=readReconstructionEvalArgs(process.argv.slice(2));
-  if(opts.help){console.log('node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/reconstruction-r0 [--browser executable] [--alternatives]');return;}
+  if(opts.help){console.log('node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/reconstruction-r0 [--browser executable] [--alternatives] [--ink-geometry]');return;}
   await evaluate(opts);
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
