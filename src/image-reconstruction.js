@@ -966,10 +966,10 @@ export function measuredJaggedPixelShift(source,rendered){
  * This is a hint for the NEXT ordinary drawWallpaper trial, not a new
  * renderer, source pixel storage or a claim of original setting recovery.
  */
-function coherentHueOffset(source,rendered,axis){
+function coherentHueOffset(source,rendered,axis,sourceRegions=null){
   if(!source||!rendered||source.width!==rendered.width||
     source.height!==rendered.height)return null;
-  const a=extractImageColourRegions(source,HUES).regions;
+  const a=sourceRegions??extractImageColourRegions(source,HUES).regions;
   const b=extractImageColourRegions(rendered,HUES).regions;
   if(a.length!==7||b.length!==7)return null;
   const offsets=[];
@@ -983,10 +983,10 @@ function coherentHueOffset(source,rendered,axis){
     Math.abs(median)>30)return null;
   return Math.round(median);
 }
-export const coherentWaveOffsetY=(source,rendered)=>
-  coherentHueOffset(source,rendered,'cy');
-export const coherentVerticalBandOffsetX=(source,rendered)=>
-  coherentHueOffset(source,rendered,'cx');
+export const coherentWaveOffsetY=(source,rendered,sourceRegions=null)=>
+  coherentHueOffset(source,rendered,'cy',sourceRegions);
+export const coherentVerticalBandOffsetX=(source,rendered,sourceRegions=null)=>
+  coherentHueOffset(source,rendered,'cx',sourceRegions);
 // An existing expanded canonical Draw ribbon can have the correct topology
 // but be collectively displaced. Only seven coherent pigment translations
 // qualify; a rough single-path silhouette must not drive global movement.
@@ -997,10 +997,10 @@ export const coherentVerticalBandOffsetX=(source,rendered)=>
  * hues, occlusion and irregular neighbouring gaps; this evidence warrants a
  * gap-and-centre fit only, not an assertion about the original Draw stroke.
  */
-export function measuredExpandedDrawRegistration(source,rendered){
+export function measuredExpandedDrawRegistration(source,rendered,sourceRegions=null){
   if(!source||!rendered||source.width!==rendered.width||
     source.height!==rendered.height)return null;
-  const a=extractImageColourRegions(source,HUES).regions;
+  const a=sourceRegions??extractImageColourRegions(source,HUES).regions;
   const b=extractImageColourRegions(rendered,HUES).regions;
   if(a.length!==7||b.length!==7)return null;
   const ordered=regions=>Array.from({length:7},(_,index)=>
@@ -1036,12 +1036,22 @@ export const coherentExpandedDrawOffsetY=(source,rendered)=>
  * render(candidate,width,height) must call the existing renderer and return
  * ImageData-like pixels at the requested dimensions.
  */
-export function rankReconstructionCandidates(candidates,source,render){
+export function rankReconstructionCandidates(candidates,source,render,
+  {referenceCache=null}={}){
   if(!Array.isArray(candidates)||candidates.length>RECONSTRUCTION_RENDER_LIMIT)
     throw Error('Reconstruction render budget exceeded');
   if(source?.width!==RECONSTRUCTION_WIDTH||
     source?.height!==RECONSTRUCTION_HEIGHT)throw Error('Invalid fitting frame');
   const results=[];
+  // The immutable 96x208 source reference never changes between candidates.
+  // Cache its one seven-hue segmentation lazily when registration is needed.
+  // The cooperative path passes an invocation-local cache across yields;
+  // no global cache, second scene owner or retained source pixels.
+  const cache=referenceCache??{};
+  const sourceColours=()=>{
+    if(cache.source!==source){cache.source=source;cache.analysis=null;}
+    return cache.analysis??=(extractImageColourRegions(source,HUES));
+  };
   for(const candidate of candidates){
     try{
       const pixels=render(candidate.recipe,RECONSTRUCTION_WIDTH,RECONSTRUCTION_HEIGHT);
@@ -1049,23 +1059,24 @@ export function rankReconstructionCandidates(candidates,source,render){
       if(Number.isFinite(error)){
         const loopInkRatio=candidate.kind==='loop'&&
           candidate.recipe.background==='black'?(()=>{
-            const a=extractImageColourRegions(source,HUES);
+            const a=sourceColours();
             const b=extractImageColourRegions(pixels,HUES);
             return a.regions.length===7&&b.regions.length===7&&b.coverage>.05?
               a.coverage/b.coverage:null;
           })():null;
         const waveOffsetY=candidate.kind==='wave'?
-          coherentWaveOffsetY(source,pixels):null;
+          coherentWaveOffsetY(source,pixels,sourceColours().regions):null;
         const bandOffsetX=candidate.kind==='straight'&&
           candidate.recipe.orientation==='vertical'?
-          coherentVerticalBandOffsetX(source,pixels):null;
+          coherentVerticalBandOffsetX(source,pixels,sourceColours().regions):null;
         const jaggedShift=candidate.kind==='jagged'&&
           candidate.recipe.background==='black'?
           measuredJaggedPixelShift(source,pixels):null;
         const drawRegistration=candidate.kind==='path'&&
           candidate.recipe.geometry==='drawn'&&
           candidate.recipe.geometrySafety===false?
-          measuredExpandedDrawRegistration(source,pixels):null;
+          measuredExpandedDrawRegistration(source,pixels,
+            sourceColours().regions):null;
         results.push({...candidate,error,
           ...(Number.isFinite(loopInkRatio)?{loopInkRatio}:{}) ,
           ...(jaggedShift?{jaggedShift}:{}),
@@ -1288,11 +1299,13 @@ export async function rankReconstructionCandidatesCooperatively(
   if(!Array.isArray(candidates)||candidates.length>RECONSTRUCTION_RENDER_LIMIT)
     throw Error('Reconstruction render budget exceeded');
   const results=[];
+  const referenceCache={};
   for(const candidate of candidates){
     if(isCancelled())return null;
     await yieldControl();
     if(isCancelled())return null;
-    results.push(rankReconstructionCandidates([candidate],source,render)[0]);
+    results.push(rankReconstructionCandidates([candidate],source,render,
+      {referenceCache})[0]);
   }
   return results.sort((a,b)=>a.error-b.error);
 }
