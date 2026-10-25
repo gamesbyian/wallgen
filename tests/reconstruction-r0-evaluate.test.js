@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readBaselineArgs,RECONSTRUCTION_R0_CASES} from '../scripts/review-reconstruction.mjs';
 import {readReconstructionEvalArgs,classifyReconstructionManifest} from '../scripts/evaluate-reconstruction-r0.mjs';
+import {parseExternalPigmentArgs,externalPigmentManifest,EXTERNAL_PIGMENT_CASES} from '../scripts/review-reconstruction-external-pigments.mjs';
 
 test('focused R0 generation targets known source studies without resetting browser arg',()=>{
  const opts=readBaselineArgs(['--only','01-vertical-straight,11-scattered-circles',
@@ -71,4 +72,26 @@ test('independently authored external graphics have no invented canonical ground
  }),/count/);
  assert.throws(()=>classifyReconstructionManifest({...external,
    schema:'unknown-evidence'}),/Unsupported/);
+});
+
+test('independently Canvas-authored pigments have no alleged native source truth',()=>{
+ assert.equal(EXTERNAL_PIGMENT_CASES.length,4);
+ assert.equal(new Set(EXTERNAL_PIGMENT_CASES.map(x=>x.id)).size,4);
+ assert.deepEqual(parseExternalPigmentArgs([]),{
+   outDir:'artifacts/external-pigment-r0'
+ });
+ assert.deepEqual(parseExternalPigmentArgs(['--out-dir','artifacts/independent']),{
+   outDir:'artifacts/independent'
+ });
+ assert.throws(()=>parseExternalPigmentArgs(['--out-dir']),/Unknown\/incomplete/);
+ const manifest=externalPigmentManifest();
+ assert.equal(manifest.schema,'roygbiv-reconstruction-external/v1');
+ assert.equal(manifest.items.length,4);
+ assert.equal(classifyReconstructionManifest(manifest).external,true);
+ for(const item of manifest.items){
+   assert.ok(!Object.hasOwn(item,'recipeFile'));
+   assert.ok(!Object.hasOwn(item,'seed'));
+ }
+ assert.ok(!Object.hasOwn(manifest,'recipe'),
+   'external pixels are never accompanied by a fictitious ROYGBIV source recipe');
 });
