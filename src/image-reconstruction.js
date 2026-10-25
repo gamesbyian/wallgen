@@ -962,6 +962,13 @@ export function rankReconstructionCandidates(candidates,source,render){
       const pixels=render(candidate.recipe,RECONSTRUCTION_WIDTH,RECONSTRUCTION_HEIGHT);
       const error=compareReconstructionPixels(source,pixels);
       if(Number.isFinite(error)){
+        const loopInkRatio=candidate.kind==='loop'&&
+          candidate.recipe.background==='black'?(()=>{
+            const a=extractImageColourRegions(source,HUES);
+            const b=extractImageColourRegions(pixels,HUES);
+            return a.regions.length===7&&b.regions.length===7&&b.coverage>.05?
+              a.coverage/b.coverage:null;
+          })():null;
         const waveOffsetY=candidate.kind==='wave'?
           coherentWaveOffsetY(source,pixels):null;
         const bandOffsetX=candidate.kind==='straight'&&
@@ -975,6 +982,7 @@ export function rankReconstructionCandidates(candidates,source,render){
           candidate.recipe.geometrySafety===false?
           measuredExpandedDrawRegistration(source,pixels):null;
         results.push({...candidate,error,
+          ...(Number.isFinite(loopInkRatio)?{loopInkRatio}:{}) ,
           ...(jaggedShift?{jaggedShift}:{}),
           ...(waveOffsetY!==null?{waveOffsetY}:{}),
           ...(bandOffsetX!==null?{bandOffsetX}:{}),
@@ -1085,9 +1093,12 @@ function refinementFields(candidate){
     ['spread',[-16,-8,8,16]],['stripeWidth',[-15,15]]
   ]:candidate.kind==='loop'?[
     ['positionX',[-6,6]],['positionY',[-6,6]],
-    // Source-fitted current loops tend to have a small residual radius error.
-    // Keep the same two radius paints but sample nearer the selected scale.
-    ['loopRadius',[-6,6]],['spread',[-10,10]],['stripeWidth',[-15,15]]
+    // Allocate two fine radius probes only when source and first-render
+    // pigment coverage match. If ink quantity differs, keep the proven
+    // stripe-width probes instead, not a source-blind radius assumption.
+    ...(candidate.loopInkRatio>=.90&&candidate.loopInkRatio<=1.06?
+      [['loopRadius',[-10,10,-6,6]],['spread',[-10,10]]]:
+      [['loopRadius',[-10,10]],['spread',[-10,10]],['stripeWidth',[-15,15]]])
   ]:candidate.kind==='wave'?[
     // The first true-render probe uses the rigid seven-hue centroid offset
     // when measured, then tests its immediate neighbourhood. Otherwise keep
