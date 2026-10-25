@@ -47,6 +47,8 @@ jobs:
                 topologyMismatch:g.topologyMismatch,
                 missingHues:g.missingHues,
                 meanWidthRatio:g.meanWidthRatio,
+                upperSourceGaps:g.upperSourceGaps,
+                upperRenderedGaps:g.upperRenderedGaps,
                 hues:g.byHue.map(h=>({
                   index:h.index,iou:h.iou,
                   sourceWidth:h.source.inkWidthMedian,
