@@ -95,8 +95,8 @@ try{
      JSON.stringify({width,height,readable,scrollState}));
    await page.screenshot({path:join(output,'complete-warning-'+width+'x'+height+'.png'),
       animations:'disabled'});
-   assert.ok(readable&&readable.top>=-1 &&
-     readable.top+readable.height<=height+1,
+   assert.ok(readable&&readable.y>=-1 &&
+     readable.y+readable.height<=height+1,
      'complete font warning must be revealable inside the real viewport');
    await page.locator('[data-text-key="text"]').fill('HELLO');
    await page.locator('[data-text-key="text"]').blur();
