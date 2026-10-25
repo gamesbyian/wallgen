@@ -1,5 +1,9 @@
 # Current ROYGBIV work queue and three-agent dispatch
 
+## Experimental seven-mask/EDT source-backed result · 25 October 2026 (pending qualified PR)
+
+[PR #707](https://github.com/gamesbyian/wallgen/pull/707) is a source-aligned, bounded diagnostic implementation under Agent 1 issue #557: exposes optional shared per-hue masks, measures visible skeleton/width/edge and preserves the existing painter and user-facing reconstruction unchanged. Actual [GHA R0 source/fit #40168220398](https://github.com/gamesbyian/wallgen/actions/runs/40168220398) and [negative width probe #40168447704](https://github.com/gamesbyian/wallgen/actions/runs/40168447704) passed focused tests and production-Chromium comparison. Crucially Hairpin #05 refused an incoherent global width hypothesis; Loop #06's coherent-looking median width ratio yielded **worse RGB/ink errors for all three width changes**, so global shrink is NOT approved. See [five-case optical/numeric findings](RECONSTRUCTION-INK-GEOMETRY-GENUINE-FINDINGS-2026-10-25.md). Keep #557 open and next test **localized** black U-channels / visible Loop crossing constraints. Heavy GHA optical proof returned to manual-only before any merge; the regular quick gate remains tiny. No physical Pixel or human creative acceptance claimed.
+
 ## Independent live integration checkpoint · 25 October 2026 UTC
 
 **Verified current `main`: `87859b0ce95c3b4254cf1bb8d6dd6df1302013aa`.** Zero open PRs at the GitHub inventory immediately following this merge. Open ownership issues remain **[#557 reconstruction](https://github.com/gamesbyian/wallgen/issues/557), [#653 typography](https://github.com/gamesbyian/wallgen/issues/653), [#664 independent acceptance](https://github.com/gamesbyian/wallgen/issues/664)**. The earlier old-SHA and pending-PR headings below are dated historical receipts; do not use them as a current merge queue.
