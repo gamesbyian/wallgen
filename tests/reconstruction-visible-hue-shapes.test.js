@@ -139,3 +139,23 @@ test('source-visible pigment retains 9–16 genuine islands, refuses 17+ instead
   assert.equal(extractVisibleHueCompound(masked(17),width,height),null,
     'overflow refuses rather than issuing a source-completeness claim');
 });
+
+test('appearance-first source contours share a separately measured canonical story, not historical provenance',()=>{
+  const image=sevenShapes();
+  const selected=observedHueShapeRecipe(image,placement,
+    normalizeRecipe({seed:'external-pixels'}),{paletteHint:'jewel'});
+  assert.ok(selected);
+  assert.equal(selected.recipe.palette,'jewel');
+  assert.equal(selected.sourceVisibleOnly,true);
+  assert.match(selected.uncertainty,/palette identity/);
+  const fallback=observedHueShapeRecipe(image,placement,
+    normalizeRecipe({seed:'external-pixels'}));
+  assert.equal(fallback.recipe.palette,'classic');
+  assert.deepEqual(selected.recipe.scatteredShapeOverrides,
+    fallback.recipe.scatteredShapeOverrides,'colour hypothesis never changes contours');
+  const locked=observedHueShapeRecipe(image,placement,
+    normalizeRecipe({palette:'pastel',lockedSettings:['palette']}),
+    {paletteHint:'jewel'});
+  assert.equal(locked?.recipe.palette,'pastel',
+    'source colour guess never circumvents a creator palette lock');
+});
