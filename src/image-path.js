@@ -45,7 +45,9 @@ function components(mask,w,h,minArea,maxResults=8){
         // win ties exactly as they did under stable sort + slice.
         let weakest=0;
         for(let i=1;i<result.length;i++)
-          if(result[i].part.area<=result[weakest].part.area)weakest=i;
+          if(result[i].part.area<result[weakest].part.area||
+            (result[i].part.area===result[weakest].part.area&&
+              result[i].ordinal>result[weakest].ordinal))weakest=i;
         if(part.area>result[weakest].part.area)result[weakest]=entry;
       }
     }
