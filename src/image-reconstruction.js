@@ -400,7 +400,12 @@ export function describeReconstructionImage(image){
   const paletteHypothesis=measuredCanonicalPalette(colour.regions);
   return {background:colour.background,colourRegions:colour.regions,
     paletteHypothesis,
-    repeatShape:colour.repeatShape,
+    // Bounding-box crop progression alone can also be produced by unrelated
+    // later pigments. A clipped shared stamp must ALSO have independently
+    // measured coherent seven-hue ribbon axis, thickness and spacing.
+    // Full sevenfold-congruent stamps retain their existing acceptance path.
+    repeatShape:colour.repeatShape?.clipped&&!ribbonBands?
+      null:colour.repeatShape,
     circleHints:colour.circleHints,
     inferredCircleLayers:colour.inferredCircleLayers,
     repeatedColourRegions,incompleteColourRegions,
