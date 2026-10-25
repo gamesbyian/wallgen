@@ -65,23 +65,30 @@ try{
        return {width:r.width,height:r.height,left:r.left,right:r.right,
          top:r.top,bottom:r.bottom,centerTarget:target?.dataset?.textHandle||null};
      };
-     return {classes:f.className,target:item?.tagName,hitHandle:item?.dataset?.textHandle||null,
+     return {classes:f.className,gripsReachable:f.dataset.gripReachable,
+       target:item?.tagName,hitHandle:item?.dataset?.textHandle||null,
        scale:handle('scale'),rotate:handle('rotate'),
        active:document.body.classList.contains('text-direct-active')};
    },{where});
    assert.ok(check.classes.includes('text-direct-compact'),'small selection not marked compact');
    assert.equal(check.target,'CANVAS',
      '44px grip still steals a pointer intended for actual tiny text ink');
-   for(const name of ['scale','rotate']){
-     const box=check[name];assert.ok(box.width>=43&&box.height>=43,
-       name+' failed 44px touch target acceptance');
-     assert.equal(box.centerTarget,name,
-       name+' grip is occluded by the other grip or scene DOM');
+   assert.equal(check.gripsReachable,'true',
+     'compact handles not fully reachable within actual current canvas');
+   for(const mode of ['scale','rotate']){
+     const box=check[mode];assert.ok(box.width>=43&&box.height>=43,
+       mode+' failed 44px touch target acceptance');
+     assert.equal(box.centerTarget,mode,
+       mode+' grip is occluded by the other grip or scene DOM');
+     assert.ok(box.left>=preview.x-1&&box.right<=preview.x+preview.width+1 &&
+       box.top>=preview.y-1&&box.bottom<=preview.y+preview.height+1,
+       mode+' button is clipped beyond the displayed phone wallpaper');
    }
-   if(example.name.includes('right-bottom')){
-     assert.match(check.classes,/text-direct-scale-left/);
-     assert.match(check.classes,/text-direct-scale-up/);
-   }
+   const cx=box=>(box.left+box.right)/2,cy=box=>(box.top+box.bottom)/2;
+   const separation=Math.hypot(cx(check.scale)-cx(check.rotate),
+     cy(check.scale)-cy(check.rotate));
+   assert.ok(separation>=48,
+     'two circular 44px transform buttons visually overlap: '+separation);
    if(example.name==='412-near-top')
      assert.match(check.classes,/text-direct-rotate-inset/);
    await page.locator('#preview').screenshot({path:join(out,name+'-before.png')});
