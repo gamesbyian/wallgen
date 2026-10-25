@@ -1,0 +1,72 @@
+name: One-shot Agent 3 independent inverse-geometry optics
+on:
+  push:
+    branches: [agent3/675-independent-optical-validation-20261024]
+    paths: [.github/workflows/agent3-675-optical-once.yml]
+permissions:
+  contents: read
+jobs:
+  real-source-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install real headless Chromium painter
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install chromium --only-shell
+      - name: Produce authentic source art without embedded recipe hints
+        run: node scripts/review-reconstruction.mjs --out-dir artifacts/agent3-r0-source --only 04-jagged,05-hairpin,06-loop,16-offset-jagged
+      - name: Run proposed branch inverse fitting on genuine unchanged PNG bytes
+        run: |
+          cp -a artifacts/agent3-r0-source artifacts/agent3-r0-proposed
+          node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/agent3-r0-proposed
+      - name: Run merged-main inverse on the SAME source PNG bytes
+        run: |
+          cp -a artifacts/agent3-r0-source artifacts/agent3-r0-main
+          git show origin/main:src/image-reconstruction.js > src/image-reconstruction.js
+          node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/agent3-r0-main
+      - name: Produce exact four-case numerical and geometry report
+        run: |
+          node --input-type=module <<'NODE'
+          import {readFile,writeFile} from 'node:fs/promises';
+          const old=JSON.parse(await readFile('artifacts/agent3-r0-main/evaluation.json','utf8'));
+          const next=JSON.parse(await readFile('artifacts/agent3-r0-proposed/evaluation.json','utf8'));
+          const samples=next.samples.map(now=>{
+            const before=old.samples.find(x=>x.id===now.id);
+            if(!before)throw Error('Missing paired control '+now.id);
+            return {id:now.id,controlError:before.bestError,
+              proposedError:now.bestError,
+              delta:now.bestError-before.bestError,
+              improvementPercent:(before.bestError-now.bestError)/before.bestError*100,
+              kind:now.bestKind,canonical:now.selectedControls,
+              paints:now.refinementRenders};
+          });
+          const report={source:'identical metadata-free current renderer PNGs',
+            baseline:'origin/main source excluding proposed inverse change',
+            experimental:'#675 HEAD inverse, no other source changes',
+            samples};
+          await writeFile('artifacts/agent3-r0-comparison.json',
+            JSON.stringify(report,null,2)+'\n');
+          for(const item of samples)
+            console.log('AGENT3_INDEPENDENT_R0 '+JSON.stringify(item));
+          if(samples.some(x=>x.paints>10||!Number.isFinite(x.proposedError)))
+            throw Error('Exceeded canonical render budget or nonfinite score');
+          NODE
+      - name: Preserve raw genuine source and before/after artwork
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent3-675-independent-current-renderer
+          path: |
+            artifacts/agent3-r0-source/
+            artifacts/agent3-r0-main/
+            artifacts/agent3-r0-proposed/
+            artifacts/agent3-r0-comparison.json
+          retention-days: 14
+          if-no-files-found: warn
