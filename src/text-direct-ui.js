@@ -1,5 +1,6 @@
 import {DESIGN_WIDTH,DESIGN_HEIGHT} from './model.js';
 import {typefaceCssFamily} from './typography-fonts.js';
+import {compactTextGripLayout} from './text-grip-layout.js';
 import {designPointFromPointer,dragTextOverlay,
   dragTextTransform,transformTextOverlay,measuredTextBounds} from './text-direct-geometry.js';
 import {hitTextAtLayout} from './text-path-geometry.js';
@@ -65,8 +66,31 @@ export function installTextCanvasMover({
     const y=rect.top-parent.top+rect.height*item.y/100;
     outline.style.left=x+'px';
     outline.style.top=y+'px';
-    outline.style.width=(bounds.width+2*extra)*rect.width/DESIGN_WIDTH+'px';
-    outline.style.height=(bounds.height+2*extra)*rect.height/DESIGN_HEIGHT+'px';
+    const physicalWidth=(bounds.width+2*extra)*rect.width/DESIGN_WIDTH;
+    const physicalHeight=(bounds.height+2*extra)*rect.height/DESIGN_HEIGHT;
+    outline.style.width=physicalWidth+'px';
+    outline.style.height=physicalHeight+'px';
+    // A one-letter object is smaller than either 44px transform button.
+    // Preserve the exact same accessible buttons, but place their centres
+    // outside authored ink and at least 48px apart in actual canvas CSS
+    // pixels, including rotated titles and right/bottom-edge placements.
+    const compact=physicalWidth<80&&physicalHeight<100;
+    outline.classList.toggle('text-direct-compact',compact);
+    if(compact){
+      const grip=compactTextGripLayout({
+        canvasWidth:rect.width,canvasHeight:rect.height,
+        centreX:rect.width*item.x/100,centreY:rect.height*item.y/100,
+        frameWidth:physicalWidth,frameHeight:physicalHeight,
+        rotation:item.rotation||0
+      });
+      for(const [handle,xy] of [[handles[0],grip.rotate],[handles[1],grip.scale]]){
+        handle.style.left=xy.left+'px';handle.style.top=xy.top+'px';
+      }
+      outline.dataset.gripReachable=String(grip.reachable);
+    }else{
+      for(const handle of handles){handle.style.left='';handle.style.top='';}
+      delete outline.dataset.gripReachable;
+    }
     outline.style.transform='translate(-50%,-50%) rotate('+item.rotation+'deg)';
     const angle=item.rotation*Math.PI/180;
     const halfVerticalReach=(Math.abs(Math.sin(angle))*(bounds.width+2*extra)*
