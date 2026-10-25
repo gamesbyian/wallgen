@@ -1435,11 +1435,12 @@ test('cropped shared hue stamps refuse tail ink-width oscillation with an unchan
      const left=i<4?0:[55,110,165][i-4];
      if(x<left)continue;
      const centre=30+i*50+Math.round(x*.13+3*Math.sin(x/17));
-     // All seven true objects remain long ribbons, preserving the same
-     // principal axes, mean physical width and pigment order. Only the last
-     // three alternate 3px and 39px locally without moving their centrelines.
+     // All seven true objects remain elongated, so the established
+     // physical axes and globally averaged thickness checks still pass.
+     // Only the three crop tails alternate 9px and 33px locally, while
+     // maintaining their original centreline and mean thickness.
      const half=distort&&i>=4?
-       (Math.floor((x-left)/12)%2===0?1:19):10;
+       (Math.floor((x-left)/12)%2===0?4:16):10;
      if(Math.abs(y-centre)<=half)return colour(HUES[i]);
    }
    return [0,0,0,255];
