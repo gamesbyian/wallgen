@@ -4,7 +4,22 @@
 export const textGraphemes=value=>typeof Intl!=='undefined'&&typeof Intl.Segmenter==='function'?
   Array.from(new Intl.Segmenter(undefined,{granularity:'grapheme'}).segment(value),p=>p.segment):
   Array.from(value);
-export function rainbowTextStops(line,mode,colours,startIndex,measure){
+// Only unambiguous Arabic/Hebrew-only strong-letter runs can have their
+// horizontal colour ordering reversed without a full Unicode Bidi resolver.
+// Numbers and other scripts can reorder independently, so preserve the
+// established native-shaped line and its previous colour mapping instead.
+export function isSimpleRightToLeft(line){
+  let found=false;
+  for(const glyph of String(line||'')){
+    if(/\p{Number}/u.test(glyph))return false;
+    if(/[\p{Script=Arabic}\p{Script=Hebrew}]/u.test(glyph)){
+      found=true;continue;
+    }
+    if(/\p{Letter}/u.test(glyph))return false;
+  }
+  return found;
+}
+export function rainbowTextStops(line,mode,colours,startIndex,measure,{rightToLeft=false}={}){
   if(!['rainbow-letter','rainbow-word'].includes(mode))
     throw Error('Unknown rainbow segmentation mode');
   if(!Array.isArray(colours)||!colours.length)throw Error('Rainbow palette is empty');
@@ -33,5 +48,11 @@ export function rainbowTextStops(line,mode,colours,startIndex,measure){
       {offset,colour:spans[i+1].colour});
   }
   stops.push({offset:1,colour:spans.at(-1).colour});
-  return {stops,nextIndex:colourIndex};
+  // Canvas2D paints RTL letters visually right-to-left even when the logical
+  // text begins with the first (red) rainbow glyph. Reflect the *stops* and
+  // reverse their order; never split/reorder native joined text itself.
+  const visual=rightToLeft?stops.slice().reverse().map(stop=>({
+    offset:1-stop.offset,colour:stop.colour
+  })):stops;
+  return {stops:visual,nextIndex:colourIndex};
 }

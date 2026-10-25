@@ -106,3 +106,20 @@ test('Text tool rerolls style, protects locked object and every letter',()=>{
   assert.deepEqual(input.textOverlays.map(x=>x.text),
     normalizeRecipe({...randomizeAllRecipe({}),textOverlays:input.textOverlays}).textOverlays.map(x=>x.text));
 });
+
+test('native whole-line Arabic rainbow maps logical first hue to the right edge',()=>{
+  const scene=resolveScene(normalizeRecipe({seed:'arabic-rtl-colours',
+    textOverlays:[{text:'سلام',font:'modern',colour:'rainbow-letter',
+      outline:'none',size:75}]}));
+  const ctx=fakeContext();
+  drawTextOverlays(ctx,600,1300,scene);
+  const gradients=ctx.calls.filter(c=>c[0]==='gradient');
+  const fills=ctx.calls.filter(c=>c[0]==='fill');
+  assert.equal(fills.length,1,'joining must keep the entire Arabic run shaped');
+  assert.equal(fills[0][1],'سلام');
+  assert.equal(gradients.length,1);
+  const stops=gradients[0][2];
+  assert.equal(stops[0][1],scene.stripes[3].color);
+  assert.equal(stops.at(-1)[1],scene.stripes[0].color);
+  assert.ok(stops.every((s,i)=>i===0||s[0]>=stops[i-1][0]));
+});
