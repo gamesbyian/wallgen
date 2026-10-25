@@ -223,11 +223,20 @@ export function measuredRainbowRibbonBands(regions,width,height){
     const wide=head.every(r=>r&&r.axisRatio>=7&&r.area>=16&&
       r.bounds?.[0]<=.04&&r.bounds?.[2]>=.96&&
       Number.isFinite(r.majorStd)&&r.majorStd>10);
-    const truncation=tail.every((r,i)=>r&&r.area>=16&&
+    // Preserve the original physically corroborated right-visible masks.
+    // Mirrored diagonals crop the complementary edge: the last-three
+    // bounding maxima retreat while minima remain frame-bound. No arbitrary
+    // sideways drift, opposite-edge mixing or extra painter calls.
+    const commonTail=tail.every((r,i)=>r&&r.area>=16&&
       Number.isFinite(r.axisAngle)&&Math.abs(r.axisAngle-axis[0])<=5&&
-      r.bounds?.[2]>=.96&&r.bounds?.[0]>=.15&&
-      r.bounds[0]>(i?tail[i-1].bounds[0]:head[3].bounds[0])+.05&&
       r.majorStd<head[3].majorStd*(1-i*.16));
+    const leftCrop=tail.every((r,i)=>r.bounds?.[2]>=.96&&
+      r.bounds?.[0]>=.15&&
+      r.bounds[0]>(i?tail[i-1].bounds[0]:head[3].bounds[0])+.05);
+    const rightCrop=tail.every((r,i)=>r.bounds?.[0]<=.04&&
+      r.bounds?.[2]<=.85&&
+      r.bounds[2]<(i?tail[i-1].bounds[2]:head[3].bounds[2])-.05);
+    const truncation=commonTail&&(leftCrop||rightCrop);
     const widths=regions.map(r=>r?.minorStd);
     const consistentWidth=widths.every(x=>Number.isFinite(x)&&x>2)&&
       Math.max(...widths)/Math.min(...widths)<1.15;
