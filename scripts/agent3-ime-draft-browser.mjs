@@ -85,11 +85,16 @@ try{
    });
    assert.equal(recipe().textOverlays[0].text,'START ADD café',
      'finished composition was not committed as complete Unicode text');
+   await page.locator('#undo').tap();
+   assert.equal(recipe().textOverlays[0].text,'START ADD',
+     'Undo must revert the completed composition as one edit');
+   assert.equal(await field.inputValue(),'START ADD',
+     'Undo must refresh the unfocused Words control to the restored recipe');
    assert.deepEqual(errors,[]);
    await page.screenshot({path:join(out,width+'x'+height+'.png')});
    const report={viewport:[width,height],focusRetained:true,
      uncommittedDraftPreserved:true,syntheticCompositionPreserved:true,
-     singleChangeCommit:true,unicodeCodepoints:'START ADD café',
+     singleChangeCommit:true,atomicUndo:true,unicodeCodepoints:'START ADD café',
      browserErrors:0,physicalAndroid:'NOT TESTED',
      nativeIme:'NOT TESTED',talkBack:'NOT TESTED'};
    reports.push(report);
