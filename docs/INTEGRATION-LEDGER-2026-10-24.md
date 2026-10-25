@@ -1,5 +1,19 @@
 # Agent 3 verified merged-main integration ledger · 24 October 2026
 
+## Independently certified final software-main checkpoint · 24 October local
+
+The prior merged-main receipts below remain intact. The latest verified GitHub `main` is **`f9c70fc43d47332021aa12cc6d4a699b1d4ca8b8`**, with **zero open pull requests** and only the three real owner issues #557, #653, #664 open.
+
+| Accepted PR | Merged SHA | Direct, independent acceptance |
+| --- | --- | --- |
+| [#675](https://github.com/gamesbyian/wallgen/pull/675) | `4a6b5cba` | Agent 1's bounded Hairpin angle-order and Loop ±6 radius optimisation. Independently generated same current-renderer source PNGs on proposed/source-control inverse in [#40154034365](https://github.com/gamesbyian/wallgen/actions/runs/40154034365) with all **10-paint** budgets held: #05 error **.10786670437→.08447790975** (21.683%), #06 **.05383495946→.04977316648** (7.545%), #04 and #16 exact parity. Actual source/control/new-fit PNGs downloaded and inspected. A second independent bright-ink mask analysis on 96×208 thumbnails found Hairpin F1 **.843008→.881468**, Loop **.917644→.920126**, controls unchanged. Residual painter geometry remains an open #557 task. The original red synthetic test was corrected before green final-head CI and guarded merge. |
+| [#677](https://github.com/gamesbyian/wallgen/pull/677) | `f9c70fc4` | Independent actual phone-sized Chromium browser journey at **320×700 and 412×892**, [one-shot #40153975315](https://github.com/gamesbyian/wallgen/actions/runs/40153975315). Imported *real vendored-licensed Bangers TTF* through the private font UI, committed Draw-following shadowed rainbow text and native tracking, downloaded original **3024×6552**, **4,121,618-byte PNG**, reloaded and proved private SHA-ID persistence in IndexedDB, then downloaded same-size exact-recipe PNG again. App errors 0, unauthorized GitHub requests 0. Source artwork screenshots from before and after reload independently compared pixel-for-pixel inside visible wallpaper: **0 changed RGB pixels** over 89,175 (320×700) and 170,742 (412×892) inspected pixels. Temporary heavy workflow removed, final quick CI green, PR merged. |
+
+The earlier [#669](https://github.com/gamesbyian/wallgen/pull/669), [#666](https://github.com/gamesbyian/wallgen/pull/666), [#673](https://github.com/gamesbyian/wallgen/pull/673) and [#674](https://github.com/gamesbyian/wallgen/pull/674) merges, original twelve no-PR branch dispositions, and the exact two UI accessibility fixes remain certified by the prior receipts below. Additional preserved QA ref `agent3/675-independent-optical-validation-20261024` exists solely to reproduce a disposable source-versus-fit Actions artifact; it is **not** a mergeable engineering change and should not be counted as rescued source.
+
+**Explicit NOT TESTED release categories:** physical Pixel 6 Pro Chrome/PWA and actual finger ergonomics; Android native input/IME/autocorrect, TalkBack, device memory/thermal limits, human design usability, license validity of third-party personal imports and authenticated opt-in remote sync. All browser touch was Chromium emulation, all creative activity was synthetic owner-independent interaction. Neither a good artwork F1 nor an export byte count proves these owner/hardware requirements.
+
+
 ## Verified post-baseline merged-main follow-through · 24 October local
 
 The earlier `c8c3644b` baseline recorded below is retained for audit; the **new exact live main verification is `e57a8a4f79dfffc49e471fa12a366416c9ff0b81`**. Additional qualified merges after the previous two are:
