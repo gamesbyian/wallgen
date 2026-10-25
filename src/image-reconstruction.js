@@ -347,8 +347,12 @@ export function measuredCanonicalPalette(regions){
 }
 
 /** Geometry-first analysis. Colour slots carry no claim about source provenance. */
-export function describeReconstructionImage(image){
-  const colour=extractImageColourRegions(image,HUES,{includeRepeatShape:true});
+export function describeReconstructionImage(image,{includeColourMasks=false}={}){
+  // The source importer already computes seven canonical hue masks. When
+  // synthesizing source-visible shapes, retain those exact arrays only for
+  // this invocation instead of reclassifying the entire source PNG.
+  const colour=extractImageColourRegions(image,HUES,{
+    includeRepeatShape:true,includeMasks:includeColourMasks});
   const paths=extractImagePathCandidates(image);
   const aspect=region=>{
     const [x0,y0,x1,y1]=region.bounds;
@@ -410,6 +414,7 @@ export function describeReconstructionImage(image){
   const ribbonBands=measuredRainbowRibbonBands(colour.regions,image.width,image.height);
   const paletteHypothesis=measuredCanonicalPalette(colour.regions);
   return {background:colour.background,colourRegions:colour.regions,
+    ...(includeColourMasks?{sourceHueMasks:colour.masks}:{}),
     paletteHypothesis,
     // Bounding-box crop progression alone can also be produced by unrelated
     // later pigments. A clipped shared stamp must ALSO have independently
@@ -463,7 +468,7 @@ export function diverseReconstructionCandidates(candidates,limit=RECONSTRUCTION_
 
 /** Return a few independently editable canonical alternatives. */
 export function reconstructionCandidates(image,recipe){
-  const desc=describeReconstructionImage(image);
+  const desc=describeReconstructionImage(image,{includeColourMasks:true});
   const current=normalizeRecipe(recipe);
   // Prefer a strongly distinguishable *appearance* hypothesis only. The
   // canonical painter still ranks candidate geometry; history is unknown.
@@ -481,8 +486,13 @@ export function reconstructionCandidates(image,recipe){
       ['hairpin','loop'].includes(desc.curve.kind)||
       desc.paths.some(path=>path.kind==='contour'&&path.closed));
   const observed=observedEligible?observedHueShapeRecipe(image,
-    reconstructionPlacement(image.width,image.height),current,
-    {paletteHint:desc.paletteHypothesis?.palette??'classic'}):null;
+    reconstructionPlacement(image.width,image.height),current,{
+      paletteHint:desc.paletteHypothesis?.palette??'classic',
+      colourAnalysis:{
+        background:desc.background,coverage:desc.coverage,
+        regions:desc.colourRegions,masks:desc.sourceHueMasks
+      }
+    }):null;
   const includeObserved=prior=>{
     if(!observed)return prior;
     const result=[...prior];
