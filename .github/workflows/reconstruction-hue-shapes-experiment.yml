@@ -13,13 +13,6 @@ on:
         type: boolean
         required: false
         default: false
-  # Temporary research-only PR trigger, must be removed after optical evidence.
-  pull_request:
-    paths:
-      - 'scripts/review-reconstruction-external-pigments.mjs'
-      - 'tests/reconstruction-r0-evaluate.test.js'
-      - 'src/image-reconstruction.js'
-      - '.github/workflows/reconstruction-hue-shapes-experiment.yml'
 permissions:
   contents: read
 concurrency:
@@ -41,13 +34,13 @@ jobs:
           npm install --no-save playwright@1.56.1
           npx playwright install --with-deps chromium
       - name: Generate four independent non-ROYGBIV Canvas source images
-        if: ${{ github.event_name == 'pull_request' || inputs.include_external_pigments }}
+        if: ${{ inputs.include_external_pigments }}
         run: node scripts/review-reconstruction-external-pigments.mjs --out-dir artifacts/external-pigment-r0
       - name: Reconstruct independent metadata-free art with ordinary six-plus-ten painter
-        if: ${{ github.event_name == 'pull_request' || inputs.include_external_pigments }}
+        if: ${{ inputs.include_external_pigments }}
         run: node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/external-pigment-r0 --hue-visible-shapes --source-signature
       - name: Report independent artwork and separate existing shape proposal errors
-        if: ${{ github.event_name == 'pull_request' || inputs.include_external_pigments }}
+        if: ${{ inputs.include_external_pigments }}
         run: |
           node --input-type=module -e '
             import {readFileSync} from "node:fs";
@@ -63,15 +56,12 @@ jobs:
                 candidateCount:s.candidateCount,sourceSignature:s.sourceSignature??null}));
           '
       - name: Generate all 22 genuine metadata-free current-renderer R0 images
-        if: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
           node scripts/review-reconstruction.mjs             --out-dir artifacts/r0-hue-shapes             
       - name: Evaluate all 22 normal six-plus-ten candidate selections plus opt-in per-hue proof
-        if: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
           node scripts/evaluate-reconstruction-r0.mjs             --dir artifacts/r0-hue-shapes --hue-visible-shapes
       - name: Print source-backed candidate outcomes, with no hidden score sidecar
-        if: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
           node --input-type=module -e '
             import {readFileSync} from "node:fs";
@@ -87,7 +77,6 @@ jobs:
               }));
           '
       - name: Verify exact source-first wins and known no-regression controls
-        if: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
           node --input-type=module -e '
             import {readFileSync} from "node:fs";
@@ -124,7 +113,6 @@ jobs:
             }));
           '
       - name: High-resolution portable Hairpin/Loop source-shape exports, where representable
-        if: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
           set -euo pipefail
           for case_id in 05-hairpin 06-loop 16-offset-jagged; do
