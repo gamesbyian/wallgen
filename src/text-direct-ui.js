@@ -76,9 +76,9 @@ export function installTextCanvasMover({
     const compact=physicalWidth<80&&physicalHeight<100;
     outline.classList.toggle('text-direct-compact',compact);
     outline.classList.toggle('text-direct-scale-left',compact&&
-      rect.width*item.x/100+physicalWidth/2+60>rect.width);
+      rect.width*item.x/100+physicalWidth/2+70>rect.width);
     outline.classList.toggle('text-direct-scale-up',compact&&
-      rect.height*item.y/100+physicalHeight/2+60>rect.height);
+      rect.height*item.y/100+physicalHeight/2+70>rect.height);
     outline.style.transform='translate(-50%,-50%) rotate('+item.rotation+'deg)';
     const angle=item.rotation*Math.PI/180;
     const halfVerticalReach=(Math.abs(Math.sin(angle))*(bounds.width+2*extra)*
