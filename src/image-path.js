@@ -264,7 +264,7 @@ export function pathToWallpaper(candidate,width,height,margin=.06){
 // and contour edge walk with path extraction, but keeps ALL closed boundary
 // rings instead of retaining only the longest stroke per component.
 // This adapter cannot return executable SVG, URLs, or source image bytes.
-function shapeEdgeLoops(component,w,h){
+function shapeEdgeLoops(component,w,h,{simplifyTolerance=null}={}){
   const occupied=new Set(component.members),edges=new Map();
   const add=(x1,y1,x2,y2)=>{
     const key=y1*(w+1)+x1,next=y2*(w+1)+x2;
@@ -294,7 +294,8 @@ function shapeEdgeLoops(component,w,h){
     if(at!==start||ring.length<4)continue;
     const closed=[...ring,ring[0]];
     const reduced=simplifyPixels(closed.length>2000?
-      resamplePixelPolyline(closed,2000):closed,Math.max(.6,Math.min(w,h)*.0025));
+      resamplePixelPolyline(closed,2000):closed,
+      simplifyTolerance??Math.max(.6,Math.min(w,h)*.0025));
     if(reduced.length>=4)loops.push(reduced.slice(0,-1));
   }
   return loops;
@@ -373,7 +374,7 @@ export function extractImageShapeCandidates(image){
 // Opt-in, source-visible per-hue silhouette extraction. Reuses the existing
 // binary hue mask, flood fill, edge loops and validated compound geometry;
 // never classifies colours again or guesses an unseen original backface.
-export function extractVisibleHueCompound(mask,w,h){
+export function extractVisibleHueCompound(mask,w,h,{simplifyTolerance=null}={}){
   if(!(mask instanceof Uint8Array)||!Number.isInteger(w)||!Number.isInteger(h)||
     w<12||h<12||w*h>650000||mask.length!==w*h)
     throw new RangeError('Unsupported visible hue mask');
@@ -397,7 +398,7 @@ export function extractVisibleHueCompound(mask,w,h){
   const toLocal=ring=>ring.map(([x,y])=>[x-minX,y-minY]);
   const outlines=[];
   for(const part of parts){
-    const rings=shapeEdgeLoops(part,w,h)
+    const rings=shapeEdgeLoops(part,w,h,{simplifyTolerance})
       .sort((a,b)=>Math.abs(ringArea(b))-Math.abs(ringArea(a)));
     if(!rings.length)return null;
     outlines.push({outer:toLocal(rings[0]),
