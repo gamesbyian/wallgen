@@ -1,0 +1,41 @@
+name: One-shot Agent 3 expressive text UI/PNG acceptance
+on:
+  push:
+    branches: [agent3/664-expressive-portrait-ui-acceptance-20261024]
+    paths: [.github/workflows/agent3-664-expressive-once.yml]
+permissions:
+  contents: read
+jobs:
+  real-mobile-chromium:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check source test syntax
+        run: node --check tests/agent3-664-expressive-portrait-browser.mjs
+      - name: Install one headless browser only
+        run: |
+          npm install --no-save playwright@1.56.1 serve@14.2.5
+          npx playwright install chromium --only-shell
+      - name: Serve current source (localhost)
+        run: |
+          npx serve . -l 4173 >/tmp/agent3-expressive.log 2>&1 &
+          for i in $(seq 1 45); do
+            if curl -fsS http://127.0.0.1:4173/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/agent3-expressive.log
+          exit 1
+      - name: Real source controls, touch/keyboard, Undo and PNG at both viewports
+        run: node tests/agent3-664-expressive-portrait-browser.mjs
+      - name: Save actual evidence on success or failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent3-664-expressive-portrait-proof
+          path: artifacts/agent3-664-expressive-portrait/
+          retention-days: 14
+          if-no-files-found: warn
