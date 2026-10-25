@@ -1,5 +1,10 @@
 # ROYGBIV release-readiness and owner-dependent acceptance ledger
 
+## Latest software/release claim boundary · late 24 October (local)
+
+**Merged code baseline verified `55a6a584`.** #679 strong editable cropped-Jagged appearance recovery, #682 wrong-pigment cropped-tail safety, #680 stale-lock fit-refusal UX, #681 bundled/private missing-glyph warnings and #684 conservative native-shaped simple RTL rainbow direction are merged and independently image/browser checked. Source artifacts, precise errors and limitations are in [INTEGRATION-LEDGER-2026-10-24.md](INTEGRATION-LEDGER-2026-10-24.md). [#683](https://github.com/gamesbyian/wallgen/pull/683) **NOT ACCEPTED** despite green quick CI: independent genuine source Chromium test failed to reproduce its claimed improvement because an older mirrored-ribbon physical measurement gate nulls the candidate, leaving error .224808026175 unchanged. [#685](https://github.com/gamesbyian/wallgen/pull/685) glyph hit selection draft and awaiting proof. Browser UI tests and source/current-renderer PNGs DO NOT certify physical Pixel touch, Android IME/TalkBack, handset heap/thermal, human suitability or live authenticated remote backup. Keep #557/#653/#664 open until those separate requirements are actually tested.
+
+
 ## Latest software acceptance and owner-dependent gates · 24 October local
 
 GitHub main verified **`f9c70fc4`**, zero open PRs. [#675](https://github.com/gamesbyian/wallgen/pull/675) independently proved real Hairpin/Loop error reductions (21.683%, 7.545%, 10 paints each), and [#677](https://github.com/gamesbyian/wallgen/pull/677) passed **real Chromium at 320×700 and 412×892** for private TTF upload + shadowed Draw text + two full-resolution exact-recipe PNG downloads across IndexedDB reload. Independent before/after wallpaper-region RGB screenshot pixels identical; artifacts and reports in [integration ledger](INTEGRATION-LEDGER-2026-10-24.md). Browser software checks are complete to this documented scope. Actual Pixel/IME/TalkBack/physical device memory/human acceptance/authenticated remote remain **NOT TESTED**; #557/#653/#664 remain appropriately open, not artificially closed.
