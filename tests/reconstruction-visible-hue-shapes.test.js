@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import {HUES,normalizeRecipe,resolveScene,encodeRecipe,decodeRecipe} from '../src/model.js';
 import {extractImageColourRegions,extractVisibleHueCompound} from '../src/image-path.js';
 import {observedHueShapeRecipe} from '../src/image-hue-reconstruction.js';
-import {reconstructionCandidates,RECONSTRUCTION_RENDER_LIMIT} from '../src/image-reconstruction.js';
+import {reconstructionCandidates,RECONSTRUCTION_RENDER_LIMIT,
+  describeReconstructionImage} from '../src/image-reconstruction.js';
 
 function hueRgb(hue){
   const chroma=255,sector=hue/60,partial=chroma*(1-Math.abs(sector%2-1));
@@ -158,4 +159,56 @@ test('appearance-first source contours share a separately measured canonical sto
     {paletteHint:'jewel'});
   assert.equal(locked?.recipe.palette,'pastel',
     'source colour guess never circumvents a creator palette lock');
+});
+
+test('one shared seven-mask classifier exactly matches the standalone editable shape proposal',()=>{
+  const input=sevenShapes();
+  const original=Array.from(input.data);
+  const plain=describeReconstructionImage(input);
+  assert.equal(Object.hasOwn(plain,'sourceHueMasks'),false,
+    'normal descriptor does not expose mutable pigment arrays');
+  const analysed=describeReconstructionImage(input,{includeColourMasks:true});
+  assert.equal(analysed.sourceHueMasks.length,7);
+  assert.ok(analysed.sourceHueMasks.every(mask=>
+    mask instanceof Uint8Array&&mask.length===input.width*input.height));
+  const options={paletteHint:'jewel'};
+  const separate=observedHueShapeRecipe(input,placement,
+    {seed:'anonymous'},options);
+  const shared=observedHueShapeRecipe(input,placement,
+    {seed:'anonymous'},{
+      ...options,colourAnalysis:{
+        masks:analysed.sourceHueMasks,
+        regions:analysed.colourRegions,
+        coverage:analysed.coverage,
+        background:analysed.background
+      }
+    });
+  assert.ok(separate&&shared);
+  assert.deepEqual(shared,separate,
+    'one segmentation pass gives exactly the same geometry, palette and locks');
+  assert.deepEqual(Array.from(input.data),original,
+    'source pixels are not modified');
+  const sourceCandidate=reconstructionCandidates(input,{seed:'anonymous'});
+  if(sourceCandidate[0]?.kind==='hue-visible-shapes')
+    assert.deepEqual(sourceCandidate[0].recipe,
+      observedHueShapeRecipe(input,placement,{seed:'anonymous'}).recipe);
+});
+
+test('shared pigment descriptor refuses spoofed sparse hues and incorrect masks',()=>{
+  const input=sevenShapes();
+  const d=describeReconstructionImage(input,{includeColourMasks:true});
+  const good={
+    masks:d.sourceHueMasks,regions:d.colourRegions,
+    background:d.background,coverage:d.coverage
+  };
+  const propose=colourAnalysis=>observedHueShapeRecipe(input,placement,
+    {seed:'unrelated'},{colourAnalysis});
+  assert.ok(propose(good));
+  const sparse={...good,regions:good.regions.map((r,i)=>
+    i===4?{...r,area:1}:r)};
+  assert.equal(propose(sparse),null);
+  assert.equal(propose({...good,masks:good.masks.slice(1)}),null);
+  assert.equal(propose({...good,masks:good.masks.map((m,i)=>
+    i===0?new Uint8Array(8):m)}),null);
+  assert.equal(propose({...good,background:'unknown'}),null);
 });

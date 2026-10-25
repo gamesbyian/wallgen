@@ -1,5 +1,9 @@
 # Inverse vision: algorithm reuse, evaluation and implementation backlog
 
+## Source-pipeline consolidation: one hue classification pass · 25 October 2026
+
+The independent visible-pigment shape proposal no longer needs to rerun HSV segmentation after `describeReconstructionImage` has already computed the same seven source masks. [PR #714](https://github.com/gamesbyian/wallgen/pull/714) shares those call-local `Uint8Array` masks and canonical source descriptors with exact seven-pigment and original region-size gates. [Genuine all-22 Chromium proof #40224875814](https://github.com/gamesbyian/wallgen/actions/runs/40224875814) matches [pre-optimization #40222314108](https://github.com/gamesbyian/wallgen/actions/runs/40222314108) **exactly for all winning kinds, all numeric pixel errors, and all research proposal errors**. This is an actual source-backed correctness/parity receipt, **not** a measured Pixel 6 Pro time/thermal/heap improvement. [Detailed implementation limits and next profiling gates](RECONSTRUCTION-SHARED-HUE-MASK-REUSE-2026-10-25.md). One forward painter and scene owner remains authoritative; avoid adding duplicate segmentation implementations.
+
 ## Shared source-measured colour story, seven editable source-shapes · 25 October 2026
 
 [PR #712](https://github.com/gamesbyian/wallgen/pull/712) passes the **already owned** `measuredCanonicalPalette` high-confidence source-only story into the independent seven-visible-pigment candidate. Previously that candidate ignored the shared nonclassic colour evidence and repainted Jewel pixels as Classic; a source-only contour could therefore reconstruct *shape* yet lose *actual colour*. Uncertain pigment story still falls back to Classic; recipe locks and honest palette/provenance disclosure remain authoritative. The optional one-paint R0 comparator now uses the same story as native selection, not an obsolete Classic-only preview.

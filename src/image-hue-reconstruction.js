@@ -11,16 +11,31 @@ import {GEOMETRY_SNAPSHOT_SCHEMA} from './geometry-asset.js';
  * reconstructionPlacement, so canvas letterboxing remains single-owned.
  * Return null when any slot/shape/lock cannot be represented.
  */
-export function observedHueShapeRecipe(image,placement,currentInput,{paletteHint='classic'}={}){
+export function observedHueShapeRecipe(image,placement,currentInput,
+  {paletteHint='classic',colourAnalysis=null}={}){
   const w=image?.width,h=image?.height;
   if(!Number.isInteger(w)||!Number.isInteger(h)||
     w<12||h<12||w*h>650000||image.data?.length!==w*h*4||
     !placement||[placement.x,placement.y,
       placement.width,placement.height].some(v=>!Number.isFinite(v))||
     placement.width<=0||placement.height<=0)return null;
-  const colours=extractImageColourRegions(image,HUES,{includeMasks:true});
-  if(colours.regions.length!==7||colours.coverage<.035||
-    colours.coverage>.91)return null;
+  // Existing reconstruction candidates already computed these exact hue
+  // masks through the single shared importer. Accept that ephemeral in-memory
+  // analysis, but preserve the standalone helper for independent callers.
+  // Never serialize hue masks or allow malformed/incomplete shared evidence
+  // to turn tiny anti-aliased flecks into purported editable pigment objects.
+  const colours=colourAnalysis??extractImageColourRegions(image,HUES,
+    {includeMasks:true});
+  const minRegionArea=Math.max(16,Math.floor(w*h*.0008));
+  if(!Array.isArray(colours?.masks)||colours.masks.length!==7||
+    colours.masks.some(mask=>!(mask instanceof Uint8Array)||
+      mask.length!==w*h)||
+    !Array.isArray(colours.regions)||colours.regions.length!==7||
+    colours.regions.some((region,index)=>
+      region?.index!==index||region.area<minRegionArea)||
+    !Number.isFinite(colours.coverage)||colours.coverage<.035||
+    colours.coverage>.91||
+    !['black','white'].includes(colours.background))return null;
   const items=[];
   for(let index=0;index<7;index++){
     const found=extractVisibleHueCompound(colours.masks[index],w,h);
