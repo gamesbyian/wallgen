@@ -1372,3 +1372,35 @@ test('four intact hue silhouettes and three real ordered crop tails become edita
    assert.notEqual(describeReconstructionImage(source(failure)).repeatShape?.clipped,
      true,'never extrapolate unrelated, unordered, or unobserved pigment contours');
 });
+
+test('cropped repeated stamps refuse unrelated pigment tails despite identical crop bounds and areas',()=>{
+ const painted=unrelated=>raster(220,350,(x,y)=>{
+   for(let index=0;index<7;index++){
+     const cut=index<4?0:[48,90,133][index-4];
+     if(x<cut)continue;
+     // Every pigment occupies a single connected 11px-wide ribbon, with
+     // exactly the same monotone crop bounds and area in both pictures.
+     // Only the final three lose the shared wavy slope in the impostor.
+     const bend=index>=4&&unrelated?44:
+       Math.round(x*.22+4*Math.sin(x/17));
+     if(Math.abs(y-(14+44*index+bend))<=5)return colour(HUES[index]);
+   }
+   return [0,0,0,255];
+ });
+ const supported=painted(false),unsupported=painted(true);
+ const known=describeReconstructionImage(supported);
+ assert.equal(known.repeatShape?.clipped,true);
+ assert.ok(known.ribbonBands,'physically coherent source supports stamps');
+ const deceptive=describeReconstructionImage(unsupported);
+ assert.equal(deceptive.colourRegions.length,7);
+ assert.equal(deceptive.ribbonBands,null,
+   'tails share crop area/bounds but their perpendicular ink axes disagree');
+ assert.equal(deceptive.repeatShape,null,
+   'do not infer absent contour equivalence from the first four hues alone');
+ assert.ok(!reconstructionCandidates(unsupported,normalizeRecipe({seed:'unrelated-tails'}))
+   .some(candidate=>candidate.kind==='shape-repeats'),
+   'no unverified seven-copy stamps should consume one of six painter slots');
+ assert.ok(reconstructionCandidates(supported,normalizeRecipe({seed:'supported-tails'}))
+   .some(candidate=>candidate.kind==='shape-repeats'),
+   'genuine full plus cropped ribbons still reach the same canonical path');
+});
