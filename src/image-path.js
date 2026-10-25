@@ -15,7 +15,7 @@ function backgroundColour(data,w,h){
   for(let y=0;y<h;y+=step){sample(0,y);sample(w-1,y);}
   return channels.map(a=>a.length?(a.sort((a,b)=>a-b)[Math.floor(a.length/2)]):255);
 }
-function components(mask,w,h,minArea){
+function components(mask,w,h,minArea,maxResults=8){
   const seen=new Uint8Array(w*h),result=[],stack=[];
   for(let start=0;start<mask.length;start++){
     if(!mask[start]||seen[start])continue;
@@ -31,7 +31,9 @@ function components(mask,w,h,minArea){
     }
     if(members.length>=minArea)result.push({members,minX,maxX,minY,maxY,area:members.length});
   }
-  return result.sort((a,b)=>b.area-a.area).slice(0,8);
+  // Existing callers retain exactly the historical eight-component ceiling.
+  // The new visible-hue inverse adapter may request one overflow sentinel.
+  return result.sort((a,b)=>b.area-a.area).slice(0,maxResults);
 }
 // Trace exposed pixel edges, preserving concavities (unlike radial silhouettes).
 function contour(component,w,h){
@@ -342,12 +344,17 @@ export function extractVisibleHueCompound(mask,w,h){
     w<12||h<12||w*h>650000||mask.length!==w*h)
     throw new RangeError('Unsupported visible hue mask');
   const minimum=Math.max(8,Math.floor(w*h*.00010));
-  const parts=components(mask,w,h,minimum);
-  if(!parts.length)return null;
+  // The old general shape picker intentionally stops at eight. Loop's
+  // genuine colour can appear as >8 separate visible patches near crossings.
+  // Request at most sixteen plus one overflow sentinel, so never silently
+  // discard a meaningful source-visible island under this new hypothesis.
+  const parts=components(mask,w,h,minimum,17);
+  if(!parts.length||parts.length>16)return null;
   const foreground=parts.reduce((sum,part)=>sum+part.area,0);
   if(foreground<Math.max(40,Math.floor(w*h*.0005)))return null;
-  // The existing component finder intentionally bounds visible islands to 8.
-  // Do not claim complete recovery when more tiny aliased patches may exist.
+  // Segmented source pixels at or above the minimum threshold are all
+  // retained; sub-threshold anti-aliased flecks remain uncertain and are
+  // not represented as independent source geometry.
   const minX=Math.min(...parts.map(p=>p.minX));
   const minY=Math.min(...parts.map(p=>p.minY));
   const maxX=Math.max(...parts.map(p=>p.maxX));
