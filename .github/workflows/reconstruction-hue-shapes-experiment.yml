@@ -1,8 +1,6 @@
 name: R0 source-visible hue shape oracle
 # Source/fit screenshots and full-resolution export remain manually opt-in.
 on:
-  pull_request:
-    paths: ['.github/workflows/reconstruction-hue-shapes-experiment.yml']
   workflow_dispatch:
 permissions:
   contents: read
