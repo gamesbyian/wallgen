@@ -193,6 +193,24 @@ test('appearance-first source contours share a separately measured canonical sto
     'source colour guess never circumvents a creator palette lock');
 });
 
+test('research contour-detail variation cannot change default source-visible geometry',()=>{
+  const image=sevenShapes(),colours=extractImageColourRegions(image,HUES,{includeMasks:true});
+  const plain=observedHueShapeRecipe(image,placement,{seed:'contour'});
+  const explicit=observedHueShapeRecipe(image,placement,{seed:'contour'},
+    {simplifyTolerance:null});
+  assert.deepEqual(plain,explicit,'normal reconstruction remains byte-for-byte invariant');
+  for(const tolerance of [.5,.6,.8,1,1.3]){
+    const candidate=observedHueShapeRecipe(image,placement,{seed:'contour'},
+      {simplifyTolerance:tolerance});
+    if(!candidate)continue; // Bounds and self-crossing validation may refuse detail.
+    assert.equal(candidate.recipe.scatteredShapeOverrides.length,7);
+    assert.deepEqual(decodeRecipe(encodeRecipe(candidate.recipe)),candidate.recipe);
+    assert.equal(candidate.sourceVisibleOnly,true);
+  }
+  assert.deepEqual(observedHueShapeRecipe(image,placement,{seed:'contour'}),
+    plain,'trial calls cannot leak state into canonical import');
+});
+
 test('one shared seven-mask classifier exactly matches the standalone editable shape proposal',()=>{
   const input=sevenShapes();
   const original=Array.from(input.data);
