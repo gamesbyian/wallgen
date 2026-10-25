@@ -1,0 +1,4 @@
+# Optional offline vectorization oracle; never install in browser or default CI.
+numpy==2.3.5
+Pillow==12.3.0
+CairoSVG==2.8.2
