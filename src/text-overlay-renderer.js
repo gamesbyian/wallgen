@@ -9,6 +9,32 @@ import {layoutTextOnPath} from './text-path-geometry.js';
 // thumbnail, headless, and preview-cache composition. Never render DOM text
 // over the preview: it would disappear from PNG exports.
 const fallbackRainbow=['#FF474E','#FF9B39','#FFE25B','#4FDD87','#53AAFF','#6359E5','#BB64ED'];
+// Canonical two-ring outline, used identically for straight native-shaped
+// runs and individual already-supported curved graphemes. Stroke only the
+// outline twice; fill (and its optional single shadow) is painted afterwards.
+function paintTextOutline(ctx,item,text,x,y){
+  const innerWidth=item.size*item.outlineWidth/100;
+  if(item.outline==='none'||innerWidth<=0)return;
+  ctx.save();
+  // Both outline rings cast NO shadows. Only the final filled glyph has
+  // the authored shadow, avoiding two/three overlapping artificial glows.
+  ctx.shadowColor='rgba(0,0,0,0)';
+  ctx.shadowBlur=0;ctx.shadowOffsetX=0;ctx.shadowOffsetY=0;
+  if(item.outline==='black-white'||item.outline==='white-black'){
+    ctx.lineWidth=innerWidth*2.5;
+    ctx.strokeStyle=item.outline==='black-white'?'#000000':'#ffffff';
+    ctx.strokeText(text,x,y);
+    ctx.lineWidth=innerWidth;
+    ctx.strokeStyle=item.outline==='black-white'?'#ffffff':'#000000';
+    ctx.strokeText(text,x,y);
+  }else{
+    ctx.lineWidth=innerWidth;
+    ctx.strokeStyle=item.outline==='white'?'#ffffff':'#000000';
+    ctx.strokeText(text,x,y);
+  }
+  ctx.restore();
+}
+
 export function drawTextOverlays(ctx,width,height,scene){
   if(!scene?.textOverlays?.length)return;
   if(!typefacesReady(scene))throw Error('Typeface unavailable: prepare fonts before painting');
@@ -93,15 +119,7 @@ export function drawTextOverlays(ctx,width,height,scene){
             colours.forEach((colour,i)=>gradient.addColorStop(i/6,colour));
             fill=gradient;
           }
-          if(item.outline!=='none'&&item.outlineWidth>0){
-            // Only the ink fill casts a shadow: never double the glow by
-            // shadowing both the dark outline and the filled glyph.
-            ctx.save();
-            ctx.shadowColor='rgba(0,0,0,0)';
-            ctx.shadowBlur=0;ctx.shadowOffsetX=0;ctx.shadowOffsetY=0;
-            ctx.strokeText(glyph.text,0,0);
-            ctx.restore();
-          }
+          paintTextOutline(ctx,item,glyph.text,0,0);
           ctx.fillStyle=fill||colours[colourIndex%colours.length];
           ctx.fillText(glyph.text,0,0);
           ctx.restore();
@@ -127,13 +145,7 @@ export function drawTextOverlays(ctx,width,height,scene){
       // Critical: draw the entire shaped run only once. Sharp gradient stops
       // recolour letters/words, preserving native ligatures, joining and
       // kerning even when colours change between grapheme clusters.
-      if(item.outline!=='none'&&item.outlineWidth>0){
-        ctx.save();
-        ctx.shadowColor='rgba(0,0,0,0)';
-        ctx.shadowBlur=0;ctx.shadowOffsetX=0;ctx.shadowOffsetY=0;
-        ctx.strokeText(line,start,0);
-        ctx.restore();
-      }
+      paintTextOutline(ctx,item,line,start,0);
       ctx.fillStyle=item.colour==='black'?'#000000':
         item.colour==='white'?'#ffffff':gradient||colours[colourIndex%colours.length];
       ctx.fillText(line,start,0);
