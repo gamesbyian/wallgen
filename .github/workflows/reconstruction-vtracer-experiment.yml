@@ -1,0 +1,89 @@
+name: R0 VTracer optical experiment
+# Temporary PR trigger for source-backed first run, remove after evidence review.
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/reconstruction-vtracer-experiment.yml'
+      - 'src/reconstruction-distance-field.js'
+      - 'scripts/benchmark-reconstruction-vtracer.mjs'
+  workflow_dispatch:
+    inputs:
+      cases:
+        description: 'Comma-separated R0 fixture IDs'
+        type: string
+        required: true
+        default: '05-hairpin,06-loop,16-offset-jagged,18-repeated-compound-hole-island,22-overlapping-reversed-circles'
+permissions:
+  contents: read
+concurrency:
+  group: r0-vtracer-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: false
+jobs:
+  oracle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      CASES: ${{ inputs.cases || '05-hairpin,06-loop,16-offset-jagged,18-repeated-compound-hole-island,22-overlapping-reversed-circles' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Mathematical and driver tests
+        run: node --test tests/reconstruction-distance-field.test.js tests/reconstruction-vtracer-oracle.test.js
+      - name: Install opt-in browser harness
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Download pinned VTracer native CLI and verify archive digest
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive="$RUNNER_TEMP/vtracer-x86_64-unknown-linux-musl.tar.gz"
+          curl --fail --location --silent --show-error \
+            'https://github.com/visioncortex/vtracer/releases/download/1.0.0-alpha.4/vtracer-x86_64-unknown-linux-musl.tar.gz' \
+            --output "$archive"
+          echo "2058f611b48ed49497f78883bde47435531e9e17e3a79428432d1528bdb12e2a  $archive" | sha256sum --check --status
+          mkdir -p "$RUNNER_TEMP/trace-bin"
+          tar --extract --gzip --file "$archive" --directory "$RUNNER_TEMP/trace-bin"
+          find "$RUNNER_TEMP/trace-bin" -maxdepth 3 -type f -name 'vtracer' -exec chmod +x {} \;
+          tracer="$(find "$RUNNER_TEMP/trace-bin" -maxdepth 3 -type f -name 'vtracer' | head -n 1)"
+          test -n "$tracer"
+          "$tracer" --version
+          echo "VTRACER_BIN=$tracer" >> "$GITHUB_ENV"
+      - name: Produce genuine current-renderer R0 sources with separate truth
+        run: node scripts/review-reconstruction.mjs --out-dir artifacts/reconstruction-r0 --only "$CASES"
+      - name: Evaluate ordinary canonical reconstruction
+        run: node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/reconstruction-r0
+      - name: Trace the same unmodified sources independently
+        run: |
+          node scripts/benchmark-reconstruction-vtracer.mjs \
+            --dir artifacts/reconstruction-r0 \
+            --out-dir artifacts/reconstruction-vtracer \
+            --only "$CASES" --vtracer "$VTRACER_BIN"
+      - name: Print source-backed comparator metrics
+        run: |
+          node --input-type=module -e '
+            import fs from "node:fs";
+            const a=JSON.parse(fs.readFileSync("artifacts/reconstruction-r0/evaluation.json"));
+            const b=JSON.parse(fs.readFileSync("artifacts/reconstruction-vtracer/report.json"));
+            for(const v of b.results){
+              const r=a.samples.find(s=>s.id===v.id);
+              console.log(JSON.stringify({id:v.id,
+                canonicalPainterError:r?.bestError??null,
+                independentVectorError:v.rgbInkError,
+                svgBytes:v.svgBytes,pathCount:v.pathCount,
+                milliseconds:v.tracerMilliseconds,
+                sourceSha256:v.sourceSha256,humanReviewed:false}));
+            }
+          '
+      - name: Preserve source, canonical fit and vector proofs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: r0-vtracer-source-fit-optical
+          path: |
+            artifacts/reconstruction-r0
+            artifacts/reconstruction-vtracer
+          if-no-files-found: warn
+          retention-days: 7
