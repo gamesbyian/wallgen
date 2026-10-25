@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {RECONSTRUCTION_R0_CASES,baselineRecipe,readBaselineArgs}
+import {RECONSTRUCTION_R0_CASES,RECONSTRUCTION_CONTOUR_HOLDOUTS,baselineRecipe,readBaselineArgs}
   from '../scripts/review-reconstruction.mjs';
 import {embedPngMetadata,stripPngDescriptiveMetadata,scanPngChunks,
   extractPngRecipe} from '../src/png-metadata.js';
@@ -69,6 +69,20 @@ test('R0 baseline covers current renderer path/radial/shape/material/fibre modes
     const scene=resolveScene(item);
     assert.ok(scene&&scene.objects?.length,'each study must resolve current scene objects');
   }
+});
+
+test('blinded R0 contour holdouts use eight distinct alternate canonical curve sources',()=>{
+  assert.equal(RECONSTRUCTION_CONTOUR_HOLDOUTS.length,8);
+  const ids=RECONSTRUCTION_CONTOUR_HOLDOUTS.map(c=>c.id);
+  assert.equal(new Set(ids).size,8);
+  assert.ok(ids.every(id=>!RECONSTRUCTION_R0_CASES.some(c=>c.id===id)),
+    'holdouts must not replace/modify the accepted fixed 22-case corpus');
+  assert.equal(readBaselineArgs(['--contour-holdouts']).contourHoldouts,true);
+  const recovered=RECONSTRUCTION_CONTOUR_HOLDOUTS.map(baselineRecipe);
+  assert.equal(recovered.filter(r=>r.geometry==='hairpin').length,4);
+  assert.equal(recovered.filter(r=>r.geometry==='loop').length,4);
+  assert.ok(new Set(recovered.map(r=>r.seed)).size===8);
+  assert.ok(recovered.every(recipe=>resolveScene(recipe).stripes.length===7));
 });
 
 test('R0 command-line supports list/help and rejects accidental flags',()=>{

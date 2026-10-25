@@ -40,6 +40,14 @@ test('source-mask browser profile is strictly opt-in and cannot be mistaken for 
  assert.equal(Object.hasOwn(readReconstructionEvalArgs([]),'profileHueMasks'),false);
 });
 
+test('contour research and heldout source generation are strictly opt-in',()=>{
+ assert.deepEqual(readReconstructionEvalArgs(['--probe-hue-contours']),
+   {dir:'artifacts/reconstruction-r0',probeHueContours:true});
+ assert.equal(Object.hasOwn(readReconstructionEvalArgs([]),'probeHueContours'),false);
+ assert.equal(readBaselineArgs(['--contour-holdouts']).contourHoldouts,true);
+ assert.equal(Object.hasOwn(readBaselineArgs([]),'contourHoldouts'),false);
+});
+
 test('independently authored external graphics have no invented canonical ground truth',()=>{
  const external={
    schema:'roygbiv-reconstruction-external/v1',items:[
