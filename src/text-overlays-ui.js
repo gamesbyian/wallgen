@@ -1,4 +1,4 @@
-import {MAX_TEXT_OVERLAYS,newTextOverlay,TEXT_FONTS,TEXT_COLOURS,TEXT_OUTLINES,TEXT_PATHS} from './text-overlays.js';
+import {MAX_TEXT_OVERLAYS,newTextOverlay,TEXT_FONTS,TEXT_COLOURS,TEXT_OUTLINES,TEXT_PATHS,TEXT_SHADOWS} from './text-overlays.js';
 import {importLocalFont,listLocalFonts,isLocalFontId} from './local-fonts.js';
 import {BUNDLED_FONTS,isBundledFontId} from './bundled-fonts.js';
 import {exportPortableFontPack,importPortableFontPack,packageFontIds} from './portable-font-pack.js';
@@ -48,6 +48,19 @@ export function installTextOverlayTool({getRecipe,changeRecipe,onFontNotice=()=>
           <label class="text-overlay-check"><input type="checkbox" data-text-key="locked"> Keep style when randomizing</label>
         </div>
         <p data-text-path-status aria-live="polite">Curved baselines support independent glyphs. Joining and bidirectional scripts keep their native straight-line shaping.</p>
+        <details class="text-overlay-effects">
+          <summary>Colour, spacing and shadow</summary>
+          <div class="text-overlay-grid">
+            <label>Letter spacing <input type="range" data-text-key="letterSpacing" min="-3" max="18" step="0.5"></label>
+            <label>Line spacing <input type="range" data-text-key="lineSpacing" min="-20" max="100" step="5"></label>
+            <label>Rainbow start <input type="range" data-text-key="rainbowOffset" min="0" max="6" step="1"></label>
+            <label class="text-overlay-check"><input type="checkbox" data-text-key="rainbowReverse"> Reverse text colours</label>
+            <label>Text shadow <select data-text-key="shadow"></select></label>
+            <label>Shadow softness <input type="range" data-text-key="shadowBlur" min="0" max="16" step="1"></label>
+            <label>Shadow distance <input type="range" data-text-key="shadowDistance" min="0" max="16" step="1"></label>
+          </div>
+          <p>Rainbow options work with rainbow lettering. Shadow controls unlock after choosing a shadow colour.</p>
+        </details>
       </details>
     </div>
     <div class="text-overlay-portability" role="group" aria-label="Portable design and private fonts">
@@ -98,6 +111,9 @@ export function installTextOverlayTool({getRecipe,changeRecipe,onFontNotice=()=>
   options(outline,TEXT_OUTLINES.map(key=>[key,({
     none:'No outline',black:'Black outline',white:'White outline'
   })[key]]));
+  options(root.querySelector('[data-text-key="shadow"]'),TEXT_SHADOWS.map(key=>[
+    key,({none:'No shadow',black:'Black shadow',white:'White shadow'})[key]
+  ]));
   options(root.querySelector('[data-text-key="path"]'),TEXT_PATHS.map(key=>[
     key,({none:'Straight · native shaping',wave:'Wave',arc:'Arch',
       circle:'Circle arc',hairpin:'Hairpin turn',loop:'Loop turn',
@@ -131,12 +147,19 @@ export function installTextOverlayTool({getRecipe,changeRecipe,onFontNotice=()=>
         'Using the authored Draw path shape; Horizontal/Vertical move the text along with its curve.':
         'Draw a path in the Draw tool first. Until then, lettering stays straight.'):
       'Curved baselines support separate graphemes; joining and bidirectional scripts keep their native straight-line shaping.';
+    const rainbowActive=item.colour?.startsWith('rainbow-');
+    const shadowActive=item.shadow==='black'||item.shadow==='white';
+    for(const key of ['rainbowOffset','rainbowReverse'])
+      root.querySelector('[data-text-key="'+key+'"]').disabled=!rainbowActive;
+    for(const key of ['shadowBlur','shadowDistance'])
+      root.querySelector('[data-text-key="'+key+'"]').disabled=!shadowActive;
     for(const control of fields.querySelectorAll('[data-text-key]')){
       const key=control.dataset.textKey;
       if(control.type==='checkbox')control.checked=Boolean(item[key]);
       else {
-        const value=key==='path'?(item.path||'none'):
-          key==='pathHeight'?(item.pathHeight??90):item[key];
+        const defaults={path:'none',pathHeight:90,letterSpacing:0,
+          lineSpacing:0,rainbowOffset:0,shadow:'none',shadowBlur:6,shadowDistance:7};
+        const value=item[key]??defaults[key];
         if(control.value!==String(value))control.value=String(value);
       }
     }
