@@ -1244,7 +1244,7 @@ test('U-turn exit angle refines after radius, separation and placement in the sa
    const deviation=Math.abs(next.turnRadius-35)*.3+
      Math.abs(next.spread-32)*.3+
      Math.abs(next.positionX-7)+Math.abs(next.positionY-7)+
-     Math.abs(next.hairpinAngle-(aligned?145:120))*.5;
+     Math.abs(next.hairpinAngle-(aligned?145:120))*.2;
    const v=Math.min(255,Math.round(deviation*2));
    return raster(w,h,()=>[v,v,v,255]);
  };
@@ -1285,7 +1285,8 @@ test('small Loop radius corrections recover the centre without extending the rea
      Math.abs(next.loopRadius-62)*2));
    return raster(w,h,()=>[v,v,v,255]);
  };
- const candidate={kind:'loop',recipe,error:.8,label:'editable loop'};
+ const candidate={kind:'loop',recipe,error:.8,label:'editable loop',
+   loopInkRatio:.98};
  let calls=0;
  const best=refineReconstructionCandidate(candidate,reference,next=>{
    calls++;return painter(next);
@@ -1296,4 +1297,14 @@ test('small Loop radius corrections recover the centre without extending the rea
  assert.equal(best.error,0);
  assert.deepEqual(await refineReconstructionCandidateCooperatively(
    candidate,reference,painter),best);
+ let widthProbes=0,radiusProbes=0;
+ const thick=refineReconstructionCandidate({...candidate,loopInkRatio:1.19},
+   reference,next=>{
+     if(next.stripeWidth!==recipe.stripeWidth)widthProbes++;
+     if(next.loopRadius!==recipe.loopRadius)radiusProbes++;
+     return painter(next);
+   });
+ assert.equal(thick.refinementRenders,10);
+ assert.ok(widthProbes>0&&radiusProbes>0,
+   'mismatched first-render ink retains the original width and radius choices');
 });
