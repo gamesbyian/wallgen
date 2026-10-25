@@ -12,7 +12,7 @@ import {GEOMETRY_SNAPSHOT_SCHEMA} from './geometry-asset.js';
  * Return null when any slot/shape/lock cannot be represented.
  */
 export function observedHueShapeRecipe(image,placement,currentInput,
-  {paletteHint='classic',colourAnalysis=null}={}){
+  {paletteHint='classic',colourAnalysis=null,simplifyTolerance=null}={}){
   const w=image?.width,h=image?.height;
   if(!Number.isInteger(w)||!Number.isInteger(h)||
     w<12||h<12||w*h>650000||image.data?.length!==w*h*4||
@@ -38,7 +38,8 @@ export function observedHueShapeRecipe(image,placement,currentInput,
     !['black','white'].includes(colours.background))return null;
   const items=[];
   for(let index=0;index<7;index++){
-    const found=extractVisibleHueCompound(colours.masks[index],w,h);
+    const found=extractVisibleHueCompound(colours.masks[index],w,h,
+      {simplifyTolerance});
     if(!found)return null;
     // A visible silhouette does not identify the source's historical curve,
     // layer ordering, original seed, material or clipped hidden region.
