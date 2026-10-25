@@ -2,6 +2,14 @@ name: R0 source-visible hue shape oracle
 # Source/fit screenshots and full-resolution export remain manually opt-in.
 on:
   workflow_dispatch:
+  # One-shot PR fidelity trial only. Restore manual-only before integration.
+  pull_request:
+    paths:
+      - 'src/image-path.js'
+      - 'src/image-hue-reconstruction.js'
+      - 'scripts/evaluate-reconstruction-r0.mjs'
+      - 'tests/reconstruction-visible-hue-shapes.test.js'
+      - '.github/workflows/reconstruction-hue-shapes-experiment.yml'
 permissions:
   contents: read
 concurrency:
@@ -27,7 +35,7 @@ jobs:
           node scripts/review-reconstruction.mjs             --out-dir artifacts/r0-hue-shapes             
       - name: Evaluate all 22 normal six-plus-ten candidate selections plus opt-in per-hue proof
         run: |
-          node scripts/evaluate-reconstruction-r0.mjs             --dir artifacts/r0-hue-shapes --hue-visible-shapes
+          node scripts/evaluate-reconstruction-r0.mjs             --dir artifacts/r0-hue-shapes --hue-visible-shapes --probe-hue-contours
       - name: Print source-backed candidate outcomes, with no hidden score sidecar
         run: |
           node --input-type=module -e '
