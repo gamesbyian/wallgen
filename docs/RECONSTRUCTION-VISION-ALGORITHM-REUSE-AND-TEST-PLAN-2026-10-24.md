@@ -1,5 +1,11 @@
 # Inverse vision: algorithm reuse, evaluation and implementation backlog
 
+## Canonical visible per-hue shape foundation · 25 October 2026
+
+[PR #709](https://github.com/gamesbyian/wallgen/pull/709) implements a bounded opt-in `scatteredShapeOverrides` for seven independent source-visible pigment geometries *inside the existing scattered object/renderer path*, while preserving shared `scatteredShape` default, holes/islands and per-index placement. [Real Chromium proof #40218632661](https://github.com/gamesbyian/wallgen/actions/runs/40218632661) painted seven distinct source-authored shapes, achieved **exact 480×1040 renderer↔worker PNG pixel parity (499,200 pixels)** and a successful full **3024×6552** portable PNG receipt. See [actual optical and schema findings](RECONSTRUCTION-PER-HUE-CANONICAL-SHAPE-ACCEPTANCE-2026-10-25.md).
+
+**Still missing:** source-mask-to-seven-shape inverse extraction and source-backed Hairpin/Loop fidelity evaluation. Convert only existing shared canonical hue mask components, contours, holes and islands, with strict portable point/byte bounds and honest clipped/occluded shape provenance. A per-hue silhouette is a source-visible editable appearance hypothesis, not an identified historical seed/hidden contour. Test against actual production painter, preserve existing six-plus-ten selection budget, locks/Undo and normal export/worker parity before adding a default candidate.
+
 ## Independent local residual experiment · 25 October 2026
 
 After the merged **#707** source-mask diagnostics, [PR #708](https://github.com/gamesbyian/wallgen/pull/708) adds opt-in five-zone source-vs-rendered pigment envelopes and isolated curvature parameter probes. The [actual GHA art and optical receipt](RECONSTRUCTION-LOCAL-CURVE-REGISTRATION-FINDINGS-2026-10-25.md) demonstrates **12/12 worse** one-field Hairpin and Loop results, while earlier width-only and width+spread probes also all lost. *Do not replace one blind global control search with another.* The Hairpin source-vs-rendered x residual changes sign from upper stem to lower bend; Loop's silhouette aligns but coloured channels and crossing topology are wrong.
