@@ -118,3 +118,24 @@ test('source-visible shape candidate neutralizes inherited Photo, texture and ca
   assert.equal(r.motif,'solid');
   assert.equal(r.photoLook?.enabled,false);
 });
+
+test('source-visible pigment retains 9–16 genuine islands, refuses 17+ instead of silently dropping them',()=>{
+  const width=200,height=200;
+  const masked=count=>{
+    const pixels=new Uint8Array(width*height);
+    for(let index=0;index<count;index++){
+      const x0=8+index%5*35,y0=8+Math.floor(index/5)*35;
+      for(let y=y0;y<y0+6;y++)for(let x=x0;x<x0+6;x++)
+        pixels[y*width+x]=1;
+    }
+    return pixels;
+  };
+  const sixteen=extractVisibleHueCompound(masked(16),width,height);
+  assert.ok(sixteen);
+  assert.equal(sixteen.components,16);
+  assert.equal(sixteen.geometry.components.length,16);
+  assert.equal(sixteen.visibleInkPixels,16*36);
+  assert.equal(sixteen.visibility,'source-visible-only');
+  assert.equal(extractVisibleHueCompound(masked(17),width,height),null,
+    'overflow refuses rather than issuing a source-completeness claim');
+});
