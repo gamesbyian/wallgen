@@ -18,31 +18,44 @@ export const EXTERNAL_PIGMENT_CASES=Object.freeze([
   {id:'occluded-mixed-seven',goal:'Seven layered polygons, some pigments almost fully occluded'}
 ]);
 
+export const LOW_CHROMA_EXTERNAL_CASES=Object.freeze([
+  {id:'dim-seven-polygons',goal:'Seven dark but hue-distinct polygon pigments on near-black'},
+  {id:'soft-seven-stars',goal:'Seven low-chroma colourful concave star pigments'},
+  {id:'neutral-seven-control',goal:'Seven grey neutral polygons, not rainbow source pixels'},
+  {id:'partial-two-hues',goal:'Only red and blue polygons; no invented five missing pigments'}
+]);
 export function parseExternalPigmentArgs(argv){
-  const opts={outDir:'artifacts/external-pigment-r0'};
+  const opts={outDir:'artifacts/external-pigment-r0',collection:'original'};
   for(let i=0;i<argv.length;i++){
     if(argv[i]==='--out-dir'&&argv[i+1]&&!argv[i+1].startsWith('--')){
       opts.outDir=argv[++i];continue;
+    }
+    if(argv[i]==='--collection'&&argv[i+1]&&
+      ['original','low-chroma'].includes(argv[i+1])){
+      opts.collection=argv[++i];continue;
     }
     if(argv[i]==='--help'||argv[i]==='-h'){opts.help=true;continue;}
     throw Error('Unknown/incomplete external pigment option: '+argv[i]);
   }
   return opts;
 }
-export function externalPigmentManifest(){
+export function externalPigmentManifest(collection='original'){
+  if(!['original','low-chroma'].includes(collection))throw Error('Unsupported external fixture collection');
+  const cases=collection==='low-chroma'?LOW_CHROMA_EXTERNAL_CASES:EXTERNAL_PIGMENT_CASES;
   return {schema:'roygbiv-reconstruction-external/v1',
     status:'independently-authored-pixels-not-artist-approved',
     source:'standalone-Canvas2D-polygons-not-ROYGBIV-recipes',
     width:WIDTH,height:HEIGHT,
     sourceProvenance:'No historical painter, seed, palette, layer order or hidden original recipe exists.',
-    items:EXTERNAL_PIGMENT_CASES.map(c=>({
+    items:cases.map(c=>({
       id:c.id,metadataFree:c.id+'.png'
     }))};
 }
 async function generate(opts){
   const out=resolve(opts.outDir);
+  const cases=opts.collection==='low-chroma'?LOW_CHROMA_EXTERNAL_CASES:EXTERNAL_PIGMENT_CASES;
   await mkdir(out,{recursive:true});
-  for(const name of ['manifest.json',...EXTERNAL_PIGMENT_CASES.map(c=>c.id+'.png')]){
+  for(const name of ['manifest.json',...cases.map(c=>c.id+'.png')]){
     try{await access(join(out,name));throw Error('Evidence already exists: '+name);}
     catch(error){if(error.code!=='ENOENT')throw error;}
   }
@@ -52,7 +65,7 @@ async function generate(opts){
   const browser=await chromium.launch({headless:true});
   try{
     const page=await browser.newPage();
-    for(const testCase of EXTERNAL_PIGMENT_CASES){
+    for(const testCase of cases){
       const dataUri=await page.evaluate(({id,width,height})=>{
         // Design is defined here, without any ROYGBIV model or image import.
         const canvas=document.createElement('canvas');
@@ -78,7 +91,22 @@ async function generate(opts){
         const circle=(x,y,r)=>{
           ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();
         };
-        if(id==='occluded-mixed-seven'){
+        if(['dim-seven-polygons','soft-seven-stars','neutral-seven-control',
+            'partial-two-hues'].includes(id)){
+          const sourceHues=[0,29,52,136,212,244,278];
+          for(let i=0;i<7;i++){
+            if(id==='partial-two-hues'&&i!==0&&i!==4)continue;
+            const {x,y}=centres[i];
+            ctx.fillStyle=id==='dim-seven-polygons'?
+              'hsl('+sourceHues[i]+' 88% 13%)':
+              id==='soft-seven-stars'?
+                'hsl('+sourceHues[i]+' 23% 70%)':
+              id==='neutral-seven-control'?'hsl(0 0% 70%)':
+                'hsl('+sourceHues[i]+' 85% 59%)';
+            polygon(x,y,68,id==='soft-seven-stars'?6:4+(i%3),
+              -Math.PI/2+i*.13,id==='soft-seven-stars'?.63:null);
+          }
+        }else if(id==='occluded-mixed-seven'){
           // Displacement and overlap exercise visible contour clipping only.
           // Source painter precedence here is intentionally not a native
           // scatteredLayerOrder or a ROYGBIV scene contract.
@@ -110,11 +138,11 @@ async function generate(opts){
         sourceRecipe:false}));
     }
     await writeFile(join(out,'manifest.json'),
-      JSON.stringify(externalPigmentManifest(),null,2)+'\n');
+      JSON.stringify(externalPigmentManifest(opts.collection),null,2)+'\n');
   }finally{await browser.close();}
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
   const opts=parseExternalPigmentArgs(process.argv.slice(2));
-  if(opts.help)console.log('node scripts/review-reconstruction-external-pigments.mjs [--out-dir DIRECTORY]');
+  if(opts.help)console.log('node scripts/review-reconstruction-external-pigments.mjs [--out-dir DIRECTORY] [--collection original|low-chroma]');
   else generate(opts).catch(e=>{console.error(e);process.exitCode=1;});
 }
