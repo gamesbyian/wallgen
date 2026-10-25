@@ -51,8 +51,15 @@ export function observedHueShapeRecipe(image,placement,currentInput){
     scatteredOverrides:items.map(item=>({
       index:item.index,x:item.x,y:item.y,radius:item.radius})),
     dividerColor:'none',dividerWidth:0,
-    material:'none',lightingMood:'off',
+    // A recovered image must not silently inherit the current studio's
+    // private materials, Photo pipeline, camera, motifs or other treatments.
+    // Existing locks still project through respectSettingLocks below.
+    material:'none',material2:'none',material3:'none',
+    textureLayer2Enabled:false,textureLayer3Enabled:false,
+    textureDisplacement:0,lightingMood:'off',
     glow:0,outline:'none',stripeShadowStrength:0,
+    motif:'solid',viewZoom:1,viewPanX:0,viewPanY:0,
+    positionX:0,positionY:0,
     surfaceTreatments:[],photoLook:{enabled:false}
   });
   if(candidate.scatteredShapeOverrides?.length!==7||
