@@ -290,6 +290,9 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle,onShape,
     if(working||!candidate||!onRecipe)return;
     if(onRecipe(candidate.recipe,{...candidate,sourceWidth:width,sourceHeight:height})){
       dialog.close();
+    }else{
+      recipeStatus.textContent='Locks changed. Re-import image.';
+      recipeApply.disabled=true;
     }
   });
   another.addEventListener('click',()=>{
