@@ -1,0 +1,6 @@
+# Optional OFFLINE inverse-graphics diagnostic dependencies only.
+# Never install in PWA/browser, app bundle or default npm quick CI.
+numpy==2.3.5
+scipy==1.17.0
+scikit-image==0.26.0
+Pillow==12.3.0
