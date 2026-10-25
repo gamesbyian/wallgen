@@ -88,7 +88,7 @@ export function textPathStation(item,station,room,prepared){
   return {x:p.x-center.x,y:p.y-center.y,
     angle:Math.atan2(right.y-left.y,right.x-left.x)};
 }
-export function layoutTextOnPath(item,line,measure,drawnPoints){
+export function layoutTextOnPath(item,line,measure,drawnPoints,{preparedPath}={}){
   if(!item||item.path==='none'||!line||!canCurveText(line))
     return {supported:false,glyphs:[]};
   const units=textGraphemes(line);
@@ -100,8 +100,11 @@ export function layoutTextOnPath(item,line,measure,drawnPoints){
   const total=widths.reduce((s,n)=>s+n,0);
   if(total<=0)return {supported:false,glyphs:[]};
   const room=availableTextWidth(item);
-  const prepared=['drawn','hairpin','loop'].includes(item.path)?
-    prepareTextFollowPath(item,drawnPoints):null;
+  const needsPrepared=['drawn','hairpin','loop'].includes(item.path);
+  // A multi-line object shares its immutable path geometry within one paint
+  // or pointer-selection pass. Explicit null is a cached invalid path.
+  const prepared=needsPrepared?
+    (preparedPath===undefined?prepareTextFollowPath(item,drawnPoints):preparedPath):null;
   if(['drawn','hairpin','loop'].includes(item.path)&&!prepared)
     return {supported:false,glyphs:[]};
   const maxArc=item.path==='circle'?
@@ -138,6 +141,8 @@ export function hitTextAtLayout(items,point,measureFor,{tolerance=0,customPath}=
     const x=px*Math.cos(angle)+py*Math.sin(angle);
     const y=-px*Math.sin(angle)+py*Math.cos(angle);
     const lines=item.text.split('\n');
+    const preparedPath=['drawn','hairpin','loop'].includes(item.path)?
+      prepareTextFollowPath(item,customPath):undefined;
     const leading=item.size*1.17*(1+(item.lineSpacing??0)/100);
     const stroke=item.outline==='none'?0:item.size*item.outlineWidth/100;
     const extra=stroke+reach;
@@ -146,7 +151,8 @@ export function hitTextAtLayout(items,point,measureFor,{tolerance=0,customPath}=
       if(!line.trim())continue;
       const offset=(lineIndex-(lines.length-1)/2)*leading;
       const layout=item.path&&item.path!=='none'?
-        layoutTextOnPath(item,line,unit=>measureFor(item,unit),customPath):null;
+        layoutTextOnPath(item,line,unit=>measureFor(item,unit),customPath,
+          {preparedPath}):null;
       if(layout?.supported){
         for(const glyph of layout.glyphs){
           if(!glyph.text.trim())continue; // authored spaces have no ink

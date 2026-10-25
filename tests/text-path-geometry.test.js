@@ -187,3 +187,32 @@ test('unsupported joining scripts are selected as whole native lines',()=>{
     x:50,y:50,size:64,path:'wave',outline:'none'};
   assert.equal(hitTextAtLayout([item],{x:300,y:650},pickMeasure)?.id,'rtl');
 });
+
+test('prepared curves preserve exactly the same native canonical station positions',()=>{
+  const points=[[.04,.36],[.18,.3],[.39,.46],[.62,.55],[.87,.38],[.98,.44]];
+  const measure=value=>[...value].length*15;
+  for(const mode of ['drawn','hairpin','loop']){
+    const item={text:'ROYGBIV\\nCURVES',x:50,y:50,size:60,
+      path:mode,pathHeight:125,outline:'none'};
+    const prepared=prepareTextFollowPath(item,points);
+    assert.ok(prepared?.total>100);
+    for(const line of ['ROYGBIV','CURVES','A DRAWN LINE','FOLLOW THE RAINBOW']){
+      const regular=layoutTextOnPath(item,line,measure,points);
+      const shared=layoutTextOnPath(item,line,measure,points,{preparedPath:prepared});
+      assert.deepEqual(shared,regular,mode+' shared path must not alter a station');
+    }
+  }
+});
+test('a provided layout sampler is called once per glyph and cached invalid Draw path stays invalid',()=>{
+  const item={text:'TEXT',x:50,y:50,size:52,path:'drawn',pathHeight:90};
+  let calls=0;
+  const sample={total:500,sample(distance){
+    calls++;
+    return {x:distance,y:distance/4,angle:.2};
+  }};
+  const result=layoutTextOnPath(item,'TEXT',()=>18,[],{preparedPath:sample});
+  assert.equal(result.supported,true);
+  assert.equal(calls,4,'already prepared geometry must be reused rather than recalculated');
+  assert.equal(layoutTextOnPath(item,'TEXT',()=>18,[],{preparedPath:null}).supported,false,
+    'null marks an already checked but invalid Draw path, avoiding repeat work');
+});
