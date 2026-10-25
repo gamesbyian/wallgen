@@ -2,12 +2,6 @@ name: R0 source-visible hue shape oracle
 # Source/fit screenshots and full-resolution export remain manually opt-in.
 on:
   workflow_dispatch:
-  # One-shot PR #717 source-backed optical parity; remove before merge.
-  pull_request:
-    paths:
-      - 'src/image-path.js'
-      - 'tests/reconstruction-visible-hue-shapes.test.js'
-      - '.github/workflows/reconstruction-hue-shapes-experiment.yml'
 permissions:
   contents: read
 concurrency:
