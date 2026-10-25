@@ -32,8 +32,22 @@ function components(mask,w,h,minArea,maxResults=8){
       const p=stack.pop(),x=p%w,y=(p/w)|0;
       members.push(p);minX=Math.min(minX,x);maxX=Math.max(maxX,x);
       minY=Math.min(minY,y);maxY=Math.max(maxY,y);
-      for(const n of [x>0?p-1:-1,x<w-1?p+1:-1,y>0?p-w:-1,y<h-1?p+w:-1]){
-        if(n>=0&&mask[n]&&!seen[n]){seen[n]=1;stack.push(n);}
+      // Probe left, right, up, down in the original exact order. Avoid
+      // allocating a fresh four-item neighbour array per ink pixel, which
+      // creates significant short-lived garbage on dense source masks.
+      // The push/mark sequence and four-connected topology are unchanged.
+      let n;
+      if(x>0){
+        n=p-1;if(mask[n]&&!seen[n]){seen[n]=1;stack.push(n);}
+      }
+      if(x<w-1){
+        n=p+1;if(mask[n]&&!seen[n]){seen[n]=1;stack.push(n);}
+      }
+      if(y>0){
+        n=p-w;if(mask[n]&&!seen[n]){seen[n]=1;stack.push(n);}
+      }
+      if(y<h-1){
+        n=p+w;if(mask[n]&&!seen[n]){seen[n]=1;stack.push(n);}
       }
     }
     if(members.length>=minArea){

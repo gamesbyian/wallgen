@@ -120,6 +120,26 @@ test('source-visible shape candidate neutralizes inherited Photo, texture and ca
   assert.equal(r.photoLook?.enabled,false);
 });
 
+test('four-neighbour extraction preserves diagonal separation and border-connected ink',()=>{
+  const width=120,height=120,mask=new Uint8Array(width*height);
+  const fill=(x0,y0,x1,y1)=>{
+    for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++)
+      mask[y*width+x]=1;
+  };
+  fill(10,10,21,21);
+  fill(21,21,32,32); // Diagonal corner contact is not a fourth neighbour.
+  fill(0,55,7,77); // Border-connected but separate source-visible island.
+  const original=mask.slice();
+  const found=extractVisibleHueCompound(mask,width,height);
+  assert.ok(found,'all three independent pieces must remain representable');
+  assert.equal(found.components,3);
+  assert.equal(found.geometry.components.length,3);
+  assert.equal(found.touchesFrame,true);
+  assert.ok(found.geometry.components.every(component=>component.holes.length===0));
+  assert.deepEqual(mask,original,'flood-fill must never mutate source hue pixels');
+  assert.deepEqual(extractVisibleHueCompound(mask,width,height),found);
+});
+
 test('source-visible pigment retains 9–16 genuine islands, refuses 17+ instead of silently dropping them',()=>{
   const width=200,height=200;
   const masked=count=>{
