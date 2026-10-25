@@ -1406,7 +1406,7 @@ test('cropped repeated stamps refuse unrelated pigment tails despite identical c
    'genuine full plus cropped ribbons still reach the same canonical path');
 });
 
-test('cropped shared hue contours remain recognizable after left-right reflection',()=>{
+test('unsupported opposite-edge crop does not become an invented repeated-stamp claim',()=>{
  const w=220,h=350;
  const original=raster(w,h,(x,y)=>{
    for(let i=0;i<7;i++){
@@ -1421,9 +1421,10 @@ test('cropped shared hue contours remain recognizable after left-right reflectio
    return Array.from(original.data.subarray(at,at+4));
  });
  const signature=describeReconstructionImage(reversed);
- assert.equal(signature.repeatShape?.clipped,true,
-   'genuine translated ribbons may be progressively cropped from either edge');
- assert.ok(signature.ribbonBands,'all seven observed pigments are coherent');
- assert.ok(reconstructionCandidates(reversed,normalizeRecipe({seed:'mirror'}))
-   .some(candidate=>candidate.kind==='shape-repeats'));
+ assert.equal(signature.repeatShape?.clipped,undefined,
+   'current canonical recognizer has source-backed right-edge crop only');
+ assert.ok(signature.ribbonBands,'pigment axes can remain coherent without crop topology proof');
+ assert.ok(!reconstructionCandidates(reversed,normalizeRecipe({seed:'mirror'}))
+   .some(candidate=>candidate.kind==='shape-repeats'),
+   'unsupported mirrored topology must not borrow the source-backed right-edge claim');
 });
