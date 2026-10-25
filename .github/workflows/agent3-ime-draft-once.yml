@@ -2,7 +2,7 @@ name: One-shot Agent 3 focused text draft and IME composition
 on:
   push:
     branches: [agent3/664-composition-draft-focus-20261025]
-    paths: [.github/workflows/agent3-ime-draft-once.yml]
+    paths: [.github/workflows/agent3-ime-draft-once.yml, src/text-overlays-ui.js, scripts/agent3-ime-draft-browser.mjs]
 permissions:
   contents: read
 jobs:
