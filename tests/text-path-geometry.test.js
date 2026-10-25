@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {normalizeRecipe,resolveScene} from '../src/model.js';
 import {normalizeTextOverlays} from '../src/text-overlays.js';
-import {canCurveText,layoutTextOnPath,textPathStation} from '../src/text-path-geometry.js';
+import {canCurveText,layoutTextOnPath,textPathStation,prepareTextFollowPath} from '../src/text-path-geometry.js';
 import {drawTextOverlays} from '../src/text-overlay-renderer.js';
 import {hitTextOverlay,measuredTextBounds} from '../src/text-direct-geometry.js';
 function context(){
@@ -94,4 +94,47 @@ test('curved layout expands direct-manipulation hit guide without changing strai
   const point={x:300,y:520};
   assert.equal(hitTextOverlay([line],point,(item,t)=>t.length*13),null);
   assert.equal(hitTextOverlay([curved],point,(item,t)=>t.length*13),curved);
+});
+
+test('authored Draw path is the canonical text baseline and stays live-editable',()=>{
+  const item={path:'drawn',size:64,pathHeight:90,x:50};
+  const points=[[.16,.4],[.28,.34],[.5,.45],[.72,.56],[.85,.48]];
+  const path=prepareTextFollowPath(item,points);
+  assert.ok(path.total>100);
+  const a=layoutTextOnPath(item,'DRAW ALONG ME',t=>t.length*12,points);
+  assert.equal(a.supported,true);
+  assert.ok(a.glyphs.some(g=>Math.abs(g.angle)>.05));
+  assert.ok(a.glyphs.every(g=>[g.x,g.y,g.angle].every(Number.isFinite)));
+  const shifted=points.map(([x,y],i)=>[x,y+(i===2?.17:0)]);
+  const b=layoutTextOnPath(item,'DRAW ALONG ME',t=>t.length*12,shifted);
+  assert.notDeepEqual(a.glyphs.map(g=>g.y),b.glyphs.map(g=>g.y),
+    'editing canonical Draw points must change the text curve without a sidecar');
+  assert.equal(layoutTextOnPath(item,'WORDS',t=>t.length*12,[]).supported,false,
+    'missing Draw path must use the unfragmented native straight fallback');
+});
+test('hairpin and loop sample the existing path geometry by actual arc length',()=>{
+  for(const mode of ['hairpin','loop']){
+    const item={path:mode,size:56,pathHeight:110,x:50};
+    const path=prepareTextFollowPath(item);
+    assert.ok(path?.total>1000);
+    const chars=layoutTextOnPath(item,'A LENGTHY CURVE',t=>t.length*13);
+    assert.ok(chars.supported);
+    assert.equal(chars.glyphs.length,15);
+    assert.ok(chars.glyphs.every(g=>[g.x,g.y,g.angle].every(Number.isFinite)));
+    const distances=chars.glyphs.map(g=>g.distance);
+    assert.ok(distances.every((d,i)=>i===0||d>=distances[i-1]));
+    assert.ok(chars.glyphs.some(g=>Math.abs(g.angle)>.05));
+  }
+});
+test('new path modes survive transport and conservative hit bounds are finite',()=>{
+  const recipe=normalizeRecipe({customPath:[[.1,.1],[.9,.9]],
+    textOverlays:[{id:'a',text:'SOME WORDS',path:'drawn',font:'editorial'},
+      {id:'b',text:'LOOP ME',path:'loop',pathHeight:140}]});
+  assert.equal(recipe.textOverlays[0].path,'drawn');
+  assert.equal(recipe.textOverlays[1].path,'loop');
+  assert.deepEqual(normalizeRecipe(JSON.parse(JSON.stringify(recipe))),recipe);
+  for(const item of recipe.textOverlays){
+    const bounds=measuredTextBounds(item,t=>t.length*17);
+    assert.ok([bounds.width,bounds.height].every(x=>Number.isFinite(x)&&x>0));
+  }
 });
