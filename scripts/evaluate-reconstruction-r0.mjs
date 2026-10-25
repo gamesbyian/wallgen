@@ -187,7 +187,8 @@ async function evaluate(opts){
             const pixels=candidateCanvas.getContext('2d',
               {willReadFrequently:true}).getImageData(0,0,fit.width,fit.height);
             const error=compareReconstructionPixels(reference,pixels);
-            widthProbe.variants.push({delta,actualStripeWidth:candidate.stripeWidth,error});
+            widthProbe.variants.push({delta,actualStripeWidth:candidate.stripeWidth,
+              error,image:candidateCanvas.toDataURL('image/png')});
             if(error+1e-9<widthProbe.bestError){
               widthProbe.bestError=error;
               widthProbe.bestStripeWidth=candidate.stripeWidth;
@@ -249,6 +250,9 @@ async function evaluate(opts){
         ...(opts.inkGeometry?{inkGeometry:inferred.inkGeometry}:{}),
         ...(opts.probeInkWidth?{widthProbe:inferred.widthProbe?{
           ...inferred.widthProbe,bestImage:undefined,
+          variants:inferred.widthProbe.variants.map((trial,i)=>({
+            ...trial,image:undefined,
+            preview:item.id+'.r0-width-trial-'+(i+1)+'.png'})),
           bestPreview:inferred.widthProbe.bestImage?
             item.id+'.r0-ink-width-probe.png':null}:null}:{}),
         selectedControls:inferred.selected?Object.fromEntries(
@@ -273,6 +277,10 @@ async function evaluate(opts){
         await writeFile(join(dir,item.id+'.r0-best-preview.png'),pngBytes(inferred.candidatePreview));
       for(const [index,variant] of inferred.candidateVariants.entries()){
         await writeFile(join(dir,record.variantPreviews[index]),pngBytes(variant.image));
+      }
+      for(const [i,trial] of (inferred.widthProbe?.variants||[]).entries()){
+        await writeFile(join(dir,item.id+'.r0-width-trial-'+(i+1)+'.png'),
+          pngBytes(trial.image));
       }
       if(inferred.widthProbe?.bestImage){
         await writeFile(join(dir,item.id+'.r0-ink-width-probe.png'),
