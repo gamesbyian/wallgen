@@ -47,13 +47,15 @@ def compare_one(source: Path, vector: Path, preview: Path) -> dict:
             raise ValueError('Out-of-bounds original source image')
         size = img.size
         original = np.asarray(img.convert('RGB'), dtype=np.float32)
+    # Apply the conservative SVG dependency/size check before XML parsing:
+    # the independent oracle must not parse unbounded entity expansions.
+    reconstructed = raster_svg(vector, size)
     raw = vector.read_bytes()
     tree = ET.fromstring(raw)
     paths = [element for element in tree.iter()
              if element.tag.rsplit('}', 1)[-1] == 'path']
     if not paths:
         raise ValueError('Vector result contains no SVG path geometry')
-    reconstructed = raster_svg(vector, size)
     preview.parent.mkdir(parents=True, exist_ok=True)
     reconstructed.save(preview)
     fitted = np.asarray(reconstructed, dtype=np.float32)
