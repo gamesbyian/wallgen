@@ -53,6 +53,16 @@ jobs:
           await writeFile('artifacts/width-profile-genuine-result.json',
             JSON.stringify(rows,null,2)+'\n');
           NODE
+      - name: Prove new negative case is a real previous-main false positive
+        run: |
+          if node --test --test-name-pattern='cropped shared hue stamps refuse tail ink-width oscillation' tests/image-reconstruction.test.js > artifacts/baseline-adversarial-test.log 2>&1; then
+            cat artifacts/baseline-adversarial-test.log
+            echo 'Unexpected baseline green: width adversarial test does not prove a prior bug'
+            exit 1
+          else
+            grep -E 'not ok|cropped shared hue stamps|error:|actual:|expected:' artifacts/baseline-adversarial-test.log || true
+            echo 'Expected RED on unchanged main: width-profile refusal is new behavior'
+          fi
       - name: Preserve genuine PNG source, old fit and new fit for inspection
         if: always()
         uses: actions/upload-artifact@v4
