@@ -1,0 +1,66 @@
+name: R0 source-visible hue shape oracle
+# One-shot PR run on first source-backed proof; restore manual-only afterwards.
+on:
+  pull_request:
+    paths: ['.github/workflows/reconstruction-hue-shapes-experiment.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: r0-hue-shapes-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: false
+jobs:
+  optical:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test canonical source-visible masks and per-hue compound receipts
+        run: node --test tests/reconstruction-visible-hue-shapes.test.js tests/scattered-shape-overrides.test.js
+      - name: Install opt-in real Chromium forward renderer
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Generate five real metadata-free current-renderer R0 images
+        run: |
+          node scripts/review-reconstruction.mjs             --out-dir artifacts/r0-hue-shapes             --only 05-hairpin,06-loop,16-offset-jagged,18-repeated-compound-hole-island,22-overlapping-reversed-circles
+      - name: Evaluate ordinary six-plus-ten rank then one opt-in per-hue shape painter
+        run: |
+          node scripts/evaluate-reconstruction-r0.mjs             --dir artifacts/r0-hue-shapes --hue-visible-shapes
+      - name: Print source-backed candidate outcomes, with no hidden score sidecar
+        run: |
+          node --input-type=module -e '
+            import {readFileSync} from "node:fs";
+            const r=JSON.parse(readFileSync("artifacts/r0-hue-shapes/evaluation.json"));
+            for(const s of r.samples)
+              console.log("HUE_SHAPE_R0 "+JSON.stringify({
+                id:s.id,currentKind:s.bestKind,currentError:s.bestError,
+                proposedError:s.hueVisibleShapes?.error??null,
+                improved:s.hueVisibleShapes?.improved??false,
+                sourceVisibleOnly:s.hueVisibleShapes?.sourceVisibleOnly??null,
+                components:s.hueVisibleShapes?.componentCounts??null,
+                croppedHueSlots:s.hueVisibleShapes?.croppedHueSlots??null
+              }));
+          '
+      - name: High-resolution portable Hairpin/Loop source-shape exports, where representable
+        run: |
+          set -euo pipefail
+          for case_id in 05-hairpin 06-loop; do
+            recipe="artifacts/r0-hue-shapes/$case_id.r0-hue-visible.recipe.json"
+            if test -f "$recipe"; then
+              node scripts/render-headless.mjs --recipe "$recipe"                 --width 3024 --height 6552 --backend reference                 --out "artifacts/r0-hue-shapes/$case_id.r0-hue-visible.full.png"
+            else
+              echo "Unrepresentable source pigment: $case_id (no fabricated recipe)"
+            fi
+          done
+      - name: Save original, existing fitted, proposed and full-resolution PNG proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: genuine-r0-source-visible-hue-recipes
+          path: artifacts/r0-hue-shapes
+          if-no-files-found: warn
+          retention-days: 7
