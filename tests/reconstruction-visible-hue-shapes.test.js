@@ -64,6 +64,38 @@ test('visible source hue shapes reuse canonical mask/holes and produce seven ind
   assert.deepEqual(original.data,bytes,'source bytes never changed');
 });
 
+test('neutral and two-hue source artwork never synthesizes a complete seven-pigment scene',()=>{
+  const source=sevenShapes(),original=source.data.slice();
+  const neutral={...source,data:source.data.slice()};
+  for(let i=0;i<neutral.data.length;i+=4){
+    if(neutral.data[i]||neutral.data[i+1]||neutral.data[i+2]){
+      neutral.data[i]=155;neutral.data[i+1]=155;neutral.data[i+2]=155;
+    }
+  }
+  const muted=extractImageColourRegions(neutral,HUES,{includeMasks:true});
+  assert.equal(muted.regions.length,0,'neutral greys cannot prove coloured pigments');
+  assert.equal(observedHueShapeRecipe(neutral,placement,{}),null);
+  // Author two isolated coloured rectangles directly, not by masking a
+  // compound source whose anti-aliased/fleck membership is an unrelated test.
+  const w=240,h=520,two={width:w,height:h,
+    data:new Uint8ClampedArray(w*h*4)};
+  for(let p=0;p<w*h;p++)two.data[p*4+3]=255;
+  for(const [x0,y0,rgb] of [
+    [35,45,hueRgb(HUES[0])],[145,270,hueRgb(HUES[4])]]){
+    for(let y=y0;y<y0+85;y++)for(let x=x0;x<x0+55;x++){
+      const at=4*(y*w+x);
+      two.data[at]=rgb[0];
+      two.data[at+1]=rgb[1];
+      two.data[at+2]=rgb[2];
+    }
+  }
+  const analysis=extractImageColourRegions(two,HUES,{includeMasks:true});
+  assert.deepEqual(analysis.regions.map(region=>region.index),[0,4]);
+  assert.equal(observedHueShapeRecipe(two,placement,{}),null,
+    'five unobserved hues cannot be hallucinated from two real ones');
+  assert.deepEqual(source.data,original,'source artwork is immutable');
+});
+
 test('incomplete hue, contradictory locks and invalid geometry refuse instead of inventing pigment',()=>{
   const incomplete=sevenShapes({omit:3});
   assert.equal(observedHueShapeRecipe(incomplete,placement,{}),null);
