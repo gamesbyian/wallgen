@@ -481,7 +481,8 @@ export function reconstructionCandidates(image,recipe){
       ['hairpin','loop'].includes(desc.curve.kind)||
       desc.paths.some(path=>path.kind==='contour'&&path.closed));
   const observed=observedEligible?observedHueShapeRecipe(image,
-    reconstructionPlacement(image.width,image.height),current):null;
+    reconstructionPlacement(image.width,image.height),current,
+    {paletteHint:desc.paletteHypothesis?.palette??'classic'}):null;
   const includeObserved=prior=>{
     if(!observed)return prior;
     const result=[...prior];

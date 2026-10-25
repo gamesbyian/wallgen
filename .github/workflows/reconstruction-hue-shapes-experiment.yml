@@ -59,7 +59,8 @@ jobs:
               "17-repeated-hue-circles":.003894,
               "18-repeated-compound-hole-island":.005473,
               "20-pastel-seven-circles":.005851,
-              "22-overlapping-reversed-circles":.004676
+              "22-overlapping-reversed-circles":.004676,
+              "19-jewel-vertical":.016
             };
             for(const [id,ceiling] of Object.entries(expectations)){
               const s=r.samples.find(x=>x.id===id);

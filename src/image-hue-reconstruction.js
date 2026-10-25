@@ -11,7 +11,7 @@ import {GEOMETRY_SNAPSHOT_SCHEMA} from './geometry-asset.js';
  * reconstructionPlacement, so canvas letterboxing remains single-owned.
  * Return null when any slot/shape/lock cannot be represented.
  */
-export function observedHueShapeRecipe(image,placement,currentInput){
+export function observedHueShapeRecipe(image,placement,currentInput,{paletteHint='classic'}={}){
   const w=image?.width,h=image?.height;
   if(!Number.isInteger(w)||!Number.isInteger(h)||
     w<12||h<12||w*h>650000||image.data?.length!==w*h*4||
@@ -40,7 +40,9 @@ export function observedHueShapeRecipe(image,placement,currentInput){
   }
   const original=normalizeRecipe(currentInput||{});
   const candidate=normalizeRecipe({...original,
-    family:'studio',palette:'classic',
+    // Caller shares the conservative seven-pigment appearance hypothesis.
+    // Unknown/ambiguous source colours still fall back to Classic.
+    family:'studio',palette:paletteHint,
     background:colours.background,
     structure:'regions',regionMode:'scattered',
     scatteredShapeKind:'imported',scatteredShape:null,

@@ -271,14 +271,20 @@ async function evaluate(opts){
         let hueVisibleShapes=null;
         if(includeHueVisibleShapes){
           const {observedHueShapeRecipe}=await import('/src/image-hue-reconstruction.js');
+          // Research comparison must use the SAME conservative source-only
+          // palette evidence as production candidate selection. Never reveal
+          // the withheld sidecar recipe to the inverse phase.
+          const {describeReconstructionImage}=await import('/src/image-reconstruction.js');
+          const palette=describeReconstructionImage(source).paletteHypothesis?.palette??'classic';
           const candidate=observedHueShapeRecipe(source,p,
-            normalizeRecipe({seed:'r0-anonymous'}));
+            normalizeRecipe({seed:'r0-anonymous'}),{paletteHint:palette});
           if(candidate){
             const canvas=render(candidate.recipe);
             const pixels=canvas.getContext('2d',
               {willReadFrequently:true}).getImageData(0,0,fit.width,fit.height);
             hueVisibleShapes={
               kind:candidate.kind,error:compareReconstructionPixels(reference,pixels),
+              measuredPalette:palette,
               sourceVisibleOnly:candidate.sourceVisibleOnly,
               uncertainty:candidate.uncertainty,
               componentCounts:candidate.componentCounts,
