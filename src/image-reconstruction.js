@@ -700,7 +700,11 @@ export function reconstructionCandidates(image,recipe){
   // existing asset snapshot and scattered-region scene, not a bitmap overlay.
   // Reject multicolour scenes to avoid painting a seven-hue drawing as red.
   if(desc.colourRegions.length<=2){
-    const shape=extractImageShapeCandidates(image).find(c=>c.geometry?.components?.length);
+    // Nine or more visible islands cannot be collapsed into a complete
+    // one-object source hypothesis: the general importer still offers
+    // individually editable visible islands, explicitly marked partial.
+    const shape=extractImageShapeCandidates(image).find(c=>
+      c.sourceComplete!==false&&c.geometry?.components?.length);
     if(shape){
       const geometry=shape.geometry;
       const [vx,vy,vw,vh]=geometry.viewBox,ox=vx+vw/2,oy=vy+vh/2;
