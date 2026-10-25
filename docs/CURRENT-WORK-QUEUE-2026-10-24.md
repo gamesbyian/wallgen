@@ -1,5 +1,11 @@
 # Current ROYGBIV work queue and three-agent dispatch
 
+## Loop #06 observed-island completeness · 25 October 2026 (PR #711)
+
+The first accepted independent-per-hue source-to-canonical renderer reconstruction [merged #710](https://github.com/gamesbyian/wallgen/pull/710) has a targeted follow-through [PR #711](https://github.com/gamesbyian/wallgen/pull/711). Previously each source hue contour returned the largest **8** significant disconnected components. The new **visible hue only** adapter accepts up to **16**, requesting 17 to *fail closed* instead of silently dropping a meaningful observed source pigment region; **all other legacy callers keep 8**.
+
+[Independent genuine 22-source Chromium run #40220797778](https://github.com/gamesbyian/wallgen/actions/runs/40220797778) passed focused tests, all no-regression controls and full-source/current PNG outputs. Loop #06 retains **13 red, 11 orange, 9 yellow** significant visible components (formerly 8/8/8). Its real-painter error is **.037835831448→.037259517188** (another 1.52% reduction); all 21 other R0 scores/kinds unchanged. Downloaded old and new genuine Loop PNGs independently reviewed at equal scale: better small colour fragments at ring intersections without large false specks or lost holes. Detailed [Loop island acceptance and uncertainty ledger](RECONSTRUCTION-LOOP-VISIBLE-ISLANDS-FINDINGS-2026-10-25.md). Heavy optical GHA back to manual-only, existing ≤6+10 painter cap unaffected. Unknown original overlap/seed or actual Pixel acceptance NOT claimed. #557 remains open.
+
 ## Source-visible seven-hue reconstruction breakthrough · 25 October 2026 (PR #710)
 
 [PR #710](https://github.com/gamesbyian/wallgen/pull/710) now connects merged #709 independent per-hue geometry snapshots to the **existing** seven-pigment image importer and actual canonical painter, with source-only masks, holes and islands, portable image-derived positioning, lock-safe fail-closed apply and honest `hue-visible-shapes` receipt provenance. It does **not** create a second renderer or store bitmap pixels as a recipe. One such candidate can replace a low-priority guess **inside the established six initial paints**; the optional R0 research comparator uses a separately labelled single true-painter evaluation. Default generation/texture/Photo behavior unchanged.
