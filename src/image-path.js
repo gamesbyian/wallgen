@@ -596,7 +596,7 @@ function inferVisibleCircleLayers(hints,masks,w,h){
 }
 
 export function extractImageColourRegions({data,width:w,height:h},hueTargets,
-  {includeRepeatShape=false}={}){
+  {includeRepeatShape=false,includeMasks=false}={}){
   if(!data||!Number.isInteger(w)||!Number.isInteger(h)||w<12||h<12||
     w*h>650000||data.length!==w*h*4||
     !Array.isArray(hueTargets)||hueTargets.length!==7||
@@ -683,8 +683,13 @@ export function extractImageColourRegions({data,width:w,height:h},hueTargets,
     regions.length===7&&componentRegions.length===7&&
     regions.every((region,i)=>region.index===i&&region.circleHint)?
     regions.map(region=>region.circleHint):null;
+  // Optional diagnostic ownership handoff: share the EXACT masks computed
+  // in this canonical pass, without retaining pixels in recipes, making a
+  // second HSV classifier or changing default import/worker allocations.
+  // Masks belong exclusively to this call; callers may treat them read-only.
   return {background:backdrop,backgroundRGB:bg,
     coverage:coloured/(w*h),regions,componentRegions,
+    ...(includeMasks?{masks}:{}),
     ...(includeRepeatShape?{
       repeatShape:repeatedHueStampShape(partsByHue,w,h),
       circleHints,
