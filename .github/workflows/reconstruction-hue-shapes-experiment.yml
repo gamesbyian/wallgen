@@ -45,6 +45,36 @@ jobs:
                 croppedHueSlots:s.hueVisibleShapes?.croppedHueSlots??null
               }));
           '
+      - name: Verify exact source-first wins and known no-regression controls
+        run: |
+          node --input-type=module -e '
+            import {readFileSync} from "node:fs";
+            const r=JSON.parse(readFileSync("artifacts/r0-hue-shapes/evaluation.json"));
+            if(r.samples.length!==22)throw Error("Expected all 22 source R0 inputs");
+            const expectations={
+              "02-diagonal-straight":.021,
+              "04-jagged":.027,
+              "05-hairpin":.041,
+              "06-loop":.046,
+              "16-offset-jagged":.022,
+              "11-scattered-circles":.005629,
+              "17-repeated-hue-circles":.003894,
+              "18-repeated-compound-hole-island":.005473,
+              "20-pastel-seven-circles":.005851,
+              "22-overlapping-reversed-circles":.004676
+            };
+            for(const [id,ceiling] of Object.entries(expectations)){
+              const s=r.samples.find(x=>x.id===id);
+              if(!s||!(s.bestError<=ceiling))
+                throw Error("Source-backed acceptance failed for "+id+": "+
+                  s?.bestError+" > "+ceiling);
+            }
+            console.log("R0_ALL22_SOURCE_BACKED "+JSON.stringify({
+              total:r.samples.length,winners:r.samples
+                .filter(x=>x.bestKind==="hue-visible-shapes")
+                .map(x=>({id:x.id,error:x.bestError}))
+            }));
+          '
       - name: High-resolution portable Hairpin/Loop source-shape exports, where representable
         run: |
           set -euo pipefail
