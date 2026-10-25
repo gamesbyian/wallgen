@@ -1,6 +1,12 @@
 # Current ROYGBIV work queue and three-agent dispatch
 
-## Local curve-registration inverse experiment · 25 October 2026 (PR #708)
+## Portable canonical per-hue shape foundation · 25 October 2026 (#709)
+
+[PR #709](https://github.com/gamesbyian/wallgen/pull/709) supplies an **opt-in native seven-slot independent shape snapshot** on ordinary scattered objects. Real [GHA proof #40218632661](https://github.com/gamesbyian/wallgen/actions/runs/40218632661) completed four unit acceptance cases; 480×1040 browser reference versus worker produced **zero differing RGBA pixels** across 499,200 pixels, 38,346 visible coloured pixels, and complete identical embedded portable recipes. A **3024×6552** actual production PNG+recipe export completed. Downloaded original 480×1040 artwork was directly inspected: seven distinct colours/contours, red hole and satellite, all visible and correct. [Acceptance and design limits](RECONSTRUCTION-PER-HUE-CANONICAL-SHAPE-ACCEPTANCE-2026-10-25.md).
+
+This closes the **representation foundation only**, not image-to-recipe fidelity. The next focused #557 engineering step is opt-in seven-hue shape extraction from the **existing** source mask/component/hole pipeline, using the same canonical rings and bounding transforms, then genuine source/old/new forward-painter comparison for #05/#06 and false-positive controls. The new shared scene extension carries 1200 vertices per hue and 192KiB total bounds, respects canonical locks, and has **no** new render engine, default artwork change or source image bytes in recipes. Heavy proof returned to manual-only GHA before merge; no physical Pixel/owner creative approval.
+
+## Local curve-registration inverse experiment · 25 October 2026 (MERGED #708)
 
 [Genuine five-source Chromium R0 run #40217651636](https://github.com/gamesbyian/wallgen/actions/runs/40217651636) completed with 15 focused tests, the existing canonical renderer and metadata-free source imagery. [PR #708](https://github.com/gamesbyian/wallgen/pull/708) measures five local source-vs-rendered hue-mask silhouette zones and gives an opt-in, bounded six-trial true-render study per Hairpin/Loop. It **does not change reconstruction selection, recipe semantics, export, Undo or the production ≤6+10 painter budget**. See [actual evaluated source-vs-trial art and independent direct optical findings](RECONSTRUCTION-LOCAL-CURVE-REGISTRATION-FINDINGS-2026-10-25.md).
 

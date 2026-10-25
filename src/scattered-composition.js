@@ -1,4 +1,5 @@
 import {normalizeScatteredOverrides,effectiveScatteredLayerOrder} from './scattered-object-edits.js';
+import {normalizeScatteredShapeOverrides} from './scattered-shape-overrides.js';
 // Independent, deterministic circles in the 600 × 1300 design plane.
 // Placement consumes its own namespaced PRNG: palette, texture and camera
 // variation never cause the same geometry to move or change diameter.
@@ -184,28 +185,40 @@ export function buildScatteredCircles(recipe){
 export function buildScatteredObjects(recipe){
   const placed=buildScatteredCircles(recipe);
   if(recipe.scatteredShapeKind!=='imported')return placed;
-  const geometry=recipe.scatteredShape?.geometry;
-  if(geometry?.type!=='compound-region'||!Array.isArray(geometry.components)||
-    !geometry.components.length)return {...placed,objects:[],placed:0,cropped:0,
+  const shared=recipe.scatteredShape?.geometry;
+  const overrideBySlot=new Map(normalizeScatteredShapeOverrides(
+    recipe.scatteredShapeOverrides).map(item=>[item.index,item.shape.geometry]));
+  if(shared?.type!=='compound-region'&&!overrideBySlot.size)
+    return {...placed,objects:[],placed:0,cropped:0,
       diagnostic:'Choose an imported shape from your library.'};
-  // Do not silently paint circles when a user has explicitly requested
-  // an imported silhouette but no portable source geometry exists.
-  const [vx,vy,vw,vh]=geometry.viewBox;
-  const ox=vx+vw/2,oy=vy+vh/2;
-  const all=geometry.components.flatMap(component=>[component.outer,...component.holes].flat());
-  const bound=Math.max(1e-9,...all.map(p=>Math.hypot(p[0]-ox,p[1]-oy)));
+  // Missing per-hue snapshots are omitted, NEVER substituted by circles.
+  // The optional shared imported shape still fills unspecific hue slots.
+  let absent=0;
   const objects=placed.objects.map(source=>{
+    const index=Number(source.id.slice(7));
+    const geometry=overrideBySlot.get(index)??shared;
+    if(geometry?.type!=='compound-region'||!geometry.components?.length){
+      absent++;return null;
+    }
+    const [vx,vy,vw,vh]=geometry.viewBox;
+    const ox=vx+vw/2,oy=vy+vh/2;
+    const all=geometry.components.flatMap(component=>
+      [component.outer,...component.holes].flat());
+    const bound=Math.max(1e-9,...all.map(p=>Math.hypot(p[0]-ox,p[1]-oy)));
     const {cx,cy,r}=source.circle,scale=r/bound;
     const transform=ring=>ring.map(([x,y])=>point(
       cx+(x-ox)*scale,cy+(y-oy)*scale));
-    const rings=geometry.components.flatMap(c=>[transform(c.outer),...c.holes.map(transform)]);
+    const rings=geometry.components.flatMap(c=>
+      [transform(c.outer),...c.holes.map(transform)]);
     return {
       kind:'region',id:source.id,colorIndex:source.colorIndex,
       origin:point(cx,cy),vertices:rings[0],rings,
-      editCircle:{cx,cy,r}, // editor-only transform; painter uses compound rings
-      // Bounding circle intentionally omitted: the painter must use the
-      // compound path, including subtractive holes and detached islands.
+      editCircle:{cx,cy,r}, // same per-object reposition/resize gestures
+      // Compound rings retain subtractive holes and detached islands.
+      // No bitmap or private library ID enters the renderer.
     };
-  });
-  return {...placed,objects};
+  }).filter(Boolean);
+  return {...placed,objects,placed:objects.length,
+    ...(absent?{diagnostic:'Missing '+absent+
+      ' portable imported pigment shape(s); no circles were substituted.'}:{})};
 }
