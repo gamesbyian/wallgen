@@ -2,7 +2,7 @@ name: One-shot Agent 3 expressive text UI/PNG acceptance
 on:
   push:
     branches: [agent3/664-expressive-portrait-ui-acceptance-20261024]
-    paths: [.github/workflows/agent3-664-expressive-once.yml]
+    paths: [.github/workflows/agent3-664-expressive-once.yml, tests/agent3-664-expressive-portrait-browser.mjs]
 permissions:
   contents: read
 jobs:
