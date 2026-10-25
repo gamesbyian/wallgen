@@ -21,7 +21,7 @@ function percentile(values,fraction){
 export function skeletonizePigment(mask,width,height,{maxIterations=48}={}){
   if(!(mask instanceof Uint8Array)||!Number.isInteger(width)||
     !Number.isInteger(height)||width<3||height<3||
-    width*height>650000||mask.length!==width*height||
+    width*height>40000||mask.length!==width*height||
     !Number.isInteger(maxIterations)||maxIterations<1||maxIterations>128)
     throw new RangeError('Invalid bounded skeleton input');
   const pixels=Uint8Array.from(mask,x=>x?1:0);
@@ -90,6 +90,8 @@ export function describeRainbowInkGeometry(image,{withSkeleton=true}={}){
   if(!image||image.width*image.height>650000||
     image.width<12||image.height<12)
     throw new RangeError('Invalid analysis image');
+  if(withSkeleton&&image.width*image.height>40000)
+    throw new RangeError('Skeleton diagnostics require downsampled analysis');
   const found=extractImageColourRegions(image,HUES,{includeMasks:true});
   const byHue=found.masks.map((mask,index)=>({
     index,...describeMask(mask,image.width,image.height,{withSkeleton})
@@ -106,6 +108,8 @@ export function compareRainbowInkGeometry(source,rendered,{withSkeleton=true}={}
     source.height!==rendered.height)
     throw new RangeError('Mismatched geometry analysis images');
   const w=source.width,h=source.height;
+  if(withSkeleton&&w*h>40000)
+    throw new RangeError('Skeleton diagnostics require downsampled analysis');
   const a=extractImageColourRegions(source,HUES,{includeMasks:true});
   const b=extractImageColourRegions(rendered,HUES,{includeMasks:true});
   const byHue=a.masks.map((mask,i)=>{
