@@ -1,4 +1,5 @@
 name: One-shot cropped-width genuine image proof
+# Adversarial source now uses long, non-overlapping 7-hue ribbons.
 on:
   push:
     branches: [agent1/557-cropped-tail-width-profile-proof-20261025]
