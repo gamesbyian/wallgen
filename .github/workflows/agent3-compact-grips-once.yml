@@ -1,4 +1,5 @@
 name: One-shot actual Chromium compact-text grip acceptance
+# Re-run: enforce 48px visible separation and canvas boundary with rotated grip pair
 on:
   push:
     branches: [agent3/664-compact-text-handle-reach-20261024]
