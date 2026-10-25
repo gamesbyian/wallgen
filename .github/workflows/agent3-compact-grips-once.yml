@@ -1,0 +1,30 @@
+name: One-shot actual Chromium compact-text grip acceptance
+on:
+  push:
+    branches: [agent3/664-compact-text-handle-reach-20261024]
+    paths: [.github/workflows/agent3-compact-grips-once.yml]
+permissions:
+  contents: read
+jobs:
+  real-portrait-pointer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Minimal Chromium shell
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install chromium --only-shell
+      - name: 5 actual viewport/position/rotation cases, true pointer, Undo, keyboard
+        run: node scripts/agent3-compact-text-handle-browser.mjs
+      - name: Preserve before/after selected actual canvas images
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent3-664-compact-tiny-44px-grips
+          path: artifacts/agent3-664-compact-grips/
+          retention-days: 14
+          if-no-files-found: warn
