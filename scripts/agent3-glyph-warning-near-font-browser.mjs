@@ -80,11 +80,24 @@ try{
       animations:'disabled'});
    await page.locator('[data-text-glyph-status]').scrollIntoViewIfNeeded();
    const readable=await page.locator('[data-text-glyph-status]').boundingBox();
+   const scrollState=await page.locator('[data-text-glyph-status]').evaluate(el=>{
+     const rows=[];let p=el;while(p&&rows.length<9){
+       const st=getComputedStyle(p);
+       const rect=p.getBoundingClientRect();
+       rows.push({node:p.tagName.toLowerCase(),id:p.id,cls:p.className,
+         overflow:st.overflowY,height:rect.height,top:rect.top,bottom:rect.bottom,
+         scrollTop:p.scrollTop,clientHeight:p.clientHeight,
+         scrollHeight:p.scrollHeight});
+       p=p.parentElement;
+     }return rows;
+   });
+   console.log('AGENT3_GLYPH_SCROLL_DIAGNOSTIC '+
+     JSON.stringify({width,height,readable,scrollState}));
+   await page.screenshot({path:join(output,'complete-warning-'+width+'x'+height+'.png'),
+      animations:'disabled'});
    assert.ok(readable&&readable.top>=-1 &&
      readable.top+readable.height<=height+1,
      'complete font warning must be revealable inside the real viewport');
-   await page.screenshot({path:join(output,'complete-warning-'+width+'x'+height+'.png'),
-      animations:'disabled'});
    await page.locator('[data-text-key="text"]').fill('HELLO');
    await page.locator('[data-text-key="text"]').blur();
    await page.waitForFunction(()=>document.querySelector('[data-text-glyph-status]')
