@@ -5,7 +5,7 @@ import {extractImageColourRegions} from '../src/image-path.js';
 import {
   skeletonizePigment,describeRainbowInkGeometry,compareRainbowInkGeometry,
   proposeMedialWidthDeltas,measureUpperHueGaps,
-  proposeUpperGapTrials
+  proposeUpperGapTrials,measureHueEnvelopeZones,localCurveProbeSpecs
 } from '../src/reconstruction-ink-geometry.js';
 
 const raster=(w,h,painter)=>{
@@ -153,4 +153,50 @@ test('coupled-gap experiment demands real source-visible missing channels',()=>{
     ...good,upperRenderedGaps:good.upperSourceGaps},'loop'),null);
   assert.equal(proposeUpperGapTrials({
     ...good,upperSourceGaps:{...good.upperSourceGaps,usableRows:2}},'loop'),null);
+});
+
+test('five local vertical zones distinguish curve registration, not just global width',()=>{
+  const width=120,height=160;
+  const make=(offset)=>Array.from({length:7},(_,hue)=>{
+    const mask=new Uint8Array(width*height);
+    for(let y=8;y<height-8;y++){
+      const bend=y>height*.50?Math.round((y-height*.5)*.18):0;
+      const start=4+hue*12+bend+offset;
+      for(let x=start;x<start+6;x++)mask[y*width+x]=1;
+    }
+    return mask;
+  });
+  const first=measureHueEnvelopeZones(make(0),width,height);
+  const shifted=measureHueEnvelopeZones(make(5),width,height);
+  assert.equal(first.length,5);
+  assert.equal(shifted.length,5);
+  for(let i=0;i<5;i++){
+    assert.equal(first[i].valid,true);
+    assert.equal(shifted[i].valid,true);
+    assert.equal(first[i].pixels,shifted[i].pixels);
+    assert.equal(shifted[i].meanX-first[i].meanX,5);
+    assert.equal(shifted[i].leftEdge-first[i].leftEdge,5);
+    assert.equal(first[i].meanRowRuns,7);
+  }
+  assert.throws(()=>measureHueEnvelopeZones(make(0),width,5),RangeError);
+});
+
+test('local curve trial plan is fail-closed and never synthesizes a recipe',()=>{
+  const good={
+    envelopeResiduals:Array.from({length:5},(_,zone)=>({zone,valid:true})),
+    upperSourceGaps:{gapPositiveFraction:1},
+    upperRenderedGaps:{gapPositiveFraction:0}
+  };
+  const recipe={stripeWidth:52,spread:42};
+  const hairpin=localCurveProbeSpecs(good,'hairpin',recipe);
+  const loop=localCurveProbeSpecs(good,'loop',recipe);
+  assert.equal(hairpin.length,6);assert.equal(loop.length,6);
+  assert.ok(hairpin.some(x=>x.turnRadiusDelta===7));
+  assert.ok(loop.some(x=>x.loopSweepDelta===5));
+  assert.equal(localCurveProbeSpecs({...good,
+    upperRenderedGaps:{gapPositiveFraction:.9}},'loop',recipe).length,0);
+  assert.equal(localCurveProbeSpecs({...good,
+    envelopeResiduals:Array.from({length:5},(_,zone)=>({zone,valid:zone===1}))},
+    'hairpin',recipe).length,0);
+  assert.equal(localCurveProbeSpecs(good,'wave',recipe).length,0);
 });
