@@ -1406,7 +1406,7 @@ test('cropped repeated stamps refuse unrelated pigment tails despite identical c
    'genuine full plus cropped ribbons still reach the same canonical path');
 });
 
-test('unsupported opposite-edge crop does not become an invented repeated-stamp claim',()=>{
+test('current mirrored Jagged crop restores editable stamps without bypassing source-tail rhythm',()=>{
  const w=220,h=350;
  const original=raster(w,h,(x,y)=>{
    for(let i=0;i<7;i++){
@@ -1421,10 +1421,30 @@ test('unsupported opposite-edge crop does not become an invented repeated-stamp 
    return Array.from(original.data.subarray(at,at+4));
  });
  const signature=describeReconstructionImage(reversed);
- assert.equal(signature.repeatShape?.clipped,undefined,
-   'current canonical recognizer has source-backed right-edge crop only');
- assert.ok(signature.ribbonBands,'pigment axes can remain coherent without crop topology proof');
- assert.ok(!reconstructionCandidates(reversed,normalizeRecipe({seed:'mirror'}))
-   .some(candidate=>candidate.kind==='shape-repeats'),
-   'unsupported mirrored topology must not borrow the source-backed right-edge claim');
+ assert.equal(signature.repeatShape?.clipped,true,
+   'actual supported source geometry may be cropped from either image edge');
+ assert.ok(signature.ribbonBands,'all seven source pigment axes/thickness must cohere');
+ const editable=reconstructionCandidates(reversed,normalizeRecipe({seed:'mirror'}))
+   .find(candidate=>candidate.kind==='shape-repeats');
+ assert.ok(editable,'the mirrored source may use the exact same canonical stamps');
+ assert.equal(editable.recipe.scatteredCount,7);
+ assert.deepEqual(decodeRecipe(encodeRecipe(editable.recipe)),editable.recipe);
+ assert.equal(resolveScene(editable.recipe).objects.length,7);
+ const distorted=raster(w,h,(x,y)=>{
+   for(let i=0;i<7;i++){
+     if(x<(i<4?0:[48,90,133][i-4]))continue;
+     const period=i<4?17:9;
+     if(Math.abs(y-(14+i*44+Math.round(x*.22+4*Math.sin(x/period))))<=5)
+       return colour(HUES[i]);
+   }
+   return [0,0,0,255];
+ });
+ const reflectedDistorted=raster(w,h,(x,y)=>{
+   const at=4*(y*w+(w-x-1));
+   return Array.from(distorted.data.subarray(at,at+4));
+ });
+ assert.notEqual(describeReconstructionImage(reflectedDistorted).repeatShape?.clipped,
+   true,'mirror symmetry cannot license unrelated hidden wave-frequency geometry');
+ assert.ok(!reconstructionCandidates(reflectedDistorted,normalizeRecipe({seed:'mirror-bad'}))
+   .some(candidate=>candidate.kind==='shape-repeats'));
 });
