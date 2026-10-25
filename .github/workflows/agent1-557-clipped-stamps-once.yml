@@ -1,0 +1,63 @@
+name: One-shot cropped hue reconstruction source/fitted PNGs
+on:
+  push:
+    branches: [agent1/557-cropped-hue-shape-stamps-20261024]
+    paths: [.github/workflows/agent1-557-clipped-stamps-once.yml]
+permissions:
+  contents: read
+jobs:
+  blind-source-pairs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install optional production Chromium painter dependencies
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Create genuine source PNGs and IDAT-identical metadata-free twins
+        run: node scripts/review-reconstruction.mjs --out-dir artifacts/sources --only 01-vertical-straight,02-diagonal-straight,03-wave,04-jagged,16-offset-jagged,17-repeated-hue-circles,18-repeated-compound-hole-island
+      - name: Blind inverse fit using this PR, without accessing source recipe truth
+        run: |
+          cp -a artifacts/sources artifacts/experiment
+          node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/experiment
+      - name: Blind same-source control against untouched main inverse engine
+        run: |
+          cp -a artifacts/sources artifacts/control
+          git show origin/main:src/image-path.js > src/image-path.js
+          git show origin/main:src/image-reconstruction.js > src/image-reconstruction.js
+          node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/control
+      - name: Publish precise actual-render improvement or regression record
+        run: |
+          node --input-type=module <<'NODE'
+          import{readFile,writeFile}from'node:fs/promises';
+          const a=JSON.parse(await readFile('artifacts/control/evaluation.json','utf8'));
+          const b=JSON.parse(await readFile('artifacts/experiment/evaluation.json','utf8'));
+          const rows=b.samples.map((x,i)=>({
+            id:x.id,control:a.samples[i].bestError,experiment:x.bestError,
+            delta:x.bestError-a.samples[i].bestError,
+            firstKind:a.samples[i].bestKind,chosenKind:x.bestKind,
+            truthPresentationFloor:x.trueRecipeRenderError
+          }));
+          for(const row of rows)console.log('CROPPED_STAMP_OPTICAL '+JSON.stringify(row));
+          await writeFile('artifacts/cropped-stamps-actual-comparison.json',
+            JSON.stringify({source:'identical current-renderer metadata-free PNG bytes',
+              status:'actual-production-painter-quantification-pending-independent-view',
+              rows},null,2)+'\n');
+          NODE
+      - name: Upload actual source and inferred PNGs for direct independent visual inspection
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reconstruction-557-partial-hue-stamp-optical-pairs
+          path: |
+            artifacts/cropped-stamps-actual-comparison.json
+            artifacts/control/
+            artifacts/experiment/
+          retention-days: 5
+          if-no-files-found: warn
