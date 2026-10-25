@@ -1,5 +1,9 @@
 # Image-to-recipe reconstruction: native and external imports
 
+## CURRENT research-to-build handoff · 24 October 2026
+
+The concrete external-tool / classical vision programme is [Inverse vision: algorithm reuse, evaluation and implementation backlog](RECONSTRUCTION-VISION-ALGORITHM-REUSE-AND-TEST-PLAN-2026-10-24.md). It is subordinate to #557 and the current work queue, **not yet a shipped feature, dependency or validated benchmark**. Prioritize VTracer opt-in GHA vectorization oracle, Euclidean-distance/medial-axis centreline and local-width descriptors for Hairpin/Loop, and experimental mask/edge/topology scoring on existing actual painter outputs. Keep the current 6+10 renderer budget, `image-path.js` importer, canonical scene representation, shared lock/Undo/provenance contracts, and lean CI. Review optical actual-art evidence before promoting any algorithm. Do not duplicate Agent 1's live cropped-tail work (#692 at this writing). Later: polygon boolean/curve fitting on proven defects, soft segmentation on permitted external art, optional WebSAM only after handset cost validation.
+
 ## CURRENT R5 DISPATCH · 24 October 2026
 
 [Live queue and owner](CURRENT-WORK-QUEUE-2026-10-24.md) plus [#557](https://github.com/gamesbyian/wallgen/issues/557) supersede the historically proposed R0–R4 phases below: these foundations, source-faithful provenance/uncertainty, bounded 6+10 real paints, canonical locks, and multiple authentic R0 geometry successes are **already shipped**. Agent 1's next real deficits are displaced Jagged #16 (.22214612), Hairpin #05 (.10786670), Loop #06 (.05383496), and truly reproduced mixed occlusion/pigment/Photo cases. Failed #648 Hairpin tuning stays rejected absent a new source-supported hypothesis. Physical Pixel/human imagery is owner-dependent and NOT TESTED.
