@@ -155,6 +155,18 @@ try{
   }
   const contact=await page.evaluate(()=>window.__textSelectionContact);
   await writeFile(join(output,'contact-sheet.png'),Buffer.from(contact.split(',')[1],'base64'));
+  // Keep the full-resolution artifact; emit a bounded scaled *real rendered*
+  // contact image in the opt-in CI log for independent optical examination.
+  const reviewImage=await page.evaluate(async()=>{
+    const source=new Image();source.src=window.__textSelectionContact;
+    await source.decode();
+    const thumb=document.createElement('canvas');
+    thumb.width=1050;
+    thumb.height=Math.round(source.height*thumb.width/source.width);
+    thumb.getContext('2d').drawImage(source,0,0,thumb.width,thumb.height);
+    return thumb.toDataURL('image/png').split(',')[1];
+  });
+  console.log('TEXT_SELECTION_CONTACT_BASE64='+reviewImage);
   assert.deepEqual(errors,[]);
   const result={status:'PASS',viewport:'Linux Chromium 412x892, NOT physical Android',
     errors,...report};
