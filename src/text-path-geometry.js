@@ -14,11 +14,33 @@ const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 // Myanmar/Indic blocks and supplementary joining scripts (e.g. Adlam).
 // For unverified complex scripts native straight-run paint is safer than
 // inventing isolated glyph shapes and often reversing visual RTL order.
-const nativeBmp=/[\u0590-\u109f\u1700-\u18af\u1a00-\u1cff\ua800-\uabff\ufb1d-\ufdff\ufe70-\ufeff\u200c\u200d\u202a-\u202e\u2066-\u2069]/u;
+const nativeBmp=/[\u0590-\u109f\u1700-\u18af\u1a00-\u1cff\ua800-\uabff\ufb1d-\ufdff\ufe70-\ufeff\u200c\u202a-\u202e\u2066-\u2069]/u;
 const commonSupplementary=/[\p{Script=Han}\p{Script=Common}\p{Script=Inherited}]/u;
 const supplementaryTextual=/[\p{Letter}\p{Number}]/u;
+const pictograph=/\p{Extended_Pictographic}/u;
+// A zero-width joiner is common in native Indic shaping AND emoji sequences.
+// Modern Intl.Segmenter keeps each emoji family/skin-tone/occupation as one
+// canvas fillText unit. Permit that *whole cluster*, never isolated members,
+// but do not fragment arbitrary script-joining controls or use the fallback
+// codepoint iterator as a pretend grapheme segmenter.
+function safeEmojiJoins(line){
+  if(!line.includes('\u200d'))return true;
+  if(typeof Intl==='undefined'||typeof Intl.Segmenter!=='function')return false;
+  for(const cluster of textGraphemes(line)){
+    if(!cluster.includes('\u200d'))continue;
+    const parts=cluster.split('\u200d');
+    if(parts.some(part=>!part||!pictograph.test(part)||
+       supplementaryTextual.test(part)))return false;
+  }
+  return true;
+}
 export function canCurveText(line){
-  if(nativeBmp.test(line))return false;
+  if(nativeBmp.test(line)||!safeEmojiJoins(line))return false;
+  // Without grapheme segmentation, a letter and its combining marks (or
+  // regional-indicator flags) would be painted as separate rotated glyphs.
+  // Retain the native line until true cluster segmentation is available.
+  if((typeof Intl==='undefined'||typeof Intl.Segmenter!=='function')&&
+     /[\p{Mark}\p{Regional_Indicator}]/u.test(line))return false;
   // Most new RTL/Indic scripts reside above the BMP. Preserve intact lines
   // for unknown supplementary letters; allow CJK ideographs, symbols and
   // emoji clusters already supported by Intl grapheme segmentation.
