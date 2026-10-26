@@ -45,6 +45,9 @@ export function isSimpleRightToLeft(line){
   }
   return found;
 }
+// Pure direction controls alter Bidi layout but have no visible ink and must
+// not consume a rainbow-letter/word colour slot between real glyphs.
+const directionOnly=/^[\u061c\u200e\u200f\u202a-\u202e\u2066-\u2069]+$/u;
 export function rainbowTextStops(line,mode,colours,startIndex,measure,{rightToLeft=false}={}){
   if(!['rainbow-letter','rainbow-word'].includes(mode))
     throw Error('Unknown rainbow segmentation mode');
@@ -57,7 +60,7 @@ export function rainbowTextStops(line,mode,colours,startIndex,measure,{rightToLe
     const width=Number.isFinite(raw)?Math.max(0,raw):0;
     spans.push({width,colour:colours[colourIndex%colours.length]});
     weight+=width;
-    if(unit.trim())colourIndex++;
+    if(unit.trim()&&!directionOnly.test(unit))colourIndex++;
   }
   if(!spans.length||weight===0)
     return {stops:[],nextIndex:colourIndex};

@@ -347,3 +347,25 @@ test('live Text controls use current renderer path status in accessible message'
   assert.match(source,/textPathStatus\(item,getRecipe\(\)\.customPath\)/);
   assert.match(source,/data-text-path-status aria-live="polite"/);
 });
+
+test('LRM and RLM bidi controls force intact native shaping rather than curved glyph fragments',()=>{
+  for(const marker of ['\u200e','\u200f']){
+    const line='HELLO'+marker+'123';
+    assert.equal(canCurveText(line),false,
+      'direction control must preserve native whole-line Bidi resolution');
+    const recipe=normalizeRecipe({textOverlays:[{
+      id:'direction',text:line,path:'wave',pathHeight:70,
+      font:'modern',colour:'rainbow-letter',outline:'none',size:56
+    }]});
+    const item=recipe.textOverlays[0];
+    assert.equal(item.path,'wave','author-owned path must remain canonical');
+    assert.equal(layoutTextOnPath(item,line,()=>16).supported,false);
+    const ctx=context();
+    drawTextOverlays(ctx,600,1300,resolveScene(recipe));
+    assert.deepEqual(ctx.calls.filter(c=>c[0]==='fill').map(c=>c[1]),[line],
+      'native renderer paints the complete marked string exactly once');
+    assert.equal(hitTextAtLayout([item],{x:300,y:650},()=>line.length*12)?.id,
+      'direction','text selection uses intact native-shaped line fallback');
+  }
+  assert.equal(canCurveText('HELLO WORLD'),true,'ordinary Latin curve unchanged');
+});

@@ -113,3 +113,19 @@ test('bounded fallback graphemes keep accents, ZWJ emoji, skin tones and paired 
     else delete Intl.Segmenter;
   }
 });
+
+test('invisible direction marks do not consume rainbow-letter colour slots',()=>{
+  for(const mark of ['\u200e','\u200f','\u2066','\u2069','\u061c']){
+    const line='A'+mark+'B';
+    const result=rainbowTextStops(line,'rainbow-letter',palette,0,width);
+    assert.equal(result.nextIndex,2,
+      'a non-ink Bidi control cannot use one of seven authored hues');
+    assert.equal(result.stops[0].colour,'R');
+    assert.equal(result.stops.at(-1).colour,'O',
+      'B must follow A directly in logical colour order');
+    assert.ok(result.stops.every(s=>Number.isFinite(s.offset)));
+    const follow=rainbowTextStops('C','rainbow-letter',palette,result.nextIndex,width);
+    assert.equal(follow.stops[0].colour,'Y','next line colour remains contiguous');
+  }
+  assert.equal(rainbowTextStops('AB','rainbow-letter',palette,0,width).nextIndex,2);
+});
