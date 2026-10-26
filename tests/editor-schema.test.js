@@ -30,6 +30,10 @@ test('self-crossing choices share Path Constraints with coherence, not a second 
   assert.ok(!TOOL_LIST.some(tool=>tool.id==='crossings'));
   assert.deepEqual(scopedKeys('tool','safety'),['geometrySafety','crossingMode']);
   assert.deepEqual(scopedKeys('tool','crossings'),[]);
+  assert.deepEqual(scopedKeys('tool','palette-tone'),
+    ['paletteToneEnabled','paletteSaturation','paletteLightness']);
+  assert.deepEqual(scopedKeys('tool','tone'),['tonalContrast'],
+    'Band tones and custom palette Tone must never share a randomizer scope');
 });
 test('each randomization scope targets only its own canonical settings',()=>{
   const fields=new Set(TOOL_LIST.flatMap(t=>t.settings));

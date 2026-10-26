@@ -447,6 +447,10 @@ function strippedCandidateBase(input,background){
   // Preserve the user's seed/locks for canonical edit semantics, but start
   // with an explicitly neutral treatment rather than inheriting hidden Photo.
   return {...base,family:'studio',palette:'classic',background,
+    // A prior user-enabled Tone is no evidence of the source's saturation.
+    // Automatic inverse fitting must begin from neutral classic pigment,
+    // just as it clears stale reversed layers and imported shapes.
+    paletteToneEnabled:false,paletteSaturation:92,paletteLightness:58,
     // These are authored scene edits, not evidence in imported source pixels.
     // A reversed palette or an old per-slot stamp changes the colour/outline
     // of new candidates even when the same independent source is analysed.

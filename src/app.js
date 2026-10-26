@@ -1,4 +1,4 @@
-import { OUTPUT_WIDTH, OUTPUT_HEIGHT, NAMES, normalizeRecipe, resolveScene, encodeRecipe, decodeRecipe, newSeed, randomizeAllRecipe, respectSettingLocks, LOCKABLE_SETTINGS } from './model.js';
+import { OUTPUT_WIDTH, OUTPUT_HEIGHT, NAMES, COLOR_STORIES, normalizeRecipe, resolveScene, encodeRecipe, decodeRecipe, newSeed, randomizeAllRecipe, respectSettingLocks, LOCKABLE_SETTINGS } from './model.js';
 import { drawWallpaper, presentNudgedArtwork } from './renderer.js?v=20261024-text-overlays1';
 import {normalizePhotoLook,PHOTO_PRESETS} from './photo-look.js';
 import {photoPreviewRecipe} from './photo-preview-compare.js';
@@ -43,7 +43,7 @@ const notice = document.getElementById('notice');
 const studioStatus = document.getElementById('studioStatus');
 const favoriteButton = document.getElementById('favorite');
 const FAVORITES_KEY = 'wallgen:favorites:v1';
-const FIELDS = ['primesOnly','family','structure','radialMode','rayCount','rayRotation','rayTwist','rayCoverage','rayCore','fieldCenterX','fieldCenterY','regionMode','regionCount','regionJitter','regionSides','scatteredCount','scatteredMinSize','scatteredMaxSize','scatteredVariation','scatteredSpacing','scatteredEdgeCrop','scatteredOverlap','scatteredShapeKind','dividerColor','dividerWidth','composition','repeatCount','repeatSpacing','orientation','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','geometry','turnRadius','hairpinAngle','loopRadius','loopSweep','geometrySafety','extendDrawnPath','crossingMode','stepCount','chevronSharpness','loopAspect','construction','motif','lineStyle','pathLength','tonalContrast','brushRoughness','dotSize','dotSpacing','endTaper','shapeFrequency','shapeDepth','motifSize','motifFrequency','palette','material','outline','background','lightingMood','lightDirection','lightStrength','shadowStrength','stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection','textureCoverage','textureRotation','textureBlend','textureLayer2Enabled','material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2','textureLayer3Enabled','material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3','chaos','stripeWidth','spread','textureStrength','textureScale','textureDisplacement','individuality','patternHomogeneity','overridePatternHomogeneity','gap','outlineBuffer','glow'];
+const FIELDS = ['primesOnly','family','structure','radialMode','rayCount','rayRotation','rayTwist','rayCoverage','rayCore','fieldCenterX','fieldCenterY','regionMode','regionCount','regionJitter','regionSides','scatteredCount','scatteredMinSize','scatteredMaxSize','scatteredVariation','scatteredSpacing','scatteredEdgeCrop','scatteredOverlap','scatteredShapeKind','dividerColor','dividerWidth','composition','repeatCount','repeatSpacing','orientation','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','geometry','turnRadius','hairpinAngle','loopRadius','loopSweep','geometrySafety','extendDrawnPath','crossingMode','stepCount','chevronSharpness','loopAspect','construction','motif','lineStyle','pathLength','tonalContrast','brushRoughness','dotSize','dotSpacing','endTaper','shapeFrequency','shapeDepth','motifSize','motifFrequency','palette','paletteToneEnabled','paletteSaturation','paletteLightness','material','outline','background','lightingMood','lightDirection','lightStrength','shadowStrength','stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection','textureCoverage','textureRotation','textureBlend','textureLayer2Enabled','material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2','textureLayer3Enabled','material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3','chaos','stripeWidth','spread','textureStrength','textureScale','textureDisplacement','individuality','patternHomogeneity','overridePatternHomogeneity','gap','outlineBuffer','glow'];
 let current = normalizeRecipe();
 let usageRecorder=null; // Initialized after first render; no default collection.
 let usageGitHubSync=null;
@@ -415,6 +415,9 @@ function toControls(recipe) {
  */
 function inactiveSettingKeys(recipe,scene){
   const inactive=new Set();
+  if(!recipe.paletteToneEnabled){
+    inactive.add('paletteSaturation');inactive.add('paletteLightness');
+  }
   const paths=recipe.structure==='paths',radial=recipe.structure==='radial',regions=recipe.structure==='regions';
   if(!paths){
     for(const key of ['composition','repeatCount','repeatSpacing','orientation',
@@ -2084,6 +2087,28 @@ document.addEventListener('change',event=>{
     return;
   }
   if(!FIELDS.includes(event.target.name)||event.target.name==='family')return;
+  if(event.target.name==='paletteToneEnabled'&&event.target.checked){
+    // First enabling tone keeps the currently selected colour story
+    // visually unchanged. The author can then deliberately move either
+    // control. Both values remain first-class recipe state afterwards.
+    const story=COLOR_STORIES[currentScene?.palette]??COLOR_STORIES.classic;
+    if(!current.paletteToneEnabled){
+      for(const [key,value] of [['paletteSaturation',story.sat],
+        ['paletteLightness',story.light]]){
+        const field=form.elements.namedItem(key);
+        field.value=String(value);
+        // These controls were dormant at the start of the native change.
+        // Make their newly visible values part of this very same atomic Undo
+        // transaction, not the stale values from the disabled form state.
+        field.dataset.inactive='false';
+      }
+      for(const [key,value] of [['paletteSaturation',story.sat],
+        ['paletteLightness',story.light]]){
+        const output=form.querySelector('output[for="'+key+'"]');
+        if(output)output.textContent=value+'%';
+      }
+    }
+  }
   clearTimeout(rangeTimeout);
   updateControlsFromInputs();
 });

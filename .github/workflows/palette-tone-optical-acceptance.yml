@@ -1,0 +1,84 @@
+name: Palette Tone genuine browser optical acceptance
+# Expensive real-browser/editor/export evidence is manual-only.
+# No automatic Playwright installation or 19.8MP painter on normal PRs.
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: palette-tone-proof-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: false
+jobs:
+  optical:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify canonical and scoped colour semantics
+        run: node --test tests/canonical-palette-tone.test.js tests/editor-schema.test.js tests/recipe-format-history.test.js
+      - name: Install one-shot Chromium
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Test actual mobile editor, canonical Undo and visible 19.8MP export
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/roygbiv-tone-http.log 2>&1 &
+          sleep 2
+          node tests/palette-tone-production-browser.mjs
+      - name: Produce exact canonical Tone reference and worker paintings
+        run: |
+          mkdir -p artifacts/palette-tone-render
+          node --input-type=module <<'JS'
+          import {writeFileSync} from 'node:fs';
+          import {normalizeRecipe} from './src/model.js';
+          for(const item of [
+            {name:'default',paletteToneEnabled:false,paletteSaturation:23,paletteLightness:13},
+            {name:'soft',paletteToneEnabled:true,paletteSaturation:23,paletteLightness:70},
+            {name:'dark',paletteToneEnabled:true,paletteSaturation:88,paletteLightness:13}
+          ]){
+            const {name,...values}=item;
+            const recipe=normalizeRecipe({seed:'tone-real-physical-pixels',
+              family:'studio',palette:'classic',structure:'regions',
+              regionMode:'scattered',scatteredCount:7,material:'none',
+              outline:'none',...values});
+            writeFileSync('artifacts/palette-tone-render/'+name+'.json',
+              JSON.stringify(recipe,null,2)+'\n');
+          }
+          JS
+          for case_id in default soft dark; do
+            if test "$case_id" = dark; then w=3024; h=6552; else w=600; h=1300; fi
+            node scripts/render-headless.mjs --recipe "artifacts/palette-tone-render/$case_id.json" --backend reference --width "$w" --height "$h" --out "artifacts/palette-tone-render/$case_id-reference.png"
+            node scripts/render-headless.mjs --recipe "artifacts/palette-tone-render/$case_id.json" --backend worker --width "$w" --height "$h" --out "artifacts/palette-tone-render/$case_id-worker.png"
+            cmp "artifacts/palette-tone-render/$case_id-reference.png" "artifacts/palette-tone-render/$case_id-worker.png"
+          done
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          import {extractPngRecipe} from './src/png-metadata.js';
+          const set={};
+          for(const id of ['default','soft','dark']){
+            const recipe=JSON.parse(readFileSync('artifacts/palette-tone-render/'+id+'.json'));
+            const bytes=readFileSync('artifacts/palette-tone-render/'+id+'-reference.png');
+            assert.deepEqual(extractPngRecipe(bytes),recipe);
+            const w=bytes.readUInt32BE(16),h=bytes.readUInt32BE(20);
+            if(id==='dark')assert.deepEqual([w,h],[3024,6552]);
+            else assert.deepEqual([w,h],[600,1300]);
+            set[id]={width:w,height:h,bytes:bytes.length,
+              tone:recipe.paletteToneEnabled,
+              saturation:recipe.paletteSaturation,lightness:recipe.paletteLightness};
+          }
+          console.log('PALETTE_TONE_EXACT_WORKER_REFERENCE '+JSON.stringify(set));
+          JS
+      - name: Save genuine editor screenshots and rendered wallpapers
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: canonical-palette-tone-genuine-png
+          path: |
+            artifacts/palette-tone-browser
+            artifacts/palette-tone-render
+          if-no-files-found: warn
+          retention-days: 7
