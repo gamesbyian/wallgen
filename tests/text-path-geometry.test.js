@@ -403,3 +403,24 @@ test('invisible format controls do not steal curved colours or create selectable
   assert.equal(hitTextAtLayout([invisible],{x:300,y:650},
     ()=>20),null,'an entirely invisible control is not pickable ink');
 });
+
+test('curved and native-fallback hit testing ignores zero-alpha top overlays',()=>{
+  const background={id:'under',enabled:true,text:'INK',x:50,y:50,size:60,
+    rotation:0,outline:'none',opacity:1};
+  const center={x:300,y:650};
+  for(const path of ['none','wave','arc','circle']){
+    const overlay={...background,id:'transparent',text:'GHOST',
+      path,pathHeight:90,opacity:0};
+    assert.equal(hitTextAtLayout([overlay],center,pickMeasure),null,path);
+    assert.equal(hitTextAtLayout([background,overlay],center,pickMeasure)?.id,
+      'under',path);
+  }
+  const invisibleNative={...background,id:'format-only',
+    text:'\u061c\u200f',path:'wave'};
+  assert.equal(hitTextAtLayout([invisibleNative],center,pickMeasure),null,
+    'native shaped fallback must not expose invisible-only selectable ink');
+  assert.equal(hitTextAtLayout([background,invisibleNative],center,pickMeasure)?.id,
+    'under');
+  const faded={...background,id:'faded',opacity:.01,path:'none'};
+  assert.equal(hitTextAtLayout([background,faded],center,pickMeasure)?.id,'faded');
+});
