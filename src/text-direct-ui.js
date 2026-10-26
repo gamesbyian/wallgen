@@ -5,7 +5,7 @@ import {typefaceCssFamily} from './typography-fonts.js';
 import {compactTextGripLayout} from './text-grip-layout.js';
 import {designPointFromPointer,dragTextOverlay,
   dragTextTransform,transformTextOverlay,measuredTextBounds,
-  measureCanvasText} from './text-direct-geometry.js';
+  measureCanvasText,textGestureOwnsCurrentRecipe} from './text-direct-geometry.js';
 import {hitTextAtLayout} from './text-path-geometry.js';
 
 // Opt-in touch gesture, with the same one-pointerup/one-Undo contract already
@@ -104,6 +104,13 @@ export function installTextCanvasMover({
   function redraw(){
     if(!active)return;
     const recipe=getRecipe();
+    // Another control, import, lock update or Undo has committed a newer
+    // canonical recipe during pointer capture. Drop the abandoned draft;
+    // pointerup must not replay the old object over the new edit.
+    if(drag&&!textGestureOwnsCurrentRecipe(drag.original,recipe,drag.id))
+      drag=null;
+    if(transformDrag&&!textGestureOwnsCurrentRecipe(
+      transformDrag.original,recipe,transformDrag.id))transformDrag=null;
     // Canvas mover and the Text pane must agree: an invisible, disabled or
     // locked-only collection has no movable ink. Never re-enable this button
     // during a frame redraw after the pane correctly disabled it.
@@ -176,7 +183,9 @@ export function installTextCanvasMover({
     event.preventDefault();event.stopImmediatePropagation();
     const finished=drag;drag=null;
     try{canvas.releasePointerCapture(event.pointerId);}catch{}
-    if(finished.moved)changeRecipe(finished.next,{cause:'text_move_on_canvas'});
+    if(finished.moved&&textGestureOwnsCurrentRecipe(
+      finished.original,getRecipe(),finished.id))
+      changeRecipe(finished.next,{cause:'text_move_on_canvas'});
     redraw();
   },true);
   canvas.addEventListener('pointercancel',event=>{
@@ -213,7 +222,8 @@ export function installTextCanvasMover({
       event.preventDefault();event.stopPropagation();
       transformDrag=null;
       try{handle.releasePointerCapture(event.pointerId);}catch{}
-      if(state.next!==state.original)
+      if(state.next!==state.original&&textGestureOwnsCurrentRecipe(
+        state.original,getRecipe(),state.id))
         changeRecipe(state.next,{cause:'text_'+mode+'_on_canvas'});
       redraw();
     });
