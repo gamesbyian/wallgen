@@ -1,6 +1,6 @@
 import {DESIGN_WIDTH,DESIGN_HEIGHT} from './model.js';
-import {textGraphemes} from './text-rainbow-shaping.js';
-import {textInkSelectionReach,textOverlayPaintsInk} from './text-overlays.js';
+import {textGraphemes,textOverlayPaintsInk} from './text-rainbow-shaping.js';
+import {textInkSelectionReach} from './text-overlays.js';
 
 // Text overlay coordinates refer to the finished wallpaper, independent of
 // stripe/world coordinates and the editor's camera/nudge controls.
