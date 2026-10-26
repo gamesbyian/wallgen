@@ -173,15 +173,20 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle,onShape,
     recipeWhy.disabled=true;
     if(recipeExplanation.matches(':popover-open'))recipeExplanation.hidePopover();
     if(!onRecipe||!onRender)return;
-    const candidates=reconstructionCandidates(pixels,getRecipe());
+    // Candidate analysis already extracted the source geometry and pigment
+    // masks once. Reuse its read-only summary instead of repeating expensive
+    // contour/radial/shape discovery for the refusal and fit preview.
+    let desc;
+    const candidates=reconstructionCandidates(pixels,getRecipe(),{
+      onDescription:analysis=>{desc=analysis;}
+    });
     if(!candidates.length){
-      showRecipeUnavailable(describeReconstructionRefusal(describeReconstructionImage(pixels),pixels));
+      showRecipeUnavailable(describeReconstructionRefusal(desc,pixels));
       return;
     }
     const frame=document.createElement('canvas');
     frame.width=RECONSTRUCTION_FRAME.width;frame.height=RECONSTRUCTION_FRAME.height;
     const g=frame.getContext('2d',{willReadFrequently:true});
-    const desc=describeReconstructionImage(pixels);
     g.fillStyle=desc.background;g.fillRect(0,0,frame.width,frame.height);
     const box=reconstructionPlacement(width,height);
     g.drawImage(image,box.x*frame.width/600,box.y*frame.height/1300,
