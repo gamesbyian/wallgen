@@ -1,0 +1,96 @@
+name: Source-dark fitted Tone full-scale canonical export
+# Single PR optical qualification; retire PR trigger after result.
+on:
+  pull_request:
+    paths:
+      - 'scripts/evaluate-reconstruction-r0.mjs'
+      - '.github/workflows/reconstruction-dark-tone-full-resolution.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: source-dark-full-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: false
+jobs:
+  full:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check source-only dark Tone and opt-in recipe receipt contracts
+        run: node --test tests/reconstruction-measured-dark-tone.test.js tests/reconstruction-r0-evaluate.test.js
+      - name: Install temporary Chromium
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Independently author dark/soft/neutral source art and preserve source SHA
+        run: |
+          node scripts/review-reconstruction-external-pigments.mjs --collection low-chroma --out-dir artifacts/dark-tone-full
+          sha256sum artifacts/dark-tone-full/dim-seven-polygons.png > artifacts/dark-tone-full/source.sha256
+      - name: Recover source-visible inferred recipe using the NORMAL six-plus-ten painter
+        run: |
+          node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/dark-tone-full --save-best-recipe
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          import {extractPngRecipe} from './src/png-metadata.js';
+          const dir='artifacts/dark-tone-full/';
+          const source=readFileSync(dir+'dim-seven-polygons.png');
+          assert.equal(extractPngRecipe(source),null,'original independent image cannot contain an artist recipe');
+          const report=JSON.parse(readFileSync(dir+'evaluation.json'));
+          assert.equal(report.samples.length,4);
+          const dark=report.samples.find(s=>s.id==='dim-seven-polygons');
+          assert.equal(dark.bestKind,'hue-visible-shapes');
+          assert.ok(dark.bestError<.03&&dark.candidateCount<=6&&dark.refinementRenders<=10);
+          const recipe=JSON.parse(readFileSync(dir+'dim-seven-polygons.r0-best-inferred.recipe.json'));
+          assert.equal(recipe.paletteToneEnabled,true);
+          assert.ok(recipe.paletteSaturation>=80&&recipe.paletteSaturation<=97);
+          assert.ok(recipe.paletteLightness>=11&&recipe.paletteLightness<=17);
+          assert.equal(recipe.scatteredShapeOverrides.length,7);
+          for(const id of ['soft-seven-stars','neutral-seven-control','partial-two-hues']){
+            const r=report.samples.find(s=>s.id===id);
+            assert.equal(r.candidateCount,0,'fabricated unsupported source '+id);
+          }
+          console.log('SOURCE_DARK_REAL_INFERRED_FIT '+JSON.stringify({
+            error:dark.bestError,sourceRecipe:false,
+            recoveredCount:recipe.scatteredShapeOverrides.length,
+            saturation:recipe.paletteSaturation,lightness:recipe.paletteLightness,
+            coarse:dark.candidateCount,refinement:dark.refinementRenders
+          }));
+          JS
+      - name: Paint actual 3024x6552 fitted source recipe separately through reference and worker
+        run: |
+          src=artifacts/dark-tone-full/dim-seven-polygons.r0-best-inferred.recipe.json
+          node scripts/render-headless.mjs --recipe "$src" --width 3024 --height 6552 --backend reference --out artifacts/dark-tone-full/dim-seven-polygons.fitted-full-reference.png
+          node scripts/render-headless.mjs --recipe "$src" --width 3024 --height 6552 --backend worker --out artifacts/dark-tone-full/dim-seven-polygons.fitted-full-worker.png
+          cmp artifacts/dark-tone-full/dim-seven-polygons.fitted-full-reference.png artifacts/dark-tone-full/dim-seven-polygons.fitted-full-worker.png
+          sha256sum -c artifacts/dark-tone-full/source.sha256
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          import {extractPngRecipe} from './src/png-metadata.js';
+          const d='artifacts/dark-tone-full/';
+          const recipe=JSON.parse(readFileSync(d+'dim-seven-polygons.r0-best-inferred.recipe.json'));
+          for(const backend of ['reference','worker']){
+            const bytes=readFileSync(d+'dim-seven-polygons.fitted-full-'+backend+'.png');
+            assert.equal(bytes.readUInt32BE(16),3024);
+            assert.equal(bytes.readUInt32BE(20),6552);
+            assert.deepEqual(extractPngRecipe(bytes),recipe,
+              'full-resolution output must restore exact source-INFERRED editable recipe');
+            console.log('SOURCE_DARK_REAL_FULL_PNG '+JSON.stringify({
+              backend,width:3024,height:6552,pngBytes:bytes.length,
+              perHueObjects:recipe.scatteredShapeOverrides.length
+            }));
+          }
+          JS
+      - name: Retain actual original source, inferred recipe and both painter exports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: source-dark-current-painter-full-19m
+          path: artifacts/dark-tone-full
+          if-no-files-found: warn
+          retention-days: 7
