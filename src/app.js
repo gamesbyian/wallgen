@@ -2093,8 +2093,15 @@ document.addEventListener('change',event=>{
     // control. Both values remain first-class recipe state afterwards.
     const story=COLOR_STORIES[currentScene?.palette]??COLOR_STORIES.classic;
     if(!current.paletteToneEnabled){
-      form.elements.namedItem('paletteSaturation').value=String(story.sat);
-      form.elements.namedItem('paletteLightness').value=String(story.light);
+      for(const [key,value] of [['paletteSaturation',story.sat],
+        ['paletteLightness',story.light]]){
+        const field=form.elements.namedItem(key);
+        field.value=String(value);
+        // These controls were dormant at the start of the native change.
+        // Make their newly visible values part of this very same atomic Undo
+        // transaction, not the stale values from the disabled form state.
+        field.dataset.inactive='false';
+      }
       for(const [key,value] of [['paletteSaturation',story.sat],
         ['paletteLightness',story.light]]){
         const output=form.querySelector('output[for="'+key+'"]');
