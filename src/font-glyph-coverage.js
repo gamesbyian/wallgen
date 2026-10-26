@@ -124,6 +124,10 @@ export function rememberFontCoverage(id,bytes){
 }
 export const cachedFontCoverage=id=>coverageByFont.get(id)||null;
 export const fontCoverageChecked=id=>coverageByFont.has(id);
+// These Unicode controls direct layout or joining but have no standalone
+// visible outline in a font cmap. Missing-glyph diagnostics must not present
+// them as broken letters (especially for native Bidi text and ZWJ emoji).
+const nonInkFormatting=/[\u061c\u200c-\u200f\u202a-\u202e\u2060\u2066-\u2069\ufeff]/u;
 export function missingFontCodepoints(coverage,text){
   if(!coverage||typeof coverage.has!=='function'||typeof text!=='string')
     return null;
@@ -131,9 +135,8 @@ export function missingFontCodepoints(coverage,text){
   for(const char of text){
     const cp=char.codePointAt(0);
     // Formatting controls/variation selectors do not need their own outline.
-    if(/\s/u.test(char)||cp<0x20||cp===0x200c||cp===0x200d||
-      (cp>=0xfe00&&cp<=0xfe0f)||(cp>=0xe0100&&cp<=0xe01ef)||
-      cp>=0x202a&&cp<=0x202e||cp>=0x2066&&cp<=0x2069)continue;
+    if(/\s/u.test(char)||cp<0x20||nonInkFormatting.test(char)||
+      (cp>=0xfe00&&cp<=0xfe0f)||(cp>=0xe0100&&cp<=0xe01ef))continue;
     if(!coverage.has(cp))missing.add(cp);
   }
   return [...missing].sort((a,b)=>a-b);

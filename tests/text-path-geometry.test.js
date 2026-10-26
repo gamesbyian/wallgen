@@ -369,3 +369,20 @@ test('LRM and RLM bidi controls force intact native shaping rather than curved g
   }
   assert.equal(canCurveText('HELLO WORLD'),true,'ordinary Latin curve unchanged');
 });
+
+
+test('Arabic Letter Mark preserves native bidirectional whole-line painting',()=>{
+  const marked='ABC\u061c123';
+  assert.equal(canCurveText(marked),false,
+    'ALM is a directional control even without Arabic visible letters');
+  const item={id:'alm',text:marked,enabled:true,x:50,y:50,size:60,
+    path:'arc',pathHeight:75,outline:'none'};
+  assert.equal(layoutTextOnPath(item,marked,()=>14).supported,false);
+  const ctx=context();drawTextOverlays(ctx,600,1300,resolveScene(
+    normalizeRecipe({textOverlays:[item]})));
+  assert.deepEqual(ctx.calls.filter(call=>call[0]==='fill').map(call=>call[1]),
+    [marked],'never fragment directional control into isolated curved glyphs');
+  assert.equal(hitTextAtLayout([item],{x:300,y:650},
+    (_item,line)=>line.length*14)?.id,'alm');
+  assert.equal(canCurveText('ABC123'),true);
+});

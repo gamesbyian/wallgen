@@ -15,7 +15,7 @@ const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 // Myanmar/Indic blocks and supplementary joining scripts (e.g. Adlam).
 // For unverified complex scripts native straight-run paint is safer than
 // inventing isolated glyph shapes and often reversing visual RTL order.
-const nativeBmp=/[\u0590-\u109f\u1700-\u18af\u1a00-\u1cff\ua800-\uabff\ufb1d-\ufdff\ufe70-\ufeff\u200c\u200e\u200f\u202a-\u202e\u2066-\u2069]/u;
+const nativeBmp=/[\u061c\u0590-\u109f\u1700-\u18af\u1a00-\u1cff\ua800-\uabff\ufb1d-\ufdff\ufe70-\ufeff\u200c\u200e\u200f\u202a-\u202e\u2066-\u2069]/u;
 const commonSupplementary=/[\p{Script=Han}\p{Script=Common}\p{Script=Inherited}]/u;
 const supplementaryTextual=/[\p{Letter}\p{Number}]/u;
 const pictograph=/\p{Extended_Pictographic}/u;

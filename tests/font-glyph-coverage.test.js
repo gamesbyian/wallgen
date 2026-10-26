@@ -113,3 +113,22 @@ test('UI checks the selected live font rather than exposing private glyph data',
   assert.match(source,/glyphCheckVersion/);
   assert.doesNotMatch(source,/fetch\([^)]*text/);
 });
+
+
+test('directional formatting and native joining controls do not masquerade as missing glyphs',()=>{
+  const coverage=inspectFontCmap(fontFixture(4));
+  const controls=['\u061c','\u200c','\u200d','\u200e','\u200f',
+    '\u202a','\u202e','\u2060','\u2066','\u2069','\ufeff',
+    '\ufe0e','\ufe0f','\u{e0100}'];
+  for(const mark of controls){
+    assert.deepEqual(missingFontCodepoints(coverage,'A'+mark+'B'),[],
+      'font cmap must not falsely require a visible control glyph U+'+
+      mark.codePointAt(0).toString(16));
+    assert.equal(missingGlyphNotice(coverage,'A'+mark+'B'),'');
+  }
+  assert.deepEqual(missingFontCodepoints(coverage,'A\u200f☃B'),[0x2603],
+    'a real missing visible snowman is still disclosed');
+  const joined='A\u200dB';
+  assert.equal(missingGlyphNotice(coverage,joined),'',
+    'joining mechanism is not an unmapped visible glyph by itself');
+});
