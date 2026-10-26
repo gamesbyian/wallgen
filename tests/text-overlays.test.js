@@ -308,3 +308,22 @@ test('asynchronous font import binds the initiating caption ID, not the later pi
   assert.deepEqual(after,[{id:'one',font:'pack-bangers'},own[1]]);
   assert.equal(after[1].font,'editorial');
 });
+
+test('hidden glyphs remain authorable but never demand a local or bundled font load',async()=>{
+  const {textOverlayPaintsInk}=await import('../src/text-rainbow-shaping.js');
+  const {recipeLocalFontIds}=await import('../src/local-fonts.js');
+  const {bundledFontsReady}=await import('../src/bundled-fonts.js');
+  const local='user-'+'0'.repeat(64);
+  const invisible=normalizeRecipe({textOverlays:[
+    {id:'private',text:'CAPTION',font:local,opacity:0},
+    {id:'bundled',text:'\u200b\u2060',font:'pack-bangers'}
+  ]});
+  assert.deepEqual(invisible.textOverlays.map(textOverlayPaintsInk),[false,false]);
+  assert.deepEqual(recipeLocalFontIds(invisible),[]);
+  assert.equal(bundledFontsReady(invisible),true);
+  const revealed=normalizeRecipe({...invisible,textOverlays:[
+    {...invisible.textOverlays[0],opacity:.05}
+  ]});
+  assert.equal(textOverlayPaintsInk(revealed.textOverlays[0]),true);
+  assert.deepEqual(recipeLocalFontIds(revealed),[local]);
+});
