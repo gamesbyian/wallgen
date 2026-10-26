@@ -2,6 +2,8 @@
 
 **Start here.** This file is a *stable execution protocol*, not a timeline. Read [the product contract](docs/PRODUCT-CONTRACT-2026-10-26.md) for owner requirements and [the **single live work queue**](docs/CURRENT-WORK-QUEUE-2026-10-24.md) for current priorities and issue ownership. Check GitHub `main`, open PRs/issues and the owning source/tests **again** immediately before work. Historical dated material under the queue, roadmap, handoff and integration ledger is evidence, not a second dispatch. Never use an old SHA, branch count or owner list as present fact without refreshing it.
 
+**Owner staffing update (26 October): no other ROYGBIV agents are presently working.** The current autonomous worker may edit either specialist lane (#557 or #653), shared source, and integration files as needed. Historical Agent 1/2 labels are scopes, not concurrent ownership reservations. Choose one independently reproducible useful slice at a time, refresh `main` between merges, and leave the queue accurate. Do not assume somebody else is progressing work.
+
 **26 October 2026 checkpoint, explicitly perishable:** independent software integration [#664](https://github.com/gamesbyian/wallgen/issues/664) is **closed**. Outstanding owner lanes were reconstruction [#557](https://github.com/gamesbyian/wallgen/issues/557) and typography [#653](https://github.com/gamesbyian/wallgen/issues/653), with zero open PRs at this reconciliation. No automatic standing Agent 3 lane is needed. Assign independent integration/branch rescue only when a new evidenced conflict, stranded deliverable or cross-lane defect exists. Agents 1 and 2 may independently progress in parallel; respect their source ownership.
 
 ## Product and engineering priorities
