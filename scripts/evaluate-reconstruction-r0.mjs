@@ -330,9 +330,16 @@ async function evaluate(opts){
           // palette evidence as production candidate selection. Never reveal
           // the withheld sidecar recipe to the inverse phase.
           const {describeReconstructionImage}=await import('/src/image-reconstruction.js');
-          const palette=describeReconstructionImage(source).paletteHypothesis?.palette??'classic';
+          const sourceDescriptor=describeReconstructionImage(source);
+          const palette=sourceDescriptor.paletteHypothesis?.palette??'classic';
           const candidate=observedHueShapeRecipe(source,p,
-            normalizeRecipe({seed:'r0-anonymous'}),{paletteHint:palette});
+            normalizeRecipe({seed:'r0-anonymous'}),{
+              paletteHint:palette,
+              // Same source-only compact first-N gate as production. This
+              // explicitly opt-in research paint saves the full-size export
+              // recipe without changing normal six-candidate selection.
+              allowPartial:sourceDescriptor.incompleteColourRegions
+            });
           if(candidate){
             const canvas=render(candidate.recipe);
             const pixels=canvas.getContext('2d',
