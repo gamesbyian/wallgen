@@ -60,6 +60,9 @@ export function observedHueShapeRecipe(image,placement,currentInput,
     family:'studio',palette:paletteHint,
     background:colours.background,
     structure:'regions',regionMode:'scattered',
+    // Source-visible hues are indexed in normal ROYGBIV order; stale editor
+    // reversal/layer edits cannot imply this source's colour or precedence.
+    reverseStripes:false,scatteredLayerOrder:[],
     scatteredShapeKind:'imported',scatteredShape:null,
     scatteredShapeOverrides:items.map(item=>({
       index:item.index,shape:item.shape})),
@@ -83,6 +86,7 @@ export function observedHueShapeRecipe(image,placement,currentInput,
     candidate.scatteredOverrides?.length!==7)return null;
   const effective=respectSettingLocks(original,candidate);
   if(effective.structure!=='regions'||effective.regionMode!=='scattered'||
+    effective.reverseStripes!==false||
     effective.scatteredShapeKind!=='imported'||
     effective.scatteredShapeOverrides?.length!==7||
     effective.scatteredOverrides?.length!==7)return null;
