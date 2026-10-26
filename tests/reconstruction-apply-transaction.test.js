@@ -72,3 +72,34 @@ test('the production UI uses the projected recipe rather than a stale candidate'
   assert.doesNotMatch(code,/const inferred=normalizeRecipe\(\{\.\.\.candidate,reconstructionOrigin:/,
     'must not commit raw pre-lock snapshot or drop the projected recipe');
 });
+
+test('Apply retains latest authored captions rather than restoring stale fit-time text',()=>{
+  const began=normalizeRecipe({
+    ...old,lockedSettings:[],
+    textOverlays:[{id:'text-1',text:'ORIGINAL',font:'modern',size:58}]
+  });
+  const importedCandidate=normalizeRecipe({...fitted,
+    textOverlays:began.textOverlays
+  });
+  const latest=normalizeRecipe({...began,textOverlays:[
+    {...began.textOverlays[0],text:'UPDATED DURING FIT',
+      size:75,opacity:.55,locked:true},
+    {id:'text-2',text:'NEW CAPTION',font:'editorial',x:27,y:31}
+  ]});
+  const snapshot=structuredClone(importedCandidate);
+  const {recipe,lockedChanges}=prepareReconstructionApply(
+    latest,importedCandidate,detail);
+  assert.deepEqual(lockedChanges,[]);
+  assert.deepEqual(recipe.textOverlays,latest.textOverlays,
+    'current user caption content, appearance, per-object locks and new objects win');
+  assert.equal(recipe.structure,'regions',
+    'inferred non-text artwork must still apply from the candidate');
+  assert.equal(recipe.reconstructionOrigin.origin,'inferred-image');
+  assert.deepEqual(importedCandidate,snapshot,
+    'stale fit preview remains immutable, even after Apply');
+  assert.deepEqual(decodeRecipe(encodeRecipe(recipe)),recipe);
+  const removed=normalizeRecipe({...latest,textOverlays:[]});
+  const without=prepareReconstructionApply(removed,importedCandidate,detail);
+  assert.equal(without.recipe.textOverlays?.length??0,0,
+    'a caption deleted since fitting must never reappear on Apply');
+});

@@ -5,7 +5,13 @@ import {normalizeRecipe,respectSettingLocks} from './model.js';
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 export function prepareReconstructionApply(currentInput,candidateInput,description){
   const current=normalizeRecipe(currentInput);
-  const candidate=normalizeRecipe(candidateInput);
+  // A foreign bitmap does not identify or reconstruct the creator's
+  // existing caption content. The original fitting snapshot may be older
+  // than the recipe at Apply time, particularly after Undo or an imported
+  // design change. Never allow that old caption snapshot to overwrite
+  // newer user-authored text, even when the fitted geometry itself applies.
+  const candidate=normalizeRecipe({...candidateInput,
+    textOverlays:current.textOverlays});
   const safe=respectSettingLocks(current,candidate);
   const lockedChanges=current.lockedSettings.filter(key=>{
     if(key==='position')
