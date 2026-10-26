@@ -132,3 +132,9 @@ test('source-truthless first-two and noncontiguous one/two hue artwork stays sep
  assert.ok(manifest.items.every(x=>!Object.hasOwn(x,'recipeFile')&&!Object.hasOwn(x,'seed')));
  assert.deepEqual(externalPigmentManifest(),externalPigmentManifest('original'));
 });
+
+test('source-state real-painter comparisons are strictly manual/opt-in research',()=>{
+  assert.deepEqual(readReconstructionEvalArgs(['--source-state-probe']),
+    {dir:'artifacts/reconstruction-r0',sourceStateProbe:true});
+  assert.equal(Object.hasOwn(readReconstructionEvalArgs([]),'sourceStateProbe'),false);
+});
