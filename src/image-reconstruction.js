@@ -736,7 +736,8 @@ export function reconstructionCandidates(image,recipe){
       colourAnalysis:{
         background:desc.background,coverage:desc.coverage,
         regions:desc.colourRegions,masks:desc.sourceHueMasks
-      }
+      },
+      sourceTone:darkTone
     }):null;
   if(observed&&darkTone){
     const recipe=respectSettingLocks(current,normalizeRecipe({...observed.recipe,

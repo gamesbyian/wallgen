@@ -12,7 +12,7 @@ import {GEOMETRY_SNAPSHOT_SCHEMA} from './geometry-asset.js';
  * Return null when any slot/shape/lock cannot be represented.
  */
 export function observedHueShapeRecipe(image,placement,currentInput,
-  {paletteHint='classic',colourAnalysis=null,allowPartial=false}={}){
+  {paletteHint='classic',colourAnalysis=null,allowPartial=false,sourceTone=null}={}){
   const w=image?.width,h=image?.height;
   if(!Number.isInteger(w)||!Number.isInteger(h)||
     w<12||h<12||w*h>650000||image.data?.length!==w*h*4||
@@ -70,7 +70,12 @@ export function observedHueShapeRecipe(image,placement,currentInput,
     family:'studio',palette:paletteHint,
     // Source-visible shape geometry does not license copying the currently
     // edited wallpaper's private soft/dark Tone into an independent image.
-    paletteToneEnabled:false,paletteSaturation:92,paletteLightness:58,
+    // Only an explicitly measured *source* Tone may enable tint here. In
+    // particular, a current editor Tone lock that agrees with that measured
+    // appearance must not suppress otherwise faithful observed geometry.
+    paletteToneEnabled:sourceTone!==null,
+    paletteSaturation:sourceTone?.saturation??92,
+    paletteLightness:sourceTone?.lightness??58,
     background:colours.background,
     structure:'regions',regionMode:'scattered',
     // Source-visible hues are indexed in normal ROYGBIV order; stale editor
@@ -98,7 +103,9 @@ export function observedHueShapeRecipe(image,placement,currentInput,
   if(candidate.scatteredShapeOverrides?.length!==count||
     candidate.scatteredOverrides?.length!==count)return null;
   const effective=respectSettingLocks(original,candidate);
-  if(effective.paletteToneEnabled!==false||
+  if(effective.paletteToneEnabled!==(sourceTone!==null)||
+     (sourceTone&&(effective.paletteSaturation!==sourceTone.saturation||
+       effective.paletteLightness!==sourceTone.lightness))||
      effective.structure!=='regions'||effective.regionMode!=='scattered'||
     effective.reverseStripes!==false||
     effective.scatteredShapeKind!=='imported'||

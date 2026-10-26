@@ -49,6 +49,29 @@ test('seven independent dark-colour silhouettes yield a measured canonical Tone 
   assert.deepEqual(source.data,original,'never change imported source pixels');
 });
 
+test('matching source-measured dark Tone locks preserve editable seven-pigment silhouettes',()=>{
+  const source=pigmentSource();
+  const tone=measuredSourceDarkTone(describeReconstructionImage(source));
+  assert.ok(tone);
+  const locked=normalizeRecipe({
+    seed:'matching-locked-dark-source',
+    paletteToneEnabled:true,
+    paletteSaturation:tone.saturation,
+    paletteLightness:tone.lightness,
+    lockedSettings:['paletteToneEnabled','paletteSaturation','paletteLightness']
+  });
+  const choices=reconstructionCandidates(source,locked);
+  const observed=choices.find(candidate=>candidate.kind==='hue-visible-shapes');
+  assert.ok(observed,
+    'matching creator Tone locks cannot veto independently observed editable ink');
+  assert.equal(observed.recipe.paletteToneEnabled,true);
+  assert.equal(observed.recipe.paletteSaturation,tone.saturation);
+  assert.equal(observed.recipe.paletteLightness,tone.lightness);
+  assert.equal(observed.recipe.scatteredShapeOverrides.length,7);
+  assert.deepEqual(observed.recipe.lockedSettings,locked.lockedSettings);
+  assert.deepEqual(decodeRecipe(encodeRecipe(observed.recipe)),observed.recipe);
+});
+
 test('creator lock against the required source Tone fails closed without false colour',()=>{
   const source=pigmentSource();
   for(const lock of ['paletteToneEnabled','paletteSaturation','paletteLightness']){
