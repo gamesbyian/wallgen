@@ -92,7 +92,7 @@ jobs:
         run: node scripts/review-reconstruction-external-pigments.mjs --collection sparse-hue --out-dir artifacts/external-sparse-hue
       - name: Fit four sparse-hue original images with real canonical renderer
         if: ${{ inputs.include_sparse_hue }}
-        run: node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/external-sparse-hue --source-signature
+        run: node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/external-sparse-hue --source-signature --hue-visible-shapes
       - name: Qualify first two semantic colour slots and refuse unsupported gaps
         if: ${{ inputs.include_sparse_hue }}
         run: |
