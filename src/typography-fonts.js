@@ -1,6 +1,7 @@
 import {prepareLocalFonts,localFontsReady,isLocalFontId,fontFamilyForId} from './local-fonts.js';
 import {prepareBundledFonts,bundledFontsReady,isBundledFontId,bundledFontFamily} from './bundled-fonts.js';
-import {TEXT_FONTS,textOverlayPaintsInk} from './text-overlays.js';
+import {TEXT_FONTS} from './text-overlays.js';
+import {textOverlayPaintsInk} from './text-rainbow-shaping.js';
 
 // One canonical font readiness boundary for worker, direct render,
 // thumbnail and exports. No second text rasterizer or ad-hoc DOM overlay.
