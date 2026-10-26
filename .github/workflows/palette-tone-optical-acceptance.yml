@@ -1,10 +1,7 @@
 name: Palette Tone genuine browser optical acceptance
-# Expensive source/painter proof: one-shot PR trigger is removed before merge.
+# Expensive real-browser/editor/export evidence is manual-only.
+# No automatic Playwright installation or 19.8MP painter on normal PRs.
 on:
-  pull_request:
-    paths:
-      - 'tests/palette-tone-production-browser.mjs'
-      - '.github/workflows/palette-tone-optical-acceptance.yml'
   workflow_dispatch:
 permissions:
   contents: read
