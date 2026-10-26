@@ -1715,3 +1715,47 @@ test('sparse observed colours never inherit reversed palettes, old stamps or old
     'locked unrelated slot shape cannot impersonate inferred source geometry');
   assert.deepEqual(source.data,original);
 });
+
+test('inverse source-visible candidates never inherit an unrelated custom palette Tone',()=>{
+  const sourcePixels=original.data.slice();
+  const ordinary=normalizeRecipe({seed:'tone-source-independent',
+    family:'studio',palette:'classic',paletteToneEnabled:false});
+  const inherited=normalizeRecipe({...ordinary,
+    paletteToneEnabled:true,paletteSaturation:0,paletteLightness:1});
+  const clean=reconstructionCandidates(original,ordinary);
+  const polluted=reconstructionCandidates(original,inherited);
+  assert.ok(clean.some(x=>x.kind==='regions'));
+  assert.deepEqual(polluted.map(x=>x.kind),clean.map(x=>x.kind),
+    'old user Tone must not introduce or remove image-derived hypotheses');
+  for(const candidate of polluted){
+    assert.equal(candidate.recipe.paletteToneEnabled,false);
+    assert.equal(candidate.recipe.paletteSaturation,92);
+    assert.equal(candidate.recipe.paletteLightness,58);
+  }
+  assert.deepEqual(original.data,sourcePixels,'source RGBA must be unchanged');
+});
+
+test('a genuinely noncircular source-visible seven-hue scene does not inherit prior Tone',()=>{
+  const points=[[38,30],[106,30],[38,95],[106,95],
+    [38,160],[106,160],[72,225]];
+  const picture=raster(160,280,(x,y)=>{
+    for(const [i,[cx,cy]] of points.entries()){
+      const dx=x-cx,dy=y-cy;
+      if(dy>=-17&&dy<=17&&Math.abs(dx)<=(dy+17)*.8)
+        return colour(HUES[i]);
+    }
+    return [0,0,0,255];
+  });
+  const base=normalizeRecipe({seed:'tone-noncircular',
+    paletteToneEnabled:true,paletteSaturation:1,paletteLightness:99});
+  const candidate=reconstructionCandidates(picture,base)
+    .find(x=>x.kind==='hue-visible-shapes');
+  assert.ok(candidate,'source-visible seven per-hue silhouettes still compete');
+  assert.equal(candidate.recipe.paletteToneEnabled,false);
+  assert.equal(candidate.recipe.paletteSaturation,92);
+  assert.equal(candidate.recipe.paletteLightness,58);
+  const locked=normalizeRecipe({...base,lockedSettings:['paletteToneEnabled']});
+  assert.ok(!reconstructionCandidates(picture,locked)
+    .some(x=>x.kind==='hue-visible-shapes'),
+    'a creator-locked unsupported Tone cannot masquerade as a source-faithful shape recipe');
+});
