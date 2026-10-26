@@ -3,8 +3,8 @@
 // Complex joining scripts keep their native whole-line shaping (straight).
 import {pathPosition} from './path-geometry.js';
 import {prepareDrawnPath,pointOnDrawnPath} from './drawn-path.js';
-import {textGraphemes,hasVisibleTextInk} from './text-rainbow-shaping.js';
-import {textInkSelectionReach,textOverlayPaintsInk} from './text-overlays.js';
+import {textGraphemes,hasVisibleTextInk,textOverlayPaintsInk} from './text-rainbow-shaping.js';
+import {textInkSelectionReach} from './text-overlays.js';
 import {availableTextWidth} from './text-direct-geometry.js';
 import {DESIGN_WIDTH,DESIGN_HEIGHT} from './model.js';
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
