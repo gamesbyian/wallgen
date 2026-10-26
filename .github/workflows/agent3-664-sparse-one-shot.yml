@@ -1,0 +1,45 @@
+name: Agent 3 sparse reconstruction refusal (temporary one-shot)
+on:
+  pull_request:
+    paths:
+      - 'tests/agent3-664-sparse-refusal-browser.mjs'
+      - 'src/image-path-ui.js'
+      - 'index.html'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: agent3-664-sparse-one-shot-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+jobs:
+  portrait-source-refusal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Optional single Chromium runtime
+        run: |
+          npm install --no-save playwright@1.56.1 serve@14.2.5
+          npx playwright install --with-deps chromium
+      - name: Serve original production UI locally
+        run: |
+          npx serve . -l 4173 >/tmp/agent3-664.log 2>&1 &
+          for i in $(seq 1 40); do
+            if curl --fail --silent http://127.0.0.1:4173/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/agent3-664.log
+          exit 1
+      - name: Prove visible refusal and source integrity at two portrait sizes
+        run: node tests/agent3-664-sparse-refusal-browser.mjs
+      - name: Retain original screenshot and source-bounded report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent3-664-sparse-refusal-portrait
+          path: artifacts/agent3-664-sparse-refusal/
+          retention-days: 7
+          if-no-files-found: warn
