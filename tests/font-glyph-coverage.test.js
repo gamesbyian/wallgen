@@ -207,3 +207,56 @@ test('format-12 ranges may not claim glyph IDs beyond the 16-bit OpenType ceilin
   assert.equal(backup.has(0x41),true);
   assert.equal(backup.has(0x1f308),false);
 });
+
+
+function multipleSameFormatUnicodeFixture(){
+  // Three independent Unicode records: two different BMP format-4 ranges
+  // and one supplementary format-12 range. "First per format" dropped B.
+  const bytes=new ArrayBuffer(256),v=new DataView(bytes);
+  const w16=(at,n)=>v.setUint16(at,n,false),w32=(at,n)=>v.setUint32(at,n,false);
+  w32(0,0x00010000);w16(4,1);
+  w32(12,0x636d6170);w32(20,28);w32(24,120);
+  w16(28,0);w16(30,3);
+  for(const [i,platform,encoding,offset] of [
+    [0,3,1,28],[1,0,3,60],[2,3,10,92]]){
+    const rec=32+i*8;
+    w16(rec,platform);w16(rec+2,encoding);w32(rec+4,offset);
+  }
+  const bmp=(at,code)=>{
+    w16(at,4);w16(at+2,32);w16(at+6,4);
+    w16(at+14,code);w16(at+16,0xffff);
+    w16(at+20,code);w16(at+22,0xffff);
+    w16(at+24,(1-code)&0xffff);w16(at+26,1);
+    w16(at+28,0);w16(at+30,0);
+  };
+  bmp(56,0x41);bmp(88,0x42);
+  w16(120,12);w16(122,0);w32(124,28);
+  w32(128,0);w32(132,1);
+  w32(136,0x1f308);w32(140,0x1f308);w32(144,9);
+  return bytes;
+}
+test('several distinct same-format Unicode tables contribute real mapped glyphs',()=>{
+  const bytes=multipleSameFormatUnicodeFixture(),coverage=inspectFontCmap(bytes);
+  assert.ok(coverage);
+  assert.equal(coverage.format,12,'full repertoire remains preferred metadata');
+  for(const cp of [0x41,0x42,0x1f308])
+    assert.equal(coverage.has(cp),true,'must union every actual Unicode mapping '+cp);
+  assert.equal(coverage.has(0x43),false);
+  assert.deepEqual(missingFontCodepoints(coverage,'AB🌈C'),[0x43]);
+  assert.equal(missingGlyphNotice(coverage,'AB🌈'),'');
+});
+test('later valid same-format Unicode records survive a malformed first record',()=>{
+  const bytes=multipleSameFormatUnicodeFixture(),v=new DataView(bytes);
+  v.setUint16(58,0xffff,false); // Corrupt first format-4 table length.
+  const coverage=inspectFontCmap(bytes);
+  assert.ok(coverage);
+  assert.equal(coverage.has(0x41),false);
+  assert.equal(coverage.has(0x42),true,'second valid format-4 remains readable');
+  assert.equal(coverage.has(0x1f308),true);
+  v.setUint32(124,0xffffffff,false); // Corrupt supplementary as well.
+  const bmp=inspectFontCmap(bytes);
+  assert.ok(bmp);
+  assert.equal(bmp.format,4);
+  assert.equal(bmp.has(0x42),true);
+  assert.equal(bmp.has(0x1f308),false);
+});
