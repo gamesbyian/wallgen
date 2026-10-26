@@ -37,6 +37,7 @@ try{
     const {exportWallpaperInWorker}=await import('/src/render-coordinator.js');
     const {layoutTextOnPath,hitTextAtLayout,canCurveText}=await import('/src/text-path-geometry.js');
     const {measureCanvasText,measuredTextBounds}=await import('/src/text-direct-geometry.js');
+    const {cachedFontCoverage,missingGlyphNotice}=await import('/src/font-glyph-coverage.js');
     const make=(w,h)=>{const c=document.createElement('canvas');c.width=w;c.height=h;return c;};
     const countDiff=(a,b)=>{
       const A=a.getContext('2d',{willReadFrequently:true}).getImageData(0,0,a.width,a.height).data;
@@ -68,6 +69,8 @@ try{
         path:'arc',pathHeight:90,font:'modern',colour:'white'},
       {name:'native-brahmi',text:'𑀦𑀫𑀦𑀫',size:65,
         path:'circle',pathHeight:90,font:'modern',colour:'white'},
+      {name:'native-alm-bundled',text:'ABA\u061cB',size:66,
+        path:'wave',pathHeight:85,font:'pack-bangers',colour:'rainbow-letter'},
     ];
     const results=[],artwork=[];
     const contact=make(examples.length*180,390),contactCtx=contact.getContext('2d');
@@ -81,6 +84,13 @@ try{
         textOverlays:[{id:'ink',x:50,y:52,enabled:true,outline:'black',
           ...spec}]});
       await prepareTypefaces(recipe);
+      let fontGlyphNotice=null;
+      if(spec.name==='native-alm-bundled'){
+        const coverage=cachedFontCoverage(spec.font);
+        if(!coverage)throw Error('No trusted cmap coverage after bundled font readiness');
+        fontGlyphNotice=missingGlyphNotice(coverage,spec.text);
+        if(fontGlyphNotice)throw Error('False font warning for ALM native text: '+fontGlyphNotice);
+      }
       const reference=make(480,1040),blank=make(480,1040),worker=make(480,1040);
       drawWallpaper(reference,recipe);
       drawWallpaper(blank,{...recipe,textOverlays:[]});
@@ -107,7 +117,8 @@ try{
         straight.width=0;
       }
       if(spec.name.startsWith('native-')&&
-          ['native-rtl-presentation','native-adlam','native-brahmi'].includes(spec.name)){
+          ['native-rtl-presentation','native-adlam','native-brahmi',
+          'native-alm-bundled'].includes(spec.name)){
         if(canCurveText(spec.text))throw Error('Unsafe script was split '+spec.name);
         const straight=make(480,1040);
         const native=normalizeRecipe({...recipe,
@@ -129,7 +140,7 @@ try{
       artwork.push(reference.toDataURL('image/png'));
       results.push({name:spec.name,inkChannels,workerPixelChannelDifferences:mismatch,
         workerPngBytes:blob.size,nativeFallbackPixelDifferences,
-        curvedVersusStraightChannels});
+        curvedVersusStraightChannels,fontGlyphNotice});
       reference.width=0;worker.width=0;blank.width=0;
     }
     const tracked=normalizeRecipe({textOverlays:[{
