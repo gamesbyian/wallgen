@@ -223,7 +223,8 @@ test('presentation-form RTL and later Indic/supplementary scripts stay native sh
   const nativeLines=[
     'ﺍﻟﺴﻼﻡ', // Arabic presentation forms, originally outside U+0590..109F
     '𞤀𞤭', // Adlam: supplementary RTL joining
-    '𐴰𐴱', // Hanifi Rohingya: supplementary RTL joining
+    '𐴀𐴁', // Hanifi Rohingya letters: supplementary RTL joining
+    '𐴰𐴱', // Hanifi Rohingya native RTL digits
     'ꦏ꧀ꦯ', // Javanese with conjunct and combining virama
     '𑀦𑀫' // Brahmi: supplementary Indic shaping
   ];
