@@ -1,8 +1,8 @@
 import {DESIGN_WIDTH,DESIGN_HEIGHT} from './model.js';
-import {TEXT_FONTS,DUAL_TEXT_OUTLINE_STROKE_MULTIPLIER,textOverlayPaintsInk} from './text-overlays.js';
+import {TEXT_FONTS,DUAL_TEXT_OUTLINE_STROKE_MULTIPLIER} from './text-overlays.js';
 import {typefacesReady,typefaceCssFamily} from './typography-fonts.js';
 import {availableTextWidth} from './text-direct-geometry.js';
-import {rainbowTextStops,isSimpleRightToLeft,hasVisibleTextInk} from './text-rainbow-shaping.js';
+import {rainbowTextStops,isSimpleRightToLeft,hasVisibleTextInk,textOverlayPaintsInk} from './text-rainbow-shaping.js';
 import {layoutTextOnPath,prepareTextFollowPath} from './text-path-geometry.js';
 
 // The same post-composite typography pass is used by reference, worker,
