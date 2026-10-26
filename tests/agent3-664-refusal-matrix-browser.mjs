@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /** Opt-in genuine Chromium input-file -> production importer -> accessible
- * refusal/qualified editable recipe. Independent source art never comes from
+ * refusal/qualified editable recipe, including post-Tone seven-dark source. Independent source art never comes from
  * ROYGBIV. No native Android, TalkBack, physical Pixel or human validation.
  *
  * First generate metadata-free source art through the standalone Canvas2D
@@ -22,7 +22,7 @@ const cases=[
  {id:'gapped-red-green-blue',group:'gapped',mode:'skipped'},
  {id:'gapped-five-colours',group:'gapped',mode:'skipped'},
  {id:'neutral-seven-control',group:'low',mode:'neutral'},
- {id:'dim-seven-polygons',group:'low',mode:'dark'},
+ {id:'dim-seven-polygons',group:'low',mode:'editable-dark'},
  {id:'leading-three-control',group:'gapped',mode:'editable'},
  {id:'leading-five-control',group:'gapped',mode:'editable'},
  {id:'contiguous-red-orange',group:'sparse',mode:'editable'}
@@ -49,14 +49,14 @@ try{
     await page.locator('#imagePathFile').setInputFiles(file);
     await page.locator('#imagePathDialog[open]').waitFor({state:'visible'});
     let status;
-    if(mode!=='editable'){
+    if(mode!=='editable'&&mode!=='editable-dark'){
       const element=page.locator('#imageRecipeUnavailable');
       await element.waitFor({state:'visible',timeout:60000});
       status=await element.textContent();
       assert.match(status,/No (faithful|reliable) editable recipe/);
       assert.match(status,/source image is unchanged/);
       if(mode==='skipped')assert.match(status,/skip earlier ROYGBIV slots/);
-      if(mode==='neutral'||mode==='dark')assert.doesNotMatch(status,/skip earlier ROYGBIV slots/,
+      if(mode==='neutral')assert.doesNotMatch(status,/skip earlier ROYGBIV slots/,
        'unsupported low-chroma source is not a missing-hue rejection');
       assert.equal(await element.getAttribute('role'),'status');
       assert.equal(await element.getAttribute('aria-live'),'polite');
@@ -77,6 +77,8 @@ try{
       const choices=await page.locator('#imageRecipeCandidate option').allTextContents();
       assert.ok(choices.some(x=>/pigment silhouettes|observed|circle/i.test(x)),
        'qualified source-visible geometry must remain available: '+choices);
+      if(mode==='editable-dark')assert.ok(choices.some(x=>/pigment silhouettes|observed/i.test(x)),
+       'seven-dark source must offer editable observed silhouettes, not a false bright outline: '+choices);
     }
     await page.screenshot({path:join(out,width+'x'+height+'-'+id+'.png'),animations:'disabled'});
     assert.equal(createHash('sha256').update(await readFile(file)).digest('hex'),hash);
