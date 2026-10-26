@@ -279,3 +279,16 @@ test('malformed imported UTF-16 is repaired without corrupting genuine emoji gra
   assert.equal(boundTextContent(source),'Z'.repeat(159)+'\ufffd',
     'the 160-codepoint limit still retains only complete trailing graphemes');
 });
+
+test('Move-text affordance follows actual painted ink rather than hidden captions',async()=>{
+  const {textOverlayPaintsInk}=await import('../src/text-rainbow-shaping.js');
+  const permitted=items=>items.some(item=>textOverlayPaintsInk(item)&&!item.locked);
+  assert.equal(permitted([{enabled:true,text:'HIDDEN',opacity:0}]),false);
+  assert.equal(permitted([{enabled:true,text:'\u200b\u2060',opacity:1}]),false);
+  assert.equal(permitted([{enabled:true,text:'VISIBLE',opacity:1,locked:true}]),false);
+  assert.equal(permitted([{enabled:true,text:'VISIBLE',opacity:.01,locked:false}]),true);
+  const {readFileSync}=await import('node:fs');
+  const source=readFileSync(new URL('../src/text-overlays-ui.js',import.meta.url),'utf8');
+  assert.match(source,/moveButton\.disabled=!items\.some\(item=>textOverlayPaintsInk\(item\)&&!item\.locked\)/);
+  assert.match(source,/moveButton\.disabled&&mover\?\.active\)mover\.endCanvasMove\(\)/);
+});
