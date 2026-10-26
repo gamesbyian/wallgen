@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {parseReconstructionJourneyArgs} from '../scripts/check-reconstruction-journey.mjs';
-import {describeReconstructionChoice} from '../src/image-path-ui.js';
+import {describeReconstructionChoice,describeReconstructionRefusal} from '../src/image-path-ui.js';
+import {readFileSync} from 'node:fs';
 
 test('actual browser reconstruction journey is opt-in and cannot target remote servers',()=>{
  const url='http://127.0.0.1:8712';
@@ -31,4 +32,27 @@ test('portrait recipe status stays compact while its accessible detail preserves
   assert.match(info.explanation,/spread, stripeWidth/);
   assert.match(info.explanation,/not the source image.s original recipe/);
   assert.match(describeReconstructionChoice(null).summary,/No reliable/);
+});
+
+test('unsupported semantic colour slots disclose refusal and manual geometry fallback',()=>{
+  const blue={colourRegions:[{index:4}]};
+  const redBlue={colourRegions:[{index:0},{index:4}]};
+  const gapped={colourRegions:[{index:0},{index:3},{index:4}],
+    unsupportedCompactHueGaps:true};
+  for(const descriptor of [blue,redBlue,gapped]){
+    const status=describeReconstructionRefusal(descriptor);
+    assert.match(status,/No faithful editable recipe/);
+    assert.match(status,/skip earlier ROYGBIV slots/);
+    assert.match(status,/would change those colours or invent missing shapes/);
+    assert.match(status,/path or silhouette/);
+    assert.match(status,/source image is unchanged/);
+  }
+  const ordinary=describeReconstructionRefusal({colourRegions:[]});
+  assert.match(ordinary,/No reliable editable recipe/);
+  assert.doesNotMatch(ordinary,/skip earlier/);
+  const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
+  assert.match(html,/<p id="imageRecipeUnavailable" role="status" aria-live="polite" hidden><\/p>/);
+  const ui=readFileSync(new URL('../src/image-path-ui.js',import.meta.url),'utf8');
+  assert.match(ui,/if\(!candidates.length\)\{\s*showRecipeUnavailable/);
+  assert.match(ui,/hideRecipeUnavailable\(\)/);
 });
