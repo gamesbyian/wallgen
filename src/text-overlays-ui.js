@@ -8,6 +8,24 @@ import {prepareTypefaces} from './typography-fonts.js';
 import {cachedFontCoverage,fontCoverageChecked,missingGlyphNotice} from './font-glyph-coverage.js';
 import {textOverlayPaintsInk} from './text-rainbow-shaping.js';
 
+// An async private-font import must address the exact *incarnation* of its
+// starting text object, not just its reusable human-friendly ID. The editor
+// may delete text-1 and create a brand-new text-1 while FontFace.load is
+// pending. This ephemeral tracker is not a recipe field or an Undo history.
+export function createTextObjectIdentityTracker(){
+  let next=0;
+  const stamps=new Map();
+  return {
+    sync(items){
+      const current=new Set((items||[]).map(item=>item.id));
+      for(const id of stamps.keys())if(!current.has(id))stamps.delete(id);
+      for(const id of current)if(!stamps.has(id))stamps.set(id,++next);
+    },
+    ticket(id){return stamps.get(id)??null;},
+    same(id,ticket){return ticket!==null&&stamps.get(id)===ticket;}
+  };
+}
+
 // A tool inside the seven-category editor, not a floating DOM preview layer.
 // Every mutation takes the existing recipe/Undo path supplied by app.js.
 export function installTextOverlayTool({getRecipe,changeRecipe,onFontNotice=()=>{}}){
@@ -165,9 +183,11 @@ export function installTextOverlayTool({getRecipe,changeRecipe,onFontNotice=()=>
   // Keep the last bound object ID so changing selections still refreshes.
   let syncedTextOwnerId=null;
   let mover=null;
+  const textIdentity=createTextObjectIdentityTracker();
   const currentItems=()=>getRecipe().textOverlays||[];
   function sync(){
     const items=currentItems();
+    textIdentity.sync(items);
     if(!items.some(item=>item.id===selectedId))selectedId=items[0]?.id||null;
     options(pick,items.map((item,index)=>[item.id,(index+1)+'. '+item.text.replace(/\s+/g,' ').slice(0,30)]));
     if(selectedId)pick.value=selectedId;
@@ -304,13 +324,15 @@ export function installTextOverlayTool({getRecipe,changeRecipe,onFontNotice=()=>
     // change. The original object owns the import, never whichever caption
     // happens to be selected when those promises finally settle.
     const targetId=selectedId;
+    const targetTicket=textIdentity.ticket(targetId);
     fontFile.disabled=true;
     fontStatus.textContent='Checking and saving font on this device…';
     try{
       const installed=await importLocalFont(file);
       library=await listLocalFonts();
       const items=currentItems();
-      if(items.some(item=>item.id===targetId)){
+      if(textIdentity.same(targetId,targetTicket)&&
+        items.some(item=>item.id===targetId)){
         commit(items.map(item=>item.id===targetId?
           {...item,font:installed.id}:item));
         fontStatus.textContent='Font installed locally: '+installed.name;
@@ -321,7 +343,7 @@ export function installTextOverlayTool({getRecipe,changeRecipe,onFontNotice=()=>
         // can be deliberately chosen again.
         sync();
         fontStatus.textContent='Font installed locally: '+installed.name+
-          '. Original text was removed; select a text object to use it.';
+          '. Original text was removed or replaced; select a text object to use it.';
         onFontNotice(fontStatus.textContent);
       }
     }catch(error){
