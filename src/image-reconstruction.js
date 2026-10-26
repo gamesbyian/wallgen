@@ -505,15 +505,25 @@ export function reconstructionCandidates(image,recipe){
   // bounded alternative; do not assume historical polygon painter order.
   // Every proposal still requires all seven valid source hue masks/rings.
   const compactNonCircles=desc.sevenColourRegions&&!desc.circleHints;
+  // The scene already paints N independent imported silhouettes for the
+  // first N semantic colour slots. Previously 2–6 compact source pigments
+  // could only become circles, even when a measured red diamond and orange
+  // hexagon were directly representable as two portable shape snapshots.
+  // Incomplete-colour recognition itself insists on one compact component
+  // for EACH contiguous first-N slot, so omitted middle hues stay refused.
+  const partialVisible=desc.incompleteColourRegions&&
+    desc.colourRegions.length>=2;
   const observedEligible=desc.radial.kind!=='rays'&&
-    (!desc.sevenColourRegions||compactNonCircles)&&
-    desc.colourRegions.length===7&&
-    (compactNonCircles||desc.radial.kind==='rings'||desc.repeatShape?.clipped||
-      ['hairpin','loop'].includes(desc.curve.kind)||
-      desc.paths.some(path=>path.kind==='contour'&&path.closed));
+    (partialVisible||
+      ((!desc.sevenColourRegions||compactNonCircles)&&
+        desc.colourRegions.length===7&&
+        (compactNonCircles||desc.radial.kind==='rings'||desc.repeatShape?.clipped||
+          ['hairpin','loop'].includes(desc.curve.kind)||
+          desc.paths.some(path=>path.kind==='contour'&&path.closed))));
   const observed=observedEligible?observedHueShapeRecipe(image,
     reconstructionPlacement(image.width,image.height),current,{
       paletteHint:desc.paletteHypothesis?.palette??'classic',
+      allowPartial:partialVisible,
       colourAnalysis:{
         background:desc.background,coverage:desc.coverage,
         regions:desc.colourRegions,masks:desc.sourceHueMasks
