@@ -188,3 +188,24 @@ test('without Intl.Segmenter, 160-codepoint bound never saves half an accent, fl
     else delete Intl.Segmenter;
   }
 });
+
+
+test('pasted Unicode paragraph and line separators become real bounded canonical lines',()=>{
+  const pasted='A\u2028B\u2029C\u0085D';
+  const canonical='A\nB\nC\nD';
+  assert.equal(boundTextContent(pasted),canonical,
+    'U+2028, U+2029, and U+0085 must count as the actual four lines');
+  assert.equal(boundTextContent(pasted+'\rE'),canonical,
+    'the fifth logical line is refused rather than silently painted inline');
+  assert.equal(boundTextContent('A\r\nB\rC\nD'),'A\nB\nC\nD',
+    'Windows CRLF and legacy Mac CR normalize to one LF each');
+  const recipe=normalizeRecipe({textOverlays:[{id:'pasted',
+    font:'modern',text:pasted+'\u2028E',colour:'white',outline:'none'}]});
+  assert.equal(recipe.textOverlays[0].text,canonical);
+  assert.deepEqual(normalizeRecipe(JSON.parse(JSON.stringify(recipe))),recipe,
+    'canonical recipe and JSON round-trip keep normalized line boundaries');
+  const ctx=fakeContext();
+  drawTextOverlays(ctx,600,1300,resolveScene(recipe));
+  assert.deepEqual(ctx.calls.filter(call=>call[0]==='fill').map(call=>call[1]),
+    ['A','B','C','D'],'real painter must render exactly four separate native lines');
+});

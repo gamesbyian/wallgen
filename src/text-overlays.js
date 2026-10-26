@@ -40,6 +40,10 @@ const num=(value,fallback,min,max)=>{
 export function boundTextContent(value){
   if(typeof value!=='string')return '';
   const cleaned=value.slice(0,4096)
+    // Pasted Unicode line/paragraph separators, legacy Mac CR and NEL are
+    // genuine logical line boundaries. Canonical rendering and the four-line
+    // quota both use LF, so normalize before counting or storing a recipe.
+    .replace(/\r\n?|[\u0085\u2028\u2029]/gu,'\n')
     .replace(/[\u0000-\u0008\u000b-\u001f\u007f]/g,'')
     .replace(/\t/g,' ');
   let remaining=160,lines=1,result='';
