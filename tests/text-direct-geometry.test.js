@@ -4,7 +4,7 @@ import {normalizeRecipe} from '../src/model.js';
 import {textInkSelectionReach,DUAL_TEXT_OUTLINE_STROKE_MULTIPLIER} from '../src/text-overlays.js';
 import {availableTextWidth,designPointFromPointer,measuredTextBounds,
   hitTextOverlay,dragTextOverlay,dragTextTransform,transformTextOverlay,
-  measureCanvasText} from '../src/text-direct-geometry.js';
+  measureCanvasText,textGestureOwnsCurrentRecipe} from '../src/text-direct-geometry.js';
 import {layoutTextOnPath,hitTextAtLayout} from '../src/text-path-geometry.js';
 
 const sample=normalizeRecipe({textOverlays:[
@@ -219,4 +219,37 @@ test('canvas mover maintains one actual-ink eligibility predicate across redraw 
   assert.match(src,/if\(!movable\)\{\s*setActive\(false\);\s*button\.disabled=true;/);
   assert.doesNotMatch(src,/some\(x=>x\.enabled&&x\.text\)/,
     'weak truthy text test used to override the new hidden-text control');
+});
+
+test('stale text pointer gestures cannot replay an older recipe across Undo or locks',()=>{
+  const original=normalizeRecipe({seed:'text-gesture-base',
+    textOverlays:[{id:'title',text:'KEEP',locked:false,x:40,y:40}]});
+  assert.equal(textGestureOwnsCurrentRecipe(original,original,'title'),true);
+  const draft=dragTextOverlay(original,'title',{x:90,y:0});
+  assert.notEqual(draft,original,'actual move may stage a draft');
+  const intervening=normalizeRecipe({...original,
+    lockedSettings:['structure'],textOverlays:[{
+      ...original.textOverlays[0],locked:true
+    }]});
+  assert.equal(textGestureOwnsCurrentRecipe(original,intervening,'title'),false,
+    'an intervening lock update wins over the old moving draft');
+  const undoToSame=normalizeRecipe(original);
+  assert.deepEqual(undoToSame,original);
+  assert.notEqual(undoToSame,original);
+  assert.equal(textGestureOwnsCurrentRecipe(original,undoToSame,'title'),false,
+    'new canonical transaction owns the state even if data is identical');
+  assert.equal(textGestureOwnsCurrentRecipe(original,original,'missing'),false);
+  assert.equal(textGestureOwnsCurrentRecipe({...original,textOverlays:[
+    {...original.textOverlays[0],locked:true}
+  ]},original,'title'),false);
+  assert.equal(textGestureOwnsCurrentRecipe(null,original,'title'),false);
+});
+test('canvas pointerup and transform pointerup recheck canonical ownership before commit',async()=>{
+  const {readFileSync}=await import('node:fs');
+  const src=readFileSync(new URL('../src/text-direct-ui.js',import.meta.url),'utf8');
+  assert.match(src,/if\(drag&&!textGestureOwnsCurrentRecipe\(drag\.original,recipe,drag\.id\)\)/);
+  assert.match(src,/if\(transformDrag&&!textGestureOwnsCurrentRecipe\(/);
+  assert.match(src,/finished\.moved&&textGestureOwnsCurrentRecipe\(/);
+  assert.match(src,/state\.next!==state\.original&&textGestureOwnsCurrentRecipe\(/);
+  assert.equal((src.match(/textGestureOwnsCurrentRecipe\(/g)||[]).length,4);
 });
