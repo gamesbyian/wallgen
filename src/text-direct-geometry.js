@@ -34,10 +34,14 @@ export function measureCanvasText(ctx,font,item,text,{tracking=false}={}){
   ctx.restore();
   return width;
 }
-export function measuredTextBounds(item,measure){
+export function measuredTextBounds(item,measure,{nativeTracking=true}={}){
   const lines=String(item.text||'').split('\n');
+  // Without native Canvas letterSpacing the canonical painter intentionally
+  // ignores tracking. The guide must follow the same capability, rather than
+  // displaying a longer box than the rendered ink or misplacing small grips.
+  const tracking=nativeTracking?(item.letterSpacing??0):0;
   const actualWidth=Math.max(0,...lines.map(line=>Math.max(0,
-    measure(line)+(item.letterSpacing??0)*textGraphemes(line).length)));
+    measure(line)+tracking*textGraphemes(line).length)));
   const width=Math.min(availableTextWidth(item),actualWidth);
   const height=Math.max(1,lines.length)*item.size*1.17*(1+(item.lineSpacing??0)/100);
   if(item.path==='circle'){

@@ -23,6 +23,28 @@ test('bounds use renderer\'s canonical 94%-width shrink and authored multiline r
  assert.equal(bounds.width,564);
  assert.ok(Math.abs(bounds.height-140.4)<1e-9);
 });
+test('text handle guides match supported and unsupported native Canvas tracking',()=>{
+  const item={text:'ABCD',size:50,x:50,letterSpacing:14};
+  const ctx={font:'initial',save(){},restore(){},
+    measureText(text){return {width:text.length*12}}};
+  const measure=value=>measureCanvasText(ctx,'bold 50px test',item,value);
+  assert.equal(measure('ABCD'),48,'fake canvas lacks native Canvas tracking');
+  assert.equal(measuredTextBounds(item,measure).width,104,
+    'default behavior retains existing tracked bounds');
+  assert.equal(measuredTextBounds(item,measure,{nativeTracking:false}).width,48,
+    'unsupported tracking cannot shift on-canvas grips away from ink');
+  assert.equal(measuredTextBounds(item,measure,{nativeTracking:true}).width,104);
+  assert.equal(measuredTextBounds({...item,path:'wave',pathHeight:80},measure,
+    {nativeTracking:false}).width,48,'curve guide uses the same native capability');
+  assert.equal(measuredTextBounds({...item,letterSpacing:0},measure,
+    {nativeTracking:false}).width,48);
+});
+test('live text editor supplies actual Canvas tracking support to guide geometry',async()=>{
+  const {readFileSync}=await import('node:fs');
+  const source=readFileSync(new URL('../src/text-direct-ui.js',import.meta.url),'utf8');
+  assert.match(source,/nativeTracking:'letterSpacing' in fontContext/,
+    'runtime transform guides must respect painter tracking capability');
+});
 test('topmost text wins overlap hit-test, rotated bbox and off-glyph misses are honored',()=>{
  const list=sample.textOverlays;
  const picked=hitTextOverlay(list,{x:300,y:650},measure);

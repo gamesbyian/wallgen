@@ -58,7 +58,8 @@ export function installTextCanvasMover({
     if(!active||!item){outline.hidden=true;return;}
     const rect=canvas.getBoundingClientRect();
     const parent=surface.getBoundingClientRect();
-    const bounds=measuredTextBounds(item,value=>measure(item,value));
+    const bounds=measuredTextBounds(item,value=>measure(item,value),
+      {nativeTracking:'letterSpacing' in fontContext});
     const extra=item.outline==='none'?0:item.size*item.outlineWidth/100;
     const x=rect.left-parent.left+rect.width*item.x/100;
     const y=rect.top-parent.top+rect.height*item.y/100;
