@@ -1,0 +1,76 @@
+name: Agent 3 current-main portrait and privacy acceptance (temporary)
+on:
+  pull_request:
+    paths:
+      - 'tests/agent3-664-refusal-matrix-browser.mjs'
+      - '.github/workflows/agent3-664-final-browser-once.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: agent3-664-final-one-shot-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+jobs:
+  current-portrait-acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright for one deliberate current-main acceptance
+        run: |
+          npm install --no-save playwright@1.56.1 serve@14.2.5
+          npx playwright install --with-deps chromium
+      - name: Serve the production source locally
+        run: |
+          npx serve . -l 4173 >/tmp/agent3-664-final.log 2>&1 &
+          for i in $(seq 1 50); do
+            if curl -fsS http://127.0.0.1:4173/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/agent3-664-final.log
+          exit 1
+      - name: Generate actual independently authored source PNGs
+        run: |
+          node scripts/review-reconstruction-external-pigments.mjs --collection gapped-hue --out-dir artifacts/agent3-refusal-sources-gapped
+          node scripts/review-reconstruction-external-pigments.mjs --collection low-chroma --out-dir artifacts/agent3-refusal-sources-low
+          node scripts/review-reconstruction-external-pigments.mjs --collection sparse-hue --out-dir artifacts/agent3-refusal-sources-sparse
+      - name: Independently run portrait editor, IME draft, accessible names, privacy and real pointer acceptance
+        run: |
+          status=0
+          for test in \
+            tests/agent3-current-accessible-names-browser.mjs \
+            tests/agent3-664-typography-browser.mjs \
+            scripts/agent3-ime-draft-browser.mjs \
+            tests/agent3-activity-idb-browser.mjs \
+            scripts/text-direct-browser-proof.mjs \
+            scripts/text-layout-hit-browser-proof.mjs \
+            tests/agent3-664-refusal-matrix-browser.mjs; do
+            echo "::group::$test"
+            if node "$test" > /tmp/current-suite.log 2>&1; then
+              echo "SUITE_PASS $test"
+            else
+              echo "SUITE_FAIL $test"
+              status=1
+            fi
+            grep -v '^LAYOUT_HIT_ART_BASE64=' /tmp/current-suite.log
+            echo "::endgroup::"
+          done
+          exit "$status"
+      - name: Preserve real browser screenshots, PNG and bounded source receipts on failures too
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent3-current-main-portrait-and-privacy
+          path: |
+            artifacts/agent3-664-refusal-matrix/
+            artifacts/agent3-664-typography/
+            artifacts/agent3-664-ime-draft/
+            artifacts/agent3-activity-idb-browser/
+            artifacts/agent3-664-names/
+            output/text-drag/
+            output/text-layout-pick/
+          retention-days: 10
+          if-no-files-found: warn
