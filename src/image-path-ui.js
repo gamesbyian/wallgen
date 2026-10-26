@@ -1,7 +1,7 @@
 import {extractImagePathCandidates,extractImageShapeCandidates,imagePlacement,pathToWallpaper} from './image-path.js?v=20261023-band-measure1';
 import {drawAuthoringLockReason,drawAuthoringLockMessage,pathStructureLockedOutsidePaths} from './path-authoring-locks.js';
 import {verifyLocalSilhouetteSvg} from './svg-import-safety.js';
-import {reconstructionCandidates,rankReconstructionCandidatesCooperatively,refineReconstructionCandidateCooperatively,reconstructionRefinementIndex,describeReconstructionImage,reconstructionPlacement,RECONSTRUCTION_FRAME,plainlyAchromaticForeground,plainlyUnsupportedSoftPigments} from './image-reconstruction.js?v=20261023-wave-contour1';
+import {reconstructionCandidates,rankReconstructionCandidatesCooperatively,refineReconstructionCandidateCooperatively,reconstructionRefinementIndex,reconstructionPlacement,RECONSTRUCTION_FRAME,plainlyAchromaticForeground,plainlyUnsupportedSoftPigments} from './image-reconstruction.js?v=20261023-wave-contour1';
 
 /** A live import dialog must match the current authoritative lock state,
  * even if a recipe restores a lock while image decoding is in flight. */
@@ -173,15 +173,20 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle,onShape,
     recipeWhy.disabled=true;
     if(recipeExplanation.matches(':popover-open'))recipeExplanation.hidePopover();
     if(!onRecipe||!onRender)return;
-    const candidates=reconstructionCandidates(pixels,getRecipe());
+    // Candidate analysis already extracted the source geometry and pigment
+    // masks once. Reuse its read-only summary instead of repeating expensive
+    // contour/radial/shape discovery for the refusal and fit preview.
+    let desc;
+    const candidates=reconstructionCandidates(pixels,getRecipe(),{
+      onDescription:analysis=>{desc=analysis;}
+    });
     if(!candidates.length){
-      showRecipeUnavailable(describeReconstructionRefusal(describeReconstructionImage(pixels),pixels));
+      showRecipeUnavailable(describeReconstructionRefusal(desc,pixels));
       return;
     }
     const frame=document.createElement('canvas');
     frame.width=RECONSTRUCTION_FRAME.width;frame.height=RECONSTRUCTION_FRAME.height;
     const g=frame.getContext('2d',{willReadFrequently:true});
-    const desc=describeReconstructionImage(pixels);
     g.fillStyle=desc.background;g.fillRect(0,0,frame.width,frame.height);
     const box=reconstructionPlacement(width,height);
     g.drawImage(image,box.x*frame.width/600,box.y*frame.height/1300,
