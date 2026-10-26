@@ -20,6 +20,20 @@ export function availableTextWidth(item){
   const room=2*Math.min(x,DESIGN_WIDTH-x)-12;
   return Math.max(12,Math.min(DESIGN_WIDTH*.94,room));
 }
+// The painter uses native Canvas2D letterSpacing (including measureText)
+// when available. Pointer selection must sample the SAME glyph advances;
+// otherwise long, tracked curves are painted far from their pick regions.
+// The editor guide deliberately measures without tracking and adds it once
+// in measuredTextBounds, so it must never request tracked measurement here.
+export function measureCanvasText(ctx,font,item,text,{tracking=false}={}){
+  ctx.save();
+  ctx.font=font;
+  if(tracking&&item.letterSpacing!==undefined&&'letterSpacing' in ctx)
+    ctx.letterSpacing=item.letterSpacing+'px';
+  const width=ctx.measureText(text).width;
+  ctx.restore();
+  return width;
+}
 export function measuredTextBounds(item,measure){
   const lines=String(item.text||'').split('\n');
   const actualWidth=Math.max(0,...lines.map(line=>Math.max(0,
