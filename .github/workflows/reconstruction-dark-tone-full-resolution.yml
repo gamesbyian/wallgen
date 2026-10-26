@@ -1,10 +1,7 @@
 name: Source-dark fitted Tone full-scale canonical export
-# Single PR optical qualification; retire PR trigger after result.
+# Genuine 19.8MP browser/worker export proof remains manually opt-in.
+# Normal pull requests use lean quick CI without a browser installation.
 on:
-  pull_request:
-    paths:
-      - 'scripts/evaluate-reconstruction-r0.mjs'
-      - '.github/workflows/reconstruction-dark-tone-full-resolution.yml'
   workflow_dispatch:
 permissions:
   contents: read
