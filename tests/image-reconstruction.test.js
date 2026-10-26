@@ -7,7 +7,7 @@ import {describeReconstructionImage,reconstructionCandidates,
   radialImageSignature,imageStripeAngle,imageCurveSignature,diverseReconstructionCandidates,reconstructionRefinementIndex,
   measuredRainbowRibbonBands,seedMeasuredRibbonControls,measuredCanonicalPalette,coherentWaveOffsetY,coherentVerticalBandOffsetX,coherentExpandedDrawOffsetY,measuredExpandedDrawRegistration,measuredJaggedPixelShift,
   rankReconstructionCandidatesCooperatively,refineReconstructionCandidateCooperatively,
-  RECONSTRUCTION_FRAME,RECONSTRUCTION_RENDER_LIMIT} from '../src/image-reconstruction.js';
+  RECONSTRUCTION_FRAME,RECONSTRUCTION_RENDER_LIMIT,reconstructionSourceFitRecipe} from '../src/image-reconstruction.js';
 
 function colour(hue){
   const h=((hue%360)+360)%360/60,i=Math.floor(h),f=h-i;
@@ -1758,4 +1758,57 @@ test('a genuinely noncircular source-visible seven-hue scene does not inherit pr
   assert.ok(!reconstructionCandidates(picture,locked)
     .some(x=>x.kind==='hue-visible-shapes'),
     'a creator-locked unsupported Tone cannot masquerade as a source-faithful shape recipe');
+});
+
+test('source inverse scoring ignores pre-existing creator text without dropping it from editable Apply',async()=>{
+  const text=normalizeRecipe({seed:'import-while-captioned',textOverlays:[
+    {id:'caption',text:'AUTHOR TEXT',font:'pack-bangers',x:50,y:82,
+      opacity:1,colour:'rainbow-letter'}
+  ]});
+  const originalText=structuredClone(text.textOverlays);
+  const proposals=reconstructionCandidates(original,text);
+  assert.ok(proposals.length>0);
+  for(const item of proposals){
+    assert.deepEqual(item.recipe.textOverlays,originalText,
+      'a new source import must not delete unrelated authored text');
+    assert.match(item.uncertainty,/text is preserved.*excluded from comparison/,
+      'accessible explanation must distinguish kept caption from fitted source');
+  }
+  const recipe=proposals[0].recipe;
+  const paintOnly=reconstructionSourceFitRecipe(recipe);
+  assert.deepEqual(paintOnly.textOverlays,[]);
+  assert.notEqual(paintOnly,recipe);
+  assert.deepEqual(recipe.textOverlays,originalText);
+  assert.deepEqual(reconstructionSourceFitRecipe(
+    normalizeRecipe({seed:'nothing-else'})).textOverlays,undefined,
+    'blank designs must retain exact existing scoring semantics');
+  const reference=raster(RECONSTRUCTION_FRAME.width,RECONSTRUCTION_FRAME.height,
+    ()=>[0,0,0,255]);
+  let renders=0;
+  const render=(r,w,h)=>{
+    renders++;
+    assert.equal(w,RECONSTRUCTION_FRAME.width);
+    assert.equal(h,RECONSTRUCTION_FRAME.height);
+    assert.equal(r.textOverlays?.length||0,0,
+      'inverse comparison must exclude pre-existing painted captions');
+    return reference;
+  };
+  const plainCandidate={kind:'straight',label:'test source fit',uncertainty:'',
+    recipe,error:.4};
+  const ranked=rankReconstructionCandidates([plainCandidate],reference,render);
+  assert.equal(ranked.length,1);
+  assert.equal(ranked[0].error,0,'the source-only black frame matches exactly');
+  assert.deepEqual(ranked[0].recipe.textOverlays,originalText);
+  const refined=refineReconstructionCandidate(plainCandidate,reference,render,
+    {maxRenders:2});
+  assert.ok(renders>=2,'both coarse and refinement invoke source-only paint');
+  assert.deepEqual(refined.recipe.textOverlays,originalText,
+    'refinement must never mutate/remove creator text');
+  assert.ok(refined.refinementRenders<=2);
+  const cooperative=await rankReconstructionCandidatesCooperatively(
+    [plainCandidate],reference,render);
+  assert.equal(cooperative[0].error,0);
+  const coopRefined=await refineReconstructionCandidateCooperatively(
+    plainCandidate,reference,render,{maxRenders:2});
+  assert.deepEqual(coopRefined.recipe.textOverlays,originalText);
 });
