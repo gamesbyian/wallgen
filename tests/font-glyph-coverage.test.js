@@ -325,3 +325,13 @@ test('Unicode default-ignorable emoji tags and shaping controls need no cmap gly
   assert.deepEqual(missingFontCodepoints(coverage,'A☃B'),[0x2603],
     'a genuinely missing visible snowman must continue to warn');
 });
+
+test('hidden glyph diagnostics use the same source-owned paint eligibility as font preparation',()=>{
+  const source=readFileSync(new URL('../src/text-overlays-ui.js',import.meta.url),'utf8');
+  assert.match(source,/if\(!supportedType\|\|!textOverlayPaintsInk\(item\)\)/,
+    'do not request a glyph-coverage load for opacity-zero or format-only text');
+  assert.match(source,/Hidden text does not block export; reimport before showing it/,
+    'missing invisible private font warning must be clear without implying export fails');
+  assert.match(source,/textOverlayPaintsInk\(item\)\?/,
+    'visible private font must still require original bytes');
+});
