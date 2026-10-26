@@ -1,7 +1,7 @@
 // One small, explicit local-recording control; no separate editor state.
 import {USAGE_MODE_KEY} from './creative-recorder.js';
 import {FEEDBACK_PREF_KEY,CREATIVE_FEEDBACK_OPTIONS} from './creative-feedback.js';
-import {createGithubUsageSync,USAGE_TOKEN_KEY,GITHUB_USAGE_REPO} from './creative-github-sync.js';
+import {createGithubUsageSync,storeUsageBackupToken,USAGE_TOKEN_KEY,GITHUB_USAGE_REPO} from './creative-github-sync.js';
 
 const escapeFileName=()=>new Date().toISOString().replace(/[:.]/g,'-');
 function downloadLog(data){
@@ -218,20 +218,22 @@ export function installCreativeRecorderUI({
   dialog.querySelector('[data-usage-sync]').addEventListener('click',async()=>{
     if(!recorder.enabled){syncStatus.textContent='Enable local recording first.';return;}
     if(!recorder.durable){syncStatus.textContent='Persistent local storage is unavailable; cannot safely sync.';return;}
-    if(tokenInput.value.trim())token=tokenInput.value.trim();
-    if(!token){syncStatus.textContent='Enter a GitHub token before connecting.';return;}
+    const proposed=tokenInput.value.trim()||token;
+    if(!proposed){syncStatus.textContent='Enter a GitHub token before connecting.';return;}
     try{
-      if(remember.checked){
-        localStorage.setItem(USAGE_TOKEN_KEY,token);
-        sessionStorage.removeItem(USAGE_TOKEN_KEY);
-      }else{
-        sessionStorage.setItem(USAGE_TOKEN_KEY,token);
-        localStorage.removeItem(USAGE_TOKEN_KEY);
-      }
+      // Arm background retry ONLY after both browser-storage operations work.
+      storeUsageBackupToken(proposed,{remember:remember.checked});
+      token=proposed;
       tokenInput.value='';
       await syncNow();
     }catch(error){
-      syncStatus.textContent='Token storage unavailable. Local activity remains saved. '+String(error.message||error);
+      connectionRevision++;sync.cancel();
+      // The failure must not leave a newly entered token in memory, where
+      // visibility/online/interval listeners would otherwise retry uploads.
+      token='';tokenInput.value='';remember.checked=false;
+      syncStatus.textContent='Backup not connected: token storage failed and automatic retries are disabled. '+
+        'If browser storage is blocked, revoke this token in GitHub Settings. '+
+        String(error.message||error);
     }
   });
   dialog.querySelector('[data-usage-disconnect]').addEventListener('click',()=>{
