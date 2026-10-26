@@ -1,5 +1,15 @@
 # Text overlays and typography: product specification and implementation queue
 
+## Text mover, imported-font ownership and invisible glyph feedback · 26 October 2026
+
+**Merged [#782](https://github.com/gamesbyian/wallgen/pull/782), [quick CI #40415010586](https://github.com/gamesbyian/wallgen/actions/runs/40415010586) PASS:** text-move tool's live canvas redraw no longer overrides the Text-pane disabled state with the old weak enabled+nonempty-string test; it hides the selection transform frame for unpainted objects, and disarms an active gesture when no visible unlocked text can move. A private TTF/OTF import now snapshots the initiating object ID before SHA/FontFace/IndexedDB async work and applies only to that original still-existing caption, even if the user switches selection in the meantime. A removed caption leaves its font safely in the local library, never automatically assigning it to a different text object.
+
+**Merged [#783](https://github.com/gamesbyian/wallgen/pull/783), [quick CI #40415256963](https://github.com/gamesbyian/wallgen/actions/runs/40415256963) PASS:** glyph coverage UI no longer claims an invisible custom font is unavailable for *rendering* when `prepareTypefaces` intentionally skips it. Only actually painted text triggers glyph coverage checking; the missing private font status distinguishes hidden text, which does not block export, from visible text requiring reimport. Native shaping, private font binary storage and user-approved portable package semantics remain unchanged.
+
+**Cross-lane reconstruction [#784](https://github.com/gamesbyian/wallgen/pull/784) PASS:** existing authored Text survives imported-image reconstruction previews and Apply, but is not counted as evidence against an unrelated external bitmap during geometry fitting. No visual text renderer changes.
+
+**Remaining #653:** real witnessed complex native contextual Bidi/Indic glyph placement on arbitrary curves, as opposed to the current safe native-shaped straight fallback; representative actual Chromium/PNG/IME-selection and physical Pixel human acceptance. These merged fixes have focused source/Node/CI acceptance; **no newly viewed wallpaper or physical Android test**.
+
 ## Current additional text correctness and cross-device font safety · 26 October 2026
 
 **Merged [#776](https://github.com/gamesbyian/wallgen/pull/776), [CI #40410723056](https://github.com/gamesbyian/wallgen/actions/runs/40410723056) PASS:** direct and layout-aware pointer selection skip zero-opacity and formatting-only text, allowing visible lower layers to be selected; hidden text remains editable by the Text object picker.
