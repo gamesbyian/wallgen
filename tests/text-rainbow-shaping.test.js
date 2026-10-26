@@ -129,3 +129,20 @@ test('invisible direction marks do not consume rainbow-letter colour slots',()=>
   }
   assert.equal(rainbowTextStops('AB','rainbow-letter',palette,0,width).nextIndex,2);
 });
+
+test('default-ignorable standalone formatting graphemes never consume visible hues',()=>{
+  for(const mark of ['\u200b','\u2060','\u034f','\u{e007f}']){
+    const line='A'+mark+'B';
+    const result=rainbowTextStops(line,'rainbow-letter',palette,0,width);
+    assert.equal(result.nextIndex,2,
+      'non-ink Unicode '+mark.codePointAt(0).toString(16)+' cannot spend a rainbow slot');
+    assert.equal(result.stops[0].colour,'R');
+    assert.equal(result.stops.at(-1).colour,'O');
+    assert.equal(rainbowTextStops('C','rainbow-letter',palette,
+      result.nextIndex,width).stops[0].colour,'Y');
+  }
+  const visibleEmoji='🏴\u{e0067}\u{e0062}\u{e007f}';
+  assert.equal(rainbowTextStops(visibleEmoji,'rainbow-letter',palette,0,width)
+    .nextIndex,1,'emoji tag components remain inside one visible grapheme');
+  assert.equal(rainbowTextStops('\u200b','rainbow-word',palette,3,width).nextIndex,3);
+});
