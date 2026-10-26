@@ -1,5 +1,8 @@
 # ROYGBIV: agent instructions
 
+**Live dispatch, reconciled 25 October 2026 (Calgary):** [merged #726, 719-branch/17-no-PR audit and three-agent work queue](docs/CURRENT-WORK-QUEUE-2026-10-24.md). Three open owner issues remain #557, #653, #664. The queue's first section supersedes old date-locked PR and branch counts below; 22 real-render R0 regressions passed, temporary optical PR triggers were retired. Preserve the lean quick check, honest hardware evidence boundary and separate Agent 1/2/3 ownership.
+
+
 **Live dispatch (24 October 2026):** [three-agent current work queue and no-PR branch rescue audit](docs/CURRENT-WORK-QUEUE-2026-10-24.md). This is the current execution index; dated passages in the long roadmap and handoff below are historical unless reaffirmed against current main, issues and PRs.
 
 
