@@ -165,19 +165,21 @@ export function rememberFontCoverage(id,bytes){
 }
 export const cachedFontCoverage=id=>coverageByFont.get(id)||null;
 export const fontCoverageChecked=id=>coverageByFont.has(id);
-// These Unicode controls direct layout or joining but have no standalone
-// visible outline in a font cmap. Missing-glyph diagnostics must not present
-// them as broken letters (especially for native Bidi text and ZWJ emoji).
-const nonInkFormatting=/[\u061c\u200c-\u200f\u202a-\u202e\u2060\u2066-\u2069\ufeff]/u;
+// Unicode Default_Ignorable_Code_Point includes variation selectors,
+// directional controls, invisible word/cluster joiners and emoji flag tags.
+// Such codepoints can be essential to rendering the surrounding grapheme
+// but do not require their own standalone glyph outline in the selected font.
+// Actual base letters, emoji pictographs and combining ink marks are still
+// checked against cmap; native browser shaping remains authoritative.
+const invisibleFormatting=/\p{Default_Ignorable_Code_Point}/u;
 export function missingFontCodepoints(coverage,text){
   if(!coverage||typeof coverage.has!=='function'||typeof text!=='string')
     return null;
   const missing=new Set();
   for(const char of text){
     const cp=char.codePointAt(0);
-    // Formatting controls/variation selectors do not need their own outline.
-    if(/\s/u.test(char)||cp<0x20||nonInkFormatting.test(char)||
-      (cp>=0xfe00&&cp<=0xfe0f)||(cp>=0xe0100&&cp<=0xe01ef))continue;
+    // Invisible controls and selectors change shaping, not glyph coverage.
+    if(/\s/u.test(char)||cp<0x20||invisibleFormatting.test(char))continue;
     if(!coverage.has(cp))missing.add(cp);
   }
   return [...missing].sort((a,b)=>a-b);
