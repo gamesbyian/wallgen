@@ -1,5 +1,17 @@
 # Text overlays and typography: product specification and implementation queue
 
+## Current additional text correctness and cross-device font safety · 26 October 2026
+
+**Merged [#776](https://github.com/gamesbyian/wallgen/pull/776), [CI #40410723056](https://github.com/gamesbyian/wallgen/actions/runs/40410723056) PASS:** direct and layout-aware pointer selection skip zero-opacity and formatting-only text, allowing visible lower layers to be selected; hidden text remains editable by the Text object picker.
+
+**Merged [#777](https://github.com/gamesbyian/wallgen/pull/777), [CI #40411458969](https://github.com/gamesbyian/wallgen/actions/runs/40411458969) PASS:** a single pure `textOverlayPaintsInk` helper in the Unicode module controls canvas paint, private/bundled font preparation/readiness, custom-render dispatch and text selection. A zero-ink private font can no longer block an unrelated visible wallpaper export on another device. A nonzero opacity still requires the original face; hidden font IDs and original bytes remain included **only** in user-approved portable-font packages. No new cyclical module dependencies.
+
+**Merged [#778](https://github.com/gamesbyian/wallgen/pull/778), [CI #40411697102](https://github.com/gamesbyian/wallgen/actions/runs/40411697102) PASS:** the existing 4096-unit/160-codepoint bounded normalizer replaces only orphan UTF-16 high/low surrogates from malformed pasted/JSON text with U+FFFD; genuine supplementary characters, paired flags and ZWJ emoji are unchanged and round-trip canonically.
+
+**Merged [#780](https://github.com/gamesbyian/wallgen/pull/780), [CI #40412276410](https://github.com/gamesbyian/wallgen/actions/runs/40412276410) PASS:** visible Move-text action is disabled when no unlocked actually painted object is available, and stale active canvas move mode exits if the last pickable object disappears. The Text panel still edits hidden/locked objects normally.
+
+**Remaining:** only independently reproducible current-source Unicode/selection/rendering defects, arbitrarily curved native contextual Bidi/Indic shaping which Canvas2D does not expose glyph positions for, and separate actual Pixel 6 Pro/IME/TalkBack/19.8MP thermal and human aesthetic acceptance. These PRs have deterministic Node/CI proof, **not fresh viewed real Chromium PNG evidence or physical Android acceptance**.
+
 ## Latest focused Unicode ink correctness · 26 October 2026
 
 **Merged [#773](https://github.com/gamesbyian/wallgen/pull/773), exact-head quick CI PASS:** canonical Unicode text may legitimately contain invisible format characters such as zero-width space and word joiner. Native-shaped rainbow-letter painting and curved-letter painting previously treated certain default-ignorable characters as visible ink, spending a ROYGBIV hue before the next actual letter; curved picking could also select invisible-only marks. One shared `hasVisibleTextInk` predicate now uses Unicode Default_Ignorable_Code_Point alongside whitespace for these three consumers. Regression coverage verifies `A\u200bB` keeps the visible red/orange progression, extended emoji-tag graphemes stay one coloured unit, and format-only curved text isn't pickable. This preserves the original codepoints, native shaping and font privacy; it is deterministic painter-call/Node evidence, not a new viewed optical browser journey or Android acceptance.
