@@ -209,3 +209,14 @@ test('direct hit-testing ignores transparent and format-only top objects',()=>{
   assert.equal(hitTextOverlay([{...hidden,opacity:.01}],center,measure)?.id,
     'hidden','a nonzero opacity is still selectable ink');
 });
+
+test('canvas mover maintains one actual-ink eligibility predicate across redraw and guides',async()=>{
+  const {readFileSync}=await import('node:fs');
+  const src=readFileSync(new URL('../src/text-direct-ui.js',import.meta.url),'utf8');
+  assert.match(src,/if\(!active\|\|!textOverlayPaintsInk\(item\)\)/,
+    'hidden selection must not leave a visible transform frame');
+  assert.match(src,/const movable=\(recipe\.textOverlays\|\|\[\]\)\.some\(x=>textOverlayPaintsInk\(x\)&&!x\.locked\)/);
+  assert.match(src,/if\(!movable\)\{\s*setActive\(false\);\s*button\.disabled=true;/);
+  assert.doesNotMatch(src,/some\(x=>x\.enabled&&x\.text\)/,
+    'weak truthy text test used to override the new hidden-text control');
+});
