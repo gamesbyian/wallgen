@@ -377,6 +377,6 @@ test('partly observed hues refuse missing semantic slots and protected scattered
     scatteredShapeKind:'circle',lockedSettings:['scatteredShapeOverrides'],
     scatteredShapeOverrides:[]});
   assert.equal(observedHueShapeRecipe(source,placement,protectedGeometry,
-    {allowPartial:true})?.recipe.scatteredCount,2,
-    'an empty protected override array is already identical to the source baseline');
+    {allowPartial:true}),null,
+    'a protected empty shape list cannot be replaced by source-derived geometry');
 });
