@@ -6,6 +6,7 @@ import {installTextCanvasMover} from './text-direct-ui.js';
 import {textPathStatus} from './text-path-status.js';
 import {prepareTypefaces} from './typography-fonts.js';
 import {cachedFontCoverage,fontCoverageChecked,missingGlyphNotice} from './font-glyph-coverage.js';
+import {textOverlayPaintsInk} from './text-rainbow-shaping.js';
 
 // A tool inside the seven-category editor, not a floating DOM preview layer.
 // Every mutation takes the existing recipe/Undo path supplied by app.js.
@@ -168,7 +169,10 @@ export function installTextOverlayTool({getRecipe,changeRecipe,onFontNotice=()=>
     pick.disabled=!item;
     remove.disabled=!item;
     add.disabled=items.length>=MAX_TEXT_OVERLAYS;
-    moveButton.disabled=!items.some(item=>item.enabled&&item.text&&!item.locked);
+    // A zero-alpha or formatting-only object has no canvas ink to grab.
+    // Its authoring fields and object picker remain available.
+    moveButton.disabled=!items.some(item=>textOverlayPaintsInk(item)&&!item.locked);
+    if(moveButton.disabled&&mover?.active)mover.endCanvasMove();
     packSave.disabled=!packageFontIds(getRecipe()).length;
     if(!item){
       syncedTextOwnerId=null;
