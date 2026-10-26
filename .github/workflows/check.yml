@@ -15,6 +15,25 @@ concurrency:
   group: quick-ci-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
+  typography_unicode_one_shot:
+    if: ${{ github.event_name == 'pull_request' && github.head_ref == 'agent2/653-native-script-fallback-20261025' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save playwright
+      - run: npx playwright install --with-deps chromium
+      - run: node scripts/typography-selection-browser-proof.mjs
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-script-fallback-one-shot
+          path: output/text-selection/
+          retention-days: 7
+
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 10
