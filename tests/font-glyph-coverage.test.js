@@ -304,3 +304,24 @@ test('unknown maxp format is unknown while cmap-only test fixtures stay readable
   assert.equal(inspectFontCmap(fontFixture(12)).has(0x1f308),true,
     'legacy cmap-only fixture remains supported without maxp');
 });
+
+
+test('Unicode default-ignorable emoji tags and shaping controls need no cmap glyph outlines',()=>{
+  const coverage=inspectFontCmap(fontFixture(4));
+  const invisible=['\u00ad','\u034f','\u180e','\u200b','\u200e','\u2060',
+    '\u{e0067}','\u{e0062}','\u{e0065}','\u{e006e}','\u{e007f}',
+    '\ufe0f','\u{e0100}'];
+  for(const char of invisible){
+    assert.deepEqual(missingFontCodepoints(coverage,'A'+char+'B'),[],
+      'default-ignorable scalar must not produce a false missing-font warning: '+
+      char.codePointAt(0).toString(16));
+    assert.equal(missingGlyphNotice(coverage,'A'+char+'B'),'');
+  }
+  const england='🏴\u{e0067}\u{e0062}\u{e0065}\u{e006e}\u{e0067}\u{e007f}';
+  assert.deepEqual(missingFontCodepoints(coverage,england),[0x1f3f4],
+    'emoji flag base still requires a real pictograph, but tags do not');
+  assert.deepEqual(missingFontCodepoints(coverage,'A\u0301B'),[0x301],
+    'visible combining accent ink remains a real glyph-coverage requirement');
+  assert.deepEqual(missingFontCodepoints(coverage,'A☃B'),[0x2603],
+    'a genuinely missing visible snowman must continue to warn');
+});
