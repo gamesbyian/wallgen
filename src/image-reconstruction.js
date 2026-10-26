@@ -1124,8 +1124,10 @@ export function reconstructionCandidates(image,recipe,{onDescription}={}){
     const paletteDisclosure=desc.paletteHypothesis?
       ' Source colours resemble the current '+desc.paletteHypothesis.palette+
       ' story; original palette identity, material and processing remain unknown.':'';
+    const captionDisclosure=current.textOverlays?.length?
+      ' Existing authored text is preserved in this editable result, but excluded from comparison with imported image pixels.':'';
     return {...candidate,recipe:effective,lockedChanges:blocked,
-      uncertainty:candidate.uncertainty+paletteDisclosure};
+      uncertainty:candidate.uncertainty+paletteDisclosure+captionDisclosure};
   }).filter(candidate=>!essential(candidate).some(key=>
     candidate.lockedChanges.includes(key)));
   // Confirmed by 02-diagonal current-renderer PNG: the third candidate
@@ -1324,6 +1326,14 @@ export function measuredExpandedDrawRegistration(source,rendered,sourceRegions=n
 export const coherentExpandedDrawOffsetY=(source,rendered)=>
   measuredExpandedDrawRegistration(source,rendered)?.offsetY??null;
 
+// A new external image is not evidence for the user's previous editable
+// captions. Keep them intact in preview/Apply, but don't score their pixels
+// as an inverse-geometry mismatch against independent imported artwork.
+ // The stripped copy is ephemeral and never replaces the canonical candidate.
+export function reconstructionSourceFitRecipe(recipe){
+  return recipe?.textOverlays?.length?{...recipe,textOverlays:[]}:recipe;
+}
+
 /** One synchronous bounded fit pass. The UI can cancel between revisions.
  * render(candidate,width,height) must call the existing renderer and return
  * ImageData-like pixels at the requested dimensions.
@@ -1346,7 +1356,7 @@ export function rankReconstructionCandidates(candidates,source,render,
   };
   for(const candidate of candidates){
     try{
-      const pixels=render(candidate.recipe,RECONSTRUCTION_WIDTH,RECONSTRUCTION_HEIGHT);
+      const pixels=render(reconstructionSourceFitRecipe(candidate.recipe),RECONSTRUCTION_WIDTH,RECONSTRUCTION_HEIGHT);
       const error=compareReconstructionPixels(source,pixels);
       if(Number.isFinite(error)){
         const loopInkRatio=candidate.kind==='loop'&&
@@ -1568,7 +1578,7 @@ function* refinementTrials(candidate,maxRenders){
 function trialError(source,recipe,render){
   try{
     return compareReconstructionPixels(source,
-      render(recipe,RECONSTRUCTION_WIDTH,RECONSTRUCTION_HEIGHT));
+      render(reconstructionSourceFitRecipe(recipe),RECONSTRUCTION_WIDTH,RECONSTRUCTION_HEIGHT));
   }catch{return Infinity;}
 }
 export function refineReconstructionCandidate(candidate,source,render,{maxRenders=10}={}){
