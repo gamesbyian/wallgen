@@ -296,3 +296,87 @@ test('shared pigment descriptor refuses spoofed sparse hues and incorrect masks'
     i===0?new Uint8Array(8):m)}),null);
   assert.equal(propose({...good,background:'unknown'}),null);
 });
+
+function twoDistinctFirstHueSilhouettes(){
+  const width=180,height=360,data=new Uint8ClampedArray(width*height*4);
+  for(let i=0;i<width*height;i++)data[i*4+3]=255;
+  for(let y=40;y<125;y++)for(let x=25;x<90;x++){
+    // A red connected L-shaped silhouette whose missing corner must remain
+    // visibly absent after reconstruction, not be filled by a fitted disk.
+    if(x>65&&y>76)continue;
+    const i=(y*width+x)*4;data.set(hueRgb(HUES[0]),i);
+  }
+  for(let y=184;y<274;y++)for(let x=96;x<165;x++){
+    // An orange asymmetric clipped-corner polygon, not a round disk.
+    if((x<114&&y<204)||(x>150&&y>255))continue;
+    const i=(y*width+x)*4;data.set(hueRgb(HUES[1]),i);
+  }
+  return {width,height,data};
+}
+test('measured first-two noncircular pigment silhouettes are portable, separately editable canonical shapes',()=>{
+  const source=twoDistinctFirstHueSilhouettes(),bytes=source.data.slice();
+  const desc=describeReconstructionImage(source);
+  assert.deepEqual(desc.colourRegions.map(c=>c.index),[0,1]);
+  assert.equal(desc.incompleteColourRegions,true,
+    'two first-slot compact source shapes qualify without seven invented pigments');
+  const masked=extractImageColourRegions(source,HUES,{includeMasks:true});
+  assert.equal(observedHueShapeRecipe(source,placement,{}),null,
+    'direct helper retains the original seven-hue contract unless explicitly qualified');
+  const direct=observedHueShapeRecipe(source,placement,{seed:'sparse-shapes'},
+    {allowPartial:true});
+  assert.ok(direct);
+  assert.equal(direct.kind,'hue-visible-shapes');
+  assert.equal(direct.recipe.scatteredCount,2);
+  assert.equal(direct.recipe.scatteredShapeOverrides.length,2);
+  assert.equal(direct.recipe.scatteredOverrides.length,2);
+  assert.deepEqual(direct.componentCounts,[1,1]);
+  const scene=resolveScene(direct.recipe);
+  assert.equal(scene.objects.length,2);
+  assert.deepEqual(scene.objects.map(o=>o.colorIndex),[0,1]);
+  assert.ok(scene.objects.every(o=>o.rings?.length&&!o.circle));
+  assert.equal(scene.objects.some(o=>o.vertices.length===144),false,
+    'angular source contour must not silently become the sampled circle polygon');
+  assert.match(direct.uncertainty,/Only the first 2 contiguous/);
+  assert.deepEqual(decodeRecipe(encodeRecipe(direct.recipe)),direct.recipe);
+  const candidates=reconstructionCandidates(source,normalizeRecipe({seed:'sparse-shapes'}));
+  assert.ok(candidates.length<=RECONSTRUCTION_RENDER_LIMIT);
+  assert.equal(candidates[0].kind,'hue-visible-shapes');
+  assert.ok(candidates.some(c=>c.kind==='regions'),
+    'preserve the ordinary circle approximation for independent true-painter ranking');
+  assert.deepEqual(candidates[0].recipe,direct.recipe);
+  const shared=observedHueShapeRecipe(source,placement,{seed:'sparse-shapes'},{
+    allowPartial:true,colourAnalysis:{
+      masks:masked.masks,regions:masked.regions,coverage:masked.coverage,
+      background:masked.background
+    }
+  });
+  assert.deepEqual(shared,direct,'shared masks are source-equivalent to standalone');
+  assert.deepEqual(source.data,bytes,'uploaded source RGBA is immutable');
+});
+
+test('partly observed hues refuse missing semantic slots and protected scattered-count edits',()=>{
+  const source=twoDistinctFirstHueSilhouettes();
+  const changed={...source,data:source.data.slice()};
+  // Change only orange pixels into blue, producing [0,4] with absent
+  // intermediate pigments, never a two-red/two-orange invented candidate.
+  for(let i=0;i<changed.data.length;i+=4)
+    if(changed.data[i]===255&&changed.data[i+1]>0){
+      const b=hueRgb(HUES[4]);changed.data.set(b,i);
+    }
+  assert.deepEqual(extractImageColourRegions(changed,HUES).regions.map(r=>r.index),[0,4]);
+  assert.equal(observedHueShapeRecipe(changed,placement,{},{allowPartial:true}),null);
+  assert.equal(reconstructionCandidates(changed,{}).length,0);
+  const protectedCount=normalizeRecipe({seed:'sparse-shapes',
+    scatteredCount:7,lockedSettings:['scatteredCount']});
+  assert.equal(observedHueShapeRecipe(source,placement,protectedCount,
+    {allowPartial:true}),null,
+    'a locked seven-object scene cannot pretend to apply a two-object preview');
+  assert.ok(!reconstructionCandidates(source,protectedCount)
+    .some(c=>c.kind==='hue-visible-shapes'));
+  const protectedGeometry=normalizeRecipe({seed:'sparse-shapes',
+    scatteredShapeKind:'circle',lockedSettings:['scatteredShapeOverrides'],
+    scatteredShapeOverrides:[]});
+  assert.equal(observedHueShapeRecipe(source,placement,protectedGeometry,
+    {allowPartial:true})?.recipe.scatteredCount,2,
+    'an empty protected override array is already identical to the source baseline');
+});
