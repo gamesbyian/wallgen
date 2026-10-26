@@ -296,8 +296,8 @@ test('Move-text affordance follows actual painted ink rather than hidden caption
 test('asynchronous font import binds the initiating caption ID, not the later picker',async()=>{
   const {readFileSync}=await import('node:fs');
   const src=readFileSync(new URL('../src/text-overlays-ui.js',import.meta.url),'utf8');
-  assert.match(src,/const targetId=selectedId;\s*fontFile\.disabled=true;/);
-  assert.match(src,/const items=currentItems\(\);\s*if\(items\.some\(item=>item\.id===targetId\)\)/);
+  assert.match(src,/const targetId=selectedId;\s*const targetTicket=textIdentity\.ticket\(targetId\);\s*fontFile\.disabled=true;/);
+  assert.match(src,/const items=currentItems\(\);\s*if\(textIdentity\.same\(targetId,targetTicket\)&&\s*items\.some\(item=>item\.id===targetId\)\)/);
   assert.match(src,/commit\(items\.map\(item=>item\.id===targetId\?/);
   assert.doesNotMatch(src,/commit\(currentItems\(\)\.map\(item=>item\.id===selectedId\?\s*\{\.\.\.item,font:installed\.id\}/);
   const own=[{id:'one',font:'bold'},{id:'two',font:'editorial'}];
