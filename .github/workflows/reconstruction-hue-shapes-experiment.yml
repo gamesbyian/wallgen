@@ -1,12 +1,6 @@
 name: R0 source-visible hue shape oracle
 # Source/fit screenshots and full-resolution export remain manually opt-in.
 on:
-  # Temporary #731 real-painter qualification only. Remove before merge.
-  pull_request:
-    paths:
-      - 'src/image-hue-reconstruction.js'
-      - 'src/image-reconstruction.js'
-      - 'tests/reconstruction-visible-hue-shapes.test.js'
   workflow_dispatch:
     inputs:
       include_sparse_hue:
@@ -50,13 +44,13 @@ jobs:
           npm install --no-save playwright@1.56.1
           npx playwright install --with-deps chromium
       - name: Generate four independent non-ROYGBIV Canvas source images
-        if: ${{ inputs.include_external_pigments || github.event_name == 'pull_request' }}
+        if: ${{ inputs.include_external_pigments }}
         run: node scripts/review-reconstruction-external-pigments.mjs --out-dir artifacts/external-pigment-r0
       - name: Reconstruct independent metadata-free art with ordinary six-plus-ten painter
-        if: ${{ inputs.include_external_pigments || github.event_name == 'pull_request' }}
+        if: ${{ inputs.include_external_pigments }}
         run: node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/external-pigment-r0 --hue-visible-shapes --source-signature
       - name: Report independent artwork and separate existing shape proposal errors
-        if: ${{ inputs.include_external_pigments || github.event_name == 'pull_request' }}
+        if: ${{ inputs.include_external_pigments }}
         run: |
           node --input-type=module -e '
             import {readFileSync} from "node:fs";
@@ -72,13 +66,13 @@ jobs:
                 candidateCount:s.candidateCount,sourceSignature:s.sourceSignature??null}));
           '
       - name: Author four independent low-chroma/neutral external source images
-        if: ${{ inputs.include_low_chroma || github.event_name == 'pull_request' }}
+        if: ${{ inputs.include_low_chroma }}
         run: node scripts/review-reconstruction-external-pigments.mjs --collection low-chroma --out-dir artifacts/external-low-chroma
       - name: Score low-chroma source-only input through real canonical six-plus-ten painter
-        if: ${{ inputs.include_low_chroma || github.event_name == 'pull_request' }}
+        if: ${{ inputs.include_low_chroma }}
         run: node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/external-low-chroma --source-signature --hue-visible-shapes
       - name: Report source pigment confidence and refusal without inferred original recipe
-        if: ${{ inputs.include_low_chroma || github.event_name == 'pull_request' }}
+        if: ${{ inputs.include_low_chroma }}
         run: |
           node --input-type=module -e '
             import {readFileSync} from "node:fs";
@@ -94,13 +88,13 @@ jobs:
                 candidateCount:s.candidateCount}));
           '
       - name: Author four independent first-hue/sparse-hue source images
-        if: ${{ inputs.include_sparse_hue || github.event_name == 'pull_request' }}
+        if: ${{ inputs.include_sparse_hue }}
         run: node scripts/review-reconstruction-external-pigments.mjs --collection sparse-hue --out-dir artifacts/external-sparse-hue
       - name: Fit four sparse-hue original images with real canonical renderer
-        if: ${{ inputs.include_sparse_hue || github.event_name == 'pull_request' }}
-        run: node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/external-sparse-hue --source-signature --hue-visible-shapes
+        if: ${{ inputs.include_sparse_hue }}
+        run: node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/external-sparse-hue --source-signature
       - name: Qualify first two semantic colour slots and refuse unsupported gaps
-        if: ${{ inputs.include_sparse_hue || github.event_name == 'pull_request' }}
+        if: ${{ inputs.include_sparse_hue }}
         run: |
           node --input-type=module -e '
             import {readFileSync} from "node:fs";
@@ -124,78 +118,16 @@ jobs:
               id:s.id,kind:s.bestKind,error:s.bestError,candidates:s.candidateCount,
               originalHueRegions:s.sourceSignature?.regionCount}));
           '
-      - name: Full-size portable first-two silhouettes through reference and worker
-        if: ${{ inputs.include_sparse_hue || github.event_name == 'pull_request' }}
-        run: |
-          set -euo pipefail
-          recipe="artifacts/external-sparse-hue/contiguous-red-orange.r0-hue-visible.recipe.json"
-          test -s "$recipe"
-          node scripts/render-headless.mjs --recipe "$recipe" --width 3024 --height 6552 --backend reference --out artifacts/external-sparse-hue/contiguous-red-orange.full-reference.png
-          node scripts/render-headless.mjs --recipe "$recipe" --width 3024 --height 6552 --backend worker --out artifacts/external-sparse-hue/contiguous-red-orange.full-worker.png
-          node --input-type=module <<'NODE'
-          import {readFileSync,writeFileSync} from 'node:fs';
-          import {chromium} from 'playwright';
-          import {extractPngRecipe} from './src/png-metadata.js';
-          import {createHash} from 'node:crypto';
-          const root='artifacts/external-sparse-hue/contiguous-red-orange';
-          const paths=[root+'.full-reference.png',root+'.full-worker.png'];
-          const bytes=paths.map(p=>readFileSync(p));
-          const recipes=bytes.map(extractPngRecipe);
-          for(const [i,r] of recipes.entries()){
-            if(r?.structure!=='regions'||r.regionMode!=='scattered'||
-                r.scatteredCount!==2||r.scatteredShapeOverrides?.length!==2||
-                r.scatteredOverrides?.length!==2||
-                r.scatteredShapeOverrides.some((x,j)=>x.index!==j))
-              throw Error('Incorrect portable full-resolution recipe '+paths[i]);
-            if(bytes[i].readUInt32BE(16)!==3024||bytes[i].readUInt32BE(20)!==6552)
-              throw Error('Incorrect PNG dimensions '+paths[i]);
-          }
-          if(JSON.stringify(recipes[0])!==JSON.stringify(recipes[1]))
-            throw Error('Reference/worker canonical metadata recipe differed');
-          const browser=await chromium.launch({headless:true});
-          let compared;
-          try{
-            const page=await browser.newPage();
-            compared=await page.evaluate(async (encodings)=>{
-              const decoded=[];
-              for(const b64 of encodings){
-                const png=Uint8Array.from(atob(b64),c=>c.charCodeAt(0));
-                const bitmap=await createImageBitmap(new Blob([png],{type:'image/png'}));
-                const canvas=document.createElement('canvas');
-                canvas.width=bitmap.width;canvas.height=bitmap.height;
-                const g=canvas.getContext('2d',{willReadFrequently:true});
-                g.drawImage(bitmap,0,0);
-                decoded.push(g.getImageData(0,0,canvas.width,canvas.height).data);
-                bitmap.close();
-              }
-              if(decoded[0].length!==decoded[1].length)
-                throw Error('Rendered PNG pixel lengths differ');
-              let changed=0;
-              for(let i=0;i<decoded[0].length;i++)
-                if(decoded[0][i]!==decoded[1][i])changed++;
-              return {comparedBytes:decoded[0].length,changedBytes:changed};
-            },bytes.map(b=>b.toString('base64')));
-          }finally{await browser.close();}
-          if(compared.changedBytes!==0)
-            throw Error('Actual reference/worker PNG pixels differ: '+compared.changedBytes);
-          const evidence={source:'independent first-two Canvas polygon original',
-            width:3024,height:6552,objects:2,firstColourSlots:[0,1],
-            referenceSha256:createHash('sha256').update(bytes[0]).digest('hex'),
-            workerSha256:createHash('sha256').update(bytes[1]).digest('hex'),
-            canonicalRecipeParity:true,sourceOriginalRecipe:false,...compared};
-          writeFileSync(root+'.full-parity-receipt.json',JSON.stringify(evidence,null,2)+'\n');
-          console.log('SPARSE_HUE_FULL_RES_ACCEPTED '+JSON.stringify(evidence));
-          NODE
       - name: Generate all 22 genuine metadata-free current-renderer R0 images
-        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' }}
+        if: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
           node scripts/review-reconstruction.mjs             --out-dir artifacts/r0-hue-shapes             
       - name: Evaluate all 22 normal six-plus-ten candidate selections plus opt-in per-hue proof
-        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' }}
+        if: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
           node scripts/evaluate-reconstruction-r0.mjs             --dir artifacts/r0-hue-shapes --hue-visible-shapes
       - name: Print source-backed candidate outcomes, with no hidden score sidecar
-        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' }}
+        if: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
           node --input-type=module -e '
             import {readFileSync} from "node:fs";
@@ -211,7 +143,7 @@ jobs:
               }));
           '
       - name: Verify exact source-first wins and known no-regression controls
-        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' }}
+        if: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
           node --input-type=module -e '
             import {readFileSync} from "node:fs";
@@ -248,7 +180,7 @@ jobs:
             }));
           '
       - name: High-resolution portable Hairpin/Loop source-shape exports, where representable
-        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' }}
+        if: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
           set -euo pipefail
           for case_id in 05-hairpin 06-loop 16-offset-jagged; do
