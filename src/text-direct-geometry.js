@@ -89,6 +89,16 @@ export function hitTextOverlay(items,point,measureFor,{tolerance=0}={}){
   return null;
 }
 const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
+// A long-running pointer capture must never replay an older full recipe
+// over another editor transaction, lock change, Undo or photo import.
+// The app replaces its normalized canonical recipe object on every commit.
+// Compare that identity, not JSON equality: even an Undo to identical data
+// is still a newer transaction which owns the user's state.
+export function textGestureOwnsCurrentRecipe(startRecipe,currentRecipe,id){
+  return startRecipe===currentRecipe&&Boolean(
+    startRecipe?.textOverlays?.some(item=>item.id===id&&!item.locked));
+}
+
 export function dragTextOverlay(recipe,id,delta){
   if(!id||!delta||!Number.isFinite(delta.x)||!Number.isFinite(delta.y))return recipe;
   let changed=false;
