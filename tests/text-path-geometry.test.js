@@ -6,6 +6,7 @@ import {canCurveText,layoutTextOnPath,textPathStation,prepareTextFollowPath,
   hitTextAtLayout} from '../src/text-path-geometry.js';
 import {drawTextOverlays} from '../src/text-overlay-renderer.js';
 import {hitTextOverlay,measuredTextBounds} from '../src/text-direct-geometry.js';
+import {textPathStatus} from '../src/text-path-status.js';
 function context(){
   const calls=[];
   return {calls,globalAlpha:1,
@@ -311,4 +312,38 @@ test('curved two-ring glyph picks reach painted outer stroke without filling hol
   assert.equal(hitTextAtLayout([item],{x:300,y:650},
     (_item,text)=>text.length*80),null,
     'hollow circle centre remains unselectable');
+});
+
+test('selected Text baseline reports native shaping fallback truth rather than generic curve promise',()=>{
+  const wave={text:'مرحبا',path:'wave',pathHeight:90,size:64};
+  assert.match(textPathStatus(wave),/currently renders straight/);
+  assert.match(textPathStatus(wave),/Wave baseline choice stays saved/);
+  assert.match(textPathStatus({...wave,path:'arc'}),/Arch baseline choice stays saved/);
+  assert.match(textPathStatus({...wave,path:'none'}),/straight baseline with native/);
+  const mixed=textPathStatus({...wave,text:'RAINBOW\nمرحبا'});
+  assert.match(mixed,/1 of 2 lines render straight/);
+  assert.match(mixed,/other lines follow the Wave/);
+  assert.match(textPathStatus({...wave,text:'👩‍🚀'}),/follows the selected Wave/,
+    'one intact joined emoji is permitted to follow a curve');
+  assert.match(textPathStatus({...wave,text:'CAFÉ'}),/follows the selected Wave/);
+});
+test('Draw status requires real usable canonical stroke and discloses native fallback',()=>{
+  const item={text:'DRAW',path:'drawn',pathHeight:90,size:64};
+  const valid=[[.1,.3],[.4,.35],[.7,.55],[.9,.6]];
+  assert.match(textPathStatus(item,valid),/Using the authored Draw path/);
+  assert.match(textPathStatus(item,[]),/Draw a usable path/);
+  assert.match(textPathStatus(item,[[.1,.5],[.11,.5]]),/Draw a usable path/,
+    'two authored points closer than 35 design units are not a usable path');
+  assert.match(textPathStatus({...item,text:'السَّلَامُ'},valid),
+    /currently renders straight/);
+  assert.match(textPathStatus({...item,text:'السَّلَامُ'},valid),
+    /Draw baseline choice stays saved/);
+  assert.match(textPathStatus({...item,text:'السَّلَامُ'},[]),
+    /Draw a usable path/, 'missing geometry takes precedence');
+});
+test('live Text controls use current renderer path status in accessible message',async()=>{
+  const {readFileSync}=await import('node:fs');
+  const source=readFileSync(new URL('../src/text-overlays-ui.js',import.meta.url),'utf8');
+  assert.match(source,/textPathStatus\(item,getRecipe\(\)\.customPath\)/);
+  assert.match(source,/data-text-path-status aria-live="polite"/);
 });
