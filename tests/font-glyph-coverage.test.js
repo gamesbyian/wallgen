@@ -184,3 +184,26 @@ test('a malformed supplementary cmap cannot mask independently valid BMP coverag
   assert.equal(inspectFontCmap(bytes),null,
     'both malformed Unicode maps remain unknown, never a fabricated success');
 });
+
+
+test('format-12 ranges may not claim glyph IDs beyond the 16-bit OpenType ceiling',()=>{
+  const bytes=fontFixture(12),view=new DataView(bytes);
+  // Group one maps A..Z to glyph IDs 1..26. Glyph 65535 is valid by
+  // itself, but is NOT a valid first glyph for 26 consecutive mappings.
+  view.setUint32(64,0xffff,false);
+  assert.equal(inspectFontCmap(bytes),null,
+    'the old parser falsely reported mapped glyphs 65536..65560');
+  view.setUint32(64,1,false);
+  view.setUint32(76,0xffff,false); // Single rainbow codepoint
+  const valid=inspectFontCmap(bytes);
+  assert.ok(valid,'a singleton glyph 65535 is legal');
+  assert.equal(valid.has(0x1f308),true);
+  const split=splitUnicodeCmapFixture(),dual=new DataView(split);
+  dual.setUint32(100,0x1f309,false); // extend rainbow group to two scalars
+  dual.setUint32(104,0xffff,false); // second would map to 65536
+  const backup=inspectFontCmap(split);
+  assert.ok(backup,'valid independent format-4 mapping survives malformed 12');
+  assert.equal(backup.format,4);
+  assert.equal(backup.has(0x41),true);
+  assert.equal(backup.has(0x1f308),false);
+});
