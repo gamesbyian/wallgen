@@ -347,13 +347,20 @@ export function measuredCanonicalPalette(regions){
 }
 
 /** Geometry-first analysis. Colour slots carry no claim about source provenance. */
-export function describeReconstructionImage(image,{includeColourMasks=false}={}){
+export function describeReconstructionImage(image,{
+  includeColourMasks=false,sourcePathCandidates=null
+}={}){
   // The source importer already computes seven canonical hue masks. When
   // synthesizing source-visible shapes, retain those exact arrays only for
   // this invocation instead of reclassifying the entire source PNG.
   const colour=extractImageColourRegions(image,HUES,{
     includeRepeatShape:true,includeMasks:includeColourMasks});
-  const paths=extractImagePathCandidates(image);
+  // The production import dialog has already extracted editable paths for
+  // its manual geometry chooser. Reuse that same source measurement instead
+  // of running the image contour scanner again for inverse recipe ranking.
+  // The public standalone path continues doing its own exact analysis.
+  const paths=Array.isArray(sourcePathCandidates)?
+    sourcePathCandidates:extractImagePathCandidates(image);
   const aspect=region=>{
     const [x0,y0,x1,y1]=region.bounds;
     const w=Math.max(1,(x1-x0)*image.width);
@@ -660,8 +667,12 @@ export function measuredSourceDarkTone(description){
 }
 
 /** Return a few independently editable canonical alternatives. */
-export function reconstructionCandidates(image,recipe,{onDescription}={}){
-  const desc=describeReconstructionImage(image,{includeColourMasks:true});
+export function reconstructionCandidates(image,recipe,{
+  onDescription,sourcePathCandidates=null
+}={}){
+  const desc=describeReconstructionImage(image,{
+    includeColourMasks:true,sourcePathCandidates
+  });
   // The editor also needs the background/slot evidence for its refusal and
   // reference preview. Hand off only the diagnostic scalars and geometry:
   // never retain seven full source mask buffers while 6+10 paints are scored.
