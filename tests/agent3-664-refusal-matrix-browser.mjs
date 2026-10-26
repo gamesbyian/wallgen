@@ -22,6 +22,7 @@ const cases=[
  {id:'gapped-red-green-blue',group:'gapped',mode:'skipped'},
  {id:'gapped-five-colours',group:'gapped',mode:'skipped'},
  {id:'neutral-seven-control',group:'low',mode:'neutral'},
+ {id:'dim-seven-polygons',group:'low',mode:'dark'},
  {id:'leading-three-control',group:'gapped',mode:'editable'},
  {id:'leading-five-control',group:'gapped',mode:'editable'},
  {id:'contiguous-red-orange',group:'sparse',mode:'editable'}
@@ -55,8 +56,8 @@ try{
       assert.match(status,/No (faithful|reliable) editable recipe/);
       assert.match(status,/source image is unchanged/);
       if(mode==='skipped')assert.match(status,/skip earlier ROYGBIV slots/);
-      if(mode==='neutral')assert.doesNotMatch(status,/skip earlier ROYGBIV slots/,
-       'grey source is unsupported for a DIFFERENT reason');
+      if(mode==='neutral'||mode==='dark')assert.doesNotMatch(status,/skip earlier ROYGBIV slots/,
+       'unsupported low-chroma source is not a missing-hue rejection');
       assert.equal(await element.getAttribute('role'),'status');
       assert.equal(await element.getAttribute('aria-live'),'polite');
       assert.equal(await page.locator('#imageRecipeWorkspace').isVisible(),false);
