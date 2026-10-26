@@ -34,7 +34,7 @@ function artwork({tones=HUES.map(h=>pastelHue(h)),
   }
   return {width,height,data};
 }
-test('independent pastel seven-colour islands are visible but cannot be faithfully repainted with canonical saturation',()=>{
+test('independent pastel seven-colour islands are visible but have no trustworthy strict hue masks',()=>{
   const source=artwork(),bytes=source.data.slice();
   const analysed=extractImageColourRegions(source,HUES);
   assert.equal(analysed.regions.length,0,
