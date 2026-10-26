@@ -1,4 +1,5 @@
 import {DESIGN_WIDTH,DESIGN_HEIGHT} from './model.js';
+import {textInkSelectionReach} from './text-overlays.js';
 import {typefaceCssFamily} from './typography-fonts.js';
 import {compactTextGripLayout} from './text-grip-layout.js';
 import {designPointFromPointer,dragTextOverlay,
@@ -60,7 +61,7 @@ export function installTextCanvasMover({
     const parent=surface.getBoundingClientRect();
     const bounds=measuredTextBounds(item,value=>measure(item,value),
       {nativeTracking:'letterSpacing' in fontContext});
-    const extra=item.outline==='none'?0:item.size*item.outlineWidth/100;
+    const extra=textInkSelectionReach(item);
     const x=rect.left-parent.left+rect.width*item.x/100;
     const y=rect.top-parent.top+rect.height*item.y/100;
     outline.style.left=x+'px';
