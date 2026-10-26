@@ -216,3 +216,39 @@ test('a provided layout sampler is called once per glyph and cached invalid Draw
   assert.equal(layoutTextOnPath(item,'TEXT',()=>18,[],{preparedPath:null}).supported,false,
     'null marks an already checked but invalid Draw path, avoiding repeat work');
 });
+
+test('presentation-form RTL and later Indic/supplementary scripts stay native shaped',()=>{
+  // Before this guard the legacy range check returned true for these scripts
+  // and separately painted/rotated graphemes in logical LTR station order.
+  const nativeLines=[
+    'ﺍﻟﺴﻼﻡ', // Arabic presentation forms, originally outside U+0590..109F
+    '𞤀𞤭', // Adlam: supplementary RTL joining
+    '𐴰𐴱', // Hanifi Rohingya: supplementary RTL joining
+    'ꦏ꧀ꦯ', // Javanese with conjunct and combining virama
+    '𑀦𑀫' // Brahmi: supplementary Indic shaping
+  ];
+  for(const line of nativeLines){
+    assert.equal(canCurveText(line),false,line+' must keep native shaping');
+    const recipe=normalizeRecipe({textOverlays:[{
+      text:line,id:'native',path:'wave',pathHeight:70,
+      colour:'white',outline:'none',size:50
+    }]});
+    assert.equal(recipe.textOverlays[0].path,'wave',
+      'a temporary script fallback must never destroy the editable recipe path');
+    const item=recipe.textOverlays[0];
+    assert.equal(layoutTextOnPath(item,line,()=>10).supported,false);
+    const ctx=context();
+    drawTextOverlays(ctx,600,1300,resolveScene(recipe));
+    const fills=ctx.calls.filter(c=>c[0]==='fill');
+    assert.equal(fills.length,1,'a joined run must be painted only once');
+    assert.equal(fills[0][1],line);
+    assert.equal(hitTextAtLayout([item],{x:300,y:650},()=>line.length*10)?.id,'native',
+      'native run selection retains a whole-line hit target');
+  }
+  for(const simple of ['CAFE\u0301','漢字','𠮷🌈','Привет','Ελλάδα']){
+    assert.equal(canCurveText(simple),true,
+      'simple existing Latin/CJK/Cyrillic/Greek curves must remain available');
+  }
+  assert.equal(canCurveText('👩‍🚀'),false,
+    'joining control still falls back instead of splitting an emoji sequence');
+});
