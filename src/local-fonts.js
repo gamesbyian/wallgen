@@ -1,4 +1,5 @@
 import {rememberFontCoverage} from './font-glyph-coverage.js';
+import {textOverlayPaintsInk} from './text-overlays.js';
 // Private user-supplied TTF/OTF storage. Fonts are never sent to a server
 // and are not embedded into PNG/JSON/share URLs. SHA-256 identifiers are the
 // only information preserved in ordinary canonical recipes.
@@ -79,7 +80,7 @@ async function registerFont(id,bytes){
 }
 export function recipeLocalFontIds(recipe){
   return [...new Set((recipe?.textOverlays||[])
-    .filter(x=>x.enabled!==false&&x.text)
+    .filter(textOverlayPaintsInk)
     .map(x=>x.font).filter(isLocalFontId))];
 }
 export function localFontsReady(recipe){
