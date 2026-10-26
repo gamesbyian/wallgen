@@ -53,7 +53,11 @@ export function inspectFontCmap(bytes){
     const ranges=[];
     for(let i=0;i<groups;i++){
       const pos=at+16+i*12,start=u32(pos),stop=u32(pos+4),glyph=u32(pos+8);
+      // Format-12 glyph IDs occupy 16 bits in OpenType. A group whose
+      // starting glyph fits but whose last codepoint overflows that range
+      // cannot represent a real mapped glyph at its tail.
       if(start>stop||stop>0x10ffff||glyph>0xffff||
+        glyph+(stop-start)>0xffff||
         (ranges.length&&start<=ranges.at(-1).stop))return null;
       ranges.push({start,stop,glyph});
     }
