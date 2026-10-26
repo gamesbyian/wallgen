@@ -34,12 +34,31 @@ const num=(value,fallback,min,max)=>{
   const valid=Number.isFinite(n)?Math.max(min,Math.min(max,n)):fallback;
   return Object.is(valid,-0)?0:valid;
 };
+// Keep the raw-input guard bounded without slicing through a UTF-16
+// surrogate or a multi-codepoint grapheme before cleaning/removing controls.
+// Two UTF-16 code units of lookahead suffice to inspect the first codepoint
+// after the cutoff and decide whether it continues the preceding cluster.
+// Never segment arbitrary unbounded user input; the sample is <=4098 units.
+function boundedRawTextPrefix(value){
+  if(value.length<=4096)return value;
+  const sample=value.slice(0,4098);
+  const clusters=typeof Intl!=='undefined'&&typeof Intl.Segmenter==='function'?
+    new Intl.Segmenter(undefined,{granularity:'grapheme'}).segment(sample):
+    fallbackTextGraphemes(sample);
+  let end=0;
+  for(const unit of clusters){
+    const length=(typeof unit==='string'?unit:unit.segment).length;
+    if(end+length>4096)break;
+    end+=length;
+  }
+  return sample.slice(0,end);
+}
 // A canonical 160-codepoint budget must never save half a combining cluster
 // or the head of a joined emoji. Iterate the grapheme segmentation lazily,
 // stopping at the budget rather than materializing arbitrary-length input.
 export function boundTextContent(value){
   if(typeof value!=='string')return '';
-  const cleaned=value.slice(0,4096)
+  const cleaned=boundedRawTextPrefix(value)
     // Pasted Unicode line/paragraph separators, legacy Mac CR and NEL are
     // genuine logical line boundaries. Canonical rendering and the four-line
     // quota both use LF, so normalize before counting or storing a recipe.

@@ -209,3 +209,37 @@ test('pasted Unicode paragraph and line separators become real bounded canonical
   assert.deepEqual(ctx.calls.filter(call=>call[0]==='fill').map(call=>call[1]),
     ['A','B','C','D'],'real painter must render exactly four separate native lines');
 });
+
+
+test('4,096-unit raw guard never saves an orphan surrogate or severed combining cluster',()=>{
+  const removable='\u007f'.repeat(3936),head='A'.repeat(159);
+  const cases=[
+    removable+head+'e\u0301',
+    removable+head+'🌈',
+    removable+head+'👩‍🚀',
+    removable+head+'🧑🏽‍💻'
+  ];
+  const run=()=>{
+    for(const input of cases){
+      assert.ok(input.length>4096);
+      const text=boundTextContent(input);
+      assert.equal(text,head,
+        'raw guard must drop incomplete final grapheme after removable controls');
+      const recipe=normalizeRecipe({textOverlays:[{text:input}]});
+      assert.equal(recipe.textOverlays[0].text,head);
+      assert.deepEqual(normalizeRecipe(JSON.parse(JSON.stringify(recipe))),recipe);
+    }
+    assert.equal(boundTextContent(removable+'A'.repeat(160)+'B'),'A'.repeat(160),
+      'complete grapheme ending at unit 4096 remains accepted');
+  };
+  run();
+  const descriptor=Object.getOwnPropertyDescriptor(Intl,'Segmenter');
+  try{
+    Object.defineProperty(Intl,'Segmenter',{value:undefined,
+      configurable:true,writable:true});
+    run();
+  }finally{
+    if(descriptor)Object.defineProperty(Intl,'Segmenter',descriptor);
+    else delete Intl.Segmenter;
+  }
+});
