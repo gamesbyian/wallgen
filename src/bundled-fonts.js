@@ -1,5 +1,5 @@
 import {rememberFontCoverage} from './font-glyph-coverage.js';
-import {textOverlayPaintsInk} from './text-overlays.js';
+import {textOverlayPaintsInk} from './text-rainbow-shaping.js';
 // 27 visually distinct OFL faces, vendored from one pinned Google Fonts
 // commit with a verbatim license per family. Loaded only when a recipe needs
 // the face; worker and document independently check the same SHA-256 bytes.
