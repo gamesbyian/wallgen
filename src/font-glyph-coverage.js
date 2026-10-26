@@ -15,16 +15,30 @@ export function inspectFontCmap(bytes){
   if(tag!==0x00010000&&tag!==0x4f54544f&&tag!==0x74727565)return null;
   const tables=u16(4);
   if(tables>256||!viewBounds(12,tables*16,len))return null;
-  let table=null;
+  let table=null,maxp=null;
   for(let i=0;i<tables;i++){
-    const at=12+i*16;
-    if(u32(at)===0x636d6170){
+    const at=12+i*16,tag=u32(at);
+    if(tag===0x636d6170||tag===0x6d617870){
       const offset=u32(at+8),size=u32(at+12);
-      if(!viewBounds(offset,size,len)||size<4)return null;
-      table={offset,size};break;
+      if(!viewBounds(offset,size,len)||size<(tag===0x636d6170?4:6))
+        return null;
+      if(tag===0x636d6170)table={offset,size};
+      else maxp={offset,size};
     }
   }
   if(!table)return null;
+  // The optional maxp bound detects cmap indices that cannot exist in the
+  // same font. Both TrueType (v1) and OpenType/CFF (v0.5) store numGlyphs
+  // as a uint16 at byte offset four. Older synthetic cmap-only fixtures
+  // have no maxp and retain their existing behaviour.
+  let numGlyphs=null;
+  if(maxp){
+    const version=u32(maxp.offset);
+    if((version!==0x00005000&&version!==0x00010000)||
+      (version===0x00010000&&maxp.size<32))return null;
+    numGlyphs=u16(maxp.offset+4);
+    if(numGlyphs===0)return null;
+  }
   const base=table.offset,end=base+table.size;
   const count=u16(base+2);
   if(count>100||!viewBounds(base+4,count*8,end))return null;
@@ -72,7 +86,10 @@ export function inspectFontCmap(bytes){
           const mid=(lo+hi)>>1,range=ranges[mid];
           if(codepoint<range.start)hi=mid-1;
           else if(codepoint>range.stop)lo=mid+1;
-          else return range.glyph+(codepoint-range.start)>0;
+          else{
+            const glyph=range.glyph+(codepoint-range.start);
+            return glyph>0&&(numGlyphs===null||glyph<numGlyphs);
+          }
         }
         return false;
       },
@@ -112,9 +129,14 @@ export function inspectFontCmap(bytes){
         if(cp<seg.first)hi=mid-1;
         else if(cp>seg.last)lo=mid+1;
         else{
-          if(!seg.glyphs)return ((cp+seg.delta)&0xffff)!==0;
+          if(!seg.glyphs){
+            const glyph=(cp+seg.delta)&0xffff;
+            return glyph!==0&&(numGlyphs===null||glyph<numGlyphs);
+          }
           const value=seg.glyphs[cp-seg.first];
-          return value!==0&&((value+seg.delta)&0xffff)!==0;
+          const glyph=(value+seg.delta)&0xffff;
+          return value!==0&&glyph!==0&&
+            (numGlyphs===null||glyph<numGlyphs);
         }
       }
       return false;
