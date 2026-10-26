@@ -296,3 +296,19 @@ test('joining-language, malformed ZWJ and missing grapheme API retain safe nativ
     else delete Intl.Segmenter;
   }
 });
+
+test('curved two-ring glyph picks reach painted outer stroke without filling hollow arcs',()=>{
+  const item={id:'ring',enabled:true,text:'W',x:50,y:50,
+    size:40,rotation:0,path:'circle',pathHeight:100,
+    outline:'white-black',outlineWidth:20};
+  const layout=layoutTextOnPath(item,item.text,()=>80);
+  assert.equal(layout.supported,true);
+  const glyph=layout.glyphs[0];
+  assert.equal(glyph.angle,0,'one centred circular glyph is upright');
+  const point={x:300+glyph.x+glyph.width/2+9,y:650+glyph.y};
+  assert.equal(hitTextAtLayout([item],point,(_item,text)=>text.length*80)?.id,'ring',
+    'double outer stroke reaches 10 units beyond glyph advance (old margin 8)');
+  assert.equal(hitTextAtLayout([item],{x:300,y:650},
+    (_item,text)=>text.length*80),null,
+    'hollow circle centre remains unselectable');
+});
