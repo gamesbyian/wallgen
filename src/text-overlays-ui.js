@@ -291,15 +291,30 @@ export function installTextOverlayTool({getRecipe,changeRecipe,onFontNotice=()=>
   fontFile.addEventListener('change',async()=>{
     const file=fontFile.files?.[0];
     if(!file||!selectedId)return;
+    // FontFace.load, digesting and IndexedDB can outlive a user selection
+    // change. The original object owns the import, never whichever caption
+    // happens to be selected when those promises finally settle.
+    const targetId=selectedId;
     fontFile.disabled=true;
     fontStatus.textContent='Checking and saving font on this device…';
     try{
       const installed=await importLocalFont(file);
       library=await listLocalFonts();
-      fontStatus.textContent='Font installed locally: '+installed.name;
-      commit(currentItems().map(item=>item.id===selectedId?
-        {...item,font:installed.id}:item));
-      onFontNotice('Imported '+installed.name+' to this device.');
+      const items=currentItems();
+      if(items.some(item=>item.id===targetId)){
+        commit(items.map(item=>item.id===targetId?
+          {...item,font:installed.id}:item));
+        fontStatus.textContent='Font installed locally: '+installed.name;
+        onFontNotice('Imported '+installed.name+' to this device.');
+      }else{
+        // A deleted source caption must not donate its face to the newly
+        // selected item. Keep the font safely in the device library so it
+        // can be deliberately chosen again.
+        sync();
+        fontStatus.textContent='Font installed locally: '+installed.name+
+          '. Original text was removed; select a text object to use it.';
+        onFontNotice(fontStatus.textContent);
+      }
     }catch(error){
       fontStatus.textContent=String(error?.message||error);
       onFontNotice(fontStatus.textContent);

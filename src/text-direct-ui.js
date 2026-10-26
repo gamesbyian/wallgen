@@ -1,5 +1,6 @@
 import {DESIGN_WIDTH,DESIGN_HEIGHT} from './model.js';
 import {textInkSelectionReach} from './text-overlays.js';
+import {textOverlayPaintsInk} from './text-rainbow-shaping.js';
 import {typefaceCssFamily} from './typography-fonts.js';
 import {compactTextGripLayout} from './text-grip-layout.js';
 import {designPointFromPointer,dragTextOverlay,
@@ -56,7 +57,7 @@ export function installTextCanvasMover({
       'bold '+item.size+'px '+typefaceCssFamily(item.font),
       item,value,{tracking});
   function paintOutline(item){
-    if(!active||!item){outline.hidden=true;return;}
+    if(!active||!textOverlayPaintsInk(item)){outline.hidden=true;return;}
     const rect=canvas.getBoundingClientRect();
     const parent=surface.getBoundingClientRect();
     const bounds=measuredTextBounds(item,value=>measure(item,value),
@@ -102,9 +103,19 @@ export function installTextCanvasMover({
   }
   function redraw(){
     if(!active)return;
-    const candidate=(transformDrag?.next||drag?.next||getRecipe()).textOverlays?.find(x=>x.id===selectedId());
+    const recipe=getRecipe();
+    // Canvas mover and the Text pane must agree: an invisible, disabled or
+    // locked-only collection has no movable ink. Never re-enable this button
+    // during a frame redraw after the pane correctly disabled it.
+    const movable=(recipe.textOverlays||[]).some(x=>textOverlayPaintsInk(x)&&!x.locked);
+    if(!movable){
+      setActive(false);
+      button.disabled=true;
+      return;
+    }
+    const candidate=(transformDrag?.next||drag?.next||recipe).textOverlays?.find(x=>x.id===selectedId());
     paintOutline(candidate);
-    button.disabled=!(getRecipe().textOverlays||[]).some(x=>x.enabled&&x.text);
+    button.disabled=false;
   }
   function setActive(next){
     active=Boolean(next);

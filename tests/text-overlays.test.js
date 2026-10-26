@@ -292,3 +292,19 @@ test('Move-text affordance follows actual painted ink rather than hidden caption
   assert.match(source,/moveButton\.disabled=!items\.some\(item=>textOverlayPaintsInk\(item\)&&!item\.locked\)/);
   assert.match(source,/moveButton\.disabled&&mover\?\.active\)mover\.endCanvasMove\(\)/);
 });
+
+test('asynchronous font import binds the initiating caption ID, not the later picker',async()=>{
+  const {readFileSync}=await import('node:fs');
+  const src=readFileSync(new URL('../src/text-overlays-ui.js',import.meta.url),'utf8');
+  assert.match(src,/const targetId=selectedId;\s*fontFile\.disabled=true;/);
+  assert.match(src,/const items=currentItems\(\);\s*if\(items\.some\(item=>item\.id===targetId\)\)/);
+  assert.match(src,/commit\(items\.map\(item=>item\.id===targetId\?/);
+  assert.doesNotMatch(src,/commit\(currentItems\(\)\.map\(item=>item\.id===selectedId\?\s*\{\.\.\.item,font:installed\.id\}/);
+  const own=[{id:'one',font:'bold'},{id:'two',font:'editorial'}];
+  let selectedId='one';
+  const targetId=selectedId;
+  selectedId='two';
+  const after=own.map(item=>item.id===targetId?{...item,font:'pack-bangers'}:item);
+  assert.deepEqual(after,[{id:'one',font:'pack-bangers'},own[1]]);
+  assert.equal(after[1].font,'editorial');
+});
