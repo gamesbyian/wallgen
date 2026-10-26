@@ -1,6 +1,8 @@
 # ROYGBIV release-readiness and owner-dependent acceptance ledger
 
 > **Purpose (26 October 2026):** This file alone tracks **software-proven versus external unverified** acceptance boundaries. Current engineering dispatch: [work queue](CURRENT-WORK-QUEUE-2026-10-24.md); stable product requirements: [product contract](PRODUCT-CONTRACT-2026-10-26.md). #664 closed for independent software/Chromium acceptance. No recorded test establishes physical Pixel 6 Pro Chrome/PWA, real Android IME/TalkBack, sustained handset 19.8MP performance, authenticated private GitHub backup, or owner/human creative approval. Historical per-SHA receipts below must not be treated as new merged-head or device evidence.
+> **Credential and deletion gate:** The implemented optional GitHub activity backup persists a PAT in **sessionStorage** when connected, or in **localStorage** if the user separately chooses “Remember token on this device across visits.” GitHub Contents permission covers the **whole private `general-purpose` repository**, not only the requested branch/path. Disconnection removes browser-stored credentials and prevents subsequent automatic sync, but prior private GitHub commits/history are not erased by deleting the local log. No real PAT upload, readback, recovery or scoped security review was performed in the recorded acceptance. See [owner privacy contract](PRODUCT-CONTRACT-2026-10-26.md) and [recorder plan](CREATIVE-BEHAVIOUR-RECORDER-PLAN-2026-10-22.md).
+
 
 ## Current release-gate update · 26 October 2026 Calgary
 
