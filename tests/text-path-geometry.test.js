@@ -261,7 +261,8 @@ test('whole joined emoji clusters follow curves without splitting glyph or colou
     assert.equal(canCurveText(cluster),true,cluster);
     const item=normalizeTextOverlays([{text:'X '+cluster+' 🌈',
       path:'arc',pathHeight:95,outline:'none',colour:'rainbow-letter'}])[0];
-    const layout=layoutTextOnPath(item,item.text,unit=>[...unit].length*12);
+    const measure=unit=>[...unit].length*12;
+    const layout=layoutTextOnPath(item,item.text,measure);
     assert.equal(layout.supported,true);
     assert.equal(layout.glyphs.filter(g=>g.text===cluster).length,1,
       'joined emoji must occupy exactly one curved station');
@@ -272,7 +273,7 @@ test('whole joined emoji clusters follow curves without splitting glyph or colou
       'paint a joined emoji only once, with the whole grapheme intact');
     const station=layout.glyphs.find(g=>g.text===cluster);
     assert.equal(hitTextAtLayout([item],
-      {x:300+station.x,y:650+station.y},()=>35)?.id,item.id,
+      {x:300+station.x,y:650+station.y},(text,unit)=>measure(unit))?.id,item.id,
       'complete emoji must be selectable at the same curved station');
   }
 });
