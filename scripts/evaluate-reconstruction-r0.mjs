@@ -26,6 +26,7 @@ export function readReconstructionEvalArgs(argv){
   const opts={dir:'artifacts/reconstruction-r0'};
   for(let i=0;i<argv.length;i++){
     const key=argv[i];
+    if(key==='--save-best-recipe'){opts.saveBestRecipe=true;continue;}
     if(key==='--alternatives'){opts.alternatives=true;continue;}
     if(key==='--ink-geometry'){opts.inkGeometry=true;continue;}
     if(key==='--probe-ink-width'){
@@ -547,6 +548,11 @@ async function evaluate(opts){
       await writeFile(join(dir,first),pngBytes(inferred.sourcePreview));
       if(inferred.candidatePreview)
         await writeFile(join(dir,item.id+'.r0-best-preview.png'),pngBytes(inferred.candidatePreview));
+      // Research-only source-first portable receipt. Never confuse this
+      // selected inferred edit with an original/source-authored recipe.
+      if(opts.saveBestRecipe&&inferred.selected)
+        await writeFile(join(dir,item.id+'.r0-best-inferred.recipe.json'),
+          JSON.stringify(inferred.selected.recipe,null,2)+'\n');
       for(const [index,variant] of inferred.candidateVariants.entries()){
         await writeFile(join(dir,record.variantPreviews[index]),pngBytes(variant.image));
       }
