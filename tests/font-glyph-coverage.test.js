@@ -260,3 +260,47 @@ test('later valid same-format Unicode records survive a malformed first record',
   assert.equal(bmp.has(0x42),true);
   assert.equal(bmp.has(0x1f308),false);
 });
+
+
+function withMaxpGlyphCount(count){
+  // Move the independent cmap fixture 16 bytes to make room for a second
+  // SFNT table record. No file data or font bytes are kept in the cache.
+  const bytes=multipleSameFormatUnicodeFixture(),raw=new Uint8Array(bytes);
+  raw.copyWithin(44,28,148);
+  const v=new DataView(bytes);
+  v.setUint16(4,2,false);
+  v.setUint32(20,44,false); // relocated cmap
+  v.setUint32(28,0x6d617870,false); // maxp
+  v.setUint32(36,200,false);v.setUint32(40,6,false);
+  v.setUint32(200,0x00005000,false);v.setUint16(204,count,false);
+  return bytes;
+}
+test('maxp.numGlyphs prevents false cmap coverage for nonexistent glyph indices',()=>{
+  const bytes=withMaxpGlyphCount(5),v=new DataView(bytes);
+  let coverage=inspectFontCmap(bytes);
+  assert.ok(coverage);
+  assert.equal(coverage.has(0x41),true);
+  assert.equal(coverage.has(0x42),true);
+  assert.equal(coverage.has(0x1f308),false,
+    'format-12 glyph index 9 cannot exist when maxp reports just 5 glyphs');
+  assert.deepEqual(missingFontCodepoints(coverage,'AB🌈'),[0x1f308]);
+  assert.match(missingGlyphNotice(coverage,'AB🌈'),/U\+1F308/);
+  v.setUint16(204,10,false);
+  coverage=inspectFontCmap(bytes);
+  assert.equal(coverage.has(0x1f308),true,
+    'glyph 9 becomes available when maxp counts 10 indices');
+  v.setUint16(204,1,false);
+  coverage=inspectFontCmap(bytes);
+  assert.equal(coverage.has(0x41),false,
+    'even glyph index 1 is outside a maxp count of one');
+  v.setUint16(204,0,false);
+  assert.equal(inspectFontCmap(bytes),null,
+    'zero-glyph maxp is malformed, not invented coverage');
+});
+test('unknown maxp format is unknown while cmap-only test fixtures stay readable',()=>{
+  const bytes=withMaxpGlyphCount(10),v=new DataView(bytes);
+  v.setUint32(200,0xdeadbeef,false);
+  assert.equal(inspectFontCmap(bytes),null);
+  assert.equal(inspectFontCmap(fontFixture(12)).has(0x1f308),true,
+    'legacy cmap-only fixture remains supported without maxp');
+});
