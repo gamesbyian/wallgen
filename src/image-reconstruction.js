@@ -528,6 +528,74 @@ export function plainlyAchromaticForeground(image,colourRegions=[]){
   return salient>=samples*.035&&neutral>=salient*.92;
 }
 
+/**
+ * Very narrow source-only contradiction witness for seven *visible* soft
+ * pigments below the ordinary hue-mask confidence threshold. Unlike a new
+ * inferred palette or relaxed importer, this NEVER creates colour objects.
+ * The current palette has no 23%-saturation/70%-lightness scene controls;
+ * painting seven pastel shapes red is therefore worse than saying that an
+ * automatic colour-faithful recipe is unavailable.
+ *
+ * Demand six independently localized, substantial chromatic pastel tones
+ * against the same opaque, uniform original background. Quantized sample
+ * bounds reject rainbow photographs, broad gradients and scattered noise.
+ * Strong hue masks, monochrome ink, transparent art and ambiguous inputs
+ * are routed to existing logic unchanged. O(<=12k sampled source pixels);
+ * no secondary masks, frame buffers, true renderer calls or saved pixels.
+ */
+export function plainlyUnsupportedSoftPigments(image,colourRegions=[]){
+  if(colourRegions.length||!image||!Number.isInteger(image.width)||
+    !Number.isInteger(image.height)||image.width<24||
+    image.height<24||image.width*image.height>650000||
+    image.data?.length!==image.width*image.height*4)return false;
+  const {width:w,height:h,data}=image;
+  const corners=[[0,0],[w-1,0],[0,h-1],[w-1,h-1]]
+    .map(([x,y])=>Array.from(data.slice(4*(y*w+x),4*(y*w+x)+4)));
+  if(corners.some(p=>p[3]<240))return false;
+  const bg=[0,1,2].map(channel=>{
+    const ordered=corners.map(c=>c[channel]).sort((a,b)=>a-b);
+    return (ordered[1]+ordered[2])/2;
+  });
+  if(corners.some(p=>p.slice(0,3).some((v,i)=>Math.abs(v-bg[i])>16)))
+    return false;
+  const groups=HUES.map(()=>({count:0,minX:w,minY:h,maxX:0,maxY:0}));
+  const step=Math.max(1,Math.ceil(Math.sqrt(w*h/12000)));
+  let samples=0,coloured=0;
+  for(let y=0;y<h;y+=step)for(let x=0;x<w;x+=step){
+    const i=4*(y*w+x);samples++;
+    if(data[i+3]<240)continue;
+    const red=data[i],green=data[i+1],blue=data[i+2];
+    const high=Math.max(red,green,blue),low=Math.min(red,green,blue);
+    const delta=high-low;
+    // Soft but genuinely chromatic visible ink, not warm-grey noise,
+    // fluorescent source colour, or almost-black hue indistinguishable
+    // from the canvas background.
+    if(high<160||high>230||low<110||delta<20||delta>52||
+      Math.max(Math.abs(red-bg[0]),Math.abs(green-bg[1]),
+        Math.abs(blue-bg[2]))<75)continue;
+    let hue;
+    if(high===red)hue=((green-blue)/delta)%6;
+    else if(high===green)hue=(blue-red)/delta+2;
+    else hue=(red-green)/delta+4;
+    hue=(hue*60+360)%360;
+    let nearest=-1,distance=Infinity;
+    for(let n=0;n<HUES.length;n++){
+      const gap=Math.abs(HUES[n]-hue),d=Math.min(gap,360-gap);
+      if(d<distance){distance=d;nearest=n;}
+    }
+    if(distance>14)continue;
+    const g=groups[nearest];g.count++;
+    g.minX=Math.min(g.minX,x);g.maxX=Math.max(g.maxX,x);
+    g.minY=Math.min(g.minY,y);g.maxY=Math.max(g.maxY,y);
+    coloured++;
+  }
+  const minMembers=Math.max(12,Math.ceil(samples*.002));
+  const independent=groups.filter(g=>g.count>=minMembers&&
+    g.maxX-g.minX<=w*.35&&g.maxY-g.minY<=h*.2);
+  return coloured>=samples*.035&&independent.length>=6&&
+    independent.reduce((total,g)=>total+g.count,0)>=samples*.035;
+}
+
 /** Return a few independently editable canonical alternatives. */
 export function reconstructionCandidates(image,recipe){
   const desc=describeReconstructionImage(image,{includeColourMasks:true});
@@ -535,7 +603,8 @@ export function reconstructionCandidates(image,recipe){
   // A source visibly full of neutral grey ink is not a recolourable rainbow
   // unless its actual source hue evidence says so. This deliberately returns
   // no auto-proposal; existing manual geometry-only path import remains.
-  if(plainlyAchromaticForeground(image,desc.colourRegions))return [];
+  if(plainlyAchromaticForeground(image,desc.colourRegions)||
+    plainlyUnsupportedSoftPigments(image,desc.colourRegions))return [];
   // Scattered scene slots are contiguous 0..N-1, not arbitrary hue IDs.
   // One blue region, or isolated red and blue without orange/yellow/green,
   // cannot be represented as one/two objects without silently recolouring
