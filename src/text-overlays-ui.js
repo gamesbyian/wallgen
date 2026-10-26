@@ -100,7 +100,14 @@ export function installTextOverlayTool({getRecipe,changeRecipe,onFontNotice=()=>
   const checkGlyphs=item=>{
     const version=++glyphCheckVersion;
     const supportedType=isLocalFontId(item.font)||isBundledFontId(item.font);
-    if(!supportedType){glyphStatus.textContent='';return;}
+    // Hidden, transparent and format-only captions paint no glyphs and
+    // deliberately do not load their custom fonts in the shared renderer.
+    // Avoid the false "exact coverage unavailable" warning from testing a
+    // font which correctly was never prepared.
+    if(!supportedType||!textOverlayPaintsInk(item)){
+      glyphStatus.textContent='';
+      return;
+    }
     if(fontCoverageChecked(item.font)){
       glyphStatus.textContent=missingGlyphNotice(
         cachedFontCoverage(item.font),item.text);
@@ -183,7 +190,9 @@ export function installTextOverlayTool({getRecipe,changeRecipe,onFontNotice=()=>
     checkGlyphs(item);
     fontStatus.textContent=isLocalFontId(item.font)&&
       !library.some(entry=>entry.id===item.font)?
-      'Font file unavailable on this device. Reimport its original TTF/OTF to restore rendering.':'';
+      (textOverlayPaintsInk(item)?
+        'Font file unavailable on this device. Reimport its original TTF/OTF to render this text.':
+        'Saved private font unavailable here. Hidden text does not block export; reimport before showing it.') : '';
     mover?.sync();
     root.querySelector('[data-text-path-height]').hidden=!item.path||
       item.path==='none'||item.path==='drawn';
