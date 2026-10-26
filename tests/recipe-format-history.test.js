@@ -24,7 +24,12 @@ test('current model has the same explicit recipe field list as latest historical
   const ledger=JSON.parse(read('docs/recipe-format-history/model-key-ledger.json'));
   const latest=ledger.revisions.at(-1);
   const current=extractRecipeKeyInventory(read('src/model.js'));
-  assert.deepEqual(current.explicitKeys,latest.explicitKeys);
+  // Historical source-pinned snapshots stay immutable when new creative fields
+  // enter the active recipe; never fabricate those fields in old commits.
+  const historical=new Set(latest.explicitKeys);
+  assert.deepEqual(current.explicitKeys.filter(k=>historical.has(k)),latest.explicitKeys);
+  assert.deepEqual(current.explicitKeys.filter(k=>!historical.has(k)),
+    ['paletteLightness','paletteSaturation','paletteToneEnabled']);
   // This first archaeological pass indexes "name: expression" properties.
   // The literal "seed," shorthand is covered by runtime normalization,
   // not by this explicit-property-only source ledger.
@@ -116,7 +121,14 @@ test('full 45-revision field-expression matrix is reproducible from pinned sourc
   }
   assert.equal(changedCount,10);
   const latest=extractRecipeFieldExpressions(read('src/model.js'));
-  assert.deepEqual(latest,raw.at(-1).fields);
+  // Protect each historical field expression without misrepresenting the
+  // genuinely new Tone settings as source-era archaeology.
+  const historicalExpressions=raw.at(-1).fields;
+  assert.deepEqual(Object.fromEntries(Object.entries(latest).filter(
+    ([key])=>Object.hasOwn(historicalExpressions,key))),historicalExpressions);
+  assert.deepEqual(Object.keys(latest).filter(
+    key=>!Object.hasOwn(historicalExpressions,key)).sort(),
+    ['paletteLightness','paletteSaturation','paletteToneEnabled']);
   const rows=expressionHistory.revisions;
   assert.ok(rows.some(row=>row.changed.some(change=>
     change.key==='stripeShadowStrength'&&change.before.includes('45, 0, 100')&&
