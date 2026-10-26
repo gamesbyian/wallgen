@@ -1,5 +1,6 @@
 import {DESIGN_WIDTH,DESIGN_HEIGHT} from './model.js';
 import {textGraphemes} from './text-rainbow-shaping.js';
+import {textInkSelectionReach} from './text-overlays.js';
 
 // Text overlay coordinates refer to the finished wallpaper, independent of
 // stripe/world coordinates and the editor's camera/nudge controls.
@@ -79,7 +80,7 @@ export function hitTextOverlay(items,point,measureFor,{tolerance=0}={}){
     const localX=dx*Math.cos(theta)+dy*Math.sin(theta);
     const localY=-dx*Math.sin(theta)+dy*Math.cos(theta);
     const {width,height}=measuredTextBounds(item,value=>measureFor(item,value));
-    const stroke=item.outline==='none'?0:item.size*item.outlineWidth/100;
+    const stroke=textInkSelectionReach(item);
     if(Math.abs(localX)<=width/2+stroke+tolerance&&
        Math.abs(localY)<=height/2+stroke+tolerance)return item;
   }
