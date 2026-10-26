@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {rainbowTextStops,textGraphemes,isSimpleRightToLeft} from '../src/text-rainbow-shaping.js';
+import {rainbowTextStops,textGraphemes,isSimpleRightToLeft,
+  fallbackTextGraphemes} from '../src/text-rainbow-shaping.js';
 
 const palette=['R','O','Y','G','B','I','V'];
 const width=unit=>Array.from(unit).length*5;
@@ -87,4 +88,28 @@ test('RTL word boundaries preserve each logical word colour on its visual side',
   assert.equal(rtl.stops.at(-1).colour,'G');
   assert.equal(rtl.stops[0].colour,'B');
   assert.equal(rtl.stops.length,first.stops.length);
+});
+
+test('bounded fallback graphemes keep accents, ZWJ emoji, skin tones and paired flags intact',()=>{
+  const sample='e\u0301👩‍🚀🧑🏽‍💻🇨🇦🇬🇧a';
+  const expected=['e\u0301','👩‍🚀','🧑🏽‍💻','🇨🇦','🇬🇧','a'];
+  assert.deepEqual([...fallbackTextGraphemes(sample)],expected);
+  const saved=Object.getOwnPropertyDescriptor(Intl,'Segmenter');
+  try{
+    Object.defineProperty(Intl,'Segmenter',{value:undefined,
+      configurable:true,writable:true});
+    assert.deepEqual(textGraphemes(sample),expected,
+      'missing browser Intl.Segmenter cannot break meaningful joined glyphs');
+    const colours=rainbowTextStops('e\u0301👩‍🚀🇨🇦',
+      'rainbow-letter',palette,0,width);
+    assert.equal(colours.nextIndex,3,
+      'fallback rainbow-letter advances once per intact grapheme');
+    assert.equal(colours.stops[0].colour,'R');
+    assert.equal(colours.stops.at(-1).colour,'Y');
+    assert.deepEqual(textGraphemes('HELLO'),['H','E','L','L','O'],
+      'simple text still colours each letter');
+  }finally{
+    if(saved)Object.defineProperty(Intl,'Segmenter',saved);
+    else delete Intl.Segmenter;
+  }
 });
