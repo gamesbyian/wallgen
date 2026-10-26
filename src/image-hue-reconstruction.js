@@ -68,6 +68,9 @@ export function observedHueShapeRecipe(image,placement,currentInput,
     // Caller shares the conservative source-visible palette hypothesis.
     // Unknown/ambiguous source colours still fall back to Classic.
     family:'studio',palette:paletteHint,
+    // Source-visible shape geometry does not license copying the currently
+    // edited wallpaper's private soft/dark Tone into an independent image.
+    paletteToneEnabled:false,paletteSaturation:92,paletteLightness:58,
     background:colours.background,
     structure:'regions',regionMode:'scattered',
     // Source-visible hues are indexed in normal ROYGBIV order; stale editor
@@ -95,7 +98,8 @@ export function observedHueShapeRecipe(image,placement,currentInput,
   if(candidate.scatteredShapeOverrides?.length!==count||
     candidate.scatteredOverrides?.length!==count)return null;
   const effective=respectSettingLocks(original,candidate);
-  if(effective.structure!=='regions'||effective.regionMode!=='scattered'||
+  if(effective.paletteToneEnabled!==false||
+     effective.structure!=='regions'||effective.regionMode!=='scattered'||
     effective.reverseStripes!==false||
     effective.scatteredShapeKind!=='imported'||
     effective.scatteredCount!==count||
