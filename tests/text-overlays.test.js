@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {normalizeRecipe,resolveScene} from '../src/model.js';
 import {normalizeTextOverlays,newTextOverlay,MAX_TEXT_OVERLAYS,
-  boundTextContent} from '../src/text-overlays.js';
+  boundTextContent,textOverlayPaintsInk} from '../src/text-overlays.js';
 import {drawTextOverlays} from '../src/text-overlay-renderer.js';
 import {randomizeScope} from '../src/scoped-random.js';
 import {randomizeAllRecipe} from '../src/model.js';
@@ -242,4 +242,23 @@ test('4,096-unit raw guard never saves an orphan surrogate or severed combining 
     if(descriptor)Object.defineProperty(Intl,'Segmenter',descriptor);
     else delete Intl.Segmenter;
   }
+});
+
+test('fully transparent or non-ink text has no renderer work or font dependency',()=>{
+  const invisible=resolveScene(normalizeRecipe({textOverlays:[
+    {text:'NO INK',font:'pack-bangers',opacity:0},
+    {text:'\u200b\u2060',font:'pack-pacifico',opacity:1},
+    {text:'DISABLED',font:'pack-bangers',enabled:false}
+  ]}));
+  const ctx=fakeContext();
+  drawTextOverlays(ctx,600,1300,invisible);
+  assert.deepEqual(ctx.calls,[],
+    'zero-pixel artwork cannot demand unavailable fonts or paint offscreen');
+  assert.equal(invisible.textOverlays.every(item=>!textOverlayPaintsInk(item)),true);
+  const exposed=resolveScene(normalizeRecipe({textOverlays:[
+    {text:'VISIBLE',font:'modern',opacity:.01},
+    {text:'INVISIBLE',font:'modern',opacity:0}
+  ]}));
+  const canvas=fakeContext();drawTextOverlays(canvas,600,1300,exposed);
+  assert.deepEqual(canvas.calls.filter(c=>c[0]==='fill').map(c=>c[1]),['VISIBLE']);
 });
