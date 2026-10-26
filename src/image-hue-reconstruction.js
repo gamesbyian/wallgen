@@ -6,13 +6,13 @@ import {DESIGN_WIDTH,DESIGN_HEIGHT,HUES,normalizeRecipe,respectSettingLocks}
 import {extractImageColourRegions,extractVisibleHueCompound} from './image-path.js';
 import {GEOMETRY_SNAPSHOT_SCHEMA} from './geometry-asset.js';
 
-/** Converts all seven visible pigment masks into independent editable,
- * self-contained scattered-region rings. Caller supplies the *existing*
+/** Converts seven, or an explicitly qualified contiguous first-N subset,
+ * of visible pigment masks into independent editable, self-contained rings. Caller supplies the *existing*
  * reconstructionPlacement, so canvas letterboxing remains single-owned.
  * Return null when any slot/shape/lock cannot be represented.
  */
 export function observedHueShapeRecipe(image,placement,currentInput,
-  {paletteHint='classic',colourAnalysis=null}={}){
+  {paletteHint='classic',colourAnalysis=null,allowPartial=false}={}){
   const w=image?.width,h=image?.height;
   if(!Number.isInteger(w)||!Number.isInteger(h)||
     w<12||h<12||w*h>650000||image.data?.length!==w*h*4||
@@ -27,19 +27,29 @@ export function observedHueShapeRecipe(image,placement,currentInput,
   const colours=colourAnalysis??extractImageColourRegions(image,HUES,
     {includeMasks:true});
   const minRegionArea=Math.max(16,Math.floor(w*h*.0008));
+  const count=colours?.regions?.length;
+  // Source colour slots are 0..N-1: sparse blue-only or red+blue images
+  // cannot become two correctly coloured scattered objects. Only the
+  // explicitly source-validated compact first-N geometry may use this route.
+  const partial=allowPartial===true&&Number.isInteger(count)&&
+    count>=2&&count<=6;
   if(!Array.isArray(colours?.masks)||colours.masks.length!==7||
     colours.masks.some(mask=>!(mask instanceof Uint8Array)||
       mask.length!==w*h)||
-    !Array.isArray(colours.regions)||colours.regions.length!==7||
+    !Array.isArray(colours.regions)||(count!==7&&!partial)||
     colours.regions.some((region,index)=>
-      region?.index!==index||region.area<minRegionArea)||
-    !Number.isFinite(colours.coverage)||colours.coverage<.035||
+      region?.index!==index||region.area<minRegionArea||
+      (partial&&(region.fillRatio<.48||region.axisRatio>1.9)))||
+    !Number.isFinite(colours.coverage)||
+    colours.coverage<(partial?.008:.035)||
     colours.coverage>.91||
     !['black','white'].includes(colours.background))return null;
   const items=[];
-  for(let index=0;index<7;index++){
+  for(let index=0;index<count;index++){
     const found=extractVisibleHueCompound(colours.masks[index],w,h);
-    if(!found)return null;
+    // The compact incomplete-colour source signature explicitly requires
+    // one substantial connected silhouette per available semantic slot.
+    if(!found||(partial&&found.components!==1))return null;
     // A visible silhouette does not identify the source's historical curve,
     // layer ordering, original seed, material or clipped hidden region.
     const x=(placement.x+found.centrePixels[0]*placement.width/w)/DESIGN_WIDTH;
@@ -55,7 +65,7 @@ export function observedHueShapeRecipe(image,placement,currentInput,
   }
   const original=normalizeRecipe(currentInput||{});
   const candidate=normalizeRecipe({...original,
-    // Caller shares the conservative seven-pigment appearance hypothesis.
+    // Caller shares the conservative source-visible palette hypothesis.
     // Unknown/ambiguous source colours still fall back to Classic.
     family:'studio',palette:paletteHint,
     background:colours.background,
@@ -63,7 +73,7 @@ export function observedHueShapeRecipe(image,placement,currentInput,
     scatteredShapeKind:'imported',scatteredShape:null,
     scatteredShapeOverrides:items.map(item=>({
       index:item.index,shape:item.shape})),
-    scatteredCount:7,scatteredMinSize:0,scatteredMaxSize:75,
+    scatteredCount:count,scatteredMinSize:0,scatteredMaxSize:75,
     scatteredSpacing:0,scatteredEdgeCrop:0,scatteredOverlap:'overlap',
     scatteredOverrides:items.map(item=>({
       index:item.index,x:item.x,y:item.y,radius:item.radius})),
@@ -79,13 +89,14 @@ export function observedHueShapeRecipe(image,placement,currentInput,
     positionX:0,positionY:0,
     surfaceTreatments:[],photoLook:{enabled:false}
   });
-  if(candidate.scatteredShapeOverrides?.length!==7||
-    candidate.scatteredOverrides?.length!==7)return null;
+  if(candidate.scatteredShapeOverrides?.length!==count||
+    candidate.scatteredOverrides?.length!==count)return null;
   const effective=respectSettingLocks(original,candidate);
   if(effective.structure!=='regions'||effective.regionMode!=='scattered'||
     effective.scatteredShapeKind!=='imported'||
-    effective.scatteredShapeOverrides?.length!==7||
-    effective.scatteredOverrides?.length!==7)return null;
+    effective.scatteredCount!==count||
+    effective.scatteredShapeOverrides?.length!==count||
+    effective.scatteredOverrides?.length!==count)return null;
   // If a locked imported shape/placement was projected differently,
   // previewing the ideal would misrepresent Apply: refuse instead.
   if(JSON.stringify(effective.scatteredShapeOverrides)!==
@@ -93,8 +104,11 @@ export function observedHueShapeRecipe(image,placement,currentInput,
     JSON.stringify(effective.scatteredOverrides)!==
       JSON.stringify(candidate.scatteredOverrides))return null;
   return {recipe:effective,kind:'hue-visible-shapes',
-    label:'Seven independently editable observed pigment silhouettes',
-    uncertainty:'These shapes describe only visible source pixels. Hidden or cropped contours, original painter order, seed, palette identity and materials were not recovered.',
+    label:count+' independently editable observed pigment silhouettes',
+    uncertainty:(partial?
+      'Only the first '+count+' contiguous semantic pigment slots were visibly classified. ':
+      '')+
+      'These shapes describe only visible source pixels. Hidden or cropped contours, original painter order, seed, palette identity and materials were not recovered.',
     sourceVisibleOnly:true,sourceDimensions:[w,h],
     croppedHueSlots:items.filter(item=>item.cropped).map(item=>item.index),
     componentCounts:items.map(item=>item.components)};
