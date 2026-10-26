@@ -263,3 +263,19 @@ test('fully transparent or non-ink text has no renderer work or font dependency'
   const canvas=fakeContext();drawTextOverlays(canvas,600,1300,exposed);
   assert.deepEqual(canvas.calls.filter(c=>c[0]==='fill').map(c=>c[1]),['VISIBLE']);
 });
+
+test('malformed imported UTF-16 is repaired without corrupting genuine emoji graphemes',()=>{
+  const raw='A\ud800B\udc00C🌈👩‍🚀🇨🇦D';
+  const fixed=boundTextContent(raw);
+  assert.equal(fixed,'A\ufffdB\ufffdC🌈👩‍🚀🇨🇦D');
+  assert.equal(/[\ud800-\udfff]/gu.test(fixed),false,
+    'no lone surrogate may persist into PNG metadata or JSON');
+  const recipe=normalizeRecipe({textOverlays:[{text:raw,font:'modern'}]});
+  assert.equal(recipe.textOverlays[0].text,fixed);
+  assert.deepEqual(normalizeRecipe(JSON.parse(JSON.stringify(recipe))),recipe);
+  assert.equal(boundTextContent('🌈👩‍🚀🇨🇦'),'🌈👩‍🚀🇨🇦',
+    'valid supplementary characters and joined emoji remain byte-identical');
+  const source='Z'.repeat(158)+'\ud800🌈';
+  assert.equal(boundTextContent(source),'Z'.repeat(158)+'\ufffd',
+    'the 160-codepoint limit still retains only complete trailing graphemes');
+});
