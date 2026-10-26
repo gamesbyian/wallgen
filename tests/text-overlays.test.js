@@ -275,7 +275,7 @@ test('malformed imported UTF-16 is repaired without corrupting genuine emoji gra
   assert.deepEqual(normalizeRecipe(JSON.parse(JSON.stringify(recipe))),recipe);
   assert.equal(boundTextContent('🌈👩‍🚀🇨🇦'),'🌈👩‍🚀🇨🇦',
     'valid supplementary characters and joined emoji remain byte-identical');
-  const source='Z'.repeat(158)+'\ud800🌈';
-  assert.equal(boundTextContent(source),'Z'.repeat(158)+'\ufffd',
+  const source='Z'.repeat(159)+'\ud800🌈';
+  assert.equal(boundTextContent(source),'Z'.repeat(159)+'\ufffd',
     'the 160-codepoint limit still retains only complete trailing graphemes');
 });
