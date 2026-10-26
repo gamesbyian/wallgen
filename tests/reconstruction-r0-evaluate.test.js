@@ -22,6 +22,14 @@ test('production evaluator CLI is opt-in and read-only by default',()=>{
 });
 
 
+test('source-blind fitted recipe receipts require explicit opt-in and cannot imply source truth',()=>{
+  assert.equal(Object.hasOwn(readReconstructionEvalArgs([]),'saveBestRecipe'),false);
+  assert.deepEqual(readReconstructionEvalArgs(['--dir','artifacts/current',
+    '--save-best-recipe']),{
+    dir:'artifacts/current',saveBestRecipe:true
+  });
+});
+
 test('optional alternative preview output requires an explicit opt-in flag',()=>{
  assert.deepEqual(readReconstructionEvalArgs(['--alternatives']),
    {dir:'artifacts/reconstruction-r0',alternatives:true});
