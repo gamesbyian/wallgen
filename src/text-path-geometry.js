@@ -3,7 +3,7 @@
 // Complex joining scripts keep their native whole-line shaping (straight).
 import {pathPosition} from './path-geometry.js';
 import {prepareDrawnPath,pointOnDrawnPath} from './drawn-path.js';
-import {textGraphemes} from './text-rainbow-shaping.js';
+import {textGraphemes,hasVisibleTextInk} from './text-rainbow-shaping.js';
 import {textInkSelectionReach} from './text-overlays.js';
 import {availableTextWidth} from './text-direct-geometry.js';
 import {DESIGN_WIDTH,DESIGN_HEIGHT} from './model.js';
@@ -186,14 +186,14 @@ export function hitTextAtLayout(items,point,measureFor,{tolerance=0,customPath}=
     const extra=stroke+reach;
     for(let lineIndex=0;lineIndex<lines.length;lineIndex++){
       const line=lines[lineIndex];
-      if(!line.trim())continue;
+      if(!hasVisibleTextInk(line))continue;
       const offset=(lineIndex-(lines.length-1)/2)*leading;
       const layout=item.path&&item.path!=='none'?
         layoutTextOnPath(item,line,unit=>measureFor(item,unit),customPath,
           {preparedPath}):null;
       if(layout?.supported){
         for(const glyph of layout.glyphs){
-          if(!glyph.text.trim())continue; // authored spaces have no ink
+          if(!hasVisibleTextInk(glyph.text))continue; // spaces and format controls paint no ink
           const centerX=glyph.x-Math.sin(glyph.angle)*offset,
             centerY=glyph.y+Math.cos(glyph.angle)*offset;
           const dx=x-centerX,dy=y-centerY,
