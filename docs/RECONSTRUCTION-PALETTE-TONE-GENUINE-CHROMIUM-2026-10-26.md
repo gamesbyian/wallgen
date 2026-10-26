@@ -36,6 +36,12 @@ Original baseline classic seven-object composition and soft source share 600×13
 
 [Retained genuine original screenshots, both 3024×6552 exports and recipe files](https://github.com/gamesbyian/wallgen/actions/runs/40384003552/artifacts/12679313321). Experimental optical workflow was returned to **manual-only** before merge. The normally cheap `npm run check:quick` now includes the small dedicated Tone semantic/locks/scoped tests.
 
+## Pre-integration source isolation regression
+
+The genuine Tone creator capability exposed one new inverse-import risk: a user may edit a completely different wallpaper with custom Tone enabled, then import a source PNG with ordinary canonical hues. Without explicit resets, the source candidate base and source-visible per-hue shapes would inherit that stale saturation/lightness, falsely changing source pigment colours while geometry appeared correct.
+
+The same canonical source-state neutrality contract established by merged #728 now resets `paletteToneEnabled:false` (with dormant classic 92/58 values) in `strippedCandidateBase` and source-visible `observedHueShapeRecipe`. Creator-lock projection is preserved; if a locked **enabled** private Tone would make the source-visible seven-hue recipe visually wrong, that particular inferred per-hue candidate is refused rather than pretending it matches the source. Fresh deterministic tests use actual independent raster hue regions and triangular seven-hue polygons, compare clean vs polluted source candidate kinds and all canonical colour settings, prove the original RGBA bytes unchanged, and verify protected-lock refusal. [Final source-isolation quick CI #40385083062](https://github.com/gamesbyian/wallgen/actions/runs/40385083062) **SUCCESS**. This narrow extra change modifies no forward painter algorithms or creator Tone UI; the previously accepted production Chromium Tone optical images therefore remain valid.
+
 ## Boundaries and next #557 gate
 
 - This supplies the **ability to paint** source-like low-saturation and very dark hues; it does **not** change `image-path.js` importer thresholds or make the existing automatic inverse fitter recognize them. Keep current source-truth refusals for unsupported sources until an **independent** future opt-in source mask / actual painter acceptance proves a representable seven-hue mapping, shape geometry and output colour.
