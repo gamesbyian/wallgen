@@ -44,7 +44,8 @@ export function boundTextContent(value){
     .replace(/\t/g,' ');
   let remaining=160,lines=1,result='';
   const segmentation=typeof Intl!=='undefined'&&typeof Intl.Segmenter==='function'?
-    new Intl.Segmenter(undefined,{granularity:'grapheme'}).segment(cleaned):cleaned;
+    new Intl.Segmenter(undefined,{granularity:'grapheme'}).segment(cleaned):
+    fallbackTextGraphemes(cleaned);
   for(const unit of segmentation){
     const cluster=typeof unit==='string'?unit:unit.segment;
     const cost=Array.from(cluster).length;
