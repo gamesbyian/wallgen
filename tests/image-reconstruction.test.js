@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {HUES,COLOR_STORIES,normalizeRecipe,resolveScene,encodeRecipe,decodeRecipe} from '../src/model.js';
-import {imagePlacement,extractImageColourRegions} from '../src/image-path.js';
+import {imagePlacement,extractImageColourRegions,extractImagePathCandidates} from '../src/image-path.js';
 import {describeReconstructionImage,reconstructionCandidates,
   rankReconstructionCandidates,compareReconstructionPixels,refineReconstructionCandidate,reconstructionPlacement,
   radialImageSignature,imageStripeAngle,imageCurveSignature,diverseReconstructionCandidates,reconstructionRefinementIndex,
@@ -1811,4 +1811,32 @@ test('source inverse scoring ignores pre-existing creator text without dropping 
   const coopRefined=await refineReconstructionCandidateCooperatively(
     plainCandidate,reference,render,{maxRenders:2});
   assert.deepEqual(coopRefined.recipe.textOverlays,originalText);
+});
+
+test('inverse importer reuses the exact manual path measurement without candidate drift',()=>{
+  const input=original;
+  const prior=Array.from(input.data);
+  const r=normalizeRecipe({seed:'reuse-live-manual-paths'});
+  const standalone=describeReconstructionImage(input);
+  const paths=extractImagePathCandidates(input);
+  const shared=describeReconstructionImage(input,{sourcePathCandidates:paths});
+  assert.deepEqual(shared,standalone,
+    'manual path measurement and ordinary standalone source analysis agree exactly');
+  const rankedStandalone=reconstructionCandidates(input,r);
+  let diagnostic=null;
+  const rankedShared=reconstructionCandidates(input,r,{
+    sourcePathCandidates:paths,onDescription:d=>{diagnostic=d;}
+  });
+  assert.deepEqual(rankedShared,rankedStandalone,
+    'manual-source path reuse cannot change accepted editable recipe ordering');
+  assert.ok(diagnostic);
+  assert.deepEqual(diagnostic.paths,standalone.paths);
+  assert.equal(Object.hasOwn(diagnostic,'sourceHueMasks'),false);
+  assert.deepEqual(Array.from(input.data),prior,'source RGBA was not changed');
+  // Explicit empty path detection must be reused too. It is NOT a request
+  // to run the source scanner again under a misleading empty array.
+  const emptyShared=describeReconstructionImage(input,{sourcePathCandidates:[]});
+  assert.deepEqual(emptyShared.paths,[]);
+  const noExtra=describeReconstructionImage(input,{sourcePathCandidates:null});
+  assert.deepEqual(noExtra,standalone);
 });
