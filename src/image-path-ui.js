@@ -48,6 +48,20 @@ export function describeReconstructionChoice(candidate){
   };
 }
 
+/**
+ * An empty automatic fit is a useful result when observed colours skip
+ * canonical slots. Distinguish that source-backed refusal from an ordinary
+ * low-confidence image, without inventing any missing pigment or recipe.
+ */
+export function describeReconstructionRefusal(descriptor){
+  const regions=Array.isArray(descriptor?.colourRegions)?descriptor.colourRegions:[];
+  const skippedFirstSlots=regions.length>0&&regions.length<=2&&
+    regions.some((region,index)=>region?.index!==index);
+  if(descriptor?.unsupportedCompactHueGaps===true||skippedFirstSlots)
+    return 'No faithful editable recipe: the image has colours that skip earlier ROYGBIV slots. Automatic reconstruction would change those colours or invent missing shapes. You can import a detected path or silhouette below and edit manually. Your source image is unchanged.';
+  return 'No reliable editable recipe could be inferred from this image. You can still import a detected path or silhouette below, when available, and adjust the design manually. Your source image is unchanged.';
+}
+
 // The image is transient: only the selected vector centreline enters the recipe.
 // A native dialog provides an accessible, phone-friendly full-stage workspace.
 export function installImagePathTool({getRecipe,onNotice,onPath,onAngle,onShape,onRecipe,onRender}){
@@ -60,6 +74,7 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle,onShape,
     closeButton=byId('imagePathCancel'),
     recipeWorkspace=byId('imageRecipeWorkspace'),recipeChooser=byId('imageRecipeCandidate'),
     recipeApply=byId('imageRecipeApply'),recipeStatus=byId('imageRecipeStatus'),
+    recipeUnavailable=byId('imageRecipeUnavailable'),
     recipeWhy=byId('imageRecipeWhy'),
     recipeExplanation=byId('imageRecipeExplanation'),
     recipeExplanationText=byId('imageRecipeExplanationText'),
@@ -139,13 +154,26 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle,onShape,
       recipeExplanationText.textContent+=' Preview unavailable: '+error.message;
     }
   }
+  function showRecipeUnavailable(message){
+    recipeWorkspace.hidden=true;
+    recipeApply.disabled=true;recipeWhy.disabled=true;
+    recipeUnavailable.textContent=message;
+    recipeUnavailable.hidden=false;
+  }
+  function hideRecipeUnavailable(){
+    recipeUnavailable.hidden=true;recipeUnavailable.textContent='';
+  }
   async function recoverRecipes(pixels,revision){
     reconstructed=[];recipeChooser.replaceChildren();recipeWorkspace.hidden=true;
+    hideRecipeUnavailable();
     recipeWhy.disabled=true;
     if(recipeExplanation.matches(':popover-open'))recipeExplanation.hidePopover();
     if(!onRecipe||!onRender)return;
     const candidates=reconstructionCandidates(pixels,getRecipe());
-    if(!candidates.length)return;
+    if(!candidates.length){
+      showRecipeUnavailable(describeReconstructionRefusal(describeReconstructionImage(pixels)));
+      return;
+    }
     const frame=document.createElement('canvas');
     frame.width=RECONSTRUCTION_FRAME.width;frame.height=RECONSTRUCTION_FRAME.height;
     const g=frame.getContext('2d',{willReadFrequently:true});
@@ -188,6 +216,7 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle,onShape,
     }
     recipeWorkspace.hidden=!reconstructed.length;
     if(reconstructed.length)chooseReconstruction(0);
+    else showRecipeUnavailable(describeReconstructionRefusal(desc));
   }
   async function decode(file){
     if(!file||!allowed.test(file.type)&&!(/\.(png|jpe?g|webp|svg)$/i.test(file.name)))
@@ -229,6 +258,7 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle,onShape,
     // has completed. Their old labels must not be mistaken for new results.
     chooser.replaceChildren();candidates=[];image=null;
     reconstructed=[];recipeWorkspace.hidden=true;recipeApply.disabled=true;
+    hideRecipeUnavailable();
     recipeWhy.disabled=true;
     if(recipeExplanation.matches(':popover-open'))recipeExplanation.hidePopover();
     sourceCanvas.getContext('2d').clearRect(0,0,sourceCanvas.width,sourceCanvas.height);
@@ -259,8 +289,9 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle,onShape,
       // stays usable if a renderer or unsupported image defeats fitting.
       try{await recoverRecipes(pixels,revision);}catch(error){
         if(revision!==loadRevision||!dialog.open)return;
-        recipeWorkspace.hidden=false;recipeApply.disabled=true;
-        recipeStatus.textContent='Editable recipe fitting unavailable: '+(error?.message||'unknown error');
+        showRecipeUnavailable('Editable recipe fitting unavailable: '+
+          (error?.message||'unknown error')+
+          '. Try a detected path or silhouette below instead. Your source image is unchanged.');
       }
     }catch(error){
       if(revision!==loadRevision)return;
@@ -359,6 +390,7 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle,onShape,
     setPhase('idle');
     image=null;candidates=[];reconstructed=[];chooser.replaceChildren();
     recipeChooser.replaceChildren();recipeWorkspace.hidden=true;recipeWhy.disabled=true;
+    hideRecipeUnavailable();
     if(recipeExplanation.matches(':popover-open'))recipeExplanation.hidePopover();
     fileInput.value='';
   });
