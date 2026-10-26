@@ -424,3 +424,31 @@ test('curved and native-fallback hit testing ignores zero-alpha top overlays',()
   const faded={...background,id:'faded',opacity:.01,path:'none'};
   assert.equal(hitTextAtLayout([background,faded],center,pickMeasure)?.id,'faded');
 });
+
+test('curved rainbow-word ignores formatting-only graphemes within a word',()=>{
+  const withMarks='A\u2060B\u200bC D';
+  const scene=resolveScene(normalizeRecipe({seed:'word-ignorable-same-hue',
+    textOverlays:[{id:'word',text:withMarks,path:'arc',pathHeight:75,
+      colour:'rainbow-word',font:'modern',outline:'none',size:70}]}));
+  const ctx=context();
+  drawTextOverlays(ctx,600,1300,scene);
+  const fills=ctx.calls.filter(call=>call[0]==='fill');
+  const visible=fills.filter(call=>/[ABCD]/u.test(call[1]));
+  assert.deepEqual(visible.map(call=>call[1]),['A','B','C','D'],
+    'original graphemes must remain at their own curved stations');
+  assert.deepEqual(visible.map(call=>call[4]),[
+    scene.stripes[0].color,scene.stripes[0].color,
+    scene.stripes[0].color,scene.stripes[1].color
+  ],'format-only controls may not start a new rainbow word');
+  assert.equal(fills.map(call=>call[1]).join(''),withMarks,
+    'invisible controls remain in canonical text and rendering order');
+  const baseline=resolveScene(normalizeRecipe({seed:'word-ignorable-same-hue',
+    textOverlays:[{id:'word',text:'A B',path:'arc',pathHeight:75,
+      colour:'rainbow-word',font:'modern',outline:'none',size:70}]}));
+  const spaces=context();
+  drawTextOverlays(spaces,600,1300,baseline);
+  const ink=spaces.calls.filter(call=>call[0]==='fill'&&/[AB]/u.test(call[1]));
+  assert.deepEqual(ink.map(call=>call[4]),
+    [baseline.stripes[0].color,baseline.stripes[1].color],
+    'genuine whitespace still advances the next word by one rainbow hue');
+});
