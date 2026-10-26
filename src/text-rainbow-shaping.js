@@ -60,7 +60,7 @@ export function rainbowTextStops(line,mode,colours,startIndex,measure,{rightToLe
     const width=Number.isFinite(raw)?Math.max(0,raw):0;
     spans.push({width,colour:colours[colourIndex%colours.length]});
     weight+=width;
-    if(unit.trim())colourIndex++;
+    if(unit.trim()&&!directionOnly.test(unit))colourIndex++;
   }
   if(!spans.length||weight===0)
     return {stops:[],nextIndex:colourIndex};
