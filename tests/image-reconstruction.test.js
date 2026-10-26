@@ -231,9 +231,12 @@ test('missing middle pigment slots never invent colour order from compact island
        return colour(HUES[indices[i]]);
    return [0,0,0,255];
  });
- assert.equal(describeReconstructionImage(noncontiguous).incompleteColourRegions,false);
- assert.ok(reconstructionCandidates(noncontiguous,{}).every(c=>c.kind!=='regions'),
-   'do not silently repurpose indigo/violet as an earlier semantic hue slot');
+ const desc=describeReconstructionImage(noncontiguous);
+ assert.equal(desc.incompleteColourRegions,false);
+ assert.equal(desc.unsupportedCompactHueGaps,true,
+   'complete isolated islands but missing middle colours are unrepresentable by first-N hue slots');
+ assert.equal(reconstructionCandidates(noncontiguous,{}).length,0,
+   'do not fit a tiny seven-colour procedural path to separate unsupported source polygons');
 });
 
 test('one and two directly representable first hues are editable without invented missing objects',()=>{
