@@ -1,5 +1,15 @@
 # Agent 3 final-current-main portrait, privacy and reconstruction acceptance
 
+## Post-closure current-main delta · 26 October 2026
+
+**Scope:** a narrower independent *regression check* after #664 software closure, not a new device/owner acceptance declaration. Main advanced through Agent 1's merged [#746](https://github.com/gamesbyian/wallgen/pull/746) seven-dark-source colour-truth guard and Agent 2's merged [#748](https://github.com/gamesbyian/wallgen/pull/748) Bidi control-colour continuity. [Opt-in genuine Chromium #40371904511](https://github.com/gamesbyian/wallgen/actions/runs/40371904511) **SUCCESS**, [actual screenshots #12672592430](https://github.com/gamesbyian/wallgen/actions/runs/40371904511/artifacts/12672592430); final-head quick prior to temporary workflow retirement [#40371904289](https://github.com/gamesbyian/wallgen/actions/runs/40371904289) SUCCESS. One-off automatic Chromium workflow retired after proof; reusable existing opt-in source matrix now includes the independent metadata-free `dim-seven-polygons` imported original.
+
+**14/14 real source→import-dialog checks across 320×700 and 412×892:** the previously established gapped 3/5 and neutral cases still refuse unsupported inferred art honestly; new very-dark seven-pigment original also returns **no fabricated bright rainbow candidate**, without falsely asserting missing semantic hue slots (its actual seven source hues are present). Three contiguous first-N controls remain editable. All original source PNG file hashes unchanged; no automatic GitHub API call. This verifies the current full UI source-backed refusal in addition to #746's original painter/optical corpus.
+
+The deliberately separate current-main `scripts/text-layout-hit-browser-proof.mjs` also **PASS**: hollow curved text's centre hit falls through to underlay, actual glyph selects top curved text, Undo restores prior position, direct vs worker 360×780 image has **zero differing channels**. This is a cross-integration regression; it **does not** establish arbitrary RTL/Indic/Bidi shaped glyphs on curves, physical Pixel, Android IME/TalkBack, human review, authenticated backups or handset stress. #557 and #653 remain specialist owners.
+
+---
+
 **Owner:** [#664](https://github.com/gamesbyian/wallgen/issues/664). **Software baseline:** merged main `08d3b5bc` (includes source truth #728, accessible no-candidate #736, editable partial first-N #737, compact missing-middle refusal #738 and independently measured neutral-grey refusal #739). **Independent real Chromium acceptance:** [SUCCESS run #40256680734](https://github.com/gamesbyian/wallgen/actions/runs/40256680734). **Saved screenshots + bounded reports:** [artifact #12622587686](https://github.com/gamesbyian/wallgen/actions/runs/40256680734/artifacts/12622587686). **Quick PR gate:** [#40256680685](https://github.com/gamesbyian/wallgen/actions/runs/40256680685) succeeded on original test commit; final-head quick must pass once the temporary PR-only workflow has been deleted. Do not infer a physical Android test.
 
 ## Seven completed genuine production-browser suites
