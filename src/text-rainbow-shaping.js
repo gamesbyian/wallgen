@@ -52,6 +52,11 @@ export function isSimpleRightToLeft(line){
 // This matches the font-coverage diagnostic's Unicode property rather than
 // maintaining another partial list of invisible codepoints.
 const defaultIgnorable=/\p{Default_Ignorable_Code_Point}/u;
+// One shared predicate for Canvas paint, font loading and pointer selection.
+// A hidden object still exists in the editor and portable design.
+export const textOverlayPaintsInk=item=>
+  item?.enabled!==false&&item?.opacity!==0&&hasVisibleTextInk(item?.text);
+
 export function hasVisibleTextInk(unit){
   return [...String(unit||'')].some(char=>
     !/\s/u.test(char)&&!defaultIgnorable.test(char));

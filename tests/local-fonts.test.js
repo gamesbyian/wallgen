@@ -57,3 +57,24 @@ test('unknown CSS family identifiers never enter canonical recipe',()=>{
   }]});
   assert.equal(input.textOverlays[0].font,'bold');
 });
+
+test('invisible private font text has no paint-time dependency but remains packageable',async()=>{
+  const id=await hashFontBytes(fontHeader());
+  const hidden=normalizeRecipe({textOverlays:[
+    {id:'alpha',text:'HIDDEN',font:id,opacity:0},
+    {id:'format',text:'\u200b\u2060',font:id,opacity:1}
+  ]});
+  assert.deepEqual(recipeLocalFontIds(hidden),[]);
+  assert.equal(localFontsReady(hidden),true);
+  assert.equal(hidden.textOverlays[0].font,id,
+    'original private font identity survives in editable canonical text');
+  const shown=normalizeRecipe({textOverlays:[
+    {...hidden.textOverlays[0],opacity:.01}
+  ]});
+  assert.deepEqual(recipeLocalFontIds(shown),[id]);
+  assert.equal(localFontsReady(shown),false,
+    'the true font must be reimported as soon as ink becomes visible');
+  const {packageFontIds}=await import('../src/portable-font-pack.js');
+  assert.deepEqual(packageFontIds(hidden),[id],
+    'explicit private font package preserves hidden design dependencies');
+});

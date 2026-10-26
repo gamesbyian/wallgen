@@ -1,6 +1,7 @@
 import {prepareLocalFonts,localFontsReady,isLocalFontId,fontFamilyForId} from './local-fonts.js';
 import {prepareBundledFonts,bundledFontsReady,isBundledFontId,bundledFontFamily} from './bundled-fonts.js';
 import {TEXT_FONTS} from './text-overlays.js';
+import {textOverlayPaintsInk} from './text-rainbow-shaping.js';
 
 // One canonical font readiness boundary for worker, direct render,
 // thumbnail and exports. No second text rasterizer or ad-hoc DOM overlay.
@@ -14,5 +15,5 @@ export function typefaceCssFamily(id){
   return TEXT_FONTS[id]||TEXT_FONTS.bold;
 }
 export const recipeHasCustomTypefaces=recipe=>
-  (recipe?.textOverlays||[]).some(item=>item.enabled!==false&&item.text&&
+  (recipe?.textOverlays||[]).some(item=>textOverlayPaintsInk(item)&&
     (isLocalFontId(item.font)||isBundledFontId(item.font)));

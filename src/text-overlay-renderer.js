@@ -2,7 +2,7 @@ import {DESIGN_WIDTH,DESIGN_HEIGHT} from './model.js';
 import {TEXT_FONTS,DUAL_TEXT_OUTLINE_STROKE_MULTIPLIER} from './text-overlays.js';
 import {typefacesReady,typefaceCssFamily} from './typography-fonts.js';
 import {availableTextWidth} from './text-direct-geometry.js';
-import {rainbowTextStops,isSimpleRightToLeft,hasVisibleTextInk} from './text-rainbow-shaping.js';
+import {rainbowTextStops,isSimpleRightToLeft,hasVisibleTextInk,textOverlayPaintsInk} from './text-rainbow-shaping.js';
 import {layoutTextOnPath,prepareTextFollowPath} from './text-path-geometry.js';
 
 // The same post-composite typography pass is used by reference, worker,
@@ -36,7 +36,7 @@ function paintTextOutline(ctx,item,text,x,y){
 }
 
 export function drawTextOverlays(ctx,width,height,scene){
-  if(!scene?.textOverlays?.length)return;
+  if(!scene?.textOverlays?.some(textOverlayPaintsInk))return;
   if(!typefacesReady(scene))throw Error('Typeface unavailable: prepare fonts before painting');
   const baseColours=scene.stripes?.length===7?
     scene.stripes.map(item=>item.color):fallbackRainbow;
@@ -45,7 +45,7 @@ export function drawTextOverlays(ctx,width,height,scene){
   // Thus a preview and 3024x6552 export retain the same design geometry.
   ctx.scale(width/DESIGN_WIDTH,height/DESIGN_HEIGHT);
   for(const item of scene.textOverlays){
-    if(!item.enabled||!item.text)continue;
+    if(!textOverlayPaintsInk(item))continue;
     const rainbow=item.rainbowReverse?[...baseColours].reverse():baseColours;
     const phase=item.rainbowOffset??0;
     const colours=phase?rainbow.map((_,i)=>rainbow[(i+phase)%rainbow.length]):rainbow;
