@@ -47,6 +47,8 @@ test('unsupported semantic colour slots disclose refusal and manual geometry fal
     assert.match(status,/path or silhouette/);
     assert.match(status,/source image is unchanged/);
   }
+  // Missing source bytes cannot qualify a specific pigment classification:
+  // preserve the neutral default rather than guessing why fitting failed.
   const ordinary=describeReconstructionRefusal({colourRegions:[]});
   assert.match(ordinary,/No reliable editable recipe/);
   assert.doesNotMatch(ordinary,/skip earlier/);

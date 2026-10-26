@@ -1,7 +1,7 @@
 import {extractImagePathCandidates,extractImageShapeCandidates,imagePlacement,pathToWallpaper} from './image-path.js?v=20261023-band-measure1';
 import {drawAuthoringLockReason,drawAuthoringLockMessage,pathStructureLockedOutsidePaths} from './path-authoring-locks.js';
 import {verifyLocalSilhouetteSvg} from './svg-import-safety.js';
-import {reconstructionCandidates,rankReconstructionCandidatesCooperatively,refineReconstructionCandidateCooperatively,reconstructionRefinementIndex,describeReconstructionImage,reconstructionPlacement,RECONSTRUCTION_FRAME} from './image-reconstruction.js?v=20261023-wave-contour1';
+import {reconstructionCandidates,rankReconstructionCandidatesCooperatively,refineReconstructionCandidateCooperatively,reconstructionRefinementIndex,describeReconstructionImage,reconstructionPlacement,RECONSTRUCTION_FRAME,plainlyAchromaticForeground,plainlyUnsupportedSoftPigments} from './image-reconstruction.js?v=20261023-wave-contour1';
 
 /** A live import dialog must match the current authoritative lock state,
  * even if a recipe restores a lock while image decoding is in flight. */
@@ -53,12 +53,16 @@ export function describeReconstructionChoice(candidate){
  * canonical slots. Distinguish that source-backed refusal from an ordinary
  * low-confidence image, without inventing any missing pigment or recipe.
  */
-export function describeReconstructionRefusal(descriptor){
+export function describeReconstructionRefusal(descriptor,source=null){
   const regions=Array.isArray(descriptor?.colourRegions)?descriptor.colourRegions:[];
   const skippedFirstSlots=regions.length>0&&regions.length<=2&&
     regions.some((region,index)=>region?.index!==index);
   if(descriptor?.unsupportedCompactHueGaps===true||skippedFirstSlots)
     return 'No faithful editable recipe: the image has colours that skip earlier ROYGBIV slots. Automatic reconstruction would change those colours or invent missing shapes. You can import a detected path or silhouette below and edit manually. Your source image is unchanged.';
+  if(source&&plainlyUnsupportedSoftPigments(source,regions))
+    return 'No colour-faithful automatic recipe: several distinct muted pigments were visible, but the automatic hue masks cannot isolate them confidently. Import a detected path or silhouette below when available, then adjust Palette Tone saturation and lightness manually. Your source image is unchanged.';
+  if(source&&plainlyAchromaticForeground(source,regions))
+    return 'No colour-faithful automatic recipe: the image contains substantial neutral ink rather than confidently classified rainbow pigments. Import a detected path or silhouette below when available and choose its colours manually. Your source image is unchanged.';
   return 'No reliable editable recipe could be inferred from this image. You can still import a detected path or silhouette below, when available, and adjust the design manually. Your source image is unchanged.';
 }
 
@@ -171,7 +175,7 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle,onShape,
     if(!onRecipe||!onRender)return;
     const candidates=reconstructionCandidates(pixels,getRecipe());
     if(!candidates.length){
-      showRecipeUnavailable(describeReconstructionRefusal(describeReconstructionImage(pixels)));
+      showRecipeUnavailable(describeReconstructionRefusal(describeReconstructionImage(pixels),pixels));
       return;
     }
     const frame=document.createElement('canvas');
@@ -216,7 +220,7 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle,onShape,
     }
     recipeWorkspace.hidden=!reconstructed.length;
     if(reconstructed.length)chooseReconstruction(0);
-    else showRecipeUnavailable(describeReconstructionRefusal(desc));
+    else showRecipeUnavailable(describeReconstructionRefusal(desc,pixels));
   }
   async function decode(file){
     if(!file||!allowed.test(file.type)&&!(/\.(png|jpe?g|webp|svg)$/i.test(file.name)))
