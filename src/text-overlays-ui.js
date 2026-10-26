@@ -3,6 +3,7 @@ import {importLocalFont,listLocalFonts,isLocalFontId} from './local-fonts.js';
 import {BUNDLED_FONTS,isBundledFontId} from './bundled-fonts.js';
 import {exportPortableFontPack,importPortableFontPack,packageFontIds} from './portable-font-pack.js';
 import {installTextCanvasMover} from './text-direct-ui.js';
+import {textPathStatus} from './text-path-status.js';
 import {prepareTypefaces} from './typography-fonts.js';
 import {cachedFontCoverage,fontCoverageChecked,missingGlyphNotice} from './font-glyph-coverage.js';
 
@@ -182,11 +183,8 @@ export function installTextOverlayTool({getRecipe,changeRecipe,onFontNotice=()=>
     mover?.sync();
     root.querySelector('[data-text-path-height]').hidden=!item.path||
       item.path==='none'||item.path==='drawn';
-    root.querySelector('[data-text-path-status]').textContent=item.path==='drawn'?
-      (getRecipe().customPath?.length>=2?
-        'Using the authored Draw path shape; Horizontal/Vertical move the text along with its curve.':
-        'Draw a path in the Draw tool first. Until then, lettering stays straight.'):
-      'Curved baselines support separate graphemes; joining and bidirectional scripts keep their native straight-line shaping.';
+    root.querySelector('[data-text-path-status]').textContent=
+      textPathStatus(item,getRecipe().customPath);
     const rainbowActive=item.colour?.startsWith('rainbow-');
     const shadowActive=item.shadow==='black'||item.shadow==='white';
     for(const key of ['rainbowOffset','rainbowReverse'])
