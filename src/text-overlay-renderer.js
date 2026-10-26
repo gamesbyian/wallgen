@@ -2,7 +2,7 @@ import {DESIGN_WIDTH,DESIGN_HEIGHT} from './model.js';
 import {TEXT_FONTS,DUAL_TEXT_OUTLINE_STROKE_MULTIPLIER} from './text-overlays.js';
 import {typefacesReady,typefaceCssFamily} from './typography-fonts.js';
 import {availableTextWidth} from './text-direct-geometry.js';
-import {rainbowTextStops,isSimpleRightToLeft} from './text-rainbow-shaping.js';
+import {rainbowTextStops,isSimpleRightToLeft,hasVisibleTextInk} from './text-rainbow-shaping.js';
 import {layoutTextOnPath,prepareTextFollowPath} from './text-path-geometry.js';
 
 // The same post-composite typography pass is used by reference, worker,
@@ -112,7 +112,7 @@ export function drawTextOverlays(ctx,width,height,scene){
       if(path?.supported){
         let inWord=false,wordColour=colours[colourIndex%colours.length];
         for(const glyph of path.glyphs){
-          const ink=Boolean(glyph.text.trim());
+          const ink=hasVisibleTextInk(glyph.text);
           let fill=item.colour==='black'?'#000000':item.colour==='white'?'#ffffff':null;
           if(item.colour==='rainbow-letter'){
             fill=colours[colourIndex%colours.length];
