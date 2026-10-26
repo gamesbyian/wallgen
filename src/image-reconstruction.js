@@ -470,10 +470,61 @@ export function diverseReconstructionCandidates(candidates,limit=RECONSTRUCTION_
   return chosen;
 }
 
+/**
+ * Detect a clearly unsupported source-colour truth, not a presumed historical
+ * recipe. The current scattered scene assigns rainbow pigments to its first
+ * objects; a source containing only neutral grey foreground silhouettes
+ * cannot be automatically reconstructed by painting those objects red.
+ *
+ * Require a substantial, overwhelmingly achromatic foreground compared with
+ * a consistent corner background. This intentionally says nothing about
+ * ambiguous very dark, soft pastel or mixed-colour art: leave those unchanged
+ * until more direct source evidence exists. Downsample only for this cheap
+ * source-only rejection, never as a substitute for the canonical hue importer.
+ */
+export function plainlyAchromaticForeground(image,colourRegions=[]){
+  if(colourRegions.length||!image||!Number.isInteger(image.width)||
+    !Number.isInteger(image.height)||image.width<24||
+    image.height<24||image.width*image.height>650000||
+    image.data?.length!==image.width*image.height*4)return false;
+  const {width:w,height:h,data}=image;
+  const corner=(x,y)=>{
+    const i=4*(y*w+x);
+    return [data[i],data[i+1],data[i+2],data[i+3]];
+  };
+  const corners=[corner(0,0),corner(w-1,0),corner(0,h-1),
+    corner(w-1,h-1)];
+  if(corners.some(p=>p[3]<240))return false;
+  const bg=[0,1,2].map(channel=>{
+    const sorted=corners.map(p=>p[channel]).sort((a,b)=>a-b);
+    return (sorted[1]+sorted[2])/2;
+  });
+  if(corners.some(p=>p.slice(0,3).some((value,index)=>
+    Math.abs(value-bg[index])>16)))return false;
+  const step=Math.max(1,Math.ceil(Math.sqrt(w*h/12000)));
+  let samples=0,salient=0,neutral=0;
+  for(let y=0;y<h;y+=step)for(let x=0;x<w;x+=step){
+    const i=4*(y*w+x);samples++;
+    if(data[i+3]<240)continue;
+    const red=data[i],green=data[i+1],blue=data[i+2];
+    if(Math.max(Math.abs(red-bg[0]),Math.abs(green-bg[1]),
+      Math.abs(blue-bg[2]))<48)continue;
+    salient++;
+    const lowest=Math.min(red,green,blue);
+    const highest=Math.max(red,green,blue);
+    if(highest-lowest<=8&&lowest>=55&&highest<=220)neutral++;
+  }
+  return salient>=samples*.035&&neutral>=salient*.92;
+}
+
 /** Return a few independently editable canonical alternatives. */
 export function reconstructionCandidates(image,recipe){
   const desc=describeReconstructionImage(image,{includeColourMasks:true});
   const current=normalizeRecipe(recipe);
+  // A source visibly full of neutral grey ink is not a recolourable rainbow
+  // unless its actual source hue evidence says so. This deliberately returns
+  // no auto-proposal; existing manual geometry-only path import remains.
+  if(plainlyAchromaticForeground(image,desc.colourRegions))return [];
   // Scattered scene slots are contiguous 0..N-1, not arbitrary hue IDs.
   // One blue region, or isolated red and blue without orange/yellow/green,
   // cannot be represented as one/two objects without silently recolouring
