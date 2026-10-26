@@ -2,7 +2,8 @@ import {DESIGN_WIDTH,DESIGN_HEIGHT} from './model.js';
 import {typefaceCssFamily} from './typography-fonts.js';
 import {compactTextGripLayout} from './text-grip-layout.js';
 import {designPointFromPointer,dragTextOverlay,
-  dragTextTransform,transformTextOverlay,measuredTextBounds} from './text-direct-geometry.js';
+  dragTextTransform,transformTextOverlay,measuredTextBounds,
+  measureCanvasText} from './text-direct-geometry.js';
 import {hitTextAtLayout} from './text-path-geometry.js';
 
 // Opt-in touch gesture, with the same one-pointerup/one-Undo contract already
@@ -49,13 +50,10 @@ export function installTextCanvasMover({
   stage.append(done);
   let active=false,drag=null,transformDrag=null;
   const fontContext=canvas.getContext('2d');
-  const measure=(item,value)=>{
-    fontContext.save();
-    fontContext.font='bold '+item.size+'px '+typefaceCssFamily(item.font);
-    const width=fontContext.measureText(value).width;
-    fontContext.restore();
-    return width;
-  };
+  const measure=(item,value,{tracking=false}={})=>
+    measureCanvasText(fontContext,
+      'bold '+item.size+'px '+typefaceCssFamily(item.font),
+      item,value,{tracking});
   function paintOutline(item){
     if(!active||!item){outline.hidden=true;return;}
     const rect=canvas.getBoundingClientRect();
@@ -137,7 +135,8 @@ export function installTextCanvasMover({
     const rect=canvas.getBoundingClientRect();
     const tolerance=14*DESIGN_WIDTH/Math.max(rect.width,1);
     const current=getRecipe();
-    const item=hitTextAtLayout(current.textOverlays,point,measure,{
+    const item=hitTextAtLayout(current.textOverlays,point,
+      (text,value)=>measure(text,value,{tracking:true}),{
       tolerance,customPath:current.customPath
     });
     if(!item)return;

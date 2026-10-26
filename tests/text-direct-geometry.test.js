@@ -2,7 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {normalizeRecipe} from '../src/model.js';
 import {availableTextWidth,designPointFromPointer,measuredTextBounds,
-  hitTextOverlay,dragTextOverlay,dragTextTransform,transformTextOverlay} from '../src/text-direct-geometry.js';
+  hitTextOverlay,dragTextOverlay,dragTextTransform,transformTextOverlay,
+  measureCanvasText} from '../src/text-direct-geometry.js';
+import {layoutTextOnPath,hitTextAtLayout} from '../src/text-path-geometry.js';
 
 const sample=normalizeRecipe({textOverlays:[
  {id:'back',text:'ABCD',x:50,y:50,size:60,rotation:0,outline:'black'},
@@ -97,4 +99,48 @@ test('invalid transform gestures are no-op; zero-distance handle cannot jump',()
   assert.equal(dragTextTransform(sample,'front','skew',{x:1,y:2},{x:2,y:3}),sample);
   assert.equal(dragTextTransform(sample,'front','scale',{x:300,y:650},{x:400,y:650}),sample);
   assert.equal(transformTextOverlay(sample,'front',{size:Infinity,rotation:NaN}),sample);
+});
+
+test('native Canvas tracking aligns curved glyph picks with painted stations',()=>{
+  // Before the fix, the direct pointer adapter used untracked measureText for
+  // layout while the painter used a tracked Canvas2D context. A long line
+  // can miss by ~100 design px, far outside even a touch tolerance.
+  const states=[];
+  const ctx={
+    font:'initial',letterSpacing:'0px',
+    save(){states.push([this.font,this.letterSpacing]);},
+    restore(){[this.font,this.letterSpacing]=states.pop();},
+    measureText(text){
+      return {width:[...text].length*(10+(parseFloat(this.letterSpacing)||0))};
+    },
+  };
+  const item={id:'tracked',text:'WWWWWWWWWWWW',enabled:true,
+    x:50,y:50,size:40,rotation:0,outline:'none',
+    path:'wave',pathHeight:20,letterSpacing:18};
+  const font='bold 40px test';
+  const natural=(text,value)=>measureCanvasText(ctx,font,text,value);
+  const tracked=(text,value)=>measureCanvasText(ctx,font,text,value,{tracking:true});
+  const rendered=layoutTextOnPath(item,item.text,unit=>tracked(item,unit));
+  assert.equal(rendered.supported,true);
+  assert.equal(rendered.total,336);
+  const last=rendered.glyphs.at(-1);
+  const ink={x:300+last.x,y:650+last.y};
+  assert.equal(hitTextAtLayout([item],ink,natural),null,
+    'old untracked hit stations miss a painted outer letter');
+  assert.equal(hitTextAtLayout([item],ink,tracked)?.id,'tracked',
+    'native tracked selection must hit what the compositor paints');
+  assert.equal(measuredTextBounds(item,value=>natural(item,value)).width,336,
+    'visual guide uses natural run + tracking once, not twice');
+  assert.equal(ctx.font,'initial');
+  assert.equal(ctx.letterSpacing,'0px');
+});
+test('selection metric stays native when letterSpacing is unsupported or absent',()=>{
+  const states=[];
+  const ctx={font:'baseline',save(){states.push(this.font);},
+    restore(){this.font=states.pop();},
+    measureText(text){return {width:text.length*11};}};
+  const item={letterSpacing:18};
+  assert.equal(measureCanvasText(ctx,'bold 30px test',item,'AB',{tracking:true}),22);
+  assert.equal(ctx.font,'baseline');
+  assert.equal(measureCanvasText(ctx,'bold 30px test',{},'AB',{tracking:true}),22);
 });
