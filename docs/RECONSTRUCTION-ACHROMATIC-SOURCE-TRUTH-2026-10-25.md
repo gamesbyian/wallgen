@@ -26,7 +26,7 @@ This checks **visible source colour**, not historical painter state. It adds no 
 
 Against **merged #726 original complete source/art acceptance ZIP** [#40247842572](https://github.com/gamesbyian/wallgen/actions/runs/40247842572), downloaded and compared actual archive members:
 
-- **198** common artifact files; **196 byte-identical**. Only the appropriate two evaluation JSON files differ because the neutral source has no false winner.
+- **198** common artifact files; **196 byte-identical**. Only `external-low-chroma/evaluation.json` and its generated `evaluation.html` viewer differ because the neutral source now has no false winner.
 - **143/143 comparable original-source and fitted PNGs byte-identical**. The neutral original source PNG is still identical; its previously fabricated *red* fitted preview remains in baseline archive but is **not produced** after correct refusal.
 - **All 22 native R0** original sources, best kinds and fit-error scores exactly unchanged.
 - **Four independent original polygon/star/circle/overlap** painter outcomes exactly unchanged.
