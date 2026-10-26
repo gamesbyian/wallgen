@@ -236,6 +236,47 @@ test('missing middle pigment slots never invent colour order from compact island
    'do not silently repurpose indigo/violet as an earlier semantic hue slot');
 });
 
+test('one and two directly representable first hues are editable without invented missing objects',()=>{
+ const source=kind=>raster(160,320,(x,y)=>{
+   if(x>=20&&x<73&&y>=40&&y<130)return colour(HUES[0]);
+   if(kind==='two'&&x>=88&&x<140&&y>=193&&y<282)return colour(HUES[1]);
+   return [0,0,0,255];
+ });
+ for(const [kind,count] of [['one',1],['two',2]]){
+   const src=source(kind);
+   const desc=describeReconstructionImage(src);
+   assert.equal(desc.incompleteColourRegions,true,'first slots meet existing compact-region confidence');
+   assert.equal(desc.colourRegions.length,count);
+   const choices=reconstructionCandidates(src,{seed:'source-first-contiguous-hues'});
+   const regions=choices.find(c=>c.kind==='regions');
+   assert.ok(regions,'first contiguous semantic colour slots can be kept editable');
+   if(count===2)assert.ok(choices.every(c=>c.kind!=='shape'),
+     'two observed pigments cannot be replaced with a one-red-shape proposal');
+   assert.equal(regions.recipe.scatteredCount,count);
+   assert.deepEqual(regions.recipe.scatteredOverrides.map(x=>x.index),
+     Array.from({length:count},(_,i)=>i));
+   assert.deepEqual(resolveScene(regions.recipe).objects.map(o=>o.colorIndex),
+     Array.from({length:count},(_,i)=>i));
+   assert.deepEqual(decodeRecipe(encodeRecipe(regions.recipe)),regions.recipe);
+ }
+});
+
+test('unrepresentable isolated blue or nonadjacent red-blue pigments refuse invented recolouring',()=>{
+ const image=kind=>raster(160,320,(x,y)=>{
+   if(kind==='two'&&x>=20&&x<73&&y>=40&&y<130)return colour(HUES[0]);
+   if(x>=88&&x<140&&y>=193&&y<282)return colour(HUES[4]);
+   return [0,0,0,255];
+ });
+ for(const kind of ['one','two']){
+   const src=image(kind),data=src.data.slice(),desc=describeReconstructionImage(src);
+   assert.deepEqual(desc.colourRegions.map(x=>x.index),
+     kind==='two'?[0,4]:[4]);
+   assert.equal(reconstructionCandidates(src,{seed:'unknown-original'}).length,0,
+     'canonical source palette cannot omit preceding pigment slots');
+   assert.deepEqual(src.data,data,'do not modify source pixels');
+ }
+});
+
 test('External opaque graphic provides a truthful editable path, not invented seven colours',()=>{
   const external=raster(160,160,(x,y)=>x>=30&&x<=130&&y>=45&&y<=116?
     [20,35,50,255]:[255,255,255,255]);
@@ -247,6 +288,10 @@ test('External opaque graphic provides a truthful editable path, not invented se
   assert.ok(candidates.some(c=>c.recipe.geometry==='drawn'));
   assert.ok(candidates.some(c=>c.kind==='shape'),
     'existing compound silhouette extraction is also available as canonical shape');
+  const geometryOnly=candidates.find(c=>c.kind==='shape');
+  assert.match(geometryOnly.label,/source pigment not inferred/);
+  assert.match(geometryOnly.uncertainty,/red rendered placeholder.*NOT recovered source colour/);
+
 });
 
 test('Candidate comparison obeys bounded real-render callback and ranks identical pixels first',()=>{

@@ -24,6 +24,12 @@ export const LOW_CHROMA_EXTERNAL_CASES=Object.freeze([
   {id:'neutral-seven-control',goal:'Seven grey neutral polygons, not rainbow source pixels'},
   {id:'partial-two-hues',goal:'Only red and blue polygons; no invented five missing pigments'}
 ]);
+export const SPARSE_HUE_EXTERNAL_CASES=Object.freeze([
+  {id:'one-red-polygon',goal:'One actually visible red polygon and no other pigment slots'},
+  {id:'contiguous-red-orange',goal:'Separate red and orange source polygons, the first two slots'},
+  {id:'isolated-blue-polygon',goal:'One observed blue source pigment without preceding hues'},
+  {id:'noncontiguous-red-blue',goal:'Red and blue source polygons with absent orange/yellow/green'}
+]);
 export function parseExternalPigmentArgs(argv){
   const opts={outDir:'artifacts/external-pigment-r0'};
   for(let i=0;i<argv.length;i++){
@@ -31,7 +37,7 @@ export function parseExternalPigmentArgs(argv){
       opts.outDir=argv[++i];continue;
     }
     if(argv[i]==='--collection'&&argv[i+1]&&
-      ['original','low-chroma'].includes(argv[i+1])){
+      ['original','low-chroma','sparse-hue'].includes(argv[i+1])){
       opts.collection=argv[++i];continue;
     }
     if(argv[i]==='--help'||argv[i]==='-h'){opts.help=true;continue;}
@@ -40,8 +46,9 @@ export function parseExternalPigmentArgs(argv){
   return opts;
 }
 export function externalPigmentManifest(collection='original'){
-  if(!['original','low-chroma'].includes(collection))throw Error('Unsupported external fixture collection');
-  const cases=collection==='low-chroma'?LOW_CHROMA_EXTERNAL_CASES:EXTERNAL_PIGMENT_CASES;
+  if(!['original','low-chroma','sparse-hue'].includes(collection))throw Error('Unsupported external fixture collection');
+  const cases=collection==='low-chroma'?LOW_CHROMA_EXTERNAL_CASES:
+    collection==='sparse-hue'?SPARSE_HUE_EXTERNAL_CASES:EXTERNAL_PIGMENT_CASES;
   return {schema:'roygbiv-reconstruction-external/v1',
     status:'independently-authored-pixels-not-artist-approved',
     source:'standalone-Canvas2D-polygons-not-ROYGBIV-recipes',
@@ -53,7 +60,8 @@ export function externalPigmentManifest(collection='original'){
 }
 async function generate(opts){
   const out=resolve(opts.outDir);
-  const cases=opts.collection==='low-chroma'?LOW_CHROMA_EXTERNAL_CASES:EXTERNAL_PIGMENT_CASES;
+  const cases=opts.collection==='low-chroma'?LOW_CHROMA_EXTERNAL_CASES:
+    opts.collection==='sparse-hue'?SPARSE_HUE_EXTERNAL_CASES:EXTERNAL_PIGMENT_CASES;
   await mkdir(out,{recursive:true});
   for(const name of ['manifest.json',...cases.map(c=>c.id+'.png')]){
     try{await access(join(out,name));throw Error('Evidence already exists: '+name);}
@@ -91,7 +99,17 @@ async function generate(opts){
         const circle=(x,y,r)=>{
           ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();
         };
-        if(['dim-seven-polygons','soft-seven-stars','neutral-seven-control',
+        if(['one-red-polygon','contiguous-red-orange','isolated-blue-polygon',
+            'noncontiguous-red-blue'].includes(id)){
+          const indices=id==='one-red-polygon'?[0]:
+            id==='contiguous-red-orange'?[0,1]:
+            id==='isolated-blue-polygon'?[4]:[0,4];
+          for(let i=0;i<indices.length;i++){
+            ctx.fillStyle=hues[indices[i]];
+            const {x,y}=centres[i];
+            polygon(x,y,74,4+i*2,-Math.PI/2+i*.2);
+          }
+        }else if(['dim-seven-polygons','soft-seven-stars','neutral-seven-control',
             'partial-two-hues'].includes(id)){
           const sourceHues=[0,29,52,136,212,244,278];
           for(let i=0;i<7;i++){
@@ -143,6 +161,6 @@ async function generate(opts){
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
   const opts=parseExternalPigmentArgs(process.argv.slice(2));
-  if(opts.help)console.log('node scripts/review-reconstruction-external-pigments.mjs [--out-dir DIRECTORY] [--collection original|low-chroma]');
+  if(opts.help)console.log('node scripts/review-reconstruction-external-pigments.mjs [--out-dir DIRECTORY] [--collection original|low-chroma|sparse-hue]');
   else generate(opts).catch(e=>{console.error(e);process.exitCode=1;});
 }

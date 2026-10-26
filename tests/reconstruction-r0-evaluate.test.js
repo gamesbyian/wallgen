@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readBaselineArgs,RECONSTRUCTION_R0_CASES} from '../scripts/review-reconstruction.mjs';
 import {readReconstructionEvalArgs,classifyReconstructionManifest} from '../scripts/evaluate-reconstruction-r0.mjs';
-import {parseExternalPigmentArgs,externalPigmentManifest,EXTERNAL_PIGMENT_CASES,LOW_CHROMA_EXTERNAL_CASES} from '../scripts/review-reconstruction-external-pigments.mjs';
+import {parseExternalPigmentArgs,externalPigmentManifest,EXTERNAL_PIGMENT_CASES,LOW_CHROMA_EXTERNAL_CASES,SPARSE_HUE_EXTERNAL_CASES} from '../scripts/review-reconstruction-external-pigments.mjs';
 
 test('focused R0 generation targets known source studies without resetting browser arg',()=>{
  const opts=readBaselineArgs(['--only','01-vertical-straight,11-scattered-circles',
@@ -119,4 +119,16 @@ test('new low-chroma independent sources are a separate truthless bounded collec
    'existing external-art set remains the default, exact semantic contract');
  assert.ok(manifest.items.every(item=>!Object.hasOwn(item,'seed')&&
    !Object.hasOwn(item,'recipeFile')));
+});
+
+test('source-truthless first-two and noncontiguous one/two hue artwork stays separate',()=>{
+ assert.equal(SPARSE_HUE_EXTERNAL_CASES.length,4);
+ assert.equal(new Set(SPARSE_HUE_EXTERNAL_CASES.map(x=>x.id)).size,4);
+ assert.deepEqual(parseExternalPigmentArgs(['--collection','sparse-hue']),
+   {outDir:'artifacts/external-pigment-r0',collection:'sparse-hue'});
+ const manifest=externalPigmentManifest('sparse-hue');
+ assert.equal(classifyReconstructionManifest(manifest).external,true);
+ assert.equal(manifest.items.length,4);
+ assert.ok(manifest.items.every(x=>!Object.hasOwn(x,'recipeFile')&&!Object.hasOwn(x,'seed')));
+ assert.deepEqual(externalPigmentManifest(),externalPigmentManifest('original'));
 });
