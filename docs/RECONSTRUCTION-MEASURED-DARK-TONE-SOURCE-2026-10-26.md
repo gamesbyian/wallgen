@@ -1,0 +1,38 @@
+# #557 · Genuine source-measured dark pigment reconstruction, not fabricated bright colour
+
+**26 October 2026 (Calgary), Agent 1.** Depends on [PR #749](https://github.com/gamesbyian/wallgen/pull/749), the separately optically qualified canonical creator Tone controls. This is a source-dependent **automatic inverse** experiment, distinct from the #749 creative slider capability.
+
+## Reproduced source-artist problem
+
+The independent four-case `low-chroma` source collection from `scripts/review-reconstruction-external-pigments.mjs` is authored **outside ROYGBIV** using Canvas2D, no embedded metadata recipe, original ROYGBIV seed or inferred source painter. `dim-seven-polygons` uses seven visibly distinct semantic ROYGBIV hues at **HSL 88% saturation / 13% lightness**, on black. Old 11 fixed colour stories could not paint them; historic browser source/fit instead generated a nearly black canvas with a tiny **bright rainbow outline** (RGB fit error **0.04562505891779456**). Merged #746 truthfully refused automatic recreation. It had no editably valid source-faithful colour hypothesis.
+
+PR #749 first adds opt-in independent scene-colour Tone that can paint real 88% / 13% colours while preserving all existing art by default. This dependent experiment enables source-fitted Tone **only with independently measured source evidence**.
+
+## One existing mask extractor and one canonical painter
+
+`src/image-reconstruction.js` exports `measuredSourceDarkTone(description)`:
+- Reuses the pre-existing `plainlyUnsupportedDarkPigments` strict-source witness. Requires seven substantial **correctly classified first-seven original hue masks**, source backdrop black, adequate coloured coverage, real dark high RGB values 55..86 and >=45 channel colour separation. No new classifier or flexible threshold in `image-path.js`.
+- Reads the seven pre-existing `meanRGB` values from that original shared extractor, converts their observed appearance to HSL without a second segmentation pass and proposes a **single** canonical saturation and lightness. All seven must independently agree within **±9 saturation points and ±4 lightness points** of the median. No claim of original palette name, seed, artist's image settings, material or hidden layer order.
+- If creator locks would prevent committing the proposed enabled Tone/saturation/lightness, **refuse**, not a dishonest preview. Other source locks, before-source neutralization and stale reversal/object-layer protections still project through existing `respectSettingLocks`.
+- The prior observed seven-per-hue visible silhouette proposal receives the same canonical Tone, preserving separate indexed editable polygon shapes, source provenance/locks and the **existing at most six initial + ten refinement real renderer paint attempts**.
+- Existing low-chroma **soft stars, neutral gray, partial and compact gapped** source refusals remain intact; ordinary native R0 seven-colour objects keep their existing painters and palettes.
+- Source RGBA never modified; recipes serialize only inferred colour control values and edited vector geometry, not masks or imported source bitmap.
+
+## Independent genuine production Chromium qualification
+
+[Optical run #40385956822](https://github.com/gamesbyian/wallgen/actions/runs/40385956822) **SUCCESS** on exactly the PR's dark-source fitter, with 22 freshly generated actual canonical-renderer original R0 PNGs, four external pigment art sources, four low-chroma, four sparse and four gapped sources (38 total). Downloaded original source, selected actual painter fit, alternative opt-in visible-shape output and actual structured evaluation report; **directly viewed** both source and fitted dark artwork.
+
+**Dark source original true current-painter difference:** the new winning `hue-visible-shapes` proposal reconstructs seven individually editable dark-colour source polygons, **0.022783217854453055**. The earlier measured false-bright-outline fit error was **0.04562505891779456**, a **50.06% lower error** against that older baseline. Note that **immediately before this PR, merged #746 refused the dark source entirely**; the previous score is historical photographic comparison, not an active previous fitter winner.
+
+**Controls:** all **22/22 genuine native R0 source images** preserve prior winning candidate kind and numeric fit error exactly, including #05 Hairpin .03053935, #06 Loop .03725952, #16 displaced Jagged .01330855 and #22 overlapped reversed circles .00467572. The four independent noncircular/circular/mixed-occlusion controls and all four gapped samples retain their expected candidate choices. The other three low-chroma sources remain **zero automatic candidates**. Seven-colour source polygons retain their measured hues; locks and normal six+ten budgets guarded by targeted Node tests and the optical evaluator.
+
+Against the older full #726 optical artifact archive [#40247842572](https://github.com/gamesbyian/wallgen/actions/runs/40247842572), **140 / 142 shared PNGs have byte-identical decoded actual RGBA pixels**. The two changed visible PNGs are the intended dark-colour fitted preview and the unrelated, previously qualified red/orange contiguous-shape improvement merged in #737. Many raw PNG **files** change because current embedded canonical recipe metadata evolved; don't confuse metadata bytes with changed painted pixels. Original independent low-chroma/source PNG pixels are unchanged. Compare candidate kinds and scores of merged source controls, not those archives' historical PR state. [Actual source and new fitted optical artifact #12681945138](https://github.com/gamesbyian/wallgen/actions/runs/40385956822/artifacts/12681945138).
+
+[Quick CI #40385956782](https://github.com/gamesbyian/wallgen/actions/runs/40385956782) **SUCCESS** including targeted seven-hue dark, per-pigment/portability, source-immutability, locked-Tone false-colour refusal and heldout pastel/mixed controls. The one-shot costly PR-triggered optical test was **removed** in the final branch; underlying source/fit and archived manual workflow remain accessible solely by opt-in.
+
+## Acceptance boundary and release handoff
+
+- Source-verified seven **dark** semantic hues can now be represented using actual canonical colour, editable polygon shapes, normal persistence and Undo model. This is not arbitrary dark photography, scanned wallpaper, partial/missing hues, or a full unrestricted palette inference. No unseen pigment ordering or source artist intent is recoverable from RGB alone.
+- Experimental source-HSL appears consistent in one independently authored dark source, not yet broad non-renderer artwork. Do not extrapolate to soft seven-stars: that input still fails the strict source hue classifier and returns no automatic candidate. Avoid relaxing arbitrary masks or adding expensive general per-pixel inference without independent production proof.
+- Retain no source RGBA inside a recipe, no extra painter stage, no alternate renderer. #749 has independent **19.8MP full-resolution reference/worker exact PNG and on-screen mobile UI proof**. This dependent #762's source-fitted, low-res geometry is tested optically; independent 19.8MP fitted-recipe export is not claimed separately. No actual Pixel 6 Pro, Android IME, TalkBack, human artist approval or sustained thermal/heap test.
+- **Merge/reconcile #749 first, then #762**, with Agent 3 #664's independent integration review and qualified current-main software regression. Agent 2 #653 typography untouched. Keep #557 OPEN for unresolved soft source representability, occluded pigment ordering/shape recovery, Hairpin/Loop black-channel precision, physical owner/handset acceptance.
