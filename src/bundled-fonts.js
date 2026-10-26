@@ -1,4 +1,5 @@
 import {rememberFontCoverage} from './font-glyph-coverage.js';
+import {textOverlayPaintsInk} from './text-overlays.js';
 // 27 visually distinct OFL faces, vendored from one pinned Google Fonts
 // commit with a verbatim license per family. Loaded only when a recipe needs
 // the face; worker and document independently check the same SHA-256 bytes.
@@ -56,11 +57,11 @@ async function manifest(){
   return manifestPromise;
 }
 export function bundledFontsReady(recipe){
-  return (recipe?.textOverlays||[]).filter(x=>x.enabled!==false&&x.text&&isBundledFontId(x.font))
+  return (recipe?.textOverlays||[]).filter(x=>textOverlayPaintsInk(x)&&isBundledFontId(x.font))
     .every(x=>ready.has(x.font));
 }
 export async function prepareBundledFonts(recipe){
-  const ids=[...new Set((recipe?.textOverlays||[]).filter(x=>x.enabled!==false&&x.text)
+  const ids=[...new Set((recipe?.textOverlays||[]).filter(textOverlayPaintsInk)
     .map(x=>x.font).filter(isBundledFontId))];
   for(const id of ids){
     if(ready.has(id))continue;
