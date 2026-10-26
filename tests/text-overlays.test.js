@@ -161,3 +161,30 @@ test('Text textarea leaves UTF-16 room for complete joined emoji before canonica
     'complete joined emoji cannot squeeze into the remaining two codepoints');
   assert.equal(normalizeTextOverlays([{text:raw}])[0].text,'A'.repeat(158));
 });
+
+test('without Intl.Segmenter, 160-codepoint bound never saves half an accent, flag or joined emoji',()=>{
+  const original=Object.getOwnPropertyDescriptor(Intl,'Segmenter');
+  try{
+    Object.defineProperty(Intl,'Segmenter',{value:undefined,
+      configurable:true,writable:true});
+    const base='A'.repeat(159);
+    assert.equal(boundTextContent(base+'e\u0301'),base,
+      'reject both base and combining mark when only one scalar remains');
+    assert.equal(boundTextContent('A'.repeat(158)+'🇨🇦'),'A'.repeat(158)+'🇨🇦');
+    assert.equal(boundTextContent(base+'🇨🇦'),base);
+    assert.equal(boundTextContent('A'.repeat(157)+'👩‍🚀'),
+      'A'.repeat(157)+'👩‍🚀','full joined cluster exactly fits 160 codepoints');
+    assert.equal(boundTextContent('A'.repeat(158)+'👩‍🚀'),'A'.repeat(158),
+      'never save a half-joined emoji just to reach 160');
+    assert.equal(boundTextContent('A'.repeat(157)+'🧑🏽‍💻'),'A'.repeat(157));
+    const scene=normalizeRecipe({textOverlays:[{
+      id:'safe',text:'A'.repeat(158)+'👩‍🚀'
+    }]});
+    assert.equal(scene.textOverlays[0].text,'A'.repeat(158));
+    assert.deepEqual(normalizeRecipe(JSON.parse(JSON.stringify(scene))),scene);
+    assert.equal(boundTextContent('B'.repeat(160)),'B'.repeat(160));
+  }finally{
+    if(original)Object.defineProperty(Intl,'Segmenter',original);
+    else delete Intl.Segmenter;
+  }
+});
