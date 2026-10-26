@@ -1,9 +1,35 @@
 // Pure colour segmentation for type that remains painted as one fully
 // shaped line. Splitting a line into separate fillText(glyph) calls destroys
 // Arabic joining, kerning, ligatures and some complex-script positioning.
+// Conservative, lazy fallback when a browser has no Intl.Segmenter. It is
+// deliberately not a complete UAX #29 implementation. Joining marks, emoji
+// modifiers, variation selectors, ZWJ sequences and regional-indicator pairs
+// must never be split across saved-text limits or rainbow colour boundaries.
+// Remaining complex-language shaping stays native/straight in canCurveText.
+const trailingGraphemePart=/[\p{Mark}\p{Emoji_Modifier}]/u;
+const regionalIndicator=/\p{Regional_Indicator}/u;
+const emojiTag=/[\u{e0020}-\u{e007f}]/u;
+export function* fallbackTextGraphemes(value){
+  let cluster='',regionalCount=0;
+  for(const char of value){
+    const regional=regionalIndicator.test(char);
+    const join=cluster&&(trailingGraphemePart.test(char)||
+      emojiTag.test(char)||char==='\u200d'||cluster.endsWith('\u200d')||
+      (regional&&regionalCount===1));
+    if(join){
+      cluster+=char;
+      if(regional)regionalCount++;
+    }else{
+      if(cluster)yield cluster;
+      cluster=char;
+      regionalCount=regional?1:0;
+    }
+  }
+  if(cluster)yield cluster;
+}
 export const textGraphemes=value=>typeof Intl!=='undefined'&&typeof Intl.Segmenter==='function'?
   Array.from(new Intl.Segmenter(undefined,{granularity:'grapheme'}).segment(value),p=>p.segment):
-  Array.from(value);
+  Array.from(fallbackTextGraphemes(value));
 // Only unambiguous Arabic/Hebrew-only strong-letter runs can have their
 // horizontal colour ordering reversed without a full Unicode Bidi resolver.
 // Numbers and other scripts can reorder independently, so preserve the
