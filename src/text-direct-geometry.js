@@ -1,5 +1,5 @@
 import {DESIGN_WIDTH,DESIGN_HEIGHT} from './model.js';
-import {textGraphemes} from './text-rainbow-shaping.js';
+import {textGraphemes,hasVisibleTextInk} from './text-rainbow-shaping.js';
 import {textInkSelectionReach} from './text-overlays.js';
 
 // Text overlay coordinates refer to the finished wallpaper, independent of
@@ -73,7 +73,9 @@ export function hitTextOverlay(items,point,measureFor,{tolerance=0}={}){
   // Reverse canonical array order: later text is rendered on top.
   for(let i=(items?.length||0)-1;i>=0;i--){
     const item=items[i];
-    if(!item?.enabled||!item.text)continue;
+    // Zero-alpha overlays cannot intercept visible ink beneath them. They
+    // remain editable through the Text object picker.
+    if(!item?.enabled||item.opacity===0||!hasVisibleTextInk(item.text))continue;
     const dx=point.x-DESIGN_WIDTH*item.x/100;
     const dy=point.y-DESIGN_HEIGHT*item.y/100;
     const theta=item.rotation*Math.PI/180;
