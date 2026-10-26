@@ -1,6 +1,6 @@
 # R.O.Y.G.B.I.V.
 
-**For autonomous contributors:** Start with [the current agent handoff](docs/AGENT-HANDOFF-2026-10-22.md) and [the lean CI policy](docs/CI-OPERATIONS-2026-10-22.md). The dated sections below document earlier releases; the handoff is the current implementation/priority authority.
+**Current product and agent orientation (26 October 2026):** [Owner product specification](docs/PRODUCT-CONTRACT-2026-10-26.md) → [single current work queue](docs/CURRENT-WORK-QUEUE-2026-10-24.md) → [agent protocol](AGENTS.md). [Lean CI policy](docs/CI-OPERATIONS-2026-10-22.md) governs verification. The long dated sections below preserve historical implementation evidence, **not** today's open PR/issue state. At the last documented audit, only #557 reconstruction and #653 typography remained open; #664 software integration is closed. Refresh live GitHub before treating that as current.
 
 
 ## What's shipped, what's planned (October 22, 2026)
