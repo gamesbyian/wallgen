@@ -1,15 +1,6 @@
 name: R0 source-visible hue shape oracle
 # Source/fit screenshots and full-resolution export remain manually opt-in.
 on:
-  # One-shot genuine optical qualification for the sparse-hue routing change.
-  # Remove PR trigger again before a qualified merge.
-  pull_request:
-    paths:
-      - 'src/image-reconstruction.js'
-      - 'tests/image-reconstruction.test.js'
-      - 'scripts/review-reconstruction-external-pigments.mjs'
-      - 'tests/reconstruction-r0-evaluate.test.js'
-      - '.github/workflows/reconstruction-hue-shapes-experiment.yml'
   workflow_dispatch:
     inputs:
       include_sparse_hue:
@@ -53,13 +44,13 @@ jobs:
           npm install --no-save playwright@1.56.1
           npx playwright install --with-deps chromium
       - name: Generate four independent non-ROYGBIV Canvas source images
-        if: ${{ github.event_name == 'pull_request' || inputs.include_external_pigments }}
+        if: ${{ inputs.include_external_pigments }}
         run: node scripts/review-reconstruction-external-pigments.mjs --out-dir artifacts/external-pigment-r0
       - name: Reconstruct independent metadata-free art with ordinary six-plus-ten painter
-        if: ${{ github.event_name == 'pull_request' || inputs.include_external_pigments }}
+        if: ${{ inputs.include_external_pigments }}
         run: node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/external-pigment-r0 --hue-visible-shapes --source-signature
       - name: Report independent artwork and separate existing shape proposal errors
-        if: ${{ github.event_name == 'pull_request' || inputs.include_external_pigments }}
+        if: ${{ inputs.include_external_pigments }}
         run: |
           node --input-type=module -e '
             import {readFileSync} from "node:fs";
@@ -75,13 +66,13 @@ jobs:
                 candidateCount:s.candidateCount,sourceSignature:s.sourceSignature??null}));
           '
       - name: Author four independent low-chroma/neutral external source images
-        if: ${{ github.event_name == 'pull_request' || inputs.include_low_chroma }}
+        if: ${{ inputs.include_low_chroma }}
         run: node scripts/review-reconstruction-external-pigments.mjs --collection low-chroma --out-dir artifacts/external-low-chroma
       - name: Score low-chroma source-only input through real canonical six-plus-ten painter
-        if: ${{ github.event_name == 'pull_request' || inputs.include_low_chroma }}
+        if: ${{ inputs.include_low_chroma }}
         run: node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/external-low-chroma --source-signature --hue-visible-shapes
       - name: Report source pigment confidence and refusal without inferred original recipe
-        if: ${{ github.event_name == 'pull_request' || inputs.include_low_chroma }}
+        if: ${{ inputs.include_low_chroma }}
         run: |
           node --input-type=module -e '
             import {readFileSync} from "node:fs";
@@ -97,13 +88,13 @@ jobs:
                 candidateCount:s.candidateCount}));
           '
       - name: Author four independent first-hue/sparse-hue source images
-        if: ${{ github.event_name == 'pull_request' || inputs.include_sparse_hue }}
+        if: ${{ inputs.include_sparse_hue }}
         run: node scripts/review-reconstruction-external-pigments.mjs --collection sparse-hue --out-dir artifacts/external-sparse-hue
       - name: Fit four sparse-hue original images with real canonical renderer
-        if: ${{ github.event_name == 'pull_request' || inputs.include_sparse_hue }}
+        if: ${{ inputs.include_sparse_hue }}
         run: node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/external-sparse-hue --source-signature
       - name: Qualify first two semantic colour slots and refuse unsupported gaps
-        if: ${{ github.event_name == 'pull_request' || inputs.include_sparse_hue }}
+        if: ${{ inputs.include_sparse_hue }}
         run: |
           node --input-type=module -e '
             import {readFileSync} from "node:fs";
@@ -128,15 +119,15 @@ jobs:
               originalHueRegions:s.sourceSignature?.regionCount}));
           '
       - name: Generate all 22 genuine metadata-free current-renderer R0 images
-        if: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' }}
+        if: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
           node scripts/review-reconstruction.mjs             --out-dir artifacts/r0-hue-shapes             
       - name: Evaluate all 22 normal six-plus-ten candidate selections plus opt-in per-hue proof
-        if: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' }}
+        if: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
           node scripts/evaluate-reconstruction-r0.mjs             --dir artifacts/r0-hue-shapes --hue-visible-shapes
       - name: Print source-backed candidate outcomes, with no hidden score sidecar
-        if: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' }}
+        if: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
           node --input-type=module -e '
             import {readFileSync} from "node:fs";
@@ -152,7 +143,7 @@ jobs:
               }));
           '
       - name: Verify exact source-first wins and known no-regression controls
-        if: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' }}
+        if: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
           node --input-type=module -e '
             import {readFileSync} from "node:fs";
@@ -189,7 +180,7 @@ jobs:
             }));
           '
       - name: High-resolution portable Hairpin/Loop source-shape exports, where representable
-        if: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' }}
+        if: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
           set -euo pipefail
           for case_id in 05-hairpin 06-loop 16-offset-jagged; do
