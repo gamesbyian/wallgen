@@ -1,5 +1,5 @@
 import {rememberFontCoverage} from './font-glyph-coverage.js';
-import {textOverlayPaintsInk} from './text-overlays.js';
+import {textOverlayPaintsInk} from './text-rainbow-shaping.js';
 // Private user-supplied TTF/OTF storage. Fonts are never sent to a server
 // and are not embedded into PNG/JSON/share URLs. SHA-256 identifiers are the
 // only information preserved in ordinary canonical recipes.
