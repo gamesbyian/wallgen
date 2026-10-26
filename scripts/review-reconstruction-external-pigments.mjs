@@ -30,6 +30,15 @@ export const SPARSE_HUE_EXTERNAL_CASES=Object.freeze([
   {id:'isolated-blue-polygon',goal:'One observed blue source pigment without preceding hues'},
   {id:'noncontiguous-red-blue',goal:'Red and blue source polygons with absent orange/yellow/green'}
 ]);
+// Distinct external sources to test missing middle semantic colours with
+// three/five compact pigment islands, alongside genuinely representable
+// contiguous controls. No canonical source recipe or per-slot art truth.
+export const GAPPED_HUE_EXTERNAL_CASES=Object.freeze([
+  {id:'gapped-red-green-blue',goal:'Three compact source polygons, semantic slots [0,3,4]'},
+  {id:'gapped-five-colours',goal:'Five compact source polygons, semantic slots [0,1,3,4,6]'},
+  {id:'leading-three-control',goal:'Three compact first hues [0,1,2]'},
+  {id:'leading-five-control',goal:'Five compact first hues [0,1,2,3,4]'}
+]);
 export function parseExternalPigmentArgs(argv){
   const opts={outDir:'artifacts/external-pigment-r0'};
   for(let i=0;i<argv.length;i++){
@@ -37,7 +46,7 @@ export function parseExternalPigmentArgs(argv){
       opts.outDir=argv[++i];continue;
     }
     if(argv[i]==='--collection'&&argv[i+1]&&
-      ['original','low-chroma','sparse-hue'].includes(argv[i+1])){
+      ['original','low-chroma','sparse-hue','gapped-hue'].includes(argv[i+1])){
       opts.collection=argv[++i];continue;
     }
     if(argv[i]==='--help'||argv[i]==='-h'){opts.help=true;continue;}
@@ -46,9 +55,10 @@ export function parseExternalPigmentArgs(argv){
   return opts;
 }
 export function externalPigmentManifest(collection='original'){
-  if(!['original','low-chroma','sparse-hue'].includes(collection))throw Error('Unsupported external fixture collection');
+  if(!['original','low-chroma','sparse-hue','gapped-hue'].includes(collection))throw Error('Unsupported external fixture collection');
   const cases=collection==='low-chroma'?LOW_CHROMA_EXTERNAL_CASES:
-    collection==='sparse-hue'?SPARSE_HUE_EXTERNAL_CASES:EXTERNAL_PIGMENT_CASES;
+    collection==='sparse-hue'?SPARSE_HUE_EXTERNAL_CASES:
+    collection==='gapped-hue'?GAPPED_HUE_EXTERNAL_CASES:EXTERNAL_PIGMENT_CASES;
   return {schema:'roygbiv-reconstruction-external/v1',
     status:'independently-authored-pixels-not-artist-approved',
     source:'standalone-Canvas2D-polygons-not-ROYGBIV-recipes',
@@ -61,7 +71,8 @@ export function externalPigmentManifest(collection='original'){
 async function generate(opts){
   const out=resolve(opts.outDir);
   const cases=opts.collection==='low-chroma'?LOW_CHROMA_EXTERNAL_CASES:
-    opts.collection==='sparse-hue'?SPARSE_HUE_EXTERNAL_CASES:EXTERNAL_PIGMENT_CASES;
+    opts.collection==='sparse-hue'?SPARSE_HUE_EXTERNAL_CASES:
+    opts.collection==='gapped-hue'?GAPPED_HUE_EXTERNAL_CASES:EXTERNAL_PIGMENT_CASES;
   await mkdir(out,{recursive:true});
   for(const name of ['manifest.json',...cases.map(c=>c.id+'.png')]){
     try{await access(join(out,name));throw Error('Evidence already exists: '+name);}
@@ -99,7 +110,17 @@ async function generate(opts){
         const circle=(x,y,r)=>{
           ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();
         };
-        if(['one-red-polygon','contiguous-red-orange','isolated-blue-polygon',
+        if(['gapped-red-green-blue','gapped-five-colours',
+            'leading-three-control','leading-five-control'].includes(id)){
+          const slots=id==='gapped-red-green-blue'?[0,3,4]:
+            id==='gapped-five-colours'?[0,1,3,4,6]:
+            id==='leading-three-control'?[0,1,2]:[0,1,2,3,4];
+          for(let i=0;i<slots.length;i++){
+            ctx.fillStyle=hues[slots[i]];
+            const {x,y}=centres[i];
+            polygon(x,y,72,4+(i%3),-Math.PI/2+i*.17);
+          }
+        }else if(['one-red-polygon','contiguous-red-orange','isolated-blue-polygon',
             'noncontiguous-red-blue'].includes(id)){
           const indices=id==='one-red-polygon'?[0]:
             id==='contiguous-red-orange'?[0,1]:
@@ -161,6 +182,6 @@ async function generate(opts){
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
   const opts=parseExternalPigmentArgs(process.argv.slice(2));
-  if(opts.help)console.log('node scripts/review-reconstruction-external-pigments.mjs [--out-dir DIRECTORY] [--collection original|low-chroma|sparse-hue]');
+  if(opts.help)console.log('node scripts/review-reconstruction-external-pigments.mjs [--out-dir DIRECTORY] [--collection original|low-chroma|sparse-hue|gapped-hue]');
   else generate(opts).catch(e=>{console.error(e);process.exitCode=1;});
 }
