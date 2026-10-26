@@ -296,3 +296,35 @@ test('shared pigment descriptor refuses spoofed sparse hues and incorrect masks'
     i===0?new Uint8Array(8):m)}),null);
   assert.equal(propose({...good,background:'unknown'}),null);
 });
+
+
+test('seven observed pigment shapes ignore unrelated source-editor palette reversal and layering',()=>{
+  const source=sevenShapes(),bytes=source.data.slice();
+  const clean=observedHueShapeRecipe(source,placement,{seed:'independent-source'});
+  assert.ok(clean);
+  const previous=normalizeRecipe({
+    seed:'independent-source',reverseStripes:true,
+    scatteredLayerOrder:[6,5,4,3,2,1,0],
+    scatteredShapeOverrides:[{index:0,shape:clean.recipe.scatteredShapeOverrides[1].shape}]
+  });
+  const inferred=observedHueShapeRecipe(source,placement,previous);
+  assert.ok(inferred,'unlocked unrelated source-editor state is not image evidence');
+  assert.deepEqual(inferred.recipe,clean.recipe,
+    'source-observed shapes, pigment order and geometry must be independent of stale edits');
+  assert.equal(resolveScene(inferred.recipe).stripes[0].name,'Red');
+  assert.deepEqual(resolveScene(inferred.recipe).objects.map(o=>o.colorIndex),
+    [0,1,2,3,4,5,6]);
+  assert.deepEqual(decodeRecipe(encodeRecipe(inferred.recipe)),inferred.recipe);
+  const normal=reconstructionCandidates(source,previous);
+  assert.ok(normal.length<=RECONSTRUCTION_RENDER_LIMIT);
+  assert.equal(normal.find(c=>c.kind==='hue-visible-shapes')?.recipe.reverseStripes,false);
+  const protectedSource=normalizeRecipe({
+    seed:'independent-source',reverseStripes:true,
+    lockedSettings:['reverseStripes']
+  });
+  assert.equal(observedHueShapeRecipe(source,placement,protectedSource),null,
+    'a protected rainbow reversal must not generate a false per-hue source preview');
+  assert.ok(!reconstructionCandidates(source,protectedSource)
+    .some(c=>c.kind==='hue-visible-shapes'));
+  assert.deepEqual(source.data,bytes,'the original imported pixels are never changed');
+});
