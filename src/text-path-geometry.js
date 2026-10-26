@@ -4,7 +4,7 @@
 import {pathPosition} from './path-geometry.js';
 import {prepareDrawnPath,pointOnDrawnPath} from './drawn-path.js';
 import {textGraphemes,hasVisibleTextInk} from './text-rainbow-shaping.js';
-import {textInkSelectionReach} from './text-overlays.js';
+import {textInkSelectionReach,textOverlayPaintsInk} from './text-overlays.js';
 import {availableTextWidth} from './text-direct-geometry.js';
 import {DESIGN_WIDTH,DESIGN_HEIGHT} from './model.js';
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
@@ -173,8 +173,7 @@ export function hitTextAtLayout(items,point,measureFor,{tolerance=0,customPath}=
     const item=items[i];
     // Pick painted ink, not a fully transparent object or a run of
     // invisible format controls. Both remain editable via the object list.
-    if(!item?.enabled||item.opacity===0||!hasVisibleTextInk(item.text)||
-      !Number.isFinite(item.size))continue;
+    if(!textOverlayPaintsInk(item)||!Number.isFinite(item.size))continue;
     const angle=(item.rotation||0)*Math.PI/180;
     const px=point.x-DESIGN_WIDTH*item.x/100,
       py=point.y-DESIGN_HEIGHT*item.y/100;
