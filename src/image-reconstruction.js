@@ -660,8 +660,15 @@ export function measuredSourceDarkTone(description){
 }
 
 /** Return a few independently editable canonical alternatives. */
-export function reconstructionCandidates(image,recipe){
+export function reconstructionCandidates(image,recipe,{onDescription}={}){
   const desc=describeReconstructionImage(image,{includeColourMasks:true});
+  // The editor also needs the background/slot evidence for its refusal and
+  // reference preview. Hand off only the diagnostic scalars and geometry:
+  // never retain seven full source mask buffers while 6+10 paints are scored.
+  if(typeof onDescription==='function'){
+    const {sourceHueMasks,...diagnostic}=desc;
+    onDescription(diagnostic);
+  }
   const current=normalizeRecipe(recipe);
   // A source visibly full of neutral grey ink is not a recolourable rainbow
   // unless its actual source hue evidence says so. This deliberately returns
