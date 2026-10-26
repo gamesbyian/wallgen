@@ -167,7 +167,7 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle,onShape,
   function hideRecipeUnavailable(){
     recipeUnavailable.hidden=true;recipeUnavailable.textContent='';
   }
-  async function recoverRecipes(pixels,revision){
+  async function recoverRecipes(pixels,revision,sourcePathCandidates){
     reconstructed=[];recipeChooser.replaceChildren();recipeWorkspace.hidden=true;
     hideRecipeUnavailable();
     recipeWhy.disabled=true;
@@ -178,7 +178,8 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle,onShape,
     // contour/radial/shape discovery for the refusal and fit preview.
     let desc;
     const candidates=reconstructionCandidates(pixels,getRecipe(),{
-      onDescription:analysis=>{desc=analysis;}
+      onDescription:analysis=>{desc=analysis;},
+      sourcePathCandidates
     });
     if(!candidates.length){
       showRecipeUnavailable(describeReconstructionRefusal(desc,pixels));
@@ -296,7 +297,7 @@ export function installImagePathTool({getRecipe,onNotice,onPath,onAngle,onShape,
       selected=0;working=false;choose(0);
       // Recipe fitting is optional: original path/silhouette extraction
       // stays usable if a renderer or unsupported image defeats fitting.
-      try{await recoverRecipes(pixels,revision);}catch(error){
+      try{await recoverRecipes(pixels,revision,extracted);}catch(error){
         if(revision!==loadRevision||!dialog.open)return;
         showRecipeUnavailable('Editable recipe fitting unavailable: '+
           (error?.message||'unknown error')+
