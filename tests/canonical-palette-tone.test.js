@@ -79,7 +79,7 @@ test('editor exposes one separate compact Tone tool backed by canonical source i
   const page=readFileSync(new URL('../index.html',import.meta.url),'utf8');
   const app=readFileSync(new URL('../src/app.js',import.meta.url),'utf8');
   const colour=EDITOR_CATEGORIES.find(x=>x.id==='colour');
-  const tone=colour.tools.filter(t=>t.id==='tone');
+  const tone=colour.tools.filter(t=>t.id==='palette-tone');
   assert.equal(tone.length,1);
   assert.deepEqual(tone[0].settings,
     ['paletteToneEnabled','paletteSaturation','paletteLightness']);
