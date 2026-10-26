@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readBaselineArgs,RECONSTRUCTION_R0_CASES} from '../scripts/review-reconstruction.mjs';
 import {readReconstructionEvalArgs,classifyReconstructionManifest} from '../scripts/evaluate-reconstruction-r0.mjs';
-import {parseExternalPigmentArgs,externalPigmentManifest,EXTERNAL_PIGMENT_CASES,LOW_CHROMA_EXTERNAL_CASES,SPARSE_HUE_EXTERNAL_CASES} from '../scripts/review-reconstruction-external-pigments.mjs';
+import {parseExternalPigmentArgs,externalPigmentManifest,EXTERNAL_PIGMENT_CASES,LOW_CHROMA_EXTERNAL_CASES,SPARSE_HUE_EXTERNAL_CASES,GAPPED_HUE_EXTERNAL_CASES} from '../scripts/review-reconstruction-external-pigments.mjs';
 
 test('focused R0 generation targets known source studies without resetting browser arg',()=>{
  const opts=readBaselineArgs(['--only','01-vertical-straight,11-scattered-circles',
@@ -131,4 +131,20 @@ test('source-truthless first-two and noncontiguous one/two hue artwork stays sep
  assert.equal(manifest.items.length,4);
  assert.ok(manifest.items.every(x=>!Object.hasOwn(x,'recipeFile')&&!Object.hasOwn(x,'seed')));
  assert.deepEqual(externalPigmentManifest(),externalPigmentManifest('original'));
+});
+
+
+test('gapped versus contiguous external artwork is independently sourced, not a secret original recipe',()=>{
+  const m=externalPigmentManifest('gapped-hue');
+  assert.equal(GAPPED_HUE_EXTERNAL_CASES.length,4);
+  assert.equal(classifyReconstructionManifest(m).external,true);
+  assert.equal(m.items.length,4);
+  assert.ok(m.items.every(x=>!Object.hasOwn(x,'recipeFile')&&!Object.hasOwn(x,'seed')));
+  assert.deepEqual(parseExternalPigmentArgs(['--collection','gapped-hue',
+    '--out-dir','artifacts/gapped-hue']),{
+      collection:'gapped-hue',outDir:'artifacts/gapped-hue'
+    });
+  assert.deepEqual(m.items.map(x=>x.id),[
+    'gapped-red-green-blue','gapped-five-colours',
+    'leading-three-control','leading-five-control']);
 });
