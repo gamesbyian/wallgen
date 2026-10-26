@@ -52,3 +52,22 @@ test('asset manifest contains exact pinned-license source and all referenced bin
     assert.ok(existsSync(new URL('../assets/fonts/'+entry.license,import.meta.url)));
   }
 });
+
+test('hidden font overlays cannot block previews or cause redundant font downloads',async()=>{
+  const hidden=normalizeRecipe({textOverlays:[
+    {text:'NO INK',font:'pack-bangers',opacity:0},
+    {text:'\u200b\u2060',font:'pack-pacifico',opacity:1},
+    {text:'DISABLED',font:'pack-righteous',enabled:false}
+  ]});
+  assert.equal(bundledFontsReady(hidden),true);
+  assert.equal(typefacesReady(hidden),true);
+  assert.equal(recipeHasCustomTypefaces(hidden),false);
+  const {prepareTypefaces}=await import('../src/typography-fonts.js');
+  await prepareTypefaces(hidden);
+  const visible=normalizeRecipe({textOverlays:[
+    {text:'VISIBLE',font:'pack-bangers',opacity:.01}
+  ]});
+  assert.equal(bundledFontsReady(visible),false);
+  assert.equal(typefacesReady(visible),false);
+  assert.equal(recipeHasCustomTypefaces(visible),true);
+});
