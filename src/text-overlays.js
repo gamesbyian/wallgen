@@ -10,7 +10,7 @@ export const TEXT_FONTS=Object.freeze({
 });
 import {isLocalFontId} from './local-fonts.js';
 import {isBundledFontId} from './bundled-fonts.js';
-import {fallbackTextGraphemes} from './text-rainbow-shaping.js';
+import {fallbackTextGraphemes,hasVisibleTextInk} from './text-rainbow-shaping.js';
 export const TEXT_COLOURS=Object.freeze([
   'black','white','rainbow-letter','rainbow-word','rainbow-gradient'
 ]);
@@ -29,6 +29,11 @@ export function textInkSelectionReach(item){
 export const TEXT_PATHS=Object.freeze(['none','wave','arc','circle','hairpin','loop','drawn']);
 export const TEXT_SHADOWS=Object.freeze(['none','black','white']);
 export const MAX_TEXT_OVERLAYS=8;
+// Paint and font readiness share this visibility contract. Invisible objects
+// remain saved and selectable in the Text panel, including their private font
+// identities for optional portable packaging, but contribute no canvas ink.
+export const textOverlayPaintsInk=item=>
+  item?.enabled!==false&&item?.opacity!==0&&hasVisibleTextInk(item?.text);
 const num=(value,fallback,min,max)=>{
   const n=Number(value);
   const valid=Number.isFinite(n)?Math.max(min,Math.min(max,n)):fallback;
