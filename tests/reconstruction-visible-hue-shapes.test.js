@@ -382,3 +382,37 @@ test('partly observed hues refuse missing semantic slots and protected scattered
     {allowPartial:true}),null,
     'a protected empty shape list cannot be replaced by source-derived geometry');
 });
+
+test('every compact contiguous three-through-six hue subset remains editable without filling missing slots',()=>{
+  const width=240,height=520,seed='contiguous-first-n';
+  for(let count=3;count<=6;count++){
+    const data=new Uint8ClampedArray(width*height*4);
+    for(let i=0;i<width*height;i++)data[4*i+3]=255;
+    for(let hue=0;hue<count;hue++){
+      const left=20+(hue%3)*72,top=65+Math.floor(hue/3)*230;
+      for(let y=top;y<top+64;y++)for(let x=left;x<left+40;x++){
+        // Deliberately angular, compact and connected noncircular polygons.
+        if(x<left+10&&y<top+12)continue;
+        data.set(hueRgb(HUES[hue]),4*(y*width+x));
+      }
+    }
+    const source={width,height,data},unchanged=data.slice();
+    const desc=describeReconstructionImage(source);
+    assert.equal(desc.incompleteColourRegions,true,
+      'contiguous first-'+count+' source colour signatures are measured');
+    assert.deepEqual(desc.colourRegions.map(x=>x.index),
+      Array.from({length:count},(_,i)=>i));
+    const candidates=reconstructionCandidates(source,{seed});
+    assert.ok(candidates.length<=RECONSTRUCTION_RENDER_LIMIT);
+    const observed=candidates.find(c=>c.kind==='hue-visible-shapes');
+    assert.ok(observed,'all genuinely visible first-'+count+' silhouettes can be selected');
+    assert.equal(observed.recipe.scatteredCount,count);
+    assert.equal(observed.recipe.scatteredShapeOverrides.length,count);
+    assert.deepEqual(observed.recipe.scatteredShapeOverrides.map(x=>x.index),
+      Array.from({length:count},(_,i)=>i));
+    assert.deepEqual(resolveScene(observed.recipe).objects.map(x=>x.colorIndex),
+      Array.from({length:count},(_,i)=>i));
+    assert.deepEqual(decodeRecipe(encodeRecipe(observed.recipe)),observed.recipe);
+    assert.deepEqual(source.data,unchanged,'do not mutate the original RGB');
+  }
+});
