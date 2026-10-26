@@ -536,9 +536,11 @@ export function plainlyAchromaticForeground(image,colourRegions=[]){
  * Very narrow source-only contradiction witness for seven *visible* soft
  * pigments below the ordinary hue-mask confidence threshold. Unlike a new
  * inferred palette or relaxed importer, this NEVER creates colour objects.
- * The current palette has no 23%-saturation/70%-lightness scene controls;
- * painting seven pastel shapes red is therefore worse than saying that an
- * automatic colour-faithful recipe is unavailable.
+ * Palette Tone now permits 23%-saturation/70%-lightness *paint*, but the
+ * existing strict hue importer cannot separate these weak source pigments
+ * into trustworthy editable silhouette masks. Painting seven source regions
+ * red is worse than refusing unsupported automatic geometry and offering
+ * deliberate manual import/recolouring instead.
  *
  * Demand six independently localized, substantial chromatic pastel tones
  * against the same opaque, uniform original background. Quantized sample
