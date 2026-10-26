@@ -43,6 +43,9 @@ export function readReconstructionEvalArgs(argv){
     if(key==='--source-signature'){
       opts.sourceSignature=true;continue;
     }
+    if(key==='--source-state-probe'){
+      opts.sourceStateProbe=true;continue;
+    }
     if(key==='--profile-hue-masks'){
       opts.profileHueMasks=true;continue;
     }
@@ -128,7 +131,8 @@ async function evaluate(opts){
       // Inference only sees image pixels, never this item's recipe.
       const inferred=await page.evaluate(async ({base64,includeAlternatives,
         includeInkGeometry,includeWidthProbe,includeChannelProbe,includeLocalCurve,
-        includeHueVisibleShapes,includeHueMaskProfile,includeSourceSignature})=>{
+        includeHueVisibleShapes,includeHueMaskProfile,includeSourceSignature,
+        includeSourceStateProbe,caseId})=>{
         const {reconstructionCandidates,rankReconstructionCandidates,
           reconstructionPlacement,RECONSTRUCTION_FRAME,
           refineReconstructionCandidate,reconstructionRefinementIndex,
@@ -227,6 +231,57 @@ async function evaluate(opts){
         }
         const best=ranked[0];
         const preview=best?render(best.recipe):null;
+        // Deliberately opt-in source-state probe. The same anonymous source
+        // is reconstructed with a polluted *unrelated* maker recipe; compare
+        // actual canonical PNG paints, never metadata/truth from the source.
+        // Additional probe paints are research-only, outside UX's 6+10 budget.
+        let sourceStateProbe=null;
+        if(includeSourceStateProbe&&
+          ['22-overlapping-reversed-circles','occluded-mixed-seven',
+            'one-red-polygon'].includes(caseId)){
+          const structural=['hue-visible-shapes','regions','shape','shape-repeats'];
+          const sourceCandidate=candidates.find(c=>structural.includes(c.kind));
+          if(sourceCandidate){
+            const staleShape=candidates.find(c=>c.kind==='hue-visible-shapes')
+              ?.recipe.scatteredShapeOverrides?.[1]?.shape??
+              candidates.find(c=>c.kind==='shape')?.recipe.scatteredShape??null;
+            const staleOrder=[6,5,4,3,2,1,0];
+            const staleOverrides=staleShape?[{index:0,shape:staleShape}]:[];
+            const unrelated=normalizeRecipe({
+              seed:'r0-anonymous',reverseStripes:true,
+              scatteredLayerOrder:staleOrder,
+              scatteredShapeOverrides:staleOverrides
+            });
+            const separate=reconstructionCandidates(source,unrelated)
+              .find(c=>c.kind===sourceCandidate.kind);
+            if(!separate)throw Error('Unrelated state suppressed observed '+caseId);
+            const clean=render(sourceCandidate.recipe);
+            const independent=render(separate.recipe);
+            // Explicit counterfactual of previous inherited scene state.
+            // It is not an original artist recipe or a hidden ground truth.
+            const inherited=render(normalizeRecipe({
+              ...sourceCandidate.recipe,reverseStripes:true,
+              scatteredLayerOrder:staleOrder,
+              scatteredShapeOverrides:staleOverrides
+            }));
+            const pixels=canvas=>canvas.getContext('2d',
+              {willReadFrequently:true}).getImageData(0,0,fit.width,fit.height);
+            const cleanPixels=pixels(clean),independentPixels=pixels(independent);
+            const samePixels=cleanPixels.data.every((v,i)=>
+              v===independentPixels.data[i]);
+            if(!samePixels)throw Error('Unrelated editor state altered '+caseId);
+            sourceStateProbe={
+              kind:sourceCandidate.kind,
+              error:compareReconstructionPixels(reference,cleanPixels),
+              pollutedError:compareReconstructionPixels(reference,independentPixels),
+              counterfactualPreviousError:compareReconstructionPixels(reference,pixels(inherited)),
+              samePixels,paintCalls:3,
+              cleanImage:clean.toDataURL('image/png'),
+              pollutedImage:independent.toDataURL('image/png'),
+              previousImage:inherited.toDataURL('image/png')
+            };
+          }
+        }
         // Reuse this ALREADY painted best-preview canvas; do not spend an
         // additional canonical painter call for diagnostic comparison.
         const inkGeometry=includeInkGeometry&&preview?
@@ -369,6 +424,7 @@ async function evaluate(opts){
         return {
           ...(includeHueMaskProfile?{hueMaskProfile}:{}),
           ...(includeSourceSignature?{sourceSignature}:{}),
+          ...(includeSourceStateProbe?{sourceStateProbe}:{}),
           ...(includeHueVisibleShapes?{hueVisibleShapes}:{}),
           ...(includeLocalCurve?{localCurveProbe}:{}),
           ...(includeChannelProbe?{channelProbe}:{}),
@@ -397,7 +453,8 @@ async function evaluate(opts){
         includeLocalCurve:!!opts.probeLocalCurve,
         includeHueVisibleShapes:!!opts.hueVisibleShapes,
         includeHueMaskProfile:!!opts.profileHueMasks,
-        includeSourceSignature:!!opts.sourceSignature});
+        includeSourceSignature:!!opts.sourceSignature,
+        includeSourceStateProbe:!!opts.sourceStateProbe,caseId:item.id});
       // External work has NO original ROYGBIV recipe or true-render floor.
       // Only actual current-production PNGs have blinded truth sidecars.
       const truth=external?null:JSON.parse(await readFile(join(dir,item.recipeFile),'utf8'));
@@ -429,6 +486,13 @@ async function evaluate(opts){
         ...(opts.inkGeometry?{inkGeometry:inferred.inkGeometry}:{}),
         ...(opts.profileHueMasks?{hueMaskProfile:inferred.hueMaskProfile}:{}),
         ...(opts.sourceSignature?{sourceSignature:inferred.sourceSignature}:{}),
+        ...(opts.sourceStateProbe?{sourceStateProbe:inferred.sourceStateProbe?{
+          ...inferred.sourceStateProbe,
+          cleanImage:undefined,pollutedImage:undefined,previousImage:undefined,
+          cleanPreview:item.id+'.source-state-clean.png',
+          pollutedPreview:item.id+'.source-state-polluted.png',
+          counterfactualPreview:item.id+'.source-state-inherited.png'
+        }:null}:{}),
         ...(opts.hueVisibleShapes?{hueVisibleShapes:inferred.hueVisibleShapes?{
           ...inferred.hueVisibleShapes,recipe:undefined,image:undefined,
           improved:inferred.hueVisibleShapes.error+1e-9<
@@ -478,6 +542,18 @@ async function evaluate(opts){
         await writeFile(join(dir,item.id+'.r0-best-preview.png'),pngBytes(inferred.candidatePreview));
       for(const [index,variant] of inferred.candidateVariants.entries()){
         await writeFile(join(dir,record.variantPreviews[index]),pngBytes(variant.image));
+      }
+      if(inferred.sourceStateProbe){
+        const p=inferred.sourceStateProbe;
+        await writeFile(join(dir,item.id+'.source-state-clean.png'),pngBytes(p.cleanImage));
+        await writeFile(join(dir,item.id+'.source-state-polluted.png'),pngBytes(p.pollutedImage));
+        await writeFile(join(dir,item.id+'.source-state-inherited.png'),pngBytes(p.previousImage));
+        console.log('SOURCE_STATE_ACTUAL_PAINTER '+JSON.stringify({
+          id:item.id,kind:p.kind,error:p.error,
+          pollutedError:p.pollutedError,
+          previousError:p.counterfactualPreviousError,samePixels:p.samePixels,
+          additionalResearchPaints:p.paintCalls
+        }));
       }
       if(inferred.hueVisibleShapes){
         await writeFile(join(dir,item.id+'.r0-hue-visible.png'),
