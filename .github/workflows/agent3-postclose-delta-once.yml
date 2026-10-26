@@ -1,0 +1,52 @@
+name: Agent 3 post-close delta witness (temporary)
+on:
+  pull_request:
+    paths:
+      - 'tests/agent3-664-refusal-matrix-browser.mjs'
+      - '.github/workflows/agent3-postclose-delta-once.yml'
+permissions:
+  contents: read
+concurrency:
+  group: agent3-postclose-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  delta-source-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install one opt-in Chromium
+        run: |
+          npm install --no-save playwright@1.56.1 serve@14.2.5
+          npx playwright install --with-deps chromium
+      - name: Serve production source
+        run: |
+          npx serve . -l 4173 >/tmp/agent3-delta.log 2>&1 &
+          for i in $(seq 1 45); do
+            curl -fsS http://127.0.0.1:4173/ >/dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/agent3-delta.log
+          exit 1
+      - name: Independently author source artwork
+        run: |
+          node scripts/review-reconstruction-external-pigments.mjs --collection gapped-hue --out-dir artifacts/agent3-refusal-sources-gapped
+          node scripts/review-reconstruction-external-pigments.mjs --collection low-chroma --out-dir artifacts/agent3-refusal-sources-low
+          node scripts/review-reconstruction-external-pigments.mjs --collection sparse-hue --out-dir artifacts/agent3-refusal-sources-sparse
+      - name: Verify post-#746 production importer at short and tall mobile sizes
+        run: node tests/agent3-664-refusal-matrix-browser.mjs
+      - name: Recheck latest text curved selection and worker parity after Bidi fix
+        run: node scripts/text-layout-hit-browser-proof.mjs > /tmp/agent3-text.log && grep 'TEXT LAYOUT HIT BROWSER PROOF' /tmp/agent3-text.log
+      - name: Retain genuine source and output pictures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent3-postclose-dark-bidi-delta
+          path: |
+            artifacts/agent3-664-refusal-matrix/
+            output/text-layout-pick/
+          retention-days: 7
+          if-no-files-found: warn
