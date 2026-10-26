@@ -355,3 +355,38 @@ test('font import ownership ticket rejects deleted-and-recreated identical capti
   assert.match(source,/if\(textIdentity\.same\(targetId,targetTicket\)&&/);
   assert.match(source,/Original text was removed or replaced/);
 });
+
+test('private font import honours newer typeface choices and whole-design replacements',async()=>{
+  const {createTextObjectIdentityTracker}=await import('../src/text-overlays-ui.js');
+  const tracker=createTextObjectIdentityTracker();
+  const old=[{id:'text-1',text:'RAINBOW',font:'modern'}];
+  tracker.sync(old);
+  const originalTicket=tracker.ticket('text-1');
+  const initialFont=old[0].font;
+  const fontSelectionVersions=new Map();
+  const initialVersion=fontSelectionVersions.get('text-1')||0;
+  const eligible=(items,ticket=originalTicket)=>tracker.same('text-1',ticket)&&
+    (fontSelectionVersions.get('text-1')||0)===initialVersion&&
+    items.some(item=>item.id==='text-1'&&item.font===initialFont);
+  assert.equal(eligible(old),true);
+  fontSelectionVersions.set('text-1',1);
+  assert.equal(eligible(old),false,
+    'choosing a different face, then choosing back, still supersedes the import');
+  fontSelectionVersions.set('text-1',0);
+  assert.equal(eligible([{...old[0],font:'editorial'}]),false,
+    'an imported font may not override a new explicit face choice');
+  assert.equal(eligible([{...old[0],text:'Updated copy'}]),true,
+    'editing the original caption words does not revoke font ownership');
+  tracker.invalidateAll();
+  tracker.sync([{...old[0]}]);
+  assert.equal(eligible(old),false,
+    'a new portable design reusing the same id/text/font is a different object');
+  assert.notEqual(tracker.ticket('text-1'),originalTicket);
+  const {readFileSync}=await import('node:fs');
+  const src=readFileSync(new URL('../src/text-overlays-ui.js',import.meta.url),'utf8');
+  assert.match(src,/if\(key==='font'\)fontSelectionVersions\.set\(selectedId,/);
+  assert.match(src,/const targetFont=currentItems\(\)\.find\(item=>item\.id===targetId\)\?\.font/);
+  assert.match(src,/const fontVersion=fontSelectionVersions\.get\(targetId\)\|\|0/);
+  assert.match(src,/items\.some\(item=>item\.id===targetId&&item\.font===targetFont\)/);
+  assert.match(src,/textIdentity\.invalidateAll\(\);\s*changeRecipe\(recipe,\{bypassLocks:true,cause:'portable_font_package_import'\}\)/);
+});
