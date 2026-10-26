@@ -59,6 +59,10 @@ function boundedRawTextPrefix(value){
 export function boundTextContent(value){
   if(typeof value!=='string')return '';
   const cleaned=boundedRawTextPrefix(value)
+    // Unicode-mode iteration recognizes intact astral pairs as one scalar,
+    // so this range catches only orphan UTF-16 halves from malformed
+    // imported JSON/clipboard text. Replace, never save isolated surrogates.
+    .replace(/[\uD800-\uDFFF]/gu,'\uFFFD')
     // Pasted Unicode line/paragraph separators, legacy Mac CR and NEL are
     // genuine logical line boundaries. Canonical rendering and the four-line
     // quota both use LF, so normalize before counting or storing a recipe.
