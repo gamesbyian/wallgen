@@ -298,7 +298,9 @@ test('shared pigment descriptor refuses spoofed sparse hues and incorrect masks'
 });
 
 function twoDistinctFirstHueSilhouettes(){
-  const width=180,height=360,data=new Uint8ClampedArray(width*height*4);
+  // Exactly the canonical 600:1300 aspect, so standalone and normal source
+  // placement compare equivalent source pixels without letterboxing offsets.
+  const width=180,height=390,data=new Uint8ClampedArray(width*height*4);
   for(let i=0;i<width*height;i++)data[i*4+3]=255;
   for(let y=40;y<125;y++)for(let x=25;x<90;x++){
     // A red connected L-shaped silhouette whose missing corner must remain
