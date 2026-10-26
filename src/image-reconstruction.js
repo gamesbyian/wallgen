@@ -630,6 +630,33 @@ export function plainlyUnsupportedDarkPigments(description){
   });
 }
 
+/**
+ * A seven-slot, source-visible dark pigment witness already exists above.
+ * Convert ONLY that witnessed seven-colour source's measured RGB means to
+ * HSL tone controls that the canonical renderer can now actually paint.
+ * This is an appearance hypothesis, not an inferred historical artist palette.
+ * Keep one agreed saturation/lightness for the entire seven-slot story.
+ */
+export function measuredSourceDarkTone(description){
+  if(!plainlyUnsupportedDarkPigments(description))return null;
+  const samples=description.colourRegions.map(region=>{
+    const [r,g,b]=region.meanRGB;
+    const hi=Math.max(r,g,b),lo=Math.min(r,g,b),range=hi-lo;
+    const l=(hi+lo)*50/255;
+    const denom=255-Math.abs(hi+lo-255);
+    return {s:range/Math.max(1,denom)*100,l};
+  });
+  const median=list=>list.slice().sort((a,b)=>a-b)[Math.floor(list.length/2)];
+  const saturation=median(samples.map(x=>x.s));
+  const lightness=median(samples.map(x=>x.l));
+  // The seven original pigments must actually share a coherent appearance;
+  // heterogeneous dark graphic/photo patches are not one canonical Tone.
+  if(saturation<65||saturation>100||lightness<8||lightness>28||
+    samples.some(x=>Math.abs(x.s-saturation)>9||
+      Math.abs(x.l-lightness)>4))return null;
+  return {saturation:Math.round(saturation),lightness:Math.round(lightness)};
+}
+
 /** Return a few independently editable canonical alternatives. */
 export function reconstructionCandidates(image,recipe){
   const desc=describeReconstructionImage(image,{includeColourMasks:true});
@@ -638,8 +665,20 @@ export function reconstructionCandidates(image,recipe){
   // unless its actual source hue evidence says so. This deliberately returns
   // no auto-proposal; existing manual geometry-only path import remains.
   if(plainlyAchromaticForeground(image,desc.colourRegions)||
-    plainlyUnsupportedSoftPigments(image,desc.colourRegions)||
-    plainlyUnsupportedDarkPigments(desc))return [];
+    plainlyUnsupportedSoftPigments(image,desc.colourRegions))return [];
+  const witnessedDark=plainlyUnsupportedDarkPigments(desc);
+  const darkTone=witnessedDark?measuredSourceDarkTone(desc):null;
+  if(witnessedDark&&!darkTone)return [];
+  if(darkTone){
+    const lockedTone=respectSettingLocks(current,normalizeRecipe({...current,
+      paletteToneEnabled:true,paletteSaturation:darkTone.saturation,
+      paletteLightness:darkTone.lightness}));
+    // A creator's locked different Tone must not be silently bypassed to
+    // make an uncommittable source-faithful automatic candidate.
+    if(!lockedTone.paletteToneEnabled||
+      lockedTone.paletteSaturation!==darkTone.saturation||
+      lockedTone.paletteLightness!==darkTone.lightness)return [];
+  }
   // Scattered scene slots are contiguous 0..N-1, not arbitrary hue IDs.
   // One blue region, or isolated red and blue without orange/yellow/green,
   // cannot be represented as one/two objects without silently recolouring
@@ -653,7 +692,10 @@ export function reconstructionCandidates(image,recipe){
   // Prefer a strongly distinguishable *appearance* hypothesis only. The
   // canonical painter still ranks candidate geometry; history is unknown.
   const base={...strippedCandidateBase(current,desc.background),
-    palette:desc.paletteHypothesis?.palette??'classic'};
+    palette:desc.paletteHypothesis?.palette??'classic',
+    ...(darkTone?{paletteToneEnabled:true,
+      paletteSaturation:darkTone.saturation,
+      paletteLightness:darkTone.lightness}:{})};
   const candidates=[];
   // Appearance-first per-hue silhouettes are a normal *editable* canonical
   // recipe, but only credible for observed multi-band nonradial geometry.
@@ -687,7 +729,7 @@ export function reconstructionCandidates(image,recipe){
         (compactNonCircles||desc.radial.kind==='rings'||desc.repeatShape?.clipped||
           ['hairpin','loop'].includes(desc.curve.kind)||
           desc.paths.some(path=>path.kind==='contour'&&path.closed))));
-  const observed=observedEligible?observedHueShapeRecipe(image,
+  let observed=observedEligible?observedHueShapeRecipe(image,
     reconstructionPlacement(image.width,image.height),current,{
       paletteHint:desc.paletteHypothesis?.palette??'classic',
       allowPartial:partialVisible,
@@ -696,6 +738,17 @@ export function reconstructionCandidates(image,recipe){
         regions:desc.colourRegions,masks:desc.sourceHueMasks
       }
     }):null;
+  if(observed&&darkTone){
+    const recipe=respectSettingLocks(current,normalizeRecipe({...observed.recipe,
+      paletteToneEnabled:true,paletteSaturation:darkTone.saturation,
+      paletteLightness:darkTone.lightness}));
+    observed=recipe.paletteToneEnabled&&
+      recipe.paletteSaturation===darkTone.saturation&&
+      recipe.paletteLightness===darkTone.lightness?
+      {...observed,recipe,label:'Seven editable dark source pigment silhouettes',
+        uncertainty:observed.uncertainty+
+          ' Shared saturation and lightness estimated from visible source pigments only.'}:null;
+  }
   const includeObserved=prior=>{
     if(!observed)return prior;
     const result=[...prior];
