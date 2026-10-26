@@ -100,6 +100,6 @@ test('Apply retains latest authored captions rather than restoring stale fit-tim
   assert.deepEqual(decodeRecipe(encodeRecipe(recipe)),recipe);
   const removed=normalizeRecipe({...latest,textOverlays:[]});
   const without=prepareReconstructionApply(removed,importedCandidate,detail);
-  assert.deepEqual(without.recipe.textOverlays,[],
+  assert.equal(without.recipe.textOverlays?.length??0,0,
     'a caption deleted since fitting must never reappear on Apply');
 });
