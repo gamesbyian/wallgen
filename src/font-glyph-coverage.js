@@ -28,7 +28,7 @@ export function inspectFontCmap(bytes){
   const base=table.offset,end=base+table.size;
   const count=u16(base+2);
   if(count>100||!viewBounds(base+4,count*8,end))return null;
-  let chosen=null;
+  const candidates=new Map();
   for(let i=0;i<count;i++){
     const rec=base+4+i*8;
     const platform=u16(rec),encoding=u16(rec+2),offset=u32(rec+4);
@@ -37,13 +37,14 @@ export function inspectFontCmap(bytes){
     const at=base+offset;
     if(!viewBounds(at,2,end))continue;
     const format=u16(at);
-    // Unicode full repertoire (format 12) is preferable to BMP-only format 4.
-    const priority=format===12?2:format===4?1:0;
-    if(!priority||priority<=(chosen?.priority||0))continue;
-    chosen={at,format,priority};
+    // A valid font can have a BMP-only table and a supplementary Unicode
+    // table whose coverage is NOT a strict superset of the BMP map. Evaluate
+    // both to avoid falsely reporting existing letters as missing.
+    if((format===4||format===12)&&!candidates.has(format))
+      candidates.set(format,{at,format});
   }
-  if(!chosen)return null;
-  const {at,format}=chosen;
+  if(!candidates.size)return null;
+  const readSubtable=({at,format})=>{
   if(format===12){
     if(!viewBounds(at,16,end))return null;
     const size=u32(at+4),groups=u32(at+12);
@@ -112,6 +113,18 @@ export function inspectFontCmap(bytes){
       }
       return false;
     },
+  });
+  };
+  const parsed=[12,4].map(format=>candidates.get(format)).filter(Boolean)
+    .map(readSubtable).filter(Boolean);
+  if(!parsed.length)return null;
+  if(parsed.length===1)return parsed[0];
+  // Format 12 does not necessarily repeat every BMP mapping from format 4.
+  // Give each independently inspected cmap its own validated bounds, and
+  // accept a codepoint if either table maps it to a real nonzero glyph ID.
+  return Object.freeze({
+    format:parsed[0].format,
+    has(codepoint){return parsed.some(table=>table.has(codepoint));},
   });
 }
 // Bounds and native FontFace.load already validated elsewhere. Inability to

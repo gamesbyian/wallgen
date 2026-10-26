@@ -132,3 +132,55 @@ test('directional formatting and native joining controls do not masquerade as mi
   assert.equal(missingGlyphNotice(coverage,joined),'',
     'joining mechanism is not an unmapped visible glyph by itself');
 });
+
+
+function splitUnicodeCmapFixture(){
+  // Valid SFNT with two independent Unicode cmap encodings: format 4 only
+  // covers BMP A..Z, while format 12 covers only U+1F308 rainbow. Neither
+  // claims to be a superset of the other. The old "prefer 12" path falsely
+  // warned that this same font's perfectly valid BMP Latin glyphs were gone.
+  const bytes=new ArrayBuffer(256),view=new DataView(bytes);
+  const w16=(at,value)=>view.setUint16(at,value,false);
+  const w32=(at,value)=>view.setUint32(at,value,false);
+  w32(0,0x00010000);w16(4,1);
+  w32(12,0x636d6170);w32(20,28);w32(24,80);
+  w16(28,0);w16(30,2);
+  w16(32,3);w16(34,1);w32(36,20);
+  w16(40,3);w16(42,10);w32(44,52);
+  const bmp=48;
+  w16(bmp,4);w16(bmp+2,32);w16(bmp+6,4);
+  w16(bmp+14,0x5a);w16(bmp+16,0xffff);
+  w16(bmp+20,0x41);w16(bmp+22,0xffff);
+  w16(bmp+24,1);w16(bmp+26,1);
+  w16(bmp+28,0);w16(bmp+30,0);
+  const full=80;
+  w16(full,12);w16(full+2,0);w32(full+4,28);
+  w32(full+8,0);w32(full+12,1);
+  w32(full+16,0x1f308);w32(full+20,0x1f308);w32(full+24,17);
+  return bytes;
+}
+test('Unicode format 12 and format 4 coverage compose without losing valid BMP letters',()=>{
+  const bytes=splitUnicodeCmapFixture(),coverage=inspectFontCmap(bytes);
+  assert.ok(coverage);
+  assert.equal(coverage.format,12,'full Unicode cmap stays primary');
+  assert.equal(coverage.has(0x41),true,
+    'format-4-only A is a real glyph even when format 12 omits it');
+  assert.equal(coverage.has(0x5a),true);
+  assert.equal(coverage.has(0x1f308),true,'supplementary rainbow stays mapped');
+  assert.equal(coverage.has(0x1f4a0),false,'missing supplement stays missing');
+  assert.deepEqual(missingFontCodepoints(coverage,'AZ🌈💠'),[0x1f4a0],
+    'font UI must not invent missing Latin glyphs');
+  assert.equal(missingGlyphNotice(coverage,'AZ🌈'),'');
+});
+test('a malformed supplementary cmap cannot mask independently valid BMP coverage',()=>{
+  const bytes=splitUnicodeCmapFixture(),view=new DataView(bytes);
+  view.setUint32(84,0xffffffff,false); // format-12 declared size out of range
+  const fallback=inspectFontCmap(bytes);
+  assert.ok(fallback,'valid format 4 remains usable');
+  assert.equal(fallback.format,4);
+  assert.equal(fallback.has(0x41),true);
+  assert.equal(fallback.has(0x1f308),false);
+  view.setUint16(50,0,false); // also corrupt format-4 length
+  assert.equal(inspectFontCmap(bytes),null,
+    'both malformed Unicode maps remain unknown, never a fabricated success');
+});
