@@ -28,22 +28,24 @@ export function inspectFontCmap(bytes){
   const base=table.offset,end=base+table.size;
   const count=u16(base+2);
   if(count>100||!viewBounds(base+4,count*8,end))return null;
-  const candidates=new Map();
+  const candidates=[],seenOffsets=new Set();
   for(let i=0;i<count;i++){
     const rec=base+4+i*8;
     const platform=u16(rec),encoding=u16(rec+2),offset=u32(rec+4);
     if(platform!==0&&!(platform===3&&(encoding===1||encoding===10)))
       continue;
     const at=base+offset;
-    if(!viewBounds(at,2,end))continue;
+    if(!viewBounds(at,2,end)||seenOffsets.has(at))continue;
     const format=u16(at);
-    // A valid font can have a BMP-only table and a supplementary Unicode
-    // table whose coverage is NOT a strict superset of the BMP map. Evaluate
-    // both to avoid falsely reporting existing letters as missing.
-    if((format===4||format===12)&&!candidates.has(format))
-      candidates.set(format,{at,format});
+    // Fonts can contain distinct Unicode subtables even at the same format,
+    // and a malformed earlier record must not hide a valid later mapping.
+    // Deduplicate only actual shared binary offsets, not format numbers.
+    if(format===4||format===12){
+      seenOffsets.add(at);
+      candidates.push({at,format});
+    }
   }
-  if(!candidates.size)return null;
+  if(!candidates.length)return null;
   const readSubtable=({at,format})=>{
   if(format===12){
     if(!viewBounds(at,16,end))return null;
@@ -119,7 +121,7 @@ export function inspectFontCmap(bytes){
     },
   });
   };
-  const parsed=[12,4].map(format=>candidates.get(format)).filter(Boolean)
+  const parsed=candidates.sort((a,b)=>b.format-a.format)
     .map(readSubtable).filter(Boolean);
   if(!parsed.length)return null;
   if(parsed.length===1)return parsed[0];
