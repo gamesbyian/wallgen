@@ -115,6 +115,12 @@ export function randomizeScope(currentInput,{scope,name,mode='reroll',strength='
   }
   for(const key of selected){
     if(current.lockedSettings.includes(key))continue;
+    // Author-enabled custom colour is a deliberate creative treatment. Even
+    // a Colour-category reroll must not turn it on/off or move its dormant
+    // sliders without consent; only the already-enabled tone values reroll.
+    if(key==='paletteToneEnabled'||
+      ((key==='paletteSaturation'||key==='paletteLightness')&&
+        !current.paletteToneEnabled))continue;
     // Safety is an explicit editorial preference, never randomly flipped.
     if(key==='textureLayer2Enabled'||key==='textureLayer3Enabled'||key==='geometrySafety')continue;
     // Disallow introducing a new randomly generated custom path: it is
@@ -132,6 +138,13 @@ export function randomizeScope(currentInput,{scope,name,mode='reroll',strength='
       sourceChoices.every(x=>x.trim()!==''&&Number.isFinite(Number(x)))?
       sourceChoices.map(Number):sourceChoices;
     let target=candidate[key];
+    // Unrestricted randomize deliberately keeps Tone off. Scoped explicit
+    // rerolls of an already-enabled treatment must still generate useful
+    // colour values, rather than taking those dormant global defaults.
+    if(mode==='reroll'&&(key==='paletteSaturation'||key==='paletteLightness')){
+      target=Math.floor(random()*101);
+      if(current.primesOnly)target=nearestPrime(target,PERCENT_PRIMES);
+    }
     if(mode==='vary'){
       if(typeof v==='number'){
         const min=el&&el.min!==''&&Number.isFinite(Number(el.min))?Number(el.min):0;
