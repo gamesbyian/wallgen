@@ -79,9 +79,14 @@ try{
    });
    await page.locator('#imagePathFile').setInputFiles({name:'first-red.png',
      mimeType:'image/png',buffer:Buffer.from(red.split(',')[1],'base64')});
-   await page.waitForFunction(()=>document.getElementById('imagePathDialog')?.open&&
-     document.getElementById('imageRecipeWorkspace')?.hidden===false,undefined,
-     {timeout:60000});
+   await page.waitForFunction(()=>{
+     const dialog=document.getElementById('imagePathDialog');
+     const workspace=document.getElementById('imageRecipeWorkspace');
+     const options=document.getElementById('imageRecipeCandidate');
+     const apply=document.getElementById('imageRecipeApply');
+     return dialog?.open&&workspace?.hidden===false&&
+       options?.options.length>0&&apply?.disabled===false;
+   },undefined,{timeout:60000});
    assert.equal(await page.locator('#imageRecipeUnavailable').isVisible(),false,
      'previous missing-colour refusal leaked into representable source');
    assert.ok(await page.locator('#imageRecipeCandidate option').count()>0);
