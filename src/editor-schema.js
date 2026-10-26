@@ -46,7 +46,7 @@ export const EDITOR_CATEGORIES=[
   ]},
   {id:'colour',label:'Colour',icon:'colour',tools:[
     {id:'rainbow',name:'Rainbow',settings:['palette','reverseStripes']},
-    {id:'tone',name:'Tone',settings:['paletteToneEnabled','paletteSaturation','paletteLightness']},
+    {id:'palette-tone',name:'Tone',settings:['paletteToneEnabled','paletteSaturation','paletteLightness']},
     {id:'canvas',name:'Background',settings:['background']},
   ]},
   {id:'material',label:'Texture',icon:'material',tools:[
