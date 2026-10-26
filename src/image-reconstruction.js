@@ -436,6 +436,10 @@ function strippedCandidateBase(input,background){
   // Preserve the user's seed/locks for canonical edit semantics, but start
   // with an explicitly neutral treatment rather than inheriting hidden Photo.
   return {...base,family:'studio',palette:'classic',background,
+    // These are authored scene edits, not evidence in imported source pixels.
+    // A reversed palette or an old per-slot stamp changes the colour/outline
+    // of new candidates even when the same independent source is analysed.
+    reverseStripes:false,scatteredLayerOrder:[],scatteredShapeOverrides:[],
     material:'none',textureDisplacement:0,textureLayer2Enabled:false,
     textureLayer3Enabled:false,lightingMood:'off',glow:0,
     surfaceTreatments:[],photoLook:{enabled:false},motif:'solid',
@@ -861,7 +865,12 @@ export function reconstructionCandidates(image,recipe){
   // A preview must depict exactly what Apply can commit. The same canonical
   // lock policy governs both; never rank an uncommittable unlocked ideal.
   const essential=candidate=>['regions','shape','shape-repeats'].includes(candidate.kind)?
-    ['structure','regionMode','scatteredShapeKind']:
+    // These proposals map measured pigment slots to semantic hue IDs.
+    // A locked reversal would paint observed red as violet. Locked old
+    // per-hue stamps would replace the extracted shape of a new source.
+    ['structure','regionMode','scatteredShapeKind','reverseStripes',
+      ...(['shape','shape-repeats'].includes(candidate.kind)?
+        ['scatteredShapeOverrides']:[])]:
     candidate.kind==='nested-rings'?['structure','regionMode']:
     candidate.kind==='radial-rays'||candidate.kind==='radial-rings'?
       ['structure','radialMode']:

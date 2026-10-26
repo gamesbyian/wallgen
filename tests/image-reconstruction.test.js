@@ -1670,3 +1670,45 @@ test('registered candidates share one source hue analysis across sync/cooperativ
    'cooperative shared cache cannot change rank, hints or paint score');
  assert.equal(paints,9,'each selected hypothesis paints once per rank call');
 });
+
+
+test('sparse observed colours never inherit reversed palettes, old stamps or old layers',()=>{
+  const source=raster(160,320,(x,y)=>
+    x>=25&&x<110&&y>=60&&y<180?colour(HUES[0]):[0,0,0,255]);
+  const original=source.data.slice();
+  const clean=reconstructionCandidates(source,normalizeRecipe({seed:'sparse-source'}));
+  const shape=clean.find(c=>c.kind==='shape');
+  const circles=clean.find(c=>c.kind==='regions');
+  assert.ok(shape&&circles,'one observed red hue supports both canonical appearance routes');
+  const polluted=normalizeRecipe({
+    seed:'sparse-source',reverseStripes:true,
+    scatteredLayerOrder:[6,5,4,3,2,1,0],
+    scatteredShapeOverrides:[{index:0,shape:shape.recipe.scatteredShape}]
+  });
+  const proposed=reconstructionCandidates(source,polluted);
+  assert.ok(proposed.length<=RECONSTRUCTION_RENDER_LIMIT);
+  for(const kind of ['shape','regions']){
+    const candidate=proposed.find(c=>c.kind===kind);
+    assert.ok(candidate);
+    assert.equal(candidate.recipe.reverseStripes,false);
+    assert.equal(candidate.recipe.scatteredLayerOrder,undefined,
+      'layer order from an unrelated maker session has no source support');
+    assert.equal(candidate.recipe.scatteredShapeOverrides,undefined,
+      'old per-object geometry must not override measured imported source contours');
+    assert.equal(resolveScene(candidate.recipe).objects[0].colorIndex,0);
+    assert.deepEqual(decodeRecipe(encodeRecipe(candidate.recipe)),candidate.recipe);
+  }
+  const protectedReverse=normalizeRecipe({
+    ...polluted,lockedSettings:['reverseStripes']
+  });
+  assert.ok(!reconstructionCandidates(source,protectedReverse)
+    .some(c=>['shape','regions'].includes(c.kind)),
+    'a locked reversal cannot repaint the source red as violet');
+  const protectedStamp=normalizeRecipe({
+    ...polluted,reverseStripes:false,lockedSettings:['scatteredShapeOverrides']
+  });
+  assert.ok(!reconstructionCandidates(source,protectedStamp)
+    .some(c=>c.kind==='shape'),
+    'locked unrelated slot shape cannot impersonate inferred source geometry');
+  assert.deepEqual(source.data,original);
+});
