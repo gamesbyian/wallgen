@@ -56,6 +56,10 @@ try{
         path:'loop',font:'modern',colour:'rainbow-gradient'},
       {name:'native-emoji-zwj',text:'e\u0301 👩‍🚀 🌈',size:65,
         path:'arc',font:'modern',colour:'rainbow-letter'},
+      {name:'joined-emoji-family',text:'👨‍👩‍👧‍👦 🌈',size:64,
+        path:'wave',pathHeight:110,font:'modern',colour:'rainbow-letter'},
+      {name:'joined-emoji-skin-tone',text:'🧑🏽‍💻 🌈',size:64,
+        path:'circle',pathHeight:150,font:'modern',colour:'rainbow-letter'},
       {name:'curved-combining',text:'cafe\u0301 🌈',size:65,
         path:'circle',pathHeight:150,font:'modern',colour:'rainbow-letter'},
       {name:'native-rtl-presentation',text:'ﺍﻟﺴﻼﻡ',size:65,
@@ -82,7 +86,26 @@ try{
       drawWallpaper(blank,{...recipe,textOverlays:[]});
       const inkChannels=countDiff(reference,blank);
       if(inkChannels<1000)throw Error('Invisible artwork '+spec.name);
-      let nativeFallbackPixelDifferences=null;
+      let nativeFallbackPixelDifferences=null,curvedVersusStraightChannels=null;
+      if(spec.name.startsWith('joined-emoji-')||spec.name==='native-emoji-zwj'){
+        if(!canCurveText(spec.text))throw Error('Complete emoji cluster cannot curve '+spec.name);
+        const clusterPieces=[...new Intl.Segmenter(undefined,
+          {granularity:'grapheme'}).segment(spec.text)].map(x=>x.segment);
+        if(!clusterPieces.some(x=>x.includes('\u200d')))
+          throw Error('Missing joined emoji cluster in '+spec.name);
+        const layout=layoutTextOnPath(recipe.textOverlays[0],spec.text,
+          unit=>[...unit].length*16,recipe.customPath);
+        if(!layout.supported||layout.glyphs.length!==clusterPieces.length||
+          layout.glyphs.some((glyph,index)=>glyph.text!==clusterPieces[index]))
+          throw Error('Curve split a joined emoji '+spec.name);
+        const straight=make(480,1040);
+        drawWallpaper(straight,normalizeRecipe({...recipe,
+          textOverlays:recipe.textOverlays.map(item=>({...item,path:'none'}))}));
+        curvedVersusStraightChannels=countDiff(reference,straight);
+        if(curvedVersusStraightChannels<1000)
+          throw Error('Joining emoji did not actually follow authored curve '+spec.name);
+        straight.width=0;
+      }
       if(spec.name.startsWith('native-')&&
           ['native-rtl-presentation','native-adlam','native-brahmi'].includes(spec.name)){
         if(canCurveText(spec.text))throw Error('Unsafe script was split '+spec.name);
@@ -105,7 +128,8 @@ try{
       contactCtx.drawImage(thumbnail,i*180,0);
       artwork.push(reference.toDataURL('image/png'));
       results.push({name:spec.name,inkChannels,workerPixelChannelDifferences:mismatch,
-        workerPngBytes:blob.size,nativeFallbackPixelDifferences});
+        workerPngBytes:blob.size,nativeFallbackPixelDifferences,
+        curvedVersusStraightChannels});
       reference.width=0;worker.width=0;blank.width=0;
     }
     const tracked=normalizeRecipe({textOverlays:[{
@@ -129,7 +153,7 @@ try{
     if(Math.abs(guide.width-trackedWidth)>.00001)
       throw Error('Guide does not match native tracked run width');
     const high=normalizeRecipe({seed:'tracked-full-resolution',
-      textOverlays:[{text:'CURVES AND COLOUR',font:'modern',
+      textOverlays:[{text:'CURVES 👩‍🚀 🌈',font:'modern',
         path:'wave',pathHeight:85,letterSpacing:6,size:64,
         shadow:'black',shadowDistance:8,outline:'white-black',
         colour:'rainbow-word'}]});
