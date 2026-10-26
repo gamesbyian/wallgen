@@ -39,6 +39,12 @@ test('text handle guides match supported and unsupported native Canvas tracking'
   assert.equal(measuredTextBounds({...item,letterSpacing:0},measure,
     {nativeTracking:false}).width,48);
 });
+test('live text editor supplies actual Canvas tracking support to guide geometry',async()=>{
+  const {readFileSync}=await import('node:fs');
+  const source=readFileSync(new URL('../src/text-direct-ui.js',import.meta.url),'utf8');
+  assert.match(source,/nativeTracking:'letterSpacing' in fontContext/,
+    'runtime transform guides must respect painter tracking capability');
+});
 test('topmost text wins overlap hit-test, rotated bbox and off-glyph misses are honored',()=>{
  const list=sample.textOverlays;
  const picked=hitTextOverlay(list,{x:300,y:650},measure);
