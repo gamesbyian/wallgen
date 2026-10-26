@@ -4,6 +4,27 @@ export const GITHUB_USAGE_REPO='gamesbyian/general-purpose';
 export const GITHUB_USAGE_BRANCH='data/roygbiv-usage';
 export const GITHUB_USAGE_PATH='telemetry/roygbiv';
 export const USAGE_TOKEN_KEY='roygbiv:usage-github-token:v1';
+// A consented backup connection must not survive failed browser credential
+// persistence. A partial set/remove error can otherwise leave a token in
+// memory and trigger an unexpected online/visibility auto-retry later.
+export function storeUsageBackupToken(token,{remember=false,
+  sessionStore=globalThis.sessionStorage,
+  persistentStore=globalThis.localStorage}={}){
+  if(typeof token!=='string'||!token.trim())throw new TypeError('Missing backup token');
+  const selected=remember?persistentStore:sessionStore;
+  const other=remember?sessionStore:persistentStore;
+  try{
+    selected.setItem(USAGE_TOKEN_KEY,token);
+    other.removeItem(USAGE_TOKEN_KEY);
+  }catch(error){
+    // Browser storage can reject either operation independently; never
+    // report a connected credential or leave retries armed after a failure.
+    for(const store of [sessionStore,persistentStore]){
+      try{store.removeItem(USAGE_TOKEN_KEY);}catch{}
+    }
+    throw error;
+  }
+}
 const copy=x=>structuredClone(x);
 
 export function orderUsageEvents(rows){

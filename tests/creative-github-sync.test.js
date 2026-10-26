@@ -2,9 +2,60 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createCreativeRecorder,memoryUsageStore} from '../src/creative-recorder.js';
 import {makeUsageBatch,encodeGithubContent,createGithubUsageWriter,
-  createGithubUsageSync,GITHUB_USAGE_BRANCH} from '../src/creative-github-sync.js';
+  createGithubUsageSync,storeUsageBackupToken,USAGE_TOKEN_KEY,GITHUB_USAGE_BRANCH} from '../src/creative-github-sync.js';
 
 const token='github_pat_test-only-never-valid';
+
+function fakeTokenStore({setFails=false,removeFails=false}={}){
+  const values=new Map();
+  return {
+    values,
+    getItem:key=>values.get(key)||null,
+    setItem(key,value){
+      if(setFails)throw new Error('storage set forbidden');
+      values.set(key,value);
+    },
+    removeItem(key){
+      if(removeFails)throw new Error('storage cleanup forbidden');
+      values.delete(key);
+    }
+  };
+}
+
+test('backup token is per-tab by default and remembered only by explicit choice',()=>{
+  const sessionStore=fakeTokenStore(),persistentStore=fakeTokenStore();
+  const stores={sessionStore,persistentStore};
+  storeUsageBackupToken(token,stores);
+  assert.equal(sessionStore.getItem(USAGE_TOKEN_KEY),token);
+  assert.equal(persistentStore.getItem(USAGE_TOKEN_KEY),null);
+  storeUsageBackupToken(token,{...stores,remember:true});
+  assert.equal(persistentStore.getItem(USAGE_TOKEN_KEY),token);
+  assert.equal(sessionStore.getItem(USAGE_TOKEN_KEY),null);
+  storeUsageBackupToken(token,{...stores,remember:false});
+  assert.equal(persistentStore.getItem(USAGE_TOKEN_KEY),null);
+  assert.equal(sessionStore.getItem(USAGE_TOKEN_KEY),token);
+});
+
+test('backup token storage errors fail closed and clean accessible partial copies',()=>{
+  const sessionStore=fakeTokenStore({setFails:true});
+  const persistentStore=fakeTokenStore();
+  persistentStore.setItem(USAGE_TOKEN_KEY,'old-remembered-token');
+  assert.throws(()=>storeUsageBackupToken(token,{sessionStore,persistentStore}),
+    /storage set forbidden/);
+  assert.equal(persistentStore.getItem(USAGE_TOKEN_KEY),null,
+    'a failed new session connection must not retain the old remembered credential');
+
+  const sessionOther=fakeTokenStore({removeFails:true});
+  const persistentSelected=fakeTokenStore();
+  assert.throws(()=>storeUsageBackupToken(token,{
+    sessionStore:sessionOther,persistentStore:persistentSelected,remember:true
+  }),/storage cleanup forbidden/);
+  assert.equal(persistentSelected.getItem(USAGE_TOKEN_KEY),null,
+    'a completed set followed by failed opposite-store cleanup must be rolled back');
+  assert.throws(()=>storeUsageBackupToken('',{
+    sessionStore:sessionOther,persistentStore:persistentSelected
+  }),/Missing backup token/);
+});
 function fixture(){
   const store=memoryUsageStore();let count=0;
   const recorder=createCreativeRecorder({store,enabled:true,
