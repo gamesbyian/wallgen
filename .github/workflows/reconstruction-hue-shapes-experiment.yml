@@ -1,11 +1,6 @@
 name: R0 source-visible hue shape oracle
 # Source/fit screenshots and full-resolution export remain manually opt-in.
 on:
-  # Temporary optical PR qualification for #728. REMOVE before integration.
-  pull_request:
-    paths:
-      - 'src/image-reconstruction.js'
-      - 'src/image-hue-reconstruction.js'
   workflow_dispatch:
     inputs:
       include_sparse_hue:
@@ -49,13 +44,13 @@ jobs:
           npm install --no-save playwright@1.56.1
           npx playwright install --with-deps chromium
       - name: Generate four independent non-ROYGBIV Canvas source images
-        if: ${{ inputs.include_external_pigments || github.event_name == 'pull_request' }}
+        if: ${{ inputs.include_external_pigments }}
         run: node scripts/review-reconstruction-external-pigments.mjs --out-dir artifacts/external-pigment-r0
       - name: Reconstruct independent metadata-free art with ordinary six-plus-ten painter
-        if: ${{ inputs.include_external_pigments || github.event_name == 'pull_request' }}
-        run: node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/external-pigment-r0 --hue-visible-shapes --source-signature --source-state-probe
+        if: ${{ inputs.include_external_pigments }}
+        run: node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/external-pigment-r0 --hue-visible-shapes --source-signature
       - name: Report independent artwork and separate existing shape proposal errors
-        if: ${{ inputs.include_external_pigments || github.event_name == 'pull_request' }}
+        if: ${{ inputs.include_external_pigments }}
         run: |
           node --input-type=module -e '
             import {readFileSync} from "node:fs";
@@ -93,13 +88,13 @@ jobs:
                 candidateCount:s.candidateCount}));
           '
       - name: Author four independent first-hue/sparse-hue source images
-        if: ${{ inputs.include_sparse_hue || github.event_name == 'pull_request' }}
+        if: ${{ inputs.include_sparse_hue }}
         run: node scripts/review-reconstruction-external-pigments.mjs --collection sparse-hue --out-dir artifacts/external-sparse-hue
       - name: Fit four sparse-hue original images with real canonical renderer
-        if: ${{ inputs.include_sparse_hue || github.event_name == 'pull_request' }}
-        run: node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/external-sparse-hue --source-signature --source-state-probe
+        if: ${{ inputs.include_sparse_hue }}
+        run: node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/external-sparse-hue --source-signature
       - name: Qualify first two semantic colour slots and refuse unsupported gaps
-        if: ${{ inputs.include_sparse_hue || github.event_name == 'pull_request' }}
+        if: ${{ inputs.include_sparse_hue }}
         run: |
           node --input-type=module -e '
             import {readFileSync} from "node:fs";
@@ -124,15 +119,15 @@ jobs:
               originalHueRegions:s.sourceSignature?.regionCount}));
           '
       - name: Generate all 22 genuine metadata-free current-renderer R0 images
-        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' }}
+        if: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
           node scripts/review-reconstruction.mjs             --out-dir artifacts/r0-hue-shapes             
       - name: Evaluate all 22 normal six-plus-ten candidate selections plus opt-in per-hue proof
-        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' }}
+        if: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
-          node scripts/evaluate-reconstruction-r0.mjs             --dir artifacts/r0-hue-shapes --hue-visible-shapes --source-state-probe
+          node scripts/evaluate-reconstruction-r0.mjs             --dir artifacts/r0-hue-shapes --hue-visible-shapes
       - name: Print source-backed candidate outcomes, with no hidden score sidecar
-        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' }}
+        if: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
           node --input-type=module -e '
             import {readFileSync} from "node:fs";
@@ -148,7 +143,7 @@ jobs:
               }));
           '
       - name: Verify exact source-first wins and known no-regression controls
-        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' }}
+        if: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
           node --input-type=module -e '
             import {readFileSync} from "node:fs";
@@ -185,7 +180,7 @@ jobs:
             }));
           '
       - name: High-resolution portable Hairpin/Loop source-shape exports, where representable
-        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' }}
+        if: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
           set -euo pipefail
           for case_id in 05-hairpin 06-loop 16-offset-jagged; do
