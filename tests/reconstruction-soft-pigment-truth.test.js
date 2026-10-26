@@ -5,6 +5,7 @@ import {extractImageColourRegions} from '../src/image-path.js';
 import {plainlyUnsupportedSoftPigments,plainlyAchromaticForeground,
   reconstructionCandidates,RECONSTRUCTION_RENDER_LIMIT}
   from '../src/image-reconstruction.js';
+import {describeReconstructionRefusal} from '../src/image-path-ui.js';
 
 function pastelHue(hue,sat=.23,light=.70){
   const chroma=(1-Math.abs(2*light-1))*sat;
@@ -71,4 +72,23 @@ test('partial soft hues, single-tone pastels, diffuse tones, dark paints and tra
   assert.equal(plainlyUnsupportedSoftPigments(badCorner,[]),false);
   const flat=artwork({tones:HUES.map(()=>[5,5,8])});
   assert.equal(plainlyUnsupportedSoftPigments(flat,[]),false);
+});
+
+test('visible refusal distinguishes soft source hues and neutral ink without inventing a candidate',()=>{
+  const muted=artwork();
+  const mutedStatus=describeReconstructionRefusal({colourRegions:[]},muted);
+  assert.match(mutedStatus,/muted pigments/);
+  assert.match(mutedStatus,/hue masks cannot isolate/);
+  assert.match(mutedStatus,/Palette Tone saturation and lightness/);
+  assert.match(mutedStatus,/source image is unchanged/);
+  const neutral=artwork({tones:HUES.map(()=>[179,179,179])});
+  const neutralStatus=describeReconstructionRefusal({colourRegions:[]},neutral);
+  assert.match(neutralStatus,/neutral ink/);
+  assert.doesNotMatch(neutralStatus,/Palette Tone/);
+  assert.match(neutralStatus,/source image is unchanged/);
+  const generic=describeReconstructionRefusal({colourRegions:[]});
+  assert.match(generic,/No reliable editable recipe/);
+  const strong=artwork({tones:HUES.map(h=>pastelHue(h,.9,.55))});
+  assert.match(describeReconstructionRefusal({colourRegions:[]},strong),
+    /No reliable editable recipe/,'do not assert a special refusal without witness');
 });
