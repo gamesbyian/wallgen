@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {normalizeRecipe,resolveScene} from '../src/model.js';
 import {normalizeTextOverlays,newTextOverlay,MAX_TEXT_OVERLAYS,
-  boundTextContent,textOverlayPaintsInk} from '../src/text-overlays.js';
+  boundTextContent} from '../src/text-overlays.js';
+import {textOverlayPaintsInk} from '../src/text-rainbow-shaping.js';
 import {drawTextOverlays} from '../src/text-overlay-renderer.js';
 import {randomizeScope} from '../src/scoped-random.js';
 import {randomizeAllRecipe} from '../src/model.js';
