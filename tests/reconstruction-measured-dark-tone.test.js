@@ -103,3 +103,31 @@ test('mixed dark and bright pigments are not assigned an imaginary uniform dark 
   }
   assert.equal(measuredSourceDarkTone(describeReconstructionImage(mixed)),null);
 });
+
+test('inverse candidate analysis exposes one source-only summary without keeping hue masks',()=>{
+  const source=pigmentSource();
+  const original=source.data.slice();
+  const recipe=normalizeRecipe({seed:'no-double-analysis'});
+  const ordinary=reconstructionCandidates(source,recipe);
+  let received=null,calls=0;
+  const shared=reconstructionCandidates(source,recipe,{
+    onDescription:descriptor=>{received=descriptor;calls++;}
+  });
+  assert.equal(calls,1,'one invocation returns one diagnostic callback');
+  assert.ok(received);
+  assert.equal(received.background,'black');
+  assert.equal(received.colourRegions.length,7);
+  assert.equal(Object.hasOwn(received,'sourceHueMasks'),false,
+    'large transient pigment arrays must not be retained by the portrait dialog');
+  assert.deepEqual(shared,ordinary,
+    'reusing the same analysis cannot alter the six-candidate structure or order');
+  assert.deepEqual(source.data,original,'never mutate the source RGBA');
+  const soft=pigmentSource(23,70);
+  let rejectedDescription=null;
+  const refused=reconstructionCandidates(soft,recipe,{
+    onDescription:descriptor=>{rejectedDescription=descriptor;}
+  });
+  assert.deepEqual(refused,[]);
+  assert.ok(rejectedDescription&&Array.isArray(rejectedDescription.colourRegions),
+    'unsupported sources must also explain the exact measured evidence');
+});
