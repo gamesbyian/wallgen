@@ -596,6 +596,36 @@ export function plainlyUnsupportedSoftPigments(image,colourRegions=[]){
     independent.reduce((total,g)=>total+g.count,0)>=samples*.035;
 }
 
+/**
+ * Existing strict hue masks can identify all seven *very dark* source
+ * pigments correctly, yet none of today's canonical colour stories paint
+ * source-mean RGB max around 62. A near-black seven-shape source may
+ * accidentally score an almost blank bright outline better than correctly
+ * positioned but over-bright canonical pigment shapes. Do not claim that
+ * score recovers the source's real colours.
+ *
+ * Reuse the ONE existing source-pigment measurement from image-path.js;
+ * this does not classify pixels again, create new masks, change palette
+ * semantics or add a renderer trial. Return false for dark ribbons, mixed
+ * bright/dim pigment or incomplete semantic slots.
+ */
+export function plainlyUnsupportedDarkPigments(description){
+  const regions=description?.colourRegions;
+  if(description?.background!=='black'||description?.sevenColourRegions!==true||
+    !Array.isArray(regions)||regions.length!==7||
+    !Number.isFinite(description.coverage)||description.coverage<.08)
+    return false;
+  return regions.every((region,index)=>{
+    if(region?.index!==index||!Array.isArray(region.meanRGB)||
+      region.meanRGB.length!==3||region.meanRGB.some(value=>
+        !Number.isFinite(value)||value<0||value>255))return false;
+    const max=Math.max(...region.meanRGB),min=Math.min(...region.meanRGB);
+    // Strong and recognizable dark source pigments, not neutral/black
+    // flakes, nor genuine bright palettes whose hues are recoverable.
+    return max>=55&&max<=86&&max-min>=45;
+  });
+}
+
 /** Return a few independently editable canonical alternatives. */
 export function reconstructionCandidates(image,recipe){
   const desc=describeReconstructionImage(image,{includeColourMasks:true});
@@ -604,7 +634,8 @@ export function reconstructionCandidates(image,recipe){
   // unless its actual source hue evidence says so. This deliberately returns
   // no auto-proposal; existing manual geometry-only path import remains.
   if(plainlyAchromaticForeground(image,desc.colourRegions)||
-    plainlyUnsupportedSoftPigments(image,desc.colourRegions))return [];
+    plainlyUnsupportedSoftPigments(image,desc.colourRegions)||
+    plainlyUnsupportedDarkPigments(desc))return [];
   // Scattered scene slots are contiguous 0..N-1, not arbitrary hue IDs.
   // One blue region, or isolated red and blue without orange/yellow/green,
   // cannot be represented as one/two objects without silently recolouring
