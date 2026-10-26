@@ -26,7 +26,7 @@ export const MATERIALS = ['none', 'grain', 'watercolor', 'construction', 'handma
 export const BLEND_MODES = ['normal', 'multiply', 'screen', 'overlay', 'soft-light', 'difference'];
 export const LIGHTING_MOODS = ['off', 'daylight', 'golden', 'moonlight'];
 export const LIGHT_DIRECTIONS = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
-export const LOCKABLE_SETTINGS = ['seed','family','orientation','geometry','motif','palette','outline','background','lightingMood','lightDirection','lightStrength','shadowStrength','stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection',
+export const LOCKABLE_SETTINGS = ['seed','family','orientation','geometry','motif','palette','paletteToneEnabled','paletteSaturation','paletteLightness','outline','background','lightingMood','lightDirection','lightStrength','shadowStrength','stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection',
   'material','textureCoverage','textureStrength','textureScale','textureRotation','textureBlend',
   'material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2',
   'material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3',
@@ -221,6 +221,10 @@ export function normalizeRecipe(input = {}) {
     motifFrequency: finiteRange(input.motifFrequency, 50, 0, 100),
     shapeDepth: finiteRange(input.shapeDepth, 50, 0, 100),
     palette: readChoice('palette', PALETTES),
+    // Custom tone is opt-in; ordinary fixed palettes stay pixel-identical.
+    paletteToneEnabled:input.paletteToneEnabled===true||input.paletteToneEnabled==='true',
+    paletteSaturation:finiteRange(input.paletteSaturation,92,0,100),
+    paletteLightness:finiteRange(input.paletteLightness,58,0,100),
     material: readChoice('material', MATERIALS),
     textureCoverage: TEXTURE_COVERAGES.includes(input.textureCoverage) ? input.textureCoverage : 'both',
     outline: readChoice('outline', OUTLINES),
@@ -298,12 +302,19 @@ export const COLOR_STORIES = Object.freeze({
   twilight: {sat:77,light:49,hue:[-9,-4,-2,6,12,9,8],lights:[1,1,9,-4,-2,-1,7]},
   citrus: {sat:90,light:61,hue:[-2,-3,-9,-13,-3,-7,-5],lights:[-1,3,12,1,-3,-4,0]},
 });
-export function paletteHsl(hue, palette, r) {
+export function paletteHsl(hue, palette, r, tone=null) {
   const story=COLOR_STORIES[palette]??COLOR_STORIES.classic;
   const i=HUES.indexOf(hue);
   const h=((hue+(story.hue?.[i]??0)+between(r,-3,3))%360+360)%360;
-  const light=Math.max(10,Math.min(90,story.light+(story.lights?.[i]??0)));
-  return `hsl(${h.toFixed(1)} ${story.sat}% ${light}%)`;
+  // One canonical colour path serves ribbon, regional, worker and exported
+  // artworks. The explicit opt-in tone can reach genuinely muted or dark
+  // pigments; old fixed palette output is byte-for-byte unchanged.
+  const custom=tone?.enabled===true;
+  const sat=custom?clamp(tone.saturation,0,100):story.sat;
+  const light=custom?
+    clamp(tone.lightness+(story.lights?.[i]??0),1,99):
+    clamp(story.light+(story.lights?.[i]??0),10,90);
+  return `hsl(${h.toFixed(1)} ${sat}% ${light}%)`;
 }
 
 // Turns a saved recipe into a deterministic scene specification, independent of resolution.
@@ -401,7 +412,11 @@ export function resolveScene(recipeInput) {
       // Reverse the colour assignment, not the geometry. It keeps all seven
       // ribbon centres sorted and preserves the historic scene on default.
       name: NAMES[recipe.reverseStripes?6-i:i], index:i,
-      color: paletteHsl(HUES[recipe.reverseStripes?6-i:i], palette, r), center: position + center,
+      color: paletteHsl(HUES[recipe.reverseStripes?6-i:i],palette,r,
+        recipe.paletteToneEnabled?{enabled:true,
+          saturation:recipe.paletteSaturation,
+          lightness:recipe.paletteLightness}:null),
+      center:position + center,
       width: Math.max(width, recipe.construction==='stroke'?.8:1.5), geometry: individualGeometry,
       motif, lineStyle:recipe.lineStyle, endTaper:recipe.endTaper,
       dotSize:recipe.dotSize,dotSpacing:recipe.dotSpacing,
