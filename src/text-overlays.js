@@ -10,6 +10,7 @@ export const TEXT_FONTS=Object.freeze({
 });
 import {isLocalFontId} from './local-fonts.js';
 import {isBundledFontId} from './bundled-fonts.js';
+import {fallbackTextGraphemes} from './text-rainbow-shaping.js';
 export const TEXT_COLOURS=Object.freeze([
   'black','white','rainbow-letter','rainbow-word','rainbow-gradient'
 ]);
