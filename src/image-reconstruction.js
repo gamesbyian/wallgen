@@ -390,13 +390,23 @@ export function describeReconstructionImage(image,{includeColourMasks=false}={})
   // seven pigments and wrongly discarded otherwise straightforward source
   // geometry. Do not assume that arbitrary *missing middle* colour slots,
   // overlapping fragments or elongated occlusions can be represented.
-  const incompleteColourRegions=colour.regions.length>=1&&
+  const compactPartialRegions=colour.regions.length>=1&&
     colour.regions.length<=6&&
     colour.componentRegions.length===colour.regions.length&&
     componentDiagonalAngle===null&&
-    colour.regions.every((region,index)=>region.index===index&&
+    colour.regions.every(region=>
       region.area>=Math.max(16,image.width*image.height*.001)&&
       region.fillRatio>=.48&&region.axisRatio<=1.9&&aspect(region)<2.3);
+  const incompleteColourRegions=compactPartialRegions&&
+    colour.regions.every((region,index)=>region.index===index);
+  // Multiple isolated source polygons may visibly skip middle ROYGBIV hues.
+  // With N scattered objects, the canonical painter assigns ONLY 0..N-1.
+  // A procedural seven-stripe candidate would add never-observed pigments
+  // and may score deceptively well by painting a thin multicoloured squiggle
+  // against mostly black pixels. Such compact, separate visible source art
+  // cannot be faithfully represented without making up missing objects.
+  const unsupportedCompactHueGaps=compactPartialRegions&&
+    !incompleteColourRegions;
   const elongated=colour.regions.filter(region=>aspect(region)>3);
   const vertical=elongated.filter(region=>{
     const [x0,y0,x1,y1]=region.bounds;
@@ -425,6 +435,7 @@ export function describeReconstructionImage(image,{includeColourMasks=false}={})
     circleHints:colour.circleHints,
     inferredCircleLayers:colour.inferredCircleLayers,
     repeatedColourRegions,incompleteColourRegions,
+    unsupportedCompactHueGaps,
     paths:paths.slice(0,6),sevenColourRegions:seven,lineDirection,
     stripeAngle,componentDiagonalAngle,radial,curve,ribbonBands,coverage:colour.coverage,
     dimensions:[image.width,image.height]};
@@ -480,8 +491,9 @@ export function reconstructionCandidates(image,recipe){
   // the pixels or fabricating missing hue objects. Manual contour import
   // remains available as a geometry-only edit; automated pixel fidelity
   // must refuse this impossible partial colour assignment.
-  if(desc.colourRegions.length>0&&desc.colourRegions.length<=2&&
-    desc.colourRegions.some((region,index)=>region.index!==index))
+  if(desc.unsupportedCompactHueGaps||
+    (desc.colourRegions.length>0&&desc.colourRegions.length<=2&&
+      desc.colourRegions.some((region,index)=>region.index!==index)))
     return [];
   // Prefer a strongly distinguishable *appearance* hypothesis only. The
   // canonical painter still ranks candidate geometry; history is unknown.
