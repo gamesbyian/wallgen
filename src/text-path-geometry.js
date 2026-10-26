@@ -4,6 +4,7 @@
 import {pathPosition} from './path-geometry.js';
 import {prepareDrawnPath,pointOnDrawnPath} from './drawn-path.js';
 import {textGraphemes} from './text-rainbow-shaping.js';
+import {textInkSelectionReach} from './text-overlays.js';
 import {availableTextWidth} from './text-direct-geometry.js';
 import {DESIGN_WIDTH,DESIGN_HEIGHT} from './model.js';
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
@@ -181,7 +182,7 @@ export function hitTextAtLayout(items,point,measureFor,{tolerance=0,customPath}=
     const preparedPath=['drawn','hairpin','loop'].includes(item.path)?
       prepareTextFollowPath(item,customPath):undefined;
     const leading=item.size*1.17*(1+(item.lineSpacing??0)/100);
-    const stroke=item.outline==='none'?0:item.size*item.outlineWidth/100;
+    const stroke=textInkSelectionReach(item);
     const extra=stroke+reach;
     for(let lineIndex=0;lineIndex<lines.length;lineIndex++){
       const line=lines[lineIndex];

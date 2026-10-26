@@ -1,5 +1,5 @@
 import {DESIGN_WIDTH,DESIGN_HEIGHT} from './model.js';
-import {TEXT_FONTS} from './text-overlays.js';
+import {TEXT_FONTS,DUAL_TEXT_OUTLINE_STROKE_MULTIPLIER} from './text-overlays.js';
 import {typefacesReady,typefaceCssFamily} from './typography-fonts.js';
 import {availableTextWidth} from './text-direct-geometry.js';
 import {rainbowTextStops,isSimpleRightToLeft} from './text-rainbow-shaping.js';
@@ -21,7 +21,7 @@ function paintTextOutline(ctx,item,text,x,y){
   ctx.shadowColor='rgba(0,0,0,0)';
   ctx.shadowBlur=0;ctx.shadowOffsetX=0;ctx.shadowOffsetY=0;
   if(item.outline==='black-white'||item.outline==='white-black'){
-    ctx.lineWidth=innerWidth*2.5;
+    ctx.lineWidth=innerWidth*DUAL_TEXT_OUTLINE_STROKE_MULTIPLIER;
     ctx.strokeStyle=item.outline==='black-white'?'#000000':'#ffffff';
     ctx.strokeText(text,x,y);
     ctx.lineWidth=innerWidth;

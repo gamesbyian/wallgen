@@ -14,6 +14,17 @@ export const TEXT_COLOURS=Object.freeze([
   'black','white','rainbow-letter','rainbow-word','rainbow-gradient'
 ]);
 export const TEXT_OUTLINES=Object.freeze(['none','black','white','black-white','white-black']);
+// The renderer paints an outer ring 2.5x the authored inner stroke width.
+// Canvas strokes expand halfway to either side of glyph ink. Keep the
+// editor's historical generous single-ring selection margin, but ensure
+// two-ring selection/handle bounds reach the actual outer visible paint.
+export const DUAL_TEXT_OUTLINE_STROKE_MULTIPLIER=2.5;
+export function textInkSelectionReach(item){
+  if(!item||item.outline==='none')return 0;
+  const inner=Math.max(0,(Number(item.size)||0)*(Number(item.outlineWidth)||0)/100);
+  return item.outline==='black-white'||item.outline==='white-black'?
+    Math.max(inner,inner*DUAL_TEXT_OUTLINE_STROKE_MULTIPLIER/2):inner;
+}
 export const TEXT_PATHS=Object.freeze(['none','wave','arc','circle','hairpin','loop','drawn']);
 export const TEXT_SHADOWS=Object.freeze(['none','black','white']);
 export const MAX_TEXT_OVERLAYS=8;

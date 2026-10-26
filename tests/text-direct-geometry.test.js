@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {normalizeRecipe} from '../src/model.js';
+import {textInkSelectionReach,DUAL_TEXT_OUTLINE_STROKE_MULTIPLIER} from '../src/text-overlays.js';
 import {availableTextWidth,designPointFromPointer,measuredTextBounds,
   hitTextOverlay,dragTextOverlay,dragTextTransform,transformTextOverlay,
   measureCanvasText} from '../src/text-direct-geometry.js';
@@ -165,4 +166,32 @@ test('selection metric stays native when letterSpacing is unsupported or absent'
   assert.equal(measureCanvasText(ctx,'bold 30px test',item,'AB',{tracking:true}),22);
   assert.equal(ctx.font,'baseline');
   assert.equal(measureCanvasText(ctx,'bold 30px test',{},'AB',{tracking:true}),22);
+});
+
+test('two-ring painted outer edge remains selectable, including generic rotated-guide geometry',()=>{
+  const item={id:'outline',enabled:true,text:'WIDE',x:50,y:50,
+    size:180,rotation:0,outline:'black-white',outlineWidth:20};
+  const inner=item.size*item.outlineWidth/100;
+  const outerWidth=inner*DUAL_TEXT_OUTLINE_STROKE_MULTIPLIER;
+  assert.equal(inner,36);
+  assert.equal(outerWidth,90);
+  assert.equal(textInkSelectionReach(item),45,'outer stroke extends half its lineWidth');
+  assert.equal(textInkSelectionReach({...item,outline:'black'}),36,
+    'ordinary single outline keeps the original generous pick margin');
+  assert.equal(textInkSelectionReach({...item,outline:'none'}),0);
+  for(const outline of ['black-white','white-black']){
+    const both={...item,outline};
+    const width=both.text.length*60;
+    const visibleOuterInk={x:300+width/2+40,y:650};
+    assert.ok(40>inner,'point was beyond the prior 36-unit margin');
+    assert.ok(40<outerWidth/2,'point is within the painted 45-unit ring reach');
+    assert.equal(hitTextOverlay([both],visibleOuterInk,(_item,t)=>t.length*60)?.id,
+      both.id,'generic hit should reach what the double ring paints');
+    assert.equal(hitTextAtLayout([both],visibleOuterInk,(_item,t)=>t.length*60)?.id,
+      both.id,'on-canvas hit should reach visible double-ring ink');
+  }
+  const missed={x:300+item.text.length*60/2+46,y:650};
+  assert.equal(hitTextOverlay([item],missed,(_item,t)=>t.length*60),null,
+    'tap beyond the outer ring still misses');
+  assert.equal(hitTextAtLayout([item],missed,(_item,t)=>t.length*60),null);
 });

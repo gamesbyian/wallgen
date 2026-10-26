@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {normalizeRecipe,resolveScene} from '../src/model.js';
-import {normalizeTextOverlays} from '../src/text-overlays.js';
+import {normalizeTextOverlays,textInkSelectionReach,DUAL_TEXT_OUTLINE_STROKE_MULTIPLIER} from '../src/text-overlays.js';
 import {drawTextOverlays} from '../src/text-overlay-renderer.js';
 import {measuredTextBounds} from '../src/text-direct-geometry.js';
 
@@ -236,4 +236,17 @@ test('shadow-angle editor control has an accessible mapping and is disabled unti
   assert.match(markup,/aria-label="Shadow angle: degrees clockwise from right"/);
   assert.match(markup,/\['shadowBlur','shadowDistance','shadowAngle'\]/);
   assert.match(markup,/shadowAngle:45/);
+});
+
+test('double-outline renderer and pointer hit margin share one outer-ring contract',()=>{
+  const scene=resolveScene(normalizeRecipe({textOverlays:[{
+    text:'EDGE',size:180,outlineWidth:20,outline:'black-white',colour:'white'
+  }]}));
+  const item=scene.textOverlays[0],ctx=fake();
+  drawTextOverlays(ctx,600,1300,scene);
+  const strokes=ctx.calls.filter(c=>c[0]==='stroke');
+  assert.equal(strokes.length,2);
+  assert.equal(strokes[0][6],strokes[1][6]*DUAL_TEXT_OUTLINE_STROKE_MULTIPLIER);
+  assert.equal(textInkSelectionReach(item),strokes[0][6]/2,
+    'the actual painted outer stroke and selection must share reach');
 });
