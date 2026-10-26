@@ -386,3 +386,20 @@ test('Arabic Letter Mark preserves native bidirectional whole-line painting',()=
     (_item,line)=>line.length*14)?.id,'alm');
   assert.equal(canCurveText('ABC123'),true);
 });
+
+test('invisible format controls do not steal curved colours or create selectable ink',()=>{
+  const item={text:'A\u200bB',path:'arc',pathHeight:80,
+    colour:'rainbow-letter',outline:'none',size:64,x:50,y:50};
+  const scene=resolveScene(normalizeRecipe({textOverlays:[item]}));
+  const ctx=context();drawTextOverlays(ctx,600,1300,scene);
+  const fills=ctx.calls.filter(x=>x[0]==='fill');
+  assert.deepEqual(fills.map(x=>x[1]),['A','\u200b','B']);
+  assert.equal(fills[0][4],scene.stripes[0].color);
+  assert.equal(fills[2][4],scene.stripes[1].color,
+    'the second visible curved glyph should get orange, not yellow');
+  const invisible={id:'invisible',enabled:true,text:'\u200b',
+    x:50,y:50,size:64,rotation:0,path:'wave',pathHeight:90,
+    outline:'none'};
+  assert.equal(hitTextAtLayout([invisible],{x:300,y:650},
+    ()=>20),null,'an entirely invisible control is not pickable ink');
+});
