@@ -109,6 +109,18 @@ try{
           'actual 19.8MP PNG recipe metadata lost Tone/shape settings');
         await writeFile(join(out,'visible-full-resolution.png'),png);
       }
+      // Capture the real editing card, rather than merely relabeling a
+      // Studio screenshot as a controls screenshot after recipe reload.
+      await page.locator('#mobileEdit').tap();
+      await page.locator('#tab-colour').tap();
+      const activeTone=page.locator(
+        '.editor-tool-chooser [data-editor-tool="palette-tone"]');
+      await activeTone.scrollIntoViewIfNeeded();await activeTone.tap();
+      assert.equal(await enabled.isChecked(),true);
+      assert.equal(await saturation.inputValue(),'23');
+      assert.equal(await lightness.inputValue(),'70');
+      assert.ok(await saturation.isVisible()&&await lightness.isVisible(),
+        'both authored custom Tone sliders must be actually visible');
       await page.screenshot({path:join(out,width+'x'+height+'-controls.png'),
         animations:'disabled'});
       assert.deepEqual(errors,[],'uncaught browser errors');
