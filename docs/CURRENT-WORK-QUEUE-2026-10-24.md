@@ -1,4 +1,4 @@
-# Current ROYGBIV work queue and three-agent dispatch
+# Current ROYGBIV owner work queue and conditional integration
 
 ## LIVE OWNER DISPATCH · 26 October 2026 Calgary (refresh GitHub before acting)
 
