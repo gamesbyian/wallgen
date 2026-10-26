@@ -5,6 +5,7 @@ import {HUES,COLOR_STORIES,normalizeRecipe,resolveScene,paletteHsl,
   respectSettingLocks,encodeRecipe,decodeRecipe,randomizeAllRecipe,
   LOCKABLE_SETTINGS} from '../src/model.js';
 import {EDITOR_CATEGORIES} from '../src/editor-schema.js';
+import {randomizeScope,scopedKeys} from '../src/scoped-random.js';
 
 const colours=recipe=>resolveScene(recipe).stripes.map(s=>s.color);
 test('opt-in Tone has no rendering or colour-story effect for existing generated art',()=>{
@@ -90,4 +91,37 @@ test('editor exposes one separate compact Tone tool backed by canonical source i
   assert.ok(app.includes("inactive.add('paletteSaturation')"));
   assert.ok(app.includes("field.dataset.inactive='false'"),
     'newly activated ranges enter the same synchronous change/Undo transaction');
+});
+
+test('scoped Tone rerolls respect explicit opt-in, separate tonal bands and per-setting locks',()=>{
+  assert.deepEqual(scopedKeys('tool','palette-tone'),
+    ['paletteToneEnabled','paletteSaturation','paletteLightness']);
+  assert.deepEqual(scopedKeys('tool','tone'),['tonalContrast']);
+  const dormant=normalizeRecipe({seed:'dormant-tone',
+    paletteToneEnabled:false,paletteSaturation:23,paletteLightness:70});
+  for(const [scope,name] of [['tool','palette-tone'],['category','colour']]){
+    const result=randomizeScope(dormant,{scope,name,seed:'dormant-reroll'});
+    assert.equal(result.recipe.paletteToneEnabled,false);
+    assert.equal(result.recipe.paletteSaturation,23);
+    assert.equal(result.recipe.paletteLightness,70);
+    assert.ok(!result.modified.some(key=>key.startsWith('paletteTone')||
+      ['paletteSaturation','paletteLightness'].includes(key)));
+  }
+  const enabled=normalizeRecipe({seed:'already-enabled',palette:'jewel',
+    paletteToneEnabled:true,paletteSaturation:23,paletteLightness:70,
+    lockedSettings:['paletteSaturation']});
+  const varied=randomizeScope(enabled,{scope:'tool',name:'palette-tone',
+    seed:'fresh-creative-tone'});
+  assert.equal(varied.recipe.paletteToneEnabled,true);
+  assert.equal(varied.recipe.paletteSaturation,23);
+  assert.ok(varied.recipe.paletteLightness>=0&&varied.recipe.paletteLightness<=100);
+  assert.notEqual(varied.recipe.paletteLightness,70);
+  assert.ok(varied.modified.every(key=>key==='paletteLightness'));
+  assert.equal(varied.recipe.palette,'jewel');
+  assert.equal(varied.recipe.seed,enabled.seed);
+  const variant=randomizeScope(enabled,{scope:'tool',name:'palette-tone',
+    seed:'gentle-tone',mode:'vary',strength:'gentle'});
+  assert.equal(variant.recipe.paletteToneEnabled,true);
+  assert.equal(variant.recipe.paletteSaturation,23);
+  assert.ok(Math.abs(variant.recipe.paletteLightness-70)<=7);
 });
