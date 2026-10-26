@@ -47,7 +47,15 @@ export function isSimpleRightToLeft(line){
 }
 // Pure direction controls alter Bidi layout but have no visible ink and must
 // not consume a rainbow-letter/word colour slot between real glyphs.
-const directionOnly=/^[\u061c\u200e\u200f\u202a-\u202e\u2066-\u2069]+$/u;
+// A formatting-only grapheme can occupy a text-model slot without painting
+// ink. Keep it in the native shaped run, but do not spend a rainbow hue on it.
+// This matches the font-coverage diagnostic's Unicode property rather than
+// maintaining another partial list of invisible codepoints.
+const defaultIgnorable=/\p{Default_Ignorable_Code_Point}/u;
+export function hasVisibleTextInk(unit){
+  return [...String(unit||'')].some(char=>
+    !/\s/u.test(char)&&!defaultIgnorable.test(char));
+}
 export function rainbowTextStops(line,mode,colours,startIndex,measure,{rightToLeft=false}={}){
   if(!['rainbow-letter','rainbow-word'].includes(mode))
     throw Error('Unknown rainbow segmentation mode');
@@ -60,7 +68,7 @@ export function rainbowTextStops(line,mode,colours,startIndex,measure,{rightToLe
     const width=Number.isFinite(raw)?Math.max(0,raw):0;
     spans.push({width,colour:colours[colourIndex%colours.length]});
     weight+=width;
-    if(unit.trim()&&!directionOnly.test(unit))colourIndex++;
+    if(hasVisibleTextInk(unit))colourIndex++;
   }
   if(!spans.length||weight===0)
     return {stops:[],nextIndex:colourIndex};
