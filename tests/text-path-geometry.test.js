@@ -58,7 +58,7 @@ test('Arabic, RTL and joining scripts are not fragmented on curved baselines',()
   assert.equal(canCurveText('مرحبا بالعالم'),false);
   assert.equal(canCurveText('שלום'),false);
   assert.equal(canCurveText('हिन्दी'),false);
-  assert.equal(canCurveText('👩‍🔬'),false);
+  assert.equal(canCurveText('👩‍🔬'),true);
   assert.equal(canCurveText('Hello 🌈'),true);
   const scene=resolveScene(normalizeRecipe({textOverlays:[
     {text:'مرحبا',path:'wave',font:'editorial',colour:'black',outline:'none'},
@@ -250,6 +250,48 @@ test('presentation-form RTL and later Indic/supplementary scripts stay native sh
     assert.equal(canCurveText(simple),true,
       'simple existing Latin/CJK/Cyrillic/Greek curves must remain available');
   }
-  assert.equal(canCurveText('👩‍🚀'),false,
-    'joining control still falls back instead of splitting an emoji sequence');
+  assert.equal(canCurveText('👩‍🚀'),true,
+    'complete emoji ZWJ clusters can curve without splitting their pictographs');
+});
+
+test('whole joined emoji clusters follow curves without splitting glyph or colour units',()=>{
+  if(typeof Intl.Segmenter!=='function')return;
+  const emoji=['👩‍🚀','👨‍👩‍👧‍👦','🧑🏽‍💻','🏳️‍🌈','👨‍❤️‍👨'];
+  for(const cluster of emoji){
+    assert.equal(canCurveText(cluster),true,cluster);
+    const item=normalizeTextOverlays([{text:'X '+cluster+' 🌈',
+      path:'arc',pathHeight:95,outline:'none',colour:'rainbow-letter'}])[0];
+    const layout=layoutTextOnPath(item,item.text,unit=>[...unit].length*12);
+    assert.equal(layout.supported,true);
+    assert.equal(layout.glyphs.filter(g=>g.text===cluster).length,1,
+      'joined emoji must occupy exactly one curved station');
+    const ctx=context();
+    drawTextOverlays(ctx,600,1300,resolveScene(normalizeRecipe({textOverlays:[item]})));
+    const fills=ctx.calls.filter(c=>c[0]==='fill'&&c[1].includes('\u200d'));
+    assert.deepEqual(fills.map(c=>c[1]),[cluster],
+      'paint a joined emoji only once, with the whole grapheme intact');
+    const station=layout.glyphs.find(g=>g.text===cluster);
+    assert.equal(hitTextAtLayout([item],
+      {x:300+station.x,y:650+station.y},()=>35)?.id,item.id,
+      'complete emoji must be selectable at the same curved station');
+  }
+});
+test('joining-language, malformed ZWJ and missing grapheme API retain safe native runs',()=>{
+  for(const text of ['र्‍क','مرح‍با','A\u200dB','👩\u200d','👩\u200dA',
+    '𞤀\u200d𞤭']){
+    assert.equal(canCurveText(text),false,text);
+    assert.equal(layoutTextOnPath({text,path:'wave',x:50,size:60},text,()=>20).supported,
+      false,'never fabricate per-grapheme stations for native joining');
+  }
+  const segmenter=Object.getOwnPropertyDescriptor(Intl,'Segmenter');
+  try{
+    Object.defineProperty(Intl,'Segmenter',{configurable:true,writable:true,value:undefined});
+    for(const text of ['👩‍🚀','👨‍👩‍👧‍👦','e\u0301','🇨🇦'])
+      assert.equal(canCurveText(text),false,
+        'without Intl.Segmenter use the native whole-line painter for '+text);
+    assert.equal(canCurveText('RAINBOW'),true);
+  }finally{
+    if(segmenter)Object.defineProperty(Intl,'Segmenter',segmenter);
+    else delete Intl.Segmenter;
+  }
 });
