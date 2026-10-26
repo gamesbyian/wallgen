@@ -171,7 +171,10 @@ export function hitTextAtLayout(items,point,measureFor,{tolerance=0,customPath}=
   const reach=Math.max(0,Number.isFinite(tolerance)?tolerance:0);
   for(let i=(items?.length||0)-1;i>=0;i--){
     const item=items[i];
-    if(!item?.enabled||!item.text||!Number.isFinite(item.size))continue;
+    // Pick painted ink, not a fully transparent object or a run of
+    // invisible format controls. Both remain editable via the object list.
+    if(!item?.enabled||item.opacity===0||!hasVisibleTextInk(item.text)||
+      !Number.isFinite(item.size))continue;
     const angle=(item.rotation||0)*Math.PI/180;
     const px=point.x-DESIGN_WIDTH*item.x/100,
       py=point.y-DESIGN_HEIGHT*item.y/100;

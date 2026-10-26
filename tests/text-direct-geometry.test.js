@@ -195,3 +195,17 @@ test('two-ring painted outer edge remains selectable, including generic rotated-
     'tap beyond the outer ring still misses');
   assert.equal(hitTextAtLayout([item],missed,(_item,t)=>t.length*60),null);
 });
+
+test('direct hit-testing ignores transparent and format-only top objects',()=>{
+  const under={id:'under',enabled:true,text:'INK',x:50,y:50,size:60,
+    rotation:0,outline:'none',opacity:1};
+  const hidden={...under,id:'hidden',text:'GHOST',opacity:0};
+  const mark={...under,id:'mark',text:'\u200b\u2060',opacity:1};
+  const center={x:300,y:650};
+  assert.equal(hitTextOverlay([under,hidden],center,measure)?.id,'under');
+  assert.equal(hitTextOverlay([hidden],center,measure),null);
+  assert.equal(hitTextOverlay([under,mark],center,measure)?.id,'under');
+  assert.equal(hitTextOverlay([mark],center,measure),null);
+  assert.equal(hitTextOverlay([{...hidden,opacity:.01}],center,measure)?.id,
+    'hidden','a nonzero opacity is still selectable ink');
+});
