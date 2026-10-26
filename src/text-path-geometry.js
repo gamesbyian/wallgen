@@ -16,14 +16,14 @@ const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 // inventing isolated glyph shapes and often reversing visual RTL order.
 const nativeBmp=/[\u0590-\u109f\u1700-\u18af\u1a00-\u1cff\ua800-\uabff\ufb1d-\ufdff\ufe70-\ufeff\u200c\u200d\u202a-\u202e\u2066-\u2069]/u;
 const commonSupplementary=/[\p{Script=Han}\p{Script=Common}\p{Script=Inherited}]/u;
-const supplementaryLetter=/\p{Letter}/u;
+const supplementaryTextual=/[\p{Letter}\p{Number}]/u;
 export function canCurveText(line){
   if(nativeBmp.test(line))return false;
   // Most new RTL/Indic scripts reside above the BMP. Preserve intact lines
   // for unknown supplementary letters; allow CJK ideographs, symbols and
   // emoji clusters already supported by Intl grapheme segmentation.
   for(const char of line){
-    if(char.codePointAt(0)>0xffff&&supplementaryLetter.test(char)&&
+    if(char.codePointAt(0)>0xffff&&supplementaryTextual.test(char)&&
        !commonSupplementary.test(char))return false;
   }
   return true;
