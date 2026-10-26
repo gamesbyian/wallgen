@@ -121,7 +121,12 @@ export function drawTextOverlays(ctx,width,height,scene){
             if(ink&&!inWord){
               wordColour=colours[colourIndex%colours.length];colourIndex++;
             }
-            inWord=ink;
+            // Default-ignorable format controls have no ink, but they
+            // aren't whitespace and must not split an existing word.
+            // Native straight rainbow-word groups non-whitespace runs as
+            // one word. Curved glyph stations must count the same units.
+            if(/\s/u.test(glyph.text))inWord=false;
+            else if(ink)inWord=true;
             fill=wordColour;
           }
           ctx.save();

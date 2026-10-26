@@ -146,3 +146,20 @@ test('default-ignorable standalone formatting graphemes never consume visible hu
     .nextIndex,1,'emoji tag components remain inside one visible grapheme');
   assert.equal(rainbowTextStops('\u200b','rainbow-word',palette,3,width).nextIndex,3);
 });
+
+test('native rainbow-word does not count invisible non-whitespace formatting as word breaks',()=>{
+  for(const marker of ['\u2060','\u200b','\u200f','\u034f']){
+    const first=rainbowTextStops('A'+marker+'B C','rainbow-word',
+      palette,0,width);
+    assert.equal(first.nextIndex,2,
+      'U+'+marker.codePointAt(0).toString(16)+' must not split a word');
+    assert.equal(first.stops[0].colour,'R');
+    assert.equal(first.stops.at(-1).colour,'O');
+    const following=rainbowTextStops('D','rainbow-word',palette,
+      first.nextIndex,width);
+    assert.equal(following.stops[0].colour,'Y');
+  }
+  const separated=rainbowTextStops('A B','rainbow-word',palette,0,width);
+  assert.equal(separated.nextIndex,2,
+    'real inter-word whitespace keeps existing segmentation');
+});
