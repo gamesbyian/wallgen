@@ -1,8 +1,19 @@
 name: R0 source-visible hue shape oracle
 # Source/fit screenshots and full-resolution export remain manually opt-in.
 on:
+  # Temporary baseline/control optical run for #557, removed before integration.
+  pull_request:
+    paths:
+      - 'scripts/review-reconstruction-external-pigments.mjs'
+      - 'src/image-reconstruction.js'
+      - 'tests/reconstruction-r0-evaluate.test.js'
   workflow_dispatch:
     inputs:
+      include_gapped_hue:
+        description: 'Independently authored missing-middle compact pigment comparison'
+        type: boolean
+        required: false
+        default: false
       include_sparse_hue:
         description: 'Additionally test independently drawn one/two semantic pigment sources'
         type: boolean
@@ -118,6 +129,25 @@ jobs:
               id:s.id,kind:s.bestKind,error:s.bestError,candidates:s.candidateCount,
               originalHueRegions:s.sourceSignature?.regionCount}));
           '
+      - name: Author four independent gapped and contiguous source pigments
+        if: ${{ inputs.include_gapped_hue || github.event_name == 'pull_request' }}
+        run: node scripts/review-reconstruction-external-pigments.mjs --collection gapped-hue --out-dir artifacts/external-gapped-hue
+      - name: Evaluate four source-blind gapped and contiguous pigments with original painter
+        if: ${{ inputs.include_gapped_hue || github.event_name == 'pull_request' }}
+        run: node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/external-gapped-hue --source-signature
+      - name: Record exact candidate count and source hue slots for each independent input
+        if: ${{ inputs.include_gapped_hue || github.event_name == 'pull_request' }}
+        run: |
+          node --input-type=module -e '
+            import {readFileSync} from "node:fs";
+            const r=JSON.parse(readFileSync("artifacts/external-gapped-hue/evaluation.json"));
+            if(r.samples.length!==4||r.samples.some(s=>s.trueStructure!==null))
+              throw Error("Missing independent gapped source evidence");
+            for(const x of r.samples)console.log("GAPPED_HUE_SOURCE "+
+              JSON.stringify({id:x.id,hueCount:x.sourceSignature?.regionCount,
+                candidateCount:x.candidateCount,kind:x.bestKind,error:x.bestError,
+                alternatives:x.alternatives?.map(a=>a.kind)}));
+          '
       - name: Generate all 22 genuine metadata-free current-renderer R0 images
         if: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
@@ -231,6 +261,7 @@ jobs:
             artifacts/r0-loop-holdouts
             artifacts/external-low-chroma
             artifacts/external-sparse-hue
+            artifacts/external-gapped-hue
             artifacts/external-pigment-r0
           if-no-files-found: warn
           retention-days: 7
