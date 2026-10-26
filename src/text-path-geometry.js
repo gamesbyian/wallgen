@@ -10,8 +10,23 @@ const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 // Splitting joining or bidirectional runs into glyph paints is incorrect:
 // Canvas2D has no shaped-glyph-position API. Refuse curved segmentation and
 // retain the original whole-line renderer for these runs.
+// The original BMP band misses Arabic/Hebrew presentation forms, later
+// Myanmar/Indic blocks and supplementary joining scripts (e.g. Adlam).
+// For unverified complex scripts native straight-run paint is safer than
+// inventing isolated glyph shapes and often reversing visual RTL order.
+const nativeBmp=/[\u0590-\u109f\u1700-\u18af\u1a00-\u1cff\ua800-\uabff\ufb1d-\ufdff\ufe70-\ufeff\u200c\u200d\u202a-\u202e\u2066-\u2069]/u;
+const commonSupplementary=/[\p{Script=Han}\p{Script=Common}\p{Script=Inherited}]/u;
+const supplementaryTextual=/[\p{Letter}\p{Number}]/u;
 export function canCurveText(line){
-  return !/[\u0590-\u109f\u1700-\u18af\u200c\u200d\u202a-\u202e\u2066-\u2069]/u.test(line);
+  if(nativeBmp.test(line))return false;
+  // Most new RTL/Indic scripts reside above the BMP. Preserve intact lines
+  // for unknown supplementary letters; allow CJK ideographs, symbols and
+  // emoji clusters already supported by Intl grapheme segmentation.
+  for(const char of line){
+    if(char.codePointAt(0)>0xffff&&supplementaryTextual.test(char)&&
+       !commonSupplementary.test(char))return false;
+  }
+  return true;
 }
 // Reuse the exact canonical Draw stroke rather than inventing a second
 // editable spline. Only a normalized recipe customPath may drive this mode.
