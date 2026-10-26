@@ -1,5 +1,14 @@
 # ROYGBIV release-readiness and owner-dependent acceptance ledger
 
+## Live software-evidence boundary · 25 October 2026 (Calgary) / 26 October UTC
+
+[Main `7213f972`](https://github.com/gamesbyian/wallgen/commit/7213f972a348f6e7fa0b952ae6d11a441d07df47) includes merged [#726](https://github.com/gamesbyian/wallgen/pull/726), a visible-colour fidelity correctness fix that preserves representable first one/two semantic hues and rejects unsupported noncontiguous slots. [Actual current-renderer optical #40247842572](https://github.com/gamesbyian/wallgen/actions/runs/40247842572) passed all 22 R0, twelve external truthless pixel sources and three large exported Hairpin/Loop/Jagged portable PNG recipes. [Final-head quick #40247989783](https://github.com/gamesbyian/wallgen/actions/runs/40247989783) passed. The one-off PR-triggered optical workflow was removed before integration. Existing 8-font/8-text full-size export [#40167429815](https://github.com/gamesbyian/wallgen/actions/runs/40167429815) remains browser-only proof; user-visible mobile Download, refusal explanation/accessible focus and full cross-journey regression are independently owned by #664.
+
+**Current issues:** #557 reconstruction fidelity (mixed occlusion, constrained pigments, source gaps); #653 specialist text shaping/perf/hit quality; #664 integration and software/browser accessibility. At merged checkpoint zero open PRs; all 17 no-PR branches accounted for in [current queue](CURRENT-WORK-QUEUE-2026-10-24.md). #664 may close when source/backend, portrait and visible Download tests have no reproducible software blockers, but that must be documented independently.
+
+**Not tested:** physical Pixel 6 Pro Chrome/PWA and real touch reach; Android IME composition and TalkBack; native 3024×6552 memory/thermal/battery; owner artistic approval and consented human usage; owner-provided licensed external samples; actual authenticated private GitHub backup read/write/failure recovery. Preserve these as separate owner-dependent acceptance and privacy realities, not mandatory speculative PR tasks. Earlier main SHAs or no-open-PR reports below are historical checkpoints.
+
+
 ## Independent acceptance and native gate checkpoint · 25 October 2026 UTC
 
 **Verified current `main`: `87859b0ce95c3b4254cf1bb8d6dd6df1302013aa`.** Zero open PRs at the GitHub inventory immediately following this merge. Open ownership issues remain **[#557 reconstruction](https://github.com/gamesbyian/wallgen/issues/557), [#653 typography](https://github.com/gamesbyian/wallgen/issues/653), [#664 independent acceptance](https://github.com/gamesbyian/wallgen/issues/664)**. The earlier old-SHA and pending-PR headings below are dated historical receipts; do not use them as a current merge queue.

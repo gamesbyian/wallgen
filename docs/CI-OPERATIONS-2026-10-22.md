@@ -1,5 +1,10 @@
 # Pragmatic CI for a personal wallpaper app
 
+## Verified final workflow disposition · 25 October 2026 (Calgary)
+
+Merged [#726](https://github.com/gamesbyian/wallgen/pull/726) used a **temporary** PR source-only/22-case Chromium optical trigger for [full source-verifiable #40247842572](https://github.com/gamesbyian/wallgen/actions/runs/40247842572). The entire added pull_request stanza and conditional heavy PR event conditions were **removed on final head** before squash merge. [Final normal Validate Wallgen #40247989783](https://github.com/gamesbyian/wallgen/actions/runs/40247989783) passed. `reconstruction-hue-shapes-experiment.yml` retains the new explicitly manual `include_sparse_hue` and previous optional low-chroma/external/full R0 inputs; **no automatic 22-image sweep**. The only ordinary PR gate remains `npm run check:quick`. Reintroduce a one-off conditional optical run only for a new demonstrated algorithmic failure, then retire it again before integration; do not invent speed or physical-phone acceptance from the CI runner.
+
+
 ## Exact current quick gate and optional art proof (2026-10-22)
 
 The sole PR `Validate Wallgen` check still runs **`npm run check:quick`**, with no Chromium, snapshots, screen recordings or full Node suite by default. After [#525](https://github.com/gamesbyian/wallgen/pull/525), its existing explicit Node test roster contains `tests/historical-v1-source-era.test.js`, a **small in-process source-integrity/recipe-refusal test**, not browser rendering. It exposed and fixed a malformed original-v1 test before merge, so genuine immutable archive proof is now checked rather than merely present in the repository.
