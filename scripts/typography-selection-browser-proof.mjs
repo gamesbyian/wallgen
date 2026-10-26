@@ -35,7 +35,7 @@ try{
     const {drawWallpaper}=await import('/src/renderer.js');
     const {prepareTypefaces,typefaceCssFamily}=await import('/src/typography-fonts.js');
     const {exportWallpaperInWorker}=await import('/src/render-coordinator.js');
-    const {layoutTextOnPath,hitTextAtLayout}=await import('/src/text-path-geometry.js');
+    const {layoutTextOnPath,hitTextAtLayout,canCurveText}=await import('/src/text-path-geometry.js');
     const {measureCanvasText,measuredTextBounds}=await import('/src/text-direct-geometry.js');
     const make=(w,h)=>{const c=document.createElement('canvas');c.width=w;c.height=h;return c;};
     const countDiff=(a,b)=>{
@@ -58,6 +58,12 @@ try{
         path:'arc',font:'modern',colour:'rainbow-letter'},
       {name:'curved-combining',text:'cafe\u0301 🌈',size:65,
         path:'circle',pathHeight:150,font:'modern',colour:'rainbow-letter'},
+      {name:'native-rtl-presentation',text:'ﺍﻟﺴﻼﻡ',size:65,
+        path:'wave',pathHeight:90,font:'modern',colour:'white'},
+      {name:'native-adlam',text:'𞤀𞤭𞤀𞤭𞤀𞤭',size:65,
+        path:'arc',pathHeight:90,font:'modern',colour:'white'},
+      {name:'native-brahmi',text:'𑀦𑀫𑀦𑀫',size:65,
+        path:'circle',pathHeight:90,font:'modern',colour:'white'},
     ];
     const results=[],artwork=[];
     const contact=make(examples.length*180,390),contactCtx=contact.getContext('2d');
@@ -76,6 +82,19 @@ try{
       drawWallpaper(blank,{...recipe,textOverlays:[]});
       const inkChannels=countDiff(reference,blank);
       if(inkChannels<1000)throw Error('Invisible artwork '+spec.name);
+      let nativeFallbackPixelDifferences=null;
+      if(spec.name.startsWith('native-')&&
+          ['native-rtl-presentation','native-adlam','native-brahmi'].includes(spec.name)){
+        if(canCurveText(spec.text))throw Error('Unsafe script was split '+spec.name);
+        const straight=make(480,1040);
+        const native=normalizeRecipe({...recipe,
+          textOverlays:recipe.textOverlays.map(item=>({...item,path:'none'}))});
+        drawWallpaper(straight,native);
+        nativeFallbackPixelDifferences=countDiff(reference,straight);
+        if(nativeFallbackPixelDifferences!==0)
+          throw Error('Native shaping was altered by curve '+spec.name);
+        straight.width=0;
+      }
       const blob=await exportWallpaperInWorker({recipe,width:480,height:1040,timeoutMs:120000});
       const bmp=await createImageBitmap(blob);
       worker.getContext('2d').drawImage(bmp,0,0);bmp.close();
@@ -86,7 +105,7 @@ try{
       contactCtx.drawImage(thumbnail,i*180,0);
       artwork.push(reference.toDataURL('image/png'));
       results.push({name:spec.name,inkChannels,workerPixelChannelDifferences:mismatch,
-        workerPngBytes:blob.size});
+        workerPngBytes:blob.size,nativeFallbackPixelDifferences});
       reference.width=0;worker.width=0;blank.width=0;
     }
     const tracked=normalizeRecipe({textOverlays:[{
