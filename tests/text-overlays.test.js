@@ -296,8 +296,8 @@ test('Move-text affordance follows actual painted ink rather than hidden caption
 test('asynchronous font import binds the initiating caption ID, not the later picker',async()=>{
   const {readFileSync}=await import('node:fs');
   const src=readFileSync(new URL('../src/text-overlays-ui.js',import.meta.url),'utf8');
-  assert.match(src,/const targetId=selectedId;\s*fontFile\.disabled=true;/);
-  assert.match(src,/const items=currentItems\(\);\s*if\(items\.some\(item=>item\.id===targetId\)\)/);
+  assert.match(src,/const targetId=selectedId;\s*const targetTicket=textIdentity\.ticket\(targetId\);\s*fontFile\.disabled=true;/);
+  assert.match(src,/const items=currentItems\(\);\s*if\(textIdentity\.same\(targetId,targetTicket\)&&\s*items\.some\(item=>item\.id===targetId\)\)/);
   assert.match(src,/commit\(items\.map\(item=>item\.id===targetId\?/);
   assert.doesNotMatch(src,/commit\(currentItems\(\)\.map\(item=>item\.id===selectedId\?\s*\{\.\.\.item,font:installed\.id\}/);
   const own=[{id:'one',font:'bold'},{id:'two',font:'editorial'}];
@@ -326,4 +326,32 @@ test('hidden glyphs remain authorable but never demand a local or bundled font l
   ]});
   assert.equal(textOverlayPaintsInk(revealed.textOverlays[0]),true);
   assert.deepEqual(recipeLocalFontIds(revealed),[local]);
+});
+
+test('font import ownership ticket rejects deleted-and-recreated identical caption IDs',async()=>{
+  const {createTextObjectIdentityTracker}=await import('../src/text-overlays-ui.js');
+  const state=createTextObjectIdentityTracker();
+  state.sync([{id:'text-1',text:'ORIGINAL',font:'bold'}]);
+  const original=state.ticket('text-1');
+  assert.ok(Number.isInteger(original));
+  state.sync([{id:'text-1',text:'ORIGINAL EDITED',font:'modern'}]);
+  assert.equal(state.same('text-1',original),true,
+    'ordinary text/style edits preserve the existing object identity');
+  state.sync([]);
+  assert.equal(state.same('text-1',original),false,
+    'deletion invalidates any in-flight private font import');
+  state.sync([{id:'text-1',text:'REPLACEMENT',font:'editorial'}]);
+  const recreated=state.ticket('text-1');
+  assert.notEqual(original,recreated,
+    'a reused author-facing ID cannot inherit the old async completion');
+  assert.equal(state.same('text-1',original),false);
+  assert.equal(state.same('text-1',recreated),true);
+  state.sync([{id:'text-2',text:'OTHER'}]);
+  assert.equal(state.same('text-1',recreated),false);
+  assert.equal(state.same('text-2',null),false);
+  const {readFileSync}=await import('node:fs');
+  const source=readFileSync(new URL('../src/text-overlays-ui.js',import.meta.url),'utf8');
+  assert.match(source,/const targetTicket=textIdentity\.ticket\(targetId\)/);
+  assert.match(source,/if\(textIdentity\.same\(targetId,targetTicket\)&&/);
+  assert.match(source,/Original text was removed or replaced/);
 });
