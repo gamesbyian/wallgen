@@ -32,6 +32,7 @@ try{
   await page.goto('http://127.0.0.1:'+server.address().port+'/',{waitUntil:'domcontentloaded'});
   const report=await page.evaluate(async()=>{
     const {normalizeRecipe}=await import('/src/model.js');
+    const {boundTextContent}=await import('/src/text-overlays.js');
     const {drawWallpaper}=await import('/src/renderer.js');
     const {prepareTypefaces,typefaceCssFamily}=await import('/src/typography-fonts.js');
     const {exportWallpaperInWorker}=await import('/src/render-coordinator.js');
@@ -71,6 +72,9 @@ try{
         path:'circle',pathHeight:90,font:'modern',colour:'white'},
       {name:'native-alm-bundled',text:'ABA\u061cB',size:66,
         path:'wave',pathHeight:85,font:'pack-bangers',colour:'rainbow-letter'},
+      {name:'unicode-paste-four-lines',
+        text:'RED\u2028ORANGE\u2029YELLOW\u0085GREEN\u2028EXTRA',
+        size:60,path:'none',font:'pack-bangers',colour:'rainbow-letter'},
     ];
     const results=[],artwork=[];
     const contact=make(examples.length*180,390),contactCtx=contact.getContext('2d');
@@ -96,6 +100,19 @@ try{
       drawWallpaper(blank,{...recipe,textOverlays:[]});
       const inkChannels=countDiff(reference,blank);
       if(inkChannels<1000)throw Error('Invisible artwork '+spec.name);
+      let unicodeLineSourcePixelDifferences=null;
+      if(spec.name==='unicode-paste-four-lines'){
+        const expected='RED\nORANGE\nYELLOW\nGREEN';
+        if(recipe.textOverlays[0].text!==expected)
+          throw Error('Pasted Unicode line separators did not count as four lines');
+        const equivalent=make(480,1040);
+        drawWallpaper(equivalent,normalizeRecipe({...recipe,
+          textOverlays:recipe.textOverlays.map(item=>({...item,text:expected}))}));
+        unicodeLineSourcePixelDifferences=countDiff(reference,equivalent);
+        if(unicodeLineSourcePixelDifferences!==0)
+          throw Error('Unicode logical separators differ from canonical LF artwork');
+        equivalent.width=0;
+      }
       let nativeFallbackPixelDifferences=null,curvedVersusStraightChannels=null;
       if(spec.name.startsWith('joined-emoji-')||spec.name==='native-emoji-zwj'){
         if(!canCurveText(spec.text))throw Error('Complete emoji cluster cannot curve '+spec.name);
@@ -140,9 +157,14 @@ try{
       artwork.push(reference.toDataURL('image/png'));
       results.push({name:spec.name,inkChannels,workerPixelChannelDifferences:mismatch,
         workerPngBytes:blob.size,nativeFallbackPixelDifferences,
-        curvedVersusStraightChannels,fontGlyphNotice});
+        curvedVersusStraightChannels,fontGlyphNotice,
+        unicodeLineSourcePixelDifferences});
       reference.width=0;worker.width=0;blank.width=0;
     }
+    const prefix='\u007f'.repeat(3936)+'A'.repeat(159);
+    if(boundTextContent(prefix+'e\u0301')!=='A'.repeat(159)||
+       boundTextContent(prefix+'🌈')!=='A'.repeat(159))
+      throw Error('Raw UTF-16 cap corrupted an imported Unicode grapheme');
     const tracked=normalizeRecipe({textOverlays:[{
       id:'tracked',text:'iiiiiiiiiiii',enabled:true,x:50,y:50,
       size:52,path:'wave',pathHeight:20,letterSpacing:18,
