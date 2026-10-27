@@ -32,6 +32,19 @@ try{
   page.on('pageerror',error=>errors.push(error.message));
   await page.addInitScript(()=>{
     window.__previewJobs=[];
+    window.__workerMessages=[];
+    const NativeWorker=window.Worker;
+    window.Worker=class InstrumentedWorker extends NativeWorker{
+      constructor(...args){
+        super(...args);
+        this.addEventListener('message',event=>{
+          const data=event.data||{};
+          if(['ready','frame','error','unsupported'].includes(data.type))
+            window.__workerMessages.push({type:data.type,id:data.id,
+              quality:data.quality,error:data.error,at:performance.now()});
+        });
+      }
+    };
     const original=Worker.prototype.postMessage;
     Worker.prototype.postMessage=function(...args){
       const request=args[0];
@@ -45,7 +58,7 @@ try{
     waitUntil:'domcontentloaded'});
   await page.waitForSelector('#preview');
   await page.waitForFunction(()=>document.querySelector('#preview')?.dataset.renderPending==='false');
-  await page.waitForTimeout(1200); // Let the one-time preview worker boot.
+  await page.waitForFunction(()=>window.__workerMessages?.some(x=>x.type==='ready'),\n    null,{timeout:20000}); // Confirm a real render worker has booted.
   await page.evaluate(()=>{
     window.__previewEvents=[];
     const canvas=document.querySelector('#preview');
@@ -80,6 +93,12 @@ try{
     }));
     const provisional=data.events.find(e=>e.phase==='provisional');
     const exact=data.events.find(e=>e.phase==='settled');
+    if(!provisional)console.error('NO_PROVISIONAL_DIAGNOSTIC '+JSON.stringify({
+      action:buttonId,events:data.events,
+      jobs:data.jobs.map(({id,quality,width,height})=>({id,quality,width,height})),
+      workerMessages:await page.evaluate(()=>window.__workerMessages.slice(-20)),
+      pageErrors:errors
+    }));
     assert.ok(provisional,'must show a provisional bitmap before full-quality settle for '+buttonId);
     assert.ok(exact.at>provisional.at,'full-quality frame must follow provisional for '+buttonId);
     assert.equal(exact.pending,'false');
