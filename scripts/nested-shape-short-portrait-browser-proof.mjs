@@ -64,6 +64,7 @@ try{
   const chooserSize=await chooser.evaluate(el=>({
     width:el.getBoundingClientRect().width,height:el.getBoundingClientRect().height}));
   assert.ok(chooserSize.height>=44&&chooserSize.width>=44,'shape library must have a 44px touch action');
+  const beforeNest=await page.evaluate(()=>new URL(location.href).searchParams.get('r'));
   await chooser.click();
   const dialog=page.locator('.geometry-library-dialog');
   await dialog.waitFor({state:'visible'});
@@ -112,9 +113,9 @@ try{
   await page.screenshot({path:join(out,'short-320-nested-controls.png')});
   await page.locator('#undo').click();
   await page.waitForFunction(previous=>new URL(location.href).searchParams.get('r')===previous,
-    original,{timeout:20000});
+    beforeNest,{timeout:20000});
   const reverted=await page.evaluate(()=>new URL(location.href).searchParams.get('r'));
-  assert.equal(reverted,original,'saved-library Nest must be one atomic undo operation');
+  assert.equal(reverted,beforeNest,'saved-library Nest must be one atomic undo operation');
   assert.deepEqual(errors,[]);
   const report={schema:'roygbiv-nested-shape-short-portrait/v1',viewport:[320,700],
     savedLibraryRealDOM:true,nestButtonTouch: nestedSize,chooserTouch:chooserSize,
