@@ -45,6 +45,7 @@ try{
     waitUntil:'domcontentloaded'});
   await page.waitForSelector('#preview');
   await page.waitForFunction(()=>document.querySelector('#preview')?.dataset.renderPending==='false');
+  await page.waitForTimeout(1200); // Let the one-time preview worker boot.
   await page.evaluate(()=>{
     window.__previewEvents=[];
     const canvas=document.querySelector('#preview');
@@ -53,7 +54,7 @@ try{
       ['roygbiv-preview-presented','settled']
     ])canvas.addEventListener(event,()=>window.__previewEvents.push({
       phase,at:performance.now(),pending:canvas.dataset.renderPending,
-      worker:phase==='settled'?undefined:undefined
+      // The event is emitted by the actual rendered preview canvas.
     }));
   });
 
