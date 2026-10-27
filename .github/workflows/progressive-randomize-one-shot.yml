@@ -1,0 +1,32 @@
+name: One-shot progressive Randomize browser proof
+# Temporary PR-only workflow. Delete before merge after evidence.
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/progressive-randomize-one-shot.yml'
+      - 'scripts/progressive-randomize-browser-proof.mjs'
+permissions:
+  contents: read
+jobs:
+  chromium:
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install one-shot Chromium
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Verify provisional and settled previews through the real editor
+        run: node scripts/progressive-randomize-browser-proof.mjs
+      - name: Save exact browser witness and PNGs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: progressive-randomize-browser-proof
+          path: output/randomize-preview-proof
+          if-no-files-found: warn
+          retention-days: 7
