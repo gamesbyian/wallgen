@@ -193,3 +193,12 @@ test('dark phone SVG keeps all seven variable-length stripes inside the tile',()
     'phone outline is overlaid above stripe geometry');
   assert.match(logo,/stroke="#fff" stroke-width="2\.5"/);
 });
+
+test('Random and seed reroll display a progressive frame before exact settled preview',()=>{
+  // These are discrete owner actions, not only continuous slider gestures.
+  // Both must opt into the same existing low-resolution → settled worker path.
+  assert.match(app,/seed:newSeed\(\)\},\{cause:'seed_reroll',interactive:true\}\)/);
+  assert.match(app,/\{record:false,cause:'randomize_all',interactive:true\}\)/);
+  assert.match(app,/settledPreviewTimer=setTimeout\(\(\)=>\{/);
+  assert.match(app,/\{quality:'settled'\}\)/);
+});
