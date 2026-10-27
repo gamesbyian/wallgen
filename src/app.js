@@ -868,7 +868,7 @@ const geometryLibrary=installGeometryLibraryUI({
 });
 
 const nestedShapeControls=installNestedShapeControls({
-  form,getRecipe:()=>current,
+  form,getRecipe:()=>current,getScene:()=>currentScene,
   onApply:recipe=>changeRecipe(recipe,{cause:'nested_shape'}),
   onNotice:showNotice
 });
