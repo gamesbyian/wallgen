@@ -25,6 +25,14 @@ jobs:
           node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/r0-microstair --save-best-recipe
       - name: Paint actual canonical micro-staircase variants (not shipping code)
         run: node scripts/probe-hue-microstair-browser.mjs artifacts/r0-microstair
+      - name: True 19.8MP reference images of opt-in .5 smoothing, Hairpin and Loop
+        run: |
+          for id in 05-hairpin 06-loop; do
+            node scripts/render-headless.mjs \
+              --recipe "artifacts/r0-microstair/$id.microstair-0p5.recipe.json" \
+              --width 3024 --height 6552 \
+              --out "artifacts/r0-microstair/$id.microstair-0p5.native.png"
+          done
       - uses: actions/upload-artifact@v4
         if: always()
         with:
