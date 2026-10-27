@@ -26,7 +26,7 @@ An isolated opt-in [actual browser experiment](https://github.com/gamesbyian/wal
 | 11 Scattered Circles | .005508 (native circles) | Ineligible: not a 7-hue shape snapshot | Leave untouched |
 | 16 Offset Jagged | .013304 | No winner | Keep original |
 
-The opt-in job's **first attempt failed before painting research variants** due a local HTTP test server classifying the `/` route as an octet-stream download instead of HTML; correcting that test server yielded a complete passing actual-Chromium run. Its real [source PNGs, all 48 altered painted PNGs, scores, and JSON report](https://github.com/gamesbyian/wallgen/actions/runs/40437075592/artifacts/12704781842) were preserved. Source/base/0.995/1.005 Hairpin and Loop PNGs were **also visibly inspected** after the successful run, confirming uniform resize changes whole centreline registration and crop as well as channel width, so it cannot isolate the local 1px channel residual.
+The opt-in job's **first attempt failed before painting research variants** due a local HTTP test server classifying the `/` route as an octet-stream download instead of HTML; correcting that test server yielded a complete passing actual-Chromium run. Its real [source PNGs, 48 variant PNGs (six eligible source cases × eight factors; 42 altered and six baselines), scores, and JSON report](https://github.com/gamesbyian/wallgen/actions/runs/40437075592/artifacts/12704781842) were preserved. Source/base/0.995/1.005 Hairpin and Loop PNGs were **also visibly inspected** after the successful run, confirming uniform resize changes whole centreline registration and crop as well as channel width, so it cannot isolate the local 1px channel residual.
 
 ## Engineering consequence
 
