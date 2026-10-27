@@ -193,13 +193,28 @@ test('shared distance samples preserve exact topology and geometry across seven 
 });
 
 test('shared sample cache is opt-in to single inset invocation and never leaks across source shapes',()=>{
-  const sample=new Map();
+  const sample={columns:new Map(),count:0,limit:32};
   const first=box(0,0,200,180),second=box(0,0,80,70);
   const cached=polygonInsetContours(first,7,{resolution:1,distanceCache:sample});
   assert.deepEqual(cached,polygonInsetContours(first,7,{resolution:1}));
-  assert.ok(sample.size>0,'the local cache should actually receive world samples');
+  assert.equal(sample.count,32,'shared cache fills only its bounded allowance');
+  assert.ok(sample.columns.size>0,'the local cache should actually receive world samples');
   // A second independent planner call has its own per-call cache; no stale
   // distance field is accidentally reused when the underlying shape changes.
   assert.deepEqual(planNestedShapeContours(second,DEFAULT_NESTED_CONTOURS),
     planNestedShapeContours(second,DEFAULT_NESTED_CONTOURS,{cacheDistances:false}));
+});
+
+
+test('high-detail traced silhouette uses exactly the same geometric output as baseline',()=>{
+  const detailed=Array.from({length:256},(_,i)=>{
+    const a=i*2*Math.PI/256;
+    return {x:155+130*Math.cos(a),y:190+175*Math.sin(a)};
+  });
+  const options={resolution:1,bounds:{left:4,right:300,top:3,bottom:350}};
+  const cached=planNestedShapeContours(detailed,DEFAULT_NESTED_CONTOURS,options);
+  const baseline=planNestedShapeContours(detailed,DEFAULT_NESTED_CONTOURS,
+    {...options,cacheDistances:false});
+  assert.deepEqual(cached,baseline);
+  assert.equal(cached.visibleCount,7);
 });
