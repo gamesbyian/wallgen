@@ -63,7 +63,7 @@ worker may render a provisional 62% preview first. After the existing 170 ms
 quiet period, the scheduler requests a definitive 100% preview. If that timer
 expires while the provisional paint is still active, its result may still be
 presented before the queued definitive one **only when both requests reference
-the identical canonical recipe object**. A newer recipe invalidates the old
+identical full canonical recipe values (object identity or serialized equivalence)**. A differently valued recipe invalidates the old
 frame even if its artwork key matches; unsolicited/duplicate frame IDs never
 release the active worker slot. Temporary frames never populate the
 authoritative nudge cache or replace exact wallpaper export. On initial page
