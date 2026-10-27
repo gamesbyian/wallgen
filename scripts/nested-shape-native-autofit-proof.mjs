@@ -165,7 +165,7 @@ await writeFile(join(out,'whole-art-preview-contact.png'),overview);
 await writeFile(join(out,'actual-native-1to1-crop-contact.png'),cropBoard);
 await writeFile(join(out,'report.json'),JSON.stringify({
   schema:'roygbiv-nested-native-autofit/v1',
-  4kProducedFromRealRenderer:true,
+  nativeOutputProducedByRealRenderer:true,
   sourceSavedWithoutMutation:true,
   localFilesOnly:true,physicalPixelTested:false,
   designerJudgement:false,images:runs
