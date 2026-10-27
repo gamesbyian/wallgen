@@ -180,7 +180,9 @@ export function installNestedShapeControls({form,getRecipe,getScene,onApply,onNo
       return;
     }
     onApply({...r,nestedShapeContours:result.settings});
-    onNotice('Fitted '+settings.count+' outline levels using actual shape geometry. Narrow tips or necks may still split; Undo restores your spacing.');
+    onNotice(result.balancedInnerColours?
+      'All seven outlines fit. Tightened their spacing slightly so the inner colours form more substantial contours. Undo restores your previous gap.':
+      'Fitted '+settings.count+' outline levels using actual shape geometry. Narrow tips or necks may still split; Undo restores your spacing.');
   });
   document.addEventListener('roygbiv-controls-synced',sync);
   sync();
