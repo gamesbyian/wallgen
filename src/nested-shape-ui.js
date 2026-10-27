@@ -21,8 +21,9 @@ export function installNestedShapeControls({form,getRecipe,onApply,onNotice}){
   button.setAttribute('aria-pressed','false');
   const help=add(root,'p','Import a silhouette, then create seven true contour outlines.');
   help.className='nested-shape-help';
-  const controls=add(root,'div');
+  const controls=add(root,'details');
   controls.className='nested-shape-fields';
+  add(controls,'summary','Fine-tune count, spacing and thickness');
   controls.hidden=true;
   const fields={};
   const numeric=(key,title,min,max,step)=>{
