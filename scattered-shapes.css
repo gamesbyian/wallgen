@@ -95,3 +95,23 @@ body.scattered-direct-active #preview:active{cursor:grabbing}
 .nested-shape-fields input,.nested-shape-fields select{width:100%;max-width:100%;
   min-width:0;min-height:44px;padding:6px 8px;border-radius:7px;
   border:1px solid var(--line);background:var(--surface);color:inherit}
+
+/* Later generic editor select rules can shrink the native colour chooser to
+   27px. Keep the real nested palette picker at a full 44px touch height. */
+.nested-shape-studio .nested-shape-fields select{
+  box-sizing:border-box;min-height:44px!important;height:44px!important;
+  max-height:none!important;
+}
+
+/* The mobile editor overrides every .field select with a more-specific
+   !important 27px/65%-width compact rule. This explicit new-feature rule
+   preserves a real 44px physical touch rectangle without affecting legacy
+   controls or the seven-category editor's compact layout. */
+@media(max-width:790px){
+  body.mobile-studio .sidebar .editor-tool-card .nested-shape-studio
+  .nested-shape-fields .field select{
+    width:100%!important;max-width:100%!important;
+    height:44px!important;min-height:44px!important;
+    max-height:none!important;
+  }
+}

@@ -54,6 +54,7 @@ export function installNestedShapeControls({form,getRecipe,getScene,onApply,onNo
   reverseLabel.className='field';
   add(reverseLabel,'span','Colour order');
   const reverse=add(reverseLabel,'select');
+  reverse.setAttribute('aria-label','Nested outline colour order');
   for(const [value,text] of [['forward','Red outside → Violet inside'],
     ['reverse','Violet outside → Red inside']]){
     const option=add(reverse,'option',text);option.value=value;

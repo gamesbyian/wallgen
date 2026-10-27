@@ -891,17 +891,12 @@ const geometryLibrary=installGeometryLibraryUI({
   }
 });
 
-const nestedShapeControls=installNestedShapeControls({
-  form,getRecipe:()=>current,getScene:()=>currentScene,
-  onApply:recipe=>changeRecipe(recipe,{cause:'nested_shape'}),
-  onNotice:showNotice
-});
+// Install contextual nested-shape controls only AFTER mountEditor moves source fields.
 
 const useScatteredShape=document.createElement('button');
 useScatteredShape.type='button';useScatteredShape.id='chooseScatteredShape';
 useScatteredShape.className='button button-outline scattered-preset';
 useScatteredShape.textContent='Choose saved silhouette…';
-document.querySelector('.editor-tool-card[data-editor-tool="regions"]')?.append(useScatteredShape);
 useScatteredShape.addEventListener('click',()=>{void geometryLibrary.open({filterKind:'shape'});});
 useScatteredShape.hidden=current.structure!=='regions'||current.regionMode!=='scattered';
 function updatePositionStatus(){
@@ -1413,6 +1408,20 @@ function syncSettingLocks(){
 }
 installSettingLocks();
 const editor=mountEditor();
+// These user-visible actions belong to the now-mounted Regions tool card.
+// Previously both were created before mountEditor(), leaving the chooser
+// detached and Nest controls stranded in the hidden source control grid.
+const regionsCard=document.querySelector('.editor-tool-card[data-editor-tool="regions"]');
+if(!regionsCard)throw new Error('Regions editor card missing during nesting initialization');
+// The saved-shape picker is the primary action here, not the final row
+// below all regional controls on a 320px-short portrait screen.
+regionsCard.prepend(useScatteredShape);
+const nestedShapeControls=installNestedShapeControls({
+  form,getRecipe:()=>current,getScene:()=>currentScene,
+  onApply:recipe=>changeRecipe(recipe,{cause:'nested_shape'}),
+  onNotice:showNotice
+});
+
 const textTool=installTextOverlayTool({getRecipe:()=>current,changeRecipe,onFontNotice:showNotice});
 // Source-linked guidance lives beside the controls it describes. It does not
 // change the saved recipe, geometry or layout outside the relevant card.
