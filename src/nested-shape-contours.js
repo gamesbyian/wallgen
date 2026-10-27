@@ -73,10 +73,15 @@ export function planNestedShapeContours(rings,settings,options={}){
   if(!settings?.enabled||!Array.isArray(rings)||!rings.length)
     return {levels:[],visibleCount:0,requestedCount:settings?.count??0,collapsed:0};
   const distances=nestedContourDistances(settings);
-  // All levels use the ORIGINAL rings and the same fixed-resolution SDF.
-  // Shared, short-lived samples avoid doing the expensive edge walk again
-  // for a grid point reached by a neighbouring inset. No global/worker state.
-  const distanceCache=options.cacheDistances===false?null:new Map();
+  // For high-vertex imported silhouettes, seven original-edge distance
+  // scans revisit enough sample sites to justify a transient shared cache.
+  // Matched Linux benchmarks found 256/512-vertex gains but regressions on
+  // ordinary 20–70-edge shapes, so keep those on the original fast path.
+  // Cap samples explicitly to bound peak phone memory. No persistent state.
+  const pointCount=Array.isArray(rings[0])?
+    rings.reduce((total,ring)=>total+ring.length,0):rings.length;
+  const distanceCache=options.cacheDistances===false||pointCount<256?
+    null:{columns:new Map(),count:0,limit:120000};
   const levels=distances.map((distance,index)=>({
     index,distance,
     contours:polygonInsetContours(rings,distance,{
