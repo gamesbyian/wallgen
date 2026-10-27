@@ -1867,8 +1867,8 @@ test('inverse importer reuses the exact manual path measurement without candidat
 
 test('automatic reconstruction of source circles is not repainted by stale seven-line Nest',()=>{
   const input=original,copy=input.data.slice();
-  const plain=normalizeRecipe({seed:'source-circles',structure:'regions'});
-  const prior=normalizeRecipe({...plain,regionMode:'scattered',
+  const plain=normalizeRecipe({seed:'source-circles',structure:'regions',regionMode:'scattered'});
+  const prior=normalizeRecipe({...plain,
     nestedShapeContours:{enabled:true,objectId:'region-0',count:7,
       strokeWidth:2,gap:5,firstInset:3,colourOrder:'reverse'}});
   assert.equal(prior.nestedShapeContours?.enabled,true);
