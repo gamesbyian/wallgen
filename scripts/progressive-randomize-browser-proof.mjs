@@ -58,7 +58,8 @@ try{
     waitUntil:'domcontentloaded'});
   await page.waitForSelector('#preview');
   await page.waitForFunction(()=>document.querySelector('#preview')?.dataset.renderPending==='false');
-  await page.waitForFunction(()=>window.__workerMessages?.some(x=>x.type==='ready'),\n    null,{timeout:20000}); // Confirm a real render worker has booted.
+  await page.waitForFunction(()=>window.__workerMessages?.some(x=>x.type==='ready'),
+    null,{timeout:20000}); // Confirm a real render worker has booted.
   await page.evaluate(()=>{
     window.__previewEvents=[];
     const canvas=document.querySelector('#preview');
