@@ -60,8 +60,28 @@ try{
   await page.locator('[data-tab="path"]').click();
   await page.locator('button[data-category="path"][data-editor-tool="regions"]').click();
   await page.locator('[name="regionMode"]').selectOption('scattered');
+  // Native control writes are debounced; await the actual current recipe
+  // commit before evaluating the conditional saved-shape entry point.
+  await page.waitForFunction(()=>{
+    try{
+      const r=JSON.parse(decodeURIComponent(new URL(location.href).searchParams.get('r')));
+      return r.structure==='regions'&&r.regionMode==='scattered';
+    }catch{return false;}
+  },null,{timeout:12000});
   const chooser=page.locator('#chooseScatteredShape');
-  await chooser.waitFor({state:'visible'});
+  const visibility=await chooser.evaluate(el=>{
+    const card=el.closest('.editor-tool-card');
+    const sheet=document.getElementById('mobileDesignSheet');
+    const rect=el.getBoundingClientRect();
+    const style=getComputedStyle(el);
+    return {hidden:el.hidden,cardHidden:card?.hidden,sheetHidden:sheet?.hidden,
+      display:style.display,rect:[rect.x,rect.y,rect.width,rect.height],
+      category:document.querySelector('[data-tab="path"]')?.getAttribute('aria-selected'),
+      regionMode:document.querySelector('[name="regionMode"]')?.value};
+  });
+  console.log('NESTED_SHORT_ENTRY_DIAGNOSTIC '+JSON.stringify(visibility));
+  await page.screenshot({path:join(out,'entry-before-library.png')});
+  await chooser.waitFor({state:'visible',timeout:12000});
   const chooserSize=await chooser.evaluate(el=>({
     width:el.getBoundingClientRect().width,height:el.getBoundingClientRect().height}));
   assert.ok(chooserSize.height>=44&&chooserSize.width>=44,'shape library must have a 44px touch action');
