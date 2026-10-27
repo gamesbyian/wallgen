@@ -148,3 +148,46 @@ test('thumbnail worker failures reject current and queued snapshots without swap
   assert.equal(queue.enabled,false);
   queue.dispose();
 });
+
+test('unknown frame during an active preview never frees the worker slot',()=>{
+  const worker=new FakeWorker(),delivered=[];
+  const scheduler=createPreviewCoordinator({canUseWorker:true,
+    workerFactory:()=>worker,onFrame:message=>delivered.push(message.key)});
+  worker.emit(ready);
+  scheduler.request({},'active',180,390);
+  scheduler.request({},'latest',180,390);
+  const stray={type:'frame',id:987654,key:'stray',frame:bitmap()};
+  worker.emit(stray);
+  assert.equal(stray.frame.closed,true,'orphaned bitmap must be freed');
+  assert.equal(worker.messages.length,1,'stray frame cannot start parallel work');
+  assert.equal(scheduler.status.active,true);
+  assert.equal(scheduler.status.pending,true);
+  worker.emit({type:'frame',id:worker.messages[0].id,key:'active',frame:bitmap()});
+  assert.equal(worker.messages.length,2,'real active completion starts newest job');
+  worker.emit({type:'frame',id:worker.messages[1].id,key:'latest',frame:bitmap()});
+  assert.deepEqual(delivered,['latest']);
+  assert.equal(scheduler.status.staleCount,2);
+  scheduler.dispose();
+});
+
+test('interactive preview upgrades to the exact settled request without presenting obsolete frames',()=>{
+  const worker=new FakeWorker(),delivered=[];
+  const scheduler=createPreviewCoordinator({canUseWorker:true,
+    workerFactory:()=>worker,onFrame:message=>delivered.push(message)});
+  worker.emit(ready);
+  scheduler.request({seed:'new'},'new',180,390,{quality:'interactive'});
+  const interactive=worker.messages[0];
+  assert.equal(interactive.quality,'interactive');
+  scheduler.request({seed:'new'},'new',290,629,{quality:'settled'});
+  const old={type:'frame',id:interactive.id,key:'new',quality:'interactive',frame:bitmap()};
+  worker.emit(old);
+  assert.equal(old.frame.closed,true);
+  assert.equal(worker.messages[1].quality,'settled');
+  assert.equal(worker.messages[1].width,290);
+  assert.equal(worker.messages[1].height,629);
+  const final={type:'frame',id:worker.messages[1].id,key:'new',
+    quality:'settled',ink:bitmap(),background:bitmap()};
+  worker.emit(final);
+  assert.deepEqual(delivered,[final]);
+  scheduler.dispose();
+});
