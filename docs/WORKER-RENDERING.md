@@ -72,7 +72,12 @@ retry loop.
 ## Background thumbnails and history fidelity
 
 A separate small-canvas FIFO worker lane renders Explore gallery cards and
-Recent Variations snapshots independently. Each archived history image comes
+Recent Variations snapshots independently. Recent Variations retains exact
+recipes on every Random or scoped change, but **defers thumbnail painting
+until that panel is opened**. It renders visible history images one at a time,
+newest first, and stops scheduling further work when the panel closes. This
+avoids using CPU and GPU bandwidth for hidden thumbnails during rapid phone
+randomization; the full preview and exact history/Undo recipes are unchanged. Each archived history image comes
 from its saved normalized recipe, not the visible canvas, which may still
 show an older asynchronous frame. FIFO ordering and stable identities prevent
 swapped image/recipe pairs. If thumbnail workers are unsupported, the small
