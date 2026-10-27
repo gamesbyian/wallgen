@@ -867,7 +867,7 @@ const geometryLibrary=installGeometryLibraryUI({
   }
 });
 
-installNestedShapeControls({
+const nestedShapeControls=installNestedShapeControls({
   form,getRecipe:()=>current,
   onApply:recipe=>changeRecipe(recipe,{cause:'nested_shape'}),
   onNotice:showNotice
@@ -2394,6 +2394,7 @@ textTool.sync();
 // Otherwise imported stacks show stale selectors until some unrelated edit.
 syncInteriorUI();
 render(current);
+nestedShapeControls.sync(); // The first URL-restored recipe did not emit a controls-synced event.
 // Start only after the first complete reference frame is visible. This keeps
 // initial page load and screenshot restoration deterministic.
 startPreviewWorker();
