@@ -55,7 +55,7 @@ function drawThumbnail(container,asset){
   container.append(svg);
 }
 
-export function installGeometryLibraryUI({getRecipe,applyPath,applyShape,onNotice,downloadBlob}){
+export function installGeometryLibraryUI({getRecipe,applyPath,applyShape,applyNestedShape,onNotice,downloadBlob}){
   const dialog=make(document.body,'dialog');
   dialog.className='geometry-library-dialog';
   dialog.setAttribute('aria-label','My shapes and paths');
@@ -141,13 +141,22 @@ export function installGeometryLibraryUI({getRecipe,applyPath,applyShape,onNotic
           onNotice('Applied saved path. Undo restores the previous wallpaper.');
         }catch(e){say(errorMessage(e));}
       });
-      else button(actions,'Use shape',()=>{
-        try{
-          if(!applyShape?.(item.geometry))return;
-          dialog.close();
-          onNotice('Applied saved silhouette. The wallpaper embeds its own copy.');
-        }catch(e){say(errorMessage(e));}
-      });
+      else {
+        button(actions,'Use shape',()=>{
+          try{
+            if(!applyShape?.(item.geometry))return;
+            dialog.close();
+            onNotice('Applied saved silhouette. The wallpaper embeds its own copy.');
+          }catch(e){say(errorMessage(e));}
+        });
+        button(actions,'Nest rainbow',()=>{
+          try{
+            if(!applyNestedShape?.(item.geometry))return;
+            dialog.close();
+            onNotice('Seven editable, evenly offset rainbow contours. Adjust under Regions.');
+          }catch(e){say(errorMessage(e));}
+        });
+      }
       button(actions,'Rename',async()=>{
         const entered=prompt('Rename '+item.kind+'',item.name);
         if(entered===null)return;
