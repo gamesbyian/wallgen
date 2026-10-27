@@ -359,3 +359,86 @@ test('Regions Nest preserves explicitly moved source transform and unrelated slo
   assert.deepEqual(frameUnpositionedNestedSilhouette({},null),[],
     'missing source shape never creates a fictional transform');
 });
+
+
+test('Auto-fit enlarges real inner hue geometry only when it is a tiny remnant',()=>{
+  const cloud=Array.from({length:52},(_,i)=>{
+    const a=i*2*Math.PI/52,r=1+.18*Math.sin(5*a)+.07*Math.cos(11*a);
+    return [300+250*r*Math.cos(a),95+66*r*Math.sin(a)];
+  });
+  const triangle=[[180,145],[205,215],[155,215]];
+  const cases=[
+    {geometry:{type:'compound-region',space:'asset-local',fillRule:'evenodd',
+      viewBox:[0,0,600,190],components:[{outer:cloud,holes:[]}]},
+      expected:'cloud'},
+    {geometry:{type:'compound-region',space:'asset-local',fillRule:'evenodd',
+      viewBox:[0,0,360,360],components:[{
+        outer:[[180,12],[336,348],[223,260],[180,315],[137,260],[24,348]],
+        holes:[triangle]}]},expected:'delta'}
+  ];
+  for(const {geometry,expected} of cases){
+    const untouched=serial(geometry);
+    const original=normalizeRecipe({seed:'auto-balance-'+expected,
+      structure:'regions',regionMode:'scattered',scatteredShapeKind:'imported',
+      scatteredCount:1,scatteredMinSize:80,scatteredMaxSize:100,
+      scatteredVariation:0,scatteredSpacing:0,scatteredEdgeCrop:0,
+      scatteredShape:{schema:'roygbiv.geometry-snapshot',version:1,geometry},
+      scatteredOverrides:[frameImportedSilhouette(geometry)]});
+    const rings=resolveScene(original).objects[0].rings;
+    const settings={...DEFAULT_NESTED_CONTOURS,gap:30};
+    const baseline=fitNestedShapeContours(rings,settings,{balanceInnerInk:false});
+    const improved=fitNestedShapeContours(rings,settings);
+    assert.equal(baseline.fitted,true);
+    assert.equal(improved.balancedInnerColours,true);
+    assert.ok(improved.settings.gap<baseline.settings.gap);
+    assert.equal(improved.settings.strokeWidth,baseline.settings.strokeWidth);
+    assert.equal(improved.settings.firstInset,baseline.settings.firstInset);
+    assert.equal(planNestedShapeContours(rings,improved.settings).visibleCount,7);
+    const lengths=plan=>plan.levels.map(level=>level.contours.reduce((sum,c)=>{
+      let length=0;
+      for(let i=1;i<c.points.length;i++)length+=Math.hypot(
+        c.points[i].x-c.points[i-1].x,c.points[i].y-c.points[i-1].y);
+      if(c.closed)length+=Math.hypot(c.points[0].x-c.points.at(-1).x,
+        c.points[0].y-c.points.at(-1).y);
+      return sum+length;
+    },0));
+    const originalLengths=lengths(planNestedShapeContours(rings,baseline.settings));
+    const newLengths=lengths(planNestedShapeContours(rings,improved.settings));
+    assert.ok(originalLengths[6]/originalLengths[0]<.1);
+    assert.ok(newLengths[6]/newLengths[0]>=.25);
+    assert.deepEqual(geometry,untouched,'creator source vector is immutable');
+    // A saved design from before this improvement had seven technically
+    // surviving but tiny violet fragments. Clicking Auto-fit again is the
+    // explicit act that improves it, not loading or rendering that recipe.
+    const previouslySaved=fitNestedShapeContours(rings,baseline.settings);
+    assert.equal(previouslySaved.balancedInnerColours,true);
+    assert.deepEqual(previouslySaved.settings,improved.settings);
+    const repeated=fitNestedShapeContours(rings,improved.settings);
+    assert.equal(repeated.changed,false,'readable art must be stable on re-fit');
+    const adopted=normalizeRecipe({...original,nestedShapeContours:improved.settings});
+    assert.deepEqual(normalizeRecipe(serial(adopted)),adopted);
+  }
+});
+
+test('Auto-fit does not crowd a readable skinny ellipse or modify a valid manual gap',()=>{
+  const geometry={type:'compound-region',space:'asset-local',fillRule:'evenodd',
+    viewBox:[0,0,620,140],components:[{outer:Array.from({length:88},(_,i)=>{
+      const a=i*2*Math.PI/88;
+      return [310+280*Math.cos(a),70+41*Math.sin(a)];
+    }),holes:[]}]};
+  const r=normalizeRecipe({seed:'auto-balance-ellipse',structure:'regions',
+    regionMode:'scattered',scatteredShapeKind:'imported',scatteredCount:1,
+    scatteredShape:{schema:'roygbiv.geometry-snapshot',version:1,geometry},
+    scatteredOverrides:[frameImportedSilhouette(geometry)]});
+  const rings=resolveScene(r).objects[0].rings;
+  const settings={...DEFAULT_NESTED_CONTOURS,gap:30};
+  const baseline=fitNestedShapeContours(rings,settings,{balanceInnerInk:false});
+  const improved=fitNestedShapeContours(rings,settings);
+  assert.equal(improved.fitted,true);
+  assert.deepEqual(improved.settings,baseline.settings,
+    'readable violet must not sacrifice normal outer separation');
+  assert.equal(improved.balancedInnerColours,undefined);
+  const already=fitNestedShapeContours(rings,improved.settings);
+  assert.equal(already.changed,false,
+    'a deliberate already-valid selection is never silently rebalanced');
+});

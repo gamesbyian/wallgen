@@ -38,6 +38,20 @@ export function nestedContourDistances(settings){
   return Array.from({length:settings.count},(_,i)=>first+i*step);
 }
 
+// Same geometric arc-length evidence used by the tiny-remnant filter and by
+// *explicit* Auto-fit readability. Never calculate this on ordinary renders.
+function contourArcLength(contour){
+  const points=contour.points;
+  return points.reduce((total,p,i)=>i?
+    total+Math.hypot(p.x-points[i-1].x,p.y-points[i-1].y):0,0)+
+    (contour.closed&&points.length>1?
+      Math.hypot(points[0].x-points.at(-1).x,
+        points[0].y-points.at(-1).y):0);
+}
+function totalContourArcLength(contours){
+  return contours.reduce((length,contour)=>length+contourArcLength(contour),0);
+}
+
 // A true offset of a CLOSED imported region cannot end abruptly in the
 // middle of the polygon. The marching-squares candidate frontier can,
  // however, leave a short open chain near a topology pinch. Only a genuinely
@@ -46,10 +60,7 @@ export function nestedContourDistances(settings){
 function validContour(contour,distance,settings,options){
   const points=contour.points;
   if(points.length<2)return false;
-  const length=points.reduce((total,p,i)=>i?
-    total+Math.hypot(p.x-points[i-1].x,p.y-points[i-1].y):0,0)+
-    (contour.closed?Math.hypot(points[0].x-points.at(-1).x,
-      points[0].y-points.at(-1).y):0);
+  const length=contourArcLength(contour);
   // Tiny final erosion islands are mathematical remnants but not readable
   // outlined design elements. A stable minimum length prevents bright dots.
   if(length<Math.max(8,settings.strokeWidth*5))return false;
@@ -111,14 +122,22 @@ function sampleNestedLevel(rings,distance,settings,options,distanceCache){
  * levels cannot restore the full requested count. No estimate or approximation
  * is used, and public planNestedShapeContours still returns every level.
  */
-function allNestedLevelsSurvive(rings,settings,options){
+function allNestedLevelsSurvive(rings,settings,options,readability=null){
   const distances=nestedContourDistances(settings);
   if(!distances.length)return false;
   const cache=createDistanceCache(rings,options);
   for(let i=distances.length-1;i>=0;i--){
-    if(!sampleNestedLevel(rings,distances[i],settings,options,cache).length)
-      return false;
+    const contours=sampleNestedLevel(rings,distances[i],settings,options,cache);
+    if(!contours.length)return false;
+    // We have already paid for both levels during this exact survival scan.
+    // Capture length only when Auto-fit is evaluating a completed candidate.
+    if(readability){
+      if(i===distances.length-1)readability.inner=totalContourArcLength(contours);
+      if(i===0)readability.outer=totalContourArcLength(contours);
+    }
   }
+  if(readability)readability.ratio=readability.outer>0?
+    readability.inner/readability.outer:0;
   return true;
 }
 
@@ -138,23 +157,64 @@ export function fitNestedShapeContours(rings,settings,options={}){
     Math.max(...y)-Math.min(...y))/2;
   // Skip costly contour evaluation when the last inset demonstrably cannot
   // fit in the shape's bounding box; the bound is necessary, not sufficient.
-  const survives=proposal=>{
+  const survives=(proposal,readability=null)=>{
     const last=nestedContourDistances(proposal).at(-1);
     if(last>=halfSpan)return false;
     const opts={resolution:options.resolution??1.0,
       padding:options.padding??80,cacheDistances:options.cacheDistances};
-    // Measured gains are on narrow *single-ring* silhouettes. Compound
-    // hole/island sets have additional topology work and the reverse walk
-    // benchmarked slower, so leave their proven full planner unchanged.
+    // Measured early-exit gains are on narrow *single-ring* silhouettes.
+    // Compound holes/islands retain their original full planner.
     if(options.earlyExit===false||Array.isArray(rings[0])){
       const report=planNestedShapeContours(rings,proposal,opts);
-      return report.visibleCount===proposal.count;
+      if(report.visibleCount!==proposal.count)return false;
+      if(readability){
+        readability.outer=totalContourArcLength(report.levels[0].contours);
+        readability.inner=totalContourArcLength(report.levels.at(-1).contours);
+        readability.ratio=readability.outer>0?
+          readability.inner/readability.outer:0;
+      }
+      return true;
     }
-    return allNestedLevelsSurvive(rings,proposal,opts);
+    return allNestedLevelsSurvive(rings,proposal,opts,readability);
   };
-  const current={...settings};
-  if(survives(current))return {settings:current,fitted:true,changed:false,
-    reason:'All requested levels already fit.'};
+  // Actual 3024px art (see docs/NESTED-AUTOFIT-NATIVE-ART-2026-10-27.md)
+  // showed all seven "surviving", but violet only 3–6% as much painted ink
+  // as red on a Delta/cloud. Total 480px actual ink closely tracked the
+  // Euclidean inner/outer contour arc-length ratio. Rather than introduce
+  // a new optical renderer, an EXPLICIT Auto-fit may conservatively spend a
+  // little more gap to give the inner colour a substantial outline.
+  const finish=(candidate,reason,readability)=>{
+    const standard={settings:candidate,fitted:true,changed:true,reason};
+    // Never compress readable, intentionally sparse art. The smallest
+    // sensible gap for this optional balancing pass remains two design
+    // pixels; the normal Auto-fit survival routine may go smaller if needed.
+    if(options.balanceInnerInk===false||candidate.count!==7||
+       candidate.gap<3.5||!readability||
+       !Number.isFinite(readability.ratio)||readability.ratio>=.10)
+      return standard;
+    const nextGap=Math.max(2,Math.floor(candidate.gap*.65*2)/2);
+    if(nextGap>=candidate.gap)return standard;
+    const trial={...candidate,gap:nextGap},trialReadability={};
+    if(!survives(trial,trialReadability)||
+       !Number.isFinite(trialReadability.ratio)||
+       trialReadability.ratio<.25||
+       trialReadability.ratio<=readability.ratio)
+      return standard;
+    return {settings:trial,fitted:true,changed:true,
+      balancedInnerColours:true,
+      reason:'Kept all seven geometric outline levels while giving the innermost colours more room to remain visible.'};
+  };
+  const current={...settings},currentReadability={};
+  if(survives(current,currentReadability)){
+    // Explicit Auto-fit must also be useful for an older saved recipe
+    // with seven barely surviving levels. Never edit it during rendering;
+    // only this clicked action may propose an Undoable readability change.
+    const balanced=finish(current,'All requested levels already fit.',
+      currentReadability);
+    if(balanced.balancedInnerColours)return balanced;
+    return {settings:current,fitted:true,changed:false,
+      reason:'All requested levels already fit.'};
+  }
   let candidate={...current};
   // Clear gap first, then outer margin, only then sacrifice stroke legibility.
   // Each step retains the maximum half-pixel increment verified to fit.
@@ -173,14 +233,17 @@ export function fitNestedShapeContours(rings,settings,options={}){
       else hi=mid;
     }
     const rounded=Math.max(min,Math.floor((lo+1e-9)*2)/2);
-    const fitted={...candidate,[key]:rounded};
-    if(survives(fitted))
-      return {settings:fitted,fitted:true,changed:true,
-        reason:'Spacing fitted to surviving geometric contour levels.'};
+    const fitted={...candidate,[key]:rounded},readability={};
+    if(survives(fitted,readability))
+      return finish(fitted,'Spacing fitted to surviving geometric contour levels.',
+        readability);
     // An unusual non-monotonic topology should never result in a false
     // success. The minimum was independently checked above.
-    return {settings:smallest,fitted:true,changed:true,
-      reason:'Used minimum spacing to preserve every contour level.'};
+    const minimumReadability={};
+    if(survives(smallest,minimumReadability))
+      return finish(smallest,'Used minimum spacing to preserve every contour level.',
+        minimumReadability);
+    return {...unchanged,reason:'A stable full contour set could not be verified.'};
   }
   // A silhouette may physically be thinner than seven minimum-width lines.
   // Return the original authoring values so a failed action never changes art.
