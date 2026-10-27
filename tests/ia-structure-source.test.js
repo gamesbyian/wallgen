@@ -35,5 +35,5 @@ test('Photo comparison and Saved thumbnail restore settle latest slider edit bef
   assert.match(photo,/if\(!canComparePhoto\(\)\)return;\s*\/\/[\s\S]*?flushQueuedControlUpdate\(\);\s*photoBeforeActive=/);
   const gallery=app.slice(app.indexOf("card.addEventListener('click',()=>{"),
     app.indexOf('drawThumbnail(canvas,recipe',app.indexOf("card.addEventListener('click',()=>{")));
-  assert.match(gallery,/flushQueuedControlUpdate\(\);\s*changeRecipe\(recipe,\{scroll:true,bypassLocks:true\}\)/);
+  assert.match(gallery,/flushQueuedControlUpdate\(\);\s*changeRecipe\(recipe,\{scroll:true,bypassLocks:true,replaceEntireDesign:true\}\)/);
 });
