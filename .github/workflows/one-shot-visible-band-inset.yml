@@ -1,0 +1,32 @@
+name: One-shot measured per-hue pigment inset
+on:
+  pull_request:
+    paths:
+      - scripts/probe-hue-shape-radius-browser.mjs
+      - .github/workflows/one-shot-visible-band-inset.yml
+permissions:
+  contents: read
+jobs:
+  source-probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - run: |
+          node scripts/review-reconstruction.mjs --out-dir artifacts/r0-band-inset --only 01-vertical-straight,03-wave,04-jagged,05-hairpin,06-loop,11-scattered-circles,16-offset-jagged
+          node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/r0-band-inset --save-best-recipe
+      - name: Research actual renderer shape radii on fixed independently rendered sources
+        run: node scripts/probe-hue-shape-radius-browser.mjs artifacts/r0-band-inset
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: per-hue-visible-band-radius-source-fit-experiment
+          path: artifacts/r0-band-inset
+          if-no-files-found: warn
+          retention-days: 7
