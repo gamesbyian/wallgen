@@ -390,3 +390,32 @@ test('private font import honours newer typeface choices and whole-design replac
   assert.match(src,/items\.some\(item=>item\.id===targetId&&item\.font===targetFont\)/);
   assert.match(src,/textIdentity\.invalidateAll\(\);\s*changeRecipe\(recipe,\{bypassLocks:true,cause:'portable_font_package_import'\}\)/);
 });
+
+test('complete design replacement revokes a pending private-font ticket despite identical IDs',async()=>{
+  const {createTextObjectIdentityTracker}=await import('../src/text-overlays-ui.js');
+  const tracker=createTextObjectIdentityTracker();
+  const from=[{id:'text-1',text:'SAME WORDS',font:'modern'}];
+  tracker.sync(from);
+  const pending=tracker.ticket('text-1');
+  tracker.sync(structuredClone(from));
+  assert.equal(tracker.same('text-1',pending),true,
+    'ID and field equality cannot detect full saved-design replacement');
+  tracker.invalidateAll();
+  tracker.sync(structuredClone(from));
+  assert.equal(tracker.same('text-1',pending),false,
+    'a restored design cannot inherit a previous live TTF import');
+  assert.notEqual(tracker.ticket('text-1'),pending);
+});
+test('real app emits design-replaced only for full restore, preserving normal input-sync',async()=>{
+  const {readFileSync}=await import('node:fs');
+  const app=readFileSync(new URL('../src/app.js',import.meta.url),'utf8');
+  const ui=readFileSync(new URL('../src/text-overlays-ui.js',import.meta.url),'utf8');
+  assert.match(app,/if\(options\.replaceEntireDesign\)\s*document\.dispatchEvent\(new Event\('roygbiv-design-replaced'\)\)/);
+  assert.match(app,/cause:'undo',replaceEntireDesign:true/);
+  assert.match(app,/changeRecipe\(recipe,\{bypassLocks:true,replaceEntireDesign:true\}\)/);
+  assert.match(app,/restore:recipe=>changeRecipe\(recipe,\{bypassLocks:true,replaceEntireDesign:true\}\)/);
+  assert.match(app,/changeRecipe\(recipe,\{scroll:true,bypassLocks:true,replaceEntireDesign:true\}\)/);
+  assert.match(ui,/addEventListener\('roygbiv-design-replaced',\(\)=>\{[\s\S]*?textIdentity\.invalidateAll\(\);\s*sync\(\)/);
+  assert.equal((app.match(/replaceEntireDesign:true/g)||[]).length,4);
+  assert.match(app,/document\.dispatchEvent\(new Event\('roygbiv-controls-synced'\)\)/);
+});
