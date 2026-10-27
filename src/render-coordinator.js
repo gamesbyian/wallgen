@@ -56,9 +56,19 @@ export function createPreviewCoordinator({
       staleCount++;closeFrame(message);
       return;
     }
+    // A settled request is normally queued after 170 ms, often before its
+    // faster interactive paint has *finished*. If both requests reference the
+    // exact same canonical recipe, that provisional bitmap is still useful.
+    // Never revive it when Undo, randomization, nudge or other edits replaced
+    // the recipe object, even if its art key happens to match.
+    const completing=active;
+    const sameRecipeUpgrade=message.quality==='interactive'&&
+      completing.quality==='interactive'&&
+      pending?.quality==='settled'&&
+      pending.recipe===completing.recipe&&pending.key===completing.key;
     clearWatchdog();
     active=null;
-    if(message.id!==revision){
+    if(message.id!==revision&&!sameRecipeUpgrade){
       staleCount++;closeFrame(message);
     }else{
       try{onFrame?.(message);frameCount++;}
