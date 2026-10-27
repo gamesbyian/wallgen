@@ -95,3 +95,9 @@ body.scattered-direct-active #preview:active{cursor:grabbing}
 .nested-shape-fields input,.nested-shape-fields select{width:100%;max-width:100%;
   min-width:0;min-height:44px;padding:6px 8px;border-radius:7px;
   border:1px solid var(--line);background:var(--surface);color:inherit}
+
+/* Later generic editor select rules can shrink the native colour chooser to
+   27px. Keep the real nested palette picker at a full 44px touch height. */
+.nested-shape-studio .nested-shape-fields select{
+  box-sizing:border-box;min-height:44px;height:44px;max-height:none;
+}
