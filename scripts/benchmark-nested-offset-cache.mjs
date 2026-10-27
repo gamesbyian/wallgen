@@ -20,7 +20,9 @@ const delta=[
 const tests=[
   ['wide-ellipse',ellipse(245,420,220,380,64)],
   ['irregular-cloud',cloud(260,370,200,300,70)],
-  ['delta-cutout',[delta,ellipse(210,260,30,45,20)]]
+  ['delta-cutout',[delta,ellipse(210,260,30,45,20)]],
+  ['detailed-ellipse-256',ellipse(245,420,220,380,256)],
+  ['photo-cloud-512',cloud(260,370,200,300,512)]
 ];
 for(const [name,shape] of tests){
   const base=()=>planNestedShapeContours(shape,DEFAULT_NESTED_CONTOURS,
