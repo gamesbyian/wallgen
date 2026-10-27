@@ -1,5 +1,7 @@
 # Imported-shape nesting: creator-facing product requirement
 
+**Implementation issue:** [#815: true seven-colour nested imported silhouettes](https://github.com/gamesbyian/wallgen/issues/815). Currently specified, not yet implemented.
+
 **Owner request:** Seven finely spaced ROYGBIV outlines/bands that follow an imported elongated cloud, Starfleet-style delta, oval, shield or other irregular silhouette with visually balanced nested contours. **This is a new positive feature request, not a defect in arbitrary-source reverse inference.** Product authority: [PRODUCT-CONTRACT-2026-10-26.md](PRODUCT-CONTRACT-2026-10-26.md), software boundaries: [RECONSTRUCTION-TYPOGRAPHY-COMPLETION-2026-10-27.md](RECONSTRUCTION-TYPOGRAPHY-COMPLETION-2026-10-27.md), technical design: [NESTED-IMPORTED-SHAPE-GEOMETRY-AND-REUSE-2026-10-27.md](NESTED-IMPORTED-SHAPE-GEOMETRY-AND-REUSE-2026-10-27.md).
 
 ## In one sentence
