@@ -1,0 +1,30 @@
+name: One-shot 320px nested library acceptance
+# Disposable browser QA only; REMOVE before merge.
+on:
+  push:
+    branches: [qa/815-short-portrait-library-journey]
+permissions:
+  contents: read
+jobs:
+  portrait:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install temporary browser
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Test real short portrait saved geometry journey
+        run: node scripts/nested-shape-short-portrait-browser-proof.mjs
+      - name: Retain proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nested-shape-320px-library-qa
+          path: artifacts/nested-short-portrait
+          if-no-files-found: warn
+          retention-days: 7
