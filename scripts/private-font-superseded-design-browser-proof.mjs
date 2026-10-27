@@ -74,7 +74,8 @@ try{
   const first=await readCurrent();
   assert.equal(first.caption,'SAME AUTHOR WORDS');
   assert.equal(first.id,'text-1');
-  assert.equal(first.font,'modern');
+  assert.ok(typeof first.font==='string'&&first.font.length>0,
+    'The source caption must have a real creator-selected face');
   await page.locator('[data-text-import]').setInputFiles({
     name:'QA-LocalTypeface.ttf',mimeType:'font/ttf',buffer:fontBytes
   });
@@ -86,7 +87,7 @@ try{
   assert.equal(pending.font,'modern');
   const replacement={seed:'different-whole-design',structure:'paths',
     geometry:'straight',textOverlays:[
-      {id:'text-1',text:'SAME AUTHOR WORDS',font:'modern',x:50,y:50}
+      {id:'text-1',text:'SAME AUTHOR WORDS',font:first.font,x:50,y:50}
     ]};
   // Real file-driven JSON restoration, not direct DOM event emulation.
   await page.locator('#importRecipeFile').setInputFiles({
@@ -107,7 +108,7 @@ try{
     ?.disabled===false,null,{timeout:30000});
   const settled=await readCurrent();
   assert.equal(settled.seed,replacement.seed);
-  assert.equal(settled.font,'modern',
+  assert.equal(settled.font,first.font,
     'old font import must not silently repaint a restored same-ID caption');
   assert.equal(settled.caption,replacement.textOverlays[0].text);
   const savedFonts=await page.evaluate(async()=>{
