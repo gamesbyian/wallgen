@@ -621,3 +621,31 @@ test('independent visible pigment reconstruction cannot inherit prior nested-sil
   assert.deepEqual(decodeRecipe(encodeRecipe(cleaned.recipe)),cleaned.recipe);
   assert.deepEqual(source.data,sourceCopy,'original source pixels unchanged');
 });
+
+
+test('observed source ink is never decorated with unrelated previous Interior Elements',()=>{
+  const source=sevenShapes(),unmodified=source.data.slice();
+  const plain=normalizeRecipe({seed:'independent-interiors',structure:'regions',
+    regionMode:'scattered'});
+  const previous=normalizeRecipe({...plain,interiorElements:[{
+    id:'prior-outline',type:'line',shape:'straight',
+    placement:'contour',stroke:'solid',color:'white',
+    width:6,position:0,opacity:1
+  }]});
+  assert.equal(previous.interiorElements.length,1);
+  const clean=observedHueShapeRecipe(source,placement,plain);
+  const cleared=observedHueShapeRecipe(source,placement,previous);
+  assert.ok(clean&&cleared);
+  assert.deepEqual(cleared.recipe,clean.recipe);
+  assert.deepEqual(cleared.recipe.interiorElements,[]);
+  assert.deepEqual(reconstructionCandidates(source,previous)
+    .map(c=>[c.kind,c.recipe]),
+    reconstructionCandidates(source,plain)
+    .map(c=>[c.kind,c.recipe]),
+    'all independent source candidates must ignore nonlocked previous Elements');
+  const locked=normalizeRecipe({...previous,
+    lockedSettings:['interiorElements']});
+  assert.equal(observedHueShapeRecipe(source,placement,locked),null,
+    'a locked non-source Interior treatment must refuse a false flat pigment claim');
+  assert.deepEqual(source.data,unmodified,'import pixels remain untouched');
+});
