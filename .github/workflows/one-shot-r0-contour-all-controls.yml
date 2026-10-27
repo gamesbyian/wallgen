@@ -1,0 +1,61 @@
+name: One-shot R0 full 22 optical contour A/B
+# TEMPORARY browser workflow; remove before integrating change to main.
+on:
+  pull_request:
+    paths:
+      - src/image-path.js
+      - src/image-hue-reconstruction.js
+      - tests/reconstruction-visible-hue-shapes.test.js
+      - scripts/evaluate-source-contour-ab.mjs
+      - .github/workflows/one-shot-r0-contour-all-controls.yml
+permissions:
+  contents: read
+jobs:
+  full-r0:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: New opt-in source-only AA unit tests
+        run: node --test tests/reconstruction-visible-hue-shapes.test.js
+      - name: Disposable renderer and PNG comparator, no committed dependency
+        run: |
+          npm install --no-save playwright@1.56.1 pngjs@7.0.0
+          npx playwright install --with-deps chromium
+      - name: Generate all 22 authentic production source PNGs once, copy untouched
+        run: |
+          node scripts/review-reconstruction.mjs --out-dir artifacts/r0-local-AA
+          cp -a artifacts/r0-local-AA artifacts/r0-original-visible
+      - name: Actual production inference with 0.2 source contour AA
+        run: |
+          node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/r0-local-AA --ink-geometry --save-best-recipe
+      - name: Baseline production inference, toggle constant only in disposable runner
+        run: |
+          cp src/image-hue-reconstruction.js /tmp/image-hue-with-AA.js
+          node --input-type=module -e '
+            import {readFileSync,writeFileSync} from "node:fs";
+            const p="src/image-hue-reconstruction.js",s=readFileSync(p,"utf8");
+            const needle="const SOURCE_VISIBLE_ANTI_ALIAS_INSET_PX=0.2;";
+            if(s.split(needle).length!==2)
+              throw Error("Cannot isolate the source-visible AA knob");
+            writeFileSync(p,s.replace(needle,
+              "const SOURCE_VISIBLE_ANTI_ALIAS_INSET_PX=0;"));
+          '
+          node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/r0-original-visible --ink-geometry --save-best-recipe
+          cp /tmp/image-hue-with-AA.js src/image-hue-reconstruction.js
+      - name: Score actual identical-source rendered PNGs with the same full-pixel loss
+        run: |
+          node scripts/evaluate-source-contour-ab.mjs artifacts/r0-local-AA artifacts/r0-original-visible
+      - name: Save real source, fitted PNG pairs, full report and original baseline
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: all-22-genuine-contour-inset-optical-comparison
+          path: |
+            artifacts/r0-local-AA
+            artifacts/r0-original-visible
+          if-no-files-found: warn
+          retention-days: 7
