@@ -148,3 +148,71 @@ test('thumbnail worker failures reject current and queued snapshots without swap
   assert.equal(queue.enabled,false);
   queue.dispose();
 });
+
+test('unknown frame during an active preview never frees the worker slot',()=>{
+  const worker=new FakeWorker(),delivered=[];
+  const scheduler=createPreviewCoordinator({canUseWorker:true,
+    workerFactory:()=>worker,onFrame:message=>delivered.push(message.key)});
+  worker.emit(ready);
+  scheduler.request({},'active',180,390);
+  scheduler.request({},'latest',180,390);
+  const stray={type:'frame',id:987654,key:'stray',frame:bitmap()};
+  worker.emit(stray);
+  assert.equal(stray.frame.closed,true,'orphaned bitmap must be freed');
+  assert.equal(worker.messages.length,1,'stray frame cannot start parallel work');
+  assert.equal(scheduler.status.active,true);
+  assert.equal(scheduler.status.pending,true);
+  worker.emit({type:'frame',id:worker.messages[0].id,key:'active',frame:bitmap()});
+  assert.equal(worker.messages.length,2,'real active completion starts newest job');
+  worker.emit({type:'frame',id:worker.messages[1].id,key:'latest',frame:bitmap()});
+  assert.deepEqual(delivered,['latest']);
+  assert.equal(scheduler.status.staleCount,2);
+  scheduler.dispose();
+});
+
+test('interactive preview is visible while the same-recipe settled frame waits',()=>{
+  const worker=new FakeWorker(),delivered=[];
+  const scheduler=createPreviewCoordinator({canUseWorker:true,
+    workerFactory:()=>worker,onFrame:message=>delivered.push(message)});
+  worker.emit(ready);
+  const recipe={seed:'new'};
+  scheduler.request(recipe,'new',180,390,{quality:'interactive'});
+  const interactive=worker.messages[0];
+  assert.equal(interactive.quality,'interactive');
+  // Simulates the 170 ms timer firing *before* the provisional paint returns.
+  scheduler.request(recipe,'new',290,629,{quality:'settled'});
+  const provisional={type:'frame',id:interactive.id,key:'new',
+    quality:'interactive',frame:bitmap()};
+  worker.emit(provisional);
+  assert.deepEqual(delivered,[provisional],
+    'useful provisional frame must not be discarded just for a queued upgrade');
+  assert.equal(worker.messages[1].quality,'settled');
+  assert.equal(worker.messages[1].width,290);
+  assert.equal(worker.messages[1].height,629);
+  const final={type:'frame',id:worker.messages[1].id,key:'new',
+    quality:'settled',ink:bitmap(),background:bitmap()};
+  worker.emit(final);
+  assert.deepEqual(delivered,[provisional,final]);
+  assert.equal(scheduler.status.staleCount,0);
+  scheduler.dispose();
+});
+
+test('interactive frame from a replaced design cannot flash even with a matching art key',()=>{
+  const worker=new FakeWorker(),delivered=[];
+  const scheduler=createPreviewCoordinator({canUseWorker:true,
+    workerFactory:()=>worker,onFrame:message=>delivered.push(message)});
+  worker.emit(ready);
+  scheduler.request({seed:'a'},'same-art',180,390,{quality:'interactive'});
+  const id=worker.messages[0].id;
+  // A new canonical recipe object can represent a camera/compositor edit with
+  // the same art key. This cannot revive the old provisional frame.
+  scheduler.request({seed:'a',viewPanX:2},'same-art',290,629,{quality:'settled'});
+  const stale={type:'frame',id,key:'same-art',quality:'interactive',frame:bitmap()};
+  worker.emit(stale);
+  assert.equal(stale.frame.closed,true);
+  assert.deepEqual(delivered,[]);
+  worker.emit({type:'frame',id:worker.messages[1].id,key:'same-art',
+    quality:'settled',ink:bitmap(),background:bitmap()});
+  assert.equal(delivered.length,1);
+  scheduler.dispose();
+});
