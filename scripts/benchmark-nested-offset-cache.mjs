@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 // Opt-in matched current-source performance comparison, not a mobile claim.
+// The production planner gates shared caching at 256 source vertices.
 import assert from 'node:assert/strict';
 import {performance} from 'node:perf_hooks';
 import {planNestedShapeContours,DEFAULT_NESTED_CONTOURS} from '../src/nested-shape-contours.js';
