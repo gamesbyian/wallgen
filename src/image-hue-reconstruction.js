@@ -4,7 +4,7 @@
 import {DESIGN_WIDTH,DESIGN_HEIGHT,HUES,normalizeRecipe,respectSettingLocks}
   from './model.js';
 import {extractImageColourRegions,extractVisibleHueCompound} from './image-path.js';
-import {GEOMETRY_SNAPSHOT_SCHEMA} from './geometry-asset.js';
+import {GEOMETRY_SNAPSHOT_SCHEMA,normalizeCompoundRegion} from './geometry-asset.js';
 
 // Bounded source-pixel AA correction. The source-visible loops are traced at
 // importer resolution, while the inverse painter scores their Canvas2D
@@ -13,6 +13,7 @@ import {GEOMETRY_SNAPSHOT_SCHEMA} from './geometry-asset.js';
 // representable high-contrast seven-hue scene. Not a global shape resize.
 // Lower-resolution standalone callers receive proportionately less offset.
 const SOURCE_VISIBLE_ANTI_ALIAS_INSET_PX=0.2;
+const SOURCE_VISIBLE_MICROSTAIR_STRENGTH=0.5;
 
 // The source's pigment masks already classify all seven hues. Only sample
 // adjacent *same-hue* interior pixels to detect observed material/texture
@@ -39,6 +40,51 @@ function substantialInteriorPigmentVariation(image,masks){
   // thin anti-aliased Draw paths cannot be called a textured canvas from a
   // few boundary pixels. No claim about actual historical materials.
   return pairs>=w*h*.05&&varied/pairs>.45;
+}
+
+/**
+ * Calibrate only the short pixel-grid staircase corners introduced when
+ * source hue masks are traced as asset-local line segments. Deliberate larger
+ * shape corners remain unchanged. The already-normalized real compound ring
+ * structure (outer/holes/islands) stays the only polygon and validation owner.
+ * This is a source-observation adapter, never a headless/worker-only effect.
+ */
+export function smoothSourceVisibleMicrostairs(found,w,h,{strength=.5}={}){
+  if(!found?.geometry?.components?.length||
+    !Number.isInteger(w)||!Number.isInteger(h)||w<12||h<12||
+    !Number.isFinite(strength)||strength<0||strength>.5)
+    throw new RangeError('Invalid bounded source-visible contour smoothing');
+  if(strength===0)return found;
+  const geometry=found.geometry,[,,vw,vh]=geometry.viewBox;
+  const centreX=vw/2,centreY=vh/2;
+  const minX=found.centrePixels[0]-centreX;
+  const minY=found.centrePixels[1]-centreY;
+  const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
+  const smooth=ring=>ring.map((point,index)=>{
+    const before=ring[(index+ring.length-1)%ring.length],
+      after=ring[(index+1)%ring.length];
+    const a=Math.hypot(point[0]-before[0],point[1]-before[1]);
+    const b=Math.hypot(after[0]-point[0],after[1]-point[1]);
+    // The short/short-or-moderate grid steps describe raster staircase
+    // facets; a genuine long straight/angled user shape stays deliberately
+    // sharp. Never move an observed source-frame crop boundary.
+    if(!(Math.min(a,b)<1.5&&Math.max(a,b)<12))return point;
+    const px=minX+point[0],py=minY+point[1];
+    if(px<=.04||px>=w-.04||py<=.04||py>=h-.04)return point;
+    const dx=clamp(((before[0]+after[0])/2-point[0])*strength,-.65,.65);
+    const dy=clamp(((before[1]+after[1])/2-point[1])*strength,-.65,.65);
+    return [clamp(point[0]+dx,0,vw),clamp(point[1]+dy,0,vh)];
+  });
+  try{
+    const next=normalizeCompoundRegion({...geometry,
+      components:geometry.components.map(c=>({
+        ...c,outer:smooth(c.outer),holes:c.holes.map(smooth)
+      }))});
+    const vertices=next.components.flatMap(c=>[...c.outer,...c.holes.flat()]);
+    const radiusPixels=Math.max(1,...vertices.map(([x,y])=>
+      Math.hypot(x-centreX,y-centreY)));
+    return {...found,geometry:next,radiusPixels};
+  }catch{return found;} // A 1px neck/crossing cannot license missing ink.
 }
 
 /** Converts seven, or an explicitly qualified contiguous first-N subset,
@@ -92,8 +138,14 @@ export function observedHueShapeRecipe(image,placement,currentInput,
       SOURCE_VISIBLE_ANTI_ALIAS_INSET_PX*Math.max(w,h)/600):0;
   const items=[];
   for(let index=0;index<count;index++){
-    const found=extractVisibleHueCompound(colours.masks[index],w,h,
+    let found=extractVisibleHueCompound(colours.masks[index],w,h,
       {insetPixels:opticalInset});
+    // Avoid a second source scan/bitmap or font/render path. The same
+    // flat/bright/nonradial source-evidence guard also protects any tiny
+    // pixel-grid staircase adjustment. Preserve exact original if unsafe.
+    if(found&&opticalInset>0&&SOURCE_VISIBLE_MICROSTAIR_STRENGTH>0)
+      found=smoothSourceVisibleMicrostairs(found,w,h,
+        {strength:SOURCE_VISIBLE_MICROSTAIR_STRENGTH});
     // The compact incomplete-colour source signature explicitly requires
     // one substantial connected silhouette per available semantic slot.
     if(!found||(partial&&found.components!==1))return null;
