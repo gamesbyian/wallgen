@@ -124,19 +124,44 @@ for(const [index,fixture] of fixtures.entries()){
   // Native sharp-corner/pinch art, actual 1:1 source pixels, NOT scaled
   // thumbnail reconstruction: choose the upper central painted artwork
   // for Delta and the centre-right outlines for elongated silhouettes.
-  const top=index===2?Math.round(HEIGHT*.20):Math.round(HEIGHT*.46);
+  // The Delta's upper tip starts around y=0.29 in this canonical
+  // frame. Do not silently archive a black crop as "apex inspection".
+  const top=index===2?Math.round(HEIGHT*.29):Math.round(HEIGHT*.46);
   const left=index===2?Math.round(WIDTH*.42):Math.round(WIDTH*.52);
   const crop=new PNG({width:420,height:420});
   for(let y=0;y<420;y++)for(let x=0;x<420;x++)
     copyPixel(full,Math.min(WIDTH-1,left+x),Math.min(HEIGHT-1,top+y),crop,x,y);
   crops.push(crop);
   await writeFile(join(out,fixture.name+'-native-crop.png'),PNG.sync.write(crop));
-  const colors=new Map();
+  // Actual pixel evidence: seven geometric levels aren't enough when
+  // low-scale rasterization could erase an entire colour. Classify real
+  // high-chroma reference pixels by their nearest canonical ROYGBIV hue.
+  const hueTargets=[0,29,52,136,212,244,278];
+  const huePixels=Array(7).fill(0);
+  const inkHue=(r,g,b)=>{
+    const max=Math.max(r,g,b),min=Math.min(r,g,b),d=max-min;
+    if(d<=65||max<=85)return null;
+    let h=0;
+    if(max===r)h=((g-b)/d)%6;
+    else if(max===g)h=(b-r)/d+2;
+    else h=(r-g)/d+4;
+    return ((h*60)%360+360)%360;
+  };
   for(let i=0;i<preview.data.length;i+=4){
-    const [r,g,b]=preview.data.subarray(i,i+3);
-    if(Math.max(r,g,b)-Math.min(r,g,b)>65&&Math.max(r,g,b)>85)
-      colors.set([r,g,b].join(','),(colors.get([r,g,b].join(','))||0)+1);
+    const h=inkHue(...preview.data.subarray(i,i+3));
+    if(h===null)continue;
+    const distances=hueTargets.map(target=>
+      Math.min(Math.abs(h-target),360-Math.abs(h-target)));
+    const best=Math.min(...distances),slot=distances.indexOf(best);
+    if(best<=14)huePixels[slot]++;
   }
+  assert.ok(huePixels.every(count=>count>30),
+    fixture.name+': each of the seven colours must produce actual visible PNG pixels: '+huePixels);
+  let cropInk=0;
+  for(let i=0;i<crop.data.length;i+=4)
+    if(inkHue(...crop.data.subarray(i,i+3))!==null)cropInk++;
+  assert.ok(cropInk>70,
+    fixture.name+': actual 1:1 native crop missed all painted outline detail');
   const result={
     name:fixture.name,requested:7,visible:report.visibleCount,
     inputGap:30,fittedGap:fitted.settings.gap,
@@ -145,7 +170,9 @@ for(const [index,fixture] of fixtures.entries()){
     exactNativePngParity:true,exactPreviewPngParity:true,
     sourceSnapshotUnchanged:true,roundTrip:true,
     sha256:sha(ref.bytes),strongChromaticPixels:
-      [...colors.values()].reduce((a,b)=>a+b,0),
+      huePixels.reduce((a,b)=>a+b,0),
+    independentlyPaintedHueSlots:huePixels.filter(n=>n>30).length,
+    previewHuePixels:huePixels,nativeCropInkPixels:cropInk,
     contourComponents:report.levels.map(l=>l.contours.length),
     renderingMs:{previewReference:smallRef.elapsedMs,
       previewWorker:smallWorker.elapsedMs,
