@@ -139,6 +139,39 @@ export function composeAgentRecipe({ style = 'studio', seed = 'agent-001', setti
   return normalizeRecipe({ ...merged, ...settings, lockedSettings: checked });
 }
 
+/**
+ * Bring an existing PWA-exported canonical recipe into the agent session
+ * without altering the live studio, source geometry or local favourites.
+ */
+export function importAgentRecipe(input) {
+  boundedObject(input, 'recipe');
+  if (input.version !== BASE.version)
+    throw new RangeError('Only current canonical recipe version ' + BASE.version + ' is supported');
+  if (typeof input.seed !== 'string' || !input.seed.trim() || input.seed.length > 90)
+    throw new RangeError('Imported recipe requires its original valid seed');
+  if (!Array.isArray(input.lockedSettings))
+    throw new TypeError('Imported recipe needs a lockedSettings array');
+  checkedLocks(input.lockedSettings);
+  const allowed = new Set([...SETTINGS, ...Object.keys(BASE),
+    'version', 'seed', 'lockedSettings', 'lockedResolved', 'reconstructionOrigin']);
+  for (const key of Object.keys(input))
+    if (!allowed.has(key)) throw new RangeError('Unknown imported recipe key: ' + key);
+  const recipe = normalizeRecipe(input);
+  // A malformed or future recipe should fail rather than silently inventing
+  // a different design and presenting it as the original user's artwork.
+  for (const [key, value] of Object.entries(input)) {
+    if (key === 'version' || key === 'lockedResolved') continue;
+    const actual = recipe[key];
+    if (['string', 'boolean', 'number'].includes(typeof value) && value !== actual)
+      throw new RangeError('Imported recipe normalized away ' + key);
+    if (Array.isArray(value) && value.length && !Array.isArray(actual))
+      throw new RangeError('Imported recipe lost array ' + key);
+    if (value && typeof value === 'object' && !Array.isArray(value) && !actual)
+      throw new RangeError('Imported recipe lost object ' + key);
+  }
+  return recipe;
+}
+
 export function editAgentRecipe(recipeInput, { settings = {}, lock = [], unlock = [] } = {}) {
   const current = normalizeRecipe(boundedObject(recipeInput, 'recipe'));
   const unlocking = checkedLocks(unlock);
