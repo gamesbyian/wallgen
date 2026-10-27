@@ -174,7 +174,7 @@ function undo(){
   if(!undoStack.length)return;
   const previous=undoStack.pop();
   undoing=true;
-  try{changeRecipe(previous,{bypassLocks:true,cause:'undo'});showNotice('Undid last design change.');}finally{undoing=false;updateUndoButton();}
+  try{changeRecipe(previous,{bypassLocks:true,cause:'undo',replaceEntireDesign:true});showNotice('Undid last design change.');}finally{undoing=false;updateUndoButton();}
 }
 
 function readFavorites() {
@@ -764,6 +764,11 @@ function changeRecipe(recipe,options={}){
   // bubbling native input/change event, so announce settled source state
   // after every recipe-driven form sync.
   document.dispatchEvent(new Event('roygbiv-controls-synced'));
+  // A complete restored design can reuse text-1 without being the same
+  // author-owned caption. Announce this only for deliberate replacements,
+  // not a routine change to camera, locks, style or other control values.
+  if(options.replaceEntireDesign)
+    document.dispatchEvent(new Event('roygbiv-design-replaced'));
 }
 document.querySelector('.studio-stage').addEventListener('roygbiv-view-zoom-request',event=>{
   changeRecipe({...current,viewZoom:event.detail});
@@ -1203,7 +1208,7 @@ importRecipeFile.addEventListener('change',async()=>{
       historicalInterpretation=recovered.format!=='roygbiv-recipe-v2'||
         recovered.normalizedFieldsChanged||recovered.recordCount>1;
     }
-    changeRecipe(recipe,{bypassLocks:true});
+    changeRecipe(recipe,{bypassLocks:true,replaceEntireDesign:true});
     showNotice(isJSON?'Restored wallpaper settings from JSON recipe.':
       historicalInterpretation?
         'Restored historical PNG settings through the current generator. Artwork may differ from the saved image; retain the original PNG.':
@@ -1963,7 +1968,7 @@ window.addEventListener('pagehide',()=>{
 
 const explorationHistory=installExplorationHistory({
   form,preview,getRecipe:()=>current,
-  restore:recipe=>changeRecipe(recipe,{bypassLocks:true}),
+  restore:recipe=>changeRecipe(recipe,{bypassLocks:true,replaceEntireDesign:true}),
   renderThumbnail:makeHistoryThumbnail,
 });
 
@@ -2258,7 +2263,7 @@ function createCard(recipe,index) {
   card.addEventListener('click',()=>{
     // Preserve the just-edited design in Undo before loading a saved variation.
     flushQueuedControlUpdate();
-    changeRecipe(recipe,{scroll:true,bypassLocks:true});
+    changeRecipe(recipe,{scroll:true,bypassLocks:true,replaceEntireDesign:true});
   });
   // Append the card immediately; bitmap rendering happens off the main
   // thread and updates it only while it is still in the active gallery.
