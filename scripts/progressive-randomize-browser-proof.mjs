@@ -50,7 +50,7 @@ try{
       const request=args[0];
       if(request?.type==='preview')
         window.__previewJobs.push({id:request.id,key:request.key,quality:request.quality,
-          width:request.width,height:request.height,postedAt:performance.now()});
+          width:request.width,height:request.height,postedAt:performance.now(),recipe:request.recipe});
       return original.apply(this,args);
     };
   });
@@ -88,7 +88,12 @@ try{
       document.querySelector('#preview')?.dataset.renderPending==='false',null,{timeout:85000});
     const data=await page.evaluate(()=>({
       events:window.__previewEvents.slice(),
-      jobs:window.__previewJobs.slice(),
+      jobs:window.__previewJobs.map(({recipe,...job})=>job),
+      postedRecipesEqual:window.__previewJobs.length>=2&&
+        JSON.stringify(window.__previewJobs[0].recipe)===
+          JSON.stringify(window.__previewJobs[1].recipe),
+      sameRecipeReference:window.__previewJobs.length>=2&&
+        window.__previewJobs[0].recipe===window.__previewJobs[1].recipe,
       visibleWidth:document.querySelector('#preview').width,
       visibleHeight:document.querySelector('#preview').height,
     }));
@@ -96,6 +101,8 @@ try{
     const exact=data.events.find(e=>e.phase==='settled');
     if(!provisional)console.error('NO_PROVISIONAL_DIAGNOSTIC '+JSON.stringify({
       action:buttonId,events:data.events,
+      postedRecipesEqual:data.postedRecipesEqual,
+      sameRecipeReference:data.sameRecipeReference,
       jobs:data.jobs.map(({id,quality,width,height})=>({id,quality,width,height})),
       workerMessages:await page.evaluate(()=>window.__workerMessages.slice(-20)),
       pageErrors:errors
@@ -110,6 +117,8 @@ try{
     assert.ok(low.width<full.width&&low.height<full.height);
     assert.deepEqual([full.width,full.height],[data.visibleWidth,data.visibleHeight]);
     return {action:buttonId,
+      postedRecipesEqual:data.postedRecipesEqual,
+      sameRecipeReference:data.sameRecipeReference,
       provisionalMs:Math.round(provisional.at-start),
       settledMs:Math.round(exact.at-start),
       size:[data.visibleWidth,data.visibleHeight],
