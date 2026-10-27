@@ -60,3 +60,17 @@ export function frameImportedSilhouette(geometry,margins=NESTED_FRAME_MARGINS){
      top<margins.y-.01||bottom>HEIGHT-margins.y+.01)return null;
   return normalized;
 }
+
+
+/**
+ * Enable Nest on an already imported silhouette. Respect the author's
+ * previous object-0 transform if any; otherwise give it the same source-aware
+ * framing as My shapes & paths → Nest rainbow. Other pigment-slot edits are
+ * carried through unchanged, and all changes remain one normal recipe Undo.
+ */
+export function frameUnpositionedNestedSilhouette(recipe,geometry){
+  const previous=normalizeScatteredOverrides(recipe?.scatteredOverrides);
+  if(previous.some(item=>item.index===0))return previous;
+  const framed=frameImportedSilhouette(geometry);
+  return framed?[...previous,framed].sort((a,b)=>a.index-b.index):previous;
+}
