@@ -1,8 +1,14 @@
 # Imported-shape nesting: creator-facing product requirement
 
-**Implementation issue:** [#815: true seven-colour nested imported silhouettes](https://github.com/gamesbyian/wallgen/issues/815). Currently specified, not yet implemented.
+**Implementation issue:** [#815: true seven-colour nested imported silhouettes](https://github.com/gamesbyian/wallgen/issues/815). **Core software now delivered** by merged [#817](https://github.com/gamesbyian/wallgen/pull/817)–[#821](https://github.com/gamesbyian/wallgen/pull/821); sections below retain the original owner requirements, including optional future optical features. The [live queue](CURRENT-WORK-QUEUE-2026-10-24.md) and [#815 current checkpoint](https://github.com/gamesbyian/wallgen/issues/815) distinguish demonstrated functionality from untested aesthetic/device gates.
 
 **Owner request:** Seven finely spaced ROYGBIV outlines/bands that follow an imported elongated cloud, Starfleet-style delta, oval, shield or other irregular silhouette with visually balanced nested contours. **This is a new positive feature request, not a defect in arbitrary-source reverse inference.** Product authority: [PRODUCT-CONTRACT-2026-10-26.md](PRODUCT-CONTRACT-2026-10-26.md), software boundaries: [RECONSTRUCTION-TYPOGRAPHY-COMPLETION-2026-10-27.md](RECONSTRUCTION-TYPOGRAPHY-COMPLETION-2026-10-27.md), technical design: [NESTED-IMPORTED-SHAPE-GEOMETRY-AND-REUSE-2026-10-27.md](NESTED-IMPORTED-SHAPE-GEOMETRY-AND-REUSE-2026-10-27.md).
+
+## Delivered product controls and remaining limits · 27 October
+
+The currently shipped interaction is **My shapes & paths → Nest rainbow** or **Regions → Nest shape**, using one imported canonical compound geometry object. Existing Regions controls select **1–7 colours, line thickness, clear spacing, outer margin and colour order**. **Auto-fit outlines to shape** is an explicit Undoable operation that reduces existing numeric parameters in the order gap, outer margin, then stroke width only until real available contours survive; it refuses impossible full counts without altering the source or inventing missing rings. **Fit shape within wallpaper** centers/scales the source silhouette's *actual ring geometry* inside the design plane with safe margins, preserving holes/islands, authored proportions and independent camera transforms. Saved-library Nest starts with that framing in a single Undo transaction. Exact native Delta worker/reference and short-portrait edit/Undo evidence are linked in the current issue/queue.
+
+**Still conditional, not presently shipped:** free-form optical apex/miter/bevel treatment, filled annular rainbow bands, seven guaranteed continuous loops through physically narrow tips, full physical Android/Pixel and real human aesthetic acceptance. These are optional quality investigations triggered by inspected current output, not a standing demand to replace the existing Euclidean engine.
 
 ## In one sentence
 
