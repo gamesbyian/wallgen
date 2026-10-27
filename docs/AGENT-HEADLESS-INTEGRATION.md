@@ -1,6 +1,6 @@
 # ROYGBIV for LLM agents: local headless integration
 
-**Status (27 October 2026):** local stdio MCP integration implemented on the feature branch. Hosted multi-user MCP, a ROYGBIV-in-app connector screen, automatic visual scoring, external model inference, and cross-session candidate storage are **not** implemented. Preserve this separation when describing the feature.
+**Status (27 October 2026):** local stdio MCP integration implemented and independently exercised by [the real Chromium + MCP CI acceptance run #40602482162](https://github.com/gamesbyian/wallgen/actions/runs/40602482162): **8/8 tests passed**, including live stdio handshake and tool calls, existing PWA recipe import, locked editing, deterministic exploration, actual 240×520 image response plus cached repeat, embedded preview recipe roundtrip, and a real **3024×6552** PNG with recoverable embedded recipe and matching exported JSON. [Actual native PNG and JSON test artifacts](https://github.com/gamesbyian/wallgen/actions/runs/40602482162/artifacts/12778519404) were uploaded for independent inspection. These are automated Linux/Chromium results, **not** a physical Pixel or human agent-host aesthetic signoff. Hosted multi-user MCP, a ROYGBIV-in-app connector screen, automatic visual scoring, external model inference, and cross-session candidate storage are **not** implemented. Preserve this separation when describing the feature.
 
 ## Product outcome
 
