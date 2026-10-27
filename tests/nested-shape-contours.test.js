@@ -70,6 +70,8 @@ test('pointed deltas and narrow necks retain honest topology and finite loops',(
   assert.deepEqual(quantized(a),quantized(b),
     'winding cannot change pixel-relevant contour geometry');
   assert.equal(a.requestedCount,7);
+  assert.ok(a.levels.every(level=>level.contours.every(c=>c.closed)),
+    'uncropped closed Delta cannot contain unfinished interior lines or cap dots');
   for(const level of a.levels){
     assert.ok(level.contours.every(c=>c.points.length>=2));
     for(const contour of level.contours)for(const p of contour.points)
@@ -107,4 +109,15 @@ test('opt-in is always attached to existing current imported object, never ordin
   assert.equal(scene.nestedShapeContours.objectId,'region-0');
   assert.equal(scene.scatteredShapeKind,'circle');
   assert.ok(scene.objects.every(o=>!o.rings),'circle objects do not receive custom shape insets');
+});
+
+test('contour-level planner retains real open chains only at camera crop edges',()=>{
+  const r={...DEFAULT_NESTED_CONTOURS,count:1,firstInset:11,strokeWidth:2};
+  const source=box(0,0,160,120);
+  const cropped=planNestedShapeContours(source,r,{
+    resolution:.7,bounds:{left:-5,right:36,top:20,bottom:105},padding:0
+  });
+  assert.ok(cropped.levels[0].contours.length>=1);
+  assert.ok(cropped.levels[0].contours.some(c=>!c.closed),
+    'genuine cropped source boundary must not be discarded');
 });
