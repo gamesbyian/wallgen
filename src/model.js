@@ -550,8 +550,10 @@ export function isPrime(n) {
   return true;
 }
 /** Independently randomize every unlocked control; primeOnly restricts numeric draws. */
-export function randomizeAllRecipe({primesOnly=false}={}) {
-  const seed=newSeed();
+export function randomizeAllRecipe({primesOnly=false,seed:requestedSeed}={}) {
+  // An explicitly supplied seed makes headless agent exploration reproducible.
+  // Browser randomization still obtains a fresh random seed as before.
+  const seed=requestedSeed===undefined?newSeed():String(requestedSeed);
   const r=rng(seed+':randomize-all');
   const any=choices=>pick(r,choices);
   const percent=()=>primesOnly?any(PRIME_PERCENTAGES):Math.floor(r()*101);
