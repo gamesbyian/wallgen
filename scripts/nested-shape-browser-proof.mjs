@@ -82,7 +82,7 @@ try{
   const url='http://127.0.0.1:'+server.address().port+
     '/?r='+encodeURIComponent(JSON.stringify(plain));
   await page.goto(url,{waitUntil:'domcontentloaded'});
-  await page.waitForSelector('.nested-shape-studio button');
+  await page.waitForSelector('.nested-shape-studio button',{state:'attached'});
   await page.waitForFunction(()=>document.querySelector('#preview')?.dataset.renderPending==='false',
     null,{timeout:80000});
   const outcome=await page.evaluate(()=>{
