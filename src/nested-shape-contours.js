@@ -78,25 +78,49 @@ export function planNestedShapeContours(rings,settings,options={}){
   // Matched Linux benchmarks found 256/512-vertex gains but regressions on
   // ordinary 20–70-edge shapes, so keep those on the original fast path.
   // Cap samples explicitly to bound peak phone memory. No persistent state.
-  const pointCount=Array.isArray(rings[0])?
-    rings.reduce((total,ring)=>total+ring.length,0):rings.length;
-  const distanceCache=options.cacheDistances===false||pointCount<256?
-    null:{columns:new Map(),count:0,limit:120000};
+  const distanceCache=createDistanceCache(rings,options);
   const levels=distances.map((distance,index)=>({
     index,distance,
-    contours:polygonInsetContours(rings,distance,{
-      bounds:options.bounds,padding:options.padding??80,
-      // The canonical world-aligned grid is independent of wallpaper output
-      // dimensions and camera crop. This slightly refines the default pitch.
-      resolution:options.resolution??1.0,
-      distanceCache
-    }).filter(contour=>validContour(contour,distance,settings,options))
+    contours:sampleNestedLevel(rings,distance,settings,options,distanceCache)
   }));
   const visibleCount=levels.filter(level=>level.contours.length>0).length;
   return {levels,visibleCount,requestedCount:levels.length,
     collapsed:levels.length-visibleCount};
 }
 
+
+
+/** A render-local cache. Only high-vertex inputs have measured cache gains. */
+function createDistanceCache(rings,options){
+  const pointCount=Array.isArray(rings[0])?
+    rings.reduce((total,ring)=>total+ring.length,0):rings.length;
+  return options.cacheDistances===false||pointCount<256?
+    null:{columns:new Map(),count:0,limit:120000};
+}
+function sampleNestedLevel(rings,distance,settings,options,distanceCache){
+  return polygonInsetContours(rings,distance,{
+    bounds:options.bounds,padding:options.padding??80,
+    // World-aligned and output-resolution-independent, identical to the
+    // actual renderer's seven-level contour calculation.
+    resolution:options.resolution??1.0,
+    distanceCache
+  }).filter(contour=>validContour(contour,distance,settings,options));
+}
+/** Fast exact truth-test for Auto-fit. Inward erosion levels are individually
+ * checked in reverse order; if one colour vanishes, rendering all remaining
+ * levels cannot restore the full requested count. No estimate or approximation
+ * is used, and public planNestedShapeContours still returns every level.
+ */
+function allNestedLevelsSurvive(rings,settings,options){
+  const distances=nestedContourDistances(settings);
+  if(!distances.length)return false;
+  const cache=createDistanceCache(rings,options);
+  for(let i=distances.length-1;i>=0;i--){
+    if(!sampleNestedLevel(rings,distances[i],settings,options,cache).length)
+      return false;
+  }
+  return true;
+}
 
 // An explicit one-click fit. This adjusts the existing *authored* dimensions;
 // it never rescales the source polygon, changes the offset definition, or
@@ -117,10 +141,16 @@ export function fitNestedShapeContours(rings,settings,options={}){
   const survives=proposal=>{
     const last=nestedContourDistances(proposal).at(-1);
     if(last>=halfSpan)return false;
-    const report=planNestedShapeContours(rings,proposal,{
-      resolution:options.resolution??1.0,padding:options.padding??80
-    });
-    return report.visibleCount===proposal.count;
+    const opts={resolution:options.resolution??1.0,
+      padding:options.padding??80,cacheDistances:options.cacheDistances};
+    // Measured gains are on narrow *single-ring* silhouettes. Compound
+    // hole/island sets have additional topology work and the reverse walk
+    // benchmarked slower, so leave their proven full planner unchanged.
+    if(options.earlyExit===false||Array.isArray(rings[0])){
+      const report=planNestedShapeContours(rings,proposal,opts);
+      return report.visibleCount===proposal.count;
+    }
+    return allNestedLevelsSurvive(rings,proposal,opts);
   };
   const current={...settings};
   if(survives(current))return {settings:current,fitted:true,changed:false,

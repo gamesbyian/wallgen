@@ -34,7 +34,7 @@ export function installNestedShapeControls({form,getRecipe,getScene,onApply,onNo
     const input=add(label,'input');
     input.type='number';input.min=String(min);input.max=String(max);
     input.step=String(step);input.inputMode='decimal';
-    input.setAttribute('aria-label',title+' (design pixels)');
+    input.setAttribute('aria-label',key==='count'?title:title+' (design pixels)');
     fields[key]=input;
     input.addEventListener('change',event=>{
       event.stopPropagation();
