@@ -1413,7 +1413,9 @@ const editor=mountEditor();
 // detached and Nest controls stranded in the hidden source control grid.
 const regionsCard=document.querySelector('.editor-tool-card[data-editor-tool="regions"]');
 if(!regionsCard)throw new Error('Regions editor card missing during nesting initialization');
-regionsCard.append(useScatteredShape);
+// The saved-shape picker is the primary action here, not the final row
+// below all regional controls on a 320px-short portrait screen.
+regionsCard.prepend(useScatteredShape);
 const nestedShapeControls=installNestedShapeControls({
   form,getRecipe:()=>current,getScene:()=>currentScene,
   onApply:recipe=>changeRecipe(recipe,{cause:'nested_shape'}),
