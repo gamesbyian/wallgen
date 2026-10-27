@@ -4,6 +4,7 @@ import {normalizeRecipe,resolveScene} from '../src/model.js';
 import {normalizeNestedShapeContours,nestedContourDistances,
   planNestedShapeContours,fitNestedShapeContours,DEFAULT_NESTED_CONTOURS} from '../src/nested-shape-contours.js';
 import {pointInPolygon,polygonInsetContours} from '../src/polygon-inset.js';
+import {frameImportedSilhouette,NESTED_FRAME_MARGINS} from '../src/nested-shape-framing.js';
 
 const box=(x0,y0,x1,y1)=>[
   {x:x0,y:y0},{x:x1,y:y0},{x:x1,y:y1},{x:x0,y:y1}
@@ -217,4 +218,64 @@ test('high-detail traced silhouette uses exactly the same geometric output as ba
     {...options,cacheDistances:false});
   assert.deepEqual(cached,baseline);
   assert.equal(cached.visibleCount,7);
+});
+
+
+test('nesting preset frames wide, tall and pointed imported silhouette geometry without distortion',()=>{
+  const cases=[
+    {type:'compound-region',viewBox:[0,0,600,200],
+      components:[{outer:[[0,0],[600,0],[600,200],[0,200]],holes:[]}]},
+    {type:'compound-region',viewBox:[0,0,120,900],
+      components:[{outer:[[0,0],[120,0],[120,900],[0,900]],holes:[]}]},
+    {type:'compound-region',viewBox:[0,0,360,360],
+      components:[{outer:[[180,18],[310,330],[228,270],[180,306],[132,270],[50,330]],
+        holes:[[[180,135],[198,195],[162,195]]]}]}
+  ];
+  for(const geometry of cases){
+    const original=serial(geometry);
+    const position=frameImportedSilhouette(geometry);
+    assert.ok(position,'a validated source must have a safe design-plane fit');
+    const shape={schema:'roygbiv.geometry-snapshot',version:1,geometry};
+    const recipe=normalizeRecipe({seed:'frame-source',structure:'regions',
+      regionMode:'scattered',scatteredShapeKind:'imported',
+      scatteredShape:shape,scatteredCount:1,scatteredMinSize:80,
+      scatteredMaxSize:100,scatteredVariation:0,scatteredEdgeCrop:0,
+      scatteredOverrides:[position],nestedShapeContours:DEFAULT_NESTED_CONTOURS});
+    const obj=resolveScene(recipe).objects[0];
+    assert.ok(obj?.rings?.length,'exact imported shape must survive canonical rendering');
+    const x=obj.rings.flat().map(p=>p.x),y=obj.rings.flat().map(p=>p.y);
+    assert.ok(Math.min(...x)>=NESTED_FRAME_MARGINS.x-.02);
+    assert.ok(Math.max(...x)<=600-NESTED_FRAME_MARGINS.x+.02);
+    assert.ok(Math.min(...y)>=NESTED_FRAME_MARGINS.y-.02);
+    assert.ok(Math.max(...y)<=1300-NESTED_FRAME_MARGINS.y+.02);
+    assert.deepEqual(geometry,original,'framing must never alter source geometry');
+    assert.deepEqual(normalizeRecipe(serial(recipe)),recipe);
+  }
+});
+
+test('design-plane framing preserves detached components, holes and aspect ratio',()=>{
+  const shape={type:'compound-region',viewBox:[0,0,400,100],
+    components:[
+      {outer:[[0,0],[280,0],[280,100],[0,100]],
+        holes:[[[90,25],[140,25],[140,65],[90,65]]]},
+      {outer:[[310,20],[400,20],[400,80],[310,80]],holes:[]}
+    ]};
+  const position=frameImportedSilhouette(shape);
+  assert.ok(position);
+  const template={schema:'roygbiv.geometry-snapshot',version:1,geometry:shape};
+  const scene=resolveScene(normalizeRecipe({seed:'compound-fit',
+    structure:'regions',regionMode:'scattered',scatteredShapeKind:'imported',
+    scatteredCount:1,scatteredShape:template,scatteredOverrides:[position]}));
+  assert.equal(scene.objects[0].rings.length,3);
+  const scaled=scene.objects[0].rings[0];
+  const width=scaled[1].x-scaled[0].x,height=scaled[2].y-scaled[1].y;
+  assert.ok(Math.abs(width/height-2.8)<1e-6,'source proportion must survive');
+});
+
+test('invalid or degenerate imported shape cannot create an unsafe frame transform',()=>{
+  for(const value of [null,{}, {type:'compound-region',viewBox:[0,0,0,1],
+    components:[]},{type:'compound-region',viewBox:[0,0,20,20],
+    components:[{outer:[[1,1],[1,1],[1,1]],holes:[]}]}]){
+    assert.equal(frameImportedSilhouette(value),null);
+  }
 });
