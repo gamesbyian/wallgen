@@ -1882,3 +1882,22 @@ test('automatic reconstruction of source circles is not repainted by stale seven
   assert.ok(stale.every(c=>!Object.hasOwn(c.recipe,'nestedShapeContours')));
   assert.deepEqual(input.data,copy,'no original pixel mutation');
 });
+
+
+test('source-visible scattered-circle hypotheses do not inherit Interior Elements',()=>{
+  const before=original.data.slice();
+  const clean=normalizeRecipe({seed:'independent-circle-decoration',
+    structure:'regions',regionMode:'scattered'});
+  const dirty=normalizeRecipe({...clean,interiorElements:[{
+    id:'foreign-pattern',type:'line',shape:'zigzag',
+    placement:'contour',color:'white',stroke:'solid',
+    width:4,opacity:1
+  }]});
+  const a=reconstructionCandidates(original,clean);
+  const b=reconstructionCandidates(original,dirty);
+  assert.ok(a.some(c=>c.kind==='regions'));
+  assert.deepEqual(b.map(c=>[c.kind,c.recipe]),
+    a.map(c=>[c.kind,c.recipe]));
+  assert.ok(b.every(c=>c.recipe.interiorElements.length===0));
+  assert.deepEqual(original.data,before);
+});
