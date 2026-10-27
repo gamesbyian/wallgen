@@ -49,10 +49,16 @@ export function createPreviewCoordinator({
       return;
     }
     if(message?.type!=='frame')return;
+    // Ignore unsolicited/duplicate frames without freeing the *real* active
+    // slot. Otherwise a late stray response can start a second paint while
+    // the worker is still rendering the current job.
+    if(message.id!==active?.id){
+      staleCount++;closeFrame(message);
+      return;
+    }
     clearWatchdog();
-    const match=message.id===active?.id;
     active=null;
-    if(!match||message.id!==revision){
+    if(message.id!==revision){
       staleCount++;closeFrame(message);
     }else{
       try{onFrame?.(message);frameCount++;}
