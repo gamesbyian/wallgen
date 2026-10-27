@@ -6,13 +6,49 @@ import {DESIGN_WIDTH,DESIGN_HEIGHT,HUES,normalizeRecipe,respectSettingLocks}
 import {extractImageColourRegions,extractVisibleHueCompound} from './image-path.js';
 import {GEOMETRY_SNAPSHOT_SCHEMA} from './geometry-asset.js';
 
+// Bounded source-pixel AA correction. The source-visible loops are traced at
+// importer resolution, while the inverse painter scores their Canvas2D
+// rasterization at 96×208. Real source-vs-paint optical measurements show a
+// 1px edge halo and support a 0.2-source-pixel contour inset on the currently
+// representable high-contrast seven-hue scene. Not a global shape resize.
+// Lower-resolution standalone callers receive proportionately less offset.
+const SOURCE_VISIBLE_ANTI_ALIAS_INSET_PX=0.2;
+
+// The source's pigment masks already classify all seven hues. Only sample
+// adjacent *same-hue* interior pixels to detect observed material/texture
+// variation, not a new palette or segmentation. Ignore sparse/skinny contours
+// where anti-aliased source borders swamp any interior-material evidence.
+// Sample every other row/column to keep this bounded on phone import.
+function substantialInteriorPigmentVariation(image,masks){
+  const w=image.width,h=image.height,data=image.data;
+  let pairs=0,varied=0;
+  for(let y=1;y<h-1;y+=2)for(let x=1;x<w-2;x+=2){
+    const pixel=y*w+x;
+    for(const mask of masks){
+      if(!mask[pixel]||!mask[pixel+1])continue;
+      pairs++;
+      const i=pixel*4;
+      const meanChange=(Math.abs(data[i]-data[i+4])+
+        Math.abs(data[i+1]-data[i+5])+
+        Math.abs(data[i+2]-data[i+6]))/3;
+      if(meanChange>2.5)varied++;
+      break;
+    }
+  }
+  // Source variation is meaningful only with enough same-colour interior;
+  // thin anti-aliased Draw paths cannot be called a textured canvas from a
+  // few boundary pixels. No claim about actual historical materials.
+  return pairs>=w*h*.05&&varied/pairs>.45;
+}
+
 /** Converts seven, or an explicitly qualified contiguous first-N subset,
  * of visible pigment masks into independent editable, self-contained rings. Caller supplies the *existing*
  * reconstructionPlacement, so canvas letterboxing remains single-owned.
  * Return null when any slot/shape/lock cannot be represented.
  */
 export function observedHueShapeRecipe(image,placement,currentInput,
-  {paletteHint='classic',colourAnalysis=null,allowPartial=false,sourceTone=null}={}){
+  {paletteHint='classic',colourAnalysis=null,allowPartial=false,sourceTone=null,
+    sourceRadialKind='unknown'}={}){
   const w=image?.width,h=image?.height;
   if(!Number.isInteger(w)||!Number.isInteger(h)||
     w<12||h<12||w*h>650000||image.data?.length!==w*h*4||
@@ -44,9 +80,20 @@ export function observedHueShapeRecipe(image,placement,currentInput,
     colours.coverage<(partial?.008:.035)||
     colours.coverage>.91||
     !['black','white'].includes(colours.background))return null;
+  // Contour AA is supported only when shared source evidence says these
+  // are solid, nonradial seven-pigment silhouettes. Genuine radial rings and
+  // variegated/embroidered ink regress when their edges are contracted.
+  // Unknown standalone consumers retain their exact original source rings.
+  const safeFlatContours=sourceRadialKind===null&&sourceTone===null&&
+    count===7&&colours.background==='black'&&
+    !substantialInteriorPigmentVariation(image,colours.masks);
+  const opticalInset=safeFlatContours?
+    Math.min(SOURCE_VISIBLE_ANTI_ALIAS_INSET_PX,
+      SOURCE_VISIBLE_ANTI_ALIAS_INSET_PX*Math.max(w,h)/600):0;
   const items=[];
   for(let index=0;index<count;index++){
-    const found=extractVisibleHueCompound(colours.masks[index],w,h);
+    const found=extractVisibleHueCompound(colours.masks[index],w,h,
+      {insetPixels:opticalInset});
     // The compact incomplete-colour source signature explicitly requires
     // one substantial connected silhouette per available semantic slot.
     if(!found||(partial&&found.components!==1))return null;

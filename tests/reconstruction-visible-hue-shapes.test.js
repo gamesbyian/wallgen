@@ -64,6 +64,102 @@ test('visible source hue shapes reuse canonical mask/holes and produce seven ind
   assert.deepEqual(original.data,bytes,'source bytes never changed');
 });
 
+test('bounded visible pigment AA inset is opt-in, source-safe and preserves holes and crop',()=>{
+  const image=sevenShapes();
+  const analysed=extractImageColourRegions(image,HUES,{includeMasks:true});
+  const mask=analysed.masks[0],unchanged=mask.slice();
+  const baseline=extractVisibleHueCompound(mask,image.width,image.height);
+  const amount=.2*Math.max(image.width,image.height)/600;
+  const adjusted=extractVisibleHueCompound(mask,image.width,image.height,
+    {insetPixels:amount});
+  assert.ok(adjusted);
+  assert.equal(adjusted.insetApplied,true);
+  assert.equal(adjusted.components,baseline.components);
+  assert.equal(adjusted.geometry.components.length,2);
+  assert.equal(adjusted.geometry.components[0].holes.length,1);
+  assert.deepEqual(adjusted.centrePixels,baseline.centrePixels);
+  assert.notDeepEqual(adjusted.geometry,baseline.geometry,
+    'only opt-in sampled contour vertices change');
+  assert.deepEqual(mask,unchanged,'never mutate source hue segmentation');
+  assert.deepEqual(extractVisibleHueCompound(mask,image.width,image.height),
+    baseline,'ordinary manual mask import stays pixel unchanged');
+  assert.throws(()=>extractVisibleHueCompound(mask,image.width,image.height,
+    {insetPixels:1}),RangeError);
+  const standalone=observedHueShapeRecipe(image,placement,{seed:'source'});
+  assert.deepEqual(standalone.recipe.scatteredShapeOverrides[0].shape.geometry,
+    baseline.geometry,'standalone callers have no measured radial source kind');
+  const production=observedHueShapeRecipe(image,placement,{seed:'source'},
+    {sourceRadialKind:null});
+  assert.deepEqual(production.recipe.scatteredShapeOverrides[0].shape.geometry,
+    adjusted.geometry,'seven black-ground candidate uses measured inset');
+  const w=100,h=120,edge=new Uint8Array(w*h);
+  for(let y=20;y<100;y++)for(let x=0;x<21;x++)edge[y*w+x]=1;
+  const cropped=extractVisibleHueCompound(edge,w,h,{insetPixels:.2});
+  assert.ok(cropped);
+  assert.equal(cropped.touchesFrame,true);
+  assert.equal(cropped.geometry.components[0].outer
+    .some(p=>p[0]===0),true,'observed clipped frame boundary remains pinned');
+  assert.deepEqual(extractVisibleHueCompound(edge,w,h).centrePixels,
+    cropped.centrePixels);
+});
+
+test('optical inset refuses source-measured radial rings and variegated interior pigment',()=>{
+  const source=sevenShapes();
+  const plain=observedHueShapeRecipe(source,placement,{seed:'no-inset'});
+  const rings=observedHueShapeRecipe(source,placement,{seed:'no-inset'},
+    {sourceRadialKind:'rings'});
+  const flat=observedHueShapeRecipe(source,placement,{seed:'no-inset'},
+    {sourceRadialKind:null});
+  assert.deepEqual(rings.recipe.scatteredShapeOverrides,
+    plain.recipe.scatteredShapeOverrides,
+    'measured rings preserve historical editable contour geometry');
+  assert.notDeepEqual(flat.recipe.scatteredShapeOverrides,
+    plain.recipe.scatteredShapeOverrides,
+    'solid nonradial seven-hue artwork permits bounded contour calibration');
+  const measuredDark=observedHueShapeRecipe(source,placement,{seed:'no-inset'},
+    {sourceRadialKind:null,sourceTone:{saturation:90,lightness:25}});
+  assert.ok(measuredDark);
+  assert.deepEqual(measuredDark.recipe.scatteredShapeOverrides,
+    plain.recipe.scatteredShapeOverrides,
+    'the existing independently measured dark source tone inhibits flat-bright AA');
+  // A real source can show fine textile variations throughout a *large*
+  // interior, not simply a handful of antialiased edge pixels. Draw seven
+  // broad independent pigment bands with ample measured same-hue interior.
+  const width=240,height=520,data=new Uint8ClampedArray(width*height*4);
+  for(let i=0;i<width*height;i++)data[i*4+3]=255;
+  for(let hue=0;hue<7;hue++){
+    const colour=hueRgb(HUES[hue]),top=12+hue*70;
+    for(let y=top;y<top+48;y++)for(let x=18;x<222;x++){
+      const i=4*(y*width+x);data.set(colour,i);
+    }
+  }
+  const broad={width,height,data};
+  const widePlain=observedHueShapeRecipe(broad,placement,{seed:'no-inset'});
+  const wideInset=observedHueShapeRecipe(broad,placement,{seed:'no-inset'},
+    {sourceRadialKind:null});
+  assert.ok(widePlain&&wideInset);
+  assert.notDeepEqual(wideInset.recipe.scatteredShapeOverrides,
+    widePlain.recipe.scatteredShapeOverrides,
+    'ordinary broad flat pigments retain a source-backed AA correction');
+  const noisy={...broad,data:broad.data.slice()};
+  for(let i=0;i<noisy.data.length;i+=4){
+    if(!noisy.data[i]&&!noisy.data[i+1]&&!noisy.data[i+2])continue;
+    const x=(i/4)%width,amount=x%2?7:-7;
+    for(let c=0;c<3;c++)noisy.data[i+c]=Math.max(0,
+      Math.min(255,noisy.data[i+c]+amount));
+  }
+  const found=extractImageColourRegions(noisy,HUES,{includeMasks:true});
+  assert.equal(found.regions.length,7);
+  const before=noisy.data.slice();
+  const textured=observedHueShapeRecipe(noisy,placement,{seed:'no-inset'},
+    {sourceRadialKind:null});
+  assert.ok(textured);
+  assert.deepEqual(textured.recipe.scatteredShapeOverrides,
+    widePlain.recipe.scatteredShapeOverrides,
+    'substantial measured same-hue interior variation refuses false flat-ink correction');
+  assert.deepEqual(noisy.data,before,'texture gate only reads source bytes');
+});
+
 test('neutral and two-hue source artwork never synthesizes a complete seven-pigment scene',()=>{
   const source=sevenShapes(),original=source.data.slice();
   const neutral={...source,data:source.data.slice()};
@@ -255,7 +351,7 @@ test('one shared seven-mask classifier exactly matches the standalone editable s
   assert.equal(analysed.sourceHueMasks.length,7);
   assert.ok(analysed.sourceHueMasks.every(mask=>
     mask instanceof Uint8Array&&mask.length===input.width*input.height));
-  const options={paletteHint:'jewel'};
+  const options={paletteHint:'jewel',sourceRadialKind:analysed.radial.kind};
   const separate=observedHueShapeRecipe(input,placement,
     {seed:'anonymous'},options);
   const shared=observedHueShapeRecipe(input,placement,
@@ -275,7 +371,8 @@ test('one shared seven-mask classifier exactly matches the standalone editable s
   const sourceCandidate=reconstructionCandidates(input,{seed:'anonymous'});
   if(sourceCandidate[0]?.kind==='hue-visible-shapes')
     assert.deepEqual(sourceCandidate[0].recipe,
-      observedHueShapeRecipe(input,placement,{seed:'anonymous'}).recipe);
+      observedHueShapeRecipe(input,placement,{seed:'anonymous'},
+        {sourceRadialKind:analysed.radial.kind}).recipe);
 });
 
 test('shared pigment descriptor refuses spoofed sparse hues and incorrect masks',()=>{

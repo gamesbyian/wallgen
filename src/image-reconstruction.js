@@ -757,7 +757,10 @@ export function reconstructionCandidates(image,recipe,{
         background:desc.background,coverage:desc.coverage,
         regions:desc.colourRegions,masks:desc.sourceHueMasks
       },
-      sourceTone:darkTone
+      sourceTone:darkTone,
+      // Reuse the one already-measured source signature. Do not call
+      // another optical classifier inside the per-hue contour adapter.
+      sourceRadialKind:desc.radial.kind
     }):null;
   if(observed&&darkTone){
     const recipe=respectSettingLocks(current,normalizeRecipe({...observed.recipe,

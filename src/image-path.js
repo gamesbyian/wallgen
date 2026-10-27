@@ -387,7 +387,38 @@ export function extractImageShapeCandidates(image){
 // Opt-in, source-visible per-hue silhouette extraction. Reuses the existing
 // binary hue mask, flood fill, edge loops and validated compound geometry;
 // never classifies colours again or guesses an unseen original backface.
-export function extractVisibleHueCompound(mask,w,h){
+// A small source-pixel AA calibration for ONLY independently observed
+// pigment contours. shapeEdgeLoops walks every outer/hole ring with actual
+// pigment on its right, so a positive right normal moves edges toward ink,
+// including enlarging black holes. Keep source-frame crop boundaries pinned:
+// a visible clipped edge reveals nothing about unseen exterior shape.
+// The renderer, scene and source pixels remain the existing single owners.
+function insetVisiblePigmentOutlines(outlines,inset,{minX,minY,bx,by,w,h}){
+  const unit=(start,end)=>{
+    const dx=end[0]-start[0],dy=end[1]-start[1],
+      length=Math.hypot(dx,dy);
+    return length>1e-9?[-dy/length,dx/length]:[0,0];
+  };
+  const adjust=ring=>ring.map((point,i)=>{
+    const prev=ring[(i+ring.length-1)%ring.length];
+    const next=ring[(i+1)%ring.length];
+    const a=unit(prev,point),b=unit(point,next);
+    const miter=inset/Math.max(.25,1+a[0]*b[0]+a[1]*b[1]);
+    const dx=clamp((a[0]+b[0])*miter,-inset*1.5,inset*1.5);
+    const dy=clamp((a[1]+b[1])*miter,-inset*1.5,inset*1.5);
+    const x=minX+point[0],y=minY+point[1];
+    // Pixel contour coordinates run 0..w and 0..h inclusive.
+    const clipX=Math.abs(x)<.04||Math.abs(x-w)<.04;
+    const clipY=Math.abs(y)<.04||Math.abs(y-h)<.04;
+    return [clamp(point[0]+(clipX?0:dx),0,bx),
+      clamp(point[1]+(clipY?0:dy),0,by)];
+  });
+  return outlines.map(c=>({outer:adjust(c.outer),holes:c.holes.map(adjust)}));
+}
+
+export function extractVisibleHueCompound(mask,w,h,{insetPixels=0}={}){
+  if(!Number.isFinite(insetPixels)||insetPixels<0||insetPixels>.5)
+    throw new RangeError('Invalid source pixel contour AA inset');
   if(!(mask instanceof Uint8Array)||!Number.isInteger(w)||!Number.isInteger(h)||
     w<12||h<12||w*h>650000||mask.length!==w*h)
     throw new RangeError('Unsupported visible hue mask');
@@ -419,20 +450,31 @@ export function extractVisibleHueCompound(mask,w,h){
   }
   if(outlines.reduce((n,c)=>n+c.outer.length+
     c.holes.reduce((sum,hole)=>sum+hole.length,0),0)>1200)return null;
-  let geometry;
-  try{
-    geometry=normalizeCompoundRegion({
-      type:'compound-region',space:'asset-local',viewBox:[0,0,bx,by],
-      fillRule:'evenodd',components:outlines
-    });
-  }catch{return null;} // Touching self-crossing corners fail closed.
+  const input=components=>({type:'compound-region',space:'asset-local',
+    viewBox:[0,0,bx,by],fillRule:'evenodd',components});
+  let geometry,insetApplied=false;
+  if(insetPixels>0){
+    // A tiny source-pixel inset can still self-intersect a one-pixel neck.
+    // Preserve the proven source-visible candidate unchanged in that case,
+    // rather than silently omitting a hue or inventing an obscured shape.
+    try{
+      geometry=normalizeCompoundRegion(input(insetVisiblePigmentOutlines(
+        outlines,insetPixels,{minX,minY,bx,by,w,h})));
+      insetApplied=true;
+    }catch{ /* Use the original valid contours below. */ }
+  }
+  if(!geometry){
+    try{geometry=normalizeCompoundRegion(input(outlines));}
+    catch{return null;} // Already unsupported source topology: fail closed.
+  }
   const cx=bx/2,cy=by/2;
   const pixels=geometry.components.flatMap(c=>[...c.outer,...c.holes.flat()]);
   const radiusPixels=Math.max(1,...pixels.map(p=>Math.hypot(p[0]-cx,p[1]-cy)));
   return {geometry,centrePixels:[minX+cx,minY+cy],radiusPixels,
     visibleInkPixels:foreground,components:parts.length,
     touchesFrame:minX===0||minY===0||maxX===w-1||maxY===h-1,
-    visibility:'source-visible-only'};
+    visibility:'source-visible-only',
+    ...(insetPixels>0?{insetApplied}:{})};
 }
 
 
