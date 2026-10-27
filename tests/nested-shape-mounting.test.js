@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 const app=readFileSync(new URL('../src/app.js',import.meta.url),'utf8');
 test('dynamic Regions card exists before saved silhouette and nesting UI are attached',()=>{
   const mounted=app.indexOf('const editor=mountEditor();');
-  const attached=app.indexOf('regionsCard.append(useScatteredShape);');
+  const attached=app.indexOf('regionsCard.prepend(useScatteredShape);');
   const nested=app.indexOf('const nestedShapeControls=installNestedShapeControls({');
   const before=app.indexOf("const useScatteredShape=document.createElement('button');");
   assert.ok(mounted>0&&attached>mounted&&nested>attached,
