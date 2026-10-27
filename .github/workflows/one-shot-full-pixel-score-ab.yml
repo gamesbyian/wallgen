@@ -1,0 +1,51 @@
+name: One-shot full-pixel versus legacy source-fit A/B
+# Temporary PR measurement, delete before integration.
+on:
+  pull_request:
+    paths:
+      - .github/workflows/one-shot-full-pixel-score-ab.yml
+permissions:
+  contents: read
+jobs:
+  measure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 28
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          npm install --no-save playwright@1.56.1 pngjs@7.0.0
+          npx playwright install --with-deps chromium
+      - name: Produce canonical unchanged source fixtures once
+        run: |
+          node scripts/review-reconstruction.mjs --out-dir artifacts/r0-complete-score --only 01-vertical-straight,03-wave,04-jagged,05-hairpin,06-loop,11-scattered-circles,16-offset-jagged
+          cp -a artifacts/r0-complete-score artifacts/r0-old-score
+      - name: New all-pixels candidate fitting
+        run: |
+          node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/r0-complete-score --ink-geometry --save-best-recipe
+      - name: Old actual scorer in disposable job checkout only
+        run: |
+          cp src/image-reconstruction.js /tmp/new-image-reconstruction.js
+          node --input-type=module -e '
+            import {readFileSync,writeFileSync} from "node:fs";
+            const p="src/image-reconstruction.js",s=readFileSync(p,"utf8");
+            const needle="for(let i=0;i<a.length;i+=4){";
+            if(s.split(needle).length!==2)throw Error("Full score site was changed");
+            writeFileSync(p,s.replace(needle,"for(let i=0;i<a.length;i+=8){"));
+          '
+          node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/r0-old-score --ink-geometry --save-best-recipe
+          cp /tmp/new-image-reconstruction.js src/image-reconstruction.js
+      - name: Equal-source cross-metric source/fitted screenshot scores
+        run: |
+          node scripts/reconstruction-scoring-aliasing-compare.mjs artifacts/r0-complete-score artifacts/r0-old-score
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: complete-versus-subsampled-source-fit-pngs
+          path: |
+            artifacts/r0-complete-score
+            artifacts/r0-old-score
+          if-no-files-found: warn
+          retention-days: 7
