@@ -179,9 +179,7 @@ process.on('exit', () => {
   }
 });
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  void serveStdio(serverFactory).catch(error => {
-    console.error('ROYGBIV MCP startup failed:', error);
-    process.exitCode = 1;
-  });
+  // The v2 SDK owns startup/lifetime; serveStdio is not a promise.
+  void serveStdio(serverFactory);
 }
 export { serverFactory };
