@@ -19,6 +19,7 @@ import {sourceSettingLabel} from './editor-control-roles.js?v=20261021-labels1';
 import {fullSettingName} from './editor-terminology.js';
 import {installExplorationHistory} from './exploration-history.js';
 import {installGeometryLibraryUI} from './geometry-library-ui.js';
+import {installNestedShapeControls} from './nested-shape-ui.js';
 import {RAINBOW_ORBITS,scatteredRadiusRange} from './scattered-composition.js';
 import {stripeContourDistortionAvailability} from './editor-effect-availability.js';
 import {normalizeScatteredOverrides,effectiveScatteredLayerOrder,moveScatteredLayer} from './scattered-object-edits.js';
@@ -863,6 +864,12 @@ const geometryLibrary=installGeometryLibraryUI({
     changeRecipe(next);
     return true;
   }
+});
+
+installNestedShapeControls({
+  form,getRecipe:()=>current,
+  onApply:recipe=>changeRecipe(recipe,{cause:'nested_shape'}),
+  onNotice:showNotice
 });
 
 const useScatteredShape=document.createElement('button');
