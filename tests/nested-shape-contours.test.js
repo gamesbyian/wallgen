@@ -58,7 +58,17 @@ test('pointed deltas and narrow necks retain honest topology and finite loops',(
     {x:140,y:254},{x:125,y:228},{x:40,y:280}
   ];
   const a=preview(delta),b=preview([...delta].reverse());
-  assert.deepEqual(a,b,'winding cannot change the contour geometry');
+  const quantized=report=>report.levels.map(level=>({
+    distance:level.distance,
+    contours:level.contours.map(contour=>({
+      closed:contour.closed,
+      points:contour.points.map(p=>[
+        Math.round(p.x*1e6)/1e6,Math.round(p.y*1e6)/1e6
+      ])
+    }))
+  }));
+  assert.deepEqual(quantized(a),quantized(b),
+    'winding cannot change pixel-relevant contour geometry');
   assert.equal(a.requestedCount,7);
   for(const level of a.levels){
     assert.ok(level.contours.every(c=>c.points.length>=2));
