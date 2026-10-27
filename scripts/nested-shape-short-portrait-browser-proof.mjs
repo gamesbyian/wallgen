@@ -25,7 +25,9 @@ const server=createServer(async(req,res)=>{
 let browser;
 try{
   await new Promise((ok,bad)=>{server.once('error',bad);server.listen(0,'127.0.0.1',ok);});
-  browser=await chromium.launch({headless:true});
+  browser=await chromium.launch({headless:true,
+    ...(process.env.ROYGBIV_CHROMIUM_EXECUTABLE?
+      {executablePath:process.env.ROYGBIV_CHROMIUM_EXECUTABLE}:{})});
   const page=await browser.newPage({viewport:{width:320,height:700},hasTouch:true,isMobile:true});
   const errors=[];
   page.on('pageerror',e=>errors.push(e.message));
