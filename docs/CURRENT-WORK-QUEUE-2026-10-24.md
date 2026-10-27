@@ -1,6 +1,14 @@
 # Current ROYGBIV owner work queue and conditional integration
 
-## LIVE OWNER DISPATCH · 26 October Calgary / 27 October 2026 UTC (refresh GitHub before acting)
+## LIVE OWNER DISPATCH · 27 October 2026 UTC (refresh main/issues before acting)
+
+**Owner-requested completion discipline:** [The new narrow #557/#653 finish-line contract](RECONSTRUCTION-TYPOGRAPHY-COMPLETION-2026-10-27.md) supersedes historical indefinite issue language. **Typography:** core editable text is software-feature complete on prior real Chromium/source/worker evidence; deliberately native-shaped straight-line fallback for complex joining scripts on arbitrary curves is a *documented limit*, not an automatic blocker. Keep physical Pixel/Android IME/TalkBack and human judgement as untested external release gates, not #653 engineering chores. **Reconstruction:** work only from a demonstrably *visible* source contour/occlusion defect in currently expressible editable geometry and require actual source-vs-fitted native-size PNG visual proof, canonical edit/Undo/export and existing sampled 22+16 false-positive controls. Never demand original seed, hidden painter stack or arbitrary-photo recovery. Do not institute more automatic optical CI or clone an existing VTracer benchmark. One falsifiable failure, one focused intervention, one before/after, then stop.
+
+**Current repo baseline before this dispatch:** `main` [`690b87f`](https://github.com/gamesbyian/wallgen/commit/690b87f051c8c2c5f685ff4094df884ecedb325a), #810/#811 progressive Randomize/worker safety merged, zero open PRs at the audit. Refresh rather than treating this count or SHA as a permanent fact.
+
+---
+
+## HISTORICAL OWNER DISPATCH · 26 October Calgary / 27 October 2026 UTC (dated receipts only)
 
 **New owner-visible preview result:** [#810](https://github.com/gamesbyian/wallgen/pull/810) is merged on `main` at [`b2b2bbe647bc`](https://github.com/gamesbyian/wallgen/commit/b2b2bbe647bca443ddd8c16f83491ed8aa69829f), exact-head quick [CI PASS](https://github.com/gamesbyian/wallgen/actions/runs/40447291357). Randomize All and Seed reroll now request a 62% provisional worker image, followed by the authoritative 100% preview, without modifying history/locks/Undo/export. A queued exact render cannot suppress a still-current low-resolution frame when both jobs reference **identical complete canonical recipe values**; different revisions and unsolicited messages remain safely rejected.
 
