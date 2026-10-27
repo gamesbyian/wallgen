@@ -116,14 +116,29 @@ test('optical inset refuses source-measured radial rings and variegated interior
   assert.notDeepEqual(flat.recipe.scatteredShapeOverrides,
     plain.recipe.scatteredShapeOverrides,
     'solid nonradial seven-hue artwork permits bounded contour calibration');
-  // A real source may have material/fibre variation even where each pigment
-  // stays correctly classifiable. Alternate subtle brightness in the source
-  // interior, without changing the visible hue count or masking semantics.
-  const noisy={...source,data:source.data.slice()};
+  // A real source can show fine textile variations throughout a *large*
+  // interior, not simply a handful of antialiased edge pixels. Draw seven
+  // broad independent pigment bands with ample measured same-hue interior.
+  const width=240,height=520,data=new Uint8ClampedArray(width*height*4);
+  for(let i=0;i<width*height;i++)data[i*4+3]=255;
+  for(let hue=0;hue<7;hue++){
+    const colour=hueRgb(HUES[hue]),top=12+hue*70;
+    for(let y=top;y<top+48;y++)for(let x=18;x<222;x++){
+      const i=4*(y*width+x);data.set(colour,i);
+    }
+  }
+  const broad={width,height,data};
+  const widePlain=observedHueShapeRecipe(broad,placement,{seed:'no-inset'});
+  const wideInset=observedHueShapeRecipe(broad,placement,{seed:'no-inset'},
+    {sourceRadialKind:null});
+  assert.ok(widePlain&&wideInset);
+  assert.notDeepEqual(wideInset.recipe.scatteredShapeOverrides,
+    widePlain.recipe.scatteredShapeOverrides,
+    'ordinary broad flat pigments retain a source-backed AA correction');
+  const noisy={...broad,data:broad.data.slice()};
   for(let i=0;i<noisy.data.length;i+=4){
     if(!noisy.data[i]&&!noisy.data[i+1]&&!noisy.data[i+2])continue;
-    const x=(i/4)%source.width;
-    const amount=x%2?7:-7;
+    const x=(i/4)%width,amount=x%2?7:-7;
     for(let c=0;c<3;c++)noisy.data[i+c]=Math.max(0,
       Math.min(255,noisy.data[i+c]+amount));
   }
@@ -134,8 +149,8 @@ test('optical inset refuses source-measured radial rings and variegated interior
     {sourceRadialKind:null});
   assert.ok(textured);
   assert.deepEqual(textured.recipe.scatteredShapeOverrides,
-    plain.recipe.scatteredShapeOverrides,
-    'measured interior pigment variation refuses a false flat-ribbon correction');
+    widePlain.recipe.scatteredShapeOverrides,
+    'substantial measured same-hue interior variation refuses false flat-ink correction');
   assert.deepEqual(noisy.data,before,'texture gate only reads source bytes');
 });
 
@@ -330,7 +345,7 @@ test('one shared seven-mask classifier exactly matches the standalone editable s
   assert.equal(analysed.sourceHueMasks.length,7);
   assert.ok(analysed.sourceHueMasks.every(mask=>
     mask instanceof Uint8Array&&mask.length===input.width*input.height));
-  const options={paletteHint:'jewel'};
+  const options={paletteHint:'jewel',sourceRadialKind:analysed.radial.kind};
   const separate=observedHueShapeRecipe(input,placement,
     {seed:'anonymous'},options);
   const shared=observedHueShapeRecipe(input,placement,
@@ -350,7 +365,8 @@ test('one shared seven-mask classifier exactly matches the standalone editable s
   const sourceCandidate=reconstructionCandidates(input,{seed:'anonymous'});
   if(sourceCandidate[0]?.kind==='hue-visible-shapes')
     assert.deepEqual(sourceCandidate[0].recipe,
-      observedHueShapeRecipe(input,placement,{seed:'anonymous'}).recipe);
+      observedHueShapeRecipe(input,placement,{seed:'anonymous'},
+        {sourceRadialKind:analysed.radial.kind}).recipe);
 });
 
 test('shared pigment descriptor refuses spoofed sparse hues and incorrect masks',()=>{
