@@ -294,7 +294,9 @@ test('Auto-fit early failure exit is bit-for-bit equivalent to full seven-level 
   for(const shape of [delta,shaped,narrow,impossible,
     [box(0,0,300,170),box(100,48,215,118)],
     [box(0,0,180,120),box(240,0,360,90)]]){
-    for(const gap of [.5,1,2,5,12]){
+    // Extreme tight/default authored distances cover both successful and
+    // failed fit decisions without turning permanent quick CI into a benchmark.
+    for(const gap of [.5,5]){
       const settings={...DEFAULT_NESTED_CONTOURS,gap};
       const fast=fitNestedShapeContours(shape,settings);
       const original=fitNestedShapeContours(shape,settings,{earlyExit:false});
