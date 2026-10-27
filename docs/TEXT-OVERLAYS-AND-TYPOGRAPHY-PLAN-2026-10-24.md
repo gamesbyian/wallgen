@@ -1,5 +1,11 @@
 # Text overlays and typography: product specification and implementation queue
 
+## Finite typography software closeout · 27 October 2026
+
+Use the [bounded reconstruction/typography completion contract](RECONSTRUCTION-TYPOGRAPHY-COMPLETION-2026-10-27.md) for the current #653 feature exit; paragraphs below document earlier experiments and **do not create a perpetual feature-completion queue**. The original editable text, font, styles, gestures, save/Undo, Unicode input, native shaped straight lines and source/worker/export fidelity are established by existing real software/Chromium evidence. Native shaping-dependent text on arbitrary curves remains a **disclosed optional advanced feature** with safe straight-line fallback, not a hidden inaccurate glyph-by-glyph implementation. Physical Android IME/TalkBack, Pixel export thermals and owner's art judgement are explicitly separate and not software-issue blockers.
+
+If a real creator supplies a need for Arabic/Indic/Bidi curved wrapping, test the existing native SVG textPath implementation, and separately HarfBuzz/harfbuzzjs glyph-run shaping with appropriate outline rasterizer, *in an opt-in benchmark*. Require actual attached font, representative joining/combining/emoji/bidi strings, preview/worker/PNG parity, hit selection, PWA load/memory and bundled/private-font privacy. Canvas TextMetrics alone cannot yield shaped glyph positions. Neither font parser nor browser SVG preview is by itself a portable production renderer. Do not introduce a second compositor or massive WASM dependency on speculation.
+
 ## Whole-design text and private-font race: actual-browser closeout · 27 October 2026 UTC
 
 Merged [#798](https://github.com/gamesbyian/wallgen/pull/798) introduces a synchronous explicit **whole-design replacement** notification from actual replacement operations, not routine camera, slider or randomization. Pending TTF/OTF import lifetime tickets cannot survive a restored same-ID and same-face author design. Merged [#799](https://github.com/gamesbyian/wallgen/pull/799) also resets an uncommitted focused Words draft on that exact boundary; a blur after restoring a prior design no longer changes the restored caption to the old design's text. Individual committed editing and Android IME focus behavior retain their earlier guards.
