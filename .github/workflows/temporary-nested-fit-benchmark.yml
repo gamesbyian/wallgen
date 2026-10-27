@@ -1,0 +1,20 @@
+name: Temporary nested Auto-fit matched benchmark
+on:
+  pull_request:
+    paths:
+      - 'src/nested-shape-contours.js'
+      - 'scripts/benchmark-nested-autofit.mjs'
+      - '.github/workflows/temporary-nested-fit-benchmark.yml'
+permissions:
+  contents: read
+jobs:
+  baseline-versus-shortcircuit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Measure matched exact fit behavior
+        run: node scripts/benchmark-nested-autofit.mjs
