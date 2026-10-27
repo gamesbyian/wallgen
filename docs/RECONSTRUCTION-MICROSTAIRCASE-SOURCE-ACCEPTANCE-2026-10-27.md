@@ -42,3 +42,12 @@ Some representative actual corrected full-frame errors vs the already-shipped #8
 - Multiple source components and holes remain within the existing canonical 1200-vertex/hue validation; topological failures return original unmodified polygons. No impossible hue slots, private pixels, fonts or source author state is serialized.
 - Fully shipped acceptance requires final exact-head lean CI after deleting the temporary expensive PR browser workflows. The reusable opt-in `scripts/probe-hue-microstair-browser.mjs` and previously accepted `scripts/evaluate-source-contour-ab.mjs` remain available for opt-in research. Do not enable repeat browser work on normal PRs.
 - #557 remains **OPEN** for source-external human acceptance, topology around occlusions and native aesthetic smoothing refinement.
+
+## Native 19.8MP reference/worker round-trip acceptance
+
+The final [true native-size Chromium run #40443267413](https://github.com/gamesbyian/wallgen/actions/runs/40443267413), [full-resolution Hairpin/Loop source, actual rendered PNG pairs, portable inferred recipes and JSON report artifact #12706992817](https://github.com/gamesbyian/wallgen/actions/runs/40443267413/artifacts/12706992817), reran the existing independent `scripts/reconstruction-contour-fullres-browser-proof.mjs` against the **actual micro-staircase production branch** rather than a research-only candidate. Real metadata-free current-renderer sources were inferred into ordinary seven-shape canonical editable scenes, then each generated 3024×6552 PNG with reference and worker backends separately.
+
+- **05 Hairpin:** native PNG reference SHA256 = worker SHA256 = `e51ba014af6981d8f07a5a798202cb6c277320b4f7b581c7b61b89ba1cd28905`; RGB/alpha channel mismatches **0**; source SHA256 unchanged; recovered PNG embedded normalized recipe exactly.
+- **06 Loop:** native PNG reference SHA256 = worker SHA256 = `408bc62e5dbc385e6777cc2b2d484b682e13f9999632079062484e4c300527ba`; RGB/alpha channel mismatches **0**; source SHA256 unchanged; recovered PNG embedded normalized recipe exactly.
+
+Total **39,626,496 pixel positions and 158,505,984 RGBA channel comparisons**. Normal fitting budgets and existing headless/worker semantics unchanged. This provides actual-branch native-size export acceptance in addition to the separately viewed 3024×6552 research variants above; neither proves a physical Android run, owner's aesthetic approval or identity of hidden painter order.
