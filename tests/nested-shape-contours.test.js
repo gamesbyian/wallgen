@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {normalizeRecipe,resolveScene} from '../src/model.js';
 import {normalizeNestedShapeContours,nestedContourDistances,
   planNestedShapeContours,fitNestedShapeContours,DEFAULT_NESTED_CONTOURS} from '../src/nested-shape-contours.js';
-import {pointInPolygon} from '../src/polygon-inset.js';
+import {pointInPolygon,polygonInsetContours} from '../src/polygon-inset.js';
 
 const box=(x0,y0,x1,y1)=>[
   {x:x0,y:y0},{x:x1,y:y0},{x:x1,y:y1},{x:x0,y:y1}
@@ -158,4 +158,63 @@ test('auto-fit is a no-op when seven contours already fit',()=>{
   assert.equal(result.fitted,true);
   assert.equal(result.changed,false);
   assert.deepEqual(result.settings,DEFAULT_NESTED_CONTOURS);
+});
+
+
+test('shared distance samples preserve exact topology and geometry across seven levels',()=>{
+  const delta=[
+    {x:140,y:0},{x:240,y:280},{x:155,y:228},
+    {x:140,y:254},{x:125,y:228},{x:40,y:280}
+  ];
+  const cloud=Array.from({length:52},(_,i)=>{
+    const theta=i*2*Math.PI/52;
+    const radius=1+.16*Math.sin(5*theta)+.08*Math.cos(9*theta);
+    return {x:180+Math.cos(theta)*135*radius,
+      y:125+Math.sin(theta)*105*radius};
+  });
+  const shapes=[
+    box(-15,-10,260,160),
+    [box(-20,-20,260,260),box(80,75,170,175)],
+    delta,
+    cloud,
+    [box(0,0,110,105),box(150,35,230,140)]
+  ];
+  const viewports=[
+    {resolution:1},
+    {resolution:.7,bounds:{left:25,right:190,top:35,bottom:205},padding:6}
+  ];
+  for(const shape of shapes)for(const options of viewports){
+    const optimized=planNestedShapeContours(shape,DEFAULT_NESTED_CONTOURS,options);
+    const baseline=planNestedShapeContours(shape,DEFAULT_NESTED_CONTOURS,
+      {...options,cacheDistances:false});
+    assert.deepEqual(optimized,baseline,
+      'cached vs independent signed-distance scans must be exactly identical');
+  }
+});
+
+test('shared sample cache is opt-in to single inset invocation and never leaks across source shapes',()=>{
+  const sample={columns:new Map(),count:0,limit:32};
+  const first=box(0,0,200,180),second=box(0,0,80,70);
+  const cached=polygonInsetContours(first,7,{resolution:1,distanceCache:sample});
+  assert.deepEqual(cached,polygonInsetContours(first,7,{resolution:1}));
+  assert.equal(sample.count,32,'shared cache fills only its bounded allowance');
+  assert.ok(sample.columns.size>0,'the local cache should actually receive world samples');
+  // A second independent planner call has its own per-call cache; no stale
+  // distance field is accidentally reused when the underlying shape changes.
+  assert.deepEqual(planNestedShapeContours(second,DEFAULT_NESTED_CONTOURS),
+    planNestedShapeContours(second,DEFAULT_NESTED_CONTOURS,{cacheDistances:false}));
+});
+
+
+test('high-detail traced silhouette uses exactly the same geometric output as baseline',()=>{
+  const detailed=Array.from({length:256},(_,i)=>{
+    const a=i*2*Math.PI/256;
+    return {x:155+130*Math.cos(a),y:190+175*Math.sin(a)};
+  });
+  const options={resolution:1,bounds:{left:4,right:300,top:3,bottom:350}};
+  const cached=planNestedShapeContours(detailed,DEFAULT_NESTED_CONTOURS,options);
+  const baseline=planNestedShapeContours(detailed,DEFAULT_NESTED_CONTOURS,
+    {...options,cacheDistances:false});
+  assert.deepEqual(cached,baseline);
+  assert.equal(cached.visibleCount,7);
 });

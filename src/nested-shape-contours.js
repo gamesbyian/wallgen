@@ -73,13 +73,23 @@ export function planNestedShapeContours(rings,settings,options={}){
   if(!settings?.enabled||!Array.isArray(rings)||!rings.length)
     return {levels:[],visibleCount:0,requestedCount:settings?.count??0,collapsed:0};
   const distances=nestedContourDistances(settings);
+  // For high-vertex imported silhouettes, seven original-edge distance
+  // scans revisit enough sample sites to justify a transient shared cache.
+  // Matched Linux benchmarks found 256/512-vertex gains but regressions on
+  // ordinary 20–70-edge shapes, so keep those on the original fast path.
+  // Cap samples explicitly to bound peak phone memory. No persistent state.
+  const pointCount=Array.isArray(rings[0])?
+    rings.reduce((total,ring)=>total+ring.length,0):rings.length;
+  const distanceCache=options.cacheDistances===false||pointCount<256?
+    null:{columns:new Map(),count:0,limit:120000};
   const levels=distances.map((distance,index)=>({
     index,distance,
     contours:polygonInsetContours(rings,distance,{
       bounds:options.bounds,padding:options.padding??80,
       // The canonical world-aligned grid is independent of wallpaper output
       // dimensions and camera crop. This slightly refines the default pitch.
-      resolution:options.resolution??1.0
+      resolution:options.resolution??1.0,
+      distanceCache
     }).filter(contour=>validContour(contour,distance,settings,options))
   }));
   const visibleCount=levels.filter(level=>level.contours.length>0).length;
