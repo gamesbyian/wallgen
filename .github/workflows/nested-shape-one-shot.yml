@@ -1,6 +1,8 @@
 name: One-shot imported nested silhouette actual Chromium evidence
 # Temporary PR-only optical acceptance; remove this workflow before merging.
 on:
+  push:
+    branches: [feat/815-seven-inset-rainbow-engine]
   pull_request:
     paths:
       - 'src/nested-shape-contours.js'
