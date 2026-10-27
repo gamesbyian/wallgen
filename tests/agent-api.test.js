@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  describeAgentCapabilities, composeAgentRecipe, editAgentRecipe,
+  describeAgentCapabilities, composeAgentRecipe, importAgentRecipe, editAgentRecipe,
   varyAgentRecipe, exploreAgentRecipes, inspectAgentRecipe
 } from '../src/agent-api.js';
 import { normalizeRecipe, randomizeAllRecipe } from '../src/model.js';
