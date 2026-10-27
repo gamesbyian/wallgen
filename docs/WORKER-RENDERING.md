@@ -113,6 +113,7 @@ copies; lower-power devices can still fail on extreme combinations.
 
 ## Acceptance strategy
 
+- `scripts/progressive-randomize-browser-proof.mjs`: opt-in real Chromium 412×892 emulation, instruments real Randomize/seed button handlers, provisional and settled frame order/timing, worker dimensions, actual preview screenshots and page errors; requires Playwright/Chromium. The 27 October 2026 source-backed run is [#40447670702](https://github.com/gamesbyian/wallgen/actions/runs/40447670702), with first frames at 148/116 ms and exact frames at 530 ms (two samples only, not Pixel hardware). The temporary PR-only installation workflow was removed after evidence capture.
 - `tests/render-coordinator.test.js`: latest-only queue behaviour, stale
   ImageBitmap release, cached-revision invalidation, worker failures,
   short-lived export and negative feature detection.
