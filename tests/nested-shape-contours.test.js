@@ -4,7 +4,7 @@ import {normalizeRecipe,resolveScene} from '../src/model.js';
 import {normalizeNestedShapeContours,nestedContourDistances,
   planNestedShapeContours,fitNestedShapeContours,DEFAULT_NESTED_CONTOURS} from '../src/nested-shape-contours.js';
 import {pointInPolygon,polygonInsetContours} from '../src/polygon-inset.js';
-import {frameImportedSilhouette,NESTED_FRAME_MARGINS} from '../src/nested-shape-framing.js';
+import {frameImportedSilhouette,frameUnpositionedNestedSilhouette,NESTED_FRAME_MARGINS} from '../src/nested-shape-framing.js';
 
 const box=(x0,y0,x1,y1)=>[
   {x:x0,y:y0},{x:x1,y:y0},{x:x1,y:y1},{x:x0,y:y1}
@@ -315,4 +315,47 @@ test('detailed source cache and fast rejection retain exact Auto-fit settings',(
   assert.deepEqual(
     fitNestedShapeContours(ellipse,settings),
     fitNestedShapeContours(ellipse,settings,{earlyExit:false}));
+});
+
+
+test('Regions Nest gives a fresh imported silhouette the same source-aware frame as library Nest',()=>{
+  const geometry={type:'compound-region',space:'asset-local',fillRule:'evenodd',
+    viewBox:[0,0,400,130],components:[{
+      outer:[[0,0],[400,0],[400,130],[0,130]],
+      holes:[[[150,40],[250,40],[250,85],[150,85]]]}]};
+  const input=serial(geometry);
+  const predicted=frameImportedSilhouette(geometry);
+  const direct=frameUnpositionedNestedSilhouette({scatteredOverrides:[]},geometry);
+  assert.deepEqual(direct,[predicted]);
+  const snapshot={schema:'roygbiv.geometry-snapshot',version:1,geometry};
+  const recipe=normalizeRecipe({
+    seed:'nested-contextual',structure:'regions',regionMode:'scattered',
+    scatteredShapeKind:'imported',scatteredCount:1,scatteredShape:snapshot,
+    scatteredOverrides:direct,nestedShapeContours:DEFAULT_NESTED_CONTOURS});
+  const object=resolveScene(recipe).objects.find(o=>o.id==='region-0');
+  const verts=object.rings.flat(),xs=verts.map(p=>p.x),ys=verts.map(p=>p.y);
+  assert.ok(Math.min(...xs)>=NESTED_FRAME_MARGINS.x-.02);
+  assert.ok(Math.max(...xs)<=600-NESTED_FRAME_MARGINS.x+.02);
+  assert.ok(Math.min(...ys)>=NESTED_FRAME_MARGINS.y-.02);
+  assert.ok(Math.max(...ys)<=1300-NESTED_FRAME_MARGINS.y+.02);
+  assert.deepEqual(geometry,input,'source rings must never be rewritten');
+  assert.deepEqual(normalizeRecipe(serial(recipe)),recipe);
+});
+
+test('Regions Nest preserves explicitly moved source transform and unrelated slots',()=>{
+  const existing=[
+    {index:0,x:.73,y:.47,radius:.29},
+    {index:3,x:.2,y:.67,radius:.16}
+  ];
+  const geometry={type:'compound-region',viewBox:[0,0,100,100],
+    components:[{outer:[[0,0],[100,0],[100,100],[0,100]],holes:[]}]};
+  assert.deepEqual(frameUnpositionedNestedSilhouette(
+    {scatteredOverrides:existing},geometry),existing,
+    'intentional object-0 placement must not change');
+  const untouched=frameUnpositionedNestedSilhouette(
+    {scatteredOverrides:[existing[1]]},geometry);
+  assert.equal(untouched[0].index,0);
+  assert.deepEqual(untouched[1],existing[1],'other hue transforms preserved');
+  assert.deepEqual(frameUnpositionedNestedSilhouette({},null),[],
+    'missing source shape never creates a fictional transform');
 });
