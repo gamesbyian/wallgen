@@ -125,3 +125,15 @@ body.scattered-direct-active #preview:active{cursor:grabbing}
   background:var(--surface);color:inherit;font-size:12px;
   font-weight:700;cursor:pointer;
 }
+
+/* One explicit, undoable geometry-aware scene framing action. */
+.nested-shape-studio .nested-shape-frame{
+  display:block;width:100%;min-width:0;min-height:44px;
+  padding:8px 9px;margin:8px 0;white-space:normal;
+  border:1px solid var(--line);border-radius:8px;
+  background:var(--surface);color:inherit;font-size:12px;
+  font-weight:700;cursor:pointer;
+}
+.nested-shape-studio .nested-shape-frame:disabled{
+  opacity:.5;cursor:default;
+}
