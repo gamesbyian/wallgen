@@ -1,0 +1,29 @@
+name: One-shot Chromium focused Words replacement
+# Temporary pull request witness; remove before merge after collecting PNGs.
+on:
+  pull_request:
+    paths:
+      - scripts/text-replaced-draft-browser-proof.mjs
+      - .github/workflows/one-shot-text-replaced-draft.yml
+permissions:
+  contents: read
+jobs:
+  proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - run: node scripts/text-replaced-draft-browser-proof.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: text-draft-undo-chromium-evidence
+          path: artifacts/text-replaced-draft-browser/
+          if-no-files-found: warn
+          retention-days: 7
