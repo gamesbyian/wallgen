@@ -22,7 +22,8 @@ export function createTextObjectIdentityTracker(){
       for(const id of current)if(!stamps.has(id))stamps.set(id,++next);
     },
     ticket(id){return stamps.get(id)??null;},
-    same(id,ticket){return ticket!==null&&stamps.get(id)===ticket;}
+    same(id,ticket){return ticket!==null&&stamps.get(id)===ticket;},
+    invalidateAll(){stamps.clear();}
   };
 }
 
@@ -184,6 +185,9 @@ export function installTextOverlayTool({getRecipe,changeRecipe,onFontNotice=()=>
   let syncedTextOwnerId=null;
   let mover=null;
   const textIdentity=createTextObjectIdentityTracker();
+  // An explicit newer typeface choice wins even if the user chooses back
+  // to the old face before a still-running private import completes.
+  const fontSelectionVersions=new Map();
   const currentItems=()=>getRecipe().textOverlays||[];
   function sync(){
     const items=currentItems();
@@ -270,6 +274,8 @@ export function installTextOverlayTool({getRecipe,changeRecipe,onFontNotice=()=>
     if(!key||!selectedId)return;
     const value=event.target.type==='checkbox'?event.target.checked:
       event.target.type==='range'?Number(event.target.value):event.target.value;
+    if(key==='font')fontSelectionVersions.set(selectedId,
+      (fontSelectionVersions.get(selectedId)||0)+1);
     commit(currentItems().map(item=>item.id===selectedId?{...item,[key]:value}:item));
   });
   packSave.addEventListener('click',async()=>{
@@ -307,6 +313,9 @@ export function installTextOverlayTool({getRecipe,changeRecipe,onFontNotice=()=>
       });
       if(recipe){
         library=await listLocalFonts();
+        // A new portable design may reuse e.g. text-1 with the same font
+        // and words. It is still not the old private-import destination.
+        textIdentity.invalidateAll();
         changeRecipe(recipe,{bypassLocks:true,cause:'portable_font_package_import'});
         sync();
         packStatus.textContent='Design and '+library.length+' available private font(s) restored.';
@@ -325,6 +334,8 @@ export function installTextOverlayTool({getRecipe,changeRecipe,onFontNotice=()=>
     // happens to be selected when those promises finally settle.
     const targetId=selectedId;
     const targetTicket=textIdentity.ticket(targetId);
+    const targetFont=currentItems().find(item=>item.id===targetId)?.font;
+    const fontVersion=fontSelectionVersions.get(targetId)||0;
     fontFile.disabled=true;
     fontStatus.textContent='Checking and saving font on this device…';
     try{
@@ -332,7 +343,8 @@ export function installTextOverlayTool({getRecipe,changeRecipe,onFontNotice=()=>
       library=await listLocalFonts();
       const items=currentItems();
       if(textIdentity.same(targetId,targetTicket)&&
-        items.some(item=>item.id===targetId)){
+        (fontSelectionVersions.get(targetId)||0)===fontVersion&&
+        items.some(item=>item.id===targetId&&item.font===targetFont)){
         commit(items.map(item=>item.id===targetId?
           {...item,font:installed.id}:item));
         fontStatus.textContent='Font installed locally: '+installed.name;
@@ -343,7 +355,7 @@ export function installTextOverlayTool({getRecipe,changeRecipe,onFontNotice=()=>
         // can be deliberately chosen again.
         sync();
         fontStatus.textContent='Font installed locally: '+installed.name+
-          '. Original text was removed or replaced; select a text object to use it.';
+          '. Original text or selected typeface changed; choose a text object to use it.';
         onFontNotice(fontStatus.textContent);
       }
     }catch(error){
