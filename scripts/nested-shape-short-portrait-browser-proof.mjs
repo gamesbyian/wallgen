@@ -53,6 +53,10 @@ try{
   await page.locator('#mobileEdit').click();
   const editVisible=await page.evaluate(()=>!document.querySelector('#mobileDesignSheet').hidden);
   assert.ok(editVisible,'mobile Edit destination must reveal the editor');
+  // Path > Regions is deliberately unavailable until the canonical
+  // structure is Regions. Exercise that prerequisite through the real UI.
+  await page.locator('[data-tab="layout"]').click();
+  await page.locator('[name="structure"]').selectOption('regions');
   await page.locator('[data-tab="path"]').click();
   await page.locator('button[data-category="path"][data-editor-tool="regions"]').click();
   const chooser=page.locator('#chooseScatteredShape');
