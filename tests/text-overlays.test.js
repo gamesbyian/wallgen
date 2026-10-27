@@ -415,7 +415,7 @@ test('real app emits design-replaced only for full restore, preserving normal in
   assert.match(app,/changeRecipe\(recipe,\{bypassLocks:true,replaceEntireDesign:true\}\)/);
   assert.match(app,/restore:recipe=>changeRecipe\(recipe,\{bypassLocks:true,replaceEntireDesign:true\}\)/);
   assert.match(app,/changeRecipe\(recipe,\{scroll:true,bypassLocks:true,replaceEntireDesign:true\}\)/);
-  assert.match(ui,/addEventListener\('roygbiv-design-replaced',\(\)=>\{[\s\S]*?textIdentity\.invalidateAll\(\);\s*sync\(\)/);
+  assert.match(ui,/addEventListener\('roygbiv-design-replaced',\(\)=>\{[\s\S]*?textIdentity\.invalidateAll\(\);[\s\S]*?syncedTextOwnerId=null;\s*sync\(\)/);
   assert.equal((app.match(/replaceEntireDesign:true/g)||[]).length,4);
   assert.match(app,/document\.dispatchEvent\(new Event\('roygbiv-controls-synced'\)\)/);
 });
