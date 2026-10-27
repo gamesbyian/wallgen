@@ -31,7 +31,7 @@ jobs:
           cp -a artifacts/r0-local-AA artifacts/r0-original-visible
       - name: Actual production inference with 0.2 source contour AA
         run: |
-          node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/r0-local-AA --ink-geometry --save-best-recipe
+          node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/r0-local-AA --ink-geometry --source-signature --save-best-recipe
       - name: Baseline production inference, toggle constant only in disposable runner
         run: |
           cp src/image-hue-reconstruction.js /tmp/image-hue-with-AA.js
@@ -44,7 +44,7 @@ jobs:
             writeFileSync(p,s.replace(needle,
               "const SOURCE_VISIBLE_ANTI_ALIAS_INSET_PX=0;"));
           '
-          node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/r0-original-visible --ink-geometry --save-best-recipe
+          node scripts/evaluate-reconstruction-r0.mjs --dir artifacts/r0-original-visible --ink-geometry --source-signature --save-best-recipe
           cp /tmp/image-hue-with-AA.js src/image-hue-reconstruction.js
       - name: Score actual identical-source rendered PNGs with the same full-pixel loss
         run: |
