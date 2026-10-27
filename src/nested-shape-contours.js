@@ -143,7 +143,10 @@ export function fitNestedShapeContours(rings,settings,options={}){
     if(last>=halfSpan)return false;
     const opts={resolution:options.resolution??1.0,
       padding:options.padding??80,cacheDistances:options.cacheDistances};
-    if(options.earlyExit===false){
+    // Measured gains are on narrow *single-ring* silhouettes. Compound
+    // hole/island sets have additional topology work and the reverse walk
+    // benchmarked slower, so leave their proven full planner unchanged.
+    if(options.earlyExit===false||Array.isArray(rings[0])){
       const report=planNestedShapeContours(rings,proposal,opts);
       return report.visibleCount===proposal.count;
     }
