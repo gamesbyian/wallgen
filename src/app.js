@@ -815,13 +815,14 @@ function applyImportedNestedShape(geometry){
     showNotice('Unlock the shape layout and shape count before nesting this silhouette.');
     return false;
   }
+  const framed=frameImportedSilhouette(geometry);
   changeRecipe({...current,structure:'regions',regionMode:'scattered',
     scatteredShapeKind:'imported',scatteredShape:cloneGeometrySnapshot(geometry),
     scatteredCount:1,scatteredMinSize:80,scatteredMaxSize:100,
     scatteredVariation:0,scatteredEdgeCrop:0,scatteredSpacing:0,
     // Explicitly chosen new source art must not inherit stale per-hue stamps.
     scatteredShapeOverrides:[],
-    scatteredOverrides:frameImportedSilhouette(geometry)?[frameImportedSilhouette(geometry)]:[],
+    scatteredOverrides:framed?[framed]:[],
     scatteredLayerOrder:[],
     dividerColor:'none',dividerWidth:0,
     nestedShapeContours:{...DEFAULT_NESTED_CONTOURS}});
