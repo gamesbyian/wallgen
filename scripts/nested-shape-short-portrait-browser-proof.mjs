@@ -223,9 +223,39 @@ try{
     beforeNest,{timeout:20000});
   const reverted=await page.evaluate(()=>new URL(location.href).searchParams.get('r'));
   assert.equal(reverted,beforeNest,'saved-library Nest must be one atomic undo operation');
+  // Second, independent native user entry: Use shape first, then select
+  // Regions → Nest shape. This must frame an unpositioned source identically
+  // to the saved-library Nest rainbow action, in one new Undo transaction.
+  await chooser.click();
+  await dialog.waitFor({state:'visible'});
+  await dialog.getByRole('button',{name:'Use shape'}).click();
+  await page.waitForFunction(()=>!document.querySelector('.geometry-library-dialog')?.open);
+  await page.waitForFunction(()=>{
+    const r=JSON.parse(decodeURIComponent(new URL(location.href).searchParams.get('r')));
+    return r.scatteredShapeKind==='imported'&&!!r.scatteredShape&&!r.nestedShapeContours;
+  });
+  const plainImported=await page.evaluate(()=>new URL(location.href).searchParams.get('r'));
+  const plainRecipe=JSON.parse(decodeURIComponent(plainImported));
+  assert.deepEqual(plainRecipe.scatteredShape.geometry,imported.geometry);
+  const directNestButton=page.locator('.nested-shape-studio>button');
+  await directNestButton.click();
+  await page.waitForFunction(()=>{
+    const r=JSON.parse(decodeURIComponent(new URL(location.href).searchParams.get('r')));
+    return r.nestedShapeContours?.enabled&&r.scatteredOverrides?.some(x=>x.index===0);
+  },null,{timeout:20000});
+  const contextual=JSON.parse(decodeURIComponent(
+    await page.evaluate(()=>new URL(location.href).searchParams.get('r'))));
+  assert.deepEqual(contextual.scatteredShape.geometry,imported.geometry);
+  assert.deepEqual(contextual.scatteredOverrides.find(x=>x.index===0),
+    canonical.recipe.scatteredOverrides.find(x=>x.index===0),
+    'both user-facing Nest entry points must frame unedited art identically');
+  await page.screenshot({path:join(out,'short-320-contextual-nest-framed.png')});
+  await page.locator('#undo').click();
+  await page.waitForFunction(previous=>new URL(location.href).searchParams.get('r')===previous,
+    plainImported,{timeout:20000});
   assert.deepEqual(errors,[]);
   const report={schema:'roygbiv-nested-shape-short-portrait/v1',viewport:[320,700],
-    savedLibraryRealDOM:true,nestButtonTouch: nestedSize,chooserTouch:chooserSize,
+    savedLibraryRealDOM:true,contextualNestUsesSameFrame:true,contextualNestOneUndo:true,nestButtonTouch: nestedSize,chooserTouch:chooserSize,
     inputs:sizes,autoFrameBounds:autoFrame,frameTouch:frameSize,frameMoveUndo:true,autoFitTouch:fitSize,autoFitVerifiedLevels:fitted.count,autoFitOneUndo:true,oneUndoRestoresRecipe:true,originalVectorUnchanged:true,
     pageExceptions:errors,physicalPixelTested:false};
   await writeFile(join(out,'report.json'),JSON.stringify(report,null,2)+'\n');
