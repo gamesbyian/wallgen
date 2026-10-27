@@ -1,0 +1,33 @@
+name: Temporary nested framing mobile browser acceptance
+on:
+  pull_request:
+    paths:
+      - 'src/nested-shape-framing.js'
+      - 'src/nested-shape-ui.js'
+      - 'scripts/nested-shape-short-portrait-browser-proof.mjs'
+      - '.github/workflows/temporary-nested-framing-browser.yml'
+permissions:
+  contents: read
+jobs:
+  portrait-framing:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install test-only Chromium
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Real imported silhouette framing and Undo
+        run: node scripts/nested-shape-short-portrait-browser-proof.mjs
+      - name: Retain inspected UI PNGs and result report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nested-framing-320-px-browser
+          path: artifacts/nested-short-portrait/
+          retention-days: 10
+          if-no-files-found: warn
