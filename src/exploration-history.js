@@ -81,6 +81,11 @@ export function installExplorationHistory({form,preview,getRecipe,restore,render
     form.classList.toggle('editor-history-open',open);
     toggle.setAttribute('aria-pressed',String(open));
     if(open){
+      // A transient thumbnail-worker failure must not permanently leave a
+      // stored recipe with a blank preview. Retry only when the owner
+      // explicitly reopens the panel, never in a hidden or runaway loop.
+      for(const item of items)if(item.thumbnailState==='failed')
+        item.thumbnailState='pending';
       refresh();
       void renderVisibleThumbnails();
     }

@@ -97,6 +97,34 @@ test('Closing history stops further thumbnail jobs; reopen resumes without losin
   }finally{h.close();}
 });
 
+test('A failed thumbnail is retried only on explicit reopen, not during hidden Random',async()=>{
+  const calls=[];
+  const h=mount(async recipe=>{
+    calls.push(recipe.seed);
+    if(calls.length===1)throw Error('Transient worker failure');
+    return 'data:image/png;base64,'+recipe.seed;
+  });
+  const oldWarn=console.warn;
+  console.warn=()=>{};
+  try{
+    h.api.remember({seed:'recover'},'Recover');
+    h.toggle.click();
+    await settle();
+    assert.deepEqual(calls,['recover'],'Initial failure must not spin retries');
+    h.toggle.click();
+    h.api.remember({seed:'other'},'Other');
+    await settle();
+    assert.deepEqual(calls,['recover'],'Hidden Random must not restart failed jobs');
+    h.toggle.click();
+    await settle();
+    assert.deepEqual(calls,['recover','other','recover'],
+      'Reopening retries old failure after newer pending work');
+    assert.equal(h.strip.children[1].children[0].src,
+      'data:image/png;base64,recover');
+    assert.equal(h.api.count(),2);
+  }finally{console.warn=oldWarn;h.close();}
+});
+
 test('Evicted history snapshots never trigger a hidden render, and failures preserve restoration',async()=>{
   const calls=[];
   const h=mount(async recipe=>{
