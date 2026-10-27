@@ -115,3 +115,13 @@ body.scattered-direct-active #preview:active{cursor:grabbing}
     max-height:none!important;
   }
 }
+
+/* An explicit transaction rather than a silently changing render-time fit.
+   Match the other nested controls' full-width, 44px touch treatment. */
+.nested-shape-studio .nested-shape-auto-fit{
+  display:block;width:100%;min-width:0;min-height:44px;
+  padding:8px 9px;margin:8px 0;white-space:normal;
+  border:1px solid var(--line);border-radius:8px;
+  background:var(--surface);color:inherit;font-size:12px;
+  font-weight:700;cursor:pointer;
+}

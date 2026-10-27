@@ -86,3 +86,64 @@ export function planNestedShapeContours(rings,settings,options={}){
   return {levels,visibleCount,requestedCount:levels.length,
     collapsed:levels.length-visibleCount};
 }
+
+
+// An explicit one-click fit. This adjusts the existing *authored* dimensions;
+// it never rescales the source polygon, changes the offset definition, or
+// silently varies gap with camera/export resolution. Fewer than the requested
+// number of surviving levels is a refusal, not a successful auto-fit.
+export function fitNestedShapeContours(rings,settings,options={}){
+  const unchanged={settings:{...settings},fitted:false,changed:false,
+    reason:'No imported silhouette to fit.'};
+  if(!settings?.enabled||!Array.isArray(rings)||!rings.length)return unchanged;
+  const vertices=(Array.isArray(rings[0])?rings:[rings]).flat();
+  if(vertices.length<3||vertices.some(p=>
+    !Number.isFinite(p?.x)||!Number.isFinite(p?.y)))return unchanged;
+  const x=vertices.map(p=>p.x),y=vertices.map(p=>p.y);
+  const halfSpan=Math.min(Math.max(...x)-Math.min(...x),
+    Math.max(...y)-Math.min(...y))/2;
+  // Skip costly contour evaluation when the last inset demonstrably cannot
+  // fit in the shape's bounding box; the bound is necessary, not sufficient.
+  const survives=proposal=>{
+    const last=nestedContourDistances(proposal).at(-1);
+    if(last>=halfSpan)return false;
+    const report=planNestedShapeContours(rings,proposal,{
+      resolution:options.resolution??1.0,padding:options.padding??80
+    });
+    return report.visibleCount===proposal.count;
+  };
+  const current={...settings};
+  if(survives(current))return {settings:current,fitted:true,changed:false,
+    reason:'All requested levels already fit.'};
+  let candidate={...current};
+  // Clear gap first, then outer margin, only then sacrifice stroke legibility.
+  // Each step retains the maximum half-pixel increment verified to fit.
+  for(const [key,min] of [['gap',.5],['firstInset',0],['strokeWidth',.5]]){
+    if(key==='gap'&&candidate.count===1)continue;
+    const maximum=candidate[key];
+    if(maximum<=min)continue;
+    const smallest={...candidate,[key]:min};
+    if(!survives(smallest)){
+      candidate=smallest;continue;
+    }
+    let lo=min,hi=maximum;
+    for(let i=0;i<8;i++){
+      const mid=(lo+hi)/2;
+      if(survives({...candidate,[key]:mid}))lo=mid;
+      else hi=mid;
+    }
+    const rounded=Math.max(min,Math.floor((lo+1e-9)*2)/2);
+    const fitted={...candidate,[key]:rounded};
+    if(survives(fitted))
+      return {settings:fitted,fitted:true,changed:true,
+        reason:'Spacing fitted to surviving geometric contour levels.'};
+    // An unusual non-monotonic topology should never result in a false
+    // success. The minimum was independently checked above.
+    return {settings:smallest,fitted:true,changed:true,
+      reason:'Used minimum spacing to preserve every contour level.'};
+  }
+  // A silhouette may physically be thinner than seven minimum-width lines.
+  // Return the original authoring values so a failed action never changes art.
+  return {...unchanged,reason:'This silhouette is too narrow for '+settings.count+
+    ' outlines even at minimum width and spacing. Enlarge the shape or reduce the line count.'};
+}

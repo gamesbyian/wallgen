@@ -1,6 +1,6 @@
 // One compact existing-Design-editor surface for nested imported silhouettes.
 // It modifies only the current canonical recipe; no separate SVG/raster editor.
-import {DEFAULT_NESTED_CONTOURS,nestedContourDistances} from './nested-shape-contours.js';
+import {DEFAULT_NESTED_CONTOURS,nestedContourDistances,fitNestedShapeContours} from './nested-shape-contours.js';
 
 const add=(parent,tag,text)=>{
   const node=document.createElement(tag);
@@ -66,6 +66,10 @@ export function installNestedShapeControls({form,getRecipe,getScene,onApply,onNo
       onApply({...r,nestedShapeContours:{...r.nestedShapeContours,
         colourOrder:reverse.value}});
   });
+  const autoFit=add(controls,'button','Auto-fit outlines to shape');
+  autoFit.type='button';
+  autoFit.className='nested-shape-auto-fit';
+  autoFit.setAttribute('aria-label','Auto-fit nested outline spacing to this silhouette');
   const warning=add(controls,'small',
     'Constant-distance contours follow the original outline. Sharp tips, holes and narrow necks may naturally split or lose inner lines; the source shape is never distorted.');
   warning.className='nested-shape-warning';
@@ -127,6 +131,25 @@ export function installNestedShapeControls({form,getRecipe,getScene,onApply,onNo
           enabled:true,objectId:'region-0'}});
       onNotice('Seven real rainbow contour offsets. Edit width and spacing below; Undo restores your previous artwork.');
     }
+  });
+  autoFit.addEventListener('click',()=>{
+    const r=getRecipe(),settings=r.nestedShapeContours;
+    const object=getScene()?.objects?.find(o=>o.id===settings?.objectId&&o.rings?.length);
+    if(!settings?.enabled||!object){
+      onNotice('Choose an imported silhouette before fitting outlines.');return;
+    }
+    const result=fitNestedShapeContours(object.rings,settings);
+    if(!result.fitted){
+      warning.textContent=result.reason;
+      onNotice(result.reason);
+      return;
+    }
+    if(!result.changed){
+      onNotice('All '+settings.count+' geometric contour levels already fit.');
+      return;
+    }
+    onApply({...r,nestedShapeContours:result.settings});
+    onNotice('Fitted '+settings.count+' outline levels using actual shape geometry. Narrow tips or necks may still split; Undo restores your spacing.');
   });
   document.addEventListener('roygbiv-controls-synced',sync);
   sync();
