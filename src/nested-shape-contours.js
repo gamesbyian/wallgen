@@ -204,9 +204,17 @@ export function fitNestedShapeContours(rings,settings,options={}){
       balancedInnerColours:true,
       reason:'Kept all seven geometric outline levels while giving the innermost colours more room to remain visible.'};
   };
-  const current={...settings};
-  if(survives(current))return {settings:current,fitted:true,changed:false,
-    reason:'All requested levels already fit.'};
+  const current={...settings},currentReadability={};
+  if(survives(current,currentReadability)){
+    // Explicit Auto-fit must also be useful for an older saved recipe
+    // with seven barely surviving levels. Never edit it during rendering;
+    // only this clicked action may propose an Undoable readability change.
+    const balanced=finish(current,'All requested levels already fit.',
+      currentReadability);
+    if(balanced.balancedInnerColours)return balanced;
+    return {settings:current,fitted:true,changed:false,
+      reason:'All requested levels already fit.'};
+  }
   let candidate={...current};
   // Clear gap first, then outer margin, only then sacrifice stroke legibility.
   // Each step retains the maximum half-pixel increment verified to fit.
