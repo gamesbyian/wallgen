@@ -38,6 +38,33 @@ export function nestedContourDistances(settings){
   return Array.from({length:settings.count},(_,i)=>first+i*step);
 }
 
+// A true offset of a CLOSED imported region cannot end abruptly in the
+// middle of the polygon. The marching-squares candidate frontier can,
+ // however, leave a short open chain near a topology pinch. Only a genuinely
+// camera-cropped chain whose BOTH ends touch the bounded contour envelope
+// is eligible. This prevents visible line-cap dots in native-size wallpapers.
+function validContour(contour,distance,settings,options){
+  const points=contour.points;
+  if(points.length<2)return false;
+  const length=points.reduce((total,p,i)=>i?
+    total+Math.hypot(p.x-points[i-1].x,p.y-points[i-1].y):0,0)+
+    (contour.closed?Math.hypot(points[0].x-points.at(-1).x,
+      points[0].y-points.at(-1).y):0);
+  // Tiny final erosion islands are mathematical remnants but not readable
+  // outlined design elements. A stable minimum length prevents bright dots.
+  if(length<Math.max(8,settings.strokeWidth*5))return false;
+  if(contour.closed)return true;
+  const bounds=options.bounds;
+  if(!bounds)return false;
+  const padding=distance+Math.max(12,options.padding??80);
+  const tol=3*(options.resolution??1)+2;
+  const near=p=>Math.abs(p.x-(bounds.left-padding))<=tol||
+    Math.abs(p.x-(bounds.right+padding))<=tol||
+    Math.abs(p.y-(bounds.top-padding))<=tol||
+    Math.abs(p.y-(bounds.bottom+padding))<=tol;
+  return near(points[0])&&near(points.at(-1));
+}
+
 /** Pure, render-resolution-independent geometry for reference, worker and PNG.
  * Returns fewer contours, honestly, when a thin region collapses. A single
  * distance may generate disconnected loops or expanding negative-space holes.
@@ -53,7 +80,7 @@ export function planNestedShapeContours(rings,settings,options={}){
       // The canonical world-aligned grid is independent of wallpaper output
       // dimensions and camera crop. This slightly refines the default pitch.
       resolution:options.resolution??1.0
-    })
+    }).filter(contour=>validContour(contour,distance,settings,options))
   }));
   const visibleCount=levels.filter(level=>level.contours.length>0).length;
   return {levels,visibleCount,requestedCount:levels.length,
