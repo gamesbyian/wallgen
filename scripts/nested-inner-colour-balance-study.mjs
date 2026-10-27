@@ -64,7 +64,7 @@ function contourLength(contour){
     pts[0].x-pts.at(-1).x,pts[0].y-pts.at(-1).y);
   return length;
 }
-const bins=[[],[]],reports=[];
+const bins=[[],[],[]],reports=[];
 for(const [i,fixture] of fixtures.entries()){
   const snapshot=JSON.stringify(fixture.shape);
   const original=normalizeRecipe({...base,seed:base.seed+'-'+i,
@@ -75,9 +75,11 @@ for(const [i,fixture] of fixtures.entries()){
   const fit=fitNestedShapeContours(source.rings,original.nestedShapeContours);
   assert.ok(fit.fitted,fixture.name+': '+fit.reason);
   const gap=fit.settings.gap;
+  const moderate=Math.max(.5,Math.floor(gap*.75*2)/2);
   const tighter=Math.max(.5,Math.floor(gap*.65*2)/2);
   const states=[
     {label:'current-max-survival',settings:fit.settings},
+    {label:'moderate-75pct',settings:{...fit.settings,gap:moderate}},
     {label:'tighter-65pct',settings:{...fit.settings,gap:tighter}}
   ];
   for(const [variant,item] of states.entries()){
@@ -122,10 +124,12 @@ function contact(images){
   }
   return PNG.sync.write(canvas);
 }
-const before=contact(bins[0]),after=contact(bins[1]);
+const before=contact(bins[0]),moderate=contact(bins[1]),after=contact(bins[2]);
 await writeFile(join(out,'current-contact.png'),before);
+await writeFile(join(out,'moderate-contact.png'),moderate);
 await writeFile(join(out,'tighter-contact.png'),after);
 await writeFile(join(out,'report.json'),JSON.stringify({schema:'roygbiv-ink-balance-study/v1',
   verifiedArtRatherThanInferred:true,noPixelOrHumanClaims:true,reports},null,2));
 console.log('NESTED_BALANCE_CURRENT_IMAGE '+before.toString('base64'));
+console.log('NESTED_BALANCE_MODERATE_IMAGE '+moderate.toString('base64'));
 console.log('NESTED_BALANCE_TIGHTER_IMAGE '+after.toString('base64'));
