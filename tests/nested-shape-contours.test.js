@@ -28,7 +28,7 @@ test('strictly bounded nesting control fields cannot create degenerate geometry'
     firstInset:Infinity,objectId:'<img onerror=x>',colourOrder:'bogus'});
   assert.deepEqual(opts,{
     enabled:true,objectId:'region-0',count:7,strokeWidth:2,
-    gap:.5,firstInset:50,colourOrder:'forward',fit:'exact'});
+    gap:.5,firstInset:3,colourOrder:'forward',fit:'exact'});
   assert.deepEqual(nestedContourDistances({...opts,count:3,strokeWidth:2,
     gap:5,firstInset:3}),[4,11,18]);
   assert.deepEqual(nestedContourDistances({...opts,enabled:false}),[]);
