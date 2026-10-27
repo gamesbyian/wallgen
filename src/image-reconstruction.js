@@ -466,6 +466,9 @@ function strippedCandidateBase(input,background){
     // source's first inferred pigment as seven multicolour border strokes.
     // This is not evidence in the anonymous bitmap and is not lockable.
     nestedShapeContours:undefined,
+    // A prior Elements stack decorates every inferred region without
+    // source evidence. Reset it alongside Photo and stale Nest settings.
+    interiorElements:[],
     material:'none',textureDisplacement:0,textureLayer2Enabled:false,
     textureLayer3Enabled:false,lightingMood:'off',glow:0,
     surfaceTreatments:[],photoLook:{enabled:false},motif:'solid',

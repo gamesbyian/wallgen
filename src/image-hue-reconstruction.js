@@ -191,6 +191,9 @@ export function observedHueShapeRecipe(image,placement,currentInput,
     scatteredOverrides:items.map(item=>({
       index:item.index,x:item.x,y:item.y,radius:item.radius})),
     dividerColor:'none',dividerWidth:0,
+    // Direct observed-pigment adapter bypasses strippedCandidateBase.
+    // An unrelated Elements stack must not draw patterns over flat source ink.
+    interiorElements:[],
     // A recovered image must not silently inherit the current studio's
     // private materials, Photo pipeline, camera, motifs or other treatments.
     // Existing locks still project through respectSettingLocks below.
@@ -205,6 +208,10 @@ export function observedHueShapeRecipe(image,placement,currentInput,
   if(candidate.scatteredShapeOverrides?.length!==count||
     candidate.scatteredOverrides?.length!==count)return null;
   const effective=respectSettingLocks(original,candidate);
+  // A deliberately locked existing Elements stack cannot be silently
+  // ignored, nor can it truthfully be called source-inferred flat pigment.
+  // Refuse this appearance hypothesis, leaving manual import available.
+  if(effective.interiorElements.length)return null;
   if(effective.paletteToneEnabled!==(sourceTone!==null)||
      (sourceTone&&(effective.paletteSaturation!==sourceTone.saturation||
        effective.paletteLightness!==sourceTone.lightness))||
