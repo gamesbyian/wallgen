@@ -46,7 +46,7 @@ test('real stdio MCP discovery, composition, locks, variation and image transpor
   }
   const call=(name,args={})=>request('tools/call',{name,arguments:args});
   const data=result=>{
-    assert.equal(result.isError,true===false);
+    assert.notEqual(result.isError,true);
     return JSON.parse(result.content.find(item=>item.type==='text').text);
   };
   try {
