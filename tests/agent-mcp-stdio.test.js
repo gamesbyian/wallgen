@@ -70,6 +70,9 @@ test('real stdio MCP discovery, composition, locks, variation and image transpor
       locks:['palette']
     }));
     assert.equal(first.recipe.palette,'jewel');
+    const imported=data(await call('roygbiv_import',{recipe:first.recipe}));
+    assert.equal(imported.id,first.id);
+    assert.deepEqual(imported.recipe,first.recipe);
     const variants=data(await call('roygbiv_explore',{
       id:first.id,count:3,seed:'stdio-batch',
       categories:['path','stripes','colour'],strength:'wild'
