@@ -4,6 +4,7 @@ import {normalizeSurfaceTreatments} from './embroidery.js';
 import {normalizeCompoundRegion,GEOMETRY_SNAPSHOT_SCHEMA} from './geometry-asset.js';
 import {normalizeScatteredOverrides,normalizeScatteredLayerOrder} from './scattered-object-edits.js';
 import {normalizeScatteredShapeOverrides} from './scattered-shape-overrides.js';
+import {normalizeNestedShapeContours} from './nested-shape-contours.js';
 import { normalizeInteriorElements } from './interior-elements.js';
 import { normalizeTextOverlays } from './text-overlays.js';
 import { STRUCTURES, RADIAL_MODES, REGION_MODES, DIVIDER_MODES, buildCompositionObjects } from './composition-geometry.js';
@@ -140,6 +141,7 @@ export function normalizeRecipe(input = {}) {
   return {
     version: 2,
     interiorElements:normalizedInteriors,
+    ...(input.nestedShapeContours?{nestedShapeContours:normalizeNestedShapeContours(input.nestedShapeContours)}:{}),
     ...(textOverlays.length?{textOverlays}:{}),
     ...(reconstructionOrigin?{reconstructionOrigin}:{}),
     // Old recipes have no Photo key, leaving their saved representation and pixels intact.
