@@ -20,6 +20,7 @@ import {fullSettingName} from './editor-terminology.js';
 import {installExplorationHistory} from './exploration-history.js';
 import {installGeometryLibraryUI} from './geometry-library-ui.js';
 import {installNestedShapeControls} from './nested-shape-ui.js';
+import {DEFAULT_NESTED_CONTOURS} from './nested-shape-contours.js';
 import {RAINBOW_ORBITS,scatteredRadiusRange} from './scattered-composition.js';
 import {stripeContourDistortionAvailability} from './editor-effect-availability.js';
 import {normalizeScatteredOverrides,effectiveScatteredLayerOrder,moveScatteredLayer} from './scattered-object-edits.js';
@@ -801,6 +802,28 @@ function applyImportedShape(geometry){
     scatteredShapeKind:'imported',scatteredShape:cloneGeometrySnapshot(geometry)});
   return true;
 }
+// A creator choosing a stored silhouette can request the complete nested
+// treatment in one canonical Undo action; don't briefly apply plain geometry
+// then submit a second transaction.
+function applyImportedNestedShape(geometry){
+  const locks=current.lockedSettings||[];
+  if((locks.includes('structure')&&current.structure!=='regions')||
+    (locks.includes('regionMode')&&current.regionMode!=='scattered')||
+    (locks.includes('scatteredShapeKind')&&current.scatteredShapeKind!=='imported')||
+    (locks.includes('scatteredCount')&&current.scatteredCount!==1)){
+    showNotice('Unlock the shape layout and shape count before nesting this silhouette.');
+    return false;
+  }
+  changeRecipe({...current,structure:'regions',regionMode:'scattered',
+    scatteredShapeKind:'imported',scatteredShape:cloneGeometrySnapshot(geometry),
+    scatteredCount:1,scatteredMinSize:80,scatteredMaxSize:100,
+    scatteredVariation:0,scatteredEdgeCrop:0,scatteredSpacing:0,
+    // Explicitly chosen new source art must not inherit stale per-hue stamps.
+    scatteredShapeOverrides:[],scatteredOverrides:[],scatteredLayerOrder:[],
+    dividerColor:'none',dividerWidth:0,
+    nestedShapeContours:{...DEFAULT_NESTED_CONTOURS}});
+  return true;
+}
 const imagePathTool=installImagePathTool({
   getRecipe:()=>current,
   onNotice:showNotice,
@@ -855,6 +878,7 @@ const geometryLibrary=installGeometryLibraryUI({
   onNotice:showNotice,
   downloadBlob,
   applyShape:applyImportedShape,
+  applyNestedShape:applyImportedNestedShape,
   applyPath:({points,anchors=[],corners=[]})=>{
     if(current.lockedSettings.includes('geometry')||
       pathStructureLockedOutsidePaths(current)){
