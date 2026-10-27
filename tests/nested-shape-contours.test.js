@@ -407,6 +407,14 @@ test('Auto-fit enlarges real inner hue geometry only when it is a tiny remnant',
     assert.ok(originalLengths[6]/originalLengths[0]<.1);
     assert.ok(newLengths[6]/newLengths[0]>=.25);
     assert.deepEqual(geometry,untouched,'creator source vector is immutable');
+    // A saved design from before this improvement had seven technically
+    // surviving but tiny violet fragments. Clicking Auto-fit again is the
+    // explicit act that improves it, not loading or rendering that recipe.
+    const previouslySaved=fitNestedShapeContours(rings,baseline.settings);
+    assert.equal(previouslySaved.balancedInnerColours,true);
+    assert.deepEqual(previouslySaved.settings,improved.settings);
+    const repeated=fitNestedShapeContours(rings,improved.settings);
+    assert.equal(repeated.changed,false,'readable art must be stable on re-fit');
     const adopted=normalizeRecipe({...original,nestedShapeContours:improved.settings});
     assert.deepEqual(normalizeRecipe(serial(adopted)),adopted);
   }
