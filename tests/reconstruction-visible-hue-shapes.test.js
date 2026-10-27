@@ -595,9 +595,9 @@ test('seven observed pigment shapes ignore unrelated source-editor palette rever
 
 test('independent visible pigment reconstruction cannot inherit prior nested-silhouette outlines',()=>{
   const source=sevenShapes(),sourceCopy=source.data.slice();
-  const clean=normalizeRecipe({seed:'source-clean'});
+  const clean=normalizeRecipe({seed:'source-clean',
+    structure:'regions',regionMode:'scattered'});
   const contaminated=normalizeRecipe({...clean,
-    structure:'regions',regionMode:'scattered',
     nestedShapeContours:{enabled:true,objectId:'region-0',count:7,
       strokeWidth:2,gap:5,firstInset:3}});
   assert.equal(contaminated.nestedShapeContours?.enabled,true,
