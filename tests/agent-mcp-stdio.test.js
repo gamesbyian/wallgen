@@ -99,6 +99,10 @@ test('real stdio MCP discovery, composition, locks, variation and image transpor
       assert.equal(bytes.readUInt32BE(16),240);
       assert.equal(bytes.readUInt32BE(20),520);
       assert.deepEqual(extractPngRecipe(bytes),edited.recipe);
+      const second=await call('roygbiv_preview',{id:edited.id,width:240});
+      assert.ok(!second.isError);
+      assert.deepEqual(second.content.find(x=>x.type==='image').data,img.data);
+      assert.equal(JSON.parse(second.content.find(x=>x.type==='text').text).cached,true);
     }
     if(doNativeExport) {
       const result=data(await call('roygbiv_export',{id:edited.id}));
