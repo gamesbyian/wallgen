@@ -72,8 +72,11 @@ for(const [i,fixture] of fixtures.entries()){
     scatteredOverrides:[frameImportedSilhouette(fixture.shape.geometry)],
     nestedShapeContours:{...DEFAULT_NESTED_CONTOURS,gap:30}});
   const source=resolveScene(original).objects[0];
-  const fit=fitNestedShapeContours(source.rings,original.nestedShapeContours);
+  const fit=fitNestedShapeContours(source.rings,original.nestedShapeContours,
+    {balanceInnerInk:false});
   assert.ok(fit.fitted,fixture.name+': '+fit.reason);
+  const automatic=fitNestedShapeContours(source.rings,original.nestedShapeContours);
+  assert.ok(automatic.fitted);
   const gap=fit.settings.gap;
   const moderate=Math.max(.5,Math.floor(gap*.75*2)/2);
   const tighter=Math.max(.5,Math.floor(gap*.65*2)/2);
@@ -107,6 +110,9 @@ for(const [i,fixture] of fixtures.entries()){
       pixelsPerHue:ink,
       violetToRedInkRatio:+(ink[6]/ink[0]).toFixed(4),
       violetToRedContourLengthRatio:+(lengths[6]/lengths[0]).toFixed(4),
+      recommendedGapByNewAutoFit:automatic.settings.gap,
+      autoFitHonoursReadability:fixture.name==='ellipse'?
+        automatic.settings.gap===gap:automatic.settings.gap===tighter,
       contourComponents:report.levels.map(l=>l.contours.length)};
     reports.push(result);console.log('NESTED_BALANCE '+JSON.stringify(result));
   }
