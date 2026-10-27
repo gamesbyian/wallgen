@@ -14,6 +14,10 @@ test('agent capabilities come from real editor taxonomy and canonical defaults',
   assert.ok(description.categories.flatMap(x => x.tools).some(x =>
     x.id === 'ends' && x.settings.includes('pathLength')));
   assert.ok(description.choices.material.includes('corduroy'));
+  assert.deepEqual(description.choices.background,['black','white']);
+  assert.ok(description.choices.textureBlend2.includes('multiply'));
+  assert.ok(description.booleans.includes('geometrySafety'));
+  assert.ok(description.complexSettings.includes('customPath'));
   assert.deepEqual(description.numeric.stripeWidth, { min: 0, max: 100,
     default: normalizeRecipe({}).stripeWidth });
 });
