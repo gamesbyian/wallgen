@@ -9,7 +9,7 @@ import * as z from 'zod/v4';
 import { createHash } from 'node:crypto';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { readFile, writeFile, mkdir, mkdtemp } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, mkdtemp, stat } from 'node:fs/promises';
 import { rmSync } from 'node:fs';
 import { tmpdir, homedir } from 'node:os';
 import { resolve, join, dirname } from 'node:path';
@@ -57,6 +57,14 @@ function get(id) {
 async function scratch() {
   if (!temporary) temporary = await mkdtemp(join(tmpdir(), 'roygbiv-mcp-'));
   return temporary;
+}
+// Prevent concurrent model tool calls from launching many Chromium instances
+// and exhausting a workstation. A failed render must not block later jobs.
+let renderQueue = Promise.resolve();
+function queueRender(recipe, width, height, outfile) {
+  const job = renderQueue.then(() => render(recipe, width, height, outfile));
+  renderQueue = job.then(() => undefined, () => undefined);
+  return job;
 }
 async function render(recipe, width, height, outfile) {
   const scratchDir = await scratch();
@@ -146,7 +154,12 @@ function serverFactory() {
     const recipe = get(id);
     const height = Math.round(width * 13 / 6);
     const outfile = join(await scratch(), id + '-' + width + '.png');
-    const info = await render(recipe, width, height, outfile);
+    let info;
+    // Candidate IDs are content-derived, and scratch files belong only to this
+    // process. Reuse successful previews, including repeated agent critiques.
+    const cached = await stat(outfile).then(s => s.size > 64).catch(() => false);
+    if (!cached) info = await queueRender(recipe, width, height, outfile);
+    else info = { file: outfile, width, height, seed: recipe.seed, cached: true };
     const data = (await readFile(outfile)).toString('base64');
     return { content: [
       { type: 'image', data, mimeType: 'image/png' },
@@ -163,7 +176,7 @@ function serverFactory() {
     await mkdir(exportsDir, { recursive: true, mode: 0o700 });
     const imagePath = join(exportsDir, id + '.png');
     const recipePath = join(exportsDir, id + '.json');
-    const info = await render(recipe, 3024, 6552, imagePath);
+    const info = await queueRender(recipe, 3024, 6552, imagePath);
     await writeFile(recipePath, JSON.stringify(recipe, null, 2), { mode: 0o600 });
     return json({ ...info, id, recipePath, imagePath, localOnly: true,
       recipeEmbedded: true, note: 'These are local paths. No remote upload or public share URL was created.' });
