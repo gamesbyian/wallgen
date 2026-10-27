@@ -6,7 +6,7 @@ import {readFile,writeFile} from 'node:fs/promises';
 import {resolve,join} from 'node:path';
 import {PNG} from 'pngjs';
 import {compareReconstructionPixels} from '../src/image-reconstruction.js';
-const [newDir,oldDir]=process.argv.slice(2).map(resolve);
+const [newDir,oldDir]=process.argv.slice(2).map(dir=>resolve(dir));
 if(!newDir||!oldDir)throw Error('Provide new/old evaluation directories');
 const readJSON=async p=>JSON.parse(await readFile(p,'utf8'));
 const readPng=async p=>{
