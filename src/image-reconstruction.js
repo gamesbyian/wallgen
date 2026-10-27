@@ -462,6 +462,10 @@ function strippedCandidateBase(input,background){
     // A reversed palette or an old per-slot stamp changes the colour/outline
     // of new candidates even when the same independent source is analysed.
     reverseStripes:false,scatteredLayerOrder:[],scatteredShapeOverrides:[],
+    // A prior authored seven-outline Nest mode must not repaint an imported
+    // source's first inferred pigment as seven multicolour border strokes.
+    // This is not evidence in the anonymous bitmap and is not lockable.
+    nestedShapeContours:undefined,
     material:'none',textureDisplacement:0,textureLayer2Enabled:false,
     textureLayer3Enabled:false,lightingMood:'off',glow:0,
     surfaceTreatments:[],photoLook:{enabled:false},motif:'solid',
