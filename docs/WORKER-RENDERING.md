@@ -58,11 +58,20 @@ When only nudge, shadow or compositing settings change, cached ink/background
 are presented immediately with the pre-existing `presentNudgedArtwork()`
 rather than scheduling another geometry solve.
 
-During slider movement, a worker request may render at 62% preview resolution.
-After interaction settles, the scheduler requests a 100% definitive preview.
-Temporary frames never populate the authoritative nudge cache. On initial page
+During slider movement **and discrete Randomize All/new-seed actions**, the
+worker may render a provisional 62% preview first. After the existing 170 ms
+quiet period, the scheduler requests a definitive 100% preview. If that timer
+expires while the provisional paint is still active, its result may still be
+presented before the queued definitive one **only when both requests reference
+the identical canonical recipe object**. A newer recipe invalidates the old
+frame even if its artwork key matches; unsolicited/duplicate frame IDs never
+release the active worker slot. Temporary frames never populate the
+authoritative nudge cache or replace exact wallpaper export. On initial page
 load the visible canvas is drawn by the reference renderer before the worker
 starts, preserving fast startup and the existing screenshot contract.
+The quick preview reduces the first frame's pixels (about 38% of full at
+matching aspect ratio), but actual latency depends on painter complexity and
+device resources; no physical-Pixel timing is implied.
 
 Failed feature detection, worker script errors, communication failures,
 context errors and request timeouts disable the worker path and invoke the
