@@ -377,6 +377,11 @@ export function installTextOverlayTool({getRecipe,changeRecipe,onFontNotice=()=>
     // with a new caption reusing the SAME id, text and selected typeface.
     // No per-caption equality test can establish original object identity.
     textIdentity.invalidateAll();
+    // A focused Words textarea keeps its uncommitted IME draft on ordinary
+    // edits. That draft belongs to the OLD design even if the restored
+    // wallpaper reuses the same human-readable text-1 ID. Force this sync
+    // to show the new owner's actual words before a later blur/change.
+    syncedTextOwnerId=null;
     sync();
   });
   sync();
