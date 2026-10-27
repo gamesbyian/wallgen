@@ -1,7 +1,7 @@
 // One compact existing-Design-editor surface for nested imported silhouettes.
 // It modifies only the current canonical recipe; no separate SVG/raster editor.
 import {DEFAULT_NESTED_CONTOURS,nestedContourDistances,fitNestedShapeContours} from './nested-shape-contours.js';
-import {frameImportedSilhouette} from './nested-shape-framing.js';
+import {frameImportedSilhouette,frameUnpositionedNestedSilhouette} from './nested-shape-framing.js';
 
 const add=(parent,tag,text)=>{
   const node=document.createElement(tag);
@@ -97,14 +97,15 @@ export function installNestedShapeControls({form,getRecipe,getScene,onApply,onNo
     button.disabled=!ready;
     button.textContent=enabled?'Turn off nested outlines':'Nest shape · 7 colours';
     button.setAttribute('aria-pressed',String(enabled));
+    const settings=r.nestedShapeContours||DEFAULT_NESTED_CONTOURS;
     help.textContent=!r.scatteredShape?
       'Import a silhouette first using Import image or My shapes & paths.':
       !ready?'Unlock its layout and shape count before nesting.':
-      enabled?'Seven colours follow the original boundary at measured distances.':
+      enabled?settings.count+' colour outline'+(settings.count===1?'':'s')+
+        ' follow the original boundary at measured distances.':
         'Create seven truly offset rainbow outlines, not scaled copies.';
     controls.hidden=!enabled;
     frameButton.disabled=!enabled||!ready;
-    const settings=r.nestedShapeContours||DEFAULT_NESTED_CONTOURS;
     for(const [key,input] of Object.entries(fields))
       if(document.activeElement!==input)input.value=String(settings[key]);
     if(document.activeElement!==reverse)reverse.value=settings.colourOrder;
@@ -133,6 +134,10 @@ export function installNestedShapeControls({form,getRecipe,getScene,onApply,onNo
         scatteredShapeKind:'imported',scatteredCount:1,scatteredEdgeCrop:0,
         scatteredVariation:0,scatteredMinSize:80,scatteredMaxSize:100,
         scatteredSpacing:0,dividerColor:'none',dividerWidth:0,
+        // Do not undo the creator's intentional position. Only a silhouette
+        // still using procedural placement receives source-derived framing.
+        scatteredOverrides:frameUnpositionedNestedSilhouette(
+          r,r.scatteredShape.geometry),
         nestedShapeContours:{...DEFAULT_NESTED_CONTOURS,...r.nestedShapeContours,
           enabled:true,objectId:'region-0'}});
       onNotice('Seven real rainbow contour offsets. Edit width and spacing below; Undo restores your previous artwork.');
