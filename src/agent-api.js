@@ -5,7 +5,8 @@
 import {
   normalizeRecipe, resolveScene, LOCKABLE_SETTINGS, FAMILIES, GEOMETRIES,
   PALETTES, MATERIALS, OUTLINES, MOTIFS, COMPOSITIONS, CONSTRUCTIONS,
-  CROSSING_MODES, LIGHTING_MOODS, LINE_STYLES, rng
+  CROSSING_MODES, LIGHTING_MOODS, LINE_STYLES, rng, STRUCTURES, RADIAL_MODES,
+  REGION_MODES, DIVIDER_MODES, TEXTURE_COVERAGES, BLEND_MODES, LIGHT_DIRECTIONS
 } from './model.js';
 import { STYLE_PRESETS, EDITOR_CATEGORIES, TOOL_LIST, SETTING_TOOL } from './editor-schema.js';
 import { randomizeScope, scopedKeys } from './scoped-random.js';
@@ -21,13 +22,35 @@ const SETTINGS = new Set([...Object.keys(BASE), ...OPTIONAL_KEYS].filter(key =>
 ));
 const CATEGORIES = new Set(EDITOR_CATEGORIES.map(category => category.id));
 const ENUMS = {
-  family: FAMILIES, geometry: ['auto', ...GEOMETRIES],
-  palette: ['auto', ...PALETTES], material: ['auto', ...MATERIALS],
-  outline: ['auto', ...OUTLINES], motif: ['auto', ...MOTIFS],
+  family: ['auto', ...FAMILIES],
+  structure: STRUCTURES,
+  radialMode: RADIAL_MODES,
+  regionMode: REGION_MODES,
+  scatteredOverlap: ['separate', 'overlap'],
+  scatteredShapeKind: ['circle', 'imported'],
+  dividerColor: DIVIDER_MODES,
   orientation: ['auto', 'vertical', 'horizontal', 'diagonal'],
-  composition: COMPOSITIONS, construction: CONSTRUCTIONS,
-  crossingMode: CROSSING_MODES, lightingMood: LIGHTING_MOODS,
-  lineStyle: LINE_STYLES
+  geometry: ['auto', ...GEOMETRIES],
+  motif: ['auto', ...MOTIFS],
+  palette: ['auto', ...PALETTES],
+  material: ['auto', ...MATERIALS],
+  material2: MATERIALS,
+  material3: MATERIALS,
+  outline: ['auto', ...OUTLINES],
+  background: ['black', 'white'],
+  composition: COMPOSITIONS,
+  construction: CONSTRUCTIONS,
+  crossingMode: CROSSING_MODES,
+  lightingMood: LIGHTING_MOODS,
+  lightDirection: LIGHT_DIRECTIONS,
+  stripeShadowDirection: LIGHT_DIRECTIONS,
+  lineStyle: LINE_STYLES,
+  textureCoverage: TEXTURE_COVERAGES,
+  textureCoverage2: TEXTURE_COVERAGES,
+  textureCoverage3: TEXTURE_COVERAGES,
+  textureBlend: BLEND_MODES,
+  textureBlend2: BLEND_MODES,
+  textureBlend3: BLEND_MODES
 };
 const STRENGTHS = new Set(['gentle', 'moderate', 'wild']);
 const MODES = new Set(['vary', 'reroll']);
@@ -87,8 +110,13 @@ export function describeAgentCapabilities() {
     categories: EDITOR_CATEGORIES.map(({ id, label, tools }) => ({
       id, label, tools: tools.map(({ id, name, settings }) => ({ id, name, settings }))
     })),
-    choices: ENUMS, numeric, otherSettings: keys.filter(key =>
-      !(key in numeric) && !(key in ENUMS)),
+    choices: ENUMS, numeric,
+    booleans: keys.filter(key => typeof BASE[key] === 'boolean'),
+    complexSettings: keys.filter(key => {
+      const v = BASE[key];
+      return v !== null && typeof v === 'object';
+    }).concat(OPTIONAL_KEYS.filter(key => !(key in BASE))),
+    otherSettings: keys.filter(key => !(key in numeric) && !(key in ENUMS)),
     lockable: LOCKABLE_SETTINGS,
     notes: [
       'The agent interprets artistic language into canonical controls; no separate prompt-to-image model is run.',
