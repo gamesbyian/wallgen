@@ -4,7 +4,7 @@ Use these instructions when you have ROYGBIV MCP tools and a user asks for rainb
 
 1. Call `roygbiv_describe` before choosing unfamiliar setting IDs, enum values or style names. All wallpaper creative controls are canonical ROYGBIV recipe fields.
 2. Interpret the user's art direction into supported settings; `roygbiv_compose` takes explicit controls, not a natural-language image-generation prompt. Record a stable seed. Prioritize the user's stated constraints, and lock settings they demand remain unchanged.
-3. Create a candidate, optionally call `roygbiv_explore` to generate at most 12 sibling recipes, and request `roygbiv_preview` for promising options. These previews return **real ROYGBIV image pixels**, not image-generation-model art.
+3. If the user supplied a full existing exported ROYGBIV recipe, call `roygbiv_import` instead of recreating it from guesses. The recipe must be canonical v2; file paths are not accepted as imports. Otherwise create a candidate, optionally call `roygbiv_explore` to generate at most 12 sibling recipes, and request `roygbiv_preview` for promising options. These previews return **real ROYGBIV image pixels**, not image-generation-model art.
 4. Look at returned images and reason visually about them. A recipe inspection only establishes structure, not actual hue visibility, aesthetic quality, frame continuity, text readability, or crop.
 5. Use `roygbiv_edit` for exact adjustments and `roygbiv_vary` for targeted re-exploration. Respect lock rules. Never treat a reported no-op as visible improvement.
 6. Export final selections using `roygbiv_export`. It generates a 3024×6552 PNG with embedded restorable recipe and a JSON sidecar. Paths returned are **local**. Do not fabricate an Internet link or claim a hosted transfer.
