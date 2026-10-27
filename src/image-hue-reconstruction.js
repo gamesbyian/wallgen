@@ -13,6 +13,7 @@ import {GEOMETRY_SNAPSHOT_SCHEMA,normalizeCompoundRegion} from './geometry-asset
 // representable high-contrast seven-hue scene. Not a global shape resize.
 // Lower-resolution standalone callers receive proportionately less offset.
 const SOURCE_VISIBLE_ANTI_ALIAS_INSET_PX=0.2;
+const SOURCE_VISIBLE_MICROSTAIR_STRENGTH=0.5;
 
 // The source's pigment masks already classify all seven hues. Only sample
 // adjacent *same-hue* interior pixels to detect observed material/texture
@@ -142,8 +143,9 @@ export function observedHueShapeRecipe(image,placement,currentInput,
     // Avoid a second source scan/bitmap or font/render path. The same
     // flat/bright/nonradial source-evidence guard also protects any tiny
     // pixel-grid staircase adjustment. Preserve exact original if unsafe.
-    if(found&&opticalInset>0)
-      found=smoothSourceVisibleMicrostairs(found,w,h);
+    if(found&&opticalInset>0&&SOURCE_VISIBLE_MICROSTAIR_STRENGTH>0)
+      found=smoothSourceVisibleMicrostairs(found,w,h,
+        {strength:SOURCE_VISIBLE_MICROSTAIR_STRENGTH});
     // The compact incomplete-colour source signature explicitly requires
     // one substantial connected silhouette per available semantic slot.
     if(!found||(partial&&found.components!==1))return null;
