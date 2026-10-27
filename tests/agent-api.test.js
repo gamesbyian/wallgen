@@ -37,6 +37,19 @@ test('agents compose full canonical portable recipes, not a separate format', ()
     ['Red','Orange','Yellow','Green','Blue','Indigo','Violet']);
 });
 
+test('agent import faithfully preserves existing PWA-exported recipe', () => {
+  const original=composeAgentRecipe({
+    style:'contour',seed:'portable-source',
+    settings:{geometry:'contour',palette:'pastel',viewZoom:1.2,
+      interiorElements:[],pathLength:88},locks:['palette','geometry']
+  });
+  const imported=importAgentRecipe(JSON.parse(JSON.stringify(original)));
+  assert.deepEqual(imported,original);
+  assert.throws(() => importAgentRecipe({...original,version:7}),/version/);
+  assert.throws(() => importAgentRecipe({...original,someFutureSetting:17}),/Unknown imported/);
+  assert.throws(() => importAgentRecipe({...original,geometry:'invalid'}),/normalized away/);
+});
+
 test('invalid or silently normalizing primitive settings fail explicitly', () => {
   assert.throws(() => composeAgentRecipe({settings:{doesNotExist:20}}), /Unknown/);
   assert.throws(() => composeAgentRecipe({settings:{geometry:'nonsense'}}), /Unsupported choice/);
