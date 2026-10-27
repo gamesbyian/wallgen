@@ -59,6 +59,7 @@ try{
   await page.locator('[name="structure"]').selectOption('regions');
   await page.locator('[data-tab="path"]').click();
   await page.locator('button[data-category="path"][data-editor-tool="regions"]').click();
+  await page.locator('[name="regionMode"]').selectOption('scattered');
   const chooser=page.locator('#chooseScatteredShape');
   await chooser.waitFor({state:'visible'});
   const chooserSize=await chooser.evaluate(el=>({
