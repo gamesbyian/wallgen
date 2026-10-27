@@ -112,7 +112,8 @@ try{
         variants.push({factor,error,meanIoU:geometry.meanIoU,
           meanEdgeChamfer:geometry.meanEdgeChamfer,
           changedPixels:paint.data.reduce((n,v,i)=>n+(v!==truth.data[i]),0),
-          png:surface.toDataURL('image/png')});
+          png:surface.toDataURL('image/png'),
+          recipe:factor===.5&&['05-hairpin','06-loop'].includes(id)?probe:null});
       }
       const baseline=variants.find(x=>x.factor===0);
       variants.sort((a,b)=>a.error-b.error);
@@ -134,15 +135,21 @@ try{
     console.log('MICROSTAIR_R0 '+JSON.stringify({
       id:record.id,baseline:record.baseline,winningFactor:record.winningFactor,
       bestError:record.bestError,delta:record.delta,
-      variants:record.variants.map(({png,...other})=>other)}));
+      variants:record.variants.map(({png,recipe,...other})=>other)}));
     for(const variant of record.variants){
       if(!variant.png)continue;
       const bytes=Buffer.from(variant.png.split(',')[1],'base64');
       await writeFile(join(dir,record.id+'.microstair-'+
         String(variant.factor).replace('.','p')+'.png'),bytes);
     }
+    for(const variant of record.variants){
+      if(variant.recipe)
+        await writeFile(join(dir,record.id+'.microstair-'+
+          String(variant.factor).replace('.','p')+'.recipe.json'),
+          JSON.stringify(variant.recipe,null,2)+'\n');
+    }
     delete record.originalRecipe;
-    record.variants=record.variants.map(({png,...other})=>other);
+    record.variants=record.variants.map(({png,recipe,...other})=>other);
   }
   await writeFile(join(dir,'microstair-probe.json'),JSON.stringify({
     schema:'roygbiv-visible-hue-local-microstair-probe/v1',
