@@ -297,6 +297,29 @@ test('External opaque graphic provides a truthful editable path, not invented se
 
 });
 
+test('inverse score observes narrow black channels in odd pixel columns and rows',()=>{
+  const w=RECONSTRUCTION_FRAME.width,h=RECONSTRUCTION_FRAME.height;
+  const background=raster(w,h,()=>[0,0,0,255]);
+  const even=raster(w,h,(x)=>x%2===0?[255,0,0,255]:[0,0,0,255]);
+  const odd=raster(w,h,(x)=>x%2===1?[255,0,0,255]:[0,0,0,255]);
+  const gap=raster(w,h,(x)=>x===31?[0,0,0,255]:[255,0,0,255]);
+  const filled=raster(w,h,()=>[255,0,0,255]);
+  const a=compareReconstructionPixels(background,even);
+  const b=compareReconstructionPixels(background,odd);
+  assert.ok(a>.10,'even-colour source contributes to score');
+  assert.equal(a,b,'odd pigment columns must have equal weight to even columns');
+  assert.equal(compareReconstructionPixels(gap,filled),
+    compareReconstructionPixels(filled,gap),
+    'a missing one-pixel black channel must count in both directions');
+  assert.ok(compareReconstructionPixels(gap,filled)>0,
+    'a gap in an odd x column must not be invisible');
+  const vertical=raster(w,h,(_,y)=>y%2?[255,0,0,255]:[0,0,0,255]);
+  const horizontal=raster(w,h,(x)=>x%2?[255,0,0,255]:[0,0,0,255]);
+  assert.equal(compareReconstructionPixels(background,vertical),
+    compareReconstructionPixels(background,horizontal),
+    'sampling should be unbiased across horizontal and vertical alternate lines');
+});
+
 test('Candidate comparison obeys bounded real-render callback and ranks identical pixels first',()=>{
   const w=RECONSTRUCTION_FRAME.width,h=RECONSTRUCTION_FRAME.height;
   const blank=raster(w,h,()=>[0,0,0,255]);
