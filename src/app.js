@@ -2150,7 +2150,7 @@ document.getElementById('applySeed').addEventListener('click',()=>changeRecipe(f
 document.getElementById('randomize').addEventListener('click',()=>{
   flushQueuedControlUpdate();
   explorationHistory.remember(current,'Before seed');
-  changeRecipe({...fromControls(),seed:newSeed()},{cause:'seed_reroll'});
+  changeRecipe({...fromControls(),seed:newSeed()},{cause:'seed_reroll',interactive:true});
   explorationHistory.remember(current,'New seed');
 });
 document.getElementById('randomizeAll').addEventListener('click',()=>{
@@ -2165,7 +2165,7 @@ document.getElementById('randomizeAll').addEventListener('click',()=>{
     // ordinary Random action preserves text styling, so retain that authored
     // path even when the new rainbow chooses a different stripe geometry.
     ...(current.textOverlays?.some(item=>item.path==='drawn')?
-      {customPath:current.customPath}:{})},{record:false,cause:'randomize_all'});
+      {customPath:current.customPath}:{})},{record:false,cause:'randomize_all',interactive:true});
   const retired=usageRecorder?.supersede(previous,current,'randomize_all');
   if(retired)creativeFeedback?.showSuperseded(retired);
   explorationHistory.remember(current,'Random');
