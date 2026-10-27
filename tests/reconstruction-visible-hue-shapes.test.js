@@ -591,3 +591,33 @@ test('seven observed pigment shapes ignore unrelated source-editor palette rever
     .some(c=>c.kind==='hue-visible-shapes'));
   assert.deepEqual(source.data,bytes,'the original imported pixels are never changed');
 });
+
+
+test('independent visible pigment reconstruction cannot inherit prior nested-silhouette outlines',()=>{
+  const source=sevenShapes(),sourceCopy=source.data.slice();
+  const clean=normalizeRecipe({seed:'source-clean',
+    structure:'regions',regionMode:'scattered'});
+  const contaminated=normalizeRecipe({...clean,
+    nestedShapeContours:{enabled:true,objectId:'region-0',count:7,
+      strokeWidth:2,gap:5,firstInset:3}});
+  assert.equal(contaminated.nestedShapeContours?.enabled,true,
+    'reproduce a genuine active prior Nest design');
+  const plain=observedHueShapeRecipe(source,placement,clean);
+  const cleaned=observedHueShapeRecipe(source,placement,contaminated);
+  assert.ok(plain&&cleaned,'source-visible hue shapes remain eligible');
+  assert.deepEqual(cleaned.recipe,plain.recipe,
+    'independent image source cannot inherit old nested outline treatment');
+  assert.equal(Object.hasOwn(cleaned.recipe,'nestedShapeContours'),false);
+  assert.equal(cleaned.recipe.scatteredShapeOverrides.length,7);
+  const rebuilt=resolveScene(cleaned.recipe);
+  assert.deepEqual(rebuilt.objects.map(o=>o.colorIndex),[0,1,2,3,4,5,6]);
+  const cleanCandidates=reconstructionCandidates(source,clean);
+  const dirtyCandidates=reconstructionCandidates(source,contaminated);
+  assert.deepEqual(dirtyCandidates.map(x=>[x.kind,x.recipe]),
+    cleanCandidates.map(x=>[x.kind,x.recipe]),
+    'full candidate selection must be independent of unrelated authored nesting');
+  assert.ok(dirtyCandidates.every(x=>!x.recipe.nestedShapeContours),
+    'no other procedural fit candidate may inherit the stale nested mode');
+  assert.deepEqual(decodeRecipe(encodeRecipe(cleaned.recipe)),cleaned.recipe);
+  assert.deepEqual(source.data,sourceCopy,'original source pixels unchanged');
+});

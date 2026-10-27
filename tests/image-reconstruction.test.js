@@ -1863,3 +1863,22 @@ test('inverse importer reuses the exact manual path measurement without candidat
   const noExtra=describeReconstructionImage(input,{sourcePathCandidates:null});
   assert.deepEqual(noExtra,standalone);
 });
+
+
+test('automatic reconstruction of source circles is not repainted by stale seven-line Nest',()=>{
+  const input=original,copy=input.data.slice();
+  const plain=normalizeRecipe({seed:'source-circles',structure:'regions',regionMode:'scattered'});
+  const prior=normalizeRecipe({...plain,
+    nestedShapeContours:{enabled:true,objectId:'region-0',count:7,
+      strokeWidth:2,gap:5,firstInset:3,colourOrder:'reverse'}});
+  assert.equal(prior.nestedShapeContours?.enabled,true);
+  const clean=reconstructionCandidates(input,plain);
+  const stale=reconstructionCandidates(input,prior);
+  assert.ok(clean.some(c=>c.kind==='regions'),
+    'actual seven source discs still generate an editable region candidate');
+  assert.deepEqual(stale.map(c=>[c.kind,c.recipe]),
+    clean.map(c=>[c.kind,c.recipe]),
+    'source candidate construction must isolate old nesting, not just Photo');
+  assert.ok(stale.every(c=>!Object.hasOwn(c.recipe,'nestedShapeContours')));
+  assert.deepEqual(input.data,copy,'no original pixel mutation');
+});
