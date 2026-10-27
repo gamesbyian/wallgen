@@ -372,6 +372,13 @@ export function installTextOverlayTool({getRecipe,changeRecipe,onFontNotice=()=>
     onSelect:id=>{selectedId=id;sync();}
   });
   document.addEventListener('roygbiv-controls-synced',sync);
+  document.addEventListener('roygbiv-design-replaced',()=>{
+    // Undo / gallery / History / JSON+PNG restore can replace everything
+    // with a new caption reusing the SAME id, text and selected typeface.
+    // No per-caption equality test can establish original object identity.
+    textIdentity.invalidateAll();
+    sync();
+  });
   sync();
   return {sync,endCanvasMove:()=>mover.endCanvasMove()};
 }
