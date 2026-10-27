@@ -85,7 +85,11 @@ test('bounded visible pigment AA inset is opt-in, source-safe and preserves hole
     baseline,'ordinary manual mask import stays pixel unchanged');
   assert.throws(()=>extractVisibleHueCompound(mask,image.width,image.height,
     {insetPixels:1}),RangeError);
-  const production=observedHueShapeRecipe(image,placement,{seed:'source'});
+  const standalone=observedHueShapeRecipe(image,placement,{seed:'source'});
+  assert.deepEqual(standalone.recipe.scatteredShapeOverrides[0].shape.geometry,
+    baseline.geometry,'standalone callers have no measured radial source kind');
+  const production=observedHueShapeRecipe(image,placement,{seed:'source'},
+    {sourceRadialKind:null});
   assert.deepEqual(production.recipe.scatteredShapeOverrides[0].shape.geometry,
     adjusted.geometry,'seven black-ground candidate uses measured inset');
   const w=100,h=120,edge=new Uint8Array(w*h);
@@ -97,6 +101,42 @@ test('bounded visible pigment AA inset is opt-in, source-safe and preserves hole
     .some(p=>p[0]===0),true,'observed clipped frame boundary remains pinned');
   assert.deepEqual(extractVisibleHueCompound(edge,w,h).centrePixels,
     cropped.centrePixels);
+});
+
+test('optical inset refuses source-measured radial rings and variegated interior pigment',()=>{
+  const source=sevenShapes();
+  const plain=observedHueShapeRecipe(source,placement,{seed:'no-inset'});
+  const rings=observedHueShapeRecipe(source,placement,{seed:'no-inset'},
+    {sourceRadialKind:'rings'});
+  const flat=observedHueShapeRecipe(source,placement,{seed:'no-inset'},
+    {sourceRadialKind:null});
+  assert.deepEqual(rings.recipe.scatteredShapeOverrides,
+    plain.recipe.scatteredShapeOverrides,
+    'measured rings preserve historical editable contour geometry');
+  assert.notDeepEqual(flat.recipe.scatteredShapeOverrides,
+    plain.recipe.scatteredShapeOverrides,
+    'solid nonradial seven-hue artwork permits bounded contour calibration');
+  // A real source may have material/fibre variation even where each pigment
+  // stays correctly classifiable. Alternate subtle brightness in the source
+  // interior, without changing the visible hue count or masking semantics.
+  const noisy={...source,data:source.data.slice()};
+  for(let i=0;i<noisy.data.length;i+=4){
+    if(!noisy.data[i]&&!noisy.data[i+1]&&!noisy.data[i+2])continue;
+    const x=(i/4)%source.width;
+    const amount=x%2?7:-7;
+    for(let c=0;c<3;c++)noisy.data[i+c]=Math.max(0,
+      Math.min(255,noisy.data[i+c]+amount));
+  }
+  const found=extractImageColourRegions(noisy,HUES,{includeMasks:true});
+  assert.equal(found.regions.length,7);
+  const before=noisy.data.slice();
+  const textured=observedHueShapeRecipe(noisy,placement,{seed:'no-inset'},
+    {sourceRadialKind:null});
+  assert.ok(textured);
+  assert.deepEqual(textured.recipe.scatteredShapeOverrides,
+    plain.recipe.scatteredShapeOverrides,
+    'measured interior pigment variation refuses a false flat-ribbon correction');
+  assert.deepEqual(noisy.data,before,'texture gate only reads source bytes');
 });
 
 test('neutral and two-hue source artwork never synthesizes a complete seven-pigment scene',()=>{
