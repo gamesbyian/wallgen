@@ -56,16 +56,21 @@ export function createPreviewCoordinator({
       staleCount++;closeFrame(message);
       return;
     }
-    // A settled request is normally queued after 170 ms, often before its
-    // faster interactive paint has *finished*. If both requests reference the
-    // exact same canonical recipe, that provisional bitmap is still useful.
-    // Never revive it when Undo, randomization, nudge or other edits replaced
-    // the recipe object, even if its art key happens to match.
+    // The 170 ms settled request can overtake its provisional frame. UI
+    // re-normalization may replace a recipe object without changing a single
+    // value, so reference identity alone is too strict. Allow the earlier
+    // bitmap only when the *complete* serialized canonical recipes agree.
+    // The art key alone omits compositor controls and is NOT sufficient.
     const completing=active;
+    const matchingRecipe=()=>{
+      if(pending.recipe===completing.recipe)return true;
+      try{return JSON.stringify(pending.recipe)===JSON.stringify(completing.recipe);}
+      catch{return false;}
+    };
     const sameRecipeUpgrade=message.quality==='interactive'&&
       completing.quality==='interactive'&&
       pending?.quality==='settled'&&
-      pending.recipe===completing.recipe&&pending.key===completing.key;
+      pending.key===completing.key&&matchingRecipe();
     clearWatchdog();
     active=null;
     if(message.id!==revision&&!sameRecipeUpgrade){

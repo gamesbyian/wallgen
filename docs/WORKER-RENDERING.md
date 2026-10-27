@@ -58,11 +58,20 @@ When only nudge, shadow or compositing settings change, cached ink/background
 are presented immediately with the pre-existing `presentNudgedArtwork()`
 rather than scheduling another geometry solve.
 
-During slider movement, a worker request may render at 62% preview resolution.
-After interaction settles, the scheduler requests a 100% definitive preview.
-Temporary frames never populate the authoritative nudge cache. On initial page
+During slider movement **and discrete Randomize All/new-seed actions**, the
+worker may render a provisional 62% preview first. After the existing 170 ms
+quiet period, the scheduler requests a definitive 100% preview. If that timer
+expires while the provisional paint is still active, its result may still be
+presented before the queued definitive one **only when both requests reference
+identical full canonical recipe values (object identity or serialized equivalence)**. A differently valued recipe invalidates the old
+frame even if its artwork key matches; unsolicited/duplicate frame IDs never
+release the active worker slot. Temporary frames never populate the
+authoritative nudge cache or replace exact wallpaper export. On initial page
 load the visible canvas is drawn by the reference renderer before the worker
 starts, preserving fast startup and the existing screenshot contract.
+The quick preview reduces the first frame's pixels (about 38% of full at
+matching aspect ratio), but actual latency depends on painter complexity and
+device resources; no physical-Pixel timing is implied.
 
 Failed feature detection, worker script errors, communication failures,
 context errors and request timeouts disable the worker path and invoke the
@@ -104,6 +113,7 @@ copies; lower-power devices can still fail on extreme combinations.
 
 ## Acceptance strategy
 
+- `scripts/progressive-randomize-browser-proof.mjs`: opt-in real Chromium 412×892 emulation, instruments real Randomize/seed button handlers, provisional and settled frame order/timing, worker dimensions, actual preview screenshots and page errors; requires Playwright/Chromium. The 27 October 2026 first source-backed run is [#40447670702](https://github.com/gamesbyian/wallgen/actions/runs/40447670702) (first frames 148/116 ms, settled at 530 ms). A repeat exposed an intermittent dropped provisional frame; [corrected source proof #40448878581](https://github.com/gamesbyian/wallgen/actions/runs/40448878581) independently confirmed that settled/provisional requests have equal serialized recipe values but different object references, and both delivered in order at 342/885 and 233/714 ms respectively. These are tiny samples on CI Chromium, not Pixel hardware. The temporary PR-only installation workflow was removed after evidence capture.
 - `tests/render-coordinator.test.js`: latest-only queue behaviour, stale
   ImageBitmap release, cached-revision invalidation, worker failures,
   short-lived export and negative feature detection.
