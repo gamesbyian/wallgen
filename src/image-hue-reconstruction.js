@@ -180,6 +180,9 @@ export function observedHueShapeRecipe(image,placement,currentInput,
     // Source-visible hues are indexed in normal ROYGBIV order; stale editor
     // reversal/layer edits cannot imply this source's colour or precedence.
     reverseStripes:false,scatteredLayerOrder:[],
+    // This independent appearance adapter bypasses strippedCandidateBase.
+    // Suppress unobserved previous Nest settings before canonical painting.
+    nestedShapeContours:undefined,
     scatteredShapeKind:'imported',scatteredShape:null,
     scatteredShapeOverrides:items.map(item=>({
       index:item.index,shape:item.shape})),
