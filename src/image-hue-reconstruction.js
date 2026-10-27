@@ -6,6 +6,14 @@ import {DESIGN_WIDTH,DESIGN_HEIGHT,HUES,normalizeRecipe,respectSettingLocks}
 import {extractImageColourRegions,extractVisibleHueCompound} from './image-path.js';
 import {GEOMETRY_SNAPSHOT_SCHEMA} from './geometry-asset.js';
 
+// Bounded source-pixel AA correction. The source-visible loops are traced at
+// importer resolution, while the inverse painter scores their Canvas2D
+// rasterization at 96×208. Real source-vs-paint optical measurements show a
+// 1px edge halo and support a 0.2-source-pixel contour inset on the currently
+// representable high-contrast seven-hue scene. Not a global shape resize.
+// Lower-resolution standalone callers receive proportionately less offset.
+const SOURCE_VISIBLE_ANTI_ALIAS_INSET_PX=0.2;
+
 /** Converts seven, or an explicitly qualified contiguous first-N subset,
  * of visible pigment masks into independent editable, self-contained rings. Caller supplies the *existing*
  * reconstructionPlacement, so canvas letterboxing remains single-owned.
@@ -44,9 +52,15 @@ export function observedHueShapeRecipe(image,placement,currentInput,
     colours.coverage<(partial?.008:.035)||
     colours.coverage>.91||
     !['black','white'].includes(colours.background))return null;
+  // Do not adjust partial/missing-slot or white-ground candidates without
+  // separately observed source-painter evidence. No new paint is invoked.
+  const opticalInset=count===7&&colours.background==='black'?
+    Math.min(SOURCE_VISIBLE_ANTI_ALIAS_INSET_PX,
+      SOURCE_VISIBLE_ANTI_ALIAS_INSET_PX*Math.max(w,h)/600):0;
   const items=[];
   for(let index=0;index<count;index++){
-    const found=extractVisibleHueCompound(colours.masks[index],w,h);
+    const found=extractVisibleHueCompound(colours.masks[index],w,h,
+      {insetPixels:opticalInset});
     // The compact incomplete-colour source signature explicitly requires
     // one substantial connected silhouette per available semantic slot.
     if(!found||(partial&&found.components!==1))return null;
