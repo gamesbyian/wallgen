@@ -1,0 +1,22 @@
+name = "roygbiv-mcp"
+main = "src/index.js"
+compatibility_date = "2026-10-27"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = false
+
+# Replace the resource URL / auth issuer in src/index.js with your verified
+# Cloudflare domains before deploying. Disable deployment until configured.
+[[services]]
+binding = "AUTH_SERVER"
+service = "roygbiv-auth"
+entrypoint = "AuthServer"
+
+[[d1_databases]]
+binding = "RECIPES"
+database_name = "roygbiv-mcp"
+database_id = "REPLACE_WITH_D1_DATABASE_ID"
+migrations_dir = "migrations"
+
+[[r2_buckets]]
+binding = "PRIVATE_ARTIFACTS"
+bucket_name = "roygbiv-private-artifacts"
