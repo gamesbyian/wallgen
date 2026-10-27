@@ -174,7 +174,7 @@ export function polygonInsetContours(polygon,inset,options={}){
   // and padding move each level's local grid origin. A different floating
   // coordinate must be evaluated anew, preserving exact existing geometry.
   // This cache never outlives a single planner call or enters a recipe.
-  const distanceCache=options.distanceCache instanceof Map?
+  const distanceCache=options.distanceCache?.columns instanceof Map?
     options.distanceCache:null;
   const value=(i,j)=>{
     const key=j*(nx+1)+i;
@@ -182,12 +182,20 @@ export function polygonInsetContours(polygon,inset,options={}){
     if(v===undefined){
       const x=x0+i*h,y=y0+j*h;
       if(distanceCache){
-        let column=distanceCache.get(x);
-        if(!column){column=new Map();distanceCache.set(x,column);}
-        v=column.get(y);
+        let column=distanceCache.columns.get(x);
+        v=column?.get(y);
         if(v===undefined){
           v=signedDistance(x,y,edges);
-          column.set(y,v);
+          // The shared cache saves edge walks for complex shapes but must
+          // never grow indefinitely on a full-bleed, detailed wallpaper.
+          if(distanceCache.count<distanceCache.limit){
+            if(!column){
+              column=new Map();
+              distanceCache.columns.set(x,column);
+            }
+            column.set(y,v);
+            distanceCache.count++;
+          }
         }
       }else v=signedDistance(x,y,edges);
       values.set(key,v);
