@@ -223,11 +223,11 @@ test('high-detail traced silhouette uses exactly the same geometric output as ba
 
 test('nesting preset frames wide, tall and pointed imported silhouette geometry without distortion',()=>{
   const cases=[
-    {type:'compound-region',viewBox:[0,0,600,200],
+    {type:'compound-region',space:'asset-local',fillRule:'evenodd',viewBox:[0,0,600,200],
       components:[{outer:[[0,0],[600,0],[600,200],[0,200]],holes:[]}]},
-    {type:'compound-region',viewBox:[0,0,120,900],
+    {type:'compound-region',space:'asset-local',fillRule:'evenodd',viewBox:[0,0,120,900],
       components:[{outer:[[0,0],[120,0],[120,900],[0,900]],holes:[]}]},
-    {type:'compound-region',viewBox:[0,0,360,360],
+    {type:'compound-region',space:'asset-local',fillRule:'evenodd',viewBox:[0,0,360,360],
       components:[{outer:[[180,18],[310,330],[228,270],[180,306],[132,270],[50,330]],
         holes:[[[180,135],[198,195],[162,195]]]}]}
   ];
@@ -254,7 +254,7 @@ test('nesting preset frames wide, tall and pointed imported silhouette geometry 
 });
 
 test('design-plane framing preserves detached components, holes and aspect ratio',()=>{
-  const shape={type:'compound-region',viewBox:[0,0,400,100],
+  const shape={type:'compound-region',space:'asset-local',fillRule:'evenodd',viewBox:[0,0,400,100],
     components:[
       {outer:[[0,0],[280,0],[280,100],[0,100]],
         holes:[[[90,25],[140,25],[140,65],[90,65]]]},
