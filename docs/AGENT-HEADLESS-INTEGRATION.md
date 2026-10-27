@@ -62,6 +62,7 @@ Local agent integration does not create an account, listen on a public port, or 
 | --- | --- |
 | `roygbiv_describe` | Authoritative editor categories, tools, known setting names, numeric bounds, enums, lockable IDs, resolution |
 | `roygbiv_compose` | New normalized and portable recipe from an explicit style, seed, settings, and locks |
+| `roygbiv_import` | Load an existing user-exported canonical v2 JSON recipe, preserving seed, settings, saved source geometry and locks, without touching the live PWA |
 | `roygbiv_edit` | Precise one-recipe edit, with explicit lock/unlock; refuses protected changes |
 | `roygbiv_vary` | Scoped single setting/tool/category reroll or nearby variation |
 | `roygbiv_explore` | 1–12 deterministic children from selected categories; same base preserved |
