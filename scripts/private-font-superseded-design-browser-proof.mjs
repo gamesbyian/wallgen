@@ -84,7 +84,8 @@ try{
     null,{timeout:30000});
   const pending=await readCurrent();
   assert.equal(pending.importerDisabled,true,'Private font must really be in-flight');
-  assert.equal(pending.font,'modern');
+  assert.equal(pending.font,first.font,
+    'the in-flight import must not change the original caption yet');
   const replacement={seed:'different-whole-design',structure:'paths',
     geometry:'straight',textOverlays:[
       {id:'text-1',text:'SAME AUTHOR WORDS',font:first.font,x:50,y:50}
