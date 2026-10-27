@@ -21,6 +21,7 @@ import {installExplorationHistory} from './exploration-history.js';
 import {installGeometryLibraryUI} from './geometry-library-ui.js';
 import {installNestedShapeControls} from './nested-shape-ui.js';
 import {DEFAULT_NESTED_CONTOURS} from './nested-shape-contours.js';
+import {frameImportedSilhouette} from './nested-shape-framing.js';
 import {RAINBOW_ORBITS,scatteredRadiusRange} from './scattered-composition.js';
 import {stripeContourDistortionAvailability} from './editor-effect-availability.js';
 import {normalizeScatteredOverrides,effectiveScatteredLayerOrder,moveScatteredLayer} from './scattered-object-edits.js';
@@ -819,7 +820,9 @@ function applyImportedNestedShape(geometry){
     scatteredCount:1,scatteredMinSize:80,scatteredMaxSize:100,
     scatteredVariation:0,scatteredEdgeCrop:0,scatteredSpacing:0,
     // Explicitly chosen new source art must not inherit stale per-hue stamps.
-    scatteredShapeOverrides:[],scatteredOverrides:[],scatteredLayerOrder:[],
+    scatteredShapeOverrides:[],
+    scatteredOverrides:frameImportedSilhouette(geometry)?[frameImportedSilhouette(geometry)]:[],
+    scatteredLayerOrder:[],
     dividerColor:'none',dividerWidth:0,
     nestedShapeContours:{...DEFAULT_NESTED_CONTOURS}});
   return true;
