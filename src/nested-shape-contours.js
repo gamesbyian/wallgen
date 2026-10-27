@@ -73,13 +73,18 @@ export function planNestedShapeContours(rings,settings,options={}){
   if(!settings?.enabled||!Array.isArray(rings)||!rings.length)
     return {levels:[],visibleCount:0,requestedCount:settings?.count??0,collapsed:0};
   const distances=nestedContourDistances(settings);
+  // All levels use the ORIGINAL rings and the same fixed-resolution SDF.
+  // Shared, short-lived samples avoid doing the expensive edge walk again
+  // for a grid point reached by a neighbouring inset. No global/worker state.
+  const distanceCache=options.cacheDistances===false?null:new Map();
   const levels=distances.map((distance,index)=>({
     index,distance,
     contours:polygonInsetContours(rings,distance,{
       bounds:options.bounds,padding:options.padding??80,
       // The canonical world-aligned grid is independent of wallpaper output
       // dimensions and camera crop. This slightly refines the default pitch.
-      resolution:options.resolution??1.0
+      resolution:options.resolution??1.0,
+      distanceCache
     }).filter(contour=>validContour(contour,distance,settings,options))
   }));
   const visibleCount=levels.filter(level=>level.contours.length>0).length;
