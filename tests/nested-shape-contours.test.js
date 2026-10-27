@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {normalizeRecipe,resolveScene} from '../src/model.js';
 import {normalizeNestedShapeContours,nestedContourDistances,
-  planNestedShapeContours,DEFAULT_NESTED_CONTOURS} from '../src/nested-shape-contours.js';
+  planNestedShapeContours,fitNestedShapeContours,DEFAULT_NESTED_CONTOURS} from '../src/nested-shape-contours.js';
 import {pointInPolygon} from '../src/polygon-inset.js';
 
 const box=(x0,y0,x1,y1)=>[
@@ -120,4 +120,42 @@ test('contour-level planner retains real open chains only at camera crop edges',
   assert.ok(cropped.levels[0].contours.length>=1);
   assert.ok(cropped.levels[0].contours.some(c=>!c.closed),
     'genuine cropped source boundary must not be discarded');
+});
+
+
+test('auto-fit preserves source silhouette and restores seven inset levels on a narrow banner',()=>{
+  const source=box(0,0,300,45);
+  const before=serial(source);
+  const initial=preview(source);
+  assert.ok(initial.visibleCount<7);
+  const fit=fitNestedShapeContours(source,DEFAULT_NESTED_CONTOURS);
+  assert.equal(fit.fitted,true,fit.reason);
+  assert.equal(fit.changed,true);
+  assert.equal(fit.settings.strokeWidth,2,'maintain legible stroke where possible');
+  assert.equal(fit.settings.firstInset,3,'preserve outer margin before reducing it');
+  assert.ok(fit.settings.gap<DEFAULT_NESTED_CONTOURS.gap);
+  assert.equal(preview(source).visibleCount,initial.visibleCount,
+    'old authored parameters remain unchanged');
+  assert.equal(planNestedShapeContours(source,fit.settings,{resolution:1}).visibleCount,7);
+  assert.deepEqual(source,before,'the original imported vertices must remain byte-identical');
+  const serialized=normalizeRecipe({nestedShapeContours:fit.settings});
+  assert.deepEqual(normalizeRecipe(serial(serialized)),serialized);
+});
+
+test('auto-fit refuses geometrically impossible seven lines without modifying authored values',()=>{
+  const thin=box(0,0,300,8);
+  const settings={...DEFAULT_NESTED_CONTOURS};
+  const result=fitNestedShapeContours(thin,settings);
+  assert.equal(result.fitted,false);
+  assert.equal(result.changed,false);
+  assert.deepEqual(result.settings,settings);
+  assert.match(result.reason,/too narrow/i);
+});
+
+test('auto-fit is a no-op when seven contours already fit',()=>{
+  const result=fitNestedShapeContours(box(0,0,360,200),
+    DEFAULT_NESTED_CONTOURS);
+  assert.equal(result.fitted,true);
+  assert.equal(result.changed,false);
+  assert.deepEqual(result.settings,DEFAULT_NESTED_CONTOURS);
 });
