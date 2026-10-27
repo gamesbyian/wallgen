@@ -116,6 +116,12 @@ test('optical inset refuses source-measured radial rings and variegated interior
   assert.notDeepEqual(flat.recipe.scatteredShapeOverrides,
     plain.recipe.scatteredShapeOverrides,
     'solid nonradial seven-hue artwork permits bounded contour calibration');
+  const measuredDark=observedHueShapeRecipe(source,placement,{seed:'no-inset'},
+    {sourceRadialKind:null,sourceTone:{saturation:90,lightness:25}});
+  assert.ok(measuredDark);
+  assert.deepEqual(measuredDark.recipe.scatteredShapeOverrides,
+    plain.recipe.scatteredShapeOverrides,
+    'the existing independently measured dark source tone inhibits flat-bright AA');
   // A real source can show fine textile variations throughout a *large*
   // interior, not simply a handful of antialiased edge pixels. Draw seven
   // broad independent pigment bands with ample measured same-hue interior.
