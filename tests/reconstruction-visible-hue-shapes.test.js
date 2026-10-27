@@ -64,6 +64,41 @@ test('visible source hue shapes reuse canonical mask/holes and produce seven ind
   assert.deepEqual(original.data,bytes,'source bytes never changed');
 });
 
+test('bounded visible pigment AA inset is opt-in, source-safe and preserves holes and crop',()=>{
+  const image=sevenShapes();
+  const analysed=extractImageColourRegions(image,HUES,{includeMasks:true});
+  const mask=analysed.masks[0],unchanged=mask.slice();
+  const baseline=extractVisibleHueCompound(mask,image.width,image.height);
+  const amount=.2*Math.max(image.width,image.height)/600;
+  const adjusted=extractVisibleHueCompound(mask,image.width,image.height,
+    {insetPixels:amount});
+  assert.ok(adjusted);
+  assert.equal(adjusted.insetApplied,true);
+  assert.equal(adjusted.components,baseline.components);
+  assert.equal(adjusted.geometry.components.length,2);
+  assert.equal(adjusted.geometry.components[0].holes.length,1);
+  assert.deepEqual(adjusted.centrePixels,baseline.centrePixels);
+  assert.notDeepEqual(adjusted.geometry,baseline.geometry,
+    'only opt-in sampled contour vertices change');
+  assert.deepEqual(mask,unchanged,'never mutate source hue segmentation');
+  assert.deepEqual(extractVisibleHueCompound(mask,image.width,image.height),
+    baseline,'ordinary manual mask import stays pixel unchanged');
+  assert.throws(()=>extractVisibleHueCompound(mask,image.width,image.height,
+    {insetPixels:1}),RangeError);
+  const production=observedHueShapeRecipe(image,placement,{seed:'source'});
+  assert.deepEqual(production.recipe.scatteredShapeOverrides[0].shape.geometry,
+    adjusted.geometry,'seven black-ground candidate uses measured inset');
+  const w=100,h=120,edge=new Uint8Array(w*h);
+  for(let y=20;y<100;y++)for(let x=0;x<21;x++)edge[y*w+x]=1;
+  const cropped=extractVisibleHueCompound(edge,w,h,{insetPixels:.2});
+  assert.ok(cropped);
+  assert.equal(cropped.touchesFrame,true);
+  assert.equal(cropped.geometry.components[0].outer
+    .some(p=>p[0]===0),true,'observed clipped frame boundary remains pinned');
+  assert.deepEqual(extractVisibleHueCompound(edge,w,h).centrePixels,
+    cropped.centrePixels);
+});
+
 test('neutral and two-hue source artwork never synthesizes a complete seven-pigment scene',()=>{
   const source=sevenShapes(),original=source.data.slice();
   const neutral={...source,data:source.data.slice()};
