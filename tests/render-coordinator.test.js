@@ -216,3 +216,26 @@ test('interactive frame from a replaced design cannot flash even with a matching
   assert.equal(delivered.length,1);
   scheduler.dispose();
 });
+
+test('equivalent re-normalized recipe still presents its provisional frame before settlement',()=>{
+  const worker=new FakeWorker(),seen=[];
+  const scheduler=createPreviewCoordinator({canUseWorker:true,
+    workerFactory:()=>worker,onFrame:message=>seen.push(message.quality)});
+  worker.emit(ready);
+  const source={seed:'normalized-twice',positionX:0,
+    textOverlays:[{id:'a',text:'ROYGBIV'}]};
+  scheduler.request(source,'same-render',180,390,{quality:'interactive'});
+  const interactiveId=worker.messages[0].id;
+  // The UI may replace its canonical recipe with a deep-equal object between
+  // the first pass and the 170 ms exact upgrade. This must remain visible.
+  const equivalent=JSON.parse(JSON.stringify(source));
+  assert.notEqual(source,equivalent);
+  scheduler.request(equivalent,'same-render',290,629,{quality:'settled'});
+  worker.emit({type:'frame',id:interactiveId,key:'same-render',
+    quality:'interactive',frame:bitmap()});
+  assert.deepEqual(seen,['interactive']);
+  worker.emit({type:'frame',id:worker.messages[1].id,key:'same-render',
+    quality:'settled',ink:bitmap(),background:bitmap()});
+  assert.deepEqual(seen,['interactive','settled']);
+  scheduler.dispose();
+});
