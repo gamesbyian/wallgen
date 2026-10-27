@@ -56,7 +56,7 @@ test('ordinary PNG restore warns when legacy source is normalized, without disab
   assert.match(app,/historicalInterpretation=recovered\.format!==/);
   assert.match(app,/recovered\.normalizedFieldsChanged\|\|recovered\.recordCount>1/);
   assert.match(app,/Artwork may differ from the saved image; retain the original PNG/);
-  assert.match(app,/changeRecipe\(recipe,\{bypassLocks:true\}\)/);
+  assert.match(app,/changeRecipe\(recipe,\{bypassLocks:true,replaceEntireDesign:true\}\)/);
 });
 
 test('existing report download labels full parsed source truth without adding a new phone control',()=>{
