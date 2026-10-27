@@ -132,6 +132,45 @@ try{
       height:el.getBoundingClientRect().height})));
   assert.ok(sizes.every(c=>c.width>=44&&c.height>=44),JSON.stringify(sizes));
   await page.screenshot({path:join(out,'short-320-nested-controls.png')});
+  // Trigger the new explicit Auto-fit against a deliberately oversized
+  // seven-contour gap through the actual number field, not model injection.
+  const gapField=page.getByRole('spinbutton',{name:'Clear spacing between lines (design pixels)'});
+  await gapField.fill('30');
+  await gapField.press('Tab');
+  await page.waitForFunction(()=>{
+    try{return JSON.parse(decodeURIComponent(new URL(location.href).searchParams.get('r')))
+      .nestedShapeContours?.gap===30;}catch{return false;}
+  });
+  const oversized=await page.evaluate(()=>new URL(location.href).searchParams.get('r'));
+  const fitButton=page.locator('.nested-shape-auto-fit');
+  const fitSize=await fitButton.evaluate(el=>({
+    width:el.getBoundingClientRect().width,height:el.getBoundingClientRect().height}));
+  assert.ok(fitSize.width>=44&&fitSize.height>=44,
+    'Auto-fit must have a real 44px touch target');
+  await fitButton.click();
+  await page.waitForFunction(()=>{
+    try{return JSON.parse(decodeURIComponent(new URL(location.href).searchParams.get('r')))
+      .nestedShapeContours?.gap<30;}catch{return false;}
+  },null,{timeout:30000});
+  const fitted=await page.evaluate(async()=>{
+    const r=JSON.parse(decodeURIComponent(new URL(location.href).searchParams.get('r')));
+    const {resolveScene}=await import('/src/model.js');
+    const {planNestedShapeContours}=await import('/src/nested-shape-contours.js');
+    const shape=resolveScene(r).objects.find(o=>o.id==='region-0');
+    return {settings:r.nestedShapeContours,
+      geometry:r.scatteredShape.geometry,
+      count:planNestedShapeContours(shape.rings,r.nestedShapeContours).visibleCount};
+  });
+  assert.deepEqual(fitted.geometry,imported.geometry,
+    'Auto-fit must not alter the original silhouette');
+  assert.equal(fitted.count,7,'Auto-fit must verify real inset contour levels');
+  await page.screenshot({path:join(out,'short-320-autofitted-controls.png')});
+  await page.locator('#undo').click();
+  await page.waitForFunction(previous=>new URL(location.href).searchParams.get('r')===previous,
+    oversized,{timeout:20000});
+  await page.locator('#undo').click();
+  await page.waitForFunction(previous=>new URL(location.href).searchParams.get('r')===previous,
+    applied,{timeout:20000});
   await page.locator('#undo').click();
   await page.waitForFunction(previous=>new URL(location.href).searchParams.get('r')===previous,
     beforeNest,{timeout:20000});
@@ -140,7 +179,7 @@ try{
   assert.deepEqual(errors,[]);
   const report={schema:'roygbiv-nested-shape-short-portrait/v1',viewport:[320,700],
     savedLibraryRealDOM:true,nestButtonTouch: nestedSize,chooserTouch:chooserSize,
-    inputs:sizes,oneUndoRestoresRecipe:true,originalVectorUnchanged:true,
+    inputs:sizes,autoFitTouch:fitSize,autoFitVerifiedLevels:fitted.count,autoFitOneUndo:true,oneUndoRestoresRecipe:true,originalVectorUnchanged:true,
     pageExceptions:errors,physicalPixelTested:false};
   await writeFile(join(out,'report.json'),JSON.stringify(report,null,2)+'\n');
   console.log('NESTED_SHORT_PROOF '+JSON.stringify(report));
