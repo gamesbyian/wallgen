@@ -1,6 +1,6 @@
 // One compact existing-Design-editor surface for nested imported silhouettes.
 // It modifies only the current canonical recipe; no separate SVG/raster editor.
-import {DEFAULT_NESTED_CONTOURS} from './nested-shape-contours.js';
+import {DEFAULT_NESTED_CONTOURS,nestedContourDistances} from './nested-shape-contours.js';
 
 const add=(parent,tag,text)=>{
   const node=document.createElement(tag);
@@ -8,7 +8,7 @@ const add=(parent,tag,text)=>{
   parent.append(node);
   return node;
 };
-export function installNestedShapeControls({form,getRecipe,onApply,onNotice}){
+export function installNestedShapeControls({form,getRecipe,getScene,onApply,onNotice}){
   const shape=form.querySelector('[name="scatteredShapeKind"]')?.closest('label');
   if(!shape)return {sync(){}};
   const root=document.createElement('div');
@@ -97,6 +97,20 @@ export function installNestedShapeControls({form,getRecipe,onApply,onNotice}){
     for(const [key,input] of Object.entries(fields))
       if(document.activeElement!==input)input.value=String(settings[key]);
     if(document.activeElement!==reverse)reverse.value=settings.colourOrder;
+    if(enabled){
+      const object=getScene()?.objects?.find(o=>o.id===settings.objectId&&o.rings?.length);
+      const p=object?.rings?.flat()||[];
+      if(p.length){
+        const xs=p.map(v=>v.x),ys=p.map(v=>v.y);
+        const clearance=Math.min(Math.max(...xs)-Math.min(...xs),
+          Math.max(...ys)-Math.min(...ys))/2;
+        const atMost=nestedContourDistances(settings).filter(d=>d<clearance).length;
+        warning.textContent=atMost<settings.count?
+          'At most '+atMost+' of '+settings.count+
+          ' inset lines fit the entire shape width at this spacing. Reduce thickness or gap. Sharp corners and necks can reduce it further.':
+          'Exact inward distances from the original boundary. Tight tips and necks can split contours naturally; no invisible geometry is invented.';
+      }
+    }
   };
   button.addEventListener('click',()=>{
     const r=getRecipe();
