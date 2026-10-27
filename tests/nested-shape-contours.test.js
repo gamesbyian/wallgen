@@ -279,3 +279,38 @@ test('invalid or degenerate imported shape cannot create an unsafe frame transfo
     assert.equal(frameImportedSilhouette(value),null);
   }
 });
+
+
+test('Auto-fit early failure exit is bit-for-bit equivalent to full seven-level planner',()=>{
+  const delta=[
+    {x:160,y:2},{x:300,y:280},{x:184,y:208},
+    {x:160,y:244},{x:136,y:208},{x:20,y:280}
+  ];
+  const shaped=Array.from({length:72},(_,i)=>{
+    const a=i*2*Math.PI/72,r=1+.14*Math.sin(5*a)+.11*Math.cos(9*a);
+    return {x:130+115*r*Math.cos(a),y:115+86*r*Math.sin(a)};
+  });
+  const narrow=box(0,0,310,42), impossible=box(0,0,310,7);
+  for(const shape of [delta,shaped,narrow,impossible,
+    [box(0,0,300,170),box(100,48,215,118)],
+    [box(0,0,180,120),box(240,0,360,90)]]){
+    for(const gap of [.5,1,2,5,12]){
+      const settings={...DEFAULT_NESTED_CONTOURS,gap};
+      const fast=fitNestedShapeContours(shape,settings);
+      const original=fitNestedShapeContours(shape,settings,{earlyExit:false});
+      assert.deepEqual(fast,original,
+        'early termination must make the exact same user-facing choice');
+    }
+  }
+});
+
+test('detailed source cache and fast rejection retain exact Auto-fit settings',()=>{
+  const ellipse=Array.from({length:256},(_,i)=>{
+    const a=i*2*Math.PI/256;
+    return {x:135+125*Math.cos(a),y:160+28*Math.sin(a)};
+  });
+  const settings={...DEFAULT_NESTED_CONTOURS};
+  assert.deepEqual(
+    fitNestedShapeContours(ellipse,settings),
+    fitNestedShapeContours(ellipse,settings,{earlyExit:false}));
+});
