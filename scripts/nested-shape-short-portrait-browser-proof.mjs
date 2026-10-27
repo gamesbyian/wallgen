@@ -25,7 +25,9 @@ const server=createServer(async(req,res)=>{
 let browser;
 try{
   await new Promise((ok,bad)=>{server.once('error',bad);server.listen(0,'127.0.0.1',ok);});
-  browser=await chromium.launch({headless:true});
+  browser=await chromium.launch({headless:true,
+    ...(process.env.ROYGBIV_CHROMIUM_EXECUTABLE?
+      {executablePath:process.env.ROYGBIV_CHROMIUM_EXECUTABLE}:{})});
   const page=await browser.newPage({viewport:{width:320,height:700},hasTouch:true,isMobile:true});
   const errors=[];
   page.on('pageerror',e=>errors.push(e.message));
@@ -112,6 +114,18 @@ try{
   assert.equal(canonical.recipe.scatteredShapeKind,'imported');
   assert.equal(canonical.recipe.scatteredCount,1);
   assert.deepEqual(canonical.recipe.scatteredShape.geometry,imported.geometry);
+  const autoFrame=await page.evaluate(async()=>{
+    const r=JSON.parse(decodeURIComponent(new URL(location.href).searchParams.get('r')));
+    const {resolveScene}=await import('/src/model.js');
+    const p=resolveScene(r).objects[0]?.rings?.flat()||[];
+    return {xMin:Math.min(...p.map(v=>v.x)),xMax:Math.max(...p.map(v=>v.x)),
+      yMin:Math.min(...p.map(v=>v.y)),yMax:Math.max(...p.map(v=>v.y))};
+  });
+  assert.ok(autoFrame.xMin>=41.98&&autoFrame.xMax<=558.02,
+    'saved Nest rainbow must frame the actual geometry safely in X');
+  assert.ok(autoFrame.yMin>=89.98&&autoFrame.yMax<=1210.02,
+    'saved Nest rainbow must frame the actual geometry safely in Y');
+
   assert.notEqual(applied,original);
   assert.equal(canonical.activeCategory,'true');
   await page.screenshot({path:join(out,'short-320-nested-art.png')});
@@ -165,6 +179,39 @@ try{
     'Auto-fit must not alter the original silhouette');
   assert.equal(fitted.count,7,'Auto-fit must verify real inset contour levels');
   await page.screenshot({path:join(out,'short-320-autofitted-controls.png')});
+  const beforeMove=await page.evaluate(()=>new URL(location.href).searchParams.get('r'));
+  // Exercise the ordinary object editor to move the imported silhouette,
+  // then the real Regions action to frame it again, with two independent
+  // undo transactions and exact preservation of its original geometry.
+  await page.locator('button[data-category="path"][data-editor-tool="scattered-edges"]').click();
+  await page.locator('.scattered-object-editor [data-orbit-action="right"]').click();
+  await page.waitForFunction(previous=>new URL(location.href).searchParams.get('r')!==previous,
+    beforeMove,{timeout:20000});
+  const moved=await page.evaluate(()=>new URL(location.href).searchParams.get('r'));
+  await page.locator('button[data-category="path"][data-editor-tool="regions"]').click();
+  await page.evaluate(()=>{document.querySelector('.nested-shape-fields').open=true;});
+  const frameButton=page.locator('.nested-shape-frame');
+  const frameSize=await frameButton.evaluate(el=>({
+    width:el.getBoundingClientRect().width,height:el.getBoundingClientRect().height}));
+  assert.ok(frameSize.width>=44&&frameSize.height>=44,
+    'Fit shape button must maintain 44px touch geometry');
+  await frameButton.click();
+  await page.waitForFunction(previous=>new URL(location.href).searchParams.get('r')!==previous,
+    moved,{timeout:20000});
+  const reframed=await page.evaluate(()=>{
+    const r=JSON.parse(decodeURIComponent(new URL(location.href).searchParams.get('r')));
+    return {geometry:r.scatteredShape.geometry,position:r.scatteredOverrides[0]};
+  });
+  assert.deepEqual(reframed.geometry,imported.geometry);
+  assert.deepEqual(reframed.position,canonical.recipe.scatteredOverrides[0],
+    'one click restores precise source-derived initial framing');
+  await page.screenshot({path:join(out,'short-320-reframed-shape.png')});
+  await page.locator('#undo').click();
+  await page.waitForFunction(previous=>new URL(location.href).searchParams.get('r')===previous,
+    moved,{timeout:20000});
+  await page.locator('#undo').click();
+  await page.waitForFunction(previous=>new URL(location.href).searchParams.get('r')===previous,
+    beforeMove,{timeout:20000});
   await page.locator('#undo').click();
   await page.waitForFunction(previous=>new URL(location.href).searchParams.get('r')===previous,
     oversized,{timeout:20000});
@@ -179,7 +226,7 @@ try{
   assert.deepEqual(errors,[]);
   const report={schema:'roygbiv-nested-shape-short-portrait/v1',viewport:[320,700],
     savedLibraryRealDOM:true,nestButtonTouch: nestedSize,chooserTouch:chooserSize,
-    inputs:sizes,autoFitTouch:fitSize,autoFitVerifiedLevels:fitted.count,autoFitOneUndo:true,oneUndoRestoresRecipe:true,originalVectorUnchanged:true,
+    inputs:sizes,autoFrameBounds:autoFrame,frameTouch:frameSize,frameMoveUndo:true,autoFitTouch:fitSize,autoFitVerifiedLevels:fitted.count,autoFitOneUndo:true,oneUndoRestoresRecipe:true,originalVectorUnchanged:true,
     pageExceptions:errors,physicalPixelTested:false};
   await writeFile(join(out,'report.json'),JSON.stringify(report,null,2)+'\n');
   console.log('NESTED_SHORT_PROOF '+JSON.stringify(report));

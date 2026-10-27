@@ -1,6 +1,7 @@
 // One compact existing-Design-editor surface for nested imported silhouettes.
 // It modifies only the current canonical recipe; no separate SVG/raster editor.
 import {DEFAULT_NESTED_CONTOURS,nestedContourDistances,fitNestedShapeContours} from './nested-shape-contours.js';
+import {frameImportedSilhouette} from './nested-shape-framing.js';
 
 const add=(parent,tag,text)=>{
   const node=document.createElement(tag);
@@ -70,6 +71,10 @@ export function installNestedShapeControls({form,getRecipe,getScene,onApply,onNo
   autoFit.type='button';
   autoFit.className='nested-shape-auto-fit';
   autoFit.setAttribute('aria-label','Auto-fit nested outline spacing to this silhouette');
+  const frameButton=add(controls,'button','Fit shape within wallpaper');
+  frameButton.type='button';
+  frameButton.className='nested-shape-frame';
+  frameButton.setAttribute('aria-label','Fit imported silhouette within design canvas');
   const warning=add(controls,'small',
     'Constant-distance contours follow the original outline. Sharp tips, holes and narrow necks may naturally split or lose inner lines; the source shape is never distorted.');
   warning.className='nested-shape-warning';
@@ -98,6 +103,7 @@ export function installNestedShapeControls({form,getRecipe,getScene,onApply,onNo
       enabled?'Seven colours follow the original boundary at measured distances.':
         'Create seven truly offset rainbow outlines, not scaled copies.';
     controls.hidden=!enabled;
+    frameButton.disabled=!enabled||!ready;
     const settings=r.nestedShapeContours||DEFAULT_NESTED_CONTOURS;
     for(const [key,input] of Object.entries(fields))
       if(document.activeElement!==input)input.value=String(settings[key]);
@@ -131,6 +137,26 @@ export function installNestedShapeControls({form,getRecipe,getScene,onApply,onNo
           enabled:true,objectId:'region-0'}});
       onNotice('Seven real rainbow contour offsets. Edit width and spacing below; Undo restores your previous artwork.');
     }
+  });
+  frameButton.addEventListener('click',()=>{
+    const r=getRecipe();
+    if(!r.nestedShapeContours?.enabled||!available(r)){
+      onNotice('Enable nested imported outlines before framing the silhouette.');
+      return;
+    }
+    const placed=frameImportedSilhouette(r.scatteredShape?.geometry);
+    if(!placed){
+      onNotice('This silhouette cannot be framed safely with the current geometry.');
+      return;
+    }
+    const others=(r.scatteredOverrides||[]).filter(item=>item.index!==0);
+    const previous=(r.scatteredOverrides||[]).find(item=>item.index===0);
+    if(previous&&JSON.stringify(previous)===JSON.stringify(placed)){
+      onNotice('The silhouette already fits the design canvas.');
+      return;
+    }
+    onApply({...r,scatteredOverrides:[...others,placed]});
+    onNotice('Fitted the imported shape within the design canvas, preserving its aspect ratio and cutouts. Undo restores its previous placement.');
   });
   autoFit.addEventListener('click',()=>{
     const r=getRecipe(),settings=r.nestedShapeContours;
