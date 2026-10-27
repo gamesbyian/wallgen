@@ -84,8 +84,8 @@ export function observedHueShapeRecipe(image,placement,currentInput,
   // are solid, nonradial seven-pigment silhouettes. Genuine radial rings and
   // variegated/embroidered ink regress when their edges are contracted.
   // Unknown standalone consumers retain their exact original source rings.
-  const safeFlatContours=sourceRadialKind===null&&count===7&&
-    colours.background==='black'&&
+  const safeFlatContours=sourceRadialKind===null&&sourceTone===null&&
+    count===7&&colours.background==='black'&&
     !substantialInteriorPigmentVariation(image,colours.masks);
   const opticalInset=safeFlatContours?
     Math.min(SOURCE_VISIBLE_ANTI_ALIAS_INSET_PX,
