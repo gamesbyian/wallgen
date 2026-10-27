@@ -15,7 +15,7 @@ import { tmpdir, homedir } from 'node:os';
 import { resolve, join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  describeAgentCapabilities, composeAgentRecipe, editAgentRecipe,
+  describeAgentCapabilities, composeAgentRecipe, importAgentRecipe, editAgentRecipe,
   varyAgentRecipe, exploreAgentRecipes, inspectAgentRecipe
 } from '../src/agent-api.js';
 
@@ -99,6 +99,14 @@ function serverFactory() {
     })
   }, safely(async ({ style, seed, settings, locks }) =>
     json(put(composeAgentRecipe({ style, seed, settings, locks })))));
+
+  server.registerTool('roygbiv_import', {
+    description: 'Load a full current-version ROYGBIV JSON recipe exported from the PWA. No change to the live browser; original source, seed and locks remain in the new candidate.',
+    inputSchema: z.object({
+      recipe: z.record(z.string(), z.unknown()).describe(
+        'Complete canonical ROYGBIV recipe object, including version and seed; not a file path.')
+    })
+  }, safely(async ({ recipe }) => json(put(importAgentRecipe(recipe)))));
 
   server.registerTool('roygbiv_edit', {
     description: 'Precisely edit a design using canonical settings; locks are respected unless explicitly unlocked.',
