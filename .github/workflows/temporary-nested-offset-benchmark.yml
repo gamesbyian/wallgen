@@ -1,0 +1,21 @@
+name: Temporary nested contour cache matched benchmark
+on:
+  pull_request:
+    paths:
+      - 'src/polygon-inset.js'
+      - 'src/nested-shape-contours.js'
+      - 'scripts/benchmark-nested-offset-cache.mjs'
+      - '.github/workflows/temporary-nested-offset-benchmark.yml'
+permissions:
+  contents: read
+jobs:
+  matched-benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Baseline and cached contour parity and speed
+        run: node scripts/benchmark-nested-offset-cache.mjs
