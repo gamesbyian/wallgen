@@ -1,0 +1,29 @@
+name: One-shot delayed private TTF restore in Chromium
+# Remove the expensive PR-only trigger after first inspected evidence.
+on:
+  pull_request:
+    paths:
+      - scripts/private-font-superseded-design-browser-proof.mjs
+      - .github/workflows/one-shot-private-font-superseded.yml
+permissions:
+  contents: read
+jobs:
+  proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - run: node scripts/private-font-superseded-design-browser-proof.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: private-font-replaced-design-chromium-evidence
+          path: artifacts/private-font-superseded-design-browser/
+          retention-days: 7
+          if-no-files-found: warn
