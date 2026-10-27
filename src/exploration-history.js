@@ -33,6 +33,7 @@ export function installExplorationHistory({form,preview,getRecipe,restore,render
       button.title=item.label;
       const image=document.createElement('img');
       image.alt='';image.src=item.image;
+      item.imageElement=image;
       const label=document.createElement('span');label.textContent=item.label;
       button.append(image,label);
       button.addEventListener('click',()=>{
@@ -43,11 +44,46 @@ export function installExplorationHistory({form,preview,getRecipe,restore,render
     }
     if(!items.length)strip.textContent='Generate or vary a wallpaper to start collecting alternatives.';
   }
+  // Archive the exact recipes immediately, but render their thumbnail images
+  // only when the owner opens Recent variations. Normal Random clicks should
+  // not compete with preview painting on a phone for a hidden panel.
+  let thumbnailBusy=false;
+  async function renderVisibleThumbnails(){
+    if(thumbnailBusy||!open)return;
+    thumbnailBusy=true;
+    try{
+      // One job at a time. Newest entries appear first, and closing the panel
+      // stops scheduling further jobs after the in-flight one finishes.
+      while(open){
+        const item=[...items].reverse().find(entry=>entry.thumbnailState==='pending');
+        if(!item)break;
+        item.thumbnailState='loading';
+        try{
+          const image=await renderThumbnail(item.recipe,120,260);
+          if(!items.includes(item))continue; // Evicted while painting.
+          item.image=image;
+          item.thumbnailState='ready';
+          // Updating the image in place preserves keyboard focus and a user's
+          // ongoing selection; rebuilding the whole strip would not.
+          if(open&&item.imageElement?.isConnected)item.imageElement.src=image;
+        }catch(error){
+          item.thumbnailState='failed';
+          console.warn('Could not render recent variation thumbnail:',error);
+          // The saved recipe stays available even if its thumbnail fails.
+        }
+      }
+    }finally{
+      thumbnailBusy=false;
+    }
+  }
   function toggleHistory(next=!open){
     open=next;panel.hidden=!next;
     form.classList.toggle('editor-history-open',open);
     toggle.setAttribute('aria-pressed',String(open));
-    if(open)refresh();
+    if(open){
+      refresh();
+      void renderVisibleThumbnails();
+    }
   }
   toggle.addEventListener('click',()=>toggleHistory());
   back.addEventListener('click',()=>toggleHistory(false));
@@ -60,18 +96,14 @@ export function installExplorationHistory({form,preview,getRecipe,restore,render
       if(items.length&&items.at(-1).signature===signature)return;
       // A worker preview can still show the PREVIOUS recipe when this is
       // called. Never photograph the visible canvas for an archival record.
-      const item={recipe:snapshot,label,signature,
+      const item={recipe:snapshot,label,signature,thumbnailState:'pending',
         image:'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=='};
       items.push(item);
       if(items.length>max)items.shift();
-      if(open)refresh();
-      Promise.resolve().then(()=>renderThumbnail(snapshot,120,260)).then(image=>{
-        item.image=image;
-        if(open&&items.includes(item))refresh();
-      }).catch(error=>{
-        console.warn('Could not render recent variation thumbnail:',error);
-        // The saved recipe stays available even if its thumbnail fails.
-      });
+      if(open){
+        refresh();
+        void renderVisibleThumbnails();
+      }
     },
     count:()=>items.length,
     close:()=>toggleHistory(false),
