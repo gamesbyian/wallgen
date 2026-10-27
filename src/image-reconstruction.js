@@ -1203,7 +1203,13 @@ export function compareReconstructionPixels(source,rendered){
     source.data?.length!==rendered.data?.length)throw Error('Mismatched reconstruction frames');
   const a=source.data,b=rendered.data;
   let colour=0,mask=0,samples=0;
-  for(let i=0;i<a.length;i+=8){
+  // This fit frame is only 96×208. Sampling every other RGBA pixel
+  // (i += 8) inspected only even X columns on every even-width row,
+  // completely ignoring one-pixel black channels in every odd X column.
+  // Compare every source pixel instead. This changes no renderer calls,
+  // source byte, painter or recipe budget; it prevents deterministic spatial
+  // aliasing in the authoritative inverse-fitting score.
+  for(let i=0;i<a.length;i+=4){
     const brightA=Math.max(a[i],a[i+1],a[i+2]);
     const brightB=Math.max(b[i],b[i+1],b[i+2]);
     // Pair colour distance with ink/negative-space coverage. The latter
