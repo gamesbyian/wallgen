@@ -1,5 +1,6 @@
 import { DESIGN_WIDTH, DESIGN_HEIGHT, resolveScene, rng, NAMES } from './model.js';
 import {drawTextOverlays} from './text-overlay-renderer.js';
+import {planNestedShapeContours} from './nested-shape-contours.js';
 import { samplePath, ribbonEdge, widthAt, noise1D } from './path-geometry.js';
 import {drawRegionInteriors,elementInk,elementWave,lineDash,elementApplies} from './interior-elements.js';
 import { viewCamera } from './view-camera.js';
@@ -875,6 +876,34 @@ export function drawRegionObjects(ctx,scene){
   // First paint every fill. A tiny matching stroke closes antialiasing seams
   // where independent floating-point cells meet without a divider.
   for(const object of regions){
+    // The imported canonical region remains editable, but its opaque base
+    // fill must not bury the negative spaces between these seven outlines.
+    const nesting=scene.nestedShapeContours;
+    const nested=nesting?.enabled&&scene.structure==='regions'&&
+      scene.regionMode==='scattered'&&scene.scatteredShapeKind==='imported'&&
+      object.rings?.length&&nesting.objectId===object.id;
+    if(nested){
+      ctx.save();
+      const planned=planNestedShapeContours(object.rings,nesting,{bounds:scene.renderBounds});
+      const colours=scene.stripes.map(stripe=>stripe.color);
+      ctx.lineWidth=nesting.strokeWidth;
+      ctx.lineCap='round';ctx.lineJoin='round';
+      for(const level of planned.levels){
+        const slot=nesting.colourOrder==='reverse'?6-level.index:level.index;
+        ctx.strokeStyle=colours[slot];
+        for(const contour of level.contours){
+          if(contour.points.length<2)continue;
+          ctx.beginPath();
+          contour.points.forEach((p,i)=>{
+            if(i===0)ctx.moveTo(p.x,p.y);else ctx.lineTo(p.x,p.y);
+          });
+          if(contour.closed)ctx.closePath();
+          ctx.stroke();
+        }
+      }
+      ctx.restore();
+      continue;
+    }
     ctx.save();trace(object);
     if(scene.glow>0){
       ctx.shadowColor=object.color;
