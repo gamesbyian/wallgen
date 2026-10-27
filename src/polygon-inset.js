@@ -169,11 +169,27 @@ export function polygonInsetContours(polygon,inset,options={}){
     }
   }
   const values=new Map(),adjacency=new Map(),segments=[];
+  // Optional ephemeral cache shared by the SEVEN levels of one silhouette.
+  // Key by the exact evaluated world coordinates, not cell indices: bounds
+  // and padding move each level's local grid origin. A different floating
+  // coordinate must be evaluated anew, preserving exact existing geometry.
+  // This cache never outlives a single planner call or enters a recipe.
+  const distanceCache=options.distanceCache instanceof Map?
+    options.distanceCache:null;
   const value=(i,j)=>{
     const key=j*(nx+1)+i;
     let v=values.get(key);
     if(v===undefined){
-      v=signedDistance(x0+i*h,y0+j*h,edges);
+      const x=x0+i*h,y=y0+j*h;
+      if(distanceCache){
+        let column=distanceCache.get(x);
+        if(!column){column=new Map();distanceCache.set(x,column);}
+        v=column.get(y);
+        if(v===undefined){
+          v=signedDistance(x,y,edges);
+          column.set(y,v);
+        }
+      }else v=signedDistance(x,y,edges);
       values.set(key,v);
     }
     return v;
