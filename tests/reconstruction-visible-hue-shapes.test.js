@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {HUES,normalizeRecipe,resolveScene,encodeRecipe,decodeRecipe} from '../src/model.js';
 import {extractImageColourRegions,extractVisibleHueCompound} from '../src/image-path.js';
-import {observedHueShapeRecipe} from '../src/image-hue-reconstruction.js';
+import {observedHueShapeRecipe,smoothSourceVisibleMicrostairs}
+  from '../src/image-hue-reconstruction.js';
 import {reconstructionCandidates,RECONSTRUCTION_RENDER_LIMIT,
   describeReconstructionImage} from '../src/image-reconstruction.js';
 
@@ -90,8 +91,11 @@ test('bounded visible pigment AA inset is opt-in, source-safe and preserves hole
     baseline.geometry,'standalone callers have no measured radial source kind');
   const production=observedHueShapeRecipe(image,placement,{seed:'source'},
     {sourceRadialKind:null});
+  const smoothed=smoothSourceVisibleMicrostairs(adjusted,
+    image.width,image.height);
   assert.deepEqual(production.recipe.scatteredShapeOverrides[0].shape.geometry,
-    adjusted.geometry,'seven black-ground candidate uses measured inset');
+    smoothed.geometry,
+    'canonical 7-hue candidate uses measured AA plus safe microstep smoothing');
   const w=100,h=120,edge=new Uint8Array(w*h);
   for(let y=20;y<100;y++)for(let x=0;x<21;x++)edge[y*w+x]=1;
   const cropped=extractVisibleHueCompound(edge,w,h,{insetPixels:.2});
@@ -158,6 +162,48 @@ test('optical inset refuses source-measured radial rings and variegated interior
     widePlain.recipe.scatteredShapeOverrides,
     'substantial measured same-hue interior variation refuses false flat-ink correction');
   assert.deepEqual(noisy.data,before,'texture gate only reads source bytes');
+});
+
+test('bounded microstep smoothing changes traced staircase but protects crop, holes and source bytes',()=>{
+  const width=160,height=240,mask=new Uint8Array(width*height);
+  for(let y=10;y<224;y++){
+    const start=Math.floor(15+y*.32);
+    for(let x=start;x<start+12;x++)mask[y*width+x]=1;
+  }
+  const unchanged=mask.slice();
+  const found=extractVisibleHueCompound(mask,width,height,{insetPixels:.2});
+  assert.ok(found&&found.geometry.components.length===1);
+  const smoothed=smoothSourceVisibleMicrostairs(found,width,height);
+  assert.notDeepEqual(smoothed.geometry,found.geometry,
+    'source-observed integer staircase is represented by actual local geometry');
+  assert.deepEqual(smoothed.centrePixels,found.centrePixels);
+  assert.deepEqual(smoothed.geometry.viewBox,found.geometry.viewBox);
+  assert.equal(smoothed.geometry.components.length,1);
+  assert.equal(smoothed.geometry.components[0].holes.length,0);
+  assert.ok(smoothed.radiusPixels>0);
+  assert.deepEqual(mask,unchanged,'no segmentation or input source mutation');
+  assert.deepEqual(smoothSourceVisibleMicrostairs(found,width,height),smoothed,
+    'shape vertex smoothing must be deterministic and re-importable');
+  assert.equal(smoothSourceVisibleMicrostairs(found,width,height,
+    {strength:0}),found);
+  assert.throws(()=>smoothSourceVisibleMicrostairs(found,width,height,
+    {strength:2}),RangeError);
+  const crop=new Uint8Array(width*height);
+  for(let y=20;y<210;y++)for(let x=0;x<Math.floor(13+y*.2);x++)
+    crop[y*width+x]=1;
+  const original=extractVisibleHueCompound(crop,width,height,{insetPixels:.2});
+  const scaled=smoothSourceVisibleMicrostairs(original,width,height);
+  assert.ok(scaled);
+  assert.equal(scaled.touchesFrame,true);
+  assert.ok(scaled.geometry.components[0].outer.some(p=>p[0]===0),
+    'observed frame crop remains on actual source boundary');
+  const source=sevenShapes();
+  const masks=extractImageColourRegions(source,HUES,{includeMasks:true}).masks;
+  const box=extractVisibleHueCompound(masks[0],source.width,source.height);
+  const boxSmoothed=smoothSourceVisibleMicrostairs(box,source.width,source.height);
+  assert.deepEqual(boxSmoothed.geometry.components.map(c=>c.holes.length),
+    box.geometry.components.map(c=>c.holes.length),
+    'true source hole and detached source island remain distinct');
 });
 
 test('neutral and two-hue source artwork never synthesizes a complete seven-pigment scene',()=>{
