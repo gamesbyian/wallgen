@@ -17,6 +17,9 @@ const equal=(a,b)=>a.width===b.width&&a.height===b.height&&
   a.data.length===b.data.length&&a.data.every((x,i)=>x===b.data[i]);
 const modern=await json(join(newDir,'evaluation.json'));
 const legacy=await json(join(oldDir,'evaluation.json'));
+const external=modern.schema==='roygbiv-reconstruction-external-evaluation/v1';
+if(external!==(legacy.schema==='roygbiv-reconstruction-external-evaluation/v1'))
+  throw Error('Cannot compare independent and current-renderer source manifests');
 const previous=new Map(legacy.samples.map(x=>[x.id,x]));
 const results=[];
 for(const item of modern.samples){
@@ -56,7 +59,9 @@ for(const item of modern.samples){
 }
 if(results.length!==legacy.samples.length)throw Error('Dropped source control');
 const summary={schema:'roygbiv-visible-hue-contour-AA-ab/v1',
-  provenance:'actual current renderer, same 22 metadata-free sources, source recipe never seen during inverse fitting',
+  provenance:external?
+    'standalone independently authored polygon/colour graphics, no ROYGBIV original recipe or human art signoff':
+    'actual current renderer, same 22 metadata-free sources, source recipe never seen during inverse fitting',
   total:results.length,
   eligible:results.filter(x=>x.fullErrorBefore!==undefined).length,
   improved:results.filter(x=>x.improved).length,
