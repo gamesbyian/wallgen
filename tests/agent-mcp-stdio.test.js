@@ -59,7 +59,7 @@ test('real stdio MCP discovery, composition, locks, variation and image transpor
       method:'notifications/initialized',params:{}})+'\n');
     const advertised=await request('tools/list');
     for(const name of ['roygbiv_describe','roygbiv_compose','roygbiv_edit',
-      'roygbiv_vary','roygbiv_explore','roygbiv_inspect',
+      'roygbiv_vary','roygbiv_explore','roygbiv_inspect','roygbiv_import',
       'roygbiv_preview','roygbiv_export'])
       assert.ok(advertised.tools.some(tool=>tool.name===name),name);
     const capability=data(await call('roygbiv_describe'));
