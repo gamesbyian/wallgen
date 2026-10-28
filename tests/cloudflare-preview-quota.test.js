@@ -57,7 +57,7 @@ test('daily quota is owner- and UTC-day-scoped with one atomic D1 write', async 
   assert.equal((await consumePreviewAllowance(env,'github:100',{now:when+2000,max:2})).used,1);
   assert.ok(env.sqlSeen[0].includes('ON CONFLICT(owner, day) DO UPDATE'));
   assert.ok(env.sqlSeen[0].includes('WHERE used < ?'));
-  assert.equal(MAX_PREVIEWS_PER_UTC_DAY,16);
+  assert.equal(MAX_PREVIEWS_PER_UTC_DAY,6);
   await purgeOldPreviewUsage(env,when);
   assert.ok(env.sqlSeen.some(sql=>sql.startsWith('DELETE FROM preview_usage')));
 });
@@ -65,4 +65,13 @@ test('quota rejects invalid clock and unreasonable limits', async () => {
   const env = quotaEnv();
   await assert.rejects(() => consumePreviewAllowance(env,'github:100',{now:Infinity}),/Invalid/);
   await assert.rejects(() => consumePreviewAllowance(env,'github:100',{max:1000}),/Invalid/);
+});
+
+test('default launch allowance remains within conservative free-tier launch cap',async()=>{
+  const env=quotaEnv(),when=Date.parse('2026-10-28T08:00:00Z');
+  for(let i=1;i<=6;i++){
+    const q=await consumePreviewAllowance(env,'github:owner',{now:when});
+    assert.equal(q.remaining,6-i);
+  }
+  await assert.rejects(()=>consumePreviewAllowance(env,'github:owner',{now:when}),/allowance/);
 });
