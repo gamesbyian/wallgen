@@ -29,8 +29,8 @@ export async function renderPreview(env,recipe,width=300) {
     const encoded=await page.evaluate(async ({recipe,width,height})=>{
       // These paths are same-origin relative to the configured trusted
       // deployment, never caller-generated import specifiers.
-      const {drawWallpaper}=await import('/src/renderer.js');
-      const {prepareTypefaces}=await import('/src/typography-fonts.js');
+      const {drawWallpaper}=await import(new URL('src/renderer.js',document.baseURI).href);
+      const {prepareTypefaces}=await import(new URL('src/typography-fonts.js',document.baseURI).href);
       await prepareTypefaces(recipe);
       const canvas=document.createElement('canvas');
       canvas.width=width;canvas.height=height;
