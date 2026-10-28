@@ -62,13 +62,15 @@ export function createServer(env,props,scopes) {
     id,count:z.number().int().min(1).max(12).optional(),seed:z.string().max(90).optional(),
     categories:z.array(z.string()).max(7).optional(),strength:z.enum(['gentle','moderate','wild']).optional()
   })},check('wallpaper:create',async({id,...options})=>({candidates:await exploreStored(env,userId,id,options)})));
-  // Never advertise a paid render tool without explicit operator consent,
-  // deployed Browser Run, trusted source and D1 quota persistence.
-  if(previewConfigured(env)) {
-    mcp.registerTool('roygbiv_preview',{
+  // Advertise a stable schema across reconnects and feature-flag flips.
+  // Enforcement is at invocation time, before owner lookup, browser, or quota.
+  // Conditional tool registration caused connected clients to retain a stale
+  // seven-tool discovery snapshot even after activating Browser Run.
+  mcp.registerTool('roygbiv_preview',{
       description:'Render true ROYGBIV production pixels from your own saved design and return the PNG for visual critique (not a full-resolution export).',
       inputSchema:z.object({id,width:z.number().int().min(180).max(600).default(360)})
     },check('wallpaper:read',async({id,width})=>{
+      if(!previewConfigured(env))throw Error('Hosted previews are not enabled or fully configured.');
       // Owner-bound storage read precedes the browser launch and quota charge.
       const recipe=await loadRecipe(env,userId,id);
       // D1 lease precedes the paid-browser quota charge, so simultaneous
@@ -88,7 +90,6 @@ export function createServer(env,props,scopes) {
           console.error('roygbiv-preview-lease-release-failed',error?.name||'Error'));
       }
     }));
-  }
   return mcp;
 }
 export function createResourceHandler(env,props,scopes) {
