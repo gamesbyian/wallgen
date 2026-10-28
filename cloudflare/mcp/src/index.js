@@ -6,6 +6,7 @@ import { describeAgentCapabilities, composeAgentRecipe, inspectAgentRecipe } fro
 import { saveRecipe, loadRecipe, editStored, varyStored, exploreStored, purgeExpiredRecipes } from './storage.js';
 import { previewConfigured, consumePreviewAllowance, purgeOldPreviewUsage } from './preview-quota.js';
 import { pngImageResult } from './mcp-image.js';
+import { acquirePreviewLease, releasePreviewLease } from './preview-lease.js';
 
 const asResult=value=>({content:[{type:'text',text:JSON.stringify(value)}]});
 const guarded=fn=>async args=>{
@@ -70,11 +71,22 @@ export function createServer(env,props,scopes) {
     },check('wallpaper:read',async({id,width})=>{
       // Owner-bound storage read precedes the browser launch and quota charge.
       const recipe=await loadRecipe(env,userId,id);
-      const allowance=await consumePreviewAllowance(env,userId);
-      const {renderPreview}=await import('./browser-render.js');
-      const {bytes,height}=await renderPreview(env,recipe,width);
-      return pngImageResult(bytes,{id,width,height,previewOnly:true,realRendererPixels:true,
-        remainingToday:allowance.remaining,note:'Actual hosted ROYGBIV pixels. This is not native-resolution export.'});
+      // D1 lease precedes the paid-browser quota charge, so simultaneous
+      // calls cannot burn credits or start a Browser Run swarm.
+      const lease=await acquirePreviewLease(env);
+      try {
+        const allowance=await consumePreviewAllowance(env,userId);
+        const {renderPreview}=await import('./browser-render.js');
+        const {bytes,height}=await renderPreview(env,recipe,width);
+        return pngImageResult(bytes,{id,width,height,previewOnly:true,realRendererPixels:true,
+          remainingToday:allowance.remaining,note:'Actual hosted ROYGBIV pixels. This is not native-resolution export.'});
+      } finally {
+        // Leases expire after 120 seconds on crashed/aborted requests.
+        // Do not throw away an otherwise successful image if D1 is
+        // temporarily unavailable during lease release.
+        await releasePreviewLease(env,lease).catch(error=>
+          console.error('roygbiv-preview-lease-release-failed',error?.name||'Error'));
+      }
     }));
   }
   return mcp;
