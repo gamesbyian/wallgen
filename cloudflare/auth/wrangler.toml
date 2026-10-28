@@ -2,7 +2,7 @@ name = "roygbiv-auth"
 main = "src/index.js"
 compatibility_date = "2026-10-27"
 compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
-workers_dev = false
+workers_dev = true
 
 [[kv_namespaces]]
 binding = "OAUTH_KV"
@@ -12,7 +12,7 @@ id = "c17832107d1d411bbf308a9f69d0ae66"
 # allowlist and per-client consent flows are configured and proven.
 
 [vars]
-AUTH_SERVER_URL = "https://REPLACE-AUTH-HOST"
-MCP_SERVER_URL = "https://REPLACE-MCP-HOST/mcp"
+AUTH_SERVER_URL = "https://roygbiv-auth.gamesbyian-roygbiv.workers.dev"
+MCP_SERVER_URL = "https://roygbiv-mcp.gamesbyian-roygbiv.workers.dev/mcp"
 GITHUB_CLIENT_ID = "REPLACE_GITHUB_CLIENT_ID"
 # GITHUB_CLIENT_SECRET and ALLOWED_GITHUB_IDS must be stored as Wrangler secrets.
