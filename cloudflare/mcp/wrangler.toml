@@ -2,7 +2,7 @@ name = "roygbiv-mcp"
 main = "src/index.js"
 compatibility_date = "2026-10-27"
 compatibility_flags = ["nodejs_compat"]
-workers_dev = false
+workers_dev = true
 
 # Replace the resource URL / auth issuer in src/index.js with your verified
 # Cloudflare domains before deploying. Disable deployment until configured.
@@ -25,8 +25,8 @@ bucket_name = "roygbiv-private-artifacts"
 crons = ["0 3 * * *"]
 
 [vars]
-AUTH_SERVER_URL = "https://REPLACE-AUTH-HOST"
-MCP_SERVER_URL = "https://REPLACE-MCP-HOST/mcp"
+AUTH_SERVER_URL = "https://roygbiv-auth.gamesbyian-roygbiv.workers.dev"
+MCP_SERVER_URL = "https://roygbiv-mcp.gamesbyian-roygbiv.workers.dev/mcp"
 
 [browser]
 binding = "BROWSER"
