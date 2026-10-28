@@ -23,3 +23,7 @@ bucket_name = "roygbiv-private-artifacts"
 
 [triggers]
 crons = ["0 3 * * *"]
+
+[vars]
+AUTH_SERVER_URL = "https://REPLACE-AUTH-HOST"
+MCP_SERVER_URL = "https://REPLACE-MCP-HOST/mcp"
