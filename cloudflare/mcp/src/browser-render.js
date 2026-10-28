@@ -23,6 +23,10 @@ export async function renderPreview(env,recipe,width=300) {
     throw RangeError('Preview width must be between 180 and 600 pixels');
   const height=Math.round(width*13/6);
   const root=sourceUrl(env);
+  // The static render host has no application scripts, styles or UI.
+  // Loading the full editor here would run unrelated code before a private
+  // recipe reaches the canvas, waste browser time and widen the trust surface.
+  const hostUrl=new URL('render-host.html',root).href;
   const expectedCommit=env.RENDER_EXPECTED_SHA;
   if(typeof expectedCommit!=='string'||!/^[a-f0-9]{40}$/.test(expectedCommit))
     throw Error('Trusted renderer revision was not configured');
@@ -45,8 +49,8 @@ export async function renderPreview(env,recipe,width=300) {
         return route.continue();
       return route.abort();
     });
-    const response=await page.goto(root,{waitUntil:'domcontentloaded',timeout:30000});
-    if(!response?.ok() || page.url()!==root)
+    const response=await page.goto(hostUrl,{waitUntil:'domcontentloaded',timeout:30000});
+    if(!response?.ok() || page.url()!==hostUrl)
       throw Error('Trusted renderer page was unavailable or redirected');
     // A stuck page must not hold an unbounded browser session.
     let timeout;
