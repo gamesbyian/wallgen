@@ -23,6 +23,42 @@ second-tenant isolation, authenticated refresh/revocation and renderer
 parity. Keep the new preview flag disabled until those relevant gates
 are exercised, and preserve the owner's private designs.
 
+## Hosted source-revision and first real Browser Run art proof (27 October 2026)
+
+Cloudflare Browser Run's actual Quick Actions API successfully loaded the
+deployed `https://gamesbyian.github.io/wallgen/` homepage and imported its
+real production `src/renderer.js` and `src/typography-fonts.js` modules.
+A 240×520 **synthetic canonical** wallpaper screenshot was rendered (real
+Chromium pixels). A second real browser run executed the actual stored
+private **original psychedelic recipe** as 180×390 Canvas output: 69,254
+out of 70,200 pixels had an RGB sum greater than 90, with 75 coarse RGB
+bins and a nonempty PNG. Subsequent 180×390 browser-JPEG screenshots
+succeeded for the original and the first two saved variations. The
+actual images were inspected and showed distinctive saturated rainbow
+organic regions with dark borders. These **are real external Cloudflare
+browser executions**, but were driven through the operator's REST
+Quick Actions, not the deployed MCP preview tool. A later rapid request
+received HTTP 429 Browser Run rate limit; do not claim an unrestricted
+render budget. Private recipe bytes were passed transiently to the
+Cloudflare browser request and never committed to GitHub or exposed via
+public image URLs.
+
+**Revision gate:** A Pages deployment now stamps
+`roygbiv-render-version.json` with the exact commit SHA **after** quick
+tests and **before** upload. The Worker refuses to advertise
+`roygbiv_preview` unless `RENDER_EXPECTED_SHA` is an exact
+40-character lowercase hex commit. Before invoking the renderer, the
+isolated Cloudflare browser fetches the manifest from the trusted
+origin and compares it with the configured SHA; mismatches and absent
+manifests fail closed. This is a source-publication consistency guard,
+not a cryptographic per-module digest, and the existing staging
+Worker has **not** been upgraded or activated by this change. The
+first new Pages manifest will appear only after this PR merges and the
+Pages deployment succeeds. Bind the SHA from that exact publication,
+not a guessed historical checkpoint. Preventing new main publishes
+from changing the renderer beneath an active Worker requires ongoing
+deploy/version coordination.
+
 ## Hosted PNG preview activation gate (27 October 2026)
 
 A new **code-level gated** `roygbiv_preview` tool has been wired to the existing
@@ -62,7 +98,7 @@ package resolution and bundling, **not** a Browser Run launch or rendered PNG.
    synthetic row was removed. The real scheduled cleanup and UTC reset
    have not yet been observed through the deployed Worker.
 3. In the operator's Cloudflare deployment, add `[browser] binding = "BROWSER"`,
-   `RENDER_SOURCE_URL = "https://gamesbyian.github.io/wallgen/"` under
+   `RENDER_SOURCE_URL = "https://gamesbyian.github.io/wallgen/"` and\n   `RENDER_EXPECTED_SHA = "<exact published full commit SHA>"` under
    `[vars]`, then explicitly set `HOSTED_PREVIEW_ENABLED = "true"`.
    Preserve OAuth secrets, the auth service binding and R2's private state.
 4. Exercise actual owner-authenticated `tools/list` and `roygbiv_preview`
