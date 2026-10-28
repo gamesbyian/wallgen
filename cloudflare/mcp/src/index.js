@@ -81,7 +81,7 @@ export function createResourceHandler(env,props,scopes) {
 const app={
   async fetch(request,env,ctx){
     const url=new URL(request.url);
-    if(url.pathname==='/health')return Response.json({service:'roygbiv-mcp',status:'auth-required',rendering:'authentication-required-for-preview-status'});
+    if(url.pathname==='/health')return Response.json({service:'roygbiv-mcp',status:'auth-required',rendering:previewConfigured(env)?'auth-required':'not-configured'});
     return new Response('Not found',{status:404});
   }
 };
