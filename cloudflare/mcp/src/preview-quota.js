@@ -4,10 +4,15 @@ import { ownerKey } from './storage.js';
 // Browser Run binding and a trusted ROYGBIV source URL. Never offer the tool
 // when one of those prerequisites is missing.
 export function previewConfigured(env) {
-  return env?.HOSTED_PREVIEW_ENABLED === 'true' &&
-    Boolean(env.BROWSER) && Boolean(env.RECIPES) &&
-    typeof env.RENDER_SOURCE_URL === 'string' &&
-    env.RENDER_SOURCE_URL.length > 0;
+  if (env?.HOSTED_PREVIEW_ENABLED !== 'true' ||
+      !env.BROWSER || !env.RECIPES ||
+      typeof env.RENDER_SOURCE_URL !== 'string' ||
+      env.RENDER_SOURCE_URL.includes('REPLACE')) return false;
+  try {
+    const url = new URL(env.RENDER_SOURCE_URL);
+    return url.protocol === 'https:' && !url.username && !url.password &&
+      !url.search && !url.hash && url.pathname.endsWith('/');
+  } catch { return false; }
 }
 
 export const MAX_PREVIEWS_PER_UTC_DAY = 16;
