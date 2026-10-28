@@ -1,0 +1,26 @@
+name: One-shot Cloudflare Browser Run Bundle
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'cloudflare/**'
+      - 'package.json'
+      - '.github/workflows/cloudflare-browser-bundle-one-shot.yml'
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-audit --no-fund
+      - run: npm run test:cloudflare
+      - run: node --check cloudflare/mcp/src/browser-render.js
+      - name: Bundle resource and auth Workers only (no deploy)
+        run: |
+          npx wrangler deploy --config cloudflare/mcp/wrangler.toml --dry-run --outdir /tmp/roygbiv-mcp
+          npx wrangler deploy --config cloudflare/auth/wrangler.toml --dry-run --outdir /tmp/roygbiv-auth
