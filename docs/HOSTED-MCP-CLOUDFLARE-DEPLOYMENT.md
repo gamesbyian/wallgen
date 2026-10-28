@@ -75,3 +75,7 @@ The owner connected the Cloudflare plugin and authorized infrastructure provisio
 - The two real resource IDs were incorporated into the checked-in Wrangler configuration; secrets and OAuth issuer/domain URLs remain deliberately unset. No Workers deployed, no end-user authentication verified, and Browser Run is still disabled pending live integration acceptance.
 
 These resource IDs are not credentials. The GitHub OAuth client secret, allowlisted GitHub IDs, exact hostnames and live acceptance must be configured separately. The provisioning does not constitute a working remote connector.
+
+## Registered Cloudflare Workers development hostname
+
+The connected Cloudflare account now has the `gamesbyian-roygbiv.workers.dev` subdomain. The reserved auth Worker URL is `https://roygbiv-auth.gamesbyian-roygbiv.workers.dev` with the GitHub OAuth application callback at `https://roygbiv-auth.gamesbyian-roygbiv.workers.dev/callback`. The MCP resource URL will be `https://roygbiv-mcp.gamesbyian-roygbiv.workers.dev/mcp`. Both Wrangler configurations have their corresponding issuer/resource URLs and `workers_dev = true` set. **These endpoints do not yet exist as deployed Workers**; no sign-in or user-facing MCP request will work until code deployment, GitHub OAuth app registration, configured credentials and security acceptance.
