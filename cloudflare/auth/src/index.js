@@ -5,8 +5,8 @@ import { htmlEscape, permittedGitHubIdentity, configurationReady } from './safet
 // Never instantiate an OAuth issuer for an unknown domain. Wrangler provides
 // these exact HTTPS origins only after explicit operator configuration.
 const authorizationServer = new OAuthAuthorizationServer({
-  issuer: env.AUTH_SERVER_URL,
-  resources: [env.MCP_SERVER_URL],
+  issuer: env.AUTH_SERVER_URL || 'https://invalid.example',
+  resources: [env.MCP_SERVER_URL || 'https://invalid.example/mcp'],
   scopesSupported: ['wallpaper:read','wallpaper:create','wallpaper:export','offline_access'],
   clientIdMetadataDocumentEnabled: true
 });
