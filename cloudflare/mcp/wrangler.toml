@@ -14,7 +14,7 @@ entrypoint = "AuthServer"
 [[d1_databases]]
 binding = "RECIPES"
 database_name = "roygbiv-mcp"
-database_id = "REPLACE_WITH_D1_DATABASE_ID"
+database_id = "c08c128b-8ac3-419d-a1dc-aaae80ddbfbe"
 migrations_dir = "migrations"
 
 [[r2_buckets]]

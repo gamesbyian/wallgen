@@ -64,3 +64,14 @@ Configure secrets only in Cloudflare, e.g. `npx wrangler secret put GITHUB_CLIEN
 ### Browser Run preview configuration (experimental)
 
 A `[browser] BROWSER` binding is present on the MCP Worker, and `@cloudflare/playwright` loads the real trusted ROYGBIV static source (e.g. a pinned Pages deployment) and imports its `src/renderer.js` and `src/typography-fonts.js` relative to the deployment's base URI. The tool renders bounded 180–600px previews, adds the genuine PNG recipe via the existing metadata writer and verifies its exact roundtrip before returning MCP image content. It never accepts a renderer URL from the agent; `RENDER_SOURCE_URL` is an operator-only environment setting. **No browser output has been verified on Cloudflare Browser Run yet**, and `RENDER_SOURCE_URL` must remain unset until pinned-source, memory, font, private data, latency, actual image and resource-limit checks pass. If the app changes on public Pages, pin the artifact or use a dedicated immutable static deployment; do not silently change rendering code in the middle of a user's candidate session.
+
+## Actual Cloudflare resources provisioned 27 Oct 2026
+
+The owner connected the Cloudflare plugin and authorized infrastructure provisioning. Live Cloudflare API results confirm:
+
+- D1 database `roygbiv-mcp`, UUID `c08c128b-8ac3-419d-a1dc-aaae80ddbfbe`. `0001_init.sql` was **executed directly** through the D1 query API; a follow-up sqlite_master query confirmed the `designs` table exists. Do not re-run a non-idempotent migration without checking the database; the checked-in schema uses IF NOT EXISTS.
+- KV namespace `roygbiv-oauth`, ID `c17832107d1d411bbf308a9f69d0ae66`. Bound in the auth Worker Wrangler template.
+- R2 bucket `roygbiv-private-artifacts` created with Standard storage, WNAM region; its managed `r2.dev` public domain was verified **disabled**. Do not enable public access.
+- The two real resource IDs were incorporated into the checked-in Wrangler configuration; secrets and OAuth issuer/domain URLs remain deliberately unset. No Workers deployed, no end-user authentication verified, and Browser Run is still disabled pending live integration acceptance.
+
+These resource IDs are not credentials. The GitHub OAuth client secret, allowlisted GitHub IDs, exact hostnames and live acceptance must be configured separately. The provisioning does not constitute a working remote connector.
