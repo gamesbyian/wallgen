@@ -1,0 +1,32 @@
+name: One-shot Cloudflare MCP Packaging Verification
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'cloudflare/**'
+      - 'tests/cloudflare-*.test.js'
+      - '.github/workflows/cloudflare-mcp-one-shot.yml'
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-audit --no-fund
+      - name: Pure cross-user isolation and OAuth safety
+        run: npm run test:cloudflare
+      - name: Worker module syntax checks
+        run: |
+          node --check cloudflare/mcp/src/index.js
+          node --check cloudflare/mcp/src/storage.js
+          node --check cloudflare/auth/src/index.js
+          node --check cloudflare/auth/src/safety.js
+      - name: Bundle both Workers without deployment
+        run: |
+          npx wrangler deploy --config cloudflare/auth/wrangler.toml --dry-run --outdir /tmp/roygbiv-auth-build
+          npx wrangler deploy --config cloudflare/mcp/wrangler.toml --dry-run --outdir /tmp/roygbiv-mcp-build
