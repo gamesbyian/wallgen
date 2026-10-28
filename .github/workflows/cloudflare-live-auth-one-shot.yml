@@ -6,6 +6,7 @@ on:
       - 'cloudflare/auth/**'
       - 'cloudflare/mcp/**'
       - '.github/workflows/cloudflare-live-auth-one-shot.yml'
+      - 'tests/cloudflare-live-oauth-denial.py'
 permissions:
   contents: read
 jobs:
