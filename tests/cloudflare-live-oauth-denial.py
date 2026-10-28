@@ -6,27 +6,45 @@ import http.cookiejar
 import html
 import json
 import re
-import urllib.error
+import subprocess
+import tempfile
+import os
 import urllib.parse
-import urllib.request
 
 ISSUER = "https://roygbiv-auth.gamesbyian-roygbiv.workers.dev"
 RESOURCE = "https://roygbiv-mcp.gamesbyian-roygbiv.workers.dev/mcp"
 REDIRECT = "http://127.0.0.1:19232/roygbiv-test"
-class NoRedirect(urllib.request.HTTPRedirectHandler):
-    def redirect_request(self, req, fp, code, msg, headers, newurl):
-        return None
+
+class CurlSession:
+    def __init__(self):
+        self.dir = tempfile.TemporaryDirectory()
+        self.cookie = os.path.join(self.dir.name, "cookies.txt")
+        self.headers = os.path.join(self.dir.name, "headers.txt")
+        self.body = os.path.join(self.dir.name, "response.txt")
 
 def request(client, url, *, data=None, headers=None):
-    req = urllib.request.Request(url, data=data, headers=headers or {})
-    try:
-        response = client.open(req, timeout=20)
-    except urllib.error.HTTPError as error:
-        response = error
-    return response.status, response.headers, response.read().decode("utf-8")
+    args = [
+        "curl", "--silent", "--show-error", "--max-time", "20",
+        "--cookie", client.cookie, "--cookie-jar", client.cookie,
+        "--dump-header", client.headers, "--output", client.body,
+        "--write-out", "%{http_code}"
+    ]
+    for k, v in (headers or {}).items():
+        args.extend(["-H", f"{k}: {v}"])
+    if data is not None:
+        args.extend(["--request", "POST", "--data-binary", "@-"])
+    args.append(url)
+    result = subprocess.run(args, input=data, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+    status = int(result.stdout.decode())
+    raw_headers = open(client.headers, encoding="utf-8").read()
+    # We don't follow redirects: only the final response block matters.
+    import email
+    hdr = email.message_from_string(raw_headers.replace("\\r", ""))
+    body = open(client.body, encoding="utf-8").read()
+    return status, hdr, body
 
 def main():
-    client = urllib.request.build_opener(NoRedirect, urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
+    client = CurlSession()
     registration = {
         "client_name": "ROYGBIV One-Shot Security Proof",
         "redirect_uris": [REDIRECT],
