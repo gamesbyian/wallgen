@@ -7,7 +7,8 @@ export function previewConfigured(env) {
   if (env?.HOSTED_PREVIEW_ENABLED !== 'true' ||
       !env.BROWSER || !env.RECIPES ||
       typeof env.RENDER_SOURCE_URL !== 'string' ||
-      env.RENDER_SOURCE_URL.includes('REPLACE')) return false;
+      env.RENDER_SOURCE_URL.includes('REPLACE') ||
+      !/^[0-9a-f]{40}$/.test(env.RENDER_EXPECTED_SHA || '')) return false;
   try {
     const url = new URL(env.RENDER_SOURCE_URL);
     return url.protocol === 'https:' && !url.username && !url.password &&
