@@ -65,3 +65,32 @@ export async function exploreStored(env,userId,id,options) {
   }
   return outputs;
 }
+
+/**
+ * A bounded cron sweep of expired private design records.
+ * Expiry is server-owned; callers cannot nominate arbitrary object keys.
+ * D1 is the authority. R2 deletes use the exact owner-scoped key.
+ */
+export async function purgeExpiredRecipes(env,{now=Date.now(),ttlDays=30,limit=100}={}){
+  if(!Number.isFinite(now)||ttlDays<1||ttlDays>365||!Number.isInteger(limit)||limit<1||limit>500)
+    throw new RangeError('Invalid retention policy');
+  const cutoff=now-ttlDays*86400000;
+  const {results=[]}=await env.RECIPES.prepare(
+    'SELECT owner,id,object_key FROM designs WHERE created_at < ? ORDER BY created_at ASC LIMIT ?'
+  ).bind(cutoff,limit).all();
+  let deleted=0;
+  for(const row of results){
+    if(typeof row.owner!=='string'||!safeId(row.id)||
+       row.object_key!=='users/'+row.owner+'/recipes/'+row.id+'.json')continue;
+    // Conditional metadata deletion first avoids deleting a newly refreshed
+    // row after a concurrent save; only remove R2 once that exact row is gone.
+    const out=await env.RECIPES.prepare(
+      'DELETE FROM designs WHERE owner = ? AND id = ? AND object_key = ? AND created_at < ?'
+    ).bind(row.owner,row.id,row.object_key,cutoff).run();
+    if((out.meta?.changes??0)===1){
+      await env.PRIVATE_ARTIFACTS.delete(row.object_key);
+      deleted++;
+    }
+  }
+  return {deleted,cutoff};
+}
