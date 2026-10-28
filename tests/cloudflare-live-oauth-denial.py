@@ -85,6 +85,7 @@ def main():
         headers={"Content-Type": "application/x-www-form-urlencoded"})
     assert status == 302, f"Denial returned {status}: {body[:300]}"
     redirected = urllib.parse.urlsplit(headers["Location"])
+    print(f"Consent denial returned redirect host: {redirected.hostname!r}; scheme={redirected.scheme!r}; path={redirected.path!r}")
     assert redirected.hostname == "127.0.0.1"
     q = urllib.parse.parse_qs(redirected.query)
     assert q.get("error") == ["access_denied"], q
