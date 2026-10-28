@@ -26,7 +26,7 @@ jobs:
       # The hosted renderer refuses a mismatched or absent immutable commit
       # marker rather than silently drawing private recipes with newer assets.
       - name: Stamp exact published rendering revision
-        run: printf '{"commit":"%s"}\\n' "$GITHUB_SHA" > roygbiv-render-version.json
+        run: printf '{"commit":"%s"}\n' "$GITHUB_SHA" > roygbiv-render-version.json
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
