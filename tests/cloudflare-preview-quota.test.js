@@ -36,6 +36,10 @@ test('hosted previews remain unadvertised without all required operator gates', 
     assert.equal(previewConfigured({ ...env, [missing]: undefined }), false);
   }
   assert.equal(previewConfigured({ ...env, HOSTED_PREVIEW_ENABLED: 'false' }), false);
+  for (const bad of ['http://example.org/roygbiv/','https://example.org/roygbiv',
+    'https://example.org/roygbiv/?copy=1','https://REPLACE-SOURCE/']) {
+    assert.equal(previewConfigured({ ...env, RENDER_SOURCE_URL: bad }), false);
+  }
 });
 test('daily quota is owner- and UTC-day-scoped with one atomic D1 write', async () => {
   const env = quotaEnv();
