@@ -80,7 +80,7 @@ export async function purgeExpiredRecipes(env,{now=Date.now(),ttlDays=30,limit=1
   ).bind(cutoff,limit).all();
   let deleted=0;
   for(const row of results){
-    if(typeof row.owner!=='string'||!safeId(row.id)||
+    if(typeof row.owner!=='string'||!/^design-[a-f0-9]{16}$/.test(row.id)||
        row.object_key!=='users/'+row.owner+'/recipes/'+row.id+'.json')continue;
     // Conditional metadata deletion first avoids deleting a newly refreshed
     // row after a concurrent save; only remove R2 once that exact row is gone.
