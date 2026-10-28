@@ -1,0 +1,31 @@
+name: One-shot Hosted Bundle Asset Inventory
+on:
+  push:
+    branches: [fix/hosted-worker-bundle-artifact-integrity-20261027]
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --package-lock=false --no-audit --no-fund
+      - name: Compile preview-enabled Worker with synthetic revision
+        run: |
+          printf '{"commit":"%s"}\n' "$GITHUB_SHA" >/tmp/roygbiv-render-revision-probe.json
+          node scripts/prepare-hosted-preview-config.mjs --sha "$GITHUB_SHA" \
+            --manifest /tmp/roygbiv-render-revision-probe.json --mode preview
+          npx wrangler deploy --dry-run --config cloudflare/mcp/wrangler.release.generated.toml \
+            --outdir artifacts/preview
+      - name: Inspect actual emitted asset paths and byte sizes
+        run: |
+          echo '=== all files in worktree output ==='
+          find artifacts/preview -maxdepth 5 -type f -printf '%p (%s bytes)\n' | sort | head -50
+          echo '=== potential JS/module files ==='
+          find artifacts/preview -type f \( -name '*.js' -o -name '*.mjs' \) -printf '%p (%s bytes)\n'
+          echo '=== directory sizes ==='
+          du -ah artifacts/preview | sort -h | tail -20
