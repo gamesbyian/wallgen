@@ -30,7 +30,7 @@ export async function consumePreviewAllowance(env, userId, {
     'RETURNING used'
   ).bind(owner, day, max).first();
   if (!row) throw new Error('Daily hosted preview allowance reached. Try again after 00:00 UTC.');
-  return { used: row.used, remaining: max - row.used, max, resetsAt: day + ' 00:00 UTC (next day)' };
+  return { used: row.used, remaining: max - row.used, max, resetsAt: new Date(Date.parse(day+'T00:00:00Z')+86400000).toISOString() };
 }
 
 export async function purgeOldPreviewUsage(env, now = Date.now()) {
