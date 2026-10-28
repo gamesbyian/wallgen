@@ -37,3 +37,25 @@ jobs:
           echo "Invalid client response: $http_code"
           test "$http_code" = 400
           if grep -qiE 'GITHUB_CLIENT_SECRET|access_token|client_secret' /tmp/oauth-invalid.txt; then echo 'Credential name or token appeared in error'; exit 1; fi
+
+      - name: Prove MCP protected-resource discovery and unauthenticated rejection
+        shell: bash
+        run: |
+          set -euo pipefail
+          endpoint='https://roygbiv-mcp.gamesbyian-roygbiv.workers.dev'
+          curl -fsS --max-time 20 "$endpoint/.well-known/oauth-protected-resource/mcp" > /tmp/roygbiv-resource.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/roygbiv-resource.json'))
+          assert d['resource']=='https://roygbiv-mcp.gamesbyian-roygbiv.workers.dev/mcp',d
+          assert 'https://roygbiv-auth.gamesbyian-roygbiv.workers.dev' in d['authorization_servers'],d
+          print('MCP resource metadata verified')
+          PY
+          http_code=$(curl -sS --max-time 20 -D /tmp/mcp-unauth-headers.txt -o /tmp/mcp-unauth-body.txt -w '%{http_code}' -H 'Content-Type: application/json' --data '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' "$endpoint/mcp")
+          echo "Anonymous MCP tools/list response: $http_code"
+          test "$http_code" = 401
+          grep -qi 'WWW-Authenticate: Bearer' /tmp/mcp-unauth-headers.txt
+          http_code=$(curl -sS --max-time 20 -D /tmp/mcp-badtoken-headers.txt -o /tmp/mcp-badtoken-body.txt -w '%{http_code}' -H 'Content-Type: application/json' -H 'Authorization: Bearer deliberately-invalid-roygbiv-token' --data '{"jsonrpc":"2.0","id":2,"method":"tools/list"}' "$endpoint/mcp")
+          echo "Invalid bearer MCP tools/list response: $http_code"
+          test "$http_code" = 401
+          grep -qi 'WWW-Authenticate: Bearer' /tmp/mcp-badtoken-headers.txt
