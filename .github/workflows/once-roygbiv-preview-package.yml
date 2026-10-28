@@ -1,0 +1,29 @@
+name: One-shot ROYGBIV Hosted Preview Package Proof
+on:
+  push:
+    branches: [feature/hosted-preview-release-gate-20261027]
+permissions:
+  contents: read
+jobs:
+  proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --package-lock=false --no-audit --no-fund
+      - run: npm run test:cloudflare
+      - name: Simulate publication marker at candidate commit (bundle only)
+        run: printf '{"commit":"%s"}\n' "$GITHUB_SHA" > /tmp/roygbiv-test-manifest.json
+      - run: node scripts/prepare-hosted-preview-config.mjs --sha "$GITHUB_SHA" --manifest /tmp/roygbiv-test-manifest.json --mode disabled
+      - run: npx wrangler deploy --dry-run --config cloudflare/mcp/wrangler.release.generated.toml --outdir ./artifacts/disabled
+      - run: node scripts/prepare-hosted-preview-config.mjs --sha "$GITHUB_SHA" --manifest /tmp/roygbiv-test-manifest.json --mode preview
+      - run: npx wrangler deploy --dry-run --config cloudflare/mcp/wrangler.release.generated.toml --outdir ./artifacts/preview
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hosted-release-dry-run-candidate
+          path: artifacts/
+          retention-days: 3
