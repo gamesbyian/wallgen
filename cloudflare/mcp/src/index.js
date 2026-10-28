@@ -2,7 +2,7 @@ import { McpServer, createMcpHandler } from '@modelcontextprotocol/server';
 import { OAuthResourceServer, insufficientScope } from '@cloudflare/workers-oauth-provider';
 import * as z from 'zod/v4';
 import { describeAgentCapabilities, composeAgentRecipe, inspectAgentRecipe } from '../../../src/agent-api.js';
-import { saveRecipe, loadRecipe, editStored, varyStored, exploreStored } from './storage.js';
+import { saveRecipe, loadRecipe, editStored, varyStored, exploreStored, purgeExpiredRecipes } from './storage.js';
 
 const asResult=value=>({content:[{type:'text',text:JSON.stringify(value)}]});
 const guarded=fn=>async args=>{
@@ -68,7 +68,7 @@ const app={
     return new Response('Not found',{status:404});
   }
 };
-export default new OAuthResourceServer({
+const oauthResource = new OAuthResourceServer({
   resourceMetadata:{
     resource:'https://REPLACE-MCP-HOST/mcp',
     authorization_servers:['https://REPLACE-AUTH-HOST']
@@ -93,3 +93,12 @@ export default new OAuthResourceServer({
     }
   }
 });
+
+export default {
+  fetch(request,env,ctx){return oauthResource.fetch(request,env,ctx);},
+  async scheduled(event,env,ctx) {
+    // Iterate in bounded batches only. Additional expired designs are picked
+    // up by the next scheduled execution, never one unbounded invocation.
+    ctx.waitUntil(purgeExpiredRecipes(env,{ttlDays:30,limit:100}));
+  }
+};
