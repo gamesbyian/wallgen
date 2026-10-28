@@ -21,7 +21,7 @@ test('default release keeps preview unavailable and preserves existing auth/data
 test('preview activation is an explicit deployment mode',()=>{
   const out=buildHostedPreviewConfig(base,{sha,manifest,mode:'preview'});
   assert.match(out,/^HOSTED_PREVIEW_ENABLED = "true"$/m);
-  assert.equal((out.match(/\[browser\]/g)||[]).length,1);
+  assert.equal((out.match(/^\[browser\]$/gm)||[]).length,1);
 });
 test('mismatch, malformed SHA, unapproved modes and corrupt defaults fail closed',()=>{
   for(const args of [
