@@ -5,21 +5,9 @@ import * as z from 'zod/v4';
 import { describeAgentCapabilities, composeAgentRecipe, inspectAgentRecipe } from '../../../src/agent-api.js';
 import { saveRecipe, loadRecipe, editStored, varyStored, exploreStored, purgeExpiredRecipes } from './storage.js';
 import { previewConfigured, consumePreviewAllowance, purgeOldPreviewUsage } from './preview-quota.js';
+import { pngImageResult } from './mcp-image.js';
 
 const asResult=value=>({content:[{type:'text',text:JSON.stringify(value)}]});
-// Preview returns ordinary MCP image content, not a JSON-serialized image
-// object. Other tools retain their existing structured JSON text responses.
-const imageResult=(bytes,detail)=>{
-  if(!(bytes instanceof Uint8Array)||bytes.length<64||bytes.length>3*1024*1024)
-    throw Error('Hosted PNG exceeds the bounded MCP preview size');
-  let binary='';
-  for(let i=0;i<bytes.length;i+=32768)
-    binary+=String.fromCharCode(...bytes.subarray(i,i+32768));
-  return {content:[
-    {type:'image',data:btoa(binary),mimeType:'image/png'},
-    {type:'text',text:JSON.stringify(detail)}
-  ]};
-};
 const guarded=fn=>async args=>{
   try{const result=await fn(args);return result?.content?result:asResult(result);}
   catch(err){return {isError:true,content:[{type:'text',text:err.message||'Request failed'}]};}
@@ -81,7 +69,7 @@ export function createServer(env,props,scopes) {
       const allowance=await consumePreviewAllowance(env,userId);
       const {renderPreview}=await import('./browser-render.js');
       const {bytes,height}=await renderPreview(env,recipe,width);
-      return imageResult(bytes,{id,width,height,previewOnly:true,realRendererPixels:true,
+      return pngImageResult(bytes,{id,width,height,previewOnly:true,realRendererPixels:true,
         remainingToday:allowance.remaining,note:'Actual hosted ROYGBIV pixels. This is not native-resolution export.'});
     }));
   }
