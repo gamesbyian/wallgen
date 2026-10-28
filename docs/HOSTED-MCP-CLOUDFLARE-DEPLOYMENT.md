@@ -25,6 +25,11 @@ redirects, browser-side requests are limited to same-origin GETs without query
 parameters, service workers are disabled, and the paint is limited to a
 45-second evaluation. A failed render also consumes a quota slot.
 
+**Source and packaging proof:** [Cloudflare-specific pure tests and real
+Wrangler dry-run #40617172299](https://github.com/gamesbyian/wallgen/actions/runs/40617172299)
+passed on the PR branch after a lockfile-free npm install. This proves
+package resolution and bundling, **not** a Browser Run launch or rendered PNG.
+
 **Activation requires independent acceptance**:
 1. Confirm the public Pages static bundle at
    `https://gamesbyian.github.io/wallgen/` actually serves the **same renderer
