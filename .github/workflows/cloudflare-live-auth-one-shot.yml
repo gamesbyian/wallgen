@@ -13,6 +13,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 4
     steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+      - name: Prove real OAuth dynamic registration, consent and denial without granting a token
+        run: python3 tests/cloudflare-live-oauth-denial.py
       - name: Verify authorization-server metadata is public and correct
         shell: bash
         run: |
