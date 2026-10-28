@@ -34,3 +34,12 @@ test('mismatch, malformed SHA, unapproved modes and corrupt defaults fail closed
     'HOSTED_PREVIEW_ENABLED = "true"'),{sha,manifest}));
   assert.throws(()=>buildHostedPreviewConfig(base+'\n[browser]\nbinding = "OTHER"\n',{sha,manifest}));
 });
+
+test('manual release audits and uploads the actual Wrangler bundle instead of empty root README',()=>{
+  const workflow=readFileSync(new URL('../.github/workflows/manual-roygbiv-hosted-release.yml',import.meta.url),'utf8');
+  assert.match(workflow,/cloudflare\/mcp\/artifacts\/roygbiv-hosted\/index\.js/);
+  assert.match(workflow,/sha256sum index\.js > SHA256SUMS/);
+  assert.match(workflow,/if-no-files-found: error/);
+  assert.match(workflow,/compression-level: 0/);
+  assert.doesNotMatch(workflow,/^\s*path: artifacts\/roygbiv-hosted\//m);
+});
