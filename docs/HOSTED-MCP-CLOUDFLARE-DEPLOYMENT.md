@@ -23,6 +23,28 @@ second-tenant isolation, authenticated refresh/revocation and renderer
 parity. Keep the new preview flag disabled until those relevant gates
 are exercised, and preserve the owner's private designs.
 
+## Isolated static renderer host (28 October 2026)
+
+Hosted browser jobs now navigate to `render-host.html` at the verified
+ROYGBIV Pages root instead of the full interactive editor. This document
+contains **no script imports, app UI, service worker registration, analytics,
+or external assets**; its restrictive CSP defaults to denying everything
+except same-origin scripts/connection requests and same-origin or data-backed
+fonts/images needed by the canonical renderer. The Worker itself still
+validates the Pages revision manifest before importing `src/renderer.js`.
+Cloudflare Browser Run's hostname guardrail and Playwright route filter
+remain in place. All hosted art is still produced by `drawWallpaper`, not
+an alternate implementation.
+
+The static document is public and carries **no user-specific designs**.
+An authenticated MCP call supplies private recipe data only inside its
+ephemeral guarded Cloudflare Chromium session. A public render-host URL
+alone does not render or expose a private design. This change should lower
+browser startup overhead and reduce untrusted execution compared with
+loading the entire studio. Actual performance gains have **not yet been
+measured**; verify real hosted Browser Run compatibility and typography
+before enabling the preview tool.
+
 ## Hosted source-revision and first real Browser Run art proof (27 October 2026)
 
 Cloudflare Browser Run's actual Quick Actions API successfully loaded the

@@ -21,7 +21,23 @@ test('hosted render refuses unmatched or missing source before importing code',(
 
 test('Browser Run session constrains allowed host before navigating',()=>{
   const launch=adapter.indexOf('guardrails:{allowedDomains:[new URL(root).hostname]}');
-  const navigate=adapter.indexOf('await page.goto(root');
+  const navigate=adapter.indexOf('await page.goto(hostUrl');
   assert.ok(launch>=0&&navigate>launch);
   assert.match(adapter,/route\.abort\(\)/);
+});
+
+const renderHost=readFileSync(new URL('../render-host.html',import.meta.url),'utf8');
+test('isolated render host loads without app shell or eager scripts',()=>{
+  assert.match(renderHost,/Content-Security-Policy/);
+  assert.match(renderHost,/default-src 'none'/);
+  assert.match(renderHost,/connect-src 'self'/);
+  assert.match(renderHost,/worker-src 'none'/);
+  assert.match(renderHost,/<body><\/body>/);
+  assert.doesNotMatch(renderHost,/<script\\b/i);
+  assert.doesNotMatch(renderHost,/<link\\b/i);
+  assert.ok(adapter.indexOf("new URL('render-host.html',root)")>=0);
+  assert.ok(adapter.indexOf('page.goto(hostUrl')>=0);
+  assert.ok(adapter.indexOf('page.url()!==hostUrl')>=0);
+  assert.ok(adapter.indexOf("manifest?.commit!==expectedCommit")>
+    adapter.indexOf('page.goto(hostUrl'));
 });
