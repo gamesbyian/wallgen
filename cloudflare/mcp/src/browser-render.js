@@ -57,7 +57,7 @@ export async function renderPreview(env,recipe,width=300) {
       new Promise((_,reject)=>{timeout=setTimeout(()=>reject(
         Error('Hosted preview exceeded its 45-second rendering limit')),45000);})
     ]).finally(()=>clearTimeout(timeout));
-    const encodedPng=embedPngMetadata(decodeBase64(encoded),{}, {recipe});
+    const encodedPng=embedPngMetadata(decodeBase64(encoded),{}, {recipe,output:{width,height}});
     if(encodedPng.length>3*1024*1024)
       throw Error('Hosted preview PNG exceeded the 3 MiB limit');
     const extracted=extractPngRecipe(encodedPng);
