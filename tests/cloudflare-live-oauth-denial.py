@@ -1,0 +1,78 @@
+#!/usr/bin/env python3
+"""Live, *denial-only* Cloudflare OAuth test. Never authenticates a GitHub user."""
+import base64
+import hashlib
+import http.cookiejar
+import html
+import json
+import re
+import urllib.error
+import urllib.parse
+import urllib.request
+
+ISSUER = "https://roygbiv-auth.gamesbyian-roygbiv.workers.dev"
+RESOURCE = "https://roygbiv-mcp.gamesbyian-roygbiv.workers.dev/mcp"
+REDIRECT = "http://127.0.0.1:19232/roygbiv-test"
+class NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+def request(client, url, *, data=None, headers=None):
+    req = urllib.request.Request(url, data=data, headers=headers or {})
+    try:
+        response = client.open(req, timeout=20)
+    except urllib.error.HTTPError as error:
+        response = error
+    return response.status, response.headers, response.read().decode("utf-8")
+
+def main():
+    client = urllib.request.build_opener(NoRedirect, urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
+    registration = {
+        "client_name": "ROYGBIV One-Shot Security Proof",
+        "redirect_uris": [REDIRECT],
+        "token_endpoint_auth_method": "none",
+        "grant_types": ["authorization_code", "refresh_token"],
+        "response_types": ["code"],
+    }
+    status, _, body = request(
+        client, ISSUER + "/oauth/register",
+        data=json.dumps(registration).encode("utf-8"),
+        headers={"Content-Type": "application/json", "Accept": "application/json"},
+    )
+    assert status in (200, 201), f"Dynamic registration status {status}: {body[:300]}"
+    info = json.loads(body)
+    client_id = info["client_id"]
+    verifier = "roygbiv-live-security-proof-code-verifier-" + "a" * 48
+    challenge = base64.urlsafe_b64encode(hashlib.sha256(verifier.encode()).digest()).decode().rstrip("=")
+    params = {
+        "client_id": client_id, "redirect_uri": REDIRECT,
+        "response_type": "code", "scope": "wallpaper:read",
+        "resource": RESOURCE, "code_challenge": challenge,
+        "code_challenge_method": "S256",
+        "state": "roygbiv-security-proof",
+    }
+    url = ISSUER + "/authorize?" + urllib.parse.urlencode(params)
+    status, _, body = request(client, url)
+    assert status == 200, f"Consent status {status}: {body[:300]}"
+    assert "ROYGBIV One-Shot Security Proof" in body
+    assert "wallpaper:read" in body
+    assert "127.0.0.1" in body
+    match = re.search(r'<input type="hidden" name="handle" value="([^"]+)"', body)
+    assert match is not None, "Consent form did not carry browser-bound handle"
+    handle = html.unescape(match.group(1))
+    # Explicit consent denial: must send no GitHub login, no authorization code.
+    status, headers, body = request(client, ISSUER + "/authorize",
+        data=urllib.parse.urlencode({"handle": handle, "decision": "deny"}).encode(),
+        headers={"Content-Type": "application/x-www-form-urlencoded"})
+    assert status == 302, f"Denial returned {status}: {body[:300]}"
+    redirected = urllib.parse.urlsplit(headers["Location"])
+    assert redirected.hostname == "127.0.0.1"
+    q = urllib.parse.parse_qs(redirected.query)
+    assert q.get("error") == ["access_denied"], q
+    assert q.get("state") == ["roygbiv-security-proof"], q
+    assert q.get("iss") == [ISSUER], q
+    assert "code" not in q
+    print("PASS: DCR, PKCE consent page, browser-bound state, explicit denial, issuer and no code issuance")
+
+if __name__ == "__main__":
+    main()
