@@ -121,6 +121,6 @@ export default {
     // Iterate in bounded batches only. Additional expired designs are picked
     // up by the next scheduled execution, never one unbounded invocation.
     ctx.waitUntil(purgeExpiredRecipes(env,{ttlDays:30,limit:100}));
-    if (env.RECIPES) ctx.waitUntil(purgeOldPreviewUsage(env));
+    if (previewConfigured(env)) ctx.waitUntil(purgeOldPreviewUsage(env));
   }
 };
