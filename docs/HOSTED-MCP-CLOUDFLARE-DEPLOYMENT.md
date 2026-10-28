@@ -91,7 +91,7 @@ overlapping request receives a retryable refusal **without consuming a
 preview quota slot**. A 120-second lease expires on crash, and a stale
 holder's token cannot release a successor's lease. The active holder
 releases in `finally`; any release failure is logged without rendering
-private data. Apply migration 0003 before enabling the tool. This is a
+private data. **Migration 0003 applied to live D1 and probed**: a synthetic test acquired token `old`, overlapping `blocked` returned no row, a timestamp beyond TTL acquired `new`, and the stale old-token delete changed zero rows. The synthetic row was removed. This is a
 cost and concurrency guard, not a full queue/fair-scheduling service.
 
 **Activation requires independent acceptance**:
