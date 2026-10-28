@@ -28,3 +28,21 @@ export async function releasePreviewLease(env,lease) {
     'DELETE FROM preview_leases WHERE lease_key = ? AND token = ?'
   ).bind(KEY,lease.token).run();
 }
+
+export const LAUNCH_GAP_MS = 21000;
+
+/** Reserve the free-plan launch cadence across all Worker isolates.
+ * Atomic D1 statement; failed reservation never charges a preview.
+ * Successful reservations are intentionally kept even on Browser Run 429.
+ */
+export async function reservePreviewLaunch(env,{now=Date.now()}={}) {
+  if(!Number.isSafeInteger(now)||now<0)throw RangeError('Invalid browser launch timestamp');
+  const key='global-browser-launch';
+  const row=await env.RECIPES.prepare(
+    'INSERT INTO preview_launch_pacing (key, last_launch_at) VALUES (?, ?) '+
+    'ON CONFLICT(key) DO UPDATE SET last_launch_at=excluded.last_launch_at '+
+    'WHERE preview_launch_pacing.last_launch_at <= ? RETURNING last_launch_at'
+  ).bind(key,now,now-LAUNCH_GAP_MS).first();
+  if (!row) throw Error('Cloudflare Browser Run free-tier launch spacing: retry in approximately 21 seconds. No preview allowance was spent.');
+  return row.last_launch_at;
+}
