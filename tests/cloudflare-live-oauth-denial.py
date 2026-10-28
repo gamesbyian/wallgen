@@ -94,5 +94,34 @@ def main():
     assert "code" not in q
     print("PASS: DCR, PKCE consent page, browser-bound state, explicit denial, issuer and no code issuance")
 
+    # New authorization transaction: stolen handle must fail without the
+    # matching browser-bound cookie. This does not mint any access token.
+    status, _, consent_body = request(client, url)
+    assert status == 200, f"Second consent GET {status}"
+    match = re.search(r'<input type="hidden" name="handle" value="([^"]+)"', consent_body)
+    assert match
+    new_handle = html.unescape(match.group(1))
+    approval_data = urllib.parse.urlencode({
+        "handle": new_handle, "decision": "approve", "scope": "wallpaper:read"
+    }).encode()
+    status, _, _ = request(CurlSession(), ISSUER + "/authorize",
+        data=approval_data,
+        headers={"Content-Type": "application/x-www-form-urlencoded"})
+    assert status == 400, f"Consent without browser cookie unexpectedly returned {status}"
+    status, headers, _ = request(client, ISSUER + "/authorize",
+        data=approval_data,
+        headers={"Content-Type": "application/x-www-form-urlencoded"})
+    assert status == 302, f"Approved consent returned {status}"
+    redirect = urllib.parse.urlsplit(headers["Location"])
+    assert redirect.scheme == "https" and redirect.hostname == "github.com"
+    assert redirect.path == "/login/oauth/authorize"
+    github_params = urllib.parse.parse_qs(redirect.query)
+    assert github_params.get("client_id") == ["Ov23liZNOeOxpR5AeDc3"]
+    assert github_params.get("redirect_uri") == [ISSUER + "/callback"]
+    assert github_params.get("code_challenge_method") == ["S256"]
+    assert github_params.get("state")
+    # Deliberately do not visit GitHub or sign anyone in.
+    print("PASS: forged approval rejected, browser-bound approval redirects to GitHub OAuth with PKCE")
+
 if __name__ == "__main__":
     main()
