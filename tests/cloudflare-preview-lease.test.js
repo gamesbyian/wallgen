@@ -18,7 +18,7 @@ function dbMock(){
       if(current?.key===key&&current.token===token){current=null;return {meta:{changes:1}};}
       return {meta:{changes:0}};
     }};
-  }}}}};
+  }}}};
 }
 test('database-wide single browser lease rejects overlapping owner requests without charges',async()=>{
   const {env,sqls}=dbMock();
