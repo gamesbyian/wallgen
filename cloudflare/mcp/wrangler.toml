@@ -27,3 +27,9 @@ crons = ["0 3 * * *"]
 [vars]
 AUTH_SERVER_URL = "https://REPLACE-AUTH-HOST"
 MCP_SERVER_URL = "https://REPLACE-MCP-HOST/mcp"
+
+[browser]
+binding = "BROWSER"
+
+# Set this to an immutable, trusted ROYGBIV static source deployment only
+# after Browser Run preview parity tests; until then the preview tool is hidden.
