@@ -25,7 +25,11 @@ export function createServer(env,props,scopes) {
     if(!scopes.includes(scope))throw Error('Insufficient scope: '+scope);
     return fn(args);
   });
-  mcp.registerTool('roygbiv_describe',{description:'Discover supported ROYGBIV canonical wallpaper controls',inputSchema:z.object({})},check('wallpaper:read',()=>describeAgentCapabilities()));
+  mcp.registerTool('roygbiv_describe',{description:'Discover supported ROYGBIV canonical wallpaper controls',inputSchema:z.object({})},check('wallpaper:read',()=>({...describeAgentCapabilities(),hostedCapabilities:{
+    preview:previewConfigured(env),nativeExport:false,
+    note:previewConfigured(env)?'Preview tool returns real PNG pixels from privately saved designs.':
+      'Hosted pixels and native export are currently unavailable; inspect is structural only.'
+  }})));
   mcp.registerTool('roygbiv_compose',{description:'Create a private canonical ROYGBIV design',inputSchema:z.object({
     style:z.string().default('studio'),seed:z.string().max(90).default('agent-001'),
     settings,locks:z.array(z.string()).optional()
