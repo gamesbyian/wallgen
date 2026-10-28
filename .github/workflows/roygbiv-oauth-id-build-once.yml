@@ -1,0 +1,30 @@
+name: One-shot Build OAuth ID Fix
+on:
+  pull_request:
+    paths:
+      - 'cloudflare/auth/**'
+      - '.github/workflows/roygbiv-oauth-id-build-once.yml'
+permissions:
+  contents: write
+jobs:
+  bundle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-audit --no-fund
+      - run: npm run test:cloudflare
+      - run: npx wrangler deploy --config cloudflare/auth/wrangler.toml --dry-run --outdir /tmp/authbuild
+      - run: |
+          mkdir -p cloudflare/staging-bundles
+          cp /tmp/authbuild/index.js cloudflare/staging-bundles/auth.mjs
+          node --check cloudflare/staging-bundles/auth.mjs
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add cloudflare/staging-bundles/auth.mjs
+          git commit -m "build: stage OAuth ID fix"
+          git push origin "HEAD:${{ github.head_ref }}"
