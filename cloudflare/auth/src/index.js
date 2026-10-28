@@ -107,7 +107,7 @@ async function callback(request,workerEnv){
   // travels in resource-bound ROYGBIV token props.
   stage='complete-authorization';
   const {redirectTo}=await oauth.completeAuthorization({
-    request:original,userId:'github:'+user.id,metadata:{},
+    request:original,userId:String(user.id),metadata:{},
     scope:original.scope,props:{userId:'github:'+user.id}
   });
   headers.set('Location',redirectTo);
