@@ -81,6 +81,65 @@ not a guessed historical checkpoint. Preventing new main publishes
 from changing the renderer beneath an active Worker requires ongoing
 deploy/version coordination.
 
+## Operator-gated, repeatable authenticated deployment
+
+The `ROYGBIV Hosted MCP Release (Manual)` workflow at
+`.github/workflows/manual-roygbiv-hosted-release.yml` is the supported
+reproducible deployment path. There is **no automatic deployment on push**.
+It accepts three explicit modes:
+
+- `package` (default): check the exact deployed Pages `roygbiv-render-version.json`
+  against the workflow's full `GITHUB_SHA`, generate a disposable Wrangler
+  config, run the Cloudflare tests, build with Wrangler `--dry-run`, and upload
+  a short-lived bundle artifact. **No Cloudflare token, live mutations or
+  Browser Run charges** are needed.
+- `deploy-disabled`: perform the same checks and deploy the Worker **with
+  the Browser Run binding installed but preview tool still unavailable**.
+  This supports anonymous OAuth challenge and health acceptance against the
+  unchanged resource hostname without launching paid browsers.
+- `deploy-preview`: explicitly opt in to the billed, owner-scoped
+  `roygbiv_preview` tool. This mode additionally requires typing
+  `ENABLE_AUTHENTICATED_BROWSER_PREVIEWS` into the workflow approval field.
+  The global D1 lease, 16/day owner allowance, exact source SHA, and
+  Cloudflare network guardrails remain mandatory. A successful deployment is
+  **not** proof ChatGPT automatically displays MCP image parts.
+
+Live deployment requires operator-supplied GitHub Actions encrypted secrets
+`CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN` with narrowly scoped
+Cloudflare Worker deployment permissions. They are **not in the repository**
+and must never be entered in a prompt, committed or printed. The existing
+Cloudflare connector permissions do **not** imply those GitHub secrets exist.
+The workflow refuses live deployment if either is missing, or if the caller
+is not `gamesbyian`. The resource Worker name, owner-only OAuth service
+binding, protected R2 bucket, D1 database and cron are all preserved in the
+base Wrangler file. Wrangler's existing encrypted secrets are preserved.
+It does **not** upload or alter the separate auth Worker.
+
+The two release modes were separately accepted through the actual
+[GitHub Actions Wrangler packaging proof #40624602519](https://github.com/gamesbyian/wallgen/actions/runs/40624602519).
+Cloudflare-specific tests, the disabled-mode generated configuration,
+its Wrangler dry-run, the preview-mode generated configuration, and its
+Wrangler dry-run **all passed**. This is package proof, not an actual
+deployment or a verified authenticated client render. The one-shot proof
+workflow was removed after successful execution.
+
+The helper `scripts/prepare-hosted-preview-config.mjs` builds a disposable
+`cloudflare/mcp/wrangler.release.generated.toml` next to the original config.
+It **never edits the tracked default-off staging config**. The resulting file
+is ignored by git, contains only public URLs and the expected commit, and
+adds `[browser]` plus the explicit preview mode. When the Pages publication
+has not caught up with the deployed source SHA, or the manifest is missing
+or malformed, the release fails closed before any deployment.
+
+Following `deploy-disabled`, independently verify the old authenticated
+design tools, consent, refresh, and D1/R2 owner isolation before moving to
+`deploy-preview`. Following `deploy-preview`, exercise actual MCP PNG
+image content, a wrong-owner ID, quota exhaustion, session cleanup and
+ChatGPT rendering. Record evidence in [#839](https://github.com/gamesbyian/wallgen/issues/839).
+Cloudflare's actual billing tier and HTTP 429 limit should be reviewed
+before this final opt-in. Keep preview disabled if no no-cost capacity is
+available.
+
 ## Hosted PNG preview activation gate (27 October 2026)
 
 A new **code-level gated** `roygbiv_preview` tool has been wired to the existing

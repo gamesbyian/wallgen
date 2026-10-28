@@ -1,0 +1,115 @@
+name: ROYGBIV Hosted MCP Release (Manual)
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Package only, deploy safely disabled, or explicitly activate billed previews"
+        type: choice
+        options: [package, deploy-disabled, deploy-preview]
+        default: package
+        required: true
+      approval:
+        description: "For deploy-preview ONLY: type ENABLE_AUTHENTICATED_BROWSER_PREVIEWS"
+        type: string
+        required: false
+        default: ""
+permissions:
+  contents: read
+concurrency:
+  group: roygbiv-hosted-mcp-release
+  cancel-in-progress: false
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Restrict deployment to repository owner and explicit approval
+        env:
+          RELEASE_MODE: ${{ inputs.mode }}
+          RELEASE_APPROVAL: ${{ inputs.approval }}
+        run: |
+          set -eu
+          if [ "$RELEASE_MODE" != package ] && [ "$GITHUB_ACTOR" != gamesbyian ]; then
+            echo "Only the authorized repository owner can deploy the hosted MCP Worker" >&2
+            exit 1
+          fi
+          if [ "$RELEASE_MODE" = deploy-preview ] && [ "$RELEASE_APPROVAL" != ENABLE_AUTHENTICATED_BROWSER_PREVIEWS ]; then
+            echo "Paid preview requires explicit owner confirmation of Cloudflare usage and privacy acceptance" >&2
+            exit 1
+          fi
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify exact deployed GitHub Pages revision, never use a guessed SHA
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location --retry 3 --retry-delay 2 \
+            'https://gamesbyian.github.io/wallgen/roygbiv-render-version.json' -o /tmp/roygbiv-render-version.json
+          node --input-type=module -e "
+            import fs from 'node:fs';
+            const {commit}=JSON.parse(fs.readFileSync('/tmp/roygbiv-render-version.json'));
+            if(commit!==process.env.GITHUB_SHA)throw Error('GitHub Pages does not yet publish this exact commit');
+            console.log('Verified production-renderer source commit',commit);
+          "
+      - name: Prepare ephemeral config with matching source and desired activation
+        env:
+          RELEASE_MODE: ${{ inputs.mode }}
+        run: |
+          set -euo pipefail
+          MODE=disabled
+          if [ "$RELEASE_MODE" = deploy-preview ]; then MODE=preview; fi
+          node scripts/prepare-hosted-preview-config.mjs --sha "$GITHUB_SHA" \
+            --manifest /tmp/roygbiv-render-version.json --mode "$MODE"
+      - name: Install dependencies and test Cloudflare safety
+        run: |
+          npm install --no-save --package-lock=false --no-audit --no-fund
+          npm run test:cloudflare
+      - name: Bundle Worker without deploying
+        run: |
+          npx wrangler deploy --dry-run --config cloudflare/mcp/wrangler.release.generated.toml \
+            --outdir artifacts/roygbiv-hosted
+      - name: Retain audited build files briefly for troubleshooting
+        uses: actions/upload-artifact@v4
+        with:
+          name: roygbiv-hosted-mcp-bundle-${{ github.sha }}
+          path: artifacts/roygbiv-hosted/
+          retention-days: 3
+      - name: Require separately configured short-lived Cloudflare deployment credentials
+        if: ${{ inputs.mode != 'package' }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          test -n "$CLOUDFLARE_API_TOKEN" || { echo 'Missing GitHub Actions CLOUDFLARE_API_TOKEN secret' >&2; exit 1; }
+          test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo 'Missing GitHub Actions CLOUDFLARE_ACCOUNT_ID secret' >&2; exit 1; }
+      - name: Deploy exact audited Worker while retaining its encrypted OAuth configuration
+        if: ${{ inputs.mode != 'package' }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx wrangler deploy --config cloudflare/mcp/wrangler.release.generated.toml
+      - name: Independently check health and rejection of anonymous access
+        if: ${{ inputs.mode != 'package' }}
+        env:
+          RELEASE_MODE: ${{ inputs.mode }}
+        run: |
+          node --input-type=module <<'NODE'
+          const origin='https://roygbiv-mcp.gamesbyian-roygbiv.workers.dev';
+          const health=await fetch(origin+'/health',{cache:'no-store'});
+          if(!health.ok)throw Error('Live health check failed: '+health.status);
+          const h=await health.json();
+          const expected=process.env.RELEASE_MODE==='deploy-preview'?'auth-required':'not-configured';
+          if(h.status!=='auth-required'||h.rendering!==expected)throw Error('Unexpected live release status');
+          const res=await fetch(origin+'/mcp',{
+            method:'POST',
+            headers:{'content-type':'application/json','accept':'application/json, text/event-stream'},
+            body:JSON.stringify({jsonrpc:'2.0',id:1,method:'tools/list',params:{}})
+          });
+          if(res.status!==401)throw Error('Anonymous MCP access was not rejected: '+res.status);
+          console.log('Live health and anonymous OAuth isolation accepted');
+          NODE
