@@ -75,9 +75,7 @@ stored recipe only through the authenticated owner and D1/R2 index, charges an
 Cloudflare Playwright on a **trusted static ROYGBIV origin**. It returns a real
 `image/png` MCP image content part plus concise metadata, not an invented
 image or screenshot of the editor. The canonical PNG retains its recipe
-metadata; image size is limited to 3 MiB. Browser navigation rejects
-redirects, browser-side requests are limited to same-origin GETs without query
-parameters, service workers are disabled, and the paint is limited to a
+metadata; image size is limited to 3 MiB. Browser sessions have an outer Cloudflare Browser Run `allowedDomains` guardrail\nrestricted to the exact trusted source hostname (requires\n`@cloudflare/playwright >=1.3.6`). Browser navigation rejects\nredirects, page-level requests are also limited to same-origin GETs without query\nparameters, service workers are disabled, and the paint is limited to a
 45-second evaluation. A failed render also consumes a quota slot.
 
 **Source and packaging proof:** [Cloudflare-specific pure tests and real
