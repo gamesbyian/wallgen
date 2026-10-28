@@ -4,10 +4,24 @@ import { OAuthResourceServer, insufficientScope } from '@cloudflare/workers-oaut
 import * as z from 'zod/v4';
 import { describeAgentCapabilities, composeAgentRecipe, inspectAgentRecipe } from '../../../src/agent-api.js';
 import { saveRecipe, loadRecipe, editStored, varyStored, exploreStored, purgeExpiredRecipes } from './storage.js';
+import { previewConfigured, consumePreviewAllowance, purgeOldPreviewUsage } from './preview-quota.js';
 
 const asResult=value=>({content:[{type:'text',text:JSON.stringify(value)}]});
+// Preview returns ordinary MCP image content, not a JSON-serialized image
+// object. Other tools retain their existing structured JSON text responses.
+const imageResult=(bytes,detail)=>{
+  if(!(bytes instanceof Uint8Array)||bytes.length<64||bytes.length>3*1024*1024)
+    throw Error('Hosted PNG exceeds the bounded MCP preview size');
+  let binary='';
+  for(let i=0;i<bytes.length;i+=32768)
+    binary+=String.fromCharCode(...bytes.subarray(i,i+32768));
+  return {content:[
+    {type:'image',data:btoa(binary),mimeType:'image/png'},
+    {type:'text',text:JSON.stringify(detail)}
+  ]};
+};
 const guarded=fn=>async args=>{
-  try{return asResult(await fn(args));}
+  try{const result=await fn(args);return result?.content?result:asResult(result);}
   catch(err){return {isError:true,content:[{type:'text',text:err.message||'Request failed'}]};}
 };
 const requireIdentity=props=>{
@@ -55,10 +69,22 @@ export function createServer(env,props,scopes) {
     id,count:z.number().int().min(1).max(12).optional(),seed:z.string().max(90).optional(),
     categories:z.array(z.string()).max(7).optional(),strength:z.enum(['gentle','moderate','wild']).optional()
   })},check('wallpaper:create',async({id,...options})=>({candidates:await exploreStored(env,userId,id,options)})));
-  // Hosted preview is a separate acceptance-gated phase. The Browser Run
-  // adapter remains in browser-render.js, but is deliberately not imported or
-  // advertised in the core authenticated deployment. This keeps browser
-  // execution and its costs completely absent from the initial Worker.
+  // Never advertise a paid render tool without explicit operator consent,
+  // deployed Browser Run, trusted source and D1 quota persistence.
+  if(previewConfigured(env)) {
+    mcp.registerTool('roygbiv_preview',{
+      description:'Render true ROYGBIV production pixels from your own saved design and return the PNG for visual critique (not a full-resolution export).',
+      inputSchema:z.object({id,width:z.number().int().min(180).max(600).default(360)})
+    },check('wallpaper:read',async({id,width})=>{
+      // Owner-bound storage read precedes the browser launch and quota charge.
+      const recipe=await loadRecipe(env,userId,id);
+      const allowance=await consumePreviewAllowance(env,userId);
+      const {renderPreview}=await import('./browser-render.js');
+      const {bytes,height}=await renderPreview(env,recipe,width);
+      return imageResult(bytes,{id,width,height,previewOnly:true,realRendererPixels:true,
+        remainingToday:allowance.remaining,note:'Actual hosted ROYGBIV pixels. This is not native-resolution export.'});
+    }));
+  }
   return mcp;
 }
 export function createResourceHandler(env,props,scopes) {
@@ -67,7 +93,7 @@ export function createResourceHandler(env,props,scopes) {
 const app={
   async fetch(request,env,ctx){
     const url=new URL(request.url);
-    if(url.pathname==='/health')return Response.json({service:'roygbiv-mcp',status:'auth-required',rendering:'not-configured'});
+    if(url.pathname==='/health')return Response.json({service:'roygbiv-mcp',status:'auth-required',rendering:'authentication-required-for-preview-status'});
     return new Response('Not found',{status:404});
   }
 };
@@ -107,5 +133,6 @@ export default {
     // Iterate in bounded batches only. Additional expired designs are picked
     // up by the next scheduled execution, never one unbounded invocation.
     ctx.waitUntil(purgeExpiredRecipes(env,{ttlDays:30,limit:100}));
+    if (env.RECIPES) ctx.waitUntil(purgeOldPreviewUsage(env));
   }
 };
