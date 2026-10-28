@@ -50,5 +50,5 @@ test('public health route bypasses OAuth wrapper while MCP remains protected',()
   const oauth=worker.lastIndexOf('return oauthResource.fetch(request,env,ctx)');
   assert.ok(position>0&&oauth>position);
   assert.match(worker,/rendering:previewConfigured\(env\)\?'auth-required':'not-configured'/);
-  assert.match(worker,/new URL\(request.url\).pathname==='\/mcp'/);
+  assert.match(worker,/new URL\(request.url\).pathname!==\s*'\/mcp'/);
 });
