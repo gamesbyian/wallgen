@@ -76,7 +76,7 @@ const oauthResource = new OAuthResourceServer({
     resource:workerEnv.MCP_SERVER_URL || 'https://invalid.example/mcp',
     authorization_servers:[workerEnv.AUTH_SERVER_URL || 'https://invalid.example']
   },
-  requiredScopes:['wallpaper:read'],
+  requiredScopes:['wallpaper:read','wallpaper:create'],
   validateToken:env=>env.AUTH_SERVER.validateToken,
   handler:{
     async fetch(request,env,ctx){
