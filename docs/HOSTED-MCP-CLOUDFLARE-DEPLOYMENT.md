@@ -4,6 +4,25 @@
 
 The two Cloudflare Workers have been **deployed to the owner's Cloudflare account**, and public OAuth discovery, unauthenticated MCP challenges, DCR registration, consent denial, CSRF rejection, and pre-login GitHub redirect have passed **real network acceptance**. The service is **not yet declared fully operational**: no owner completed a real GitHub login and no authorized end-to-end `tools/call` or live user-specific R2/D1 write has been demonstrated. Hosted PNG preview and native export are explicitly unavailable.
 
+## New connected ChatGPT read-path acceptance (27 October 2026 MDT)
+
+A real ChatGPT conversation invoked the connected `ROYGBIV2` hosted MCP
+`roygbiv_inspect` tool for **five pre-existing privately saved designs**.
+Every call successfully returned an actual canonical recipe, seed and
+structural scene summary, including the original and four persisted
+variations. This is genuine **owner-authenticated remote MCP read** and
+owner-scoped D1/R2 retrieval evidence, replacing the earlier historical
+"no authenticated call observed" status. The user's prior design-creation
+exchange is evidence of host-visible creation, but this verification
+directly rechecked reads only. The private recipes and their design IDs
+are intentionally not copied into this public repository.
+
+Still **not demonstrated**: hosted Browser Run pixels, ChatGPT displaying
+an image-content response, a real full-resolution export, independent
+second-tenant isolation, authenticated refresh/revocation and renderer
+parity. Keep the new preview flag disabled until those relevant gates
+are exercised, and preserve the owner's private designs.
+
 ## Hosted PNG preview activation gate (27 October 2026)
 
 A new **code-level gated** `roygbiv_preview` tool has been wired to the existing
