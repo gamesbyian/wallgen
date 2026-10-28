@@ -39,8 +39,8 @@ def request(client, url, *, data=None, headers=None):
     raw_headers = open(client.headers, encoding="utf-8").read()
     # We don't follow redirects: only the final response block matters.
     import email
-    blocks = [block for block in re.split(r"\\r?\\n\\r?\\n", raw_headers) if block.strip()]
-    hdr = email.message_from_string("\\n".join(blocks[-1].splitlines()[1:]))
+    blocks = [block for block in re.split(r"\r?\n\r?\n", raw_headers) if block.strip()]
+    hdr = email.message_from_string("\n".join(blocks[-1].splitlines()[1:]))
     body = open(client.body, encoding="utf-8").read()
     return status, hdr, body
 
