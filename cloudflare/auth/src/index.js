@@ -119,7 +119,7 @@ export default class AuthServer extends WorkerEntrypoint {
       if(pathname==='/callback')return await callback(request,this.env);
       return authorizationServer.fetch(request,this.env,this.ctx);
     }catch(error){
-      if(error instanceof CimdFetchError)return new Response('The requesting application's identity could not be verified.',{status:400,headers:{'Cache-Control':'no-store'}});
+      if(error instanceof CimdFetchError)return new Response('The requesting application could not be verified.',{status:400,headers:{'Cache-Control':'no-store'}});
       if(!(error instanceof AuthorizationError))throw error;
       if(error.redirectTo)return Response.redirect(error.redirectTo,302);
       return new Response(error.description,{status:400,headers:{'Content-Type':'text/plain; charset=utf-8','Cache-Control':'no-store'}});
