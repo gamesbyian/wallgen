@@ -1,4 +1,4 @@
-import { OAuthAuthorizationServer, AuthorizationError } from '@cloudflare/workers-oauth-provider';
+import { OAuthAuthorizationServer, AuthorizationError, CimdFetchError, authorizationErrorRedirect } from '@cloudflare/workers-oauth-provider';
 import { env, WorkerEntrypoint } from 'cloudflare:workers';
 import { htmlEscape, permittedGitHubIdentity, configurationReady } from './safety.js';
 
@@ -8,7 +8,8 @@ const authorizationServer = new OAuthAuthorizationServer({
   issuer: env.AUTH_SERVER_URL || 'https://invalid.example',
   resources: [env.MCP_SERVER_URL || 'https://invalid.example/mcp'],
   scopesSupported: ['wallpaper:read','wallpaper:create','wallpaper:export','offline_access'],
-  clientIdMetadataDocumentEnabled: true
+  clientIdMetadataDocumentEnabled: true,
+  clientRegistrationEndpoint: '/oauth/register'
 });
 
 function consentHtml(details,handle) {
@@ -71,11 +72,17 @@ async function authorize(request,workerEnv){
 async function callback(request,workerEnv){
   const oauth=authorizationServer.getOAuthApi(workerEnv);
   const {request:original,data,headers}=await oauth.finishUpstream(request);
-  const code=new URL(request.url).searchParams.get('code');
+  const query=new URL(request.url).searchParams;
+  if(query.has('error')){
+    headers.set('Location',authorizationErrorRedirect(original,'access_denied'));
+    headers.set('Cache-Control','no-store');
+    return new Response(null,{status:302,headers});
+  }
+  const code=query.get('code');
   if(!code || typeof data?.verifier!=='string')return new Response('Invalid sign-in callback',{status:400});
   const tokenResponse=await fetch('https://github.com/login/oauth/access_token',{
-    method:'POST',headers:{Accept:'application/json','Content-Type':'application/json'},
-    body:JSON.stringify({client_id:workerEnv.GITHUB_CLIENT_ID,
+    method:'POST',headers:{Accept:'application/json','Content-Type':'application/x-www-form-urlencoded'},
+    body:new URLSearchParams({client_id:workerEnv.GITHUB_CLIENT_ID,
       client_secret:workerEnv.GITHUB_CLIENT_SECRET,code,code_verifier:data.verifier})
   });
   if(!tokenResponse.ok)return new Response('GitHub sign-in failed',{status:502});
@@ -102,7 +109,7 @@ async function callback(request,workerEnv){
   headers.set('Cache-Control','no-store');
   return new Response(null,{status:302,headers});
 }
-export default class AuthServer extends WorkerEntrypoint {
+export class AuthServer extends WorkerEntrypoint {
   async fetch(request) {
     if(!configurationReady(this.env))
       return new Response('ROYGBIV OAuth is not configured.',{status:503});
@@ -112,9 +119,10 @@ export default class AuthServer extends WorkerEntrypoint {
       if(pathname==='/callback')return await callback(request,this.env);
       return authorizationServer.fetch(request,this.env,this.ctx);
     }catch(error){
+      if(error instanceof CimdFetchError)return new Response('The requesting application could not be verified.',{status:400,headers:{'Cache-Control':'no-store'}});
       if(!(error instanceof AuthorizationError))throw error;
       if(error.redirectTo)return Response.redirect(error.redirectTo,302);
-      return new Response(error.description,{status:400});
+      return new Response(error.description,{status:400,headers:{'Content-Type':'text/plain; charset=utf-8','Cache-Control':'no-store'}});
     }
   }
   validateToken(resource,token){
@@ -122,3 +130,5 @@ export default class AuthServer extends WorkerEntrypoint {
     return authorizationServer.validateToken(resource,token,this.env);
   }
 }
+
+export default AuthServer;

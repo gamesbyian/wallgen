@@ -4,8 +4,8 @@ compatibility_date = "2026-10-27"
 compatibility_flags = ["nodejs_compat"]
 workers_dev = true
 
-# Replace the resource URL / auth issuer in src/index.js with your verified
-# Cloudflare domains before deploying. Disable deployment until configured.
+# Live invite-only staging resource uses the issuer configured in [vars].
+# Keep Cloudflare Browser Run disabled until actual image acceptance.
 [[services]]
 binding = "AUTH_SERVER"
 service = "roygbiv-auth"
@@ -28,8 +28,5 @@ crons = ["0 3 * * *"]
 AUTH_SERVER_URL = "https://roygbiv-auth.gamesbyian-roygbiv.workers.dev"
 MCP_SERVER_URL = "https://roygbiv-mcp.gamesbyian-roygbiv.workers.dev/mcp"
 
-[browser]
-binding = "BROWSER"
-
-# Set this to an immutable, trusted ROYGBIV static source deployment only
-# after Browser Run preview parity tests; until then the preview tool is hidden.
+# Browser Run remains intentionally unbound and unadvertised in this
+# security-first staging deployment. See browser-render.js for later research.

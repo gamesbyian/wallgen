@@ -2,6 +2,8 @@
 
 **Agent/headless creation (experimental local MCP):** Agents with local MCP tooling can discover canonical controls, compose and vary editable designs, inspect real Chromium PNG previews and export native wallpapers. Run `npm install`, `npx playwright install chromium`, then `npm run mcp`; see [agent integration, limits and configuration](docs/AGENT-HEADLESS-INTEGRATION.md). This is local stdio, **not** a public ChatGPT/Claude cloud connector. The phone studio remains independent.
 
+**Hosted Cloudflare MCP staging (27 October):** The invite-only remote MCP/auth Workers are deployed at `https://roygbiv-mcp.gamesbyian-roygbiv.workers.dev/mcp`. Public OAuth/MCP metadata, unauthorized 401 challenges, DCR, PKCE consent, safe denial and browser-bound GitHub redirection passed [real live CI #40611049584](https://github.com/gamesbyian/wallgen/actions/runs/40611049584). **Actual GitHub login, authorized tool execution, hosted PNG preview/export and ChatGPT/Claude host acceptance are not yet verified.** This does not change the fully functional local MCP. See [live staging runbook](docs/HOSTED-MCP-CLOUDFLARE-DEPLOYMENT.md).
+
 **Current product and agent orientation (26 October 2026):** [Owner product specification](docs/PRODUCT-CONTRACT-2026-10-26.md) → [single current work queue](docs/CURRENT-WORK-QUEUE-2026-10-24.md) → [agent protocol](AGENTS.md). [Lean CI policy](docs/CI-OPERATIONS-2026-10-22.md) governs verification. The long dated sections below preserve historical implementation evidence, **not** today's open PR/issue state. At the last documented audit, only #557 reconstruction and #653 typography remained open; #664 software integration is closed. Refresh live GitHub before treating that as current.
 
 

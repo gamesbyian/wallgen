@@ -4,7 +4,6 @@ import { OAuthResourceServer, insufficientScope } from '@cloudflare/workers-oaut
 import * as z from 'zod/v4';
 import { describeAgentCapabilities, composeAgentRecipe, inspectAgentRecipe } from '../../../src/agent-api.js';
 import { saveRecipe, loadRecipe, editStored, varyStored, exploreStored, purgeExpiredRecipes } from './storage.js';
-import { renderPreview } from './browser-render.js';
 
 const asResult=value=>({content:[{type:'text',text:JSON.stringify(value)}]});
 const guarded=fn=>async args=>{
@@ -56,29 +55,10 @@ export function createServer(env,props,scopes) {
     id,count:z.number().int().min(1).max(12).optional(),seed:z.string().max(90).optional(),
     categories:z.array(z.string()).max(7).optional(),strength:z.enum(['gentle','moderate','wild']).optional()
   })},check('wallpaper:create',async({id,...options})=>({candidates:await exploreStored(env,userId,id,options)})));
-  // Preview is opt-in per deployment, only after a trusted static ROYGBIV
-  // source URL is configured and a real Browser Run binding is available.
-  // Native export is intentionally not advertised without verified quotas.
-  if(env.RENDER_SOURCE_URL && !env.RENDER_SOURCE_URL.includes('REPLACE') && env.BROWSER) {
-    mcp.registerTool('roygbiv_preview',{
-      description:'Render true ROYGBIV pixels through Cloudflare Browser Run for a private design; inspect the resulting image.',
-      inputSchema:z.object({id,width:z.number().int().min(180).max(600).default(300)})
-    },async({id,width})=>{
-      try{
-        if(!scopes.includes('wallpaper:create'))throw Error('Insufficient scope: wallpaper:create');
-        const recipe=await loadRecipe(env,userId,id);
-        const result=await renderPreview(env,recipe,width);
-        // Build base64 in safe chunks, avoiding giant argument lists.
-        let binary='';
-        for(const b of result.bytes)binary+=String.fromCharCode(b);
-        return {content:[
-          {type:'image',data:btoa(binary),mimeType:'image/png'},
-          {type:'text',text:JSON.stringify({id,width:result.width,height:result.height,
-            authenticRenderer:true,previewOnly:true})}
-        ]};
-      }catch(e){return {isError:true,content:[{type:'text',text:e.message}]};}
-    });
-  }
+  // Hosted preview is a separate acceptance-gated phase. The Browser Run
+  // adapter remains in browser-render.js, but is deliberately not imported or
+  // advertised in the core authenticated deployment. This keeps browser
+  // execution and its costs completely absent from the initial Worker.
   return mcp;
 }
 export function createResourceHandler(env,props,scopes) {
@@ -108,7 +88,7 @@ const oauthResource = new OAuthResourceServer({
         // MCP initialize/list calls under the read scope.
         const body=await request.clone().json().catch(()=>null);
         const writeTools=new Set(['roygbiv_compose','roygbiv_import','roygbiv_edit',
-          'roygbiv_vary','roygbiv_explore','roygbiv_preview']);
+          'roygbiv_vary','roygbiv_explore']);
         if(body?.method==='tools/call'&&writeTools.has(body.params?.name))
           return insufficientScope(ctx.auth,['wallpaper:read','wallpaper:create']);
       }
