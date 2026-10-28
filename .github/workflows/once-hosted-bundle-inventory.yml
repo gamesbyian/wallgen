@@ -35,3 +35,17 @@ jobs:
           done
           echo '=== large app-independent built files outside node_modules ==='
           find . -maxdepth 6 -type f -size +600k -not -path '*/node_modules/*' -printf '%p (%s bytes)\\n' | head -35
+      - name: Verify Worker module and create integrity digest
+        run: |
+          test -s cloudflare/mcp/artifacts/preview/index.js
+          node --check cloudflare/mcp/artifacts/preview/index.js
+          (cd cloudflare/mcp/artifacts/preview && sha256sum index.js > SHA256SUMS)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: real-preview-module-inventory
+          path: |
+            cloudflare/mcp/artifacts/preview/index.js
+            cloudflare/mcp/artifacts/preview/SHA256SUMS
+          compression-level: 0
+          retention-days: 3
+          if-no-files-found: error
