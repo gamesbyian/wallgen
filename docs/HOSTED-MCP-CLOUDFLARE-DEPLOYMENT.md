@@ -4,6 +4,81 @@
 
 The two Cloudflare Workers have been **deployed to the owner's Cloudflare account**, and public OAuth discovery, unauthenticated MCP challenges, DCR registration, consent denial, CSRF rejection, and pre-login GitHub redirect have passed **real network acceptance**. The service is **not yet declared fully operational**: no owner completed a real GitHub login and no authorized end-to-end `tools/call` or live user-specific R2/D1 write has been demonstrated. Hosted PNG preview and native export are explicitly unavailable.
 
+## New connected ChatGPT read-path acceptance (27 October 2026 MDT)
+
+A real ChatGPT conversation invoked the connected `ROYGBIV2` hosted MCP
+`roygbiv_inspect` tool for **five pre-existing privately saved designs**.
+Every call successfully returned an actual canonical recipe, seed and
+structural scene summary, including the original and four persisted
+variations. This is genuine **owner-authenticated remote MCP read** and
+owner-scoped D1/R2 retrieval evidence, replacing the earlier historical
+"no authenticated call observed" status. The user's prior design-creation
+exchange is evidence of host-visible creation, but this verification
+directly rechecked reads only. The private recipes and their design IDs
+are intentionally not copied into this public repository.
+
+Still **not demonstrated**: hosted Browser Run pixels, ChatGPT displaying
+an image-content response, a real full-resolution export, independent
+second-tenant isolation, authenticated refresh/revocation and renderer
+parity. Keep the new preview flag disabled until those relevant gates
+are exercised, and preserve the owner's private designs.
+
+## Hosted PNG preview activation gate (27 October 2026)
+
+A new **code-level gated** `roygbiv_preview` tool has been wired to the existing
+`cloudflare/mcp/src/browser-render.js` and native `src/renderer.js` browser
+canvas pathway. It is **not live in ChatGPT yet**. The shipped Wrangler default is
+`HOSTED_PREVIEW_ENABLED = "false"`; without all of the opt-in flag, Browser Run
+binding, D1 backing and exact trusted render-source URL, the tool is omitted
+from MCP discovery. Existing design tools remain available.
+
+When all gates are intentionally enabled, the tool takes an owner-scoped
+`design-...` ID and a preview width from 180–600 (default 360), reads the
+stored recipe only through the authenticated owner and D1/R2 index, charges an
+**atomic 16 renders per account per UTC day** SQLite allowance, and launches
+Cloudflare Playwright on a **trusted static ROYGBIV origin**. It returns a real
+`image/png` MCP image content part plus concise metadata, not an invented
+image or screenshot of the editor. The canonical PNG retains its recipe
+metadata; image size is limited to 3 MiB. Browser navigation rejects
+redirects, browser-side requests are limited to same-origin GETs without query
+parameters, service workers are disabled, and the paint is limited to a
+45-second evaluation. A failed render also consumes a quota slot.
+
+**Source and packaging proof:** [Cloudflare-specific pure tests and real
+Wrangler dry-run #40617172299](https://github.com/gamesbyian/wallgen/actions/runs/40617172299)
+passed on the PR branch after a lockfile-free npm install. This proves
+package resolution and bundling, **not** a Browser Run launch or rendered PNG.
+
+**Activation requires independent acceptance**:
+1. Confirm the public Pages static bundle at
+   `https://gamesbyian.github.io/wallgen/` actually serves the **same renderer
+   revision as the Worker**, with no analytics or third-party dependencies
+   that would see private recipe data. This is an example origin, not a
+   verified current deployment.
+2. **Applied 27 October 2026:** migration `0002_preview_usage.sql`'s table
+   and index now exist in the live owner-scoped D1 database. A synthetic
+   owner/day demonstrated the exact atomic UPSERT `RETURNING` sequence
+   `used=1`, `used=2`, then **no row returned** at limit 2; the
+   synthetic row was removed. The real scheduled cleanup and UTC reset
+   have not yet been observed through the deployed Worker.
+3. In the operator's Cloudflare deployment, add `[browser] binding = "BROWSER"`,
+   `RENDER_SOURCE_URL = "https://gamesbyian.github.io/wallgen/"` under
+   `[vars]`, then explicitly set `HOSTED_PREVIEW_ENABLED = "true"`.
+   Preserve OAuth secrets, the auth service binding and R2's private state.
+4. Exercise actual owner-authenticated `tools/list` and `roygbiv_preview`
+   for several saved designs, verify visible pixels and parity against the
+   local headless Chromium renderer at the same dimensions, test hostile
+   IDs, missing auth, quota exhaustion, large PNGs and repeat calls.
+5. Check current Cloudflare Browser Run quotas/billing before leaving it on.
+   Release to ChatGPT only after successful host-level image display. A
+   connector may need a refresh to discover the new tool.
+
+No preview blobs are stored or made public by this initial path; each request
+renders and returns its PNG directly through the authorized MCP response.
+Full-resolution cloud export is still separate and unimplemented. Nothing in
+source-only tests or a successful dry-run constitutes authentic Browser Run
+pixel acceptance.
+
 ## Real staging endpoints and resources
 
 - Authorization issuer: `https://roygbiv-auth.gamesbyian-roygbiv.workers.dev`

@@ -27,6 +27,11 @@ crons = ["0 3 * * *"]
 [vars]
 AUTH_SERVER_URL = "https://roygbiv-auth.gamesbyian-roygbiv.workers.dev"
 MCP_SERVER_URL = "https://roygbiv-mcp.gamesbyian-roygbiv.workers.dev/mcp"
+HOSTED_PREVIEW_ENABLED = "false"
 
-# Browser Run remains intentionally unbound and unadvertised in this
-# security-first staging deployment. See browser-render.js for later research.
+# To run a billed, owner-only preview acceptance trial: apply migration
+# 0002_preview_usage.sql, verify trusted static Pages rendering and matching
+# source revision, and explicitly add [browser] binding = "BROWSER",
+# RENDER_SOURCE_URL = "https://gamesbyian.github.io/wallgen/" under [vars],
+# and HOSTED_PREVIEW_ENABLED = "true". Do not turn on without live art,
+# D1 quota and security acceptance. The shipped staging default is OFF.

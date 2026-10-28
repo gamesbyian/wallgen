@@ -4,10 +4,12 @@ import { OAuthResourceServer, insufficientScope } from '@cloudflare/workers-oaut
 import * as z from 'zod/v4';
 import { describeAgentCapabilities, composeAgentRecipe, inspectAgentRecipe } from '../../../src/agent-api.js';
 import { saveRecipe, loadRecipe, editStored, varyStored, exploreStored, purgeExpiredRecipes } from './storage.js';
+import { previewConfigured, consumePreviewAllowance, purgeOldPreviewUsage } from './preview-quota.js';
+import { pngImageResult } from './mcp-image.js';
 
 const asResult=value=>({content:[{type:'text',text:JSON.stringify(value)}]});
 const guarded=fn=>async args=>{
-  try{return asResult(await fn(args));}
+  try{const result=await fn(args);return result?.content?result:asResult(result);}
   catch(err){return {isError:true,content:[{type:'text',text:err.message||'Request failed'}]};}
 };
 const requireIdentity=props=>{
@@ -23,7 +25,11 @@ export function createServer(env,props,scopes) {
     if(!scopes.includes(scope))throw Error('Insufficient scope: '+scope);
     return fn(args);
   });
-  mcp.registerTool('roygbiv_describe',{description:'Discover supported ROYGBIV canonical wallpaper controls',inputSchema:z.object({})},check('wallpaper:read',()=>describeAgentCapabilities()));
+  mcp.registerTool('roygbiv_describe',{description:'Discover supported ROYGBIV canonical wallpaper controls',inputSchema:z.object({})},check('wallpaper:read',()=>({...describeAgentCapabilities(),hostedCapabilities:{
+    preview:previewConfigured(env),nativeExport:false,
+    note:previewConfigured(env)?'Preview tool returns real PNG pixels from privately saved designs.':
+      'Hosted pixels and native export are currently unavailable; inspect is structural only.'
+  }})));
   mcp.registerTool('roygbiv_compose',{description:'Create a private canonical ROYGBIV design',inputSchema:z.object({
     style:z.string().default('studio'),seed:z.string().max(90).default('agent-001'),
     settings,locks:z.array(z.string()).optional()
@@ -55,10 +61,22 @@ export function createServer(env,props,scopes) {
     id,count:z.number().int().min(1).max(12).optional(),seed:z.string().max(90).optional(),
     categories:z.array(z.string()).max(7).optional(),strength:z.enum(['gentle','moderate','wild']).optional()
   })},check('wallpaper:create',async({id,...options})=>({candidates:await exploreStored(env,userId,id,options)})));
-  // Hosted preview is a separate acceptance-gated phase. The Browser Run
-  // adapter remains in browser-render.js, but is deliberately not imported or
-  // advertised in the core authenticated deployment. This keeps browser
-  // execution and its costs completely absent from the initial Worker.
+  // Never advertise a paid render tool without explicit operator consent,
+  // deployed Browser Run, trusted source and D1 quota persistence.
+  if(previewConfigured(env)) {
+    mcp.registerTool('roygbiv_preview',{
+      description:'Render true ROYGBIV production pixels from your own saved design and return the PNG for visual critique (not a full-resolution export).',
+      inputSchema:z.object({id,width:z.number().int().min(180).max(600).default(360)})
+    },check('wallpaper:read',async({id,width})=>{
+      // Owner-bound storage read precedes the browser launch and quota charge.
+      const recipe=await loadRecipe(env,userId,id);
+      const allowance=await consumePreviewAllowance(env,userId);
+      const {renderPreview}=await import('./browser-render.js');
+      const {bytes,height}=await renderPreview(env,recipe,width);
+      return pngImageResult(bytes,{id,width,height,previewOnly:true,realRendererPixels:true,
+        remainingToday:allowance.remaining,note:'Actual hosted ROYGBIV pixels. This is not native-resolution export.'});
+    }));
+  }
   return mcp;
 }
 export function createResourceHandler(env,props,scopes) {
@@ -67,7 +85,7 @@ export function createResourceHandler(env,props,scopes) {
 const app={
   async fetch(request,env,ctx){
     const url=new URL(request.url);
-    if(url.pathname==='/health')return Response.json({service:'roygbiv-mcp',status:'auth-required',rendering:'not-configured'});
+    if(url.pathname==='/health')return Response.json({service:'roygbiv-mcp',status:'auth-required',rendering:previewConfigured(env)?'auth-required':'not-configured'});
     return new Response('Not found',{status:404});
   }
 };
@@ -107,5 +125,6 @@ export default {
     // Iterate in bounded batches only. Additional expired designs are picked
     // up by the next scheduled execution, never one unbounded invocation.
     ctx.waitUntil(purgeExpiredRecipes(env,{ttlDays:30,limit:100}));
+    if (previewConfigured(env)) ctx.waitUntil(purgeOldPreviewUsage(env));
   }
 };
