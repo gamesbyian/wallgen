@@ -26,7 +26,12 @@ export async function renderPreview(env,recipe,width=300) {
   const expectedCommit=env.RENDER_EXPECTED_SHA;
   if(typeof expectedCommit!=='string'||!/^[a-f0-9]{40}$/.test(expectedCommit))
     throw Error('Trusted renderer revision was not configured');
-  const browser=await launch(env.BROWSER);
+  // Network restrictions are enforced by Browser Run itself, before the
+  // page or its scripts execute. Page.route below is a second, path-level
+  // same-origin restriction, not the only containment boundary.
+  const browser=await launch(env.BROWSER,{
+    guardrails:{allowedDomains:[new URL(root).hostname]}
+  });
   try {
     const context=await browser.newContext({viewport:{width:800,height:900},serviceWorkers:'block'});
     const page=await context.newPage();
