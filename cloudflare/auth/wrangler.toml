@@ -14,5 +14,5 @@ id = "c17832107d1d411bbf308a9f69d0ae66"
 [vars]
 AUTH_SERVER_URL = "https://roygbiv-auth.gamesbyian-roygbiv.workers.dev"
 MCP_SERVER_URL = "https://roygbiv-mcp.gamesbyian-roygbiv.workers.dev/mcp"
-GITHUB_CLIENT_ID = "REPLACE_GITHUB_CLIENT_ID"
+GITHUB_CLIENT_ID = "Ov23liZNOeOxpR5AeDc3"
 # GITHUB_CLIENT_SECRET and ALLOWED_GITHUB_IDS must be stored as Wrangler secrets.
