@@ -21,7 +21,7 @@ test('hosted render refuses unmatched or missing source before importing code',(
 
 test('Browser Run session constrains allowed host before navigating',()=>{
   const launch=adapter.indexOf('guardrails:{allowedDomains:[new URL(root).hostname]}');
-  const navigate=adapter.indexOf('await page.goto(root');
+  const navigate=adapter.indexOf('await page.goto(hostUrl');
   assert.ok(launch>=0&&navigate>launch);
   assert.match(adapter,/route\.abort\(\)/);
 });
