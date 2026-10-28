@@ -1,4 +1,5 @@
 import { McpServer, createMcpHandler } from '@modelcontextprotocol/server';
+import { env as workerEnv } from 'cloudflare:workers';
 import { OAuthResourceServer, insufficientScope } from '@cloudflare/workers-oauth-provider';
 import * as z from 'zod/v4';
 import { describeAgentCapabilities, composeAgentRecipe, inspectAgentRecipe } from '../../../src/agent-api.js';
