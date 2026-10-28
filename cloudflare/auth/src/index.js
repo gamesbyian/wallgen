@@ -109,7 +109,7 @@ async function callback(request,workerEnv){
   headers.set('Cache-Control','no-store');
   return new Response(null,{status:302,headers});
 }
-export default class AuthServer extends WorkerEntrypoint {
+export class AuthServer extends WorkerEntrypoint {
   async fetch(request) {
     if(!configurationReady(this.env))
       return new Response('ROYGBIV OAuth is not configured.',{status:503});
@@ -130,3 +130,5 @@ export default class AuthServer extends WorkerEntrypoint {
     return authorizationServer.validateToken(resource,token,this.env);
   }
 }
+
+export default AuthServer;
