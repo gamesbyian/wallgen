@@ -6,7 +6,7 @@ workers_dev = false
 
 [[kv_namespaces]]
 binding = "OAUTH_KV"
-id = "REPLACE_WITH_OAUTH_KV_NAMESPACE_ID"
+id = "c17832107d1d411bbf308a9f69d0ae66"
 
 # /authorize intentionally returns 503 until upstream sign-in, CSRF,
 # allowlist and per-client consent flows are configured and proven.
