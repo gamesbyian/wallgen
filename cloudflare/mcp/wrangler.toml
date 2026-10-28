@@ -20,3 +20,6 @@ migrations_dir = "migrations"
 [[r2_buckets]]
 binding = "PRIVATE_ARTIFACTS"
 bucket_name = "roygbiv-private-artifacts"
+
+[triggers]
+crons = ["0 3 * * *"]
