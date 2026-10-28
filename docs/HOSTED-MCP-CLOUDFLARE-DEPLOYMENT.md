@@ -1,81 +1,60 @@
-# Hosted ROYGBIV MCP: Cloudflare deployment engineering (27 Oct 2026)
+# ROYGBIV hosted MCP on Cloudflare
 
-## Status: PRE-DEPLOYMENT FOUNDATION ONLY
+**Live staging checkpoint: 27 October 2026, 18:48 MDT (00:48 UTC on 28 October)**
 
-**Repository verification (27 October):** [one-shot Cloudflare packaging CI #40606485952](https://github.com/gamesbyian/wallgen/actions/runs/40606485952) completed **PASS**: 6/6 pure owner-isolation and OAuth-safety tests, JavaScript syntax checks, and genuine `wrangler deploy --dry-run` bundles for **both** Workers, without deploying or using account credentials. The temporary workflow has been removed from the integration branch. This is source/package verification, **not** a deployed authenticated end-to-end session.
+The two Cloudflare Workers have been **deployed to the owner's Cloudflare account**, and public OAuth discovery, unauthenticated MCP challenges, DCR registration, consent denial, CSRF rejection, and pre-login GitHub redirect have passed **real network acceptance**. The service is **not yet declared fully operational**: no owner completed a real GitHub login and no authorized end-to-end `tools/call` or live user-specific R2/D1 write has been demonstrated. Hosted PNG preview and native export are explicitly unavailable.
 
-The code under `cloudflare/` provides a Cloudflare Workers **split authorization/resource server scaffold**, GitHub OAuth sign-in code with fail-closed configuration, a Streamable HTTP MCP tool catalog for canonical non-rendering design operations, and D1+R2 owner-scoped private recipe persistence. It is NOT an operational live OAuth acceptance, deployed public endpoint, working preview/export service or connected Claude/ChatGPT integration. **Do not deploy the templates as an end-user service or claim an authenticated end-to-end journey.**
+## Real staging endpoints and resources
 
-The local stdio MCP in `scripts/roygbiv-mcp.mjs` remains the actually accepted, production-Chromium reference (PR #829). The hosted code reuses `src/agent-api.js`, `src/model.js`, and `src/scoped-random.js`, never another painter.
+- Authorization issuer: `https://roygbiv-auth.gamesbyian-roygbiv.workers.dev`
+- OAuth redirect callback registered with GitHub: `https://roygbiv-auth.gamesbyian-roygbiv.workers.dev/callback`
+- Remote MCP resource (enter this in a supported MCP-capable host): `https://roygbiv-mcp.gamesbyian-roygbiv.workers.dev/mcp`
+- OAuth authorization metadata: `https://roygbiv-auth.gamesbyian-roygbiv.workers.dev/.well-known/oauth-authorization-server`
+- MCP protected-resource metadata: `https://roygbiv-mcp.gamesbyian-roygbiv.workers.dev/.well-known/oauth-protected-resource/mcp`
+- Auth Worker `roygbiv-auth` (module WorkerEntrypoint named export `AuthServer`): real OAuth provider code installed. Service-binding RPC `validateToken(resource,token)` available privately to the MCP Worker.
+- Resource Worker `roygbiv-mcp`: remote Streamable HTTP via `OAuthResourceServer` and canonical `src/agent-api.js`, with discovery, compose, import, inspect, edit, vary and explore. Authenticated calls must carry resource-bound ROYGBIV access tokens. Never accept arbitrary upstream GitHub tokens as MCP bearer tokens.
+- GitHub OAuth client ID `Ov23liZNOeOxpR5AeDc3` is a non-secret. The actual `GITHUB_CLIENT_SECRET` is stored in the auth Worker's **Cloudflare encrypted secret binding**; the separate `ALLOWED_GITHUB_IDS` secret admits only the owner's verified numeric GitHub account ID. Both bindings were re-verified **after** bundle replacement. No secret value was read, copied into GitHub, or returned to an agent.
+- Cloudflare KV namespace `roygbiv-oauth` (binding `OAUTH_KV`): `c17832107d1d411bbf308a9f69d0ae66`. Holds OAuth state and encrypted grants/transactions per library contract.
+- D1 `roygbiv-mcp` (binding `RECIPES`): `c08c128b-8ac3-419d-a1dc-aaae80ddbfbe`. `migrations/0001_init.sql` was applied through the live D1 API, and the `designs` table was verified.
+- R2 `roygbiv-private-artifacts` (binding `PRIVATE_ARTIFACTS`): private bucket. Its managed `r2.dev` public domain is disabled; do not enable it.
+- A daily 03:00 UTC Cron Trigger was installed on `roygbiv-mcp`. Source handler performs a bounded 30-day recipe-retention sweep (maximum 100 indexed records per invocation); real scheduled retention and failure-retry behavior have **not yet** been observed.
+- Browser Run is deliberately **not bound** to the live Worker. Preview and 3024×6552 export tools are not registered in this staging rollout, and no paid Chromium jobs have been run.
 
-## Architecture and current acceptance boundaries
+## Live evidence
 
-1. `cloudflare/auth/src/index.js`: `OAuthAuthorizationServer` (Cloudflare Workers OAuth Provider v1 split-role library) for discovery, token issuance infrastructure and internal resource-token validation. The GitHub upstream OAuth code, verified numeric user-ID allowlist, per-client consent page, PKCE, browser-bound state and callback are **implemented but not live-tested**. All OAuth endpoints respond HTTP 503 until the provider URLs, approved numeric IDs, GitHub application ID and encrypted client secret are configured.
-2. `cloudflare/mcp/src/index.js`: `OAuthResourceServer` validates resource-scoped tokens through the auth service binding, publishes protected-resource discovery and mounts `createMcpHandler` Streamable HTTP. Each request instantiates its own canonical tools and uses the authorized `ctx.props.userId` and scopes. No anonymous or global mutable candidate pool.
-3. `cloudflare/mcp/src/storage.js`: D1 owner+candidate composite primary key and R2 user-prefixed private objects. Candidate IDs alone are insufficient to retrieve a recipe. The server never accepts storage keys, paths or R2 URLs from the model. Only current canonical v2 recipes are accepted; bounded inputs, strict imports and lock-aware edits.
-4. `cloudflare/mcp/migrations/0001_init.sql`: metadata index, no plaintext OAuth credentials or prompts. `cloudflare/*/wrangler.toml`: config templates with deliberately invalid placeholder IDs and domains, and `workers_dev=false`.
-5. The optional `cloudflare/mcp/src/browser-render.js` Browser Run **preview adapter** uses the actual ROYGBIV Canvas renderer and preserves the embedded canonical recipe; `roygbiv_preview` is registered only if a Browser Run binding and explicit trusted `RENDER_SOURCE_URL` are configured. This code has **not** passed a live remote browser proof, so leave the URL unset for the first authentication rollout. Native export is intentionally **not registered** until the backend has passed a 3024×6552 final PNG recipe roundtrip test with resource caps. A screenshot of the PWA UI is not a substitute. If Browser Run cannot satisfy dimensions/memory/serialization, use an isolated Chromium container behind a Cloudflare Queue.
+1. [One-shot live OAuth+MCP acceptance run #40611049584](https://github.com/gamesbyian/wallgen/actions/runs/40611049584): **PASS**. From an independent GitHub Actions runner, confirms OAuth issuer and token endpoint metadata; invalid OAuth client 400; MCP resource metadata; anonymous `tools/list` 401 with proper Bearer challenge; forged bearer 401 through the private auth service binding; DCR client registration; PKCE authorization request; real consent page with redirect hostname; deliberate consent denial, including issuer and state, without issuing a code; stolen/forged consent handle rejected without browser cookie; approved consent redirects to the correctly registered GitHub OAuth endpoint with PKCE. No actual GitHub login took place.
+2. [Source and packaging proof #40606896435](https://github.com/gamesbyian/wallgen/actions/runs/40606896435): initial 6/6 mock security/owner-isolation tests and successful Wrangler dry-runs. The current, browser-free core Worker was separately bundled and deployed using the same source and Cloudflare API; no GitHub-hosted deployment token was required.
+3. `npm run test:cloudflare`: six mock/pure tests for owner-scoped D1/R2 persistence, deterministic controls, oversized/invalid inputs, GitHub numeric-ID allowlist, dangerous consent HTML and fail-closed config. Mock tests do **not** substitute for independent live tenant-isolation testing.
 
-## Security and privacy contract
+The repeatable no-login smoke test is `python3 tests/cloudflare-live-oauth-denial.py`. It registers a short-lived test OAuth client through DCR, exercises consent and explicitly stops at GitHub's login boundary. It never follows the GitHub OAuth redirect, issues a user token or retrieves private data. The one-shot workflow that invoked it is removed before merging; the test remains available for explicit execution when necessary.
 
-- OAuth client identity, user identity and scopes must be verified on every request; `ctx.props.userId` is only trusted after the v1 provider has validated the token and sign-in consent stored trusted props.
-- `wallpaper:read` for inspect/discovery, `wallpaper:create` for compose/import/edit/vary/explore, `wallpaper:export` reserved for future export jobs.
-- Sign-in is invite/allowlist-only at first. Each client must receive explicit consent naming scopes and destination origin, with secure session cookies, anti-CSRF measures, PKCE and resource binding. Never treat a caller-supplied email, arbitrary header or MCP parameter as verified identity.
-- R2 bucket is private. Never attach a public `r2.dev` endpoint. Download URLs require expiring, user-scoped signatures or authenticated proxy. Automatic artifact retention/purge must be proven before rendering starts.
-- Render cost limits, account quotas, cancellation, input limits, abuse monitoring and artifact expiry are mandatory before public release.
-- No public anonymous account, blanket Google Drive permissions, private font upload, model-powered training, or third-party analytics by default.
+## Implementation contract and privacy
 
-## Deployment prerequisites (human Cloudflare access required)
+The standard local stdio MCP (`scripts/roygbiv-mcp.mjs`, [PR #829](https://github.com/gamesbyian/wallgen/pull/829)) remains available and is already accepted with real Chromium and native export.
 
-1. Provision one Cloudflare account and, eventually, hostnames `auth.<domain>` and `mcp.<domain>` over TLS. A single authorized Workers domain can be used for initial integration, with verified exact origins.
-2. Create `OAUTH_KV`, a D1 database named `roygbiv-mcp`, and a **private** R2 bucket named `roygbiv-private-artifacts`. Place actual binding IDs into the two Wrangler configurations, never into user-visible messages or sample commits.
-3. Create a **GitHub OAuth application**. Set its callback URL to `https://<auth-host>/callback`. Configure `GITHUB_CLIENT_ID` in the Auth Worker Wrangler vars; store `GITHUB_CLIENT_SECRET` via `wrangler secret put`. Store `ALLOWED_GITHUB_IDS` as a comma-separated list of verified **numeric GitHub user IDs** in a secret (never a login display string). `/authorize` uses the Cloudflare provider consent and upstream-state APIs and refuses unknown accounts, but this must be exercised with real GitHub and Cloudflare identities before publishing.
-4. Replace both `REPLACE-AUTH-HOST` and `REPLACE-MCP-HOST` with the verified canonical hosts. Auth resource audiences and MCP metadata must agree exactly.
-5. Apply `0001_init.sql` to D1 and configure the auth Worker service binding name `roygbiv-auth`. Start with **staging**, not public production. Deploy only after the sign-in and private-resource test gates are green.
-6. Smoke-test unauthenticated 401 challenge, authorization discovery, PKCE flow, allowlist enforcement, consent deny/revoke, token expiry, audience rejection, step-up scope behavior, cross-user D1/R2 access denial, and actual Claude/ChatGPT MCP client discovery.
-7. Implement and benchmark the render job backend, automatic cleanup, quotas and signed private handoff. Then activate render tool registration. Avoid passing full-resolution PNGs through the agent transcript.
+The remote Worker uses the **same** canonical recipe API, model schema, editor taxonomy, lock semantics and scoped randomization. It does not build a parallel painter. Clients supply a brief and interact with ROYGBIV's actual controls. On the hosted path, D1 rows are keyed by `(owner,id)`; R2 object paths are generated from the verified OAuth account rather than model-supplied paths. The default service never provides unprotected object or download URLs. GitHub upstream access tokens are never persisted into the ROYGBIV grant or exposed to MCP clients.
 
-Wrangler commands after the operator provisions the resources and replaces template placeholders:
+`wallpaper:read` is the baseline required OAuth scope. Writes require `wallpaper:create` and can issue an OAuth insufficient-scope step-up challenge. The `wallpaper:export` scope is reserved for future render jobs. Users must explicitly consent per client, and the server enforces a strict verified GitHub ID allowlist. Cloudflare consent/upstream helper APIs bind handles and state to the browser, prevent framing, and enforce PKCE for public clients. Unknown identities and mismatched user paths are rejected.
 
-```bash
-npx wrangler d1 migrations apply roygbiv-mcp --config cloudflare/mcp/wrangler.toml --remote
-npx wrangler deploy --config cloudflare/auth/wrangler.toml
-npx wrangler deploy --config cloudflare/mcp/wrangler.toml
-```
+The public Workers URLs are internet reachable for OAuth discovery and authorization; **that does not mean private designs are public**. Only an allowlisted GitHub login with resource-scoped tokens can access the tenant's MCP tools. Dynamic client registration itself is not an authenticated user account, so it grants no wallpaper data.
 
-**These commands are not safe to run on the current scaffold** because the sign-in gate is intentionally disabled and the domains/IDs are placeholders. No deployment workflow is enabled; do not add a push-to-production action holding unrestricted tokens until the user explicitly authorizes account use and the security acceptance suite passes.
+## Remaining gates before declaring a working hosted connector
 
-## Verification and milestones
+1. **Owner's genuine authorization journey:** Connect `https://roygbiv-mcp.gamesbyian-roygbiv.workers.dev/mcp` in a compatible remote-MCP client, approve read/create permissions, finish GitHub login, return to the client, and verify `tools/list` and actual `roygbiv_compose`, `roygbiv_inspect`, `roygbiv_edit`, `roygbiv_explore` calls.
+2. **Live privacy/integrity:** Validate real D1/R2 writes and reads, lock persistence, canonical recipe roundtrips, user A vs B account isolation with genuinely independent approved identities, token audience rejection, refresh/revocation and a write-scope upgrade. The invite-only allowlist is not a replacement for two-account acceptance.
+3. **Rate limiting and cost controls:** Configure appropriate Cloudflare rate-limit rules, bounds on jobs/artifacts, error budgets and anti-abuse policies. Never publish an anonymous render endpoint.
+4. **Real image preview:** Research `cloudflare/mcp/src/browser-render.js` as a separate cost-gated deployment; benchmark actual canonical pixels, text/font fidelity, recipe metadata and memory/time against the local Chromium reference before registration. Native Pixel 6 Pro export (3024×6552), signed private artifact download, cleanup and job/cancellation quotas remain subsequent work.
+5. **Repeatable deployment:** The live Workers were uploaded using audited, Wrangler dry-run-built module bundles through the connected Cloudflare management API. OAuth secrets were inherited using explicit `inherit` bindings and verified. Future operator deployment via Wrangler:
+   ```bash
+   npm install
+   npx wrangler deploy --config cloudflare/auth/wrangler.toml
+   npx wrangler deploy --config cloudflare/mcp/wrangler.toml
+   ```
+   Each step must preserve existing Cloudflare Worker secrets, resource bindings and OAuth issuer URLs. Build a restricted service-token-based deployment workflow only after its permission scope, review gate and secret handling have been approved.
 
-Pure owner-scoped storage tests: `node --test tests/cloudflare-storage.test.js`. This uses a deterministic fake Cloudflare D1/R2 interface; it establishes application tenancy logic, not actual Cloudflare service security. A future Cloudflare Miniflare/workerd integration suite must exercise `OAuthResourceServer` with two independently authorized accounts.
+The current client is a **live, invite-only staging MCP endpoint**, not a public hosted wallpaper product and not a tested production-ready export service. Preserve this distinction in status reports, issue closure and user-facing instructions.
 
-**Delivered in this branch:** auth/resource boundaries, canonical MCP tool skeleton, private D1/R2 storage and privacy-safety spec. **Not delivered:** live-tested OAuth consent with real credentials, deployed service, actual hosted Chromium rendering, signed downloads, user quotas, browser client acceptance and automatic resource expiration.
+## References
 
-Current provider references: [Workers OAuth Provider v1](https://developers.cloudflare.com/changelog/post/2026-10-01-workers-oauth-provider-1x/), [OAuth consent/security](https://developers.cloudflare.com/agents/model-context-protocol/guides/securing-mcp-server/), [MCP HTTP handler](https://github.com/modelcontextprotocol/typescript-sdk/blob/main/docs/serving/http.md), [Cloudflare Browser Run](https://developers.cloudflare.com/browser-run/get-started/).
-
-**Retention implementation:** `cloudflare/mcp/src/storage.js` implements a bounded `purgeExpiredRecipes` sweep, invoked daily at 03:00 UTC via the MCP Worker's scheduled handler. It scans at most 100 expired metadata records per invocation, matches the exact owner-scoped R2 key and conditionally deletes D1 rows before removing the matching R2 object. This is designed to expire **recipes after 30 days**, not yet preview images/export artifacts (which are not implemented). A production retention audit must still demonstrate actual D1/R2 scheduled delivery and failure/retry semantics before release.
-
-### OAuth configuration in the current branch
-
-The GitHub authorization handler is now implemented using Cloudflare provider v1's `parseAuthRequest`, `describeConsent`, `beginConsent`, `approveConsent`, `beginUpstream`, `finishUpstream` and `completeAuthorization` APIs. It displays the client, scopes and validated redirect hostname with HTML escaping, binds upstream state to the browser, verifies the upstream GitHub profile and checks its immutable numeric ID against `ALLOWED_GITHUB_IDS`. The GitHub access token is **not saved in ROYGBIV props or shown to an agent**. Access tokens issued by ROYGBIV are resource scoped and carry only a verified `github:<id>` user identity. GitHub OAuth application credentials and actual Cloudflare hostnames have not been supplied or tested; the service must not be advertised as usable until end-to-end OAuth tests pass.
-
-Configure secrets only in Cloudflare, e.g. `npx wrangler secret put GITHUB_CLIENT_SECRET --config cloudflare/auth/wrangler.toml` and `npx wrangler secret put ALLOWED_GITHUB_IDS --config cloudflare/auth/wrangler.toml`. The `AUTH_SERVER_URL` and `MCP_SERVER_URL` Wrangler vars must exactly match the live HTTPS hostnames and resource. Run `npm run test:cloudflare` for mock storage and pure auth safety tests. These tests do **not** assert genuine OAuth token issuance or Cloudflare Worker compatibility.
-
-### Browser Run preview configuration (experimental)
-
-A `[browser] BROWSER` binding is present on the MCP Worker, and `@cloudflare/playwright` loads the real trusted ROYGBIV static source (e.g. a pinned Pages deployment) and imports its `src/renderer.js` and `src/typography-fonts.js` relative to the deployment's base URI. The tool renders bounded 180–600px previews, adds the genuine PNG recipe via the existing metadata writer and verifies its exact roundtrip before returning MCP image content. It never accepts a renderer URL from the agent; `RENDER_SOURCE_URL` is an operator-only environment setting. **No browser output has been verified on Cloudflare Browser Run yet**, and `RENDER_SOURCE_URL` must remain unset until pinned-source, memory, font, private data, latency, actual image and resource-limit checks pass. If the app changes on public Pages, pin the artifact or use a dedicated immutable static deployment; do not silently change rendering code in the middle of a user's candidate session.
-
-## Actual Cloudflare resources provisioned 27 Oct 2026
-
-The owner connected the Cloudflare plugin and authorized infrastructure provisioning. Live Cloudflare API results confirm:
-
-- D1 database `roygbiv-mcp`, UUID `c08c128b-8ac3-419d-a1dc-aaae80ddbfbe`. `0001_init.sql` was **executed directly** through the D1 query API; a follow-up sqlite_master query confirmed the `designs` table exists. Do not re-run a non-idempotent migration without checking the database; the checked-in schema uses IF NOT EXISTS.
-- KV namespace `roygbiv-oauth`, ID `c17832107d1d411bbf308a9f69d0ae66`. Bound in the auth Worker Wrangler template.
-- R2 bucket `roygbiv-private-artifacts` created with Standard storage, WNAM region; its managed `r2.dev` public domain was verified **disabled**. Do not enable public access.
-- The two real resource IDs were incorporated into the checked-in Wrangler configuration; secrets and OAuth issuer/domain URLs remain deliberately unset. No Workers deployed, no end-user authentication verified, and Browser Run is still disabled pending live integration acceptance.
-
-These resource IDs are not credentials. The GitHub OAuth client secret, allowlisted GitHub IDs, exact hostnames and live acceptance must be configured separately. The provisioning does not constitute a working remote connector.
-
-## Registered Cloudflare Workers development hostname
-
-The connected Cloudflare account now has the `gamesbyian-roygbiv.workers.dev` subdomain. The reserved auth Worker URL is `https://roygbiv-auth.gamesbyian-roygbiv.workers.dev` with the GitHub OAuth application callback at `https://roygbiv-auth.gamesbyian-roygbiv.workers.dev/callback`. The MCP resource URL will be `https://roygbiv-mcp.gamesbyian-roygbiv.workers.dev/mcp`. Both Wrangler configurations have their corresponding issuer/resource URLs and `workers_dev = true` set. **These endpoints do not yet exist as deployed Workers**; no sign-in or user-facing MCP request will work until code deployment, GitHub OAuth app registration, configured credentials and security acceptance.
+- Cloudflare [OAuth Provider v1](https://github.com/cloudflare/workers-oauth-provider), [OAuth consent contract](https://github.com/cloudflare/workers-oauth-provider/blob/main/docs/consent-page.md), [split resource servers](https://github.com/cloudflare/workers-oauth-provider/blob/main/docs/resource-servers.md).
+- [Hosted Browser Run](https://developers.cloudflare.com/browser-run/), [MCP 2026 authentication](https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization).
