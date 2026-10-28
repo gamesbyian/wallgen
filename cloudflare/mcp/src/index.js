@@ -82,9 +82,13 @@ const oauthResource = new OAuthResourceServer({
       const scopes=ctx.auth?.scope||[];
       if(!scopes.includes('wallpaper:read'))return insufficientScope(ctx.auth,['wallpaper:read']);
       if(request.method==='POST' && !scopes.includes('wallpaper:create')) {
-        // Read-only requests (tools/list / describe / inspect) are allowed.
-        // Per-tool scope checks block writes; OAuth step-up can be added once
-        // the host client supports consent for additional scopes.
+        // Step-up only for mutation tools. Preserve read-only tools and
+        // MCP initialize/list calls under the read scope.
+        const body=await request.clone().json().catch(()=>null);
+        const writeTools=new Set(['roygbiv_compose','roygbiv_import','roygbiv_edit',
+          'roygbiv_vary','roygbiv_explore']);
+        if(body?.method==='tools/call'&&writeTools.has(body.params?.name))
+          return insufficientScope(ctx.auth,['wallpaper:read','wallpaper:create']);
       }
       const url=new URL(request.url);
       if(request.headers.get('origin') && request.headers.get('origin')!==url.origin)
