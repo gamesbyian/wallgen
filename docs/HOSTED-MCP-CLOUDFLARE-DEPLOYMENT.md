@@ -83,6 +83,17 @@ Wrangler dry-run #40617172299](https://github.com/gamesbyian/wallgen/actions/run
 passed on the PR branch after a lockfile-free npm install. This proves
 package resolution and bundling, **not** a Browser Run launch or rendered PNG.
 
+**Global Browser Run lease:** one D1 row, created by
+`migrations/0003_preview_leases.sql`, now serializes all hosted
+preview renders across Workers isolates. It is acquired after owner-scoped
+recipe retrieval but before the paid daily allowance charge. A second
+overlapping request receives a retryable refusal **without consuming a
+preview quota slot**. A 120-second lease expires on crash, and a stale
+holder's token cannot release a successor's lease. The active holder
+releases in `finally`; any release failure is logged without rendering
+private data. Apply migration 0003 before enabling the tool. This is a
+cost and concurrency guard, not a full queue/fair-scheduling service.
+
 **Activation requires independent acceptance**:
 1. Confirm the public Pages static bundle at
    `https://gamesbyian.github.io/wallgen/` actually serves the **same renderer
