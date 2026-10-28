@@ -6,7 +6,7 @@ import { describeAgentCapabilities, composeAgentRecipe, inspectAgentRecipe } fro
 import { saveRecipe, loadRecipe, editStored, varyStored, exploreStored, purgeExpiredRecipes } from './storage.js';
 import { previewConfigured, consumePreviewAllowance, purgeOldPreviewUsage } from './preview-quota.js';
 import { pngImageResult } from './mcp-image.js';
-import { acquirePreviewLease, releasePreviewLease } from './preview-lease.js';
+import { acquirePreviewLease, releasePreviewLease, reservePreviewLaunch } from './preview-lease.js';
 
 const asResult=value=>({content:[{type:'text',text:JSON.stringify(value)}]});
 const guarded=fn=>async args=>{
@@ -77,6 +77,7 @@ export function createServer(env,props,scopes) {
       // calls cannot burn credits or start a Browser Run swarm.
       const lease=await acquirePreviewLease(env);
       try {
+        await reservePreviewLaunch(env);
         const allowance=await consumePreviewAllowance(env,userId);
         const {renderPreview}=await import('./browser-render.js');
         const {bytes,height}=await renderPreview(env,recipe,width);

@@ -33,9 +33,21 @@ export async function renderPreview(env,recipe,width=300) {
   // Network restrictions are enforced by Browser Run itself, before the
   // page or its scripts execute. Page.route below is a second, path-level
   // same-origin restriction, not the only containment boundary.
-  const browser=await launch(env.BROWSER,{
-    guardrails:{allowedDomains:[new URL(root).hostname]}
-  });
+  let browser;
+  try {
+    browser=await launch(env.BROWSER,{
+      guardrails:{allowedDomains:[new URL(root).hostname]}
+    });
+  } catch (error) {
+    const message=String(error?.message||'');
+    if (/429/.test(message) && /rate limit exceeded/i.test(message)) {
+      throw Error('Cloudflare Browser Run rejected a new browser launch (HTTP 429 rate limit). The free plan permits one new browser approximately every 20 seconds; this may also reflect another account-level limit. Try again later. No image was rendered.');
+    }
+    if (/429/.test(message) && /browser time limit exceeded/i.test(message)) {
+      throw Error('Cloudflare Browser Run daily browser-time allowance is exhausted. Browser access normally resets at 00:00 UTC on the free plan. No image was rendered.');
+    }
+    throw error;
+  }
   try {
     const context=await browser.newContext({viewport:{width:800,height:900},serviceWorkers:'block'});
     const page=await context.newPage();
