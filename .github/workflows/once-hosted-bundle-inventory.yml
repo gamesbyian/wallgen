@@ -29,3 +29,9 @@ jobs:
           find artifacts/preview -type f \( -name '*.js' -o -name '*.mjs' \) -printf '%p (%s bytes)\n'
           echo '=== directory sizes ==='
           du -ah artifacts/preview | sort -h | tail -20
+          echo '=== other Wrangler directories ==='
+          for d in cloudflare/mcp/artifacts/preview cloudflare/mcp/.wrangler .wrangler artifacts; do
+            if [ -d "$d" ]; then find "$d" -maxdepth 5 -type f -printf '%p (%s bytes)\\n' | head -40; fi
+          done
+          echo '=== large app-independent built files outside node_modules ==='
+          find . -maxdepth 6 -type f -size +600k -not -path '*/node_modules/*' -printf '%p (%s bytes)\\n' | head -35
