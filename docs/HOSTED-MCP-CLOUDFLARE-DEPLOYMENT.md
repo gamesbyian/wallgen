@@ -93,6 +93,14 @@ binding, protected R2 bucket, D1 database and cron are all preserved in the
 base Wrangler file. Wrangler's existing encrypted secrets are preserved.
 It does **not** upload or alter the separate auth Worker.
 
+The two release modes were separately accepted through the actual
+[GitHub Actions Wrangler packaging proof #40624602519](https://github.com/gamesbyian/wallgen/actions/runs/40624602519).
+Cloudflare-specific tests, the disabled-mode generated configuration,
+its Wrangler dry-run, the preview-mode generated configuration, and its
+Wrangler dry-run **all passed**. This is package proof, not an actual
+deployment or a verified authenticated client render. The one-shot proof
+workflow was removed after successful execution.
+
 The helper `scripts/prepare-hosted-preview-config.mjs` builds a disposable
 `cloudflare/mcp/wrangler.release.generated.toml` next to the original config.
 It **never edits the tracked default-off staging config**. The resulting file
