@@ -19,7 +19,7 @@ export function buildHostedPreviewConfig(baseline,{sha,manifest,mode='disabled'}
     throw Error('Mode must be disabled or preview');
   if(!/^[ \t]*HOSTED_PREVIEW_ENABLED = "false"[ \t]*$/m.test(baseline))
     throw Error('Default-off preview marker missing; refusing release');
-  if(baseline.includes('RENDER_EXPECTED_SHA = ')||baseline.includes('\n[browser]'))
+  if(/^[ \t]*RENDER_EXPECTED_SHA[ \t]*=/m.test(baseline)||/^[ \t]*\[browser\][ \t]*$/m.test(baseline))
     throw Error('Checked-in configuration already contains release bindings');
   const vars=[
     'HOSTED_PREVIEW_ENABLED = "'+(mode==='preview'?'true':'false')+'"',
