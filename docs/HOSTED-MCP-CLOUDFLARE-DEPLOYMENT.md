@@ -36,9 +36,12 @@ package resolution and bundling, **not** a Browser Run launch or rendered PNG.
    revision as the Worker**, with no analytics or third-party dependencies
    that would see private recipe data. This is an example origin, not a
    verified current deployment.
-2. Apply `cloudflare/mcp/migrations/0002_preview_usage.sql` to the same live
-   owner-scoped D1 database. Verify atomic quota exhaustion, UTC reset and
-   correct daily-row cleanup from the scheduled handler.
+2. **Applied 27 October 2026:** migration `0002_preview_usage.sql`'s table
+   and index now exist in the live owner-scoped D1 database. A synthetic
+   owner/day demonstrated the exact atomic UPSERT `RETURNING` sequence
+   `used=1`, `used=2`, then **no row returned** at limit 2; the
+   synthetic row was removed. The real scheduled cleanup and UTC reset
+   have not yet been observed through the deployed Worker.
 3. In the operator's Cloudflare deployment, add `[browser] binding = "BROWSER"`,
    `RENDER_SOURCE_URL = "https://gamesbyian.github.io/wallgen/"` under
    `[vars]`, then explicitly set `HOSTED_PREVIEW_ENABLED = "true"`.
