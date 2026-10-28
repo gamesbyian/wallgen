@@ -33,5 +33,8 @@ HOSTED_PREVIEW_ENABLED = "false"
 # 0002_preview_usage.sql, verify trusted static Pages rendering and matching
 # source revision, and explicitly add [browser] binding = "BROWSER",
 # RENDER_SOURCE_URL = "https://gamesbyian.github.io/wallgen/" under [vars],
-# and HOSTED_PREVIEW_ENABLED = "true". Do not turn on without live art,
+# RENDER_EXPECTED_SHA = "<exact 40-character main commit from Pages manifest>",
+# and HOSTED_PREVIEW_ENABLED = "true". A missing or mismatched source SHA
+# fails closed before any private design reaches the canvas.
+# Do not turn on without live art,
 # D1 quota and security acceptance. The shipped staging default is OFF.

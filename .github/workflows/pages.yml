@@ -23,6 +23,10 @@ jobs:
           node-version: '22'
       # Cheap sanity check before publishing this personal app; deeper verification is opt-in.
       - run: npm run check:quick
+      # The hosted renderer refuses a mismatched or absent immutable commit
+      # marker rather than silently drawing private recipes with newer assets.
+      - name: Stamp exact published rendering revision
+        run: printf '{"commit":"%s"}\n' "$GITHUB_SHA" > roygbiv-render-version.json
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

@@ -23,6 +23,9 @@ export async function renderPreview(env,recipe,width=300) {
     throw RangeError('Preview width must be between 180 and 600 pixels');
   const height=Math.round(width*13/6);
   const root=sourceUrl(env);
+  const expectedCommit=env.RENDER_EXPECTED_SHA;
+  if(typeof expectedCommit!=='string'||!/^[a-f0-9]{40}$/.test(expectedCommit))
+    throw Error('Trusted renderer revision was not configured');
   const browser=await launch(env.BROWSER);
   try {
     const context=await browser.newContext({viewport:{width:800,height:900},serviceWorkers:'block'});
@@ -43,7 +46,18 @@ export async function renderPreview(env,recipe,width=300) {
     // A stuck page must not hold an unbounded browser session.
     let timeout;
     const encoded=await Promise.race([
-      page.evaluate(async ({recipe,width,height,root})=>{
+      page.evaluate(async ({recipe,width,height,root,expectedCommit})=>{
+        // Check the Pages deployment stamp *inside the same isolated browser*
+        // before executing any renderer modules or touching private artwork.
+        // A Pages update ahead of the worker fails closed until independently
+        // matched and intentionally redeployed.
+        const manifestResponse=await fetch(new URL('roygbiv-render-version.json',root),{
+          cache:'no-store',credentials:'omit',redirect:'error'
+        });
+        if(!manifestResponse.ok)throw Error('Trusted renderer revision manifest unavailable');
+        const manifest=await manifestResponse.json();
+        if(manifest?.commit!==expectedCommit)
+          throw Error('Trusted renderer revision mismatch; preview disabled until verified');
         // These paths are same-origin relative to our trusted root,
         // never caller-generated import specifiers.
         const {drawWallpaper}=await import(new URL('src/renderer.js',root).href);
@@ -53,7 +67,7 @@ export async function renderPreview(env,recipe,width=300) {
         canvas.width=width;canvas.height=height;
         drawWallpaper(canvas,recipe);
         return canvas.toDataURL('image/png').split(',')[1];
-      },{recipe,width,height,root}),
+      },{recipe,width,height,root,expectedCommit}),
       new Promise((_,reject)=>{timeout=setTimeout(()=>reject(
         Error('Hosted preview exceeded its 45-second rendering limit')),45000);})
     ]).finally(()=>clearTimeout(timeout));
