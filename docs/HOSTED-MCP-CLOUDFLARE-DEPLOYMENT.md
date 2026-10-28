@@ -2,6 +2,8 @@
 
 ## Status: PRE-DEPLOYMENT FOUNDATION ONLY
 
+**Repository verification (27 October):** [one-shot Cloudflare packaging CI #40606485952](https://github.com/gamesbyian/wallgen/actions/runs/40606485952) completed **PASS**: 6/6 pure owner-isolation and OAuth-safety tests, JavaScript syntax checks, and genuine `wrangler deploy --dry-run` bundles for **both** Workers, without deploying or using account credentials. The temporary workflow has been removed from the integration branch. This is source/package verification, **not** a deployed authenticated end-to-end session.
+
 The code under `cloudflare/` provides a Cloudflare Workers **split authorization/resource server scaffold**, GitHub OAuth sign-in code with fail-closed configuration, a Streamable HTTP MCP tool catalog for canonical non-rendering design operations, and D1+R2 owner-scoped private recipe persistence. It is NOT an operational live OAuth acceptance, deployed public endpoint, working preview/export service or connected Claude/ChatGPT integration. **Do not deploy the templates as an end-user service or claim an authenticated end-to-end journey.**
 
 The local stdio MCP in `scripts/roygbiv-mcp.mjs` remains the actually accepted, production-Chromium reference (PR #829). The hosted code reuses `src/agent-api.js`, `src/model.js`, and `src/scoped-random.js`, never another painter.
