@@ -81,6 +81,30 @@ not a guessed historical checkpoint. Preventing new main publishes
 from changing the renderer beneath an active Worker requires ongoing
 deploy/version coordination.
 
+## Corrected real Worker bundle retention (28 October 2026)
+
+A [GitHub Actions inspection](https://github.com/gamesbyian/wallgen/actions/runs/40625790030)
+established that `wrangler deploy --dry-run --config cloudflare/mcp/wrangler.release.generated.toml
+--outdir artifacts/preview` writes the executable JavaScript to
+`cloudflare/mcp/artifacts/preview/index.js`, **relative to its Wrangler
+configuration**, not the repository-root `artifacts/preview`. Earlier
+uploaded "bundles" contained only tiny `README.md` files, even though
+Wrangler reported a successful ~4.17 MiB compilation.
+
+[Independent real-bundle proof](https://github.com/gamesbyian/wallgen/actions/runs/40625927675)
+emitted the actual 4,273,720-byte `index.js` module and a `SHA256SUMS`
+file. The resulting GitHub Actions artifact was downloaded and independently
+verified with `sha256sum -c SHA256SUMS`, which returned **index.js: OK**.
+
+The permanent manual release workflow now fails closed unless the **real**
+module is present and between 200 kB and 8 MB. It stores the module
+and SHA256 digest, not an empty directory, with three-day retention.
+This proves a reproducible reviewable package. It does **not** mean the
+module was uploaded into the live Cloudflare Worker or that browser pixels
+were delivered through MCP. There are no verified GitHub Actions Cloudflare
+deployment secrets. Preserve the existing hosted connector until the
+reviewed authenticated rollout can be deployed and independently accepted.
+
 ## Operator-gated, repeatable authenticated deployment
 
 The `ROYGBIV Hosted MCP Release (Manual)` workflow at
