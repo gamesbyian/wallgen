@@ -124,7 +124,7 @@ It accepts three explicit modes:
 - `deploy-preview`: explicitly opt in to the billed, owner-scoped
   `roygbiv_preview` tool. This mode additionally requires typing
   `ENABLE_AUTHENTICATED_BROWSER_PREVIEWS` into the workflow approval field.
-  The global D1 lease, 16/day owner allowance, exact source SHA, and
+  The global D1 lease, 6/day owner allowance, exact source SHA, and
   Cloudflare network guardrails remain mandatory. A successful deployment is
   **not** proof ChatGPT automatically displays MCP image parts.
 
@@ -176,7 +176,7 @@ from MCP discovery. Existing design tools remain available.
 When all gates are intentionally enabled, the tool takes an owner-scoped
 `design-...` ID and a preview width from 180–600 (default 360), reads the
 stored recipe only through the authenticated owner and D1/R2 index, charges an
-**atomic 16 renders per account per UTC day** SQLite allowance, and launches
+**atomic 6 renders per account per UTC day** SQLite allowance, and launches
 Cloudflare Playwright on a **trusted static ROYGBIV origin**. It returns a real
 `image/png` MCP image content part plus concise metadata, not an invented
 image or screenshot of the editor. The canonical PNG retains its recipe
@@ -187,6 +187,22 @@ metadata; image size is limited to 3 MiB. Browser sessions have an outer Cloudfl
 Wrangler dry-run #40617172299](https://github.com/gamesbyian/wallgen/actions/runs/40617172299)
 passed on the PR branch after a lockfile-free npm install. This proves
 package resolution and bundling, **not** a Browser Run launch or rendered PNG.
+
+**Browser usage budget (28 October 2026):** Cloudflare's published
+[Browser Run pricing](https://developers.cloudflare.com/browser-run/pricing/)
+includes 10 minutes of Browser Run time per day on Workers Free, with
+no billable overage, and an included monthly allowance with paid overage
+on Workers Paid. The actual account billing tier and historical usage
+have **not** been verified. The default owner-scoped preview allowance
+is now **six launches per UTC day**, rather than sixteen, to avoid
+normalizing a potentially expensive burst. This is a conservative
+request-count bound, **not a certified financial limit**: sessions vary
+in runtime; browser usage from other applications and Quick Actions
+shares the account's plan. A 120-second global single-browser lease
+and a strict render timeout further reduce, but cannot eliminate,
+wasted usage. Before enabling this feature, independently check the
+Cloudflare Dashboard's Compute > Browser Run usage and billing settings.
+Do not claim a price or a free guarantee for a specific account.
 
 **Global Browser Run lease:** one D1 row, created by
 `migrations/0003_preview_leases.sql`, now serializes all hosted
