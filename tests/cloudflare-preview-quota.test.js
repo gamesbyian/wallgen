@@ -1,4 +1,5 @@
 import test from 'node:test';
+import {readFileSync} from 'node:fs';
 import assert from 'node:assert/strict';
 import {
   previewConfigured, consumePreviewAllowance, purgeOldPreviewUsage,
@@ -30,7 +31,7 @@ function quotaEnv() {
     }
   };
 }
-test('hosted previews remain unadvertised without all required operator gates', () => {
+test('hosted previews remain inoperable without all required operator gates', () => {
   const env = quotaEnv();
   assert.equal(previewConfigured(env), true);
   for (const missing of ['BROWSER','RECIPES','RENDER_SOURCE_URL']) {
@@ -74,4 +75,15 @@ test('default launch allowance remains within conservative free-tier launch cap'
     assert.equal(q.remaining,6-i);
   }
   await assert.rejects(()=>consumePreviewAllowance(env,'github:owner',{now:when}),/allowance/);
+});
+
+test('stable MCP preview tool discovery never bypasses paid browser activation gate',()=>{
+  const source=readFileSync(new URL('../cloudflare/mcp/src/index.js',import.meta.url),'utf8');
+  assert.match(source,/mcp\.registerTool\('roygbiv_preview'/);
+  assert.doesNotMatch(source,/if\s*\(previewConfigured\(env\)\)\s*\{\s*mcp\.registerTool\('roygbiv_preview'/);
+  const registration=source.indexOf("mcp.registerTool('roygbiv_preview'");
+  const invocationGate=source.indexOf("if(!previewConfigured(env))throw Error(",registration);
+  const userLookup=source.indexOf('await loadRecipe(env,userId,id)',registration);
+  const lease=source.indexOf('await acquirePreviewLease(env)',registration);
+  assert.ok(registration>=0&&invocationGate>registration&&userLookup>invocationGate&&lease>userLookup);
 });
