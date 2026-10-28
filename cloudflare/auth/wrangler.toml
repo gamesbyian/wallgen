@@ -10,3 +10,9 @@ id = "REPLACE_WITH_OAUTH_KV_NAMESPACE_ID"
 
 # /authorize intentionally returns 503 until upstream sign-in, CSRF,
 # allowlist and per-client consent flows are configured and proven.
+
+[vars]
+AUTH_SERVER_URL = "https://REPLACE-AUTH-HOST"
+MCP_SERVER_URL = "https://REPLACE-MCP-HOST/mcp"
+GITHUB_CLIENT_ID = "REPLACE_GITHUB_CLIENT_ID"
+# GITHUB_CLIENT_SECRET and ALLOWED_GITHUB_IDS must be stored as Wrangler secrets.
