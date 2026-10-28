@@ -43,3 +43,12 @@ test('manual release audits and uploads the actual Wrangler bundle instead of em
   assert.match(workflow,/compression-level: 0/);
   assert.doesNotMatch(workflow,/^\s*path: artifacts\/roygbiv-hosted\//m);
 });
+
+test('public health route bypasses OAuth wrapper while MCP remains protected',()=>{
+  const worker=readFileSync(new URL('../cloudflare/mcp/src/index.js',import.meta.url),'utf8');
+  const position=worker.indexOf("if(request.method==='GET' && new URL(request.url).pathname==='/health')");
+  const oauth=worker.lastIndexOf('return oauthResource.fetch(request,env,ctx)');
+  assert.ok(position>0&&oauth>position);
+  assert.match(worker,/rendering:previewConfigured\(env\)\?'auth-required':'not-configured'/);
+  assert.match(worker,/new URL\(request.url\).pathname!==\s*'\/mcp'/);
+});

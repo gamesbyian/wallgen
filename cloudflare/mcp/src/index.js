@@ -132,7 +132,15 @@ const oauthResource = new OAuthResourceServer({
 });
 
 export default {
-  fetch(request,env,ctx){return oauthResource.fetch(request,env,ctx);},
+  fetch(request,env,ctx){
+    // OAuthResourceServer owns /mcp and its discovery paths, not this
+    // intentionally public and non-sensitive operational health endpoint.
+    // The OAuth wrapper returns 404 for /health without invoking its nested
+    // handler. Intercept that exact route before routing the rest to OAuth.
+    if(request.method==='GET' && new URL(request.url).pathname==='/health')
+      return app.fetch(request,env,ctx);
+    return oauthResource.fetch(request,env,ctx);
+  },
   async scheduled(event,env,ctx) {
     // Iterate in bounded batches only. Additional expired designs are picked
     // up by the next scheduled execution, never one unbounded invocation.
