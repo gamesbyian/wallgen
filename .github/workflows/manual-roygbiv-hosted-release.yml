@@ -71,12 +71,28 @@ jobs:
         run: |
           npx wrangler deploy --dry-run --config cloudflare/mcp/wrangler.release.generated.toml \
             --outdir artifacts/roygbiv-hosted
-      - name: Retain audited build files briefly for troubleshooting
+      - name: Verify the actual bundled Worker, not an empty README directory
+        run: |
+          set -euo pipefail
+          FILE=cloudflare/mcp/artifacts/roygbiv-hosted/index.js
+          test -s "$FILE" || { echo 'Wrangler produced no deployable Worker module' >&2; exit 1; }
+          node --input-type=module -e "
+            import fs from 'node:fs';
+            const b=fs.statSync(process.argv[1]).size;
+            if (b < 200000 || b > 8000000) throw Error('Unexpected Worker size '+b);
+            console.log('Audited Worker bytes:',b);
+          " "$FILE"
+          (cd cloudflare/mcp/artifacts/roygbiv-hosted && sha256sum index.js > SHA256SUMS)
+      - name: Retain actual audited Worker module briefly
         uses: actions/upload-artifact@v4
         with:
           name: roygbiv-hosted-mcp-bundle-${{ github.sha }}
-          path: artifacts/roygbiv-hosted/
+          path: |
+            cloudflare/mcp/artifacts/roygbiv-hosted/index.js
+            cloudflare/mcp/artifacts/roygbiv-hosted/SHA256SUMS
           retention-days: 3
+          compression-level: 0
+          if-no-files-found: error
       - name: Require separately configured short-lived Cloudflare deployment credentials
         if: ${{ inputs.mode != 'package' }}
         env:

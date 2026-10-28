@@ -1,2 +1,3 @@
 node_modules/
 cloudflare/mcp/wrangler.release.generated.toml
+cloudflare/mcp/artifacts/
