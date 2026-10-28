@@ -71,8 +71,8 @@ const app={
 };
 const oauthResource = new OAuthResourceServer({
   resourceMetadata:{
-    resource:'https://REPLACE-MCP-HOST/mcp',
-    authorization_servers:['https://REPLACE-AUTH-HOST']
+    resource:workerEnv.MCP_SERVER_URL || 'https://invalid.example/mcp',
+    authorization_servers:[workerEnv.AUTH_SERVER_URL || 'https://invalid.example']
   },
   requiredScopes:['wallpaper:read'],
   validateToken:env=>env.AUTH_SERVER.validateToken,
