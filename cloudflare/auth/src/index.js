@@ -70,6 +70,8 @@ async function authorize(request,workerEnv){
   return new Response(null,{status:302,headers});
 }
 async function callback(request,workerEnv){
+  let stage='finish-upstream';
+  try {
   const oauth=authorizationServer.getOAuthApi(workerEnv);
   const {request:original,data,headers}=await oauth.finishUpstream(request);
   const query=new URL(request.url).searchParams;
@@ -80,6 +82,7 @@ async function callback(request,workerEnv){
   }
   const code=query.get('code');
   if(!code || typeof data?.verifier!=='string')return new Response('Invalid sign-in callback',{status:400});
+  stage='github-token-exchange';
   const tokenResponse=await fetch('https://github.com/login/oauth/access_token',{
     method:'POST',headers:{Accept:'application/json','Content-Type':'application/x-www-form-urlencoded'},
     body:new URLSearchParams({client_id:workerEnv.GITHUB_CLIENT_ID,
@@ -89,6 +92,7 @@ async function callback(request,workerEnv){
   const token=await tokenResponse.json();
   if(typeof token.access_token!=='string'||!token.access_token)
     return new Response('GitHub did not issue a token',{status:403});
+  stage='github-identity';
   const userResponse=await fetch('https://api.github.com/user',{
     headers:{Authorization:'Bearer '+token.access_token,
       'User-Agent':'roygbiv-mcp-auth','Accept':'application/vnd.github+json'}
@@ -101,6 +105,7 @@ async function callback(request,workerEnv){
     });
   // Store no upstream GitHub access token. Only the stable verified numeric ID
   // travels in resource-bound ROYGBIV token props.
+  stage='complete-authorization';
   const {redirectTo}=await oauth.completeAuthorization({
     request:original,userId:'github:'+user.id,metadata:{},
     scope:original.scope,props:{userId:'github:'+user.id}
@@ -108,6 +113,16 @@ async function callback(request,workerEnv){
   headers.set('Location',redirectTo);
   headers.set('Cache-Control','no-store');
   return new Response(null,{status:302,headers});
+  } catch (error) {
+    // Never serialize upstream tokens, URLs with OAuth codes, or stack traces
+    // into an HTTP response. Stage names alone are safe and sufficient for
+    // field diagnosis; exception details remain in restricted Worker logs.
+    console.error('roygbiv-oauth-callback-failed', stage, error?.name || 'Error');
+    return new Response('ROYGBIV OAuth callback failed at '+stage+'. Please retry authorization.',{
+      status:502,
+      headers:{'Content-Type':'text/plain; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}
+    });
+  }
 }
 export class AuthServer extends WorkerEntrypoint {
   async fetch(request) {
