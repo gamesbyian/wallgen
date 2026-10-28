@@ -10,7 +10,8 @@ function quotaEnv() {
   const rows = new Map();
   const sqlSeen = [];
   return { rows, sqlSeen, BROWSER: {}, HOSTED_PREVIEW_ENABLED: 'true',
-    RENDER_SOURCE_URL: 'https://example.org/roygbiv/', RECIPES: {
+    RENDER_SOURCE_URL: 'https://example.org/roygbiv/',
+    RENDER_EXPECTED_SHA: '0123456789abcdef0123456789abcdef01234567', RECIPES: {
       prepare(sql) {
         sqlSeen.push(sql);
         let args;
@@ -36,6 +37,9 @@ test('hosted previews remain unadvertised without all required operator gates', 
     assert.equal(previewConfigured({ ...env, [missing]: undefined }), false);
   }
   assert.equal(previewConfigured({ ...env, HOSTED_PREVIEW_ENABLED: 'false' }), false);
+  for (const sha of ['', 'main', '0123456', 'G'.repeat(40), '0'.repeat(41)]) {
+    assert.equal(previewConfigured({ ...env, RENDER_EXPECTED_SHA: sha }), false);
+  }
   for (const bad of ['http://example.org/roygbiv/','https://example.org/roygbiv',
     'https://example.org/roygbiv/?copy=1','https://REPLACE-SOURCE/']) {
     assert.equal(previewConfigured({ ...env, RENDER_SOURCE_URL: bad }), false);
