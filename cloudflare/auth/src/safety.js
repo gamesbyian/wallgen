@@ -14,6 +14,6 @@ export function configurationReady(env) {
   return Boolean(env.AUTH_SERVER_URL?.startsWith('https://') &&
     env.MCP_SERVER_URL?.startsWith('https://') &&
     !env.AUTH_SERVER_URL.includes('REPLACE') && !env.MCP_SERVER_URL.includes('REPLACE') &&
-    env.GITHUB_CLIENT_ID && env.GITHUB_CLIENT_SECRET &&
+    env.GITHUB_CLIENT_ID && !env.GITHUB_CLIENT_ID.includes('REPLACE') && env.GITHUB_CLIENT_SECRET &&
     env.ALLOWED_GITHUB_IDS?.trim());
 }
