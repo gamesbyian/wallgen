@@ -25,7 +25,8 @@ export async function renderPreview(env,recipe,width=300) {
   const root=sourceUrl(env);
   const browser=await launch(env.BROWSER);
   try {
-    const page=await browser.newPage({viewport:{width:800,height:900}});
+    const context=await browser.newContext({viewport:{width:800,height:900},serviceWorkers:'block'});
+    const page=await context.newPage();
     // Recipe data enters the page context. Restrict its requests to GETs
     // for the configured static renderer origin, with no query or hash.
     const rootOrigin=new URL(root).origin;
@@ -43,15 +44,15 @@ export async function renderPreview(env,recipe,width=300) {
     let timeout;
     const encoded=await Promise.race([
       page.evaluate(async ({recipe,width,height,root})=>{
-      // These paths are same-origin relative to the configured trusted
-      // deployment, never caller-generated import specifiers.
-      const {drawWallpaper}=await import(new URL('src/renderer.js',root).href);
-      const {prepareTypefaces}=await import(new URL('src/typography-fonts.js',root).href);
-      await prepareTypefaces(recipe);
-      const canvas=document.createElement('canvas');
-      canvas.width=width;canvas.height=height;
-      drawWallpaper(canvas,recipe);
-      return canvas.toDataURL('image/png').split(',')[1];
+        // These paths are same-origin relative to our trusted root,
+        // never caller-generated import specifiers.
+        const {drawWallpaper}=await import(new URL('src/renderer.js',root).href);
+        const {prepareTypefaces}=await import(new URL('src/typography-fonts.js',root).href);
+        await prepareTypefaces(recipe);
+        const canvas=document.createElement('canvas');
+        canvas.width=width;canvas.height=height;
+        drawWallpaper(canvas,recipe);
+        return canvas.toDataURL('image/png').split(',')[1];
       },{recipe,width,height,root}),
       new Promise((_,reject)=>{timeout=setTimeout(()=>reject(
         Error('Hosted preview exceeded its 45-second rendering limit')),45000);})
