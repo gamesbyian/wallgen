@@ -16,7 +16,11 @@ export function previewConfigured(env) {
   } catch { return false; }
 }
 
-export const MAX_PREVIEWS_PER_UTC_DAY = 16;
+// Conservative no-surprise default: Browser Run Free currently includes
+// 10 browser minutes/day per Cloudflare. Six bounded preview launches leave
+// headroom for startup and other Browser Run jobs, but usage in this Worker
+// is not a complete accounting of account-wide browser time.
+export const MAX_PREVIEWS_PER_UTC_DAY = 6;
 
 /**
  * Charge a bounded daily allowance *before* launching a paid browser.
