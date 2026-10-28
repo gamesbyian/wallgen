@@ -22,8 +22,11 @@ jobs:
       - run: npx wrangler deploy --config cloudflare/mcp/wrangler.toml --dry-run --outdir /tmp/mcpbuild
       - run: |
           mkdir -p cloudflare/staging-bundles
-          split -b 450000 -d -a 2 /tmp/mcpbuild/index.js cloudflare/staging-bundles/mcp-part-\n          sha256sum /tmp/mcpbuild/index.js > cloudflare/staging-bundles/mcp.sha256
-          cat cloudflare/staging-bundles/mcp-part-* > /tmp/rebuilt-mcp.js\n          node --check /tmp/rebuilt-mcp.js\n          sha256sum /tmp/rebuilt-mcp.js
+          split -b 450000 -d -a 2 /tmp/mcpbuild/index.js cloudflare/staging-bundles/mcp-part-
+          sha256sum /tmp/mcpbuild/index.js > cloudflare/staging-bundles/mcp.sha256
+          cat cloudflare/staging-bundles/mcp-part-* > /tmp/rebuilt-mcp.js
+          node --check /tmp/rebuilt-mcp.js
+          sha256sum /tmp/rebuilt-mcp.js
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add cloudflare/staging-bundles/mcp-part-* cloudflare/staging-bundles/mcp.sha256
