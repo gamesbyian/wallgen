@@ -62,3 +62,26 @@ export function pointerAngularDelta(start,current,pivot){
   const b=Math.atan2(current.y-pivot.y,current.x-pivot.x)*180/Math.PI;
   return shortestAngularDifference(a,b);
 }
+
+/** Incremental, screen-space object rotation.
+ * The first pointer sample anchors the handle without ever teleporting
+ * an object's rotation to the finger's absolute bearing. A finger crossing
+ * the pivot's central dead zone disarms angle tracking until it leaves,
+ * preventing near-zero-radius `atan2` noise from producing giant spins.
+ */
+export function beginPointerRotation({value,pivot,point,minRadius=24}){
+  if(!finite(value)||!pivot||!point||
+    ![pivot.x,pivot.y,point.x,point.y,minRadius].every(finite)||
+    minRadius<0)throw new TypeError('Screen-space rotation needs finite geometry');
+  const radius=Math.hypot(point.x-pivot.x,point.y-pivot.y);
+  return {raw:value,value,pivot,last:radius>=minRadius?{...point}:null,minRadius};
+}
+export function advancePointerRotation(state,point){
+  if(!state||!point||![point.x,point.y].every(finite))return state;
+  const radius=Math.hypot(point.x-state.pivot.x,point.y-state.pivot.y);
+  if(radius<state.minRadius)return {...state,last:null};
+  if(!state.last)return {...state,last:{...point}};
+  const delta=pointerAngularDelta(state.last,point,state.pivot);
+  const raw=state.raw+delta;
+  return {...state,raw,value:raw,last:{...point}};
+}
