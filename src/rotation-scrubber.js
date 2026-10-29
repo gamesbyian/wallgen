@@ -131,7 +131,10 @@ export function installRotationScrubbers({form,onBegin,onPreview,onCommit,onCanc
     if(active)close();
     const spec=ROTATION_FIELD_SPECS[field.name];
     if(!spec)return;
-    active={field,trigger,spec};
+    active={field,trigger,spec,
+      category:document.querySelector('.settings-tab[aria-selected="true"]')?.dataset.tab,
+      tool:document.querySelector('.editor-tool-chooser [data-editor-tool][aria-pressed="true"]')?.dataset.editorTool
+    };
     shade.hidden=false;
     heading.textContent='Rotate · '+name(field.name);
     entry.min=String(spec.min);
@@ -235,7 +238,13 @@ export function installRotationScrubbers({form,onBegin,onPreview,onCommit,onCanc
     else if(active&&!gesture)syncReadout(read());
   }
   document.addEventListener('roygbiv-controls-synced',sync);
-  document.addEventListener('editor-tool-changed',()=>{if(active)close();});
+  // The editor re-emits its selection on every recipe sync, even when it is
+  // the SAME tool. Never cancel pointer capture on those redundant events.
+  document.addEventListener('editor-tool-changed',event=>{
+    if(!active)return;
+    if(event.detail?.category!==active.category||event.detail?.tool!==active.tool)
+      close();
+  });
   sync();
   return {close,sync,get active(){return Boolean(active);}};
 }
