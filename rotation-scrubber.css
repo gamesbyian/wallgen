@@ -110,3 +110,15 @@
 .rotation-scrub-panel .rotation-scrub-hint,
 .rotation-scrub-panel .rotation-scrub-settings,
 .rotation-scrub-panel .rotation-scrub-pad{color:inherit}
+
+/* Use the very same accessible shared rotation dialog for individual
+   canonical text-object rotation and text-shadow direction. Source range
+   fields remain in-place and active; no shadow control when shadow is Off. */
+.text-overlay-editor .text-precision-rotate{
+  display:block;min-height:44px;min-width:44px;width:100%;max-width:100%;
+  padding:6px 7px;margin-top:4px;
+  border:1px solid var(--line,#777);border-radius:8px;
+  background:var(--surface,#202027);color:inherit;
+  font:inherit;font-size:12px;font-weight:700;
+}
+.text-overlay-editor .text-precision-rotate:disabled{opacity:.5;cursor:not-allowed}
