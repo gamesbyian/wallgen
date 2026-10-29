@@ -10,7 +10,7 @@
 .rotation-scrub-panel{
   width:min(100%,520px);max-height:75dvh;overflow:auto;
   display:grid;gap:8px;
-  background:var(--surface,#202027);color:var(--text,#f8f8fa);
+  background:var(--surface,#202027);color:inherit;
   border:1px solid var(--border,#737380);border-radius:18px;
   padding:12px;box-sizing:border-box;
   box-shadow:0 12px 40px rgba(0,0,0,.5);
@@ -102,3 +102,11 @@
 @media(prefers-reduced-motion:reduce){
   .rotation-scrub-panel,.rotation-scrub-pad{transition:none!important;animation:none!important}
 }
+
+/* Dialog is attached to <body>, so inherit the actual theme's foreground.
+   --surface switches to near-white in Cream; no invented --text variable. */
+.rotation-scrub-panel .rotation-scrub-readout,
+.rotation-scrub-panel .rotation-scrub-header,
+.rotation-scrub-panel .rotation-scrub-hint,
+.rotation-scrub-panel .rotation-scrub-settings,
+.rotation-scrub-panel .rotation-scrub-pad{color:inherit}
