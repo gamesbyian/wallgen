@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   ROTATION_FIELD_SPECS,canonicalAngle,magneticAngle,
   beginRotationDrag,advanceRotationDrag,shortestAngularDifference,pointerAngularDelta,
+  beginPointerRotation,advancePointerRotation,
 } from '../src/rotation-gesture.js';
 
 test('pointerdown and vertical-only mode changes never alter rotation',()=>{
@@ -53,4 +54,34 @@ test('scrub can cross a seam or multiple revolutions without reversing',()=>{
   assert.equal(canonicalAngle(s.value,ROTATION_FIELD_SPECS.textureRotation),159.9);
   assert.equal(pointerAngularDelta({x:0,y:1},{x:0,y:-1},{x:0,y:0}),-180);
   assert.equal(pointerAngularDelta({x:-1,y:.01},{x:-1,y:-.01},{x:0,y:0})>0,true);
+});
+
+test('object grip starts at authored orientation and crosses the seam continuously',()=>{
+  const pivot={x:100,y:100};
+  let s=beginPointerRotation({value:170,pivot,point:{x:0,y:100}});
+  assert.equal(s.raw,170,'off-centre pointerdown must not rotate');
+  s=advancePointerRotation(s,{x:0,y:101});
+  assert.ok(s.raw<170&&s.raw>169,'small counterclockwise motion should be small');
+  const before=s.raw;
+  s=advancePointerRotation(s,{x:100,y:200});
+  assert.ok(s.raw<before-70,'rotating past a quadrant must accumulate');
+  // Incremental path may travel beyond a full revolution in a single gesture.
+  let long=beginPointerRotation({value:0,pivot:{x:0,y:0},point:{x:40,y:0}});
+  for(let cycle=0;cycle<2;cycle++)
+    for(let i=1;i<=24;i++){
+      const a=(cycle*24+i)*Math.PI/12;
+      long=advancePointerRotation(long,{x:40*Math.cos(a),y:40*Math.sin(a)});
+    }
+  assert.ok(Math.abs(long.raw-720)<.001,'two revolutions should accumulate to 720°');
+});
+test('near-pivot dead zone drops ambiguous bearings and rearms without jump',()=>{
+  let s=beginPointerRotation({value:27,pivot:{x:0,y:0},
+    point:{x:50,y:0},minRadius:24});
+  s=advancePointerRotation(s,{x:1,y:1});
+  assert.equal(s.last,null);
+  assert.equal(s.raw,27);
+  s=advancePointerRotation(s,{x:-45,y:0});
+  assert.equal(s.raw,27,'leaving dead zone only rearms tracking');
+  s=advancePointerRotation(s,{x:0,y:-45});
+  assert.ok(s.raw>100&&s.raw<130,'motion after rearming should rotate');
 });
