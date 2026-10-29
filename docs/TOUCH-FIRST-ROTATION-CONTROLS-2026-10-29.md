@@ -50,3 +50,15 @@ Code ownership: pure `src/rotation-gesture.js`, UI `src/rotation-scrubber.js` an
 **R2 text on-canvas grip follow-up:** [PR #856](https://github.com/gamesbyian/wallgen/pull/856) uses the same pure rotation module for screen-space incremental bearing deltas. Prevents off-centre start jumps, continues through 360-degree seams/multiple revolutions, ignores ambiguous movement near the pivot, then resumes without a jump. Existing separate move/scale paths, locked text, focus and one-Undo remain intact. [Actual 412x892 Chromium/worker proof #40959229346](https://github.com/gamesbyian/wallgen/actions/runs/40959229346) passed 44px grips, rotate/scale/Undo/keyboard, no browser exceptions and exact worker/reference image pixels. Only software emulation; physical Android touch remains untested. Source scope does not yet upgrade scattered/imported shape handles.
 
 **Outstanding:** R3 instrument actual pointer-to-preview latency and dropped frames for expensive material rotations before adding caches; targeted performance work only after a reproduced bottleneck. R4 evaluate whether desktop Material's old six-key row should be collapsed after human use. Further adapt the common control to text overlay rotation/shadow and other explicit semantic fields, without treating geometric sweeps as cyclic angles. Do not claim the universal rotation migration is fully complete.
+
+## R3 baseline measurement, Linux Chromium 412x892 (29 October 2026)
+
+A deliberately reproducible 40-step drag at approximately 16 ms per input showed that only the last preview was normally delivered, even though the numerical angle control updates continuously. [Original untouched renderer run #40964233800](https://github.com/gamesbyian/wallgen/actions/runs/40964233800). These are NOT physical Pixel 6 Pro or repeat-sample statistical performance claims:
+
+| Design | Input events | Intermediate images presented | Final exact preview after last input |
+| --- | ---: | ---: | ---: |
+| Single-layer linen | 40 | 1 | ~917 ms |
+| Three material layers | 40 | 0 | ~1294 ms |
+| Complex loop path | 40 | 0 | ~808 ms |
+
+The first linen intermediate arrived about 3145 ms after the initial drag sample, and about 339 ms after its nearest preceding input. A single Linux runner pass cannot isolate total GPU/CPU variance, but the inability to display intermediate frames on 2 of 3 cases is reproducible by the attached `scripts/rotation-latency-browser.mjs`. The source pipeline is latest-only: pending interactive requests supersede in-flight frames before presentation. **Next falsifiable intervention:** accept a completed lower-resolution provisional frame only while it belongs to the SAME ongoing rotation gesture, and never after a commit, cancel, change of tool or other design. Continue rendering the newest exact canonical final image. Repeat the same benchmark and ensure Undo/export/reference parity and no stale cross-gesture leak.
