@@ -72,6 +72,29 @@ try{
    await shadowAngle.click();
    await exact.fill('359');await exact.press('Tab');
    assert.equal(current().textOverlays[0].shadowAngle,359);
+   await mkdir(join(root,'artifacts','precision-text'),{recursive:true});
+   await page.screenshot({path:join(root,'artifacts','precision-text',width+'-shadow-dialog.png')});
+   if(width===412){
+     await page.waitForFunction(()=>document.querySelector('#preview')?.dataset.renderPending==='false',
+       null,{timeout:30000});
+     const parity=await page.evaluate(async()=>{
+       const {decodeRecipe}=await import('/src/model.js');
+       const {drawWallpaper}=await import('/src/renderer.js');
+       const {exportWallpaperInWorker}=await import('/src/render-coordinator.js');
+       const recipe=decodeRecipe(new URL(location.href).searchParams.get('r'));
+       const make=()=>{const canvas=document.createElement('canvas');canvas.width=240;canvas.height=520;return canvas;};
+       const a=make(),b=make();
+       drawWallpaper(a,recipe);
+       const png=await exportWallpaperInWorker({recipe,width:240,height:520,timeoutMs:90000});
+       const bmp=await createImageBitmap(png);b.getContext('2d').drawImage(bmp,0,0);bmp.close();
+       const pixels=canvas=>canvas.getContext('2d',{willReadFrequently:true})
+         .getImageData(0,0,240,520).data;
+       const left=pixels(a),right=pixels(b);let diff=0;
+       for(let i=0;i<left.length;i++)if(left[i]!==right[i])diff++;
+       return diff;
+     });
+     assert.equal(parity,0,'Selected shadow direction must have exact worker/reference pixels');
+   }
    await page.locator('.rotation-scrub-close').click();
    await page.locator('#undo').click();
    assert.equal(current().textOverlays[0].shadowAngle??45,45,
