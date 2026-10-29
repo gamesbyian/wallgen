@@ -114,7 +114,11 @@ function startPreviewWorker(){
     onFrame:message=>{
       // The coordinator rejects obsolete revisions, but the underlying
       // recipe may also have changed through Undo or a cached nudge.
-      if(message.key!==artKey(current)){closeFrame(message);return;}
+      const sameLiveGesture=message.provisionalStale===true&&
+        rotationTransaction?.gesture===message.gesture;
+      if(message.key!==artKey(current)&&!sameLiveGesture){
+        closeFrame(message);return;
+      }
       if(message.quality==='interactive'){
         // A worker's reduced-quality frame already has its Photo finish.
         // Keep an active Before view untouched until the settled cached ink arrives.
@@ -159,7 +163,7 @@ let galleryRequestId = 0;
 let explorationRecipes = null; // Last contact sheet is retained across Saved visits.
 let favorites = readFavorites();
 const undoStack=[];
-let rotationTransaction=null,rotationScrubbers=null;
+let rotationTransaction=null,rotationScrubbers=null,rotationGestureCounter=0;
 const UNDO_LIMIT=80;
 let undoing=false;
 function updateUndoButton(){const button=document.getElementById('undo');button.disabled=undoStack.length===0;button.title=undoStack.length?`Undo (${undoStack.length} available)`:'Nothing to undo';}
@@ -718,7 +722,8 @@ function render(recipe,{scroll=false,bypassLocks=false,interactive=false,cause='
     const width=interactive?Math.max(160,Math.round(preview.width*scale)):preview.width;
     const height=interactive?Math.max(340,Math.round(preview.height*scale)):preview.height;
     if(previewPainted&&startPreviewWorker().request(current,key,width,height,
-      {quality:interactive?'interactive':'settled'})){
+      {quality:interactive?'interactive':'settled',
+        gesture:interactive?rotationTransaction?.gesture??null:null})){
       // Keep the last complete wallpaper visible while the newest request
       // renders, then settle at the exact screen resolution after dragging.
       preview.dataset.renderPending='true';
@@ -2246,7 +2251,8 @@ for(const button of document.querySelectorAll('[data-rotate-target]')){
 function beginRotationTransaction(field){
   flushQueuedControlUpdate();
   if(rotationTransaction||field.disabled||field.dataset.inactive==='true')return false;
-  rotationTransaction={key:field.name,before:current};
+  rotationTransaction={key:field.name,before:current,
+    gesture:'rotation-'+(++rotationGestureCounter)};
   return true;
 }
 function previewRotationTransaction(field,value){

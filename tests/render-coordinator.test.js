@@ -239,3 +239,64 @@ test('equivalent re-normalized recipe still presents its provisional frame befor
   assert.deepEqual(seen,['interactive','settled']);
   scheduler.dispose();
 });
+
+test('a continuous rotation can present a trailing low-quality frame before the latest',()=>{
+  const worker=new FakeWorker(),seen=[];
+  const scheduler=createPreviewCoordinator({canUseWorker:true,
+    workerFactory:()=>worker,onFrame:x=>seen.push(x)});
+  worker.emit(ready);
+  scheduler.request({textureRotation:10},'angle-10',180,390,
+    {quality:'interactive',gesture:'rotate-1'});
+  const old=worker.messages.at(-1);
+  scheduler.request({textureRotation:40},'angle-40',180,390,
+    {quality:'interactive',gesture:'rotate-1'});
+  scheduler.request({textureRotation:70},'angle-70',180,390,
+    {quality:'interactive',gesture:'rotate-1'});
+  const trailing={type:'frame',id:old.id,key:'angle-10',quality:'interactive',frame:bitmap()};
+  worker.emit(trailing);
+  assert.equal(seen.length,1);
+  assert.equal(seen[0].provisionalStale,true);
+  assert.equal(seen[0].gesture,'rotate-1');
+  assert.equal(seen[0].key,'angle-10');
+  assert.equal(trailing.frame.closed,false,'recipient owns displayed frame');
+  const newest=worker.messages.at(-1);
+  assert.equal(newest.key,'angle-70');
+  worker.emit({type:'frame',id:newest.id,key:newest.key,quality:'interactive',frame:bitmap()});
+  assert.equal(seen.at(-1).provisionalStale,undefined);
+  scheduler.dispose();
+});
+test('cross-gesture, stopped, and post-commit intermediate frames remain rejected',()=>{
+  for(const pending of [
+    {key:'new-gesture',options:{quality:'interactive',gesture:'rotate-2'}},
+    {key:'settled',options:{quality:'settled',gesture:'rotate-1'}},
+    {key:'non-rotation',options:{quality:'interactive'}},
+  ]){
+    const worker=new FakeWorker(),seen=[];
+    const scheduler=createPreviewCoordinator({canUseWorker:true,
+      workerFactory:()=>worker,onFrame:x=>seen.push(x)});
+    worker.emit(ready);
+    scheduler.request({textureRotation:10},'old-rotation',180,390,
+      {quality:'interactive',gesture:'rotate-1'});
+    const old=worker.messages.at(-1);
+    scheduler.request({textureRotation:50},pending.key,180,390,pending.options);
+    const trailing={type:'frame',id:old.id,key:'old-rotation',
+      quality:'interactive',frame:bitmap()};
+    worker.emit(trailing);
+    assert.equal(trailing.frame.closed,true,'stale bitmap must be released');
+    assert.deepEqual(seen,[],'stale preview cannot cross gesture boundaries');
+    scheduler.dispose();
+  }
+  const worker=new FakeWorker(),seen=[];
+  const scheduler=createPreviewCoordinator({canUseWorker:true,
+    workerFactory:()=>worker,onFrame:x=>seen.push(x)});
+  worker.emit(ready);
+  scheduler.request({textureRotation:10},'old',180,390,
+    {quality:'interactive',gesture:'rotate-1'});
+  const id=worker.messages.at(-1).id;
+  scheduler.invalidate();
+  const stale={type:'frame',id,key:'old',quality:'interactive',frame:bitmap()};
+  worker.emit(stale);
+  assert.equal(stale.frame.closed,true);
+  assert.deepEqual(seen,[]);
+  scheduler.dispose();
+});
