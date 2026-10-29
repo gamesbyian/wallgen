@@ -25,6 +25,24 @@ python3.13 -m unittest discover -s tests -p test_reconstruction_vtracer.py -v
 
 For trusted source SVGs from an already completed offline experiment, omit the CLI and reuse `--existing-svg-dir /trusted/vtracer-dir`. Input PNGs are **read-only**, identified by SHA-256, limited to at most 50 sources and ≤650,000 pixels each. The source and restored vector PNG are separate artifacts. XML shapes with external/embedded images, URL resources, DTD/ENTITY references and huge payloads are refused. This trusted reference utility is **not an arbitrary untrusted SVG opening service**. Metrics assume black input backgrounds (the R0 corpus uses black) and are not the canonical perceptual/winner score.
 
+## Additional trusted vectorizer comparison: native SVG primitives (29 October 2026)
+
+The original optional Python oracle rejected any SVG with no `<path>` elements. That excluded a fundamental feature of [Open Vectorizer](https://github.com/vardirhq/open-vectorizer): compact native `<circle>`, `<ellipse>`, and `<rect>` geometry that can explain source pixels with fewer editable elements. The same existing **offline** comparator now accepts those SVG primitives, plus SVG lines/polygons, and reports both `svgPathCount` and `svgPrimitiveCount`/`svgShapeElementCount`/`svgShapeCounts`. Original VTracer path measurements remain separately reported and comparable.
+
+Use the tool already in the repository, not a new rendering stack. Pin/build the external vectorizer locally, produce trusted `CASE.svg` for each original `CASE.no-metadata.png` under a separate, owner-controlled directory, then run:
+
+```bash
+python3 scripts/benchmark-reconstruction-vtracer.py \
+  --source-dir artifacts/reconstruction-r0 \
+  --out-dir artifacts/open-vectorizer-evidence \
+  --existing-svg-dir artifacts/open-vectorizer-svg \
+  --oracle-name "Open Vectorizer pinned local"
+```
+
+The comparator reads and hashes each original file, loads **no recipe truth sidecar**, separately rasterizes each trusted SVG with CairoSVG, emits PNGs and mean RGB/bright foreground overlap, and writes distinct vectorizer provenance. SVG is restricted to flat, self-contained safe geometry; it rejects active content, external links, URL dependencies, DTD/entities, and unsupported SVG graph elements. **Do not pass arbitrary web SVGs or untrusted downloads directly to CairoSVG**. Independently verify the actual Open Vectorizer commit and licence before running it. **Verified fixture gate:** [one-shot Python 3.13 GitHub Actions #40952861778](https://github.com/gamesbyian/wallgen/actions/runs/40952861778) passed all **5/5** tests using pinned Numpy/Pillow/CairoSVG, including a true zero-path three-primitive SVG, unchanged PNG bytes, old path comparator and unsafe SVG refusal. The test generated independent primitive overlap 0.946061 and RGB error 0.0038998 on authored geometry. The one-shot workflow was retired before integration; this is deterministic fixture acceptance, not actual ROYGBIV Hairpin/Loop improvement. This enhancement has only unit/fixture-level evidence until genuine production source vs two-oracle PNGs are generated and inspected. It is not a vector-to-canonical scene import, new PWA dependency, or demonstrated fidelity improvement.
+
+A full trial should compare selected R0 Hairpin/Loop, independent circles and compound-hole sources against the already completed pinned VTracer baseline. Evaluate shape element counts **and actual viewed native artwork**, topology, per-hue colour fidelity, source immutability, and whether any proposed primitive can survive the canonical geometry owner and Undo/export contract. Stop if only SVG syntax changes without a meaningful editable-recipe advantage.
+
 ## Real current production Chromium evaluation
 
 The actual one-shot [GitHub Actions run #40167184750](https://github.com/gamesbyian/wallgen/actions/runs/40167184750) successfully installed pinned VTracer with checksum verification, generated **six genuine 480×1040 current `render-headless` PNG artworks** and metadata-free pixel-preserving twins, vectorized all six through the independent Rust CLI, and rasterized the resulting SVG using **CairoSVG 2.8.2 on the same dimensions**. Original and vector-raster artwork PNGs were downloaded, inspected and compared directly side by side, including bent Hairpin U, Loop ring/crossover, hue-clipped Jagged endings, compound shape holes and layered circles. Source-original recipes were never supplied to the vector oracle.
