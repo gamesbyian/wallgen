@@ -3,6 +3,7 @@ import {textInkSelectionReach} from './text-overlays.js';
 import {textOverlayPaintsInk} from './text-rainbow-shaping.js';
 import {typefaceCssFamily} from './typography-fonts.js';
 import {compactTextGripLayout} from './text-grip-layout.js';
+import {beginPointerRotation,advancePointerRotation} from './rotation-gesture.js';
 import {designPointFromPointer,dragTextOverlay,
   dragTextTransform,transformTextOverlay,measuredTextBounds,
   measureCanvasText,textGestureOwnsCurrentRecipe} from './text-direct-geometry.js';
@@ -203,7 +204,15 @@ export function installTextCanvasMover({
       const start=designPointFromPointer(event,canvas);
       if(!start)return;
       event.preventDefault();event.stopPropagation();
-      transformDrag={mode,pointerId:event.pointerId,id,start,
+      const bounds=canvas.getBoundingClientRect();
+      const pivot={x:bounds.left+bounds.width*item.x/100,
+        y:bounds.top+bounds.height*item.y/100};
+      // Rotate by actual CSS pixels around the rendered object, rather than
+      // nominal 600x1300 art units. Offset handle grabs have zero initial jump.
+      const rotateState=mode==='rotate'?beginPointerRotation({
+        value:item.rotation||0,pivot,
+        point:{x:event.clientX,y:event.clientY},minRadius:24}):null;
+      transformDrag={mode,pointerId:event.pointerId,id,start,rotateState,
         original:getRecipe(),next:getRecipe()};
       try{handle.setPointerCapture(event.pointerId);}catch{}
     });
@@ -211,9 +220,16 @@ export function installTextCanvasMover({
       const state=transformDrag;
       if(!state||state.pointerId!==event.pointerId||state.mode!==mode)return;
       event.preventDefault();event.stopPropagation();
-      const point=designPointFromPointer(event,canvas);
-      if(!point)return;
-      state.next=dragTextTransform(state.original,state.id,mode,state.start,point);
+      if(mode==='rotate'){
+        state.rotateState=advancePointerRotation(state.rotateState,
+          {x:event.clientX,y:event.clientY});
+        state.next=transformTextOverlay(state.original,state.id,
+          {rotation:state.rotateState.raw});
+      }else{
+        const point=designPointFromPointer(event,canvas);
+        if(!point)return;
+        state.next=dragTextTransform(state.original,state.id,mode,state.start,point);
+      }
       redraw();
     });
     handle.addEventListener('pointerup',event=>{
