@@ -1,0 +1,27 @@
+name: One-shot text rotation grip acceptance
+on:
+  push:
+    branches:
+      - feature/text-canvas-rotation-stability-20261029
+permissions:
+  contents: read
+jobs:
+  proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install temporary local browser dependency
+        run: npm install --no-save --no-package-lock --ignore-scripts --no-audit --no-fund
+      - name: Actual text rotation, scale, Undo and worker pixel parity
+        run: node scripts/text-transform-browser-proof.mjs
+      - name: Retain inspected wallpaper
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: text-rotation-viewport-proof
+          path: output/text-transform/*.png
+          if-no-files-found: ignore
