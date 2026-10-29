@@ -38,7 +38,8 @@ try{
    await page.waitForSelector('[data-rotation-precision="textureRotation"]',{state:'attached'});
    await page.locator('#mobileEdit').click();
    await page.locator('#tab-material').click();
-   await page.locator('[data-editor-tool="finish1"]').click();
+   await page.locator('.editor-tool-chooser [data-editor-tool="layer1"]').click();
+   await page.locator('.editor-tool-card[data-editor-tool="layer1"] .material-inspector-tab').filter({hasText:'Finish'}).click();
    const trigger=page.locator('[data-rotation-precision="textureRotation"]');
    assert.equal(await trigger.isVisible(),true);
    const tbox=await trigger.boundingBox();
@@ -66,7 +67,7 @@ try{
    await page.locator('.rotation-scrub-close').click();
    await page.locator('#undo').click();
    assert.equal(current().textureRotation,17.5,'Numeric edit did not create one Undo');
-   const lock=page.locator('.editor-tool-card[data-editor-tool="finish1"] .texture-rotation-field .setting-lock');
+   const lock=page.locator('.editor-tool-card[data-editor-tool="layer1"] .texture-rotation-field .setting-lock');
    await lock.click();
    assert.equal(await trigger.isDisabled(),true,'Locked field kept its precision entry');
    await lock.click();
