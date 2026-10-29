@@ -1,0 +1,23 @@
+name: Vector oracle safety acceptance (one-shot)
+on:
+  pull_request:
+    paths:
+      - scripts/benchmark-reconstruction-vtracer.py
+      - tests/test_reconstruction_vtracer.py
+      - .github/workflows/one-shot-vector-oracle-primitives.yml
+permissions:
+  contents: read
+jobs:
+  python-vector-oracle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: docs/reconstruction-vtracer-requirements.txt
+      - run: python -m pip install -r docs/reconstruction-vtracer-requirements.txt
+      - name: Test primitives, old paths, and decoded XML URL refusal
+        run: python -m unittest discover -s tests -p test_reconstruction_vtracer.py -v
