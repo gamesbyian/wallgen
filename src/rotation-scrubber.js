@@ -57,7 +57,17 @@ export function installRotationScrubbers({form,onBegin,onPreview,onCommit,onCanc
   let active=null,gesture=null,raf=0,pending=null,previewed=false;
   const read=()=>Number(active?.field?.value);
   const isAvailable=field=>!!field&&!field.disabled&&field.dataset.inactive!=='true';
-  const name=key=>key.replace(/([a-z])([A-Z])/g,'$1 $2').replace(/(\d)$/,' layer $1');
+  const names=Object.freeze({
+    textureRotation:'Texture layer 1',
+    textureRotation2:'Texture layer 2',
+    textureRotation3:'Texture layer 3',
+    diagonalRotation:'Diagonal orientation',
+    rayRotation:'Ray orientation',
+    rayTwist:'Ray twist',
+    hairpinAngle:'Hairpin turn',
+    loopSweep:'Loop sweep',
+  });
+  const name=key=>names[key]||key;
   const fmt=(value,spec)=>Number(value).toFixed(spec.step<1?1:0)+'°';
   function syncReadout(value){
     if(!active)return;
