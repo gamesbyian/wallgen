@@ -8,6 +8,7 @@ const app=readFileSync(new URL('../src/app.js',import.meta.url),'utf8');
 const readme=readFileSync(new URL('../README.md',import.meta.url),'utf8');
 const license=readFileSync(new URL('../LICENSE',import.meta.url),'utf8');
 const logo=readFileSync(new URL('../assets/roygbiv-logo.svg',import.meta.url),'utf8');
+const rainbowTitle=readFileSync(new URL('../assets/roygbiv-title-rainbow.svg',import.meta.url),'utf8');
 
 test('categories are generated from a canonical schema with seven accessible tabs',()=>{
   const schema=readFileSync(new URL('../src/editor-schema.js',import.meta.url),'utf8');
@@ -55,7 +56,8 @@ test('canvas lighting retains source controls and is documented under Light',()=
   }
   assert.match(colour,/Light &amp; shadow/);
   assert.match(css,/\.lighting-subsection/);
-  assert.match(readme,/Ambient light & shade \(Light → Lighting\)/);
+  assert.match(readme,/ambient lighting/i);
+  assert.match(readme,/Layout, Path, Stripes, Details, Colour, Texture and Light/);
 });
 
 test('public domain licence and documentation acknowledge ChatGPT and unrestricted use',()=>{
@@ -64,9 +66,10 @@ test('public domain licence and documentation acknowledge ChatGPT and unrestrict
   assert.match(license,/with or without attribution/i);
   assert.match(license,/The Unlicense/i);
   assert.match(license,/THE SOFTWARE IS PROVIDED "AS IS"/);
-  assert.match(readme,/made by its project creator with \*\*ChatGPT\*\*/i);
-  assert.match(readme,/\*\*claims no ownership/i);
-  assert.match(readme,/\*\*for any purpose\*\*/i);
+  assert.match(readme,/ROYGBIV was created with ChatGPT/);
+  assert.match(readme,/anyone, for any purpose/);
+  assert.match(readme,/without requesting attribution/);
+  assert.match(readme,/\[The Unlicense\]\(LICENSE\)/);
 });
 
 test('setting locks use the approved distinct SVG assets and preserve their action semantics',()=>{
@@ -81,7 +84,8 @@ test('texture relief and ambient canvas illumination are described accurately',(
   assert.match(html,/Gently roughen|Distort the actual stripe contours/);
   assert.match(html,/>Shading<\/span>/);
   assert.match(html,/Stripe shadows, outlines and glow are in Details/);
-  assert.match(readme,/Canvas ambience does not cast shadows from the stripe silhouettes/);
+  assert.match(readme,/ambient lighting/i);
+  assert.match(readme,/independently controlled stripe shadows/i);
 });
 
 test('Primes only has no lock and shares the full settings width with Randomize',()=>{
@@ -133,7 +137,14 @@ test('R.O.Y.G.B.I.V. branding is consistent in public-facing output',()=>{
   assert.match(html,/<footer><span>R\.O\.Y\.G\.B\.I\.V\. \/ V1\.0/);
   assert.match(html,/name="software"[^>]*value="R\.O\.Y\.G\.B\.I\.V\. · Made with ChatGPT"/);
   assert.match(app,/roygbiv-\$\{safeFilename\(current\.seed\)\}/);
-  assert.match(readme,/# R\.O\.Y\.G\.B\.I\.V\./);
+  assert.ok(readme.includes('<h1 align="center"><img src="assets/roygbiv-title-rainbow.svg" alt="R.O.Y.G.B.I.V."'));
+  // The README headline is now a centered SVG, not a literal Markdown heading.
+  // Verify every letter AND its period share the intended rainbow pigment.
+  const expected=[['R','#ff474e'],['O','#ff9b39'],['Y','#e5b900'],
+    ['G','#239b55'],['B','#338be8'],['I','#6359e5'],['V','#bb64ed']];
+  for(const [letter,colour] of expected)
+    assert.ok(rainbowTitle.includes('<tspan fill="'+colour+'">'+letter+'.</tspan>'));
+  assert.equal((rainbowTitle.match(/<tspan fill=/g)||[]).length,7);
   assert.match(readme,/Rainbow-Only\. You Generate Based on Individual Variables\./);
   assert.match(license,/R\.O\.Y\.G\.B\.I\.V\. — PUBLIC-DOMAIN DEDICATION/);
 });
