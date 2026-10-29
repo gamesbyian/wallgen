@@ -66,6 +66,8 @@ export function installRotationScrubbers({form,onBegin,onPreview,onCommit,onCanc
     rayTwist:'Ray twist',
     hairpinAngle:'Hairpin turn',
     loopSweep:'Loop sweep',
+    textRotation:'Selected text object',
+    textShadowAngle:'Selected text shadow',
   });
   const name=key=>names[key]||key;
   const fmt=(value,spec)=>Number(value).toFixed(spec.step<1?1:0)+'°';
@@ -266,5 +268,7 @@ export function installRotationScrubbers({form,onBegin,onPreview,onCommit,onCanc
       close();
   });
   sync();
-  return {close,sync,get active(){return Boolean(active);}};
+  return {close,sync,
+    openExternal:(field,trigger)=>open(field,trigger),
+    get active(){return Boolean(active);}};
 }

@@ -85,3 +85,13 @@ test('near-pivot dead zone drops ambiguous bearings and rearms without jump',()=
   s=advancePointerRotation(s,{x:0,y:-45});
   assert.ok(s.raw>100&&s.raw<130,'motion after rearming should rotate');
 });
+
+test('selected text body angle clamps but shadow direction wraps at 360',()=>{
+  const {textRotation,textShadowAngle}=ROTATION_FIELD_SPECS;
+  assert.equal(canonicalAngle(190,textRotation),180);
+  assert.equal(canonicalAngle(-191,textRotation),-180);
+  assert.equal(canonicalAngle(359,textShadowAngle),359);
+  assert.equal(canonicalAngle(360,textShadowAngle),0);
+  assert.equal(canonicalAngle(-1,textShadowAngle),359);
+  assert.equal(canonicalAngle(450,ROTATION_FIELD_SPECS.loopSweep),450);
+});

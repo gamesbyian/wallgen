@@ -9,6 +9,8 @@ export const ROTATION_FIELD_SPECS=Object.freeze({
   rayTwist:{min:-180,max:180,wrap:false,step:1},
   hairpinAngle:{min:60,max:180,wrap:false,step:1},
   loopSweep:{min:240,max:450,wrap:false,step:1},
+  textRotation:{min:-180,max:180,wrap:false,step:1},
+  textShadowAngle:{min:0,max:360,wrap:true,step:1},
 });
 const finite=n=>Number.isFinite(n);
 export const shortestAngularDifference=(from,to)=>{
