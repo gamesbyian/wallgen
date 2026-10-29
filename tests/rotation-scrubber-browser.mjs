@@ -42,20 +42,20 @@ try{
    await page.locator('.editor-tool-card[data-editor-tool="layer1"] .material-inspector-tab').filter({hasText:'Finish'}).click();
    const trigger=page.locator('[data-rotation-precision="textureRotation"]');
    assert.equal(await trigger.isVisible(),true);
+   const rail=page.locator('.editor-tool-card[data-editor-tool="layer1"] .texture-rotation-field .rotation-controls');
+   assert.equal(await rail.isVisible(),false,'Old six-button micro-rail must be collapsed on phones');
    const tbox=await trigger.boundingBox();
    assert.ok(tbox.height>=44&&tbox.width>=44,'Precision entry lacks 44px target at '+width);
    await trigger.click();
    const dialog=page.locator('.rotation-scrub-panel');
    assert.equal(await dialog.isVisible(),true);
    assert.equal(current().textureRotation,17.5,'Opening changed the source recipe');
-   await page.evaluate(()=>{
-     window.__rotationEvents=[];
-     for(const kind of ['pointerdown','pointermove','pointerup','pointercancel','lostpointercapture']){
-       document.querySelector('.rotation-scrub-pad').addEventListener(kind,e=>{
-         window.__rotationEvents.push({kind,x:e.clientX,y:e.clientY,id:e.pointerId,primary:e.isPrimary});
-       },true);
-     }
-   });
+   for(const button of await dialog.locator('.rotation-scrub-actions button').all()){
+     const box=await button.boundingBox();
+     assert.ok(box.width>=44&&box.height>=44,'Dialog shortcut is below 44px');
+   }
+   mkdirSync(join(root,'artifacts','rotation-touch'),{recursive:true});
+   await page.screenshot({path:join(root,'artifacts','rotation-touch',width+'-dialog.png'),fullPage:false});
    const pad=page.locator('.rotation-scrub-pad');
    const box=await pad.boundingBox();
    const x=box.x+box.width/2,y=box.y+box.height/2;
@@ -64,12 +64,7 @@ try{
    await page.mouse.move(x,y);await page.mouse.down();
    await page.mouse.move(x+65,y,{steps:8});await page.mouse.up();
    const changed=current().textureRotation;
-   console.log('ROTATION_DEBUG',JSON.stringify(await page.evaluate(()=>({
-     source:document.querySelector('input[name="textureRotation"]')?.value,
-     url:location.href.slice(0,120),
-     readout:document.querySelector('.rotation-scrub-readout')?.textContent,
-     events:window.__rotationEvents
-   }))));
+
    assert.ok(changed>17.5&&changed<90,'Horizontal drag did not update texture rotation: '+changed);
    await page.locator('.rotation-scrub-close').click();
    await page.locator('#undo').click();
@@ -86,7 +81,6 @@ try{
    assert.equal(await trigger.isDisabled(),true,'Locked field kept its precision entry');
    await lock.click();
    assert.equal(await trigger.isEnabled(),true);
-   mkdirSync(join(root,'artifacts','rotation-touch'),{recursive:true});
    await page.screenshot({path:join(root,'artifacts','rotation-touch',width+'.png'),fullPage:false});
    await page.close();
  }
