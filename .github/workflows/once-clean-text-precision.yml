@@ -1,0 +1,27 @@
+name: One-shot clean text precision acceptance
+on:
+  push:
+    branches:
+      - feature/precision-text-overlay-angles-clean-20261029
+permissions:
+  contents: read
+jobs:
+  proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser client without lockfile
+        run: npm install --no-save --no-package-lock --ignore-scripts --no-audit --no-fund
+      - name: Real Chromium 320 and 412px text angle and shadow gestures
+        run: CHROME_BIN=/usr/bin/google-chrome node tests/text-precision-rotation-browser.mjs
+      - name: Attach phone view evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: clean-text-precision-browser
+          path: artifacts/precision-text/*
+          if-no-files-found: ignore
