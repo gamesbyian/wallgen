@@ -41,7 +41,7 @@
   min-height:44px;min-width:44px;border-radius:9px;padding:4px 9px;
   font:inherit;font-size:13px;cursor:pointer;
 }
-.rotation-scrub-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.rotation-scrub-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
 .rotation-scrub-presets{display:flex;flex-wrap:wrap;gap:5px}
 .rotation-scrub-presets button{flex:1 1 50px}
 .rotation-precision-launch{
@@ -59,10 +59,33 @@
   grid-column:1!important;grid-row:1!important;
   align-self:center!important;width:100%!important;
 }
-@media(max-width:399px){
+/* On phones the single large control replaces the formerly crowded six-
+   control rail; every old action remains accessible inside the dialog.
+   Original field and shortcut DOM nodes remain mounted for form/Undo parity. */
+@media(max-width:790px){
   body.mobile-studio.mobile-edit-open .sidebar .editor-tool-card
     .texture-rotation-field:has(>.rotation-precision-launch){
-    grid-template-rows:44px 31px!important;min-height:78px!important;
+    grid-template-columns:minmax(0,1fr) 44px 44px!important;
+    grid-template-rows:44px!important;
+    min-height:44px!important;gap:4px!important;
+  }
+  body.mobile-studio.mobile-edit-open .sidebar .editor-tool-card
+    .texture-rotation-field:has(>.rotation-precision-launch) .rotation-controls{
+    display:none!important;
+  }
+  body.mobile-studio.mobile-edit-open .sidebar .editor-tool-card
+    .texture-rotation-field>.rotation-precision-launch{
+    grid-column:1!important;grid-row:1!important;min-height:44px!important;
+  }
+  body.mobile-studio.mobile-edit-open .sidebar .editor-tool-card
+    .texture-rotation-field>.editor-setting-die{
+    grid-column:2!important;grid-row:1!important;
+    min-width:44px!important;min-height:44px!important;
+  }
+  body.mobile-studio.mobile-edit-open .sidebar .editor-tool-card
+    .texture-rotation-field>.setting-lock{
+    grid-column:3!important;grid-row:1!important;
+    min-width:44px!important;min-height:44px!important;
   }
 }
 @media(max-width:340px){
