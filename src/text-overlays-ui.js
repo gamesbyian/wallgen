@@ -417,5 +417,5 @@ export function installTextOverlayTool({
     sync();
   });
   sync();
-  return {sync,endCanvasMove:()=>mover.endCanvasMove()};
+  return {sync,selectedId:()=>selectedId,endCanvasMove:()=>mover.endCanvasMove()};
 }
