@@ -18,3 +18,35 @@
 5. If traces overfragment the Loop or discard black channels, record that as evidence **against** adoption.
 
 **Cost control:** one job with hard timeout, one temporary manually scoped workflow deleted after experiment, small short-retention artifact, no ongoing CI, no hosted Cloudflare Browser Run.
+
+## Actual execution and five-artwork results · 29 October 2026 UTC
+
+**Status: genuine completed, visually inspected offline evidence.** [GitHub Actions run #40955345542](https://github.com/gamesbyian/wallgen/actions/runs/40955345542) **PASS** built exact pinned Open Vectorizer source, checksum-verified VTracer, rendered five real 480×1040 current-production `drawWallpaper` PNGs and metadata-free twins, vectorized the same input pixels through each external CLI, rasterized their SVGs using the already existing CairoSVG comparator, asserted 5/5 exact matching original source SHA-256 across both comparisons, and preserved all five PNG/SVG triplets plus JSON scores in [artifact #12933422147](https://github.com/gamesbyian/wallgen/actions/runs/40955345542/artifacts/12933422147) (3-day retention). No source original recipe sidecar entered either vectorizer.
+
+| Actual current-renderer source | Open RGB MAE/255 | VTracer RGB MAE/255 | Open bright ink IoU | VTracer bright ink IoU | Open shapes | VTracer shapes | Open primitive geometry |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| 05 Hairpin | **0.003022** | 0.012025 | **0.98027** | 0.95870 | **210** | 17 | 1 ellipse, 209 paths |
+| 06 Loop | **0.001461** | 0.013846 | **0.99670** | 0.97165 | 106 | 107 | 1 circle, 105 paths |
+| 11 scattered circles | **0.000254** | 0.002308 | **0.99861** | 0.98950 | **8** | 9 | **7 circles, 1 path** |
+| 13 hole + detached shape | **0.000164** | 0.000612 | **0.99257** | 0.97870 | **4** | 4 | 2 rectangles, 2 paths |
+| 22 reversed overlapping circles | **0.000420** | 0.002239 | **0.99798** | 0.99148 | **8** | 8 | 1 circle, 7 paths |
+
+*Method:* error is mean absolute difference across all source RGB channels at 480×1040, scaled by 255, after a black-backed CairoSVG reconstruction; bright foreground IoU uses a max-RGB brightness threshold of 50. These are not the separate ROYGBIV weighted 96×208 canonical candidate scores or per-hue/semantic topology metrics. Both comparators use the same independent renderer, resolution and original bytes. The 5/5 result supports these exact generated flat-art inputs, not arbitrary photographs, gradients, owner-provided real source imagery or changed physical-device performance.
+
+### Direct optical inspection of actual downloaded images
+
+The actual Actions ZIP was downloaded and the **full five triptychs were opened visually** at matched display scale. For the Hairpin, a further native source-pixel crop around the inner red turn was examined. This is independent assistant optical inspection, not human owner acceptance.
+
+- **Hairpin:** Open Vectorizer retains the outer contour and coloured channels more closely at the pixel level, but it visibly adds small dark pixel speckles/steps along the right inner red stroke and near the U-turn. VTracer paints that turn with fewer, smoother broad contours but has greater source mismatch in channel edges. **210 Open shapes vs 17 VTracer shapes** rules out converting the Open result directly into a useful user-editable Hairpin. The source raster itself has faint antialias/crossover texture around the red point, so identifying these speckles does not imply a recoverable original author curve.
+- **Loop:** Open Vectorizer very closely reproduces visible ring placement, colour bands and black gaps at this scale; the triptych shows no obvious gross extra islands. Its **106 shapes** reflect observed visible fragments/occlusion, not recovered single-Loop procedural semantics, while VTracer has 107. Invisible crossing/painter precedence remains unobservable from the raster.
+- **Seven separate circles:** Seven Open SVG `<circle>` primitives plus one residual path recover an elegant, compact editable *appearance*. VTracer uses nine paths. Because ROYGBIV already renders true canonical circles and can infer them in source settings, this is a useful **independent primitive-detection oracle**, not evidence a new circle renderer/import schema is necessary.
+- **Hole + island:** Both reference results visually preserve the large square black hole and detached red island. Open produces two rectangles/two paths with substantially lower RGB error. Correct visible negative space is evidence, but no unobserved original compound-ring provenance was recovered.
+- **Reversed overlapping circles:** Both preserve the visible sequence and seven colours. Open's lower pixel error is clear numerically; its single native circle plus seven paths does not establish the original invisible circle arcs or draw order, which should never be invented.
+
+### Engineering disposition
+
+**Accept the offline comparison research as completed. Do not vendor Open Vectorizer into the current PWA or introduce a second renderer/recipe dialect.** The trial falsifies any claim that VTracer necessarily provides a more accurate pixel-level vector reference for ROYGBIV flat art: Open Vectorizer wins this exact five-case RGB/bright-IoU comparison decisively. It also falsifies any simple claim that higher fidelity equals semantic editability: Hairpin has 210 Open source shapes for one intended path construction.
+
+The reusable insight is **subpixel edge coverage and explicit primitive hypothesis scoring**, not indiscriminate copying of SVG output into canonical `src/geometry-asset.js`. The next #557 work should begin only with a *specific reproduced visible failure* for which the established source-visible hue masks/EDT and current normalizer cannot already furnish an adequate answer. If it warrants an experiment, extract **only** a bounded source-shape hint or independently implement a narrow mathematical primitive with correct licensing, then require old/new original/current-painter PNG, genuine canonical edit/Undo, 6+10 budget, full-size export, out-of-sample negative source, and no Pixel claims. The current results alone justify **zero production dependency or new permanent CI**.
+
+**Evidence retention:** GitHub Actions artifact has 3-day retention; the source-pinned commands and full numerical/optical outcome are preserved in this document. A static five-case side-by-side contact sheet and Hairpin crop were generated locally during review, but not embedded into public git because binary research artifacts are not required by runtime and the original provenance lives in the Actions artifact. This trial's temporary workflow is retired before integration.
