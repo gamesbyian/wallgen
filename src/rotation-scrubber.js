@@ -87,7 +87,10 @@ export function installRotationScrubbers({form,onBegin,onPreview,onCommit,onCanc
   }
   function finishPointer({cancel=false}={}){
     if(!gesture||!active)return;
-    flush();
+    if(cancel){
+      if(raf){cancelAnimationFrame(raf);raf=0;}
+      pending=null;
+    }else flush();
     const value=canonicalAngle(gesture.state.value,active.spec);
     const before=gesture.before;
     const hasPreview=previewed;
@@ -161,6 +164,14 @@ export function installRotationScrubbers({form,onBegin,onPreview,onCommit,onCanc
     if(!gesture||event.pointerId!==gesture.pointerId)return;
     event.preventDefault();
     gesture.state=advanceRotationDrag(gesture.state,{x:event.clientX,y:event.clientY});
+    if(!active.spec.wrap){
+      // Avoid latent overshoot: reversing at a bounded sweep or turn limit
+      // must immediately move the control back inside the legal interval.
+      gesture.state.raw=Math.max(active.spec.min,
+        Math.min(active.spec.max,gesture.state.raw));
+      gesture.state.value=Math.max(active.spec.min,
+        Math.min(active.spec.max,gesture.state.value));
+    }
     const value=canonicalAngle(gesture.state.value,active.spec);
     syncReadout(value);
     if(value!==read())schedule(value);
