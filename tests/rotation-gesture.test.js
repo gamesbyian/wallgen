@@ -95,3 +95,13 @@ test('selected text body angle clamps but shadow direction wraps at 360',()=>{
   assert.equal(canonicalAngle(-1,textShadowAngle),359);
   assert.equal(canonicalAngle(450,ROTATION_FIELD_SPECS.loopSweep),450);
 });
+
+test('regional embroidery direction clamps to signed 0.1° without angle wrap',()=>{
+  const spec=ROTATION_FIELD_SPECS.embroideryDirection;
+  assert.equal(canonicalAngle(37.54,spec),37.5);
+  assert.equal(canonicalAngle(37.56,spec),37.6);
+  assert.equal(canonicalAngle(-181,spec),-180);
+  assert.equal(canonicalAngle(181,spec),180);
+  assert.equal(canonicalAngle(180,spec),180);
+  assert.equal(canonicalAngle(450,ROTATION_FIELD_SPECS.loopSweep),450);
+});

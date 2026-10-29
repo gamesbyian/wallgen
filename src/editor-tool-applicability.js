@@ -22,6 +22,10 @@ export function toolAppliesToScene(entry,{structure='paths',regionMode='voronoi'
     if(entry.id==='dividers')return structure!=='paths';
   }
   if(entry.category==='layout')return entry.id==='structure-mode'||structure==='paths';
-  if(entry.category==='material'&&entry.id==='surface')return structure==='paths';
+  // Surface houses original source embroidery controls as well as path-only
+  // distortion/roughness. Regional stitches apply to Radial and Regions;
+  // hiding this entire tool made their angle inaccessible whenever enabled.
+  // Individual inapplicable source fields stay disabled by app.js instead.
+  if(entry.category==='material'&&entry.id==='surface')return true;
   return true;
 }

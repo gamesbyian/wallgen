@@ -30,3 +30,15 @@ test('next action does not change recipe automatically or create phantom fields'
   assert.doesNotMatch(file,/changeRecipe|createElement\('input'\)/);
   assert.match(main,/installDesignTypeNext\(\{form,tools,/);
 });
+
+test('Surface remains reachable when regional embroidery direction applies',()=>{
+  const surface=TOOL_LIST.find(tool=>tool.id==='surface'&&tool.category==='material');
+  assert.ok(surface,'Missing existing Surface tool');
+  for(const [structure,regionMode] of [
+    ['paths','voronoi'],['radial','voronoi'],
+    ['regions','organic'],['regions','nested'],['regions','scattered']
+  ]){
+    assert.equal(toolAppliesToScene(surface,{structure,regionMode}),true,
+      'Surface tool inaccessible for '+structure+'/'+regionMode);
+  }
+});

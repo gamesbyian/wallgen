@@ -2273,12 +2273,18 @@ function beginRotationTransaction(field){
   if(rotationTransaction||field.disabled||field.dataset.inactive==='true')return false;
   if(field.textItemId&&!current.textOverlays?.some(item=>item.id===field.textItemId))
     return false;
+  if(field.surfaceTreatmentId&&!current.surfaceTreatments?.some(item=>
+    item.id===field.surfaceTreatmentId&&item.enabled))return false;
   rotationTransaction={key:field.name,before:current,
     gesture:'rotation-'+(++rotationGestureCounter),
-    textItemId:field.textItemId||null,textProperty:field.textProperty||null};
+    textItemId:field.textItemId||null,textProperty:field.textProperty||null,
+    surfaceTreatmentId:field.surfaceTreatmentId||null};
   return true;
 }
 function recipeWithRotation(tx,value){
+  if(tx.surfaceTreatmentId)return {...current,
+    surfaceTreatments:(current.surfaceTreatments||[]).map(item=>
+      item.id===tx.surfaceTreatmentId?{...item,direction:value}:item)};
   if(!tx.textItemId)return {...current,[tx.key]:value};
   return {...current,textOverlays:(current.textOverlays||[]).map(item=>
     item.id===tx.textItemId?{...item,[tx.textProperty]:value}:item)};
@@ -2286,7 +2292,8 @@ function recipeWithRotation(tx,value){
 function previewRotationTransaction(field,value){
   const tx=rotationTransaction;
   if(!tx||tx.key!==field.name||field.disabled||
-    (tx.textItemId&&tx.textItemId!==field.textItemId))return;
+    (tx.textItemId&&tx.textItemId!==field.textItemId)||
+    (tx.surfaceTreatmentId&&tx.surfaceTreatmentId!==field.surfaceTreatmentId))return;
   render(recipeWithRotation(tx,value),{interactive:true,record:false,
     recordHistory:false,cause:'rotation_preview'});
   toControls(current);
@@ -2309,6 +2316,14 @@ function cancelRotationTransaction(field){
   const tx=rotationTransaction;
   if(!tx||tx.key!==field.name)return;
   rotationTransaction=null;
+  if(tx.surfaceTreatmentId){
+    if(sameRecipe(current,tx.before))return;
+    render({...current,surfaceTreatments:tx.before.surfaceTreatments},{record:false,
+      recordHistory:false,cause:'rotation_scrub_cancel'});
+    toControls(current);
+    document.dispatchEvent(new Event('roygbiv-controls-synced'));
+    return;
+  }
   if(tx.textItemId){
     if(sameRecipe(current,tx.before))return;
     render({...current,textOverlays:tx.before.textOverlays},{record:false,
@@ -2329,6 +2344,39 @@ rotationScrubbers=installRotationScrubbers({form,
   onCommit:commitRotationTransaction,
   onCancel:cancelRotationTransaction
 });
+// Regional thread direction is an editor-owned nested treatment, not a
+// top-level canonical field. Bind the same dialog to the real editor-stitches
+// treatment, preserving every other authored treatment and original input.
+const embroideryDirectionInput=form.elements.namedItem('embroideryDirection');
+const embroideryAngleButton=document.createElement('button');
+embroideryAngleButton.type='button';
+embroideryAngleButton.className='rotation-precision-launch embroidery-precision-angle';
+embroideryAngleButton.dataset.embroideryPrecision='direction';
+embroideryAngleButton.setAttribute('aria-haspopup','dialog');
+embroideryAngleButton.setAttribute('aria-label','Precisely rotate regional stitch direction');
+embroideryDirectionInput.parentElement.append(embroideryAngleButton);
+const editorThread=()=>current.surfaceTreatments?.find(item=>
+  item.id==='editor-stitches'&&item.enabled);
+const syncEmbroideryPrecision=()=>{
+  const thread=editorThread();
+  embroideryAngleButton.disabled=!thread||embroideryDirectionInput.disabled;
+  embroideryAngleButton.textContent='Rotate stitches '+Number(thread?.direction??38).toFixed(1)+'°';
+};
+embroideryAngleButton.addEventListener('click',()=>{
+  if(embroideryAngleButton.disabled)return;
+  const field={
+    name:'embroideryDirection',surfaceTreatmentId:'editor-stitches',dataset:{},
+    get disabled(){return !editorThread()||embroideryDirectionInput.disabled;},
+    get value(){return String(editorThread()?.direction??38);}
+  };
+  rotationScrubbers.openExternal(field,embroideryAngleButton);
+});
+document.addEventListener('roygbiv-controls-synced',syncEmbroideryPrecision);
+// Initial URL/recipe restore calls toControls directly, before the regular
+// changeRecipe event path. Opening Surface must refresh nested treatment state
+// even when no edit has yet occurred in this session.
+document.addEventListener('editor-tool-changed',syncEmbroideryPrecision);
+syncEmbroideryPrecision();
 document.getElementById('undo').addEventListener('click',undo);
 document.getElementById('download').addEventListener('click',downloadPNG);
 document.getElementById('copyRecipe').addEventListener('click',()=>{
