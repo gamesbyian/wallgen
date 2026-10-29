@@ -1,0 +1,112 @@
+/* Large touch-first rotation interaction. Existing source fields stay mounted. */
+.rotation-scrub-shade[hidden]{display:none!important}
+.rotation-scrub-shade{
+  position:fixed;inset:0;z-index:10050;
+  display:flex;align-items:flex-end;justify-content:center;
+  background:rgba(0,0,0,.4);
+  padding:12px max(12px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));
+  box-sizing:border-box;
+}
+.rotation-scrub-panel{
+  width:min(100%,520px);max-height:75dvh;overflow:auto;
+  display:grid;gap:8px;
+  background:var(--surface,#202027);color:inherit;
+  border:1px solid var(--border,#737380);border-radius:18px;
+  padding:12px;box-sizing:border-box;
+  box-shadow:0 12px 40px rgba(0,0,0,.5);
+}
+.rotation-scrub-header{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.rotation-scrub-header strong{font-size:15px}
+.rotation-scrub-readout{text-align:center;font-weight:800;font-size:27px;font-variant-numeric:tabular-nums}
+.rotation-scrub-pad{
+  min-height:74px;display:flex;align-items:center;justify-content:center;
+  position:relative;isolation:isolate;overflow:hidden;
+  border-radius:12px;border:2px solid currentColor;cursor:ew-resize;
+  touch-action:none;user-select:none;-webkit-user-select:none;
+  background:repeating-linear-gradient(90deg,transparent 0 13px,rgba(127,127,127,.24) 13px 14px),rgba(127,127,127,.09);
+  font-weight:700;letter-spacing:.02em;
+}
+.rotation-scrub-pad:focus-visible,.rotation-scrub-panel button:focus-visible,
+.rotation-scrub-panel select:focus-visible,.rotation-scrub-panel input:focus-visible,
+.rotation-precision-launch:focus-visible{outline:3px solid #f8d65a;outline-offset:2px}
+.rotation-scrub-pad span{pointer-events:none;padding:5px 8px;border-radius:6px;background:var(--surface,#202027)}
+.rotation-scrub-hint{font-size:11px;line-height:1.4;margin:0;text-align:center}
+.rotation-scrub-settings{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.rotation-scrub-settings label{display:grid;gap:4px;font-size:12px;font-weight:650}
+.rotation-scrub-settings input,.rotation-scrub-settings select{
+  width:100%;box-sizing:border-box;min-height:44px;padding:4px 9px;font:inherit;
+  border-radius:9px;border:1px solid currentColor;background:var(--surface,#202027);color:inherit
+}
+.rotation-scrub-close,.rotation-scrub-actions button,.rotation-scrub-presets button{
+  min-height:44px;min-width:44px;border-radius:9px;padding:4px 9px;
+  font:inherit;font-size:13px;cursor:pointer;
+}
+.rotation-scrub-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.rotation-scrub-presets{display:flex;flex-wrap:wrap;gap:5px}
+.rotation-scrub-presets button{flex:1 1 50px}
+.rotation-precision-launch{
+  box-sizing:border-box;min-height:44px;min-width:44px;
+  width:auto;max-width:100%;padding:4px 6px;
+  font-weight:750;font-size:12px;cursor:pointer;
+}
+.rotation-precision-launch:disabled{opacity:.4;cursor:not-allowed}
+/* Texture: replace the tiny noninteractive label with an accessible entry.
+   Preserve the original source 6-item shortcut rail and its event handlers. */
+.editor-tool-card .texture-rotation-field:has(>.rotation-precision-launch)>span{
+  display:none!important;
+}
+.editor-tool-card .texture-rotation-field>.rotation-precision-launch{
+  grid-column:1!important;grid-row:1!important;
+  align-self:center!important;width:100%!important;
+}
+/* On phones the single large control replaces the formerly crowded six-
+   control rail; every old action remains accessible inside the dialog.
+   Original field and shortcut DOM nodes remain mounted for form/Undo parity. */
+@media(max-width:790px){
+  body.mobile-studio.mobile-edit-open .sidebar .editor-tool-card
+    .texture-rotation-field:has(>.rotation-precision-launch){
+    grid-template-columns:minmax(0,1fr) 44px 44px!important;
+    grid-template-rows:44px!important;
+    min-height:44px!important;gap:4px!important;
+  }
+  body.mobile-studio.mobile-edit-open .sidebar .editor-tool-card
+    .texture-rotation-field:has(>.rotation-precision-launch) .rotation-controls{
+    display:none!important;
+  }
+  body.mobile-studio.mobile-edit-open .sidebar .editor-tool-card
+    .texture-rotation-field>.rotation-precision-launch{
+    grid-column:1!important;grid-row:1!important;min-height:44px!important;
+  }
+  body.mobile-studio.mobile-edit-open .sidebar .editor-tool-card
+    .texture-rotation-field>.editor-setting-die{
+    grid-column:2!important;grid-row:1!important;
+    min-width:44px!important;min-height:44px!important;
+  }
+  body.mobile-studio.mobile-edit-open .sidebar .editor-tool-card
+    .texture-rotation-field>.setting-lock{
+    grid-column:3!important;grid-row:1!important;
+    min-width:44px!important;min-height:44px!important;
+  }
+}
+@media(max-width:340px){
+  body.mobile-studio .sidebar .editor-tool-card .texture-rotation-field>.rotation-precision-launch{
+    font-size:10px;padding:2px!important;
+  }
+}
+/* Range-based angle values retain their own canonical sliders and input.
+   Make the precision entry a compact extra action, without hiding those. */
+.editor-tool-card .lockable-setting:not(.texture-rotation-field)>.rotation-precision-launch{
+  display:block;max-width:140px;align-self:flex-start;
+  margin:3px 0;
+}
+@media(prefers-reduced-motion:reduce){
+  .rotation-scrub-panel,.rotation-scrub-pad{transition:none!important;animation:none!important}
+}
+
+/* Dialog is attached to <body>, so inherit the actual theme's foreground.
+   --surface switches to near-white in Cream; no invented --text variable. */
+.rotation-scrub-panel .rotation-scrub-readout,
+.rotation-scrub-panel .rotation-scrub-header,
+.rotation-scrub-panel .rotation-scrub-hint,
+.rotation-scrub-panel .rotation-scrub-settings,
+.rotation-scrub-panel .rotation-scrub-pad{color:inherit}
