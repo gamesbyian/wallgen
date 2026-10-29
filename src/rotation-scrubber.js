@@ -95,7 +95,7 @@ export function installRotationScrubbers({form,onBegin,onPreview,onCommit,onCanc
     gesture=null;previewed=false;
     try{pad.releasePointerCapture(pointerId);}catch{}
     if(cancel||value===before){
-      if(hasPreview)onCancel(active.field);
+      onCancel(active.field);
       syncReadout(read());
       return;
     }
@@ -180,7 +180,7 @@ export function installRotationScrubbers({form,onBegin,onPreview,onCommit,onCanc
       event.key==='ArrowRight'||event.key==='ArrowUp'?1:0;
     if(!delta||!active)return;
     event.preventDefault();
-    apply(read()+delta*(event.shiftKey?.1:1));
+    apply(read()+delta*(event.shiftKey ? .1 : 1));
   });
   entry.addEventListener('change',()=>{
     if(!active)return;
