@@ -22,7 +22,9 @@ const server=createServer(async(req,res)=>{
 let browser;
 try{
   await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',resolve)});
-  browser=await chromium.launch({headless:true});
+  browser=await chromium.launch({headless:true,
+    ...(process.env.CHROME_BIN?{executablePath:process.env.CHROME_BIN}:{}),
+    args:process.env.CI?['--no-sandbox']:[]});
   const page=await browser.newPage({viewport:{width:412,height:892},deviceScaleFactor:1});
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto('http://127.0.0.1:'+server.address().port+'/',{waitUntil:'domcontentloaded'});
