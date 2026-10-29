@@ -44,9 +44,12 @@ export function installRotationScrubbers({form,onBegin,onPreview,onCommit,onCanc
   entryLabel.append(entry);
   settings.append(snapLabel,entryLabel);
   const buttons=create('div','rotation-scrub-actions');
+  const minus90=create('button',null,'−90°');
   const minus=create('button',null,'−1°');
   const plus=create('button',null,'+1°');
-  minus.type=plus.type='button';buttons.append(minus,plus);
+  const plus90=create('button',null,'+90°');
+  for(const b of [minus90,minus,plus,plus90])b.type='button';
+  buttons.append(minus90,minus,plus,plus90);
   const presets=create('div','rotation-scrub-presets');
   panel.append(header,readout,pad,hint,settings,buttons,presets);
   shade.append(panel);document.body.append(shade);
@@ -203,8 +206,10 @@ export function installRotationScrubbers({form,onBegin,onPreview,onCommit,onCanc
     }
     apply(Number(entry.value));
   });
+  minus90.addEventListener('click',()=>apply(read()-90));
   minus.addEventListener('click',()=>apply(read()-1));
   plus.addEventListener('click',()=>apply(read()+1));
+  plus90.addEventListener('click',()=>apply(read()+90));
   done.addEventListener('click',close);
   shade.addEventListener('pointerdown',event=>{if(event.target===shade)close();});
   panel.addEventListener('keydown',event=>{
@@ -226,14 +231,19 @@ export function installRotationScrubbers({form,onBegin,onPreview,onCommit,onCanc
     if(!host)continue;
     const launch=create('button','rotation-precision-launch','Rotate');
     launch.type='button';launch.dataset.rotationPrecision=key;
-    launch.setAttribute('aria-label','Open precise rotation for '+name(key));
+    launch.setAttribute('aria-label','Open precise angle adjustment for '+name(key));
     launch.setAttribute('aria-haspopup','dialog');
     launch.addEventListener('click',()=>open(field,launch));
     host.append(launch);
     triggers.push({field,launch});
   }
   function sync(){
-    for(const {field,launch} of triggers)launch.disabled=!isAvailable(field);
+    for(const {field,launch} of triggers){
+      launch.disabled=!isAvailable(field);
+      const spec=ROTATION_FIELD_SPECS[field.name];
+      const action=['hairpinAngle','loopSweep'].includes(field.name)?'Angle':'Rotate';
+      launch.textContent=action+' '+fmt(Number(field.value),spec);
+    }
     if(active&&!isAvailable(active.field))close();
     else if(active&&!gesture)syncReadout(read());
   }
