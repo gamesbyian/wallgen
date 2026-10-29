@@ -62,3 +62,15 @@ A deliberately reproducible 40-step drag at approximately 16 ms per input showed
 | Complex loop path | 40 | 0 | ~808 ms |
 
 The first linen intermediate arrived about 3145 ms after the initial drag sample, and about 339 ms after its nearest preceding input. A single Linux runner pass cannot isolate total GPU/CPU variance, but the inability to display intermediate frames on 2 of 3 cases is reproducible by the attached `scripts/rotation-latency-browser.mjs`. The source pipeline is latest-only: pending interactive requests supersede in-flight frames before presentation. **Next falsifiable intervention:** accept a completed lower-resolution provisional frame only while it belongs to the SAME ongoing rotation gesture, and never after a commit, cancel, change of tool or other design. Continue rendering the newest exact canonical final image. Repeat the same benchmark and ensure Undo/export/reference parity and no stale cross-gesture leak.
+
+## R3 measured intervention: live-gesture provisional frames (29 October 2026)
+
+[Repeat benchmark #40964997275](https://github.com/gamesbyian/wallgen/actions/runs/40964997275) from the same 40-input Chromium script, now with a strictly gesture-scoped provisional frame allowance:
+
+| Scenario | Before → after intermediate frames | First intermediate | Last input → settled, before → after |
+| --- | --- | --- | --- |
+| Single-layer linen | 1 → 9 | ~3145 → ~257 ms | ~917 → ~488 ms |
+| Three material layers | 0 → 5 | None → ~433 ms | ~1294 → ~1005 ms |
+| Complex loop path | 0 → 6 | None → ~321 ms | ~808 → ~512 ms |
+
+A completed **interactive-quality, low-resolution** frame may now be delivered while queued newer interactive rotation revisions have the **identical active gesture token**. The coordinating app checks the same live transaction before presenting a key-mismatched bitmap. No stale bitmap becomes authoritative cached composition, gallery art or native PNG. Existing exact settled composer remains unchanged. Separate node tests enforce expiry when gesture changes, settles, is invalidated or is not a rotation. No stale frame can be rendered after a completed/cancelled gesture or another design. Times are unpaired, single Linux CI runs; do not interpret them as guaranteed speedup, statistical significance or actual phone measurement. The measured benefit here is primarily increased visible intermediate feedback.
