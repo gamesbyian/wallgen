@@ -3,6 +3,7 @@ import { drawWallpaper, presentNudgedArtwork } from './renderer.js?v=20261024-te
 import {normalizePhotoLook,PHOTO_PRESETS} from './photo-look.js';
 import {photoPreviewRecipe} from './photo-preview-compare.js';
 import {createPreviewCoordinator,createThumbnailQueue,exportWallpaperInWorker,closeFrame} from './render-coordinator.js';
+import {installRotationScrubbers} from './rotation-scrubber.js';
 import { embedPngMetadata, extractPngRecipeWithProvenance, cleanMetadata, METADATA_FIELDS } from './png-metadata.js';
 import {inspectPngMigration,migratePngMetadataOnly,inspectPngRecipeArchive,archivePngRecipeRecords} from './png-recipe-migration.js';
 import { installDrawTool } from './draw-path-ui.js?v=20261018-extend1';
@@ -158,12 +159,13 @@ let galleryRequestId = 0;
 let explorationRecipes = null; // Last contact sheet is retained across Saved visits.
 let favorites = readFavorites();
 const undoStack=[];
+let rotationTransaction=null,rotationScrubbers=null;
 const UNDO_LIMIT=80;
 let undoing=false;
 function updateUndoButton(){const button=document.getElementById('undo');button.disabled=undoStack.length===0;button.title=undoStack.length?`Undo (${undoStack.length} available)`:'Nothing to undo';}
-function checkpoint(next){
+function checkpoint(next,{recordHistory=true}={}){
   const normalized=normalizeRecipe(next);
-  if(!undoing && !sameRecipe(current,normalized)){
+  if(recordHistory&&!undoing && !sameRecipe(current,normalized)){
     undoStack.push({...current});
     if(undoStack.length>UNDO_LIMIT)undoStack.shift();
   }
@@ -651,10 +653,10 @@ function syncURL() {
   } catch { /* Local file previews may prohibit History API. */ }
 }
 function titleCase(value){return value.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase());}
-function render(recipe,{scroll=false,bypassLocks=false,interactive=false,cause='edit',record=true}={}) {
+function render(recipe,{scroll=false,bypassLocks=false,interactive=false,cause='edit',record=true,recordHistory=true}={}) {
   const next=bypassLocks?normalizeRecipe(recipe):respectSettingLocks(current,recipe);
   const previous=current;
-  current=checkpoint(next);
+  current=checkpoint(next,{recordHistory});
   if(record)usageRecorder?.transition(previous,current,{cause,context:{
     category:document.querySelector('.settings-tab[aria-selected="true"]')?.dataset.tab||null
   }});
@@ -756,6 +758,9 @@ function render(recipe,{scroll=false,bypassLocks=false,interactive=false,cause='
   if(scroll) document.querySelector('.workspace-head').scrollIntoView({behavior:'smooth',block:'start'});
 }
 function changeRecipe(recipe,options={}){
+  // An unrelated command supersedes any transient rotation gesture. Its
+  // uncommitted preview is cancelled before that command reads the recipe.
+  if(rotationScrubbers?.active)rotationScrubbers.close();
   // An explicit operation must not be overwritten by an older slider timer.
   cancelQueuedControlUpdate();
   render(recipe,options);toControls(current);showResolvedSelections(currentScene);
@@ -2235,6 +2240,52 @@ for(const button of document.querySelectorAll('[data-rotate-target]')){
     changeRecipe(recipe);
   });
 }
+// A shared touch-first rotation dialog drives the ORIGINAL fields. Intermediate
+// interactive previews never checkpoint Undo; releasing one gesture records
+// the pre-gesture recipe exactly once and settles the canonical painter.
+function beginRotationTransaction(field){
+  flushQueuedControlUpdate();
+  if(rotationTransaction||field.disabled||field.dataset.inactive==='true')return false;
+  rotationTransaction={key:field.name,before:current};
+  return true;
+}
+function previewRotationTransaction(field,value){
+  const tx=rotationTransaction;
+  if(!tx||tx.key!==field.name||field.disabled)return;
+  render({...current,[tx.key]:value},{interactive:true,record:false,
+    recordHistory:false,cause:'rotation_preview'});
+  toControls(current);
+}
+function commitRotationTransaction(field,value){
+  const tx=rotationTransaction;
+  if(!tx||tx.key!==field.name)return;
+  rotationTransaction=null;
+  const next=normalizeRecipe({...current,[tx.key]:value});
+  if(!sameRecipe(tx.before,next)){
+    undoStack.push(tx.before);
+    if(undoStack.length>UNDO_LIMIT)undoStack.shift();
+    updateUndoButton();
+  }
+  render(next,{recordHistory:false,cause:'rotation_scrub_commit'});
+  toControls(current);
+  document.dispatchEvent(new Event('roygbiv-controls-synced'));
+}
+function cancelRotationTransaction(field){
+  const tx=rotationTransaction;
+  if(!tx||tx.key!==field.name)return;
+  rotationTransaction=null;
+  if(current[tx.key]===tx.before[tx.key])return;
+  render({...current,[tx.key]:tx.before[tx.key]},{record:false,
+    recordHistory:false,cause:'rotation_scrub_cancel'});
+  toControls(current);
+  document.dispatchEvent(new Event('roygbiv-controls-synced'));
+}
+rotationScrubbers=installRotationScrubbers({form,
+  onBegin:beginRotationTransaction,
+  onPreview:previewRotationTransaction,
+  onCommit:commitRotationTransaction,
+  onCancel:cancelRotationTransaction
+});
 document.getElementById('undo').addEventListener('click',undo);
 document.getElementById('download').addEventListener('click',downloadPNG);
 document.getElementById('copyRecipe').addEventListener('click',()=>{
