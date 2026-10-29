@@ -96,6 +96,29 @@ try{
    await page.locator('.rotation-scrub-close').click();
    await page.locator('#undo').click();
    assert.equal(current().textureRotation,17.5,'Numeric edit did not create one Undo');
+   // A genuine Chrome touch-event route, separate from the mouse-pointer proof.
+   await trigger.click();
+   await page.locator('.rotation-scrub-snap').selectOption('0');
+   const touchBox=await pad.boundingBox();
+   const touchX=touchBox.x+touchBox.width/2,touchY=touchBox.y+touchBox.height/2;
+   const cdp=await page.context().newCDPSession(page);
+   const fireTouch=(type,points)=>cdp.send('Input.dispatchTouchEvent',{
+     type,touchPoints:points.map(([x,y])=>({x,y}))
+   });
+   await fireTouch('touchStart',[[touchX,touchY]]);
+   await fireTouch('touchMove',[[touchX+22,touchY]]);
+   await fireTouch('touchMove',[[touchX+54,touchY]]);
+   await fireTouch('touchEnd',[]);
+   const touched=current().textureRotation;
+   assert.ok(touched>17.5&&touched<90,'Real touch did not commit rotation: '+touched);
+   await fireTouch('touchStart',[[touchX,touchY]]);
+   await fireTouch('touchMove',[[touchX+32,touchY]]);
+   await fireTouch('touchCancel',[]);
+   assert.equal(current().textureRotation,touched,
+     'Cancelled real touch must restore previous canonical angle');
+   await page.locator('.rotation-scrub-close').click();
+   await page.locator('#undo').click();
+   assert.equal(current().textureRotation,17.5,'Touch gesture must be one Undo');
    const lock=page.locator('.editor-tool-card[data-editor-tool="layer1"] .texture-rotation-field .setting-lock');
    await lock.click();
    assert.equal(await trigger.isDisabled(),true,'Locked field kept its precision entry');
