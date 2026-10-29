@@ -137,7 +137,7 @@ test('R.O.Y.G.B.I.V. branding is consistent in public-facing output',()=>{
   assert.match(html,/<footer><span>R\.O\.Y\.G\.B\.I\.V\. \/ V1\.0/);
   assert.match(html,/name="software"[^>]*value="R\.O\.Y\.G\.B\.I\.V\. · Made with ChatGPT"/);
   assert.match(app,/roygbiv-\$\{safeFilename\(current\.seed\)\}/);
-  assert.match(readme,/<h1 align="center"><img src="assets\\/roygbiv-title-rainbow\\.svg" alt="R\\.O\\.Y\\.G\\.B\\.I\\.V\\."/);
+  assert.ok(readme.includes('<h1 align="center"><img src="assets/roygbiv-title-rainbow.svg" alt="R.O.Y.G.B.I.V."'));
   // The README headline is now a centered SVG, not a literal Markdown heading.
   // Verify every letter AND its period share the intended rainbow pigment.
   const expected=[['R','#ff474e'],['O','#ff9b39'],['Y','#e5b900'],
