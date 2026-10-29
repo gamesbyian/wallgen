@@ -35,7 +35,7 @@ try{
      textureStrength:70,textureRotation:17.5});
    const current=()=>decodeRecipe(new URL(page.url()).searchParams.get('r'));
    await page.goto(base+'/?r='+encodeRecipe(initial),{waitUntil:'domcontentloaded'});
-   await page.waitForSelector('[data-rotation-precision="textureRotation"]');
+   await page.waitForSelector('[data-rotation-precision="textureRotation"]',{state:'attached'});
    await page.locator('#mobileEdit').click();
    await page.locator('#tab-material').click();
    await page.locator('[data-editor-tool="finish1"]').click();
