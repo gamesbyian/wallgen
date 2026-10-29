@@ -50,7 +50,8 @@ export function advanceRotationDrag(state,{x,y}){
   const raw=state.raw+delta*ROTATION_DRAG_GAINS[mode];
   // A vertical-only sensitivity switch must never change the angle.
   if(delta===0)return {...state,lastX:x,mode};
-  const result=magneticAngle(raw,{interval:state.snap,held:state.held});
+  const result=magneticAngle(raw,{interval:mode==='fine'?0:state.snap,
+    held:mode==='fine'?null:state.held});
   return {...state,raw,lastX:x,value:result.value,held:result.held,mode};
 }
 export function pointerAngularDelta(start,current,pivot){
