@@ -53,7 +53,7 @@ try{
    const modalContrast=async()=>page.evaluate(()=>{
      const panel=document.querySelector('.rotation-scrub-panel');
      const readout=panel.querySelector('.rotation-scrub-readout');
-     const rgb=value=>[...value.matchAll(/[\\d.]+/g)].slice(0,3).map(m=>Number(m[0]));
+     const rgb=value=>[...value.matchAll(/[\d.]+/g)].slice(0,3).map(m=>Number(m[0]));
      const luminance=value=>{
        const [r,g,b]=rgb(value).map(v=>v/255).map(v=>
          v<=.04045?v/12.92:((v+.055)/1.055)**2.4);
