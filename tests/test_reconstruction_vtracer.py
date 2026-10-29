@@ -97,7 +97,9 @@ class OfflineVectorTests(unittest.TestCase):
                          '<svg><foreignObject/></svg>',
                          '<svg><use href="#x"/></svg>',
                          '<svg><circle r="2" onload="evil()"/></svg>',
-                         '<svg><rect style="fill:url(https://x)"/></svg>']:
+                         '<svg><rect style="fill:url(https://x)"/></svg>',
+                         '<svg><rect style="fill:url&#40;https://x)"/></svg>',
+                         '<svg><circle fill="url&#40;https://x)" r="2"/></svg>']:
                 svg.write_text(data)
                 with self.assertRaises(ValueError):
                     oracle.raster_svg(svg,(80,160))
