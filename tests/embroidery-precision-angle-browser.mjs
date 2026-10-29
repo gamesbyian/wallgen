@@ -49,6 +49,13 @@ try{
    if(!(await thread.evaluate(el=>el.open)))await thread.locator('summary').click();
    const trigger=page.locator('[data-embroidery-precision="direction"]');
    assert.equal(await trigger.isVisible(),true);
+   console.log('EMBROIDERY_ROTATION_DEBUG',JSON.stringify(await page.evaluate(()=>({
+     recipe:decodeURIComponent(new URL(location.href).searchParams.get('r')||'').slice(0,350),
+     sourceDisabled:document.querySelector('[name="embroideryDirection"]')?.disabled,
+     buttonDisabled:document.querySelector('[data-embroidery-precision]')?.disabled,
+     sourceValue:document.querySelector('[name="embroideryDirection"]')?.value,
+     target:document.querySelector('[name="embroideryTarget"]')?.value
+   }))));
    assert.equal(await trigger.isEnabled(),true);
    const target=await trigger.boundingBox();
    assert.ok(target.width>=44&&target.height>=44,'Embroidery precision hitbox too small');
