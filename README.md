@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/roygbiv-logo.svg" alt="ROYGBIV rainbow phone icon" width="220">
+</p>
+
 # R.O.Y.G.B.I.V.
 
 **Agent/headless creation (experimental local MCP):** Agents with local MCP tooling can discover canonical controls, compose and vary editable designs, inspect real Chromium PNG previews and export native wallpapers. Run `npm install`, `npx playwright install chromium`, then `npm run mcp`; see [agent integration, limits and configuration](docs/AGENT-HEADLESS-INTEGRATION.md). This is local stdio, **not** a public ChatGPT/Claude cloud connector. The phone studio remains independent.
