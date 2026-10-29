@@ -111,23 +111,13 @@ try{
    await fireTouch('touchEnd',[]);
    const touched=current().textureRotation;
    assert.ok(touched>17.5&&touched<90,'Real touch did not commit rotation: '+touched);
-   await page.evaluate(()=>{
-     window.__cancelEvents=[];
-     const pad=document.querySelector('.rotation-scrub-pad');
-     for(const type of ['touchstart','touchmove','touchcancel','touchend',
-       'pointerdown','pointermove','pointercancel','pointerup','lostpointercapture']){
-       pad.addEventListener(type,e=>window.__cancelEvents.push(type),true);
-     }
-   });
    await fireTouch('touchStart',[[touchX,touchY]]);
    await fireTouch('touchMove',[[touchX+32,touchY]]);
    await fireTouch('touchCancel',[]);
-   await page.waitForTimeout(100);
-   console.log('TOUCH_CANCEL_EVENTS',JSON.stringify(await page.evaluate(()=>({
-     events:window.__cancelEvents,
-     readout:document.querySelector('.rotation-scrub-readout')?.textContent,
-     original:document.querySelector('input[name="textureRotation"]')?.value
-   }))));
+   await page.waitForFunction(expected=>{
+     const field=document.querySelector('input[name="textureRotation"]');
+     return field&&Math.abs(Number(field.value)-expected)<.01;
+   },touched,{timeout:3000});
    assert.equal(current().textureRotation,touched,
      'Cancelled real touch must restore previous canonical angle');
    await page.locator('.rotation-scrub-close').click();
