@@ -1431,7 +1431,27 @@ const nestedShapeControls=installNestedShapeControls({
   onNotice:showNotice
 });
 
-const textTool=installTextOverlayTool({getRecipe:()=>current,changeRecipe,onFontNotice:showNotice});
+const textTool=installTextOverlayTool({getRecipe:()=>current,changeRecipe,
+  onFontNotice:showNotice,
+  onPrecisionRotation:({key,id,trigger})=>{
+    if(!rotationScrubbers)return;
+    const field={
+      name:key==='rotation'?'textRotation':'textShadowAngle',
+      textItemId:id,textProperty:key,dataset:{},
+      get disabled(){
+        const item=current.textOverlays?.find(value=>value.id===id);
+        return !item||textTool.selectedId()!==id||
+          (key==='shadowAngle'&&!['black','white'].includes(item.shadow));
+      },
+      get value(){
+        const item=current.textOverlays?.find(value=>value.id===id);
+        return String(item?.[key]??(key==='shadowAngle'?45:0));
+      }
+    };
+    rotationScrubbers.openExternal(field,trigger);
+  },
+  onPrecisionRotationSync:()=>rotationScrubbers?.sync()
+});
 // Source-linked guidance lives beside the controls it describes. It does not
 // change the saved recipe, geometry or layout outside the relevant card.
 for(const [id,tool] of [['scatteredSourceNotice','regions'],
@@ -2246,13 +2266,22 @@ for(const button of document.querySelectorAll('[data-rotate-target]')){
 function beginRotationTransaction(field){
   flushQueuedControlUpdate();
   if(rotationTransaction||field.disabled||field.dataset.inactive==='true')return false;
-  rotationTransaction={key:field.name,before:current};
+  if(field.textItemId&&!current.textOverlays?.some(item=>item.id===field.textItemId))
+    return false;
+  rotationTransaction={key:field.name,before:current,
+    textItemId:field.textItemId||null,textProperty:field.textProperty||null};
   return true;
+}
+function recipeWithRotation(tx,value){
+  if(!tx.textItemId)return {...current,[tx.key]:value};
+  return {...current,textOverlays:(current.textOverlays||[]).map(item=>
+    item.id===tx.textItemId?{...item,[tx.textProperty]:value}:item)};
 }
 function previewRotationTransaction(field,value){
   const tx=rotationTransaction;
-  if(!tx||tx.key!==field.name||field.disabled)return;
-  render({...current,[tx.key]:value},{interactive:true,record:false,
+  if(!tx||tx.key!==field.name||field.disabled||
+    (tx.textItemId&&tx.textItemId!==field.textItemId))return;
+  render(recipeWithRotation(tx,value),{interactive:true,record:false,
     recordHistory:false,cause:'rotation_preview'});
   toControls(current);
 }
@@ -2260,20 +2289,28 @@ function commitRotationTransaction(field,value){
   const tx=rotationTransaction;
   if(!tx||tx.key!==field.name)return;
   rotationTransaction=null;
-  const next=normalizeRecipe({...current,[tx.key]:value});
+  const next=normalizeRecipe(recipeWithRotation(tx,value));
   if(!sameRecipe(tx.before,next)){
     undoStack.push(tx.before);
     if(undoStack.length>UNDO_LIMIT)undoStack.shift();
     updateUndoButton();
   }
   render(next,{recordHistory:false,cause:'rotation_scrub_commit'});
-  toControls(current);
+  toControls(current);textTool.sync();
   document.dispatchEvent(new Event('roygbiv-controls-synced'));
 }
 function cancelRotationTransaction(field){
   const tx=rotationTransaction;
   if(!tx||tx.key!==field.name)return;
   rotationTransaction=null;
+  if(tx.textItemId){
+    if(sameRecipe(current,tx.before))return;
+    render({...current,textOverlays:tx.before.textOverlays},{record:false,
+      recordHistory:false,cause:'rotation_scrub_cancel'});
+    toControls(current);textTool.sync();
+    document.dispatchEvent(new Event('roygbiv-controls-synced'));
+    return;
+  }
   if(current[tx.key]===tx.before[tx.key])return;
   render({...current,[tx.key]:tx.before[tx.key]},{record:false,
     recordHistory:false,cause:'rotation_scrub_cancel'});
