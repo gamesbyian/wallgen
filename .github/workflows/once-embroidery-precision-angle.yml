@@ -1,0 +1,27 @@
+name: One-shot regional embroidery rotation browser proof
+on:
+  push:
+    branches:
+      - feature/precision-embroidery-direction-20261029
+permissions:
+  contents: read
+jobs:
+  proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser client
+        run: npm install --no-save --no-package-lock --ignore-scripts --no-audit --no-fund
+      - name: Test 320px/412px actual embroidery interactions and pixels
+        run: CHROME_BIN=/usr/bin/google-chrome node tests/embroidery-precision-angle-browser.mjs
+      - name: Attach browser screenshots and result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: regional-angle-acceptance
+          path: artifacts/embroidery-angle/*
+          if-no-files-found: ignore
