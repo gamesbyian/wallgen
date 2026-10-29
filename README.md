@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="assets/roygbiv-logo.svg" alt="ROYGBIV rainbow phone icon" width="220">
+  <img src="assets/roygbiv-logo-transparent.svg" alt="ROYGBIV rainbow phone icon" width="220">
 </p>
 
-<h1 align="center">R.O.Y.G.B.I.V.</h1>
+<h1 align="center"><img src="assets/roygbiv-title-rainbow.svg" alt="R.O.Y.G.B.I.V." width="440"></h1>
 
 <p align="center"><strong>Seven colours. Countless ways to make them your own.</strong></p>
 
