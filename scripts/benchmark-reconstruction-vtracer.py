@@ -45,10 +45,17 @@ def inspect_svg_geometry(source: bytes) -> dict:
         tag = element.tag.rsplit('}', 1)[-1]
         if tag not in SAFE_TAGS:
             raise ValueError('Unsupported SVG element: ' + tag)
-        for name in element.attrib:
+        for name, value in element.attrib.items():
             local_name = name.rsplit('}', 1)[-1].lower()
             if local_name.startswith('on') or local_name in ('href', 'src'):
                 raise ValueError('Unsafe SVG attribute: ' + local_name)
+            # ElementTree expands numeric XML escapes before CairoSVG does.
+            # Inspect the decoded value, not only raw source bytes, to reject
+            # an obfuscated CSS url() / external dependency.
+            lowered = value.lower()
+            if any(token in lowered for token in
+                   ('url(', '@import', 'javascript:', 'data:')):
+                raise ValueError('Unsafe SVG attribute value: ' + local_name)
         if tag in counts:
             counts[tag] += 1
             if tag == 'path':
