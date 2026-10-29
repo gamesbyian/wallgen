@@ -1,0 +1,27 @@
+name: One-shot selected text angle browser acceptance
+on:
+  push:
+    branches:
+      - feature/precision-text-overlay-angles-20261029
+permissions:
+  contents: read
+jobs:
+  proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright client without lockfile
+        run: npm install --no-save --no-package-lock --ignore-scripts --no-audit --no-fund
+      - name: Real Chromium text object angle and shadow gestures
+        run: CHROME_BIN=/usr/bin/google-chrome node tests/text-precision-rotation-browser.mjs
+      - name: Attach phone evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: text-precision-rotation-phone
+          path: artifacts/precision-text/*
+          if-no-files-found: ignore
