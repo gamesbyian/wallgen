@@ -39,7 +39,7 @@ It can be a quick wallpaper generator or an obsessively adjustable little art st
 | **Colour & composition** | Work with classic, electric, pastel, jewel and muted rainbow palettes, reversible colour order, backgrounds and repeated rainbow groups. |
 | **Materials & texture** | Try paper, canvas, linen, denim, stone, stucco, wood, foil, vinyl and other layered finishes. |
 | **Thread & embroidery** | Give selected colours or entire compositions Satin, Soft Satin, Tatami, Running or Chain-stitch treatments. |
-| **Light & photography** | Experiment with ambient lighting, stripe shadows, glow, grain, halation, film looks and digital-camera-inspired finishing. |
+| **Light & photography** | Experiment with ambient lighting, independently controlled stripe shadows, glow, grain, halation, film looks and digital-camera-inspired finishing. |
 | **Precision tools** | Adjust individual shapes, draw paths, use per-setting locks, nudge and zoom the composition, and undo experiments. |
 
 ### Discover, don't start over
