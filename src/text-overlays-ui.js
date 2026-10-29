@@ -29,7 +29,10 @@ export function createTextObjectIdentityTracker(){
 
 // A tool inside the seven-category editor, not a floating DOM preview layer.
 // Every mutation takes the existing recipe/Undo path supplied by app.js.
-export function installTextOverlayTool({getRecipe,changeRecipe,onFontNotice=()=>{}}){
+export function installTextOverlayTool({
+  getRecipe,changeRecipe,onFontNotice=()=>{},
+  onPrecisionRotation=()=>{},onPrecisionRotationSync=()=>{}
+}){
   const card=document.querySelector('.editor-tool-card[data-editor-tool="typography"]');
   if(!card)throw Error('Typography card must be mounted before text controls');
   const root=document.createElement('div');
@@ -179,6 +182,28 @@ export function installTextOverlayTool({getRecipe,changeRecipe,onFontNotice=()=>
       drawn:'Follow my Draw path'})[key]
   ]));
   let selectedId=null;
+  // The same shared precision angle dialog used by material and path controls
+  // operates on the actual selected canonical text object. No cloned input
+  // or second text recipe is introduced; inactive shadows stay disabled.
+  const precisionAngles=[];
+  for(const [key,label] of [
+    ['rotation','Rotate text'],['shadowAngle','Shadow angle']
+  ]){
+    const input=root.querySelector('[data-text-key="'+key+'"]');
+    const trigger=document.createElement('button');
+    trigger.type='button';
+    trigger.className='rotation-precision-launch text-precision-rotate';
+    trigger.dataset.textPrecision=key;
+    trigger.setAttribute('aria-haspopup','dialog');
+    trigger.setAttribute('aria-label','Open precise '+label.toLowerCase()+' adjustment');
+    trigger.addEventListener('click',event=>{
+      event.preventDefault();event.stopPropagation();
+      if(!selectedId||input.disabled)return;
+      onPrecisionRotation({key,id:selectedId,trigger});
+    });
+    input.parentElement.append(trigger);
+    precisionAngles.push({key,label,input,trigger});
+  }
   // A background control refresh must not replace uncommitted Words drafts
   // while a user is typing or composing with a mobile input method.
   // Keep the last bound object ID so changing selections still refreshes.
@@ -206,6 +231,8 @@ export function installTextOverlayTool({getRecipe,changeRecipe,onFontNotice=()=>
     if(moveButton.disabled&&mover?.active)mover.endCanvasMove();
     packSave.disabled=!packageFontIds(getRecipe()).length;
     if(!item){
+      for(const {trigger} of precisionAngles)trigger.disabled=true;
+      onPrecisionRotationSync();
       syncedTextOwnerId=null;
       glyphCheckVersion++;glyphStatus.textContent='';
       fontStatus.textContent='';mover?.endCanvasMove();return;
@@ -247,6 +274,11 @@ export function installTextOverlayTool({getRecipe,changeRecipe,onFontNotice=()=>
       }
     }
     syncedTextOwnerId=item.id;
+    for(const {key,label,input,trigger} of precisionAngles){
+      trigger.disabled=input.disabled;
+      trigger.textContent=label+' '+Number(item[key]??(key==='shadowAngle'?45:0)).toFixed(0)+'°';
+    }
+    onPrecisionRotationSync();
   }
   function commit(items){
     changeRecipe({...getRecipe(),textOverlays:items});
