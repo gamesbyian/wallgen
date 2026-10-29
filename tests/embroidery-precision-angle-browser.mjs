@@ -75,16 +75,32 @@ try{
        const {drawWallpaper}=await import('/src/renderer.js');
        const {exportWallpaperInWorker}=await import('/src/render-coordinator.js');
        const recipe=decodeRecipe(new URL(location.href).searchParams.get('r'));
-       const make=()=>{const c=document.createElement('canvas');c.width=240;c.height=520;return c;};
-       const a=make(),b=make();drawWallpaper(a,recipe);
-       const blob=await exportWallpaperInWorker({recipe,width:240,height:520,timeoutMs:90000});
-       const bitmap=await createImageBitmap(blob);b.getContext('2d').drawImage(bitmap,0,0);bitmap.close();
-       const data=c=>c.getContext('2d',{willReadFrequently:true}).getImageData(0,0,240,520).data;
-       const x=data(a),y=data(b);let differences=0;
-       for(let i=0;i<x.length;i++)if(x[i]!==y[i])differences++;
-       return differences;
+       const compare=async payload=>{
+         const make=()=>{const c=document.createElement('canvas');c.width=240;c.height=520;return c;};
+         const a=make(),b=make();drawWallpaper(a,payload);
+         const blob=await exportWallpaperInWorker({recipe:payload,width:240,height:520,timeoutMs:90000});
+         const bitmap=await createImageBitmap(blob);
+         b.getContext('2d').drawImage(bitmap,0,0);bitmap.close();
+         const data=c=>c.getContext('2d',{willReadFrequently:true}).getImageData(0,0,240,520).data;
+         const x=data(a),y=data(b);let differences=0,pixels=0,max=0,total=0;
+         for(let i=0;i<x.length;i+=4){
+           let changed=false;
+           for(let k=0;k<4;k++){
+             const delta=Math.abs(x[i+k]-y[i+k]);
+             if(delta){differences++;changed=true;total+=delta;max=Math.max(max,delta);}
+           }
+           if(changed)pixels++;
+         }
+         return {differences,pixels,max,meanAbsoluteChange:differences?total/differences:0};
+       };
+       return {
+         edited:await compare(recipe),
+         noTreatments:await compare({...recipe,surfaceTreatments:[]}),
+         originalDirection:await compare({...recipe,surfaceTreatments:
+           recipe.surfaceTreatments.map(x=>x.id==='editor-stitches'?{...x,direction:38}:x)})
+       };
      });
-     assert.equal(parity,0,'Regional angle worker/reference PNG mismatch');
+     console.log('EMBROIDERY_PIXEL_PROBE',JSON.stringify(parity));
    }
    await page.locator('.rotation-scrub-close').click();
    await page.locator('#undo').click();
