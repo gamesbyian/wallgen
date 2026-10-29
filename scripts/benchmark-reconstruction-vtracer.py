@@ -30,7 +30,7 @@ def inspect_svg_geometry(source: bytes) -> dict:
     if len(source) > 8_000_000 or any(token in source.lower() for token in
             (b'<!doctype', b'<!entity', b'<?xml-stylesheet', b'<image',
              b'url(', b'@import', b'xlink:href=', b' href=',
-             b'javascript:', b'data:', b'http:', b'https:')):
+             b'javascript:', b'data:')):
         raise ValueError('Untrusted/unsupported SVG dependency or size')
     tree = ET.fromstring(source)
     if tree.tag.rsplit('}', 1)[-1] != 'svg':
