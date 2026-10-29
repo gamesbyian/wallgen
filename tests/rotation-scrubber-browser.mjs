@@ -50,12 +50,32 @@ try{
    const dialog=page.locator('.rotation-scrub-panel');
    assert.equal(await dialog.isVisible(),true);
    assert.equal(current().textureRotation,17.5,'Opening changed the source recipe');
+   const modalContrast=async()=>page.evaluate(()=>{
+     const panel=document.querySelector('.rotation-scrub-panel');
+     const readout=panel.querySelector('.rotation-scrub-readout');
+     const rgb=value=>[...value.matchAll(/[\\d.]+/g)].slice(0,3).map(m=>Number(m[0]));
+     const luminance=value=>{
+       const [r,g,b]=rgb(value).map(v=>v/255).map(v=>
+         v<=.04045?v/12.92:((v+.055)/1.055)**2.4);
+       return .2126*r+.7152*g+.0722*b;
+     };
+     const a=luminance(getComputedStyle(panel).backgroundColor);
+     const b=luminance(getComputedStyle(readout).color);
+     return (Math.max(a,b)+.05)/(Math.min(a,b)+.05);
+   });
+   mkdirSync(join(root,'artifacts','rotation-touch'),{recursive:true});
+   for(const theme of ['cream','dark']){
+     await page.locator('[data-studio-theme="'+theme+'"]').evaluate(el=>el.click());
+     const ratio=await modalContrast();
+     assert.ok(ratio>=4.5,'Poor '+theme+' dialog foreground contrast: '+ratio);
+     await page.screenshot({path:join(root,'artifacts','rotation-touch',width+'-'+theme+'-dialog.png'),fullPage:false});
+   }
+   await page.locator('[data-studio-theme="cream"]').evaluate(el=>el.click());
    for(const button of await dialog.locator('.rotation-scrub-actions button').all()){
      const box=await button.boundingBox();
      assert.ok(box.width>=44&&box.height>=44,'Dialog shortcut is below 44px');
    }
-   mkdirSync(join(root,'artifacts','rotation-touch'),{recursive:true});
-   await page.screenshot({path:join(root,'artifacts','rotation-touch',width+'-dialog.png'),fullPage:false});
+
    const pad=page.locator('.rotation-scrub-pad');
    const box=await pad.boundingBox();
    const x=box.x+box.width/2,y=box.y+box.height/2;
