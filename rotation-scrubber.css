@@ -122,3 +122,14 @@
   font:inherit;font-size:12px;font-weight:700;
 }
 .text-overlay-editor .text-precision-rotate:disabled{opacity:.5;cursor:not-allowed}
+
+/* Regional embroidery is a nested surface-treatment angle, edited in the
+   same large precision dialog. Keep its original exact numeric control. */
+.embroidery-controls .embroidery-precision-angle{
+  min-height:44px;min-width:44px;width:100%;max-width:100%;
+  margin-top:4px;padding:5px;
+  border:1px solid var(--line,#777);border-radius:8px;
+  background:var(--surface,#202027);color:inherit;
+  font-size:12px;font-weight:700;
+}
+.embroidery-controls .embroidery-precision-angle:disabled{opacity:.5;cursor:not-allowed}
