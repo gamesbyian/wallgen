@@ -2372,6 +2372,10 @@ embroideryAngleButton.addEventListener('click',()=>{
   rotationScrubbers.openExternal(field,embroideryAngleButton);
 });
 document.addEventListener('roygbiv-controls-synced',syncEmbroideryPrecision);
+// Initial URL/recipe restore calls toControls directly, before the regular
+// changeRecipe event path. Opening Surface must refresh nested treatment state
+// even when no edit has yet occurred in this session.
+document.addEventListener('editor-tool-changed',syncEmbroideryPrecision);
 syncEmbroideryPrecision();
 document.getElementById('undo').addEventListener('click',undo);
 document.getElementById('download').addEventListener('click',downloadPNG);
