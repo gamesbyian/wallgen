@@ -67,16 +67,27 @@ export function createPreviewCoordinator({
       try{return JSON.stringify(pending.recipe)===JSON.stringify(completing.recipe);}
       catch{return false;}
     };
+    // For a continuous rotation gesture, the newest exact preview may take
+    // hundreds of ms. Display a completed low-resolution frame as an
+    // explicitly provisional (potentially trailing) frame ONLY when a newer
+    // interactive request belongs to the SAME gesture token. The caller
+    // independently checks the live gesture before painting; obsolete
+    // designs, other sliders, cancels and post-commit frames remain rejected.
+    const trailingGestureFrame=message.quality==='interactive'&&
+      completing.quality==='interactive'&&completing.gesture!=null&&
+      pending?.gesture===completing.gesture&&pending?.quality==='interactive';
     const sameRecipeUpgrade=message.quality==='interactive'&&
       completing.quality==='interactive'&&
       pending?.quality==='settled'&&
       pending.key===completing.key&&matchingRecipe();
     clearWatchdog();
     active=null;
-    if(message.id!==revision&&!sameRecipeUpgrade){
+    if(message.id!==revision&&!sameRecipeUpgrade&&!trailingGestureFrame){
       staleCount++;closeFrame(message);
     }else{
-      try{onFrame?.(message);frameCount++;}
+      const delivered=trailingGestureFrame&&message.id!==revision?
+        {...message,provisionalStale:true,gesture:completing.gesture}:message;
+      try{onFrame?.(delivered);frameCount++;}
       catch(error){closeFrame(message);fail(error);return;}
     }
     dispatch();
@@ -91,10 +102,10 @@ export function createPreviewCoordinator({
     }catch(error){fail(error);}
   }
   return {
-    request(recipe,key,width,height,{quality='settled'}={}){
+    request(recipe,key,width,height,{quality='settled',gesture=null}={}){
       if(disabled||disposed)return false;
       const id=++revision;
-      pending={id,key,recipe,width,height,quality};
+      pending={id,key,recipe,width,height,quality,gesture};
       dispatch();
       return true;
     },
