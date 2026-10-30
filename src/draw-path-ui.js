@@ -61,8 +61,12 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
     minimize.setAttribute('aria-label',collapse?
       'Show drawing and point editing controls':'Hide drawing controls to uncover the canvas');
   }
-  minimize.addEventListener('click',()=>setPanelCollapsed(
-    panel.dataset.controlsCollapsed!=='true'));
+  minimize.addEventListener('click',()=>{
+    setPanelCollapsed(panel.dataset.controlsCollapsed!=='true');
+    // Expanded/collapsed panels obstruct different areas; recompute the
+    // visible offset grip and its associated hit geometry immediately.
+    if(editing&&editor)draw(editor.points);
+  });
   // 320×700 and 412×700 have even less unobstructed canvas than 500×700.
   // Hide the drawing panel when a point editor opens; the existing 44px
   // Show controls action remains available to recover every button.
