@@ -126,9 +126,17 @@ export function installTextCanvasMover({
     button.disabled=false;
   }
   function setActive(next){
+    // Mode dismissal is always a cancellation of provisional pointer edits.
+    // Release both owners before clearing state; delayed lost-capture events
+    // then observe null and cannot cancel a future independent gesture.
+    const oldDrag=drag,oldTransform=transformDrag;
+    drag=null;transformDrag=null;
+    if(oldDrag){try{canvas.releasePointerCapture(oldDrag.pointerId);}catch{}}
+    if(oldTransform){
+      const owner=handles.find(h=>h.dataset.textHandle===oldTransform.mode);
+      try{owner?.releasePointerCapture(oldTransform.pointerId);}catch{}
+    }
     active=Boolean(next);
-    drag=null;
-    transformDrag=null;
     if(active){
       if(document.body.classList.contains('path-drawing')){
         active=false;onNotice('Finish Draw mode before moving text.');
@@ -194,6 +202,10 @@ export function installTextCanvasMover({
     event.stopImmediatePropagation();
     drag=null;redraw(); // Cancellation never commits a partial gesture.
   },true);
+  canvas.addEventListener('lostpointercapture',event=>{
+    if(!drag||drag.pointerId!==event.pointerId)return;
+    drag=null;redraw(); // Never save a move without a genuine pointerup.
+  },true);
   for(const handle of handles){
     const mode=handle.dataset.textHandle;
     handle.addEventListener('pointerdown',event=>{
@@ -246,6 +258,11 @@ export function installTextCanvasMover({
     handle.addEventListener('pointercancel',event=>{
       if(!transformDrag||transformDrag.pointerId!==event.pointerId)return;
       transformDrag=null;redraw();
+    });
+    handle.addEventListener('lostpointercapture',event=>{
+      if(!transformDrag||transformDrag.pointerId!==event.pointerId||
+        transformDrag.mode!==mode)return;
+      transformDrag=null;redraw(); // Rotate/scale must also fail closed.
     });
     // A screen reader or keyboard can use Enter to step the value or arrow
     // keys in both directions. Each keypress stays a single Undo transaction.

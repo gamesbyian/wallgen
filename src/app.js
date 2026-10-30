@@ -1607,8 +1607,14 @@ scatteredDirectDone.textContent='Done moving';
 scatteredDirectDone.hidden=true;
 document.querySelector('.studio-stage')?.append(scatteredDirectDone);
 function setScatteredDirectActive(next){
-  scatteredDirectActive=!!next;
+  // Closing a drag tool is a cancellation: release capture but never save a
+  // provisional circle. A delayed lostpointercapture then sees no active drag.
+  const oldDrag=scatteredDirectDrag;
   scatteredDirectDrag=null;
+  if(oldDrag){
+    try{preview.releasePointerCapture(oldDrag.pointerId);}catch{}
+  }
+  scatteredDirectActive=!!next;
   document.body.classList.toggle('scattered-direct-active',scatteredDirectActive);
   moveOnCanvas.setAttribute('aria-pressed',String(scatteredDirectActive));
   moveOnCanvas.textContent=scatteredDirectActive?'Stop moving shapes':'Move shapes on canvas';
@@ -1648,7 +1654,8 @@ moveOnCanvas.addEventListener('click',()=>{
 });
 scatteredDirectDone.addEventListener('click',()=>setScatteredDirectActive(false));
 preview.addEventListener('pointerdown',event=>{
-  if(!scatteredDirectActive||scatteredDirectDrag||event.button!==0)return;
+  if(!scatteredDirectActive||scatteredDirectDrag||event.button!==0||
+     event.isPrimary===false)return;
   const rect=preview.getBoundingClientRect();
   const pos=pixelFromPointer(event);
   const world=scatteredPixelToWorld(current,preview.width,preview.height,pos.x,pos.y);
@@ -1695,6 +1702,13 @@ preview.addEventListener('pointercancel',event=>{
   if(!scatteredDirectDrag||scatteredDirectDrag.pointerId!==event.pointerId)return;
   scatteredDirectDrag=null;
   syncScatteredDirectOutline(); // Cancellation leaves recipe untouched.
+});
+// Losing capture can occur independently of pointercancel (e.g. modal/tool
+// focus changes, DOM capture arbitration). Never strand the editor in drag.
+preview.addEventListener('lostpointercapture',event=>{
+  if(!scatteredDirectDrag||scatteredDirectDrag.pointerId!==event.pointerId)return;
+  scatteredDirectDrag=null;
+  syncScatteredDirectOutline(); // Roll back the temporary outline only.
 });
 window.addEventListener('resize',()=>{if(scatteredDirectActive)syncScatteredDirectOutline();});
 window.addEventListener('keydown',event=>{

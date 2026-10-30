@@ -47,6 +47,22 @@ try{
   const rect=await page.locator('#preview').boundingBox();
   assert.ok(rect?.width>150&&rect?.height>250);
   const origin={x:rect.x+rect.width*.5,y:rect.y+rect.height*.5};
+  // Cancel a genuine pointer move by releasing capture before pointerup.
+  // This must neither modify saved text nor strand the next gesture.
+  // The production canvas listener stops immediate propagation. Capture
+  // at document first, rather than adding a listener behind that guard.
+  await page.evaluate(()=>document.addEventListener(
+    'pointerdown',event=>{window.__textDragPointer=event.pointerId;},
+    {once:true,capture:true}));
+  await page.mouse.move(origin.x,origin.y);
+  await page.mouse.down();
+  await page.mouse.move(origin.x+rect.width*.07,origin.y+rect.height*.04,{steps:4});
+  const movingPointer=await page.evaluate(()=>window.__textDragPointer);
+  await page.evaluate(pointerId=>document.getElementById('preview')
+    .releasePointerCapture(pointerId),movingPointer);
+  await page.mouse.up();
+  assert.deepEqual(await getText(),initial,
+    'lost canvas capture must not save provisional text movement');
   await page.mouse.move(origin.x,origin.y);
   await page.mouse.down();
   await page.mouse.move(origin.x+rect.width*.13,origin.y+rect.height*.1,{steps:6});
@@ -65,6 +81,25 @@ try{
   const undone=await getText();
   assert.equal(undone.x,initial.x);
   assert.equal(undone.y,initial.y);
+  // A detached scale/rotation DOM handle can lose pointer capture too.
+  const scaleHandle=page.locator('[data-text-handle="scale"]');
+  const handleBox=await scaleHandle.boundingBox();
+  assert.ok(handleBox?.width>=1,'scale handle must remain in the live inspector');
+  const scaleCenter={x:handleBox.x+handleBox.width/2,
+    y:handleBox.y+handleBox.height/2};
+  await page.evaluate(()=>document.querySelector('[data-text-handle="scale"]')
+    .addEventListener('pointerdown',event=>{
+      window.__scaleDragPointer=event.pointerId;
+    },{once:true}));
+  await page.mouse.move(scaleCenter.x,scaleCenter.y);
+  await page.mouse.down();
+  await page.mouse.move(scaleCenter.x+35,scaleCenter.y+12,{steps:5});
+  const scalePointer=await page.evaluate(()=>window.__scaleDragPointer);
+  await page.evaluate(id=>document.querySelector('[data-text-handle="scale"]')
+    .releasePointerCapture(id),scalePointer);
+  await page.mouse.up();
+  assert.deepEqual(await getText(),undone,
+    'lost scale-handle capture must not commit provisional text scaling');
   // Switch to scattered direct manipulation while armed; no two simultaneous
   // gesture owners are allowed to respond to one pointerdown.
   await page.evaluate(()=>document.getElementById('scatteredMoveOnCanvas').click());
@@ -95,7 +130,8 @@ try{
   assert.deepEqual(errors,[]);
   const proof={status:'PASS',viewport:'emulated 412x892, not native Pixel',
     original:{x:initial.x,y:initial.y},dragged:{x:moved.x,y:moved.y},
-    undoRestored:true,visualGuidePresent:true,directGestureModesExclusive:true,
+    undoRestored:true,canvasCaptureLossCancelled:true,scaleCaptureLossCancelled:true,
+    visualGuidePresent:true,directGestureModesExclusive:true,
     browserErrors:errors,art};
   await writeFile(join(out,'report.json'),JSON.stringify(proof,null,2)+'\n');
   console.log('TEXT DIRECT MANIPULATION PROOF '+JSON.stringify(proof));
