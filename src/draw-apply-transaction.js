@@ -11,8 +11,11 @@ import {normalizeRecipe} from './model.js';
 export function appliedDrawnPathRecipe(input,points,anchors=[],corners=[],
   extended=false,preservePosition=false){
   const recipe=normalizeRecipe(input);
+  // A newly committed sampled stroke intentionally replaces an old true
+  // vector source. Never leave both path dialects in a saved recipe.
+  const {vectorPath:replacedVectorSource,...base}=recipe;
   return normalizeRecipe({
-    ...recipe,
+    ...base,
     customPath:points,
     drawnAnchors:anchors,
     drawnCorners:corners,
