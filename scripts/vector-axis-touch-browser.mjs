@@ -20,8 +20,9 @@ const server=createServer(async(req,res)=>{
   try{
     const abs=resolve(root,'.'+decodeURIComponent(new URL(req.url,'http://localhost').pathname));
     if(abs!==root&&!abs.startsWith(root+'/')){res.writeHead(403).end();return;}
-    res.writeHead(200,{'Content-Type':mime[extname(abs)]||'application/octet-stream',
-      'Cache-Control':'no-store'}).end(await readFile(abs===root?join(root,'index.html'):abs));
+    const file=abs===root?join(root,'index.html'):abs;
+    res.writeHead(200,{'Content-Type':mime[extname(file)]||'application/octet-stream',
+      'Cache-Control':'no-store'}).end(await readFile(file));
   }catch{res.writeHead(404).end('Not Found');}
 });
 const fixture=normalizeRecipe({seed:'touch-axis-30-oct',structure:'paths',geometry:'drawn',
