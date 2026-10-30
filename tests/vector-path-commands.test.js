@@ -177,3 +177,26 @@ test('dense sampled-path import preserves exact authored world-space line statio
   assert.equal(next.total,old.total);
   assert.equal(next.closed,old.closed);
 });
+
+test('bounded hostile topology matrix: never produce nonfinite samples or silently truncate',()=>{
+  let seed=0x9e3779b9;
+  const next=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/0x100000000;};
+  const pos=()=>[-2+5*next(),-2+5*next()];
+  for(let k=0;k<160;k++){
+    const start=pos(),count=2+Math.floor(next()*14);
+    const segments=Array.from({length:count},(_,i)=>({
+      kind:next()<.35?'line':'cubic',to:{id:'node'+i,point:pos()}
+    })).map(s=>s.kind==='line'?s:{...s,controlOut:pos(),controlIn:pos()});
+    const path=normalizeVectorPath({space:'normalized-design',closed:k%2===0,
+      start:{id:'start',point:start},segments,
+      ...(k%2===0?{closing:{kind:'line'}}:{})});
+    assert.ok(path);
+    const compiled=flattenVectorPath(path);
+    if(!compiled)continue; // explicit bounded refusal is valid
+    assert.ok(compiled.points.length<=4096);
+    assert.deepEqual(compiled.points[0],start);
+    assert.deepEqual(compiled.points.at(-1),k%2===0?start:segments.at(-1).to.point);
+    assert.ok(compiled.points.every(p=>p.length===2&&p.every(Number.isFinite)));
+    assert.equal(compiled.sampleParameters.length,compiled.points.length);
+  }
+});
