@@ -5,6 +5,7 @@ import {normalizeVectorPath} from '../src/vector-path-commands.js';
 import {prepareTextFollowPath} from '../src/text-path-geometry.js';
 import {appliedDrawnPathRecipe} from '../src/draw-apply-transaction.js';
 import {importAgentRecipe,describeAgentCapabilities} from '../src/agent-api.js';
+import {buildAyaRecipeHandoff} from '../src/aya-recipe-reference.js';
 import {embedPngMetadata,extractPngRecipeWithProvenance,RECIPE_FORMAT_V3} from '../src/png-metadata.js';
 
 const source=normalizeVectorPath({
@@ -109,4 +110,14 @@ test('embedded PNG records true vector v3 metadata and restores exact authored c
   assert.equal(restored.normalizedFieldsChanged,false);
   assert.deepEqual(restored.recipe.vectorPath.segments[0].controlIn,
     source.segments[0].controlIn);
+});
+
+test('AYA handoff describes exact v3 command schema and warns that legacy Draw cannot edit cubics',()=>{
+  const guide=buildAyaRecipeHandoff({direction:'An organically looping rainbow',
+    currentRecipe:v3()});
+  assert.match(guide,/version 3 true Bézier path format/);
+  assert.match(guide,/vectorPath/);
+  assert.match(guide,/single vectorPath instead of sampled customPath/);
+  assert.match(guide,/older finger-sampled point editor refuses/);
+  assert.match(guide,/canonical recipe version 3/i);
 });
