@@ -1,0 +1,27 @@
+name: One-shot fixed Random scene cost profiler
+on:
+  push:
+    branches:
+      - research/randomize-scene-costs-20261029
+permissions:
+  contents: read
+jobs:
+  costs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 13
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install client without lockfile
+        run: npm install --no-save --no-package-lock --ignore-scripts --no-audit --no-fund
+      - name: Sample 32 real Random recipes and six repeated outliers
+        run: CHROME_BIN=/usr/bin/google-chrome node scripts/randomize-scene-costs-browser.mjs
+      - name: Retain exact seed and timing evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: randomize-scene-costs
+          path: artifacts/randomize-scene-costs/sample.json
+          if-no-files-found: warn
