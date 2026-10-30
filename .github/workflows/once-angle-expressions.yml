@@ -1,0 +1,38 @@
+name: One-shot angle expression mobile Chromium
+on:
+  pull_request:
+    paths:
+      - 'src/precision-angle-expression.js'
+      - 'src/rotation-scrubber.js'
+      - 'scripts/precision-angle-expression-browser.mjs'
+      - '.github/workflows/once-angle-expressions.yml'
+permissions:
+  contents: read
+jobs:
+  angle-entry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Strict parser and source checks
+        run: |
+          node --check src/rotation-scrubber.js
+          node --check scripts/precision-angle-expression-browser.mjs
+          node --test tests/precision-angle-expression.test.js tests/rotation-gesture.test.js
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Exercise live inspector and recipes in mobile portrait
+        run: node scripts/precision-angle-expression-browser.mjs
+      - name: Preserve screenshots/report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: angle-expression-mobile-evidence
+          path: artifacts/angle-expressions-mobile/
+          retention-days: 7
+          if-no-files-found: warn
