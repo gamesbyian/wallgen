@@ -5,6 +5,7 @@ import {createPointEditor,clonePointEditor,addPointAnchor,deletePointAnchor,
   savedPointAnchors,savedPointCorners} from './path-point-editor.js';
 import {drawAuthoringLockReason,drawAuthoringLockMessage} from './path-authoring-locks.js';
 import {beginAxisDrag,axisConstrainedPoint} from './axis-constrained-drag.js';
+import {placeOffsetGrip} from './path-offset-grip.js';
 
 /** Match the renderer's world-space camera and *screen-space* composition
  * nudge. Positive viewPanX/Y moves the camera to higher world coordinates,
@@ -60,10 +61,17 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
     minimize.setAttribute('aria-label',collapse?
       'Show drawing and point editing controls':'Hide drawing controls to uncover the canvas');
   }
-  minimize.addEventListener('click',()=>setPanelCollapsed(
-    panel.dataset.controlsCollapsed!=='true'));
-  const shortPortrait=()=>window.matchMedia(
-    '(min-width:480px) and (max-width:599px) and (max-height:760px) and (orientation:portrait)').matches;
+  minimize.addEventListener('click',()=>{
+    setPanelCollapsed(panel.dataset.controlsCollapsed!=='true');
+    // Expanded/collapsed panels obstruct different areas; recompute the
+    // visible offset grip and its associated hit geometry immediately.
+    if(editing&&editor)draw(editor.points);
+  });
+  // In a phone portrait viewport even the tall Draw inspector masks anchors
+  // across much of the art. Enter Edit points with the canvas unobstructed;
+  // the original 44px Show controls action remains on screen for Apply/Undo.
+  const phonePortrait=()=>window.matchMedia(
+    '(max-width:599px) and (orientation:portrait)').matches;
   setPanelCollapsed(false);
   const smooth=byId('drawSmooth'),geometric=byId('drawGeometric');
   const again=byId('drawAgain'),cancel=byId('drawCancel');
@@ -114,6 +122,27 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
   }
   const project=(m,p)=>[m.x(p[0]),m.y(p[1])];
   const distance=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]);
+  // Paint and hit-test the SAME derived target. The target lives only in
+  // canvas interaction space; an authored node's design coordinates and
+  // original source are unchanged. No grip while a drag is in progress,
+  // because recomputing its preferred quadrant would jump under a finger.
+  function selectedOffsetGrip(m){
+    if(!editing||!editor||editor.selected===-1||adding||drag)return null;
+    const origin=project(m,editor.points[editor.selected]);
+    const handles=pointHandles(editor,editor.selected);
+    const obstacles=editor.anchors.filter(i=>i!==editor.selected)
+      .map(i=>project(m,editor.points[i]));
+    for(const side of editablePointHandleSides(editor,editor.selected))
+      obstacles.push(project(m,handles[side]));
+    const bounds=overlay.getBoundingClientRect(),panelRect=panel.getBoundingClientRect();
+    const blockedRects=panelRect.width&&panelRect.height?[{
+      x:(panelRect.left-bounds.left)*m.scale,
+      y:(panelRect.top-bounds.top)*m.scale,
+      width:panelRect.width*m.scale,height:panelRect.height*m.scale
+    }]:[];
+    return placeOffsetGrip({anchor:origin,width:overlay.width,height:overlay.height,
+      scale:m.scale,obstacles,blockedRects});
+  }
   function draw(points){
     ctx.setTransform(1,0,0,1,0,0);
     ctx.clearRect(0,0,overlay.width,overlay.height);
@@ -166,6 +195,24 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
       ctx.fillRect(x-r,y-r,r*2,r*2);
       ctx.strokeRect(x-r,y-r,r*2,r*2);
     }
+    const grip=selectedOffsetGrip(m);
+    if(grip){
+      const origin=project(m,editor.points[editor.selected]);
+      ctx.save();
+      ctx.strokeStyle='#072b3a';ctx.lineWidth=4*m.scale;
+      ctx.beginPath();ctx.moveTo(...origin);ctx.lineTo(grip.x,grip.y);ctx.stroke();
+      ctx.strokeStyle='#a6f0ff';ctx.lineWidth=2*m.scale;ctx.stroke();
+      ctx.fillStyle='#113f58';ctx.strokeStyle='#f9fdff';ctx.lineWidth=2*m.scale;
+      ctx.beginPath();ctx.arc(grip.x,grip.y,13*m.scale,0,Math.PI*2);
+      ctx.fill();ctx.stroke();
+      // Directional cross marks a draggable screen-space handle, rather
+      // than a second actual path node.
+      ctx.strokeStyle='#ffffff';ctx.lineWidth=2*m.scale;
+      ctx.beginPath();
+      ctx.moveTo(grip.x-6*m.scale,grip.y);ctx.lineTo(grip.x+6*m.scale,grip.y);
+      ctx.moveTo(grip.x,grip.y-6*m.scale);ctx.lineTo(grip.x,grip.y+6*m.scale);
+      ctx.stroke();ctx.restore();
+    }
   }
   function syncPointControls(){
     const savedPath=getRecipe();
@@ -209,7 +256,7 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
     phase.textContent=step==='anchors'?'Edit points':step==='refine'?'Refine':'Sketch';
     // Auto-uncover precisely when an editable anchor enters the screen.
     // An explicit Show tap remains respected during subsequent selections.
-    if(step==='anchors'&&previousPhase!=='anchors'&&shortPortrait())
+    if(step==='anchors'&&previousPhase!=='anchors'&&phonePortrait())
       setPanelCollapsed(true);
     else if(step!=='anchors'&&previousPhase==='anchors')
       setPanelCollapsed(false);
@@ -344,6 +391,12 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
           return {type:'handle',index:editor.selected,side,at:handles[side]};
       }
     }
+    // Tangent hit regions and exact real node centers always win. The
+    // detached grip is available only when its 44px disk cannot overlap
+    // another node's normal 17px selection tolerance.
+    const grip=selectedOffsetGrip(m);
+    if(grip&&distance(mouse,[grip.x,grip.y])<=grip.radius)
+      return {type:'anchor',index:editor.selected,at:editor.points[editor.selected]};
     let best=null,least=radius;
     for(const i of editor.anchors){
       const d=distance(mouse,project(m,editor.points[i]));
@@ -407,6 +460,8 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
         return;
       }
       editor.selected=hit.index;
+      overlay.setAttribute('aria-label',
+        'Edit selected path node. Drag its cyan offset grip, or use arrow keys for precise vector movement. The original point and tangent handles remain draggable.');
       pointer=event.pointerId;
       const start=clonePointEditor(editor),mouse=position(event);
       drag={hit,start,moved:false,
@@ -467,7 +522,10 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
     if(!editing)append(event);
     pointer=null;
     try{overlay.releasePointerCapture(event.pointerId);}catch{}
-    if(editing){if(drag?.moved)settle();drag=null;return;}
+    if(editing){
+      if(drag?.moved)settle();
+      drag=null;draw(editor.points);return;
+    }
     setFit(fit);
     interruptedStroke=null;
     if(ready.length<2)hint.textContent='That was too short. Draw a longer path.';
