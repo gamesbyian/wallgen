@@ -523,6 +523,9 @@ export function respectSettingLocks(currentInput, nextInput) {
   const locked=new Set(current.lockedSettings);
   for(const key of locked) {
     if(key==='geometry'){
+      // Geometry lock owns the source dialect as well as the selected tool:
+      // it cannot silently switch an authored v3 path to sampled v2.
+      next.version=current.version;
       next.customPath=current.customPath;
       next.drawnAnchors=current.drawnAnchors;
       next.drawnCorners=current.drawnCorners;
