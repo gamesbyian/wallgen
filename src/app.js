@@ -798,6 +798,11 @@ document.querySelector('.studio-stage').addEventListener('roygbiv-view-fit-reque
 const drawTool=installDrawTool({
   getRecipe:()=>current,
   onNotice:showNotice,
+  onApplyVector:vectorPath=>{
+    const next=normalizeRecipe({...fromControls(),version:3,vectorPath});
+    changeRecipe(next,{cause:'vector_path_author'});
+    showNotice('Vector curve applied. Undo restores the previous design.');
+  },
   onApply:(points,anchors=[],corners=[],extended=false,preservePosition=false)=>{
     const next=appliedDrawnPathRecipe(fromControls(),points,anchors,corners,
       extended,preservePosition);
