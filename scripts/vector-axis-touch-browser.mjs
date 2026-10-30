@@ -54,6 +54,12 @@ try{
         await page.locator('#drawPathPanel').waitFor({state:'visible'});
         await page.locator('#drawEditPoints').click();
         assert.equal(await page.locator('#drawPathPanel').getAttribute('data-phase'),'anchors');
+        // The short portrait panel now deliberately collapses to reveal
+        // obscured anchors; reopen it only while changing a tool modifier.
+        const panel=page.locator('#drawPathPanel'),
+          minimize=page.locator('.draw-panel-minimize');
+        if(await panel.getAttribute('data-controls-collapsed')==='true')
+          await minimize.click();
         const axis=page.locator('#drawAxisLock');
         assert.equal(await axis.isVisible(),true);
         const size=await axis.evaluate(el=>{
@@ -66,6 +72,7 @@ try{
           await axis.click();
           assert.equal(await axis.getAttribute('aria-pressed'),'true');
         }
+        if(width===320)await minimize.click();
         const rect=await page.locator('#preview').boundingBox();
         const anchor=fixture.customPath[targetIndex];
         const x=rect.x+anchor[0]*rect.width,y=rect.y+anchor[1]*rect.height;
