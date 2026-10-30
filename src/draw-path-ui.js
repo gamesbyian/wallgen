@@ -70,7 +70,7 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
   // In a phone portrait viewport even the tall Draw inspector masks anchors
   // across much of the art. Enter Edit points with the canvas unobstructed;
   // the original 44px Show controls action remains on screen for Apply/Undo.
-  const shortPortrait=()=>window.matchMedia(
+  const phonePortrait=()=>window.matchMedia(
     '(max-width:599px) and (orientation:portrait)').matches;
   setPanelCollapsed(false);
   const smooth=byId('drawSmooth'),geometric=byId('drawGeometric');
@@ -256,7 +256,7 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
     phase.textContent=step==='anchors'?'Edit points':step==='refine'?'Refine':'Sketch';
     // Auto-uncover precisely when an editable anchor enters the screen.
     // An explicit Show tap remains respected during subsequent selections.
-    if(step==='anchors'&&previousPhase!=='anchors'&&shortPortrait())
+    if(step==='anchors'&&previousPhase!=='anchors'&&phonePortrait())
       setPanelCollapsed(true);
     else if(step!=='anchors'&&previousPhase==='anchors')
       setPanelCollapsed(false);
@@ -460,6 +460,8 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
         return;
       }
       editor.selected=hit.index;
+      overlay.setAttribute('aria-label',
+        'Edit selected path node. Drag its cyan offset grip, or use arrow keys for precise vector movement. The original point and tangent handles remain draggable.');
       pointer=event.pointerId;
       const start=clonePointEditor(editor),mouse=position(event);
       drag={hit,start,moved:false,
