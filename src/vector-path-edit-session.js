@@ -2,7 +2,7 @@
 // Pointer/keyboard inputs must already be expressed in design coordinates.
 // No screen pixels, renderer state, or serializer side effects.
 import {normalizeVectorPath,moveVectorNode,moveVectorHandle,
-  setVectorNodeMode,splitVectorSegment} from './vector-path-commands.js';
+  setVectorNodeMode,splitVectorSegment,deleteVectorNode} from './vector-path-commands.js';
 const available=(path,id)=>id===path.start.id||path.segments.some(s=>s.to.id===id);
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 const entry=(path,selectedId)=>({path,selectedId});
@@ -24,7 +24,7 @@ export function setVectorEditLocked(state,locked){
 }
 export function beginVectorEdit(state,{kind,id,side,segmentIndex,newId}={}){
   if(!state||state.locked||state.tx||
-     !['node','handle','mode','insert'].includes(kind))return state;
+     !['node','handle','mode','insert','delete'].includes(kind))return state;
   if(kind==='insert'){
     if(!Number.isInteger(segmentIndex)||segmentIndex<0||
        segmentIndex>=state.path.segments.length+(state.path.closed?1:0)||!newId||
@@ -43,9 +43,16 @@ export function previewVectorEdit(state,{point,mode,t}={}){
   const proposed=kind==='node'?moveVectorNode(base,id,point):
     kind==='handle'?moveVectorHandle(base,id,side,point):
     kind==='mode'?setVectorNodeMode(base,id,mode):
+    kind==='delete'?deleteVectorNode(base,id):
     splitVectorSegment(base,segmentIndex,t,newId);
   if(!proposed)return state;
-  return {...state,draft:proposed,selectedId:kind==='insert'?newId:id};
+  let selectedId=kind==='insert'?newId:id;
+  if(kind==='delete'){
+    const ids=[base.start.id,...base.segments.map(seg=>seg.to.id)],
+      index=ids.indexOf(id);
+    selectedId=ids[index===ids.length-1?index-1:index+1];
+  }
+  return {...state,draft:proposed,selectedId};
 }
 export function cancelVectorEdit(state){
   if(!state?.tx)return state;
