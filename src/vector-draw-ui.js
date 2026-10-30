@@ -34,10 +34,11 @@ export function installVectorDrawEditor({getRecipe,onApply,onNotice,
   const insert=create('button','Insert node','vector-draw-action');
   const axis=create('button','Lock axis','vector-draw-action');
   const mode=create('select',undefined,'vector-draw-action');
-  mode.setAttribute('aria-label','Selected Bézier node type');
-  mode.title='Choose how the selected incoming and outgoing handles behave';
+  mode.setAttribute('aria-label','Selected Bézier node type or Delete selected node');
+  mode.title='Set the selected node type or Delete node; deletion previews its local curve change and supports Undo';
   for(const [value,label] of [['independent','Independent'],
-    ['corner','Corner'],['aligned','Aligned'],['mirrored','Mirrored']]){
+    ['corner','Corner'],['aligned','Aligned'],['mirrored','Mirrored'],
+    ['delete','Delete node (Undo available)']]){
     const option=create('option',label);option.value=value;mode.append(option);
   }
   for(const el of [controls,use,cancel,undo,redo,insert,axis])el.type='button';
@@ -241,8 +242,22 @@ export function installVectorDrawEditor({getRecipe,onApply,onNotice,
   redo.addEventListener('click',()=>{session=redoVectorEdit(session);sync();});
   insert.addEventListener('click',()=>{insertMode=!insertMode;sync();});
   axis.addEventListener('click',()=>{axisLock=!axisLock;sync();});
+  function deleteSelectedNode(){
+    if(!active||!session?.selectedId||session.tx)return;
+    const started=beginVectorEdit(session,{kind:'delete',id:session.selectedId});
+    const preview=previewVectorEdit(started);
+    if(preview===started){
+      session=cancelVectorEdit(started);
+      onNotice('A path must retain at least two authored nodes.');
+    }else{
+      session=commitVectorEdit(preview);
+      onNotice('Node removed. Review the changed curve before Use path, or Undo.');
+    }
+    sync();
+  }
   mode.addEventListener('change',()=>{
     if(!active||!session.selectedId)return;
+    if(mode.value==='delete'){deleteSelectedNode();return;}
     const start=beginVectorEdit(session,{kind:'mode',id:session.selectedId});
     const draft=previewVectorEdit(start,{mode:mode.value});
     if(draft===start){
@@ -270,6 +285,9 @@ export function installVectorDrawEditor({getRecipe,onApply,onNotice,
     if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='z'){
       event.preventDefault();session=event.shiftKey?
         redoVectorEdit(session):undoVectorEdit(session);sync();return;
+    }
+    if((event.key==='Delete'||event.key==='Backspace')&&session.selectedId){
+      event.preventDefault();deleteSelectedNode();return;
     }
     if(!session.selectedId||!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(event.key))
       return;
