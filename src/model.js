@@ -119,10 +119,17 @@ export function normalizeRecipe(input = {}) {
   const vectorRequested=input?.vectorPath!==undefined;
   if(input?.version===3&&!vectorRequested)
     throw new RangeError('Version 3 recipe requires a vectorPath source');
-  const vectorPath=vectorRequested?normalizeVectorPath(input.vectorPath):null;
-  if(vectorRequested&&(!vectorPath||
-      (Array.isArray(input.customPath)&&input.customPath.length>=2)))
-    throw new RangeError('Version 3 requires one valid vectorPath and no competing sampled customPath');
+  if(vectorRequested){
+    const vectorPath=normalizeVectorPath(input.vectorPath);
+    if(!vectorPath||(Array.isArray(input.customPath)&&input.customPath.length>=2))
+      throw new RangeError('Version 3 requires one valid vectorPath and no competing sampled customPath');
+    // Keep the pinned historical v2 field normalizer unchanged. It has a
+    // source-blob ledger and existing saved-design meaning. The v3 overlay
+    // replaces its single path source AFTER ordinary field normalization.
+    const base=normalizeRecipe({...input,version:2,vectorPath:undefined,
+      customPath:[],drawnAnchors:[],drawnCorners:[]});
+    return {...base,version:3,vectorPath};
+  }
   const readChoice = (key, allowed) => allowed.includes(input[key]) ? input[key] : 'auto';
   const seed = String(input.seed ?? 'rainbow-001').trim().slice(0, 90) || 'rainbow-001';
   const drawnPath=normalizeDrawnPathWithIndexMap(input.customPath);
@@ -150,8 +157,7 @@ export function normalizeRecipe(input = {}) {
     .filter(i=>Number.isInteger(i)&&i>=0&&i<drawnPath.points.length))]
     .sort((a,b)=>a-b).slice(0,96);
   return {
-    version: vectorRequested?3:2,
-    ...(vectorPath?{vectorPath}:{}),
+    version: 2,
     interiorElements:normalizedInteriors,
     ...(input.nestedShapeContours?{nestedShapeContours:normalizeNestedShapeContours(input.nestedShapeContours)}:{}),
     ...(textOverlays.length?{textOverlays}:{}),
@@ -203,12 +209,12 @@ export function normalizeRecipe(input = {}) {
     mirrorHorizontal: input.mirrorHorizontal === true || input.mirrorHorizontal === 'true',
     mirrorVertical: input.mirrorVertical === true || input.mirrorVertical === 'true',
     geometry: readChoice('geometry', GEOMETRIES),
-    customPath:vectorRequested?[]:drawnPath.points,
+    customPath:drawnPath.points,
     extendDrawnPath:input.extendDrawnPath===true||input.extendDrawnPath==='true',
     // User-protected anchors/corners follow the original stroke station
     // through duplicate removal and legacy >96-point resampling.
-    drawnAnchors:vectorRequested?[]:mappedPathIndices(input.drawnAnchors),
-    drawnCorners:vectorRequested?[]:mappedPathIndices(input.drawnCorners),
+    drawnAnchors:mappedPathIndices(input.drawnAnchors),
+    drawnCorners:mappedPathIndices(input.drawnCorners),
     motif: readChoice('motif', MOTIFS),
     lineStyle: LINE_STYLES.includes(input.lineStyle) ? input.lineStyle : 'continuous',
     composition: COMPOSITIONS.includes(input.composition) ? input.composition : 'single',
