@@ -13,10 +13,12 @@ export function createPreviewCoordinator({
   onFrame,onFailure,workerFactory=createRenderWorker,
   canUseWorker=typeof Worker==='function'&&typeof OffscreenCanvas==='function',
   startupMs=8000,frameTimeoutMs=20000,
+  now=()=>Date.now(),randomPreemptAfterMs=75,randomPreemptCooldownMs=185,
 }={}){
   let worker=null,ready=false,disabled=!canUseWorker,disposed=false;
   let active=null,pending=null,revision=0,watchdog=null;
   let frameCount=0,staleCount=0,failedReason=null;
+  let activeSince=0,lastRandomPreempt=-Infinity,randomPreemptCount=0;
   const clearWatchdog=()=>{if(watchdog!==null)clearTimeout(watchdog);watchdog=null;};
   const fail=error=>{
     if(disposed||disabled)return;
@@ -33,6 +35,7 @@ export function createPreviewCoordinator({
   const dispatch=()=>{
     if(disabled||disposed||!ready||active||!pending)return;
     active=pending;pending=null;
+    activeSince=now();
     arm(frameTimeoutMs,'Worker preview timed out');
     try{worker.postMessage({type:'preview',...active});}
     catch(error){fail(error);}
@@ -92,20 +95,50 @@ export function createPreviewCoordinator({
     }
     dispatch();
   };
-  if(!disabled){
+  const boot=()=>{
+    if(disabled||disposed)return;
     try{
-      worker=workerFactory();
-      worker.onmessage=event=>handle(event.data);
-      worker.onerror=event=>{event?.preventDefault?.();fail(event?.message||'Worker script failed');};
-      worker.onmessageerror=()=>fail('Cannot deserialize worker frame');
+      const instance=workerFactory();
+      worker=instance;
+      instance.onmessage=event=>{
+        // Messages queued from a terminated generation must NEVER free
+        // the new worker's active slot or expose an obsolete wallpaper.
+        if(worker!==instance){closeFrame(event.data);return;}
+        handle(event.data);
+      };
+      instance.onerror=event=>{
+        if(worker!==instance)return;
+        event?.preventDefault?.();fail(event?.message||'Worker script failed');
+      };
+      instance.onmessageerror=()=>{
+        if(worker===instance)fail('Cannot deserialize worker frame');
+      };
       arm(startupMs,'Worker initialization timed out');
     }catch(error){fail(error);}
-  }
+  };
+  const preemptObsoleteRandom=(key,quality,intent)=>{
+    if(intent!=='randomize'||quality!=='interactive'||!active||!ready||
+      key===active.key)return;
+    const elapsed=now()-activeSince;
+    if(elapsed<randomPreemptAfterMs||
+      now()-lastRandomPreempt<randomPreemptCooldownMs)return;
+    // Canvas2D painting is synchronous inside the worker and cannot
+    // cooperatively cancel. A bounded restart is preferable to executing
+    // an expensive now-irrelevant Random design, but only for explicit
+    // user exploration. Never preempt transforms, text, Undo or exports.
+    lastRandomPreempt=now();randomPreemptCount++;
+    clearWatchdog();
+    try{worker?.terminate();}catch{}
+    worker=null;ready=false;active=null;
+    boot();
+  };
+  if(!disabled)boot();
   return {
-    request(recipe,key,width,height,{quality='settled',gesture=null}={}){
+    request(recipe,key,width,height,{quality='settled',gesture=null,intent=null}={}){
       if(disabled||disposed)return false;
       const id=++revision;
       pending={id,key,recipe,width,height,quality,gesture};
+      preemptObsoleteRandom(key,quality,intent);
       dispatch();
       return true;
     },
@@ -122,7 +155,7 @@ export function createPreviewCoordinator({
     get enabled(){return !disabled&&!disposed;},
     get ready(){return ready&&!disabled&&!disposed;},
     get status(){return {ready,disabled,failedReason,frameCount,staleCount,
-      pending:!!pending,active:!!active};},
+      pending:!!pending,active:!!active,randomPreemptCount};},
   };
 }
 
