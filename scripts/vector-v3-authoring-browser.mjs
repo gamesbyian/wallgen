@@ -8,6 +8,7 @@ import {resolve,join,dirname,extname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {chromium} from 'playwright';
 import {normalizeRecipe,decodeRecipe,encodeRecipe} from '../src/model.js';
+import {pointOnVectorSegment} from '../src/vector-path-commands.js';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const out=join(root,'artifacts/vector-v3-authoring');
 await mkdir(out,{recursive:true});
@@ -133,8 +134,82 @@ try{
       await toggle.click();
       await toolbar.locator('button',{hasText:'Cancel'}).click();
       assert.deepEqual(current(page),updated);
+      const screen=async point=>page.locator('#preview').evaluate((canvas,p)=>{
+        const b=canvas.getBoundingClientRect();
+        return {x:b.left+p[0]*b.width,y:b.top+p[1]*b.height};
+      },point);
+      // Selected true cubic tangent must move exact authored control points,
+      // unlike the old sampled Draw editor's inferred tangent approximation.
+      await button.click();
+      await page.mouse.click(changedAnchor.x,changedAnchor.y);
+      const handlePoint=updated.vectorPath.segments[1].controlOut;
+      const handle=await screen(handlePoint);
+      await page.mouse.move(handle.x,handle.y);
+      await page.mouse.down();
+      await page.mouse.move(handle.x+18,handle.y-12,{steps:6});
+      await page.mouse.up();
+      await toggle.click();
+      assert.equal(await undo.isDisabled(),false);
+      await toolbar.locator('button',{hasText:'Use path'}).click();
+      await page.waitForFunction(prev=>{
+        try{
+          const x=JSON.parse(decodeURIComponent(new URL(location.href).searchParams.get('r')));
+          return x.vectorPath.segments[1].controlOut[0]!==prev;
+        }catch{return false;}
+      },updated.vectorPath.segments[1].controlOut[0]);
+      const withHandle=current(page);
+      assert.equal(withHandle.vectorPath.segments[0].to.id,'bend');
+      assert.notDeepEqual(withHandle.vectorPath.segments[1].controlOut,handlePoint);
+      // Exact cubic subdivision must add one stable node, with no aliasing
+      // back to the obsolete sampled coordinates.
+      await button.click();
+      await toggle.click();
+      await toolbar.locator('button',{hasText:'Insert node'}).click();
+      await toggle.click();
+      const middle=pointOnVectorSegment(withHandle.vectorPath,0,.5);
+      const segmentTouch=await screen(middle);
+      assert.equal(await page.evaluate(pt=>document.elementFromPoint(pt.x,pt.y)?.id,
+        segmentTouch),'drawOverlay');
+      await page.mouse.click(segmentTouch.x,segmentTouch.y);
+      await toggle.click();
+      assert.equal(await undo.isDisabled(),false);
+      await toolbar.locator('button',{hasText:'Use path'}).click();
+      await page.waitForFunction(()=> {
+        try{
+          const x=JSON.parse(decodeURIComponent(new URL(location.href).searchParams.get('r')));
+          return x.vectorPath.segments.length===3;
+        }catch{return false;}
+      });
+      const inserted=current(page);
+      assert.equal(inserted.vectorPath.segments.length,3);
+      assert.match(inserted.vectorPath.segments[0].to.id,/^vectorNode/);
+      assert.equal(inserted.vectorPath.segments[1].to.id,'bend');
+      assert.equal(inserted.customPath.length,0);
+      // Screen-direction axis lock must preserve the actual normalized Y.
+      await button.click();
+      await toggle.click();
+      await toolbar.locator('button',{hasText:'Lock axis'}).click();
+      await toggle.click();
+      const bend=inserted.vectorPath.segments[1].to.point;
+      const bendScreen=await screen(bend);
+      await page.mouse.move(bendScreen.x,bendScreen.y);
+      await page.mouse.down();
+      await page.mouse.move(bendScreen.x+31,bendScreen.y+3,{steps:6});
+      await page.mouse.up();
+      await toggle.click();
+      await toolbar.locator('button',{hasText:'Use path'}).click();
+      await page.waitForFunction(prev=>{
+        try{
+          const x=JSON.parse(decodeURIComponent(new URL(location.href).searchParams.get('r')));
+          return x.vectorPath.segments[1].to.point[0]!==prev;
+        }catch{return false;}
+      },bend[0]);
+      const locked=current(page);
+      assert.equal(locked.vectorPath.segments[1].to.point[1],bend[1]);
+      assert.ok(locked.vectorPath.segments[1].to.point[0]>bend[0]);
       summary.push({viewport:[width,height],touchTarget:touch,
-        sourcePreserved:true,moveSaved:true,cancelRestored:true});
+        sourcePreserved:true,moveSaved:true,cancelRestored:true,
+        tangentHandleSaved:true,cubicInserted:true,axisConstrained:true});
     }finally{await page.close();}
   }
   assert.deepEqual(pageErrors,[]);
