@@ -94,31 +94,40 @@ export function flattenVectorPath(input,{tolerance=.65,maxSamples=VECTOR_PATH_MA
     !Number.isInteger(maxDepth)||maxDepth<1||maxDepth>20)return null;
   const samples=[copy(path.start.point)];
   const stationIndices={[path.start.id]:0};
-  const append=p=>{if(samples.length>=maxSamples)return false;samples.push(copy(p));return true;};
-  const flattenCubic=(p0,p1,p2,p3)=>{
-    const stack=[{ps:[p0,p1,p2,p3],depth:0}];
+  const sampleParameters=[{segmentIndex:0,t:0}];
+  const append=(p,segmentIndex,t)=>{
+    if(samples.length>=maxSamples)return false;
+    samples.push(copy(p));sampleParameters.push({segmentIndex,t});return true;
+  };
+  const flattenCubic=(p0,p1,p2,p3,segmentIndex)=>{
+    const stack=[{ps:[p0,p1,p2,p3],depth:0,t0:0,t1:1}];
     while(stack.length){
-      const {ps,depth}=stack.pop();
-      if(flatness(...ps)<=tolerance){if(!append(ps[3]))return false;continue;}
+      const {ps,depth,t0,t1}=stack.pop();
+      if(flatness(...ps)<=tolerance){
+        if(!append(ps[3],segmentIndex,t1))return false;
+        continue;
+      }
       if(depth>=maxDepth)return false;
-      const [left,right]=halves(...ps);
-      stack.push({ps:right,depth:depth+1},{ps:left,depth:depth+1});
+      const [left,right]=halves(...ps),mid=(t0+t1)/2;
+      stack.push({ps:right,depth:depth+1,t0:mid,t1},
+        {ps:left,depth:depth+1,t0,t1:mid});
     }
     return true;
   };
   let previous=path.start.point;
-  for(const seg of path.segments){
-    if(!(seg.kind==='line'?append(seg.to.point):
-      flattenCubic(previous,seg.controlOut,seg.controlIn,seg.to.point)))return null;
+  for(const [index,seg] of path.segments.entries()){
+    if(!(seg.kind==='line'?append(seg.to.point,index,1):
+      flattenCubic(previous,seg.controlOut,seg.controlIn,seg.to.point,index)))return null;
     stationIndices[seg.to.id]=samples.length-1;
     previous=seg.to.point;
   }
   if(path.closed){
     const last=path.closing;
-    if(!(last.kind==='line'?append(path.start.point):
-      flattenCubic(previous,last.controlOut,last.controlIn,path.start.point)))return null;
+    if(!(last.kind==='line'?append(path.start.point,path.segments.length,1):
+      flattenCubic(previous,last.controlOut,last.controlIn,path.start.point,
+        path.segments.length)))return null;
   }
-  return {points:samples,stationIndices,closed:path.closed,
+  return {points:samples,stationIndices,sampleParameters,closed:path.closed,
     segments:path.segments.length+(path.closed?1:0)};
 }
 
@@ -136,6 +145,62 @@ export function prepareVectorDrawnPath(input,options){
   if(lengths.at(-1)<=0)return null;
   return {points,lengths,total:lengths.at(-1),closed:result.closed,
     stationIndices:result.stationIndices};
+}
+
+/** Exact point on a particular authored line/cubic, including explicit closure. */
+export function pointOnVectorSegment(input,index,t){
+  const path=normalizeVectorPath(input);
+  if(!path||!Number.isInteger(index)||index<0||
+      index>=path.segments.length+(path.closed?1:0)||
+      !Number.isFinite(t)||t<0||t>1)return null;
+  const closing=index===path.segments.length;
+  const seg=closing?path.closing:path.segments[index];
+  const start=index===0?path.start.point:path.segments[index-1].to.point;
+  const end=closing?path.start.point:seg.to.point;
+  if(seg.kind==='line')return lerp(start,end,t);
+  const q0=lerp(start,seg.controlOut,t),q1=lerp(seg.controlOut,seg.controlIn,t),
+    q2=lerp(seg.controlIn,end,t),r0=lerp(q0,q1,t),r1=lerp(q1,q2,t);
+  return lerp(r0,r1,t);
+}
+
+/** Nearest true authored cubic segment/t for insertion. Disambiguate crossing
+ * branches using bounded vector-space samples, then refine the subinterval. */
+export function nearestVectorSegment(input,query,options){
+  const path=normalizeVectorPath(input);
+  if(!path||!Array.isArray(query)||query.length!==2||
+    !query.every(n=>Number.isFinite(n)&&Math.abs(n)<100))return null;
+  const flat=flattenVectorPath(path,options);
+  if(!flat)return null;
+  let nearest=null;
+  for(let i=1;i<flat.points.length;i++){
+    const a=flat.points[i-1],b=flat.points[i],param=flat.sampleParameters[i];
+    const previous=flat.sampleParameters[i-1];
+    const t0=previous.segmentIndex===param.segmentIndex?previous.t:0;
+    const vx=(b[0]-a[0])*VECTOR_PATH_WIDTH,vy=(b[1]-a[1])*VECTOR_PATH_HEIGHT;
+    const wx=(query[0]-a[0])*VECTOR_PATH_WIDTH,wy=(query[1]-a[1])*VECTOR_PATH_HEIGHT;
+    const u=clamp((wx*vx+wy*vy)/(vx*vx+vy*vy||1),0,1);
+    const dist=Math.hypot(wx-u*vx,wy-u*vy);
+    if(!nearest||dist<nearest.distance){
+      nearest={segmentIndex:param.segmentIndex,t0,t1:param.t,
+        estimate:t0+(param.t-t0)*u,distance:dist};
+    }
+  }
+  if(!nearest)return null;
+  const index=nearest.segmentIndex;
+  const cost=t=>metric(pointOnVectorSegment(path,index,t),query);
+  let lo=nearest.t0,hi=nearest.t1;
+  for(let k=0;k<22;k++){
+    const c=hi-(hi-lo)*.6180339887498948,d=lo+(hi-lo)*.6180339887498948;
+    if(cost(c)<=cost(d))hi=d;else lo=c;
+  }
+  const choices=[lo,(lo+hi)/2,hi,nearest.estimate,nearest.t0,nearest.t1];
+  let best=null;
+  for(const t of choices){
+    const distance=cost(t);
+    if(!best||distance<best.distanceDesign)best={segmentIndex:index,t,
+      point:pointOnVectorSegment(path,index,t),distanceDesign:distance};
+  }
+  return best;
 }
 
 function nodeLocation(path,id){
