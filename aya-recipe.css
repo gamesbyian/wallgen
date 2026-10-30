@@ -1,0 +1,60 @@
+/* The AYA composer is an independent More subview. It never changes the
+   height of the ordinary More sheet, dock or wallpaper preview. */
+.aya-recipe-dialog{
+  box-sizing:border-box;width:min(29rem,calc(100vw - 1.5rem));
+  max-width:calc(100vw - 1.5rem);
+  max-height:calc(100dvh - 1rem - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  margin:auto;padding:clamp(.65rem,2dvh,1rem);
+  border:1px solid var(--line,#777);border-radius:1rem;
+  background:var(--surface,#fff);color:var(--ink,#1c1527);
+  box-shadow:0 1rem 3rem #0006;
+  overflow:hidden;
+}
+.aya-recipe-dialog:not([open]){display:none!important}
+.aya-recipe-dialog[open]{display:grid;grid-template-rows:auto auto minmax(3rem,auto) auto auto auto;gap:clamp(.3rem,1.1dvh,.75rem)}
+.aya-recipe-dialog::backdrop{background:rgb(8 9 14 / .76)}
+.aya-recipe-head{display:flex;align-items:center;gap:.65rem;min-width:0}
+.aya-recipe-logo{width:3.5rem;height:3.5rem;flex:none;border-radius:.6rem}
+.aya-recipe-heading{min-width:0;flex:1}
+.aya-recipe-heading h2{font-size:1.05rem;line-height:1.15;margin:0;font-weight:800}
+.aya-recipe-heading p{font-size:.72rem;line-height:1.3;margin:.25rem 0 0}
+.aya-recipe-dialog button{font:inherit;color:inherit;cursor:pointer}
+.aya-recipe-close{min-width:44px;min-height:44px;display:grid;place-items:center;border:1px solid var(--line,#777);border-radius:.65rem;background:transparent}
+.aya-recipe-prompt-label{font-weight:750;font-size:.8rem;line-height:1.25}
+#ayaRecipePrompt{
+  box-sizing:border-box;width:100%;min-width:0;min-height:3rem;
+  height:clamp(3rem,13dvh,6.5rem);resize:none;
+  font:inherit;font-size:.9rem;line-height:1.35;
+  border:1px solid var(--line,#777);border-radius:.65rem;
+  background:var(--surface,#fff);color:inherit;padding:.6rem;
+}
+.aya-recipe-current{display:flex;align-items:center;gap:.6rem;min-height:44px;font-size:.78rem;line-height:1.25}
+.aya-recipe-current input{width:1.15rem;height:1.15rem;accent-color:#8153b1}
+.aya-recipe-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.4rem}
+.aya-recipe-actions button{
+  min-width:0;min-height:44px;padding:.45rem .2rem;border-radius:.6rem;
+  border:1px solid var(--line,#777);background:transparent;
+  font-size:.76rem;font-weight:750;line-height:1.2;
+}
+.aya-recipe-actions #ayaRecipeShare{background:#6337a2;color:#fff;border-color:#6337a2}
+.aya-recipe-actions button:disabled{opacity:.55;cursor:default}
+.aya-recipe-status{min-height:2.4em;margin:0;font-size:.71rem;line-height:1.2;overflow-wrap:anywhere}
+.aya-recipe-dialog :focus-visible{outline:2px solid #a66ee5;outline-offset:2px}
+#ayaRecipeOpen{
+  min-height:44px;display:flex;align-items:center;gap:.55rem;
+  border:1px solid var(--line,#777);border-radius:.6rem;
+  color:inherit;background:var(--surface,#fff);
+}
+#ayaRecipeOpen img{width:1.65rem;height:1.65rem;border-radius:.3rem}
+@media(max-width:790px){
+  body.mobile-studio #ayaRecipeOpen{width:100%;min-height:44px;justify-content:flex-start;padding:.45rem .6rem;font-weight:750}
+  body.mobile-studio #ayaRecipeOpen img{flex:0 0 1.65rem}
+}
+@media(max-height:530px){
+  .aya-recipe-dialog{padding:.45rem}
+  .aya-recipe-dialog[open]{gap:.2rem}
+  .aya-recipe-logo{width:2rem;height:2rem}
+  .aya-recipe-heading p{display:none}
+  #ayaRecipePrompt{height:clamp(2.4rem,10dvh,3.5rem)}
+  .aya-recipe-status{min-height:1.3em}
+}
