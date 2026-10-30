@@ -55,8 +55,17 @@ try{
           return {x:p.left+(.5+(point[0]-.5)*recipe.viewZoom+offsetX)*p.width,
             y:p.top+(.5+(point[1]-.5)*recipe.viewZoom+offsetY)*p.height};
         },{point:fixture.customPath[selected],recipe:fixture});
-        assert.equal(await page.evaluate(p=>document.elementFromPoint(p.x,p.y)?.id,origin),
-          'drawOverlay','real anchor must remain reachable');
+        const anchorHit=await page.evaluate(p=>{
+          const node=document.elementFromPoint(p.x,p.y);
+          const rect=el=>{const r=el.getBoundingClientRect();
+            return {x:r.x,y:r.y,width:r.width,height:r.height};};
+          return {id:node?.id,tag:node?.tagName,cls:String(node?.className||''),
+            overlay:rect(document.getElementById('drawOverlay')),
+            panel:rect(document.getElementById('drawPathPanel')),point:p};
+        },origin);
+        console.log('OFFSET_GRIP_ANCHOR_HIT',JSON.stringify({width,height,mode,...anchorHit}));
+        assert.equal(anchorHit.id,'drawOverlay',
+          'real anchor must remain reachable: '+JSON.stringify(anchorHit));
         await page.mouse.click(origin.x,origin.y);
         assert.equal(await page.locator('#drawUndoPoint').isDisabled(),true);
         const locateGrip=()=>page.evaluate(async({source,index})=>{
