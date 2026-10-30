@@ -1,4 +1,5 @@
 import { OUTPUT_WIDTH, OUTPUT_HEIGHT, NAMES, COLOR_STORIES, normalizeRecipe, resolveScene, encodeRecipe, decodeRecipe, newSeed, randomizeAllRecipe, respectSettingLocks, LOCKABLE_SETTINGS } from './model.js';
+import {installAyaRecipeHandoff} from './aya-recipe-handoff.js';
 import { drawWallpaper, presentNudgedArtwork } from './renderer.js?v=20261024-text-overlays1';
 import {normalizePhotoLook,PHOTO_PRESETS} from './photo-look.js';
 import {photoPreviewRecipe} from './photo-preview-compare.js';
@@ -2418,6 +2419,10 @@ document.getElementById('copyLink').addEventListener('click',async()=>{
     showNotice('Design link is too long to open reliably. Use Save recipe JSON or Download PNG to share this wallpaper. '+error.message);
   }
 });
+installAyaRecipeHandoff({getCurrentRecipe:()=>{
+  flushQueuedControlUpdate();
+  return normalizeRecipe(current);
+}});
 document.getElementById('downloadRecipe').addEventListener('click',()=>{
   flushQueuedControlUpdate();
   usageRecorder?.action('save_recipe_json',current);

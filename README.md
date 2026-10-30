@@ -85,6 +85,12 @@ npm test
 npm run check
 ```
 
+## Ask Your Agent: describe a wallpaper, get an editable recipe
+
+Under **More → Files & sharing → Ask Your Agent**, describe a design in ordinary language. ROYGBIV assembles a source-derived reference describing the current JSON recipe format, settings, ranges, visibility rules and interactions. Share the guide with your preferred AI assistant, or copy/save it for manual attachment. You can optionally include the current design for targeted changes.
+
+The assistant can produce a ROYGBIV `.json` recipe. Save it and use **Import design** as usual. There is no built-in AI service, no account or API key, no response monitoring and no automatic result import. Recipient file support varies by device and agent app, so Copy and Save are always offered. The source-informed effect notes are **not** yet measured perceptual response curves. See [AYA recipe handoff and remaining acceptance plan](docs/AYA-RECIPE-HANDOFF-2026-10-30.md).
+
 ## For developers and AI agents
 
 ROYGBIV is also an experiment in making a visual editor understandable and controllable by AI agents. The **local MCP/headless integration** lets suitably equipped agents inspect canonical controls, construct and vary editable designs, render real Chromium previews and export wallpapers.

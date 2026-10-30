@@ -44,6 +44,7 @@
   <link rel="stylesheet" href="colour-vision-preview.css?v=20261022-1">
   <link rel="stylesheet" href="photo-controls.css?v=20261022-photo1">
   <link rel="stylesheet" href="png-recipe-migration.css?v=20261022-m1">
+  <link rel="stylesheet" href="aya-recipe.css?v=20261030-1">
 </head>
 <body>
   <header class="masthead">
@@ -459,6 +460,7 @@
         <div class="main-actions"><button id="randomize" class="button button-outline" type="button" title="New seed; keep current settings"><img class="ui-icon" src="assets/icons/roygbiv/reroll.svg" alt="" aria-hidden="true" draggable="false"> <span>New variation</span></button><button id="download" class="button button-light" type="button"><img class="ui-icon" src="assets/icons/roygbiv/export-png.svg" alt="" aria-hidden="true" draggable="false"> <span>Download PNG</span></button><button id="favorite" class="button button-icon" title="Add to favourites" aria-label="Add to favourites" aria-pressed="false" type="button"><img class="ui-icon" src="assets/icons/roygbiv/favourite.svg" alt="" aria-hidden="true" draggable="false"></button></div>
       </div>
       <div class="export-metadata">
+        <button id="ayaRecipeOpen" type="button" aria-haspopup="dialog" aria-controls="ayaRecipeDialog"><img src="assets/aya-roygbiv.svg" alt="" aria-hidden="true"> Ask Your Agent · create JSON recipe</button>
         <button id="importRecipePNG" type="button" class="text-link-button" aria-label="Import design from PNG or JSON recipe"><img class="ui-icon" src="assets/icons/roygbiv/path.svg" alt="" aria-hidden="true" draggable="false"> Import design</button>
         <input id="importRecipeFile" type="file" accept="image/png,.png,application/json,.json" hidden aria-label="Choose a wallpaper PNG or recipe JSON to restore a design">
         <button id="migrateRecipeToggle" type="button" class="text-link-button"
@@ -575,7 +577,23 @@
       <button type="button" id="imagePathShape" disabled>Use silhouette as shape</button>
     </div>
   </dialog>
-  <script type="module" src="src/app.js?v=20261024-text-overlays1"></script>
+  <dialog id="ayaRecipeDialog" class="aya-recipe-dialog" aria-labelledby="ayaRecipeTitle" aria-describedby="ayaRecipeIntro">
+    <div class="aya-recipe-head">
+      <img class="aya-recipe-logo" src="assets/aya-roygbiv.svg" alt="" aria-hidden="true">
+      <div class="aya-recipe-heading"><h2 id="ayaRecipeTitle">Ask Your Agent</h2><p id="ayaRecipeIntro">Describe a wallpaper. Your agent can create an editable ROYGBIV JSON recipe.</p></div>
+      <button type="button" class="aya-recipe-close" id="ayaRecipeClose" aria-label="Close Ask Your Agent">✕</button>
+    </div>
+    <label class="aya-recipe-prompt-label" for="ayaRecipePrompt">Describe your design</label>
+    <textarea id="ayaRecipePrompt" maxlength="1600" rows="3" placeholder="Seven flowing rainbow ribbons, embroidered linen, soft light…" aria-required="true"></textarea>
+    <label class="aya-recipe-current"><input id="ayaRecipeIncludeCurrent" type="checkbox"><span>Include current recipe so the agent can edit this design</span></label>
+    <div class="aya-recipe-actions">
+      <button type="button" id="ayaRecipeShare">Share guide</button>
+      <button type="button" id="ayaRecipeCopy">Copy guide</button>
+      <button type="button" id="ayaRecipeSave">Save guide</button>
+    </div>
+    <p class="aya-recipe-status" id="ayaRecipeStatus" role="status" aria-live="polite">A one-way handoff. Save the agent’s JSON, then use Import design.</p>
+  </dialog>
+  <script type="module" src="src/app.js?v=20261030-aya1"></script>
   <script type="module" src="src/mobile-studio.js?v=20261023-escape-focus1"></script>
   <script type="module" src="src/mobile-fullscreen.js?v=20261021-1"></script>
   <script type="module" src="src/mobile-swipes.js?v=20261023-single-editor1"></script>
