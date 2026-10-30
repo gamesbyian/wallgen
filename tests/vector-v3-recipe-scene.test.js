@@ -5,6 +5,7 @@ import {normalizeVectorPath} from '../src/vector-path-commands.js';
 import {prepareTextFollowPath} from '../src/text-path-geometry.js';
 import {appliedDrawnPathRecipe} from '../src/draw-apply-transaction.js';
 import {importAgentRecipe,describeAgentCapabilities} from '../src/agent-api.js';
+import {embedPngMetadata,extractPngRecipeWithProvenance,RECIPE_FORMAT_V3} from '../src/png-metadata.js';
 
 const source=normalizeVectorPath({
   space:'normalized-design',closed:false,
@@ -95,4 +96,17 @@ test('agent import accepts canonical v3, but malformed/future geometry fails clo
   assert.ok(describeAgentCapabilities().supportedImportRecipeVersions.includes(3));
   assert.throws(()=>importAgentRecipe({...recipe,vectorPath:{broken:true}}));
   assert.throws(()=>importAgentRecipe({...recipe,version:4}));
+});
+
+test('embedded PNG records true vector v3 metadata and restores exact authored controls',()=>{
+  const tiny=Uint8Array.from(Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScL/9QAAAABJRU5ErkJggg==','base64'));
+  const recipe=v3();
+  const file=embedPngMetadata(tiny,{title:'vector test'},{recipe});
+  const restored=extractPngRecipeWithProvenance(file);
+  assert.equal(restored.format,RECIPE_FORMAT_V3);
+  assert.deepEqual(restored.recipe,recipe);
+  assert.equal(restored.normalizedFieldsChanged,false);
+  assert.deepEqual(restored.recipe.vectorPath.segments[0].controlIn,
+    source.segments[0].controlIn);
 });
