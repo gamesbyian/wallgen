@@ -76,7 +76,7 @@ try{
           editor.selected=index;
           const overlay=document.getElementById('drawOverlay');
           const bounds=overlay.getBoundingClientRect(),
-            stage=document.querySelector('.studio-stage').getBoundingClientRect(),
+            stage=overlay.getBoundingClientRect(),
             image=document.getElementById('preview').getBoundingClientRect(),
             panel=document.getElementById('drawPathPanel').getBoundingClientRect();
           const scale=overlay.width/stage.width,zoom=source.viewZoom;
@@ -118,13 +118,6 @@ try{
         }
         g=await locateGrip();
         assert.ok(g&&g.hit==='drawOverlay');
-        await page.evaluate(()=>{
-          window.__offsetDebug=[];
-          const o=document.getElementById('drawOverlay');
-          for(const type of ['pointerdown','pointermove','pointerup','pointercancel','lostpointercapture'])
-            o.addEventListener(type,e=>window.__offsetDebug.push({
-              type,x:e.clientX,y:e.clientY,buttons:e.buttons,pointerId:e.pointerId}),true);
-        });
         await page.mouse.move(g.x,g.y);
         await page.mouse.down();
         await page.mouse.move(g.x+32,g.y+(mode==='axis'?3:21),{steps:6});
@@ -142,10 +135,7 @@ try{
           await page.locator('#drawCancel').click();
           assert.deepEqual(current(page),fixture,'canceled gesture kept source untouched');
         }else{
-          const hasUndo=!(await page.locator('#drawUndoPoint').isDisabled());
-          if(!hasUndo)console.log('OFFSET_GRIP_NO_CHANGE',JSON.stringify({
-            width,height,mode,g,events:await page.evaluate(()=>window.__offsetDebug)}));
-          assert.equal(hasUndo,true);
+          assert.equal(await page.locator('#drawUndoPoint').isDisabled(),false);
           assert.deepEqual(current(page),fixture,'unapplied path changes are provisional');
           await page.screenshot({path:join(out,width+'x'+height+'-'+mode+'.png'),
             animations:'disabled'});
