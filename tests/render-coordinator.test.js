@@ -300,3 +300,86 @@ test('cross-gesture, stopped, and post-commit intermediate frames remain rejecte
   assert.deepEqual(seen,[]);
   scheduler.dispose();
 });
+
+test('only new Random designs preempt an old expensive worker paint',()=>{
+  let clock=1000;
+  const workers=[],received=[];
+  const scheduler=createPreviewCoordinator({
+    canUseWorker:true,now:()=>clock,
+    workerFactory:()=>{const w=new FakeWorker();workers.push(w);return w;},
+    onFrame:frame=>received.push(frame.key),
+  });
+  const first=workers[0];first.emit(ready);
+  scheduler.request({seed:'one'},'one',180,390,{quality:'interactive',intent:'randomize'});
+  const oldId=first.messages.at(-1).id;
+  clock+=110;
+  scheduler.request({seed:'two'},'two',180,390,{quality:'interactive',intent:'randomize'});
+  assert.equal(first.terminated,true,'obsolete Random paint should be cancelled');
+  assert.equal(workers.length,2);
+  assert.equal(scheduler.status.randomPreemptCount,1);
+  const orphan={type:'frame',id:oldId,key:'one',quality:'interactive',frame:bitmap()};
+  first.emit(orphan);
+  assert.equal(orphan.frame.closed,true,'old worker may not leak an obsolete bitmap');
+  const second=workers[1];second.emit(ready);
+  assert.deepEqual(second.messages.map(m=>m.key),['two']);
+  clock+=80;
+  scheduler.request({seed:'three'},'three',180,390,{quality:'interactive',intent:'randomize'});
+  assert.equal(workers.length,2,'cooldown bounds worker restart storms');
+  clock+=120;
+  scheduler.request({seed:'four'},'four',180,390,{quality:'interactive',intent:'randomize'});
+  assert.equal(workers.length,3,'newest Random may preempt after cooldown');
+  assert.equal(second.terminated,true);
+  const third=workers[2];third.emit(ready);
+  assert.deepEqual(third.messages.map(m=>m.key),['four']);
+  const fresh=third.messages[0];
+  third.emit({type:'frame',id:fresh.id,key:'four',quality:'interactive',frame:bitmap()});
+  assert.deepEqual(received,['four']);
+  assert.equal(scheduler.status.randomPreemptCount,2);
+  scheduler.dispose();
+  assert.equal(third.terminated,true);
+});
+
+test('normal controls, settled upgrades, Undo, and young jobs never preempt workers',()=>{
+  let clock=2500;
+  const workers=[],received=[];
+  const scheduler=createPreviewCoordinator({canUseWorker:true,now:()=>clock,
+    workerFactory:()=>{let w=new FakeWorker();workers.push(w);return w;},
+    onFrame:x=>received.push(x.key)});
+  const old=workers[0];old.emit(ready);
+  scheduler.request({seed:'a'},'a',180,390,{quality:'interactive'});
+  clock+=500;
+  scheduler.request({seed:'b'},'b',180,390,{quality:'interactive'});
+  scheduler.request({seed:'c'},'c',600,1300,{quality:'settled',intent:'randomize'});
+  assert.equal(workers.length,1,'settled and ordinary changes cannot kill active worker');
+  scheduler.invalidate();
+  scheduler.request({seed:'d'},'d',180,390,{quality:'interactive',intent:'randomize'});
+  // Invalidation does not interrupt synchronous active work unless the
+  // user explicitly starts another Random. This request may preempt.
+  assert.equal(workers.length,2);
+  const current=workers[1];current.emit(ready);
+  clock+=10;
+  scheduler.request({seed:'e'},'e',180,390,{quality:'interactive',intent:'randomize'});
+  assert.equal(workers.length,2,'too-young paint cannot trigger restart');
+  scheduler.dispose();
+});
+
+test('a failed Random preemption boot falls back once without leaking an old worker',()=>{
+  let clock=2000,tries=0;
+  const old=new FakeWorker(),failures=[];
+  const scheduler=createPreviewCoordinator({canUseWorker:true,now:()=>clock,
+    workerFactory:()=>{
+      if(++tries===1)return old;
+      throw Error('worker startup unavailable');
+    },
+    onFailure:error=>failures.push(error)});
+  old.emit(ready);
+  scheduler.request({seed:'a'},'a',180,390,{quality:'interactive'});
+  clock+=120;
+  assert.equal(scheduler.request({seed:'b'},'b',180,390,
+    {quality:'interactive',intent:'randomize'}),true);
+  assert.equal(old.terminated,true);
+  assert.deepEqual(failures,['worker startup unavailable']);
+  assert.equal(scheduler.enabled,false);
+  assert.equal(scheduler.request({seed:'c'},'c',180,390),false);
+  scheduler.dispose();
+});
