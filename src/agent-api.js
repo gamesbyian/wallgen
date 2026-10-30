@@ -109,6 +109,7 @@ export function describeAgentCapabilities() {
     }));
   return {
     name: 'ROYGBIV', recipeVersion: BASE.version,
+    supportedImportRecipeVersions: [2,3],
     canvas: { design: [600,1300], native: [3024,6552] },
     styles: Object.keys(STYLE_PRESETS),
     categories: EDITOR_CATEGORIES.map(({ id, label, tools }) => ({
@@ -127,7 +128,8 @@ export function describeAgentCapabilities() {
       'All renders use production ROYGBIV pixels; previews are not final-resolution exports.',
       'Exact selected tool and category IDs are discoverable above.',
       'Unknown, protected or invalid primitive setting values fail explicitly.',
-      'Locked settings are never changed by exploration.'
+      'Locked settings are never changed by exploration.',
+      'A version 3 recipe may import a validated vectorPath command graph; sampled Draw editing remains unavailable for that source during migration.'
     ]
   };
 }
@@ -149,15 +151,16 @@ export function composeAgentRecipe({ style = 'studio', seed = 'agent-001', setti
  */
 export function importAgentRecipe(input) {
   boundedObject(input, 'recipe');
-  if (input.version !== BASE.version)
-    throw new RangeError('Only current canonical recipe version ' + BASE.version + ' is supported');
+  if (input.version !== BASE.version && input.version !== 3)
+    throw new RangeError('Only canonical recipe versions 2 or 3 are supported');
   if (typeof input.seed !== 'string' || !input.seed.trim() || input.seed.length > 90)
     throw new RangeError('Imported recipe requires its original valid seed');
   if (!Array.isArray(input.lockedSettings))
     throw new TypeError('Imported recipe needs a lockedSettings array');
   checkedLocks(input.lockedSettings);
   const allowed = new Set([...SETTINGS, ...Object.keys(BASE),
-    'version', 'seed', 'lockedSettings', 'lockedResolved', 'reconstructionOrigin']);
+    'version', 'seed', 'lockedSettings', 'lockedResolved', 'reconstructionOrigin',
+    ...(input.version===3?['vectorPath']:[])]);
   for (const key of Object.keys(input))
     if (!allowed.has(key)) throw new RangeError('Unknown imported recipe key: ' + key);
   const recipe = normalizeRecipe(input);
