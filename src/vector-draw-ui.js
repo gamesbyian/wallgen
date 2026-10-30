@@ -8,6 +8,7 @@ import {hitVectorEditTarget,vectorNodeTargets} from './vector-node-hit.js';
 import {beginAxisDrag,axisConstrainedPoint} from './axis-constrained-drag.js';
 import {drawnPathViewportOffset} from './draw-path-ui.js';
 import {VECTOR_PATH_MIN,VECTOR_PATH_MAX} from './vector-path-commands.js';
+import {vectorKeyboardCommand} from './vector-keyboard-precision.js';
 
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const distance=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]);
@@ -151,7 +152,7 @@ export function installVectorDrawEditor({getRecipe,onApply,onNotice,
     overlay.hidden=false;button.setAttribute('aria-pressed','true');
     document.body.classList.add('path-drawing');
     overlay.setAttribute('aria-label',
-      'True Bézier vector editor. Drag square nodes or selected tangent circles, or use arrow keys.');
+      'True Bézier vector editor. Drag square nodes or selected tangent circles. Brackets cycle nodes, arrows nudge, Alt plus arrows nudge outgoing handles, Alt Shift plus arrows nudge incoming handles.');
     sync();
     return true;
   }
@@ -271,19 +272,17 @@ export function installVectorDrawEditor({getRecipe,onApply,onNotice,
       event.preventDefault();session=event.shiftKey?
         redoVectorEdit(session):undoVectorEdit(session);sync();return;
     }
-    if(!session.selectedId||!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(event.key))
-      return;
+    const command=vectorKeyboardCommand(session.path,session.selectedId,event);
+    if(!command)return;
     event.preventDefault();
-    const prev=nodePoint(session.selectedId);if(!prev)return;
-    const count=event.shiftKey?10:1;
-    const x=prev[0]+(event.key==='ArrowLeft'?-count/600:
-      event.key==='ArrowRight'?count/600:0);
-    const y=prev[1]+(event.key==='ArrowUp'?-count/1300:
-      event.key==='ArrowDown'?count/1300:0);
-    const tx=beginVectorEdit(session,{kind:'node',id:session.selectedId});
-    session=commitVectorEdit(previewVectorEdit(tx,{point:[
-      clamp(x,VECTOR_PATH_MIN,VECTOR_PATH_MAX),
-      clamp(y,VECTOR_PATH_MIN,VECTOR_PATH_MAX)]}));
+    if(command.kind==='select'){
+      session=selectVectorEditNode(session,command.id);
+      overlapCycle=0;sync();return;
+    }
+    const tx=beginVectorEdit(session,{kind:command.kind,id:command.id,
+      side:command.side});
+    if(!tx.tx)return;
+    session=commitVectorEdit(previewVectorEdit(tx,{point:command.point}));
     sync();
   });
   window.addEventListener('resize',()=>{if(active)sync();});
