@@ -72,7 +72,13 @@ try{
         const el=document.querySelector('input[name="spread"]');
         el.value='44';el.dispatchEvent(new Event('change',{bubbles:true}));
       });
-      await page.waitForFunction(()=>new URL(location.href).searchParams.has('r'));
+      await page.waitForFunction(()=>{
+        try{
+          const r=JSON.parse(decodeURIComponent(
+            new URL(location.href).searchParams.get('r')));
+          return r.spread===44&&r.version===3;
+        }catch{return false;}
+      },null,{timeout:16000});
       const updated=current(page);
       assert.equal(updated.version,3);
       assert.deepEqual(updated.vectorPath,before.vectorPath);
