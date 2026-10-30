@@ -545,3 +545,11 @@
 
 /* Base document movement follows the user's OS preference, as do the mobile tray and dock. */
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.setting-lock{transition:none}}
+
+/* Exact scalar expressions are editable in the original stepper row.
+   A malformed expression must be clearly visible without saving a recipe. */
+.slider-number[aria-invalid="true"]{
+  border-color:#f05a70!important;
+  outline:2px solid #f05a70;
+  outline-offset:1px;
+}
