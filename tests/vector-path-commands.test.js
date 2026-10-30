@@ -229,3 +229,47 @@ test('aligned and mirrored modes require both real adjacent tangent controls',()
   assert.equal(setVectorNodeMode(sample,'start','mirrored'),null);
   assert.equal(setVectorNodeMode(sample,'end','aligned'),null);
 });
+
+test('inserting on the closing LINE preserves explicit closure, start ID and exact geometry',()=>{
+  const original=vectorPathFromPolyline([[.2,.2],[.8,.2],[.8,.8]],{closed:true});
+  const closingIndex=original.segments.length,t=.37;
+  const midpoint=pointOnVectorSegment(original,closingIndex,t);
+  const edited=splitVectorSegment(original,closingIndex,t,'seam');
+  assert.ok(edited);
+  assert.equal(edited.closed,true);
+  assert.equal(edited.start.id,'n0');
+  assert.equal(edited.segments.length,3);
+  assert.equal(edited.segments.at(-1).to.id,'seam');
+  assert.equal(edited.closing.kind,'line');
+  assert.deepEqual(edited.segments.at(-1).to.point,midpoint);
+  assert.deepEqual(edited.segments.slice(0,2),original.segments);
+  assert.equal(pointOnVectorSegment(edited,3,1)[0],original.start.point[0]);
+  assert.equal(splitVectorSegment(original,closingIndex,t,'n0'),null);
+  assert.equal(splitVectorSegment(original,closingIndex+1,t,'other'),null);
+});
+test('closed cubic seam split preserves exact parametric curve on BOTH halves',()=>{
+  const original=normalizeVectorPath({
+    space:'normalized-design',closed:true,
+    start:{id:'first',point:[.2,.3]},
+    segments:[{kind:'line',to:{id:'last',point:[.78,.78]}}],
+    closing:{kind:'cubic',controlOut:[.92,.35],controlIn:[-.1,.85]},
+    nodeModes:{}
+  });
+  const tSplit=.42,closingIndex=original.segments.length;
+  const edited=splitVectorSegment(original,closingIndex,tSplit,'splitSeam');
+  assert.ok(edited);
+  assert.equal(edited.closed,true);
+  assert.equal(edited.segments.at(-1).kind,'cubic');
+  assert.equal(edited.closing.kind,'cubic');
+  assert.equal(edited.nodeModes.splitSeam,'aligned');
+  assert.deepEqual(edited.segments[0],original.segments[0]);
+  assert.equal(edited.segments.at(-1).to.id,'splitSeam');
+  for(let k=0;k<=40;k++){
+    const t=k/40,originalPoint=pointOnVectorSegment(original,closingIndex,t);
+    const splitPoint=t<=tSplit?
+      pointOnVectorSegment(edited,closingIndex,t/tSplit):
+      pointOnVectorSegment(edited,closingIndex+1,(t-tSplit)/(1-tSplit));
+    assert.ok(eq(originalPoint,splitPoint,1e-8),JSON.stringify({t,originalPoint,splitPoint}));
+  }
+  assert.deepEqual(original.segments[0].to.point,[.78,.78]);
+});
