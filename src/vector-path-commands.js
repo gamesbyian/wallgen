@@ -314,21 +314,39 @@ export function setVectorNodeMode(input,id,mode){
 /** Stable existing IDs; exact De Casteljau splitting preserves cubic shape. */
 export function splitVectorSegment(input,index,t,newId){
   const path=normalizeVectorPath(input);
-  if(!path||!Number.isInteger(index)||index<0||index>=path.segments.length||
+  if(!path||!Number.isInteger(index)||index<0||
+     index>=path.segments.length+(path.closed?1:0)||
      !Number.isFinite(t)||t<=0||t>=1||!idOK(newId)||nodeLocation(path,newId)||
      path.segments.length>=VECTOR_PATH_MAX_SEGMENTS)return null;
-  const seg=path.segments[index];
-  const a=index===0?path.start.point:path.segments[index-1].to.point;
+  const closing=index===path.segments.length;
+  const seg=closing?path.closing:path.segments[index];
+  const a=index===0?path.start.point:
+    path.segments[index-1].to.point;
+  const end=closing?path.start.point:seg.to.point;
   if(seg.kind==='line'){
-    const middle=lerp(a,seg.to.point,t);
-    path.segments.splice(index,1,{kind:'line',to:{id:newId,point:middle}},seg);
+    const middle=lerp(a,end,t);
+    if(closing){
+      // The former seam's first half becomes a regular segment; the
+      // second half remains the explicit closure to the ORIGINAL start ID.
+      path.segments.push({kind:'line',to:{id:newId,point:middle}});
+    }else{
+      path.segments.splice(index,1,{kind:'line',to:{id:newId,point:middle}},seg);
+    }
   }else{
-    const p0=a,p1=seg.controlOut,p2=seg.controlIn,p3=seg.to.point;
+    const p0=a,p1=seg.controlOut,p2=seg.controlIn,p3=end;
     const p01=lerp(p0,p1,t),p12=lerp(p1,p2,t),p23=lerp(p2,p3,t);
     const p012=lerp(p01,p12,t),p123=lerp(p12,p23,t),p=lerp(p012,p123,t);
-    path.segments.splice(index,1,
-      {kind:'cubic',to:{id:newId,point:p},controlOut:p01,controlIn:p012},
-      {kind:'cubic',to:seg.to,controlOut:p123,controlIn:p23});
+    const first={kind:'cubic',to:{id:newId,point:p},
+      controlOut:p01,controlIn:p012};
+    if(closing){
+      path.segments.push(first);
+      path.closing={kind:'cubic',controlOut:p123,controlIn:p23};
+    }else{
+      path.segments.splice(index,1,first,
+        {kind:'cubic',to:seg.to,controlOut:p123,controlIn:p23});
+    }
+    // Split cubics have collinear true tangents at the new node. Handles
+    // remain explicit and editable, including at a closed-path seam.
     path.nodeModes[newId]='aligned';
   }
   return normalizeVectorPath(path);
