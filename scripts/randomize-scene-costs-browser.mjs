@@ -91,8 +91,42 @@ try{
         settled:[await render(recipe,600,1300,'settled')].map(Math.round),
       });
     }
+    // Diagnostic ablation ONLY. These are NOT proposed visual shortcuts:
+    // compare the exact same seed while disabling one expensive subsystem.
+    // It identifies where to optimize without changing production pixels.
+    const ablation=[];
+    for(const row of slowest.slice(0,2)){
+      const recipe=randomizeAllRecipe({seed:row.seed});
+      const trials=[
+        ['unaltered',recipe],
+        ['no-material',{...recipe,material:'none',textureStrength:0,
+          textureLayer2Enabled:false,textureLayer3Enabled:false}],
+        ['no-displacement',{...recipe,textureDisplacement:0}],
+        ['no-interior',{...recipe,interiorElements:[]}],
+        ['no-outline',{...recipe,outline:'none'}],
+        ['simple-path-or-rays',{...recipe,geometry:'straight',
+          rayCount:7,radialMode:'spokes'}],
+        ['few-rays',{...recipe,rayCount:7}],
+        ['solid-motif',{...recipe,motif:'solid'}],
+      ];
+      const measures=[];
+      for(const [label,variant] of trials){
+        // Run twice: the second value is a warm-worker measurement. The
+        // entire renderer is still exercised on each measurement.
+        const times=[await render(variant,372,806),
+          await render(variant,372,806)];
+        measures.push({label,times:times.map(Math.round)});
+      }
+      ablation.push({seed:row.seed,recipe:{
+        structure:recipe.structure,geometry:recipe.geometry,radialMode:recipe.radialMode,
+        rayCount:recipe.rayCount,construction:recipe.construction,
+        material:recipe.material,textureStrength:recipe.textureStrength,
+        textureDisplacement:recipe.textureDisplacement,motif:recipe.motif,
+        outline:recipe.outline,interior:recipe.interiorElements.length,
+      },measures});
+    }
     worker.terminate();
-    return {rows,slowest,repeats};
+    return {rows,slowest,repeats,ablation};
   });
   assert.deepEqual(errors,[]);
   assert.equal(result.rows.length,32);
@@ -103,6 +137,7 @@ try{
       result},null,2)+'\n');
   console.log('RANDOM_RENDER_COST_TOP',JSON.stringify(result.slowest));
   console.log('RANDOM_RENDER_COST_REPEAT',JSON.stringify(result.repeats));
+  console.log('RANDOM_RENDER_COST_ABLATION',JSON.stringify(result.ablation));
   console.log('RANDOM_RENDER_COST_MEDIAN',
     [...result.rows].sort((a,b)=>a.ms-b.ms)[Math.floor(result.rows.length/2)].ms);
 }finally{
