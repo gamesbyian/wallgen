@@ -133,3 +133,6 @@
   font-size:12px;font-weight:700;
 }
 .embroidery-controls .embroidery-precision-angle:disabled{opacity:.5;cursor:not-allowed}
+
+/* Invalid arithmetic stays visible for correction and cannot commit a recipe. */
+.rotation-scrub-entry[aria-invalid="true"]{border-color:#e94b63;outline:2px solid #e94b63;outline-offset:1px}
