@@ -50,7 +50,7 @@ export function normalizeVectorPath(input){
     if(!record(input.nodeModes)||Object.keys(input.nodeModes).length>ids.size)return null;
     for(const [id,mode] of Object.entries(input.nodeModes)){
       if(!ids.has(id)||!modes.has(mode))return null;
-      if(mode!=='corner')nodeModes[id]=mode;
+      if(mode!=='independent')nodeModes[id]=mode;
     }
   }
   return {space:'normalized-design',start:{id:input.start.id,point:copy(input.start.point)},
@@ -249,7 +249,7 @@ export function moveVectorHandle(input,id,side,next){
   if(!path||!point(next)||!idOK(id)||!['in','out'].includes(side))return null;
   const loc=nodeLocation(path,id),ref=handleRef(path,id,side);
   if(!loc||!ref)return null;
-  const mode=Object.hasOwn(path.nodeModes,id)?path.nodeModes[id]:'corner';
+  const mode=Object.hasOwn(path.nodeModes,id)?path.nodeModes[id]:'independent';
   const opposite=handleRef(path,id,oppositeSide(side));
   const proposed=[];
   if(opposite&&(mode==='aligned'||mode==='mirrored')){
@@ -263,19 +263,48 @@ export function moveVectorHandle(input,id,side,next){
   }
   proposed.push({seg:ref.seg,key:ref.key,to:copy(next)});
   for(const p of proposed)p.seg[p.key]=p.to;
+  // Pulling a collapsed Corner's handle creates a genuinely independent
+  // tangent. Corner and Independent cannot be cosmetic aliases.
+  if(mode==='corner'&&metric(loc.at,next)>1e-9)delete path.nodeModes[id];
   return path;
 }
 export function setVectorNodeMode(input,id,mode){
   const path=normalizeVectorPath(input);
   if(!path||!nodeLocation(path,id)||!modes.has(mode))return null;
-  if(mode==='corner')delete path.nodeModes[id];else path.nodeModes[id]=mode;
-  if(mode==='aligned'||mode==='mirrored'){
-    const out=handleRef(path,id,'out'),inp=handleRef(path,id,'in');
-    if(out&&inp){
-      const corrected=moveVectorHandle(path,id,'out',out.seg[out.key]);
-      if(!corrected)return null;
-      return corrected;
+  if(mode==='independent')delete path.nodeModes[id];else path.nodeModes[id]=mode;
+  const origin=nodeLocation(path,id).at;
+  const out=handleRef(path,id,'out'),inp=handleRef(path,id,'in');
+  if(mode==='corner'){
+    // A real Corner has collapsed cubic tangent controls at the node.
+    if(out)out.seg[out.key]=copy(origin);
+    if(inp)inp.seg[inp.key]=copy(origin);
+    return path;
+  }
+  if((mode==='aligned'||mode==='mirrored')&&out&&inp){
+    let next=out.seg[out.key];
+    if(metric(origin,next)<1e-9){
+      const prior=inp.seg[inp.key];
+      if(metric(origin,prior)>1e-9){
+        next=[2*origin[0]-prior[0],2*origin[1]-prior[1]];
+      }else{
+        // Reopen a collapsed corner using genuine 600x1300 design-space
+        // chord direction, not a bounding-box percentage or screen pixel.
+        const location=nodeLocation(path,id),i=location.index;
+        const prev=i<0?(path.closed?path.segments.at(-1).to.point:null):
+          i===0?path.start.point:path.segments[i-1].to.point;
+        const following=i<0?path.segments[0].to.point:
+          i+1<path.segments.length?path.segments[i+1].to.point:
+          path.closed?path.start.point:null;
+        if(!prev||!following)return path;
+        const v=asEuclidean(sub(following,prev)),len=Math.hypot(...v);
+        if(len<1e-8)return null;
+        const base=asEuclidean(origin),reach=Math.min(40,Math.max(12,
+          Math.min(metric(origin,prev),metric(origin,following))*.35));
+        next=fromEuclidean(add(base,v.map(x=>x/len*reach)));
+      }
+      if(!point(next))return null;
     }
+    return moveVectorHandle(path,id,'out',next);
   }
   return path;
 }
