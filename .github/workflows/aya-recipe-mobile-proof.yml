@@ -18,8 +18,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: 'npm'
-      - run: npm ci
+      - run: npm install --no-package-lock
       - run: npx playwright install --with-deps chromium
       - name: Real Chromium 320/412/500/790 one-screen AYA
         run: node scripts/aya-recipe-mobile-acceptance.mjs
