@@ -2,6 +2,7 @@
 // Geometry is separate; app.js owns preview, commits, Undo and model normalization.
 import {ROTATION_FIELD_SPECS,canonicalAngle,
   beginRotationDrag,advanceRotationDrag} from './rotation-gesture.js';
+import {parseAngleExpression} from './precision-angle-expression.js';
 
 export function installRotationScrubbers({form,onBegin,onPreview,onCommit,onCancel}){
   if(!form||![onBegin,onPreview,onCommit,onCancel].every(x=>typeof x==='function'))
@@ -40,7 +41,10 @@ export function installRotationScrubbers({form,onBegin,onPreview,onCommit,onCanc
   snapLabel.append(snap);
   const entryLabel=create('label','rotation-scrub-entry-label','Exact angle');
   const entry=create('input','rotation-scrub-entry');
-  entry.type='number';entry.step='0.1';entry.inputMode='decimal';
+  entry.type='text';entry.inputMode='text';entry.autocomplete='off';entry.spellcheck=false;
+  entry.placeholder='45°, +=15, 45+15';
+  entry.title='Exact degrees, or relative +=15, -=15, *=2, /=2; simple arithmetic such as 45+15';
+  entry.setAttribute('aria-description',entry.title);
   entryLabel.append(entry);
   settings.append(snapLabel,entryLabel);
   const buttons=create('div','rotation-scrub-actions');
@@ -72,12 +76,13 @@ export function installRotationScrubbers({form,onBegin,onPreview,onCommit,onCanc
   });
   const name=key=>names[key]||key;
   const fmt=(value,spec)=>Number(value).toFixed(spec.step<1?1:0)+'°';
-  function syncReadout(value){
+  function syncReadout(value,forceInput=false){
     if(!active)return;
     const spec=active.spec;
     const n=canonicalAngle(value,spec);
     readout.textContent=fmt(n,spec);
-    entry.value=String(n);
+    // App/worker sync must not erase a partially typed expression.
+    if(forceInput||document.activeElement!==entry)entry.value=String(n);
     pad.setAttribute('aria-valuemin',String(spec.min));
     pad.setAttribute('aria-valuemax',String(spec.wrap?spec.max-spec.step:spec.max));
     pad.setAttribute('aria-valuenow',String(n));
@@ -153,9 +158,7 @@ export function installRotationScrubbers({form,onBegin,onPreview,onCommit,onCanc
     };
     shade.hidden=false;
     heading.textContent='Rotate · '+name(field.name);
-    entry.min=String(spec.min);
-    entry.max=String(spec.wrap?spec.max-spec.step:spec.max);
-    entry.step=String(spec.step);
+    entry.removeAttribute('aria-invalid');
     syncReadout(read());
     updatePresetButtons();
     pad.focus({preventScroll:true});
@@ -212,12 +215,17 @@ export function installRotationScrubbers({form,onBegin,onPreview,onCommit,onCanc
     event.preventDefault();
     apply(read()+delta*(event.shiftKey ? .1 : 1));
   });
+  entry.addEventListener('input',()=>entry.removeAttribute('aria-invalid'));
   entry.addEventListener('change',()=>{
     if(!active)return;
-    if(entry.value.trim()===''||!Number.isFinite(Number(entry.value))){
-      syncReadout(read());return;
+    const target=parseAngleExpression(entry.value,read());
+    if(target===null){
+      // Invalid input neither silently changes the current angle nor creates
+      // an Undo snapshot. Keep the expression visible for correction.
+      entry.setAttribute('aria-invalid','true');return;
     }
-    apply(Number(entry.value));
+    entry.removeAttribute('aria-invalid');
+    apply(target);syncReadout(read(),true);
   });
   minus90.addEventListener('click',()=>apply(read()-90));
   minus.addEventListener('click',()=>apply(read()-1));
