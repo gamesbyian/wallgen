@@ -1,0 +1,56 @@
+# Decision study: canonical parametric Draw paths before four-node editing
+30 October 2026 · issue [#867](https://github.com/gamesbyian/wallgen/issues/867) · **technical design / not an implemented schema migration**
+
+## Source-backed findings
+
+- `src/drawn-path.js` stores `customPath` as normalized coordinates on the 600×1300 design plane, capped at 96 stations by `normalizeDrawnPathWithIndexMap`. It removes near duplicates, rounds to five decimals, maps saved manual index constraints through resampling, and can keep off-frame coordinates from -2 to 3.
+- `src/model.js` persists `customPath`, `drawnAnchors` and `drawnCorners` and resolves them through `prepareDrawnPath`. The prepared path is still an ordered polyline: `pointOnDrawnPath` interpolates along cumulative straight-segment arc lengths. Sparse paths (<20 stations) receive a `soften`/resample pass at rendering, while dense ones can retain their samples. The rendered appearance is therefore not trivially equivalent to SVG line commands over raw sparse coordinates.
+- `src/path-point-editor.js` currently infers in/out handles from neighbouring polyline samples. It applies cubic *basis weights* to shift nearby sampled stations while preserving authored anchors; this is useful local sculpting, but it **does not persist genuine cubic control handles**. Current `drawnCorners` is a subset of sample indices, not a four-way node continuity type.
+- `src/draw-path-ui.js` edits those sampled stations directly. `src/draw-apply-transaction.js` commits them through the ordinary normalized recipe/Undo/locks. `src/text-path-geometry.js` also follows these paths; other downstream consumers include model scene resolution, renderer/worker/headless, inverse reconstruction and import, agent API, JSON/PNG metadata, local library, source-preservation and keyboard interaction.
+
+**Decision:** Do not label current inferred sampled tangents as Linearity/Figma-style independent/mirrored/asymmetric cubic handles. The missing capability is the authored **path representation**, not the number of toolbar buttons.
+
+## Proposed pre-release canonical upgrade
+
+An intentional, coordinated new recipe schema is justified if true curve editing remains a priority. Introduce one canonical `vectorPath` object for drawn path geometry, rather than appending permanent `customPath2` / `bezierControls` fields beside the existing source:
+
+```json
+{
+  "vectorPath": {
+    "space": "normalized-design",
+    "start": {"id": "n0", "point": [0.1, 0.25]},
+    "segments": [
+      {"kind": "cubic", "to": {"id": "n1", "point": [0.5, 0.5]},
+       "controlOut": [0.2, 0.25], "controlIn": [0.4, 0.5]},
+      {"kind": "line", "to": {"id": "n2", "point": [0.9, 0.75]}}
+    ],
+    "closed": false,
+    "nodeModes": {"n1": "aligned"}
+  }
+}
+```
+
+This is a **candidate format, not shipped recipe code**. Stable node IDs should survive insertion/deletion, tool re-entry, Undo and reconstructed/imported transformations. Explicit `closed` eliminates accidental closure based only on endpoint proximity. Each segment has a true authored geometry type, with `M/L/C`-equivalent operations and no hidden pixel units. `nodeModes` describes the user's editing constraint, while the actual control coordinates remain authoritative. `corner` and `independent` allow different tangents; `aligned` keeps their directions collinear; `mirrored` keeps both direction and lengths mirrored **in the 600×1300 Euclidean design metric**. A single-point/end-node has only its meaningful adjacent handle.
+
+**Renderer boundary:** compile this one representation into the existing deterministic world-coordinate path sampling contract used by the ribbon, crossing, text-follow and geometry safety systems. Do not copy another scene graph or reimplement the renderer. The compiler must preserve endpoints, tangent directions, self intersections, multi-revolution loops, explicit off-canvas continuations and source topology. Use bounded adaptive flatness / curvature criteria in design units, deterministic arc-length sampling and a documented segment budget; no screen-zoom-based tessellation in a saved design. Validate normal offsets against genuine high curvature.
+
+## Migration decision and risks
+
+Since ROYGBIV is unreleased, current recipe fields are not privileged. An *atomic v3 migration* is preferable to years of dual semantics.
+
+1. Stage a pure command model/normalizer/serializer, polyline-to-command conversion and deterministic compiled-point adapter, with tests **before** altering the UI.
+2. Validate that a canonical raw 96-station path survives conversion to line commands without reordering or loss; investigate sparse paths separately because current rendering softens them. Preserve meaningful sampled artwork by one-time baked conversion or a mathematically equivalent compilation rule, not an everlasting `legacy` renderer fork.
+3. Implement actual editable cubic nodes, continuity constraints and precise move/scale; make the Draw UI consume those authoritative commands. Preserve stable identity across add/delete and local one-step Undo.
+4. In one coordinated migration, update `model.js`, `drawn-path.js`, `path-point-editor.js`, `draw-path-ui.js`, `draw-apply-transaction.js`, `text-path-geometry.js`, all scene/render/worker/headless/MCP consumers, import/export and PNG metadata, local saved designs and tests.
+5. Provide one tested import upgrader for old v2/PNG recipes and an explicit diagnostic if an old source cannot be represented without unacceptable changes. Keep untouched imported **source bytes** and source provenance separate from editable rebuilt geometry. Do not silently infer unknown hidden pigments or reconstruct lost original vector controls.
+6. Cut over to one canonical representation, remove redundant compatibility scaffolding after representative saved design migrations, and update the schema discovery/AYA recipe handbook together.
+
+**Blocking acceptance:** current forward-render parity on source-confirmed line paths (including sparse, dense, loop, open/closed, off-frame, hairpin, imported, RTL-following text), selected cubic edits under camera pan/zoom, holes/crossings, finite bounds and malicious input; one gesture/one Undo; no change on focus/tap; canonical JSON and embedded PNG roundtrip; reference/worker/headless agreement; scale-dependent viewing invariance and a representative 3024×6552 export. Physical Pixel and human touch comfort remain separate.
+
+## Other queued improvements
+
+Keep V1's offset touch grip and axis-lock mode independent of this migration. The viewport interaction layer already maps from screen coordinates to normalized vector edits; it should adapt to node IDs and real controls, not be reimplemented. V3 selected object transforms and V4 scalar precision can progress on independent modules while the path model is designed.
+
+## Reuse assessment
+
+Study MIT Bezier.js for cubic evaluation, arc-length/nearest projection and splitting; Paper.js for curve continuity operations; Konva/Fabric/Moveable for UI transform handling. Introduce dependencies only after an isolated prototype demonstrates clear benefit over a small tested pure module. Penpot's MPL-2.0 and tldraw's distinct licensing make direct source reuse a separate approval/review task. Never promise exact cubic conversion of arbitrary sampled geometry: fitting and simplification need source-backed deviation metrics, not visual intuition.
