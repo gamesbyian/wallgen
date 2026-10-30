@@ -18,11 +18,13 @@ const spatialGeometry=stripe=>['hairpin','loop','loops','drawn'].includes(stripe
 // Sample the same material height field used to paint each visible texture.
 // The sample point is transformed from ribbon space to the material's world-
 // anchored coordinates, so pan/zoom/export do not move the relief pattern.
-export function textureHeight(scene,stripe,x,side=0){
+export function textureHeight(scene,stripe,x,side=0,point=null){
   if(!scene.textureDisplacement)return 0;
-  const layers=scene.textureLayers.filter(layer=>layer.coverage!=='background');
-  if(!layers.length)return 0;
-  const p=samplePath(stripe,x,scene.extent);
+  const layers=scene.textureLayers;
+  // Do not allocate a freshly filtered layer array for every curve point.
+  // This function can be called thousands of times per authored motif.
+  if(!layers.some(layer=>layer.coverage!=='background'))return 0;
+  const p=point??samplePath(stripe,x,scene.extent);
   const distance=side*widthAt(stripe,x,scene.extent)*.5;
   const localX=p.x+p.nx*distance,localY=p.y+p.ny*distance;
   const c=Math.cos(scene.angle),s=Math.sin(scene.angle);
@@ -34,6 +36,7 @@ export function textureHeight(scene,stripe,x,side=0){
     (scene.centerY-DESIGN_HEIGHT/2+ry);
   let field=0;
   for(const layer of layers){
+    if(layer.coverage==='background')continue;
     const dx=wx-DESIGN_WIDTH/2,dy=wy-DESIGN_HEIGHT/2;
     const tx=dx*layer.heightCos+dy*layer.heightSin;
     const ty=-dx*layer.heightSin+dy*layer.heightCos;
@@ -277,11 +280,11 @@ function stampStar(ctx,x,y,r,points=5) {
  * No path clipping: a mark is either entirely within the stripe and canvas,
  * or completely absent. Multiple x samples protect curved/jagged edges.
  */
-export function motifFits(stripe,scene,x,y,halfX,halfY,extent=scene.extent) {
+export function motifFits(stripe,scene,x,y,halfX,halfY,extent=scene.extent,point=null) {
   if(stripe.hidden || x-halfX < (stripe.segmentStart??-extent) || x+halfX > (stripe.segmentEnd??extent)) return false;
   const margin=.12;
   if(spatialGeometry(stripe)){
-    const p=samplePath(stripe,x,extent);
+    const p=point??samplePath(stripe,x,extent);
     const transverse=y-p.y;
     if(Math.abs(transverse)+Math.max(halfX,halfY)>=widthAt(stripe,x,extent)/2)return false;
     const at=ribbonPoint(scene,p.x+p.nx*transverse,p.y+p.ny*transverse);
@@ -587,7 +590,12 @@ function fillMotif(ctx,stripe,extent,scene) {
       const offset=j*step*.82;
       const jitter=scene.intensity*step*.10;
       const xx=x+(Math.abs(j)%2)*spacing*.35+(random()-.5)*jitter;
-      const yy=geometryAt(xx,stripe,extent)+offset+(random()-.5)*jitter+textureHeight(scene,stripe,xx,0)*.3;
+      // Placement, material relief, fit and spatial drawing all inspect
+      // this exact same x station. Share its deterministic sample instead
+      // of re-evaluating loop/hairpin geometry up to four times per mark.
+      const point=samplePath(stripe,xx,extent);
+      const yy=point.y+offset+(random()-.5)*jitter+
+        textureHeight(scene,stripe,xx,0,point)*.3;
       // Large dots are sized relative to the available stripe width, so
       // the maximum remains a visible disc instead of being rejected by the
       // all-or-nothing mark fit test.
@@ -603,13 +611,13 @@ function fillMotif(ctx,stripe,extent,scene) {
       else if(motif==='stars'){bx=radius*1.16;by=radius*1.16;}
       const cs=Math.abs(Math.cos(variation.angle)),sn=Math.abs(Math.sin(variation.angle));
       const halfX=bx*cs+by*sn,halfY=bx*sn+by*cs;
-      if(!motifFits(stripe,scene,xx,yy,halfX,halfY,extent))continue;
+      if(!motifFits(stripe,scene,xx,yy,halfX,halfY,extent,point))continue;
       ctx.save();
       ctx.globalAlpha=variation.opacity;
       if(spatialGeometry(stripe)){
-        const p=samplePath(stripe,xx,extent),offset=yy-p.y;
-        ctx.translate(p.x+p.nx*offset,p.y+p.ny*offset);
-        ctx.rotate(Math.atan2(p.ty,p.tx)+variation.angle);
+        const transverse=yy-point.y;
+        ctx.translate(point.x+point.nx*transverse,point.y+point.ny*transverse);
+        ctx.rotate(Math.atan2(point.ty,point.tx)+variation.angle);
       }else{ctx.translate(xx,yy);ctx.rotate(variation.angle);}
       if(motif==='hatch'){
         ctx.beginPath();ctx.moveTo(-step*.34*variation.scale,step*.34*variation.scale);ctx.lineTo(step*.34*variation.scale,-step*.34*variation.scale);ctx.stroke();
