@@ -107,7 +107,14 @@ try{
         await page.mouse.click(g.x,g.y);
         assert.equal(await page.locator('#drawUndoPoint').isDisabled(),true,
           'grip tap without moving must be inert');
-        if(mode==='axis')await page.locator('#drawAxisLock').click();
+        if(mode==='axis'){
+          const panel=page.locator('#drawPathPanel'),
+            minimize=page.locator('.draw-panel-minimize');
+          if(await panel.getAttribute('data-controls-collapsed')==='true')
+            await minimize.click();
+          await page.locator('#drawAxisLock').click();
+          await minimize.click(); // keep the grip unobscured by the panel
+        }
         g=await locateGrip();
         assert.ok(g&&g.hit==='drawOverlay');
         await page.mouse.move(g.x,g.y);
