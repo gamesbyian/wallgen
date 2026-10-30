@@ -1,3 +1,5 @@
+> **30 October 2026 update:** Active vector-native editing/precision touch work is now dispatched through [CURRENT-WORK-QUEUE-2026-10-24.md](CURRENT-WORK-QUEUE-2026-10-24.md) and designed in [TOUCH-FIRST-VECTOR-INTERACTION-PLAN-2026-10-30.md](TOUCH-FIRST-VECTOR-INTERACTION-PLAN-2026-10-30.md). Do not create an independent competing UX queue; below is historical implementation context. Pre-release recipe schemas may be redesigned for coherent implementation with a deliberate upgrade policy.
+
 # Implementation-safe ROYGBIV redesign queue
 
 **CURRENT 24 October execution note:** [Reconciled three-agent queue and branch audit](CURRENT-WORK-QUEUE-2026-10-24.md) supersedes the historical undecided C07–C17 material below. Only #557/#653/#664 are open. The seven-category/five-destination interface and native control work is delivered. Agent 3 may investigate a *reproduced* UI or accessibility defect; optional restructuring is not automatically reactivated. Physical Pixel/TalkBack/IME remain NOT TESTED.
