@@ -6,6 +6,7 @@ import {createPointEditor,clonePointEditor,addPointAnchor,deletePointAnchor,
 import {drawAuthoringLockReason,drawAuthoringLockMessage} from './path-authoring-locks.js';
 import {beginAxisDrag,axisConstrainedPoint} from './axis-constrained-drag.js';
 import {placeOffsetGrip} from './path-offset-grip.js';
+import {installVectorDrawEditor} from './vector-draw-ui.js';
 
 /** Match the renderer's world-space camera and *screen-space* composition
  * nudge. Positive viewPanX/Y moves the camera to higher world coordinates,
@@ -41,10 +42,12 @@ export function savedDrawSourceMatches(sourceKey,recipe){
 
 // The freehand overlay is also the optional point editor: one shared camera,
 // one source of path geometry and one save/undo transaction.
-export function installDrawTool({getRecipe,onApply,onNotice}){
+export function installDrawTool({getRecipe,onApply,onApplyVector,onNotice}){
   const byId=id=>document.getElementById(id);
   const button=byId('drawPathToggle'),panel=byId('drawPathPanel');
   const overlay=byId('drawOverlay'),wallpaper=byId('preview');
+  const vectorEditor=installVectorDrawEditor({getRecipe,onApply:onApplyVector,
+    onNotice,button,overlay,wallpaper});
   const hint=byId('drawPathHint'),apply=byId('drawApply');
   const phase=panel.querySelector('.draw-phase');
   // Short portrait Draw controls can cover an authored point. Collapse the
@@ -295,12 +298,9 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
     document.body.classList.remove('path-drawing');
   }
   function start(){
-    // This sampled-path editor cannot safely round-trip true cubic control
-    // points. Refuse it until the vector authoring UI owns that source.
-    if(getRecipe().vectorPath){
-      onNotice('This design uses true vector curves. Its node editor is being integrated; the old sampled Draw tool cannot edit or replace them.');
-      return;
-    }
+    // True cubic source is owned by its proper command/node editor; never
+    // route it through the sampled-station editor or flatten it on save.
+    if(getRecipe().vectorPath){vectorEditor.open();return;}
     const blocked=drawAuthoringLockReason(getRecipe());
     if(blocked){
       onNotice(drawAuthoringLockMessage(blocked));
@@ -678,7 +678,8 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
       return true;
     },
     sync(recipe){
-      geometryOption.disabled=recipe.customPath.length<2;
+      geometryOption.disabled=recipe.customPath.length<2&&!recipe.vectorPath;
+      vectorEditor.sync(recipe);
       button.disabled=!!drawAuthoringLockReason(recipe);
       if(active){
         const locked=recipe.lockedSettings.includes('extendDrawnPath');
@@ -709,6 +710,6 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
         draw(visiblePoints());
       }
     },
-    close:stop,
+    close:()=>{vectorEditor.close();stop();},
   };
 }
