@@ -1,0 +1,39 @@
+name: One-shot v3 vector recipe mobile pixel acceptance
+on:
+  pull_request:
+    paths:
+      - 'src/model.js'
+      - 'src/vector-path-commands.js'
+      - 'scripts/vector-v3-preview-browser.mjs'
+      - '.github/workflows/once-vector-v3-preview.yml'
+permissions:
+  contents: read
+jobs:
+  vector-v3-pixels:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Source and canonical transport tests
+        run: |
+          node --check src/model.js
+          node --check src/agent-api.js
+          node --check scripts/vector-v3-preview-browser.mjs
+          node --test tests/vector-v3-recipe-scene.test.js tests/model.test.js tests/png-metadata.test.js
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Exercise actual mobile v3 path pixels and controls
+        run: node scripts/vector-v3-preview-browser.mjs
+      - name: Preserve rendered evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vector-v3-mobile-proof
+          path: artifacts/vector-v3-preview/
+          retention-days: 7
+          if-no-files-found: warn
