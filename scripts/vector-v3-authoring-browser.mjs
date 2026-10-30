@@ -72,6 +72,26 @@ try{
       await page.mouse.click(anchor.x,anchor.y);
       assert.deepEqual(current(page),source);
       await toggle.click();
+      const panelMetrics=await toolbar.evaluate(el=>{
+        const b=el.getBoundingClientRect();
+        const controls=[...el.querySelectorAll('button,select')].map(child=>{
+          const r=child.getBoundingClientRect();
+          const found=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);
+          return {text:child.textContent.trim(),width:r.width,height:r.height,
+            hit:found===child||child.contains(found),top:r.top,bottom:r.bottom};
+        });
+        return {box:{top:b.top,bottom:b.bottom,height:b.height},
+          scroll:el.scrollHeight>el.clientHeight,controls};
+      });
+      assert.equal(panelMetrics.scroll,false,'v3 inspector cannot scroll');
+      assert.ok(panelMetrics.box.top>=0&&panelMetrics.box.bottom<=height,
+        'all controls must fit the mobile viewport');
+      assert.ok(panelMetrics.box.height<=112,
+        'two 44px control rows plus compact spacing');
+      for(const action of panelMetrics.controls)
+        assert.ok(action.width>=44&&action.height>=44&&action.hit&&
+          action.top>=0&&action.bottom<=height,
+          'inaccessible v3 control: '+JSON.stringify(action));
       const undo=toolbar.locator('button',{hasText:'Undo'});
       assert.equal(await undo.isDisabled(),true);
       const mode=toolbar.locator('select.vector-draw-action');
