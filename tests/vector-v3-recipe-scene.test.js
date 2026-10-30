@@ -118,6 +118,6 @@ test('AYA handoff describes exact v3 command schema and warns that legacy Draw c
   assert.match(guide,/version 3 true Bézier path format/);
   assert.match(guide,/vectorPath/);
   assert.match(guide,/single vectorPath instead of sampled customPath/);
-  assert.match(guide,/older finger-sampled point editor refuses/);
+  assert.match(guide,/dedicated true Bézier vector-node editor/);
   assert.match(guide,/canonical recipe version 3/i);
 });

@@ -83,14 +83,17 @@ try{
       assert.equal(updated.version,3);
       assert.deepEqual(updated.vectorPath,before.vectorPath);
       assert.equal(updated.spread,44);
-      // The historical sampled Draw editor must refuse this source rather
-      // than saving a lossy polyline and claiming it is the same Bézier.
+      // True v3 source now opens the dedicated editor. Opening and
+      // canceling cannot rewrite its exact control coordinates.
       const beforeBlock=current(page);
       await page.locator('#drawPathToggle').click();
-      assert.equal(await page.locator('#drawOverlay').isHidden(),true);
+      assert.equal(await page.locator('#drawOverlay').isVisible(),true);
+      assert.equal(await page.locator('.vector-draw-tools').isVisible(),true);
+      await page.locator('.vector-draw-toggle').click();
+      await page.locator('.vector-draw-tools button',{hasText:'Cancel'}).click();
       assert.deepEqual(current(page),beforeBlock);
       report.push({viewport:[width,height],inkSamples:summary.colored,
-        pixelHash:summary.hash,v3Preserved:true,oldDrawRefused:true});
+        pixelHash:summary.hash,v3Preserved:true,vectorEditorOpened:true});
     }finally{await page.close();}
   }
   assert.deepEqual(pageErrors,[]);
