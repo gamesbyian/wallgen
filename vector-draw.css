@@ -1,0 +1,41 @@
+/* The v3 tool has its own temporary controls, not a second authored
+   geometry pipeline. All touch targets have 44 CSS px minimum height. */
+.vector-draw-tools[hidden]{display:none!important}
+.vector-draw-tools{
+  position:fixed;z-index:10040;
+  bottom:max(76px,calc(64px + env(safe-area-inset-bottom)));
+  left:50%;transform:translateX(-50%);
+  box-sizing:border-box;width:min(380px,calc(100vw - 14px));
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;
+  background:var(--surface,#20242e);
+  color:inherit;border:1px solid var(--border,#77828b);
+  border-radius:12px;padding:6px;
+  box-shadow:0 6px 28px rgba(0,0,0,.6)
+}
+.vector-draw-tools button,.vector-draw-tools select{
+  min-width:0;min-height:44px;box-sizing:border-box;
+  border:1px solid currentColor;border-radius:8px;
+  color:inherit;background:var(--surface,#20242e);
+  padding:5px 3px;font:inherit;font-size:11px;font-weight:700
+}
+.vector-draw-tools select{grid-column:span 2}
+.vector-draw-tools .vector-draw-toggle{font-size:11px}
+.vector-draw-tools button[aria-pressed="true"]{
+  color:#061827;background:#b5e8ff;border-color:#b5e8ff
+}
+.vector-draw-tools :is(button,select):focus-visible{
+  outline:3px solid #ffdc5b;outline-offset:1px
+}
+.vector-draw-tools :is(button,select):disabled{opacity:.44}
+.vector-draw-tools.is-collapsed{
+  display:flex;justify-content:flex-end;
+  width:auto;max-width:min(380px,calc(100vw - 14px));
+  padding:4px;background:var(--surface,#20242e)
+}
+.vector-draw-tools.is-collapsed .vector-draw-action{display:none}
+.vector-draw-tools.is-collapsed .vector-draw-toggle{
+  min-width:104px;min-height:44px
+}
+@media(min-width:792px){
+  .vector-draw-tools{bottom:24px}
+}
