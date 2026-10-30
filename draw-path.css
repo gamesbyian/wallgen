@@ -182,6 +182,8 @@ body.path-drawing .wallpaper-frame{
 .draw-point-controls button[aria-pressed="true"]{border-color:#5ed6f1;background:#214d62;color:#fff}
 body.path-drawing .studio-stage>#drawOverlay{cursor:crosshair}
 .draw-point-controls button{font-size:10px;min-height:28px}
+/* A new one-thumb constraint mode must have a full tap target even in compact trays. */
+.draw-point-controls #drawAxisLock{min-height:44px!important;touch-action:manipulation}
 @media(max-width:790px){
   body.mobile-studio .draw-path-panel{max-height:35dvh;overflow-y:auto}
   body.mobile-studio .draw-point-controls button{font-size:10px;min-height:34px}

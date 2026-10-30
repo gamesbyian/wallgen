@@ -1,3 +1,5 @@
+> **30 October 2026:** Rotation remains an already accepted specialized implementation. Generalize its proven gesture/Undo/preview principles only where they fit vector-native editing; [touch-first vector interaction plan](TOUCH-FIRST-VECTOR-INTERACTION-PLAN-2026-10-30.md) now owns the broader control overhaul. Recipe schemas are pre-release and may evolve; a new UI field is never a reason to preserve the old shape indefinitely.
+
 # Touch-first rotation controls | ROYGBIV
 Owner request: 2026-10-29. Current status: planned specification and incremental implementation; no physical Pixel acceptance yet.
 
