@@ -227,9 +227,94 @@ try{
       const locked=current(page);
       assert.equal(locked.vectorPath.segments[1].to.point[1],bend[1]);
       assert.ok(locked.vectorPath.segments[1].to.point[0]>bend[0]);
+      // The v3 finger grip uses the same clear-space geometry as sampled
+      // Draw, without modifying the authored node or storing CSS pixels.
+      await button.click();
+      const selectedBend=locked.vectorPath.segments[1].to.point;
+      const beforeGrip=await screen(selectedBend);
+      await page.mouse.click(beforeGrip.x,beforeGrip.y);
+      const grip=await page.evaluate(async({selectedId})=>{
+        const {vectorNodeTargets}=await import('/src/vector-node-hit.js');
+        const {placeOffsetGrip}=await import('/src/path-offset-grip.js');
+        const path=JSON.parse(decodeURIComponent(
+          new URL(location.href).searchParams.get('r'))).vectorPath;
+        const targets=vectorNodeTargets(path);
+        const node=targets.nodes.find(n=>n.id===selectedId);
+        const canvas=document.getElementById('preview').getBoundingClientRect(),
+          overlay=document.getElementById('drawOverlay'),
+          rect=overlay.getBoundingClientRect(),scale=overlay.width/rect.width,
+          toolbar=document.querySelector('.vector-draw-tools').getBoundingClientRect();
+        const project=p=>[canvas.left+p[0]*canvas.width,canvas.top+p[1]*canvas.height];
+        const conv=p=>{const [x,y]=project(p);
+          return [(x-rect.left)*scale,(y-rect.top)*scale];};
+        const result=placeOffsetGrip({anchor:conv(node.point),
+          width:overlay.width,height:overlay.height,scale,
+          obstacles:[
+            ...targets.nodes.filter(n=>n.id!==selectedId).map(n=>conv(n.point)),
+            ...targets.handles.map(n=>conv(n.point))],
+          blockedRects:[{x:(toolbar.left-rect.left)*scale,
+            y:(toolbar.top-rect.top)*scale,
+            width:toolbar.width*scale,height:toolbar.height*scale}]});
+        return result&&{x:result.x/scale+rect.left,y:result.y/scale+rect.top,
+          radius:result.radius/scale,
+          hit:document.elementFromPoint(result.x/scale+rect.left,
+            result.y/scale+rect.top)?.id};
+      },{selectedId:'bend'});
+      assert.ok(grip&&grip.radius>=22&&grip.hit==='drawOverlay',
+        'true vector selected node grip must be finger accessible: '+JSON.stringify(grip));
+      await page.mouse.move(grip.x,grip.y);
+      await page.mouse.down();
+      await page.mouse.move(grip.x+25,grip.y+18,{steps:6});
+      await page.mouse.up();
+      await toggle.click();
+      assert.equal(await undo.isDisabled(),false,'offset grip created one editing action');
+      await toolbar.locator('button',{hasText:'Use path'}).click();
+      await page.waitForFunction(prev=>{
+        try{
+          const r=JSON.parse(decodeURIComponent(new URL(location.href).searchParams.get('r')));
+          return r.vectorPath.segments[1].to.point[0]!==prev;
+        }catch{return false;}
+      },selectedBend[0]);
+      const withGrip=current(page);
+      assert.ok(withGrip.vectorPath.segments[1].to.point[0]>selectedBend[0]);
+      // Snap guides are separate from axis-lock: move near another node's
+      // screen X and check that the committed vector X equals its true X.
+      await button.click();
+      const beforeSnap=withGrip.vectorPath.segments[1].to.point;
+      const finish=withGrip.vectorPath.segments.at(-1).to.point;
+      const startTouch=await screen(beforeSnap);
+      await page.mouse.click(startTouch.x,startTouch.y);
+      await toggle.click();
+      const snapButton=toolbar.locator('button',{hasText:'Snap guides'});
+      assert.equal(await snapButton.isVisible(),true);
+      const hitSize=await snapButton.evaluate(el=>{
+        const r=el.getBoundingClientRect();return [r.width,r.height];
+      });
+      assert.ok(hitSize.every(n=>n>=44),'snap control must be finger sized');
+      await snapButton.click();
+      assert.equal(await snapButton.getAttribute('aria-pressed'),'true');
+      await toggle.click();
+      const alignedTouch=await screen([finish[0],beforeSnap[1]+.04]);
+      await page.mouse.move(startTouch.x,startTouch.y);
+      await page.mouse.down();
+      await page.mouse.move(alignedTouch.x-3,alignedTouch.y,{steps:9});
+      await page.mouse.up();
+      await toggle.click();
+      assert.equal(await undo.isDisabled(),false);
+      await toolbar.locator('button',{hasText:'Use path'}).click();
+      await page.waitForFunction(prev=>{
+        try{
+          const r=JSON.parse(decodeURIComponent(new URL(location.href).searchParams.get('r')));
+          return r.vectorPath.segments[1].to.point[0]!==prev;
+        }catch{return false;}
+      },beforeSnap[0]);
+      const snapped=current(page);
+      assert.equal(snapped.vectorPath.segments[1].to.point[0],finish[0],
+        'alignment magnet must commit canonical vector X, not visual CSS X');
       summary.push({viewport:[width,height],touchTarget:touch,
         sourcePreserved:true,moveSaved:true,cancelRestored:true,
-        tangentHandleSaved:true,cubicInserted:true,axisConstrained:true});
+        tangentHandleSaved:true,cubicInserted:true,axisConstrained:true,
+        offsetGripSaved:true,alignmentSnapped:true});
     }finally{await page.close();}
   }
   assert.deepEqual(pageErrors,[]);
