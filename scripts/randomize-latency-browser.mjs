@@ -39,6 +39,22 @@ try{
  for(const entry of cases){
   const page=await browser.newPage({viewport:{width:412,height:892},hasTouch:true,
     isMobile:true,reducedMotion:'reduce'});
+  // Paired A/B runner trials must explore IDENTICAL random canonical scenes.
+  // Override only the app's two-word newSeed() draw inside this test page,
+  // leaving other browser crypto consumers untouched.
+  await page.addInitScript(()=>{
+    const original=Crypto.prototype.getRandomValues;
+    let sequence=0;
+    Crypto.prototype.getRandomValues=function(array){
+      if(array instanceof Uint32Array&&array.length===2){
+        const n=++sequence;
+        array[0]=(0x12345678+Math.imul(n,0x9e3779b9))>>>0;
+        array[1]=(0xfedcba98+Math.imul(n,0x85ebca6b))>>>0;
+        return array;
+      }
+      return original.call(this,array);
+    };
+  });
   const errors=[];page.on('pageerror',e=>errors.push(String(e)));
   const start=normalizeRecipe(entry.recipe);
   await page.goto(base+'/?r='+encodeRecipe(start),{waitUntil:'domcontentloaded'});
