@@ -99,6 +99,10 @@ export function describeAgentCapabilities() {
   const keys = [...SETTINGS].sort();
   const numeric = Object.fromEntries(keys.filter(key => typeof BASE[key] === 'number')
     .map(key => {
+      // Cyclic angles wrap: probing +/-1e9 does not discover their bounds.
+      // All texture rotation controls are canonical 0..359.9 degrees.
+      if (/^textureRotation(?:2|3)?$/.test(key))
+        return [key, { min: 0, max: 359.9, default: BASE[key], cyclic: true }];
       const min = normalizeRecipe({ [key]: -1e9 })[key];
       const max = normalizeRecipe({ [key]: 1e9 })[key];
       return [key, { min, max, default: BASE[key] }];
