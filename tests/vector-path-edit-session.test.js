@@ -94,3 +94,27 @@ test('bounded Undo evicts oldest entries and new commits invalidate redo',()=>{
   s=undoVectorEdit(s);assert.equal(s.redo.length,1);
   s=step(s,'n1',[.54,.54]);assert.equal(s.redo.length,0);
 });
+
+test('insertion transaction at a closed cubic seam is one reversible action',()=>{
+  const closed=normalizeVectorPath({
+    space:'normalized-design',closed:true,start:{id:'origin',point:[.2,.2]},
+    segments:[{kind:'cubic',to:{id:'last',point:[.7,.7]},
+      controlOut:[.25,.4],controlIn:[.65,.6]}],
+    closing:{kind:'cubic',controlOut:[.8,.5],controlIn:[.1,.6]}
+  });
+  const original=createVectorEditSession(closed);
+  const begun=beginVectorEdit(original,{kind:'insert',segmentIndex:1,newId:'seam'});
+  assert.ok(begun.tx);
+  const preview=previewVectorEdit(begun,{t:.5});
+  assert.equal(preview.path,original.path);
+  assert.equal(preview.draft.segments.length,2);
+  assert.equal(preview.selectedId,'seam');
+  const committed=commitVectorEdit(preview);
+  assert.equal(committed.undo.length,1);
+  assert.equal(committed.path.closed,true);
+  assert.equal(committed.path.segments[1].to.id,'seam');
+  const back=undoVectorEdit(committed);
+  assert.deepEqual(back.path,closed);
+  assert.deepEqual(redoVectorEdit(back).path,committed.path);
+  assert.deepEqual(cancelVectorEdit(preview).path,closed);
+});
