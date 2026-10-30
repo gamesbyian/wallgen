@@ -4,6 +4,7 @@ import {createPointEditor,clonePointEditor,addPointAnchor,deletePointAnchor,
   resmoothPointEdits,insertPointAnchor,
   savedPointAnchors,savedPointCorners} from './path-point-editor.js';
 import {drawAuthoringLockReason,drawAuthoringLockMessage} from './path-authoring-locks.js';
+import {beginAxisDrag,axisConstrainedPoint} from './axis-constrained-drag.js';
 
 /** Match the renderer's world-space camera and *screen-space* composition
  * nudge. Positive viewPanX/Y moves the camera to higher world coordinates,
@@ -70,11 +71,13 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
   const extend=byId('drawExtendPath');
   const editButton=byId('drawEditPoints'),addButton=byId('drawAddPoint');
   const deleteButton=byId('drawDeletePoint'),cornerButton=byId('drawCornerPoint');
+  const axisButton=byId('drawAxisLock');
   const reSmooth=byId('drawResmoothPoints'),pointUndo=byId('drawUndoPoint');
   const geometryOption=document.querySelector('[name=geometry] option[value=drawn]');
   const ctx=overlay.getContext('2d');
   let active=false,pointer=null,raw=[],ready=[],importedSource=[],fit='smooth',editing=false;
   let editor=null,pendingPins=[],pendingCorners=[],adding=false,drag=null,history=[];
+  let axisLock=false; // UI gesture mode only; never add it to saved recipe geometry.
   let editingSavedPath=false,showingSavedPath=false;
   let savedSourcePath=null,applying=false,interruptedStroke=null;
   const cameraPan=()=>drawnPathViewportOffset(getRecipe(),
@@ -172,6 +175,10 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
     editButton.textContent=editing?'Hide points':'Edit points';
     const available=editing&&editor?.selected!==-1;
     addButton.hidden=deleteButton.hidden=cornerButton.hidden=reSmooth.hidden=pointUndo.hidden=!editing;
+    axisButton.hidden=!editing;
+    axisButton.setAttribute('aria-pressed',String(axisLock));
+    axisButton.textContent=axisLock?'Axis lock: On':'Lock axis';
+    axisButton.setAttribute('aria-label',axisLock?'Disable axis-constrained dragging':'Enable axis-constrained dragging');
     addButton.setAttribute('aria-pressed',String(adding));
     deleteButton.disabled=!available||editor.selected===0||editor.selected===editor.points.length-1;
     cornerButton.disabled=!available||editor.selected===0||
@@ -228,6 +235,7 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
     pointer=null;drag=null;interruptedStroke=null;
     raw=[];ready=[];importedSource=[];pendingPins=[];pendingCorners=[];
     editor=null;editing=false;adding=false;history=[];
+    axisLock=false;
     editingSavedPath=false;showingSavedPath=false;
     savedSourcePath=null;
     setPanelCollapsed(false);
@@ -403,7 +411,8 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
       const start=clonePointEditor(editor),mouse=position(event);
       drag={hit,start,moved:false,
         offset:[hit.at[0]-mouse[0],hit.at[1]-mouse[1]],
-        handles:pointHandles(editor,hit.index)};
+        handles:pointHandles(editor,hit.index),
+        constraint:beginAxisDrag([event.clientX,event.clientY],hit.at,axisLock)};
       try{overlay.setPointerCapture(pointer);}catch{}
       syncPointControls();draw(editor.points);
       return;
@@ -428,10 +437,14 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
     if(pointer!==event.pointerId)return;
     event.preventDefault();event.stopPropagation();
     if(editing&&drag){
-      const pos=position(event),to=[
+      const pos=position(event),proposal=[
         Math.max(DRAW_COORD_MIN,Math.min(DRAW_COORD_MAX,pos[0]+drag.offset[0])),
         Math.max(DRAW_COORD_MIN,Math.min(DRAW_COORD_MAX,pos[1]+drag.offset[1]))
       ];
+      const constrained=axisConstrainedPoint(drag.constraint,
+        [event.clientX,event.clientY],proposal);
+      drag.constraint=constrained.state;
+      const to=constrained.point;
       if(!drag.moved){
         const changed=drag.hit.type==='anchor'?
           pointAnchorWouldMove(editor,drag.hit.index,to,drag.start.points):
@@ -511,6 +524,12 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
     if(!editing||editor.selected===-1)return;
     pushUndo();deletePointAnchor(editor,editor.selected);
     syncPointControls();draw(editor.points);
+  });
+  axisButton.addEventListener('click',()=>{
+    if(!editing||drag)return;
+    axisLock=!axisLock;
+    syncPointControls();
+    hint.textContent=axisLock?'Next drag stays horizontal or vertical after a short deliberate movement.':'Drag anchors and tangents freely.';
   });
   cornerButton.addEventListener('click',()=>{
     if(!editing||editor.selected===-1)return;
