@@ -1,0 +1,27 @@
+name: One-shot Random latency baseline
+on:
+  push:
+    branches:
+      - research/randomize-latency-baseline-20261029
+permissions:
+  contents: read
+jobs:
+  baseline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser client without lockfile
+        run: npm install --no-save --no-package-lock --ignore-scripts --no-audit --no-fund
+      - name: Measure actual 412x892 Random interactions
+        run: CHROME_BIN=/usr/bin/google-chrome node scripts/randomize-latency-browser.mjs
+      - name: Retain baseline JSON
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: randomize-latency-baseline
+          path: artifacts/randomize-latency/baseline.json
+          if-no-files-found: warn
