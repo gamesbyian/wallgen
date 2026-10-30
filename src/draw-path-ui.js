@@ -536,7 +536,7 @@ export function installDrawTool({getRecipe,onApply,onApplyVector,onNotice}){
     interruptedStroke=null;
     if(ready.length<2)hint.textContent='That was too short. Draw a longer path.';
   });
-  overlay.addEventListener('pointercancel',event=>{
+  const cancelDrawPointer=event=>{
     if(pointer!==event.pointerId)return;
     event.preventDefault();pointer=null;
     if(editing&&drag){
@@ -557,7 +557,9 @@ export function installDrawTool({getRecipe,onApply,onApplyVector,onNotice}){
         hint.textContent='Stroke interrupted. Draw again.';
       }
     }
-  });
+  };
+  overlay.addEventListener('pointercancel',cancelDrawPointer);
+  overlay.addEventListener('lostpointercapture',cancelDrawPointer);
   overlay.addEventListener('click',event=>{if(active){event.preventDefault();event.stopPropagation();}});
   button.addEventListener('click',()=>active?stop():start());
   window.addEventListener('resize',()=>{
