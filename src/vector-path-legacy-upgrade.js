@@ -70,9 +70,12 @@ export function upgradeSampledDrawnPath(source){
   if(maxVertexError>1e-7||lengthDelta>1e-7)
     return refuse('rendered-geometry-parity-failed',{
       maxVertexErrorDesign:maxVertexError,lengthDeltaDesign:lengthDelta});
+  // A duplicated final station on an explicitly closed curve is the same
+  // topological node as its first station. Never emit a missing terminal ID.
+  const nodeId=i=>closed&&i===old.points.length-1?'n0':'n'+i;
   const authoring={
-    protectedNodeIds:pins.map(i=>'n'+i),
-    cornerNodeIds:corners.map(i=>'n'+i),
+    protectedNodeIds:[...new Set(pins.map(nodeId))],
+    cornerNodeIds:[...new Set(corners.map(nodeId))],
     // Applied only to dense paths where sample order is exactly conserved.
     // For sparse paths this remains empty, since there were no authored pins.
   };
