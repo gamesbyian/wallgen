@@ -280,6 +280,8 @@ export function setVectorNodeMode(input,id,mode){
     if(inp)inp.seg[inp.key]=copy(origin);
     return path;
   }
+  // Endpoints and line-to-cubic joins have no opposite tangent to constrain.
+  if((mode==='aligned'||mode==='mirrored')&&(!out||!inp))return null;
   if((mode==='aligned'||mode==='mirrored')&&out&&inp){
     let next=out.seg[out.key];
     if(metric(origin,next)<1e-9){
