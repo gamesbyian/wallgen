@@ -103,12 +103,16 @@ try{
         if(mode==='cancel'){
           assert.equal(await undo.isDisabled(),true,
             'canceled drag must not retain a local Undo transaction');
+          if(await panel.getAttribute('data-controls-collapsed')==='true')
+            await minimize.click();
           await page.locator('#drawCancel').click();
           assert.deepEqual(current(page),fixture);
         }else{
           assert.equal(await undo.isDisabled(),false,'real movement must create Undo');
           const filename=width+'x'+height+'-'+mode+'.png';
           await page.screenshot({path:join(out,filename),animations:'disabled'});
+          if(await panel.getAttribute('data-controls-collapsed')==='true')
+            await minimize.click();
           await page.locator('#drawApply').click();
           await page.waitForFunction(v=>{
             try{
