@@ -1,0 +1,33 @@
+name: One-shot motif sampling exact cross-commit acceptance
+on:
+  push:
+    branches:
+      - feature/reuse-motif-path-samples-20261029
+permissions:
+  contents: read
+jobs:
+  proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 17
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          path: comparator-baseline
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser client without lockfile
+        run: npm install --no-save --no-package-lock --ignore-scripts --no-audit --no-fund
+      - name: Pure geometry sample equivalence
+        run: node --test tests/motif-sample-equivalence.test.js
+      - name: Compare real motif pixels and production worker performance
+        run: CHROME_BIN=/usr/bin/google-chrome node scripts/motif-sample-reuse-acceptance.mjs
+      - name: Retain exact hashes and timings
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: motif-reuse-acceptance
+          path: artifacts/motif-samples/pixel-proof.json
+          if-no-files-found: warn
