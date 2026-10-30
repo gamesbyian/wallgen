@@ -6,7 +6,7 @@
   bottom:max(76px,calc(64px + env(safe-area-inset-bottom)));
   left:50%;transform:translateX(-50%);
   box-sizing:border-box;width:min(380px,calc(100vw - 14px));
-  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;
+  display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;
   background:var(--surface,#20242e);
   color:inherit;border:1px solid var(--border,#77828b);
   border-radius:12px;padding:6px;
