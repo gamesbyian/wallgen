@@ -117,14 +117,63 @@ try{
    assert.equal(r.worker.identical,true,
      'Worker Canvas pixel regression '+r.name+' '+JSON.stringify(r.worker));
  }
+ // Comparable production interactive-worker paint durations, excluding
+ // Worker boot and PNG encoding. Each painter is a real OffscreenCanvas job,
+ // with repeated A/B trials and identical canonical recipes.
+ const speed=await page.evaluate(async cases=>{
+   const workers={};
+   for(const version of ['base','candidate']){
+     const worker=new Worker('/'+version+'/src/render-worker.js',{type:'module'});
+     let pending=null;
+     const ready=new Promise((resolve,reject)=>{
+       const timeout=setTimeout(()=>reject(Error('Worker not ready: '+version)),30000);
+       worker.onmessage=({data})=>{
+         if(data.type==='ready'){clearTimeout(timeout);resolve();return;}
+         if(data.type==='unsupported'){clearTimeout(timeout);reject(Error(data.error));return;}
+         pending?.(data);
+       };
+     });
+     await ready;
+     workers[version]={worker,run:recipe=>new Promise((resolve,reject)=>{
+       const id=(workers[version].id=(workers[version].id||0)+1);
+       const timeout=setTimeout(()=>reject(Error('Paint stalled '+version)),45000);
+       pending=null;
+       workers[version].pending=data=>{
+         if(data.id!==id)return;
+         clearTimeout(timeout);workers[version].pending=null;
+         for(const k of ['frame','ink','background'])data[k]?.close?.();
+         if(data.type==='error')reject(Error(data.error));
+         else resolve(Math.round(data.ms));
+       };
+       worker.postMessage({type:'preview',id,key:recipe.seed,quality:'interactive',
+         width:372,height:806,recipe});
+     })};
+     // Keep receiver tied to the version's mutable pending handler.
+     worker.onmessage=({data})=>{
+       if(data.type==='ready')return;
+       workers[version].pending?.(data);
+     };
+   }
+   const output=[];
+   for(const input of cases.filter(x=>['wood-both','radial-felt','three-both',
+     'random-worst-30','random-worst-20'].includes(x.name))){
+     const times={base:[],candidate:[]};
+     for(let trial=0;trial<3;trial++){
+       times.base.push(await workers.base.run(input.recipe));
+       times.candidate.push(await workers.candidate.run(input.recipe));
+     }
+     output.push({name:input.name,times});
+   }
+   workers.base.worker.terminate();workers.candidate.worker.terminate();
+   return output;
+ },specs);
  await mkdir(join(root,'artifacts','material-once'),{recursive:true});
  await writeFile(join(root,'artifacts','material-once','pixel-proof.json'),
-   JSON.stringify({environment:'Linux Chromium 240x520 exact raw image pixel SHA-256',
-     results},null,2)+'\n');
+   JSON.stringify({environment:'Linux Chromium 240x520 exact raw image pixel SHA-256; 372x806 real worker draw timings',
+     results,speed},null,2)+'\n');
  console.log('MATERIAL_ONEPASS_EXACT_PIXELS_PASS',JSON.stringify(
-   results.map(x=>({name:x.name,baselineDirectMs:x.direct.base.ms,
-     candidateDirectMs:x.direct.candidate.ms,baselineWorkerMs:x.worker.base.ms,
-     candidateWorkerMs:x.worker.candidate.ms}))));
+   results.map(x=>({name:x.name,direct:x.direct.identical,worker:x.worker.identical}))));
+ console.log('MATERIAL_ONEPASS_WORKER_TIMES',JSON.stringify(speed));
 }finally{
  await browser?.close();await new Promise(done=>server.close(done));
 }
