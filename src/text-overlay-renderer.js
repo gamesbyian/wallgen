@@ -89,7 +89,7 @@ export function drawTextOverlays(ctx,width,height,scene){
     const lines=item.text.split('\n');
     // Shared immutable geometry for all lines of this text object.
     const preparedPath=['drawn','hairpin','loop'].includes(item.path)?
-      prepareTextFollowPath(item,scene.customPath):undefined;
+      prepareTextFollowPath(item,scene.vectorPath??scene.customPath):undefined;
     let colourIndex=0;
     const lineHeight=item.size*1.17*(1+(item.lineSpacing??0)/100);
     lines.forEach((line,lineIndex)=>{
@@ -104,7 +104,7 @@ export function drawTextOverlays(ctx,width,height,scene){
       // untouched whole-line native Canvas paint below.
       const path=item.path&&item.path!=='none'?
         layoutTextOnPath(item,line,unit=>ctx.measureText(unit).width,
-          scene.customPath,{preparedPath}):null;
+          scene.vectorPath??scene.customPath,{preparedPath}):null;
       // Shift multiple curved lines along the LOCAL PATH NORMAL. A simple
       // vertical offset causes independent lines to cross on steep bends.
       // Unsupported joined scripts still use the untouched straight line.
