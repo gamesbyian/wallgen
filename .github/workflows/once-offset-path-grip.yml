@@ -26,8 +26,10 @@ jobs:
         run: |
           npm install --no-save playwright@1.56.1
           npx playwright install --with-deps chromium
-      - name: Exercise actual mobile pointer flows
-        run: node scripts/path-offset-grip-browser.mjs
+      - name: Exercise actual mobile pointer flows and earlier axis regression
+        run: |
+          node scripts/path-offset-grip-browser.mjs
+          node scripts/vector-axis-touch-browser.mjs
       - name: Preserve screenshots and gesture evidence
         if: always()
         uses: actions/upload-artifact@v4
