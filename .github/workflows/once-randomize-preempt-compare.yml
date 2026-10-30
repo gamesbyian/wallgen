@@ -1,4 +1,4 @@
-name: One-shot Random preemption comparison
+name: One-shot paired Random preemption evaluation
 on:
   push:
     branches:
@@ -8,20 +8,54 @@ permissions:
 jobs:
   compare:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          path: comparator-baseline
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Install browser client without lockfile
-        run: npm install --no-save --no-package-lock --ignore-scripts --no-audit --no-fund
-      - name: Compare 412px Random interactions
-        run: CHROME_BIN=/usr/bin/google-chrome node scripts/randomize-latency-browser.mjs
-      - name: Retain measured results
+      - name: Install identical browser clients in both builds
+        run: |
+          npm install --no-save --no-package-lock --ignore-scripts --no-audit --no-fund
+          (cd comparator-baseline && npm install --no-save --no-package-lock --ignore-scripts --no-audit --no-fund)
+      - name: Verify current worker safety tests first
+        run: node --test tests/render-coordinator.test.js
+      - name: Measure deterministic paired A/B Random sessions
+        run: |
+          mkdir -p artifacts/randomize-comparison
+          cp scripts/randomize-latency-browser.mjs comparator-baseline/scripts/randomize-latency-browser.mjs
+          for round in 1 2; do
+            (cd comparator-baseline && CHROME_BIN=/usr/bin/google-chrome node scripts/randomize-latency-browser.mjs)
+            cp comparator-baseline/artifacts/randomize-latency/baseline.json artifacts/randomize-comparison/main-$round.json
+            CHROME_BIN=/usr/bin/google-chrome node scripts/randomize-latency-browser.mjs
+            cp artifacts/randomize-latency/baseline.json artifacts/randomize-comparison/candidate-$round.json
+          done
+      - name: Summarize matched trials
+        run: |
+          node --input-type=module <<'JS'
+          import {readFileSync} from 'node:fs';
+          const get=(version,round)=>JSON.parse(readFileSync('artifacts/randomize-comparison/'+version+'-'+round+'.json')).results;
+          for(let i=0;i<3;i++){
+            const name=get('main',1)[i].scenario;
+            for(const mode of ['single','burst']){
+              const trials=[1,2].map(round=>({
+                before:get('main',round)[i][mode].totalFromFirstMs,
+                after:get('candidate',round)[i][mode].totalFromFirstMs,
+                firstBefore:get('main',round)[i][mode].firstInteractiveMs,
+                firstAfter:get('candidate',round)[i][mode].firstInteractiveMs
+              }));
+              console.log('PAIRED_RANDOM_COMPARE',JSON.stringify({name,mode,trials}));
+            }
+          }
+          JS
+      - name: Attach paired JSON evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: randomize-preemption-comparison
-          path: artifacts/randomize-latency/baseline.json
-          if-no-files-found: warn
+          name: randomize-preemption-paired
+          path: artifacts/randomize-comparison/*.json
+          if-no-files-found: ignore
