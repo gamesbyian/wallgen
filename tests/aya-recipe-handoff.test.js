@@ -8,6 +8,8 @@ import {AYA_SEMANTIC_RULES,buildAyaRecipeHandoff} from '../src/aya-recipe-refere
 test('AYA guide is generated from the actual canonical version, bounds, choices and controls',()=>{
   const guide=buildAyaRecipeHandoff({direction:'Seven waves of linen with soft shadows'});
   const capabilities=describeAgentCapabilities();
+  for(const key of ['textureRotation','textureRotation2','textureRotation3'])
+    assert.deepEqual([capabilities.numeric[key].min,capabilities.numeric[key].max,capabilities.numeric[key].cyclic],[0,359.9,true]);
   assert.match(guide,new RegExp('RecipeVersion: '+capabilities.recipeVersion));
   assert.ok(guide.includes(JSON.stringify(capabilities.numeric,null,2)));
   assert.ok(guide.includes(JSON.stringify(capabilities.choices,null,2)));
