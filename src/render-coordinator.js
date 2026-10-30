@@ -139,6 +139,10 @@ export function createPreviewCoordinator({
       const id=++revision;
       pending={id,key,recipe,width,height,quality,gesture};
       preemptObsoleteRandom(key,quality,intent);
+      // A restart can synchronously fail during workerFactory(). The caller
+      // must then fall back to its exact main-thread painter rather than
+      // marking a never-to-arrive preview as permanently busy.
+      if(disabled)return false;
       dispatch();
       return true;
     },
