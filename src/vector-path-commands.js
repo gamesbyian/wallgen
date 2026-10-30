@@ -271,6 +271,7 @@ export function moveVectorHandle(input,id,side,next){
 export function setVectorNodeMode(input,id,mode){
   const path=normalizeVectorPath(input);
   if(!path||!nodeLocation(path,id)||!modes.has(mode))return null;
+  const oldMode=path.nodeModes[id]||'independent';
   if(mode==='independent')delete path.nodeModes[id];else path.nodeModes[id]=mode;
   const origin=nodeLocation(path,id).at;
   const out=handleRef(path,id,'out'),inp=handleRef(path,id,'in');
@@ -278,6 +279,23 @@ export function setVectorNodeMode(input,id,mode){
     // A real Corner has collapsed cubic tangent controls at the node.
     if(out)out.seg[out.key]=copy(origin);
     if(inp)inp.seg[inp.key]=copy(origin);
+    return path;
+  }
+  if(mode==='independent'&&oldMode==='corner'){
+    // A collapsed Corner has no visible/grabbable handle. Switching back to
+    // Independent should reopen each *real adjacent cubic control* using
+    // its own local chord, even at an open end or a closed-path seam.
+    // No artificial handles are added to line-only edges.
+    const location=nodeLocation(path,id),i=location.index;
+    const previous=i<0?(path.closed?path.segments.at(-1).to.point:null):
+      i===0?path.start.point:path.segments[i-1].to.point;
+    const following=i<0?path.segments[0].to.point:
+      i+1<path.segments.length?path.segments[i+1].to.point:
+      path.closed?path.start.point:null;
+    if(inp&&previous&&metric(inp.seg[inp.key],origin)<1e-9)
+      inp.seg[inp.key]=lerp(origin,previous,.3);
+    if(out&&following&&metric(out.seg[out.key],origin)<1e-9)
+      out.seg[out.key]=lerp(origin,following,.3);
     return path;
   }
   // Endpoints and line-to-cubic joins have no opposite tangent to constrain.
