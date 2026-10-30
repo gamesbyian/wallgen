@@ -5,6 +5,7 @@ import {normalizePhotoLook,PHOTO_PRESETS} from './photo-look.js';
 import {photoPreviewRecipe} from './photo-preview-compare.js';
 import {createPreviewCoordinator,createThumbnailQueue,exportWallpaperInWorker,closeFrame} from './render-coordinator.js';
 import {installRotationScrubbers} from './rotation-scrubber.js';
+import {parseScalarExpression} from './precision-scalar-expression.js';
 import { embedPngMetadata, extractPngRecipeWithProvenance, cleanMetadata, METADATA_FIELDS } from './png-metadata.js';
 import {inspectPngMigration,migratePngMetadataOnly,inspectPngRecipeArchive,archivePngRecipeRecords} from './png-recipe-migration.js';
 import { installDrawTool } from './draw-path-ui.js?v=20261018-extend1';
@@ -255,6 +256,15 @@ function syncPhotoSecondarySlot(presetId){
   form.querySelector('[data-photo-secondary="grain"]').hidden=active;
   form.querySelector('[data-photo-secondary="halation"]').hidden=!active;
 }
+// Preserve a spinbutton's canonical numeric accessibility value while
+// keeping an actively typed expression intact until explicit validation.
+function syncNumericSlider(numeric,value){
+  if(!numeric)return;
+  numeric.setAttribute('aria-valuenow',String(value));
+  if(document.activeElement!==numeric){
+    numeric.value=String(value);numeric.removeAttribute('aria-invalid');
+  }
+}
 function fromControls() {
   const data={seed:seedInput.value,positionX:current.positionX,positionY:current.positionY,
     viewZoom:current.viewZoom,viewPanX:current.viewPanX,viewPanY:current.viewPanY,
@@ -338,7 +348,7 @@ function toControls(recipe) {
     const output=form.querySelector(`output[for="${key}"]`);
     if(output) output.textContent=key==='repeatCount'?String(current[key]):`${current[key]}%`;
     const numeric=form.querySelector(`[data-number-for="${key}"]`);
-    if(numeric)numeric.value=current[key];
+    syncNumericSlider(numeric,current[key]);
   }
   const photo=normalizePhotoLook(current.photoLook);
   form.elements.namedItem('photoEnabled').checked=photo.enabled;
@@ -347,7 +357,7 @@ function toControls(recipe) {
     ['photoHalation',photo.parameters.halation??PHOTO_PRESETS['film-halation-only'].halation]]){
     form.elements.namedItem(name).value=String(value);
     const numeric=form.querySelector('[data-number-for="'+name+'"]');
-    if(numeric)numeric.value=String(value);
+    syncNumericSlider(numeric,value);
   }
   syncPhotoSecondarySlot(photo.presetId);
   if(!photo.enabled||photo.amount===0)photoBeforeActive=false;
@@ -384,7 +394,7 @@ function toControls(recipe) {
   for(const [name,value] of [['embroideryPitch',stitch?.pitch??5],['embroideryRelief',stitch?.relief??65]]){
     form.elements.namedItem(name).value=String(value);
     const numeric=form.querySelector('[data-number-for="'+name+'"]');
-    if(numeric)numeric.value=String(value);
+    syncNumericSlider(numeric,value);
   }
   syncTextureLayerVisibility();
   syncStripeShadowUI();
@@ -574,7 +584,7 @@ function syncInactiveSettings(){
       }
       field.value=isInactive?'0':String(current[key]);
       const numeric=form.querySelector('[data-number-for="'+key+'"]');
-      if(numeric)numeric.value=isInactive?'0':String(current[key]);
+      syncNumericSlider(numeric,isInactive?'0':current[key]);
       const output=form.querySelector('output[for="'+key+'"]');
       if(output)output.textContent=(isInactive?'0':current[key])+(key==='repeatCount'?'':'%');
     }else if(field.type==='checkbox'){
@@ -1293,30 +1303,65 @@ for(const slider of form.querySelectorAll('input[type="range"]')){
   const minus=document.createElement('button');minus.type='button';minus.className='step-button';minus.innerHTML=iconMarkup('minus');minus.setAttribute('aria-label','Decrease '+accessibleName);
   const plus=document.createElement('button');plus.type='button';plus.className='step-button';plus.innerHTML=iconMarkup('plus');plus.setAttribute('aria-label','Increase '+accessibleName);
   const numeric=document.createElement('input');
-  numeric.type='number';numeric.className='slider-number';numeric.min=slider.min;numeric.max=slider.max;
-  numeric.step=slider.step||'1';numeric.value=slider.value;numeric.dataset.numberFor=slider.name;
+  numeric.type='text';numeric.className='slider-number';numeric.inputMode='text';
+  numeric.autocomplete='off';numeric.spellcheck=false;
+  numeric.value=slider.value;numeric.dataset.numberFor=slider.name;
+  numeric.title='Exact slider value or explicit relative arithmetic (+=, -=, *=, /=). Absolute % for percent sliders; relative % unsupported.';
+  numeric.setAttribute('aria-description',numeric.title);
+  numeric.setAttribute('role','spinbutton');
+  numeric.setAttribute('aria-valuemin',slider.min);
+  numeric.setAttribute('aria-valuemax',slider.max);
+  numeric.setAttribute('aria-valuenow',slider.value);
   const degreeControls=['diagonalRotation','hairpinAngle','loopSweep','rayRotation','rayTwist'];
-  const countControls=['rayCount','regionCount','regionSides','stepCount'];
-  const unit=degreeControls.includes(slider.name)?' in degrees':
-    countControls.includes(slider.name)?'':' percentage';
-  numeric.setAttribute('aria-label',accessibleName+unit);
+  const countControls=['rayCount','regionCount','regionSides','stepCount','scatteredCount'];
+  const unitKind=degreeControls.includes(slider.name)?'angle':
+    countControls.includes(slider.name)?'count':
+      (Number(slider.min)===0&&Number(slider.max)===100)||
+      ['fieldCenterX','fieldCenterY'].includes(slider.name)?'percent':'unitless';
+  const unit=unitKind==='angle'?' in degrees':unitKind==='percent'?' slider percent':'';
+  numeric.setAttribute('aria-label',accessibleName+unit+'. Exact value or relative arithmetic');
   slider.parentNode.insertBefore(row,slider);row.append(minus,slider,plus,numeric);
+  numeric.addEventListener('input',()=>numeric.removeAttribute('aria-invalid'));
   numeric.addEventListener('change',()=>{
-    const raw=Number(numeric.value);
-    if(numeric.value.trim()==='' || !Number.isFinite(raw)){numeric.value=slider.value;return;}
-    const step=Number(slider.step)||1,min=Number(slider.min),max=Number(slider.max);
-    slider.value=String(Math.min(max,Math.max(min,Math.round((raw-min)/step)*step+min)));
-    numeric.value=slider.value;
+    const parsed=parseScalarExpression(numeric.value,Number(slider.value),{
+      min:Number(slider.min),max:Number(slider.max),
+      step:Number(slider.step)||1,unit:unitKind});
+    if(parsed===null){
+      // Keep invalid entry editable. No canonical recipe or Undo mutation.
+      numeric.setAttribute('aria-invalid','true');return;
+    }
+    numeric.removeAttribute('aria-invalid');
+    if(parsed===Number(slider.value)){
+      numeric.value=slider.value;numeric.setAttribute('aria-valuenow',slider.value);return;
+    }
+    slider.value=String(parsed);
+    numeric.value=slider.value;numeric.setAttribute('aria-valuenow',slider.value);
     const output=form.querySelector('output[for="'+slider.name+'"]');
     if(output)output.textContent=slider.value+'%';
     clearTimeout(rangeTimeout);
     updateControlsFromInputs();
   });
+  // Text expression entry retains the native number input's arrow stepping.
+  // Keep Left/Right for caret movement, Up/Down for the semantic spinbutton.
+  numeric.addEventListener('keydown',event=>{
+    if(event.key!=='ArrowUp'&&event.key!=='ArrowDown')return;
+    event.preventDefault();
+    if(numeric.disabled)return;
+    const direction=event.key==='ArrowUp'?1:-1;
+    const delta=direction*(event.shiftKey?10:1)*(Number(slider.step)||1);
+    const next=parseScalarExpression(String(Number(slider.value)+delta),Number(slider.value),{
+      min:Number(slider.min),max:Number(slider.max),
+      step:Number(slider.step)||1,unit:unitKind});
+    if(next===null)return;
+    numeric.value=String(next);
+    numeric.dispatchEvent(new Event('change',{bubbles:true}));
+  });
   for(const [button,delta] of [[minus,-1],[plus,1]]){
     button.addEventListener('click',()=>{
       slider.value=String(Math.max(Number(slider.min),Math.min(Number(slider.max),Number(slider.value)+delta*(Number(slider.step)||1))));
       clearTimeout(rangeTimeout);
-      numeric.value=slider.value;
+      numeric.value=slider.value;numeric.setAttribute('aria-valuenow',slider.value);
+      numeric.removeAttribute('aria-invalid');
       const output=form.querySelector('output[for="'+slider.name+'"]');if(output)output.textContent=slider.value+'%';
       updateControlsFromInputs();
     });
@@ -2139,7 +2184,7 @@ form.addEventListener('input',event=>{
   const output=form.querySelector(`output[for="${key}"]`);
   if(output)output.textContent=`${event.target.value}%`;
   const numeric=form.querySelector(`[data-number-for="${key}"]`);
-  if(numeric)numeric.value=event.target.value;
+  if(numeric){numeric.value=event.target.value;numeric.setAttribute('aria-valuenow',event.target.value);}
   clearTimeout(rangeTimeout);
   rangeTimeout=setTimeout(()=>{
     rangeTimeout=0;

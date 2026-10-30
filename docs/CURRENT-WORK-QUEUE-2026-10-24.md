@@ -1,5 +1,9 @@
 # Current ROYGBIV owner work queue and conditional integration
 
+## V4b · Existing slider exact/relative numeric entry, 30 October 2026
+
+**PR #884 source and real browser verified, final clean-head CI pending:** Current numeric stepper inputs gain safe absolute arithmetic and explicit `+=`, `-=`, `*=`, `/=` edits, using the same audited expression grammar as angle inputs. Field descriptors distinguish angular, discrete count, percent-position and unitless sliders. Typed absolute `25%` denotes the exact *displayed slider percentage*, not pixels or geometry; `+=10%` is deliberately refused because relative percent-of-current versus percentage-points is ambiguous. No `eval`, implicit physical units, new recipe keys or raster-derived geometry. Changes pass through the existing source controls, setting locks, history and render/Undo; no additional mobile toolbar row. Invalid input stays present and is marked `aria-invalid`, without a recipe change. Actual two-phone Chromium [#41131577408](https://github.com/gamesbyian/wallgen/actions/runs/41131577408) **PASS**; earlier exact-head lean [#41131577279](https://github.com/gamesbyian/wallgen/actions/runs/41131577279) **PASS**. Rebased source on #880 and final quick CI still required. Tiny mobile textbox readability, native Android IME and TalkBack require subsequent actual device acceptance; no certification claimed.
+
 ## Active owner control dispatch, 30 October 2026 · issue #867
 
 **Live main:** genuine v3 Bézier command geometry, atomic authoring, accurate node/handle/segment hit targets and on-canvas mobile node editing are merged through [#879](https://github.com/gamesbyian/wallgen/pull/879), with real browser evidence. The app remains pre-release, so revise and consolidate recipe schemas whenever the coherent canonical editor benefits. Original private source and valuable saved art retain explicit migration/refusal protection.
