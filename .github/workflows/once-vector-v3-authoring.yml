@@ -1,0 +1,39 @@
+name: One-shot real v3 Bézier mobile authoring
+on:
+  pull_request:
+    paths:
+      - 'src/vector-draw-ui.js'
+      - 'src/draw-path-ui.js'
+      - 'scripts/vector-v3-authoring-browser.mjs'
+      - '.github/workflows/once-vector-v3-authoring.yml'
+permissions:
+  contents: read
+jobs:
+  authoring:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify gesture sources and command transactions
+        run: |
+          node --check src/vector-draw-ui.js
+          node --check src/draw-path-ui.js
+          node --check scripts/vector-v3-authoring-browser.mjs
+          node --test tests/vector-path-commands.test.js tests/vector-path-edit-session.test.js tests/vector-node-hit.test.js tests/vector-v3-recipe-scene.test.js
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Run authentic mobile pointer and recipe journeys
+        run: node scripts/vector-v3-authoring-browser.mjs
+      - name: Upload screenshots and source report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vector-v3-authoring-evidence
+          path: artifacts/vector-v3-authoring/
+          retention-days: 7
+          if-no-files-found: warn
