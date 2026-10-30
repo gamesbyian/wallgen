@@ -48,6 +48,7 @@ export function installVectorDrawEditor({getRecipe,onApply,onNotice,
   insert.setAttribute('aria-pressed','false');
   axis.setAttribute('aria-pressed','false');
   snap.setAttribute('aria-pressed','false');
+  snap.setAttribute('aria-label','Toggle vector alignment snapping');
   snap.title='Magnetically align a dragged node to other node X/Y coordinates; independent from Lock axis';
   toolbar.append(controls,undo,redo,insert,axis,mode,use,cancel,snap);
   document.body.append(toolbar);

@@ -285,7 +285,7 @@ try{
       const startTouch=await screen(beforeSnap);
       await page.mouse.click(startTouch.x,startTouch.y);
       await toggle.click();
-      const snapButton=toolbar.locator('button',{hasText:'Snap guides'});
+      const snapButton=toolbar.locator('button[aria-label="Toggle vector alignment snapping"]');
       assert.equal(await snapButton.isVisible(),true);
       const hitSize=await snapButton.evaluate(el=>{
         const r=el.getBoundingClientRect();return [r.width,r.height];
