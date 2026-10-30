@@ -273,3 +273,35 @@ test('closed cubic seam split preserves exact parametric curve on BOTH halves',(
   }
   assert.deepEqual(original.segments[0].to.point,[.78,.78]);
 });
+
+test('Corner to Independent regenerates real draggable handles without a phantom node',()=>{
+  const path=normalizeVectorPath({space:'normalized-design',closed:false,
+    start:{id:'a',point:[.15,.2]},segments:[
+      {kind:'cubic',to:{id:'b',point:[.5,.5]},
+        controlOut:[.28,.3],controlIn:[.4,.45]},
+      {kind:'cubic',to:{id:'c',point:[.82,.8]},
+        controlOut:[.62,.58],controlIn:[.75,.72]}]});
+  const corner=setVectorNodeMode(path,'b','corner');
+  assert.deepEqual(corner.segments[0].controlIn,[.5,.5]);
+  assert.deepEqual(corner.segments[1].controlOut,[.5,.5]);
+  const independent=setVectorNodeMode(corner,'b','independent');
+  assert.ok(independent);
+  assert.deepEqual(independent.segments[0].controlIn,[.5+.3*(.15-.5),.5+.3*(.2-.5)]);
+  assert.deepEqual(independent.segments[1].controlOut,[.5+.3*(.82-.5),.5+.3*(.8-.5)]);
+  assert.equal(independent.nodeModes.b,undefined);
+  assert.deepEqual(path.segments[0].controlIn,[.4,.45]);
+});
+test('Closed start Corner can restore both seam and initial cubic handles',()=>{
+  const path=normalizeVectorPath({space:'normalized-design',closed:true,
+    start:{id:'a',point:[.18,.22]},segments:[
+      {kind:'cubic',to:{id:'b',point:[.7,.3]},
+        controlOut:[.33,.2],controlIn:[.59,.28]},
+      {kind:'line',to:{id:'c',point:[.8,.8]}}],
+    closing:{kind:'cubic',controlOut:[.42,.88],controlIn:[.25,.36]}});
+  const corner=setVectorNodeMode(path,'a','corner');
+  const restored=setVectorNodeMode(corner,'a','independent');
+  assert.ok(restored);
+  assert.notDeepEqual(restored.segments[0].controlOut,restored.start.point);
+  assert.notDeepEqual(restored.closing.controlIn,restored.start.point);
+  assert.equal(restored.nodeModes.a,undefined);
+});
