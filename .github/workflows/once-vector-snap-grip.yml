@@ -1,0 +1,38 @@
+name: One-shot v3 node snap/grip Chromium acceptance
+on:
+  pull_request:
+    paths:
+      - 'src/vector-node-snap.js'
+      - 'src/vector-draw-ui.js'
+      - 'scripts/vector-v3-authoring-browser.mjs'
+      - '.github/workflows/once-vector-snap-grip.yml'
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check code and pure gesture tests
+        run: |
+          node --check src/vector-draw-ui.js
+          node --check scripts/vector-v3-authoring-browser.mjs
+          node --test tests/vector-node-snap.test.js tests/vector-node-hit.test.js tests/path-offset-grip.test.js
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Run 320x700 and 412x892 full source-integrated journeys
+        run: node scripts/vector-v3-authoring-browser.mjs
+      - name: Keep screenshot and JSON proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vector-snap-grip-mobile
+          path: artifacts/vector-v3-authoring/
+          retention-days: 7
+          if-no-files-found: warn
