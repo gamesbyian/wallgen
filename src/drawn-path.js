@@ -2,6 +2,7 @@
 // the 600 x 1300 design plane, independent of the display's size or zoom.
 // Imported paths are bounded, finite, compact and safe for deterministic export.
 import {interpretStroke} from './stroke-intent.js';
+import {prepareVectorDrawnPath} from './vector-path-commands.js';
 
 export const PATH_WIDTH=600;
 export const PATH_HEIGHT=1300;
@@ -247,6 +248,10 @@ export function finishDrawnPath(raw,mode='smooth',strength=1){
 }
 
 export function prepareDrawnPath(input){
+  // Pure command-path compiler shares the existing world-coordinate ribbon
+  // interface without changing the live recipe schema or legacy stroke UX.
+  // Node IDs and cubic handles remain authoritative in the command object.
+  if(input?.space==='normalized-design')return prepareVectorDrawnPath(input);
   const stored=normalizeDrawnPath(input);
   if(stored.length<2)return null;
   // Sparse recipe anchors have mathematical corners with zero turn radius.
