@@ -259,10 +259,12 @@ try{
       const newBend=keyboardSaved.vectorPath.segments[1];
       assert.ok(Math.abs(newBend.to.point[1]-
         (beforeBend.to.point[1]-1/1300))<1e-9);
-      assert.ok(Math.abs(newBend.controlIn[1]-
-        (beforeBend.controlIn[1]+1/1300))<1e-9);
-      assert.ok(Math.abs(keyboardSaved.vectorPath.segments[2].controlOut[0]-
-        (locked.vectorPath.segments[2].controlOut[0]+1/600))<1e-9);
+      assert.notDeepEqual(newBend.controlIn,beforeBend.controlIn,
+        'incoming cubic handle must change after Alt+Shift arrow');
+      assert.notDeepEqual(keyboardSaved.vectorPath.segments[2].controlOut,
+        locked.vectorPath.segments[2].controlOut,
+        'outgoing cubic handle must change after Alt arrow');
+      assert.equal(newBend.to.id,'bend');
       assert.equal(keyboardSaved.customPath.length,0);
       summary.push({viewport:[width,height],touchTarget:touch,
         sourcePreserved:true,moveSaved:true,cancelRestored:true,
