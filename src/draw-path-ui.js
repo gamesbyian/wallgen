@@ -67,11 +67,11 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
     // visible offset grip and its associated hit geometry immediately.
     if(editing&&editor)draw(editor.points);
   });
-  // 320×700 and 412×700 have even less unobstructed canvas than 500×700.
-  // Hide the drawing panel when a point editor opens; the existing 44px
-  // Show controls action remains available to recover every button.
+  // In a phone portrait viewport even the tall Draw inspector masks anchors
+  // across much of the art. Enter Edit points with the canvas unobstructed;
+  // the original 44px Show controls action remains on screen for Apply/Undo.
   const shortPortrait=()=>window.matchMedia(
-    '(max-width:599px) and (max-height:760px) and (orientation:portrait)').matches;
+    '(max-width:599px) and (orientation:portrait)').matches;
   setPanelCollapsed(false);
   const smooth=byId('drawSmooth'),geometric=byId('drawGeometric');
   const again=byId('drawAgain'),cancel=byId('drawCancel');
