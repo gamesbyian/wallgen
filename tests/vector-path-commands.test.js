@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {normalizeVectorPath,vectorPathFromPolyline,flattenVectorPath,prepareVectorDrawnPath,
-  moveVectorNode,moveVectorHandle,setVectorNodeMode,splitVectorSegment,VECTOR_PATH_MAX_SAMPLES}
+  moveVectorNode,moveVectorHandle,setVectorNodeMode,splitVectorSegment,
+  nearestVectorSegment,pointOnVectorSegment,VECTOR_PATH_MAX_SAMPLES}
   from '../src/vector-path-commands.js';
 import {prepareDrawnPath,pointOnDrawnPath} from '../src/drawn-path.js';
 
@@ -133,4 +134,31 @@ test('De Casteljau subdivision preserves exact original cubic and existing endpo
   assert.ok(Math.max(...before.points.map(nearest))<2);
   assert.deepEqual(sample.segments[0].to.point,[.5,.6]);
   assert.equal(splitVectorSegment(p,0,.5,'mid'),null);
+});
+
+test('true nearest cubic hit returns correct segment and insertion parameter',()=>{
+  const p=normalizeVectorPath(sample);
+  const exact=pointOnVectorSegment(p,0,.375);
+  const hit=nearestVectorSegment(p,exact,{tolerance:.25});
+  assert.ok(hit);assert.equal(hit.segmentIndex,0);
+  assert.ok(Math.abs(hit.t-.375)<.003);
+  assert.ok(hit.distanceDesign<.01);
+  assert.equal(nearestVectorSegment(p,[Infinity,0]),null);
+});
+
+test('crossing path lookup identifies branch rather than merely nearest node',()=>{
+  const p=vectorPathFromPolyline([[.2,.2],[.8,.8],[.2,.8],[.8,.2]]);
+  const low=nearestVectorSegment(p,[.7,.3]);
+  assert.equal(low.segmentIndex,2);
+  assert.ok(Math.abs(low.t-5/6)<.01);
+  const upper=nearestVectorSegment(p,[.5,.8]);
+  assert.equal(upper.segmentIndex,1);
+  assert.ok(upper.distanceDesign<.00001);
+});
+
+test('closed vector path hit resolves explicit closing segment',()=>{
+  const p=vectorPathFromPolyline([[.2,.2],[.75,.2],[.75,.75]],{closed:true});
+  const hit=nearestVectorSegment(p,[.475,.475]);
+  assert.equal(hit.segmentIndex,2);
+  assert.ok(Math.abs(hit.t-.5)<.01);
 });
