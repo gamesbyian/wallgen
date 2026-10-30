@@ -153,6 +153,9 @@ export function pointOnVectorSegment(input,index,t){
   if(!path||!Number.isInteger(index)||index<0||
       index>=path.segments.length+(path.closed?1:0)||
       !Number.isFinite(t)||t<0||t>1)return null;
+  return evaluateNormalizedSegment(path,index,t);
+}
+function evaluateNormalizedSegment(path,index,t){
   const closing=index===path.segments.length;
   const seg=closing?path.closing:path.segments[index];
   const start=index===0?path.start.point:path.segments[index-1].to.point;
@@ -187,7 +190,7 @@ export function nearestVectorSegment(input,query,options){
   }
   if(!nearest)return null;
   const index=nearest.segmentIndex;
-  const cost=t=>metric(pointOnVectorSegment(path,index,t),query);
+  const cost=t=>metric(evaluateNormalizedSegment(path,index,t),query);
   let lo=nearest.t0,hi=nearest.t1;
   for(let k=0;k<22;k++){
     const c=hi-(hi-lo)*.6180339887498948,d=lo+(hi-lo)*.6180339887498948;
@@ -198,7 +201,7 @@ export function nearestVectorSegment(input,query,options){
   for(const t of choices){
     const distance=cost(t);
     if(!best||distance<best.distanceDesign)best={segmentIndex:index,t,
-      point:pointOnVectorSegment(path,index,t),distanceDesign:distance};
+      point:evaluateNormalizedSegment(path,index,t),distanceDesign:distance};
   }
   return best;
 }
