@@ -1,4 +1,7 @@
 # Decision study: canonical parametric Draw paths before four-node editing
+
+**Implementation checkpoint, 30 October 2026:** [PR #872](https://github.com/gamesbyian/wallgen/pull/872) introduces the first pure *real line/cubic command graph*, with stable IDs, explicit closed-state/closing segment, vector-metric handle continuity, exact De Casteljau splitting, bounded adaptive compilation and an adapter to the existing world-coordinate ribbon/path sampling contract. This source work **does not yet change canonical saved recipes, live Draw point UI, MCP/AYA schemas or exports**. The interface and older sampled `customPath` remain active while the coordinated migration below is implemented. The near-term migration should replace, not retain indefinitely, the sampled geometry as the authoritative authored type. New core module: `src/vector-path-commands.js`; tests: `tests/vector-path-commands.test.js`. The first normalizer rejects malformed geometry rather than treating invalid curve input as an empty authored path. Source tree must not call this software-complete true Bézier authoring before editing/roundtrip/actual rendering are integrated.
+
 30 October 2026 · issue [#867](https://github.com/gamesbyian/wallgen/issues/867) · **technical design / not an implemented schema migration**
 
 ## Source-backed findings
