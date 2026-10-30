@@ -224,3 +224,8 @@ test('Mirrored mode reopens a collapsed corner with Euclidean design tangents',(
   assert.ok(Math.hypot(...v(outside))>=12);
   assert.ok(eq(v(inside),v(outside).map(n=>-n)));
 });
+
+test('aligned and mirrored modes require both real adjacent tangent controls',()=>{
+  assert.equal(setVectorNodeMode(sample,'start','mirrored'),null);
+  assert.equal(setVectorNodeMode(sample,'end','aligned'),null);
+});
