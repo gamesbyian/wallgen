@@ -23,3 +23,46 @@ Benchmark before and after on the same script and scenario set. Reject candidate
 ## Release boundary
 
 Shipping quality is governed by the user's real Random interactions, current canonical recipe, source preserving locks and Undo, actual preview pixels, and worker/export fidelity. Emulated Chromium is not Pixel 6 Pro thermal/heap/UX evidence. Retire one-shot CI workflows after measurement and retain reusable script and this concise owning report.
+
+## Paired safety experiment: worker interruption rejected (29 October 2026)
+
+An isolated branch (`feature/randomize-preview-preemption-20261029`, **not merged**) tested restarting the busy preview Worker when a new Random request superseded its currently synchronous Canvas2D paint. The source included guarded worker-generation identity, cooldown, startup fallback, and fake-worker unit tests. An initial unpaired run hinted at a speedup, but the [same-run, deterministic-seed paired A/B trial #40981369721](https://github.com/gamesbyian/wallgen/actions/runs/40981369721) **did not reproduce it**. The trial copied the same seed-deterministic browser script into both live `main` and candidate checkouts, and alternated each case twice on the same Ubuntu runner:
+
+| Four rapid Random presses | Main, trials 1 / 2 | Preemption, trials 1 / 2 |
+| --- | ---: | ---: |
+| Basic path | 1162 / 1179 ms | 1158 / 1157 ms |
+| Three-material | 1028 / 1144 ms | 1176 / 1118 ms |
+| Regions | 1025 / 1131 ms | 1161 / 1161 ms |
+
+Single clicks were likewise similar. Unit tests passed, but adding worker churn for no demonstrated improvement would be counterproductive; **do not merge or deploy the candidate**. The initial 3.3-second heavy case reflects large variance in random generated scene cost rather than a universally stuck scheduler. Do not label an unpaired faster run as proven acceleration.
+
+**Next focus:** profile actual production worker rendering across a *fixed, reproducible corpus* of randomized canonical scenes; identify specific slow operations/recipe families, then modify only a measured bottleneck. Preserve visible art, PNG metadata, locks, Undo, worker/fallback behavior, and native fidelity.
+
+## Fixed-seed scene-cost diagnosis (29 October 2026)
+
+[32-production-worker-scene sample #40981824025](https://github.com/gamesbyian/wallgen/actions/runs/40981824025), rendered at interactive 372×806 using `scripts/randomize-scene-costs-browser.mjs`, found **162ms median**, with two repeatable long-tail designs:
+
+- `random-perf-fixed-30`: paths + multi-loop + dashed marks + double outline + wood grain. First 1330ms, repeats ~1303/1304ms and settled 1533ms.
+- `random-perf-fixed-20`: concentric radial + 56 rays + felt. First 936ms, repeats ~915/931ms and settled 2422ms.
+
+[Real-worker subsystem ablation #40982018463](https://github.com/gamesbyian/wallgen/actions/runs/40982018463) confirmed the bottlenecks rather than guessing: radial felt dropped from ~754 to ~56ms when disabling material. Wood-grain loops dropped from ~1024 to ~515ms with material removed, ~561ms with displacement disabled, ~362ms with solid motif, and ~78ms with straight geometry. These are intentionally different artworks used ONLY for diagnosis, not approximations shipped in the renderer. The sampled performance spread explains why Random feels intermittently much slower than its typical result.
+
+## Exact one-pass material re-use: candidate accepted (29 October 2026)
+
+A precise redundant-work fix in `src/renderer.js`: a material layer with `coverage='both'` previously painted the **identical deterministic material twice**, once for background and once for stripes. Background and ink remain separate compositors, with independent ordered blends. The renderer now paints each material layer exactly once, applies the unmasked scratch to the background if requested, and then masks the same scratch for the stripes if requested. No geometry, texture stroke, parameter, recipe, camera, export, cache or blended layer semantics have been rewritten, and there is **no** new full-frame cache.
+
+[Same-run old-main vs candidate acceptance #40982569405](https://github.com/gamesbyian/wallgen/actions/runs/40982569405) tested **9 canonical material designs** including the two expensive random seeds, varied blend modes, three `both` layers, stripe-only, background-only, radial, regions, wood, grain, fabric and foil. All 9 had **exact raw-pixel SHA-256 equality at 240×520** between code versions in **each** backend (direct Canvas2D and PNG export Worker). Additionally, the **actual 3024×6552 worker PNG** for wood-grain `both` was byte-for-byte SHA256 identical, **4,607,982 bytes** in each version, digest `407bcd9b62f2f59d2c50c703b3ce6f5cbdd60745d62eab6c84748a706790dd9e`. This preserves existing direct/worker differences, rather than inventing new pixel parity between them.
+
+Three repeated production `372×806` worker paint durations in that same comparison (milliseconds; last pair shown to avoid startup bias):
+
+| Sample | Previous | One-pass | Relative benefit |
+| --- | ---: | ---: | ---: |
+| Radial felt (`both`) | 332 | 175 | ~47% less |
+| Three materials (`both`) | 583 | 297 | ~49% less |
+| Random worst seed 20 | 946 | 524 | ~45% less |
+| Wood `both` | 185 | 169 | ~9% less |
+| Loop/wood worst seed 30 | 1274 | 1262 | ~1% less |
+
+These are **single CI runner repeated worker trials**, not phone frame rates or population statistics. Benefits are large where material duplication dominated, appropriately small where loop geometry/marks dominate. The 32-seed cost profiler and cross-commit acceptance script are retained; temporary large CI workflows retired. No real Pixel 6 Pro performance, native on-device memory/thermal, owner touch preference or human aesthetic judgement is implied.
+
+**Next scope:** Only if a further demonstrable bottleneck is requested, profile the repeatable slow loop/dashed-motif geometry in seed 30. Do not weaken source-visible art or reintroduce worker restart churn. The cross-material `both` duplicate render is addressed with identical pixels.
