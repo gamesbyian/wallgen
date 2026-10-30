@@ -1,5 +1,10 @@
 # Current ROYGBIV owner work queue and conditional integration
 
+## AYA recipe handoff, 30 October 2026 · independent feature branch
+
+[AYA structured recipe handoff spec](AYA-RECIPE-HANDOFF-2026-10-30.md) owns the new scoped source-derived JSON assistant-guide feature. Implementation branch `feature/aya-recipe-handoff-20261030` adds More composer, recolored original vector icon, optional current recipe, Share/Copy/Save, semantics guide and source tests. It does not alter the canonical recipe, renderer, existing import or vector touch work in #867. **Remaining acceptance gates:** actual 320×700 / 412×892 Chromium no-scroll/44px behavior, Android browser/AI-target file ingestion, and imported result quality. No completed physical-device tests or recipient verification are implied. Future semantics calibration requires actual renderer evidence; do not advertise empirically measured visual response ranges yet.
+
+
 ## LIVE OWNER DISPATCH · 30 October 2026 UTC · vector-native touch interaction
 
 **Implementation umbrella:** [#867](https://github.com/gamesbyian/wallgen/issues/867) owns the remaining vector-control revamps without creating an independent work queue.
