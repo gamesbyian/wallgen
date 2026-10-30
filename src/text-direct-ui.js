@@ -158,7 +158,7 @@ export function installTextCanvasMover({
     const current=getRecipe();
     const item=hitTextAtLayout(current.textOverlays,point,
       (text,value)=>measure(text,value,{tracking:true}),{
-      tolerance,customPath:current.customPath
+      tolerance,customPath:current.vectorPath??current.customPath
     });
     if(!item)return;
     event.preventDefault();event.stopImmediatePropagation();

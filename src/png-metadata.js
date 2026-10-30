@@ -71,6 +71,7 @@ function exifTiff(info){
 }
 export const RECIPE_KEYWORD='ROYGBIV Recipe';
 export const RECIPE_FORMAT='roygbiv-recipe-v2';
+export const RECIPE_FORMAT_V3='roygbiv-recipe-v3';
 // Full normalized Interior selections can legitimately exceed the old 64 KiB
 // reader bound. Still cap named metadata before parsing untrusted JSON.
 export const MAX_RECIPE_ITXT_BYTES=1024*1024;
@@ -82,8 +83,9 @@ export function serializePngRecipe(recipe,{output}={}){
     Number.isSafeInteger(output.height)&&output.height>0?
       {width:output.width,height:output.height}:
       {width:OUTPUT_WIDTH,height:OUTPUT_HEIGHT};
-  return JSON.stringify({format:RECIPE_FORMAT,recipe:normalizeRecipe(recipe),
-    output:dimensions,generator:'R.O.Y.G.B.I.V.'});
+  const canonical=normalizeRecipe(recipe);
+  return JSON.stringify({format:canonical.version===3?RECIPE_FORMAT_V3:RECIPE_FORMAT,
+    recipe:canonical,output:dimensions,generator:'R.O.Y.G.B.I.V.'});
 }
 export function embedPngMetadata(input,values={},options={}){
   const bytes=input instanceof Uint8Array?input:new Uint8Array(input);
@@ -210,10 +212,12 @@ export function extractPngRecipeWithProvenance(input){
   if(!selected)return {recipe:null,format:null,recordCount:0,
     normalizedFieldsChanged:false};
   const {format,rawRecipe}=selected;
-  if(![RECIPE_FORMAT,'roygbiv-recipe-v1'].includes(format))
+  if(![RECIPE_FORMAT,RECIPE_FORMAT_V3,'roygbiv-recipe-v1'].includes(format))
     throw Error('Unsupported recipe metadata version');
   if(typeof rawRecipe.seed!=='string'||!rawRecipe.seed.trim()||
-    (format===RECIPE_FORMAT&&!['paths','radial','regions'].includes(rawRecipe.structure)))
+    ([RECIPE_FORMAT,RECIPE_FORMAT_V3].includes(format)&&
+      !['paths','radial','regions'].includes(rawRecipe.structure))||
+    (format===RECIPE_FORMAT_V3&&rawRecipe.version!==3))
     throw Error('Damaged recipe metadata identity');
   const recipe=normalizeRecipe(rawRecipe);
   const fields=Object.keys(recipe),sourceKeys=Object.keys(rawRecipe);

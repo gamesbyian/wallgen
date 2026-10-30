@@ -258,7 +258,9 @@ function syncPhotoSecondarySlot(presetId){
 function fromControls() {
   const data={seed:seedInput.value,positionX:current.positionX,positionY:current.positionY,
     viewZoom:current.viewZoom,viewPanX:current.viewPanX,viewPanY:current.viewPanY,
-    customPath:current.customPath,drawnAnchors:current.drawnAnchors,drawnCorners:current.drawnCorners,interiorElements:current.interiorElements,
+    customPath:current.customPath,drawnAnchors:current.drawnAnchors,drawnCorners:current.drawnCorners,
+    ...(current.vectorPath?{vectorPath:current.vectorPath}:{}),
+    interiorElements:current.interiorElements,
     nestedShapeContours:current.nestedShapeContours,
     textOverlays:current.textOverlays,
     scatteredShape:current.scatteredShape,scatteredOverrides:current.scatteredOverrides,

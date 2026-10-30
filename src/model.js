@@ -10,6 +10,7 @@ import { normalizeTextOverlays } from './text-overlays.js';
 import { STRUCTURES, RADIAL_MODES, REGION_MODES, DIVIDER_MODES, buildCompositionObjects } from './composition-geometry.js';
 export { STRUCTURES, RADIAL_MODES, REGION_MODES, DIVIDER_MODES };
 import { normalizeDrawnPathWithIndexMap, prepareDrawnPath, safeDrawnBandSpan } from './drawn-path.js';
+import {normalizeVectorPath} from './vector-path-commands.js';
 export const DESIGN_WIDTH = 600;
 export const DESIGN_HEIGHT = 1300;
 export const OUTPUT_WIDTH = 3024;
@@ -112,6 +113,23 @@ function normalizeReconstructionOrigin(input){
 }
 
 export function normalizeRecipe(input = {}) {
+  // New pre-release v3 path recipes own one authoritative true vector
+  // command graph. v2 remains read-only-compatible during coordinated UI
+  // migration; a v3 import must not silently drop malformed cubic controls.
+  const vectorRequested=input?.vectorPath!==undefined;
+  if(input?.version===3&&!vectorRequested)
+    throw new RangeError('Version 3 recipe requires a vectorPath source');
+  if(vectorRequested){
+    const vectorPath=normalizeVectorPath(input.vectorPath);
+    if(!vectorPath||(Array.isArray(input.customPath)&&input.customPath.length>=2))
+      throw new RangeError('Version 3 requires one valid vectorPath and no competing sampled customPath');
+    // Keep the pinned historical v2 field normalizer unchanged. It has a
+    // source-blob ledger and existing saved-design meaning. The v3 overlay
+    // replaces its single path source AFTER ordinary field normalization.
+    const base=normalizeRecipe({...input,version:2,vectorPath:undefined,
+      customPath:[],drawnAnchors:[],drawnCorners:[]});
+    return {...base,version:3,vectorPath};
+  }
   const readChoice = (key, allowed) => allowed.includes(input[key]) ? input[key] : 'auto';
   const seed = String(input.seed ?? 'rainbow-001').trim().slice(0, 90) || 'rainbow-001';
   const drawnPath=normalizeDrawnPathWithIndexMap(input.customPath);
@@ -329,8 +347,10 @@ export function resolveScene(recipeInput) {
   const profile = PROFILES[family];
   const orientation = keepAuto('orientation',recipe.orientation === 'auto' ? pick(random, ['vertical', 'vertical', 'diagonal', 'horizontal']) : recipe.orientation);
   const selectedGeometry = keepAuto('geometry',recipe.geometry === 'auto' ? profile.geometry : recipe.geometry);
-  const geometry = selectedGeometry==='drawn'&&recipe.customPath.length<2?'straight':selectedGeometry;
-  const drawnPath=geometry==='drawn'?prepareDrawnPath(recipe.customPath):null;
+  const drawnSource=recipe.vectorPath??recipe.customPath;
+  const hasDrawnSource=!!recipe.vectorPath||recipe.customPath.length>=2;
+  const geometry = selectedGeometry==='drawn'&&!hasDrawnSource?'straight':selectedGeometry;
+  const drawnPath=geometry==='drawn'?prepareDrawnPath(drawnSource):null;
   const motif = keepAuto('motif',recipe.motif === 'auto' ? profile.motif : recipe.motif);
   const palette = keepAuto('palette',recipe.palette === 'auto' ? profile.palette : recipe.palette);
   const material = keepAuto('material',recipe.material === 'auto' ? profile.material : recipe.material);
@@ -509,9 +529,14 @@ export function respectSettingLocks(currentInput, nextInput) {
   const locked=new Set(current.lockedSettings);
   for(const key of locked) {
     if(key==='geometry'){
+      // Geometry lock owns the source dialect as well as the selected tool:
+      // it cannot silently switch an authored v3 path to sampled v2.
+      next.version=current.version;
       next.customPath=current.customPath;
       next.drawnAnchors=current.drawnAnchors;
       next.drawnCorners=current.drawnCorners;
+      if(current.vectorPath)next.vectorPath=current.vectorPath;
+      else delete next.vectorPath;
       next.extendDrawnPath=current.extendDrawnPath;
     }
     // For optional layers, the material chooser is the sole visible on/off
