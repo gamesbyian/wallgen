@@ -15,11 +15,25 @@ class Element extends EventTarget {
     const classes=new Set();
     this.classList={
       add:name=>classes.add(name),remove:name=>classes.delete(name),
-      contains:name=>classes.has(name)
+      contains:name=>classes.has(name),
+      toggle:(name,force)=>{
+        const enabled=force===undefined?!classes.has(name):!!force;
+        if(enabled)classes.add(name);else classes.delete(name);
+        return enabled;
+      }
     };
+    this.children=[];this.parentElement=null;
   }
   setAttribute(name,value){this.attributes[name]=String(value);}
   getAttribute(name){return this.attributes[name]??null;}
+  removeAttribute(name){delete this.attributes[name];}
+  append(...children){
+    for(const child of children){
+      this.children.push(child);
+      if(child&&typeof child==='object')child.parentElement=this;
+    }
+  }
+  appendChild(child){this.append(child);return child;}
   getBoundingClientRect(){return {left:0,top:0,width:600,height:1300};}
   getContext(){
     if(!this.canvasCalls)this.canvasCalls=[];
@@ -42,28 +56,33 @@ function fixture(recipeInput,{commitOnApply=false}={}){
     'drawApply','drawSmooth','drawGeometric','drawAgain','drawCancel',
     'drawSmoothingStrength','drawSmoothingValue','drawExtendPath',
     'drawEditPoints','drawAddPoint','drawDeletePoint','drawCornerPoint',
-    'drawResmoothPoints','drawUndoPoint'];
+    'drawAxisLock','drawResmoothPoints','drawUndoPoint','mobileDismissHandle'];
   const nodes=Object.fromEntries(ids.map(id=>[id,new Element(id)]));
   nodes.drawSmoothingStrength.value='3';
   nodes.drawUndoPoint.parentElement=new Element('undoContainer');
   const phase=new Element('phase');
-  nodes.drawPathPanel.querySelector=selector=>selector==='.draw-phase'?phase:null;
+  const intro=new Element('drawIntro');
+  nodes.drawPathPanel.querySelector=selector=>selector==='.draw-phase'?phase:
+    selector==='.draw-path-intro'?intro:null;
   const stage=new Element('stage');
   stage.dataset.viewZoom=String(recipe.viewZoom);
   nodes.drawOverlay.parentElement=stage;
   const geometryOption=new Element('geometryOption');
   const document=new EventTarget();
   document.getElementById=id=>nodes[id];
+  document.createElement=tag=>new Element(tag);
   document.querySelector=selector=>selector==='.studio-stage'?stage:
     selector==='[name=geometry] option[value=drawn]'?geometryOption:null;
   document.body=new Element('body');
   const window=new EventTarget();
+  window.matchMedia=()=>({matches:false});
   const old={document:globalThis.document,window:globalThis.window};
   globalThis.document=document;globalThis.window=window;
   const calls=[];
   let tool;
   tool=installDrawTool({
     getRecipe:()=>recipe,
+    onApplyVector:()=>{}, // Real v3 editor now mounts beside v2.
     onNotice:message=>{throw Error('Unexpected notice: '+message);},
     onApply:(...args)=>{
       calls.push(args);
