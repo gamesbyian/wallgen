@@ -128,6 +128,9 @@ try{
         await page.mouse.up();
         if(mode==='cancel'){
           assert.equal(await page.locator('#drawUndoPoint').isDisabled(),true);
+          if(await page.locator('#drawPathPanel')
+            .getAttribute('data-controls-collapsed')==='true')
+            await page.locator('.draw-panel-minimize').click();
           await page.locator('#drawCancel').click();
           assert.deepEqual(current(page),fixture,'canceled gesture kept source untouched');
         }else{
@@ -135,6 +138,9 @@ try{
           assert.deepEqual(current(page),fixture,'unapplied path changes are provisional');
           await page.screenshot({path:join(out,width+'x'+height+'-'+mode+'.png'),
             animations:'disabled'});
+          if(await page.locator('#drawPathPanel')
+            .getAttribute('data-controls-collapsed')==='true')
+            await page.locator('.draw-panel-minimize').click();
           await page.locator('#drawApply').click();
           await page.waitForFunction(before=>{
             try{
