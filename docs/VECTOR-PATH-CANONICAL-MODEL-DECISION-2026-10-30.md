@@ -10,6 +10,8 @@
 
 30 October 2026 · issue [#867](https://github.com/gamesbyian/wallgen/issues/867) · **technical design / not an implemented schema migration**
 
+**Closed-path seam acceptance, PR #875:** The exact command engine now supports inserting a node into an explicitly closing line or cubic segment (index equal to the ordinary segment count). De Casteljau splits preserve both halves of the authored cubic and original start ID, retaining explicit closure, source control coordinates and existing node IDs. The pure edit transaction admits that seam index and preserves single-step Undo/redo/cancel. This closes a geometry/editor dependency for complete loops before live recipe v3 cutover.
+
 ## Source-backed findings
 
 - `src/drawn-path.js` stores `customPath` as normalized coordinates on the 600×1300 design plane, capped at 96 stations by `normalizeDrawnPathWithIndexMap`. It removes near duplicates, rounds to five decimals, maps saved manual index constraints through resampling, and can keep off-frame coordinates from -2 to 3.
