@@ -2,7 +2,7 @@
 
 # Touch-first rotation controls | ROYGBIV
 
-**30 October follow-up (PR #871, integration pending):** Exact-angle entry in the existing precision dialog now accepts a tiny, non-executing arithmetic language (`+=15`, `-=15°`, `*=2`, `/=2`, `45+15°`), preserving absolute negative values, canonical angle wrap/clamp and Undo. Invalid expressions retain a visible error state without saving anything. This is an angle-only extension, not permission to apply pixel or ambiguous percent arithmetic to vector geometry. [Real browser run #41021397879](https://github.com/gamesbyian/wallgen/actions/runs/41021397879) passed both primary portrait viewports, with actual text entry, invalid refusal, source recipe commits and focus recovery.
+**30 October follow-up (MERGED PR #871):** Exact-angle entry in the existing precision dialog now accepts a tiny, non-executing arithmetic language (`+=15`, `-=15°`, `*=2`, `/=2`, `45+15°`), preserving absolute negative values, canonical angle wrap/clamp and Undo. Invalid expressions retain a visible error state without saving anything. This is an angle-only extension, not permission to apply pixel or ambiguous percent arithmetic to vector geometry. [Real browser run #41021397879](https://github.com/gamesbyian/wallgen/actions/runs/41021397879) passed both primary portrait viewports, with actual text entry, invalid refusal, source recipe commits and focus recovery.
 
 Owner request: 2026-10-29. Current status: planned specification and incremental implementation; no physical Pixel acceptance yet.
 
