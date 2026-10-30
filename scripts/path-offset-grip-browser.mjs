@@ -63,7 +63,6 @@ try{
             overlay:rect(document.getElementById('drawOverlay')),
             panel:rect(document.getElementById('drawPathPanel')),point:p};
         },origin);
-        console.log('OFFSET_GRIP_ANCHOR_HIT',JSON.stringify({width,height,mode,...anchorHit}));
         assert.equal(anchorHit.id,'drawOverlay',
           'real anchor must remain reachable: '+JSON.stringify(anchorHit));
         await page.mouse.click(origin.x,origin.y);
@@ -101,7 +100,6 @@ try{
             anchor:project(editor.points[index])};
         },{source:fixture,index:selected});
         let g=await locateGrip();
-        console.log('OFFSET_GRIP_TARGET',JSON.stringify({width,height,mode,g}));
         assert.ok(g,'offset finger grip needs clear accessible space '+width);
         assert.equal(g.hit,'drawOverlay','offset handle must be genuinely clickable');
         assert.equal(g.radius,22,'large screen-space interactive radius');
