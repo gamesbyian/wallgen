@@ -1175,21 +1175,24 @@ export function drawWallpaper(canvas, recipe, options={}) {
   const blend=layer=>layer.blend==='normal'?'source-over':layer.blend;
   ctx.fillStyle=scene.background==='white'?'#fff':'#000';
   ctx.fillRect(0,0,canvas.width,canvas.height);
-  for(let i=0;i<layers.length;i++){
-    const layer=layers[i];
-    if(layer.coverage==='stripes')continue;
+  // Background and stripe compositors are independent canvases. They
+  // must receive their layers in the original order, but do NOT require
+  // two rasterizations of a deterministic material with coverage='both'.
+  // Render each layer ONCE; apply unmasked pixels to the background first,
+  // then alpha-mask that same scratch image for ink. No pixel approximation,
+  // tile cache, new recipe field, or extra canvas allocation is introduced.
+  for(const layer of layers){
     textured(layer);
-    ctx.save();ctx.globalCompositeOperation=blend(layer);
-    ctx.drawImage(scratch,margin.left,margin.top,canvas.width,canvas.height,0,0,canvas.width,canvas.height);
-    ctx.restore();
-  }
-  for(let i=0;i<layers.length;i++){
-    const layer=layers[i];
-    if(layer.coverage==='background')continue;
-    textured(layer);
-    s.save();s.globalCompositeOperation='destination-in';s.drawImage(ink,0,0);s.restore();
-    g.save();g.setTransform(1,0,0,1,0,0);
-    g.globalCompositeOperation=blend(layer);g.drawImage(scratch,0,0);g.restore();
+    if(layer.coverage!=='stripes'){
+      ctx.save();ctx.globalCompositeOperation=blend(layer);
+      ctx.drawImage(scratch,margin.left,margin.top,canvas.width,canvas.height,0,0,canvas.width,canvas.height);
+      ctx.restore();
+    }
+    if(layer.coverage!=='background'){
+      s.save();s.globalCompositeOperation='destination-in';s.drawImage(ink,0,0);s.restore();
+      g.save();g.setTransform(1,0,0,1,0,0);
+      g.globalCompositeOperation=blend(layer);g.drawImage(scratch,0,0);g.restore();
+    }
   }
   // Background stays fixed. The immutable ink now has transparent overscan:
   // stripes that exited the original frame keep going off-frame when nudged.
