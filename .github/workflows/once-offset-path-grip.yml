@@ -1,0 +1,38 @@
+name: One-shot offset path grip mobile Chromium
+on:
+  pull_request:
+    paths:
+      - 'src/path-offset-grip.js'
+      - 'src/draw-path-ui.js'
+      - 'scripts/path-offset-grip-browser.mjs'
+      - '.github/workflows/once-offset-path-grip.yml'
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Focused source geometry tests
+        run: |
+          node --check scripts/path-offset-grip-browser.mjs
+          node --check src/draw-path-ui.js
+          node --test tests/path-offset-grip.test.js tests/axis-constrained-drag.test.js tests/path-point-editor.test.js
+      - name: Install test browser
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Exercise actual mobile pointer flows
+        run: node scripts/path-offset-grip-browser.mjs
+      - name: Preserve screenshots and gesture evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: offset-path-grip-mobile-evidence
+          path: artifacts/offset-path-grip/
+          retention-days: 7
+          if-no-files-found: warn
