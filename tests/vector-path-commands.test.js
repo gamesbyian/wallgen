@@ -118,7 +118,9 @@ test('switching a mode immediately reconciles genuine cubic handle continuity',(
   assert.ok(eq([(inp[0]-c[0])*600,(inp[1]-c[1])*1300],
     [-(out[0]-c[0])*600,-(out[1]-c[1])*1300]));
   const corner=setVectorNodeMode(mir,'mid','corner');
-  assert.equal(corner.nodeModes.mid,undefined);
+  assert.equal(corner.nodeModes.mid,'corner');
+  assert.deepEqual(corner.segments[0].controlIn,[.5,.6]);
+  assert.deepEqual(corner.segments[1].controlOut,[.5,.6]);
   assert.equal(setVectorNodeMode(sample,'unknown','aligned'),null);
 });
 
@@ -199,4 +201,31 @@ test('bounded hostile topology matrix: never produce nonfinite samples or silent
     assert.ok(compiled.points.every(p=>p.length===2&&p.every(Number.isFinite)));
     assert.equal(compiled.sampleParameters.length,compiled.points.length);
   }
+});
+
+test('Corner collapses cubic handles, pulling out one creates Independent',()=>{
+  const p=setVectorNodeMode(sample,'mid','corner');
+  assert.ok(p);assert.equal(p.nodeModes.mid,'corner');
+  assert.deepEqual(p.segments[0].controlIn,[.5,.6]);
+  assert.deepEqual(p.segments[1].controlOut,[.5,.6]);
+  const out=moveVectorHandle(p,'mid','out',[.56,.65]);
+  assert.ok(out);assert.equal(out.nodeModes.mid,undefined);
+  assert.deepEqual(out.segments[0].controlIn,[.5,.6]);
+  assert.deepEqual(out.segments[1].controlOut,[.56,.65]);
+});
+
+test('Mirrored mode reopens a collapsed corner with Euclidean design tangents',()=>{
+  const p=setVectorNodeMode(sample,'mid','corner');
+  const reopened=setVectorNodeMode(p,'mid','mirrored');
+  assert.ok(reopened);
+  const origin=[.5,.6],inside=reopened.segments[0].controlIn,
+    outside=reopened.segments[1].controlOut;
+  const v=p=>[(p[0]-origin[0])*600,(p[1]-origin[1])*1300];
+  assert.ok(Math.hypot(...v(outside))>=12);
+  assert.ok(eq(v(inside),v(outside).map(n=>-n)));
+});
+
+test('aligned and mirrored modes require both real adjacent tangent controls',()=>{
+  assert.equal(setVectorNodeMode(sample,'start','mirrored'),null);
+  assert.equal(setVectorNodeMode(sample,'end','aligned'),null);
 });

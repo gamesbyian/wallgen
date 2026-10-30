@@ -1,5 +1,8 @@
 # Decision study: canonical parametric Draw paths before four-node editing
 
+**Node-mode semantic correction, PR #874 (validation pending):** independent is now the default when a cubic has draggable controls; explicit `corner` actually collapses the adjacent stored cubic control points to the node, producing a sharp editable station. Pulling a handle out of Corner transitions it to Independent. Switching a collapsed Corner to Aligned/Mirrored uses the neighbouring Euclidean design-space chord to construct constrained tangents, without relying on normalized bounding-box proportions or screen pixels. This makes the four named modes geometrically meaningful rather than alternate labels for the same behaviour. Focused source tests required; the production sampled-path editor is still unchanged.
+
+
 **Next implementation slice, MERGED PR #873, CI [#41104726410](https://github.com/gamesbyian/wallgen/actions/runs/41104726410) PASS:** `src/vector-path-edit-session.js` adds an immutable authoring transaction above true cubic commands. It keeps the original source path untouched until commit, re-evaluates every provisional node/handle/insert edit against the same source snapshot, cancels safely on pointer interruption or lock activation, and implements selection-stable, bounded Undo/redo (one history entry per actual committed action). This session is pure and is deliberately **not wired into the existing Draw sampled-path editor** before a coordinated schema cutover. Tests: `tests/vector-path-edit-session.test.js`. The goal is to avoid baking DOM/pointer details or legacy sampled-point indices into the future vector authoring core.
 
 
