@@ -295,6 +295,12 @@ export function installDrawTool({getRecipe,onApply,onNotice}){
     document.body.classList.remove('path-drawing');
   }
   function start(){
+    // This sampled-path editor cannot safely round-trip true cubic control
+    // points. Refuse it until the vector authoring UI owns that source.
+    if(getRecipe().vectorPath){
+      onNotice('This design uses true vector curves. Its node editor is being integrated; the old sampled Draw tool cannot edit or replace them.');
+      return;
+    }
     const blocked=drawAuthoringLockReason(getRecipe());
     if(blocked){
       onNotice(drawAuthoringLockMessage(blocked));
