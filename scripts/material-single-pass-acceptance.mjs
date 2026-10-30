@@ -167,13 +167,34 @@ try{
    workers.base.worker.terminate();workers.candidate.worker.terminate();
    return output;
  },specs);
+ // An actual native-resolution PNG encode is a separate fidelity gate.
+ // Compare the real production export Worker output at 3024x6552, but do
+ // not claim the Linux runner verifies Pixel 6 Pro memory/thermal behavior.
+ const native=await page.evaluate(async recipe=>{
+   const outcome={};
+   const hex=buffer=>[...new Uint8Array(buffer)]
+     .map(x=>x.toString(16).padStart(2,'0')).join('');
+   for(const version of ['base','candidate']){
+     const {exportWallpaperInWorker}=await import('/'+version+'/src/render-coordinator.js');
+     const blob=await exportWallpaperInWorker({
+       recipe,width:3024,height:6552,timeoutMs:150000
+     });
+     const bytes=await blob.arrayBuffer();
+     outcome[version]={sha256:hex(await crypto.subtle.digest('SHA-256',bytes)),
+       size:bytes.byteLength};
+   }
+   return outcome;
+ },specs.find(x=>x.name==='wood-both').recipe);
+ assert.deepEqual(native.base,native.candidate,
+   'Native-resolution 3024x6552 worker PNG no longer matches current main');
  await mkdir(join(root,'artifacts','material-once'),{recursive:true});
  await writeFile(join(root,'artifacts','material-once','pixel-proof.json'),
-   JSON.stringify({environment:'Linux Chromium 240x520 exact raw image pixel SHA-256; 372x806 real worker draw timings',
-     results,speed},null,2)+'\n');
+   JSON.stringify({environment:'Linux Chromium 240x520 exact raw pixels; 372x806 worker timings; 3024x6552 worker PNG SHA',
+     results,speed,native},null,2)+'\n');
  console.log('MATERIAL_ONEPASS_EXACT_PIXELS_PASS',JSON.stringify(
    results.map(x=>({name:x.name,direct:x.direct.identical,worker:x.worker.identical}))));
  console.log('MATERIAL_ONEPASS_WORKER_TIMES',JSON.stringify(speed));
+ console.log('MATERIAL_ONEPASS_NATIVE_IDENTICAL',JSON.stringify(native));
 }finally{
  await browser?.close();await new Promise(done=>server.close(done));
 }
