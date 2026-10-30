@@ -1,6 +1,9 @@
 > **30 October 2026:** Rotation remains an already accepted specialized implementation. Generalize its proven gesture/Undo/preview principles only where they fit vector-native editing; [touch-first vector interaction plan](TOUCH-FIRST-VECTOR-INTERACTION-PLAN-2026-10-30.md) now owns the broader control overhaul. Recipe schemas are pre-release and may evolve; a new UI field is never a reason to preserve the old shape indefinitely.
 
 # Touch-first rotation controls | ROYGBIV
+
+**30 October follow-up (PR #871, integration pending):** Exact-angle entry in the existing precision dialog now accepts a tiny, non-executing arithmetic language (`+=15`, `-=15°`, `*=2`, `/=2`, `45+15°`), preserving absolute negative values, canonical angle wrap/clamp and Undo. Invalid expressions retain a visible error state without saving anything. This is an angle-only extension, not permission to apply pixel or ambiguous percent arithmetic to vector geometry. [Real browser run #41021397879](https://github.com/gamesbyian/wallgen/actions/runs/41021397879) passed both primary portrait viewports, with actual text entry, invalid refusal, source recipe commits and focus recovery.
+
 Owner request: 2026-10-29. Current status: planned specification and incremental implementation; no physical Pixel acceptance yet.
 
 ## Design objective
