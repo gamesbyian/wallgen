@@ -11,7 +11,7 @@
 
 ## V2 NODE MODE GEOMETRY REFINEMENT · 30 October 2026
 
-**PR #874 source/CI pending:** correct the new Bézier command model so `Corner` collapses stored tangent controls, `Independent` permits separate unlinked cubic handles, and Aligned/Mirrored modes reconstruct valid controls after a previously collapsed corner. All work remains in normalized design geometry; the on-screen sampled Draw path editor is not yet migrated. Do not expose four true node modes in production until the recipe/renderer/Undo/UI cutover is complete.
+**MERGED PR #874 (commit `0c028bea5db643523359020b810d0e62b0edeef7`, [CI #41105722790](https://github.com/gamesbyian/wallgen/actions/runs/41105722790) PASS):** correct the new Bézier command model so `Corner` collapses stored tangent controls, `Independent` permits separate unlinked cubic handles, and Aligned/Mirrored modes reconstruct valid controls after a previously collapsed corner. All work remains in normalized design geometry; the on-screen sampled Draw path editor is not yet migrated. Do not expose four true node modes in production until the recipe/renderer/Undo/UI cutover is complete.
 
 ## V2 EXACT CURVE EDIT TRANSACTIONS · 30 October 2026
 
