@@ -723,7 +723,11 @@ function render(recipe,{scroll=false,bypassLocks=false,interactive=false,cause='
     const height=interactive?Math.max(340,Math.round(preview.height*scale)):preview.height;
     if(previewPainted&&startPreviewWorker().request(current,key,width,height,
       {quality:interactive?'interactive':'settled',
-        gesture:interactive?rotationTransaction?.gesture??null:null})){
+        gesture:interactive?rotationTransaction?.gesture??null:null,
+        // Only explicit Random/New variation may cancel an expensive
+        // obsolete worker paint. Ordinary drags, text and Undo never do.
+        intent:interactive&&['randomize_all','seed_reroll'].includes(cause)
+          ?'randomize':null})){
       // Keep the last complete wallpaper visible while the newest request
       // renders, then settle at the exact screen resolution after dragging.
       preview.dataset.renderPending='true';
