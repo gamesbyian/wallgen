@@ -351,3 +351,56 @@ export function splitVectorSegment(input,index,t,newId){
   }
   return normalizeVectorPath(path);
 }
+
+
+/** Delete one authored node as an explicit, reversible simplification.
+ * A generic pair of cubics cannot be merged into one exact cubic, so this
+ * operation intentionally rebuilds a bounded local bridge from the surviving
+ * endpoint tangents. The editor should preview it before committing.
+ * Node identities elsewhere and explicit open/closed topology are retained.
+ */
+export function deleteVectorNode(input,id){
+  let path=normalizeVectorPath(input);
+  if(!path||!idOK(id))return null;
+  const nodes=[path.start,...path.segments.map(seg=>seg.to)];
+  const i=nodes.findIndex(node=>node.id===id),n=nodes.length;
+  if(i<0||n<=2)return null;
+  const prev=nodes[(i-1+n)%n],removed=nodes[i],next=nodes[(i+1)%n];
+  const merge=(before,after,to)=>{
+    if(before.kind==='line'&&after.kind==='line')
+      return to?{kind:'line',to}:{kind:'line'};
+    const controlOut=before.kind==='cubic'?copy(before.controlOut):
+      lerp(prev.point,removed.point,1/3);
+    const controlIn=after.kind==='cubic'?copy(after.controlIn):
+      lerp(next.point,removed.point,1/3);
+    return {...(to?{to}:{}),kind:'cubic',controlOut,controlIn};
+  };
+  if(!path.closed&&i===0){
+    path.start={id:next.id,point:copy(next.point)};
+    path.segments.shift();
+  }else if(!path.closed&&i===n-1){
+    path.segments.pop();
+  }else if(path.closed&&i===0){
+    const combined=merge(path.closing,path.segments[0],null);
+    path.start={id:next.id,point:copy(next.point)};
+    path.segments.shift();path.closing=combined;
+  }else if(path.closed&&i===n-1){
+    path.closing=merge(path.segments[i-1],path.closing,null);
+    path.segments.pop();
+  }else{
+    const combined=merge(path.segments[i-1],path.segments[i],
+      {id:next.id,point:copy(next.point)});
+    path.segments.splice(i-1,2,combined);
+  }
+  delete path.nodeModes[id];
+  // A node whose adjacent segment changed must retain genuinely valid mode
+  // geometry. Reconcile constraints or revert only that node to Independent.
+  for(const survivor of new Set([prev.id,next.id])){
+    const mode=path.nodeModes[survivor];
+    if(!mode)continue;
+    const adjusted=setVectorNodeMode(path,survivor,mode);
+    if(adjusted)path=adjusted;
+    else delete path.nodeModes[survivor];
+  }
+  return normalizeVectorPath(path);
+}
