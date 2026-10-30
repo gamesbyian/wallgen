@@ -821,3 +821,27 @@ test('imported path keeps fit controls until Edit points -> Hide points commits 
     assert.deepEqual(f.recipe,f.snap);
   }finally{f.cleanup();}
 });
+
+test('lost pointer capture cancels an uncommitted legacy Draw point transaction',()=>{
+  const f=fixture({seed:'lost-capture-v2-unit',structure:'paths',geometry:'drawn',
+    customPath:path,viewZoom:1,viewPanX:0,viewPanY:0});
+  try{
+    f.nodes.drawPathToggle.click();
+    f.nodes.drawEditPoints.click();
+    selectFirstAnchor(f);
+    const p=f.recipe.customPath[0],x=p[0]*600,y=p[1]*1300;
+    pointer(f.nodes.drawOverlay,'pointerdown',{
+      pointerId:29,isPrimary:true,button:0,clientX:x,clientY:y});
+    pointer(f.nodes.drawOverlay,'pointermove',{
+      pointerId:29,isPrimary:true,clientX:x+36,clientY:y+20});
+    pointer(f.nodes.drawOverlay,'lostpointercapture',{
+      pointerId:29,isPrimary:true});
+    assert.equal(f.nodes.drawUndoPoint.disabled,true,
+      'losing capture must discard the provisional anchor Undo');
+    f.nodes.drawApply.click();
+    assert.equal(f.calls.length,1);
+    assert.deepEqual(f.calls[0][0],path,
+      'lost capture must not silently commit unfinished source geometry');
+    assert.deepEqual(f.recipe,f.snap);
+  }finally{f.cleanup();}
+});

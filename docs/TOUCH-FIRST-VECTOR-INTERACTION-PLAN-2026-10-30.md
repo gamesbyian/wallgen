@@ -18,7 +18,9 @@ The production v3 Bézier Draw editor is now real, merged in [#879](https://gith
 
 Physical Pixel touch, TalkBack, Android IME and human ergonomics remain independent unverified gates.
 
-**Pointer lifecycle closure (PR #885):** Scattered shapes, text move/rotate/scale, and historical sampled v2 Draw now use source-equivalent cancellation on lost pointer capture, and direct tools release captures when dismissed. Real browser #41134719492 passed the two viewport scattered/Draw and 412×892 text cancellation journeys, plus renderer/worker parity; final integration and quick CI remain pending. This hardens gestures without changing stored vector units or preview art.
+**MERGED pointer lifecycle closure (PR #885):** Scattered shapes, text move/rotate/scale, and historical sampled v2 Draw now use source-equivalent cancellation on lost pointer capture, and direct tools release captures when dismissed. Real browser #41134719492 passed the two viewport scattered/Draw and 412×892 text cancellation journeys, plus renderer/worker parity; final quick [#41134909772](https://github.com/gamesbyian/wallgen/actions/runs/41134909772) passed and the temporary Chromium workflow was retired before merge. This hardens gestures without changing stored vector units or preview art.
+
+**Historical test-harness recovery (#886/#887):** Old sampled Draw EventTarget tests predate the mounted v3 editor. A source-only fixture repair supplied the missing sibling editor constructor, document creation/append, axis control and mobile-window stubs. All 30 existing tests passed [#41135284522](https://github.com/gamesbyian/wallgen/actions/runs/41135284522); a lost-capture unit regression and permanent lean-gate inclusion are being accepted separately. Keep this separate from production geometry behavior.
 
 ## Evidence-backed interaction influences
 - **Adobe Illustrator for iPad**: draggable primary/secondary touch shortcut, temporary and locked modes, tool-specific axis, handle pairing, scale-from-centre and 45°/10° rotation changes. Official: https://helpx.adobe.com/in/illustrator/ipad/get-started/shortcuts-and-gestures/touch-shortcuts-gestures.html
