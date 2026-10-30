@@ -162,3 +162,18 @@ test('closed vector path hit resolves explicit closing segment',()=>{
   assert.equal(hit.segmentIndex,2);
   assert.ok(Math.abs(hit.t-.5)<.01);
 });
+
+test('dense sampled-path import preserves exact authored world-space line stations',()=>{
+  // Source Draw recipes already round dense authored paths to 5 decimals.
+  const dense=Array.from({length:64},(_,i)=>[
+    Number((.2+.58*i/63).toFixed(5)),
+    Number((.5+.24*Math.sin(i/63*Math.PI*3)).toFixed(5))]);
+  const p=vectorPathFromPolyline(dense);
+  const old=prepareDrawnPath(dense),next=prepareDrawnPath(p);
+  assert.ok(old&&next);
+  assert.equal(old.points.length,dense.length);
+  assert.deepEqual(next.points,old.points);
+  assert.deepEqual(next.lengths,old.lengths);
+  assert.equal(next.total,old.total);
+  assert.equal(next.closed,old.closed);
+});
