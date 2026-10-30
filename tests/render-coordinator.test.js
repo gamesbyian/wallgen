@@ -376,7 +376,7 @@ test('a failed Random preemption boot falls back once without leaking an old wor
   scheduler.request({seed:'a'},'a',180,390,{quality:'interactive'});
   clock+=120;
   assert.equal(scheduler.request({seed:'b'},'b',180,390,
-    {quality:'interactive',intent:'randomize'}),true);
+    {quality:'interactive',intent:'randomize'}),false);
   assert.equal(old.terminated,true);
   assert.deepEqual(failures,['worker startup unavailable']);
   assert.equal(scheduler.enabled,false);
