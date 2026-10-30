@@ -27,7 +27,7 @@ export function beginVectorEdit(state,{kind,id,side,segmentIndex,newId}={}){
      !['node','handle','mode','insert'].includes(kind))return state;
   if(kind==='insert'){
     if(!Number.isInteger(segmentIndex)||segmentIndex<0||
-       segmentIndex>=state.path.segments.length||!newId||
+       segmentIndex>=state.path.segments.length+(state.path.closed?1:0)||!newId||
        available(state.path,newId))return state;
   }else if(!available(state.path,id))return state;
   if(kind==='handle'&&!['in','out'].includes(side))return state;
