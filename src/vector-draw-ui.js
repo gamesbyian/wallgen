@@ -8,6 +8,8 @@ import {hitVectorEditTarget,vectorNodeTargets} from './vector-node-hit.js';
 import {beginAxisDrag,axisConstrainedPoint} from './axis-constrained-drag.js';
 import {drawnPathViewportOffset} from './draw-path-ui.js';
 import {VECTOR_PATH_MIN,VECTOR_PATH_MAX} from './vector-path-commands.js';
+import {placeOffsetGrip} from './path-offset-grip.js';
+import {snapVectorNode} from './vector-node-snap.js';
 
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const distance=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]);
@@ -33,6 +35,7 @@ export function installVectorDrawEditor({getRecipe,onApply,onNotice,
   const redo=create('button','Redo','vector-draw-action');
   const insert=create('button','Insert node','vector-draw-action');
   const axis=create('button','Lock axis','vector-draw-action');
+  const snap=create('button','Snap guides','vector-draw-action');
   const mode=create('select',undefined,'vector-draw-action');
   mode.setAttribute('aria-label','Selected Bézier node type');
   mode.title='Choose how the selected incoming and outgoing handles behave';
@@ -40,14 +43,17 @@ export function installVectorDrawEditor({getRecipe,onApply,onNotice,
     ['corner','Corner'],['aligned','Aligned'],['mirrored','Mirrored']]){
     const option=create('option',label);option.value=value;mode.append(option);
   }
-  for(const el of [controls,use,cancel,undo,redo,insert,axis])el.type='button';
+  for(const el of [controls,use,cancel,undo,redo,insert,axis,snap])el.type='button';
   controls.setAttribute('aria-expanded','false');
   insert.setAttribute('aria-pressed','false');
   axis.setAttribute('aria-pressed','false');
-  toolbar.append(controls,undo,redo,insert,axis,mode,use,cancel);
+  snap.setAttribute('aria-pressed','false');
+  snap.setAttribute('aria-label','Toggle vector alignment snapping');
+  snap.title='Magnetically align a dragged node to other node X/Y coordinates; independent from Lock axis';
+  toolbar.append(controls,undo,redo,insert,axis,mode,use,cancel,snap);
   document.body.append(toolbar);
   let active=false,session=null,sourceKey=null,drag=null,insertMode=false,
-    axisLock=false,applying=false,serial=0,overlapCycle=0;
+    axisLock=false,snapEnabled=false,applying=false,serial=0,overlapCycle=0;
   const sourceSignature=()=>JSON.stringify(getRecipe().vectorPath??null);
   function camera(){
     const recipe=getRecipe();
@@ -68,6 +74,31 @@ export function installVectorDrawEditor({getRecipe,onApply,onNotice,
     const [x,y]=project(p),rect=overlay.getBoundingClientRect();
     return [(x-rect.left)*overlay.width/Math.max(rect.width,1),
       (y-rect.top)*overlay.height/Math.max(rect.height,1)];
+  }
+  // A detached 44px finger grip is visible only where neither a real node,
+  // an editable tangent nor the phone toolbar can be accidentally captured.
+  // This derived hit target never appears in saved geometry.
+  function offsetGrip(){
+    if(!active||!session?.selectedId||drag||insertMode)return null;
+    const targets=vectorNodeTargets(session.draft);
+    const selected=targets?.nodes.find(n=>n.id===session.selectedId);
+    if(!selected)return null;
+    const rect=overlay.getBoundingClientRect(),scale=overlay.width/Math.max(rect.width,1);
+    const {project}=camera();
+    const canvas=p=>{
+      const [x,y]=project(p);
+      return [(x-rect.left)*scale,(y-rect.top)*scale];
+    };
+    const obstacles=[
+      ...targets.nodes.filter(n=>n.id!==selected.id).map(n=>canvas(n.point)),
+      ...targets.handles.map(h=>canvas(h.point))
+    ];
+    const menu=toolbar.getBoundingClientRect();
+    const blockedRects=[{x:(menu.left-rect.left)*scale,y:(menu.top-rect.top)*scale,
+      width:menu.width*scale,height:menu.height*scale}];
+    const grip=placeOffsetGrip({anchor:canvas(selected.point),
+      width:overlay.width,height:overlay.height,scale,obstacles,blockedRects});
+    return grip?{...grip,anchor:canvas(selected.point),scale}:null;
   }
   function paint(){
     if(!active)return;
@@ -107,6 +138,35 @@ export function installVectorDrawEditor({getRecipe,onApply,onNotice,
       ctx.fillStyle=sel?'#ffc45b':'#fff';ctx.fill();ctx.strokeStyle='#091e35';
       ctx.lineWidth=2*scale;ctx.stroke();
     }
+    // Guides are view-only. Underlying artwork coordinates are untouched.
+    if(drag?.snapLocks){
+      ctx.save();ctx.lineWidth=1.2*scale;ctx.strokeStyle='#ffe08c';
+      ctx.setLineDash([6*scale,5*scale]);
+      const line=drag.snapLocks;
+      if(line.x){
+        const x=p([line.x.value,0])[0];
+        ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,overlay.height);ctx.stroke();
+      }
+      if(line.y){
+        const y=p([0,line.y.value])[1];
+        ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(overlay.width,y);ctx.stroke();
+      }
+      ctx.restore();
+    }
+    const grip=offsetGrip();
+    if(grip){
+      ctx.save();
+      ctx.lineWidth=2*scale;ctx.strokeStyle='#67e6f7';
+      ctx.beginPath();ctx.moveTo(...grip.anchor);ctx.lineTo(grip.x,grip.y);ctx.stroke();
+      ctx.fillStyle='#0f4960';ctx.strokeStyle='#ffffff';ctx.lineWidth=2*scale;
+      ctx.beginPath();ctx.arc(grip.x,grip.y,12*scale,0,Math.PI*2);
+      ctx.fill();ctx.stroke();
+      ctx.beginPath();ctx.moveTo(grip.x-6*scale,grip.y);
+      ctx.lineTo(grip.x+6*scale,grip.y);
+      ctx.moveTo(grip.x,grip.y-6*scale);
+      ctx.lineTo(grip.x,grip.y+6*scale);ctx.stroke();
+      ctx.restore();
+    }
     ctx.restore();
   }
   function sync(){
@@ -123,13 +183,15 @@ export function installVectorDrawEditor({getRecipe,onApply,onNotice,
     mode.value=selected?path.nodeModes[id]||'independent':'independent';
     insert.setAttribute('aria-pressed',String(insertMode));
     axis.setAttribute('aria-pressed',String(axisLock));
+    snap.setAttribute('aria-pressed',String(snapEnabled));
+    snap.textContent=snapEnabled?'Snap on':'Snap guides';
     axis.textContent=axisLock?'Axis locked':'Lock axis';
     paint();
   }
   function close({focus=true}={}){
     if(!active)return;
     if(drag){session=cancelVectorEdit(session);drag=null;}
-    active=false;session=null;sourceKey=null;insertMode=false;axisLock=false;
+    active=false;session=null;sourceKey=null;insertMode=false;axisLock=false;snapEnabled=false;
     toolbar.hidden=true;overlay.hidden=true;
     button.setAttribute('aria-pressed','false');
     document.body.classList.remove('path-drawing');
@@ -145,13 +207,13 @@ export function installVectorDrawEditor({getRecipe,onApply,onNotice,
     }
     session=createVectorEditSession(recipe.vectorPath);
     if(!session)return false;
-    sourceKey=sourceSignature();active=true;drag=null;overlapCycle=0;
+    sourceKey=sourceSignature();active=true;drag=null;overlapCycle=0;snapEnabled=false;
     toolbar.hidden=false;
     toolbar.classList.add('is-collapsed');
     overlay.hidden=false;button.setAttribute('aria-pressed','true');
     document.body.classList.add('path-drawing');
     overlay.setAttribute('aria-label',
-      'True Bézier vector editor. Drag square nodes or selected tangent circles, or use arrow keys.');
+      'True Bézier vector editor. Drag square nodes, their detached cyan grip or selected tangent circles. Snap guides and axis constraints are separate controls.');
     sync();
     return true;
   }
@@ -173,6 +235,17 @@ export function installVectorDrawEditor({getRecipe,onApply,onNotice,
     if(!active||drag||event.button!==0||event.isPrimary===false)return;
     const at=[event.clientX,event.clientY];
     let hit=target(at);
+    // Preserve actual node and handle hit priority; only intercept empty
+    // space or a segment where a selected clear-space grip is painted.
+    if((!hit||hit.kind==='segment')&&session.selectedId){
+      const grip=offsetGrip();
+      if(grip){
+        const rect=overlay.getBoundingClientRect();
+        const x=(at[0]-rect.left)*grip.scale,y=(at[1]-rect.top)*grip.scale;
+        if(Math.hypot(x-grip.x,y-grip.y)<=grip.radius)
+          hit={kind:'node',id:session.selectedId,offsetGrip:true};
+      }
+    }
     if(!hit)return;
     event.preventDefault();event.stopImmediatePropagation();
     if(insertMode&&hit.kind==='segment'){
@@ -201,7 +274,8 @@ export function installVectorDrawEditor({getRecipe,onApply,onNotice,
     if(!session.tx){sync();return;}
     drag={pointerId:event.pointerId,kind:hit.kind,id:hit.id,side:hit.side,
       start:at,offset,
-      axis:beginAxisDrag(at,origin,axisLock),moved:false};
+      axis:beginAxisDrag(at,origin,axisLock),moved:false,
+      snapping:snapEnabled,snapLocks:{x:null,y:null}};
     try{overlay.setPointerCapture(event.pointerId);}catch{}
     sync();
   },true);
@@ -216,7 +290,15 @@ export function installVectorDrawEditor({getRecipe,onApply,onNotice,
       clamp(raw[1]+drag.offset[1],VECTOR_PATH_MIN,VECTOR_PATH_MAX)];
     const constrained=axisConstrainedPoint(drag.axis,at,candidate);
     drag.axis=constrained.state;
-    session=previewVectorEdit(session,{point:constrained.point});
+    let nextPoint=constrained.point;
+    if(drag.snapping&&drag.kind==='node'){
+      const candidates=vectorNodeTargets(session.path).nodes.filter(n=>n.id!==drag.id);
+      const snapped=snapVectorNode(nextPoint,candidates,{project:camera().project,
+        enabled:true,axis:drag.axis.enabled?drag.axis.axis:null,
+        previous:drag.snapLocks});
+      nextPoint=snapped.point;drag.snapLocks=snapped.locks;
+    }
+    session=previewVectorEdit(session,{point:nextPoint});
     sync();
   },true);
   const finish=(event,cancelled)=>{
@@ -241,6 +323,7 @@ export function installVectorDrawEditor({getRecipe,onApply,onNotice,
   redo.addEventListener('click',()=>{session=redoVectorEdit(session);sync();});
   insert.addEventListener('click',()=>{insertMode=!insertMode;sync();});
   axis.addEventListener('click',()=>{axisLock=!axisLock;sync();});
+  snap.addEventListener('click',()=>{snapEnabled=!snapEnabled;sync();});
   mode.addEventListener('change',()=>{
     if(!active||!session.selectedId)return;
     const start=beginVectorEdit(session,{kind:'mode',id:session.selectedId});
