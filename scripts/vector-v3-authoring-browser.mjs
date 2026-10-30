@@ -1,0 +1,146 @@
+#!/usr/bin/env node
+// Actual Chrome pointer journey for native v3 Bézier authoring (not a physical
+// Android/IME/TalkBack or human tactile usability certification).
+import assert from 'node:assert/strict';
+import {createServer} from 'node:http';
+import {readFile,writeFile,mkdir} from 'node:fs/promises';
+import {resolve,join,dirname,extname} from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {chromium} from 'playwright';
+import {normalizeRecipe,decodeRecipe,encodeRecipe} from '../src/model.js';
+const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
+const out=join(root,'artifacts/vector-v3-authoring');
+await mkdir(out,{recursive:true});
+const mime={'.html':'text/html','.js':'text/javascript','.css':'text/css',
+  '.svg':'image/svg+xml','.woff2':'font/woff2','.ttf':'font/ttf',
+  '.json':'application/json','.png':'image/png'};
+const server=createServer(async(req,res)=>{
+  try{
+    const abs=resolve(root,'.'+decodeURIComponent(new URL(req.url,'http://local').pathname));
+    if(abs!==root&&!abs.startsWith(root+'/')){res.writeHead(403).end();return;}
+    const file=abs===root?join(root,'index.html'):abs;
+    res.writeHead(200,{'Content-Type':mime[extname(file)]||'application/octet-stream',
+      'Cache-Control':'no-store'}).end(await readFile(file));
+  }catch{res.writeHead(404).end('Not Found');}
+});
+const recipe=normalizeRecipe({seed:'v3-direct-authoring',structure:'paths',geometry:'drawn',
+  construction:'stroke',spread:28,viewZoom:1,viewPanX:0,viewPanY:0,
+  vectorPath:{space:'normalized-design',closed:false,
+    start:{id:'start',point:[.13,.2]},segments:[
+      {kind:'cubic',to:{id:'bend',point:[.5,.46]},
+        controlOut:[.25,.3],controlIn:[.38,.42]},
+      {kind:'cubic',to:{id:'finish',point:[.85,.8]},
+        controlOut:[.65,.5],controlIn:[.75,.72]}],
+    nodeModes:{bend:'aligned'}}});
+const current=page=>decodeRecipe(new URL(page.url()).searchParams.get('r'));
+const summary=[],pageErrors=[];let browser;
+try{
+  await new Promise((yes,no)=>{server.once('error',no);server.listen(0,'127.0.0.1',yes);});
+  browser=await chromium.launch({headless:true});
+  for(const [width,height] of [[320,700],[412,892]]){
+    const page=await browser.newPage({viewport:{width,height},isMobile:true,
+      hasTouch:true,reducedMotion:'reduce',deviceScaleFactor:1});
+    page.setDefaultTimeout(18000);
+    page.on('pageerror',e=>pageErrors.push(String(e)));
+    try{
+      await page.goto('http://127.0.0.1:'+server.address().port+'/?r='+encodeRecipe(recipe),
+        {waitUntil:'domcontentloaded'});
+      await page.waitForFunction(()=>document.querySelector('#preview')?.dataset.renderPending==='false',
+        null,{timeout:85000});
+      const source=current(page);
+      assert.deepEqual(source,recipe);
+      const button=page.locator('#drawPathToggle');
+      await button.click();
+      assert.equal(await page.locator('#drawOverlay').isVisible(),true);
+      const toolbar=page.locator('.vector-draw-tools');
+      assert.equal(await toolbar.isVisible(),true);
+      const toggle=toolbar.locator('.vector-draw-toggle');
+      const touch=await toggle.evaluate(el=>{
+        const r=el.getBoundingClientRect();
+        return {width:r.width,height:r.height,
+          hit:document.elementFromPoint(r.left+r.width/2,r.top+r.height/2)===el};
+      });
+      assert.ok(touch.width>=44&&touch.height>=44&&touch.hit);
+      const anchor=await page.locator('#preview').evaluate((canvas)=>{
+        const b=canvas.getBoundingClientRect();
+        return {x:b.left+.5*b.width,y:b.top+.46*b.height};
+      });
+      assert.equal(await page.evaluate(a=>document.elementFromPoint(a.x,a.y)?.id,anchor),
+        'drawOverlay','true authored anchor needs unobstructed screen access');
+      // No-movement selection must never touch the source recipe.
+      await page.mouse.click(anchor.x,anchor.y);
+      assert.deepEqual(current(page),source);
+      await toggle.click();
+      const undo=toolbar.locator('button',{hasText:'Undo'});
+      assert.equal(await undo.isDisabled(),true);
+      const mode=toolbar.locator('select.vector-draw-action');
+      assert.equal(await mode.inputValue(),'aligned');
+      await mode.selectOption('mirrored');
+      assert.equal(await undo.isDisabled(),false);
+      await undo.click();
+      assert.equal(await mode.inputValue(),'aligned');
+      // Actual touch drag with controls collapsed, then local Undo.
+      await toggle.click();
+      await page.mouse.move(anchor.x,anchor.y);
+      await page.mouse.down();
+      await page.mouse.move(anchor.x+25,anchor.y+18,{steps:7});
+      await page.mouse.up();
+      await toggle.click();
+      assert.equal(await undo.isDisabled(),false);
+      await undo.click();
+      assert.equal(await undo.isDisabled(),true);
+      // Commit the no-op edit: source must be identical.
+      await toolbar.locator('button',{hasText:'Use path'}).click();
+      assert.deepEqual(current(page),source);
+      assert.equal(await page.locator('#drawOverlay').isHidden(),true);
+      // Reenter; this time commit actual node movement with a one-step
+      // source recipe change and still-exact handle/node IDs.
+      await button.click();
+      await page.mouse.move(anchor.x,anchor.y);
+      await page.mouse.down();
+      await page.mouse.move(anchor.x+30,anchor.y+10,{steps:7});
+      await page.mouse.up();
+      await toggle.click();
+      await page.screenshot({path:join(out,width+'x'+height+'-editing.png'),
+        animations:'disabled'});
+      await toolbar.locator('button',{hasText:'Use path'}).click();
+      await page.waitForFunction(original=>{
+        try{
+          const saved=JSON.parse(decodeURIComponent(new URL(location.href).searchParams.get('r')));
+          return saved.vectorPath?.segments?.[0]?.to?.point?.[0]!==original;
+        }catch{return false;}
+      },source.vectorPath.segments[0].to.point[0],{timeout:17000});
+      const applied=current(page);
+      assert.equal(applied.version,3);
+      assert.equal(applied.vectorPath.segments[0].to.id,'bend');
+      assert.ok(applied.vectorPath.segments[0].to.point[0]>
+        source.vectorPath.segments[0].to.point[0]);
+      assert.equal(applied.customPath.length,0);
+      assert.deepEqual([applied.viewZoom,applied.viewPanX,applied.viewPanY],
+        [1,0,0]);
+      // Cancel another provisional edit and prove that it never changes
+      // the saved URL/recipe or the current camera.
+      const updated=applied;
+      await button.click();
+      const changedAnchor=await page.locator('#preview').evaluate((canvas,point)=>{
+        const b=canvas.getBoundingClientRect();
+        return {x:b.left+point[0]*b.width,y:b.top+point[1]*b.height};
+      },updated.vectorPath.segments[0].to.point);
+      await page.mouse.move(changedAnchor.x,changedAnchor.y);
+      await page.mouse.down();
+      await page.mouse.move(changedAnchor.x-19,changedAnchor.y+24,{steps:5});
+      await page.mouse.up();
+      await toggle.click();
+      await toolbar.locator('button',{hasText:'Cancel'}).click();
+      assert.deepEqual(current(page),updated);
+      summary.push({viewport:[width,height],touchTarget:touch,
+        sourcePreserved:true,moveSaved:true,cancelRestored:true});
+    }finally{await page.close();}
+  }
+  assert.deepEqual(pageErrors,[]);
+  await writeFile(join(out,'report.json'),JSON.stringify(summary,null,2));
+  console.log('VECTOR_V3_AUTHORING_PASS '+JSON.stringify(summary));
+}finally{
+  await browser?.close();
+  await new Promise(resolve=>server.close(resolve));
+}
