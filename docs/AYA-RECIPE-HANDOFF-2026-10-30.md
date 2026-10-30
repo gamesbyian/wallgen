@@ -72,6 +72,12 @@ The reference is generated at handoff time from the running editor's code. Every
 - Recipe JSON strict-validation preview before the existing import transaction; preserve user-friendly legacy imports and do not silently rewrite unknown input.
 - Add visible agent recipes gallery/iteration only if users ask for it. Never add response tracking, inference hosting or automated return as a condition for AYA.
 
+## Accepted real Chromium proof · 30 October 2026
+
+[GitHub Actions run 41019185386](https://github.com/gamesbyian/wallgen/actions/runs/41019185386) executed the **real browser editor** and `scripts/aya-recipe-mobile-acceptance.mjs`, passing every assertion at 320×700, 412×892, 500×790 and 790×700. The AYA dialog's measured height was approximately 374, 374, 367 and 347 CSS pixels respectively. Every control was inside both its dialog and the viewport; `scrollHeight === clientHeight` in each case; Share, Copy, Save and Close each measured at least 44px high. The wallpaper preview height was unchanged in all four journeys (287, 404.1, 341.9, 287 CSS pixels respectively). No browser page errors were recorded. [Four captured screenshots](https://github.com/gamesbyian/wallgen/actions/runs/41019185386/artifacts/12961335374) were retained by Actions with short-lived evidence retention.
+
+This is genuine Chromium acceptance. It does not simulate a real soft keyboard, Android native Sharesheet recipients, TalkBack, physical Pixel 6 Pro feel or the quality of an independently generated JSON recipe. Those remain explicitly open device/recipient and content-quality gates.
+
 ## Testing and release truth
 
 `node --test tests/aya-recipe-handoff.test.js` checks source-derived guide content, opt-in privacy, and More wiring at source level. `npm test` includes this file. Source checks **do not prove** runtime viewport geometry, platform shares, end-user attachment reception or generated JSON artistic quality. Real Chromium and Android testing are separate evidence gates.
