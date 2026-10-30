@@ -43,7 +43,7 @@ test('mixed cubic and line joins remain finite and preserve intentional topology
     segments:[
       {kind:'cubic',to:{id:'b',point:[.5,.6]},
         controlOut:[.3,.34],controlIn:[.45,.6]},
-      {kind:'line',to:{id:'c',point:[.8,.8]}],
+      {kind:'line',to:{id:'c',point:[.8,.8]}},
       {kind:'cubic',to:{id:'d',point:[.9,.9]},
         controlOut:[.82,.9],controlIn:[.88,.92]}],
     nodeModes:{}});
