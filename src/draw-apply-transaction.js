@@ -16,6 +16,7 @@ export function appliedDrawnPathRecipe(input,points,anchors=[],corners=[],
   const {vectorPath:replacedVectorSource,...base}=recipe;
   return normalizeRecipe({
     ...base,
+    version:2,
     customPath:points,
     drawnAnchors:anchors,
     drawnCorners:corners,
