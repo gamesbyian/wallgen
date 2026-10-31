@@ -119,8 +119,8 @@ all 12 unlit PNG files were byte-identical. Lit 600×1300 bead NW imagery had
 a deliberately subtle change rather than a replaced silhouette. The lit bead
 wave rendered in ~200 ms on the new CI-host Chromium sample versus ~205 ms in
 the old archived sample; these are noisy single samples, **not** a speedup claim.
-Exact-head mandatory CI and retirement of the temporary proof workflow
-remain required before integrating PR #935. A direct Pixel 6 Pro performance
+The one-shot workflow is removed from the proposed merge, and an exact-head
+quick-suite run is required after the final cleanup before integration. A direct Pixel 6 Pro performance
 profile and human acceptance are still unavailable.
 
 ## Next S4 research: occlusion from actual source topology, not decorative offsets
