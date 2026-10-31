@@ -145,7 +145,7 @@ export function dragTextTransform(recipe,id,mode,start,current,screen={width:DES
   const a={x:(start.x-origin.x)*sx,y:(start.y-origin.y)*sy};
   const b={x:(current.x-origin.x)*sx,y:(current.y-origin.y)*sy};
   const initial=Math.hypot(a.x,a.y);
-  if(initial<10*Math.min(sx,sy))return recipe;
+  if(initial<10)return recipe; // Physical touch guard, independent of zoom or aspect.
   if(mode==='scale'){
     const ratio=Math.hypot(b.x,b.y)/initial;
     return transformTextOverlay(recipe,id,{size:item.size*ratio});
