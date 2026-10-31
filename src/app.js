@@ -1643,8 +1643,13 @@ function setScatteredDirectActive(next){
   moveOnCanvas.setAttribute('aria-pressed',String(scatteredDirectActive));
   moveOnCanvas.textContent=scatteredDirectActive?'Stop moving shapes':'Move shapes on canvas';
   scatteredDirectDone.hidden=!scatteredDirectActive;
-  if(scatteredDirectActive)syncScatteredDirectOutline();
-  else {scatteredDirectOutline.hidden=true;scatteredScaleGrip.hidden=true;}
+  if(scatteredDirectActive){
+    // The inspector may never have been opened. Populate real selection IDs
+    // before the very first canvas tap or an empty <select> silently resets
+    // a selected buried/topmost object to its default first option.
+    syncScatteredObjectEditor();
+    if(scatteredDirectActive)syncScatteredDirectOutline();
+  }else {scatteredDirectOutline.hidden=true;scatteredScaleGrip.hidden=true;}
 }
 function pixelFromPointer(event){
   const rect=preview.getBoundingClientRect();
