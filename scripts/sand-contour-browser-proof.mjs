@@ -50,6 +50,10 @@ try{
     ['05-beaded-wave','06-beaded-loop','07-beaded-compound','08-beaded-nested'][i],
     normalizeRecipe({...recipe,material:'sand-beaded'})
   ]));
+  scenes.push(...scenes.slice(0,4).map(([,recipe],i)=>[
+    ['11-filigree-wave','12-filigree-loop','13-filigree-compound','14-filigree-nested'][i],
+    normalizeRecipe({...recipe,material:'sand-filigree'})
+  ]));
   const results=[];
   for(const [name,recipe] of scenes){
     const data=await page.evaluate(async recipe=>{
