@@ -19,7 +19,7 @@ The term *sand mandala* here refers to material and deposition craftsmanship, no
 
 `material`, `material2` and `material3` accept `sand-mandala`; each of the three existing Material selectors exposes **Fine coloured sand · mandala**. Coverage selection is unchanged: use **Stripes only** to leave gaps and substrate pristine. Existing Scale sets grain gauge and packing pitch in the authored 600×1300 world; Strength controls the contribution to the existing material compositor. Seeds are derived from the usual immutable per-layer recipe seeds. No CSS-pixel sizing, random state per draw, image imports, externally sourced shader code or new top-level navigation.
 
-`src/sand-material.js` addresses each grain by its world-space staggered-cell indices. A bounded, jittered close-packing approximation deposits small elliptical shadows, reflected upper-left grain surfaces and occasional sharp glints. Grain coordinates and radii never depend on visible crop, frame number, camera zoom, output size or draw order. A sampled low-amplitude sand height field is allowed to influence opt-in existing ribbon displacement, but suppressed enough to avoid destroying sharp vector boundaries. Masks remain exact for compound holes and separated islands.
+`src/sand-material.js` addresses each grain by its world-space staggered-cell indices. A bounded, jittered close-packing approximation deposits multiple seeded, stratified matte mineral microflecks per authored-world lattice cell, with subtle shaded facets and rare small glints. Grain coordinates and radii never depend on visible crop, frame number, camera zoom, output size or draw order. A sampled low-amplitude sand height field is allowed to influence opt-in existing ribbon displacement, but suppressed enough to avoid destroying sharp vector boundaries. Masks remain exact for compound holes and separated islands.
 
 This is a **stylized 2.5D deposition surface**. It does **not yet** implement measured real granular physics, accurate collision packing, mineral spectral reflection, raised contour ridges, object-relative pigment flow, ornate fillings, or optical validation of traditional art. Do not label it physically accurate or claim visual acceptance without actual rendered images and device evidence.
 
@@ -53,7 +53,11 @@ The first slice contains new original code, borrowing only general public algori
 - [x] Shaded granular detail draws through the existing preview, worker and native headless renderer call graph
 - [x] Pure crop-stable, seed-stable sampled particle field with bounded logical pitch
 - [x] Regression tests added to mandatory quick-test command
-- [ ] GitHub CI PASS for branch and PR
-- [ ] Real Chromium side-by-side optically inspected sand/no-sand renders
-- [ ] Physical Pixel 6 Pro performance and accessibility verification
+- [x] GitHub quick CI PASS on material implementation: [#41238544285](https://github.com/gamesbyian/wallgen/actions/runs/41238544285)
+- [x] Actual Chromium PNG smoke PASS with source PNGs inspected at preview, full-res detail and region-worker sizes: [#41238544266](https://github.com/gamesbyian/wallgen/actions/runs/41238544266). The opaque glossy bead/polka-dot look was found and replaced by finer matte microflecks; optical acceptance is for this limited texture character only, not genuine physical sand realism.
+- [ ] Physical Pixel 6 Pro randomization latency, visual fidelity and accessibility verification
 - [ ] Raised contour rims and true path-aware ornamentation (S2/S3)
+
+### Genuine Chromium acceptance note, 31 October 2026
+
+Production `render-headless.mjs` generated 600×1300 sand and plain controls, 3024×6552 full-resolution sand art, and a 600×1300 sand regional artwork via the actual worker backend. Automated PNG dimensions, embedded canonical recipe, and genuine changed pixels passed. Visual examination of the artifacts found an overly regular glossy-bead pattern in the early iteration; the final iteration replaces those visible bead circles with stratified microflecks. The full-sized crop now reads more like speckled mineral/pigment than plastic beads, though it is still plainly a stylized texture: the fill is relatively flat and the edge relief/contour alignment awaits S2. **No device performance, raised-edge realism, exact native phone, or complex source-hole acceptance is claimed.**
