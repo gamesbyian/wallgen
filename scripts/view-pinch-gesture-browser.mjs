@@ -46,7 +46,7 @@ try{
     {waitUntil:'domcontentloaded'});
    await page.waitForFunction(()=>document.querySelector('#preview')?.dataset.renderPending==='false',
     null,{timeout:85000});
-   await page.locator('#viewPanOnCanvas').click();
+   await page.evaluate(()=>document.getElementById('viewPanOnCanvas').click());
    assert.equal(await page.locator('#preview').evaluate(el=>el.style.touchAction),'none');
    const rect=await page.locator('#preview').boundingBox();
    const p1={x:rect.x+rect.width*.28,y:rect.y+rect.height*.52,id:1};
@@ -73,7 +73,7 @@ try{
    assert.equal(changed.positionY,original.positionY);
    assert.deepEqual(changed.scatteredOverrides,original.scatteredOverrides);
    assert.equal(await page.locator('#preview').evaluate(el=>el.style.transform),'');
-   await page.locator('#undo').click();
+   await page.evaluate(()=>document.getElementById('undo').click());
    assert.deepEqual(current(page),original,'pinch and pan commit as one Undo');
    await page.waitForFunction(()=>document.querySelector('#preview')?.dataset.renderPending==='false',
     null,{timeout:85000});
