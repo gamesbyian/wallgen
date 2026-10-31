@@ -244,14 +244,16 @@ test('stale text pointer gestures cannot replay an older recipe across Undo or l
   ]},original,'title'),false);
   assert.equal(textGestureOwnsCurrentRecipe(null,original,'title'),false);
 });
-test('canvas pointerup and transform pointerup recheck canonical ownership before commit',async()=>{
+test('canvas and transform commits require current recipe and current selection',async()=>{
   const {readFileSync}=await import('node:fs');
   const src=readFileSync(new URL('../src/text-direct-ui.js',import.meta.url),'utf8');
-  assert.match(src,/if\(drag&&!textGestureOwnsCurrentRecipe\(drag\.original,recipe,drag\.id\)\)/);
-  assert.match(src,/if\(transformDrag&&!textGestureOwnsCurrentRecipe\(/);
-  assert.match(src,/finished\.moved&&textGestureOwnsCurrentRecipe\(/);
-  assert.match(src,/state\.next!==state\.original&&textGestureOwnsCurrentRecipe\(/);
-  assert.equal((src.match(/textGestureOwnsCurrentRecipe\(/g)||[]).length,4);
+  // Assertions follow the behavioural contract rather than historical
+  // whitespace or the old weaker function name.
+  assert.match(src,/drag&&!textGestureHasOwnership\(drag\.original,recipe,drag\.id,selectedId\(\)\)/);
+  assert.match(src,/transformDrag&&!textGestureHasOwnership\(/);
+  assert.match(src,/finished\.moved&&textGestureHasOwnership\(/);
+  assert.match(src,/state\.next!==state\.original&&textGestureHasOwnership\(/);
+  assert.match(src,/discardCapturedGestures\(\)/);
 });
 
 test('touch scaling follows displayed CSS geometry when canvas and artwork aspect ratios differ',()=>{
