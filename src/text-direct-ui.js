@@ -240,7 +240,9 @@ export function installTextCanvasMover({
       }else{
         const point=designPointFromPointer(event,canvas);
         if(!point)return;
-        state.next=dragTextTransform(state.original,state.id,mode,state.start,point);
+        const rect=canvas.getBoundingClientRect();
+        state.next=dragTextTransform(state.original,state.id,mode,state.start,point,
+          {width:rect.width,height:rect.height});
       }
       redraw();
     });

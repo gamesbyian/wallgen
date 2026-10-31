@@ -130,17 +130,22 @@ export function transformTextOverlay(recipe,id,{size,rotation}={}){
   });
   return changed?{...recipe,textOverlays:items}:recipe;
 }
-export function dragTextTransform(recipe,id,mode,start,current){
+export function dragTextTransform(recipe,id,mode,start,current,screen={width:DESIGN_WIDTH,height:DESIGN_HEIGHT}){
   if(!['rotate','scale'].includes(mode)||!start||!current||
       ![start.x,start.y,current.x,current.y].every(Number.isFinite))
     return recipe;
   const item=(recipe.textOverlays||[]).find(x=>x.id===id);
   if(!item||item.locked)return recipe;
+  // Distances must use the displayed canvas metric. The authored wallpaper
+  // may be scaled or letterboxed; those dimensions are not touch units.
+  if(!screen||!Number.isFinite(screen.width)||!Number.isFinite(screen.height)||
+      screen.width<=0||screen.height<=0)return recipe;
   const origin={x:DESIGN_WIDTH*item.x/100,y:DESIGN_HEIGHT*item.y/100};
-  const a={x:start.x-origin.x,y:start.y-origin.y};
-  const b={x:current.x-origin.x,y:current.y-origin.y};
+  const sx=screen.width/DESIGN_WIDTH,sy=screen.height/DESIGN_HEIGHT;
+  const a={x:(start.x-origin.x)*sx,y:(start.y-origin.y)*sy};
+  const b={x:(current.x-origin.x)*sx,y:(current.y-origin.y)*sy};
   const initial=Math.hypot(a.x,a.y);
-  if(initial<10)return recipe;
+  if(initial<10)return recipe; // Physical touch guard, independent of zoom or aspect.
   if(mode==='scale'){
     const ratio=Math.hypot(b.x,b.y)/initial;
     return transformTextOverlay(recipe,id,{size:item.size*ratio});
