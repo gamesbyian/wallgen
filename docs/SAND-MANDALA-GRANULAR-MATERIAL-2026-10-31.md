@@ -123,6 +123,35 @@ The one-shot workflow is removed from the proposed merge, and an exact-head
 quick-suite run is required after the final cleanup before integration. A direct Pixel 6 Pro performance
 profile and human acceptance are still unavailable.
 
+## S4.2 bounded lighting for seven nested vector outlines (PR #936)
+
+The six-stripe/sand layer lighting introduced in S4 still left a
+geometry-specific inconsistency: imported seven-line metric contours painted
+a fixed white centreline, even under golden/moonlight moods and reversed light.
+A thin contour cannot host the large contact ridge used for filled ribbons,
+and translating a colour stroke itself would violate the exact source width.
+
+The original metric contour is copied to a temporary Path2D *only when
+lighting is active*, leaving its canonical source and original coloured
+stroke untouched. A lamp-facing narrow mood-tinted highlight and a
+counter-facing contact shade are then stroked at a strictly bounded shift.
+For any source width `W>0`, both accent strands have
+`w=min(.24W,.75)` and `offset=.34(W-w)`, so
+`offset+w/2 <= W/2` for all positive W. Given round caps and joins,
+the entire shifted accent is a geometric subset of the original source
+stroke, including tips and high curvature. No outside pigment or apparent
+widening may occupy intentional gaps between nested outlines. All dimensions
+are authored-world geometry, not device CSS pixels. The old unlit centreline
+paint path is left byte-for-byte intact.
+
+**Acceptance for PR #936:** pure source-width/lighting-direction/palette
+tests, original source-art browser proof extended to golden NW and SE nested
+contours, and final required quick CI after removing the temporary proof
+workflow. [Chromium run #41254599500](https://github.com/gamesbyian/wallgen/actions/runs/41254599500)
+is the independently triggered visual acceptance run. Its result must be
+verified before merging; a run URL by itself is not a success claim.
+Real Pixel 6 Pro optical and thermal performance remains unverified.
+
 ## Next S4 research: occlusion from actual source topology, not decorative offsets
 
 **Target result:** sand piles and beads should carry their own believable height, changing the cast-shadow length and illuminated-face width consistently as the global light moves. The merged S4 directional marks establish shared reference frames but do not yet establish measured height, ray visibility or pile contact.
