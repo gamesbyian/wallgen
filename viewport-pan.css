@@ -39,3 +39,31 @@ html[data-theme="cream"] .viewport-positioner .positioner-description>span{color
     min-height:36px;
   }
 }
+
+/* An explicitly armed one-finger camera gesture, separate from artistic moves.
+   Temporary CSS canvas translation exists only while the pointer is held. */
+.viewport-positioner #viewPanOnCanvas{
+  box-sizing:border-box;min-width:0;width:100%;min-height:44px;
+  border:1px solid #79b9df;border-radius:9px;background:var(--surface);
+  color:inherit;font-size:12px;font-weight:700;padding:8px 10px;
+  cursor:pointer;
+}
+.viewport-positioner #viewPanOnCanvas[aria-pressed="true"]{
+  background:#28577c;color:#fff;border-color:#9cd4ff;
+}
+.viewport-positioner #viewPanOnCanvas:focus-visible{
+  outline:2px solid #9cd4ff;outline-offset:2px;
+}
+body.view-pan-canvas-active #preview{
+  touch-action:none;cursor:grab;will-change:transform;
+}
+body.view-pan-canvas-active #preview:active{cursor:grabbing}
+#viewPanDone{
+  position:absolute;z-index:13;top:10px;right:10px;
+  min-width:112px;min-height:44px;padding:8px 12px;
+  border-radius:11px;border:2px solid #bde6ff;
+  background:#183d58;color:#fff;font-size:12px;font-weight:750;
+  box-shadow:0 3px 15px #0008;
+}
+#viewPanDone[hidden]{display:none!important}
+#viewPanDone:focus-visible{outline:2px solid #fff;outline-offset:3px}

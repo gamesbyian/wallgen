@@ -30,6 +30,7 @@ import {stripeContourDistortionAvailability} from './editor-effect-availability.
 import {normalizeScatteredOverrides,effectiveScatteredLayerOrder,moveScatteredLayer} from './scattered-object-edits.js';
 import {embroideryObjectChoices,resolveEmbroideryObjectChoice,reconcileEmbroideryObjectOptions} from './embroidery-target-choices.js';
 import {scatteredPixelToWorld,scatteredWorldToPixel,pickScatteredRegion,scatteredMoveOverride,clamp as clampScattered} from './scattered-drag.js';
+import {installViewPanGesture} from './view-pan-ui.js';
 import {beginScatteredScale,advanceScatteredScale} from './scattered-scale-gesture.js';
 import {cloneGeometrySnapshot} from './geometry-asset.js';
 import {parseStoredFavorites} from './favorites-store.js';
@@ -969,6 +970,13 @@ for(const button of document.querySelectorAll('[data-view-pan]')){
     changeRecipe(recipe);
   });
 }
+// Camera framing owns its own explicit gesture mode. The original
+// directional controls stay available for 5%-step precision and accessibility.
+installViewPanGesture({
+  getRecipe:()=>current,changeRecipe,onNotice:showNotice,
+  preview,stage:document.querySelector('.studio-stage'),
+  host:document.querySelector('.viewport-positioner')
+});
 const NUDGE_STEP=1;
 for(const button of document.querySelectorAll('[data-nudge]')){
   button.addEventListener('click',()=>{
