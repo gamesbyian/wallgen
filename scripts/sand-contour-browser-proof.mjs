@@ -61,7 +61,9 @@ try{
       const {resolveScene}=await import('/src/model.js');
       const canvas=document.createElement('canvas');
       canvas.width=600;canvas.height=1300;
+      const started=performance.now();
       drawWallpaper(canvas,recipe);
+      const renderMs=performance.now()-started;
       const ctx=canvas.getContext('2d');
       const source=resolveScene(recipe).objects?.[0];
       let hole=null,island=null;
@@ -76,7 +78,7 @@ try{
         hole={point:[hx,hy],rgba:[...ctx.getImageData(hx,hy,1,1).data]};
         island={point:[ix,iy],rgba:[...ctx.getImageData(ix,iy,1,1).data]};
       }
-      return {png:canvas.toDataURL('image/png'),hole,island};
+      return {png:canvas.toDataURL('image/png'),hole,island,renderMs};
     },recipe);
     const png=Buffer.from(data.png.split(',')[1],'base64');
     assert.equal(png.toString('hex',0,8),'89504e470d0a1a0a');
@@ -89,8 +91,13 @@ try{
       assert.ok(data.island.rgba[0]+data.island.rgba[1]+data.island.rgba[2]>35,
         'detached island must remain real coloured geometry');
     }
-    results.push({name,bytes:png.length,hole:data.hole,island:data.island});
+    results.push({name,bytes:png.length,renderMs:data.renderMs,
+      hole:data.hole,island:data.island});
   }
+  await writeFile(join(out,'render-timings.json'),JSON.stringify({
+    environment:'GitHub Actions headless Chromium, not physical Pixel 6 Pro',
+    timings:results.map(({name,renderMs})=>({name,renderMs}))
+  },null,2));
   console.log('SAND_CONTOUR_CHROMIUM_PASS',JSON.stringify(results));
   await page.close();
 }finally{await browser.close();await new Promise(r=>server.close(r));}
