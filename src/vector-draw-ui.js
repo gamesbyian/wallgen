@@ -11,6 +11,7 @@ import {VECTOR_PATH_MIN,VECTOR_PATH_MAX} from './vector-path-commands.js';
 import {placeOffsetGrip} from './path-offset-grip.js';
 import {snapVectorNode} from './vector-node-snap.js';
 import {vectorKeyboardCommand} from './vector-keyboard-precision.js';
+import {continuesVectorTapCycle,vectorTapCycle} from './vector-overlap-cycle.js';
 
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const distance=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]);
@@ -55,7 +56,7 @@ export function installVectorDrawEditor({getRecipe,onApply,onNotice,
   toolbar.append(controls,undo,redo,insert,axis,mode,use,cancel,snap);
   document.body.append(toolbar);
   let active=false,session=null,sourceKey=null,drag=null,insertMode=false,
-    axisLock=false,snapEnabled=false,applying=false,serial=0,overlapCycle=0;
+    axisLock=false,snapEnabled=false,applying=false,serial=0,overlapTap=null;
   const sourceSignature=()=>JSON.stringify(getRecipe().vectorPath??null);
   function camera(){
     const recipe=getRecipe();
@@ -194,6 +195,7 @@ export function installVectorDrawEditor({getRecipe,onApply,onNotice,
     if(!active)return;
     if(drag){session=cancelVectorEdit(session);drag=null;}
     active=false;session=null;sourceKey=null;insertMode=false;axisLock=false;snapEnabled=false;
+    overlapTap=null;
     toolbar.hidden=true;overlay.hidden=true;
     button.setAttribute('aria-pressed','false');
     document.body.classList.remove('path-drawing');
@@ -209,7 +211,7 @@ export function installVectorDrawEditor({getRecipe,onApply,onNotice,
     }
     session=createVectorEditSession(recipe.vectorPath);
     if(!session)return false;
-    sourceKey=sourceSignature();active=true;drag=null;overlapCycle=0;snapEnabled=false;
+    sourceKey=sourceSignature();active=true;drag=null;overlapTap=null;snapEnabled=false;
     toolbar.hidden=false;
     toolbar.classList.add('is-collapsed');
     overlay.hidden=false;button.setAttribute('aria-pressed','true');
@@ -259,12 +261,13 @@ export function installVectorDrawEditor({getRecipe,onApply,onNotice,
     }
     if(hit.kind==='segment')return;
     if(hit.kind==='node'){
-      const overlaps=hit.overlaps||[];
-      // Repeated taps at a crowded position cycle authored identities.
-      if(overlaps.length>1&&session.selectedId===hit.id)overlapCycle++;
-      else overlapCycle=0;
-      if(overlapCycle&&overlaps.length)hit=target(at,overlapCycle);
-    }else overlapCycle=0;
+      const ids=hit.overlaps||[];
+      // Keep the previously selected buried node available for dragging.
+      // A stationary tap cycles only on release, never on pointerdown.
+      if(continuesVectorTapCycle(overlapTap,ids,at,performance.now()))
+        hit={...hit,id:overlapTap.selectedId};
+      else overlapTap=null;
+    }else overlapTap=null;
     if(hit.kind==='node')session=selectVectorEditNode(session,hit.id);
     const origin=hit.kind==='node'?nodePoint(hit.id):
       handlePoint(hit.id,hit.side);
@@ -275,7 +278,7 @@ export function installVectorDrawEditor({getRecipe,onApply,onNotice,
       id:hit.id,side:hit.side});
     if(!session.tx){sync();return;}
     drag={pointerId:event.pointerId,kind:hit.kind,id:hit.id,side:hit.side,
-      start:at,offset,
+      start:at,offset,overlaps:hit.overlaps||null,
       axis:beginAxisDrag(at,origin,axisLock),moved:false,
       snapping:snapEnabled,snapLocks:{x:null,y:null}};
     try{overlay.setPointerCapture(event.pointerId);}catch{}
@@ -286,7 +289,7 @@ export function installVectorDrawEditor({getRecipe,onApply,onNotice,
     event.preventDefault();event.stopImmediatePropagation();
     const at=[event.clientX,event.clientY],m=distance(at,drag.start);
     if(m<4&&!drag.moved)return;
-    drag.moved=true;
+    drag.moved=true;overlapTap=null;
     const {unproject}=camera(),raw=unproject(at),candidate=[
       clamp(raw[0]+drag.offset[0],VECTOR_PATH_MIN,VECTOR_PATH_MAX),
       clamp(raw[1]+drag.offset[1],VECTOR_PATH_MIN,VECTOR_PATH_MAX)];
@@ -309,13 +312,21 @@ export function installVectorDrawEditor({getRecipe,onApply,onNotice,
     const current=drag;drag=null;
     try{overlay.releasePointerCapture(current.pointerId);}catch{}
     session=cancelled?cancelVectorEdit(session):commitVectorEdit(session);
+    if(!cancelled&&!current.moved&&current.kind==='node'&&
+       current.overlaps?.length>1){
+      const choice=vectorTapCycle(overlapTap,current.overlaps,
+        current.start,performance.now());
+      overlapTap=choice.state;
+      if(choice.selectedId)
+        session=selectVectorEditNode(session,choice.selectedId);
+    }else overlapTap=null;
     sync();
   };
   overlay.addEventListener('pointerup',e=>finish(e,false),true);
   overlay.addEventListener('pointercancel',e=>finish(e,true),true);
   overlay.addEventListener('lostpointercapture',e=>{
     if(active&&drag&&drag.pointerId===e.pointerId){
-      session=cancelVectorEdit(session);drag=null;sync();
+      session=cancelVectorEdit(session);drag=null;overlapTap=null;sync();
     }
   });
   controls.addEventListener('click',()=>{
@@ -381,7 +392,7 @@ export function installVectorDrawEditor({getRecipe,onApply,onNotice,
     event.preventDefault();
     if(command.kind==='select'){
       session=selectVectorEditNode(session,command.id);
-      overlapCycle=0;sync();return;
+      overlapTap=null;sync();return;
     }
     const tx=beginVectorEdit(session,{kind:command.kind,id:command.id,
       side:command.side});
