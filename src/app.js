@@ -31,7 +31,9 @@ import {normalizeScatteredOverrides,effectiveScatteredLayerOrder,moveScatteredLa
 import {embroideryObjectChoices,resolveEmbroideryObjectChoice,reconcileEmbroideryObjectOptions} from './embroidery-target-choices.js';
 import {scatteredPixelToWorld,scatteredWorldToPixel,pickScatteredRegion,hitScatteredRegions,scatteredMoveOverride,clamp as clampScattered} from './scattered-drag.js';
 import {installViewPanGesture} from './view-pan-ui.js';
-import {beginScatteredScale,advanceScatteredScale} from './scattered-scale-gesture.js';
+import {beginScatteredScale,advanceScatteredScale,anchoredScatteredCircle,
+  beginScatteredAnchoredScale,advanceScatteredAnchoredScale}
+  from './scattered-scale-gesture.js';
 import {snapScatteredCentre} from './scattered-centre-snap.js';
 import {scatteredSelectionBounds} from './scattered-selection-bounds.js';
 import {beginAxisDrag,axisConstrainedPoint} from './axis-constrained-drag.js';
@@ -1610,6 +1612,7 @@ document.querySelector('.editor-tool-card[data-editor-tool="scattered-edges"]')
 let scatteredDirectActive=false,scatteredDirectDrag=null,scatteredScaleDrag=null;
 let scatteredAxisLock=false; // UI gesture modifier only; never saved in recipes.
 let scatteredSnapEnabled=false; // Optional centre guides, never a recipe property.
+let scatteredEdgeScale=false; // Temporary transform pivot, no new recipe field.
 let scatteredTapCycle=null; // Only source-aware editor selection, never recipe data.
 const scatteredDirectOutline=document.createElement('div');
 scatteredDirectOutline.id='scatteredDirectOutline';
@@ -1660,6 +1663,24 @@ scatteredSnapButton.addEventListener('click',()=>{
   scatteredSnapButton.setAttribute('aria-pressed',String(scatteredSnapEnabled));
   scatteredSnapButton.textContent=scatteredSnapEnabled?'Snapping on':'Snap centres';
 });
+// Optional inverse-side pivot for the SAME proportional region scale writer.
+// Fixed anchor comes from the real imported ring bounds, not the radius
+// envelope, a raster hit map or any CSS values persisted in the recipe.
+const scatteredPivotButton=document.createElement('button');
+scatteredPivotButton.type='button';
+scatteredPivotButton.id='scatteredDirectPivot';
+scatteredPivotButton.textContent='Scale from edge';
+scatteredPivotButton.hidden=true;
+scatteredPivotButton.setAttribute('aria-pressed','false');
+scatteredPivotButton.setAttribute('aria-label',
+  'Keep the opposite shape edge fixed while scaling');
+scatteredPivotButton.title='On: resizing keeps the opposite actual shape boundary fixed. Off: scale about the shape centre. This setting affects only the active editor gesture.';
+document.querySelector('.studio-stage')?.append(scatteredPivotButton);
+scatteredPivotButton.addEventListener('click',()=>{
+  scatteredEdgeScale=!scatteredEdgeScale;
+  scatteredPivotButton.setAttribute('aria-pressed',String(scatteredEdgeScale));
+  scatteredPivotButton.textContent=scatteredEdgeScale?'Edge fixed':'Scale from edge';
+});
 function setScatteredDirectActive(next){
   // Closing a drag tool is a cancellation: release capture but never save a
   // provisional circle. A delayed lostpointercapture then sees no active drag.
@@ -1678,6 +1699,7 @@ function setScatteredDirectActive(next){
   scatteredDirectDone.hidden=!scatteredDirectActive;
   scatteredAxisButton.hidden=!scatteredDirectActive;
   scatteredSnapButton.hidden=!scatteredDirectActive;
+  scatteredPivotButton.hidden=!scatteredDirectActive;
   if(scatteredDirectActive){
     // The inspector may never have been opened. Populate real selection IDs
     // before the very first canvas tap or an empty <select> silently resets
@@ -1737,6 +1759,27 @@ function syncScatteredDirectOutline(temporaryCircle=null){
   scatteredScaleGrip.hidden=surfaceRect.width<44||surfaceRect.height<44;
 
 }
+// Choose which true vector boundary lies opposite the detached CSS grip.
+ // Anchoring the bounds (rather than the editCircle envelope) matters for
+ // elongated, holed or disconnected imported silhouettes.
+function scatteredOppositeEdgeAnchor(object,circle){
+  const bounds=scatteredSelectionBounds(object,circle);
+  if(!bounds)return null;
+  const rect=preview.getBoundingClientRect();
+  const grip=scatteredScaleGrip.getBoundingClientRect();
+  if(!rect.width||!grip.width)return null;
+  const centre=(bounds.minX+bounds.maxX)/2;
+  const middle=scatteredWorldToPixel(current,preview.width,preview.height,
+    centre,(bounds.minY+bounds.maxY)/2);
+  const middleX=rect.left+middle.x*rect.width/preview.width;
+  const gripX=grip.left+grip.width/2;
+  const anchor={x:gripX>=middleX?bounds.minX:bounds.maxX,
+    y:(bounds.minY+bounds.maxY)/2};
+  const source=scatteredWorldToPixel(current,preview.width,preview.height,
+    anchor.x,anchor.y);
+  const anchorX=rect.left+source.x*rect.width/preview.width;
+  return {anchor,gripX,anchorX};
+}
 moveOnCanvas.addEventListener('click',()=>{
   // The same wallpaper cannot be in both direct-manipulation modes.
   if(!scatteredDirectActive)textTool.endCanvasMove();
@@ -1757,22 +1800,38 @@ scatteredScaleGrip.addEventListener('pointerdown',event=>{
   const rect=preview.getBoundingClientRect();
   const centre={x:rect.left+projected.x*rect.width/preview.width,
     y:rect.top+projected.y*rect.height/preview.height};
-  const gesture=beginScatteredScale({circle,centre,
-    point:{x:event.clientX,y:event.clientY}});
+  const point={x:event.clientX,y:event.clientY};
+  const pinned=scatteredEdgeScale?scatteredOppositeEdgeAnchor(object,circle):null;
+  const anchored=pinned?beginScatteredAnchoredScale({circle,point,...pinned}):null;
+  const gesture=anchored||beginScatteredScale({circle,centre,point});
   if(!gesture)return;
+  if(scatteredEdgeScale&&!anchored)
+    orbitNote.textContent='The opposite edge cannot be reached reliably; scaling from centre.';
   event.preventDefault();event.stopPropagation();
   scatteredScaleDrag={pointerId:event.pointerId,index,circle:{...circle},
-    original:current,gesture,current:{...circle}};
+    original:current,gesture,edge:!!anchored,current:{...circle}};
   try{scatteredScaleGrip.setPointerCapture(event.pointerId);}catch{}
 });
 scatteredScaleGrip.addEventListener('pointermove',event=>{
   const drag=scatteredScaleDrag;
   if(!drag||drag.pointerId!==event.pointerId)return;
   event.preventDefault();event.stopPropagation();
-  drag.gesture=advanceScatteredScale(drag.gesture,
-    {x:event.clientX,y:event.clientY});
-  drag.current={...drag.circle,r:drag.gesture.radius};
+  const point={x:event.clientX,y:event.clientY};
+  drag.gesture=drag.edge?
+    advanceScatteredAnchoredScale(drag.gesture,point):
+    advanceScatteredScale(drag.gesture,point);
+  drag.current=drag.edge?
+    {...drag.circle,...drag.gesture.circle}:
+    {...drag.circle,r:drag.gesture.radius};
   syncScatteredDirectOutline(drag.current);
+  // Follow the actual finger with the disposable 44px grip throughout
+  // resizing. A detached grip otherwise trails the moving silhouette and
+  // can stop receiving pointermove/up when a browser releases capture after
+  // a control-layout update. No pointer/CSS position enters saved art.
+  const surface=scatteredScaleGrip.parentElement.getBoundingClientRect();
+  const size=scatteredScaleGrip.getBoundingClientRect();
+  scatteredScaleGrip.style.left=(event.clientX-surface.left-size.width/2)+'px';
+  scatteredScaleGrip.style.top=(event.clientY-surface.top-size.height/2)+'px';
 });
 scatteredScaleGrip.addEventListener('pointerup',event=>{
   const drag=scatteredScaleDrag;
@@ -1783,7 +1842,7 @@ scatteredScaleGrip.addEventListener('pointerup',event=>{
   if(scatteredDirectActive&&drag.original===current&&
      drag.index===Number(orbitPicker.value)&&drag.gesture.moved){
     const overrides=scatteredMoveOverride(drag.original,drag.index,
-      drag.current,{x:drag.circle.cx,y:drag.circle.cy});
+      drag.current,{x:drag.current.cx,y:drag.current.cy});
     changeRecipe({...drag.original,scatteredOverrides:overrides});
   }
   syncScatteredDirectOutline();
@@ -1802,8 +1861,13 @@ function stepScatteredScale(direction,multiplier=1){
   if(!circle)return;
   const radius=clampScattered(circle.r*(1+direction*.05*multiplier),6,720);
   if(radius===circle.r)return;
-  const overrides=scatteredMoveOverride(current,index,{...circle,r:radius},
-    {x:circle.cx,y:circle.cy});
+  const objectPivot=scatteredEdgeScale?scatteredOppositeEdgeAnchor(object,circle):null;
+  const updated=objectPivot?
+    anchoredScatteredCircle(circle,objectPivot.anchor,radius):
+    {...circle,r:radius};
+  if(!updated)return;
+  const overrides=scatteredMoveOverride(current,index,updated,
+    {x:updated.cx,y:updated.cy});
   changeRecipe({...current,scatteredOverrides:overrides});
 }
 scatteredScaleGrip.addEventListener('keydown',event=>{

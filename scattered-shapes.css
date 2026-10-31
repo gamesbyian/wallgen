@@ -64,6 +64,13 @@ body.scattered-direct-active #preview:active{cursor:grabbing}
   font-size:12px;font-weight:750;box-shadow:0 3px 15px #0008}
 #scatteredDirectSnap[aria-pressed="true"]{background:#844267;border-color:#fff}
 #scatteredDirectSnap[hidden]{display:none!important}
+#scatteredDirectPivot{position:absolute;z-index:12;top:110px;left:10px;
+  min-width:108px;min-height:44px;padding:8px 11px;border-radius:11px;
+  border:2px solid #ffcfef;background:#301b35;color:#fff;
+  font-size:12px;font-weight:750;box-shadow:0 3px 15px #0008}
+#scatteredDirectPivot[aria-pressed="true"]{background:#844267;border-color:#fff}
+#scatteredDirectPivot[hidden]{display:none!important}
+#scatteredDirectPivot:focus-visible{outline:2px solid #fff;outline-offset:3px}
 #scatteredDirectSnap:focus-visible{outline:2px solid #fff;outline-offset:3px}
 #scatteredDirectAxis:focus-visible{outline:2px solid #fff;outline-offset:3px}
 #scatteredDirectDone:focus-visible{outline:2px solid #fff;outline-offset:3px}
