@@ -161,5 +161,7 @@ try{
   try{ws?.close()}catch{}
   proc.kill('SIGTERM');
   await new Promise(resolve=>server.close(resolve));
-  rmSync(profile,{recursive:true,force:true});
+  // Chromium can write a final profile journal after SIGTERM. Retry only
+  // transient filesystem cleanup; never mask a browser assertion failure.
+  rmSync(profile,{recursive:true,force:true,maxRetries:20,retryDelay:100});
 }
