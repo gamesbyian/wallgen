@@ -43,3 +43,17 @@ export function sandRibbonLighting(scene){
     scene?.mirrorHorizontal?-1:1,
     scene?.mirrorVertical?-1:1);
 }
+
+/** A unit hemispherical cap normal under the shared world-direction lamp.
+ * nx/ny are the slope's horizontal components; the implicit positive z
+ * component makes this a raised, opaque mineral surface, not a flat stamp.
+ * One fixed elevation gives stable highlights without inventing a second
+ * independent UI light or requiring a per-pixel height/ray buffer.
+ * The response is geometry only: intensity/mood are applied by the painter. */
+export function sandCapDiffuse(lighting,nx,ny){
+  if(!lighting||![lighting.x,lighting.y,nx,ny].every(Number.isFinite))return 0;
+  const r2=nx*nx+ny*ny;
+  const z=Math.sqrt(Math.max(0,1-Math.min(1,r2)));
+  const elevation=.68,lateral=Math.sqrt(1-elevation*elevation);
+  return clamp(nx*lighting.x*lateral+ny*lighting.y*lateral+z*elevation);
+}
