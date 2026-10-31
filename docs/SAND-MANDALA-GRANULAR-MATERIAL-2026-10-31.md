@@ -1,6 +1,6 @@
 # Granular materials and sand-mandala surface plan
 
-**Status:** first material slice merged as [#912](https://github.com/gamesbyian/wallgen/pull/912), commit `ea434590`, 31 October 2026. Exact-head quick CI [#41238785115](https://github.com/gamesbyian/wallgen/actions/runs/41238785115) passed. Contour deposition and ornate patterns remain planned in [#913](https://github.com/gamesbyian/wallgen/issues/913). **Date:** 31 October 2026.
+**Status:** fine sand S1 merged in [#912](https://github.com/gamesbyian/wallgen/pull/912) (`ea434590`); inward boundary relief S2 merged in [#916](https://github.com/gamesbyian/wallgen/pull/916) (`c560c874`); optional Beaded sand filigree S3 starter merged in [#918](https://github.com/gamesbyian/wallgen/pull/918) (`01f7d78b`). Final exact-head required [quick CI #41244651155](https://github.com/gamesbyian/wallgen/actions/runs/41244651155) PASS. Advanced ornaments, physical materials and device profiling remain open in [#913](https://github.com/gamesbyian/wallgen/issues/913). **Date:** 31 October 2026.
 
 ## User intention
 
@@ -47,7 +47,7 @@ The existing sand material now has a geometry-aware, bounded design-unit edge tr
 
 **Limitations:** This is controlled 2.5D rim shading, not granular material transport/physics. It does not yet distribute grains by tangent or local curvature, calculate physical contact normals, spill into neighbouring fills, or synthesize beaded/ornate contour rows. Those remain S3. Source render cost/actual phone latency and high-DPI optical quality must be measured independently. Genuine [Chromium art and PNG acceptance #41243087745](https://github.com/gamesbyian/wallgen/actions/runs/41243087745) **PASS**: normal wave ribbon, loop, imported compound hole/island, seven nested contours and production 3024×6552 PNG. The black hole was checked as exact RGBA(0,0,0,255), and the detached island was verified as coloured ink. Source PNGs were inspected: modest interior shading is visible at regular colour edges, while rim details on two-unit nested lines remain deliberately slight. Physical Pixel timing, real optical grain packing, cross-browser quality and human artwork signoff are NOT proven.
 
-## S3 first ornament: optional beaded sand filigree (PR #918)
+## S3 first ornament: optional beaded sand filigree (merged PR #918)
 
 The granular engine can now expose a **separate material identity**, `sand-beaded`, with the existing fine sand treatment plus sparse raised mineral beads following original path/region contours. This is intentionally separate from `sand-mandala`: selecting ordinary fine sand never auto-adds decorative dots.
 
