@@ -160,8 +160,13 @@ try{
 }finally{
   try{ws?.close()}catch{}
   proc.kill('SIGTERM');
+  // A Chromium process may still be flushing its profile after SIGTERM.
+  // Follow the already proven production browser-smoke cleanup contract.
+  await Promise.race([
+    new Promise(resolve=>proc.exitCode!==null?resolve():proc.once('exit',resolve)),
+    delay(2200),
+  ]);
   await new Promise(resolve=>server.close(resolve));
-  // Chromium can write a final profile journal after SIGTERM. Retry only
-  // transient filesystem cleanup; never mask a browser assertion failure.
-  rmSync(profile,{recursive:true,force:true,maxRetries:20,retryDelay:100});
+  try{rmSync(profile,{recursive:true,force:true,maxRetries:5,retryDelay:180});}
+  catch(e){console.warn('Temporary Chrome profile cleanup:',e.message);}
 }
