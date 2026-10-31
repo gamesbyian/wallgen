@@ -45,7 +45,7 @@ The existing sand material now has a geometry-aware, bounded design-unit edge tr
 - Seven thin imported nested contours instead receive a narrow centreline specular accent inside the original authored stroke footprint; levels that truly collapse remain absent. The system does not attempt to project a thick inward ridge onto a two-unit line.
 - Woven/ornamental negative-space motifs do not acquire false filled-ribbon rims. Other existing materials are unchanged without an active sand layer.
 
-**Limitations:** This is controlled 2.5D rim shading, not granular material transport/physics. It does not yet distribute grains by tangent or local curvature, calculate physical contact normals, spill into neighbouring fills, or synthesize beaded/ornate contour rows. Those remain S3. Source render cost/actual phone latency and high-DPI optical quality must be measured independently. The first proof is a genuine Chromium production painter test for a wave, loop, imported hole/island and nested contours plus 3024×6552 PNG; when a result is accepted, record the exact run ID here rather than assuming a green test from its existence.
+**Limitations:** This is controlled 2.5D rim shading, not granular material transport/physics. It does not yet distribute grains by tangent or local curvature, calculate physical contact normals, spill into neighbouring fills, or synthesize beaded/ornate contour rows. Those remain S3. Source render cost/actual phone latency and high-DPI optical quality must be measured independently. Genuine [Chromium art and PNG acceptance #41243087745](https://github.com/gamesbyian/wallgen/actions/runs/41243087745) **PASS**: normal wave ribbon, loop, imported compound hole/island, seven nested contours and production 3024×6552 PNG. The black hole was checked as exact RGBA(0,0,0,255), and the detached island was verified as coloured ink. Source PNGs were inspected: modest interior shading is visible at regular colour edges, while rim details on two-unit nested lines remain deliberately slight. Physical Pixel timing, real optical grain packing, cross-browser quality and human artwork signoff are NOT proven.
 
 ## Next phases (S3 / S4 remain planned)
 
@@ -66,7 +66,8 @@ The first slice contains new original code, borrowing only general public algori
 - [x] GitHub quick CI PASS on material implementation: [#41238544285](https://github.com/gamesbyian/wallgen/actions/runs/41238544285)
 - [x] Actual Chromium PNG smoke PASS with source PNGs inspected at preview, full-res detail and region-worker sizes: [#41238544266](https://github.com/gamesbyian/wallgen/actions/runs/41238544266). The opaque glossy bead/polka-dot look was found and replaced by finer matte microflecks; optical acceptance is for this limited texture character only, not genuine physical sand realism.
 - [ ] Physical Pixel 6 Pro randomization latency, visual fidelity and accessibility verification
-- [ ] Raised contour rims and true path-aware ornamentation (S2/S3)
+- [x] Basic inward, vector-clipped contour shading S2 verified in production Chromium [#41243087745](https://github.com/gamesbyian/wallgen/actions/runs/41243087745)
+- [ ] More physical sand deposition and true ornamental contour rows (S3)
 
 ### Genuine Chromium acceptance note, 31 October 2026
 
