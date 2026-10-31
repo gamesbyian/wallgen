@@ -2,7 +2,7 @@ import {DESIGN_WIDTH,DESIGN_HEIGHT} from './model.js';
 import {textInkSelectionReach} from './text-overlays.js';
 import {textOverlayPaintsInk} from './text-rainbow-shaping.js';
 import {typefaceCssFamily} from './typography-fonts.js';
-import {compactTextGripLayout} from './text-grip-layout.js';
+import {compactTextGripLayout,shouldDetachTextGrips} from './text-grip-layout.js';
 import {beginPointerRotation,advancePointerRotation} from './rotation-gesture.js';
 import {beginAxisDrag,axisConstrainedPoint} from './axis-constrained-drag.js';
 import {snapTextAnchor} from './text-anchor-snap.js';
@@ -111,7 +111,13 @@ export function installTextCanvasMover({
     // Preserve the exact same accessible buttons, but place their centres
     // outside authored ink and at least 48px apart in actual canvas CSS
     // pixels, including rotated titles and right/bottom-edge placements.
-    const compact=physicalWidth<80&&physicalHeight<100;
+    const angle=item.rotation*Math.PI/180;
+    const halfVerticalReach=(Math.abs(Math.sin(angle))*(bounds.width+2*extra)*
+      rect.width/DESIGN_WIDTH+Math.abs(Math.cos(angle))*(bounds.height+2*extra)*
+      rect.height/DESIGN_HEIGHT)/2;
+    const rotateInset=y-halfVerticalReach<60;
+    const compact=shouldDetachTextGrips({frameWidth:physicalWidth,
+      frameHeight:physicalHeight,rotateInset});
     outline.classList.toggle('text-direct-compact',compact);
     if(compact){
       const grip=compactTextGripLayout({
@@ -129,11 +135,7 @@ export function installTextCanvasMover({
       delete outline.dataset.gripReachable;
     }
     outline.style.transform='translate(-50%,-50%) rotate('+item.rotation+'deg)';
-    const angle=item.rotation*Math.PI/180;
-    const halfVerticalReach=(Math.abs(Math.sin(angle))*(bounds.width+2*extra)*
-      rect.width/DESIGN_WIDTH+Math.abs(Math.cos(angle))*(bounds.height+2*extra)*
-      rect.height/DESIGN_HEIGHT)/2;
-    outline.classList.toggle('text-direct-rotate-inset',y-halfVerticalReach<60);
+    outline.classList.toggle('text-direct-rotate-inset',rotateInset);
     for(const handle of handles)handle.disabled=!!item.locked;
     outline.hidden=false;
   }
