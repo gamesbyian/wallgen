@@ -30,6 +30,7 @@ import {stripeContourDistortionAvailability} from './editor-effect-availability.
 import {normalizeScatteredOverrides,effectiveScatteredLayerOrder,moveScatteredLayer} from './scattered-object-edits.js';
 import {embroideryObjectChoices,resolveEmbroideryObjectChoice,reconcileEmbroideryObjectOptions} from './embroidery-target-choices.js';
 import {scatteredPixelToWorld,scatteredWorldToPixel,pickScatteredRegion,scatteredMoveOverride,clamp as clampScattered} from './scattered-drag.js';
+import {beginScatteredScale,advanceScatteredScale} from './scattered-scale-gesture.js';
 import {cloneGeometrySnapshot} from './geometry-asset.js';
 import {parseStoredFavorites} from './favorites-store.js';
 import {encodePortableRecipe,decodePortableRecipe,portableShareUrl,portableShareTokenFromLocation,
@@ -1594,12 +1595,22 @@ document.querySelector('.editor-tool-card[data-editor-tool="scattered-edges"]')
 // Direct manipulation is opt-in: normal preview taps, app navigation, Draw,
 // and camera controls are otherwise completely unchanged. Only pointerup
 // commits a recipe, making the whole drag ONE Undo step.
-let scatteredDirectActive=false,scatteredDirectDrag=null;
+let scatteredDirectActive=false,scatteredDirectDrag=null,scatteredScaleDrag=null;
 const scatteredDirectOutline=document.createElement('div');
 scatteredDirectOutline.id='scatteredDirectOutline';
 scatteredDirectOutline.className='scattered-direct-outline';
 scatteredDirectOutline.hidden=true;
 document.querySelector('.wallpaper-surface')?.append(scatteredDirectOutline);
+// The grip is a sibling of the pointer-transparent outline. Its touch target
+// remains 44 CSS px, while only the normalized radius changes in the recipe.
+const scatteredScaleGrip=document.createElement('button');
+scatteredScaleGrip.type='button';
+scatteredScaleGrip.id='scatteredDirectScale';
+scatteredScaleGrip.textContent='⤢';
+scatteredScaleGrip.setAttribute('aria-label','Scale selected shape proportionally from its centre');
+scatteredScaleGrip.title='Drag to scale selected shape, or use Up/Down arrow keys';
+scatteredScaleGrip.hidden=true;
+document.querySelector('.wallpaper-surface')?.append(scatteredScaleGrip);
 const scatteredDirectDone=document.createElement('button');
 scatteredDirectDone.type='button';
 scatteredDirectDone.id='scatteredDirectDone';
@@ -1609,10 +1620,13 @@ document.querySelector('.studio-stage')?.append(scatteredDirectDone);
 function setScatteredDirectActive(next){
   // Closing a drag tool is a cancellation: release capture but never save a
   // provisional circle. A delayed lostpointercapture then sees no active drag.
-  const oldDrag=scatteredDirectDrag;
-  scatteredDirectDrag=null;
+  const oldDrag=scatteredDirectDrag,oldScale=scatteredScaleDrag;
+  scatteredDirectDrag=null;scatteredScaleDrag=null;
   if(oldDrag){
     try{preview.releasePointerCapture(oldDrag.pointerId);}catch{}
+  }
+  if(oldScale){
+    try{scatteredScaleGrip.releasePointerCapture(oldScale.pointerId);}catch{}
   }
   scatteredDirectActive=!!next;
   document.body.classList.toggle('scattered-direct-active',scatteredDirectActive);
@@ -1620,7 +1634,7 @@ function setScatteredDirectActive(next){
   moveOnCanvas.textContent=scatteredDirectActive?'Stop moving shapes':'Move shapes on canvas';
   scatteredDirectDone.hidden=!scatteredDirectActive;
   if(scatteredDirectActive)syncScatteredDirectOutline();
-  else scatteredDirectOutline.hidden=true;
+  else {scatteredDirectOutline.hidden=true;scatteredScaleGrip.hidden=true;}
 }
 function pixelFromPointer(event){
   const rect=preview.getBoundingClientRect();
@@ -1628,11 +1642,11 @@ function pixelFromPointer(event){
     y:(event.clientY-rect.top)*preview.height/Math.max(rect.height,1)};
 }
 function syncScatteredDirectOutline(temporaryCircle=null){
-  if(!scatteredDirectActive){scatteredDirectOutline.hidden=true;return;}
+  if(!scatteredDirectActive){scatteredDirectOutline.hidden=true;scatteredScaleGrip.hidden=true;return;}
   const id=Number(orbitPicker.value);
   const object=currentScene?.objects?.find(o=>o.id==='region-'+id);
   const circle=temporaryCircle||object?.circle||object?.editCircle;
-  if(!circle){scatteredDirectOutline.hidden=true;return;}
+  if(!circle){scatteredDirectOutline.hidden=true;scatteredScaleGrip.hidden=true;return;}
   const pixel=scatteredWorldToPixel(current,preview.width,preview.height,circle.cx,circle.cy);
   const canvasRect=preview.getBoundingClientRect();
   const surfaceRect=preview.closest('.wallpaper-surface').getBoundingClientRect();
@@ -1644,6 +1658,24 @@ function syncScatteredDirectOutline(temporaryCircle=null){
   scatteredDirectOutline.style.width=(radiusX*2)+'px';
   scatteredDirectOutline.style.height=(radiusY*2)+'px';
   scatteredDirectOutline.hidden=false;
+  // A detached handle does not steal taps from the painted silhouette.
+  // Choose a visible side and clamp ONLY the CSS control to the live surface;
+  // the real design circle is never screen-clamped or quantized.
+  const centreX=canvasRect.left-surfaceRect.left+pixel.x*scaleX;
+  const centreY=canvasRect.top-surfaceRect.top+pixel.y*scaleY;
+  const radius=22,clearance=12;
+  const right=centreX+radiusX+radius+clearance;
+  const left=centreX-radiusX-radius-clearance;
+  let gripX=right+radius<=surfaceRect.width?right:left;
+  if(gripX+radius>surfaceRect.width||gripX-radius<0)
+    gripX=clampScattered(gripX,radius,surfaceRect.width-radius);
+  let gripY=clampScattered(centreY,radius,surfaceRect.height-radius);
+  if(gripY<68&&gripX>surfaceRect.width-155)
+    gripX=clampScattered(left,radius,surfaceRect.width-radius);
+  scatteredScaleGrip.style.left=(gripX-radius)+'px';
+  scatteredScaleGrip.style.top=(gripY-radius)+'px';
+  scatteredScaleGrip.hidden=surfaceRect.width<44||surfaceRect.height<44;
+
 }
 moveOnCanvas.addEventListener('click',()=>{
   // The same wallpaper cannot be in both direct-manipulation modes.
@@ -1653,8 +1685,77 @@ moveOnCanvas.addEventListener('click',()=>{
   setScatteredDirectActive(!scatteredDirectActive);
 });
 scatteredDirectDone.addEventListener('click',()=>setScatteredDirectActive(false));
+scatteredScaleGrip.addEventListener('pointerdown',event=>{
+  if(!scatteredDirectActive||scatteredDirectDrag||scatteredScaleDrag||
+     event.button!==0||event.isPrimary===false)return;
+  const index=Number(orbitPicker.value);
+  const object=currentScene?.objects?.find(o=>o.id==='region-'+index);
+  const circle=object?.circle||object?.editCircle;
+  if(!circle)return;
+  const projected=scatteredWorldToPixel(current,preview.width,preview.height,
+    circle.cx,circle.cy);
+  const rect=preview.getBoundingClientRect();
+  const centre={x:rect.left+projected.x*rect.width/preview.width,
+    y:rect.top+projected.y*rect.height/preview.height};
+  const gesture=beginScatteredScale({circle,centre,
+    point:{x:event.clientX,y:event.clientY}});
+  if(!gesture)return;
+  event.preventDefault();event.stopPropagation();
+  scatteredScaleDrag={pointerId:event.pointerId,index,circle:{...circle},
+    original:current,gesture,current:{...circle}};
+  try{scatteredScaleGrip.setPointerCapture(event.pointerId);}catch{}
+});
+scatteredScaleGrip.addEventListener('pointermove',event=>{
+  const drag=scatteredScaleDrag;
+  if(!drag||drag.pointerId!==event.pointerId)return;
+  event.preventDefault();event.stopPropagation();
+  drag.gesture=advanceScatteredScale(drag.gesture,
+    {x:event.clientX,y:event.clientY});
+  drag.current={...drag.circle,r:drag.gesture.radius};
+  syncScatteredDirectOutline(drag.current);
+});
+scatteredScaleGrip.addEventListener('pointerup',event=>{
+  const drag=scatteredScaleDrag;
+  if(!drag||drag.pointerId!==event.pointerId)return;
+  event.preventDefault();event.stopPropagation();
+  scatteredScaleDrag=null;
+  try{scatteredScaleGrip.releasePointerCapture(event.pointerId);}catch{}
+  if(scatteredDirectActive&&drag.original===current&&
+     drag.index===Number(orbitPicker.value)&&drag.gesture.moved){
+    const overrides=scatteredMoveOverride(drag.original,drag.index,
+      drag.current,{x:drag.circle.cx,y:drag.circle.cy});
+    changeRecipe({...drag.original,scatteredOverrides:overrides});
+  }
+  syncScatteredDirectOutline();
+});
+for(const name of ['pointercancel','lostpointercapture']){
+  scatteredScaleGrip.addEventListener(name,event=>{
+    if(!scatteredScaleDrag||scatteredScaleDrag.pointerId!==event.pointerId)return;
+    scatteredScaleDrag=null;syncScatteredDirectOutline();
+  });
+}
+function stepScatteredScale(direction,multiplier=1){
+  if(!scatteredDirectActive||scatteredScaleDrag||scatteredDirectDrag)return;
+  const index=Number(orbitPicker.value);
+  const object=currentScene?.objects?.find(o=>o.id==='region-'+index);
+  const circle=object?.circle||object?.editCircle;
+  if(!circle)return;
+  const radius=clampScattered(circle.r*(1+direction*.05*multiplier),6,720);
+  if(radius===circle.r)return;
+  const overrides=scatteredMoveOverride(current,index,{...circle,r:radius},
+    {x:circle.cx,y:circle.cy});
+  changeRecipe({...current,scatteredOverrides:overrides});
+}
+scatteredScaleGrip.addEventListener('keydown',event=>{
+  if(event.key!=='ArrowUp'&&event.key!=='ArrowDown')return;
+  event.preventDefault();event.stopPropagation();
+  stepScatteredScale(event.key==='ArrowUp'?1:-1,event.shiftKey?4:1);
+});
+scatteredScaleGrip.addEventListener('click',event=>{
+  if(event.detail===0)stepScatteredScale(1);
+});
 preview.addEventListener('pointerdown',event=>{
-  if(!scatteredDirectActive||scatteredDirectDrag||event.button!==0||
+  if(!scatteredDirectActive||scatteredDirectDrag||scatteredScaleDrag||event.button!==0||
      event.isPrimary===false)return;
   const rect=preview.getBoundingClientRect();
   const pos=pixelFromPointer(event);
@@ -1669,7 +1770,7 @@ preview.addEventListener('pointerdown',event=>{
   const index=Number(object.id.slice(7));
   orbitPicker.value=String(index);
   syncScatteredObjectEditor();
-  scatteredDirectDrag={pointerId:event.pointerId,index,
+  scatteredDirectDrag={pointerId:event.pointerId,index,original:current,
     startWorld:world,circle:{...circle},current:{...circle},moved:false};
   try{preview.setPointerCapture(event.pointerId);}catch{}
 });
@@ -1691,10 +1792,10 @@ preview.addEventListener('pointerup',event=>{
   event.preventDefault();event.stopPropagation();
   scatteredDirectDrag=null;
   try{preview.releasePointerCapture(event.pointerId);}catch{}
-  if(drag.moved){
-    const overrides=scatteredMoveOverride(current,drag.index,drag.circle,
+  if(drag.moved&&drag.original===current&&scatteredDirectActive){
+    const overrides=scatteredMoveOverride(drag.original,drag.index,drag.circle,
       {x:drag.current.cx,y:drag.current.cy});
-    changeRecipe({...current,scatteredOverrides:overrides});
+    changeRecipe({...drag.original,scatteredOverrides:overrides});
   }
   syncScatteredDirectOutline();
 });
