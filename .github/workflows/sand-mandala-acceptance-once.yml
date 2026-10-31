@@ -1,5 +1,7 @@
 name: Sand mandala one-time real Chromium acceptance
 on:
+  pull_request:
+    branches: [main]
   push:
     branches: [feat/sand-mandala-material-20261031]
 permissions:
