@@ -63,8 +63,24 @@ try{
      'overlap lies on visible unblocked preview');
    const selected=()=>page.evaluate(()=>
      document.querySelector('#scatteredObjectEditor select')?.value);
+   const beforeTap=await page.evaluate(({x,y})=>{
+     window.__overlapDown=null;
+     document.addEventListener('pointerdown',e=>{
+       window.__overlapDown={target:e.target.id,button:e.button,
+         isPrimary:e.isPrimary,x:e.clientX,y:e.clientY};
+     },{capture:true,once:true});
+     return {hit:document.elementFromPoint(x,y)?.id,
+       active:document.body.classList.contains('scattered-direct-active'),
+       target:document.getElementById('preview')?.id,
+       picker:document.querySelector('#scatteredObjectEditor select')?.value};
+   },target);
    await page.mouse.click(target.x,target.y);
-   assert.equal(await selected(),target.ids[0].slice(7));
+   const afterTap=await page.evaluate(()=>({down:window.__overlapDown,
+     picker:document.querySelector('#scatteredObjectEditor select')?.value,
+     aria:document.getElementById('scatteredMoveOnCanvas').getAttribute('aria-pressed')
+   }));
+   assert.equal(await selected(),target.ids[0].slice(7),
+     JSON.stringify({target,beforeTap,afterTap}));
    assert.deepEqual(recipe(page),initial,'selection alone never edits a wallpaper');
    await page.mouse.click(target.x,target.y);
    assert.equal(await selected(),target.ids[1].slice(7),
