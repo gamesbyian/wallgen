@@ -51,7 +51,9 @@ export function sandRibbonLighting(scene){
  * independent UI light or requiring a per-pixel height/ray buffer.
  * The response is geometry only: intensity/mood are applied by the painter. */
 export function sandCapDiffuse(lighting,nx,ny){
-  if(!lighting||![lighting.x,lighting.y,nx,ny].every(Number.isFinite))return 0;
+  // Called once per visible microfacet: avoid allocating a validation array.
+  if(!lighting||!Number.isFinite(lighting.x)||!Number.isFinite(lighting.y)||
+    !Number.isFinite(nx)||!Number.isFinite(ny))return 0;
   const r2=nx*nx+ny*ny;
   const z=Math.sqrt(Math.max(0,1-Math.min(1,r2)));
   const elevation=.68,lateral=Math.sqrt(1-elevation*elevation);
