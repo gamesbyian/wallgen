@@ -11,7 +11,7 @@ function hash(ix,iy,seed,salt){
 // Density and grain gauge are authored-world units, never output or CSS pixels.
 // Scale zero is still bounded: no runaway million-particle editor frame.
 export function sandPitch(layer){
-  return 4.8*Math.max(.85,.6+1.6*clamp(Number(layer.scale)||0,0,100)/100);
+  return 3.3*Math.max(.85,.6+1.6*clamp(Number(layer.scale)||0,0,100)/100);
 }
 // A single grain is addressed by immutable lattice indices and the material seed.
 // Jittered staggered rows avoid the visible square-grid artefact of naive dots.
@@ -19,9 +19,9 @@ export function sandGrainAt(layer,ix,iy){
   const pitch=sandPitch(layer),stepY=pitch*.88,seed=layer.heightSeed|0;
   const x=(ix+.5+(iy&1)*.5+(hash(ix,iy,seed,31)-.5)*.46)*pitch;
   const y=(iy+.5+(hash(ix,iy,seed,37)-.5)*.44)*stepY;
-  const r=pitch*(.335+hash(ix,iy,seed,41)*.15);
+  const r=pitch*(.25+hash(ix,iy,seed,41)*.13);
   return {x,y,r,shade:Math.floor(hash(ix,iy,seed,43)*8),
-    sparkle:hash(ix,iy,seed,47)>.954,ix,iy};
+    sparkle:hash(ix,iy,seed,47)>.993,ix,iy};
 }
 // Crop-independent enumeration: a partial grain just outside the crop is
 // included, while its shape/position never depends on which crop requested it.
@@ -36,19 +36,19 @@ export function forEachSandGrain(layer,bounds,visit){
     visit(g);
   }
 }
-const shadow=Array.from({length:8},(_,i)=>'rgba(0,0,0,'+(.19+i*.026).toFixed(3)+')');
-const highlight=Array.from({length:8},(_,i)=>'rgba(255,255,255,'+(.19+(7-i)*.03).toFixed(3)+')');
-const glint='rgba(255,255,255,0.46)';
+const shadow=Array.from({length:8},(_,i)=>'rgba(0,0,0,'+(.095+i*.012).toFixed(3)+')');
+const highlight=Array.from({length:8},(_,i)=>'rgba(255,255,255,'+(.088+(7-i)*.014).toFixed(3)+')');
+const glint='rgba(255,255,255,0.23)';
 /** Paint a compact deposit of tiny 2.5D grains; caller already owns alpha,
  * colour, coverage, blend mode and the world-to-canvas transform. */
 export function paintSandGrains(ctx,layer,bounds){
   forEachSandGrain(layer,bounds,g=>{
-    // Broad dark contact and smaller upper-left light surface make a rounded
-    // mineral grain rather than a flat speckle. Saturated fill remains beneath.
+    // Matte, close-packed fine powder: contacts and upper-left surfaces are
+    // deliberately low-contrast, not shiny raised plastic beads.
     ctx.fillStyle=shadow[g.shade];
-    ctx.beginPath();ctx.ellipse(g.x+g.r*.12,g.y+g.r*.16,g.r*1.04,g.r*.93,0,0,TAU);ctx.fill();
+    ctx.beginPath();ctx.ellipse(g.x+g.r*.1,g.y+g.r*.12,g.r*.86,g.r*.77,0,0,TAU);ctx.fill();
     ctx.fillStyle=highlight[g.shade];
-    ctx.beginPath();ctx.ellipse(g.x-g.r*.18,g.y-g.r*.22,g.r*.72,g.r*.57,-.16,0,TAU);ctx.fill();
+    ctx.beginPath();ctx.ellipse(g.x-g.r*.13,g.y-g.r*.16,g.r*.62,g.r*.53,-.16,0,TAU);ctx.fill();
     if(g.sparkle){
       ctx.fillStyle=glint;
       ctx.beginPath();ctx.arc(g.x-g.r*.32,g.y-g.r*.42,g.r*.14,0,TAU);ctx.fill();
