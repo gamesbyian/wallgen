@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {normalizeRecipe,resolveScene,encodeRecipe,decodeRecipe} from '../src/model.js';
-import {sandLighting,rotateSandLighting,sandMaterialLighting,sandRibbonLighting} from '../src/sand-lighting.js';
+import {sandLighting,rotateSandLighting,sandMaterialLighting,sandRibbonLighting,sandCapDiffuse} from '../src/sand-lighting.js';
 import {paintSandGrains,sandGrainAt} from '../src/sand-material.js';
 import {sandRimStyles,paintSandContourRim} from '../src/sand-contour-relief.js';
 import {sandBeadStyles,paintSandRegionBeads} from '../src/sand-beads.js';
@@ -116,4 +116,59 @@ test('renderer reuses scene lighting for grains, rotated paths and exact compoun
   assert.match(src,/const ribbonLight=sandRibbonLighting\(scene\)/);
   assert.match(src,/ctx\.clip\(object\.rings\?'evenodd':'nonzero'\)/);
   assert.match(src,/sandRims\.some\(s=>s\.lighting\)\?\[sandRegionPath\(object\)\]:null/);
+});
+
+test('hemisphere normals turn with the same physical lamp as ribbon and material transforms',()=>{
+  const light=sandLighting(scene({lightDirection:'top-left'}));
+  const opposite=sandLighting(scene({lightDirection:'bottom-right'}));
+  const nx=light.x*.8,ny=light.y*.8;
+  assert.ok(sandCapDiffuse(light,nx,ny)>sandCapDiffuse(light,-nx,-ny));
+  assert.ok(near(sandCapDiffuse(light,nx,ny),
+    sandCapDiffuse(opposite,-nx,-ny)));
+  assert.ok(near(sandCapDiffuse(light,0,0),.68));
+  assert.equal(sandCapDiffuse(null,nx,ny),0);
+  assert.equal(sandCapDiffuse(light,NaN,ny),0);
+  assert.ok(sandCapDiffuse(light,-2,-2)<=1);
+  const rotated=rotateSandLighting(light,Math.PI/2);
+  assert.ok(near(sandCapDiffuse(light,nx,ny),
+    sandCapDiffuse(rotated,ny,-nx)));
+});
+test('beads use one analytic rounded cap plus directional, bounded contact footprint',()=>{
+  const draw=direction=>{
+    const c=mock();
+    c.ellipse=(...args)=>c.ops.push(['ellipse',...args]);
+    c.createRadialGradient=(...coords)=>{
+      const stops=[];c.ops.push(['gradient',...coords,stops]);
+      return {addColorStop:(offset,colour)=>stops.push([offset,colour])};
+    };
+    const styles=sandBeadStyles(scene({lightDirection:direction}));
+    paintSandRegionBeads(c,{circle:{cx:50,cy:50,r:30}},styles);
+    return c.ops;
+  };
+  const nw=draw('top-left'),se=draw('bottom-right');
+  const gradients=nw.filter(x=>x[0]==='gradient');
+  assert.ok(gradients.length>=8);
+  assert.ok(gradients.every(x=>x.at(-1).length===4));
+  assert.ok(gradients.every(x=>x.at(-1)[0][1].includes('255,255,242')));
+  assert.ok(gradients.every(x=>x.at(-1)[3][1].includes('22,28,48')));
+  const shadows=nw.filter(x=>x[0]==='ellipse');
+  assert.equal(shadows.length,gradients.length);
+  assert.ok(shadows[0][1]>se.find(x=>x[0]==='ellipse')[1]);
+  assert.ok(shadows[0][2]>se.find(x=>x[0]==='ellipse')[2]);
+  const cap=nw.find(x=>x[0]==='arc');
+  assert.ok(cap&&cap[3]>0);
+  assert.equal(nw.filter(x=>x[0]==='arc').length,gradients.length);
+});
+test('lit grain microfacets keep the exact same seeded coordinates across crops',()=>{
+  const layer={material:'sand-mandala',heightSeed:247,scale:35};
+  const lamp=sandLighting(scene({lightDirection:'top-right'}));
+  const paint=bounds=>{
+    const c=mock();paintSandGrains(c,layer,bounds,lamp);
+    return c.ops.filter(o=>o[0]==='rect'&&o[1]>=20&&o[1]<=27&&
+      o[2]>=20&&o[2]<=27).map(o=>o.slice(1));
+  };
+  const wide=paint({left:0,top:0,right:80,bottom:80});
+  const narrow=paint({left:12,top:12,right:42,bottom:42});
+  assert.ok(wide.length>0);
+  assert.deepEqual(wide,narrow);
 });
