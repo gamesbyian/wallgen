@@ -1,0 +1,59 @@
+name: Sand mandala one-time real Chromium acceptance
+on:
+  push:
+    branches: [feat/sand-mandala-material-20261031]
+permissions:
+  contents: read
+jobs:
+  sand:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install production headless browser
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+      - name: Produce sand and no-sand real PNG artwork
+        run: |
+          mkdir -p artifacts/sand-once
+          npm run render -- --seed sand-mandala-acceptance --set family=studio --set geometry=wave --set motif=solid --set material=sand-mandala --set textureCoverage=stripes --set textureStrength=90 --set textureScale=43 --set stripeWidth=66 --set spread=54 --width 600 --height 1300 --out artifacts/sand-once/sand-600.png
+          npm run render -- --seed sand-mandala-acceptance --set family=studio --set geometry=wave --set motif=solid --set material=none --set textureCoverage=stripes --set textureStrength=90 --set textureScale=43 --set stripeWidth=66 --set spread=54 --width 600 --height 1300 --out artifacts/sand-once/plain-600.png
+          npm run render -- --seed sand-mandala-acceptance --set family=studio --set geometry=wave --set motif=solid --set material=sand-mandala --set textureCoverage=stripes --set textureStrength=90 --set textureScale=43 --set stripeWidth=66 --set spread=54 --width 3024 --height 6552 --out artifacts/sand-once/sand-full.png
+          npm run render -- --seed sand-region-acceptance --set structure=regions --set material=sand-mandala --set textureCoverage=stripes --set textureStrength=85 --set textureScale=39 --width 600 --height 1300 --backend worker --out artifacts/sand-once/sand-region-worker.png
+      - name: Check actual PNG dimensions, distinct pixels and embedded recipes
+        run: |
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {readFile} from 'node:fs/promises';
+          import {extractPngRecipe} from './src/png-metadata.js';
+          const dir='artifacts/sand-once/';
+          const files=[
+            ['sand-600.png',600,1300,'sand-mandala'],
+            ['plain-600.png',600,1300,'none'],
+            ['sand-full.png',3024,6552,'sand-mandala'],
+            ['sand-region-worker.png',600,1300,'sand-mandala']
+          ];
+          const images=new Map();
+          for(const [name,width,height,material] of files){
+            const image=await readFile(dir+name);images.set(name,image);
+            assert.equal(image.toString('hex',0,8),'89504e470d0a1a0a');
+            assert.equal(image.readUInt32BE(16),width);
+            assert.equal(image.readUInt32BE(20),height);
+            assert.equal(extractPngRecipe(image)?.material,material);
+          }
+          assert.notDeepEqual(images.get('sand-600.png'),images.get('plain-600.png'));
+          console.log('SAND_CHROMIUM_ACCEPTANCE_PASS',JSON.stringify({
+            trueRenderer:true,preview:true,fullExport:true,workerRegions:true,
+            pixelDifference:true,embeddedRecipe:true}));
+          JS
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sand-mandala-true-render-once
+          path: artifacts/sand-once/
+          if-no-files-found: ignore
+          retention-days: 5
