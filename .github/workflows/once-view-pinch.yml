@@ -1,0 +1,28 @@
+name: One-shot two-finger frame acceptance
+on:
+  pull_request:
+    paths:
+      - 'src/view-pan-gesture.js'
+      - 'src/view-pan-ui.js'
+      - 'scripts/view-pinch-gesture-browser.mjs'
+      - '.github/workflows/once-view-pinch.yml'
+  workflow_dispatch:
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: node scripts/view-pinch-gesture-browser.mjs
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: view-pinch-evidence
+          path: artifacts/view-pinch-gesture/
+          if-no-files-found: ignore
