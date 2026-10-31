@@ -288,3 +288,31 @@ test('text axis toggle is a named, transient canvas control with frozen gesture 
   assert.match(source,/axisDrag:beginAxisDrag\(/);
   assert.match(source,/drag\.axisDrag=next\.state/);
 });
+
+test('keyboard nudge is source-percent-based with fine, standard and coarse steps',async()=>{
+ const {nudgeTextOverlay}=await import('../src/text-direct-geometry.js');
+ const before=sample;
+ const standard=nudgeTextOverlay(before,'front','ArrowRight');
+ assert.equal(standard.textOverlays[1].x,51);
+ assert.equal(standard.textOverlays[1].y,50);
+ const coarse=nudgeTextOverlay(before,'front','ArrowUp',{coarse:true});
+ assert.equal(coarse.textOverlays[1].y,45);
+ const fine=nudgeTextOverlay(before,'front','ArrowLeft',{fine:true});
+ assert.equal(fine.textOverlays[1].x,49.9);
+ assert.equal(nudgeTextOverlay(before,'locked','ArrowRight'),before);
+ assert.equal(nudgeTextOverlay(before,'front','Escape'),before);
+ assert.deepEqual(before,sample);
+ const bounds=nudgeTextOverlay(normalizeRecipe({textOverlays:[
+   {id:'edge',text:'x',x:100,y:0,size:20}]}),'edge','ArrowRight');
+ assert.equal(bounds.textOverlays[0].x,100);
+});
+test('keyboard text guide is focusable without stealing handle shortcuts',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const source=readFileSync(new URL('../src/text-direct-ui.js',import.meta.url),'utf8');
+ const css=readFileSync(new URL('../text-overlays.css',import.meta.url),'utf8');
+ assert.match(source,/outline\.tabIndex=0/);
+ assert.match(source,/event\.target!==outline/);
+ assert.match(source,/nudgeTextOverlay\(current,id,event\.key/);
+ assert.match(source,/cause:'text_move_keyboard'/);
+ assert.match(css,/\.text-direct-outline:focus-visible/);
+});

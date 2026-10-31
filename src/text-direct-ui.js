@@ -6,7 +6,7 @@ import {compactTextGripLayout} from './text-grip-layout.js';
 import {beginPointerRotation,advancePointerRotation} from './rotation-gesture.js';
 import {beginAxisDrag,axisConstrainedPoint} from './axis-constrained-drag.js';
 import {snapTextAnchor} from './text-anchor-snap.js';
-import {designPointFromPointer,dragTextOverlay,
+import {designPointFromPointer,dragTextOverlay,nudgeTextOverlay,
   dragTextTransform,transformTextOverlay,measuredTextBounds,
   measureCanvasText,textGestureOwnsCurrentRecipe} from './text-direct-geometry.js';
 import {hitTextAtLayout} from './text-path-geometry.js';
@@ -29,6 +29,9 @@ export function installTextCanvasMover({
   // even while those buttons remain visible and keyboard-focusable.
   outline.setAttribute('role','group');
   outline.setAttribute('aria-label','Selected text transform controls');
+  outline.tabIndex=0;
+  outline.setAttribute('aria-keyshortcuts',
+    'ArrowLeft ArrowRight ArrowUp ArrowDown');
   // Transform handles are real DOM controls, not invisible bitmap hotspots.
   // They remain keyboard-accessible and are never drawn into saved PNGs.
   const handleSpecs=[
@@ -87,6 +90,10 @@ export function installTextCanvasMover({
       item,value,{tracking});
   function paintOutline(item){
     if(!active||!textOverlayPaintsInk(item)){outline.hidden=true;return;}
+    const readable=String(item.text||'').replace(/\s+/g,' ').slice(0,64);
+    outline.setAttribute('aria-label',item.locked?
+      'Selected locked text: '+readable+'. Unlock it to move.':
+      'Selected text: '+readable+'. Arrow keys move one percent; Shift moves five percent; Control moves one tenth of a percent.');
     const rect=canvas.getBoundingClientRect();
     const parent=surface.getBoundingClientRect();
     const bounds=measuredTextBounds(item,value=>measure(item,value),
@@ -164,6 +171,8 @@ export function installTextCanvasMover({
       const owner=handles.find(h=>h.dataset.textHandle===oldTransform.mode);
       try{owner?.releasePointerCapture(oldTransform.pointerId);}catch{}
     }
+    const guideHadFocus=document.activeElement===outline||
+      handles.includes(document.activeElement);
     active=Boolean(next);
     if(active){
       if(document.body.classList.contains('path-drawing')){
@@ -183,9 +192,26 @@ export function installTextCanvasMover({
     done.hidden=!active;
     axisButton.hidden=!active;
     snapButton.hidden=!active;
-    if(!active)outline.hidden=true;
-    else redraw();
+    if(!active){
+      outline.hidden=true;
+      if(guideHadFocus)button.focus({preventScroll:true});
+    }else redraw();
   }
+  // Focusable guide provides a direct keyboard path without stealing
+  // arrow keys from numeric fields, the rotation grip or other tools.
+  outline.addEventListener('keydown',event=>{
+    if(event.target!==outline||!active||drag||transformDrag||
+      !['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key)||
+      event.altKey)return;
+    event.preventDefault();event.stopPropagation();
+    const current=getRecipe(),id=selectedId();
+    const selected=current.textOverlays?.find(item=>item.id===id);
+    if(!selected||selected.locked||!textOverlayPaintsInk(selected))return;
+    const next=nudgeTextOverlay(current,id,event.key,
+      {coarse:event.shiftKey,fine:event.ctrlKey||event.metaKey});
+    if(next!==current)changeRecipe(next,{cause:'text_move_keyboard'});
+    redraw();
+  });
   button.addEventListener('click',()=>setActive(!active));
   done.addEventListener('click',()=>{setActive(false);document.getElementById('mobileEdit')?.focus({preventScroll:true});});
   canvas.addEventListener('pointerdown',event=>{

@@ -155,3 +155,18 @@ export function dragTextTransform(recipe,id,mode,start,current,screen={width:DES
   const difference=((to-from+Math.PI)%(2*Math.PI)+2*Math.PI)%(2*Math.PI)-Math.PI;
   return transformTextOverlay(recipe,id,{rotation:item.rotation+difference*180/Math.PI});
 }
+
+// Keyboard-only direct text positioning in canonical percent-of-artwork units.
+// The requested step never depends on CSS pixels, device resolution or zoom;
+// only the existing dragTextOverlay writer changes the selected anchor.
+export function nudgeTextOverlay(recipe,id,key,{coarse=false,fine=false}={}){
+  const arrows={ArrowLeft:[-1,0],ArrowRight:[1,0],
+    ArrowUp:[0,-1],ArrowDown:[0,1]};
+  const direction=arrows[key];
+  if(!direction)return recipe;
+  const step=fine?0.1:coarse?5:1;
+  return dragTextOverlay(recipe,id,{
+    x:direction[0]*DESIGN_WIDTH*step/100,
+    y:direction[1]*DESIGN_HEIGHT*step/100
+  });
+}
