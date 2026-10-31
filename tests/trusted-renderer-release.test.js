@@ -49,3 +49,19 @@ test('Worker release config remains default disabled unless explicitly approved'
     manifest:{commit:'b'.repeat(40)},mode:'preview'}));
   assert.match(base,/HOSTED_PREVIEW_ENABLED = "false"/);
 });
+
+test('trusted release curl commands are valid single-backslash shell continuations',()=>{
+  const lines=manual.split('\n');
+  const curl=lines.filter(line=>line.includes('curl --fail'));
+  assert.ok(curl.length>=3,'both rolling and trusted source must be read');
+  for(const line of curl){
+    assert.ok(line.endsWith('\\'),'curl continuation must have one trailing slash');
+    assert.equal(line.endsWith('\\\\'),false,'double slash escapes newline into a literal argument');
+  }
+  const publicManifest=lines.find(line=>line.includes("'https://gamesbyian.github.io/wallgen/trusted-renderer/roygbiv-render-version.json'"));
+  assert.ok(publicManifest?.endsWith('\\')&&!publicManifest.endsWith('\\\\'),
+    'the immutable manifest URL must join its output-file argument');
+  const publicHost=lines.find(line=>line.includes("'https://gamesbyian.github.io/wallgen/trusted-renderer/render-host.html'"));
+  assert.ok(publicHost?.endsWith('\\')&&!publicHost.endsWith('\\\\'),
+    'the trusted host URL must join its output-file argument');
+});
