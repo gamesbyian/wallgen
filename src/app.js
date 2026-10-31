@@ -29,9 +29,10 @@ import {RAINBOW_ORBITS,scatteredRadiusRange} from './scattered-composition.js';
 import {stripeContourDistortionAvailability} from './editor-effect-availability.js';
 import {normalizeScatteredOverrides,effectiveScatteredLayerOrder,moveScatteredLayer} from './scattered-object-edits.js';
 import {embroideryObjectChoices,resolveEmbroideryObjectChoice,reconcileEmbroideryObjectOptions} from './embroidery-target-choices.js';
-import {scatteredPixelToWorld,scatteredWorldToPixel,pickScatteredRegion,scatteredMoveOverride,clamp as clampScattered} from './scattered-drag.js';
+import {scatteredPixelToWorld,scatteredWorldToPixel,pickScatteredRegion,hitScatteredRegions,scatteredMoveOverride,clamp as clampScattered} from './scattered-drag.js';
 import {installViewPanGesture} from './view-pan-ui.js';
 import {beginScatteredScale,advanceScatteredScale} from './scattered-scale-gesture.js';
+import {continuesScatteredTapCycle,advanceScatteredTapCycle} from './scattered-overlap-cycle.js';
 import {cloneGeometrySnapshot} from './geometry-asset.js';
 import {parseStoredFavorites} from './favorites-store.js';
 import {encodePortableRecipe,decodePortableRecipe,portableShareUrl,portableShareTokenFromLocation,
@@ -1604,6 +1605,7 @@ document.querySelector('.editor-tool-card[data-editor-tool="scattered-edges"]')
 // and camera controls are otherwise completely unchanged. Only pointerup
 // commits a recipe, making the whole drag ONE Undo step.
 let scatteredDirectActive=false,scatteredDirectDrag=null,scatteredScaleDrag=null;
+let scatteredTapCycle=null; // Only source-aware editor selection, never recipe data.
 const scatteredDirectOutline=document.createElement('div');
 scatteredDirectOutline.id='scatteredDirectOutline';
 scatteredDirectOutline.className='scattered-direct-outline';
@@ -1629,7 +1631,7 @@ function setScatteredDirectActive(next){
   // Closing a drag tool is a cancellation: release capture but never save a
   // provisional circle. A delayed lostpointercapture then sees no active drag.
   const oldDrag=scatteredDirectDrag,oldScale=scatteredScaleDrag;
-  scatteredDirectDrag=null;scatteredScaleDrag=null;
+  scatteredDirectDrag=null;scatteredScaleDrag=null;scatteredTapCycle=null;
   if(oldDrag){
     try{preview.releasePointerCapture(oldDrag.pointerId);}catch{}
   }
@@ -1770,8 +1772,14 @@ preview.addEventListener('pointerdown',event=>{
   const world=scatteredPixelToWorld(current,preview.width,preview.height,pos.x,pos.y);
   const projection=scatteredWorldToPixel(current,preview.width,preview.height,world.x,world.y);
   const tolerance=14*preview.width/Math.max(rect.width,1)/projection.radiusScaleX;
-  const object=pickScatteredRegion(currentScene?.objects,world,tolerance);
-  if(!object)return;
+  const hits=hitScatteredRegions(currentScene?.objects,world,tolerance);
+  if(!hits.length){scatteredTapCycle=null;return;}
+  const tapPoint={x:event.clientX,y:event.clientY},now=performance.now();
+  const previous=scatteredTapCycle?.recipe===current?scatteredTapCycle:null;
+  // Once a buried shape is selected, another press can drag that exact shape.
+  // A tap with no movement cycles only on release, avoiding surprise drags.
+  const repeated=continuesScatteredTapCycle(previous,hits,tapPoint,now);
+  const object=repeated?hits.find(o=>o.id==='region-'+orbitPicker.value)||hits[0]:hits[0];
   event.preventDefault();event.stopPropagation();
   const circle=object.circle||object.editCircle;
   if(!circle)return;
@@ -1779,7 +1787,8 @@ preview.addEventListener('pointerdown',event=>{
   orbitPicker.value=String(index);
   syncScatteredObjectEditor();
   scatteredDirectDrag={pointerId:event.pointerId,index,original:current,
-    startWorld:world,circle:{...circle},current:{...circle},moved:false};
+    startWorld:world,circle:{...circle},current:{...circle},moved:false,
+    tapPoint,previous,hits};
   try{preview.setPointerCapture(event.pointerId);}catch{}
 });
 preview.addEventListener('pointermove',event=>{
@@ -1800,23 +1809,38 @@ preview.addEventListener('pointerup',event=>{
   event.preventDefault();event.stopPropagation();
   scatteredDirectDrag=null;
   try{preview.releasePointerCapture(event.pointerId);}catch{}
-  if(drag.moved&&drag.original===current&&scatteredDirectActive){
-    const overrides=scatteredMoveOverride(drag.original,drag.index,drag.circle,
-      {x:drag.current.cx,y:drag.current.cy});
-    changeRecipe({...drag.original,scatteredOverrides:overrides});
-  }
+  if(drag.original===current&&scatteredDirectActive&&
+     drag.index===Number(orbitPicker.value)){
+    if(drag.moved){
+      scatteredTapCycle=null;
+      const overrides=scatteredMoveOverride(drag.original,drag.index,drag.circle,
+        {x:drag.current.cx,y:drag.current.cy});
+      changeRecipe({...drag.original,scatteredOverrides:overrides});
+    }else{
+      const step=advanceScatteredTapCycle(drag.previous,drag.hits,
+        drag.tapPoint,performance.now());
+      scatteredTapCycle=step.state?{...step.state,recipe:current}:null;
+      if(step.selected){
+        orbitPicker.value=step.selected.id.slice(7);
+        syncScatteredObjectEditor();
+        if(drag.hits.length>1)
+          orbitNote.textContent+=' · Overlap: '+(drag.hits.indexOf(step.selected)+1)+
+            ' of '+drag.hits.length+'. Tap again to select underneath.';
+      }
+    }
+  }else scatteredTapCycle=null;
   syncScatteredDirectOutline();
 });
 preview.addEventListener('pointercancel',event=>{
   if(!scatteredDirectDrag||scatteredDirectDrag.pointerId!==event.pointerId)return;
-  scatteredDirectDrag=null;
+  scatteredDirectDrag=null;scatteredTapCycle=null;
   syncScatteredDirectOutline(); // Cancellation leaves recipe untouched.
 });
 // Losing capture can occur independently of pointercancel (e.g. modal/tool
 // focus changes, DOM capture arbitration). Never strand the editor in drag.
 preview.addEventListener('lostpointercapture',event=>{
   if(!scatteredDirectDrag||scatteredDirectDrag.pointerId!==event.pointerId)return;
-  scatteredDirectDrag=null;
+  scatteredDirectDrag=null;scatteredTapCycle=null;
   syncScatteredDirectOutline(); // Roll back the temporary outline only.
 });
 window.addEventListener('resize',()=>{if(scatteredDirectActive)syncScatteredDirectOutline();});
@@ -1873,7 +1897,7 @@ function syncScatteredObjectEditor(){
     ' · Layer '+(layer+1)+' of '+order.length:'No shape selected';
   if(scatteredDirectActive&&!scatteredDirectDrag)syncScatteredDirectOutline();
 }
-orbitPicker.addEventListener('change',syncScatteredObjectEditor);
+orbitPicker.addEventListener('change',()=>{scatteredTapCycle=null;syncScatteredObjectEditor();});
 orbitLayers.addEventListener('click',event=>{
   const button=event.target.closest('button[data-orbit-layer]');
   if(!button||button.disabled)return;
