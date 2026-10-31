@@ -1,0 +1,20 @@
+name: Once scattered snap real Chromium mobile acceptance
+on:
+  pull_request:
+    paths:
+      - .github/workflows/once-scattered-snap-browser-20261031.yml
+permissions:
+  contents: read
+jobs:
+  chrome:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Show available browser
+        run: command -v google-chrome || command -v chromium
+      - name: Real phone-size CSS hit cells, magnetic movement and Undo
+        run: node tests/scattered-direct-snap-browser.mjs
