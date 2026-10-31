@@ -1,0 +1,31 @@
+name: Sand contour true Chromium optical acceptance (one-time)
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  sand:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Set up browser
+        run: |
+          npm install --no-save --no-audit --no-fund
+          npx playwright install --with-deps chromium
+      - name: Source-consistent production raster verification
+        run: |
+          node --test tests/sand-material.test.js tests/sand-contour-relief.test.js
+          node scripts/sand-contour-browser-proof.mjs
+          npm run render -- --seed sand-wave-s2 --set family=studio --set geometry=wave --set material=sand-mandala --set textureCoverage=stripes --set textureStrength=90 --set textureScale=37 --set stripeWidth=71 --set spread=48 --width 3024 --height 6552 --out artifacts/sand-contour-browser/05-sand-full-resolution.png
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sand-contour-source-authentic-art
+          path: artifacts/sand-contour-browser
+          if-no-files-found: ignore
+          retention-days: 5
