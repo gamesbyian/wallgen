@@ -1,5 +1,9 @@
 # Current ROYGBIV owner work queue and conditional integration
 
+## V5 · Anchored two-finger Frame tool, 30 October 2026
+
+**PR #894, acceptance run complete, merge pending final lean gate:** the existing opt-in Frame tool now accepts two real touch contacts to zoom and pan around their midpoint without authoring the wallpaper's geometry. It continues an already-previewed one-finger pan as part of the **same** provisional transaction; lifting either finger commits one Undo. ViewZoom is bounded to .5–2.5 and stored to .01, camera pan to .1%; the 10%-step zoom buttons remain unchanged. Any third finger, pointercancel, lost capture, stale source, Escape, mode exit or window blur discards the preview. Temporary CSS scaling is never an exported bitmap; the settled source renderer produces the authoritative frame. Real two-phone Chromium touch-events [#41160826142](https://github.com/gamesbyian/wallgen/actions/runs/41160826142) passed at 320×700 and 412×892, including no-op, gesture commit, one Undo, camera-only geometry and cancellation. Physical Android pinch ergonomics/TalkBack are not tested. Retire the one-shot browser workflow before merge.
+
 ## Next control decisions after merged V3/V5 slices
 
 - **V3 remaining:** design-native transform origin/proportional semantics for imported noncircular silhouettes and text, exact shape handles/locks, and consistent keyboard alternatives. Use the existing source graph; avoid a second scene dialect or authored CSS-pixel sizes.

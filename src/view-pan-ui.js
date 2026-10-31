@@ -1,4 +1,5 @@
-import {beginViewPan,advanceViewPan} from './view-pan-gesture.js';
+import {beginViewPan,advanceViewPan,beginViewPinch,
+  advanceViewPinch,viewPinchPreview} from './view-pan-gesture.js';
 
 // Opt-in preview framing. Existing arrow buttons remain the precision fallback.
 // CSS translation is strictly a transient gesture preview: source regeneration
@@ -9,18 +10,37 @@ export function installViewPanGesture({getRecipe,changeRecipe,onNotice=()=>{},
     typeof changeRecipe!=='function')throw Error('Camera pan needs source, canvas and controls');
   const button=document.createElement('button');
   button.type='button';button.id='viewPanOnCanvas';
-  button.textContent='Drag frame on wallpaper';
+  button.textContent='Drag or pinch frame';
   button.setAttribute('aria-pressed','false');
-  button.setAttribute('aria-label','Drag the wallpaper to reframe the camera');
-  button.title='One-finger frame movement; keeps original artwork positions unchanged';
+  button.setAttribute('aria-label','Drag or pinch the wallpaper to reframe the camera');
+  button.title='One-finger pan or two-finger anchored zoom; artwork positions remain unchanged';
   host.append(button);
   const done=document.createElement('button');
   done.type='button';done.id='viewPanDone';done.hidden=true;
   done.textContent='Done reframing';stage.append(done);
-  let active=false,drag=null;
+  let active=false,drag=null,pinch=null;
+  const originalTouchAction=preview.style.touchAction;
+  const originalTransformOrigin=preview.style.transformOrigin;
+  function releasePointer(id){
+    try{preview.releasePointerCapture(id);}catch{}
+  }
   function clearGesture(){
-    const old=drag;drag=null;preview.style.transform='';
-    if(old)try{preview.releasePointerCapture(old.pointerId);}catch{}
+    const old=drag,oldPinch=pinch;
+    drag=null;pinch=null;
+    preview.style.transform='';
+    preview.style.transformOrigin=originalTransformOrigin;
+    if(old)releasePointer(old.pointerId);
+    if(oldPinch)for(const id of oldPinch.ids)releasePointer(id);
+  }
+  const local=(point,rect)=>({x:point.x-rect.left,y:point.y-rect.top});
+  function drawPinch(){
+    if(!pinch)return;
+    const next=pinch.state,view=pinch.viewport;
+    const placement=viewPinchPreview(pinch.original,next,view);
+    if(!placement)return;
+    preview.style.transformOrigin='50% 50%';
+    const {scale,x,y}=placement;
+    preview.style.transform='translate3d('+x+'px,'+y+'px,0) scale('+scale+')';
   }
   function setActive(value){
     clearGesture();
@@ -36,9 +56,10 @@ export function installViewPanGesture({getRecipe,changeRecipe,onNotice=()=>{},
         document.getElementById('mobileDismissHandle')?.click();
     }
     active=requested;
+    preview.style.touchAction=active?'none':originalTouchAction;
     document.body.classList.toggle('view-pan-canvas-active',active);
     button.setAttribute('aria-pressed',String(active));
-    button.textContent=active?'Stop dragging frame':'Drag frame on wallpaper';
+    button.textContent=active?'Stop reframing':'Drag or pinch frame';
     done.hidden=!active;
   }
   button.addEventListener('click',()=>setActive(!active));
@@ -49,25 +70,77 @@ export function installViewPanGesture({getRecipe,changeRecipe,onNotice=()=>{},
     target?.focus({preventScroll:true});
   });
   preview.addEventListener('pointerdown',event=>{
-    if(!active||drag||event.button!==0||event.isPrimary===false)return;
+    if(!active||event.button!==0)return;
+    if(pinch){
+      // A third finger invalidates the two-touch interpretation.
+      if(event.pointerType==='touch')clearGesture();
+      return;
+    }
+    if(drag){
+      if(event.pointerType!=='touch'||drag.pointerType!=='touch'||
+          drag.pointerId===event.pointerId)return;
+      if(drag.original!==getRecipe()){clearGesture();return;}
+      const {rect,original,state}=drag;
+      const first=local(drag.current,rect);
+      const second=local({x:event.clientX,y:event.clientY},rect);
+      // Carry an already-previewed one-finger pan forward without committing
+      // it or jumping visually when the second finger lands.
+      const staged={...original,viewPanX:state.panX,viewPanY:state.panY};
+      const viewport={width:rect.width,height:rect.height};
+      const start=beginViewPinch({recipe:staged,first,second,viewport});
+      if(!start){clearGesture();return;}
+      event.preventDefault();event.stopImmediatePropagation();
+      pinch={original,ids:[drag.pointerId,event.pointerId],
+        points:[first,second],viewport,state:start,rect};
+      drag=null;
+      try{preview.setPointerCapture(event.pointerId);}catch{}
+      drawPinch();
+      return;
+    }
+    if(event.isPrimary===false)return;
     const rect=preview.getBoundingClientRect(),original=getRecipe();
+    const current={x:event.clientX,y:event.clientY};
     const state=beginViewPan({recipe:original,
-      point:{x:event.clientX,y:event.clientY},
-      viewport:{width:rect.width,height:rect.height}});
+      point:current,viewport:{width:rect.width,height:rect.height}});
     if(!state)return;
     event.preventDefault();event.stopImmediatePropagation();
-    drag={original,state,pointerId:event.pointerId};
+    drag={original,state,pointerId:event.pointerId,
+      pointerType:event.pointerType,rect,current};
     try{preview.setPointerCapture(event.pointerId);}catch{}
   },true);
   preview.addEventListener('pointermove',event=>{
+    if(pinch){
+      const i=pinch.ids.indexOf(event.pointerId);
+      if(i<0)return;
+      event.preventDefault();event.stopImmediatePropagation();
+      if(pinch.original!==getRecipe()){clearGesture();return;}
+      pinch.points[i]=local({x:event.clientX,y:event.clientY},pinch.rect);
+      pinch.state=advanceViewPinch(pinch.state,...pinch.points);
+      drawPinch();
+      return;
+    }
     if(!drag||event.pointerId!==drag.pointerId)return;
     event.preventDefault();event.stopImmediatePropagation();
     if(drag.original!==getRecipe()){clearGesture();return;}
-    drag.state=advanceViewPan(drag.state,{x:event.clientX,y:event.clientY});
+    drag.current={x:event.clientX,y:event.clientY};
+    drag.state=advanceViewPan(drag.state,drag.current);
     const {displacementX:x,displacementY:y}=drag.state;
     preview.style.transform=x||y?'translate3d('+x+'px,'+y+'px,0)':'';
   },true);
   preview.addEventListener('pointerup',event=>{
+    if(pinch){
+      if(!pinch.ids.includes(event.pointerId))return;
+      event.preventDefault();event.stopImmediatePropagation();
+      const {original,state}=pinch;
+      const changed=state.zoom!==original.viewZoom||
+        state.panX!==original.viewPanX||state.panY!==original.viewPanY;
+      const valid=active&&original===getRecipe()&&changed;
+      clearGesture(); // One finger lifting ends the whole two-finger transaction.
+      if(valid)changeRecipe({...original,viewZoom:state.zoom,
+        viewPanX:state.panX,viewPanY:state.panY},
+        {cause:'view_pinch_on_canvas'});
+      return;
+    }
     if(!drag||event.pointerId!==drag.pointerId)return;
     event.preventDefault();event.stopImmediatePropagation();
     const {original,state}=drag;
@@ -78,7 +151,8 @@ export function installViewPanGesture({getRecipe,changeRecipe,onNotice=()=>{},
   },true);
   for(const name of ['pointercancel','lostpointercapture']){
     preview.addEventListener(name,event=>{
-      if(drag&&event.pointerId===drag.pointerId)clearGesture();
+      if((drag&&event.pointerId===drag.pointerId)||
+         (pinch&&pinch.ids.includes(event.pointerId)))clearGesture();
     },true);
   }
   // Switching to another canvas authoring mode disarms framing. These
@@ -97,7 +171,8 @@ export function installViewPanGesture({getRecipe,changeRecipe,onNotice=()=>{},
   });
   // An unrelated canonical update cancels the provisional camera translation.
   document.addEventListener('roygbiv-controls-synced',()=>{
-    if(drag&&drag.original!==getRecipe())clearGesture();
+    if((drag&&drag.original!==getRecipe())||
+       (pinch&&pinch.original!==getRecipe()))clearGesture();
   });
   return {end:()=>setActive(false),get active(){return active;}};
 }
