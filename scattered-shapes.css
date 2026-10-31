@@ -51,6 +51,13 @@ body.scattered-direct-active #preview:active{cursor:grabbing}
   border:2px solid #ffcfef;background:#301b35;color:#fff;
   font-size:12px;font-weight:750;box-shadow:0 3px 15px #0008}
 #scatteredDirectDone[hidden]{display:none!important}
+#scatteredDirectAxis{position:absolute;z-index:12;top:10px;left:10px;
+  min-width:100px;min-height:44px;padding:8px 11px;border-radius:11px;
+  border:2px solid #ffcfef;background:#301b35;color:#fff;
+  font-size:12px;font-weight:750;box-shadow:0 3px 15px #0008}
+#scatteredDirectAxis[aria-pressed="true"]{background:#844267;border-color:#fff}
+#scatteredDirectAxis[hidden]{display:none!important}
+#scatteredDirectAxis:focus-visible{outline:2px solid #fff;outline-offset:3px}
 #scatteredDirectDone:focus-visible{outline:2px solid #fff;outline-offset:3px}
 #scatteredMoveOnCanvas[aria-pressed="true"]{background:#4a2442;color:#fff;
   border-color:#e995c4}

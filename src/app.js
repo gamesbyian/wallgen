@@ -32,6 +32,7 @@ import {embroideryObjectChoices,resolveEmbroideryObjectChoice,reconcileEmbroider
 import {scatteredPixelToWorld,scatteredWorldToPixel,pickScatteredRegion,hitScatteredRegions,scatteredMoveOverride,clamp as clampScattered} from './scattered-drag.js';
 import {installViewPanGesture} from './view-pan-ui.js';
 import {beginScatteredScale,advanceScatteredScale} from './scattered-scale-gesture.js';
+import {beginAxisDrag,axisConstrainedPoint} from './axis-constrained-drag.js';
 import {continuesScatteredTapCycle,advanceScatteredTapCycle} from './scattered-overlap-cycle.js';
 import {cloneGeometrySnapshot} from './geometry-asset.js';
 import {parseStoredFavorites} from './favorites-store.js';
@@ -1605,6 +1606,7 @@ document.querySelector('.editor-tool-card[data-editor-tool="scattered-edges"]')
 // and camera controls are otherwise completely unchanged. Only pointerup
 // commits a recipe, making the whole drag ONE Undo step.
 let scatteredDirectActive=false,scatteredDirectDrag=null,scatteredScaleDrag=null;
+let scatteredAxisLock=false; // UI gesture modifier only; never saved in recipes.
 let scatteredTapCycle=null; // Only source-aware editor selection, never recipe data.
 const scatteredDirectOutline=document.createElement('div');
 scatteredDirectOutline.id='scatteredDirectOutline';
@@ -1627,6 +1629,20 @@ scatteredDirectDone.id='scatteredDirectDone';
 scatteredDirectDone.textContent='Done moving';
 scatteredDirectDone.hidden=true;
 document.querySelector('.studio-stage')?.append(scatteredDirectDone);
+const scatteredAxisButton=document.createElement('button');
+scatteredAxisButton.type='button';
+scatteredAxisButton.id='scatteredDirectAxis';
+scatteredAxisButton.textContent='Lock axis';
+scatteredAxisButton.hidden=true;
+scatteredAxisButton.setAttribute('aria-pressed','false');
+scatteredAxisButton.setAttribute('aria-label','Lock shape movement to one horizontal or vertical axis');
+scatteredAxisButton.title='One-thumb movement constraint. First 8 CSS px chooses the direction; shape geometry remains vector-based.';
+document.querySelector('.studio-stage')?.append(scatteredAxisButton);
+scatteredAxisButton.addEventListener('click',()=>{
+  scatteredAxisLock=!scatteredAxisLock;
+  scatteredAxisButton.setAttribute('aria-pressed',String(scatteredAxisLock));
+  scatteredAxisButton.textContent=scatteredAxisLock?'Axis locked':'Lock axis';
+});
 function setScatteredDirectActive(next){
   // Closing a drag tool is a cancellation: release capture but never save a
   // provisional circle. A delayed lostpointercapture then sees no active drag.
@@ -1643,6 +1659,7 @@ function setScatteredDirectActive(next){
   moveOnCanvas.setAttribute('aria-pressed',String(scatteredDirectActive));
   moveOnCanvas.textContent=scatteredDirectActive?'Stop moving shapes':'Move shapes on canvas';
   scatteredDirectDone.hidden=!scatteredDirectActive;
+  scatteredAxisButton.hidden=!scatteredDirectActive;
   if(scatteredDirectActive){
     // The inspector may never have been opened. Populate real selection IDs
     // before the very first canvas tap or an empty <select> silently resets
@@ -1793,6 +1810,8 @@ preview.addEventListener('pointerdown',event=>{
   syncScatteredObjectEditor();
   scatteredDirectDrag={pointerId:event.pointerId,index,original:current,
     startWorld:world,circle:{...circle},current:{...circle},moved:false,
+    axisDrag:beginAxisDrag([event.clientX,event.clientY],
+      [circle.cx,circle.cy],scatteredAxisLock||event.shiftKey),
     tapPoint,previous,hits};
   try{preview.setPointerCapture(event.pointerId);}catch{}
 });
@@ -1802,8 +1821,14 @@ preview.addEventListener('pointermove',event=>{
   event.preventDefault();event.stopPropagation();
   const pos=pixelFromPointer(event);
   const world=scatteredPixelToWorld(current,preview.width,preview.height,pos.x,pos.y);
-  const cx=clampScattered(drag.circle.cx+world.x-drag.startWorld.x,-300,900);
-  const cy=clampScattered(drag.circle.cy+world.y-drag.startWorld.y,-650,1950);
+  const raw=[clampScattered(drag.circle.cx+world.x-drag.startWorld.x,-300,900),
+    clampScattered(drag.circle.cy+world.y-drag.startWorld.y,-650,1950)];
+  // Pick the dominant axis in physical CSS-screen space, but constrain the
+  // original authored centre. The lock is frozen when this drag begins.
+  const constrained=axisConstrainedPoint(drag.axisDrag,
+    [event.clientX,event.clientY],raw);
+  drag.axisDrag=constrained.state;
+  const [cx,cy]=constrained.point;
   drag.current={...drag.circle,cx,cy};
   drag.moved=Math.hypot(cx-drag.circle.cx,cy-drag.circle.cy)>.9;
   syncScatteredDirectOutline(drag.current);
