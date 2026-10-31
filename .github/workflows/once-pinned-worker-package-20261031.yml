@@ -1,0 +1,52 @@
+name: Once pinned hosted Worker preview bundle without deployment
+on:
+  pull_request:
+    paths:
+      - .github/workflows/once-pinned-worker-package-20261031.yml
+permissions:
+  contents: read
+jobs:
+  release-package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify actual immutable Pages pin without changing any Cloudflare state
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location --retry 5 --retry-delay 2 'https://gamesbyian.github.io/wallgen/trusted-renderer/roygbiv-render-version.json' -o /tmp/roygbiv-trusted-render-version.json
+          node --input-type=module -e "
+            import fs from 'node:fs';
+            const p=JSON.parse(fs.readFileSync('cloudflare/mcp/trusted-renderer-release.json'));
+            const m=JSON.parse(fs.readFileSync('/tmp/roygbiv-trusted-render-version.json'));
+            if(m.commit!==p.commit||!(/^[a-f0-9]{40}$/).test(p.commit))throw Error('Public renderer release pin mismatch');
+            console.log('APPROVED_RENDERER_PIN',p.commit);
+          "
+      - name: Produce exact intentionally preview-enabled release config WITHOUT deploy
+        run: |
+          set -euo pipefail
+          PIN="$(node -p "require('./cloudflare/mcp/trusted-renderer-release.json').commit")"
+          node scripts/prepare-hosted-preview-config.mjs --sha "$PIN" --manifest /tmp/roygbiv-trusted-render-version.json --mode preview
+          FILE=cloudflare/mcp/wrangler.release.generated.toml
+          grep -F 'HOSTED_PREVIEW_ENABLED = "true"' "$FILE"
+          grep -F 'RENDER_SOURCE_URL = "https://gamesbyian.github.io/wallgen/trusted-renderer/"' "$FILE"
+          grep -F "RENDER_EXPECTED_SHA = \"$PIN\"" "$FILE"
+          grep -F 'binding = "BROWSER"' "$FILE"
+          grep -F 'binding = "AUTH_SERVER"' "$FILE"
+      - name: Run entire Cloudflare security suite and package real Worker without deploying
+        run: |
+          set -euo pipefail
+          npm install --no-save --package-lock=false --no-audit --no-fund
+          npm run test:cloudflare
+          npx wrangler deploy --dry-run --config cloudflare/mcp/wrangler.release.generated.toml --outdir artifacts/pinned-release-proof
+          FILE=cloudflare/mcp/artifacts/pinned-release-proof/index.js
+          test -s "$FILE"
+          SIZE="$(wc -c < "$FILE")"
+          test "$SIZE" -ge 200000 && test "$SIZE" -le 8000000
+          sha256sum "$FILE"
+          echo "PINNED_PREVIEW_WORKER_DRY_RUN_PASS bytes=$SIZE"
