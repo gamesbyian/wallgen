@@ -35,10 +35,12 @@ function strokeDeposit(ctx,style,path,inkWidth,depth){
   // silhouette. Caller supplies an already-clipped Canvas2D drawing context.
   ctx.lineWidth=inkWidth;
   ctx.strokeStyle='rgba(0,0,0,'+(style.dark*(depth===0?1:.72)).toFixed(4)+')';
-  ctx.stroke(path);
+  // The no-argument Canvas2D overload strokes the current path. Passing
+  // explicit undefined may select the Path2D overload in some browsers.
+  if(path===undefined)ctx.stroke();else ctx.stroke(path);
   ctx.lineWidth=inkWidth*.48;
   ctx.strokeStyle='rgba(255,255,255,'+(style.light*(depth===0?.85:1)).toFixed(4)+')';
-  ctx.stroke(path);
+  if(path===undefined)ctx.stroke();else ctx.stroke(path);
 }
 /** Each polygon offset is measured against the ORIGINAL collection of rings.
  * This uses the existing even-odd Euclidean offset engine, not centroid
