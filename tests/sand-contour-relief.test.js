@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {normalizeRecipe,resolveScene,encodeRecipe,decodeRecipe} from '../src/model.js';
 import {sandRimStyles,supportsSandRibbonRim,paintSandContourRim,
-  paintSandStrokeGlint} from '../src/sand-contour-relief.js';
+  paintSandStrokeGlint,sandStrokeGlintFootprint} from '../src/sand-contour-relief.js';
 import {readFileSync} from 'node:fs';
 
 const scene=(extra={})=>resolveScene(normalizeRecipe({
@@ -60,5 +60,44 @@ test('actual renderer wires compound even-odd clipping, source rails, crossing r
   assert.match(src,/paintSandContourRim\(ctx,sandRims\.some\(s=>s\.lighting\)\?\[sandRegionPath\(object\)\]:null,sandRims\)/);
   assert.match(src,/paintSandContourRim\(g,\[traceEdge\(stripe/);
   assert.match(src,/paintSandContourRim\(g,\[traceEdge\(branch/);
-  assert.match(src,/paintSandStrokeGlint\(ctx,nesting\.strokeWidth,sandRims\)/);
+  assert.match(src,/paintSandStrokeGlint\(ctx,nesting\.strokeWidth,sandRims,litGlintPath\)/);
+});
+
+test('lit glints and tiny contact shades remain inside every source stroke width',()=>{
+  for(const sourceWidth of [.12,.4,.75,1,2,3,7,18]){
+    const profile=sandStrokeGlintFootprint(sourceWidth);
+    assert.ok(profile.width>0&&profile.width<sourceWidth);
+    assert.ok(profile.offset>0);
+    // Minkowski width bound: offset by source normal cannot escape the
+    // original stroked path even when its tangent changes at a sharp tip.
+    assert.ok(profile.offset+profile.width/2<=sourceWidth/2+1e-12);
+  }
+  assert.equal(sandStrokeGlintFootprint(0),null);
+  assert.equal(sandStrokeGlintFootprint(Infinity),null);
+  assert.equal(sandStrokeGlintFootprint(NaN),null);
+  const mk=()=>{const ops=[];return {ops,
+    save(){ops.push(['save'])},restore(){ops.push(['restore'])},
+    translate(x,y){ops.push(['translate',x,y])},
+    stroke(p){ops.push(['stroke',p??'current',this.strokeStyle,this.lineWidth])}
+  }};
+  const nw=sandRimStyles(scene({lightingMood:'golden',
+    lightDirection:'top-left',lightStrength:80,shadowStrength:65}));
+  const se=sandRimStyles(scene({lightingMood:'golden',
+    lightDirection:'bottom-right',lightStrength:80,shadowStrength:65}));
+  const a=mk(),b=mk();
+  assert.equal(paintSandStrokeGlint(a,2,nw,'canonical-path'),true);
+  assert.equal(paintSandStrokeGlint(b,2,se,'canonical-path'),true);
+  const strokes=a.ops.filter(x=>x[0]==='stroke');
+  assert.equal(strokes.length,2);
+  assert.ok(strokes.every(x=>x[1]==='canonical-path'));
+  assert.ok(strokes[0][2].includes(nw[0].lighting.shade));
+  assert.ok(strokes[1][2].includes(nw[0].lighting.high));
+  assert.ok(a.ops.filter(x=>x[0]==='translate')[0][1]>0);
+  assert.ok(b.ops.filter(x=>x[0]==='translate')[0][1]<0);
+  assert.equal(paintSandStrokeGlint(mk(),2,[],null),false);
+  const legacy=mk();
+  assert.equal(paintSandStrokeGlint(legacy,2,
+    sandRimStyles(scene()),null),true);
+  assert.deepEqual(legacy.ops.filter(x=>x[0]==='stroke').map(x=>x[1]),
+    ['current']);
 });
