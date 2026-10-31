@@ -16,8 +16,9 @@ const server=createServer(async(req,res)=>{
  try{
   const path=resolve(root,'.'+decodeURIComponent(new URL(req.url,'http://local').pathname));
   if(path!==root&&!path.startsWith(root+'/')){res.writeHead(403).end();return;}
-  res.writeHead(200,{'Content-Type':mime[extname(path)]||'application/octet-stream',
-   'Cache-Control':'no-store'}).end(await readFile(path===root?join(root,'index.html'):path));
+  const file=path===root?join(root,'index.html'):path;
+  res.writeHead(200,{'Content-Type':mime[extname(file)]||'application/octet-stream',
+   'Cache-Control':'no-store'}).end(await readFile(file));
  }catch{res.writeHead(404).end('Not Found');}
 });
 const report=[],errors=[];
