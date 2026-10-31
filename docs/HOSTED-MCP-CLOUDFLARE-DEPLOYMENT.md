@@ -1,5 +1,11 @@
 # ROYGBIV hosted MCP on Cloudflare
 
+## 31 October 2026 · source-integrated early revision preflight (not deployed)
+
+[PR #904](https://github.com/gamesbyian/wallgen/pull/904) merged at `53a80fb8` and mandatory [quick CI #41234675819](https://github.com/gamesbyian/wallgen/actions/runs/41234675819) passed. Before the fix, an already stale Pages full-SHA marker was checked only *inside* the paid browser, after a preview lease, launch pacing and D1 daily allowance consumption. The Worker code now performs an inexpensive cache-bypassing GET of the **same trusted public manifest** immediately after owner-authorised recipe lookup but **before** the lease, D1 allowance and Browser Run. An absent, malformed or mismatched marker causes an explicit refusal without attempting a paid browser launch. Shared source/expected-SHA validation and the independent Chromium-side check remain mandatory, so a Pages update between preflight and render still fails closed. No old source, guessed SHA or unauthenticated client-supplied URL may bypass either guard.
+
+**Deployment truth:** this is **merged source only** until the owner-approved Worker release has been packaged, audited, and deployed. The presently running Worker was not changed by this PR and can still consume an allowance on revision mismatch. Existing manual `deploy-preview` approval and all D1/browser quota ceilings remain intact. First production acceptance should confirm the actual published Pages SHA, live Worker version, early refusal path (with unchanged allowance on stale SHA), then a genuine owner-scoped PNG image response once release versions agree. Do not treat Node tests, a dry-run bundle or authenticated `inspect` as actual PNG display acceptance.
+
 ## 31 October 2026 · actual deployed state and verified preview refusal
 
 The earlier 27–28 October descriptions below are historical checkpoints. **Live read-only Cloudflare settings inspection now confirms** both `roygbiv-auth` and `roygbiv-mcp` deployed. The MCP Worker **has** a Browser binding, `HOSTED_PREVIEW_ENABLED=true`, `RENDER_SOURCE_URL=https://gamesbyian.github.io/wallgen/`, and the exact pinned `RENDER_EXPECTED_SHA=86831ae4189fde164c3454792a561c1a18c896dd`. This is an opt-in active *staging configuration*, not proof that its rendered PNG is currently usable.
