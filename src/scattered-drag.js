@@ -32,6 +32,21 @@ export function pointInRing(point,ring){
   }
   return inside;
 }
+// Boundary-distance hit assistance for an imported vector silhouette. The
+// painter's even-odd fill remains authoritative; this is a transient pointer
+// target only, and must never create painted or serialized geometry.
+function nearRingEdge(point,ring,reachSquared){
+  if(!Array.isArray(ring)||ring.length<3)return false;
+  for(let i=0,j=ring.length-1;i<ring.length;j=i++){
+    const a=ring[j],b=ring[i];
+    if(!finite(a?.x)||!finite(a?.y)||!finite(b?.x)||!finite(b?.y))continue;
+    const dx=b.x-a.x,dy=b.y-a.y,lengthSquared=dx*dx+dy*dy;
+    const t=lengthSquared>0?clamp(((point.x-a.x)*dx+(point.y-a.y)*dy)/lengthSquared,0,1):0;
+    const x=point.x-a.x-t*dx,y=point.y-a.y-t*dy;
+    if(x*x+y*y<=reachSquared)return true;
+  }
+  return false;
+}
 /** All intersected painted regions, frontmost first. The caller decides
  * whether to pick immediately or cycle; never alter scene/paint order. */
 export function hitScatteredRegions(objects,point,tolerance=0){
@@ -50,6 +65,13 @@ export function hitScatteredRegions(objects,point,tolerance=0){
       // Exactly the existing even-odd semantics, retaining real compound
       // holes and disconnected islands. No raster hit map is introduced.
       inside=object.rings.reduce((hit,ring)=>hit!==pointInRing(point,ring),false);
+      // The circular editor already offers a finger-sized outer reach.
+      // Give irregular silhouettes the same courtesy near OUTER edges,
+      // without making a genuine cutout/hole or overlapping even-odd void
+      // selectable. Points contained by any ring are not outer-edge taps.
+      const reach=finite(tolerance)?Math.max(0,tolerance):0;
+      if(!inside&&reach>0&&!object.rings.some(ring=>pointInRing(point,ring)))
+        inside=object.rings.some(ring=>nearRingEdge(point,ring,reach*reach));
     }
     if(inside)hits.push(object);
   }
