@@ -27,6 +27,26 @@ jobs:
       # marker rather than silently drawing private recipes with newer assets.
       - name: Stamp exact published rendering revision
         run: printf '{"commit":"%s"}\n' "$GITHUB_SHA" > roygbiv-render-version.json
+      # Promote separately from ordinary app edits: the hosted Worker is
+      # trusted to render ONLY this pinned, immutable source tree. Every
+      # rolling main Pages publish re-materializes the same commit bytes.
+      - name: Include immutable trusted renderer release
+        run: |
+          set -euo pipefail
+          PIN="$(node -p "require('./cloudflare/mcp/trusted-renderer-release.json').commit")"
+          [[ "$PIN" =~ ^[a-f0-9]{40}$ ]] || { echo 'Invalid renderer release pin' >&2; exit 1; }
+          test ! -e trusted-renderer || { echo 'Unexpected renderer release tree in checkout' >&2; exit 1; }
+          git fetch --no-tags --depth=1 origin "$PIN"
+          test "$(git rev-parse "$PIN^{commit}")" = "$PIN"
+          mkdir trusted-renderer
+          git archive --format=tar "$PIN" src assets render-host.html |
+            tar -xf - -C trusted-renderer
+          test -s trusted-renderer/render-host.html
+          test -s trusted-renderer/src/renderer.js
+          test -s trusted-renderer/src/typography-fonts.js
+          test -s trusted-renderer/assets/fonts/manifest.json
+          printf '{"commit":"%s"}\n' "$PIN" > trusted-renderer/roygbiv-render-version.json
+          echo "Published separate trusted renderer $PIN with live app $GITHUB_SHA"
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
