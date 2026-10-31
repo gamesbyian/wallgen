@@ -8,6 +8,7 @@ import {findPathCrossings,crossingTopIsLater,crossingBranchClip} from './crossin
 import {materialContourHeight,paintMaterial} from './material-surface.js';
 import {sandRimStyles,supportsSandRibbonRim,paintSandContourRim,paintSandStrokeGlint} from './sand-contour-relief.js';
 import {sandBeadStyles,paintSandRegionBeads,paintSandRibbonBeads,paintSandNestedBeads} from './sand-beads.js';
+import {sandEchoStyles,paintSandRegionEchoes,paintSandRibbonEchoes} from './sand-contour-echo.js';
 import {applyPhotoFinish} from './photo-look.js';
 import {matchingEmbroidery,drawRibbonEmbroidery,drawRegionEmbroidery} from './embroidery.js';
 
@@ -865,6 +866,7 @@ export function presentNudgedArtwork(canvas, layers, recipe) {
 export function drawRegionObjects(ctx,scene){
   const sandRims=sandRimStyles(scene);
   const sandBeads=sandBeadStyles(scene);
+  const sandEchoes=sandEchoStyles(scene);
   const divider=scene.dividerColor==='background'?scene.background:scene.dividerColor;
   const hasDivider=scene.dividerColor!=='none'&&scene.dividerWidth>0;
   const trace=object=>{
@@ -937,7 +939,7 @@ export function drawRegionObjects(ctx,scene){
       ctx.restore();
     }
     drawRegionInteriors(ctx,object,scene.interiorElements,scene.structure,scene.renderBounds);
-    if(sandRims.length||sandBeads.length){
+    if(sandRims.length||sandBeads.length||sandEchoes.length){
       // Each actual region, including disjoint imported islands and holes,
       // owns its inward ridge. Never shade the empty cutouts or neighbours.
       ctx.save();trace(object);
@@ -945,6 +947,7 @@ export function drawRegionObjects(ctx,scene){
       trace(object);
       paintSandContourRim(ctx,null,sandRims);
       paintSandRegionBeads(ctx,object,sandBeads);
+      paintSandRegionEchoes(ctx,object,sandEchoes,scene.renderBounds);
       ctx.restore();
     }
     if(!hasDivider){
@@ -1024,6 +1027,7 @@ export function drawWallpaper(canvas, recipe, options={}) {
   g.rotate(scene.angle);
   const sandRims=sandRimStyles(scene);
   const sandBeads=sandBeadStyles(scene);
+  const sandEchoes=sandEchoStyles(scene);
   const crossingBundles=[];
   for(const bundle of scene.objects){
   const bundleOffset=bundle.offset;
@@ -1050,13 +1054,17 @@ export function drawWallpaper(canvas, recipe, options={}) {
     drawOutline(g,path,stripe,scene);
     g.fillStyle=stripe.color;g.strokeStyle=stripe.color;
     fillMotif(g,stripe,scene.extent,scene);
-    if((sandRims.length||sandBeads.length)&&supportsSandRibbonRim(scene,stripe)){
+    if((sandRims.length||sandBeads.length||sandEchoes.length)&&supportsSandRibbonRim(scene,stripe)){
       g.save();g.clip(stripeFillPath(stripe,scene.extent,scene));
       // Source edge rails, no fake transverse cap at a crossing repair.
       paintSandContourRim(g,[traceEdge(stripe,scene.extent,-1,scene),
         traceEdge(stripe,scene.extent,1,scene)],sandRims);
       paintSandRibbonBeads(g,stripe,scene.extent,sandBeads,(station,side)=>
         edgePoint(station,stripe,scene.extent,side,scene));
+      paintSandRibbonEchoes(g,stripe,scene.extent,sandEchoes,
+        (station,side)=>edgePoint(station,stripe,scene.extent,side,scene),
+        station=>samplePath(stripe,station,scene.extent),
+        station=>widthAt(stripe,station,scene.extent));
       g.restore();
     }
     const stitch=matchingEmbroidery(scene.surfaceTreatments,{
@@ -1126,7 +1134,7 @@ export function drawWallpaper(canvas, recipe, options={}) {
           drawCrossingOutline(g,branch,scene);
           g.fillStyle=stripe.color;g.strokeStyle=stripe.color;
           fillMotif(g,branch,scene.extent,scene);
-          if((sandRims.length||sandBeads.length)&&supportsSandRibbonRim(scene,branch)){
+          if((sandRims.length||sandBeads.length||sandEchoes.length)&&supportsSandRibbonRim(scene,branch)){
             g.save();g.clip(stripeFillPath(branch,scene.extent,scene));
             paintSandContourRim(g,[traceEdge(branch,scene.extent,-1,scene),
               traceEdge(branch,scene.extent,1,scene)],sandRims);
@@ -1134,6 +1142,10 @@ export function drawWallpaper(canvas, recipe, options={}) {
             // crossing clip's temporary start/end (no phase restart).
             paintSandRibbonBeads(g,stripe,scene.extent,sandBeads,(station,side)=>
               edgePoint(station,stripe,scene.extent,side,scene),{start,end});
+            paintSandRibbonEchoes(g,stripe,scene.extent,sandEchoes,
+              (station,side)=>edgePoint(station,stripe,scene.extent,side,scene),
+              station=>samplePath(stripe,station,scene.extent),
+              station=>widthAt(stripe,station,scene.extent),{start,end});
             g.restore();
           }
           // The painter must replay exactly the top branch's thread surface,
