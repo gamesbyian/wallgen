@@ -15,8 +15,9 @@ const types={'.html':'text/html','.js':'text/javascript','.json':'application/js
 const server=createServer(async(req,res)=>{
   const file=resolve(root,'.'+decodeURIComponent(new URL(req.url,'http://localhost').pathname));
   if(!file.startsWith(root+'/')&&file!==root){res.writeHead(403).end();return;}
-  try{const content=await readFile(file===root?join(root,'index.html'):file);
-    res.writeHead(200,{'Content-Type':types[extname(file)]||'application/octet-stream'});
+  const target=file===root?join(root,'index.html'):file;
+  try{const content=await readFile(target);
+    res.writeHead(200,{'Content-Type':types[extname(target)]||'application/octet-stream'});
     res.end(content);}catch{res.writeHead(404).end('not found');}
 });
 const listen=()=>new Promise((ok,fail)=>{server.once('error',fail);server.listen(0,'127.0.0.1',ok)});
