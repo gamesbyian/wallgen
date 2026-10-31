@@ -175,8 +175,49 @@ try{
     await evaluate('document.getElementById("undo").click()');
     await waitFor('Math.abs(JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).textOverlays.find(x=>x.id==="moving").x-30)<.001');
     assert.deepEqual(await source(),recipe);
+    // The Text object picker can switch selection while pointer capture is
+    // held. That must abandon the OLD object's preview and pointer owner.
+    const start=world(rect,180,676);
+    await dispatch('mouseMoved',start.x,start.y);
+    await dispatch('mousePressed',start.x,start.y,1);
+    await dispatch('mouseMoved',start.x+34,start.y,1);
+    await evaluate('(()=>{const picker=document.querySelector("[data-text-picker]");picker.value="guide";picker.dispatchEvent(new Event("change",{bubbles:true}))})()');
+    await dispatch('mouseMoved',start.x+75,start.y,1);
+    await dispatch('mouseReleased',start.x+75,start.y);
+    assert.deepEqual(await source(),recipe,
+      'picker selection change during a captured move must never commit old text');
+    // The same rule must apply to a captured scale handle, and no selection
+    // change may cause the old operation to modify the newly chosen object.
+    await evaluate('(()=>{const picker=document.querySelector("[data-text-picker]");picker.value="moving";picker.dispatchEvent(new Event("change",{bubbles:true}))})()');
+    const grip=await evaluate('(()=>{const h=document.querySelector(".text-direct-scale"),r=h.getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2;const top=document.elementFromPoint(x,y);return {x,y,hit:top===h}})()');
+    assert.equal(grip.hit,true,'44px scale handle must be reachable at '+width);
+    await dispatch('mouseMoved',grip.x,grip.y);
+    await dispatch('mousePressed',grip.x,grip.y,1);
+    await dispatch('mouseMoved',grip.x+30,grip.y+30,1);
+    await evaluate('(()=>{const picker=document.querySelector("[data-text-picker]");picker.value="guide";picker.dispatchEvent(new Event("change",{bubbles:true}))})()');
+    await dispatch('mouseReleased',grip.x+30,grip.y+30);
+    assert.deepEqual(await source(),recipe,
+      'picker selection change during a captured scale must not commit geometry');
+    await evaluate('(()=>{const picker=document.querySelector("[data-text-picker]");picker.value="moving";picker.dispatchEvent(new Event("change",{bubbles:true}))})()');
+    // Simulate the browser relinquishing active focus without a matching
+    // pointercancel; later pointerup must never commit a ghost drag.
+    await dispatch('mouseMoved',start.x,start.y);
+    await dispatch('mousePressed',start.x,start.y,1);
+    await dispatch('mouseMoved',start.x+40,start.y,1);
+    await evaluate('window.dispatchEvent(new Event("blur"))');
+    await dispatch('mouseReleased',start.x+40,start.y);
+    assert.deepEqual(await source(),recipe,'blur must discard the source draft');
+    // A CSS-layout / orientation change invalidates the gesture's screen
+    // metric; release after resize must also be a no-op.
+    await dispatch('mouseMoved',start.x,start.y);
+    await dispatch('mousePressed',start.x,start.y,1);
+    await dispatch('mouseMoved',start.x+40,start.y,1);
+    await evaluate('window.dispatchEvent(new Event("resize"))');
+    await dispatch('mouseReleased',start.x+40,start.y);
+    assert.deepEqual(await source(),recipe,'resize must abandon CSS-space draft');
     assert.equal(jsErrors.length,0,'No uncaught editor errors');
     results.push({width,height,snap:60,free:59,keyboard:[31,36,35.9],
+      staleSelectionCancelled:true,blurAndResizeCancelled:true,
       oneUndoEach:true,hitCells:controls.map(c=>({id:c.id,width:c.width,height:c.height})),
       notTested:['physical Pixel','TalkBack']});
     console.log('TEXT_DIRECT_CONTROLS_BROWSER_PASS',JSON.stringify(results.at(-1)));

@@ -170,3 +170,10 @@ export function nudgeTextOverlay(recipe,id,key,{coarse=false,fine=false}={}){
     y:direction[1]*DESIGN_HEIGHT*step/100
   });
 }
+
+/** Gesture ownership includes transient editor selection as well as the
+ * canonical recipe incarnation. Switching the Text object picker without
+ * editing the recipe must revoke a captured gesture immediately. */
+export function textGestureHasOwnership(startRecipe,currentRecipe,id,selectedId){
+  return selectedId===id&&textGestureOwnsCurrentRecipe(startRecipe,currentRecipe,id);
+}
