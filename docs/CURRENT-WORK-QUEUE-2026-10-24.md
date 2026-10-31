@@ -1,5 +1,10 @@
 # Current ROYGBIV owner work queue and conditional integration
 
+## V3 · Snap intent threshold for text movement (31 October 2026, software candidate)
+
+After #917 and real Chromium acceptance #920, the direct text mover now requires **8 CSS pixels of actual pointer movement** before acquiring a magnetic text anchor. Previously an unintentional 1px jitter could acquire an existing guide up to 8px away, moving text on pointerup despite no meaningful drag. This uses the shared axis-lock `AXIS_LOCK_THRESHOLD_CSS_PX` constant and original pointerdown snapshot, adds no canonical geometry or schema field, and clears acquired guide locks if pointer movement returns below the threshold. Axis locks remain independent. Pure and wiring tests live in `tests/text-anchor-snap.test.js`, already included in the quick suite. Physical Android and TalkBack remain untested. **Pending CI and integration.**
+
+
 ## V3 · Real-browser text control acceptance and compact-grip repair (31 October 2026)
 
 **[PR #920](https://github.com/gamesbyian/wallgen/pull/920) verified by real two-viewport Chromium [#41244512831](https://github.com/gamesbyian/wallgen/actions/runs/41244512831) PASS:** a 412×892 regression exposed a previously hidden hit-target overlap: an 83 CSS-pixel short text banner did not enter the old <80px compact-grip mode, so its inset 44px scale button intercepted centre drags. At 320×700 the same 59px banner used detached grips correctly. The original `compactTextGripLayout` remains the placement engine; pure `shouldDetachTextGrips` now selects it whenever two 44px controls risk obscuring a short selection, including the inset rotation case near the top edge. No authored geometry, recipe field or raster paint changed. The permanent `tests/text-direct-controls-browser.mjs` verifies both viewport sizes, unoccluded >=44px Axis/Snap/Done targets, true snap-on x=60% versus free x=59%, keyboard movement (1%, 5%, 0.1%), individual Undo and unchanged source after Undo. Source tests cover the width threshold and top-edge case. The temporary browser workflow is removed before merge; this exact run is **browser evidence**, not physical Pixel/TalkBack acceptance.
