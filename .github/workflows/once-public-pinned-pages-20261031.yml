@@ -19,9 +19,9 @@ jobs:
           set -euo pipefail
           PIN="$(node -p "require('./cloudflare/mcp/trusted-renderer-release.json').commit")"
           ROOT='https://gamesbyian.github.io/wallgen'
-          curl --fail --silent --show-error --location --retry 5 --retry-delay 2 \\
+          curl --fail --silent --show-error --location --retry 5 --retry-delay 2 \
             "$ROOT/roygbiv-render-version.json" -o /tmp/root-version.json
-          curl --fail --silent --show-error --location --retry 5 --retry-delay 2 \\
+          curl --fail --silent --show-error --location --retry 5 --retry-delay 2 \
             "$ROOT/trusted-renderer/roygbiv-render-version.json" -o /tmp/trusted-version.json
           node --input-type=module -e "
             import fs from 'node:fs';
@@ -36,7 +36,7 @@ jobs:
           git fetch --no-tags --depth=1 origin "$PIN"
           for path in src/renderer.js src/model.js src/typography-fonts.js assets/fonts/manifest.json render-host.html; do
             file="$(mktemp)"
-            curl --fail --silent --show-error --location --retry 5 --retry-delay 2 \\
+            curl --fail --silent --show-error --location --retry 5 --retry-delay 2 \
               "$ROOT/trusted-renderer/$path" -o "$file"
             expected="$(git show "$PIN:$path" | sha256sum | cut -d' ' -f1)"
             actual="$(sha256sum "$file" | cut -d' ' -f1)"
