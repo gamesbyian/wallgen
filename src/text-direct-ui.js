@@ -5,6 +5,7 @@ import {typefaceCssFamily} from './typography-fonts.js';
 import {compactTextGripLayout} from './text-grip-layout.js';
 import {beginPointerRotation,advancePointerRotation} from './rotation-gesture.js';
 import {beginAxisDrag,axisConstrainedPoint} from './axis-constrained-drag.js';
+import {snapTextAnchor} from './text-anchor-snap.js';
 import {designPointFromPointer,dragTextOverlay,
   dragTextTransform,transformTextOverlay,measuredTextBounds,
   measureCanvasText,textGestureOwnsCurrentRecipe} from './text-direct-geometry.js';
@@ -64,6 +65,19 @@ export function installTextCanvasMover({
     axisLocked=!axisLocked;
     axisButton.setAttribute('aria-pressed',String(axisLocked));
     axisButton.textContent=axisLocked?'Axis locked':'Lock axis';
+  });
+  const snapButton=document.createElement('button');
+  snapButton.type='button';snapButton.id='textDirectSnap';
+  snapButton.textContent='Snap anchors';snapButton.hidden=true;
+  snapButton.setAttribute('aria-pressed','false');
+  snapButton.setAttribute('aria-label','Snap text anchors to other visible text and canvas centre');
+  snapButton.title='Magnetically align the selected text anchor with other visible text anchors or the wallpaper centre; independent of Lock axis.';
+  stage.append(snapButton);
+  let snapEnabled=false;
+  snapButton.addEventListener('click',()=>{
+    snapEnabled=!snapEnabled;
+    snapButton.setAttribute('aria-pressed',String(snapEnabled));
+    snapButton.textContent=snapEnabled?'Snapping on':'Snap anchors';
   });
   let active=false,drag=null,transformDrag=null;
   const fontContext=canvas.getContext('2d');
@@ -168,6 +182,7 @@ export function installTextCanvasMover({
     button.textContent=active?'Stop moving text':'Move text on wallpaper';
     done.hidden=!active;
     axisButton.hidden=!active;
+    snapButton.hidden=!active;
     if(!active)outline.hidden=true;
     else redraw();
   }
@@ -191,6 +206,7 @@ export function installTextCanvasMover({
       axisDrag:beginAxisDrag([event.clientX,event.clientY],
         [DESIGN_WIDTH*item.x/100,DESIGN_HEIGHT*item.y/100],
         axisLocked||event.shiftKey),
+      snapEnabled,snapLocks:{x:null,y:null},
       original:getRecipe(),next:getRecipe(),moved:false};
     try{canvas.setPointerCapture(event.pointerId);}catch{}
     redraw();
@@ -205,8 +221,20 @@ export function installTextCanvasMover({
       [event.clientX,event.clientY],
       [x+point.x-drag.start.x,y+point.y-drag.start.y]);
     drag.axisDrag=next.state;
+    let anchor=next.point;
+    // Reuse the original vector-node 8/14 CSS-pixel hysteresis. The
+    // pointerdown snapshot owns guides and enabled state for this gesture.
+    if(drag.snapEnabled&&(!drag.axisDrag.enabled||drag.axisDrag.axis)){
+      const bounds=canvas.getBoundingClientRect();
+      const result=snapTextAnchor(anchor,drag.original.textOverlays,drag.id,
+        {cssWidth:bounds.width,cssHeight:bounds.height},{enabled:true,
+          axis:drag.axisDrag.enabled?drag.axisDrag.axis:null,
+          previous:drag.snapLocks});
+      anchor=result.point||anchor;
+      drag.snapLocks=result.locks;
+    }
     drag.next=dragTextOverlay(drag.original,drag.id,{
-      x:next.point[0]-x,y:next.point[1]-y});
+      x:anchor[0]-x,y:anchor[1]-y});
     drag.moved=drag.next!==drag.original;
     redraw();
   },true);
