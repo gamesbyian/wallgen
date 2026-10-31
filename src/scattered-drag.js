@@ -32,19 +32,31 @@ export function pointInRing(point,ring){
   }
   return inside;
 }
-export function pickScatteredRegion(objects,point,tolerance=0){
-  // Canvas paints later objects above earlier ones: select topmost hit.
-  for(const object of [...(objects||[])].reverse()){
-    if(object.kind!=='region')continue;
+/** All intersected painted regions, frontmost first. The caller decides
+ * whether to pick immediately or cycle; never alter scene/paint order. */
+export function hitScatteredRegions(objects,point,tolerance=0){
+  if(!finite(point?.x)||!finite(point?.y)||!Array.isArray(objects))return [];
+  const hits=[];
+  // Current painter draws the last scene object last, above earlier layers.
+  for(let i=objects.length-1;i>=0;i--){
+    const object=objects[i];
+    if(object?.kind!=='region')continue;
+    let inside=false;
     if(object.circle){
       const {cx,cy,r}=object.circle;
-      if(Math.hypot(point.x-cx,point.y-cy)<=r+tolerance)return object;
+      inside=finite(cx)&&finite(cy)&&finite(r)&&r>=0&&
+        Math.hypot(point.x-cx,point.y-cy)<=r+Math.max(0,tolerance);
     }else if(Array.isArray(object.rings)){
-      const inside=object.rings.reduce((hit,ring)=>hit!==pointInRing(point,ring),false);
-      if(inside)return object; // Even-odd holes and detached islands.
+      // Exactly the existing even-odd semantics, retaining real compound
+      // holes and disconnected islands. No raster hit map is introduced.
+      inside=object.rings.reduce((hit,ring)=>hit!==pointInRing(point,ring),false);
     }
+    if(inside)hits.push(object);
   }
-  return null;
+  return hits;
+}
+export function pickScatteredRegion(objects,point,tolerance=0){
+  return hitScatteredRegions(objects,point,tolerance)[0]||null;
 }
 export function scatteredMoveOverride(recipe,index,circle,world){
   if(!Number.isInteger(index)||index<0||index>=70||
