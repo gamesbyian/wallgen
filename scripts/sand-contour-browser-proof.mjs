@@ -83,7 +83,7 @@ try{
     assert.equal(png.readUInt32BE(16),600);
     assert.equal(png.readUInt32BE(20),1300);
     await writeFile(join(out,name+'.png'),png);
-    if(name==='03-sand-compound'||name==='07-beaded-compound'){
+    if(name==='03-sand-compound'||name==='07-beaded-compound'||name==='13-filigree-compound'){
       assert.deepEqual(data.hole.rgba,[0,0,0,255],
         'a true compound silhouette hole must remain unpainted');
       assert.ok(data.island.rgba[0]+data.island.rgba[1]+data.island.rgba[2]>35,
