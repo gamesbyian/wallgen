@@ -32,6 +32,7 @@ import {embroideryObjectChoices,resolveEmbroideryObjectChoice,reconcileEmbroider
 import {scatteredPixelToWorld,scatteredWorldToPixel,pickScatteredRegion,hitScatteredRegions,scatteredMoveOverride,clamp as clampScattered} from './scattered-drag.js';
 import {installViewPanGesture} from './view-pan-ui.js';
 import {beginScatteredScale,advanceScatteredScale} from './scattered-scale-gesture.js';
+import {scatteredSelectionBounds} from './scattered-selection-bounds.js';
 import {beginAxisDrag,axisConstrainedPoint} from './axis-constrained-drag.js';
 import {continuesScatteredTapCycle,advanceScatteredTapCycle} from './scattered-overlap-cycle.js';
 import {cloneGeometrySnapshot} from './geometry-asset.js';
@@ -1679,25 +1680,35 @@ function syncScatteredDirectOutline(temporaryCircle=null){
   const object=currentScene?.objects?.find(o=>o.id==='region-'+id);
   const circle=temporaryCircle||object?.circle||object?.editCircle;
   if(!circle){scatteredDirectOutline.hidden=true;scatteredScaleGrip.hidden=true;return;}
-  const pixel=scatteredWorldToPixel(current,preview.width,preview.height,circle.cx,circle.cy);
+  const bounds=scatteredSelectionBounds(object,circle);
+  if(!bounds){scatteredDirectOutline.hidden=true;scatteredScaleGrip.hidden=true;return;}
   const canvasRect=preview.getBoundingClientRect();
   const surfaceRect=preview.closest('.wallpaper-surface').getBoundingClientRect();
   const scaleX=canvasRect.width/preview.width,scaleY=canvasRect.height/preview.height;
-  const radiusX=circle.r*pixel.radiusScaleX*scaleX;
-  const radiusY=circle.r*pixel.radiusScaleY*scaleY;
-  scatteredDirectOutline.style.left=(canvasRect.left-surfaceRect.left+pixel.x*scaleX-radiusX)+'px';
-  scatteredDirectOutline.style.top=(canvasRect.top-surfaceRect.top+pixel.y*scaleY-radiusY)+'px';
-  scatteredDirectOutline.style.width=(radiusX*2)+'px';
-  scatteredDirectOutline.style.height=(radiusY*2)+'px';
+  // Project the actual authored compound ring extents, not its enclosing
+  // placement radius. Detached islands and holes are included faithfully;
+  // an AABB guide never changes the authoritative even-odd painted rings.
+  const low=scatteredWorldToPixel(current,preview.width,preview.height,
+    bounds.minX,bounds.minY);
+  const high=scatteredWorldToPixel(current,preview.width,preview.height,
+    bounds.maxX,bounds.maxY);
+  const leftEdge=canvasRect.left-surfaceRect.left+low.x*scaleX;
+  const topEdge=canvasRect.top-surfaceRect.top+low.y*scaleY;
+  const rightEdge=canvasRect.left-surfaceRect.left+high.x*scaleX;
+  const bottomEdge=canvasRect.top-surfaceRect.top+high.y*scaleY;
+  scatteredDirectOutline.classList.toggle('scattered-direct-compound',bounds.isCompound);
+  scatteredDirectOutline.style.left=leftEdge+'px';
+  scatteredDirectOutline.style.top=topEdge+'px';
+  scatteredDirectOutline.style.width=(rightEdge-leftEdge)+'px';
+  scatteredDirectOutline.style.height=(bottomEdge-topEdge)+'px';
   scatteredDirectOutline.hidden=false;
-  // A detached handle does not steal taps from the painted silhouette.
-  // Choose a visible side and clamp ONLY the CSS control to the live surface;
-  // the real design circle is never screen-clamped or quantized.
-  const centreX=canvasRect.left-surfaceRect.left+pixel.x*scaleX;
-  const centreY=canvasRect.top-surfaceRect.top+pixel.y*scaleY;
+  // A detached grip remains in CSS interaction space and cannot alter the
+  // shape's authored source. Imported silhouettes use their real bounds
+  // rather than an unnecessarily enormous circular selection frame.
+  const centreY=(topEdge+bottomEdge)/2;
   const radius=22,clearance=12;
-  const right=centreX+radiusX+radius+clearance;
-  const left=centreX-radiusX-radius-clearance;
+  const right=rightEdge+radius+clearance;
+  const left=leftEdge-radius-clearance;
   let gripX=right+radius<=surfaceRect.width?right:left;
   if(gripX+radius>surfaceRect.width||gripX-radius<0)
     gripX=clampScattered(gripX,radius,surfaceRect.width-radius);
