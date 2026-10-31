@@ -1,6 +1,10 @@
 # Touch-first, vector-native interaction system
 Owner decision: 30 October 2026. This document owns the interaction overhaul prompted by the completed rotation work. The current queue is still `CURRENT-WORK-QUEUE-2026-10-24.md`; this is an implementation/reference contract, not a competing dispatch.
 
+## V3 · Text-anchor magnetic alignment (31 October 2026, pending CI)
+
+The existing opt-in **Move text on wallpaper** mode gains a separate 44 CSS-pixel **Snap anchors** toggle, initially off. It reuses the shared `snapVectorNode` 8 CSS-pixel acquisition / 14 CSS-pixel release hysteresis already used by Bézier nodes and scattered shapes. Guides come from the original canonical anchors of *other visibly painted text overlays* (including locked text) and the finished wallpaper centre, excluding disabled, transparent and inkless text. Snap happens after the existing one-thumb direction acquisition; only the moving axis can magnetically align. On pointerdown, both toggle state and guide history are frozen for that gesture. All results flow through the existing canonical `dragTextOverlay` writer, source-identity refusal, pointercancel/lostcapture handling and one-step Undo. The finished-artwork coordinate mapping uses actual CSS canvas width and height; camera position and preview pixel count do not become text coordinates. Added permanent tests under `tests/text-anchor-snap.test.js` to quick CI. **Status: candidate code submitted for independent CI; no real-device/TalkBack/Chromium acceptance claim.**
+
 ## Product outcome
 Make drawing and editing fast for casual randomize-first work, while allowing deliberate, precise, one-thumb manipulation. All geometry/edit operations use **canonical vector-space values**. CSS pixels are permitted for finger hit targets, pointer displacement, gesture thresholds, preview rasterization and accessibility. Output raster pixels must never become an authored geometry unit by accident. Existing normalized 600×1300 design coordinates and legacy percentage-based controls are valid vector-space conventions; do not create a parallel 0–1 model to replace them merely for aesthetics.
 
