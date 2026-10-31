@@ -253,3 +253,29 @@ test('canvas pointerup and transform pointerup recheck canonical ownership befor
   assert.match(src,/state\.next!==state\.original&&textGestureOwnsCurrentRecipe\(/);
   assert.equal((src.match(/textGestureOwnsCurrentRecipe\(/g)||[]).length,4);
 });
+
+test('touch scaling follows displayed CSS geometry when canvas and artwork aspect ratios differ',()=>{
+  const item=sample.textOverlays[1];
+  const centre={x:300,y:650};
+  const start={x:400,y:650},end={x:300,y:750};
+  const stretched=dragTextTransform(sample,'front','scale',start,end,
+    {width:300,height:780});
+  assert.equal(stretched.textOverlays[1].size,78,
+    '100 design units vertically represent 60 screen px; horizontally 50');
+  assert.equal(stretched.textOverlays[1].x,item.x);
+  assert.equal(stretched.textOverlays[1].y,item.y);
+  assert.equal(stretched.textOverlays[1].rotation,item.rotation);
+  assert.equal(dragTextTransform(sample,'front','scale',start,start,
+    {width:300,height:780}),sample,'no-op gesture preserves object identity');
+  assert.equal(dragTextTransform(sample,'front','scale',start,end,
+    {width:0,height:780}),sample,'invisible canvases cannot commit transforms');
+  assert.equal(dragTextTransform(sample,'front','scale',start,end,
+    {width:NaN,height:780}),sample,'invalid viewport dimensions fail closed');
+  assert.equal(dragTextTransform(sample,'locked','scale',start,end,
+    {width:300,height:780}),sample,'locks survive screen-space adaptation');
+});
+test('text touch transform adapter supplies actual canvas bounds',async()=>{
+  const {readFileSync}=await import('node:fs');
+  const src=readFileSync(new URL('../src/text-direct-ui.js',import.meta.url),'utf8');
+  assert.match(src,/state\.next=dragTextTransform\(state\.original,state\.id,mode,state\.start,point,\s*\{width:rect\.width,height:rect\.height\}\)/);
+});
