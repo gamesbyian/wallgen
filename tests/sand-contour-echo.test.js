@@ -74,7 +74,7 @@ test('ribbon echoes retain original station positions on crossing-window replay'
   const draw=range=>{
     const c=ctx();paintSandRibbonEchoes(c,stripe,160,styles(),
       pointAt,centerAt,widthAt,range);return c.events.filter(x=>
-      Array.isArray(x)&&['move','line'].includes(x[0]));
+      Array.isArray(x)&&['move','line'].includes(x[0])).map(x=>x.slice(1));
   };
   const all=draw(),part=draw({start:-51,end:73});
   assert.ok(part.length>30);
