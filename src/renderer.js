@@ -920,14 +920,20 @@ export function drawRegionObjects(ctx,scene){
         for(const contour of level.contours){
           if(contour.points.length<2)continue;
           ctx.beginPath();
+          // The optional lighting path is the same original contour, captured
+          // before the inset accents translate. The unlit drawing remains the
+          // original current-path stroke with no duplicate geometry work.
+          const litGlintPath=sandRims.some(s=>s.lighting)&&typeof Path2D==='function'?
+            new Path2D():null;
           contour.points.forEach((p,i)=>{
-            if(i===0)ctx.moveTo(p.x,p.y);else ctx.lineTo(p.x,p.y);
+            if(i===0){ctx.moveTo(p.x,p.y);litGlintPath?.moveTo(p.x,p.y);}
+            else{ctx.lineTo(p.x,p.y);litGlintPath?.lineTo(p.x,p.y);}
           });
-          if(contour.closed)ctx.closePath();
+          if(contour.closed){ctx.closePath();litGlintPath?.closePath();}
           ctx.stroke();
-          // Nested metric outlines retain their exact diameter and negative
-          // space: a narrow centreline glint never widens a coloured stroke.
-          paintSandStrokeGlint(ctx,nesting.strokeWidth,sandRims);
+          // Both directional inset accents are provably within the original
+          // coloured stroke's round-join footprint, including sharp tips.
+          paintSandStrokeGlint(ctx,nesting.strokeWidth,sandRims,litGlintPath);
           paintSandNestedBeads(ctx,contour,nesting.strokeWidth,sandBeads);
         }
       }
