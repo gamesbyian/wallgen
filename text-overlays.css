@@ -57,6 +57,13 @@ body.text-direct-active #preview:active{cursor:grabbing}
   background:#322044;color:#fff;font-size:12px;font-weight:750;
   box-shadow:0 3px 15px #0008}
 #textDirectDone[hidden]{display:none!important}
+#textDirectAxis{position:absolute;z-index:12;top:10px;left:10px;
+  min-width:100px;min-height:44px;padding:8px 11px;border-radius:11px;
+  border:2px solid #ffaaff;background:#322044;color:#fff;font-size:12px;
+  font-weight:750;box-shadow:0 3px 15px #0008}
+#textDirectAxis[aria-pressed="true"]{background:#824c9d;border-color:#fff}
+#textDirectAxis[hidden]{display:none!important}
+#textDirectAxis:focus-visible{outline:2px solid #fff;outline-offset:3px}
 #textDirectDone:focus-visible{outline:2px solid #fff;outline-offset:3px}
 
 /* Actual 44px touch targets are attached to the selected text frame.

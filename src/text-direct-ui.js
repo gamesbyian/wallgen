@@ -4,6 +4,7 @@ import {textOverlayPaintsInk} from './text-rainbow-shaping.js';
 import {typefaceCssFamily} from './typography-fonts.js';
 import {compactTextGripLayout} from './text-grip-layout.js';
 import {beginPointerRotation,advancePointerRotation} from './rotation-gesture.js';
+import {beginAxisDrag,axisConstrainedPoint} from './axis-constrained-drag.js';
 import {designPointFromPointer,dragTextOverlay,
   dragTextTransform,transformTextOverlay,measuredTextBounds,
   measureCanvasText,textGestureOwnsCurrentRecipe} from './text-direct-geometry.js';
@@ -51,6 +52,19 @@ export function installTextCanvasMover({
   done.textContent='Done moving text';
   done.hidden=true;
   stage.append(done);
+  const axisButton=document.createElement('button');
+  axisButton.type='button';axisButton.id='textDirectAxis';
+  axisButton.textContent='Lock axis';axisButton.hidden=true;
+  axisButton.setAttribute('aria-pressed','false');
+  axisButton.setAttribute('aria-label','Lock text movement to horizontal or vertical');
+  axisButton.title='One-thumb text movement: drag 8 CSS px to choose an axis. Hold Shift while dragging to constrain temporarily.';
+  stage.append(axisButton);
+  let axisLocked=false;
+  axisButton.addEventListener('click',()=>{
+    axisLocked=!axisLocked;
+    axisButton.setAttribute('aria-pressed',String(axisLocked));
+    axisButton.textContent=axisLocked?'Axis locked':'Lock axis';
+  });
   let active=false,drag=null,transformDrag=null;
   const fontContext=canvas.getContext('2d');
   const measure=(item,value,{tracking=false}={})=>
@@ -153,6 +167,7 @@ export function installTextCanvasMover({
     button.setAttribute('aria-pressed',String(active));
     button.textContent=active?'Stop moving text':'Move text on wallpaper';
     done.hidden=!active;
+    axisButton.hidden=!active;
     if(!active)outline.hidden=true;
     else redraw();
   }
@@ -173,6 +188,9 @@ export function installTextCanvasMover({
     onSelect(item.id);
     if(item.locked){onNotice('Unlock this text object to move it.');redraw();return;}
     drag={id:item.id,pointerId:event.pointerId,start:point,
+      axisDrag:beginAxisDrag([event.clientX,event.clientY],
+        [DESIGN_WIDTH*item.x/100,DESIGN_HEIGHT*item.y/100],
+        axisLocked||event.shiftKey),
       original:getRecipe(),next:getRecipe(),moved:false};
     try{canvas.setPointerCapture(event.pointerId);}catch{}
     redraw();
@@ -182,8 +200,13 @@ export function installTextCanvasMover({
     event.preventDefault();event.stopImmediatePropagation();
     const point=designPointFromPointer(event,canvas);
     if(!point)return;
+    const [x,y]=drag.axisDrag.origin;
+    const next=axisConstrainedPoint(drag.axisDrag,
+      [event.clientX,event.clientY],
+      [x+point.x-drag.start.x,y+point.y-drag.start.y]);
+    drag.axisDrag=next.state;
     drag.next=dragTextOverlay(drag.original,drag.id,{
-      x:point.x-drag.start.x,y:point.y-drag.start.y});
+      x:next.point[0]-x,y:next.point[1]-y});
     drag.moved=drag.next!==drag.original;
     redraw();
   },true);

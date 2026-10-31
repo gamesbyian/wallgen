@@ -279,3 +279,12 @@ test('text touch transform adapter supplies actual canvas bounds',async()=>{
   const src=readFileSync(new URL('../src/text-direct-ui.js',import.meta.url),'utf8');
   assert.match(src,/state\.next=dragTextTransform\(state\.original,state\.id,mode,state\.start,point,\s*\{width:rect\.width,height:rect\.height\}\)/);
 });
+
+test('text axis toggle is a named, transient canvas control with frozen gesture state',async()=>{
+  const {readFileSync}=await import('node:fs');
+  const source=readFileSync(new URL('../src/text-direct-ui.js',import.meta.url),'utf8');
+  assert.match(source,/axisButton\.setAttribute\('aria-pressed'/);
+  assert.match(source,/axisLocked\|\|event\.shiftKey/);
+  assert.match(source,/axisDrag:beginAxisDrag\(/);
+  assert.match(source,/drag\.axisDrag=next\.state/);
+});
