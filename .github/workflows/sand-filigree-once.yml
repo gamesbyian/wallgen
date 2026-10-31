@@ -25,6 +25,8 @@ jobs:
           node scripts/sand-contour-browser-proof.mjs
           npm run render -- --seed filigree-native --set family=studio --set geometry=wave --set material=sand-filigree --set textureCoverage=stripes --set textureStrength=95 --set textureScale=37 --width 3024 --height 6552 --out artifacts/sand-contour-browser/15-filigree-full-resolution.png
           npm run render -- --seed filigree-region-worker --set structure=regions --set material=sand-filigree --set textureCoverage=stripes --backend worker --width 600 --height 1300 --out artifacts/sand-contour-browser/16-filigree-worker-regions.png
+          npm run render -- --seed sand-wave-s2 --set family=studio --set geometry=wave --set material=sand-filigree --set textureCoverage=stripes --width 320 --height 700 --out artifacts/sand-contour-browser/17-filigree-320x700.png
+          npm run render -- --seed sand-wave-s2 --set family=studio --set geometry=wave --set material=sand-filigree --set textureCoverage=stripes --width 412 --height 892 --out artifacts/sand-contour-browser/18-filigree-412x892.png
       - uses: actions/upload-artifact@v4
         if: always()
         with:
