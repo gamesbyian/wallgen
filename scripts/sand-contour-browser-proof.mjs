@@ -44,6 +44,12 @@ try{
     ['03-sand-compound',shape],
     ['04-sand-nested',nested]
   ];
+  // Same source artwork, same vector geometry, only the material variant
+  // differs. This makes before/after optical comparison unambiguous.
+  scenes.push(...scenes.slice(0,4).map(([name,recipe],i)=>[
+    ['05-beaded-wave','06-beaded-loop','07-beaded-compound','08-beaded-nested'][i],
+    normalizeRecipe({...recipe,material:'sand-beaded'})
+  ]));
   const results=[];
   for(const [name,recipe] of scenes){
     const data=await page.evaluate(async recipe=>{
@@ -73,7 +79,7 @@ try{
     assert.equal(png.readUInt32BE(16),600);
     assert.equal(png.readUInt32BE(20),1300);
     await writeFile(join(out,name+'.png'),png);
-    if(name==='03-sand-compound'){
+    if(name==='03-sand-compound'||name==='07-beaded-compound'){
       assert.deepEqual(data.hole.rgba,[0,0,0,255],
         'a true compound silhouette hole must remain unpainted');
       assert.ok(data.island.rgba[0]+data.island.rgba[1]+data.island.rgba[2]>35,
