@@ -91,3 +91,13 @@ export function scatteredMoveOverride(recipe,index,circle,world){
     y:clamp(world.y/1300,-.5,1.5),
     radius:clamp(circle.r/600,.01,1.2)}]);
 }
+
+// The immutable normalized recipe object identifies the exact transaction
+// incarnation. An Undo that recreates identical values still revokes an older
+// pointer owner. Selection is checked independently because a picker may
+// change without replacing the recipe at all.
+export function scatteredGestureOwnsCurrentRecipe(gesture,recipe,selectedIndex){
+  return !!recipe&&typeof recipe==='object'&&
+    gesture?.original===recipe&&Number.isInteger(gesture.index)&&
+    Number.isInteger(selectedIndex)&&gesture.index===selectedIndex;
+}
