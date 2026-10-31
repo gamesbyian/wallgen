@@ -1,8 +1,8 @@
 # Current ROYGBIV owner work queue and conditional integration
 
-## V3 · Snap intent threshold for text movement (31 October 2026, software candidate)
+## V3 · Snap intent threshold for text movement (31 October 2026, merged #922)
 
-After #917 and real Chromium acceptance #920, the direct text mover now requires **8 CSS pixels of actual pointer movement** before acquiring a magnetic text anchor. Previously an unintentional 1px jitter could acquire an existing guide up to 8px away, moving text on pointerup despite no meaningful drag. This uses the shared axis-lock `AXIS_LOCK_THRESHOLD_CSS_PX` constant and original pointerdown snapshot, adds no canonical geometry or schema field, and clears acquired guide locks if pointer movement returns below the threshold. Axis locks remain independent. Pure and wiring tests live in `tests/text-anchor-snap.test.js`, already included in the quick suite. Physical Android and TalkBack remain untested. **Pending CI and integration.**
+After #917 and real Chromium acceptance #920, the direct text mover now requires **8 CSS pixels of actual pointer movement** before acquiring a magnetic text anchor. Previously an unintentional 1px jitter could acquire an existing guide up to 8px away, moving text on pointerup despite no meaningful drag. This uses the shared axis-lock `AXIS_LOCK_THRESHOLD_CSS_PX` constant and original pointerdown snapshot, adds no canonical geometry or schema field, and clears acquired guide locks if pointer movement returns below the threshold. Axis locks remain independent. Pure and wiring tests live in `tests/text-anchor-snap.test.js`, already included in the quick suite. Physical Android and TalkBack remain untested. **MERGED [PR #922](https://github.com/gamesbyian/wallgen/pull/922), main `180e3887`, with exact-head [quick CI #41245222064](https://github.com/gamesbyian/wallgen/actions/runs/41245222064) PASS.**
 
 
 ## V3 · Real-browser text control acceptance and compact-grip repair (31 October 2026)
