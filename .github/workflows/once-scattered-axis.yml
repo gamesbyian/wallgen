@@ -1,0 +1,29 @@
+name: One-shot scattered axis touch acceptance
+on:
+  push:
+    branches: [feat/scattered-axis-lock-20261030]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser test dependency
+        run: npm install --no-save --package-lock=false --no-audit --no-fund
+      - name: Provision Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Exercise real pointer capture, shape lock and Undo on two phones
+        run: node scripts/scattered-axis-browser.mjs
+      - name: Save actual browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: scattered-axis-portrait-evidence
+          path: artifacts/scattered-axis/
+          if-no-files-found: ignore
