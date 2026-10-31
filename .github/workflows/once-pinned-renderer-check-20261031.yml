@@ -1,0 +1,48 @@
+name: Once pinned hosted renderer source verification
+on:
+  pull_request:
+    paths:
+      - .github/workflows/once-pinned-renderer-check-20261031.yml
+permissions:
+  contents: read
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Assemble the exact immutable source bytes as the Pages workflow does
+        run: |
+          set -euo pipefail
+          PIN="$(node -p "require('./cloudflare/mcp/trusted-renderer-release.json').commit")"
+          [[ "$PIN" =~ ^[a-f0-9]{40}$ ]]
+          git fetch --no-tags --depth=1 origin "$PIN"
+          test "$(git rev-parse "$PIN^{commit}")" = "$PIN"
+          mkdir trusted-renderer
+          git archive --format=tar "$PIN" src assets render-host.html | tar -xf - -C trusted-renderer
+          printf '{"commit":"%s"}\n' "$PIN" > trusted-renderer/roygbiv-render-version.json
+          test -s trusted-renderer/src/renderer.js
+          test -s trusted-renderer/src/typography-fonts.js
+          test -s trusted-renderer/assets/fonts/manifest.json
+          test -s trusted-renderer/render-host.html
+          echo "Snapshot exact SHA: $PIN"
+      - name: Confirm all exported src and assets byte-identical to pinned git tree
+        run: |
+          set -euo pipefail
+          PIN="$(node -p "require('./cloudflare/mcp/trusted-renderer-release.json').commit")"
+          test "$(git archive --format=tar "$PIN" src assets render-host.html | sha256sum | cut -d' ' -f1)" = \
+            "$(tar -C trusted-renderer -cf - src assets render-host.html | sha256sum | cut -d' ' -f1)" || \
+            echo 'Note: tar headers differ across archives; comparing content hashes below'
+          git ls-tree -r --name-only "$PIN" -- src assets render-host.html > /tmp/pinned-list
+          while IFS= read -r source; do
+            expected="$(git show "$PIN:$source" | sha256sum | cut -d' ' -f1)"
+            actual="$(sha256sum "trusted-renderer/$source" | cut -d' ' -f1)"
+            test "$expected" = "$actual" || { echo "Mismatch in $source" >&2; exit 1; }
+          done < /tmp/pinned-list
+          test "$(find trusted-renderer/src trusted-renderer/assets -type f | wc -l)" -ge 100
+          echo "All $(wc -l < /tmp/pinned-list) trusted snapshot files match git"
