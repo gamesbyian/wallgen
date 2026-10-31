@@ -30,7 +30,7 @@ import {RAINBOW_ORBITS,scatteredRadiusRange} from './scattered-composition.js';
 import {stripeContourDistortionAvailability} from './editor-effect-availability.js';
 import {normalizeScatteredOverrides,effectiveScatteredLayerOrder,moveScatteredLayer} from './scattered-object-edits.js';
 import {embroideryObjectChoices,resolveEmbroideryObjectChoice,reconcileEmbroideryObjectOptions} from './embroidery-target-choices.js';
-import {scatteredPixelToWorld,scatteredWorldToPixel,pickScatteredRegion,hitScatteredRegions,scatteredMoveOverride,scatteredGestureOwnsCurrentRecipe,clamp as clampScattered} from './scattered-drag.js';
+import {scatteredPixelToWorld,scatteredWorldToPixel,pickScatteredRegion,hitScatteredRegions,scatteredMoveOverride,nudgeScatteredRegion,scatteredGestureOwnsCurrentRecipe,clamp as clampScattered} from './scattered-drag.js';
 import {installViewPanGesture} from './view-pan-ui.js';
 import {beginScatteredScale,advanceScatteredScale,anchoredScatteredCircle,
   beginScatteredAnchoredScale,advanceScatteredAnchoredScale}
@@ -1614,6 +1614,10 @@ const scatteredDirectOutline=document.createElement('div');
 scatteredDirectOutline.id='scatteredDirectOutline';
 scatteredDirectOutline.className='scattered-direct-outline';
 scatteredDirectOutline.hidden=true;
+scatteredDirectOutline.tabIndex=0;
+scatteredDirectOutline.setAttribute('role','group');
+scatteredDirectOutline.setAttribute('aria-keyshortcuts',
+  'ArrowLeft ArrowRight ArrowUp ArrowDown');
 document.querySelector('.wallpaper-surface')?.append(scatteredDirectOutline);
 // The grip is a sibling of the pointer-transparent outline. Its touch target
 // remains 44 CSS px, while only the normalized radius changes in the recipe.
@@ -1691,6 +1695,8 @@ function discardScatteredDirectGestures(){
 }
 function setScatteredDirectActive(next){
   // Tool exit always cancels pending movement and resizing.
+  const guideHadFocus=document.activeElement===scatteredDirectOutline||
+    document.activeElement===scatteredScaleGrip;
   discardScatteredDirectGestures();
   scatteredDirectActive=!!next;
   document.body.classList.toggle('scattered-direct-active',scatteredDirectActive);
@@ -1706,7 +1712,17 @@ function setScatteredDirectActive(next){
     // a selected buried/topmost object to its default first option.
     syncScatteredObjectEditor();
     if(scatteredDirectActive)syncScatteredDirectOutline();
-  }else {scatteredDirectOutline.hidden=true;scatteredScaleGrip.hidden=true;}
+  }else {
+    scatteredDirectOutline.hidden=true;scatteredScaleGrip.hidden=true;
+    if(guideHadFocus){
+      // The original inspector button lives in a dismissed mobile sheet.
+      // Focusing it would silently fail and strand the keyboard on an
+      // unrelated tab. Restore focus to the actually visible editor entry.
+      const mobileEntry=document.body.classList.contains('mobile-studio')?
+        document.getElementById('mobileEdit'):null;
+      (mobileEntry||moveOnCanvas).focus({preventScroll:true});
+    }
+  }
 }
 function pixelFromPointer(event){
   const rect=preview.getBoundingClientRect();
@@ -1741,6 +1757,9 @@ function syncScatteredDirectOutline(temporaryCircle=null){
   scatteredDirectOutline.style.width=(rightEdge-leftEdge)+'px';
   scatteredDirectOutline.style.height=(bottomEdge-topEdge)+'px';
   scatteredDirectOutline.hidden=false;
+  const text=current.scatteredShapeKind==='imported'?'silhouette':'circle';
+  scatteredDirectOutline.setAttribute('aria-label',
+    'Selected '+text+' '+(id+1)+'. Arrow keys move one percent of the wallpaper, Shift five percent, Control or Command one tenth of a percent.');
   // A detached grip remains in CSS interaction space and cannot alter the
   // shape's authored source. Imported silhouettes use their real bounds
   // rather than an unnecessarily enormous circular selection frame.
@@ -1788,6 +1807,34 @@ moveOnCanvas.addEventListener('click',()=>{
   setScatteredDirectActive(!scatteredDirectActive);
 });
 scatteredDirectDone.addEventListener('click',()=>setScatteredDirectActive(false));
+// The visual guide itself is focusable without creating an invisible hotspot.
+// Its key handler does not intercept the scale grip, sliders, text editors,
+// arrow-key inspector controls or keyboard tool navigation.
+scatteredDirectOutline.addEventListener('keydown',event=>{
+  if(event.target===scatteredDirectOutline&&scatteredDirectActive&&
+     event.key==='Escape'){
+    // Handle before the mobile sheet's document-level Escape listener.
+    // Otherwise it steals focus for the sheet before the selected guide can
+    // return focus to the owner tool entry.
+    event.preventDefault();event.stopPropagation();
+    setScatteredDirectActive(false);
+    return;
+  }
+  if(event.target!==scatteredDirectOutline||!scatteredDirectActive||
+     scatteredDirectDrag||scatteredScaleDrag||event.altKey||
+     !['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key))
+    return;
+  event.preventDefault();event.stopPropagation();
+  const index=Number(orbitPicker.value);
+  const object=currentScene?.objects?.find(o=>o.id==='region-'+index);
+  const circle=object?.circle||object?.editCircle;
+  if(!circle)return;
+  const updated=nudgeScatteredRegion(current,index,circle,event.key,
+    {coarse:event.shiftKey,fine:event.ctrlKey||event.metaKey});
+  if(updated!==current)changeRecipe(updated,{cause:'scattered_move_keyboard'});
+  syncScatteredDirectOutline();
+});
+
 scatteredScaleGrip.addEventListener('pointerdown',event=>{
   if(!scatteredDirectActive||scatteredDirectDrag||scatteredScaleDrag||
      event.button!==0||event.isPrimary===false)return;
@@ -1871,6 +1918,10 @@ function stepScatteredScale(direction,multiplier=1){
   changeRecipe({...current,scatteredOverrides:overrides});
 }
 scatteredScaleGrip.addEventListener('keydown',event=>{
+  if(event.key==='Escape'&&scatteredDirectActive){
+    event.preventDefault();event.stopPropagation();
+    setScatteredDirectActive(false);return;
+  }
   if(event.key!=='ArrowUp'&&event.key!=='ArrowDown')return;
   event.preventDefault();event.stopPropagation();
   stepScatteredScale(event.key==='ArrowUp'?1:-1,event.shiftKey?4:1);
