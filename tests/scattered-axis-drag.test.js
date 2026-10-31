@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {beginAxisDrag,axisConstrainedPoint} from '../src/axis-constrained-drag.js';
-import {scatteredWorldToPixel,scatteredPixelToWorld,scatteredMoveOverride}
+import {scatteredWorldToPixel,scatteredPixelToWorld,scatteredMoveOverride,scatteredGestureOwnsCurrentRecipe}
   from '../src/scattered-drag.js';
 
 const recipe={viewZoom:1.4,viewPanX:8,viewPanY:-12,positionX:0,positionY:0,
@@ -42,4 +42,27 @@ test('camera zoom and pan round-trip hit mapping without authored pixels',()=>{
   const found=scatteredPixelToWorld(recipe,width,height,p.x,p.y);
   assert.ok(Math.abs(found.x-origin.x)<1e-9);
   assert.ok(Math.abs(found.y-origin.y)<1e-9);
+});
+
+test('pointer ownership fails closed after picker change or recipe incarnation change',()=>{
+  const gesture={original:recipe,index:2,pointerId:7};
+  assert.equal(scatteredGestureOwnsCurrentRecipe(gesture,recipe,2),true);
+  assert.equal(scatteredGestureOwnsCurrentRecipe(gesture,recipe,3),false,
+    'switching selector without changing source cancels old gesture');
+  assert.equal(scatteredGestureOwnsCurrentRecipe(gesture,{...recipe},2),false,
+    'Undo/import with same values is still a newer recipe incarnation');
+  assert.equal(scatteredGestureOwnsCurrentRecipe(null,recipe,2),false);
+  assert.equal(scatteredGestureOwnsCurrentRecipe(gesture,null,2),false);
+  assert.equal(scatteredGestureOwnsCurrentRecipe(gesture,recipe,NaN),false);
+});
+test('scattered gesture release lifecycle covers picker, blur, resize and hiding',async()=>{
+  const {readFileSync}=await import('node:fs');
+  const source=readFileSync(new URL('../src/app.js',import.meta.url),'utf8');
+  assert.match(source,/function discardScatteredDirectGestures\(\)/);
+  assert.match(source,/scatteredDirectDrag=null;scatteredScaleDrag=null;scatteredTapCycle=null/);
+  assert.match(source,/orbitPicker\.addEventListener\('change',[\s\S]*?discardScatteredDirectGestures\(\)/);
+  assert.match(source,/window\.addEventListener\('blur',abandonInterruptedScatteredGesture\)/);
+  assert.match(source,/window\.addEventListener\('resize',abandonInterruptedScatteredGesture\)/);
+  assert.match(source,/document\.addEventListener\('visibilitychange'/);
+  assert.match(source,/scatteredGestureOwnsCurrentRecipe\(\s*drag,current,Number\(orbitPicker\.value\)\)/);
 });

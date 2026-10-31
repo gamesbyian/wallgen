@@ -30,7 +30,7 @@ import {RAINBOW_ORBITS,scatteredRadiusRange} from './scattered-composition.js';
 import {stripeContourDistortionAvailability} from './editor-effect-availability.js';
 import {normalizeScatteredOverrides,effectiveScatteredLayerOrder,moveScatteredLayer} from './scattered-object-edits.js';
 import {embroideryObjectChoices,resolveEmbroideryObjectChoice,reconcileEmbroideryObjectOptions} from './embroidery-target-choices.js';
-import {scatteredPixelToWorld,scatteredWorldToPixel,pickScatteredRegion,hitScatteredRegions,scatteredMoveOverride,clamp as clampScattered} from './scattered-drag.js';
+import {scatteredPixelToWorld,scatteredWorldToPixel,pickScatteredRegion,hitScatteredRegions,scatteredMoveOverride,scatteredGestureOwnsCurrentRecipe,clamp as clampScattered} from './scattered-drag.js';
 import {installViewPanGesture} from './view-pan-ui.js';
 import {beginScatteredScale,advanceScatteredScale,anchoredScatteredCircle,
   beginScatteredAnchoredScale,advanceScatteredAnchoredScale}
@@ -1677,9 +1677,9 @@ scatteredPivotButton.addEventListener('click',()=>{
   scatteredPivotButton.setAttribute('aria-pressed',String(scatteredEdgeScale));
   scatteredPivotButton.textContent=scatteredEdgeScale?'Edge fixed':'Scale from edge';
 });
-function setScatteredDirectActive(next){
-  // Closing a drag tool is a cancellation: release capture but never save a
-  // provisional circle. A delayed lostpointercapture then sees no active drag.
+// A browser may lose pointer capture while the source remains unchanged.
+// Clear gesture ownership BEFORE release to make delayed callbacks harmless.
+function discardScatteredDirectGestures(){
   const oldDrag=scatteredDirectDrag,oldScale=scatteredScaleDrag;
   scatteredDirectDrag=null;scatteredScaleDrag=null;scatteredTapCycle=null;
   if(oldDrag){
@@ -1688,6 +1688,10 @@ function setScatteredDirectActive(next){
   if(oldScale){
     try{scatteredScaleGrip.releasePointerCapture(oldScale.pointerId);}catch{}
   }
+}
+function setScatteredDirectActive(next){
+  // Tool exit always cancels pending movement and resizing.
+  discardScatteredDirectGestures();
   scatteredDirectActive=!!next;
   document.body.classList.toggle('scattered-direct-active',scatteredDirectActive);
   moveOnCanvas.setAttribute('aria-pressed',String(scatteredDirectActive));
@@ -1835,8 +1839,8 @@ scatteredScaleGrip.addEventListener('pointerup',event=>{
   event.preventDefault();event.stopPropagation();
   scatteredScaleDrag=null;
   try{scatteredScaleGrip.releasePointerCapture(event.pointerId);}catch{}
-  if(scatteredDirectActive&&drag.original===current&&
-     drag.index===Number(orbitPicker.value)&&drag.gesture.moved){
+  if(scatteredDirectActive&&scatteredGestureOwnsCurrentRecipe(
+      drag,current,Number(orbitPicker.value))&&drag.gesture.moved){
     const overrides=scatteredMoveOverride(drag.original,drag.index,
       drag.current,{x:drag.current.cx,y:drag.current.cy});
     changeRecipe({...drag.original,scatteredOverrides:overrides});
@@ -1943,8 +1947,8 @@ preview.addEventListener('pointerup',event=>{
   event.preventDefault();event.stopPropagation();
   scatteredDirectDrag=null;
   try{preview.releasePointerCapture(event.pointerId);}catch{}
-  if(drag.original===current&&scatteredDirectActive&&
-     drag.index===Number(orbitPicker.value)){
+  if(scatteredDirectActive&&scatteredGestureOwnsCurrentRecipe(
+      drag,current,Number(orbitPicker.value))){
     if(drag.moved){
       scatteredTapCycle=null;
       const overrides=scatteredMoveOverride(drag.original,drag.index,drag.circle,
@@ -1977,7 +1981,15 @@ preview.addEventListener('lostpointercapture',event=>{
   scatteredDirectDrag=null;scatteredTapCycle=null;
   syncScatteredDirectOutline(); // Roll back the temporary outline only.
 });
-window.addEventListener('resize',()=>{if(scatteredDirectActive)syncScatteredDirectOutline();});
+function abandonInterruptedScatteredGesture(){
+  discardScatteredDirectGestures();
+  if(scatteredDirectActive)syncScatteredDirectOutline();
+}
+window.addEventListener('resize',abandonInterruptedScatteredGesture);
+window.addEventListener('blur',abandonInterruptedScatteredGesture);
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden)abandonInterruptedScatteredGesture();
+});
 window.addEventListener('keydown',event=>{
   if(event.key==='Escape'&&scatteredDirectActive){
     setScatteredDirectActive(false);
@@ -1989,6 +2001,12 @@ function syncScatteredObjectEditor(){
   const root=document.getElementById('scatteredObjectEditor');
   if(!root)return; // First render can precede mountEditor().
   const objects=currentScene?.objects?.filter(o=>o.circle||o.editCircle)||[];
+  // A newer canonical source, Undo, or picker change revokes stale ownership.
+  if((scatteredDirectDrag&&!scatteredGestureOwnsCurrentRecipe(
+        scatteredDirectDrag,current,Number(orbitPicker.value)))||
+     (scatteredScaleDrag&&!scatteredGestureOwnsCurrentRecipe(
+        scatteredScaleDrag,current,Number(orbitPicker.value))))
+    discardScatteredDirectGestures();
   const active=current.structure==='regions'&&
     current.regionMode==='scattered'&&objects.length>0;
   root.hidden=!active;
@@ -2031,7 +2049,10 @@ function syncScatteredObjectEditor(){
     ' · Layer '+(layer+1)+' of '+order.length:'No shape selected';
   if(scatteredDirectActive&&!scatteredDirectDrag)syncScatteredDirectOutline();
 }
-orbitPicker.addEventListener('change',()=>{scatteredTapCycle=null;syncScatteredObjectEditor();});
+orbitPicker.addEventListener('change',()=>{
+  discardScatteredDirectGestures();
+  syncScatteredObjectEditor();
+});
 orbitLayers.addEventListener('click',event=>{
   const button=event.target.closest('button[data-orbit-layer]');
   if(!button||button.disabled)return;
