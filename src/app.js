@@ -32,6 +32,7 @@ import {embroideryObjectChoices,resolveEmbroideryObjectChoice,reconcileEmbroider
 import {scatteredPixelToWorld,scatteredWorldToPixel,pickScatteredRegion,hitScatteredRegions,scatteredMoveOverride,clamp as clampScattered} from './scattered-drag.js';
 import {installViewPanGesture} from './view-pan-ui.js';
 import {beginScatteredScale,advanceScatteredScale} from './scattered-scale-gesture.js';
+import {snapScatteredCentre} from './scattered-centre-snap.js';
 import {scatteredSelectionBounds} from './scattered-selection-bounds.js';
 import {beginAxisDrag,axisConstrainedPoint} from './axis-constrained-drag.js';
 import {continuesScatteredTapCycle,advanceScatteredTapCycle} from './scattered-overlap-cycle.js';
@@ -1608,6 +1609,7 @@ document.querySelector('.editor-tool-card[data-editor-tool="scattered-edges"]')
 // commits a recipe, making the whole drag ONE Undo step.
 let scatteredDirectActive=false,scatteredDirectDrag=null,scatteredScaleDrag=null;
 let scatteredAxisLock=false; // UI gesture modifier only; never saved in recipes.
+let scatteredSnapEnabled=false; // Optional centre guides, never a recipe property.
 let scatteredTapCycle=null; // Only source-aware editor selection, never recipe data.
 const scatteredDirectOutline=document.createElement('div');
 scatteredDirectOutline.id='scatteredDirectOutline';
@@ -1644,6 +1646,20 @@ scatteredAxisButton.addEventListener('click',()=>{
   scatteredAxisButton.setAttribute('aria-pressed',String(scatteredAxisLock));
   scatteredAxisButton.textContent=scatteredAxisLock?'Axis locked':'Lock axis';
 });
+const scatteredSnapButton=document.createElement('button');
+scatteredSnapButton.type='button';
+scatteredSnapButton.id='scatteredDirectSnap';
+scatteredSnapButton.textContent='Snap centres';
+scatteredSnapButton.hidden=true;
+scatteredSnapButton.setAttribute('aria-pressed','false');
+scatteredSnapButton.setAttribute('aria-label','Snap moving shape to other shape centres or the design centre');
+scatteredSnapButton.title='Optional X/Y magnetic alignment with 8 CSS px acquisition and 14 CSS px release. Keeps vector coordinates and Undo unchanged.';
+document.querySelector('.studio-stage')?.append(scatteredSnapButton);
+scatteredSnapButton.addEventListener('click',()=>{
+  scatteredSnapEnabled=!scatteredSnapEnabled;
+  scatteredSnapButton.setAttribute('aria-pressed',String(scatteredSnapEnabled));
+  scatteredSnapButton.textContent=scatteredSnapEnabled?'Snapping on':'Snap centres';
+});
 function setScatteredDirectActive(next){
   // Closing a drag tool is a cancellation: release capture but never save a
   // provisional circle. A delayed lostpointercapture then sees no active drag.
@@ -1661,6 +1677,7 @@ function setScatteredDirectActive(next){
   moveOnCanvas.textContent=scatteredDirectActive?'Stop moving shapes':'Move shapes on canvas';
   scatteredDirectDone.hidden=!scatteredDirectActive;
   scatteredAxisButton.hidden=!scatteredDirectActive;
+  scatteredSnapButton.hidden=!scatteredDirectActive;
   if(scatteredDirectActive){
     // The inspector may never have been opened. Populate real selection IDs
     // before the very first canvas tap or an empty <select> silently resets
@@ -1823,7 +1840,8 @@ preview.addEventListener('pointerdown',event=>{
     startWorld:world,circle:{...circle},current:{...circle},moved:false,
     axisDrag:beginAxisDrag([event.clientX,event.clientY],
       [circle.cx,circle.cy],scatteredAxisLock||event.shiftKey),
-    tapPoint,previous,hits};
+    snapEnabled:scatteredSnapEnabled,snapObjects:currentScene?.objects||[],
+    snapLocks:{x:null,y:null},tapPoint,previous,hits};
   try{preview.setPointerCapture(event.pointerId);}catch{}
 });
 preview.addEventListener('pointermove',event=>{
@@ -1839,7 +1857,22 @@ preview.addEventListener('pointermove',event=>{
   const constrained=axisConstrainedPoint(drag.axisDrag,
     [event.clientX,event.clientY],raw);
   drag.axisDrag=constrained.state;
-  const [cx,cy]=constrained.point;
+  let [cx,cy]=constrained.point;
+  // Snap is explicitly opt-in and frozen at pointerdown. Reuse Draw's
+  // independent X/Y magnetic guides in actual CSS-screen space; never
+  // persist a pixel length or a second object transform model.
+  if(drag.snapEnabled&&
+     Math.hypot(event.clientX-drag.tapPoint.x,event.clientY-drag.tapPoint.y)>=8){
+    const rect=preview.getBoundingClientRect();
+    const aligned=snapScatteredCentre([cx,cy],drag.snapObjects,
+      'region-'+drag.index,drag.original,{
+        canvasWidth:preview.width,canvasHeight:preview.height,
+        cssWidth:rect.width,cssHeight:rect.height
+      },{enabled:true,axis:drag.axisDrag.enabled?drag.axisDrag.axis:null,
+        previous:drag.snapLocks});
+    [cx,cy]=aligned.point;
+    drag.snapLocks=aligned.locks;
+  }else drag.snapLocks={x:null,y:null};
   drag.current={...drag.circle,cx,cy};
   drag.moved=Math.hypot(cx-drag.circle.cx,cy-drag.circle.cy)>.9;
   syncScatteredDirectOutline(drag.current);
