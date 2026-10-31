@@ -35,9 +35,19 @@ A seven-colour vector shape remains one vector scene object. The granular field 
 - **Optics:** check actual screenshots at 320×700 and 412×892, full-resolution export and close zoom. Distinguish film grain (noise), printed paper grain, and physically arranged sand; ensure coloured bands do not become speckled plastic or stars.
 - **Tests:** pure deterministic grain location/seed/crop/count tests, canonical normalization/transport, material height bounds, all three select options. Full browser screenshot inspection and handset judgement remain explicitly unverified until exercised.
 
-## Next phases (not yet delivered)
+## Phase S2 implementation: opt-in inward contour relief (PR #916)
 
-**Phase S2: path-/region-aware deposition.** Add an optional per-role sand treatment or granular style object using the same `surfaceTreatments` ownership model as embroidery, after evaluating a safe discriminated union rather than shoehorning a new style into embroidery-only fields. Evaluate a signed distance or exact offset from each vector boundary; avoid a global raster distance texture that can invert holes or smear narrow necks. Use tangent/normal frames from `samplePath` for ribbons and `polygon-inset` for compound rings. A thin rim has subtle material height and contact shadows, without bleeding into transparent gaps, and remains correct at self-crossings.
+The existing sand material now has a geometry-aware, bounded design-unit edge treatment, owned by `src/sand-contour-relief.js` and the existing foreground painting stages in `src/renderer.js`. No new recipe property, visible control, output pixels stored in source, material renderer or object-shadow model is added.
+
+- Only an active `sand-mandala` layer covering stripes/foreground adds relief. A background-only sand layer leaves coloured object outlines alone. Strength drives subtle dark contact and pale raised-edge tones; the inherited material scale drives the physical ridge width in authored-world units.
+- Ribbon fills use the genuine original open edge rails (`traceEdge`) and the existing compound `stripeFillPath` clip. They never introduce transverse fake caps at the temporary boundaries of an over/under crossing. The crossing correction replays the same effect on its selected branch.
+- Coloured circles and polygon/compound regions reuse the same filled source path, with the **original even-odd clip** for holes and detached islands. The rim is drawn *inward* on the filled side of every exposed ring; exterior gaps and interior cutouts are not colour-filled by the treatment.
+- Seven thin imported nested contours instead receive a narrow centreline specular accent inside the original authored stroke footprint; levels that truly collapse remain absent. The system does not attempt to project a thick inward ridge onto a two-unit line.
+- Woven/ornamental negative-space motifs do not acquire false filled-ribbon rims. Other existing materials are unchanged without an active sand layer.
+
+**Limitations:** This is controlled 2.5D rim shading, not granular material transport/physics. It does not yet distribute grains by tangent or local curvature, calculate physical contact normals, spill into neighbouring fills, or synthesize beaded/ornate contour rows. Those remain S3. Source render cost/actual phone latency and high-DPI optical quality must be measured independently. Genuine [Chromium art and PNG acceptance #41243087745](https://github.com/gamesbyian/wallgen/actions/runs/41243087745) **PASS**: normal wave ribbon, loop, imported compound hole/island, seven nested contours and production 3024×6552 PNG. The black hole was checked as exact RGBA(0,0,0,255), and the detached island was verified as coloured ink. Source PNGs were inspected: modest interior shading is visible at regular colour edges, while rim details on two-unit nested lines remain deliberately slight. Physical Pixel timing, real optical grain packing, cross-browser quality and human artwork signoff are NOT proven.
+
+## Next phases (S3 / S4 remain planned)
 
 **Phase S3: decorative deposition.** Deterministic contour echoes, beaded outlines, concentric fillings, dotted rows and optional bounded controlled spill. Parameterize width/gap/phase in authored-world units and reuse the accepted nesting/topology engine. Allow one material treatment per semantic object or palette target without writing redundant geometry per grain.
 
@@ -56,7 +66,8 @@ The first slice contains new original code, borrowing only general public algori
 - [x] GitHub quick CI PASS on material implementation: [#41238544285](https://github.com/gamesbyian/wallgen/actions/runs/41238544285)
 - [x] Actual Chromium PNG smoke PASS with source PNGs inspected at preview, full-res detail and region-worker sizes: [#41238544266](https://github.com/gamesbyian/wallgen/actions/runs/41238544266). The opaque glossy bead/polka-dot look was found and replaced by finer matte microflecks; optical acceptance is for this limited texture character only, not genuine physical sand realism.
 - [ ] Physical Pixel 6 Pro randomization latency, visual fidelity and accessibility verification
-- [ ] Raised contour rims and true path-aware ornamentation (S2/S3)
+- [x] Basic inward, vector-clipped contour shading S2 verified in production Chromium [#41243087745](https://github.com/gamesbyian/wallgen/actions/runs/41243087745)
+- [ ] More physical sand deposition and true ornamental contour rows (S3)
 
 ### Genuine Chromium acceptance note, 31 October 2026
 

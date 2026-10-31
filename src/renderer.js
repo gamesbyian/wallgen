@@ -6,6 +6,7 @@ import {drawRegionInteriors,elementInk,elementWave,lineDash,elementApplies} from
 import { viewCamera } from './view-camera.js';
 import {findPathCrossings,crossingTopIsLater,crossingBranchClip} from './crossing-order.js';
 import {materialContourHeight,paintMaterial} from './material-surface.js';
+import {sandRimStyles,supportsSandRibbonRim,paintSandContourRim,paintSandStrokeGlint} from './sand-contour-relief.js';
 import {applyPhotoFinish} from './photo-look.js';
 import {matchingEmbroidery,drawRibbonEmbroidery,drawRegionEmbroidery} from './embroidery.js';
 
@@ -861,6 +862,7 @@ export function presentNudgedArtwork(canvas, layers, recipe) {
 // material stack, camera, lighting, nudge and export path as ribbon objects.
 // No regional generator paints directly: the painter consumes scene.objects.
 export function drawRegionObjects(ctx,scene){
+  const sandRims=sandRimStyles(scene);
   const divider=scene.dividerColor==='background'?scene.background:scene.dividerColor;
   const hasDivider=scene.dividerColor!=='none'&&scene.dividerWidth>0;
   const trace=object=>{
@@ -907,6 +909,9 @@ export function drawRegionObjects(ctx,scene){
           });
           if(contour.closed)ctx.closePath();
           ctx.stroke();
+          // Nested metric outlines retain their exact diameter and negative
+          // space: a narrow centreline glint never widens a coloured stroke.
+          paintSandStrokeGlint(ctx,nesting.strokeWidth,sandRims);
         }
       }
       ctx.restore();
@@ -929,6 +934,15 @@ export function drawRegionObjects(ctx,scene){
       ctx.restore();
     }
     drawRegionInteriors(ctx,object,scene.interiorElements,scene.structure,scene.renderBounds);
+    if(sandRims.length){
+      // Each actual region, including disjoint imported islands and holes,
+      // owns its inward ridge. Never shade the empty cutouts or neighbours.
+      ctx.save();trace(object);
+      ctx.clip(object.rings?'evenodd':'nonzero');
+      trace(object);
+      paintSandContourRim(ctx,null,sandRims);
+      ctx.restore();
+    }
     if(!hasDivider){
       if(stitch)trace(object);
       ctx.strokeStyle=object.color;
@@ -1004,6 +1018,7 @@ export function drawWallpaper(canvas, recipe, options={}) {
     g.translate(scene.centerX-DESIGN_WIDTH/2,scene.centerY-DESIGN_HEIGHT/2);
   }else g.translate(scene.centerX,scene.centerY);
   g.rotate(scene.angle);
+  const sandRims=sandRimStyles(scene);
   const crossingBundles=[];
   for(const bundle of scene.objects){
   const bundleOffset=bundle.offset;
@@ -1030,6 +1045,13 @@ export function drawWallpaper(canvas, recipe, options={}) {
     drawOutline(g,path,stripe,scene);
     g.fillStyle=stripe.color;g.strokeStyle=stripe.color;
     fillMotif(g,stripe,scene.extent,scene);
+    if(sandRims.length&&supportsSandRibbonRim(scene,stripe)){
+      g.save();g.clip(stripeFillPath(stripe,scene.extent,scene));
+      // Source edge rails, no fake transverse cap at a crossing repair.
+      paintSandContourRim(g,[traceEdge(stripe,scene.extent,-1,scene),
+        traceEdge(stripe,scene.extent,1,scene)],sandRims);
+      g.restore();
+    }
     const stitch=matchingEmbroidery(scene.surfaceTreatments,{
       id:stripe.objectId,colorSlot:NAMES.indexOf(stripe.name)});
     if(stitch&&scene.construction==='ribbon'&&scene.lineStyle==='continuous'&&scene.motif==='solid'){
@@ -1097,6 +1119,12 @@ export function drawWallpaper(canvas, recipe, options={}) {
           drawCrossingOutline(g,branch,scene);
           g.fillStyle=stripe.color;g.strokeStyle=stripe.color;
           fillMotif(g,branch,scene.extent,scene);
+          if(sandRims.length&&supportsSandRibbonRim(scene,branch)){
+            g.save();g.clip(stripeFillPath(branch,scene.extent,scene));
+            paintSandContourRim(g,[traceEdge(branch,scene.extent,-1,scene),
+              traceEdge(branch,scene.extent,1,scene)],sandRims);
+            g.restore();
+          }
           // The painter must replay exactly the top branch's thread surface,
           // otherwise the foreground ribbon becomes smooth at self-crossings.
           // Keep stitch stations anchored in the ORIGINAL ribbon so both
