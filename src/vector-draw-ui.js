@@ -58,6 +58,16 @@ export function installVectorDrawEditor({getRecipe,onApply,onNotice,
   let active=false,session=null,sourceKey=null,drag=null,insertMode=false,
     axisLock=false,snapEnabled=false,applying=false,serial=0,overlapTap=null;
   const sourceSignature=()=>JSON.stringify(getRecipe().vectorPath??null);
+  // Some normal preview re-renders emit zoom-updated notifications with the
+  // same camera. Only a real change of the pointer inverse may cancel a
+  // gesture. Resize and blur always cancel as explicit interruption events.
+  function screenMapFingerprint(){
+    const recipe=getRecipe(),rect=wallpaper.getBoundingClientRect();
+    const zoom=Number(studio?.dataset.viewZoom)||Number(recipe.viewZoom)||1;
+    const [ox,oy]=drawnPathViewportOffset(recipe,true);
+    return [zoom,ox,oy,rect.left,rect.top,rect.width,rect.height]
+      .map(v=>Number.isFinite(v)?v.toFixed(3):'invalid').join('|');
+  }
   function camera(){
     const recipe=getRecipe();
     const zoom=Number(studio?.dataset.viewZoom)||Number(recipe.viewZoom)||1;
@@ -191,9 +201,19 @@ export function installVectorDrawEditor({getRecipe,onApply,onNotice,
     axis.textContent=axisLock?'Axis locked':'Lock axis';
     paint();
   }
+  function abandonPointerEdit(){
+    if(!drag)return false;
+    const old=drag;
+    drag=null;overlapTap=null;
+    session=cancelVectorEdit(session);
+    // Release after clearing the owner. A late lostpointercapture must never
+    // discard a newer gesture or strand a hidden canvas as pointer owner.
+    try{overlay.releasePointerCapture(old.pointerId);}catch{}
+    return true;
+  }
   function close({focus=true}={}){
     if(!active)return;
-    if(drag){session=cancelVectorEdit(session);drag=null;}
+    abandonPointerEdit();
     active=false;session=null;sourceKey=null;insertMode=false;axisLock=false;snapEnabled=false;
     overlapTap=null;
     toolbar.hidden=true;overlay.hidden=true;
@@ -278,7 +298,7 @@ export function installVectorDrawEditor({getRecipe,onApply,onNotice,
       id:hit.id,side:hit.side});
     if(!session.tx){sync();return;}
     drag={pointerId:event.pointerId,kind:hit.kind,id:hit.id,side:hit.side,
-      start:at,offset,overlaps:hit.overlaps||null,
+      start:at,screenMap:screenMapFingerprint(),offset,overlaps:hit.overlaps||null,
       axis:beginAxisDrag(at,origin,axisLock),moved:false,
       snapping:snapEnabled,snapLocks:{x:null,y:null}};
     try{overlay.setPointerCapture(event.pointerId);}catch{}
@@ -353,7 +373,7 @@ export function installVectorDrawEditor({getRecipe,onApply,onNotice,
   }
   mode.addEventListener('change',()=>{
     overlapTap=null;
-    if(!active||!session.selectedId)return;
+    if(!active||!session.selectedId||session.tx)return;
     if(mode.value==='delete'){deleteSelectedNode();return;}
     const start=beginVectorEdit(session,{kind:'mode',id:session.selectedId});
     const draft=previewVectorEdit(start,{mode:mode.value});
@@ -379,12 +399,17 @@ export function installVectorDrawEditor({getRecipe,onApply,onNotice,
     if(event.key==='Escape'){
       event.preventDefault();close();return;
     }
+    // Keep even Undo/Redo out of an active pointer transaction. Prevent the
+    // browser's native Undo on that key chord, but never edit our Undo graph.
+    if(drag||session.tx){
+      if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='z')
+        event.preventDefault();
+      return;
+    }
     if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='z'){
       event.preventDefault();overlapTap=null;session=event.shiftKey?
         redoVectorEdit(session):undoVectorEdit(session);sync();return;
     }
-    // Do not interleave discrete keyboard transactions with a live pointer edit.
-    if(drag||session.tx)return;
     if(!event.ctrlKey&&!event.metaKey&&
        (event.key==='Delete'||event.key==='Backspace')&&session.selectedId){
       event.preventDefault();deleteSelectedNode();return;
@@ -402,11 +427,21 @@ export function installVectorDrawEditor({getRecipe,onApply,onNotice,
     overlapTap=null;session=commitVectorEdit(previewVectorEdit(tx,{point:command.point}));
     sync();
   });
-  window.addEventListener('resize',()=>{if(active)sync();});
-  studio?.addEventListener('roygbiv-view-zoom-updated',()=>{if(active)sync();});
-  overlay.parentElement?.addEventListener('roygbiv-preview-zoom',()=>{
-    if(active)sync();
+  // The screen-to-vector inverse changes after a resize or camera zoom.
+  // Never carry a pointerdown snapshot through that change: rollback its
+  // provisional cubic move while preserving previous committed local Undo.
+  const refreshViewport=(force=false)=>{
+    if(!active)return;
+    if(force||(drag&&drag.screenMap!==screenMapFingerprint()))
+      abandonPointerEdit();
+    sync();
+  };
+  window.addEventListener('blur',()=>{
+    if(active&&abandonPointerEdit())sync();
   });
+  window.addEventListener('resize',()=>refreshViewport(true));
+  studio?.addEventListener('roygbiv-view-zoom-updated',()=>refreshViewport());
+  overlay.parentElement?.addEventListener('roygbiv-preview-zoom',()=>refreshViewport());
   return {open,close,
     sync(recipe){
       if(!active)return;

@@ -68,3 +68,37 @@ test('a canceled deletion and invalid keyboard nudge cannot corrupt source or hi
   assert.deepEqual(state.path,before);
   assert.equal(state.undo.length,0);
 });
+
+test('abandoned vector pointer transactions restore original cubic geometry and local history',()=>{
+  let session=selectVectorEditNode(createVectorEditSession(source),'b');
+  const original=session.path;
+  session=beginVectorEdit(session,{kind:'node',id:'b'});
+  session=previewVectorEdit(session,{point:[.62,.46]});
+  assert.notDeepEqual(session.draft,original);
+  assert.equal(session.undo.length,0);
+  const canceled=cancelVectorEdit(session);
+  assert.deepEqual(canceled.path,original);
+  assert.deepEqual(canceled.draft,original);
+  assert.equal(canceled.tx,null);
+  assert.equal(canceled.undo.length,0);
+  assert.equal(canceled.selectedId,'b');
+  const valid=commitVectorEdit(previewVectorEdit(
+    beginVectorEdit(canceled,{kind:'node',id:'b'}),{point:[.62,.46]}));
+  assert.equal(valid.undo.length,1);
+  assert.deepEqual(undoVectorEdit(valid).path,original);
+});
+test('Draw UI cancels screen-mapped pointer capture on focus, resize, zoom and close',async()=>{
+  const {readFileSync}=await import('node:fs');
+  const src=readFileSync(new URL('../src/vector-draw-ui.js',import.meta.url),'utf8');
+  assert.match(src,/function abandonPointerEdit\(\)/);
+  assert.match(src,/drag=null;overlapTap=null;\s*session=cancelVectorEdit\(session\)/);
+  assert.match(src,/overlay.releasePointerCapture\(old.pointerId\)/);
+  assert.match(src,/function close\(\{focus=true\}=\{\}\)\{\s*if\(!active\)return;\s*abandonPointerEdit\(\)/);
+  assert.match(src,/window.addEventListener\('blur'/);
+  assert.match(src,/screenMap:screenMapFingerprint\(\)/);
+  assert.match(src,/drag\.screenMap!==screenMapFingerprint\(\)/);
+  assert.match(src,/window.addEventListener\('resize',\(\)=>refreshViewport\(true\)\)/);
+  assert.match(src,/roygbiv-view-zoom-updated',\(\)=>refreshViewport\(\)/);
+  assert.match(src,/roygbiv-preview-zoom',\(\)=>refreshViewport\(\)/);
+  assert.match(src,/if\(drag\|\|session.tx\)\{\s*if\(\(event.ctrlKey/);
+});

@@ -1,0 +1,25 @@
+name: Once vector Draw pointer interruption acceptance
+on:
+  pull_request:
+    paths:
+      - 'tests/vector-draw-interruption-browser.mjs'
+      - '.github/workflows/once-vector-gesture-interruption.yml'
+      - 'src/vector-draw-ui.js'
+permissions:
+  contents: read
+jobs:
+  real-vector-chromium:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check browser and JS
+        run: |
+          command -v google-chrome || command -v chromium
+          node --check src/vector-draw-ui.js
+          node --check tests/vector-draw-interruption-browser.mjs
+      - name: Real mobile Chromium pointer lifecycle
+        run: node tests/vector-draw-interruption-browser.mjs
