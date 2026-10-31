@@ -57,11 +57,11 @@ jobs:
       - name: Verify independently pinned trusted renderer release
         run: |
           set -euo pipefail
-          curl --fail --silent --show-error --location --retry 3 --retry-delay 2 \\
-            'https://gamesbyian.github.io/wallgen/trusted-renderer/roygbiv-render-version.json' \\
+          curl --fail --silent --show-error --location --retry 3 --retry-delay 2 \
+            'https://gamesbyian.github.io/wallgen/trusted-renderer/roygbiv-render-version.json' \
             -o /tmp/roygbiv-trusted-render-version.json
-          curl --fail --silent --show-error --location --retry 3 --retry-delay 2 \\
-            'https://gamesbyian.github.io/wallgen/trusted-renderer/render-host.html' \\
+          curl --fail --silent --show-error --location --retry 3 --retry-delay 2 \
+            'https://gamesbyian.github.io/wallgen/trusted-renderer/render-host.html' \
             -o /tmp/roygbiv-trusted-render-host.html
           node --input-type=module -e "
             import fs from 'node:fs';
