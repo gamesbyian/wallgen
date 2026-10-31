@@ -1,6 +1,6 @@
 # Granular materials and sand-mandala surface plan
 
-**Status:** first material slice implemented in branch `feat/sand-mandala-material-20261031`; contour deposition and ornate patterns remain planned. **Date:** 31 October 2026.
+**Status:** first material slice merged as [#912](https://github.com/gamesbyian/wallgen/pull/912), commit `ea434590`, 31 October 2026. Exact-head quick CI [#41238785115](https://github.com/gamesbyian/wallgen/actions/runs/41238785115) passed. Contour deposition and ornate patterns remain planned in [#913](https://github.com/gamesbyian/wallgen/issues/913). **Date:** 31 October 2026.
 
 ## User intention
 
