@@ -57,3 +57,17 @@ export function compactTextGripLayout({
 function toCss(point,hw,hh,radius){
   return {left:hw+point.x-radius,top:hh+point.y-radius};
 }
+
+// Two 44px grips can eclipse the text's main centre drag zone when a
+// short title has grown just beyond the old 80px compact threshold.
+// Preserve a full 22px finger radius around the centre: a right-inset
+// 44px scale grip is only safely outside that area after 3 grip widths.
+// Near the top edge, the inset rotate grip additionally occupies ink.
+export function shouldDetachTextGrips({frameWidth,frameHeight,
+  rotateInset=false,buttonSize=44}={}){
+  if(![frameWidth,frameHeight,buttonSize].every(Number.isFinite)||
+      frameWidth<=0||frameHeight<=0||buttonSize<20)
+    throw Error('Invalid text grip compact decision');
+  return frameWidth<buttonSize*3&&frameHeight<buttonSize*3||
+    rotateInset&&frameHeight<buttonSize*2;
+}

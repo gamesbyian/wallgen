@@ -316,3 +316,17 @@ test('keyboard text guide is focusable without stealing handle shortcuts',async(
  assert.match(source,/cause:'text_move_keyboard'/);
  assert.match(css,/\.text-direct-outline:focus-visible/);
 });
+
+test('compact 44px grips detach before eclipsing the text drag centre',async()=>{
+ const {shouldDetachTextGrips}=await import('../src/text-grip-layout.js');
+ assert.equal(shouldDetachTextGrips({frameWidth:58.75,frameHeight:24.5}),true);
+ assert.equal(shouldDetachTextGrips({frameWidth:83.42,frameHeight:34.8}),true,
+   'wide-phone 83px text must not expose an inset scale grip at its centre');
+ assert.equal(shouldDetachTextGrips({frameWidth:131.9,frameHeight:110}),true);
+ assert.equal(shouldDetachTextGrips({frameWidth:132,frameHeight:110}),false);
+ assert.equal(shouldDetachTextGrips({frameWidth:160,frameHeight:34,rotateInset:true}),true,
+   'an inset rotate handle cannot obscure a short phrase near the top');
+ assert.equal(shouldDetachTextGrips({frameWidth:160,frameHeight:34}),false);
+ assert.equal(shouldDetachTextGrips({frameWidth:80,frameHeight:170}),false);
+ assert.throws(()=>shouldDetachTextGrips({frameWidth:NaN,frameHeight:40}));
+});

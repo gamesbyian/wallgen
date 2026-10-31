@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {compactTextGripLayout} from '../src/text-grip-layout.js';
+import {compactTextGripLayout,shouldDetachTextGrips} from '../src/text-grip-layout.js';
 
 const examples=[
   {canvasWidth:165,canvasHeight:350,centreX:82.5,centreY:175,frameWidth:10,frameHeight:18,rotation:0},
@@ -37,8 +37,12 @@ test('44px compact rotate/scale centres do not collide or spill into genuine por
 test('the same real accessible 44px DOM buttons remain ink-clear and keyboard-operable',()=>{
  const ui=readFileSync(new URL('../src/text-direct-ui.js',import.meta.url),'utf8');
  const css=readFileSync(new URL('../text-overlays.css',import.meta.url),'utf8');
- assert.match(ui,/const compact=physicalWidth<80&&physicalHeight<100/,
-   'one-letter titles must trigger the compact layout');
+ assert.match(ui,/const compact=shouldDetachTextGrips\(\{frameWidth:physicalWidth/,
+   'compact grips must be chosen by the shared tested CSS-screen hit geometry');
+ assert.equal(shouldDetachTextGrips({frameWidth:83.42,frameHeight:34.8}),true,
+   '83px short title at 412px viewport must not have an inset scale handle on ink');
+ assert.equal(shouldDetachTextGrips({frameWidth:160,frameHeight:34,rotateInset:true}),true,
+   'short captions near top inset rotation must move grips away from text');
  assert.match(ui,/compactTextGripLayout\(\{/);
  assert.match(ui,/outline\.dataset\.gripReachable=String\(grip\.reachable\)/);
  assert.match(css,/\.text-direct-handle\{[^}]*width:44px;height:44px/,
