@@ -108,14 +108,38 @@ export function installViewPanGesture({getRecipe,changeRecipe,onNotice=()=>{},
     try{preview.setPointerCapture(event.pointerId);}catch{}
   },true);
   preview.addEventListener('pointermove',event=>{
+    if(pinch){
+      const i=pinch.ids.indexOf(event.pointerId);
+      if(i<0)return;
+      event.preventDefault();event.stopImmediatePropagation();
+      if(pinch.original!==getRecipe()){clearGesture();return;}
+      pinch.points[i]=local({x:event.clientX,y:event.clientY},pinch.rect);
+      pinch.state=advanceViewPinch(pinch.state,...pinch.points);
+      drawPinch();
+      return;
+    }
     if(!drag||event.pointerId!==drag.pointerId)return;
     event.preventDefault();event.stopImmediatePropagation();
     if(drag.original!==getRecipe()){clearGesture();return;}
-    drag.state=advanceViewPan(drag.state,{x:event.clientX,y:event.clientY});
+    drag.current={x:event.clientX,y:event.clientY};
+    drag.state=advanceViewPan(drag.state,drag.current);
     const {displacementX:x,displacementY:y}=drag.state;
     preview.style.transform=x||y?'translate3d('+x+'px,'+y+'px,0)':'';
   },true);
   preview.addEventListener('pointerup',event=>{
+    if(pinch){
+      if(!pinch.ids.includes(event.pointerId))return;
+      event.preventDefault();event.stopImmediatePropagation();
+      const {original,state}=pinch;
+      const changed=state.zoom!==original.viewZoom||
+        state.panX!==original.viewPanX||state.panY!==original.viewPanY;
+      const valid=active&&original===getRecipe()&&changed;
+      clearGesture(); // One finger lifting ends the whole two-finger transaction.
+      if(valid)changeRecipe({...original,viewZoom:state.zoom,
+        viewPanX:state.panX,viewPanY:state.panY},
+        {cause:'view_pinch_on_canvas'});
+      return;
+    }
     if(!drag||event.pointerId!==drag.pointerId)return;
     event.preventDefault();event.stopImmediatePropagation();
     const {original,state}=drag;
@@ -126,7 +150,8 @@ export function installViewPanGesture({getRecipe,changeRecipe,onNotice=()=>{},
   },true);
   for(const name of ['pointercancel','lostpointercapture']){
     preview.addEventListener(name,event=>{
-      if(drag&&event.pointerId===drag.pointerId)clearGesture();
+      if((drag&&event.pointerId===drag.pointerId)||
+         (pinch&&pinch.ids.includes(event.pointerId)))clearGesture();
     },true);
   }
   // Switching to another canvas authoring mode disarms framing. These
@@ -145,7 +170,8 @@ export function installViewPanGesture({getRecipe,changeRecipe,onNotice=()=>{},
   });
   // An unrelated canonical update cancels the provisional camera translation.
   document.addEventListener('roygbiv-controls-synced',()=>{
-    if(drag&&drag.original!==getRecipe())clearGesture();
+    if((drag&&drag.original!==getRecipe())||
+       (pinch&&pinch.original!==getRecipe()))clearGesture();
   });
   return {end:()=>setActive(false),get active(){return active;}};
 }
