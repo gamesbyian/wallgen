@@ -59,10 +59,11 @@ try{
    for(let i=0;i<3;i++)await page.mouse.click(at.x,at.y);
    assert.deepEqual(recipe(page),original,'selection never authors a recipe');
    await page.keyboard.press('ArrowRight');
+   const beforeURL=page.url();
    const toolbar=page.locator('.vector-draw-tools');
    await toolbar.locator('.vector-draw-toggle').click();
    await toolbar.locator('button',{hasText:'Use path'}).click();
-   await page.waitForFunction(before=>location.href!==before,await page.url());
+   await page.waitForFunction(before=>location.href!==before,beforeURL);
    const edited=recipe(page),before=original.vectorPath;
    assert.ok(edited.vectorPath.segments[2].to.point[0]>
      before.segments[2].to.point[0],
