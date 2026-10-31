@@ -330,3 +330,22 @@ test('compact 44px grips detach before eclipsing the text drag centre',async()=>
  assert.equal(shouldDetachTextGrips({frameWidth:80,frameHeight:170}),false);
  assert.throws(()=>shouldDetachTextGrips({frameWidth:NaN,frameHeight:40}));
 });
+
+test('selection changes revoke pending text gestures without requiring a recipe edit',async()=>{
+  const {textGestureHasOwnership}=await import('../src/text-direct-geometry.js');
+  assert.equal(textGestureHasOwnership(sample,sample,'front','front'),true);
+  assert.equal(textGestureHasOwnership(sample,sample,'front','back'),false,
+    'picker-only selection changes invalidate the old pointer owner');
+  assert.equal(textGestureHasOwnership(sample,structuredClone(sample),'front','front'),
+    false,'an intervening recipe transaction invalidates the pointer owner');
+  assert.equal(textGestureHasOwnership(sample,sample,'locked','locked'),false);
+  assert.equal(textGestureHasOwnership(sample,sample,'missing','missing'),false);
+});
+test('direct canvas gesture capture ends on blur, resize and selection changes',async()=>{
+  const {readFileSync}=await import('node:fs');
+  const source=readFileSync(new URL('../src/text-direct-ui.js',import.meta.url),'utf8');
+  assert.match(source,/discardCapturedGestures\(\)/);
+  assert.match(source,/textGestureHasOwnership\(drag\.original,recipe,drag\.id,selectedId\(\)\)/);
+  assert.match(source,/textGestureHasOwnership\(\s*state\.original,getRecipe\(\),state\.id,selectedId\(\)\)/);
+  assert.match(source,/\['blur','resize'\]/);
+});

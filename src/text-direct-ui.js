@@ -8,7 +8,7 @@ import {beginAxisDrag,axisConstrainedPoint} from './axis-constrained-drag.js';
 import {snapTextAnchor,textSnapGestureMoved} from './text-anchor-snap.js';
 import {designPointFromPointer,dragTextOverlay,nudgeTextOverlay,
   dragTextTransform,transformTextOverlay,measuredTextBounds,
-  measureCanvasText,textGestureOwnsCurrentRecipe} from './text-direct-geometry.js';
+  measureCanvasText,textGestureHasOwnership} from './text-direct-geometry.js';
 import {hitTextAtLayout} from './text-path-geometry.js';
 
 // Opt-in touch gesture, with the same one-pointerup/one-Undo contract already
@@ -139,16 +139,29 @@ export function installTextCanvasMover({
     for(const handle of handles)handle.disabled=!!item.locked;
     outline.hidden=false;
   }
+  function discardCapturedGestures(){
+    // Clear the gesture owners BEFORE releasing pointer capture. A delayed
+    // lostpointercapture must never cancel a subsequently started gesture.
+    const oldDrag=drag,oldTransform=transformDrag;
+    drag=null;transformDrag=null;
+    if(oldDrag){
+      try{canvas.releasePointerCapture(oldDrag.pointerId);}catch{}
+    }
+    if(oldTransform){
+      const owner=handles.find(h=>h.dataset.textHandle===oldTransform.mode);
+      try{owner?.releasePointerCapture(oldTransform.pointerId);}catch{}
+    }
+  }
   function redraw(){
     if(!active)return;
     const recipe=getRecipe();
     // Another control, import, lock update or Undo has committed a newer
     // canonical recipe during pointer capture. Drop the abandoned draft;
     // pointerup must not replay the old object over the new edit.
-    if(drag&&!textGestureOwnsCurrentRecipe(drag.original,recipe,drag.id))
-      drag=null;
-    if(transformDrag&&!textGestureOwnsCurrentRecipe(
-      transformDrag.original,recipe,transformDrag.id))transformDrag=null;
+    if((drag&&!textGestureHasOwnership(drag.original,recipe,drag.id,selectedId()))||
+       (transformDrag&&!textGestureHasOwnership(
+         transformDrag.original,recipe,transformDrag.id,selectedId())))
+      discardCapturedGestures();
     // Canvas mover and the Text pane must agree: an invisible, disabled or
     // locked-only collection has no movable ink. Never re-enable this button
     // during a frame redraw after the pane correctly disabled it.
@@ -166,13 +179,7 @@ export function installTextCanvasMover({
     // Mode dismissal is always a cancellation of provisional pointer edits.
     // Release both owners before clearing state; delayed lost-capture events
     // then observe null and cannot cancel a future independent gesture.
-    const oldDrag=drag,oldTransform=transformDrag;
-    drag=null;transformDrag=null;
-    if(oldDrag){try{canvas.releasePointerCapture(oldDrag.pointerId);}catch{}}
-    if(oldTransform){
-      const owner=handles.find(h=>h.dataset.textHandle===oldTransform.mode);
-      try{owner?.releasePointerCapture(oldTransform.pointerId);}catch{}
-    }
+    discardCapturedGestures();
     const guideHadFocus=document.activeElement===outline||
       handles.includes(document.activeElement);
     active=Boolean(next);
@@ -242,6 +249,9 @@ export function installTextCanvasMover({
   canvas.addEventListener('pointermove',event=>{
     if(!active||!drag||drag.pointerId!==event.pointerId)return;
     event.preventDefault();event.stopImmediatePropagation();
+    if(!textGestureHasOwnership(drag.original,getRecipe(),drag.id,selectedId())){
+      discardCapturedGestures();redraw();return;
+    }
     const point=designPointFromPointer(event,canvas);
     if(!point)return;
     const [x,y]=drag.axisDrag.origin;
@@ -273,8 +283,8 @@ export function installTextCanvasMover({
     event.preventDefault();event.stopImmediatePropagation();
     const finished=drag;drag=null;
     try{canvas.releasePointerCapture(event.pointerId);}catch{}
-    if(finished.moved&&textGestureOwnsCurrentRecipe(
-      finished.original,getRecipe(),finished.id))
+    if(finished.moved&&textGestureHasOwnership(
+      finished.original,getRecipe(),finished.id,selectedId()))
       changeRecipe(finished.next,{cause:'text_move_on_canvas'});
     redraw();
   },true);
@@ -313,6 +323,9 @@ export function installTextCanvasMover({
       const state=transformDrag;
       if(!state||state.pointerId!==event.pointerId||state.mode!==mode)return;
       event.preventDefault();event.stopPropagation();
+      if(!textGestureHasOwnership(state.original,getRecipe(),state.id,selectedId())){
+        discardCapturedGestures();redraw();return;
+      }
       if(mode==='rotate'){
         state.rotateState=advancePointerRotation(state.rotateState,
           {x:event.clientX,y:event.clientY});
@@ -333,8 +346,8 @@ export function installTextCanvasMover({
       event.preventDefault();event.stopPropagation();
       transformDrag=null;
       try{handle.releasePointerCapture(event.pointerId);}catch{}
-      if(state.next!==state.original&&textGestureOwnsCurrentRecipe(
-        state.original,getRecipe(),state.id))
+      if(state.next!==state.original&&textGestureHasOwnership(
+        state.original,getRecipe(),state.id,selectedId()))
         changeRecipe(state.next,{cause:'text_'+mode+'_on_canvas'});
       redraw();
     });
@@ -371,7 +384,11 @@ export function installTextCanvasMover({
       step(event.key===positive?1:-1);
     });
   }
-  window.addEventListener('resize',redraw);
+  // Browser focus loss and viewport reflow revoke CSS-space pointer snapshots.
+  // Neither may commit a provisional source edit on a later pointerup.
+  for(const name of ['blur','resize']){
+    window.addEventListener(name,()=>{discardCapturedGestures();redraw();});
+  }
   window.addEventListener('keydown',event=>{
     if(active&&event.key==='Escape'){setActive(false);event.preventDefault();}
   });

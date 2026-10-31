@@ -1,0 +1,25 @@
+name: Once text captured-gesture lifecycle Chromium
+on:
+  pull_request:
+    paths:
+      - 'tests/text-direct-controls-browser.mjs'
+      - '.github/workflows/once-text-gesture-lifecycle.yml'
+      - 'src/text-direct-ui.js'
+permissions:
+  contents: read
+jobs:
+  real-chromium-text:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check Chromium and test source
+        run: |
+          command -v google-chrome || command -v chromium
+          node --check src/text-direct-ui.js
+          node --check tests/text-direct-controls-browser.mjs
+      - name: Test actual text pointer ownership across mobile viewports
+        run: node tests/text-direct-controls-browser.mjs
