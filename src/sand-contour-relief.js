@@ -9,7 +9,7 @@ const opacity=n=>'rgba('+n+')';
  * never transform an unrelated foreground's shape. Source layer order is kept. */
 export function sandRimStyles(scene){
   return (scene?.textureLayers||[])
-    .filter(layer=>(layer?.material==='sand-mandala'||layer?.material==='sand-beaded')&&
+    .filter(layer=>(layer?.material==='sand-mandala'||layer?.material==='sand-beaded'||layer?.material==='sand-filigree')&&
       layer.coverage!=='background'&&finite(layer.strength)&&layer.strength>0)
     .map(layer=>{
       const gauge=sandPitch(layer),strength=Math.min(1,layer.strength/100);

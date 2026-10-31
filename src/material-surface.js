@@ -26,7 +26,7 @@ function fractal(x,y,seed){
 // [field period, ridge pitch, ridge weight, local/rough field weight]
 // The relief silhouette and visible surface therefore share composition.
 export const MATERIAL_CHARACTER=Object.freeze({
-  grain:[7,0,0,.84], 'sand-mandala':[6,0,0,.48], 'sand-beaded':[6,0,0,.48],watercolor:[69,0,0,.23],
+  grain:[7,0,0,.84], 'sand-mandala':[6,0,0,.48], 'sand-beaded':[6,0,0,.48], 'sand-filigree':[6,0,0,.48],watercolor:[69,0,0,.23],
   construction:[10,0,0,.68],handmade:[24,0,0,.63],
   linen:[13,5,.27,.53], 'linen-soft':[13,5,.27,.53],
   'linen-organic':[13,5,.27,.53],canvas:[18,9,.31,.62],
@@ -87,7 +87,7 @@ export function materialHeight(layer,x,y){
 export function materialContourHeight(layer,x,y){
   // Sand is deposited against exact vector boundaries. Its microscopic relief
   // must not sawtooth a drawn edge when displacement is turned up.
-  if(layer.material==='sand-mandala'||layer.material==='sand-beaded')return materialHeight(layer,x,y)*.18;
+  if(layer.material==='sand-mandala'||layer.material==='sand-beaded'||layer.material==='sand-filigree')return materialHeight(layer,x,y)*.18;
   if(layer.material!=='linen-soft'&&layer.material!=='linen-organic')return materialHeight(layer,x,y);
   const unit=materialUnit(layer);
   const offsetX=5*unit*.5,offsetY=5*1.12*unit*.5;
@@ -335,7 +335,8 @@ export function paintMaterial(ctx,layer,bounds){
   switch(layer.material){
     case 'grain': dots(ctx,layer,bounds,5.3,.65,.37,2);break;
     case 'sand-mandala':
-    case 'sand-beaded': paintSandGrains(ctx,layer,bounds);break;
+    case 'sand-beaded':
+    case 'sand-filigree': paintSandGrains(ctx,layer,bounds);break;
     case 'watercolor':
       dots(ctx,layer,bounds,6,.55,.15,2);
       flecks(ctx,layer,bounds,18,5,.11);break;

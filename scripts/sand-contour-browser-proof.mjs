@@ -50,6 +50,10 @@ try{
     ['05-beaded-wave','06-beaded-loop','07-beaded-compound','08-beaded-nested'][i],
     normalizeRecipe({...recipe,material:'sand-beaded'})
   ]));
+  scenes.push(...scenes.slice(0,4).map(([,recipe],i)=>[
+    ['11-filigree-wave','12-filigree-loop','13-filigree-compound','14-filigree-nested'][i],
+    normalizeRecipe({...recipe,material:'sand-filigree'})
+  ]));
   const results=[];
   for(const [name,recipe] of scenes){
     const data=await page.evaluate(async recipe=>{
@@ -57,7 +61,9 @@ try{
       const {resolveScene}=await import('/src/model.js');
       const canvas=document.createElement('canvas');
       canvas.width=600;canvas.height=1300;
+      const started=performance.now();
       drawWallpaper(canvas,recipe);
+      const renderMs=performance.now()-started;
       const ctx=canvas.getContext('2d');
       const source=resolveScene(recipe).objects?.[0];
       let hole=null,island=null;
@@ -72,21 +78,46 @@ try{
         hole={point:[hx,hy],rgba:[...ctx.getImageData(hx,hy,1,1).data]};
         island={point:[ix,iy],rgba:[...ctx.getImageData(ix,iy,1,1).data]};
       }
-      return {png:canvas.toDataURL('image/png'),hole,island};
+      // Hash actual visible RGBA pixels, not PNG metadata (which differs
+      // between material recipes even if a renderer accidentally draws the
+      // same visual output).
+      const rgba=ctx.getImageData(0,0,canvas.width,canvas.height).data;
+      let pixelHash=2166136261;
+      for(let i=0;i<rgba.length;i+=4){
+        pixelHash=Math.imul(pixelHash^rgba[i],16777619)>>>0;
+        pixelHash=Math.imul(pixelHash^rgba[i+1],16777619)>>>0;
+        pixelHash=Math.imul(pixelHash^rgba[i+2],16777619)>>>0;
+        pixelHash=Math.imul(pixelHash^rgba[i+3],16777619)>>>0;
+      }
+      return {png:canvas.toDataURL('image/png'),hole,island,renderMs,pixelHash};
     },recipe);
     const png=Buffer.from(data.png.split(',')[1],'base64');
     assert.equal(png.toString('hex',0,8),'89504e470d0a1a0a');
     assert.equal(png.readUInt32BE(16),600);
     assert.equal(png.readUInt32BE(20),1300);
     await writeFile(join(out,name+'.png'),png);
-    if(name==='03-sand-compound'||name==='07-beaded-compound'){
+    if(name==='03-sand-compound'||name==='07-beaded-compound'||name==='13-filigree-compound'){
       assert.deepEqual(data.hole.rgba,[0,0,0,255],
         'a true compound silhouette hole must remain unpainted');
       assert.ok(data.island.rgba[0]+data.island.rgba[1]+data.island.rgba[2]>35,
         'detached island must remain real coloured geometry');
     }
-    results.push({name,bytes:png.length,hole:data.hole,island:data.island});
+    results.push({name,bytes:png.length,pixelHash:data.pixelHash,renderMs:data.renderMs,
+      hole:data.hole,island:data.island});
   }
+  for(const [fine,filigree] of [
+    ['01-sand-wave','11-filigree-wave'],
+    ['02-sand-loop','12-filigree-loop'],
+    ['03-sand-compound','13-filigree-compound']
+  ]){
+    assert.notEqual(results.find(x=>x.name===fine).pixelHash,
+      results.find(x=>x.name===filigree).pixelHash,
+      'real rendered pixels must visibly differ for '+filigree);
+  }
+  await writeFile(join(out,'render-timings.json'),JSON.stringify({
+    environment:'GitHub Actions headless Chromium, not physical Pixel 6 Pro',
+    timings:results.map(({name,renderMs})=>({name,renderMs}))
+  },null,2));
   console.log('SAND_CONTOUR_CHROMIUM_PASS',JSON.stringify(results));
   await page.close();
 }finally{await browser.close();await new Promise(r=>server.close(r));}
