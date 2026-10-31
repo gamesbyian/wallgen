@@ -63,3 +63,16 @@ test('sand paint uses Canvas2D grain relief without raster assets or random stat
   assert.equal(JSON.stringify(marks),first);
   assert.ok(Math.abs(materialContourHeight(l,23,17))<=.2);
 });
+
+test('invalid sand crop bounds fail closed without visiting grains',()=>{
+  const invalid=[null,{left:0,top:0,right:NaN,bottom:100},
+    {left:0,top:0,right:100,bottom:Infinity},
+    {left:20,top:0,right:10,bottom:30},
+    {left:0,top:30,right:10,bottom:20}];
+  for(const bounds of invalid){
+    let visits=0;
+    forEachSandGrain(layer(),bounds,()=>visits++);
+    assert.equal(visits,0);
+  }
+  assert.doesNotThrow(()=>forEachSandGrain(layer(),crop(0,0,20,20),null));
+});

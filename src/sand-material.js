@@ -26,6 +26,9 @@ export function sandGrainAt(layer,ix,iy){
 // Crop-independent enumeration: a partial grain just outside the crop is
 // included, while its shape/position never depends on which crop requested it.
 export function forEachSandGrain(layer,bounds,visit){
+  if(typeof visit!=='function'||!bounds||
+    ![bounds.left,bounds.top,bounds.right,bounds.bottom].every(Number.isFinite)||
+    bounds.right<bounds.left||bounds.bottom<bounds.top)return;
   const pitch=sandPitch(layer),stepY=pitch*.88;
   const ix0=Math.floor(bounds.left/pitch)-2,ix1=Math.ceil(bounds.right/pitch)+2;
   const iy0=Math.floor(bounds.top/stepY)-2,iy1=Math.ceil(bounds.bottom/stepY)+2;
