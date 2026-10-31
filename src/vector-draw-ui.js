@@ -332,12 +332,13 @@ export function installVectorDrawEditor({getRecipe,onApply,onNotice,
   controls.addEventListener('click',()=>{
     toolbar.classList.toggle('is-collapsed');sync();
   });
-  undo.addEventListener('click',()=>{session=undoVectorEdit(session);sync();});
-  redo.addEventListener('click',()=>{session=redoVectorEdit(session);sync();});
+  undo.addEventListener('click',()=>{overlapTap=null;session=undoVectorEdit(session);sync();});
+  redo.addEventListener('click',()=>{overlapTap=null;session=redoVectorEdit(session);sync();});
   insert.addEventListener('click',()=>{insertMode=!insertMode;sync();});
   axis.addEventListener('click',()=>{axisLock=!axisLock;sync();});
   snap.addEventListener('click',()=>{snapEnabled=!snapEnabled;sync();});
   function deleteSelectedNode(){
+    overlapTap=null;
     if(!active||!session?.selectedId||session.tx)return;
     const started=beginVectorEdit(session,{kind:'delete',id:session.selectedId});
     const preview=previewVectorEdit(started);
@@ -351,6 +352,7 @@ export function installVectorDrawEditor({getRecipe,onApply,onNotice,
     sync();
   }
   mode.addEventListener('change',()=>{
+    overlapTap=null;
     if(!active||!session.selectedId)return;
     if(mode.value==='delete'){deleteSelectedNode();return;}
     const start=beginVectorEdit(session,{kind:'mode',id:session.selectedId});
@@ -378,7 +380,7 @@ export function installVectorDrawEditor({getRecipe,onApply,onNotice,
       event.preventDefault();close();return;
     }
     if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='z'){
-      event.preventDefault();session=event.shiftKey?
+      event.preventDefault();overlapTap=null;session=event.shiftKey?
         redoVectorEdit(session):undoVectorEdit(session);sync();return;
     }
     // Do not interleave discrete keyboard transactions with a live pointer edit.
@@ -397,7 +399,7 @@ export function installVectorDrawEditor({getRecipe,onApply,onNotice,
     const tx=beginVectorEdit(session,{kind:command.kind,id:command.id,
       side:command.side});
     if(!tx.tx)return;
-    session=commitVectorEdit(previewVectorEdit(tx,{point:command.point}));
+    overlapTap=null;session=commitVectorEdit(previewVectorEdit(tx,{point:command.point}));
     sync();
   });
   window.addEventListener('resize',()=>{if(active)sync();});
