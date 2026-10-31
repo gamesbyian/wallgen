@@ -8,7 +8,7 @@ import {readFile, writeFile} from 'node:fs/promises';
 import {resolve, dirname, join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 
-export const TRUSTED_RENDER_ROOT='https://gamesbyian.github.io/wallgen/';
+export const TRUSTED_RENDER_ROOT='https://gamesbyian.github.io/wallgen/trusted-renderer/';
 export const SHA_PATTERN=/^[a-f0-9]{40}$/;
 export function buildHostedPreviewConfig(baseline,{sha,manifest,mode='disabled'}={}) {
   if(typeof baseline!=='string'||!baseline.includes('name = "roygbiv-mcp"'))
