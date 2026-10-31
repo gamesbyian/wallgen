@@ -68,7 +68,7 @@ const css=()=>evaluate('(()=>{const r=document.getElementById("preview").getBoun
 const source=()=>evaluate('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r")))');
 const currentX=()=>evaluate('JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).scatteredOverrides.find(x=>x.index===0).x');
 const dispatch=(type,x,y,buttons=0)=>command('Input.dispatchMouseEvent',{
-  type,x,y,button:buttons?'left':'none',buttons,clickCount:1});
+  type,x,y,button:type==='mouseMoved'?'none':'left',buttons,clickCount:1});
 async function tap(x,y){
   await dispatch('mouseMoved',x,y);
   await dispatch('mousePressed',x,y,1);
