@@ -1,0 +1,25 @@
+name: One-shot imported silhouette bounds acceptance
+on:
+  push:
+    branches: [feat/scattered-compound-selection-20261030]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --package-lock=false --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - run: node scripts/scattered-selection-guide-browser.mjs
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: imported-silhouette-guide-portraits
+          path: artifacts/scattered-selection-guide/
+          if-no-files-found: ignore
