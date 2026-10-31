@@ -51,15 +51,14 @@ test('grain count stays bounded for full authored canvas even at finest gauge',(
 test('sand paint uses Canvas2D grain relief without raster assets or random state',()=>{
   const marks=[],ctx={
     save(){marks.push('save');},restore(){marks.push('restore');},
-    beginPath(){},ellipse(x,y,rx,ry){marks.push(['ellipse',x,y,rx,ry,this.fillStyle]);},
-    arc(x,y,r){marks.push(['arc',x,y,r]);},fill(){marks.push('fill');}
+    fillRect(x,y,w,h){marks.push(['grain',x,y,w,h,this.fillStyle]);}
   };
   const l=layer(50,42),b=crop(0,0,50,50);
   paintMaterial(ctx,l,b);
   const first=JSON.stringify(marks);
-  assert.ok(first.includes('ellipse'));
-  assert.ok(marks.some(m=>Array.isArray(m)&&m[0]==='ellipse'&&m[5].startsWith('rgba(255')));
-  assert.ok(marks.some(m=>Array.isArray(m)&&m[0]==='ellipse'&&m[5].startsWith('rgba(0')));
+  assert.ok(first.includes('grain'));
+  assert.ok(marks.some(m=>Array.isArray(m)&&m[0]==='grain'&&m[5].startsWith('rgba(255')));
+  assert.ok(marks.some(m=>Array.isArray(m)&&m[0]==='grain'&&m[5].startsWith('rgba(0')));
   marks.length=0;paintMaterial(ctx,l,b);
   assert.equal(JSON.stringify(marks),first);
   assert.ok(Math.abs(materialContourHeight(l,23,17))<=.2);
