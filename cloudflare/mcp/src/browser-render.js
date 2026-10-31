@@ -1,16 +1,9 @@
 import { launch } from '@cloudflare/playwright';
 import { embedPngMetadata, extractPngRecipe } from '../../../src/png-metadata.js';
+import {trustedRendererSource} from './preview-source-preflight.js';
 
 // Browser Run executes ROYGBIV's production Canvas renderer on a trusted
 // deployment of the same code. A screenshot of the UI would be wrong.
-function sourceUrl(env) {
-  const value=env.RENDER_SOURCE_URL;
-  if(typeof value!=='string'||value.includes('REPLACE'))throw Error('Render source is not configured');
-  const url=new URL(value);
-  if(url.protocol!=='https:'||url.username||url.password||url.search||url.hash||!url.pathname.endsWith('/'))
-    throw Error('Render source must be a trusted HTTPS directory URL, with trailing slash and no parameters');
-  return url.toString();
-}
 function decodeBase64(encoded) {
   const raw=atob(encoded);
   const buffer=new Uint8Array(raw.length);
@@ -22,14 +15,11 @@ export async function renderPreview(env,recipe,width=300) {
   if(!Number.isInteger(width)||width<180||width>600)
     throw RangeError('Preview width must be between 180 and 600 pixels');
   const height=Math.round(width*13/6);
-  const root=sourceUrl(env);
+  const {root,expectedCommit}=trustedRendererSource(env);
   // The static render host has no application scripts, styles or UI.
   // Loading the full editor here would run unrelated code before a private
   // recipe reaches the canvas, waste browser time and widen the trust surface.
   const hostUrl=new URL('render-host.html',root).href;
-  const expectedCommit=env.RENDER_EXPECTED_SHA;
-  if(typeof expectedCommit!=='string'||!/^[a-f0-9]{40}$/.test(expectedCommit))
-    throw Error('Trusted renderer revision was not configured');
   // Network restrictions are enforced by Browser Run itself, before the
   // page or its scripts execute. Page.route below is a second, path-level
   // same-origin restriction, not the only containment boundary.
