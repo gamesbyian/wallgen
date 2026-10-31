@@ -142,12 +142,7 @@ try{
     // A slight unintentional movement must not cause a history transaction.
     await drag({x:grip.x,y:grip.y},{x:grip.x+3,y:grip.y+3});
     assert.deepEqual(await source(),recipe,'sub-8px jitter must not resize');
-    await evaluate('(()=>{window.__edgeEvents=[];const grip=document.getElementById("scatteredDirectScale");for(const name of ["pointerdown","pointermove","pointerup","pointercancel","lostpointercapture","gotpointercapture"])grip.addEventListener(name,e=>{window.__edgeEvents.push({name,where:"grip",x:e.clientX,y:e.clientY,id:e.pointerId,primary:e.isPrimary,captured:grip.hasPointerCapture(e.pointerId),hidden:grip.hidden});if(name==="pointerdown")queueMicrotask(()=>window.__edgeEvents.push({name:"after-pointerdown",captured:grip.hasPointerCapture(e.pointerId)}))},true);for(const name of ["pointerup","pointermove","pointercancel"])document.addEventListener(name,e=>window.__edgeEvents.push({name,where:"document",target:e.target.id,x:e.clientX,y:e.clientY,captured:grip.hasPointerCapture(e.pointerId)}),true)})()');
-    console.log('SCATTERED_EDGE_BEFORE',JSON.stringify({width,grip,
-      c:await circle(),target:await evaluate('(()=>{const b=document.getElementById("scatteredDirectScale"),r=b.getBoundingClientRect();const a=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);return {target:a?.id,rect:{left:r.left,top:r.top,width:r.width,height:r.height},pivot:document.getElementById("scatteredDirectPivot").getAttribute("aria-pressed")}})()')}));
     await drag({x:grip.x,y:grip.y},{x:grip.x+35,y:grip.y});
-    console.log('SCATTERED_EDGE_AFTER',JSON.stringify({width,
-      c:await circle(),data:await evaluate('({events:window.__edgeEvents, note:document.querySelector(".scattered-object-note")?.textContent, pivot:document.getElementById("scatteredDirectPivot").getAttribute("aria-pressed")})')}));
     await waitFor('Math.abs(JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get("r"))).scatteredOverrides.find(x=>x.index===0).radius-.08)>.003');
     const anchored=await circle();
     assert.ok(anchored.r>before.r,'anchored gesture enlarged the region');
