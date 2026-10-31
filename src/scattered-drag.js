@@ -101,3 +101,24 @@ export function scatteredGestureOwnsCurrentRecipe(gesture,recipe,selectedIndex){
     gesture?.original===recipe&&Number.isInteger(gesture.index)&&
     Number.isInteger(selectedIndex)&&gesture.index===selectedIndex;
 }
+
+// Keyboard movement is vector-native: percentages apply to the finished
+// authored 600x1300 canvas, not the browser viewport or device pixels.
+// Do not create an Undo entry when a move cannot change the canonical object.
+export function nudgeScatteredRegion(recipe,index,circle,key,
+  {coarse=false,fine=false}={}){
+  const direction={
+    ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]
+  }[key];
+  if(!direction||!recipe||!Number.isInteger(index)||index<0||index>=70||
+    !finite(circle?.cx)||!finite(circle?.cy)||!finite(circle?.r)||circle.r<=0)
+    return recipe;
+  const step=fine?0.1:coarse?5:1;
+  const x=clamp(circle.cx+direction[0]*600*step/100,-300,900);
+  const y=clamp(circle.cy+direction[1]*1300*step/100,-650,1950);
+  if(x===circle.cx&&y===circle.cy)return recipe;
+  const before=normalizeScatteredOverrides(recipe.scatteredOverrides);
+  const after=scatteredMoveOverride(recipe,index,circle,{x,y});
+  if(JSON.stringify(after)===JSON.stringify(before))return recipe;
+  return {...recipe,scatteredOverrides:after};
+}
