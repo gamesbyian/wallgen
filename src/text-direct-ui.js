@@ -5,7 +5,7 @@ import {typefaceCssFamily} from './typography-fonts.js';
 import {compactTextGripLayout,shouldDetachTextGrips} from './text-grip-layout.js';
 import {beginPointerRotation,advancePointerRotation} from './rotation-gesture.js';
 import {beginAxisDrag,axisConstrainedPoint} from './axis-constrained-drag.js';
-import {snapTextAnchor} from './text-anchor-snap.js';
+import {snapTextAnchor,textSnapGestureMoved} from './text-anchor-snap.js';
 import {designPointFromPointer,dragTextOverlay,nudgeTextOverlay,
   dragTextTransform,transformTextOverlay,measuredTextBounds,
   measureCanvasText,textGestureOwnsCurrentRecipe} from './text-direct-geometry.js';
@@ -252,7 +252,9 @@ export function installTextCanvasMover({
     let anchor=next.point;
     // Reuse the original vector-node 8/14 CSS-pixel hysteresis. The
     // pointerdown snapshot owns guides and enabled state for this gesture.
-    if(drag.snapEnabled&&(!drag.axisDrag.enabled||drag.axisDrag.axis)){
+    if(drag.snapEnabled&&
+       textSnapGestureMoved(drag.axisDrag.start,[event.clientX,event.clientY])&&
+       (!drag.axisDrag.enabled||drag.axisDrag.axis)){
       const bounds=canvas.getBoundingClientRect();
       const result=snapTextAnchor(anchor,drag.original.textOverlays,drag.id,
         {cssWidth:bounds.width,cssHeight:bounds.height},{enabled:true,
@@ -260,7 +262,7 @@ export function installTextCanvasMover({
           previous:drag.snapLocks});
       anchor=result.point||anchor;
       drag.snapLocks=result.locks;
-    }
+    }else drag.snapLocks={x:null,y:null};
     drag.next=dragTextOverlay(drag.original,drag.id,{
       x:anchor[0]-x,y:anchor[1]-y});
     drag.moved=drag.next!==drag.original;

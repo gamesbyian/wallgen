@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {normalizeRecipe,DESIGN_WIDTH,DESIGN_HEIGHT} from '../src/model.js';
 import {dragTextOverlay} from '../src/text-direct-geometry.js';
-import {snapTextAnchor} from '../src/text-anchor-snap.js';
+import {snapTextAnchor,textSnapGestureMoved} from '../src/text-anchor-snap.js';
 const view={cssWidth:300,cssHeight:650};
 const recipe=normalizeRecipe({textOverlays:[
   {id:'moving',text:'RAINBOW',x:25,y:25,size:40},
@@ -78,4 +78,20 @@ test('touch mover uses one canonical transaction and a separate 44px toggle',()=
   assert.match(source,/snapTextAnchor\(anchor,drag\.original\.textOverlays/);
   assert.match(source,/changeRecipe\(finished\.next,\{cause:'text_move_on_canvas'\}\)/);
   assert.match(css,/#textDirectSnap\{[^}]*min-height:44px/);
+});
+
+test('micro-moves and stationary taps cannot activate magnetic text guides',()=>{
+  const origin=[145,360];
+  assert.equal(textSnapGestureMoved(origin,origin),false);
+  assert.equal(textSnapGestureMoved(origin,[152.9,360]),false);
+  assert.equal(textSnapGestureMoved(origin,[153,360]),true);
+  assert.equal(textSnapGestureMoved(origin,[145,368]),true);
+  assert.equal(textSnapGestureMoved(origin,[NaN,360]),false);
+  assert.equal(textSnapGestureMoved(origin,null),false);
+  assert.equal(textSnapGestureMoved(null,origin),false);
+});
+test('text direct mover freezes snap until an intentional eight CSS-pixel drag',()=>{
+  const source=readFileSync(new URL('../src/text-direct-ui.js',import.meta.url),'utf8');
+  assert.match(source,/textSnapGestureMoved\(drag\.axisDrag\.start,\[event\.clientX,event\.clientY\]\)/);
+  assert.match(source,/else drag\.snapLocks=\{x:null,y:null\}/);
 });
