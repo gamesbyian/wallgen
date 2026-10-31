@@ -49,8 +49,6 @@ The existing sand material now has a geometry-aware, bounded design-unit edge tr
 
 ## Next phases (S3 / S4 remain planned)
 
-**Phase S2: path-/region-aware deposition.** Add an optional per-role sand treatment or granular style object using the same `surfaceTreatments` ownership model as embroidery, after evaluating a safe discriminated union rather than shoehorning a new style into embroidery-only fields. Evaluate a signed distance or exact offset from each vector boundary; avoid a global raster distance texture that can invert holes or smear narrow necks. Use tangent/normal frames from `samplePath` for ribbons and `polygon-inset` for compound rings. A thin rim has subtle material height and contact shadows, without bleeding into transparent gaps, and remains correct at self-crossings.
-
 **Phase S3: decorative deposition.** Deterministic contour echoes, beaded outlines, concentric fillings, dotted rows and optional bounded controlled spill. Parameterize width/gap/phase in authored-world units and reuse the accepted nesting/topology engine. Allow one material treatment per semantic object or palette target without writing redundant geometry per grain.
 
 **Phase S4: artistic presets and profiling.** Fine powder, medium mineral sand, coarse crystalline sand and raised filigree as styles/controls of one engine. Tune actual art and phone performance before exposing additional sliders. For agent-driven design, expose normal canonical material values through the existing recipe schema rather than a second tool API. Only introduce shader acceleration after measured Canvas2D costs.
