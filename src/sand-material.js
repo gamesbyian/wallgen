@@ -1,3 +1,4 @@
+import {sandCapDiffuse} from './sand-lighting.js';
 // Deterministic, world-space mineral grains for the existing material compositor.
 // Vector paths and masks remain the only source of geometry; no bitmap texture,
 // per-pixel saved positions, paint-order RNG or physical particle simulation.
@@ -53,9 +54,9 @@ export function paintSandGrains(ctx,layer,bounds,lighting=null){
   // Lighting-off keeps the original fleck pixel output exactly unchanged.
   const lit=lighting&&Number.isFinite(lighting.x)&&Number.isFinite(lighting.y);
   const dark=lit?Array.from({length:8},(_,i)=>
-    'rgba('+lighting.shade+','+(.045+lighting.shadow*(.13+i*.010)).toFixed(3)+')'):shadow;
+    'rgba('+lighting.shade+','+(.045+lighting.shadow*(.09+(7-i)*.012)).toFixed(3)+')'):shadow;
   const bright=lit?Array.from({length:8},(_,i)=>
-    'rgba('+lighting.high+','+(.045+lighting.light*(.12+(7-i)*.011)).toFixed(3)+')'):highlight;
+    'rgba('+lighting.high+','+(.045+lighting.light*(.075+i*.012)).toFixed(3)+')'):highlight;
   const glimmer=lit?'rgba('+lighting.high+','+(.12+lighting.light*.20).toFixed(3)+')':glint;
   // Fully include flecks whose parent cell centre is outside the crop.
   const padded={left:bounds.left-pitch,top:bounds.top-pitch,
@@ -67,10 +68,18 @@ export function paintSandGrains(ctx,layer,bounds,lighting=null){
       // All sizes remain logical material units; there are no pixel-based
       // geometry controls and no dependence on preview/export dimensions.
       const diameter=pitch*(.105+.18*hash(g.ix,g.iy,seed,97+k*31));
-      const tone=Math.floor(hash(g.ix,g.iy,seed,131+k*29)*8);
-      const darkFacet=(k%2)===0;
+      // An individual mineral facet has a seed-stable hemispherical normal.
+      // Its illumination is the cap's normal·light response, not an alternating
+      // dark/light index. Reversing the lamp changes which actual facets face it.
+      // No per-fleck colour strings, extra primitives or particle state.
+      const nx=(hash(g.ix,g.iy,seed,151+k*37)-.5)*1.60;
+      const ny=(hash(g.ix,g.iy,seed,163+k*41)-.5)*1.60;
+      const incident=lit?sandCapDiffuse(lighting,nx,ny):0;
+      const darkFacet=lit?incident<.48:(k%2)===0;
+      const tone=lit?Math.min(7,Math.floor(incident*8)):
+        Math.floor(hash(g.ix,g.iy,seed,131+k*29)*8);
       const drift=lit?(darkFacet?-lighting.shadow:lighting.light)*diameter*.24:0;
-      ctx.fillStyle=darkFacet?dark[tone]:bright[tone];
+      ctx.fillStyle=darkFacet?dark[lit?7-tone:tone]:bright[tone];
       ctx.fillRect(x-diameter*.5+(lit?lighting.x*drift:0),
         y-diameter*.5+(lit?lighting.y*drift:0),diameter,diameter);
     }

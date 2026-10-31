@@ -3,7 +3,7 @@
 // are owned by the existing renderer, not reconstructed or reserialized here.
 import {sandPitch} from './sand-material.js';
 import {contourBoundaryFrame} from './contour-decoration.js';
-import {sandLighting} from './sand-lighting.js';
+import {sandLighting,sandCapDiffuse} from './sand-lighting.js';
 
 const TAU=Math.PI*2;
 const good=v=>Number.isFinite(v);
@@ -31,21 +31,44 @@ function drawBead(ctx,x,y,style,maxRadius=Infinity){
     ctx.beginPath();ctx.arc(x-radius*.12,y-radius*.17,radius*.71,0,TAU);ctx.fill();
     return;
   }
-  // A physically coherent bead casts a tiny contact shadow AWAY from light,
-  // and receives its brighter mineral facet on the light-facing hemisphere.
+  // A short *contact* shadow follows the bead's raised footprint away from
+  // the lamp. This is deliberately inside the existing authored-ink clip:
+  // an edge bead may be truncated by a real cutout, but cannot invent pigment
+  // or a floating external shadow over a transparent hole.
   if(light.shadow>0){
-    const offset=radius*(.23+.31*light.shadow);
-    ctx.fillStyle='rgba('+light.shade+','+
-      (style.shadowAlpha*(.2+.8*light.shadow)).toFixed(4)+')';
-    ctx.beginPath();ctx.arc(x-light.x*offset,y-light.y*offset,
-      radius*.96,0,TAU);ctx.fill();
+    const offset=radius*(.20+.27*light.shadow);
+    const opacity=style.shadowAlpha*(.18+.66*light.shadow);
+    ctx.fillStyle='rgba('+light.shade+','+opacity.toFixed(4)+')';
+    ctx.beginPath();
+    if(typeof ctx.ellipse==='function')
+      ctx.ellipse(x-light.x*offset,y-light.y*offset,
+        radius*.88,radius*.56,Math.atan2(light.y,light.x),0,TAU);
+    else ctx.arc(x-light.x*offset,y-light.y*offset,radius*.82,0,TAU);
+    ctx.fill();
   }
-  if(light.light>0){
-    const offset=radius*.31;
+  // One round cap with an oblique light lobe and a darker trailing perimeter.
+  // A gradient occupies only the original bead radius, unlike two translated
+  // solid disks whose overlap looks like flat pasted circles. Keep a cheap
+  // sub-unit fallback for narrow nested lines and minimal Canvas2D adapters.
+  if(radius>=.75&&typeof ctx.createRadialGradient==='function'){
+    const facing=sandCapDiffuse(light,light.x*.48,light.y*.48);
+    const trailing=sandCapDiffuse(light,-light.x*.72,-light.y*.72);
+    const g=ctx.createRadialGradient(x+light.x*radius*.32,
+      y+light.y*radius*.32,0,x,y,radius*1.04);
+    const shine=style.lightAlpha*light.light*facing;
+    const shade=style.shadowAlpha*light.shadow*(1-trailing*.35);
+    g.addColorStop(0,'rgba('+light.high+','+(shine*.79).toFixed(4)+')');
+    g.addColorStop(.42,'rgba('+light.high+','+(shine*.34).toFixed(4)+')');
+    g.addColorStop(.75,'rgba('+light.shade+','+(shade*.12).toFixed(4)+')');
+    g.addColorStop(1,'rgba('+light.shade+','+(shade*.57).toFixed(4)+')');
+    ctx.fillStyle=g;
+    ctx.beginPath();ctx.arc(x,y,radius,0,TAU);ctx.fill();
+  }else if(light.light>0){
+    // Tiny strokes should stay one small glint, not allocate gradients.
     ctx.fillStyle='rgba('+light.high+','+
-      (style.lightAlpha*(.2+.8*light.light)).toFixed(4)+')';
-    ctx.beginPath();ctx.arc(x+light.x*offset,y+light.y*offset,
-      radius*.72,0,TAU);ctx.fill();
+      (style.lightAlpha*light.light*.83).toFixed(4)+')';
+    ctx.beginPath();ctx.arc(x+light.x*radius*.17,
+      y+light.y*radius*.17,radius*.68,0,TAU);ctx.fill();
   }
 }
 /** Each frame comes from the shared original source-ring anchoring logic.

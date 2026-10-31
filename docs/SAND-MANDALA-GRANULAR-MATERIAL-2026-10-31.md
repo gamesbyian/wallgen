@@ -83,6 +83,46 @@ Material lighting uses only the *existing canonical* `lightingMood`, `lightDirec
 
 **Verified Chromium evidence:** [run #41250353579](https://github.com/gamesbyian/wallgen/actions/runs/41250353579) **PASS** for pure directional math, old unlit grain marking parity, source-matched 600×1300 daylight NW and SE comparisons of fine sand, raised beads and metric echoes, a golden lit compound ring including its source hole, native 3024×6552 beaded artwork, and 412×892 worker-region output. The actual PNGs were inspected at full portrait and zoomed crop: light direction modifies microfaceting and relief without deforming vectors or filling the hole. Timings from the CI-hosted Chromium run for wave materials were ~205–228 ms, overlapping the unlit ~229–243 ms samples, with ordinary measurement noise; this is **not** a physical Pixel 6 Pro benchmark. The essential preview cache refinement is implemented through `src/render-art-key.js`: unlike ordinary whole-canvas lighting, changes to the lighting controls with any active sand layer MUST invalidate and repaint source ink. This keeps preview and worker export consistent without penalizing the fast no-sand compositor path. A dedicated unit suite enforces all three material-layer cases. Final exact-head [quick CI #41250576416](https://github.com/gamesbyian/wallgen/actions/runs/41250576416) PASS after preserving concurrent main. The one-time Chromium workflow was deleted before merge. No real Android thermal/battery or direct touch testing is claimed.
 
+## S4.1 normal-oriented microscopic facets and round bead caps (PR #935)
+
+The first lighting pass used alternating dark/light flecks and a pair of offset
+circles for each bead. That was computationally cheap but did not couple actual
+microfacet orientation to light: an individual fleck could not change its
+illumination according to its own stable orientation. This refinement shares
+one analytic hemispherical normal-response kernel across both painters.
+
+- **Fine sand:** each original seeded subgrain keeps its exact x/y/diameter,
+  original six paint operations per lattice cell, original crop phase and source
+  mask. Two additional hash salts choose a persistent, bounded local cap normal.
+  A clamped normal-dot-direction response selects from 16 prebuilt mood-coloured
+  diffuse swatches. The incoming light rotates into material coordinates exactly
+  as before. When mood is disabled, the original even/odd highlights remain
+  byte-for-byte identical; no migration or new material control is introduced.
+- **Beads:** the true original source ring/rail station still decides the centre
+  and maximum physical radius. A single radial-gradient cap adds a light-facing
+  diffuse dome and opposite-facing perimeter shading inside that radius. A
+  short bounded oval below the cap darkens contact on the side opposite the
+  shared lamp; source geometry, hole clips and narrow-line width remain the
+  final boundaries. Tiny subunit caps retain a cheaper highlight fallback.
+- **Shadow limits:** no height collisions, ray visibility, true intergrain
+  occlusion, cast shadows across separated objects or automatically inferred
+  3D structure is claimed. The lamp elevation is fixed inside the optical
+  approximation, with no new speculative light-elevation setting.
+
+**Real optical comparison:** [Chromium #41254128826](https://github.com/gamesbyian/wallgen/actions/runs/41254128826)
+PASS. It rendered source-matched unlit/NW/SE powder/bead/filigree artworks,
+an imported compound ring with original cutout and detached island, and
+checked real RGBA lighting differences. Against archived pre-change rendered
+evidence [#41250353579](https://github.com/gamesbyian/wallgen/actions/runs/41250353579),
+all 12 unlit PNG files were byte-identical. Lit 600×1300 bead NW imagery had
+262,329 changed RGB pixels (mean absolute RGB change ~1.60 units), confirming
+a deliberately subtle change rather than a replaced silhouette. The lit bead
+wave rendered in ~200 ms on the new CI-host Chromium sample versus ~205 ms in
+the old archived sample; these are noisy single samples, **not** a speedup claim.
+The one-shot workflow is removed from the proposed merge, and an exact-head
+quick-suite run is required after the final cleanup before integration. A direct Pixel 6 Pro performance
+profile and human acceptance are still unavailable.
+
 ## Next S4 research: occlusion from actual source topology, not decorative offsets
 
 **Target result:** sand piles and beads should carry their own believable height, changing the cast-shadow length and illuminated-face width consistently as the global light moves. The merged S4 directional marks establish shared reference frames but do not yet establish measured height, ray visibility or pile contact.
