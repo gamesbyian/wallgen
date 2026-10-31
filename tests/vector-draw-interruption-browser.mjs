@@ -133,10 +133,12 @@ try{
     await waitFor('document.readyState==="complete" && !!document.getElementById("drawPathToggle")');
     await waitFor('document.body.classList.contains("mobile-studio")');
     assert.deepEqual(await source(),recipe);
-    const point=await evaluate('(()=>{const r=document.getElementById("preview").getBoundingClientRect();return {x:r.left+r.width*.5,y:r.top+r.height*.7}})()');
+    let point;
     for(const action of ['blur','resize','frameZoom','previewZoom','escape']){
       await evaluate('document.getElementById("drawPathToggle").click()');
       await waitFor('document.querySelector(".vector-draw-tools")?.hidden===false');
+      await delay(500); // Let the initial async preview/layout settle.
+      point=await evaluate('(()=>{const r=document.getElementById("preview").getBoundingClientRect();return {x:r.left+r.width*.5,y:r.top+r.height*.7}})()');
       const hit=await evaluate('document.elementFromPoint('+point.x+','+point.y+')?.id');
       assert.equal(hit,'drawOverlay',
         'The authored Bézier overlay must receive the actual pointer at '+width);
