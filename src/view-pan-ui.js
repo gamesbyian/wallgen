@@ -20,6 +20,7 @@ export function installViewPanGesture({getRecipe,changeRecipe,onNotice=()=>{},
   done.textContent='Done reframing';stage.append(done);
   let active=false,drag=null,pinch=null;
   const originalTouchAction=preview.style.touchAction;
+  const originalTransformOrigin=preview.style.transformOrigin;
   function releasePointer(id){
     try{preview.releasePointerCapture(id);}catch{}
   }
@@ -27,7 +28,7 @@ export function installViewPanGesture({getRecipe,changeRecipe,onNotice=()=>{},
     const old=drag,oldPinch=pinch;
     drag=null;pinch=null;
     preview.style.transform='';
-    preview.style.transformOrigin='';
+    preview.style.transformOrigin=originalTransformOrigin;
     if(old)releasePointer(old.pointerId);
     if(oldPinch)for(const id of oldPinch.ids)releasePointer(id);
   }
