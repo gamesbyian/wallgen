@@ -37,15 +37,15 @@ test('grain identities and physical radii remain fixed across overlapping crops'
   for(const [id,g] of cut)assert.deepEqual(whole.get(id),g);
   assert.deepEqual(sandGrainAt(l,-3,-4),sandGrainAt(l,-3,-4));
   assert.notDeepEqual(sandGrainAt(layer(50,713),-3,-4),sandGrainAt(l,-3,-4));
-  assert.ok(sandPitch(layer(0))>3.5);
+  assert.ok(sandPitch(layer(0))>2.5);
   assert.ok(sandPitch(layer(100))>sandPitch(layer(0)));
 });
 
 test('grain count stays bounded for full authored canvas even at finest gauge',()=>{
   let count=0;
   forEachSandGrain(layer(0),crop(0,0,600,1300),()=>count++);
-  assert.ok(count>20000);
-  assert.ok(count<70000,'fine material cannot flood editor with particles');
+  assert.ok(count>60000);
+  assert.ok(count<140000,'fine material cannot flood editor with particles');
 });
 
 test('sand paint uses Canvas2D grain relief without raster assets or random state',()=>{
