@@ -1,5 +1,18 @@
 # ROYGBIV hosted MCP on Cloudflare
 
+## 31 October 2026 · actual deployed state and verified preview refusal
+
+The earlier 27–28 October descriptions below are historical checkpoints. **Live read-only Cloudflare settings inspection now confirms** both `roygbiv-auth` and `roygbiv-mcp` deployed. The MCP Worker **has** a Browser binding, `HOSTED_PREVIEW_ENABLED=true`, `RENDER_SOURCE_URL=https://gamesbyian.github.io/wallgen/`, and the exact pinned `RENDER_EXPECTED_SHA=86831ae4189fde164c3454792a561c1a18c896dd`. This is an opt-in active *staging configuration*, not proof that its rendered PNG is currently usable.
+
+The connected ROYGBIV MCP advertises `roygbiv_preview`. An authenticated owner-scoped inspection of a previously saved private design succeeded. A single real 180px preview invocation instead returned the fail-closed error **`Trusted renderer revision mismatch; preview disabled until verified`**. The GitHub Pages publisher stamps the full main-commit hash in `roygbiv-render-version.json` on each successful deployment. Main has advanced past the Worker pin, and [Pages run #41234016506](https://github.com/gamesbyian/wallgen/actions/runs/41234016506) already published a newer main revision. **The preview PNG/image-content return path remains unaccepted.** No private recipe or returned image was made public, and no new Cloudflare changes were made.
+
+### Release policy and practical next action
+
+1. Retain the exact-SHA trust barrier. **Do not** silently disable it to keep previews alive after app changes. It prevents private recipes being rendered by an unverified different renderer.
+2. Only after an intended main commit has completed GitHub Pages publication, the repository owner may explicitly select `deploy-preview` in [the manual release workflow](../.github/workflows/manual-roygbiv-hosted-release.yml) with its existing mandatory approval string. That workflow checks the actually served Pages marker equals the committing release source, verifies the Worker, and preserves billing/privacy controls. **Do not replace this owner gate with implicit continuous billed deployments.** Any subsequent Pages push can invalidate a pin, so frequent app development makes this a *temporary* staging remedy.
+3. Architectural follow-up: publish a **stable, immutable renderer snapshot** decoupled from everyday editor/README merges, and pin the Worker to that known source. Require matching byte/version evidence, asset accessibility/CSP audit, explicit promotion and rollback, and identical source/worker rendering checks. Do not use an unversioned URL, guess a revision or weaken private access to paper over rapid Pages changes.
+4. After a deliberately pinned release, use one low-width private preview to verify the MCP really returns an `image/png` part, bounded time/bytes and cleanup, owner isolation, D1 daily ceiling and ChatGPT's display. A direct `roygbiv_inspect` success only proves authenticated metadata access.
+
 **Live staging checkpoint: 27 October 2026, 18:48 MDT (00:48 UTC on 28 October)**
 
 The two Cloudflare Workers have been **deployed to the owner's Cloudflare account**, and public OAuth discovery, unauthenticated MCP challenges, DCR registration, consent denial, CSRF rejection, and pre-login GitHub redirect have passed **real network acceptance**. The service is **not yet declared fully operational**: no owner completed a real GitHub login and no authorized end-to-end `tools/call` or live user-specific R2/D1 write has been demonstrated. Hosted PNG preview and native export are explicitly unavailable.
