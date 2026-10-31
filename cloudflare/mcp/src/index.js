@@ -73,6 +73,11 @@ export function createServer(env,props,scopes) {
       if(!previewConfigured(env))throw Error('Hosted previews are not enabled or fully configured.');
       // Owner-bound storage read precedes the browser launch and quota charge.
       const recipe=await loadRecipe(env,userId,id);
+      // Fail closed before taking a lease, spending daily quota or launching
+      // a billable browser. A second, independent check in Browser Run still
+      // protects against the Pages revision changing between these requests.
+      const {preflightTrustedRendererRevision}=await import('./preview-source-preflight.js');
+      await preflightTrustedRendererRevision(env);
       // D1 lease precedes the paid-browser quota charge, so simultaneous
       // calls cannot burn credits or start a Browser Run swarm.
       const lease=await acquirePreviewLease(env);
