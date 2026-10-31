@@ -36,22 +36,34 @@ export function forEachSandGrain(layer,bounds,visit){
     visit(g);
   }
 }
-const shadow=Array.from({length:8},(_,i)=>'rgba(0,0,0,'+(.095+i*.012).toFixed(3)+')');
-const highlight=Array.from({length:8},(_,i)=>'rgba(255,255,255,'+(.088+(7-i)*.014).toFixed(3)+')');
-const glint='rgba(255,255,255,0.23)';
-/** Paint a compact deposit of tiny 2.5D grains; caller already owns alpha,
- * colour, coverage, blend mode and the world-to-canvas transform. */
+// Tonal, sub-grain mineral facets. The cell lattice is merely a stratification
+// index; the visible grains are independently scattered *within* each cell.
+// This removes the regular circular polka-dot appearance at high export zoom.
+const shadow=Array.from({length:8},(_,i)=>'rgba(0,0,0,'+(.14+i*.017).toFixed(3)+')');
+const highlight=Array.from({length:8},(_,i)=>'rgba(255,255,255,'+(.12+(7-i)*.016).toFixed(3)+')');
+const glint='rgba(255,255,255,0.29)';
+/** Paint matte sub-grains, keeping the shared compositor's authored-world
+ * transform, palette ink, alpha, coverage, blend and clip untouched. */
 export function paintSandGrains(ctx,layer,bounds){
-  forEachSandGrain(layer,bounds,g=>{
-    // Matte, close-packed fine powder: contacts and upper-left surfaces are
-    // deliberately low-contrast, not shiny raised plastic beads.
-    ctx.fillStyle=shadow[g.shade];
-    ctx.beginPath();ctx.ellipse(g.x+g.r*.1,g.y+g.r*.12,g.r*.86,g.r*.77,0,0,TAU);ctx.fill();
-    ctx.fillStyle=highlight[g.shade];
-    ctx.beginPath();ctx.ellipse(g.x-g.r*.13,g.y-g.r*.16,g.r*.62,g.r*.53,-.16,0,TAU);ctx.fill();
+  const pitch=sandPitch(layer),stepY=pitch*.88,seed=layer.heightSeed|0;
+  // Fully include flecks whose parent cell centre is outside the crop.
+  const padded={left:bounds.left-pitch,top:bounds.top-pitch,
+    right:bounds.right+pitch,bottom:bounds.bottom+pitch};
+  forEachSandGrain(layer,padded,g=>{
+    for(let k=0;k<6;k++){
+      const x=(g.ix+(g.iy&1)*.5+hash(g.ix,g.iy,seed,71+k*17))*pitch;
+      const y=(g.iy+hash(g.ix,g.iy,seed,79+k*23))*stepY;
+      // All sizes remain logical material units; there are no pixel-based
+      // geometry controls and no dependence on preview/export dimensions.
+      const diameter=pitch*(.105+.18*hash(g.ix,g.iy,seed,97+k*31));
+      const tone=Math.floor(hash(g.ix,g.iy,seed,131+k*29)*8);
+      ctx.fillStyle=k%2===0?shadow[tone]:highlight[tone];
+      ctx.fillRect(x-diameter*.5,y-diameter*.5,diameter,diameter);
+    }
     if(g.sparkle){
+      const x=(g.ix+.5+(g.iy&1)*.5)*pitch,y=(g.iy+.5)*stepY;
       ctx.fillStyle=glint;
-      ctx.beginPath();ctx.arc(g.x-g.r*.32,g.y-g.r*.42,g.r*.14,0,TAU);ctx.fill();
+      ctx.fillRect(x-pitch*.045,y-pitch*.045,pitch*.09,pitch*.09);
     }
   });
 }
