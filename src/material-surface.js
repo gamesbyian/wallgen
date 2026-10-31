@@ -321,7 +321,7 @@ function creaseLines(ctx,layer,bounds,cell,opacity){
  * Rendering a larger crop or a high-resolution PNG cannot introduce tile seams.
  * Caller supplies canvas transform mapping material-local coordinates to pixels.
  */
-export function paintMaterial(ctx,layer,bounds){
+export function paintMaterial(ctx,layer,bounds,sandLight=null){
   if(!MATERIAL_CHARACTER[layer.material])return;
   ctx.save();
   // Broad, irregular material mass under the fine detail. All finishes use
@@ -336,7 +336,7 @@ export function paintMaterial(ctx,layer,bounds){
     case 'grain': dots(ctx,layer,bounds,5.3,.65,.37,2);break;
     case 'sand-mandala':
     case 'sand-beaded':
-    case 'sand-filigree': paintSandGrains(ctx,layer,bounds);break;
+    case 'sand-filigree': paintSandGrains(ctx,layer,bounds,sandLight);break;
     case 'watercolor':
       dots(ctx,layer,bounds,6,.55,.15,2);
       flecks(ctx,layer,bounds,18,5,.11);break;

@@ -3,10 +3,11 @@
 // are owned by the existing renderer, not reconstructed or reserialized here.
 import {sandPitch} from './sand-material.js';
 import {contourBoundaryFrame} from './contour-decoration.js';
+import {sandLighting} from './sand-lighting.js';
 
 const TAU=Math.PI*2;
 const good=v=>Number.isFinite(v);
-export function sandBeadStyles(scene){
+export function sandBeadStyles(scene,lighting=sandLighting(scene)){ 
   return (scene?.textureLayers||[]).filter(layer=>
     layer?.material==='sand-beaded'&&layer.coverage!=='background'&&
     good(layer.strength)&&layer.strength>0).map(layer=>{
@@ -14,17 +15,38 @@ export function sandBeadStyles(scene){
     return {interval:Math.max(6,gauge*3.05),radius:Math.min(4, gauge*.72),
       // Each independent texture layer retains its own seed-stable bead phase.
       phase:(Math.imul(layer.heightSeed|0,2654435761)>>>0)/4294967296,
-      shadowAlpha:.28*s,lightAlpha:.44*s};
+      shadowAlpha:.28*s,lightAlpha:.44*s,lighting};
   });
 }
 function drawBead(ctx,x,y,style,maxRadius=Infinity){
   if(!good(x)||!good(y))return;
   const radius=Math.min(style.radius,maxRadius);
   if(radius<=.15)return;
-  ctx.fillStyle='rgba(0,0,0,'+style.shadowAlpha.toFixed(4)+')';
-  ctx.beginPath();ctx.arc(x+radius*.1,y+radius*.12,radius,0,TAU);ctx.fill();
-  ctx.fillStyle='rgba(255,255,255,'+style.lightAlpha.toFixed(4)+')';
-  ctx.beginPath();ctx.arc(x-radius*.12,y-radius*.17,radius*.71,0,TAU);ctx.fill();
+  const light=style.lighting;
+  if(!light){
+    // Unlit legacy visual remains byte-for-byte unchanged.
+    ctx.fillStyle='rgba(0,0,0,'+style.shadowAlpha.toFixed(4)+')';
+    ctx.beginPath();ctx.arc(x+radius*.1,y+radius*.12,radius,0,TAU);ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,'+style.lightAlpha.toFixed(4)+')';
+    ctx.beginPath();ctx.arc(x-radius*.12,y-radius*.17,radius*.71,0,TAU);ctx.fill();
+    return;
+  }
+  // A physically coherent bead casts a tiny contact shadow AWAY from light,
+  // and receives its brighter mineral facet on the light-facing hemisphere.
+  if(light.shadow>0){
+    const offset=radius*(.23+.31*light.shadow);
+    ctx.fillStyle='rgba('+light.shade+','+
+      (style.shadowAlpha*(.2+.8*light.shadow)).toFixed(4)+')';
+    ctx.beginPath();ctx.arc(x-light.x*offset,y-light.y*offset,
+      radius*.96,0,TAU);ctx.fill();
+  }
+  if(light.light>0){
+    const offset=radius*.31;
+    ctx.fillStyle='rgba('+light.high+','+
+      (style.lightAlpha*(.2+.8*light.light)).toFixed(4)+')';
+    ctx.beginPath();ctx.arc(x+light.x*offset,y+light.y*offset,
+      radius*.72,0,TAU);ctx.fill();
+  }
 }
 /** Each frame comes from the shared original source-ring anchoring logic.
  * Distance stations are along real perimeter length (including holes and

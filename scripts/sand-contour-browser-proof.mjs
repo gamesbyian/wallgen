@@ -54,6 +54,22 @@ try{
     ['11-filigree-wave','12-filigree-loop','13-filigree-compound','14-filigree-nested'][i],
     normalizeRecipe({...recipe,material:'sand-filigree'})
   ]));
+  const litSources=[
+    ['sand-mandala','01-sand-wave','20-lit-grain-nw','21-lit-grain-se'],
+    ['sand-beaded','05-beaded-wave','22-lit-bead-nw','23-lit-bead-se'],
+    ['sand-filigree','11-filigree-wave','24-lit-echo-nw','25-lit-echo-se'],
+  ];
+  for(const [,source,nw,se] of litSources){
+    const base=scenes.find(([name])=>name===source)?.[1];
+    assert.ok(base);
+    scenes.push([nw,normalizeRecipe({...base,lightingMood:'daylight',
+      lightDirection:'top-left',lightStrength:85,shadowStrength:75})]);
+    scenes.push([se,normalizeRecipe({...base,lightingMood:'daylight',
+      lightDirection:'bottom-right',lightStrength:85,shadowStrength:75})]);
+  }
+  const compoundBase=scenes.find(([name])=>name==='13-filigree-compound')[1];
+  scenes.push(['26-lit-compound',normalizeRecipe({...compoundBase,
+    lightingMood:'golden',lightDirection:'top-right',lightStrength:80,shadowStrength:70})]);
   const results=[];
   for(const [name,recipe] of scenes){
     const data=await page.evaluate(async recipe=>{
@@ -114,6 +130,19 @@ try{
       results.find(x=>x.name===filigree).pixelHash,
       'real rendered pixels must visibly differ for '+filigree);
   }
+  for(const [,source,nw,se] of litSources){
+    const lookup=n=>results.find(x=>x.name===n);
+    assert.notEqual(lookup(source).pixelHash,lookup(nw).pixelHash,
+      'lit '+nw+' must differ from the same unlit source');
+    assert.notEqual(lookup(nw).pixelHash,lookup(se).pixelHash,
+      'moving one physical light must change visible material relief '+nw);
+  }
+  const litHole=results.find(x=>x.name==='26-lit-compound').hole;
+  assert.ok(litHole&&litHole.rgba[3]===255,'lit compound holes stay opaque substrate');
+  // Ambient canvas light can tint the black substrate. Do not incorrectly
+  // demand exact black when the user explicitly selected whole-canvas light.
+  assert.ok(litHole.rgba[0]<150&&litHole.rgba[1]<150,
+    'transparent hole must remain substrate, not rainbow pigment');
   await writeFile(join(out,'render-timings.json'),JSON.stringify({
     environment:'GitHub Actions headless Chromium, not physical Pixel 6 Pro',
     timings:results.map(({name,renderMs})=>({name,renderMs}))
