@@ -78,7 +78,18 @@ try{
         hole={point:[hx,hy],rgba:[...ctx.getImageData(hx,hy,1,1).data]};
         island={point:[ix,iy],rgba:[...ctx.getImageData(ix,iy,1,1).data]};
       }
-      return {png:canvas.toDataURL('image/png'),hole,island,renderMs};
+      // Hash actual visible RGBA pixels, not PNG metadata (which differs
+      // between material recipes even if a renderer accidentally draws the
+      // same visual output).
+      const rgba=ctx.getImageData(0,0,canvas.width,canvas.height).data;
+      let pixelHash=2166136261;
+      for(let i=0;i<rgba.length;i+=4){
+        pixelHash=Math.imul(pixelHash^rgba[i],16777619)>>>0;
+        pixelHash=Math.imul(pixelHash^rgba[i+1],16777619)>>>0;
+        pixelHash=Math.imul(pixelHash^rgba[i+2],16777619)>>>0;
+        pixelHash=Math.imul(pixelHash^rgba[i+3],16777619)>>>0;
+      }
+      return {png:canvas.toDataURL('image/png'),hole,island,renderMs,pixelHash};
     },recipe);
     const png=Buffer.from(data.png.split(',')[1],'base64');
     assert.equal(png.toString('hex',0,8),'89504e470d0a1a0a');
@@ -91,8 +102,17 @@ try{
       assert.ok(data.island.rgba[0]+data.island.rgba[1]+data.island.rgba[2]>35,
         'detached island must remain real coloured geometry');
     }
-    results.push({name,bytes:png.length,renderMs:data.renderMs,
+    results.push({name,bytes:png.length,pixelHash:data.pixelHash,renderMs:data.renderMs,
       hole:data.hole,island:data.island});
+  }
+  for(const [fine,filigree] of [
+    ['01-sand-wave','11-filigree-wave'],
+    ['02-sand-loop','12-filigree-loop'],
+    ['03-sand-compound','13-filigree-compound']
+  ]){
+    assert.notEqual(results.find(x=>x.name===fine).pixelHash,
+      results.find(x=>x.name===filigree).pixelHash,
+      'real rendered pixels must visibly differ for '+filigree);
   }
   await writeFile(join(out,'render-timings.json'),JSON.stringify({
     environment:'GitHub Actions headless Chromium, not physical Pixel 6 Pro',
