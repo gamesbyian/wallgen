@@ -1,13 +1,14 @@
 // Sand is deposited INSIDE existing vector paths; this module never modifies
 // source contours, scene geometry, object masks, or the independent grain field.
 import {sandPitch} from './sand-material.js';
+import {sandLighting} from './sand-lighting.js';
 
 const finite=v=>typeof v==='number'&&Number.isFinite(v);
 const opacity=n=>'rgba('+n+')';
 
 /** Only sand on foreground ink creates a contour rim. Background materials
  * never transform an unrelated foreground's shape. Source layer order is kept. */
-export function sandRimStyles(scene){
+export function sandRimStyles(scene,lighting=sandLighting(scene)){
   return (scene?.textureLayers||[])
     .filter(layer=>(layer?.material==='sand-mandala'||layer?.material==='sand-beaded'||layer?.material==='sand-filigree')&&
       layer.coverage!=='background'&&finite(layer.strength)&&layer.strength>0)
@@ -18,7 +19,7 @@ export function sandRimStyles(scene){
         darkWidth:gauge*1.85,
         lightWidth:gauge*.42,
         darkAlpha:.16*strength,
-        lightAlpha:.12*strength,
+        lightAlpha:.12*strength,lighting,
       };
     });
 }
@@ -42,14 +43,30 @@ export function paintSandContourRim(ctx,outlinePaths,styles){
   ctx.lineCap='butt';ctx.lineJoin='round';
   for(const style of styles){
     if(!finite(style?.gauge)||style.gauge<=0)continue;
-    const paint=(width,shade,alpha)=>{
+    const paint=(width,shade,alpha,lighting=null,shift=0)=>{
       if(!finite(width)||width<=0||!finite(alpha)||alpha<=0)return;
       ctx.lineWidth=width;
       ctx.strokeStyle=opacity(shade+','+Math.min(.4,alpha).toFixed(4));
+      ctx.save();
+      // Path2D geometry lives in original source coordinates. Translate the
+      // virtual contact profile, never the original authoring path or clip.
+      // The current-path fallback has no transformable Path2D and retains the
+      // neutral rim until explicitly converted by its geometry owner.
+      if(lighting&&paths.every(Boolean))
+        ctx.translate(lighting.x*shift,lighting.y*shift);
       for(const path of paths) { if(path)ctx.stroke(path);else ctx.stroke();drawn++; }
+      ctx.restore();
     };
-    paint(style.darkWidth,'0,0,0',style.darkAlpha);
-    paint(style.lightWidth,'255,255,255',style.lightAlpha);
+    const l=style.lighting;
+    if(l){
+      paint(style.darkWidth,l.shade,style.darkAlpha*l.shadow,l,
+        style.gauge*.48);
+      paint(style.lightWidth,l.high,style.lightAlpha*l.light,l,
+        -style.gauge*.43);
+    }else{
+      paint(style.darkWidth,'0,0,0',style.darkAlpha);
+      paint(style.lightWidth,'255,255,255',style.lightAlpha);
+    }
   }
   ctx.restore();
   return drawn;

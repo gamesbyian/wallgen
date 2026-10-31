@@ -47,8 +47,16 @@ const highlight=Array.from({length:8},(_,i)=>'rgba(255,255,255,'+(.12+(7-i)*.016
 const glint='rgba(255,255,255,0.29)';
 /** Paint matte sub-grains, keeping the shared compositor's authored-world
  * transform, palette ink, alpha, coverage, blend and clip untouched. */
-export function paintSandGrains(ctx,layer,bounds){
+export function paintSandGrains(ctx,layer,bounds,lighting=null){
   const pitch=sandPitch(layer),stepY=pitch*.88,seed=layer.heightSeed|0;
+  // Precompute only sixteen mood-tinted shades, never a string per grain.
+  // Lighting-off keeps the original fleck pixel output exactly unchanged.
+  const lit=lighting&&Number.isFinite(lighting.x)&&Number.isFinite(lighting.y);
+  const dark=lit?Array.from({length:8},(_,i)=>
+    'rgba('+lighting.shade+','+(.045+lighting.shadow*(.13+i*.010)).toFixed(3)+')'):shadow;
+  const bright=lit?Array.from({length:8},(_,i)=>
+    'rgba('+lighting.high+','+(.045+lighting.light*(.12+(7-i)*.011)).toFixed(3)+')'):highlight;
+  const glimmer=lit?'rgba('+lighting.high+','+(.12+lighting.light*.20).toFixed(3)+')':glint;
   // Fully include flecks whose parent cell centre is outside the crop.
   const padded={left:bounds.left-pitch,top:bounds.top-pitch,
     right:bounds.right+pitch,bottom:bounds.bottom+pitch};
@@ -60,12 +68,15 @@ export function paintSandGrains(ctx,layer,bounds){
       // geometry controls and no dependence on preview/export dimensions.
       const diameter=pitch*(.105+.18*hash(g.ix,g.iy,seed,97+k*31));
       const tone=Math.floor(hash(g.ix,g.iy,seed,131+k*29)*8);
-      ctx.fillStyle=k%2===0?shadow[tone]:highlight[tone];
-      ctx.fillRect(x-diameter*.5,y-diameter*.5,diameter,diameter);
+      const darkFacet=(k%2)===0;
+      const drift=lit?(darkFacet?-lighting.shadow:lighting.light)*diameter*.24:0;
+      ctx.fillStyle=darkFacet?dark[tone]:bright[tone];
+      ctx.fillRect(x-diameter*.5+(lit?lighting.x*drift:0),
+        y-diameter*.5+(lit?lighting.y*drift:0),diameter,diameter);
     }
     if(g.sparkle){
       const x=(g.ix+.5+(g.iy&1)*.5)*pitch,y=(g.iy+.5)*stepY;
-      ctx.fillStyle=glint;
+      ctx.fillStyle=glimmer;
       ctx.fillRect(x-pitch*.045,y-pitch*.045,pitch*.09,pitch*.09);
     }
   });

@@ -57,7 +57,7 @@ test('rim reuses clipped paths, never fills or expands colour geometry',()=>{
 test('actual renderer wires compound even-odd clipping, source rails, crossing replay and nested contour linework',()=>{
   const src=readFileSync(new URL('../src/renderer.js',import.meta.url),'utf8');
   assert.match(src,/ctx\.clip\(object\.rings\?'evenodd':'nonzero'\)/);
-  assert.match(src,/paintSandContourRim\(ctx,null,sandRims\)/);
+  assert.match(src,/paintSandContourRim\(ctx,sandRims\.some\(s=>s\.lighting\)\?\[sandRegionPath\(object\)\]:null,sandRims\)/);
   assert.match(src,/paintSandContourRim\(g,\[traceEdge\(stripe/);
   assert.match(src,/paintSandContourRim\(g,\[traceEdge\(branch/);
   assert.match(src,/paintSandStrokeGlint\(ctx,nesting\.strokeWidth,sandRims\)/);

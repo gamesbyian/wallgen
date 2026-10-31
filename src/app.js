@@ -1,6 +1,7 @@
 import { OUTPUT_WIDTH, OUTPUT_HEIGHT, NAMES, COLOR_STORIES, normalizeRecipe, resolveScene, encodeRecipe, decodeRecipe, newSeed, randomizeAllRecipe, respectSettingLocks, LOCKABLE_SETTINGS } from './model.js';
 import {installAyaRecipeHandoff} from './aya-recipe-handoff.js';
 import { drawWallpaper, presentNudgedArtwork } from './renderer.js?v=20261024-text-overlays1';
+import {artKey} from './render-art-key.js';
 import {normalizePhotoLook,PHOTO_PRESETS} from './photo-look.js';
 import {photoPreviewRecipe} from './photo-preview-compare.js';
 import {createPreviewCoordinator,createThumbnailQueue,exportWallpaperInWorker,closeFrame} from './render-coordinator.js';
@@ -162,12 +163,7 @@ function startPreviewWorker(){
 }
 const settingLockButtons=new Map();
 const autos=['family','orientation','geometry','motif','palette','material','outline'];
-function artKey(recipe){
-  const {positionX,positionY,lockedSettings,primesOnly,
-    lightingMood,lightDirection,lightStrength,shadowStrength,
-    stripeShadowStrength,stripeShadowSoftness,stripeShadowDirection,...art}=normalizeRecipe(recipe);
-  return JSON.stringify(art);
-}
+// Source-material-aware artKey lives in render-art-key.js for deterministic preview caching.
 let noticeTimer = 0;
 let galleryRequestId = 0;
 let explorationRecipes = null; // Last contact sheet is retained across Saved visits.

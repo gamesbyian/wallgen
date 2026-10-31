@@ -9,6 +9,7 @@ import {materialContourHeight,paintMaterial} from './material-surface.js';
 import {sandRimStyles,supportsSandRibbonRim,paintSandContourRim,paintSandStrokeGlint} from './sand-contour-relief.js';
 import {sandBeadStyles,paintSandRegionBeads,paintSandRibbonBeads,paintSandNestedBeads} from './sand-beads.js';
 import {sandEchoStyles,paintSandRegionEchoes,paintSandRibbonEchoes} from './sand-contour-echo.js';
+import {sandLighting,sandRibbonLighting,sandMaterialLighting} from './sand-lighting.js';
 import {applyPhotoFinish} from './photo-look.js';
 import {matchingEmbroidery,drawRibbonEmbroidery,drawRegionEmbroidery} from './embroidery.js';
 
@@ -886,6 +887,17 @@ export function drawRegionObjects(ctx,scene){
       }
     }
   };
+  const sandRegionPath=object=>{
+    const path=new Path2D();
+    if(object.circle){const {cx,cy,r}=object.circle;path.arc(cx,cy,r,0,2*Math.PI);}
+    else for(const ring of object.rings||[object.vertices]){
+      if(!ring.length)continue;
+      path.moveTo(ring[0].x,ring[0].y);
+      for(let i=1;i<ring.length;i++)path.lineTo(ring[i].x,ring[i].y);
+      path.closePath();
+    }
+    return path;
+  };
   const regions=scene.objects.filter(o=>o.kind==='region'&&o.vertices.length>=3);
   // First paint every fill. A tiny matching stroke closes antialiasing seams
   // where independent floating-point cells meet without a divider.
@@ -945,7 +957,7 @@ export function drawRegionObjects(ctx,scene){
       ctx.save();trace(object);
       ctx.clip(object.rings?'evenodd':'nonzero');
       trace(object);
-      paintSandContourRim(ctx,null,sandRims);
+      paintSandContourRim(ctx,sandRims.some(s=>s.lighting)?[sandRegionPath(object)]:null,sandRims);
       paintSandRegionBeads(ctx,object,sandBeads);
       paintSandRegionEchoes(ctx,object,sandEchoes,scene.renderBounds);
       ctx.restore();
@@ -1025,9 +1037,12 @@ export function drawWallpaper(canvas, recipe, options={}) {
     g.translate(scene.centerX-DESIGN_WIDTH/2,scene.centerY-DESIGN_HEIGHT/2);
   }else g.translate(scene.centerX,scene.centerY);
   g.rotate(scene.angle);
-  const sandRims=sandRimStyles(scene);
-  const sandBeads=sandBeadStyles(scene);
-  const sandEchoes=sandEchoStyles(scene);
+  // Ribbon geometry is transformed separately from region geometry and
+  // independently of the world-oriented atmospheric light and material.
+  const ribbonLight=sandRibbonLighting(scene);
+  const sandRims=sandRimStyles(scene,ribbonLight);
+  const sandBeads=sandBeadStyles(scene,ribbonLight);
+  const sandEchoes=sandEchoStyles(scene,ribbonLight);
   const crossingBundles=[];
   for(const bundle of scene.objects){
   const bundleOffset=bundle.offset;
@@ -1220,7 +1235,7 @@ export function drawWallpaper(canvas, recipe, options={}) {
       if(!t)throw new Error('Material surface unavailable');
       t.setTransform(rasterScale,0,0,rasterScale,-x0*rasterScale,-y0*rasterScale);
       t.globalAlpha=layer.strength/100;
-      paintMaterial(t,layer,{left,right,top,bottom});
+      paintMaterial(t,layer,{left,right,top,bottom},sandMaterialLighting(scene,layer));
       s.setTransform(scaleX,0,0,scaleY,margin.left+offsetX,margin.top+offsetY);
       s.translate(DESIGN_WIDTH/2,DESIGN_HEIGHT/2);
       s.rotate(radians);
