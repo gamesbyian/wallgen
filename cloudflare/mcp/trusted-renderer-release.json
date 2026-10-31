@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "commit": "86831ae4189fde164c3454792a561c1a18c896dd",
+  "commit": "53a80fb81efe1ec2f4e2e6870513ed1c34145dbf",
   "snapshotPath": "trusted-renderer",
   "sourcePaths": ["src", "assets", "render-host.html"]
 }
