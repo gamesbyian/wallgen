@@ -181,7 +181,8 @@ export function installTextCanvasMover({
     // then observe null and cannot cancel a future independent gesture.
     discardCapturedGestures();
     const guideHadFocus=document.activeElement===outline||
-      handles.includes(document.activeElement);
+      handles.includes(document.activeElement)||
+      [axisButton,snapButton,done].includes(document.activeElement);
     active=Boolean(next);
     if(active){
       if(document.body.classList.contains('path-drawing')){
@@ -203,9 +204,26 @@ export function installTextCanvasMover({
     snapButton.hidden=!active;
     if(!active){
       outline.hidden=true;
-      if(guideHadFocus)button.focus({preventScroll:true});
+      if(guideHadFocus){
+        // The Text inspector button lives in a dismissed phone editor tray.
+        // Focus a visible, stable editor entry instead of a hidden control.
+        const mobileEntry=document.body.classList.contains('mobile-studio')?
+          document.getElementById('mobileEdit'):null;
+        (mobileEntry||button).focus({preventScroll:true});
+      }
     }else redraw();
   }
+  // Escape belongs to an armed direct-text tool when focus is on its
+  // selected frame or controls. Handle it inside the stage, BEFORE the
+  // mobile editor's document-level Escape handler can steal focus.
+  stage.addEventListener('keydown',event=>{
+    if(!active||event.key!=='Escape')return;
+    const target=event.target;
+    if(target!==outline&&!outline.contains(target)&&target!==done&&
+       target!==axisButton&&target!==snapButton)return;
+    event.preventDefault();event.stopPropagation();
+    setActive(false);
+  });
   // Focusable guide provides a direct keyboard path without stealing
   // arrow keys from numeric fields, the rotation grip or other tools.
   outline.addEventListener('keydown',event=>{

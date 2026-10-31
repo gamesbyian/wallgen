@@ -1,0 +1,25 @@
+name: Once Text Escape Focus Browser Acceptance
+on:
+  pull_request:
+    paths:
+      - 'tests/text-direct-controls-browser.mjs'
+      - '.github/workflows/once-text-escape-focus.yml'
+      - 'src/text-direct-ui.js'
+permissions:
+  contents: read
+jobs:
+  real-chromium-text-focus:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check installed browser and integration syntax
+        run: |
+          command -v google-chrome || command -v chromium
+          node --check src/text-direct-ui.js
+          node --check tests/text-direct-controls-browser.mjs
+      - name: Exercise text control Escape focus and existing pointer journeys
+        run: node tests/text-direct-controls-browser.mjs

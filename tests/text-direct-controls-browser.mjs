@@ -215,9 +215,32 @@ try{
     await evaluate('window.dispatchEvent(new Event("resize"))');
     await dispatch('mouseReleased',start.x+40,start.y);
     assert.deepEqual(await source(),recipe,'resize must abandon CSS-space draft');
+    // Mobile and desktop must dismiss the original on-canvas text tool
+    // without the mobile sheet's document Escape handler stealing focus.
+    // Test the selected text guide, both transform grips and mode controls.
+    const escapeTargets=['.text-direct-outline','.text-direct-scale',
+      '.text-direct-rotate','#textDirectAxis','#textDirectSnap','#textDirectDone'];
+    for(const selector of escapeTargets){
+      await waitFor('document.body.classList.contains("text-direct-active")');
+      const active=await evaluate('(()=>{const target=document.querySelector('+JSON.stringify(selector)+');target.focus();return {focused:document.activeElement===target,hidden:target.hidden}})()');
+      assert.ok(active.focused&&!active.hidden,
+        'Escape target must accept focus: '+selector);
+      await command('Input.dispatchKeyEvent',{type:'rawKeyDown',key:'Escape',code:'Escape',
+        windowsVirtualKeyCode:27,nativeVirtualKeyCode:27});
+      await command('Input.dispatchKeyEvent',{type:'keyUp',key:'Escape',code:'Escape',
+        windowsVirtualKeyCode:27,nativeVirtualKeyCode:27});
+      await waitFor('!document.body.classList.contains("text-direct-active")');
+      assert.equal(await evaluate('document.activeElement?.id'),'mobileEdit',
+        'Escape should restore visible editor entry from '+selector);
+      assert.deepEqual(await source(),recipe,
+        'Escape from '+selector+' must never edit authored text');
+      await evaluate('document.querySelector("[data-text-move]").click()');
+      await waitFor('document.body.classList.contains("text-direct-active")');
+    }
     assert.equal(jsErrors.length,0,'No uncaught editor errors');
     results.push({width,height,snap:60,free:59,keyboard:[31,36,35.9],
       staleSelectionCancelled:true,blurAndResizeCancelled:true,
+      escapeFocusReturned:escapeTargets.length,
       oneUndoEach:true,hitCells:controls.map(c=>({id:c.id,width:c.width,height:c.height})),
       notTested:['physical Pixel','TalkBack']});
     console.log('TEXT_DIRECT_CONTROLS_BROWSER_PASS',JSON.stringify(results.at(-1)));
