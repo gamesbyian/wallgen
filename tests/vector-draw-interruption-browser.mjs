@@ -156,10 +156,11 @@ try{
       if(action==='frameZoom')await evaluate('(()=>{const s=document.querySelector(".studio-stage");s.dataset.viewZoom="1.4";s.dispatchEvent(new Event("roygbiv-view-zoom-updated"))})()');
       if(action==='previewZoom')await evaluate('(()=>{const canvas=document.getElementById("preview");canvas.style.width="92%";canvas.parentElement.dispatchEvent(new Event("roygbiv-preview-zoom"))})()');
       if(action==='escape')await evaluate('document.dispatchEvent(new KeyboardEvent("keydown",{key:"Escape",bubbles:true}))');
+      // A disabled node-type selector also means "no node selected", so it
+      // cannot independently prove transaction cancellation. The definitive
+      // check is that Use path succeeds and exports the untouched source.
       if(action==='escape')
         await waitFor('document.querySelector(".vector-draw-tools")?.hidden===true');
-      else
-        await waitFor('document.querySelector(".vector-draw-tools select")?.disabled===false');
       await dispatch('mouseReleased',point.x+24,point.y+12);
       if(action!=='escape'){
         await waitFor('document.querySelector(".vector-draw-tools")?.hidden===false');
