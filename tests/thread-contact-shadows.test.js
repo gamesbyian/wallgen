@@ -60,9 +60,13 @@ test('only a genuine transverse over/under source intersection produces a lower-
 });
 
 test('contact position moves away from lamp but the existing lower-thread capsule never moves',()=>{
+  // Separate yarn courses, not adjacent sections of one strand. The
+  // crossing resolver correctly rejects adjacent sourceIndex neighbours.
   const lower=mark('lower',[0,0],[20,20],1),
-    upper=mark('upper',[0,20],[20,0],2);
-  const hit=threadCrossingGraph([lower,upper])[0],contact={hit,top:upper,bottom:lower};
+    upper=mark('upper',[0,20],[20,0],8);
+  const hit=threadCrossingGraph([lower,upper])[0];
+  assert.ok(hit,'a real topological contact must exist before testing light');
+  const contact={hit,top:upper,bottom:lower};
   const first=capture(),second=capture();
   paintSatinThreadContacts(first,[contact],lamp('top-left'),7,90);
   paintSatinThreadContacts(second,[contact],lamp('bottom-right'),7,90);
