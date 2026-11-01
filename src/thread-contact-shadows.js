@@ -145,10 +145,15 @@ export function selectSatinReplayContacts(plan,crossing,halfLength,
   const radius=Math.max(2,Math.min(96,sourceWidth*.7));
   const radiusSquared=radius*radius;
   const early=crossing.early,late=crossing.late;
+  // Do not let an enormous shallow-crossing repaint window associate yarn
+  // from a different visit simply because both fit into that broad mask.
+  // Actual thread contact must also be near its original source junction
+  // in *station units*, independent of output size or zoom.
+  const stationTolerance=Math.min(halfLength,Math.max(8,sourceWidth*2));
   const assigned=(s,station)=>{
     // Both windows can overlap at tight turns. A stitch belongs to the
     // nearest original traversal, with its actual source station preserved.
-    if(Math.abs(s-station)>halfLength)return false;
+    if(Math.abs(s-station)>stationTolerance)return false;
     const other=station===early?late:early;
     return Math.abs(s-station)<Math.abs(s-other);
   };
