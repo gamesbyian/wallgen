@@ -740,7 +740,12 @@ function render(recipe,{scroll=false,bypassLocks=false,interactive=false,cause='
     const height=interactive?Math.max(340,Math.round(preview.height*scale)):preview.height;
     if(previewPainted&&startPreviewWorker().request(current,key,width,height,
       {quality:interactive?'interactive':'settled',
-        gesture:interactive?rotationTransaction?.gesture??null:null})){
+        gesture:interactive?rotationTransaction?.gesture??null:null,
+        // Only explicit Random and seed reroll may replace slow obsolete
+        // paint. Ordinary edits, focus, gesture previews, Undo and PNG
+        // exports retain their exact preemption-free ownership.
+        intent:interactive&&['randomize_all','seed_reroll'].includes(cause)
+          ?'randomize':null})){
       // Keep the last complete wallpaper visible while the newest request
       // renders, then settle at the exact screen resolution after dragging.
       preview.dataset.renderPending='true';
