@@ -81,3 +81,59 @@ test('extreme finite rail coordinates never create a nonprogressing station loop
     200,{interval:13},(x,side)=>({x,y:side}),()=>normal++);
   assert.ok(normal>10,'safe source-anchored beads remain unchanged');
 });
+
+
+test('three beaded material layers reuse one perimeter with exactly unchanged mark order',()=>{
+  const s=sandBeadStyles(resolveScene(normalizeRecipe({
+    seed:'perimeter-reuse-compound',material:'sand-beaded',
+    textureCoverage:'stripes',textureScale:36,textureStrength:85,
+    textureLayer2Enabled:true,material2:'sand-beaded',
+    textureCoverage2:'stripes',textureScale2:36,textureStrength2:70,
+    textureLayer3Enabled:true,material3:'sand-beaded',
+    textureCoverage3:'stripes',textureScale3:60,textureStrength3:55,
+  })));
+  assert.equal(s.length,3);
+  const object={rings:[sq(0,0,90,90),sq(30,30,60,60),sq(105,5,130,35)]};
+  const canvas=()=>({
+    events:[],
+    save(){this.events.push(['save'])},
+    restore(){this.events.push(['restore'])},
+    beginPath(){this.events.push(['begin'])},
+    arc(x,y,r){this.events.push(['arc',x,y,r,this.fillStyle])},
+    fill(){this.events.push(['fill'])}
+  });
+  const whole=canvas();
+  const combined=paintSandRegionBeads(whole,object,s);
+  const partials=s.map(style=>{
+    const c=canvas();
+    const count=paintSandRegionBeads(c,object,[style]);
+    return {events:c.events,count};
+  });
+  assert.ok(combined>50);
+  assert.equal(combined,partials.reduce((n,p)=>n+p.count,0));
+  const visible=events=>events.filter(e=>['arc','fill'].includes(e[0]));
+  assert.deepEqual(visible(whole.events),
+    partials.flatMap(p=>visible(p.events)),
+    'one source perimeter must preserve each seeded layer phase and paint order');
+  assert.ok(somePhaseDifference(s),'distinct material layers must keep independent bead phases');
+  const source=readFileSync(new URL('../src/sand-beads.js',import.meta.url),'utf8');
+  assert.equal((source.match(/contourBoundaryFrame\(rings\)/g)||[]).length,1,
+    'region source ring framing belongs outside the material-layer loop');
+});
+
+function somePhaseDifference(styles){
+  return styles.some(style=>style.phase!==styles[0].phase);
+}
+
+test('circular region beads remain analytic and match independent layer painters',()=>{
+  const s=sandBeadStyles(fixture()),circle={circle:{cx:20,cy:40,r:18}};
+  const canvas=()=>({events:[],
+    save(){},restore(){},beginPath(){},
+    arc(x,y,r){this.events.push([x,y,r,this.fillStyle])},
+    fill(){}
+  });
+  const a=canvas(),b=canvas();
+  assert.equal(paintSandRegionBeads(a,circle,[s[0],s[0]]),
+    2*paintSandRegionBeads(b,circle,[s[0]]));
+  assert.deepEqual(a.events,[...b.events,...b.events]);
+});
