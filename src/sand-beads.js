@@ -104,6 +104,11 @@ export function forEachRingBead(frames,interval,visit,phase=0){
 export function paintSandRegionBeads(ctx,region,styles){
   if(!styles?.length||!region)return 0;
   const rings=region.rings||[region.vertices];
+  // The source perimeter is identical for all active material layers. Build
+  // its original, canonical arc-length frames only once per paint operation;
+  // phases, spacing, colours and cap lighting remain independently layered.
+  // Circles retain their exact analytic perimeter without polygon framing.
+  const frames=region.circle?null:contourBoundaryFrame(rings);
   let count=0;
   ctx.save();
   for(const style of styles){
@@ -117,7 +122,6 @@ export function paintSandRegionBeads(ctx,region,styles){
         count++;
       }
     }else{
-      const frames=contourBoundaryFrame(rings);
       forEachRingBead(frames,style.interval,(x,y)=>{
         drawBead(ctx,x,y,style);count++;
       },style.phase);
