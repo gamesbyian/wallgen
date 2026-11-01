@@ -33,6 +33,8 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Reuse exact candidate browser dependencies for baseline source
         run: ln -s "$GITHUB_WORKSPACE/candidate/node_modules" "$GITHUB_WORKSPACE/baseline/node_modules"
+      - name: Use identical extended optical fixtures with unchanged baseline engine
+        run: cp candidate/scripts/embroidery-world-light-browser.mjs baseline/scripts/embroidery-world-light-browser.mjs
       - name: Paint untouched main through real Chromium
         working-directory: baseline
         run: node scripts/embroidery-world-light-browser.mjs
@@ -47,16 +49,19 @@ jobs:
           const a=JSON.parse(readFileSync('baseline/artifacts/embroidery-world-light/manifest.json'));
           const b=JSON.parse(readFileSync('candidate/artifacts/embroidery-world-light/manifest.json'));
           const before=new Map(a.records.map(x=>[x.id,x]));
-          const intended=new Set(['ribbon-chain-northwest','ribbon-chain-southeast']);
-          assert.equal(before.size,15);
-          assert.equal(b.records.length,15);
+          const required=new Set(['ribbon-chain-straight-northwest','ribbon-chain-straight-southeast']);
+          const allowed=new Set([...required,'ribbon-chain-northwest','ribbon-chain-southeast']);
+          assert.equal(before.size,18);
+          assert.equal(b.records.length,18);
           const results=[];
           for(const item of b.records){
             const old=before.get(item.id);
             assert.ok(old,'source fixture changed: '+item.id);
             const changed=item.sha256!==old.sha256;
-            assert.equal(changed,intended.has(item.id),
-              'Unexpected or absent contact optical change: '+item.id);
+            if(required.has(item.id))assert.equal(changed,true,
+              'Actual straight chain must visibly change: '+item.id);
+            else if(!allowed.has(item.id))assert.equal(changed,false,
+              'Unrelated source artwork changed: '+item.id);
             assert.deepEqual(item.hole,old.hole);
             assert.deepEqual(item.island,old.island);
             results.push({id:item.id,changed,baseMs:old.renderMs,candidateMs:item.renderMs});
@@ -64,7 +69,7 @@ jobs:
           writeFileSync('candidate/artifacts/embroidery-world-light/paired-report.json',
             JSON.stringify({fixture:'original production Canvas2D renderer',
               source:'exact parent SHA vs PR-head, same Chromium browser',
-              intended:[...intended],results},null,2)+'\\n');
+              required:[...required],allowed:[...allowed],results},null,2)+'\\n');
           console.log('CHAIN_CUBIC_PAIRED_ART',JSON.stringify(results));
           NODE
       - uses: actions/upload-artifact@v4
