@@ -6,7 +6,7 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: once-sand-layer-perf-\${{ github.event.pull_request.number }}
+  group: once-sand-layer-perf-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 jobs:
   compare:
