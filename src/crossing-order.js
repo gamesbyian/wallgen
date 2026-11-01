@@ -7,10 +7,11 @@ const delta=(a,b)=>({x:a.x-b.x,y:a.y-b.y});
 export const CROSSING_MODES=Object.freeze(['over','under','weave']);
 
 /** Two non-neighbouring path segments cross transversely in the design plane. */
-export function segmentIntersection(a,b,c,d){
+export function segmentIntersection(a,b,c,d,{minimumProduct=1}={}){
   const r=delta(b,a),s=delta(d,c),den=cross(r,s);
   const lengths=Math.hypot(r.x,r.y)*Math.hypot(s.x,s.y);
-  if(lengths<1||Math.abs(den)/lengths<.12)return null;
+  if(!Number.isFinite(minimumProduct)||minimumProduct<0||
+     lengths<minimumProduct||Math.abs(den)/lengths<.12)return null;
   const v=delta(c,a),t=cross(v,s)/den,u=cross(v,r)/den;
   if(t<=.001||t>=.999||u<=.001||u>=.999)return null;
   return {x:a.x+r.x*t,y:a.y+r.y*t,t,u};
