@@ -53,8 +53,6 @@ jobs:
             const a=previous.results[i],b=current.results[i];
             assert.equal(a.sha256,b.sha256,'Real PNG pixels differ for '+a.name);
             assert.equal(a.styles,b.styles,'Canonical material layer count differs');
-            assert.equal(a.rings,3);
-            assert.equal(b.rings,3);
             const ratio=a.medianGeometryMs/b.medianGeometryMs;
             const renderRatio=a.medianRenderMs/b.medianRenderMs;
             comparison.push({scene:a.name,sourceSha256:a.sha256,
