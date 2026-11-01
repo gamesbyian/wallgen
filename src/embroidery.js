@@ -1,6 +1,7 @@
 import {samplePath,widthAt} from './path-geometry.js';
 import {threadLightProfile,rotateThreadLighting} from './thread-lighting.js';
 import {planSatinThreadContacts,paintSatinThreadContacts} from './thread-contact-shadows.js';
+import {chainLinkCurve} from './chain-stitch-topology.js';
 
 // Surface roles are addressed by authored object IDs or semantic ROYGBIV
 // colour slots. This optional array is never inferred from legacy textures.
@@ -80,12 +81,12 @@ export function paintThreadRelief(ctx,ax,ay,bx,by,pitch,relief,
 // Two restrained offset strokes suggest depth without recolouring the ink.
 function chainLink(ctx,x,y,tx,ty,nx,ny,half,loft,relief,lighting=null){
   const loop=(shift,sx=0,sy=0)=>{
-    const cx=x+nx*shift+sx,cy=y+ny*shift+sy;
-    const point=(along,across)=>[cx+tx*along+nx*across,
-      cy+ty*along+ny*across];
-    const a=point(-half,0),b=point(half,0);
-    const upper1=point(-half*.55,loft),upper2=point(half*.6,loft);
-    const lower1=point(half*.6,-loft),lower2=point(-half*.55,-loft);
+    // The exact painter owns its original world-unit cubic geometry.
+    // The same control points now support separate, bounded future
+    // source-curve link-to-link contact studies without a second dialect.
+    const link=chainLinkCurve(x,y,tx,ty,nx,ny,half,loft,shift,sx,sy);
+    if(!link)return;
+    const {a,b,upper1,upper2,lower1,lower2}=link;
     ctx.beginPath();ctx.moveTo(...a);
     ctx.bezierCurveTo(...upper1,...upper2,...b);
     ctx.bezierCurveTo(...lower1,...lower2,...a);
