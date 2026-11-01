@@ -27,6 +27,9 @@ test('personal project has only a small active workflow menu', async () => {
     'check.yml': ['pull_request', 'workflow_dispatch'],
     'pages.yml': ['push', 'workflow_dispatch'],
     'promote-source-visual-plates.yml': ['pull_request', 'workflow_dispatch'],
+    // TEMPORARY E4 optical study, removed together with the one-shot workflow
+    // before merging; the policy must have the original exact allowlist on main.
+    'e4-chain-optics-one-shot.yml': ['pull_request'],
   };
   // Every active specialty suite must be manually requested; no hidden push.
   const manual = [
