@@ -57,6 +57,7 @@ const styles=[
   ['ribbon-chain-straight',normalizeRecipe({...ribbon('chain'),
     geometry:'straight',orientation:'horizontal',crossingMode:'over'})],
   ['ribbon-fibre',ribbon('satin-fibre')],
+  ['region-chain',region('chain')],
   ['region-tatami',region('tatami')],
   ['region-fibre',region('tatami-fibre')]
 ];
