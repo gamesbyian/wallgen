@@ -57,3 +57,7 @@ The initial PR gate has now passed [the real code/CI change run #41256856336](ht
 A second focused CI change reuses the same fail-closed classifier for the main Pages publisher. It compares the exact GitHub push `before` SHA to the checked-out commit, only on `refs/heads/main` with an explicit publishing-workflow opt-in. All-zero, absent, unreachable or ambiguous ancestors and any non-Markdown, mixed, CI/dependency, manual or other branch event retain `check:quick`. The dedicated selector/policy tests run before deciding.
 
 A Markdown-only Pages push **still publishes**: the exact main source stamp, immutable trusted-renderer archive, and Pages upload/deployment steps remain unconditional. This removes only redundant Node app tests for content which cannot affect the runtime. The separate legacy dynamic Pages workflow remains a repository-settings issue [#940](https://github.com/gamesbyian/wallgen/issues/940). The new main-push fast route must not be described as production-verified until a genuine docs-only main push runs.
+
+## Pages source configuration follow-up
+
+The repository owner reports changing **Settings → Pages → Build and deployment → Source** to **GitHub Actions**. The setting itself is external to this repository. Verify that a new main push launches only the intended `Publish Wallgen` workflow and that the actual Pages deployment succeeds before claiming the duplicate dynamic workflow is retired. Track the external verification in issue #940.
