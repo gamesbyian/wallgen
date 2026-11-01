@@ -181,6 +181,21 @@ The ephemeral geometry optimizations [#956](https://github.com/gamesbyian/wallge
 
 The intended repeated-same-inset case spent about **60% less time in geometry** and **6% less in its whole painting pass** in this paired sample, with zero pixel changes. Other scenarios exhibit noise and in one case a slightly slower whole render, so no general 6% acceleration claim is warranted. The timing samples are within one headless Chromium/GitHub runner (three whole-art, six isolated geometry measurements per case), **not** longitudinal statistics, a randomization user-action benchmark, or Pixel battery/thermal data. The temporary comparison Actions workflow is retired; the reusable script and actual-pixel acceptance contract remain in source. Later #959 source-station reuse is not included in this particular A/B, which compared only the first two geometry optimizations.
 
+## Ribbon source-station reuse: measured pixel-identical Chromium (1 November 2026)
+
+[PR #959](https://github.com/gamesbyian/wallgen/pull/959) shares each exact original ribbon station's width, centre and two side-edge geometry evaluations across all optional filigree material styles and inset depths **within one paint**. Original station identity, no-LOD crop/crossing replay, Path2D outlines, shading and source clip ownership stay unchanged; no cache survives a source change.
+
+[Source-paired Chromium #41274414002](https://github.com/gamesbyian/wallgen/actions/runs/41274414002) **PASS**: fixed canonical wave and multi-loop designs with three independently configured filigree layers and corresponding one-layer controls, rendered at the real 600×1300 production painter size before (`25e0024986b66a1e54088ea4f20dc1fbc8f59729`) and after station reuse, using the **same Linux Chromium installation**. All **four final PNGs were byte-identical**, and the number of painted decorative paths was identical. The reusable `scripts/sand-ribbon-performance.mjs` measures complete `drawWallpaper` and separately invokes the actual filigree painter with production `samplePath`, `widthAt` and `ribbonEdge` callbacks.
+
+| Scene | Isolated ribbon geometry before → after (ms, median) | Whole art before → after (ms, median) |
+| --- | ---: | ---: |
+| Three-layer wave | **11.10 → 4.63** | 852.3 → 827.1 |
+| Three-layer multi-loop | **5.63 → 1.78** | 1203.6 → 1187.5 |
+| One-layer wave | 3.90 → 1.78 | 358.4 → 339.2 |
+| One-layer multi-loop | 2.10 → 1.23 | 573.7 → 557.5 |
+
+The isolated geometry portion was **1.7–3.2× faster** across these cases and whole-art render differences were smaller (~1–5%) on the single runner. This is evidence for the **specific source-station reuse** rather than a claim of universal Random button speed or Pixel 6 Pro thermal/preview latency. No new visually substituted pixels, geometry dialect, renderer or recipe fields are introduced. Temporary Actions proof retired after evidence; baseline script is permanent.
+
 ## Next S4 research: occlusion from actual source topology, not decorative offsets
 
 **Target result:** sand piles and beads should carry their own believable height, changing the cast-shadow length and illuminated-face width consistently as the global light moves. The merged S4 directional marks establish shared reference frames but do not yet establish measured height, ray visibility or pile contact.
