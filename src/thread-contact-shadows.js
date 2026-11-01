@@ -91,9 +91,10 @@ export function planSatinThreadContacts(stripe,extent,treatment,lighting){
  * this as a Canvas2D vector path rather than a pixel buffer, screen-unit
  * approximation, rectangular clip or ellipse wider than the original yarn.
  * Caller owns ctx.save/clip and the full original colour-region/ribbon clip. */
-export function traceThreadContactCapsule(ctx,a,b,width){
+export function traceThreadContactCapsule(ctx,a,b,width,{minLength=.75}={}){
   const dx=b.x-a.x,dy=b.y-a.y,length=Math.hypot(dx,dy);
-  if(!Number.isFinite(length)||length<.75||
+  if(!Number.isFinite(length)||length<minLength||
+    !Number.isFinite(minLength)||minLength<=0||
     !Number.isFinite(width)||width<=0)return false;
   const nx=-dy/length,ny=dx/length,r=width*.5;
   const normal=Math.atan2(ny,nx);
