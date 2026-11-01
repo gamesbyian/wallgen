@@ -46,3 +46,31 @@ test('unimplemented SVG primitives or path forms fail instead of publishing an i
   assert.throws(() => parseLogoSvg(dark.replace('</svg>', '<circle cx="15" cy="15" r="2"/></svg>')), /Unsupported logo SVG/);
   assert.throws(() => parseLogoSvg(dark.replace('M11.4567 40 L96.1433 17.12', 'M11.4567 40 Q20 20 96.1433 17.12')), /Unsupported logo SVG/);
 });
+
+
+test('SVG-only visual effects cannot be silently ignored in generated PNGs', () => {
+  for (const [name, mutated] of [
+    ['whole-icon opacity', dark.replace('<svg xmlns=', '<svg opacity="0.5" xmlns=')],
+    ['stripe opacity', dark.replace('stroke="#ff474e"', 'stroke="#ff474e" opacity="0.25"')],
+    ['background filter', dark.replace('rx="15" fill="#050608"', 'rx="15" filter="url(#blur)" fill="#050608"')],
+    ['group blend', dark.replace('transform="translate(1 0)"', 'transform="translate(1 0)" style="mix-blend-mode:multiply"')],
+    ['clip path', dark.replace('</svg>', '<clipPath id="x"><rect width="10" height="10"/></clipPath></svg>')],
+    ['mask', dark.replace('</svg>', '<mask id="m"></mask></svg>')],
+    ['nested transform', dark.replace('stroke-width="9"', 'transform="rotate(15)" stroke-width="9"')],
+    ['extra path attribute', dark.replace('d="M8 52.9109', 'vector-effect="non-scaling-stroke" d="M8 52.9109')],
+    ['background new fill', dark.replace('fill="#050608"', 'fill="url(#gradient)"')],
+    ['unexpected text content', dark.replace('</svg>', 'hidden content</svg>')],
+    ['unknown SVG drawing order', dark.replace('<g transform="translate(1 0)">', '<g transform="translate(1 0)"><g>')],
+  ]) {
+    assert.notEqual(mutated, dark, 'mutation fixture must change source: ' + name);
+    assert.throws(() => parseLogoSvg(mutated), /Unsupported logo SVG/, name);
+  }
+});
+
+test('metadata comments and editable vector coordinates remain supported', () => {
+  const annotated = dark.replace('<!-- Seven parallel', '<!-- Annotated source -->\n  <!-- Seven parallel');
+  assert.deepEqual(parseLogoSvg(annotated), parseLogoSvg(dark));
+  const moved = dark.replace('L96.1433 17.12', 'L90.1433 17.12');
+  assert.deepEqual(parseLogoSvg(moved).bands[0].segment,
+    [12.4567, 37.6, 91.1433, 14.72]);
+});
