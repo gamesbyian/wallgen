@@ -19,6 +19,11 @@ export function planSatinThreadContacts(stripe,extent,treatment,lighting){
     !finite(treatment.pitch)||treatment.pitch<=0||
     !['satin','satin-soft'].includes(treatment.style)||
     !finite(lighting.shadow)||lighting.shadow<=0)return null;
+  // Initial optical scope is truly returning/self-crossing ribbons. Normal
+  // straight, wave and hairpin surfaces retain their existing fast lighting
+  // path rather than building a 2,500-station candidate graph every redraw.
+  const geometry=stripe.sharedGeometry??stripe.geometry;
+  if(!['loop','loops','drawn'].includes(geometry))return null;
   const step=treatment.pitch,interval=Math.max(step,2*extent/2500);
   // Use the original visible source station span, including exact authored
   // floating/drawn truncations. A clipped-away invisible stitch cannot cast
