@@ -103,8 +103,9 @@ function chainLink(ctx,x,y,tx,ty,nx,ny,half,loft,relief,lighting=null){
 // active; contacts are deliberately *not* independently solved from a
 // crossing-replay crop, which has a different major-branch z order.
 function paintChainLinkContact(ctx,prior,curves,lighting,pitch,relief,
-  yarnWidth){
-  const hits=prior&&curves?chainLinkContactEvents(prior.curves,curves):[];
+  yarnWidth,sourceEvents=null){
+  const hits=sourceEvents??(prior&&curves?
+    chainLinkContactEvents(prior.curves,curves):[]);
   if(!hits.length||!prior.profile)return 0;
   const now=threadLightProfile(lighting,curves[0][0].x,curves[0][0].y,
     curves[0][3].x,curves[0][3].y,pitch,relief);
@@ -188,6 +189,99 @@ function fibreSpan(ctx,ax,ay,bx,by,pitch,relief,phase,lighting=null){
   path(ax+dx*start+nx*offset*.4*side,ay+dy*start+ny*offset*.4*side,
     ax+dx*end+nx*offset*.4*side,ay+dy*end+ny*offset*.4*side);
 }
+// A single authoritative original-world chain station sampler. Full paint
+// and *all* crossing branches use the same three lanes, neighbouring-source
+// curvature shrink, global indices and initial unclipped source geometry.
+function ribbonChainStation(stripe,extent,step,i){
+  const linkStep=Math.max(step*2.8,2*extent/950);
+  const station=-extent+i*linkStep;
+  if(i<0||i>950||station+linkStep>extent)return [];
+  const centre=station+linkStep*.5;
+  const p=samplePath(stripe,centre,extent);
+  const halfWidth=widthAt(stripe,centre,extent)*.46;
+  if(![p.x,p.y,p.tx,p.ty,p.nx,p.ny,halfWidth].every(Number.isFinite)||
+    halfWidth<=0)return [];
+  const neighbours=[];
+  for(const delta of [-linkStep,linkStep]){
+    const next=centre+delta;
+    if(next<-extent||next>extent)continue;
+    const q=samplePath(stripe,next,extent);
+    const w=widthAt(stripe,next,extent)*.46;
+    if([q.x,q.y,q.nx,q.ny,w].every(Number.isFinite)&&w>0)
+      neighbours.push({x:q.x,y:q.y,nx:q.nx,ny:q.ny,w});
+  }
+  const result=[];
+  for(const lane of [-.66,0,.66]){
+    const cx=p.x+p.nx*halfWidth*lane,cy=p.y+p.ny*halfWidth*lane;
+    let spacing=linkStep;
+    for(const q of neighbours)
+      spacing=Math.min(spacing,Math.hypot(cx-q.x-q.nx*q.w*lane,
+        cy-q.y-q.ny*q.w*lane));
+    const half=linkStep*.51*Math.min(1,
+      Math.max(.20,spacing/linkStep)/.94);
+    const loft=Math.min(step*.72,half*.62,halfWidth*.48);
+    result.push({index:i,lane,station:centre,cx,cy,
+      tx:p.tx,ty:p.ty,nx:p.nx,ny:p.ny,half,loft});
+  }
+  return result;
+}
+/** Original-authority major-branch chain source contacts.
+ * This per-junction study is only invoked by the renderer that owns the
+ * original Over/Under/Weave hierarchy. Never infer hierarchy from colour
+ * painting or rerun topology on an independently cropped branch. */
+export function selectChainReplayContacts(stripe,extent,treatment,lighting,
+  crossing,halfLength,topIsLater,sourceWidth){
+  const output=new Map();
+  if(treatment?.style!=='chain'||!lighting||lighting.shadow<=0||
+    !Number.isFinite(extent)||extent<=0||
+    !Number.isFinite(treatment.pitch)||treatment.pitch<=0||
+    !Number.isFinite(crossing?.early)||!Number.isFinite(crossing?.late)||
+    !Number.isFinite(crossing?.x)||!Number.isFinite(crossing?.y)||
+    !Number.isFinite(halfLength)||halfLength<=0||
+    !Number.isFinite(sourceWidth)||sourceWidth<=0||
+    typeof topIsLater!=='boolean')return output;
+  const step=treatment.pitch,linkStep=Math.max(step*2.8,2*extent/950);
+  // At most three centre-neighbour links on each side of the original
+  // junction. The exact source sampler is independent of crop/zoom/export.
+  const candidates=station=>{
+    const centreIndex=(station+extent)/linkStep-.5;
+    const index=Math.round(centreIndex),items=[];
+    const tolerance=Math.min(halfLength,linkStep*1.6);
+    for(let i=Math.max(0,index-1);i<=Math.min(950,index+1);i++){
+      const middle=-extent+(i+.5)*linkStep;
+      if(Math.abs(middle-station)>tolerance)continue;
+      for(const link of ribbonChainStation(stripe,extent,step,i)){
+        const curves=chainLinkCurves(link.cx,link.cy,link.tx,link.ty,
+          link.nx,link.ny,link.half,link.loft);
+        const profile=threadLightProfile(lighting,
+          link.cx-link.tx*link.half,link.cy-link.ty*link.half,
+          link.cx+link.tx*link.half,link.cy+link.ty*link.half,
+          Math.max(link.loft*2,1),treatment.relief);
+        if(curves&&profile)items.push({...link,curves,profile});
+      }
+    }
+    return items;
+  };
+  const early=candidates(crossing.early),late=candidates(crossing.late);
+  const top=topIsLater?late:early,bottom=topIsLater?early:late;
+  const radius=Math.min(96,Math.max(2,sourceWidth*.85));
+  const r2=radius*radius;
+  let count=0;
+  for(const above of top)for(const below of bottom){
+    // This is a distinct traversal crossing. Consecutive same-lane source
+    // links are already handled by the full Over painter.
+    if(Math.abs(above.index-below.index)<=1)continue;
+    const events=chainLinkContactEvents(below.curves,above.curves)
+      .filter(h=>(h.x-crossing.x)**2+(h.y-crossing.y)**2<=r2);
+    if(!events.length)continue;
+    count+=events.length;
+    if(count>64)return new Map(); // fail closed on pathological overlap
+    if(!output.has(above.index))output.set(above.index,[]);
+    output.get(above.index).push({lane:above.lane,top:above,bottom:below,
+      events});
+  }
+  return output;
+}
 /** Draw transverse thread ribs along the same tangent/normal path as ribbon geometry.
  * Caller establishes the actual stripe footprint as the active clipping mask.
  */
@@ -218,53 +312,29 @@ export function drawRibbonEmbroidery(ctx,stripe,extent,treatment,range=null,ligh
     for(let i=firstLink;i<=lastLink;i++){
       const station=-extent+i*linkStep;
       if(station+linkStep>extent)break;
-      const p=samplePath(stripe,station+linkStep*.5,extent);
-      const halfWidth=widthAt(stripe,station+linkStep*.5,extent)*.46;
-      if(![p.x,p.y,p.tx,p.ty,p.nx,p.ny,halfWidth].every(Number.isFinite)||
-        halfWidth<=0)continue;
-      // On a tight loop the inner lane advances less distance between two
-      // world-anchored stitch stations than the outer lane. Keeping the same
-      // tangent-length loop there piles several glossy links on top of one
-      // another (visible in the red/orange eye of the production Chain PNG).
-      // Neighbour sampling is shared across all three lanes and bounded to
-      // two extra path/width evaluations per station. It changes neither the
-      // original station lattice nor crossing replay phase.
-      const neighbours=[];
-      for(const delta of [-linkStep,linkStep]){
-        const next=station+linkStep*.5+delta;
-        if(next<-extent||next>extent)continue;
-        const q=samplePath(stripe,next,extent);
-        const w=widthAt(stripe,next,extent)*.46;
-        if([q.x,q.y,q.nx,q.ny,w].every(Number.isFinite)&&w>0)
-          neighbours.push({x:q.x,y:q.y,nx:q.nx,ny:q.ny,w});
-      }
-      for(const lane of [-.66,0,.66]){
-        const cx=p.x+p.nx*halfWidth*lane,cy=p.y+p.ny*halfWidth*lane;
-        let spacing=linkStep;
-        for(const q of neighbours)
-          spacing=Math.min(spacing,Math.hypot(cx-q.x-q.nx*q.w*lane,
-            cy-q.y-q.ny*q.w*lane));
-        // Full-sized on straight/open paths; shrink smoothly only where
-        // neighbouring centres are less than 94% of their nominal spacing.
-        // The 20% floor prevents a collapsed bend from producing zero-area
-        // links without increasing our <=950*3 candidate budget.
-        const half=linkStep*.51*Math.min(1,
-          Math.max(.20,spacing/linkStep)/.94);
-        const loft=Math.min(step*.72,half*.62,halfWidth*.48);
+      for(const link of ribbonChainStation(stripe,extent,step,i)){
+        const {lane,cx,cy,tx,ty,nx,ny,half,loft}=link;
+        if(range&&replayContacts instanceof Map&&lighting?.shadow>0){
+          for(const entry of replayContacts.get(i)||[]){
+            if(entry.lane!==lane)continue;
+            paintChainLinkContact(ctx,entry.bottom,entry.top.curves,
+              lighting,step,treatment.relief,ctx.lineWidth,entry.events);
+          }
+        }
         if(contactShadows&&!range&&lighting?.shadow>0){
-          const curves=chainLinkCurves(cx,cy,p.tx,p.ty,p.nx,p.ny,
+          const curves=chainLinkCurves(cx,cy,tx,ty,nx,ny,
             half,loft);
           const prior=previousByLane.get(lane);
           if(prior?.index===i-1&&curves)
             paintChainLinkContact(ctx,prior,curves,lighting,step,
               treatment.relief,ctx.lineWidth);
           const profile=threadLightProfile(lighting,
-            cx-p.tx*half,cy-p.ty*half,cx+p.tx*half,cy+p.ty*half,
+            cx-tx*half,cy-ty*half,cx+tx*half,cy+ty*half,
             Math.max(loft*2,1),treatment.relief);
           if(curves&&profile)previousByLane.set(lane,{index:i,curves,profile});
           else previousByLane.delete(lane);
         }
-        chainLink(ctx,cx,cy,p.tx,p.ty,p.nx,p.ny,
+        chainLink(ctx,cx,cy,tx,ty,nx,ny,
           half,loft,treatment.relief,lighting);
         count++;
       }
