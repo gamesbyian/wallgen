@@ -2,8 +2,9 @@
 // actual later satin stitch crosses a previously painted lower satin stitch.
 // The owning renderer's full ribbon mask remains active; this pass clips
 // *again* to the lower stitch capsule, never to the open coloured substrate.
-// Over/Under/Weave policy is owned by the renderer. Only default "over" is
-// currently eligible; other z policies must not manufacture contact shadows.
+// Over/Under/Weave policy is owned by the renderer: full Over painting uses
+// natural source order; Under/Weave repaint only original selected contacts
+// against the already painted lower yarn at each true branch junction.
 import {samplePath,widthAt} from './path-geometry.js';
 import {threadCrossingGraph} from './thread-crossings.js';
 import {threadLightProfile} from './thread-lighting.js';
@@ -119,4 +120,54 @@ export function paintSatinThreadContacts(ctx,contacts,lighting,pitch,relief){
     painted++;
   }
   return painted;
+}
+
+
+/** Resolve crossing-replay contacts from one COMPLETE original satin graph.
+ *
+ * The source graph's default ordering always stores early as below and late
+ * as above. The original renderer's crossingTopIsLater(mode,stripe,k) is the
+ * sole authority for which traversal is physically foreground at this major
+ * ribbon junction. Reconcile both facts here without re-solving a cropped
+ * segment graph, and reject all contacts unrelated to this one junction.
+ *
+ * Input coordinates are source design units; this is a transient draw plan,
+ * not editable, serialized, raster or viewport geometry.
+ */
+export function selectSatinReplayContacts(plan,crossing,halfLength,
+  topIsLater,sourceWidth){
+  const result=new Map();
+  if(!plan||!(plan.byStation instanceof Map)||
+     !Number.isFinite(crossing?.early)||!Number.isFinite(crossing?.late)||
+     !Number.isFinite(crossing?.x)||!Number.isFinite(crossing?.y)||
+     !Number.isFinite(halfLength)||halfLength<=0||
+     !Number.isFinite(sourceWidth)||sourceWidth<=0||
+     typeof topIsLater!=='boolean')return result;
+  const radius=Math.max(2,Math.min(96,sourceWidth*.7));
+  const radiusSquared=radius*radius;
+  const early=crossing.early,late=crossing.late;
+  // Do not let an enormous shallow-crossing repaint window associate yarn
+  // from a different visit simply because both fit into that broad mask.
+  // Actual thread contact must also be near its original source junction
+  // in *station units*, independent of output size or zoom.
+  const stationTolerance=Math.min(halfLength,Math.max(8,sourceWidth*2));
+  const assigned=(s,station)=>{
+    // Both windows can overlap at tight turns. A stitch belongs to the
+    // nearest original traversal, with its actual source station preserved.
+    if(Math.abs(s-station)>stationTolerance)return false;
+    const other=station===early?late:early;
+    return Math.abs(s-station)<Math.abs(s-other);
+  };
+  for(const batch of plan.byStation.values())for(const item of batch){
+    const {hit}=item,first=item.bottom,second=item.top;
+    if(!hit||!first||!second||
+       !assigned(first.station,early)||!assigned(second.station,late)||
+       (hit.x-crossing.x)**2+(hit.y-crossing.y)**2>radiusSquared)continue;
+    const top=topIsLater?second:first;
+    const bottom=topIsLater?first:second;
+    const entry={hit,top,bottom};
+    if(!result.has(top.sourceIndex))result.set(top.sourceIndex,[]);
+    result.get(top.sourceIndex).push(entry);
+  }
+  return result;
 }
