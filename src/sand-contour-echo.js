@@ -128,6 +128,11 @@ export function paintSandRibbonEchoes(ctx,stripe,extent,styles,
   if(!Number.isSafeInteger(first)||!Number.isSafeInteger(last)||
      last<first||last-first>7000)return 0;
   let count=0;
+  // Every active material style replays exactly the same source stations.
+  // Cache immutable source width/centre/edge samples within this one paint,
+  // never across a recipe, camera, crossing window or edit. Exact world-space
+  // coordinates and painter order remain unchanged.
+  const sampledStations=new Array(last-first+1);
   ctx.save();ctx.lineJoin='round';ctx.lineCap='butt';
   for(const style of styles)for(let depth=0;depth<style.insets.length;depth++){
     const inset=style.insets[depth],inkWidth=style.width*(depth===0?1:.83);
@@ -136,12 +141,21 @@ export function paintSandRibbonEchoes(ctx,stripe,extent,styles,
       const flush=()=>{if(active){strokeDeposit(ctx,style,path||undefined,inkWidth,depth);
         active=false;path=null;count++;}};
       for(let i=first;i<=last;i++){
-        const station=origin+i*step;
-        const halfWidth=widthAtStation(station)*.5;
+        const key=i-first;
+        let sample=sampledStations[key];
+        if(!sample){
+          const station=origin+i*step;
+          sample={station,halfWidth:widthAtStation(station)*.5};
+          sampledStations[key]=sample;
+        }
+        const {station,halfWidth}=sample;
         if(!finite(halfWidth)||halfWidth<=inset+inkWidth*.75){
           flush();continue;
         }
-        const edge=pointAt(station,side),centre=centerAt(station);
+        const edgeKey=side===-1?'left':'right';
+        if(!Object.hasOwn(sample,edgeKey))sample[edgeKey]=pointAt(station,side);
+        if(!Object.hasOwn(sample,'centre'))sample.centre=centerAt(station);
+        const edge=sample[edgeKey],centre=sample.centre;
         if(!edge||!centre||![edge.x,edge.y,centre.x,centre.y].every(finite)){
           flush();continue;
         }
