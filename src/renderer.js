@@ -12,6 +12,7 @@ import {sandEchoStyles,paintSandRegionEchoes,paintSandRibbonEchoes} from './sand
 import {sandLighting,sandRibbonLighting,sandMaterialLighting} from './sand-lighting.js';
 import {applyPhotoFinish} from './photo-look.js';
 import {matchingEmbroidery,drawRibbonEmbroidery,drawRegionEmbroidery} from './embroidery.js';
+import {planSatinThreadContacts,selectSatinReplayContacts} from './thread-contact-shadows.js';
 
 const TAU = Math.PI * 2;
 const geometryAt=(x,stripe,extent)=>samplePath(stripe,x,extent).y;
@@ -1111,6 +1112,9 @@ export function drawWallpaper(canvas, recipe, options={}) {
       const reference=stripes.find(st=>st.index===3)||stripes[Math.floor(stripes.length/2)];
       if(!reference)continue;
       const hits=findPathCrossings(reference,scene.extent,samplePath);
+      // Each stripe's full ORIGINAL stitch lattice is analyzed at most once
+      // for this paint, never independently for a truncated branch replay.
+      const replayPlans=new Map();
       for(let k=0;k<hits.length;k++){
         const hit=hits[k];
         const pack=Math.max(12,scene.width*7);
@@ -1181,7 +1185,26 @@ export function drawWallpaper(canvas, recipe, options={}) {
              scene.lineStyle==='continuous'&&scene.motif==='solid'){
             g.save();
             g.clip(stripeFillPath(branch,scene.extent,scene));
-            drawRibbonEmbroidery(g,stripe,scene.extent,stitch,{start,end},ribbonLight);
+            let replayContacts=null;
+            if(scene.crossingMode!=='over'&&ribbonLight&&
+              (stitch.style==='satin'||stitch.style==='satin-soft')){
+              if(!replayPlans.has(stripe))
+                replayPlans.set(stripe,planSatinThreadContacts(
+                  stripe,scene.extent,stitch,ribbonLight));
+              const plan=replayPlans.get(stripe);
+              if(plan){
+                // The reference crossing locates the branch but each ribbon
+                // is displaced along its own source normal. Use this stripe's
+                // actual early/late geometry to localize *its* contacts.
+                const a=samplePath(stripe,hit.early,scene.extent);
+                const b=samplePath(stripe,hit.late,scene.extent);
+                replayContacts=selectSatinReplayContacts(plan,{
+                  ...hit,x:(a.x+b.x)*.5,y:(a.y+b.y)*.5
+                },halfLength,later,stripe.width);
+              }
+            }
+            drawRibbonEmbroidery(g,stripe,scene.extent,stitch,
+              {start,end},ribbonLight,{replayContacts});
             g.restore();
           }
           drawPathInteriors(g,branch,scene.extent,scene);
