@@ -1,6 +1,8 @@
 import {samplePath,widthAt} from './path-geometry.js';
 import {threadLightProfile,rotateThreadLighting} from './thread-lighting.js';
-import {planSatinThreadContacts,paintSatinThreadContacts} from './thread-contact-shadows.js';
+import {planSatinThreadContacts,paintSatinThreadContacts,
+  traceThreadContactCapsule} from './thread-contact-shadows.js';
+import {chainLinkCurves,traceChainLink,chainLinkContactEvents} from './chain-thread-contacts.js';
 
 // Surface roles are addressed by authored object IDs or semantic ROYGBIV
 // colour slots. This optional array is never inferred from legacy textures.
@@ -79,17 +81,8 @@ export function paintThreadRelief(ctx,ax,ay,bx,by,pitch,relief,
 // tangent/normal of a path, or the region's rotated local coordinate frame.
 // Two restrained offset strokes suggest depth without recolouring the ink.
 function chainLink(ctx,x,y,tx,ty,nx,ny,half,loft,relief,lighting=null){
-  const loop=(shift,sx=0,sy=0)=>{
-    const cx=x+nx*shift+sx,cy=y+ny*shift+sy;
-    const point=(along,across)=>[cx+tx*along+nx*across,
-      cy+ty*along+ny*across];
-    const a=point(-half,0),b=point(half,0);
-    const upper1=point(-half*.55,loft),upper2=point(half*.6,loft);
-    const lower1=point(half*.6,-loft),lower2=point(-half*.55,-loft);
-    ctx.beginPath();ctx.moveTo(...a);
-    ctx.bezierCurveTo(...upper1,...upper2,...b);
-    ctx.bezierCurveTo(...lower1,...lower2,...a);
-  };
+  const loop=(shift,sx=0,sy=0)=>traceChainLink(ctx,
+    chainLinkCurves(x,y,tx,ty,nx,ny,half,loft,shift),sx,sy);
   const p=threadLightProfile(lighting,
     x-tx*half,y-ty*half,x+tx*half,y+ty*half,Math.max(loft*2,1),relief);
   if(p){
@@ -104,6 +97,40 @@ function chainLink(ctx,x,y,tx,ty,nx,ny,half,loft,relief,lighting=null){
     loop(.42);ctx.strokeStyle='rgba(0,0,0,.20)';ctx.stroke();
     loop(-.3);stitchInk(ctx,.68,relief);ctx.stroke();
   }
+}
+// The later linked cubic is topmost in the original chain painter. Only
+// genuine same-lane adjacent cubic intersections may shade the previously
+// deposited, locally projected lower cord. Original ink/ribbon clip is still
+// active; contacts are deliberately *not* independently solved from a
+// crossing-replay crop, which has a different major-branch z order.
+function paintChainLinkContact(ctx,prior,curves,lighting,pitch,relief,
+  yarnWidth){
+  const top=prior&&curves?chainLinkContactEvents(prior.curves,curves):[];
+  if(!top.length||!prior.profile)return 0;
+  const now=threadLightProfile(lighting,curves[0][0].x,curves[0][0].y,
+    curves[0][3].x,curves[0][3].y,pitch,relief);
+  if(!now)return 0;
+  let painted=0;
+  for(const hit of top){
+    const a={x:hit.lowerA.x+prior.profile.shadowX,
+      y:hit.lowerA.y+prior.profile.shadowY};
+    const b={x:hit.lowerB.x+prior.profile.shadowX,
+      y:hit.lowerB.y+prior.profile.shadowY};
+    ctx.save();
+    if(!traceThreadContactCapsule(ctx,a,b,yarnWidth)){
+      ctx.restore();continue;
+    }
+    ctx.clip();
+    ctx.beginPath();
+    ctx.arc(hit.x+now.shadowX,hit.y+now.shadowY,
+      Math.max(.45,Math.min(2,yarnWidth*.8)),0,Math.PI*2);
+    ctx.fillStyle='rgba('+now.shadeRgb+','+
+      (.16*now.shade).toFixed(3)+')';
+    ctx.fill();
+    ctx.restore();
+    painted++;
+  }
+  return painted;
 }
 // Opt-in fibre appearance. An underlaid dark edge, two thin strands and a
 // softly interrupted glint respond to the *actual stitch direction*. Since
@@ -173,6 +200,10 @@ export function drawRibbonEmbroidery(ctx,stripe,extent,treatment,range=null,ligh
     const firstLink=Math.max(0,Math.ceil((start+extent)/linkStep-1e-9));
     const lastLink=Math.min(950,Math.floor((end+extent)/linkStep+1e-9));
     let count=0;
+    // Original-world source indices, independently tracked for each lane.
+    // Never manufacture a contact between nonadjacent, cropped or missing
+    // links, or build a second graph from only the visible replay window.
+    const previousByLane=new Map();
     ctx.save();
     ctx.lineCap='round';ctx.lineJoin='round';
     ctx.lineWidth=Math.max(.8,Math.min(2,step*.24));
@@ -212,6 +243,19 @@ export function drawRibbonEmbroidery(ctx,stripe,extent,treatment,range=null,ligh
         const half=linkStep*.51*Math.min(1,
           Math.max(.20,spacing/linkStep)/.94);
         const loft=Math.min(step*.72,half*.62,halfWidth*.48);
+        if(contactShadows&&!range&&lighting){
+          const curves=chainLinkCurves(cx,cy,p.tx,p.ty,p.nx,p.ny,
+            half,loft);
+          const prior=previousByLane.get(lane);
+          if(prior?.index===i-1&&curves)
+            paintChainLinkContact(ctx,prior,curves,lighting,step,
+              treatment.relief,ctx.lineWidth);
+          const profile=threadLightProfile(lighting,
+            cx-p.tx*half,cy-p.ty*half,cx+p.tx*half,cy+p.ty*half,
+            Math.max(loft*2,1),treatment.relief);
+          if(curves&&profile)previousByLane.set(lane,{index:i,curves,profile});
+          else previousByLane.delete(lane);
+        }
         chainLink(ctx,cx,cy,p.tx,p.ty,p.nx,p.ny,
           half,loft,treatment.relief,lighting);
         count++;
