@@ -38,6 +38,25 @@ export const MATERIAL_CHARACTER=Object.freeze({
   corduroy:[19,9,.66,.45], 'vinyl-sheet':[80,0,0,.20],
   foil:[32,0,0,.77], 'glossy-paper':[95,0,0,.12],
 });
+// The shared material painter contains multiple source-indexed loops (dots,
+// fibres, seams, yarns and mineral grains). A finite untrusted crop can still
+// exceed exact integer precision, at which point i++ stops advancing. Reject
+// such crops at the one shared entry point, before allocating/painting anything.
+// The 2-world-unit proxy is finer than every regular material station grid;
+// 12M proxy cells leaves substantial room for zoomed/rotated 600×1300 art.
+export function assertMaterialWorkBounds(bounds){
+  if(!bounds||![bounds.left,bounds.top,bounds.right,bounds.bottom]
+    .every(Number.isFinite)||bounds.right<bounds.left||bounds.bottom<bounds.top)
+    throw new RangeError('Material crop must have finite ordered source bounds');
+  const step=2;
+  const ix0=Math.floor(bounds.left/step)-3,ix1=Math.ceil(bounds.right/step)+3;
+  const iy0=Math.floor(bounds.top/step)-3,iy1=Math.ceil(bounds.bottom/step)+3;
+  const countX=ix1-ix0+1,countY=iy1-iy0+1;
+  if(![ix0,ix1,iy0,iy1,countX,countY].every(Number.isSafeInteger)||
+     countX*countY>12_000_000)
+    throw new RangeError('Material crop exceeds safe source-coordinate lattice');
+}
+
 export const materialUnit=layer=>.6+1.6*clamp(layer.scale/100,0,1);
 function materialParameters(layer){
   return MATERIAL_CHARACTER[layer.material]||MATERIAL_CHARACTER.grain;
@@ -323,6 +342,7 @@ function creaseLines(ctx,layer,bounds,cell,opacity){
  */
 export function paintMaterial(ctx,layer,bounds,sandLight=null){
   if(!MATERIAL_CHARACTER[layer.material])return;
+  assertMaterialWorkBounds(bounds);
   ctx.save();
   // Broad, irregular material mass under the fine detail. All finishes use
   // the same materialHeight() that governs their stripe-edge relief.
