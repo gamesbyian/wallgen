@@ -953,7 +953,7 @@ export function drawRegionObjects(ctx,scene){
       ctx.save();
       trace(object);
       ctx.clip(object.rings?'evenodd':'nonzero');
-      drawRegionEmbroidery(ctx,object,stitch);
+      drawRegionEmbroidery(ctx,object,stitch,sandLighting(scene));
       ctx.restore();
     }
     drawRegionInteriors(ctx,object,scene.interiorElements,scene.structure,scene.renderBounds);
@@ -1092,7 +1092,7 @@ export function drawWallpaper(canvas, recipe, options={}) {
       id:stripe.objectId,colorSlot:NAMES.indexOf(stripe.name)});
     if(stitch&&scene.construction==='ribbon'&&scene.lineStyle==='continuous'&&scene.motif==='solid'){
       g.save();g.clip(stripeFillPath(stripe,scene.extent,scene));
-      drawRibbonEmbroidery(g,stripe,scene.extent,stitch);
+      drawRibbonEmbroidery(g,stripe,scene.extent,stitch,null,ribbonLight);
       g.restore();
     }
     if(scene.construction!=='woven')drawBrushWear(g,stripe,scene.extent,scene);
@@ -1180,7 +1180,7 @@ export function drawWallpaper(canvas, recipe, options={}) {
              scene.lineStyle==='continuous'&&scene.motif==='solid'){
             g.save();
             g.clip(stripeFillPath(branch,scene.extent,scene));
-            drawRibbonEmbroidery(g,stripe,scene.extent,stitch,{start,end});
+            drawRibbonEmbroidery(g,stripe,scene.extent,stitch,{start,end},ribbonLight);
             g.restore();
           }
           drawPathInteriors(g,branch,scene.extent,scene);
