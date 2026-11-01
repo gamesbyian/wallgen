@@ -74,15 +74,51 @@ export function paintSandContourRim(ctx,outlinePaths,styles){
 /** Very narrow coloured strokes (e.g. the seven metric nested outlines)
  * cannot host a broad inward ridge. An interior specular thread adds relief
  * without widening the original footprint or bridging intentional gaps. */
-export function paintSandStrokeGlint(ctx,originalWidth,styles){
-  if(!styles?.length||!finite(originalWidth)||originalWidth<=0)return false;
-  const alpha=Math.min(.18,styles.reduce((n,s)=>n+(s.lightAlpha||0)*.55,0));
-  if(alpha<=0)return false;
-  ctx.save();
-  ctx.lineCap='butt';ctx.lineJoin='round';
-  ctx.lineWidth=Math.min(originalWidth*.24,.75);
-  ctx.strokeStyle='rgba(255,255,255,'+alpha.toFixed(4)+')';
-  ctx.stroke();
+/** The inner coloured trace is a strict Minkowski subset of the original
+ * round-joined stroke: the centreline offset plus the inset trace radius is
+ * at most half the original source width, even at bends and sharp tips.
+ * These are authored-world widths, not device or export pixels. */
+export function sandStrokeGlintFootprint(originalWidth){
+  if(!finite(originalWidth)||originalWidth<=0)return null;
+  const width=Math.min(originalWidth*.24,.75);
+  return {width,offset:(originalWidth-width)*.34};
+}
+/** Very narrow coloured strokes cannot host a broad raised sand rim. With
+ * world lighting, put an inset highlight on the lamp-facing half and a short
+ * contact shade on the opposite half. The optional source Path2D is necessary
+ * because translating a Canvas current path after construction does not
+ * reliably move its geometry. No widened silhouette or pseudo-stroke mask.
+ * Unlit rendering retains the historical white centreline exactly. */
+export function paintSandStrokeGlint(ctx,originalWidth,styles,sourcePath=null){
+  if(!styles?.length)return false;
+  const footprint=sandStrokeGlintFootprint(originalWidth);
+  if(!footprint)return false;
+  const l=styles.find(s=>s?.lighting)?.lighting;
+  const unlitAlpha=Math.min(.18,styles.reduce((n,s)=>n+(s.lightAlpha||0)*.55,0));
+  if(!l||!sourcePath){
+    if(unlitAlpha<=0)return false;
+    ctx.save();ctx.lineCap='butt';ctx.lineJoin='round';
+    ctx.lineWidth=footprint.width;
+    ctx.strokeStyle='rgba(255,255,255,'+unlitAlpha.toFixed(4)+')';
+    ctx.stroke();ctx.restore();return true;
+  }
+  const highlight=Math.min(.18,styles.reduce((n,s)=>
+    n+(s.lightAlpha||0)*(s.lighting?.light||0)*.55,0));
+  const shade=Math.min(.18,styles.reduce((n,s)=>
+    n+(s.darkAlpha||0)*(s.lighting?.shadow||0)*.32,0));
+  if(!highlight&&!shade)return false;
+  ctx.save();ctx.lineCap='round';ctx.lineJoin='round';
+  ctx.lineWidth=footprint.width;
+  const paint=(rgb,alpha,side)=>{
+    if(alpha<=0)return;
+    ctx.save();
+    ctx.translate(l.x*side*footprint.offset,l.y*side*footprint.offset);
+    ctx.strokeStyle='rgba('+rgb+','+alpha.toFixed(4)+')';
+    ctx.stroke(sourcePath);
+    ctx.restore();
+  };
+  paint(l.shade,shade,-1);
+  paint(l.high,highlight,1);
   ctx.restore();
   return true;
 }

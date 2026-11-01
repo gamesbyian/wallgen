@@ -67,6 +67,13 @@ try{
     scenes.push([se,normalizeRecipe({...base,lightingMood:'daylight',
       lightDirection:'bottom-right',lightStrength:85,shadowStrength:75})]);
   }
+  const nestedBase=scenes.find(([name])=>name==='04-sand-nested')[1];
+  scenes.push(['29-lit-nested-nw',normalizeRecipe({...nestedBase,
+    lightingMood:'golden',lightDirection:'top-left',
+    lightStrength:85,shadowStrength:80})]);
+  scenes.push(['30-lit-nested-se',normalizeRecipe({...nestedBase,
+    lightingMood:'golden',lightDirection:'bottom-right',
+    lightStrength:85,shadowStrength:80})]);
   const compoundBase=scenes.find(([name])=>name==='13-filigree-compound')[1];
   scenes.push(['26-lit-compound',normalizeRecipe({...compoundBase,
     lightingMood:'golden',lightDirection:'top-right',lightStrength:80,shadowStrength:70})]);
@@ -137,6 +144,14 @@ try{
     assert.notEqual(lookup(nw).pixelHash,lookup(se).pixelHash,
       'moving one physical light must change visible material relief '+nw);
   }
+  for(const name of ['29-lit-nested-nw','30-lit-nested-se']){
+    assert.notEqual(results.find(x=>x.name===name).pixelHash,
+      results.find(x=>x.name==='04-sand-nested').pixelHash,
+      'golden directional nested accents must change real rendered pixels');
+  }
+  assert.notEqual(results.find(x=>x.name==='29-lit-nested-nw').pixelHash,
+    results.find(x=>x.name==='30-lit-nested-se').pixelHash,
+    'light reversal must change the actual nested source artwork');
   const litHole=results.find(x=>x.name==='26-lit-compound').hole;
   assert.ok(litHole&&litHole.rgba[3]===255,'lit compound holes stay opaque substrate');
   // Ambient canvas light can tint the black substrate. Do not incorrectly
