@@ -18,9 +18,16 @@ const server=createServer(async(req,res)=>{
     const name=decodeURIComponent(new URL(req.url,'http://127.0.0.1').pathname);
     const path=resolve(root,'.'+(name==='/'?'/index.html':name));
     if(!path.startsWith(root+'/')){res.writeHead(403).end();return;}
+    // Read the file before sending HTTP 200: the baseline intentionally lacks
+    // the candidate-only contact module, and that expected 404 must never
+    // crash the proof server with ERR_HTTP_HEADERS_SENT.
+    const bytes=await readFile(path);
     res.writeHead(200,{'content-type':mime[extname(path)]||'application/octet-stream'})
-      .end(await readFile(path));
-  }catch{res.writeHead(404).end('not found');}
+      .end(bytes);
+  }catch(error){
+    if(!res.headersSent)res.writeHead(404).end('not found');
+    else res.destroy(error);
+  }
 });
 const listen=()=>new Promise((ok,fail)=>{
   server.once('error',fail);server.listen(0,'127.0.0.1',ok);
