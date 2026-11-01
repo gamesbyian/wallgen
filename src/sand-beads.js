@@ -3,7 +3,7 @@
 // are owned by the existing renderer, not reconstructed or reserialized here.
 import {sandPitch} from './sand-material.js';
 import {contourBoundaryFrame} from './contour-decoration.js';
-import {sandLighting,sandCapDiffuse} from './sand-lighting.js';
+import {sandLighting,sandCapDiffuse,sandDepositHeight,sandShadowReach} from './sand-lighting.js';
 
 const TAU=Math.PI*2;
 const good=v=>Number.isFinite(v);
@@ -15,7 +15,7 @@ export function sandBeadStyles(scene,lighting=sandLighting(scene)){
     return {interval:Math.max(6,gauge*3.05),radius:Math.min(4, gauge*.72),
       // Each independent texture layer retains its own seed-stable bead phase.
       phase:(Math.imul(layer.heightSeed|0,2654435761)>>>0)/4294967296,
-      shadowAlpha:.28*s,lightAlpha:.44*s,lighting};
+      shadowAlpha:.28*s,lightAlpha:.44*s,strength:s,lighting};
   });
 }
 function drawBead(ctx,x,y,style,maxRadius=Infinity){
@@ -23,6 +23,8 @@ function drawBead(ctx,x,y,style,maxRadius=Infinity){
   const radius=Math.min(style.radius,maxRadius);
   if(radius<=.15)return;
   const light=style.lighting;
+  const height=light?sandDepositHeight(radius,style.strength):0;
+  const slope=radius>0?height/radius:0;
   if(!light){
     // Unlit legacy visual remains byte-for-byte unchanged.
     ctx.fillStyle='rgba(0,0,0,'+style.shadowAlpha.toFixed(4)+')';
@@ -36,7 +38,7 @@ function drawBead(ctx,x,y,style,maxRadius=Infinity){
   // an edge bead may be truncated by a real cutout, but cannot invent pigment
   // or a floating external shadow over a transparent hole.
   if(light.shadow>0){
-    const offset=radius*(.20+.27*light.shadow);
+    const offset=Math.min(radius*.85,sandShadowReach(height));
     const opacity=style.shadowAlpha*(.18+.66*light.shadow);
     ctx.fillStyle='rgba('+light.shade+','+opacity.toFixed(4)+')';
     ctx.beginPath();
@@ -51,10 +53,13 @@ function drawBead(ctx,x,y,style,maxRadius=Infinity){
   // solid disks whose overlap looks like flat pasted circles. Keep a cheap
   // sub-unit fallback for narrow nested lines and minimal Canvas2D adapters.
   if(radius>=.75&&typeof ctx.createRadialGradient==='function'){
-    const facing=sandCapDiffuse(light,light.x*.48,light.y*.48);
-    const trailing=sandCapDiffuse(light,-light.x*.72,-light.y*.72);
-    const g=ctx.createRadialGradient(x+light.x*radius*.32,
-      y+light.y*radius*.32,0,x,y,radius*1.04);
+    // Cap slope and the light-facing lobe follow the same derived height as
+    // its projected contact shade. The bead centre and radius never move.
+    const facing=sandCapDiffuse(light,light.x*slope*.8,light.y*slope*.8);
+    const trailing=sandCapDiffuse(light,-light.x*slope*1.2,-light.y*slope*1.2);
+    const lobe=.20+.22*slope;
+    const g=ctx.createRadialGradient(x+light.x*radius*lobe,
+      y+light.y*radius*lobe,0,x,y,radius*1.04);
     const shine=style.lightAlpha*light.light*facing;
     const shade=style.shadowAlpha*light.shadow*(1-trailing*.35);
     g.addColorStop(0,'rgba('+light.high+','+(shine*.79).toFixed(4)+')');
