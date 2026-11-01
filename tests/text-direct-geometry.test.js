@@ -351,3 +351,14 @@ test('direct canvas gesture capture ends on blur, resize and selection changes',
   assert.match(source,/textGestureHasOwnership\(\s*state\.original,getRecipe\(\),state\.id,selectedId\(\)\)/);
   assert.match(source,/\['blur','resize'\]/);
 });
+
+test('mobile Escape from selected text and transform controls returns visible editor focus',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const source=readFileSync(new URL('../src/text-direct-ui.js',import.meta.url),'utf8');
+ assert.match(source,/stage\.addEventListener\('keydown',event=>\{/);
+ assert.match(source,/target!==outline&&!outline\.contains\(target\)/);
+ assert.match(source,/event\.preventDefault\(\);event\.stopPropagation\(\);\s*setActive\(false\)/);
+ assert.match(source,/const mobileEntry=document\.body\.classList\.contains\('mobile-studio'\)/);
+ assert.match(source,/\(mobileEntry\|\|button\)\.focus\(\{preventScroll:true\}\)/);
+ assert.match(source,/\[axisButton,snapButton,done\]\.includes\(document\.activeElement\)/);
+});
