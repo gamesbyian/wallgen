@@ -72,7 +72,7 @@ jobs:
       - id: deployment
         uses: actions/deploy-pages@v4
       # A successful upload is not proof the public site serves these exact
-      # bytes. Check the live commit, trusted-renderer pin and both PNGs.
+      # bytes. Check live commits, editor/renderer/worker source and both PNGs.
       - name: Verify public deployed artifacts
         env:
           PAGES_DEPLOY_URL: ${{ steps.deployment.outputs.page_url }}
