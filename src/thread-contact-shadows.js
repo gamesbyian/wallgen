@@ -13,12 +13,13 @@ const finite=Number.isFinite;
 const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
 /** Pure full-original-source plan. Never make one from a crossing replay's
  * cropped station range: it would lose the original lower/upper relationship.
- * This slice supports actual satin/satin-soft ribbon segments only; chain
- * cubics, fibres and region rows need separate topology-specific models. */
+ * Satin/soft satin and the ribbon fibre finishes share an original station
+ * lattice, but their true lower-ink footprints differ. Chain cubics and
+ * region courses need separate topology-specific curve/row models. */
 export function planSatinThreadContacts(stripe,extent,treatment,lighting){
   if(!stripe||!treatment||!lighting||!finite(extent)||extent<=0||
     !finite(treatment.pitch)||treatment.pitch<=0||
-    !['satin','satin-soft'].includes(treatment.style)||
+    !['satin','satin-soft','satin-fibre','tatami-fibre'].includes(treatment.style)||
     !finite(lighting.shadow)||lighting.shadow<=0)return null;
   // Initial optical scope is truly returning/self-crossing ribbons. Normal
   // straight, wave and hairpin surfaces retain their existing fast lighting
@@ -34,7 +35,13 @@ export function planSatinThreadContacts(stripe,extent,treatment,lighting){
   if(!finite(start)||!finite(end)||end<start)return null;
   const first=Math.max(0,Math.ceil((start+extent)/interval-1e-9));
   const last=Math.min(2500,Math.floor((end+extent)/interval+1e-9));
-  const inkWidth=clamp(step*.26,.7,2.5);
+  const fibre=treatment.style==='satin-fibre'||
+    treatment.style==='tatami-fibre';
+  // Actual fibreSpan() draws its dark underlaid yarn in this width at
+  // +0.35 normal and the same world-lamp projected contact offset. A satin
+  // contact-width approximation would shade naked coloured substrate.
+  const inkWidth=fibre?Math.min(3.2,Math.max(.8,step*.32)):
+    clamp(step*.26,.7,2.5);
   const segments=[];
   for(let i=first;i<=last;i++){
     const station=-extent+i*interval;
@@ -45,6 +52,17 @@ export function planSatinThreadContacts(stripe,extent,treatment,lighting){
     const a={x:p.x-p.nx*w,y:p.y-p.ny*w},
       b={x:p.x+p.nx*w,y:p.y+p.ny*w};
     if(![a.x,a.y,b.x,b.y].every(finite))continue;
+    if(fibre){
+      const dx=b.x-a.x,dy=b.y-a.y,length=Math.hypot(dx,dy);
+      if(length<.75)continue;
+      const normalX=-dy/length,normalY=dx/length;
+      const profile=threadLightProfile(lighting,a.x,a.y,b.x,b.y,
+        step,treatment.relief);
+      if(!profile)continue;
+      const shiftX=normalX*.35+profile.shadowX,
+        shiftY=normalY*.35+profile.shadowY;
+      a.x+=shiftX;a.y+=shiftY;b.x+=shiftX;b.y+=shiftY;
+    }
     segments.push({id:'satin-'+i,owner:'source-ribbon',
       course:'satin',sourceIndex:i,station,start:a,end:b,width:inkWidth});
   }
