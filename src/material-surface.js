@@ -59,7 +59,8 @@ export function assertMaterialWorkBounds(bounds){
 
 export const materialUnit=layer=>.6+1.6*clamp(layer.scale/100,0,1);
 function materialParameters(layer){
-  return MATERIAL_CHARACTER[layer.material]||MATERIAL_CHARACTER.grain;
+  return Object.hasOwn(MATERIAL_CHARACTER,layer.material)?
+    MATERIAL_CHARACTER[layer.material]:MATERIAL_CHARACTER.grain;
 }
 /** Signed material relief at a point in material-local logical coordinates. */
 export function materialHeight(layer,x,y){
@@ -341,7 +342,7 @@ function creaseLines(ctx,layer,bounds,cell,opacity){
  * Caller supplies canvas transform mapping material-local coordinates to pixels.
  */
 export function paintMaterial(ctx,layer,bounds,sandLight=null){
-  if(!MATERIAL_CHARACTER[layer.material])return;
+  if(!Object.hasOwn(MATERIAL_CHARACTER,layer.material))return;
   assertMaterialWorkBounds(bounds);
   ctx.save();
   // Broad, irregular material mass under the fine detail. All finishes use
