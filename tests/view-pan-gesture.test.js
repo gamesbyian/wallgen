@@ -175,6 +175,21 @@ test('Frame pointer capture rolls back on resize, pagehide and hidden document',
       assert.equal(writes.length,1,'new valid drag should still commit once');
       assert.equal(writes[0].value.viewPanX,-10);
       assert.equal(writes[0].meta.cause,'view_pan_on_canvas');
+      preview.emit('pointerdown',pointer(7,100,200));
+      preview.emit('pointerdown',pointer(8,200,200));
+      preview.emit('pointermove',pointer(8,250,200));
+      assert.match(preview.style.transform,/scale\(1\.5\)/,
+        'two-finger pinch should preview a changed zoom');
+      assert.deepEqual([...preview.captured].sort(),[7,8]);
+      if(eventName==='visibilitychange'){
+        mockDocument.hidden=true;
+        mockDocument.emit('visibilitychange');
+      }else mockWindow.emit(eventName);
+      assert.equal(preview.style.transform,'');
+      assert.equal(preview.captured.size,0,'both pinch captures must release');
+      preview.emit('pointerup',pointer(8,250,200));
+      preview.emit('pointerup',pointer(7,100,200));
+      assert.equal(writes.length,1,'interrupted pinch must not add a camera edit');
     }
   }finally{
     if(previousDocument===undefined)delete globalThis.document;
