@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {assertMaterialWorkBounds,MATERIAL_CHARACTER,paintMaterial} from '../src/material-surface.js';
+import {assertMaterialWorkBounds,MATERIAL_CHARACTER,materialHeight,paintMaterial} from '../src/material-surface.js';
 
 const crop=(left,top,right,bottom)=>({left,top,right,bottom});
 test('ordinary and heavily reframed camera material bounds remain valid',()=>{
@@ -46,4 +46,17 @@ test('unknown material remains a no-op and ordinary sand paint is unchanged',()=
   calls.length=0;
   paintMaterial(ctx,layer,crop(-10,-10,10,10));
   assert.equal(JSON.stringify(calls),first,'source seed and crop retain deterministic paint');
+});
+
+
+test('prototype property names are never interpreted as valid material types',()=>{
+  const context={save(){throw new Error('unregistered material must never paint');}};
+  const base={material:'grain',scale:40,heightSeed:19,strength:80};
+  const expected=materialHeight(base,31,47);
+  for(const material of ['constructor','toString','__proto__']){
+    assert.equal(Object.hasOwn(MATERIAL_CHARACTER,material),false);
+    assert.doesNotThrow(()=>paintMaterial(context,{...base,material},crop(0,0,20,20)));
+    assert.equal(materialHeight({...base,material},31,47),expected,
+      'unknown material retains original fallback relief');
+  }
 });
