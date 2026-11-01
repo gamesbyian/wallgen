@@ -12,7 +12,7 @@ export function sandDepositHeight(gauge,strength,kind='bead'){
   const s=clamp(strength);
   // Bead caps rise as a proportion of their own radius. Loose contour rims
   // retain a lower, continuous shoulder. Neither affects source geometry.
-  return gauge*(kind==='rim'?.27+.29*s:.27+.35*s);
+  return gauge*(kind==='rim' ? (.27+.29*s) : (.27+.35*s));
 }
 export function sandShadowReach(height){
   if(!Number.isFinite(height)||height<=0)return 0;
