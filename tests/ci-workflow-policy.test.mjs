@@ -120,3 +120,20 @@ test('main docs-only sanity fast path cannot suppress source stamping or trusted
   assert.match(pages, /trusted-renderer\/roygbiv-render-version\.json/);
   assert.match(pages, /actions\/deploy-pages@v4/);
 });
+
+
+test('Pages deployment is independently checked after upload and keeps failure evidence', async () => {
+  const pages = await readFile(path.join(workflows, 'pages.yml'), 'utf8');
+  const deploy = pages.indexOf('uses: actions/deploy-pages@v4');
+  const verify = pages.indexOf('node scripts/ci-evidence.mjs pages-publish -- node scripts/verify-pages-publication.mjs');
+  const upload = pages.indexOf('Upload publication failure digest');
+  assert(deploy >= 0 && verify > deploy && upload > verify,
+    'Public source/PNG proof must run after Pages deployment and preserve failure evidence');
+  assert.match(pages, /PAGES_DEPLOY_URL: \$\{\{ steps\.deployment\.outputs\.page_url \}\}/);
+  assert.match(pages, /if: failure\(\)/);
+  const checker = await readFile(path.join(root, 'scripts/verify-pages-publication.mjs'),'utf8');
+  for (const name of ['roygbiv-render-version.json',
+    'trusted-renderer/roygbiv-render-version.json',
+    'assets/roygbiv-logo-dark.png','assets/roygbiv-logo-cream.png'])
+    assert(checker.includes(name), 'Missing public artifact check: ' + name);
+});
