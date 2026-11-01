@@ -2,6 +2,23 @@
 // topology. No second light control, source bitmap, or geometry model.
 // Coordinates and magnitudes are logical design units, never output pixels.
 const ROOT_HALF=Math.SQRT1_2;
+// A shared lamp elevation, in logical world units, for both rounded-cap
+// diffuse response and projected raised-deposit contact shadows. These derived
+// profiles live only in the painter: recipes never contain pixel heights.
+export const SAND_LIGHT_ELEVATION=.68;
+export function sandDepositHeight(gauge,strength,kind='bead'){
+  if(!Number.isFinite(gauge)||gauge<=0||!Number.isFinite(strength))
+    return 0;
+  const s=clamp(strength);
+  // Bead caps rise as a proportion of their own radius. Loose contour rims
+  // retain a lower, continuous shoulder. Neither affects source geometry.
+  return gauge*(kind==='rim'?.27+.29*s:.27+.35*s);
+}
+export function sandShadowReach(height){
+  if(!Number.isFinite(height)||height<=0)return 0;
+  return height*Math.sqrt(1-SAND_LIGHT_ELEVATION**2)/SAND_LIGHT_ELEVATION;
+}
+
 const clamp=v=>Math.min(1,Math.max(0,Number.isFinite(v)?v:0));
 const palettes={
   daylight:{high:'255,255,242',shade:'22,28,48'},
@@ -56,6 +73,6 @@ export function sandCapDiffuse(lighting,nx,ny){
     !Number.isFinite(nx)||!Number.isFinite(ny))return 0;
   const r2=nx*nx+ny*ny;
   const z=Math.sqrt(Math.max(0,1-Math.min(1,r2)));
-  const elevation=.68,lateral=Math.sqrt(1-elevation*elevation);
+  const elevation=SAND_LIGHT_ELEVATION,lateral=Math.sqrt(1-elevation*elevation);
   return clamp(nx*lighting.x*lateral+ny*lighting.y*lateral+z*elevation);
 }
