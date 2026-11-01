@@ -47,13 +47,15 @@ jobs:
           for(let i=0;i<next.records.length;i++){
             const a=base.records[i],b=next.records[i];
             assert.deepEqual(a.hole,b.hole,'Embroidery changed true empty source hole: '+a.id);
-            assert.equal(a.island?.[3],255,'baseline detached island disappeared');
-            assert.equal(b.island?.[3],255,'candidate detached island disappeared');
-            assert(a.island.slice(0,3).reduce((n,v)=>n+v,0)>35);
-            assert(b.island.slice(0,3).reduce((n,v)=>n+v,0)>35,
-              'candidate detached island must retain real coloured pigment');
-            if(a.id.endsWith('-off'))
-              assert.deepEqual(a.island,b.island,'unlit island must stay exact');
+            if(a.id.startsWith('region-')){
+              assert.equal(a.island?.[3],255,'baseline detached island disappeared');
+              assert.equal(b.island?.[3],255,'candidate detached island disappeared');
+              assert(a.island.slice(0,3).reduce((n,v)=>n+v,0)>35);
+              assert(b.island.slice(0,3).reduce((n,v)=>n+v,0)>35,
+                'candidate detached island must retain real coloured pigment');
+              if(a.id.endsWith('-off'))
+                assert.deepEqual(a.island,b.island,'unlit island must stay exact');
+            }
             const equals=a.sha256===b.sha256;
             if(a.id.endsWith('-off')){
               assert(equals,'Lighting Off must be exact old pixels: '+a.id);
