@@ -41,7 +41,7 @@ export function chooseTier({ event, base, head, depth, diff, allowDocsPush = fal
   if (event === 'workflow_dispatch' && depth === 'full') return { tier: 'full', reason: 'Explicit full-suite request' };
   const docsPush = event === 'push' && allowDocsPush === true && ref === 'refs/heads/main';
   if (event !== 'pull_request' && !docsPush) return { tier: 'quick', reason: 'Unclassified event or manual quick request' };
-  if (!SHA.test(base || '') || !SHA.test(head || '')) return { tier: 'quick', reason: 'Missing or invalid SHA; fail-closed' };
+  if (!SHA.test(base || '') || !SHA.test(head || '') || /^0{40}$/.test(base || '')) return { tier: 'quick', reason: 'Missing or invalid SHA; fail-closed' };
   try {
     const entries = parseNameStatusZ(diff(base, head));
     const tier = classifyChanges(entries);
