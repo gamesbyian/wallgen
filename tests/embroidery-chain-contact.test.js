@@ -22,7 +22,7 @@ function capture(){
     arc(...v){path.push(['arc',...v]);ops.push(['arc',...v]);},
     closePath(){path.push(['close']);ops.push(['close']);},
     clip(){ops.push(['clip',path.map(x=>x.slice())]);},
-    fill(){ops.push(['fill',this.fillStyle]);},
+    fill(){ops.push(['fill',this.fillStyle,path.map(x=>x.slice())]);},
     stroke(){ops.push(['stroke',this.strokeStyle]);}
   };
 }
@@ -80,8 +80,15 @@ test('real chain ribbon adds projected contacts only on full, lit Over painting'
   assert.ok(clips.length>0,'source-linked stitches should really overlap');
   assert.ok(clips.length<3*n,'bounded shadows cannot outrun authored links');
   assert.equal(shaded.ops.filter(x=>x[0]==='fill').length,clips.length);
-  assert.ok(clips.every(x=>x[1].filter(p=>p[0]==='arc').length===2),
-    'only local rounded lower-source yarn may receive contact ink');
+  assert.ok(clips.every(x=>x[1].filter(p=>p[0]==='arc').length>=2&&
+    x[1].filter(p=>p[0]==='arc').length%2===0),
+    'only additive round-capped lower-source yarn may receive contact ink');
+  for(const fill of shaded.ops.filter(x=>x[0]==='fill')){
+    const paths=fill[2];
+    for(let i=0;i<paths.length;i++)if(paths[i][0]==='arc')
+      assert.equal(paths[i-1]?.[0],'move',
+        'each contact circle must begin a fresh subpath, with no false bridge');
+  }
   drawRibbonEmbroidery(unlit,stripe,scene.extent,treatment,null,null,
     {contactShadows:true});
   assert.equal(unlit.ops.filter(x=>x[0]==='clip').length,0);
