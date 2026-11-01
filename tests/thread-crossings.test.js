@@ -56,9 +56,10 @@ test('a cropped branch selects the SAME crossing graph from original world stati
   assert.deepEqual(threadCrossingsInRange(whole,null),whole);
 });
 
-test('source loop path stations are compatible with the established real path sampler',()=>{
+test('authored figure-eight stations are compatible with the real production path sampler',()=>{
   const scene=resolveScene({seed:'real-thread-crossing-world',
-    structure:'paths',geometry:'loop',construction:'ribbon',motif:'solid'});
+    structure:'paths',geometry:'drawn',construction:'ribbon',motif:'solid',
+    customPath:[[.2,.2],[.8,.8],[.2,.8],[.8,.2]]});
   const stripe=scene.stripes[3],extent=scene.extent;
   const count=120;
   const points=Array.from({length:count+1},(_,i)=>
@@ -69,7 +70,7 @@ test('source loop path stations are compatible with the established real path sa
     {course:'same-source-loop',sourceIndex:i,
       station:-extent+(i+.5)*2*extent/count,width:2}));
   const hits=threadCrossingGraph(segments);
-  assert.ok(hits.length>0,'production loop ought to have original self-crossings');
+  assert.ok(hits.length>0,'original user-drawn figure-eight ought to have genuine self-crossings');
   for(const hit of hits){
     assert.ok(hit.aboveIndex>hit.belowIndex);
     assert.equal(hit.owner,'shape-1');
