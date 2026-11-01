@@ -1092,7 +1092,8 @@ export function drawWallpaper(canvas, recipe, options={}) {
       id:stripe.objectId,colorSlot:NAMES.indexOf(stripe.name)});
     if(stitch&&scene.construction==='ribbon'&&scene.lineStyle==='continuous'&&scene.motif==='solid'){
       g.save();g.clip(stripeFillPath(stripe,scene.extent,scene));
-      drawRibbonEmbroidery(g,stripe,scene.extent,stitch,null,ribbonLight);
+      drawRibbonEmbroidery(g,stripe,scene.extent,stitch,null,ribbonLight,
+        {contactShadows:scene.crossingMode==='over'});
       g.restore();
     }
     if(scene.construction!=='woven')drawBrushWear(g,stripe,scene.extent,scene);
