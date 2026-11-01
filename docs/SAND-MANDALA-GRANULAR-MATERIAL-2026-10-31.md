@@ -148,9 +148,12 @@ paint path is left byte-for-byte intact.
 tests, original source-art browser proof extended to golden NW and SE nested
 contours, and final required quick CI after removing the temporary proof
 workflow. [Chromium run #41254599500](https://github.com/gamesbyian/wallgen/actions/runs/41254599500)
-is the independently triggered visual acceptance run. Its result must be
-verified before merging; a run URL by itself is not a success claim.
-Real Pixel 6 Pro optical and thermal performance remains unverified.
+**PASS** for real Chromium, adding original-source golden NW/SE
+nested PNGs and checking full RGBA directional change, while retaining exact
+negative space and original source rings. All twelve archived unlit PNGs were
+byte-identical to the previous accepted [S4.1 proof #41254128826](https://github.com/gamesbyian/wallgen/actions/runs/41254128826).
+One-shot browser workflow retired before merge; final exact-head quick CI
+is mandatory. Real Pixel 6 Pro optical and thermal performance remains unverified.
 
 ## Next S4 research: occlusion from actual source topology, not decorative offsets
 
