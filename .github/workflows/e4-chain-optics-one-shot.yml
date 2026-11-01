@@ -51,8 +51,8 @@ jobs:
           const before=new Map(a.records.map(x=>[x.id,x]));
           const required=new Set(['region-chain-northwest','region-chain-southeast']);
           const allowed=new Set([...required]);
-          assert.equal(before.size,21);
-          assert.equal(b.records.length,21);
+          assert.equal(before.size,30);
+          assert.equal(b.records.length,30);
           const results=[];
           for(const item of b.records){
             const old=before.get(item.id);
