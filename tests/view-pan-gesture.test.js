@@ -23,7 +23,8 @@ test('viewport-only drag moves camera opposite to view pan with no jump',()=>{
 test('zoom gain is mathematically inverse and saved framing is resolution independent',()=>{
  const double=advanceViewPan(make(2),{x:130,y:265});
  assert.deepEqual([double.panX,double.panY],[-4.4,-4.4]);
- assert.deepEqual([double.displacementX,double.displacementY],[26.4,57.2]);
+ assert.ok(Math.abs(double.displacementX-26.4)<1e-9);
+ assert.ok(Math.abs(double.displacementY-57.2)<1e-9);
  const original=normalizeRecipe({viewZoom:2,viewPanX:0,viewPanY:0,
    positionX:11,positionY:-7});
  const changed=normalizeRecipe({...original,viewPanX:double.panX,viewPanY:double.panY});
