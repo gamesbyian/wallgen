@@ -5,6 +5,11 @@ import { checkPublishedPages, verifyPublishedPages } from '../scripts/verify-pag
 const commit = 'a'.repeat(40);
 const trustedCommit = 'b'.repeat(40);
 const assets = {
+  'index.html': Buffer.from('<html>built application</html>'),
+  'src/app.js': Buffer.from('export const app = 1;'),
+  'src/model.js': Buffer.from('export const model = 1;'),
+  'src/renderer.js': Buffer.from('export const renderer = 1;'),
+  'src/render-worker.js': Buffer.from('export const worker = 1;'),
   'assets/roygbiv-logo-dark.png': Buffer.from('dark-generated-icon'),
   'assets/roygbiv-logo-cream.png': Buffer.from('cream-generated-icon'),
 };
@@ -39,10 +44,15 @@ test('published Pages proof checks both exact source SHAs and both PNG bytes', a
   const result = await checkPublishedPages(options);
   assert.equal(result.commit, commit);
   assert.equal(result.trustedCommit, trustedCommit);
-  assert.equal(result.assetsChecked, 4);
+  assert.equal(result.assetsChecked, 9);
   assert.deepEqual(requested.map(p=>p.key), [
     'roygbiv-render-version.json',
     'trusted-renderer/roygbiv-render-version.json',
+    'index.html',
+    'src/app.js',
+    'src/model.js',
+    'src/renderer.js',
+    'src/render-worker.js',
     'assets/roygbiv-logo-dark.png',
     'assets/roygbiv-logo-cream.png',
   ]);
@@ -58,7 +68,9 @@ test('stale source, stale pin and mismatched PNG cannot pass publication', async
   for (const [overrides, diagnostic] of [
     [{'roygbiv-render-version.json':JSON.stringify({commit:'c'.repeat(40)})},/Published source mismatch/],
     [{'trusted-renderer/roygbiv-render-version.json':JSON.stringify({commit:'c'.repeat(40)})},/Published source mismatch/],
-    [{'assets/roygbiv-logo-cream.png':Buffer.from('wrong')},/Published PNG differs/],
+    [{'assets/roygbiv-logo-cream.png':Buffer.from('wrong')},/Published source asset differs/],
+    [{'src/renderer.js':Buffer.from('stale renderer')},/Published source asset differs/],
+    [{'index.html':Buffer.from('stale editor')},/Published source asset differs/],
     [{'assets/roygbiv-logo-dark.png':null},/HTTP 404/],
     [{'roygbiv-render-version.json':'broken JSON'},/Invalid published version JSON/],
   ]) {
@@ -80,7 +92,7 @@ test('deployment verification is bounded, retries the stale CDN then succeeds', 
     sleepImpl:async ms=>{pauses.push(ms);}});
   assert.equal(result.commit,commit);
   assert.deepEqual(pauses,[1]);
-  assert.equal(requested.length,7,'one failed attempt checks all four paths, then three more are fetched');
+  assert.equal(requested.length,17,'one intercepted manifest request plus all nine paths on the second attempt');
 });
 
 test('persistent outage fails visibly and invalid URLs or SHAs never count as proof', async () => {

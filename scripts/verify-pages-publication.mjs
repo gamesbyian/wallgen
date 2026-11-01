@@ -7,7 +7,12 @@ import { resolve, dirname } from 'node:path';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const SHA = /^[0-9a-f]{40}$/;
-const assetNames = ['assets/roygbiv-logo-dark.png', 'assets/roygbiv-logo-cream.png'];
+// Check representative executable/editor bytes too. A fresh commit marker
+// beside a CDN-stale index or renderer must not count as a published release.
+const sourceNames = ['index.html', 'src/app.js', 'src/model.js',
+  'src/renderer.js', 'src/render-worker.js'];
+const assetNames = [...sourceNames,
+  'assets/roygbiv-logo-dark.png', 'assets/roygbiv-logo-cream.png'];
 const versionNames = ['roygbiv-render-version.json',
   'trusted-renderer/roygbiv-render-version.json'];
 
@@ -54,7 +59,7 @@ export async function checkPublishedPages({ pageUrl, commit, trustedCommit,
     const name = assetNames[i];
     const expected = readAsset(name);
     if (!Buffer.from(expected).equals(downloaded[i + versionNames.length]))
-      throw new Error('Published PNG differs from built SVG-derived asset: ' + name);
+      throw new Error('Published source asset differs from exact build: ' + name);
   }
   return { commit, trustedCommit, pageUrl: base.href,
     assetsChecked: files.length };
@@ -88,7 +93,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
       pageUrl: process.env.PAGES_DEPLOY_URL, commit: process.env.GITHUB_SHA,
       trustedCommit: trusted.commit,
     });
-    console.log('Published Pages source, renderer pin and both SVG-derived PNGs verified: ' +
+    console.log('Published Pages source, renderer pin and source/editor/worker bytes and SVG-derived PNGs verified: ' +
       result.commit + ' at ' + result.pageUrl);
   } catch (error) {
     console.error(error.message);
