@@ -20,8 +20,14 @@ export function planSatinThreadContacts(stripe,extent,treatment,lighting){
     !['satin','satin-soft'].includes(treatment.style)||
     !finite(lighting.shadow)||lighting.shadow<=0)return null;
   const step=treatment.pitch,interval=Math.max(step,2*extent/2500);
-  const first=Math.max(0,Math.ceil((-extent+extent)/interval-1e-9));
-  const last=Math.min(2500,Math.floor((extent+extent)/interval+1e-9));
+  // Use the original visible source station span, including exact authored
+  // floating/drawn truncations. A clipped-away invisible stitch cannot cast
+  // a contact shadow onto otherwise visible yarn.
+  const start=Math.max(-extent,stripe.segmentStart??-extent);
+  const end=Math.min(extent,stripe.segmentEnd??extent);
+  if(!finite(start)||!finite(end)||end<start)return null;
+  const first=Math.max(0,Math.ceil((start+extent)/interval-1e-9));
+  const last=Math.min(2500,Math.floor((end+extent)/interval+1e-9));
   const inkWidth=clamp(step*.26,.7,2.5);
   const segments=[];
   for(let i=first;i<=last;i++){
