@@ -251,7 +251,7 @@ export function drawRibbonEmbroidery(ctx,stripe,extent,treatment,range=null,ligh
         const half=linkStep*.51*Math.min(1,
           Math.max(.20,spacing/linkStep)/.94);
         const loft=Math.min(step*.72,half*.62,halfWidth*.48);
-        if(contactShadows&&!range&&lighting){
+        if(contactShadows&&!range&&lighting?.shadow>0){
           const curves=chainLinkCurves(cx,cy,p.tx,p.ty,p.nx,p.ny,
             half,loft);
           const prior=previousByLane.get(lane);
