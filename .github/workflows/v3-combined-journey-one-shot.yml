@@ -1,0 +1,32 @@
+name: V3 combined real two-phone journey (one-shot)
+on:
+  pull_request:
+    paths:
+      - 'scripts/scattered-combined-journey-browser.mjs'
+      - '.github/workflows/v3-combined-journey-one-shot.yml'
+permissions:
+  contents: read
+jobs:
+  live-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Chromium for real phone-view journeys
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Verify genuine locked keyboard, pointer, undo and focus journey
+        run: node scripts/scattered-combined-journey-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v3-combined-phone-journey
+          path: artifacts/scattered-combined-journey/
+          if-no-files-found: warn
+          retention-days: 5
