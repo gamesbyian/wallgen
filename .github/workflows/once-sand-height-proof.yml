@@ -1,0 +1,88 @@
+name: One-shot original-vs-height sand optical proof
+# Intentionally disposable. Remove from .github/workflows/ after evidence.
+on:
+  push:
+    branches: [feat/sand-shared-height-light-projection-20261101]
+    paths: [.github/workflows/once-sand-height-proof.yml]
+permissions:
+  contents: read
+concurrency:
+  group: once-sand-height-proof
+  cancel-in-progress: false
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install one local Chromium
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Render exact candidate source art
+        run: |
+          node scripts/sand-contour-browser-proof.mjs > /tmp/sand-candidate.log
+          tail -n 2 /tmp/sand-candidate.log | cut -c 1-250
+      - name: Render previous accepted main with same browser installation
+        env:
+          BASE_SHA: 733b99f9658e50e631558044ab2aa5c108636681
+        run: |
+          set -euo pipefail
+          BASE="$RUNNER_TEMP/sand-previous"
+          git worktree add --detach "$BASE" "$BASE_SHA"
+          ln -s "$GITHUB_WORKSPACE/node_modules" "$BASE/node_modules"
+          (cd "$BASE" && node scripts/sand-contour-browser-proof.mjs > /tmp/sand-previous.log)
+          tail -n 2 /tmp/sand-previous.log | cut -c 1-250
+      - name: Compare actual PNG bytes and production geometry controls
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readdirSync,readFileSync,writeFileSync,mkdirSync} from 'node:fs';
+          import {join} from 'node:path';
+          const old=join(process.env.RUNNER_TEMP,'sand-previous/artifacts/sand-contour-browser');
+          const current='artifacts/sand-contour-browser';
+          const names=readdirSync(current).filter(name=>name.endsWith('.png')).sort();
+          assert.deepEqual(readdirSync(old).filter(name=>name.endsWith('.png')).sort(),names);
+          const lit=names.filter(name=>name.includes('-lit-'));
+          const unlit=names.filter(name=>!name.includes('-lit-'));
+          assert(unlit.length>=12&&lit.length>=9);
+          const changed=[];
+          for(const name of names){
+            const previous=readFileSync(join(old,name));
+            const actual=readFileSync(join(current,name));
+            assert.equal(actual.readUInt32BE(16),600);
+            assert.equal(actual.readUInt32BE(20),1300);
+            if(unlit.includes(name))assert.deepEqual(actual,previous,
+              'Unlit source pixels must stay unchanged: '+name);
+            else if(!actual.equals(previous))changed.push(name);
+          }
+          for(const kind of ['22-lit-bead-nw','23-lit-bead-se',
+            '24-lit-echo-nw','25-lit-echo-se','26-lit-compound']){
+            assert(changed.some(name=>name.startsWith(kind)),
+              'Expected raised sand light difference missing: '+kind);
+          }
+          mkdirSync('artifacts/sand-height-comparison',{recursive:true});
+          const report={baseline:'733b99f9658e50e631558044ab2aa5c108636681',
+            head:process.env.GITHUB_SHA,unlitIdentical:unlit,
+            litChanged:changed,litUnchanged:lit.filter(n=>!changed.includes(n)),
+            environment:'Same installed headless Chromium, original production painter; NOT Pixel hardware'};
+          writeFileSync('artifacts/sand-height-comparison/summary.json',
+            JSON.stringify(report,null,2)+'\n');
+          console.log('SAND_HEIGHT_ORIGINAL_VS_NEW_PASS',JSON.stringify(report));
+          NODE
+      - name: Upload authentic source-matched art and comparison
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sand-height-source-matched
+          path: |
+            artifacts/sand-contour-browser/
+            artifacts/sand-height-comparison/
+          retention-days: 7
+          if-no-files-found: warn
