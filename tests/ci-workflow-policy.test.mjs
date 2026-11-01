@@ -84,3 +84,14 @@ test('every PR keeps one fail-closed, self-tested required check', async () => {
   assert.match(promote, /head\.repo\.full_name == github\.repository/,
     'Write-enabled promotion must reject fork PRs');
 });
+
+test('manual optical evidence cannot be cancelled by a later distinct request', async () => {
+  for (const name of ['ui-screenshot-atlas.yml', 'visual-agent1.yml']) {
+    const content = await readFile(path.join(workflows, name), 'utf8');
+    assert.match(content, /cancel-in-progress: false/, name + ' must preserve manually requested run');
+    assert.doesNotMatch(content, /cancel-in-progress: true/, name + ' has unsafe cancellation');
+  }
+  const logo = await readFile(path.join(workflows, 'logo-raster.yml'), 'utf8');
+  assert.match(logo, /group: logo-raster-/, 'Logo raster writes require branch serialization');
+  assert.match(logo, /cancel-in-progress: false/, 'Do not interrupt branch write jobs');
+});
