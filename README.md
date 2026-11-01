@@ -38,7 +38,7 @@ It can be a quick wallpaper generator or an obsessively adjustable little art st
 | **Ribbons & details** | Adjust stripe width, spacing, taper, outlines, patterns, motifs, overlaps and woven crossings. |
 | **Colour & composition** | Work with classic, electric, pastel, jewel and muted rainbow palettes, reversible colour order, backgrounds and repeated rainbow groups. |
 | **Materials & texture** | Try paper, canvas, linen, denim, **fine coloured sand**, **beaded sand filigree**, stone, stucco, wood, foil, vinyl and other layered finishes. |
-| **Thread & embroidery** | Give selected colours or entire compositions Satin, Soft Satin, Tatami, Running or Chain-stitch treatments. |
+| **Thread & embroidery** | Give selected colours or entire compositions Satin, Soft Satin, Tatami, Running or Chain-stitch treatments. Raised thread highlights follow the scene lighting, with real crossing-contact detail on eligible satin ribbons. |
 | **Light & photography** | Experiment with ambient lighting, independently controlled stripe shadows, glow, grain, halation, film looks and digital-camera-inspired finishing. |
 | **Precision tools** | Adjust individual shapes, draw paths, use per-setting locks, nudge and zoom the composition, and undo experiments. |
 
