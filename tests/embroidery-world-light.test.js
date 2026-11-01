@@ -124,7 +124,7 @@ test('preview key includes global lighting only for enabled authored embroidery'
 test('production paths retain exact clipping and crossing replay with one lamp',()=>{
   const code=readFileSync(new URL('../src/renderer.js',import.meta.url),'utf8');
   assert.match(code,/drawRegionEmbroidery\(ctx,object,stitch,sandLighting\(scene\)\)/);
-  assert.match(code,/drawRibbonEmbroidery\(g,stripe,scene\.extent,stitch,null,ribbonLight\)/);
+  assert.match(code,/drawRibbonEmbroidery\(g,stripe,scene\.extent,stitch,null,ribbonLight,\s*\{contactShadows:scene\.crossingMode==='over'\}\)/);
   assert.match(code,/drawRibbonEmbroidery\(g,stripe,scene\.extent,stitch,\{start,end\},ribbonLight\)/);
   assert.match(code,/ctx\.clip\(object\.rings\?'evenodd':'nonzero'\)/);
   assert.match(code,/g\.clip\(stripeFillPath\(branch,scene\.extent,scene\)\)/);
