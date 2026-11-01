@@ -17,15 +17,38 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      # A stable required check is always present. Never path-filter this workflow.
+      - name: Verify CI policy and selection safety
+        run: node scripts/ci-evidence.mjs policy -- node --test tests/ci-workflow-policy.test.mjs tests/ci-select.test.mjs
+      - name: Classify exact PR diff (unknown means full quick gate)
+        id: selection
+        env:
+          CI_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          CI_DEPTH: ${{ inputs.depth }}
+        run: node scripts/ci-select.mjs
+      - name: Documentation-only tier
+        if: ${{ steps.selection.outputs.tier == 'docs' }}
+        run: echo 'Markdown-only diff; selector and policy self-tests passed. No renderer suite dispatched.'
       - name: Basic app and recipe sanity
-        if: ${{ github.event_name != 'workflow_dispatch' || inputs.depth != 'full' }}
-        run: npm run check:quick
+        if: ${{ steps.selection.outputs.tier == 'quick' }}
+        run: node scripts/ci-evidence.mjs quick -- npm run check:quick
       - name: Full Node suite (manual request only)
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.depth == 'full' }}
-        run: npm run check
+        if: ${{ steps.selection.outputs.tier == 'full' }}
+        run: node scripts/ci-evidence.mjs full -- npm run check
+      - name: Upload failure digest
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wallgen-ci-failure-${{ github.run_id }}
+          path: artifacts/ci/*.json
+          retention-days: 7
+          if-no-files-found: ignore
