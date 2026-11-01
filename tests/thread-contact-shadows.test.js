@@ -316,3 +316,27 @@ test('fibre is shaded only at real source contact stations, never all coloured s
   assert.equal(clipped.operations.filter(op=>op[0]==='clip').length,0,
     'cropped replay must not independently construct a partial contact graph');
 });
+
+
+test('fine fibre contact remains a narrow translucent cue, never satin-sized ink',()=>{
+  const lower=mark('fibre-lower',[0,0],[20,20],1),
+    upper=mark('fibre-upper',[0,20],[20,0],8);
+  const hit=threadCrossingGraph([lower,upper])[0];
+  assert.ok(hit);
+  const item={hit,top:upper,bottom:lower},light=lamp();
+  const satin=capture(),fibre=capture();
+  paintSatinThreadContacts(satin,[item],light,7,90);
+  paintSatinThreadContacts(fibre,[item],light,7,90,{fibre:true});
+  const circle=ctx=>ctx.operations.filter(op=>op[0]==='arc').at(-1);
+  const ink=ctx=>ctx.operations.find(op=>op[0]==='fill')[1];
+  assert.ok(circle(fibre)[3]<circle(satin)[3],
+    'fibre contact must have a smaller source-world radius');
+  const alpha=val=>Number(val.match(/,([0-9.]+)\)$/)?.[1]);
+  assert.ok(alpha(ink(fibre))>0&&alpha(ink(fibre))<
+    alpha(ink(satin))*.3,
+    'many genuine fine-fibre intersections must not accumulate satin-sized darkness');
+  assert.deepEqual(
+    fibre.operations.find(op=>op[0]==='clip')[1],
+    satin.operations.find(op=>op[0]==='clip')[1],
+    'material response can differ without changing the original lower yarn mask');
+});
