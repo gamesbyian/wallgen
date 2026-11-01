@@ -46,3 +46,16 @@ test('missing, malformed or inaccessible diffs never skip the quick gate', () =>
   assert.equal(choose('', { event: 'workflow_dispatch', depth: 'full' }).tier, 'full');
   assert.equal(choose('', { event: 'workflow_dispatch', depth: 'quick' }).tier, 'quick');
 });
+
+test('only opt-in main pushes with a valid parent qualify for docs-only publication', () => {
+  const mainPush = { event: 'push', allowDocsPush: true, ref: 'refs/heads/main' };
+  assert.equal(choose('M\0docs/notes.md\0', mainPush).tier, 'docs');
+  assert.equal(choose('M\0README.md\0', mainPush).tier, 'docs');
+  assert.equal(choose('M\0docs/notes.md\0', { ...mainPush, base: '0'.repeat(40) }).tier, 'quick');
+  assert.equal(choose('M\0docs/notes.md\0', { event: 'push', ref: 'refs/heads/main' }).tier, 'quick');
+  assert.equal(choose('M\0docs/notes.md\0', { ...mainPush, ref: 'refs/heads/development' }).tier, 'quick');
+  assert.equal(choose('M\0src/renderer.js\0', mainPush).tier, 'quick');
+  assert.equal(choose('M\0docs/notes.md\0M\0package.json\0', mainPush).tier, 'quick');
+  assert.equal(choose('R100\0docs/notes.md\0src/renderer.js\0', mainPush).tier, 'quick');
+  assert.equal(choose('', { ...mainPush, diff: () => { throw Error('missing ancestor'); } }).tier, 'quick');
+});
