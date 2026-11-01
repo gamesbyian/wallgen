@@ -99,6 +99,11 @@ test('real drawn ribbon builds bounded original-station satin topology and never
   assert.equal(planSatinThreadContacts(stripe,scene.extent,thread(),null),null);
   assert.equal(planSatinThreadContacts(stripe,scene.extent,thread('chain'),light),null);
   assert.equal(planSatinThreadContacts(stripe,scene.extent,thread('running'),light),null);
+  assert.equal(planSatinThreadContacts({...stripe,geometry:'straight',
+    sharedGeometry:'straight'},scene.extent,thread(),light),null,
+    'ordinary straight/wave ribbons should not pay to build contact topology');
+  assert.equal(planSatinThreadContacts({...stripe,geometry:'wave',
+    sharedGeometry:'wave'},scene.extent,thread(),light),null);
   const truncated={...stripe,segmentStart:-scene.extent*.12,
     segmentEnd:scene.extent*.18};
   const shortened=planSatinThreadContacts(truncated,scene.extent,thread(),light);
