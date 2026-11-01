@@ -5,7 +5,7 @@ permissions:
   contents: read
 concurrency:
   group: visual-agent1-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 jobs:
   live-plates:
     runs-on: ubuntu-latest
