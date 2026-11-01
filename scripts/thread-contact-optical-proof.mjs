@@ -62,7 +62,21 @@ const scenes=[
     surfaceTreatments:[style('satin-soft')]}],
   ['running-over-nw',{lightingMood:'daylight',lightDirection:'top-left',
     lightStrength:90,shadowStrength:85,crossingMode:'over',
-    surfaceTreatments:[style('running')]}]
+    surfaceTreatments:[style('running')]}],
+  ['fibre-over-off',{lightingMood:'off',crossingMode:'over',
+    surfaceTreatments:[style('satin-fibre')]}],
+  ['fibre-over-nw',{lightingMood:'daylight',lightDirection:'top-left',
+    lightStrength:90,shadowStrength:85,crossingMode:'over',
+    surfaceTreatments:[style('satin-fibre')]}],
+  ['fibre-under-nw',{lightingMood:'daylight',lightDirection:'top-left',
+    lightStrength:90,shadowStrength:85,crossingMode:'under',
+    surfaceTreatments:[style('satin-fibre')]}],
+  ['fibre-weave-nw',{lightingMood:'daylight',lightDirection:'top-left',
+    lightStrength:90,shadowStrength:85,crossingMode:'weave',
+    surfaceTreatments:[style('satin-fibre')]}],
+  ['fibre-tatami-over-nw',{lightingMood:'daylight',lightDirection:'top-left',
+    lightStrength:90,shadowStrength:85,crossingMode:'over',
+    surfaceTreatments:[style('tatami-fibre')]}]
 ];
 await listen();
 let browser;
