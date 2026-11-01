@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {threadCrossingGraph,threadCrossingsInRange} from '../src/thread-crossings.js';
 import {resolveScene} from '../src/model.js';
 import {samplePath} from '../src/path-geometry.js';
+import {crossingTopIsLater} from '../src/crossing-order.js';
 
 const stitch=(id,ax,ay,bx,by,{owner='shape-1',course=id,sourceIndex=1,
   station=10,width=2}={})=>({
@@ -94,4 +95,26 @@ test('unbounded or unsafe geometry is refused instead of hanging or truncating c
     {course:'cross-'+i,sourceIndex:i,station:i}));
   assert.throws(()=>threadCrossingGraph(dense),RangeError,
     'deliberately pathological all-to-all crossing count must be bounded');
+});
+
+
+test('source crossing hierarchy follows the actual Over/Under/Weave authority',()=>{
+  const earlier=stitch('first',0,0,20,20,{station:-20}),
+    later=stitch('second',0,20,20,0,{station:30});
+  const make=(mode,idx=0)=>threadCrossingGraph([earlier,later],{
+    topIsLater:({graphIndex})=>crossingTopIsLater(mode,3,idx+graphIndex)
+  });
+  assert.equal(make('over')[0].aboveId,'second');
+  assert.equal(make('under')[0].aboveId,'first');
+  assert.equal(make('under')[0].belowId,'second');
+  assert.equal(make('weave',0)[0].aboveId,'first');
+  assert.equal(make('weave',1)[0].aboveId,'second');
+  assert.equal(make('under')[0].aboveStation,-20,
+    'cropped replay selection uses the actual top stitch station');
+  assert.throws(()=>threadCrossingGraph([earlier,later],{
+    topIsLater:()=>undefined
+  }),TypeError,'ambiguous hierarchy may not silently default to an invented shadow');
+  assert.throws(()=>threadCrossingGraph([earlier,later],{
+    topIsLater:'invalid'
+  }),RangeError);
 });
