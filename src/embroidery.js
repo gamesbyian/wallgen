@@ -279,9 +279,9 @@ export function drawRibbonEmbroidery(ctx,stripe,extent,treatment,range=null,ligh
     if(!Number.isFinite(w)||w<=0)continue;
     const ax=p.x-p.nx*w,ay=p.y-p.ny*w,bx=p.x+p.nx*w,by=p.y+p.ny*w;
     if(contactPlan)paintSatinThreadContacts(ctx,
-      contactPlan.byStation.get(i),lighting,step,treatment.relief);
+      contactPlan.byStation.get(i),lighting,step,treatment.relief,{fibre});
     if(range&&replayContacts instanceof Map)paintSatinThreadContacts(ctx,
-      replayContacts.get(i),lighting,step,treatment.relief);
+      replayContacts.get(i),lighting,step,treatment.relief,{fibre});
     // Contacts must be drawn on actual *previously deposited* lower yarn
     // before either the upper satin ridge or the fibre microstrands.
     if(fibre){fibreSpan(ctx,ax,ay,bx,by,step,treatment.relief,i,lighting);count++;continue;}
