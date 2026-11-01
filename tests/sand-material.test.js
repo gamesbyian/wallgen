@@ -76,3 +76,18 @@ test('invalid sand crop bounds fail closed without visiting grains',()=>{
   }
   assert.doesNotThrow(()=>forEachSandGrain(layer(),crop(0,0,20,20),null));
 });
+
+
+test('pathological finite crop bounds cannot hang or flood the sand lattice',()=>{
+  const l=layer(0,37);
+  for(const bounds of [
+    crop(-100_000,-100_000,100_000,100_000),
+    crop(Number.MAX_SAFE_INTEGER,0,Number.MAX_SAFE_INTEGER+100,40),
+    crop(-Number.MAX_VALUE,-10,Number.MAX_VALUE,10),
+  ])assert.throws(()=>forEachSandGrain(l,bounds,()=>{}),
+    /RangeError|safe source-coordinate lattice/);
+  // Ordinary negative-world crops retain original deterministic identities.
+  const a=sample(l,crop(-20,-20,25,25)),b=sample(l,crop(-50,-50,50,50));
+  assert.ok(a.size>0);
+  for(const [key,grain] of a)assert.deepEqual(b.get(key),grain);
+});
