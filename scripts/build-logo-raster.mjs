@@ -20,7 +20,47 @@ const requireMatch = (source, regex, detail) => {
   return match;
 };
 
+// This deliberately small icon renderer must reject SVG features that it
+// cannot represent. A silent partial parse could publish the wrong logo.
+function verifySupportedLogoSvg(source) {
+  if (typeof source !== 'string' ||
+      (source.match(/<title\b/g) || []).length !== 1 ||
+      !/<title id="title">[^<]*<\/title>/.test(source)) {
+    throw new Error('Unsupported logo SVG: expected one plain title');
+  }
+  const clean = source.replace(/<!--[\s\S]*?-->/g, '')
+    .replace(/<title id="title">[^<]*<\/title>/, '');
+  const tags = clean.match(/<[^>]+>/g) || [];
+  const N = '-?\\d+(?:\\.\\d+)?';
+  const HEX = '#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?';
+  const stroke = new RegExp('^<path stroke="' + HEX +
+    '" d="M' + N + ' ' + N + ' L' + N + ' ' + N + '"\\s*/>$');
+  const supported = [
+    /^<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg" viewBox="0 0 120 120" role="img" aria-labelledby="title"\s*>$/,
+    new RegExp('^<rect width="120" height="120" rx="' + N + '" fill="' + HEX + '"\\s*/>$'),
+    new RegExp('^<g transform="translate\\(' + N + ' ' + N + '\\)"\\s*>$'),
+    new RegExp('^<g transform="translate\\(' + N + ' ' + N +
+      '\\)" fill="none" stroke-width="' + N + '" stroke-linecap="round"\\s*>$'),
+    ...Array(7).fill(stroke),
+    /^<\/g>$/,
+    new RegExp('^<rect x="' + N + '" y="' + N + '" width="' + N +
+      '" height="' + N + '" rx="' + N +
+      '" fill="none"\\s+stroke="' + HEX + '" stroke-width="' + N + '"\\s*/>$'),
+    new RegExp('^<path d="M' + N + ' ' + N + ' H' + N + ' M' + N + ' ' +
+      N + ' H' + N + '" fill="none" stroke="' + HEX +
+      '"\\s+stroke-width="' + N + '" stroke-linecap="round"\\s*/>$'),
+    /^<\/g>$/,
+    /^<\/svg>$/,
+  ];
+  if (tags.length !== supported.length ||
+      tags.some((tag, i) => !supported[i].test(tag)) ||
+      clean.replace(/<[^>]+>/g, '').trim() !== '') {
+    throw new Error('Unsupported logo SVG: unknown element, attribute, text, or drawing order');
+  }
+}
+
 export function parseLogoSvg(source) {
+  verifySupportedLogoSvg(source);
   if (!/<svg\s[^>]*viewBox="0 0 120 120"[^>]*>/.test(source) ||
       (source.match(/<rect\b/g) || []).length !== 2 ||
       (source.match(/<path\b/g) || []).length !== 8 ||
