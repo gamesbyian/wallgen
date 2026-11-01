@@ -16,6 +16,7 @@ const clean = s => String(s)
   .replace(/(authorization\s*[:=]\s*)(?:bearer|basic)?\s*[^\s,;]+/ig, '$1[REDACTED]')
   .replace(/\b(?:gh[pousr]_[A-Za-z0-9_]+|sk-[A-Za-z0-9_-]{12,})\b/g, '[REDACTED]')
   .replace(/([?&](?:token|key|secret|password)=)[^&\s]+/ig, '$1[REDACTED]');
+const safeInvocation = clean(invocation);
 let tail = '';
 let firstError = '';
 let pending = '';
@@ -48,7 +49,7 @@ const ok = !startupError && code === 0 && !signal;
 const first = clean(startupError || firstError || pending || tail.split('\n').find(l => /error|fail/i.test(l)) || 'No diagnostic line captured').slice(0, 400);
 const report = {
   schemaVersion: 1, evidence: 'observed', status: ok ? 'passed' : 'failed',
-  stage, command: invocation, ref: process.env.GITHUB_REF || null,
+  stage, command: safeInvocation, ref: process.env.GITHUB_REF || null,
   sha: process.env.GITHUB_SHA || null, event: process.env.GITHUB_EVENT_NAME || null,
   runUrl, job: process.env.GITHUB_JOB || null, exitCode: code, signal,
   elapsedMs: Date.now() - started,
@@ -56,14 +57,14 @@ const report = {
   firstRelevantLine: ok ? null : first,
   boundedExcerpt: ok ? null : clean(tail).slice(-6000),
   expected: null, actual: null,
-  nextAction: ok ? null : 'Inspect this stage in the linked run; reproduce: ' + invocation
+  nextAction: ok ? null : 'Inspect this stage in the linked run; reproduce: ' + safeInvocation
 };
 if (process.env.GITHUB_STEP_SUMMARY) {
   appendFileSync(process.env.GITHUB_STEP_SUMMARY,
     '### ' + stage + ': ' + (ok ? 'PASS' : 'FAIL') + '\n' +
     '- Source: ' + (report.sha || 'unknown') + '\n' +
     '- Duration: ' + (report.elapsedMs / 1000).toFixed(1) + 's\n' +
-    '- Reproduce: ' + invocation + '\n' +
+    '- Reproduce: ' + safeInvocation + '\n' +
     (ok ? '' : '- First relevant line: ' + first.replace(/[\r\n|]/g, ' ') + '\n') + '\n');
 }
 if (!ok) {
