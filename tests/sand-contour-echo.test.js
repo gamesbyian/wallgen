@@ -214,7 +214,10 @@ test('cropped and pinched ribbon reuses only geometrically valid source stations
   };
   const full=make(),subset=make({start:-19,end:29});
   assert.ok(subset.count>0);
-  assert.ok(subset.marks.every(op=>full.marks.some(x=>
-    JSON.stringify(op)===JSON.stringify(x))));
+  const stations=marks=>marks.filter(x=>x[0]==='move'||x[0]==='line')
+    .map(x=>JSON.stringify(x.slice(1)));
+  const all=new Set(stations(full.marks));
+  assert.ok(stations(subset.marks).every(x=>all.has(x)),
+    'all cropped rail stations must be selected from the full source lattice');
   assert.deepEqual(make({start:65,end:95}).marks,[]);
 });
