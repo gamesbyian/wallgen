@@ -2,8 +2,9 @@
 // actual later satin stitch crosses a previously painted lower satin stitch.
 // The owning renderer's full ribbon mask remains active; this pass clips
 // *again* to the lower stitch capsule, never to the open coloured substrate.
-// Over/Under/Weave policy is owned by the renderer. Only default "over" is
-// currently eligible; other z policies must not manufacture contact shadows.
+// Over/Under/Weave policy is owned by the renderer: full Over painting uses
+// natural source order; Under/Weave repaint only original selected contacts
+// against the already painted lower yarn at each true branch junction.
 import {samplePath,widthAt} from './path-geometry.js';
 import {threadCrossingGraph} from './thread-crossings.js';
 import {threadLightProfile} from './thread-lighting.js';
