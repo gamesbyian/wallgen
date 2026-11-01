@@ -1,0 +1,78 @@
+name: One-shot source-matched Under Weave contact optics
+on:
+  pull_request:
+    branches: [main]
+    paths: [.github/workflows/once-under-weave-contact.yml]
+permissions:
+  contents: read
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install identical Chromium
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Render current production Under Weave and control PNGs
+        run: node scripts/thread-contact-optical-proof.mjs
+      - name: Render accepted previous main in same Chromium
+        run: |
+          set -euo pipefail
+          BASE="$RUNNER_TEMP/thread-before-under-weave"
+          git worktree add --detach "$BASE" c5e95f08de5a70627f027b8bd081c1b5c35f3d0f
+          ln -s "$GITHUB_WORKSPACE/node_modules" "$BASE/node_modules"
+          (cd "$BASE" && node scripts/thread-contact-optical-proof.mjs)
+          mkdir -p artifacts/thread-crossing-replay/baseline
+          cp "$BASE/artifacts/thread-contact-optics/"*.png artifacts/thread-crossing-replay/baseline/
+      - name: Assert only true Under Weave contacts alter production source pixels
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
+          import {join} from 'node:path';
+          const baseline=JSON.parse(readFileSync(join(process.env.RUNNER_TEMP,
+            'thread-before-under-weave/artifacts/thread-contact-optics/report.json'),'utf8'));
+          const candidate=JSON.parse(readFileSync(
+            'artifacts/thread-contact-optics/report.json','utf8'));
+          assert.deepEqual(baseline.records.map(x=>x.name),
+            candidate.records.map(x=>x.name));
+          assert.equal(candidate.records.length,7);
+          const changed=[],preserved=[];
+          for(let i=0;i<7;i++){
+            const a=baseline.records[i],b=candidate.records[i];
+            if(['satin-under-nw','satin-weave-nw'].includes(b.name)){
+              assert.notEqual(a.sha256,b.sha256,
+                'Canonical crossing replay must produce real source contact pixels: '+b.name);
+              changed.push(b.name);
+            }else{
+              assert.equal(a.sha256,b.sha256,
+                'Accepted Over, Off, Soft-Over, and Running must preserve pixels: '+b.name);
+              preserved.push(b.name);
+            }
+          }
+          const summary={baseline:'c5e95f08de5a70627f027b8bd081c1b5c35f3d0f',
+            candidate:process.env.GITHUB_SHA,changed,preserved,
+            note:'Actual 600x1300 Canvas source render under same Linux Chromium; not physical Pixel'};
+          mkdirSync('artifacts/thread-crossing-replay',{recursive:true});
+          writeFileSync('artifacts/thread-crossing-replay/summary.json',
+            JSON.stringify(summary,null,2)+'\n');
+          console.log('UNDER_WEAVE_CONTACT_SOURCE_MATCH_PASS',JSON.stringify(summary));
+          NODE
+      - name: Upload actual Under Weave PNGs and source comparison
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: thread-under-weave-original-art-comparison
+          path: |
+            artifacts/thread-contact-optics/
+            artifacts/thread-crossing-replay/
+          retention-days: 7
+          if-no-files-found: warn
