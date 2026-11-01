@@ -110,27 +110,33 @@ function paintChainLinkContact(ctx,prior,curves,lighting,pitch,relief,
   const now=threadLightProfile(lighting,curves[0][0].x,curves[0][0].y,
     curves[0][3].x,curves[0][3].y,pitch,relief);
   if(!now)return 0;
-  let painted=0;
+  // One additive *vector* clip path for all genuine contacts of this
+  // source pair. It is still the union of round-capped original lower-cord
+  // pieces, not the broad link hull. Grouping keeps Canvas state/clip/fill
+  // work bounded once per link instead of repeating it for both cubic rails.
+  const valid=[];
+  ctx.save();
+  ctx.beginPath();
   for(const hit of top){
     const a={x:hit.lowerA.x+prior.profile.shadowX,
       y:hit.lowerA.y+prior.profile.shadowY};
     const b={x:hit.lowerB.x+prior.profile.shadowX,
       y:hit.lowerB.y+prior.profile.shadowY};
-    ctx.save();
-    if(!traceThreadContactCapsule(ctx,a,b,yarnWidth,{minLength:.04})){
-      ctx.restore();continue;
-    }
+    if(traceThreadContactCapsule(ctx,a,b,yarnWidth,
+      {minLength:.04,beginPath:false}))valid.push(hit);
+  }
+  if(valid.length){
     ctx.clip();
     ctx.beginPath();
-    ctx.arc(hit.x+now.shadowX,hit.y+now.shadowY,
-      Math.max(.45,Math.min(2,yarnWidth*.8)),0,Math.PI*2);
+    for(const hit of valid)
+      ctx.arc(hit.x+now.shadowX,hit.y+now.shadowY,
+        Math.max(.45,Math.min(2,yarnWidth*.8)),0,Math.PI*2);
     ctx.fillStyle='rgba('+now.shadeRgb+','+
       (.16*now.shade).toFixed(3)+')';
     ctx.fill();
-    ctx.restore();
-    painted++;
   }
-  return painted;
+  ctx.restore();
+  return valid.length;
 }
 // Opt-in fibre appearance. An underlaid dark edge, two thin strands and a
 // softly interrupted glint respond to the *actual stitch direction*. Since
