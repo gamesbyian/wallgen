@@ -117,7 +117,7 @@ function paintChainLinkContact(ctx,prior,curves,lighting,pitch,relief,
     const b={x:hit.lowerB.x+prior.profile.shadowX,
       y:hit.lowerB.y+prior.profile.shadowY};
     ctx.save();
-    if(!traceThreadContactCapsule(ctx,a,b,yarnWidth)){
+    if(!traceThreadContactCapsule(ctx,a,b,yarnWidth,{minLength:.04})){
       ctx.restore();continue;
     }
     ctx.clip();
