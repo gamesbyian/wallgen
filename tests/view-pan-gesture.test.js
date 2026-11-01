@@ -100,3 +100,16 @@ test('frame UI contains two-pointer rollback and one atomic camera commit',async
  assert.match(ui,/preview\.style\.touchAction=active\?'none':originalTouchAction/);
  assert.match(ui,/pinch&&pinch\.original!==getRecipe\(\)/);
 });
+
+import {readFileSync} from 'node:fs';
+test('Frame mode Escape and Done restore a visible keyboard entry without a camera edit',()=>{
+  const source=readFileSync(new URL('../src/view-pan-ui.js',import.meta.url),'utf8');
+  assert.match(source,/const mobile=document\.body\.classList\.contains\('mobile-studio'\)/);
+  assert.match(source,/\(mobile\|\|button\)\.focus\(\{preventScroll:true\}\)/);
+  assert.match(source,/done\.addEventListener\('keydown',event=>\{/);
+  assert.match(source,/event\.preventDefault\(\);event\.stopPropagation\(\);\s*closeAndFocus\(\)/);
+  assert.match(source,/done\.addEventListener\('click',closeAndFocus\)/);
+  assert.match(source,/window\.addEventListener\('keydown',event=>\{/);
+  assert.match(source,/clearGesture\(\);\s*const requested=Boolean\(value\)/,
+    'Escape closes frame mode via normal cancellation, not a second camera writer');
+});

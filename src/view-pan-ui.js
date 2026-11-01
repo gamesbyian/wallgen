@@ -62,12 +62,27 @@ export function installViewPanGesture({getRecipe,changeRecipe,onNotice=()=>{},
     button.textContent=active?'Stop reframing':'Drag or pinch frame';
     done.hidden=!active;
   }
-  button.addEventListener('click',()=>setActive(!active));
-  done.addEventListener('click',()=>{
+  function focusVisibleEntry(){
+    // On a phone the original Frame inspector button sits inside the
+    // dismissed editor sheet. Restore focus to its visible entry instead;
+    // a hidden button is an unusable keyboard destination.
+    const mobile=document.body.classList.contains('mobile-studio')?
+      document.getElementById('mobileEdit'):null;
+    (mobile||button).focus({preventScroll:true});
+  }
+  function closeAndFocus(){
     setActive(false);
-    const target=button.getClientRects().length?button:
-      document.getElementById('mobileEdit');
-    target?.focus({preventScroll:true});
+    focusVisibleEntry();
+  }
+  button.addEventListener('click',()=>setActive(!active));
+  done.addEventListener('click',closeAndFocus);
+  done.addEventListener('keydown',event=>{
+    if(active&&event.key==='Escape'){
+      // This stage control owns its Escape before the document-level
+      // mobile sheet handler can redirect keyboard focus elsewhere.
+      event.preventDefault();event.stopPropagation();
+      closeAndFocus();
+    }
   });
   preview.addEventListener('pointerdown',event=>{
     if(!active||event.button!==0)return;
@@ -166,7 +181,8 @@ export function installViewPanGesture({getRecipe,changeRecipe,onNotice=()=>{},
   window.addEventListener('blur',clearGesture);
   window.addEventListener('keydown',event=>{
     if(active&&event.key==='Escape'){
-      event.preventDefault();setActive(false);
+      event.preventDefault();
+      closeAndFocus();
     }
   });
   // An unrelated canonical update cancels the provisional camera translation.
