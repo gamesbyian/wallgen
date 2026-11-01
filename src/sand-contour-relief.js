@@ -1,7 +1,7 @@
 // Sand is deposited INSIDE existing vector paths; this module never modifies
 // source contours, scene geometry, object masks, or the independent grain field.
 import {sandPitch} from './sand-material.js';
-import {sandLighting} from './sand-lighting.js';
+import {sandLighting,sandDepositHeight,sandShadowReach} from './sand-lighting.js';
 
 const finite=v=>typeof v==='number'&&Number.isFinite(v);
 const opacity=n=>'rgba('+n+')';
@@ -16,6 +16,7 @@ export function sandRimStyles(scene,lighting=sandLighting(scene)){
       const gauge=sandPitch(layer),strength=Math.min(1,layer.strength/100);
       return {
         gauge,
+        height:sandDepositHeight(gauge,strength,'rim'),
         darkWidth:gauge*1.85,
         lightWidth:gauge*.42,
         darkAlpha:.16*strength,
@@ -59,10 +60,13 @@ export function paintSandContourRim(ctx,outlinePaths,styles){
     };
     const l=style.lighting;
     if(l){
-      paint(style.darkWidth,l.shade,style.darkAlpha*l.shadow,l,
-        style.gauge*.48);
-      paint(style.lightWidth,l.high,style.lightAlpha*l.light,l,
-        -style.gauge*.43);
+      // A raised ridge casts its contact shade AWAY from the incoming light.
+      // The previous rim offsets were backwards relative to bead caps and the
+      // existing narrow-stroke glints. Both shifts now use one analytic height
+      // profile and the shared fixed-elevation lamp; clipping still owns ink.
+      const reach=sandShadowReach(style.height||0);
+      paint(style.darkWidth,l.shade,style.darkAlpha*l.shadow,l,-reach);
+      paint(style.lightWidth,l.high,style.lightAlpha*l.light,l,reach*.72);
     }else{
       paint(style.darkWidth,'0,0,0',style.darkAlpha);
       paint(style.lightWidth,'255,255,255',style.lightAlpha);
