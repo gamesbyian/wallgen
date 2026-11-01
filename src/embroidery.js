@@ -1,7 +1,6 @@
 import {samplePath,widthAt} from './path-geometry.js';
 import {threadLightProfile,rotateThreadLighting} from './thread-lighting.js';
-import {planSatinThreadContacts,paintSatinThreadContacts,
-  traceThreadContactCapsule} from './thread-contact-shadows.js';
+import {planSatinThreadContacts,paintSatinThreadContacts} from './thread-contact-shadows.js';
 import {chainLinkCurves,traceChainLink,chainLinkContactEvents} from './chain-thread-contacts.js';
 
 // Surface roles are addressed by authored object IDs or semantic ROYGBIV
@@ -105,42 +104,33 @@ function chainLink(ctx,x,y,tx,ty,nx,ny,half,loft,relief,lighting=null){
 // crossing-replay crop, which has a different major-branch z order.
 function paintChainLinkContact(ctx,prior,curves,lighting,pitch,relief,
   yarnWidth){
-  const top=prior&&curves?chainLinkContactEvents(prior.curves,curves):[];
-  if(!top.length||!prior.profile)return 0;
+  const hits=prior&&curves?chainLinkContactEvents(prior.curves,curves):[];
+  if(!hits.length||!prior.profile)return 0;
   const now=threadLightProfile(lighting,curves[0][0].x,curves[0][0].y,
     curves[0][3].x,curves[0][3].y,pitch,relief);
   if(!now)return 0;
-  // One additive *vector* clip path for all genuine contacts of this
-  // source pair. It is still the union of round-capped original lower-cord
-  // pieces, not the broad link hull. Grouping keeps Canvas state/clip/fill
-  // work bounded once per link instead of repeating it for both cubic rails.
-  const valid=[];
-  ctx.save();
-  ctx.beginPath();
-  for(const hit of top){
-    const a={x:hit.lowerA.x+prior.profile.shadowX,
-      y:hit.lowerA.y+prior.profile.shadowY};
-    const b={x:hit.lowerB.x+prior.profile.shadowX,
-      y:hit.lowerB.y+prior.profile.shadowY};
-    if(traceThreadContactCapsule(ctx,a,b,yarnWidth,
-      {minLength:.04,beginPath:false}))valid.push(hit);
-  }
-  if(valid.length){
-    ctx.clip();
+  // The source renderer already painted the lower cubic as an opaque-width
+  // dark/bright cord. Paint a *narrower* local original-curve stroke INSIDE
+  // its dark projected underlay, with a strictly bounded lamp-side shift.
+  // .16 + .31 = .47 < the half-width .50 of the actual lower cord:
+  // no external Canvas clip or extra pixel-based mask is required.
+  // A tiny chord does not pretend to be a new upper fabric surface.
+  const lampLength=Math.hypot(now.shadowX,now.shadowY);
+  const offset=lampLength?Math.min(yarnWidth*.16,lampLength)/lampLength:0;
+  const sx=now.shadowX*offset,sy=now.shadowY*offset;
+  ctx.lineWidth=yarnWidth*.62;
+  ctx.strokeStyle='rgba('+now.shadeRgb+','+
+    (.16*now.shade).toFixed(3)+')';
+  for(const hit of hits){
     ctx.beginPath();
-    for(const hit of valid){
-      const radius=Math.max(.45,Math.min(2,yarnWidth*.8));
-      // Explicit new subpath: Canvas arc() otherwise connects circles with
-      // a straight line, manufacturing dark fabric between real contacts.
-      ctx.moveTo(hit.x+now.shadowX+radius,hit.y+now.shadowY);
-      ctx.arc(hit.x+now.shadowX,hit.y+now.shadowY,radius,0,Math.PI*2);
-    }
-    ctx.fillStyle='rgba('+now.shadeRgb+','+
-      (.16*now.shade).toFixed(3)+')';
-    ctx.fill();
+    ctx.moveTo(hit.lowerA.x+prior.profile.shadowX+sx,
+      hit.lowerA.y+prior.profile.shadowY+sy);
+    ctx.lineTo(hit.lowerB.x+prior.profile.shadowX+sx,
+      hit.lowerB.y+prior.profile.shadowY+sy);
+    ctx.stroke();
   }
-  ctx.restore();
-  return valid.length;
+  ctx.lineWidth=yarnWidth;
+  return hits.length;
 }
 // Opt-in fibre appearance. An underlaid dark edge, two thin strands and a
 // softly interrupted glint respond to the *actual stitch direction*. Since
