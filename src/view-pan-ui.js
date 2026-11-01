@@ -179,6 +179,13 @@ export function installViewPanGesture({getRecipe,changeRecipe,onNotice=()=>{},
       setActive(false);
   });
   window.addEventListener('blur',clearGesture);
+  // A resize invalidates the captured CSS-to-world mapping. Page suspension
+  // likewise revokes provisional touch ownership, never committing stale pan.
+  window.addEventListener('resize',clearGesture);
+  window.addEventListener('pagehide',clearGesture);
+  document.addEventListener('visibilitychange',()=>{
+    if(document.hidden)clearGesture();
+  });
   window.addEventListener('keydown',event=>{
     if(active&&event.key==='Escape'){
       event.preventDefault();
