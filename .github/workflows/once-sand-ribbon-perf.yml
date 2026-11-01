@@ -1,0 +1,76 @@
+name: One-shot ribbon station source-matched optical and performance proof
+on:
+  pull_request:
+    branches: [main]
+    paths: [.github/workflows/once-sand-ribbon-perf.yml]
+permissions:
+  contents: read
+concurrency:
+  group: once-sand-ribbon-perf
+  cancel-in-progress: true
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install identical Chromium dependency
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Render optimized production wave and loops
+        run: node scripts/sand-ribbon-performance.mjs > /tmp/ribbon-current.log
+      - name: Render exact pre-station-cache revision
+        run: |
+          set -euo pipefail
+          BASE="$RUNNER_TEMP/ribbon-before-station-cache"
+          git worktree add --detach "$BASE" 25e0024986b66a1e54088ea4f20dc1fbc8f59729
+          cp scripts/sand-ribbon-performance.mjs "$BASE/scripts/sand-ribbon-performance.mjs"
+          ln -s "$GITHUB_WORKSPACE/node_modules" "$BASE/node_modules"
+          (cd "$BASE" && node scripts/sand-ribbon-performance.mjs > /tmp/ribbon-before.log)
+      - name: Verify every source PNG and report timing
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync,writeFileSync} from 'node:fs';
+          import {join} from 'node:path';
+          const before=JSON.parse(readFileSync(join(process.env.RUNNER_TEMP,
+            'ribbon-before-station-cache/artifacts/sand-ribbon-performance/measurements.json'),'utf8'));
+          const after=JSON.parse(readFileSync(
+            'artifacts/sand-ribbon-performance/measurements.json','utf8'));
+          assert.equal(before.results.length,4);
+          assert.deepEqual(before.results.map(x=>x.name),after.results.map(x=>x.name));
+          const comparison=[];
+          for(let i=0;i<before.results.length;i++){
+            const a=before.results[i],b=after.results[i];
+            assert.equal(a.sha256,b.sha256,'Actual source-matched PNG differs: '+a.name);
+            assert.equal(a.styles,b.styles);
+            assert.equal(a.pathCount,b.pathCount);
+            comparison.push({scene:a.name,sha256:a.sha256,
+              beforeGeometryMs:a.medianGeometryMs,afterGeometryMs:b.medianGeometryMs,
+              beforeFullRenderMs:a.medianRenderMs,afterFullRenderMs:b.medianRenderMs,
+              geometryRatio:a.medianGeometryMs/b.medianGeometryMs,
+              renderRatio:a.medianRenderMs/b.medianRenderMs});
+          }
+          const report={baseline:'25e0024986b66a1e54088ea4f20dc1fbc8f59729',
+            candidate:process.env.GITHUB_SHA,comparison,
+            environment:'same Linux headless Chromium runner, no Pixel hardware',
+            sourceParity:'all four real production 600x1300 wallpapers byte-identical'};
+          writeFileSync('artifacts/sand-ribbon-performance/paired.json',
+            JSON.stringify(report,null,2)+'\n');
+          console.log('SAND_RIBBON_SOURCE_MATCHED_PASS',JSON.stringify(report));
+          NODE
+      - name: Upload source-matched output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: roygbiv-sand-ribbon-proof
+          path: artifacts/sand-ribbon-performance/
+          retention-days: 7
+          if-no-files-found: warn
