@@ -53,6 +53,17 @@ function strokeDeposit(ctx,style,path,inkWidth,depth){
   paint(inkWidth*.48,l?l.high:'255,255,255',
     style.light*(depth===0?.85:1)*(l?l.light:1),l?-inkWidth*.6:0);
 }
+/** A single region paint may contain up to three independent filigree layers
+ * with the same authored gauge. Reuse immutable metric inset solutions only
+ * within this ONE paint call, never across changed recipes, crops or objects.
+ * Each style still paints its own colour/alpha in exactly its original order. */
+export function sandCachedInsetContours(cache,rings,distance,bounds,solve=polygonInsetContours){
+  if(!cache.has(distance))
+    cache.set(distance,solve(rings,distance,{
+      bounds,resolution:1.5,padding:Math.max(18,distance*2)
+    }));
+  return cache.get(distance);
+}
 /** Each polygon offset is measured against the ORIGINAL collection of rings.
  * This uses the existing even-odd Euclidean offset engine, not centroid
  * scaling, so holes expand and narrow necks honestly collapse or split.
@@ -60,6 +71,9 @@ function strokeDeposit(ctx,style,path,inkWidth,depth){
 export function paintSandRegionEchoes(ctx,object,styles,bounds=null){
   if(!styles?.length||!object)return 0;
   let count=0;
+  const rings=object.circle?null:(object.rings||[object.vertices]);
+  const vertexCount=rings?rings.reduce((n,ring)=>n+(ring?.length||0),0):0;
+  const insetSolutions=new Map();
   ctx.save();ctx.lineJoin='round';ctx.lineCap='butt';
   for(const style of styles){
     for(let depth=0;depth<style.insets.length;depth++){
@@ -75,15 +89,10 @@ export function paintSandRegionEchoes(ctx,object,styles,bounds=null){
         target.arc(cx,cy,r-distance,0,TAU);
         strokeDeposit(ctx,style,path||undefined,width,depth);count++;
       }else{
-        const rings=object.rings||[object.vertices];
-        const vertexCount=rings.reduce((n,ring)=>n+(ring?.length||0),0);
-        // Large supplied source vectors are safe and still get the existing
-        // fine sand and rim. Do not force expensive 2D inset solving on them
-        // until a measured adaptive implementation is available.
+        // Large supplied source vectors still keep their existing fine sand
+        // and rim without invoking the expensive Euclidean inset solver.
         if(vertexCount>MAX_SOURCE_VERTICES||!vertexCount)continue;
-        const contours=polygonInsetContours(rings,distance,{
-          bounds,resolution:1.5,padding:Math.max(18,distance*2)
-        });
+        const contours=sandCachedInsetContours(insetSolutions,rings,distance,bounds);
         let renderedPoints=0;
         for(const contour of contours){
           if((renderedPoints+=contour.points.length)>MAX_CONTOUR_POINTS)break;
