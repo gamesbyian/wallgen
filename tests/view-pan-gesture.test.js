@@ -113,3 +113,73 @@ test('Frame mode Escape and Done restore a visible keyboard entry without a came
   assert.match(source,/clearGesture\(\);\s*const requested=Boolean\(value\)/,
     'Escape closes frame mode via normal cancellation, not a second camera writer');
 });
+
+
+test('Frame pointer capture rolls back on resize, pagehide and hidden document', async () => {
+  const {installViewPanGesture}=await import('../src/view-pan-ui.js');
+  const previousDocument=globalThis.document;
+  const previousWindow=globalThis.window;
+  const makeTarget=()=>({
+    style:{touchAction:'auto',transform:'',transformOrigin:''},
+    hidden:false,events:new Map(),attributes:new Map(),
+    addEventListener(type,listener){
+      const list=this.events.get(type)||[];
+      list.push(listener);this.events.set(type,list);
+    },
+    emit(type,data={}){
+      for(const listener of this.events.get(type)||[])listener(data);
+    },
+    setAttribute(key,value){this.attributes.set(key,value);},
+    append(child){this.children??=[];this.children.push(child);},
+    getBoundingClientRect(){return {left:0,top:0,width:300,height:650};},
+    captured:new Set(),
+    setPointerCapture(id){this.captured.add(id);},
+    releasePointerCapture(id){this.captured.delete(id);},
+    focus(){},
+  });
+  const pointer=(id,x,y)=>({button:0,isPrimary:id===7,
+    pointerType:'touch',pointerId:id,clientX:x,clientY:y,
+    preventDefault(){},stopImmediatePropagation(){}});
+  try{
+    for(const eventName of ['resize','pagehide','visibilitychange']){
+      const preview=makeTarget(),stage=makeTarget(),host=makeTarget();
+      const mockWindow=makeTarget(),mockDocument=makeTarget();
+      mockDocument.body={classList:{contains:()=>false,toggle(){}}};
+      mockDocument.createElement=()=>makeTarget();
+      mockDocument.getElementById=()=>null;
+      mockDocument.hidden=false;
+      globalThis.window=mockWindow;globalThis.document=mockDocument;
+      const original={viewZoom:1,viewPanX:0,viewPanY:0};
+      const writes=[];
+      installViewPanGesture({getRecipe:()=>original,
+        changeRecipe:(value,meta)=>writes.push({value,meta}),preview,stage,host});
+      const button=host.children[0];
+      button.emit('click');
+      assert.equal(button.attributes.get('aria-pressed'),'true');
+      preview.emit('pointerdown',pointer(7,100,200));
+      preview.emit('pointermove',pointer(7,140,200));
+      assert.notEqual(preview.style.transform,'','drag must visibly preview');
+      assert(preview.captured.has(7));
+      if(eventName==='visibilitychange'){
+        mockDocument.hidden=true;
+        mockDocument.emit('visibilitychange');
+      }else mockWindow.emit(eventName);
+      assert.equal(preview.style.transform,'','canceled gesture must roll back its preview');
+      assert.equal(preview.captured.size,0,'capture must be released before delayed pointerup');
+      preview.emit('pointerup',pointer(7,140,200));
+      assert.equal(writes.length,0,eventName+' must not commit a stale pan');
+      mockDocument.hidden=false;
+      preview.emit('pointerdown',pointer(7,100,200));
+      preview.emit('pointermove',pointer(7,130,200));
+      preview.emit('pointerup',pointer(7,130,200));
+      assert.equal(writes.length,1,'new valid drag should still commit once');
+      assert.equal(writes[0].value.viewPanX,-10);
+      assert.equal(writes[0].meta.cause,'view_pan_on_canvas');
+    }
+  }finally{
+    if(previousDocument===undefined)delete globalThis.document;
+    else globalThis.document=previousDocument;
+    if(previousWindow===undefined)delete globalThis.window;
+    else globalThis.window=previousWindow;
+  }
+});
