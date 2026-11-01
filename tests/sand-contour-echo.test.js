@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {normalizeRecipe,resolveScene,encodeRecipe,decodeRecipe} from '../src/model.js';
-import {sandEchoStyles,paintSandRegionEchoes,paintSandRibbonEchoes} from '../src/sand-contour-echo.js';
+import {sandEchoStyles,sandCachedInsetContours,paintSandRegionEchoes,paintSandRibbonEchoes} from '../src/sand-contour-echo.js';
 
 const square=(x0,y0,x1,y1)=>[
   {x:x0,y:y0},{x:x1,y:y0},{x:x1,y:y1},{x:x0,y:y1}
@@ -104,4 +104,55 @@ test('nonprogressing extreme integer stations refuse optional echoes without any
     ()=>{sampled++;return 50;}),0);
   assert.equal(sampled,0);
   assert.equal(c.events.length,0,'source-unsafe decorative paths draw no surrogate geometry');
+});
+
+
+test('same-gauge region filigree layers solve each real inset only once per paint',()=>{
+  const rings=[square(0,0,170,110),square(55,36,99,75),
+    square(200,28,240,65)];
+  const bounds={left:-20,top:-20,right:260,bottom:145};
+  let calls=0;
+  const solve=(source,distance,options)=>{
+    calls++;
+    assert.equal(source,rings);
+    assert.equal(options.bounds,bounds);
+    assert.equal(options.resolution,1.5);
+    assert.equal(options.padding,Math.max(18,distance*2));
+    return [{closed:true,points:[...rings[0]]}];
+  };
+  const cache=new Map();
+  const a=sandCachedInsetContours(cache,rings,5.5,bounds,solve);
+  const b=sandCachedInsetContours(cache,rings,5.5,bounds,solve);
+  const c=sandCachedInsetContours(cache,rings,8,bounds,solve);
+  assert.equal(a,b,'identical inset and current source share the same exact contours');
+  assert.notEqual(a,c,'a distinct metric inset must not reuse the wrong contour');
+  assert.equal(calls,2);
+  assert.equal(cache.size,2);
+
+  const base=styles()[0],second={...base,
+    dark:base.dark*.7,light:base.light*.8,seed:base.seed+11};
+  const object={rings},pair=ctx(),first=ctx(),next=ctx();
+  const paired=paintSandRegionEchoes(pair,object,[base,second],bounds);
+  const aCount=paintSandRegionEchoes(first,object,[base],bounds);
+  const bCount=paintSandRegionEchoes(next,object,[second],bounds);
+  assert.equal(paired,aCount+bCount);
+  const visible=ops=>ops.filter(x=>Array.isArray(x)&&
+    ['move','line','stroke','arc'].includes(x[0]));
+  assert.deepEqual(visible(pair.events),
+    [...visible(first.events),...visible(next.events)],
+    'reuse must preserve every original source path and the layer paint order');
+});
+
+test('different material gauges keep their independent metric inset geometry',()=>{
+  const first=styles({textureScale:12})[0],
+    second=styles({textureScale:92})[0];
+  assert.notDeepEqual(first.insets,second.insets);
+  const object={rings:[square(0,0,250,240)]},bounds={
+    left:-10,top:-10,right:260,bottom:250
+  };
+  const a=ctx(),b=ctx();
+  const count=paintSandRegionEchoes(a,object,[first,second],bounds);
+  const separate=paintSandRegionEchoes(b,object,[first],bounds)+
+    paintSandRegionEchoes(b,object,[second],bounds);
+  assert.equal(count,separate);
 });
