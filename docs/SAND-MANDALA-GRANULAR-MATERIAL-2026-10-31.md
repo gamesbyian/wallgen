@@ -165,6 +165,22 @@ The opt-in lighting pass now derives both profiles from the existing authored-wo
 
 The browser proof used GitHub-hosted Linux Chromium, **not** the owner's Pixel 6 Pro, a performance/thermal test, a seven-width optical aesthetic signoff, or proof of true cast shadows across material holes and crossings. Remove its disposable pull-request workflow after proof and require a clean exact-head quick check before merging. The follow-up S4 topology/occlusion and device measurements below remain genuine open work.
 
+## Multi-layer geometry reuse: measured same-run source-art parity (1 November 2026)
+
+The ephemeral geometry optimizations [#956](https://github.com/gamesbyian/wallgen/pull/956) and [#957](https://github.com/gamesbyian/wallgen/pull/957) remove repeated original-source Euclidean inset solving for same-gauge filigree layers and repeated original perimeter framing for independent beaded layers. No new approximation or cache across artworks was introduced.
+
+[Paired real Chromium #41274101988](https://github.com/gamesbyian/wallgen/actions/runs/41274101988) compared accepted S4.3 baseline `f64720cec0a5cb4fcafc17950903a0cb40dc696a` against the optimized source `ecb69b28dac7e6c208f9def50841960cd006bdc6` on **the same Linux runner and browser**. The reusable `scripts/sand-multilayer-performance.mjs` creates five genuine 600×1300 imported compound-ring scenes (original hole and detached island), with three same-gauge beads, three same-gauge filigree, three differently gauged filigree and two one-layer controls. Source-generated PNG SHA-256 was identical for **all five** cases; this is real rendered artwork, not source-only proxy parity.
+
+| Scene | Geometry stage before→after (ms, median) | Whole render before→after (ms, median) |
+| --- | ---: | ---: |
+| Three beaded layers | 1.10 → 1.00 | 451.9 → 444.5 |
+| Three filigree layers, **same gauge** | **44.64 → 17.86** | **513.5 → 481.8** |
+| Three filigree layers, different gauges | 56.22 → 51.76 | 465.1 → 482.8 |
+| One beaded layer | 0.38 → 0.40 | 154.8 → 147.5 |
+| One filigree layer | 15.58 → 16.60 | 162.9 → 164.2 |
+
+The intended repeated-same-inset case spent about **60% less time in geometry** and **6% less in its whole painting pass** in this paired sample, with zero pixel changes. Other scenarios exhibit noise and in one case a slightly slower whole render, so no general 6% acceleration claim is warranted. The timing samples are within one headless Chromium/GitHub runner (three whole-art, six isolated geometry measurements per case), **not** longitudinal statistics, a randomization user-action benchmark, or Pixel battery/thermal data. The temporary comparison Actions workflow is retired; the reusable script and actual-pixel acceptance contract remain in source. Later #959 source-station reuse is not included in this particular A/B, which compared only the first two geometry optimizations.
+
 ## Next S4 research: occlusion from actual source topology, not decorative offsets
 
 **Target result:** sand piles and beads should carry their own believable height, changing the cast-shadow length and illuminated-face width consistently as the global light moves. The merged S4 directional marks establish shared reference frames but do not yet establish measured height, ray visibility or pile contact.
