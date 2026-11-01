@@ -1,8 +1,8 @@
 name: One-shot original-vs-height sand optical proof
 # Intentionally disposable. Remove from .github/workflows/ after evidence.
 on:
-  push:
-    branches: [feat/sand-shared-height-light-projection-20261101]
+  pull_request:
+    branches: [main]
     paths: [.github/workflows/once-sand-height-proof.yml]
 permissions:
   contents: read
