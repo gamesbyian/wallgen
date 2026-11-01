@@ -128,9 +128,13 @@ function paintChainLinkContact(ctx,prior,curves,lighting,pitch,relief,
   if(valid.length){
     ctx.clip();
     ctx.beginPath();
-    for(const hit of valid)
-      ctx.arc(hit.x+now.shadowX,hit.y+now.shadowY,
-        Math.max(.45,Math.min(2,yarnWidth*.8)),0,Math.PI*2);
+    for(const hit of valid){
+      const radius=Math.max(.45,Math.min(2,yarnWidth*.8));
+      // Explicit new subpath: Canvas arc() otherwise connects circles with
+      // a straight line, manufacturing dark fabric between real contacts.
+      ctx.moveTo(hit.x+now.shadowX+radius,hit.y+now.shadowY);
+      ctx.arc(hit.x+now.shadowX,hit.y+now.shadowY,radius,0,Math.PI*2);
+    }
     ctx.fillStyle='rgba('+now.shadeRgb+','+
       (.16*now.shade).toFixed(3)+')';
     ctx.fill();
