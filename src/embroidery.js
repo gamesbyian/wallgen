@@ -157,7 +157,7 @@ function fibreSpan(ctx,ax,ay,bx,by,pitch,relief,phase,lighting=null){
  * Caller establishes the actual stripe footprint as the active clipping mask.
  */
 export function drawRibbonEmbroidery(ctx,stripe,extent,treatment,range=null,lighting=null,
-  {contactShadows=false}={}){
+  {contactShadows=false,replayContacts=null}={}){
   if(!treatment||!Number.isFinite(extent)||extent<=0)return 0;
   const step=treatment.pitch;
   const gentle=treatment.style==='satin-soft';
@@ -281,6 +281,8 @@ export function drawRibbonEmbroidery(ctx,stripe,extent,treatment,range=null,ligh
     if(fibre){fibreSpan(ctx,ax,ay,bx,by,step,treatment.relief,i,lighting);count++;continue;}
     if(contactPlan)paintSatinThreadContacts(ctx,
       contactPlan.byStation.get(i),lighting,step,treatment.relief);
+    if(range&&replayContacts instanceof Map)paintSatinThreadContacts(ctx,
+      replayContacts.get(i),lighting,step,treatment.relief);
     // Dark underlay and offset bright ridge create a restrained raised cord.
     if(!paintThreadRelief(ctx,ax,ay,bx,by,step,treatment.relief,
       gentle?.11:.31,(.10+treatment.relief/100*.24)*(gentle?.43:1),lighting)){
