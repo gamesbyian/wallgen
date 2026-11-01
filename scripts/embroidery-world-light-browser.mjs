@@ -46,6 +46,10 @@ const region=(style)=>normalizeRecipe({
 const styles=[
   ['ribbon-satin',ribbon('satin')],
   ['ribbon-chain',ribbon('chain')],
+  // Full-source linked cord overlap is guaranteed along an open straight
+  // path, unlike the intentionally compressed inner arcs of tight loops.
+  ['ribbon-chain-straight',normalizeRecipe({...ribbon('chain'),
+    geometry:'straight',orientation:'horizontal',crossingMode:'over'})],
   ['ribbon-fibre',ribbon('satin-fibre')],
   ['region-tatami',region('tatami')],
   ['region-fibre',region('tatami-fibre')]
