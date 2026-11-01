@@ -18,11 +18,25 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      # Cheap sanity check before publishing this personal app; deeper verification is opt-in.
-      - run: npm run check:quick
+      - name: Verify conservative publication classification
+        run: node --test tests/ci-select.test.mjs tests/ci-workflow-policy.test.mjs
+      - name: Classify main change against exact previous SHA
+        id: selection
+        env:
+          CI_BASE_SHA: ${{ github.event.before }}
+          CI_ALLOW_DOCS_PUSH: 'true'
+        run: node scripts/ci-select.mjs
+      # Unknown, mixed, code or manual publishes retain the original broad sanity suite.
+      # A proven Markdown-only push still publishes and stamps its exact source revision.
+      - name: Verify changed application
+        if: ${{ steps.selection.outputs.tier != 'docs' }}
+        run: npm run check:quick
       # The hosted renderer refuses a mismatched or absent immutable commit
       # marker rather than silently drawing private recipes with newer assets.
       - name: Stamp exact published rendering revision
