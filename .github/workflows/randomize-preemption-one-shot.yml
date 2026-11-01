@@ -1,0 +1,73 @@
+name: Random worker preemption paired real Chromium (one-shot)
+on:
+  pull_request:
+    paths:
+      - 'src/render-coordinator.js'
+      - 'src/app.js'
+      - 'tests/render-coordinator.test.js'
+      - '.github/workflows/randomize-preemption-one-shot.yml'
+permissions:
+  contents: read
+jobs:
+  paired-actual-app:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: baseline
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: candidate
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install one Chromium dependency tree
+        working-directory: candidate
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Share real Chromium dependencies
+        run: ln -s "$GITHUB_WORKSPACE/candidate/node_modules" "$GITHUB_WORKSPACE/baseline/node_modules"
+      - name: Existing main Random latency on actual app
+        working-directory: baseline
+        run: node scripts/randomize-latency-browser.mjs
+      - name: Exact PR head Random latency on actual app
+        working-directory: candidate
+        run: node scripts/randomize-latency-browser.mjs
+      - name: Check complete comparable scenario evidence
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync,writeFileSync} from 'node:fs';
+          const f=where=>JSON.parse(readFileSync(where+'/artifacts/randomize-latency/baseline.json'));
+          const before=f('baseline'),after=f('candidate');
+          assert.deepEqual(before.results.map(x=>x.scenario),['basic','three-material','regions']);
+          assert.deepEqual(after.results.map(x=>x.scenario),before.results.map(x=>x.scenario));
+          for(const group of [before,after])for(const row of group.results){
+            assert.deepEqual(row.errors,[]);
+            for(const kind of ['single','burst']){
+              assert.ok(row[kind].settleAfterLastClickMs!==null);
+              assert.ok(Number.isFinite(row[kind].settleAfterLastClickMs));
+            }
+          }
+          const paired=after.results.map((r,i)=>({scenario:r.scenario,
+            main:before.results[i].burst,candidate:r.burst}));
+          writeFileSync('candidate/artifacts/randomize-latency/paired.json',
+            JSON.stringify({note:'real same-machine Chromium; Random seeds differ; not a controlled speedup claim',
+              paired},null,2)+'\n');
+          console.log('RANDOM_REAL_PAIRED',JSON.stringify(paired));
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: random-preemption-paired-chromium
+          path: |
+            baseline/artifacts/randomize-latency/
+            candidate/artifacts/randomize-latency/
+          if-no-files-found: warn
+          retention-days: 5
