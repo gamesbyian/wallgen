@@ -13,14 +13,17 @@ const MAX_INTERSECTIONS=512;
 /** Only actual interior/interior transverse stitch centerline intersections
  * count as crossing contacts. Parallel/coplanar/endpoint touching yarn, close
  * nonintersecting neighbours and separate object owners produce no events.
- * The later source stitch is above the earlier; caller may select a stable
+ * The later source stitch is above by default; a caller-owned original\n * Over/Under/Weave decision may explicitly reverse this. Select a stable
  * crop-window subset of these full-source events for crossing replay.
  *
  * Each segment: {id,owner,course,sourceIndex,station,start:{x,y},
  *                end:{x,y},width}. All coordinates and widths are design
  * units, with no output pixels or serializable recipe geometry. */
-export function threadCrossingGraph(segments,{cellSize=24}={}){
+export function threadCrossingGraph(segments,{
+  cellSize=24,topIsLater=()=>true
+}={}){
   if(!Array.isArray(segments)||segments.length>MAX_STITCH_SEGMENTS||
+     typeof topIsLater!=='function'||
      !finite(cellSize)||cellSize<8||cellSize>256)
     throw new RangeError('Unbounded embroidery crossing study');
   const grid=new Map(),hits=[];
@@ -61,12 +64,21 @@ export function threadCrossingGraph(segments,{cellSize=24}={}){
       if(!crossing)continue;
       if(hits.length>=MAX_INTERSECTIONS)
         throw new RangeError('Excessively many source stitch crossings');
+      // The renderer owns the user's Over/Under/Weave decision. The default
+      // preserves normal painter order; an explicit resolver must supply
+      // the canonical crossing decision for flipped or alternating passes.
+      // Never silently invent a second colour-based crossing policy.
+      const later=topIsLater({earlier:lower,later:item,
+        earlierIndex:j,laterIndex:i,point:crossing,graphIndex:hits.length});
+      if(typeof later!=='boolean')
+        throw new TypeError('Thread crossing hierarchy must be explicit');
+      const top=later?item:lower,bottom=later?lower:item;
       hits.push({
         x:crossing.x,y:crossing.y,
-        belowId:lower.id,aboveId:item.id,
-        belowIndex:j,aboveIndex:i,
-        belowStation:lower.station,aboveStation:item.station,
-        belowWidth:lower.width,aboveWidth:item.width,
+        belowId:bottom.id,aboveId:top.id,
+        belowIndex:later?j:i,aboveIndex:later?i:j,
+        belowStation:bottom.station,aboveStation:top.station,
+        belowWidth:bottom.width,aboveWidth:top.width,
         owner:item.owner
       });
     }
