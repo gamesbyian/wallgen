@@ -125,8 +125,16 @@ function paintChainLinkContact(ctx,prior,curves,lighting,pitch,relief,
     ctx.beginPath();
     ctx.moveTo(hit.lowerA.x+prior.profile.shadowX+sx,
       hit.lowerA.y+prior.profile.shadowY+sy);
-    ctx.lineTo(hit.lowerB.x+prior.profile.shadowX+sx,
-      hit.lowerB.y+prior.profile.shadowY+sy);
+    // Trace the *actual original cubic subarc*, not the approximating
+    // intersection-test chord. A narrow shifted curve remains inside the
+    // parent lower-yarn round stroke even on highly curved loop interiors.
+    const sub=hit.lowerCurve;
+    ctx.bezierCurveTo(sub[1].x+prior.profile.shadowX+sx,
+      sub[1].y+prior.profile.shadowY+sy,
+      sub[2].x+prior.profile.shadowX+sx,
+      sub[2].y+prior.profile.shadowY+sy,
+      sub[3].x+prior.profile.shadowX+sx,
+      sub[3].y+prior.profile.shadowY+sy);
     ctx.stroke();
   }
   ctx.lineWidth=yarnWidth;
