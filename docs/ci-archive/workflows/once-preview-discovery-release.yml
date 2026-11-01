@@ -1,0 +1,72 @@
+name: One-shot ROYGBIV Preview Discovery Release
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/once-preview-discovery-release.yml]
+permissions:
+  contents: read
+concurrency:
+  group: roygbiv-hosted-mcp-release
+  cancel-in-progress: false
+jobs:
+  release:
+    if: github.repository == 'gamesbyian/wallgen' && github.ref == 'refs/heads/main' && github.actor == 'gamesbyian'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Wait for the exact SHA to be live on Pages before changing Worker
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 35); do
+            if curl -fsSL --retry 2 'https://gamesbyian.github.io/wallgen/roygbiv-render-version.json' -o /tmp/roygbiv-preview-manifest.json &&
+              node --input-type=module -e "
+                import fs from 'node:fs';
+                const {commit}=JSON.parse(fs.readFileSync('/tmp/roygbiv-preview-manifest.json'));
+                if(commit!==process.env.GITHUB_SHA)process.exit(1);
+              "; then
+              echo "Published exact release commit $GITHUB_SHA"
+              exit 0
+            fi
+            sleep 8
+          done
+          echo 'Refusing deploy: published renderer SHA is not the release commit' >&2
+          exit 1
+      - name: Build and test enabled owner-only preview without invoking Browser Run
+        run: |
+          set -euo pipefail
+          node scripts/prepare-hosted-preview-config.mjs --sha "$GITHUB_SHA" \
+            --manifest /tmp/roygbiv-preview-manifest.json --mode preview
+          npm install --no-save --package-lock=false --no-audit --no-fund
+          npm run test:cloudflare
+          npx wrangler deploy --dry-run --config cloudflare/mcp/wrangler.release.generated.toml \
+            --outdir artifacts/preview-once
+          test -s cloudflare/mcp/artifacts/preview-once/index.js
+      - name: Validate configured deployment credentials without logging them
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          test -n "$CLOUDFLARE_API_TOKEN" && test -n "$CLOUDFLARE_ACCOUNT_ID"
+      - name: Deploy already owner-approved authenticated preview at exact source revision
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler deploy --config cloudflare/mcp/wrangler.release.generated.toml
+      - name: Verify preview enabled and anonymous MCP remains protected
+        run: |
+          node --input-type=module <<'NODE'
+          const root='https://roygbiv-mcp.gamesbyian-roygbiv.workers.dev';
+          const health=await fetch(root+'/health',{cache:'no-store'});
+          if(!health.ok)throw Error('Health: '+health.status);
+          const j=await health.json();
+          if(j.status!=='auth-required'||j.rendering!=='auth-required')throw Error('Preview unavailable: '+JSON.stringify(j));
+          const anon=await fetch(root+'/mcp',{method:'POST',headers:{'content-type':'application/json','accept':'application/json, text/event-stream'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'tools/list',params:{}})});
+          if(anon.status!==401)throw Error('Anonymous MCP not refused: '+anon.status);
+          console.log('Live preview gate enabled; public health green; anonymous tools protected');
+          NODE
