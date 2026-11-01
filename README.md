@@ -73,6 +73,7 @@ Everything runs as a static, offline-friendly browser app with **no account, tra
 Open the [hosted studio](https://gamesbyian.github.io/wallgen/), or serve a local checkout with any static web server:
 
 ```bash
+node scripts/build-logo-raster.mjs  # Refresh PNG fallbacks from the authoritative SVG logos
 python3 -m http.server 4173
 ```
 
