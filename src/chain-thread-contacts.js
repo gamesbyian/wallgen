@@ -64,7 +64,8 @@ const intersectCubics=(lower,upper)=>{
       const hit=segmentIntersection(a[0],a[3],b[0],b[3],
         {minimumProduct:1e-8});
       if(hit&&!found.some(e=>Math.hypot(e.x-hit.x,e.y-hit.y)<.25))
-        found.push({x:hit.x,y:hit.y,lowerA:a[0],lowerB:a[3]});
+        found.push({x:hit.x,y:hit.y,lowerA:a[0],lowerB:a[3],
+          lowerCurve:a});
       continue;
     }
     const halvesA=splitCubic(a),halvesB=splitCubic(b);
