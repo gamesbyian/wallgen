@@ -111,7 +111,8 @@ export function traceThreadContactCapsule(ctx,a,b,width){
  * and the renderer's existing original-geometry ink mask; it cannot colour
  * an exposed rectangular corner beyond a stitch endpoint.
  * The upper stitch subsequently paints in unchanged source z order. */
-export function paintSatinThreadContacts(ctx,contacts,lighting,pitch,relief){
+export function paintSatinThreadContacts(ctx,contacts,lighting,pitch,relief,
+  {fibre=false}={}){
   if(!Array.isArray(contacts)||!contacts.length||!lighting||
     !finite(lighting.shadow)||lighting.shadow<=0)return 0;
   let painted=0;
@@ -128,11 +129,16 @@ export function paintSatinThreadContacts(ctx,contacts,lighting,pitch,relief){
     ctx.clip();
     // A local projected soft contact footprint (in authored world units).
     // No Canvas shadowBlur: an unbounded blur would bleed through the mask.
-    const radius=clamp(Math.max(width*1.65,pitch*.3),.5,pitch*.65);
+    // Fibre underlays are hairline strands, not broad tubular satin cords.
+    // A satin-sized opaque stamp at every true folded-ribbon contact piles
+    // into an unphysical dark patch. Keep a micron-scale, low-opacity touch
+    // confined to the *actual lower fibre* round capsule instead.
+    const radius=fibre?clamp(Math.min(width*.75,pitch*.18),.4,2):
+      clamp(Math.max(width*1.65,pitch*.3),.5,pitch*.65);
     ctx.beginPath();
     ctx.arc(hit.x+profile.shadowX,hit.y+profile.shadowY,radius,0,Math.PI*2);
     ctx.fillStyle='rgba('+profile.shadeRgb+','+
-      (.24*profile.shade).toFixed(3)+')';
+      ((fibre?.055:.24)*profile.shade).toFixed(3)+')';
     ctx.fill();
     ctx.restore();
     painted++;
