@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {chainLinkCurves,traceChainLink,chainLinkContactEvents} from '../src/chain-thread-contacts.js';
-import {drawRibbonEmbroidery,normalizeSurfaceTreatments,selectChainReplayContacts} from '../src/embroidery.js';
+import {drawRibbonEmbroidery,drawRegionEmbroidery,normalizeSurfaceTreatments,selectChainReplayContacts} from '../src/embroidery.js';
 import {sandLighting,sandRibbonLighting} from '../src/sand-lighting.js';
 import {findPathCrossings} from '../src/crossing-order.js';
 import {samplePath} from '../src/path-geometry.js';
@@ -18,6 +18,8 @@ function capture(){
   let path=[];
   return {ops,save(){ops.push(['save']);},
     restore(){ops.push(['restore']);},
+    translate(...v){ops.push(['translate',...v]);},
+    rotate(...v){ops.push(['rotate',...v]);},
     beginPath(){path=[];ops.push(['begin']);},
     moveTo(...v){path.push(['move',...v]);ops.push(['move',...v]);},
     lineTo(...v){path.push(['line',...v]);ops.push(['line',...v]);},
@@ -186,4 +188,36 @@ test('crossing replay shades only original selected chain stations and leaves un
     {start:-scene.extent,end:-scene.extent+45},light);
   assert.deepEqual(far.ops,baseline.ops,
     'unrelated crop may not replay a junction shadow');
+});
+
+test('real region chain rows illuminate only original consecutive linked cubics',()=>{
+  const treatment=style(),object={circle:{cx:300,cy:650,r:62}};
+  const daylight=lamp('top-left');
+  const dark=capture(),lit=capture(),darkAgain=capture();
+  const a=drawRegionEmbroidery(dark,object,treatment,null);
+  const b=drawRegionEmbroidery(lit,object,treatment,daylight);
+  const c=drawRegionEmbroidery(darkAgain,object,treatment,null);
+  assert.ok(a>100&&a===b&&b===c,
+    'world station rows and deterministic linked loop count cannot change');
+  assert.deepEqual(dark.ops,darkAgain.ops,
+    'the original no-light source chain must be byte-equivalent');
+  assert.ok(lit.ops.filter(x=>x[0]==='stroke').length>
+    dark.ops.filter(x=>x[0]==='stroke').length,
+    'lit region rows should shade actual interlocking lower source cords');
+  const w=Math.max(.7,Math.min(2.5,treatment.pitch*.25));
+  const contact=lit.ops.filter(x=>x[0]==='stroke'&&x[2]<w);
+  assert.ok(contact.length>0&&contact.length<a*2,
+    'contact work must be bounded by actual authored chain links');
+  assert.ok(contact.every(x=>x[2]===w*.62),
+    'local contact ink fits inside the lower original cubic cord');
+  assert.equal(lit.ops.filter(x=>x[0]==='fill'||x[0]==='clip').length,0,
+    'the region owns its even-odd clip; no fabric-wide rectangular mask');
+  assert.equal(lit.ops.filter(x=>x[0]==='rotate').length,1,
+    'all contacts use the original region-local rotated lamp');
+});
+test('a disconnected or degenerate region cannot create fabricated chain contact',()=>{
+  const invalid={vertices:[{x:NaN,y:10},{x:30,y:10}]};
+  const ctx=capture();
+  assert.equal(drawRegionEmbroidery(ctx,invalid,style(),lamp()),0);
+  assert.deepEqual(ctx.ops,[]);
 });

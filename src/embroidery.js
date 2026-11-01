@@ -481,10 +481,23 @@ export function drawRegionEmbroidery(ctx,object,treatment,lighting=null){
       const limit=diagonal*.8;
       const index=Math.floor((k+n)/chainStride);
       const offset=(index%2)*chainStep*.5;
+      // Real consecutive linked cubics intersect on each original row.
+      // Keep row-local source order and the existing even-odd object clip;
+      // adjacent parallel tatami rows have no such physical intersection.
+      let prior=null;
       for(let x=-limit+offset;x+chainStep<=limit;x+=chainStep){
-        chainLink(ctx,x+chainStep*.5,y,1,0,0,1,
-          chainStep*.51,Math.min(treatment.pitch*.74,chainStep*.29),
-          treatment.relief,localLight);
+        const cx=x+chainStep*.5,half=chainStep*.51;
+        const loft=Math.min(treatment.pitch*.74,chainStep*.29);
+        if(localLight?.shadow>0){
+          const curves=chainLinkCurves(cx,y,1,0,0,1,half,loft);
+          if(prior&&curves)paintChainLinkContact(ctx,prior,curves,
+            localLight,treatment.pitch,treatment.relief,ctx.lineWidth);
+          const profile=threadLightProfile(localLight,
+            cx-half,y,cx+half,y,Math.max(loft*2,1),treatment.relief);
+          prior=curves&&profile?{curves,profile}:null;
+        }
+        chainLink(ctx,cx,y,1,0,0,1,
+          half,loft,treatment.relief,localLight);
         stitches++;
       }
     }else if(shortRows){
