@@ -1,0 +1,76 @@
+name: One-shot source-matched embroidery light optics
+on:
+  pull_request:
+    branches: [main]
+    paths: [.github/workflows/once-embroidery-world-light.yml]
+permissions:
+  contents: read
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install matching Chromium
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Render candidate source-matched embroidery
+        run: node scripts/embroidery-world-light-browser.mjs > /tmp/thread-candidate.log
+      - name: Render prior main under same Chromium
+        run: |
+          set -euo pipefail
+          BASE="$RUNNER_TEMP/embroidery-before-light"
+          git worktree add --detach "$BASE" e6effc751b58acd3082beab4e898cbc993add085
+          cp scripts/embroidery-world-light-browser.mjs "$BASE/scripts/embroidery-world-light-browser.mjs"
+          ln -s "$GITHUB_WORKSPACE/node_modules" "$BASE/node_modules"
+          (cd "$BASE" && node scripts/embroidery-world-light-browser.mjs > /tmp/thread-baseline.log)
+      - name: Assert original unlit pixels and light-active source changes
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync,writeFileSync} from 'node:fs';
+          import {join} from 'node:path';
+          const base=JSON.parse(readFileSync(join(process.env.RUNNER_TEMP,
+            'embroidery-before-light/artifacts/embroidery-world-light/manifest.json'),'utf8'));
+          const next=JSON.parse(readFileSync(
+            'artifacts/embroidery-world-light/manifest.json','utf8'));
+          assert.equal(base.records.length,15);
+          assert.deepEqual(base.records.map(r=>r.id),next.records.map(r=>r.id));
+          const changed=[],unchanged=[];
+          for(let i=0;i<next.records.length;i++){
+            const a=base.records[i],b=next.records[i];
+            assert.deepEqual(a.hole,b.hole,'Embroidery changed true empty source hole: '+a.id);
+            assert.deepEqual(a.island,b.island,'Embroidery changed detached island source centre: '+a.id);
+            const equals=a.sha256===b.sha256;
+            if(a.id.endsWith('-off')){
+              assert(equals,'Lighting Off must be exact old pixels: '+a.id);
+              unchanged.push(a.id);
+            }else{
+              assert(!equals,'Directional thread response absent: '+a.id);
+              changed.push(a.id);
+            }
+          }
+          assert.equal(unchanged.length,5);
+          assert.equal(changed.length,10);
+          const summary={baseline:'e6effc751b58acd3082beab4e898cbc993add085',
+            candidate:process.env.GITHUB_SHA,unchanged,changed,
+            environment:'Same Linux headless Chromium, not Pixel or real thread physics'};
+          writeFileSync('artifacts/embroidery-world-light/paired-summary.json',
+            JSON.stringify(summary,null,2)+'\n');
+          console.log('EMBROIDERY_WORLD_LIGHT_SOURCE_MATCH_PASS',JSON.stringify(summary));
+          NODE
+      - name: Upload actual verified embroidery PNG and summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: embroidery-world-light-actual-art
+          path: artifacts/embroidery-world-light/
+          retention-days: 7
+          if-no-files-found: warn
