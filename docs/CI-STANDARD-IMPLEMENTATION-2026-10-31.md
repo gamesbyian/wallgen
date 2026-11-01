@@ -61,3 +61,12 @@ A Markdown-only Pages push **still publishes**: the exact main source stamp, imm
 ## Pages source configuration follow-up
 
 The repository owner reports changing **Settings → Pages → Build and deployment → Source** to **GitHub Actions**. The setting itself is external to this repository. Verify that a new main push launches only the intended `Publish Wallgen` workflow and that the actual Pages deployment succeeds before claiming the duplicate dynamic workflow is retired. Track the external verification in issue #940.
+
+
+## Generated-logo source authority and dispatch consolidation (PR #945, #946)
+
+Merged [#945](https://github.com/gamesbyian/wallgen/pull/945) guards the former logo-publishing bot against concurrent source revisions; its required exact-head quick CI [#41261755682](https://github.com/gamesbyian/wallgen/actions/runs/41261755682) passed. A deeper audit then found the standalone JavaScript rasterizer had its **own divergent hand-transcribed stripe endpoints** rather than reading the actual two SVG logo files. Merely preventing a stale branch push did not fix source-to-output correctness.
+
+[#946](https://github.com/gamesbyian/wallgen/pull/946) replaces those duplicate paths with SVG-authoritative source parsing and deterministic RGBA rendering; a source path/color edit changes the output, and unsupported SVG primitives fail visibly. The source-drift/PNG tests join the quick gate. The former write-enabled raster-bot workflow is archived and removed from active Actions; the existing Pages publisher now renders PNG PWA fallbacks from the same source SVGs before uploading its artifact. This also eliminates an extra branch write and redundant triggered workflow. Local static-server users are instructed to run the raster generation command when checking out new icon SVG revisions.
+
+**Status at authoring:** PR #946 pending exact-head CI, integration and a published Pages artifact check. No runner-minute savings, live Pages icon acceptance, or resolution of arbitrary future SVG syntax has yet been claimed. Existing checked-in PNG companions remain historical snapshots; deployed Pages PNGs are generated afresh. Review an actual Pages deployment after merge and compare one generated icon to the current SVG before marking this phase production-verified.

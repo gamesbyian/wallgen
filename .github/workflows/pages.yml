@@ -37,6 +37,10 @@ jobs:
       - name: Verify changed application
         if: ${{ steps.selection.outputs.tier != 'docs' }}
         run: npm run check:quick
+      # SVGs own icon geometry. Generate PWA PNG fallbacks inside the existing
+      # Pages artifact, without a second workflow or an automated branch push.
+      - name: Build PWA logo PNGs from source SVGs
+        run: node scripts/build-logo-raster.mjs
       # The hosted renderer refuses a mismatched or absent immutable commit
       # marker rather than silently drawing private recipes with newer assets.
       - name: Stamp exact published rendering revision
