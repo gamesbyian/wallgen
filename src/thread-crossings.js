@@ -13,7 +13,8 @@ const MAX_INTERSECTIONS=512;
 /** Only actual interior/interior transverse stitch centerline intersections
  * count as crossing contacts. Parallel/coplanar/endpoint touching yarn, close
  * nonintersecting neighbours and separate object owners produce no events.
- * The later source stitch is above by default; a caller-owned original\n * Over/Under/Weave decision may explicitly reverse this. Select a stable
+ * The later source stitch is above by default; a caller-owned original
+ * Over/Under/Weave decision may explicitly reverse this. Select a stable
  * crop-window subset of these full-source events for crossing replay.
  *
  * Each segment: {id,owner,course,sourceIndex,station,start:{x,y},
