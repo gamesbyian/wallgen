@@ -39,7 +39,7 @@ export function forEachSandGrain(layer,bounds,visit){
   // The normal full 600×1300 design is well below this hard safety ceiling;
   // never silently generate a partial/fabricated mineral field.
   if(![ix0,ix1,iy0,iy1,cellsX,cellsY].every(Number.isSafeInteger)||
-     cellsX*cellsY>2_000_000)
+     cellsX*cellsY>6_000_000)
     throw new RangeError('Sand grain crop exceeds safe source-coordinate lattice');
   for(let iy=iy0;iy<=iy1;iy++)for(let ix=ix0;ix<=ix1;ix++){
     const g=sandGrainAt(layer,ix,iy);
