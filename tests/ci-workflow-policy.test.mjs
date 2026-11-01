@@ -95,3 +95,17 @@ test('manual optical evidence cannot be cancelled by a later distinct request', 
   assert.match(logo, /group: logo-raster-/, 'Logo raster writes require branch serialization');
   assert.match(logo, /cancel-in-progress: false/, 'Do not interrupt branch write jobs');
 });
+
+test('main docs-only sanity fast path cannot suppress source stamping or trusted deployment', async () => {
+  const pages = await readFile(path.join(workflows, 'pages.yml'), 'utf8');
+  assert.match(pages, /fetch-depth: 2/);
+  assert.match(pages, /CI_BASE_SHA:/);
+  assert.match(pages, /CI_ALLOW_DOCS_PUSH: 'true'/);
+  assert.match(pages, /run: node scripts\/ci-select\.mjs/);
+  assert.match(pages, /run: node --test tests\/ci-select\.test\.mjs/);
+  assert.match(pages, /if: \$\{\{ steps\.selection\.outputs\.tier != 'docs' \}\}/);
+  assert.match(pages, /run: npm run check:quick/);
+  assert.match(pages, /roygbiv-render-version\.json/);
+  assert.match(pages, /trusted-renderer\/roygbiv-render-version\.json/);
+  assert.match(pages, /actions\/deploy-pages@v4/);
+});

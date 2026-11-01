@@ -49,3 +49,11 @@ The previously automatic **one-shot preview discovery** deployment workflow is n
 - **Rollback:** revert the PR to restore ordinary always-quick PR checks; leave hosted source pins and renderer release checks untouched.
 
 Do not conflate a passing Node suite with actual device touch, headless PNG art judgement, authenticated preview access, or source-preserving export proof.
+
+## Second implementation slice: exact main-push verification selection
+
+The initial PR gate has now passed [the real code/CI change run #41256856336](https://github.com/gamesbyian/wallgen/actions/runs/41256856336) and the post-merge documentation-only [run #41257029757](https://github.com/gamesbyian/wallgen/actions/runs/41257029757). Their respective completed job elapsed times were **80s and 6s** (full quick step **71s** on the former; docs-tier policy-only job on the latter). These are two different change types, not a controlled same-workload benchmark. The docs-only route genuinely executed policy tests and skipped the source suite, while retaining a green stable required context.
+
+A second focused CI change reuses the same fail-closed classifier for the main Pages publisher. It compares the exact GitHub push `before` SHA to the checked-out commit, only on `refs/heads/main` with an explicit publishing-workflow opt-in. All-zero, absent, unreachable or ambiguous ancestors and any non-Markdown, mixed, CI/dependency, manual or other branch event retain `check:quick`. The dedicated selector/policy tests run before deciding.
+
+A Markdown-only Pages push **still publishes**: the exact main source stamp, immutable trusted-renderer archive, and Pages upload/deployment steps remain unconditional. This removes only redundant Node app tests for content which cannot affect the runtime. The separate legacy dynamic Pages workflow remains a repository-settings issue [#940](https://github.com/gamesbyian/wallgen/issues/940). The new main-push fast route must not be described as production-verified until a genuine docs-only main push runs.
