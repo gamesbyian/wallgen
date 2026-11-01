@@ -1,4 +1,5 @@
 import {samplePath,widthAt} from './path-geometry.js';
+import {threadLightProfile,rotateThreadLighting} from './thread-lighting.js';
 
 // Surface roles are addressed by authored object IDs or semantic ROYGBIV
 // colour slots. This optional array is never inferred from legacy textures.
@@ -50,15 +51,35 @@ function stitchInk(ctx,brightness,relief){
   const alpha=(.10+relief/100*.24)*brightness;
   ctx.strokeStyle='rgba(255,255,255,'+alpha.toFixed(3)+')';
 }
+// A stitch-wide raised cord, with normal-facing anisotropic highlights and
+// height-projected contact shade. Caller retains exact authored vector clip,
+// stroke order, station grid and endpoint coordinates. Legacy rendering takes
+// the original non-lit path without entering this function.
+export function paintThreadRelief(ctx,ax,ay,bx,by,pitch,relief,
+  darkAlpha,lightAlpha,lighting){
+  const p=threadLightProfile(lighting,ax,ay,bx,by,pitch,relief);
+  if(!p)return false;
+  const path=(sx,sy)=>{
+    ctx.beginPath();ctx.moveTo(ax+sx,ay+sy);
+    ctx.lineTo(bx+sx,by+sy);ctx.stroke();
+  };
+  ctx.strokeStyle='rgba('+p.shadeRgb+','+
+    (darkAlpha*(.12+.88*p.shade)).toFixed(3)+')';
+  path(p.shadowX,p.shadowY);
+  ctx.strokeStyle='rgba('+p.highRgb+','+
+    (lightAlpha*p.shine).toFixed(3)+')';
+  path(p.highlightX,p.highlightY);
+  return true;
+}
 // Two curved thread spans close into a linked oval. The link is an actual
 // cubic path rather than a dashed straight stroke. Adjacent links meet at
 // exactly the same globally anchored ends, with the following loop visually
 // trapping its predecessor. Coordinates are supplied by the existing
 // tangent/normal of a path, or the region's rotated local coordinate frame.
 // Two restrained offset strokes suggest depth without recolouring the ink.
-function chainLink(ctx,x,y,tx,ty,nx,ny,half,loft,relief){
-  const loop=(shift)=>{
-    const cx=x+nx*shift,cy=y+ny*shift;
+function chainLink(ctx,x,y,tx,ty,nx,ny,half,loft,relief,lighting=null){
+  const loop=(shift,sx=0,sy=0)=>{
+    const cx=x+nx*shift+sx,cy=y+ny*shift+sy;
     const point=(along,across)=>[cx+tx*along+nx*across,
       cy+ty*along+ny*across];
     const a=point(-half,0),b=point(half,0);
@@ -68,8 +89,20 @@ function chainLink(ctx,x,y,tx,ty,nx,ny,half,loft,relief){
     ctx.bezierCurveTo(...upper1,...upper2,...b);
     ctx.bezierCurveTo(...lower1,...lower2,...a);
   };
-  loop(.42);ctx.strokeStyle='rgba(0,0,0,.20)';ctx.stroke();
-  loop(-.3);stitchInk(ctx,.68,relief);ctx.stroke();
+  const p=threadLightProfile(lighting,
+    x-tx*half,y-ty*half,x+tx*half,y+ty*half,Math.max(loft*2,1),relief);
+  if(p){
+    loop(0,p.shadowX,p.shadowY);
+    ctx.strokeStyle='rgba('+p.shadeRgb+','+(.2*(.12+.88*p.shade)).toFixed(3)+')';
+    ctx.stroke();
+    loop(0,p.highlightX,p.highlightY);
+    ctx.strokeStyle='rgba('+p.highRgb+','+
+      ((.10+relief/100*.24)*.68*p.shine).toFixed(3)+')';
+    ctx.stroke();
+  }else{
+    loop(.42);ctx.strokeStyle='rgba(0,0,0,.20)';ctx.stroke();
+    loop(-.3);stitchInk(ctx,.68,relief);ctx.stroke();
+  }
 }
 // Opt-in fibre appearance. An underlaid dark edge, two thin strands and a
 // softly interrupted glint respond to the *actual stitch direction*. Since
@@ -77,15 +110,18 @@ function chainLink(ctx,x,y,tx,ty,nx,ny,half,loft,relief){
 // not turn into opaque grey hatching. Every stroke is clipped by the caller's
 // original ribbon/compound path, including holes and detached islands.
 // All phase values are lattice indices, so crossing replays paint identically.
-function fibreSpan(ctx,ax,ay,bx,by,pitch,relief,phase){
+function fibreSpan(ctx,ax,ay,bx,by,pitch,relief,phase,lighting=null){
   const dx=bx-ax,dy=by-ay,length=Math.hypot(dx,dy);
   if(!Number.isFinite(length)||length<.75)return;
   const nx=-dy/length,ny=dx/length,depth=relief/100;
-  const light=(nx-ny)/Math.SQRT2; // stable upper-left grazing illumination
+  const profile=threadLightProfile(lighting,ax,ay,bx,by,pitch,relief);
+  const light=profile?profile.facing:(nx-ny)/Math.SQRT2;
   const side=light>=0?1:-1;
   const underlay=.03+depth*.085;
   const strand=.028+depth*.075;
-  const highlight=(.025+depth*.10)*(.55+.45*Math.abs(light));
+  const highlight=(.025+depth*.10)*(.55+.45*Math.abs(light))*
+    (profile?profile.shine:1);
+  const shadow=profile?profile.shade:1;
   const offset=Math.min(.64,Math.max(.25,pitch*.105));
   const path=(sx,sy,ex,ey)=>{
     ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(ex,ey);ctx.stroke();
@@ -93,27 +129,33 @@ function fibreSpan(ctx,ax,ay,bx,by,pitch,relief,phase){
   // Shallow underlay first; it belongs to this one stitch and does not shade
   // adjacent unstitched ink or the substrate outside the clipped surface.
   ctx.lineWidth=Math.min(3.2,Math.max(.8,pitch*.32));
-  ctx.strokeStyle='rgba(0,0,0,'+underlay.toFixed(3)+')';
-  path(ax+nx*.35+.18,ay+ny*.35+.18,bx+nx*.35+.18,by+ny*.35+.18);
+  ctx.strokeStyle='rgba('+(profile?profile.shadeRgb:'0,0,0')+','+
+    (underlay*shadow).toFixed(3)+')';
+  if(profile)path(ax+nx*.35+profile.shadowX,ay+ny*.35+profile.shadowY,
+    bx+nx*.35+profile.shadowX,by+ny*.35+profile.shadowY);
+  else path(ax+nx*.35+.18,ay+ny*.35+.18,bx+nx*.35+.18,by+ny*.35+.18);
   ctx.lineWidth=Math.min(.9,Math.max(.4,pitch*.115));
-  ctx.strokeStyle='rgba(0,0,0,'+strand.toFixed(3)+')';
+  ctx.strokeStyle='rgba('+(profile?profile.shadeRgb:'0,0,0')+','+
+    (strand*shadow).toFixed(3)+')';
   path(ax-nx*offset*side,ay-ny*offset*side,
     bx-nx*offset*side,by-ny*offset*side);
-  ctx.strokeStyle='rgba(255,255,255,'+highlight.toFixed(3)+')';
+  ctx.strokeStyle='rgba('+(profile?profile.highRgb:'255,255,255')+','+
+    highlight.toFixed(3)+')';
   path(ax+nx*offset*side,ay+ny*offset*side,
     bx+nx*offset*side,by+ny*offset*side);
   // Fibre twists interrupt specular reflection. Never use per-render RNG:
   // alternate the glint position on the original world-space stitch lattice.
   const start=(phase&1)? .13:.44,end=Math.min(.95,start+.32);
   ctx.lineWidth=Math.min(.65,Math.max(.32,pitch*.085));
-  ctx.strokeStyle='rgba(255,255,255,'+(highlight*.65).toFixed(3)+')';
+  ctx.strokeStyle='rgba('+(profile?profile.highRgb:'255,255,255')+','+
+    (highlight*.65).toFixed(3)+')';
   path(ax+dx*start+nx*offset*.4*side,ay+dy*start+ny*offset*.4*side,
     ax+dx*end+nx*offset*.4*side,ay+dy*end+ny*offset*.4*side);
 }
 /** Draw transverse thread ribs along the same tangent/normal path as ribbon geometry.
  * Caller establishes the actual stripe footprint as the active clipping mask.
  */
-export function drawRibbonEmbroidery(ctx,stripe,extent,treatment,range=null){
+export function drawRibbonEmbroidery(ctx,stripe,extent,treatment,range=null,lighting=null){
   if(!treatment||!Number.isFinite(extent)||extent<=0)return 0;
   const step=treatment.pitch;
   const gentle=treatment.style==='satin-soft';
@@ -169,7 +211,7 @@ export function drawRibbonEmbroidery(ctx,stripe,extent,treatment,range=null){
           Math.max(.20,spacing/linkStep)/.94);
         const loft=Math.min(step*.72,half*.62,halfWidth*.48);
         chainLink(ctx,cx,cy,p.tx,p.ty,p.nx,p.ny,
-          half,loft,treatment.relief);
+          half,loft,treatment.relief,lighting);
         count++;
       }
     }
@@ -200,10 +242,13 @@ export function drawRibbonEmbroidery(ctx,stripe,extent,treatment,range=null){
       for(const lane of [-.68,0,.68]){
         const ax=a.x+a.nx*aw*lane,ay=a.y+a.ny*aw*lane;
         const bx=b.x+b.nx*bw*lane,by=b.y+b.ny*bw*lane;
-        ctx.beginPath();ctx.moveTo(ax+.48,ay+.48);ctx.lineTo(bx+.48,by+.48);
-        ctx.strokeStyle='rgba(0,0,0,.31)';ctx.stroke();
-        ctx.beginPath();ctx.moveTo(ax-.38,ay-.38);ctx.lineTo(bx-.38,by-.38);
-        stitchInk(ctx,1,treatment.relief);ctx.stroke();
+        if(!paintThreadRelief(ctx,ax,ay,bx,by,step,treatment.relief,
+          .31,.10+treatment.relief/100*.24,lighting)){
+          ctx.beginPath();ctx.moveTo(ax+.48,ay+.48);ctx.lineTo(bx+.48,by+.48);
+          ctx.strokeStyle='rgba(0,0,0,.31)';ctx.stroke();
+          ctx.beginPath();ctx.moveTo(ax-.38,ay-.38);ctx.lineTo(bx-.38,by-.38);
+          stitchInk(ctx,1,treatment.relief);ctx.stroke();
+        }
         count++;
       }
     }
@@ -226,12 +271,15 @@ export function drawRibbonEmbroidery(ctx,stripe,extent,treatment,range=null){
     const w=widthAt(stripe,station,extent)*.485;
     if(!Number.isFinite(w)||w<=0)continue;
     const ax=p.x-p.nx*w,ay=p.y-p.ny*w,bx=p.x+p.nx*w,by=p.y+p.ny*w;
-    if(fibre){fibreSpan(ctx,ax,ay,bx,by,step,treatment.relief,i);count++;continue;}
+    if(fibre){fibreSpan(ctx,ax,ay,bx,by,step,treatment.relief,i,lighting);count++;continue;}
     // Dark underlay and offset bright ridge create a restrained raised cord.
-    ctx.beginPath();ctx.moveTo(ax+.55,ay+.55);ctx.lineTo(bx+.55,by+.55);
-    ctx.strokeStyle=gentle?'rgba(0,0,0,.11)':'rgba(0,0,0,.31)';ctx.stroke();
-    ctx.beginPath();ctx.moveTo(ax-.42,ay-.42);ctx.lineTo(bx-.42,by-.42);
-    stitchInk(ctx,gentle?.43:1,treatment.relief);ctx.stroke();
+    if(!paintThreadRelief(ctx,ax,ay,bx,by,step,treatment.relief,
+      gentle?.11:.31,(.10+treatment.relief/100*.24)*(gentle?.43:1),lighting)){
+      ctx.beginPath();ctx.moveTo(ax+.55,ay+.55);ctx.lineTo(bx+.55,by+.55);
+      ctx.strokeStyle=gentle?'rgba(0,0,0,.11)':'rgba(0,0,0,.31)';ctx.stroke();
+      ctx.beginPath();ctx.moveTo(ax-.42,ay-.42);ctx.lineTo(bx-.42,by-.42);
+      stitchInk(ctx,gentle?.43:1,treatment.relief);ctx.stroke();
+    }
     count++;
   }
   ctx.restore();
@@ -257,7 +305,7 @@ const regionBounds=object=>{
 /** Fill with crossed half-tone rows clipped by the caller's even-odd region
  * path (including holes and disjoint imported islands). No mask allocations.
  */
-export function drawRegionEmbroidery(ctx,object,treatment){
+export function drawRegionEmbroidery(ctx,object,treatment,lighting=null){
   if(!treatment)return 0;
   const {left,right,top,bottom}=regionBounds(object);
   if(![left,right,top,bottom].every(Number.isFinite))return 0;
@@ -279,7 +327,9 @@ export function drawRegionEmbroidery(ctx,object,treatment){
   let stitches=0;
   ctx.save();
   ctx.translate((left+right)/2,(top+bottom)/2);
-  ctx.rotate((treatment.direction+((height>width)?90:0))*Math.PI/180);
+  const angle=(treatment.direction+((height>width)?90:0))*Math.PI/180;
+  ctx.rotate(angle);
+  const localLight=rotateThreadLighting(lighting,angle);
   ctx.lineCap='round';
   ctx.lineWidth=Math.max(.7,Math.min(2.5,treatment.pitch*.25));
   // Chain fills need fewer, distinct loop courses than closely stacked
@@ -299,7 +349,7 @@ export function drawRegionEmbroidery(ctx,object,treatment){
       for(let x=-limit+offset;x+chainStep<=limit;x+=chainStep){
         chainLink(ctx,x+chainStep*.5,y,1,0,0,1,
           chainStep*.51,Math.min(treatment.pitch*.74,chainStep*.29),
-          treatment.relief);
+          treatment.relief,localLight);
         stitches++;
       }
     }else if(shortRows){
@@ -311,25 +361,32 @@ export function drawRegionEmbroidery(ctx,object,treatment){
         if(b-a<1)continue;
         if(fibre){
           fibreSpan(ctx,a,y,b,y,treatment.pitch,treatment.relief,
-            k*8191+Math.floor((x+limit+segment)/segment));
+            k*8191+Math.floor((x+limit+segment)/segment),localLight);
           stitches++;continue;
         }
-        ctx.beginPath();ctx.moveTo(a,y+.5);ctx.lineTo(b,y+.5);
-        ctx.strokeStyle='rgba(0,0,0,.25)';ctx.stroke();
-        ctx.beginPath();ctx.moveTo(a,y-.5);ctx.lineTo(b,y-.5);
-        stitchInk(ctx,.82,treatment.relief);ctx.stroke();
+        if(!paintThreadRelief(ctx,a,y,b,y,treatment.pitch,treatment.relief,
+          .25,(.10+treatment.relief/100*.24)*.82,localLight)){
+          ctx.beginPath();ctx.moveTo(a,y+.5);ctx.lineTo(b,y+.5);
+          ctx.strokeStyle='rgba(0,0,0,.25)';ctx.stroke();
+          ctx.beginPath();ctx.moveTo(a,y-.5);ctx.lineTo(b,y-.5);
+          stitchInk(ctx,.82,treatment.relief);ctx.stroke();
+        }
         stitches++;
       }
     }else{
       if(fibre){
         fibreSpan(ctx,-diagonal*.8,y,diagonal*.8,y,
-          treatment.pitch,treatment.relief,k);
+          treatment.pitch,treatment.relief,k,localLight);
         stitches++;continue;
       }
-      ctx.beginPath();ctx.moveTo(-diagonal*.8,y+.5);ctx.lineTo(diagonal*.8,y+.5);
-      ctx.strokeStyle=gentle?'rgba(0,0,0,.09)':'rgba(0,0,0,.25)';ctx.stroke();
-      ctx.beginPath();ctx.moveTo(-diagonal*.8,y-.5);ctx.lineTo(diagonal*.8,y-.5);
-      stitchInk(ctx,gentle?.37:.82,treatment.relief);ctx.stroke();
+      if(!paintThreadRelief(ctx,-diagonal*.8,y,diagonal*.8,y,
+        treatment.pitch,treatment.relief,gentle?.09:.25,
+        (.10+treatment.relief/100*.24)*(gentle?.37:.82),localLight)){
+        ctx.beginPath();ctx.moveTo(-diagonal*.8,y+.5);ctx.lineTo(diagonal*.8,y+.5);
+        ctx.strokeStyle=gentle?'rgba(0,0,0,.09)':'rgba(0,0,0,.25)';ctx.stroke();
+        ctx.beginPath();ctx.moveTo(-diagonal*.8,y-.5);ctx.lineTo(diagonal*.8,y-.5);
+        stitchInk(ctx,gentle?.37:.82,treatment.relief);ctx.stroke();
+      }
       stitches++;
     }
   }
