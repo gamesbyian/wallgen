@@ -92,3 +92,16 @@ test('renderer clips echo deposits to actual source fill and replays source stat
   assert.match(code,/paintSandRibbonEchoes\(g,stripe,scene\.extent,sandEchoes,/);
   assert.match(code,/station=>widthAt\(stripe,station,scene\.extent\),\{start,end\}\)/);
 });
+
+
+test('nonprogressing extreme integer stations refuse optional echoes without any strokes',()=>{
+  const stripe={coreExtent:1e20,segmentStart:1e20,segmentEnd:1e20+1e9};
+  let sampled=0;
+  const c=ctx();
+  assert.equal(paintSandRibbonEchoes(c,stripe,1e21,styles(),
+    ()=>{sampled++;return {x:0,y:0};},
+    ()=>{sampled++;return {x:0,y:0};},
+    ()=>{sampled++;return 50;}),0);
+  assert.equal(sampled,0);
+  assert.equal(c.events.length,0,'source-unsafe decorative paths draw no surrogate geometry');
+});
