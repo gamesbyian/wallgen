@@ -71,3 +71,17 @@ jobs:
           path: .
       - id: deployment
         uses: actions/deploy-pages@v4
+      # A successful upload is not proof the public site serves these exact
+      # bytes. Check the live commit, trusted-renderer pin and both PNGs.
+      - name: Verify public deployed artifacts
+        env:
+          PAGES_DEPLOY_URL: ${{ steps.deployment.outputs.page_url }}
+        run: node scripts/ci-evidence.mjs pages-publish -- node scripts/verify-pages-publication.mjs
+      - name: Upload publication failure digest
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wallgen-pages-failure-${{ github.run_id }}
+          path: artifacts/ci/*.json
+          retention-days: 7
+          if-no-files-found: ignore
