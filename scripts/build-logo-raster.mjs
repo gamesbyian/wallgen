@@ -1,49 +1,91 @@
-// Dependency-free raster companions for the repository's two SVG logo variants.
-// Keep the geometry and palette here matched to assets/roygbiv-logo-*.svg.
-import {readFileSync,writeFileSync} from 'node:fs';
-import {deflateSync} from 'node:zlib';
-import {fileURLToPath} from 'node:url';
-import {dirname,resolve} from 'node:path';
+// Render the current SVG logo geometry, not a separately hard-coded approximation.
+// Unsupported edits fail visibly rather than silently shipping stale PNG images.
+import { readFileSync, writeFileSync } from 'node:fs';
+import { deflateSync } from 'node:zlib';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
 
-const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
-const SIZE=512;
-const COLORS=['#ff474e','#ff9b39','#ffe25b','#4fdd87','#53aaff','#6359e5','#bb64ed'];
-const EDGES=[[12,40,107,14],[8,52,67,35],[23,61,111,36],
-  [12,74,110,48],[10,87,78,68],[17,97,111,72],[40,100,100,84]];
-const rgb=(hex)=>[parseInt(hex.slice(1,3),16),parseInt(hex.slice(3,5),16),parseInt(hex.slice(5,7),16)];
-const colors=COLORS.map(rgb);
-const dist=(x,y,ax,ay,bx,by)=>{
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const SIZE = 512;
+const number = '(-?\\d+(?:\\.\\d+)?)';
+const hex = '(#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?)';
+const rgb = (color) => {
+  const h = color.slice(1);
+  const value = h.length === 3 ? [...h].map(c => c + c) : [h.slice(0,2),h.slice(2,4),h.slice(4,6)];
+  return value.map(c => parseInt(c, 16));
+};
+const requireMatch = (source, regex, detail) => {
+  const match = source.match(regex);
+  if (!match) throw new Error('Unsupported logo SVG: ' + detail);
+  return match;
+};
+
+export function parseLogoSvg(source) {
+  if (!/<svg\s[^>]*viewBox="0 0 120 120"[^>]*>/.test(source) ||
+      (source.match(/<rect\b/g) || []).length !== 2 ||
+      (source.match(/<path\b/g) || []).length !== 8 ||
+      (source.match(/<g\b/g) || []).length !== 2 ||
+      /<(?:circle|ellipse|polygon|polyline|line|image|text|use|foreignObject)\b/i.test(source)) {
+    throw new Error('Unsupported logo SVG: unexpected drawing elements or dimensions');
+  }
+  const outer = requireMatch(source, new RegExp('<g transform="translate\\(' + number + ' ' + number + '\\)"\\s*>'), 'outer translation');
+  const inner = requireMatch(source, new RegExp('<g transform="translate\\(' + number + ' ' + number + '\\)" fill="none" stroke-width="' + number + '" stroke-linecap="round"\\s*>'), 'band transform or round stroke');
+  const background = requireMatch(source, new RegExp('<rect width="120" height="120" rx="' + number + '" fill="' + hex + '"\\s*/>'), 'rounded background');
+  const frame = requireMatch(source, new RegExp('<rect x="' + number + '" y="' + number + '" width="' + number + '" height="' + number + '" rx="' + number + '" fill="none"\\s+stroke="' + hex + '" stroke-width="' + number + '"\\s*/>'), 'phone frame');
+  const detail = requireMatch(source, new RegExp('<path d="([^"]+)" fill="none" stroke="' + hex + '"\\s+stroke-width="' + number + '" stroke-linecap="round"\\s*/>'), 'phone detail');
+  const strokes = [...source.matchAll(new RegExp('<path stroke="' + hex + '" d="M' + number + ' ' + number + ' L' + number + ' ' + number + '"\\s*/>', 'g'))];
+  if (strokes.length !== 7) throw new Error('Unsupported logo SVG: expected exactly seven simple rainbow paths');
+  const detailSegments = [...detail[1].matchAll(new RegExp('M' + number + ' ' + number + ' H' + number, 'g'))];
+  if (detailSegments.length !== 2 || detail[1].replace(new RegExp('M' + number + ' ' + number + ' H' + number, 'g'), '').trim() !== '') {
+    throw new Error('Unsupported logo SVG: expected two horizontal phone details');
+  }
+  const [ox, oy] = [Number(outer[1]), Number(outer[2])];
+  const [ix, iy, width] = [Number(inner[1]), Number(inner[2]), Number(inner[3])];
+  const [fx, fy, fw, fh, fr, fc, fs] = frame.slice(1);
+  const [bgRadius, bg] = background.slice(1);
+  const [, detailPath, detailColor, detailWidth] = detail;
+  const model = {
+    background: rgb(bg), bgRadius: Number(bgRadius),
+    bands: strokes.map(m => ({ color: rgb(m[1]), segment: [Number(m[2]) + ox + ix, Number(m[3]) + oy + iy, Number(m[4]) + ox + ix, Number(m[5]) + oy + iy], width })),
+    frame: { x: Number(fx) + ox, y: Number(fy) + oy, width: Number(fw), height: Number(fh), radius: Number(fr), color: rgb(fc), stroke: Number(fs) },
+    details: detailSegments.map(m => ({ segment: [Number(m[1]) + ox, Number(m[2]) + oy, Number(m[3]) + ox, Number(m[2]) + oy], width: Number(detailWidth), color: rgb(detailColor) })),
+  };
+  if (![bgRadius, ox, oy, ix, iy, width, fx, fy, fw, fh, fr, fs, detailWidth].every(v => Number.isFinite(Number(v))) ||
+      [width, fw, fh, fr, fs, detailWidth, bgRadius].some(v => Number(v) <= 0)) throw new Error('Unsupported logo SVG: invalid geometry');
+  return model;
+}
+
+const distance = (x,y,ax,ay,bx,by) => {
   const dx=bx-ax,dy=by-ay,den=dx*dx+dy*dy;
-  const t=Math.max(0,Math.min(1,((x-ax)*dx+(y-ay)*dy)/den));
+  const t=den>0 ? Math.max(0,Math.min(1,((x-ax)*dx+(y-ay)*dy)/den)) : 0;
   return Math.hypot(x-(ax+t*dx),y-(ay+t*dy));
 };
-function roundedDistance(x,y,cx,cy,hw,hh,r){
+function roundedDistance(x,y,cx,cy,hw,hh,r) {
   const qx=Math.abs(x-cx)-(hw-r),qy=Math.abs(y-cy)-(hh-r);
   return Math.hypot(Math.max(qx,0),Math.max(qy,0))+Math.min(Math.max(qx,qy),0)-r;
 }
-function sample(x,y,light){
-  const bg=light?[255,249,238]:[5,6,8],ink=light?[17,19,26]:[255,255,255];
-  if(roundedDistance(x,y,60,60,60,60,15)>0)return [0,0,0,0];
-  let result=bg;
-  // RGB bands are part of the same 2.4-unit upward offset as the SVG.
-  for(let i=0;i<EDGES.length;i++){
-    const [ax,ay,bx,by]=EDGES[i];
-    if(dist(x,y,ax,ay-2.4,bx,by-2.4)<=4.5)result=colors[i];
+function sample(x,y,icon) {
+  if (roundedDistance(x,y,60,60,60,60,icon.bgRadius)>0) return [0,0,0,0];
+  let result=icon.background;
+  for (const band of icon.bands) {
+    if (distance(x,y,...band.segment) <= band.width / 2) result=band.color;
   }
-  if(Math.abs(roundedDistance(x,y,60.5,60,26.5,47,10))<=1.25 ||
-    dist(x,y,50,21,71,21)<=.85 ||
-    dist(x,y,55,99,66,99)<=.85)result=ink;
+  const f=icon.frame;
+  if (Math.abs(roundedDistance(x,y,f.x+f.width/2,f.y+f.height/2,f.width/2,f.height/2,f.radius)) <= f.stroke/2) result=f.color;
+  for (const detail of icon.details) {
+    if (distance(x,y,...detail.segment) <= detail.width/2) result=detail.color;
+  }
   return [...result,255];
 }
-function crc32(bytes){
+function crc32(bytes) {
   let crc=0xffffffff;
-  for(const b of bytes){
+  for (const b of bytes) {
     crc^=b;
-    for(let i=0;i<8;i++)crc=(crc&1)?(crc>>>1)^0xedb88320:crc>>>1;
+    for (let i=0;i<8;i++) crc=(crc&1)?(crc>>>1)^0xedb88320:crc>>>1;
   }
   return (crc^0xffffffff)>>>0;
 }
-function chunk(type,data){
+function chunk(type,data) {
   const name=Buffer.from(type,'ascii');
   const out=Buffer.alloc(12+data.length);
   out.writeUInt32BE(data.length,0);
@@ -51,34 +93,35 @@ function chunk(type,data){
   out.writeUInt32BE(crc32(out.subarray(4,out.length-4)),out.length-4);
   return out;
 }
-function render(light){
+export function rasterizeLogoSvg(source) {
+  const icon = parseLogoSvg(source);
   const raw=Buffer.alloc((1+SIZE*4)*SIZE);
   const steps=3,n=steps*steps;
-  for(let y=0;y<SIZE;y++){
+  for (let y=0;y<SIZE;y++) {
     const row=y*(1+SIZE*4);
-    for(let x=0;x<SIZE;x++){
+    for (let x=0;x<SIZE;x++) {
       const rgba=[0,0,0,0];
-      for(let sy=0;sy<steps;sy++)for(let sx=0;sx<steps;sx++){
-        const pixel=sample((x+(sx+.5)/steps)*120/SIZE,(y+(sy+.5)/steps)*120/SIZE,light);
-        for(let c=0;c<4;c++)rgba[c]+=pixel[c];
+      for (let sy=0;sy<steps;sy++) for (let sx=0;sx<steps;sx++) {
+        const pixel=sample((x+(sx+.5)/steps)*120/SIZE,(y+(sy+.5)/steps)*120/SIZE,icon);
+        for (let c=0;c<4;c++) rgba[c]+=pixel[c];
       }
-      for(let c=0;c<4;c++)raw[row+1+x*4+c]=Math.round(rgba[c]/n);
+      for (let c=0;c<4;c++) raw[row+1+x*4+c]=Math.round(rgba[c]/n);
     }
   }
   const ihdr=Buffer.alloc(13);
   ihdr.writeUInt32BE(SIZE,0);ihdr.writeUInt32BE(SIZE,4);ihdr[8]=8;ihdr[9]=6;
-  const png=Buffer.concat([
+  return Buffer.concat([
     Buffer.from('89504e470d0a1a0a','hex'),
     chunk('IHDR',ihdr),chunk('IDAT',deflateSync(raw,{level:9})),
     chunk('IEND',Buffer.alloc(0)),
   ]);
-  return png;
 }
-for(const light of [false,true]){
-  const theme=light?'cream':'dark';
-  const svg=readFileSync(resolve(root,'assets',`roygbiv-logo-${theme}.svg`),'utf8');
-  for(const color of COLORS)if(!svg.includes(color))throw Error(`SVG palette mismatch in ${theme}`);
-  const file=resolve(root,'assets',`roygbiv-logo-${theme}.png`);
-  writeFileSync(file,render(light));
-  console.log(`${file}: 512×512 RGBA raster`);
+
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  for (const theme of ['dark','cream']) {
+    const source = readFileSync(resolve(root,'assets','roygbiv-logo-'+theme+'.svg'),'utf8');
+    const file = resolve(root,'assets','roygbiv-logo-'+theme+'.png');
+    writeFileSync(file,rasterizeLogoSvg(source));
+    console.log(file + ': 512×512 RGBA raster from SVG geometry');
+  }
 }
