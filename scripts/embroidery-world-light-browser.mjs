@@ -43,7 +43,13 @@ const region=(style)=>normalizeRecipe({
   ...compoundStitchRecipe('thread-world-lamp-compound'),
   surfaceTreatments:[treatment(style)]
 });
+const chainJunction=normalizeRecipe({...ribbon('chain'),
+  geometry:'drawn',customPath:[[.2,.2],[.8,.8],[.2,.8],[.8,.2]],
+  stripeWidth:100,spread:45,geometrySafety:false});
 const styles=[
+  ['chain-cross-over',normalizeRecipe({...chainJunction,crossingMode:'over'})],
+  ['chain-cross-under',normalizeRecipe({...chainJunction,crossingMode:'under'})],
+  ['chain-cross-weave',normalizeRecipe({...chainJunction,crossingMode:'weave'})],
   ['ribbon-satin',ribbon('satin')],
   ['ribbon-chain',ribbon('chain')],
   // Full-source linked cord overlap is guaranteed along an open straight
