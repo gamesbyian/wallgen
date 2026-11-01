@@ -1187,7 +1187,7 @@ export function drawWallpaper(canvas, recipe, options={}) {
             g.clip(stripeFillPath(branch,scene.extent,scene));
             let replayContacts=null;
             if(scene.crossingMode!=='over'&&ribbonLight&&
-              (stitch.style==='satin'||stitch.style==='satin-soft')){
+              ['satin','satin-soft','satin-fibre','tatami-fibre'].includes(stitch.style)){
               if(!replayPlans.has(stripe))
                 replayPlans.set(stripe,planSatinThreadContacts(
                   stripe,scene.extent,stitch,ribbonLight));
