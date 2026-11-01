@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {resolveScene} from '../src/model.js';
 import {sandLighting,sandRibbonLighting} from '../src/sand-lighting.js';
+import {samplePath,widthAt} from '../src/path-geometry.js';
+import {threadLightProfile} from '../src/thread-lighting.js';
 import {normalizeSurfaceTreatments,drawRibbonEmbroidery} from '../src/embroidery.js';
 import {planSatinThreadContacts,paintSatinThreadContacts,traceThreadContactCapsule,selectSatinReplayContacts} from '../src/thread-contact-shadows.js';
 import {threadCrossingGraph} from '../src/thread-crossings.js';
@@ -247,4 +249,94 @@ test('only original top station receives replay contact ink before its own stitc
   drawRibbonEmbroidery(noLight,stripe,extent,style,range,null,
     {replayContacts:selected});
   assert.equal(noLight.operations.filter(op=>op[0]==='clip').length,0);
+});
+
+
+test('ribbon fibre contact topology follows its actual projected underlay, not satin width',()=>{
+  const scene=resolveScene({
+    seed:'fibre-source-real-figure-eight',geometry:'drawn',structure:'paths',
+    construction:'ribbon',motif:'solid',
+    customPath:[[.2,.2],[.8,.8],[.2,.8],[.8,.2]],
+    stripeWidth:90,spread:45
+  });
+  const stripe=scene.stripes[3],extent=scene.extent;
+  const light=lamp(),fibre=thread('satin-fibre');
+  const plan=planSatinThreadContacts(stripe,extent,fibre,light);
+  const tatami=planSatinThreadContacts(stripe,extent,thread('tatami-fibre'),light);
+  const satin=planSatinThreadContacts(stripe,extent,thread(),light);
+  assert.ok(plan&&tatami&&satin);
+  assert.ok(plan.segments.length>100);
+  assert.ok(plan.contacts>0,
+    'only original transverse fibre underlays may generate true contacts');
+  assert.equal(plan.contacts,tatami.contacts,
+    'ribbon satin-fibre and tatami-fibre use the same actual original underlay');
+  const actualWidth=Math.min(3.2,Math.max(.8,fibre.pitch*.32));
+  const found=plan.segments.find(item=>item.sourceIndex>5);
+  assert.equal(found.width,actualWidth);
+  const station=found.station,p=samplePath(stripe,station,extent),
+    w=widthAt(stripe,station,extent)*.485;
+  const start={x:p.x-p.nx*w,y:p.y-p.ny*w},
+    end={x:p.x+p.nx*w,y:p.y+p.ny*w};
+  const dx=end.x-start.x,dy=end.y-start.y,l=Math.hypot(dx,dy);
+  const nx=-dy/l,ny=dx/l;
+  const profile=threadLightProfile(light,start.x,start.y,
+    end.x,end.y,fibre.pitch,fibre.relief);
+  assert.ok(profile);
+  const shiftX=nx*.35+profile.shadowX,shiftY=ny*.35+profile.shadowY;
+  assert.ok(Math.abs(found.start.x-start.x-shiftX)<1e-8);
+  assert.ok(Math.abs(found.start.y-start.y-shiftY)<1e-8);
+  assert.ok(Math.abs(found.end.x-end.x-shiftX)<1e-8);
+  assert.ok(Math.abs(found.end.y-end.y-shiftY)<1e-8);
+  assert.notEqual(found.start.x,satin.segments.find(x=>x.sourceIndex===found.sourceIndex)?.start.x,
+    'fibre uses exact light-projected lower ink rather than satin default source mask');
+  assert.equal(planSatinThreadContacts(stripe,extent,fibre,null),null);
+});
+
+test('fibre is shaded only at real source contact stations, never all coloured substrate',()=>{
+  const scene=resolveScene({
+    seed:'fibre-contact-complete',structure:'paths',geometry:'drawn',
+    customPath:[[.2,.2],[.8,.8],[.2,.8],[.8,.2]],
+    construction:'ribbon',stripeWidth:90,spread:45
+  });
+  const stripe=scene.stripes[3],style=thread('satin-fibre'),light=lamp();
+  const before=capture(),after=capture(),unlit=capture();
+  const a=drawRibbonEmbroidery(before,stripe,scene.extent,style,null,light);
+  const b=drawRibbonEmbroidery(after,stripe,scene.extent,style,null,light,
+    {contactShadows:true});
+  assert.equal(a,b,'original fibre stitch station/strand counts must stay intact');
+  assert.ok(after.operations.filter(op=>op[0]==='clip').length>0,
+    'actual crossing contacts should be clipped to the previously drawn fibre underlay');
+  assert.equal(before.operations.filter(op=>op[0]==='clip').length,0);
+  drawRibbonEmbroidery(unlit,stripe,scene.extent,style,null,null,{contactShadows:true});
+  assert.equal(unlit.operations.filter(op=>op[0]==='clip').length,0);
+  const clipped=capture();
+  const range={start:-scene.extent*.1,end:scene.extent*.1};
+  drawRibbonEmbroidery(clipped,stripe,scene.extent,style,range,light,
+    {contactShadows:true});
+  assert.equal(clipped.operations.filter(op=>op[0]==='clip').length,0,
+    'cropped replay must not independently construct a partial contact graph');
+});
+
+
+test('fine fibre contact remains a narrow translucent cue, never satin-sized ink',()=>{
+  const lower=mark('fibre-lower',[0,0],[20,20],1),
+    upper=mark('fibre-upper',[0,20],[20,0],8);
+  const hit=threadCrossingGraph([lower,upper])[0];
+  assert.ok(hit);
+  const item={hit,top:upper,bottom:lower},light=lamp();
+  const satin=capture(),fibre=capture();
+  paintSatinThreadContacts(satin,[item],light,7,90);
+  paintSatinThreadContacts(fibre,[item],light,7,90,{fibre:true});
+  const circle=ctx=>ctx.operations.filter(op=>op[0]==='arc').at(-1);
+  const ink=ctx=>ctx.operations.find(op=>op[0]==='fill')[1];
+  assert.ok(circle(fibre)[3]<circle(satin)[3],
+    'fibre contact must have a smaller source-world radius');
+  const alpha=val=>Number(val.match(/,([0-9.]+)\)$/)?.[1]);
+  assert.ok(alpha(ink(fibre))>0&&alpha(ink(fibre))<
+    alpha(ink(satin))*.3,
+    'many genuine fine-fibre intersections must not accumulate satin-sized darkness');
+  assert.deepEqual(
+    fibre.operations.find(op=>op[0]==='clip')[1],
+    satin.operations.find(op=>op[0]==='clip')[1],
+    'material response can differ without changing the original lower yarn mask');
 });

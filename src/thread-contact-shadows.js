@@ -13,12 +13,13 @@ const finite=Number.isFinite;
 const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
 /** Pure full-original-source plan. Never make one from a crossing replay's
  * cropped station range: it would lose the original lower/upper relationship.
- * This slice supports actual satin/satin-soft ribbon segments only; chain
- * cubics, fibres and region rows need separate topology-specific models. */
+ * Satin/soft satin and the ribbon fibre finishes share an original station
+ * lattice, but their true lower-ink footprints differ. Chain cubics and
+ * region courses need separate topology-specific curve/row models. */
 export function planSatinThreadContacts(stripe,extent,treatment,lighting){
   if(!stripe||!treatment||!lighting||!finite(extent)||extent<=0||
     !finite(treatment.pitch)||treatment.pitch<=0||
-    !['satin','satin-soft'].includes(treatment.style)||
+    !['satin','satin-soft','satin-fibre','tatami-fibre'].includes(treatment.style)||
     !finite(lighting.shadow)||lighting.shadow<=0)return null;
   // Initial optical scope is truly returning/self-crossing ribbons. Normal
   // straight, wave and hairpin surfaces retain their existing fast lighting
@@ -34,7 +35,13 @@ export function planSatinThreadContacts(stripe,extent,treatment,lighting){
   if(!finite(start)||!finite(end)||end<start)return null;
   const first=Math.max(0,Math.ceil((start+extent)/interval-1e-9));
   const last=Math.min(2500,Math.floor((end+extent)/interval+1e-9));
-  const inkWidth=clamp(step*.26,.7,2.5);
+  const fibre=treatment.style==='satin-fibre'||
+    treatment.style==='tatami-fibre';
+  // Actual fibreSpan() draws its dark underlaid yarn in this width at
+  // +0.35 normal and the same world-lamp projected contact offset. A satin
+  // contact-width approximation would shade naked coloured substrate.
+  const inkWidth=fibre?Math.min(3.2,Math.max(.8,step*.32)):
+    clamp(step*.26,.7,2.5);
   const segments=[];
   for(let i=first;i<=last;i++){
     const station=-extent+i*interval;
@@ -45,6 +52,17 @@ export function planSatinThreadContacts(stripe,extent,treatment,lighting){
     const a={x:p.x-p.nx*w,y:p.y-p.ny*w},
       b={x:p.x+p.nx*w,y:p.y+p.ny*w};
     if(![a.x,a.y,b.x,b.y].every(finite))continue;
+    if(fibre){
+      const dx=b.x-a.x,dy=b.y-a.y,length=Math.hypot(dx,dy);
+      if(length<.75)continue;
+      const normalX=-dy/length,normalY=dx/length;
+      const profile=threadLightProfile(lighting,a.x,a.y,b.x,b.y,
+        step,treatment.relief);
+      if(!profile)continue;
+      const shiftX=normalX*.35+profile.shadowX,
+        shiftY=normalY*.35+profile.shadowY;
+      a.x+=shiftX;a.y+=shiftY;b.x+=shiftX;b.y+=shiftY;
+    }
     segments.push({id:'satin-'+i,owner:'source-ribbon',
       course:'satin',sourceIndex:i,station,start:a,end:b,width:inkWidth});
   }
@@ -93,7 +111,8 @@ export function traceThreadContactCapsule(ctx,a,b,width){
  * and the renderer's existing original-geometry ink mask; it cannot colour
  * an exposed rectangular corner beyond a stitch endpoint.
  * The upper stitch subsequently paints in unchanged source z order. */
-export function paintSatinThreadContacts(ctx,contacts,lighting,pitch,relief){
+export function paintSatinThreadContacts(ctx,contacts,lighting,pitch,relief,
+  {fibre=false}={}){
   if(!Array.isArray(contacts)||!contacts.length||!lighting||
     !finite(lighting.shadow)||lighting.shadow<=0)return 0;
   let painted=0;
@@ -110,11 +129,16 @@ export function paintSatinThreadContacts(ctx,contacts,lighting,pitch,relief){
     ctx.clip();
     // A local projected soft contact footprint (in authored world units).
     // No Canvas shadowBlur: an unbounded blur would bleed through the mask.
-    const radius=clamp(Math.max(width*1.65,pitch*.3),.5,pitch*.65);
+    // Fibre underlays are hairline strands, not broad tubular satin cords.
+    // A satin-sized opaque stamp at every true folded-ribbon contact piles
+    // into an unphysical dark patch. Keep a micron-scale, low-opacity touch
+    // confined to the *actual lower fibre* round capsule instead.
+    const radius=fibre?clamp(Math.min(width*.75,pitch*.18),.4,2):
+      clamp(Math.max(width*1.65,pitch*.3),.5,pitch*.65);
     ctx.beginPath();
     ctx.arc(hit.x+profile.shadowX,hit.y+profile.shadowY,radius,0,Math.PI*2);
     ctx.fillStyle='rgba('+profile.shadeRgb+','+
-      (.24*profile.shade).toFixed(3)+')';
+      ((fibre?.055:.24)*profile.shade).toFixed(3)+')';
     ctx.fill();
     ctx.restore();
     painted++;
