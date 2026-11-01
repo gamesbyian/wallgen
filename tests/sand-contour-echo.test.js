@@ -156,3 +156,65 @@ test('different material gauges keep their independent metric inset geometry',()
     paintSandRegionEchoes(b,object,[second],bounds);
   assert.equal(count,separate);
 });
+
+
+test('multi-layer ribbon echoes reuse original source station geometry without changing stroke order',()=>{
+  const base=styles({textureScale:42})[0];
+  const finishes=[base,{...base,seed:base.seed+5,light:base.light*.7},
+    {...styles({textureScale:68})[0],dark:.13}];
+  const stripe={coreExtent:160,segmentStart:-160,segmentEnd:160};
+  const range={start:-72,end:93},extent=160;
+  const calls={width:0,centre:0,left:0,right:0};
+  const pointAt=(station,side)=>{
+    calls[side===-1?'left':'right']++;
+    return {x:station,y:side*(24+2*Math.sin(station/30))};
+  };
+  const centreAt=station=>{calls.centre++;return {x:station,y:0};};
+  const widthAtStation=station=>{
+    calls.width++;return 48+4*Math.sin(station/30);
+  };
+  const full=ctx();
+  const multiCount=paintSandRibbonEchoes(full,stripe,extent,finishes,
+    pointAt,centreAt,widthAtStation,range);
+  const fullCalls={...calls};
+  const stationSpan=Math.floor((range.end+extent)/3.6)-
+    Math.ceil((range.start+extent)/3.6)+1;
+  assert.ok(stationSpan>25);
+  assert.ok(fullCalls.width<=stationSpan,
+    'source widths must be evaluated once per original station');
+  assert.ok(fullCalls.centre<=stationSpan,
+    'centres are shared across both sides and all material layers');
+  assert.ok(fullCalls.left<=stationSpan&&fullCalls.right<=stationSpan,
+    'each side-edge is evaluated at most once per original station');
+  const separately=finishes.map(style=>{
+    const canvas=ctx();
+    const count=paintSandRibbonEchoes(canvas,stripe,extent,[style],
+      (station,side)=>({x:station,y:side*(24+2*Math.sin(station/30))}),
+      station=>({x:station,y:0}),
+      station=>48+4*Math.sin(station/30),range);
+    return {canvas,count};
+  });
+  assert.equal(multiCount,separately.reduce((n,p)=>n+p.count,0));
+  const marks=events=>events.filter(op=>Array.isArray(op)&&
+    ['move','line','stroke'].includes(op[0]));
+  assert.deepEqual(marks(full.events),separately.flatMap(p=>marks(p.canvas.events)),
+    'source point/path order and each style pigment must match independent painters');
+});
+
+test('cropped and pinched ribbon reuses only geometrically valid source stations',()=>{
+  const stripe={coreExtent:150,segmentStart:-150,segmentEnd:150};
+  const a=styles()[0];
+  const make=range=>{
+    const c=ctx();
+    const count=paintSandRibbonEchoes(c,stripe,150,[a,a],(station,side)=>
+      ({x:station,y:side*20}),station=>({x:station,y:0}),station=>
+      station<-20||station>30?5:40,range);
+    return {count,marks:c.events.filter(op=>Array.isArray(op)&&
+      ['move','line','stroke'].includes(op[0]))};
+  };
+  const full=make(),subset=make({start:-19,end:29});
+  assert.ok(subset.count>0);
+  assert.ok(subset.marks.every(op=>full.marks.some(x=>
+    JSON.stringify(op)===JSON.stringify(x))));
+  assert.deepEqual(make({start:65,end:95}).marks,[]);
+});
