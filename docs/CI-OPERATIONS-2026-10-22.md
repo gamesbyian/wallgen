@@ -1,5 +1,8 @@
 # Pragmatic CI for a personal wallpaper app
 
+**31 October 2026 implementation amendment:** The 13-workflow menu and ordinary always-quick PR description below are historical. The current [normative standard](CI-ENGINEERING-STANDARD.md) and [audited implementation/observed baseline](CI-STANDARD-IMPLEMENTATION-2026-10-31.md) govern future changes: one stable required PR gate always runs its CI-policy/selection tests, then skips the broad rendering quick suite *only* for proven non-CI Markdown changes; all code/ambiguous changes still run the existing full quick suite. The retired one-shot preview discovery deploy is archived, giving 21 active workflow definitions. Historical October workflow quantities and runtime claims are not current facts.
+
+
 ## Verified final workflow disposition · 25 October 2026 (Calgary)
 
 Merged [#726](https://github.com/gamesbyian/wallgen/pull/726) used a **temporary** PR source-only/22-case Chromium optical trigger for [full source-verifiable #40247842572](https://github.com/gamesbyian/wallgen/actions/runs/40247842572). The entire added pull_request stanza and conditional heavy PR event conditions were **removed on final head** before squash merge. [Final normal Validate Wallgen #40247989783](https://github.com/gamesbyian/wallgen/actions/runs/40247989783) passed. `reconstruction-hue-shapes-experiment.yml` retains the new explicitly manual `include_sparse_hue` and previous optional low-chroma/external/full R0 inputs; **no automatic 22-image sweep**. The only ordinary PR gate remains `npm run check:quick`. Reintroduce a one-off conditional optical run only for a new demonstrated algorithmic failure, then retire it again before integration; do not invent speed or physical-phone acceptance from the CI runner.
