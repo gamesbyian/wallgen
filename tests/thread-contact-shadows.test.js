@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 import {resolveScene} from '../src/model.js';
 import {sandLighting,sandRibbonLighting} from '../src/sand-lighting.js';
 import {normalizeSurfaceTreatments,drawRibbonEmbroidery} from '../src/embroidery.js';
-import {planSatinThreadContacts,paintSatinThreadContacts} from '../src/thread-contact-shadows.js';
+import {planSatinThreadContacts,paintSatinThreadContacts,traceThreadContactCapsule} from '../src/thread-contact-shadows.js';
 import {threadCrossingGraph} from '../src/thread-crossings.js';
 
 const thread=(style='satin')=>normalizeSurfaceTreatments([{
@@ -47,8 +47,9 @@ test('only a genuine transverse over/under source intersection produces a lower-
   const fills=ctx.operations.filter(op=>op[0]==='fill');
   assert.equal(clips.length,1);
   assert.equal(fills.length,1);
-  assert.equal(clips[0][1].filter(op=>op[0]==='line').length,3,
-    'contact shadow clip is the original narrow lower-thread quadrilateral');
+  assert.equal(clips[0][1].filter(op=>op[0]==='line').length,2);
+  assert.equal(clips[0][1].filter(op=>op[0]==='arc').length,2,
+    'contact clip must use real semicircular yarn endpoints, not rectangle corners');
   assert.equal(ctx.operations.filter(op=>op[0]==='save').length,1);
   assert.equal(ctx.operations.filter(op=>op[0]==='restore').length,1);
   assert.ok(ctx.operations.findIndex(op=>op[0]==='clip')<
@@ -73,7 +74,7 @@ test('contact position moves away from lamp but the existing lower-thread capsul
   const clip=ops=>ops.operations.find(o=>o[0]==='clip')[1];
   assert.deepEqual(clip(first),clip(second),
     'changing lamp must never move original lower source geometry');
-  const point=ops=>ops.operations.find(o=>o[0]==='arc');
+  const point=ops=>ops.operations.filter(o=>o[0]==='arc').at(-1);
   const a=point(first),b=point(second);
   assert.ok(a[1]>b[1]&&a[2]>b[2],
     'NW lamp must push the tiny contact shade towards SE');
@@ -143,4 +144,40 @@ test('only fully painted, lit satin over-policy may add contacts; replay is unch
   const code=readFileSync(new URL('../src/renderer.js',import.meta.url),'utf8');
   assert.match(code,/contactShadows:scene\.crossingMode==='over'/);
   assert.match(code,/drawRibbonEmbroidery\(g,stripe,scene\.extent,stitch,\{start,end\},ribbonLight\)/);
+});
+
+test('capsules follow the original thread tangent with true rounded forward/back caps',()=>{
+  for(const [start,end,width] of [
+    [{x:0,y:0},{x:20,y:0},4],
+    [{x:0,y:0},{x:0,y:20},4],
+    [{x:0,y:0},{x:12,y:16},6],
+    [{x:20,y:20},{x:0,y:0},2]
+  ]){
+    const ctx=capture();
+    assert.equal(traceThreadContactCapsule(ctx,start,end,width),true);
+    const arcs=ctx.operations.filter(e=>e[0]==='arc');
+    const lines=ctx.operations.filter(e=>e[0]==='line');
+    assert.equal(arcs.length,2);
+    assert.equal(lines.length,2);
+    assert.ok(arcs.every(a=>a[3]===width*.5&&a[6]===true));
+    assert.deepEqual(arcs.slice(0,1).map(a=>a.slice(1,3)),[[end.x,end.y]],
+      'first semicircle must be centered on far yarn endpoint');
+    assert.deepEqual(arcs.slice(1).map(a=>a.slice(1,3)),[[start.x,start.y]],
+      'second semicircle must be centered on near yarn endpoint');
+    for(const a of arcs)assert.ok(Math.abs(a[5]-a[4]+Math.PI)<1e-8,
+      'semicircle must cover exactly 180 degrees toward the end tangent');
+    assert.equal(ctx.operations.at(-1)[0],'close',
+      'the vector capsule must close before being used as a clip');
+  }
+  for(const [start,end,width] of [
+    [{x:0,y:0},{x:0,y:0},2],
+    [{x:0,y:0},{x:.2,y:.1},2],
+    [{x:0,y:0},{x:10,y:10},0],
+    [{x:0,y:0},{x:10,y:10},NaN]
+  ]){
+    const ctx=capture();
+    assert.equal(traceThreadContactCapsule(ctx,start,end,width),false);
+    assert.deepEqual(ctx.operations,[],
+      'invalid source geometry must not leave a partial clip path behind');
+  }
 });

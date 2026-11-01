@@ -67,10 +67,31 @@ export function planSatinThreadContacts(stripe,extent,treatment,lighting){
     throw error;
   }
 }
+/** Trace the real lower yarn's round-capped source-width footprint.
+ * Its two semicircles project forward/back along the stitch tangent. Keep
+ * this as a Canvas2D vector path rather than a pixel buffer, screen-unit
+ * approximation, rectangular clip or ellipse wider than the original yarn.
+ * Caller owns ctx.save/clip and the full original colour-region/ribbon clip. */
+export function traceThreadContactCapsule(ctx,a,b,width){
+  const dx=b.x-a.x,dy=b.y-a.y,length=Math.hypot(dx,dy);
+  if(!Number.isFinite(length)||length<.75||
+    !Number.isFinite(width)||width<=0)return false;
+  const nx=-dy/length,ny=dx/length,r=width*.5;
+  const normal=Math.atan2(ny,nx);
+  ctx.beginPath();
+  ctx.moveTo(a.x+nx*r,a.y+ny*r);
+  ctx.lineTo(b.x+nx*r,b.y+ny*r);
+  ctx.arc(b.x,b.y,r,normal,normal-Math.PI,true);
+  ctx.lineTo(a.x-nx*r,a.y-ny*r);
+  ctx.arc(a.x,a.y,r,normal-Math.PI,normal-2*Math.PI,true);
+  ctx.closePath();
+  return true;
+}
 /** Draw at a proven original-station intersection BEFORE its upper stitch.
- * The dark deposit is restricted to an oriented narrow quadrilateral tracing
- * exactly the lower stitch, intersected with the caller's existing ink clip.
- * The upper stitch subsequently paints in its unchanged original z order. */
+ * The contact shade is clipped to the *actual round-capped lower yarn*
+ * and the renderer's existing original-geometry ink mask; it cannot colour
+ * an exposed rectangular corner beyond a stitch endpoint.
+ * The upper stitch subsequently paints in unchanged source z order. */
 export function paintSatinThreadContacts(ctx,contacts,lighting,pitch,relief){
   if(!Array.isArray(contacts)||!contacts.length||!lighting||
     !finite(lighting.shadow)||lighting.shadow<=0)return 0;
@@ -81,19 +102,13 @@ export function paintSatinThreadContacts(ctx,contacts,lighting,pitch,relief){
     const profile=threadLightProfile(lighting,top.start.x,top.start.y,
       top.end.x,top.end.y,pitch,relief);
     if(!profile||!finite(length)||length<.75)continue;
-    const nx=-(b.y-a.y)/length,ny=(b.x-a.x)/length;
-    const r=width*.5;
     ctx.save();
-    ctx.beginPath();
-    ctx.moveTo(a.x+nx*r,a.y+ny*r);
-    ctx.lineTo(b.x+nx*r,b.y+ny*r);
-    ctx.lineTo(b.x-nx*r,b.y-ny*r);
-    ctx.lineTo(a.x-nx*r,a.y-ny*r);
-    ctx.closePath();
+    if(!traceThreadContactCapsule(ctx,a,b,width)){
+      ctx.restore();continue;
+    }
     ctx.clip();
     // A local projected soft contact footprint (in authored world units).
     // No Canvas shadowBlur: an unbounded blur would bleed through the mask.
-    const reach=profile.reach;
     const radius=clamp(Math.max(width*1.65,pitch*.3),.5,pitch*.65);
     ctx.beginPath();
     ctx.arc(hit.x+profile.shadowX,hit.y+profile.shadowY,radius,0,Math.PI*2);
