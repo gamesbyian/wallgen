@@ -1,7 +1,9 @@
 // A one-pointer viewport framing transaction. CSS-pixel movement determines
 // input gain but saved camera offsets stay percentages of the design plane.
 // No image pixels, raster offsets or composition nudge enter the recipe.
+import {AXIS_LOCK_THRESHOLD_CSS_PX} from './axis-constrained-drag.js';
 const finite=Number.isFinite;
+export const VIEW_PAN_INTENT_CSS_PX=AXIS_LOCK_THRESHOLD_CSS_PX;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const round=v=>Math.round(v*10)/10;
 export function beginViewPan({recipe,point,viewport}={}){
@@ -17,11 +19,15 @@ export function beginViewPan({recipe,point,viewport}={}){
 export function advanceViewPan(state,point){
   if(!state||!point||![point.x,point.y].every(finite))return state;
   const dx=point.x-state.origin.x,dy=point.y-state.origin.y;
-  // The pointer must move perceptibly before editing any source value.
-  if(Math.hypot(dx,dy)<2)return {...state,panX:state.startX,
+  // Shared touch intent gate: a tiny contact jitter must not write
+  // camera history. Subtract the dead zone in the original drag direction so
+  // the first accepted sample never teleports the canvas by eight pixels.
+  const distance=Math.hypot(dx,dy);
+  if(distance<=VIEW_PAN_INTENT_CSS_PX)return {...state,panX:state.startX,
     panY:state.startY,displacementX:0,displacementY:0,moved:false};
-  const panX=round(clamp(state.startX-100*dx/(state.viewport.width*state.zoom),-50,50));
-  const panY=round(clamp(state.startY-100*dy/(state.viewport.height*state.zoom),-50,50));
+  const gain=(distance-VIEW_PAN_INTENT_CSS_PX)/distance;
+  const panX=round(clamp(state.startX-100*dx*gain/(state.viewport.width*state.zoom),-50,50));
+  const panY=round(clamp(state.startY-100*dy*gain/(state.viewport.height*state.zoom),-50,50));
   // Preview uses the actual clamped camera movement, never unchecked dx/dy.
   const displacementX=-(panX-state.startX)*state.viewport.width*state.zoom/100;
   const displacementY=-(panY-state.startY)*state.viewport.height*state.zoom/100;

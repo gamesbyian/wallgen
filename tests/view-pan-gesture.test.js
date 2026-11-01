@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {beginViewPan,advanceViewPan,beginViewPinch,
+import {beginViewPan,advanceViewPan,VIEW_PAN_INTENT_CSS_PX,beginViewPinch,
   advanceViewPinch,viewPinchPreview} from '../src/view-pan-gesture.js';
 import {viewCamera} from '../src/view-camera.js';
 import {normalizeRecipe} from '../src/model.js';
@@ -12,18 +12,19 @@ test('viewport-only drag moves camera opposite to view pan with no jump',()=>{
  const start=make();
  assert.deepEqual([start.panX,start.panY],[0,0]);
  const next=advanceViewPan(start,{x:130,y:265});
- assert.deepEqual([next.panX,next.panY],[-10,-10]);
- assert.deepEqual([next.displacementX,next.displacementY],[30,65]);
+ assert.deepEqual([next.panX,next.panY],[-8.9,-8.9]);
+ assert.deepEqual([next.displacementX,next.displacementY],[26.7,57.85]);
  const before=viewCamera(300,650,1,{panX:0,panY:0});
  const after=viewCamera(300,650,1,{panX:next.panX,panY:next.panY});
- assert.equal(after.offsetX-before.offsetX,30);
- assert.equal(after.offsetY-before.offsetY,65);
+ assert.ok(Math.abs(after.offsetX-before.offsetX-26.7)<1e-9);
+ assert.ok(Math.abs(after.offsetY-before.offsetY-57.85)<1e-9);
  assert.deepEqual([start.panX,start.panY],[0,0]);
 });
 test('zoom gain is mathematically inverse and saved framing is resolution independent',()=>{
  const double=advanceViewPan(make(2),{x:130,y:265});
- assert.deepEqual([double.panX,double.panY],[-5,-5]);
- assert.deepEqual([double.displacementX,double.displacementY],[30,65]);
+ assert.deepEqual([double.panX,double.panY],[-4.4,-4.4]);
+ assert.ok(Math.abs(double.displacementX-26.4)<1e-9);
+ assert.ok(Math.abs(double.displacementY-57.2)<1e-9);
  const original=normalizeRecipe({viewZoom:2,viewPanX:0,viewPanY:0,
    positionX:11,positionY:-7});
  const changed=normalizeRecipe({...original,viewPanX:double.panX,viewPanY:double.panY});
@@ -40,6 +41,26 @@ test('pan clamps at canonical 50%, preview respects clamp, and invalid samples a
  assert.equal(beginViewPan({recipe:{viewZoom:0,viewPanX:0,viewPanY:0},
    point:{x:0,y:0},viewport:{width:300,height:650}}),null);
  assert.equal(advanceViewPan(s,{x:101,y:201}).moved,false);
+});
+
+test('Frame pan requires real touch intent and never jumps at dead-zone exit',()=>{
+ assert.equal(VIEW_PAN_INTENT_CSS_PX,8);
+ const start=make();
+ for(const amount of [1,3,7,8]){
+   const noEdit=advanceViewPan(start,{x:100+amount,y:200});
+   assert.equal(noEdit.moved,false);
+   assert.deepEqual([noEdit.panX,noEdit.panY,noEdit.displacementX,noEdit.displacementY],[0,0,0,0]);
+ }
+ const first=advanceViewPan(start,{x:109,y:200});
+ assert.equal(first.panX,-.3);
+ assert.equal(first.moved,true);
+ assert.ok(first.displacementX>0&&first.displacementX<2,
+   'crossing the intent threshold must not teleport the canvas by eight pixels');
+ const farther=advanceViewPan(start,{x:116,y:200});
+ assert.ok(farther.displacementX>first.displacementX);
+ assert.ok(farther.displacementX<9,
+   'gain grows smoothly from the authored source point');
+ assert.deepEqual([start.panX,start.panY],[0,0]);
 });
 
 const viewport={width:300,height:650};
@@ -173,8 +194,12 @@ test('Frame pointer capture rolls back on resize, pagehide and hidden document',
       preview.emit('pointermove',pointer(7,130,200));
       preview.emit('pointerup',pointer(7,130,200));
       assert.equal(writes.length,1,'new valid drag should still commit once');
-      assert.equal(writes[0].value.viewPanX,-10);
+      assert.equal(writes[0].value.viewPanX,-7.3);
       assert.equal(writes[0].meta.cause,'view_pan_on_canvas');
+      preview.emit('pointerdown',pointer(7,100,200));
+      preview.emit('pointermove',pointer(7,103,200));
+      preview.emit('pointerup',pointer(7,103,200));
+      assert.equal(writes.length,1,'contact jitter must not append an Undo-worthy camera edit');
       preview.emit('pointerdown',pointer(7,100,200));
       preview.emit('pointerdown',pointer(8,200,200));
       preview.emit('pointermove',pointer(8,250,200));
