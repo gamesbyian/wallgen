@@ -11,7 +11,8 @@ import {sandBeadStyles,paintSandRegionBeads,paintSandRibbonBeads,paintSandNested
 import {sandEchoStyles,paintSandRegionEchoes,paintSandRibbonEchoes} from './sand-contour-echo.js';
 import {sandLighting,sandRibbonLighting,sandMaterialLighting} from './sand-lighting.js';
 import {applyPhotoFinish} from './photo-look.js';
-import {matchingEmbroidery,drawRibbonEmbroidery,drawRegionEmbroidery} from './embroidery.js';
+import {matchingEmbroidery,drawRibbonEmbroidery,drawRegionEmbroidery,
+  selectChainReplayContacts} from './embroidery.js';
 import {planSatinThreadContacts,selectSatinReplayContacts} from './thread-contact-shadows.js';
 
 const TAU = Math.PI * 2;
@@ -1187,20 +1188,24 @@ export function drawWallpaper(canvas, recipe, options={}) {
             g.clip(stripeFillPath(branch,scene.extent,scene));
             let replayContacts=null;
             if(scene.crossingMode!=='over'&&ribbonLight&&
-              ['satin','satin-soft','satin-fibre','tatami-fibre'].includes(stitch.style)){
-              if(!replayPlans.has(stripe))
-                replayPlans.set(stripe,planSatinThreadContacts(
-                  stripe,scene.extent,stitch,ribbonLight));
-              const plan=replayPlans.get(stripe);
-              if(plan){
-                // The reference crossing locates the branch but each ribbon
-                // is displaced along its own source normal. Use this stripe's
-                // actual early/late geometry to localize *its* contacts.
-                const a=samplePath(stripe,hit.early,scene.extent);
-                const b=samplePath(stripe,hit.late,scene.extent);
-                replayContacts=selectSatinReplayContacts(plan,{
-                  ...hit,x:(a.x+b.x)*.5,y:(a.y+b.y)*.5
-                },halfLength,later,stripe.width);
+              ['satin','satin-soft','satin-fibre','tatami-fibre','chain'].includes(stitch.style)){
+              // The reference crossing locates the bundle. Each coloured
+              // stripe's own original geometry establishes contact locations.
+              const a=samplePath(stripe,hit.early,scene.extent);
+              const b=samplePath(stripe,hit.late,scene.extent);
+              const sourceHit={...hit,x:(a.x+b.x)*.5,y:(a.y+b.y)*.5};
+              if(stitch.style==='chain'){
+                // Chain's original linked cubic loops require their own
+                // source-station geometry and the canonical branch z policy.
+                replayContacts=selectChainReplayContacts(stripe,scene.extent,
+                  stitch,ribbonLight,sourceHit,halfLength,later,stripe.width);
+              }else{
+                if(!replayPlans.has(stripe))
+                  replayPlans.set(stripe,planSatinThreadContacts(
+                    stripe,scene.extent,stitch,ribbonLight));
+                const plan=replayPlans.get(stripe);
+                if(plan)replayContacts=selectSatinReplayContacts(plan,
+                  sourceHit,halfLength,later,stripe.width);
               }
             }
             drawRibbonEmbroidery(g,stripe,scene.extent,stitch,
