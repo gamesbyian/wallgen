@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 import {resolveScene} from '../src/model.js';
 import {sandLighting,sandRibbonLighting} from '../src/sand-lighting.js';
 import {normalizeSurfaceTreatments,drawRibbonEmbroidery} from '../src/embroidery.js';
-import {planSatinThreadContacts,paintSatinThreadContacts,traceThreadContactCapsule} from '../src/thread-contact-shadows.js';
+import {planSatinThreadContacts,paintSatinThreadContacts,traceThreadContactCapsule,selectSatinReplayContacts} from '../src/thread-contact-shadows.js';
 import {threadCrossingGraph} from '../src/thread-crossings.js';
 
 const thread=(style='satin')=>normalizeSurfaceTreatments([{
@@ -180,4 +180,71 @@ test('capsules follow the original thread tangent with true rounded forward/back
     assert.deepEqual(ctx.operations,[],
       'invalid source geometry must not leave a partial clip path behind');
   }
+});
+
+
+test('Under and Weave select only genuine full-source cross-traversal yarn contacts',()=>{
+  const earlier=mark('earlier',[0,0],[20,20],10),
+    later=mark('later',[0,20],[20,0],50);
+  const hit=threadCrossingGraph([earlier,later])[0];
+  assert.ok(hit);
+  const pair={hit,top:later,bottom:earlier};
+  const plan={byStation:new Map([[50,[pair]]])};
+  const crossing={early:10,late:50,x:10,y:10};
+  const after=selectSatinReplayContacts(plan,crossing,12,true,8);
+  assert.deepEqual([...after.keys()],[50]);
+  assert.equal(after.get(50)[0].top.id,'later');
+  assert.equal(after.get(50)[0].bottom.id,'earlier');
+  const before=selectSatinReplayContacts(plan,crossing,12,false,8);
+  assert.deepEqual([...before.keys()],[10]);
+  assert.equal(before.get(10)[0].top.id,'earlier');
+  assert.equal(before.get(10)[0].bottom.id,'later');
+  assert.deepEqual(hit,after.get(50)[0].hit);
+  assert.deepEqual(hit,before.get(10)[0].hit,
+    'a local replay cannot recompute or relocate original source intersection');
+  assert.equal(selectSatinReplayContacts(plan,crossing,3,false,8).size,1);
+  assert.equal(selectSatinReplayContacts(plan,{
+    ...crossing,x:100,y:100
+  },12,false,8).size,0,
+  'unrelated source contacts outside the local original crossing are excluded');
+  assert.equal(selectSatinReplayContacts(plan,{...crossing,late:13},
+    50,true,8).size,0,
+    'even overlapping replay windows must not misidentify original traversal');
+  assert.equal(selectSatinReplayContacts(plan,crossing,12,'under',8).size,0,
+    'only the actual renderer-owned boolean crossing policy is accepted');
+});
+
+test('only original top station receives replay contact ink before its own stitch',()=>{
+  const scene=resolveScene({
+    seed:'contact-replay-station-test',geometry:'drawn',
+    customPath:[[.2,.2],[.8,.8],[.2,.8],[.8,.2]],
+    construction:'ribbon',stripeWidth:90,spread:45
+  });
+  const stripe=scene.stripes[3],pitch=7,style=thread(),light=lamp();
+  const extent=scene.extent,interval=Math.max(pitch,2*extent/2500);
+  const index= Math.max(20,Math.floor(extent/interval));
+  const station=-extent+index*interval;
+  const segment=mark('target',[0,0],[20,20],index);
+  const upper=mark('under',[0,20],[20,0],index+7);
+  const hit=threadCrossingGraph([segment,upper])[0];
+  assert.ok(hit);
+  const selected=new Map([[index,[{hit,top:segment,bottom:upper}]]]);
+  const range={start:station-interval*.1,end:station+interval*.1};
+  const plain=capture(),replay=capture();
+  const a=drawRibbonEmbroidery(plain,stripe,extent,style,range,light);
+  const b=drawRibbonEmbroidery(replay,stripe,extent,style,range,light,
+    {replayContacts:selected});
+  assert.equal(a,b);
+  assert.equal(replay.operations.filter(op=>op[0]==='clip').length,1,
+    'only selected true source crossing receives a lower-yarn contact clip');
+  assert.equal(plain.operations.filter(op=>op[0]==='clip').length,0);
+  const noContact=capture();
+  drawRibbonEmbroidery(noContact,stripe,extent,style,range,light,
+    {replayContacts:new Map([[index-30,selected.get(index)]])});
+  assert.deepEqual(noContact.operations,plain.operations,
+    'contacts for an unseen original source station cannot reach a replay crop');
+  const noLight=capture();
+  drawRibbonEmbroidery(noLight,stripe,extent,style,range,null,
+    {replayContacts:selected});
+  assert.equal(noLight.operations.filter(op=>op[0]==='clip').length,0);
 });
