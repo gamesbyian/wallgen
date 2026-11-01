@@ -99,6 +99,14 @@ test('real drawn ribbon builds bounded original-station satin topology and never
   assert.equal(planSatinThreadContacts(stripe,scene.extent,thread(),null),null);
   assert.equal(planSatinThreadContacts(stripe,scene.extent,thread('chain'),light),null);
   assert.equal(planSatinThreadContacts(stripe,scene.extent,thread('running'),light),null);
+  const truncated={...stripe,segmentStart:-scene.extent*.12,
+    segmentEnd:scene.extent*.18};
+  const shortened=planSatinThreadContacts(truncated,scene.extent,thread(),light);
+  assert.ok(shortened);
+  assert.ok(shortened.segments.length<plan.segments.length);
+  assert.ok(shortened.segments.every(s=>s.station>=truncated.segmentStart-1e-7&&
+    s.station<=truncated.segmentEnd+1e-7),
+    'invisible original floating ribbon stations cannot cast contact onto visible ink');
 });
 
 test('only fully painted, lit satin over-policy may add contacts; replay is unchanged',()=>{
