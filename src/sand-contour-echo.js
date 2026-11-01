@@ -113,8 +113,11 @@ export function paintSandRibbonEchoes(ctx,stripe,extent,styles,
   const step=3.6,origin=-(stripe.coreExtent??extent);
   const first=Math.ceil((start-origin)/step-1e-9);
   const last=Math.floor((end-origin)/step+1e-9);
-  // Explicitly bound path solving for oddly long authored ranges.
-  if(last-first>7000)return 0;
+  // A finite but huge authored station may exceed exact JS integer
+  // precision: i++ can then equal i forever. Keep the optional ornament
+  // absent rather than creating a nonterminating render or invented contour.
+  if(!Number.isSafeInteger(first)||!Number.isSafeInteger(last)||
+     last<first||last-first>7000)return 0;
   let count=0;
   ctx.save();ctx.lineJoin='round';ctx.lineCap='butt';
   for(const style of styles)for(let depth=0;depth<style.insets.length;depth++){

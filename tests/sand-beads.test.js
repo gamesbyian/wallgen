@@ -68,3 +68,16 @@ test('physical bead marks use only clipped Canvas2D and keep nested width',()=>{
   assert.ok(events.filter(x=>Array.isArray(x)).every(x=>x[3]<=.76));
   assert.equal(paintSandNestedBeads(ctx,{closed:false,points:sq(0,0,80,80)},2,style),0);
 });
+
+
+test('extreme finite rail coordinates never create a nonprogressing station loop',()=>{
+  let visited=0;
+  const stripe={coreExtent:1e20,segmentStart:1e20,segmentEnd:1e20+1e9};
+  forEachRailBead(stripe,1e21,{interval:13},
+    ()=>{visited++;return {x:0,y:0};},()=>{visited++;});
+  assert.equal(visited,0,'unsafe source station indices must be refused');
+  let normal=0;
+  forEachRailBead({coreExtent:200,segmentStart:-200,segmentEnd:200},
+    200,{interval:13},(x,side)=>({x,y:side}),()=>normal++);
+  assert.ok(normal>10,'safe source-anchored beads remain unchanged');
+});

@@ -33,6 +33,14 @@ export function forEachSandGrain(layer,bounds,visit){
   const pitch=sandPitch(layer),stepY=pitch*.88;
   const ix0=Math.floor(bounds.left/pitch)-2,ix1=Math.ceil(bounds.right/pitch)+2;
   const iy0=Math.floor(bounds.top/stepY)-2,iy1=Math.ceil(bounds.bottom/stepY)+2;
+  const cellsX=ix1-ix0+1,cellsY=iy1-iy0+1;
+  // An imported/translated crop can be finite yet outside JS's exact lattice
+  // integers. At >= 2^53, i++ may never advance and hang the entire editor.
+  // The normal full 600×1300 design is well below this hard safety ceiling;
+  // never silently generate a partial/fabricated mineral field.
+  if(![ix0,ix1,iy0,iy1,cellsX,cellsY].every(Number.isSafeInteger)||
+     cellsX*cellsY>6_000_000)
+    throw new RangeError('Sand grain crop exceeds safe source-coordinate lattice');
   for(let iy=iy0;iy<=iy1;iy++)for(let ix=ix0;ix<=ix1;ix++){
     const g=sandGrainAt(layer,ix,iy);
     if(g.x+g.r*1.3<bounds.left||g.x-g.r*1.3>bounds.right||

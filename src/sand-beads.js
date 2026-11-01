@@ -133,8 +133,15 @@ export function forEachRailBead(stripe,extent,style,pointAt,visit,range=null){
   if(!good(anchor)||!good(start)||!good(end)||end<start)return;
   const first=Math.ceil((start-anchor)/style.interval-1e-9);
   const last=Math.floor((end-anchor)/style.interval+1e-9);
-  // Cap pathological untrusted source ranges without moving the lattice.
-  for(let i=first;i<=last&&i<first+4000;i++){
+  // Extremely translated yet finite source ranges can exceed 2^53. At that
+  // precision a numeric station counter might never advance. Never draw an
+  // unanchored substitute or let an optional bead pass hang the renderer.
+  if(!Number.isSafeInteger(first)||!Number.isSafeInteger(last)||
+     last<first)return;
+  // Cap only the number of source-anchored stations, preserving their indices.
+  const count=Math.min(last-first+1,4000);
+  for(let offset=0;offset<count;offset++){
+    const i=first+offset;
     const station=anchor+i*style.interval;
     for(const side of [-1,1]){
       const point=pointAt(station,side);
