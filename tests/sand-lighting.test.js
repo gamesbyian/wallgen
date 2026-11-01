@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {normalizeRecipe,resolveScene,encodeRecipe,decodeRecipe} from '../src/model.js';
-import {sandLighting,rotateSandLighting,sandMaterialLighting,sandRibbonLighting,sandCapDiffuse} from '../src/sand-lighting.js';
+import {sandLighting,rotateSandLighting,sandMaterialLighting,sandRibbonLighting,sandCapDiffuse,sandDepositHeight,sandShadowReach,SAND_LIGHT_ELEVATION} from '../src/sand-lighting.js';
 import {paintSandGrains,sandGrainAt} from '../src/sand-material.js';
 import {sandRimStyles,paintSandContourRim} from '../src/sand-contour-relief.js';
 import {sandBeadStyles,paintSandRegionBeads} from '../src/sand-beads.js';
@@ -85,7 +85,7 @@ test('bead shadow and highlights face opposite halves without moving source ring
   assert.equal(nw[0].lighting.x,-se[0].lighting.x);
   assert.equal(sandBeadStyles(scene({lightingMood:'off'}))[0].lighting,null);
 });
-test('lit contour rims translate shadow into light and highlights away, only on Path2D',()=>{
+test('lit contour rims shade away from incoming light and highlight toward it, only on Path2D',()=>{
   const nw=sandRimStyles(scene({material:'sand-filigree'}));
   const se=sandRimStyles(scene({material:'sand-filigree',lightDirection:'bottom-right'}));
   const c=mock(),c2=mock();
@@ -94,8 +94,10 @@ test('lit contour rims translate shadow into light and highlights away, only on 
   const shifts=c.ops.filter(x=>x[0]==='translate');
   const reverse=c2.ops.filter(x=>x[0]==='translate');
   assert.equal(shifts.length,2);
-  assert.ok(shifts[0][1]<0&&shifts[0][2]<0);
-  assert.ok(shifts[1][1]>0&&shifts[1][2]>0);
+  assert.ok(shifts[0][1]>0&&shifts[0][2]>0,
+    'NW light projects the dark rim toward the southeast');
+  assert.ok(shifts[1][1]<0&&shifts[1][2]<0,
+    'specular rim must face the incoming northwest light');
   assert.ok(near(shifts[0][1],-reverse[0][1]));
   assert.equal(paintSandContourRim(mock(),null,[]),0);
 });
@@ -171,4 +173,60 @@ test('lit grain microfacets keep the exact same seeded coordinates across crops'
   const narrow=paint({left:12,top:12,right:42,bottom:42});
   assert.ok(wide.length>0);
   assert.deepEqual(wide,narrow);
+});
+
+
+test('analytic deposit heights share one elevation and increase with authored gauge/strength',()=>{
+  assert.equal(SAND_LIGHT_ELEVATION,.68);
+  const low=sandDepositHeight(3,.2,'bead');
+  const high=sandDepositHeight(3,.9,'bead');
+  assert.ok(high>low&&low>0);
+  assert.ok(sandDepositHeight(6,.9,'bead')>high);
+  assert.ok(sandDepositHeight(3,.9,'rim')<high);
+  assert.equal(sandDepositHeight(-1,.9),0);
+  assert.equal(sandDepositHeight(3,NaN),0);
+  assert.equal(sandShadowReach(Infinity),0);
+  assert.equal(sandShadowReach(-1),0);
+  assert.ok(near(sandShadowReach(high),
+    high*Math.sqrt(1-SAND_LIGHT_ELEVATION**2)/SAND_LIGHT_ELEVATION));
+});
+
+test('raised rim and bead contact projections use coherent light-side geometry',()=>{
+  const nw=scene({lightDirection:'top-left',textureStrength:88});
+  const se=scene({lightDirection:'bottom-right',textureStrength:88});
+  const rimNW=sandRimStyles(nw),rimSE=sandRimStyles(se);
+  const beadNW=sandBeadStyles(nw),beadSE=sandBeadStyles(se);
+  assert.ok(rimNW[0].height>0);
+  const makeRim=styles=>{
+    const c=mock();paintSandContourRim(c,['source-boundary'],styles);
+    return c.ops.filter(op=>op[0]==='translate');
+  };
+  const rimA=makeRim(rimNW),rimB=makeRim(rimSE);
+  assert.ok(rimA[0][1]>0&&rimA[0][2]>0);
+  assert.ok(rimA[1][1]<0&&rimA[1][2]<0);
+  assert.ok(near(rimA[0][1],-rimB[0][1]));
+  assert.ok(near(rimA[1][2],-rimB[1][2]));
+  const shadowOrigin=styles=>{
+    const c=mock();c.ellipse=(...args)=>c.ops.push(['ellipse',...args]);
+    paintSandRegionBeads(c,{circle:{cx:50,cy:50,r:20}},styles);
+    return c.ops.find(op=>op[0]==='ellipse');
+  };
+  const a=shadowOrigin(beadNW),b=shadowOrigin(beadSE);
+  assert.ok(a[1]>b[1]&&a[2]>b[2],
+    'bead contact shadows and rims must both lie away from a NW light');
+  const dim=sandRimStyles(scene({textureStrength:20}));
+  assert.ok(rimNW[0].height>dim[0].height);
+  assert.ok(Math.abs(makeRim(rimNW)[0][1])>Math.abs(makeRim(dim)[0][1]));
+});
+
+test('unlit bead and rim deposits remain independent of new height projection',()=>{
+  const off=sandBeadStyles(scene({lightingMood:'off'}));
+  const c=mock();
+  paintSandRegionBeads(c,{circle:{cx:30,cy:30,r:12}},off);
+  assert.ok(c.ops.some(x=>x[0]==='arc'));
+  assert.equal(c.ops.filter(x=>x[0]==='ellipse').length,0);
+  assert.equal(c.ops.filter(x=>x[0]==='translate').length,0);
+  const rim=mock();
+  paintSandContourRim(rim,['unmodified'],sandRimStyles(scene({lightingMood:'off'})));
+  assert.equal(rim.ops.filter(x=>x[0]==='translate').length,0);
 });
