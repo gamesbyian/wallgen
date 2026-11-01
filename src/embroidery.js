@@ -1,5 +1,6 @@
 import {samplePath,widthAt} from './path-geometry.js';
 import {threadLightProfile,rotateThreadLighting} from './thread-lighting.js';
+import {planSatinThreadContacts,paintSatinThreadContacts} from './thread-contact-shadows.js';
 
 // Surface roles are addressed by authored object IDs or semantic ROYGBIV
 // colour slots. This optional array is never inferred from legacy textures.
@@ -155,7 +156,8 @@ function fibreSpan(ctx,ax,ay,bx,by,pitch,relief,phase,lighting=null){
 /** Draw transverse thread ribs along the same tangent/normal path as ribbon geometry.
  * Caller establishes the actual stripe footprint as the active clipping mask.
  */
-export function drawRibbonEmbroidery(ctx,stripe,extent,treatment,range=null,lighting=null){
+export function drawRibbonEmbroidery(ctx,stripe,extent,treatment,range=null,lighting=null,
+  {contactShadows=false}={}){
   if(!treatment||!Number.isFinite(extent)||extent<=0)return 0;
   const step=treatment.pitch;
   const gentle=treatment.style==='satin-soft';
@@ -261,6 +263,11 @@ export function drawRibbonEmbroidery(ctx,stripe,extent,treatment,range=null,ligh
   // the number of candidate stations, not their positions or appearance.
   const first=Math.max(0,Math.ceil((start+extent)/interval-1e-9));
   const last=Math.min(2500,Math.floor((end+extent)/interval+1e-9));
+  // Contact topology is computed from the original full source only for the
+  // renderer's canonical later-over crossing policy, never local branch
+  // replays or Under/Weave modes. Existing unlit paths stay byte identical.
+  const contactPlan=contactShadows&&!range?
+    planSatinThreadContacts(stripe,extent,treatment,lighting):null;
   let count=0;
   ctx.save();
   ctx.lineCap='round';
@@ -272,6 +279,8 @@ export function drawRibbonEmbroidery(ctx,stripe,extent,treatment,range=null,ligh
     if(!Number.isFinite(w)||w<=0)continue;
     const ax=p.x-p.nx*w,ay=p.y-p.ny*w,bx=p.x+p.nx*w,by=p.y+p.ny*w;
     if(fibre){fibreSpan(ctx,ax,ay,bx,by,step,treatment.relief,i,lighting);count++;continue;}
+    if(contactPlan)paintSatinThreadContacts(ctx,
+      contactPlan.byStation.get(i),lighting,step,treatment.relief);
     // Dark underlay and offset bright ridge create a restrained raised cord.
     if(!paintThreadRelief(ctx,ax,ay,bx,by,step,treatment.relief,
       gentle?.11:.31,(.10+treatment.relief/100*.24)*(gentle?.43:1),lighting)){
