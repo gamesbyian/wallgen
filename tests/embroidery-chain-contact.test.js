@@ -23,7 +23,7 @@ function capture(){
     closePath(){path.push(['close']);ops.push(['close']);},
     clip(){ops.push(['clip',path.map(x=>x.slice())]);},
     fill(){ops.push(['fill',this.fillStyle,path.map(x=>x.slice())]);},
-    stroke(){ops.push(['stroke',this.strokeStyle]);}
+    stroke(){ops.push(['stroke',this.strokeStyle,this.lineWidth]);}
   };
 }
 const style=()=>normalizeSurfaceTreatments([{
@@ -76,25 +76,29 @@ test('real chain ribbon adds projected contacts only on full, lit Over painting'
   assert.equal(n,m,'adding contacts may not change the source stitch lattice');
   assert.ok(n>9);
   assert.equal(plain.ops.filter(x=>x[0]==='clip').length,0);
-  const clips=shaded.ops.filter(x=>x[0]==='clip');
-  assert.ok(clips.length>0,'source-linked stitches should really overlap');
-  assert.ok(clips.length<3*n,'bounded shadows cannot outrun authored links');
-  assert.equal(shaded.ops.filter(x=>x[0]==='fill').length,clips.length);
-  assert.ok(clips.every(x=>x[1].filter(p=>p[0]==='arc').length>=2&&
-    x[1].filter(p=>p[0]==='arc').length%2===0),
-    'only additive round-capped lower-source yarn may receive contact ink');
-  for(const fill of shaded.ops.filter(x=>x[0]==='fill')){
-    const paths=fill[2];
-    for(let i=0;i<paths.length;i++)if(paths[i][0]==='arc')
-      assert.equal(paths[i-1]?.[0],'move',
-        'each contact circle must begin a fresh subpath, with no false bridge');
-  }
+  assert.equal(shaded.ops.filter(x=>x[0]==='clip').length,0,
+    'source lower-cord geometry must contain the narrow contact stroke');
+  const plainStrokes=plain.ops.filter(x=>x[0]==='stroke');
+  const shadedStrokes=shaded.ops.filter(x=>x[0]==='stroke');
+  assert.ok(shadedStrokes.length>plainStrokes.length,
+    'actual source chain intersections must draw their lower-cord contacts');
+  const additions=shadedStrokes.filter(x=>x[2]<Math.max(.8,Math.min(2,treatment.pitch*.24)));
+  assert.ok(additions.length>0&&additions.length<3*n,
+    'contact count is bounded by source links, not screen pixels');
+  assert.ok(additions.every(x=>x[2]>0&&x[2]<
+    Math.max(.8,Math.min(2,treatment.pitch*.24))),
+    'contact ink must fit entirely inside real lower underlay width');
+  assert.equal(shaded.ops.filter(x=>x[0]==='fill').length,0,
+    'no giant arc area or ambient fabric darkening is permitted');
   drawRibbonEmbroidery(unlit,stripe,scene.extent,treatment,null,null,
     {contactShadows:true});
   assert.equal(unlit.ops.filter(x=>x[0]==='clip').length,0);
-  drawRibbonEmbroidery(crop,stripe,scene.extent,treatment,
-    {start:-scene.extent*.2,end:scene.extent*.2},light,
+  const range={start:-scene.extent*.2,end:scene.extent*.2};
+  drawRibbonEmbroidery(crop,stripe,scene.extent,treatment,range,light,
     {contactShadows:true});
-  assert.equal(crop.ops.filter(x=>x[0]==='clip').length,0,
-    'a major-branch crossing replay must not invent its own chain z order');
+  const replayWithoutContacts=capture();
+  drawRibbonEmbroidery(replayWithoutContacts,stripe,scene.extent,treatment,
+    range,light);
+  assert.deepEqual(crop.ops,replayWithoutContacts.ops,
+    'major-branch crossing replay must be byte-for-byte source-stroke identical');
 });
