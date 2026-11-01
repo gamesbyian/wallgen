@@ -109,3 +109,19 @@ test('main docs-only sanity fast path cannot suppress source stamping or trusted
   assert.match(pages, /trusted-renderer\/roygbiv-render-version\.json/);
   assert.match(pages, /actions\/deploy-pages@v4/);
 });
+
+
+test('raster bot cannot publish pixels from superseded logo source or force a branch', async () => {
+  const logo = await readFile(path.join(workflows, 'logo-raster.yml'), 'utf8');
+  assert.match(logo, /git fetch --no-tags origin/);
+  assert.match(logo, /git diff --quiet HEAD "refs\/remotes\/origin\/\$\{TARGET_BRANCH\}"/);
+  for (const input of [
+    'assets/roygbiv-logo.svg', 'assets/roygbiv-logo-dark.svg',
+    'assets/roygbiv-logo-cream.svg', 'scripts/build-logo-raster.mjs',
+  ]) assert(logo.includes(input), 'Missing source change protection: ' + input);
+  assert.match(logo, /exit 1/, 'Stale source must fail visibly');
+  assert.match(logo, /rebase "refs\/remotes\/origin\/\$\{TARGET_BRANCH\}"/,
+    'Unrelated branch advances must be integrated before output push');
+  assert.match(logo, /git push origin "HEAD:refs\/heads\/\$\{TARGET_BRANCH\}"/);
+  assert.doesNotMatch(logo, /git push[^\n]*--force/, 'Never overwrite a concurrent update');
+});
