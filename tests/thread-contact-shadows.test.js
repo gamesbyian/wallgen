@@ -143,7 +143,7 @@ test('only fully painted, lit satin over-policy may add contacts; replay is unch
   assert.equal(unlit.operations.filter(x=>x[0]==='clip').length,0);
   const code=readFileSync(new URL('../src/renderer.js',import.meta.url),'utf8');
   assert.match(code,/contactShadows:scene\.crossingMode==='over'/);
-  assert.match(code,/drawRibbonEmbroidery\(g,stripe,scene\.extent,stitch,\{start,end\},ribbonLight\)/);
+  assert.match(code,/drawRibbonEmbroidery\(g,stripe,scene\.extent,stitch,\s*\{start,end\},ribbonLight,\{replayContacts\}\)/);
 });
 
 test('capsules follow the original thread tangent with true rounded forward/back caps',()=>{
