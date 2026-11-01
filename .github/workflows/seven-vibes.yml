@@ -2,6 +2,8 @@ name: Seven ROYGBIV vibes
 # Specialized evidence suite: explicit Actions dispatch only; normal PR gates live in the core workflows.
 on:
   workflow_dispatch:
+permissions:
+  contents: read
 jobs:
   wallpapers:
     runs-on: ubuntu-latest

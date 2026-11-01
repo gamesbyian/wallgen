@@ -5,6 +5,8 @@ name: Native wallpaper gallery
 # Specialized evidence suite: explicit Actions dispatch only; normal PR gates live in the core workflows.
 on:
   workflow_dispatch:
+permissions:
+  contents: read
 jobs:
   native-wallpapers:
     runs-on: ubuntu-latest

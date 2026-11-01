@@ -37,7 +37,7 @@ ROYGBIV is a free, mobile-first, **portrait Pixel 6 Pro Chrome/PWA** wallpaper s
 | Material / film / embroidery | Specific current art plan, actual `src/material-surface.js`, `src/photo-look.js`, `src/embroidery.js` |
 | PNG archival conversion | [Recipe format registry](docs/recipe-format-history/REGISTRY.md), [migration policy](docs/PNG-RECIPE-MIGRATION-AND-FORMAT-REGISTRY-PLAN-2026-10-22.md): optional, explicit refusal on unknown dialects |
 | Recorder / privacy / real use | [Creative recorder](docs/CREATIVE-BEHAVIOUR-RECORDER-PLAN-2026-10-22.md), [human field guide](docs/AGENT-HUMAN-EXPECTATIONS-AND-CREATIVE-COMPOSITION.md): opt-in, never silently upload |
-| CI or verification | [Lean CI policy](docs/CI-OPERATIONS-2026-10-22.md) and targeted tests/artifacts |
+| CI or verification | [Normative CI engineering standard](docs/CI-ENGINEERING-STANDARD.md), [live implementation audit](docs/CI-STANDARD-IMPLEMENTATION-2026-10-31.md), [lean operating policy](docs/CI-OPERATIONS-2026-10-22.md), and targeted evidence |
 
 Avoid reading or appending the full historical research archive for a focused fix. The authoritative queue should have one small present-tense dispatch at the top; place past receipts below a marked archive boundary.
 
