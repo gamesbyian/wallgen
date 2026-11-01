@@ -29,11 +29,16 @@ test('personal project has only a small active workflow menu', async () => {
     'logo-raster.yml': ['push', 'workflow_dispatch'],
     'promote-source-visual-plates.yml': ['pull_request', 'workflow_dispatch'],
   };
+  // Every active specialty suite must be manually requested; no hidden push.
   const manual = [
-    'mobile-browser.yml', 'headless-render.yml', 'agent3-mobile-acceptance.yml',
-    'geometry-library-browser.yml',
-    'visual-agent1.yml', 'ui-screenshot-atlas.yml', 'seven-vibes.yml',
-    'native-wallpaper-gallery.yml', 'design-reference-assets.yml',
+    'agent3-mobile-acceptance.yml', 'design-reference-assets.yml',
+    'geometry-library-browser.yml', 'headless-render.yml',
+    'manual-roygbiv-hosted-release.yml', 'mobile-browser.yml',
+    'native-wallpaper-gallery.yml', 'palette-tone-optical-acceptance.yml',
+    'per-hue-shape-optical.yml', 'reconstruction-dark-tone-full-resolution.yml',
+    'reconstruction-hue-shapes-experiment.yml', 'reconstruction-ink-geometry-experiment.yml',
+    'reconstruction-source-mask-profile.yml', 'reconstruction-vtracer-experiment.yml',
+    'seven-vibes.yml', 'ui-screenshot-atlas.yml', 'visual-agent1.yml',
   ];
   for (const name of manual) expected[name] = ['workflow_dispatch'];
   const live = (await readdir(workflows)).filter(n => /\.ya?ml$/.test(n)).sort();
@@ -51,12 +56,31 @@ test('automatic PR checks stay quick and deep suites require an explicit choice'
   const check = await readFile(path.join(workflows, 'check.yml'), 'utf8');
   assert.match(check, /  pull_request:/);
   assert.doesNotMatch(check, /^  push:/m);
-  assert.match(check, /run: npm run check:quick/);
-  assert.match(check, /inputs\.depth == 'full'/);
-  assert.match(check, /run: npm run check\n/);
+  assert.match(check, /ci-evidence\.mjs quick -- npm run check:quick/);
+  assert.match(check, /steps\.selection\.outputs\.tier == 'full'/);
+  assert.match(check, /ci-evidence\.mjs full -- npm run check\n/);
   const pages = await readFile(path.join(workflows, 'pages.yml'), 'utf8');
   assert.match(pages, /run: npm run check:quick/);
   const pkg = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8'));
   assert.match(pkg.scripts['check:quick'], /node --test/);
   assert.match(pkg.scripts.check, /npm test/);
+});
+
+test('every PR keeps one fail-closed, self-tested required check', async () => {
+  const check = await readFile(path.join(workflows, 'check.yml'), 'utf8');
+  assert.match(check, /run: node scripts\/ci-select\.mjs/);
+  assert.match(check, /CI_BASE_SHA:/);
+  assert.match(check, /fetch-depth: 2/);
+  assert.match(check, /ci-workflow-policy\.test\.mjs tests\/ci-select\.test\.mjs/);
+  assert.match(check, /steps\.selection\.outputs\.tier == 'docs'/);
+  assert.match(check, /steps\.selection\.outputs\.tier == 'quick'/);
+  assert.match(check, /if: failure\(\)/);
+  assert.match(check, /upload-artifact@v4/);
+  assert.doesNotMatch(check, /^    paths:/m, 'Required workflow must not be path-filtered');
+  const retired = await readdir(archive);
+  assert(retired.includes('once-preview-discovery-release.yml'),
+    'One-shot credentialed release must remain archived, not be a live push trigger');
+  const promote = await readFile(path.join(workflows, 'promote-source-visual-plates.yml'), 'utf8');
+  assert.match(promote, /head\.repo\.full_name == github\.repository/,
+    'Write-enabled promotion must reject fork PRs');
 });
