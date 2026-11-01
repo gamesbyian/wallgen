@@ -55,5 +55,5 @@ test('crossing compositing reuses the same stitch semantics only for eligible so
   assert.match(branch,/scene\.construction==='ribbon'/);
   assert.match(branch,/scene\.motif==='solid'/);
   assert.match(branch,/g\.clip\(stripeFillPath\(branch,scene\.extent,scene\)\)/);
-  assert.match(branch,/drawRibbonEmbroidery\(g,stripe,scene\.extent,stitch,\{start,end\},ribbonLight\)/);
+  assert.match(branch,/drawRibbonEmbroidery\(g,stripe,scene\.extent,stitch,\s*\{start,end\},ribbonLight,\{replayContacts\}\)/);
 });
