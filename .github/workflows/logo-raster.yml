@@ -13,9 +13,14 @@ on:
   workflow_dispatch:
 permissions:
   contents: write
+# Serialize branch writes: a newer logo revision must never race another bot push.
+concurrency:
+  group: logo-raster-${{ github.ref }}
+  cancel-in-progress: false
 jobs:
   rasterize:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
         with:
