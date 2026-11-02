@@ -32,21 +32,20 @@ const server=createServer(async(request,response)=>{
 const pairFor=i=>[Math.imul(i,0x9e3779b1)>>>0,
   (Math.imul(i+17,0x85ebca6b)^0xa5a5f0f0)>>>0];
 const seedFor=pair=>pair.map(n=>n.toString(36)).join('-');
-// Select the same genuinely Random-generated source family on every run.
+// Pin the exact genuinely Random-generated source family on every run.
 // No app control is changed to force a cheap proxy geometry.
-function findSeed(label,predicate,start=1){
-  for(let i=start;i<12000;i++){
-    const pair=pairFor(i),seed=seedFor(pair);
-    const recipe=randomizeAllRecipe({seed});
-    if(predicate(recipe))return {label,index:i,pair,seed,recipe};
-  }
-  throw new Error('Could not find fixed Random source family: '+label);
+function pinnedSeed(label,index,predicate){
+  const pair=pairFor(index),seed=seedFor(pair);
+  const recipe=randomizeAllRecipe({seed});
+  assert.ok(predicate(recipe),'Pinned Random case changed source family: '+label);
+  return {label,index,pair,seed,recipe};
 }
 const scenes=[
-  findSeed('textured-loops',r=>r.structure==='paths'&&r.geometry==='loops'&&
+  pinnedSeed('textured-loops',94,r=>r.structure==='paths'&&r.geometry==='loops'&&
     r.material!=='none'&&r.textureDisplacement>20),
-  findSeed('radial-rays',r=>r.structure==='radial'&&r.rayCount>=28&&r.material!=='none',120),
-  findSeed('regions',r=>r.structure==='regions'&&r.regionCount>=14,240),
+  pinnedSeed('radial-rays',126,r=>r.structure==='radial'&&r.rayCount>=28&&
+    r.material==='sand-mandala'),
+  pinnedSeed('regions',240,r=>r.structure==='regions'&&r.regionCount>=14),
 ];
 const profiles=scenes.map(({label,index,seed,recipe})=>({
   label,index,seed,structure:recipe.structure,geometry:recipe.geometry,
