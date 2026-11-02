@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {normalizeRecipe,resolveScene,rng} from '../src/model.js';
-import {samplePath,ribbonEdge} from '../src/path-geometry.js';
+import {samplePath,pathPosition,ribbonEdge} from '../src/path-geometry.js';
 import {motifFits,textureHeight,motifVariation,motifStripeFactors,balanceStripeEnds,stripeFrameContacts} from '../src/renderer.js';
 
 test('shared motif path point exactly matches independent forward sampling',()=>{
@@ -138,6 +138,35 @@ test('paint-only loop/hairpin balancing skips diagnostic scans without altering 
             {...paint,contacts:normal.contacts},normal,
             'paint-only mode must preserve all source-visible balancing decisions');
         }
+      }
+    }
+  }
+});
+
+test('render-only repeating-loop aspect factor keeps original path positions bit-for-bit',()=>{
+  for(const loopAspect of [0,1,20,50,83,99,100]){
+    for(const loopAmplitude of [0,2,13,42,80]){
+      const scene=resolveScene(normalizeRecipe({
+        seed:'loop-constant-'+loopAspect+'-'+loopAmplitude,
+        structure:'paths',geometry:'loops',loopAspect,loopAmplitude,
+        shapeFrequency:83,construction:'ribbon',textureDisplacement:80,
+      }));
+      for(const source of [scene.stripes[0],scene.stripes[3],scene.stripes[6]]){
+        const oldStripe={...source};
+        const cachedStripe={...oldStripe,
+          _renderLoopXAmplitude:(oldStripe.loopAmplitude??13)*2.1*
+            Math.pow(2,((oldStripe.loopAspect??50)-50)/35)};
+        for(const station of [-2,-1,-.7,-.35,0,.14,.36,.8,1,2].map(
+          x=>x*scene.extent)){
+          assert.deepEqual(pathPosition(cachedStripe,station,scene.extent),
+            pathPosition(oldStripe,station,scene.extent),
+            'centreline must be bit-identical');
+          assert.deepEqual(samplePath(cachedStripe,station,scene.extent),
+            samplePath(oldStripe,station,scene.extent),
+            'three-station tangent must be bit-identical');
+        }
+        assert.equal(oldStripe._renderLoopXAmplitude,undefined,
+          'normal source and independent geometry users stay unmodified');
       }
     }
   }
