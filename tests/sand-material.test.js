@@ -91,3 +91,16 @@ test('pathological finite crop bounds cannot hang or flood the sand lattice',()=
   assert.ok(a.size>0);
   for(const [key,grain] of a)assert.deepEqual(b.get(key),grain);
 });
+
+
+test('precomputed grain gauge retains exact public grain positions and facets',()=>{
+  for(const scale of [0,1,25,50,80,99,100]){
+    for(const heightSeed of [-123,0,712,102493]){
+      const l=layer(scale,heightSeed),pitch=sandPitch(l);
+      for(const [ix,iy] of [[-141,-89],[-1,0],[0,0],[1,-1],[43,72]]){
+        assert.deepEqual(sandGrainAt(l,ix,iy,pitch),sandGrainAt(l,ix,iy),
+          'stable shared gauge '+scale+'/'+heightSeed+'/'+ix+'/'+iy);
+      }
+    }
+  }
+});
