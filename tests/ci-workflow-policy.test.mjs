@@ -65,6 +65,23 @@ test('automatic PR checks stay quick and deep suites require an explicit choice'
   assert.match(pkg.scripts.check, /npm test/);
 });
 
+test('real two-viewport touch and accessible-name acceptance requires explicit same-repo PR opt-in', async () => {
+  const check = await readFile(path.join(workflows, 'check.yml'), 'utf8');
+  for (const requirement of [
+    '  touch-browser:',
+    "contains(github.event.pull_request.title, '[touch-browser]')",
+    'github.event.pull_request.head.repo.full_name == github.repository',
+    'node tests/rotation-scrubber-browser.mjs',
+    'node tests/agent3-portrait-swipes-escape.mjs',
+    'node tests/agent3-current-accessible-names-browser.mjs',
+    'persist-credentials: false',
+    'steps.selection.outputs.tier == \'quick\'',
+    '  test:'
+  ]) {
+    assert.ok(check.includes(requirement), 'Opt-in browser CI policy missing: ' + requirement);
+  }
+});
+
 test('every PR keeps one fail-closed, self-tested required check', async () => {
   const check = await readFile(path.join(workflows, 'check.yml'), 'utf8');
   assert.match(check, /run: node scripts\/ci-select\.mjs/);

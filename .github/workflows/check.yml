@@ -52,3 +52,54 @@ jobs:
           path: artifacts/ci/*.json
           retention-days: 7
           if-no-files-found: ignore
+
+  # On-demand, unprivileged real Chromium evidence for a same-repository PR.
+  # The required lightweight "test" check is unchanged. An agent opts in by
+  # including [touch-browser] in its PR title. Forks cannot run this deep gate.
+  touch-browser:
+    if: ${{ github.event_name == 'pull_request' && contains(github.event.pull_request.title, '[touch-browser]') && github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser-only acceptance dependencies
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1 serve@14.2.5
+          npx playwright install --with-deps chromium
+      - name: Validate production-linked browser journeys
+        run: |
+          node --check tests/rotation-scrubber-browser.mjs
+          node --check tests/agent3-portrait-swipes-escape.mjs
+          node --check tests/agent3-current-accessible-names-browser.mjs
+      - name: Serve current PR source
+        run: |
+          npx serve . -l 4173 > /tmp/roygbiv-opt-in-browser.log 2>&1 &
+          for i in $(seq 1 40); do
+            if curl --fail --silent http://127.0.0.1:4173/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/roygbiv-opt-in-browser.log
+          exit 1
+      - name: Genuine two-viewport Chromium acceptance
+        run: |
+          CHROME_BIN="$(command -v google-chrome || command -v chromium || echo /usr/bin/google-chrome)" node tests/rotation-scrubber-browser.mjs
+          node tests/agent3-portrait-swipes-escape.mjs
+          node tests/agent3-current-accessible-names-browser.mjs
+      - name: Preserve successful and failed browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: roygbiv-opt-in-touch-browser-${{ github.run_id }}
+          path: |
+            artifacts/rotation-touch/
+            artifacts/agent3-portrait-swipes-escape/
+            artifacts/agent3-664-names/
+          retention-days: 14
+          if-no-files-found: warn
