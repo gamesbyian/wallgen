@@ -162,7 +162,8 @@ test('Frame pointer capture rolls back on resize, pagehide and hidden document',
     pointerType:'touch',pointerId:id,clientX:x,clientY:y,
     preventDefault(){},stopImmediatePropagation(){}});
   try{
-    for(const eventName of ['resize','pagehide','visibilitychange']){
+    for(const eventName of ['resize','pagehide','visibilitychange',
+      'mobile-edit','mobile-saved','mobile-more','mobile-explore']){
       const preview=makeTarget(),stage=makeTarget(),host=makeTarget();
       const mockWindow=makeTarget(),mockDocument=makeTarget();
       mockDocument.body={classList:{contains:()=>false,toggle(){}}};
@@ -184,12 +185,26 @@ test('Frame pointer capture rolls back on resize, pagehide and hidden document',
       if(eventName==='visibilitychange'){
         mockDocument.hidden=true;
         mockDocument.emit('visibilitychange');
+      }else if(eventName.startsWith('mobile-')){
+        mockDocument.emit('roygbiv-mobile-navigation-changed',{
+          detail:{mode:eventName.slice(7)}});
+        assert.equal(button.attributes.get('aria-pressed'),'false',
+          'entering a different destination must disarm Frame');
+        assert.equal(stage.children[0].hidden,true,
+          'stage Done must not remain active in another destination');
+        assert.equal(preview.style.touchAction,'auto',
+          'navigation must restore normal preview gestures');
       }else mockWindow.emit(eventName);
       assert.equal(preview.style.transform,'','canceled gesture must roll back its preview');
       assert.equal(preview.captured.size,0,'capture must be released before delayed pointerup');
       preview.emit('pointerup',pointer(7,140,200));
       assert.equal(writes.length,0,eventName+' must not commit a stale pan');
       mockDocument.hidden=false;
+      if(eventName.startsWith('mobile-')){
+        // Once navigation disarms a temporary mode, explicitly re-arm it.
+        button.emit('click');
+        assert.equal(button.attributes.get('aria-pressed'),'true');
+      }
       preview.emit('pointerdown',pointer(7,100,200));
       preview.emit('pointermove',pointer(7,130,200));
       preview.emit('pointerup',pointer(7,130,200));
@@ -209,6 +224,10 @@ test('Frame pointer capture rolls back on resize, pagehide and hidden document',
       if(eventName==='visibilitychange'){
         mockDocument.hidden=true;
         mockDocument.emit('visibilitychange');
+      }else if(eventName.startsWith('mobile-')){
+        mockDocument.emit('roygbiv-mobile-navigation-changed',{
+          detail:{mode:eventName.slice(7)}});
+        assert.equal(button.attributes.get('aria-pressed'),'false');
       }else mockWindow.emit(eventName);
       assert.equal(preview.style.transform,'');
       assert.equal(preview.captured.size,0,'both pinch captures must release');
