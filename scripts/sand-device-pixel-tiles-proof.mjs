@@ -66,7 +66,15 @@ const patch=[
  "        paintMaterial(t,layer,paintBounds,sandMaterialLighting(scene,layer));",
  "      }"
 ].join('\n');
-const candidate=original.replace(anchor,patch);
+// A deliberately expensive negative control: keep the *full original grain
+// enumeration bounds* in every tile while changing only its clip. If this
+// produces exact cached pixels, incomplete crop enumeration caused the gap;
+// if pixels still differ, partitioned draw/clip ordering remains suspect.
+const fullBoundsOnly=process.argv.includes('--full-bounds-control');
+const tilePaint=fullBoundsOnly?patch.replace(
+  '            paintMaterial(t,layer,materialBounds,sandMaterialLighting(scene,layer));',
+  '            paintMaterial(t,layer,paintBounds,sandMaterialLighting(scene,layer));'):patch;
+const candidate=original.replace(anchor,tilePaint);
 const server=createServer(async(req,res)=>{
  try{
   const pathname=decodeURIComponent(new URL(req.url,'http://localhost').pathname);
@@ -85,7 +93,7 @@ const server=createServer(async(req,res)=>{
 const pairFor=i=>[Math.imul(i,0x9e3779b1)>>>0,
  (Math.imul(i+17,0x85ebca6b)^0xa5a5f0f0)>>>0];
 const seedFor=i=>pairFor(i).map(n=>n.toString(36)).join('-');
-const scenes=[
+let scenes=[
  {label:'sand-600x1300',index:126,w:600,h:1300,overrides:{textureCoverage:'stripes'}},
  {label:'sand-372x806',index:126,w:372,h:806,overrides:{textureCoverage:'stripes'}},
  {label:'sand-nudged-rotated',index:126,w:372,h:806,
@@ -97,6 +105,7 @@ const scenes=[
 ].map(x=>({...x,recipe:normalizeRecipe({
  ...randomizeAllRecipe({seed:seedFor(x.index)}),...x.overrides
 })}));
+if(fullBoundsOnly)scenes=scenes.filter(x=>['sand-372x806','sand-nudged-rotated'].includes(x.label));
 assert.equal(scenes[0].recipe.material,'sand-mandala');
 assert.equal(scenes[0].recipe.rayCount,42);
 await new Promise(done=>server.listen(0,'127.0.0.1',done));
@@ -108,7 +117,7 @@ try{
  const page=await browser.newPage();
  const errors=[];page.on('pageerror',e=>errors.push(String(e)));
  await page.goto('http://127.0.0.1:'+server.address().port+'/',{waitUntil:'domcontentloaded'});
- const results=await page.evaluate(async scenes=>{
+ const results=await page.evaluate(async ({scenes,fullBoundsOnly})=>{
   const {presentNudgedArtwork}=await import('/base/src/renderer.js');
   const workers=await Promise.all(['base','crop'].map(async version=>{
    const w=new Worker('/'+version+'/src/render-worker.js',{type:'module'});
@@ -185,7 +194,7 @@ try{
   const records=[];
   for(const scene of scenes){
    const samples=[];
-   for(let i=0;i<3;i++){
+   for(let i=0;i<(fullBoundsOnly?1:3);i++){
     const pair={};
     for(const worker of (i%2?workers.slice().reverse():workers)){
      const msg=await worker.request(scene.recipe,scene.w,scene.h);
@@ -225,7 +234,7 @@ try{
     width:scene.w,height:scene.h,samples});
   }
   const native={};
-  for(const worker of workers){
+  for(const worker of (fullBoundsOnly?[]:workers)){
    const res=await worker.request(scenes[0].recipe,3024,6552,'export');
    if(res.type!=='exported'||res.blob?.type!=='image/png')throw Error('Native export error');
    native[worker.version]={sha:await hash(await res.blob.arrayBuffer()),bytes:res.blob.size};
@@ -234,9 +243,9 @@ try{
   if(native.base.sha!==native.crop.sha||native.base.bytes!==native.crop.bytes)
     throw Error('Native export byte mismatch');
   return {records,native};
- },scenes);
+ },{scenes,fullBoundsOnly});
  assert.deepEqual(errors,[]);
- const median=xs=>xs.slice().sort((a,b)=>a-b)[2];
+ const median=xs=>xs.slice().sort((a,b)=>a-b)[Math.floor(xs.length/2)];
  const summary=results.records.map(r=>({label:r.label,material:r.material,
   exact:r.samples.every(s=>!s.changed&&!s.alphaChanged),
   entireCacheExact:r.samples.every(s=>s.fullCacheExact),
@@ -246,10 +255,11 @@ try{
   baseMedianMs:Math.round(median(r.samples.map(s=>s.baseMs))),
   cropMedianMs:Math.round(median(r.samples.map(s=>s.cropMs))),
   originalVisibleSha:r.samples[0].baseSha,candidateVisibleSha:r.samples[0].cropSha}));
- await mkdir(join(root,'artifacts','sand-device-pixel-tiles'),{recursive:true});
- await writeFile(join(root,'artifacts','sand-device-pixel-tiles','receipt.json'),
+ const evidenceFolder=fullBoundsOnly?'sand-device-pixel-tiles-full-bounds':'sand-device-pixel-tiles';
+ await mkdir(join(root,'artifacts',evidenceFolder),{recursive:true});
+ await writeFile(join(root,'artifacts',evidenceFolder,'receipt.json'),
   JSON.stringify({environment:'Actual Chromium Worker, source-identical complete cache vs device-pixel-aligned staged tile clip; no production change',summary,...results},null,2)+'\n');
- console.log('ROYGBIV_SAND_DEVICE_PIXEL_TILES',JSON.stringify({summary,native:results.native}));
+ console.log(fullBoundsOnly?'ROYGBIV_SAND_TILE_FULL_BOUNDS_CONTROL':'ROYGBIV_SAND_DEVICE_PIXEL_TILES',JSON.stringify({summary,native:results.native}));
 }finally{
  await browser?.close();await new Promise(done=>server.close(done));
 }
