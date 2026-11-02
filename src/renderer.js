@@ -347,13 +347,21 @@ export function motifFits(stripe,scene,x,y,halfX,halfY,extent=scene.extent,point
  * Homogeneity is 100 for identical motifs. Optional stripe override adds
  * deterministic per-stripe differences without changing the motif type.
  */
-export function motifVariation(scene,stripe,random) {
-  const variance=1-scene.patternHomogeneity/100;
+// These seeded stripe factors do not depend on the individual motif mark.
+// Dense random designs can contain thousands of marks: derive them once per
+// painted stripe rather than rehashing the same seed for every single mark.
+export function motifStripeFactors(scene,stripe) {
   const stripeEffect=scene.overridePatternHomogeneity ? scene.individuality/100 : 0;
   const stripeRandom=rng(scene.seed+':motif-stripe:'+stripe.index);
   const stripeScale=1+(stripeRandom()-.5)*1.0*stripeEffect;
   const stripeAngle=(stripeRandom()-.5)*1.6*stripeEffect;
   const stripeOpacity=1-(stripeRandom()*.45*stripeEffect);
+  return {stripeScale,stripeAngle,stripeOpacity};
+}
+export function motifVariation(scene,stripe,random,stripeFactors=null) {
+  const variance=1-scene.patternHomogeneity/100;
+  const {stripeScale,stripeAngle,stripeOpacity}=
+    stripeFactors??motifStripeFactors(scene,stripe);
   return {
     scale:Math.max(.28,stripeScale*(1+(random()-.5)*1.1*variance)),
     angle:stripeAngle+(random()-.5)*Math.PI*variance,
@@ -587,12 +595,13 @@ function fillMotif(ctx,stripe,extent,scene) {
   const across=Math.max(1,Math.ceil(stripe.width/(step*.83)));
   const stroke=Math.min(step*.19,Math.max(.55,stripe.width*.14));
   ctx.save();ctx.lineWidth=stroke;ctx.lineCap='round';ctx.lineJoin='round';
+  const stripeFactors=motifStripeFactors(scene,stripe);
   const dotSpacingFactor=motif==='dots'?1.8-.95*scene.dotSpacing/100:1;
   const spacing=Math.max(2.5,(motif==='dashes'?step*1.9:motif==='chevrons'?step*1.5:step)*dotSpacingFactor/motifRate);
   const drawColumn=(x,index,random)=>{
     for(let j=-across;j<=across;j++){
       if(motif==='checker' && ((index+1+j)&1)!==0)continue;
-      const variation=motifVariation(scene,stripe,random);
+      const variation=motifVariation(scene,stripe,random,stripeFactors);
       const offset=j*step*.82;
       const jitter=scene.intensity*step*.10;
       const xx=x+(Math.abs(j)%2)*spacing*.35+(random()-.5)*jitter;

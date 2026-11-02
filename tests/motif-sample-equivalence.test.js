@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {normalizeRecipe,resolveScene} from '../src/model.js';
+import {normalizeRecipe,resolveScene,rng} from '../src/model.js';
 import {samplePath} from '../src/path-geometry.js';
-import {motifFits,textureHeight} from '../src/renderer.js';
+import {motifFits,textureHeight,motifVariation,motifStripeFactors} from '../src/renderer.js';
 
 test('shared motif path point exactly matches independent forward sampling',()=>{
   for(const geometry of ['straight','wave','loop','loops','hairpin']){
@@ -35,6 +35,46 @@ test('shared motif path point exactly matches independent forward sampling',()=>
       if(textureCoverage==='background')
         assert.equal(textureHeight(scene,stripe,0,0),0,
           'background-only material cannot displace stripe marks');
+    }
+  }
+});
+
+test('precomputed motif stripe factors preserve every original seeded mark exactly',()=>{
+  for(const geometry of ['straight','wave','loop','loops','hairpin']){
+    for(const overridePatternHomogeneity of [false,true]){
+      for(const patternHomogeneity of [0,37,100]){
+        const recipe=normalizeRecipe({
+          seed:'motif-factor-parity-'+geometry+'-'+overridePatternHomogeneity+'-'+patternHomogeneity,
+          structure:'paths',geometry,construction:'ribbon',motif:'dots',
+          patternHomogeneity,overridePatternHomogeneity,individuality:89,
+        });
+        const scene=resolveScene(recipe);
+        for(const stripe of [scene.stripes[0],scene.stripes[3],scene.stripes[6]]){
+          const factors=motifStripeFactors(scene,stripe);
+          const stripeEffect=scene.overridePatternHomogeneity?scene.individuality/100:0;
+          const oldStripeRandom=rng(scene.seed+':motif-stripe:'+stripe.index);
+          const stripeScale=1+(oldStripeRandom()-.5)*1.0*stripeEffect;
+          const stripeAngle=(oldStripeRandom()-.5)*1.6*stripeEffect;
+          const stripeOpacity=1-(oldStripeRandom()*.45*stripeEffect);
+          assert.deepEqual(factors,{stripeScale,stripeAngle,stripeOpacity});
+          const seed=scene.seed+':motifs:'+stripe.index;
+          const originalRandom=rng(seed);
+          const cachedRandom=rng(seed);
+          const publicRandom=rng(seed);
+          const variance=1-scene.patternHomogeneity/100;
+          for(let mark=0;mark<96;mark++){
+            const reference={
+              scale:Math.max(.28,stripeScale*(1+(originalRandom()-.5)*1.1*variance)),
+              angle:stripeAngle+(originalRandom()-.5)*Math.PI*variance,
+              opacity:Math.max(.16,stripeOpacity*(1-originalRandom()*.75*variance)),
+            };
+            assert.deepEqual(motifVariation(scene,stripe,cachedRandom,factors),
+              reference,'cached motif parity '+geometry+' '+stripe.index+' '+mark);
+            assert.deepEqual(motifVariation(scene,stripe,publicRandom),
+              reference,'standalone motif parity '+geometry+' '+stripe.index+' '+mark);
+          }
+        }
+      }
     }
   }
 });
