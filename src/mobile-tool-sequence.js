@@ -19,6 +19,15 @@ export function adjacentVisibleMobileTool(choices,currentId,direction){
 // rail or category rail must remain native scrolling gestures; touches on
 // labels/links/ARIA controls belong to those controls, not to tool navigation.
 // Only a genuine noninteractive tray surface may begin a tool swipe.
+// A native TouchEvent exposes every active contact, even one that began
+// outside the editor. Only the original single finger may finish navigation;
+// any concurrent finger or substituted touch ends the tentative gesture.
+export function matchingSingleTouchEnd(identifier,event){
+  if(!event||event.touches?.length!==0||event.changedTouches?.length!==1)
+    return null;
+  const touch=event.changedTouches[0];
+  return touch.identifier===identifier?touch:null;
+}
 export function isMobileToolSwipeSurface(target){
   return !!target?.closest && !target.closest(
     'input,select,textarea,button,label,a,[role="button"],[role="slider"],' +
