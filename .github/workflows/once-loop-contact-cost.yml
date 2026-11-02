@@ -5,6 +5,7 @@ on:
     paths:
       - 'src/renderer.js'
       - 'tests/motif-sample-equivalence.test.js'
+      - 'scripts/motif-sample-reuse-acceptance.mjs'
       - '.github/workflows/once-loop-contact-cost.yml'
 permissions:
   contents: read
@@ -36,6 +37,7 @@ jobs:
       - name: Ten canonical actual-browser direct/worker pixel SHA and warm timings
         env:
           CHROME_BIN: /usr/bin/google-chrome
+          ROYGBIV_PERF_TRIALS: '9'
         run: node scripts/motif-sample-reuse-acceptance.mjs
       - name: Preserve bounded measured source evidence
         if: always()
