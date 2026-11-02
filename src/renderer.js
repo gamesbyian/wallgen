@@ -1082,6 +1082,12 @@ export function drawWallpaper(canvas, recipe, options={}) {
       {...original,center:original.center+bundleOffset};
     stripe.objectId=bundle.id+'/stripe-'+original.index;
     stripe.coreExtent=scene.coreExtent;
+    // The aspect ratio and original X amplitude never change within this
+    // canonical paint. Avoid a Math.pow at every looping source station.
+    // Keep this value on the disposable render stripe, never the recipe.
+    if((stripe.sharedGeometry??stripe.geometry)==='loops')
+      stripe._renderLoopXAmplitude=(stripe.loopAmplitude??13)*2.1*
+        Math.pow(2,((stripe.loopAspect??50)-50)/35);
     if((stripe.sharedGeometry??stripe.geometry)==='drawn'){
       stripe.extendDrawnPath=extendOpenPath;
       stripe.segmentStart=extendOpenPath?-scene.extent:-scene.coreExtent;
