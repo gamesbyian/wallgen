@@ -1,0 +1,36 @@
+name: One-off sand source-crop optical proof
+on:
+  pull_request:
+    paths:
+      - 'scripts/sand-viewport-crop-feasibility-browser.mjs'
+      - '.github/workflows/one-off-sand-crop-proof.yml'
+permissions:
+  contents: read
+jobs:
+  browser:
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository && contains(github.event.pull_request.title, '[sand-crop-proof]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Chromium
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Verify experimental script
+        run: node --check scripts/sand-viewport-crop-feasibility-browser.mjs
+      - name: Exact visible canvas pixels and native PNG for source-bound sand
+        run: node scripts/sand-viewport-crop-feasibility-browser.mjs
+      - name: Preserve optical and timing evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: source-crop-optical-proof-${{ github.run_id }}
+          path: artifacts/sand-crop-feasibility/
+          retention-days: 14
+          if-no-files-found: warn
