@@ -272,3 +272,46 @@ speed guarantee. The full-size source pixels, mobile gesture semantics,
 camera, user locks/Undo and original artwork remain unchanged. Physical
 Pixel 6 Pro interaction/thermal evidence is still outstanding. The
 one-shot acceptance workflow is retired after proof.
+
+## Zero-side material-height queries skip width solving (2 November 2026, PR #992)
+
+The paint-time motif-placement path requests
+`textureHeight(scene,stripe,x,0,point)` for many marks. Previously the
+height field still invoked the full longitudinal `widthAt()` solver to
+calculate `0*width/2`. For canonical finite widths, this has no geometric
+effect, yet a width profile can involve taper normalization and
+sinusoidal source variation. The height sampler now uses the input zero
+directly when `side===0`, preserving `-0`'s sign, and keeps the original
+multiplication order and exact width calculation for signed `-1/+1`
+physical ribbon edges. No alternate material field, recipe, geometry,
+seed, camera, worker or export implementation was added.
+
+The permanent quick suite checks 2,016 signed original-vs-shortcut
+offsets across six geometries, four displacement settings, three source
+stripes and seven stations, with both signs of zero and independent
+material-height point sampling.
+
+[Actual source-matched nine-pair Chromium #41374314345](https://github.com/gamesbyian/wallgen/actions/runs/41374314345)
+passed all 20 raw-pixel comparisons across ten canonical recipes in direct
+Canvas2D and production export Worker. The real **3024×6552 worker PNG**
+remained byte-identical, 11,453,267 bytes, SHA-256
+`b7fa60e7f6208957cd87d1341a3f57e166c0749a6fb22f39f9f61a41876e4c4a`.
+All nine worker paint pairs were interleaved baseline/candidate in alternating
+order, on one Linux Chrome runner (ms):
+
+| Fixed case | Original | Zero-side shortcut |
+| --- | --- | --- |
+| `random-perf-fixed-30` loops/wood/dashes | 1159,1054,1034,1004,995,981,982,980,998 | 1105,1041,999,986,979,958,964,977,960 |
+| repeating-loop/dashes control | 169,156,155,156,159,155,157,154,152 | 180,159,154,153,154,152,157,159,153 |
+| single-loop/chevrons control | 187,184,170,171,172,171,168,189,170 | 189,174,170,168,172,169,169,172,188 |
+| hairpin/stars control | 173,167,167,169,174,167,166,169,171 | 173,166,167,170,180,166,168,169,171 |
+| zigzag/checker control | 157,121,118,118,119,133,119,118,117 | 134,120,120,118,120,119,119,118,120 |
+
+Fixed seed 30 improved in **all nine pairs**. Excluding the first cold pair,
+the original warm median was **996.5ms**, candidate **978ms**, approximately
+**1.9% less worker painting time**. Other cases are mixed/noise-sized. These
+are *paired isolated-worker durations*, not total click-to-canvas latency,
+and must not be added to gains measured on different CI runners. The
+unchanged art, existing Undo/locks and final PNG are the primary acceptance;
+physical Pixel 6 Pro thermal/latency measurements remain unverified.
+The one-shot workflow is retired after collecting this evidence.
