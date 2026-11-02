@@ -195,12 +195,13 @@ try{
           const digest=new Uint8Array(await crypto.subtle.digest('SHA-256',bytes));
           return [...digest].map(byte=>byte.toString(16).padStart(2,'0')).join('');
         });
-        assert.equal(receipt.workerTimeline.filter(event=>event.kind==='created').length<=1,
-          'one Random action/burst must never spawn a replacement storm');
+        const previewWorkerIds=new Set(receipt.workerTimeline.filter(event=>
+          event.kind==='requested').map(event=>event.workerId));
+        assert.ok(previewWorkerIds.size>=1&&previewWorkerIds.size<=2,
+          'a Random burst can use at most one replacement preview worker');
         return {
           clicks:pairs.length,expectedSeed,finalCanvasSHA256,
-          replacementWorkers:receipt.workerTimeline.filter(event=>
-            event.kind==='created').length,
+          replacementWorkers:Math.max(0,previewWorkerIds.size-1),
           finalStructure:current.structure,
           finalGeometry:current.geometry,worker:final.worker,
           firstInteractiveFromFirstMs:interactive.length?
