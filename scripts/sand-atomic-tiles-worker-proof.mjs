@@ -134,12 +134,38 @@ try{
    const digest=await crypto.subtle.digest('SHA-256',bytes);
    return [...new Uint8Array(digest)].map(x=>x.toString(16).padStart(2,'0')).join('');
   };
-  async function hashBitmap(bitmap){
-   const canvas=new OffscreenCanvas(bitmap.width,bitmap.height);
-   try{
-    canvas.getContext('2d').drawImage(bitmap,0,0);
-    return await hash(canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data);
-   }finally{canvas.width=0;canvas.height=0;}
+  async function inspectBitmap(bitmap){
+    const canvas=new OffscreenCanvas(bitmap.width,bitmap.height);
+    try{
+      canvas.getContext('2d').drawImage(bitmap,0,0);
+      const data=new Uint8ClampedArray(canvas.getContext('2d').getImageData(
+        0,0,canvas.width,canvas.height).data);
+      return {sha:await hash(data),width:canvas.width,height:canvas.height,data};
+    }finally{canvas.width=0;canvas.height=0;}
+  }
+  function difference(a,b){
+    if(a.width!==b.width||a.height!==b.height)throw Error('Surface dimensions changed');
+    let count=0,maximum=0,alpha=0,minX=a.width,minY=a.height,maxX=-1,maxY=-1;
+    let totalDelta=0;
+    for(let px=0;px<a.width*a.height;px++){
+      const off=px*4;
+      let biggest=0;
+      for(let k=0;k<4;k++){
+        const diff=Math.abs(a.data[off+k]-b.data[off+k]);
+        if(k===3&&diff)alpha++;
+        biggest=Math.max(biggest,diff);totalDelta+=diff;
+      }
+      if(biggest){
+        count++;
+        const x=px%a.width,y=Math.floor(px/a.width);
+        minX=Math.min(minX,x);minY=Math.min(minY,y);
+        maxX=Math.max(maxX,x);maxY=Math.max(maxY,y);
+        maximum=Math.max(maximum,biggest);
+      }
+    }
+    return {changedPixels:count,maxChannelDifference:maximum,alphaChanges:alpha,
+      bbox:count?[minX,minY,maxX,maxY]:null,
+      channelMAE:totalDelta/(a.width*a.height*4)};
   }
   async function paint(frame,recipe,width,height){
    const c=new OffscreenCanvas(width,height);
@@ -159,8 +185,8 @@ try{
      const msg=await worker.request(scene.recipe,scene.w,scene.h);
      if(msg.type!=='frame'||msg.quality!=='settled')throw Error('Missing settled frame');
      const pixels=await paint(msg,scene.recipe,scene.w,scene.h);
-     const inkSha=await hashBitmap(msg.ink),backgroundSha=await hashBitmap(msg.background);
-     pair[worker.version]={ms:msg.ms,pixels,inkSha,backgroundSha,overhang:msg.overhang};
+     const ink=await inspectBitmap(msg.ink),background=await inspectBitmap(msg.background);
+     pair[worker.version]={ms:msg.ms,pixels,ink,background,overhang:msg.overhang};
      msg.background.close();msg.ink.close();
     }
     const p=pair.base.pixels,q=pair.crop.pixels;
@@ -176,11 +202,13 @@ try{
      if(p[j+3]!==q[j+3])alphaChanged++;
     }
     const receipt={i,baseMs:pair.base.ms,cropMs:pair.crop.ms,
-      fullCacheExact:pair.base.inkSha===pair.crop.inkSha&&
-        pair.base.backgroundSha===pair.crop.backgroundSha&&
+      fullCacheExact:pair.base.ink.sha===pair.crop.ink.sha&&
+        pair.base.background.sha===pair.crop.background.sha&&
         JSON.stringify(pair.base.overhang)===JSON.stringify(pair.crop.overhang),
-      inkSha:{base:pair.base.inkSha,tiled:pair.crop.inkSha},
-      backgroundSha:{base:pair.base.backgroundSha,tiled:pair.crop.backgroundSha},
+      inkSha:{base:pair.base.ink.sha,tiled:pair.crop.ink.sha},
+      backgroundSha:{base:pair.base.background.sha,tiled:pair.crop.background.sha},
+      inkDiff:difference(pair.base.ink,pair.crop.ink),
+      backgroundDiff:difference(pair.base.background,pair.crop.background),
       baseSha:await hash(p),cropSha:await hash(q),changed,maxDelta,alphaChanged,
       channelMAE:mae/(scene.w*scene.h*3)};
     samples.push(receipt);
@@ -206,6 +234,8 @@ try{
  const summary=results.records.map(r=>({label:r.label,material:r.material,
   exact:r.samples.every(s=>!s.changed&&!s.alphaChanged),
   entireCacheExact:r.samples.every(s=>s.fullCacheExact),
+  inkDifference:r.samples[0].inkDiff,
+  backgroundDifference:r.samples[0].backgroundDiff,
   changed:r.samples[0].changed,maxDelta:r.samples[0].maxDelta,
   baseMedianMs:Math.round(median(r.samples.map(s=>s.baseMs))),
   cropMedianMs:Math.round(median(r.samples.map(s=>s.cropMs))),
