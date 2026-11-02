@@ -315,3 +315,53 @@ and must not be added to gains measured on different CI runners. The
 unchanged art, existing Undo/locks and final PNG are the primary acceptance;
 physical Pixel 6 Pro thermal/latency measurements remain unverified.
 The one-shot workflow is retired after collecting this evidence.
+
+## Paint-scoped material texture factors (2 November 2026, PR #996)
+
+The existing `textureHeight(scene,stripe,x,side,point)` samples source-matched
+material relief at many edge, motif and crossing stations. Before this
+change, **every sample** rechecked the immutable layer list for any
+non-background coverage, calculated `Math.cos(scene.angle)` and
+`Math.sin(scene.angle)`, and recalculated the same
+`Math.pow(scene.textureDisplacement/100,.85)` cap factor. The height field,
+source coordinates, material stack, rotated layer cos/sin and actual signed
+edge expressions remain unchanged.
+
+The renderer now keeps these *four immutable factors* in a `WeakMap` for
+the duration of **one `drawWallpaper` invocation only**, deleting the entry
+in `finally` even when an exception aborts an in-progress paint. Direct
+external calls to `textureHeight` use their original arithmetic and observe
+current material/angle edits. The normal quick suite
+`tests/render-surface-lifecycle.test.js` proves that a completed paint
+returns no stale material coverage/trigonometry: adding a real texture
+and rotating the returned scene produces the same original relief samples
+as a fresh independent scene. No persistent cache, recipe field, alternative
+geometry, new material brush, LOD or worker lifecycle change was made.
+
+[Actual source-matched Chrome proof #41381506368](https://github.com/gamesbyian/wallgen/actions/runs/41381506368)
+passed ten raw-pixel SHA comparisons through **both** direct Canvas2D and
+the real export Worker (20/20). The actual 3024×6552 worker PNG was
+**byte-for-byte identical**, 11,453,267 bytes, SHA-256
+`b7fa60e7f6208957cd87d1341a3f57e166c0749a6fb22f39f9f61a41876e4c4a`.
+
+Same-run production Worker interactive paint times at 372×806 (ms, nine
+alternating baseline/candidate trials, first cold pair retained in rows):
+
+| Actual source | Original | Render-scoped factors |
+| --- | --- | --- |
+| repeating loops + dashes + wood | 174,173,161,164,165,162,162,166,161 | 173,160,153,151,155,150,156,153,157 |
+| fixed slow Random seed 30 | 839,782,817,780,733,723,734,720,721 | 838,772,801,758,713,711,738,711,720 |
+| single loop + chevrons | 210,181,177,179,182,179,184,205,180 | 198,175,177,174,181,174,176,186,198 |
+| hairpin + stars | 180,172,169,176,180,174,175,178,175 | 175,168,171,173,174,168,172,172,173 |
+| zigzag + checker | 109,102,91,92,95,94,90,93,92 | 100,98,91,89,95,92,91,88,90 |
+
+The loop-dashes scene improved in **all nine pairs**. Excluding the cold
+first pair, its warm median fell from **163ms to 154ms (5.5% less)**.
+The more expensive fixed Random seed 30 has a much smaller warm median
+improvement: **733.5ms to 729ms (0.6% less)**. These scene-specific results
+justify the eliminated work but do not establish a material improvement for
+every Random click. Do not add percentages from unrelated benchmarks, and
+do not infer physical Pixel 6 Pro speed, memory/thermal behaviour or UI
+latency from hosted Linux Chromium. The one-shot browser workflow is
+retired after exact-source evidence; the reusable benchmark and quick
+regression test remain.
