@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {visibleMobileTools,adjacentVisibleMobileTool,isMobileToolSwipeSurface} from '../src/mobile-tool-sequence.js';
+import {visibleMobileTools,adjacentVisibleMobileTool,isMobileToolSwipeSurface,
+  matchingSingleTouchEnd} from '../src/mobile-tool-sequence.js';
 
 const chip=(category,id,name,{hidden=false,disabled=false}={})=>({
   dataset:{category,editorTool:id},hidden,disabled,textContent:name,
@@ -72,4 +73,29 @@ test('tool and category rail scrolling never navigates the full editor sheet',()
   assert.match(source,/touchcancel'.*gesture=null/);
   assert.match(source,/!document.body.classList.contains\('mobile-edit-open'\)/,
     'late touchend after editor dismissal cannot navigate invisibly');
+});
+
+
+test('editor sheet navigation rejects ambiguous multi-touch and substituted pointer ends',()=>{
+  const point=(identifier,x=100,y=100)=>({identifier,clientX:x,clientY:y});
+  const original=point(14,190,100);
+  assert.equal(matchingSingleTouchEnd(14,
+    {touches:[],changedTouches:[original]}),original);
+  assert.equal(matchingSingleTouchEnd(14,
+    {touches:[point(22)],changedTouches:[original]}),null,
+    'another contact anywhere on the screen vetoes navigation');
+  assert.equal(matchingSingleTouchEnd(14,
+    {touches:[],changedTouches:[point(15)]}),null,
+    'the contact lifting must be the one that started the swipe');
+  assert.equal(matchingSingleTouchEnd(14,
+    {touches:[],changedTouches:[original,point(15)]}),null);
+  assert.equal(matchingSingleTouchEnd(14,
+    {touches:[],changedTouches:[]}),null);
+  assert.equal(matchingSingleTouchEnd(14,null),null);
+  const source=readFileSync(new URL('../src/mobile-swipes.js',import.meta.url),'utf8');
+  assert.match(source,/gesture=\{id:t\.identifier/);
+  assert.match(source,/matchingSingleTouchEnd\(start\.id,event\)/);
+  assert.match(source,/window\.addEventListener\('touchstart',event=>\{/);
+  assert.match(source,/if\(gesture&&event\.touches\.length!==1\)gesture=null/,
+    'a second finger landing outside the editor must also invalidate the swipe');
 });
