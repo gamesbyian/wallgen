@@ -1,0 +1,36 @@
+name: One-off exact sand device-pixel clip proof
+on:
+  pull_request:
+    paths:
+      - 'scripts/sand-device-pixel-tiles-proof.mjs'
+      - '.github/workflows/one-off-sand-device-pixel-clips.yml'
+permissions:
+  contents: read
+jobs:
+  pixel-proof:
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository && contains(github.event.pull_request.title, '[sand-pixel-clips]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install actual Chromium
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Verify diagnostic JS syntax
+        run: node --check scripts/sand-device-pixel-tiles-proof.mjs
+      - name: Real original-worker complete ink/background, visible and native PNG comparisons
+        run: node scripts/sand-device-pixel-tiles-proof.mjs
+      - name: Preserve exact RGBA mismatch or matching receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sand-device-pixel-clips-${{ github.run_id }}
+          path: artifacts/sand-device-pixel-tiles/
+          retention-days: 7
+          if-no-files-found: warn
