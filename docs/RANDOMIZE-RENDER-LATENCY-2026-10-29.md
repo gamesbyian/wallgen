@@ -95,7 +95,7 @@ placement, geometry, colour, recipe, lock, Undo, worker scheduling, or paint
 resolution changes. A permanent deterministic quick test exercises the
 original arithmetic against both paths over five geometries, three
 homogeneity values, two override modes, three stripe slots and 96 sequential
-marks: **17,280 mark comparisons per path**.
+marks: **8,640 marks per path, 17,280 comparisons in total**.
 
 [Same-run base-SHA vs candidate actual Chromium proof #41369862393](https://github.com/gamesbyian/wallgen/actions/runs/41369862393)
 verified 10 canonical source-identical recipes including the previously
