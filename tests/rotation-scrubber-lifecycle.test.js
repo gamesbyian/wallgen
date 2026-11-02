@@ -90,13 +90,13 @@ test('precision rotation rolls back interrupted touch work and refuses stale cap
     pad.emit('pointerdown',pointer(1,100,100));
     pad.emit('pointermove',pointer(1,130,160));
     assert.equal(hint.dataset.speed,'fine');
-    assert.match(status.textContent,/Fine.*0\\.04/);
+    assert.match(status.textContent,/Fine.*0\.04/);
     pad.emit('pointermove',pointer(1,145,40));
     assert.equal(hint.dataset.speed,'fast');
-    assert.match(status.textContent,/Fast.*1\\.6/);
+    assert.match(status.textContent,/Fast.*1\.6/);
     pad.emit('pointermove',pointer(1,155,100));
     assert.equal(hint.dataset.speed,'normal');
-    assert.match(status.textContent,/Normal.*0\\.45/);
+    assert.match(status.textContent,/Normal.*0\.45/);
     pad.emit('pointercancel',pointer(1,155,100));
     assert.equal(hint.dataset.speed,'normal');
     assert.equal(Number(field.value),30);
