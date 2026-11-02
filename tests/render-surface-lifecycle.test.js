@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {drawWallpaper} from '../src/renderer.js';
-import {normalizeRecipe} from '../src/model.js';
+import {drawWallpaper,textureHeight} from '../src/renderer.js';
+import {normalizeRecipe,resolveScene} from '../src/model.js';
 
 // A failed target ink context must not strand a full-resolution backing store.
 // This is a Node fault-path contract; successful pixels are checked separately
@@ -122,4 +122,32 @@ test('background cache allocation failure frees finished ink without publishing 
   assert.deepEqual([created[0].width,created[0].height],[0,0]);
   assert.equal(cache.ink,undefined);
   assert.equal(cache.background,undefined);
+});
+
+
+test('per-paint material constants never survive successful returned scenes',()=>{
+  // The required quick suite checks this independently of browser pixels.
+  // Region geometry avoids any Path2D or expensive material brush setup.
+  const target={width:280,height:607,getContext(){return proxyCanvasContext();}};
+  const scene=drawWallpaper(target,normalizeRecipe({
+    seed:'material-constants-lifetime',structure:'regions',regionMode:'blocks',
+    material:'none',textureDisplacement:85,lightingMood:'off',
+  }),{canvasFactory:(width,height)=>({
+    width,height,getContext(){return proxyCanvasContext();}
+  })});
+  // This exact returned scene would incorrectly retain the old zero-
+  // stripe-coverage decision if its transient WeakMap entry leaked.
+  scene.textureLayers=resolveScene(normalizeRecipe({
+    seed:'material-constants-lifetime',material:'wood-grain',
+    textureStrength:95,textureCoverage:'both',textureDisplacement:85
+  })).textureLayers;
+  scene.angle=.37;
+  const independent={...scene},stripe=scene.stripes[3],x=127.5;
+  for(const side of [-1,0,1]){
+    assert.equal(textureHeight(scene,stripe,x,side),
+      textureHeight(independent,stripe,x,side),
+      'post-paint source height must use current scene instead of stale cache');
+  }
+  assert.notEqual(textureHeight(scene,stripe,x,1),0,
+    'new active material must produce a real nonzero contour');
 });
