@@ -4,11 +4,24 @@ import {sandCapDiffuse} from './sand-lighting.js';
 // per-pixel saved positions, paint-order RNG or physical particle simulation.
 const TAU=Math.PI*2;
 const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
-function hash(ix,iy,seed,salt){
-  let n=Math.imul(ix|0,374761393)^Math.imul(iy|0,668265263)^(seed|0)^Math.imul(salt,2246822519);
+// The same lattice cell supplies five grain fields and up to 36 facet
+// fields. Its two integer products and the fixed salt products are invariant
+// across those samples. Preserve the original exact xor/mix arithmetic.
+const cellHashBase=(ix,iy,seed)=>
+  Math.imul(ix|0,374761393)^Math.imul(iy|0,668265263)^(seed|0);
+function hashFromBase(base,hashedSalt){
+  let n=base^hashedSalt;
   n=Math.imul(n^(n>>>13),1274126177);
   return ((n^(n>>>16))>>>0)/4294967296;
 }
+const hashedSalt=salt=>Math.imul(salt,2246822519);
+const GRAIN_SALTS=Object.freeze({x:hashedSalt(31),y:hashedSalt(37),
+  radius:hashedSalt(41),shade:hashedSalt(43),sparkle:hashedSalt(47)});
+const FACET_SALTS=Object.freeze(Array.from({length:6},(_,k)=>Object.freeze({
+  x:hashedSalt(71+k*17),y:hashedSalt(79+k*23),
+  diameter:hashedSalt(97+k*31),normalX:hashedSalt(151+k*37),
+  normalY:hashedSalt(163+k*41),tone:hashedSalt(131+k*29),
+})));
 // Density and grain gauge are authored-world units, never output or CSS pixels.
 // Scale zero is still bounded: no runaway million-particle editor frame.
 export function sandPitch(layer){
@@ -18,11 +31,13 @@ export function sandPitch(layer){
 // Jittered staggered rows avoid the visible square-grid artefact of naive dots.
 export function sandGrainAt(layer,ix,iy){
   const pitch=sandPitch(layer),stepY=pitch*.88,seed=layer.heightSeed|0;
-  const x=(ix+.5+(iy&1)*.5+(hash(ix,iy,seed,31)-.5)*.46)*pitch;
-  const y=(iy+.5+(hash(ix,iy,seed,37)-.5)*.44)*stepY;
-  const r=pitch*(.25+hash(ix,iy,seed,41)*.13);
-  return {x,y,r,shade:Math.floor(hash(ix,iy,seed,43)*8),
-    sparkle:hash(ix,iy,seed,47)>.993,ix,iy};
+  const base=cellHashBase(ix,iy,seed);
+  const x=(ix+.5+(iy&1)*.5+
+    (hashFromBase(base,GRAIN_SALTS.x)-.5)*.46)*pitch;
+  const y=(iy+.5+(hashFromBase(base,GRAIN_SALTS.y)-.5)*.44)*stepY;
+  const r=pitch*(.25+hashFromBase(base,GRAIN_SALTS.radius)*.13);
+  return {x,y,r,shade:Math.floor(hashFromBase(base,GRAIN_SALTS.shade)*8),
+    sparkle:hashFromBase(base,GRAIN_SALTS.sparkle)>.993,ix,iy};
 }
 // Crop-independent enumeration: a partial grain just outside the crop is
 // included, while its shape/position never depends on which crop requested it.
@@ -70,22 +85,24 @@ export function paintSandGrains(ctx,layer,bounds,lighting=null){
   const padded={left:bounds.left-pitch,top:bounds.top-pitch,
     right:bounds.right+pitch,bottom:bounds.bottom+pitch};
   forEachSandGrain(layer,padded,g=>{
+    const base=cellHashBase(g.ix,g.iy,seed);
     for(let k=0;k<6;k++){
-      const x=(g.ix+(g.iy&1)*.5+hash(g.ix,g.iy,seed,71+k*17))*pitch;
-      const y=(g.iy+hash(g.ix,g.iy,seed,79+k*23))*stepY;
+      const salts=FACET_SALTS[k];
+      const x=(g.ix+(g.iy&1)*.5+hashFromBase(base,salts.x))*pitch;
+      const y=(g.iy+hashFromBase(base,salts.y))*stepY;
       // All sizes remain logical material units; there are no pixel-based
       // geometry controls and no dependence on preview/export dimensions.
-      const diameter=pitch*(.105+.18*hash(g.ix,g.iy,seed,97+k*31));
+      const diameter=pitch*(.105+.18*hashFromBase(base,salts.diameter));
       // An individual mineral facet has a seed-stable hemispherical normal.
       // Its illumination is the cap's normal·light response, not an alternating
       // dark/light index. Reversing the lamp changes which actual facets face it.
       // No per-fleck colour strings, extra primitives or particle state.
-      const nx=(hash(g.ix,g.iy,seed,151+k*37)-.5)*1.60;
-      const ny=(hash(g.ix,g.iy,seed,163+k*41)-.5)*1.60;
+      const nx=(hashFromBase(base,salts.normalX)-.5)*1.60;
+      const ny=(hashFromBase(base,salts.normalY)-.5)*1.60;
       const incident=lit?sandCapDiffuse(lighting,nx,ny):0;
       const darkFacet=lit?incident<.48:(k%2)===0;
       const tone=lit?Math.min(7,Math.floor(incident*8)):
-        Math.floor(hash(g.ix,g.iy,seed,131+k*29)*8);
+        Math.floor(hashFromBase(base,salts.tone)*8);
       const drift=lit?(darkFacet?-lighting.shadow:lighting.light)*diameter*.24:0;
       ctx.fillStyle=darkFacet?dark[lit?7-tone:tone]:bright[tone];
       ctx.fillRect(x-diameter*.5+(lit?lighting.x*drift:0),
