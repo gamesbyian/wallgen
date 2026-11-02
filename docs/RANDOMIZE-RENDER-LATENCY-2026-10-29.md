@@ -365,3 +365,70 @@ do not infer physical Pixel 6 Pro speed, memory/thermal behaviour or UI
 latency from hosted Linux Chromium. The one-shot browser workflow is
 retired after exact-source evidence; the reusable benchmark and quick
 regression test remain.
+
+## Real Random button, pinned seeds and two mobile viewports (2 November 2026, PR #1000)
+
+The earlier source-level optimiser trials measured real production **worker
+paint** durations, not the actual Random button or final visible presentation.
+The old browser-click script chose different crypto-random recipes on every
+run, so source work could not be compared or reproduced. The reusable
+`scripts/randomize-e2e-fixed-seeds-browser.mjs` now intercepts only the
+**two-element Uint32Array** `crypto.getRandomValues` used by
+`model.newSeed()` in an isolated test Chromium context. All other browser
+crypto requests retain their real CSPRNG. This exercises the production
+`#randomizeAll` action, existing preview Worker, progressive canvas and
+history/URL update without a fake renderer or new recipe control.
+
+Three literal generated seed pairs were pinned after selecting genuine
+`randomizeAllRecipe` outputs. A source-family assertion now **fails** if
+future random generation changes the recipe, rather than silently switching
+to an easier benchmark:
+- `6rf94u-1e3y45x`: paths, repeating loops, handmade surface, 50%
+  texture displacement
+- `1pyivby-tpkh85`: radial 42 rays, sand-mandala, 30% displacement
+- `nb4tm8-1mudoyj`: 14 regions, stone, 31% displacement
+
+[Actual Chromium Random-button proof #41382558974](https://github.com/gamesbyian/wallgen/actions/runs/41382558974)
+**passed** 6 real mobile-touch journeys across 320×700 and 412×892.
+For each, a single Random and four rapid Random clicks generated the
+**same final canonical seed**; the observed final
+`roygbiv-preview-presented.detail.key` matched the real
+`artKey(current)`, and final frames came from the actual Worker.
+No page errors or unconsumed injected random seeds occurred. All
+milliseconds below measure **actual click event to final presentation**,
+rather than worker-only CPU time.
+
+| Viewport | Pinned random source | Single: final after click | Four clicks: final after last click | Four clicks: final from first |
+| --- | --- | ---: | ---: | ---: |
+| 320×700 | repeating loops / handmade | 381 | 394 | 946 |
+| 320×700 | 42-ray sand mandala | **2598** | **6037** | **6583** |
+| 320×700 | regions / stone | 252 | 402 | 1004 |
+| 412×892 | repeating loops / handmade | 375 | 1635 | 2214 |
+| 412×892 | 42-ray sand mandala | **2548** | **5978** | **6534** |
+| 412×892 | regions / stone | 251 | 240 | 852 |
+
+For the single click, the first provisional radial/sand frame appeared
+after ~714–734ms, with canonical settled art after ~2.5s. Most rapid
+four-click bursts delivered **zero intermediate provisional frames**.
+The harness requests 110ms between clicks via Playwright, but actual
+measured click intervals were roughly **178–222ms**, because Playwright
+input dispatch and the UI work take time. Do not misreport them as
+exactly 110ms-spaced hardware taps.
+
+**Priority consequence:** the radial sand long tail is a genuine
+reproducible *user-visible* latency issue, not a generic
+speedup extrapolation from worker paint samples. Its ~6s latest-frame
+delay may include finishing obsolete synchronous worker jobs plus the
+required final paint; separate those causes in a source-matched
+experiment before changing scheduling. Earlier broad worker-preemption
+[#978](https://github.com/gamesbyian/wallgen/pull/978) was **rejected**
+after mixed/negative seed-matched A/B proof and must not be reintroduced
+without substantially stronger, targeted evidence. Prefer profiling and
+source-identical sand/radial painting costs and cooperative opportunities
+before adding worker churn.
+
+These are real Linux Chromium touch emulations using the two target
+viewports, **not physical Pixel 6 Pro**, not thermal measurements, and
+not evidence of one universal Random performance distribution. The
+reusable script and pinned case IDs are retained; the temporary test
+workflow is retired after proof.
