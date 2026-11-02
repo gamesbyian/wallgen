@@ -159,6 +159,13 @@ try{
         assert.ok(final,'the final click must present finished artwork');
         assert.equal(final.key,artKey(current),'presented frame must match final authored art');
         assert.equal(final.worker,true,'real Chromium worker, not main-thread fallback');
+        assert.ok(receipt.workerTimeline.some(event=>event.kind==='requested'&&
+          event.key===final.key&&event.quality==='settled'),
+          'the real worker must be dispatched for the current settled source');
+        assert.ok(receipt.workerTimeline.some(event=>event.kind==='completed'&&
+          event.key===final.key&&event.quality==='settled'&&
+          Number.isFinite(event.paintMs)),
+          'the real worker must complete and report its final source paint');
         const interactive=receipt.interactive.filter(frame=>frame.ms>=first);
         return {
           clicks:pairs.length,expectedSeed,finalStructure:current.structure,
