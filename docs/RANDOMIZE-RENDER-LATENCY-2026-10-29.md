@@ -658,3 +658,21 @@ Original sand full-size direct SHA-256 `1c7b146ff06916f4746518a59f2be277cca077ec
 **Verdict:** a same-size direct Worker frame is a possible *provisional* preview improvement, but is **not source-pixel identical** to the authoritative overscanned settled image. Do not cache it as canonical, eliminate the final settled frame, claim exact PNG identity, or silently transfer it into instant-nudge assets. Exactness is currently broken even at the same output resolution for these three cases, likely requiring a proper diagnosis of source crop/raster phase and whole-picture compositing; causes are not yet individually proven. A future temporary full-size provisional trial must compare actual first-visible and final-visible, assess phone memory, battery/thermal workload, and confirm the 170ms settled upgrade and correct nudge/Undo/interruption behavior. If enough visual differences remain, it may be an acceptable *explicitly provisional* UX trade-off only after owner acceptance, not an invisible 'exact' optimization.
 
 The one-off CI workflow was retired; the opt-in original-source optical harness is retained as evidence and a reproducible non-equality gate.
+
+## Full-size Random provisional trial rejected: initial responsiveness regresses (2 November 2026, PR #1018)
+
+The original [real source-matched input A/B #41449489883](https://github.com/gamesbyian/wallgen/actions/runs/41449489883) and [independent real mobile-sized A/B with provisional dimensions and first-visible events #41449828297](https://github.com/gamesbyian/wallgen/actions/runs/41449828297) tested changing the explicit Random/new-seed provisional from **62% (372×806)** to **100% (600×1300)**, leaving non-Random gestures, the exact settled cache, the export painter, worker ownership and the quiet-period obsolete-job replacement unchanged. Both actual Chromium runs passed **all final real displayed-canvas SHA-256 equality** checks for the pinned 42-ray sand, loops and regions sources at 320×700 and 412×892. Real Worker request timelines confirmed actual preview dimensions, final authoritative art keys and bounded source-aware restarts.
+
+But first-visible full-size provisional frames were **slower**:
+| Real Random case / viewport | Existing 62% first visible | Candidate 100% first visible | Change |
+|---|---:|---:|---:|
+| **42-ray sand, 320×700** | **705ms** | **778ms** | **+73ms** |
+| **42-ray sand, 412×892** | **700ms** | **792ms** | **+92ms** |
+| Loops, 320×700 | 174ms | 180ms | +6ms |
+| Loops, 412×892 | 158ms | 228ms | +70ms |
+| Regions, 320×700 | 74ms | 131ms | +57ms |
+| Regions, 412×892 | 84ms | 103ms | +19ms |
+
+Even the source-matched radial settled single-click final time regressed in the second test (320×700 **2490→2569ms**, 412×892 **2477→2582ms**). Burst outcomes were mixed. The full-size interim art is sharper, yet as independently documented in #1017, it differs slightly from the canonical overscanned final image and therefore remains explicitly provisional. The measured first-visible latency regression is unacceptable as a performance optimisation; on-device memory and thermals could be worse and were not measured.
+
+**Disposition:** PR #1018 closed **without merging the app's single-line resolution change**; the one-off proof workflow removed. Retained original-source random A/B harness fields for provisional requested dimensions, actual provisional Worker paint and first-visible frame latency, so subsequent experiments cannot conceal a regressions behind matching final pixels. Preserve the existing 62% Random provisional, correct single/burst worker replacement policy #1010, instant nudge caches and unchanged export fidelity. A new source-preserving mechanism must reduce paint work at the material/crop level before revisiting preview resolution.
