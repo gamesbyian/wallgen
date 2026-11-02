@@ -78,6 +78,35 @@ try{
           }
           return original.call(this,array);
         };
+        // Test-only observation of real preview worker requests and replies.
+        // The native Worker runs normally, with its original postMessage,
+        // scheduling and bitmap transfers. No synthetic messages are sent.
+        const NativeWorker=window.Worker;
+        window.__roygbivWorkerTimeline=[];
+        window.Worker=class TracedWorker extends NativeWorker{
+          constructor(url,options){
+            super(url,options);
+            if(!String(url).includes('render-worker.js'))return;
+            this.addEventListener('message',event=>{
+              const msg=event.data;
+              if(msg?.type!=='frame'&&msg?.type!=='error')return;
+              window.__roygbivWorkerTimeline?.push({
+                kind:msg.type==='frame'?'completed':'error',
+                at:performance.now(),id:msg.id,key:msg.key||null,
+                quality:msg.quality||null,paintMs:msg.ms??null,
+              });
+            });
+            const originalPost=this.postMessage;
+            this.postMessage=function(message,...rest){
+              if(message?.type==='preview')
+                window.__roygbivWorkerTimeline?.push({
+                  kind:'requested',at:performance.now(),id:message.id,
+                  key:message.key||null,quality:message.quality||null,
+                });
+              return originalPost.call(this,message,...rest);
+            };
+          }
+        };
         window.__roygbivSeedHarnessReady=true;
       });
       const initial=normalizeRecipe({seed:'e2e-initial-'+entry.label,
@@ -92,6 +121,7 @@ try{
       const run=async(pairs)=>{
         await page.evaluate(sourcePairs=>{
           window.__roygbivFixedSeeds=sourcePairs.map(pair=>pair.slice());
+          window.__roygbivWorkerTimeline=[];
           const canvas=document.querySelector('#preview');
           const control=document.querySelector('#randomizeAll');
           const receipt={clicks:[],interactive:[],settled:[]};
@@ -116,6 +146,7 @@ try{
         const receipt=await page.evaluate(()=>({
           ...window.__roygbivClickReceipt,
           remaining:window.__roygbivFixedSeeds.length,
+          workerTimeline:window.__roygbivWorkerTimeline||[],
         }));
         const current=decodeRecipe(new URL(page.url()).searchParams.get('r'));
         assert.ok(current,'Random must leave a valid canonical recipe URL');
@@ -140,6 +171,17 @@ try{
           actualClickGaps:receipt.clicks.slice(1).map((time,i)=>
             Math.round(time-receipt.clicks[i])),
           settledFrames:receipt.settled.length,
+          // A completed obsolete worker paint can delay the newest frame
+          // even when no stale visual frame was ever presented.
+          workerTimeline:receipt.workerTimeline.map(event=>({
+            ...event,relativeMs:Math.round(event.at-first),
+          })),
+          settledWorkerPaintMs:receipt.workerTimeline.filter(event=>
+            event.kind==='completed'&&event.key===final.key&&
+            event.quality==='settled').at(-1)?.paintMs??null,
+          obsoleteWorkerCompletionsAfterLastClick:receipt.workerTimeline.filter(
+            event=>event.kind==='completed'&&event.at>=last&&
+              event.key!==final.key).length,
         };
       };
       await load();
