@@ -1,0 +1,47 @@
+# One-shot production Chromium measurement. Delete after evidence.
+name: One-off loop contact scan cost and exact pixels
+on:
+  pull_request:
+    paths:
+      - 'src/renderer.js'
+      - 'tests/motif-sample-equivalence.test.js'
+      - '.github/workflows/once-loop-contact-cost.yml'
+permissions:
+  contents: read
+concurrency:
+  group: once-loop-contact-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  source-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Exact candidate checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Source-matched original renderer
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: comparator-baseline
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install unchanged production browser harness
+        run: npm install --no-package-lock --ignore-scripts --no-audit --no-fund
+      - name: Source/cap report parity and diagnostic negative controls
+        run: node --test tests/motif-sample-equivalence.test.js
+      - name: Ten canonical actual-browser direct/worker pixel SHA and warm timings
+        env:
+          CHROME_BIN: /usr/bin/google-chrome
+        run: node scripts/motif-sample-reuse-acceptance.mjs
+      - name: Preserve bounded measured source evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: loop-contact-cost-proof-${{ github.run_id }}
+          path: artifacts/motif-samples/pixel-proof.json
+          retention-days: 7
+          if-no-files-found: ignore
