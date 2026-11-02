@@ -1,0 +1,43 @@
+name: One-off exact background sand source-crop acceptance
+on:
+  pull_request:
+    paths:
+      - 'scripts/background-only-sand-crop-ab-browser.mjs'
+      - '.github/workflows/one-off-background-sand-crop.yml'
+permissions:
+  contents: read
+jobs:
+  actual-source-ab:
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository && contains(github.event.pull_request.title, '[background-sand-proof]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare original exact baseline
+        env:
+          CI_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          git worktree add --detach comparator-baseline "$CI_BASE_SHA"
+          test "$(git -C comparator-baseline rev-parse HEAD)" = "$CI_BASE_SHA"
+      - name: Install actual Chromium
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Check acceptance harness syntax
+        run: node --check scripts/background-only-sand-crop-ab-browser.mjs
+      - name: Paired original-and-candidate full cache pixels and 3024x6552 PNG
+        run: node scripts/background-only-sand-crop-ab-browser.mjs
+      - name: Preserve raw browser acceptance
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: background-sand-crop-ab-${{ github.run_id }}
+          path: artifacts/background-sand-crop-ab/
+          retention-days: 14
+          if-no-files-found: warn
