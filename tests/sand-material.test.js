@@ -91,3 +91,33 @@ test('pathological finite crop bounds cannot hang or flood the sand lattice',()=
   assert.ok(a.size>0);
   for(const [key,grain] of a)assert.deepEqual(b.get(key),grain);
 });
+
+
+test('reused sand cell hashes reproduce original five-field lattice grain exactly',()=>{
+  const originalHash=(ix,iy,seed,salt)=>{
+    let n=Math.imul(ix|0,374761393)^Math.imul(iy|0,668265263)^
+      (seed|0)^Math.imul(salt,2246822519);
+    n=Math.imul(n^(n>>>13),1274126177);
+    return ((n^(n>>>16))>>>0)/4294967296;
+  };
+  for(const scale of [0,1,19,50,100]){
+    for(const heightSeed of [-2147483648,-1,0,712,2147483647]){
+      const l=layer(scale,heightSeed);
+      const pitch=sandPitch(l),stepY=pitch*.88,seed=l.heightSeed|0;
+      for(const [ix,iy] of [
+        [-100000,-13457],[-17,89],[-1,0],[0,-1],[0,0],[1,1],
+        [999,1737],[2147483648,-2147483648]
+      ]){
+        const x=(ix+.5+(iy&1)*.5+
+          (originalHash(ix,iy,seed,31)-.5)*.46)*pitch;
+        const y=(iy+.5+(originalHash(ix,iy,seed,37)-.5)*.44)*stepY;
+        const r=pitch*(.25+originalHash(ix,iy,seed,41)*.13);
+        const reference={x,y,r,
+          shade:Math.floor(originalHash(ix,iy,seed,43)*8),
+          sparkle:originalHash(ix,iy,seed,47)>.993,ix,iy};
+        assert.deepEqual(sandGrainAt(l,ix,iy),reference,
+          'source grain hash fields must match old integer path');
+      }
+    }
+  }
+});
