@@ -1,4 +1,11 @@
 # Touch-first, vector-native interaction system
+
+## Current delivered follow-through · 1 November 2026
+
+**Completed, verified by required quick CI:** [#980](https://github.com/gamesbyian/wallgen/pull/980) added an 8 CSS-pixel rotation-scrub contact gate and cancellation on lost focus/resize/hidden page, without pointer jumps or extra Undo. [#982](https://github.com/gamesbyian/wallgen/pull/982) restores keyboard focus to a *visible* editor entry after the precision dialog closes. [#985](https://github.com/gamesbyian/wallgen/pull/985) fills the existing ARIA angle slider's Home/End/Page/Shift-key behavior using property-aware canonical steps, and offers Illustrator iPad's useful 10° magnetic snap alongside 15°/45°. [#987](https://github.com/gamesbyian/wallgen/pull/987) disarms a temporary on-canvas camera pan/pinch mode on mobile Edit/Explore/Saved/More navigation. [#988](https://github.com/gamesbyian/wallgen/pull/988) fixes the actual gesture-state binding for a compact live Fine/Normal/Fast speed readout.
+
+All updates reuse the original recipe, preview, Undo, camera and event ownership; keyboard and gesture regressions execute production-installed event handlers. **These are Node/required quick-CI acceptances, not completed 320×700 or 412×892 Chromium, physical Pixel, Android IME or TalkBack evidence.** The existing `tests/rotation-scrubber-browser.mjs` remains the repeatable browser journey; avoid silently upgrading its evidence tier without a genuine run. Keep the single [live work queue](CURRENT-WORK-QUEUE-2026-10-24.md) and [issue #867](https://github.com/gamesbyian/wallgen/issues/867) authoritative for later defect-driven work. Additional industry-inspired gestures should be added only when their conflicts with existing touch ownership and one-thumb use are proven acceptable.
+
 Owner decision: 30 October 2026. This document owns the interaction overhaul prompted by the completed rotation work. The current queue is still `CURRENT-WORK-QUEUE-2026-10-24.md`; this is an implementation/reference contract, not a competing dispatch.
 
 ## V5 · Frame camera mode Escape and focus lifecycle (31 October 2026, browser accepted)
