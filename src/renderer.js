@@ -16,6 +16,9 @@ import {matchingEmbroidery,drawRibbonEmbroidery,drawRegionEmbroidery,
 import {planSatinThreadContacts,selectSatinReplayContacts} from './thread-contact-shadows.js';
 
 const TAU = Math.PI * 2;
+// Per-paint only. No recipe data or returned scene caches these derived
+// quantities, and external callers of textureHeight retain source math.
+const materialPaintFactors=new WeakMap();
 const geometryAt=(x,stripe,extent)=>samplePath(stripe,x,extent).y;
 const edgePoint=(x,stripe,extent,side,scene)=>{
   if(!scene||!scene.textureDisplacement)
@@ -37,14 +40,17 @@ export function textureHeight(scene,stripe,x,side=0,point=null){
   const layers=scene.textureLayers;
   // Do not allocate a freshly filtered layer array for every curve point.
   // This function can be called thousands of times per authored motif.
-  if(!layers.some(layer=>layer.coverage!=='background'))return 0;
+  const paintFactors=materialPaintFactors.get(scene);
+  if(paintFactors?!paintFactors.hasStripeCoverage:
+      !layers.some(layer=>layer.coverage!=='background'))return 0;
   const p=point??samplePath(stripe,x,scene.extent);
   // A centreline material-height query has no transverse offset. Preserve
   // the input zero's sign but skip a varying-width solve for every motif mark.
   // Nonzero sides retain the exact original multiplication order.
   const distance=side===0?side:side*widthAt(stripe,x,scene.extent)*.5;
   const localX=p.x+p.nx*distance,localY=p.y+p.ny*distance;
-  const c=Math.cos(scene.angle),s=Math.sin(scene.angle);
+  const c=paintFactors?paintFactors.cos:Math.cos(scene.angle);
+  const s=paintFactors?paintFactors.sin:Math.sin(scene.angle);
   const rx=localX*c-localY*s,ry=localX*s+localY*c;
   // Mirror is applied to the entire stripe layer, before texture compositing.
   const wx=DESIGN_WIDTH/2+(scene.mirrorHorizontal?-1:1)*
@@ -62,7 +68,8 @@ export function textureHeight(scene,stripe,x,side=0,point=null){
     field+=materialContourHeight(layer,tx,ty)*(layer.strength/100);
   }
   const cap=Math.min(28,stripe.width*.34)*
-    Math.pow(scene.textureDisplacement/100,.85);
+    (paintFactors?paintFactors.displacementFactor:
+      Math.pow(scene.textureDisplacement/100,.85));
   return Math.max(-cap,Math.min(cap,field*cap*1.5));
 }
 // This is an independent line rendering style, NOT the dot/dash motif.
@@ -1019,6 +1026,13 @@ export function drawRegionObjects(ctx,scene){
 
 export function drawWallpaper(canvas, recipe, options={}) {
   const scene=resolveScene(recipe);
+  // These are intrinsic to this immutable render snapshot. They used to be
+  // recomputed for every texture-displaced path/motif station.
+  materialPaintFactors.set(scene,{
+    hasStripeCoverage:scene.textureLayers.some(layer=>layer.coverage!=='background'),
+    cos:Math.cos(scene.angle),sin:Math.sin(scene.angle),
+    displacementFactor:Math.pow(scene.textureDisplacement/100,.85),
+  });
   const camera=viewCamera(canvas.width,canvas.height,scene.viewZoom,
     {panX:scene.viewPanX,panY:scene.viewPanY});
   // Stripe cap/continuity decisions belong to the authored composition,
@@ -1360,6 +1374,7 @@ export function drawWallpaper(canvas, recipe, options={}) {
   }
   return scene;
   }finally{
+    materialPaintFactors.delete(scene);
     releaseRenderSurface(scratch);
     // The two settled preview layers survive only a successful paint. A
     // failed context, compositor or Photo stage must not retain backing
