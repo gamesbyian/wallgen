@@ -1,0 +1,40 @@
+# One-off real Chromium 320x700 / 412x892 Random button acceptance.
+# Remove after evidence so the standard small workflow inventory remains intact.
+name: One-off deterministic real Random button latency
+on:
+  pull_request:
+    paths:
+      - 'scripts/randomize-e2e-fixed-seeds-browser.mjs'
+      - '.github/workflows/once-real-random-click-acceptance.yml'
+permissions:
+  contents: read
+concurrency:
+  group: one-random-e2e-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  actual-mobile-clicks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install existing browser dependency with no lockfile
+        run: npm install --no-package-lock --ignore-scripts --no-audit --no-fund
+      - name: Verify script syntax
+        run: node --check scripts/randomize-e2e-fixed-seeds-browser.mjs
+      - name: Real Random clicks, correct final pixels, genuine worker and timing
+        env:
+          CHROME_BIN: /usr/bin/google-chrome
+        run: node scripts/randomize-e2e-fixed-seeds-browser.mjs
+      - name: Save browser measurements and failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: actual-random-click-journey-${{ github.run_id }}
+          path: artifacts/randomize-e2e-fixed/receipt.json
+          retention-days: 7
+          if-no-files-found: ignore
