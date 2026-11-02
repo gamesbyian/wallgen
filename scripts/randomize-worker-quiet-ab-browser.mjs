@@ -118,6 +118,7 @@ try{
                 window.__roygbivWorkerTimeline?.push({
                   kind:'requested',at:performance.now(),workerId,id:message.id,
                   key:message.key||null,quality:message.quality||null,
+                  width:message.width,height:message.height,
                 });
               return originalPost.call(this,message,...rest);
             };
@@ -274,6 +275,14 @@ try{
     version:r.version,viewport:r.viewport,case:r.case,
     singleMs:r.single.finalAfterLastClickMs,
     burstMs:r.burst.finalAfterLastClickMs,
+    firstInteractiveMs:r.single.firstInteractiveFromFirstMs,
+    burstFirstInteractiveMs:r.burst.firstInteractiveFromFirstMs,
+    requestedProvisionalSize:r.single.workerTimeline.find(event=>
+      event.kind==='requested'&&event.quality==='interactive')?.width+'x'+
+      r.single.workerTimeline.find(event=>
+        event.kind==='requested'&&event.quality==='interactive')?.height,
+    singleProvisionalPaintMs:r.single.workerTimeline.find(event=>
+      event.kind==='completed'&&event.quality==='interactive')?.paintMs??null,
     burstObsoleteWaitMs:r.burst.obsoleteWorkerWaitAfterLastClickMs,
     burstObsoleteCompletions:r.burst.obsoleteWorkerCompletionsAfterLastClick,
     burstReplacementWorkers:r.burst.replacementWorkers,
