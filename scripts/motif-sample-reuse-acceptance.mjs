@@ -65,6 +65,8 @@ const samples=[
  ['radial',normalizeRecipe({seed:'motif-radial',structure:'radial',
    radialMode:'concentric',rayCount:56,material:'felt',textureStrength:60,
    textureCoverage:'both'})],
+ // Reproducible real-click 42-ray sand long tail, pinned by the E2E harness.
+ ['radial-sand-mandala',randomizeAllRecipe({seed:'1pyivby-tpkh85'})],
  ['regions',normalizeRecipe({seed:'motif-regions',structure:'regions',
    regionMode:'organic',regionCount:14,material:'grain',textureStrength:70})],
 ];
@@ -159,7 +161,7 @@ try{
    }
    const output=[];
    for(const input of cases.filter(x=>['random-worst-30','loop-dashes','loop-chevrons',
-     'hairpin-stars','zigzag-checker'].includes(x.name))){
+     'hairpin-stars','zigzag-checker','radial-sand-mandala'].includes(x.name))){
      const times={base:[],candidate:[]};
      for(let trial=0;trial<trials;trial++){
        const order=trial%2===0?['base','candidate']:['candidate','base'];
