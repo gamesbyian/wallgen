@@ -1,7 +1,7 @@
 // One touch-first angle inspector for the app's ORIGINAL canonical form fields.
 // Geometry is separate; app.js owns preview, commits, Undo and model normalization.
 import {ROTATION_FIELD_SPECS,canonicalAngle,
-  beginRotationDrag,advanceRotationDrag} from './rotation-gesture.js';
+  beginRotationDrag,advanceRotationDrag,ROTATION_SCRUB_INTENT_CSS_PX} from './rotation-gesture.js';
 import {parseAngleExpression} from './precision-angle-expression.js';
 
 export function installRotationScrubbers({form,onBegin,onPreview,onCommit,onCancel}){
@@ -174,11 +174,17 @@ export function installRotationScrubbers({form,onBegin,onPreview,onCommit,onCanc
     syncReadout(read());
   }
   pad.addEventListener('pointerdown',event=>{
+    // If another finger enters the scrub surface, the original gesture
+    // becomes ambiguous. Roll back rather than committing a stray angle.
+    if(gesture&&event.pointerType==='touch'&&event.pointerId!==gesture.pointerId){
+      finishPointer({cancel:true});return;
+    }
     if(!active||gesture||!isAvailable(active.field)||event.button!==0||event.isPrimary===false)return;
     if(onBegin(active.field)===false)return;
     event.preventDefault();
     gesture={pointerId:event.pointerId,before:read(),
-      state:beginRotationDrag({value:read(),x:event.clientX,y:event.clientY,snap:Number(snap.value)})};
+      state:beginRotationDrag({value:read(),x:event.clientX,y:event.clientY,
+        snap:Number(snap.value),intent:ROTATION_SCRUB_INTENT_CSS_PX})};
     previewed=false;
     try{pad.setPointerCapture(event.pointerId);}catch{}
   });
@@ -205,8 +211,16 @@ export function installRotationScrubbers({form,onBegin,onPreview,onCommit,onCanc
   pad.addEventListener('pointercancel',event=>{
     if(gesture&&gesture.pointerId===event.pointerId)finishPointer({cancel:true});
   });
-  pad.addEventListener('lostpointercapture',()=>{
-    if(gesture)finishPointer({cancel:true});
+  pad.addEventListener('lostpointercapture',event=>{
+    // A delayed loss belonging to an old pointer must not cancel the new one.
+    if(gesture&&gesture.pointerId===event.pointerId)
+      finishPointer({cancel:true});
+  });
+  const cancelTransient=()=>{if(gesture)finishPointer({cancel:true});};
+  for(const type of ['blur','pagehide','resize'])
+    window.addEventListener(type,cancelTransient);
+  document.addEventListener('visibilitychange',()=>{
+    if(document.hidden)cancelTransient();
   });
   pad.addEventListener('keydown',event=>{
     const delta=event.key==='ArrowLeft'||event.key==='ArrowDown'?-1:

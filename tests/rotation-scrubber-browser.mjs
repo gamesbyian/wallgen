@@ -82,6 +82,10 @@ try{
    await page.mouse.move(x,y);await page.mouse.down();await page.mouse.up();
    assert.equal(current().textureRotation,17.5,'Touch without moving changed angle');
    await page.mouse.move(x,y);await page.mouse.down();
+   await page.mouse.move(x+7,y,{steps:3});await page.mouse.up();
+   assert.equal(current().textureRotation,17.5,
+     '7px settling jitter created an accidental rotation at '+width);
+   await page.mouse.move(x,y);await page.mouse.down();
    await page.mouse.move(x+65,y,{steps:8});await page.mouse.up();
    const changed=current().textureRotation;
 
@@ -106,6 +110,11 @@ try{
      type,touchPoints:points.map(([x,y])=>({x,y}))
    });
    await fireTouch('touchStart',[[touchX,touchY]]);
+   await fireTouch('touchMove',[[touchX+7,touchY]]);
+   await fireTouch('touchEnd',[]);
+   assert.equal(current().textureRotation,17.5,
+     'Real 7px touch should not create a rotation at '+width);
+   await fireTouch('touchStart',[[touchX,touchY]]);
    await fireTouch('touchMove',[[touchX+22,touchY]]);
    await fireTouch('touchMove',[[touchX+54,touchY]]);
    await fireTouch('touchEnd',[]);
@@ -120,6 +129,14 @@ try{
    },touched,{timeout:3000});
    assert.equal(current().textureRotation,touched,
      'Cancelled real touch must restore previous canonical angle');
+   // A real touch followed by a browser interruption must also refuse
+   // the release, independent of pointercancel.
+   await fireTouch('touchStart',[[touchX,touchY]]);
+   await fireTouch('touchMove',[[touchX+40,touchY]]);
+   await page.evaluate(()=>window.dispatchEvent(new Event('blur')));
+   await fireTouch('touchEnd',[]);
+   assert.equal(current().textureRotation,touched,
+     'Interrupted touch must not create a hidden history edit');
    await page.locator('.rotation-scrub-close').click();
    await page.locator('#undo').click();
    assert.equal(current().textureRotation,17.5,'Touch gesture must be one Undo');

@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   ROTATION_FIELD_SPECS,canonicalAngle,magneticAngle,
-  beginRotationDrag,advanceRotationDrag,shortestAngularDifference,pointerAngularDelta,
+  beginRotationDrag,advanceRotationDrag,ROTATION_SCRUB_INTENT_CSS_PX,
+  shortestAngularDifference,pointerAngularDelta,
   beginPointerRotation,advancePointerRotation,
 } from '../src/rotation-gesture.js';
 
@@ -104,4 +105,35 @@ test('regional embroidery direction clamps to signed 0.1° without angle wrap',(
   assert.equal(canonicalAngle(181,spec),180);
   assert.equal(canonicalAngle(180,spec),180);
   assert.equal(canonicalAngle(450,ROTATION_FIELD_SPECS.loopSweep),450);
+});
+
+test('touch scrubber ignores settling jitter and crosses its intent boundary continuously',()=>{
+  assert.equal(ROTATION_SCRUB_INTENT_CSS_PX,8);
+  const start=beginRotationDrag({value:20,x:100,y:100,snap:0,
+    intent:ROTATION_SCRUB_INTENT_CSS_PX});
+  for(const dx of [-8,-4,0,2,7,8]){
+    const sample=advanceRotationDrag(start,{x:100+dx,y:100});
+    assert.equal(sample.value,20,'contact jitter must never create an edit');
+    assert.equal(sample.engaged,false);
+  }
+  let next=advanceRotationDrag(start,{x:109,y:100});
+  assert.ok(Math.abs(next.value-20.45)<1e-9,
+    'the first sample moves only the distance beyond the intent band');
+  assert.equal(next.engaged,true);
+  next=advanceRotationDrag(next,{x:119,y:100});
+  assert.ok(Math.abs(next.value-24.95)<1e-9);
+  const fine=advanceRotationDrag(next,{x:119,y:160});
+  assert.equal(fine.value,next.value,'vertical-only fine selection never teleports');
+  const adjusted=advanceRotationDrag(fine,{x:129,y:160});
+  assert.ok(Math.abs(adjusted.value-25.35)<1e-9);
+  const back=advanceRotationDrag(adjusted,{x:119,y:160});
+  assert.ok(Math.abs(back.value-next.value)<1e-9,
+    'reversing after fine selection returns by incremental movement');
+  const verticalFirst=advanceRotationDrag(start,{x:100,y:170});
+  assert.equal(verticalFirst.engaged,false,
+    'speed switching alone does not arm the horizontal scrubber');
+  assert.equal(advanceRotationDrag(verticalFirst,{x:106,y:170}).value,20);
+  const fineStart=advanceRotationDrag(verticalFirst,{x:109,y:170});
+  assert.ok(Math.abs(fineStart.value-20.04)<1e-9);
+  assert.throws(()=>beginRotationDrag({value:0,x:0,y:0,intent:-1}),TypeError);
 });

@@ -41,21 +41,33 @@ export function magneticAngle(raw,{interval=0,held=null,acquire=2,release=4}={})
   return {value:raw,held:null};
 }
 export const ROTATION_DRAG_GAINS=Object.freeze({fine:.04,normal:.45,fast:1.6});
-export function beginRotationDrag({value,x,y,snap=45}){
-  if(![value,x,y].every(finite))throw new TypeError('Rotation drag needs finite start coordinates/value');
-  return {raw:value,value,lastX:x,startY:y,held:null,snap};
+// A thumb settling onto a scrubber may move a few CSS pixels before the
+// intended drag. Unlike angular precision this is input-only, never recipe data.
+export const ROTATION_SCRUB_INTENT_CSS_PX=8;
+export function beginRotationDrag({value,x,y,snap=45,intent=0}){
+  if(![value,x,y,intent].every(finite)||intent<0)
+    throw new TypeError('Rotation drag needs finite coordinates/value and nonnegative intent');
+  return {raw:value,value,lastX:x,startX:x,startY:y,held:null,snap,
+    intent,engaged:intent===0};
 }
 export function advanceRotationDrag(state,{x,y}){
   if(!state||![x,y].every(finite))return state;
   const dy=y-state.startY;
   const mode=dy>=42?'fine':dy<=-42?'fast':'normal';
-  const delta=x-state.lastX;
+  // Subtract initial horizontal contact jitter once, in the direction of
+  // travel. A vertical-only speed selection cannot trigger an angle edit.
+  // Once engaged, use incremental deltas to avoid teleporting when the
+  // finger changes speed bands or reverses direction.
+  const fromStart=x-state.startX;
+  const delta=state.engaged?x-state.lastX:
+    Math.abs(fromStart)>state.intent?
+      fromStart-Math.sign(fromStart)*state.intent:0;
   const raw=state.raw+delta*ROTATION_DRAG_GAINS[mode];
-  // A vertical-only sensitivity switch must never change the angle.
   if(delta===0)return {...state,lastX:x,mode};
   const result=magneticAngle(raw,{interval:mode==='fine'?0:state.snap,
     held:mode==='fine'?null:state.held});
-  return {...state,raw,lastX:x,value:result.value,held:result.held,mode};
+  return {...state,raw,lastX:x,value:result.value,held:result.held,mode,
+    engaged:true};
 }
 export function pointerAngularDelta(start,current,pivot){
   if(!start||!current||!pivot)return 0;
