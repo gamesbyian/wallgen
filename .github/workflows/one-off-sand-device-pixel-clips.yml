@@ -26,11 +26,15 @@ jobs:
         run: node --check scripts/sand-device-pixel-tiles-proof.mjs
       - name: Real original-worker complete ink/background, visible and native PNG comparisons
         run: node scripts/sand-device-pixel-tiles-proof.mjs
+      - name: Distinguish clipped painting from incomplete source-facet enumeration
+        run: node scripts/sand-device-pixel-tiles-proof.mjs --full-bounds-control
       - name: Preserve exact RGBA mismatch or matching receipts
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: sand-device-pixel-clips-${{ github.run_id }}
-          path: artifacts/sand-device-pixel-tiles/
+          path: |
+            artifacts/sand-device-pixel-tiles/
+            artifacts/sand-device-pixel-tiles-full-bounds/
           retention-days: 7
           if-no-files-found: warn
