@@ -1,0 +1,36 @@
+name: One-off production sand Worker Canvas2D method count
+on:
+  pull_request:
+    paths:
+      - 'scripts/sand-worker-canvas-method-counts.mjs'
+      - '.github/workflows/one-off-sand-method-counts.yml'
+permissions:
+  contents: read
+jobs:
+  count:
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository && contains(github.event.pull_request.title, '[sand-method-count]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install real Chromium
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Validate method-count harness syntax
+        run: node --check scripts/sand-worker-canvas-method-counts.mjs
+      - name: Count native Canvas2D calls and verify unchanged original pixels
+        run: node scripts/sand-worker-canvas-method-counts.mjs
+      - name: Preserve genuine worker counts or failure receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sand-worker-canvas-method-counts-${{ github.run_id }}
+          path: artifacts/sand-canvas2d-method-counts/
+          retention-days: 14
+          if-no-files-found: warn
