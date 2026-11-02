@@ -14,7 +14,7 @@ Single [Linux Chrome 412×892 browser journey](https://github.com/gamesbyian/wal
 
 The four-click multi-material burst produced exactly one intermediate preview and delayed settled art by 2,791ms after the last click. These measurements make heavy random exploration a genuine user-facing latency problem.
 
-## Next falsifiable intervention
+## Historical next intervention hypothesis (29 October; rejected below)
 
 Try **bounded exploration-only worker preemption**: when a brand-new Random / New variation request supersedes a materially different in-progress preview, terminate its already-obsolete worker and spawn one fresh worker with the newest canonical recipe. Throttle restart frequency, avoid pathological loops and normal slider/text/rotation/editor paths, preserve startup/fallback error handling, prevent stale generations from delivering images, and keep exact final art and history. Do **not** render stale random images as if current, unlike the deliberately bounded rotation-gesture provisional frames.
 
@@ -166,3 +166,61 @@ the previous #981 proof. These are production Chromium worker paint times,
 not actual device Random-to-visible latency, and neither Pixel 6 Pro thermals
 nor physical touch response have been measured. The one-shot proof workflow
 is removed after qualification; required clean-head quick CI is independent.
+
+## Avoiding paint-only single-loop/hairpin contact scans (2 November 2026, PR #986)
+
+Non-floating **single loops and hairpins** already retain their natural ribbon
+ends regardless of a frame-contact report. Nevertheless the paint path invoked
+the full `stripeFrameContacts()` inspection for every painted stripe, sampling
+two ribbon edges at **481 source stations** and testing three segments per
+station. The renderer never reads the returned `contacts` object.
+
+The painter now calls `balanceStripeEnds(scene,stripe,false)`. Only for
+non-floating `loop` or `hairpin`, the optional flag omits those diagnostics
+and returns `contacts:null`; the same `balanced:true,hidden:false` remains.
+External two-argument callers still receive **exactly the original full**
+`contacts` output, and `floating`, `loops` (repeating), `wave`, other
+geometries still compute and use genuine contacts to decide end balancing.
+No source geometry, stitch physics, texture/displacement, worker scheduling,
+history/Undo, metadata or export algorithm was changed. The permanent quick
+suite compares source-visible stripe/end mutations and public diagnostic
+results for four geometries, three composition modes, two displacement
+values and three stripe slots.
+
+[Real paired browser proof #41373071498](https://github.com/gamesbyian/wallgen/actions/runs/41373071498)
+passed ten identical-art cases across direct Canvas2D and PNG worker, native
+3024×6552 PNG bytes, but three trial timing pairs were inconclusive enough
+to warrant a larger experiment. The reusable
+`scripts/motif-sample-reuse-acceptance.mjs` now accepts a bounded optional
+`ROYGBIV_PERF_TRIALS` count, alternating **baseline→candidate** and
+**candidate→baseline** per trial, rather than consistently rendering one
+candidate after an already warmed base.
+
+[Source-matched nine-pair trial #41373248975](https://github.com/gamesbyian/wallgen/actions/runs/41373248975)
+passed all 20 raw-pixel comparisons (ten canonical cases × reference Canvas2D
+and worker). The native production 3024×6552 PNG remained **byte-for-byte
+identical**, 11,453,267 bytes, SHA-256
+`b7fa60e7f6208957cd87d1341a3f57e166c0749a6fb22f39f9f61a41876e4c4a`.
+
+Actual 372×806 interactive worker paint times (ms; nine interleaved trials):
+
+| Source / geometry | Baseline | Candidate | Warm-trial median |
+| --- | --- | --- | --- |
+| **single loop / chevrons** | 246,236,250,230,227,231,230,248,226 | 244,228,216,216,216,215,221,217,228 | **230.5 → 216.5 ms (6.1% less)** |
+| **hairpin / stars** | 238,223,221,226,225,223,220,223,231 | 228,213,214,216,221,212,213,225,221 | **223 → 215 ms (3.6% less)** |
+| repeating loops / dashes | 218,214,203,203,202,203,202,203,201 | 218,217,207,202,203,202,202,201,200 | ~203 → 202 ms (control) |
+| repeat loops / worst random seed 30 | 1265,1125,1104,1131,1109,1098,1101,1101,1096 | 1191,1104,1119,1112,1104,1104,1114,1095,1093 | ~1102.5 → 1104 ms (control) |
+| zigzag / checker | 144,125,124,125,123,132,123,125,124 | 138,124,122,122,125,131,124,123,127 | ~124.5 → 124 ms (control) |
+
+Warm-trial medians omit the first pair of cold renders. The small control
+variation and stable positive single-loop/hairpin improvement match the
+specific skipped work. No general Random latency improvement, mobile device
+FPS or thermal speedup is claimed. Actual Pixel 6 Pro latency remains an
+independent acceptance gate. The one-shot workflow is retired after proof;
+the reusable benchmark and deterministic source test remain.
+
+**Rejected follow-up (PR #984):** Sharing two cross-section edge samples
+also retained exact pixels, but [source-matched Chromium #41372732527](https://github.com/gamesbyian/wallgen/actions/runs/41372732527)
+showed mixed/noise-sized worker timing differences. It was closed **unmerged**
+and its temporary workflow retired. Do not present it as a missing
+performance improvement.

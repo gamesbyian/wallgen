@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {normalizeRecipe,resolveScene,rng} from '../src/model.js';
 import {samplePath,ribbonEdge} from '../src/path-geometry.js';
-import {motifFits,textureHeight,motifVariation,motifStripeFactors} from '../src/renderer.js';
+import {motifFits,textureHeight,motifVariation,motifStripeFactors,balanceStripeEnds,stripeFrameContacts} from '../src/renderer.js';
 
 test('shared motif path point exactly matches independent forward sampling',()=>{
   for(const geometry of ['straight','wave','loop','loops','hairpin']){
@@ -104,6 +104,39 @@ test('textured ribbon edges reuse precisely the original centreline sample',()=>
                 ' '+stripe.index+' '+fraction+' '+side);
             }
           }
+        }
+      }
+    }
+  }
+});
+
+test('paint-only loop/hairpin balancing skips diagnostic scans without altering end caps',()=>{
+  for(const geometry of ['hairpin','loop','loops','wave']){
+    for(const composition of ['single','repeat','floating']){
+      for(const displacement of [0,95]){
+        const scene=resolveScene(normalizeRecipe({
+          seed:'balanced-contact-parity-'+geometry+'-'+composition+'-'+displacement,
+          structure:'paths',geometry,composition,material:'wood-grain',
+          textureCoverage:'both',textureDisplacement:displacement,
+          textureStrength:84,mirrorHorizontal:true,outline:'double',
+        }));
+        for(const stripe of [scene.stripes[0],scene.stripes[3],scene.stripes[6]]){
+          const oldStripe={...stripe},paintStripe={...stripe};
+          const normal=balanceStripeEnds(scene,oldStripe);
+          const paint=balanceStripeEnds(scene,paintStripe,false);
+          const skip=composition!=='floating'&&['hairpin','loop'].includes(geometry);
+          if(skip){
+            assert.equal(paint.contacts,null,
+              'paint must skip unnecessary diagnostics for '+geometry);
+            assert.deepEqual(normal.contacts,stripeFrameContacts(scene,stripe),
+              'public API still provides actual contact diagnostics');
+          }else assert.deepEqual(paint.contacts,normal.contacts,
+            'floating or other geometry still requires real contact decisions');
+          assert.deepEqual(paintStripe,oldStripe,
+            'paint-specific option must never change stripe geometry, visibility or caps');
+          assert.deepEqual(
+            {...paint,contacts:normal.contacts},normal,
+            'paint-only mode must preserve all source-visible balancing decisions');
         }
       }
     }
