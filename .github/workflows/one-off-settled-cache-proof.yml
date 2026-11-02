@@ -1,0 +1,48 @@
+name: One-off original-vs-cache-only settled Worker proof
+on:
+  pull_request:
+    paths:
+      - 'scripts/settled-worker-cache-ab-browser.mjs'
+      - '.github/workflows/one-off-settled-cache-proof.yml'
+permissions:
+  contents: read
+jobs:
+  original-source-pixel-and-latency:
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository && contains(github.event.pull_request.title, '[settled-cache-proof]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare actual original-base checkout for same-run Chromium A-B
+        env:
+          CI_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          git worktree add --detach comparator-baseline "$CI_BASE_SHA"
+          git -C comparator-baseline rev-parse HEAD
+          test "$(git -C comparator-baseline rev-parse HEAD)" = "$CI_BASE_SHA"
+      - name: Install genuine Chromium
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Check exact acceptance harness source
+        run: node --check scripts/settled-worker-cache-ab-browser.mjs
+      - name: Production Worker layers and native 3024x6552 PNG source parity
+        run: node scripts/settled-worker-cache-ab-browser.mjs
+      - name: Actual Random button 320x700 and 412x892 source and canvas-pixel parity
+        run: node scripts/randomize-worker-quiet-ab-browser.mjs
+      - name: Preserve success or failure receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: original-settled-cache-worker-ab-${{ github.run_id }}
+          path: |
+            artifacts/settled-worker-cache-ab/
+            artifacts/randomize-preemption-ab/
+          retention-days: 14
+          if-no-files-found: warn
