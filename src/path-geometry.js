@@ -100,7 +100,12 @@ export function pathPosition(stripe,x,extent){
     const phase=(stripe.sharedPhase??0);
     const angle=x/pitch*TAU+phase;
     const size=stripe.loopAmplitude??13;
-    return {x:x-size*2.1*Math.pow(2,((stripe.loopAspect??50)-50)/35)*Math.sin(angle),y:size*Math.cos(angle)};
+    // During a single immutable paint, the aspect-controlled X amplitude
+    // belongs to the stripe, not to the tens of thousands of sampled stations.
+    // Independent geometry callers retain the exact original calculation.
+    const xAmplitude=stripe._renderLoopXAmplitude??
+      (size*2.1*Math.pow(2,((stripe.loopAspect??50)-50)/35));
+    return {x:x-xAmplitude*Math.sin(angle),y:size*Math.cos(angle)};
   }
   const shared=modulation(x,g,stripe.sharedPhase??stripe.phase,
     stripe.sharedPeriod??stripe.period,stripe.sharedDisplacement??stripe.displacement,coreExtent,stripe);

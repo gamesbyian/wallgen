@@ -224,3 +224,51 @@ also retained exact pixels, but [source-matched Chromium #41372732527](https://g
 showed mixed/noise-sized worker timing differences. It was closed **unmerged**
 and its temporary workflow retired. Do not present it as a missing
 performance improvement.
+
+## Repeating-loop invariant aspect factor reuse (2 November 2026, PR #989)
+
+A remaining repeatable source cost in `random-perf-fixed-30` was the
+`loops` path position function: each call recomputed
+`Math.pow(2,(loopAspect-50)/35)`, even though both `loopAspect` and
+`loopAmplitude` are constants of the authored stripe. Every tangent calls
+`pathPosition` **three times**, and the renderer samples thousands of
+source stations. On the original disposable paint stripe, the renderer now
+computes exactly the original left-associative X-amplitude expression once:
+`(loopAmplitude??13)*2.1*Math.pow(2,((loopAspect??50)-50)/35)`.
+`pathPosition` uses this value only when it is present on a cloned paint
+stripe; independent/public geometry sampling continues its original formula.
+No new recipe property, persistent geometry cache, approximation, changed
+relative station or painter order is introduced.
+
+Permanent quick regression tests compare **2,100 source-identical values**
+across seven aspects, five amplitude inputs, three colour slots and ten
+in- and out-of-frame stations, for both original path position and the
+three-station unit tangent.
+
+[Same-run actual source-matched Chromium #41373798607](https://github.com/gamesbyian/wallgen/actions/runs/41373798607)
+passed all ten canonical artwork comparisons in both direct Canvas2D and
+real export Worker (20 exact raw-pixel SHA matches). The **3024×6552 native
+worker PNG** remained byte-for-byte identical (11,453,267 bytes,
+SHA-256 `b7fa60e7f6208957cd87d1341a3f57e166c0749a6fb22f39f9f61a41876e4c4a`).
+
+Actual 372×806 production worker paint durations (ms), **nine alternating
+base/candidate trials**, with original source matched per case:
+
+| Scene | Original | Cached aspect X amplitude |
+| --- | --- | --- |
+| `random-perf-fixed-30` repeating loops, wood, dashes | 729,645,632,592,595,587,597,579,584 | 671,617,576,552,572,546,559,554,592 |
+| repeating-loop/dashes control | 134,120,119,120,121,121,120,121,119 | 133,125,119,120,120,119,120,121,123 |
+| single-loop/chevrons control | 148,140,129,128,132,130,130,145,130 | 139,140,132,129,132,130,126,132,139 |
+| hairpin/stars control | 132,135,139,126,125,130,130,125,126 | 133,134,139,132,127,128,134,126,126 |
+| zigzag/checker control | 76,71,69,68,68,68,69,67,68 | 77,71,67,66,68,73,68,67,71 |
+
+For fixed seed 30, **eight of nine candidate pairs were faster**. After
+excluding the first cold pair, the original warm median was **593.5ms** and
+the candidate **565.5ms**, a **4.7% reduction**. Other examples were
+noise-sized or neutral. Do not add percentages from different benchmark
+runs; host resource contention and browser state differ. This is a verified
+improvement on an expensive fixed scene, **not** a device-wide Random
+speed guarantee. The full-size source pixels, mobile gesture semantics,
+camera, user locks/Undo and original artwork remain unchanged. Physical
+Pixel 6 Pro interaction/thermal evidence is still outstanding. The
+one-shot acceptance workflow is retired after proof.
