@@ -170,6 +170,13 @@ export function installViewPanGesture({getRecipe,changeRecipe,onNotice=()=>{},
          (pinch&&pinch.ids.includes(event.pointerId)))clearGesture();
     },true);
   }
+  // Entering another phone destination must revoke the temporary camera
+  // mode. Arming Frame itself dismisses Edit and announces "studio", which
+  // deliberately does not revoke it. The other destinations do.
+  document.addEventListener('roygbiv-mobile-navigation-changed',event=>{
+    if(active&&event.detail?.mode&&event.detail.mode!=='studio')
+      setActive(false);
+  });
   // Switching to another canvas authoring mode disarms framing. These
   // controls retain their original ownership and no two tools consume a
   // pointer in the same frame.
