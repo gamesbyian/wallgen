@@ -1,0 +1,36 @@
+name: One-off full-res interactive versus settled cache optical identity
+on:
+  pull_request:
+    paths:
+      - 'scripts/fullsize-worker-early-frame-optical.mjs'
+      - '.github/workflows/one-off-early-frame-optical.yml'
+permissions:
+  contents: read
+jobs:
+  optical:
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository && contains(github.event.pull_request.title, '[early-fullsize-optical]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install real Chromium
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Check source
+        run: node --check scripts/fullsize-worker-early-frame-optical.mjs
+      - name: Measure exact full-size early Worker frame versus settled presentation
+        run: node scripts/fullsize-worker-early-frame-optical.mjs
+      - name: Preserve actual optical comparisons
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fullsize-early-vs-settled-${{ github.run_id }}
+          path: artifacts/fullsize-early-vs-settled/
+          retention-days: 14
+          if-no-files-found: warn
