@@ -39,7 +39,10 @@ export function textureHeight(scene,stripe,x,side=0,point=null){
   // This function can be called thousands of times per authored motif.
   if(!layers.some(layer=>layer.coverage!=='background'))return 0;
   const p=point??samplePath(stripe,x,scene.extent);
-  const distance=side*widthAt(stripe,x,scene.extent)*.5;
+  // A centreline material-height query has no transverse offset. Preserve
+  // the input zero's sign but skip a varying-width solve for every motif mark.
+  // Nonzero sides retain the exact original multiplication order.
+  const distance=side===0?side:side*widthAt(stripe,x,scene.extent)*.5;
   const localX=p.x+p.nx*distance,localY=p.y+p.ny*distance;
   const c=Math.cos(scene.angle),s=Math.sin(scene.angle);
   const rx=localX*c-localY*s,ry=localX*s+localY*c;

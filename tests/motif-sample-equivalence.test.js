@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {normalizeRecipe,resolveScene,rng} from '../src/model.js';
-import {samplePath,pathPosition,ribbonEdge} from '../src/path-geometry.js';
+import {samplePath,pathPosition,ribbonEdge,widthAt} from '../src/path-geometry.js';
 import {motifFits,textureHeight,motifVariation,motifStripeFactors,balanceStripeEnds,stripeFrameContacts} from '../src/renderer.js';
 
 test('shared motif path point exactly matches independent forward sampling',()=>{
@@ -167,6 +167,39 @@ test('render-only repeating-loop aspect factor keeps original path positions bit
         }
         assert.equal(oldStripe._renderLoopXAmplitude,undefined,
           'normal source and independent geometry users stay unmodified');
+      }
+    }
+  }
+});
+
+test('centreline material offset skips width without changing signed source offsets',()=>{
+  for(const geometry of ['straight','wave','jagged','loops','loop','hairpin']){
+    for(const displacement of [0,25,70,100]){
+      const scene=resolveScene(normalizeRecipe({
+        seed:'zero-side-'+geometry+'-'+displacement,
+        structure:'paths',geometry,material:'wood-grain',
+        textureStrength:95,textureCoverage:'both',
+        textureDisplacement:displacement,
+        edgeTaper:90,
+      }));
+      for(const stripe of [scene.stripes[0],scene.stripes[3],scene.stripes[6]]){
+        for(const t of [-1,-.75,-.25,0,.33,.71,1]){
+          const x=t*scene.extent;
+          for(const side of [-1,-0,0,1]){
+            const original=side*widthAt(stripe,x,scene.extent)*.5;
+            const optimized=side===0?side:side*widthAt(stripe,x,scene.extent)*.5;
+            assert.ok(Object.is(original,optimized),
+              'keep original signed offset '+geometry+' '+displacement+' '+side+' '+t);
+          }
+          const originalPoint=samplePath(stripe,x,scene.extent);
+          // Both the original and optional-sample material-height paths
+          // must evaluate to the same exact field at signed zero stations.
+          for(const side of [-0,0]){
+            assert.ok(Object.is(
+              textureHeight(scene,stripe,x,side),
+              textureHeight(scene,stripe,x,side,originalPoint)));
+          }
+        }
       }
     }
   }
