@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   ROTATION_FIELD_SPECS,canonicalAngle,magneticAngle,
   beginRotationDrag,advanceRotationDrag,ROTATION_SCRUB_INTENT_CSS_PX,
+  rotationKeyboardTarget,
   shortestAngularDifference,pointerAngularDelta,
   beginPointerRotation,advancePointerRotation,
 } from '../src/rotation-gesture.js';
@@ -136,4 +137,42 @@ test('touch scrubber ignores settling jitter and crosses its intent boundary con
   const fineStart=advanceRotationDrag(verticalFirst,{x:109,y:170});
   assert.ok(Math.abs(fineStart.value-20.04)<1e-9);
   assert.throws(()=>beginRotationDrag({value:0,x:0,y:0,intent:-1}),TypeError);
+});
+
+test('precision angle slider keys cover APG Home/End/Page and valid property steps',()=>{
+  const t=ROTATION_FIELD_SPECS.textureRotation,
+    s=ROTATION_FIELD_SPECS.loopSweep,
+    i=ROTATION_FIELD_SPECS.diagonalRotation;
+  const key=(value,spec,name,other={})=>
+    rotationKeyboardTarget(value,spec,{key:name,...other});
+  assert.equal(key(12.3,t,'Home'),0);
+  assert.equal(key(12.3,t,'End'),359.9,
+    'cyclic end is last real angle, never wrapped back to zero');
+  assert.equal(key(12.3,t,'PageUp'),22.3);
+  assert.equal(key(12.3,t,'PageDown'),2.3);
+  assert.equal(key(359.9,t,'PageUp'),9.9,
+    'page keys honor original cyclic semantics');
+  assert.equal(key(20,t,'ArrowUp',{shiftKey:true}),20.1);
+  assert.equal(key(20,t,'ArrowLeft'),19);
+  assert.equal(key(20,t,'ArrowDown'),19);
+  assert.equal(key(20,t,'ArrowRight'),21);
+  assert.equal(key(20,t,'ArrowRight',{shiftKey:true}),20.1);
+  assert.equal(key(20,i,'ArrowRight',{shiftKey:true}),21,
+    'Shift must not silently do nothing on whole-degree controls');
+  assert.equal(key(180,i,'ArrowRight'),180,
+    'bounded orientation clamps at its legal maximum');
+  assert.equal(key(360,s,'Home'),240);
+  assert.equal(key(360,s,'End'),450,
+    '450-degree sweep remains distinct from 90 degrees');
+  assert.equal(key(449,s,'PageUp'),450);
+  assert.equal(key(241,s,'PageDown'),240);
+  for(const name of ['Tab','Space','Escape','KeyA']){
+    assert.equal(key(20,t,name),null,'unowned keys remain untouched');
+  }
+  for(const mods of [{ctrlKey:true},{metaKey:true},{altKey:true}]){
+    assert.equal(key(20,t,'ArrowLeft',mods),null,
+      'browser modifier shortcuts remain untouched');
+  }
+  assert.equal(key(NaN,t,'Home'),null);
+  assert.equal(key(20,null,'Home'),null);
 });

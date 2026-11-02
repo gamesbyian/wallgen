@@ -1,7 +1,8 @@
 // One touch-first angle inspector for the app's ORIGINAL canonical form fields.
 // Geometry is separate; app.js owns preview, commits, Undo and model normalization.
 import {ROTATION_FIELD_SPECS,canonicalAngle,
-  beginRotationDrag,advanceRotationDrag,ROTATION_SCRUB_INTENT_CSS_PX} from './rotation-gesture.js';
+  beginRotationDrag,advanceRotationDrag,ROTATION_SCRUB_INTENT_CSS_PX,
+  rotationKeyboardTarget} from './rotation-gesture.js';
 import {parseAngleExpression} from './precision-angle-expression.js';
 
 export function installRotationScrubbers({form,onBegin,onPreview,onCommit,onCancel}){
@@ -26,7 +27,9 @@ export function installRotationScrubbers({form,onBegin,onPreview,onCommit,onCanc
   readout.setAttribute('aria-live','off');
   const pad=create('div','rotation-scrub-pad');
   pad.setAttribute('role','slider');pad.tabIndex=0;
-  pad.setAttribute('aria-label','Drag horizontally to adjust angle; drag vertically to change sensitivity');
+  pad.setAttribute('aria-label','Rotation angle. Drag horizontally or use arrow keys to adjust.'); 
+  pad.setAttribute('aria-description',
+    'Shift and arrow keys use the finest available step. Page Up and Down change by 10 degrees. Home and End go to the allowed limits. Drag vertically to change sensitivity.');
   const padLabel=create('span',null,'← Drag to rotate →');
   pad.append(padLabel);
   const hint=create('p','rotation-scrub-hint',
@@ -34,7 +37,7 @@ export function installRotationScrubbers({form,onBegin,onPreview,onCommit,onCanc
   const settings=create('div','rotation-scrub-settings');
   const snapLabel=create('label','rotation-scrub-snap-label','Snap');
   const snap=create('select','rotation-scrub-snap');
-  for(const [value,label] of [['0','Free'],['45','45°'],['15','15°']]){
+  for(const [value,label] of [['0','Free'],['45','45°'],['15','15°'],['10','10°']]){
     const option=create('option',null,label);option.value=value;snap.append(option);
   }
   snap.value='45';
@@ -239,11 +242,11 @@ export function installRotationScrubbers({form,onBegin,onPreview,onCommit,onCanc
     if(document.hidden)cancelTransient();
   });
   pad.addEventListener('keydown',event=>{
-    const delta=event.key==='ArrowLeft'||event.key==='ArrowDown'?-1:
-      event.key==='ArrowRight'||event.key==='ArrowUp'?1:0;
-    if(!delta||!active)return;
+    if(!active||gesture)return;
+    const target=rotationKeyboardTarget(read(),active.spec,event);
+    if(target===null)return;
     event.preventDefault();
-    apply(read()+delta*(event.shiftKey ? .1 : 1));
+    apply(target);
   });
   entry.addEventListener('input',()=>entry.removeAttribute('aria-invalid'));
   entry.addEventListener('change',()=>{

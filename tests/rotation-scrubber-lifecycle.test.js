@@ -117,6 +117,28 @@ test('precision rotation rolls back interrupted touch work and refuses stale cap
     assert.ok(previews.length>=4);
     assert.equal(frames.size,0,'no provisional preview frame can survive');
 
+    // The actual focusable ARIA slider must honor Home/End/Page and the
+    // 0.1-degree shift fine step. No alternative keyboard UI or Undo path.
+    const snap=find(shade,'rotation-scrub-snap');
+    assert.ok(snap.children.some(option=>option.value==='10'),
+      'Illustrator-style 10° magnetic alignment should be offered');
+    const commitsBeforeKeys=commits.length;
+    pad.emit('keydown',{key:'Home'});
+    assert.equal(Number(field.value),0);
+    pad.emit('keydown',{key:'End'});
+    assert.equal(Number(field.value),359.9);
+    pad.emit('keydown',{key:'PageUp'});
+    assert.equal(Number(field.value),9.9);
+    pad.emit('keydown',{key:'PageDown'});
+    assert.equal(Number(field.value),359.9);
+    pad.emit('keydown',{key:'ArrowLeft',shiftKey:true});
+    assert.equal(Number(field.value),359.8);
+    pad.emit('keydown',{key:'ArrowLeft',ctrlKey:true});
+    assert.equal(Number(field.value),359.8,
+      'browser modifier shortcut must not mutate the recipe');
+    assert.equal(commits.length,commitsBeforeKeys+5,
+      'each accepted key is one canonical source commit');
+
     // A current tool switch can remove the triggering control from layout
     // while the modal is still open. Focus must return to a visible entry.
     const mobileEntry=new MockNode('button',doc);
