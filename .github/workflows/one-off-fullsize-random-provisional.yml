@@ -1,0 +1,41 @@
+name: One-off Random fullsize provisional source matched real-click proof
+on:
+  pull_request:
+    paths:
+      - 'src/app.js'
+      - '.github/workflows/one-off-fullsize-random-provisional.yml'
+permissions:
+  contents: read
+jobs:
+  real-random-ab:
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository && contains(github.event.pull_request.title, '[fullsize-random-ab]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Checkout original main as comparison
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          git worktree add --detach comparator-baseline "$BASE_SHA"
+          test "$(git -C comparator-baseline rev-parse HEAD)" = "$BASE_SHA"
+      - name: Install Chromium
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Exact source A-B real Random button click and pixel validation
+        run: node scripts/randomize-worker-quiet-ab-browser.mjs
+      - name: Save original/candidate input, Worker and canvas SHA receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: real-fullsize-random-provisional-${{ github.run_id }}
+          path: artifacts/randomize-preemption-ab/
+          retention-days: 14
+          if-no-files-found: warn
