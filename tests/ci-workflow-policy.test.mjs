@@ -157,3 +157,29 @@ test('Pages deployment is independently checked after upload and keeps failure e
     'assets/roygbiv-logo-dark.png','assets/roygbiv-logo-cream.png'])
     assert(checker.includes(name), 'Missing public artifact check: ' + name);
 });
+
+
+test('Pages build and deployment are separate retry-safe jobs', async () => {
+  const pages = await readFile(path.join(workflows, 'pages.yml'), 'utf8');
+  const buildAt = pages.indexOf('\n  build:\n');
+  const deployAt = pages.indexOf('\n  deploy:\n');
+  assert(buildAt > 0 && deployAt > buildAt, 'Pages must build before deploying');
+  const build = pages.slice(buildAt, deployAt);
+  const deploy = pages.slice(deployAt);
+  assert.match(deploy, /^    needs: build$/m,
+    'Deploy must consume the successful completed build job');
+  assert.equal((pages.match(/uses: actions\/upload-pages-artifact@v3/g) || []).length, 1,
+    'Exactly one Pages artifact upload per run');
+  assert.match(build, /uses: actions\/upload-pages-artifact@v3/);
+  assert.doesNotMatch(deploy, /upload-pages-artifact/,
+    'Retrying only a failed deploy must never create a second named artifact');
+  assert.match(deploy, /uses: actions\/deploy-pages@v4/);
+  assert.doesNotMatch(build, /uses: actions\/deploy-pages@v4/);
+  assert.match(deploy, /environment:\n      name: github-pages/);
+  assert.match(deploy, /uses: actions\/checkout@v4/);
+  assert.match(deploy, /run: node scripts\/build-logo-raster\.mjs/,
+    'Post-deployment proof must recreate the exact SVG-derived PNGs');
+  assert.match(deploy, /run: node scripts\/ci-evidence\.mjs pages-publish -- node scripts\/verify-pages-publication\.mjs/);
+  assert.match(build, /Upload build failure digest/);
+  assert.match(deploy, /Upload publication failure digest/);
+});
