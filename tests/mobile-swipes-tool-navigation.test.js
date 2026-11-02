@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {visibleMobileTools,adjacentVisibleMobileTool,isMobileToolSwipeSurface,
-  matchingSingleTouchEnd} from '../src/mobile-tool-sequence.js';
+  matchingSingleTouchEnd,mobileToolSelectionChanged} from '../src/mobile-tool-sequence.js';
 
 const chip=(category,id,name,{hidden=false,disabled=false}={})=>({
   dataset:{category,editorTool:id},hidden,disabled,textContent:name,
@@ -98,4 +98,19 @@ test('editor sheet navigation rejects ambiguous multi-touch and substituted poin
   assert.match(source,/window\.addEventListener\('touchstart',event=>\{/);
   assert.match(source,/if\(gesture&&event\.touches\.length!==1\)gesture=null/,
     'a second finger landing outside the editor must also invalidate the swipe');
+});
+
+
+test('changing the chosen tool cancels pending sheet swipe without canceling same-tool sync',()=>{
+  const original={category:'material',tool:'layer1'};
+  assert.equal(mobileToolSelectionChanged(original,{...original}),false,
+    'source syncs repeatedly re-emit the same selected tool');
+  assert.equal(mobileToolSelectionChanged(original,{category:'material',tool:'layer2'}),true);
+  assert.equal(mobileToolSelectionChanged(original,{category:'layout',tool:'layer1'}),true);
+  assert.equal(mobileToolSelectionChanged(original,null),true);
+  const source=readFileSync(new URL('../src/mobile-swipes.js',import.meta.url),'utf8');
+  assert.match(source,/if\(mobileToolSelectionChanged\(active,event\.detail\)\)gesture=null/,
+    'the production event subscriber must disarm the in-progress swipe');
+  assert.match(source,/active=event\.detail;update\(\)/,
+    'canonical active selection remains the only navigation state');
 });
