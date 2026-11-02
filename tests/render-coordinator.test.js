@@ -300,3 +300,104 @@ test('cross-gesture, stopped, and post-commit intermediate frames remain rejecte
   assert.deepEqual(seen,[]);
   scheduler.dispose();
 });
+
+
+test('quiet Random interruption replaces only an aged obsolete active worker',()=>{
+  let time=1000;
+  const workers=[],frames=[];
+  const scheduler=createPreviewCoordinator({
+    canUseWorker:true,now:()=>time,
+    randomObsoleteMinAgeMs:240,randomRestartCooldownMs:2000,
+    workerFactory:()=>{const worker=new FakeWorker();workers.push(worker);return worker;},
+    onFrame:msg=>frames.push(msg.key),
+  });
+  const old=workers[0];old.emit(ready);
+  scheduler.request({seed:'old'},'old-art',180,390,{quality:'interactive'});
+  const oldId=old.messages[0].id;
+  time+=400;
+  scheduler.request({seed:'latest'},'latest-art',600,1300,{quality:'settled'});
+  assert.equal(scheduler.restartObsoleteRandomFor('wrong-key'),false);
+  assert.equal(scheduler.restartObsoleteRandomFor('latest-art'),true);
+  assert.equal(old.terminated,true);
+  assert.equal(scheduler.status.randomRestartCount,1);
+  assert.equal(workers.length,2);
+  const obsolete={type:'frame',id:oldId,key:'old-art',
+    quality:'interactive',frame:bitmap()};
+  old.emit(obsolete);
+  assert.equal(obsolete.frame.closed,true,'late dead-worker bitmaps must be closed');
+  assert.equal(scheduler.status.active,false);
+  const replacement=workers[1];
+  replacement.emit(ready);
+  assert.deepEqual(replacement.messages.map(msg=>msg.key),['latest-art']);
+  assert.equal(replacement.messages[0].quality,'settled');
+  replacement.emit({type:'frame',id:replacement.messages[0].id,
+    key:'latest-art',quality:'settled',ink:bitmap(),background:bitmap()});
+  assert.deepEqual(frames,['latest-art']);
+  assert.equal(scheduler.status.randomRestartCount,1);
+  scheduler.dispose();
+  assert.equal(replacement.terminated,true);
+});
+
+test('single Random settled upgrade, young jobs, missing pending and cooldown never restart',()=>{
+  let time=5000;
+  const workers=[];
+  const scheduler=createPreviewCoordinator({
+    canUseWorker:true,now:()=>time,
+    randomObsoleteMinAgeMs:240,randomRestartCooldownMs:2000,
+    workerFactory:()=>{const w=new FakeWorker();workers.push(w);return w;},
+  });
+  const old=workers[0];old.emit(ready);
+  const recipe={seed:'same'};
+  scheduler.request(recipe,'same-art',180,390,{quality:'interactive'});
+  scheduler.request(recipe,'same-art',600,1300,{quality:'settled'});
+  time+=500;
+  assert.equal(scheduler.restartObsoleteRandomFor('same-art'),false);
+  assert.equal(workers.length,1);
+  old.emit({type:'frame',id:old.messages[0].id,key:'same-art',
+    quality:'interactive',frame:bitmap()});
+  old.emit({type:'frame',id:old.messages[1].id,key:'same-art',
+    quality:'settled',ink:bitmap(),background:bitmap()});
+  assert.equal(scheduler.restartObsoleteRandomFor('same-art'),false);
+  scheduler.request({seed:'expensive'},'expensive-art',180,390);
+  scheduler.request({seed:'fresh'},'fresh-art',180,390);
+  assert.equal(scheduler.restartObsoleteRandomFor('fresh-art'),false,
+    'fresh active work must retain its full short opportunity to finish');
+  time+=400;
+  assert.equal(scheduler.restartObsoleteRandomFor('fresh-art'),true);
+  assert.equal(workers.length,2);
+  const second=workers[1];second.emit(ready);
+  scheduler.request({seed:'another'},'third-art',180,390);
+  time+=400;
+  assert.equal(scheduler.restartObsoleteRandomFor('third-art'),false,
+    'a replacement may not trigger a second restart storm');
+  scheduler.dispose();
+});
+
+test('replacement constructor failure retains the existing functioning worker',()=>{
+  let time=1000,calls=0;
+  const original=new FakeWorker(),delivered=[];
+  const scheduler=createPreviewCoordinator({
+    canUseWorker:true,now:()=>time,
+    workerFactory:()=>{
+      calls++;if(calls>1)throw Error('new worker allocation exhausted');
+      return original;
+    },
+    onFrame:msg=>delivered.push(msg.key),
+  });
+  original.emit(ready);
+  scheduler.request({seed:'old'},'old',180,390,{quality:'interactive'});
+  const id=original.messages[0].id;
+  time+=400;
+  scheduler.request({seed:'new'},'new',600,1300,{quality:'settled'});
+  assert.equal(scheduler.restartObsoleteRandomFor('new'),false);
+  assert.equal(original.terminated,false,'old functioning renderer must survive');
+  assert.equal(scheduler.enabled,true,'do not initiate fallback for optional optimization');
+  const stale={type:'frame',id,key:'old',quality:'interactive',frame:bitmap()};
+  original.emit(stale);
+  assert.ok(stale.frame.closed);
+  assert.equal(original.messages[1].key,'new');
+  original.emit({type:'frame',id:original.messages[1].id,key:'new',
+    quality:'settled',ink:bitmap(),background:bitmap()});
+  assert.deepEqual(delivered,['new']);
+  scheduler.dispose();
+});
