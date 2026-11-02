@@ -156,6 +156,31 @@ test('three composited materials apply rotated masks, background and blend modes
   }
 });
 
+test('paint-time material factor memoization is discarded before returning the scene',()=>{
+  const recipe={seed:'paint-factor-lifetime',geometry:'loops',material:'wood-grain',
+    textureCoverage:'both',textureDisplacement:85,motif:'dots',
+    textureLayer2Enabled:true,material2:'linen',textureCoverage2:'stripes',
+    textureStrength2:72};
+  const canvas={width:320,height:700,getContext:()=>new FakeContext()};
+  const painted=drawWallpaper(canvas,recipe);
+  const source={...painted};
+  const stripe=painted.stripes[3],station=painted.extent*.19;
+  for(const angle of [painted.angle,painted.angle+.45,painted.angle-.22]){
+    painted.angle=angle;
+    source.angle=angle;
+    for(const side of [-1,0,1])
+      assert.equal(textureHeight(painted,stripe,station,side),
+        textureHeight(source,stripe,station,side),
+        'returned scene must use live, uncached angle and displacement');
+  }
+  // A returned scene remains usable for independent analysis even if its
+  // material stack changes after the completed paint.
+  painted.textureLayers=[...painted.textureLayers.map(layer=>({...layer,coverage:'background'}))];
+  source.textureLayers=painted.textureLayers;
+  assert.equal(textureHeight(painted,stripe,station,1),0);
+  assert.equal(textureHeight(source,stripe,station,1),0);
+});
+
 test('material-informed height field is deterministic, bounded, and disabled by default',()=>{
   const base={seed:'edge-relief',orientation:'diagonal',stripeWidth:70,material:'adobe',textureCoverage:'stripes'};
   const none=resolveScene({...base});
