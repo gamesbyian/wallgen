@@ -142,10 +142,10 @@ test('precision rotation rolls back interrupted touch work and refuses stale cap
 
     // Desktop returns to the currently selected visible tool on revocation.
     const desktopTool=new MockNode('button',doc);
+    desktopTool.dataset.editorTool='layer1';
     doc.body.classList={contains:()=>false};
     doc.querySelector=selector=>selector.startsWith('.settings-tab')?
-      {dataset:{tab:'material'}}:selector.includes('[data-editor-tool]')?
-      {dataset:{editorTool:'layer1'}}:selector.includes('.editor-tool-chooser')?
+      {dataset:{tab:'material'}}:selector.startsWith('.editor-tool-chooser')?
       desktopTool:null;
     launch.emit('click');
     launch.boxVisible=false;
