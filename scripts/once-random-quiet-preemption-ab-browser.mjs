@@ -94,16 +94,20 @@ try{
         // scheduling and bitmap transfers. No synthetic messages are sent.
         const NativeWorker=window.Worker;
         window.__roygbivWorkerTimeline=[];
+        window.__roygbivWorkerProbeId=0;
         window.Worker=class TracedWorker extends NativeWorker{
           constructor(url,options){
             super(url,options);
             if(!String(url).includes('render-worker.js'))return;
+            const workerId=++window.__roygbivWorkerProbeId;
+            window.__roygbivWorkerTimeline?.push({kind:'created',
+              at:performance.now(),workerId});
             this.addEventListener('message',event=>{
               const msg=event.data;
               if(msg?.type!=='frame'&&msg?.type!=='error')return;
               window.__roygbivWorkerTimeline?.push({
                 kind:msg.type==='frame'?'completed':'error',
-                at:performance.now(),id:msg.id,key:msg.key||null,
+                at:performance.now(),workerId,id:msg.id,key:msg.key||null,
                 quality:msg.quality||null,paintMs:msg.ms??null,
               });
             });
@@ -111,10 +115,16 @@ try{
             this.postMessage=function(message,...rest){
               if(message?.type==='preview')
                 window.__roygbivWorkerTimeline?.push({
-                  kind:'requested',at:performance.now(),id:message.id,
+                  kind:'requested',at:performance.now(),workerId,id:message.id,
                   key:message.key||null,quality:message.quality||null,
                 });
               return originalPost.call(this,message,...rest);
+            };
+            const originalTerminate=this.terminate;
+            this.terminate=function(...rest){
+              window.__roygbivWorkerTimeline?.push({kind:'terminated',
+                at:performance.now(),workerId});
+              return originalTerminate.call(this,...rest);
             };
           }
         };
@@ -178,8 +188,20 @@ try{
           Number.isFinite(event.paintMs)),
           'the real worker must complete and report its final source paint');
         const interactive=receipt.interactive.filter(frame=>frame.ms>=first);
+        const finalCanvasSHA256=await page.evaluate(async()=>{
+          const canvas=document.querySelector('#preview');
+          const bytes=canvas.getContext('2d',{willReadFrequently:true})
+            .getImageData(0,0,canvas.width,canvas.height).data;
+          const digest=new Uint8Array(await crypto.subtle.digest('SHA-256',bytes));
+          return [...digest].map(byte=>byte.toString(16).padStart(2,'0')).join('');
+        });
+        assert.equal(receipt.workerTimeline.filter(event=>event.kind==='created').length<=1,
+          'one Random action/burst must never spawn a replacement storm');
         return {
-          clicks:pairs.length,expectedSeed,finalStructure:current.structure,
+          clicks:pairs.length,expectedSeed,finalCanvasSHA256,
+          replacementWorkers:receipt.workerTimeline.filter(event=>
+            event.kind==='created').length,
+          finalStructure:current.structure,
           finalGeometry:current.geometry,worker:final.worker,
           firstInteractiveFromFirstMs:interactive.length?
             Math.round(interactive[0].ms-first):null,
@@ -231,9 +253,15 @@ try{
       const candidateResult=results.find(r=>r.version==='candidate'&&
         r.viewport===viewport&&r.case===entry.label);
       assert.ok(baseResult&&candidateResult,'missing source-matched A/B case');
-      for(const action of ['single','burst'])
+      for(const action of ['single','burst']){
         assert.equal(baseResult[action].expectedSeed,candidateResult[action].expectedSeed,
           'A/B generated different source art');
+        assert.equal(baseResult[action].finalCanvasSHA256,
+          candidateResult[action].finalCanvasSHA256,
+          'A/B must present pixel-identical final real Canvas2D artwork');
+      }
+      assert.equal(candidateResult.single.replacementWorkers,0,
+        'ordinary single Random must not restart an already current worker');
     }
   const evidence={environment:'real Linux Chromium mobile touch viewport; not physical Pixel',
     profiles,results};
@@ -246,6 +274,9 @@ try{
     burstMs:r.burst.finalAfterLastClickMs,
     burstObsoleteWaitMs:r.burst.obsoleteWorkerWaitAfterLastClickMs,
     burstObsoleteCompletions:r.burst.obsoleteWorkerCompletionsAfterLastClick,
+    burstReplacementWorkers:r.burst.replacementWorkers,
+    singleReplacementWorkers:r.single.replacementWorkers,
+    finalCanvasSHA256:r.burst.finalCanvasSHA256,
     singleWorkerPaintMs:r.single.settledWorkerPaintMs,
     burstWorkerPaintMs:r.burst.settledWorkerPaintMs,
   }))));
