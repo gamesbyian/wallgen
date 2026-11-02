@@ -1,0 +1,49 @@
+# Disposable paired production renderer evidence; remove before integration.
+name: One-off source-identical sand lattice hash reuse
+on:
+  pull_request:
+    paths:
+      - 'src/sand-material.js'
+      - 'tests/sand-material.test.js'
+      - 'scripts/motif-sample-reuse-acceptance.mjs'
+      - '.github/workflows/once-sand-cell-hash-source-proof.yml'
+permissions:
+  contents: read
+concurrency:
+  group: one-sand-hash-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  source-parity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout exact candidate
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Checkout immutable exact base
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: comparator-baseline
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install existing browser harness
+        run: npm install --no-package-lock --ignore-scripts --no-audit --no-fund
+      - name: Original hashed-lattice arithmetic and source safety tests
+        run: node --test tests/sand-material.test.js tests/sand-lighting.test.js tests/material-work-bounds.test.js
+      - name: Real Chrome reference/worker pixel parity and nine alternating paint trials
+        env:
+          CHROME_BIN: /usr/bin/google-chrome
+          ROYGBIV_PERF_TRIALS: '9'
+        run: node scripts/motif-sample-reuse-acceptance.mjs
+      - name: Save source-matched timings and native PNG receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sand-lattice-hash-source-proof-${{ github.run_id }}
+          path: artifacts/motif-samples/pixel-proof.json
+          retention-days: 7
+          if-no-files-found: ignore
