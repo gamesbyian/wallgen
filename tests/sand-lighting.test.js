@@ -114,7 +114,12 @@ test('echo shading uses same palette and preserves physical inset distances',()=
 });
 test('renderer reuses scene lighting for grains, rotated paths and exact compound holes',()=>{
   const src=readFileSync(new URL('../src/renderer.js',import.meta.url),'utf8');
-  assert.match(src,/paintMaterial\(t,layer,\{left,right,top,bottom\},sandMaterialLighting\(scene,layer\)\)/);
+  // The material painter still receives the same scene-derived world light;
+  // background-only sand now narrows its source lattice without changing
+  // full-res target raster geometry, foreground material or the nudge cache.
+  assert.match(src,/let paintBounds=\{left,right,top,bottom\}/);
+  assert.match(src,/layer\.coverage==='background'/);
+  assert.match(src,/paintMaterial\(t,layer,paintBounds,sandMaterialLighting\(scene,layer\)\)/);
   assert.match(src,/const ribbonLight=sandRibbonLighting\(scene\)/);
   assert.match(src,/ctx\.clip\(object\.rings\?'evenodd':'nonzero'\)/);
   assert.match(src,/sandRims\.some\(s=>s\.lighting\)\?\[sandRegionPath\(object\)\]:null/);
