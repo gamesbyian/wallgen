@@ -1,5 +1,14 @@
 # ROYGBIV release-readiness and owner-dependent acceptance ledger
 
+## 2 November 2026: public Pages software gate recovered; external gates remain open
+
+The [new two-job Pages run #41540788647](https://github.com/gamesbyian/wallgen/actions/runs/41540788647) **passed** build, deployment and independently fetched public live editor/model/renderer/Worker/trusted renderer release pin and PWA logos at full source SHA `da87df2bf4863fc354424031b36a2f976c42e789`. PR [#1025](https://github.com/gamesbyian/wallgen/pull/1025) introduced separately retryable deploy, preventing another artifact upload when **only** a failed deploy job is retried. The preceding [source-compatible main publish #41537314015](https://github.com/gamesbyian/wallgen/actions/runs/41537314015) is an **historical red** caused by GitHub Pages artifact-ID lookup and subsequently duplicated artifact names, not an unresolved current app test failure. [Detailed incident and live source evidence](CI-PAGES-RETRY-2026-11-02.md).
+
+Read-only Cloudflare API inspection on 2 November independently confirms **the `roygbiv-mcp` latest Worker deployment remains 28 October 2026 at 04:45:48 UTC**, with Browser binding and preview flag present, but `RENDER_EXPECTED_SHA=86831ae4189fde164c3454792a561c1a18c896dd` and the rolling Pages root as its source. Therefore a working *public Pages* renderer is not proof the new authenticated hosted MCP preview is deployed or rendered. Release and paid-service/tenant-isolation gates remain [#839](https://github.com/gamesbyian/wallgen/issues/839) and explicitly owner-authorized. No billed release was initiated.
+
+**Still untested:** physical Pixel 6 Pro native Android Chrome/PWA touch, IME/TalkBack, sustained 3024×6552 memory/thermal/battery, actual authenticated private backup, and independent human creative judgement. Do not convert software/browser tests into those acceptance claims.
+
+
 ## Software specialist scope reconciliation · 27 October 2026 UTC
 
 [Outcome-based closeout PR #812](https://github.com/gamesbyian/wallgen/pull/812) merged; [#653](https://github.com/gamesbyian/wallgen/issues/653) is **CLOSED for delivered editable typography** under its disclosed native-shaped straight fallback. [#557](https://github.com/gamesbyian/wallgen/issues/557) remains **OPEN for bounded visible/expressible source reconstruction defects only**, not impossible seed/hidden-layer archaeology; see [the finite exit contract](RECONSTRUCTION-TYPOGRAPHY-COMPLETION-2026-10-27.md). This change to issue classification does **not** certify actual Pixel 6 Pro Chrome/PWA, real Android IME or TalkBack, 3024×6552 sustained handset heap/battery/thermal, owner artistic approval, external author-source permission, or authenticated remote backup: all remain **NOT TESTED**. Historical dated open-issue counts below are snapshots only.
