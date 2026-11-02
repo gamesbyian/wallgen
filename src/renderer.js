@@ -1317,7 +1317,30 @@ export function drawWallpaper(canvas, recipe, options={}) {
       if(!t)throw new Error('Material surface unavailable');
       t.setTransform(rasterScale,0,0,rasterScale,-x0*rasterScale,-y0*rasterScale);
       t.globalAlpha=layer.strength/100;
-      paintMaterial(t,layer,{left,right,top,bottom},sandMaterialLighting(scene,layer));
+      // A background-only material is never part of the movable ink cache.
+      // Its scratch pixels outside the final viewport are discarded when
+      // copying the fixed background. Preserve the ORIGINAL full raster
+      // geometry and scaling so the visible source pixels remain canonical.
+      let paintBounds={left,right,top,bottom};
+      if(layer.coverage==='background'&&
+        ['sand-mandala','sand-beaded','sand-filigree'].includes(layer.material)){
+        const visible=camera.boundsWithMargin({left:0,right:0,top:0,bottom:0});
+        let l=Infinity,r=-Infinity,t=Infinity,b=-Infinity;
+        for(const [vx,vy] of [
+          [visible.left,visible.top],[visible.left,visible.bottom],
+          [visible.right,visible.top],[visible.right,visible.bottom]]){
+          const dx=vx-DESIGN_WIDTH/2,dy=vy-DESIGN_HEIGHT/2;
+          const tx=dx*c+dy*sin,ty=-dx*sin+dy*c;
+          l=Math.min(l,tx);r=Math.max(r,tx);
+          t=Math.min(t,ty);b=Math.max(b,ty);
+        }
+        // Conservatively include off-crop facets and resampling support.
+        // Sand facets are a few design units wide, never image pixels.
+        const pad=24;
+        paintBounds={left:Math.max(left,l-pad),right:Math.min(right,r+pad),
+          top:Math.max(top,t-pad),bottom:Math.min(bottom,b+pad)};
+      }
+      paintMaterial(t,layer,paintBounds,sandMaterialLighting(scene,layer));
       s.setTransform(scaleX,0,0,scaleY,margin.left+offsetX,margin.top+offsetY);
       s.translate(DESIGN_WIDTH/2,DESIGN_HEIGHT/2);
       s.rotate(radians);
