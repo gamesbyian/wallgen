@@ -247,7 +247,7 @@ try{
   cropMedianMs:Math.round(median(r.samples.map(s=>s.cropMs))),
   originalVisibleSha:r.samples[0].baseSha,candidateVisibleSha:r.samples[0].cropSha}));
  await mkdir(join(root,'artifacts','sand-device-pixel-tiles'),{recursive:true});
- await writeFile(join(root,'artifacts','sand-atomic-tiles','receipt.json'),
+ await writeFile(join(root,'artifacts','sand-device-pixel-tiles','receipt.json'),
   JSON.stringify({environment:'Actual Chromium Worker, source-identical complete cache vs device-pixel-aligned staged tile clip; no production change',summary,...results},null,2)+'\n');
  console.log('ROYGBIV_SAND_DEVICE_PIXEL_TILES',JSON.stringify({summary,native:results.native}));
 }finally{
