@@ -23,6 +23,13 @@ export function focusUnavailableReason({inactive=false,locked=false,disabled=fal
   if(disabled)return 'This setting is temporarily unavailable. Open All controls to inspect it.';
   return '';
 }
+// A repeated active-tool announcement must not replace focused DOM chips.
+// Reconcile by semantic field identity instead of comparing rendered labels.
+export function sameFocusChipInventory(buttons,fields){
+  return Array.isArray(buttons)&&Array.isArray(fields)&&
+    buttons.length===fields.length&&fields.every((field,index)=>
+      Boolean(field?.name)&&buttons[index]?.dataset?.focusKey===field.name);
+}
 export function focusChipDestination(key,index,count){
   if(!Number.isInteger(index)||!Number.isInteger(count)||count<1||index<0||index>=count)return -1;
   if(key==='ArrowRight')return (index+1)%count;
@@ -149,23 +156,48 @@ export function installFocusedAdjustments({form,chooser}){
   function refresh(){
     if(!active)return;
     const card=document.querySelector('.editor-tool-card:not([hidden])');
+    const focusedChip=chips.contains(document.activeElement)?
+      document.activeElement.closest('button[data-focus-key]'):null;
+    const focusedKey=focusedChip?.dataset.focusKey||null;
     available=card?[...card.querySelectorAll('input[type=range][name]')].filter(focusEligible):[];
     const empty=available.length===0;
     form.classList.toggle('editor-focus-empty',empty);
     chips.hidden=empty;
-    chips.replaceChildren();
+    const existing=[...chips.querySelectorAll('button[data-focus-key]')];
+    const sameInventory=sameFocusChipInventory(existing,available);
     if(empty){
-      original=null;row.hidden=true;help.textContent='This tool has no sliders. Choose All controls for its other settings.';
+      if(!sameInventory)chips.replaceChildren();
+      original=null;row.hidden=true;
+      help.textContent='This tool has no sliders. Choose All controls for its other settings.';
+      // A keyboard-focusable chip was removed; do not strand focus on body.
+      if(focusedKey)all.focus({preventScroll:true});
       return;
     }
     row.hidden=false;
-    for(const field of available){
-      const chip=create('button','editor-focus-chip',sourceLabel(field));
-      chip.type='button';chip.dataset.focusKey=field.name;
-      chip.addEventListener('click',()=>choose(field));
-      chips.append(chip);
+    if(!sameInventory){
+      chips.replaceChildren();
+      for(const field of available){
+        const chip=create('button','editor-focus-chip',sourceLabel(field));
+        chip.type='button';chip.dataset.focusKey=field.name;
+        // Read the latest canonical source field on activation. An editor
+        // rebuild can replace its input element while keeping the same name.
+        chip.addEventListener('click',()=>{
+          const current=available.find(candidate=>candidate.name===chip.dataset.focusKey);
+          if(current)choose(current);
+        });
+        chips.append(chip);
+      }
+    }else for(const [index,field] of available.entries()){
+      const label=sourceLabel(field);
+      if(existing[index].textContent!==label)existing[index].textContent=label;
     }
     choose(available.includes(original)?original:available[0]);
+    if(focusedKey&&!sameInventory){
+      const next=[...chips.querySelectorAll('button[data-focus-key]')];
+      (next.find(chip=>chip.dataset.focusKey===focusedKey)||
+        next.find(chip=>chip.dataset.focusKey===original?.name)||
+        next[0])?.focus({preventScroll:true});
+    }
   }
   function setActive(next,{responsive=false}={}){
     if(next&&!mobile.matches)return;
