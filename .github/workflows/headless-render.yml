@@ -194,3 +194,4 @@ jobs:
           name: roy-gbiv-headless-previews
           path: output/*.png
           if-no-files-found: warn
+          retention-days: 7

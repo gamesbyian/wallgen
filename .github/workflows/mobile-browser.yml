@@ -27,3 +27,4 @@ jobs:
           name: editor-layout-browser-zoom
           path: output/editor-layout/*.png
           if-no-files-found: ignore
+          retention-days: 7
