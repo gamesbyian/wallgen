@@ -745,7 +745,11 @@ function render(recipe,{scroll=false,bypassLocks=false,interactive=false,cause='
     previewPresented();
   }else{
     clearSettledPreview();
-    const scale=interactive?.62:1;
+    // Full Random/new-seed previews paint thousands of world-anchored mineral
+    // facets irrespective of output pixels. Trial full-size provisional art
+    // ONLY for those explicit commands; drag/slider gesture paths retain 62%.
+    // Settled canonical render and its overscanned nudge cache are unchanged.
+    const scale=interactive?(explicitRandom?1:.62):1;
     const width=interactive?Math.max(160,Math.round(preview.width*scale)):preview.width;
     const height=interactive?Math.max(340,Math.round(preview.height*scale)):preview.height;
     if(previewPainted&&startPreviewWorker().request(current,key,width,height,
