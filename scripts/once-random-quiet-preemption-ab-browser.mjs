@@ -27,7 +27,10 @@ const server=createServer(async(request,response)=>{
       path.startsWith('/candidate/')?'/candidate/':null;
     if(!prefix){response.writeHead(404).end();return;}
     const home=prefix==='/base/'?comparator:root;
-    const filename=resolve(home,'.'+path.slice(prefix.length-1));
+    // '/base/' and '/candidate/' are pages, not directories to read.
+    // Resolve other static files relative to the matching checkout root.
+    const relative=path.slice(prefix.length);
+    const filename=resolve(home,'./'+(relative||'index.html'));
     if(!filename.startsWith(home+'/')){response.writeHead(403).end();return;}
     response.writeHead(200,{'content-type':mime[extname(filename)]||'application/octet-stream',
       'cache-control':'no-store'}).end(await readFile(filename));
