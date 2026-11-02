@@ -1,0 +1,36 @@
+name: One-off exact full sand cache from source-aligned center and border
+on:
+  pull_request:
+    paths:
+      - 'scripts/sand-atomic-tiles-worker-proof.mjs'
+      - '.github/workflows/one-off-sand-atomic-tiles.yml'
+permissions:
+  contents: read
+jobs:
+  chromium:
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository && contains(github.event.pull_request.title, '[sand-tile-proof]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install genuine Chromium
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Syntax and source-invariant check
+        run: node --check scripts/sand-atomic-tiles-worker-proof.mjs
+      - name: Genuine Worker original whole cache vs center-then-border tile source parity
+        run: node scripts/sand-atomic-tiles-worker-proof.mjs
+      - name: Preserve actual full-ink/background image hashes and deltas
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sand-source-tile-full-cache-${{ github.run_id }}
+          path: artifacts/sand-atomic-tiles/
+          retention-days: 14
+          if-no-files-found: warn
