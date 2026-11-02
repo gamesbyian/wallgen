@@ -32,8 +32,12 @@ export function installRotationScrubbers({form,onBegin,onPreview,onCommit,onCanc
     'Shift and arrow keys use the finest available step. Page Up and Down change by 10 degrees. Home and End go to the allowed limits. Drag vertically to change sensitivity.');
   const padLabel=create('span',null,'← Drag to rotate →');
   pad.append(padLabel);
-  const hint=create('p','rotation-scrub-hint',
-    'Down: fine (0.04°/px) · Level: normal (0.45°/px) · Up: fast (1.6°/px)');
+  const hint=create('p','rotation-scrub-hint');
+  const speedStatus=create('strong','rotation-scrub-speed','Normal · 0.45°/px');
+  speedStatus.setAttribute('role','status');
+  speedStatus.setAttribute('aria-live','polite');
+  hint.append(speedStatus,create('span',null,
+    'Drag down for fine movement · up for fast movement'));
   const settings=create('div','rotation-scrub-settings');
   const snapLabel=create('label','rotation-scrub-snap-label','Snap');
   const snap=create('select','rotation-scrub-snap');
@@ -90,7 +94,17 @@ export function installRotationScrubbers({form,onBegin,onPreview,onCommit,onCanc
     pad.setAttribute('aria-valuemax',String(spec.wrap?spec.max-spec.step:spec.max));
     pad.setAttribute('aria-valuenow',String(n));
     pad.setAttribute('aria-valuetext',fmt(n,spec));
-    hint.dataset.speed=gesture?.mode||'normal';
+    // The gesture mode lives on its pure state, not the pointer owner.
+    // Update the visible/accessible feedback only on mode changes, avoiding
+    // per-frame status announcements and unrelated render work.
+    const mode=gesture?.state?.mode||'normal';
+    if(hint.dataset.speed!==mode){
+      hint.dataset.speed=mode;
+      speedStatus.textContent={
+        fine:'Fine · 0.04°/px',normal:'Normal · 0.45°/px',
+        fast:'Fast · 1.6°/px'
+      }[mode];
+    }
   }
   function flush(){
     if(raf){cancelAnimationFrame(raf);raf=0;}

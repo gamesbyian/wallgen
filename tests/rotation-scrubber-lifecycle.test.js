@@ -82,6 +82,25 @@ test('precision rotation rolls back interrupted touch work and refuses stale cap
     assert.equal(commits.length,0,'7px finger contact must not create an edit');
     assert.equal(Number(field.value),30);
 
+    // Mode feedback is the actual pointer gesture's speed, not the
+    // containing owner, and returns to normal when the drag is canceled.
+    const hint=find(shade,'rotation-scrub-hint');
+    const status=find(shade,'rotation-scrub-speed');
+    assert.equal(hint.dataset.speed,'normal');
+    pad.emit('pointerdown',pointer(1,100,100));
+    pad.emit('pointermove',pointer(1,130,160));
+    assert.equal(hint.dataset.speed,'fine');
+    assert.match(status.textContent,/Fine.*0\.04/);
+    pad.emit('pointermove',pointer(1,145,40));
+    assert.equal(hint.dataset.speed,'fast');
+    assert.match(status.textContent,/Fast.*1\.6/);
+    pad.emit('pointermove',pointer(1,155,100));
+    assert.equal(hint.dataset.speed,'normal');
+    assert.match(status.textContent,/Normal.*0\.45/);
+    pad.emit('pointercancel',pointer(1,155,100));
+    assert.equal(hint.dataset.speed,'normal');
+    assert.equal(Number(field.value),30);
+
     for(const type of ['blur','pagehide','resize','visibilitychange']){
       doc.hidden=false;
       pad.emit('pointerdown',pointer(1,100,100));

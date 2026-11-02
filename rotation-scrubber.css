@@ -30,7 +30,19 @@
 .rotation-scrub-panel select:focus-visible,.rotation-scrub-panel input:focus-visible,
 .rotation-precision-launch:focus-visible{outline:3px solid #f8d65a;outline-offset:2px}
 .rotation-scrub-pad span{pointer-events:none;padding:5px 8px;border-radius:6px;background:var(--surface,#202027)}
-.rotation-scrub-hint{font-size:11px;line-height:1.4;margin:0;text-align:center}
+.rotation-scrub-hint{
+  display:flex;align-items:center;justify-content:center;flex-wrap:wrap;
+  column-gap:9px;row-gap:3px;
+  font-size:11px;line-height:1.4;margin:0;text-align:center;
+}
+.rotation-scrub-speed{
+  display:inline-flex;align-items:center;justify-content:center;
+  border:1px solid currentColor;border-radius:999px;padding:3px 9px;
+  font-weight:800;font-size:12px;white-space:nowrap;
+  font-variant-numeric:tabular-nums;
+}
+.rotation-scrub-hint[data-speed="fine"] .rotation-scrub-speed{border-style:dashed}
+.rotation-scrub-hint[data-speed="fast"] .rotation-scrub-speed{border-width:2px;padding:2px 8px}
 .rotation-scrub-settings{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .rotation-scrub-settings label{display:grid;gap:4px;font-size:12px;font-weight:650}
 .rotation-scrub-settings input,.rotation-scrub-settings select{
