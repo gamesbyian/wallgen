@@ -16,8 +16,8 @@ export function sandPitch(layer){
 }
 // A single grain is addressed by immutable lattice indices and the material seed.
 // Jittered staggered rows avoid the visible square-grid artefact of naive dots.
-export function sandGrainAt(layer,ix,iy){
-  const pitch=sandPitch(layer),stepY=pitch*.88,seed=layer.heightSeed|0;
+export function sandGrainAt(layer,ix,iy,pitch=sandPitch(layer)){
+  const stepY=pitch*.88,seed=layer.heightSeed|0;
   const x=(ix+.5+(iy&1)*.5+(hash(ix,iy,seed,31)-.5)*.46)*pitch;
   const y=(iy+.5+(hash(ix,iy,seed,37)-.5)*.44)*stepY;
   const r=pitch*(.25+hash(ix,iy,seed,41)*.13);
@@ -42,7 +42,9 @@ export function forEachSandGrain(layer,bounds,visit){
      cellsX*cellsY>6_000_000)
     throw new RangeError('Sand grain crop exceeds safe source-coordinate lattice');
   for(let iy=iy0;iy<=iy1;iy++)for(let ix=ix0;ix<=ix1;ix++){
-    const g=sandGrainAt(layer,ix,iy);
+    // One crop has one authored grain gauge. Reuse it rather than solving
+    // scale/clamp again for every individual mineral cell.
+    const g=sandGrainAt(layer,ix,iy,pitch);
     if(g.x+g.r*1.3<bounds.left||g.x-g.r*1.3>bounds.right||
        g.y+g.r*1.3<bounds.top||g.y-g.r*1.3>bounds.bottom)continue;
     visit(g);
@@ -80,9 +82,12 @@ export function paintSandGrains(ctx,layer,bounds,lighting=null){
       // Its illumination is the cap's normal·light response, not an alternating
       // dark/light index. Reversing the lamp changes which actual facets face it.
       // No per-fleck colour strings, extra primitives or particle state.
-      const nx=(hash(g.ix,g.iy,seed,151+k*37)-.5)*1.60;
-      const ny=(hash(g.ix,g.iy,seed,163+k*41)-.5)*1.60;
-      const incident=lit?sandCapDiffuse(lighting,nx,ny):0;
+      // The two seeded normal hashes are only used by directional light.
+      // An unlit grain must retain original colour/position/alpha, without
+      // doing invisible normal work six times for every grain.
+      const incident=lit?sandCapDiffuse(lighting,
+        (hash(g.ix,g.iy,seed,151+k*37)-.5)*1.60,
+        (hash(g.ix,g.iy,seed,163+k*41)-.5)*1.60):0;
       const darkFacet=lit?incident<.48:(k%2)===0;
       const tone=lit?Math.min(7,Math.floor(incident*8)):
         Math.floor(hash(g.ix,g.iy,seed,131+k*29)*8);
