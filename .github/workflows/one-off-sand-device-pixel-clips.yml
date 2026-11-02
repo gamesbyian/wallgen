@@ -24,8 +24,8 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Verify diagnostic JS syntax
         run: node --check scripts/sand-device-pixel-tiles-proof.mjs
-      - name: Real original-worker complete ink/background, visible and native PNG comparisons
-        run: node scripts/sand-device-pixel-tiles-proof.mjs
+      # Original direct/whole-cache and native PNG baseline already passed on this PR
+      # in run 41542254521; avoid repeating that expensive unchanged evidence.
       - name: Distinguish clipped painting from incomplete source-facet enumeration
         run: node scripts/sand-device-pixel-tiles-proof.mjs --full-bounds-control
       - name: Preserve exact RGBA mismatch or matching receipts
