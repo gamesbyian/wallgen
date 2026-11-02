@@ -75,6 +75,8 @@ test('real two-viewport touch and accessible-name acceptance requires explicit s
     'node tests/agent3-portrait-swipes-escape.mjs',
     'node tests/agent3-current-accessible-names-browser.mjs',
     'node tests/mobile-touch-continuity-browser.mjs',
+    'node tests/independent-keyboard-focus-journey.mjs',
+    'node tests/view-pan-escape-focus-browser.mjs',
     'persist-credentials: false',
     'steps.selection.outputs.tier == \'quick\'',
     '  test:'

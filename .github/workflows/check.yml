@@ -79,6 +79,8 @@ jobs:
           node --check tests/agent3-portrait-swipes-escape.mjs
           node --check tests/agent3-current-accessible-names-browser.mjs
           node --check tests/mobile-touch-continuity-browser.mjs
+          node --check tests/independent-keyboard-focus-journey.mjs
+          node --check tests/view-pan-escape-focus-browser.mjs
       - name: Serve current PR source
         run: |
           npx serve . -l 4173 > /tmp/roygbiv-opt-in-browser.log 2>&1 &
@@ -94,6 +96,8 @@ jobs:
           node tests/agent3-portrait-swipes-escape.mjs
           node tests/agent3-current-accessible-names-browser.mjs
           node tests/mobile-touch-continuity-browser.mjs
+          node tests/independent-keyboard-focus-journey.mjs
+          CHROME_BIN="$(command -v google-chrome || command -v chromium || echo /usr/bin/google-chrome)" node tests/view-pan-escape-focus-browser.mjs
       - name: Preserve successful and failed browser evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -104,5 +108,6 @@ jobs:
             artifacts/agent3-portrait-swipes-escape/
             artifacts/agent3-664-names/
             artifacts/touch-continuity-browser/
+            artifacts/independent-keyboard-focus/
           retention-days: 14
           if-no-files-found: warn
