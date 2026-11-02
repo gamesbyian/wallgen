@@ -6,6 +6,9 @@ const ROOT_HALF=Math.SQRT1_2;
 // diffuse response and projected raised-deposit contact shadows. These derived
 // profiles live only in the painter: recipes never contain pixel heights.
 export const SAND_LIGHT_ELEVATION=.68;
+// The cap's lateral component is a constant of the one shared lamp.
+// Derive it once, not for every illuminated sand microfacet.
+const SAND_CAP_LATERAL=Math.sqrt(1-SAND_LIGHT_ELEVATION*SAND_LIGHT_ELEVATION);
 export function sandDepositHeight(gauge,strength,kind='bead'){
   if(!Number.isFinite(gauge)||gauge<=0||!Number.isFinite(strength))
     return 0;
@@ -73,6 +76,6 @@ export function sandCapDiffuse(lighting,nx,ny){
     !Number.isFinite(nx)||!Number.isFinite(ny))return 0;
   const r2=nx*nx+ny*ny;
   const z=Math.sqrt(Math.max(0,1-Math.min(1,r2)));
-  const elevation=SAND_LIGHT_ELEVATION,lateral=Math.sqrt(1-elevation*elevation);
+  const elevation=SAND_LIGHT_ELEVATION,lateral=SAND_CAP_LATERAL;
   return clamp(nx*lighting.x*lateral+ny*lighting.y*lateral+z*elevation);
 }
