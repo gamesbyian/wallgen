@@ -2,7 +2,7 @@
 // gesture advances to the next named tool, while direct chips work immediately.
 // The editor occupies a separate reserved tray, leaving all seven visible
 // rainbow stripes above it at all times.
-import {visibleMobileTools,adjacentVisibleMobileTool,isMobileToolSwipeSurface,matchingSingleTouchEnd} from './mobile-tool-sequence.js';
+import {visibleMobileTools,adjacentVisibleMobileTool,isMobileToolSwipeSurface,matchingSingleTouchEnd,mobileToolSelectionChanged} from './mobile-tool-sequence.js';
 import {selectEditorTool} from './editor-layout.js?v=20261023-single-editor1';
 const phone=window.matchMedia('(max-width:790px)');
 const editor=document.getElementById('mobileDesignSheet');
@@ -17,8 +17,11 @@ function update(){
   count.textContent=index<0?'No available tools':
     (index+1)+' / '+choices.length+' · '+choices[index].name;
 }
-document.addEventListener('editor-tool-changed',event=>{active=event.detail;update();});
 let gesture=null;
+document.addEventListener('editor-tool-changed',event=>{
+  if(mobileToolSelectionChanged(active,event.detail))gesture=null;
+  active=event.detail;update();
+});
 editor.addEventListener('touchstart',event=>{
   if(!phone.matches||!document.body.classList.contains('mobile-edit-open')||event.touches.length!==1){
     gesture=null;return;
