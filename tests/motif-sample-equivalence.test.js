@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {normalizeRecipe,resolveScene,rng} from '../src/model.js';
-import {samplePath} from '../src/path-geometry.js';
+import {samplePath,ribbonEdge} from '../src/path-geometry.js';
 import {motifFits,textureHeight,motifVariation,motifStripeFactors} from '../src/renderer.js';
 
 test('shared motif path point exactly matches independent forward sampling',()=>{
@@ -72,6 +72,37 @@ test('precomputed motif stripe factors preserve every original seeded mark exact
               reference,'cached motif parity '+geometry+' '+stripe.index+' '+mark);
             assert.deepEqual(motifVariation(scene,stripe,publicRandom),
               reference,'standalone motif parity '+geometry+' '+stripe.index+' '+mark);
+          }
+        }
+      }
+    }
+  }
+});
+
+test('textured ribbon edges reuse precisely the original centreline sample',()=>{
+  for(const geometry of ['straight','wave','jagged','loop','loops','hairpin']){
+    for(const textureCoverage of ['both','stripes','background']){
+      for(const textureDisplacement of [0,48,95]){
+        const scene=resolveScene(normalizeRecipe({
+          seed:'edge-station-'+geometry+'-'+textureCoverage+'-'+textureDisplacement,
+          structure:'paths',geometry,construction:'ribbon',motif:'dashes',
+          material:'wood-grain',textureStrength:87,
+          textureCoverage,textureDisplacement,
+          shapeFrequency:77,shapeDepth:69,edgeTaper:45,
+          mirrorHorizontal:true,mirrorVertical:true,
+        }));
+        for(const stripe of [scene.stripes[0],scene.stripes[3],scene.stripes[6]]){
+          for(const fraction of [-.95,-.5,-.17,0,.3,.63,.97]){
+            const x=scene.extent*fraction,point=samplePath(stripe,x,scene.extent);
+            for(const side of [-1,0,1]){
+              const original=ribbonEdge(stripe,x,scene.extent,side,
+                textureHeight(scene,stripe,x,side));
+              const shared=ribbonEdge(stripe,x,scene.extent,side,
+                textureHeight(scene,stripe,x,side,point),point);
+              assert.deepEqual(shared,original,
+                'edge parity '+geometry+' '+textureCoverage+' '+textureDisplacement+
+                ' '+stripe.index+' '+fraction+' '+side);
+            }
           }
         }
       }
