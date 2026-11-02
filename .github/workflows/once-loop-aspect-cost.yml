@@ -1,0 +1,49 @@
+# One-shot real-browser source and performance proof, then retire.
+name: One-off repeating loop aspect source fidelity and performance
+on:
+  pull_request:
+    paths:
+      - 'src/renderer.js'
+      - 'src/path-geometry.js'
+      - 'tests/motif-sample-equivalence.test.js'
+      - '.github/workflows/once-loop-aspect-cost.yml'
+permissions:
+  contents: read
+concurrency:
+  group: once-loop-aspect-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  source-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact candidate
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Checkout immutable source baseline
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: comparator-baseline
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install harness without lockfile
+        run: npm install --no-package-lock --ignore-scripts --no-audit --no-fund
+      - name: Independent exact path station and tangent math
+        run: node --test tests/motif-sample-equivalence.test.js
+      - name: Compare canonical real-browser pixels and native PNG plus nine alternating worker timings
+        env:
+          CHROME_BIN: /usr/bin/google-chrome
+          ROYGBIV_PERF_TRIALS: '9'
+        run: node scripts/motif-sample-reuse-acceptance.mjs
+      - name: Save bounded comparative proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: loop-aspect-cost-proof-${{ github.run_id }}
+          path: artifacts/motif-samples/pixel-proof.json
+          retention-days: 7
+          if-no-files-found: ignore
