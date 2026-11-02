@@ -126,13 +126,29 @@ export function installRotationScrubbers({form,onBegin,onPreview,onCommit,onCanc
     onCommit(active.field,value);
     syncReadout(read());
   }
+  function focusAfterClose(trigger){
+    // ARIA dialog guidance: return focus to its invoker if still visible,
+    // otherwise choose the next meaningful control in the current workflow.
+    // Tool/category changes can hide the invoker without removing its node.
+    const visible=element=>element&&element.isConnected&&!element.disabled&&
+      !element.hidden&&element.getClientRects().length>0&&
+      !element.closest('[hidden],[inert],[aria-hidden="true"]');
+    const candidates=[trigger];
+    if(document.body.classList.contains('mobile-studio'))
+      candidates.push(document.getElementById('mobileEdit'));
+    candidates.push(
+      document.querySelector('.editor-tool-chooser [data-editor-tool][aria-pressed="true"]'),
+      document.querySelector('.settings-tab[aria-selected="true"]'));
+    const destination=candidates.find(visible);
+    destination?.focus({preventScroll:true});
+  }
   function close(){
     if(!active)return;
     if(gesture)finishPointer({cancel:true});
     if(raf){cancelAnimationFrame(raf);raf=0;}pending=null;
     const focus=active.trigger;
     active=null;shade.hidden=true;
-    focus?.focus({preventScroll:true});
+    focusAfterClose(focus);
   }
   function updatePresetButtons(){
     presets.replaceChildren();
