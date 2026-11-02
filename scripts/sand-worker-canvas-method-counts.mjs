@@ -21,8 +21,9 @@ const server=createServer(async(req,res)=>{
     if(path==='/'){res.writeHead(200,{'content-type':'text/html'}).end('<!doctype html><title>Worker Canvas2D methods</title>');return;}
     const file=resolve(root,'.'+path);
     if(!file.startsWith(root+'/')){res.writeHead(403).end();return;}
+    const body=await readFile(file);
     res.writeHead(200,{'content-type':mime[extname(file)]||'application/octet-stream',
-      'cache-control':'no-store'}).end(await readFile(file));
+      'cache-control':'no-store'}).end(body);
   }catch(error){res.writeHead(404).end(String(error));}
 });
 const pairFor=i=>[Math.imul(i,0x9e3779b1)>>>0,
