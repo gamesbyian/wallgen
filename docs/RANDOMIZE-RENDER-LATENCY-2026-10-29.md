@@ -78,3 +78,47 @@ Once the material-both duplication was eliminated, the remaining repeatably slow
 Same-run 372×806 production worker paint trials (third paired run): complex seed30 **1723 → 1470ms (~15% reduction)**, custom loop/dashes **236 → 224ms**, loop/chevrons **274 → 254ms**, hairpin/stars **260 → 247ms**. Smaller changes match the fact that only spatial motif-heavy scenes redundantly resampled geometry. This is Linux CI Chromium, not physical Pixel benchmark or a global Random latency guarantee. Reusable scripts `scripts/motif-sample-reuse-acceptance.mjs` and test `tests/motif-sample-equivalence.test.js` retain the verification; the one-shot heavy CI workflow was removed before integration.
 
 **Boundary:** no ongoing unverified GPU/material rewrites; further latency work only after another actual slow design and pixel-preserving quantified acceptance. Some complex designs still require >1s to render in Chromium.
+
+## Fixed-seed motif variation factor reuse (1 November 2026, PR #981)
+
+Following the accepted path-station reuse, `fillMotif()` still recreated the
+identical seeded stripe-variation RNG, rehashed the same seed string and drew
+the same three stripe factors for **every single decorative mark**. Those
+factors depend only on the canonical scene and stripe index; the separate
+per-mark random stream is genuinely different and must remain sequential.
+
+The narrow candidate computes the existing three stripe factors once per
+painted stripe and passes them to the original `motifVariation` calculation.
+Its standalone three-argument export still derives factors independently,
+so callers and their original RNG consumption remain unchanged. No motif
+placement, geometry, colour, recipe, lock, Undo, worker scheduling, or paint
+resolution changes. A permanent deterministic quick test exercises the
+original arithmetic against both paths over five geometries, three
+homogeneity values, two override modes, three stripe slots and 96 sequential
+marks: **17,280 mark comparisons per path**.
+
+[Same-run base-SHA vs candidate actual Chromium proof #41369862393](https://github.com/gamesbyian/wallgen/actions/runs/41369862393)
+verified 10 canonical source-identical recipes including the previously
+slow `random-perf-fixed-30`, in both reference Canvas2D and real PNG export
+Worker: **all 20 raw-pixel comparisons passed**. The real native-resolution
+3024×6552 slow-seed PNG remained **byte-for-byte identical** (11,453,267
+bytes, SHA-256 `b7fa60e7f6208957cd87d1341a3f57e166c0749a6fb22f39f9f61a41876e4c4a`).
+
+Actual production 372×806 interactive worker paint times in milliseconds
+from the same Linux runner, base→candidate (three alternating trials):
+
+| Fixed source | Original | Reuse candidate |
+| --- | --- | --- |
+| `random-perf-fixed-30` | 1480 / 1380 / 1374 | 1271 / 1152 / 1151 |
+| loop/dashes | 192 / 179 / 178 | 185 / 174 / 176 |
+| loop/chevrons | 224 / 219 / 207 | 226 / 215 / 203 |
+| hairpin/stars | 234 / 203 / 201 | 200 / 194 / 193 |
+| zigzag/checker | 157 / 146 / 145 | 162 / 147 / 145 |
+
+The two warm slow-seed comparisons are ~16–17% faster; other sources show
+small or noisy differences. This is a **repeatable fixed-case** benefit, not
+a guarantee that general Random interactions become 16% faster, and it is
+not a physical Pixel 6 Pro memory/thermal measurement. The one-shot browser
+workflow is retired after this result; the reusable exact-source comparison
+script and permanent deterministic source test remain. Required clean-head
+quick CI is a separate integration gate.
