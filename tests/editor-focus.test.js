@@ -1,7 +1,8 @@
 import {readFileSync} from 'node:fs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {focusEligible,adjustedValue,focusChipDestination,focusUnavailableReason} from '../src/editor-focus.js';
+import {focusEligible,adjustedValue,focusChipDestination,focusUnavailableReason,
+  sameFocusChipInventory} from '../src/editor-focus.js';
 const field=(value='40',min='0',max='100',step='1')=>({tagName:'INPUT',type:'range',
  name:'stripeWidth',value,min,max,step,disabled:false,closest:()=>null});
 test('only actual available named range controls qualify; no proxy recipe keys',()=>{
@@ -85,4 +86,27 @@ test('Focus expands only its own tall-phone viewport reservation',()=>{
   assert.match(css, /--mobile-tray-height:clamp\(295px,34dvh,330px\)!important/);
   assert.match(css, /--mobile-tray-height:clamp\(192px,23dvh,215px\)!important/);
   assert.match(html, /editor-focus\.css\?v=20261019-viewport1/);
+});
+
+test('Focus chip reconciliation keeps stable semantic identity across routine source syncs',()=>{
+  const chips=[{dataset:{focusKey:'textureStrength'}},
+    {dataset:{focusKey:'textureScale'}}];
+  const fields=[{name:'textureStrength'},{name:'textureScale'}];
+  assert.equal(sameFocusChipInventory(chips,fields),true);
+  // Replacing the source input instance or its numeric value does not change
+  // the active tool's chip inventory or justify destroying keyboard focus.
+  assert.equal(sameFocusChipInventory(chips,[
+    {name:'textureStrength',value:'72'},{name:'textureScale',value:'30'}]),true);
+  assert.equal(sameFocusChipInventory(chips,fields.slice(0,1)),false);
+  assert.equal(sameFocusChipInventory(chips,[fields[1],fields[0]]),false);
+  assert.equal(sameFocusChipInventory(chips,[fields[0],{name:'textureRotation'}]),false);
+  assert.equal(sameFocusChipInventory([],[]),true);
+  assert.equal(sameFocusChipInventory(null,fields),false);
+  assert.equal(sameFocusChipInventory(chips,[fields[0],{}]),false);
+  const source=requireFocusSource();
+  assert.match(source,/const sameInventory=sameFocusChipInventory\(existing,available\)/);
+  assert.match(source,/if\(!sameInventory\)\{\s*chips\.replaceChildren\(\)/);
+  assert.match(source,/if\(focusedKey&&!sameInventory\)/);
+  assert.match(source,/if\(focusedKey\)all\.focus\(\{preventScroll:true\}\)/);
+  assert.match(source,/const current=available\.find\(candidate=>candidate\.name===chip\.dataset\.focusKey\)/);
 });
