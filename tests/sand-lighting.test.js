@@ -230,3 +230,23 @@ test('unlit bead and rim deposits remain independent of new height projection',(
   paintSandContourRim(rim,['unmodified'],sandRimStyles(scene({lightingMood:'off'})));
   assert.equal(rim.ops.filter(x=>x[0]==='translate').length,0);
 });
+
+
+test('precomputed cap lateral reproduces the original per-facet square root exactly',()=>{
+  const lighting=sandLighting(scene({lightingMood:'daylight'}));
+  const reference=(nx,ny)=>{
+    const r2=nx*nx+ny*ny;
+    const z=Math.sqrt(Math.max(0,1-Math.min(1,r2)));
+    const elevation=SAND_LIGHT_ELEVATION;
+    const lateral=Math.sqrt(1-elevation*elevation);
+    return Math.min(1,Math.max(0,nx*lighting.x*lateral+
+      ny*lighting.y*lateral+z*elevation));
+  };
+  for(let ix=-8;ix<=8;ix++)for(let iy=-8;iy<=8;iy++){
+    const nx=ix*.19,ny=iy*.19;
+    assert.ok(Object.is(sandCapDiffuse(lighting,nx,ny),reference(nx,ny)),
+      'source cap response must be bit identical '+nx+'/'+ny);
+  }
+  assert.equal(sandCapDiffuse(null,0,0),0);
+  assert.equal(sandCapDiffuse(lighting,NaN,.5),0);
+});
