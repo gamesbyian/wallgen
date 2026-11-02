@@ -1,0 +1,49 @@
+# Disposable real-Chromium, source-matched proof for one sampled ribbon edge.
+# Retire after evidence and require ordinary clean-head quick CI.
+name: One-off ribbon edge sample source parity
+on:
+  pull_request:
+    paths:
+      - 'src/renderer.js'
+      - 'src/path-geometry.js'
+      - 'tests/motif-sample-equivalence.test.js'
+      - '.github/workflows/once-edge-sample-reuse.yml'
+permissions:
+  contents: read
+concurrency:
+  group: one-edge-reuse-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  source-parity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact candidate
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Checkout exact original base
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: comparator-baseline
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser harness without lockfile
+        run: npm install --no-package-lock --ignore-scripts --no-audit --no-fund
+      - name: Check installed Chrome
+        run: google-chrome --version
+      - name: Run exact-pixel and production worker paired proof
+        env:
+          CHROME_BIN: /usr/bin/google-chrome
+        run: node scripts/motif-sample-reuse-acceptance.mjs
+      - name: Save performance and pixel receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: edge-station-paired-proof-${{ github.run_id }}
+          path: artifacts/motif-samples/pixel-proof.json
+          retention-days: 7
+          if-no-files-found: ignore
