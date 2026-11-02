@@ -2,7 +2,7 @@ import {readFileSync} from 'node:fs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {focusEligible,adjustedValue,focusChipDestination,focusUnavailableReason,
-  sameFocusChipInventory} from '../src/editor-focus.js';
+  sameFocusChipInventory,focusSelectedField} from '../src/editor-focus.js';
 const field=(value='40',min='0',max='100',step='1')=>({tagName:'INPUT',type:'range',
  name:'stripeWidth',value,min,max,step,disabled:false,closest:()=>null});
 test('only actual available named range controls qualify; no proxy recipe keys',()=>{
@@ -109,4 +109,25 @@ test('Focus chip reconciliation keeps stable semantic identity across routine so
   assert.match(source,/if\(focusedKey&&!sameInventory\)/);
   assert.match(source,/if\(focusedKey\)all\.focus\(\{preventScroll:true\}\)/);
   assert.match(source,/const current=available\.find\(candidate=>candidate\.name===chip\.dataset\.focusKey\)/);
+});
+
+
+test('Focus keeps the selected named parameter through source input replacement',()=>{
+  const first={name:'embroideryDirection',value:'15'};
+  const second={name:'textureRotation',value:'30'};
+  const fields=[first,second];
+  assert.equal(focusSelectedField(fields,second),second,
+    'retain the identical live source instance when available');
+  const newFields=[{name:'embroideryDirection',value:'88'},
+    {name:'textureRotation',value:'45'}];
+  assert.equal(focusSelectedField(newFields,second),newFields[1],
+    'retained Focus choice must follow semantic identity, not first-chip order');
+  assert.equal(focusSelectedField(newFields,{name:'removedParameter'}),newFields[0],
+    'a tool change with no matching parameter falls back to the first live one');
+  assert.equal(focusSelectedField(newFields,null),newFields[0]);
+  assert.equal(focusSelectedField([],second),null);
+  assert.equal(focusSelectedField(null,second),null);
+  const source=requireFocusSource();
+  assert.match(source,/choose\(focusSelectedField\(available,original\)\)/,
+    'the real mounted Focus installer must reuse the same semantic resolver');
 });
