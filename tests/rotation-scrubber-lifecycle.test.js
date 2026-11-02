@@ -9,7 +9,10 @@ class MockNode {
     this.tag=tag;this.ownerDocument=doc;this.children=[];
     this.listeners=new Map();this.attributes=new Map();this.dataset={};
     this.style={};this.hidden=false;this.disabled=false;this.value='';
+    this.isConnected=true;this.boxVisible=true;
   }
+  getClientRects(){return this.boxVisible?[{width:44,height:44}]:[];}
+  closest(){return null;}
   addEventListener(type,fn){
     const list=this.listeners.get(type)||[];list.push(fn);
     this.listeners.set(type,list);
@@ -113,6 +116,42 @@ test('precision rotation rolls back interrupted touch work and refuses stale cap
     assert.ok(cancels>=6);
     assert.ok(previews.length>=4);
     assert.equal(frames.size,0,'no provisional preview frame can survive');
+
+    // A current tool switch can remove the triggering control from layout
+    // while the modal is still open. Focus must return to a visible entry.
+    const mobileEntry=new MockNode('button',doc);
+    doc.body.classList={contains:key=>key==='mobile-studio'};
+    doc.getElementById=id=>id==='mobileEdit'?mobileEntry:null;
+    doc.querySelector=selector=>selector.includes('.settings-tab')?
+      {dataset:{tab:'material'}}:selector.includes('.editor-tool-chooser')?
+      {dataset:{editorTool:'layer1'}}:null;
+    launch.emit('click');
+    assert.equal(doc.activeElement,pad);
+    launch.boxVisible=false;
+    doc.emit('editor-tool-changed',{detail:{category:'layout',tool:'arrange'}});
+    assert.equal(shade.hidden,true);
+    assert.equal(doc.activeElement,mobileEntry,
+      'dialog must never return focus to a now-hidden phone tool');
+
+    // Ordinary Done preserves the invoker focus when it is still visible.
+    launch.boxVisible=true;
+    launch.emit('click');
+    find(shade,'rotation-scrub-close').emit('click');
+    assert.equal(doc.activeElement,launch,
+      'visible invoker remains the expected focus destination');
+
+    // Desktop returns to the currently selected visible tool on revocation.
+    const desktopTool=new MockNode('button',doc);
+    desktopTool.dataset.editorTool='layer1';
+    doc.body.classList={contains:()=>false};
+    doc.querySelector=selector=>selector.startsWith('.settings-tab')?
+      {dataset:{tab:'material'}}:selector.startsWith('.editor-tool-chooser')?
+      desktopTool:null;
+    launch.emit('click');
+    launch.boxVisible=false;
+    doc.emit('editor-tool-changed',{detail:{category:'layout',tool:'arrange'}});
+    assert.equal(doc.activeElement,desktopTool,
+      'desktop tool switch must focus the new tool, not a hidden old action');
   }finally{
     if(originalDocument===undefined)delete globalThis.document;
     else globalThis.document=originalDocument;
