@@ -189,6 +189,10 @@ try{
           obsoleteWorkerCompletionsAfterLastClick:receipt.workerTimeline.filter(
             event=>event.kind==='completed'&&event.at>=last&&
               event.key!==final.key).length,
+          obsoleteWorkerWaitAfterLastClickMs:Math.round(Math.max(0,
+            ...receipt.workerTimeline.filter(event=>
+              event.kind==='completed'&&event.at>=last&&
+              event.key!==final.key).map(event=>event.at-last))),
         };
       };
       await load();
