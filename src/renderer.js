@@ -17,8 +17,16 @@ import {planSatinThreadContacts,selectSatinReplayContacts} from './thread-contac
 
 const TAU = Math.PI * 2;
 const geometryAt=(x,stripe,extent)=>samplePath(stripe,x,extent).y;
-const edgePoint=(x,stripe,extent,side,scene)=>
-  ribbonEdge(stripe,x,extent,side,scene?textureHeight(scene,stripe,x,side):0);
+const edgePoint=(x,stripe,extent,side,scene)=>{
+  if(!scene||!scene.textureDisplacement)
+    return ribbonEdge(stripe,x,extent,side,0);
+  // Both the relief sampler and the edge would otherwise independently solve
+  // the identical path station (three pathPosition calls apiece). Reuse the
+  // original sample without changing relief, width or vector edge arithmetic.
+  const point=samplePath(stripe,x,extent);
+  return ribbonEdge(stripe,x,extent,side,
+    textureHeight(scene,stripe,x,side,point),point);
+};
 const edgeAt=(x,stripe,extent,side,scene)=>edgePoint(x,stripe,extent,side,scene).y;
 const spatialGeometry=stripe=>['hairpin','loop','loops','drawn'].includes(stripe.sharedGeometry??stripe.geometry);
 // Sample the same material height field used to paint each visible texture.
