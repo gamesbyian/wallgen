@@ -7,7 +7,7 @@ import {createServer} from 'node:http';
 import {readFile,mkdir,writeFile} from 'node:fs/promises';
 import {resolve,join,extname} from 'node:path';
 import {chromium} from 'playwright';
-import {randomizeAllRecipe} from '../src/model.js';
+import {randomizeAllRecipe,normalizeRecipe} from '../src/model.js';
 
 const root=process.cwd(),types={'.html':'text/html','.js':'text/javascript',
  '.css':'text/css','.json':'application/json','.svg':'image/svg+xml','.woff2':'font/woff2'};
@@ -17,7 +17,11 @@ assert.equal(original.split(anchor).length,2,'Expected unique material stage anc
 const patch=[
  '      let materialCrop={left,right,top,bottom};',
  "      if(options.cache&&['sand-mandala','sand-beaded','sand-filigree'].includes(layer.material)){",
- '        const visible=camera.boundsWithMargin({left:0,right:0,top:0,bottom:0});',
+ '        const sx=canvas.width*(scene.positionX||0)/100;',
+ '        const sy=canvas.height*(scene.positionY||0)/100;',
+ '        const visible=camera.boundsWithMargin({',
+ '          left:Math.max(0,sx),right:Math.max(0,-sx),',
+ '          top:Math.max(0,sy),bottom:Math.max(0,-sy)});',
  '        let l=Infinity,r=-Infinity,t=Infinity,b=-Infinity;',
  '        for(const [vx,vy] of [[visible.left,visible.top],[visible.left,visible.bottom],',
  '          [visible.right,visible.top],[visible.right,visible.bottom]]){',
@@ -53,9 +57,22 @@ const seedFor=i=>pairFor(i).map(n=>n.toString(36)).join('-');
 const scenes=[
  {label:'sand-600x1300',index:126,w:600,h:1300},
  {label:'sand-372x806',index:126,w:372,h:806},
+ {label:'sand-nudge-plus30-minus30',index:126,w:600,h:1300,
+  overrides:{positionX:30,positionY:-30}},
+ {label:'sand-nudge-minus30-plus30',index:126,w:372,h:806,
+  overrides:{positionX:-30,positionY:30}},
+ {label:'sand-zoom-pan',index:126,w:600,h:1300,
+  overrides:{viewZoom:1.35,viewPanX:8,viewPanY:-6}},
+ {label:'sand-beaded',index:126,w:600,h:1300,
+  overrides:{material:'sand-beaded'}},
+ {label:'sand-multilayer-rotated',index:126,w:372,h:806,
+  overrides:{textureLayer2Enabled:true,material2:'sand-filigree',
+    textureStrength2:45,textureCoverage2:'both',textureRotation2:37}},
  {label:'loops-600x1300',index:94,w:600,h:1300},
  {label:'regions-600x1300',index:240,w:600,h:1300},
-].map(x=>({...x,recipe:randomizeAllRecipe({seed:seedFor(x.index)})}));
+].map(x=>({...x,recipe:normalizeRecipe({
+  ...randomizeAllRecipe({seed:seedFor(x.index)}),...x.overrides
+})}));
 assert.equal(scenes[0].recipe.material,'sand-mandala');
 assert.equal(scenes[0].recipe.rayCount,42);
 await new Promise(done=>server.listen(0,'127.0.0.1',done));
@@ -111,7 +128,7 @@ try{
   const records=[];
   for(const scene of scenes){
    const samples=[];
-   for(let i=0;i<5;i++){
+   for(let i=0;i<(scene.label==='sand-600x1300'||scene.label==='sand-372x806'?5:3);i++){
     const pair={};
     for(const worker of (i%2?workers.slice().reverse():workers)){
      const msg=await worker.request(scene.recipe,scene.w,scene.h);
