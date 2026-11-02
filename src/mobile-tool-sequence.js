@@ -15,6 +15,12 @@ export function adjacentVisibleMobileTool(choices,currentId,direction){
   return next===index?null:choices[next].id;
 }
 
+// A recipe sync can reannounce the currently selected tool. Only a genuine
+// category/tool switch invalidates an unfinished sheet swipe.
+export function mobileToolSelectionChanged(previous,next){
+  return previous?.category!==next?.category||previous?.tool!==next?.tool;
+}
+
 // The entire sheet sees bubbled touch events. Horizontal drags on the tool
 // rail or category rail must remain native scrolling gestures; touches on
 // labels/links/ARIA controls belong to those controls, not to tool navigation.
