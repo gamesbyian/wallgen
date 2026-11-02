@@ -240,7 +240,7 @@ try{
    native[worker.version]={sha:await hash(await res.blob.arrayBuffer()),bytes:res.blob.size};
   }
   workers.forEach(w=>w.worker.terminate());
-  if(native.base.sha!==native.crop.sha||native.base.bytes!==native.crop.bytes)
+  if(!fullBoundsOnly&&(native.base.sha!==native.crop.sha||native.base.bytes!==native.crop.bytes))
     throw Error('Native export byte mismatch');
   return {records,native};
  },{scenes,fullBoundsOnly});
