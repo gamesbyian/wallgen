@@ -432,3 +432,73 @@ viewports, **not physical Pixel 6 Pro**, not thermal measurements, and
 not evidence of one universal Random performance distribution. The
 reusable script and pinned case IDs are retained; the temporary test
 workflow is retired after proof.
+
+## Actual request/completion trace: the long-tail wait is obsolete work (2 November 2026, PR #1007)
+
+[Real 320×700 and 412×892 Chrome Worker timeline #41383827870](https://github.com/gamesbyian/wallgen/actions/runs/41383827870)
+extends the pinned-source **actual Random click** test without changing
+app code. In a browser-only `Worker` subclass it observes original
+`postMessage` preview requests and actual native `frame` replies,
+including the worker's real `data.ms` paint duration, source art key,
+quality, request ID and time relative to input. The subclass never sends
+synthetic messages, cancels workers or alters the coordinator. Every
+final frame had a matching real Worker **request and completion** at the
+authoritative final art key; all six touch journeys passed with no
+browser errors. A reusable source-matched Chromium proof also found **all
+11 pinned cases SHA-identical** in both reference Canvas2D and export
+Worker (22/22). The native 3024×6552 worker PNG matched its source bytes.
+
+The previously unexplained sand-mandala 42-ray burst has now been
+**causally separated by Worker message evidence**:
+
+| Event | 320×700 | 412×892 |
+| --- | ---: | ---: |
+| First superseded *interactive* paint began | ~32 ms before first click event | ~31 ms before first click event |
+| Obsolete first paint completed | 4,730 ms after first click | 4,570 ms after first click |
+| **Actual obsolete paint duration** | **4,761 ms** | **4,601 ms** |
+| Final *settled* paint dispatched | 4,730 ms after first click | 4,570 ms after first click |
+| Final source-identical settled Worker paint | 1,904 ms | 1,837 ms |
+| Finished frame delivered | 6,639 ms after first click | 6,409 ms after first click |
+| From **last tap** to final visible frame | **6,059 ms** | **5,809 ms** |
+
+The first four-tap job was a **different generated recipe** and was
+already obsolete by the last tap (the measured input gaps put that tap
+only ~0.55–0.60s after the first). Because the current preview Worker
+cannot interrupt synchronous Canvas2D work, it spent **around four
+additional seconds after the last tap** painting a picture that was
+never delivered, then painted the exact latest settled artwork for
+~1.8–1.9s. A single source-identical Random click also correctly
+produced an interactive frame in ~0.76–0.78s and the settled frame in
+~2.54–2.57s. **The several-second burst latency is primarily obsolete
+active-worker occupancy plus genuine settled-resolution cost**, not
+a 6-second render of the latest recipe, recipe corruption, stale pixels
+shown to the user or an unexpectedly slow 372×806 sand microfacet alone.
+
+Do not confuse an individual paint's `ms` with the full UI event clock.
+The instrumented app's real Worker and frame identity are validated.
+The work is platform-emulated Chromium, not physical Pixel CPU/GPU
+thermal acceptance.
+
+### Re-evaluating rejected worker preemption without losing the evidence
+
+Earlier general restart [#978](https://github.com/gamesbyian/wallgen/pull/978)
+was properly rejected because prior paired random workloads had no
+reproducible gain and one heterogeneous run regressed badly. **This
+new trace identifies a different deterministic, multi-second obsolete
+active job**, justifying only a fresh *bounded, source-matched*
+experiment: explicitly mark user-triggered new Random/reroll intents;
+compare original worker scheduling to guarded interruption using
+identical final seeds, 4-tap timing, two mobile viewports, genuine
+worker requests, latest-art-key acceptance, no concurrent restart
+storms and actual single-tap/ordinary-controls negative controls.
+Reject if the full user-facing timeline, fallback, gesture or memory
+regresses. Do not automatically merge prior branch code or claim
+worker restarting is accepted.
+
+The independent sand microfacet proposal
+[#1003](https://github.com/gamesbyian/wallgen/pull/1003) was **closed
+unmerged** after all pixels matched but the real radial 372×806 paint
+improved only ~1.4% with mixed trials, insufficient to explain the 6s
+burst. This preserves exact granular artwork without speculative
+quality reductions. The temporary instrumentation workflow is retired
+after evidence; the reusable trace and 42-ray source remain in scripts.
