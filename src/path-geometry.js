@@ -153,8 +153,10 @@ export function widthAt(stripe,x,extent){
   const edge=clamp(distance/(Math.max(.001,taper)*span*.45),0,1);
   return base*(.03+.97*edge*edge*(3-2*edge));
 }
-export function ribbonEdge(stripe,x,extent,side,edgeRelief=0){
-  const p=samplePath(stripe,x,extent);
+// When callers have already sampled this exact station for texture relief,
+// reuse that immutable sample instead of solving the same path tangent again.
+export function ribbonEdge(stripe,x,extent,side,edgeRelief=0,point=null){
+  const p=point??samplePath(stripe,x,extent);
   const distance=side*widthAt(stripe,x,extent)/2+edgeRelief;
   return {x:p.x+p.nx*distance,y:p.y+p.ny*distance};
 }

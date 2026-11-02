@@ -122,3 +122,47 @@ not a physical Pixel 6 Pro memory/thermal measurement. The one-shot browser
 workflow is retired after this result; the reusable exact-source comparison
 script and permanent deterministic source test remain. Required clean-head
 quick CI is a separate integration gate.
+
+## Textured ribbon edge station reuse (1 November 2026, PR #983)
+
+The `edgePoint` path for **texture-displaced ribbon edges** previously
+evaluated `samplePath(stripe,x,extent)` in `textureHeight()`, then evaluated
+the **same** geometry/tangent again in `ribbonEdge()`. Each source sample
+requires three underlying path positions for the point and tangent, which
+is disproportionately costly for loops, hairpins and jagged paths.
+
+The renderer now computes the exact original `samplePath` once and passes it
+to both the existing source height sampler and `ribbonEdge`, whose default
+public five-argument behavior is unchanged. When displacement is off, the
+original fast edge route is retained. No cache state, new geometry,
+approximation, alternate rasterizer, texture resolution or recipe field
+is introduced. An added permanent quick test proves **3,402 exact edge
+comparisons** across six path families, three texture coverage modes, three
+displacement values, three stripe slots, seven stations and three sides.
+
+[Same-run base-SHA vs candidate real Chromium proof #41370515911](https://github.com/gamesbyian/wallgen/actions/runs/41370515911)
+passed **all 20 exact raw-pixel comparisons** (ten original production
+recipes through both direct Canvas2D and export Worker). The 3024×6552
+fixed-slow-seed PNG was **byte-for-byte identical** on both sources:
+11,453,267 bytes, SHA-256
+`b7fa60e7f6208957cd87d1341a3f57e166c0749a6fb22f39f9f61a41876e4c4a`.
+
+Fixed-source worker paint timings in milliseconds, same Linux Chrome runner,
+three alternating source-matched trials, original→candidate:
+
+| Fixed source | Original | Shared edge sample |
+| --- | --- | --- |
+| `random-perf-fixed-30` | 691 / 720 / 721 | 674 / 649 / 640 |
+| loop/dashes | 150 / 146 / 134 | 147 / 140 / 129 |
+| loop/chevrons | 170 / 164 / 151 | 164 / 141 / 145 |
+| hairpin/stars | 155 / 148 / 146 | 145 / 146 / 140 |
+| zigzag/checker | 98 / 84 / 82 | 80 / 75 / 73 |
+
+The two warm slow-seed comparisons are approximately **10–11% faster**;
+small sources are improved or noisy. Compare paired rows *within this run*
+only; runner noise and differing background resource availability make the
+absolute durations **not comparable across different GitHub runs**, including
+the previous #981 proof. These are production Chromium worker paint times,
+not actual device Random-to-visible latency, and neither Pixel 6 Pro thermals
+nor physical touch response have been measured. The one-shot proof workflow
+is removed after qualification; required clean-head quick CI is independent.
