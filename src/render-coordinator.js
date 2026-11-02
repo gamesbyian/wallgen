@@ -13,15 +13,17 @@ export function createPreviewCoordinator({
   onFrame,onFailure,workerFactory=createRenderWorker,
   canUseWorker=typeof Worker==='function'&&typeof OffscreenCanvas==='function',
   startupMs=8000,frameTimeoutMs=20000,
+  now=()=>Date.now(),randomObsoleteMinAgeMs=240,randomRestartCooldownMs=2000,
 }={}){
   let worker=null,ready=false,disabled=!canUseWorker,disposed=false;
   let active=null,pending=null,revision=0,watchdog=null;
   let frameCount=0,staleCount=0,failedReason=null;
+  let activeSince=null,lastRandomRestart=-Infinity,randomRestartCount=0;
   const clearWatchdog=()=>{if(watchdog!==null)clearTimeout(watchdog);watchdog=null;};
   const fail=error=>{
     if(disposed||disabled)return;
     disabled=true;ready=false;failedReason=String(error?.message||error);
-    clearWatchdog();active=null;pending=null;
+    clearWatchdog();active=null;activeSince=null;pending=null;
     try{worker?.terminate();}catch{}
     worker=null;
     onFailure?.(failedReason);
@@ -32,7 +34,7 @@ export function createPreviewCoordinator({
   };
   const dispatch=()=>{
     if(disabled||disposed||!ready||active||!pending)return;
-    active=pending;pending=null;
+    active=pending;pending=null;activeSince=now();
     arm(frameTimeoutMs,'Worker preview timed out');
     try{worker.postMessage({type:'preview',...active});}
     catch(error){fail(error);}
@@ -81,7 +83,7 @@ export function createPreviewCoordinator({
       pending?.quality==='settled'&&
       pending.key===completing.key&&matchingRecipe();
     clearWatchdog();
-    active=null;
+    active=null;activeSince=null;
     if(message.id!==revision&&!sameRecipeUpgrade&&!trailingGestureFrame){
       staleCount++;closeFrame(message);
     }else{
@@ -92,15 +94,54 @@ export function createPreviewCoordinator({
     }
     dispatch();
   };
+  // Guard every asynchronous callback by instance ownership. A terminated
+  // worker may already have queued a transferable frame; only the current
+  // generation can release the active slot or trigger the reference fallback.
+  const attachWorker=instance=>{
+    instance.onmessage=event=>{
+      if(instance!==worker){closeFrame(event.data);return;}
+      handle(event.data);
+    };
+    instance.onerror=event=>{
+      event?.preventDefault?.();
+      if(instance===worker)fail(event?.message||'Worker script failed');
+    };
+    instance.onmessageerror=()=>{
+      if(instance===worker)fail('Cannot deserialize worker frame');
+    };
+  };
   if(!disabled){
     try{
       worker=workerFactory();
-      worker.onmessage=event=>handle(event.data);
-      worker.onerror=event=>{event?.preventDefault?.();fail(event?.message||'Worker script failed');};
-      worker.onmessageerror=()=>fail('Cannot deserialize worker frame');
+      attachWorker(worker);
       arm(startupMs,'Worker initialization timed out');
     }catch(error){fail(error);}
   }
+  // Only the app's quiet-period Random handler may request this. The source
+  // must already be queued, distinct from the expensive active job, and old
+  // enough that a fresh startup is less likely to be wasted. A replacement
+  // construction failure leaves the original working queue untouched.
+  const restartObsoleteRandomFor=key=>{
+    if(disabled||disposed||!ready||!active||!pending||
+      pending.key!==key||active.key===key||activeSince===null)return false;
+    const at=now();
+    if(at-activeSince<randomObsoleteMinAgeMs||
+      at-lastRandomRestart<randomRestartCooldownMs)return false;
+    let replacement;
+    try{
+      replacement=workerFactory();
+      attachWorker(replacement);
+    }catch{
+      try{replacement?.terminate();}catch{}
+      return false;
+    }
+    const superseded=worker;
+    worker=replacement;ready=false;active=null;activeSince=null;
+    lastRandomRestart=at;randomRestartCount++;
+    arm(startupMs,'Replacement preview worker initialization timed out');
+    try{superseded?.terminate();}catch{}
+    return true;
+  };
   return {
     request(recipe,key,width,height,{quality='settled',gesture=null}={}){
       if(disabled||disposed)return false;
@@ -113,16 +154,17 @@ export function createPreviewCoordinator({
       ++revision;
       pending=null;
     },
+    restartObsoleteRandomFor,
     dispose(){
       disposed=true;disabled=true;clearWatchdog();
-      pending=null;active=null;
+      pending=null;active=null;activeSince=null;
       try{worker?.terminate();}catch{}
       worker=null;
     },
     get enabled(){return !disabled&&!disposed;},
     get ready(){return ready&&!disabled&&!disposed;},
     get status(){return {ready,disabled,failedReason,frameCount,staleCount,
-      pending:!!pending,active:!!active};},
+      pending:!!pending,active:!!active,randomRestartCount};},
   };
 }
 

@@ -502,3 +502,91 @@ improved only ~1.4% with mixed trials, insufficient to explain the 6s
 burst. This preserves exact granular artwork without speculative
 quality reductions. The temporary instrumentation workflow is retired
 after evidence; the reusable trace and 42-ray source remain in scripts.
+
+## Scoped quiet Random cancellation: source-matched real burst win (2 November 2026, PR #1010)
+
+The [actual Worker timeline #41383827870](https://github.com/gamesbyian/wallgen/actions/runs/41383827870)
+isolated the 42-ray sand Random burst's **4.6–4.8-second obsolete active
+paint**, followed by the **1.8–1.9-second** correct final settled paint.
+Prior speculative general restart [#978](https://github.com/gamesbyian/wallgen/pull/978)
+was appropriately rejected. The present follow-up is deliberately a
+different and bounded intervention:
+
+- Only **explicit full Random and New Seed** commands set a quiet timer,
+  never a rotation/slider/text gesture, scoped change, Undo, cache nudge
+  or PNG export. Any other recipe render cancels that timer.
+- After **300ms without another Random**, consider preemption only if the
+  actual active preview Worker is still painting a **different art key**
+  from the genuine latest queued job, and the obsolete job is at least
+  **240ms old**. A **2-second restart cooldown** bounds repeated churn.
+  The normal same-recipe 170ms provisional→settled upgrade is untouched.
+- The replacement Worker is constructed and handlers bound **before**
+  retiring the old one; failed replacement construction preserves the
+  original functioning worker and queue. Old Worker message/error
+  callbacks are generation-guarded; any transferred late bitmaps are
+  closed and cannot free the new active slot. Existing startup watchdog
+  and reference renderer fallback remain authoritative.
+- No recipe field, material grain, mask, pixel quality, original artwork,
+  server, thumbnail FIFO or export Worker has changed.
+
+The reusable [source-matched A/B harness](../scripts/randomize-worker-quiet-ab-browser.mjs)
+serves the exact original-main commit and candidate **on the same real
+Chromium runner**, using the same production-generated seeds for a single
+Random and four rapid Randoms at 320×700 and 412×892. It checks final
+canonical seed, art key, **SHA-256 of actual displayed canvas pixels**,
+real Worker request/completion and bounded Worker generation count.
+The browser is touch-emulated; this remains distinct from a physical Pixel.
+
+First actual [same-run A/B #41388984339](https://github.com/gamesbyian/wallgen/actions/runs/41388984339)
+passed all 12 real input journeys. A harness-only URL mapping failure was
+fixed before this test, and it did not exercise production code.
+
+The stricter independent [A/B with displayed-canvas pixel SHA
+#41389321233](https://github.com/gamesbyian/wallgen/actions/runs/41389321233)
+also **passed every A/B source/pixel/Worker assertion**:
+
+| Source / 4 Randoms | Baseline after last click | Candidate after last click | Relative |
+| --- | ---: | ---: | ---: |
+| **42-ray radial sand, 320×700** | **5723ms** | **2193ms** | **61.7% less** |
+| **42-ray radial sand, 412×892** | **5780ms** | **2167ms** | **62.5% less** |
+| Textured repeating loops, 320×700 | 406ms | 452ms | +46ms (short control) |
+| Textured repeating loops, 412×892 | 2124ms | 368ms | −1756ms (obsolete-work case) |
+| 14 stone regions, 320×700 | 244ms | 255ms | +11ms (short control) |
+| 14 stone regions, 412×892 | 246ms | 253ms | +7ms (short control) |
+
+The radial/sand single-click settled durations stayed comparable: 320×700
+**2489ms→2472ms**; 412×892 **2515ms→2524ms**. The two short-region
+single-click controls were 246→248ms and 241→235ms. Every candidate
+**single-click** used **zero replacement Workers**. Every heavy radial
+**four-click burst** used **exactly one replacement** and had **zero
+obsolete completed paints after the last tap**, while each baseline
+had one obsolete completion consuming ~3.9 seconds after the last tap.
+Short loop/region bursts required zero replacements. The earlier
+[source-only first A/B](https://github.com/gamesbyian/wallgen/actions/runs/41388984339)
+independently observed ~62–63% radial burst reductions in both viewports.
+
+Final visible canvas SHA-256 hashes were identical per recipe across
+versions at both sizes: radial sand
+`59e9487672c2d9f9fa49fce8e2fe0c06ec367ec057276d1c74e2b6d0d8505b63`,
+loops `54f92f48b21c709726563511fd67601ce5364350f47a6c4499fd4b9bbf74c06a`,
+regions `311fda3f8abe295dbf98e9afc9367d0b86e88121cb7938a6a920d72f43348107`.
+Worker-unit tests independently cover old-generation bitmap closure,
+cooldown/young jobs, normal same-source upgrade and replacement allocation
+failure. No output-pixel differences were detected.
+
+**Conclusion scoped strictly to the pinned burst:** a targeted quiet-period
+replacement can recover roughly **3.5–3.6 seconds** otherwise lost waiting
+for a superseded 4.6–4.8s synchronous paint. The final true settled
+~1.8–1.9s paint remains expensive; do not describe this as a universal
+63% speedup or as physical phone thermal/IME validation. The prior general
+immediate worker-restart rejection remains valid for its own tested scope.
+The temporary proof workflow was retired after this acceptance; ordinary
+required CI at the final clean head remains a separate merge gate.
+
+**Negative sand microfacet research:** [#1008](https://github.com/gamesbyian/wallgen/pull/1008)
+passed 22 pixel comparisons but had no repeatable warm radial speedup
+(650.5→649.5ms); [#1009](https://github.com/gamesbyian/wallgen/pull/1009)
+passed 28 pixel comparisons but its apparent 439.5→423ms first-run
+radial gain reversed to **655→669ms** on an independent same-source
+runner. Both were closed *without* production code. Do not recycle them
+as accepted sand rendering improvements.

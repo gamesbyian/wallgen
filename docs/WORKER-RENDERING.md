@@ -47,9 +47,18 @@ The worker releases its own underlying OffscreenCanvas backing stores in
 
 `src/render-coordinator.js` uses **one active job and one replaceable
 pending preview**, with monotonically increasing request IDs. A slow synchronous
-Canvas2D draw cannot be interrupted simply by sending `postMessage()`;
-instead, obsolete queued requests are skipped and obsolete completed frames
-are closed, never displayed. A watchdog covers stuck startup and renders.
+Canvas2D draw cannot be interrupted simply by sending `postMessage()`.
+Ordinarily, obsolete queued requests are skipped and obsolete completed
+frames are closed, never displayed. A watchdog covers stuck startup and renders.
+There is one narrowly scoped exception for an actual **full Random / New Seed**
+burst: after 300ms of user quiet, the app may retire an **already obsolete**
+active preview Worker, but only if its running source differs from the latest
+queued art, it has been painting at least 240ms and the last replacement was
+more than two seconds ago. A replacement Worker is constructed first; failure
+to construct it preserves the original worker. Late callbacks from retired
+generations cannot deliver stale bitmaps or trigger fallback. Ordinary
+single-click same-source upgrades, slider/rotation/text, Undo, thumbnail,
+and export workflows retain the unchanged coordinator policy.
 
 The UI recipe, undo history, URL, favourite state and selected controls commit
 **synchronously** on the main thread. Worker display is asynchronous.
@@ -114,6 +123,14 @@ copies; lower-power devices can still fail on extreme combinations.
 ## Acceptance strategy
 
 - `scripts/progressive-randomize-browser-proof.mjs`: opt-in real Chromium 412×892 emulation, instruments real Randomize/seed button handlers, provisional and settled frame order/timing, worker dimensions, actual preview screenshots and page errors; requires Playwright/Chromium. The 27 October 2026 first source-backed run is [#40447670702](https://github.com/gamesbyian/wallgen/actions/runs/40447670702) (first frames 148/116 ms, settled at 530 ms). A repeat exposed an intermittent dropped provisional frame; [corrected source proof #40448878581](https://github.com/gamesbyian/wallgen/actions/runs/40448878581) independently confirmed that settled/provisional requests have equal serialized recipe values but different object references, and both delivered in order at 342/885 and 233/714 ms respectively. These are tiny samples on CI Chromium, not Pixel hardware. The temporary PR-only installation workflow was removed after evidence capture.
+- `scripts/randomize-worker-quiet-ab-browser.mjs`: reusable true-Chromium,
+  same-seed cross-checkout A/B at 320×700 and 412×892. Measures real
+  Random click-to-presented latency, Worker dispatch/completion,
+  generation count, final art key and actual displayed canvas pixel SHA.
+  [Replicated source A/B #41389321233](https://github.com/gamesbyian/wallgen/actions/runs/41389321233)
+  showed a ~62% reduction in the pinned heavy burst using exactly one
+  replacement while ordinary single clicks/short controls retained exact
+  pixel output. No physical Pixel memory/thermal acceptance is inferred.
 - `tests/render-coordinator.test.js`: latest-only queue behaviour, stale
   ImageBitmap release, cached-revision invalidation, worker failures,
   short-lived export and negative feature detection.

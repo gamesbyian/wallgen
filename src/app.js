@@ -68,6 +68,11 @@ const previewLayers={background:null,ink:null,scene:null,key:null,overhang:null}
 let previewWorker=null;
 let previewPainted=false;
 let settledPreviewTimer=null;
+let randomWorkerQuietTimer=null;
+const clearRandomWorkerQuiet=()=>{
+  if(randomWorkerQuietTimer!==null)clearTimeout(randomWorkerQuietTimer);
+  randomWorkerQuietTimer=null;
+};
 // Compare uses the cached composed artwork and never commits a recipe change.
 const photoCompareButton=form.querySelector('[data-photo-compare]');
 let photoBeforeActive=false;
@@ -103,6 +108,7 @@ function releasePreviewLayers(){
   previewLayers.key=null;
 }
 function previewPresented(){
+  clearRandomWorkerQuiet();
   syncPhotoCompareButton();
   preview.dataset.renderPending='false';
   preview.removeAttribute('aria-busy');
@@ -675,6 +681,10 @@ function syncURL() {
 }
 function titleCase(value){return value.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase());}
 function render(recipe,{scroll=false,bypassLocks=false,interactive=false,cause='edit',record=true,recordHistory=true}={}) {
+  // A Random burst resets its own quiet window; all non-Random actions cancel
+  // pending interruption intent before changing any canonical recipe state.
+  clearRandomWorkerQuiet();
+  const explicitRandom=interactive&&['randomize_all','seed_reroll'].includes(cause);
   const next=bypassLocks?normalizeRecipe(recipe):respectSettingLocks(current,recipe);
   const previous=current;
   current=checkpoint(next,{recordHistory});
@@ -745,6 +755,16 @@ function render(recipe,{scroll=false,bypassLocks=false,interactive=false,cause='
       // renders, then settle at the exact screen resolution after dragging.
       preview.dataset.renderPending='true';
       preview.setAttribute('aria-busy','true');
+      // Only a quiet period after a direct Random / new seed can replace an
+      // ALREADY obsolete paint. Bursts reset this timer, so a replacement
+      // worker receives the latest exact settled source, not an interim draw.
+      // Normal gestures, text, Undo, cache nudges and exports never call it.
+      if(explicitRandom)randomWorkerQuietTimer=setTimeout(()=>{
+        randomWorkerQuietTimer=null;
+        if(!document.hidden&&preview.dataset.renderPending==='true'&&
+          artKey(current)===key)
+          previewWorker?.restartObsoleteRandomFor(key);
+      },300);
       if(interactive)settledPreviewTimer=setTimeout(()=>{
         settledPreviewTimer=null;
         if(previewWorker?.enabled&&artKey(current)===key)
