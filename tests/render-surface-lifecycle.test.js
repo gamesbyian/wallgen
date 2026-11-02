@@ -151,3 +151,37 @@ test('per-paint material constants never survive successful returned scenes',()=
   assert.notEqual(textureHeight(scene,stripe,x,1),0,
     'new active material must produce a real nonzero contour');
 });
+
+
+test('cached settled worker path never paints the discarded final destination',()=>{
+  const target={width:600,height:1300,
+    getContext(){return proxyCanvasContext({throwOnPresent:true});}};
+  const cache={},surfaces=[];
+  const factory=(width,height)=>{
+    const surface={width,height,getContext(){return proxyCanvasContext();}};
+    surfaces.push(surface);
+    return surface;
+  };
+  assert.doesNotThrow(()=>drawWallpaper(target,normalizeRecipe({
+    seed:'skip-unused-worker-final-canvas',structure:'regions',regionMode:'blocks',
+    material:'none',lightingMood:'golden',lightStrength:35,
+    shadowStrength:45,stripeShadowStrength:50
+  }),{cache,skipPhoto:true,skipPresentation:true,canvasFactory:factory}));
+  assert.equal(surfaces.length,2,'only the reusable ink and background are retained');
+  assert.equal(cache.ink,surfaces[0]);
+  assert.equal(cache.background,surfaces[1]);
+  assert.equal(cache.background.width,600);
+  assert.equal(cache.background.height,1300);
+  assert.deepEqual(cache.overhang.width,600);
+  assert.deepEqual(cache.overhang.height,1300);
+});
+
+test('cache-only paint cannot silently change direct exports or uncached renders',()=>{
+  const target={width:600,height:1300,getContext(){return proxyCanvasContext();}};
+  const recipe=normalizeRecipe({seed:'skip-worker-destination-guard',
+    structure:'regions',regionMode:'blocks',material:'none'});
+  assert.throws(()=>drawWallpaper(target,recipe,{skipPresentation:true}),
+    /Cache-only paint requires cache/);
+  assert.throws(()=>drawWallpaper(target,recipe,{skipPresentation:true,cache:{}}),
+    /Cache-only paint requires cache/);
+});
