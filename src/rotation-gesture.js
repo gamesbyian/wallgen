@@ -69,6 +69,26 @@ export function advanceRotationDrag(state,{x,y}){
   return {...state,raw,lastX:x,value:result.value,held:result.held,mode,
     engaged:true};
 }
+/** Standard ARIA slider keys, mapped to each real canonical angle lattice.
+ * Shift remains the fine step where supported, never a silent no-op for
+ * integer-only fields. Page keys jump ten degrees, Home/End reach legal bounds.
+ * Control/Command/Alt shortcuts belong to the browser or host app.
+ * No source state, DOM or Undo lives here. */
+export function rotationKeyboardTarget(value,spec,{
+  key,shiftKey=false,ctrlKey=false,metaKey=false,altKey=false
+}={}){
+  if(!finite(value)||!spec||!finite(spec.min)||!finite(spec.max)||
+     !finite(spec.step)||spec.step<=0||ctrlKey||metaKey||altKey)return null;
+  if(key==='Home')return canonicalAngle(spec.min,spec);
+  if(key==='End')return canonicalAngle(spec.wrap?
+    spec.max-spec.step:spec.max,spec);
+  const sign=['ArrowRight','ArrowUp','PageUp'].includes(key)?1:
+    ['ArrowLeft','ArrowDown','PageDown'].includes(key)?-1:0;
+  if(!sign)return null;
+  const increment=key==='PageUp'||key==='PageDown'?
+    Math.max(10,10*spec.step):shiftKey?spec.step:Math.max(1,spec.step);
+  return canonicalAngle(value+sign*increment,spec);
+}
 export function pointerAngularDelta(start,current,pivot){
   if(!start||!current||!pivot)return 0;
   const coords=[start.x,start.y,current.x,current.y,pivot.x,pivot.y];
