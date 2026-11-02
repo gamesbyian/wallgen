@@ -3,6 +3,8 @@
  * Diagnostic only: count actual Canvas2D method calls in the production
  * OffscreenCanvas Worker for canonical Random sources. The untouched Worker
  * renders the same recipe before and after in-memory method forwarding;
+ * the pinned heavy scene also measures same-size interactive (no overscan)
+ * against settled (+30%-per-side immutable nudge overscan) call counts.
  * compare both transferred bitmap SHA-256s. Counted timings are intentionally
  * NOT used as performance claims because wrapper overhead is nonzero.
  */
@@ -58,24 +60,24 @@ try{
       if(messages.has(data?.id))messages.get(data.id)(data);
     });
     worker.addEventListener('error',err=>readyReject(Error(err.message)));
-    window.__renderSettled=(recipe,width,height)=>new Promise((resolve,reject)=>{
+    window.__renderPreview=(recipe,width,height,quality='settled')=>new Promise((resolve,reject)=>{
       const id=++next;
       const timeout=setTimeout(()=>{messages.delete(id);reject(Error('Worker timed out'));},90000);
       messages.set(id,data=>{
         clearTimeout(timeout);messages.delete(id);
         if(data.type==='error')reject(Error(data.error));
-        else if(data.type==='frame'&&data.quality==='settled')resolve(data);
+        else if(data.type==='frame'&&data.quality===quality)resolve(data);
         else reject(Error('Unexpected Worker response'));
       });
-      worker.postMessage({type:'preview',id,key:recipe.seed,recipe,width,height,quality:'settled'});
+      worker.postMessage({type:'preview',id,key:recipe.seed,recipe,width,height,quality});
     });
     window.__disposeWorker=()=>worker.terminate();
     await ready;
   });
   const actualWorker=await workerEvent;
-  async function render(recipe,width,height){
-    return page.evaluate(async ({recipe,width,height})=>{
-      const frame=await window.__renderSettled(recipe,width,height);
+  async function render(recipe,width,height,quality='settled'){
+    return page.evaluate(async ({recipe,width,height,quality})=>{
+      const frame=await window.__renderPreview(recipe,width,height,quality);
       async function hashBitmap(bitmap){
         const canvas=new OffscreenCanvas(bitmap.width,bitmap.height);
         try{
@@ -87,9 +89,10 @@ try{
             sha256:Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('')};
         }finally{bitmap.close();canvas.width=0;canvas.height=0;}
       }
+      if(quality==='interactive')return {ms:frame.ms,frame:await hashBitmap(frame.frame)};
       return {ms:frame.ms,ink:await hashBitmap(frame.ink),
         background:await hashBitmap(frame.background),overhang:frame.overhang};
-    },{recipe,width,height});
+    },{recipe,width,height,quality});
   }
   const methods=['fillRect','drawImage','clearRect','fill','stroke','arc',
     'beginPath','rect','clip','moveTo','lineTo','quadraticCurveTo',
@@ -99,6 +102,7 @@ try{
   for(let i=0;i<scenes.length;i++){
     const entry=scenes[i];
     const original=await render(entry.recipe,entry.w,entry.h);
+    const originalInteractive=i===0?await render(entry.recipe,entry.w,entry.h,'interactive'):null;
     if(i===0){
       // Patch the *same Worker realm* after the first native paint. The
       // browser source files and painter algorithms stay byte-for-byte.
@@ -128,18 +132,35 @@ try{
       'Worker background pixels changed: '+entry.label);
     assert.deepEqual(instrumented.overhang,original.overhang);
     assert.ok(counts.fillRect>0,'No actual Canvas2D fillRect operations');
+    let interactiveAtSameSize=null;
+    if(i===0){
+      await actualWorker.evaluate(()=>globalThis.__roygbivResetCalls());
+      const countedInteractive=await render(entry.recipe,entry.w,entry.h,'interactive');
+      const interactiveCounts=await actualWorker.evaluate(()=>({...globalThis.__roygbivCanvasCalls}));
+      assert.deepEqual(countedInteractive.frame,originalInteractive.frame,
+        'Interactive final bitmap changed under method instrumentation');
+      assert.ok(interactiveCounts.fillRect>0&&counts.fillRect>interactiveCounts.fillRect,
+        'Expected the cached 30%-per-side source crop to include extra sand marks');
+      interactiveAtSameSize={nativeCounts:interactiveCounts,
+        frameSha256:originalInteractive.frame.sha256,
+        frameDimensions:[originalInteractive.frame.width,originalInteractive.frame.height],
+        baselineWorkerMs:originalInteractive.ms,
+        instrumentedWorkerMs:countedInteractive.ms,
+        settledToInteractiveFillRectRatio:counts.fillRect/interactiveCounts.fillRect};
+    }
     results.push({label:entry.label,seed:entry.seed,material:entry.recipe.material,
       rayCount:entry.recipe.rayCount,width:entry.w,height:entry.h,
       baselineWorkerMs:original.ms,instrumentedWorkerMs:instrumented.ms,
-      counts,inkSha256:original.ink.sha256,
+      counts,interactiveAtSameSize,inkSha256:original.ink.sha256,
       backgroundSha256:original.background.sha256});
   }
   await page.evaluate(()=>window.__disposeWorker());
   assert.deepEqual(errors,[]);
   await mkdir(join(root,'artifacts','sand-canvas2d-method-counts'),{recursive:true});
   await writeFile(join(root,'artifacts','sand-canvas2d-method-counts','receipt.json'),
-    JSON.stringify({environment:'Actual Chrome production Worker; in-memory API-method counting only, method timings not representative',results},null,2)+'\n');
+    JSON.stringify({environment:'Actual Chrome production Worker; in-memory API-method counting only, method timings not representative; same-size interactive vs settled counts isolate cache source overscan',results},null,2)+'\n');
   console.log('ROYGBIV_SAND_CANVAS_METHOD_COUNTS',JSON.stringify(results));
+  console.log('ROYGBIV_SAND_OVERSCAN_RATIO',JSON.stringify(results[0].interactiveAtSameSize));
 }finally{
   await browser?.close();
   await new Promise(done=>server.close(done));
