@@ -67,6 +67,17 @@ const samples=[
    textureCoverage:'both'})],
  // Reproducible real-click 42-ray sand long tail, pinned by the E2E harness.
  ['radial-sand-mandala',randomizeAllRecipe({seed:'1pyivby-tpkh85'})],
+ // Explicit directional/lighting-off sand controls ensure the shared
+ // lattice hash changes neither original facet normals nor unlit colours.
+ ['sand-lit-daylight',normalizeRecipe({seed:'hash-facet-lit-daylight',structure:'radial',
+   radialMode:'concentric',rayCount:42,material:'sand-mandala',textureStrength:82,
+   textureCoverage:'both',lightingMood:'daylight',lightStrength:90,shadowStrength:70})],
+ ['sand-lit-moonlight',normalizeRecipe({seed:'hash-facet-lit-moonlight',structure:'paths',
+   geometry:'loops',material:'sand-beaded',textureStrength:80,
+   textureCoverage:'both',lightingMood:'moonlight',lightStrength:75,shadowStrength:88})],
+ ['sand-unlit-filigree',normalizeRecipe({seed:'hash-facet-unlit-filigree',structure:'regions',
+   regionMode:'organic',regionCount:14,material:'sand-filigree',textureStrength:80,
+   textureCoverage:'both',lightingMood:'off'})],
  ['regions',normalizeRecipe({seed:'motif-regions',structure:'regions',
    regionMode:'organic',regionCount:14,material:'grain',textureStrength:70})],
 ];
@@ -161,7 +172,8 @@ try{
    }
    const output=[];
    for(const input of cases.filter(x=>['random-worst-30','loop-dashes','loop-chevrons',
-     'hairpin-stars','zigzag-checker','radial-sand-mandala'].includes(x.name))){
+     'hairpin-stars','zigzag-checker','radial-sand-mandala',
+     'sand-lit-daylight','sand-unlit-filigree'].includes(x.name))){
      const times={base:[],candidate:[]};
      for(let trial=0;trial<trials;trial++){
        const order=trial%2===0?['base','candidate']:['candidate','base'];
