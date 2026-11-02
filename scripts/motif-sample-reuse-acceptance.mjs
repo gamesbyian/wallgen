@@ -11,6 +11,9 @@ import {readFile,mkdir,writeFile} from 'node:fs/promises';
 import {resolve,join,extname} from 'node:path';
 import {chromium} from 'playwright';
 import {normalizeRecipe,randomizeAllRecipe} from '../src/model.js';
+// Alternate A/B and B/A order to avoid runner warming favouring one version.
+// Raised repetitions are opt-in for targeted measurements, not normal CI.
+const perfTrials=Math.max(3,Math.min(12,Number(process.env.ROYGBIV_PERF_TRIALS)||3));
 const root=process.cwd();
 const baseline=resolve(root,'comparator-baseline');
 const mime={'.js':'text/javascript','.css':'text/css','.html':'text/html',
@@ -120,7 +123,7 @@ try{
  // Comparable production interactive-worker paint durations, excluding
  // Worker boot and PNG encoding. Each painter is a real OffscreenCanvas job,
  // with repeated A/B trials and identical canonical recipes.
- const speed=await page.evaluate(async cases=>{
+ const speed=await page.evaluate(async ({cases,trials})=>{
    const workers={};
    for(const version of ['base','candidate']){
      const worker=new Worker('/'+version+'/src/render-worker.js',{type:'module'});
@@ -158,15 +161,16 @@ try{
    for(const input of cases.filter(x=>['random-worst-30','loop-dashes','loop-chevrons',
      'hairpin-stars','zigzag-checker'].includes(x.name))){
      const times={base:[],candidate:[]};
-     for(let trial=0;trial<3;trial++){
-       times.base.push(await workers.base.run(input.recipe));
-       times.candidate.push(await workers.candidate.run(input.recipe));
+     for(let trial=0;trial<trials;trial++){
+       const order=trial%2===0?['base','candidate']:['candidate','base'];
+       for(const version of order)
+         times[version].push(await workers[version].run(input.recipe));
      }
      output.push({name:input.name,times});
    }
    workers.base.worker.terminate();workers.candidate.worker.terminate();
    return output;
- },specs);
+ },{cases:specs,trials:perfTrials});
  // An actual native-resolution PNG encode is a separate fidelity gate.
  // Compare the real production export Worker output at 3024x6552, but do
  // not claim the Linux runner verifies Pixel 6 Pro memory/thermal behavior.
