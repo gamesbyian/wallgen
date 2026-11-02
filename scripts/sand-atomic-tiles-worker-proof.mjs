@@ -12,10 +12,11 @@ import {randomizeAllRecipe,normalizeRecipe} from '../src/model.js';
 const root=process.cwd(),types={'.html':'text/html','.js':'text/javascript',
  '.css':'text/css','.json':'application/json','.svg':'image/svg+xml','.woff2':'font/woff2'};
 const original=await readFile(join(root,'src/renderer.js'),'utf8');
-const anchor='      paintMaterial(t,layer,{left,right,top,bottom},sandMaterialLighting(scene,layer));';
+const anchor='      paintMaterial(t,layer,paintBounds,sandMaterialLighting(scene,layer));';
 assert.equal(original.split(anchor).length,2,'Expected unique material stage anchor');
 const patch=[
- "      if(options.cache&&['sand-mandala','sand-beaded','sand-filigree'].includes(layer.material)){",
+ "      if(options.cache&&layer.coverage!=='background'&&", 
+"        ['sand-mandala','sand-beaded','sand-filigree'].includes(layer.material)){",
  "        const visible=camera.boundsWithMargin({left:0,right:0,top:0,bottom:0});",
  "        let l=Infinity,r=-Infinity,topCut=Infinity,bottomCut=-Infinity;",
  "        for(const [vx,vy] of [[visible.left,visible.top],[visible.left,visible.bottom],",
@@ -56,7 +57,7 @@ const patch=[
  "          t.restore();",
  "        }",
  "      }else{",
- "        paintMaterial(t,layer,{left,right,top,bottom},sandMaterialLighting(scene,layer));",
+ "        paintMaterial(t,layer,paintBounds,sandMaterialLighting(scene,layer));",
  "      }"
 ].join('\n');
 const candidate=original.replace(anchor,patch);
@@ -79,12 +80,12 @@ const pairFor=i=>[Math.imul(i,0x9e3779b1)>>>0,
  (Math.imul(i+17,0x85ebca6b)^0xa5a5f0f0)>>>0];
 const seedFor=i=>pairFor(i).map(n=>n.toString(36)).join('-');
 const scenes=[
- {label:'sand-600x1300',index:126,w:600,h:1300},
- {label:'sand-372x806',index:126,w:372,h:806},
+ {label:'sand-600x1300',index:126,w:600,h:1300,overrides:{textureCoverage:'stripes'}},
+ {label:'sand-372x806',index:126,w:372,h:806,overrides:{textureCoverage:'stripes'}},
  {label:'sand-nudged-rotated',index:126,w:372,h:806,
-  overrides:{positionX:30,positionY:-30,textureRotation:37}},
+  overrides:{textureCoverage:'stripes',positionX:30,positionY:-30,textureRotation:37}},
  {label:'sand-multilayer',index:126,w:372,h:806,
-  overrides:{textureLayer2Enabled:true,material2:'sand-filigree',
+  overrides:{textureCoverage:'stripes',textureLayer2Enabled:true,material2:'sand-filigree',
    textureStrength2:45,textureCoverage2:'both',textureRotation2:37}},
  {label:'loops-control',index:94,w:600,h:1300},
 ].map(x=>({...x,recipe:normalizeRecipe({
