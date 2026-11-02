@@ -1025,6 +1025,10 @@ export function drawRegionObjects(ctx,scene){
 }
 
 export function drawWallpaper(canvas, recipe, options={}) {
+  // Settled Workers transfer cached ink/background, never their local final canvas.
+  // A cache-only paint must not be requested by a normal export or fallback.
+  if(options.skipPresentation&&(!options.cache||!options.skipPhoto))
+    throw new Error('Cache-only paint requires cache and external Photo presentation');
   const scene=resolveScene(recipe);
   // These are intrinsic to this immutable render snapshot. They used to be
   // recomputed for every texture-displaced path/motif station.
@@ -1362,10 +1366,16 @@ export function drawWallpaper(canvas, recipe, options={}) {
     if(!backgroundContext)throw new Error('Canvas background layer unavailable');
     backgroundContext.drawImage(canvas,0,0);
   }
-  drawFinishedInk(ctx,ink,scene,margin);
-  applyCanvasAtmosphere(ctx,canvas.width,canvas.height,scene);
-  if(!options.skipPhoto)applyPhotoFinish(ctx,canvas.width,canvas.height,scene.photoLook,scene.seed);
-  drawTextOverlays(ctx,canvas.width,canvas.height,scene);
+  // The settled preview Worker sends only immutable cache.background/cache.ink.
+  // Its fully composited destination would be discarded; the authoritative
+  // main-thread presenter applies shadow/atmosphere/Photo/text to those layers.
+  // Keep direct rendering, fallback, thumbnails and export fully unchanged.
+  if(!options.skipPresentation){
+    drawFinishedInk(ctx,ink,scene,margin);
+    applyCanvasAtmosphere(ctx,canvas.width,canvas.height,scene);
+    if(!options.skipPhoto)applyPhotoFinish(ctx,canvas.width,canvas.height,scene.photoLook,scene.seed);
+    drawTextOverlays(ctx,canvas.width,canvas.height,scene);
+  }
   if(options.cache){
     options.cache.background=cachedBackground;
     options.cache.ink=ink;
