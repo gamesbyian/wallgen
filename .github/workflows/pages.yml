@@ -11,11 +11,8 @@ concurrency:
   group: github-pages
   cancel-in-progress: true
 jobs:
-  publish:
+  build:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -69,6 +66,33 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: .
+      # Only one artifact is uploaded per run. Deploy can be retried without
+      # re-running this expensive build or creating duplicate github-pages artifacts.
+      - name: Upload build failure digest
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wallgen-pages-build-failure-${{ github.run_id }}
+          path: artifacts/ci/*.json
+          retention-days: 7
+          if-no-files-found: ignore
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      # Public byte verification compares against this exact original checkout.
+      # These generated icons must match the bytes in the uploaded build tree.
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Recreate deterministic SVG-derived icons for public byte verification
+        run: node scripts/build-logo-raster.mjs
       - id: deployment
         uses: actions/deploy-pages@v4
       # A successful upload is not proof the public site serves these exact

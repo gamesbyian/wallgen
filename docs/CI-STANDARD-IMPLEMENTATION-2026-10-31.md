@@ -2,6 +2,8 @@
 
 **Scope:** ROYGBIV / `gamesbyian/wallgen`. Engineering standard: [CI-ENGINEERING-STANDARD.md](CI-ENGINEERING-STANDARD.md). Live baseline was `main` at `964670e559321cab523199a8d2b9c327c502e498`. This is an evidence snapshot, not a permanent CI status claim.
 
+**2 November 2026 Pages deployment incident:** Exact-main [run #41537314015](https://github.com/gamesbyian/wallgen/actions/runs/41537314015) passed source tests and uploaded the Pages artifact but failed the Pages API's artifact-ID lookup; whole-job retry then created a second identically named artifact and failed deterministically. The proposed single-workflow **build → deploy** split makes a failed deployment separately retryable without rebuilding or re-uploading, preserving strict published-byte verification. [Evidence, operation and non-goals](CI-PAGES-RETRY-2026-11-02.md). A green PR check is not a verified restored public deployment.
+
 ## Observed baseline
 
 GitHub Actions first 100 runs queried at the above baseline, **2026-10-31 22:53 through 2026-11-01 00:05 UTC** (a high-activity 72-minute window, not a statistically representative month):
