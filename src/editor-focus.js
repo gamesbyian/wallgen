@@ -30,6 +30,16 @@ export function sameFocusChipInventory(buttons,fields){
     buttons.length===fields.length&&fields.every((field,index)=>
       Boolean(field?.name)&&buttons[index]?.dataset?.focusKey===field.name);
 }
+// Form/source rebuilds can swap the canonical INPUT element without
+// changing its named recipe parameter. Preserve the user's choice first by
+// node identity, then by stable field name, before falling back to the new
+// tool's first available slider.
+export function focusSelectedField(fields,selected){
+  if(!Array.isArray(fields)||!fields.length)return null;
+  return fields.find(field=>field===selected)||
+    (selected?.name?fields.find(field=>field.name===selected.name):null)||
+    fields[0];
+}
 export function focusChipDestination(key,index,count){
   if(!Number.isInteger(index)||!Number.isInteger(count)||count<1||index<0||index>=count)return -1;
   if(key==='ArrowRight')return (index+1)%count;
@@ -191,7 +201,7 @@ export function installFocusedAdjustments({form,chooser}){
       const label=sourceLabel(field);
       if(existing[index].textContent!==label)existing[index].textContent=label;
     }
-    choose(available.includes(original)?original:available[0]);
+    choose(focusSelectedField(available,original));
     if(focusedKey&&!sameInventory){
       const next=[...chips.querySelectorAll('button[data-focus-key]')];
       (next.find(chip=>chip.dataset.focusKey===focusedKey)||
