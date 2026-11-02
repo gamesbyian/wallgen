@@ -17,16 +17,21 @@ import {planSatinThreadContacts,selectSatinReplayContacts} from './thread-contac
 
 const TAU = Math.PI * 2;
 const geometryAt=(x,stripe,extent)=>samplePath(stripe,x,extent).y;
-const edgePoint=(x,stripe,extent,side,scene)=>{
+const edgePoint=(x,stripe,extent,side,scene,point=null)=>{
   if(!scene||!scene.textureDisplacement)
-    return ribbonEdge(stripe,x,extent,side,0);
-  // Both the relief sampler and the edge would otherwise independently solve
-  // the identical path station (three pathPosition calls apiece). Reuse the
-  // original sample without changing relief, width or vector edge arithmetic.
-  const point=samplePath(stripe,x,extent);
+    return ribbonEdge(stripe,x,extent,side,0,point);
+  // Reuse the original tangent sample in the relief and final edge position.
+  const p=point??samplePath(stripe,x,extent);
   return ribbonEdge(stripe,x,extent,side,
-    textureHeight(scene,stripe,x,side,point),point);
+    textureHeight(scene,stripe,x,side,p),p);
 };
+// A physical ribbon cross-section has two different side relief values but
+// the same exact centreline and normal. Sample geometry once per station.
+export function pairedRibbonEdges(x,stripe,extent,scene){
+  const point=samplePath(stripe,x,extent);
+  return [edgePoint(x,stripe,extent,-1,scene,point),
+    edgePoint(x,stripe,extent,1,scene,point)];
+}
 const edgeAt=(x,stripe,extent,side,scene)=>edgePoint(x,stripe,extent,side,scene).y;
 const spatialGeometry=stripe=>['hairpin','loop','loops','drawn'].includes(stripe.sharedGeometry??stripe.geometry);
 // Sample the same material height field used to paint each visible texture.
@@ -159,8 +164,7 @@ export function stripeFillPath(stripe,extent,scene,Path=Path2D){
   let previous=null;
   for(let i=0;i<=count;i++){
     const x=start+(end-start)*i/count;
-    const pair=[edgePoint(x,stripe,extent,-1,scene),
-      edgePoint(x,stripe,extent,1,scene)];
+    const pair=pairedRibbonEdges(x,stripe,extent,scene);
     if(previous){
       const corners=[previous[0],pair[0],pair[1],previous[1]];
       const a=corners[0],b=corners[1],c=corners[2];
@@ -198,7 +202,7 @@ function ribbonPoint(scene,x,y) {
     y:scene.mirrorVertical?DESIGN_HEIGHT-py:py};
 }
 function endpoints(scene,stripe,x) {
-  const low=edgePoint(x,stripe,scene.extent,-1,scene),high=edgePoint(x,stripe,scene.extent,1,scene);
+  const [low,high]=pairedRibbonEdges(x,stripe,scene.extent,scene);
   return [ribbonPoint(scene,low.x,low.y),ribbonPoint(scene,high.x,high.y)];
 }
 function contactSegment(scene,contacts,p,q) {
