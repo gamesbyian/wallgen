@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {normalizeRecipe,resolveScene,rng} from '../src/model.js';
 import {samplePath,ribbonEdge} from '../src/path-geometry.js';
-import {motifFits,textureHeight,motifVariation,motifStripeFactors} from '../src/renderer.js';
+import {motifFits,textureHeight,motifVariation,motifStripeFactors,pairedRibbonEdges} from '../src/renderer.js';
 
 test('shared motif path point exactly matches independent forward sampling',()=>{
   for(const geometry of ['straight','wave','loop','loops','hairpin']){
@@ -103,6 +103,37 @@ test('textured ribbon edges reuse precisely the original centreline sample',()=>
                 'edge parity '+geometry+' '+textureCoverage+' '+textureDisplacement+
                 ' '+stripe.index+' '+fraction+' '+side);
             }
+          }
+        }
+      }
+    }
+  }
+});
+
+test('two ribbon edges share the original exact station with independent side relief',()=>{
+  for(const geometry of ['straight','wave','jagged','hairpin','loop','loops']){
+    for(const coverage of ['background','stripes','both']){
+      for(const displacement of [0,47,95]){
+        const scene=resolveScene(normalizeRecipe({
+          seed:'paired-edge-'+geometry+'-'+coverage+'-'+displacement,
+          structure:'paths',geometry,composition:'floating',
+          material:'wood-grain',textureStrength:91,
+          textureCoverage:coverage,textureDisplacement:displacement,
+          shapeDepth:67,shapeFrequency:84,edgeTaper:76,
+          mirrorHorizontal:true,mirrorVertical:false,
+        }));
+        for(const stripe of [scene.stripes[0],scene.stripes[3],scene.stripes[6]]){
+          for(const fraction of [-1,-.77,-.39,-.1,0,.24,.68,.91,1]){
+            const x=scene.extent*fraction;
+            // Independent old code path intentionally computes both source
+            // tangents and both texture offsets separately.
+            const expected=[-1,1].map(side=>
+              ribbonEdge(stripe,x,scene.extent,side,
+                textureHeight(scene,stripe,x,side)));
+            const actual=pairedRibbonEdges(x,stripe,scene.extent,scene);
+            assert.deepEqual(actual,expected,
+              'paired ribbon parity '+geometry+' '+coverage+' '+displacement+
+              ' '+stripe.index+' '+fraction);
           }
         }
       }
