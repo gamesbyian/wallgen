@@ -71,7 +71,7 @@ const patch=[
 // produces exact cached pixels, incomplete crop enumeration caused the gap;
 // if pixels still differ, partitioned draw/clip ordering remains suspect.
 const fullBoundsOnly=process.argv.includes('--full-bounds-control');
-const tilePaint=fullBoundsOnly?patch.replace(
+const tilePaint=fullBoundsOnly?patch.join('\n').replace(
   '            paintMaterial(t,layer,materialBounds,sandMaterialLighting(scene,layer));',
   '            paintMaterial(t,layer,paintBounds,sandMaterialLighting(scene,layer));'):patch;
 const candidate=original.replace(anchor,tilePaint);
