@@ -10,6 +10,14 @@ A **whole-job retry** of that old monolithic publisher correctly rebuilt the sam
 
 Similar intermittent artifact/deployment service errors have been [reported upstream in `actions/deploy-pages` issue #418](https://github.com/actions/deploy-pages/issues/418); this log does **not** establish which GitHub backend component caused this particular first HTTP 400.
 
+## Verified recovery and acceptance
+
+[PR #1025](https://github.com/gamesbyian/wallgen/pull/1025) merged at `da87df2bf4863fc354424031b36a2f976c42e789` after [required CI success #41540515777](https://github.com/gamesbyian/wallgen/actions/runs/41540515777). The *new* independent [main publish #41540788647](https://github.com/gamesbyian/wallgen/actions/runs/41540788647) completed successfully with **both `build` and `deploy` green**. Its `Verify public deployed artifacts` step fetched and compared actual public bytes, reporting:
+
+`Published Pages source, renderer pin and source/editor/worker bytes and SVG-derived PNGs verified: da87df2bf4863fc354424031b36a2f976c42e789 at https://gamesbyian.github.io/wallgen/`
+
+This proves the replacement workflow's actual Pages result at that SHA, including the separately immutable trusted renderer, but does not prove that a *future failed deploy-only retry* has yet occurred, nor Cloudflare/ChatGPT hosted preview, physical Pixel rendering or human approval. The old failed run remains valuable negative evidence, not an unresolved current publishing outage.
+
 ## Corrected workflow lifecycle
 
 The existing single `Publish Wallgen` workflow (`.github/workflows/pages.yml`) now contains **two serial jobs**, not another workflow:
