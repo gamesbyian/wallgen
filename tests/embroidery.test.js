@@ -217,6 +217,43 @@ test('only genuine same-row round tatami cap overlap receives bounded directiona
     'rotating the whole original row may not erase real local same-row contacts');
 });
 
+test('fibre contact capsules coincide with actual projected original underlay strokes',()=>{
+  const region={rings:[[
+    {x:50,y:630},{x:550,y:630},{x:550,y:670},{x:50,y:670}
+  ]]};
+  const light=sandLighting({lightingMood:'daylight',lightDirection:'bottom-right',
+    lightStrength:88,shadowStrength:85});
+  const capture=()=>{let path=[];const clips=[],strokes=[];return{
+    clips,strokes,save(){},restore(){},translate(){},rotate(){},
+    beginPath(){path=[]},moveTo(x,y){path.push(['M',x,y])},
+    lineTo(x,y){path.push(['L',x,y])},
+    arc(x,y,r){path.push(['A',x,y,r])},closePath(){},
+    clip(){clips.push(path.map(x=>[...x]))},
+    stroke(){strokes.push({width:this.lineWidth,path:path.map(x=>[...x])})},
+    fill(){}
+  }};
+  const ctx=capture(),treatment=select({style:'tatami-fibre',pitch:8,relief:80});
+  const count=drawRegionEmbroidery(ctx,region,treatment,light);
+  assert.ok(count>0&&ctx.clips.length>2);
+  assert.equal(ctx.clips.length%2,0,'two real physical caps per contact');
+  const actualWidth=Math.min(3.2,Math.max(.8,treatment.pitch*.32));
+  const epsilon=1e-8;
+  const covered=clip=>ctx.strokes.some(stroke=>{
+    if(Math.abs(stroke.width-actualWidth)>epsilon)return false;
+    const start=stroke.path.find(p=>p[0]==='M'),cap=clip.find(p=>p[0]==='M');
+    return start&&cap&&Math.abs(start[1]-cap[1])<epsilon&&
+      Math.abs(start[2]+actualWidth*.5-cap[2])<epsilon;
+  });
+  for(const clip of ctx.clips){
+    assert.equal(clip.filter(item=>item[0]==='A').length,2,
+      'contact must be the original rounded underlay capsule, not a rectangle');
+    assert.ok(clip.filter(item=>item[0]==='A').every(item=>
+      Math.abs(item[3]-actualWidth*.5)<epsilon),
+    'tatami fibre contact cannot borrow the ordinary tatami stitch width');
+    assert.ok(covered(clip),'each clipped capsule matches an actually painted original projected underlay');
+  }
+});
+
 test('source-bounded region tatami omits thousands of off-clip strokes without restarting stitch phases',()=>{
   const object={rings:[[
     {x:50,y:640},{x:550,y:640},{x:550,y:660},{x:50,y:660}
