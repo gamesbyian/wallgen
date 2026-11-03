@@ -47,6 +47,10 @@ let cases=[
     rings:[ring(50,570,550,730)],width:600,height:1300,effect:false},
   {label:'lit-pitch8-real-cap',style:'tatami',pitch:8,direction:0,lit:true,
     rings:[ring(50,570,550,730)],width:600,height:1300,effect:true},
+  {label:'lit-pitch8-phone-320',style:'tatami',pitch:8,direction:0,lit:true,
+    rings:[ring(50,570,550,730)],width:320,height:700,effect:true},
+  {label:'lit-pitch8-phone-412',style:'tatami',pitch:8,direction:0,lit:true,
+    rings:[ring(50,570,550,730)],width:412,height:892,effect:true},
   {label:'lit-pitch16-real-cap',style:'tatami',pitch:16,direction:0,lit:true,
     rings:[ring(50,570,550,730)],width:600,height:1300,effect:true},
   {label:'lit-pitch8-rotated',style:'tatami',pitch:8,direction:38,lit:true,
@@ -66,6 +70,8 @@ let cases=[
 ];
 const visualOnly=process.argv.includes('--visual-only');
 if(visualOnly)cases=cases.filter(c=>c.label==='lit-pitch8-real-cap');
+const mobileOnly=process.argv.includes('--mobile-only');
+if(mobileOnly)cases=cases.filter(c=>c.label.startsWith('lit-pitch8-phone-'));
 await new Promise(ok=>server.listen(0,'127.0.0.1',ok));
 let browser;
 try{
