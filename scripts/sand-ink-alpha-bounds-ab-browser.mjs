@@ -113,7 +113,7 @@ const cases=[
   return {...entry,recipe};
 });
 assert.equal(cases[0].recipe.material,'sand-mandala');
-assert.equal(cases[6].recipe.rayCount,42);
+assert.equal(cases.find(c=>c.label==='sand-dense-radial-control')?.recipe.rayCount,42);
 assert.equal(cases[0].recipe.textureCoverage,'stripes');
 await new Promise(done=>server.listen(0,'127.0.0.1',done));
 let browser;
