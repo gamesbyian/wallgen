@@ -34,7 +34,7 @@ jobs:
           node --check scripts/embroidery-region-source-bounds-ab-browser.mjs
           node --test tests/embroidery.test.js tests/embroidery-chain-contact.test.js tests/thread-contact-shadows.test.js
       - name: Compare real original vs clipped regional Canvas2D ink and native PNG
-        run: node scripts/embroidery-region-source-bounds-ab-browser.mjs
+        run: node scripts/embroidery-region-source-bounds-ab-browser.mjs --remaining-styles-only
       - name: Save source-indexed full pixels and work-volume receipt
         if: always()
         uses: actions/upload-artifact@v4
