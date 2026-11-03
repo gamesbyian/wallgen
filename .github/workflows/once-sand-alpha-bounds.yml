@@ -2,6 +2,7 @@ name: One-off movable sand ink-alpha crop whole-cache A-B
 on:
   pull_request:
     paths:
+      - 'src/renderer.js'
       - 'scripts/sand-ink-alpha-bounds-ab-browser.mjs'
       - '.github/workflows/once-sand-alpha-bounds.yml'
 permissions:
@@ -14,7 +15,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          fetch-depth: 0
           persist-credentials: false
+      - name: Checkout exact original base in separate immutable worktree
+        env:
+          CI_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          git worktree add --detach comparator-baseline "$CI_BASE_SHA"
+          test "$(git -C comparator-baseline rev-parse HEAD)" = "$CI_BASE_SHA"
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -24,7 +32,7 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Check diagnostic source
         run: node --check scripts/sand-ink-alpha-bounds-ab-browser.mjs
-      - name: Compare eight full source caches, original and alpha-bounded proposed paint
+      - name: Source-matched eleven-scene full nudge-cache A-B plus native PNG
         run: node scripts/sand-ink-alpha-bounds-ab-browser.mjs
       - name: Preserve quantitative proof
         if: always()
