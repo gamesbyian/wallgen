@@ -1,10 +1,11 @@
+#!/usr/bin/env node
 /**
  * One-off full-cache A/B hypothesis: derive conservative movable stripe
  * material bounds from actual painted ink alpha, while preserving full
  * material canvas origin/size and the source-backed real Worker.
  * No production module is edited or imported by this script.
  */
-#!/usr/bin/env node
+
 /**
  * Paired real Chromium source acceptance of original vs proposed settled cache
  * Worker. Serve original base and PR source from independent checkouts.
