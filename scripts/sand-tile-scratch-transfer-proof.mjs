@@ -75,6 +75,7 @@ const useImageDraw=process.argv.includes('--image-draw');
 const cropFacets=process.argv.includes('--crop-facets');
 const compactScratch=process.argv.includes('--compact-scratch');
 const coreClear=process.argv.includes('--core-clear');
+const stageTiming=process.argv.includes('--stage-timing');
 const start=patch.indexOf('        for(const clip of clips){');
 const finish=patch.indexOf('      }else{',start);
 assert(start>=0&&finish>start,'Original tile loop must still match');
@@ -136,7 +137,24 @@ const tileTransfer=compactScratch?compactTransfer:[
   '          }',
   '        }finally{releaseRenderSurface(tileSurface);}',
 ].join('\n');
-const candidate=original.replace(anchor,patch.slice(0,start)+tileTransfer+'\n'+patch.slice(finish));
+const timedTransfer=stageTiming?tileTransfer
+  .replace('        const tileSurface=createRenderSurface(tw,th,options.canvasFactory);',
+    '        const materialTileStart=performance.now();\n        const tileSurface=createRenderSurface(tw,th,options.canvasFactory);')
+  .replace('            t.restore();\n          }',
+    '            t.restore();\n            if(clip===clips[0])self.__sandStage={firstWorkerMs:performance.now()-self.__sandWorkerBegin,firstMaterialMs:performance.now()-materialTileStart};\n          }')
+  .replace('        }finally{releaseRenderSurface(tileSurface);}',
+    '          self.__sandStage={...self.__sandStage,allMaterialMs:performance.now()-materialTileStart};\n        }finally{releaseRenderSurface(tileSurface);}')
+  :tileTransfer;
+const candidate=original.replace(anchor,patch.slice(0,start)+timedTransfer+'\n'+patch.slice(finish));
+const workerSource=await readFile(join(root,'src/render-worker.js'),'utf8');
+const originalStage='const start=performance.now();';
+const originalFrame='overhang:cache.overhang,ms:performance.now()-start},';
+assert(workerSource.includes(originalStage)&&workerSource.includes(originalFrame),
+  'Original Worker diagnostic anchors changed');
+const candidateWorker=stageTiming?workerSource
+  .replace(originalStage,'const start=performance.now();self.__sandWorkerBegin=start;self.__sandStage=null;')
+  .replace(originalFrame,'overhang:cache.overhang,sandStage:self.__sandStage,ms:performance.now()-start},')
+  :workerSource;
 assert(candidate!==original&&candidate.includes('const tileSurface=createRenderSurface'), 'Candidate painter must replace original material stage');
 const server=createServer(async(req,res)=>{
  try{
@@ -147,8 +165,9 @@ const server=createServer(async(req,res)=>{
   if(!match){res.writeHead(404).end();return;}
   const file=resolve(root,'./'+match[2]);
   if(!file.startsWith(root+'/')){res.writeHead(403).end();return;}
-  const bytes=match[1]==='crop'&&match[2]==='src/renderer.js'?
-    candidate:await readFile(file);
+  const bytes=match[1]==='crop'&&match[2]==='src/renderer.js'?candidate:
+    match[1]==='crop'&&match[2]==='src/render-worker.js'?candidateWorker:
+    await readFile(file);
   res.writeHead(200,{'content-type':types[extname(file)]||'application/octet-stream',
     'cache-control':'no-store'}).end(bytes);
  }catch(error){if(!res.headersSent)res.writeHead(404).end(String(error));}
@@ -168,7 +187,8 @@ let scenes=[
 ].map(x=>({...x,recipe:normalizeRecipe({
  ...randomizeAllRecipe({seed:seedFor(x.index)}),...x.overrides
 })}));
-if(!cropFacets)scenes=scenes.filter(x=>['sand-372x806','sand-nudged-rotated'].includes(x.label));
+if(stageTiming)scenes=scenes.filter(x=>['sand-600x1300','sand-372x806'].includes(x.label));
+else if(!cropFacets)scenes=scenes.filter(x=>['sand-372x806','sand-nudged-rotated'].includes(x.label));
 assert.equal(scenes[0].recipe.material,'sand-mandala');
 assert.equal(scenes[0].recipe.rayCount,42);
 await new Promise(done=>server.listen(0,'127.0.0.1',done));
@@ -257,14 +277,14 @@ try{
   const records=[];
   for(const scene of scenes){
    const samples=[];
-   for(let i=0;i<(fullBoundsOnly?1:3);i++){
+   for(let i=0;i<(stageTiming?3:fullBoundsOnly?1:3);i++){
     const pair={};
     for(const worker of (i%2?workers.slice().reverse():workers)){
      const msg=await worker.request(scene.recipe,scene.w,scene.h);
      if(msg.type!=='frame'||msg.quality!=='settled')throw Error('Missing settled frame');
      const pixels=await paint(msg,scene.recipe,scene.w,scene.h);
      const ink=await inspectBitmap(msg.ink),background=await inspectBitmap(msg.background);
-     pair[worker.version]={ms:msg.ms,pixels,ink,background,overhang:msg.overhang};
+     pair[worker.version]={ms:msg.ms,sandStage:msg.sandStage,pixels,ink,background,overhang:msg.overhang};
      msg.background.close();msg.ink.close();
     }
     const p=pair.base.pixels,q=pair.crop.pixels;
@@ -279,7 +299,7 @@ try{
      maxDelta=Math.max(maxDelta,delta);
      if(p[j+3]!==q[j+3])alphaChanged++;
     }
-    const receipt={i,baseMs:pair.base.ms,cropMs:pair.crop.ms,
+    const receipt={i,baseMs:pair.base.ms,cropMs:pair.crop.ms,sandStage:pair.crop.sandStage,
       fullCacheExact:pair.base.ink.sha===pair.crop.ink.sha&&
         pair.base.background.sha===pair.crop.background.sha&&
         JSON.stringify(pair.base.overhang)===JSON.stringify(pair.crop.overhang),
@@ -317,12 +337,14 @@ try{
   changed:r.samples[0].changed,maxDelta:r.samples[0].maxDelta,
   baseMedianMs:Math.round(median(r.samples.map(s=>s.baseMs))),
   cropMedianMs:Math.round(median(r.samples.map(s=>s.cropMs))),
+  firstWorkerMedianMs:stageTiming?Math.round(median(r.samples.map(s=>s.sandStage?.firstWorkerMs??Infinity))):null,
+  allMaterialMedianMs:stageTiming?Math.round(median(r.samples.map(s=>s.sandStage?.allMaterialMs??Infinity))):null,
   originalVisibleSha:r.samples[0].baseSha,candidateVisibleSha:r.samples[0].cropSha}));
- const evidenceFolder=compactScratch?'sand-tile-scratch-compact':coreClear?'sand-tile-scratch-core-clear':cropFacets?'sand-tile-scratch-cropped':useImageDraw?'sand-tile-scratch-drawimage':'sand-tile-scratch-pixeldata';
+ const evidenceFolder=stageTiming?'sand-tile-scratch-stage-timing':compactScratch?'sand-tile-scratch-compact':coreClear?'sand-tile-scratch-core-clear':cropFacets?'sand-tile-scratch-cropped':useImageDraw?'sand-tile-scratch-drawimage':'sand-tile-scratch-pixeldata';
  await mkdir(join(root,'artifacts',evidenceFolder),{recursive:true});
  await writeFile(join(root,'artifacts',evidenceFolder,'receipt.json'),
   JSON.stringify({environment:'Original Chromium worker versus scratch tile full-grain paint with unmodified integer-pixel core transfer, no production change',summary,...results},null,2)+'\n');
- console.log(compactScratch?'ROYGBIV_SAND_COMPACT_TILE_SCRATCH':coreClear?'ROYGBIV_SAND_CORE_CLEAR':cropFacets?'ROYGBIV_SAND_SCRATCH_CROPPED':useImageDraw?'ROYGBIV_SAND_SCRATCH_DRAWIMAGE':'ROYGBIV_SAND_SCRATCH_IMAGEDATA',JSON.stringify({summary,native:results.native}));
+ console.log(stageTiming?'ROYGBIV_SAND_SCRATCH_STAGE_TIMING':compactScratch?'ROYGBIV_SAND_COMPACT_TILE_SCRATCH':coreClear?'ROYGBIV_SAND_CORE_CLEAR':cropFacets?'ROYGBIV_SAND_SCRATCH_CROPPED':useImageDraw?'ROYGBIV_SAND_SCRATCH_DRAWIMAGE':'ROYGBIV_SAND_SCRATCH_IMAGEDATA',JSON.stringify({summary,native:results.native}));
 }finally{
  await browser?.close();await new Promise(done=>server.close(done));
 }
