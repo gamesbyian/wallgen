@@ -1,0 +1,46 @@
+name: One-off real tatami endcap shadow optical acceptance
+on:
+  pull_request:
+    paths:
+      - src/embroidery.js
+      - tests/embroidery.test.js
+      - scripts/embroidery-tatami-real-cap-optical.mjs
+      - .github/workflows/once-embroidery-real-tatami-caps.yml
+permissions:
+  contents: read
+jobs:
+  real-source-contacts:
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository && contains(github.event.pull_request.title, '[tatami-cap-e4]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Immutable accepted pre-contact main painter
+        uses: actions/checkout@v4
+        with:
+          ref: a3bdc4b520cb48db00499ba84c9fdb4616e16659
+          path: comparator-baseline
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Original-source contact truth and focused node tests
+        run: |
+          node --check scripts/embroidery-tatami-real-cap-optical.mjs
+          node --test tests/embroidery.test.js
+      - name: Install actual headless Chromium once
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Test true E4 yarn-cap overlaps under original even-odd vector clips
+        run: node scripts/embroidery-tatami-real-cap-optical.mjs
+      - name: Keep actual source pixel and native PNG receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: real-tatami-cap-contact-${{ github.run_id }}
+          path: artifacts/embroidery-tatami-real-cap/
+          retention-days: 7
+          if-no-files-found: warn
