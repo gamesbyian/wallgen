@@ -1,0 +1,60 @@
+name: One-off true Random-click pre-post sand crop
+on:
+  pull_request:
+    paths:
+      - scripts/randomize-e2e-sand-source-ab-browser.mjs
+      - scripts/compare-sand-random-e2e-receipts.mjs
+      - .github/workflows/once-sand-real-random-source-ab.yml
+permissions:
+  contents: read
+jobs:
+  compare-real-random:
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository && contains(github.event.pull_request.title, '[real-random-sand-ab]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Check out immutable pre-1029 production source
+        uses: actions/checkout@v4
+        with:
+          ref: 3c76cb18e424fa501380b768bf690a567e71bf44
+          path: comparator-baseline
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install real Chromium only once
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Check exact test and comparator syntax
+        run: |
+          node --check scripts/randomize-e2e-sand-source-ab-browser.mjs
+          node --check scripts/compare-sand-random-e2e-receipts.mjs
+      - name: Use identical test harness for two complete historical app sources
+        run: cp scripts/randomize-e2e-sand-source-ab-browser.mjs comparator-baseline/scripts/
+      - name: Historical app real Random button, both phone viewports
+        working-directory: comparator-baseline
+        env:
+          ROYGBIV_SOURCE_LABEL: pre-1029-3c76cb18
+        run: node scripts/randomize-e2e-sand-source-ab-browser.mjs
+      - name: Current app real Random button, both phone viewports
+        env:
+          ROYGBIV_SOURCE_LABEL: post-1029-current
+        run: node scripts/randomize-e2e-sand-source-ab-browser.mjs
+      - name: Record source matched Worker and click-to-visible differences
+        run: |
+          node scripts/compare-sand-random-e2e-receipts.mjs comparator-baseline/artifacts/randomize-e2e-sand-cross-source/receipt.json artifacts/randomize-e2e-sand-cross-source/receipt.json
+      - name: Preserve source and actual browser input timing receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: real-random-sand-ab-${{ github.run_id }}
+          path: |
+            comparator-baseline/artifacts/randomize-e2e-sand-cross-source/receipt.json
+            artifacts/randomize-e2e-sand-cross-source/receipt.json
+            artifacts/sand-random-cross-source/comparison.json
+          retention-days: 7
+          if-no-files-found: warn
