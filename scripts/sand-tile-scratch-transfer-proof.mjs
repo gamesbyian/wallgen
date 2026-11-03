@@ -74,6 +74,7 @@ const fullBoundsOnly=true; // One full-field grain enumeration in every tile, di
 const useImageDraw=process.argv.includes('--image-draw');
 const cropFacets=process.argv.includes('--crop-facets');
 const compactScratch=process.argv.includes('--compact-scratch');
+const coreClear=process.argv.includes('--core-clear');
 const start=patch.indexOf('        for(const clip of clips){');
 const finish=patch.indexOf('      }else{',start);
 assert(start>=0&&finish>start,'Original tile loop must still match');
@@ -117,7 +118,8 @@ const tileTransfer=compactScratch?compactTransfer:[
   '            const pw=px1-px0,ph=py1-py0;',
   '            if(pw<=0||ph<=0)continue;',
   '            tileCtx.setTransform(1,0,0,1,0,0);',
-  '            tileCtx.clearRect(0,0,tw,th);',
+  coreClear?'            tileCtx.clearRect(px0,py0,pw,ph);':
+    '            tileCtx.clearRect(0,0,tw,th);',
   '            tileCtx.setTransform(rasterScale,0,0,rasterScale,-x0*rasterScale,-y0*rasterScale);',
   '            tileCtx.globalAlpha=layer.strength/100;',
   '            const materialBounds={left:Math.max(left,clip.left-pad),',
@@ -316,11 +318,11 @@ try{
   baseMedianMs:Math.round(median(r.samples.map(s=>s.baseMs))),
   cropMedianMs:Math.round(median(r.samples.map(s=>s.cropMs))),
   originalVisibleSha:r.samples[0].baseSha,candidateVisibleSha:r.samples[0].cropSha}));
- const evidenceFolder=compactScratch?'sand-tile-scratch-compact':cropFacets?'sand-tile-scratch-cropped':useImageDraw?'sand-tile-scratch-drawimage':'sand-tile-scratch-pixeldata';
+ const evidenceFolder=compactScratch?'sand-tile-scratch-compact':coreClear?'sand-tile-scratch-core-clear':cropFacets?'sand-tile-scratch-cropped':useImageDraw?'sand-tile-scratch-drawimage':'sand-tile-scratch-pixeldata';
  await mkdir(join(root,'artifacts',evidenceFolder),{recursive:true});
  await writeFile(join(root,'artifacts',evidenceFolder,'receipt.json'),
   JSON.stringify({environment:'Original Chromium worker versus scratch tile full-grain paint with unmodified integer-pixel core transfer, no production change',summary,...results},null,2)+'\n');
- console.log(compactScratch?'ROYGBIV_SAND_COMPACT_TILE_SCRATCH':cropFacets?'ROYGBIV_SAND_SCRATCH_CROPPED':useImageDraw?'ROYGBIV_SAND_SCRATCH_DRAWIMAGE':'ROYGBIV_SAND_SCRATCH_IMAGEDATA',JSON.stringify({summary,native:results.native}));
+ console.log(compactScratch?'ROYGBIV_SAND_COMPACT_TILE_SCRATCH':coreClear?'ROYGBIV_SAND_CORE_CLEAR':cropFacets?'ROYGBIV_SAND_SCRATCH_CROPPED':useImageDraw?'ROYGBIV_SAND_SCRATCH_DRAWIMAGE':'ROYGBIV_SAND_SCRATCH_IMAGEDATA',JSON.stringify({summary,native:results.native}));
 }finally{
  await browser?.close();await new Promise(done=>server.close(done));
 }
