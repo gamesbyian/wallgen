@@ -465,6 +465,19 @@ export function drawRegionEmbroidery(ctx,object,treatment,lighting=null){
   const angle=(treatment.direction+((height>width)?90:0))*Math.PI/180;
   ctx.rotate(angle);
   const localLight=rotateThreadLighting(lighting,angle);
+  // A polygon's original vertices (or exact circle) are wholly contained
+  // in its world-space axis-aligned bounds. Transform those four corners
+  // into the stitch-local frame, WITHOUT moving the existing row lattice.
+  // Rows and short stitches beyond these conservative source limits cannot
+  // reach any pixel inside the original even-odd silhouette clip.
+  // Keep extra authored-world space for relief offsets, round caps and
+  // antialiasing; normalized pitch is 2..16 so this exceeds the maximum
+  // thread-light projection and width. Chain links are deliberately excluded
+  // from culling because the prior-link contact topology is source ordered.
+  const c=Math.cos(angle),s=Math.sin(angle);
+  const halfX=(Math.abs(c)*width+Math.abs(s)*height)*.5;
+  const halfY=(Math.abs(s)*width+Math.abs(c)*height)*.5;
+  const threadHalo=Math.max(24,treatment.pitch*3);
   ctx.lineCap='round';
   ctx.lineWidth=Math.max(.7,Math.min(2.5,treatment.pitch*.25));
   // Chain fills need fewer, distinct loop courses than closely stacked
@@ -476,6 +489,9 @@ export function drawRegionEmbroidery(ctx,object,treatment,lighting=null){
   for(let k=-n;k<=n;k++){
     const y=k*treatment.pitch;
     if(Math.abs(y)>diagonal*.7)continue;
+    // This only omits source rows provably outside the original region
+    // bounds plus enough world-space margin for any projected yarn ink.
+    if(!chain&&Math.abs(y)>halfY+threadHalo)continue;
     if(chain){
       if((k+n)%chainStride!==0)continue;
       const limit=diagonal*.8;
@@ -507,6 +523,9 @@ export function drawRegionEmbroidery(ctx,object,treatment,lighting=null){
       for(let x=-limit-segment+offset;x<limit;x+=segment){
         const a=Math.max(-limit,x+.7),b=Math.min(limit,x+segment-.7);
         if(b-a<1)continue;
+        // Preserve each original k/segment index, stagger and stitch phase.
+        // A completely off-object segment cannot survive the existing clip.
+        if(b< -halfX-threadHalo||a>halfX+threadHalo)continue;
         if(fibre){
           fibreSpan(ctx,a,y,b,y,treatment.pitch,treatment.relief,
             k*8191+Math.floor((x+limit+segment)/segment),localLight);
