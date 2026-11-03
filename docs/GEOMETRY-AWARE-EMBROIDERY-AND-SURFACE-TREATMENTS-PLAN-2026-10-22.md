@@ -334,3 +334,24 @@ The successful [#1034](https://github.com/gamesbyian/wallgen/pull/1034) original
 | Native-resolution same compound, exact PNG | 3452 | **2282** | **33.9%** | 58 / 19 |
 
 A low-cost production test asserts that the thin chain still uses hundreds of genuine original links, that original in-row phase is deterministic, and that lighting still produces real consecutive-cubic contact strokes while introducing **no new source clip**. Other nonchain source bounds are unchanged from #1034. These are local source-stage timings and actual pixel identity, not a claimed user-visible Random speedup or physical Pixel battery/thermal test. No new topological shadow beyond actual source linked cubics is added. The optional A/B script is updated; its one-off workflow is retired before clean required CI and merge. Remaining E4 scope is genuine newly demonstrated external/internal tatami contact topology and physical/human acceptance, not fabricated shadows between noncrossing rows.
+
+## Source-disjoint link columns in original linked-chain region fills (3 November 2026, PR #1036)
+
+Accepted [#1034](https://github.com/gamesbyian/wallgen/pull/1034) bounded satin/tatami/running original-world stitch rows; [#1035](https://github.com/gamesbyian/wallgen/pull/1035) extended the same margin to whole chain **rows**, but conservatively left every link in each retained row intact. A narrow or rotated imported shape can still submit hundreds of linked cubic loops that lie *entirely outside* the author's existing region even-odd clip. This adds unnecessary original-cubic path construction and source-linked contact intersection work.
+
+The new extremely local `drawRegionEmbroidery` change checks each original link's x-control hull `cx-half .. cx+half` in unchanged stitch-local authored units against the existing **rotated source-object bound** `±halfX` plus `max(24,3*pitch)`. All chain cubic control points are inside that horizontal hull. When the entire hull misses the padded region bounds, its winding, original clip, round cap, world-lamp projection and adjacent-contact shade cannot reach the source artwork. The link is skipped and local `prior` reset, rather than reconnecting the next retained link to a nonadjacent source station. Every surviving link retains the **same original row `k`, x station, cubic geometry, original predecessor and lamp**. This is complementary to #1035, rather than a replacement of the accepted row filter. The earlier #1035 rule forbidding arbitrary individual-link skips remains correct; #1036 adds a specific geometrically disjoint case backed by actual pixels. No alpha readback, new cache, image-space positions, geometry API, external bitmap mask, source art or recipe schema.
+
+[Original complete-source Chromium A/B #41619031377](https://github.com/gamesbyian/wallgen/actions/runs/41619031377) used immutable accepted `96f6085bf0cb52eda2a67bb9ff1c80a42044484d` for the baseline `src/embroidery.js`, and the identical shared Canvas2D source clips and dependencies for the candidate. Three alternating pairs each for seven 600×1300 actual chain-filled original objects (lit, dark, rotated, circle, tall column and an even-odd compound island/hole), plus one native **3024×6552** compound export. **Every complete rendered RGBA pixel matched**. Full native PNG was **byte-for-byte identical**, 1,634,260 bytes, SHA-256 `dfbee67e912eda67c37ff497deacf238e974ff127df9c8d0b6fa91b2397a27b5`. The fast source test ensures retained original contact curves, determinism and absence of extra clips. There is no physical Pixel, actual Random-click or subjective art-quality claim.
+
+| Original region linked-chain case | After #1035 whole-row culling | After #1036 row + link culling | Further avoided | Local stage median before → after |
+|---|---:|---:|---:|---:|
+| 500×20 unlit | 297 | **216** | 27.3% | 4 → 2ms |
+| 500×20 lit contacts | 297 | **216** | 27.3% | 5 → 5ms |
+| Thin rotated lit | 1881 | **1140** | 39.4% | 26 → 14ms |
+| Tall narrow column lit | 2632 | **252** | **90.4%** | 23 → 3ms |
+| Tall narrow column unlit | 2632 | **252** | 90.4% | 4 → 1ms |
+| Circle | 687 | **475** | 30.9% | 6 → 6ms |
+| Compound hole + island | 2282 | **1502** | 34.2% | 19 → 14ms |
+| Native compound 3024×6552 | 2282 | **1502** | 34.2% | 22 → 13ms |
+
+These are original Canvas2D **region chain-stage** single-run medians of three alternating pairs (one native pair), not an app-level throughput claim. Improvements vary with object aspect ratio and illumination; fully occupied or unusually broad objects may not benefit. The optional original-vs-candidate script remains independently runnable; its disposable browser workflow was removed before final exact-head normal CI. The source-width and original-world station semantics remain canonical. Residual E4 is real source-overlapping tatami contact, not synthetic shadows between nonintersecting rows, plus genuine handset/human validation.

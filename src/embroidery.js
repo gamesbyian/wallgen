@@ -475,7 +475,9 @@ export function drawRegionEmbroidery(ctx,object,treatment,lighting=null){
   // thread-light projection and width. Chain links may omit entire original
   // off-object rows: previous-link contacts are source-ordered *within each
   // row*, with no cross-row predecessor state. Never omit individual links
-  // from a retained chain row, where contacts depend on the preceding link.
+  // from a retained chain row without respecting original predecessor order.
+  // Individual chain links whose full cubic control hull misses the padded
+  // source bounding box can also be omitted, provided prior is reset there.
   const c=Math.cos(angle),s=Math.sin(angle);
   const halfX=(Math.abs(c)*width+Math.abs(s)*height)*.5;
   const halfY=(Math.abs(s)*width+Math.abs(c)*height)*.5;
@@ -505,6 +507,18 @@ export function drawRegionEmbroidery(ctx,object,treatment,lighting=null){
       let prior=null;
       for(let x=-limit+offset;x+chainStep<=limit;x+=chainStep){
         const cx=x+chainStep*.5,half=chainStep*.51;
+        // The source cubic control hull is x-bounded by cx +/- half,
+        // including the upper and lower curved branches. A link entirely
+        // beyond the original rotated object bounds plus the yarn/lighting
+        // halo cannot draw into its existing even-odd clip. Keep the original
+        // x station and row index; do not restart or compress the lattice.
+        // A skipped link also breaks local predecessor contact state. Its
+        // intersection with a later retained link is outside the clip and
+        // therefore cannot own any visible contact or lamp-projected shade.
+        if(cx+half< -halfX-threadHalo||
+           cx-half>halfX+threadHalo){
+          prior=null;continue;
+        }
         const loft=Math.min(treatment.pitch*.74,chainStep*.29);
         if(localLight?.shadow>0){
           const curves=chainLinkCurves(cx,y,1,0,0,1,half,loft);
