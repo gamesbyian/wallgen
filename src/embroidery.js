@@ -95,7 +95,7 @@ function paintTatamiCapContact(ctx,prior,a,b,y,width,lighting,pitch,relief,
   // Its thinner glint/microstrands do NOT reach the adjacent stitch.
   // Transform only these capsule centres; ordinary tatami is unchanged.
   const sx=fibreUnderlay?profile.shadowX:0;
-  const sy=fibreUnderlay?.35+profile.shadowY:0;
+  const sy=fibreUnderlay ? .35+profile.shadowY : 0;
   ctx.save();
   const low={x:prior.a+sx,y:y+sy},lowEnd={x:prior.b+sx,y:y+sy};
   const high={x:a+sx,y:y+sy},highEnd={x:b+sx,y:y+sy};
@@ -119,7 +119,7 @@ function paintTatamiCapContact(ctx,prior,a,b,y,width,lighting,pitch,relief,
   // The fibre underlay is much thinner and more transparent than a
   // regular tubular tatami stitch; do not stamp a satin-scale dark blob.
   ctx.fillStyle='rgba('+profile.shadeRgb+','+
-    ((fibreUnderlay?.055:.16)*profile.shade).toFixed(3)+')';
+    ((fibreUnderlay ? .055 : .16)*profile.shade).toFixed(3)+')';
   ctx.fill();
   ctx.restore();
   return true;
