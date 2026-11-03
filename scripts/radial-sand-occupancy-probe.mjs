@@ -1,11 +1,18 @@
 #!/usr/bin/env node
 /**
- * Diagnostic only: measure pre-material vector ink alpha occupancy and readback overhead in a source-instrumented real OffscreenCanvas Worker for canonical Random sources. The untouched Worker
- * renders the same recipe before and after in-memory method forwarding;
- * the pinned heavy scene also measures same-size interactive (no overscan)
- * against settled (+30%-per-side immutable nudge overscan) call counts.
- * compare both transferred bitmap SHA-256s. Counted timings are intentionally
- * NOT used as performance claims because wrapper overhead is nonzero.
+ * Opt-in, source-instrumented real Chromium Worker experiment.
+ *
+ * Before painting its sand material, sample the *actual* canonical radial
+ * source ink alpha, map nontransparent pixels to 16/32/64 authored-world-unit
+ * occupancy cells, conservatively dilate by 40 units + one cell, and report
+ * the optimistic skip fraction alongside the costs of readback, scanning,
+ * and dilation. Keep the source dimensions, canvas, cache, transforms,
+ * nudge overhang, painter and export behavior untouched.
+ *
+ * Two identical trials verify deterministic returned ink/background SHAs.
+ * The probe deliberately does not test a production culling implementation,
+ * source-matched parity with a separate original Worker, or phone performance.
+ * See docs/RANDOMIZE-RENDER-LATENCY-2026-10-29.md (#1031).
  */
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
