@@ -72,6 +72,7 @@ const patch=[
 // if pixels still differ, partitioned draw/clip ordering remains suspect.
 const fullBoundsOnly=true; // One full-field grain enumeration in every tile, diagnostic only.
 const useImageDraw=process.argv.includes('--image-draw');
+const cropFacets=process.argv.includes('--crop-facets');
 const start=patch.indexOf('        for(const clip of clips){');
 const finish=patch.indexOf('      }else{',start);
 assert(start>=0&&finish>start,'Original tile loop must still match');
@@ -92,7 +93,11 @@ const tileTransfer=[
   '            tileCtx.clearRect(0,0,tw,th);',
   '            tileCtx.setTransform(rasterScale,0,0,rasterScale,-x0*rasterScale,-y0*rasterScale);',
   '            tileCtx.globalAlpha=layer.strength/100;',
-  '            paintMaterial(tileCtx,layer,paintBounds,sandMaterialLighting(scene,layer));',
+  '            const materialBounds={left:Math.max(left,clip.left-pad),',
+  '              right:Math.min(right,clip.right+pad),',
+  '              top:Math.max(top,clip.top-pad),bottom:Math.min(bottom,clip.bottom+pad)};',
+  cropFacets?'            paintMaterial(tileCtx,layer,materialBounds,sandMaterialLighting(scene,layer));':
+    '            paintMaterial(tileCtx,layer,paintBounds,sandMaterialLighting(scene,layer));',
   '            t.save();',
   '            t.setTransform(1,0,0,1,0,0);t.globalAlpha=1;',
   useImageDraw?
@@ -134,7 +139,7 @@ let scenes=[
 ].map(x=>({...x,recipe:normalizeRecipe({
  ...randomizeAllRecipe({seed:seedFor(x.index)}),...x.overrides
 })}));
-scenes=scenes.filter(x=>['sand-372x806','sand-nudged-rotated'].includes(x.label));
+if(!cropFacets)scenes=scenes.filter(x=>['sand-372x806','sand-nudged-rotated'].includes(x.label));
 assert.equal(scenes[0].recipe.material,'sand-mandala');
 assert.equal(scenes[0].recipe.rayCount,42);
 await new Promise(done=>server.listen(0,'127.0.0.1',done));
@@ -284,11 +289,11 @@ try{
   baseMedianMs:Math.round(median(r.samples.map(s=>s.baseMs))),
   cropMedianMs:Math.round(median(r.samples.map(s=>s.cropMs))),
   originalVisibleSha:r.samples[0].baseSha,candidateVisibleSha:r.samples[0].cropSha}));
- const evidenceFolder=useImageDraw?'sand-tile-scratch-drawimage':'sand-tile-scratch-pixeldata';
+ const evidenceFolder=cropFacets?'sand-tile-scratch-cropped':useImageDraw?'sand-tile-scratch-drawimage':'sand-tile-scratch-pixeldata';
  await mkdir(join(root,'artifacts',evidenceFolder),{recursive:true});
  await writeFile(join(root,'artifacts',evidenceFolder,'receipt.json'),
   JSON.stringify({environment:'Original Chromium worker versus scratch tile full-grain paint with unmodified integer-pixel core transfer, no production change',summary,...results},null,2)+'\n');
- console.log(useImageDraw?'ROYGBIV_SAND_SCRATCH_DRAWIMAGE':'ROYGBIV_SAND_SCRATCH_IMAGEDATA',JSON.stringify({summary,native:results.native}));
+ console.log(cropFacets?'ROYGBIV_SAND_SCRATCH_CROPPED':useImageDraw?'ROYGBIV_SAND_SCRATCH_DRAWIMAGE':'ROYGBIV_SAND_SCRATCH_IMAGEDATA',JSON.stringify({summary,native:results.native}));
 }finally{
  await browser?.close();await new Promise(done=>server.close(done));
 }
