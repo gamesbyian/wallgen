@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {normalizeRecipe,encodeRecipe,decodeRecipe,resolveScene} from '../src/model.js';
 import {normalizeSurfaceTreatments,matchingEmbroidery,drawRibbonEmbroidery,drawRegionEmbroidery} from '../src/embroidery.js';
+import {sandLighting} from '../src/sand-lighting.js';
 
 const select=(opts={})=>normalizeSurfaceTreatments([{
   id:'thread-1',enabled:true,target:{scope:'palette',role:'fill',colorSlots:[1],ids:[]},
@@ -100,6 +101,107 @@ test('tatami on a clipped region draws staggered short rows; satin remains long 
   const repeat=segments();
   drawRegionEmbroidery(repeat,rectangle,select({style:'tatami',pitch:8}));
   assert.deepEqual(tatami.strokes,repeat.strokes,'same authored grid, no RNG');
+});
+
+test('authored tatami courses cannot claim transverse contact between parallel source rows',()=>{
+  // Source truth: the production painter lays each region-tatami centreline
+  // at y=k*pitch before one global rotation. Separate courses remain
+  // parallel under that rotation; shadow/glint offsets are NOT new yarn
+  // crossings. Keep the issue conditional on a genuinely authored
+  // intersecting course, not a proximity-based fake shadow.
+  const object={rings:[[
+    {x:50,y:640},{x:550,y:640},{x:550,y:660},{x:50,y:660}
+  ]]};
+  for(const [pitch,direction] of [[2,0],[5,38],[16,73]]){
+    const paths=[],context={
+      save(){},restore(){},translate(){},rotate(){},beginPath(){},
+      moveTo(x,y){this.start={x,y}},
+      lineTo(x,y){paths.push({start:{...this.start},end:{x,y}})},
+      stroke(){}
+    };
+    const stitches=drawRegionEmbroidery(context,object,
+      select({style:'tatami',pitch,direction,relief:100}),null);
+    assert.ok(stitches>0,'test must exercise the live source painter');
+    assert.equal(paths.length,2*stitches,
+      'unlit original tatami has two ink strokes for each real source stitch');
+    const courses=new Map();
+    for(let i=0;i<paths.length;i+=2){
+      const lower=paths[i],upper=paths[i+1];
+      assert.equal(lower.start.x,upper.start.x);
+      assert.equal(lower.end.x,upper.end.x);
+      assert.equal(lower.start.y-lower.end.y,0);
+      assert.equal(upper.start.y-upper.end.y,0);
+      const y=(lower.start.y+upper.start.y)/2;
+      assert.ok(Math.abs(lower.start.y-upper.start.y-1)<1e-9,
+        'two side shadings must still belong to one unchanged source course');
+      if(!courses.has(y))courses.set(y,[]);
+      courses.get(y).push([lower.start.x,lower.end.x]);
+    }
+    const ys=[...courses.keys()].sort((a,b)=>a-b);
+    assert.ok(ys.length>1,'source must contain multiple original courses');
+    for(let i=1;i<ys.length;i++)assert.ok(ys[i]-ys[i-1]>=pitch-1e-8,
+      'distinct tatami source centrelines are pitch-separated, never transverse');
+    for(const pieces of courses.values()){
+      pieces.sort((a,b)=>a[0]-b[0]);
+      for(let i=1;i<pieces.length;i++)
+        assert.ok(pieces[i][0]-pieces[i-1][1]>=1.4-1e-8,
+          'tatami centrelines retain their 1.4-unit original station gap; round yarn caps may overlap at high pitch');
+    }
+    // Applying the single ctx.rotate(direction) to every course cannot
+    // manufacture a transverse intersection from these parallel lines.
+    // New cross-hatching or manually crossing source segments would need
+    // their own intentionally authored geometry before contact shading.
+  }
+});
+
+test('only genuine same-row round tatami cap overlap receives bounded directional contact ink',()=>{
+  const object={rings:[[
+    {x:50,y:640},{x:550,y:640},{x:550,y:660},{x:50,y:660}
+  ]]};
+  const lamp=sandLighting({lightingMood:'daylight',
+    lightDirection:'top-left',lightStrength:90,shadowStrength:80});
+  const record=()=>{const ops={strokes:0,clips:0,arcs:0,fills:0,saves:0,restores:0};
+    return {...ops,ops,save(){ops.saves++},restore(){ops.restores++},
+      translate(){},rotate(){},beginPath(){},moveTo(){},lineTo(){},
+      stroke(){ops.strokes++},arc(){ops.arcs++},closePath(){},
+      clip(){ops.clips++},fill(){ops.fills++}};
+  };
+  const low=record(),standard=record(),wide=record(),unlit=record(),
+    fibre=record(),running=record(),rotated=record();
+  // Original adjacent short stitch centres are separated by exactly 1.4;
+  // at pitch 5, real round yarn width 1.25 has no endcap overlap.
+  assert.ok(drawRegionEmbroidery(low,object,
+    select({style:'tatami',pitch:5}),lamp)>0);
+  assert.equal(low.ops.fills,0);
+  assert.equal(low.ops.clips,0);
+  // Pitch 8 -> 2-unit round yarn: adjacent 1.4-unit gap has a true
+  // 0.6-unit overlapping capsule lens. It is legitimate source contact.
+  const count=drawRegionEmbroidery(standard,object,
+    select({style:'tatami',pitch:8}),lamp);
+  assert.ok(count>0&&standard.ops.fills>0);
+  assert.equal(standard.ops.clips,standard.ops.fills*2,
+    'each contact is clipped to BOTH exact original lower and upper yarn capsules');
+  assert.equal(standard.ops.arcs,standard.ops.fills*5,
+    'each pair of round capsules contributes four semicircles and one local contact shadow disk');
+  assert.equal(standard.ops.saves,standard.ops.restores,
+    'nested intersection clip always restores the original region canvas state');
+  drawRegionEmbroidery(wide,object,select({style:'tatami',pitch:16}),lamp);
+  assert.ok(wide.ops.fills>0);
+  assert.equal(wide.ops.clips,wide.ops.fills*2);
+  // The same 8-unit source without an active lamp retains its exact
+  // historical double-ink paths, with no extra contact clip/painting.
+  assert.equal(drawRegionEmbroidery(unlit,object,
+    select({style:'tatami',pitch:8}),null),count);
+  assert.equal(unlit.ops.fills,0);
+  // Running and fibre tatami have distinct original yarn footprints and
+  // must not borrow a satin/tatami stroke-width contact approximation.
+  drawRegionEmbroidery(running,object,select({style:'running',pitch:8}),lamp);
+  drawRegionEmbroidery(fibre,object,select({style:'tatami-fibre',pitch:8}),lamp);
+  assert.equal(running.ops.fills,0);
+  assert.equal(fibre.ops.fills,0);
+  drawRegionEmbroidery(rotated,object,select({style:'tatami',pitch:8,direction:38}),lamp);
+  assert.ok(rotated.ops.fills>0,
+    'rotating the whole original row may not erase real local same-row contacts');
 });
 
 test('source-bounded region tatami omits thousands of off-clip strokes without restarting stitch phases',()=>{
