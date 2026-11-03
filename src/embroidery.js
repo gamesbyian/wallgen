@@ -526,6 +526,11 @@ export function drawRegionEmbroidery(ctx,object,treatment,lighting=null){
   const threadHalo=Math.max(24,treatment.pitch*3);
   ctx.lineCap='round';
   ctx.lineWidth=Math.max(.7,Math.min(2.5,treatment.pitch*.25));
+  // The authored short-stitch end gap is >=1.4 world units. The usual
+  // normalized pitch=5 has width 1.25: no physical cap contact exists,
+  // so do not even enter the per-stitch shade code on that hot path.
+  const tatamiCapOverlapEligible=tatami&&!fibre&&
+    localLight?.shadow>0&&ctx.lineWidth>1.4;
   // Chain fills need fewer, distinct loop courses than closely stacked
   // satin rows. Limit total curve work for large imported multi-ring art.
   const chainStride=Math.max(2,Math.ceil((2*n+1)/120));
@@ -591,10 +596,10 @@ export function drawRegionEmbroidery(ctx,object,treatment,lighting=null){
         }
         // No work for ordinary pitch=5, any unlit source, running stitch,
         // or a fibre pattern whose distinct microstrands are not modeled here.
-        if(tatami&&!fibre&&localLight?.shadow>0&&priorTatami)
+        if(tatamiCapOverlapEligible&&priorTatami)
           paintTatamiCapContact(ctx,priorTatami,a,b,y,ctx.lineWidth,
             localLight,treatment.pitch,treatment.relief);
-        if(tatami&&!fibre)priorTatami={a,b};
+        if(tatamiCapOverlapEligible)priorTatami={a,b};
         if(fibre){
           fibreSpan(ctx,a,y,b,y,treatment.pitch,treatment.relief,
             k*8191+Math.floor((x+limit+segment)/segment),localLight);
