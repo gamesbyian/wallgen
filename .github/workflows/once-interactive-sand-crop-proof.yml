@@ -1,0 +1,66 @@
+name: One-off interactive floating sand crop exact source acceptance
+on:
+  pull_request:
+    paths:
+      - src/renderer.js
+      - src/render-worker.js
+      - scripts/sand-interactive-source-crop-ab-browser.mjs
+      - .github/workflows/once-interactive-sand-crop-proof.yml
+permissions:
+  contents: read
+jobs:
+  real-source-pixels-and-clicks:
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository && contains(github.event.pull_request.title, '[interactive-sand-crop]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Check out exact pre-change source for original Renderer and Worker
+        uses: actions/checkout@v4
+        with:
+          ref: 6c7fa0ff422c10b14c675596ee150e60f4962e7f
+          path: comparator-baseline
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install real Chromium once for both exact-source comparisons
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Verify experimental source and test grammar
+        run: |
+          node --check src/renderer.js
+          node --check src/render-worker.js
+          node --check scripts/sand-interactive-source-crop-ab-browser.mjs
+          node --check scripts/randomize-e2e-sand-source-ab-browser.mjs
+      - name: Compare all real interactive pixels, immutable settled cache and native PNG
+        run: node scripts/sand-interactive-source-crop-ab-browser.mjs
+      - name: Install the identical real-click diagnostic into the prior production source
+        run: cp scripts/randomize-e2e-sand-source-ab-browser.mjs comparator-baseline/scripts/
+      - name: Baseline real Random button, including first provisional and four-click burst
+        working-directory: comparator-baseline
+        env:
+          ROYGBIV_SOURCE_LABEL: before-interactive-crop-6c7fa0ff
+        run: node scripts/randomize-e2e-sand-source-ab-browser.mjs
+      - name: Candidate real Random button in both mobile touch viewports
+        env:
+          ROYGBIV_SOURCE_LABEL: proposed-interactive-crop
+        run: node scripts/randomize-e2e-sand-source-ab-browser.mjs
+      - name: Record real first-visible, final-presented and Worker differences
+        run: |
+          node scripts/compare-sand-random-e2e-receipts.mjs comparator-baseline/artifacts/randomize-e2e-sand-cross-source/receipt.json artifacts/randomize-e2e-sand-cross-source/receipt.json
+      - name: Retain real pixel and user interaction source receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: interactive-sand-source-ab-${{ github.run_id }}
+          path: |
+            artifacts/interactive-sand-source-crop/receipt.json
+            comparator-baseline/artifacts/randomize-e2e-sand-cross-source/receipt.json
+            artifacts/randomize-e2e-sand-cross-source/receipt.json
+            artifacts/sand-random-cross-source/comparison.json
+          retention-days: 7
+          if-no-files-found: warn
