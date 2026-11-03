@@ -1,0 +1,41 @@
+name: One-off sand scratch tile pixel equivalence
+on:
+  pull_request:
+    paths:
+      - 'scripts/sand-tile-scratch-transfer-proof.mjs'
+      - '.github/workflows/once-sand-scratch-pixel-proof.yml'
+permissions:
+  contents: read
+jobs:
+  scratch-proof:
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository && contains(github.event.pull_request.title, '[sand-scratch]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Chromium for real OffscreenCanvas Worker
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Verify diagnostic source syntax
+        run: node --check scripts/sand-tile-scratch-transfer-proof.mjs
+      - name: Compare exact full cached RGBA against scratch plus putImageData cores
+        run: node scripts/sand-tile-scratch-transfer-proof.mjs
+      - name: Compare exact full cached RGBA against scratch plus drawImage cores
+        if: success()
+        run: node scripts/sand-tile-scratch-transfer-proof.mjs --image-draw
+      - name: Preserve independent full-cache mismatch receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sand-scratch-transfer-${{ github.run_id }}
+          path: |
+            artifacts/sand-tile-scratch-pixeldata/
+            artifacts/sand-tile-scratch-drawimage/
+          retention-days: 7
+          if-no-files-found: warn
