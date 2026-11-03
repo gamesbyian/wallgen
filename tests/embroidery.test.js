@@ -102,6 +102,57 @@ test('tatami on a clipped region draws staggered short rows; satin remains long 
   assert.deepEqual(tatami.strokes,repeat.strokes,'same authored grid, no RNG');
 });
 
+test('authored tatami courses cannot claim transverse contact between parallel source rows',()=>{
+  // Source truth: the production painter lays each region-tatami centreline
+  // at y=k*pitch before one global rotation. Separate courses remain
+  // parallel under that rotation; shadow/glint offsets are NOT new yarn
+  // crossings. Keep the issue conditional on a genuinely authored
+  // intersecting course, not a proximity-based fake shadow.
+  const object={rings:[[
+    {x:50,y:640},{x:550,y:640},{x:550,y:660},{x:50,y:660}
+  ]]};
+  for(const [pitch,direction] of [[2,0],[5,38],[16,73]]){
+    const paths=[],context={
+      save(){},restore(){},translate(){},rotate(){},beginPath(){},
+      moveTo(x,y){this.start={x,y}},
+      lineTo(x,y){paths.push({start:{...this.start},end:{x,y}})},
+      stroke(){}
+    };
+    const stitches=drawRegionEmbroidery(context,object,
+      select({style:'tatami',pitch,direction,relief:100}),null);
+    assert.ok(stitches>0,'test must exercise the live source painter');
+    assert.equal(paths.length,2*stitches,
+      'unlit original tatami has two ink strokes for each real source stitch');
+    const courses=new Map();
+    for(let i=0;i<paths.length;i+=2){
+      const lower=paths[i],upper=paths[i+1];
+      assert.equal(lower.start.x,upper.start.x);
+      assert.equal(lower.end.x,upper.end.x);
+      assert.equal(lower.start.y-lower.end.y,0);
+      assert.equal(upper.start.y-upper.end.y,0);
+      const y=(lower.start.y+upper.start.y)/2;
+      assert.ok(Math.abs(lower.start.y-upper.start.y-1)<1e-9,
+        'two side shadings must still belong to one unchanged source course');
+      if(!courses.has(y))courses.set(y,[]);
+      courses.get(y).push([lower.start.x,lower.end.x]);
+    }
+    const ys=[...courses.keys()].sort((a,b)=>a-b);
+    assert.ok(ys.length>1,'source must contain multiple original courses');
+    for(let i=1;i<ys.length;i++)assert.ok(ys[i]-ys[i-1]>=pitch-1e-8,
+      'distinct tatami source centrelines are pitch-separated, never transverse');
+    for(const pieces of courses.values()){
+      pieces.sort((a,b)=>a[0]-b[0]);
+      for(let i=1;i<pieces.length;i++)
+        assert.ok(pieces[i][0]-pieces[i-1][1]>=1.4-1e-8,
+          'individual authored short tatami source pieces have a real gap');
+    }
+    // Applying the single ctx.rotate(direction) to every course cannot
+    // manufacture a transverse intersection from these parallel lines.
+    // New cross-hatching or manually crossing source segments would need
+    // their own intentionally authored geometry before contact shading.
+  }
+});
+
 test('source-bounded region tatami omits thousands of off-clip strokes without restarting stitch phases',()=>{
   const object={rings:[[
     {x:50,y:640},{x:550,y:640},{x:550,y:660},{x:50,y:660}
