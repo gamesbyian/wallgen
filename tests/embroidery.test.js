@@ -167,7 +167,8 @@ test('only genuine same-row round tatami cap overlap receives bounded directiona
       clip(){ops.clips++},fill(){ops.fills++}};
   };
   const low=record(),standard=record(),wide=record(),unlit=record(),
-    fibre=record(),running=record(),rotated=record();
+    fibre=record(),fibreLow=record(),fibreUnlit=record(),
+    running=record(),rotated=record();
   // Original adjacent short stitch centres are separated by exactly 1.4;
   // at pitch 5, real round yarn width 1.25 has no endcap overlap.
   assert.ok(drawRegionEmbroidery(low,object,
@@ -193,12 +194,24 @@ test('only genuine same-row round tatami cap overlap receives bounded directiona
   assert.equal(drawRegionEmbroidery(unlit,object,
     select({style:'tatami',pitch:8}),null),count);
   assert.equal(unlit.ops.fills,0);
-  // Running and fibre tatami have distinct original yarn footprints and
-  // must not borrow a satin/tatami stroke-width contact approximation.
+  // Fibre tatami's actual underlying shadow stroke has width .32*pitch,
+  // whereas the visible microstrands are too thin to reach one another.
+  // The 1.4-unit source gap is physically bridged at pitch 8 (2.56-wide
+  // underlay) but not at pitch 4 (1.28-wide underlay).
   drawRegionEmbroidery(running,object,select({style:'running',pitch:8}),lamp);
   drawRegionEmbroidery(fibre,object,select({style:'tatami-fibre',pitch:8}),lamp);
+  drawRegionEmbroidery(fibreLow,object,select({style:'tatami-fibre',pitch:4}),lamp);
+  drawRegionEmbroidery(fibreUnlit,object,select({style:'tatami-fibre',pitch:8}),null);
   assert.equal(running.ops.fills,0);
-  assert.equal(fibre.ops.fills,0);
+  assert.ok(fibre.ops.fills>0,'only real adjacent source underlay cap overlaps are shaded');
+  assert.equal(fibre.ops.clips,fibre.ops.fills*2,
+    'fibre contact shade is clipped by both original underlay capsules');
+  assert.equal(fibre.ops.arcs,fibre.ops.fills*5);
+  assert.equal(fibre.ops.saves,fibre.ops.restores);
+  assert.equal(fibreLow.ops.fills,0,
+    'an underlay narrower than the original station gap must remain unchanged');
+  assert.equal(fibreUnlit.ops.fills,0,
+    'disabling lighting never introduces contact shadows');
   drawRegionEmbroidery(rotated,object,select({style:'tatami',pitch:8,direction:38}),lamp);
   assert.ok(rotated.ops.fills>0,
     'rotating the whole original row may not erase real local same-row contacts');
