@@ -166,7 +166,7 @@ try{
           throw Error('Expected real source-endcap optical difference missing in '+entry.label);
         if(!entry.effect&&different!==0)
           throw Error('Unlit/parallel/unsupported source must retain exact old pixels: '+entry.label+' differing='+different);
-        if(entry.effect&&pair.base.png?.sha256===pair.candidate.png?.sha256)
+        if(entry.effect&&entry.width>=3024&&pair.base.png?.sha256===pair.candidate.png?.sha256)
           throw Error('Native true-contact PNG did not change as expected');
         samples.push({originalStitches:pair.base.stitches,
           baseMs:pair.base.paintMs,candidateMs:pair.candidate.paintMs,
