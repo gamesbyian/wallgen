@@ -1284,6 +1284,9 @@ export function drawWallpaper(canvas, recipe, options={}) {
     s=scratch.getContext('2d');
     if(!s) throw new Error('Texture composite surface unavailable');
   }
+  // One conservative world-coordinate alpha window per settled render, reused
+  // by multiple floating stripe-only sand layers. Full raster geometry stays fixed.
+  let stripeSandInkPixelBounds;
   const textured=layer=>{
     s.setTransform(1,0,0,1,0,0);
     s.globalCompositeOperation='source-over';s.globalAlpha=1;
@@ -1339,6 +1342,58 @@ export function drawWallpaper(canvas, recipe, options={}) {
         const pad=24;
         paintBounds={left:Math.max(left,l-pad),right:Math.min(right,r+pad),
           top:Math.max(top,t-pad),bottom:Math.min(bottom,b+pad)};
+      }
+      if(options.cache&&scene.structure==='paths'&&
+        scene.composition==='floating'&&layer.coverage==='stripes'&&
+        ['sand-mandala','sand-beaded','sand-filigree'].includes(layer.material)){
+        // Conservative pixel-alpha footprint of already-rendered *source ink*.
+        // Keep full material surface geometry/scale/origin unchanged: this is
+        // only a candidate reduction in world-space facet enumeration.
+        if(stripeSandInkPixelBounds===undefined){
+          let ax0=inkWidth,ay0=inkHeight,ax1=-1,ay1=-1;
+          // Read once for any layered floating sand; a second material
+          // rotates this SAME conservative source alpha footprint.
+          try{
+            const pixels=g.getImageData(0,0,inkWidth,inkHeight).data;
+            for(let row=0;row<inkHeight;row++){
+              const rowBase=row*inkWidth*4;
+              for(let col=0;col<inkWidth;col++){
+                if(pixels[rowBase+col*4+3]===0)continue;
+                if(col<ax0)ax0=col;
+                if(col>ax1)ax1=col;
+                if(row<ay0)ay0=row;
+                if(row>ay1)ay1=row;
+              }
+            }
+          }catch{
+            // Feature support/resource failure must never lose visible ink.
+            ax0=0;ay0=0;ax1=inkWidth-1;ay1=inkHeight-1;
+          }
+          stripeSandInkPixelBounds=ax1>=ax0&&ay1>=ay0?
+            {ax0,ay0,ax1,ay1}:null;
+        }
+        if(stripeSandInkPixelBounds){
+          const {ax0,ay0,ax1,ay1}=stripeSandInkPixelBounds;
+          // Alpha-mask footprint corners -> original design world -> rotated
+          // material source. Overshoot by 24 authored units for facets,
+          // raster resampling and boundary antialias. No LOD or thin pixels.
+          const xlo=(ax0-margin.left-offsetX)/scaleX;
+          const xhi=(ax1+1-margin.left-offsetX)/scaleX;
+          const ylo=(ay0-margin.top-offsetY)/scaleY;
+          const yhi=(ay1+1-margin.top-offsetY)/scaleY;
+          let l=Infinity,r=-Infinity,u=Infinity,d=-Infinity;
+          for(const [vx,vy] of [[xlo,ylo],[xlo,yhi],[xhi,ylo],[xhi,yhi]]){
+            const dx=vx-DESIGN_WIDTH/2,dy=vy-DESIGN_HEIGHT/2;
+            const tx=dx*c+dy*sin,ty=-dx*sin+dy*c;
+            l=Math.min(l,tx);r=Math.max(r,tx);
+            u=Math.min(u,ty);d=Math.max(d,ty);
+          }
+          const halo=24;
+          paintBounds={left:Math.max(left,l-halo),right:Math.min(right,r+halo),
+            top:Math.max(top,u-halo),bottom:Math.min(bottom,d+halo)};
+          if(paintBounds.right<paintBounds.left||paintBounds.bottom<paintBounds.top)
+            paintBounds={left,right,top,bottom}; // diagnostic fail-safe
+        }
       }
       paintMaterial(t,layer,paintBounds,sandMaterialLighting(scene,layer));
       s.setTransform(scaleX,0,0,scaleY,margin.left+offsetX,margin.top+offsetY);
