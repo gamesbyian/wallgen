@@ -20,6 +20,8 @@ import {chromium} from 'playwright';
 import {randomizeAllRecipe,normalizeRecipe} from '../src/model.js';
 
 const root=process.cwd(),comparison=resolve(root,'comparator-baseline');
+const mime={'.html':'text/html','.js':'text/javascript','.css':'text/css',
+  '.json':'application/json','.svg':'image/svg+xml','.woff2':'font/woff2'};
 const originalRenderer=await readFile(join(comparison,'src/renderer.js'),'utf8');
 const candidateRenderer=await readFile(join(root,'src/renderer.js'),'utf8');
 assert.notEqual(originalRenderer,candidateRenderer,'Must compare genuinely distinct exact source');
