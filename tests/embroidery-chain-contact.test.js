@@ -241,6 +241,32 @@ test('out-of-shape chain rows are omitted but original within-row link contacts 
     'only the renderer original even-odd region owns the clip');
 });
 
+test('region chain only omits fully disjoint source links without moving retained contacts',()=>{
+  const treatment=normalizeSurfaceTreatments([{
+    id:'chain-x-window',enabled:true,style:'chain',pitch:5,relief:85,
+    direction:0,target:{scope:'all',role:'fill',colorSlots:[],ids:[]}
+  }])[0];
+  const object={rings:[[
+    {x:50,y:640},{x:550,y:640},{x:550,y:660},{x:50,y:660}
+  ]]};
+  const dark=capture(),lit=capture(),second=capture();
+  const a=drawRegionEmbroidery(dark,object,treatment,null);
+  const b=drawRegionEmbroidery(lit,object,treatment,lamp());
+  const c=drawRegionEmbroidery(second,object,treatment,null);
+  assert.ok(a>=100&&a<297,
+    'whole-row source culling already retained 297; horizontal source bounds must omit more fully clipped links');
+  assert.equal(a,b,'lighting does not change source station count');
+  assert.equal(a,c);
+  assert.deepEqual(dark.ops,second.ops,
+    'retained link lattice must stay fixed and source deterministic');
+  const w=Math.max(.7,Math.min(2.5,treatment.pitch*.25));
+  const contact=lit.ops.filter(x=>x[0]==='stroke'&&x[2]<w);
+  assert.ok(contact.length>0&&contact.length<a*2,
+    'genuine consecutive original cubic contacts must remain after x culling');
+  assert.equal(lit.ops.filter(x=>x[0]==='clip').length,0,
+    'no new masks or alternate clipping are allowed');
+});
+
 test('a disconnected or degenerate region cannot create fabricated chain contact',()=>{
   const invalid={vertices:[{x:NaN,y:10},{x:30,y:10}]};
   const ctx=capture();
