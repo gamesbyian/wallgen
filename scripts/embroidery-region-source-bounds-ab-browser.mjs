@@ -3,7 +3,7 @@
  * One-off opt-in original-vs-candidate region embroidery proof.
  * Both call real drawRegionEmbroidery in Chromium OffscreenCanvas2D under
  * the same original even-odd silhouette clip; includes 3024x6552 PNG.
- * Baseline files come from immutable pre-change commit 924e2ab2.
+ * Baseline files come from immutable pre-chain-row-cull 1aa27b42.
  */
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
@@ -43,6 +43,20 @@ let cases=[
     rings:[polygon(50,640,550,660)],width:600,height:1300,lit:true},
   {label:'thin-chain-topology-control',style:'chain',pitch:5,direction:0,
     rings:[polygon(50,640,550,660)],width:600,height:1300,lit:true},
+  {label:'chain-thin-unlit',style:'chain',pitch:5,direction:0,
+    rings:[polygon(50,640,550,660)],width:600,height:1300,lit:false},
+  {label:'chain-thin-lit',style:'chain',pitch:5,direction:0,
+    rings:[polygon(50,640,550,660)],width:600,height:1300,lit:true},
+  {label:'chain-thin-rotated',style:'chain',pitch:5,direction:38,
+    rings:[polygon(50,640,550,660)],width:600,height:1300,lit:true},
+  {label:'chain-circle',style:'chain',pitch:8,direction:73,
+    circle:{cx:300,cy:650,r:140},width:600,height:1300,lit:true},
+  {label:'chain-compound-hole-island',style:'chain',pitch:5,direction:17,
+    rings:[polygon(50,450,550,850),polygon(100,500,500,800),
+      polygon(275,615,325,685)],width:600,height:1300,lit:true},
+  {label:'chain-native-compound',style:'chain',pitch:5,direction:17,
+    rings:[polygon(50,450,550,850),polygon(100,500,500,800),
+      polygon(275,615,325,685)],width:3024,height:6552,lit:true},
   {label:'thin-rotated-tatami-fibre',style:'tatami-fibre',pitch:5,direction:38,
     rings:[polygon(50,640,550,660)],width:600,height:1300,lit:true},
   {label:'tall-running-reverse-lamp',style:'running',pitch:7,direction:38,
@@ -61,6 +75,8 @@ let cases=[
 ];
 if(process.argv.includes('--remaining-styles-only'))
   cases=cases.filter(entry=>['thin-satin-lit','thin-chain-topology-control'].includes(entry.label));
+if(process.argv.includes('--chain-only'))
+  cases=cases.filter(entry=>entry.label.startsWith('chain-'));
 await new Promise(done=>server.listen(0,'127.0.0.1',done));
 let browser;
 try{
@@ -161,7 +177,7 @@ try{
   await mkdir(join(root,'artifacts','embroidery-region-bounds'),{recursive:true});
   await writeFile(join(root,'artifacts','embroidery-region-bounds','receipt.json'),
     JSON.stringify({environment:'Real Chromium Canvas2D source region clip, full raw pixel and native PNG; not physical Pixel',
-      baselineSource:'924e2ab2e005cb65bc77788b56b725399fb64e11',
+      baselineSource:'1aa27b427eab95a97ed7d27a667d4069899eb1e6',
       experimentalSource:'current PR',
       summary,cases:result},null,2)+'\n');
   console.log('ROYGBIV_EMBROIDERY_REGION_BOUNDS',JSON.stringify(summary));
