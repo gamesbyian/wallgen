@@ -91,3 +91,29 @@ test('pathological finite crop bounds cannot hang or flood the sand lattice',()=
   assert.ok(a.size>0);
   for(const [key,grain] of a)assert.deepEqual(b.get(key),grain);
 });
+
+
+test('floating stripe sand alpha culling never narrows exports or nonfloating material caches',()=>{
+  const renderer=readFileSync(new URL('../src/renderer.js',import.meta.url),'utf8');
+  const guard=renderer.indexOf("if(options.cache&&scene.structure==='paths'&&");
+  const paint=renderer.indexOf('paintMaterial(t,layer,paintBounds,sandMaterialLighting(scene,layer));',guard);
+  assert.ok(guard>0&&paint>guard,'original material painter must remain shared');
+  const candidate=renderer.slice(guard,paint);
+  assert.match(candidate,/scene\.composition==='floating'/);
+  assert.match(candidate,/layer\.coverage==='stripes'/);
+  assert.match(candidate,/sand-mandala.*sand-beaded.*sand-filigree/);
+  assert.match(candidate,/stripeSandInkPixelBounds===undefined/,
+    'read the original vector ink alpha only once across ordered sand layers');
+  assert.match(candidate,/g\.getImageData\(0,0,inkWidth,inkHeight\)/);
+  assert.match(candidate,/catch\s*\{[\s\S]*ax0=0;ay0=0;ax1=inkWidth-1;ay1=inkHeight-1/,
+    'source-pixel read failures must degrade to complete canonical paint');
+  assert.match(candidate,/const halo=24/);
+  assert.match(candidate,/paintBounds=\{left:Math\.max\(left,l-halo\)/);
+  assert.match(renderer,/const surface=createRenderSurface\(tw,th,options\.canvasFactory\)/,
+    'the original full material scratch dimension and origin must survive');
+  assert.match(renderer,/t\.setTransform\(rasterScale,0,0,rasterScale,-x0\*rasterScale,-y0\*rasterScale\)/);
+  assert.match(renderer,/s\.drawImage\(surface,x0,y0,w,h\)/);
+  // Actual *whole* ImageBitmap SHA, native PNG and Worker timing comparisons
+  // are pinned in scripts/sand-ink-alpha-bounds-ab-browser.mjs, not inferred
+  // from this structural guard test.
+});
