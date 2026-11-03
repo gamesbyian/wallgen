@@ -26,14 +26,15 @@ jobs:
         run: node --check scripts/sand-tile-scratch-transfer-proof.mjs
       # Two full-grain scratch transfer strategies already passed exactly in
       # source-matched run 41556115139; run only the new bounded-crop question.
-      - name: Prove complete cache equality with cropped facet enumeration in all five scenes
-        run: node scripts/sand-tile-scratch-transfer-proof.mjs --image-draw --crop-facets
+      # Full-size scratch crop exactness is preserved in completed run 41556414100.
+      - name: Prove tile-sized scratch coordinate translation on five source-matched worker caches
+        run: node scripts/sand-tile-scratch-transfer-proof.mjs --image-draw --crop-facets --compact-scratch
       - name: Preserve independent full-cache mismatch receipts
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: sand-scratch-transfer-${{ github.run_id }}
           path: |
-            artifacts/sand-tile-scratch-cropped/
+            artifacts/sand-tile-scratch-compact/
           retention-days: 7
           if-no-files-found: warn
