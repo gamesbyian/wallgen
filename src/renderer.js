@@ -1366,8 +1366,9 @@ export function drawWallpaper(canvas, recipe, options={}) {
               }
             }
           }catch{
-            // Feature support/resource failure must never lose visible ink.
-            ax0=0;ay0=0;ax1=inkWidth-1;ay1=inkHeight-1;
+            // Feature support/resource failure must paint the complete,
+            // canonical source crop. Do not infer a narrower alpha rectangle.
+            ax0=Infinity;ay0=Infinity;ax1=-1;ay1=-1;
           }
           stripeSandInkPixelBounds=ax1>=ax0&&ay1>=ay0?
             {ax0,ay0,ax1,ay1}:null;
