@@ -183,3 +183,20 @@ test('Pages build and deployment are separate retry-safe jobs', async () => {
   assert.match(build, /Upload build failure digest/);
   assert.match(deploy, /Upload publication failure digest/);
 });
+
+
+test('live ROYGBIV owner queue stays small and historical issue evidence is retained', async () => {
+  const live = await readFile(path.join(root, 'docs/CURRENT-WORK-QUEUE-2026-10-24.md'), 'utf8');
+  const past = await readFile(path.join(root, 'docs/CURRENT-WORK-QUEUE-ARCHIVE-THROUGH-2026-11-02.md'), 'utf8');
+  assert.ok(Buffer.byteLength(live, 'utf8') < 16000,
+    'The single live dispatch has become a historical transcript; place past receipts in the archive');
+  assert.ok(Buffer.byteLength(past, 'utf8') > 200000,
+    'Do not silently discard the full dated execution and acceptance evidence');
+  assert.match(live, /Authoritative current dispatch/);
+  for (const issue of [867,913,963,557,815,839])
+    assert.match(live, new RegExp('\\[#' + issue + '\\]'), 'Missing issue #' + issue + ' live dispatch');
+  assert.match(live, /CURRENT-WORK-QUEUE-ARCHIVE-THROUGH-2026-11-02\.md/);
+  assert.match(past, /#1028/);
+  assert.match(past, /#1025/);
+  assert.match(past, /## Accepted implementation receipts/);
+});
