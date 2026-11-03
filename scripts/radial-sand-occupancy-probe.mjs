@@ -12,7 +12,7 @@ import {createServer} from 'node:http';
 import {readFile,mkdir,writeFile} from 'node:fs/promises';
 import {resolve,join,extname} from 'node:path';
 import {chromium} from 'playwright';
-import {randomizeAllRecipe} from '../src/model.js';
+import {randomizeAllRecipe,normalizeRecipe} from '../src/model.js';
 
 const root=process.cwd(),mime={'.html':'text/html','.js':'text/javascript',
   '.css':'text/css','.json':'application/json','.svg':'image/svg+xml','.woff2':'font/woff2'};
@@ -48,7 +48,8 @@ const scenes=[
  {label:'sand-372x806',seed:seedFor(126),w:372,h:806},
  {label:'loops-600x1300',seed:seedFor(94),w:600,h:1300},
  {label:'regions-600x1300',seed:seedFor(240),w:600,h:1300},
-].map(c=>({...c,recipe:randomizeAllRecipe({seed:c.seed})}));
+].map(c=>({...c,recipe:normalizeRecipe({...randomizeAllRecipe({seed:c.seed}),
+  textureCoverage:'stripes'})}));
 assert.equal(scenes[0].recipe.material,'sand-mandala');
 assert.equal(scenes[0].recipe.rayCount,42);
 await new Promise(done=>server.listen(0,'127.0.0.1',done));
@@ -113,7 +114,8 @@ try{
     for(let k=0;k<2;k++){
       const result=await render(entry.recipe,entry.w,entry.h);
       assert(result.occupancy?.sizes?.length===3,
-        'Real pre-material ink occupancy missing from patched Worker');
+        'Real pre-material ink occupancy missing from patched Worker: '+
+        JSON.stringify(result.occupancy));
       trials.push({workerMs:result.ms,occupancy:result.occupancy,
         inkSha256:result.ink.sha256,backgroundSha256:result.background.sha256,
         overhang:result.overhang});
