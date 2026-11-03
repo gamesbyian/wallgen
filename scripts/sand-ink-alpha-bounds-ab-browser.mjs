@@ -23,8 +23,10 @@ const root=process.cwd();
 const originalRenderer=await readFile(join(root,'src/renderer.js'),'utf8');
 const paintAnchor='      paintMaterial(t,layer,paintBounds,sandMaterialLighting(scene,layer));';
 assert.equal(originalRenderer.split(paintAnchor).length,2,'Original single paint anchor changed');
-const injected="      if(options.cache&&layer.coverage==='stripes'&&\n        ['sand-mandala','sand-beaded','sand-filigree'].includes(layer.material)){\n        // Conservative pixel-alpha footprint of already-rendered *source ink*.\n        // Keep full material surface geometry/scale/origin unchanged: this is\n        // only a candidate reduction in world-space facet enumeration.\n        const pixels=g.getImageData(0,0,inkWidth,inkHeight).data;\n        let ax0=inkWidth,ay0=inkHeight,ax1=-1,ay1=-1;\n        for(let row=0;row<inkHeight;row++){\n          const rowBase=row*inkWidth*4;\n          for(let col=0;col<inkWidth;col++){\n            if(pixels[rowBase+col*4+3]===0)continue;\n            if(col<ax0)ax0=col;\n            if(col>ax1)ax1=col;\n            if(row<ay0)ay0=row;\n            if(row>ay1)ay1=row;\n          }\n        }\n        if(ax1>=ax0&&ay1>=ay0){\n          // Alpha-mask footprint corners -> original design world -> rotated\n          // material source. Overshoot by 24 authored units for facets,\n          // raster resampling and boundary antialias. No LOD or thin pixels.\n          const xlo=(ax0-margin.left-offsetX)/scaleX;\n          const xhi=(ax1+1-margin.left-offsetX)/scaleX;\n          const ylo=(ay0-margin.top-offsetY)/scaleY;\n          const yhi=(ay1+1-margin.top-offsetY)/scaleY;\n          let l=Infinity,r=-Infinity,u=Infinity,d=-Infinity;\n          for(const [vx,vy] of [[xlo,ylo],[xlo,yhi],[xhi,ylo],[xhi,yhi]]){\n            const dx=vx-DESIGN_WIDTH/2,dy=vy-DESIGN_HEIGHT/2;\n            const tx=dx*c+dy*sin,ty=-dx*sin+dy*c;\n            l=Math.min(l,tx);r=Math.max(r,tx);\n            u=Math.min(u,ty);d=Math.max(d,ty);\n          }\n          const halo=24;\n          paintBounds={left:Math.max(left,l-halo),right:Math.min(right,r+halo),\n            top:Math.max(top,u-halo),bottom:Math.min(bottom,d+halo)};\n          if(paintBounds.right<paintBounds.left||paintBounds.bottom<paintBounds.top)\n            paintBounds={left,right,top,bottom}; // diagnostic fail-safe\n        }\n      }\n";
-const candidateRenderer=originalRenderer.replace(paintAnchor,injected+paintAnchor);
+const injected="      if(options.cache&&scene.structure==='paths'&&\n        scene.composition==='floating'&&layer.coverage==='stripes'&&\n        ['sand-mandala','sand-beaded','sand-filigree'].includes(layer.material)){\n        // Conservative pixel-alpha footprint of already-rendered *source ink*.\n        // Keep full material surface geometry/scale/origin unchanged: this is\n        // only a candidate reduction in world-space facet enumeration.\n        if(stripeSandInkPixelBounds===undefined){\n          let ax0=inkWidth,ay0=inkHeight,ax1=-1,ay1=-1;\n          // Read once for any layered floating sand; a second material\n          // rotates this SAME conservative source alpha footprint.\n          try{\n            const pixels=g.getImageData(0,0,inkWidth,inkHeight).data;\n            for(let row=0;row<inkHeight;row++){\n              const rowBase=row*inkWidth*4;\n              for(let col=0;col<inkWidth;col++){\n                if(pixels[rowBase+col*4+3]===0)continue;\n                if(col<ax0)ax0=col;\n                if(col>ax1)ax1=col;\n                if(row<ay0)ay0=row;\n                if(row>ay1)ay1=row;\n              }\n            }\n          }catch{\n            // Feature support/resource failure must never lose visible ink.\n            ax0=0;ay0=0;ax1=inkWidth-1;ay1=inkHeight-1;\n          }\n          stripeSandInkPixelBounds=ax1>=ax0&&ay1>=ay0?\n            {ax0,ay0,ax1,ay1}:null;\n        }\n        if(stripeSandInkPixelBounds){\n          const {ax0,ay0,ax1,ay1}=stripeSandInkPixelBounds;\n          // Alpha-mask footprint corners -> original design world -> rotated\n          // material source. Overshoot by 24 authored units for facets,\n          // raster resampling and boundary antialias. No LOD or thin pixels.\n          const xlo=(ax0-margin.left-offsetX)/scaleX;\n          const xhi=(ax1+1-margin.left-offsetX)/scaleX;\n          const ylo=(ay0-margin.top-offsetY)/scaleY;\n          const yhi=(ay1+1-margin.top-offsetY)/scaleY;\n          let l=Infinity,r=-Infinity,u=Infinity,d=-Infinity;\n          for(const [vx,vy] of [[xlo,ylo],[xlo,yhi],[xhi,ylo],[xhi,yhi]]){\n            const dx=vx-DESIGN_WIDTH/2,dy=vy-DESIGN_HEIGHT/2;\n            const tx=dx*c+dy*sin,ty=-dx*sin+dy*c;\n            l=Math.min(l,tx);r=Math.max(r,tx);\n            u=Math.min(u,ty);d=Math.max(d,ty);\n          }\n          const halo=24;\n          paintBounds={left:Math.max(left,l-halo),right:Math.min(right,r+halo),\n            top:Math.max(top,u-halo),bottom:Math.min(bottom,d+halo)};\n          if(paintBounds.right<paintBounds.left||paintBounds.bottom<paintBounds.top)\n            paintBounds={left,right,top,bottom}; // diagnostic fail-safe\n        }\n      }\n";
+const candidateRenderer=originalRenderer
+  .replace('  const textured=layer=>{','  let stripeSandInkPixelBounds;\n  const textured=layer=>{')
+  .replace(paintAnchor,injected+paintAnchor);
 
 const mime={'.html':'text/html','.js':'text/javascript','.css':'text/css',
   '.json':'application/json','.svg':'image/svg+xml','.woff2':'font/woff2'};
@@ -46,32 +48,49 @@ const pairFor=i=>[Math.imul(i,0x9e3779b1)>>>0,
   (Math.imul(i+17,0x85ebca6b)^0xa5a5f0f0)>>>0];
 const seedFor=pair=>pair.map(n=>n.toString(36)).join('-');
 const cases=[
-  {label:'sand-stripes-42-ray-600x1300',index:126,width:600,height:1300,
-    overrides:{textureCoverage:'stripes'}},
-  {label:'sand-stripes-42-ray-372x806',index:126,width:372,height:806,
-    overrides:{textureCoverage:'stripes'}},
-  {label:'sand-stripes-nudged-rotated',index:126,width:372,height:806,
-    overrides:{textureCoverage:'stripes',positionX:30,positionY:-30,
-      textureRotation:37}},
-  {label:'sand-single-floating-short-loop',index:94,width:600,height:1300,
+  {label:'sand-floating-short-loop-600x1300',index:94,width:600,height:1300,
     overrides:{structure:'paths',geometry:'loop',composition:'floating',
       material:'sand-mandala',textureCoverage:'stripes',
       stripeWidth:15,spread:8,pathLength:25}},
-  {label:'sand-two-layer-stripes',index:126,width:372,height:806,
-    overrides:{textureCoverage:'stripes',textureLayer2Enabled:true,
-      material2:'sand-beaded',textureCoverage2:'stripes',
-      textureStrength2:45}},
+  {label:'sand-floating-short-loop-372x806',index:94,width:372,height:806,
+    overrides:{structure:'paths',geometry:'loop',composition:'floating',
+      material:'sand-mandala',textureCoverage:'stripes',
+      stripeWidth:15,spread:8,pathLength:25}},
+  {label:'sand-floating-rotated-nudged',index:94,width:372,height:806,
+    overrides:{structure:'paths',geometry:'loop',composition:'floating',
+      material:'sand-mandala',textureCoverage:'stripes',
+      stripeWidth:15,spread:8,pathLength:25,
+      positionX:30,positionY:-30,textureRotation:37}},
+  {label:'sand-floating-normal-length',index:126,width:372,height:806,
+    overrides:{structure:'paths',geometry:'loop',composition:'floating',
+      material:'sand-mandala',textureCoverage:'stripes',
+      stripeWidth:52,spread:56,pathLength:65}},
+  {label:'sand-floating-long-hairpin',index:126,width:372,height:806,
+    overrides:{structure:'paths',geometry:'hairpin',composition:'floating',
+      material:'sand-mandala',textureCoverage:'stripes',
+      stripeWidth:52,spread:56,pathLength:100}},
+  {label:'sand-floating-dual-sand',index:94,width:372,height:806,
+    overrides:{structure:'paths',geometry:'loop',composition:'floating',
+      material:'sand-mandala',textureCoverage:'stripes',
+      stripeWidth:15,spread:8,pathLength:25,
+      textureLayer2Enabled:true,material2:'sand-filigree',
+      textureCoverage2:'stripes',textureRotation2:37,textureStrength2:45}},
+  {label:'sand-dense-radial-control',index:126,width:600,height:1300,
+    overrides:{textureCoverage:'stripes'}},
+  {label:'sand-dense-radial-mobile-control',index:126,width:372,height:806,
+    overrides:{textureCoverage:'stripes'}},
+  {label:'sand-both-coverage-control',index:126,width:372,height:806,
+    overrides:{textureCoverage:'both'}},
   {label:'sand-background-control',index:126,width:372,height:806,
     overrides:{textureCoverage:'background'}},
-  {label:'loops-control',index:94,width:372,height:806},
-  {label:'regions-control',index:240,width:372,height:806},
+  {label:'loops-nonsand-control',index:94,width:372,height:806},
 ].map(({overrides,...entry})=>{
   const recipe=normalizeRecipe({...randomizeAllRecipe({
     seed:seedFor(pairFor(entry.index))}),...overrides});
   return {...entry,recipe};
 });
 assert.equal(cases[0].recipe.material,'sand-mandala');
-assert.equal(cases[0].recipe.rayCount,42);
+assert.equal(cases[6].recipe.rayCount,42);
 assert.equal(cases[0].recipe.textureCoverage,'stripes');
 await new Promise(done=>server.listen(0,'127.0.0.1',done));
 let browser;
