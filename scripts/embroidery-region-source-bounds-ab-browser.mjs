@@ -34,10 +34,14 @@ const server=createServer(async(req,res)=>{
 });
 const polygon=(left,top,right,bottom)=>[
   {x:left,y:top},{x:right,y:top},{x:right,y:bottom},{x:left,y:bottom}];
-const cases=[
+let cases=[
   {label:'thin-horizontal-tatami-unlit',style:'tatami',pitch:5,direction:0,
     rings:[polygon(50,640,550,660)],width:600,height:1300,lit:false},
   {label:'thin-horizontal-tatami-lit',style:'tatami',pitch:5,direction:0,
+    rings:[polygon(50,640,550,660)],width:600,height:1300,lit:true},
+  {label:'thin-satin-lit',style:'satin',pitch:5,direction:0,
+    rings:[polygon(50,640,550,660)],width:600,height:1300,lit:true},
+  {label:'thin-chain-topology-control',style:'chain',pitch:5,direction:0,
     rings:[polygon(50,640,550,660)],width:600,height:1300,lit:true},
   {label:'thin-rotated-tatami-fibre',style:'tatami-fibre',pitch:5,direction:38,
     rings:[polygon(50,640,550,660)],width:600,height:1300,lit:true},
@@ -55,6 +59,8 @@ const cases=[
     rings:[polygon(50,450,550,850),polygon(100,500,500,800),
       polygon(275,615,325,685)],width:3024,height:6552,lit:true},
 ];
+if(process.argv.includes('--remaining-styles-only'))
+  cases=cases.filter(entry=>['thin-satin-lit','thin-chain-topology-control'].includes(entry.label));
 await new Promise(done=>server.listen(0,'127.0.0.1',done));
 let browser;
 try{
