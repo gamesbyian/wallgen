@@ -200,7 +200,7 @@ try{
  const page=await browser.newPage();
  const errors=[];page.on('pageerror',e=>errors.push(String(e)));
  await page.goto('http://127.0.0.1:'+server.address().port+'/',{waitUntil:'domcontentloaded'});
- const results=await page.evaluate(async ({scenes,fullBoundsOnly})=>{
+ const results=await page.evaluate(async ({scenes,fullBoundsOnly,stageTiming})=>{
   const {presentNudgedArtwork}=await import('/base/src/renderer.js');
   const workers=await Promise.all(['base','crop'].map(async version=>{
    const w=new Worker('/'+version+'/src/render-worker.js',{type:'module'});
@@ -326,7 +326,7 @@ try{
   if(!fullBoundsOnly&&(native.base.sha!==native.crop.sha||native.base.bytes!==native.crop.bytes))
     throw Error('Native export byte mismatch');
   return {records,native};
- },{scenes,fullBoundsOnly});
+ },{scenes,fullBoundsOnly,stageTiming});
  assert.deepEqual(errors,[]);
  const median=xs=>xs.slice().sort((a,b)=>a-b)[Math.floor(xs.length/2)];
  const summary=results.records.map(r=>({label:r.label,material:r.material,
