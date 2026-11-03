@@ -1,0 +1,44 @@
+name: One-off original chain-link horizontal bound pixel proof
+on:
+  pull_request:
+    paths:
+      - src/embroidery.js
+      - tests/embroidery-chain-contact.test.js
+      - scripts/embroidery-chain-link-x-bounds-ab-browser.mjs
+      - .github/workflows/once-embroidery-chain-x-bounds.yml
+permissions:
+  contents: read
+jobs:
+  original-chain-source-pixels:
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository && contains(github.event.pull_request.title, '[embroidery-chain-x]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Check out accepted original chain row bounding source
+        uses: actions/checkout@v4
+        with:
+          ref: 96f6085bf0cb52eda2a67bb9ff1c80a42044484d
+          path: comparator-baseline
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Chromium for paired original-source images
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Run only related fast source geometry and link-contact tests
+        run: node --test tests/embroidery-chain-contact.test.js tests/embroidery.test.js
+      - name: Compare original clips and whole RGBA, linked contacts, native PNG
+        run: node scripts/embroidery-chain-link-x-bounds-ab-browser.mjs --x-only
+      - name: Preserve actual source-equivalent pixel and perf receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: embroidery-chain-x-${{ github.run_id }}
+          path: artifacts/embroidery-chain-x-bounds/receipt.json
+          retention-days: 7
+          if-no-files-found: warn
