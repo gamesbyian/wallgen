@@ -73,10 +73,37 @@ const patch=[
 const fullBoundsOnly=true; // One full-field grain enumeration in every tile, diagnostic only.
 const useImageDraw=process.argv.includes('--image-draw');
 const cropFacets=process.argv.includes('--crop-facets');
+const compactScratch=process.argv.includes('--compact-scratch');
 const start=patch.indexOf('        for(const clip of clips){');
 const finish=patch.indexOf('      }else{',start);
 assert(start>=0&&finish>start,'Original tile loop must still match');
-const tileTransfer=[
+const compactTransfer=[
+  '        for(const clip of clips){',
+  '          if(clip.right<=clip.left||clip.bottom<=clip.top)continue;',
+  '          const px0=Math.max(0,Math.round((clip.left-x0)*rasterScale));',
+  '          const py0=Math.max(0,Math.round((clip.top-y0)*rasterScale));',
+  '          const px1=clip.right>=x0+w?tw:Math.min(tw,Math.round((clip.right-x0)*rasterScale));',
+  '          const py1=clip.bottom>=y0+h?th:Math.min(th,Math.round((clip.bottom-y0)*rasterScale));',
+  '          const pw=px1-px0,ph=py1-py0;',
+  '          if(pw<=0||ph<=0)continue;',
+  '          const materialBounds={left:Math.max(left,clip.left-pad),',
+  '            right:Math.min(right,clip.right+pad),',
+  '            top:Math.max(top,clip.top-pad),bottom:Math.min(bottom,clip.bottom+pad)};',
+  '          const tileSurface=createRenderSurface(pw,ph,options.canvasFactory);',
+  '          try{',
+  '            const tileCtx=tileSurface.getContext("2d");',
+  '            if(!tileCtx)throw new Error("Compact material scratch unavailable");',
+  '            tileCtx.setTransform(rasterScale,0,0,rasterScale,',
+  '              -x0*rasterScale-px0,-y0*rasterScale-py0);',
+  '            tileCtx.globalAlpha=layer.strength/100;',
+  '            paintMaterial(tileCtx,layer,materialBounds,sandMaterialLighting(scene,layer));',
+  '            t.save();t.setTransform(1,0,0,1,0,0);t.globalAlpha=1;',
+  '            t.drawImage(tileSurface,px0,py0);',
+  '            t.restore();',
+  '          }finally{releaseRenderSurface(tileSurface);}',
+  '        }',
+].join('\n');
+const tileTransfer=compactScratch?compactTransfer:[
   '        const tileSurface=createRenderSurface(tw,th,options.canvasFactory);',
   '        try{',
   '          const tileCtx=tileSurface.getContext("2d");',
@@ -289,11 +316,11 @@ try{
   baseMedianMs:Math.round(median(r.samples.map(s=>s.baseMs))),
   cropMedianMs:Math.round(median(r.samples.map(s=>s.cropMs))),
   originalVisibleSha:r.samples[0].baseSha,candidateVisibleSha:r.samples[0].cropSha}));
- const evidenceFolder=cropFacets?'sand-tile-scratch-cropped':useImageDraw?'sand-tile-scratch-drawimage':'sand-tile-scratch-pixeldata';
+ const evidenceFolder=compactScratch?'sand-tile-scratch-compact':cropFacets?'sand-tile-scratch-cropped':useImageDraw?'sand-tile-scratch-drawimage':'sand-tile-scratch-pixeldata';
  await mkdir(join(root,'artifacts',evidenceFolder),{recursive:true});
  await writeFile(join(root,'artifacts',evidenceFolder,'receipt.json'),
   JSON.stringify({environment:'Original Chromium worker versus scratch tile full-grain paint with unmodified integer-pixel core transfer, no production change',summary,...results},null,2)+'\n');
- console.log(cropFacets?'ROYGBIV_SAND_SCRATCH_CROPPED':useImageDraw?'ROYGBIV_SAND_SCRATCH_DRAWIMAGE':'ROYGBIV_SAND_SCRATCH_IMAGEDATA',JSON.stringify({summary,native:results.native}));
+ console.log(compactScratch?'ROYGBIV_SAND_COMPACT_TILE_SCRATCH':cropFacets?'ROYGBIV_SAND_SCRATCH_CROPPED':useImageDraw?'ROYGBIV_SAND_SCRATCH_DRAWIMAGE':'ROYGBIV_SAND_SCRATCH_IMAGEDATA',JSON.stringify({summary,native:results.native}));
 }finally{
  await browser?.close();await new Promise(done=>server.close(done));
 }
