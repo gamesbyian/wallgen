@@ -102,6 +102,34 @@ test('tatami on a clipped region draws staggered short rows; satin remains long 
   assert.deepEqual(tatami.strokes,repeat.strokes,'same authored grid, no RNG');
 });
 
+test('source-bounded region tatami omits thousands of off-clip strokes without restarting stitch phases',()=>{
+  const object={rings:[[
+    {x:50,y:640},{x:550,y:640},{x:550,y:660},{x:50,y:660}
+  ]]};
+  const record=()=>{const paths=[];let a=null;return{
+    paths,save(){},restore(){},translate(){},rotate(){},beginPath(){},
+    moveTo(x,y){a=[x,y]},lineTo(x,y){paths.push([a,[x,y]])},stroke(){}
+  }};
+  const straight=record(),repeat=record(),rotated=record(),running=record();
+  const tatami=select({style:'tatami',pitch:5,direction:0});
+  const n=drawRegionEmbroidery(straight,object,tatami);
+  assert.ok(n>300&&n<600,
+    '500×20 original-world rectangle should not paint ~7,144 off-mask tatami pieces');
+  assert.equal(straight.paths.length,n*2,
+    'unlit tatami still paints the same two original shadow/highlight paths per retained source stitch');
+  assert.equal(drawRegionEmbroidery(repeat,object,tatami),n);
+  assert.deepEqual(repeat.paths,straight.paths,
+    'source bounds do not regenerate the global tatami phase or inject RNG');
+  const rotatedCount=drawRegionEmbroidery(rotated,object,
+    select({style:'tatami',pitch:5,direction:38}));
+  assert.ok(rotatedCount>n&&rotatedCount<2500,
+    'oblique narrow-source bounds remain conservative without restoring the full diagonal-sized raster sweep');
+  const runCount=drawRegionEmbroidery(running,object,
+    select({style:'running',pitch:5,direction:0}));
+  assert.ok(runCount>0&&runCount<1000);
+  assert.equal(running.paths.length,runCount*2);
+});
+
 test('running stitch is an opt-in stable path-following alternative to satin',()=>{
   const source=resolveScene({seed:'stitch-run',structure:'paths',geometry:'wave',motif:'solid'});
   const base=source.stripes[1],step=6;
