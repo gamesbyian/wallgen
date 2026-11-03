@@ -33,8 +33,10 @@ self.onmessage=async({data})=>{
     }else if(type==='preview'){
       if(quality==='interactive'){
         // A transient lower-resolution frame while the user is dragging.
-        // Do not populate the full overscan nudge cache for obsolete frames.
-        drawWallpaper(surface,recipe);
+        // The original settled floating-sand ink bounds optimization is
+        // enabled only for this transient Worker preview and settled caches.
+        // Never use it for direct/native export or publish a partial nudge cache.
+        drawWallpaper(surface,recipe,{previewInkCrop:true});
         const frame=surface.transferToImageBitmap();
         try{self.postMessage({type:'frame',id,key,quality,frame,
           ms:performance.now()-start},[frame]);}
