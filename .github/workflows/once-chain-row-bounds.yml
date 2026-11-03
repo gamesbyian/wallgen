@@ -1,0 +1,45 @@
+name: One-off exact chain row-source bounds proof
+on:
+  pull_request:
+    paths:
+      - src/embroidery.js
+      - scripts/embroidery-region-source-bounds-ab-browser.mjs
+      - .github/workflows/once-chain-row-bounds.yml
+permissions:
+  contents: read
+jobs:
+  chain-source-proof:
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository && contains(github.event.pull_request.title, '[chain-row-bounds]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: 1aa27b427eab95a97ed7d27a667d4069899eb1e6
+          path: comparator-baseline
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install real Chromium
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Check true source and focused chain tests
+        run: |
+          node --check src/embroidery.js
+          node --check scripts/embroidery-region-source-bounds-ab-browser.mjs
+          node --test tests/embroidery-chain-contact.test.js tests/embroidery.test.js
+      - name: Compare exact chain-lamp, compound-hole and native-PNG source pixels
+        run: node scripts/embroidery-region-source-bounds-ab-browser.mjs --chain-only
+      - name: Save original-vs-candidate link count and pixel receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: chain-row-bounds-${{ github.run_id }}
+          path: artifacts/embroidery-region-bounds/
+          retention-days: 7
+          if-no-files-found: warn
