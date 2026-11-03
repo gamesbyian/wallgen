@@ -28,14 +28,15 @@ jobs:
       # source-matched run 41556115139; run only the new bounded-crop question.
       # Full-size scratch crop exactness is preserved in completed run 41556414100.
       # Negative compact-raster result recorded in run 41556703442.
-      - name: Verify exact source material coordinates with scratch clear limited to tile core
-        run: node scripts/sand-tile-scratch-transfer-proof.mjs --image-draw --crop-facets --core-clear
+      # Exact core-clear pixels already passed five sources in #41557024257.
+      - name: Measure completed first center tile against full Worker occupancy
+        run: node scripts/sand-tile-scratch-transfer-proof.mjs --image-draw --crop-facets --core-clear --stage-timing
       - name: Preserve independent full-cache mismatch receipts
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: sand-scratch-transfer-${{ github.run_id }}
           path: |
-            artifacts/sand-tile-scratch-core-clear/
+            artifacts/sand-tile-scratch-stage-timing/
           retention-days: 7
           if-no-files-found: warn
