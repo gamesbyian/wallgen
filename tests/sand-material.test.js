@@ -105,7 +105,7 @@ test('floating stripe sand alpha culling never narrows exports or nonfloating ma
   assert.match(candidate,/stripeSandInkPixelBounds===undefined/,
     'read the original vector ink alpha only once across ordered sand layers');
   assert.match(candidate,/g\.getImageData\(0,0,inkWidth,inkHeight\)/);
-  assert.match(candidate,/catch\s*\{[\s\S]*ax0=0;ay0=0;ax1=inkWidth-1;ay1=inkHeight-1/,
+  assert.match(candidate,/catch\s*\{[\s\S]*ax0=Infinity;ay0=Infinity;ax1=-1;ay1=-1/,
     'source-pixel read failures must degrade to complete canonical paint');
   assert.match(candidate,/const halo=24/);
   assert.match(candidate,/paintBounds=\{left:Math\.max\(left,l-halo\)/);
