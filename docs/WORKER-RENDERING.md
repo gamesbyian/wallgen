@@ -79,8 +79,20 @@ authoritative nudge cache or replace exact wallpaper export. On initial page
 load the visible canvas is drawn by the reference renderer before the worker
 starts, preserving fast startup and the existing screenshot contract.
 The quick preview reduces the first frame's pixels (about 38% of full at
-matching aspect ratio), but actual latency depends on painter complexity and
-device resources; no physical-Pixel timing is implied.
+matching aspect ratio). For **only** the interactive Worker path, a bounded
+`previewInkCrop` painter option reuses the settled #1029 alpha-footprint
+source window for sparse floating stripe-only sand, with the original
+material raster origin, 24 authored-world-unit halo and full-bounds fallback.
+Neither native export nor thumbnail/direct rendering sees this option;
+definitive Worker previews separately retain their immutable nudge cache.
+This prevents slow provisional sand painting from blocking the later final
+Worker in the same serial queue. [Paired actual bitmap and real-click proof
+#41600231779](https://github.com/gamesbyian/wallgen/actions/runs/41600231779)
+established zero changed interactive pixels (21 pairs), identical settled
+cache/native PNG output and ~0.67–0.70s earlier genuine first picture for
+one eligible Random seed at 320×700 and 412×892. The other materials and
+radial/both-coverage controls were neutral. Actual latency depends on painter
+complexity and device resources; no physical-Pixel timing is implied.
 
 Failed feature detection, worker script errors, communication failures,
 context errors and request timeouts disable the worker path and invoke the

@@ -93,9 +93,9 @@ test('pathological finite crop bounds cannot hang or flood the sand lattice',()=
 });
 
 
-test('floating stripe sand alpha culling never narrows exports or nonfloating material caches',()=>{
+test('floating stripe sand alpha culling is opt-in for preview and never narrows native exports or nonfloating caches',()=>{
   const renderer=readFileSync(new URL('../src/renderer.js',import.meta.url),'utf8');
-  const guard=renderer.indexOf("if(options.cache&&scene.structure==='paths'&&");
+  const guard=renderer.indexOf("if((options.cache||options.previewInkCrop)&&scene.structure==='paths'&&");
   const paint=renderer.indexOf('paintMaterial(t,layer,paintBounds,sandMaterialLighting(scene,layer));',guard);
   assert.ok(guard>0&&paint>guard,'original material painter must remain shared');
   const candidate=renderer.slice(guard,paint);
@@ -113,7 +113,19 @@ test('floating stripe sand alpha culling never narrows exports or nonfloating ma
     'the original full material scratch dimension and origin must survive');
   assert.match(renderer,/t\.setTransform\(rasterScale,0,0,rasterScale,-x0\*rasterScale,-y0\*rasterScale\)/);
   assert.match(renderer,/s\.drawImage\(surface,x0,y0,w,h\)/);
-  // Actual *whole* ImageBitmap SHA, native PNG and Worker timing comparisons
-  // are pinned in scripts/sand-ink-alpha-bounds-ab-browser.mjs, not inferred
-  // from this structural guard test.
+  const worker=readFileSync(new URL('../src/render-worker.js',import.meta.url),'utf8');
+  const interactiveStart=worker.indexOf("if(quality==='interactive'){");
+  const interactiveEnd=worker.indexOf('cache={};',interactiveStart);
+  assert.ok(interactiveStart>0&&interactiveEnd>interactiveStart,
+    'transient and settled Worker branches must remain distinct');
+  assert.match(worker.slice(interactiveStart,interactiveEnd),
+    /drawWallpaper\(surface,recipe,\{previewInkCrop:true\}\)/,
+    'only the low-res interactive Worker enables the new opt-in crop');
+  assert.equal((worker.match(/previewInkCrop:true/g)||[]).length,1,
+    'do not enable readback for thumbnails, export, or additional Worker branches');
+  assert.match(worker,/}else\{\n      drawWallpaper\(surface,recipe\);\n      const blob=await surface.convertToBlob/,
+    'native Worker PNG export must retain unchanged original reference painter');
+  // Whole interactive RGBA, immutable cache and native PNG source A/B are
+  // verified in the opt-in real Chromium script, not by these source guards.
+
 });
