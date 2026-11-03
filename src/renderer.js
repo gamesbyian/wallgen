@@ -1343,7 +1343,11 @@ export function drawWallpaper(canvas, recipe, options={}) {
         paintBounds={left:Math.max(left,l-pad),right:Math.min(right,r+pad),
           top:Math.max(top,t-pad),bottom:Math.min(bottom,b+pad)};
       }
-      if(options.cache&&scene.structure==='paths'&&
+      // Settled and low-resolution transient Worker previews can safely
+      // crop facet enumeration to already-painted source ink. Native export,
+      // thumbnails and direct/reference rendering retain original bounds.
+      // This flag never commits or changes the full nudge cache.
+      if((options.cache||options.previewInkCrop)&&scene.structure==='paths'&&
         scene.composition==='floating'&&layer.coverage==='stripes'&&
         ['sand-mandala','sand-beaded','sand-filigree'].includes(layer.material)){
         // Conservative pixel-alpha footprint of already-rendered *source ink*.
