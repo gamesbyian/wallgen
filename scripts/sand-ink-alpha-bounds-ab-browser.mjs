@@ -20,19 +20,27 @@ import {chromium} from 'playwright';
 import {randomizeAllRecipe,normalizeRecipe} from '../src/model.js';
 
 const root=process.cwd(),comparison=resolve(root,'comparator-baseline');
+const originalRenderer=await readFile(join(comparison,'src/renderer.js'),'utf8');
+const candidateRenderer=await readFile(join(root,'src/renderer.js'),'utf8');
+assert.notEqual(originalRenderer,candidateRenderer,'Must compare genuinely distinct exact source');
+
 const server=createServer(async(req,res)=>{
  try{
   const pathname=decodeURIComponent(new URL(req.url,'http://localhost').pathname);
   if(pathname==='/'){res.writeHead(200,{'content-type':'text/html'}).end('<!doctype html><title>Settled Worker source acceptance</title>');return;}
   const match=/^\/(base|candidate)\/(.+)$/.exec(pathname);
   if(!match){res.writeHead(404).end();return;}
-  const home=match[1]==='base'?comparison:root;
-  const file=resolve(home,'./'+match[2]);
-  if(!file.startsWith(home+'/')){res.writeHead(403).end();return;}
-  const bytes=await readFile(file);
+  // Both versions use identical Worker/model/material bytes, varying ONLY
+  // the exact original renderer source fetched from the immutable PR base.
+  // This isolates the one production code change and avoids worktree imports.
+  const file=resolve(root,'./'+match[2]);
+  if(!file.startsWith(root+'/')){res.writeHead(403).end();return;}
+  const bytes=match[2]==='src/renderer.js'?
+    match[1]==='base'?originalRenderer:candidateRenderer:
+    await readFile(file);
   res.writeHead(200,{'content-type':mime[extname(file)]||'application/octet-stream',
     'cache-control':'no-store'}).end(bytes);
- }catch(error){res.writeHead(404).end(String(error));}
+ }catch(error){console.error('SOURCE_SERVER_FAILURE',req.url,error.message);if(!res.headersSent)res.writeHead(404).end(String(error));}
 });
 const pairFor=i=>[Math.imul(i,0x9e3779b1)>>>0,
   (Math.imul(i+17,0x85ebca6b)^0xa5a5f0f0)>>>0];
@@ -105,7 +113,7 @@ try{
     if(data?.type==='unsupported'){clearTimeout(readyTimeout);readyReject(Error(data.error));return;}
     if(callbacks.has(data?.id))callbacks.get(data.id)(data);
    });
-   w.addEventListener('error',e=>readyReject(Error(version+': '+e.message)));
+   w.addEventListener('error',e=>readyReject(Error(version+': '+(e.message||'module worker failed without browser error detail')+' '+(e.filename||''))));
    await ready;
    return {version,worker:w,request(payload){
     return new Promise((resolve,reject)=>{
