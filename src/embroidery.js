@@ -1,6 +1,6 @@
 import {samplePath,widthAt} from './path-geometry.js';
 import {threadLightProfile,rotateThreadLighting} from './thread-lighting.js';
-import {planSatinThreadContacts,paintSatinThreadContacts} from './thread-contact-shadows.js';
+import {planSatinThreadContacts,paintSatinThreadContacts,traceThreadContactCapsule} from './thread-contact-shadows.js';
 import {chainLinkCurves,traceChainLink,chainLinkContactEvents} from './chain-thread-contacts.js';
 
 // Surface roles are addressed by authored object IDs or semantic ROYGBIV
@@ -71,6 +71,48 @@ export function paintThreadRelief(ctx,ax,ay,bx,by,pitch,relief,
   ctx.strokeStyle='rgba('+p.highRgb+','+
     (lightAlpha*p.shine).toFixed(3)+')';
   path(p.highlightX,p.highlightY);
+  return true;
+}
+// E4: adjacent short tatami stitches are parallel in their *source* rows,
+// but their actual round yarn endcaps can intersect when the normalized
+// thread stroke is wider than the authored 1.4-unit station gap. Model only
+// that real, consecutive, same-row capsule contact. No invented transverse
+// crossing or contact between different parallel courses, detached islands,
+// or source segments skipped by the original region-bound filter.
+//
+// Paint on the original lower (earlier) yarn, before the top (later) stitch.
+// The existing region even-odd clip owns the fabric boundary, while two
+// nested source-capsule clips confine the shade to their physical overlap.
+// No raster mask, saved heightfield, new recipe or source station renumbering.
+function paintTatamiCapContact(ctx,prior,a,b,y,width,lighting,pitch,relief){
+  if(!prior||![prior.a,prior.b,a,b,y,width].every(Number.isFinite)||
+      width<=0||prior.b>a||a-prior.b>=width)return false;
+  const profile=threadLightProfile(lighting,a,y,b,y,pitch,relief);
+  if(!profile||profile.shade<=0)return false;
+  ctx.save();
+  const low={x:prior.a,y},lowEnd={x:prior.b,y};
+  const high={x:a,y},highEnd={x:b,y};
+  if(!traceThreadContactCapsule(ctx,low,lowEnd,width)){
+    ctx.restore();return false;
+  }
+  ctx.clip();
+  if(!traceThreadContactCapsule(ctx,high,highEnd,width)){
+    ctx.restore();return false;
+  }
+  ctx.clip();
+  const distance=a-prior.b;
+  const overlap=width-distance;
+  // The lamp only biases this very small true endcap contact across the
+  // original lower yarn. Never grow it beyond the physical capsule lens.
+  const reach=Math.hypot(profile.shadowX,profile.shadowY);
+  const shift=reach?Math.min(width*.12,overlap*.25)/reach:0;
+  ctx.beginPath();
+  ctx.arc((prior.b+a)*.5+profile.shadowX*shift,
+    y+profile.shadowY*shift,width*.53,0,Math.PI*2);
+  ctx.fillStyle='rgba('+profile.shadeRgb+','+
+    (.16*profile.shade).toFixed(3)+')';
+  ctx.fill();
+  ctx.restore();
   return true;
 }
 // Two curved thread spans close into a linked oval. The link is an actual
@@ -536,12 +578,23 @@ export function drawRegionEmbroidery(ctx,object,treatment,lighting=null){
       const limit=diagonal*.8;
       const period=tatami?3:2;
       const offset=((k%period+period)%period)*segment/period;
+      // Only current-row, genuinely consecutive, already painted source yarn
+      // may own a cap contact. A clipped-away segment severs this predecessor.
+      let priorTatami=null;
       for(let x=-limit-segment+offset;x<limit;x+=segment){
         const a=Math.max(-limit,x+.7),b=Math.min(limit,x+segment-.7);
-        if(b-a<1)continue;
+        if(b-a<1){priorTatami=null;continue;}
         // Preserve each original k/segment index, stagger and stitch phase.
         // A completely off-object segment cannot survive the existing clip.
-        if(b< -halfX-threadHalo||a>halfX+threadHalo)continue;
+        if(b< -halfX-threadHalo||a>halfX+threadHalo){
+          priorTatami=null;continue;
+        }
+        // No work for ordinary pitch=5, any unlit source, running stitch,
+        // or a fibre pattern whose distinct microstrands are not modeled here.
+        if(tatami&&!fibre&&localLight?.shadow>0&&priorTatami)
+          paintTatamiCapContact(ctx,priorTatami,a,b,y,ctx.lineWidth,
+            localLight,treatment.pitch,treatment.relief);
+        if(tatami&&!fibre)priorTatami={a,b};
         if(fibre){
           fibreSpan(ctx,a,y,b,y,treatment.pitch,treatment.relief,
             k*8191+Math.floor((x+limit+segment)/segment),localLight);
