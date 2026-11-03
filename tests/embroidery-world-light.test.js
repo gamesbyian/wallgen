@@ -23,6 +23,10 @@ function fake(){
     beginPath(){vertices=[]},moveTo(x,y){vertices.push(['M',x,y])},
     lineTo(x,y){vertices.push(['L',x,y])},
     bezierCurveTo(...pts){vertices.push(['C',...pts])},
+    // The real region fibre painter now clips true underlay contacts to
+    // both source capsules. This fake records stroke ink only, but must
+    // implement the Canvas path methods it exercises.
+    arc(){},closePath(){},clip(){},fill(){},
     stroke(){strokes.push({path:vertices.map(p=>[...p]),ink:this.strokeStyle,
       width:this.lineWidth})}};
 }

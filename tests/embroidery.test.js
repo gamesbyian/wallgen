@@ -167,7 +167,8 @@ test('only genuine same-row round tatami cap overlap receives bounded directiona
       clip(){ops.clips++},fill(){ops.fills++}};
   };
   const low=record(),standard=record(),wide=record(),unlit=record(),
-    fibre=record(),running=record(),rotated=record();
+    fibre=record(),fibreLow=record(),fibreUnlit=record(),
+    running=record(),rotated=record();
   // Original adjacent short stitch centres are separated by exactly 1.4;
   // at pitch 5, real round yarn width 1.25 has no endcap overlap.
   assert.ok(drawRegionEmbroidery(low,object,
@@ -193,15 +194,64 @@ test('only genuine same-row round tatami cap overlap receives bounded directiona
   assert.equal(drawRegionEmbroidery(unlit,object,
     select({style:'tatami',pitch:8}),null),count);
   assert.equal(unlit.ops.fills,0);
-  // Running and fibre tatami have distinct original yarn footprints and
-  // must not borrow a satin/tatami stroke-width contact approximation.
+  // Fibre tatami's actual underlying shadow stroke has width .32*pitch,
+  // whereas the visible microstrands are too thin to reach one another.
+  // The 1.4-unit source gap is physically bridged at pitch 8 (2.56-wide
+  // underlay) but not at pitch 4 (1.28-wide underlay).
   drawRegionEmbroidery(running,object,select({style:'running',pitch:8}),lamp);
   drawRegionEmbroidery(fibre,object,select({style:'tatami-fibre',pitch:8}),lamp);
+  drawRegionEmbroidery(fibreLow,object,select({style:'tatami-fibre',pitch:4}),lamp);
+  drawRegionEmbroidery(fibreUnlit,object,select({style:'tatami-fibre',pitch:8}),null);
   assert.equal(running.ops.fills,0);
-  assert.equal(fibre.ops.fills,0);
+  assert.ok(fibre.ops.fills>0,'only real adjacent source underlay cap overlaps are shaded');
+  assert.equal(fibre.ops.clips,fibre.ops.fills*2,
+    'fibre contact shade is clipped by both original underlay capsules');
+  assert.equal(fibre.ops.arcs,fibre.ops.fills*5);
+  assert.equal(fibre.ops.saves,fibre.ops.restores);
+  assert.equal(fibreLow.ops.fills,0,
+    'an underlay narrower than the original station gap must remain unchanged');
+  assert.equal(fibreUnlit.ops.fills,0,
+    'disabling lighting never introduces contact shadows');
   drawRegionEmbroidery(rotated,object,select({style:'tatami',pitch:8,direction:38}),lamp);
   assert.ok(rotated.ops.fills>0,
     'rotating the whole original row may not erase real local same-row contacts');
+});
+
+test('fibre contact capsules coincide with actual projected original underlay strokes',()=>{
+  const region={rings:[[
+    {x:50,y:630},{x:550,y:630},{x:550,y:670},{x:50,y:670}
+  ]]};
+  const light=sandLighting({lightingMood:'daylight',lightDirection:'bottom-right',
+    lightStrength:88,shadowStrength:85});
+  const capture=()=>{let path=[];const clips=[],strokes=[];return{
+    clips,strokes,save(){},restore(){},translate(){},rotate(){},
+    beginPath(){path=[]},moveTo(x,y){path.push(['M',x,y])},
+    lineTo(x,y){path.push(['L',x,y])},
+    arc(x,y,r){path.push(['A',x,y,r])},closePath(){},
+    clip(){clips.push(path.map(x=>[...x]))},
+    stroke(){strokes.push({width:this.lineWidth,path:path.map(x=>[...x])})},
+    fill(){}
+  }};
+  const ctx=capture(),treatment=select({style:'tatami-fibre',pitch:8,relief:80});
+  const count=drawRegionEmbroidery(ctx,region,treatment,light);
+  assert.ok(count>0&&ctx.clips.length>2);
+  assert.equal(ctx.clips.length%2,0,'two real physical caps per contact');
+  const actualWidth=Math.min(3.2,Math.max(.8,treatment.pitch*.32));
+  const epsilon=1e-8;
+  const covered=clip=>ctx.strokes.some(stroke=>{
+    if(Math.abs(stroke.width-actualWidth)>epsilon)return false;
+    const start=stroke.path.find(p=>p[0]==='M'),cap=clip.find(p=>p[0]==='M');
+    return start&&cap&&Math.abs(start[1]-cap[1])<epsilon&&
+      Math.abs(start[2]+actualWidth*.5-cap[2])<epsilon;
+  });
+  for(const clip of ctx.clips){
+    assert.equal(clip.filter(item=>item[0]==='A').length,2,
+      'contact must be the original rounded underlay capsule, not a rectangle');
+    assert.ok(clip.filter(item=>item[0]==='A').every(item=>
+      Math.abs(item[3]-actualWidth*.5)<epsilon),
+    'tatami fibre contact cannot borrow the ordinary tatami stitch width');
+    assert.ok(covered(clip),'each clipped capsule matches an actually painted original projected underlay');
+  }
 });
 
 test('source-bounded region tatami omits thousands of off-clip strokes without restarting stitch phases',()=>{

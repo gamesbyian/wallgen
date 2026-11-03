@@ -84,14 +84,21 @@ export function paintThreadRelief(ctx,ax,ay,bx,by,pitch,relief,
 // The existing region even-odd clip owns the fabric boundary, while two
 // nested source-capsule clips confine the shade to their physical overlap.
 // No raster mask, saved heightfield, new recipe or source station renumbering.
-function paintTatamiCapContact(ctx,prior,a,b,y,width,lighting,pitch,relief){
+function paintTatamiCapContact(ctx,prior,a,b,y,width,lighting,pitch,relief,
+  {fibreUnderlay=false}={}){
   if(!prior||![prior.a,prior.b,a,b,y,width].every(Number.isFinite)||
       width<=0||prior.b>a||a-prior.b>=width)return false;
   const profile=threadLightProfile(lighting,a,y,b,y,pitch,relief);
   if(!profile||profile.shade<=0)return false;
+  // Fibre tatami's *actual* underlying yarn is a .35-normal-offset
+  // round-capped shadow stroke, projected by the same world lamp.
+  // Its thinner glint/microstrands do NOT reach the adjacent stitch.
+  // Transform only these capsule centres; ordinary tatami is unchanged.
+  const sx=fibreUnderlay?profile.shadowX:0;
+  const sy=fibreUnderlay ? .35+profile.shadowY : 0;
   ctx.save();
-  const low={x:prior.a,y},lowEnd={x:prior.b,y};
-  const high={x:a,y},highEnd={x:b,y};
+  const low={x:prior.a+sx,y:y+sy},lowEnd={x:prior.b+sx,y:y+sy};
+  const high={x:a+sx,y:y+sy},highEnd={x:b+sx,y:y+sy};
   if(!traceThreadContactCapsule(ctx,low,lowEnd,width)){
     ctx.restore();return false;
   }
@@ -107,10 +114,12 @@ function paintTatamiCapContact(ctx,prior,a,b,y,width,lighting,pitch,relief){
   const reach=Math.hypot(profile.shadowX,profile.shadowY);
   const shift=reach?Math.min(width*.12,overlap*.25)/reach:0;
   ctx.beginPath();
-  ctx.arc((prior.b+a)*.5+profile.shadowX*shift,
-    y+profile.shadowY*shift,width*.53,0,Math.PI*2);
+  ctx.arc((prior.b+a)*.5+sx+profile.shadowX*shift,
+    y+sy+profile.shadowY*shift,width*.53,0,Math.PI*2);
+  // The fibre underlay is much thinner and more transparent than a
+  // regular tubular tatami stitch; do not stamp a satin-scale dark blob.
   ctx.fillStyle='rgba('+profile.shadeRgb+','+
-    (.16*profile.shade).toFixed(3)+')';
+    ((fibreUnderlay ? .055 : .16)*profile.shade).toFixed(3)+')';
   ctx.fill();
   ctx.restore();
   return true;
@@ -529,8 +538,9 @@ export function drawRegionEmbroidery(ctx,object,treatment,lighting=null){
   // The authored short-stitch end gap is >=1.4 world units. The usual
   // normalized pitch=5 has width 1.25: no physical cap contact exists,
   // so do not even enter the per-stitch shade code on that hot path.
-  const tatamiCapOverlapEligible=tatami&&!fibre&&
-    localLight?.shadow>0&&ctx.lineWidth>1.4;
+  const fibreUnderlayWidth=Math.min(3.2,Math.max(.8,treatment.pitch*.32));
+  const tatamiCapOverlapEligible=tatami&&localLight?.shadow>0&&
+    (fibre?fibreUnderlayWidth:ctx.lineWidth)>1.4;
   // Chain fills need fewer, distinct loop courses than closely stacked
   // satin rows. Limit total curve work for large imported multi-ring art.
   const chainStride=Math.max(2,Math.ceil((2*n+1)/120));
@@ -594,11 +604,14 @@ export function drawRegionEmbroidery(ctx,object,treatment,lighting=null){
         if(b< -halfX-threadHalo||a>halfX+threadHalo){
           priorTatami=null;continue;
         }
-        // No work for ordinary pitch=5, any unlit source, running stitch,
-        // or a fibre pattern whose distinct microstrands are not modeled here.
+        // Only truly overlapping round yarn caps can receive this
+        // micro-contact. Fibre uses its actual projected dark *underlay*
+        // width/centre, never the narrower highlight or a satin proxy.
         if(tatamiCapOverlapEligible&&priorTatami)
-          paintTatamiCapContact(ctx,priorTatami,a,b,y,ctx.lineWidth,
-            localLight,treatment.pitch,treatment.relief);
+          paintTatamiCapContact(ctx,priorTatami,a,b,y,
+            fibre?fibreUnderlayWidth:ctx.lineWidth,
+            localLight,treatment.pitch,treatment.relief,
+            {fibreUnderlay:fibre});
         if(tatamiCapOverlapEligible)priorTatami={a,b};
         if(fibre){
           fibreSpan(ctx,a,y,b,y,treatment.pitch,treatment.relief,
