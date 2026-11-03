@@ -39,7 +39,7 @@ ROYGBIV is a free, mobile-first, **portrait Pixel 6 Pro Chrome/PWA** wallpaper s
 | Recorder / privacy / real use | [Creative recorder](docs/CREATIVE-BEHAVIOUR-RECORDER-PLAN-2026-10-22.md), [human field guide](docs/AGENT-HUMAN-EXPECTATIONS-AND-CREATIVE-COMPOSITION.md): opt-in, never silently upload |
 | CI or verification | [Normative CI engineering standard](docs/CI-ENGINEERING-STANDARD.md), [live implementation audit](docs/CI-STANDARD-IMPLEMENTATION-2026-10-31.md), [lean operating policy](docs/CI-OPERATIONS-2026-10-22.md), and targeted evidence |
 
-Avoid reading or appending the full historical research archive for a focused fix. The authoritative queue should have one small present-tense dispatch at the top; place past receipts below a marked archive boundary.
+Avoid reading or appending full historical research logs for a focused fix. The [authoritative live queue](docs/CURRENT-WORK-QUEUE-2026-10-24.md) deliberately contains **only current six-lane dispatch and release gates**; its previous 222 KB of original timestamped receipts are preserved intact in [the separate historical archive](docs/CURRENT-WORK-QUEUE-ARCHIVE-THROUGH-2026-11-02.md). Read that archive only to recover a specific past branch/decision, put detailed new measurements in their owning reports, and update the small live queue only when action priorities change. Required CI prevents it from regrowing into an agent-context dump.
 
 ## Shared engine: non-negotiable integration rules
 
