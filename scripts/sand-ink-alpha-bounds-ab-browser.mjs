@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /**
- * One-off full-cache A/B hypothesis: derive conservative movable stripe
+ * Source-matched Worker A/B of the production conservative movable stripe
  * material bounds from actual painted ink alpha, while preserving full
  * material canvas origin/size and the source-backed real Worker.
- * No production module is edited or imported by this script.
+ * The source baseline uses the exact pull-request base commit worktree.
  */
 
 /**
@@ -19,27 +19,17 @@ import {resolve,join,extname} from 'node:path';
 import {chromium} from 'playwright';
 import {randomizeAllRecipe,normalizeRecipe} from '../src/model.js';
 
-const root=process.cwd();
-const originalRenderer=await readFile(join(root,'src/renderer.js'),'utf8');
-const paintAnchor='      paintMaterial(t,layer,paintBounds,sandMaterialLighting(scene,layer));';
-assert.equal(originalRenderer.split(paintAnchor).length,2,'Original single paint anchor changed');
-const injected="      if(options.cache&&scene.structure==='paths'&&\n        scene.composition==='floating'&&layer.coverage==='stripes'&&\n        ['sand-mandala','sand-beaded','sand-filigree'].includes(layer.material)){\n        // Conservative pixel-alpha footprint of already-rendered *source ink*.\n        // Keep full material surface geometry/scale/origin unchanged: this is\n        // only a candidate reduction in world-space facet enumeration.\n        if(stripeSandInkPixelBounds===undefined){\n          let ax0=inkWidth,ay0=inkHeight,ax1=-1,ay1=-1;\n          // Read once for any layered floating sand; a second material\n          // rotates this SAME conservative source alpha footprint.\n          try{\n            const pixels=g.getImageData(0,0,inkWidth,inkHeight).data;\n            for(let row=0;row<inkHeight;row++){\n              const rowBase=row*inkWidth*4;\n              for(let col=0;col<inkWidth;col++){\n                if(pixels[rowBase+col*4+3]===0)continue;\n                if(col<ax0)ax0=col;\n                if(col>ax1)ax1=col;\n                if(row<ay0)ay0=row;\n                if(row>ay1)ay1=row;\n              }\n            }\n          }catch{\n            // Feature support/resource failure must never lose visible ink.\n            ax0=0;ay0=0;ax1=inkWidth-1;ay1=inkHeight-1;\n          }\n          stripeSandInkPixelBounds=ax1>=ax0&&ay1>=ay0?\n            {ax0,ay0,ax1,ay1}:null;\n        }\n        if(stripeSandInkPixelBounds){\n          const {ax0,ay0,ax1,ay1}=stripeSandInkPixelBounds;\n          // Alpha-mask footprint corners -> original design world -> rotated\n          // material source. Overshoot by 24 authored units for facets,\n          // raster resampling and boundary antialias. No LOD or thin pixels.\n          const xlo=(ax0-margin.left-offsetX)/scaleX;\n          const xhi=(ax1+1-margin.left-offsetX)/scaleX;\n          const ylo=(ay0-margin.top-offsetY)/scaleY;\n          const yhi=(ay1+1-margin.top-offsetY)/scaleY;\n          let l=Infinity,r=-Infinity,u=Infinity,d=-Infinity;\n          for(const [vx,vy] of [[xlo,ylo],[xlo,yhi],[xhi,ylo],[xhi,yhi]]){\n            const dx=vx-DESIGN_WIDTH/2,dy=vy-DESIGN_HEIGHT/2;\n            const tx=dx*c+dy*sin,ty=-dx*sin+dy*c;\n            l=Math.min(l,tx);r=Math.max(r,tx);\n            u=Math.min(u,ty);d=Math.max(d,ty);\n          }\n          const halo=24;\n          paintBounds={left:Math.max(left,l-halo),right:Math.min(right,r+halo),\n            top:Math.max(top,u-halo),bottom:Math.min(bottom,d+halo)};\n          if(paintBounds.right<paintBounds.left||paintBounds.bottom<paintBounds.top)\n            paintBounds={left,right,top,bottom}; // diagnostic fail-safe\n        }\n      }\n";
-const candidateRenderer=originalRenderer
-  .replace('  const textured=layer=>{','  let stripeSandInkPixelBounds;\n  const textured=layer=>{')
-  .replace(paintAnchor,injected+paintAnchor);
-
-const mime={'.html':'text/html','.js':'text/javascript','.css':'text/css',
-  '.json':'application/json','.svg':'image/svg+xml','.woff2':'font/woff2'};
+const root=process.cwd(),comparison=resolve(root,'comparator-baseline');
 const server=createServer(async(req,res)=>{
  try{
   const pathname=decodeURIComponent(new URL(req.url,'http://localhost').pathname);
   if(pathname==='/'){res.writeHead(200,{'content-type':'text/html'}).end('<!doctype html><title>Settled Worker source acceptance</title>');return;}
   const match=/^\/(base|candidate)\/(.+)$/.exec(pathname);
   if(!match){res.writeHead(404).end();return;}
-  const file=resolve(root,'./'+match[2]);
-  if(!file.startsWith(root+'/')){res.writeHead(403).end();return;}
-  const bytes=match[1]==='candidate'&&match[2]==='src/renderer.js'?
-    candidateRenderer:await readFile(file);
+  const home=match[1]==='base'?comparison:root;
+  const file=resolve(home,'./'+match[2]);
+  if(!file.startsWith(home+'/')){res.writeHead(403).end();return;}
+  const bytes=await readFile(file);
   res.writeHead(200,{'content-type':mime[extname(file)]||'application/octet-stream',
     'cache-control':'no-store'}).end(bytes);
  }catch(error){res.writeHead(404).end(String(error));}
