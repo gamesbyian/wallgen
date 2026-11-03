@@ -24,18 +24,16 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Verify diagnostic source syntax
         run: node --check scripts/sand-tile-scratch-transfer-proof.mjs
-      - name: Compare exact full cached RGBA against scratch plus putImageData cores
-        run: node scripts/sand-tile-scratch-transfer-proof.mjs
-      - name: Compare exact full cached RGBA against scratch plus drawImage cores
-        if: success()
-        run: node scripts/sand-tile-scratch-transfer-proof.mjs --image-draw
+      # Two full-grain scratch transfer strategies already passed exactly in
+      # source-matched run 41556115139; run only the new bounded-crop question.
+      - name: Prove complete cache equality with cropped facet enumeration in all five scenes
+        run: node scripts/sand-tile-scratch-transfer-proof.mjs --image-draw --crop-facets
       - name: Preserve independent full-cache mismatch receipts
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: sand-scratch-transfer-${{ github.run_id }}
           path: |
-            artifacts/sand-tile-scratch-pixeldata/
-            artifacts/sand-tile-scratch-drawimage/
+            artifacts/sand-tile-scratch-cropped/
           retention-days: 7
           if-no-files-found: warn
