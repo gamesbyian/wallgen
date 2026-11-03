@@ -1,0 +1,36 @@
+name: One-off dense sand alpha occupancy economics
+on:
+  pull_request:
+    paths:
+      - scripts/radial-sand-occupancy-probe.mjs
+      - .github/workflows/once-radial-alpha-occupancy.yml
+permissions:
+  contents: read
+jobs:
+  inspect:
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository && contains(github.event.pull_request.title, '[radial-occupancy]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Chromium
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Verify instrumentation syntax
+        run: node --check scripts/radial-sand-occupancy-probe.mjs
+      - name: Profile genuine pre-material radial alpha occupancy
+        run: node scripts/radial-sand-occupancy-probe.mjs
+      - name: Preserve source-indexed occupancy receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: radial-occupancy-${{ github.run_id }}
+          path: artifacts/radial-alpha-occupancy/
+          retention-days: 7
+          if-no-files-found: warn
