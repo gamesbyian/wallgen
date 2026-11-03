@@ -472,8 +472,10 @@ export function drawRegionEmbroidery(ctx,object,treatment,lighting=null){
   // reach any pixel inside the original even-odd silhouette clip.
   // Keep extra authored-world space for relief offsets, round caps and
   // antialiasing; normalized pitch is 2..16 so this exceeds the maximum
-  // thread-light projection and width. Chain links are deliberately excluded
-  // from culling because the prior-link contact topology is source ordered.
+  // thread-light projection and width. Chain links may omit entire original
+  // off-object rows: previous-link contacts are source-ordered *within each
+  // row*, with no cross-row predecessor state. Never omit individual links
+  // from a retained chain row, where contacts depend on the preceding link.
   const c=Math.cos(angle),s=Math.sin(angle);
   const halfX=(Math.abs(c)*width+Math.abs(s)*height)*.5;
   const halfY=(Math.abs(s)*width+Math.abs(c)*height)*.5;
@@ -491,7 +493,7 @@ export function drawRegionEmbroidery(ctx,object,treatment,lighting=null){
     if(Math.abs(y)>diagonal*.7)continue;
     // This only omits source rows provably outside the original region
     // bounds plus enough world-space margin for any projected yarn ink.
-    if(!chain&&Math.abs(y)>halfY+threadHalo)continue;
+    if(Math.abs(y)>halfY+threadHalo)continue;
     if(chain){
       if((k+n)%chainStride!==0)continue;
       const limit=diagonal*.8;

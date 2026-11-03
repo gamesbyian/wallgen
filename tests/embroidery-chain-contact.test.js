@@ -215,6 +215,32 @@ test('real region chain rows illuminate only original consecutive linked cubics'
   assert.equal(lit.ops.filter(x=>x[0]==='rotate').length,1,
     'all contacts use the original region-local rotated lamp');
 });
+test('out-of-shape chain rows are omitted but original within-row link contacts remain source ordered',()=>{
+  const treatment=normalizeSurfaceTreatments([{
+    id:'narrow-chain-bounds',enabled:true,style:'chain',
+    pitch:5,direction:0,relief:85,
+    target:{scope:'all',role:'fill',colorSlots:[],ids:[]}
+  }])[0];
+  const object={rings:[[
+    {x:50,y:640},{x:550,y:640},{x:550,y:660},{x:50,y:660}
+  ]]};
+  const unlit=capture(),again=capture(),lit=capture();
+  const count=drawRegionEmbroidery(unlit,object,treatment,null);
+  assert.ok(count>150&&count<500,
+    'the row-local original loop grid must not submit thousands of off-object link curves');
+  assert.equal(drawRegionEmbroidery(again,object,treatment,null),count);
+  assert.deepEqual(again.ops,unlit.ops,
+    'conservative row skipping must not restart or perturb any remaining source link phase');
+  assert.equal(drawRegionEmbroidery(lit,object,treatment,lamp()),count,
+    'lighting must not alter which original source chain stations are painted');
+  const w=Math.max(.7,Math.min(2.5,treatment.pitch*.25));
+  const contacts=lit.ops.filter(op=>op[0]==='stroke'&&op[2]<w);
+  assert.ok(contacts.length>0&&contacts.length<count*2,
+    'complete retained rows still contain real consecutive-cubic contact strokes');
+  assert.equal(lit.ops.filter(op=>op[0]==='clip').length,0,
+    'only the renderer original even-odd region owns the clip');
+});
+
 test('a disconnected or degenerate region cannot create fabricated chain contact',()=>{
   const invalid={vertices:[{x:NaN,y:10},{x:30,y:10}]};
   const ctx=capture();
