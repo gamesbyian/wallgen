@@ -8,7 +8,7 @@ const visible=(structure,regionMode='voronoi',construction='ribbon')=>
     .map(tool=>tool.id);
 
 test('scene policy preserves every tool in its source schema',()=>{
-  assert.equal(TOOL_LIST.length,40);
+  assert.equal(TOOL_LIST.length,42);
   assert.equal(EDITOR_CATEGORIES.length,7);
   for(const structure of ['paths','radial','regions']){
     const tools=visible(structure);
@@ -21,12 +21,15 @@ test('scene policy preserves every tool in its source schema',()=>{
 });
 test('path-specific tools and shape settings appear only in path scenes',()=>{
   const paths=visible('paths'),radial=visible('radial'),regions=visible('regions');
-  for(const id of ['geometry','safety','turn','single-loop','shape-details','ends','outlines','surface','structure'])
+  for(const id of ['geometry','safety','turn','single-loop','shape-details','ends','outlines','structure'])
     assert.ok(paths.includes(id),id);
-  for(const id of ['geometry','safety','turn','single-loop','shape-details','ends','outlines','surface','structure']){
+  for(const id of ['geometry','safety','turn','single-loop','shape-details','ends','outlines','structure']){
     assert.ok(!radial.includes(id),'radial '+id);
     assert.ok(!regions.includes(id),'regions '+id);
   }
+  // The shared Surface inspector also owns regional embroidery controls.
+  // Hiding its whole tool would make radial/region thread options unreachable.
+  for(const tools of [paths,radial,regions])assert.ok(tools.includes('surface'));
   assert.ok(radial.includes('rays'));
   assert.ok(radial.includes('ray-shape'));
   assert.ok(!regions.includes('rays'));
