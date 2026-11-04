@@ -20,7 +20,11 @@ test('image path importer presents transient progress, ready and empty states fr
 test('phase indicator never adds a new canonical input, changes geometry or stores an image',()=>{
   const js=read('src/image-path-ui.js');
   assert.match(js,/const phaseLabel=dialog\.querySelector\('\.image-path-phase'\)/);
-  assert.match(js,/image=null;candidates=\[\];chooser\.replaceChildren\(\);fileInput\.value=''/);
+  assert.match(js,/image=null;candidates=\[\];reconstructed=\[\];chooser\.replaceChildren\(\)/);
+  assert.match(js,/dialog\.addEventListener\('close',[\s\S]*?fileInput\.value=''/,
+    'closing the original importer must clear native file selection for retry');
+  assert.match(js,/if\(blocked\)\{[\s\S]*?fileInput\.value='';[\s\S]*?onNotice/,
+    'lock rejection must also clear the file selection for same-file retry');
   assert.match(js,/onPath\(imported\)/);
   assert.match(js,/onAngle\(candidates\[selected\]\.angle\)/);
   const html=read('index.html');

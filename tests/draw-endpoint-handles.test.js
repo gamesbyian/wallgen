@@ -64,7 +64,9 @@ test('valid single-sided endpoint handle moves only the adjacent source span',()
 test('the actual Draw hit-test and ink renderer never advertise ghost endpoint handles',()=>{
   const code=readFileSync(new URL('../src/draw-path-ui.js',import.meta.url),'utf8');
   const references=code.match(/editablePointHandleSides\(editor,editor\.selected\)/g)||[];
-  assert.equal(references.length,2,'both actual ink and pointer hit-tests must use validity');
+  assert.equal(references.length,3,
+    'offset grip obstacles, visible tangent ink and pointer hit-tests must all use validity');
+  assert.match(code,/function selectedOffsetGrip\(m\)[\s\S]*?for\(const side of editablePointHandleSides\(editor,editor.selected\)\)[\s\S]*?obstacles\.push/);
   assert.match(code,/cornerButton\.disabled=!available\|\|editor\.selected===0\|\|\s*editor\.selected===editor\.points\.length-1/);
   assert.match(code,/if\(distance\(mouse,project\(m,handles\[side\]\)\)<=radius\)/);
 });

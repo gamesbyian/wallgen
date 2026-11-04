@@ -25,6 +25,7 @@ test('contrast change retains original source import actions',()=>{
   for(const id of ['imagePathApply','imagePathAngle','imagePathCancel',
     'imagePathCandidate','imagePathAnother'])
     assert.equal([...html.matchAll(new RegExp('id="'+id+'"','g'))].length,1,id);
-  assert.match(html,/image-path\.css\?v=20261022-shapes1/);
+  assert.equal([...html.matchAll(/href="image-path\.css\?v=[^"]+"/g)].length,1,
+    'the current importer must load its existing CSS exactly once');
   assert.doesNotMatch(css,/linear-gradient|radial-gradient|conic-gradient/i);
 });

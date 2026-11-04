@@ -18,6 +18,8 @@ test('inactive source controls display zero and preserve recipe state on save',(
   assert.match(source,/inactive\.add\('shapeFrequency'\),inactive\.add\('shapeDepth'\)/);
   assert.match(source,/data\[key\]=field\.dataset\.inactive==='true'\?current\[key\]/);
   assert.match(source,/field\.value=isInactive\?'0':String\(current\[key\]\)/);
-  assert.match(source,/numeric\.value=isInactive\?'0':String\(current\[key\]\)/);
+  assert.match(source,/syncNumericSlider\(numeric,isInactive\?'0':current\[key\]\)/);
+  assert.match(source,/if\(isInactive && Number\(field\.min\)>0\)/);
+  assert.match(source,/if\(field\.dataset\.activeMin\)field\.min=field\.dataset\.activeMin/);
   assert.match(source,/field\.disabled=isInactive\|\|locked/);
 });
