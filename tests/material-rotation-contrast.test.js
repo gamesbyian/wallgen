@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-const read=file=>readFileSync(new URL('../'+file,import.meta.url),'utf8');
+const read=file=>readFileSync(new URL('../'+file,import.meta.url),'utf8')
+  .replace(/\r\n/g,'\n');
 const lum=hex=>[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)/255)
  .map(c=>c<=.04045?c/12.92:((c+.055)/1.055)**2.4)
  .reduce((sum,c,i)=>sum+c*[.2126,.7152,.0722][i],0);
