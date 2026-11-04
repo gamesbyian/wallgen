@@ -416,12 +416,10 @@ try{
         'Original Finish action must reveal source-bound Finish inputs');
       console.log('MATERIAL_INSPECTOR_GEOMETRY '+JSON.stringify({
         width,height,materialBefore,materialFinish}));
-      if(width>=412)assert.ok(materialFinish.paneWithinCard&&
-        materialFinish.fieldsWithinCard&&materialFinish.visibleFieldCount>0,
-        'Primary Pixel-class Finish view cannot clip source controls: '+
+      assert.ok(materialFinish.paneWithinCard&&materialFinish.fieldsWithinCard&&
+        materialFinish.visibleFieldCount>0,
+        'No original Finish row may be clipped, even on the 320px fallback: '+
           JSON.stringify(materialFinish));
-      // The 320x700 fallback remains lower-priority, but record any overflow
-      // numerically before choosing a bounded, non-overlay remedy.
       await page.screenshot({path:join(output,'material-finish-'+width+'x'+height+'.png'),
         animations:'disabled'});
       await page.keyboard.press('Home');
