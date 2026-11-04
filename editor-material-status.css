@@ -53,24 +53,12 @@
   }
 }
 
-/* Supported 320x640/700 portrait exposes a shorter mobile Edit tray than
-   320x892. Only when an actual selected Finish 2/3 card contains its visible
-   inactive explanation, return 16px of vertical room for the original 5+1
-   rotation controls. Keep other tools and the canvas-first default unchanged. */
-@media(max-width:360px) and (max-height:740px){
-  body.mobile-studio.mobile-edit-open:has(
-    .editor-tool-card[data-editor-tool^="layer"]:not([hidden])
-      .material-inspector-pane[data-material-view="finish"]:not([hidden])
-      >.material-finish-help:not([hidden])){
-    /* The tool chooser now owns a 44px native hit row, 13px taller than
-       the original 31px strip. Preserve all six inactive Material rotation
-       controls instead of letting the late Finish help rule steal that space. */
-    /* The source category bar is now 10px taller; retain the six rotation
-       actions inside the Finish card at 320×700 without touching the art. */
-    --mobile-tray-height:307px!important;
-  }
-}
-
+/* The former 307px short-portrait inactive-Finish override is retired.
+   It overrode the 44px Material/Finish workspaces with a smaller tray as
+   soon as the Finish help appeared, clipping the original rotation field.
+   The component-specific <=499px Texture reservation in editor-redesign.css
+   now keeps both view switches at one stable, source-visible tray height.
+   No global workspace/renderer dimensions are modified. */
 
 /* First opt-in semantic textile treatment, inside the existing Surface card. */
 .embroidery-controls{display:grid;gap:8px;min-width:0}

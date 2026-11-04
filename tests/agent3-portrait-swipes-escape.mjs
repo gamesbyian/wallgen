@@ -364,6 +364,72 @@ try{
       assert.equal(await page.locator('#editorHistory').isVisible(),false);
       assert.equal(await history.evaluate(el=>document.activeElement===el),true,
         'Visible Back action must return keyboard focus to original trigger');
+      // Texture's original Material/Finish tabs used 27px phone targets.
+      // Measure each REAL source-bound button and the whole visible pane
+      // inside the card before accepting the 44px redesign.
+      await page.locator('#tab-material').tap();
+      const materialTabs='.editor-tool-card[data-editor-tool="layer1"] .material-inspector-tab';
+      const inspectMaterial=()=>page.evaluate(()=>{
+        const card=document.querySelector('.editor-tool-card[data-editor-tool="layer1"]');
+        const cardBounds=card.getBoundingClientRect();
+        const buttons=[...card.querySelectorAll('.material-inspector-tab')];
+        const pane=card.querySelector('.material-inspector-pane:not([hidden])');
+        const paneBounds=pane.getBoundingClientRect();
+        const fields=[...pane.querySelectorAll('.lockable-setting')]
+          .filter(el=>el.getBoundingClientRect().height>0);
+        return {cardVisible:!card.hidden,
+          selected:buttons.find(b=>b.getAttribute('aria-pressed')==='true')?.textContent,
+          tabs:buttons.map(button=>{
+            const b=button.getBoundingClientRect();
+            const hit=document.elementFromPoint(b.left+b.width/2,b.top+b.height/2);
+            return {label:button.textContent,width:b.width,height:b.height,
+              centerHit:hit===button||button.contains(hit),
+              insideCard:b.top>=cardBounds.top-2&&b.bottom<=cardBounds.bottom+2};
+          }),
+          paneWithinCard:paneBounds.top>=cardBounds.top-2&&
+            paneBounds.bottom<=cardBounds.bottom+2,
+          fieldsWithinCard:fields.every(field=>{
+            const b=field.getBoundingClientRect();
+            return b.top>=cardBounds.top-2&&b.bottom<=cardBounds.bottom+2;
+          }),
+          visibleFieldCount:fields.length,
+          cardBounds:{top:cardBounds.top,bottom:cardBounds.bottom,height:cardBounds.height},
+          paneBounds:{top:paneBounds.top,bottom:paneBounds.bottom,height:paneBounds.height},
+          fieldBounds:fields.map(field=>{
+            const b=field.getBoundingClientRect();
+            return {name:field.querySelector('[name]')?.name||'other',
+              top:b.top,bottom:b.bottom,height:b.height};
+          })};
+      });
+      const materialBefore=await inspectMaterial();
+      assert.equal(materialBefore.cardVisible,true,
+        'Original Layer 1 card must be visible');
+      assert.equal(materialBefore.selected,'Material');
+      for(const tab of materialBefore.tabs)
+        assert.ok(tab.width>=44&&tab.height>=44&&tab.centerHit&&tab.insideCard,
+          'Material/Finish original tab needs a real >=44px hit cell: '+JSON.stringify(tab));
+      assert.ok(materialBefore.paneWithinCard&&materialBefore.fieldsWithinCard,
+        'Material view must fit inside original tool card after taller tabs');
+      await page.locator(materialTabs).nth(1).tap();
+      const materialFinish=await inspectMaterial();
+      assert.equal(materialFinish.selected,'Finish',
+        'Original Finish action must reveal source-bound Finish inputs');
+      console.log('MATERIAL_INSPECTOR_GEOMETRY '+JSON.stringify({
+        width,height,materialBefore,materialFinish}));
+      assert.ok(materialFinish.paneWithinCard&&materialFinish.fieldsWithinCard&&
+        materialFinish.visibleFieldCount>0,
+        'No original Finish row may be clipped, even on the 320px fallback: '+
+          JSON.stringify(materialFinish));
+      await page.screenshot({path:join(output,'material-finish-'+width+'x'+height+'.png'),
+        animations:'disabled'});
+      await page.keyboard.press('Home');
+      assert.equal((await inspectMaterial()).selected,'Material',
+        'Home must still select original Material view with keyboard');
+      await page.keyboard.press('End');
+      assert.equal((await inspectMaterial()).selected,'Finish',
+        'End must still select original Finish view with keyboard');
+      assert.deepEqual(decodeRecipe(new URL(page.url()).searchParams.get('r')),recipe,
+        'Inspector view switching must not change authored material or recipe');
       // Open the existing native Activity dialog programmatically while Edit
       // is shown, isolating Escape ownership without inventing a UI route.
       await page.locator('#creativeActivityOpen').evaluate(el=>el.click());
@@ -382,6 +448,7 @@ try{
         swipedFrom:before.selected,swipedTo:after.selected,
         counter:after.position,selectedVisible:after.selectedVisible,
         searchGeometry,keyboardChoice,historyExit,
+        materialBefore,materialFinish,
         searchEscapeKeepsEdit:true,historyEscapeKeepsEdit:true,
         dialogEscapeKeepsEdit:true,
         recipePreserved:true,railScrollPreserved:true,touchCancelSafe:true,source:'Chromium synthetic TouchEvent and keyboard',

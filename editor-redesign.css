@@ -1696,3 +1696,50 @@ html[data-theme="cream"] body.mobile-studio .sidebar .settings-tabs .settings-ta
     white-space:nowrap;
   }
 }
+
+
+/* The two original Material / Finish views are frequent precision-tool
+   destinations. Their historic 27px mobile tab height is below the primary
+   Pixel-class touch contract. Enlarge the real tab rectangles in place;
+   preserve the single canonical material layer, source fields and one
+   inspector row. Do not paint transparent hit zones over other controls. */
+@media(max-width:790px){
+  body.mobile-studio .sidebar .editor-tool-card .material-inspector-tab{
+    box-sizing:border-box!important;
+    height:44px!important;min-height:44px!important;
+    max-height:44px!important;
+    padding:6px 10px!important;font-size:12px!important;
+    line-height:1.2;
+  }
+}
+
+
+/* Chromium source geometry (4 Nov): at 412x892 the exact original Finish
+   rotation cell ends 22.8px below the bounded card; at 320x700 it ends
+   30px below. A nominally 44px Material/Finish tab must not hide an entire
+   original rotation control. Reserve ~33-36px in the EDIT tray only while
+   an existing Texture layer is active. Keep height stable across Material /
+   Finish switching; the stage loses real layout space rather than being
+   overpainted by hidden controls. Never resize authored wallpaper geometry. */
+@media(max-width:499px){
+  body.mobile-studio.mobile-edit-open:has(
+    .sidebar .editor-tool-card[data-editor-tool^="layer"]:not([hidden])){
+    --mobile-tray-height:clamp(350px,40dvh,360px)!important;
+  }
+}
+
+
+/* Zoomed phone / compact foldable 500-790 CSS px: the same source Finish
+   rotation field exceeded its original card by 11px at 600x700 after the
+   44px inspector tabs. Give the EXISTING Texture workspace ~16-17px more
+   vertical reservation in this band, without changing other category
+   layouts, preview rendering or source geometry. */
+@media(min-width:500px) and (max-width:790px){
+  /* Match the existing non-Focus height owner's #controls specificity.
+     Otherwise its earlier :not(:has(#controls.editor-focus-active)) rule
+     wins despite this later component-specific declaration. */
+  body.mobile-studio.mobile-edit-open:not(:has(#controls.editor-focus-active)):has(
+    .sidebar .editor-tool-card[data-editor-tool^="layer"]:not([hidden])){
+    --mobile-tray-height:clamp(365px,calc(36dvh + 24px),455px)!important;
+  }
+}
