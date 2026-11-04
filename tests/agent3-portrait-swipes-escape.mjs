@@ -441,6 +441,88 @@ try{
       assert.deepEqual(decodeRecipe(new URL(page.url()).searchParams.get('r')),recipe,
         'Navigation gestures must never mutate wallpaper recipe');
       assert.deepEqual(errors,[],'Page errors during scene-aware gesture acceptance');
+      // Source-first exploratory census: diagnose the next two genuine
+      // mobile control actions BEFORE deciding which available space to use.
+      // This is a deliberate second recipe, not a mutation of the initial
+      // radial viewport/gesture acceptance above.
+      const inspectSourceAction=(cardSelector,selector)=>page.evaluate(({cardSelector,selector})=>{
+        const card=document.querySelector(cardSelector);
+        const button=card?.querySelector(selector);
+        if(!card||!button)return {found:false};
+        const c=card.getBoundingClientRect(),b=button.getBoundingClientRect();
+        const hit=document.elementFromPoint(b.left+b.width/2,b.top+b.height/2);
+        const children=[...card.querySelectorAll('.lockable-setting')]
+          .filter(el=>!el.hidden&&el.getBoundingClientRect().height>0)
+          .map(el=>{const x=el.getBoundingClientRect();return {
+            name:el.querySelector('[name]')?.name||'',top:x.top,bottom:x.bottom,
+            inside:x.top>=c.top-2&&x.bottom<=c.bottom+2};});
+        return {found:true,visible:!button.hidden,width:b.width,height:b.height,
+          centerHit:hit===button||button.contains(hit),
+          top:b.top,bottom:b.bottom,cardTop:c.top,cardBottom:c.bottom,
+          insideCard:b.top>=c.top-2&&b.bottom<=c.bottom+2,
+          originalControlsInside:children.every(x=>x.inside),originalControls:children,
+          label:button.textContent,active:document.activeElement===button};
+      },{cardSelector,selector});
+      await page.locator('#tab-layout').tap();
+      const designAction=await inspectSourceAction(
+        '.editor-tool-card[data-editor-tool="structure-mode"]','.editor-design-next');
+      assert.ok(designAction.found&&designAction.visible&&
+        designAction.height>=44&&designAction.width>=44&&
+        designAction.centerHit&&designAction.insideCard&&
+        designAction.originalControlsInside,
+        'Design Next must have an original unobscured 44px cell: '+
+          JSON.stringify(designAction));
+      console.log('DESIGN_NEXT_GEOMETRY '+JSON.stringify({width,height,designAction}));
+      await page.screenshot({path:join(output,'design-next-'+width+'x'+height+'.png'),
+        animations:'disabled'});
+      await page.locator('.editor-tool-card[data-editor-tool="structure-mode"] .editor-design-next').tap();
+      const designArrival=await page.evaluate(()=>{
+        const chip=document.querySelector('.editor-tool-tab[aria-pressed="true"]:not([hidden])');
+        return {category:chip?.dataset.category,tool:chip?.dataset.editorTool,
+          focused:chip===document.activeElement,
+          sourceHidden:document.querySelector(
+            '.editor-tool-card[data-editor-tool="structure-mode"]').hidden};
+      });
+      assert.ok(designArrival.category==='path'&&designArrival.tool&&
+        designArrival.focused&&designArrival.sourceHidden,
+        'Design Next must navigate and focus the actual source tool: '+
+          JSON.stringify(designArrival));
+      assert.deepEqual(decodeRecipe(new URL(page.url()).searchParams.get('r')),recipe,
+        'Deliberate Design Next navigation must not rewrite the radial recipe');
+      const pathRecipe=normalizeRecipe({...recipe,structure:'paths',
+        geometry:'straight',construction:'ribbon',motif:'solid'});
+      await page.goto(origin+'/?r='+encodeRecipe(pathRecipe),
+        {waitUntil:'domcontentloaded'});
+      await page.locator('#mobileEdit').tap();
+      await page.locator('#tab-stripes').tap();
+      const patternActions=[];
+      for(const tool of ['marks','motif-scale']){
+        await page.locator('.editor-tool-tab[data-editor-tool="'+tool+'"]').tap();
+        const details=await inspectSourceAction(
+          '.editor-tool-card[data-editor-tool="'+tool+'"]',
+          '.editor-pattern-prerequisite button');
+        assert.ok(details.found&&details.visible&&
+          details.width>=44&&details.height>=44&&details.centerHit&&
+          details.insideCard&&details.originalControlsInside,
+          'Dormant Pattern prerequisite must fit native card with >=44px hit: '+
+            JSON.stringify({tool,...details}));
+        await page.screenshot({path:join(output,'pattern-'+tool+'-'+width+'x'+height+'.png'),
+          animations:'disabled'});
+        await page.locator('.editor-tool-card[data-editor-tool="'+tool+
+          '"] .editor-pattern-prerequisite button').tap();
+        const arrival=await page.evaluate(()=>{
+          const chip=document.querySelector('.editor-tool-tab[aria-pressed="true"]:not([hidden])');
+          return {category:chip?.dataset.category,tool:chip?.dataset.editorTool,
+            focused:chip===document.activeElement};
+        });
+        assert.deepEqual(arrival,{category:'stripes',tool:'patterns',focused:true},
+          'Prerequisite must reveal and focus the existing Patterns tool');
+        patternActions.push({tool,...details,arrival});
+      }
+      console.log('PATTERN_ACTION_GEOMETRY '+JSON.stringify({width,height,patternActions}));
+      assert.deepEqual(decodeRecipe(new URL(page.url()).searchParams.get('r')),pathRecipe,
+        'Deliberate prerequisite navigation must not rewrite authored source recipe');
+      assert.deepEqual(errors,[],'No browser script exceptions in guidance census');
       const result={width,height,applicable:before.tools.map(x=>x.id),
         categoryRail:{...categories,lastTouch:lastCategory,keyboardHome:true},
         zoomedPhoneTargets,compactExplore,
@@ -448,7 +530,7 @@ try{
         swipedFrom:before.selected,swipedTo:after.selected,
         counter:after.position,selectedVisible:after.selectedVisible,
         searchGeometry,keyboardChoice,historyExit,
-        materialBefore,materialFinish,
+        materialBefore,materialFinish,designAction,designArrival,patternActions,
         searchEscapeKeepsEdit:true,historyEscapeKeepsEdit:true,
         dialogEscapeKeepsEdit:true,
         recipePreserved:true,railScrollPreserved:true,touchCancelSafe:true,source:'Chromium synthetic TouchEvent and keyboard',
