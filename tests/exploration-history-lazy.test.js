@@ -21,6 +21,7 @@ function mount(renderThumbnail){
     setAttribute(name,value){this.attributes.set(name,String(value));}
     addEventListener(type,handler){this.handlers.set(type,handler);}
     click(){this.handlers.get('click')?.();}
+    focus(){document.activeElement=this;}
   }
   const document={
     createElement(tag){const item=new Element(tag);created.push(item);return item;},
@@ -45,11 +46,35 @@ function mount(renderThumbnail){
   const toggle=created.find(item=>item.id==='editorHistoryToggle');
   const panel=created.find(item=>item.id==='editorHistory');
   const strip=created.find(item=>item.className==='editor-history-strip');
-  return {api,toggle,panel,strip,restored,
+  const back=created.find(item=>item.className==='editor-history-close');
+  return {api,toggle,panel,strip,back,restored,
+    activeElement:()=>document.activeElement,
     close(){if(prior===undefined)delete globalThis.document;
       else globalThis.document=prior;}};
 }
 const settle=()=>new Promise(resolve=>setImmediate(resolve));
+
+test('History Back and Escape return focus to its original action, never dismiss the editor',()=>{
+  const h=mount(async()=>null);
+  try{
+    h.toggle.click();
+    h.back.click();
+    assert.equal(h.panel.hidden,true,'Back closes only the history panel');
+    assert.equal(h.activeElement(),h.toggle,'Back focus returns to the real toolbar action');
+    assert.equal(h.toggle.attributes.get('aria-pressed'),'false');
+    h.toggle.click();
+    let prevented=false,stopped=false;
+    h.panel.handlers.get('keydown')({
+      key:'Escape',
+      preventDefault(){prevented=true;},
+      stopPropagation(){stopped=true;}
+    });
+    assert.equal(h.panel.hidden,true,'Escape closes the history panel');
+    assert.equal(h.activeElement(),h.toggle,'Escape returns focus to the original trigger');
+    assert.equal(prevented,true);
+    assert.equal(stopped,true,'Escape must not bubble to the global mobile sheet handler');
+  }finally{h.close();}
+});
 
 test('Random archives recipes without painting hidden history thumbnails',async()=>{
   const calls=[];
