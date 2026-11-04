@@ -90,8 +90,21 @@ export function installExplorationHistory({form,preview,getRecipe,restore,render
       void renderVisibleThumbnails();
     }
   }
+  function closeHistoryToTrigger(){
+    toggleHistory(false);
+    // The only explicit History exit lives in the original Explore action
+    // rail. Return keyboard/assistive focus there, never to a hidden Back
+    // button or an invented duplicate navigation control.
+    if(toggle.isConnected&&!toggle.hidden)toggle.focus({preventScroll:true});
+  }
   toggle.addEventListener('click',()=>toggleHistory());
-  back.addEventListener('click',()=>toggleHistory(false));
+  back.addEventListener('click',closeHistoryToTrigger);
+  panel.addEventListener('keydown',event=>{
+    if(event.key!=='Escape')return;
+    event.preventDefault();
+    event.stopPropagation(); // Do not also close the parent mobile Edit sheet.
+    closeHistoryToTrigger();
+  });
   document.addEventListener('editor-tool-changed',()=>toggleHistory(false));
   refresh();
   return {
