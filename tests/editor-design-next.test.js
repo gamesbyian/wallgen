@@ -25,6 +25,9 @@ test('next action does not change recipe automatically or create phantom fields'
   const file=readFileSync(new URL('../src/editor-design-next.js',import.meta.url),'utf8');
   const main=readFileSync(new URL('../src/editor-layout.js',import.meta.url),'utf8');
   assert.match(file,/document\.addEventListener\('roygbiv-controls-synced',sync\)/);
+  assert.match(file,/document\.addEventListener\('editor-tool-changed',sync\)/);
+  assert.match(file,/getScene\?\.\(\)/);
+  assert.match(main,/getScene:\(\)=>\(\{structure:activeStructure,regionMode:activeRegionMode\}\)/);
   assert.match(file,/button\.addEventListener\('click'/);
   assert.match(file,/select\(category,tool\)/);
   assert.doesNotMatch(file,/changeRecipe|createElement\('input'\)/);
