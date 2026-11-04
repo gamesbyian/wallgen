@@ -57,7 +57,8 @@ test('source UI exposes a focusable all-shapes recovery button only for shape-re
   assert.match(source,/All shapes · clear '\+active\.objectIds\.length\+' selected'/);
   assert.match(source,/clearShapes\.dataset\.interiorFocus='field\.objectIds\.clear'/);
   assert.match(source,/clearShapes\.addEventListener\('click',\(\)=>update\('objectIds',\[\]\)\)/);
-  assert.match(source,/if\(stackLocked\)\{[\s\S]*?if\(control!==lock&&control!==choose\)control\.disabled=true/);
+  assert.match(source,/if\(stackLocked\)\{[\s\S]*?if\(control!==lock&&control!==choose&&\s*!control\.hasAttribute\('data-interior-switcher'\)\)control\.disabled=true/,
+    'a locked Interior stack must disable mutations but keep navigation switchers accessible');
   assert.ok(source.includes('resolveInteriorFocusTarget(controls,focused)?.focus'),
     'when the clear-only control disappears, the chooser must receive restored focus');
 });

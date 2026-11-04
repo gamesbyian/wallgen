@@ -36,12 +36,14 @@ test('a valid seven-circle range needs no unnecessary warning',()=>{
   assert.equal(r.countCapped,false);
   assert.ok(r.maxRadius>r.minRadius);
 });
-test('invalid imported silhouette renders safely, with explicit placeholder text',()=>{
+test('missing imported silhouette refuses to fabricate circles and shows a choose-shape diagnostic',()=>{
   const recipe=normalizeRecipe({structure:'regions',regionMode:'scattered',
     scatteredShapeKind:'imported',scatteredShape:null,scatteredCount:3});
   const generated=buildScatteredObjects(recipe);
   assert.ok(generated.diagnostic?.includes('Choose an imported shape'));
-  assert.ok(generated.objects.length);
+  assert.deepEqual(generated.objects,[],
+    'missing imported geometry must not silently render invented circle artwork');
+  assert.equal(generated.placed,0);
   const app=readFileSync(new URL('../src/app.js',import.meta.url),'utf8');
   assert.match(app,/Circles are placeholders/);
   assert.match(app,/scatteredSourceNotice/);
