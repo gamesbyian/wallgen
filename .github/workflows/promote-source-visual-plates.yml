@@ -13,7 +13,12 @@ permissions:
 
 jobs:
   promote-reviewed-images:
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    # This is a write-enabled, provenance-sensitive operation. Updating its
+    # workflow or evidence script must never run promotion by default.
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      contains(github.event.pull_request.title, '[promote-reviewed-images]')
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:

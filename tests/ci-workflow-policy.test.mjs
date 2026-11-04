@@ -108,6 +108,8 @@ test('every PR keeps one fail-closed, self-tested required check', async () => {
   const promote = await readFile(path.join(workflows, 'promote-source-visual-plates.yml'), 'utf8');
   assert.match(promote, /head\.repo\.full_name == github\.repository/,
     'Write-enabled promotion must reject fork PRs');
+  assert.match(promote, /contains\(github\.event\.pull_request\.title, '\[promote-reviewed-images\]'\)/,
+    'Updating the write-enabled workflow must not automatically promote expired evidence');
 });
 
 test('required CI and Pages use Node 24 action runtimes without adding implicit dependency caches', async () => {
