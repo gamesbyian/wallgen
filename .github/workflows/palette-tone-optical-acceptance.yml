@@ -13,10 +13,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: '22'
+          package-manager-cache: false
       - name: Verify canonical and scoped colour semantics
         run: node --test tests/canonical-palette-tone.test.js tests/editor-schema.test.js tests/recipe-format-history.test.js
       - name: Install one-shot Chromium

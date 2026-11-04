@@ -26,10 +26,11 @@ jobs:
     env:
       ATLAS_MODE: ${{ github.event_name == 'pull_request' && 'smoke' || inputs.mode }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: '22'
+          package-manager-cache: false
       - name: Validate atlas JavaScript
         run: |
           node --check scripts/capture-ui-atlas.mjs

@@ -14,10 +14,11 @@ jobs:
       SOURCE_PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
       SOURCE_PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: '22'
+          package-manager-cache: false
       - name: Validate independent evidence script
         run: |
           node --check scripts/visual-reference-audit-agent1.mjs
@@ -56,10 +57,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: '22'
+          package-manager-cache: false
       - name: Validate source slider audit
         run: node --check scripts/visual-narrow-desktop-range-agent1.mjs
       - name: Install Chromium for real source geometry

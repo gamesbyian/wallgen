@@ -18,14 +18,15 @@ jobs:
     timeout-minutes: 12
     steps:
       - name: Checkout the exact same-repository PR head with full ancestry
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.head.ref }}
           fetch-depth: 0
           persist-credentials: true
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: '22'
+          package-manager-cache: false
       - name: Reject changed PR head while promotion is in flight
         env:
           SOURCE_HEAD: ${{ github.event.pull_request.head.sha }}

@@ -133,6 +133,28 @@ test('required CI and Pages use Node 24 action runtimes without adding implicit 
   assert.equal((pages.match(/uses: actions\/upload-pages-artifact@v3/g) || []).length, 1);
 });
 
+test('opt-in evidence and guarded promotion keep supported action runtimes without surprise npm caches', async () => {
+  const specialty=(await readdir(workflows)).filter(name=>/\.yml$/.test(name)&&
+    !['check.yml','pages.yml'].includes(name));
+  assert.equal(specialty.length,18,'Do not silently change the opt-in workflow menu');
+  let setups=0;
+  for(const name of specialty){
+    const source=await readFile(path.join(workflows,name),'utf8');
+    const checkouts=(source.match(/uses: actions\/checkout@v6/g)||[]).length;
+    const nodeSetups=(source.match(/uses: actions\/setup-node@v6/g)||[]).length;
+    const disabledCaches=(source.match(/package-manager-cache: false/g)||[]).length;
+    assert.ok(checkouts>0,name+' has no checkout');
+    assert.equal(nodeSetups,checkouts,name+' must pair each checkout with a supported Node setup');
+    assert.equal(disabledCaches,nodeSetups,name+' must not enable implicit npm caching');
+    assert.equal((source.match(/node-version: '22'/g)||[]).length,nodeSetups,
+      name+' application test version must remain pinned independently of the Action runtime');
+    assert.doesNotMatch(source,/uses: actions\/(?:checkout|setup-node)@v[1-5](?:\s|$)/m,
+      name+' depends on an obsolete JavaScript action runtime');
+    setups+=nodeSetups;
+  }
+  assert.equal(setups,19,'Source-owned opt-in Action invocation inventory changed');
+});
+
 test('manual optical evidence cannot be cancelled by a later distinct request', async () => {
   for (const name of ['ui-screenshot-atlas.yml', 'visual-agent1.yml']) {
     const content = await readFile(path.join(workflows, name), 'utf8');
