@@ -334,7 +334,14 @@ export function mountEditor(){
     const cat=event.detail;
     if(cat!==activeCategory)selectEditorTool(cat,EDITOR_CATEGORIES.find(c=>c.id===cat).tools[0].id);
   });
-  randomCategory.addEventListener('click',()=>{randomCategory.dataset.randomCategory=currentCategoryFromTabs();});
+  randomCategory.addEventListener('click',()=>{
+    randomCategory.dataset.randomCategory=currentCategoryFromTabs();
+    closeVariation();
+  });
+  // The history action is appended later by its original history owner.
+  controls.addEventListener('click',event=>{
+    if(event.target.closest('#editorHistoryToggle'))closeVariation();
+  });
   let matchedSearchHit=null,rankedSearchHits=[],searchMatchIndex=0;
   function renderSearchChoices(){
     searchResults.replaceChildren();
@@ -387,6 +394,7 @@ export function mountEditor(){
   }
   search.addEventListener('click',()=>{
     if(!searchInput.hidden){closeSearch();return;}
+    closeVariation();
     searchInput.hidden=false;searchClose.hidden=false;
     explore.classList.add('editor-search-open');
     search.setAttribute('aria-expanded','true');
