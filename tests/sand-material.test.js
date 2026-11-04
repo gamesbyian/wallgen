@@ -113,7 +113,8 @@ test('floating stripe sand alpha culling is opt-in for preview and never narrows
     'the original full material scratch dimension and origin must survive');
   assert.match(renderer,/t\.setTransform\(rasterScale,0,0,rasterScale,-x0\*rasterScale,-y0\*rasterScale\)/);
   assert.match(renderer,/s\.drawImage\(surface,x0,y0,w,h\)/);
-  const worker=readFileSync(new URL('../src/render-worker.js',import.meta.url),'utf8');
+  // Windows Git checkouts can use CRLF; source-policy assertions are semantic.
+  const worker=readFileSync(new URL('../src/render-worker.js',import.meta.url),'utf8').replace(/\r\n/g,'\n');
   const interactiveStart=worker.indexOf("if(quality==='interactive'){");
   const interactiveEnd=worker.indexOf('cache={};',interactiveStart);
   assert.ok(interactiveStart>0&&interactiveEnd>interactiveStart,

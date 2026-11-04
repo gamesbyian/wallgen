@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {execFileSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
 const read=(name)=>readFileSync(new URL('../'+name,import.meta.url),'utf8');
 const html=read('index.html');
 const css=read('studio-themes.css');
@@ -79,7 +80,7 @@ test('the two SVGs share geometry and differ in background and phone outline col
   }
 });
 test('raster generator produces matching actual PNG binaries at icon resolution',()=>{
-  execFileSync(process.execPath,[new URL('../scripts/build-logo-raster.mjs',import.meta.url).pathname],{stdio:'pipe'});
+  execFileSync(process.execPath,[fileURLToPath(new URL('../scripts/build-logo-raster.mjs',import.meta.url))],{stdio:'pipe'});
   const dark=readFileSync(new URL('../assets/roygbiv-logo-dark.png',import.meta.url));
   const cream=readFileSync(new URL('../assets/roygbiv-logo-cream.png',import.meta.url));
   const sig=Buffer.from('89504e470d0a1a0a','hex');

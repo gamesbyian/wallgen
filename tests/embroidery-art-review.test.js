@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {spawnSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
 import {normalizeRecipe,resolveScene} from '../src/model.js';
 import {normalizeSurfaceTreatments} from '../src/embroidery.js';
 const source=readFileSync(new URL('../scripts/review-embroidery.mjs',import.meta.url),'utf8');
@@ -26,7 +27,7 @@ test('scattered review target is a real source-authored region; treatment remain
 });
 test('embroidery review help needs no browser or network',()=>{
   const result=spawnSync(process.execPath,
-    [new URL('../scripts/review-embroidery.mjs',import.meta.url).pathname,'--help'],
+    [fileURLToPath(new URL('../scripts/review-embroidery.mjs',import.meta.url)),'--help'],
     {encoding:'utf8',timeout:10000});
   assert.equal(result.status,0,result.stderr);
   assert.match(result.stdout,/review-embroidery\.mjs/);

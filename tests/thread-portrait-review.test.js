@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {spawnSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
 import {readFileSync} from 'node:fs';
 const code=readFileSync(new URL('../scripts/review-thread-portrait.mjs',import.meta.url),'utf8');
 test('thread portrait review is exactly two targeted screens and not a UI atlas',()=>{
@@ -13,7 +14,7 @@ test('thread portrait review is exactly two targeted screens and not a UI atlas'
 });
 test('thread portrait help does not require browser or web server',()=>{
   const r=spawnSync(process.execPath,
-    [new URL('../scripts/review-thread-portrait.mjs',import.meta.url).pathname,'--help'],
+    [fileURLToPath(new URL('../scripts/review-thread-portrait.mjs',import.meta.url)),'--help'],
     {encoding:'utf8',timeout:10000});
   // Help exits before playwright usage in the executable; help is a simple CLI check.
   assert.equal(r.status,0,r.stderr);
