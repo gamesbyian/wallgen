@@ -16,6 +16,8 @@ const observations=[];
 try{
   for(const [width,height] of [[320,700],[412,892],[600,700],[600,900]]){
     const context=await browser.newContext({viewport:{width,height},
+      // Primary Pixel 6 Pro physical-resolution class: 412×892 CSS x DPR 3.5.
+      deviceScaleFactor:width===412?3.5:1,
       isMobile:true,hasTouch:true,reducedMotion:'reduce'});
     const page=await context.newPage(),errors=[];
     page.on('pageerror',error=>errors.push(String(error)));
@@ -24,6 +26,76 @@ try{
       await page.goto(origin+'/?r='+encodeRecipe(recipe),
         {waitUntil:'domcontentloaded'});
       await page.locator('#mobileEdit').tap();
+      // The 1440×3120 physical-display class has a roughly 412×892 CSS
+      // viewport. Validate real hit rectangles, not 1440px CSS breakpoints.
+      let compactExplore=null;
+      if(width<=499){
+        compactExplore=await page.evaluate(()=>{
+          const selectors=['.editor-style select','#editorVariationToggle',
+            '.editor-explore-actions>.editor-scope-button',
+            '.editor-explore-actions>.editor-search-toggle[aria-label="Find a setting"]'];
+          return selectors.map(selector=>{
+            const node=document.querySelector(selector);
+            if(!node)throw Error('Missing compact source action: '+selector);
+            const r=node.getBoundingClientRect();
+            const hit=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);
+            return {selector,width:r.width,height:r.height,
+              centerHit:node===hit||node.contains(hit),
+              viewportVisible:r.left>=0&&r.right<=innerWidth};
+          });
+        });
+        for(const t of compactExplore)
+          assert.ok(t.width>=44&&t.height>=44&&t.centerHit&&t.viewportVisible,
+            'Compact portrait action must be a real visible >=44px hit cell: '+JSON.stringify(t));
+        const toggle=page.locator('#editorVariationToggle');
+        assert.equal(await page.locator('#editorVariationOptions').isVisible(),false,
+          'Detail selectors must be disclosed, not squeezed into 29px defaults');
+        await toggle.tap();
+        assert.equal(await toggle.getAttribute('aria-expanded'),'true',
+          'Variation action must accurately announce expanded state');
+        const actualOptions=await page.evaluate(()=>{
+          const panel=document.getElementById('editorVariationOptions');
+          const explorer=document.querySelector('.editor-explore').getBoundingClientRect();
+          const tabs=document.querySelector('.settings-tabs').getBoundingClientRect();
+          const selectors=[...panel.querySelectorAll('select')];
+          return {selectors:selectors.map(node=>{
+              const r=node.getBoundingClientRect();
+              const hit=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);
+              return {height:r.height,width:r.width,hit:node===hit||node.contains(hit)};
+            }),
+            sourceMatches:document.querySelectorAll('#editorVariationMode').length===1&&
+              document.querySelectorAll('#editorVariationStrength').length===1,
+            insideSheet:explorer.bottom<=tabs.top+1};
+        });
+        assert.ok(actualOptions.sourceMatches&&actualOptions.insideSheet,
+          'Variation must reuse original select nodes and reserve space above tabs');
+        for(const item of actualOptions.selectors)
+          assert.ok(item.height>=44&&item.width>=44&&item.hit,
+            'Disclosed original selectors must be physically tappable');
+        await page.locator('#editorVariationMode').selectOption('vary');
+        await page.locator('#editorVariationStrength').selectOption('wild');
+        await page.locator('#editorVariationStrength').focus();
+        await page.keyboard.press('Escape');
+        assert.equal(await toggle.getAttribute('aria-expanded'),'false');
+        assert.equal(await page.locator('#editorVariationOptions').isVisible(),false,
+          'Escape must close only transient Variation controls');
+        assert.equal(await toggle.evaluate(el=>document.activeElement===el),true,
+          'Escape must return focus to the same visible Variation action');
+        assert.equal(await page.locator('body').evaluate(el=>
+          el.classList.contains('mobile-edit-open')),true,
+          'Variation Escape must not dismiss the whole Edit sheet');
+        assert.equal(await page.locator('#editorVariationMode').inputValue(),'vary',
+          'Source variation mode remains stable after detail disclosure');
+        assert.equal(await page.locator('#editorVariationStrength').inputValue(),'wild',
+          'Source variation strength remains stable after detail disclosure');
+        assert.deepEqual(decodeRecipe(new URL(page.url()).searchParams.get('r')),recipe,
+          'Variation disclosure and mode selection must leave authored recipe untouched');
+      }else{
+        assert.equal(await page.locator('#editorVariationToggle').isVisible(),false,
+          'Wide mobile preserves the original two inline variation selectors');
+        assert.equal(await page.locator('#editorVariationMode').isVisible(),true);
+        assert.equal(await page.locator('#editorVariationStrength').isVisible(),true);
+      }
       // Browser zoom can yield 500–790 CSS px even on an actual phone.
       // This width band used a 36px tool chip and 35×38px search/dice.
       // Confirm the real mounted DOM, plus hit-test ownership (no overlaps).
@@ -217,7 +289,8 @@ try{
       assert.deepEqual(errors,[],'Page errors during scene-aware gesture acceptance');
       const result={width,height,applicable:before.tools.map(x=>x.id),
         categoryRail:{...categories,lastTouch:lastCategory,keyboardHome:true},
-        zoomedPhoneTargets,
+        zoomedPhoneTargets,compactExplore,
+        primaryPixelClass:width===412,deviceScaleFactor:width===412?3.5:1,
         swipedFrom:before.selected,swipedTo:after.selected,
         counter:after.position,selectedVisible:after.selectedVisible,
         searchEscapeKeepsEdit:true,dialogEscapeKeepsEdit:true,
