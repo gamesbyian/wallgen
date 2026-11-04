@@ -11,6 +11,8 @@ class Element extends EventTarget{
   }
   click(){if(!this.disabled)this.dispatchEvent(new Event('click'));}
   querySelector(){return new Element('phase');}
+  matches(){return false;}
+  hidePopover(){}
   showModal(){this.open=true;}
   close(){this.open=false;this.dispatchEvent(new Event('close'));}
   append(option){this.options.push(option);}
@@ -25,7 +27,11 @@ test('image decode completing after Structure lock does not re-enable invalid mo
     createURL:URL.createObjectURL,revokeURL:URL.revokeObjectURL};
   const ids=['importPathToggle','imagePathFile','imagePathDialog','imagePathCanvas',
     'imagePathCandidate','imagePathStatus','imagePathApply','imagePathShape','imagePathAngle',
-    'imagePathAnother','imagePathCancel'];
+    'imagePathAnother','imagePathCancel',
+    'imageRecipeWorkspace','imageRecipeCandidate','imageRecipeApply',
+    'imageRecipeStatus','imageRecipeUnavailable','imageRecipeWhy',
+    'imageRecipeExplanation','imageRecipeExplanationText','imageRecipeCanvas',
+    'imageRecipeSourceCanvas'];
   const nodes=Object.fromEntries(ids.map(id=>[id,new Element(id)]));
   globalThis.document={
     getElementById:id=>nodes[id],
