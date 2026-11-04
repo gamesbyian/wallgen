@@ -2,7 +2,7 @@
   "version": 1,
   "baseline": "main@4f900d8f6fe5f4dd5c1ed114d1777d8d3a393659",
   "sourceContract": "docs/ui-reference/canonical-screen-contract.json",
-  "sourceInventory": "docs/ui-reference/source-control-inventory.json",
+  "sourceInventory": "docs/ui-reference/source-control-inventory-2026-10-19.json",
   "evidencePolicy": "177 exact canonical claims tracked 1:1. Candidate selectors and proof filenames do not themselves confer reachability. Confirm test-specific assertions and green CI at the applicable commit. Human visual review and native Android AT remain unverified.",
   "counts": {
     "plates": 12,

@@ -5,7 +5,7 @@ import {readFileSync,existsSync} from 'node:fs';
 const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 const spec=JSON.parse(read('docs/ui-reference/canonical-screen-contract.json'));
 const matrix=JSON.parse(read('docs/ui-reference/agent2-runtime-plate-traceability.json'));
-const inventory=JSON.parse(read('docs/ui-reference/source-control-inventory.json'));
+const inventory=JSON.parse(read('docs/ui-reference/source-control-inventory-2026-10-19.json'));
 
 test('all 177 canonical screen claims have one exact, reviewable trace row',()=>{
   const expected=spec.screens.flatMap(plate=>

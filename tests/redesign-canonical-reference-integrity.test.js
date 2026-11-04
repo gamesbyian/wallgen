@@ -5,7 +5,7 @@ import {readFileSync,existsSync} from 'node:fs';
 const json=path=>JSON.parse(readFileSync(path,'utf8'));
 const contract=json('docs/ui-reference/canonical-screen-contract.json');
 const trace=json('docs/ui-reference/component-traceability.json');
-const inventory=json('docs/ui-reference/source-control-inventory.json');
+const inventory=json('docs/ui-reference/source-control-inventory-2026-10-19.json');
 const manifest=json('assets/icons/roygbiv/manifest.json');
 const html=readFileSync('index.html','utf8');
 const historySource=readFileSync('src/exploration-history.js','utf8');

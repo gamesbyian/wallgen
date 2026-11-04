@@ -11,7 +11,7 @@ import {chromium} from 'playwright';
 const origin=process.env.ROYGBIV_URL||'http://127.0.0.1:4173';
 const out=resolve(process.env.ROYGBIV_CENSUS_OUT||'artifacts/agent3-runtime-source-census');
 await mkdir(out,{recursive:true});
-const inventory=JSON.parse(await readFile(new URL('../docs/ui-reference/source-control-inventory.json',import.meta.url),'utf8'));
+const inventory=JSON.parse(await readFile(new URL('../docs/ui-reference/source-control-inventory-2026-10-19.json',import.meta.url),'utf8'));
 assert.equal(inventory.staticIds.length,inventory.counts.staticIds,'source static ID inventory must reconcile');
 assert.equal(new Set(inventory.staticIds).size,inventory.staticIds.length,'source inventory contains duplicated IDs');
 // Historical source tabs are replaced by explicit seven-category navigation.
