@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "sourceCommit": "c4d75cbfa30dd513c91a6b80348c56d0a053723f + default five-destination integration",
+  "sourceCommit": "27f67434977b60da6b51f0c16229b88baa64d16e (current editor inventory refreshed; historical wireframe baseline unchanged)",
   "referenceBaseline": "https://github.com/gamesbyian/wallgen/actions/runs/39166559800",
   "status": "canonical proposed implementation contract, not app screenshot",
   "notes": [
@@ -8,7 +8,8 @@
     "Screen contract required/conditional arrays, category tool inventory and source DOM remain the implementation authority.",
     "Icons are the exact SVG source geometry, not image-generated interpretations.",
     "The 55 original glyphs and brand app icon remain. Four extension glyphs are integrated and eight remain unwired pending independent use-case and human aesthetic approval.",
-    "The source default dock now has five static destinations; previousDockControls records the original six source actions that remain in the HTML, relocated without changing their handlers."
+    "The source default dock now has five static destinations; previousDockControls records the original six source actions that remain in the HTML, relocated without changing their handlers.",
+    "The current seven category / 42 tool inventory follows src/editor-schema.js at 27f67434977b60da6b51f0c16229b88baa64d16e; these original twelve SVG reference plates remain conceptual wireframes, not proof of pixel-current layouts."
   ],
   "global": {
     "navigation": [
@@ -61,7 +62,7 @@
         "tools": [
           {
             "id": "structure-mode",
-            "label": "Canvas structure",
+            "label": "Structure",
             "settings": [
               "structure"
             ]
@@ -87,7 +88,7 @@
           },
           {
             "id": "variability",
-            "label": "Variation",
+            "label": "Irregularity",
             "settings": [
               "chaos"
             ]
@@ -119,7 +120,7 @@
           },
           {
             "id": "ray-shape",
-            "label": "Ray shape",
+            "label": "Ray detail",
             "settings": [
               "rayTwist",
               "rayCoverage",
@@ -139,7 +140,8 @@
             "label": "Regions",
             "settings": [
               "regionMode",
-              "regionCount"
+              "regionCount",
+              "scatteredShapeKind"
             ]
           },
           {
@@ -148,6 +150,31 @@
             "settings": [
               "regionJitter",
               "regionSides"
+            ]
+          },
+          {
+            "id": "scattered-size",
+            "label": "Objects",
+            "settings": [
+              "scatteredCount",
+              "scatteredMinSize",
+              "scatteredMaxSize"
+            ]
+          },
+          {
+            "id": "scattered-distribution",
+            "label": "Distribution",
+            "settings": [
+              "scatteredVariation",
+              "scatteredSpacing"
+            ]
+          },
+          {
+            "id": "scattered-edges",
+            "label": "Edges & overlap",
+            "settings": [
+              "scatteredEdgeCrop",
+              "scatteredOverlap"
             ]
           },
           {
@@ -168,7 +195,7 @@
           },
           {
             "id": "single-loop",
-            "label": "Single loop",
+            "label": "Loop",
             "settings": [
               "loopRadius",
               "loopSweep"
@@ -196,7 +223,7 @@
       },
       {
         "id": "stripes",
-        "label": "Shapes",
+        "label": "Stripes",
         "icon": "stripes",
         "tools": [
           {
@@ -219,7 +246,7 @@
           },
           {
             "id": "marks",
-            "label": "Marks",
+            "label": "Dots",
             "settings": [
               "dotSize",
               "dotSpacing"
@@ -242,7 +269,7 @@
           },
           {
             "id": "character",
-            "label": "Character",
+            "label": "Stripe differences",
             "settings": [
               "individuality",
               "overridePatternHomogeneity"
@@ -261,13 +288,18 @@
             "settings": []
           },
           {
+            "id": "typography",
+            "label": "Text",
+            "settings": []
+          },
+          {
             "id": "interior-style",
-            "label": "Element style",
+            "label": "Style",
             "settings": []
           },
           {
             "id": "interior-motion",
-            "label": "Element motion",
+            "label": "Wave",
             "settings": []
           },
           {
@@ -277,7 +309,7 @@
           },
           {
             "id": "interior-targets",
-            "label": "Colour targets",
+            "label": "Ink & targets",
             "settings": []
           },
           {
@@ -329,6 +361,15 @@
             ]
           },
           {
+            "id": "palette-tone",
+            "label": "Tone",
+            "settings": [
+              "paletteToneEnabled",
+              "paletteSaturation",
+              "paletteLightness"
+            ]
+          },
+          {
             "id": "canvas",
             "label": "Background",
             "settings": [
@@ -339,7 +380,7 @@
       },
       {
         "id": "material",
-        "label": "Material",
+        "label": "Texture",
         "icon": "material",
         "tools": [
           {
@@ -349,16 +390,10 @@
               "material",
               "textureCoverage",
               "textureBlend",
-              "textureLayer2Enabled"
-            ]
-          },
-          {
-            "id": "finish1",
-            "label": "Finish 1",
-            "settings": [
               "textureStrength",
               "textureScale",
-              "textureRotation"
+              "textureRotation",
+              "textureLayer2Enabled"
             ]
           },
           {
@@ -368,16 +403,10 @@
               "material2",
               "textureCoverage2",
               "textureBlend2",
-              "textureLayer3Enabled"
-            ]
-          },
-          {
-            "id": "finish2",
-            "label": "Finish 2",
-            "settings": [
               "textureStrength2",
               "textureScale2",
-              "textureRotation2"
+              "textureRotation2",
+              "textureLayer3Enabled"
             ]
           },
           {
@@ -386,13 +415,7 @@
             "settings": [
               "material3",
               "textureCoverage3",
-              "textureBlend3"
-            ]
-          },
-          {
-            "id": "finish3",
-            "label": "Finish 3",
-            "settings": [
+              "textureBlend3",
               "textureStrength3",
               "textureScale3",
               "textureRotation3"
@@ -410,7 +433,7 @@
       },
       {
         "id": "effects",
-        "label": "Effects",
+        "label": "Light",
         "icon": "effects",
         "tools": [
           {

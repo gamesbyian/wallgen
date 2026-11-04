@@ -7,10 +7,15 @@ const root=new URL('../',import.meta.url);
 const read=p=>readFileSync(new URL(p,root),'utf8');
 const spec=JSON.parse(read('docs/ui-reference/canonical-screen-contract.json'));
 const manifest=JSON.parse(read('assets/icons/roygbiv/manifest.json'));
-test('canonical references enumerate all seven categories, all 40 tools and 12 illustrated states',()=>{
+test('canonical references enumerate all seven categories, all 42 tools and 12 illustrated states',()=>{
  assert.equal(spec.global.sourceCategories.length,7);
  assert.deepEqual(spec.global.sourceCategories.map(c=>({id:c.id,tools:c.tools.map(t=>({id:t.id,settings:t.settings}))})),EDITOR_CATEGORIES.map(c=>({id:c.id,tools:c.tools.map(t=>({id:t.id,settings:t.settings}))})), 'captured editor keys must reflect current source');
- assert.equal(spec.global.sourceCategories.reduce((n,c)=>n+c.tools.length,0),40);
+ assert.equal(spec.global.sourceCategories.reduce((n,c)=>n+c.tools.length,0),42);
+ assert.deepEqual(spec.global.sourceCategories.map(c=>({id:c.id,label:c.label,icon:c.icon,
+   tools:c.tools.map(t=>({id:t.id,name:t.label,settings:t.settings}))})),
+   EDITOR_CATEGORIES.map(c=>({id:c.id,label:c.label,icon:c.icon,
+     tools:c.tools.map(t=>({id:t.id,name:t.name,settings:t.settings}))})),
+   'Reference labels and controls must match canonical live editor, not a stale concept');
  assert.equal(spec.screens.length,12);
  for(const sc of spec.screens){
   assert.ok(sc.required.length>=6 && sc.conditional.length && sc.forbidden.length,sc.id);
