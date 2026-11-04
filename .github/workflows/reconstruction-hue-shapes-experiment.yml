@@ -39,10 +39,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: '22'
+          package-manager-cache: false
       - name: Test canonical source-visible masks and per-hue compound receipts
         run: node --test tests/reconstruction-visible-hue-shapes.test.js tests/scattered-shape-overrides.test.js
       - name: Install opt-in real Chromium forward renderer

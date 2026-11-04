@@ -13,19 +13,25 @@ permissions:
 
 jobs:
   promote-reviewed-images:
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    # This is a write-enabled, provenance-sensitive operation. Updating its
+    # workflow or evidence script must never run promotion by default.
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      contains(github.event.pull_request.title, '[promote-reviewed-images]')
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
       - name: Checkout the exact same-repository PR head with full ancestry
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.head.ref }}
           fetch-depth: 0
           persist-credentials: true
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: '22'
+          package-manager-cache: false
       - name: Reject changed PR head while promotion is in flight
         env:
           SOURCE_HEAD: ${{ github.event.pull_request.head.sha }}

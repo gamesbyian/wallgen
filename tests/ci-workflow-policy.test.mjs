@@ -32,7 +32,6 @@ test('personal project has only a small active workflow menu', async () => {
   const expected = {
     'check.yml': ['pull_request', 'workflow_dispatch'],
     'pages.yml': ['push', 'workflow_dispatch'],
-    'promote-source-visual-plates.yml': ['pull_request', 'workflow_dispatch'],
   };
   // Every active specialty suite must be manually requested; no hidden push.
   const manual = [
@@ -105,9 +104,13 @@ test('every PR keeps one fail-closed, self-tested required check', async () => {
   const retired = await readdir(archive);
   assert(retired.includes('once-preview-discovery-release.yml'),
     'One-shot credentialed release must remain archived, not be a live push trigger');
-  const promote = await readFile(path.join(workflows, 'promote-source-visual-plates.yml'), 'utf8');
-  assert.match(promote, /head\.repo\.full_name == github\.repository/,
-    'Write-enabled promotion must reject fork PRs');
+  assert(retired.includes('promote-source-visual-plates.yml'),
+    'Original one-shot write-enabled promotion must be archived, not live');
+  const historicPromote=await readFile(path.join(archive,'promote-source-visual-plates.yml'),'utf8');
+  assert.match(historicPromote,/head\.repo\.full_name == github\.repository/,
+    'Archived promotion must preserve its historical fork-rejection evidence');
+  assert.match(historicPromote,/contains\(github\.event\.pull_request\.title, '\[promote-reviewed-images\]'\)/,
+    'Retain the final fail-closed opt-in safeguard in the historical source');
 });
 
 test('required CI and Pages use Node 24 action runtimes without adding implicit dependency caches', async () => {
@@ -131,6 +134,28 @@ test('required CI and Pages use Node 24 action runtimes without adding implicit 
   // The single, named artifact uploader is intentionally retained until
   // another real deployment validates any future archive-format migration.
   assert.equal((pages.match(/uses: actions\/upload-pages-artifact@v3/g) || []).length, 1);
+});
+
+test('remaining opt-in evidence uses supported action runtimes without surprise npm caches', async () => {
+  const specialty=(await readdir(workflows)).filter(name=>/\.yml$/.test(name)&&
+    !['check.yml','pages.yml'].includes(name));
+  assert.equal(specialty.length,17,'Do not silently change the opt-in workflow menu');
+  let setups=0;
+  for(const name of specialty){
+    const source=await readFile(path.join(workflows,name),'utf8');
+    const checkouts=(source.match(/uses: actions\/checkout@v6/g)||[]).length;
+    const nodeSetups=(source.match(/uses: actions\/setup-node@v6/g)||[]).length;
+    const disabledCaches=(source.match(/package-manager-cache: false/g)||[]).length;
+    assert.ok(checkouts>0,name+' has no checkout');
+    assert.equal(nodeSetups,checkouts,name+' must pair each checkout with a supported Node setup');
+    assert.equal(disabledCaches,nodeSetups,name+' must not enable implicit npm caching');
+    assert.equal((source.match(/node-version: '22'/g)||[]).length,nodeSetups,
+      name+' application test version must remain pinned independently of the Action runtime');
+    assert.doesNotMatch(source,/uses: actions\/(?:checkout|setup-node)@v[1-5](?:\s|$)/m,
+      name+' depends on an obsolete JavaScript action runtime');
+    setups+=nodeSetups;
+  }
+  assert.equal(setups,18,'Source-owned opt-in Action invocation inventory changed');
 });
 
 test('manual optical evidence cannot be cancelled by a later distinct request', async () => {

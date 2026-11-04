@@ -20,10 +20,11 @@ jobs:
     env:
       CASES: ${{ inputs.cases || '05-hairpin,06-loop,16-offset-jagged,18-repeated-compound-hole-island,22-overlapping-reversed-circles' }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: '22'
+          package-manager-cache: false
       - name: Mathematical and driver tests
         run: node --test tests/reconstruction-distance-field.test.js tests/reconstruction-vtracer-oracle.test.js
       - name: Install opt-in browser harness
