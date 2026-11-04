@@ -91,3 +91,23 @@ A second actual browser run then found 600×700's original source angle bottom *
 These numbers are actual Chromium CSS geometry, not physical Pixel touch/thermal or TalkBack evidence. Original Material/Finish keyboard Home/End and unmodified encoded recipe passed. Earlier red runs on the PR are recorded negative evidence; the clean-head success supersedes those source states.
 
 **Remaining conditional discovery:** `editor-pattern-prerequisite` and `editor-design-next` have historically small mobile action rows in `editor-redesign.css`. Before modifying their heights, prove actual applicability and card containment at the primary 412×892, then preserve keyboard/focus/source operations and preview space. Avoid another broad, global breakpoint override.
+
+
+## 4 November UTC: Pattern prerequisites, Design Continue and scene-truthful labels
+
+**[#1064](https://github.com/gamesbyian/wallgen/pull/1064), MERGED at `7ca74df`.** Initial, production-linked Chromium census [#41825142147](https://github.com/gamesbyian/wallgen/actions/runs/41825142147) reproduced two real source touch-target problems across 320×700, **412×892 at DPR 3.5**, 600×700 and 600×900: the original Design Type `Continue` button measured **28px high**, and the Dots and Motif scale dormant Pattern `Go to Patterns` action measured **26px high**. All sat within their original source cards with adequate spare height. The correct remediation was therefore **in-place 44px buttons**, with no additional Edit tray, secondary toolbar, overlay, cloned source controls or recipe changes. Their existing CSS breakpoints remain mobile-only (<=790 CSS px).
+
+The amended [exact-head quick + opt-in genuine Chromium #41825730221](https://github.com/gamesbyian/wallgen/actions/runs/41825730221) both **PASSED**. Measured original-control widths and heights:
+
+| CSS viewport | Design Continue | Each dormant Pattern action | Card and navigation |
+| --- | --- | --- | --- |
+| 320×700 | 250×44px | 96×44px | Unobscured, all source controls inside |
+| **412×892, DPR 3.5** | **342×44px** | **96×44px** | **Unobscured, all source controls inside** |
+| 600×700 | 530×44px | 96×44px | Unobscured, all source controls inside |
+| 600×900 | 530×44px | 96×44px | Unobscured, all source controls inside |
+
+Real `tap()` clicks on Continue, Dots and Motif scale select the actual original destination tool. Focus transfers to that visible tool chip rather than staying trapped on a hidden originating action; for scene-dependent fallback selection, focus follows the **actually selected** chip (e.g., Radial rays), not a guessed requested ID. The original URL recipe, Undo and wallpaper rendering are unchanged. Both prerequisite hints continue to use the canonical `patternToolPrerequisite` policy and disappear when their real inputs become applicable.
+
+**[#1065](https://github.com/gamesbyian/wallgen/pull/1065), MERGED at `61371f8`.** The first #1064 radial acceptance uncovered a related semantic mismatch: the Design Type button **displayed** `Continue → Edit paths` while tapping it correctly opened Radial rays. The button's text and navigation had been calculated from the native form select at an initialization point when its value did not necessarily match the actual applicable scene. The follow-up now receives the authoritative `activeStructure/activeRegionMode` values from the existing editor, deriving both the **label** and **destination** from the same scene truth as `toolApplies`. It refreshes on original editor-tool changes as well as controls synchronization. No new recipe store, editor model or duplicated native fields were introduced. [Required quick + opt-in Chromium #41827129798](https://github.com/gamesbyian/wallgen/actions/runs/41827129798) both **PASSED** at all four viewports: a loaded radial design explicitly reads **`Continue → Edit radial rays`** and taps through to focused Radial rays; a separately loaded path design explicitly reads **`Continue → Edit paths`**; both original recipes remain intact.
+
+**Evidence limits:** browser interaction, actual rendered CSS hit geometry, visible source card containment and programmatic keyboard-focus ownership were proven. No physical Pixel 6 Pro, native Android voice IME, TalkBack, OS Back or subjective hand-feel was tested. Remaining touch improvements should be targeted to demonstrated on-canvas discoverability/grip/camera shortcomings, not a speculative global mobile control repaint.
