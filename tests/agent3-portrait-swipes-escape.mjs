@@ -268,6 +268,56 @@ try{
       const search=page.getByRole('button',{name:'Find a setting'});
       await search.tap();
       assert.equal(await page.locator('.editor-search-input').isVisible(),true);
+      // A real ambiguous ranked search: exercise mounted option nodes,
+      // including the fourth option if it must scroll on short screens.
+      await page.locator('.editor-search-input').fill('shadow');
+      const searchGeometry=await page.evaluate(()=>{
+        const list=document.getElementById('editorSearchResults');
+        const sheet=document.getElementById('mobileDesignSheet');
+        const choices=[...list.querySelectorAll('[data-search-index]')];
+        const bounds=list.getBoundingClientRect();
+        const sheetBounds=sheet.getBoundingClientRect();
+        const first=choices[0]?.getBoundingClientRect();
+        const center=first&&document.elementFromPoint(
+          first.left+first.width/2,first.top+first.height/2);
+        return {count:choices.length,
+          rows:choices.map(node=>({
+            width:node.getBoundingClientRect().width,
+            height:node.getBoundingClientRect().height
+          })),
+          listHeight:bounds.height,scrollHeight:list.scrollHeight,
+          boundedWithinSheet:bounds.bottom<=sheetBounds.bottom+2,
+          firstCenterHit:!!center&&(center===choices[0]||choices[0].contains(center)),
+          inputFocused:document.activeElement===document.querySelector('.editor-search-input')};
+      });
+      assert.ok(searchGeometry.count>=2,'Ambiguous shadow search must show real ranked choices');
+      assert.ok(searchGeometry.inputFocused&&searchGeometry.firstCenterHit,
+        'Search input focus and actual touch ownership of first option');
+      assert.ok(searchGeometry.boundedWithinSheet,
+        'Search popover must remain in Edit rather than cover wallpaper');
+      for(const row of searchGeometry.rows)
+        assert.ok(row.height>=44&&row.width>=44,
+          'All mounted ranked options must have real >=44px phone hit cells: '+JSON.stringify(row));
+      for(let i=1;i<searchGeometry.count;i++)await page.keyboard.press('ArrowDown');
+      const keyboardChoice=await page.evaluate(()=>{
+        const list=document.getElementById('editorSearchResults');
+        const input=document.querySelector('.editor-search-input');
+        const current=document.getElementById(input.getAttribute('aria-activedescendant'));
+        const listRect=list.getBoundingClientRect(),choice=current?.getBoundingClientRect();
+        const center=choice&&document.elementFromPoint(
+          choice.left+choice.width/2,choice.top+choice.height/2);
+        return {selected:current?.dataset.searchIndex,
+          inputFocused:document.activeElement===input,
+          visible:!!choice&&choice.top>=listRect.top-2&&choice.bottom<=listRect.bottom+2,
+          centerHit:!!center&&(center===current||current.contains(center)),
+          scrollTop:list.scrollTop};
+      });
+      assert.equal(keyboardChoice.selected,String(searchGeometry.count-1),
+        'ArrowDown must select the final semantic result');
+      assert.ok(keyboardChoice.visible&&keyboardChoice.centerHit&&keyboardChoice.inputFocused,
+        'Keyboard choice remains genuinely visible and tappable within listbox');
+      await page.screenshot({path:join(output,'search-'+width+'x'+height+'.png'),
+        animations:'disabled'});
       await page.keyboard.press('Escape');
       assert.equal(await page.locator('.editor-search-input').isVisible(),false,
         'Escape closes only setting search');
@@ -293,6 +343,7 @@ try{
         primaryPixelClass:width===412,deviceScaleFactor:width===412?3.5:1,
         swipedFrom:before.selected,swipedTo:after.selected,
         counter:after.position,selectedVisible:after.selectedVisible,
+        searchGeometry,keyboardChoice,
         searchEscapeKeepsEdit:true,dialogEscapeKeepsEdit:true,
         recipePreserved:true,railScrollPreserved:true,touchCancelSafe:true,source:'Chromium synthetic TouchEvent and keyboard',
         physicalPixel:false,humanUse:false};
