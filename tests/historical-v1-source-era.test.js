@@ -18,8 +18,13 @@ const fixture=JSON.parse(readFileSync(new URL('EXPECTED-SEMANTICS.json',root),'u
 const tiny=Uint8Array.from(Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/mXPo5QAAAABJRU5ErkJggg==',
   'base64'));
-const hashGitBlob=source=>createHash('sha1').update(
-  Buffer.concat([Buffer.from('blob '+source.length),Buffer.from([0]),source])).digest('hex');
+// Git records canonical LF bytes even when a Windows checkout expands them
+// to CRLF. Check the original Git blob, not the platform's worktree filter.
+const hashGitBlob=source=>{
+  const canonical=Buffer.from(source.toString('utf8').replace(/\r\n/g,'\n'));
+  return createHash('sha1').update(Buffer.concat([
+    Buffer.from('blob '+canonical.length),Buffer.from([0]),canonical])).digest('hex');
+};
 
 // These unchanged files are the actual first v1 Git blobs, not retyped shadow
 // defaults or guessed copy/paste render logic. CI fails if either is edited.

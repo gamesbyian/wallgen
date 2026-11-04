@@ -4,6 +4,7 @@ import {mkdtempSync,writeFileSync,readFileSync,rmSync,existsSync} from 'node:fs'
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {spawnSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
 import {normalizeRecipe} from '../src/model.js';
 import {embedPngMetadata,readRawPngRecipe,extractPngRecipe,extractPngRecipeWithProvenance,scanPngChunks,RECIPE_FORMAT}
   from '../src/png-metadata.js';
@@ -249,7 +250,7 @@ test('CLI --archive writes original bytes even when PNG metadata migration canno
       report=join(folder,'report.json'),output=join(folder,'should-not-exist.png');
     writeFileSync(input,image);
     const run=spawnSync(process.execPath,[
-      new URL('../scripts/update-png-recipe.mjs',import.meta.url).pathname,
+      fileURLToPath(new URL('../scripts/update-png-recipe.mjs',import.meta.url)),
       '--in',input,'--archive',out,'--report',report,'--out',output
     ],{encoding:'utf8',timeout:15000});
     assert.equal(run.status,2,run.stderr||String(run.error));
