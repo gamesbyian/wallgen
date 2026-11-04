@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {HUES,normalizeRecipe} from '../src/model.js';
 import {extractImageColourRegions} from '../src/image-path.js';
 import {describeReconstructionImage,reconstructionCandidates,
-  plainlyUnsupportedDarkPigments,RECONSTRUCTION_RENDER_LIMIT}
+  plainlyUnsupportedDarkPigments,measuredSourceDarkTone,RECONSTRUCTION_RENDER_LIMIT}
   from '../src/image-reconstruction.js';
 
 function hsl(h,s=.88,l=.13){
@@ -31,7 +31,7 @@ function sevenArt({palette=HUES.map(h=>hsl(h)),layout='islands',bg=[5,5,8]}={}){
   }
   return {width,height,data};
 }
-test('seven compact visibly very dark pigments are not misrepresented by a tiny bright outline',()=>{
+test('seven compact dark pigments retain measured colour in editable candidates, never a bright impostor',()=>{
   const source=sevenArt(),original=source.data.slice();
   const desc=describeReconstructionImage(source);
   assert.equal(desc.background,'black');
@@ -39,8 +39,21 @@ test('seven compact visibly very dark pigments are not misrepresented by a tiny 
   assert.deepEqual(desc.colourRegions.map(region=>region.index),[0,1,2,3,4,5,6]);
   assert.ok(desc.colourRegions.every(r=>Math.max(...r.meanRGB)<86));
   assert.equal(plainlyUnsupportedDarkPigments(desc),true);
-  assert.deepEqual(reconstructionCandidates(source,normalizeRecipe({seed:'unknown-dark-source'})),[],
-    'the source RGB cannot be reproduced by any bright canonical palette');
+  // Canonical Palette Tone can now actually paint these source colours.
+  // The older absolute refusal was correct before that capability existed.
+  const tone=measuredSourceDarkTone(desc);
+  assert.deepEqual(tone,{saturation:88,lightness:13});
+  const choices=reconstructionCandidates(source,normalizeRecipe({seed:'unknown-dark-source'}));
+  assert.ok(choices.length>0&&choices.length<=RECONSTRUCTION_RENDER_LIMIT);
+  const visible=choices.find(candidate=>candidate.kind==='hue-visible-shapes');
+  assert.ok(visible,'the original seven individually editable source shapes must be offered');
+  assert.equal(visible.recipe.scatteredShapeOverrides.length,7);
+  for(const choice of choices){
+    assert.equal(choice.recipe.paletteToneEnabled,true);
+    assert.deepEqual([choice.recipe.paletteSaturation,choice.recipe.paletteLightness],
+      [tone.saturation,tone.lightness],
+      'no bright canonical palette may silently replace the measured dark pigments');
+  }
   assert.deepEqual(source.data,original,'do not modify the anonymous source');
 });
 test('genuinely representable coloured palettes and mixed-bright art keep normal bounded candidates',()=>{
@@ -54,11 +67,18 @@ test('genuinely representable coloured palettes and mixed-bright art keep normal
   assert.equal(describeReconstructionImage(mixed).colourRegions.length,7);
   assert.equal(plainlyUnsupportedDarkPigments(describeReconstructionImage(mixed)),false);
 });
-test('dark ribbons, very faint ink, broken slots and pale-background hues do not trigger compact seven-dark refusal',()=>{
+test('dark ribbons use source Tone while faint ink, broken slots and pale backgrounds remain distinct',()=>{
   const ribbons=sevenArt({layout:'ribbons'});
   const bands=describeReconstructionImage(ribbons);
-  assert.equal(bands.sevenColourRegions,false);
-  assert.equal(plainlyUnsupportedDarkPigments(bands),false);
+  assert.equal(bands.colourRegions.length,7);
+  // Contiguous ribbons also have seven strong semantic hue masks. The old
+  // helper name predates measured Tone, but its dark witness no longer
+  // implies a refusal when all seven colours can be painted faithfully.
+  assert.deepEqual(measuredSourceDarkTone(bands),{saturation:88,lightness:13});
+  const ribbonCandidates=reconstructionCandidates(ribbons,{seed:'dark-ribbons-not-bright'});
+  assert.ok(ribbonCandidates.length>0&&ribbonCandidates.length<=RECONSTRUCTION_RENDER_LIMIT);
+  assert.ok(ribbonCandidates.every(candidate=>candidate.recipe.paletteToneEnabled&&
+    candidate.recipe.paletteSaturation===88&&candidate.recipe.paletteLightness===13));
   const faint=sevenArt({palette:HUES.map(h=>hsl(h,.88,.09))});
   assert.ok(extractImageColourRegions(faint,HUES).regions.length<7);
   assert.equal(plainlyUnsupportedDarkPigments(describeReconstructionImage(faint)),false);
