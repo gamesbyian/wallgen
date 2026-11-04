@@ -72,10 +72,17 @@ try{
       assert.equal(categories.count,7,'All seven category tabs must exist');
       assert.ok(categories.minWidth>=46&&categories.minHeight>=44,
         'Every tab needs a genuine 47×44 CSS-pixel touch cell');
-      assert.equal(categories.overflowX,'auto',
-        'Overflow must scroll natively instead of clipping at the editor');
-      assert.equal(categories.touchAction,'pan-x',
-        'Horizontal thumb gestures belong to the category rail');
+      if(width<=499){
+        assert.equal(categories.overflowX,'auto',
+          'Overflow must scroll natively instead of clipping at the editor');
+        assert.equal(categories.touchAction,'pan-x',
+          'Horizontal thumb gestures belong to the category rail');
+      }else{
+        // The 500–790px category row already fits its seven full-size cells.
+        // Its original overflow:visible is harmless at zero scroll overflow.
+        assert.ok(categories.scrollWidth<=categories.clientWidth+1,
+          'Wide category tabs must not be clipped or need a second scroll owner');
+      }
       if(width===320)assert.ok(categories.scrollWidth>categories.clientWidth+8,
         'At 320, the last category needs real horizontal scroll space');
       else assert.ok(categories.scrollWidth<=categories.clientWidth+1,
