@@ -27,3 +27,11 @@ The max-499px tab CSS originally set seven fixed-minimum 47px tabs and a 3px gap
 4. **Focus continuity and complexity.** Preserve actual source-field focus, escaped child-dialog precedence, keyboard roving, visible 44px routes, single Undo and original imported PNG bytes. Refine one observed interaction at a time, not a second all-in-one gesture framework.
 
 **Review boundary:** automated Chromium and Node results can prove source-linked behavior and measured rectangles; tactile intuition, thermal throttling, handset gesture arbitration and TalkBack remain unverified until run on the actual device.
+
+## Follow-through: zoomed phone and short portrait target continuity
+
+Source review found that the 500–790px CSS media band, typically reached by phone browser zoom-out or compact foldables, still rendered the original Starting style, Variation mode/strength, per-category randomize and Search controls at 35×38px or 38px tall. Its named-tool chips remained 36px high on shorter viewports, despite 44px being available on previously accepted tall cases. The related Light/Shadow shortcut was only 27px high in a nominal 44px tool row across mobile.
+
+The scoped follow-through uses the **same DOM control nodes**, lifts 500–790px operation and named-tool rows to 44px (and the top lane to 46px), and makes contextual related links 44px on all phone viewports. No new tool taxonomy, source input, extra row, invisible hit target or CSS-derived geometry is authored. The Edit tray reserves roughly eight additional CSS pixels for the existing rows instead of painting over the wallpaper.
+
+Acceptance requires the existing on-demand genuine browser suite extended to **600×700 and 600×900**, measuring actual bounding boxes and centre hit ownership for eight live primary controls. The already accepted 320×700/412×892 source gestures, keyboard and source invariants remain in that same regression suite. A source-only quick test independently checks the responsive rules. Browser size and computed CSS evidence do not establish real Pixel/IME/TalkBack or human ergonomic approval.
