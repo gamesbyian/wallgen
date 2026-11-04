@@ -14,13 +14,14 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 2
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: '22'
+          package-manager-cache: false
       - name: Verify conservative publication classification
         run: node --test tests/ci-select.test.mjs tests/ci-workflow-policy.test.mjs
       - name: Classify main change against exact previous SHA
@@ -85,12 +86,13 @@ jobs:
     steps:
       # Public byte verification compares against this exact original checkout.
       # These generated icons must match the bytes in the uploaded build tree.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: '22'
+          package-manager-cache: false
       - name: Recreate deterministic SVG-derived icons for public byte verification
         run: node scripts/build-logo-raster.mjs
       - id: deployment

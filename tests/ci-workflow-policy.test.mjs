@@ -110,6 +110,22 @@ test('every PR keeps one fail-closed, self-tested required check', async () => {
     'Write-enabled promotion must reject fork PRs');
 });
 
+test('required CI and Pages use Node 24 action runtimes without adding implicit dependency caches', async () => {
+  for (const name of ['check.yml', 'pages.yml']) {
+    const workflow = await readFile(path.join(workflows, name), 'utf8');
+    assert.equal((workflow.match(/uses: actions\/checkout@v6/g) || []).length, 2,
+      name+' checkout version/count drift');
+    assert.equal((workflow.match(/uses: actions\/setup-node@v6/g) || []).length, 2,
+      name+' setup-node version/count drift');
+    assert.equal((workflow.match(/package-manager-cache: false/g) || []).length, 2,
+      name+' must not silently add dependency cache to privileged Pages/CI');
+    assert.doesNotMatch(workflow, /uses: actions\/(?:checkout|setup-node)@v[1-5](?:\s|$)/m,
+      name+' has an obsolete JavaScript action runtime');
+    assert.equal((workflow.match(/node-version: '22'/g) || []).length, 2,
+      name+' application test Node version must remain separately pinned');
+  }
+});
+
 test('manual optical evidence cannot be cancelled by a later distinct request', async () => {
   for (const name of ['ui-screenshot-atlas.yml', 'visual-agent1.yml']) {
     const content = await readFile(path.join(workflows, name), 'utf8');
@@ -182,7 +198,7 @@ test('Pages build and deployment are separate retry-safe jobs', async () => {
   assert.match(deploy, /uses: actions\/deploy-pages@v4/);
   assert.doesNotMatch(build, /uses: actions\/deploy-pages@v4/);
   assert.match(deploy, /environment:\n      name: github-pages/);
-  assert.match(deploy, /uses: actions\/checkout@v4/);
+  assert.match(deploy, /uses: actions\/checkout@v6/);
   assert.match(deploy, /run: node scripts\/build-logo-raster\.mjs/,
     'Post-deployment proof must recreate the exact SVG-derived PNGs');
   assert.match(deploy, /run: node scripts\/ci-evidence\.mjs pages-publish -- node scripts\/verify-pages-publication\.mjs/);
