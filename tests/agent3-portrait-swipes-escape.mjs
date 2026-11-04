@@ -466,9 +466,29 @@ try{
       await page.locator('#tab-layout').tap();
       const designAction=await inspectSourceAction(
         '.editor-tool-card[data-editor-tool="structure-mode"]','.editor-design-next');
-      console.log('DESIGN_NEXT_BASELINE '+JSON.stringify({width,height,designAction}));
+      assert.ok(designAction.found&&designAction.visible&&
+        designAction.height>=44&&designAction.width>=44&&
+        designAction.centerHit&&designAction.insideCard&&
+        designAction.originalControlsInside,
+        'Design Next must have an original unobscured 44px cell: '+
+          JSON.stringify(designAction));
+      console.log('DESIGN_NEXT_GEOMETRY '+JSON.stringify({width,height,designAction}));
       await page.screenshot({path:join(output,'design-next-'+width+'x'+height+'.png'),
         animations:'disabled'});
+      await page.locator('.editor-tool-card[data-editor-tool="structure-mode"] .editor-design-next').tap();
+      const designArrival=await page.evaluate(()=>{
+        const chip=document.querySelector('.editor-tool-tab[aria-pressed="true"]:not([hidden])');
+        return {category:chip?.dataset.category,tool:chip?.dataset.editorTool,
+          focused:chip===document.activeElement,
+          sourceHidden:document.querySelector(
+            '.editor-tool-card[data-editor-tool="structure-mode"]').hidden};
+      });
+      assert.ok(designArrival.category==='path'&&designArrival.tool&&
+        designArrival.focused&&designArrival.sourceHidden,
+        'Design Next must navigate and focus the actual source tool: '+
+          JSON.stringify(designArrival));
+      assert.deepEqual(decodeRecipe(new URL(page.url()).searchParams.get('r')),recipe,
+        'Deliberate Design Next navigation must not rewrite the radial recipe');
       const pathRecipe=normalizeRecipe({...recipe,structure:'paths',
         geometry:'straight',construction:'ribbon',motif:'solid'});
       await page.goto(origin+'/?r='+encodeRecipe(pathRecipe),
@@ -481,13 +501,27 @@ try{
         const details=await inspectSourceAction(
           '.editor-tool-card[data-editor-tool="'+tool+'"]',
           '.editor-pattern-prerequisite button');
-        patternActions.push({tool,...details});
+        assert.ok(details.found&&details.visible&&
+          details.width>=44&&details.height>=44&&details.centerHit&&
+          details.insideCard&&details.originalControlsInside,
+          'Dormant Pattern prerequisite must fit native card with >=44px hit: '+
+            JSON.stringify({tool,...details}));
+        await page.screenshot({path:join(output,'pattern-'+tool+'-'+width+'x'+height+'.png'),
+          animations:'disabled'});
+        await page.locator('.editor-tool-card[data-editor-tool="'+tool+
+          '"] .editor-pattern-prerequisite button').tap();
+        const arrival=await page.evaluate(()=>{
+          const chip=document.querySelector('.editor-tool-tab[aria-pressed="true"]:not([hidden])');
+          return {category:chip?.dataset.category,tool:chip?.dataset.editorTool,
+            focused:chip===document.activeElement};
+        });
+        assert.deepEqual(arrival,{category:'stripes',tool:'patterns',focused:true},
+          'Prerequisite must reveal and focus the existing Patterns tool');
+        patternActions.push({tool,...details,arrival});
       }
-      console.log('PATTERN_ACTION_BASELINE '+JSON.stringify({width,height,patternActions}));
-      await page.screenshot({path:join(output,'pattern-hints-'+width+'x'+height+'.png'),
-        animations:'disabled'});
+      console.log('PATTERN_ACTION_GEOMETRY '+JSON.stringify({width,height,patternActions}));
       assert.deepEqual(decodeRecipe(new URL(page.url()).searchParams.get('r')),pathRecipe,
-        'Read-only prerequisite census must leave second source recipe intact');
+        'Deliberate prerequisite navigation must not rewrite authored source recipe');
       assert.deepEqual(errors,[],'No browser script exceptions in guidance census');
       const result={width,height,applicable:before.tools.map(x=>x.id),
         categoryRail:{...categories,lastTouch:lastCategory,keyboardHome:true},
@@ -496,7 +530,7 @@ try{
         swipedFrom:before.selected,swipedTo:after.selected,
         counter:after.position,selectedVisible:after.selectedVisible,
         searchGeometry,keyboardChoice,historyExit,
-        materialBefore,materialFinish,designAction,patternActions,
+        materialBefore,materialFinish,designAction,designArrival,patternActions,
         searchEscapeKeepsEdit:true,historyEscapeKeepsEdit:true,
         dialogEscapeKeepsEdit:true,
         recipePreserved:true,railScrollPreserved:true,touchCancelSafe:true,source:'Chromium synthetic TouchEvent and keyboard',
