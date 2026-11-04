@@ -69,3 +69,25 @@ Escape from a source select closes the transient controls, returns focus to the 
 **[#1060](https://github.com/gamesbyian/wallgen/pull/1060) MERGED at `4af8e4b`.** The original Recent Variations Back button had a nominal 29px min-height. A two-column mobile-only heading now gives that *same* Back button a **94×44px** verified native rectangle, keeps the heading and helper text, and stays within Edit. The History panel now owns Escape and stops it reaching the global mobile sheet dismissal, restoring focus to its original Explore action on both Back and Escape. Original history snapshot/thumbnail lazy loading, restoration, source recipe and Undo are unchanged. [Exact-head quick + Chromium #41785598271](https://github.com/gamesbyian/wallgen/actions/runs/41785598271) passed 320×700, 412×892/DPR3.5, 600×700 and 600×900, including actual center hit ownership, panel containment, unchanged Edit, keyboard focus and recipe URL. Again, physical Pixel, TalkBack/Android IME/OS Back and human ergonomics remain separately unverified.
 
 **Conditional next source targets:** Texture Material/Finish view tabs still declare a 27px phone minimum, as do certain contextual prerequisite/next-step buttons. Their compact tool cards have tightly bounded height and many authored settings. A world-class solution must prove the **entire** Material/Finish workflow still fits, not simply make one selector taller while pushing another under the clipping boundary. Measure their real browser rectangles and card visibility first at 412×892; use lower-priority 320 and zoomed-phone acceptance as regressions. Do not add a permanent navigation row or duplicate source selectors for convenience.
+
+
+## 4 November UTC: Texture Material/Finish 44px tabs and source-field containment
+
+**[#1062](https://github.com/gamesbyian/wallgen/pull/1062), MERGED at `9b537e2`.** The two original Material/Finish inspector tab buttons in each Texture layer previously declared 27px mobile minimum height. The current change gives the real buttons 44 CSS-pixel hit rectangles, preserving the original native layer selectors, keyboard Home/End, `aria-pressed`, single material source and Undo. It does not create a new panel route, recipe field or gesture dialect.
+
+The first attempted pure height change **failed** its actual browser assertion because the original Finish rotation field extended past the tool-card clipping boundary by **30px at 320×700** and **~23px at 412×892**. An old inactive-Finish 307px `--mobile-tray-height` override also took effect only after choosing Finish, producing a sudden 43px tray shrink on short phones. That stale rule has been retired. The primary <=499px Texture-only Edit tray uses `clamp(350px,40dvh,360px)`, stable across Material/Finish views; it yields the original 44px rotation field without clipping and does not overpaint the wallpaper.
+
+A second actual browser run then found 600×700's original source angle bottom **11px beyond its card**. The 500–790px Texture-only tray reservation now receives approximately 17px additional height, with specificity deliberately matching the existing `#controls.editor-focus-active` rule. This prevents the old general mobile tray rule from silently overriding the source-owned Texture geometry. No non-Texture tool or creative canvas recipe is altered.
+
+[Exact-head required quick + optional genuine Chromium #41787664395](https://github.com/gamesbyian/wallgen/actions/runs/41787664395) both **PASSED**, including screenshot artifacts, four-view source/keyboard/navigation/recipe acceptance and exact browser rectangles:
+
+| CSS viewport | Each Material/Finish tab | Rotation bottom / card bottom | Source fields |
+| --- | --- | --- | --- |
+| 320×700 | 123.5×44px | 683 / 696 | All inside |
+| **412×892, DPR 3.5** | **169.5×44px** | **877.98 / 888** | **All inside** |
+| 600×700 | 263.5×44px | 690 / 696 | All inside |
+| 600×900 | 263.5×44px | 890 / 896 | All inside |
+
+These numbers are actual Chromium CSS geometry, not physical Pixel touch/thermal or TalkBack evidence. Original Material/Finish keyboard Home/End and unmodified encoded recipe passed. Earlier red runs on the PR are recorded negative evidence; the clean-head success supersedes those source states.
+
+**Remaining conditional discovery:** `editor-pattern-prerequisite` and `editor-design-next` have historically small mobile action rows in `editor-redesign.css`. Before modifying their heights, prove actual applicability and card containment at the primary 412×892, then preserve keyboard/focus/source operations and preview space. Avoid another broad, global breakpoint override.
