@@ -27,6 +27,11 @@ export function installDesignTypeNext({tools,form,select}){
       form.elements.namedItem('structure')?.value,
       form.elements.namedItem('regionMode')?.value);
     select(category,tool);
+    // This button disappears when the destination card takes over. Transfer
+    // focus to the real selected tool chip instead of leaving keyboard or
+    // screen-reader focus on hidden source chrome.
+    const destination=tools.get(tool)?.chip;
+    if(destination&&!destination.hidden)destination.focus({preventScroll:true});
   });
   card.append(button);
   document.addEventListener('roygbiv-controls-synced',sync);
