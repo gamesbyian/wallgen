@@ -44,8 +44,9 @@ export function installPatternPrerequisites({tools,form,select}){
         select('stripes',config.tool);
         // Navigation hides the old note. Keep focus on the original
         // destination tool action for keyboard and assistive navigation.
-        const destination=tools.get(config.tool)?.chip;
-        if(destination&&!destination.hidden)destination.focus({preventScroll:true});
+        const destination=[...tools.values()].find(entry=>
+          !entry.chip.hidden&&entry.chip.getAttribute('aria-pressed')==='true')?.chip;
+        destination?.focus({preventScroll:true});
       }
     });
     note.append(text,button);
