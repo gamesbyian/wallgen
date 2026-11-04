@@ -507,6 +507,7 @@ export function mountEditor(){
   installPatternPrerequisites({form,tools,
     select:(category,tool)=>selectEditorTool(category,tool,{source:'related'})});
   installDesignTypeNext({form,tools,
+    getScene:()=>({structure:activeStructure,regionMode:activeRegionMode}),
     select:(category,tool)=>selectEditorTool(category,tool,{source:'related'})});
   return {focused,materialInspectors,getCurrent:()=>({category:activeCategory,tool:activeTool}),tools,chooser,searchInput};
 }
