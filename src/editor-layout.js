@@ -359,6 +359,17 @@ export function mountEditor(){
       searchResults.append(option);
     });
     searchInput.setAttribute('aria-activedescendant','editorSearchChoice'+searchMatchIndex);
+    // Arrow-driven activedescendant must stay in the actual visible part of
+    // this bounded list. Scroll ONLY the listbox, never the editing sheet,
+    // category rail or artwork viewport.
+    const current=searchResults.querySelector('[data-search-index="'+searchMatchIndex+'"]');
+    if(current){
+      const list=searchResults.getBoundingClientRect();
+      const choice=current.getBoundingClientRect();
+      if(choice.top<list.top+2)searchResults.scrollTop+=choice.top-list.top-2;
+      else if(choice.bottom>list.bottom-2)
+        searchResults.scrollTop+=choice.bottom-list.bottom+2;
+    }
   }
   function chooseSearchResult(hit){
     const {tool,key,label}=hit;
