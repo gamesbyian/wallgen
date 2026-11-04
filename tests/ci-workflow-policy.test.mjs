@@ -1,12 +1,18 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { readFile, readdir } from 'node:fs/promises';
+import { readFile as readRawFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const workflows = path.join(root, '.github/workflows');
 const archive = path.join(root, 'docs/ci-archive/workflows');
+// Git on Windows may expand checked-out LF workflow YAML into CRLF.
+// Validate the same semantic source contracts on both checkout platforms.
+const readFile = async (file, encoding) => {
+  const content = await readRawFile(file, encoding);
+  return typeof content === 'string' ? content.replace(/\r\n/g, '\n') : content;
+};
 
 function events(yaml) {
   const lines = yaml.split(/\r?\n/);
