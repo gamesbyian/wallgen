@@ -19,13 +19,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 2
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: '22'
+          package-manager-cache: false
       # A stable required check is always present. Never path-filter this workflow.
       - name: Verify CI policy and selection safety
         run: node scripts/ci-evidence.mjs policy -- node --test tests/ci-workflow-policy.test.mjs tests/ci-select.test.mjs tests/ci-evidence.test.mjs
@@ -63,12 +64,13 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: '22'
+          package-manager-cache: false
       - name: Install browser-only acceptance dependencies
         run: |
           npm install --no-save --no-package-lock playwright@1.56.1 serve@14.2.5
