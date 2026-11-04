@@ -1735,7 +1735,10 @@ html[data-theme="cream"] body.mobile-studio .sidebar .settings-tabs .settings-ta
    vertical reservation in this band, without changing other category
    layouts, preview rendering or source geometry. */
 @media(min-width:500px) and (max-width:790px){
-  body.mobile-studio.mobile-edit-open:has(
+  /* Match the existing non-Focus height owner's #controls specificity.
+     Otherwise its earlier :not(:has(#controls.editor-focus-active)) rule
+     wins despite this later component-specific declaration. */
+  body.mobile-studio.mobile-edit-open:not(:has(#controls.editor-focus-active)):has(
     .sidebar .editor-tool-card[data-editor-tool^="layer"]:not([hidden])){
     --mobile-tray-height:clamp(365px,calc(36dvh + 24px),455px)!important;
   }
