@@ -1727,3 +1727,16 @@ html[data-theme="cream"] body.mobile-studio .sidebar .settings-tabs .settings-ta
     --mobile-tray-height:clamp(350px,40dvh,360px)!important;
   }
 }
+
+
+/* Zoomed phone / compact foldable 500-790 CSS px: the same source Finish
+   rotation field exceeded its original card by 11px at 600x700 after the
+   44px inspector tabs. Give the EXISTING Texture workspace ~16-17px more
+   vertical reservation in this band, without changing other category
+   layouts, preview rendering or source geometry. */
+@media(min-width:500px) and (max-width:790px){
+  body.mobile-studio.mobile-edit-open:has(
+    .sidebar .editor-tool-card[data-editor-tool^="layer"]:not([hidden])){
+    --mobile-tray-height:clamp(365px,calc(36dvh + 24px),455px)!important;
+  }
+}
