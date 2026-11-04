@@ -466,6 +466,8 @@ try{
       await page.locator('#tab-layout').tap();
       const designAction=await inspectSourceAction(
         '.editor-tool-card[data-editor-tool="structure-mode"]','.editor-design-next');
+      assert.match(designAction.label,/Continue → Edit radial rays/,
+        'Restored radial design must show the actual next scene tool, not stale Paths');
       assert.ok(designAction.found&&designAction.visible&&
         designAction.height>=44&&designAction.width>=44&&
         designAction.centerHit&&designAction.insideCard&&
@@ -494,6 +496,11 @@ try{
       await page.goto(origin+'/?r='+encodeRecipe(pathRecipe),
         {waitUntil:'domcontentloaded'});
       await page.locator('#mobileEdit').tap();
+      await page.locator('#tab-layout').tap();
+      const pathsDesignAction=await inspectSourceAction(
+        '.editor-tool-card[data-editor-tool="structure-mode"]','.editor-design-next');
+      assert.match(pathsDesignAction.label,/Continue → Edit paths/,
+        'Fresh paths recipe must change Design Continue guidance before navigating');
       await page.locator('#tab-stripes').tap();
       const patternActions=[];
       for(const tool of ['marks','motif-scale']){
@@ -530,7 +537,7 @@ try{
         swipedFrom:before.selected,swipedTo:after.selected,
         counter:after.position,selectedVisible:after.selectedVisible,
         searchGeometry,keyboardChoice,historyExit,
-        materialBefore,materialFinish,designAction,designArrival,patternActions,
+        materialBefore,materialFinish,designAction,designArrival,pathsDesignAction,patternActions,
         searchEscapeKeepsEdit:true,historyEscapeKeepsEdit:true,
         dialogEscapeKeepsEdit:true,
         recipePreserved:true,railScrollPreserved:true,touchCancelSafe:true,source:'Chromium synthetic TouchEvent and keyboard',
