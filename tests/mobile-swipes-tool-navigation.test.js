@@ -128,8 +128,28 @@ test('seven-category scroll rail keeps its last real touch target reachable at 3
   assert.match(rule,/overscroll-behavior-x:contain!important/);
   assert.match(rule,/scrollbar-width:none/);
   assert.match(css,/@media\(max-width:499px\)\{[\s\S]*?\.settings-tabs \.settings-tab\{[\s\S]*?height:44px!important/);
-  assert.match(html,/editor-redesign\.css\?v=20261103-touch-seven-tab-scroll1/);
+  assert.match(html,/editor-redesign\.css\?v=20261103-zoomed-touch44/);
   // Keep the existing seven real source buttons and keyboard navigation.
   assert.match(readFileSync(new URL('../src/editor-layout.js',import.meta.url),'utf8'),
     /nav\.addEventListener\('keydown',[\s\S]*?selectEditorTool\(next\.dataset\.tab/);
+});
+
+test('zoomed-phone primary actions occupy genuine 44px source rectangles',()=>{
+  const css=readFileSync(new URL('../editor-redesign.css',import.meta.url),'utf8');
+  const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
+  const start=css.indexOf('/* Short or zoomed phone 500');
+  assert.ok(start>0,'Existing phone-width touch repair must not be removed');
+  const rules=css.slice(start);
+  assert.match(rules,/@media\(min-width:500px\) and \(max-width:790px\)/);
+  for(const part of ['editor-explore','editor-style select','editor-variation-mode',
+    'editor-variation-strength','editor-scope-button','editor-search-toggle',
+    'editor-tool-chooser','editor-tool-tab','editor-focus-toggle','editor-tool-reroll',
+    'editor-related-tool'])
+    assert.ok(rules.includes(part),part+' must share the source touch target contract');
+  assert.match(rules,/height:44px!important;min-height:44px!important/);
+  assert.match(rules,/height:44px!important;\s*min-height:44px!important;max-height:44px!important/);
+  assert.match(rules,/\.editor-related-tool:not\(\[hidden\]\)/);
+  assert.match(html,/editor-redesign\.css\?v=20261103-zoomed-touch44/);
+  assert.doesNotMatch(rules,/pointer-events:none|transform:scale\(/,
+    'Never fake a thumb target with a visual-only transform or click-through overlay');
 });

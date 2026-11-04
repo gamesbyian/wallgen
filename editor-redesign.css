@@ -1510,3 +1510,49 @@ html[data-theme="cream"] body.mobile-studio .sidebar .settings-tabs .settings-ta
 .editor-search-choice:hover,.editor-search-choice[aria-selected=true]{
   background:rgba(125,130,160,.18);font-weight:650}
 .editor-search-choice:focus-visible{outline:2px solid currentColor;outline-offset:-2px}
+
+/* Short or zoomed phone 500–790px: seven 44px category actions already fit,
+   but the explore/search and named-tool lanes still used desktop-size
+   27–38px source controls. Honor the *visible* button rectangles, never
+   overlay invisible hit padding over an adjacent field or the artwork.
+   Reuse the single row of real source inputs/chips and original selection. */
+@media(min-width:500px) and (max-width:790px){
+  body.mobile-studio.mobile-edit-open:not(:has(#controls.editor-focus-active)){
+    --mobile-tray-height:clamp(348px,calc(36dvh + 8px),438px)!important;
+  }
+  body.mobile-studio .sidebar .editor-explore{
+    height:46px!important;min-height:46px!important;
+    max-height:46px!important;flex-basis:46px!important;
+  }
+  body.mobile-studio .sidebar .editor-style select,
+  body.mobile-studio .sidebar .editor-variation-mode,
+  body.mobile-studio .sidebar .editor-variation-strength{
+    box-sizing:border-box!important;height:44px!important;min-height:44px!important;
+  }
+  body.mobile-studio .sidebar .editor-explore-actions>.editor-scope-button,
+  body.mobile-studio .sidebar .editor-explore-actions>.editor-search-toggle{
+    box-sizing:border-box!important;flex:0 0 44px!important;
+    width:44px!important;min-width:44px!important;
+    height:44px!important;min-height:44px!important;
+  }
+  body.mobile-studio .sidebar .editor-tool-chooser{
+    flex:0 0 44px!important;height:44px!important;
+    min-height:44px!important;max-height:44px!important;
+  }
+  body.mobile-studio .sidebar .editor-tool-tab:not([hidden]),
+  body.mobile-studio .sidebar .editor-tool-chooser>.editor-focus-toggle,
+  body.mobile-studio .sidebar .editor-tool-chooser>.editor-tool-reroll:not([hidden]){
+    box-sizing:border-box!important;height:44px!important;
+    min-height:44px!important;max-height:44px!important;
+  }
+}
+/* Cross-tool Light and Shadow shortcuts share the one original chip rail.
+   A 27px contextual link inside a 44px source strip misses the same touch
+   target contract, on both narrow and zoomed phone viewports. */
+@media(max-width:790px){
+  body.mobile-studio .sidebar .editor-tool-chooser
+  .editor-related-tool:not([hidden]){
+    box-sizing:border-box!important;height:44px!important;
+    min-height:44px!important;max-height:44px!important;
+  }
+}

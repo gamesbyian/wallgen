@@ -14,7 +14,7 @@ const recipe=normalizeRecipe({seed:'agent3-visible-swipes-escape',
 const browser=await chromium.launch({headless:true});
 const observations=[];
 try{
-  for(const [width,height] of [[320,700],[412,892]]){
+  for(const [width,height] of [[320,700],[412,892],[600,700],[600,900]]){
     const context=await browser.newContext({viewport:{width,height},
       isMobile:true,hasTouch:true,reducedMotion:'reduce'});
     const page=await context.newPage(),errors=[];
@@ -24,6 +24,38 @@ try{
       await page.goto(origin+'/?r='+encodeRecipe(recipe),
         {waitUntil:'domcontentloaded'});
       await page.locator('#mobileEdit').tap();
+      // Browser zoom can yield 500–790 CSS px even on an actual phone.
+      // This width band used a 36px tool chip and 35×38px search/dice.
+      // Confirm the real mounted DOM, plus hit-test ownership (no overlaps).
+      let zoomedPhoneTargets=null;
+      if(width>=500){
+        zoomedPhoneTargets=await page.evaluate(()=>{
+          const selectors=[
+            '.editor-style select',
+            '.editor-variation-mode',
+            '.editor-variation-strength',
+            '.editor-explore-actions>.editor-scope-button',
+            '.editor-explore-actions>.editor-search-toggle',
+            '.editor-tool-tab:not([hidden])',
+            '.editor-tool-chooser>.editor-focus-toggle',
+            '.editor-tool-chooser>.editor-tool-reroll:not([hidden])'
+          ];
+          return selectors.map(selector=>{
+            const node=document.querySelector(selector);
+            if(!node)throw Error('Expected original source control: '+selector);
+            const r=node.getBoundingClientRect();
+            const hit=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);
+            return {selector,width:r.width,height:r.height,visible:r.width>0&&r.height>0,
+              centeredHit:node===hit||node.contains(hit)};
+          });
+        });
+        for(const t of zoomedPhoneTargets){
+          assert.ok(t.visible&&t.width>=44&&t.height>=44,
+            'Native 44px phone target must fit its original lane: '+JSON.stringify(t));
+          assert.ok(t.centeredHit,
+            'Actual center tap cannot be intercepted by another control: '+JSON.stringify(t));
+        }
+      }
       // Seven minimum-width tabs cannot physically fit at 320 CSS pixels.
       // Exercise native scroll, actual touch selection and keyboard Home.
       const categories=await page.evaluate(()=>{
@@ -40,10 +72,17 @@ try{
       assert.equal(categories.count,7,'All seven category tabs must exist');
       assert.ok(categories.minWidth>=46&&categories.minHeight>=44,
         'Every tab needs a genuine 47×44 CSS-pixel touch cell');
-      assert.equal(categories.overflowX,'auto',
-        'Overflow must scroll natively instead of clipping at the editor');
-      assert.equal(categories.touchAction,'pan-x',
-        'Horizontal thumb gestures belong to the category rail');
+      if(width<=499){
+        assert.equal(categories.overflowX,'auto',
+          'Overflow must scroll natively instead of clipping at the editor');
+        assert.equal(categories.touchAction,'pan-x',
+          'Horizontal thumb gestures belong to the category rail');
+      }else{
+        // The 500–790px category row already fits its seven full-size cells.
+        // Its original overflow:visible is harmless at zero scroll overflow.
+        assert.ok(categories.scrollWidth<=categories.clientWidth+1,
+          'Wide category tabs must not be clipped or need a second scroll owner');
+      }
       if(width===320)assert.ok(categories.scrollWidth>categories.clientWidth+8,
         'At 320, the last category needs real horizontal scroll space');
       else assert.ok(categories.scrollWidth<=categories.clientWidth+1,
@@ -178,6 +217,7 @@ try{
       assert.deepEqual(errors,[],'Page errors during scene-aware gesture acceptance');
       const result={width,height,applicable:before.tools.map(x=>x.id),
         categoryRail:{...categories,lastTouch:lastCategory,keyboardHome:true},
+        zoomedPhoneTargets,
         swipedFrom:before.selected,swipedTo:after.selected,
         counter:after.position,selectedVisible:after.selectedVisible,
         searchEscapeKeepsEdit:true,dialogEscapeKeepsEdit:true,
