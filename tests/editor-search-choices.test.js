@@ -41,6 +41,16 @@ test('multiple-choice UI has semantic listbox, keyboard navigation, click and es
   assert.match(css,/max-height:186px/);
 });
 
+test('compact ranked search has thumb-scale choices and scrolls only its own list on arrows',()=>{
+  const css=readFileSync(new URL('../editor-redesign.css',import.meta.url),'utf8');
+  const layout=readFileSync(new URL('../src/editor-layout.js',import.meta.url),'utf8');
+  assert.match(css,/body\.mobile-studio \.sidebar \.editor-search-choice\s*\{[^}]*min-height:44px/);
+  assert.match(css,/body\.mobile-studio \.sidebar \.editor-search-results:not\(\[hidden\]\)\s*\{[^}]*max-height:min\(208px,25dvh\)/);
+  assert.match(layout,/searchResults\.scrollTop\+=choice\.bottom-list\.bottom/);
+  assert.match(layout,/searchResults\.scrollTop\+=choice\.top-list\.top/);
+  assert.doesNotMatch(layout,/searchResults\.scrollIntoView/);
+});
+
 test('specific artistic photo terms navigate to one existing Light pane without changing look',()=>{
   const examples={
     'film grain':'Film grain',
