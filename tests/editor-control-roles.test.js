@@ -35,7 +35,7 @@ test('annotations leave original control objects and key semantics untouched',()
 });
 test('all source categories retain canonical identity and named tools',()=>{
   assert.equal(EDITOR_CATEGORIES.length,7);
-  assert.equal(EDITOR_CATEGORIES.reduce((n,c)=>n+c.tools.length,0),40);
+  assert.equal(EDITOR_CATEGORIES.reduce((n,c)=>n+c.tools.length,0),42);
 });
 
 test('scoped randomize labels use visible source language, never raw recipe keys',()=>{

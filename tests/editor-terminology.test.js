@@ -5,12 +5,12 @@ import {FULL_SETTING_LABELS,fullSettingName,legacyCategoryAliases,
   legacyToolAliases,legacySettingAliases} from '../src/editor-terminology.js';
 import {findEditorToolMatch} from '../src/editor-tool-search.js';
 
-test('names-only migration retains seven canonical categories, forty tool IDs and all settings',()=>{
+test('names-only migration retains seven canonical categories, 42 tool IDs and all settings',()=>{
   assert.deepEqual(EDITOR_CATEGORIES.map(c=>c.label),
     ['Layout','Path','Stripes','Details','Colour','Texture','Light']);
-  assert.equal(TOOL_LIST.length,40);
+  assert.equal(TOOL_LIST.length,42);
   const keys=Object.keys(SETTING_TOOL);
-  assert.equal(keys.length,87);
+  assert.equal(keys.length,98);
   assert.deepEqual(validateEditorSchema(keys),{missing:[],duplicated:[],unknown:[]});
   assert.ok(keys.includes('textureDisplacement'));
   assert.ok(keys.includes('textureLayer2Enabled')&&keys.includes('textureLayer3Enabled'));
