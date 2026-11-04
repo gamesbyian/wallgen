@@ -51,7 +51,7 @@ test('Worker release config remains default disabled unless explicitly approved'
 });
 
 test('trusted release curl commands are valid single-backslash shell continuations',()=>{
-  const lines=manual.split('\n');
+  const lines=manual.split(/\r?\n/);
   const curl=lines.filter(line=>line.includes('curl --fail'));
   assert.ok(curl.length>=3,'both rolling and trusted source must be read');
   for(const line of curl){
