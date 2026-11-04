@@ -32,7 +32,7 @@ const DOMAIN_ROWS = "archetype|What kind of picture is this?|4|O|structure,radia
   "marks|What recurring pattern or marks fill a band?|3|F|motif,lineStyle,patternHomogeneity,dotSize,dotSpacing,motifSize,motifFrequency\n" +
   "stripe-character|How different is each coloured band?|3|O|individuality,overridePatternHomogeneity,tonalContrast\n" +
   "boundaries|How visibly are shapes separated?|3|O|outline,gap,outlineBuffer,dividerColor,dividerWidth\n" +
-  "palette|What colour relationship and negative space?|4|F|palette,reverseStripes,background\n" +
+  "palette|What colour relationship and negative space?|4|F|palette,reverseStripes,background,paletteToneEnabled,paletteSaturation,paletteLightness\n" +
   "local-light|What is cast or luminous at stripe boundaries?|3|O|stripeShadowStrength,stripeShadowSoftness,stripeShadowDirection,glow\n" +
   "surface-material|What is the physical texture and where is it applied?|3|F|material,textureCoverage,textureBlend,textureStrength,textureScale,textureRotation\n" +
   "surface-second|What does the second surface layer contribute?|3|O|textureLayer2Enabled,material2,textureCoverage2,textureBlend2,textureStrength2,textureScale2,textureRotation2\n" +
