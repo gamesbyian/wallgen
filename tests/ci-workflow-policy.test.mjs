@@ -124,6 +124,13 @@ test('required CI and Pages use Node 24 action runtimes without adding implicit 
     assert.equal((workflow.match(/node-version: '22'/g) || []).length, 2,
       name+' application test Node version must remain separately pinned');
   }
+  const pages = await readFile(path.join(workflows, 'pages.yml'), 'utf8');
+  assert.match(pages, /uses: actions\/configure-pages@v6/);
+  assert.match(pages, /uses: actions\/deploy-pages@v5/);
+  assert.doesNotMatch(pages, /uses: actions\/(?:configure-pages@v5|deploy-pages@v4)/);
+  // The single, named artifact uploader is intentionally retained until
+  // another real deployment validates any future archive-format migration.
+  assert.equal((pages.match(/uses: actions\/upload-pages-artifact@v3/g) || []).length, 1);
 });
 
 test('manual optical evidence cannot be cancelled by a later distinct request', async () => {
@@ -160,13 +167,13 @@ test('main docs-only sanity fast path cannot suppress source stamping or trusted
   assert.match(pages, /run: npm run check:quick/);
   assert.match(pages, /roygbiv-render-version\.json/);
   assert.match(pages, /trusted-renderer\/roygbiv-render-version\.json/);
-  assert.match(pages, /actions\/deploy-pages@v4/);
+  assert.match(pages, /actions\/deploy-pages@v5/);
 });
 
 
 test('Pages deployment is independently checked after upload and keeps failure evidence', async () => {
   const pages = await readFile(path.join(workflows, 'pages.yml'), 'utf8');
-  const deploy = pages.indexOf('uses: actions/deploy-pages@v4');
+  const deploy = pages.indexOf('uses: actions/deploy-pages@v5');
   const verify = pages.indexOf('node scripts/ci-evidence.mjs pages-publish -- node scripts/verify-pages-publication.mjs');
   const upload = pages.indexOf('Upload publication failure digest');
   assert(deploy >= 0 && verify > deploy && upload > verify,
@@ -195,8 +202,8 @@ test('Pages build and deployment are separate retry-safe jobs', async () => {
   assert.match(build, /uses: actions\/upload-pages-artifact@v3/);
   assert.doesNotMatch(deploy, /upload-pages-artifact/,
     'Retrying only a failed deploy must never create a second named artifact');
-  assert.match(deploy, /uses: actions\/deploy-pages@v4/);
-  assert.doesNotMatch(build, /uses: actions\/deploy-pages@v4/);
+  assert.match(deploy, /uses: actions\/deploy-pages@v5/);
+  assert.doesNotMatch(build, /uses: actions\/deploy-pages@v5/);
   assert.match(deploy, /environment:\n      name: github-pages/);
   assert.match(deploy, /uses: actions\/checkout@v6/);
   assert.match(deploy, /run: node scripts\/build-logo-raster\.mjs/,
