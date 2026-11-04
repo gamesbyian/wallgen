@@ -12,8 +12,12 @@ test('live schema has exactly one domain and candidate home per source setting',
   assert.equal(a.inventory.domainKeys,a.inventory.sourceKeys);
   assert.equal(a.inventory.candidateKeys,candidateHomes().length);
   assert.equal(a.inventory.categories,7);
-  assert.equal(a.inventory.tools,40);
-  assert.equal(a.inventory.sourceKeys,95);
+  assert.equal(a.inventory.tools,42);
+  for(const key of ['paletteToneEnabled','paletteSaturation','paletteLightness']){
+    assert.equal(inspectSetting(key)?.domain,'palette',key+' must have a reviewed domain');
+    assert.deepEqual(inspectSetting(key)?.current,['Colour','Tone']);
+  }
+  assert.equal(a.inventory.sourceKeys,98);
 });
 test('goals, prerequisites and evidence do not point at nonexistent keys',()=>{
   const all=new Set(sourceHomes().map(x=>x.key));
