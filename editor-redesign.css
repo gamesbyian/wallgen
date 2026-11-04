@@ -1696,3 +1696,19 @@ html[data-theme="cream"] body.mobile-studio .sidebar .settings-tabs .settings-ta
     white-space:nowrap;
   }
 }
+
+
+/* The two original Material / Finish views are frequent precision-tool
+   destinations. Their historic 27px mobile tab height is below the primary
+   Pixel-class touch contract. Enlarge the real tab rectangles in place;
+   preserve the single canonical material layer, source fields and one
+   inspector row. Do not paint transparent hit zones over other controls. */
+@media(max-width:790px){
+  body.mobile-studio .sidebar .editor-tool-card .material-inspector-tab{
+    box-sizing:border-box!important;
+    height:44px!important;min-height:44px!important;
+    max-height:44px!important;
+    padding:6px 10px!important;font-size:12px!important;
+    line-height:1.2;
+  }
+}
