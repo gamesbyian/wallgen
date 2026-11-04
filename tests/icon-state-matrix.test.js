@@ -6,7 +6,8 @@ import {DRAWINGS_B} from '../src/ui-icon-drawings-b.js';
 import {DRAWINGS_C} from '../src/ui-icon-drawings-c.js';
 import {DRAWINGS_D} from '../src/ui-icon-drawings-d.js';
 import {DRAWINGS_E} from '../src/ui-icon-drawings-e.js';
-const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
+// Keep exact live SVG geometry comparisons independent of Windows Git's CRLF conversion.
+const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8').replace(/\r\n/g,'\n');
 test('offline icon-state fixture exactly reproduces every production inline symbol',()=>{
  const source={...DRAWINGS_A,...DRAWINGS_B,...DRAWINGS_C,...DRAWINGS_D,...DRAWINGS_E};
  const html=read('assets/icons/roygbiv/state-matrix.html');
