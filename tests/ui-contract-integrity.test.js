@@ -34,7 +34,7 @@ test('every source setting has a reviewed identity and belongs to real editor co
   }
 });
 
-test('all 40 tool identities stay aligned with live editor schema',()=>{
+test('all 42 tool identities stay aligned with live editor schema',()=>{
   const live=EDITOR_CATEGORIES.flatMap(c=>c.tools.map(t=>c.id+'/'+t.id));
   assert.deepEqual(live,base.toolIds,'Tool omitted or renamed without reviewing contract');
   assert.equal(EDITOR_CATEGORIES.length,base.counts.categories);
@@ -57,6 +57,11 @@ test('source controls remain traced and required interactions are protected',()=
     'drawAddPoint','drawDeletePoint','drawCornerPoint','drawResmoothPoints',
     'metadataToggle','metadataRemember','metadataClear','downloadRecipe','importRecipePNG','viewPanStatus'];
   for(const id of necessary)assert.ok(listed.has(id),'Feature dropped without deliberate deprecation: '+id);
+  // Current source's new import/reconstruction/AYA affordances need the same
+  // explicit source-ID review as the original dock and Draw interactions.
+  for(const id of ['drawAxisLock','imageRecipeWorkspace','imageRecipeApply',
+    'imageRecipeUnavailable','migrateRecipeDownload','ayaRecipeShare','ayaRecipeCopy'])
+    assert.ok(listed.has(id),'Unreviewed current source control: '+id);
 });
 
 test('camera zoom, composition nudge and future viewport pan remain distinct',()=>{
