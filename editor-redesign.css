@@ -1712,3 +1712,18 @@ html[data-theme="cream"] body.mobile-studio .sidebar .settings-tabs .settings-ta
     line-height:1.2;
   }
 }
+
+
+/* Chromium source geometry (4 Nov): at 412x892 the exact original Finish
+   rotation cell ends 22.8px below the bounded card; at 320x700 it ends
+   30px below. A nominally 44px Material/Finish tab must not hide an entire
+   original rotation control. Reserve ~33-36px in the EDIT tray only while
+   an existing Texture layer is active. Keep height stable across Material /
+   Finish switching; the stage loses real layout space rather than being
+   overpainted by hidden controls. Never resize authored wallpaper geometry. */
+@media(max-width:499px){
+  body.mobile-studio.mobile-edit-open:has(
+    .sidebar .editor-tool-card[data-editor-tool^="layer"]:not([hidden])){
+    --mobile-tray-height:clamp(350px,40dvh,360px)!important;
+  }
+}
