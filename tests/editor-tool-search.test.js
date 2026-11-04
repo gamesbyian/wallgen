@@ -41,6 +41,10 @@ test('live search reports an inapplicable match rather than selecting an unrelat
   assert.match(js,/applies:tool=>toolApplies\(tools\.get\(tool\.id\)\)/);
   assert.match(js,/That setting is unavailable for the current canvas structure/);
   assert.match(js,/searchStatus\.setAttribute\('role','status'\)/);
+  // Search may explain an inactive field but must never focus/edit it.
+  assert.match(js,/if\(field\?\.disabled\)\{/);
+  assert.match(js,/not active in this design\. Change its prerequisite to enable it\./);
+  assert.match(js,/locked\. Unlock it to edit\./);
   assert.match(css,/\.editor-search-status\[hidden\]/);
   assert.match(css,/position:absolute;z-index:21/);
 });
@@ -73,7 +77,7 @@ test('exact settings outrank similarly named tools and carry their canonical hom
   const result=matches('Contour distortion',{structure:'paths'});
   assert.equal(result?.key,'textureDisplacement');
   assert.equal(result.tool.id,'surface');
-  assert.equal(matches('textureRotation3',{structure:'paths'})?.tool.id,'finish3');
+  assert.equal(matches('textureRotation3',{structure:'paths'})?.tool.id,'layer3');
   assert.equal(matches('Structure',{structure:'paths'})?.key,'structure');
   assert.equal(matches('Radial rays',{structure:'paths'}),null);
   assert.equal(matches('Radial rays',{structure:'radial'})?.kind,'tool');
@@ -88,7 +92,11 @@ test('intent synonyms identify creative outcomes only when their tool is availab
   assert.equal(find('space between circles',{structure:'regions',regionMode:'scattered'})?.key,'scatteredSpacing');
   assert.equal(find('space between circles',{structure:'paths'}),null);
   assert.equal(find('texture changes edges',{structure:'paths'})?.key,'textureDisplacement');
-  assert.equal(find('texture changes edges',{structure:'radial'}),null);
+  // Surface also contains accessible radial/region embroidery controls, so
+  // the whole tool remains searchable. Inactive *fields* explain the prerequisite.
+  const radialTexture=find('texture changes edges',{structure:'radial'});
+  assert.equal(radialTexture?.key,'textureDisplacement');
+  assert.equal(radialTexture?.tool.id,'surface');
   assert.equal(find('neon',{structure:'paths'})?.key,'glow');
 });
 
