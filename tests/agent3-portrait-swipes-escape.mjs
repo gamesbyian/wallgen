@@ -24,6 +24,48 @@ try{
       await page.goto(origin+'/?r='+encodeRecipe(recipe),
         {waitUntil:'domcontentloaded'});
       await page.locator('#mobileEdit').tap();
+      // Seven minimum-width tabs cannot physically fit at 320 CSS pixels.
+      // Exercise native scroll, actual touch selection and keyboard Home.
+      const categories=await page.evaluate(()=>{
+        const rail=document.querySelector('.settings-tabs');
+        const tabs=[...rail.querySelectorAll('[data-tab]')];
+        return {count:tabs.length,clientWidth:rail.clientWidth,
+          scrollWidth:rail.scrollWidth,
+          overflowX:getComputedStyle(rail).overflowX,
+          touchAction:getComputedStyle(rail).touchAction,
+          minWidth:Math.min(...tabs.map(t=>t.getBoundingClientRect().width)),
+          minHeight:Math.min(...tabs.map(t=>t.getBoundingClientRect().height)),
+          first:tabs[0].dataset.tab,last:tabs.at(-1).dataset.tab};
+      });
+      assert.equal(categories.count,7,'All seven category tabs must exist');
+      assert.ok(categories.minWidth>=46&&categories.minHeight>=44,
+        'Every tab needs a genuine 47×44 CSS-pixel touch cell');
+      assert.equal(categories.overflowX,'auto',
+        'Overflow must scroll natively instead of clipping at the editor');
+      assert.equal(categories.touchAction,'pan-x',
+        'Horizontal thumb gestures belong to the category rail');
+      if(width===320)assert.ok(categories.scrollWidth>categories.clientWidth+8,
+        'At 320, the last category needs real horizontal scroll space');
+      else assert.ok(categories.scrollWidth<=categories.clientWidth+1,
+        'At 412, the seven category cells should fit without scroll');
+      await page.locator('.settings-tabs [data-tab]').last().tap();
+      const lastCategory=await page.evaluate(()=>{
+        const rail=document.querySelector('.settings-tabs');
+        const tab=rail.querySelector('[data-tab][aria-selected="true"]');
+        const a=rail.getBoundingClientRect(),b=tab.getBoundingClientRect();
+        return {selected:tab.dataset.tab,visible:b.left>=a.left-1&&b.right<=a.right+1,
+          scrollLeft:rail.scrollLeft};
+      });
+      assert.equal(lastCategory.selected,categories.last,
+        'Touch must reach the last category');
+      assert.equal(lastCategory.visible,true,
+        'The final selected tab must be physically visible');
+      if(width===320)assert.ok(lastCategory.scrollLeft>1,
+        'Last tab selection must pan the native 320px category rail');
+      await page.keyboard.press('Home');
+      assert.equal(await page.locator('.settings-tabs [aria-selected="true"]')
+        .getAttribute('data-tab'),categories.first,
+        'Keyboard Home must return from the last category to the first');
       await page.locator('#tab-path').tap();
       const read=()=>page.evaluate(()=>{
         const chooser=document.querySelector('.editor-tool-chooser');
@@ -135,6 +177,7 @@ try{
         'Navigation gestures must never mutate wallpaper recipe');
       assert.deepEqual(errors,[],'Page errors during scene-aware gesture acceptance');
       const result={width,height,applicable:before.tools.map(x=>x.id),
+        categoryRail:{...categories,lastTouch:lastCategory,keyboardHome:true},
         swipedFrom:before.selected,swipedTo:after.selected,
         counter:after.position,selectedVisible:after.selectedVisible,
         searchEscapeKeepsEdit:true,dialogEscapeKeepsEdit:true,

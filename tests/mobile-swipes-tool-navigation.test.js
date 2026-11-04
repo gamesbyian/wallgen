@@ -114,3 +114,22 @@ test('changing the chosen tool cancels pending sheet swipe without canceling sam
   assert.match(source,/active=event\.detail;update\(\)/,
     'canonical active selection remains the only navigation state');
 });
+
+test('seven-category scroll rail keeps its last real touch target reachable at 320px',()=>{
+  const css=readFileSync(new URL('../editor-redesign.css',import.meta.url),'utf8');
+  const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
+  const start=css.indexOf('/* The seven source category names need regular');
+  const end=css.indexOf('/* Portrait experiment:',start);
+  assert.ok(start>=0&&end>start,'Narrow category row policy must remain source-owned');
+  const rule=css.slice(start,end);
+  assert.match(rule,/grid-template-columns:repeat\(7,minmax\(47px,1fr\)\)!important/);
+  assert.match(rule,/overflow-x:auto!important;overflow-y:hidden!important/);
+  assert.match(rule,/touch-action:pan-x!important/);
+  assert.match(rule,/overscroll-behavior-x:contain!important/);
+  assert.match(rule,/scrollbar-width:none/);
+  assert.match(css,/@media\(max-width:499px\)\{[\s\S]*?\.settings-tabs \.settings-tab\{[\s\S]*?height:44px!important/);
+  assert.match(html,/editor-redesign\.css\?v=20261103-touch-seven-tab-scroll1/);
+  // Keep the existing seven real source buttons and keyboard navigation.
+  assert.match(readFileSync(new URL('../src/editor-layout.js',import.meta.url),'utf8'),
+    /nav\.addEventListener\('keydown',[\s\S]*?selectEditorTool\(next\.dataset\.tab/);
+});

@@ -1111,10 +1111,22 @@ html[data-theme="cream"] body.mobile-studio .sidebar .settings-tabs .settings-ta
    This does not insert a second row or alter any original tab handler. */
 @media(max-width:499px){
   body.mobile-studio .sidebar .settings-tabs{
+    /* Seven >=47px-wide source tabs cannot fit a 320px portrait once gaps
+       are included. The original overflow:visible clipped the last tab at
+       the hidden sidebar edge instead of offering the promised swipe rail. */
+    grid-template-columns:repeat(7,minmax(47px,1fr))!important;
+    width:100%!important;min-width:0!important;box-sizing:border-box;
     gap:3px!important;
     justify-content:flex-start!important;
     padding-inline:2px!important;
+    overflow-x:auto!important;overflow-y:hidden!important;
+    overscroll-behavior-x:contain!important;
+    touch-action:pan-x!important;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+    scroll-padding-inline:2px;
   }
+  body.mobile-studio .sidebar .settings-tabs::-webkit-scrollbar{display:none}
   body.mobile-studio .sidebar .settings-tabs .settings-tab{
     box-sizing:border-box!important;
     flex:1 0 47px!important;
