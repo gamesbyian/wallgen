@@ -7,7 +7,10 @@ import {normalizeRecipe,resolveScene} from '../src/model.js';
 import {normalizeSurfaceTreatments} from '../src/embroidery.js';
 const source=readFileSync(new URL('../scripts/review-embroidery.mjs',import.meta.url),'utf8');
 test('production embroidery art review deliberately has seven independently labelled cases',()=>{
-  const names=[...source.matchAll(/id:'(\d\d-[a-z-]+)'/g)].map(hit=>hit[1]);
+  // Optional focused reviewers deliberately add more cases below the base seven.
+  const base=source.match(/const cases=Object\.freeze\(\[([\s\S]*?)\]\);/);
+  assert.ok(base,'original seven-scene review set must exist');
+  const names=[...base[1].matchAll(/id:'(\d\d-[a-z-]+)'/g)].map(hit=>hit[1]);
   assert.deepEqual(names,['00-ribbon-plain','01-ribbon-satin','02-ribbon-running',
     '03-regions-plain','04-regions-tatami','05-regions-running','06-one-region']);
   assert.match(source,/normalizeRecipe\(\{\.\.\.base,/);

@@ -10,8 +10,10 @@ test('existing opt-in photo reviewer selects five exact camera comparisons',()=>
   for(const id of ['camera-natural','camera-hdr','camera-webcam-signal','camera-digicam-signal'])
     assert.ok(Object.hasOwn(PHOTO_PRESETS,id),id);
   assert.match(script,/cases\[5\],cases\[6\]/);
-  assert.match(script,/comparison:opts\.focusCamera\?'camera-family-five'/);
-  assert.match(script,/if\(opts\.focusDeepBlack&&opts\.focusCamera\)/);
+  assert.match(script,/opts\.focusCamera\?'camera-family-five'/);
+  assert.match(script,/opts\.focusStreamParity\?'photo-readback-four'/);
+  assert.match(script,/if\(Number\(!!opts\.focusDeepBlack\)\+Number\(!!opts\.focusCamera\)/);
+  assert.match(script,/throw Error\('Choose only one focused art review'\)/);
   assert.match(script,/--recipe',source,'--width','600','--height','1300'/);
   assert.match(script,/Review output already exists/);
 });

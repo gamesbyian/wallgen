@@ -134,7 +134,7 @@ test('all settings have a single tool home and no nested mobile vertical scrolli
   const schema=read('src/editor-schema.js');
   const layout=read('src/editor-layout.js');
   const css=read('editor-redesign.css');
-  for(const name of ['Geometry','Patterns','Shadows','Outlines','Lighting','Variation'])
+  for(const name of ['Geometry','Patterns','Shadows','Outlines','Lighting','Irregularity'])
     assert.ok(schema.includes("name:'"+name+"'"),name);
   assert.match(layout,/const root=fieldNode\(key\)/);
   assert.match(layout,/annotateEditorSettingRow\(root,form\.elements\.namedItem\(key\),key,/);
