@@ -1652,3 +1652,22 @@ html[data-theme="cream"] body.mobile-studio .sidebar .settings-tabs .settings-ta
     outline:2px solid #c85092;outline-offset:-2px;
   }
 }
+
+
+/* Pixel-class search: each ranked result is a real finger-selectable row.
+   The list floats only over the EXISTING Edit sheet, not over the artwork.
+   On short fallback devices it scrolls internally rather than growing a
+   permanent second toolbar or pushing the wallpaper. Desktop 36px choices
+   remain unchanged. */
+@media(max-width:790px){
+  body.mobile-studio .sidebar .editor-search-results:not([hidden]){
+    box-sizing:border-box;max-height:min(208px,25dvh);
+    overscroll-behavior-y:contain;touch-action:pan-y;
+    scroll-padding-block:4px;
+  }
+  body.mobile-studio .sidebar .editor-search-choice{
+    box-sizing:border-box;min-height:44px;
+    padding:8px 10px;font-size:12px;line-height:1.3;
+    white-space:normal;overflow-wrap:anywhere;
+  }
+}
