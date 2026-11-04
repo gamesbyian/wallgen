@@ -92,6 +92,16 @@ export function mountEditor(){
   for(const [value,name] of [['gentle','Gentle'],['moderate','Moderate'],['wild','Wild']]){
     const opt=create('option',null,name);opt.value=value;strength.append(opt);
   }
+  // Move, never clone, the real source selectors into a temporary second row
+  // only when the artist asks for detailed variation controls on a phone.
+  const variationToggle=create('button','editor-variation-toggle','Variation');
+  variationToggle.id='editorVariationToggle';variationToggle.type='button';
+  variationToggle.setAttribute('aria-label','Variation options');
+  variationToggle.setAttribute('aria-controls','editorVariationOptions');
+  variationToggle.setAttribute('aria-expanded','false');
+  const variationOptions=create('div','editor-variation-options');
+  variationOptions.id='editorVariationOptions';
+  variationOptions.append(scopeMode,strength);
   const randomCategory=create('button','editor-scope-button');
   randomCategory.innerHTML=iconMarkup('randomize')+' Category';
   randomCategory.type='button';randomCategory.dataset.randomCategory='layout';
@@ -116,9 +126,52 @@ export function mountEditor(){
   searchClose.type='button';searchClose.hidden=true;
   searchClose.setAttribute('aria-label','Close setting search');
   searchClose.title='Close search';
-  controls.append(scopeMode,strength,randomCategory,search);
+  controls.append(variationToggle,variationOptions,randomCategory,search);
   explore.append(style,controls,searchInput,searchClose,searchStatus,searchResults);
   nav.before(explore);
+  const compactVariation=window.matchMedia('(max-width:499px)');
+  const closeVariation=({restoreFocus=false}={})=>{
+    if(!variationOptions.hidden&&compactVariation.matches){
+      variationOptions.hidden=true;
+      variationToggle.setAttribute('aria-expanded','false');
+      explore.classList.remove('editor-variation-open');
+      if(restoreFocus)variationToggle.focus({preventScroll:true});
+    }
+  };
+  const syncVariationLayout=()=>{
+    closeVariation();
+    if(compactVariation.matches){
+      // An absolute child of the horizontal action scroller can be clipped.
+      // Park the ORIGINAL selectors beside the row, inside the editor only.
+      controls.after(variationOptions);
+      variationOptions.hidden=true;
+    }else{
+      variationToggle.after(variationOptions);
+      variationOptions.hidden=false;
+    }
+    variationToggle.setAttribute('aria-expanded','false');
+    explore.classList.remove('editor-variation-open');
+  };
+  syncVariationLayout();
+  compactVariation.addEventListener('change',syncVariationLayout);
+  variationToggle.addEventListener('click',()=>{
+    if(!compactVariation.matches)return;
+    if(!variationOptions.hidden){closeVariation({restoreFocus:true});return;}
+    variationOptions.hidden=false;
+    variationToggle.setAttribute('aria-expanded','true');
+    explore.classList.add('editor-variation-open');
+    scopeMode.focus({preventScroll:true});
+  });
+  explore.addEventListener('keydown',event=>{
+    if(event.key!=='Escape'||variationOptions.hidden||
+      !variationOptions.contains(event.target))return;
+    event.preventDefault();event.stopPropagation();
+    closeVariation({restoreFocus:true});
+  });
+  document.addEventListener('roygbiv-mobile-navigation-changed',event=>{
+    if(event.detail?.mode!=='edit')closeVariation();
+  });
+  document.addEventListener('editor-tool-changed',()=>closeVariation());
   nav.replaceChildren();
 
   const chooser=create('nav','editor-tool-chooser');
@@ -281,7 +334,14 @@ export function mountEditor(){
     const cat=event.detail;
     if(cat!==activeCategory)selectEditorTool(cat,EDITOR_CATEGORIES.find(c=>c.id===cat).tools[0].id);
   });
-  randomCategory.addEventListener('click',()=>{randomCategory.dataset.randomCategory=currentCategoryFromTabs();});
+  randomCategory.addEventListener('click',()=>{
+    randomCategory.dataset.randomCategory=currentCategoryFromTabs();
+    closeVariation();
+  });
+  // The history action is appended later by its original history owner.
+  controls.addEventListener('click',event=>{
+    if(event.target.closest('#editorHistoryToggle'))closeVariation();
+  });
   let matchedSearchHit=null,rankedSearchHits=[],searchMatchIndex=0;
   function renderSearchChoices(){
     searchResults.replaceChildren();
@@ -334,6 +394,7 @@ export function mountEditor(){
   }
   search.addEventListener('click',()=>{
     if(!searchInput.hidden){closeSearch();return;}
+    closeVariation();
     searchInput.hidden=false;searchClose.hidden=false;
     explore.classList.add('editor-search-open');
     search.setAttribute('aria-expanded','true');
