@@ -40,7 +40,13 @@ export function installPatternPrerequisites({tools,form,select}){
         construction:form.elements.namedItem('construction')?.value,
         motif:form.elements.namedItem('motif')?.value
       });
-      if(config)select('stripes',config.tool);
+      if(config){
+        select('stripes',config.tool);
+        // Navigation hides the old note. Keep focus on the original
+        // destination tool action for keyboard and assistive navigation.
+        const destination=tools.get(config.tool)?.chip;
+        if(destination&&!destination.hidden)destination.focus({preventScroll:true});
+      }
     });
     note.append(text,button);
     card.append(note);
