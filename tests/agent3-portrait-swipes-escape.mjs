@@ -441,6 +441,54 @@ try{
       assert.deepEqual(decodeRecipe(new URL(page.url()).searchParams.get('r')),recipe,
         'Navigation gestures must never mutate wallpaper recipe');
       assert.deepEqual(errors,[],'Page errors during scene-aware gesture acceptance');
+      // Source-first exploratory census: diagnose the next two genuine
+      // mobile control actions BEFORE deciding which available space to use.
+      // This is a deliberate second recipe, not a mutation of the initial
+      // radial viewport/gesture acceptance above.
+      const inspectSourceAction=(cardSelector,selector)=>page.evaluate(({cardSelector,selector})=>{
+        const card=document.querySelector(cardSelector);
+        const button=card?.querySelector(selector);
+        if(!card||!button)return {found:false};
+        const c=card.getBoundingClientRect(),b=button.getBoundingClientRect();
+        const hit=document.elementFromPoint(b.left+b.width/2,b.top+b.height/2);
+        const children=[...card.querySelectorAll('.lockable-setting')]
+          .filter(el=>!el.hidden&&el.getBoundingClientRect().height>0)
+          .map(el=>{const x=el.getBoundingClientRect();return {
+            name:el.querySelector('[name]')?.name||'',top:x.top,bottom:x.bottom,
+            inside:x.top>=c.top-2&&x.bottom<=c.bottom+2};});
+        return {found:true,visible:!button.hidden,width:b.width,height:b.height,
+          centerHit:hit===button||button.contains(hit),
+          top:b.top,bottom:b.bottom,cardTop:c.top,cardBottom:c.bottom,
+          insideCard:b.top>=c.top-2&&b.bottom<=c.bottom+2,
+          originalControlsInside:children.every(x=>x.inside),originalControls:children,
+          label:button.textContent,active:document.activeElement===button};
+      },{cardSelector,selector});
+      await page.locator('#tab-layout').tap();
+      const designAction=await inspectSourceAction(
+        '.editor-tool-card[data-editor-tool="structure-mode"]','.editor-design-next');
+      console.log('DESIGN_NEXT_BASELINE '+JSON.stringify({width,height,designAction}));
+      await page.screenshot({path:join(output,'design-next-'+width+'x'+height+'.png'),
+        animations:'disabled'});
+      const pathRecipe=normalizeRecipe({...recipe,structure:'paths',
+        geometry:'straight',construction:'ribbon',motif:'solid'});
+      await page.goto(origin+'/?r='+encodeRecipe(pathRecipe),
+        {waitUntil:'domcontentloaded'});
+      await page.locator('#mobileEdit').tap();
+      await page.locator('#tab-stripes').tap();
+      const patternActions=[];
+      for(const tool of ['marks','motif-scale']){
+        await page.locator('.editor-tool-tab[data-editor-tool="'+tool+'"]').tap();
+        const details=await inspectSourceAction(
+          '.editor-tool-card[data-editor-tool="'+tool+'"]',
+          '.editor-pattern-prerequisite button');
+        patternActions.push({tool,...details});
+      }
+      console.log('PATTERN_ACTION_BASELINE '+JSON.stringify({width,height,patternActions}));
+      await page.screenshot({path:join(output,'pattern-hints-'+width+'x'+height+'.png'),
+        animations:'disabled'});
+      assert.deepEqual(decodeRecipe(new URL(page.url()).searchParams.get('r')),pathRecipe,
+        'Read-only prerequisite census must leave second source recipe intact');
+      assert.deepEqual(errors,[],'No browser script exceptions in guidance census');
       const result={width,height,applicable:before.tools.map(x=>x.id),
         categoryRail:{...categories,lastTouch:lastCategory,keyboardHome:true},
         zoomedPhoneTargets,compactExplore,
@@ -448,7 +496,7 @@ try{
         swipedFrom:before.selected,swipedTo:after.selected,
         counter:after.position,selectedVisible:after.selectedVisible,
         searchGeometry,keyboardChoice,historyExit,
-        materialBefore,materialFinish,
+        materialBefore,materialFinish,designAction,patternActions,
         searchEscapeKeepsEdit:true,historyEscapeKeepsEdit:true,
         dialogEscapeKeepsEdit:true,
         recipePreserved:true,railScrollPreserved:true,touchCancelSafe:true,source:'Chromium synthetic TouchEvent and keyboard',
