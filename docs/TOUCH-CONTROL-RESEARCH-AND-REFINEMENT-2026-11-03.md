@@ -1,0 +1,29 @@
+# ROYGBIV touch-control research and conditional refinement audit
+**3 November 2026 · #867 · current source and third-party implementation references**
+
+## Design principle
+Keep direct on-canvas, vector-native manipulation and the existing seven-category, single-tool-row interface. Familiar gestures may accelerate an action, but a gesture should not be the only way to find or complete it. One committed movement remains one source-owned Undo entry. Controls must be physically reachable and keyboard/assistive-accessible at 320×700 and 412×892, without overlapping the actual wallpaper or storing CSS pixel dimensions as artwork.
+
+## Prior art, with limits
+- **Apple Human Interface Guidelines, Gestures**: preserve established tap, drag, swipe, zoom and rotation meanings, provide non-gesture alternatives, and give immediate direct-manipulation feedback. Shortcut gestures supplement visible controls. https://developer.apple.com/design/human-interface-guidelines/gestures/
+- **Android accessibility guidance**: avoid gesture-only functions; 48dp touch targets are recommended (with 44 CSS px the current ROYGBIV minimum at small portrait, not a claim of full Android 48dp acceptance). TalkBack/Switch Access/Voice Access need ordinary click-based actions. https://developer.android.com/design/ui/mobile/guides/foundations/accessibility and https://developer.android.com/guide/topics/ui/accessibility/views/apps-views
+- **Material bottom sheets**: drag handles are accessible **buttons**, not decorative swipe-only affordances; expansion/collapse actions can be invoked without dragging. Existing ROYGBIV mobileDismissHandle already has a click and keyboard fallback. https://github.com/material-components/material-components-android/blob/master/docs/components/BottomSheet.md
+- **Adobe Fresco on iPhone and iPad**: compact visual tools, an optional moveable touch shortcut, pinch/direct transforms and side handles are useful precedents. Avoid copying a stylus-first mode into a finger-first wallpaper studio merely because it exists. https://helpx-origin.aws116.adobeitc.com/uk/fresco/desktop/introduction/fresco-on-iphone.html and https://www.adobe.com/learn/fresco/web/use-selections-make-artwork
+- **Figma mobile**: useful for previewing and moving between frames, but the official Android/iOS app **cannot edit Figma Design files**; do not cite it as a shipped mobile vector-editing implementation. https://help.figma.com/hc/en-us/articles/1500007537281-Guide-to-the-Figma-mobile-app
+
+## Current independent source finding and scoped implementation
+The seven category tabs are created as real buttons in `src/editor-layout.js`; selecting a category already preserves roving keyboard focus and scrolls an obscured chosen tab into view. The phone layout reserves a *single* 44px category row, with the existing 44px horizontal named-tool chip row beneath it.
+
+The max-499px tab CSS originally set seven fixed-minimum 47px tabs and a 3px gap, while also assigning `overflow:visible!important` to the grid in an earlier source block. At 320px, those widths exceed the viewport (7×47 + 6×3 + 4 padding = **351px**); the enclosing editor shell clips overflow. The last tab cannot be assumed thumb-reachable merely because it exists, responds to programmatic source navigation or passes a static DOM assertion. The former 10px "Swipe settings" counter is intentionally hidden by the newer single-tool editor and should not be revived as a second toolbar.
+
+**Selected remedy:** keep the exact same seven buttons, gap, CSS touch size, editor navigation and tool owners. Make the existing category grid a real `overflow-x:auto`, `touch-action:pan-x`, minmax(47px,1fr) native scroller at max-499px; retain 44px height and full-width equal cells at 412px. No new row, overlay, button clone, gesture recognizer, recipe field or Undo logic.
+
+**Qualification:** one source-policy unit test, and direct `tap()`/keyboard-Home tests in the existing optional 320×700/412×892 Chromium acceptance. Require all seven real tabs, >=47×44 input cells, actual narrow scroll width, physically visible last active tab, full-width fit at 412, and unchanged actual wallpaper source after navigation. Browser CI is not physical Pixel 6 Pro, Android IME, TalkBack or human thumb assessment.
+
+## Additional candidates, not blanket authorizations
+1. **500–790px/narrow-height control hit cells.** Some original named-tool/search/variation rules remain 27–31px even though 320/412 portrait tool chips were enlarged. Capture real browser rectangles at the specified breakpoint and adjust responsive budgets *only for actual violations*; avoid papering over with invisible pointer hit zones.
+2. **Gesture discovery and alternatives.** The category and named-tool chip rails already provide direct tap, keyboard and horizontal scroll alternatives to sheet swipes. Do not add a permanent Prev/Next row merely because a legacy counter is hidden. Only add a compact alternate affordance where real visible chips remain unreachable or users demonstrably miss them.
+3. **Precision transforms and thumb occlusion.** Existing 8px intent threshold, detachable grips, source-space snapping and rotation modal are accepted at stated browser evidence tiers. Compare live 320/412 screen captures and genuine pointer workflows before changing grip pivot, transform preview, acceleration or cancel gestures.
+4. **Focus continuity and complexity.** Preserve actual source-field focus, escaped child-dialog precedence, keyboard roving, visible 44px routes, single Undo and original imported PNG bytes. Refine one observed interaction at a time, not a second all-in-one gesture framework.
+
+**Review boundary:** automated Chromium and Node results can prove source-linked behavior and measured rectangles; tactile intuition, thermal throttling, handset gesture arbitration and TalkBack remain unverified until run on the actual device.
