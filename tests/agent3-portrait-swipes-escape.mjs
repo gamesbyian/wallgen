@@ -326,6 +326,44 @@ try{
         'Consumed search Escape must not dismiss Edit');
       assert.equal(await search.evaluate(el=>document.activeElement===el),true,
         'Setting search returns keyboard focus to toggle');
+      // Recent Variations is a temporary editor-space view; its Back and
+      // Escape routes must not leave focus on a newly hidden panel button or
+      // let global Escape dismiss the entire mobile Edit sheet.
+      const history=page.locator('#editorHistoryToggle');
+      await history.tap();
+      const back=page.locator('.editor-history-close');
+      const historyExit=await page.evaluate(()=>{
+        const button=document.querySelector('.editor-history-close');
+        const panel=document.getElementById('editorHistory');
+        const sheet=document.getElementById('mobileDesignSheet');
+        const r=button.getBoundingClientRect();
+        const hit=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);
+        const sheetBounds=sheet.getBoundingClientRect();
+        return {width:r.width,height:r.height,
+          centerHit:button===hit||button.contains(hit),
+          withinSheet:r.top>=sheetBounds.top&&r.bottom<=sheetBounds.bottom,
+          open:!panel.hidden};
+      });
+      assert.ok(historyExit.open&&historyExit.height>=44&&historyExit.width>=44&&
+        historyExit.centerHit&&historyExit.withinSheet,
+        'History return must be a real accessible 44px control in Edit: '+
+          JSON.stringify(historyExit));
+      await page.screenshot({path:join(output,'history-'+width+'x'+height+'.png'),
+        animations:'disabled'});
+      await back.focus();
+      await page.keyboard.press('Escape');
+      assert.equal(await page.locator('#editorHistory').isVisible(),false,
+        'History Escape must close its own temporary panel');
+      assert.equal(await history.evaluate(el=>document.activeElement===el),true,
+        'History Escape must restore visible original action focus');
+      assert.equal(await page.locator('body').evaluate(el=>
+        el.classList.contains('mobile-edit-open')),true,
+        'History Escape must not dismiss Edit');
+      await history.tap();
+      await back.tap();
+      assert.equal(await page.locator('#editorHistory').isVisible(),false);
+      assert.equal(await history.evaluate(el=>document.activeElement===el),true,
+        'Visible Back action must return keyboard focus to original trigger');
       // Open the existing native Activity dialog programmatically while Edit
       // is shown, isolating Escape ownership without inventing a UI route.
       await page.locator('#creativeActivityOpen').evaluate(el=>el.click());
@@ -343,8 +381,9 @@ try{
         primaryPixelClass:width===412,deviceScaleFactor:width===412?3.5:1,
         swipedFrom:before.selected,swipedTo:after.selected,
         counter:after.position,selectedVisible:after.selectedVisible,
-        searchGeometry,keyboardChoice,
-        searchEscapeKeepsEdit:true,dialogEscapeKeepsEdit:true,
+        searchGeometry,keyboardChoice,historyExit,
+        searchEscapeKeepsEdit:true,historyEscapeKeepsEdit:true,
+        dialogEscapeKeepsEdit:true,
         recipePreserved:true,railScrollPreserved:true,touchCancelSafe:true,source:'Chromium synthetic TouchEvent and keyboard',
         physicalPixel:false,humanUse:false};
       observations.push(result);
