@@ -30,8 +30,9 @@ export function installDesignTypeNext({tools,form,select}){
     // This button disappears when the destination card takes over. Transfer
     // focus to the real selected tool chip instead of leaving keyboard or
     // screen-reader focus on hidden source chrome.
-    const destination=tools.get(tool)?.chip;
-    if(destination&&!destination.hidden)destination.focus({preventScroll:true});
+    const destination=[...tools.values()].find(entry=>
+      !entry.chip.hidden&&entry.chip.getAttribute('aria-pressed')==='true')?.chip;
+    destination?.focus({preventScroll:true});
   });
   card.append(button);
   document.addEventListener('roygbiv-controls-synced',sync);
