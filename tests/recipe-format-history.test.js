@@ -128,7 +128,7 @@ test('full 45-revision field-expression matrix is reproducible from pinned sourc
     ([key])=>Object.hasOwn(historicalExpressions,key))),historicalExpressions);
   assert.deepEqual(Object.keys(latest).filter(
     key=>!Object.hasOwn(historicalExpressions,key)).sort(),
-    ['paletteLightness','paletteSaturation','paletteToneEnabled']);
+    ['insetAlignment','paletteLightness','paletteSaturation','paletteToneEnabled']);
   const rows=expressionHistory.revisions;
   assert.ok(rows.some(row=>row.changed.some(change=>
     change.key==='stripeShadowStrength'&&change.before.includes('45, 0, 100')&&
