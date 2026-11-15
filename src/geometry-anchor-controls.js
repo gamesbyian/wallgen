@@ -3,6 +3,7 @@
 import {STRIPE_ANCHORS,GROUP_ANCHORS,WIDTH_ANCHORS,LENGTH_ANCHORS,groupAnchorCoordinate,
   bandAnchorCoordinate} from './geometry-anchors.js';
 import {balanceStripeEnds} from './renderer.js?v=20261024-text-overlays1';
+import {resolveScene} from './model.js';
 
 const options={
   spreadAnchor:[['centre','Centre of rainbow'],['red','Red stripe'],['green','Green stripe'],['violet','Violet stripe']],
@@ -15,7 +16,7 @@ export function installGeometryAnchorControls({form,getRecipe,getScene,onApply})
   for(const [key,source,reference] of [
     ['spreadAnchor','spread','spreadAnchorPosition'],
     ['repeatAnchor','repeatSpacing','repeatAnchorPosition'],
-    ['widthAnchor','stripeWidth','widthAnchorPosition'],
+    ['widthAnchor','stripeWidth','widthAnchorBasis'],
     ['pathLengthAnchor','pathLength','pathLengthAnchorPoints']
   ]){
     const field=form.elements.namedItem(source);
@@ -54,6 +55,19 @@ export function installGeometryAnchorControls({form,getRecipe,getScene,onApply})
          key==='widthAnchor'&&!WIDTH_ANCHORS.includes(anchor)||
          key==='pathLengthAnchor'&&!LENGTH_ANCHORS.includes(anchor))return;
       const stripes=scene?.stripes||[];
+      // Anchored width contributes a separate, uniform translation. Capture
+      // a spread reference before that width-only translation so the two
+      // dimensional controls never double-apply one another's shift.
+      const bareStripes=recipe.widthAnchor&&['spreadAnchor','widthAnchor'].includes(key)?
+        resolveScene({...recipe,widthAnchor:undefined,widthAnchorBasis:undefined,
+          widthAnchorOffset:undefined}).stripes:stripes;
+      if(key==='widthAnchor'){
+        const offset=stripes[0]?.center-bareStripes[0]?.center;
+        if(!Number.isFinite(offset))return;
+        onApply({...recipe,widthAnchor:anchor,widthAnchorBasis:recipe.stripeWidth,
+          widthAnchorOffset:offset});
+        return;
+      }
       if(key==='pathLengthAnchor'){
         if(scene?.composition!=='floating'||scene.geometry==='drawn')return;
         const points=stripes.map(original=>{
@@ -71,9 +85,8 @@ export function installGeometryAnchorControls({form,getRecipe,getScene,onApply})
       }
       const value=key==='spreadAnchor'?
         (anchor==='centre'?
-          (stripes[0]?.center+stripes.at(-1)?.center)/2:
-          stripes.find(stripe=>stripe.name===anchor[0].toUpperCase()+anchor.slice(1))?.center):
-        key==='widthAnchor'?bandAnchorCoordinate(stripes,anchor):
+          (bareStripes[0]?.center+bareStripes.at(-1)?.center)/2:
+          bareStripes.find(stripe=>stripe.name===anchor[0].toUpperCase()+anchor.slice(1))?.center):
         groupAnchorCoordinate(scene?.bundleOffsets,anchor);
       if(!Number.isFinite(value))return;
       onApply({...recipe,[key]:anchor,[reference]:value});

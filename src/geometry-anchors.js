@@ -49,9 +49,14 @@ export function bandAnchorCoordinate(stripes,anchor='centre'){
   if(anchor==='violet-edge')return violetEdge;
   return (redEdge+violetEdge)/2;
 }
-export function pinBandEdges(stripes,{anchor='centre',position}={}){
-  if(!stripes?.length||anchor==='centre'&&!Number.isFinite(position))return stripes;
-  const target=Number.isFinite(position)?position:0;
-  const shift=target-bandAnchorCoordinate(stripes,anchor);
+export function pinBandEdges(stripes,{anchor='centre',basisStripes,offset=0}={}){
+  if(!stripes?.length||!basisStripes?.length)return stripes;
+  // The width anchor only acts on width changes: both reference and actual
+  // edges are measured at the SAME current stripe spread / group location.
+  // Thus it cannot fight an independently selected Red/Green/Violet anchor.
+  const shift=(Number.isFinite(offset)?offset:0)+
+    bandAnchorCoordinate(basisStripes,anchor)-
+    bandAnchorCoordinate(stripes,anchor);
+  if(shift===0)return stripes;
   return stripes.map(stripe=>({...stripe,center:stripe.center+shift}));
 }

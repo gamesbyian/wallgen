@@ -64,7 +64,8 @@ test('ribbon thickness can grow while holding a semantic outer edge or band cent
         reverseStripes,construction:'ribbon',chaos:76};
       const original=resolveScene(base);
       const coordinate=bandAnchorCoordinate(original.stripes,anchor);
-      const recipe={...base,widthAnchor:anchor,widthAnchorPosition:coordinate};
+      const recipe={...base,widthAnchor:anchor,
+        widthAnchorBasis:base.stripeWidth,widthAnchorOffset:0};
       const chosen=resolveScene(recipe);
       chosen.stripes.forEach((stripe,i)=>close(stripe.center,original.stripes[i].center,
         'choosing width anchor must not move art'));
@@ -113,4 +114,30 @@ test('repeat anchors stay dormant for single and floating compositions',()=>{
   assert.deepEqual(resolveScene({...withAnchor,composition:'single'}).bundleOffsets,[0]);
   assert.deepEqual(resolveScene({...withAnchor,composition:'floating'}).bundleOffsets,[0]);
   assert.equal(resolveScene({...withAnchor,composition:'repeat'}).bundleOffsets[0],-240);
+});
+
+test('width and spread anchors compose without double-counting either reference',()=>{
+  const source={seed:'anchor-combination',spread:28,stripeWidth:36,chaos:72,
+    geometry:'straight',orientation:'vertical',reverseStripes:true};
+  const initial=resolveScene(source);
+  const red=initial.stripes.find(s=>s.name==='Red').center;
+  const both={...source,spreadAnchor:'red',spreadAnchorPosition:red,
+    widthAnchor:'violet-edge',widthAnchorBasis:source.stripeWidth,widthAnchorOffset:0};
+  let scene=resolveScene(both);
+  scene.stripes.forEach((stripe,i)=>close(stripe.center,initial.stripes[i].center,'two anchors selection must not shift'));
+  const violetEdge=bandAnchorCoordinate(scene.stripes,'violet-edge');
+  const thickened={...both,stripeWidth:90};
+  scene=resolveScene(thickened);
+  close(bandAnchorCoordinate(scene.stripes,'violet-edge'),violetEdge,'width action pins edge');
+  // Selecting the Red anchor AFTER the width has changed uses the pre-width
+  // geometric coordinate; otherwise the width translation gets applied twice.
+  const unwidth=resolveScene({...thickened,widthAnchor:undefined,
+    widthAnchorBasis:undefined,widthAnchorOffset:undefined});
+  const captured=unwidth.stripes.find(s=>s.name==='Red').center;
+  const reanchored={...thickened,spreadAnchor:'red',spreadAnchorPosition:captured};
+  close(resolveScene(reanchored).stripes.find(s=>s.name==='Red').center,
+    scene.stripes.find(s=>s.name==='Red').center,'reselecting spread anchor cannot jump');
+  const expanded=resolveScene({...reanchored,spread:78});
+  close(expanded.stripes.find(s=>s.name==='Red').center,
+    scene.stripes.find(s=>s.name==='Red').center,'spread action preserves Red with width anchor active');
 });

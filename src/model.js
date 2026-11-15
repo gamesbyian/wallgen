@@ -262,7 +262,7 @@ export function normalizeRecipe(input = {}) {
     stripeShadowDirection: LIGHT_DIRECTIONS.includes(input.stripeShadowDirection) ? input.stripeShadowDirection : 'top-left',
     chaos: finiteRange(input.chaos, 36, 0, 100),
     stripeWidth: finiteRange(input.stripeWidth, 52, 0, 100),
-    ...(WIDTH_ANCHORS.includes(input.widthAnchor)?{widthAnchor:input.widthAnchor,...(Number.isFinite(input.widthAnchorPosition)?{widthAnchorPosition:finiteRange(input.widthAnchorPosition,0,-10000,10000)}:{})}:{}),
+    ...(WIDTH_ANCHORS.includes(input.widthAnchor)?{widthAnchor:input.widthAnchor,widthAnchorBasis:finiteRange(input.widthAnchorBasis,input.stripeWidth??52,0,100),widthAnchorOffset:finiteRange(input.widthAnchorOffset,0,-10000,10000)}:{}),
     textureDisplacement: finiteRange(input.textureDisplacement, 0, 0, 100),
     spread: finiteRange(input.spread, 56, 0, 100),
     ...(STRIPE_ANCHORS.includes(input.spreadAnchor)?{spreadAnchor:input.spreadAnchor,...(Number.isFinite(input.spreadAnchorPosition)?{spreadAnchorPosition:finiteRange(input.spreadAnchorPosition,0,-10000,10000)}:{})}:{}),
@@ -424,14 +424,23 @@ export function resolveScene(recipeInput) {
   // Starting styles populate explicit settings in the editor. A family must
   // not invisibly multiply the user's manually selected stripe thickness.
   const widthFactor = .12+.395*Math.pow(recipe.stripeWidth/50,1.85);
+  const widthReferences=[];
   const generatedStripes = positions.map((position, i) => {
     const r = rng(`${recipe.seed}:stripe:${i}`);
     // Derive the reference gaps from the *weights*, not floating-point
     // differences of spread-dependent positions. Width is bit-for-bit fixed.
     const leftGap = i ? referenceSpread*weights[i-1]/sum : referenceAvg;
     const rightGap = i < 6 ? referenceSpread*weights[i]/sum : referenceAvg;
-    let width = Math.min(leftGap,rightGap)*widthFactor*between(r,1-chaos*.35,1+chaos*.35);
+    const widthVariation=between(r,1-chaos*.35,1+chaos*.35);
+    let width = Math.min(leftGap,rightGap)*widthFactor*widthVariation;
     if(recipe.construction==='stroke')width=Math.max(.35,width*.12);
+    if(recipe.widthAnchor){
+      const basisFactor=.12+.395*Math.pow(recipe.widthAnchorBasis/50,1.85);
+      let basisWidth=Math.min(leftGap,rightGap)*basisFactor*widthVariation;
+      if(recipe.construction==='stroke')basisWidth=Math.max(.35,basisWidth*.12);
+      widthReferences.push(Math.max(basisWidth,
+        recipe.construction==='stroke'?.8:1.5));
+    }
     // Individuality varies each stripe within its chosen geometry, while
     // preserving the intended shape family even at the extreme endpoint.
     const individualGeometry=geometry;
@@ -495,8 +504,12 @@ export function resolveScene(recipeInput) {
       jitterSeed:`${recipe.seed}-noise-${i}`,
     };
   });
+  const referenceStripes=recipe.widthAnchor?
+    generatedStripes.map((stripe,i)=>({...stripe,width:widthReferences[i]})):
+    null;
   const stripes=pinBandEdges(generatedStripes,{
-    anchor:recipe.widthAnchor,position:recipe.widthAnchorPosition
+    anchor:recipe.widthAnchor,basisStripes:referenceStripes,
+    offset:recipe.widthAnchorOffset
   });
   const textureLayers = [
     {material, strength:recipe.textureStrength, scale:recipe.textureScale, rotation:recipe.textureRotation,

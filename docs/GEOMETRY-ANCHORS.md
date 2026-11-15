@@ -19,7 +19,7 @@ coordinate, except where a geometric bound makes doing so impossible.
 |---|---|---|---|
 | Stripes → Spread | Centre (legacy), Red, Green, Violet | `spreadAnchor`, `spreadAnchorPosition` | `src/model.js`, `src/geometry-anchors.js` |
 | Layout → Repeat spacing | Centre (legacy), First, Last | `repeatAnchor`, `repeatAnchorPosition` | Same shared geometry helper |
-| Stripes → Stripe width | Centre (legacy), Red outer edge, Violet outer edge | `widthAnchor`, `widthAnchorPosition` | Same helper, after ribbon widths resolve |
+| Stripes → Stripe width | Centre (legacy), Red outer edge, Violet outer edge | `widthAnchor`, `widthAnchorBasis`, `widthAnchorOffset` | Same helper, after ribbon widths resolve |
 | Path → Path length | Centre (legacy), Start, End, for independent inset / floating stripes | `pathLengthAnchor`, `pathLengthAnchorPoints` | `src/renderer.js:balanceStripeEnds` |
 | Imported shape → Nested outlines | Outermost (legacy), Middle, Innermost | `nestedShapeContours.anchor`, `nestedShapeContours.anchorDistance` | `src/nested-shape-contours.js` |
 
@@ -44,7 +44,9 @@ carry any chosen anchor and its reference.
   centre lines, not necessarily the Green stripe when gap irregularity is on.
 - **Ribbon width** can hold the group's Red or Violet *outermost physical edge*.
   All seven bands translate as a family as their thickness changes, avoiding
-  contradictory per-stripe edge constraints.
+  contradictory per-stripe edge constraints. Its effect is relative to the
+  captured stripe-width percentage, so it does not compete with the separately
+  anchored spread dimension.
 - **Repeated group** anchors hold the selected group's translation offset
   while repeat spacing or group count changes. Centre is the family midpoint,
   including for even repeat counts.
