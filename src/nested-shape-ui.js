@@ -1,6 +1,7 @@
 // One compact existing-Design-editor surface for nested imported silhouettes.
 // It modifies only the current canonical recipe; no separate SVG/raster editor.
-import {DEFAULT_NESTED_CONTOURS,nestedContourDistances,fitNestedShapeContours} from './nested-shape-contours.js';
+import {DEFAULT_NESTED_CONTOURS,nestedContourDistances,nestedAnchorIndex,
+  nestedAnchorClearance,fitNestedShapeContours} from './nested-shape-contours.js';
 import {frameImportedSilhouette,frameUnpositionedNestedSilhouette} from './nested-shape-framing.js';
 
 const add=(parent,tag,text)=>{
@@ -42,8 +43,14 @@ export function installNestedShapeControls({form,getRecipe,getScene,onApply,onNo
       const value=Number.isFinite(raw)?Math.max(min,Math.min(max,raw)):min;
       const r=getRecipe();
       if(!r.nestedShapeContours?.enabled)return;
-      onApply({...r,nestedShapeContours:{...r.nestedShapeContours,
-        [key]:key==='count'?Math.round(value):value}});
+      const next={...r.nestedShapeContours,
+        [key]:key==='count'?Math.round(value):value};
+      // Explicitly editing the outer margin moves the entire family and
+      // re-bases an inner/middle anchor at the newly requested position.
+      if(key==='firstInset'&&['middle','inner'].includes(next.anchor))
+        next.anchorDistance=value+next.strokeWidth/2+
+          nestedAnchorIndex(next)*(next.gap+next.strokeWidth);
+      onApply({...r,nestedShapeContours:next});
     });
     return {label,text,input};
   };
@@ -51,6 +58,32 @@ export function installNestedShapeControls({form,getRecipe,getScene,onApply,onNo
   numeric('strokeWidth','Line thickness',.5,12,.5);
   numeric('gap','Clear spacing between lines',.5,30,.5);
   numeric('firstInset','Outer margin',0,50,.5);
+  const anchorLabel=add(controls,'label');
+  anchorLabel.className='field';
+  add(anchorLabel,'span','Keep outline stationary');
+  const anchorSelect=add(anchorLabel,'select');
+  anchorSelect.setAttribute('aria-label','Nested outline spacing anchor');
+  for(const [value,title] of [['outer','Outermost contour'],
+    ['middle','Middle contour'],['inner','Innermost contour']]){
+    const option=add(anchorSelect,'option',title);option.value=value;
+  }
+  anchorSelect.addEventListener('change',event=>{
+    event.stopPropagation();
+    const r=getRecipe(),settings=r.nestedShapeContours;
+    if(!settings?.enabled)return;
+    const distances=nestedContourDistances(settings);
+    const anchor=anchorSelect.value;
+    if(anchor==='outer'){
+      // Returning to the normal outer-margin mode must not move any lines.
+      const firstInset=Math.max(0,distances[0]-settings.strokeWidth/2);
+      onApply({...r,nestedShapeContours:{...settings,anchor:'outer',
+        anchorDistance:undefined,firstInset}});
+    }else{
+      const index=nestedAnchorIndex(settings,anchor);
+      onApply({...r,nestedShapeContours:{...settings,anchor,
+        anchorDistance:distances[index]}});
+    }
+  });
   const reverseLabel=add(controls,'label');
   reverseLabel.className='field';
   add(reverseLabel,'span','Colour order');
@@ -106,9 +139,17 @@ export function installNestedShapeControls({form,getRecipe,getScene,onApply,onNo
         'Create seven truly offset rainbow outlines, not scaled copies.';
     controls.hidden=!enabled;
     frameButton.disabled=!enabled||!ready;
+    const clear=nestedAnchorClearance(settings);
     for(const [key,input] of Object.entries(fields))
-      if(document.activeElement!==input)input.value=String(settings[key]);
+      if(document.activeElement!==input)input.value=String(key==='firstInset'?
+        Math.max(0,clear.effectiveFirst-settings.strokeWidth/2):settings[key]);
+    // Anchoring can produce a real outer margin greater than the original
+    // manual 50-unit range, without sacrificing the inner fixed contour.
+    fields.firstInset.max=String(Math.max(50,
+      Math.ceil(clear.effectiveFirst-settings.strokeWidth/2)));
+    if(document.activeElement!==anchorSelect)anchorSelect.value=settings.anchor||'outer';
     if(document.activeElement!==reverse)reverse.value=settings.colourOrder;
+    autoFit.disabled=enabled&&['middle','inner'].includes(settings.anchor);
     if(enabled){
       const object=getScene()?.objects?.find(o=>o.id===settings.objectId&&o.rings?.length);
       const p=object?.rings?.flat()||[];
@@ -117,9 +158,13 @@ export function installNestedShapeControls({form,getRecipe,getScene,onApply,onNo
         const clearance=Math.min(Math.max(...xs)-Math.min(...xs),
           Math.max(...ys)-Math.min(...ys))/2;
         const atMost=nestedContourDistances(settings).filter(d=>d<clearance).length;
-        warning.textContent=atMost<settings.count?
+        warning.textContent=clear.clamped?
+          'The requested gap exceeds the available outside margin. The outermost contour is held against the silhouette border; the selected inner anchor cannot remain fixed until spacing is reduced.':
+          atMost<settings.count?
           'At most '+atMost+' of '+settings.count+
           ' inset lines fit the entire shape width at this spacing. Reduce thickness or gap. Sharp corners and necks can reduce it further.':
+          ['middle','inner'].includes(settings.anchor)?
+          'The selected contour is fixed while spacing changes. Auto-fit is available with the Outermost anchor because it needs permission to shift all levels.':
           'Exact inward distances from the original boundary. Tight tips and necks can split contours naturally; no invisible geometry is invented.';
       }
     }
