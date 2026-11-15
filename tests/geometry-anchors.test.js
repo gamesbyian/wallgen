@@ -141,3 +141,17 @@ test('width and spread anchors compose without double-counting either reference'
   close(expanded.stripes.find(s=>s.name==='Red').center,
     scene.stripes.find(s=>s.name==='Red').center,'spread action preserves Red with width anchor active');
 });
+
+test('a width anchor never shifts stripes merely because their spread changes',()=>{
+  for(const anchor of ['centre','red-edge','violet-edge']){
+    const seed={seed:'width-spread-separation',stripeWidth:44,
+      reverseStripes:true,chaos:90,geometry:'straight'};
+    for(const spread of [8,40,88]){
+      const baseline=resolveScene({...seed,spread});
+      const anchored=resolveScene({...seed,spread,widthAnchor:anchor,
+        widthAnchorBasis:44,widthAnchorOffset:0});
+      anchored.stripes.forEach((stripe,i)=>close(stripe.center,
+        baseline.stripes[i].center,'unchanged width must not affect spread'));
+    }
+  }
+});
