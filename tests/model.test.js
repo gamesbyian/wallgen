@@ -1,6 +1,6 @@
 import test from 'node:test';
 import {pathPosition} from '../src/path-geometry.js';
-import {outlineDimensions} from '../src/renderer.js';
+import {outlineDimensions,balanceStripeEnds,stripeFrameContacts} from '../src/renderer.js';
 import {materialHeight,materialContourHeight} from '../src/material-surface.js';
 import {readFileSync} from 'node:fs';
 import assert from 'node:assert/strict';
@@ -24,6 +24,35 @@ test('ROYGBIV invariant, positive widths, strictly ascending stripe positions',(
     }
   }
 });
+test('reported diagonal full-bleed design keeps all seven original path domains',()=>{
+  // Reproduction of a real diagonally mirrored single-rainbow recipe.
+  // Its red-to-green stripes previously acquired artificial internal caps.
+  const recipe={seed:'18p281y-e40ccl',family:'signal',structure:'paths',
+    geometry:'straight',orientation:'diagonal',composition:'single',
+    diagonalRotation:66,mirrorHorizontal:true,mirrorVertical:false,
+    construction:'woven',chaos:6,stripeWidth:17,spread:26,individuality:55,
+    material:'linen',textureDisplacement:12,gap:49,outlineBuffer:17,glow:4};
+  let mixedEdgeContacts=0;
+  for(const diagonalRotation of [0,15,30,45,66,75,90,120,150,180])
+    for(const mirrorHorizontal of [true,false]){
+      const scene=resolveScene({...recipe,diagonalRotation,mirrorHorizontal});
+      for(const stripe of scene.stripes){
+        const contacts=stripeFrameContacts(scene,stripe);
+        if(contacts.left!==contacts.right||contacts.top!==contacts.bottom)
+          mixedEdgeContacts++;
+        const result=balanceStripeEnds(scene,stripe,false);
+        assert.equal(result.hidden,false);
+        assert.equal(stripe.hidden,undefined);
+        assert.equal(stripe.segmentStart,undefined,
+          'the red-to-violet domain must not be shortened: '+stripe.name);
+        assert.equal(stripe.segmentEnd,undefined);
+        assert.deepEqual(stripeFrameContacts(scene,stripe),contacts);
+      }
+    }
+  assert.ok(mixedEdgeContacts>0,
+    'the rotation sweep must actually cover mixed-edge diagonal crossings');
+});
+
 test('same seed and settings are fully deterministic',()=>{
   const config={seed:'this-is-a-seed',family:'contour',palette:'pastel',material:'linen',orientation:'diagonal',individuality:93};
   assert.deepEqual(resolveScene(config),resolveScene(config));
