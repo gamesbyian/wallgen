@@ -514,10 +514,14 @@ export function resolveScene(recipeInput) {
     layer.heightSin=Math.sin(radians);
   }
   const materialSummary=textureLayers.length ? textureLayers.map(layer=>layer.material).join(' + ') : 'none';
-  const bundleOffsets=pinGroupOffsets(Array.from({length:repeats},(_,i)=>
-    (i-(repeats-1)/2)*(spread+(12+recipe.repeatSpacing*1.1))),{
-    anchor:recipe.repeatAnchor,position:recipe.repeatAnchorPosition
-  });
+  const unpinnedBundles=Array.from({length:repeats},(_,i)=>
+    (i-(repeats-1)/2)*(spread+(12+recipe.repeatSpacing*1.1)));
+  // A repeat-only anchor must never displace the lone bundle when the artist
+  // switches to Single or Floating. Preserve the setting for later reuse.
+  const bundleOffsets=recipe.composition==='repeat'?
+    pinGroupOffsets(unpinnedBundles,{
+      anchor:recipe.repeatAnchor,position:recipe.repeatAnchorPosition
+    }):unpinnedBundles;
   // Every layout produces a unified ordered object list; seven colours are
   // semantic palette slots rather than an assumption of seven objects.
   const objects=buildCompositionObjects(recipe,stripes.map(stripe=>stripe.color),stripes,bundleOffsets);

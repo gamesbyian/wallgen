@@ -106,3 +106,11 @@ test('floating endpoint anchors hold every visible stripe when length is shorten
       normalizeRecipe(recipe));
   }
 });
+
+test('repeat anchors stay dormant for single and floating compositions',()=>{
+  const withAnchor={seed:'repeat-mode-guard',repeatAnchor:'first',
+    repeatAnchorPosition:-240,repeatCount:5,repeatSpacing:88};
+  assert.deepEqual(resolveScene({...withAnchor,composition:'single'}).bundleOffsets,[0]);
+  assert.deepEqual(resolveScene({...withAnchor,composition:'floating'}).bundleOffsets,[0]);
+  assert.equal(resolveScene({...withAnchor,composition:'repeat'}).bundleOffsets[0],-240);
+});
