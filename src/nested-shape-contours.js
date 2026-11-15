@@ -21,7 +21,12 @@ export function normalizeNestedShapeContours(raw){
     count:Math.round(finite(raw.count,7,1,7)),
     strokeWidth:finite(raw.strokeWidth,2,.5,12),
     gap:finite(raw.gap,5,.5,30),
-    firstInset:finite(raw.firstInset,3,0,50),
+    firstInset:finite(raw.firstInset,3,0,10000),
+    ...(raw.anchor==='middle'||raw.anchor==='inner'?{
+      anchor:raw.anchor,
+      ...(Number.isFinite(raw.anchorDistance)?{
+        anchorDistance:finite(raw.anchorDistance,0,0,10000)}:{})
+    }:{}),
     colourOrder:raw.colourOrder==='reverse'?'reverse':'forward',
     // Automatic fitting must never silently invent contours or change geometry.
     // Explicit fit currently draws every physically existing requested level.
@@ -29,11 +34,29 @@ export function normalizeNestedShapeContours(raw){
   };
 }
 
-// All seven contours are measured against the ORIGINAL border. Never offset
+// All contours are measured against the ORIGINAL border. Never offset
 // a previously quantized offset: accumulated error crowds elongated shapes.
+// Middle/inner anchors preserve an authored physical distance when spacing
+// changes. If the required outer margin becomes negative, clip at the source
+// boundary rather than invent an impossible contour outside the silhouette.
+export function nestedAnchorIndex(settings,anchor=settings?.anchor){
+  const count=Math.max(1,Math.round(settings?.count??7));
+  return anchor==='inner'?count-1:
+    anchor==='middle'?Math.floor((count-1)/2):0;
+}
+export function nestedAnchorClearance(settings){
+  const half=settings.strokeWidth/2;
+  const step=settings.gap+settings.strokeWidth;
+  const desired=Number.isFinite(settings.anchorDistance)&&
+    ['middle','inner'].includes(settings.anchor)?
+    settings.anchorDistance-nestedAnchorIndex(settings)*step:
+    settings.firstInset+half;
+  return {desiredFirst:desired,clamped:desired<half,
+    effectiveFirst:Math.max(half,desired)};
+}
 export function nestedContourDistances(settings){
   if(!settings?.enabled)return [];
-  const first=settings.firstInset+settings.strokeWidth/2;
+  const first=nestedAnchorClearance(settings).effectiveFirst;
   const step=settings.gap+settings.strokeWidth;
   return Array.from({length:settings.count},(_,i)=>first+i*step);
 }

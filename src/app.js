@@ -24,6 +24,7 @@ import {fullSettingName} from './editor-terminology.js';
 import {installExplorationHistory} from './exploration-history.js';
 import {installGeometryLibraryUI} from './geometry-library-ui.js';
 import {installNestedShapeControls} from './nested-shape-ui.js';
+import {installGeometryAnchorControls} from './geometry-anchor-controls.js';
 import {DEFAULT_NESTED_CONTOURS} from './nested-shape-contours.js';
 import {frameImportedSilhouette} from './nested-shape-framing.js';
 import {RAINBOW_ORBITS,scatteredRadiusRange} from './scattered-composition.js';
@@ -282,6 +283,12 @@ function fromControls() {
     ...(current.vectorPath?{vectorPath:current.vectorPath}:{}),
     interiorElements:current.interiorElements,
     nestedShapeContours:current.nestedShapeContours,
+    spreadAnchor:current.spreadAnchor,spreadAnchorPosition:current.spreadAnchorPosition,
+    repeatAnchor:current.repeatAnchor,repeatAnchorPosition:current.repeatAnchorPosition,
+    widthAnchor:current.widthAnchor,widthAnchorBasis:current.widthAnchorBasis,
+    widthAnchorOffset:current.widthAnchorOffset,
+    pathLengthAnchor:current.pathLengthAnchor,
+    pathLengthAnchorPoints:current.pathLengthAnchorPoints,
     textOverlays:current.textOverlays,
     scatteredShape:current.scatteredShape,scatteredOverrides:current.scatteredOverrides,
     scatteredLayerOrder:current.scatteredLayerOrder};
@@ -1514,6 +1521,10 @@ if(!regionsCard)throw new Error('Regions editor card missing during nesting init
 // The saved-shape picker is the primary action here, not the final row
 // below all regional controls on a 320px-short portrait screen.
 regionsCard.prepend(useScatteredShape);
+const geometryAnchorControls=installGeometryAnchorControls({
+  form,getRecipe:()=>current,getScene:()=>currentScene,
+  onApply:recipe=>changeRecipe(recipe,{cause:'geometry_anchor'})
+});
 const nestedShapeControls=installNestedShapeControls({
   form,getRecipe:()=>current,getScene:()=>currentScene,
   onApply:recipe=>changeRecipe(recipe,{cause:'nested_shape'}),
