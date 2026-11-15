@@ -248,16 +248,18 @@ export function balanceStripeEnds(scene,stripe,collectContacts=true,randomizeFlo
   if((stripe.sharedGeometry??stripe.geometry)==='drawn')
     return {contacts:{left:false,right:false,top:false,bottom:false},
       balanced:true,hidden:false};
-  // A returning path legitimately has both ends at the same frame edge.
-  // Paired returns and crossings for hairpins and single loops are
-  // intentional, rather than one-sided cropping mistakes.
+  // Procedural ribbons have no authored endpoints: every side of the
+  // viewport is a legitimate place to enter or exit. In particular, a
+  // diagonal crossing from the left to the bottom must not be shortened
+  // merely because it does not hit the opposite (right) edge.
+  //
+  // Only Floating composition deliberately creates finite inset ends.
+  // Preserve its safe-interval search and path-length controls below.
   const floating=scene.composition==='floating';
-  if(!floating && spatialGeometry(stripe) && ['hairpin','loop'].includes(stripe.sharedGeometry??stripe.geometry))
+  if(!floating)
     return {contacts:collectContacts?stripeFrameContacts(scene,stripe):null,
       balanced:true,hidden:false};
   const contacts=stripeFrameContacts(scene,stripe);
-  const balanced=(contacts.left===contacts.right && contacts.top===contacts.bottom);
-  if(balanced&&!floating)return {contacts,balanced:true,hidden:false};
   // Account for borders and glow so even their outermost pixels stay inset.
   const margin=24+scene.glow*.30+scene.gap*.14+scene.outlineBuffer*.14;
   const f=scene.viewBounds||{left:0,right:DESIGN_WIDTH,top:0,bottom:DESIGN_HEIGHT};
@@ -281,6 +283,7 @@ export function balanceStripeEnds(scene,stripe,collectContacts=true,randomizeFlo
     return {contacts,balanced:false,hidden:true};
   }
   if(floating&&randomizeFloating){
+    const rawFloatingStart=bestStart,rawFloatingEnd=bestEnd;
     const random=rng(scene.seed+':floating-ends:'+stripe.index);
     const amount=(.18+.78*scene.pathLength/100)*
       (1-random()*scene.individuality/100*.24);
@@ -289,6 +292,19 @@ export function balanceStripeEnds(scene,stripe,collectContacts=true,randomizeFlo
     const centre=(bestStart+bestEnd)*.5+(random()-.5)*free*.7;
     bestStart=centre-length*.5;
     bestEnd=centre+length*.5;
+    const target=scene.pathLengthAnchorPoints?.[stripe.index];
+    if(Number.isFinite(target)&&['start','end','centre'].includes(scene.pathLengthAnchor)){
+      // Each stripe owns an authored world-station reference. When extending
+      // would exit the safe in-canvas interval, the bounds take precedence
+      // and the adjusted endpoint remains inside the wallpaper.
+      const desired=scene.pathLengthAnchor==='start'?target:
+        scene.pathLengthAnchor==='end'?target-length:target-length/2;
+      const constrained=Math.max(rawFloatingStart,
+        Math.min(desired,rawFloatingEnd-length));
+      bestStart=constrained;
+      bestEnd=constrained+length;
+      stripe.anchorClamped=Math.abs(desired-constrained)>1e-7;
+    }
   }
   stripe.segmentStart=bestStart;
   stripe.segmentEnd=bestEnd;
@@ -1144,20 +1160,23 @@ export function drawWallpaper(canvas, recipe, options={}) {
       if(end<=start+8){
         for(const stripe of visible)stripe.hidden=true;
       }else{
-        const span=end-start;
+        // Keep Path Length effective while sharing the safe stripe interval.
+        const safeSpan=end-start;
+        const span=safeSpan*(.18+.78*scene.pathLength/100);
+        const sharedStart=start+(safeSpan-span)/2;
         for(const stripe of visible){
           const fraction=stripe.index/Math.max(1,preparedStripes.length-1);
           if(scene.insetAlignment==='staggered'){
             const length=span*.72;
-            stripe.segmentStart=start+(span-length)*fraction;
+            stripe.segmentStart=sharedStart+(span-length)*fraction;
             stripe.segmentEnd=stripe.segmentStart+length;
           }else if(scene.insetAlignment==='progressive'){
             const length=span*(.45+.55*fraction);
-            stripe.segmentStart=start+(span-length)/2;
+            stripe.segmentStart=sharedStart+(span-length)/2;
             stripe.segmentEnd=stripe.segmentStart+length;
           }else{
-            stripe.segmentStart=start;
-            stripe.segmentEnd=end;
+            stripe.segmentStart=sharedStart;
+            stripe.segmentEnd=sharedStart+span;
           }
         }
       }

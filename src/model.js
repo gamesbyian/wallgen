@@ -1,4 +1,5 @@
 import { SHAPES } from './path-geometry.js';
+import {STRIPE_ANCHORS,GROUP_ANCHORS,WIDTH_ANCHORS,LENGTH_ANCHORS,pinStripePositions,pinGroupOffsets,pinBandEdges} from './geometry-anchors.js';
 import {normalizePhotoLook} from './photo-look.js';
 import {normalizeSurfaceTreatments} from './embroidery.js';
 import {normalizeCompoundRegion,GEOMETRY_SNAPSHOT_SCHEMA} from './geometry-asset.js';
@@ -224,6 +225,7 @@ export function normalizeRecipe(input = {}) {
     crossingMode: CROSSING_MODES.includes(input.crossingMode)?input.crossingMode:'over',
     repeatCount: Math.round(finiteRange(input.repeatCount, 3, 2, 6)),
     repeatSpacing: finiteRange(input.repeatSpacing, 50, 0, 100),
+    ...(GROUP_ANCHORS.includes(input.repeatAnchor)?{repeatAnchor:input.repeatAnchor,...(Number.isFinite(input.repeatAnchorPosition)?{repeatAnchorPosition:finiteRange(input.repeatAnchorPosition,0,-10000,10000)}:{})}:{}),
     turnRadius: finiteRange(input.turnRadius, 50, 0, 100),
     geometrySafety: !(input.geometrySafety===false || input.geometrySafety==='false'),
     hairpinAngle: finiteRange(input.hairpinAngle, 180, 60, 180),
@@ -234,6 +236,7 @@ export function normalizeRecipe(input = {}) {
     loopAspect: finiteRange(input.loopAspect, 50, 0, 100),
     endTaper: finiteRange(input.endTaper, 0, 0, 100),
     pathLength: finiteRange(input.pathLength, 65, 0, 100),
+    ...(LENGTH_ANCHORS.includes(input.pathLengthAnchor)?{pathLengthAnchor:input.pathLengthAnchor,...(Array.isArray(input.pathLengthAnchorPoints)&&input.pathLengthAnchorPoints.length===7&&input.pathLengthAnchorPoints.every(value=>value===null||Number.isFinite(value))?{pathLengthAnchorPoints:input.pathLengthAnchorPoints.map(value=>value===null?null:finiteRange(value,0,-10000,10000))}:{})}:{}),
     tonalContrast: finiteRange(input.tonalContrast, 50, 0, 100),
     brushRoughness: finiteRange(input.brushRoughness, 0, 0, 100),
     dotSize: finiteRange(input.dotSize, 50, 0, 100),
@@ -261,8 +264,10 @@ export function normalizeRecipe(input = {}) {
     stripeShadowDirection: LIGHT_DIRECTIONS.includes(input.stripeShadowDirection) ? input.stripeShadowDirection : 'top-left',
     chaos: finiteRange(input.chaos, 36, 0, 100),
     stripeWidth: finiteRange(input.stripeWidth, 52, 0, 100),
+    ...(WIDTH_ANCHORS.includes(input.widthAnchor)?{widthAnchor:input.widthAnchor,widthAnchorBasis:finiteRange(input.widthAnchorBasis,input.stripeWidth??52,0,100),widthAnchorOffset:finiteRange(input.widthAnchorOffset,0,-10000,10000)}:{}),
     textureDisplacement: finiteRange(input.textureDisplacement, 0, 0, 100),
     spread: finiteRange(input.spread, 56, 0, 100),
+    ...(STRIPE_ANCHORS.includes(input.spreadAnchor)?{spreadAnchor:input.spreadAnchor,...(Number.isFinite(input.spreadAnchorPosition)?{spreadAnchorPosition:finiteRange(input.spreadAnchorPosition,0,-10000,10000)}:{})}:{}),
     textureStrength: finiteRange(input.textureStrength, 52, 0, 100),
     textureScale: finiteRange(input.textureScale, 50, 0, 100),
     textureRotation: normalizeRotation(input.textureRotation),
@@ -399,8 +404,13 @@ export function resolveScene(recipeInput) {
   const commonTaper=between(random,0,0.28)*chaos;
   const weights = Array.from({length:6}, () => between(random, 1 - chaos * .46, 1 + chaos * .46));
   const sum = weights.reduce((a,b) => a+b,0);
-  const positions = [-spread/2];
-  for (const weight of weights) positions.push(positions.at(-1) + spread * weight / sum);
+  const unanchoredPositions = [-spread/2];
+  for (const weight of weights)
+    unanchoredPositions.push(unanchoredPositions.at(-1) + spread * weight / sum);
+  const positions=pinStripePositions(unanchoredPositions,{
+    anchor:recipe.spreadAnchor,position:recipe.spreadAnchorPosition,
+    centre:center,reverse:recipe.reverseStripes
+  });
   const avg = spread / 6;
   // Include the seed-derived group offset, not just half the band's spread.
   // Omitting this offset used to invert the violet/indigo turns even while
@@ -416,14 +426,23 @@ export function resolveScene(recipeInput) {
   // Starting styles populate explicit settings in the editor. A family must
   // not invisibly multiply the user's manually selected stripe thickness.
   const widthFactor = .12+.395*Math.pow(recipe.stripeWidth/50,1.85);
-  const stripes = positions.map((position, i) => {
+  const widthReferences=[];
+  const generatedStripes = positions.map((position, i) => {
     const r = rng(`${recipe.seed}:stripe:${i}`);
     // Derive the reference gaps from the *weights*, not floating-point
     // differences of spread-dependent positions. Width is bit-for-bit fixed.
     const leftGap = i ? referenceSpread*weights[i-1]/sum : referenceAvg;
     const rightGap = i < 6 ? referenceSpread*weights[i]/sum : referenceAvg;
-    let width = Math.min(leftGap,rightGap)*widthFactor*between(r,1-chaos*.35,1+chaos*.35);
+    const widthVariation=between(r,1-chaos*.35,1+chaos*.35);
+    let width = Math.min(leftGap,rightGap)*widthFactor*widthVariation;
     if(recipe.construction==='stroke')width=Math.max(.35,width*.12);
+    if(recipe.widthAnchor){
+      const basisFactor=.12+.395*Math.pow(recipe.widthAnchorBasis/50,1.85);
+      let basisWidth=Math.min(leftGap,rightGap)*basisFactor*widthVariation;
+      if(recipe.construction==='stroke')basisWidth=Math.max(.35,basisWidth*.12);
+      widthReferences.push(Math.max(basisWidth,
+        recipe.construction==='stroke'?.8:1.5));
+    }
     // Individuality varies each stripe within its chosen geometry, while
     // preserving the intended shape family even at the extreme endpoint.
     const individualGeometry=geometry;
@@ -487,6 +506,13 @@ export function resolveScene(recipeInput) {
       jitterSeed:`${recipe.seed}-noise-${i}`,
     };
   });
+  const referenceStripes=recipe.widthAnchor?
+    generatedStripes.map((stripe,i)=>({...stripe,width:widthReferences[i]})):
+    null;
+  const stripes=pinBandEdges(generatedStripes,{
+    anchor:recipe.widthAnchor,basisStripes:referenceStripes,
+    offset:recipe.widthAnchorOffset
+  });
   const textureLayers = [
     {material, strength:recipe.textureStrength, scale:recipe.textureScale, rotation:recipe.textureRotation,
       coverage:recipe.textureCoverage, blend:recipe.textureBlend, seed:recipe.seed+':texture:1', heightSeed:hashString(recipe.seed+':texture:1')},
@@ -503,8 +529,14 @@ export function resolveScene(recipeInput) {
     layer.heightSin=Math.sin(radians);
   }
   const materialSummary=textureLayers.length ? textureLayers.map(layer=>layer.material).join(' + ') : 'none';
-  const bundleOffsets=Array.from({length:repeats},(_,i)=>
+  const unpinnedBundles=Array.from({length:repeats},(_,i)=>
     (i-(repeats-1)/2)*(spread+(12+recipe.repeatSpacing*1.1)));
+  // A repeat-only anchor must never displace the lone bundle when the artist
+  // switches to Single or Floating. Preserve the setting for later reuse.
+  const bundleOffsets=recipe.composition==='repeat'?
+    pinGroupOffsets(unpinnedBundles,{
+      anchor:recipe.repeatAnchor,position:recipe.repeatAnchorPosition
+    }):unpinnedBundles;
   // Every layout produces a unified ordered object list; seven colours are
   // semantic palette slots rather than an assumption of seven objects.
   const objects=buildCompositionObjects(recipe,stripes.map(stripe=>stripe.color),stripes,bundleOffsets);

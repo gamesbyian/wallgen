@@ -110,7 +110,7 @@ test('textured ribbon edges reuse precisely the original centreline sample',()=>
   }
 });
 
-test('paint-only loop/hairpin balancing skips diagnostic scans without altering end caps',()=>{
+test('paint-only procedural full-bleed skips diagnostics while floating retains safe end caps',()=>{
   for(const geometry of ['hairpin','loop','loops','wave']){
     for(const composition of ['single','repeat','floating']){
       for(const displacement of [0,95]){
@@ -124,14 +124,14 @@ test('paint-only loop/hairpin balancing skips diagnostic scans without altering 
           const oldStripe={...stripe},paintStripe={...stripe};
           const normal=balanceStripeEnds(scene,oldStripe);
           const paint=balanceStripeEnds(scene,paintStripe,false);
-          const skip=composition!=='floating'&&['hairpin','loop'].includes(geometry);
+          const skip=composition!=='floating';
           if(skip){
             assert.equal(paint.contacts,null,
               'paint must skip unnecessary diagnostics for '+geometry);
             assert.deepEqual(normal.contacts,stripeFrameContacts(scene,stripe),
               'public API still provides actual contact diagnostics');
           }else assert.deepEqual(paint.contacts,normal.contacts,
-            'floating or other geometry still requires real contact decisions');
+            'floating compositions still require real contact decisions');
           assert.deepEqual(paintStripe,oldStripe,
             'paint-specific option must never change stripe geometry, visibility or caps');
           assert.deepEqual(

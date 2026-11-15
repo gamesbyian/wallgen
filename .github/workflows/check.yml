@@ -83,6 +83,7 @@ jobs:
           node --check tests/mobile-touch-continuity-browser.mjs
           node --check tests/independent-keyboard-focus-journey.mjs
           node --check tests/view-pan-escape-focus-browser.mjs
+          node --check tests/geometry-anchors-browser.mjs
       - name: Serve current PR source
         run: |
           npx serve . -l 4173 > /tmp/roygbiv-opt-in-browser.log 2>&1 &
@@ -100,6 +101,7 @@ jobs:
           node tests/mobile-touch-continuity-browser.mjs
           node tests/independent-keyboard-focus-journey.mjs
           CHROME_BIN="$(command -v google-chrome || command -v chromium || echo /usr/bin/google-chrome)" node tests/view-pan-escape-focus-browser.mjs
+          node tests/geometry-anchors-browser.mjs
       - name: Preserve successful and failed browser evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -111,5 +113,6 @@ jobs:
             artifacts/agent3-664-names/
             artifacts/touch-continuity-browser/
             artifacts/independent-keyboard-focus/
+            artifacts/geometry-anchors-browser/
           retention-days: 14
           if-no-files-found: warn
