@@ -1,5 +1,5 @@
 import { SHAPES } from './path-geometry.js';
-import {STRIPE_ANCHORS,GROUP_ANCHORS,WIDTH_ANCHORS,pinStripePositions,pinGroupOffsets,pinBandEdges} from './geometry-anchors.js';
+import {STRIPE_ANCHORS,GROUP_ANCHORS,WIDTH_ANCHORS,LENGTH_ANCHORS,pinStripePositions,pinGroupOffsets,pinBandEdges} from './geometry-anchors.js';
 import {normalizePhotoLook} from './photo-look.js';
 import {normalizeSurfaceTreatments} from './embroidery.js';
 import {normalizeCompoundRegion,GEOMETRY_SNAPSHOT_SCHEMA} from './geometry-asset.js';
@@ -234,6 +234,7 @@ export function normalizeRecipe(input = {}) {
     loopAspect: finiteRange(input.loopAspect, 50, 0, 100),
     endTaper: finiteRange(input.endTaper, 0, 0, 100),
     pathLength: finiteRange(input.pathLength, 65, 0, 100),
+    ...(LENGTH_ANCHORS.includes(input.pathLengthAnchor)?{pathLengthAnchor:input.pathLengthAnchor,...(Array.isArray(input.pathLengthAnchorPoints)&&input.pathLengthAnchorPoints.length===7&&input.pathLengthAnchorPoints.every(value=>value===null||Number.isFinite(value))?{pathLengthAnchorPoints:input.pathLengthAnchorPoints.map(value=>value===null?null:finiteRange(value,0,-10000,10000))}:{})}:{}),
     tonalContrast: finiteRange(input.tonalContrast, 50, 0, 100),
     brushRoughness: finiteRange(input.brushRoughness, 0, 0, 100),
     dotSize: finiteRange(input.dotSize, 50, 0, 100),

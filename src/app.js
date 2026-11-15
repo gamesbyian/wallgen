@@ -286,6 +286,8 @@ function fromControls() {
     spreadAnchor:current.spreadAnchor,spreadAnchorPosition:current.spreadAnchorPosition,
     repeatAnchor:current.repeatAnchor,repeatAnchorPosition:current.repeatAnchorPosition,
     widthAnchor:current.widthAnchor,widthAnchorPosition:current.widthAnchorPosition,
+    pathLengthAnchor:current.pathLengthAnchor,
+    pathLengthAnchorPoints:current.pathLengthAnchorPoints,
     textOverlays:current.textOverlays,
     scatteredShape:current.scatteredShape,scatteredOverrides:current.scatteredOverrides,
     scatteredLayerOrder:current.scatteredLayerOrder};

@@ -281,6 +281,7 @@ export function balanceStripeEnds(scene,stripe,collectContacts=true) {
     return {contacts,balanced:false,hidden:true};
   }
   if(floating){
+    const rawFloatingStart=bestStart,rawFloatingEnd=bestEnd;
     const random=rng(scene.seed+':floating-ends:'+stripe.index);
     const amount=(.18+.78*scene.pathLength/100)*
       (1-random()*scene.individuality/100*.24);
@@ -289,6 +290,19 @@ export function balanceStripeEnds(scene,stripe,collectContacts=true) {
     const centre=(bestStart+bestEnd)*.5+(random()-.5)*free*.7;
     bestStart=centre-length*.5;
     bestEnd=centre+length*.5;
+    const target=scene.pathLengthAnchorPoints?.[stripe.index];
+    if(Number.isFinite(target)&&['start','end','centre'].includes(scene.pathLengthAnchor)){
+      // Each stripe owns an authored world-station reference. When extending
+      // would exit the safe in-canvas interval, the bounds take precedence
+      // and the adjusted endpoint remains inside the wallpaper.
+      const desired=scene.pathLengthAnchor==='start'?target:
+        scene.pathLengthAnchor==='end'?target-length:target-length/2;
+      const constrained=Math.max(rawFloatingStart,
+        Math.min(desired,rawFloatingEnd-length));
+      bestStart=constrained;
+      bestEnd=constrained+length;
+      stripe.anchorClamped=Math.abs(desired-constrained)>1e-7;
+    }
   }
   stripe.segmentStart=bestStart;
   stripe.segmentEnd=bestEnd;

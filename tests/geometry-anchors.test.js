@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {normalizeRecipe,resolveScene,encodeRecipe,decodeRecipe} from '../src/model.js';
 import {stripeAnchorCoordinate,groupAnchorCoordinate,bandAnchorCoordinate} from '../src/geometry-anchors.js';
+import {balanceStripeEnds} from '../src/renderer.js';
 
 const close=(a,b,message)=>assert.ok(Math.abs(a-b)<1e-7,message+' ('+a+' vs '+b+')');
 const stripeByName=(scene,name)=>scene.stripes.find(s=>s.name===name);
@@ -72,4 +73,36 @@ test('ribbon thickness can grow while holding a semantic outer edge or band cent
         anchor+' boundary must remain at selected world coordinate');
       assert.ok(changed.stripes.some((stripe,i)=>stripe.width!==original.stripes[i].width));
     }
+});
+
+test('floating endpoint anchors hold every visible stripe when length is shortened',()=>{
+  for(const anchor of ['start','centre','end']){
+    const base={seed:'floating-length-anchors',composition:'floating',
+      geometry:'straight',orientation:'vertical',pathLength:72,spread:35,
+      individuality:45};
+    const original=resolveScene(base);
+    const endpoints=scene=>scene.stripes.map(s=>{
+      const stripe={...s};
+      balanceStripeEnds(scene,stripe,false);
+      return stripe.hidden?null:{start:stripe.segmentStart,end:stripe.segmentEnd};
+    });
+    const before=endpoints(original);
+    const points=before.map(e=>!e?null:anchor==='start'?e.start:
+      anchor==='end'?e.end:(e.start+e.end)/2);
+    const recipe={...base,pathLengthAnchor:anchor,pathLengthAnchorPoints:points};
+    const chosen=endpoints(resolveScene(recipe));
+    before.forEach((e,i)=>{
+      if(!e)return;
+      close(chosen[i].start,e.start,'selecting endpoint anchor cannot jump start');
+      close(chosen[i].end,e.end,'selecting endpoint anchor cannot jump end');
+    });
+    const shortened=endpoints(resolveScene({...recipe,pathLength:25}));
+    shortened.forEach((e,i)=>{
+      if(!e||points[i]===null)return;
+      const coordinate=anchor==='start'?e.start:anchor==='end'?e.end:(e.start+e.end)/2;
+      close(coordinate,points[i],anchor+' must preserve world-station endpoint');
+    });
+    assert.deepEqual(decodeRecipe(encodeRecipe(recipe)),
+      normalizeRecipe(recipe));
+  }
 });

@@ -4,6 +4,7 @@
 export const STRIPE_ANCHORS=Object.freeze(['centre','red','green','violet']);
 export const GROUP_ANCHORS=Object.freeze(['centre','first','last']);
 export const WIDTH_ANCHORS=Object.freeze(['centre','red-edge','violet-edge']);
+export const LENGTH_ANCHORS=Object.freeze(['centre','start','end']);
 const stripeSlot=(anchor,reverse)=> {
   const index={red:0,green:3,violet:6}[anchor];
   return index===undefined?null:reverse?6-index:index;
