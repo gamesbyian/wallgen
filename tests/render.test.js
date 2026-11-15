@@ -612,3 +612,28 @@ test('all inset alignment modes render through the ordinary unified path painter
       insetAlignment,geometry:'wave',individuality:45,pathLength:85}));
   }
 });
+
+test('coordinated floating Path Length remains effective after anchor reconciliation',()=>{
+  const moveTo=FakePath2D.prototype.moveTo;
+  try{
+    FakePath2D.prototype.moveTo=function(x,y){
+      if(Number.isFinite(x)&&Number.isFinite(y))calls.push(['pathMove',x,y]);
+    };
+    for(const alignment of ['aligned','staggered','progressive']){
+      const recipe={seed:'aligned-length-regression',structure:'paths',
+        composition:'floating',insetAlignment:alignment,geometry:'straight',
+        orientation:'vertical',individuality:0,spread:22,stripeWidth:17,
+        outline:'none',material:'none'};
+      const traces=[];
+      for(const pathLength of [15,90]){
+        calls.length=0;
+        drawWallpaper({width:600,height:1300,getContext:()=>new FakeContext('main')},
+          {...recipe,pathLength});
+        traces.push(calls.filter(call=>call[0]==='pathMove'));
+      }
+      assert.ok(traces[0].length>0,alignment+' has no painted path geometry');
+      assert.notDeepEqual(traces[0],traces[1],
+        alignment+' must visibly respond to the Path Length setting');
+    }
+  }finally{FakePath2D.prototype.moveTo=moveTo;}
+});
