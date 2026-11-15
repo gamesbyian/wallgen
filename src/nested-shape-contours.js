@@ -21,7 +21,7 @@ export function normalizeNestedShapeContours(raw){
     count:Math.round(finite(raw.count,7,1,7)),
     strokeWidth:finite(raw.strokeWidth,2,.5,12),
     gap:finite(raw.gap,5,.5,30),
-    firstInset:finite(raw.firstInset,3,0,50),
+    firstInset:finite(raw.firstInset,3,0,10000),
     ...(raw.anchor==='middle'||raw.anchor==='inner'?{
       anchor:raw.anchor,
       ...(Number.isFinite(raw.anchorDistance)?{

@@ -34,4 +34,15 @@ test('nested anchors normalize safely and round-trip as recipe-owned geometry',(
   assert.equal(recipe.nestedShapeContours.anchor,'middle');
   assert.equal(normalizeNestedShapeContours({...base,anchor:'invalid'}).anchor,undefined);
   assert.equal(normalizeNestedShapeContours({...base,anchor:'inner',anchorDistance:NaN}).anchorDistance,undefined);
+  // Switching back to the outer reference must preserve a large, valid
+  // margin after the inner contour has held steady through a gap reduction.
+  const wide={...base,gap:30,firstInset:30};
+  const target=nestedContourDistances(wide).at(-1);
+  const held={...wide,anchor:'inner',anchorDistance:target,gap:1};
+  const largeOuter=nestedContourDistances(held)[0]-wide.strokeWidth/2;
+  assert.ok(largeOuter>50);
+  const restored=normalizeNestedShapeContours({...held,anchor:'outer',
+    anchorDistance:undefined,firstInset:largeOuter});
+  assert.deepEqual(nestedContourDistances(restored),nestedContourDistances({
+    ...held,anchor:'outer',anchorDistance:undefined,firstInset:largeOuter}));
 });

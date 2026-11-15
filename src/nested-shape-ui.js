@@ -39,9 +39,12 @@ export function installNestedShapeControls({form,getRecipe,getScene,onApply,onNo
     fields[key]=input;
     input.addEventListener('change',event=>{
       event.stopPropagation();
-      const raw=Number(input.value);
-      const value=Number.isFinite(raw)?Math.max(min,Math.min(max,raw)):min;
-      const r=getRecipe();
+      const raw=Number(input.value),r=getRecipe();
+      // A fixed inner contour can legitimately push the outer margin beyond
+      // the original unanchored 50-unit editor range.
+      const limit=key==='firstInset'&&['middle','inner'].includes(
+        r.nestedShapeContours?.anchor)?10000:max;
+      const value=Number.isFinite(raw)?Math.max(min,Math.min(limit,raw)):min;
       if(!r.nestedShapeContours?.enabled)return;
       const next={...r.nestedShapeContours,
         [key]:key==='count'?Math.round(value):value};
