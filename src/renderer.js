@@ -1094,14 +1094,13 @@ export function drawWallpaper(canvas, recipe, options={}) {
   for(const bundle of scene.objects){
   const bundleOffset=bundle.offset;
   const crossingStripes=[];
-  for(const original of bundle.stripes){
+  // Resolve all individual safe intervals before imposing any shared alignment.
+  // Painting must never change the interval of a stripe already drawn.
+  const preparedStripes=bundle.stripes.map(original=>{
     const stripe=scene.bundleOffsets.length===1?{...original}:
       {...original,center:original.center+bundleOffset};
     stripe.objectId=bundle.id+'/stripe-'+original.index;
     stripe.coreExtent=scene.coreExtent;
-    // The aspect ratio and original X amplitude never change within this
-    // canonical paint. Avoid a Math.pow at every looping source station.
-    // Keep this value on the disposable render stripe, never the recipe.
     if((stripe.sharedGeometry??stripe.geometry)==='loops')
       stripe._renderLoopXAmplitude=(stripe.loopAmplitude??13)*2.1*
         Math.pow(2,((stripe.loopAspect??50)-50)/35);
@@ -1111,9 +1110,39 @@ export function drawWallpaper(canvas, recipe, options={}) {
       stripe.segmentEnd=extendOpenPath?scene.extent:scene.coreExtent;
     }
     if(['tonal','woven'].includes(scene.construction))stripe.lineStyle='continuous';
-    // Ends are already predetermined for non-floating hairpins/single loops.
-    // Contact diagnostics are not needed to paint, so do not compute them.
     balanceStripeEnds(scene,stripe,false);
+    return stripe;
+  });
+  if(scene.composition==='floating'&&scene.insetAlignment!=='independent'){
+    const visible=preparedStripes.filter(stripe=>!stripe.hidden);
+    if(visible.length){
+      // An intersection, not one arbitrarily chosen stripe's interval,
+      // guarantees every aligned endpoint remains inside every safe envelope.
+      const start=Math.max(...visible.map(stripe=>stripe.segmentStart));
+      const end=Math.min(...visible.map(stripe=>stripe.segmentEnd));
+      if(end<=start+8){
+        for(const stripe of visible)stripe.hidden=true;
+      }else{
+        const span=end-start;
+        for(const stripe of visible){
+          const fraction=stripe.index/Math.max(1,preparedStripes.length-1);
+          if(scene.insetAlignment==='staggered'){
+            const length=span*.72;
+            stripe.segmentStart=start+(span-length)*fraction;
+            stripe.segmentEnd=stripe.segmentStart+length;
+          }else if(scene.insetAlignment==='progressive'){
+            const length=span*(.45+.55*fraction);
+            stripe.segmentStart=start+(span-length)/2;
+            stripe.segmentEnd=stripe.segmentStart+length;
+          }else{
+            stripe.segmentStart=start;
+            stripe.segmentEnd=end;
+          }
+        }
+      }
+    }
+  }
+  for(const stripe of preparedStripes){
     if(stripe.hidden)continue;
     crossingStripes.push(stripe);
     const path=stripePath(stripe,scene.extent,scene);
