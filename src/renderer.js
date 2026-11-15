@@ -1021,6 +1021,27 @@ export function drawRegionObjects(ctx,scene){
     ctx.lineJoin='round';
     for(const object of regions){trace(object);ctx.stroke();}
     ctx.restore();
+    // A wedge with zero inner radius has no inner circular boundary. Many
+    // outlined radial polygons nevertheless pile opaque strokes over that
+    // same point, making a spurious black core. Restore the underlying actual
+    // wedge fills only within the stroke-convergence footprint. A user-set
+    // positive centre gap is never modified by this treatment.
+    if(scene.structure==='radial'&&scene.rayCore===0&&
+      ['sunburst','starburst','pinwheel'].includes(scene.radialMode)){
+      const origin=regions[0]?.origin;
+      if(origin){
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(origin.x,origin.y,Math.max(1,.3+scene.dividerWidth*.24),0,2*Math.PI);
+        ctx.clip();
+        for(const object of regions){
+          trace(object);
+          ctx.fillStyle=object.color;
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+    }
   }
 }
 
