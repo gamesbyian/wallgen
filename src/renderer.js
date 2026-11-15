@@ -242,7 +242,7 @@ export function stripeFrameContacts(scene,stripe) {
 // non-floating hairpin or single loop already retains its natural ends,
 // so allow that call site to omit the otherwise unused 480-station scan.
 // External callers still get the full report by default.
-export function balanceStripeEnds(scene,stripe,collectContacts=true) {
+export function balanceStripeEnds(scene,stripe,collectContacts=true,randomizeFloating=true) {
   // A user trace is intentionally bounded by the input surface. Let its seven
   // normal-offset ribbons clip naturally instead of recapping the sketch.
   if((stripe.sharedGeometry??stripe.geometry)==='drawn')
@@ -280,7 +280,7 @@ export function balanceStripeEnds(scene,stripe,collectContacts=true) {
     stripe.hidden=true;
     return {contacts,balanced:false,hidden:true};
   }
-  if(floating){
+  if(floating&&randomizeFloating){
     const random=rng(scene.seed+':floating-ends:'+stripe.index);
     const amount=(.18+.78*scene.pathLength/100)*
       (1-random()*scene.individuality/100*.24);
@@ -1131,7 +1131,7 @@ export function drawWallpaper(canvas, recipe, options={}) {
       stripe.segmentEnd=extendOpenPath?scene.extent:scene.coreExtent;
     }
     if(['tonal','woven'].includes(scene.construction))stripe.lineStyle='continuous';
-    balanceStripeEnds(scene,stripe,false);
+    balanceStripeEnds(scene,stripe,false,scene.insetAlignment==='independent');
     return stripe;
   });
   if(scene.composition==='floating'&&scene.insetAlignment!=='independent'){
