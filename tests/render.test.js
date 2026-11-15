@@ -110,54 +110,31 @@ test('motif shapes must fit completely, no boundary clipping',()=>{
   assert.equal(motifFits(stripe,scene,0,stripe.center+10000,2,2),false);
 });
 
-test('procedural stripes bleed naturally even across non-opposite frame edges',()=>{
-  let mixedEdgeContacts=0;
-  for(const geometry of ['straight','wave','zigzag','loops'])
-    for(const orientation of ['vertical','horizontal','diagonal'])
-      for(const diagonalRotation of [-75,0,45,90]){
-        const scene=resolveScene({
-          seed:'bleed:'+geometry+':'+orientation+':'+diagonalRotation,
-          geometry,orientation,diagonalRotation,individuality:85,
-          chaos:85,spread:66,stripeWidth:65,
-        });
-        for(const stripe of scene.stripes){
-          const before=stripeFrameContacts(scene,stripe);
-          if(before.left!==before.right||before.top!==before.bottom)
-            mixedEdgeContacts++;
-          const result=balanceStripeEnds(scene,stripe,false);
-          assert.equal(result.hidden,false);
-          assert.equal(stripe.hidden,undefined);
-          assert.equal(stripe.segmentStart,undefined);
-          assert.equal(stripe.segmentEnd,undefined);
-          assert.deepEqual(stripeFrameContacts(scene,stripe),before,
-            'full-bleed contact positions must be left untouched');
+test('frame contacts are bilateral or fully inset for a variety of seeded geometries',()=>{
+  let inset=0,through=0;
+  for(const orientation of ['vertical','horizontal','diagonal'])
+    for(let i=0;i<24;i++){
+      const scene=resolveScene({
+        seed:'frame-balance:'+orientation+':'+i,orientation,
+        individuality:85,chaos:85,spread:66,stripeWidth:65,
+        positionX:((i%5)-2)*7,positionY:((i%7)-3)*5,
+      });
+      for(const stripe of scene.stripes){
+        const result=balanceStripeEnds(scene,stripe);
+        if(stripe.hidden)continue;
+        const edges=stripeFrameContacts(scene,stripe);
+        assert.equal(edges.left,edges.right,orientation+':'+i+':'+stripe.index+' left/right');
+        assert.equal(edges.top,edges.bottom,orientation+':'+i+':'+stripe.index+' top/bottom');
+        if(result.balanced)through++;
+        else{
+          inset++;
+          assert.ok(stripe.segmentEnd>stripe.segmentStart);
+          assert.equal(motifFits(stripe,scene,stripe.segmentStart,stripe.center,3,3),false);
         }
       }
-  assert.ok(mixedEdgeContacts>0,'diagonals should genuinely exercise mixed-edge exits');
-});
-
-test('floating composition retains deliberate safe inset endpoints',()=>{
-  let inset=0;
-  for(const diagonalRotation of [-60,0,66,135]){
-    const scene=resolveScene({seed:'floating-safeguard',
-      geometry:'straight',orientation:'diagonal',diagonalRotation,
-      composition:'floating',pathLength:58,individuality:55,
-      chaos:6,spread:26,stripeWidth:17});
-    for(const stripe of scene.stripes){
-      const result=balanceStripeEnds(scene,stripe,false);
-      if(result.hidden)continue;
-      inset++;
-      assert.ok(stripe.segmentStart> -scene.extent);
-      assert.ok(stripe.segmentEnd<scene.extent);
-      assert.ok(stripe.segmentEnd>stripe.segmentStart);
-      assert.deepEqual(stripeFrameContacts(scene,stripe),
-        {left:false,right:false,top:false,bottom:false},
-        'authored inset ends must remain fully inside the frame');
-      assert.equal(motifFits(stripe,scene,stripe.segmentStart,
-        stripe.center,3,3),false);
     }
-  }
-  assert.ok(inset>0,'the floating mode still paints shortened stripes');
+  assert.ok(through>0,'Some stripes should still cross paired opposite edges');
+  assert.ok(inset>0,'Unbalanced edge contact should trigger paired end insets');
 });
 
 test('three composited materials apply rotated masks, background and blend modes',()=>{
@@ -199,27 +176,24 @@ test('material-informed height field is deterministic, bounded, and disabled by 
   const rotated=resolveScene({...base,textureDisplacement:85,textureRotation:90});
   assert.notEqual(first,textureHeight(rotated,rotated.stripes[3],153,1));
 });
-test('material-displaced procedural ribbons retain their complete longitudinal domain',()=>{
-  let encounteredMixedEdges=0;
+test('displaced edges preserve the opposite-edge framing rule',()=>{
+  let rendered=0;
   for(const orientation of ['vertical','horizontal','diagonal'])for(let i=0;i<10;i++){
     const scene=resolveScene({seed:'relief-balance-'+orientation+'-'+i,orientation,
       material:'stucco',textureDisplacement:78,textureCoverage:'both',
       textureLayer2Enabled:true,material2:'wood-grain',textureCoverage2:'stripes',
       individuality:80,chaos:75,spread:60,stripeWidth:62});
     for(const stripe of scene.stripes){
-      const before=stripeFrameContacts(scene,stripe);
-      if(before.left!==before.right||before.top!==before.bottom)
-        encounteredMixedEdges++;
-      balanceStripeEnds(scene,stripe,false);
-      assert.equal(stripe.hidden,undefined);
-      assert.equal(stripe.segmentStart,undefined);
-      assert.equal(stripe.segmentEnd,undefined);
-      assert.deepEqual(stripeFrameContacts(scene,stripe),before);
+      balanceStripeEnds(scene,stripe);
+      if(stripe.hidden)continue;
+      const edges=stripeFrameContacts(scene,stripe);
+      assert.equal(edges.left,edges.right,orientation+' '+i+' stripe '+stripe.index+' LR');
+      assert.equal(edges.top,edges.bottom,orientation+' '+i+' stripe '+stripe.index+' TB');
+      rendered++;
     }
   }
-  assert.ok(encounteredMixedEdges>0,'displaced ribbons exercise unequal edge contacts');
+  assert.ok(rendered>0);
 });
-
 test('rough material and fine motif rendering complete together without clipping',()=>{
   calls.length=0;
   const canvas={width:600,height:1300,getContext:()=>new FakeContext('main')};
@@ -550,7 +524,7 @@ test('dotted/dashed marks keep the same anchor and spacing when overscan is used
   assert.deepEqual(stripeLineMarks(stripe,scene.extent),marks);
 });
 
-test('diagonal mirroring applies to the ink and preserves full-bleed endpoints',()=>{
+test('diagonal mirroring applies to ink transform, not the whole background canvas',()=>{
   for(const [mirrorHorizontal,mirrorVertical] of [[true,false],[false,true],[true,true]]){
     calls.length=0;
     const scene=drawWallpaper({width:600,height:1300,getContext:()=>new FakeContext('main')},
@@ -561,12 +535,11 @@ test('diagonal mirroring applies to the ink and preserves full-bleed endpoints',
     assert.ok(calls.some(x=>x[0]==='scale'&&x[1]===(mirrorHorizontal?-1:1)&&
       x[2]===(mirrorVertical?-1:1)),'stripe ink uses reflected geometry');
     for(const stripe of scene.stripes){
+      balanceStripeEnds(scene,stripe);
+      if(stripe.hidden)continue;
       const contacts=stripeFrameContacts(scene,stripe);
-      const result=balanceStripeEnds(scene,stripe,false);
-      assert.equal(result.hidden,false);
-      assert.equal(stripe.segmentStart,undefined);
-      assert.equal(stripe.segmentEnd,undefined);
-      assert.deepEqual(stripeFrameContacts(scene,stripe),contacts);
+      assert.equal(contacts.left,contacts.right);
+      assert.equal(contacts.top,contacts.bottom);
     }
   }
 });
@@ -621,4 +594,46 @@ test('contour decorations paint actual inset strokes in the shared region render
         structure+'/'+mode+' must actually stroke the inset path');
     }
   }finally{FakeContext.prototype.stroke=previous;}
+});
+
+test('zero-core radial wedges restore origin fills after thick boundary convergence',()=>{
+  for(const radialMode of ['sunburst','starburst','pinwheel']){
+    calls.length=0;
+    drawWallpaper({width:600,height:1300,getContext:()=>new FakeContext('main')},
+      {structure:'radial',radialMode,rayCount:70,rayCore:0,
+        rayCoverage:93,dividerColor:'black',dividerWidth:100});
+    assert.ok(calls.some(call=>call[0]==='clip'),
+      radialMode+' should protect true zero-radius origin against stroke buildup');
+  }
+});
+test('all inset alignment modes render through the ordinary unified path painter',()=>{
+  for(const insetAlignment of ['independent','aligned','staggered','progressive']){
+    assert.doesNotThrow(()=>render({seed:'alignment-mode',composition:'floating',
+      insetAlignment,geometry:'wave',individuality:45,pathLength:85}));
+  }
+});
+
+test('coordinated floating Path Length remains effective after anchor reconciliation',()=>{
+  const moveTo=FakePath2D.prototype.moveTo;
+  try{
+    FakePath2D.prototype.moveTo=function(x,y){
+      if(Number.isFinite(x)&&Number.isFinite(y))calls.push(['pathMove',x,y]);
+    };
+    for(const alignment of ['aligned','staggered','progressive']){
+      const recipe={seed:'aligned-length-regression',structure:'paths',
+        composition:'floating',insetAlignment:alignment,geometry:'straight',
+        orientation:'vertical',individuality:0,spread:22,stripeWidth:17,
+        outline:'none',material:'none'};
+      const traces=[];
+      for(const pathLength of [15,90]){
+        calls.length=0;
+        drawWallpaper({width:600,height:1300,getContext:()=>new FakeContext('main')},
+          {...recipe,pathLength});
+        traces.push(calls.filter(call=>call[0]==='pathMove'));
+      }
+      assert.ok(traces[0].length>0,alignment+' has no painted path geometry');
+      assert.notDeepEqual(traces[0],traces[1],
+        alignment+' must visibly respond to the Path Length setting');
+    }
+  }finally{FakePath2D.prototype.moveTo=moveTo;}
 });

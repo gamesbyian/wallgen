@@ -242,7 +242,7 @@ export function stripeFrameContacts(scene,stripe) {
 // non-floating hairpin or single loop already retains its natural ends,
 // so allow that call site to omit the otherwise unused 480-station scan.
 // External callers still get the full report by default.
-export function balanceStripeEnds(scene,stripe,collectContacts=true) {
+export function balanceStripeEnds(scene,stripe,collectContacts=true,randomizeFloating=true) {
   // A user trace is intentionally bounded by the input surface. Let its seven
   // normal-offset ribbons clip naturally instead of recapping the sketch.
   if((stripe.sharedGeometry??stripe.geometry)==='drawn')
@@ -282,7 +282,7 @@ export function balanceStripeEnds(scene,stripe,collectContacts=true) {
     stripe.hidden=true;
     return {contacts,balanced:false,hidden:true};
   }
-  if(floating){
+  if(floating&&randomizeFloating){
     const rawFloatingStart=bestStart,rawFloatingEnd=bestEnd;
     const random=rng(scene.seed+':floating-ends:'+stripe.index);
     const amount=(.18+.78*scene.pathLength/100)*
@@ -1037,6 +1037,27 @@ export function drawRegionObjects(ctx,scene){
     ctx.lineJoin='round';
     for(const object of regions){trace(object);ctx.stroke();}
     ctx.restore();
+    // A wedge with zero inner radius has no inner circular boundary. Many
+    // outlined radial polygons nevertheless pile opaque strokes over that
+    // same point, making a spurious black core. Restore the underlying actual
+    // wedge fills only within the stroke-convergence footprint. A user-set
+    // positive centre gap is never modified by this treatment.
+    if(scene.structure==='radial'&&scene.rayCore===0&&
+      ['sunburst','starburst','pinwheel'].includes(scene.radialMode)){
+      const origin=regions[0]?.origin;
+      if(origin){
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(origin.x,origin.y,Math.max(1,.3+scene.dividerWidth*.24),0,2*Math.PI);
+        ctx.clip();
+        for(const object of regions){
+          trace(object);
+          ctx.fillStyle=object.color;
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+    }
   }
 }
 
@@ -1110,14 +1131,13 @@ export function drawWallpaper(canvas, recipe, options={}) {
   for(const bundle of scene.objects){
   const bundleOffset=bundle.offset;
   const crossingStripes=[];
-  for(const original of bundle.stripes){
+  // Resolve all individual safe intervals before imposing any shared alignment.
+  // Painting must never change the interval of a stripe already drawn.
+  const preparedStripes=bundle.stripes.map(original=>{
     const stripe=scene.bundleOffsets.length===1?{...original}:
       {...original,center:original.center+bundleOffset};
     stripe.objectId=bundle.id+'/stripe-'+original.index;
     stripe.coreExtent=scene.coreExtent;
-    // The aspect ratio and original X amplitude never change within this
-    // canonical paint. Avoid a Math.pow at every looping source station.
-    // Keep this value on the disposable render stripe, never the recipe.
     if((stripe.sharedGeometry??stripe.geometry)==='loops')
       stripe._renderLoopXAmplitude=(stripe.loopAmplitude??13)*2.1*
         Math.pow(2,((stripe.loopAspect??50)-50)/35);
@@ -1127,9 +1147,42 @@ export function drawWallpaper(canvas, recipe, options={}) {
       stripe.segmentEnd=extendOpenPath?scene.extent:scene.coreExtent;
     }
     if(['tonal','woven'].includes(scene.construction))stripe.lineStyle='continuous';
-    // Ends are already predetermined for non-floating hairpins/single loops.
-    // Contact diagnostics are not needed to paint, so do not compute them.
-    balanceStripeEnds(scene,stripe,false);
+    balanceStripeEnds(scene,stripe,false,scene.insetAlignment==='independent');
+    return stripe;
+  });
+  if(scene.composition==='floating'&&scene.insetAlignment!=='independent'){
+    const visible=preparedStripes.filter(stripe=>!stripe.hidden);
+    if(visible.length){
+      // An intersection, not one arbitrarily chosen stripe's interval,
+      // guarantees every aligned endpoint remains inside every safe envelope.
+      const start=Math.max(...visible.map(stripe=>stripe.segmentStart));
+      const end=Math.min(...visible.map(stripe=>stripe.segmentEnd));
+      if(end<=start+8){
+        for(const stripe of visible)stripe.hidden=true;
+      }else{
+        // Keep Path Length effective while sharing the safe stripe interval.
+        const safeSpan=end-start;
+        const span=safeSpan*(.18+.78*scene.pathLength/100);
+        const sharedStart=start+(safeSpan-span)/2;
+        for(const stripe of visible){
+          const fraction=stripe.index/Math.max(1,preparedStripes.length-1);
+          if(scene.insetAlignment==='staggered'){
+            const length=span*.72;
+            stripe.segmentStart=sharedStart+(span-length)*fraction;
+            stripe.segmentEnd=stripe.segmentStart+length;
+          }else if(scene.insetAlignment==='progressive'){
+            const length=span*(.45+.55*fraction);
+            stripe.segmentStart=sharedStart+(span-length)/2;
+            stripe.segmentEnd=stripe.segmentStart+length;
+          }else{
+            stripe.segmentStart=sharedStart;
+            stripe.segmentEnd=sharedStart+span;
+          }
+        }
+      }
+    }
+  }
+  for(const stripe of preparedStripes){
     if(stripe.hidden)continue;
     crossingStripes.push(stripe);
     const path=stripePath(stripe,scene.extent,scene);

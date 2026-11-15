@@ -115,3 +115,25 @@ test('default seven-element compositions actually show all seven colours in the 
       'regions/'+regionMode);
   }
 });
+
+test('zero centre gap produces actual radial vertices at the origin',()=>{
+  for(const radialMode of ['sunburst','starburst','pinwheel'])
+    for(const rayCount of [7,14,35,70]){
+      const scene=resolveScene({structure:'radial',radialMode,rayCount,
+        rayCore:0,rayCoverage:93,fieldCenterX:34,fieldCenterY:61});
+      const origin={x:600*.34,y:1300*.61};
+      for(const object of scene.objects){
+        assert.deepEqual(object.vertices[0],origin);
+        assert.deepEqual(object.vertices.at(-1),origin);
+      }
+    }
+});
+test('inset alignment is canonical and defaults to legacy independent endpoints',()=>{
+  for(const insetAlignment of ['independent','aligned','staggered','progressive']){
+    const recipe=normalizeRecipe({composition:'floating',insetAlignment});
+    assert.equal(recipe.insetAlignment,insetAlignment);
+    assert.deepEqual(decodeRecipe(encodeRecipe(recipe)),recipe);
+  }
+  assert.equal(normalizeRecipe({composition:'floating'}).insetAlignment,'independent');
+  assert.equal(normalizeRecipe({insetAlignment:'unrecognized'}).insetAlignment,'independent');
+});

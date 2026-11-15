@@ -4,7 +4,7 @@
 export const EDITOR_CATEGORIES=[
   {id:'layout',label:'Layout',icon:'layout',tools:[
     {id:'structure-mode',name:'Structure',settings:['structure']},
-    {id:'arrange',name:'Arrangement',settings:['composition','repeatCount','repeatSpacing']},
+    {id:'arrange',name:'Arrangement',settings:['composition','insetAlignment','repeatCount','repeatSpacing']},
     {id:'direction',name:'Direction',settings:['orientation','diagonalRotation','mirrorHorizontal','mirrorVertical']},
     {id:'variability',name:'Irregularity',settings:['chaos']},
   ]},

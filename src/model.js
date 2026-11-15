@@ -21,6 +21,7 @@ export const NAMES = ['Red', 'Orange', 'Yellow', 'Green', 'Blue', 'Indigo', 'Vio
 export const FAMILIES = ['studio', 'currents', 'fracture', 'confetti', 'deco', 'tapestry', 'signal', 'contour'];
 export const GEOMETRIES = SHAPES;
 export const COMPOSITIONS = ['single', 'repeat', 'floating'];
+export const INSET_ALIGNMENTS = ['independent', 'aligned', 'staggered', 'progressive'];
 export const CONSTRUCTIONS = ['ribbon', 'stroke', 'tonal', 'woven'];
 export const LINE_STYLES = ['continuous', 'dotted', 'dashed'];
 export const CROSSING_MODES = ['over', 'under', 'weave'];
@@ -36,7 +37,7 @@ export const LOCKABLE_SETTINGS = ['seed','family','orientation','geometry','moti
   'textureDisplacement','patternHomogeneity','chaos','stripeWidth','spread','shapeFrequency','shapeDepth','motifSize','motifFrequency','lineStyle','individuality',
   'overridePatternHomogeneity','gap','outlineBuffer','glow','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','position',
   'structure','radialMode','rayCount','rayRotation','rayTwist','rayCoverage','rayCore','fieldCenterX','fieldCenterY','regionMode','regionCount','regionJitter','regionSides','scatteredCount','scatteredMinSize','scatteredMaxSize','scatteredVariation','scatteredSpacing','scatteredEdgeCrop','scatteredOverlap','scatteredShapeKind','scatteredShapeOverrides','dividerColor','dividerWidth',
-  'composition','repeatCount','repeatSpacing','construction','crossingMode','turnRadius','hairpinAngle','loopRadius','loopSweep','geometrySafety','extendDrawnPath','stepCount','chevronSharpness','loopAspect','pathLength','endTaper','tonalContrast','brushRoughness','dotSize','dotSpacing','interiorElements'];
+  'composition','insetAlignment','repeatCount','repeatSpacing','construction','crossingMode','turnRadius','hairpinAngle','loopRadius','loopSweep','geometrySafety','extendDrawnPath','stepCount','chevronSharpness','loopAspect','pathLength','endTaper','tonalContrast','brushRoughness','dotSize','dotSpacing','interiorElements'];
 export const PALETTES = ['classic', 'electric', 'pastel', 'jewel', 'muted', 'sunset', 'candy', 'arctic', 'earth', 'twilight', 'citrus'];
 export const TEXTURE_COVERAGES = ['both', 'stripes', 'background'];
 export const OUTLINES = ['none', 'hairline', 'white', 'double', 'broken', 'one-side', 'black', 'black-hairline', 'black-double', 'black-broken', 'black-one-side'];
@@ -219,6 +220,7 @@ export function normalizeRecipe(input = {}) {
     motif: readChoice('motif', MOTIFS),
     lineStyle: LINE_STYLES.includes(input.lineStyle) ? input.lineStyle : 'continuous',
     composition: COMPOSITIONS.includes(input.composition) ? input.composition : 'single',
+    insetAlignment: INSET_ALIGNMENTS.includes(input.insetAlignment) ? input.insetAlignment : 'independent',
     construction: CONSTRUCTIONS.includes(input.construction) ? input.construction : 'ribbon',
     crossingMode: CROSSING_MODES.includes(input.crossingMode)?input.crossingMode:'over',
     repeatCount: Math.round(finiteRange(input.repeatCount, 3, 2, 6)),
@@ -654,7 +656,7 @@ export function randomizeAllRecipe({primesOnly=false,seed:requestedSeed}={}) {
     stripeShadowStrength:percent(),stripeShadowSoftness:percent(),
     chaos:percent(), stripeWidth:percent(), spread:percent(),
     shapeFrequency:percent(),shapeDepth:percent(),motifSize:percent(),motifFrequency:percent(),lineStyle:any(LINE_STYLES),
-    composition:any(COMPOSITIONS),construction:any(CONSTRUCTIONS.filter(x=>x!=='tonal')),crossingMode:any(CROSSING_MODES),
+    composition:any(COMPOSITIONS),insetAlignment:any(INSET_ALIGNMENTS),construction:any(CONSTRUCTIONS.filter(x=>x!=='tonal')),crossingMode:any(CROSSING_MODES),
     repeatCount:2+Math.floor(r()*5),repeatSpacing:percent(),
     turnRadius:percent(),loopRadius:percent(),loopSweep:240+Math.floor(r()*211),stepCount:1+Math.floor(r()*16),chevronSharpness:percent(),loopAspect:percent(),pathLength:percent(),endTaper:percent(),
     tonalContrast:percent(),brushRoughness:percent(),dotSize:percent(),dotSpacing:percent(),

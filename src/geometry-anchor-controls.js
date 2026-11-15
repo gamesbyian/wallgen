@@ -101,6 +101,7 @@ export function installGeometryAnchorControls({form,getRecipe,getScene,onApply})
       row.hidden=r.structure!=='paths'||
         (key==='repeatAnchor'&&r.composition!=='repeat')||
         (key==='pathLengthAnchor'&&(r.composition!=='floating'||
+          r.insetAlignment&&r.insetAlignment!=='independent'||
           getScene()?.geometry==='drawn'));
     }
   };
