@@ -51,6 +51,9 @@ try{
       spread:38,repeatSpacing:35,stripeWidth:42,pathLength:68});
     await page.goto(origin+'/?r='+encodeRecipe(seed),{waitUntil:'domcontentloaded'});
     await page.waitForSelector('.geometry-anchor-setting select[name="spreadAnchor"]',{state:'attached'});
+    await page.waitForFunction(()=>
+      document.querySelector('#preview')?.dataset.renderPending==='false',
+      null,{timeout:85000});
     await page.locator('#mobileEdit').tap();
     await page.locator('#tab-stripes').tap();
     await page.locator('.editor-tool-chooser [data-category="stripes"][data-editor-tool="structure"]').tap();
