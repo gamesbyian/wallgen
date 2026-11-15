@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {normalizeRecipe,resolveScene,encodeRecipe,decodeRecipe} from '../src/model.js';
-import {stripeAnchorCoordinate,groupAnchorCoordinate} from '../src/geometry-anchors.js';
+import {stripeAnchorCoordinate,groupAnchorCoordinate,bandAnchorCoordinate} from '../src/geometry-anchors.js';
 
 const close=(a,b,message)=>assert.ok(Math.abs(a-b)<1e-7,message+' ('+a+' vs '+b+')');
 const stripeByName=(scene,name)=>scene.stripes.find(s=>s.name===name);
@@ -54,4 +54,22 @@ test('anchors survive saved recipe transport and invalid references cannot poiso
   assert.equal(legacy.spreadAnchor,undefined);
   assert.equal(legacy.repeatAnchor,undefined);
   close(stripeAnchorCoordinate([-3,-2,-1,.1,1.2,2,3],'green',true),.1,'middle slot');
+});
+
+test('ribbon thickness can grow while holding a semantic outer edge or band centre',()=>{
+  for(const reverseStripes of [false,true])
+    for(const anchor of ['centre','red-edge','violet-edge']){
+      const base={seed:'width-anchors',stripeWidth:35,spread:52,
+        reverseStripes,construction:'ribbon',chaos:76};
+      const original=resolveScene(base);
+      const coordinate=bandAnchorCoordinate(original.stripes,anchor);
+      const recipe={...base,widthAnchor:anchor,widthAnchorPosition:coordinate};
+      const chosen=resolveScene(recipe);
+      chosen.stripes.forEach((stripe,i)=>close(stripe.center,original.stripes[i].center,
+        'choosing width anchor must not move art'));
+      const changed=resolveScene({...recipe,stripeWidth:88});
+      close(bandAnchorCoordinate(changed.stripes,anchor),coordinate,
+        anchor+' boundary must remain at selected world coordinate');
+      assert.ok(changed.stripes.some((stripe,i)=>stripe.width!==original.stripes[i].width));
+    }
 });

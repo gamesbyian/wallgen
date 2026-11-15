@@ -1,16 +1,19 @@
 // Small, contextual anchor selectors belong beside the dimensions they govern.
 // They are recipe-owned, Undoable, accessible and independent of viewport zoom.
-import {STRIPE_ANCHORS,GROUP_ANCHORS,groupAnchorCoordinate} from './geometry-anchors.js';
+import {STRIPE_ANCHORS,GROUP_ANCHORS,WIDTH_ANCHORS,groupAnchorCoordinate,
+  bandAnchorCoordinate} from './geometry-anchors.js';
 
 const options={
   spreadAnchor:[['centre','Centre of rainbow'],['red','Red stripe'],['green','Green stripe'],['violet','Violet stripe']],
-  repeatAnchor:[['centre','Centre of groups'],['first','First group'],['last','Last group']]
+  repeatAnchor:[['centre','Centre of groups'],['first','First group'],['last','Last group']],
+  widthAnchor:[['centre','Centre of rainbow'],['red-edge','Red outer edge'],['violet-edge','Violet outer edge']]
 };
 export function installGeometryAnchorControls({form,getRecipe,getScene,onApply}){
   const controls=[];
   for(const [key,source,reference] of [
     ['spreadAnchor','spread','spreadAnchorPosition'],
-    ['repeatAnchor','repeatSpacing','repeatAnchorPosition']
+    ['repeatAnchor','repeatSpacing','repeatAnchorPosition'],
+    ['widthAnchor','stripeWidth','widthAnchorPosition']
   ]){
     const field=form.elements.namedItem(source);
     const sourceRow=field?.closest('label');
@@ -18,7 +21,8 @@ export function installGeometryAnchorControls({form,getRecipe,getScene,onApply})
     const row=document.createElement('label');
     row.className='geometry-anchor-setting';
     const title=document.createElement('span');
-    title.textContent=key==='spreadAnchor'?'Hold stripe stationary':'Hold group stationary';
+    title.textContent=key==='spreadAnchor'?'Hold stripe stationary':
+      key==='repeatAnchor'?'Hold group stationary':'Hold ribbon edge stationary';
     const selector=document.createElement('select');
     selector.name=key;
     selector.setAttribute('aria-label',title.textContent);
@@ -36,12 +40,14 @@ export function installGeometryAnchorControls({form,getRecipe,getScene,onApply})
       const recipe=getRecipe(),scene=getScene();
       const anchor=selector.value;
       if(key==='spreadAnchor'&&!STRIPE_ANCHORS.includes(anchor)||
-         key==='repeatAnchor'&&!GROUP_ANCHORS.includes(anchor))return;
+         key==='repeatAnchor'&&!GROUP_ANCHORS.includes(anchor)||
+         key==='widthAnchor'&&!WIDTH_ANCHORS.includes(anchor))return;
       const stripes=scene?.stripes||[];
       const value=key==='spreadAnchor'?
         (anchor==='centre'?
           (stripes[0]?.center+stripes.at(-1)?.center)/2:
           stripes.find(stripe=>stripe.name===anchor[0].toUpperCase()+anchor.slice(1))?.center):
+        key==='widthAnchor'?bandAnchorCoordinate(stripes,anchor):
         groupAnchorCoordinate(scene?.bundleOffsets,anchor);
       if(!Number.isFinite(value))return;
       onApply({...recipe,[key]:anchor,[reference]:value});

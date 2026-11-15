@@ -1,5 +1,5 @@
 import { SHAPES } from './path-geometry.js';
-import {STRIPE_ANCHORS,GROUP_ANCHORS,pinStripePositions,pinGroupOffsets} from './geometry-anchors.js';
+import {STRIPE_ANCHORS,GROUP_ANCHORS,WIDTH_ANCHORS,pinStripePositions,pinGroupOffsets,pinBandEdges} from './geometry-anchors.js';
 import {normalizePhotoLook} from './photo-look.js';
 import {normalizeSurfaceTreatments} from './embroidery.js';
 import {normalizeCompoundRegion,GEOMETRY_SNAPSHOT_SCHEMA} from './geometry-asset.js';
@@ -261,6 +261,7 @@ export function normalizeRecipe(input = {}) {
     stripeShadowDirection: LIGHT_DIRECTIONS.includes(input.stripeShadowDirection) ? input.stripeShadowDirection : 'top-left',
     chaos: finiteRange(input.chaos, 36, 0, 100),
     stripeWidth: finiteRange(input.stripeWidth, 52, 0, 100),
+    ...(WIDTH_ANCHORS.includes(input.widthAnchor)?{widthAnchor:input.widthAnchor,...(Number.isFinite(input.widthAnchorPosition)?{widthAnchorPosition:finiteRange(input.widthAnchorPosition,0,-10000,10000)}:{})}:{}),
     textureDisplacement: finiteRange(input.textureDisplacement, 0, 0, 100),
     spread: finiteRange(input.spread, 56, 0, 100),
     ...(STRIPE_ANCHORS.includes(input.spreadAnchor)?{spreadAnchor:input.spreadAnchor,...(Number.isFinite(input.spreadAnchorPosition)?{spreadAnchorPosition:finiteRange(input.spreadAnchorPosition,0,-10000,10000)}:{})}:{}),
@@ -422,7 +423,7 @@ export function resolveScene(recipeInput) {
   // Starting styles populate explicit settings in the editor. A family must
   // not invisibly multiply the user's manually selected stripe thickness.
   const widthFactor = .12+.395*Math.pow(recipe.stripeWidth/50,1.85);
-  const stripes = positions.map((position, i) => {
+  const generatedStripes = positions.map((position, i) => {
     const r = rng(`${recipe.seed}:stripe:${i}`);
     // Derive the reference gaps from the *weights*, not floating-point
     // differences of spread-dependent positions. Width is bit-for-bit fixed.
@@ -492,6 +493,9 @@ export function resolveScene(recipeInput) {
       patternScale:between(r,.7,1.25), patternPhase:r()*120,
       jitterSeed:`${recipe.seed}-noise-${i}`,
     };
+  });
+  const stripes=pinBandEdges(generatedStripes,{
+    anchor:recipe.widthAnchor,position:recipe.widthAnchorPosition
   });
   const textureLayers = [
     {material, strength:recipe.textureStrength, scale:recipe.textureScale, rotation:recipe.textureRotation,

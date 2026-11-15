@@ -285,6 +285,7 @@ function fromControls() {
     nestedShapeContours:current.nestedShapeContours,
     spreadAnchor:current.spreadAnchor,spreadAnchorPosition:current.spreadAnchorPosition,
     repeatAnchor:current.repeatAnchor,repeatAnchorPosition:current.repeatAnchorPosition,
+    widthAnchor:current.widthAnchor,widthAnchorPosition:current.widthAnchorPosition,
     textOverlays:current.textOverlays,
     scatteredShape:current.scatteredShape,scatteredOverrides:current.scatteredOverrides,
     scatteredLayerOrder:current.scatteredLayerOrder};
