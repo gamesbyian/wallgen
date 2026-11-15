@@ -1,4 +1,5 @@
 import { SHAPES } from './path-geometry.js';
+import {STRIPE_ANCHORS,GROUP_ANCHORS,pinStripePositions,pinGroupOffsets} from './geometry-anchors.js';
 import {normalizePhotoLook} from './photo-look.js';
 import {normalizeSurfaceTreatments} from './embroidery.js';
 import {normalizeCompoundRegion,GEOMETRY_SNAPSHOT_SCHEMA} from './geometry-asset.js';
@@ -222,6 +223,11 @@ export function normalizeRecipe(input = {}) {
     crossingMode: CROSSING_MODES.includes(input.crossingMode)?input.crossingMode:'over',
     repeatCount: Math.round(finiteRange(input.repeatCount, 3, 2, 6)),
     repeatSpacing: finiteRange(input.repeatSpacing, 50, 0, 100),
+    ...(GROUP_ANCHORS.includes(input.repeatAnchor)?{
+      repeatAnchor:input.repeatAnchor,
+      ...(Number.isFinite(input.repeatAnchorPosition)?{
+        repeatAnchorPosition:finiteRange(input.repeatAnchorPosition,0,-10000,10000)}:{})
+    }:{}),
     turnRadius: finiteRange(input.turnRadius, 50, 0, 100),
     geometrySafety: !(input.geometrySafety===false || input.geometrySafety==='false'),
     hairpinAngle: finiteRange(input.hairpinAngle, 180, 60, 180),
@@ -261,6 +267,11 @@ export function normalizeRecipe(input = {}) {
     stripeWidth: finiteRange(input.stripeWidth, 52, 0, 100),
     textureDisplacement: finiteRange(input.textureDisplacement, 0, 0, 100),
     spread: finiteRange(input.spread, 56, 0, 100),
+    ...(STRIPE_ANCHORS.includes(input.spreadAnchor)?{
+      spreadAnchor:input.spreadAnchor,
+      ...(Number.isFinite(input.spreadAnchorPosition)?{
+        spreadAnchorPosition:finiteRange(input.spreadAnchorPosition,0,-10000,10000)}:{})
+    }:{}),
     textureStrength: finiteRange(input.textureStrength, 52, 0, 100),
     textureScale: finiteRange(input.textureScale, 50, 0, 100),
     textureRotation: normalizeRotation(input.textureRotation),
@@ -397,8 +408,13 @@ export function resolveScene(recipeInput) {
   const commonTaper=between(random,0,0.28)*chaos;
   const weights = Array.from({length:6}, () => between(random, 1 - chaos * .46, 1 + chaos * .46));
   const sum = weights.reduce((a,b) => a+b,0);
-  const positions = [-spread/2];
-  for (const weight of weights) positions.push(positions.at(-1) + spread * weight / sum);
+  const unanchoredPositions = [-spread/2];
+  for (const weight of weights)
+    unanchoredPositions.push(unanchoredPositions.at(-1) + spread * weight / sum);
+  const positions=pinStripePositions(unanchoredPositions,{
+    anchor:recipe.spreadAnchor,position:recipe.spreadAnchorPosition,
+    centre:center,reverse:recipe.reverseStripes
+  });
   const avg = spread / 6;
   // Include the seed-derived group offset, not just half the band's spread.
   // Omitting this offset used to invert the violet/indigo turns even while
@@ -501,8 +517,10 @@ export function resolveScene(recipeInput) {
     layer.heightSin=Math.sin(radians);
   }
   const materialSummary=textureLayers.length ? textureLayers.map(layer=>layer.material).join(' + ') : 'none';
-  const bundleOffsets=Array.from({length:repeats},(_,i)=>
-    (i-(repeats-1)/2)*(spread+(12+recipe.repeatSpacing*1.1)));
+  const bundleOffsets=pinGroupOffsets(Array.from({length:repeats},(_,i)=>
+    (i-(repeats-1)/2)*(spread+(12+recipe.repeatSpacing*1.1))),{
+    anchor:recipe.repeatAnchor,position:recipe.repeatAnchorPosition
+  });
   // Every layout produces a unified ordered object list; seven colours are
   // semantic palette slots rather than an assumption of seven objects.
   const objects=buildCompositionObjects(recipe,stripes.map(stripe=>stripe.color),stripes,bundleOffsets);

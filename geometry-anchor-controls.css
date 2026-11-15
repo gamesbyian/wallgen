@@ -1,0 +1,13 @@
+/* World-coordinate layout anchors, kept beside their own dimension. */
+.geometry-anchor-setting{
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;
+  gap:8px;min-height:44px;padding:6px 2px;
+  font-size:12px;font-weight:600;
+}
+.geometry-anchor-setting[hidden]{display:none!important}
+.geometry-anchor-setting select{
+  flex:1 1 160px;max-width:100%;min-height:44px;padding:7px 10px;
+  border:1px solid currentColor;border-radius:9px;
+  background:var(--surface,#171723);color:inherit;font:inherit;
+}
+.geometry-anchor-setting select:focus-visible{outline:3px solid #6dcdfc;outline-offset:2px}
