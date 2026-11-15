@@ -595,3 +595,20 @@ test('contour decorations paint actual inset strokes in the shared region render
     }
   }finally{FakeContext.prototype.stroke=previous;}
 });
+
+test('zero-core radial wedges restore origin fills after thick boundary convergence',()=>{
+  for(const radialMode of ['sunburst','starburst','pinwheel']){
+    calls.length=0;
+    drawWallpaper({width:600,height:1300,getContext:()=>new FakeContext('main')},
+      {structure:'radial',radialMode,rayCount:70,rayCore:0,
+        rayCoverage:93,dividerColor:'black',dividerWidth:100});
+    assert.ok(calls.some(call=>call[0]==='clip'),
+      radialMode+' should protect true zero-radius origin against stroke buildup');
+  }
+});
+test('all inset alignment modes render through the ordinary unified path painter',()=>{
+  for(const insetAlignment of ['independent','aligned','staggered','progressive']){
+    assert.doesNotThrow(()=>render({seed:'alignment-mode',composition:'floating',
+      insetAlignment,geometry:'wave',individuality:45,pathLength:85}));
+  }
+});
