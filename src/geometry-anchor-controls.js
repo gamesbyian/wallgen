@@ -2,7 +2,7 @@
 // They are recipe-owned, Undoable, accessible and independent of viewport zoom.
 import {STRIPE_ANCHORS,GROUP_ANCHORS,WIDTH_ANCHORS,LENGTH_ANCHORS,groupAnchorCoordinate,
   bandAnchorCoordinate} from './geometry-anchors.js';
-import {balanceStripeEnds} from './renderer.js';
+import {balanceStripeEnds} from './renderer.js?v=20261024-text-overlays1';
 
 const options={
   spreadAnchor:[['centre','Centre of rainbow'],['red','Red stripe'],['green','Green stripe'],['violet','Violet stripe']],
@@ -19,7 +19,8 @@ export function installGeometryAnchorControls({form,getRecipe,getScene,onApply})
     ['pathLengthAnchor','pathLength','pathLengthAnchorPoints']
   ]){
     const field=form.elements.namedItem(source);
-    const sourceRow=field?.closest('label');
+    const sourceRow=field?.closest('.lockable-setting')||
+      field?.closest('.texture-rotation-field')||field?.closest('label');
     if(!sourceRow)throw new Error('Anchor control missing source field: '+source);
     const row=document.createElement('label');
     row.className='geometry-anchor-setting';
