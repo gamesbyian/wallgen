@@ -20,14 +20,14 @@ export function groupAnchorCoordinate(offsets,anchor='centre'){
     anchor==='last'?offsets.at(-1):(offsets[0]+offsets.at(-1))/2;
 }
 export function pinStripePositions(positions,{anchor='centre',position,centre=0,reverse=false}={}){
-  if(!positions?.length||anchor==='centre'&&!Number.isFinite(position))return positions;
-  const target=Number.isFinite(position)?position:0;
+  if(!positions?.length||!Number.isFinite(position))return positions;
+  const target=position;
   const shift=target-centre-stripeAnchorCoordinate(positions,anchor,reverse);
   return positions.map(value=>value+shift);
 }
 export function pinGroupOffsets(offsets,{anchor='centre',position}={}){
-  if(!offsets?.length||anchor==='centre'&&!Number.isFinite(position))return offsets;
-  const target=Number.isFinite(position)?position:0;
+  if(!offsets?.length||!Number.isFinite(position))return offsets;
+  const target=position;
   const shift=target-groupAnchorCoordinate(offsets,anchor);
   return offsets.map(value=>value+shift);
 }
