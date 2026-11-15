@@ -29,7 +29,7 @@ test('current model has the same explicit recipe field list as latest historical
   const historical=new Set(latest.explicitKeys);
   assert.deepEqual(current.explicitKeys.filter(k=>historical.has(k)),latest.explicitKeys);
   assert.deepEqual(current.explicitKeys.filter(k=>!historical.has(k)),
-    ['paletteLightness','paletteSaturation','paletteToneEnabled']);
+    ['insetAlignment','paletteLightness','paletteSaturation','paletteToneEnabled']);
   // This first archaeological pass indexes "name: expression" properties.
   // The literal "seed," shorthand is covered by runtime normalization,
   // not by this explicit-property-only source ledger.
