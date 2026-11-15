@@ -155,3 +155,14 @@ test('a width anchor never shifts stripes merely because their spread changes',(
     }
   }
 });
+
+test('incomplete imported anchors cannot silently pin artwork to world zero',()=>{
+  const base={seed:'incomplete-anchor-reference',composition:'repeat',
+    repeatCount:4,spread:58,repeatSpacing:42};
+  const normal=resolveScene(base);
+  const incomplete=resolveScene({...base,spreadAnchor:'red',repeatAnchor:'first'});
+  normal.stripes.forEach((stripe,i)=>close(incomplete.stripes[i].center,
+    stripe.center,'missing stripe reference cannot shift art'));
+  normal.bundleOffsets.forEach((offset,i)=>close(incomplete.bundleOffsets[i],
+    offset,'missing group reference cannot shift art'));
+});
