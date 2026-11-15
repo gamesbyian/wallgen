@@ -223,11 +223,7 @@ export function normalizeRecipe(input = {}) {
     crossingMode: CROSSING_MODES.includes(input.crossingMode)?input.crossingMode:'over',
     repeatCount: Math.round(finiteRange(input.repeatCount, 3, 2, 6)),
     repeatSpacing: finiteRange(input.repeatSpacing, 50, 0, 100),
-    ...(GROUP_ANCHORS.includes(input.repeatAnchor)?{
-      repeatAnchor:input.repeatAnchor,
-      ...(Number.isFinite(input.repeatAnchorPosition)?{
-        repeatAnchorPosition:finiteRange(input.repeatAnchorPosition,0,-10000,10000)}:{})
-    }:{}),
+    ...(GROUP_ANCHORS.includes(input.repeatAnchor)?{repeatAnchor:input.repeatAnchor,...(Number.isFinite(input.repeatAnchorPosition)?{repeatAnchorPosition:finiteRange(input.repeatAnchorPosition,0,-10000,10000)}:{})}:{}),
     turnRadius: finiteRange(input.turnRadius, 50, 0, 100),
     geometrySafety: !(input.geometrySafety===false || input.geometrySafety==='false'),
     hairpinAngle: finiteRange(input.hairpinAngle, 180, 60, 180),
@@ -267,11 +263,7 @@ export function normalizeRecipe(input = {}) {
     stripeWidth: finiteRange(input.stripeWidth, 52, 0, 100),
     textureDisplacement: finiteRange(input.textureDisplacement, 0, 0, 100),
     spread: finiteRange(input.spread, 56, 0, 100),
-    ...(STRIPE_ANCHORS.includes(input.spreadAnchor)?{
-      spreadAnchor:input.spreadAnchor,
-      ...(Number.isFinite(input.spreadAnchorPosition)?{
-        spreadAnchorPosition:finiteRange(input.spreadAnchorPosition,0,-10000,10000)}:{})
-    }:{}),
+    ...(STRIPE_ANCHORS.includes(input.spreadAnchor)?{spreadAnchor:input.spreadAnchor,...(Number.isFinite(input.spreadAnchorPosition)?{spreadAnchorPosition:finiteRange(input.spreadAnchorPosition,0,-10000,10000)}:{})}:{}),
     textureStrength: finiteRange(input.textureStrength, 52, 0, 100),
     textureScale: finiteRange(input.textureScale, 50, 0, 100),
     textureRotation: normalizeRotation(input.textureRotation),
