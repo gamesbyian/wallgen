@@ -248,16 +248,18 @@ export function balanceStripeEnds(scene,stripe,collectContacts=true) {
   if((stripe.sharedGeometry??stripe.geometry)==='drawn')
     return {contacts:{left:false,right:false,top:false,bottom:false},
       balanced:true,hidden:false};
-  // A returning path legitimately has both ends at the same frame edge.
-  // Paired returns and crossings for hairpins and single loops are
-  // intentional, rather than one-sided cropping mistakes.
+  // Procedural ribbons have no authored endpoints: every side of the
+  // viewport is a legitimate place to enter or exit. In particular, a
+  // diagonal crossing from the left to the bottom must not be shortened
+  // merely because it does not hit the opposite (right) edge.
+  //
+  // Only Floating composition deliberately creates finite inset ends.
+  // Preserve its safe-interval search and path-length controls below.
   const floating=scene.composition==='floating';
-  if(!floating && spatialGeometry(stripe) && ['hairpin','loop'].includes(stripe.sharedGeometry??stripe.geometry))
+  if(!floating)
     return {contacts:collectContacts?stripeFrameContacts(scene,stripe):null,
       balanced:true,hidden:false};
   const contacts=stripeFrameContacts(scene,stripe);
-  const balanced=(contacts.left===contacts.right && contacts.top===contacts.bottom);
-  if(balanced&&!floating)return {contacts,balanced:true,hidden:false};
   // Account for borders and glow so even their outermost pixels stay inset.
   const margin=24+scene.glow*.30+scene.gap*.14+scene.outlineBuffer*.14;
   const f=scene.viewBounds||{left:0,right:DESIGN_WIDTH,top:0,bottom:DESIGN_HEIGHT};
