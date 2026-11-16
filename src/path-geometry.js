@@ -1,4 +1,5 @@
 import {pointOnDrawnPath} from './drawn-path.js';
+import {stripeEdgeOffset} from './edge-profiles.js';
 // Shared path sampler for every stripe geometry. x is the stable longitudinal
 // parameter; its *position* may turn back on itself (hairpins and loops).
 // The same samples drive silhouettes, decorations and frame-contact tests.
@@ -11,10 +12,10 @@ export const noise1D=(x,seed)=>{
   const hash=j=>fract(Math.sin(j*127.1+seed*311.7)*43758.5453)*2-1;
   return mix(hash(i),hash(i+1),fract(x));
 };
-export const SHAPES=['straight','wave','zigzag','chevron','jagged','stepped','arc','contour','hairpin','loop','loops','drawn'];
+export const SHAPES=['straight','wave','zigzag','chevron','jagged','stepped','scalloped','arc','contour','hairpin','loop','loops','drawn'];
 export function modulation(x, geometry, phase, period, d, extent,detail={}){
   const t=x/period+phase/TAU;
-  if(geometry==='straight')return 0;
+  if(geometry==='straight'||geometry==='scalloped')return 0;
   if(geometry==='wave')return d*(Math.sin(t*TAU)*.78+Math.sin(t*TAU*.43+phase)*.22);
   if(geometry==='zigzag')return d*(2*Math.abs(2*fract(t)-1)-1);
   if(geometry==='chevron')return d*(1-2*Math.pow(Math.abs(2*fract(t)-1),.2+.7*(detail.chevronSharpness??50)/100));
@@ -162,6 +163,7 @@ export function widthAt(stripe,x,extent){
 // reuse that immutable sample instead of solving the same path tangent again.
 export function ribbonEdge(stripe,x,extent,side,edgeRelief=0,point=null){
   const p=point??samplePath(stripe,x,extent);
-  const distance=side*widthAt(stripe,x,extent)/2+edgeRelief;
+  const width=widthAt(stripe,x,extent);
+  const distance=side*width/2+edgeRelief+stripeEdgeOffset(stripe,x,side,width);
   return {x:p.x+p.nx*distance,y:p.y+p.ny*distance};
 }
