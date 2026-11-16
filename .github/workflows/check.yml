@@ -84,6 +84,7 @@ jobs:
           node --check tests/independent-keyboard-focus-journey.mjs
           node --check tests/view-pan-escape-focus-browser.mjs
           node --check tests/geometry-anchors-browser.mjs
+          node --check tests/stripe-effects-browser.mjs
           node --check tests/pigment-browser-acceptance.mjs
       - name: Serve current PR source
         run: |
@@ -103,6 +104,7 @@ jobs:
           node tests/independent-keyboard-focus-journey.mjs
           CHROME_BIN="$(command -v google-chrome || command -v chromium || echo /usr/bin/google-chrome)" node tests/view-pan-escape-focus-browser.mjs
           node tests/geometry-anchors-browser.mjs
+          node tests/stripe-effects-browser.mjs
           node tests/pigment-browser-acceptance.mjs
       - name: Preserve successful and failed browser evidence
         if: always()
@@ -116,5 +118,6 @@ jobs:
             artifacts/touch-continuity-browser/
             artifacts/independent-keyboard-focus/
             artifacts/geometry-anchors-browser/
+            artifacts/stripe-effects-browser/
           retention-days: 14
           if-no-files-found: warn
