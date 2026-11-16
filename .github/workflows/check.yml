@@ -86,6 +86,7 @@ jobs:
           node --check tests/geometry-anchors-browser.mjs
           node --check tests/stripe-effects-browser.mjs
           node --check tests/pigment-browser-acceptance.mjs
+          node --check tests/inset-anchor-layout-browser.mjs
       - name: Serve current PR source
         run: |
           npx serve . -l 4173 > /tmp/roygbiv-opt-in-browser.log 2>&1 &
@@ -106,6 +107,7 @@ jobs:
           node tests/geometry-anchors-browser.mjs
           node tests/stripe-effects-browser.mjs
           node tests/pigment-browser-acceptance.mjs
+          node tests/inset-anchor-layout-browser.mjs
       - name: Preserve successful and failed browser evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -119,5 +121,6 @@ jobs:
             artifacts/independent-keyboard-focus/
             artifacts/geometry-anchors-browser/
             artifacts/stripe-effects-browser/
+            artifacts/inset-anchor-layout-browser/
           retention-days: 14
           if-no-files-found: warn
