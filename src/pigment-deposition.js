@@ -100,7 +100,12 @@ export function paintPigmentedFill(ctx,paint,path,bounds,scene,objectSeed,option
   const matrix=ctx.getTransform?.();
   const density=matrix?Math.max(Math.hypot(matrix.a,matrix.b),
     Math.hypot(matrix.c,matrix.d)):2;
-  const ppu=clamp(Math.ceil(density*4)/4,.5,2);
+  // Region fields can contain dozens of independent fills. At preview size,
+  // use the nearest quarter-sample rather than rounding up for every object:
+  // the same deterministic noise field is sampled more economically. Native
+  // export density still caps at two samples per source unit.
+  const ppu=clamp((scene.structure==='paths'?Math.ceil(density*4):
+    Math.round(density*4))/4,.5,2);
   const x0=Math.floor((bounds.left-pad)*ppu)/ppu;
   const y0=Math.floor((bounds.top-pad)*ppu)/ppu;
   const x1=Math.ceil((bounds.right+pad)*ppu)/ppu;
