@@ -4,7 +4,7 @@ import {placeFloatingInterval} from './floating-inset-placement.js';
 import {drawTextOverlays} from './text-overlay-renderer.js';
 import {planNestedShapeContours} from './nested-shape-contours.js';
 import { samplePath, ribbonEdge, widthAt, noise1D } from './path-geometry.js';
-import {decorateRegionObjects,edgePitch} from './edge-profiles.js';
+import {decorateRegionObjects,edgePitch,bouncingPitch} from './edge-profiles.js';
 import {drawRegionInteriors,elementInk,elementWave,lineDash,elementApplies} from './interior-elements.js';
 import { viewCamera } from './view-camera.js';
 import {findPathCrossings,crossingTopIsLater,crossingBranchClip} from './crossing-order.js';
@@ -172,7 +172,7 @@ function stripePath(stripe,extent,scene){
     // Narrow scallops and bouncing drops need adequate arc samples.
     // This extra work is opt-in; other geometries retain historic sampling.
     const decoratedPitch=stripe.edgeStyle==='bouncing'?
-      edgePitch(100-(stripe.shapeFrequency??50)):
+      bouncingPitch(stripe.shapeFrequency??50):
       edgePitch(stripe.edgeSize??50);
     const step=['scalloped','bouncing'].includes(stripe.edgeStyle)?
       Math.min(3,decoratedPitch/18):3;
