@@ -1,4 +1,5 @@
 import { DESIGN_WIDTH, DESIGN_HEIGHT, resolveScene, rng, NAMES } from './model.js';
+import {effectRgba,paintInsetEdge} from './stripe-edge-effects.js';
 import {drawTextOverlays} from './text-overlay-renderer.js';
 import {planNestedShapeContours} from './nested-shape-contours.js';
 import { samplePath, ribbonEdge, widthAt, noise1D } from './path-geometry.js';
@@ -851,7 +852,8 @@ export function applyCanvasAtmosphere(ctx,width,height,recipe){
 // It is separate from the stationary, whole-canvas atmospheric illumination.
 // The cached ink remains immutable, so nudge cannot reshape stripe geometry.
 export function stripeShadowParameters(recipe,scale=1){
-  if(recipe.stripeShadowStrength<=0)return null;
+  if(recipe.stripeShadowStrength<=0||recipe.stripeShadowPlacement==='inner'||
+    recipe.stripeShadowColorMode!=='original'||recipe.stripeShadowInvert)return null;
   const strength=recipe.stripeShadowStrength/100;
   const softness=recipe.stripeShadowSoftness/100;
   const direction=recipe.stripeShadowDirection||'top-left';
@@ -914,7 +916,7 @@ export function presentNudgedArtwork(canvas, layers, recipe) {
 // Closed-region objects share the same transparent ink, palette slots,
 // material stack, camera, lighting, nudge and export path as ribbon objects.
 // No regional generator paints directly: the painter consumes scene.objects.
-export function drawRegionObjects(ctx,scene){
+export function drawRegionObjects(ctx,scene,rememberEffectShape=null){
   const sandRims=sandRimStyles(scene);
   const sandBeads=sandBeadStyles(scene);
   const sandEchoes=sandEchoStyles(scene);
@@ -990,9 +992,12 @@ export function drawRegionObjects(ctx,scene){
       ctx.restore();
       continue;
     }
+    if(rememberEffectShape)rememberEffectShape(sandRegionPath(object),object.color,
+      object.rings?'evenodd':'nonzero');
     ctx.save();trace(object);
-    if(scene.glow>0){
-      ctx.shadowColor=object.color;
+    if(scene.glow>0&&scene.glowPlacement!=='inner'){
+      ctx.shadowColor=effectRgba(scene.glowColorMode,object.color,
+        scene.glowCustomColor,scene.glowInvert);
       ctx.shadowBlur=scene.glow/100*32;
     }
     ctx.fillStyle=object.color;
@@ -1107,7 +1112,19 @@ export function drawWallpaper(canvas, recipe, options={}) {
   const {scaleX,scaleY,offsetX,offsetY}=camera;
   scene.renderBounds=camera.boundsWithMargin(margin);
   const ink=createRenderSurface(inkWidth,inkHeight,options.canvasFactory);
-  let scratch,s,cachedBackground;
+  let scratch,s,cachedBackground,effectSurface;
+  // Mask geometry is retained only when a newly selected effect needs it.
+  // Existing glow and grey silhouette shadow still use their historical paths.
+  const insetShadow=scene.stripeShadowStrength>0&&scene.stripeShadowPlacement!=='outer';
+  const insetGlow=scene.glow>0&&scene.glowPlacement!=='outer';
+  const colouredOuterShadow=scene.stripeShadowStrength>0&&
+    scene.stripeShadowPlacement!=='inner'&&
+    (scene.stripeShadowColorMode!=='original'||scene.stripeShadowInvert);
+  const effectShapes=[];
+  const rememberEffectShape=(insetShadow||insetGlow||colouredOuterShadow)?
+    (path,colour,rule='nonzero')=>effectShapes.push({
+      path,colour,rule,transform:g.getTransform()
+    }):null;
   let cacheCommitted=false;
   try{
   const g=ink.getContext('2d');
@@ -1186,8 +1203,13 @@ export function drawWallpaper(canvas, recipe, options={}) {
     if(stripe.hidden)continue;
     crossingStripes.push(stripe);
     const path=stripePath(stripe,scene.extent,scene);
-    if(scene.glow>0){
-      g.save();g.shadowColor=stripe.color;g.shadowBlur=scene.glow/100*32;g.globalAlpha=.70;
+    if(rememberEffectShape)rememberEffectShape(
+      stripeFillPath(stripe,scene.extent,scene),stripe.color);
+    if(scene.glow>0&&scene.glowPlacement!=='inner'){
+      g.save();
+      g.shadowColor=effectRgba(scene.glowColorMode,stripe.color,
+        scene.glowCustomColor,scene.glowInvert);
+      g.shadowBlur=scene.glow/100*32;g.globalAlpha=.70;
       g.fillStyle=stripe.color;g.fill(stripeFillPath(stripe,scene.extent,scene));g.restore();
     }
     drawOutline(g,path,stripe,scene);
@@ -1342,7 +1364,7 @@ export function drawWallpaper(canvas, recipe, options={}) {
       }
     }
   }
-  }else drawRegionObjects(g,scene);
+  }else drawRegionObjects(g,scene,rememberEffectShape);
   // One scratch buffer is reused for every texture layer and surface.
   // The stripe pass masks against the current ink alpha, so multiply/screen/etc
   // affect the stripe colours without spraying texture into negative space.
@@ -1502,6 +1524,72 @@ export function drawWallpaper(canvas, recipe, options={}) {
       g.globalCompositeOperation=blend(layer);g.drawImage(scratch,0,0);g.restore();
     }
   }
+  // Inner shading runs after texture deposition. Use the actual final source
+  // alpha through source-atop so transparent pattern holes remain transparent.
+  // Both effects are clipped to their respective original path or region mask.
+  if(insetShadow||insetGlow){
+    for(const shape of effectShapes){
+      g.save();g.setTransform(shape.transform);
+      if(insetShadow){
+        const strength=scene.stripeShadowStrength/100;
+        const softness=scene.stripeShadowSoftness/100;
+        const direction=scene.stripeShadowDirection||'top-left';
+        paintInsetEdge(g,shape.path,{
+          rule:shape.rule,extent:scene.extent,
+          colour:effectRgba(scene.stripeShadowColorMode,shape.colour,
+            scene.stripeShadowCustomColor,scene.stripeShadowInvert,
+            strength*(scene.stripeShadowColorMode==='original'?.65:1)),
+          blur:(1+16*softness)*scaleX,
+          x:(direction.endsWith('right')?-5:5)*scaleX,
+          y:(direction.startsWith('bottom')?-5:5)*scaleY
+        });
+      }
+      if(insetGlow){
+        paintInsetEdge(g,shape.path,{
+          rule:shape.rule,extent:scene.extent,
+          colour:effectRgba(scene.glowColorMode,shape.colour,
+            scene.glowCustomColor,scene.glowInvert,.70*scene.glow/100),
+          blur:(1+32*scene.glow/100)*scaleX
+        });
+      }
+      g.restore();
+    }
+  }
+  // Nonlegacy outer shadows require independent stripe hues, so draw their
+  // tinted silhouettes on a temporary surface. Remove every source footprint
+  // and place only the surviving blurred/offset shadow BEHIND the final ink.
+  // The temporary is not retained by nudge caches or by PNG exports.
+  if(colouredOuterShadow&&effectShapes.length){
+    effectSurface=createRenderSurface(inkWidth,inkHeight,options.canvasFactory);
+    const e=effectSurface.getContext('2d');
+    if(!e)throw new Error('Stripe shadow effect surface unavailable');
+    const softness=scene.stripeShadowSoftness/100;
+    const direction=scene.stripeShadowDirection||'top-left';
+    for(const shape of effectShapes){
+      e.save();e.setTransform(shape.transform);
+      e.shadowColor=effectRgba(scene.stripeShadowColorMode,shape.colour,
+        scene.stripeShadowCustomColor,scene.stripeShadowInvert,
+        scene.stripeShadowStrength/100);
+      e.shadowBlur=(1+16*softness)*scaleX;
+      e.shadowOffsetX=(direction.endsWith('right')?-5:5)*scaleX;
+      e.shadowOffsetY=(direction.startsWith('bottom')?-5:5)*scaleY;
+      e.fillStyle='#fff';
+      e.fill(shape.path,shape.rule);
+      e.restore();
+    }
+    // Erase the unshifted silhouettes (including compound cutouts) so this
+    // surface contains *only* cast shadows, never opaque replacement stripes.
+    for(const shape of effectShapes){
+      e.save();e.setTransform(shape.transform);
+      e.globalCompositeOperation='destination-out';
+      e.fillStyle='#000';e.fill(shape.path,shape.rule);
+      e.restore();
+    }
+    g.save();g.setTransform(1,0,0,1,0,0);
+    g.globalCompositeOperation='destination-over';
+    g.drawImage(effectSurface,0,0);g.restore();
+    releaseRenderSurface(effectSurface);effectSurface=null;
+  }
   // Background stays fixed. The immutable ink now has transparent overscan:
   // stripes that exited the original frame keep going off-frame when nudged.
   // Intentionally inset stripe endpoints are unchanged.
@@ -1528,6 +1616,7 @@ export function drawWallpaper(canvas, recipe, options={}) {
   }finally{
     materialPaintFactors.delete(scene);
     releaseRenderSurface(scratch);
+    releaseRenderSurface(effectSurface);
     // The two settled preview layers survive only a successful paint. A
     // failed context, compositor or Photo stage must not retain backing
     // stores or advertise an incomplete frame for Undo/nudge reuse.
