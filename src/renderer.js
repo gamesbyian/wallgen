@@ -853,7 +853,7 @@ export function applyCanvasAtmosphere(ctx,width,height,recipe){
 // The cached ink remains immutable, so nudge cannot reshape stripe geometry.
 export function stripeShadowParameters(recipe,scale=1){
   if(recipe.stripeShadowStrength<=0||recipe.stripeShadowPlacement==='inner'||
-    recipe.stripeShadowColorMode!=='original'||recipe.stripeShadowInvert)return null;
+    (recipe.stripeShadowColorMode&&recipe.stripeShadowColorMode!=='original')||recipe.stripeShadowInvert)return null;
   const strength=recipe.stripeShadowStrength/100;
   const softness=recipe.stripeShadowSoftness/100;
   const direction=recipe.stripeShadowDirection||'top-left';
