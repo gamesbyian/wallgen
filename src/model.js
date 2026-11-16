@@ -502,13 +502,16 @@ export function resolveScene(recipeInput) {
       dotRadius:Math.max(2,referenceAvg*(.23+.45*recipe.dotSize/100)*widthFactor*.95),
       drawnPath,
       shapeFrequency:recipe.shapeFrequency,
+      shapeDepth:recipe.shapeDepth,
       stepCount:recipe.stepCount,
       chevronSharpness:recipe.chevronSharpness,
       loopAspect:recipe.loopAspect,
-      // Genuine scallops are an edge profile, never a broken repeated-loop
-      // centreline. Allow independent profiles on any other path geometry.
+      // The saved 'scalloped' geometry ID is retained for old recipes, but
+      // its default treatment is now a bouncing silhouette: shallow upper
+      // arches and smaller lower drops around a straight, filled band.
+      // Explicit scalloped edge styles still retain their older forms.
       ...(geometry==='scalloped'||recipe.stripeEdgeStyle!=='straight'?{
-        edgeStyle:recipe.stripeEdgeStyle==='straight'?'scalloped':recipe.stripeEdgeStyle,
+        edgeStyle:recipe.stripeEdgeStyle==='straight'?'bouncing':recipe.stripeEdgeStyle,
         scallopForm:recipe.stripeScallopForm,
         edgeSize:recipe.stripeEdgeSize,edgeDepth:recipe.stripeEdgeDepth,
         edgeDirection:recipe.stripeEdgeDirection,edgeSides:recipe.stripeEdgeSides,

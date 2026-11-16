@@ -505,16 +505,25 @@ function inactiveSettingKeys(recipe,scene){
     inactive.add('textureDisplacement');
   // Decorative motifs have separate size/density knobs; straight geometry
   // never has curve frequency/depth, even when marked with chevrons.
-  if(['straight','scalloped','hairpin','loop','drawn'].includes(scene.geometry))
+  if(['straight','hairpin','loop','drawn'].includes(scene.geometry)||
+    (scene.geometry==='scalloped'&&recipe.stripeEdgeStyle!=='straight'))
     inactive.add('shapeFrequency'),inactive.add('shapeDepth');
-  if(paths&&recipe.stripeEdgeStyle!=='scalloped'&&scene.geometry!=='scalloped')
+  // Bounce frequency/height are the native geometry controls. The separate
+  // stripe-edge size/depth controls belong only to explicitly chosen edge
+  // styles, while phase, direction, sides and alignment still adjust bounce.
+  if(paths&&recipe.stripeEdgeStyle!=='scalloped')
     inactive.add('stripeScallopForm');
-  if(paths&&['bunting','ricrac'].includes(recipe.stripeScallopForm))
+  if(paths&&recipe.stripeEdgeStyle==='scalloped'&&
+    ['bunting','ricrac'].includes(recipe.stripeScallopForm))
     inactive.add('stripeEdgeSides');
-  if(paths&&recipe.stripeScallopForm==='ricrac')inactive.add('stripeEdgeDirection');
-  if(paths&&(recipe.stripeEdgeStyle==='straight'&&scene.geometry!=='scalloped'))
-    for(const key of ['stripeEdgeSize','stripeEdgeDepth','stripeEdgePhase',
-      'stripeEdgeDirection','stripeEdgeSides','stripeEdgeAlignment'])inactive.add(key);
+  if(paths&&recipe.stripeEdgeStyle==='scalloped'&&recipe.stripeScallopForm==='ricrac')
+    inactive.add('stripeEdgeDirection');
+  if(paths&&recipe.stripeEdgeStyle==='straight'){
+    inactive.add('stripeEdgeSize');inactive.add('stripeEdgeDepth');
+    if(scene.geometry!=='scalloped')
+      for(const key of ['stripeEdgePhase','stripeEdgeDirection',
+        'stripeEdgeSides','stripeEdgeAlignment'])inactive.add(key);
+  }
   if(regions&&recipe.regionEdgeStyle==='straight')
     for(const key of ['regionEdgeSize','regionEdgeDepth','regionEdgePhase',
       'regionEdgeDirection'])inactive.add(key);
@@ -596,6 +605,15 @@ function inactiveSettingKeys(recipe,scene){
 function syncInactiveSettings(){
   const scene=currentScene||resolveScene(current);
   const inactive=inactiveSettingKeys(current,scene);
+  const bouncing=scene.structure==='paths'&&scene.geometry==='scalloped'&&
+    current.stripeEdgeStyle==='straight';
+  for(const [key,ordinary,bounce] of [
+    ['shapeFrequency','Bend frequency','Bounce frequency'],
+    ['shapeDepth','Bend depth','Bounce height']
+  ]){
+    const label=form.elements.namedItem(key)?.closest('label')?.querySelector('span');
+    if(label)label.textContent=bouncing?bounce:ordinary;
+  }
   for(const key of FIELDS){
     const field=form.elements.namedItem(key);
     if(!field)continue;
@@ -821,8 +839,11 @@ function render(recipe,{scroll=false,bypassLocks=false,interactive=false,cause='
   updateViewPanStatus();
   showResolvedSelections(currentScene);
   document.getElementById('detailFamily').textContent=titleCase(currentScene.family);
-  document.getElementById('detailGeometry').textContent=titleCase(currentScene.structure==='paths'?
-    currentScene.geometry:currentScene.structure==='radial'?currentScene.radialMode:currentScene.regionMode);
+  document.getElementById('detailGeometry').textContent=
+    currentScene.structure==='paths'&&currentScene.geometry==='scalloped'?
+      'Bouncing ribbon':titleCase(currentScene.structure==='paths'?
+        currentScene.geometry:currentScene.structure==='radial'?
+          currentScene.radialMode:currentScene.regionMode);
   document.getElementById('detailMaterial').textContent=titleCase(currentScene.materialSummary);
   favoriteButton.setAttribute('aria-pressed',String(isFavorite(current)));
   favoriteButton.setAttribute('aria-label',isFavorite(current)?'Remove from favourites':'Add to favourites');
