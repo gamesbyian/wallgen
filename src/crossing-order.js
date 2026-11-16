@@ -17,8 +17,12 @@ export function segmentIntersection(a,b,c,d,{minimumProduct=1}={}){
   return {x:a.x+r.x*t,y:a.y+r.y*t,t,u};
 }
 /** Identify centreline crossing stations in drawing order, once per junction. */
-export function findPathCrossings(stripe,extent,sampler,{step=9,maxCrossings=32}={}){
-  const first=stripe.segmentStart??-extent,last=stripe.segmentEnd??extent;
+export function findPathCrossings(stripe,extent,sampler,{
+  step=9,maxCrossings=32,start=-extent,end=extent
+}={}){
+  const first=Math.max(stripe.segmentStart??-extent,start);
+  const last=Math.min(stripe.segmentEnd??extent,end);
+  if(last<=first)return [];
   const count=Math.max(32,Math.min(820,Math.ceil((last-first)/step)));
   const points=Array.from({length:count+1},(_,i)=>{
     const parameter=first+(last-first)*i/count;
