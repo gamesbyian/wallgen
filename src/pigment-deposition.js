@@ -13,11 +13,26 @@ function hash(x,y,seed){
   v=Math.imul(v^(v>>>13),1274126177);
   return ((v^(v>>>16))>>>0)/4294967296;
 }
-function noise(x,y,seed){
-  const ix=Math.floor(x),iy=Math.floor(y),fx=x-ix,fy=y-iy;
-  const u=fx*fx*(3-2*fx),v=fy*fy*(3-2*fy);
-  return mix(mix(hash(ix,iy,seed),hash(ix+1,iy,seed),u),
-    mix(hash(ix,iy+1,seed),hash(ix+1,iy+1,seed),u),v)*2-1;
+// Cache the four lattice corners while traversing adjacent pixels. A coarse
+// pigment cell spans dozens of pixels; rehashing its same four corners for
+// every single sample made 600x1300 previews unnecessarily CPU-heavy.
+function makeNoise(seed){
+  let lastX=NaN,lastY=NaN,h00,h10,h01,h11;
+  return (x,y)=>{
+    const ix=Math.floor(x),iy=Math.floor(y),fx=x-ix,fy=y-iy;
+    if(ix!==lastX||iy!==lastY){
+      if(iy===lastY&&ix===lastX+1){
+        h00=h10;h01=h11;
+        h10=hash(ix+1,iy,seed);h11=hash(ix+1,iy+1,seed);
+      }else{
+        h00=hash(ix,iy,seed);h10=hash(ix+1,iy,seed);
+        h01=hash(ix,iy+1,seed);h11=hash(ix+1,iy+1,seed);
+      }
+      lastX=ix;lastY=iy;
+    }
+    const u=fx*fx*(3-2*fx),v=fy*fy*(3-2*fy);
+    return mix(mix(h00,h10,u),mix(h01,h11,u),v)*2-1;
+  };
 }
 const styleProfile={
   'dry-brush':{loss:.70,pores:.80,streak:1,pool:0},
@@ -26,33 +41,42 @@ const styleProfile={
   wash:{loss:.55,pores:.25,streak:.06,pool:1},
   opaque:{loss:.32,pores:.35,streak:.40,pool:.12}
 };
-export function pigmentCoverage(x,y,seed,settings,material=0,edge=0){
+// Construct once per painted object, not once per pixel. Profile lookups,
+// exponentiation and noise lattice values are all stable for that object.
+export function makePigmentCoverageSampler(seed,settings){
   const strength=clamp(settings.brushRoughness/100);
-  if(strength===0)return 1;
+  if(strength===0)return ()=>1;
   const profile=styleProfile[settings.pigmentStyle]||styleProfile['dry-brush'];
   const scale=5+44*Math.pow(clamp(settings.pigmentGrainScale/100),1.45);
   const stretch=1+clamp(settings.pigmentDirectionality/100)*8*profile.streak;
-  const coarse=noise(x/(scale*3.7*stretch),y/(scale*3.1),seed+17);
-  const patches=noise(x/(scale*stretch),y/(scale*.64),seed+71);
-  const grain=noise(x/(scale*.22*(1+2*profile.streak)),y/(scale*.16),seed+137);
-  const pores=noise(x/1.4,y/1.4,seed+239);
-  // Coherent missing-pigment areas, irregular deposits and pores coexist.
-  const depletion=profile.loss*(.72-.35*coarse-.36*patches-.15*grain);
-  let coverage=clamp(1-strength*depletion,0,1);
-  const poreCut=clamp((pores-.04)/.88);
-  coverage*=1-strength*profile.pores*.76*poreCut;
-  // A real substrate changes where pigment settles. No material means no
-  // extra paper/cloth noise: this is the independently controllable ink.
-  coverage*=1-strength*.24*clamp(material,-1,1);
-  if(edge>0){
-    const breakup=clamp(settings.pigmentEdgeBreakup/100);
-    const ragged=clamp(.24+.67*patches+.28*grain,0,1);
-    coverage*=1-strength*breakup*edge*(1-ragged);
-    // Waterborne pigment migrates toward a drying boundary.
-    if(profile.pool)coverage=mix(coverage,Math.min(1,coverage+strength*.22*profile.pool),
-      edge*(1-breakup*.5));
-  }
-  return clamp(coverage);
+  const coarseNoise=makeNoise(seed+17);
+  const patchNoise=makeNoise(seed+71);
+  const grainNoise=makeNoise(seed+137);
+  const poreNoise=makeNoise(seed+239);
+  const breakup=clamp(settings.pigmentEdgeBreakup/100);
+  return (x,y,material=0,edge=0)=>{
+    const coarse=coarseNoise(x/(scale*3.7*stretch),y/(scale*3.1));
+    const patches=patchNoise(x/(scale*stretch),y/(scale*.64));
+    const grain=grainNoise(x/(scale*.22*(1+2*profile.streak)),y/(scale*.16));
+    const pores=poreNoise(x/1.4,y/1.4);
+    const depletion=profile.loss*(.72-.35*coarse-.36*patches-.15*grain);
+    let coverage=clamp(1-strength*depletion,0,1);
+    const poreCut=clamp((pores-.04)/.88);
+    coverage*=1-strength*profile.pores*.76*poreCut;
+    coverage*=1-strength*.24*clamp(material,-1,1);
+    if(edge>0){
+      const ragged=clamp(.24+.67*patches+.28*grain,0,1);
+      coverage*=1-strength*breakup*edge*(1-ragged);
+      if(profile.pool)coverage=mix(coverage,
+        Math.min(1,coverage+strength*.22*profile.pool),
+        edge*(1-breakup*.5));
+    }
+    return clamp(coverage);
+  };
+}
+// One-off field sampling remains public for tests and third-party consumers.
+export function pigmentCoverage(x,y,seed,settings,material=0,edge=0){
+  return makePigmentCoverageSampler(seed,settings)(x,y,material,edge);
 }
 // Material relief is sampled in the same oriented world frame used by the
 // existing surface painter. Background-only layers cannot modify ink deposit.
@@ -201,7 +225,7 @@ export function paintPigmentedFill(ctx,paint,path,bounds,scene,objectSeed,option
   }
   const breakup=clamp(scene.pigmentEdgeBreakup/100);
   const radius=Math.max(1,Math.round((1+2.5*breakup)*ppu));
-  const fieldSettings=scene;
+  const coverageAt=makePigmentCoverageSampler(seed,scene);
   for(let iy=0;iy<h;iy++){
     const y=y0+(iy+.5)/ppu;
     for(let ix=0;ix<w;ix++){
@@ -226,7 +250,7 @@ export function paintPigmentedFill(ctx,paint,path,bounds,scene,objectSeed,option
           mix(materialGrid[m+materialCols],
             materialGrid[m+materialCols+1],tx),ty);
       }
-      const coverage=pigmentCoverage(x,y,seed,fieldSettings,material,edge);
+      const coverage=coverageAt(x,y,material,edge);
       bytes[index*4+3]=Math.round(base*coverage);
     }
   }
