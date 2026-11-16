@@ -94,7 +94,9 @@ export function stripeEdgeOffset(stripe,station,side,localWidth){
   const amplitude=(stripe.edgeDirection==='inward'||stripe.edgeDirection==='alternating')?
     Math.min(desired,width*.44):desired;
   const pitch=edgePitch(stripe.edgeSize??50);
-  const phase=stripe.edgePhasePercent??0;
+  // Opposite physical boundaries are half a motif apart. The across-colour
+  // alignment setting is applied upstream and remains independent.
+  const phase=(stripe.edgePhasePercent??0)+(side===1?50:0);
   const direction=stripe.edgeDirection??'outward';
   return side*(style==='scalloped'?
     circularScallop(station,pitch,phase,amplitude,direction):
