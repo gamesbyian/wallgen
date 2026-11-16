@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {normalizeRecipe,encodeRecipe,decodeRecipe,LOCKABLE_SETTINGS,
   respectSettingLocks,resolveScene,PIGMENT_STYLES} from '../src/model.js';
-import {pigmentCoverage,pigmentMaterialSampler,paintPigmentedFill,
+import {pigmentCoverage,makePigmentCoverageSampler,pigmentMaterialSampler,paintPigmentedFill,
   visiblePigmentBounds,safePigmentDensity} from '../src/pigment-deposition.js';
 
 const base={brushRoughness:75,pigmentStyle:'dry-brush',pigmentGrainScale:35,
@@ -52,6 +52,21 @@ test('roughness strength gradually reveals substrate without affecting another o
   for(const [x,y] of samples)
     assert.ok(pigmentCoverage(x,y,555,base,-1,1)>=0&&
       pigmentCoverage(x,y,555,base,1,1)<=1);
+});
+
+test('cached pigment sampler preserves individual-pixel field across adjacent scans',()=>{
+  for(const style of PIGMENT_STYLES){
+    const settings={...base,pigmentStyle:style};
+    const seed=732;
+    const sampler=makePigmentCoverageSampler(seed,settings);
+    for(let j=0;j<32;j++)for(let i=0;i<40;i++){
+      const x=i*.73-17.3,y=j*.71-9.8;
+      const material=(i%7-3)/3,edge=(j%5)/4;
+      assert.equal(sampler(x,y,material,edge),
+        pigmentCoverage(x,y,seed,settings,material,edge),
+        'cache must retain pixel-exact source noise');
+    }
+  }
 });
 
 test('pigment controls normalize, survive sharing, and respect locks',()=>{
