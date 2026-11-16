@@ -1,5 +1,6 @@
 import { DESIGN_WIDTH, DESIGN_HEIGHT, resolveScene, rng, NAMES } from './model.js';
 import {effectRgba,paintInsetEdge} from './stripe-edge-effects.js';
+import {placeFloatingInterval} from './floating-inset-placement.js';
 import {drawTextOverlays} from './text-overlay-renderer.js';
 import {planNestedShapeContours} from './nested-shape-contours.js';
 import { samplePath, ribbonEdge, widthAt, noise1D } from './path-geometry.js';
@@ -320,11 +321,18 @@ export function balanceStripeEnds(scene,stripe,collectContacts=true,randomizeFlo
     const random=rng(scene.seed+':floating-ends:'+stripe.index);
     const amount=(.18+.78*scene.pathLength/100)*
       (1-random()*scene.individuality/100*.24);
-    const length=(bestEnd-bestStart)*amount;
-    const free=(bestEnd-bestStart)-length;
-    const centre=(bestStart+bestEnd)*.5+(random()-.5)*free*.7;
-    bestStart=centre-length*.5;
-    bestEnd=centre+length*.5;
+    // The previous formula scaled a random offset from the current safe
+    // interval midpoint. Spreading the rainbow changed those midpoints,
+    // sliding the short inset strokes sideways. A seed-derived world station
+    // is independent of transverse spacing; clamp only if canvas safety
+    // physically prevents keeping that station.
+    const preferredCentre=(random()-.5)*DESIGN_WIDTH*.30;
+    const interval=placeFloatingInterval(rawFloatingStart,rawFloatingEnd,
+      amount,preferredCentre);
+    bestStart=interval.start;
+    bestEnd=interval.end;
+    stripe.floatingStationClamped=interval.clamped;
+    const length=bestEnd-bestStart;
     const target=scene.pathLengthAnchorPoints?.[stripe.index];
     if(Number.isFinite(target)&&['start','end','centre'].includes(scene.pathLengthAnchor)){
       // Each stripe owns an authored world-station reference. When extending
@@ -1229,9 +1237,10 @@ export function drawWallpaper(canvas, recipe, options={}) {
         for(const stripe of visible)stripe.hidden=true;
       }else{
         // Keep Path Length effective while sharing the safe stripe interval.
-        const safeSpan=end-start;
-        const span=safeSpan*(.18+.78*scene.pathLength/100);
-        const sharedStart=start+(safeSpan-span)/2;
+        const shared=placeFloatingInterval(start,end,
+          .18+.78*scene.pathLength/100,0);
+        const span=shared.end-shared.start;
+        const sharedStart=shared.start;
         for(const stripe of visible){
           const fraction=stripe.index/Math.max(1,preparedStripes.length-1);
           if(scene.insetAlignment==='staggered'){
