@@ -11,14 +11,6 @@ const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const fract=n=>n-Math.floor(n);
 const smoothstep=t=>t*t*(3-2*t);
 export const edgePitch=size=>18+clamp(Number(size)||0,0,100)*1.24;
-// Bounces require their own perceptual frequency scale: scallop edge pitch
-// is decorative and much too dense for a broad, readable bouncing ribbon.
-// 0 = widely spaced gestures, 100 = tighter but still distinct arches.
-export const bouncingPitch=frequency=>{
-  const f=clamp(Number(frequency)||0,0,100)/100;
-  return 90+270*Math.pow(1-f,1.35);
-};
-
 // A true circular arc, specified by its chord (pitch) and sagitta (depth).
 // The depth control changes the radius of the circle, not a cosine amplitude;
 // at depth = pitch / 2 every lobe is an exact semicircle.
@@ -35,43 +27,6 @@ export function circularScallop(station,pitch,phase=0,depth=pitch/2,
     direction==='alternating'&&Math.abs(Math.floor(cycle)%2)===1?-1:1;
   return height*sign;
 }
-// Bouncing ribbon: a broad shallow arch on the upper boundary and a narrower
-// rounded drop on the lower boundary, centred at each upper-arch join.
-// Both decorate an otherwise straight, substantial band. This is different
-// from symmetric scalloped edges and from ric-rac centreline modulation.
-export function bouncingRibbonOffset(stripe,station,side,localWidth){
-  if(!Number.isFinite(station)||!Number.isFinite(localWidth)||localWidth<=0)return 0;
-  if((stripe.edgeSides==='negative'&&side!==-1)||
-    (stripe.edgeSides==='positive'&&side!==1))return 0;
-  // A perceptual height curve makes subtle low values useful and the high
-  // end genuinely dramatic, without the old stripe-width cap flattening
-  // the entire slider response on thin lines.
-  const height=clamp(stripe.shapeDepth??50,0,100)/100;
-  if(height===0)return 0;
-  const strength=Math.pow(height,1.45);
-  const pitch=bouncingPitch(stripe.shapeFrequency??50);
-  const phase=side===-1?(stripe.edgePhasePercent??0):
-    (stripe.edgePhasePercentB??stripe.edgePhasePercent??0);
-  const cycle=station/pitch+phase/100,t=fract(cycle);
-  // Height is proportional to horizontal travel, independently of stripe
-  // thickness. Broad arches peak halfway between the deeper lower drops.
-  const upperDepth=pitch*.115*strength;
-  const lowerDepth=pitch*.22*strength;
-  // A whole-period raised cosine flows continuously from one rounded drop
-  // into the next. Its only horizontal tangents are isolated extrema at the
-  // drop centres and the shallow valleys between them. The old truncated
-  // semicircle left a 30%-of-pitch straight plateau between each drop.
-  const drop=lowerDepth*(1+Math.cos(TAU*t))*.5;
-  const value=side===-1?
-    circularScallop(station,pitch,phase,upperDepth):drop;
-  const direction=stripe.edgeDirection??'outward';
-  const sign=direction==='inward'?-1:
-    direction==='alternating'&&Math.abs(Math.floor(cycle)%2)===1?-1:1;
-  // Inward bounces must not make the two boundaries change places, even at
-  // high depth or a locally tapered endpoint.
-  return side*sign*(sign<0?Math.min(value,localWidth*.24):value);
-}
-
 // Wavy, pinked and stepped remain independent shapes; scallops alone use arcs.
 export function edgeWave(style,station,pitch,phase=0,direction='outward'){
   if(style==='straight'||!Number.isFinite(station)||!Number.isFinite(pitch)||pitch<=0)return 0;
@@ -93,8 +48,6 @@ export function edgeWave(style,station,pitch,phase=0,direction='outward'){
 // The local width cap prevents inward scallops from inverting a tapered band.
 export function stripeEdgeOffset(stripe,station,side,localWidth){
   const style=stripe.edgeStyle??'straight';
-  if(style==='bouncing')
-    return bouncingRibbonOffset(stripe,station,side,localWidth);
   if(style==='straight'||!stripe.edgeDepth||
     (style==='scalloped'&&stripe.scallopForm==='ricrac')||
     ((style!=='scalloped'||stripe.scallopForm!=='bunting')&&
