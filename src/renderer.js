@@ -169,10 +169,13 @@ function stripePath(stripe,extent,scene){
   }else{
     const start=stripe.segmentStart??-extent,end=stripe.segmentEnd??extent;
     // The original continuous fill is unchanged for existing saved recipes.
-    // Small scallops need more arc samples than long straight segments.
-    // This extra work is opt-in; unchanged recipes retain historic sampling.
-    const step=stripe.edgeStyle==='scalloped'?
-      Math.min(3,edgePitch(stripe.edgeSize??50)/14):3;
+    // Narrow scallops and bouncing drops need adequate arc samples.
+    // This extra work is opt-in; other geometries retain historic sampling.
+    const decoratedPitch=stripe.edgeStyle==='bouncing'?
+      edgePitch(100-(stripe.shapeFrequency??50)):
+      edgePitch(stripe.edgeSize??50);
+    const step=['scalloped','bouncing'].includes(stripe.edgeStyle)?
+      Math.min(3,decoratedPitch/18):3;
     const count=Math.max(500,Math.ceil((end-start)/step));
     for(let i=0;i<=count;i++){
       const x=start+(end-start)*i/count,p=edgePoint(x,stripe,extent,-1,scene);
