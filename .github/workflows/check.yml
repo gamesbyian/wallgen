@@ -67,9 +67,10 @@ jobs:
 
   # On-demand, unprivileged real Chromium evidence for a same-repository PR.
   # The required lightweight "test" check is unchanged. An agent opts in by
-  # including [touch-browser] in its PR title. Forks cannot run this deep gate.
+  # including [touch-browser] for the full suite or [bounce-browser] for
+  # a focused production geometry proof. Forks cannot run either gate.
   touch-browser:
-    if: ${{ github.event_name == 'pull_request' && contains(github.event.pull_request.title, '[touch-browser]') && github.event.pull_request.head.repo.full_name == github.repository }}
+    if: ${{ github.event_name == 'pull_request' && (contains(github.event.pull_request.title, '[touch-browser]') || contains(github.event.pull_request.title, '[bounce-browser]')) && github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-latest
     timeout-minutes: 25
     permissions:
@@ -109,6 +110,7 @@ jobs:
           cat /tmp/roygbiv-opt-in-browser.log
           exit 1
       - name: Genuine two-viewport Chromium acceptance
+        if: ${{ contains(github.event.pull_request.title, '[touch-browser]') }}
         run: |
           CHROME_BIN="$(command -v google-chrome || command -v chromium || echo /usr/bin/google-chrome)" node tests/rotation-scrubber-browser.mjs
           node tests/agent3-portrait-swipes-escape.mjs
@@ -121,6 +123,9 @@ jobs:
           node tests/bouncing-ribbon-browser.mjs
           node tests/pigment-browser-acceptance.mjs
           node tests/inset-anchor-layout-browser.mjs
+      - name: Bouncing ribbon production Chromium and worker export acceptance
+        if: ${{ contains(github.event.pull_request.title, '[bounce-browser]') }}
+        run: node tests/bouncing-ribbon-browser.mjs
       - name: Preserve successful and failed browser evidence
         if: always()
         uses: actions/upload-artifact@v4
