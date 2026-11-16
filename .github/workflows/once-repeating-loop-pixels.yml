@@ -1,0 +1,47 @@
+name: One-off repeating-loop pixel verification
+on:
+  pull_request:
+    paths:
+      - src/model.js
+      - src/path-geometry.js
+      - src/renderer.js
+      - tests/repeating-loop-visual-browser.mjs
+      - .github/workflows/once-repeating-loop-pixels.yml
+permissions:
+  contents: read
+jobs:
+  loop-pixels:
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'fix/repeating-loops-visible-width-aware' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          package-manager-cache: false
+      - name: Browser source dependencies
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1 serve@14.2.5
+          npx playwright install --with-deps chromium
+      - name: Serve PR branch production source
+        run: |
+          npx serve . -l 4173 > /tmp/repeating-loop-source.log 2>&1 &
+          for i in $(seq 1 35); do
+            if curl -fsS http://127.0.0.1:4173/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/repeating-loop-source.log
+          exit 1
+      - name: Verify painted loop holes and save exact PNGs
+        run: node tests/repeating-loop-visual-browser.mjs
+      - name: Preserve real production source images
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: repeating-loop-visual-${{ github.run_id }}
+          path: artifacts/repeating-loop-visual/
+          retention-days: 5
+          if-no-files-found: warn
