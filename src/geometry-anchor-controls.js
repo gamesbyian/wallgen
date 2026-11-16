@@ -1,18 +1,23 @@
-// Small, contextual anchor selectors belong beside the dimensions they govern.
-// They are recipe-owned, Undoable, accessible and independent of viewport zoom.
-import {STRIPE_ANCHORS,GROUP_ANCHORS,WIDTH_ANCHORS,LENGTH_ANCHORS,groupAnchorCoordinate,
-  bandAnchorCoordinate} from './geometry-anchors.js';
+// Compact, source-adjacent controls: the fixed-height mobile tool card
+// must never hide the colour anchors below its clipped viewport.
+import {STRIPE_ANCHORS,GROUP_ANCHORS,WIDTH_ANCHORS,LENGTH_ANCHORS,groupAnchorCoordinate} from './geometry-anchors.js';
 import {balanceStripeEnds} from './renderer.js?v=20261024-text-overlays1';
 import {resolveScene} from './model.js';
 
 const options={
-  spreadAnchor:[['centre','Centre of rainbow'],['red','Red stripe'],['green','Green stripe'],['violet','Violet stripe']],
-  repeatAnchor:[['centre','Centre of groups'],['first','First group'],['last','Last group']],
-  widthAnchor:[['centre','Centre of rainbow'],['red-edge','Red outer edge'],['violet-edge','Violet outer edge']],
-  pathLengthAnchor:[['centre','Centre of each stripe'],['start','Start of each stripe'],['end','End of each stripe']]
+  spreadAnchor:[['centre','Centre'],['red','Red'],['green','Green'],['violet','Violet']],
+  repeatAnchor:[['centre','Centre'],['first','First group'],['last','Last group']],
+  widthAnchor:[['centre','Centre'],['red-edge','Red edge'],['violet-edge','Violet edge']],
+  pathLengthAnchor:[['centre','Centre'],['start','Start'],['end','End']]
 };
+
 export function installGeometryAnchorControls({form,getRecipe,getScene,onApply}){
   const controls=[];
+  const stripeStrip=document.createElement('div');
+  stripeStrip.className='geometry-anchor-strip';
+  stripeStrip.setAttribute('role','group');
+  stripeStrip.setAttribute('aria-label','Stationary stripe references');
+
   for(const [key,source,reference] of [
     ['spreadAnchor','spread','spreadAnchorPosition'],
     ['repeatAnchor','repeatSpacing','repeatAnchorPosition'],
@@ -23,42 +28,53 @@ export function installGeometryAnchorControls({form,getRecipe,getScene,onApply})
     const sourceRow=field?.closest('.lockable-setting')||
       field?.closest('.texture-rotation-field')||field?.closest('label');
     if(!sourceRow)throw new Error('Anchor control missing source field: '+source);
-    const row=document.createElement('label');
-    row.className='geometry-anchor-setting';
+    const isStripeAnchor=key==='spreadAnchor'||key==='widthAnchor';
+    const row=isStripeAnchor?stripeStrip:document.createElement('label');
+    if(!isStripeAnchor)row.className='geometry-anchor-setting';
+    const wrapper=isStripeAnchor?document.createElement('label'):row;
+    if(isStripeAnchor)wrapper.className='geometry-anchor-inline';
     const title=document.createElement('span');
-    title.textContent=key==='spreadAnchor'?'Hold stripe stationary':
+    title.textContent=key==='spreadAnchor'?'Spacing lock':
       key==='repeatAnchor'?'Hold group stationary':
-      key==='widthAnchor'?'Hold ribbon edge stationary':'Hold stripe endpoint stationary';
+      key==='widthAnchor'?'Width edge':'Hold stripe endpoint';
     const selector=document.createElement('select');
     selector.name=key;
-    selector.setAttribute('aria-label',title.textContent);
-    selector.setAttribute('aria-describedby',sourceRow.querySelector('small[id]')?.id||'');
+    selector.setAttribute('aria-label',key==='spreadAnchor'?'Keep this stripe fixed during spacing changes':
+      key==='widthAnchor'?'Keep this ribbon edge fixed during thickness changes':
+      title.textContent);
     for(const [value,label] of options[key]){
       const item=document.createElement('option');
       item.value=value;item.textContent=label;selector.append(item);
     }
-    row.append(title,selector);
-    if(key==='pathLengthAnchor'){
-      const hint=document.createElement('small');
-      hint.textContent='Floating stripes only. Artwork bounds take priority if a fixed endpoint would leave the canvas.';
-      row.append(hint);
+    wrapper.append(title,selector);
+    if(isStripeAnchor){
+      stripeStrip.append(wrapper);
+      if(key==='spreadAnchor')sourceRow.after(stripeStrip);
+    }else{
+      if(key==='pathLengthAnchor'){
+        const hint=document.createElement('small');
+        hint.textContent='Independent inset stripes only. Canvas limits take priority.';
+        row.append(hint);
+      }
+      sourceRow.after(row);
     }
-    sourceRow.after(row);
     selector.addEventListener('change',event=>{
-      // Do not pass these selects through the ordinary source-field change
-      // handler: the anchor reference must be captured in the same transaction.
+      // Capture the reference and change the selection atomically. The
+      // form's ordinary scalar-change listener must not process this choice.
       event.stopPropagation();
-      const recipe=getRecipe(),scene=getScene();
+      const recipe=getRecipe();
       const anchor=selector.value;
       if(key==='spreadAnchor'&&!STRIPE_ANCHORS.includes(anchor)||
          key==='repeatAnchor'&&!GROUP_ANCHORS.includes(anchor)||
          key==='widthAnchor'&&!WIDTH_ANCHORS.includes(anchor)||
          key==='pathLengthAnchor'&&!LENGTH_ANCHORS.includes(anchor))return;
+      // The active canvas may still be rendering through the worker. Read
+      // authoritative recipe geometry, not a stale presented frame.
+      const scene=key==='pathLengthAnchor'?
+        (getScene()||resolveScene(recipe)):resolveScene(recipe);
       const stripes=scene?.stripes||[];
-      // Anchored width contributes a separate, uniform translation. Capture
-      // a spread reference before that width-only translation so the two
-      // dimensional controls never double-apply one another's shift.
-      const bareStripes=recipe.widthAnchor&&['spreadAnchor','widthAnchor'].includes(key)?
+      const bareStripes=recipe.widthAnchor&&
+        ['spreadAnchor','widthAnchor'].includes(key)?
         resolveScene({...recipe,widthAnchor:undefined,widthAnchorBasis:undefined,
           widthAnchorOffset:undefined}).stripes:stripes;
       if(key==='widthAnchor'){
@@ -69,7 +85,8 @@ export function installGeometryAnchorControls({form,getRecipe,getScene,onApply})
         return;
       }
       if(key==='pathLengthAnchor'){
-        if(scene?.composition!=='floating'||scene.geometry==='drawn')return;
+        if(scene?.composition!=='floating'||scene.geometry==='drawn'||
+           scene.insetAlignment!=='independent')return;
         const points=stripes.map(original=>{
           const stripe={...original};
           balanceStripeEnds(scene,stripe,false);
@@ -79,29 +96,31 @@ export function installGeometryAnchorControls({form,getRecipe,getScene,onApply})
             anchor==='end'?stripe.segmentEnd:
             (stripe.segmentStart+stripe.segmentEnd)/2;
         });
-        if(points.every(point=>point===null))return;
+        if(points.every(value=>value===null))return;
         onApply({...recipe,[key]:anchor,[reference]:points});
         return;
       }
       const value=key==='spreadAnchor'?
         (anchor==='centre'?
           (bareStripes[0]?.center+bareStripes.at(-1)?.center)/2:
-          bareStripes.find(stripe=>stripe.name===anchor[0].toUpperCase()+anchor.slice(1))?.center):
+          bareStripes.find(stripe=>stripe.name===
+            anchor[0].toUpperCase()+anchor.slice(1))?.center):
         groupAnchorCoordinate(scene?.bundleOffsets,anchor);
       if(!Number.isFinite(value))return;
       onApply({...recipe,[key]:anchor,[reference]:value});
     });
     controls.push({key,row,selector});
   }
+
   const sync=()=>{
-    const r=getRecipe();
+    const recipe=getRecipe();
     for(const {key,row,selector} of controls){
-      const value=r[key]||'centre';
-      if(document.activeElement!==selector)selector.value=value;
-      row.hidden=r.structure!=='paths'||
-        (key==='repeatAnchor'&&r.composition!=='repeat')||
-        (key==='pathLengthAnchor'&&(r.composition!=='floating'||
-          r.insetAlignment&&r.insetAlignment!=='independent'||
+      if(document.activeElement!==selector)
+        selector.value=recipe[key]||'centre';
+      row.hidden=recipe.structure!=='paths'||
+        (key==='repeatAnchor'&&recipe.composition!=='repeat')||
+        (key==='pathLengthAnchor'&&(recipe.composition!=='floating'||
+          recipe.insetAlignment!=='independent'||
           getScene()?.geometry==='drawn'));
     }
   };
