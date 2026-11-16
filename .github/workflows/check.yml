@@ -96,6 +96,7 @@ jobs:
           node --check tests/view-pan-escape-focus-browser.mjs
           node --check tests/geometry-anchors-browser.mjs
           node --check tests/stripe-effects-browser.mjs
+          node --check tests/bouncing-ribbon-browser.mjs
           node --check tests/pigment-browser-acceptance.mjs
           node --check tests/inset-anchor-layout-browser.mjs
       - name: Serve current PR source
@@ -117,6 +118,7 @@ jobs:
           CHROME_BIN="$(command -v google-chrome || command -v chromium || echo /usr/bin/google-chrome)" node tests/view-pan-escape-focus-browser.mjs
           node tests/geometry-anchors-browser.mjs
           node tests/stripe-effects-browser.mjs
+          node tests/bouncing-ribbon-browser.mjs
           node tests/pigment-browser-acceptance.mjs
           node tests/inset-anchor-layout-browser.mjs
       - name: Preserve successful and failed browser evidence
@@ -132,6 +134,7 @@ jobs:
             artifacts/independent-keyboard-focus/
             artifacts/geometry-anchors-browser/
             artifacts/stripe-effects-browser/
+            artifacts/bouncing-ribbon-browser/
             artifacts/inset-anchor-layout-browser/
           retention-days: 14
           if-no-files-found: warn
