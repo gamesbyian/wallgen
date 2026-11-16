@@ -10,10 +10,12 @@ test('app and portrait gesture navigator import one identical stateful editor la
   assert.deepEqual(spec(app),spec(mobile),
     'Separate URLs, including differing ?v query strings, instantiate separate editor tools maps');
   assert.equal(spec(app).length,1);
-  assert.match(spec(app)[0],/single-editor1/);
+  assert.match(spec(app)[0],/^\.\/editor-layout\.js\?v=[\w-]+$/,
+    'The editor singleton may be cache-busted, but must be versioned');
   const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
   assert.ok(html.includes('src/app.js?v='));
   // The independently cache-busted app entry may evolve without changing
   // the shared editor-layout module identity (enforced above).
-  assert.match(html,/src\/mobile-swipes\.js\?v=20261023-single-editor1/);
+  assert.match(html,/src\/mobile-swipes\.js\?v=[\w-]+/,
+    'The phone gesture entry must be cache-busted with the app');
 });
