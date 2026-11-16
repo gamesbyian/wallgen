@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {edgePitch,edgeWave,stripeEdgeOffset,decorateRegionObjects,
+import {edgePitch,edgeWave,circularScallop,stripeEdgeOffset,decorateRegionObjects,
   normalizeRegionEdgeOverrides} from '../src/edge-profiles.js';
 import {samplePath,ribbonEdge,widthAt} from '../src/path-geometry.js';
 import {normalizeRecipe,resolveScene} from '../src/model.js';
@@ -29,6 +29,70 @@ test('scallops, waves, teeth and steps have independent deterministic profiles',
   assert.equal(edgeWave('scalloped',pitch*1.5,pitch,0,'alternating'),-1);
   assert.equal(edgeWave('straight',pitch/2,pitch),0);
 });
+
+test('scallops are actual circular arcs, including shallower circular segments',()=>{
+  const pitch=80,half=pitch/2;
+  for(const h of [half,half*.35]){
+    const radius=(half*half+h*h)/(2*h);
+    for(const t of [0,.125,.25,.5,.75,.875,1]){
+      const x=(t-.5)*pitch;
+      const y=circularScallop(t*pitch,pitch,0,h);
+      assert.ok(Math.abs(x*x+Math.pow(y+radius-h,2)-radius*radius)<1e-7,
+        'sample must lie on the generating circle at t='+t);
+    }
+  }
+  for(const i of [0,1,2,3,4]){
+    assert.ok(Math.abs(circularScallop(i*pitch+.5*pitch,pitch,0,half)-half)<1e-8);
+    assert.ok(Math.abs(circularScallop(i*pitch,pitch,0,half))<1e-8);
+  }
+});
+test('ric-rac, bunting and edge-only are independent selectable silhouettes',()=>{
+  const base={seed:'three-forms',geometry:'scalloped',construction:'stroke',
+    stripeWidth:75,spread:70,individuality:0,shapeFrequency:100,shapeDepth:100,
+    stripeEdgeStyle:'scalloped',stripeEdgeSize:50,stripeEdgeDepth:100,
+    stripeEdgeSides:'negative',stripeEdgeDirection:'outward'};
+  const ricrac=resolveScene(normalizeRecipe({...base,stripeScallopForm:'ricrac'}));
+  const bunting=resolveScene(normalizeRecipe({...base,stripeScallopForm:'bunting'}));
+  const edgeOnly=resolveScene(normalizeRecipe({...base,stripeScallopForm:'edge-only'}));
+  const pitch=edgePitch(base.stripeEdgeSize),x=pitch/2;
+  const a=ricrac.stripes[3],b=bunting.stripes[3],c=edgeOnly.stripes[3];
+  assert.ok(samplePath(a,x,ricrac.extent).y>a.center);
+  assert.ok(samplePath(a,x+pitch,ricrac.extent).y<a.center);
+  assert.equal(samplePath(b,x,bunting.extent).y,b.center);
+  assert.equal(samplePath(c,x,edgeOnly.extent).y,c.center);
+  assert.equal(stripeEdgeOffset(a,x,-1,a.width),0);
+  assert.equal(stripeEdgeOffset(a,x,1,a.width),0);
+  assert.ok(stripeEdgeOffset(b,x,-1,b.width)<0);
+  assert.ok(stripeEdgeOffset(b,x,1,b.width)>0,
+    'bunting is a symmetric pair of decorated edges');
+  assert.ok(stripeEdgeOffset(c,x,-1,c.width)<0);
+  assert.equal(stripeEdgeOffset(c,x,1,c.width),0,
+    'edge-only respects selected physical edge');
+  const zeroWave=resolveScene(normalizeRecipe({...base,stripeScallopForm:'ricrac',
+    shapeFrequency:0,shapeDepth:0}));
+  assert.equal(samplePath(zeroWave.stripes[3],x,zeroWave.extent).y,
+    samplePath(a,x,ricrac.extent).y,
+    'ric-rac must not inherit the generic wave frequency or depth');
+  const invalid=normalizeRecipe({...base,stripeScallopForm:'bad'});
+  assert.equal(invalid.stripeScallopForm,'edge-only');
+  for(const mode of ['ricrac','bunting','edge-only']){
+    const recipe=normalizeRecipe({...base,stripeScallopForm:mode});
+    assert.deepEqual(normalizeRecipe(recipe),recipe);
+  }
+});
+test('scallop depth stays even under authored stripe taper',()=>{
+  const stripe={edgeStyle:'scalloped',scallopForm:'edge-only',
+    edgeDepth:100,edgeSize:50,edgeDirection:'outward',
+    edgeSides:'both',edgePhasePercent:0,width:50};
+  const x=edgePitch(50)/2;
+  assert.equal(stripeEdgeOffset(stripe,x,-1,20),
+    stripeEdgeOffset(stripe,x,-1,45));
+  assert.ok(Math.abs(stripeEdgeOffset(stripe,x,1,45))>0);
+  assert.equal(stripeEdgeOffset({...stripe,edgeStyle:'wavy',
+    scallopForm:'bunting',edgeSides:'negative'},x,1,45),0,
+    'bunting choice must not override edge selection on non-scalloped styles');
+});
+
 test('stripe edge directions, single-side editing, and zero-depth leave core stable',()=>{
   const stripe={edgeStyle:'scalloped',edgeDepth:100,edgeSize:50,
     edgeSides:'both',edgePhasePercent:0,edgeDirection:'outward'};

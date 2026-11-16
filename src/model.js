@@ -1,6 +1,6 @@
 import { SHAPES } from './path-geometry.js';
 import {EDGE_STYLES,EDGE_DIRECTIONS,STRIPE_EDGE_SIDES,STRIPE_EDGE_ALIGNMENTS,
-  normalizeRegionEdgeOverrides} from './edge-profiles.js';
+  STRIPE_SCALLOP_FORMS,normalizeRegionEdgeOverrides} from './edge-profiles.js';
 import {STRIPE_ANCHORS,GROUP_ANCHORS,WIDTH_ANCHORS,LENGTH_ANCHORS,pinStripePositions,pinGroupOffsets,pinBandEdges,stripeAnchorCoordinate} from './geometry-anchors.js';
 import {normalizePhotoLook} from './photo-look.js';
 import {normalizeSurfaceTreatments} from './embroidery.js';
@@ -43,7 +43,7 @@ export const LOCKABLE_SETTINGS = ['seed','family','orientation','geometry','moti
   'textureDisplacement','patternHomogeneity','chaos','stripeWidth','spread','shapeFrequency','shapeDepth','motifSize','motifFrequency','lineStyle','individuality',
   'overridePatternHomogeneity','gap','outlineBuffer','glow','glowPlacement','glowColorMode','glowCustomColor','glowInvert','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','position',
   'structure','radialMode','rayCount','rayRotation','rayTwist','rayCoverage','rayCore','fieldCenterX','fieldCenterY','regionMode','regionCount','regionJitter','regionSides','regionEdgeStyle','regionEdgeSize','regionEdgeDepth','regionEdgePhase','regionEdgeDirection','regionEdgeOverrides','scatteredCount','scatteredMinSize','scatteredMaxSize','scatteredVariation','scatteredSpacing','scatteredEdgeCrop','scatteredOverlap','scatteredShapeKind','scatteredShapeOverrides','dividerColor','dividerWidth',
-  'composition','insetAlignment','repeatCount','repeatSpacing','construction','crossingMode','turnRadius','hairpinAngle','loopRadius','loopSweep','geometrySafety','extendDrawnPath','stepCount','chevronSharpness','loopAspect','stripeEdgeStyle','stripeEdgeSize','stripeEdgeDepth','stripeEdgePhase','stripeEdgeDirection','stripeEdgeSides','stripeEdgeAlignment','pathLength','endTaper','tonalContrast','brushRoughness','pigmentStyle','pigmentGrainScale','pigmentEdgeBreakup','pigmentDirectionality','dotSize','dotSpacing','interiorElements'];
+  'composition','insetAlignment','repeatCount','repeatSpacing','construction','crossingMode','turnRadius','hairpinAngle','loopRadius','loopSweep','geometrySafety','extendDrawnPath','stepCount','chevronSharpness','loopAspect','stripeEdgeStyle','stripeScallopForm','stripeEdgeSize','stripeEdgeDepth','stripeEdgePhase','stripeEdgeDirection','stripeEdgeSides','stripeEdgeAlignment','pathLength','endTaper','tonalContrast','brushRoughness','pigmentStyle','pigmentGrainScale','pigmentEdgeBreakup','pigmentDirectionality','dotSize','dotSpacing','interiorElements'];
 export const PALETTES = ['classic', 'electric', 'pastel', 'jewel', 'muted', 'sunset', 'candy', 'arctic', 'earth', 'twilight', 'citrus'];
 export const TEXTURE_COVERAGES = ['both', 'stripes', 'background'];
 export const OUTLINES = ['none', 'hairline', 'white', 'double', 'broken', 'one-side', 'black', 'black-hairline', 'black-double', 'black-broken', 'black-one-side'];
@@ -225,6 +225,7 @@ export function normalizeRecipe(input = {}) {
     mirrorVertical: input.mirrorVertical === true || input.mirrorVertical === 'true',
     geometry: readChoice('geometry', GEOMETRIES),
     stripeEdgeStyle:EDGE_STYLES.includes(input.stripeEdgeStyle)?input.stripeEdgeStyle:'straight',
+    stripeScallopForm:STRIPE_SCALLOP_FORMS.includes(input.stripeScallopForm)?input.stripeScallopForm:'edge-only',
     stripeEdgeSize:finiteRange(input.stripeEdgeSize,50,0,100),
     stripeEdgeDepth:finiteRange(input.stripeEdgeDepth,70,0,100),
     stripeEdgePhase:finiteRange(input.stripeEdgePhase,0,0,100),
@@ -508,6 +509,7 @@ export function resolveScene(recipeInput) {
       // centreline. Allow independent profiles on any other path geometry.
       ...(geometry==='scalloped'||recipe.stripeEdgeStyle!=='straight'?{
         edgeStyle:recipe.stripeEdgeStyle==='straight'?'scalloped':recipe.stripeEdgeStyle,
+        scallopForm:recipe.stripeScallopForm,
         edgeSize:recipe.stripeEdgeSize,edgeDepth:recipe.stripeEdgeDepth,
         edgeDirection:recipe.stripeEdgeDirection,edgeSides:recipe.stripeEdgeSides,
         edgePhasePercent:recipe.stripeEdgePhase+
