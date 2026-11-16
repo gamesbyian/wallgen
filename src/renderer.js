@@ -532,7 +532,8 @@ function stripePigmentBounds(stripe,extent){
   for(let i=0;i<=n;i++){
     const station=start+(end-start)*i/n;
     const p=samplePath(stripe,station,extent);
-    const r=widthAt(stripe,station,extent)*.55+7;
+    // Texture displacement can shift either edge by up to 28 source units.
+    const r=widthAt(stripe,station,extent)*.55+35;
     left=Math.min(left,p.x-r);right=Math.max(right,p.x+r);
     top=Math.min(top,p.y-r);bottom=Math.max(bottom,p.y+r);
   }
@@ -542,7 +543,10 @@ function paintStripePigment(ctx,stripe,extent,scene,resources){
   if(!scene.brushRoughness||scene.construction==='woven'){
     fillMotif(ctx,stripe,extent,scene);return;
   }
-  const path=stripeFillPath(stripe,extent,scene);
+  // A dotted or patterned ribbon has deliberately disconnected footprints.
+  // Never add a continuous feather outside its actual painted motif.
+  const path=stripe.motif==='solid'&&stripe.lineStyle==='continuous'?
+    stripeFillPath(stripe,extent,scene):null;
   paintPigmentedFill(ctx,t=>{
     t.fillStyle=stripe.color;t.strokeStyle=stripe.color;
     fillMotif(t,stripe,extent,scene);
