@@ -996,8 +996,9 @@ export function drawRegionObjects(ctx,scene,rememberEffectShape=null){
       object.rings?'evenodd':'nonzero');
     ctx.save();trace(object);
     if(scene.glow>0&&scene.glowPlacement!=='inner'){
-      ctx.shadowColor=effectRgba(scene.glowColorMode,object.color,
-        scene.glowCustomColor,scene.glowInvert);
+      ctx.shadowColor=scene.glowColorMode==='stripe'&&!scene.glowInvert?
+        object.color:effectRgba(scene.glowColorMode,object.color,
+          scene.glowCustomColor,scene.glowInvert);
       ctx.shadowBlur=scene.glow/100*32;
     }
     ctx.fillStyle=object.color;
@@ -1207,8 +1208,9 @@ export function drawWallpaper(canvas, recipe, options={}) {
       stripeFillPath(stripe,scene.extent,scene),stripe.color);
     if(scene.glow>0&&scene.glowPlacement!=='inner'){
       g.save();
-      g.shadowColor=effectRgba(scene.glowColorMode,stripe.color,
-        scene.glowCustomColor,scene.glowInvert);
+      g.shadowColor=scene.glowColorMode==='stripe'&&!scene.glowInvert?
+        stripe.color:effectRgba(scene.glowColorMode,stripe.color,
+          scene.glowCustomColor,scene.glowInvert);
       g.shadowBlur=scene.glow/100*32;g.globalAlpha=.70;
       g.fillStyle=stripe.color;g.fill(stripeFillPath(stripe,scene.extent,scene));g.restore();
     }
