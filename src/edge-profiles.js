@@ -28,6 +28,37 @@ export function circularScallop(station,pitch,phase=0,depth=pitch/2,
     direction==='alternating'&&Math.abs(Math.floor(cycle)%2)===1?-1:1;
   return height*sign;
 }
+// Bouncing ribbon: a broad shallow arch on the upper boundary and a narrower
+// rounded drop on the lower boundary, centred at each upper-arch join.
+// Both decorate an otherwise straight, substantial band. This is different
+// from symmetric scalloped edges and from ric-rac centreline modulation.
+export function bouncingRibbonOffset(stripe,station,side,localWidth){
+  if(!Number.isFinite(station)||!Number.isFinite(localWidth)||localWidth<=0)return 0;
+  if((stripe.edgeSides==='negative'&&side!==-1)||
+    (stripe.edgeSides==='positive'&&side!==1))return 0;
+  const depth=clamp(stripe.shapeDepth??50,0,100)/50;
+  if(depth===0)return 0;
+  const width=Math.max(0,stripe.width??localWidth);
+  const pitch=edgePitch(100-clamp(stripe.shapeFrequency??50,0,100));
+  const phase=stripe.edgePhasePercent??0;
+  const cycle=station/pitch+phase/100,t=fract(cycle);
+  const upperDepth=Math.min(pitch*.14,width*.22)*depth;
+  const lowerDepth=Math.min(pitch*.31,width*.48)*depth;
+  // Arc shoulders remain flat between drops. The central round lobe is
+  // bounded to 54% of the pitch; it never consumes the whole base ribbon.
+  const fromJoin=Math.min(t,1-t)*pitch,halfDrop=pitch*.27;
+  const drop=fromJoin>=halfDrop?0:
+    lowerDepth*Math.sqrt(Math.max(0,1-(fromJoin/halfDrop)**2));
+  const value=side===-1?
+    circularScallop(station,pitch,phase,upperDepth):drop;
+  const direction=stripe.edgeDirection??'outward';
+  const sign=direction==='inward'?-1:
+    direction==='alternating'&&Math.abs(Math.floor(cycle)%2)===1?-1:1;
+  // Inward bounces must not make the two boundaries change places, even at
+  // high depth or a locally tapered endpoint.
+  return side*sign*(sign<0?Math.min(value,localWidth*.24):value);
+}
+
 // Wavy, pinked and stepped remain independent shapes; scallops alone use arcs.
 export function edgeWave(style,station,pitch,phase=0,direction='outward'){
   if(style==='straight'||!Number.isFinite(station)||!Number.isFinite(pitch)||pitch<=0)return 0;
@@ -49,6 +80,8 @@ export function edgeWave(style,station,pitch,phase=0,direction='outward'){
 // The local width cap prevents inward scallops from inverting a tapered band.
 export function stripeEdgeOffset(stripe,station,side,localWidth){
   const style=stripe.edgeStyle??'straight';
+  if(style==='bouncing')
+    return bouncingRibbonOffset(stripe,station,side,localWidth);
   if(style==='straight'||!stripe.edgeDepth||
     (style==='scalloped'&&stripe.scallopForm==='ricrac')||
     ((style!=='scalloped'||stripe.scallopForm!=='bunting')&&
