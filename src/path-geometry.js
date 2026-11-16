@@ -160,14 +160,20 @@ export function widthAt(stripe,x,extent){
   const t=(drawn?clamp(x,-core,core):x)/core;
   const base=stripe.width*Math.max(.3,1+stripe.taper*
     (Math.sin(t*TAU*1.4+(stripe.edgePhase??stripe.phase))*.7+t*.3));
-  const taper=(stripe.endTaper??0)/100;
-  if(!taper)return base;
+  // Historical stripe objects only have endTaper, which applied at both ends.
+  const startTaper=(stripe.startTaper??stripe.endTaper??0)/100;
+  const endTaper=(stripe.endTaper??0)/100;
+  if(!startTaper&&!endTaper)return base;
   // Crossing repairs draw a local branch from the ORIGINAL ribbon. Local
   // clipping limits geometry, but must never create new tapered endpoints.
   const start=stripe.taperStart??stripe.segmentStart??-extent,
     end=stripe.taperEnd??stripe.segmentEnd??extent;
-  const span=Math.max(1,end-start),distance=Math.min(x-start,end-x);
-  const edge=clamp(distance/(Math.max(.001,taper)*span*.45),0,1);
+  const span=Math.max(1,end-start);
+  // Each taper occupies at most 45% of the original path, with no overlap.
+  // A zero-strength end therefore remains blunt, regardless of the other.
+  const startEdge=startTaper?clamp((x-start)/(startTaper*span*.45),0,1):1;
+  const endEdge=endTaper?clamp((end-x)/(endTaper*span*.45),0,1):1;
+  const edge=Math.min(startEdge,endEdge);
   return base*(.03+.97*edge*edge*(3-2*edge));
 }
 // When callers have already sampled this exact station for texture relief,
