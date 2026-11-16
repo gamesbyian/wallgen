@@ -553,3 +553,12 @@
   outline:2px solid #f05a70;
   outline-offset:1px;
 }
+
+/* Physical stripe-edge phase: compact, reachable half-cycle presets. */
+.edge-phase-presets{display:flex;flex-wrap:wrap;gap:8px;width:100%;margin-top:5px}
+.edge-phase-presets button{flex:1 1 110px;min-height:44px;padding:7px 11px;
+  border:1px solid #77788c;border-radius:8px;background:var(--paper,#f8f7f4);
+  color:#252535;font-size:12px;font-weight:750;white-space:nowrap}
+.edge-phase-presets button[aria-pressed="true"]{background:#d7c7f5;
+  border-color:#956acb;color:#302249}
+.edge-phase-presets button:disabled{opacity:.4;cursor:not-allowed}
