@@ -489,7 +489,7 @@ export function resolveScene(recipeInput) {
     const displacement = Math.min(referenceAvg * .32, width * .7 + referenceAvg * .08) * (.3 + .7*chaos)*depthFactor*arcDepthGain;
     const phase=between(r,0,Math.PI*2);
     const edgeAlignmentPhase=recipe.stripeEdgeAlignment==='staggered'?(i%2)*50:
-      recipe.stripeEdgeAlignment==='independent'?phase/TAU*100:0;
+      recipe.stripeEdgeAlignment==='independent'?phase/(2*Math.PI)*100:0;
     const period=commonPeriod*between(r,.8,1.2);
     return {
       // Reverse the colour assignment, not the geometry. It keeps all seven
