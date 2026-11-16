@@ -29,7 +29,7 @@ test('current model has the same explicit recipe field list as latest historical
   const historical=new Set(latest.explicitKeys);
   assert.deepEqual(current.explicitKeys.filter(k=>historical.has(k)),latest.explicitKeys);
   assert.deepEqual(current.explicitKeys.filter(k=>!historical.has(k)),
-    ['glowColorMode','glowCustomColor','glowInvert','glowPlacement','insetAlignment','paletteLightness','paletteSaturation','paletteToneEnabled','pigmentDirectionality','pigmentEdgeBreakup','pigmentGrainScale','pigmentStyle','regionEdgeDepth','regionEdgeDirection','regionEdgePhase','regionEdgeSize','regionEdgeStyle','stripeEdgeAlignment','stripeEdgeDepth','stripeEdgeDirection','stripeEdgePhase','stripeEdgeSides','stripeEdgeSize','stripeEdgeStyle','stripeScallopForm','stripeShadowColorMode','stripeShadowCustomColor','stripeShadowInvert','stripeShadowPlacement']);
+    ['glowColorMode','glowCustomColor','glowInvert','glowPlacement','insetAlignment','paletteLightness','paletteSaturation','paletteToneEnabled','pigmentDirectionality','pigmentEdgeBreakup','pigmentGrainScale','pigmentStyle','regionEdgeDepth','regionEdgeDirection','regionEdgePhase','regionEdgeSize','regionEdgeStyle','stripeEdgeAlignment','stripeEdgeDepth','stripeEdgeDirection','stripeEdgePhase','stripeEdgePhaseB','stripeEdgeSides','stripeEdgeSize','stripeEdgeStyle','stripeScallopForm','stripeShadowColorMode','stripeShadowCustomColor','stripeShadowInvert','stripeShadowPlacement']);
   // This first archaeological pass indexes "name: expression" properties.
   // The literal "seed," shorthand is covered by runtime normalization,
   // not by this explicit-property-only source ledger.
@@ -128,7 +128,7 @@ test('full 45-revision field-expression matrix is reproducible from pinned sourc
     ([key])=>Object.hasOwn(historicalExpressions,key))),historicalExpressions);
   assert.deepEqual(Object.keys(latest).filter(
     key=>!Object.hasOwn(historicalExpressions,key)).sort(),
-    ['glowColorMode','glowCustomColor','glowInvert','glowPlacement','insetAlignment','paletteLightness','paletteSaturation','paletteToneEnabled','pigmentDirectionality','pigmentEdgeBreakup','pigmentGrainScale','pigmentStyle','regionEdgeDepth','regionEdgeDirection','regionEdgePhase','regionEdgeSize','regionEdgeStyle','stripeEdgeAlignment','stripeEdgeDepth','stripeEdgeDirection','stripeEdgePhase','stripeEdgeSides','stripeEdgeSize','stripeEdgeStyle','stripeScallopForm','stripeShadowColorMode','stripeShadowCustomColor','stripeShadowInvert','stripeShadowPlacement']);
+    ['glowColorMode','glowCustomColor','glowInvert','glowPlacement','insetAlignment','paletteLightness','paletteSaturation','paletteToneEnabled','pigmentDirectionality','pigmentEdgeBreakup','pigmentGrainScale','pigmentStyle','regionEdgeDepth','regionEdgeDirection','regionEdgePhase','regionEdgeSize','regionEdgeStyle','stripeEdgeAlignment','stripeEdgeDepth','stripeEdgeDirection','stripeEdgePhase','stripeEdgePhaseB','stripeEdgeSides','stripeEdgeSize','stripeEdgeStyle','stripeScallopForm','stripeShadowColorMode','stripeShadowCustomColor','stripeShadowInvert','stripeShadowPlacement']);
   const rows=expressionHistory.revisions;
   assert.ok(rows.some(row=>row.changed.some(change=>
     change.key==='stripeShadowStrength'&&change.before.includes('45, 0, 100')&&

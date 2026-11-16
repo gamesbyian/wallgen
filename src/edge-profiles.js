@@ -40,7 +40,8 @@ export function bouncingRibbonOffset(stripe,station,side,localWidth){
   if(depth===0)return 0;
   const width=Math.max(0,stripe.width??localWidth);
   const pitch=edgePitch(100-clamp(stripe.shapeFrequency??50,0,100));
-  const phase=stripe.edgePhasePercent??0;
+  const phase=side===-1?(stripe.edgePhasePercent??0):
+    (stripe.edgePhasePercentB??stripe.edgePhasePercent??0);
   const cycle=station/pitch+phase/100,t=fract(cycle);
   const upperDepth=Math.min(pitch*.14,width*.27)*depth;
   const lowerDepth=Math.min(pitch*.31,width*.70)*depth;
@@ -94,7 +95,8 @@ export function stripeEdgeOffset(stripe,station,side,localWidth){
   const amplitude=(stripe.edgeDirection==='inward'||stripe.edgeDirection==='alternating')?
     Math.min(desired,width*.44):desired;
   const pitch=edgePitch(stripe.edgeSize??50);
-  const phase=stripe.edgePhasePercent??0;
+  const phase=side===-1?(stripe.edgePhasePercent??0):
+    (stripe.edgePhasePercentB??stripe.edgePhasePercent??0);
   const direction=stripe.edgeDirection??'outward';
   return side*(style==='scalloped'?
     circularScallop(station,pitch,phase,amplitude,direction):

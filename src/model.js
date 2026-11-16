@@ -43,7 +43,7 @@ export const LOCKABLE_SETTINGS = ['seed','family','orientation','geometry','moti
   'textureDisplacement','patternHomogeneity','chaos','stripeWidth','spread','shapeFrequency','shapeDepth','motifSize','motifFrequency','lineStyle','individuality',
   'overridePatternHomogeneity','gap','outlineBuffer','glow','glowPlacement','glowColorMode','glowCustomColor','glowInvert','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','position',
   'structure','radialMode','rayCount','rayRotation','rayTwist','rayCoverage','rayCore','fieldCenterX','fieldCenterY','regionMode','regionCount','regionJitter','regionSides','regionEdgeStyle','regionEdgeSize','regionEdgeDepth','regionEdgePhase','regionEdgeDirection','regionEdgeOverrides','scatteredCount','scatteredMinSize','scatteredMaxSize','scatteredVariation','scatteredSpacing','scatteredEdgeCrop','scatteredOverlap','scatteredShapeKind','scatteredShapeOverrides','dividerColor','dividerWidth',
-  'composition','insetAlignment','repeatCount','repeatSpacing','construction','crossingMode','turnRadius','hairpinAngle','loopRadius','loopSweep','geometrySafety','extendDrawnPath','stepCount','chevronSharpness','loopAspect','stripeEdgeStyle','stripeScallopForm','stripeEdgeSize','stripeEdgeDepth','stripeEdgePhase','stripeEdgeDirection','stripeEdgeSides','stripeEdgeAlignment','pathLength','endTaper','tonalContrast','brushRoughness','pigmentStyle','pigmentGrainScale','pigmentEdgeBreakup','pigmentDirectionality','dotSize','dotSpacing','interiorElements'];
+  'composition','insetAlignment','repeatCount','repeatSpacing','construction','crossingMode','turnRadius','hairpinAngle','loopRadius','loopSweep','geometrySafety','extendDrawnPath','stepCount','chevronSharpness','loopAspect','stripeEdgeStyle','stripeScallopForm','stripeEdgeSize','stripeEdgeDepth','stripeEdgePhase','stripeEdgePhaseB','stripeEdgeDirection','stripeEdgeSides','stripeEdgeAlignment','pathLength','endTaper','tonalContrast','brushRoughness','pigmentStyle','pigmentGrainScale','pigmentEdgeBreakup','pigmentDirectionality','dotSize','dotSpacing','interiorElements'];
 export const PALETTES = ['classic', 'electric', 'pastel', 'jewel', 'muted', 'sunset', 'candy', 'arctic', 'earth', 'twilight', 'citrus'];
 export const TEXTURE_COVERAGES = ['both', 'stripes', 'background'];
 export const OUTLINES = ['none', 'hairline', 'white', 'double', 'broken', 'one-side', 'black', 'black-hairline', 'black-double', 'black-broken', 'black-one-side'];
@@ -229,6 +229,7 @@ export function normalizeRecipe(input = {}) {
     stripeEdgeSize:finiteRange(input.stripeEdgeSize,50,0,100),
     stripeEdgeDepth:finiteRange(input.stripeEdgeDepth,70,0,100),
     stripeEdgePhase:finiteRange(input.stripeEdgePhase,0,0,100),
+    stripeEdgePhaseB:finiteRange(input.stripeEdgePhaseB,0,0,100),
     stripeEdgeDirection:EDGE_DIRECTIONS.includes(input.stripeEdgeDirection)?input.stripeEdgeDirection:'outward',
     stripeEdgeSides:STRIPE_EDGE_SIDES.includes(input.stripeEdgeSides)?input.stripeEdgeSides:'both',
     stripeEdgeAlignment:STRIPE_EDGE_ALIGNMENTS.includes(input.stripeEdgeAlignment)?input.stripeEdgeAlignment:'aligned',
@@ -433,6 +434,10 @@ export function resolveScene(recipeInput) {
     between(random,.85,1.15);
   // True zero means no centreline displacement, not a residual half-wave.
   const depthFactor=Math.pow(recipe.shapeDepth/50,1.3);
+  // Sweeping arcs gain up to three times their former maximum depth without
+  // sacrificing the fine adjustment range for gentle bends (0–50).
+  const arcDepthGain=geometry==='arc'?
+    1+2*Math.pow(Math.max(0,(recipe.shapeDepth-50)/50),2):1;
   const commonEdgePhase=between(random,0,Math.PI*2);
   const commonTaper=between(random,0,0.28)*chaos;
   const weights = Array.from({length:6}, () => between(random, 1 - chaos * .46, 1 + chaos * .46));
@@ -455,7 +460,7 @@ export function resolveScene(recipeInput) {
   // Changing spread changes only centre-to-centre positions, not ribbon width.
   const referenceSpread=geometry==='drawn'?spread:span*spreadFactor(56)/repeats;
   const referenceAvg=referenceSpread/6;
-  const commonDisplacement=referenceAvg*.22*(.3+.7*chaos)*depthFactor;
+  const commonDisplacement=referenceAvg*.22*(.3+.7*chaos)*depthFactor*arcDepthGain;
   // Starting styles populate explicit settings in the editor. A family must
   // not invisibly multiply the user's manually selected stripe thickness.
   const widthFactor = .12+.395*Math.pow(recipe.stripeWidth/50,1.85);
@@ -481,8 +486,10 @@ export function resolveScene(recipeInput) {
     const individualGeometry=geometry;
     // Motif, palette and material belong to the whole seven-stripe design.
     // Individuality is geometric only. Pattern changes are never selected here.
-    const displacement = Math.min(referenceAvg * .32, width * .7 + referenceAvg * .08) * (.3 + .7*chaos)*depthFactor;
+    const displacement = Math.min(referenceAvg * .32, width * .7 + referenceAvg * .08) * (.3 + .7*chaos)*depthFactor*arcDepthGain;
     const phase=between(r,0,Math.PI*2);
+    const edgeAlignmentPhase=recipe.stripeEdgeAlignment==='staggered'?(i%2)*50:
+      recipe.stripeEdgeAlignment==='independent'?phase/(2*Math.PI)*100:0;
     const period=commonPeriod*between(r,.8,1.2);
     return {
       // Reverse the colour assignment, not the geometry. It keeps all seven
@@ -515,9 +522,8 @@ export function resolveScene(recipeInput) {
         scallopForm:recipe.stripeScallopForm,
         edgeSize:recipe.stripeEdgeSize,edgeDepth:recipe.stripeEdgeDepth,
         edgeDirection:recipe.stripeEdgeDirection,edgeSides:recipe.stripeEdgeSides,
-        edgePhasePercent:recipe.stripeEdgePhase+
-          (recipe.stripeEdgeAlignment==='staggered'?(i%2)*50:
-            recipe.stripeEdgeAlignment==='independent'?phase/TAU*100:0)
+        edgePhasePercent:recipe.stripeEdgePhase+edgeAlignmentPhase,
+        edgePhasePercentB:recipe.stripeEdgePhaseB+edgeAlignmentPhase
       }:{}),
       turnRadius:recipe.geometrySafety?
         Math.min(Math.max(90+recipe.turnRadius*1.35,spread*.56),

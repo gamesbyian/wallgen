@@ -28,7 +28,7 @@ export const EDITOR_CATEGORIES=[
   {id:'stripes',label:'Stripes',icon:'stripes',tools:[
     {id:'structure',name:'Structure',settings:['construction','stripeWidth','spread']},
     {id:'inset',name:'Inset stripes',settings:['insetAlignment']},
-    {id:'edges',name:'Edge shapes',settings:['stripeEdgeStyle','stripeScallopForm','stripeEdgeSize','stripeEdgeDepth','stripeEdgePhase','stripeEdgeDirection','stripeEdgeSides','stripeEdgeAlignment']},
+    {id:'edges',name:'Edge shapes',settings:['stripeEdgeStyle','stripeScallopForm','stripeEdgeSize','stripeEdgeDepth','stripeEdgePhase','stripeEdgePhaseB','stripeEdgeDirection','stripeEdgeSides','stripeEdgeAlignment']},
     {id:'patterns',name:'Patterns',settings:['motif','lineStyle','patternHomogeneity']},
     {id:'marks',name:'Dots',settings:['dotSize','dotSpacing']},
     {id:'motif-scale',name:'Motif scale',settings:['motifSize','motifFrequency']},
