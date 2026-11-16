@@ -87,13 +87,20 @@ export function pigmentMaterialSampler(scene){
  * The clip/path can contain holes and disconnected islands. A shared scratch
  * surface is reused instead of allocating a full-resolution layer per stripe.
  *
- * The 2 samples/source-unit lattice is anchored to integer world coordinates.
- * Main strokes and crossing replays use the same coordinates and seed.
+ * The quantized viewport-appropriate source lattice is anchored to world
+ * coordinates. Main strokes and crossing replays use identical density and seed.
  */
 export function paintPigmentedFill(ctx,paint,path,bounds,scene,objectSeed,options={}){
   if(!scene.brushRoughness){paint(ctx);return;}
   const pad=3.5*scene.brushRoughness/100*scene.pigmentEdgeBreakup/100+2;
-  const ppu=2;
+  // Preview paints only the samples it can display. Native exports retain
+  // two fine source samples/unit, but a 360x780 preview avoids paying their
+  // entire 600x1300-resolution cost. Quantize the density so small camera
+  // nudges do not continuously rephase the paint lattice.
+  const matrix=ctx.getTransform?.();
+  const density=matrix?Math.max(Math.hypot(matrix.a,matrix.b),
+    Math.hypot(matrix.c,matrix.d)):2;
+  const ppu=clamp(Math.ceil(density*4)/4,.5,2);
   const x0=Math.floor((bounds.left-pad)*ppu)/ppu;
   const y0=Math.floor((bounds.top-pad)*ppu)/ppu;
   const x1=Math.ceil((bounds.right+pad)*ppu)/ppu;
@@ -135,6 +142,20 @@ export function paintPigmentedFill(ctx,paint,path,bounds,scene,objectSeed,option
   const original=new Uint8Array(w*h);
   for(let i=0,j=3;i<original.length;i++,j+=4)original[i]=bytes[j];
   const seed=hashString(objectSeed),sampleMaterial=options.material||null;
+  // Underlying textile/stone relief is much smoother than pigment pores.
+  // Sample it every ~3 logical units and bilinearly interpolate: repeated
+  // materialHeight calls per pixel used to dominate low-resolution previews.
+  const materialPitch=Math.max(1,Math.round(ppu*3));
+  const materialCols=Math.ceil(w/materialPitch)+2;
+  const materialRows=Math.ceil(h/materialPitch)+2;
+  let materialGrid=null;
+  if(sampleMaterial){
+    materialGrid=new Float32Array(materialCols*materialRows);
+    for(let gy=0;gy<materialRows;gy++)
+      for(let gx=0;gx<materialCols;gx++)
+        materialGrid[gy*materialCols+gx]=sampleMaterial(
+          x0+gx*materialPitch/ppu,y0+gy*materialPitch/ppu);
+  }
   const breakup=clamp(scene.pigmentEdgeBreakup/100);
   const radius=Math.max(1,Math.round((1+2.5*breakup)*ppu));
   const fieldSettings=scene;
@@ -153,7 +174,15 @@ export function paintPigmentedFill(ctx,paint,path,bounds,scene,objectSeed,option
         if(iy<radius||original[index-radius*w]<96)edge+=.25;
         if(iy+radius>=h||original[index+radius*w]<96)edge+=.25;
       }
-      const material=sampleMaterial?sampleMaterial(x,y):0;
+      let material=0;
+      if(materialGrid){
+        const fx=ix/materialPitch,fy=iy/materialPitch;
+        const mx=Math.floor(fx),my=Math.floor(fy),tx=fx-mx,ty=fy-my;
+        const m=my*materialCols+mx;
+        material=mix(mix(materialGrid[m],materialGrid[m+1],tx),
+          mix(materialGrid[m+materialCols],
+            materialGrid[m+materialCols+1],tx),ty);
+      }
       const coverage=pigmentCoverage(x,y,seed,fieldSettings,material,edge);
       bytes[index*4+3]=Math.round(base*coverage);
     }
