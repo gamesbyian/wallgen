@@ -1,8 +1,8 @@
-import {EDITOR_CATEGORIES, TOOL_LIST, SETTING_TOOL} from './editor-schema.js?v=20261021-labels1';
+import {EDITOR_CATEGORIES, TOOL_LIST, SETTING_TOOL} from './editor-schema.js?v=20261116-insettools1';
 import {iconMarkup} from './ui-icons.js';
 import {annotateEditorSettingRow,sourceSettingLabel} from './editor-control-roles.js?v=20261021-labels1';
 import {installFocusedAdjustments} from './editor-focus.js';
-import {toolAppliesToScene} from './editor-tool-applicability.js';
+import {toolAppliesToScene} from './editor-tool-applicability.js?v=20261116-insettools1';
 import {findEditorToolMatch,findEditorSearchHit,findEditorSearchHits} from './editor-tool-search.js?v=20261022-choice1';
 import {legacyToolAliases,legacyCategoryAliases,legacySettingAliases} from './editor-terminology.js';
 import {installMaterialLayerIndicators} from './editor-material-indicators.js';
