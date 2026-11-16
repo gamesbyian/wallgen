@@ -15,7 +15,7 @@ const evidence=[];
 const close=(a,b,msg)=>assert.ok(Math.abs(a-b)<1e-6,
   `${msg}: ${a} versus ${b}`);
 try{
-  for(const [width,height] of [[320,700],[412,892]]){
+  for(const [width,height] of [[320,700],[384,832],[412,892]]){
     const context=await browser.newContext({viewport:{width,height},
       isMobile:true,hasTouch:true,reducedMotion:'reduce'});
     const page=await context.newPage(),errors=[];
