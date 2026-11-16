@@ -3,7 +3,7 @@
 // The editor occupies a separate reserved tray, leaving all seven visible
 // rainbow stripes above it at all times.
 import {visibleMobileTools,adjacentVisibleMobileTool,isMobileToolSwipeSurface,matchingSingleTouchEnd,mobileToolSelectionChanged} from './mobile-tool-sequence.js';
-import {selectEditorTool} from './editor-layout.js?v=20261116-insettools1';
+import {selectEditorTool} from './editor-layout.js?v=20261116-dualedges1';
 const phone=window.matchMedia('(max-width:790px)');
 const editor=document.getElementById('mobileDesignSheet');
 const count=document.getElementById('mobileSettingPosition');
