@@ -41,8 +41,8 @@ export const EDITOR_CATEGORIES=[
     {id:'interior-targets',name:'Ink & targets',settings:[]},
     {id:'outlines',name:'Outlines',settings:['outline','gap','outlineBuffer']},
     {id:'dividers',name:'Dividers',settings:['dividerColor','dividerWidth']},
-    {id:'shadows',name:'Shadows',settings:['stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection']},
-    {id:'glow',name:'Glow',settings:['glow']},
+    {id:'shadows',name:'Shadows',settings:['stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection','stripeShadowPlacement','stripeShadowColorMode','stripeShadowCustomColor','stripeShadowInvert']},
+    {id:'glow',name:'Glow',settings:['glow','glowPlacement','glowColorMode','glowCustomColor','glowInvert']},
   ]},
   {id:'colour',label:'Colour',icon:'colour',tools:[
     {id:'rainbow',name:'Rainbow',settings:['palette','reverseStripes']},
