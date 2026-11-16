@@ -42,8 +42,8 @@ export function bouncingRibbonOffset(stripe,station,side,localWidth){
   const pitch=edgePitch(100-clamp(stripe.shapeFrequency??50,0,100));
   const phase=stripe.edgePhasePercent??0;
   const cycle=station/pitch+phase/100,t=fract(cycle);
-  const upperDepth=Math.min(pitch*.14,width*.22)*depth;
-  const lowerDepth=Math.min(pitch*.31,width*.48)*depth;
+  const upperDepth=Math.min(pitch*.14,width*.27)*depth;
+  const lowerDepth=Math.min(pitch*.31,width*.70)*depth;
   // Arc shoulders remain flat between drops. The central round lobe is
   // bounded to 54% of the pitch; it never consumes the whole base ribbon.
   const fromJoin=Math.min(t,1-t)*pitch,halfDrop=pitch*.27;
