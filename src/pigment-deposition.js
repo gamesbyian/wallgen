@@ -81,6 +81,38 @@ export function pigmentMaterialSampler(scene){
     return total?sum/total:0;
   };
 }
+// A long diagonal may occupy a 3,000-unit bounding square despite only
+// touching a sliver of the viewport. Crop raster work in ORIGINAL local
+// artwork coordinates by inverse-transforming the actual ink-canvas corners.
+// The generous bleed retains glow and boundary-feather contributions.
+export function visiblePigmentBounds(bounds,matrix,canvas,bleed=48){
+  if(!matrix||!canvas?.width||!canvas?.height)return bounds;
+  const {a,b,c,d,e,f}=matrix;
+  const det=a*d-b*c;
+  if(!Number.isFinite(det)||Math.abs(det)<1e-9)return bounds;
+  let left=Infinity,right=-Infinity,top=Infinity,bottom=-Infinity;
+  for(const [px,py] of [[0,0],[canvas.width,0],
+    [canvas.width,canvas.height],[0,canvas.height]]){
+    const dx=px-e,dy=py-f;
+    const x=(d*dx-c*dy)/det,y=(a*dy-b*dx)/det;
+    left=Math.min(left,x);right=Math.max(right,x);
+    top=Math.min(top,y);bottom=Math.max(bottom,y);
+  }
+  return {left:Math.max(bounds.left,left-bleed),
+    right:Math.min(bounds.right,right+bleed),
+    top:Math.max(bounds.top,top-bleed),
+    bottom:Math.min(bounds.bottom,bottom+bleed)};
+}
+// Retain some pigment even for an unusually large visible object rather than
+// silently switching to the old opaque rendering at the memory ceiling.
+export function safePigmentDensity(bounds,preferred){
+  const area=Math.max(0,bounds.right-bounds.left)*
+    Math.max(0,bounds.bottom-bounds.top);
+  if(!Number.isFinite(area)||area===0)return preferred;
+  const limit=Math.sqrt(7_600_000/area);
+  if(limit>=preferred)return preferred;
+  return Math.min(preferred,Math.max(.25,Math.floor(limit*4)/4));
+}
 /**
  * Paint one independent source-over ink object. Its RGBA pixels carry true
  * variable coverage, so underlying objects remain visible through thin ink.
@@ -104,12 +136,18 @@ export function paintPigmentedFill(ctx,paint,path,bounds,scene,objectSeed,option
   // use the nearest quarter-sample rather than rounding up for every object:
   // the same deterministic noise field is sampled more economically. Native
   // export density still caps at two samples per source unit.
-  const ppu=clamp((scene.structure==='paths'?Math.ceil(density*4):
+  const preferred=clamp((scene.structure==='paths'?Math.ceil(density*4):
     Math.round(density*4))/4,.5,2);
-  const x0=Math.floor((bounds.left-pad)*ppu)/ppu;
-  const y0=Math.floor((bounds.top-pad)*ppu)/ppu;
-  const x1=Math.ceil((bounds.right+pad)*ppu)/ppu;
-  const y1=Math.ceil((bounds.bottom+pad)*ppu)/ppu;
+  const visible=visiblePigmentBounds(bounds,matrix,ctx.canvas,
+    Math.max(48,pad+scene.glow/100*45));
+  if(visible.left>=visible.right||visible.top>=visible.bottom)return;
+  const padded={left:visible.left-pad,right:visible.right+pad,
+    top:visible.top-pad,bottom:visible.bottom+pad};
+  const ppu=safePigmentDensity(padded,preferred);
+  const x0=Math.floor(padded.left*ppu)/ppu;
+  const y0=Math.floor(padded.top*ppu)/ppu;
+  const x1=Math.ceil(padded.right*ppu)/ppu;
+  const y1=Math.ceil(padded.bottom*ppu)/ppu;
   const w=Math.ceil((x1-x0)*ppu),h=Math.ceil((y1-y0)*ppu);
   // Hostile imported geometry and giant zoom-out bounds must stay bounded.
   // Render the original shape rather than allocating a dangerous bitmap.
