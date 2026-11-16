@@ -29,7 +29,7 @@ test('current model has the same explicit recipe field list as latest historical
   const historical=new Set(latest.explicitKeys);
   assert.deepEqual(current.explicitKeys.filter(k=>historical.has(k)),latest.explicitKeys);
   assert.deepEqual(current.explicitKeys.filter(k=>!historical.has(k)),
-    ['insetAlignment','paletteLightness','paletteSaturation','paletteToneEnabled']);
+    ['insetAlignment','paletteLightness','paletteSaturation','paletteToneEnabled','pigmentDirectionality','pigmentEdgeBreakup','pigmentGrainScale','pigmentStyle']);
   // This first archaeological pass indexes "name: expression" properties.
   // The literal "seed," shorthand is covered by runtime normalization,
   // not by this explicit-property-only source ledger.
@@ -122,13 +122,13 @@ test('full 45-revision field-expression matrix is reproducible from pinned sourc
   assert.equal(changedCount,10);
   const latest=extractRecipeFieldExpressions(read('src/model.js'));
   // Protect each historical field expression without misrepresenting the
-  // genuinely new Tone settings as source-era archaeology.
+  // genuinely new Tone and pigment settings as source-era archaeology.
   const historicalExpressions=raw.at(-1).fields;
   assert.deepEqual(Object.fromEntries(Object.entries(latest).filter(
     ([key])=>Object.hasOwn(historicalExpressions,key))),historicalExpressions);
   assert.deepEqual(Object.keys(latest).filter(
     key=>!Object.hasOwn(historicalExpressions,key)).sort(),
-    ['insetAlignment','paletteLightness','paletteSaturation','paletteToneEnabled']);
+    ['insetAlignment','paletteLightness','paletteSaturation','paletteToneEnabled','pigmentDirectionality','pigmentEdgeBreakup','pigmentGrainScale','pigmentStyle']);
   const rows=expressionHistory.revisions;
   assert.ok(rows.some(row=>row.changed.some(change=>
     change.key==='stripeShadowStrength'&&change.before.includes('45, 0, 100')&&
