@@ -302,6 +302,38 @@ test('cross-gesture, stopped, and post-commit intermediate frames remain rejecte
 });
 
 
+test('slow obsolete effect paints can be preempted after edit quieting without touching current work',()=>{
+  let time=1000;
+  const workers=[],seen=[];
+  const scheduler=createPreviewCoordinator({
+    canUseWorker:true,now:()=>time,
+    workerFactory:()=>{const worker=new FakeWorker();workers.push(worker);return worker;},
+    onFrame:frame=>seen.push(frame.key),
+  });
+  const first=workers[0];first.emit(ready);
+  scheduler.request({seed:'old'},'old',600,1300,{quality:'settled'});
+  const staleId=first.messages[0].id;
+  scheduler.request({seed:'latest'},'latest',600,1300,{quality:'settled'});
+  time+=640;
+  assert.equal(scheduler.restartObsoleteFor('latest',{minAgeMs:650}),false,
+    'recent work should be allowed to finish rather than restarting');
+  time+=20;
+  assert.equal(scheduler.restartObsoleteFor('latest',{minAgeMs:650}),true,
+    'older obsolete work must not indefinitely block the last requested edit');
+  assert.ok(first.terminated);
+  const late={type:'frame',id:staleId,key:'old',ink:bitmap()};
+  first.emit(late);
+  assert.ok(late.ink.closed,'terminated worker output never paints an outdated image');
+  const fresh=workers[1];fresh.emit(ready);
+  assert.deepEqual(fresh.messages.map(x=>x.key),['latest']);
+  assert.equal(scheduler.restartObsoleteFor('latest',{minAgeMs:650}),false,
+    'never replace a worker drawing the actual latest recipe');
+  fresh.emit({type:'frame',id:fresh.messages[0].id,key:'latest',
+    ink:bitmap(),background:bitmap()});
+  assert.deepEqual(seen,['latest']);
+  scheduler.dispose();
+});
+
 test('quiet Random interruption replaces only an aged obsolete active worker',()=>{
   let time=1000;
   const workers=[],frames=[];
