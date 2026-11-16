@@ -168,11 +168,11 @@ function stripePath(stripe,extent,scene){
     }
   }else{
     const start=stripe.segmentStart??-extent,end=stripe.segmentEnd??extent;
-    // Tight rebounds need more stations than ordinary centreline paths.
-    // Keep that cost exclusive to bouncing; existing decorative scallops
-    // and every other geometry retain their established sampling behaviour.
+    // The narrow join between neighbouring circular-looking archlets needs
+    // more points than broad ordinary curves. Scale samples to their pitch,
+    // exclusively for this geometry; unrelated stripe paths stay unchanged.
     const bouncing=(stripe.sharedGeometry??stripe.geometry)==='scalloped';
-    const step=bouncing?Math.min(3,bouncingPitch(stripe.shapeFrequency??50)/60):
+    const step=bouncing?Math.min(3,bouncingPitch(stripe.shapeFrequency??50)/85):
       stripe.edgeStyle==='scalloped'?
         Math.min(3,edgePitch(stripe.edgeSize??50)/18):3;
     const count=Math.max(500,Math.ceil((end-start)/step));
