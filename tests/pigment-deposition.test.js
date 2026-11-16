@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {normalizeRecipe,encodeRecipe,decodeRecipe,LOCKABLE_SETTINGS,
   respectSettingLocks,resolveScene,PIGMENT_STYLES} from '../src/model.js';
-import {pigmentCoverage,pigmentMaterialSampler,paintPigmentedFill} from '../src/pigment-deposition.js';
+import {pigmentCoverage,pigmentMaterialSampler,paintPigmentedFill,
+  visiblePigmentBounds,safePigmentDensity} from '../src/pigment-deposition.js';
 
 const base={brushRoughness:75,pigmentStyle:'dry-brush',pigmentGrainScale:35,
   pigmentEdgeBreakup:45,pigmentDirectionality:60};
@@ -101,4 +102,27 @@ test('pigment controls remain editable on radial and region compositions',()=>{
     assert.ok(!unavailable.includes("'"+key+"'"),
       key+' must not be disabled just because geometry is a region');
   assert.match(app,/if\(recipe\.construction==='woven'&&recipe\.structure==='paths'\)/);
+});
+
+test('diagonal native-export work remains bounded without dropping pigment',()=>{
+  const angle=Math.PI/4,c=Math.cos(angle),sin=Math.sin(angle);
+  const matrix={a:c,b:sin,c:-sin,d:c,e:300,f:650};
+  const visible=visiblePigmentBounds(
+    {left:-1950,right:1950,top:-1950,bottom:1950},
+    matrix,{width:600,height:1300});
+  assert.ok(visible.right-visible.left<1600,visible);
+  assert.ok(visible.bottom-visible.top<1600,visible);
+  const ppu=safePigmentDensity(visible,2);
+  assert.ok(ppu>=.25&&ppu<=2);
+  const pixels=(visible.right-visible.left)*(visible.bottom-visible.top)*ppu*ppu;
+  assert.ok(pixels<8_000_000,{pixels,ppu});
+  const huge={left:-1600,right:1600,top:-1600,bottom:1600};
+  const reduced=safePigmentDensity(huge,2);
+  assert.ok(reduced<2&&reduced>.25);
+  assert.ok(3200*3200*reduced*reduced<=7_600_000);
+  const outside=visiblePigmentBounds(
+    {left:5000,right:5100,top:5000,bottom:5100},
+    matrix,{width:600,height:1300});
+  assert.ok(outside.left>=outside.right||outside.top>=outside.bottom,
+    'fully off-camera pigment should do no offscreen raster work');
 });
