@@ -1128,7 +1128,7 @@ export function drawWallpaper(canvas, recipe, options={}) {
   const {scaleX,scaleY,offsetX,offsetY}=camera;
   scene.renderBounds=camera.boundsWithMargin(margin);
   const ink=createRenderSurface(inkWidth,inkHeight,options.canvasFactory);
-  let scratch,s,cachedBackground,effectSurface;
+  let scratch,s,cachedBackground,effectSurface,g;
   // Mask geometry is retained only when a newly selected effect needs it.
   // Existing glow and grey silhouette shadow still use their historical paths.
   const insetShadow=scene.stripeShadowStrength>0&&scene.stripeShadowPlacement!=='outer';
@@ -1146,7 +1146,7 @@ export function drawWallpaper(canvas, recipe, options={}) {
     material:scene.brushRoughness?pigmentMaterialSampler(scene):null};
   let cacheCommitted=false;
   try{
-  const g=ink.getContext('2d');
+  g=ink.getContext('2d');
   if(!g) throw new Error('Canvas ink layer unavailable');
   g.setTransform(scaleX,0,0,scaleY,
     margin.left+offsetX,margin.top+offsetY);
