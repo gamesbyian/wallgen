@@ -75,6 +75,13 @@ test('the reported design retains visibly open loops at all aspect values and st
         assert.ok(stripe.loopAmplitude>widest*.5,
           'the inner clearance must account for the widest stripe');
       }
+      for(let i=1;i<scene.stripes.length;i++){
+        const previous=scene.stripes[i-1],stripe=scene.stripes[i];
+        const clearance=stripe.center-previous.center-
+          (2*stripe.loopAmplitude+(previous.width+stripe.width)/2);
+        assert.ok(clearance>=3.99999,
+          'another hue must not paint across a neighbouring loop opening');
+      }
       assertVisibleHole(scene,scene.stripes[3]);
       const stripe=scene.stripes[3],pitch=stripe.loopPeriod;
       const hits=findPathCrossings({...stripe,
@@ -134,5 +141,24 @@ test('loop crossing search follows camera pan, zoom, rotation, and mirroring',()
     assert.ok(hits.some(h=>Math.abs(h.x-nominal)<stripe.loopPeriod*3),
       'visible crossings must not be exhausted by offscreen repairs');
     assert.ok(Number.isFinite(co+si));
+  }
+});
+
+test('spread anchors survive the spacing needed to keep thick loops apart',()=>{
+  for(const spreadAnchor of ['red','green','violet']){
+    for(const reverseStripes of [false,true]){
+      const base={seed:'loop-spread-anchor',geometry:'loops',
+        geometrySafety:true,spread:30,spreadAnchor,
+        spreadAnchorPosition:35,reverseStripes,shapeDepth:75};
+      const narrow=resolveScene({...base,stripeWidth:0});
+      const wide=resolveScene({...base,stripeWidth:100});
+      const point=scene=>scene.stripes.find(s=>
+        s.name===spreadAnchor[0].toUpperCase()+spreadAnchor.slice(1)).center;
+      assert.ok(Math.abs(point(narrow)-35)<1e-8);
+      assert.ok(Math.abs(point(wide)-35)<1e-8,
+        'changing stripe thickness may not displace the pinned hue');
+      assert.ok(wide.stripes[6].center-wide.stripes[0].center>
+        narrow.stripes[6].center-narrow.stripes[0].center);
+    }
   }
 });
