@@ -25,6 +25,7 @@ import {installExplorationHistory} from './exploration-history.js';
 import {installGeometryLibraryUI} from './geometry-library-ui.js';
 import {installNestedShapeControls} from './nested-shape-ui.js';
 import {installGeometryAnchorControls} from './geometry-anchor-controls.js';
+import {installRegionEdgeControls} from './region-edge-ui.js';
 import {DEFAULT_NESTED_CONTOURS} from './nested-shape-contours.js';
 import {frameImportedSilhouette} from './nested-shape-framing.js';
 import {RAINBOW_ORBITS,scatteredRadiusRange} from './scattered-composition.js';
@@ -59,12 +60,13 @@ const notice = document.getElementById('notice');
 const studioStatus = document.getElementById('studioStatus');
 const favoriteButton = document.getElementById('favorite');
 const FAVORITES_KEY = 'wallgen:favorites:v1';
-const FIELDS = ['primesOnly','family','structure','radialMode','rayCount','rayRotation','rayTwist','rayCoverage','rayCore','fieldCenterX','fieldCenterY','regionMode','regionCount','regionJitter','regionSides','scatteredCount','scatteredMinSize','scatteredMaxSize','scatteredVariation','scatteredSpacing','scatteredEdgeCrop','scatteredOverlap','scatteredShapeKind','dividerColor','dividerWidth','composition','insetAlignment','repeatCount','repeatSpacing','orientation','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','geometry','turnRadius','hairpinAngle','loopRadius','loopSweep','geometrySafety','extendDrawnPath','crossingMode','stepCount','chevronSharpness','loopAspect','construction','motif','lineStyle','pathLength','tonalContrast','dotSize','dotSpacing','endTaper','shapeFrequency','shapeDepth','motifSize','motifFrequency','palette','paletteToneEnabled','paletteSaturation','paletteLightness','material','outline','background','lightingMood','lightDirection','lightStrength','shadowStrength','stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection','stripeShadowPlacement','stripeShadowColorMode','stripeShadowCustomColor','stripeShadowInvert','glowPlacement','glowColorMode','glowCustomColor','glowInvert','textureCoverage','textureRotation','textureBlend','textureLayer2Enabled','material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2','textureLayer3Enabled','material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3','chaos','stripeWidth','spread','textureStrength','textureScale','textureDisplacement','individuality','patternHomogeneity','overridePatternHomogeneity','gap','outlineBuffer','glow'];
+const FIELDS = ['primesOnly','family','structure','radialMode','rayCount','rayRotation','rayTwist','rayCoverage','rayCore','fieldCenterX','fieldCenterY','regionMode','regionCount','regionJitter','regionSides','regionEdgeStyle','regionEdgeSize','regionEdgeDepth','regionEdgePhase','regionEdgeDirection','scatteredCount','scatteredMinSize','scatteredMaxSize','scatteredVariation','scatteredSpacing','scatteredEdgeCrop','scatteredOverlap','scatteredShapeKind','dividerColor','dividerWidth','composition','insetAlignment','repeatCount','repeatSpacing','orientation','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','geometry','stripeEdgeStyle','stripeEdgeSize','stripeEdgeDepth','stripeEdgePhase','stripeEdgeDirection','stripeEdgeSides','stripeEdgeAlignment','turnRadius','hairpinAngle','loopRadius','loopSweep','geometrySafety','extendDrawnPath','crossingMode','stepCount','chevronSharpness','loopAspect','construction','motif','lineStyle','pathLength','tonalContrast','dotSize','dotSpacing','endTaper','shapeFrequency','shapeDepth','motifSize','motifFrequency','palette','paletteToneEnabled','paletteSaturation','paletteLightness','material','outline','background','lightingMood','lightDirection','lightStrength','shadowStrength','stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection','stripeShadowPlacement','stripeShadowColorMode','stripeShadowCustomColor','stripeShadowInvert','glowPlacement','glowColorMode','glowCustomColor','glowInvert','textureCoverage','textureRotation','textureBlend','textureLayer2Enabled','material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2','textureLayer3Enabled','material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3','chaos','stripeWidth','spread','textureStrength','textureScale','textureDisplacement','individuality','patternHomogeneity','overridePatternHomogeneity','gap','outlineBuffer','glow'];
 let current = normalizeRecipe();
 let usageRecorder=null; // Initialized after first render; no default collection.
 let usageGitHubSync=null;
 let creativeFeedback=null;
 let currentScene;
+let regionEdgesUI=null;
 const previewLayers={background:null,ink:null,scene:null,key:null,overhang:null};
 let previewWorker=null;
 let previewPainted=false;
@@ -291,6 +293,7 @@ function fromControls() {
     pathLengthAnchorPoints:current.pathLengthAnchorPoints,
     textOverlays:current.textOverlays,
     scatteredShape:current.scatteredShape,scatteredOverrides:current.scatteredOverrides,
+    regionEdgeOverrides:current.regionEdgeOverrides,
     scatteredLayerOrder:current.scatteredLayerOrder};
   for (const key of FIELDS) { const field=form.elements.namedItem(key); data[key]=field.dataset.inactive==='true'?current[key]:(field.type==='checkbox'?field.checked:field.value); }
   // A single nested recipe travels in links, saved designs, PNG and workers.
@@ -420,6 +423,7 @@ function toControls(recipe) {
   syncInactiveSettings();
   syncScopedSettingDice();
   syncEditorStructure(current.structure,current.regionMode,current.construction);
+  regionEdgesUI?.sync();
   const useShape=document.getElementById('chooseScatteredShape');
   if(useShape)useShape.hidden=!(current.structure==='regions'&&current.regionMode==='scattered');
   const effective=document.getElementById('geometrySafetyStatus');
@@ -463,7 +467,7 @@ function inactiveSettingKeys(recipe,scene){
     for(const key of ['composition','insetAlignment','repeatCount','repeatSpacing','orientation',
       'diagonalRotation','mirrorHorizontal','mirrorVertical','geometry','geometrySafety',
       'crossingMode','turnRadius','hairpinAngle','loopRadius','loopSweep','stepCount',
-      'chevronSharpness','loopAspect','shapeFrequency','shapeDepth','pathLength','endTaper',
+      'chevronSharpness','loopAspect','shapeFrequency','shapeDepth','stripeEdgeStyle','stripeEdgeSize','stripeEdgeDepth','stripeEdgePhase','stripeEdgeDirection','stripeEdgeSides','stripeEdgeAlignment','pathLength','endTaper',
       'construction','motif','lineStyle','patternHomogeneity','overridePatternHomogeneity',
       'tonalContrast','brushRoughness','pigmentStyle','pigmentGrainScale','pigmentEdgeBreakup','pigmentDirectionality','dotSize','dotSpacing','motifSize','motifFrequency',
       'stripeWidth','spread','individuality','chaos','outline','gap','outlineBuffer','textureDisplacement'])inactive.add(key);
@@ -476,7 +480,7 @@ function inactiveSettingKeys(recipe,scene){
     if(recipe.radialMode==='spokes')inactive.add('rayTwist');
   }
   if(!regions){
-    for(const key of ['regionMode','regionCount','regionJitter','regionSides','scatteredCount','scatteredMinSize','scatteredMaxSize','scatteredVariation','scatteredSpacing','scatteredEdgeCrop','scatteredOverlap','scatteredShapeKind'])inactive.add(key);
+    for(const key of ['regionMode','regionCount','regionJitter','regionSides','regionEdgeStyle','regionEdgeSize','regionEdgeDepth','regionEdgePhase','regionEdgeDirection','scatteredCount','scatteredMinSize','scatteredMaxSize','scatteredVariation','scatteredSpacing','scatteredEdgeCrop','scatteredOverlap','scatteredShapeKind'])inactive.add(key);
   }else{
     if(recipe.regionMode!=='nested')inactive.add('regionSides');
     if(recipe.regionMode==='nested'||recipe.regionMode==='scattered')inactive.add('regionJitter');
@@ -500,8 +504,14 @@ function inactiveSettingKeys(recipe,scene){
     inactive.add('textureDisplacement');
   // Decorative motifs have separate size/density knobs; straight geometry
   // never has curve frequency/depth, even when marked with chevrons.
-  if(['straight','hairpin','loop','drawn'].includes(scene.geometry))
+  if(['straight','scalloped','hairpin','loop','drawn'].includes(scene.geometry))
     inactive.add('shapeFrequency'),inactive.add('shapeDepth');
+  if(paths&&(recipe.stripeEdgeStyle==='straight'&&scene.geometry!=='scalloped'))
+    for(const key of ['stripeEdgeSize','stripeEdgeDepth','stripeEdgePhase',
+      'stripeEdgeDirection','stripeEdgeSides','stripeEdgeAlignment'])inactive.add(key);
+  if(regions&&recipe.regionEdgeStyle==='straight')
+    for(const key of ['regionEdgeSize','regionEdgeDepth','regionEdgePhase',
+      'regionEdgeDirection'])inactive.add(key);
   if(scene.geometry==='drawn')inactive.add('orientation');
   else inactive.add('extendDrawnPath');
   if(recipe.composition==='floating')inactive.add('extendDrawnPath');
@@ -1531,6 +1541,11 @@ if(!regionsCard)throw new Error('Regions editor card missing during nesting init
 // The saved-shape picker is the primary action here, not the final row
 // below all regional controls on a 320px-short portrait screen.
 regionsCard.prepend(useScatteredShape);
+regionEdgesUI=installRegionEdgeControls({
+  card:document.querySelector('.editor-tool-card[data-editor-tool="region-edges"]'),
+  getRecipe:()=>current,getScene:()=>resolveScene(current),
+  onApply:recipe=>changeRecipe(recipe,{cause:'region_edges'})
+});
 const geometryAnchorControls=installGeometryAnchorControls({
   form,getRecipe:()=>current,getScene:()=>currentScene,
   onApply:recipe=>changeRecipe(recipe,{cause:'geometry_anchor'})
