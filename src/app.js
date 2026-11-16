@@ -1,6 +1,6 @@
 import { OUTPUT_WIDTH, OUTPUT_HEIGHT, NAMES, COLOR_STORIES, normalizeRecipe, resolveScene, encodeRecipe, decodeRecipe, newSeed, randomizeAllRecipe, respectSettingLocks, LOCKABLE_SETTINGS } from './model.js';
 import {installAyaRecipeHandoff} from './aya-recipe-handoff.js';
-import { drawWallpaper, presentNudgedArtwork } from './renderer.js?v=20261024-text-overlays1';
+import { drawWallpaper, presentNudgedArtwork } from './renderer.js?v=20261116-insetstation1';
 import {artKey} from './render-art-key.js';
 import {normalizePhotoLook,PHOTO_PRESETS} from './photo-look.js';
 import {photoPreviewRecipe} from './photo-preview-compare.js';
@@ -15,16 +15,16 @@ import { installImagePathTool } from './image-path-ui.js?v=20261023-wave-contour
 import {prepareReconstructionApply} from './reconstruction-apply-transaction.js';
 import {importedAngleDeltaDegrees} from './import-angle-wrap.js';
 import {pathStructureLockedOutsidePaths} from './path-authoring-locks.js';
-import {mountEditor,selectEditorTool,syncEditorStructure} from './editor-layout.js?v=20261023-single-editor1';
+import {mountEditor,selectEditorTool,syncEditorStructure} from './editor-layout.js?v=20261116-insettools1';
 import {randomizeScope} from './scoped-random.js';
 import {newInteriorElementId,INTERIOR_LIMITS,resolveInteriorSelection,interiorTargetSummary,resolveInteriorFocusTarget,interiorSliderStep} from './interior-elements.js';
-import {STYLE_PRESETS,EDITOR_CATEGORIES,TOOL_LIST} from './editor-schema.js?v=20261021-labels1';
+import {STYLE_PRESETS,EDITOR_CATEGORIES,TOOL_LIST} from './editor-schema.js?v=20261116-insettools1';
 import {sourceSettingLabel} from './editor-control-roles.js?v=20261021-labels1';
 import {fullSettingName} from './editor-terminology.js';
 import {installExplorationHistory} from './exploration-history.js';
 import {installGeometryLibraryUI} from './geometry-library-ui.js';
 import {installNestedShapeControls} from './nested-shape-ui.js';
-import {installGeometryAnchorControls} from './geometry-anchor-controls.js';
+import {installGeometryAnchorControls} from './geometry-anchor-controls.js?v=20261116-visible1';
 import {installRegionEdgeControls} from './region-edge-ui.js';
 import {DEFAULT_NESTED_CONTOURS} from './nested-shape-contours.js';
 import {frameImportedSilhouette} from './nested-shape-framing.js';
