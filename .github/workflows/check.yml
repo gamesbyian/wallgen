@@ -84,6 +84,7 @@ jobs:
           node --check tests/independent-keyboard-focus-journey.mjs
           node --check tests/view-pan-escape-focus-browser.mjs
           node --check tests/geometry-anchors-browser.mjs
+          node --check tests/pigment-browser-acceptance.mjs
       - name: Serve current PR source
         run: |
           npx serve . -l 4173 > /tmp/roygbiv-opt-in-browser.log 2>&1 &
@@ -102,6 +103,7 @@ jobs:
           node tests/independent-keyboard-focus-journey.mjs
           CHROME_BIN="$(command -v google-chrome || command -v chromium || echo /usr/bin/google-chrome)" node tests/view-pan-escape-focus-browser.mjs
           node tests/geometry-anchors-browser.mjs
+          node tests/pigment-browser-acceptance.mjs
       - name: Preserve successful and failed browser evidence
         if: always()
         uses: actions/upload-artifact@v4

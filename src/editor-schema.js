@@ -55,7 +55,7 @@ export const EDITOR_CATEGORIES=[
     {id:'layer1',name:'Layer 1',settings:['material','textureCoverage','textureBlend','textureStrength','textureScale','textureRotation','textureLayer2Enabled']},
     {id:'layer2',name:'Layer 2',settings:['material2','textureCoverage2','textureBlend2','textureStrength2','textureScale2','textureRotation2','textureLayer3Enabled']},
     {id:'layer3',name:'Layer 3',settings:['material3','textureCoverage3','textureBlend3','textureStrength3','textureScale3','textureRotation3']},
-    {id:'surface',name:'Surface',settings:['textureDisplacement','brushRoughness']},
+    {id:'surface',name:'Surface',settings:['textureDisplacement','brushRoughness','pigmentStyle','pigmentGrainScale','pigmentEdgeBreakup','pigmentDirectionality']},
   ]},
   {id:'effects',label:'Light',icon:'effects',tools:[
     {id:'lighting',name:'Lighting',settings:['lightingMood','lightDirection','lightStrength','shadowStrength']},

@@ -6,6 +6,7 @@ import {drawRegionInteriors,elementInk,elementWave,lineDash,elementApplies} from
 import { viewCamera } from './view-camera.js';
 import {findPathCrossings,crossingTopIsLater,crossingBranchClip} from './crossing-order.js';
 import {materialContourHeight,paintMaterial} from './material-surface.js';
+import {paintPigmentedFill,pigmentMaterialSampler} from './pigment-deposition.js';
 import {sandRimStyles,supportsSandRibbonRim,paintSandContourRim,paintSandStrokeGlint} from './sand-contour-relief.js';
 import {sandBeadStyles,paintSandRegionBeads,paintSandRibbonBeads,paintSandNestedBeads} from './sand-beads.js';
 import {sandEchoStyles,paintSandRegionEchoes,paintSandRibbonEchoes} from './sand-contour-echo.js';
@@ -522,47 +523,50 @@ function drawPathInteriors(ctx,stripe,extent,scene){
   }
   ctx.restore();
 }
-function drawBrushWear(ctx,stripe,extent,scene){
-  if(!scene.brushRoughness)return;
-  const random=rng(scene.seed+':brush:'+stripe.index);
-  const strength=scene.brushRoughness/100;
-  const n=Math.ceil(18+strength*300);
-  const core=stripe.coreExtent??extent;
-  const start=Math.max(-core,stripe.segmentStart??-core);
-  const end=Math.min(core,stripe.segmentEnd??core);
-  const renderStart=stripe.segmentStart??-extent;
-  const renderEnd=stripe.segmentEnd??extent;
-  ctx.save();
-  // Wear belongs to the painted mark, never to the adjacent background.
-  // In particular, dotted ribbons must not grow free-floating scratches.
-  ctx.clip(stripeFillPath(stripe,extent,scene));
-  ctx.strokeStyle=scene.background==='white'?'#fff':'#000';
-  ctx.lineCap='round';
-  const scratch=(station,random)=>{
+// The scratch painter gives every path or filled region its OWN translucent
+// pigment layer, preserving underlying ink at crossings and overlaps.
+function stripePigmentBounds(stripe,extent){
+  const start=stripe.segmentStart??-extent,end=stripe.segmentEnd??extent;
+  const n=Math.max(80,Math.min(1600,Math.ceil((end-start)/4)));
+  let left=Infinity,right=-Infinity,top=Infinity,bottom=-Infinity;
+  for(let i=0;i<=n;i++){
+    const station=start+(end-start)*i/n;
     const p=samplePath(stripe,station,extent);
-    const half=widthAt(stripe,station,extent)*.38;
-    if(half<.4)return;
-    const offset=(random()*2-1)*half;
-    const x=p.x+p.nx*offset,y=p.y+p.ny*offset;
-    const length=.5+random()*Math.min(13,stripe.width*.6);
-    ctx.globalAlpha=(.04+.62*random())*strength;
-    ctx.lineWidth=Math.max(.3,Math.min(1.8,stripe.width*.05)*(0.2+random()));
-    ctx.beginPath();ctx.moveTo(x,y);
-    ctx.lineTo(x+p.tx*length,y+p.ty*length);ctx.stroke();
-  };
-  // Preserve the exact seeded sequence within the original composition.
-  // Extending the rendered domain must never reposition its wear scratches.
-  if(end>start)for(let i=0;i<n;i++)scratch(start+(end-start)*random(),random);
-  const density=n/Math.max(1,end-start);
-  for(const [from,to,side] of [
-    [renderStart,start,'before'],[end,renderEnd,'after']
-  ]){
-    if(to<=from)continue;
-    const extra=rng(scene.seed+':brush:'+stripe.index+':'+side);
-    const count=Math.min(1200,Math.ceil((to-from)*density));
-    for(let i=0;i<count;i++)scratch(from+(to-from)*extra(),extra);
+    // Texture displacement can shift either edge by up to 28 source units.
+    const r=widthAt(stripe,station,extent)*.55+35;
+    left=Math.min(left,p.x-r);right=Math.max(right,p.x+r);
+    top=Math.min(top,p.y-r);bottom=Math.max(bottom,p.y+r);
   }
-  ctx.restore();
+  return {left,right,top,bottom};
+}
+function paintStripePigment(ctx,stripe,extent,scene,resources){
+  if(!scene.brushRoughness||scene.construction==='woven'){
+    fillMotif(ctx,stripe,extent,scene);return;
+  }
+  // A dotted or patterned ribbon has deliberately disconnected footprints.
+  // Never add a continuous feather outside its actual painted motif.
+  const path=stripe.motif==='solid'&&stripe.lineStyle==='continuous'?
+    stripeFillPath(stripe,extent,scene):null;
+  paintPigmentedFill(ctx,t=>{
+    t.fillStyle=stripe.color;t.strokeStyle=stripe.color;
+    fillMotif(t,stripe,extent,scene);
+  },path,stripePigmentBounds(stripe,extent),scene,
+  scene.seed+':pigment:'+stripe.objectId,{
+    ...resources,colour:stripe.color
+  });
+}
+function regionPigmentBounds(object){
+  if(object.circle){
+    const {cx,cy,r}=object.circle;
+    return {left:cx-r,right:cx+r,top:cy-r,bottom:cy+r};
+  }
+  let left=Infinity,right=-Infinity,top=Infinity,bottom=-Infinity;
+  for(const ring of object.rings||[object.vertices])
+    for(const p of ring){
+      left=Math.min(left,p.x);right=Math.max(right,p.x);
+      top=Math.min(top,p.y);bottom=Math.max(bottom,p.y);
+    }
+  return {left,right,top,bottom};
 }
 function drawConstruction(ctx,stripe,extent,scene){
   const kind=scene.construction;
@@ -914,7 +918,9 @@ export function presentNudgedArtwork(canvas, layers, recipe) {
 // Closed-region objects share the same transparent ink, palette slots,
 // material stack, camera, lighting, nudge and export path as ribbon objects.
 // No regional generator paints directly: the painter consumes scene.objects.
-export function drawRegionObjects(ctx,scene){
+export function drawRegionObjects(ctx,scene,resources={}){
+  const pigmentResources=scene.brushRoughness?
+    {material:pigmentMaterialSampler(scene),...resources}:resources;
   const sandRims=sandRimStyles(scene);
   const sandBeads=sandBeadStyles(scene);
   const sandEchoes=sandEchoStyles(scene);
@@ -996,7 +1002,16 @@ export function drawRegionObjects(ctx,scene){
       ctx.shadowBlur=scene.glow/100*32;
     }
     ctx.fillStyle=object.color;
-    if(object.rings)ctx.fill('evenodd');else ctx.fill();
+    if(scene.brushRoughness){
+      const shape=sandRegionPath(object);
+      paintPigmentedFill(ctx,t=>{
+        t.fillStyle=object.color;
+        t.fill(shape,object.rings?'evenodd':'nonzero');
+      },shape,regionPigmentBounds(object),scene,
+      scene.seed+':pigment:'+object.id,
+      {...pigmentResources,colour:object.color});
+    }else if(object.rings)ctx.fill('evenodd');
+    else ctx.fill();
     ctx.shadowBlur=0;
     const stitch=matchingEmbroidery(scene.surfaceTreatments,{id:object.id,colorSlot:object.colorIndex});
     if(stitch){
@@ -1108,6 +1123,9 @@ export function drawWallpaper(canvas, recipe, options={}) {
   scene.renderBounds=camera.boundsWithMargin(margin);
   const ink=createRenderSurface(inkWidth,inkHeight,options.canvasFactory);
   let scratch,s,cachedBackground;
+  const pigmentScratch={canvas:null};
+  const pigmentResources={scratch:pigmentScratch,canvasFactory:options.canvasFactory,
+    material:scene.brushRoughness?pigmentMaterialSampler(scene):null};
   let cacheCommitted=false;
   try{
   const g=ink.getContext('2d');
@@ -1192,7 +1210,7 @@ export function drawWallpaper(canvas, recipe, options={}) {
     }
     drawOutline(g,path,stripe,scene);
     g.fillStyle=stripe.color;g.strokeStyle=stripe.color;
-    fillMotif(g,stripe,scene.extent,scene);
+    paintStripePigment(g,stripe,scene.extent,scene,pigmentResources);
     if((sandRims.length||sandBeads.length||sandEchoes.length)&&supportsSandRibbonRim(scene,stripe)){
       g.save();g.clip(stripeFillPath(stripe,scene.extent,scene));
       // Source edge rails, no fake transverse cap at a crossing repair.
@@ -1214,7 +1232,6 @@ export function drawWallpaper(canvas, recipe, options={}) {
         {contactShadows:scene.crossingMode==='over'});
       g.restore();
     }
-    if(scene.construction!=='woven')drawBrushWear(g,stripe,scene.extent,scene);
     drawPathInteriors(g,stripe,scene.extent,scene);
   }
   crossingBundles.push(crossingStripes);
@@ -1276,7 +1293,7 @@ export function drawWallpaper(canvas, recipe, options={}) {
           g.clip(crossingBranchClip(branch,scene.extent,station,halfLength,samplePath));
           drawCrossingOutline(g,branch,scene);
           g.fillStyle=stripe.color;g.strokeStyle=stripe.color;
-          fillMotif(g,branch,scene.extent,scene);
+          paintStripePigment(g,branch,scene.extent,scene,pigmentResources);
           if((sandRims.length||sandBeads.length||sandEchoes.length)&&supportsSandRibbonRim(scene,branch)){
             g.save();g.clip(stripeFillPath(branch,scene.extent,scene));
             paintSandContourRim(g,[traceEdge(branch,scene.extent,-1,scene),
@@ -1329,20 +1346,12 @@ export function drawWallpaper(canvas, recipe, options={}) {
             g.restore();
           }
           drawPathInteriors(g,branch,scene.extent,scene);
-          // Brush wear is seeded against the complete ribbon. Sample it
-          // from the original path through the local branch mask so a
-          // crossing does not suddenly acquire a different grain pattern.
-          if(scene.construction!=='woven'){
-            g.save();g.clip(path);
-            drawBrushWear(g,stripe,scene.extent,scene);
-            g.restore();
-          }
           g.restore();
         }
       }
     }
   }
-  }else drawRegionObjects(g,scene);
+  }else drawRegionObjects(g,scene,pigmentResources);
   // One scratch buffer is reused for every texture layer and surface.
   // The stripe pass masks against the current ink alpha, so multiply/screen/etc
   // affect the stripe colours without spraying texture into negative space.
@@ -1528,6 +1537,7 @@ export function drawWallpaper(canvas, recipe, options={}) {
   }finally{
     materialPaintFactors.delete(scene);
     releaseRenderSurface(scratch);
+    releaseRenderSurface(pigmentScratch.canvas);
     // The two settled preview layers survive only a successful paint. A
     // failed context, compositor or Photo stage must not retain backing
     // stores or advertise an incomplete frame for Undo/nudge reuse.

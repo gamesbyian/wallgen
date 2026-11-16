@@ -426,7 +426,11 @@
             "label": "Surface",
             "settings": [
               "textureDisplacement",
-              "brushRoughness"
+              "brushRoughness",
+              "pigmentStyle",
+              "pigmentGrainScale",
+              "pigmentEdgeBreakup",
+              "pigmentDirectionality"
             ]
           }
         ]

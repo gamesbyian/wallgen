@@ -3,16 +3,16 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import { auditHomes, evaluate, TASKS } from '../scripts/ia-structure-evaluate.mjs';
 
-test('the navigation research model covers the current 99 artistic settings and 17 representative tasks', () => {
+test('the navigation research model covers the current 103 artistic settings and 17 representative tasks', () => {
   const audit = auditHomes();
   assert.deepEqual(audit.issues, []);
-  assert.equal(audit.sourceKeys, 99);
-  assert.equal(audit.candidateKeys, 99);
+  assert.equal(audit.sourceKeys, 103);
+  assert.equal(audit.candidateKeys, 103);
   assert.equal(TASKS.length, 17);
   const result = evaluate();
   assert.equal(result.kind, 'STRUCTURAL_ROUTE_PROXY_NOT_HUMAN_TEST');
-  assert.equal(result.inventory.source, 99);
-  assert.equal(result.inventory.proposed, 99);
+  assert.equal(result.inventory.source, 103);
+  assert.equal(result.inventory.proposed, 103);
   assert.equal(result.inventory.taskCount, 17);
 });
 
