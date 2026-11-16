@@ -60,7 +60,7 @@ const notice = document.getElementById('notice');
 const studioStatus = document.getElementById('studioStatus');
 const favoriteButton = document.getElementById('favorite');
 const FAVORITES_KEY = 'wallgen:favorites:v1';
-const FIELDS = ['primesOnly','family','structure','radialMode','rayCount','rayRotation','rayTwist','rayCoverage','rayCore','fieldCenterX','fieldCenterY','regionMode','regionCount','regionJitter','regionSides','regionEdgeStyle','regionEdgeSize','regionEdgeDepth','regionEdgePhase','regionEdgeDirection','scatteredCount','scatteredMinSize','scatteredMaxSize','scatteredVariation','scatteredSpacing','scatteredEdgeCrop','scatteredOverlap','scatteredShapeKind','dividerColor','dividerWidth','composition','insetAlignment','repeatCount','repeatSpacing','orientation','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','geometry','stripeEdgeStyle','stripeScallopForm','stripeEdgeSize','stripeEdgeDepth','stripeEdgePhase','stripeEdgeDirection','stripeEdgeSides','stripeEdgeAlignment','turnRadius','hairpinAngle','loopRadius','loopSweep','geometrySafety','extendDrawnPath','crossingMode','stepCount','chevronSharpness','loopAspect','construction','motif','lineStyle','pathLength','tonalContrast','dotSize','dotSpacing','endTaper','shapeFrequency','shapeDepth','motifSize','motifFrequency','palette','paletteToneEnabled','paletteSaturation','paletteLightness','material','outline','background','lightingMood','lightDirection','lightStrength','shadowStrength','stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection','stripeShadowPlacement','stripeShadowColorMode','stripeShadowCustomColor','stripeShadowInvert','glowPlacement','glowColorMode','glowCustomColor','glowInvert','textureCoverage','textureRotation','textureBlend','textureLayer2Enabled','material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2','textureLayer3Enabled','material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3','chaos','stripeWidth','spread','textureStrength','textureScale','textureDisplacement','individuality','patternHomogeneity','overridePatternHomogeneity','gap','outlineBuffer','glow'];
+const FIELDS = ['primesOnly','family','structure','radialMode','rayCount','rayRotation','rayTwist','rayCoverage','rayCore','fieldCenterX','fieldCenterY','regionMode','regionCount','regionJitter','regionSides','regionEdgeStyle','regionEdgeSize','regionEdgeDepth','regionEdgePhase','regionEdgeDirection','scatteredCount','scatteredMinSize','scatteredMaxSize','scatteredVariation','scatteredSpacing','scatteredEdgeCrop','scatteredOverlap','scatteredShapeKind','dividerColor','dividerWidth','composition','insetAlignment','repeatCount','repeatSpacing','orientation','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','geometry','stripeEdgeStyle','stripeScallopForm','stripeEdgeSize','stripeEdgeDepth','stripeEdgePhase','stripeEdgePhaseB','stripeEdgeDirection','stripeEdgeSides','stripeEdgeAlignment','turnRadius','hairpinAngle','loopRadius','loopSweep','geometrySafety','extendDrawnPath','crossingMode','stepCount','chevronSharpness','loopAspect','construction','motif','lineStyle','pathLength','tonalContrast','dotSize','dotSpacing','endTaper','shapeFrequency','shapeDepth','motifSize','motifFrequency','palette','paletteToneEnabled','paletteSaturation','paletteLightness','material','outline','background','lightingMood','lightDirection','lightStrength','shadowStrength','stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection','stripeShadowPlacement','stripeShadowColorMode','stripeShadowCustomColor','stripeShadowInvert','glowPlacement','glowColorMode','glowCustomColor','glowInvert','textureCoverage','textureRotation','textureBlend','textureLayer2Enabled','material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2','textureLayer3Enabled','material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3','chaos','stripeWidth','spread','textureStrength','textureScale','textureDisplacement','individuality','patternHomogeneity','overridePatternHomogeneity','gap','outlineBuffer','glow'];
 let current = normalizeRecipe();
 let usageRecorder=null; // Initialized after first render; no default collection.
 let usageGitHubSync=null;
@@ -468,7 +468,7 @@ function inactiveSettingKeys(recipe,scene){
     for(const key of ['composition','insetAlignment','repeatCount','repeatSpacing','orientation',
       'diagonalRotation','mirrorHorizontal','mirrorVertical','geometry','geometrySafety',
       'crossingMode','turnRadius','hairpinAngle','loopRadius','loopSweep','stepCount',
-      'chevronSharpness','loopAspect','shapeFrequency','shapeDepth','stripeEdgeStyle','stripeScallopForm','stripeEdgeSize','stripeEdgeDepth','stripeEdgePhase','stripeEdgeDirection','stripeEdgeSides','stripeEdgeAlignment','pathLength','endTaper',
+      'chevronSharpness','loopAspect','shapeFrequency','shapeDepth','stripeEdgeStyle','stripeScallopForm','stripeEdgeSize','stripeEdgeDepth','stripeEdgePhase','stripeEdgePhaseB','stripeEdgeDirection','stripeEdgeSides','stripeEdgeAlignment','pathLength','endTaper',
       'construction','motif','lineStyle','patternHomogeneity','overridePatternHomogeneity',
       'tonalContrast','dotSize','dotSpacing','motifSize','motifFrequency',
       'stripeWidth','spread','individuality','chaos','outline','gap','outlineBuffer','textureDisplacement'])inactive.add(key);
@@ -516,12 +516,18 @@ function inactiveSettingKeys(recipe,scene){
   if(paths&&recipe.stripeEdgeStyle==='scalloped'&&
     ['bunting','ricrac'].includes(recipe.stripeScallopForm))
     inactive.add('stripeEdgeSides');
-  if(paths&&recipe.stripeEdgeStyle==='scalloped'&&recipe.stripeScallopForm==='ricrac')
+  if(paths&&recipe.stripeEdgeStyle==='scalloped'&&recipe.stripeScallopForm==='ricrac'){
     inactive.add('stripeEdgeDirection');
+    inactive.add('stripeEdgePhaseB'); // Ric-rac bends the centreline, not a second edge.
+  }
+  if(paths&&recipe.stripeEdgeStyle!=='straight'){
+    if(recipe.stripeEdgeSides==='negative')inactive.add('stripeEdgePhaseB');
+    if(recipe.stripeEdgeSides==='positive')inactive.add('stripeEdgePhase');
+  }
   if(paths&&recipe.stripeEdgeStyle==='straight'){
     inactive.add('stripeEdgeSize');inactive.add('stripeEdgeDepth');
     if(scene.geometry!=='scalloped')
-      for(const key of ['stripeEdgePhase','stripeEdgeDirection',
+      for(const key of ['stripeEdgePhase','stripeEdgePhaseB','stripeEdgeDirection',
         'stripeEdgeSides','stripeEdgeAlignment'])inactive.add(key);
   }
   if(regions&&recipe.regionEdgeStyle==='straight')
@@ -689,6 +695,12 @@ function syncInactiveSettings(){
       if(reason.hidden)distortion.removeAttribute('aria-describedby');
       else distortion.setAttribute('aria-describedby',reason.id);
     }
+  }
+  // Presets operate on edge B only; edge A may be locked as a reference.
+  const offset=((current.stripeEdgePhaseB-current.stripeEdgePhase)%100+100)%100;
+  for(const button of form.querySelectorAll('[data-edge-phase-preset]')){
+    button.disabled=form.elements.namedItem('stripeEdgePhaseB').disabled;
+    button.setAttribute('aria-pressed',String(offset===Number(button.dataset.edgePhasePreset)));
   }
   for(const button of document.querySelectorAll('.setting-inactive > .setting-lock')){
     button.disabled=true;
@@ -2607,6 +2619,15 @@ activateSettingsTab(rememberedTab);
 // Scope-aware exploration. One die changes exactly its setting; a tool die
 // changes only that tool; a category die only that category. Locks and dormant
 // controls are honoured by the same model shared with a future Wizard Mode.
+form.addEventListener('click',event=>{
+  const button=event.target.closest('[data-edge-phase-preset]');
+  if(!button||button.disabled)return;
+  event.preventDefault();
+  // A preset is a single undoable edit; leave the first edge where it is.
+  flushQueuedControlUpdate();
+  const difference=Number(button.dataset.edgePhasePreset);
+  changeRecipe({...current,stripeEdgePhaseB:(current.stripeEdgePhase+difference)%100});
+});
 form.addEventListener('click',event=>{
   const button=event.target.closest('[data-random-setting],[data-random-tool],[data-random-category]');
   if(!button||button.disabled)return;
