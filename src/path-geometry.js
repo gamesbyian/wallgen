@@ -103,7 +103,7 @@ export function pathPosition(stripe,x,extent){
     // During a single immutable paint, the aspect-controlled X amplitude
     // belongs to the stripe, not to the tens of thousands of sampled stations.
     // Independent geometry callers retain the exact original calculation.
-    const xAmplitude=stripe._renderLoopXAmplitude??
+    const xAmplitude=stripe._renderLoopXAmplitude??stripe.loopXAmplitude??
       (size*2.1*Math.pow(2,((stripe.loopAspect??50)-50)/35));
     return {x:x-xAmplitude*Math.sin(angle),y:size*Math.cos(angle)};
   }
