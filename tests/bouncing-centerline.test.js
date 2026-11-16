@@ -28,31 +28,59 @@ test('bouncing path repeats periodically with rounded, tangent-continuous contac
     }
     // Contacts lie at whole periods for phase zero; both the slope and
     // curvature must meet across the seam of the next period.
-    const dx=pitch*1e-4,fn=x=>bouncingCenterline(x,frequency,h);
+    // This narrow rounded contact has high but finite curvature. Derivative
+    // continuity is measured in the limit, not at an arc-sized chord.
+    const dx=pitch*1e-6,fn=x=>bouncingCenterline(x,frequency,h);
     const left=(fn(0)-fn(-dx))/dx,right=(fn(dx)-fn(0))/dx;
-    assert.ok(Math.abs(left-right)<.01,'no sharp rebound at '+frequency);
-    const cLeft=(fn(0)-2*fn(-dx)+fn(-2*dx))/(dx*dx);
-    const cRight=(fn(2*dx)-2*fn(dx)+fn(0))/(dx*dx);
+    assert.ok(Math.abs(left-right)<.001,'continuous arc join at '+frequency);
+    const curvatureStep=pitch*1e-5;
+    const cLeft=(fn(0)-2*fn(-curvatureStep)+fn(-2*curvatureStep))/
+      (curvatureStep*curvatureStep);
+    const cRight=(fn(2*curvatureStep)-2*fn(curvatureStep)+fn(0))/
+      (curvatureStep*curvatureStep);
     assert.ok(Math.abs(cLeft-cRight)<.15,'no curvature jump at '+frequency);
   }
 });
 
-test('bounce rhythm has a short rounded impact and asymmetric ballistic flight',()=>{
-  const pitch=bouncingPitch(50);
-  let best={x:0,y:Infinity};
-  for(let i=0;i<=1000;i++){
-    const x=i*pitch/1000,y=bouncingCenterline(x,50,100);
-    if(y<best.y)best={x,y};
+test('each repetition is a broad circular-looking arch, not a travelling wave',()=>{
+  const pitch=bouncingPitch(50),height=100;
+  const at=t=>bouncingCenterline(t*pitch,50,height);
+  const contact=at(0),crown=at(.5);
+  close(contact,at(1));
+  close(crown,at(-.5));
+  close(contact-crown,40+.16*pitch,1e-8);
+  // One arch, with its crown in the MIDDLE of each cell. No early peak,
+  // asymmetric falling side, or alternating upward/downward half-bounce.
+  for(let i=1;i<=100;i++){
+    const t=i/200;
+    assert.ok(at(t)<at(t-.005),
+      'first half must climb monotonically to the arch crown at '+t);
+    close(at(t),at(1-t),1e-9);
   }
-  assert.ok(best.x/pitch>.33&&best.x/pitch<.44,
-    'asymmetric apex must occur noticeably before the midpoint');
-  const rebound=bouncingCenterline(0,50,100);
-  assert.ok(rebound>best.y+95,'the centerline itself makes a substantial excursion');
-  assert.ok(bouncingCenterline(.1*pitch,50,100)<rebound,
-    'the ascending section leaves the rebound rather than sitting flat');
-  const a=bouncingCenterline(.18*pitch,50,100);
-  const b=bouncingCenterline(.82*pitch,50,100);
-  assert.ok(Math.abs(a-b)>10,'upward and downward flights have different timing');
+  // A circular cap has broad shoulders and steeper approaches to its feet.
+  // A half-sine or generic smooth wave has lower shoulders at quarter pitch.
+  const quarterRise=(contact-at(.25))/(contact-crown);
+  assert.ok(quarterRise>.79&&quarterRise<.9,
+    'quarter-pitch shoulder must look circular rather than sinusoidal');
+  assert.ok((contact-at(.05))/(contact-crown)>.25,
+    'the circular arc must rise quickly just after its narrow join');
+});
+
+test('adjacent archlets repeat the same geometry and round both joins',()=>{
+  for(const frequency of [0,35,70,100]){
+    const pitch=bouncingPitch(frequency);
+    const at=t=>bouncingCenterline(t*pitch,frequency,85);
+    for(let i=-3;i<=3;i++){
+      close(at(i),at(0));
+      close(at(i+.5),at(.5));
+    }
+    // Contact is a very narrow, rounded valley; the neighbouring crowns
+    // remain smooth, without a broad flat platform through the join.
+    assert.ok(at(.015)<at(0)&&at(-.015)<at(0));
+    const e=.0001;
+    close((at(e)-at(-e))/(2*e),0,1e-8);
+    close((at(.5+e)-at(.5-e))/(2*e),0,1e-8);
+  }
 });
 
 test('frequency controls pitch; height controls excursion independently of width',()=>{
@@ -62,7 +90,8 @@ test('frequency controls pitch; height controls excursion independently of width
   for(const f of [0,50,100]){
     assert.equal(excursion(f,0),0);
     assert.ok(excursion(f,90)>excursion(f,45)*1.9);
-    assert.ok(excursion(f,100)>60);
+    assert.ok(excursion(f,100)>50,
+      'even the smallest pitch has a visibly substantial rounded arc');
   }
   const ratio=excursion(0,100)/excursion(100,100);
   assert.ok(ratio<1.8,'changing pitch must not redefine amplitude fourfold');
@@ -112,14 +141,18 @@ test('bounce alignment and individuality modify the centerline, not two edges',(
     stripeEdgePhaseB:0,individuality:0};
   const aligned=make({...base,stripeEdgeAlignment:'aligned'});
   const staggered=make({...base,stripeEdgeAlignment:'staggered'});
-  const p=bouncingPitch(45),centerline=(scene,i,x)=>
+  const p=bouncingPitch(45),sample=p*.10,centerline=(scene,i,x)=>
     pathPosition(scene.stripes[i],x,scene.extent).y;
-  close(centerline(aligned,0,p/4),centerline(aligned,1,p/4));
-  assert.ok(Math.abs(centerline(staggered,0,p/4)-centerline(staggered,1,p/4))>10);
+  // At a quarter period, a half-pitch shift gives the SAME value for
+  // symmetric arches. Sample nearer the contact to measure phase changes.
+  close(centerline(aligned,0,sample),centerline(aligned,1,sample));
+  assert.ok(Math.abs(centerline(staggered,0,sample)-
+    centerline(staggered,1,sample))>10);
   const independent=make({...base,stripeEdgeAlignment:'aligned',individuality:100});
-  assert.ok(Math.abs(centerline(independent,0,p/4)-centerline(independent,1,p/4))>1);
+  assert.ok(Math.abs(centerline(independent,0,sample)-
+    centerline(independent,1,sample))>1);
   const phaseB=make({...base,stripeEdgePhaseB:50});
-  close(centerline(aligned,3,p/4),centerline(phaseB,3,p/4));
+  close(centerline(aligned,3,sample),centerline(phaseB,3,sample));
 });
 
 test('decorative edges remain independent and coexist with bouncing geometry',()=>{

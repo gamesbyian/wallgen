@@ -37,11 +37,19 @@ export function modulation(x, geometry, phase, period, d, extent,detail={}){
   }
   return d*(Math.sin(t*TAU*.42)*.35+Math.sin(t*TAU*.79+phase)*.4+Math.sin(t*TAU*1.33)*.25);
 }
-// One periodic C2 centreline. Outside the short rounded impact interval the
-// motion is almost parabolic, like a ball's flight; the smooth impact itself
-// replaces a physically sharp velocity reversal. A gentle periodic time warp
-// makes the ascent short and the descent long without introducing corners.
-// All distances are world units. The profile is independent of stripe width.
+// A chain of identical ROUND-CROWNED ARCS: one upside-down arc per pitch.
+// Each period has a high, broad semicircular-looking crown halfway across,
+// with steep sides meeting at the low contact between neighbouring archlets.
+//
+// A circular semicircle has infinite slope at its endpoints and a cusp when
+// repeated; directly thickening it with physical normals produces spikes.
+// This fourth-root rounded semicircular approximation resolves that contact
+// over a small, fixed fraction of each pitch. It is C2 (actually smooth)
+// across joins but retains the recognisable near-vertical sides of arcs.
+// No alternating sinusoidal hills, time warp, or bouncing-specific edge offsets.
+const ARCH_CONTACT=.025;
+const ARCH_BASE=Math.sqrt(ARCH_CONTACT);
+const ARCH_DENOM=Math.sqrt(Math.hypot(1,ARCH_CONTACT))-ARCH_BASE;
 export const bouncingPitch=frequency=>{
   const f=clamp(Number(frequency)||0,0,100)/100;
   return 90+270*Math.pow(1-f,1.35);
@@ -52,19 +60,17 @@ export function bouncingCenterline(station,frequency,height,phase=0){
   if(strength===0)return 0;
   const pitch=bouncingPitch(frequency);
   const t=fract(station/pitch+phase);
-  // This time warp is strictly increasing: 1 - 0.12*pi > 0.
-  const warped=t+.06*(1-Math.cos(TAU*t));
-  const distance=Math.min(warped,1-warped);
-  // Rounded absolute distance, followed by a quadratic flight term.
-  // Choose coefficients so that height=1 and slope=0 at the apex.
-  // The mirrored distance and periodic time warp have matching derivatives
-  // at period joins; the result has continuous first AND second derivatives.
-  const contact=.048,apex=Math.hypot(.5,contact);
-  const normalizer=apex-contact-.125/apex;
-  const flight=(Math.hypot(distance,contact)-contact-
-    .5*distance*distance/apex)/normalizer;
-  const amplitude=(70+.2*pitch)*strength;
-  return amplitude*(.65-flight);
+  // sin²(πt) has one nonnegative lobe per period. The quarter power
+  // approximates a circle better than sin(πt) and produces a broad arch
+  // crown. Positive contact radius rounds the inter-arch join smoothly.
+  const sine=Math.sin(Math.PI*t);
+  const arc=(Math.sqrt(Math.hypot(sine,ARCH_CONTACT))-ARCH_BASE)/
+    ARCH_DENOM;
+  // Height is applied only to the centreline, independent of stripe width.
+  // A small fixed world-space term keeps tiny-pitch arches legible while
+  // long-pitch arches stay broader than tall.
+  const rise=(40+.16*pitch)*strength;
+  return rise*(.5-arc);
 }
 export function pathPosition(stripe,x,extent){
   // Zoom expands the station domain. Finite drawn ends remain unless opted in.
@@ -138,8 +144,9 @@ export function pathPosition(stripe,x,extent){
     return {x:x-xAmplitude*Math.sin(angle),y:size*Math.cos(angle)};
   }
   if(g==='scalloped'&&stripe.geometry==='scalloped'){
-    // Saved geometry ID stays 'scalloped', but the physical object is one
-    // bouncing centreline. Individuality shifts its timing, not its edges.
+    // Saved geometry ID remains 'scalloped'. Repeat one rounded arch
+    // each pitch, then let ribbonEdge() apply thickness via local normals.
+    // Individuality shifts entire arcs, never their two edges separately.
     const delta=(stripe.phase??0)-(stripe.sharedPhase??0);
     const drift=Math.atan2(Math.sin(delta),Math.cos(delta))/
       TAU*(stripe.parallelMix??0);
