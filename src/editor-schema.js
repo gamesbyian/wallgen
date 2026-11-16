@@ -23,7 +23,7 @@ export const EDITOR_CATEGORIES=[
     {id:'turn',name:'Turns',settings:['turnRadius','hairpinAngle']},
     {id:'single-loop',name:'Loop',settings:['loopRadius','loopSweep']},
     {id:'shape-details',name:'Shape detail',settings:['stepCount','chevronSharpness','loopAspect']},
-    {id:'ends',name:'Endpoints',settings:['pathLength','endTaper','extendDrawnPath']},
+    {id:'ends',name:'Endpoints',settings:['pathLength','startTaper','endTaper','extendDrawnPath']},
   ]},
   {id:'stripes',label:'Stripes',icon:'stripes',tools:[
     {id:'structure',name:'Structure',settings:['construction','stripeWidth','spread']},
