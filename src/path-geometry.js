@@ -1,5 +1,5 @@
 import {pointOnDrawnPath} from './drawn-path.js';
-import {stripeEdgeOffset} from './edge-profiles.js';
+import {stripeEdgeOffset,circularScallop,edgePitch} from './edge-profiles.js';
 // Shared path sampler for every stripe geometry. x is the stable longitudinal
 // parameter; its *position* may turn back on itself (hairpins and loops).
 // The same samples drive silhouettes, decorations and frame-contact tests.
@@ -111,7 +111,18 @@ export function pathPosition(stripe,x,extent){
   const shared=modulation(x,g,stripe.sharedPhase??stripe.phase,
     stripe.sharedPeriod??stripe.period,stripe.sharedDisplacement??stripe.displacement,coreExtent,stripe);
   const individual=modulation(x,stripe.geometry,stripe.phase,stripe.period,stripe.displacement,coreExtent,stripe);
-  return {x,y:mix(shared,individual,stripe.parallelMix??1)+(stripe.tilt??0)*x/coreExtent};
+  // Ric-rac is a succession of alternating circular arcs through the
+  // centreline. It has its own pitch, depth and phase, independent of the
+  // generic wave / shapeFrequency controls. Edge-only and bunting do not move
+  // the centreline at all.
+  const ricrac=stripe.scallopForm==='ricrac'&&stripe.edgeStyle==='scalloped';
+  const pitch=ricrac?edgePitch(stripe.edgeSize??50):0;
+  const scallop=ricrac?circularScallop(x,pitch,
+    stripe.edgePhasePercent??0,
+    Math.min(pitch/2,stripe.width*.72*(stripe.edgeDepth??70)/100),
+    'alternating'):0;
+  return {x,y:mix(shared,individual,stripe.parallelMix??1)+
+    (stripe.tilt??0)*x/coreExtent+scallop};
 }
 export function samplePath(stripe,x,extent){
   const p=pathPosition(stripe,x,extent);
