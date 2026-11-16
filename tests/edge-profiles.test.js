@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {edgePitch,edgeWave,circularScallop,bouncingRibbonOffset,stripeEdgeOffset,decorateRegionObjects,
+import {edgePitch,bouncingPitch,edgeWave,circularScallop,bouncingRibbonOffset,stripeEdgeOffset,decorateRegionObjects,
   normalizeRegionEdgeOverrides} from '../src/edge-profiles.js';
 import {samplePath,ribbonEdge,widthAt} from '../src/path-geometry.js';
 import {normalizeRecipe,resolveScene} from '../src/model.js';
@@ -114,11 +114,11 @@ test('bouncing ribbon geometry has upper arches and staggered rounded lower drop
   for(const x of [-500,-25,0,25,500]){
     assert.equal(samplePath(stripe,x,scene.extent).y,stripe.center);
   }
-  const p1=ribbonEdge(stripe,edgePitch(recipe.stripeEdgeSize)/2,
+  const p1=ribbonEdge(stripe,bouncingPitch(recipe.shapeFrequency)/2,
     scene.extent,-1);
   const p2=ribbonEdge(stripe,0,scene.extent,-1);
   assert.ok(p1.y<p2.y,'scallop must bulge from the actual upper ribbon edge');
-  const pitch=edgePitch(100-recipe.shapeFrequency);
+  const pitch=bouncingPitch(recipe.shapeFrequency);
   const upperJoin=ribbonEdge(stripe,0,scene.extent,-1).y;
   const upperPeak=ribbonEdge(stripe,pitch/2,scene.extent,-1).y;
   const lowerDrop=ribbonEdge(stripe,0,scene.extent,1).y;
@@ -134,7 +134,7 @@ test('bouncing ribbon controls change frequency, depth, phase and affected sides
   const recipe=normalizeRecipe({geometry:'scalloped',stripeWidth:80,individuality:0,
     shapeFrequency:50,shapeDepth:50,stripeEdgePhase:0});
   const stripe=resolveScene(recipe).stripes[3];
-  const pitch=edgePitch(50);
+  const pitch=bouncingPitch(50);
   const upper=bouncingRibbonOffset(stripe,pitch/2,-1,stripe.width);
   const lower=bouncingRibbonOffset(stripe,0,1,stripe.width);
   assert.ok(upper<0&&lower>0);
@@ -148,11 +148,35 @@ test('bouncing ribbon controls change frequency, depth, phase and affected sides
   assert.ok(bouncingRibbonOffset({...stripe,edgePhasePercentB:50},pitch/2,1,stripe.width)>0);
   assert.ok(bouncingRibbonOffset({...stripe,edgeDirection:'inward'},0,1,stripe.width)<0);
   const compact={...stripe,shapeFrequency:100},broad={...stripe,shapeFrequency:0};
-  assert.ok(edgePitch(100-compact.shapeFrequency)<edgePitch(100-broad.shapeFrequency));
+  assert.ok(bouncingPitch(compact.shapeFrequency)<bouncingPitch(broad.shapeFrequency));
   const explicit=resolveScene(normalizeRecipe({...recipe,stripeEdgeStyle:'scalloped',
     stripeScallopForm:'bunting'})).stripes[3];
   assert.equal(explicit.edgeStyle,'scalloped','older scallop edge forms remain selectable');
   assert.equal(normalizeRecipe(recipe).geometry,'scalloped');
+});
+test('bouncing pitch stays broad across its entire frequency range',()=>{
+  assert.equal(bouncingPitch(100),90);
+  assert.equal(bouncingPitch(0),360);
+  for(const f of [0,10,25,50,75,90])
+    assert.ok(bouncingPitch(f)>bouncingPitch(f+10));
+  assert.ok(bouncingPitch(100)>edgePitch(0)*4,
+    'even maximum frequency must remain broad enough to read as a bounce');
+});
+test('bounce height is visibly expressive even for thin strokes',()=>{
+  const recipe=normalizeRecipe({geometry:'scalloped',shapeFrequency:100,
+    shapeDepth:30,construction:'stroke',stripeWidth:50});
+  const stripe=resolveScene(recipe).stripes[3];
+  const pitch=bouncingPitch(100);
+  const at=h=>bouncingRibbonOffset({...stripe,shapeDepth:h},0,1,stripe.width);
+  const subtle=at(30),bold=at(100);
+  assert.equal(at(0),0);
+  assert.ok(bold>subtle*4,'30-to-100 produces a dramatic visible change');
+  assert.ok(bold>=pitch*.2,'maximum drop has substantial world-space depth');
+  assert.equal(bold,bouncingRibbonOffset({...stripe,shapeDepth:100,
+    width:stripe.width*.1},0,1,stripe.width*.1),
+    'outward bounce height does not silently clamp to stripe thickness');
+  assert.ok(Number.isFinite(bouncingRibbonOffset({...stripe,shapeDepth:100,
+    edgeDirection:'inward'},0,1,stripe.width)));
 });
 test('independent edges do not alter old repeated-loop ribbon cross-sections',()=>{
   const scene=resolveScene(normalizeRecipe({seed:'legacy-loops',geometry:'loops'}));
@@ -288,7 +312,7 @@ test('bouncing geometry can move the lower drops without moving upper arches',()
     stripeEdgePhase:0,stripeEdgePhaseB:0});
   const normal=resolveScene(recipe).stripes[3];
   const staggered=resolveScene({...recipe,stripeEdgePhaseB:50}).stripes[3];
-  const pitch=edgePitch(100-recipe.shapeFrequency);
+  const pitch=bouncingPitch(recipe.shapeFrequency);
   assert.equal(bouncingRibbonOffset(normal,pitch/2,-1,normal.width),
     bouncingRibbonOffset(staggered,pitch/2,-1,staggered.width));
   assert.ok(bouncingRibbonOffset(normal,0,1,normal.width)>
