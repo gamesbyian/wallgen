@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {normalizeRecipe,encodeRecipe,decodeRecipe,LOCKABLE_SETTINGS,
   respectSettingLocks,resolveScene,PIGMENT_STYLES} from '../src/model.js';
 import {pigmentCoverage,pigmentMaterialSampler,paintPigmentedFill} from '../src/pigment-deposition.js';
@@ -87,4 +88,17 @@ test('unsafe imported bounds degrade to the original fill instead of allocating 
   paintPigmentedFill(ctx,t=>{assert.equal(t,ctx);called++;},
     null,{left:0,top:0,right:1000000,bottom:1000000},recipe,'giant');
   assert.equal(called,1);
+});
+
+test('pigment controls remain editable on radial and region compositions',()=>{
+  const app=readFileSync(new URL('../src/app.js',import.meta.url),'utf8');
+  const start=app.indexOf('if(!paths){',app.indexOf('function inactiveSettingKeys'));
+  const end=app.indexOf('if(!radial){',start);
+  assert.ok(start>0&&end>start);
+  const unavailable=app.slice(start,end);
+  for(const key of ['brushRoughness','pigmentStyle','pigmentGrainScale',
+    'pigmentEdgeBreakup','pigmentDirectionality'])
+    assert.ok(!unavailable.includes("'"+key+"'"),
+      key+' must not be disabled just because geometry is a region');
+  assert.match(app,/if\(recipe\.construction==='woven'&&recipe\.structure==='paths'\)/);
 });
