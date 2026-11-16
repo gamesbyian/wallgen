@@ -45,6 +45,17 @@ jobs:
       - name: Full Node suite (manual request only)
         if: ${{ steps.selection.outputs.tier == 'full' }}
         run: node scripts/ci-evidence.mjs full -- npm run check
+      - name: Generate deterministic bouncing-centerline visual plates
+        if: ${{ steps.selection.outputs.tier == 'quick' || steps.selection.outputs.tier == 'full' }}
+        run: node scripts/bouncing-centerline-plates.mjs artifacts/bouncing-centerline
+      - name: Preserve bouncing-centerline visual evidence
+        if: ${{ always() && (steps.selection.outputs.tier == 'quick' || steps.selection.outputs.tier == 'full') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: bouncing-centerline-plates-${{ github.run_id }}
+          path: artifacts/bouncing-centerline/
+          retention-days: 14
+          if-no-files-found: warn
       - name: Upload failure digest
         if: failure()
         uses: actions/upload-artifact@v4
@@ -56,9 +67,10 @@ jobs:
 
   # On-demand, unprivileged real Chromium evidence for a same-repository PR.
   # The required lightweight "test" check is unchanged. An agent opts in by
-  # including [touch-browser] in its PR title. Forks cannot run this deep gate.
+  # including [touch-browser] for the full suite or [bounce-browser] for
+  # a focused production geometry proof. Forks cannot run either gate.
   touch-browser:
-    if: ${{ github.event_name == 'pull_request' && contains(github.event.pull_request.title, '[touch-browser]') && github.event.pull_request.head.repo.full_name == github.repository }}
+    if: ${{ github.event_name == 'pull_request' && (contains(github.event.pull_request.title, '[touch-browser]') || contains(github.event.pull_request.title, '[bounce-browser]')) && github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-latest
     timeout-minutes: 25
     permissions:
@@ -85,6 +97,7 @@ jobs:
           node --check tests/view-pan-escape-focus-browser.mjs
           node --check tests/geometry-anchors-browser.mjs
           node --check tests/stripe-effects-browser.mjs
+          node --check tests/bouncing-ribbon-browser.mjs
           node --check tests/pigment-browser-acceptance.mjs
           node --check tests/inset-anchor-layout-browser.mjs
       - name: Serve current PR source
@@ -97,6 +110,7 @@ jobs:
           cat /tmp/roygbiv-opt-in-browser.log
           exit 1
       - name: Genuine two-viewport Chromium acceptance
+        if: ${{ contains(github.event.pull_request.title, '[touch-browser]') }}
         run: |
           CHROME_BIN="$(command -v google-chrome || command -v chromium || echo /usr/bin/google-chrome)" node tests/rotation-scrubber-browser.mjs
           node tests/agent3-portrait-swipes-escape.mjs
@@ -106,8 +120,12 @@ jobs:
           CHROME_BIN="$(command -v google-chrome || command -v chromium || echo /usr/bin/google-chrome)" node tests/view-pan-escape-focus-browser.mjs
           node tests/geometry-anchors-browser.mjs
           node tests/stripe-effects-browser.mjs
+          node tests/bouncing-ribbon-browser.mjs
           node tests/pigment-browser-acceptance.mjs
           node tests/inset-anchor-layout-browser.mjs
+      - name: Bouncing ribbon production Chromium and worker export acceptance
+        if: ${{ contains(github.event.pull_request.title, '[bounce-browser]') }}
+        run: node tests/bouncing-ribbon-browser.mjs
       - name: Preserve successful and failed browser evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -121,6 +139,7 @@ jobs:
             artifacts/independent-keyboard-focus/
             artifacts/geometry-anchors-browser/
             artifacts/stripe-effects-browser/
+            artifacts/bouncing-ribbon-browser/
             artifacts/inset-anchor-layout-browser/
           retention-days: 14
           if-no-files-found: warn

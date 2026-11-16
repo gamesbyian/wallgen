@@ -37,6 +37,35 @@ export function modulation(x, geometry, phase, period, d, extent,detail={}){
   }
   return d*(Math.sin(t*TAU*.42)*.35+Math.sin(t*TAU*.79+phase)*.4+Math.sin(t*TAU*1.33)*.25);
 }
+// One periodic C2 centreline. Outside the short rounded impact interval the
+// motion is almost parabolic, like a ball's flight; the smooth impact itself
+// replaces a physically sharp velocity reversal. A gentle periodic time warp
+// makes the ascent short and the descent long without introducing corners.
+// All distances are world units. The profile is independent of stripe width.
+export const bouncingPitch=frequency=>{
+  const f=clamp(Number(frequency)||0,0,100)/100;
+  return 90+270*Math.pow(1-f,1.35);
+};
+export function bouncingCenterline(station,frequency,height,phase=0){
+  if(!Number.isFinite(station))return 0;
+  const strength=Math.pow(clamp(Number(height)||0,0,100)/100,1.15);
+  if(strength===0)return 0;
+  const pitch=bouncingPitch(frequency);
+  const t=fract(station/pitch+phase);
+  // This time warp is strictly increasing: 1 - 0.12*pi > 0.
+  const warped=t+.06*(1-Math.cos(TAU*t));
+  const distance=Math.min(warped,1-warped);
+  // Rounded absolute distance, followed by a quadratic flight term.
+  // Choose coefficients so that height=1 and slope=0 at the apex.
+  // The mirrored distance and periodic time warp have matching derivatives
+  // at period joins; the result has continuous first AND second derivatives.
+  const contact=.048,apex=Math.hypot(.5,contact);
+  const normalizer=apex-contact-.125/apex;
+  const flight=(Math.hypot(distance,contact)-contact-
+    .5*distance*distance/apex)/normalizer;
+  const amplitude=(70+.2*pitch)*strength;
+  return amplitude*(.65-flight);
+}
 export function pathPosition(stripe,x,extent){
   // Zoom expands the station domain. Finite drawn ends remain unless opted in.
   const coreExtent=stripe.coreExtent??extent;
@@ -107,6 +136,16 @@ export function pathPosition(stripe,x,extent){
     const xAmplitude=stripe._renderLoopXAmplitude??stripe.loopXAmplitude??
       (size*2.1*Math.pow(2,((stripe.loopAspect??50)-50)/35));
     return {x:x-xAmplitude*Math.sin(angle),y:size*Math.cos(angle)};
+  }
+  if(g==='scalloped'&&stripe.geometry==='scalloped'){
+    // Saved geometry ID stays 'scalloped', but the physical object is one
+    // bouncing centreline. Individuality shifts its timing, not its edges.
+    const delta=(stripe.phase??0)-(stripe.sharedPhase??0);
+    const drift=Math.atan2(Math.sin(delta),Math.cos(delta))/
+      TAU*(stripe.parallelMix??0);
+    const phase=(stripe.edgePhasePercent??0)/100+drift;
+    return {x,y:bouncingCenterline(x,stripe.shapeFrequency??50,
+      stripe.shapeDepth??50,phase)+(stripe.tilt??0)*x/coreExtent};
   }
   const shared=modulation(x,g,stripe.sharedPhase??stripe.phase,
     stripe.sharedPeriod??stripe.period,stripe.sharedDisplacement??stripe.displacement,coreExtent,stripe);

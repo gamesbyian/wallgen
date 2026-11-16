@@ -3,8 +3,8 @@ import {effectRgba,paintInsetEdge} from './stripe-edge-effects.js';
 import {placeFloatingInterval} from './floating-inset-placement.js';
 import {drawTextOverlays} from './text-overlay-renderer.js';
 import {planNestedShapeContours} from './nested-shape-contours.js';
-import { samplePath, ribbonEdge, widthAt, noise1D } from './path-geometry.js';
-import {decorateRegionObjects,edgePitch,bouncingPitch} from './edge-profiles.js';
+import { samplePath, ribbonEdge, widthAt, noise1D, bouncingPitch } from './path-geometry.js';
+import {decorateRegionObjects,edgePitch} from './edge-profiles.js';
 import {drawRegionInteriors,elementInk,elementWave,lineDash,elementApplies} from './interior-elements.js';
 import { viewCamera } from './view-camera.js';
 import {findPathCrossings,crossingTopIsLater,crossingBranchClip} from './crossing-order.js';
@@ -168,14 +168,13 @@ function stripePath(stripe,extent,scene){
     }
   }else{
     const start=stripe.segmentStart??-extent,end=stripe.segmentEnd??extent;
-    // The original continuous fill is unchanged for existing saved recipes.
-    // Narrow scallops and bouncing drops need adequate arc samples.
-    // This extra work is opt-in; other geometries retain historic sampling.
-    const decoratedPitch=stripe.edgeStyle==='bouncing'?
-      bouncingPitch(stripe.shapeFrequency??50):
-      edgePitch(stripe.edgeSize??50);
-    const step=['scalloped','bouncing'].includes(stripe.edgeStyle)?
-      Math.min(3,decoratedPitch/18):3;
+    // Tight rebounds need more stations than ordinary centreline paths.
+    // Keep that cost exclusive to bouncing; existing decorative scallops
+    // and every other geometry retain their established sampling behaviour.
+    const bouncing=(stripe.sharedGeometry??stripe.geometry)==='scalloped';
+    const step=bouncing?Math.min(3,bouncingPitch(stripe.shapeFrequency??50)/60):
+      stripe.edgeStyle==='scalloped'?
+        Math.min(3,edgePitch(stripe.edgeSize??50)/18):3;
     const count=Math.max(500,Math.ceil((end-start)/step));
     for(let i=0;i<=count;i++){
       const x=start+(end-start)*i/count,p=edgePoint(x,stripe,extent,-1,scene);
