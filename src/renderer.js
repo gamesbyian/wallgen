@@ -3,6 +3,7 @@ import {effectRgba,paintInsetEdge} from './stripe-edge-effects.js';
 import {drawTextOverlays} from './text-overlay-renderer.js';
 import {planNestedShapeContours} from './nested-shape-contours.js';
 import { samplePath, ribbonEdge, widthAt, noise1D } from './path-geometry.js';
+import {decorateRegionObjects} from './edge-profiles.js';
 import {drawRegionInteriors,elementInk,elementWave,lineDash,elementApplies} from './interior-elements.js';
 import { viewCamera } from './view-camera.js';
 import {findPathCrossings,crossingTopIsLater,crossingBranchClip} from './crossing-order.js';
@@ -982,7 +983,7 @@ export function drawRegionObjects(ctx,scene,resources={},rememberEffectShape=nul
     }
     return path;
   };
-  const regions=scene.objects.filter(o=>o.kind==='region'&&o.vertices.length>=3);
+  const regions=decorateRegionObjects(scene.objects,scene);
   // First paint every fill. A tiny matching stroke closes antialiasing seams
   // where independent floating-point cells meet without a divider.
   for(const object of regions){
