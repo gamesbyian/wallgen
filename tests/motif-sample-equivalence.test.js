@@ -154,8 +154,9 @@ test('render-only repeating-loop aspect factor keeps original path positions bit
       for(const source of [scene.stripes[0],scene.stripes[3],scene.stripes[6]]){
         const oldStripe={...source};
         const cachedStripe={...oldStripe,
-          _renderLoopXAmplitude:(oldStripe.loopAmplitude??13)*2.1*
-            Math.pow(2,((oldStripe.loopAspect??50)-50)/35)};
+          _renderLoopXAmplitude:oldStripe.loopXAmplitude??
+            ((oldStripe.loopAmplitude??13)*2.1*
+              Math.pow(2,((oldStripe.loopAspect??50)-50)/35))};
         for(const station of [-2,-1,-.7,-.35,0,.14,.36,.8,1,2].map(
           x=>x*scene.extent)){
           assert.deepEqual(pathPosition(cachedStripe,station,scene.extent),
