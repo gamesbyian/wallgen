@@ -516,12 +516,10 @@ export function resolveScene(recipeInput) {
       stepCount:recipe.stepCount,
       chevronSharpness:recipe.chevronSharpness,
       loopAspect:recipe.loopAspect,
-      // The saved 'scalloped' geometry ID is retained for old recipes, but
-      // its default treatment is now a bouncing silhouette: shallow upper
-      // arches and smaller lower drops around a straight, filled band.
-      // Explicit scalloped edge styles still retain their older forms.
+      // 'scalloped' remains the serialized ID for the bouncing *centreline*.
+      // Decorative edge treatments are independent of the path geometry.
       ...(geometry==='scalloped'||recipe.stripeEdgeStyle!=='straight'?{
-        edgeStyle:recipe.stripeEdgeStyle==='straight'?'bouncing':recipe.stripeEdgeStyle,
+        edgeStyle:recipe.stripeEdgeStyle,
         scallopForm:recipe.stripeScallopForm,
         edgeSize:recipe.stripeEdgeSize,edgeDepth:recipe.stripeEdgeDepth,
         edgeDirection:recipe.stripeEdgeDirection,edgeSides:recipe.stripeEdgeSides,
