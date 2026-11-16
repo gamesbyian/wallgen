@@ -123,7 +123,7 @@ test('bounce alignment and individuality modify the centerline, not two edges',(
 });
 
 test('decorative edges remain independent and coexist with bouncing geometry',()=>{
-  const plain=make({stripeEdgeStyle:'straight'});
+  const plain=make({stripeEdgeStyle:'straight',shapeDepth:100});
   const decorated=make({stripeEdgeStyle:'wavy',stripeEdgeDepth:70,
     stripeEdgePhase:0,stripeEdgePhaseB:50,shapeDepth:100});
   const a=plain.stripes[3],b=decorated.stripes[3];
