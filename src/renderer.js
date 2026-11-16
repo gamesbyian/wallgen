@@ -3,7 +3,7 @@ import {effectRgba,paintInsetEdge} from './stripe-edge-effects.js';
 import {drawTextOverlays} from './text-overlay-renderer.js';
 import {planNestedShapeContours} from './nested-shape-contours.js';
 import { samplePath, ribbonEdge, widthAt, noise1D } from './path-geometry.js';
-import {decorateRegionObjects} from './edge-profiles.js';
+import {decorateRegionObjects,edgePitch} from './edge-profiles.js';
 import {drawRegionInteriors,elementInk,elementWave,lineDash,elementApplies} from './interior-elements.js';
 import { viewCamera } from './view-camera.js';
 import {findPathCrossings,crossingTopIsLater,crossingBranchClip} from './crossing-order.js';
@@ -168,7 +168,11 @@ function stripePath(stripe,extent,scene){
   }else{
     const start=stripe.segmentStart??-extent,end=stripe.segmentEnd??extent;
     // The original continuous fill is unchanged for existing saved recipes.
-    const count=Math.max(500,Math.ceil((end-start)/3));
+    // Small scallops need more arc samples than long straight segments.
+    // This extra work is opt-in; unchanged recipes retain historic sampling.
+    const step=stripe.edgeStyle==='scalloped'?
+      Math.min(3,edgePitch(stripe.edgeSize??50)/14):3;
+    const count=Math.max(500,Math.ceil((end-start)/step));
     for(let i=0;i<=count;i++){
       const x=start+(end-start)*i/count,p=edgePoint(x,stripe,extent,-1,scene);
       if(i===0)path.moveTo(p.x,p.y);else path.lineTo(p.x,p.y);
