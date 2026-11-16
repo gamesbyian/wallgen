@@ -33,7 +33,11 @@ export function modulation(x, geometry, phase, period, d, extent,detail={}){
     const u=x/extent*cycles+phase/TAU;
     // Raised cosine joins successive arches with continuous derivatives;
     // triangular periodic parabola tiles caused unintended sharp cusps.
-    return d*Math.cos(u*Math.PI);
+    // Preserve all historic depths through the neutral midpoint. Give arcs
+    // extra travel only in the upper half: max bend depth is now 3x deeper.
+    const depth=clamp(detail.shapeDepth??50,0,100);
+    const arcRange=1+2*clamp((depth-50)/50,0,1);
+    return d*arcRange*Math.cos(u*Math.PI);
   }
   return d*(Math.sin(t*TAU*.42)*.35+Math.sin(t*TAU*.79+phase)*.4+Math.sin(t*TAU*1.33)*.25);
 }
