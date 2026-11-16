@@ -24,6 +24,7 @@ export const COMPOSITIONS = ['single', 'repeat', 'floating'];
 export const INSET_ALIGNMENTS = ['independent', 'aligned', 'staggered', 'progressive'];
 export const CONSTRUCTIONS = ['ribbon', 'stroke', 'tonal', 'woven'];
 export const LINE_STYLES = ['continuous', 'dotted', 'dashed'];
+export const PIGMENT_STYLES = ['dry-brush','chalk','ink','wash','opaque'];
 export const CROSSING_MODES = ['over', 'under', 'weave'];
 export const MOTIFS = ['solid', 'dots', 'stars', 'dashes', 'diamonds', 'chevrons', 'hatch', 'checker'];
 export const MATERIALS = ['none', 'grain', 'sand-mandala', 'sand-beaded', 'sand-filigree', 'watercolor', 'construction', 'handmade', 'linen', 'linen-soft', 'linen-organic', 'canvas', 'denim', 'knit', 'felt', 'corduroy', 'corrugated', 'concrete', 'stucco', 'stone', 'drywall', 'wood-grain', 'vinyl-sheet', 'foil', 'glossy-paper', 'adobe'];
@@ -37,7 +38,7 @@ export const LOCKABLE_SETTINGS = ['seed','family','orientation','geometry','moti
   'textureDisplacement','patternHomogeneity','chaos','stripeWidth','spread','shapeFrequency','shapeDepth','motifSize','motifFrequency','lineStyle','individuality',
   'overridePatternHomogeneity','gap','outlineBuffer','glow','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','position',
   'structure','radialMode','rayCount','rayRotation','rayTwist','rayCoverage','rayCore','fieldCenterX','fieldCenterY','regionMode','regionCount','regionJitter','regionSides','scatteredCount','scatteredMinSize','scatteredMaxSize','scatteredVariation','scatteredSpacing','scatteredEdgeCrop','scatteredOverlap','scatteredShapeKind','scatteredShapeOverrides','dividerColor','dividerWidth',
-  'composition','insetAlignment','repeatCount','repeatSpacing','construction','crossingMode','turnRadius','hairpinAngle','loopRadius','loopSweep','geometrySafety','extendDrawnPath','stepCount','chevronSharpness','loopAspect','pathLength','endTaper','tonalContrast','brushRoughness','dotSize','dotSpacing','interiorElements'];
+  'composition','insetAlignment','repeatCount','repeatSpacing','construction','crossingMode','turnRadius','hairpinAngle','loopRadius','loopSweep','geometrySafety','extendDrawnPath','stepCount','chevronSharpness','loopAspect','pathLength','endTaper','tonalContrast','brushRoughness','pigmentStyle','pigmentGrainScale','pigmentEdgeBreakup','pigmentDirectionality','dotSize','dotSpacing','interiorElements'];
 export const PALETTES = ['classic', 'electric', 'pastel', 'jewel', 'muted', 'sunset', 'candy', 'arctic', 'earth', 'twilight', 'citrus'];
 export const TEXTURE_COVERAGES = ['both', 'stripes', 'background'];
 export const OUTLINES = ['none', 'hairline', 'white', 'double', 'broken', 'one-side', 'black', 'black-hairline', 'black-double', 'black-broken', 'black-one-side'];
@@ -239,6 +240,10 @@ export function normalizeRecipe(input = {}) {
     ...(LENGTH_ANCHORS.includes(input.pathLengthAnchor)?{pathLengthAnchor:input.pathLengthAnchor,...(Array.isArray(input.pathLengthAnchorPoints)&&input.pathLengthAnchorPoints.length===7&&input.pathLengthAnchorPoints.every(value=>value===null||Number.isFinite(value))?{pathLengthAnchorPoints:input.pathLengthAnchorPoints.map(value=>value===null?null:finiteRange(value,0,-10000,10000))}:{})}:{}),
     tonalContrast: finiteRange(input.tonalContrast, 50, 0, 100),
     brushRoughness: finiteRange(input.brushRoughness, 0, 0, 100),
+    pigmentStyle:PIGMENT_STYLES.includes(input.pigmentStyle)?input.pigmentStyle:'dry-brush',
+    pigmentGrainScale:finiteRange(input.pigmentGrainScale,35,0,100),
+    pigmentEdgeBreakup:finiteRange(input.pigmentEdgeBreakup,45,0,100),
+    pigmentDirectionality:finiteRange(input.pigmentDirectionality,60,0,100),
     dotSize: finiteRange(input.dotSize, 50, 0, 100),
     dotSpacing: finiteRange(input.dotSpacing, 50, 0, 100),
     shapeFrequency: finiteRange(input.shapeFrequency, 50, 0, 100),
@@ -659,7 +664,8 @@ export function randomizeAllRecipe({primesOnly=false,seed:requestedSeed}={}) {
     composition:any(COMPOSITIONS),insetAlignment:any(INSET_ALIGNMENTS),construction:any(CONSTRUCTIONS.filter(x=>x!=='tonal')),crossingMode:any(CROSSING_MODES),
     repeatCount:2+Math.floor(r()*5),repeatSpacing:percent(),
     turnRadius:percent(),loopRadius:percent(),loopSweep:240+Math.floor(r()*211),stepCount:1+Math.floor(r()*16),chevronSharpness:percent(),loopAspect:percent(),pathLength:percent(),endTaper:percent(),
-    tonalContrast:percent(),brushRoughness:percent(),dotSize:percent(),dotSpacing:percent(),
+    tonalContrast:percent(),brushRoughness:percent(),pigmentStyle:any(PIGMENT_STYLES),
+    pigmentGrainScale:percent(),pigmentEdgeBreakup:percent(),pigmentDirectionality:percent(),dotSize:percent(),dotSpacing:percent(),
     textureStrength:percent(), textureScale:percent(), textureDisplacement:percent(), individuality:percent(),
     patternHomogeneity:percent(), overridePatternHomogeneity:r()>.5,
     gap:percent(), outlineBuffer:percent(), glow:percent(), positionX:0, positionY:0,
