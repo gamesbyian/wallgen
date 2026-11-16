@@ -527,7 +527,7 @@ export function resolveScene(recipeInput) {
     const widest=Math.max(...stripes.map(stripe=>stripe.width));
     const nominalPitch=stripes[0].loopPeriod;
     const aspect=1.15+1.5*recipe.loopAspect/100;
-    const minimumAmplitude=Math.max(widest*1.1+5,
+    const minimumAmplitude=Math.max(widest*.85+5,
       nominalPitch/(2.15*aspect));
     const amplitude=minimumAmplitude*(1+.55*recipe.shapeDepth/100);
     const xAmplitude=amplitude*aspect;
