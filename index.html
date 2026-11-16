@@ -146,7 +146,13 @@
           <label class="field">Scallop form <select name="stripeScallopForm" data-setting="stripeScallopForm"><option value="edge-only">Edge-only / straight centreline</option><option value="bunting">Half-circle bunting / both edges</option><option value="ricrac">Ric-rac / alternating centreline</option></select></label>
           <label class="field range-field"><span>Edge size</span><input type="range" name="stripeEdgeSize" data-setting="stripeEdgeSize" min="0" max="100" value="50"></label>
           <label class="field range-field"><span>Edge depth</span><input type="range" name="stripeEdgeDepth" data-setting="stripeEdgeDepth" min="0" max="100" value="70"></label>
-          <label class="field range-field"><span>Edge phase</span><input type="range" name="stripeEdgePhase" data-setting="stripeEdgePhase" min="0" max="100" value="0"></label>
+          <label class="field range-field"><span>First edge phase</span><input type="range" name="stripeEdgePhase" data-setting="stripeEdgePhase" min="0" max="100" value="0"></label>
+          <label class="field range-field"><span>Second edge phase</span><input type="range" name="stripeEdgePhaseB" data-setting="stripeEdgePhaseB" min="0" max="100" value="0">
+            <small class="edge-phase-presets" aria-label="Phase relationship between stripe edges">
+              <button type="button" data-edge-phase-preset="0" aria-pressed="true" title="Move second edge to match the first">Match first</button>
+              <button type="button" data-edge-phase-preset="50" aria-pressed="false" title="Offset the second edge by half a pattern cycle">Offset 50%</button>
+            </small>
+          </label>
           <label class="field">Edge direction <select name="stripeEdgeDirection" data-setting="stripeEdgeDirection"><option value="outward">Outward</option><option value="inward">Inward</option><option value="alternating">Alternating</option></select></label>
           <label class="field">Edges affected <select name="stripeEdgeSides" data-setting="stripeEdgeSides"><option value="both">Both sides</option><option value="negative">First / upper side</option><option value="positive">Second / lower side</option></select></label>
           <label class="field">Stripe alignment <select name="stripeEdgeAlignment" data-setting="stripeEdgeAlignment"><option value="aligned">Aligned across all colours</option><option value="staggered">Staggered, alternate colours</option><option value="independent">Independent per colour</option></select></label>
@@ -645,7 +651,7 @@
     </div>
     <p class="aya-recipe-status" id="ayaRecipeStatus" role="status" aria-live="polite">A one-way handoff. Save the agent’s JSON, then use Import design.</p>
   </dialog>
-  <script type="module" src="src/app.js?v=20261116-insetanchors1"></script>
+  <script type="module" src="src/app.js?v=20261116-dualedges1"></script>
   <script type="module" src="src/mobile-studio.js?v=20261023-escape-focus1"></script>
   <script type="module" src="src/mobile-fullscreen.js?v=20261021-1"></script>
   <script type="module" src="src/mobile-swipes.js?v=20261116-insettools1"></script>
