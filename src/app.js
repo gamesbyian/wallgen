@@ -15,10 +15,10 @@ import { installImagePathTool } from './image-path-ui.js?v=20261023-wave-contour
 import {prepareReconstructionApply} from './reconstruction-apply-transaction.js';
 import {importedAngleDeltaDegrees} from './import-angle-wrap.js';
 import {pathStructureLockedOutsidePaths} from './path-authoring-locks.js';
-import {mountEditor,selectEditorTool,syncEditorStructure} from './editor-layout.js?v=20261116-dualedges1';
+import {mountEditor,selectEditorTool,syncEditorStructure} from './editor-layout.js?v=20261116-pigment-home1';
 import {randomizeScope} from './scoped-random.js';
 import {newInteriorElementId,INTERIOR_LIMITS,resolveInteriorSelection,interiorTargetSummary,resolveInteriorFocusTarget,interiorSliderStep} from './interior-elements.js';
-import {STYLE_PRESETS,EDITOR_CATEGORIES,TOOL_LIST} from './editor-schema.js?v=20261116-dualedges1';
+import {STYLE_PRESETS,EDITOR_CATEGORIES,TOOL_LIST} from './editor-schema.js?v=20261116-pigment-home1';
 import {sourceSettingLabel} from './editor-control-roles.js?v=20261021-labels1';
 import {fullSettingName} from './editor-terminology.js';
 import {installExplorationHistory} from './exploration-history.js';

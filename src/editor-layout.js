@@ -1,4 +1,4 @@
-import {EDITOR_CATEGORIES, TOOL_LIST, SETTING_TOOL} from './editor-schema.js?v=20261116-dualedges1';
+import {EDITOR_CATEGORIES, TOOL_LIST, SETTING_TOOL} from './editor-schema.js?v=20261116-pigment-home1';
 import {iconMarkup} from './ui-icons.js';
 import {annotateEditorSettingRow,sourceSettingLabel} from './editor-control-roles.js?v=20261021-labels1';
 import {installFocusedAdjustments} from './editor-focus.js';
@@ -207,7 +207,7 @@ export function mountEditor(){
     form.append(panel);
     for(const tool of category.tools){
       const chip=create('button','editor-tool-tab',tool.name);
-      const toolIcon=({outlines:'outlines',shadows:'shadows',glow:'glow',lighting:'lighting',interior:'interior-elements',geometry:'path',patterns:'stripes',ray:'path',surface:'material'})[tool.id];
+      const toolIcon=({outlines:'outlines',shadows:'shadows',glow:'glow',lighting:'lighting',interior:'interior-elements',geometry:'path',patterns:'stripes',ray:'path',surface:'material',pigment:'material'})[tool.id];
       if(toolIcon)chip.innerHTML=iconMarkup(toolIcon)+'<span>'+tool.name+'</span>';
       chip.type='button';chip.dataset.editorTool=tool.id;
       chip.dataset.category=category.id;
