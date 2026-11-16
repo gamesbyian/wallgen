@@ -422,7 +422,8 @@ function toControls(recipe) {
   syncSettingLocks();
   syncInactiveSettings();
   syncScopedSettingDice();
-  syncEditorStructure(current.structure,current.regionMode,current.construction);
+  syncEditorStructure(current.structure,current.regionMode,current.construction,
+    current.composition);
   regionEdgesUI?.sync();
   const useShape=document.getElementById('chooseScatteredShape');
   if(useShape)useShape.hidden=!(current.structure==='regions'&&current.regionMode==='scattered');
@@ -1557,6 +1558,31 @@ const geometryAnchorControls=installGeometryAnchorControls({
   form,getRecipe:()=>current,getScene:()=>currentScene,
   onApply:recipe=>changeRecipe(recipe,{cause:'geometry_anchor'})
 });
+// The original inset alignment selector now lives in its own visible
+// Stripes → Inset stripes tool, not the distant Layout settings. Keep one
+// authoritative control and give each alignment a readable explanation.
+const insetCard=document.querySelector('.editor-tool-card[data-editor-tool="inset"]');
+if(!insetCard)throw new Error('Inset stripes editor card missing');
+const insetDescription=document.createElement('p');
+insetDescription.className='inset-alignment-description';
+insetDescription.setAttribute('aria-live','polite');
+const insetLengths=document.createElement('button');
+insetLengths.type='button';insetLengths.className='inset-endpoints-link';
+insetLengths.textContent='Adjust inset length and endpoints';
+insetLengths.addEventListener('click',()=>selectEditorTool('path','ends'));
+insetCard.append(insetDescription,insetLengths);
+const syncInsetDescription=()=>{
+  const messages={
+    independent:'Individual stripes retain their own seeded positions. Spacing changes move them apart without sliding them along their paths.',
+    aligned:'Dependent stripes share the same start and end stations, within the available canvas area.',
+    staggered:'Stripes share one safe placement but their endpoints step progressively along the path.',
+    progressive:'Stripes share one centre station, with their lengths increasing progressively.'
+  };
+  insetDescription.textContent=messages[current.insetAlignment]||messages.independent;
+};
+document.addEventListener('roygbiv-controls-synced',syncInsetDescription);
+syncInsetDescription();
+
 const nestedShapeControls=installNestedShapeControls({
   form,getRecipe:()=>current,getScene:()=>currentScene,
   onApply:recipe=>changeRecipe(recipe,{cause:'nested_shape'}),
