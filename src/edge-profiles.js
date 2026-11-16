@@ -51,11 +51,15 @@ export function stripeEdgeOffset(stripe,station,side,localWidth){
   const style=stripe.edgeStyle??'straight';
   if(style==='straight'||!stripe.edgeDepth||
     (style==='scalloped'&&stripe.scallopForm==='ricrac')||
-    (stripe.scallopForm!=='bunting'&&
+    ((style!=='scalloped'||stripe.scallopForm!=='bunting')&&
       ((stripe.edgeSides==='negative'&&side!==-1)||
       (stripe.edgeSides==='positive'&&side!==1))))return 0;
   const width=Math.max(0,localWidth);
-  const amplitude=width*.44*clamp(stripe.edgeDepth,0,100)/100;
+  // Use a fixed authored radius along the length; taper/texture must not
+  // make consecutive lobes wobble. Only inward cuts require a local cap.
+  const desired=(stripe.width??width)*.44*clamp(stripe.edgeDepth,0,100)/100;
+  const amplitude=(stripe.edgeDirection==='inward'||stripe.edgeDirection==='alternating')?
+    Math.min(desired,width*.44):desired;
   const pitch=edgePitch(stripe.edgeSize??50);
   const phase=stripe.edgePhasePercent??0;
   const direction=stripe.edgeDirection??'outward';
