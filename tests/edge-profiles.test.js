@@ -145,7 +145,7 @@ test('bouncing ribbon controls change frequency, depth, phase and affected sides
   assert.equal(bouncingRibbonOffset({...stripe,shapeDepth:0},0,1,stripe.width),0);
   assert.ok(bouncingRibbonOffset({...stripe,shapeDepth:90},0,1,stripe.width)>lower);
   assert.equal(bouncingRibbonOffset({...stripe,edgeSides:'negative'},0,1,stripe.width),0);
-  assert.ok(bouncingRibbonOffset({...stripe,edgePhasePercent:50},pitch/2,1,stripe.width)>0);
+  assert.ok(bouncingRibbonOffset({...stripe,edgePhasePercentB:50},pitch/2,1,stripe.width)>0);
   assert.ok(bouncingRibbonOffset({...stripe,edgeDirection:'inward'},0,1,stripe.width)<0);
   const compact={...stripe,shapeFrequency:100},broad={...stripe,shapeFrequency:0};
   assert.ok(edgePitch(100-compact.shapeFrequency)<edgePitch(100-broad.shapeFrequency));
