@@ -46,6 +46,11 @@ try{
     const regions={structure:'regions',regionMode:'voronoi',regionCount:21,
       dividerColor:'none'};
     const pathPlain=paint({...path,brushRoughness:0});
+    const diagPlain=paint({...path,orientation:'diagonal',
+      diagonalRotation:19,brushRoughness:0});
+    const diagRough=paint({...path,orientation:'diagonal',
+      diagonalRotation:19,brushRoughness:95,
+      pigmentStyle:'dry-brush',pigmentEdgeBreakup:80});
     const pathRough=paint({...path,brushRoughness:95,
       pigmentStyle:'dry-brush',pigmentEdgeBreakup:80});
     const pathRepeat=paint({...path,brushRoughness:95,
@@ -65,6 +70,7 @@ try{
       return changed;
     };
     return {paths:compare(pathPlain,pathRough),
+      diagonal:compare(diagPlain,diagRough),
       regions:compare(regionPlain,regionRough),
       repeatExact:equal(pathRough.pixels,pathRepeat.pixels),
       presetDifference:countDiff(pathRough.pixels,ink.pixels),
@@ -72,7 +78,7 @@ try{
       renderMs:{plain:pathPlain.ms,rough:pathRough.ms,regions:regionRough.ms,
         linen:linen.ms}};
   });
-  for(const type of ['paths','regions']){
+  for(const type of ['paths','diagonal','regions']){
     const c=cases[type];
     assert.ok(c.source>1200,{type,c});
     assert.ok(c.modified>1500,{type,c});
