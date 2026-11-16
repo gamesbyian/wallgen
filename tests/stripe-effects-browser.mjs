@@ -21,9 +21,11 @@ try{
     const paint=extra=>{
       const canvas=document.createElement('canvas');
       canvas.width=300;canvas.height=650;
+      const started=performance.now();
       drawWallpaper(canvas,{...common,...extra});
+      const ms=performance.now()-started;
       const ctx=canvas.getContext('2d',{willReadFrequently:true});
-      return {data:new Uint8ClampedArray(ctx.getImageData(0,0,300,650).data),
+      return {ms,data:new Uint8ClampedArray(ctx.getImageData(0,0,300,650).data),
         image:canvas.toDataURL('image/png')};
     };
     const baseline=paint({});
@@ -56,6 +58,9 @@ try{
       stripeShadowStrength:75,stripeShadowColorMode:'dark-stripe',
       stripeShadowPlacement:'both',glow:40,glowPlacement:'inner'});
     return {
+      renderMs:{baseline:baseline.ms,outerShadow:whiteShadow.ms,
+        innerGlow:innerGlow.ms,outerGlow:outerGlow.ms,both:both.ms,
+        regional:regional.ms,radial:radial.ms},
       whiteOutside:changed(whiteShadow,'outside'),
       blackOutside:changed(darkShadow,'outside'),
       innerGlowInside:changed(innerGlow,'inside'),

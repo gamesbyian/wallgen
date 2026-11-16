@@ -469,7 +469,7 @@ function inactiveSettingKeys(recipe,scene){
       'crossingMode','turnRadius','hairpinAngle','loopRadius','loopSweep','stepCount',
       'chevronSharpness','loopAspect','shapeFrequency','shapeDepth','stripeEdgeStyle','stripeEdgeSize','stripeEdgeDepth','stripeEdgePhase','stripeEdgeDirection','stripeEdgeSides','stripeEdgeAlignment','pathLength','endTaper',
       'construction','motif','lineStyle','patternHomogeneity','overridePatternHomogeneity',
-      'tonalContrast','brushRoughness','pigmentStyle','pigmentGrainScale','pigmentEdgeBreakup','pigmentDirectionality','dotSize','dotSpacing','motifSize','motifFrequency',
+      'tonalContrast','dotSize','dotSpacing','motifSize','motifFrequency',
       'stripeWidth','spread','individuality','chaos','outline','gap','outlineBuffer','textureDisplacement'])inactive.add(key);
   }
   if(!radial){
@@ -782,16 +782,18 @@ function render(recipe,{scroll=false,bypassLocks=false,interactive=false,cause='
       // renders, then settle at the exact screen resolution after dragging.
       preview.dataset.renderPending='true';
       preview.setAttribute('aria-busy','true');
-      // Only a quiet period after a direct Random / new seed can replace an
-      // ALREADY obsolete paint. Bursts reset this timer, so a replacement
-      // worker receives the latest exact settled source, not an interim draw.
-      // Normal gestures, text, Undo, cache nudges and exports never call it.
-      if(explicitRandom)randomWorkerQuietTimer=setTimeout(()=>{
+      // Expensive source effects can leave a stale, synchronous worker paint
+      // occupying the only render slot after the next edit. Once controls
+      // have gone quiet, interrupt only an aged obsolete job, never a same-art
+      // interactive-to-settled upgrade. Worker-side cooldown prevents storms.
+      randomWorkerQuietTimer=setTimeout(()=>{
         randomWorkerQuietTimer=null;
         if(!document.hidden&&preview.dataset.renderPending==='true'&&
-          artKey(current)===key)
-          previewWorker?.restartObsoleteRandomFor(key);
-      },300);
+          artKey(current)===key){
+          if(explicitRandom)previewWorker?.restartObsoleteRandomFor(key);
+          else previewWorker?.restartObsoleteFor(key,{minAgeMs:650});
+        }
+      },explicitRandom?300:450);
       if(interactive)settledPreviewTimer=setTimeout(()=>{
         settledPreviewTimer=null;
         if(previewWorker?.enabled&&artKey(current)===key)

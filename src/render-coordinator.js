@@ -121,11 +121,11 @@ export function createPreviewCoordinator({
   // must already be queued, distinct from the expensive active job, and old
   // enough that a fresh startup is less likely to be wasted. A replacement
   // construction failure leaves the original working queue untouched.
-  const restartObsoleteRandomFor=key=>{
+  const restartObsoleteFor=(key,{minAgeMs=randomObsoleteMinAgeMs}={})=>{
     if(disabled||disposed||!ready||!active||!pending||
       pending.key!==key||active.key===key||activeSince===null)return false;
     const at=now();
-    if(at-activeSince<randomObsoleteMinAgeMs||
+    if(at-activeSince<Math.max(randomObsoleteMinAgeMs,minAgeMs)||
       at-lastRandomRestart<randomRestartCooldownMs)return false;
     let replacement;
     try{
@@ -142,6 +142,8 @@ export function createPreviewCoordinator({
     try{superseded?.terminate();}catch{}
     return true;
   };
+  // Preserve the original Random-only API for existing callers and tests.
+  const restartObsoleteRandomFor=key=>restartObsoleteFor(key);
   return {
     request(recipe,key,width,height,{quality='settled',gesture=null}={}){
       if(disabled||disposed)return false;
@@ -155,6 +157,7 @@ export function createPreviewCoordinator({
       pending=null;
     },
     restartObsoleteRandomFor,
+    restartObsoleteFor,
     dispose(){
       disposed=true;disabled=true;clearWatchdog();
       pending=null;active=null;activeSince=null;
