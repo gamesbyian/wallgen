@@ -2,7 +2,7 @@
 // A hidden tool keeps its original recipe settings and locks intact.
 const PATH_TOOLS=new Set(['geometry','safety','turn','single-loop','shape-details','ends']);
 const RADIAL_TOOLS=new Set(['rays','ray-shape','origin']);
-const REGION_TOOLS=new Set(['regions','region-detail','origin',
+const REGION_TOOLS=new Set(['regions','region-detail','region-edges','origin',
   'scattered-size','scattered-distribution','scattered-edges']);
 
 export function toolAppliesToScene(entry,{structure='paths',regionMode='voronoi',construction='ribbon'}={}){
