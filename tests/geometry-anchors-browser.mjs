@@ -50,7 +50,7 @@ try{
       geometry:'straight',orientation:'vertical',chaos:78,
       spread:38,repeatSpacing:35,stripeWidth:42,pathLength:68});
     await page.goto(origin+'/?r='+encodeRecipe(seed),{waitUntil:'domcontentloaded'});
-    await page.waitForSelector('.geometry-anchor-setting select[name="spreadAnchor"]',{state:'attached'});
+    await page.waitForSelector('.geometry-anchor-strip select[name="spreadAnchor"]',{state:'attached'});
     await page.waitForFunction(()=>
       document.querySelector('#preview')?.dataset.renderPending==='false',
       null,{timeout:85000});
