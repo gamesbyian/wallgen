@@ -27,7 +27,7 @@ const DOMAIN_ROWS = "archetype|What kind of picture is this?|4|O|structure,radia
   "radial-shape|How do the rays fan, twist and expose background?|4|O|rayTwist,rayCoverage,rayCore\n" +
   "regions|How irregular or angular are cells?|3|O|regionJitter,regionSides\n" +
   "objects|How large, separated and cropped are independent shapes?|4|F|scatteredMinSize,scatteredMaxSize,scatteredVariation,scatteredSpacing,scatteredEdgeCrop,scatteredOverlap\n" +
-  "ends|How do open ribbons end or continue?|3|O|pathLength,endTaper,extendDrawnPath\n" +
+  "ends|How do open ribbons end or continue?|4|O|pathLength,startTaper,endTaper,extendDrawnPath\n" +
   "stripe-proportions|How broad and widely separated is the colour ink?|4|F|stripeWidth,spread\n" +
   "marks|What recurring pattern or marks fill a band?|3|F|motif,lineStyle,patternHomogeneity,dotSize,dotSpacing,motifSize,motifFrequency\n" +
   "stripe-character|How different is each coloured band?|3|O|individuality,overridePatternHomogeneity,tonalContrast\n" +
@@ -58,7 +58,7 @@ const GOAL_ROWS = "negative-space|more space,gaps,air,breathe,less crowded|strip
 "print-fabric|paper,fabric,cloth,printed,textile,material,grain|material,textureCoverage,textureStrength,textureScale,textureBlend,material2,textureStrength2|Build material character with attached adjustments\n"+
 "contour-relief|rough texture,distort,contour,edges,pigment|material,textureCoverage,textureStrength,textureDisplacement,brushRoughness,pigmentStyle,pigmentGrainScale,pigmentEdgeBreakup,pigmentDirectionality|Texture and the pigment coverage field respond to actual substrate relief\n"+
 "luminous|neon,glow,shadow,light,illuminate,bright|glow,stripeShadowStrength,stripeShadowSoftness,stripeShadowDirection,lightingMood,lightStrength,lightDirection|Join global and local lighting effects\n"+
-"floating-ribbons|floating,short,ends,taper,length|composition,pathLength,endTaper,stripeWidth,spread|Shape termination belongs beside floating composition\n"+
+"floating-ribbons|floating,short,ends,taper,length|composition,pathLength,startTaper,endTaper,stripeWidth,spread|Shape termination belongs beside floating composition\n"+
 "restore-shape|saved silhouette,reuse path,import shape,geometry library||Open geometry library, then apply source geometry rather than saved wallpaper\n"+
 "edit-object|move one circle,individual shape,resize just one,manual layout||Missing today: individual-scattered-object authoring, distinct from generative distribution\n"+
 "inspect-vision|colour blindness,vision comparison,simulate vision||Colour Vision Preview is an inspection overlay, not saved recipe appearance\n"+
