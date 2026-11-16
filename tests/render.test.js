@@ -41,6 +41,35 @@ function render(recipe) {
   assert.ok(calls.some(c=>c[0]==='fillRect' && c[1]==='#000'));
   assert.ok(calls.some(c=>c[0]==='drawImage'));
 }
+test('coloured and inset stripe effects render for paths, radial rays and regions',()=>{
+  const combinations=[
+    ['paths',{stripeShadowPlacement:'outer',stripeShadowColorMode:'black',stripeShadowInvert:true,
+      glowPlacement:'inner',glowColorMode:'white'}],
+    ['paths',{stripeShadowPlacement:'both',stripeShadowColorMode:'stripe',
+      glowPlacement:'both',glowColorMode:'stripe',glowInvert:true}],
+    ['radial',{stripeShadowPlacement:'inner',stripeShadowColorMode:'dark-stripe',
+      glowPlacement:'inner',glowColorMode:'custom',glowCustomColor:'#ffaa22'}],
+    ['regions',{stripeShadowPlacement:'both',stripeShadowColorMode:'light-stripe',
+      glowPlacement:'outer',glowColorMode:'black'}],
+  ];
+  for(const [structure,effect] of combinations){
+    calls.length=0;
+    const canvas={width:180,height:390,getContext:()=>new FakeContext()};
+    const cache={};
+    const scene=drawWallpaper(canvas,{
+      seed:'stripe-effects-'+structure,structure,material:'none',
+      stripeShadowStrength:100,stripeShadowSoftness:0,glow:45,
+      ...effect
+    },{cache});
+    assert.equal(scene.structure,structure);
+    assert.ok(cache.ink&&cache.background,'effect layers must preserve nudge cache');
+    if(effect.stripeShadowPlacement!=='inner'&&effect.stripeShadowColorMode!=='original')
+      assert.ok(calls.some(call=>call[0]==='drawImage'&&call[1]==='destination-over'),
+        'per-stripe cast shadow must be composited behind opaque ink');
+    assert.doesNotThrow(()=>presentNudgedArtwork(canvas,cache,scene));
+  }
+});
+
 test('radial and regional objects use the complete common painting pipeline',()=>{
   for(const [structure,modes,key] of [
     ['radial',['sunburst','starburst','pinwheel','spokes','concentric'],'radialMode'],
