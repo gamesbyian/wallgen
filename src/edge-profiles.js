@@ -11,6 +11,13 @@ const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const fract=n=>n-Math.floor(n);
 const smoothstep=t=>t*t*(3-2*t);
 export const edgePitch=size=>18+clamp(Number(size)||0,0,100)*1.24;
+// Bounces require their own perceptual frequency scale: scallop edge pitch
+// is decorative and much too dense for a broad, readable bouncing ribbon.
+// 0 = widely spaced gestures, 100 = tighter but still distinct arches.
+export const bouncingPitch=frequency=>{
+  const f=clamp(Number(frequency)||0,0,100)/100;
+  return 90+270*Math.pow(1-f,1.35);
+};
 
 // A true circular arc, specified by its chord (pitch) and sagitta (depth).
 // The depth control changes the radius of the circle, not a cosine amplitude;
@@ -36,18 +43,23 @@ export function bouncingRibbonOffset(stripe,station,side,localWidth){
   if(!Number.isFinite(station)||!Number.isFinite(localWidth)||localWidth<=0)return 0;
   if((stripe.edgeSides==='negative'&&side!==-1)||
     (stripe.edgeSides==='positive'&&side!==1))return 0;
-  const depth=clamp(stripe.shapeDepth??50,0,100)/50;
-  if(depth===0)return 0;
-  const width=Math.max(0,stripe.width??localWidth);
-  const pitch=edgePitch(100-clamp(stripe.shapeFrequency??50,0,100));
+  // A perceptual height curve makes subtle low values useful and the high
+  // end genuinely dramatic, without the old stripe-width cap flattening
+  // the entire slider response on thin lines.
+  const height=clamp(stripe.shapeDepth??50,0,100)/100;
+  if(height===0)return 0;
+  const strength=Math.pow(height,1.45);
+  const pitch=bouncingPitch(stripe.shapeFrequency??50);
   const phase=side===-1?(stripe.edgePhasePercent??0):
     (stripe.edgePhasePercentB??stripe.edgePhasePercent??0);
   const cycle=station/pitch+phase/100,t=fract(cycle);
-  const upperDepth=Math.min(pitch*.14,width*.27)*depth;
-  const lowerDepth=Math.min(pitch*.31,width*.70)*depth;
-  // Arc shoulders remain flat between drops. The central round lobe is
-  // bounded to 54% of the pitch; it never consumes the whole base ribbon.
-  const fromJoin=Math.min(t,1-t)*pitch,halfDrop=pitch*.27;
+  // Height is proportional to horizontal travel, independently of stripe
+  // thickness. Broad arches peak halfway between the deeper lower drops.
+  const upperDepth=pitch*.115*strength;
+  const lowerDepth=pitch*.22*strength;
+  // Drops consume 70% of each pitch. Their wider shoulders keep the rhythm
+  // bouncy rather than reading as closely packed serrations.
+  const fromJoin=Math.min(t,1-t)*pitch,halfDrop=pitch*.35;
   const drop=fromJoin>=halfDrop?0:
     lowerDepth*Math.sqrt(Math.max(0,1-(fromJoin/halfDrop)**2));
   const value=side===-1?
