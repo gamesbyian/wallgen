@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {edgePitch,edgeWave,circularScallop,stripeEdgeOffset,decorateRegionObjects,
+import {edgePitch,edgeWave,circularScallop,bouncingRibbonOffset,stripeEdgeOffset,decorateRegionObjects,
   normalizeRegionEdgeOverrides} from '../src/edge-profiles.js';
 import {samplePath,ribbonEdge,widthAt} from '../src/path-geometry.js';
 import {normalizeRecipe,resolveScene} from '../src/model.js';
@@ -107,7 +107,7 @@ test('stripe edge directions, single-side editing, and zero-depth leave core sta
   assert.equal(stripeEdgeOffset({...stripe,edgeDepth:0},station,1,40),0);
   assert.ok(stripeEdgeOffset({...stripe,edgeDirection:'inward'},station,1,40)<0);
 });
-test('scalloped geometry is a true straight centreline with rounded boundaries',()=>{
+test('bouncing ribbon geometry has upper arches and staggered rounded lower drops',()=>{
   const recipe=normalizeRecipe({seed:'ornamental-scene',geometry:'scalloped',
     stripeWidth:70,spread:60,individuality:0,construction:'ribbon'});
   const scene=resolveScene(recipe),stripe=scene.stripes[3];
@@ -118,8 +118,41 @@ test('scalloped geometry is a true straight centreline with rounded boundaries',
     scene.extent,-1);
   const p2=ribbonEdge(stripe,0,scene.extent,-1);
   assert.ok(p1.y<p2.y,'scallop must bulge from the actual upper ribbon edge');
-  assert.equal(scene.geometry,'scalloped');
-  assert.equal(stripe.edgeStyle,'scalloped');
+  const pitch=edgePitch(100-recipe.shapeFrequency);
+  const upperJoin=ribbonEdge(stripe,0,scene.extent,-1).y;
+  const upperPeak=ribbonEdge(stripe,pitch/2,scene.extent,-1).y;
+  const lowerDrop=ribbonEdge(stripe,0,scene.extent,1).y;
+  const lowerShoulder=ribbonEdge(stripe,pitch/2,scene.extent,1).y;
+  assert.ok(upperPeak<upperJoin,'upper edge has broad arches');
+  assert.ok(lowerDrop>lowerShoulder,'lower drops sit between the upper arches');
+  assert.ok(Math.abs(bouncingRibbonOffset(stripe,pitch/2,1,stripe.width))<1e-8,
+    'flat continuous lower shoulders preserve the base ribbon');
+  assert.equal(scene.geometry,'scalloped','historic saved geometry identifier remains valid');
+  assert.equal(stripe.edgeStyle,'bouncing');
+});
+test('bouncing ribbon controls change frequency, depth, phase and affected sides',()=>{
+  const recipe=normalizeRecipe({geometry:'scalloped',stripeWidth:80,individuality:0,
+    shapeFrequency:50,shapeDepth:50,stripeEdgePhase:0});
+  const stripe=resolveScene(recipe).stripes[3];
+  const pitch=edgePitch(50);
+  const upper=bouncingRibbonOffset(stripe,pitch/2,-1,stripe.width);
+  const lower=bouncingRibbonOffset(stripe,0,1,stripe.width);
+  assert.ok(upper<0&&lower>0);
+  assert.ok(Math.abs(lower)>Math.abs(upper)*1.5,
+    'drops are deeper than broad upper arches');
+  assert.equal(bouncingRibbonOffset(stripe,pitch/2,1,stripe.width),0);
+  assert.ok(Math.abs(bouncingRibbonOffset(stripe,pitch/2+pitch,-1,stripe.width)-upper)<1e-9);
+  assert.equal(bouncingRibbonOffset({...stripe,shapeDepth:0},0,1,stripe.width),0);
+  assert.ok(bouncingRibbonOffset({...stripe,shapeDepth:90},0,1,stripe.width)>lower);
+  assert.equal(bouncingRibbonOffset({...stripe,edgeSides:'negative'},0,1,stripe.width),0);
+  assert.ok(bouncingRibbonOffset({...stripe,edgePhasePercent:50},pitch/2,1,stripe.width)>0);
+  assert.ok(bouncingRibbonOffset({...stripe,edgeDirection:'inward'},0,1,stripe.width)<0);
+  const compact={...stripe,shapeFrequency:100},broad={...stripe,shapeFrequency:0};
+  assert.ok(edgePitch(100-compact.shapeFrequency)<edgePitch(100-broad.shapeFrequency));
+  const explicit=resolveScene(normalizeRecipe({...recipe,stripeEdgeStyle:'scalloped',
+    stripeScallopForm:'bunting'})).stripes[3];
+  assert.equal(explicit.edgeStyle,'scalloped','older scallop edge forms remain selectable');
+  assert.equal(normalizeRecipe(recipe).geometry,'scalloped');
 });
 test('independent edges do not alter old repeated-loop ribbon cross-sections',()=>{
   const scene=resolveScene(normalizeRecipe({seed:'legacy-loops',geometry:'loops'}));
