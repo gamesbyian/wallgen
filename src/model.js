@@ -1,5 +1,5 @@
 import { SHAPES } from './path-geometry.js';
-import {STRIPE_ANCHORS,GROUP_ANCHORS,WIDTH_ANCHORS,LENGTH_ANCHORS,pinStripePositions,pinGroupOffsets,pinBandEdges} from './geometry-anchors.js';
+import {STRIPE_ANCHORS,GROUP_ANCHORS,WIDTH_ANCHORS,LENGTH_ANCHORS,pinStripePositions,pinGroupOffsets,pinBandEdges,stripeAnchorCoordinate} from './geometry-anchors.js';
 import {normalizePhotoLook} from './photo-look.js';
 import {normalizeSurfaceTreatments} from './embroidery.js';
 import {normalizeCompoundRegion,GEOMETRY_SNAPSHOT_SCHEMA} from './geometry-asset.js';
@@ -540,7 +540,25 @@ export function resolveScene(recipeInput) {
       stripe.loopXAmplitude=xAmplitude;
       stripe.loopPeriod=pitch;
     }
+    // A hole in each ribbon is not enough if a neighbouring hue fills it.
+    // Keep the whole vertical envelope of each coloured loop separate, even
+    // across different source stations. Expand ONLY inter-stripe spacing:
+    // stripe widths and the authored Red/Green/Violet position anchor stay put.
+    let spacingScale=1;
+    for(let i=1;i<stripes.length;i++){
+      const gap=stripes[i].center-stripes[i-1].center;
+      const needed=2*amplitude+(stripes[i].width+stripes[i-1].width)/2+4;
+      spacingScale=Math.max(spacingScale,needed/Math.max(1e-6,gap));
+    }
+    if(spacingScale>1){
+      const pivot=stripeAnchorCoordinate(stripes.map(s=>s.center),
+        recipe.spreadAnchor,recipe.reverseStripes);
+      for(const stripe of stripes)
+        stripe.center=pivot+(stripe.center-pivot)*spacingScale;
+    }
   }
+  const physicalSpread=geometry==='loops'&&recipe.geometrySafety?
+    stripes.at(-1).center-stripes[0].center:spread;
   const textureLayers = [
     {material, strength:recipe.textureStrength, scale:recipe.textureScale, rotation:recipe.textureRotation,
       coverage:recipe.textureCoverage, blend:recipe.textureBlend, seed:recipe.seed+':texture:1', heightSeed:hashString(recipe.seed+':texture:1')},
@@ -558,7 +576,7 @@ export function resolveScene(recipeInput) {
   }
   const materialSummary=textureLayers.length ? textureLayers.map(layer=>layer.material).join(' + ') : 'none';
   const unpinnedBundles=Array.from({length:repeats},(_,i)=>
-    (i-(repeats-1)/2)*(spread+(12+recipe.repeatSpacing*1.1)));
+    (i-(repeats-1)/2)*(physicalSpread+(12+recipe.repeatSpacing*1.1)));
   // A repeat-only anchor must never displace the lone bundle when the artist
   // switches to Single or Floating. Preserve the setting for later reuse.
   const bundleOffsets=recipe.composition==='repeat'?
@@ -573,7 +591,7 @@ export function resolveScene(recipeInput) {
     // Reflect the entire diagonal ink layer, not its textures or background.
     mirrorHorizontal:orientation==='diagonal' && recipe.mirrorHorizontal,
     mirrorVertical:orientation==='diagonal' && recipe.mirrorVertical,
-    stripes, intensity: chaos, width: avg,
+    stripes, intensity: chaos, width: physicalSpread/6,
     bundleOffsets, objects,
     extent: Math.hypot(DESIGN_WIDTH, DESIGN_HEIGHT) * 1.35,
     reliefFallbackSeed:hashString(recipe.seed+':relief:fine-grain'),
