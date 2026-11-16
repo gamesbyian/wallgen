@@ -465,7 +465,7 @@ function inactiveSettingKeys(recipe,scene){
       'crossingMode','turnRadius','hairpinAngle','loopRadius','loopSweep','stepCount',
       'chevronSharpness','loopAspect','shapeFrequency','shapeDepth','pathLength','endTaper',
       'construction','motif','lineStyle','patternHomogeneity','overridePatternHomogeneity',
-      'tonalContrast','brushRoughness','pigmentStyle','pigmentGrainScale','pigmentEdgeBreakup','pigmentDirectionality','dotSize','dotSpacing','motifSize','motifFrequency',
+      'tonalContrast','dotSize','dotSpacing','motifSize','motifFrequency',
       'stripeWidth','spread','individuality','chaos','outline','gap','outlineBuffer','textureDisplacement'])inactive.add(key);
   }
   if(!radial){
