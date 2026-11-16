@@ -193,7 +193,26 @@
                 <option value="bottom-right">Lower right ↖</option>
               </select>
             </label>
-            <small class="stripe-shadow-help">Zero shadow strength turns stripe shadows off. Canvas lighting is controlled separately under Light.</small>
+            <div class="control-grid">
+              <label class="field">Placement
+                <select name="stripeShadowPlacement" data-setting="stripeShadowPlacement">
+                  <option value="outer">Outer</option><option value="inner">Inner</option><option value="both">Both</option>
+                </select>
+              </label>
+              <label class="field">Shadow colour
+                <select name="stripeShadowColorMode" data-setting="stripeShadowColorMode">
+                  <option value="original">Original grey-blue</option>
+                  <option value="black">Black</option><option value="white">White</option>
+                  <option value="stripe">Stripe colour</option><option value="dark-stripe">Darkened stripe</option>
+                  <option value="light-stripe">Lightened stripe</option><option value="custom">Custom colour</option>
+                </select>
+              </label>
+              <label class="field">Custom shadow colour <input type="color" name="stripeShadowCustomColor" data-setting="stripeShadowCustomColor" value="#ffffff"></label>
+              <label class="field"><span>Invert shadow colour</span>
+                <input type="checkbox" name="stripeShadowInvert" data-setting="stripeShadowInvert">
+              </label>
+            </div>
+            <small class="stripe-shadow-help">Outer shadows fall outside the stripe, inner shadows shade its inside edges, and Both combines them. Canvas lighting is separate under Light.</small>
           </div>
         </div>
         </section>
@@ -379,6 +398,10 @@
           <label class="field path-extension-toggle" title="Continue open drawn and imported paths beyond the frame at any zoom or nudge. Closed and floating paths retain their ends."><span>Extend open paths</span><input type="checkbox" name="extendDrawnPath" data-setting="extendDrawnPath"></label>
           <label class="field range-field"><span>End taper</span><input type="range" name="endTaper" data-setting="endTaper" min="0" max="100" value="0"></label>
           <label class="field range-field"><span>Glow </span><input type="range" name="glow" id="glow" data-setting="glow" min="0" max="100" value="0"></label>
+           <label class="field">Glow placement <select name="glowPlacement" data-setting="glowPlacement"><option value="outer">Outer</option><option value="inner">Inner</option><option value="both">Both</option></select></label>
+           <label class="field">Glow colour <select name="glowColorMode" data-setting="glowColorMode"><option value="stripe">Stripe colour</option><option value="black">Black</option><option value="white">White</option><option value="dark-stripe">Darkened stripe</option><option value="light-stripe">Lightened stripe</option><option value="custom">Custom colour</option></select></label>
+           <label class="field">Custom glow colour <input type="color" name="glowCustomColor" data-setting="glowCustomColor" value="#ffffff"></label>
+           <label class="field"><span>Invert glow colour</span><input type="checkbox" name="glowInvert" data-setting="glowInvert"></label>
         </div>
         
         <p class="control-note">Geometric individuality changes path direction, parallelism, and edge profiles, never stripe pattern types. New variation retains settings; Randomize all changes everything.</p>
