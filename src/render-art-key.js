@@ -24,6 +24,11 @@ export function artKey(input){
   // The exact same key is used for worker response freshness, nudge cache,
   // and photo comparison. Repaint only if these lighting settings can alter
   // the immutable source ink or material background.
+  // Custom-colour or inset shadows are baked into the ink surface. Only the
+  // legacy whole-silhouette outer shadow may use compositor-only nudges.
+  if(recipe.stripeShadowStrength>0&&
+    (recipe.stripeShadowPlacement!=='outer'||recipe.stripeShadowColorMode!=='original'||recipe.stripeShadowInvert))
+    Object.assign(art,{stripeShadowStrength,stripeShadowSoftness,stripeShadowDirection});
   if(hasDirectionalSand(recipe)||hasDirectionalEmbroidery(recipe))
     Object.assign(art,{lightingMood,lightDirection,lightStrength,shadowStrength});
   return JSON.stringify(art);

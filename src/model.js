@@ -31,12 +31,15 @@ export const MATERIALS = ['none', 'grain', 'sand-mandala', 'sand-beaded', 'sand-
 export const BLEND_MODES = ['normal', 'multiply', 'screen', 'overlay', 'soft-light', 'difference'];
 export const LIGHTING_MOODS = ['off', 'daylight', 'golden', 'moonlight'];
 export const LIGHT_DIRECTIONS = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
-export const LOCKABLE_SETTINGS = ['seed','family','orientation','geometry','motif','palette','paletteToneEnabled','paletteSaturation','paletteLightness','outline','background','lightingMood','lightDirection','lightStrength','shadowStrength','stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection',
+export const EFFECT_PLACEMENTS = ['inner', 'outer', 'both'];
+export const SHADOW_COLOUR_MODES = ['original', 'black', 'white', 'stripe', 'dark-stripe', 'light-stripe', 'custom'];
+export const GLOW_COLOUR_MODES = ['stripe', 'black', 'white', 'dark-stripe', 'light-stripe', 'custom'];
+export const LOCKABLE_SETTINGS = ['seed','family','orientation','geometry','motif','palette','paletteToneEnabled','paletteSaturation','paletteLightness','outline','background','lightingMood','lightDirection','lightStrength','shadowStrength','stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection','stripeShadowColorMode','stripeShadowCustomColor','stripeShadowInvert','stripeShadowPlacement',
   'material','textureCoverage','textureStrength','textureScale','textureRotation','textureBlend',
   'material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2',
   'material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3',
   'textureDisplacement','patternHomogeneity','chaos','stripeWidth','spread','shapeFrequency','shapeDepth','motifSize','motifFrequency','lineStyle','individuality',
-  'overridePatternHomogeneity','gap','outlineBuffer','glow','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','position',
+  'overridePatternHomogeneity','gap','outlineBuffer','glow','glowPlacement','glowColorMode','glowCustomColor','glowInvert','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','position',
   'structure','radialMode','rayCount','rayRotation','rayTwist','rayCoverage','rayCore','fieldCenterX','fieldCenterY','regionMode','regionCount','regionJitter','regionSides','scatteredCount','scatteredMinSize','scatteredMaxSize','scatteredVariation','scatteredSpacing','scatteredEdgeCrop','scatteredOverlap','scatteredShapeKind','scatteredShapeOverrides','dividerColor','dividerWidth',
   'composition','insetAlignment','repeatCount','repeatSpacing','construction','crossingMode','turnRadius','hairpinAngle','loopRadius','loopSweep','geometrySafety','extendDrawnPath','stepCount','chevronSharpness','loopAspect','pathLength','endTaper','tonalContrast','brushRoughness','pigmentStyle','pigmentGrainScale','pigmentEdgeBreakup','pigmentDirectionality','dotSize','dotSpacing','interiorElements'];
 export const PALETTES = ['classic', 'electric', 'pastel', 'jewel', 'muted', 'sunset', 'candy', 'arctic', 'earth', 'twilight', 'citrus'];
@@ -267,6 +270,10 @@ export function normalizeRecipe(input = {}) {
     stripeShadowStrength: finiteRange(input.stripeShadowStrength, 0, 0, 100),
     stripeShadowSoftness: finiteRange(input.stripeShadowSoftness, 55, 0, 100),
     stripeShadowDirection: LIGHT_DIRECTIONS.includes(input.stripeShadowDirection) ? input.stripeShadowDirection : 'top-left',
+    stripeShadowColorMode: SHADOW_COLOUR_MODES.includes(input.stripeShadowColorMode)?input.stripeShadowColorMode:'original',
+    stripeShadowCustomColor: /^#[0-9a-f]{6}$/i.test(input.stripeShadowCustomColor||'')?input.stripeShadowCustomColor.toLowerCase():'#ffffff',
+    stripeShadowInvert: input.stripeShadowInvert===true||input.stripeShadowInvert==='true',
+    stripeShadowPlacement: EFFECT_PLACEMENTS.includes(input.stripeShadowPlacement)?input.stripeShadowPlacement:'outer',
     chaos: finiteRange(input.chaos, 36, 0, 100),
     stripeWidth: finiteRange(input.stripeWidth, 52, 0, 100),
     ...(WIDTH_ANCHORS.includes(input.widthAnchor)?{widthAnchor:input.widthAnchor,widthAnchorBasis:finiteRange(input.widthAnchorBasis,input.stripeWidth??52,0,100),widthAnchorOffset:finiteRange(input.widthAnchorOffset,0,-10000,10000)}:{}),
@@ -297,6 +304,10 @@ export function normalizeRecipe(input = {}) {
     gap: finiteRange(input.gap, 28, 0, 100),
     outlineBuffer: finiteRange(input.outlineBuffer, 0, 0, 100),
     glow: finiteRange(input.glow, 0, 0, 100),
+    glowPlacement: EFFECT_PLACEMENTS.includes(input.glowPlacement)?input.glowPlacement:'outer',
+    glowColorMode: GLOW_COLOUR_MODES.includes(input.glowColorMode)?input.glowColorMode:'stripe',
+    glowCustomColor: /^#[0-9a-f]{6}$/i.test(input.glowCustomColor||'')?input.glowCustomColor.toLowerCase():'#ffffff',
+    glowInvert: input.glowInvert===true||input.glowInvert==='true',
     // Camera framing is part of the artwork and therefore of every saved PNG.
     viewZoom: Math.round(finiteRange(input.viewZoom, 1, .5, 2.5)*100)/100,
     // Camera-only frame pan in percent of the original 600×1300 world.
@@ -659,6 +670,8 @@ export function randomizeAllRecipe({primesOnly=false,seed:requestedSeed}={}) {
     lightStrength:percent(),shadowStrength:percent(),
     stripeShadowDirection:any(LIGHT_DIRECTIONS),
     stripeShadowStrength:percent(),stripeShadowSoftness:percent(),
+    stripeShadowColorMode:any(SHADOW_COLOUR_MODES),stripeShadowInvert:r()>.5,
+    stripeShadowPlacement:any(EFFECT_PLACEMENTS),stripeShadowCustomColor:'#ffffff',
     chaos:percent(), stripeWidth:percent(), spread:percent(),
     shapeFrequency:percent(),shapeDepth:percent(),motifSize:percent(),motifFrequency:percent(),lineStyle:any(LINE_STYLES),
     composition:any(COMPOSITIONS),insetAlignment:any(INSET_ALIGNMENTS),construction:any(CONSTRUCTIONS.filter(x=>x!=='tonal')),crossingMode:any(CROSSING_MODES),
@@ -669,5 +682,7 @@ export function randomizeAllRecipe({primesOnly=false,seed:requestedSeed}={}) {
     textureStrength:percent(), textureScale:percent(), textureDisplacement:percent(), individuality:percent(),
     patternHomogeneity:percent(), overridePatternHomogeneity:r()>.5,
     gap:percent(), outlineBuffer:percent(), glow:percent(), positionX:0, positionY:0,
+    glowPlacement:any(EFFECT_PLACEMENTS),glowColorMode:any(GLOW_COLOUR_MODES),
+    glowInvert:r()>.5,glowCustomColor:'#ffffff',
   });
 }

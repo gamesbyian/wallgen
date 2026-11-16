@@ -59,7 +59,7 @@ const notice = document.getElementById('notice');
 const studioStatus = document.getElementById('studioStatus');
 const favoriteButton = document.getElementById('favorite');
 const FAVORITES_KEY = 'wallgen:favorites:v1';
-const FIELDS = ['primesOnly','family','structure','radialMode','rayCount','rayRotation','rayTwist','rayCoverage','rayCore','fieldCenterX','fieldCenterY','regionMode','regionCount','regionJitter','regionSides','scatteredCount','scatteredMinSize','scatteredMaxSize','scatteredVariation','scatteredSpacing','scatteredEdgeCrop','scatteredOverlap','scatteredShapeKind','dividerColor','dividerWidth','composition','insetAlignment','repeatCount','repeatSpacing','orientation','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','geometry','turnRadius','hairpinAngle','loopRadius','loopSweep','geometrySafety','extendDrawnPath','crossingMode','stepCount','chevronSharpness','loopAspect','construction','motif','lineStyle','pathLength','tonalContrast','dotSize','dotSpacing','endTaper','shapeFrequency','shapeDepth','motifSize','motifFrequency','palette','paletteToneEnabled','paletteSaturation','paletteLightness','material','outline','background','lightingMood','lightDirection','lightStrength','shadowStrength','stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection','textureCoverage','textureRotation','textureBlend','textureLayer2Enabled','material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2','textureLayer3Enabled','material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3','chaos','stripeWidth','spread','textureStrength','textureScale','textureDisplacement','individuality','patternHomogeneity','overridePatternHomogeneity','gap','outlineBuffer','glow'];
+const FIELDS = ['primesOnly','family','structure','radialMode','rayCount','rayRotation','rayTwist','rayCoverage','rayCore','fieldCenterX','fieldCenterY','regionMode','regionCount','regionJitter','regionSides','scatteredCount','scatteredMinSize','scatteredMaxSize','scatteredVariation','scatteredSpacing','scatteredEdgeCrop','scatteredOverlap','scatteredShapeKind','dividerColor','dividerWidth','composition','insetAlignment','repeatCount','repeatSpacing','orientation','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','geometry','turnRadius','hairpinAngle','loopRadius','loopSweep','geometrySafety','extendDrawnPath','crossingMode','stepCount','chevronSharpness','loopAspect','construction','motif','lineStyle','pathLength','tonalContrast','dotSize','dotSpacing','endTaper','shapeFrequency','shapeDepth','motifSize','motifFrequency','palette','paletteToneEnabled','paletteSaturation','paletteLightness','material','outline','background','lightingMood','lightDirection','lightStrength','shadowStrength','stripeShadowStrength','stripeShadowSoftness','stripeShadowDirection','stripeShadowPlacement','stripeShadowColorMode','stripeShadowCustomColor','stripeShadowInvert','glowPlacement','glowColorMode','glowCustomColor','glowInvert','textureCoverage','textureRotation','textureBlend','textureLayer2Enabled','material2','textureCoverage2','textureStrength2','textureScale2','textureRotation2','textureBlend2','textureLayer3Enabled','material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3','chaos','stripeWidth','spread','textureStrength','textureScale','textureDisplacement','individuality','patternHomogeneity','overridePatternHomogeneity','gap','outlineBuffer','glow'];
 let current = normalizeRecipe();
 let usageRecorder=null; // Initialized after first render; no default collection.
 let usageGitHubSync=null;
@@ -556,7 +556,13 @@ function inactiveSettingKeys(recipe,scene){
   if(recipe.stripeShadowStrength===0){
     inactive.add('stripeShadowSoftness');
     inactive.add('stripeShadowDirection');
+    for(const key of ['stripeShadowPlacement','stripeShadowColorMode','stripeShadowCustomColor','stripeShadowInvert'])inactive.add(key);
   }
+  if(recipe.stripeShadowColorMode!=='custom')inactive.add('stripeShadowCustomColor');
+  if(recipe.glow===0){
+    for(const key of ['glowPlacement','glowColorMode','glowCustomColor','glowInvert'])inactive.add(key);
+  }
+  if(recipe.glowColorMode!=='custom')inactive.add('glowCustomColor');
   // A real material at zero strength can be re-enabled using its strength
   // control; all subordinate appearance knobs are dormant in the meantime.
   for(const suffix of ['','2','3']){
@@ -623,6 +629,8 @@ function syncInactiveSettings(){
       }
     }else if(field.type==='number'){
       field.value=isInactive?'0':String(current[key]);
+    }else if(field.type==='color'){
+      field.value=String(current[key]);
     }
     if(key.startsWith('textureRotation') || key==='diagonalRotation'){
       for(const button of document.querySelectorAll('[data-rotate-target="'+key+'"]'))
