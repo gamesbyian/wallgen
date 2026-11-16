@@ -186,12 +186,8 @@ export function paintPigmentedFill(ctx,paint,path,bounds,scene,objectSeed,option
   }
   const surface=holder.canvas;
   if(!surface){paint(ctx);return;}
-  // Repeated stripes and small regions often differ by just a few pixels.
-  // Shrinking/re-growing the shared scratch buffer reallocates the full
-  // backing store for every colour. Retain its high-water capacity and draw
-  // only the freshly cleared, painted subrectangle.
-  if(surface.width<w)surface.width=w;
-  if(surface.height<h)surface.height=h;
+  if(surface.width!==w)surface.width=w;
+  if(surface.height!==h)surface.height=h;
   const t=surface.getContext('2d',{willReadFrequently:true});
   if(!t){paint(ctx);return;}
   t.setTransform(1,0,0,1,0,0);
@@ -259,5 +255,5 @@ export function paintPigmentedFill(ctx,paint,path,bounds,scene,objectSeed,option
     }
   }
   t.putImageData(pixels,0,0);
-  ctx.drawImage(surface,0,0,w,h,x0,y0,w/ppu,h/ppu);
+  ctx.drawImage(surface,x0,y0,w/ppu,h/ppu);
 }
