@@ -37,8 +37,11 @@ randomization and AYA agent handoff.
   introducing an overlaid pigment deposit. Patterned/dotted paths never receive
   an outside halo along an imaginary continuous ribbon.
 - The scratch surface is reused within a render and released when complete.
-  Giant imported bounds fall back to the original opaque fill instead of
-  allocating arbitrarily large pixel buffers.
+  Long diagonal/offscreen objects are clipped to the inverse-transformed
+  visible canvas plus glow/edge bleed. Large visible objects reduce sampling
+  density before exhausting the scratch budget; only pathological dimensions
+  fall back to their original opaque fill instead of allocating unbounded
+  pixel buffers.
 - Existing recipes with 0 roughness remain on the original renderer path and
   need no migration. Previously saved nonzero roughness intentionally receives
   the upgraded appearance.
