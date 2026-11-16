@@ -144,10 +144,8 @@ export function pathPosition(stripe,x,extent){
     const drift=Math.atan2(Math.sin(delta),Math.cos(delta))/
       TAU*(stripe.parallelMix??0);
     const phase=(stripe.edgePhasePercent??0)/100+drift;
-    return {x,y:stripe.center===undefined?bouncingCenterline(x,
-      stripe.shapeFrequency??50,stripe.shapeDepth??50,phase):
-      bouncingCenterline(x,stripe.shapeFrequency??50,
-        stripe.shapeDepth??50,phase)+(stripe.tilt??0)*x/coreExtent};
+    return {x,y:bouncingCenterline(x,stripe.shapeFrequency??50,
+      stripe.shapeDepth??50,phase)+(stripe.tilt??0)*x/coreExtent};
   }
   const shared=modulation(x,g,stripe.sharedPhase??stripe.phase,
     stripe.sharedPeriod??stripe.period,stripe.sharedDisplacement??stripe.displacement,coreExtent,stripe);
