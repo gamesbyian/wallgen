@@ -505,7 +505,8 @@ function inactiveSettingKeys(recipe,scene){
     inactive.add('textureDisplacement');
   // Decorative motifs have separate size/density knobs; straight geometry
   // never has curve frequency/depth, even when marked with chevrons.
-  if(['straight','hairpin','loop','drawn'].includes(scene.geometry))
+  if(['straight','hairpin','loop','drawn'].includes(scene.geometry)||
+    (scene.geometry==='scalloped'&&recipe.stripeEdgeStyle!=='straight'))
     inactive.add('shapeFrequency'),inactive.add('shapeDepth');
   // Bounce frequency/height are the native geometry controls. The separate
   // stripe-edge size/depth controls belong only to explicitly chosen edge
