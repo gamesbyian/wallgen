@@ -45,8 +45,12 @@ randomization and AYA agent handoff.
 
 ## Current limits and acceptance
 
-The grain field is sampled at two pixels per logical artwork unit and resampled
-to the requested output size. On tight hairpins and loops, longitudinal grain
+The grain field is sampled on a source-anchored, viewport-aware lattice:
+small previews use a quantized density from 0.5 to 2 samples per logical
+artwork unit, while native exports retain up to two samples per unit.
+Substrate relief is bilinearly interpolated from a coarser material lattice
+(roughly one material sample per three logical units) to avoid expensive
+per-pixel material lookups. On tight hairpins and loops, longitudinal grain
 follows the local design coordinate frame rather than an exact reconstructed
 arc-length/tangent field. Fine micron-level detail is still supplied by the
 independent material painter. Native export performance at the maximum camera
