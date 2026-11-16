@@ -45,3 +45,7 @@ This is a **structural field-membership map**, not a claim that a field kept the
 5. Keep current PNG raster and non-recipe ancillary bytes untouched throughout; migrations require **both** exact image preservation and honest recipe-fidelity reporting.
 
 **Reproduction:** `node scripts/build-recipe-format-history.mjs` in a full local Git checkout generates a comparable key history. The script uses the local Git graph and may include additional branches, so its revision count can legitimately differ from this main-history snapshot.
+
+## Active additions after the frozen archaeology range
+
+The pinned 45-revision source-blob ledger above remains immutable. The active editor now adds `stripeShadowPlacement`, `stripeShadowColorMode`, `stripeShadowCustomColor`, `stripeShadowInvert`, `glowPlacement`, `glowColorMode`, `glowCustomColor`, and `glowInvert` (November 2026). They are deliberately not attributed to any October source commit. Missing keys load `outer` placement, original grey-blue stripe shadow and stripe-coloured glow, with inversion disabled. The `stripeShadowStrength` default stays zero.
