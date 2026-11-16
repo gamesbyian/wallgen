@@ -57,11 +57,11 @@ export function bouncingRibbonOffset(stripe,station,side,localWidth){
   // thickness. Broad arches peak halfway between the deeper lower drops.
   const upperDepth=pitch*.115*strength;
   const lowerDepth=pitch*.22*strength;
-  // Drops consume 70% of each pitch. Their wider shoulders keep the rhythm
-  // bouncy rather than reading as closely packed serrations.
-  const fromJoin=Math.min(t,1-t)*pitch,halfDrop=pitch*.35;
-  const drop=fromJoin>=halfDrop?0:
-    lowerDepth*Math.sqrt(Math.max(0,1-(fromJoin/halfDrop)**2));
+  // A whole-period raised cosine flows continuously from one rounded drop
+  // into the next. Its only horizontal tangents are isolated extrema at the
+  // drop centres and the shallow valleys between them. The old truncated
+  // semicircle left a 30%-of-pitch straight plateau between each drop.
+  const drop=lowerDepth*(1+Math.cos(TAU*t))*.5;
   const value=side===-1?
     circularScallop(station,pitch,phase,upperDepth):drop;
   const direction=stripe.edgeDirection??'outward';

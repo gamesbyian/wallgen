@@ -126,7 +126,9 @@ test('bouncing ribbon geometry has upper arches and staggered rounded lower drop
   assert.ok(upperPeak<upperJoin,'upper edge has broad arches');
   assert.ok(lowerDrop>lowerShoulder,'lower drops sit between the upper arches');
   assert.ok(Math.abs(bouncingRibbonOffset(stripe,pitch/2,1,stripe.width))<1e-8,
-    'flat continuous lower shoulders preserve the base ribbon');
+    'the lower contour reaches its smooth minimum halfway between drops');
+  assert.ok(bouncingRibbonOffset(stripe,pitch*.4,1,stripe.width)>0,
+    'the lower contour must continue curving through the former flat shoulder');
   assert.equal(scene.geometry,'scalloped','historic saved geometry identifier remains valid');
   assert.equal(stripe.edgeStyle,'bouncing');
 });
@@ -153,6 +155,36 @@ test('bouncing ribbon controls change frequency, depth, phase and affected sides
     stripeScallopForm:'bunting'})).stripes[3];
   assert.equal(explicit.edgeStyle,'scalloped','older scallop edge forms remain selectable');
   assert.equal(normalizeRecipe(recipe).geometry,'scalloped');
+});
+test('bouncing lower edge has no flat interval or slope discontinuity',()=>{
+  const stripe={edgeStyle:'bouncing',shapeFrequency:47,shapeDepth:85,
+    edgeDirection:'outward',edgePhasePercent:0,edgePhasePercentB:0,
+    edgeSides:'both',width:20};
+  const pitch=bouncingPitch(47);
+  const sample=t=>bouncingRibbonOffset(stripe,t*pitch,1,stripe.width);
+  const peak=sample(0);
+  assert.ok(peak>0);
+  // Each station between two drops must have strictly positive, changing
+  // displacement except at the single zero-height midpoint.
+  for(let i=1;i<50;i++){
+    const t=i/100;
+    assert.ok(sample(t)>0,'no zero plateau at '+t);
+    assert.ok(sample(t)<sample(t-1/100),
+      'the lower edge descends smoothly toward its midpoint at '+t);
+    assert.ok(Math.abs(sample(t)-sample(1-t))<1e-9,
+      'the two sides of each bounce are symmetric');
+  }
+  const eps=1e-4;
+  for(const t of [0,.5,1]){
+    const slopeBefore=(sample(t)-sample(t-eps))/eps;
+    const slopeAfter=(sample(t+eps)-sample(t))/eps;
+    assert.ok(Math.abs(slopeAfter-slopeBefore)<peak*.01,
+      'bounce is tangent-continuous at period join/valley '+t);
+  }
+  assert.equal(sample(.5),0);
+  assert.ok(sample(.35)>0&&sample(.65)>0,
+    'former truncated semicircle boundaries are now curved');
+  assert.ok(Math.abs(sample(0)-sample(1))<1e-9);
 });
 test('bouncing pitch stays broad across its entire frequency range',()=>{
   assert.equal(bouncingPitch(100),90);
