@@ -242,3 +242,71 @@ test('both edge editors are independently discoverable in the canonical tool map
   assert.deepEqual([SETTING_TOOL.stripeEdgeStyle.category,
     SETTING_TOOL.stripeEdgeStyle.tool],['stripes','edges']);
 });
+
+
+test('physical ribbon edges have independently adjustable phase for all four edge styles',()=>{
+  const base={seed:'two-edge-phases',geometry:'straight',construction:'ribbon',
+    individuality:0,stripeWidth:75,spread:60,stripeEdgeSize:50,
+    stripeEdgeDepth:85,stripeEdgePhase:0,stripeEdgePhaseB:0,
+    stripeEdgeSides:'both',stripeEdgeAlignment:'aligned',
+    stripeScallopForm:'bunting'};
+  const station=edgePitch(50)*.10;
+  for(const style of ['wavy','pinked','scalloped','stepped']){
+    const first=resolveScene(normalizeRecipe({...base,stripeEdgeStyle:style})).stripes[3];
+    const offset=resolveScene(normalizeRecipe({...base,stripeEdgeStyle:style,
+      stripeEdgePhaseB:50})).stripes[3];
+    assert.equal(stripeEdgeOffset(first,station,-1,first.width),
+      stripeEdgeOffset(offset,station,-1,offset.width),
+      style+' must retain first-edge phase when second is changed');
+    assert.notEqual(stripeEdgeOffset(first,station,1,first.width),
+      stripeEdgeOffset(offset,station,1,offset.width),
+      style+' must change only the second edge');
+    assert.ok(Math.abs(stripeEdgeOffset(first,station+edgePitch(50)/2,1,first.width)-
+      stripeEdgeOffset(offset,station,1,offset.width))<1e-8,
+      style+' second edge must shift precisely half a pitch');
+  }
+  const normalized=normalizeRecipe({...base,stripeEdgePhase:37,stripeEdgePhaseB:87});
+  assert.equal(normalized.stripeEdgePhase,37);
+  assert.equal(normalized.stripeEdgePhaseB,87);
+  assert.deepEqual(normalizeRecipe(normalized),normalized);
+});
+
+test('stripe-to-stripe alignment maintains the chosen physical-edge offset',()=>{
+  for(const alignment of ['aligned','staggered','independent']){
+    const scene=resolveScene(normalizeRecipe({
+      seed:'relative-alignment',stripeEdgeStyle:'wavy',
+      stripeEdgeAlignment:alignment,stripeEdgePhase:23,stripeEdgePhaseB:73
+    }));
+    for(const stripe of scene.stripes)
+      assert.ok(Math.abs(stripe.edgePhasePercentB-stripe.edgePhasePercent-50)<1e-10);
+  }
+});
+
+test('bouncing geometry can move the lower drops without moving upper arches',()=>{
+  const recipe=normalizeRecipe({seed:'bounce-side-offset',geometry:'scalloped',
+    stripeWidth:80,shapeFrequency:50,shapeDepth:65,
+    stripeEdgePhase:0,stripeEdgePhaseB:0});
+  const normal=resolveScene(recipe).stripes[3];
+  const staggered=resolveScene({...recipe,stripeEdgePhaseB:50}).stripes[3];
+  const pitch=edgePitch(100-recipe.shapeFrequency);
+  assert.equal(bouncingRibbonOffset(normal,pitch/2,-1,normal.width),
+    bouncingRibbonOffset(staggered,pitch/2,-1,staggered.width));
+  assert.ok(bouncingRibbonOffset(normal,0,1,normal.width)>
+    bouncingRibbonOffset(staggered,0,1,staggered.width));
+});
+
+test('sweeping arc depth reaches three times its previous maximum while gentle bends remain unchanged',()=>{
+  const base={seed:'arc-depth-range',geometry:'arc',individuality:0,
+    shapeFrequency:37,shapeDepth:50};
+  const gentle=resolveScene(normalizeRecipe(base)).stripes[3];
+  const extreme=resolveScene(normalizeRecipe({...base,shapeDepth:100})).stripes[3];
+  const oldDepthRatio=Math.pow(100/50,1.3);
+  const relative=extreme.sharedDisplacement/gentle.sharedDisplacement;
+  assert.ok(Math.abs(relative-3*oldDepthRatio)<1e-10,
+    'the maximum arc displacement must be 3x its original value');
+  const waveGentle=resolveScene(normalizeRecipe({...base,geometry:'wave'})).stripes[3];
+  const waveExtreme=resolveScene(normalizeRecipe({...base,geometry:'wave',shapeDepth:100})).stripes[3];
+  assert.ok(Math.abs(waveExtreme.sharedDisplacement/waveGentle.sharedDisplacement-
+    oldDepthRatio)<1e-10,
+    'other path geometries must retain their old maximum bend depth');
+});
