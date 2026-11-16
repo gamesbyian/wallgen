@@ -518,6 +518,29 @@ export function resolveScene(recipeInput) {
     anchor:recipe.widthAnchor,basisStripes:referenceStripes,
     offset:recipe.widthAnchorOffset
   });
+  if(geometry==='loops'&&recipe.geometrySafety){
+    // A repeating centreline can reverse while its filled ribbon still
+    // completely swallows the loop opening. Resolve the *whole* rainbow from
+    // the widest actual stripe, after width anchors, so all seven colours
+    // retain a common period and silhouette without changing stripe width.
+    // Unlike an ordinary wave, even minimum Shape Depth must remain a loop.
+    const widest=Math.max(...stripes.map(stripe=>stripe.width));
+    const nominalPitch=stripes[0].loopPeriod;
+    const aspect=1.15+1.5*recipe.loopAspect/100;
+    const minimumAmplitude=Math.max(widest*1.1+5,
+      nominalPitch/(2.15*aspect));
+    const amplitude=minimumAmplitude*(1+.55*recipe.shapeDepth/100);
+    const xAmplitude=amplitude*aspect;
+    // Keep consecutive folds separate as the visible loop gets wider.
+    // This also bounds the rate of turns at high Shape Frequency rather than
+    // making increasingly dense, filled-in knots.
+    const pitch=Math.max(nominalPitch,2.15*xAmplitude);
+    for(const stripe of stripes){
+      stripe.loopAmplitude=amplitude;
+      stripe.loopXAmplitude=xAmplitude;
+      stripe.loopPeriod=pitch;
+    }
+  }
   const textureLayers = [
     {material, strength:recipe.textureStrength, scale:recipe.textureScale, rotation:recipe.textureRotation,
       coverage:recipe.textureCoverage, blend:recipe.textureBlend, seed:recipe.seed+':texture:1', heightSeed:hashString(recipe.seed+':texture:1')},
