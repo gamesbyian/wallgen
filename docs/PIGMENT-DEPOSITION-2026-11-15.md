@@ -23,6 +23,18 @@ underpainting or substrate reveal without erasing lower objects at overlaps.
 All settings are normalized and bounded for JSON/PNG/URL restoration, locking,
 randomization and AYA agent handoff.
 
+### Editor placement (2026-11-16)
+
+Texture > **Pigment** is a separate named tool after **Surface**. Pigment owns the
+five controls above, with their original live DOM inputs and saved recipe keys;
+Surface retains contour distortion and embroidery. The Pigment tool has its own
+scoped randomization, focus/search destination, and locks, without splitting
+or cloning the recipe controls. On phones, each pigment range reserves a line
+for its label, randomization die and lock, followed by a full-width slider.
+The active Pigment card can scroll on unusually short viewports rather than
+clipping its final slider; on the primary portrait sizes the Edit tray expands
+only while Pigment is selected.
+
 ## Rendering contract
 
 - The field is computed from object identity, recipe seed, and original artwork
