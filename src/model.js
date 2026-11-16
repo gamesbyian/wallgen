@@ -1,4 +1,6 @@
 import { SHAPES } from './path-geometry.js';
+import {EDGE_STYLES,EDGE_DIRECTIONS,STRIPE_EDGE_SIDES,STRIPE_EDGE_ALIGNMENTS,
+  normalizeRegionEdgeOverrides} from './edge-profiles.js';
 import {STRIPE_ANCHORS,GROUP_ANCHORS,WIDTH_ANCHORS,LENGTH_ANCHORS,pinStripePositions,pinGroupOffsets,pinBandEdges,stripeAnchorCoordinate} from './geometry-anchors.js';
 import {normalizePhotoLook} from './photo-look.js';
 import {normalizeSurfaceTreatments} from './embroidery.js';
@@ -40,8 +42,8 @@ export const LOCKABLE_SETTINGS = ['seed','family','orientation','geometry','moti
   'material3','textureCoverage3','textureStrength3','textureScale3','textureRotation3','textureBlend3',
   'textureDisplacement','patternHomogeneity','chaos','stripeWidth','spread','shapeFrequency','shapeDepth','motifSize','motifFrequency','lineStyle','individuality',
   'overridePatternHomogeneity','gap','outlineBuffer','glow','glowPlacement','glowColorMode','glowCustomColor','glowInvert','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','position',
-  'structure','radialMode','rayCount','rayRotation','rayTwist','rayCoverage','rayCore','fieldCenterX','fieldCenterY','regionMode','regionCount','regionJitter','regionSides','scatteredCount','scatteredMinSize','scatteredMaxSize','scatteredVariation','scatteredSpacing','scatteredEdgeCrop','scatteredOverlap','scatteredShapeKind','scatteredShapeOverrides','dividerColor','dividerWidth',
-  'composition','insetAlignment','repeatCount','repeatSpacing','construction','crossingMode','turnRadius','hairpinAngle','loopRadius','loopSweep','geometrySafety','extendDrawnPath','stepCount','chevronSharpness','loopAspect','pathLength','endTaper','tonalContrast','brushRoughness','pigmentStyle','pigmentGrainScale','pigmentEdgeBreakup','pigmentDirectionality','dotSize','dotSpacing','interiorElements'];
+  'structure','radialMode','rayCount','rayRotation','rayTwist','rayCoverage','rayCore','fieldCenterX','fieldCenterY','regionMode','regionCount','regionJitter','regionSides','regionEdgeStyle','regionEdgeSize','regionEdgeDepth','regionEdgePhase','regionEdgeDirection','regionEdgeOverrides','scatteredCount','scatteredMinSize','scatteredMaxSize','scatteredVariation','scatteredSpacing','scatteredEdgeCrop','scatteredOverlap','scatteredShapeKind','scatteredShapeOverrides','dividerColor','dividerWidth',
+  'composition','insetAlignment','repeatCount','repeatSpacing','construction','crossingMode','turnRadius','hairpinAngle','loopRadius','loopSweep','geometrySafety','extendDrawnPath','stepCount','chevronSharpness','loopAspect','stripeEdgeStyle','stripeEdgeSize','stripeEdgeDepth','stripeEdgePhase','stripeEdgeDirection','stripeEdgeSides','stripeEdgeAlignment','pathLength','endTaper','tonalContrast','brushRoughness','pigmentStyle','pigmentGrainScale','pigmentEdgeBreakup','pigmentDirectionality','dotSize','dotSpacing','interiorElements'];
 export const PALETTES = ['classic', 'electric', 'pastel', 'jewel', 'muted', 'sunset', 'candy', 'arctic', 'earth', 'twilight', 'citrus'];
 export const TEXTURE_COVERAGES = ['both', 'stripes', 'background'];
 export const OUTLINES = ['none', 'hairline', 'white', 'double', 'broken', 'one-side', 'black', 'black-hairline', 'black-double', 'black-broken', 'black-one-side'];
@@ -192,6 +194,13 @@ export function normalizeRecipe(input = {}) {
     regionCount: Math.round(finiteRange(input.regionCount, 14, 7, 70)/7)*7,
     regionJitter: finiteRange(input.regionJitter, 45, 0, 100),
     regionSides: Math.round(finiteRange(input.regionSides, 0, 0, 12)),
+    regionEdgeStyle:EDGE_STYLES.includes(input.regionEdgeStyle)?input.regionEdgeStyle:'straight',
+    regionEdgeSize:finiteRange(input.regionEdgeSize,50,0,100),
+    regionEdgeDepth:finiteRange(input.regionEdgeDepth,50,0,100),
+    regionEdgePhase:finiteRange(input.regionEdgePhase,0,0,100),
+    regionEdgeDirection:EDGE_DIRECTIONS.includes(input.regionEdgeDirection)?input.regionEdgeDirection:'outward',
+    ...(normalizeRegionEdgeOverrides(input.regionEdgeOverrides).length?
+      {regionEdgeOverrides:normalizeRegionEdgeOverrides(input.regionEdgeOverrides)}:{}),
     scatteredCount: Math.round(finiteRange(input.scatteredCount,7,1,70)),
     scatteredMinSize: finiteRange(input.scatteredMinSize,10,0,100),
     scatteredMaxSize: finiteRange(input.scatteredMaxSize,83,0,100),
@@ -215,6 +224,13 @@ export function normalizeRecipe(input = {}) {
     mirrorHorizontal: input.mirrorHorizontal === true || input.mirrorHorizontal === 'true',
     mirrorVertical: input.mirrorVertical === true || input.mirrorVertical === 'true',
     geometry: readChoice('geometry', GEOMETRIES),
+    stripeEdgeStyle:EDGE_STYLES.includes(input.stripeEdgeStyle)?input.stripeEdgeStyle:'straight',
+    stripeEdgeSize:finiteRange(input.stripeEdgeSize,50,0,100),
+    stripeEdgeDepth:finiteRange(input.stripeEdgeDepth,70,0,100),
+    stripeEdgePhase:finiteRange(input.stripeEdgePhase,0,0,100),
+    stripeEdgeDirection:EDGE_DIRECTIONS.includes(input.stripeEdgeDirection)?input.stripeEdgeDirection:'outward',
+    stripeEdgeSides:STRIPE_EDGE_SIDES.includes(input.stripeEdgeSides)?input.stripeEdgeSides:'both',
+    stripeEdgeAlignment:STRIPE_EDGE_ALIGNMENTS.includes(input.stripeEdgeAlignment)?input.stripeEdgeAlignment:'aligned',
     customPath:drawnPath.points,
     extendDrawnPath:input.extendDrawnPath===true||input.extendDrawnPath==='true',
     // User-protected anchors/corners follow the original stroke station
@@ -488,6 +504,16 @@ export function resolveScene(recipeInput) {
       stepCount:recipe.stepCount,
       chevronSharpness:recipe.chevronSharpness,
       loopAspect:recipe.loopAspect,
+      // Genuine scallops are an edge profile, never a broken repeated-loop
+      // centreline. Allow independent profiles on any other path geometry.
+      ...(geometry==='scalloped'||recipe.stripeEdgeStyle!=='straight'?{
+        edgeStyle:recipe.stripeEdgeStyle==='straight'?'scalloped':recipe.stripeEdgeStyle,
+        edgeSize:recipe.stripeEdgeSize,edgeDepth:recipe.stripeEdgeDepth,
+        edgeDirection:recipe.stripeEdgeDirection,edgeSides:recipe.stripeEdgeSides,
+        edgePhasePercent:recipe.stripeEdgePhase+
+          (recipe.stripeEdgeAlignment==='staggered'?(i%2)*50:
+            recipe.stripeEdgeAlignment==='independent'?phase/TAU*100:0)
+      }:{}),
       turnRadius:recipe.geometrySafety?
         Math.min(Math.max(90+recipe.turnRadius*1.35,spread*.56),
           DESIGN_WIDTH*.44-spread/2):
