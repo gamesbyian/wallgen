@@ -64,3 +64,14 @@
 .editor-tool-card[data-editor-tool="inset"] .inset-endpoints-link:focus-visible{
   outline:3px solid #4eaeea;outline-offset:2px;
 }
+
+/* At 412×892 a standard Structure card ended 19px before the new 44px
+   anchor strip. Reserve actual layout height only while editing this tool,
+   rather than allowing the overflow-hidden card to swallow an input. */
+@media(max-width:499px) and (min-height:840px){
+  body.mobile-studio.mobile-edit-open:has(
+    .sidebar .editor-tool-card[data-editor-tool="structure"]:not([hidden])
+    .geometry-anchor-strip:not([hidden])){
+    --mobile-tray-height:clamp(385px,44dvh,425px)!important;
+  }
+}
