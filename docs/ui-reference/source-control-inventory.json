@@ -256,6 +256,7 @@
     "outlineBuffer",
     "pathLength",
     "extendDrawnPath",
+    "startTaper",
     "endTaper",
     "glow"
   ],
