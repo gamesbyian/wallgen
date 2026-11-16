@@ -33,6 +33,32 @@ const edgePoint=(x,stripe,extent,side,scene)=>{
 };
 const edgeAt=(x,stripe,extent,side,scene)=>edgePoint(x,stripe,extent,side,scene).y;
 const spatialGeometry=stripe=>['hairpin','loop','loops','drawn'].includes(stripe.sharedGeometry??stripe.geometry);
+// The repeating-loop path is longer than the visible canvas. Previously the
+// crossing scan consumed its 32-hit budget in the invisible far-left overhang
+// and never repaired the loops on screen. Find a source-station window from
+// the actual camera crop, inverse rotation and optional whole-layer mirror.
+export function visibleLoopCrossingRange(scene,stripe){
+  const bounds=scene.renderBounds??scene.viewBounds??
+    {left:0,top:0,right:DESIGN_WIDTH,bottom:DESIGN_HEIGHT};
+  const co=Math.cos(scene.angle),si=Math.sin(scene.angle);
+  let low=Infinity,high=-Infinity;
+  for(const wx of [bounds.left,bounds.right])
+    for(const wy of [bounds.top,bounds.bottom]){
+      const x=scene.mirrorHorizontal?DESIGN_WIDTH-wx:wx;
+      const y=scene.mirrorVertical?DESIGN_HEIGHT-wy:wy;
+      const station=(x-scene.centerX)*co+(y-scene.centerY)*si;
+      low=Math.min(low,station);high=Math.max(high,station);
+    }
+  const pitch=stripe.loopPeriod??65;
+  const xAmplitude=stripe.loopXAmplitude??
+    (stripe.loopAmplitude??13)*2.1*Math.pow(2,((stripe.loopAspect??50)-50)/35);
+  // Allow both long loop lobes and the maximum 310-unit crossing repair
+  // to extend through the crop without suddenly ending at the frame.
+  const halo=Math.max(330,pitch+2*Math.abs(xAmplitude)+stripe.width);
+  const start=low-halo,end=high+halo;
+  return {start,end,step:Math.min(9,Math.max(.6,pitch/18)),
+    maxCrossings:Math.max(32,Math.ceil((end-start)/Math.max(1,pitch))+8)};
+}
 // Sample the same material height field used to paint each visible texture.
 // The sample point is transformed from ribbon space to the material's world-
 // anchored coordinates, so pan/zoom/export do not move the relief pattern.
@@ -1246,7 +1272,8 @@ export function drawWallpaper(canvas, recipe, options={}) {
     for(const stripes of crossingBundles){
       const reference=stripes.find(st=>st.index===3)||stripes[Math.floor(stripes.length/2)];
       if(!reference)continue;
-      const hits=findPathCrossings(reference,scene.extent,samplePath);
+      const hits=findPathCrossings(reference,scene.extent,samplePath,
+        scene.geometry==='loops'?visibleLoopCrossingRange(scene,reference):{});
       // Each stripe's full ORIGINAL stitch lattice is analyzed at most once
       // for this paint, never independently for a truncated branch replay.
       const replayPlans=new Map();
