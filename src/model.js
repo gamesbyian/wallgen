@@ -43,7 +43,7 @@ export const LOCKABLE_SETTINGS = ['seed','family','orientation','geometry','moti
   'textureDisplacement','patternHomogeneity','chaos','stripeWidth','spread','shapeFrequency','shapeDepth','motifSize','motifFrequency','lineStyle','individuality',
   'overridePatternHomogeneity','gap','outlineBuffer','glow','glowPlacement','glowColorMode','glowCustomColor','glowInvert','reverseStripes','diagonalRotation','mirrorHorizontal','mirrorVertical','position',
   'structure','radialMode','rayCount','rayRotation','rayTwist','rayCoverage','rayCore','fieldCenterX','fieldCenterY','regionMode','regionCount','regionJitter','regionSides','regionEdgeStyle','regionEdgeSize','regionEdgeDepth','regionEdgePhase','regionEdgeDirection','regionEdgeOverrides','scatteredCount','scatteredMinSize','scatteredMaxSize','scatteredVariation','scatteredSpacing','scatteredEdgeCrop','scatteredOverlap','scatteredShapeKind','scatteredShapeOverrides','dividerColor','dividerWidth',
-  'composition','insetAlignment','repeatCount','repeatSpacing','construction','crossingMode','turnRadius','hairpinAngle','loopRadius','loopSweep','geometrySafety','extendDrawnPath','stepCount','chevronSharpness','loopAspect','stripeEdgeStyle','stripeScallopForm','stripeEdgeSize','stripeEdgeDepth','stripeEdgePhase','stripeEdgePhaseB','stripeEdgeDirection','stripeEdgeSides','stripeEdgeAlignment','pathLength','endTaper','tonalContrast','brushRoughness','pigmentStyle','pigmentGrainScale','pigmentEdgeBreakup','pigmentDirectionality','dotSize','dotSpacing','interiorElements'];
+  'composition','insetAlignment','repeatCount','repeatSpacing','construction','crossingMode','turnRadius','hairpinAngle','loopRadius','loopSweep','geometrySafety','extendDrawnPath','stepCount','chevronSharpness','loopAspect','stripeEdgeStyle','stripeScallopForm','stripeEdgeSize','stripeEdgeDepth','stripeEdgePhase','stripeEdgePhaseB','stripeEdgeDirection','stripeEdgeSides','stripeEdgeAlignment','pathLength','startTaper','endTaper','tonalContrast','brushRoughness','pigmentStyle','pigmentGrainScale','pigmentEdgeBreakup','pigmentDirectionality','dotSize','dotSpacing','interiorElements'];
 export const PALETTES = ['classic', 'electric', 'pastel', 'jewel', 'muted', 'sunset', 'candy', 'arctic', 'earth', 'twilight', 'citrus'];
 export const TEXTURE_COVERAGES = ['both', 'stripes', 'background'];
 export const OUTLINES = ['none', 'hairline', 'white', 'double', 'broken', 'one-side', 'black', 'black-hairline', 'black-double', 'black-broken', 'black-one-side'];
@@ -256,6 +256,8 @@ export function normalizeRecipe(input = {}) {
     stepCount: Math.round(finiteRange(input.stepCount, 4, 1, 16)),
     chevronSharpness: finiteRange(input.chevronSharpness, 50, 0, 100),
     loopAspect: finiteRange(input.loopAspect, 50, 0, 100),
+    // Pre-split recipes used one value for both tips. Keep that silhouette.
+    startTaper: finiteRange(input.startTaper, input.endTaper ?? 0, 0, 100),
     endTaper: finiteRange(input.endTaper, 0, 0, 100),
     pathLength: finiteRange(input.pathLength, 65, 0, 100),
     ...(LENGTH_ANCHORS.includes(input.pathLengthAnchor)?{pathLengthAnchor:input.pathLengthAnchor,...(Array.isArray(input.pathLengthAnchorPoints)&&input.pathLengthAnchorPoints.length===7&&input.pathLengthAnchorPoints.every(value=>value===null||Number.isFinite(value))?{pathLengthAnchorPoints:input.pathLengthAnchorPoints.map(value=>value===null?null:finiteRange(value,0,-10000,10000))}:{})}:{}),
@@ -501,7 +503,8 @@ export function resolveScene(recipeInput) {
           lightness:recipe.paletteLightness}:null),
       center:position + center,
       width: Math.max(width, recipe.construction==='stroke'?.8:1.5), geometry: individualGeometry,
-      motif, lineStyle:recipe.lineStyle, endTaper:recipe.endTaper,
+      motif, lineStyle:recipe.lineStyle,
+      startTaper:recipe.startTaper, endTaper:recipe.endTaper,
       dotSize:recipe.dotSize,dotSpacing:recipe.dotSpacing,
       // These are shared across the seven colours: a dotted rainbow can form
       // real aligned columns instead of seven independently spaced chains.
@@ -754,7 +757,7 @@ export function randomizeAllRecipe({primesOnly=false,seed:requestedSeed}={}) {
     shapeFrequency:percent(),shapeDepth:percent(),motifSize:percent(),motifFrequency:percent(),lineStyle:any(LINE_STYLES),
     composition:any(COMPOSITIONS),insetAlignment:any(INSET_ALIGNMENTS),construction:any(CONSTRUCTIONS.filter(x=>x!=='tonal')),crossingMode:any(CROSSING_MODES),
     repeatCount:2+Math.floor(r()*5),repeatSpacing:percent(),
-    turnRadius:percent(),loopRadius:percent(),loopSweep:240+Math.floor(r()*211),stepCount:1+Math.floor(r()*16),chevronSharpness:percent(),loopAspect:percent(),pathLength:percent(),endTaper:percent(),
+    turnRadius:percent(),loopRadius:percent(),loopSweep:240+Math.floor(r()*211),stepCount:1+Math.floor(r()*16),chevronSharpness:percent(),loopAspect:percent(),pathLength:percent(),startTaper:percent(),endTaper:percent(),
     tonalContrast:percent(),brushRoughness:percent(),pigmentStyle:any(PIGMENT_STYLES),
     pigmentGrainScale:percent(),pigmentEdgeBreakup:percent(),pigmentDirectionality:percent(),dotSize:percent(),dotSpacing:percent(),
     textureStrength:percent(), textureScale:percent(), textureDisplacement:percent(), individuality:percent(),
