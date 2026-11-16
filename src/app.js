@@ -1,6 +1,6 @@
 import { OUTPUT_WIDTH, OUTPUT_HEIGHT, NAMES, COLOR_STORIES, normalizeRecipe, resolveScene, encodeRecipe, decodeRecipe, newSeed, randomizeAllRecipe, respectSettingLocks, LOCKABLE_SETTINGS } from './model.js';
 import {installAyaRecipeHandoff} from './aya-recipe-handoff.js';
-import { drawWallpaper, presentNudgedArtwork } from './renderer.js?v=20261024-text-overlays1';
+import { drawWallpaper, presentNudgedArtwork } from './renderer.js?v=20261116-insetstation1';
 import {artKey} from './render-art-key.js';
 import {normalizePhotoLook,PHOTO_PRESETS} from './photo-look.js';
 import {photoPreviewRecipe} from './photo-preview-compare.js';
@@ -15,16 +15,16 @@ import { installImagePathTool } from './image-path-ui.js?v=20261023-wave-contour
 import {prepareReconstructionApply} from './reconstruction-apply-transaction.js';
 import {importedAngleDeltaDegrees} from './import-angle-wrap.js';
 import {pathStructureLockedOutsidePaths} from './path-authoring-locks.js';
-import {mountEditor,selectEditorTool,syncEditorStructure} from './editor-layout.js?v=20261023-single-editor1';
+import {mountEditor,selectEditorTool,syncEditorStructure} from './editor-layout.js?v=20261116-insettools1';
 import {randomizeScope} from './scoped-random.js';
 import {newInteriorElementId,INTERIOR_LIMITS,resolveInteriorSelection,interiorTargetSummary,resolveInteriorFocusTarget,interiorSliderStep} from './interior-elements.js';
-import {STYLE_PRESETS,EDITOR_CATEGORIES,TOOL_LIST} from './editor-schema.js?v=20261021-labels1';
+import {STYLE_PRESETS,EDITOR_CATEGORIES,TOOL_LIST} from './editor-schema.js?v=20261116-insettools1';
 import {sourceSettingLabel} from './editor-control-roles.js?v=20261021-labels1';
 import {fullSettingName} from './editor-terminology.js';
 import {installExplorationHistory} from './exploration-history.js';
 import {installGeometryLibraryUI} from './geometry-library-ui.js';
 import {installNestedShapeControls} from './nested-shape-ui.js';
-import {installGeometryAnchorControls} from './geometry-anchor-controls.js';
+import {installGeometryAnchorControls} from './geometry-anchor-controls.js?v=20261116-visible1';
 import {installRegionEdgeControls} from './region-edge-ui.js';
 import {DEFAULT_NESTED_CONTOURS} from './nested-shape-contours.js';
 import {frameImportedSilhouette} from './nested-shape-framing.js';
@@ -422,7 +422,8 @@ function toControls(recipe) {
   syncSettingLocks();
   syncInactiveSettings();
   syncScopedSettingDice();
-  syncEditorStructure(current.structure,current.regionMode,current.construction);
+  syncEditorStructure(current.structure,current.regionMode,current.construction,
+    current.composition);
   regionEdgesUI?.sync();
   const useShape=document.getElementById('chooseScatteredShape');
   if(useShape)useShape.hidden=!(current.structure==='regions'&&current.regionMode==='scattered');
@@ -1557,6 +1558,31 @@ const geometryAnchorControls=installGeometryAnchorControls({
   form,getRecipe:()=>current,getScene:()=>currentScene,
   onApply:recipe=>changeRecipe(recipe,{cause:'geometry_anchor'})
 });
+// The original inset alignment selector now lives in its own visible
+// Stripes → Inset stripes tool, not the distant Layout settings. Keep one
+// authoritative control and give each alignment a readable explanation.
+const insetCard=document.querySelector('.editor-tool-card[data-editor-tool="inset"]');
+if(!insetCard)throw new Error('Inset stripes editor card missing');
+const insetDescription=document.createElement('p');
+insetDescription.className='inset-alignment-description';
+insetDescription.setAttribute('aria-live','polite');
+const insetLengths=document.createElement('button');
+insetLengths.type='button';insetLengths.className='inset-endpoints-link';
+insetLengths.textContent='Adjust inset length and endpoints';
+insetLengths.addEventListener('click',()=>selectEditorTool('path','ends'));
+insetCard.append(insetDescription,insetLengths);
+const syncInsetDescription=()=>{
+  const messages={
+    independent:'Individual stripes retain their own seeded positions. Spacing changes move them apart without sliding them along their paths.',
+    aligned:'Dependent stripes share the same start and end stations, within the available canvas area.',
+    staggered:'Stripes share one safe placement but their endpoints step progressively along the path.',
+    progressive:'Stripes share one centre station, with their lengths increasing progressively.'
+  };
+  insetDescription.textContent=messages[current.insetAlignment]||messages.independent;
+};
+document.addEventListener('roygbiv-controls-synced',syncInsetDescription);
+syncInsetDescription();
+
 const nestedShapeControls=installNestedShapeControls({
   form,getRecipe:()=>current,getScene:()=>currentScene,
   onApply:recipe=>changeRecipe(recipe,{cause:'nested_shape'}),

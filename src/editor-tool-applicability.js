@@ -5,7 +5,8 @@ const RADIAL_TOOLS=new Set(['rays','ray-shape','origin']);
 const REGION_TOOLS=new Set(['regions','region-detail','region-edges','origin',
   'scattered-size','scattered-distribution','scattered-edges']);
 
-export function toolAppliesToScene(entry,{structure='paths',regionMode='voronoi',construction='ribbon'}={}){
+export function toolAppliesToScene(entry,{structure='paths',regionMode='voronoi',
+  construction='ribbon',composition='single'}={}){
   if(entry.category==='path'){
     if(structure==='paths')return PATH_TOOLS.has(entry.id);
     if(structure==='radial')return RADIAL_TOOLS.has(entry.id);
@@ -16,7 +17,9 @@ export function toolAppliesToScene(entry,{structure='paths',regionMode='voronoi'
     return true;
   }
   if(entry.category==='stripes')
-    return structure==='paths'&&(entry.id!=='tone'||construction==='tonal');
+    return structure==='paths'&&
+      (entry.id!=='tone'||construction==='tonal')&&
+      (entry.id!=='inset'||composition==='floating');
   if(entry.category==='details'){
     if(entry.id==='outlines')return structure==='paths';
     if(entry.id==='dividers')return structure!=='paths';

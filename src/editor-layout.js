@@ -1,8 +1,8 @@
-import {EDITOR_CATEGORIES, TOOL_LIST, SETTING_TOOL} from './editor-schema.js?v=20261021-labels1';
+import {EDITOR_CATEGORIES, TOOL_LIST, SETTING_TOOL} from './editor-schema.js?v=20261116-insettools1';
 import {iconMarkup} from './ui-icons.js';
 import {annotateEditorSettingRow,sourceSettingLabel} from './editor-control-roles.js?v=20261021-labels1';
 import {installFocusedAdjustments} from './editor-focus.js';
-import {toolAppliesToScene} from './editor-tool-applicability.js';
+import {toolAppliesToScene} from './editor-tool-applicability.js?v=20261116-insettools1';
 import {findEditorToolMatch,findEditorSearchHit,findEditorSearchHits} from './editor-tool-search.js?v=20261022-choice1';
 import {legacyToolAliases,legacyCategoryAliases,legacySettingAliases} from './editor-terminology.js';
 import {installMaterialLayerIndicators} from './editor-material-indicators.js';
@@ -23,21 +23,25 @@ function fieldNode(key){
 const tools=new Map();
 let activeCategory='layout',activeTool='arrange';
 let relatedLightLinks=null;
-let activeStructure='paths',activeRegionMode='voronoi',activeConstruction='ribbon';
+let activeStructure='paths',activeRegionMode='voronoi',
+  activeConstruction='ribbon',activeComposition='single';
 // Keep the editor populated only with tools that can modify the active scene.
 // Hidden tools retain all values and locks; changing structure restores them.
 function toolApplies(entry){
   return toolAppliesToScene({category:entry.category,id:entry.spec.id},{
-    structure:activeStructure,regionMode:activeRegionMode,construction:activeConstruction
+    structure:activeStructure,regionMode:activeRegionMode,
+    construction:activeConstruction,composition:activeComposition
   });
 }
 function applicableTool(category){
   return [...tools.values()].find(entry=>entry.category===category&&toolApplies(entry))?.spec.id;
 }
-export function syncEditorStructure(structure,regionMode,construction='ribbon'){
+export function syncEditorStructure(structure,regionMode,construction='ribbon',
+  composition='single'){
   activeStructure=structure;
   activeRegionMode=regionMode;
   activeConstruction=construction;
+  activeComposition=composition;
   const pathTab=byId('tab-path');
   if(pathTab?.lastChild?.nodeType===3)
     pathTab.lastChild.textContent=structure==='paths'?' Path':' Geometry';

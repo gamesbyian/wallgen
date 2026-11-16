@@ -4,7 +4,7 @@
 export const EDITOR_CATEGORIES=[
   {id:'layout',label:'Layout',icon:'layout',tools:[
     {id:'structure-mode',name:'Structure',settings:['structure']},
-    {id:'arrange',name:'Arrangement',settings:['composition','insetAlignment','repeatCount','repeatSpacing']},
+    {id:'arrange',name:'Arrangement',settings:['composition','repeatCount','repeatSpacing']},
     {id:'direction',name:'Direction',settings:['orientation','diagonalRotation','mirrorHorizontal','mirrorVertical']},
     {id:'variability',name:'Irregularity',settings:['chaos']},
   ]},
@@ -27,6 +27,7 @@ export const EDITOR_CATEGORIES=[
   ]},
   {id:'stripes',label:'Stripes',icon:'stripes',tools:[
     {id:'structure',name:'Structure',settings:['construction','stripeWidth','spread']},
+    {id:'inset',name:'Inset stripes',settings:['insetAlignment']},
     {id:'edges',name:'Edge shapes',settings:['stripeEdgeStyle','stripeScallopForm','stripeEdgeSize','stripeEdgeDepth','stripeEdgePhase','stripeEdgeDirection','stripeEdgeSides','stripeEdgeAlignment']},
     {id:'patterns',name:'Patterns',settings:['motif','lineStyle','patternHomogeneity']},
     {id:'marks',name:'Dots',settings:['dotSize','dotSpacing']},
