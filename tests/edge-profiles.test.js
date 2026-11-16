@@ -45,7 +45,7 @@ test('stripe edge directions, single-side editing, and zero-depth leave core sta
 });
 test('scalloped geometry is a true straight centreline with rounded boundaries',()=>{
   const recipe=normalizeRecipe({seed:'ornamental-scene',geometry:'scalloped',
-    stripeWidth:70,spread:60,construction:'ribbon'});
+    stripeWidth:70,spread:60,individuality:0,construction:'ribbon'});
   const scene=resolveScene(recipe),stripe=scene.stripes[3];
   for(const x of [-500,-25,0,25,500]){
     assert.equal(samplePath(stripe,x,scene.extent).y,stripe.center);
