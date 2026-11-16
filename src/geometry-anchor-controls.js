@@ -1,7 +1,7 @@
 // Compact, source-adjacent controls: the fixed-height mobile tool card
 // must never hide the colour anchors below its clipped viewport.
 import {STRIPE_ANCHORS,GROUP_ANCHORS,WIDTH_ANCHORS,LENGTH_ANCHORS,groupAnchorCoordinate} from './geometry-anchors.js';
-import {balanceStripeEnds} from './renderer.js?v=20261024-text-overlays1';
+import {balanceStripeEnds} from './renderer.js?v=20261116-insetstation1';
 import {resolveScene} from './model.js';
 
 const options={
