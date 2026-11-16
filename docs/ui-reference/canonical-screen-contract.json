@@ -215,6 +215,7 @@
             "label": "Endpoints",
             "settings": [
               "pathLength",
+              "startTaper",
               "endTaper",
               "extendDrawnPath"
             ]
