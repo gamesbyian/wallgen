@@ -29,6 +29,8 @@ test('Pigment settings reuse exactly one original live control each',()=>{
   const html=read('index.html');
   const layout=read('src/editor-layout.js');
   const stylesheet=read('editor-pigment.css');
+  const app=read('src/app.js');
+  const swipe=read('src/mobile-swipes.js');
   for(const key of pigmentKeys){
     assert.equal((html.match(new RegExp('name="'+key+'"','g'))||[]).length,1,key);
     assert.equal((html.match(new RegExp('data-setting="'+key+'"','g'))||[]).length,1,key);
@@ -36,6 +38,11 @@ test('Pigment settings reuse exactly one original live control each',()=>{
   assert.match(layout,/const root=fieldNode\(key\)/);
   assert.match(layout,/appendUnique\(card,root\)/);
   assert.match(html,/editor-pigment\.css\?v=/);
+  assert.match(html,/src\/app\.js\?v=20261116-pigment-home1/);
+  assert.match(html,/src\/mobile-swipes\.js\?v=20261116-pigment-home1/);
+  assert.match(app,/editor-layout\.js\?v=20261116-pigment-home1/);
+  assert.match(swipe,/editor-layout\.js\?v=20261116-pigment-home1/);
+  assert.match(layout,/editor-schema\.js\?v=20261116-pigment-home1/);
   assert.match(stylesheet,/data-editor-tool="pigment"/);
   assert.match(stylesheet,/grid-template-rows:minmax\(27px,auto\) 35px!important/);
   assert.match(stylesheet,/overflow-y:auto!important/);
