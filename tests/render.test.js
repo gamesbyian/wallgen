@@ -9,11 +9,11 @@ import {materialHeight,MATERIAL_CHARACTER} from '../src/material-surface.js';
 // without requiring a native browser, raster library, or platform build step.
 const calls=[];
 class FakePath2D {
-  moveTo(){} lineTo(){} closePath(){} arc(){}
+  moveTo(){} lineTo(){} closePath(){} arc(){} rect(){} addPath(){}
 }
 class FakeContext {
   constructor(tag='layer') {this.tag=tag;this.fillStyle='#000';this.strokeStyle='#000';this.globalAlpha=1;this.globalCompositeOperation='source-over';}
-  save(){} restore(){} scale(x,y){calls.push(['scale',x,y]);} translate(){} rotate(a){calls.push(['rotate',a]);} setTransform(){}
+  save(){} restore(){} getTransform(){return {a:1,b:0,c:0,d:1,e:0,f:0};} scale(x,y){calls.push(['scale',x,y]);} translate(){} rotate(a){calls.push(['rotate',a]);} setTransform(){}
   clearRect(){} beginPath(){} moveTo(){} lineTo(){} closePath(){}
   arc(){} quadraticCurveTo(){} clip(){calls.push(['clip',this.tag]);} stroke(){} setLineDash(){}
   fill(){} fillRect(...args){calls.push(['fillRect',this.fillStyle,...args,this.tag]);}
