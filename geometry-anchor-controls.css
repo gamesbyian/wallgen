@@ -45,3 +45,22 @@
   .editor-tool-card .geometry-anchor-inline{gap:2px;font-size:10px}
   .editor-tool-card .geometry-anchor-inline select{font-size:11px;padding-inline:1px}
 }
+
+/* Inset-specific choices keep a clear permanent home without crowding the
+   Stripe Structure card or introducing a duplicate authoritative input. */
+.editor-tool-card[data-editor-tool="inset"] .inset-alignment-description{
+  margin:5px 3px;padding:8px 9px;
+  font-size:12px;line-height:1.4;
+  border-radius:8px;border:1px solid var(--line,#c7c4cb);
+  background:transparent;flex:0 0 auto;
+}
+.editor-tool-card[data-editor-tool="inset"] .inset-endpoints-link{
+  display:block;flex:0 0 auto;align-self:stretch;
+  box-sizing:border-box;min-height:44px;margin:2px 3px;
+  border-radius:9px;border:1px solid var(--line,#c7c4cb);
+  background:transparent;color:inherit;font:inherit;
+  font-size:12px;font-weight:700;cursor:pointer;
+}
+.editor-tool-card[data-editor-tool="inset"] .inset-endpoints-link:focus-visible{
+  outline:3px solid #4eaeea;outline-offset:2px;
+}
