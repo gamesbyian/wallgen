@@ -37,7 +37,7 @@ const DOMAIN_ROWS = "archetype|What kind of picture is this?|4|O|structure,radia
   "surface-material|What is the physical texture and where is it applied?|3|F|material,textureCoverage,textureBlend,textureStrength,textureScale,textureRotation\n" +
   "surface-second|What does the second surface layer contribute?|3|O|textureLayer2Enabled,material2,textureCoverage2,textureBlend2,textureStrength2,textureScale2,textureRotation2\n" +
   "surface-third|What does the third surface layer contribute?|3|S|textureLayer3Enabled,material3,textureCoverage3,textureBlend3,textureStrength3,textureScale3,textureRotation3\n" +
-  "surface-edges|How does pigment or surface material change contours?|3|O|textureDisplacement,brushRoughness\n" +
+  "surface-edges|How does pigment or surface material change contours?|3|O|textureDisplacement,brushRoughness,pigmentStyle,pigmentGrainScale,pigmentEdgeBreakup,pigmentDirectionality\n" +
   "global-light|What overall illumination and shading?|3|O|lightingMood,lightDirection,lightStrength,shadowStrength";
 const parseLines=text=>text.trim().split('\n').map(line=>line.split('|'));
 export const DOMAINS=Object.freeze(parseLines(DOMAIN_ROWS).map(([id,question,impact,frequency,keys])=>
@@ -56,7 +56,7 @@ const GOAL_ROWS = "negative-space|more space,gaps,air,breathe,less crowded|strip
 "circle-packing|circles,clearance,scatter,scattered,overlap,room,cropped|regionMode,scatteredShapeKind,scatteredCount,scatteredMinSize,scatteredMaxSize,scatteredVariation,scatteredSpacing,scatteredOverlap,scatteredEdgeCrop|Arrange independently generated disks\n"+
 "palette-contrast|palette,colours,color,white background,reverse rainbow|palette,reverseStripes,background,outline|Compare colour relationships in context\n"+
 "print-fabric|paper,fabric,cloth,printed,textile,material,grain|material,textureCoverage,textureStrength,textureScale,textureBlend,material2,textureStrength2|Build material character with attached adjustments\n"+
-"contour-relief|rough texture,distort,contour,edges,pigment|material,textureCoverage,textureStrength,textureDisplacement,brushRoughness|Texture effect depends on actual stripe-applied material\n"+
+"contour-relief|rough texture,distort,contour,edges,pigment|material,textureCoverage,textureStrength,textureDisplacement,brushRoughness,pigmentStyle,pigmentGrainScale,pigmentEdgeBreakup,pigmentDirectionality|Texture and the pigment coverage field respond to actual substrate relief\n"+
 "luminous|neon,glow,shadow,light,illuminate,bright|glow,stripeShadowStrength,stripeShadowSoftness,stripeShadowDirection,lightingMood,lightStrength,lightDirection|Join global and local lighting effects\n"+
 "floating-ribbons|floating,short,ends,taper,length|composition,pathLength,endTaper,stripeWidth,spread|Shape termination belongs beside floating composition\n"+
 "restore-shape|saved silhouette,reuse path,import shape,geometry library||Open geometry library, then apply source geometry rather than saved wallpaper\n"+
