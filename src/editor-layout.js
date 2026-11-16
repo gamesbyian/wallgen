@@ -23,21 +23,25 @@ function fieldNode(key){
 const tools=new Map();
 let activeCategory='layout',activeTool='arrange';
 let relatedLightLinks=null;
-let activeStructure='paths',activeRegionMode='voronoi',activeConstruction='ribbon';
+let activeStructure='paths',activeRegionMode='voronoi',
+  activeConstruction='ribbon',activeComposition='single';
 // Keep the editor populated only with tools that can modify the active scene.
 // Hidden tools retain all values and locks; changing structure restores them.
 function toolApplies(entry){
   return toolAppliesToScene({category:entry.category,id:entry.spec.id},{
-    structure:activeStructure,regionMode:activeRegionMode,construction:activeConstruction
+    structure:activeStructure,regionMode:activeRegionMode,
+    construction:activeConstruction,composition:activeComposition
   });
 }
 function applicableTool(category){
   return [...tools.values()].find(entry=>entry.category===category&&toolApplies(entry))?.spec.id;
 }
-export function syncEditorStructure(structure,regionMode,construction='ribbon'){
+export function syncEditorStructure(structure,regionMode,construction='ribbon',
+  composition='single'){
   activeStructure=structure;
   activeRegionMode=regionMode;
   activeConstruction=construction;
+  activeComposition=composition;
   const pathTab=byId('tab-path');
   if(pathTab?.lastChild?.nodeType===3)
     pathTab.lastChild.textContent=structure==='paths'?' Path':' Geometry';
