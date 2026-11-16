@@ -45,6 +45,17 @@ jobs:
       - name: Full Node suite (manual request only)
         if: ${{ steps.selection.outputs.tier == 'full' }}
         run: node scripts/ci-evidence.mjs full -- npm run check
+      - name: Generate deterministic bouncing-centerline visual plates
+        if: ${{ steps.selection.outputs.tier == 'quick' || steps.selection.outputs.tier == 'full' }}
+        run: node scripts/bouncing-centerline-plates.mjs artifacts/bouncing-centerline
+      - name: Preserve bouncing-centerline visual evidence
+        if: ${{ always() && (steps.selection.outputs.tier == 'quick' || steps.selection.outputs.tier == 'full') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: bouncing-centerline-plates-${{ github.run_id }}
+          path: artifacts/bouncing-centerline/
+          retention-days: 14
+          if-no-files-found: warn
       - name: Upload failure digest
         if: failure()
         uses: actions/upload-artifact@v4
