@@ -1,0 +1,23 @@
+/* Individual region profiles share the ordinary single-tool editor tray. */
+.region-edge-object-editor{
+  display:grid;gap:10px;padding:12px;margin-top:12px;
+  border:1px solid var(--line,rgba(122,112,101,.38));
+  border-radius:12px;
+}
+.region-edge-object-editor[hidden]{display:none}
+.region-edge-object-editor strong{font-size:.95rem}
+.region-edge-object-editor p{font-size:.85rem;line-height:1.4;margin:0;opacity:.82}
+.region-edge-object-editor label{
+  display:flex;flex-direction:column;gap:5px;min-width:0;
+  font-size:.88rem;font-weight:600;
+}
+.region-edge-object-editor select,
+.region-edge-object-editor button{min-height:44px;width:100%;font:inherit}
+.region-edge-object-editor input[type=range]{min-height:44px;width:100%;touch-action:pan-y}
+.region-edge-object-editor .region-edge-value-row{
+  display:flex;align-items:center;gap:8px;min-width:0;
+}
+.region-edge-object-editor output{
+  min-width:3.25em;text-align:right;font-variant-numeric:tabular-nums;font-weight:500
+}
+.region-edge-object-editor .region-edge-override-status{opacity:.8}

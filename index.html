@@ -42,6 +42,7 @@
   <link rel="stylesheet" href="mobile-more-groups.css?v=20261018-more1">
   <link rel="stylesheet" href="editor-setting-rows.css?v=20261019-rotationlabel1">
   <link rel="stylesheet" href="geometry-anchor-controls.css?v=20261115-1">
+  <link rel="stylesheet" href="region-edge-ui.css?v=20261115-1">
   <link rel="stylesheet" href="editor-material-status.css?v=20261022-texture-workspace1">
   <link rel="stylesheet" href="colour-vision-preview.css?v=20261022-1">
   <link rel="stylesheet" href="photo-controls.css?v=20261022-photo1">
@@ -127,6 +128,11 @@
           <label class="field">Shape source <select name="scatteredShapeKind" data-setting="scatteredShapeKind"><option value="circle">Perfect circles</option><option value="imported">Imported silhouette</option></select></label>
           <label class="field range-field"><span>Region count</span><input type="range" name="regionCount" data-setting="regionCount" min="7" max="70" step="7" value="14"></label>
           <label class="field range-field"><span>Irregularity</span><input type="range" name="regionJitter" data-setting="regionJitter" min="0" max="100" value="45"></label>
+          <label class="field">Region edge shape <select name="regionEdgeStyle" data-setting="regionEdgeStyle"><option value="straight">Straight / original</option><option value="scalloped">Scalloped / rounded</option><option value="pinked">Pinked / triangular</option><option value="wavy">Wavy</option><option value="stepped">Stepped / square</option></select></label>
+          <label class="field range-field"><span>Region edge size</span><input type="range" name="regionEdgeSize" data-setting="regionEdgeSize" min="0" max="100" value="50"></label>
+          <label class="field range-field"><span>Region edge depth</span><input type="range" name="regionEdgeDepth" data-setting="regionEdgeDepth" min="0" max="100" value="50"></label>
+          <label class="field range-field"><span>Region edge phase</span><input type="range" name="regionEdgePhase" data-setting="regionEdgePhase" min="0" max="100" value="0"></label>
+          <label class="field">Region edge direction <select name="regionEdgeDirection" data-setting="regionEdgeDirection"><option value="outward">Outward</option><option value="inward">Inward</option><option value="alternating">Alternating</option></select></label>
           <label class="field range-field"><span>Shape sides</span><input type="range" name="regionSides" data-setting="regionSides" min="0" max="12" step="1" value="0"><small>0 = circular, 3–12 = polygons.</small></label>
           <label class="field range-field"><span>Shape count</span><input type="range" name="scatteredCount" data-setting="scatteredCount" min="1" max="70" step="1" value="7"></label>
           <label class="field range-field"><span>Smallest shape</span><input type="range" name="scatteredMinSize" data-setting="scatteredMinSize" min="0" max="100" value="10"></label>
@@ -136,7 +142,14 @@
           <label class="field range-field"><span>Edge cropping</span><input type="range" name="scatteredEdgeCrop" data-setting="scatteredEdgeCrop" min="0" max="100" value="75"></label>
           <label class="field">Overlap <select name="scatteredOverlap" data-setting="scatteredOverlap"><option value="separate">Keep circles separate</option><option value="overlap">Allow overlaps</option></select></label>
           
-          <label class="field">Path geometry <select name="geometry" data-setting="geometry"><option value="auto">Follow style</option><option value="straight">Straight</option><option value="wave">Wavy</option><option value="zigzag">Zigzag</option><option value="chevron">Chevron / pointed V</option><option value="jagged">Jagged / fractured</option><option value="stepped">Stepped</option><option value="arc">Sweeping arcs</option><option value="contour">Topographic</option><option value="hairpin">Hairpin / returning curve</option><option value="loop">Single loop / circular turn</option><option value="loops">Continuous loops</option><option value="drawn" disabled>Drawn path</option></select></label>
+          <label class="field">Stripe edge shape <select name="stripeEdgeStyle" data-setting="stripeEdgeStyle"><option value="straight">Straight / original</option><option value="scalloped">Scalloped / rounded</option><option value="pinked">Pinked / triangular</option><option value="wavy">Wavy</option><option value="stepped">Stepped / square</option></select></label>
+          <label class="field range-field"><span>Edge size</span><input type="range" name="stripeEdgeSize" data-setting="stripeEdgeSize" min="0" max="100" value="50"></label>
+          <label class="field range-field"><span>Edge depth</span><input type="range" name="stripeEdgeDepth" data-setting="stripeEdgeDepth" min="0" max="100" value="70"></label>
+          <label class="field range-field"><span>Edge phase</span><input type="range" name="stripeEdgePhase" data-setting="stripeEdgePhase" min="0" max="100" value="0"></label>
+          <label class="field">Edge direction <select name="stripeEdgeDirection" data-setting="stripeEdgeDirection"><option value="outward">Outward</option><option value="inward">Inward</option><option value="alternating">Alternating</option></select></label>
+          <label class="field">Edges affected <select name="stripeEdgeSides" data-setting="stripeEdgeSides"><option value="both">Both sides</option><option value="negative">First / upper side</option><option value="positive">Second / lower side</option></select></label>
+          <label class="field">Stripe alignment <select name="stripeEdgeAlignment" data-setting="stripeEdgeAlignment"><option value="aligned">Aligned across all colours</option><option value="staggered">Staggered, alternate colours</option><option value="independent">Independent per colour</option></select></label>
+          <label class="field">Path geometry <select name="geometry" data-setting="geometry"><option value="auto">Follow style</option><option value="straight">Straight</option><option value="wave">Wavy</option><option value="zigzag">Zigzag</option><option value="chevron">Chevron / pointed V</option><option value="jagged">Jagged / fractured</option><option value="scalloped">Scalloped ribbon</option><option value="stepped">Stepped</option><option value="arc">Sweeping arcs</option><option value="contour">Topographic</option><option value="hairpin">Hairpin / returning curve</option><option value="loop">Single loop / circular turn</option><option value="loops">Continuous loops</option><option value="drawn" disabled>Drawn path</option></select></label>
           <label class="field range-field"><span>Hairpin radius</span><input type="range" name="turnRadius" data-setting="turnRadius" min="0" max="100" value="50"></label>
           <label class="field range-field"><span>Hairpin turn angle</span><input type="range" name="hairpinAngle" data-setting="hairpinAngle" min="60" max="180" value="180" step="1"></label>
           <label class="field range-field"><span>Loop radius</span><input type="range" name="loopRadius" data-setting="loopRadius" min="0" max="100" value="50"></label>

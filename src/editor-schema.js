@@ -15,6 +15,7 @@ export const EDITOR_CATEGORIES=[
     {id:'origin',name:'Origin',settings:['fieldCenterX','fieldCenterY']},
     {id:'regions',name:'Regions',settings:['regionMode','regionCount','scatteredShapeKind']},
     {id:'region-detail',name:'Region detail',settings:['regionJitter','regionSides']},
+    {id:'region-edges',name:'Region edges',settings:['regionEdgeStyle','regionEdgeSize','regionEdgeDepth','regionEdgePhase','regionEdgeDirection']},
     {id:'scattered-size',name:'Objects',settings:['scatteredCount','scatteredMinSize','scatteredMaxSize']},
     {id:'scattered-distribution',name:'Distribution',settings:['scatteredVariation','scatteredSpacing']},
     {id:'scattered-edges',name:'Edges & overlap',settings:['scatteredEdgeCrop','scatteredOverlap']},
@@ -26,6 +27,7 @@ export const EDITOR_CATEGORIES=[
   ]},
   {id:'stripes',label:'Stripes',icon:'stripes',tools:[
     {id:'structure',name:'Structure',settings:['construction','stripeWidth','spread']},
+    {id:'edges',name:'Edge shapes',settings:['stripeEdgeStyle','stripeEdgeSize','stripeEdgeDepth','stripeEdgePhase','stripeEdgeDirection','stripeEdgeSides','stripeEdgeAlignment']},
     {id:'patterns',name:'Patterns',settings:['motif','lineStyle','patternHomogeneity']},
     {id:'marks',name:'Dots',settings:['dotSize','dotSpacing']},
     {id:'motif-scale',name:'Motif scale',settings:['motifSize','motifFrequency']},
