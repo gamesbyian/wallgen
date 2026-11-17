@@ -61,7 +61,7 @@ test('thick, thin and medium swept arches have no gaps at sharp contacts',()=>{
           segmentStart:-pitch,segmentEnd:pitch};
         const path=stripeFillPath(stripe,scene.extent,scene,RecordingPath);
         assert.ok(path.shapes.length>100);
-        for(const t of [-1,-.01,-.003,0,.003,.01,1]){
+        for(const t of [-.99,-.01,-.003,0,.003,.01,.99]){
           const x=t*pitch,p=samplePath(stripe,x,scene.extent);
           const half=widthAt(stripe,x,scene.extent)/2;
           for(const ratio of [-.72,-.4,0,.4,.72]){
