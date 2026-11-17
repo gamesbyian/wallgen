@@ -42,6 +42,102 @@ try{
     const lowPaint=paint(low);
     const highPaint=paint(high);
     const zeroPaint=paint({...high,shapeDepth:0});
+    // Exact user-reported settings, with an explicit black background and
+    // seven rainbow pigments. Export and preview must share the same fill.
+    const owner={orientation:'vertical',construction:'ribbon',
+      shapeFrequency:42,shapeDepth:79,stripeWidth:65,
+      background:'black',startTaper:0,endTaper:0};
+    const ownerPaint=paint(owner);
+    const {resolveScene}=await import('/src/model.js');
+    const {samplePath,widthAt,bouncingPitch}=await import('/src/path-geometry.js');
+    const {stripeFillPath}=await import('/src/renderer.js');
+    const {viewCamera}=await import('/src/view-camera.js');
+    const ownerScene=resolveScene({...base,...owner});
+    const ownerCamera=viewCamera(width,height,ownerScene.viewZoom);
+    let ownerProbes=0;
+    for(const stripe of ownerScene.stripes){
+      const p=bouncingPitch(owner.shapeFrequency);
+      for(const station of [-p,-p*.01,0,p*.01,p]){
+        const point=samplePath(stripe,station,ownerScene.extent);
+        const half=widthAt(stripe,station,ownerScene.extent)/2;
+        for(const ratio of [-.5,0,.5]){
+          const px=point.x+point.nx*half*ratio;
+          const py=point.y+point.ny*half*ratio;
+          const cos=Math.cos(ownerScene.angle),sin=Math.sin(ownerScene.angle);
+          const wx=ownerScene.centerX+px*cos-py*sin;
+          const wy=ownerScene.centerY+px*sin+py*cos;
+          const ix=Math.round(wx*ownerCamera.scaleX+ownerCamera.offsetX);
+          const iy=Math.round(wy*ownerCamera.scaleY+ownerCamera.offsetY);
+          if(ix<2||iy<2||ix>=width-2||iy>=height-2)continue;
+          const index=(iy*width+ix)*4;
+          assert.ok(Math.max(...ownerPaint.data.subarray(index,index+3))>45,
+            'production preview has a background hole inside the owned stripe');
+          ownerProbes++;
+        }
+      }
+    }
+    assert.ok(ownerProbes>25,'check enough actual ribbon join pixels');
+    // Independently rasterize the production fill path in multiple sizes and
+    // orientations. Check both normal interior points and full circular
+    // neighborhoods at contacts (where the old winding rule left diamonds).
+    const cases=[
+      {frequency:42,height:79,physicalWidth:3,orientation:'vertical'},
+      {frequency:42,height:79,physicalWidth:28,orientation:'vertical'},
+      {frequency:42,height:79,physicalWidth:85,orientation:'vertical'},
+      {frequency:90,height:100,physicalWidth:85,orientation:'horizontal'},
+      {frequency:15,height:35,physicalWidth:68,orientation:'diagonal'},
+      {frequency:65,height:95,physicalWidth:42,orientation:'diagonal',
+        startTaper:65,endTaper:80,stripeEdgeStyle:'wavy',
+        stripeEdgeDepth:55,stripeEdgePhaseB:50}
+    ];
+    let sweptProbes=0;
+    for(const spec of cases){
+      const scene=resolveScene({...base,orientation:spec.orientation,
+        shapeFrequency:spec.frequency,shapeDepth:spec.height,
+        stripeEdgeStyle:spec.stripeEdgeStyle??'straight',
+        stripeEdgeDepth:spec.stripeEdgeDepth??0,
+        stripeEdgePhaseB:spec.stripeEdgePhaseB??0,
+        startTaper:spec.startTaper??0,endTaper:spec.endTaper??0});
+      const stripe={...scene.stripes[3],width:spec.physicalWidth,
+        segmentStart:-300,segmentEnd:300};
+      const c=document.createElement('canvas');c.width=1000;c.height=1000;
+      const g=c.getContext('2d',{willReadFrequently:true});
+      g.fillStyle='#000';g.fillRect(0,0,1000,1000);
+      g.save();g.translate(500,500);g.rotate(scene.angle);
+      g.translate(0,-stripe.center);
+      g.fillStyle='#f0f';g.fill(stripeFillPath(stripe,scene.extent,scene));
+      g.restore();
+      const pixels=g.getImageData(0,0,1000,1000).data;
+      const cos=Math.cos(scene.angle),sin=Math.sin(scene.angle);
+      const probe=(x,y)=>{
+        const localY=y-stripe.center;
+        const ix=Math.round(500+x*cos-localY*sin);
+        const iy=Math.round(500+x*sin+localY*cos);
+        if(ix<3||iy<3||ix>=997||iy>=997)return;
+        assert.ok(pixels[(iy*1000+ix)*4]>90,
+          'background pixel inside swept stripe, '+JSON.stringify(spec)+
+          ' at '+x+','+y);
+        sweptProbes++;
+      };
+      const pitch=bouncingPitch(spec.frequency);
+      for(const contact of [-pitch,0,pitch]){
+        if(Math.abs(contact)>295)continue;
+        for(const delta of [-3,-1,-.25,0,.25,1,3]){
+          const station=contact+delta;
+          const p=samplePath(stripe,station,scene.extent);
+          const half=widthAt(stripe,station,scene.extent)/2;
+          for(const ratio of [-.6,0,.6])
+            probe(p.x+p.nx*half*ratio,p.y+p.ny*half*ratio);
+        }
+        const p=samplePath(stripe,contact,scene.extent);
+        const radius=widthAt(stripe,contact,scene.extent)*.24;
+        for(let i=0;i<16;i++){
+          const a=i*Math.PI/8;
+          probe(p.x+Math.cos(a)*radius,p.y+Math.sin(a)*radius);
+        }
+      }
+    }
+    assert.ok(sweptProbes>250,'rasterized sufficient varied join interiors');
     let changed=0,coloured=0;
     for(let i=0;i<highPaint.data.length;i+=4){
       if(Math.max(...highPaint.data.subarray(i,i+3))-
@@ -69,9 +165,10 @@ try{
       width,height,coloured,changed,
       workerBytes:workerBlob.size,workerPixelMismatches:mismatches,
       workerPixelCount:320*700,
+      ownerProbes,sweptProbes,
       images:{
         low:lowPaint.image,high:highPaint.image,
-        worker:workerCanvas.toDataURL('image/png')
+        owner:ownerPaint.image,worker:workerCanvas.toDataURL('image/png')
       },
       highRecipe:{...base,...high}
     };
@@ -88,6 +185,8 @@ try{
   assert.ok(result.coloured>500,'real rendered preview must contain coloured stripes');
   assert.ok(result.changed>1200,'pronounced bounce must change actual raster pixels');
   assert.ok(result.workerBytes>2500,'worker export must emit nonempty PNG bytes');
+  assert.ok(result.ownerProbes>25,'original reported scene has clean joins');
+  assert.ok(result.sweptProbes>250,'all swept raster scenarios cover their joins');
   assert.ok(result.workerPixelMismatches/result.workerPixelCount<.01,
     'reference and worker paint must agree on actual bouncing silhouette');
   assert.deepEqual(errors,[],'no browser page exceptions');
