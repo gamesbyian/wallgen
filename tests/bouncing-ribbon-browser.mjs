@@ -16,6 +16,7 @@ try{
   await page.goto(process.env.ROYGBIV_URL||'http://127.0.0.1:4173/',
     {waitUntil:'domcontentloaded'});
   const result=await page.evaluate(async()=>{
+    const ensure=(value,message)=>{if(!value)throw Error(message);};
     const {drawWallpaper}=await import('/src/renderer.js');
     const {exportWallpaperInWorker}=await import('/src/render-coordinator.js');
     const base={
@@ -70,13 +71,13 @@ try{
           const iy=Math.round(wy*ownerCamera.scaleY+ownerCamera.offsetY);
           if(ix<2||iy<2||ix>=width-2||iy>=height-2)continue;
           const index=(iy*width+ix)*4;
-          assert.ok(Math.max(...ownerPaint.data.subarray(index,index+3))>45,
+          ensure(Math.max(...ownerPaint.data.subarray(index,index+3))>45,
             'production preview has a background hole inside the owned stripe');
           ownerProbes++;
         }
       }
     }
-    assert.ok(ownerProbes>25,'check enough actual ribbon join pixels');
+    ensure(ownerProbes>25,'check enough actual ribbon join pixels');
     // Independently rasterize the production fill path in multiple sizes and
     // orientations. Check both normal interior points and full circular
     // neighborhoods at contacts (where the old winding rule left diamonds).
@@ -114,7 +115,7 @@ try{
         const ix=Math.round(500+x*cos-localY*sin);
         const iy=Math.round(500+x*sin+localY*cos);
         if(ix<3||iy<3||ix>=997||iy>=997)return;
-        assert.ok(pixels[(iy*1000+ix)*4]>90,
+        ensure(pixels[(iy*1000+ix)*4]>90,
           'background pixel inside swept stripe, '+JSON.stringify(spec)+
           ' at '+x+','+y);
         sweptProbes++;
@@ -137,7 +138,7 @@ try{
         }
       }
     }
-    assert.ok(sweptProbes>250,'rasterized sufficient varied join interiors');
+    ensure(sweptProbes>250,'rasterized sufficient varied join interiors');
     let changed=0,coloured=0;
     for(let i=0;i<highPaint.data.length;i+=4){
       if(Math.max(...highPaint.data.subarray(i,i+3))-
