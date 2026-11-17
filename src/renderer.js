@@ -5,6 +5,7 @@ import {drawTextOverlays} from './text-overlay-renderer.js';
 import {planNestedShapeContours} from './nested-shape-contours.js';
 import { samplePath, ribbonEdge, widthAt, noise1D, bouncingPitch } from './path-geometry.js';
 import {decorateRegionObjects,edgePitch} from './edge-profiles.js';
+import {sweptRibbonPath} from './swept-ribbon.js';
 import {drawRegionInteriors,elementInk,elementWave,lineDash,elementApplies} from './interior-elements.js';
 import { viewCamera } from './view-camera.js';
 import {findPathCrossings,crossingTopIsLater,crossingBranchClip} from './crossing-order.js';
@@ -197,6 +198,22 @@ function stripePath(stripe,extent,scene){
 // Keep the original contour for drawing the *outer* outline, never stroke
 // these internal cell boundaries.
 export function stripeFillPath(stripe,extent,scene,Path=Path2D){
+  // A bouncing arch join has a sub-world-unit radius of curvature. The
+  // opposite normal offsets can fold across each other even for a modest
+  // stripe width. Fill one winding-safe union of short swept sections rather
+  // than a globally self-intersecting polygon. Use it for every fill, mask,
+  // pigment clip, and export; never composite the cells individually.
+  if((stripe.sharedGeometry??stripe.geometry)==='scalloped'&&
+    stripe.geometry==='scalloped'&&
+    (stripe.lineStyle||'continuous')==='continuous')
+    return sweptRibbonPath({
+      start:stripe.segmentStart??-extent,end:stripe.segmentEnd??extent,
+      pitch:bouncingPitch(stripe.shapeFrequency??50),Path,
+      sample:x=>({
+        negative:edgePoint(x,stripe,extent,-1,scene),
+        positive:edgePoint(x,stripe,extent,1,scene)
+      })
+    });
   if(!spatialGeometry(stripe)||(stripe.lineStyle||'continuous')!=='continuous')
     return stripePath(stripe,extent,scene);
   const path=new Path();
