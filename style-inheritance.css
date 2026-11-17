@@ -1,0 +1,64 @@
+/* A small pin/reset action lives beside the select, in the SAME editor
+   row. A second row overflows the phone's fixed-height Texture cards.
+   Keep it outside the <label> so it remains a separate accessible button. */
+.editor-tool-card .lockable-setting:has(>.style-inheritance-action)>
+  .field:not(.range-field)>select{
+  flex:0 1 calc(62% - 29px)!important;
+  width:calc(62% - 29px)!important;
+  max-width:calc(62% - 29px)!important;
+}
+.editor-tool-card .lockable-setting>.style-inheritance-action{
+  position:absolute;
+  z-index:2;
+  right:50px;
+  top:50%;
+  transform:translateY(-50%);
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  box-sizing:border-box;
+  width:26px;
+  height:27px;
+  padding:1px;
+  border:1px solid transparent;
+  border-radius:6px;
+  background:transparent;
+  color:var(--muted);
+  font-size:15px;
+  line-height:1;
+  cursor:pointer;
+}
+.editor-tool-card .lockable-setting>.style-inheritance-action:hover:not(:disabled),
+.editor-tool-card .lockable-setting>.style-inheritance-action:focus-visible{
+  border-color:var(--line);
+  color:inherit;
+}
+.editor-tool-card .lockable-setting>.style-inheritance-action:focus-visible{
+  outline:2px solid currentColor;
+  outline-offset:1px;
+}
+.editor-tool-card .lockable-setting>.style-inheritance-action:disabled{
+  opacity:.6;
+  cursor:not-allowed;
+}
+@media(max-width:790px){
+  body.mobile-studio .sidebar .editor-tool-card
+    .lockable-setting:has(>.style-inheritance-action)>
+    .field:not(.range-field)>select{
+    flex:0 1 calc(61% - 35px)!important;
+    width:calc(61% - 35px)!important;
+    max-width:calc(61% - 35px)!important;
+  }
+  body.mobile-studio .sidebar .editor-tool-card .lockable-setting>
+    .style-inheritance-action{
+    right:65px;
+    width:32px;
+    height:32px;
+  }
+}
+@media(min-width:500px) and (max-width:790px){
+  body.mobile-studio .sidebar .editor-tool-card .lockable-setting>
+    .style-inheritance-action{
+    right:70px;
+  }
+}

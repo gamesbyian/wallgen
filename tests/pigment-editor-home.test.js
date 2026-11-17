@@ -38,7 +38,8 @@ test('Pigment settings reuse exactly one original live control each',()=>{
   assert.match(layout,/const root=fieldNode\(key\)/);
   assert.match(layout,/appendUnique\(card,root\)/);
   assert.match(html,/editor-pigment\.css\?v=/);
-  assert.match(html,/src\/app\.js\?v=20261116-pigment-home1/);
+  // App entrypoint can be cache-busted by unrelated editor features.
+  assert.match(html,/src\/app\.js\?v=\d{8}-[a-z0-9-]+/);
   assert.match(html,/src\/mobile-swipes\.js\?v=20261116-pigment-home1/);
   assert.match(app,/editor-layout\.js\?v=20261116-pigment-home1/);
   assert.match(swipe,/editor-layout\.js\?v=20261116-pigment-home1/);
