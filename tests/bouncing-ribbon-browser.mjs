@@ -127,11 +127,16 @@ try{
           const station=contact+delta;
           const p=samplePath(stripe,station,scene.extent);
           const half=widthAt(stripe,station,scene.extent)/2;
-          for(const ratio of [-.6,0,.6])
+          // A 3-world-unit stroke can land half a pixel outside a
+          // near-boundary probe after integer pixel rounding; keep its
+          // sample safely inside the physical width.
+          const ratios=spec.physicalWidth<6?[-.25,0,.25]:[-.6,0,.6];
+          for(const ratio of ratios)
             probe(p.x+p.nx*half*ratio,p.y+p.ny*half*ratio);
         }
         const p=samplePath(stripe,contact,scene.extent);
-        const radius=widthAt(stripe,contact,scene.extent)*.24;
+        const radius=widthAt(stripe,contact,scene.extent)*
+          (spec.physicalWidth<6?.14:.24);
         for(let i=0;i<16;i++){
           const a=i*Math.PI/8;
           probe(p.x+Math.cos(a)*radius,p.y+Math.sin(a)*radius);
