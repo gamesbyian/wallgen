@@ -67,6 +67,6 @@ test('the original form routes direct selections to overrides and unrelated edit
   assert.match(app,/isStyleInherited\(current,key\)\?\s*effectiveStyleValue\(current,currentScene\|\|resolveScene\(current\),key\):'auto'/);
   assert.match(app,/changeRecipe\(\{\.\.\.current,family,stripeWidth:defaults\.stripeWidth\}\)/);
   assert.match(css,/position:absolute/);
-  assert.match(css,/calc\\(61% - 35px\\)/);
+  assert.ok(css.includes('calc(61% - 35px)'));
   assert.doesNotMatch(css,/grid-row:2/);
 });
