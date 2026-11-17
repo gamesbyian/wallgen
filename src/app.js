@@ -1495,7 +1495,7 @@ function showResolvedSelections(scene){
         'Custom choice: '+resolvedName);
       const action=form.querySelector('[data-style-inheritance="'+key+'"]');
       if(action){
-        action.textContent=inherited?'↳ Style linked':'↶ Use style';
+        action.textContent=inherited?'⛓':'↶';
         action.setAttribute('aria-pressed',String(inherited));
         action.setAttribute('aria-label',inherited?
           'Keep '+resolvedName+' for '+sourceSettingLabel(select,key):
