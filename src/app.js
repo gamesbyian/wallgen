@@ -19,6 +19,8 @@ import {mountEditor,selectEditorTool,syncEditorStructure} from './editor-layout.
 import {randomizeScope} from './scoped-random.js';
 import {newInteriorElementId,INTERIOR_LIMITS,resolveInteriorSelection,interiorTargetSummary,resolveInteriorFocusTarget,interiorSliderStep} from './interior-elements.js';
 import {STYLE_PRESETS,EDITOR_CATEGORIES,TOOL_LIST} from './editor-schema.js?v=20261116-pigment-home1';
+import {STYLE_INHERITABLE_KEYS,isStyleInherited,effectiveStyleValue,storedStyleValue,
+  withStyleChoice} from './style-inheritance.js';
 import {sourceSettingLabel} from './editor-control-roles.js?v=20261021-labels1';
 import {fullSettingName} from './editor-terminology.js';
 import {installExplorationHistory} from './exploration-history.js';
@@ -295,7 +297,14 @@ function fromControls() {
     scatteredShape:current.scatteredShape,scatteredOverrides:current.scatteredOverrides,
     regionEdgeOverrides:current.regionEdgeOverrides,
     scatteredLayerOrder:current.scatteredLayerOrder};
-  for (const key of FIELDS) { const field=form.elements.namedItem(key); data[key]=field.dataset.inactive==='true'?current[key]:(field.type==='checkbox'?field.checked:field.value); }
+  for(const key of FIELDS){
+    const field=form.elements.namedItem(key);
+    const value=field.dataset.inactive==='true'?current[key]:
+      field.type==='checkbox'?field.checked:field.value;
+    // The select shows the effective choice, but an inherited recipe still
+    // stores 'auto' until the user explicitly makes an individual choice.
+    data[key]=storedStyleValue(key,current,value);
+  }
   // A single nested recipe travels in links, saved designs, PNG and workers.
   // Do not add an Off-only Photo key to untouched legacy recipes.
   const prior=current.photoLook;
@@ -1465,18 +1474,44 @@ for(const slider of form.querySelectorAll('input[type="range"]')){
 }
 const automaticKeys=autos;
 for(const key of automaticKeys){
+  if(STYLE_INHERITABLE_KEYS.includes(key))continue;
   const select=form.elements.namedItem(key),hint=document.createElement('small');
   hint.className='resolved-selection';hint.dataset.resolved=key;select.insertAdjacentElement('afterend',hint);
 }
 function showResolvedSelections(scene){
   for(const key of automaticKeys){
-    const select=form.elements.namedItem(key),hint=form.querySelector('[data-resolved="'+key+'"]');
-    const auto=select.value==='auto',option=Array.from(select.options).find(o=>o.value===scene[key]);
+    const select=form.elements.namedItem(key);
+    const inherited=isStyleInherited(current,key);
+    const option=Array.from(select.options).find(o=>o.value===scene[key]);
     const resolvedName=option?.textContent||titleCase(String(scene[key]));
+    if(STYLE_INHERITABLE_KEYS.includes(key)){
+      // Native selects expose real choices only. Their visible value must
+      // never be mistaken for the canonical 'auto' inheritance state.
+      if(select.dataset.inactive!=='true')
+        select.value=effectiveStyleValue(current,scene,key);
+      select.dataset.styleInherited=String(inherited);
+      select.setAttribute('aria-description',inherited?
+        'Following the starting style: '+resolvedName:
+        'Custom choice: '+resolvedName);
+      const action=form.querySelector('[data-style-inheritance="'+key+'"]');
+      if(action){
+        action.textContent=inherited?'↳ Style linked':'↶ Use style';
+        action.setAttribute('aria-pressed',String(inherited));
+        action.setAttribute('aria-label',inherited?
+          'Keep '+resolvedName+' for '+sourceSettingLabel(select,key):
+          'Reset '+sourceSettingLabel(select,key)+' to starting style');
+        action.title=inherited?
+          'Following starting style. Select here to keep '+resolvedName+'.':
+          'Restore this setting to the starting style';
+        action.disabled=select.disabled||select.dataset.inactive==='true';
+      }
+      continue;
+    }
+    const hint=form.querySelector('[data-resolved="'+key+'"]');
+    const auto=current[key]==='auto';
     hint.textContent=auto?'↳ Selected: '+resolvedName:'';
     hint.hidden=!auto;
-    // The narrow mobile toolbar has space for a single line. Put the Auto
-    // selection inside the native select, not an extra line beneath it.
+    // Family and orientation retain their independent Surprise me controls.
     if(key==='family'){
       const autoOption=Array.from(select.options).find(o=>o.value==='auto');
       if(autoOption)autoOption.textContent=auto?'Auto · '+resolvedName:'Surprise me';
@@ -1570,6 +1605,25 @@ function syncSettingLocks(){
   }
 }
 installSettingLocks();
+// Reuse the source selectors, including their locks, search and undo state.
+// This small action pins an inherited choice (including the SAME displayed
+// choice) or restores inheritance without putting 'auto' in the dropdown.
+for(const key of STYLE_INHERITABLE_KEYS){
+  const field=form.elements.namedItem(key);
+  const host=field.closest('.lockable-setting');
+  const action=document.createElement('button');
+  action.type='button';action.className='style-inheritance-action';
+  action.dataset.styleInheritance=key;
+  action.addEventListener('click',event=>{
+    event.preventDefault();event.stopPropagation();
+    if(action.disabled)return;
+    flushQueuedControlUpdate();
+    const value=isStyleInherited(current,key)?
+      effectiveStyleValue(current,currentScene||resolveScene(current),key):'auto';
+    changeRecipe(withStyleChoice(fromControls(),key,value));
+  });
+  host.append(action);
+}
 const editor=mountEditor();
 // These user-visible actions belong to the now-mounted Regions tool card.
 // Previously both were created before mountEditor(), leaving the chooser
@@ -2654,9 +2708,10 @@ form.addEventListener('change',event=>{
   if(event.target.name!=='family')return;
   const family=event.target.value,defaults=STYLE_PRESETS[family];
   if(!defaults)return;
-  // Convert the starting style to inspectable values. It never acts as a
-  // hidden multiplier after the player manually edits a field.
-  changeRecipe({...current,family,...defaults});
+  // The style changes inherited choices. Explicitly chosen geometry, motif,
+  // palette, outline and texture remain independent. Stripe width continues
+  // to use the chosen style's initial scale.
+  changeRecipe({...current,family,stripeWidth:defaults.stripeWidth});
 },true);
 form.addEventListener('input',event=>{
   const key=event.target.name;
@@ -2701,6 +2756,14 @@ document.addEventListener('change',event=>{
     return;
   }
   if(!FIELDS.includes(event.target.name)||event.target.name==='family')return;
+  if(STYLE_INHERITABLE_KEYS.includes(event.target.name)){
+    // The native select displays the effective value. Only a direct choice
+    // converts its saved 'auto' to an explicit override.
+    clearTimeout(rangeTimeout);
+    changeRecipe(withStyleChoice(fromControls(),
+      event.target.name,event.target.value));
+    return;
+  }
   if(event.target.name==='paletteToneEnabled'&&event.target.checked){
     // First enabling tone keeps the currently selected colour story
     // visually unchanged. The author can then deliberately move either
