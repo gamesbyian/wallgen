@@ -1,0 +1,42 @@
+/* Style inheritance belongs to the original editor control, not a second
+   select or a hidden recipe setting. Keep the reset/pin action in a separate
+   labelled button outside the native <label> for correct keyboard semantics. */
+.editor-tool-card .lockable-setting>.style-inheritance-action{
+  grid-column:1;
+  grid-row:2;
+  justify-self:end;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:28px;
+  max-width:100%;
+  padding:2px 9px;
+  margin-top:2px;
+  border:1px solid transparent;
+  border-radius:6px;
+  background:transparent;
+  color:var(--muted);
+  font-size:11px;
+  line-height:1.2;
+  cursor:pointer;
+}
+.editor-tool-card .lockable-setting>.style-inheritance-action:hover:not(:disabled),
+.editor-tool-card .lockable-setting>.style-inheritance-action:focus-visible{
+  border-color:var(--line);
+  color:inherit;
+}
+.editor-tool-card .lockable-setting>.style-inheritance-action:focus-visible{
+  outline:2px solid currentColor;
+  outline-offset:1px;
+}
+.editor-tool-card .lockable-setting>.style-inheritance-action:disabled{
+  opacity:.6;
+  cursor:not-allowed;
+}
+/* Extra status controls must remain operable in the touch-sized editor. */
+@media(max-width:790px){
+  .editor-tool-card .lockable-setting>.style-inheritance-action{
+    min-height:44px;
+    min-width:44px;
+  }
+}
